@@ -4,6 +4,7 @@ Source pixels must come from forward-running upstream lanes, never a candidate
 render or a source restored using candidate serialization.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
@@ -45,6 +46,7 @@ def check_online_pixels(
     frames: slice | None,
     mse_max: float,
     failure_dir: str | Path,
+    compare_states: Callable[[TensorDict, TensorDict], object] = compare_state,
 ) -> NDArray[np.float64]:
     """Check one capture selection against an independently witnessed rollout."""
     batch, horizon = trace.actions.shape[:2]
@@ -57,12 +59,12 @@ def check_online_pixels(
     result = None
     try:
         env.set_state(trace.initial.clone())
-        compare_state(env.get_state(), trace.initial)
+        compare_states(env.get_state(), trace.initial)
         actions = trace.actions[:, 0] if horizon == 1 else trace.actions
         result = env.step(actions.copy(), states=states, frames=frames)
         assert all(value.device.type == env.device.type for value in result.values(True, True))
-        compare_state(result["state"], trace.states[-1])
-        compare_state(env.get_state(), trace.states[-1])
+        compare_states(result["state"], trace.states[-1])
+        compare_states(env.get_state(), trace.states[-1])
         torch.testing.assert_close(result["valid"].cpu(), trace.valid, atol=0, rtol=0)
         for key, expected in trace.tasks.items():
             torch.testing.assert_close(
@@ -82,7 +84,7 @@ def check_online_pixels(
             assert tuple(result[name].shape[:2]) == (batch, len(indices))
             if name == "states":
                 for j, t in enumerate(indices):
-                    compare_state(result[name][:, j], trace.states[t])
+                    compare_states(result[name][:, j], trace.states[t])
         indices = [] if frames is None else list(range(horizon))[frames]
         errors = np.empty((batch, 0), dtype=np.float64)
         if frames is not None:

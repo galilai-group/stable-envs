@@ -26,7 +26,7 @@ def test_shared_profiles_cover_each_registration_once():
     registrations = [case.registration for cases in PROFILES.values() for case in cases]
     assert len(registrations) == len(set(registrations)) == 38
     assert set(registrations) == SWM_IDS.keys() - EXCLUDED
-    expected_counts = dict(native=128, fetch=336, dmc=288, navigation=96, ogbench=48, pusht=24, rocket=16)
+    expected_counts = dict(native=128, fetch=396, dmc=288, navigation=96, ogbench=72, pusht=60, rocket=16)
     for device in ("cpu", "cuda"):
         for profile, expected in expected_counts.items():
             cases = list(case_map(profile, device).values())

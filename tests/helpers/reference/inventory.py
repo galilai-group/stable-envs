@@ -39,7 +39,7 @@ def inventory():
         if row["family"] == "rocket":
             online.append("tests/integration/test_rocket_source_pixels.py")
         profile = profiles.get(registration)
-        if profile in {"native", "navigation", "dmc", "fetch"} and "FetchPickAndPlace" not in registration:
+        if profile in {"native", "navigation", "dmc", "fetch", "ogbench", "pusht"}:
             online.append(f"tests/contracts/test_{profile}_source_pixels.py")
         rows.append(
             dict(

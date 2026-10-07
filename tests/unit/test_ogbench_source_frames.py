@@ -39,6 +39,18 @@ def test_unexpected_source_gl_error_is_not_suppressed(family, cutoffs, error):
         source_gl_identity(gl, family, cutoffs)
 
 
+def test_source_identity_query_errors_are_not_suppressed():
+    from tests.helpers.reference.ogbench_pixels import source_gl_identity
+
+    errors = iter([1281, 0, 1280])
+    gl = SimpleNamespace(
+        GL_NO_ERROR=0, GL_INVALID_VALUE=1281, GL_VENDOR=1, GL_RENDERER=2,
+        glGetError=lambda: next(errors), glGetString=lambda name: b'Mesa llvmpipe',
+    )
+    with pytest.raises(RuntimeError, match='identity query generated an error'):
+        source_gl_identity(gl, 'Cube', [100.])
+
+
 def test_renderer_inspection_error_can_cross_worker_queue():
     import ctypes
     import pickle

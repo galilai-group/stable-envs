@@ -50,11 +50,11 @@ def case_map(profile, device="cpu"):
         "navigation": ("reached", "terminal"),
         "fetch": ("reached", "horizon"),
         "dmc": (None,),
+        "ogbench": (None,),
+        "pusht": ("reached", "contact", "terminal"),
     }
     if profile in pixel_scenarios:
         for value in parameters(profile):
-            if profile == "fetch" and value[0].domain == "PickAndPlace":
-                continue
             for horizon in (1, 8):
                 for scenario in pixel_scenarios[profile]:
                     suffix = f"-{scenario}" if scenario else ""
@@ -65,6 +65,13 @@ def case_map(profile, device="cpu"):
                         f"seed{value[1]}/{value[2]}/{horizon}" + (f"/{scenario}" if scenario else ""),
                         device,
                     )
+    if profile == "fetch":
+        for value in parameters(profile):
+            if value[0].domain == "PickAndPlace":
+                node = f"tests/contracts/test_fetch_source_pixels.py::test_source_render_changes_continuation[{label(value)}]"
+                mapping[node] = CaseKey(
+                    value[0].registration, "source-render-mutation", f"seed{value[1]}/{value[2]}", device
+                )
     if profile == "native":
         prefix = "tests/contracts/test_native_acceptance.py::"
         for case in PROFILES["native"]:

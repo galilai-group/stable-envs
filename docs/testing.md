@@ -39,10 +39,10 @@ Source pins are explicit in
 `tests/helpers/reference/profiles.py`. The source checkout must be clean at
 `176d54532b3c0a251a4f509b74f2fdacc143a63d`. Source environment code is loaded unchanged;
 unrelated learning-stack package initializers are omitted. Profiles compare CPU
-physics with CPU or CUDA State/output delivery. Native, Navigation, DMC and nine
-Fetch registrations additionally check rendering against source pixels. Profiles do not measure
-throughput. DMC and Maze constructors require a working GL context even when
-frames are omitted; use Oscar EGL when local GL is unavailable. Cube/Scene retain
+physics with CPU or CUDA State/output delivery. All 38 non-Craftax registrations
+also have maintained independent source-pixel checks, using the declared family
+backends below. Profiles do not measure throughput. DMC and Maze constructors
+require a working GL context even when frames are omitted; use Oscar EGL when local GL is unavailable. Cube/Scene retain
 the accepted controlled-entropy source scope. PushT and Rocket compare independent
 native-engine fields in addition to public replay-State restoration.
 
@@ -224,8 +224,9 @@ That checkpoint established shared source-pixel coverage for **25/38 non-Craftax
 five native controls, three Navigation, seven DMC and nine Fetch registrations.
 Each counted registration passed its own required CPU/CUDA cases. This is test
 migration, not a new promotion matrix or a claim about every rendering backend.
-The DMC correction below raises current validated coverage to **30/38**.
-Fetch PickAndPlace (three), OGBench (three), and PushT (two) still need migration.
+The subsequent DMC correction established **30/38**; the final cohort below completes **38/38**.
+That left Fetch PickAndPlace (three), OGBench (three), and PushT (two), now covered
+by the final cohort below.
 
 Native's 896 frame comparisons per device have MSE zero. Navigation's 768 have
 maximum MSE 0.0000217513; Fetch's 2,304 have maximum MSE 0.000252860 on CPU and
@@ -242,19 +243,22 @@ simulator. The [CSV](https://github.com/galilai-group/stable-envs/blob/sami-dev/
 includes latency mean and SD; the
 [validation report](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/fetch-readback-oscar-validation.json)
 links the raw evidence. The default MJWarp renderer is unchanged.
-The optimized renderer passes all 336 Fetch source-profile cases per device;
-maximum source MSE is 0.000253508 on CPU and 0.000248164 on CUDA. PickAndPlace's
-source-pixel exclusion remains; its readback regression compares against the
-previous high-fidelity implementation.
+That optimization checkpoint passed all 336 Fetch source-profile cases per device;
+maximum source MSE was 0.000253508 on CPU and 0.000248164 on CUDA. PickAndPlace
+was excluded from that source-pixel gate; the independent-branch protocol below
+closes the exclusion. Its readback regression compares against the previous
+high-fidelity implementation.
 
 | Profile | Required cases/device | Source-pixel cases/device | Source renderer |
 | --- | ---: | ---: | --- |
 | Native | 128 | 56 | CPU pygame |
 | Navigation | 96 | 48 | CPU Torch/Matplotlib |
 | DMC | 288 | 96 | Software GL for CPU; NVIDIA EGL for CUDA |
-| Fetch | 336 | 144 | Software GL for CPU; NVIDIA EGL for CUDA |
+| Fetch | 396 | 192 | Software GL for CPU; NVIDIA EGL for CUDA |
+| OGBench | 72 | 24 | Software GL for CPU; NVIDIA EGL for CUDA |
+| PushT | 60 | 36 | CPU pygame |
 
-DMC and Fetch tests verify the actual GL vendor/renderer. On Oscar, CPU checks use
+DMC, Fetch and OGBench tests verify the actual GL vendor/renderer. On Oscar, CPU checks use
 Xvfb/GLFW with `LIBGL_ALWAYS_SOFTWARE=1`, `GALLIUM_DRIVER=llvmpipe`, and
 `PYOPENGL_PLATFORM=glx`; CUDA checks use `MUJOCO_GL=egl` and
 `PYOPENGL_PLATFORM=egl` in a separate process. Source physics remains CPU. The
@@ -262,9 +266,9 @@ Fetch cohort tests the explicit `opengl` candidate backend and preserves upstrea
 480-to-64 rendering; it does not certify other backends. Its source adapter uses a
 fresh subprocess because upstream `close()` calls `glfw.terminate()`, invalidating
 other GLFW windows in that process. It binds each source lane's context before
-rendering and returns owned State/task/frame data. PickAndPlace is excluded
-because its source rendering changes controller caches and future transitions.
-Its State-only regression cases remain required in the Fetch profile.
+rendering and returns owned State/task/frame data. PickAndPlace uses the disposable
+source branches described below because its source rendering changes controller
+caches and future transitions. All State regression cases remain required.
 
 Fetch OpenGL readback has a separate regression test in
 `tests/integration/test_fetch_opengl.py`. Run it in the same explicit software-GL
@@ -300,7 +304,7 @@ normalized MSE limit of 0.001 on CPU and CUDA. Both complete profiles pass
 **288/288 required cases**, including 96 source-pixel cases and 1,536 frame
 comparisons per device. CPU renderer regressions pass 57 tests; the separate
 Apple MPS check is skipped on Linux. The source profiles have no required skips.
-Shared source-pixel coverage is now **30/38 non-Craftax registrations**.
+That checkpoint established shared source-pixel coverage for **30/38 non-Craftax registrations**.
 
 | DMC registration | CPU max MSE | CUDA max MSE |
 | --- | ---: | ---: |
@@ -372,6 +376,61 @@ synchronization, but excludes rollout, disk loading, initial transfer, and batch
 indexing. The report preserves twelve latency samples after warmup, mean/SD,
 code and corpus hashes, and source-image MSE. Throughput compares our two
 implementations on the same device; it does not measure source-renderer FPS.
+
+## Completed source-pixel adapter coverage
+
+Maintained independent source-pixel checks now cover **38/38 non-Craftax registrations**.
+The final cohort adds both PushT registrations, Maze/Cube/Scene and all three Fetch
+PickAndPlace variants. Both output-device profiles pass their complete required
+cases, without missing, duplicated or skipped cases:
+
+| Profile | CPU cases | CUDA-output cases | Renderer scope |
+| --- | ---: | ---: | --- |
+| PushT | 60/60 | 60/60 | CPU raster on both output devices |
+| OGBench | 72/72 | 72/72 | Cube/Scene explicit OpenGL; Maze default |
+| Fetch | 396/396 | 396/396 | Explicit OpenGL, all 12 registrations |
+
+This is test-coverage completion within the recorded scope, not a claim that every
+backend, Variation or lifecycle is certified. In particular, the fast default
+Cube CUDA MJWarp path measured about 0.0019 MSE in a retained rejected probe.
+Cube/Scene's passing OpenGL results do not promote that path. CPU OpenGL is
+verified software GL; CUDA OpenGL is verified NVIDIA EGL. PushT's CUDA profile
+checks State/output placement and does not claim native GPU rasterization.
+
+The per-frame normalized MSE limit stays at 0.001. New-registration worst errors:
+
+| Registration | CPU max MSE | CUDA-output max MSE |
+| --- | ---: | ---: |
+| `swm/FetchPickAndPlace-v3` | 0.00032087268 | 0.00031219588 |
+| `swm/FetchPickAndPlaceDense-v3` | 0.00032087268 | 0.00031219588 |
+| `swm/FetchPickAndPlaceDict-v3` | 0.00032087268 | 0.00031219588 |
+| `swm/OGBCube-v0` | 7.7658182e-05 | 4.5252527e-05 |
+| `swm/OGBMaze-v0` | 0.00074431759 | 0.00070212253 |
+| `swm/OGBScene-v0` | 0 | 0 |
+| `swm/PushT-Discrete-v1` | 0 | 0 |
+| `swm/PushT-v1` | 0 | 0 |
+
+The shared checker validates restored and final State, exact task outputs, captured
+intermediate States, validity masks, selected source frames and output ownership.
+Family adapters supply independent source traces; PushT adds first-step collision
+and mixed-terminal cases. Replay-history comparisons permit only validated zero
+padding, while preserving exact history values, dtypes and lengths.
+
+Cube/Scene checkpoints retain the accepted controlled-entropy scope and are
+independently witnessed against source engine fields, RNG, task and model state.
+Their source spotlight cutoff of 100 leaves a known GL error; the shared identity
+helper records that exact condition and rejects other errors without changing lighting.
+
+PickAndPlace source rendering mutates controller caches and future transitions.
+Each reference image therefore comes from a disposable source branch independently
+reset and replayed to the matching pre-render State; rendering never touches the
+physics trajectory. Twelve required rejected controls retain the continuous-render
+source mutation witness. This proves matched-State pixels and pure candidate
+rendering, not equivalence to the source's render-mutated continuation.
+
+The [final cohort report](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/final-source-pixels-oscar-validation.json)
+records registration-specific results, backend scope, sealed evidence, dependency/code
+hashes and terminal scheduler status. Historical acceptance files remain unchanged.
 
 ## Saved rendering evidence
 

@@ -17,18 +17,15 @@ from tests.helpers.reference.pixels import PixelTrace
 from tests.helpers.reference.profiles import Registration
 
 
-def _render(source: gym.Env, device: str) -> tuple[NDArray[np.uint8], dict]:
+def _image(source: gym.Env, device: str) -> tuple[NDArray[np.uint8], dict]:
     from OpenGL import GL
 
-    before = snapshot(source)
     raw = source.unwrapped
     viewer = raw.mujoco_renderer._viewers.get("rgb_array")
     if viewer is not None:
         # Gymnasium only switches contexts between render modes within one env.
         viewer.make_context_current()
     frame = np.asarray(source.render()).copy()
-    delta = differences(before, snapshot(source))
-    assert not delta, ("Source rendering changed continuation State", delta)
     raw.mujoco_renderer._viewers["rgb_array"].make_context_current()
     vendor = GL.glGetString(GL.GL_VENDOR).decode()
     renderer = GL.glGetString(GL.GL_RENDERER).decode()
@@ -47,20 +44,33 @@ def _render(source: gym.Env, device: str) -> tuple[NDArray[np.uint8], dict]:
     return frame, identity
 
 
-def fetch_trace(
-    case: Registration, seed: int, dtype: str, horizon: int, scenario: str, device: str, source_root: str
-) -> tuple[PixelTrace, list[dict]]:
-    # Source close() terminates GLFW globally; its contexts must not share our renderer process.
+def _render(source: gym.Env, device: str) -> tuple[NDArray[np.uint8], dict]:
+    before = snapshot(source)
+    result = _image(source, device)
+    delta = differences(before, snapshot(source))
+    assert not delta, ("Source rendering changed continuation State", delta)
+    return result
+
+
+def _isolated(mode: str, args: tuple):
+    # Source close() terminates GLFW globally; isolate it from candidate contexts.
     with TemporaryDirectory(prefix="fetch-source-pixels-") as directory:
         request, response = Path(directory) / "request.pkl", Path(directory) / "response.pkl"
-        request.write_bytes(pickle.dumps((case, seed, dtype, horizon, scenario, device, source_root)))
+        request.write_bytes(pickle.dumps((mode, args)))
         subprocess.run(
             [sys.executable, "-m", __name__, str(request), str(response)],
             cwd=Path(__file__).resolve().parents[3],
             check=True,
-            timeout=120,
+            timeout=300,
         )
         return pickle.loads(response.read_bytes())
+
+
+def fetch_trace(
+    case: Registration, seed: int, dtype: str, horizon: int, scenario: str, device: str, source_root: str
+) -> tuple[PixelTrace, list[dict]]:
+    mode = "branches" if case.domain == "PickAndPlace" else "trace"
+    return _isolated(mode, (case, seed, dtype, horizon, scenario, device, source_root))
 
 
 def _fetch_trace(
@@ -134,6 +144,81 @@ def _fetch_trace(
             assert not plain.unwrapped.mujoco_renderer._viewers
         if scenario == "horizon":
             np.testing.assert_array_equal(np.stack(validity, axis=1), np.arange(horizon)[None, :] < [[1], [3]])
+    return PixelTrace(
+        initial,
+        states,
+        {key: torch.stack([row[key] for row in outputs], dim=1) for key in outputs[0]},
+        np.stack(frames, axis=1),
+        torch.from_numpy(np.stack(validity, axis=1)),
+        actions,
+    ), identities
+
+
+def _pickandplace_trace(
+    case: Registration, seed: int, dtype: str, horizon: int, scenario: str, device: str, source_root: str
+) -> tuple[PixelTrace, list[dict]]:
+    """Render disposable forward-replayed source branches; never mutate the physics trajectory."""
+    assert case.domain == "PickAndPlace"
+    load_source(source_root, "fetch")
+    importlib.import_module("stable_worldmodel.envs.gymnasium_robotics")
+    with ExitStack() as stack:
+        physics = [stack.enter_context(closing(gym.make(case.registration))) for _ in range(2)]
+        histories = [[], []]
+        prefixes = {"reached": (0, 7), "horizon": (49, 47)}[scenario]
+        for lane, source in enumerate(physics):
+            assert source.spec.max_episode_steps == 50
+            source.reset(seed=seed + lane, options={"variation": []})
+            for _ in range(prefixes[lane]):
+                action = np.zeros(4, dtype=dtype)
+                output = source.step(action.copy())
+                histories[lane].append(action)
+                assert not (output[2] or output[3])
+        initial = source_state([snapshot(source) for source in physics])
+        actions = np.random.default_rng(seed + 1000).uniform(-1, 1, (2, horizon, 4)).astype(dtype)
+        active = np.ones(2, bool)
+        states, frames, validity, outputs, identities = [], [], [], [], []
+        previous = [None, None]
+        for step in range(horizon):
+            validity.append(active.copy())
+            rows, images = [], []
+            for lane, source in enumerate(physics):
+                if active[lane]:
+                    previous[lane] = source.step(actions[lane, step].copy())
+                    histories[lane].append(actions[lane, step].copy())
+                rows.append(previous[lane])
+                before = snapshot(source)
+                with closing(gym.make(case.registration, render_mode="rgb_array", resolution=64)) as branch:
+                    branch.reset(seed=seed + lane, options={"variation": []})
+                    branch_output = None
+                    for action in histories[lane]:
+                        branch_output = branch.step(action.copy())
+                    assert not differences(rows[-1], branch_output)
+                    assert not differences(before, snapshot(branch)), (
+                        "Disposable source branch did not reach matching State"
+                    )
+                    image, identity = _image(branch, device)
+                    mutation = differences(before, snapshot(branch))
+                assert not differences(before, snapshot(source)), "Renderer touched the physics source"
+                assert not source.unwrapped.mujoco_renderer._viewers
+                images.append(image)
+                if step == 0:
+                    identities.append(dict(gl=identity, oracle_mode="disposable-forward-source-branch", mutations=[]))
+                else:
+                    assert identity == identities[lane]["gl"]
+                identities[lane]["mutations"].append(dict(step=step, differences=mutation))
+            tasks = {
+                **task_columns(rows),
+                "success": torch.as_tensor(np.asarray([row[4]["is_success"] for row in rows])),
+            }
+            done = (tasks["terminated"] | tasks["truncated"]).numpy().copy()
+            for column in tasks.values():
+                column[~active] = 0
+            outputs.append(tasks)
+            states.append(source_state([snapshot(source) for source in physics]))
+            frames.append(np.stack(images))
+            active &= ~done
+        if scenario == "horizon":
+            np.testing.assert_array_equal(np.stack(validity, axis=1), np.arange(horizon)[None, :] < [[1], [3]])
         return PixelTrace(
             initial,
             states,
@@ -144,6 +229,38 @@ def _fetch_trace(
         ), identities
 
 
+def fetch_mutation_witness(case: Registration, seed: int, dtype: str, device: str, source_root: str) -> dict:
+    return _isolated("mutation", (case, seed, dtype, device, source_root))
+
+
+def _pickandplace_mutation(case: Registration, seed: int, dtype: str, device: str, source_root: str) -> dict:
+    """Keep the rejected continuous-render source trajectory as an explicit witness."""
+    assert case.domain == "PickAndPlace"
+    load_source(source_root, "fetch")
+    importlib.import_module("stable_worldmodel.envs.gymnasium_robotics")
+    with (
+        closing(gym.make(case.registration)) as plain,
+        closing(gym.make(case.registration, render_mode="rgb_array", resolution=64)) as visual,
+    ):
+        for source in (plain, visual):
+            source.reset(seed=seed, options={"variation": []})
+        actions = np.random.default_rng(seed + 1000).uniform(-1, 1, (9, 4)).astype(dtype)
+        for step, action in enumerate(actions[:-1]):
+            assert not differences(plain.step(action.copy()), visual.step(action.copy()))
+            assert not differences(snapshot(plain), snapshot(visual))
+            before = snapshot(visual)
+            _, identity = _image(visual, device)
+            mutation = differences(before, snapshot(visual))
+            if mutation:
+                action = actions[step + 1]
+                continuation = differences(plain.step(action.copy()), visual.step(action.copy()))
+                continuation.update(differences(snapshot(plain), snapshot(visual), "/state"))
+                assert continuation, "Recorded render mutation did not change the following transition"
+                return dict(step=step, mutation=mutation, continuation=continuation, source_gl=identity)
+        raise AssertionError("Expected PickAndPlace continuous-render mutation was not witnessed")
+
+
 if __name__ == "__main__":
-    args = pickle.loads(Path(sys.argv[1]).read_bytes())
-    Path(sys.argv[2]).write_bytes(pickle.dumps(_fetch_trace(*args)))
+    mode, args = pickle.loads(Path(sys.argv[1]).read_bytes())
+    function = {"trace": _fetch_trace, "branches": _pickandplace_trace, "mutation": _pickandplace_mutation}[mode]
+    Path(sys.argv[2]).write_bytes(pickle.dumps(function(*args)))

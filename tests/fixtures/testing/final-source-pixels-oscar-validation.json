@@ -1,0 +1,455 @@
+{
+  "status": "PASS",
+  "baseline_commit": "d5947b65a1a3491ca982104aa100d6c8f06a9f18",
+  "source_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "scope": "Maintained independent source-pixel coverage for final eight non-Craftax registrations, with complete family State/simulation/task/online profiles",
+  "shared_source_pixel_registrations": 38,
+  "non_craftax_registrations": 38,
+  "previous_source_pixel_registrations": 30,
+  "profiles": {
+    "pusht": {
+      "cpu": {
+        "required": 60,
+        "passed": 60,
+        "pixel_cases": 36,
+        "frame_comparisons": 576,
+        "mse_max": 0.0,
+        "seal_files": 63,
+        "job_id": "7085452",
+        "hardware": {
+          "host": "node1840.oscar.ccv.brown.edu",
+          "gpu": null,
+          "versions": {
+            "torch": "2.14.0+cu126",
+            "numpy": "2.2.6",
+            "gymnasium": "1.2.3",
+            "pygame": "2.6.1",
+            "mujoco": "3.12.0"
+          }
+        },
+        "versions": {
+          "gymnasium": "1.2.3",
+          "numpy": "2.2.6",
+          "pygame": "2.6.1",
+          "pymunk": "7.2.0"
+        },
+        "artifact": "pusht-v2/cpu/artifacts"
+      },
+      "cuda": {
+        "required": 60,
+        "passed": 60,
+        "pixel_cases": 36,
+        "frame_comparisons": 576,
+        "mse_max": 0.0,
+        "seal_files": 63,
+        "job_id": "7085453",
+        "hardware": {
+          "host": "gpu2113.oscar.ccv.brown.edu",
+          "gpu": "NVIDIA GeForce RTX 3090",
+          "versions": {
+            "torch": "2.14.0+cu126",
+            "numpy": "2.2.6",
+            "gymnasium": "1.2.3",
+            "pygame": "2.6.1",
+            "mujoco": "3.12.0"
+          }
+        },
+        "versions": {
+          "gymnasium": "1.2.3",
+          "numpy": "2.2.6",
+          "pygame": "2.6.1",
+          "pymunk": "7.2.0"
+        },
+        "artifact": "pusht-v2/cuda/artifacts"
+      }
+    },
+    "ogbench": {
+      "cpu": {
+        "required": 72,
+        "passed": 72,
+        "pixel_cases": 24,
+        "frame_comparisons": 384,
+        "mse_max": 0.0007443175901896707,
+        "seal_files": 75,
+        "job_id": "7085750",
+        "hardware": {
+          "host": "node1807.oscar.ccv.brown.edu",
+          "gpu": null,
+          "versions": {
+            "torch": "2.14.0+cu126",
+            "numpy": "2.2.6",
+            "gymnasium": "1.2.3",
+            "pygame": "2.6.1",
+            "mujoco": "3.12.0"
+          }
+        },
+        "versions": {
+          "dm-control": "1.0.45",
+          "gymnasium": "1.2.3",
+          "mujoco": "3.12.0",
+          "numpy": "2.2.6",
+          "ogbench": "1.2.1"
+        },
+        "artifact": "ogbench-v4/cpu/artifacts"
+      },
+      "cuda": {
+        "required": 72,
+        "passed": 72,
+        "pixel_cases": 24,
+        "frame_comparisons": 384,
+        "mse_max": 0.0007021225309976932,
+        "seal_files": 75,
+        "job_id": "7085749",
+        "hardware": {
+          "host": "gpu2101.oscar.ccv.brown.edu",
+          "gpu": "NVIDIA GeForce RTX 3090",
+          "versions": {
+            "torch": "2.14.0+cu126",
+            "numpy": "2.2.6",
+            "gymnasium": "1.2.3",
+            "pygame": "2.6.1",
+            "mujoco": "3.12.0"
+          }
+        },
+        "versions": {
+          "dm-control": "1.0.45",
+          "gymnasium": "1.2.3",
+          "mujoco": "3.12.0",
+          "numpy": "2.2.6",
+          "ogbench": "1.2.1"
+        },
+        "artifact": "ogbench-v4/cuda/artifacts"
+      }
+    },
+    "fetch": {
+      "cpu": {
+        "required": 396,
+        "passed": 396,
+        "pixel_cases": 192,
+        "frame_comparisons": 3072,
+        "mse_max": 0.00032087268118031527,
+        "seal_files": 399,
+        "job_id": "7085434",
+        "hardware": {
+          "host": "node1918.oscar.ccv.brown.edu",
+          "gpu": null,
+          "versions": {
+            "torch": "2.14.0+cu126",
+            "numpy": "2.5.3",
+            "gymnasium": "1.3.0",
+            "pygame": "2.6.1",
+            "mujoco": "3.11.0"
+          }
+        },
+        "versions": {
+          "gymnasium": "1.3.0",
+          "gymnasium-robotics": "1.4.2",
+          "mujoco": "3.11.0",
+          "numpy": "2.5.3"
+        },
+        "artifact": "fetch-v1/cpu/artifacts"
+      },
+      "cuda": {
+        "required": 396,
+        "passed": 396,
+        "pixel_cases": 192,
+        "frame_comparisons": 3072,
+        "mse_max": 0.0003121958801903114,
+        "seal_files": 399,
+        "job_id": "7085437",
+        "hardware": {
+          "host": "gpu2109.oscar.ccv.brown.edu",
+          "gpu": "NVIDIA GeForce RTX 3090",
+          "versions": {
+            "torch": "2.14.0+cu126",
+            "numpy": "2.5.3",
+            "gymnasium": "1.3.0",
+            "pygame": "2.6.1",
+            "mujoco": "3.11.0"
+          }
+        },
+        "versions": {
+          "gymnasium": "1.3.0",
+          "gymnasium-robotics": "1.4.2",
+          "mujoco": "3.11.0",
+          "numpy": "2.5.3"
+        },
+        "artifact": "fetch-v1/cuda/artifacts"
+      }
+    }
+  },
+  "registrations": {
+    "swm/PushT-v1": {
+      "cpu": {
+        "pixel_cases": 24,
+        "frame_comparisons": 384,
+        "mse_max": 0.0
+      },
+      "cuda": {
+        "pixel_cases": 24,
+        "frame_comparisons": 384,
+        "mse_max": 0.0
+      }
+    },
+    "swm/PushT-Discrete-v1": {
+      "cpu": {
+        "pixel_cases": 12,
+        "frame_comparisons": 192,
+        "mse_max": 0.0
+      },
+      "cuda": {
+        "pixel_cases": 12,
+        "frame_comparisons": 192,
+        "mse_max": 0.0
+      }
+    },
+    "swm/OGBMaze-v0": {
+      "cpu": {
+        "pixel_cases": 8,
+        "frame_comparisons": 128,
+        "mse_max": 0.0007443175901896707
+      },
+      "cuda": {
+        "pixel_cases": 8,
+        "frame_comparisons": 128,
+        "mse_max": 0.0007021225309976932
+      }
+    },
+    "swm/OGBCube-v0": {
+      "cpu": {
+        "pixel_cases": 8,
+        "frame_comparisons": 128,
+        "mse_max": 7.765818234973729e-05
+      },
+      "cuda": {
+        "pixel_cases": 8,
+        "frame_comparisons": 128,
+        "mse_max": 4.5252527072920675e-05
+      }
+    },
+    "swm/OGBScene-v0": {
+      "cpu": {
+        "pixel_cases": 8,
+        "frame_comparisons": 128,
+        "mse_max": 0.0
+      },
+      "cuda": {
+        "pixel_cases": 8,
+        "frame_comparisons": 128,
+        "mse_max": 0.0
+      }
+    },
+    "swm/FetchReach-v3": {
+      "cpu": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.00018102387503203895
+      },
+      "cuda": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.0001725410599288735
+      }
+    },
+    "swm/FetchReachDense-v3": {
+      "cpu": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.00018102387503203895
+      },
+      "cuda": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.0001725410599288735
+      }
+    },
+    "swm/FetchReachDict-v3": {
+      "cpu": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.00018102387503203895
+      },
+      "cuda": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.0001725410599288735
+      }
+    },
+    "swm/FetchPush-v3": {
+      "cpu": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.00020326842440407535
+      },
+      "cuda": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.00019535630326476995
+      }
+    },
+    "swm/FetchPushDense-v3": {
+      "cpu": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.00020326842440407535
+      },
+      "cuda": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.00019535630326476995
+      }
+    },
+    "swm/FetchPushDict-v3": {
+      "cpu": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.00020326842440407535
+      },
+      "cuda": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.00019535630326476995
+      }
+    },
+    "swm/FetchSlide-v3": {
+      "cpu": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.00025350826605151865
+      },
+      "cuda": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.0002481642677495835
+      }
+    },
+    "swm/FetchSlideDense-v3": {
+      "cpu": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.00025350826605151865
+      },
+      "cuda": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.0002481642677495835
+      }
+    },
+    "swm/FetchSlideDict-v3": {
+      "cpu": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.00025350826605151865
+      },
+      "cuda": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.0002481642677495835
+      }
+    },
+    "swm/FetchPickAndPlace-v3": {
+      "cpu": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.00032087268118031527
+      },
+      "cuda": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.0003121958801903114
+      }
+    },
+    "swm/FetchPickAndPlaceDense-v3": {
+      "cpu": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.00032087268118031527
+      },
+      "cuda": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.0003121958801903114
+      }
+    },
+    "swm/FetchPickAndPlaceDict-v3": {
+      "cpu": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.00032087268118031527
+      },
+      "cuda": {
+        "pixel_cases": 16,
+        "frame_comparisons": 256,
+        "mse_max": 0.0003121958801903114
+      }
+    }
+  },
+  "snapshot_differences": {
+    "pusht/cpu": [
+      "stable_envs/envs/dmcontrol/trackcom.py",
+      "tests/contracts/test_ogbench_source_pixels.py",
+      "tests/helpers/reference/ogbench_pixels.py"
+    ],
+    "pusht/cuda": [
+      "stable_envs/envs/dmcontrol/trackcom.py",
+      "tests/contracts/test_ogbench_source_pixels.py",
+      "tests/helpers/reference/ogbench_pixels.py"
+    ],
+    "ogbench/cpu": [],
+    "ogbench/cuda": [],
+    "fetch/cpu": [
+      "stable_envs/envs/dmcontrol/trackcom.py",
+      "tests/contracts/test_ogbench_source_pixels.py",
+      "tests/helpers/reference/ogbench_pixels.py",
+      "tests/helpers/reference/pusht_pixels.py"
+    ],
+    "fetch/cuda": [
+      "stable_envs/envs/dmcontrol/trackcom.py",
+      "tests/contracts/test_ogbench_source_pixels.py",
+      "tests/helpers/reference/ogbench_pixels.py",
+      "tests/helpers/reference/pusht_pixels.py"
+    ]
+  },
+  "per_frame_normalized_mse_limit": 0.001,
+  "backend_scope": {
+    "pusht": "CPU raster with CPU/CUDA State and output delivery",
+    "ogbench": "Cube/Scene explicit OpenGL; Maze default backend",
+    "fetch": "explicit OpenGL"
+  },
+  "limitations": [
+    "Cube/Scene default fast GPU MJWarp is not covered by this acceptance; a separately retained Cube probe exceeds .001 MSE.",
+    "Default appearance at64px, batch2, seeds17/42 and horizons1/8; not universal Variation/lifecycle/throughput certification.",
+    "PushT source and candidate rasterize on CPU for both output devices; CUDA proves State/output placement, not native GPU rasterization.",
+    "Cube/Scene retain controlled-entropy source scope and independent native field/RNG/task/model witnesses before candidate checkpoint extraction.",
+    "PickAndPlace renders disposable independently reset and forward-replayed source branches; source render mutates controller caches, so continuous-render source continuation is a required rejected control, not an equivalence claim.",
+    "Prior acceptance evidence remains unchanged. Source pixels are never produced by candidate rendering or by restoring the source from candidate serialization."
+  ],
+  "candidate_files": {
+    "scripts/benchmarks/online_stepping/ogbench_parallel_source.py": "d973831dabfc912b8632c03105834d550f63a6f53b2d366dc6e3cf718a98b68f",
+    "tests/contracts/conftest.py": "90132411d2f5fd521958561472dbda5f303224af3cc58e139c3b10b6b0e345bd",
+    "tests/contracts/test_fetch_source_pixels.py": "da3541232dd98ea3ea0938f06a9c678ae43519cd46204bb9cf34b47b1c567c7b",
+    "tests/contracts/test_ogbench_source_pixels.py": "494441bb11cb80041624f022a1ce964bd2430571f078698ff628455803a179c5",
+    "tests/contracts/test_pusht_source_pixels.py": "be14840f065fe31b4b99219c389e5ebc8ba415dc7f5ba6188c0e5060ecbfc79a",
+    "tests/helpers/reference/fetch_pixels.py": "6702c3e34082cf4429470122d81317967eee9959e73d0348dcb40484361bcb2f",
+    "tests/helpers/reference/pixels.py": "6ec38a30a554f1fedc9c4fd084f46d69865baf09a8e1b2a89d8aad26b02564bf",
+    "tests/helpers/reference/inventory.py": "b52c2aab50aeeeabbc726e5db2fd3141c24faa972b136acfa6e6710f02d595f4",
+    "tests/helpers/reference/ogbench_pixels.py": "b0eba1ddcce61b864e8f90f76879e6a876caa3167987cac571c744dcf575a160",
+    "tests/helpers/reference/pusht_pixels.py": "b6a990738723344c6ca1ac012227a4461176b68db6e19a9cad53b1d4090d2b55",
+    "tests/unit/test_contract_inventory.py": "b19f513805155d5f748619bb2f3dea2b85e1353c09885cd0ee769c687b63e687",
+    "tests/unit/test_final_source_pixels.py": "774ddc6b21f832971b1efedcb1f6b3fb0fdf9dc648b76f2c216cb09c9dfb249c",
+    "tests/unit/test_ogbench_source_frames.py": "77f20500e662ad1e6fcfe117658dba0914e39ac04e66abccaf39a8ae107d026e"
+  },
+  "snapshot_difference_scope": "Only unrelated DMC tracking renderer optimization may differ in production; all family renderer/adapter and common source-checker files match the accepted snapshots.",
+  "scheduler_evidence": "final-source-pixels/scheduler.txt",
+  "rejected_runs": {
+    "pusht-v1": "Contact trajectory missed intended collision; deterministic first contact corrected in v2.",
+    "ogbench-v1": "Known source cutoff100 left GL1281 before identity query; scoped handling reused from prior accepted source gate.",
+    "ogbench-v2": "Default fast CUDA MJWarp failed source MSE; retained as a real renderer gap, not promoted. Explicit OpenGL is accepted scope.",
+    "ogbench-v3": "Submission failed SSH authentication; no acceptance evidence."
+  },
+  "artifact_archive": {
+    "path": "tests/fixtures/testing/final-source-pixels-oscar-evidence.tar.gz",
+    "sha256": "f857914e33ef11f6e253f84a569401f733e17156fce7e586659633c47bcfbc37",
+    "seal": "final-source-pixels/SHA256SUMS"
+  }
+}

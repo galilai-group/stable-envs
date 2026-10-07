@@ -159,7 +159,13 @@ The historical DMC profile remains FAIL; a sibling's result cannot satisfy a fai
 Fetch's isolated-source OpenGL profile passes all 336 required cases on each
 device. That checkpoint validated 25/38 registrations. The subsequent DMC correction
 passes all 288 required cases on each device, extending validated shared
-source-pixel coverage to 30/38. Eight registrations still need adapters.
+source-pixel coverage to 30/38. The final maintained adapters subsequently complete
+38/38 under the declared backend scopes: Cube/Scene OpenGL, Fetch OpenGL, Maze
+default and PushT CPU raster with CPU/CUDA output. The fast Cube/Scene GPU paths
+are not promoted by the OpenGL gate. PickAndPlace uses independently replayed
+disposable source render branches, with continuous-render source mutation retained
+as a required rejected control.
+[Final cohort evidence](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/final-source-pixels-oscar-validation.json).
 The [DMC correction record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/dmc-render-oscar-validation.json)
 preserves fresh source acceptance and paired performance; neither substitutes for
 Variation or lifecycle checks. The
