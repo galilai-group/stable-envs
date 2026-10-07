@@ -3,7 +3,7 @@ from __future__ import annotations
 import torch
 from tensordict import TensorDict
 
-from ..._adapters.dmcontrol_continuation import CONFIG, CONTINUATION_FIELDS, DMCContinuationAdapter
+from ..._adapters.dmcontrol_continuation import CONFIG, CONTINUATION_FIELDS, DMCContinuationAdapter, _make_env
 from ..._adapters.dmcontrol_execution import make_dmc_adapter
 from ...spaces import Box, Dict
 
@@ -12,6 +12,11 @@ class DMCContinuationSemantics:
     action_dtype = torch.float64
     action_low, action_high = -1.0, 1.0
     execution_mode = "DELEGATED_CPU"
+
+    @classmethod
+    def _load_env(cls, seed: int):
+        # Registered Cheetah uses a different material from the suite default.
+        return _make_env(cls.DOMAIN, seed)
 
     @property
     def action_dim(self):

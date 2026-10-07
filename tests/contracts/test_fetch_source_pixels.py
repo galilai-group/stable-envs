@@ -27,7 +27,7 @@ def test_source_rollout_pixels(
     if case.family != "fetch" or case.domain == "PickAndPlace":
         pytest.skip("Source-pixel protocol covers Fetch Reach/Push/Slide; PickAndPlace rendering mutates dynamics")
     device = request.config.getoption("--contract-device")
-    trace, identities = fetch_trace(case, seed, dtype, horizon, scenario, device)
+    trace, identities = fetch_trace(case, seed, dtype, horizon, scenario, device, source_identity["root"])
     with se.make(case.name, num_envs=2, size=64, device=device, backend="opengl") as env:
         errors = []
         for i, (states, frames) in enumerate(

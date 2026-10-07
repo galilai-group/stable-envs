@@ -47,3 +47,22 @@ def test_production_adapter_does_not_import_stable_worldmodel():
         "inspect"
     ).getsource(__import__("stable_envs._adapters.dmcontrol_continuation", fromlist=["*"]))
     assert "stable_worldmodel" not in source
+
+
+@pytest.mark.parametrize(
+    "name, color",
+    [
+        ("DMCCheetahRun", [0.6, 0.3, 0.3, 1.0]),
+        ("DMCHopperHop", [0.7, 0.5, 0.3, 1.0]),
+        ("DMCWalkerWalk", [0.7, 0.5, 0.3, 1.0]),
+    ],
+)
+def test_registered_render_model_material(name: str, color: list[float]) -> None:
+    """Renderer models must use pinned SWM defaults, including Cheetah's red material."""
+    from stable_envs.envs import dmcontrol
+
+    source = getattr(dmcontrol, name)._load_env(17)
+    try:
+        np.testing.assert_array_equal(source.physics.named.model.mat_rgba["self"], np.asarray(color, np.float32))
+    finally:
+        source.close()

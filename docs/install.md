@@ -41,7 +41,7 @@ Two kinds, and they are easy to mix up.
 | `ogbench` | OGBench mazes (and manip, with CUDA) | `ogbench` + MuJoCo |
 | `dmcontrol` | DM Control cells | `dm_control` + MuJoCo |
 | `mujoco-locomotion` | Gymnasium MuJoCo locomotion | Gymnasium MuJoCo |
-| `robotics` | Fetch | gymnasium-robotics (MuJoCo pin) |
+| `robotics` | Fetch | gymnasium-robotics (MuJoCo pin), OpenCV for source-sized OpenGL output |
 | `mjwarp` | Fetch / some visual 3-D cells | MuJoCo Warp render backend |
 | `metaworld` | Meta-World | scenes come from the package's own MjModel |
 | `humanoidbench` | HumanoidBench remainder | env package is not on PyPI |

@@ -114,6 +114,8 @@ nav:
       - Previous contributor URL: adding-an-env.md
       - Testing: testing.md
       - Testing infrastructure plan: testing-design.md
+      - Test redundancy audit: testing-redundancy-audit.md
+      - Docstring cleanup: docstring-cleanup.md
       - Fidelity methodology: concepts/fidelity-methodology.md
       - Fidelity tiers: concepts/fidelity-tiers.md
       - The Scene2D IR: concepts/scene-ir.md

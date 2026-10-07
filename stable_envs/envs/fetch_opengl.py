@@ -2,6 +2,7 @@
 
 Uses the same compact pose and appearance contract as MJWarp. The four hidden
 translucent mocap markers remain a declared limitation of that model.
+Match the source's 480px raster before resizing; supersampling adds density there.
 """
 
 import copy
@@ -18,6 +19,7 @@ _CACHE = {}
 
 def render(env, states=None, size=None, supersample=None, variation=None, style=None, out=None):
     env._check_open("render")
+    import cv2
     import mujoco
     from OpenGL import GL
 
@@ -31,15 +33,19 @@ def render(env, states=None, size=None, supersample=None, variation=None, style=
         raise ValueError("Invalid Fetch render size/supersample")
     style = env.resolve_style(style, variation, batch=len(rows))
     values = {k: style[k].detach().cpu().numpy() for k in env.variation_space.names()}
-    key = (env.SCENE, size * ss)
+    native_size = 480
+    raster_size = native_size * ss
+    key = (env.SCENE, raster_size)
     images = []
     with _LOCK:
         b = fetch._build_bundle(env.SCENE)
         if key not in _CACHE:
             model = copy.copy(b.model)
             fetch._restore(model, b.pristine)
+            model.vis.global_.offwidth = max(model.vis.global_.offwidth, raster_size)
+            model.vis.global_.offheight = max(model.vis.global_.offheight, raster_size)
             data = mujoco.MjData(model)
-            renderer = mujoco.Renderer(model, height=size * ss, width=size * ss)
+            renderer = mujoco.Renderer(model, height=raster_size, width=raster_size)
             renderer._gl_context.make_current()
             entry = (
                 model,
@@ -88,8 +94,8 @@ def render(env, states=None, size=None, supersample=None, variation=None, style=
             renderer.update_scene(data, camera=b.info["cam"])
             image = renderer.render().copy()
             if ss > 1:
-                image = np.rint(image.reshape(size, ss, size, ss, 3).mean((1, 3))).astype(np.uint8)
-            images.append(image)
+                image = np.rint(image.reshape(native_size, ss, native_size, ss, 3).mean((1, 3))).astype(np.uint8)
+            images.append(cv2.resize(image, (size, size)))
     result = torch.as_tensor(np.stack(images), device=env.device).reshape(*lead, size, size, 3)
     if out is not None:
         if (

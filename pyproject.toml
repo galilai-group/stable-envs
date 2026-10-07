@@ -64,7 +64,7 @@ sokoban = ["gym-sokoban", "imageio"]
 dmcontrol = ["dm-control>=1.0.44", "mujoco>=3.11,<3.13"]
 mujoco-locomotion = ["gymnasium[mujoco]>=1.0", "mujoco>=3.11,<3.13"]
 # gymnasium-robotics 1.4.2's Fetch setters fail with MuJoCo 3.12.
-robotics = ["gymnasium-robotics", "mujoco>=3.11,<3.12"]
+robotics = ["gymnasium-robotics", "mujoco>=3.11,<3.12", "opencv-python-headless"]
 crafter = ["crafter"]
 overcooked = ["jax", "jaxmarl", "matplotlib"]
 griddly = ["griddly==1.6.7", "pyyaml"]

@@ -148,18 +148,29 @@ and forward-only source rollouts, and checks rendering for State mutation.
 Required-case accounting includes these tests and the pinned pygame version.
 No benchmark driver is retired: this B2 correctness cohort does not replace its
 large-batch, process, performance or Variation coverage. Shared source-pixel
-migration now covers six registrations, while full-State/simulation regression
-profiles continue to cover all 38 non-Craftax registrations.
+migration covered six registrations at that checkpoint; full-State/simulation
+regression profiles continue to cover all 38 non-Craftax registrations.
 
 The parallel extension implements Navigation, DMC and nine non-PickAndPlace Fetch
-source-pixel adapters. Navigation's 96-case CPU profile passes. Their GPU gates
-and DMC/Fetch software-GL gates remain pending Oscar authentication; implemented
-coverage must not be reported as validated migration. The shared checker now
-accepts nested task keys and explicit per-output NaN sentinels for DMC. Tests
-reject undeclared NaNs, including NaNs in reward when another output permits them.
-This cohort would bring shared source-pixel migration to 30/38 registrations once
-its required gates pass. PickAndPlace's render mutation, OGBench's source/device
-scope, and PushT remain separate follow-ups.
+source-pixel adapters. Native and Navigation pass their complete fresh CPU/CUDA
+profiles. Seven DMC registrations pass each required case, while five approximate
+moving-camera renderers exceed the unchanged 0.001 per-frame limit. The complete
+DMC profile remains FAIL; a sibling's result cannot satisfy a failing registration.
+Fetch's isolated-source OpenGL profile passes all 336 required cases on each
+device. Validated shared source-pixel migration is now 25/38 registrations; five
+DMC registrations fail the pixel limit and eight still need adapters. The
+[Oscar record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/parallel-source-pixels-oscar-validation.json)
+keeps passing cases, failed controls and runtime/code provenance separate. No
+profile failure is converted to PASS because some registrations succeeded.
+
+The shared checker accepts nested task keys and explicit per-output NaN sentinels
+for DMC. Tests reject undeclared NaNs, including NaNs in reward when another output
+permits them. Fetch source traces run in a separate interpreter: upstream GLFW
+teardown destroys every window in the process, so sharing it with cached candidate
+contexts corrupts later images. Each source lane's GL context must be current
+before rendering. This isolation changes ownership, not the source code or oracle.
+PickAndPlace's render mutation, OGBench's source/device scope, and PushT remain
+separate follow-ups; no historical gate or evidence file was removed.
 
 ### Acceptance axes
 

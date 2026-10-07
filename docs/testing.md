@@ -198,7 +198,7 @@ terminal lanes. Source rendering must leave State unchanged. CPU and CUDA
 candidate images both compare against native-resolution CPU pygame images with
 the same per-frame 0.001 limit; pygame has no source GPU renderer.
 
-This extends the maintained shared source-pixel checks to **6/38 registrations**,
+That checkpoint extended the maintained shared source-pixel checks to **6/38 registrations**,
 including Rocket. It does not replace the classic-control performance benchmarks,
 large-batch/process gates, or appearance-Variation tests. Those retain their
 separate obligations and historical evidence.
@@ -210,12 +210,31 @@ Its hashed evidence archive preserves sealed reports, case identities, source/co
 hashes, runtime versions, logs and terminal scheduler status. These measurements
 apply to the tested cases and configurations.
 
-The next adapter cohort adds Navigation (three registrations), DMC (twelve), and
-Fetch Reach/Push/Slide (nine). These are implemented tests, not completed GPU
-acceptance. Navigation's full CPU profile passes; Oscar validation for the new
-cohort is pending SSH reconnection. The
-[cohort record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/parallel-source-pixels-validation.json)
-separates completed local checks from unexecuted cluster gates.
+The next cohort implements Navigation (three registrations), DMC (twelve), and
+Fetch Reach/Push/Slide (nine). Fresh Oscar runs pass Native and Navigation's complete
+CPU/CUDA profiles. Seven DMC registrations also pass every required case on both
+devices; the DMC profile as a whole fails its pixel gate. Fetch's explicit OpenGL
+profile passes all 336 required cases on each device. The original
+[pending cohort record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/parallel-source-pixels-validation.json)
+remains unchanged; it records the earlier checkpoint, not current acceptance.
+
+The [Oscar validation record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/parallel-source-pixels-oscar-validation.json)
+records the fresh results and links a hashed archive of code snapshots, sealed
+reports, raw failed witnesses, JUnit results, dependencies and terminal job status.
+Shared source-pixel migration is now **25/38 non-Craftax registrations**: Rocket,
+five native controls, three Navigation, seven DMC and nine Fetch registrations.
+Each counted registration passed its own required CPU/CUDA cases. This is test
+migration, not a new promotion matrix or a claim about every rendering backend.
+Five DMC registrations fail the pixel limit; Fetch PickAndPlace (three), OGBench
+(three), and PushT (two) still need migration.
+
+Native's 896 frame comparisons per device have MSE zero. Navigation's 768 have
+maximum MSE 0.0000217513; Fetch's 2,304 have maximum MSE 0.000252860 on CPU and
+0.000248120 on CUDA. Counts include repeated capture-selector comparisons.
+The nine Fetch registrations use the explicit OpenGL backend. Its source-sized
+raster improves fidelity but costs about 1.5 times the render time in a warm B64
+probe repeating two States on CPU and an A40 GPU. That is a diagnostic, not a
+broad performance certification; the default MJWarp renderer is unchanged.
 
 | Profile | Required cases/device | Source-pixel cases/device | Source renderer |
 | --- | ---: | ---: | --- |
@@ -229,7 +248,10 @@ Xvfb/GLFW with `LIBGL_ALWAYS_SOFTWARE=1`, `GALLIUM_DRIVER=llvmpipe`, and
 `PYOPENGL_PLATFORM=glx`; CUDA checks use `MUJOCO_GL=egl` and
 `PYOPENGL_PLATFORM=egl` in a separate process. Source physics remains CPU. The
 Fetch cohort tests the explicit `opengl` candidate backend and preserves upstream
-480-to-64 rendering; it does not certify other backends. PickAndPlace is excluded
+480-to-64 rendering; it does not certify other backends. Its source adapter uses a
+fresh subprocess because upstream `close()` calls `glfw.terminate()`, invalidating
+other GLFW windows in that process. It binds each source lane's context before
+rendering and returns owned State/task/frame data. PickAndPlace is excluded
 because its source rendering changes controller caches and future transitions.
 Its State-only regression cases remain required in the Fetch profile.
 
@@ -238,6 +260,25 @@ reached states; existing lifecycle/process/Variation gates remain required. DMC'
 documented `success=NaN` sentinel is allowed only on that declared output in the
 seven affected domains. Other task fields retain exact comparison and reject NaNs.
 The original family gates and accepted evidence remain untouched.
+
+The default DMC backends still exceed the pixel limit on these five registrations.
+All 192 State/simulation/task/online-State cases pass on each device; the whole
+DMC profile passes 248/288 cases and remains **FAIL**. These are observed maxima
+from failing selections, not a completed all-frame sample:
+
+| DMC registration | CPU max MSE | CUDA max MSE |
+| --- | ---: | ---: |
+| Cheetah | 0.00302108 | 0.00288118 |
+| Hopper | 0.00371256 | 0.00366035 |
+| Humanoid | 0.00122174 | 0.00139473 |
+| Quadruped | 0.00114775 | 0.00121736 |
+| Walker | 0.00871613 | 0.00848571 |
+
+Cheetah's renderer now uses the registered source material. Remaining moving-camera
+rendering differences include texture filtering and reflections; the tests retain
+the default backend and the 0.001 threshold. Acrobot, BallInCup, Cartpole, Finger,
+Manipulator, Pendulum and Reacher each pass all 24 required cases on both devices.
+These sampled passes do not replace their separate appearance-Variation gates.
 
 ## Saved rendering evidence
 

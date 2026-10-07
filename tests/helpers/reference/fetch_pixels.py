@@ -1,11 +1,17 @@
+import importlib
+import pickle
+import subprocess
+import sys
 from contextlib import ExitStack, closing
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import gymnasium as gym
 import numpy as np
 import torch
 from numpy.typing import NDArray
 
-from tests.helpers.reference.bridges import task_columns
+from tests.helpers.reference.bridges import load_source, task_columns
 from tests.helpers.reference.fetch_semantics import differences, snapshot, source_state
 from tests.helpers.reference.pixels import PixelTrace
 from tests.helpers.reference.profiles import Registration
@@ -15,10 +21,14 @@ def _render(source: gym.Env, device: str) -> tuple[NDArray[np.uint8], dict]:
     from OpenGL import GL
 
     before = snapshot(source)
+    raw = source.unwrapped
+    viewer = raw.mujoco_renderer._viewers.get("rgb_array")
+    if viewer is not None:
+        # Gymnasium only switches contexts between render modes within one env.
+        viewer.make_context_current()
     frame = np.asarray(source.render()).copy()
     delta = differences(before, snapshot(source))
     assert not delta, ("Source rendering changed continuation State", delta)
-    raw = source.unwrapped
     raw.mujoco_renderer._viewers["rgb_array"].make_context_current()
     vendor = GL.glGetString(GL.GL_VENDOR).decode()
     renderer = GL.glGetString(GL.GL_RENDERER).decode()
@@ -38,11 +48,29 @@ def _render(source: gym.Env, device: str) -> tuple[NDArray[np.uint8], dict]:
 
 
 def fetch_trace(
-    case: Registration, seed: int, dtype: str, horizon: int, scenario: str, device: str
+    case: Registration, seed: int, dtype: str, horizon: int, scenario: str, device: str, source_root: str
+) -> tuple[PixelTrace, list[dict]]:
+    # Source close() terminates GLFW globally; its contexts must not share our renderer process.
+    with TemporaryDirectory(prefix="fetch-source-pixels-") as directory:
+        request, response = Path(directory) / "request.pkl", Path(directory) / "response.pkl"
+        request.write_bytes(pickle.dumps((case, seed, dtype, horizon, scenario, device, source_root)))
+        subprocess.run(
+            [sys.executable, "-m", __name__, str(request), str(response)],
+            cwd=Path(__file__).resolve().parents[3],
+            check=True,
+            timeout=120,
+        )
+        return pickle.loads(response.read_bytes())
+
+
+def _fetch_trace(
+    case: Registration, seed: int, dtype: str, horizon: int, scenario: str, device: str, source_root: str
 ) -> tuple[PixelTrace, list[dict]]:
     """Compare rendering and no-render source lanes before extracting source-owned State."""
     if case.domain not in ("Reach", "Push", "Slide"):
         raise ValueError("PickAndPlace requires a separate render-mutation protocol")
+    load_source(source_root, "fetch")
+    importlib.import_module("stable_worldmodel.envs.gymnasium_robotics")
     with ExitStack() as stack:
         physics, rendered = [], []
         for lane in range(2):
@@ -114,3 +142,8 @@ def fetch_trace(
             torch.from_numpy(np.stack(validity, axis=1)),
             actions,
         ), identities
+
+
+if __name__ == "__main__":
+    args = pickle.loads(Path(sys.argv[1]).read_bytes())
+    Path(sys.argv[2]).write_bytes(pickle.dumps(_fetch_trace(*args)))
