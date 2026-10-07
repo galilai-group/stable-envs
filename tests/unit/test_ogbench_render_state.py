@@ -14,6 +14,32 @@ from stable_envs.envs.ogbench import manipulation as core
 from stable_envs.envs.ogbench import manipulation_renderer as renderer
 
 
+def test_scene_samples_match_opengl_positions_and_plate():
+    from stable_envs.envs.ogbench.manipulation_fidelity import rotate_four_samples, sample_plate
+
+    # NVIDIA GL_SAMPLE_POSITION, converted from bottom-up to top-down rows.
+    positions = torch.tensor([[[0.125, 0.375], [0.625, 0.125]], [[0.375, 0.875], [0.875, 0.625]]])
+    y, x = torch.meshgrid(torch.tensor([0.25, 0.75]), torch.tensor([0.25, 0.75]), indexing="ij")
+    rays = torch.stack((x, y, -torch.ones_like(x)), dim=-1)
+    rays /= torch.linalg.vector_norm(rays, dim=-1, keepdim=True)
+    rotate_four_samples(rays)
+    torch.testing.assert_close((rays / -rays[..., 2:3])[..., :2], positions)
+    y, x = torch.meshgrid(torch.arange(4) / 4 + 0.125, torch.arange(4) / 4 + 0.125, indexing="ij")
+    plate = torch.stack((x, y, torch.zeros_like(x)), dim=-1)
+    torch.testing.assert_close(sample_plate(plate)[..., :2], positions)
+
+
+def test_scene_sampling_has_separate_model_cache():
+    from tests.helpers.ogbench_golden import FIXTURES, load
+
+    state, _ = load(FIXTURES / "Scene-mjwarp.npz")
+    regular_key, regular = renderer.configured_bundle("Scene", state[0])
+    sampled_key, sampled = renderer.configured_bundle("Scene", state[0], "gl4")
+    assert regular_key != sampled_key and regular is not sampled
+    assert regular.sample_pattern == "grid" and sampled.sample_pattern == "gl4"
+    assert renderer.configured_bundle("Scene", state[0]) == (regular_key, regular)
+
+
 @pytest.mark.parametrize("family", ["Cube", "Scene"])
 def test_configuration_groups_preserve_exact_static_keys(family):
     from tests.helpers.ogbench_golden import FIXTURES, load

@@ -62,7 +62,8 @@ renderer throughput, not online stepping or a matched CUDA-output pipeline.
 At B256, removing unused composition and reducing configuration overhead makes
 this 1.60× faster than the previous 2× fidelity implementation. It is still 22%
 slower than the old default, whose mean MSE was 0.002059. B1 remains slower than
-source. Scene's GPU default is not promoted by this result.
+source. This Cube checkpoint does not certify Scene; its separate gate follows
+in the [testing record](../testing.md).
 [CSV with latency and FPS dispersion](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/cube-default-cuda-performance.csv)
 and [acceptance scope](../testing.md#cube-default-cuda-renderer-acceptance).
 

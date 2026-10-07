@@ -26,7 +26,7 @@ def test_source_rollout_pixels(
         pytest.skip("OGBench source pixels belong to the OGBench profile")
     device = request.config.getoption("--contract-device")
     trace, identities = ogbench_trace(case, seed, dtype, horizon, device)
-    backend = "opengl" if case.domain == "Scene" else "auto"
+    backend = "auto"
     with se.make(case.name, num_envs=2, size=64, device=device, backend=backend) as env:
         errors = []
         for i, (states, frames) in enumerate(

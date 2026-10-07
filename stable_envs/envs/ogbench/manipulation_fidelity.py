@@ -8,11 +8,32 @@ from . import manipulation as core
 _REFERENCE = core._RES.BoundedCache(32, name="ogbench.fidelity_reference")
 
 
+def rotate_four_samples(rays: torch.Tensor) -> None:
+    """Match NVIDIA's four MSAA positions in a 2× ray grid with top-down image rows."""
+    height, width, _ = rays.shape
+    plane = rays / -rays[..., 2:3]
+    dx = (plane[0, 1, 0] - plane[0, 0, 0]).clone()
+    dy = (plane[1, 0, 1] - plane[0, 0, 1]).clone()
+    plane[..., 0] += (torch.arange(height, device=rays.device)[:, None] % 2 - 0.5) * 0.5 * dx
+    plane[..., 1] += (0.5 - torch.arange(width, device=rays.device)[None, :] % 2) * 0.5 * dy
+    rays.copy_(plane / torch.linalg.vector_norm(plane, dim=-1, keepdim=True))
+
+
+def sample_plate(image: torch.Tensor) -> torch.Tensor:
+    """Sample a cached 4× GL background at the matching four ray positions."""
+    height, width, _ = image.shape
+    pixels = image.reshape(height // 4, 4, width // 4, 4, 3)
+    result = image.new_empty((height // 2, width // 2, 3))
+    for y, x, hy, hx in ((0, 0, 1, 0), (0, 1, 0, 2), (1, 0, 3, 1), (1, 1, 2, 3)):
+        result[y::2, x::2] = pixels[:, hy, :, hx, :]
+    return result
+
+
 def draw(token, bundle, state, device, size, supersample):
-    """Composite Cube transparency and moving shadows using two MJWarp passes.
+    """Composite transparency and moving shadows using two MJWarp passes.
 
     Remove the pinned shader's 0.3 shadow transmission before applying shadows
-    to the static reference. This approximation is supported only for Cube."""
+    to the static reference."""
     import mujoco
 
     from .manipulation_renderer import _ConfiguredRenderer
@@ -53,7 +74,7 @@ def draw(token, bundle, state, device, size, supersample):
     movers[torch.as_tensor(np.asarray(bundle.movers) + 1, device=device)] = True
     opacity = torch.ones(bundle.model.ngeom + 1, device=device)
     for geom in transparent:
-        if geom in bundle.movers:
+        if bundle.nbuttons or geom in bundle.movers:
             opacity[geom + 1] = float(alpha[geom])
     images = []
     for start in range(0, len(state), core.MJW_CHUNK):

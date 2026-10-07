@@ -41,9 +41,11 @@ def _configuration_groups(family, host):
     return groups.values()
 
 
-def configured_bundle(family, row):
+def configured_bundle(family, row, sample_pattern="grid"):
     """Cache the compiled render model under its immutable configuration key."""
     token = configuration_key(family, row)
+    if sample_pattern != "grid":
+        token += "/" + sample_pattern
     with _LOCK:
         bundle = core.get_bundle(token)
         if bundle is None:
@@ -53,6 +55,7 @@ def configured_bundle(family, row):
             bundle = core.build_bundle(
                 env, camera="front_pixels", size=core.SPEC[family]["size"], nbuttons=2 if family == "Scene" else 0
             )
+            bundle.sample_pattern = sample_pattern
             core.register_bundle(token, bundle)
         return token, bundle
 
@@ -105,14 +108,12 @@ def render(family, state, device, backend="auto", chunk_size=None):
         from . import manipulation_opengl
 
         return manipulation_opengl.render(family, state, device, chunk_size)
-    if backend == "auto" and family == "Cube":
+    if backend == "auto":
         backend = "mjwarp_fidelity"
     host = state.detach().cpu()
     pixels.validate(family, host)
     if backend not in ("auto", "mjwarp", "mjwarp_fidelity"):
-        raise ValueError("Cube/Scene rendering supports mjwarp, Cube mjwarp_fidelity, or explicit opengl backend")
-    if backend == "mjwarp_fidelity" and family != "Cube":
-        raise ValueError("mjwarp_fidelity is currently validated only for Cube")
+        raise ValueError("Cube/Scene rendering supports mjwarp, mjwarp_fidelity, or explicit opengl backend")
     if torch.device(device).type != "cuda":
         raise NotImplementedError("Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA")
     _check_versions()
@@ -128,7 +129,8 @@ def render(family, state, device, backend="auto", chunk_size=None):
         active = set()
         device_index = torch.cuda.current_device()
         for indices in _configuration_groups(family, host):
-            token, bundle = configured_bundle(family, host[indices[0]])
+            pattern = "gl4" if family == "Scene" and backend == "mjwarp_fidelity" and ss == 2 else "grid"
+            token, bundle = configured_bundle(family, host[indices[0]], pattern)
             prepared.append((token, bundle, indices))
             limit = chunk_size or len(indices)
             for start in range(0, len(indices), limit):

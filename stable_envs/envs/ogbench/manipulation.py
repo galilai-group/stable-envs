@@ -138,6 +138,7 @@ class _Bundle:
         "grid_tex",
         "var_defaults",
         "plate_checked",
+        "sample_pattern",
     )
 
     @property
@@ -189,6 +190,7 @@ def build_bundle(env, *, camera, size, nbuttons):
     b.cube_geoms = _cube_geoms(u, m)
     b.grid_tex = _grid_texture(m, b.var_defaults["floor.color"])
     b.plate_checked = False
+    b.sample_pattern = "grid"
     return b
 
 
@@ -384,6 +386,12 @@ def _build_context(cell: str, res: int, nworld: int) -> _Ctx:
             use_shadows=True,
             render_skybox=True,
         )
+        if b.sample_pattern == "gl4":
+            from .manipulation_fidelity import rotate_four_samples
+
+            if not c.rc.use_precomputed_rays:
+                raise RuntimeError("Scene's four-sample renderer requires precomputed camera rays")
+            rotate_four_samples(wp.to_torch(c.rc.ray).reshape(res, res, 3))
         _frame(c)
         wp.synchronize()
         # Keep views of Warp buffers; advanced channel indexing here would freeze a copied frame.
@@ -634,7 +642,7 @@ class OGBManipBase(Env):
         import mujoco
 
         b = self._b
-        rig = _plate_rig(self.CELL, int(res))
+        rig = _plate_rig(self.CELL, int(res) * (2 if b.sample_pattern == "gl4" else 1))
         live = b.model
         shape = (int(live.ngeom), int(live.nq), int(live.nmocap))
         assert shape == rig.shape, (
@@ -662,7 +670,12 @@ class OGBManipBase(Env):
         d.qvel[:] = 0.0
         mujoco.mj_forward(rig.model, d)
         rig.renderer.update_scene(d, camera=b.cam, scene_option=b.unwrapped._scene_option)
-        return torch.as_tensor(rig.renderer.render().copy(), device=self.device)
+        image = torch.as_tensor(rig.renderer.render().copy(), device=self.device)
+        if b.sample_pattern == "gl4":
+            from .manipulation_fidelity import sample_plate
+
+            image = sample_plate(image)
+        return image
 
     def _apply_floor(self, rig, floor) -> None:
         """Write checker texels and upload them in the rig's current GL context.

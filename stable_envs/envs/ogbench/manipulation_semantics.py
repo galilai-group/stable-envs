@@ -33,7 +33,7 @@ class ManipulationSemantics:
 
         self.state_names = render_state_names(self._nq, 1, 2 if self.CELL == "Scene" else 0)
         if supersample is None:
-            supersample = 2 if self.CELL == "Cube" and torch.device(device).type == "cuda" and backend == "auto" else 1
+            supersample = 2 if torch.device(device).type == "cuda" and backend == "auto" else 1
         # Env uses its seed only for metadata/render-state sampling; physical RNGs are adapter-owned.
         Env.__init__(
             self,

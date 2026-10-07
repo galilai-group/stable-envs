@@ -51,18 +51,21 @@ def test_opengl_supplied_state_and_out(name):
         env.render(state, backend="opengl")
 
 
-def test_cube_fidelity_batch_and_nonmutation():
+@pytest.mark.parametrize("name", ["OGBCube", "OGBScene"])
+def test_ogbench_fidelity_batch_and_nonmutation(name):
     if os.environ.get("SE_FIDELITY_TEST_DEVICE") != "cuda" or os.environ.get("SE_FIDELITY_TEST_FAMILY") != "OGB":
-        pytest.skip("Requires Cube CUDA profile")
+        pytest.skip("Requires OGBench CUDA profile")
     import stable_envs as se
 
-    env = se.make("OGBCube", device="cuda", seed=17)
+    env = se.make(name, device="cuda", seed=17)
     try:
         state = env.get_state()
         before = state_hash(state)
         rows = env.to_render_state(state).expand(3).clone()
         rows["appearance", "floor.color"][1] = 0.3
         rows["appearance", "cube.color"][2] = torch.tensor([[0.1, 0.7, 0.3]], device="cuda")
+        if name == "OGBScene":
+            rows["pose", "buttons"][:] = torch.tensor([[0, 0], [1, 0], [0, 1]], device="cuda")
         saved = state_hash(rows)
         images = env.render(rows, backend="mjwarp_fidelity", chunk_size=2)
         for i in range(3):
