@@ -1,8 +1,13 @@
-# Cube default-renderer candidate — acceptance pending
+# Cube default-renderer candidate — historical pending checkpoint
+
+The follow-up [acceptance record](../testing.md#cube-default-cuda-renderer-acceptance)
+closes the gates below. This note and its pending evidence describe the earlier
+checkpoint; the original JSON, archive and fixtures remain unchanged.
 
 This candidate starts from `1b1422da9fe74b9dece405d278a7b867ac8d4c79`.
-It is **not an accepted backend promotion**. The three immutable A40 golden-image
-checks and terminal scheduler verification remain outstanding. Oscar rejected
+At that checkpoint it was **not an accepted backend promotion**. The three
+immutable A40 golden-image checks and terminal scheduler verification were
+still outstanding. Oscar rejected
 fresh SSH authentication before their submission; the control socket was absent.
 
 Cube's CUDA default selects the existing two-pass fidelity renderer and defaults

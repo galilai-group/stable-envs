@@ -161,10 +161,17 @@ device. That checkpoint validated 25/38 registrations. The subsequent DMC correc
 passes all 288 required cases on each device, extending validated shared
 source-pixel coverage to 30/38. The final maintained adapters subsequently complete
 38/38 under the declared backend scopes: Cube/Scene OpenGL, Fetch OpenGL, Maze
-default and PushT CPU raster with CPU/CUDA output. The fast Cube/Scene GPU paths
-are not promoted by the OpenGL gate. PickAndPlace uses independently replayed
+default and PushT CPU raster with CPU/CUDA output. Those OpenGL results do not
+promote the fast Cube/Scene GPU paths. PickAndPlace uses independently replayed
 disposable source render branches, with continuous-render source mutation retained
 as a required rejected control.
+
+Cube subsequently switches its maintained source-pixel profile to the CUDA default:
+two-pass fidelity with 2× supersampling. Separate complete CPU/CUDA source profiles
+and exact A40 regression checks gate that change; Scene remains explicit OpenGL.
+The [Cube acceptance record](testing.md#cube-default-cuda-renderer-acceptance)
+keeps source parity, frozen-image stability and paired performance distinct.
+
 [Final cohort evidence](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/final-source-pixels-oscar-validation.json).
 The [DMC correction record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/dmc-render-oscar-validation.json)
 preserves fresh source acceptance and paired performance; neither substitutes for

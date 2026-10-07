@@ -377,12 +377,43 @@ indexing. The report preserves twelve latency samples after warmup, mean/SD,
 code and corpus hashes, and source-image MSE. Throughput compares our two
 implementations on the same device; it does not measure source-renderer FPS.
 
+## Cube default CUDA renderer acceptance
+
+Cube's CUDA `backend="auto"` now uses the two-pass fidelity renderer with 2×
+supersampling. Explicit backends and supplied RenderState sampling remain
+unchanged; the CPU default remains software OpenGL. The maintained Cube source
+profile now exercises `auto`. Scene still exercises explicit OpenGL.
+
+The complete OGBench source profiles pass **72/72 cases on each output device**,
+including eight independent source-pixel cases per registration. CPU job `7092268`
+and CUDA job `7095709` both terminate successfully. These profiles also check
+State restoration, simulation, tasks and online capture within their declared
+controlled-entropy scope. They do not extend acceptance to arbitrary Variations.
+
+On an actual NVIDIA A40, job `7095719` passes **4/4 with no skips**: three exact
+frozen-image checks for Cube/Scene explicit GPU backends and Cube's batch, chunk,
+style and nonmutation check. The fixtures are unchanged. Golden equality protects
+existing paths; the independent source profile establishes the new default's MSE.
+
+The paired RTX 3090 saved-state probe measures normalized MSE **0.0006046 ±
+0.0000364**, with worst frame **0.000691**, over 32 independently reached States
+at 64×64. At B256, ours renders **5,812 FPS** versus source NVIDIA OpenGL's
+**1,787 FPS** (3.25×). B1 remains slower. Larger batches repeat those 32 States;
+this is neither an online measurement nor a refreshed 38-registration table.
+See [timing scope and tradeoffs](api/mjwarp.md#cube-default-checkpoint).
+
+[Acceptance report](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/cube-default-oscar-validation.json)
+links sealed source results, hardware, scheduler terminal records and the immutable
+pending archive. The earlier benchmark job's later collection failure remains
+recorded; acceptance uses separate complete source and golden-test runs.
+[CSV with mean and SD](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/cube-default-cuda-performance.csv).
+
 ## Completed source-pixel adapter coverage
 
-Maintained independent source-pixel checks now cover **38/38 non-Craftax registrations**.
-The final cohort adds both PushT registrations, Maze/Cube/Scene and all three Fetch
-PickAndPlace variants. Both output-device profiles pass their complete required
-cases, without missing, duplicated or skipped cases:
+Maintained independent source-pixel checks cover **38/38 non-Craftax registrations**.
+The original final-cohort checkpoint added both PushT registrations, Maze/Cube/Scene
+and all three Fetch PickAndPlace variants. Both output-device profiles passed
+their complete required cases, without missing, duplicated or skipped cases:
 
 | Profile | CPU cases | CUDA-output cases | Renderer scope |
 | --- | ---: | ---: | --- |
@@ -391,10 +422,10 @@ cases, without missing, duplicated or skipped cases:
 | Fetch | 396/396 | 396/396 | Explicit OpenGL, all 12 registrations |
 
 This is test-coverage completion within the recorded scope, not a claim that every
-backend, Variation or lifecycle is certified. In particular, the fast default
-Cube CUDA MJWarp path measured about 0.0019 MSE in a retained rejected probe.
-Cube/Scene's passing OpenGL results do not promote that path. CPU OpenGL is
-verified software GL; CUDA OpenGL is verified NVIDIA EGL. PushT's CUDA profile
+backend, Variation or lifecycle is certified. The then-default Cube CUDA MJWarp
+path measured about 0.0019 MSE in a retained rejected probe. Those OpenGL results
+did not promote that path; the separately gated Cube default above replaces it.
+CPU OpenGL is verified software GL; CUDA OpenGL is verified NVIDIA EGL. PushT's CUDA profile
 checks State/output placement and does not claim native GPU rasterization.
 
 The per-frame normalized MSE limit stays at 0.001. New-registration worst errors:
