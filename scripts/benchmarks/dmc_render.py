@@ -112,6 +112,8 @@ def _worker(plan: dict) -> None:
                     "fps": batch / float(np.mean(seconds)),
                 }
             )
+    with Path(plan["result"]).with_suffix(".npz").open("xb") as stream:
+        np.savez_compressed(stream, frames=actual)
     assert report["code_sha256"] == _code(root, "stable_envs"), "Checkout changed during measurement"
     with Path(plan["result"]).open("x") as stream:
         json.dump(report, stream, indent=2, allow_nan=False)
@@ -213,6 +215,17 @@ def main() -> None:
             assert all(result[key] == hardware[key] for key in hardware), "Worker runtime changed"
             assert result["corpus_sha256"] == _hash(evidence.root / corpus_name)
             results[label] = result
+        with np.load(evidence.root / domain / "before.npz", allow_pickle=False) as saved:
+            previous = saved["frames"]
+        with np.load(evidence.root / domain / "after.npz", allow_pickle=False) as saved:
+            current = saved["frames"]
+        difference = current.astype(np.int16) - previous.astype(np.int16)
+        fidelity_change = {
+            "identical": bool(np.array_equal(previous, current)),
+            "max_channel_error": int(np.abs(difference).max()),
+            "differing_channels": int(np.count_nonzero(difference)),
+            "mse_max": float(np.mean((difference.astype(np.float64) / 255) ** 2, axis=(1, 2, 3)).max()),
+        }
         for before, after in zip(results["before"]["measurements"], results["after"]["measurements"], strict=True):
             assert before["batch"] == after["batch"]
             row = {
@@ -225,6 +238,7 @@ def main() -> None:
                 "mse_before": results["before"]["mse_vs_source"],
                 "mse_after": results["after"]["mse_vs_source"],
                 "source_gl": identities[0],
+                "change_from_baseline": fidelity_change,
                 "order": list(order),
             }
             report["rows"].append(row)

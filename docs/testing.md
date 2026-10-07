@@ -328,6 +328,33 @@ CPU B64 throughput is 0.60–0.68× the previous renderer.
 CUDA B256 throughput is 0.70–0.90× the previous renderer.
 These are same-device before/after library measurements, not speedups over the source simulator.
 
+The follow-up optimization compares against that accepted high-fidelity checkpoint
+(`d5947b65`), retaining bit-for-bit identical images on the 32-State paired corpus.
+CPU shadow rays avoid padding and unused normal calculations, with larger chunks
+only where the measured resolution benefits. GPU batches use up to 256 worlds at
+sizes through 84px, retain the 64-world bound above that, and skip an overwritten sky pass.
+
+| DMC registration | CPU B64 speedup | RTX 3090 B256 speedup |
+| --- | ---: | ---: |
+| Walker | 1.20× | 1.70× |
+| Hopper | 1.45× | 1.87× |
+| Cheetah | 1.61× | 1.83× |
+| Humanoid | 1.97× | 1.57× |
+| Quadruped | 1.03× | 1.55× |
+
+GPU B64 throughput is approximately unchanged (0.985–1.011×); B1 improves
+1.09–1.25×. CPU B1 improves 1.02–1.08×. These are same-device before/after
+comparisons, not speedups over the source. The CPU run uses one Torch thread;
+GPU timing uses an RTX 3090. Both complete source profiles pass 288/288 cases
+with the unchanged per-frame 0.001 limit. The final CPU regression bundle passes
+242 tests with only the Linux-unavailable MPS check skipped. Eight GPU tests check
+exact images across batch capacities, row order, per-row style and the 84/85px boundary.
+
+The [optimization report](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/dmc-render-opt-oscar-validation.json)
+and [timing CSV](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/dmc-render-opt-performance.csv)
+retain raw timing samples, latency and MSE mean/SD, code hashes, source gates,
+batch regressions and rejected experiments. The earlier correction evidence remains unchanged.
+
 For paired timing of the five body-tracking DMC renderers, use the same pinned
 DMC dependencies and GL configuration as the source profile:
 

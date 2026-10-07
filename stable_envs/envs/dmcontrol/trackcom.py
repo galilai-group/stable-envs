@@ -83,7 +83,7 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
             enabled_geom_groups=list(VISIBLE_GROUPS),
             use_textures=True,
             use_shadows=True,
-            render_skybox=True,
+            render_skybox=False,  # Misses receive the cached source sky after this pass.
             **dict(cls.RENDER_FLAGS),
         )
         from ...render.trackcom_reflection import Reflection
@@ -135,6 +135,14 @@ class DMControlTrackCom(_DMCModel):
     RENDER_FLAGS: dict = {}
 
     CPU_RENDER_CHUNK = C3.CPU_CHUNK
+    # Measured CPU choices at source-tested resolutions; larger images retain the memory bound.
+    _CPU_RENDER_CHUNKS = {
+        ("hopper", 64): 64,
+        ("cheetah", 64): 64,
+        ("cheetah", 84): 32,
+        ("humanoid", 64): 16,
+        ("humanoid", 84): 16,
+    }
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
@@ -158,8 +166,8 @@ class DMControlTrackCom(_DMCModel):
                 f"device='cuda' (MJWarp) or device='cpu' (stable_envs.render.cpu3d)"
             )
 
-    def _context(self, size: int) -> _TCtx:
-        return _tc_context(type(self), int(size), MJW_CHUNK)
+    def _context(self, size: int, nworld: int = MJW_CHUNK) -> _TCtx:
+        return _tc_context(type(self), int(size), int(nworld))
 
     @classmethod
     def _used_materials(cls) -> list[str]:
@@ -277,7 +285,10 @@ class DMControlTrackCom(_DMCModel):
                 mat[:, i] = sty[f"material.{name}"][:B]
         base = torch.as_tensor(pr["light_diffuse"], dtype=torch.float32, device=self.device)
         ldif = torch.clamp(base.unsqueeze(0) * sty["light.diffuse_scale"][:B].reshape(B, 1, 1), 0, 1)
-        C3.render(sc, cam, xp, xm, lp, ld, mat, ldif, out=buf, chunk_size=self.CPU_RENDER_CHUNK)
+        chunk = self._CPU_RENDER_CHUNKS.get((self.DOMAIN, size), self.CPU_RENDER_CHUNK)
+        # An explicit instance override is used by controlled chunk sweeps.
+        chunk = vars(self).get("CPU_RENDER_CHUNK", chunk)
+        C3.render(sc, cam, xp, xm, lp, ld, mat, ldif, out=buf, chunk_size=chunk)
 
     @torch.no_grad()
     def _render(
@@ -312,9 +323,12 @@ class DMControlTrackCom(_DMCModel):
         if self.device.type == "cpu":
             self._render_cpu(s, sty, size, buf)
             return buf.view(*lead, size, size, 3) if lead else buf
-        c = self._context(size)
-        for lo in range(0, B, MJW_CHUNK):
-            hi = min(B, lo + MJW_CHUNK)
+        # Small images can amortize uploads across more worlds; keep the existing large-image bound.
+        capacity = 256 if size <= 84 else MJW_CHUNK
+        worlds = min(capacity, 1 << max(0, B - 1).bit_length())
+        c = self._context(size, worlds)
+        for lo in range(0, B, worlds):
+            hi = min(B, lo + worlds)
             self._upload(c, s[lo:hi], sty, lo, hi)
             torch.cuda.synchronize()
             c.wp.capture_launch(c.graph)

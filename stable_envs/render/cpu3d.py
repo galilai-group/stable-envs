@@ -927,10 +927,24 @@ def _any_blocking_flat(
     d: torch.Tensor,
     lim: torch.Tensor,
 ) -> torch.Tensor:
-    """Test compacted shadow rays, returning (Q,) boolean occlusion.
-
-    Group by environment, pad with zero-length rays, then restore input order.
-    """
+    """Test compacted shadow rays, returning (Q,) boolean occlusion."""
+    ray_norm = R3.dot3(d, d)
+    if o.device.type == "cpu" and R3._unit_rays(ray_norm):
+        blocked = torch.zeros(env.shape, device=o.device, dtype=torch.bool)
+        for k, kind in enumerate(scene.kinds):
+            active = (~blocked) & (lim > 0)
+            if R3._kind_is_bounded(kind):
+                radius = R3.bound_radius_tensor(kind, scene.sizes[k])
+                active &= R3._rays_near(xpos_rel[env, k], radius, o, d, ray_norm)
+            js = active.nonzero(as_tuple=True)[0]
+            if not js.numel():
+                continue
+            distance = R3._intersect_distance(
+                kind, scene.sizes[k], xpos_rel[env[js], k], xmat[env[js], k], o[js], d[js]
+            )
+            blocked[js] = (distance > 0) & (distance < lim[js])
+        return blocked
+    # Other devices keep the batched dispatcher; nonunit rays bypass geometric bounds.
     B, K = xpos_rel.shape[:2]
     Q = env.numel()
     order = torch.argsort(env, stable=True)

@@ -162,7 +162,7 @@ class Lights:
         return (t(self.dirs), t(self.ambient), t(self.diffuse), t(self.specular))
 
 
-def _sphere(o, d, pos, r):
+def _sphere(o, d, pos, r, normal=True):
     oc = o - pos
     b = dot3(oc, d)
     c = dot3(oc, oc) - r * r
@@ -172,11 +172,13 @@ def _sphere(o, d, pos, r):
     t = torch.where(t > 0, t, -b + sq)
     hit = (disc > 0) & (t > 0)
     t = torch.where(hit, t, torch.full_like(t, INF))
+    if not normal:
+        return t, None
     n = (oc + t.unsqueeze(-1).clamp(max=1e6) * d) / r.unsqueeze(-1)
     return t, n
 
 
-def _ellipsoid(o, d, pos, R, size):
+def _ellipsoid(o, d, pos, R, size, normal=True):
     """Intersect an ellipsoid by scaling local rays to a unit sphere.
 
     Normals are normalised gradients in the local frame, rotated back to world space.
@@ -200,13 +202,15 @@ def _ellipsoid(o, d, pos, R, size):
     t = torch.where(t > 0, t, (-b + sq) / a_safe)
     hit = (disc > 0) & (t > 0) & (a > 1e-12) & (size[..., 0] > 0) & (size[..., 1] > 0) & (size[..., 2] > 0)
     t = torch.where(hit, t, torch.full_like(t, INF))
+    if not normal:
+        return t, None
     pl = ol + t.unsqueeze(-1).clamp(max=1e6) * dl
     nl = pl * inv * inv
     nl = nl / torch.clamp(torch.sqrt(dot3(nl, nl)).unsqueeze(-1), min=1e-12)
     return t, mv3(R, nl)
 
 
-def _capsule(o, d, pos, R, r, hh):
+def _capsule(o, d, pos, R, r, hh, normal=True):
     """Intersect a local Z-axis capsule with radius r and cylinder half-length hh."""
     ol = mtv3(R, o - pos)
     dl = mtv3(R, d)
@@ -234,6 +238,8 @@ def _capsule(o, d, pos, R, r, hh):
             t = -bb + sgn * s2
             ok = (dd > 0) & (t > 0)
             best = torch.where(ok & (t < best), t, best)
+    if not normal:
+        return best, None
     pl = ol + best.unsqueeze(-1).clamp(max=1e6) * dl
     zc = torch.maximum(torch.minimum(pl[..., 2], hh), -hh)
     nl = pl - torch.stack([torch.zeros_like(zc), torch.zeros_like(zc), zc], -1)
@@ -241,7 +247,7 @@ def _capsule(o, d, pos, R, r, hh):
     return best, mv3(R, nl)
 
 
-def _cylinder(o, d, pos, R, r, hh):
+def _cylinder(o, d, pos, R, r, hh, normal=True):
     ol = mtv3(R, o - pos)
     dl = mtv3(R, d)
     a = dl[..., 0] ** 2 + dl[..., 1] ** 2
@@ -269,6 +275,8 @@ def _cylinder(o, d, pos, R, r, hh):
         best = torch.where(upd, t, best)
         side = side & ~upd
         capz = torch.where(upd, torch.full_like(capz, sgn), capz)
+    if not normal:
+        return best, None
     pl = ol + best.unsqueeze(-1).clamp(max=1e6) * dl
     nl_side = torch.stack([pl[..., 0], pl[..., 1], torch.zeros_like(pl[..., 0])], -1) / r.unsqueeze(-1)
     nl_cap = torch.stack([torch.zeros_like(capz), torch.zeros_like(capz), capz], -1)
@@ -276,7 +284,7 @@ def _cylinder(o, d, pos, R, r, hh):
     return best, mv3(R, nl)
 
 
-def _box(o, d, pos, R, size):
+def _box(o, d, pos, R, size, normal=True):
     ol = mtv3(R, o - pos)
     dl = mtv3(R, d)
     inv = 1.0 / torch.where(dl.abs() < 1e-12, torch.full_like(dl, 1e-12), dl)
@@ -287,6 +295,8 @@ def _box(o, d, pos, R, size):
     hit = tmax >= torch.clamp(tmin, min=0.0)
     t = torch.where(tmin > 0, tmin, tmax)
     t = torch.where(hit & (t > 0), t, torch.full_like(t, INF))
+    if not normal:
+        return t, None
     pl = ol + t.unsqueeze(-1).clamp(max=1e6) * dl
     rel = pl.abs() / torch.clamp(size, min=1e-12)
     ax = rel.argmax(-1, keepdim=True)
@@ -316,16 +326,25 @@ def intersect(
 
     Poses (..., 3) and rotations (..., 3, 3) broadcast against rays (..., 3).
     Unsupported MuJoCo geometry kinds raise ValueError."""
+    return _intersect(kind, size, pos, R, o, d, normal=True)
+
+
+def _intersect_distance(kind, size, pos, R, o, d):
+    """Return hit distances without constructing normals for occlusion rays."""
+    return _intersect(kind, size, pos, R, o, d, normal=False)[0]
+
+
+def _intersect(kind, size, pos, R, o, d, *, normal):
     if kind == SPHERE:
-        return _sphere(o, d, pos, size[..., 0:1].squeeze(-1))
+        return _sphere(o, d, pos, size[..., 0:1].squeeze(-1), normal=normal)
     if kind == CAPSULE:
-        return _capsule(o, d, pos, R, size[..., 0:1].squeeze(-1), size[..., 1:2].squeeze(-1))
+        return _capsule(o, d, pos, R, size[..., 0:1].squeeze(-1), size[..., 1:2].squeeze(-1), normal=normal)
     if kind == CYLINDER:
-        return _cylinder(o, d, pos, R, size[..., 0:1].squeeze(-1), size[..., 1:2].squeeze(-1))
+        return _cylinder(o, d, pos, R, size[..., 0:1].squeeze(-1), size[..., 1:2].squeeze(-1), normal=normal)
     if kind == BOX:
-        return _box(o, d, pos, R, size)
+        return _box(o, d, pos, R, size, normal=normal)
     if kind == ELLIPSOID:
-        return _ellipsoid(o, d, pos, R, size)
+        return _ellipsoid(o, d, pos, R, size, normal=normal)
     if kind == PLANE:
         return _plane(o, d, pos, R, size)
     raise ValueError(f"raycast3d has no intersector for mjtGeom {kind}; scenes here are primitive-only")
@@ -458,7 +477,7 @@ def _any_blocking_torch_unbounded(
     B, N = o.shape[0], o.shape[1]
     blocked = torch.zeros((B, N), device=o.device, dtype=torch.bool)
     for k, kind in enumerate(int(x) for x in kinds):
-        t, _ = intersect(kind, sizes[:, k : k + 1], pos[:, k : k + 1], R[:, k : k + 1], o, d)
+        t = _intersect_distance(kind, sizes[:, k : k + 1], pos[:, k : k + 1], R[:, k : k + 1], o, d)
         hit = (t > 0) & (t < lim)
         if skip is not None:
             hit = hit & (skip != k)
@@ -502,13 +521,13 @@ def any_blocking_torch(
             if js.numel() == N:
                 js = None
         if js is None:
-            t, _ = intersect(kind, sizes[:, k : k + 1], pos[:, k : k + 1], R[:, k : k + 1], o, d)
+            t = _intersect_distance(kind, sizes[:, k : k + 1], pos[:, k : k + 1], R[:, k : k + 1], o, d)
             hit = (t > 0) & (t < lim)
             if skip is not None:
                 hit = hit & (skip != k)
             blocked |= hit
         else:
-            t, _ = intersect(kind, sizes[:, k : k + 1], pos[:, k : k + 1], R[:, k : k + 1], o[:, js], d[:, js])
+            t = _intersect_distance(kind, sizes[:, k : k + 1], pos[:, k : k + 1], R[:, k : k + 1], o[:, js], d[:, js])
             hit = (t > 0) & (t < lim[:, js])
             if skip is not None:
                 hit = hit & (skip[:, js] != k)
