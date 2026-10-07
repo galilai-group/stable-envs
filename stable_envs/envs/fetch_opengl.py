@@ -17,6 +17,58 @@ _LOCK = threading.RLock()
 _CACHE = {}
 
 
+class _Readback:
+    """Collect resized frames in a bounded OpenGL buffer, then read each chunk once."""
+
+    def __init__(self, renderer, size: int, batch: int):
+        import mujoco
+        from OpenGL import GL
+
+        if batch < 1:
+            raise ValueError("Cannot render an empty Fetch batch")
+        self.renderer, self.size = renderer, size
+        self.images = np.empty((batch, size, size, 3), dtype=np.uint8)
+        renderer._gl_context.make_current()
+        self.capacity = min(batch, max(1, int(GL.glGetIntegerv(GL.GL_MAX_RENDERBUFFER_SIZE)) // size))
+        context = renderer._mjr_context
+        for index, width, height in ((0, renderer.width, renderer.height), (1, size, size * self.capacity)):
+            if context.auxWidth[index] != width or context.auxHeight[index] != height:
+                mujoco.mjr_addAux(index, width, height, 0, context)
+        mujoco.mjr_restoreBuffer(context)
+
+    def render(self, index: int) -> None:
+        import mujoco
+        from OpenGL import GL
+
+        renderer, size = self.renderer, self.size
+        context = renderer._mjr_context
+        width, height = renderer.width, renderer.height
+        slot = index % self.capacity
+        mujoco.mjr_render(renderer._rect, renderer.scene, context)
+        try:
+            # Resolve multisampling at native size before resizing and flipping each frame.
+            GL.glBindFramebuffer(GL.GL_DRAW_FRAMEBUFFER, int(context.auxFBO[0]))
+            GL.glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL.GL_COLOR_BUFFER_BIT, GL.GL_NEAREST)
+            GL.glBindFramebuffer(GL.GL_READ_FRAMEBUFFER, int(context.auxFBO[0]))
+            GL.glBindFramebuffer(GL.GL_DRAW_FRAMEBUFFER, int(context.auxFBO[1]))
+            GL.glBlitFramebuffer(
+                0, height, width, 0, 0, slot * size, size, (slot + 1) * size, GL.GL_COLOR_BUFFER_BIT, GL.GL_LINEAR
+            )
+            if slot + 1 == self.capacity or index + 1 == len(self.images):
+                GL.glBindFramebuffer(GL.GL_READ_FRAMEBUFFER, int(context.auxFBO[1]))
+                GL.glReadPixels(
+                    0,
+                    0,
+                    size,
+                    (slot + 1) * size,
+                    GL.GL_RGB,
+                    GL.GL_UNSIGNED_BYTE,
+                    self.images[index - slot : index + 1],
+                )
+        finally:
+            mujoco.mjr_restoreBuffer(context)
+
+
 def render(env, states=None, size=None, supersample=None, variation=None, style=None, out=None):
     env._check_open("render")
     import cv2
@@ -62,6 +114,7 @@ def render(env, states=None, size=None, supersample=None, variation=None, style=
             raise RuntimeError(f"CPU rendering requires software OpenGL, found {vendor}: {gl_device}")
         if env.device.type == "cuda" and (software or "nvidia" not in vendor.lower()):
             raise RuntimeError(f"CUDA rendering requires NVIDIA OpenGL, found {vendor}: {gl_device}")
+        readback = _Readback(renderer, size, len(rows)) if ss == 1 else None
         for i, row in enumerate(rows):
             fetch._restore(model, b.pristine)
             for name, geoms in (
@@ -92,11 +145,14 @@ def render(env, states=None, size=None, supersample=None, variation=None, style=
             data.mocap_pos[b.info["goal_mocap"]] = row[b.nq : b.nq + 3]
             mujoco.mj_forward(model, data)
             renderer.update_scene(data, camera=b.info["cam"])
-            image = renderer.render().copy()
-            if ss > 1:
+            if readback is not None:
+                readback.render(i)
+            else:
+                image = renderer.render()
                 image = np.rint(image.reshape(native_size, ss, native_size, ss, 3).mean((1, 3))).astype(np.uint8)
-            images.append(cv2.resize(image, (size, size)))
-    result = torch.as_tensor(np.stack(images), device=env.device).reshape(*lead, size, size, 3)
+                images.append(cv2.resize(image, (size, size)))
+    images = readback.images if readback is not None else np.stack(images)
+    result = torch.as_tensor(images, device=env.device).reshape(*lead, size, size, 3)
     if out is not None:
         if (
             out.shape != result.shape

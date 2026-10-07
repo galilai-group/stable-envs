@@ -231,10 +231,22 @@ Five DMC registrations fail the pixel limit; Fetch PickAndPlace (three), OGBench
 Native's 896 frame comparisons per device have MSE zero. Navigation's 768 have
 maximum MSE 0.0000217513; Fetch's 2,304 have maximum MSE 0.000252860 on CPU and
 0.000248120 on CUDA. Counts include repeated capture-selector comparisons.
-The nine Fetch registrations use the explicit OpenGL backend. Its source-sized
-raster improves fidelity but costs about 1.5 times the render time in a warm B64
-probe repeating two States on CPU and an A40 GPU. That is a diagnostic, not a
-broad performance certification; the default MJWarp renderer is unchanged.
+The nine Fetch registrations use the explicit OpenGL backend. Initially, its
+source-sized raster cost about 1.5 times the render time in a warm B64 probe
+repeating two States on CPU and an A40 GPU. GPU resizing and batched readback now
+recover performance while retaining that raster and MSAA. Across four Fetch
+scenes, paired RTX A5500 measurements show 1.95–1.99× throughput at B64 and
+1.98–2.05× at B256 versus the previous high-fidelity implementation. Software-GL
+CPU throughput improves 2–3% at B64; single-frame results include a 0.6% regression.
+These are before/after library measurements, not speedups over the source
+simulator. The [CSV](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/fetch-readback-performance.csv)
+includes latency mean and SD; the
+[validation report](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/fetch-readback-oscar-validation.json)
+links the raw evidence. The default MJWarp renderer is unchanged.
+The optimized renderer passes all 336 Fetch source-profile cases per device;
+maximum source MSE is 0.000253508 on CPU and 0.000248164 on CUDA. PickAndPlace's
+source-pixel exclusion remains; its readback regression compares against the
+previous high-fidelity implementation.
 
 | Profile | Required cases/device | Source-pixel cases/device | Source renderer |
 | --- | ---: | ---: | --- |
@@ -254,6 +266,29 @@ other GLFW windows in that process. It binds each source lane's context before
 rendering and returns owned State/task/frame data. PickAndPlace is excluded
 because its source rendering changes controller caches and future transitions.
 Its State-only regression cases remain required in the Fetch profile.
+
+Fetch OpenGL readback has a separate regression test in
+`tests/integration/test_fetch_opengl.py`. Run it in the same explicit software-GL
+or NVIDIA EGL environment as the source profile. It compares against MuJoCo's
+480px readback plus OpenCV resize, checks odd and enlarged output sizes, output
+ownership, context switching, and a partial readback chunk. Hardware interpolation
+can differ from OpenCV by two channel levels; the test bounds both channel error
+and RMS error. The independent source-pixel limit remains 0.001.
+
+For a paired renderer benchmark, export the previous high-fidelity implementation
+and run on a compute node with the Fetch dependencies and GL environment above:
+
+```bash
+git show a2f8f820:stable_envs/envs/fetch_opengl.py > /tmp/fetch-before-readback.py
+python -m scripts.benchmarks.fetch_readback --device cuda \
+  --baseline-file /tmp/fetch-before-readback.py --output /tmp/fetch-readback-results
+```
+
+The benchmark saves and reloads 1,024 rollout States per scene. State generation,
+disk loading and initial device transfer are outside timing; public `env.render`
+and output synchronization are inside. It alternates implementation order and
+records twelve paired measurements after warmup. Its MSE compares the two library
+implementations, not the source simulator; use the source profile for that claim.
 
 Navigation includes reached and mixed-terminal scenarios. DMC uses ordinary
 reached states; existing lifecycle/process/Variation gates remain required. DMC's
