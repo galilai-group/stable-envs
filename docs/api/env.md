@@ -17,8 +17,12 @@ simulation without adding a shared Observation class.
 State is a TensorDict checkpoint, potentially privileged, not the learner
 observation. Variation can affect physics, reset, task or appearance.
 
-For Cube and Scene, `backend="auto"` selects the existing software OpenGL
-renderer on CPU and the existing mesh renderer on CUDA. CPU rendering requires
+For Cube and Scene, `backend="auto"` selects software OpenGL on CPU. On CUDA,
+Cube uses the two-pass MJWarp fidelity renderer with 2× supersampling by default;
+Scene uses the existing mesh renderer. An explicit `supersample` argument or a
+supplied RenderState's sampling setting is preserved. Use `supersample=2` when
+rendering an older 1× RenderState with this Cube sampling configuration.
+CPU rendering requires
 Mesa software OpenGL configured before importing MuJoCo; a hardware GL context
 is rejected for CPU measurements. An explicit `backend="mjwarp"` still requires
 CUDA. Selecting a backend does not change where physics runs: it remains CPU.

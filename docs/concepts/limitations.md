@@ -25,8 +25,9 @@ same frame".
 |---|---|---|
 | PushT / PushTDiscrete | source physics and Pygame rendering | tensor/output storage only; no GPU renderer on this public path |
 | classic control, navigation, OGBench mazes, most 2-D | yes | yes |
-| Fetch (12 ids) | **no backend** | yes |
-| OGBCube, OGBScene, PyFlytRocketLanding | **refuse** (`device="cpu"` / CPU-only `auto` raises; no silent CUDA fallback) | required |
+| Fetch (12 ids) | software OpenGL (`backend="opengl"`) | MJWarp or explicit NVIDIA OpenGL |
+| OGBCube, OGBScene | software OpenGL | MJWarp or explicit NVIDIA OpenGL |
+| PyFlytRocketLanding | TinyRenderer | public CUDA rendering path |
 | DM Control trackcom / visual-tier body-tracking | CPU3D path where declared | MJWarp |
 | nvdiff locomotion (visual tier) | not a supported consumer of the x86 sparse-stage path | nvdiffrast |
 

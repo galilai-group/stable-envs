@@ -14,6 +14,24 @@ from stable_envs.envs.ogbench import manipulation as core
 from stable_envs.envs.ogbench import manipulation_renderer as renderer
 
 
+@pytest.mark.parametrize("family", ["Cube", "Scene"])
+def test_configuration_groups_preserve_exact_static_keys(family):
+    from tests.helpers.ogbench_golden import FIXTURES, load
+
+    state, _ = load(FIXTURES / f"{family}-mjwarp.npz")
+    keys = (*pixels.STATIC, *(("lock_color",) if family == "Scene" else ()))
+    for index, key in enumerate(keys):
+        state["appearance", key][index].reshape(-1)[0] += 0.001
+    # These per-world inputs must not create new compiled-model groups.
+    state["pose", "qpos"][-1, 0] += 0.1
+    state["appearance", "cube.color"][-1] = 0.2
+    expected = {}
+    for index, row in enumerate(state):
+        expected.setdefault(renderer.configuration_key(family, row), []).append(index)
+    assert list(renderer._configuration_groups(family, state)) == list(expected.values())
+    assert len(expected) == len(keys) + 1
+
+
 @pytest.mark.parametrize("family,cls", [("Cube", OGBCube), ("Scene", OGBScene)])
 def test_named_render_state_boundary(family, cls):
     with cls(num_envs=3, seed=17) as env:

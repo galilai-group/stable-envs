@@ -717,33 +717,15 @@ class OGBManipBase(Env):
         plate1 = (plate if ss == 1 else plates1[0]) if gidx is None else None
         cube = self._cube_colours(host, B)
         lut = self._mover_lut()
-        b = self._b
-        nq, nmoc = b.nq, b.nmocap
-
         for lo in range(0, B, MJW_CHUNK):
             hi = min(lo + MJW_CHUNK, B)
             n = hi - lo
-            nw = 1 if n <= 1 else min(MJW_CHUNK, 1 << (n - 1).bit_length())
-            c = _context(self.CELL, res, nw)
-            chunk = s[lo:hi]
-            wp = c.wp
-            wp.to_torch(c.wd.qpos)[:n] = chunk[:, :nq]
-            if nmoc:
-                mp = chunk[:, nq : nq + 3 * nmoc].reshape(n, nmoc, 3)
-                wp.to_torch(c.wd.mocap_pos)[:n] = mp
-                wp.to_torch(c.wd.mocap_quat)[:n] = (
-                    self._identity_quat(nmoc, n) if mocap_quat is None else mocap_quat[lo:hi]
-                )
-            if b.nbuttons:
-                self._upload_button_colours(c, chunk, n)
-            # Upload buttons first: their whole-row color write would otherwise overwrite cube RGB.
-            if cube is not None:
-                self._upload_cube_colours(c, cube[lo:hi], n)
-            # Synchronize Torch uploads and Warp graph replay before reading shared buffers.
-            torch.cuda.synchronize()
-            wp.capture_launch(c.graph)
-            wp.synchronize()
-            rgb, seg = c.bgra[:n][..., [2, 1, 0]], c.seg[:n]
+            rgb, seg = self._raster(
+                s[lo:hi],
+                res,
+                None if cube is None else cube[lo:hi],
+                None if mocap_quat is None else mocap_quat[lo:hi],
+            )
             # Use the mover mask: a nonnegative segmentation ID may instead identify the static floor.
             mv = lut.index_select(0, (seg + 1).reshape(-1)).view(seg.shape)
             if gidx is None:
@@ -767,6 +749,31 @@ class OGBManipBase(Env):
                 any_mv = mv.reshape(n, size, ss, size, ss).any(4).any(2)
                 buf[lo:hi] = torch.where(any_mv.unsqueeze(-1), small, pl1)
         return buf.view(*lead, size, size, 3) if lead else buf
+
+    def _raster(self, chunk, res, cube, mocap_quat):
+        """Draw one chunk; segmentation aliases the context until its next replay."""
+        n = len(chunk)
+        if not 1 <= n <= MJW_CHUNK:
+            raise ValueError(f"Raster chunks must contain 1..{MJW_CHUNK} rows")
+        b = self._b
+        nq, nmoc = b.nq, b.nmocap
+        c = _context(self.CELL, res, 1 << (n - 1).bit_length())
+        wp = c.wp
+        wp.to_torch(c.wd.qpos)[:n] = chunk[:, :nq]
+        if nmoc:
+            mp = chunk[:, nq : nq + 3 * nmoc].reshape(n, nmoc, 3)
+            wp.to_torch(c.wd.mocap_pos)[:n] = mp
+            wp.to_torch(c.wd.mocap_quat)[:n] = self._identity_quat(nmoc, n) if mocap_quat is None else mocap_quat
+        if b.nbuttons:
+            self._upload_button_colours(c, chunk, n)
+        # Upload buttons first: their whole-row color write would otherwise overwrite cube RGB.
+        if cube is not None:
+            self._upload_cube_colours(c, cube, n)
+        # Synchronize Torch uploads and Warp graph replay before reading shared buffers.
+        torch.cuda.synchronize()
+        wp.capture_launch(c.graph)
+        wp.synchronize()
+        return c.bgra[:n][..., [2, 1, 0]], c.seg[:n]
 
     def _identity_quat(self, nmoc: int, n: int) -> torch.Tensor:
         """Return cached (n, nmoc, 4) identity quaternions on the renderer device."""

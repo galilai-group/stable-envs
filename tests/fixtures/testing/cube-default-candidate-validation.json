@@ -1,0 +1,634 @@
+{
+  "status": "PENDING_A40_REGRESSIONS_AND_TERMINAL_STATUS",
+  "accepted": false,
+  "baseline_commit": "1b1422da9fe74b9dece405d278a7b867ac8d4c79",
+  "source_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "candidate_manifest": "candidate-v2/manifest.json",
+  "source_gates": {
+    "cpu": {
+      "passed": 72,
+      "required": 72,
+      "registrations": {
+        "OGBCube": {
+          "cases": 8,
+          "frames": 128,
+          "mse_max": 7.765818234973729e-05,
+          "backend": "auto"
+        },
+        "OGBScene": {
+          "cases": 8,
+          "frames": 128,
+          "mse_max": 0.0,
+          "backend": "opengl"
+        },
+        "PointMazeLargeNavigate": {
+          "cases": 8,
+          "frames": 128,
+          "mse_max": 0.0007443175901896707,
+          "backend": "auto"
+        }
+      },
+      "hardware": {
+        "host": "node1851.oscar.ccv.brown.edu",
+        "gpu": null,
+        "versions": {
+          "torch": "2.14.0+cu126",
+          "numpy": "2.2.6",
+          "gymnasium": "1.2.3",
+          "pygame": "2.6.1",
+          "mujoco": "3.12.0"
+        }
+      },
+      "artifact": "candidate-v2/cpu/artifacts"
+    },
+    "cuda": {
+      "passed": 72,
+      "required": 72,
+      "registrations": {
+        "OGBCube": {
+          "cases": 8,
+          "frames": 128,
+          "mse_max": 0.0006909389317409971,
+          "backend": "auto"
+        },
+        "OGBScene": {
+          "cases": 8,
+          "frames": 128,
+          "mse_max": 0.0,
+          "backend": "opengl"
+        },
+        "PointMazeLargeNavigate": {
+          "cases": 8,
+          "frames": 128,
+          "mse_max": 0.0007021225309976932,
+          "backend": "auto"
+        }
+      },
+      "hardware": {
+        "host": "gpu2110.oscar.ccv.brown.edu",
+        "gpu": "NVIDIA GeForce RTX 3090",
+        "versions": {
+          "torch": "2.14.0+cu126",
+          "numpy": "2.2.6",
+          "gymnasium": "1.2.3",
+          "pygame": "2.6.1",
+          "mujoco": "3.12.0"
+        }
+      },
+      "artifact": "candidate-v2/cuda/artifacts",
+      "bundle_failure": "Source tests passed 72/72; later regression collection failed because exported helper was missing; overall job 7092266 exited 4. Standalone rerun 7093278 remains to be collected."
+    }
+  },
+  "remaining": [
+    "Run three immutable A40-pinned golden fixtures on A40; 3090 skips are not passes",
+    "Collect standalone CUDA gate job 7093278 and terminal scheduler evidence",
+    "Only then merge candidate into sami-dev and update accepted backend scope"
+  ],
+  "scope": "Cube candidate default CUDA render at 64px. Scene diagnostics are not a production change or promotion.",
+  "gpu_regressions": {
+    "passed": 1,
+    "skipped": 3,
+    "skip_reason": "Committed golden GPU is NVIDIA A40; run used RTX 3090",
+    "passed_scope": "Cube default-resolution batch/chunk/style/nonmutation, including 257 rows",
+    "artifact": "regressions-v1/cuda/artifacts/regressions.xml"
+  },
+  "performance": {
+    "rows": [
+      {
+        "env": "swm/OGBCube-v0",
+        "status": "CANDIDATE_NOT_ACCEPTED",
+        "resolution": 64,
+        "batch": 1,
+        "independent_states": 32,
+        "warmups": 3,
+        "timing_samples": 6,
+        "mse_mean": 0.0006046001938357043,
+        "mse_sd": 3.638053705590035e-05,
+        "mse_max": 0.0006909389317409971,
+        "ours_gpu_fps": 144.31859875329286,
+        "ours_gpu_fps_sd": 0.5441327025465997,
+        "ours_gpu_batch_ms_mean": 6.929113840063413,
+        "ours_gpu_batch_ms_sd": 0.026150907551152222,
+        "source_gpu_fps": 1948.0524298453881,
+        "source_gpu_fps_sd": 16.484734166016466,
+        "source_gpu_batch_ms_mean": 0.51333320637544,
+        "source_gpu_batch_ms_sd": 0.004353385251385108,
+        "previous_default_gpu_fps": 96.63158760585195,
+        "previous_default_gpu_fps_sd": 1.3128602888681882,
+        "previous_default_gpu_batch_ms_mean": 10.34858295073112,
+        "previous_default_gpu_batch_ms_sd": 0.14111781500160914,
+        "previous_fidelity_gpu_fps": 70.02583996539518,
+        "previous_fidelity_gpu_fps_sd": 0.8798545067309109,
+        "previous_fidelity_gpu_batch_ms_mean": 14.280442769328753,
+        "previous_fidelity_gpu_batch_ms_sd": 0.18216594703336622,
+        "speedup_vs_source_gpu": 0.0740835290376384,
+        "speedup_vs_previous_default_gpu": 1.4934929905317318,
+        "speedup_vs_previous_fidelity_gpu": 2.0609334900461187
+      },
+      {
+        "env": "swm/OGBCube-v0",
+        "status": "CANDIDATE_NOT_ACCEPTED",
+        "resolution": 64,
+        "batch": 64,
+        "independent_states": 32,
+        "warmups": 3,
+        "timing_samples": 6,
+        "mse_mean": 0.0006046001938357043,
+        "mse_sd": 3.638053705590035e-05,
+        "mse_max": 0.0006909389317409971,
+        "ours_gpu_fps": 4104.730564935367,
+        "ours_gpu_fps_sd": 23.24608859498807,
+        "ours_gpu_batch_ms_mean": 15.591766374806562,
+        "ours_gpu_batch_ms_sd": 0.08863361645188049,
+        "source_gpu_fps": 1790.8561538828324,
+        "source_gpu_fps_sd": 50.387524168754396,
+        "source_gpu_batch_ms_mean": 35.73709695289532,
+        "source_gpu_batch_ms_sd": 1.05250349187745,
+        "previous_default_gpu_fps": 3827.3737729442973,
+        "previous_default_gpu_fps_sd": 196.32898189309032,
+        "previous_default_gpu_batch_ms_mean": 16.721648784975212,
+        "previous_default_gpu_batch_ms_sd": 0.9290724843218381,
+        "previous_fidelity_gpu_fps": 2316.210772201295,
+        "previous_fidelity_gpu_fps_sd": 68.39815832037709,
+        "previous_fidelity_gpu_batch_ms_mean": 27.631336823105812,
+        "previous_fidelity_gpu_batch_ms_sd": 0.8555032537025865,
+        "speedup_vs_source_gpu": 2.2920492838219997,
+        "speedup_vs_previous_default_gpu": 1.0724666072469076,
+        "speedup_vs_previous_fidelity_gpu": 1.7721748876222894
+      },
+      {
+        "env": "swm/OGBCube-v0",
+        "status": "CANDIDATE_NOT_ACCEPTED",
+        "resolution": 64,
+        "batch": 256,
+        "independent_states": 32,
+        "warmups": 3,
+        "timing_samples": 6,
+        "mse_mean": 0.0006046001938357043,
+        "mse_sd": 3.638053705590035e-05,
+        "mse_max": 0.0006909389317409971,
+        "ours_gpu_fps": 5812.283076608701,
+        "ours_gpu_fps_sd": 11.818652717373093,
+        "ours_gpu_batch_ms_mean": 44.04465450594822,
+        "ours_gpu_batch_ms_sd": 0.08956671764734314,
+        "source_gpu_fps": 1787.4416077034293,
+        "source_gpu_fps_sd": 19.92744104500252,
+        "source_gpu_batch_ms_mean": 143.22146183500686,
+        "source_gpu_batch_ms_sd": 1.5970593399404818,
+        "previous_default_gpu_fps": 7462.617586912954,
+        "previous_default_gpu_fps_sd": 21.11069322080419,
+        "previous_default_gpu_batch_ms_mean": 34.30431708693504,
+        "previous_default_gpu_batch_ms_sd": 0.09703347281370318,
+        "previous_fidelity_gpu_fps": 3626.2132485640313,
+        "previous_fidelity_gpu_fps_sd": 24.302629362354132,
+        "previous_fidelity_gpu_batch_ms_mean": 70.59706157694261,
+        "previous_fidelity_gpu_batch_ms_sd": 0.4766013041878685,
+        "speedup_vs_source_gpu": 3.2517331204326925,
+        "speedup_vs_previous_default_gpu": 0.7788531314805126,
+        "speedup_vs_previous_fidelity_gpu": 1.602851977585804
+      }
+    ],
+    "scope": "Warmed public render of saved RenderStates, synchronization included. Disk, rollout, projection, initial transfer and indexing excluded. B64/B256 repeat 32 independent reached States. Same RTX3090 allocation. Source public GPU OpenGL renders ready independent source instances serially and returns NumPy RGB including readback; ours returns CUDA RGB. This is not a 1000-independent-frame or online benchmark.",
+    "old_default_mse_mean": 0.0020590730906907798,
+    "old_default_mse_max": 0.002323347690792003,
+    "explicit_cuda_paths_pixel_identical": true,
+    "source_and_state_corpora_identical": true,
+    "csv_sha256": "3fb6de530961d7faa05cc9a9343be3267f71bc569a4c14842e80fe81ac1a8c8e"
+  },
+  "scene_diagnostic": {
+    "scene-diagnostic": [
+      {
+        "backend": "auto",
+        "mse_max": 0.0076312808875592724,
+        "mse_mean": 0.006595049267409169,
+        "mse_per_state": [
+          0.0061842425389273354,
+          0.005985898853005254,
+          0.006165002893518519,
+          0.006231975582308087,
+          0.006179681993303858,
+          0.006118532635684993,
+          0.0061206614743528134,
+          0.00607610479342881,
+          0.007121999100906701,
+          0.007052445774061258,
+          0.007064830834294503,
+          0.00731706505110214,
+          0.007037433769463668,
+          0.006986606964068306,
+          0.007156482282455465,
+          0.007129115254149045,
+          0.005659871153322439,
+          0.005720010532807895,
+          0.00589483812315776,
+          0.0057517303541105985,
+          0.005842594595027554,
+          0.0057473199911091885,
+          0.005695562053457004,
+          0.005763410807541971,
+          0.007366287405485069,
+          0.0076312808875592724,
+          0.007441256067377933,
+          0.007334799115724721,
+          0.007409771532183134,
+          0.007300552471805715,
+          0.007348179135829168,
+          0.007206032535563244
+        ],
+        "mse_sd": 0.0006860366906242229,
+        "supersample": null,
+        "timings": [
+          {
+            "batch": 1,
+            "fps": 129.60360215662035,
+            "seconds": [
+              0.00776692945510149,
+              0.0077261002734303474,
+              0.007695730775594711,
+              0.007680379785597324,
+              0.007720159366726875,
+              0.007705709896981716
+            ]
+          },
+          {
+            "batch": 64,
+            "fps": 6231.796834016946,
+            "seconds": [
+              0.01035232376307249,
+              0.010226172395050526,
+              0.010221792384982109,
+              0.010222312994301319,
+              0.010230802930891514,
+              0.010366062633693218
+            ]
+          },
+          {
+            "batch": 256,
+            "fps": 14787.951859742929,
+            "seconds": [
+              0.01737859472632408,
+              0.017348255030810833,
+              0.017335434444248676,
+              0.01739073544740677,
+              0.017213884741067886,
+              0.017201434820890427
+            ]
+          }
+        ]
+      },
+      {
+        "backend": "mjwarp_fidelity",
+        "mse_max": 0.003915479973647956,
+        "mse_mean": 0.0030674629646525176,
+        "mse_per_state": [
+          0.002902339244521338,
+          0.0027080967957035756,
+          0.0029113689746732025,
+          0.002952801857058183,
+          0.002935913821206587,
+          0.0028755767012687435,
+          0.002884577646418045,
+          0.0028194597130110216,
+          0.0030346726619569398,
+          0.0029681818090798403,
+          0.002994476283160323,
+          0.003204325209454697,
+          0.002948417776015635,
+          0.0029191734649333593,
+          0.003096245033961298,
+          0.003066944404395745,
+          0.0026233912938132768,
+          0.0026520849352813024,
+          0.002819771341951813,
+          0.002710547275486992,
+          0.002767286270104447,
+          0.002662575191432782,
+          0.002615671907038959,
+          0.0026940209294502118,
+          0.0036518218653883126,
+          0.003915479973647956,
+          0.003730371131295656,
+          0.0036401464180443413,
+          0.0037021142709534795,
+          0.003596433262847623,
+          0.003651609106673715,
+          0.0035029182986511596
+        ],
+        "mse_sd": 0.00038573497048616923,
+        "supersample": 1,
+        "timings": [
+          {
+            "batch": 1,
+            "fps": 77.21842578352039,
+            "seconds": [
+              0.012948929332196712,
+              0.012944557704031467,
+              0.01302321907132864,
+              0.012928788550198078,
+              0.012939808890223503,
+              0.012916358187794685
+            ]
+          },
+          {
+            "batch": 64,
+            "fps": 3792.102542500323,
+            "seconds": [
+              0.01692370418459177,
+              0.016910774633288383,
+              0.01689490396529436,
+              0.016867133788764477,
+              0.01685255393385887,
+              0.016814013943076134
+            ]
+          },
+          {
+            "batch": 256,
+            "fps": 8867.01033043494,
+            "seconds": [
+              0.02916760090738535,
+              0.029559503309428692,
+              0.02862561121582985,
+              0.028646601364016533,
+              0.02861397061496973,
+              0.028613081201910973
+            ]
+          }
+        ]
+      },
+      {
+        "backend": "mjwarp_fidelity",
+        "mse_max": 0.0016261123526207873,
+        "mse_mean": 0.001460158521512159,
+        "mse_per_state": [
+          0.00140339778170255,
+          0.001356702249935922,
+          0.0013263115448385234,
+          0.0013671161632545174,
+          0.0013309396726419326,
+          0.0013964080321671153,
+          0.0013990775282743818,
+          0.001377600161796745,
+          0.0014509668757208766,
+          0.0014458381391772395,
+          0.0014051674335992567,
+          0.00142652715702294,
+          0.0014304256475874662,
+          0.0014770673639145197,
+          0.001424275669213764,
+          0.0014361063052672049,
+          0.0015514390498846597,
+          0.0015999918400775345,
+          0.0016261123526207873,
+          0.0015707174924708446,
+          0.0015268929518294245,
+          0.001568745094034346,
+          0.0015661006283640908,
+          0.0015430776324009997,
+          0.0014723278506664104,
+          0.0014651653911155966,
+          0.0014212832804690505,
+          0.0014866014573721644,
+          0.001428603431773036,
+          0.0015124791746764065,
+          0.0014373565755959247,
+          0.0014942507589228505
+        ],
+        "mse_sd": 7.809801902914997e-05,
+        "supersample": 2,
+        "timings": [
+          {
+            "batch": 1,
+            "fps": 74.83171701401508,
+            "seconds": [
+              0.0133776580914855,
+              0.013413476757705212,
+              0.01332828775048256,
+              0.01339211780577898,
+              0.013333006761968136,
+              0.01333535835146904
+            ]
+          },
+          {
+            "batch": 64,
+            "fps": 2560.9078001328908,
+            "seconds": [
+              0.02482749242335558,
+              0.025007163174450397,
+              0.025071502663195133,
+              0.024972733110189438,
+              0.02487738337367773,
+              0.025190552696585655
+            ]
+          },
+          {
+            "batch": 256,
+            "fps": 4135.593197821163,
+            "seconds": [
+              0.06163798086345196,
+              0.06159784086048603,
+              0.061752911657094955,
+              0.061649201437830925,
+              0.06253472156822681,
+              0.06223718170076609
+            ]
+          }
+        ]
+      }
+    ],
+    "scene-sampling-diagnostic": [
+      {
+        "backend": "mjwarp_fidelity",
+        "mse_max": 0.001251922337562476,
+        "mse_mean": 0.0011197843921959103,
+        "mse_per_state": [
+          0.0010634068527329231,
+          0.0010392374627547097,
+          0.0010612805171088043,
+          0.0011156391171664743,
+          0.0010691651047673972,
+          0.00108095569212162,
+          0.0010532006920415226,
+          0.001067817215734333,
+          0.0010658898720844548,
+          0.0010866401043669101,
+          0.0010451521550205048,
+          0.0010537738890490837,
+          0.001058356962065872,
+          0.0010715855480264,
+          0.0010587637066673072,
+          0.0010397681080193514,
+          0.0011463201753332051,
+          0.0011358023857010124,
+          0.0011396082636485965,
+          0.0011274046740836858,
+          0.0010996822135717031,
+          0.0011372503964821223,
+          0.0010969038350634372,
+          0.0011089522359188774,
+          0.001244518334294502,
+          0.001219905905581187,
+          0.0012336976763744712,
+          0.001251922337562476,
+          0.0012070840642220942,
+          0.0012176243812475971,
+          0.001229277301198257,
+          0.001206513370258234
+        ],
+        "mse_sd": 6.954901608213421e-05,
+        "supersample": 3,
+        "timings": [
+          {
+            "batch": 1,
+            "fps": 66.8334849793283,
+            "seconds": [
+              0.0150345079600811,
+              0.014824479818344116,
+              0.01500152051448822,
+              0.015048658475279808,
+              0.01512826792895794,
+              0.014737922698259354
+            ]
+          },
+          {
+            "batch": 64,
+            "fps": 1796.7502036197313,
+            "seconds": [
+              0.035676637664437294,
+              0.0357072576880455,
+              0.03553569130599499,
+              0.03563470020890236,
+              0.0355897881090641,
+              0.03557511605322361
+            ]
+          },
+          {
+            "batch": 256,
+            "fps": 2522.796727079518,
+            "seconds": [
+              0.101066455245018,
+              0.10558172687888145,
+              0.10078454948961735,
+              0.1004794891923666,
+              0.10047226026654243,
+              0.1004636213183403
+            ]
+          }
+        ]
+      },
+      {
+        "backend": "mjwarp_fidelity",
+        "mse_max": 0.001163553631215558,
+        "mse_mean": 0.0010451277894544765,
+        "mse_per_state": [
+          0.0009777652124983982,
+          0.0009668882360950917,
+          0.0009826861964148405,
+          0.0010167100694444444,
+          0.0009762371043188518,
+          0.0009719644087210049,
+          0.0009699507100634372,
+          0.0009784710708221197,
+          0.0009923479451012431,
+          0.001007105890763168,
+          0.0009958847458509548,
+          0.0009977382497116493,
+          0.0009988646193771628,
+          0.0010203670162918109,
+          0.0010067429494265026,
+          0.000983984024573882,
+          0.0010606722774894274,
+          0.0010597599180603614,
+          0.0010644631371748046,
+          0.0010584721020761247,
+          0.0010414726807798284,
+          0.0010608825331603232,
+          0.0010306169802479816,
+          0.0010437053957612456,
+          0.001163553631215558,
+          0.0011566176971196977,
+          0.00114545287069076,
+          0.0011456493596212994,
+          0.0011274221953895937,
+          0.0011543361727861079,
+          0.0011533900222670767,
+          0.0011339138392285019
+        ],
+        "mse_sd": 6.692201863934404e-05,
+        "supersample": 4,
+        "timings": [
+          {
+            "batch": 1,
+            "fps": 67.44562139273103,
+            "seconds": [
+              0.014836801216006279,
+              0.01480783149600029,
+              0.014825129881501198,
+              0.014836231246590614,
+              0.014843739569187164,
+              0.014810822904109955
+            ]
+          },
+          {
+            "batch": 64,
+            "fps": 1317.3363137293293,
+            "seconds": [
+              0.04845329932868481,
+              0.04845310002565384,
+              0.04854501970112324,
+              0.04863098822534084,
+              0.0487134475260973,
+              0.048701461404561996
+            ]
+          },
+          {
+            "batch": 256,
+            "fps": 1656.3864847667926,
+            "seconds": [
+              0.15829511918127537,
+              0.15376419574022293,
+              0.15396149642765522,
+              0.1542176939547062,
+              0.15341250970959663,
+              0.15366879478096962
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "scene_regions_4x": {
+    "right_window": {
+      "full_frame_mse_contribution": 0.0005155487823193003,
+      "fraction_of_total_squared_error": 0.49328779458481364
+    },
+    "upper_arm": {
+      "full_frame_mse_contribution": 0.00019786943736083075,
+      "fraction_of_total_squared_error": 0.18932559191073875
+    },
+    "lower_center_and_buttons": {
+      "full_frame_mse_contribution": 0.0002057436608540986,
+      "fraction_of_total_squared_error": 0.19685981267562525
+    },
+    "left_background_and_drawer": {
+      "full_frame_mse_contribution": 0.000125965908920247,
+      "fraction_of_total_squared_error": 0.12052680082882226
+    }
+  },
+  "local_checks": {
+    "unit_tests": 28,
+    "ruff": "PASS",
+    "diff_check": "PASS",
+    "mkdocs_strict": "PASS",
+    "wheel_smoke": "PASS outside checkout using preinstalled dependencies, not all-family or fresh dependency-resolution acceptance",
+    "wheel_hashes": {
+      "stable_envs-0.1.0-py3-none-any.whl": "3ca1bf9fda01522bdb512b46eaee044b38c647b2f23a72535051b3ef8f1a50b1",
+      ".gitignore": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1",
+      "stable_envs-0.1.0.tar.gz": "13d6e61d216abe45d807ec3f54ce312cda1270c2c04faa500d827d0e2d1c72e6"
+    }
+  },
+  "archive": {
+    "path": "tests/fixtures/testing/cube-default-candidate-evidence.tar.gz",
+    "sha256": "8e25f62f7855c9acad8e013c905ed722ba7081312c51ef93f8276e8fa21f8460",
+    "seal_files": 317
+  }
+}

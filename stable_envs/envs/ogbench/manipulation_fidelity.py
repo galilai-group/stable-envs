@@ -32,20 +32,22 @@ def draw(token, bundle, state, device, size, supersample):
             alternate.pristine["geom_group"] = alternate.model.geom_group.copy()
             core.register_bundle(key, alternate)
 
-    def raster(key, rows):
+    def raster(key, rows, *, composite=False):
         renderer = _ConfiguredRenderer(key, core.get_bundle(key), device, res, 1)
         try:
-            composite = renderer.draw(rows)
+            if not composite:
+                return renderer.raster(rows)
+            image = renderer.draw(rows)
             nw = 1 if len(rows) == 1 else 1 << (len(rows) - 1).bit_length()
             context = core._context(key, res, nw)
-            return composite, context.bgra[: len(rows)][..., [2, 1, 0]], context.seg[: len(rows)]
+            return image, context.bgra[: len(rows)][..., [2, 1, 0]], context.seg[: len(rows)]
         finally:
             renderer.close()
 
     reference_key = token, res, str(device)
     reference = _REFERENCE.get(reference_key)
     if reference is None:
-        reference = raster(token + "/fidelity/static", state[:1])[1].clone().float().clamp_min(1)
+        reference = raster(token + "/fidelity/static", state[:1])[0].clone().float().clamp_min(1)
         _REFERENCE.put(reference_key, reference)
     movers = torch.zeros(bundle.model.ngeom + 1, dtype=torch.bool, device=device)
     movers[torch.as_tensor(np.asarray(bundle.movers) + 1, device=device)] = True
@@ -60,8 +62,8 @@ def draw(token, bundle, state, device, size, supersample):
         keys = [(torch.cuda.current_device(), key, res, nw) for key in (token, token + "/fidelity/opaque")]
         # Both passes' segmentation views remain live until composition completes.
         with core._CTX_CACHE.lease(keys):
-            _, first, first_seg = raster(token, rows)
-            opaque, shadowed, opaque_seg = raster(token + "/fidelity/opaque", rows)
+            first, first_seg = raster(token, rows)
+            opaque, shadowed, opaque_seg = raster(token + "/fidelity/opaque", rows, composite=True)
             ratio = ((shadowed.float() / reference).clamp(0, 1) - 0.3).div(0.7).clamp(0, 1)
             moving = movers[(opaque_seg + 1).long()]
             shadows = torch.where(moving[..., None], opaque.float(), opaque.float() * ratio)

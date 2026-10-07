@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import hashlib
 import threading
+from functools import lru_cache
 from importlib.metadata import version
 
+import numpy as np
 import torch
 
 from ..._adapters import ogbench_render_state as pixels
@@ -12,11 +14,31 @@ from . import manipulation as core
 _LOCK = threading.RLock()
 
 
+@lru_cache(maxsize=1)
+def _check_versions():
+    if version("mujoco") != "3.12.0" or version("ogbench") != "1.2.1":
+        raise ImportError("Cube/Scene unified rendering requires mujoco==3.12.0 and ogbench==1.2.1")
+    if version("mujoco-warp") != "3.12.0" or version("warp-lang") != "1.17.0":
+        raise ImportError("Cube/Scene frozen GPU rendering requires mujoco-warp==3.12.0 and warp-lang==1.17.0")
+
+
 def configuration_key(family, row):
     h = hashlib.sha256(family.encode())
     for key in (*pixels.STATIC, *(("lock_color",) if family == "Scene" else ())):
         h.update(row["appearance", key].detach().cpu().contiguous().numpy().tobytes())
     return f"stable-envs-{family}-{h.hexdigest()}"
+
+
+def _configuration_groups(family, host):
+    """Group exact model bytes without constructing a TensorDict for every row."""
+    keys = (*pixels.STATIC, *(("lock_color",) if family == "Scene" else ()))
+    columns = [
+        np.ascontiguousarray(host["appearance", key].numpy()).reshape(len(host), -1).view(np.uint8) for key in keys
+    ]
+    groups = {}
+    for index, row in enumerate(np.concatenate(columns, axis=1)):
+        groups.setdefault(row.tobytes(), []).append(index)
+    return groups.values()
 
 
 def configured_bundle(family, row):
@@ -49,13 +71,27 @@ class _ConfiguredRenderer(core.OGBManipBase):
             cache_key=token,
         )
 
-    def draw(self, state):
+    def _rows(self, state):
         columns = [state["pose", "qpos"], state["pose", "mocap_pos"]]
         if self._b.nbuttons:
             columns.append(state["pose", "buttons"])
-        rows = torch.cat(columns, dim=-1).to(self.device, torch.float32)
+        return torch.cat(columns, dim=-1).to(self.device, torch.float32)
+
+    def raster(self, state):
+        cube = self._cube_colours(
+            {"cube.color": state["appearance", "cube.color"].detach().cpu().numpy().reshape(len(state), 3)},
+            len(state),
+        )
+        return self._raster(
+            self._rows(state),
+            self.size,
+            cube,
+            state["pose", "mocap_quat"].reshape(len(state), self._b.nmocap, 4),
+        )
+
+    def draw(self, state):
         return super()._render(
-            rows,
+            self._rows(state),
             mocap_quat=state["pose", "mocap_quat"].reshape(len(state), self._b.nmocap, 4),
             variation={
                 "cube.color": state["appearance", "cube.color"].reshape(len(state), 3),
@@ -69,6 +105,8 @@ def render(family, state, device, backend="auto", chunk_size=None):
         from . import manipulation_opengl
 
         return manipulation_opengl.render(family, state, device, chunk_size)
+    if backend == "auto" and family == "Cube":
+        backend = "mjwarp_fidelity"
     host = state.detach().cpu()
     pixels.validate(family, host)
     if backend not in ("auto", "mjwarp", "mjwarp_fidelity"):
@@ -77,10 +115,7 @@ def render(family, state, device, backend="auto", chunk_size=None):
         raise ValueError("mjwarp_fidelity is currently validated only for Cube")
     if torch.device(device).type != "cuda":
         raise NotImplementedError("Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA")
-    if version("mujoco") != "3.12.0" or version("ogbench") != "1.2.1":
-        raise ImportError("Cube/Scene unified rendering requires mujoco==3.12.0 and ogbench==1.2.1")
-    if version("mujoco-warp") != "3.12.0" or version("warp-lang") != "1.17.0":
-        raise ImportError("Cube/Scene frozen GPU rendering requires mujoco-warp==3.12.0 and warp-lang==1.17.0")
+    _check_versions()
     if chunk_size is not None and (type(chunk_size) is not int or chunk_size < 1):
         raise ValueError("chunk_size must be a positive integer")
     size, ss = (int(host["renderer", key][0, 0]) for key in ("size", "supersample"))
@@ -89,13 +124,10 @@ def render(family, state, device, backend="auto", chunk_size=None):
     import warp as wp
 
     with _LOCK, torch.cuda.device(device), wp.ScopedDevice(str(device)):
-        groups = {}
-        for i, row in enumerate(host):
-            groups.setdefault(configuration_key(family, row), []).append(i)
         prepared = []
         active = set()
         device_index = torch.cuda.current_device()
-        for indices in groups.values():
+        for indices in _configuration_groups(family, host):
             token, bundle = configured_bundle(family, host[indices[0]])
             prepared.append((token, bundle, indices))
             limit = chunk_size or len(indices)

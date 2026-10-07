@@ -94,5 +94,7 @@ The measured source install, including the header-path failure mode, is in
 
 ## Device honesty
 
-OGBCube, OGBScene and PyFlytRocketLanding refuse `device="cpu"` (and `device="auto"` on a CPU-only
-machine) rather than silently falling back to CUDA. Fetch has no CPU backend. Details: [limitations](concepts/limitations.md).
+Device support depends on the family and backend. Cube, Scene and Fetch have
+software OpenGL CPU paths; their CUDA renderers require an NVIDIA GPU. Cube/Scene
+physics still runs on CPU. See [backend selection](api/env.md) and
+[limitations](concepts/limitations.md); CPU measurements must not use a hardware GL context.
