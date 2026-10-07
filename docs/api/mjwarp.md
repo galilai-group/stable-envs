@@ -67,4 +67,31 @@ in the [testing record](../testing.md).
 [CSV with latency and FPS dispersion](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/cube-default-cuda-performance.csv)
 and [acceptance scope](../testing.md#cube-default-cuda-renderer-acceptance).
 
+### Scene default checkpoint
+
+Scene's CUDA default uses four OpenGL-aligned samples per pixel and two MJWarp
+passes for transparency and shadows. Its static background is baked once at higher
+resolution and cached at the matching sample locations. The per-frame ray count
+is four per pixel per pass. Explicit `mjwarp` and supplied sampling settings retain
+their previous meaning.
+
+| Batch | Ours GPU FPS | Source GPU FPS | Speedup |
+| ---: | ---: | ---: | ---: |
+| 1 | 117 | 1,641 | 0.071× |
+| 64 | 3,297 | 1,480 | 2.23× |
+| 256 | 4,769 | 1,476 | 3.23× |
+
+These paired RTX 3090 measurements use 32 independently reached saved States at
+64×64, three warmups and six timed samples. Larger batches repeat those States.
+Timing includes public rendering and synchronization; rollout, disk loading,
+projection, initial transfer and batch indexing are excluded. Source OpenGL loops
+ready independent source instances and returns NumPy images including readback;
+ours returns CUDA images. This is not an online or equal-output-destination test.
+
+Mean normalized MSE is **0.000768 ± 0.000106**, worst **0.000950**. The old default
+was about 4.15× faster at B256 but exceeded the pixel limit (mean MSE 0.006595).
+The new path meets 0.001 on this corpus, not 0.0005, and remains slower at B1.
+[Acceptance scope](../testing.md#scene-default-cuda-renderer-acceptance) and
+[CSV with timing dispersion](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/scene-default-cuda-performance.csv).
+
 ::: stable_envs.render.mjwarp

@@ -377,12 +377,41 @@ indexing. The report preserves twelve latency samples after warmup, mean/SD,
 code and corpus hashes, and source-image MSE. Throughput compares our two
 implementations on the same device; it does not measure source-renderer FPS.
 
+## Scene default CUDA renderer acceptance
+
+Scene's CUDA default uses the two-pass fidelity renderer with four samples per
+pixel. Their positions match NVIDIA OpenGL's four-sample pattern, and the cached
+static background uses those same positions. Fixed and moving glass both blend
+with the opaque pass. This replaces the missing shadows/transparency and coarse
+single-sample edges of its previous default. CPU software OpenGL is unchanged.
+
+Complete OGBench profiles pass **72/72 on CPU and 72/72 on CUDA**, with `auto`
+now tested independently for Cube, Scene and Maze. A separate NVIDIA A40 job
+passes **5/5 without skips**: Cube/Scene batch, chunk, style and nonmutation checks
+followed by the three immutable explicit-backend golden-image tests. The source
+profiles retain their existing State, simulation, task and controlled-entropy
+scope; these results do not certify every Variation or reachable scene.
+
+The paired RTX 3090 probe measures mean normalized MSE **0.000768 ± 0.000106**,
+worst **0.000950**, across 32 independently reached States at 64×64. At B256,
+ours renders **4,769 FPS** versus source's **1,476 FPS** (3.23×). The older default
+reached 19,811 FPS but had mean MSE 0.006595 and worst 0.007631. B1 remains slower
+than source. Larger batches repeat the 32 States; no new all-38 or online benchmark
+is implied. [Timing protocol](api/mjwarp.md#scene-default-checkpoint).
+
+[Acceptance report](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/scene-default-oscar-validation.json),
+[CSV with mean and SD](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/scene-default-cuda-performance.csv),
+and [matched-state images](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/scene-default-comparison.png)
+preserve raw frames, source/code hashes, scheduler records and rejected experiments.
+Mesh-normal interpolation worsened agreement and was rejected; changing sampling
+without aligning the static background also missed the threshold.
+
 ## Cube default CUDA renderer acceptance
 
 Cube's CUDA `backend="auto"` now uses the two-pass fidelity renderer with 2×
 supersampling. Explicit backends and supplied RenderState sampling remain
-unchanged; the CPU default remains software OpenGL. The maintained Cube source
-profile now exercises `auto`. Scene still exercises explicit OpenGL.
+unchanged; the CPU default remains software OpenGL. At this Cube checkpoint, its
+maintained source profile switched to `auto`; Scene still used explicit OpenGL.
 
 The complete OGBench source profiles pass **72/72 cases on each output device**,
 including eight independent source-pixel cases per registration. CPU job `7092268`

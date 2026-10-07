@@ -168,7 +168,8 @@ as a required rejected control.
 
 Cube subsequently switches its maintained source-pixel profile to the CUDA default:
 two-pass fidelity with 2× supersampling. Separate complete CPU/CUDA source profiles
-and exact A40 regression checks gate that change; Scene remains explicit OpenGL.
+and exact A40 regression checks gate that change; Scene was still tested through
+explicit OpenGL at that checkpoint.
 The [Cube acceptance record](testing.md#cube-default-cuda-renderer-acceptance)
 keeps source parity, frozen-image stability and paired performance distinct.
 
@@ -179,6 +180,11 @@ Variation or lifecycle checks. The
 [Oscar record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/parallel-source-pixels-oscar-validation.json)
 keeps passing cases, failed controls and runtime/code provenance separate. No
 profile failure is converted to PASS because some registrations succeeded.
+
+Scene subsequently passes its own default-backend source gate using four
+OpenGL-aligned samples and matched static-background sampling. The complete
+CPU/CUDA profiles and immutable A40 regressions remain separate requirements.
+[Scene evidence and performance scope](testing.md#scene-default-cuda-renderer-acceptance).
 
 The shared checker accepts nested task keys and explicit per-output NaN sentinels
 for DMC. Tests reject undeclared NaNs, including NaNs in reward when another output
