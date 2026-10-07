@@ -13,7 +13,20 @@ from .base import _DMCModel
 class _TCtx:
     """Hold a captured MJWarp render graph and the per-world arrays it reads and writes."""
 
-    __slots__ = ("wm", "wd", "rc", "bgra", "graph", "nworld", "res", "wp", "mjw")
+    __slots__ = ("wm", "wd", "rc", "bgra", "graph", "nworld", "res", "wp", "mjw", "textures", "reflection")
+
+
+def _sky_plate(cls, size: int) -> np.ndarray:
+    import mujoco
+    from dm_control.mujoco import wrapper
+
+    source, model, *_ = cls._bundle(cls.default_size)
+    if model.cam_mode[cls.CAMERA] != mujoco.mjtCamLight.mjCAMLIGHT_TRACKCOM:
+        raise ValueError("Cached TrackCom sky requires a camera with fixed orientation")
+    option = wrapper.MjvOption()
+    option.geomgroup[:] = 0
+    option.sitegroup[:] = 0
+    return source.physics.render(height=size, width=size, camera_id=cls.CAMERA, scene_option=option).copy()
 
 
 def _tc_context(cls, res: int, nworld: int) -> _TCtx:
@@ -56,6 +69,7 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
     batched = sorted({"mat_rgba", "light_diffuse"} | {a for a, _ in slots})
     c.wm = mjw.put_model(m, batch_sizes={k: int(nworld) for k in batched})
     c.wd = mjw.put_data(m, d0, nworld=int(nworld))
+    c.textures = c.reflection = None
     # Keep GL-style rounding active during source generation and first compilation,
     # including the warm-up render.
     with MW.gl_rounding():
@@ -64,6 +78,7 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
             nworld=int(nworld),
             cam_res=(int(res), int(res)),
             render_rgb=True,
+            render_seg=True,
             cam_active=[i == int(cls.CAMERA) for i in range(m.ncam)],
             enabled_geom_groups=list(VISIBLE_GROUPS),
             use_textures=True,
@@ -71,6 +86,11 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
             render_skybox=True,
             **dict(cls.RENDER_FLAGS),
         )
+        from ...render.trackcom_reflection import Reflection
+        from ...render.trackcom_texture import Textures
+
+        c.textures = Textures(m, c.rc, _sky_plate(cls, int(res)))
+        c.reflection = Reflection(c.wm, c.wd, c.rc, m)
         _tc_frame(c)
         wp.synchronize()
     import torch
@@ -89,6 +109,10 @@ def _tc_frame(c: _TCtx) -> None:
     c.mjw.camlight(c.wm, c.wd)
     c.mjw.refit_bvh(c.wm, c.wd, c.rc)
     c.mjw.render(c.wm, c.wd, c.rc)
+    if c.textures is not None:
+        c.textures.render()
+    if c.reflection is not None:
+        c.reflection.render()
 
 
 class DMControlTrackCom(_DMCModel):
@@ -153,7 +177,6 @@ class DMControlTrackCom(_DMCModel):
                 used.append(mid)
         return [mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_MATERIAL, i) or f"mat{i}" for i in used]
 
-
     def _cpu_scene(self, size: int) -> C3.Scene:
         """Cache a CPU scene per resolution from canonical geometry and render flags."""
         cache = self.__dict__.setdefault("_cpu_scenes", _RES.BoundedCache(4, name="dmcontrol.trackcom.cpu"))
@@ -193,6 +216,10 @@ class DMControlTrackCom(_DMCModel):
                 f"device='cuda' draws it through MJWarp; device='cpu' is refused rather than "
                 f"silently served by the GPU"
             ) from e
+        sc.sky = (
+            torch.as_tensor(_sky_plate(type(self), int(size)), device=self.device, dtype=torch.float32).reshape(-1, 3)
+            / 255
+        )
         return cache.put(int(size), sc)
 
     def _cpu_poses(self, s: torch.Tensor, sc: C3.Scene):
@@ -252,7 +279,6 @@ class DMControlTrackCom(_DMCModel):
         ldif = torch.clamp(base.unsqueeze(0) * sty["light.diffuse_scale"][:B].reshape(B, 1, 1), 0, 1)
         C3.render(sc, cam, xp, xm, lp, ld, mat, ldif, out=buf, chunk_size=self.CPU_RENDER_CHUNK)
 
-
     @torch.no_grad()
     def _render(
         self,
@@ -272,12 +298,7 @@ class DMControlTrackCom(_DMCModel):
         size = int(size or self.size)
         ss = int(self.ss if supersample is None else supersample)
         if ss != 1:
-            raise ValueError(
-                f"{type(self).__name__}: supersample={ss} is not offered. MJWarp casts one ray per "
-                f"pixel and a box average over sub-samples is not GL's mipmap pyramid: measured on "
-                f"the identical mechanism it lowers the far floor's mean error and lowers whole-frame "
-                f"exactness at the same time (docs/research/mujoco_locomotion.md S6.5)."
-            )
+            raise ValueError(f"{type(self).__name__}: only supersample=1 is supported.")
         sty = self.resolve_style(style, variation, batch=B)
 
         if out is None:

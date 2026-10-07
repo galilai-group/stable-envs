@@ -153,12 +153,16 @@ regression profiles continue to cover all 38 non-Craftax registrations.
 
 The parallel extension implements Navigation, DMC and nine non-PickAndPlace Fetch
 source-pixel adapters. Native and Navigation pass their complete fresh CPU/CUDA
-profiles. Seven DMC registrations pass each required case, while five approximate
-moving-camera renderers exceed the unchanged 0.001 per-frame limit. The complete
-DMC profile remains FAIL; a sibling's result cannot satisfy a failing registration.
+profiles. At that checkpoint, seven DMC registrations passed each required case,
+while five moving-camera renderers exceeded the unchanged 0.001 per-frame limit.
+The historical DMC profile remains FAIL; a sibling's result cannot satisfy a failing registration.
 Fetch's isolated-source OpenGL profile passes all 336 required cases on each
-device. Validated shared source-pixel migration is now 25/38 registrations; five
-DMC registrations fail the pixel limit and eight still need adapters. The
+device. That checkpoint validated 25/38 registrations. The subsequent DMC correction
+passes all 288 required cases on each device, extending validated shared
+source-pixel coverage to 30/38. Eight registrations still need adapters.
+The [DMC correction record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/dmc-render-oscar-validation.json)
+preserves fresh source acceptance and paired performance; neither substitutes for
+Variation or lifecycle checks. The
 [Oscar record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/parallel-source-pixels-oscar-validation.json)
 keeps passing cases, failed controls and runtime/code provenance separate. No
 profile failure is converted to PASS because some registrations succeeded.

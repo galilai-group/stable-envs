@@ -23,18 +23,10 @@ _AT_VERSIONS = {"mujoco": "3.11.0"}
 _AT_MEASURED_WITH = {"mujoco_warp": "3.11.0"}
 
 VISUAL_NOTE = (
-    "The frame is MJWarp's raytrace of the same scene, not dm_control's own raster. Two named "
-    "mechanisms carry the residual, both measured per surface off MuJoCo's segmentation buffer: "
-    '(1) the skybox is an 800x4800 gradient with mark="random" specks and MJWarp samples it with one '
-    "unfiltered tap, which is 48-89% of the frame on cheetah/hopper/walker at mean 4.1-4.7/255 and is "
-    "what holds SSIM down; (2) the checker floor is MINIFIED and MJWarp has no level-of-detail "
-    "selection, so where MuJoCo's mipmap shows one grey (far-band luminance spread 0.1 on humanoid) "
-    "MJWarp paints full contrast (9.7). Suitable for generating training data live -- the frame is a "
-    "function of the state and the appearance knobs are per-environment tensors. NOT a substitute for "
-    "a stored dataset when a policy will be evaluated on official dm_control pixels: the train and "
-    "eval pixel distributions differ by the amount above and nothing here measures what that costs a "
-    "policy. Closing it needs plane-texture level-of-detail in mujoco_warp's render kernel, which "
-    "needs ray differentials it does not compute."
+    "Body-tracking cameras use analytic rendering with filtered textures, floor reflections, "
+    "and source-derived floor lighting. Geometry edges and body shading can still differ from "
+    "source OpenGL. The visual_fidelity dictionary records the historical MuJoCo 3.11 benchmark; "
+    "current source-pixel acceptance is measured separately by the maintained contract tests."
 )
 
 PARITY_NOTE = (
@@ -122,14 +114,9 @@ def trackcom_cell(
                 visual_note=note,
                 __module__=_MODULE,
                 __doc__=(
-                    f'DM Control {domain}-{task} at camera {camera}, a mode="trackcom" camera.\n\n'
-                    f"VISUAL TIER -- these are NOT the official pixels. The frame is MJWarp's raytrace of "
-                    f"dm_control's own scene at dm_control's own camera, which lands on MuJoCo's "
-                    f"cam_xpos to 1e-8 m; measured against physics.render it is mean "
-                    f"{vf['mean_abs']:.2f}/255 with {100 * vf['within8_frac']:.1f}% of pixels within "
-                    f"8/255 and SSIM {vf['ssim']:.3f}. The residual is the unfiltered speckled skybox and "
-                    f"the minified checker floor. Good for generating training data live; not "
-                    f"interchangeable with a stored dataset of official pixels. See visual_note."
+                    f"DM Control {domain}-{task} at body-tracking camera {camera}.\n\n"
+                    "VISUAL TIER: uses MJWarp on CUDA or cpu3d on CPU; source OpenGL is an explicit backend. "
+                    "Pixels approximate the source rasterizer. See visual_note for measurement scope."
                 ),
             ),
         )

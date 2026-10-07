@@ -210,23 +210,22 @@ Its hashed evidence archive preserves sealed reports, case identities, source/co
 hashes, runtime versions, logs and terminal scheduler status. These measurements
 apply to the tested cases and configurations.
 
-The next cohort implements Navigation (three registrations), DMC (twelve), and
-Fetch Reach/Push/Slide (nine). Fresh Oscar runs pass Native and Navigation's complete
-CPU/CUDA profiles. Seven DMC registrations also pass every required case on both
-devices; the DMC profile as a whole fails its pixel gate. Fetch's explicit OpenGL
+The Navigation/DMC/Fetch extension initially passed Native and Navigation's complete
+CPU/CUDA profiles. Seven DMC registrations passed every required case on both
+devices; five failed the pixel gate at that checkpoint. Fetch's explicit OpenGL
 profile passes all 336 required cases on each device. The original
 [pending cohort record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/parallel-source-pixels-validation.json)
 remains unchanged; it records the earlier checkpoint, not current acceptance.
 
 The [Oscar validation record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/parallel-source-pixels-oscar-validation.json)
-records the fresh results and links a hashed archive of code snapshots, sealed
+records that checkpoint and links a hashed archive of code snapshots, sealed
 reports, raw failed witnesses, JUnit results, dependencies and terminal job status.
-Shared source-pixel migration is now **25/38 non-Craftax registrations**: Rocket,
+That checkpoint established shared source-pixel coverage for **25/38 non-Craftax registrations**: Rocket,
 five native controls, three Navigation, seven DMC and nine Fetch registrations.
 Each counted registration passed its own required CPU/CUDA cases. This is test
 migration, not a new promotion matrix or a claim about every rendering backend.
-Five DMC registrations fail the pixel limit; Fetch PickAndPlace (three), OGBench
-(three), and PushT (two) still need migration.
+The DMC correction below raises current validated coverage to **30/38**.
+Fetch PickAndPlace (three), OGBench (three), and PushT (two) still need migration.
 
 Native's 896 frame comparisons per device have MSE zero. Navigation's 768 have
 maximum MSE 0.0000217513; Fetch's 2,304 have maximum MSE 0.000252860 on CPU and
@@ -296,24 +295,56 @@ documented `success=NaN` sentinel is allowed only on that declared output in the
 seven affected domains. Other task fields retain exact comparison and reject NaNs.
 The original family gates and accepted evidence remain untouched.
 
-The default DMC backends still exceed the pixel limit on these five registrations.
-All 192 State/simulation/task/online-State cases pass on each device; the whole
-DMC profile passes 248/288 cases and remains **FAIL**. These are observed maxima
-from failing selections, not a completed all-frame sample:
+The five default body-tracking DMC renderers now pass the unchanged per-frame
+normalized MSE limit of 0.001 on CPU and CUDA. Both complete profiles pass
+**288/288 required cases**, including 96 source-pixel cases and 1,536 frame
+comparisons per device. CPU renderer regressions pass 57 tests; the separate
+Apple MPS check is skipped on Linux. The source profiles have no required skips.
+Shared source-pixel coverage is now **30/38 non-Craftax registrations**.
 
 | DMC registration | CPU max MSE | CUDA max MSE |
 | --- | ---: | ---: |
-| Cheetah | 0.00302108 | 0.00288118 |
-| Hopper | 0.00371256 | 0.00366035 |
-| Humanoid | 0.00122174 | 0.00139473 |
-| Quadruped | 0.00114775 | 0.00121736 |
-| Walker | 0.00871613 | 0.00848571 |
+| Cheetah | 0.00034661 | 0.00033259 |
+| Hopper | 0.00035924 | 0.00039328 |
+| Humanoid | 0.00061119 | 0.00077615 |
+| Quadruped | 0.00048780 | 0.00053922 |
+| Walker | 0.00070605 | 0.00073589 |
 
-Cheetah's renderer now uses the registered source material. Remaining moving-camera
-rendering differences include texture filtering and reflections; the tests retain
-the default backend and the 0.001 threshold. Acrobot, BallInCup, Cartpole, Finger,
-Manipulator, Pendulum and Reacher each pass all 24 required cases on both devices.
-These sampled passes do not replace their separate appearance-Variation gates.
+Corrections include version-aware plane texture coordinates, mip filtering,
+additive floor reflections, shadow intensity, and source-mesh vertex lighting.
+The fixed-orientation camera permits a cached source-filtered sky. Rendering
+stays at the requested resolution with the same default CPU/MJWarp backends.
+Analytic geometry and body shading retain small differences from OpenGL.
+These checks cover default appearance at 64px; separate Variation and lifecycle
+gates remain required. Historical `visual_fidelity` dictionaries still describe
+the older MuJoCo 3.11 measurement, not these fresh MuJoCo 3.12 results.
+
+The [validation report](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/dmc-render-oscar-validation.json)
+links sealed source reports, runtime/code hashes, diagnostic failures, saved
+States and terminal scheduler evidence. The
+[paired timing CSV](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/dmc-render-performance.csv)
+records the fidelity correction's cost, including latency and MSE mean/SD.
+CPU B64 throughput is 0.60–0.68× the previous renderer.
+CUDA B256 throughput is 0.70–0.90× the previous renderer.
+These are same-device before/after library measurements, not speedups over the source simulator.
+
+For paired timing of the five body-tracking DMC renderers, use the same pinned
+DMC dependencies and GL configuration as the source profile:
+
+```bash
+python -m scripts.benchmarks.dmc_render --device cuda \
+  --baseline-root /path/to/baseline-checkout \
+  --source-root /path/to/pinned-stable-worldmodel \
+  --output /path/to/new-dmc-benchmark
+```
+
+This saves 32 independently reached source States per domain (two seeds, two
+lanes, eight transitions) and reloads them in separate baseline/candidate workers.
+Larger batches repeat that corpus. Timing includes public rendering and output
+synchronization, but excludes rollout, disk loading, initial transfer, and batch
+indexing. The report preserves twelve latency samples after warmup, mean/SD,
+code and corpus hashes, and source-image MSE. Throughput compares our two
+implementations on the same device; it does not measure source-renderer FPS.
 
 ## Saved rendering evidence
 

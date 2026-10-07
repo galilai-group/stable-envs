@@ -1,0 +1,531 @@
+"""Filtered floor shading and a reflected-ray pass for TrackCom."""
+
+import dataclasses
+
+import numpy as np
+
+from .texture_mip import plane_grid, plane_texgen
+
+
+class Reflection:
+    """Reuse the primary renderer's segmentation, BVH and lighting on floor hits."""
+
+    def __init__(self, model, data, context, source_model):
+        import mujoco
+        import warp as wp
+        from mujoco_warp._src import render as upstream
+
+        materials = np.asarray(source_model.geom_matid)
+        reflective = [
+            i for i, material in enumerate(materials) if material >= 0 and source_model.mat_reflectance[material] > 0
+        ]
+        if len(reflective) != 1 or source_model.geom_type[reflective[0]] != mujoco.mjtGeom.mjGEOM_PLANE:
+            raise ValueError("TrackCom reflection requires exactly one reflective plane")
+        if context.nrender != 1 or context.splat_count or context.bvh_nflexgeom:
+            raise ValueError("TrackCom reflection requires one camera and rigid geometry")
+        if not bool(context.render_seg.numpy().all()):
+            raise ValueError("TrackCom reflection requires primary render_seg=True")
+        if not context.use_precomputed_rays:
+            raise ValueError("TrackCom reflection requires precomputed camera rays")
+        flags = {
+            f.name: getattr(context, f.name)
+            for f in dataclasses.fields(context)
+            if f.type in (int, wp.uint32, bool, float, wp.vec3)
+        }
+        cast = upstream._make_cast_ray(context.geom_ray_types)
+        shadow_cast = upstream._make_cast_ray(context.geom_ray_types, first_hit=True)
+        lighting = upstream._make_compute_lighting(shadow_cast)
+        sample_texture = upstream.sample_texture
+        plane = reflective[0]
+        reflectance = float(source_model.mat_reflectance[materials[plane]])
+        nlight = int(model.nlight)
+        plane_material = int(materials[plane])
+        plane_texture = int(source_model.mat_texid[materials[plane], 1])
+        texture_width = int(source_model.tex_width[plane_texture]) if plane_texture >= 0 else 1
+        texture_height = int(source_model.tex_height[plane_texture]) if plane_texture >= 0 else 1
+        width, height = map(int, context.cam_res.numpy()[0])
+        size = np.asarray(source_model.geom_size[plane, :2], dtype=float)
+        repeat = np.asarray(source_model.mat_texrepeat[plane_material], dtype=float)
+        uniform = bool(source_model.mat_texuniform[plane_material])
+        scale, offset = plane_texgen(size, repeat, uniform, tuple(map(int, mujoco.__version__.split(".")[:2])))
+        uv_sx, uv_sy = map(float, scale)
+        uv_ox, uv_oy = map(float, offset)
+        grids = [
+            plane_grid(
+                float(size[i]),
+                float(source_model.geom_size[plane, 2]),
+                float(source_model.vis.map.zfar * source_model.stat.extent),
+                float(repeat[i]),
+                mujoco.mjMAXPLANEGRID,
+            )
+            for i in range(2)
+        ]
+
+        @wp.struct
+        class Scene:
+            geom_type: wp.array[int]
+            geom_dataid: wp.array2d[int]
+            geom_matid: wp.array2d[int]
+            geom_size: wp.array2d[wp.vec3]
+            geom_rgba: wp.array2d[wp.vec4]
+            flex_vertadr: wp.array[int]
+            flex_edge: wp.array[wp.vec2i]
+            flex_radius: wp.array[float]
+            mesh_faceadr: wp.array[int]
+            mat_texid: wp.array3d[int]
+            mat_texrepeat: wp.array2d[wp.vec2]
+            mat_rgba: wp.array2d[wp.vec4]
+            mat_specular: wp.array2d[float]
+            mat_shininess: wp.array2d[float]
+            mat_emission: wp.array2d[float]
+            light_active: wp.array2d[bool]
+            light_type: wp.array2d[int]
+            light_castshadow: wp.array2d[bool]
+            light_attenuation: wp.array2d[wp.vec3]
+            light_cutoff: wp.array2d[float]
+            light_exponent: wp.array2d[float]
+            light_ambient: wp.array2d[wp.vec3]
+            light_diffuse: wp.array2d[wp.vec3]
+            light_specular: wp.array2d[wp.vec3]
+            geom_xpos: wp.array2d[wp.vec3]
+            geom_xmat: wp.array2d[wp.mat33]
+            flexvert_xpos: wp.array2d[wp.vec3]
+            cam_xpos: wp.array2d[wp.vec3]
+            cam_xmat: wp.array2d[wp.mat33]
+            light_xpos: wp.array2d[wp.vec3]
+            light_xdir: wp.array2d[wp.vec3]
+            bvh_id: wp.uint64
+            group_root: wp.array[int]
+            enabled_geom_ids: wp.array[int]
+            mesh_bvh_id: wp.array[wp.uint64]
+            hfield_bvh_id: wp.array[wp.uint64]
+            flex_geom_flexid: wp.array[int]
+            flex_geom_edgeid: wp.array[int]
+            flex_bvh_id: wp.array[wp.uint64]
+            flex_group_root: wp.array2d[int]
+            mesh_facetexcoord: wp.array[wp.vec3i]
+            mesh_texcoord: wp.array[wp.vec2]
+            mesh_texcoord_offsets: wp.array[int]
+            textures: wp.array[wp.Texture2D]
+            ray: wp.array[wp.vec3]
+            cam_id_map: wp.array[int]
+            seg_data: wp.array2d[wp.vec2i]
+            rgb_data: wp.array2d[wp.uint32]
+            grid_x: wp.array[float]
+            grid_y: wp.array[float]
+
+        @wp.func
+        def blocked(
+            s: Scene, world: int, point: wp.vec3, normal: wp.vec3, kind: int, pos: wp.vec3, direction: wp.vec3
+        ):
+            shadow_direction = -direction
+            limit = float(1.0e8)  # noqa: UP018
+            if kind != 1:
+                delta = pos - point
+                shadow_direction = wp.normalize(delta)
+                limit = wp.length(delta) - 1.0e-3
+            blocker, distance, hit_normal, u, v, face, mesh = shadow_cast(
+                s.geom_type,
+                s.geom_dataid,
+                s.geom_size,
+                s.flex_vertadr,
+                s.flex_edge,
+                s.flex_radius,
+                s.geom_xpos,
+                s.geom_xmat,
+                s.flexvert_xpos,
+                s.bvh_id,
+                s.group_root[world],
+                world,
+                wp.static(flags["bvh_ngeom"]),
+                wp.static(flags["bvh_nflexgeom"]),
+                s.enabled_geom_ids,
+                s.mesh_bvh_id,
+                s.hfield_bvh_id,
+                s.flex_geom_flexid,
+                s.flex_geom_edgeid,
+                s.flex_bvh_id,
+                s.flex_group_root,
+                point + normal * 1.0e-4,
+                shadow_direction,
+                limit,
+                wp.static(flags["enable_backface_culling"]),
+            )
+            return blocker != -1
+
+        @wp.func
+        def cell(grid: wp.array[float], position: float):
+            lo = int(0)  # noqa: UP018
+            hi = grid.shape[0] - 1
+            while hi - lo > 1:
+                middle = (lo + hi) // 2
+                if grid[middle] <= position:
+                    lo = middle
+                else:
+                    hi = middle
+            return lo
+
+        @wp.func
+        def illuminate(
+            s: Scene,
+            world: int,
+            normal: wp.vec3,
+            point: wp.vec3,
+            view: wp.vec3,
+            spec: float,
+            shin: float,
+            active: bool,
+            kind: int,
+            shadow: bool,
+            pos: wp.vec3,
+            direction: wp.vec3,
+            attenuation: wp.vec3,
+            cutoff: float,
+            exponent: float,
+            diffuse: wp.vec3,
+            light_spec: wp.vec3,
+        ):
+            return lighting(
+                s.geom_type,
+                s.geom_dataid,
+                s.geom_size,
+                s.flex_vertadr,
+                s.flex_edge,
+                s.flex_radius,
+                s.geom_xpos,
+                s.geom_xmat,
+                s.flexvert_xpos,
+                False,
+                s.bvh_id,
+                s.group_root[world],
+                wp.static(flags["bvh_ngeom"]),
+                wp.static(flags["bvh_nflexgeom"]),
+                s.enabled_geom_ids,
+                world,
+                s.mesh_bvh_id,
+                s.hfield_bvh_id,
+                s.flex_geom_flexid,
+                s.flex_geom_edgeid,
+                s.flex_bvh_id,
+                s.flex_group_root,
+                active,
+                kind,
+                shadow,
+                pos,
+                direction,
+                attenuation,
+                cutoff,
+                exponent,
+                diffuse,
+                light_spec,
+                normal,
+                point,
+                view,
+                spec,
+                shin,
+                wp.static(flags["enable_backface_culling"]),
+                wp.static(flags["enable_specular"]),
+                False,
+                True,
+            )
+
+        @wp.func
+        def shade(
+            s: Scene,
+            world: int,
+            geom: int,
+            point: wp.vec3,
+            normal: wp.vec3,
+            view: wp.vec3,
+            forward: wp.vec3,
+            origin: wp.vec3,
+            u: float,
+            v: float,
+            face: int,
+            mesh: int,
+            lod: float,
+            gain: float,
+            blocked_mask: int,
+        ):
+            material = s.geom_matid[world % s.geom_matid.shape[0], geom]
+            color = s.geom_rgba[world % s.geom_rgba.shape[0], geom]
+            spec = float(0.5)  # noqa: UP018
+            shin = float(64.0)  # noqa: UP018
+            emission = float(0.0)  # noqa: UP018
+            if material >= 0:
+                color = s.mat_rgba[world % s.mat_rgba.shape[0], material]
+                if wp.static(flags["enable_specular"]):
+                    spec = s.mat_specular[world % s.mat_specular.shape[0], material]
+                    shin = s.mat_shininess[world % s.mat_shininess.shape[0], material] * 128.0
+                if wp.static(flags["enable_emission"]):
+                    emission = s.mat_emission[world % s.mat_emission.shape[0], material]
+            base = wp.vec3(color[0], color[1], color[2])
+            if wp.static(flags["use_textures"]):
+                if material >= 0 and geom != wp.static(plane):
+                    texture = s.mat_texid[world % s.mat_texid.shape[0], material, 1]
+                    if texture >= 0:
+                        tex_color = sample_texture(
+                            s.geom_type,
+                            s.mesh_faceadr,
+                            geom,
+                            s.mat_texrepeat[world % s.mat_texrepeat.shape[0], material],
+                            s.textures[texture],
+                            s.geom_xpos[world, geom],
+                            s.geom_xmat[world, geom],
+                            s.mesh_facetexcoord,
+                            s.mesh_texcoord,
+                            s.mesh_texcoord_offsets,
+                            point,
+                            u,
+                            v,
+                            face,
+                            mesh,
+                        )
+                        base = wp.cw_mul(base, tex_color)
+            base *= gain
+            result = base * emission
+            shadow_passes = wp.vec3(0.0)
+            if wp.static(flags["use_ambient_lighting"]):
+                if wp.static(flags["headlight_active"]):
+                    result += wp.cw_mul(base, wp.static(flags["headlight_ambient"]))
+                elif wp.static(nlight == 0):
+                    result += base * wp.static(upstream.NO_LIGHT_AMBIENT_FALLBACK)
+            for light in range(wp.static(nlight)):
+                active = s.light_active[world % s.light_active.shape[0], light] and (blocked_mask & (1 << light)) == 0
+                separate_pass = (
+                    geom == wp.static(plane)
+                    and s.light_castshadow[world % s.light_castshadow.shape[0], light]
+                    and wp.static(flags["use_shadows"])
+                )
+                ambient = wp.vec3(0.0)
+                if wp.static(flags["use_ambient_lighting"] and flags["enable_per_light_ambient"]):
+                    if active:
+                        ambient = wp.cw_mul(base, s.light_ambient[world % s.light_ambient.shape[0], light])
+                diffuse, specular = illuminate(
+                    s,
+                    world,
+                    normal,
+                    point,
+                    view,
+                    spec,
+                    shin,
+                    active,
+                    s.light_type[world % s.light_type.shape[0], light],
+                    False,
+                    s.light_xpos[world, light],
+                    s.light_xdir[world, light],
+                    s.light_attenuation[world % s.light_attenuation.shape[0], light],
+                    s.light_cutoff[world % s.light_cutoff.shape[0], light] * (wp.pi / 180.0),
+                    s.light_exponent[world % s.light_exponent.shape[0], light],
+                    s.light_diffuse[world % s.light_diffuse.shape[0], light],
+                    s.light_specular[world % s.light_specular.shape[0], light],
+                )
+                contribution = ambient + wp.cw_mul(base, diffuse) + specular
+                if separate_pass:
+                    shadow_passes += wp.min(wp.max(contribution, wp.vec3(0.0)), wp.vec3(1.0))
+                else:
+                    result += contribution
+            if wp.static(flags["headlight_active"]):
+                diffuse, specular = illuminate(
+                    s,
+                    world,
+                    normal,
+                    point,
+                    view,
+                    spec,
+                    shin,
+                    True,
+                    1,
+                    False,
+                    origin,
+                    forward,
+                    wp.vec3(1.0, 0.0, 0.0),
+                    0.0,
+                    0.0,
+                    wp.static(flags["headlight_diffuse"]),
+                    wp.static(flags["headlight_specular"]),
+                )
+                result += wp.cw_mul(base, diffuse) + specular
+            result = wp.min(wp.max(result, wp.vec3(0.0)), wp.vec3(1.0))
+            # Each GL shadow-light pass clamps independently, then adds to the regular pass.
+            return result + shadow_passes
+
+        @wp.kernel(module="unique", enable_backward=False)
+        def reflected_pixels(s: Scene):
+            world, pixel = wp.tid()
+            if s.seg_data[world, pixel][0] != wp.static(plane):
+                return
+            camera = s.cam_id_map[0]
+            origin = s.cam_xpos[world, camera]
+            rotation = s.cam_xmat[world, camera]
+            direction = rotation @ s.ray[pixel]
+            normal_plane = s.geom_xmat[world, wp.static(plane)][:, 2]
+            plane_pos = s.geom_xpos[world, wp.static(plane)]
+            distance = wp.dot(plane_pos - origin, normal_plane) / wp.dot(direction, normal_plane)
+            on_plane = origin + direction * distance
+            footprint = float(1.0)  # noqa: UP018
+            plane_rotation = s.geom_xmat[world, wp.static(plane)]
+            for axis in range(2):
+                neighbor = int(0)  # noqa: UP018
+                if axis == 0:
+                    neighbor = pixel + 1
+                    if pixel % wp.static(width) == wp.static(width - 1):
+                        neighbor = pixel - 1
+                else:
+                    neighbor = pixel + wp.static(width)
+                    if pixel // wp.static(width) == wp.static(height - 1):
+                        neighbor = pixel - wp.static(width)
+                neighbor = wp.clamp(neighbor, 0, wp.static(width * height - 1))
+                ray_neighbor = rotation @ s.ray[neighbor]
+                divisor = wp.dot(ray_neighbor, normal_plane)
+                if wp.abs(divisor) > 1.0e-8:
+                    neighbor_point = origin + ray_neighbor * (wp.dot(plane_pos - origin, normal_plane) / divisor)
+                    delta = wp.transpose(plane_rotation) @ (neighbor_point - on_plane)
+                    uv_delta = wp.vec2(
+                        delta[0] * 0.5 * wp.static(uv_sx * texture_width),
+                        delta[1] * 0.5 * wp.static(uv_sy * texture_height),
+                    )
+                    footprint = wp.max(footprint, wp.length(uv_delta))
+            lod = wp.log(footprint) / wp.log(2.0)
+            blocked_mask = int(0)  # noqa: UP018
+            if wp.static(flags["use_shadows"]):
+                for light in range(wp.static(nlight)):
+                    if (
+                        s.light_active[world % s.light_active.shape[0], light]
+                        and s.light_castshadow[world % s.light_castshadow.shape[0], light]
+                    ):
+                        if blocked(
+                            s,
+                            world,
+                            on_plane,
+                            normal_plane,
+                            s.light_type[world % s.light_type.shape[0], light],
+                            s.light_xpos[world, light],
+                            s.light_xdir[world, light],
+                        ):
+                            blocked_mask |= 1 << light
+            local = wp.transpose(plane_rotation) @ (on_plane - plane_pos)
+            ix = cell(s.grid_x, local[0])
+            iy = cell(s.grid_y, local[1])
+            # Materialize scalar values before reassigning corner coordinates in Warp branches.
+            x0, x1 = s.grid_x[ix] + 0.0, s.grid_x[ix + 1] + 0.0
+            y0, y1 = s.grid_y[iy] + 0.0, s.grid_y[iy + 1] + 0.0
+            fx = (local[0] - x0) / (x1 - x0)
+            fy = (local[1] - y0) / (y1 - y0)
+            surface = wp.vec3(0.0)
+            for corner in range(4):
+                vx, vy = x0, y0
+                weight = 1.0 - wp.max(fx, fy)
+                if corner == 1:
+                    vx = x1
+                    weight = wp.max(fx - fy, 0.0)
+                elif corner == 2:
+                    vy = y1
+                    weight = wp.max(fy - fx, 0.0)
+                elif corner == 3:
+                    vx, vy = x1, y1
+                    weight = wp.min(fx, fy)
+                if weight > 0.0:
+                    vertex = plane_pos + plane_rotation @ wp.vec3(vx, vy, 0.0)
+                    surface += weight * shade(
+                        s,
+                        world,
+                        wp.static(plane),
+                        vertex,
+                        normal_plane,
+                        wp.normalize(origin - vertex),
+                        -rotation[:, 2],
+                        origin,
+                        0.0,
+                        0.0,
+                        -1,
+                        -1,
+                        0.0,
+                        1.0,
+                        blocked_mask,
+                    )
+            if wp.static(flags["use_textures"] and plane_texture >= 0):
+                uv = wp.vec2(
+                    0.5 * local[0] * wp.static(uv_sx) + wp.static(uv_ox),
+                    -0.5 * local[1] * wp.static(uv_sy) + wp.static(uv_oy),
+                )
+                uv -= wp.vec2(wp.floor(uv[0]), wp.floor(uv[1]))
+                tap = wp.texture_sample(s.textures[wp.static(plane_texture)], uv, dtype=wp.vec4, lod=lod)
+                surface = wp.cw_mul(surface, wp.vec3(tap[0], tap[1], tap[2]))
+            result = surface
+            reflected = direction - 2.0 * wp.dot(direction, normal_plane) * normal_plane
+            ray_origin = on_plane + normal_plane * 1.0e-4
+            geom, distance, normal, u, v, face, mesh = cast(
+                s.geom_type,
+                s.geom_dataid,
+                s.geom_size,
+                s.flex_vertadr,
+                s.flex_edge,
+                s.flex_radius,
+                s.geom_xpos,
+                s.geom_xmat,
+                s.flexvert_xpos,
+                s.bvh_id,
+                s.group_root[world],
+                world,
+                wp.static(flags["bvh_ngeom"]),
+                wp.static(flags["bvh_nflexgeom"]),
+                s.enabled_geom_ids,
+                s.mesh_bvh_id,
+                s.hfield_bvh_id,
+                s.flex_geom_flexid,
+                s.flex_geom_edgeid,
+                s.flex_bvh_id,
+                s.flex_group_root,
+                ray_origin,
+                reflected,
+                1.0e10,
+                wp.static(flags["enable_backface_culling"]),
+            )
+            if geom >= 0 and geom != wp.static(plane):
+                point = ray_origin + reflected * distance
+                forward = -rotation[:, 2]
+                mirror = shade(
+                    s,
+                    world,
+                    geom,
+                    point,
+                    normal,
+                    -reflected,
+                    forward,
+                    origin,
+                    u,
+                    v,
+                    face,
+                    mesh,
+                    0.0,
+                    wp.static(reflectance),
+                    0,
+                )
+                # MuJoCo adds the lit plane; reflectance scales mirror RGB, not specular.
+                result = surface + mirror
+            rgb = result * 255.0
+            red = wp.uint32(wp.clamp(rgb[0] + 0.5, 0.0, 255.0))
+            green = wp.uint32(wp.clamp(rgb[1] + 0.5, 0.0, 255.0))
+            blue = wp.uint32(wp.clamp(rgb[2] + 0.5, 0.0, 255.0))
+            s.rgb_data[world, pixel] = (
+                (wp.uint32(255) << wp.uint32(24)) | (red << wp.uint32(16)) | (green << wp.uint32(8)) | blue
+            )
+
+        scene = Scene()
+        grid_arrays = {
+            name: wp.array(values, dtype=float, device=data.geom_xpos.device)
+            for name, values in zip(("grid_x", "grid_y"), grids, strict=True)
+        }
+        for name in Scene.vars:
+            if name in grid_arrays:
+                setattr(scene, name, grid_arrays[name])
+                continue
+            owner = next(owner for owner in (model, data, context) if hasattr(owner, name))
+            setattr(scene, name, getattr(owner, name))
+        self._wp, self._kernel, self._scene = wp, reflected_pixels, scene
+        self._shape = (int(data.nworld), int(context.total_rays))
+        self._device = data.geom_xpos.device
+
+    def render(self):
+        self._wp.launch(self._kernel, dim=self._shape, inputs=[self._scene], device=self._device)

@@ -68,16 +68,8 @@ class _TranscribedQuadrupedModel:
 
 
 QUADRUPED_NOTE = (
-    "(3) the floor material has reflectance 0.2, so dm_control draws the body's MIRROR IMAGE in the "
-    "floor beside its shadow; MJWarp and cpu3d draw no reflection (the shadow is a 0.3 any-hit factor "
-    "against a 2048 shadow map). Measured off the segmentation buffer at the registered default "
-    "(camera 2, 224 px): the floor within the body's box and its mirror is 35 % of the frame and "
-    "carries 57 % of the residual; the far checker 29 %, the skybox 6.5 %, the body 7 %, the "
-    "ellipsoid torso 1.2 %. (4) physics.render draws three SITES that neither backend draws -- the "
-    "two pupil spheres (material eye) and the red torso site -- up to ~50 of the 50,176 px of a 224 "
-    "px frame (0.01-0.1 %), max 186/255, 0.5 % of the residual; the eye material is therefore not "
-    "an appearance knob here. The cell draws the registered default appearance (material self .6 .3 .3); the "
-    "suite's own (.7 .5 .3) is the material.self knob."
+    "The analytic renderers omit the source's pupil and torso sites. The registered default "
+    "body material is (.6, .3, .3); material.self can select the suite's (.7, .5, .3) appearance."
 )
 
 

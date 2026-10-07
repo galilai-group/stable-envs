@@ -15,6 +15,7 @@ from .primitives import (
     bound_radius,
 )
 from .primitives import dot3 as _dot
+from .texture_mip import mip_pyramid, plane_grid, plane_texgen, sample_plane_filtered, sample_skybox_filtered
 
 # Movers share raycast3d primitive support; the floor is intersected separately.
 MOVER_KINDS = tuple(k for k in PRIMITIVE_KINDS if k != PLANE)
@@ -22,8 +23,9 @@ MOVER_KINDS = tuple(k for k in PRIMITIVE_KINDS if k != PLANE)
 LIGHT_SPOT, LIGHT_DIRECTIONAL = 0, 1
 #: MuJoCo's material defaults, which the megakernel uses for a geom without a material.
 DEFAULT_MAT_SPECULAR, DEFAULT_MAT_SHININESS, MAX_SHININESS = 0.5, 0.5, 128.0
-#: ``NO_LIGHT_AMBIENT_FALLBACK``: what MJWarp multiplies a shadowed light's contribution by. Not 0.
-SHADOW_VISIBLE = 0.3
+# Blocked direct lighting contributes nothing; an unlit scene retains the fallback ambient.
+SHADOW_VISIBLE = 0.0
+NO_LIGHT_AMBIENT_FALLBACK = 0.3
 #: The shadow-ray offsets the megakernel uses.
 SHADOW_ORIGIN_EPS, SHADOW_MAX_T_EPS = 1.0e-4, 1.0e-3
 #: ``MJ_MINVAL``, the front-face threshold of ``ray_plane``.
@@ -202,22 +204,48 @@ class Scene:
         self.plane_mat = np.asarray(d.geom_xmat[g], np.float64).reshape(3, 3).copy()
         self.plane_size = np.asarray(m.geom_size[g], np.float64).copy()
         self.plane_matid = int(m.geom_matid[g])
+        self.plane_reflectance = float(m.mat_reflectance[self.plane_matid]) if self.plane_matid >= 0 else 0.0
         self.plane_tex = None
-        self.plane_texrepeat = np.ones(2)
+        self.plane_texscale = np.ones(2)
+        self.plane_texoffset = np.full(2, -0.5)
         if self.plane_matid >= 0:
             t = m.mat_texid[self.plane_matid]
             tex = int(t[1]) if np.ndim(t) else int(t)  # the RGB role, as MJWarp
             if tex >= 0:
                 self.plane_tex = torch.as_tensor(texture_array(m, tex).astype(np.float32) / 255.0, device=self.device)
-                self.plane_texrepeat = np.asarray(m.mat_texrepeat[self.plane_matid], np.float64)
+                self.plane_texscale, self.plane_texoffset = plane_texgen(
+                    self.plane_size,
+                    m.mat_texrepeat[self.plane_matid],
+                    bool(m.mat_texuniform[self.plane_matid]),
+                    tuple(int(v) for v in mujoco.__version__.split(".")[:2]),
+                )
+        repeat = m.mat_texrepeat[self.plane_matid] if self.plane_matid >= 0 else (0, 0)
+        self.plane_grid = tuple(
+            torch.as_tensor(
+                plane_grid(
+                    float(size),
+                    float(self.plane_size[2]),
+                    float(m.vis.map.zfar * m.stat.extent),
+                    float(rep),
+                    int(mujoco.mjMAXPLANEGRID),
+                ),
+                dtype=torch.float32,
+                device=self.device,
+            )
+            for size, rep in zip(self.plane_size[:2], repeat, strict=True)
+        )
+        self.plane_mips = mip_pyramid(self.plane_tex) if self.plane_tex is not None else None
+        self.plane_uv_gradients = self._plane_uv_gradients() if self.plane_mips is not None else None
 
-        # the skybox plate, through MJWarp's own sampler, once
+        # Camera orientation is fixed, so filtered sky pixels can be cached.
         skybox = [t for t in range(m.ntex) if int(m.tex_type[t]) == int(mujoco.mjtTexture.mjTEXTURE_SKYBOX)]
         if skybox:
             tex = torch.as_tensor(texture_array(m, skybox[0]).astype(np.float32) / 255.0, device=self.device)
-            self.sky = sample_skybox(
-                tex, int(m.tex_width[skybox[0]]), torch.as_tensor(self.dirs, device=self.device)
-            )  # (N,3) [0,1]
+            self.sky = sample_skybox_filtered(
+                tex,
+                int(m.tex_width[skybox[0]]),
+                torch.as_tensor(self.dirs, device=self.device).reshape(self.res, self.res, 3),
+            ).reshape(-1, 3)
         else:
             self.sky = torch.tensor(SKY_FALLBACK, device=self.device).expand(self.dirs.shape[0], 3)
 
@@ -325,6 +353,28 @@ class Scene:
             raise ValueError(
                 "cpu3d: shadow bounds require a horizontal upward-facing plane; use_shadows=False disables them"
             )
+
+    def _plane_uv_gradients(self) -> torch.Tensor:
+        """Cache UV derivatives per unit signed camera-to-plane distance."""
+        rays = torch.as_tensor(self.dirs, device=self.device)
+        rotation = torch.as_tensor(self.xmat, dtype=torch.float32, device=self.device)
+        plane = torch.as_tensor(self.plane_mat, dtype=torch.float32, device=self.device)
+        rays = rays / -_dot(rays, rotation[:, 2])[:, None]
+        denominator = _dot(rays, plane[:, 2])
+        denominator = torch.where(denominator.abs() > MJ_MINVAL, denominator, torch.full_like(denominator, MJ_MINVAL))
+        pixel = 2 * math.tan(math.radians(self.fovy) * 0.5) / self.res
+        gradients = []
+        for derivative in (pixel * rotation[:, 0], -pixel * rotation[:, 1]):
+            hit_derivative = (
+                derivative - rays * (_dot(derivative, plane[:, 2]) / denominator)[:, None]
+            ) / denominator[:, None]
+            gradients.extend(
+                (
+                    0.5 * float(self.plane_texscale[0]) * _dot(hit_derivative, plane[:, 0]),
+                    -0.5 * float(self.plane_texscale[1]) * _dot(hit_derivative, plane[:, 1]),
+                )
+            )
+        return torch.stack(gradients, dim=-1)
 
     @staticmethod
     def _rays(xmat: np.ndarray, fovy: float, res: int) -> np.ndarray:
@@ -512,7 +562,6 @@ def _render_chunk(
 
     # ---- everything relative to the camera: the origin is 0 for every env
     xpos_rel = xpos - cam.view(B, 1, 3)
-    lrel = light_pos - cam.view(B, 1, 3)  # (B,L,3)
     if K:
         inside = (torch.sqrt(_dot(xpos_rel, xpos_rel)) <= scene.radii.view(1, K)).any()
         if bool(inside):
@@ -603,7 +652,7 @@ def _render_chunk(
         base = table[env, own]
         # textured non-plane geoms: the megakernel's texel (0, 0); ones for the plane and untextured
         base = base * torch.where((pid > 0).unsqueeze(-1), scene.mat_tex00[mat_idx], torch.ones_like(base))
-        # texture: the plane's one bilinear tap under MJWarp's PLANE texgen law
+        # Plane UVs follow the source texgen law; the projected footprint selects mip levels.
         if scene.plane_tex is not None:
             on_plane = pid == 0
             if bool(on_plane.any()):
@@ -612,110 +661,254 @@ def _render_chunk(
                 rel = pw - ppos_w
                 lx = _dot(rel, pm[:, 0])
                 ly = _dot(rel, pm[:, 1])
-                rep = scene.plane_texrepeat
-                u = 0.5 * lx * float(rep[0]) - 0.5
-                v = -0.5 * ly * float(rep[1]) - 0.5
+                rep = scene.plane_texscale
+                u = 0.5 * lx * float(rep[0]) + float(scene.plane_texoffset[0])
+                v = -0.5 * ly * float(rep[1]) + float(scene.plane_texoffset[1])
                 u = u - torch.floor(u)
                 v = v - torch.floor(v)
                 base = base.clone()
-                base[j] = base[j] * bilinear(scene.plane_tex, u, v)
-        mspec = scene.mat_spec[mat_idx] if scene.enable_specular else torch.full_like(t, DEFAULT_MAT_SPECULAR)
-        mshin = (
-            scene.mat_shin[mat_idx]
-            if scene.enable_specular
-            else torch.full_like(t, DEFAULT_MAT_SHININESS * MAX_SHININESS)
+                height = _dot(ppos_w - cam[env[j]], pn)
+                gradient = scene.plane_uv_gradients[ray[j]] * height[:, None]
+                base[j] = base[j] * sample_plane_filtered(scene.plane_mips, u, v, *gradient.unbind(-1))
+        rgb.view(-1, 3)[flat] = _shade_hits(
+            scene, base, p, n, view, pid, env, cam, xpos_rel, xmat, light_pos, light_dir, light_diffuse
         )
-        memis = scene.mat_emis[mat_idx]
-        result = base * memis.unsqueeze(-1)
-        hl_amb, hl_dif, hl_spec = (torch.as_tensor(x, dtype=torch.float32, device=dev) for x in scene.headlight)
-        if scene.headlight_active:
-            result = result + base * hl_amb
-        elif not scene.lights:
-            result = result + base * SHADOW_VISIBLE  # NO_LIGHT_AMBIENT_FALLBACK, nlight == 0
-        for li, L in enumerate(scene.lights):
-            if L.active:
-                result = result + base * torch.as_tensor(L.ambient, dtype=torch.float32, device=dev)
-
-        # shadow candidates: mover hits, and plane hits inside the movers' light footprint
-        if scene.use_shadows and K and any(L.castshadow for L in scene.lights):
-            cand = pid > 0
-            for li, L in enumerate(scene.lights):
-                if not L.active or not L.castshadow or L.kind == LIGHT_DIRECTIONAL:
-                    continue
-                lo_xy, hi_xy, unb = _light_footprint(scene, xpos_rel, lrel[:, li], cam)
-                pw = (p + cam[env])[:, :2]
-                inside = ((pw >= lo_xy[env]) & (pw <= hi_xy[env])).all(-1) | unb[env]
-                cand = cand | ((pid == 0) & inside)
-            if SHADOW_TEST_ALL_HITS:
-                cand = torch.ones_like(pid, dtype=torch.bool)
-        else:
-            cand = torch.zeros_like(pid, dtype=torch.bool)
-
-        for li, L in enumerate(scene.lights):
-            if not L.active:
-                continue
-            if L.kind == LIGHT_DIRECTIONAL:
-                Lv = -light_dir[env, li]
-                Ldir, _ = _normalize(Lv)
-                dist = torch.full_like(t, 1e8)
-                att = torch.ones_like(t)
-                cone = torch.ones_like(t, dtype=torch.bool)
-            else:
-                Ldir, dist = _normalize(lrel[env, li] - p)
-                ldir_n, _ = _normalize(light_dir[env, li])
-                cos_theta = _dot(-Ldir, ldir_n)
-                cos_cut = math.cos(math.radians(L.cutoff_deg))
-                cone = cos_theta >= cos_cut
-                att = torch.pow(cos_theta.clamp_min(0.0), L.exponent)
-            ndotl = _dot(n, Ldir).clamp_min(0.0)
-            live = cone & (ndotl > 0)
-            visible = torch.ones_like(t)
-            if L.castshadow and scene.use_shadows and K:
-                q = torch.nonzero(live & cand, as_tuple=False).reshape(-1)
-                if q.numel():
-                    o_s = p[q] + n[q] * SHADOW_ORIGIN_EPS
-                    d_s = Ldir[q]
-                    lim = dist[q] - SHADOW_MAX_T_EPS
-                    blocked = _any_blocking_flat(scene, xpos_rel, xmat, env[q], o_s, d_s, lim)
-                    # the plane occludes too (the megakernel shadows against its whole BVH):
-                    # ``ray_plane`` from the shadow origin, front face only, inside the bounds
-                    o_w = o_s + cam[env[q]]
-                    lz = _dot(d_s, pn)
-                    fr = lz <= -MJ_MINVAL
-                    tp = _dot(ppos_w - o_w, pn) / torch.where(fr, lz, torch.full_like(lz, -1.0))
-                    okp = fr & (tp >= 0) & (tp < lim)
-                    if sx > 0 or sy > 0:
-                        hp = o_w + d_s * tp.unsqueeze(-1) - ppos_w
-                        if sx > 0:
-                            okp = okp & (_dot(hp, pm[:, 0]).abs() <= sx)
-                        if sy > 0:
-                            okp = okp & (_dot(hp, pm[:, 1]).abs() <= sy)
-                    blocked = blocked | okp
-                    vis_q = torch.where(blocked, torch.full_like(lim, SHADOW_VISIBLE), torch.ones_like(lim))
-                    visible = visible.clone()
-                    visible[q] = vis_q
-            wgt = att * visible * live.to(t.dtype)
-            dif = light_diffuse[env, li] * (ndotl * wgt).unsqueeze(-1)
-            result = result + base * dif
-            if scene.enable_specular:
-                sp = _specular(n, Ldir, view, mspec, mshin, wgt)
-                result = result + torch.as_tensor(L.specular, dtype=torch.float32, device=dev) * sp.unsqueeze(-1)
-        if scene.headlight_active:
-            R = torch.as_tensor(scene.xmat, dtype=torch.float32, device=dev)
-            Ldir = R[:, 2].view(1, 3).expand_as(n)  # -cam_fwd: toward the camera
-            ndotl = _dot(n, Ldir).clamp_min(0.0)
-            live = ndotl > 0
-            wgt = live.to(t.dtype)
-            result = result + base * (hl_dif * (ndotl * wgt).unsqueeze(-1))
-            if scene.enable_specular:
-                sp = _specular(n, Ldir, view, mspec, mshin, wgt)
-                result = result + hl_spec * sp.unsqueeze(-1)
-        rgb.view(-1, 3)[flat] = result.clamp(0.0, 1.0)
+    if scene.plane_reflectance > 0 and K:
+        _reflect(scene, rgb, prim, t_plane, cam, xpos_rel, xmat, light_pos, light_dir, mat_rgb, light_diffuse)
     # ``pack_rgba_to_uint32``: C ``int()`` truncates; under ``gl_rounding`` it is int(x*255 + 0.5)
     q = rgb * 255.0
     if QUANT == "round":
         q = q + 0.5
     return torch.floor(q).clamp_(0, 255).to(torch.uint8)
+
+
+def _plane_vertices(scene, p, owners, cam):
+    """Return unique visible grid vertices and each floor hit's triangle weights."""
+    matrix = torch.as_tensor(scene.plane_mat, dtype=torch.float32, device=p.device)
+    origin = torch.as_tensor(scene.plane_pos, dtype=torch.float32, device=p.device)
+    local = p + cam[owners] - origin
+    x, y = _dot(local, matrix[:, 0]), _dot(local, matrix[:, 1])
+    gx, gy = scene.plane_grid
+    ix = torch.searchsorted(gx, x.contiguous()).clamp(1, len(gx) - 1)
+    iy = torch.searchsorted(gy, y.contiguous()).clamp(1, len(gy) - 1)
+    fx = ((x - gx[ix - 1]) / (gx[ix] - gx[ix - 1])).clamp(0, 1)
+    fy = ((y - gy[iy - 1]) / (gy[iy] - gy[iy - 1])).clamp(0, 1)
+    first = (iy - 1) * len(gx) + ix - 1
+    last = iy * len(gx) + ix
+    other = first + torch.where(fx >= fy, 1, len(gx))
+    keys = torch.stack((first, last, other), -1) + owners[:, None] * (len(gx) * len(gy))
+    unique, inverse = torch.unique(keys, return_inverse=True)
+    vertex_env = unique // (len(gx) * len(gy))
+    vertex = unique % (len(gx) * len(gy))
+    world = origin + gx[vertex % len(gx), None] * matrix[:, 0] + gy[vertex // len(gx), None] * matrix[:, 1]
+    point = world - cam[vertex_env]
+    weights = torch.stack((1 - torch.maximum(fx, fy), torch.minimum(fx, fy), (fx - fy).abs()), -1)
+    return vertex_env, point, inverse, weights
+
+
+def _interpolate_vertices(values, inverse, weights):
+    return (values[inverse] * weights[..., None]).sum(1)
+
+
+def _light_vectors(light, position, direction, point):
+    if light.kind == LIGHT_DIRECTIONAL:
+        light_dir, _ = _normalize(-direction)
+        distance = torch.full_like(point[:, 0], 1e8)
+        attenuation = torch.ones_like(distance)
+        cone = torch.ones_like(distance, dtype=torch.bool)
+    else:
+        light_dir, distance = _normalize(position - point)
+        axis, _ = _normalize(direction)
+        cosine = _dot(-light_dir, axis)
+        cone = cosine >= math.cos(math.radians(light.cutoff_deg))
+        attenuation = torch.pow(cosine.clamp_min(0.0), light.exponent)
+    return light_dir, distance, attenuation, cone
+
+
+def _shade_hits(
+    scene, base, p, n, view, pid, env, cam, xpos_rel, xmat, light_pos, light_dir, light_diffuse, *, shadows=True
+):
+    """Shade compact primary or reflected hits using the same material and lights."""
+    dev = p.device
+    t = p[:, 0]
+    K = len(scene.kinds)
+    use_shadows = scene.use_shadows and shadows
+    mat_idx = scene.prim_mat[pid]
+    pn = torch.as_tensor(scene.plane_mat[:, 2], dtype=torch.float32, device=dev)
+    ppos_w = torch.as_tensor(scene.plane_pos, dtype=torch.float32, device=dev)
+    pm = torch.as_tensor(scene.plane_mat, dtype=torch.float32, device=dev)
+    sx, sy = float(scene.plane_size[0]), float(scene.plane_size[1])
+    lrel = light_pos - cam[:, None]
+    plane_rows = (pid == 0).nonzero(as_tuple=True)[0]
+    if plane_rows.numel():
+        vertex_env, vertex_point, inverse, weights = _plane_vertices(scene, p[plane_rows], env[plane_rows], cam)
+        vertex_view, _ = _normalize(-vertex_point)
+        vertex_normal = pn.expand_as(vertex_point)
+    mspec = scene.mat_spec[mat_idx] if scene.enable_specular else torch.full_like(t, DEFAULT_MAT_SPECULAR)
+    mshin = (
+        scene.mat_shin[mat_idx] if scene.enable_specular else torch.full_like(t, DEFAULT_MAT_SHININESS * MAX_SHININESS)
+    )
+    memis = scene.mat_emis[mat_idx]
+    result = base * memis.unsqueeze(-1)
+    hl_amb, hl_dif, hl_spec = (torch.as_tensor(x, dtype=torch.float32, device=dev) for x in scene.headlight)
+    if scene.headlight_active:
+        result = result + base * hl_amb
+    elif not scene.lights:
+        result = result + base * NO_LIGHT_AMBIENT_FALLBACK
+    for li, L in enumerate(scene.lights):
+        if L.active:
+            result = result + base * torch.as_tensor(L.ambient, dtype=torch.float32, device=dev)
+
+    # shadow candidates: mover hits, and plane hits inside the movers' light footprint
+    if use_shadows and K and any(L.castshadow for L in scene.lights):
+        cand = pid > 0
+        for li, L in enumerate(scene.lights):
+            if not L.active or not L.castshadow or L.kind == LIGHT_DIRECTIONAL:
+                continue
+            lo_xy, hi_xy, unb = _light_footprint(scene, xpos_rel, lrel[:, li], cam)
+            pw = (p + cam[env])[:, :2]
+            inside = ((pw >= lo_xy[env]) & (pw <= hi_xy[env])).all(-1) | unb[env]
+            cand = cand | ((pid == 0) & inside)
+        if SHADOW_TEST_ALL_HITS:
+            cand = torch.ones_like(pid, dtype=torch.bool)
+    else:
+        cand = torch.zeros_like(pid, dtype=torch.bool)
+
+    for li, L in enumerate(scene.lights):
+        if not L.active:
+            continue
+        Ldir, dist, att, cone = _light_vectors(L, lrel[env, li], light_dir[env, li], p)
+        ndotl = _dot(n, Ldir).clamp_min(0.0)
+        live = cone & (ndotl > 0)
+        visible = torch.ones_like(t)
+        if L.castshadow and use_shadows and K:
+            q = torch.nonzero(live & cand, as_tuple=False).reshape(-1)
+            if q.numel():
+                o_s = p[q] + n[q] * SHADOW_ORIGIN_EPS
+                d_s = Ldir[q]
+                lim = dist[q] - SHADOW_MAX_T_EPS
+                blocked = _any_blocking_flat(scene, xpos_rel, xmat, env[q], o_s, d_s, lim)
+                # the plane occludes too (the megakernel shadows against its whole BVH):
+                # ``ray_plane`` from the shadow origin, front face only, inside the bounds
+                o_w = o_s + cam[env[q]]
+                lz = _dot(d_s, pn)
+                fr = lz <= -MJ_MINVAL
+                tp = _dot(ppos_w - o_w, pn) / torch.where(fr, lz, torch.full_like(lz, -1.0))
+                okp = fr & (tp >= 0) & (tp < lim)
+                if sx > 0 or sy > 0:
+                    hp = o_w + d_s * tp.unsqueeze(-1) - ppos_w
+                    if sx > 0:
+                        okp = okp & (_dot(hp, pm[:, 0]).abs() <= sx)
+                    if sy > 0:
+                        okp = okp & (_dot(hp, pm[:, 1]).abs() <= sy)
+                blocked = blocked | okp
+                vis_q = torch.where(blocked, torch.full_like(lim, SHADOW_VISIBLE), torch.ones_like(lim))
+                visible = visible.clone()
+                visible[q] = vis_q
+        wgt = att * visible * live.to(t.dtype)
+        dif = light_diffuse[env, li] * (ndotl * wgt).unsqueeze(-1)
+        if plane_rows.numel():
+            vertex_light, _, vertex_att, vertex_cone = _light_vectors(
+                L, lrel[vertex_env, li], light_dir[vertex_env, li], vertex_point
+            )
+            vertex_dot = _dot(vertex_normal, vertex_light).clamp_min(0)
+            vertex_weight = vertex_att * (vertex_cone & (vertex_dot > 0)).to(t.dtype)
+            vertex_diffuse = light_diffuse[vertex_env, li] * (vertex_dot * vertex_weight)[:, None]
+            dif[plane_rows] = _interpolate_vertices(vertex_diffuse, inverse, weights) * visible[plane_rows, None]
+        result = result + base * dif
+        if scene.enable_specular:
+            sp = _specular(n, Ldir, view, mspec, mshin, wgt)
+            if plane_rows.numel():
+                plane_mat = scene.prim_mat[0]
+                vertex_spec = _specular(
+                    vertex_normal,
+                    vertex_light,
+                    vertex_view,
+                    scene.mat_spec[plane_mat],
+                    scene.mat_shin[plane_mat],
+                    vertex_weight,
+                )
+                sp[plane_rows] = (
+                    _interpolate_vertices(vertex_spec[:, None], inverse, weights)[:, 0] * visible[plane_rows]
+                )
+            result = result + torch.as_tensor(L.specular, dtype=torch.float32, device=dev) * sp.unsqueeze(-1)
+    if scene.headlight_active:
+        R = torch.as_tensor(scene.xmat, dtype=torch.float32, device=dev)
+        Ldir = R[:, 2].view(1, 3).expand_as(n)  # -cam_fwd: toward the camera
+        ndotl = _dot(n, Ldir).clamp_min(0.0)
+        live = ndotl > 0
+        wgt = live.to(t.dtype)
+        result = result + base * (hl_dif * (ndotl * wgt).unsqueeze(-1))
+        if scene.enable_specular:
+            sp = _specular(n, Ldir, view, mspec, mshin, wgt)
+            if plane_rows.numel():
+                plane_mat = scene.prim_mat[0]
+                vertex_light = R[:, 2].expand_as(vertex_point)
+                vertex_weight = (_dot(vertex_normal, vertex_light) > 0).to(t.dtype)
+                vertex_spec = _specular(
+                    vertex_normal,
+                    vertex_light,
+                    vertex_view,
+                    scene.mat_spec[plane_mat],
+                    scene.mat_shin[plane_mat],
+                    vertex_weight,
+                )
+                sp[plane_rows] = _interpolate_vertices(vertex_spec[:, None], inverse, weights)[:, 0]
+            result = result + hl_spec * sp.unsqueeze(-1)
+    return result.clamp(0.0, 1.0)
+
+
+def _reflect(scene, rgb, prim, plane_t, cam, xpos_rel, xmat, light_pos, light_dir, mat_rgb, light_diffuse):
+    """Add MuJoCo-style unshadowed reflections within mirrored mover bounds."""
+    B, N = prim.shape
+    dev = cam.device
+    normal = torch.as_tensor(scene.plane_mat[:, 2], dtype=torch.float32, device=dev)
+    floor = torch.as_tensor(scene.plane_pos, dtype=torch.float32, device=dev)
+    height = _dot(xpos_rel + cam[:, None] - floor, normal)
+    mirrored = xpos_rel - 2 * height[..., None] * normal
+    win = None if FORCE_FULL_FRAME else _mover_window(scene, mirrored)
+    if win == WINDOW_EMPTY:
+        return
+    idx = torch.arange(N, device=dev).expand(B, -1) if win is None else _window_index(*win, scene.res, dev)
+    on_plane = prim.gather(1, idx) == 0
+    if not bool(on_plane.any()):
+        return
+    rays = torch.as_tensor(scene.dirs, device=dev)[idx]
+    origins = rays * plane_t.gather(1, idx)[..., None]
+    directions = rays - 2 * _dot(rays, normal)[..., None] * normal
+    origins = origins + normal * SHADOW_ORIGIN_EPS
+    distance, normals, movers = R3.cast_nearest(
+        scene.kinds, scene.sizes[None].expand(B, -1, -1), xpos_rel, xmat, origins, directions
+    )
+    seen = on_plane & (distance < INF) & (_dot(normals, directions) <= 0)
+    env, pixel = seen.nonzero(as_tuple=True)
+    if not env.numel():
+        return
+    pid = movers[env, pixel] + 1
+    material = scene.prim_mat[pid]
+    own = torch.where(material == scene.nmat, scene.nmat + 1 + pid, material)
+    base = scene.mat_table(mat_rgb)[env, own] * scene.mat_tex00[material] * scene.plane_reflectance
+    direction = directions[env, pixel]
+    point = origins[env, pixel] + distance[env, pixel, None] * direction
+    reflected = _shade_hits(
+        scene,
+        base,
+        point,
+        normals[env, pixel],
+        -direction,
+        pid,
+        env,
+        cam,
+        xpos_rel,
+        xmat,
+        light_pos,
+        light_dir,
+        light_diffuse,
+        shadows=False,
+    )
+    dst = idx[env, pixel]
+    # MuJoCo scales reflected geom RGB before shading, then adds the floor (GL_ONE, GL_ONE).
+    rgb[env, dst] = (reflected + rgb[env, dst]).clamp(0, 1)
 
 
 def _specular(n, light, view, specular, shininess, weight):
