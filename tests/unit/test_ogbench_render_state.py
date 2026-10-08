@@ -8,10 +8,10 @@ import torch
 from tensordict import TensorDict
 
 pytest.importorskip("ogbench")
-from stable_envs._adapters.ogbench import render_state as pixels
 from stable_envs.envs.ogbench import OGBCube, OGBScene
 from stable_envs.envs.ogbench import manipulation as core
 from stable_envs.envs.ogbench import manipulation_renderer as renderer
+from stable_envs.envs.ogbench.simulation import render_state as pixels
 
 
 def test_scene_samples_match_opengl_positions_and_plate():

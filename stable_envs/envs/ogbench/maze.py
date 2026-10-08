@@ -9,13 +9,13 @@ from ..._execution.protocol import StepPipeline, step_pipeline
 
 configure_mujoco_gl()
 
-from ..._adapters.ogbench.execution import make_maze_adapter
-from ..._adapters.ogbench.maze import OGB_MAZE_FIELDS, OGBMazeAdapter
 from ...env import Env
 from ...registry import register
 from ...render import _resources as _RES
 from ...render import raycast3d as R3
 from ...spaces import Box, Dict, Discrete
+from .simulation.execution import make_maze_adapter
+from .simulation.maze import OGB_MAZE_FIELDS, OGBMazeAdapter
 
 # Shading totals fitted on point-agent interiors, not baked floor pixels.
 SHADE_AMBIENT, SHADE_DIFFUSE, SHADE_SPECULAR, SHADE_EXPONENT = 0.078438, 1.416189, 0.230554, 45.0

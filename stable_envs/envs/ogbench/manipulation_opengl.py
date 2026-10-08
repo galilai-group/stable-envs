@@ -8,9 +8,9 @@ from importlib.metadata import version
 import numpy as np
 import torch
 
-from ..._adapters.ogbench import render_state as pixels
-from ..._adapters.ogbench.compatibility import MODEL_VALUES, CompatibleCube, CompatibleScene
 from ...render._resources import retain_process_lifetime
+from .simulation import render_state as pixels
+from .simulation.compatibility import MODEL_VALUES, CompatibleCube, CompatibleScene
 
 _LOCK = threading.RLock()
 _CACHE = {}

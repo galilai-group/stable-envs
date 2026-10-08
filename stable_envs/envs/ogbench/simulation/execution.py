@@ -3,8 +3,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING, TypeVar
 
-from ..._execution.policy import cpu_affinity, process_count
-from ..._execution.protocol import SimulatorAdapter
+from ...._execution.policy import cpu_affinity, process_count
+from ...._execution.protocol import SimulatorAdapter
 
 if TYPE_CHECKING:
     import torch

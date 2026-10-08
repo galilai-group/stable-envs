@@ -10,7 +10,7 @@ import pytest
 import torch
 from tensordict import TensorDict
 
-from stable_envs._adapters.ogbench.maze import OGBMazeAdapter
+from stable_envs.envs.ogbench.simulation.maze import OGBMazeAdapter
 from tests.helpers.reference.semantics import compare_state
 
 ROOT = Path(__file__).parents[1] / "fixtures/semantics/ogbench_maze"

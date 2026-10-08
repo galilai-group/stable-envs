@@ -24,9 +24,9 @@ import stable_envs as se
 from benchmarks.online.common import PIN, equal_state
 from benchmarks.online.ogbench_parallel_source import OGBSource, ParallelOGBSource
 from benchmarks.online.ogbench_source_transport_gate import equal
-from stable_envs._adapters.ogbench.manipulation import OGBManipulationAdapter
-from stable_envs._adapters.ogbench.maze import OGBMazeAdapter
 from stable_envs._core.stepping import step as dispatch_step
+from stable_envs.envs.ogbench.simulation.manipulation import OGBManipulationAdapter
+from stable_envs.envs.ogbench.simulation.maze import OGBMazeAdapter
 from tests.helpers.reference.ogbench_manipulation_semantics import assert_oracle
 
 NAMES = {"Maze": "PointMazeLargeNavigate", "Cube": "OGBCube", "Scene": "OGBScene"}
@@ -113,7 +113,7 @@ def main():
         Path("tests/helpers/reference/ogbench_manipulation_source.py"),
         Path("stable_envs/env.py"),
         Path("stable_envs/_core/stepping.py"),
-        *Path("stable_envs/_adapters").rglob("*.py"),
+        *Path("stable_envs/envs/ogbench/simulation").rglob("*.py"),
         *Path("stable_envs/_execution").rglob("*.py"),
         Path("stable_envs/envs/ogbench/maze.py"),
         Path("stable_envs/envs/ogbench/manipulation_semantics.py"),

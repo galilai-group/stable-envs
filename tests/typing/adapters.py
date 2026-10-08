@@ -7,13 +7,13 @@ from stable_envs._adapters.dmc.factory import DMCAdapter
 from stable_envs._adapters.dmc.process import DMCProcessAdapter
 from stable_envs._adapters.fetch.adapter import FetchAdapter
 from stable_envs._adapters.fetch.process import FetchProcessAdapter
-from stable_envs._adapters.ogbench.manipulation import OGBManipulationAdapter
-from stable_envs._adapters.ogbench.manipulation_process import OGBManipulationProcessAdapter
-from stable_envs._adapters.ogbench.maze import OGBMazeAdapter
-from stable_envs._adapters.ogbench.maze_process import OGBMazeProcessAdapter
 from stable_envs._adapters.pusht.replay_batch import PushTReplayAdapter
 from stable_envs._adapters.rocket.adapter import RocketAdapter
 from stable_envs._execution.protocol import SimulatorAdapter, StepPipeline
+from stable_envs.envs.ogbench.simulation.manipulation import OGBManipulationAdapter
+from stable_envs.envs.ogbench.simulation.manipulation_process import OGBManipulationProcessAdapter
+from stable_envs.envs.ogbench.simulation.maze import OGBMazeAdapter
+from stable_envs.envs.ogbench.simulation.maze_process import OGBMazeProcessAdapter
 
 
 def local_adapters(

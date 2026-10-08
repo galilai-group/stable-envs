@@ -8,8 +8,8 @@ from importlib.metadata import version
 import numpy as np
 import torch
 
-from ..._adapters.ogbench import render_state as pixels
 from . import manipulation as core
+from .simulation import render_state as pixels
 
 _LOCK = threading.RLock()
 

@@ -8,9 +8,9 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ..._execution.protocol import SimulatorAdapter
-from ..._execution.requests import ProcessRequests
-from ..._execution.shared_memory import allocate_buffers, buffer_views, owned_group
+from ...._execution.protocol import SimulatorAdapter
+from ...._execution.requests import ProcessRequests
+from ...._execution.shared_memory import allocate_buffers, buffer_views, owned_group
 from .maze import OGBMazeAdapter
 
 

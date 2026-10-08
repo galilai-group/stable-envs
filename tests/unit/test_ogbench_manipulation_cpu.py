@@ -17,9 +17,9 @@ pytest.importorskip("ogbench")
 import mujoco
 from ogbench.manipspace.envs.manipspace_env import ManipSpaceEnv
 
-from stable_envs._adapters.ogbench.manipulation import OGBManipulationAdapter
-from stable_envs._adapters.ogbench.compatibility import CompatibleCube, CompatibleScene
 from stable_envs.envs.ogbench import OGBCube, OGBScene
+from stable_envs.envs.ogbench.simulation.compatibility import CompatibleCube, CompatibleScene
+from stable_envs.envs.ogbench.simulation.manipulation import OGBManipulationAdapter
 from tests.helpers.reference.ogbench_manipulation_semantics import assert_oracle, load_oracle, numpy_equal
 
 ROOT = Path(__file__).resolve().parents[2]
