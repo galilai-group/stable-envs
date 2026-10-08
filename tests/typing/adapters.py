@@ -12,8 +12,8 @@ from stable_envs._adapters.ogbench.manipulation_process import OGBManipulationPr
 from stable_envs._adapters.ogbench.maze import OGBMazeAdapter
 from stable_envs._adapters.ogbench.maze_process import OGBMazeProcessAdapter
 from stable_envs._adapters.pusht.replay_batch import PushTReplayAdapter
-from stable_envs._adapters.rocket.adapter import RocketAdapter
 from stable_envs._execution.protocol import SimulatorAdapter, StepPipeline
+from stable_envs.envs.rocket.simulation.adapter import RocketAdapter
 
 
 def local_adapters(

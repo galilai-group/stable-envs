@@ -466,8 +466,8 @@ def test_family_device_caches_release_on_eviction():
             'BoundedCache(16, name="mujoco_locomotion.nvd"',
             "close_cached_renderer",
         ),
-        (root / "envs" / "rocket_landing.py", 'BoundedCache(8, name="rocket.nvd"', "close_cached_renderer"),
-        (root / "envs" / "rocket_landing.py", "owns_scene = True", "owns_scene"),
+        (root / "envs" / "rocket" / "legacy.py", 'BoundedCache(8, name="rocket.nvd"', "close_cached_renderer"),
+        (root / "envs" / "rocket" / "legacy.py", "owns_scene = True", "owns_scene"),
     ]
     for path, needle, label in checks:
         src = path.read_text(encoding="utf-8")

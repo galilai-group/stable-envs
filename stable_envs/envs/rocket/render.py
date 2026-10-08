@@ -12,7 +12,7 @@ import threading
 import numpy as np
 import torch
 
-from . import rocket_landing as geometry
+from . import legacy as geometry
 
 ND = geometry.ND
 BODY_COLOR, FIN_COLOR, LEG_COLOR, BOOSTER_COLOR, PAD_COLOR, FLAME_COLOR = range(6)
@@ -75,7 +75,7 @@ class _Scene(ND.Scene):
 
 class _Renderer(ND.BatchRenderer):
     def _rasterize(self, positions, resolution):
-        from ._rocket_raster import rasterize
+        from .raster import rasterize
 
         raster = rasterize(positions, self.scene.face, resolution)
         # Rocket uses nearest textures without mipmaps. Nvdiffrast's shared

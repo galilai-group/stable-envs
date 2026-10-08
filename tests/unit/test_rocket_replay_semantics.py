@@ -131,7 +131,7 @@ def test_cpu_render_supplied_state_is_exact_and_nonmutating():
 
 
 def test_render_projection_matches_actual_engine_materials(pair):
-    from stable_envs.envs import rocket_landing as frozen
+    from stable_envs.envs.rocket import legacy as frozen
 
     e = pair[0]
     e.reset(seed=17, options={"variation": ["all"]})

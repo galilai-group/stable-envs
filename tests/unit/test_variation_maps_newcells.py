@@ -177,7 +177,7 @@ def test_rocket_default_variation_round_trips_through_the_style_layout():
     """The registered default must survive `variation -> style -> variation` unchanged. This is the
     mapping half of "the registered default is reproducible through the mapping"; the pixel half is
     the GPU artifact."""
-    rl = pytest.importorskip("stable_envs.envs.rocket_landing")
+    rl = pytest.importorskip("stable_envs.envs.rocket.legacy")
     layout = rl.style_layout()
     default = np.asarray(rl._default_style_row(), np.float64)
     m = _map_for(ROCKET)
@@ -191,7 +191,7 @@ def test_rocket_default_variation_round_trips_through_the_style_layout():
 def test_rocket_mapped_leaves_are_disjoint_slices_of_the_style_row():
     """Isolation, structurally: two mapped leaves that overlap in the style row cannot be varied
     independently no matter what the renderer does."""
-    rl = pytest.importorskip("stable_envs.envs.rocket_landing")
+    rl = pytest.importorskip("stable_envs.envs.rocket.legacy")
     layout = rl.style_layout()
     m = _map_for(ROCKET)
     seen = {}
@@ -206,7 +206,7 @@ def test_rocket_pad_color_default_is_white_not_the_declared_two_hundred():
     """swm declares pad.color init_value (200,200,200) but a plain reset loads the UNMODIFIED pad
     URDF -- `_modify_pad_urdf` runs only when a variation is requested -- so the pad is white. Our
     default is the one a plain reset produces, which is what "the registered default" means."""
-    rl = pytest.importorskip("stable_envs.envs.rocket_landing")
+    rl = pytest.importorskip("stable_envs.envs.rocket.legacy")
     layout = rl.style_layout()
     o, w = layout["pad.color"]
     row = np.asarray(rl._default_style_row(), np.float64)

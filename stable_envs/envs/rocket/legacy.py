@@ -6,9 +6,9 @@ import os
 import numpy as np
 import torch
 
-from ..env import Env
-from ..registry import register
-from ..spaces import Dict, Discrete, RGBBox
+from ...env import Env
+from ...registry import register
+from ...spaces import Dict, Discrete, RGBBox
 
 try:
     import nvdiffrast.torch as _nvdr
@@ -18,8 +18,8 @@ try:
 except Exception as _e:  # pragma: no cover
     NVDIFF_IMPORT_ERROR = f"{type(_e).__name__}: {_e}"
 
-from ..render import _resources as _RES
-from ..render import nvdiff as ND  # noqa: E402
+from ...render import _resources as _RES
+from ...render import nvdiff as ND  # noqa: E402
 
 # PyFlyt advances physics at 240 Hz; the camera lags by one substep.
 DT = 1.0 / 240.0

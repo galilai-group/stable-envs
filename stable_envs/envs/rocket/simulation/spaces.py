@@ -11,7 +11,7 @@ from __future__ import annotations
 import numpy as np
 from gymnasium import spaces
 
-from ...spaces import Dict as PublicDict
+from ....spaces import Dict as PublicDict
 
 
 class Box(spaces.Box):

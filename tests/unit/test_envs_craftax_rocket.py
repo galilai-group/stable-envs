@@ -26,9 +26,9 @@ import torch
 
 import stable_envs as snv
 from stable_envs._core import dynamics
-from stable_envs.envs import rocket_landing as RL
 from stable_envs.envs.craftax import classic as craftax
 from stable_envs.envs.craftax import full as _craftax_full
+from stable_envs.envs.rocket import legacy as RL
 from tests.helpers.stepping import branch_step, branch_steps
 
 CRAFTAX = ("CraftaxClassic", "CraftaxFull")

@@ -6,12 +6,12 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from .._adapters.rocket.adapter import RocketAdapter
-from .._core.style import StyleTensor
-from ..env import Env
-from ..registry import REGISTRY, register
-from ..specs import CompositeSpec, Spec
-from . import rocket_landing as frozen
+from ..._core.style import StyleTensor
+from ...env import Env
+from ...registry import REGISTRY, register
+from ...specs import CompositeSpec, Spec
+from . import legacy as frozen
+from .simulation.adapter import RocketAdapter
 
 
 class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
@@ -193,7 +193,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
             [self.B],
             device=self.device,
         )
-        from . import rocket_render
+        from . import render as rocket_render
 
         result.update(rocket_render.project(state))
         return result
@@ -221,7 +221,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
 
     def render(self, state=None, *, size=None, supersample=None, backend=None, chunk_size=None, out=None):
         self._check_open("render")
-        from . import rocket_render
+        from . import render as rocket_render
 
         backend = self.backend if backend is None else backend
         allowed = ("auto", "tiny") if self.device.type == "cpu" else ("auto", "nvdiffrast")
@@ -298,7 +298,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         return frames
 
     def _close(self):
-        from . import rocket_render
+        from . import render as rocket_render
 
         try:
             rocket_render.close(self)

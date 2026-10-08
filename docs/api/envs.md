@@ -56,7 +56,7 @@ Each module's docstring is where its measured constants live: the reference id, 
     options:
       members: false
 
-::: stable_envs.envs.rocket_landing
+::: stable_envs.envs.rocket
     options:
       members: false
 

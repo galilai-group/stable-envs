@@ -252,7 +252,7 @@ def test_from_triangles_clip_row_is_independent_of_batch_size():
     ``torch.sparse.mm``, whose four-term row sums (``S4``/``S3`` carry four and three nonzeros per row)
     are reordered by a kernel chosen from the dense operand's column count.
 
-    DOCUMENTED_LIMITATION, also on ``rocket_landing.DOCUMENTED_LIMITATIONS`` and so in
+    DOCUMENTED_LIMITATION, also on ``rocket.legacy.DOCUMENTED_LIMITATIONS`` and so in
     ``describe()``: this reaches no shipped frame, because nothing in the registry draws through nvdiff
     on ``device="cpu"``. A fix for the POSITIONS is written and measured, and is not applied
     because on cuda it moves four of the six re-frozen locomotion cells by 2.7e-07 of mean_abs and
