@@ -17,7 +17,7 @@ from stable_envs._adapters.ogbench.compatibility import (
     CompatibleScene,
     nodes,
 )
-from stable_envs._adapters.state_columns import owned_columns
+from stable_envs._execution.state_columns import owned_columns
 
 PARTS = (
     "TIME",

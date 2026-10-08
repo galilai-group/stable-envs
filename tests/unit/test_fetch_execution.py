@@ -4,8 +4,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from stable_envs._adapters import execution as policy
 from stable_envs._adapters.fetch import execution as execution
+from stable_envs._execution import policy
 
 
 @pytest.mark.parametrize(

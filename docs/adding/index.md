@@ -30,7 +30,7 @@ implementation while retaining different acceptance evidence.
 - Keep reusable rendering engines in `render/`. A helper used by one environment
   family belongs with that family, even when it deals with graphics.
 - Use `_adapters/` for simulator execution and State conversion. Group a family's
-  adapters together when it has several modules; shared process transport stays separate.
+  adapters together when it has several modules; shared process transport lives in `_execution/`.
 - Put reference comparisons and corpus utilities under `testing/`; experiment
   drivers belong under `scripts/`.
 

@@ -8,8 +8,8 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from .. import SimulatorAdapter
-from ..state_columns import owned_columns
+from ..._execution.protocol import SimulatorAdapter
+from ..._execution.state_columns import owned_columns
 from .compatibility import CUBE_SAMPLES, MODEL_VALUES, CompatibleCube, CompatibleScene, nodes
 
 PARTS = (

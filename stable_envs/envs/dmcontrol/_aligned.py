@@ -3,9 +3,9 @@ from __future__ import annotations
 import torch
 from tensordict import TensorDict
 
-from ..._adapters import StepPipeline, step_pipeline
 from ..._adapters.dmc.aligned import ALIGNED_FIELDS, CONFIG
 from ..._adapters.dmc.execution import make_dmc_adapter
+from ..._execution.protocol import StepPipeline, step_pipeline
 from ...spaces import Box, Dict, Discrete
 
 

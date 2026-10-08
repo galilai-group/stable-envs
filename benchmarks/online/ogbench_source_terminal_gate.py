@@ -114,6 +114,7 @@ def main():
         Path("stable_envs/env.py"),
         Path("stable_envs/_core/stepping.py"),
         *Path("stable_envs/_adapters").rglob("*.py"),
+        *Path("stable_envs/_execution").rglob("*.py"),
         Path("stable_envs/envs/ogbench/maze.py"),
         Path("stable_envs/envs/ogbench/manipulation_semantics.py"),
     ]

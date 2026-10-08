@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from stable_envs._adapters import execution as policy
+from stable_envs._execution import policy
 
 pytest.importorskip("dm_control")
 from stable_envs._adapters.dmc import execution as execution

@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 import torch
 
-from .._adapters import StepPipeline, step_pipeline
 from .._adapters.classic.local import _PHYSICS_SPACES, CLASSIC_FIELDS, ClassicControlAdapter, validate_classic_state
+from .._execution.protocol import StepPipeline, step_pipeline
 from ..spaces import Box, Dict
 from ..specs import Spec
 

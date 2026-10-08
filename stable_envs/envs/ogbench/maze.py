@@ -4,8 +4,8 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ..._adapters import StepPipeline, step_pipeline
 from ..._core.mujoco_gl import configure_mujoco_gl
+from ..._execution.protocol import StepPipeline, step_pipeline
 
 configure_mujoco_gl()
 

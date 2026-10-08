@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..execution import cpu_affinity, process_count
+from ..._execution.policy import cpu_affinity, process_count
 
 if TYPE_CHECKING:
     import torch

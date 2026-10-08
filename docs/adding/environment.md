@@ -23,7 +23,7 @@ A simulator-backed `Env` exposes:
 | `render(state=None, ...)`, `frame_spec` | Project internally to the renderer; do not change live simulation |
 | `close()` / context manager | Idempotent owned-resource cleanup; operations after close refuse |
 
-The private `stable_envs._adapters.SimulatorAdapter` protocol comprises `num_envs`,
+The private `stable_envs._execution.protocol.SimulatorAdapter` protocol comprises `num_envs`,
 reset/get/set/step/close. It has no rendering or transition method. See the accepted
 `ClassicControlAdapter` and `ClassicControlSemantics` in
 `stable_envs/envs/_classic_semantics.py`, and the delegated Fetch adapter in

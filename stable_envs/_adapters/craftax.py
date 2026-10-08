@@ -14,7 +14,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from . import SimulatorAdapter
+from .._execution.protocol import SimulatorAdapter
 
 PROFILE = {
     "craftax": "1.5.0",

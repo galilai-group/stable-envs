@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from .. import SimulatorAdapter
+from ..._execution.protocol import SimulatorAdapter
 from .actions import validate_action
 from .replay import RocketReplay, generator_state, install_generator
 

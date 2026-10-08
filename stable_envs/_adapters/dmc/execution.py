@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import torch
 
-from ..execution import cpu_affinity, process_count
+from ..._execution.policy import cpu_affinity, process_count
 from .factory import PROCESS_DOMAINS, DMCAdapter, make_local
 from .process import DMCProcessAdapter
 

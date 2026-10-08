@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from stable_envs._adapters import execution as policy
+from stable_envs._execution import policy
 
 pytest.importorskip("ogbench")
 from stable_envs._adapters.ogbench import execution as execution

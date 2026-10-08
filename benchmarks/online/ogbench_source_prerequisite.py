@@ -86,6 +86,7 @@ def main():
         Path("tests/helpers/reference/ogbench_manipulation_semantics.py"),
         Path("tests/helpers/reference/ogbench_manipulation_source.py"),
         *Path("stable_envs/_adapters").rglob("*.py"),
+        *Path("stable_envs/_execution").rglob("*.py"),
     ]
     report = dict(
         status="RUNNING",

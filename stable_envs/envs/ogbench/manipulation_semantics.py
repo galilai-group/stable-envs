@@ -4,8 +4,8 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ..._adapters import StepPipeline, step_pipeline
 from ..._core.style import StyleTensor
+from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env
 from ...specs import CompositeSpec, Spec
 
