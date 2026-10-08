@@ -11,7 +11,7 @@ import threading
 import numpy as np
 import torch
 
-from ..render._resources import retain_process_lifetime
+from ...render._resources import retain_process_lifetime
 
 _LOCK = threading.RLock()
 _CACHE = {}
@@ -75,7 +75,7 @@ def render(env, states=None, size=None, supersample=None, variation=None, style=
     import mujoco
     from OpenGL import GL
 
-    from . import fetch
+    from . import envs as fetch
 
     rows = torch.as_tensor(env._render_state if states is None else states, device=env.device)
     lead = tuple(rows.shape[:-1])

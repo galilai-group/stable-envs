@@ -64,7 +64,7 @@ def full_compare(state, refs):
         exact_array(
             state["task", "initial_gripper_xpos"][lane].numpy(), e.unwrapped.initial_gripper_xpos, "reset_anchor"
         )
-    from stable_envs._adapters.fetch.adapter import state_fields
+    from stable_envs.envs.fetch.simulation.adapter import state_fields
 
     fields = state_fields(refs[0].unwrapped.model.nq, refs[0].unwrapped.model.nv)
     assert set(state.keys(True, True)) == set(fields)

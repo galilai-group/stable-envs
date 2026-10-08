@@ -7,7 +7,7 @@ import pytest
 import torch
 
 import stable_envs as se
-from stable_envs.envs import fetch_opengl
+from stable_envs.envs.fetch import opengl as fetch_opengl
 
 
 @pytest.fixture(scope="module")

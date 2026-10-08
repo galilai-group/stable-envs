@@ -4,10 +4,10 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from .._adapters.fetch.execution import make_fetch_adapter as FetchAdapter
-from .._execution.protocol import StepPipeline, step_pipeline
-from ..env import Env
-from ..spaces import Box, Dict
+from ..._execution.protocol import StepPipeline, step_pipeline
+from ...env import Env
+from ...spaces import Box, Dict
+from .simulation.execution import make_fetch_adapter as FetchAdapter
 
 
 class FetchSemantics:
@@ -43,7 +43,7 @@ class FetchSemantics:
         self._reset_keys.add("table.color")
         self._configured_mass = self._simulator.object_mass
         self.state_dim = self._nq + 3  # Private renderer width, not full State width.
-        from .fetch import GOAL_NAMES, OBJECT_JOINT, ROBOT_JOINTS
+        from .envs import GOAL_NAMES, OBJECT_JOINT, ROBOT_JOINTS
 
         self.state_names = (*ROBOT_JOINTS, *(OBJECT_JOINT if self._has_object else ()), *GOAL_NAMES)
         Env.__init__(
@@ -58,7 +58,7 @@ class FetchSemantics:
 
     def make_variation_space(self):
         # Read defaults from the owned simulator without allocating a render context.
-        from .fetch import BLUE, _effective_rgba
+        from .envs import BLUE, _effective_rgba
 
         m = self._simulator.reference_model()
         floor = _effective_rgba(m, m.geom("floor0").id)[:3]
@@ -201,13 +201,13 @@ class FetchSemantics:
     def _render(self, *args, **kwargs):
         backend = kwargs.pop("backend", self.backend)
         if backend == "opengl":
-            from . import fetch_opengl
+            from . import opengl
 
-            return fetch_opengl.render(self, *args, **kwargs)
+            return opengl.render(self, *args, **kwargs)
         if self.device.type != "cuda":
             raise NotImplementedError("CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp")
         if not hasattr(self, "_b"):
-            from .fetch import _build_bundle, _require_gpu_renderer
+            from .envs import _build_bundle, _require_gpu_renderer
 
             _require_gpu_renderer()
             self._b = _build_bundle(self.SCENE)

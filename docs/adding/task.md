@@ -17,7 +17,7 @@ A registration selects a backend, task and renderer/default configuration.
 Shared code does not erase per-registration obligations. Fetch's accepted family
 uses one `FetchAdapter`, with task-specific configuration and sparse/dense reward
 selection. Its twelve classes compose `FetchSemantics` with `FetchBase`; the
-`CELLS` table and `_make_classes` in `stable_envs/envs/fetch.py` define the public
+`CELLS` table and `_make_classes` in `stable_envs/envs/fetch/envs.py` define the public
 classes. The native registry uses class names, not historical SWM IDs.
 
 ## Complete example: shared Fetch backend, distinct task semantics

@@ -450,7 +450,7 @@ def test_family_device_caches_release_on_eviction():
 
     root = pathlib.Path(__file__).resolve().parents[2] / "stable_envs"
     checks = [
-        (root / "envs" / "fetch.py", 'BoundedCache(6, name="fetch.ctx"', "release_cached_ctx"),
+        (root / "envs" / "fetch" / "envs.py", 'BoundedCache(6, name="fetch.ctx"', "release_cached_ctx"),
         (
             root / "envs" / "ogbench" / "manipulation.py",
             "ContextCache(on_evict=_release_context",
@@ -475,8 +475,8 @@ def test_family_device_caches_release_on_eviction():
     robocasa = (root / "envs" / "robocasa.py").read_text(encoding="utf-8")
     assert "on_evict=lambda c: c.close()" in robocasa
     cpu = [
-        (root / "envs" / "fetch.py", 'BoundedCache(32, name="fetch.plate"'),
-        (root / "envs" / "fetch.py", 'BoundedCache(256, name="fetch.cam"'),
+        (root / "envs" / "fetch" / "envs.py", 'BoundedCache(32, name="fetch.plate"'),
+        (root / "envs" / "fetch" / "envs.py", 'BoundedCache(256, name="fetch.cam"'),
         (root / "envs" / "ogbench" / "maze.py", 'BoundedCache(_SCENE_CACHE_MAX, name="ogbench.maze"'),
         (root / "envs" / "ogbench" / "manipulation.py", 'BoundedCache(_PLATE_CACHE_MAX, name="ogbench.plate"'),
         (root / "envs" / "metaworld.py", 'BoundedCache(_PLATE_CACHE_MAX, name="metaworld.plate"'),

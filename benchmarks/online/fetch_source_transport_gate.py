@@ -18,8 +18,8 @@ import torch
 from gymnasium.envs.mujoco.mujoco_rendering import MujocoRenderer
 
 from benchmarks.online.fetch_parallel_source import FetchSource, ParallelFetchSource, import_source
-from stable_envs._adapters.fetch.adapter import FetchAdapter
 from stable_envs._core.stepping import step as dispatch_step
+from stable_envs.envs.fetch.simulation.adapter import FetchAdapter
 
 
 def fixture(task, reward):
@@ -90,8 +90,8 @@ def main():
         Path("tests/helpers/reference/fetch_semantics.py"),
         Path("tests/helpers/reference/fetch_compare.py"),
         Path("stable_envs/_core/stepping.py"),
-        Path("stable_envs/_adapters/fetch/adapter.py"),
-        Path("stable_envs/_adapters/fetch/observations.py"),
+        Path("stable_envs/envs/fetch/simulation/adapter.py"),
+        Path("stable_envs/envs/fetch/simulation/observations.py"),
     ]
     report = dict(
         status="RUNNING",
