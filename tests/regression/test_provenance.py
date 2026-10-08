@@ -85,7 +85,7 @@ from pathlib import Path  # noqa: E402
 import numpy as np  # noqa: E402
 
 from stable_envs.testing import conformance as C  # noqa: E402
-from stable_envs.testing import render_worker as W  # noqa: E402
+from tests._runner import render_worker as W  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 

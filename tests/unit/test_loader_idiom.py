@@ -36,7 +36,7 @@ torch = pytest.importorskip("torch")
 from test_input_validation import TinyEnv, _ids, _states  # noqa: E402  (same directory)
 from torch.utils.data import BatchSampler, DataLoader, SequentialSampler, TensorDataset
 
-from stable_envs._data import StateDataset, TrajectoryDataset, collate_batched
+from stable_envs.testing._data import StateDataset, TrajectoryDataset, collate_batched
 
 DEV = "cpu"
 

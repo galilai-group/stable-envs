@@ -13,7 +13,7 @@ import time
 
 import pytest
 
-from . import node_health, resource_guard
+from tests._runner import node_health, resource_guard
 
 # Fresh-interpreter checks remain in the full suite, outside the renderer smoke subset.
 SMOKE_EXCLUDED_FIXTURES = frozenset({"fresh_process"})

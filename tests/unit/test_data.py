@@ -33,7 +33,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from stable_envs._data import StateDataset, TrajectoryDataset, collate_batched, render_states
+from stable_envs.testing._data import StateDataset, TrajectoryDataset, collate_batched, render_states
 
 #: The frame is uint8, so the identity a pixel can carry is taken modulo this. A prime, so that
 #: "state 3 got style 3" cannot come out true by a coincidence with the batch size — and any fixture
@@ -597,7 +597,7 @@ def test_the_corpus_names_its_own_env_in_a_COLUMN_not_only_in_the_description(hf
     hub round trip comes back with an empty description and a corpus that has forgotten which renderer
     its states belong to. The column costs a few hundred bytes after parquet dictionary-encodes it.
     """
-    from stable_envs._data import HF_META_KEY
+    from stable_envs.testing._data import HF_META_KEY
 
     ds = TrajectoryDataset(RecordingEnv(), _states(8).reshape(2, 4, 2), window=1, device="cpu")
     hfds = ds.to_hf()
@@ -612,7 +612,7 @@ def test_the_corpus_names_its_own_env_in_a_COLUMN_not_only_in_the_description(hf
 def test_a_corpus_that_names_no_env_is_refused_rather_than_guessed(hf):
     """Guessing from ``state_dim`` picks the wrong env the moment two envs share a width."""
     ds = TrajectoryDataset(RecordingEnv(), _states(8).reshape(2, 4, 2), window=1, device="cpu")
-    from stable_envs._data import HF_META_KEY
+    from stable_envs.testing._data import HF_META_KEY
 
     stripped = ds.to_hf().remove_columns([HF_META_KEY])
     stripped.info.description = ""
@@ -633,7 +633,7 @@ def test_a_missing_datasets_package_explains_itself_instead_of_tracebacking(monk
     """
     import sys
 
-    import stable_envs._data as D
+    import stable_envs.testing._data as D
 
     monkeypatch.setitem(sys.modules, "datasets", None)  # `import datasets` now raises ImportError
     ds = TrajectoryDataset(RecordingEnv(), _states(8).reshape(2, 4, 2), window=1, device="cpu")

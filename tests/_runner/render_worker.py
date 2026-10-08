@@ -1,6 +1,6 @@
 """Render seeded inputs in a fresh interpreter and write comparison artifacts.
 
-Run with python -m stable_envs.testing.render_worker --help. Per-environment
+Run with python -m tests._runner.render_worker --help. Per-environment
 errors are recorded in the report; callers must inspect it, not just exit status.
 """
 
@@ -12,7 +12,7 @@ import os
 import sys
 import traceback
 
-from .._mujoco_gl import configure_mujoco_gl
+from stable_envs._mujoco_gl import configure_mujoco_gl
 
 configure_mujoco_gl()
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")

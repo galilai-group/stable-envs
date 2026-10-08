@@ -12,7 +12,7 @@ supervisor exists to prevent. They are kept in the repo rather than run once by 
 safety net that is never exercised is a safety net nobody can trust, and the way to exercise this one
 is to run
 
-    SE_SELFTEST_CRASH=1 python -m stable_envs.testing.supervisor -- tests/gpu -m selftest -v
+    SE_SELFTEST_CRASH=1 python -m tests._runner.supervisor -- tests/gpu -m selftest -v
 
 and confirm the summary reports the crashes by name and still reports every other test.
 """
@@ -32,7 +32,7 @@ if not torch.cuda.is_available():
     pytest.skip("stable-envs GPU tests require a CUDA device", allow_module_level=True)
 
 import stable_envs as se
-from stable_envs.testing import resource_guard
+from tests._runner import resource_guard
 
 
 def test_the_resource_guard_is_attached_to_the_classes_the_driver_goes_through():

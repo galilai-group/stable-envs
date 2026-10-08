@@ -13,22 +13,22 @@ tests can run directly through pytest. See [the testing guide](../testing.md) fo
 and acceptance requirements.
 
 ```
-python -m stable_envs.testing.supervisor -- tests/ -v      # full suite, crash-isolated
-python -m stable_envs.testing.supervisor --smoke           # one env per family
-python -m stable_envs.testing.node_health                  # is this host fit to measure on?
+python -m tests._runner.supervisor -- tests/ -v      # full suite, crash-isolated
+python -m tests._runner.supervisor --smoke           # one env per family
+python -m tests._runner.node_health                  # is this host fit to measure on?
 sbatch scripts/run_gpu_tests.sbatch                        # the same, on a GPU node
 sbatch scripts/run_smoke_tests.sbatch
 ```
 
-::: stable_envs.testing.supervisor
+::: tests._runner.supervisor
 
-::: stable_envs.testing.resource_guard
+::: tests._runner.resource_guard
 
-::: stable_envs.testing.node_health
+::: tests._runner.node_health
 
-::: stable_envs.testing.render_worker
+::: tests._runner.render_worker
 
-`stable_envs/testing/safety_plugin.py` supplies the pytest hooks for resource accounting, flushed
+`tests/_runner/safety_plugin.py` supplies the pytest hooks for resource accounting, flushed
 progress events, node checks, and smoke selection. The supervisor consumes those events; node checks
 can be unavailable or skipped, so inspect their details rather than treating `ok` alone as proof
 that the host is healthy.

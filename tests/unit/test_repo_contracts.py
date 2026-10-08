@@ -202,7 +202,7 @@ def test_every_launcher_runs_through_the_supervisor_rather_than_bare_pytest():
     """
     for p in LAUNCHERS:
         src = p.read_text()
-        assert "stable_envs.testing.supervisor" in src, (
+        assert "tests._runner.supervisor" in src, (
             f"{p.name} does not run through the supervisor, so a crash in it produces no report"
         )
         assert "--json" in src and "--rundir" in src, (
