@@ -1,6 +1,6 @@
 """The safety net, tested. A suite that cannot survive a crashing test has to prove that it can.
 
-Everything in ``stable_envs/testing/supervisor.py`` and ``resource_guard.py`` exists to convert a class
+Everything in ``tests/_runner/supervisor.py`` and ``resource_guard.py`` exists to convert a class
 of failure that kills the interpreter into one attributed test failure. That claim cannot be checked by
 reading the code: the whole point is what happens when the process is gone, and the only honest way to
 check it is to kill a process and look at what came back. So each test here generates a throwaway test
@@ -64,7 +64,7 @@ def _run_supervisor(tmp_path: Path, module_src: str, *extra_args, timeout=300) -
         sys.executable,
         "-u",
         "-m",
-        "stable_envs.testing.supervisor",
+        "tests._runner.supervisor",
         "--rundir",
         str(rundir),
         "--json",
@@ -73,7 +73,7 @@ def _run_supervisor(tmp_path: Path, module_src: str, *extra_args, timeout=300) -
         "--",
         str(tmp_path / "test_generated.py"),
         "-p",
-        "stable_envs.testing.safety_plugin",
+        "tests._runner.safety_plugin",
         # The generated module lives in a tmp dir, so its rootdir is NOT this repo and it inherits
         # none of our addopts -- including `-p no:randomly`. These tests assert on which test the
         # crash is attributed to, which is an ORDER claim, so a shuffled child would fail them for
@@ -170,7 +170,7 @@ def test_the_stall_watchdog_kills_a_hung_test_and_carries_on(tmp_path):
 #: involved. That the patch is really attached to ``mujoco.egl.GLContext`` is asserted separately, on
 #: the GPU, in tests/gpu/test_crash_isolation.py.
 GUARD_PROBE = """
-from stable_envs.testing import resource_guard as G
+from tests._runner import resource_guard as G
 
 def test_releases_a_context():
     G._record("context", "created")
@@ -204,7 +204,7 @@ def test_the_resource_guard_fails_the_test_that_broke_the_rule(tmp_path):
             "pytest",
             str(tmp_path / "test_guard.py"),
             "-p",
-            "stable_envs.testing.safety_plugin",
+            "tests._runner.safety_plugin",
             "-p",
             "no:cacheprovider",
             "-p",
@@ -236,7 +236,7 @@ def test_the_guard_can_be_put_in_report_only_mode_for_a_bisect(tmp_path):
             "pytest",
             str(tmp_path / "test_guard.py"),
             "-p",
-            "stable_envs.testing.safety_plugin",
+            "tests._runner.safety_plugin",
             "-p",
             "no:cacheprovider",
             "-p",
@@ -281,7 +281,7 @@ def test_the_per_test_timeout_is_applied_but_never_required(tmp_path):
         "pytest",
         str(tmp_path / "test_generated.py"),
         "-p",
-        "stable_envs.testing.safety_plugin",
+        "tests._runner.safety_plugin",
         "-p",
         "no:cacheprovider",
         "-p",
@@ -330,7 +330,7 @@ def test_a_condemned_node_is_refused_by_name_before_anything_is_measured():
     only that the gate closes but that the message carries the hostname and the scheduler's reason —
     those two strings are the entire difference between a one-line diagnosis and an afternoon.
     """
-    from stable_envs.testing import node_health as N
+    from tests._runner import node_health as N
 
     real = N.slurm_node_status
     try:
@@ -354,7 +354,7 @@ def test_a_healthy_state_string_is_not_mistaken_for_a_condemned_one():
     goes unnoticed. SLURM decorates states with ``*~#$`` suffixes, so the match is on the alphabetic
     stem — which is exactly the kind of thing that is obvious until someone writes ``state == "drain"``.
     """
-    from stable_envs.testing.node_health import state_is_condemned
+    from tests._runner.node_health import state_is_condemned
 
     for good in ("mix", "mix-", "alloc", "alloc#", "idle", "idle~", "comp", "resv", "plnd"):
         assert not state_is_condemned(good), good
@@ -371,7 +371,7 @@ def test_an_unstable_reference_renderer_closes_the_gate_even_on_a_healthy_lookin
     message has to say that no stable-envs code was involved: otherwise the next reader spends the
     afternoon in ``raycast3d.py``.
     """
-    from stable_envs.testing import node_health as N
+    from tests._runner import node_health as N
 
     real_sched, real_probe = N.slurm_node_status, N.reference_renderer_probe
     try:
@@ -400,7 +400,7 @@ def test_a_condemned_node_ends_the_whole_run_with_code_78_and_an_artifact(tmp_pa
     first time.
     """
     (tmp_path / "conftest.py").write_text(
-        "from stable_envs.testing import node_health\n"
+        "from tests._runner import node_health\n"
         "node_health.slurm_node_status = lambda host=None, timeout=20.0: "
         "{'state': 'drain*', 'reason': 'NHC: auto-reboot', 'source': 'sinfo'}\n"
     )
@@ -419,7 +419,7 @@ def _run_supervisor_env(tmp_path: Path, module_src: str, **envextra):
         sys.executable,
         "-u",
         "-m",
-        "stable_envs.testing.supervisor",
+        "tests._runner.supervisor",
         "--rundir",
         str(rundir),
         "--json",
@@ -427,7 +427,7 @@ def _run_supervisor_env(tmp_path: Path, module_src: str, **envextra):
         "--",
         str(tmp_path / "test_generated.py"),
         "-p",
-        "stable_envs.testing.safety_plugin",
+        "tests._runner.safety_plugin",
         "-p",
         "no:randomly",
         "-p",
@@ -452,7 +452,7 @@ def test_the_smoke_subset_covers_every_env_family_exactly_once():
     """
     pytest.importorskip("torch")
     import stable_envs as se
-    from stable_envs.testing.safety_plugin import _family_representatives, smoke_envs
+    from tests._runner.safety_plugin import _family_representatives, smoke_envs
 
     reps = _family_representatives()
     families = {cls.__module__.rsplit(".", 1)[-1] for cls in se.registry.REGISTRY.values()}

@@ -430,7 +430,7 @@ def _code_of(name: str) -> str:
 @pytest.mark.unit
 @pytest.mark.parametrize("name", ["mjwarp/__init__.py", "mjwarp/lightspec.py", "nvdiff.py", "rendernet.py", "_resources.py"])
 def test_nothing_in_the_render_backends_releases_an_egl_context(name):
-    """The rule ``testing/resource_guard.py`` enforces at zero tolerance, checked at the source.
+    """The rule ``tests/_runner/resource_guard.py`` enforces at zero tolerance, checked at the source.
 
     Releasing one EGL context corrupts rendering in every other live context in the process; four
     separate incidents in this repository were exactly that, each surfacing as pixel differences in an

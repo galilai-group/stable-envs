@@ -550,7 +550,7 @@ The suite has aborted its own interpreter four times in a week while being green
 do that is defective whatever its exit code says: `SIGABRT` out of MuJoCo, EGL or the CUDA driver is not
 an exception, so pytest writes no report for the test that died and never runs the ones after it.
 
-The sbatch scripts therefore go through `stable_envs.testing.supervisor` rather than calling pytest
+The sbatch scripts therefore go through `tests._runner.supervisor` rather than calling pytest
 directly. It writes one breadcrumb per test, and when the interpreter dies it names the test that killed
 it, records it as **CRASHED**, and resumes the run past it — a crash costs one test instead of the run.
 On a clean run it costs one extra process and nothing else. (`pytest --forked` is the obvious

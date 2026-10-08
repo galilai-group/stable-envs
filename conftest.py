@@ -10,10 +10,10 @@ and the only way to run the suite is to remember ``PYTHONPATH=.`` — which is e
 friction that ends with a suite nobody runs.
 
 ``pytest_plugins`` second, and it must be in the ROOT conftest: pytest refuses ``pytest_plugins`` in a
-non-top-level conftest, and putting ``-p stable_envs.testing.safety_plugin`` in ``addopts`` instead
+non-top-level conftest, and putting ``-p tests._runner.safety_plugin`` in ``addopts`` instead
 would try to import the package before the line above has run. So the order is not incidental.
 
-See ``stable_envs/testing/safety_plugin.py`` for what the plugin does and why each part of it exists.
+See ``tests/_runner/safety_plugin.py`` for what the plugin does and why each part of it exists.
 """
 
 from __future__ import annotations
@@ -25,4 +25,4 @@ _ROOT = str(Path(__file__).resolve().parent)
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
-pytest_plugins = ("stable_envs.testing.safety_plugin",)
+pytest_plugins = ("tests._runner.safety_plugin",)

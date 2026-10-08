@@ -43,7 +43,7 @@
 # gpu-058 was caught twice, in the MetaWorld and OGBench
 # investigations; the rest were condemned by the scheduler during a run. A parity number measured on any of them is meaningless, and the failure reads as a
 # state-sufficiency violation in the renderer, which is where an afternoon goes. The node gate in
-# stable_envs/testing/node_health.py catches a node that goes bad DURING a run and exits 78; this list
+# tests/_runner/node_health.py catches a node that goes bad DURING a run and exits 78; this list
 # is the ones already known. tests/unit/test_repo_contracts.py asserts the three lists agree.
 #SBATCH --exclude=gb-west-a1-gpu-004,gb-west-a1-gpu-047,gb-west-a1-gpu-058,gb-west-a1-gpu-068,gb-west-a1-gpu-070,gb-west-a1-gpu-082,gb-west-a1-gpu-120,gb-west-a1-gpu-184
 #SBATCH --output=/mnt/vast/home/randall.balestriero/rjepa_bench_logs/se_smoke_%j.out
@@ -60,7 +60,7 @@ fi
 RUN=/mnt/vast/home/randall.balestriero/rjepa_bench_logs/se_smoke_${SLURM_JOB_ID:-manual}
 mkdir -p "$RUN"
 
-"$PY" -u -m stable_envs.testing.supervisor \
+"$PY" -u -m tests._runner.supervisor \
     --rundir "$RUN" --json "$RUN/result.json" --smoke --stall-timeout 600 \
     -- tests/ -q -rs "$@"
 rc=$?

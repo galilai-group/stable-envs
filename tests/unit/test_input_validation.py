@@ -42,9 +42,9 @@ torch = pytest.importorskip("torch")
 
 from stable_envs import spaces
 from stable_envs._core.style import StyleTensor
-from stable_envs._data import StateDataset, TrajectoryDataset, check_style, render_states
 from stable_envs.env import Env as StableEnv
 from stable_envs.env import check_states, require_contiguous_out
+from stable_envs.testing._data import StateDataset, TrajectoryDataset, check_style, render_states
 
 DEV = "cpu"
 NAMES = ("agent_x", "agent_y", "block_x", "block_y", "block_angle")

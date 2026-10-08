@@ -1,6 +1,6 @@
 """Run pytest in restartable subprocesses and aggregate failures across crashes.
 
-Use python -m stable_envs.testing.supervisor -- [pytest arguments]. Finished
+Use python -m tests._runner.supervisor -- [pytest arguments]. Finished
 and crashed tests are deselected on restart; crashes remain failures in the
 combined report. A bounded restart count prevents an endless crash loop.
 """

@@ -35,7 +35,7 @@ PY=/mnt/vast/home/randall.balestriero/miniconda3/envs/test/bin/python
 RUN=/mnt/vast/home/randall.balestriero/rjepa_bench_logs/se_unit_${SLURM_JOB_ID:-manual}
 mkdir -p "$RUN"
 
-"$PY" -u -m stable_envs.testing.supervisor \
+"$PY" -u -m tests._runner.supervisor \
     --rundir "$RUN" --json "$RUN/result.json" \
     -- tests/unit tests/regression tests/integration/test_safety_net.py -v -rs --durations=15 "$@"
 rc=$?

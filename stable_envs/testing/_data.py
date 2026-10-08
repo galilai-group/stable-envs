@@ -15,8 +15,8 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from .env import Env, check_states, require_contiguous_out
-from .registry import make
+from stable_envs.env import Env, check_states, require_contiguous_out
+from stable_envs.registry import make
 
 HF_META_KEY = "stable_envs"
 
@@ -600,6 +600,6 @@ def _require_datasets():
 
 
 def _version() -> str:
-    from . import __version__
+    from stable_envs import __version__
 
     return __version__

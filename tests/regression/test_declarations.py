@@ -556,7 +556,7 @@ def test_every_gate_exclusion_states_its_mechanism():
     test the list is a place to quietly move anything inconvenient, which is the same silent-skip
     failure one level up.
     """
-    from stable_envs.testing import gate
+    from tests._runner import gate
 
     for name, why in gate.EXCLUDED.items():
         assert why and len(why) > 120, (
@@ -573,7 +573,7 @@ def test_every_gate_exclusion_states_its_mechanism():
 
 def test_gate_envs_removes_exactly_the_excluded_and_nothing_else():
     """``gate_envs`` is subtraction, not filtering-by-availability."""
-    from stable_envs.testing import gate
+    from tests._runner import gate
 
     names = ["PushT", "OvercookedCrampedRoom", "DMCWalkerWalk", "OvercookedCoordRing"]
     assert gate.gate_envs(names) == ["DMCWalkerWalk", "PushT"]
@@ -615,7 +615,7 @@ def test_the_live_context_cap_scales_with_the_registry():
     The rate-based rules are the ones that catch real runaway creation, and they are per-test, so
     scaling this one costs nothing they were covering.
     """
-    from stable_envs.testing import resource_guard as RG
+    from tests._runner import resource_guard as RG
 
     lim = RG.limits()
     assert lim["session_live"] >= 192, "the floor must never make an existing run's bound tighter"
@@ -631,7 +631,7 @@ def test_the_live_context_cap_scales_with_the_registry():
 
 def test_a_test_that_creates_no_context_is_never_a_runaway():
     """The exact shape of the false positive: zero created, zero freed, many live."""
-    from stable_envs.testing import resource_guard as RG
+    from tests._runner import resource_guard as RG
 
     d = {
         "context_created": 0,

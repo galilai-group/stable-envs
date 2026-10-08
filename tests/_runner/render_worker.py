@@ -1,6 +1,6 @@
 """Render seeded inputs in a fresh interpreter and write comparison artifacts.
 
-Run with python -m stable_envs.testing.render_worker --help. Per-environment
+Run with python -m tests._runner.render_worker --help. Per-environment
 errors are recorded in the report; callers must inspect it, not just exit status.
 """
 
@@ -12,7 +12,8 @@ import os
 import sys
 import traceback
 
-from .._core.mujoco_gl import configure_mujoco_gl
+from stable_envs._core.mujoco_gl import configure_mujoco_gl
+from stable_envs.testing._sampling import STATE_SEED, STYLE_SEED, sample_inputs  # noqa: F401
 
 configure_mujoco_gl()
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
@@ -20,27 +21,14 @@ os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 import numpy as np
 
 # Protocol seeds are shared with the parent test.
-STATE_SEED = 20260809
-STYLE_SEED = 20260810
 ROLLOUT_SEED = 7
 ROLLOUT_STEPS = 4
 
 
 def _digest(a) -> str:
-    from .conformance import frames_digest
+    from stable_envs.testing.conformance import frames_digest
 
     return frames_digest(a)
-
-
-def sample_inputs(env, n: int):
-    """Draw the fixed-seed inputs shared by the parent test and worker."""
-    states = np.asarray(env.sample_states(n, rng=np.random.default_rng(STATE_SEED)), np.float32)
-    style = (
-        np.asarray(env.sample_style(n, rng=np.random.default_rng(STYLE_SEED)), np.float32)
-        if env.style_dim
-        else np.zeros((n, 0), np.float32)
-    )
-    return states, style
 
 
 def rollout_digests(env, n: int) -> dict:
@@ -49,7 +37,7 @@ def rollout_digests(env, n: int) -> dict:
 
     if not has_dynamics(env):
         return {}
-    from ._rollout import sample
+    from stable_envs.testing._rollout import sample
 
     tr = sample(env, steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
     out = {"rollout_states_sha": _digest(tr["states"].detach().cpu().numpy())}

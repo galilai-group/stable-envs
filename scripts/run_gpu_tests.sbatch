@@ -3,7 +3,7 @@
 #   sbatch scripts/run_gpu_tests.sbatch                 # everything
 #   sbatch scripts/run_gpu_tests.sbatch -k PushT        # extra args go straight to pytest
 #
-# Run through stable_envs.testing.supervisor rather than through pytest directly. The suite has aborted
+# Run through tests._runner.supervisor rather than through pytest directly. The suite has aborted
 # itself four times in a week -- SIGABRT/SIGSEGV out of MuJoCo, EGL or the CUDA driver -- and a bare
 # pytest reports nothing at all when that happens: the test that died is not named, every test after it
 # is never run, and the whole artifact of the run is a shell exit code. The supervisor turns that into
@@ -34,7 +34,7 @@
 # gpu-058 was caught twice, in the MetaWorld and OGBench
 # investigations; the rest were condemned by the scheduler during a run. A parity number measured on any of them is meaningless, and the failure reads as a
 # state-sufficiency violation in the renderer, which is where an afternoon goes. The node gate in
-# stable_envs/testing/node_health.py catches a node that goes bad DURING a run and exits 78; this list
+# tests/_runner/node_health.py catches a node that goes bad DURING a run and exits 78; this list
 # is the ones already known. tests/unit/test_repo_contracts.py asserts the three lists agree.
 #SBATCH --exclude=gb-west-a1-gpu-004,gb-west-a1-gpu-047,gb-west-a1-gpu-058,gb-west-a1-gpu-068,gb-west-a1-gpu-070,gb-west-a1-gpu-082,gb-west-a1-gpu-120,gb-west-a1-gpu-184
 #SBATCH --output=/mnt/vast/home/randall.balestriero/rjepa_bench_logs/se_gpu_%j.out
@@ -52,9 +52,9 @@ PY=/mnt/vast/home/randall.balestriero/venvs/se-all/bin/python
 
 # What this run is REQUIRED to reach. Without it a venv that lost a dependency skips its whole
 # assignment and reports success, which is the failure this gate exists to make impossible.
-# stable_envs/testing/gate.py subtracts the one declared exclusion (Overcooked, which cannot share an
+# tests/_runner/gate.py subtracts the one declared exclusion (Overcooked, which cannot share an
 # interpreter -- jaxmarl needs scipy<=1.12 against jax's >=1.14) and nothing else.
-export SE_REQUIRE_ENVS=$("$PY" -m stable_envs.testing.gate)
+export SE_REQUIRE_ENVS=$("$PY" -m tests._runner.gate)
 echo "se-gpu gate covers $(tr ',' '\n' <<<"$SE_REQUIRE_ENVS" | grep -c .) envs"
 
 # Artifacts live on shared storage, not in the node's /tmp: a crashed or preempted job still leaves the
@@ -62,7 +62,7 @@ echo "se-gpu gate covers $(tr ',' '\n' <<<"$SE_REQUIRE_ENVS" | grep -c .) envs"
 RUN=/mnt/vast/home/randall.balestriero/rjepa_bench_logs/se_gpu_${SLURM_JOB_ID:-manual}
 mkdir -p "$RUN"
 
-"$PY" -u -m stable_envs.testing.supervisor \
+"$PY" -u -m tests._runner.supervisor \
     --rundir "$RUN" --json "$RUN/result.json" \
     -- tests/ -v -rs --durations=25 "$@"
 rc=$?

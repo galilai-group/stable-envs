@@ -31,7 +31,7 @@ if not torch.cuda.is_available():
 from _shared import assert_frames_identical, make_or_skip, sampled_states
 
 import stable_envs as se
-from stable_envs._data import render_states
+from stable_envs.testing._data import render_states
 
 #: One env per RENDER BACKEND rather than per family: the 2-D rasterizer, the tile atlas and the 3-D
 #: ray caster are the three places a device-blind cache can live, and every other registered env
@@ -92,7 +92,7 @@ def _ddp_child(rank: int, world: int, name: str, n: int, q):
     import torch.distributed as dist
     from torch.utils.data import DataLoader, DistributedSampler
 
-    from stable_envs._data import StateDataset, collate_batched
+    from stable_envs.testing._data import StateDataset, collate_batched
 
     torch.cuda.set_device(rank)
     os.environ.setdefault("MASTER_ADDR", "127.0.0.1")

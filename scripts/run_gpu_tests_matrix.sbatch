@@ -55,7 +55,7 @@ echo "se-matrix venv=$VENV owns $(tr ',' '\n' <<<"$SE_REQUIRE_ENVS" | wc -l) env
 RUN=/mnt/vast/home/randall.balestriero/rjepa_bench_logs/se_mx_${VENV}_${SLURM_JOB_ID:-manual}
 mkdir -p "$RUN"
 
-"$PY" -u -m stable_envs.testing.supervisor \
+"$PY" -u -m tests._runner.supervisor \
     --rundir "$RUN" --json "$RUN/result.json" \
     -- tests/ -v -rs --durations=25 "$@"
 rc=$?

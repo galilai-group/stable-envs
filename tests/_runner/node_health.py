@@ -81,7 +81,7 @@ def reference_renderer_probe(candidates=None) -> dict:
     cls = _egl_probe_class(candidates)
     if cls is None:
         return {"skipped": "no EGL-backed reference env in this selection"}
-    from . import conformance as C
+    from stable_envs.testing import conformance as C
 
     size = int(getattr(cls, "default_size", 224))
     try:

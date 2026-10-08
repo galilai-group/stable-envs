@@ -928,7 +928,7 @@ def check_batch_size_invariance(env, states, style=None, sizes=(1, 7, 64), probe
 
 def check_chunked_render_matches(env, states, style=None, chunks=(1, 7, 64, 4096)) -> dict:
     """Compare private render_states outputs across chunk sizes using identical inputs."""
-    from .._data import render_states
+    from ._data import render_states
 
     ref = None
     worst, where = 0, ""
@@ -961,7 +961,7 @@ DOWNSAMPLE_PROTOCOL_N = 8
 
 def downsample_protocol(states=None) -> dict:
     """Describe the fixed downsampling corpus and optionally hash its state rows."""
-    from . import render_worker as W
+    from . import _sampling as W
 
     out = {
         "n": DOWNSAMPLE_PROTOCOL_N,
@@ -978,7 +978,7 @@ def downsample_protocol(states=None) -> dict:
 
 def downsample_protocol_states(env) -> np.ndarray:
     """Draw the fixed-seed render rows used to measure the downsampling bound."""
-    from . import render_worker as W
+    from . import _sampling as W
 
     states, _ = W.sample_inputs(env, DOWNSAMPLE_PROTOCOL_N)
     return np.ascontiguousarray(states, np.float32)

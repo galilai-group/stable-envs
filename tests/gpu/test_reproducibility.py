@@ -70,9 +70,9 @@ if not torch.cuda.is_available():
 from _shared import family_params, make_or_skip, resolve_family, sampled_states
 
 import stable_envs as se
-from stable_envs._data import StateDataset, TrajectoryDataset, collate_batched
 from stable_envs.testing import conformance as C
-from stable_envs.testing import render_worker as W
+from stable_envs.testing._data import StateDataset, TrajectoryDataset, collate_batched
+from tests._runner import render_worker as W
 from tests.helpers.reference.certification import has_reference_renderer
 
 
@@ -190,7 +190,7 @@ def inputs(env):
 
 @pytest.fixture(scope="session")
 def fresh_process(request, tmp_path_factory):
-    """Run the registry through ``stable_envs.testing.render_worker`` in a NEW interpreter, once.
+    """Run the registry through ``tests._runner.render_worker`` in a NEW interpreter, once.
 
     One subprocess for 44 envs rather than one per env. A fresh interpreter costs a CUDA context, a
     Triton cache lookup and every env's construction — for the MuJoCo mazes, a plate bake — so per-env
@@ -216,7 +216,7 @@ def fresh_process(request, tmp_path_factory):
     cmd = [
         sys.executable,
         "-m",
-        "stable_envs.testing.render_worker",
+        "tests._runner.render_worker",
         "--out-npz",
         str(npz),
         "--out-json",
@@ -236,7 +236,7 @@ def fresh_process(request, tmp_path_factory):
     # envs. Emitting the worker's own per-env progress is what makes a long setup distinguishable
     # from a wedged one, which is the distinction the watchdog exists to make.
     try:
-        from stable_envs.testing.safety_plugin import _emit
+        from tests._runner.safety_plugin import _emit
     except Exception:  # noqa: BLE001
 
         def _emit(**_rec):  # pragma: no cover

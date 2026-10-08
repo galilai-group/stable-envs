@@ -30,7 +30,7 @@ pytest tests/ -v -rs                           # the same, if you already hold a
 ```
 
 The full suite requires CUDA by design and skips loudly rather than going green without it. Run it
-through `stable_envs.testing.supervisor` (which is what the sbatch scripts do): a segfault or
+through `tests._runner.supervisor` (which is what the sbatch scripts do): a segfault or
 `SIGABRT` out of MuJoCo, EGL or the driver ends the interpreter, and a bare pytest then reports
 nothing at all about which test caused it.
 
@@ -58,7 +58,7 @@ Do not promote a registration from renderer parity or a sibling's passing task a
   change to a fidelity claim requires independent evidence and review.
 - Do not release an EGL context or close a `mujoco.Renderer`. Releasing one corrupts rendering in
   every other live context in the process, silently, and the damage surfaces later as pixel
-  differences in an unrelated env. `stable_envs/testing/resource_guard.py` fails the test that does it.
+  differences in an unrelated env. `tests/_runner/resource_guard.py` fails the test that does it.
 - Do not create contexts, renderers or envs per state, per style value or per call. Context
   creation that scales with the batch means a per-environment value is being turned into a
   per-environment *scene*.
