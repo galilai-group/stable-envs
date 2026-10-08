@@ -27,7 +27,7 @@ class CraftaxSemantics(Env):
     default_supersample = 1
 
     def __init__(self, num_envs=1, size=None, supersample=1, device="cpu", backend="auto", seed=0):
-        from ..._adapters.craftax import CraftaxAdapter
+        from .simulation import CraftaxAdapter
 
         if (
             size is not None

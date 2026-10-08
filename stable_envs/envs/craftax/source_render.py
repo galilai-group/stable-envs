@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ..._adapters.craftax import decode
+from .simulation import decode
 
 # Source-read inventory: both upstream render_craftax_pixels functions, including
 # full Craftax's is_boss_vulnerable helper. Entity health/cooldowns are not drawn.
