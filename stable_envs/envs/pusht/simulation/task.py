@@ -19,7 +19,7 @@ import pymunk.pygame_util
 from gymnasium import spaces
 from pymunk.vec2d import Vec2d
 
-from ...envs._pusht_draw import DrawOptions
+from ..draw import DrawOptions
 from . import spaces as swm_spaces
 from .quantizer import PolarQuantizer
 

@@ -2,7 +2,7 @@
      width="289" height="72" role="img" aria-label="stable-envs">
   <title>stable-envs</title>
   <desc>A compact state projecting into a rendered frame. Colours are the PushT palette as emitted by
-  stable_envs/envs/pusht.py: LightSlateGray #778899 outline over #8FA3B8 fill (the T-block), RoyalBlue
+  stable_envs/envs/pusht/legacy.py: LightSlateGray #778899 outline over #8FA3B8 fill (the T-block), RoyalBlue
   #4169E1 (the agent), LightGreen #90EE90 (the goal pose). Wordmark glyphs are outlines, not text.</desc>
   <g transform="translate(6.0,7.0) scale(0.90625)">
     <!-- the beam: a compact state expanding into a frame -->

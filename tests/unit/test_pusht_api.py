@@ -15,7 +15,7 @@ torch = pytest.importorskip("torch")
 pytest.importorskip("tensordict")
 
 import stable_envs as snv
-from stable_envs.envs.pusht import PushT as LegacyPushT
+from stable_envs.envs.pusht.legacy import PushT as LegacyPushT
 
 pytestmark = pytest.mark.unit
 

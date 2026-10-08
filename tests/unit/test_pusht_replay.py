@@ -15,9 +15,9 @@ torch = pytest.importorskip("torch")
 pytest.importorskip("pygame")
 pytest.importorskip("cv2")
 
-from stable_envs._adapters.pusht.numeric import decode_seed, encode_seed, get_value, put_value
-from stable_envs._adapters.pusht.replay import PushTReplay
-from stable_envs._adapters.pusht.replay_batch import PushTReplayAdapter
+from stable_envs.envs.pusht.simulation.numeric import decode_seed, encode_seed, get_value, put_value
+from stable_envs.envs.pusht.simulation.replay import PushTReplay
+from stable_envs.envs.pusht.simulation.replay_batch import PushTReplayAdapter
 
 pytestmark = pytest.mark.unit
 

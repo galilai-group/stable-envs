@@ -19,7 +19,7 @@ torch = pytest.importorskip("torch")
 pytest.importorskip("tensordict")
 
 import stable_envs as snv
-from stable_envs.envs.pusht import PushT as LegacyPushT
+from stable_envs.envs.pusht.legacy import PushT as LegacyPushT
 from stable_envs.specs import CompositeSpec, Spec
 
 pytestmark = pytest.mark.unit
@@ -166,7 +166,7 @@ def test_unpack_and_state_never_alias_the_env_buffer():
     """A StepResult or ``env.state`` must not change under the caller's feet at the next step."""
     import torch
 
-    from stable_envs.envs.pusht import PushT
+    from stable_envs.envs.pusht.legacy import PushT
 
     env = PushT(num_envs=4, device="cpu")
     env.reset(seed=0)
