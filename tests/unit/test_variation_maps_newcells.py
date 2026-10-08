@@ -442,7 +442,7 @@ def test_simple_point_maze_position_is_not_style():
 def test_simple_point_maze_mapped_leaves_are_dims_of_our_own_space():
     """The map names OUR paths. If a path is not a leaf of our variation space, the mapping silently
     does nothing -- which is the failure mode `renamed` exists to prevent."""
-    spm = pytest.importorskip("stable_envs.envs.navigation")
+    spm = pytest.importorskip("stable_envs.envs.navigation.envs")
     space = spm.SimplePointMaze.make_variation_space(spm.SimplePointMaze)
     ours = set(space.names())
     for leaf in _map_for(SPM).pairs():
