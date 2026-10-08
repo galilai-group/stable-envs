@@ -30,7 +30,7 @@ manifest = {
     "seed": 17,
     "batch": 3,
     "steps": 32,
-    "generator": "scripts/recovery/freeze_dmc_first_family_oracle.py",
+    "generator": "scripts/testing/freeze_dmc_first_family_oracle.py",
     "versions": {
         name: importlib.metadata.version(name) for name in ("numpy", "mujoco", "dm-control", "stable-worldmodel")
     },

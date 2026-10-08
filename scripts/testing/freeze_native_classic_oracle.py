@@ -1,4 +1,4 @@
-"""Freeze additive real-reference-only oracles for three native navigation defaults."""
+"""Freeze additive real-reference-only oracles for two classic-control defaults."""
 
 import hashlib
 import importlib.metadata
@@ -9,16 +9,11 @@ from pathlib import Path
 import numpy as np
 import stable_worldmodel
 
-from tests.helpers.reference.native_navigation_semantics import NativeNavigationReference
+from tests.helpers.reference.native_classic_semantics import NativeClassicReference
 
 PIN = "176d54532b3c0a251a4f509b74f2fdacc143a63d"
-DOMAINS = ("two_room", "piecewise", "simple_point_maze")
-HISTORICAL_IDS = {
-    "two_room": "swm/TwoRoom-v1",
-    "piecewise": "swm/Piecewise-v0",
-    "simple_point_maze": "swm/SimplePointMaze-v0",
-}
-root = Path("tests/fixtures/semantics/native_navigation")
+DOMAINS = ("cartpole", "pendulum")
+root = Path("tests/fixtures/semantics/native_classic")
 root.mkdir(parents=True, exist_ok=True)
 version = importlib.metadata.version("gymnasium").replace(".", "")
 paths = {domain: root / f"{domain}_swm_176d545_gymnasium{version}.npz" for domain in DOMAINS}
@@ -35,21 +30,24 @@ manifest = {
     "seed": 17,
     "batch": 3,
     "steps": 32,
-    "generator": "scripts/recovery/freeze_native_navigation_oracle.py",
+    "generator": "scripts/testing/freeze_native_classic_oracle.py",
     "versions": {
         name: importlib.metadata.version(name)
-        for name in ("numpy", "gymnasium", "torch", "tensordict", "stable-worldmodel", "matplotlib")
+        for name in ("numpy", "gymnasium", "torch", "tensordict", "stable-worldmodel")
     },
-    "source": "Real pinned SWM environments only; independent of stable-envs production equations",
-    "scope": "Empty-kwargs TwoRoom-v1, Piecewise-v0 and SimplePointMaze-v0 defaults only",
+    "source": "Real pinned SWM wrappers only; independent of stable-envs production adapter",
     "domains": {},
 }
 for domain in DOMAINS:
-    ref = NativeNavigationReference(domain, 3)
+    ref = NativeClassicReference(domain, 3)
     try:
         initial = ref.reset(seed=17)
-        bound = 0.4 if domain == "simple_point_maze" else 1.5
-        actions = np.random.default_rng(217).uniform(-bound, bound, size=(32, 3, 2)).astype(np.float32)
+        rng = np.random.default_rng(217)
+        actions = (
+            rng.integers(0, 2, size=(32, 3, 1), dtype=np.int64)
+            if domain == "cartpole"
+            else rng.uniform(-2, 2, size=(32, 3, 1)).astype(np.float32)
+        )
         outcomes = [ref.step(action) for action in actions]
         values = {"actions": actions}
         for key in initial.keys(True, True):
@@ -57,19 +55,12 @@ for domain in DOMAINS:
             values[f"state/{name}"] = np.stack(
                 [initial[key].numpy(), *[outcome["state"][key].numpy() for outcome in outcomes]]
             )
-        output_keys = set(outcomes[0].keys(True, True)) - {
-            ("state", *key) if isinstance(key, tuple) else ("state", key)
-            for key in initial.keys(True, True)
-        }
-        for key in sorted(output_keys, key=str):
-            if key == "state" or (isinstance(key, tuple) and key[0] == "state"):
-                continue
-            name = key if isinstance(key, str) else "/".join(key)
-            values[f"output/{name}"] = np.stack([outcome[key].numpy() for outcome in outcomes])
+        for key in ("reward", "terminated", "truncated", "observation", "info_state"):
+            values[key] = np.stack([outcome[key].numpy() for outcome in outcomes])
         path = paths[domain]
         np.savez_compressed(path, **values)
         manifest["domains"][domain] = {
-            "historical_id": HISTORICAL_IDS[domain],
+            "historical_id": f"swm/{'CartPole' if domain == 'cartpole' else 'Pendulum'}Control-v1",
             "file": path.name,
             "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
             "arrays": {key: {"shape": list(value.shape), "dtype": str(value.dtype)} for key, value in values.items()},

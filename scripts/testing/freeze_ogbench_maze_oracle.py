@@ -55,7 +55,7 @@ try:
         "seed": 17,
         "batch": 3,
         "steps": 32,
-        "generator": "scripts/recovery/freeze_ogbench_maze_oracle.py",
+        "generator": "scripts/testing/freeze_ogbench_maze_oracle.py",
         "versions": {
             k: importlib.metadata.version(k) for k in ("numpy", "gymnasium", "ogbench", "mujoco", "stable-worldmodel")
         },

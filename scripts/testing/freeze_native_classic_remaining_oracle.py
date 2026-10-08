@@ -1,4 +1,4 @@
-"""Freeze additive real-reference-only oracles for two classic-control defaults."""
+"""Freeze additive real-reference-only oracles for the remaining classic defaults."""
 
 import hashlib
 import importlib.metadata
@@ -12,8 +12,13 @@ import stable_worldmodel
 from tests.helpers.reference.native_classic_semantics import NativeClassicReference
 
 PIN = "176d54532b3c0a251a4f509b74f2fdacc143a63d"
-DOMAINS = ("cartpole", "pendulum")
-root = Path("tests/fixtures/semantics/native_classic")
+DOMAINS = ("acrobot", "mountain_car", "mountain_car_continuous")
+HISTORICAL_IDS = {
+    "acrobot": "swm/AcrobotControl-v1",
+    "mountain_car": "swm/MountainCarControl-v0",
+    "mountain_car_continuous": "swm/MountainCarContinuousControl-v0",
+}
+root = Path("tests/fixtures/semantics/native_classic_remaining")
 root.mkdir(parents=True, exist_ok=True)
 version = importlib.metadata.version("gymnasium").replace(".", "")
 paths = {domain: root / f"{domain}_swm_176d545_gymnasium{version}.npz" for domain in DOMAINS}
@@ -30,7 +35,7 @@ manifest = {
     "seed": 17,
     "batch": 3,
     "steps": 32,
-    "generator": "scripts/recovery/freeze_native_classic_oracle.py",
+    "generator": "scripts/testing/freeze_native_classic_remaining_oracle.py",
     "versions": {
         name: importlib.metadata.version(name)
         for name in ("numpy", "gymnasium", "torch", "tensordict", "stable-worldmodel")
@@ -44,9 +49,9 @@ for domain in DOMAINS:
         initial = ref.reset(seed=17)
         rng = np.random.default_rng(217)
         actions = (
-            rng.integers(0, 2, size=(32, 3, 1), dtype=np.int64)
-            if domain == "cartpole"
-            else rng.uniform(-2, 2, size=(32, 3, 1)).astype(np.float32)
+            rng.integers(0, 3, size=(32, 3, 1), dtype=np.int64)
+            if domain in {"acrobot", "mountain_car"}
+            else rng.uniform(-1, 1, size=(32, 3, 1)).astype(np.float32)
         )
         outcomes = [ref.step(action) for action in actions]
         values = {"actions": actions}
@@ -60,7 +65,7 @@ for domain in DOMAINS:
         path = paths[domain]
         np.savez_compressed(path, **values)
         manifest["domains"][domain] = {
-            "historical_id": f"swm/{'CartPole' if domain == 'cartpole' else 'Pendulum'}Control-v1",
+            "historical_id": HISTORICAL_IDS[domain],
             "file": path.name,
             "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
             "arrays": {key: {"shape": list(value.shape), "dtype": str(value.dtype)} for key, value in values.items()},

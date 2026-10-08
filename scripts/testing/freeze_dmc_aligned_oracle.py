@@ -26,7 +26,7 @@ assert not subprocess.check_output(["git", "-C", str(source), "diff", "HEAD", "-
 assert importlib.metadata.version("mujoco") == "3.12.0"
 manifest = {
     "reference_commit": pin, "seed": 17, "batch": 3, "steps": 32,
-    "generator": "scripts/recovery/freeze_dmc_aligned_oracle.py",
+    "generator": "scripts/testing/freeze_dmc_aligned_oracle.py",
     "versions": {name: importlib.metadata.version(name) for name in ("numpy", "mujoco", "dm-control", "stable-worldmodel")},
     "source": "Real pinned SWM wrappers only; independent of candidate adapter", "domains": {},
 }

@@ -39,7 +39,7 @@ try:
         "seed": 17,
         "batch": 3,
         "steps": 32,
-        "generator": "scripts/recovery/freeze_reacher_oracle.py",
+        "generator": "scripts/testing/freeze_reacher_oracle.py",
         "versions": {k: importlib.metadata.version(k) for k in ("numpy", "mujoco", "dm-control", "stable-worldmodel")},
         "source": "Real SWM wrapper only; independent of candidate adapter",
         "arrays": {k: {"shape": list(v.shape), "dtype": str(v.dtype)} for k, v in values.items()},
