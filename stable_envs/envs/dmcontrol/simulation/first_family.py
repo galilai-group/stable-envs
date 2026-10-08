@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ..._execution.protocol import SimulatorAdapter
+from ...._execution.protocol import SimulatorAdapter
 from .state import export_state
 
 # These fields restore simulation; compact renderer columns cannot.

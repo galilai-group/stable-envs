@@ -86,8 +86,8 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
             render_skybox=False,  # Misses receive the cached source sky after this pass.
             **dict(cls.RENDER_FLAGS),
         )
-        from ...render.trackcom_reflection import Reflection
-        from ...render.trackcom_texture import Textures
+        from .trackcom_reflection import Reflection
+        from .trackcom_texture import Textures
 
         c.textures = Textures(m, c.rc, _sky_plate(cls, int(res)))
         c.reflection = Reflection(c.wm, c.wd, c.rc, m)

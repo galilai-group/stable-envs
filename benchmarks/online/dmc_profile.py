@@ -22,12 +22,12 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from stable_envs._adapters.dmc.aligned import CONFIG as ALIGNED
-from stable_envs._adapters.dmc.aligned import DMCAlignedAdapter
-from stable_envs._adapters.dmc.continuation import CONFIG as CONTINUATION
-from stable_envs._adapters.dmc.continuation import DMCContinuationAdapter
-from stable_envs._adapters.dmc.first_family import FirstFamilyAdapter, ReacherAdapter
-from stable_envs._adapters.dmc.humanoid import DMCHumanoidAdapter
+from stable_envs.envs.dmcontrol.simulation.aligned import CONFIG as ALIGNED
+from stable_envs.envs.dmcontrol.simulation.aligned import DMCAlignedAdapter
+from stable_envs.envs.dmcontrol.simulation.continuation import CONFIG as CONTINUATION
+from stable_envs.envs.dmcontrol.simulation.continuation import DMCContinuationAdapter
+from stable_envs.envs.dmcontrol.simulation.first_family import FirstFamilyAdapter, ReacherAdapter
+from stable_envs.envs.dmcontrol.simulation.humanoid import DMCHumanoidAdapter
 
 DOMAINS = ["acrobot", "pendulum", "cartpole", "reacher", *CONTINUATION, *ALIGNED, "humanoid"]
 
@@ -74,7 +74,7 @@ def main():
         },
         source_sha256={
             str(p): hashlib.sha256(p.read_bytes()).hexdigest()
-            for p in [*Path("stable_envs/_adapters").rglob("*.py"), *Path("stable_envs/_execution").rglob("*.py"), Path(__file__).relative_to(Path.cwd())]
+            for p in [*Path("stable_envs/envs/dmcontrol/simulation").rglob("*.py"), *Path("stable_envs/_execution").rglob("*.py"), Path(__file__).relative_to(Path.cwd())]
         },
         scope="adapter.step with complete State; diagnostic only, not public step or a source speedup",
         cells=[],

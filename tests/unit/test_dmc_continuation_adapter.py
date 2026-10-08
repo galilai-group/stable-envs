@@ -5,7 +5,7 @@ import pytest
 import torch
 from tensordict import TensorDict
 
-from stable_envs._adapters.dmc.continuation import CONFIG, CONTINUATION_FIELDS, DMCContinuationAdapter
+from stable_envs.envs.dmcontrol.simulation.continuation import CONFIG, CONTINUATION_FIELDS, DMCContinuationAdapter
 
 
 @pytest.mark.parametrize("domain", ["cheetah", "hopper", "walker"])
@@ -41,7 +41,7 @@ def test_adapter_full_state_roundtrip_snapshot_independence_and_validation(domai
 def test_production_adapter_does_not_import_stable_worldmodel():
     source = __import__(
         "inspect"
-    ).getsource(__import__("stable_envs._adapters.dmc.continuation", fromlist=["*"]))
+    ).getsource(__import__("stable_envs.envs.dmcontrol.simulation.continuation", fromlist=["*"]))
     assert "stable_worldmodel" not in source
 
 

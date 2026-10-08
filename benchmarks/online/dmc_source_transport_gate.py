@@ -49,7 +49,7 @@ def main():
         Path("benchmarks/online/classic_parallel_source.py"),
         Path("benchmarks/online/common.py"),
         Path("benchmarks/online/dmc_profile.py"),
-        *Path("stable_envs/_adapters").rglob("*.py"),
+        *Path("stable_envs/envs/dmcontrol/simulation").rglob("*.py"),
         *Path("stable_envs/_execution").rglob("*.py"),
         Path("tests/helpers/reference/dmc_semantics.py"),
     ]
