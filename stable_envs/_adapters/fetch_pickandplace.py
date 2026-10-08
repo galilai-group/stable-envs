@@ -143,7 +143,7 @@ class FetchAdapter:
             result.append(colors)
         return result
 
-    def reset(self, seed=None, variations=None):
+    def reset(self, seed: int | None = None, variations=None) -> TensorDict:
         self._check_open()
         for lane, e in enumerate(self.envs):
             values = {} if variations is None else variations[lane]
@@ -181,7 +181,7 @@ class FetchAdapter:
         ]
         return self.get_state()
 
-    def get_state(self):
+    def get_state(self) -> TensorDict:
         self._check_open()
         # Owned column arrays: one tensor conversion/transfer per field, not per lane.
         columns = {
@@ -238,7 +238,7 @@ class FetchAdapter:
         if (state["lifecycle", "elapsed_steps"] < 0).any():
             raise ValueError("Negative elapsed_steps")
 
-    def set_state(self, state):
+    def set_state(self, state: TensorDict) -> None:
         self._validate_state(state)
         host = state.cpu()
         for lane, (e, i) in enumerate(zip(self.envs, self._gripper)):
@@ -267,12 +267,12 @@ class FetchAdapter:
                 "uinteger": row["rng", "uinteger"].item(),
             }
 
-    def step(self, actions, *, active=None):
+    def step(self, actions: torch.Tensor | np.ndarray, *, active=None) -> TensorDict:
         out = self.advance(actions, active=active)
         out["state"] = self.get_state()
         return out
 
-    def advance(self, actions, *, active=None):
+    def advance(self, actions: torch.Tensor | np.ndarray, *, active=None) -> TensorDict:
         """Advance active lanes without capturing State; retain inactive lane outputs."""
         self._check_open()
         if torch.is_tensor(active):
@@ -320,7 +320,7 @@ class FetchAdapter:
             device=self.device,
         )
 
-    def close(self):
+    def close(self) -> None:
         if not self._closed:
             if self._executor is not None:
                 self._executor.shutdown(wait=True)

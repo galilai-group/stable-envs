@@ -20,7 +20,7 @@ def _arrays(buffers, specs, batch):
 
 
 def _worker(conn, start, count, batch, task, reward_type, seed, threads, cpus, buffers, specs):
-    adapter = None
+    adapter: FetchAdapter | None = None
     try:
         if cpus is not None and hasattr(os, "sched_setaffinity"):
             os.sched_setaffinity(0, cpus)
@@ -234,7 +234,7 @@ class FetchProcessAdapter(ProcessRequests, FetchAdapter):
             raise ValueError("Expected positive integer episode limits, one per lane")
         self._request("limits", [limits[rows] for rows in self._slices])
 
-    def reset(self, seed=None, variations=None):
+    def reset(self, seed: int | None = None, variations=None) -> TensorDict:
         self._check_open()
         if variations is not None and len(variations) != self.num_envs:
             raise ValueError("Expected one variation dictionary per lane")
@@ -248,11 +248,11 @@ class FetchProcessAdapter(ProcessRequests, FetchAdapter):
         self._mass = np.concatenate(masses)
         return self._state()
 
-    def get_state(self):
+    def get_state(self) -> TensorDict:
         self._request("get_state")
         return self._state()
 
-    def set_state(self, state):
+    def set_state(self, state: TensorDict) -> None:
         # Reject before writing shared storage owned by an in-flight step.
         self._check_idle()
         self._validate_state(state)
@@ -275,21 +275,21 @@ class FetchProcessAdapter(ProcessRequests, FetchAdapter):
             raise ValueError("Fetch active mask must have shape (num_envs,)")
         return [(actions[rows], None if active is None else active[rows]) for rows in self._slices]
 
-    def advance(self, actions, *, active=None):
+    def advance(self, actions: torch.Tensor | np.ndarray, *, active=None) -> TensorDict:
         self._request("advance", self._actions(actions, active))
         return self._task()
 
-    def step(self, actions, *, active=None):
+    def step(self, actions: torch.Tensor | np.ndarray, *, active=None) -> TensorDict:
         self._request("step", self._actions(actions, active))
         result = self._task()
         result["state"] = self._state()
         return result
 
-    def submit_step(self, actions, *, active=None, capture_state=True):
+    def submit_step(self, actions: torch.Tensor | np.ndarray, *, active=None, capture_state: bool = True) -> None:
         """Submit one transition; receive its result before submitting another."""
         self._submit("step" if capture_state else "advance", self._actions(actions, active))
 
-    def receive_step(self):
+    def receive_step(self) -> TensorDict:
         """Wait for completion and copy outputs before workers can reuse shared storage."""
         self._check_open()
         if self._pending not in ("step", "advance"):
@@ -301,6 +301,6 @@ class FetchProcessAdapter(ProcessRequests, FetchAdapter):
             result["state"] = self._state()
         return result
 
-    def abort_step(self):
+    def abort_step(self) -> None:
         """Terminate workers and close the adapter after a failed consumer."""
         self._abort()

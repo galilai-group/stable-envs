@@ -1,12 +1,24 @@
+from __future__ import annotations
+
 import multiprocessing as mp
 import os
 import sys
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import torch
 
 from .fetch_pickandplace import FetchAdapter
 from .fetch_process import FetchProcessAdapter
 
 
-def make_fetch_adapter(num_envs, device="cpu", seed=0, task="PickAndPlace", reward_type="sparse"):
+def make_fetch_adapter(
+    num_envs: int,
+    device: str | torch.device = "cpu",
+    seed: int | None = 0,
+    task: str = "PickAndPlace",
+    reward_type: str = "sparse",
+) -> FetchAdapter:
     # Daemonic workers cannot spawn children; keep their simulators local.
     cpus = sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None
     available = len(cpus) if cpus is not None else 1

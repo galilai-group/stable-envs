@@ -20,7 +20,7 @@ def _views(buffers, specs, batch):
 
 
 def _worker(conn, family, start, count, batch, seed, reward_task_id, cpus, buffers, specs):
-    adapter = None
+    adapter: OGBManipulationAdapter | None = None
     try:
         if cpus is not None and hasattr(os, "sched_setaffinity"):
             os.sched_setaffinity(0, cpus)

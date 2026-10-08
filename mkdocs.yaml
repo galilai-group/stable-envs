@@ -116,6 +116,7 @@ nav:
       - Testing infrastructure plan: testing-design.md
       - Test redundancy audit: testing-redundancy-audit.md
       - Docstring cleanup: docstring-cleanup.md
+      - Package cleanup: package-cleanup.md
       - Fidelity methodology: concepts/fidelity-methodology.md
       - Fidelity tiers: concepts/fidelity-tiers.md
       - The Scene2D IR: concepts/scene-ir.md
