@@ -4,8 +4,8 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ..._execution.protocol import SimulatorAdapter
-from ..._execution.state_columns import owned_columns
+from ...._execution.protocol import SimulatorAdapter
+from ...._execution.state_columns import owned_columns
 
 OGB_MAZE_FIELDS = {
     ("root", "position"): (2, torch.float64),

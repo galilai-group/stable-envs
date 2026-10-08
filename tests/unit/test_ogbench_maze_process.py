@@ -10,8 +10,8 @@ import torch
 pytest.importorskip("ogbench")
 
 import stable_envs as se
-from stable_envs._adapters.ogbench.maze import OGBMazeAdapter
-from stable_envs._adapters.ogbench.maze_process import OGBMazeProcessAdapter
+from stable_envs.envs.ogbench.simulation.maze import OGBMazeAdapter
+from stable_envs.envs.ogbench.simulation.maze_process import OGBMazeProcessAdapter
 from tests.unit.test_ogbench_state_export import equal
 
 

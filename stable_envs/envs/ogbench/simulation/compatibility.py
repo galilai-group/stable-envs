@@ -11,7 +11,7 @@ from ogbench.manipspace.envs.cube_env import CubeEnv
 from ogbench.manipspace.envs.manipspace_env import ManipSpaceEnv
 from ogbench.manipspace.envs.scene_env import SceneEnv
 
-from ...spaces import Box, Dict
+from ....spaces import Box, Dict
 
 MODEL_VALUES = ("cube.size", "agent.color", "floor.color", "camera.angle_delta", "light.intensity")
 

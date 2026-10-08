@@ -23,8 +23,8 @@ import numpy as np
 import torch
 
 from benchmarks.online.common import PIN, equal_state
-from stable_envs._adapters.ogbench.manipulation import OGBManipulationAdapter
-from stable_envs._adapters.ogbench.maze import OGBMazeAdapter
+from stable_envs.envs.ogbench.simulation.manipulation import OGBManipulationAdapter
+from stable_envs.envs.ogbench.simulation.maze import OGBMazeAdapter
 from tests.helpers.reference.ogbench_manipulation_semantics import assert_oracle, load_oracle
 from tests.helpers.reference.ogbench_maze_semantics import OGBMazeReference
 
@@ -85,7 +85,7 @@ def main():
         Path("tests/helpers/reference/ogbench_maze_semantics.py"),
         Path("tests/helpers/reference/ogbench_manipulation_semantics.py"),
         Path("tests/helpers/reference/ogbench_manipulation_source.py"),
-        *Path("stable_envs/_adapters").rglob("*.py"),
+        *Path("stable_envs/envs/ogbench/simulation").rglob("*.py"),
         *Path("stable_envs/_execution").rglob("*.py"),
     ]
     report = dict(

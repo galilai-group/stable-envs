@@ -8,7 +8,7 @@ import torch
 
 pytest.importorskip("ogbench")
 
-from stable_envs._adapters.ogbench.manipulation import OGBManipulationAdapter
+from stable_envs.envs.ogbench.simulation.manipulation import OGBManipulationAdapter
 from tests.helpers.reference.ogbench_before_validation_columns import OGBManipulationAdapter as Before
 
 
