@@ -3,8 +3,9 @@ from __future__ import annotations
 import torch
 from tensordict import TensorDict
 
+from ..._adapters import StepPipeline, step_pipeline
 from ..._adapters.dmcontrol_execution import make_dmc_adapter
-from ..._adapters.dmcontrol_humanoid import HUMANOID_CONFIG, HUMANOID_FIELDS, DMCHumanoidAdapter
+from ..._adapters.dmcontrol_humanoid import HUMANOID_CONFIG, HUMANOID_FIELDS
 from ...spaces import Box, Dict
 
 
@@ -19,7 +20,7 @@ class DMCHumanoidSemantics:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._simulator = make_dmc_adapter("humanoid", self.B, self.device, self._seed, DMCHumanoidAdapter)
+        self._simulator = make_dmc_adapter("humanoid", self.B, self.device, self._seed)
 
     @property
     def _resume_fields(self):
@@ -83,9 +84,9 @@ class DMCHumanoidSemantics:
         self._check_open("set_state")
         self._simulator.set_state(state)
 
-    def _step_pipeline(self):
+    def _step_pipeline(self) -> StepPipeline | None:
         owner = self._simulator
-        return owner if hasattr(owner, "submit_step") else None
+        return step_pipeline(owner)
 
     def _step(self, actions):
         self._check_open("step")

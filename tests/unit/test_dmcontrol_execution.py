@@ -25,10 +25,9 @@ def test_routing_preserves_local_fallback(monkeypatch, domain, platform, batch, 
     monkeypatch.setattr(policy.os, "sched_getaffinity", lambda _: set(range(cores)), raising=False)
     monkeypatch.setattr(policy.mp, "current_process", lambda: SimpleNamespace(daemon=daemon))
     monkeypatch.setattr(execution, "DMCProcessAdapter", lambda *args, **kwargs: ("process", args, kwargs))
-    local = lambda *args: ("local", args, {})
-    kind, args, kwargs = execution.make_dmc_adapter(domain, batch, "cpu", 17, local)
+    monkeypatch.setattr(execution, "make_local", lambda *args: ("local", args, {}))
+    kind, args, kwargs = execution.make_dmc_adapter(domain, batch, "cpu", 17)
     count = expected if domain != "quadruped" else 0
     assert kind == ("process" if count else "local")
-    assert args == ((batch, "cpu", 17) if not count and domain in ("reacher", "humanoid")
-                    else (domain, batch, "cpu", 17))
+    assert args == (domain, batch, "cpu", 17)
     assert kwargs == (dict(processes=count, cpus=list(range(cores))) if count else {})

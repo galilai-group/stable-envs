@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ..._adapters import StepPipeline, step_pipeline
 from ..._mujoco_gl import configure_mujoco_gl
 
 configure_mujoco_gl()
@@ -703,9 +704,9 @@ class _HistoricalDefaultSemantics:
         self._check_open("step")
         return self._simulator.step(actions, active=active, capture_state=False)
 
-    def _step_pipeline(self):
+    def _step_pipeline(self) -> StepPipeline | None:
         owner = self._simulator
-        return owner if hasattr(owner, "submit_step") else None
+        return step_pipeline(owner)
 
     def _close(self):
         if hasattr(self, "_simulator"):

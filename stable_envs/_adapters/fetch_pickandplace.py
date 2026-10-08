@@ -98,6 +98,12 @@ class FetchAdapter:
         self._mass = np.asarray(values, np.float64).reshape(self.num_envs).copy()
         # Apply mass only after the next source reset.
 
+    @property
+    def object_mass(self) -> np.ndarray:
+        """Return an owned copy of the configured mass for each lane."""
+        self._check_open()
+        return self._mass.copy()
+
     def reference_model(self):
         self._check_open()
         return self.envs[0].unwrapped.model

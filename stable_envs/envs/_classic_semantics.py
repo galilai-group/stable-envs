@@ -15,6 +15,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .._adapters import StepPipeline, step_pipeline
 from ..spaces import Box, Dict
 from ..specs import Spec
 
@@ -443,9 +444,9 @@ class ClassicControlSemantics:
         self._simulator.set_state(state)
         self._sync_authoritative_state(state)
 
-    def _step_pipeline(self):
+    def _step_pipeline(self) -> StepPipeline | None:
         owner = self._simulator
-        return owner if hasattr(owner, "submit_step") else None
+        return step_pipeline(owner)
 
     def _step(self, actions, *, active=None):
         self._check_open("step")

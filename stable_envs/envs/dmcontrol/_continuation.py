@@ -3,7 +3,8 @@ from __future__ import annotations
 import torch
 from tensordict import TensorDict
 
-from ..._adapters.dmcontrol_continuation import CONFIG, CONTINUATION_FIELDS, DMCContinuationAdapter, _make_env
+from ..._adapters import StepPipeline, step_pipeline
+from ..._adapters.dmcontrol_continuation import CONFIG, CONTINUATION_FIELDS, _make_env
 from ..._adapters.dmcontrol_execution import make_dmc_adapter
 from ...spaces import Box, Dict
 
@@ -24,7 +25,7 @@ class DMCContinuationSemantics:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._simulator = make_dmc_adapter(self.DOMAIN, self.B, self.device, self._seed, DMCContinuationAdapter)
+        self._simulator = make_dmc_adapter(self.DOMAIN, self.B, self.device, self._seed)
 
     @property
     def _resume_fields(self):
@@ -89,9 +90,9 @@ class DMCContinuationSemantics:
         self._check_open("set_state")
         self._simulator.set_state(state)
 
-    def _step_pipeline(self):
+    def _step_pipeline(self) -> StepPipeline | None:
         owner = self._simulator
-        return owner if hasattr(owner, "submit_step") else None
+        return step_pipeline(owner)
 
     def _step(self, actions):
         self._check_open("step")

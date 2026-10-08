@@ -1,5 +1,6 @@
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
+import numpy as np
 from tensordict import TensorDict
 from torch import Tensor
 
@@ -27,10 +28,29 @@ class SimulatorAdapter(Protocol):
         """Restore a complete snapshot for all lanes."""
         ...
 
-    def step(self, actions: Tensor) -> TensorDict:
+    def step(self, actions: Tensor | np.ndarray) -> TensorDict:
         """Advance one action per lane and return State and the defined task outputs."""
         ...
 
     def close(self) -> None:
         """Release owned simulator resources and workers."""
         ...
+
+
+@runtime_checkable
+class StepPipeline(Protocol):
+    """One in-flight transition; receive owned outputs before reusing worker storage."""
+
+    def submit_step(
+        self, actions: Tensor | np.ndarray, *, active: Tensor | np.ndarray | None = None, capture_state: bool = True
+    ) -> None: ...
+
+    def receive_step(self) -> TensorDict: ...
+
+    def abort_step(self) -> None:
+        """Release workers after an interrupted request."""
+        ...
+
+
+def step_pipeline(adapter: SimulatorAdapter) -> StepPipeline | None:
+    return adapter if isinstance(adapter, StepPipeline) else None

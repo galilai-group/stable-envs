@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import ctypes
 import multiprocessing as mp
 import os
 import traceback
@@ -11,16 +10,11 @@ from tensordict import TensorDict
 
 from .ogbench import OGBMazeAdapter
 from .process_requests import ProcessRequests
+from .shared_memory import allocate_buffers, buffer_views, owned_group
 
 
 def _path(key):
     return key if isinstance(key, tuple) else (key,)
-
-
-def _views(buffers, specs, batch):
-    return {
-        key: np.frombuffer(buffers[key], dtype=dtype).reshape(batch, *shape) for key, (shape, dtype) in specs.items()
-    }
 
 
 def _worker(conn, start, count, batch, seed, cpus, buffers, specs):
@@ -30,7 +24,7 @@ def _worker(conn, start, count, batch, seed, cpus, buffers, specs):
             os.sched_setaffinity(0, cpus)
         torch.set_num_threads(1)
         adapter = OGBMazeAdapter(count, seed=seed + start)
-        views = _views(buffers, specs, batch)
+        views = buffer_views(buffers, specs, batch)
         rows = slice(start, start + count)
 
         def write(group, value):
@@ -145,11 +139,8 @@ class OGBMazeProcessAdapter(ProcessRequests):
             slice(int(lanes[0]), int(lanes[-1]) + 1) for lanes in np.array_split(np.arange(num_envs), processes)
         ]
         context = mp.get_context("spawn")
-        self._buffers = {
-            key: context.RawArray(ctypes.c_ubyte, int(num_envs * np.prod(shape) * dtype.itemsize))
-            for key, (shape, dtype) in self._specs.items()
-        }
-        self._views = _views(self._buffers, self._specs, num_envs)
+        self._buffers = allocate_buffers(context, self._specs, num_envs)
+        self._views = buffer_views(self._buffers, self._specs, num_envs)
         groups = [None] * processes if cpus is None else [group.tolist() for group in np.array_split(cpus, processes)]
         try:
             for rows, group in zip(self._slices, groups, strict=True):
@@ -186,15 +177,7 @@ class OGBMazeProcessAdapter(ProcessRequests):
             raise RuntimeError("OGBMazeProcessAdapter is closed")
 
     def _owned(self, group):
-        return TensorDict(
-            {
-                key[1:]: torch.from_numpy(value.copy()).to(self.device)
-                for key, value in self._views.items()
-                if key[0] == group
-            },
-            [self.num_envs],
-            device=self.device,
-        )
+        return owned_group(self._views, group, self.num_envs, self.device)
 
     def get_state(self):
         self._request("get_state")

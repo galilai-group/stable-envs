@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .._adapters import StepPipeline, step_pipeline
 from .._adapters.fetch_execution import make_fetch_adapter as FetchAdapter
 from ..env import Env
 from ..spaces import Box, Dict
@@ -40,7 +41,7 @@ class FetchSemantics:
         if not self._has_object:
             self._reset_keys -= {"block.mass", "block.angle", "block.start_position", "object.color"}
         self._reset_keys.add("table.color")
-        self._configured_mass = self._simulator._mass.copy()
+        self._configured_mass = self._simulator.object_mass
         self.state_dim = self._nq + 3  # Private renderer width, not full State width.
         from .fetch import GOAL_NAMES, OBJECT_JOINT, ROBOT_JOINTS
 
@@ -90,7 +91,7 @@ class FetchSemantics:
         )
         if self._has_object:
             result["block"] = Dict(
-                {"mass": Box(low=0.01, high=50.0, shape=(1,), init_value=self._simulator._mass[:1].tolist())}
+                {"mass": Box(low=0.01, high=50.0, shape=(1,), init_value=self._simulator.object_mass[:1].tolist())}
             )
         return Dict(result)
 
@@ -146,7 +147,7 @@ class FetchSemantics:
         if self._has_object:
             off = next(off for name, off, _ in self.variation_space.flat_layout() if name == "block.mass")
             self._style.values[:, off] = torch.as_tensor(
-                self._simulator._mass, device=self.device, dtype=torch.float32
+                self._simulator.object_mass, device=self.device, dtype=torch.float32
             )
         return state
 
@@ -182,10 +183,10 @@ class FetchSemantics:
         """Advance without State capture for sequences needing only a final checkpoint."""
         return self._simulator.advance(actions, active=active)
 
-    def _step_pipeline(self):
+    def _step_pipeline(self) -> StepPipeline | None:
         # Process owners can advance independently of the parent's renderer.
         # Local/threaded owners retain the synchronous reference path.
-        return self._simulator if hasattr(self._simulator, "submit_step") else None
+        return step_pipeline(self._simulator)
 
     def set_variation(self, variation=None, **overrides):
         result = super().set_variation(variation, **overrides)

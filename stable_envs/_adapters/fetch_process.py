@@ -70,7 +70,7 @@ def _worker(conn, start, count, batch, task, reward_type, seed, threads, cpus, b
             elif command == "reset":
                 seed, variations = payload
                 write_state(adapter.reset(seed, variations))
-                result = adapter._mass.copy()
+                result = adapter.object_mass
             elif command == "mass":
                 adapter.configure_object_mass(payload)
             elif command == "visual":
@@ -126,7 +126,7 @@ class FetchProcessAdapter(ProcessRequests, FetchAdapter):
         try:
             self.fields, self.has_object = prototype.fields, prototype.has_object
             self._model = prototype.reference_model()
-            self._mass = np.repeat(prototype._mass, self.num_envs)
+            self._mass = np.repeat(prototype.object_mass, self.num_envs)
         finally:
             prototype.close()
         self._workers = processes * threads_per_process

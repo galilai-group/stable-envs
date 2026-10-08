@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import ctypes
 import multiprocessing as mp
 import os
 import traceback
@@ -9,37 +8,13 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from .dmcontrol import FIRST_FAMILY_FIELDS, FirstFamilyAdapter, ReacherAdapter
-from .dmcontrol_aligned import CONFIG as ALIGNED
-from .dmcontrol_aligned import DMCAlignedAdapter
-from .dmcontrol_continuation import CONFIG as CONTINUATION
-from .dmcontrol_continuation import DMCContinuationAdapter
-from .dmcontrol_humanoid import DMCHumanoidAdapter
+from .dmcontrol_factory import make_local
 from .process_requests import ProcessRequests
-
-
-def make_local(domain, batch, device="cpu", seed=0):
-    if domain in FIRST_FAMILY_FIELDS:
-        return FirstFamilyAdapter(domain, batch, device, seed)
-    if domain == "reacher":
-        return ReacherAdapter(batch, device, seed)
-    if domain in ALIGNED:
-        return DMCAlignedAdapter(domain, batch, device, seed)
-    if domain in CONTINUATION:
-        return DMCContinuationAdapter(domain, batch, device, seed)
-    if domain == "humanoid":
-        return DMCHumanoidAdapter(batch, device, seed)
-    raise ValueError(f"Unsupported recovered DMC domain {domain!r}")
+from .shared_memory import allocate_buffers, buffer_views, owned_group
 
 
 def _path(key):
     return key if isinstance(key, tuple) else (key,)
-
-
-def _views(buffers, specs, batch):
-    return {
-        key: np.frombuffer(buffers[key], dtype=dtype).reshape(batch, *shape) for key, (shape, dtype) in specs.items()
-    }
 
 
 def _worker(conn, domain, start, count, batch, seed, cpus, buffers, specs):
@@ -49,7 +24,7 @@ def _worker(conn, domain, start, count, batch, seed, cpus, buffers, specs):
             os.sched_setaffinity(0, cpus)
         torch.set_num_threads(1)
         adapter = make_local(domain, count, seed=seed + start)
-        views = _views(buffers, specs, batch)
+        views = buffer_views(buffers, specs, batch)
         rows = slice(start, start + count)
 
         def write_state(state):
@@ -167,11 +142,8 @@ class DMCProcessAdapter(ProcessRequests):
             slice(int(lanes[0]), int(lanes[-1]) + 1) for lanes in np.array_split(np.arange(num_envs), processes)
         ]
         context = mp.get_context("spawn")
-        self._buffers = {
-            key: context.RawArray(ctypes.c_ubyte, int(num_envs * np.prod(shape) * dtype.itemsize))
-            for key, (shape, dtype) in self._specs.items()
-        }
-        self._views = _views(self._buffers, self._specs, num_envs)
+        self._buffers = allocate_buffers(context, self._specs, num_envs)
+        self._views = buffer_views(self._buffers, self._specs, num_envs)
         groups = [None] * processes if cpus is None else [group.tolist() for group in np.array_split(cpus, processes)]
         try:
             for rows, group in zip(self._slices, groups, strict=True):
@@ -209,15 +181,7 @@ class DMCProcessAdapter(ProcessRequests):
             raise RuntimeError("DMCProcessAdapter is closed")
 
     def _owned(self, group):
-        return TensorDict(
-            {
-                key[1:]: torch.from_numpy(value.copy()).to(self.device)
-                for key, value in self._views.items()
-                if key[0] == group
-            },
-            [self.num_envs],
-            device=self.device,
-        )
+        return owned_group(self._views, group, self.num_envs, self.device)
 
     def get_state(self):
         self._request("get_state")
