@@ -30,7 +30,7 @@ exists instead of a generalisation of :mod:`stable_envs.envs.craftax`:
   rather than 9 (``game_logic.clip_inventory_and_intrinsics``), two-digit numbers, a level digit,
   four attribute digits, and five cells carrying a second alpha-blended enchantment icon.
 
-``stable_envs/render/prng.py`` **is** shared, and is used unchanged: the noise field is
+``stable_envs/envs/craftax/prng.py`` **is** shared, and is used unchanged: the noise field is
 ``prng.uniform(key, (9t, 11t)) * 95 + 32``, which is character for character what craftax writes.
 
 Parity: measured on 64 sampled states at 10 px and 16 px over the whole observation and over all
@@ -115,12 +115,12 @@ import zlib
 import numpy as np
 import torch
 
-from ..env import Env
-from ..registry import register
-from ..render import _resources as _RES
-from ..render import prng
-from ..spaces import Box, Dict, Discrete
-from ._craftax_full_tex import MOB_BASE, N_MOB_SLOT, N_PROJ_SLOT, TABLES
+from ...env import Env
+from ...registry import register
+from ...render import _resources as _RES
+from ...spaces import Box, Dict, Discrete
+from . import prng
+from ._textures import MOB_BASE, N_MOB_SLOT, N_PROJ_SLOT, TABLES
 
 #: tile edge in px. 10 is the registered default (``BLOCK_PIXEL_SIZE_AGENT``);
 #: craftax also ships 16 (``_IMG``) and 64 (``_HUMAN``). The baked tables carry 10 and 16, the two
@@ -150,7 +150,7 @@ N_COUNT = 100
 N_DIGIT = 10
 #: ``state_rng`` is two uint32 and a uint32 does NOT survive a float32 state row -- only 2.008% of
 #: random uint32 round-trip through one. Split into 16-bit halves, 100% do. Four slots, not two.
-#: See ``stable_envs/render/prng.py``.
+#: See ``stable_envs/envs/craftax/prng.py``.
 N_KEY_HALVES = 4
 #: ``night_texture``: the colour night is tinted towards, ``[[[0, 16, 64]]]`` in craftax's constants.
 NIGHT_TINT = (0.0, 16.0, 64.0)
@@ -649,7 +649,7 @@ def night_vignette(device: torch.device, h: int, w: int) -> torch.Tensor:
 
     A **normalised radial distance** ``sqrt((x - h//2)^2 + (y - w//2)^2) / max``: zero at the frame
     centre, one at the farthest corner. Classic's is a Gaussian on a ``linspace(-1, 1)`` grid, which
-    is why :func:`stable_envs.envs.craftax.night_vignette` cannot serve here.
+    is why :func:`stable_envs.envs.craftax.classic.night_vignette` cannot serve here.
 
     **The normalisation is a reciprocal multiply and not a divide.** craftax computes it under jax,
     and XLA lowers a float32 divide by a scalar as ``x * (1/s)``; against a true float32 divide that

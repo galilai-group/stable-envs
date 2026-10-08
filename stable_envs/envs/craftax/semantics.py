@@ -5,10 +5,10 @@ from __future__ import annotations
 import torch
 from tensordict import TensorDict
 
-from ..env import Env
-from ..registry import register
-from ..spaces import Dict
-from ..specs import CompositeSpec, Spec
+from ...env import Env
+from ...registry import register
+from ...spaces import Dict
+from ...specs import CompositeSpec, Spec
 
 
 class CraftaxSemantics(Env):
@@ -27,7 +27,7 @@ class CraftaxSemantics(Env):
     default_supersample = 1
 
     def __init__(self, num_envs=1, size=None, supersample=1, device="cpu", backend="auto", seed=0):
-        from .._adapters.craftax import CraftaxAdapter
+        from ..._adapters.craftax import CraftaxAdapter
 
         if (
             size is not None
@@ -116,7 +116,7 @@ class CraftaxSemantics(Env):
         return super().frame_spec
 
     def to_render_state(self, state=None, *, size=None, supersample=None):
-        from .._adapters.craftax_render import project
+        from ..._adapters.craftax_render import project
 
         self._render_options(size, supersample)
         return project(self._simulator, self.get_state() if state is None else state)
@@ -125,7 +125,7 @@ class CraftaxSemantics(Env):
         return self.to_render_state(state)
 
     def render(self, state=None, *, size=None, supersample=None, backend=None, chunk_size=None, out=None):
-        from .._adapters.craftax_render import render
+        from ..._adapters.craftax_render import render
 
         self._render_options(size, supersample, backend)
         if state is None or isinstance(state, TensorDict) and "engine" in state.keys():

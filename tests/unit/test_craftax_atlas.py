@@ -22,7 +22,7 @@ Three of the assertions are not about speed at all and would each hide a plausib
   process, and nothing downstream would flag it, so the table's bytes are checked after rendering.
 
 The fuzz deliberately includes out-of-range class ids: ``render`` wraps them (see the module
-docstring in ``stable_envs/envs/craftax.py``) and wrapping has to survive the new index arithmetic.
+docstring in ``stable_envs/envs/craftax/classic.py``) and wrapping has to survive the new index arithmetic.
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ import pytest
 import torch
 
 from stable_envs._style import StyleTensor
-from stable_envs.envs.craftax import (
+from stable_envs.envs.craftax.classic import (
     ATLAS_MAX_TILE_PX,
     N_BLOCK,
     N_COUNT,
@@ -202,7 +202,7 @@ def test_atlas_is_not_written_through_by_a_render(size):
 
 def test_atlas_shape_and_budget():
     """The table is 976 tiles, and the size at which it stops being a table is documented."""
-    from stable_envs.envs.craftax import N_COMPOSITE, STRIP_BASE
+    from stable_envs.envs.craftax.classic import N_COMPOSITE, STRIP_BASE
 
     assert N_COMPOSITE == (N_PLAYER + 1) * N_BLOCK * N_MOB == 816
     assert N_TILE == STRIP_BASE + N_STRIP * N_COUNT == 976

@@ -48,11 +48,11 @@ Each module's docstring is where its measured constants live: the reference id, 
     options:
       members: false
 
-::: stable_envs.envs.craftax
+::: stable_envs.envs.craftax.classic
     options:
       members: false
 
-::: stable_envs.envs._craftax_full
+::: stable_envs.envs.craftax.full
     options:
       members: false
 

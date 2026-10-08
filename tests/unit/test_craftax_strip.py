@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 import torch
 
-from stable_envs.envs.craftax import (
+from stable_envs.envs.craftax.classic import (
     N_BLOCK,
     N_COUNT,
     N_FACING,
@@ -384,7 +384,9 @@ def test_light_level_decodes_by_a_tent_that_is_the_identity_in_range(env, states
     # 1.0 + 25 = 26; 26 % 2 == 0; tent(0) == 0 -> full night, so the probe reaches the frame
     _, _, _, _, _, probed, _ = env._decode(torch.as_tensor(_set(states, light=26.0)), len(states))
     assert float(probed.max()) == 0.0
-    assert not torch.equal(env._render(_set(states, light=1.0), size=16), env._render(_set(states, light=26.0), size=16))
+    assert not torch.equal(
+        env._render(_set(states, light=1.0), size=16), env._render(_set(states, light=26.0), size=16)
+    )
 
 
 def test_a_batch_may_mix_day_dusk_night_and_sleep(env, states):
@@ -406,7 +408,7 @@ def test_a_batch_may_mix_day_dusk_night_and_sleep(env, states):
 
 def test_the_night_chain_is_shape_parameterised_for_the_full_renderer():
     """W2 consumes ``night_and_sleep`` verbatim at its own window size, so it must not be 7x9-bound."""
-    from stable_envs.envs.craftax import night_and_sleep, night_vignette
+    from stable_envs.envs.craftax.classic import night_and_sleep, night_vignette
 
     for h, w in ((49, 63), (112, 144), (63, 77), (90, 110)):
         world = torch.rand(3, h, w, 3) * 255
@@ -514,7 +516,7 @@ def test_the_declared_certification_distribution_is_the_one_the_sampler_produces
     distribution rather than something chosen for the benchmark. If the sampler is retuned, the
     declared shares must move with it or the tier is being read against the wrong mix.
     """
-    from stable_envs.envs.craftax import CraftaxClassic as C
+    from stable_envs.envs.craftax.classic import CraftaxClassic as C
 
     d = C.certification_state_distribution
     assert d["daylight_share"] == 0.25
@@ -539,7 +541,7 @@ def test_the_performance_record_says_what_it_does_not_certify():
     speed cannot use the same reference here. Both are recorded; neither certifies anything until
     that is ruled on, and the record has to say so in the record rather than only in a findings file.
     """
-    from stable_envs.envs.craftax import CraftaxClassic as C
+    from stable_envs.envs.craftax.classic import CraftaxClassic as C
 
     p, n = C.performance_record_cpu, C.s_cpu_note
     assert p["tier"] == "CPU_FASTER"

@@ -5,7 +5,7 @@ sizes (10, 16). uint8 and LOSSLESS: craftax's ``load_texture`` reads each PNG as
 the alpha channel to ``alpha // 255`` so every alpha is exactly 0 or 1, and resizes with
 ``Image.NEAREST``; measured over all 47 texture keys at both sizes, the only non-integral
 entry is ``night_noise_intensity_texture``, which is a function of the frame size rather than
-an asset and is built at runtime by :func:`stable_envs.envs._craftax_full.night_vignette`.
+an asset and is built at runtime by :func:`stable_envs.envs.craftax.full.night_vignette`.
 
 Do not hand-edit. Re-run the generator against a new craftax and re-measure parity.
 """

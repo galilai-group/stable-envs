@@ -21,6 +21,24 @@ implementation while retaining different acceptance evidence.
 | New pixels, camera, visual backend, or rendering implementation without changing semantics | [Renderer](renderer.md) |
 | New model inputs, observation packaging, or learner-visible filtering | [stable-worldmodel](../concepts/worldmodel.md) |
 
+## Where code belongs
+
+- Keep the package root for shared public types and their immediate implementation:
+  `Env`, State/specs, spaces, registration and configuration.
+- Put family-specific code in `envs/<family>/`. Craftax's `prng.py`, for example,
+  exists to reproduce its night noise; it is not a shared rendering backend.
+- Keep reusable rendering engines in `render/`. A helper used by one environment
+  family belongs with that family, even when it deals with graphics.
+- Use `_adapters/` for simulator execution and State conversion. Group a family's
+  adapters together when it has several modules; shared process transport stays separate.
+- Put reference comparisons and corpus utilities under `testing/`; experiment
+  drivers belong under `scripts/`.
+
+A leading underscore marks an internal module or helper. It should communicate
+privacy, not development history. Public support is defined by the documented
+API, not by the absence of an underscore. Create a subpackage when several files
+share an owner or backend; avoid directories that merely rename a single file.
+
 ## Ownership and minimum interface
 
 Stable-envs owns exhaustive simulator State, `get_state()`, `set_state()`, reset,

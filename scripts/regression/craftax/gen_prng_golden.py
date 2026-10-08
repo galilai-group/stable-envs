@@ -1,4 +1,4 @@
-"""Freeze golden vectors for ``stable_envs/render/prng.py`` out of a real jax.
+"""Freeze golden vectors for ``stable_envs/envs/craftax/prng.py`` out of a real jax.
 
 Run in the reference venv (`/Users/samib/se7-craftax-venv`, jax 0.11.1). Writes
 ``tests/fixtures/regression/fidelity/prng_threefry_golden.json``, which ``tests/unit/test_craftax_prng.py`` asserts against
@@ -84,7 +84,7 @@ def main():
 
     out = {
         "what": (
-            "golden vectors for stable_envs/render/prng.py, frozen from a real jax so the test "
+            "golden vectors for stable_envs/envs/craftax/prng.py, frozen from a real jax so the test "
             "needs none. 'uniform_bits' are the float32 bit patterns of "
             "jax.random.uniform(key, shape); digests are sha256 over those bytes."
         ),

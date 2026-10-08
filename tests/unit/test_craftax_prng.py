@@ -1,15 +1,4 @@
-"""``stable_envs/render/prng.py`` against golden vectors frozen from a real jax.
-
-The repo ships no jax and no Oscar interpreter has one, so a test that imported jax would skip
-everywhere and assert nothing. ``tests/fixtures/regression/fidelity/prng_threefry_golden.json`` is therefore frozen by
-``scripts/regression/craftax/gen_prng_golden.py`` against jax 0.11.1 with
-``jax_threefry_partitionable = True``, and this module asserts against the file.
-
-What is being asserted is **bit** agreement, not closeness. ``jax.random.uniform`` builds its
-floats by randomising the mantissa of an exponent-1 float, so every value is exactly representable
-and a one-bit difference in the hash shows up as a completely different number rather than as a
-small error. There is no tolerance to choose.
-"""
+"""Bit-exact checks against frozen JAX partitionable-Threefry vectors."""
 
 from __future__ import annotations
 
@@ -21,7 +10,7 @@ import numpy as np
 import pytest
 import torch
 
-from stable_envs.render import prng
+from stable_envs.envs.craftax import prng
 
 GOLDEN = (
     pathlib.Path(__file__).resolve().parents[1] / "fixtures" / "regression" / "fidelity" / "prng_threefry_golden.json"
@@ -42,11 +31,7 @@ def _keys(rows):
 
 
 def test_the_golden_file_says_which_jax_path_it_froze(golden):
-    """A golden file that does not say which of jax's two code paths it came from is worthless.
-
-    The partitionable and pre-0.4.36 paths give different bits for the same key, so a vector frozen
-    without recording the flag cannot be checked against anything later.
-    """
+    """Require the JAX version and PRNG configuration in the reference data."""
     assert golden["jax_threefry_partitionable"] is True, golden
     assert golden["jax_default_prng_impl"] == "threefry2x32", golden
     assert golden["jax"], golden
@@ -63,7 +48,7 @@ def test_uniform_matches_jax_bit_for_bit_on_small_shapes(golden):
 
 
 def test_uniform_matches_jax_on_the_render_sized_fields(golden):
-    """The shapes Craftax Classic (49x63, 112x144) and full Craftax (63x77, 90x110) actually draw."""
+    """Check the field sizes used by Classic and full Craftax."""
     for r in golden["digest"]:
         got = prng.uniform(_keys([r]), tuple(r["shape"]))[0].numpy()
         b = np.ascontiguousarray(got).view(np.uint32).ravel()
@@ -73,7 +58,7 @@ def test_uniform_matches_jax_on_the_render_sized_fields(golden):
 
 
 def test_the_scaled_night_field_matches(golden):
-    """``uniform(key, shape) * 95 + 32`` — the expression the renderer evaluates, not a component."""
+    """Check the complete night-noise expression, including float32 scaling."""
     for r in golden["scaled"]:
         got = prng.uniform(_keys([r]), tuple(r["shape"]))[0] * 95 + 32
         b = np.ascontiguousarray(got.numpy()).view(np.uint32).ravel()
@@ -81,7 +66,7 @@ def test_the_scaled_night_field_matches(golden):
 
 
 def test_a_batch_of_keys_is_the_same_as_the_keys_one_at_a_time(golden):
-    """Batching must not change a row. This is the batch-invariance rule applied to the PRNG."""
+    """Each key produces the same field alone or in a batch."""
     rows = [r for r in golden["digest"] if tuple(r["shape"]) == (49, 63)]
     keys = _keys(rows)
     batched = prng.uniform(keys, (49, 63))
@@ -100,7 +85,7 @@ def test_permuting_the_batch_permutes_the_output_and_nothing_else(golden):
 
 
 def test_counter_offset_chunks_a_field_without_changing_it(golden):
-    """Drawing (49,63) in three chunks must rebuild the field jax drew in one call."""
+    """Chunks must reconstruct the same field as a single draw."""
     rows = [r for r in golden["digest"] if tuple(r["shape"]) == (49, 63)][:4]
     keys = _keys(rows)
     whole = prng.uniform(keys, (49 * 63,))
@@ -121,11 +106,7 @@ def test_random_bits_is_what_uniform_is_built_from(golden):
 
 
 def test_key_halves_round_trip_exactly_through_float32():
-    """The reason an env carries FOUR numbers for a key and not two.
-
-    A uint32 does not survive a float32 state row; two 16-bit halves do. This asserts the property
-    the state encoding depends on, on the worst cases and on a large random sample.
-    """
+    """Key halves must survive float32 render projections without losing bits."""
     rng = np.random.default_rng(0)
     raw = np.concatenate(
         [
@@ -139,18 +120,18 @@ def test_key_halves_round_trip_exactly_through_float32():
     halves = prng.key_to_halves(keys)
     assert int(halves.max()) <= 0xFFFF and int(halves.min()) >= 0
 
-    # the round trip that matters is through float32, which is what a state row is
+    # Render projections store key halves as float32.
     through_f32 = torch.as_tensor(halves.numpy().astype(np.float32).astype(np.int64))
     back = prng.key_from_halves(through_f32)
     assert torch.equal(back, keys)
 
-    # and a bare uint32 through float32 does NOT round-trip, which is why the halves exist
+    # Full uint32 words lose precision in float32.
     bad = raw.astype(np.float32).astype(np.uint64).astype(np.uint32)
     assert (bad == raw).mean() < 0.1, "if this passes, the four-slot key encoding is unnecessary"
 
 
 def test_key_from_halves_tolerates_a_conformance_probe(golden):
-    """``check_state_dims_matter`` perturbs a state dimension by +25; the decode must stay total."""
+    """Perturbing a key half must produce a valid, different key."""
     keys = _keys(golden["digest"][:4])
     halves = prng.key_to_halves(keys).to(torch.float32)
     probed = (halves + 25.0).round().to(torch.int64) % 65536
@@ -160,12 +141,7 @@ def test_key_from_halves_tolerates_a_conformance_probe(golden):
 
 
 def test_rotation_mask_is_the_one_that_is_easy_to_get_wrong():
-    """``_rotl32`` keeps ``d`` bits after a shift right by ``32-d``, not ``32-d`` bits.
-
-    The wrong mask produces a hash that looks like noise and is wrong everywhere, which is exactly
-    the failure that is invisible without a golden vector. Asserted directly against a reference
-    rotation computed in python ints.
-    """
+    """Compare signed-tensor rotations with unsigned Python-integer arithmetic."""
     rng = np.random.default_rng(7)
     vals = np.concatenate(
         [
@@ -189,20 +165,7 @@ def test_uniform_is_in_range_and_is_not_degenerate(golden):
 
 
 def test_uniform_takes_no_range_arguments(golden):
-    """Scaling into a range is the CALLER's expression, on purpose.
-
-    ``jax.random.uniform(key, shape, dtype, minval, maxval)`` computes
-    ``floats*(maxval-minval)+minval``, and under ``jax.jit`` XLA contracts that into a fused
-    multiply-add, which rounds once where a separate multiply and add round twice. Independent
-    review measured **508 of 4096 values differing** for the span ``[32, 127)`` at shape
-    ``(32, 127)`` — while a power-of-two span agrees, which is precisely the coincidence that lets
-    such a bug survive a test. A range argument here would be bit-exact against one jax call and not
-    another, depending on a fusion decision the caller cannot see, so there is none.
-
-    What pins the real expression is ``test_the_scaled_night_field_matches``: both craftax renderers
-    write ``uniform(key, shape) * 95 + 32`` themselves and un-jitted, and that is checked against
-    jax-generated values.
-    """
+    """Keep range scaling at the call site to preserve its rounding behavior."""
     import inspect
 
     p = inspect.signature(prng.uniform).parameters
@@ -212,8 +175,8 @@ def test_uniform_takes_no_range_arguments(golden):
     assert [n for n in p] == ["keys", "shape", "offset"]
 
 
-def test_render_module_exports_are_the_minimal_interface():
-    """W2 consumes this module verbatim; keep the surface small and named."""
+def test_prng_functions_are_available():
+    """Expose the hash, field generation and key conversion functions."""
     assert set(n for n in dir(prng) if not n.startswith("_")) >= {
         "threefry2x32",
         "random_bits",
@@ -225,11 +188,7 @@ def test_render_module_exports_are_the_minimal_interface():
 
 @pytest.mark.parametrize("shape", [(1, 1), (3, 5), (49, 63)])
 def test_odd_element_counts_work(golden, shape):
-    """The partitionable path has no pairing, so an odd element count is not a special case.
-
-    Asserted because the pre-0.4.36 path DID pad to an even count, and a port that carried that
-    padding over would be wrong only on odd shapes.
-    """
+    """Odd field sizes must match the partitionable reference without padding."""
     rows = [r for r in golden["full"] if tuple(r["shape"]) == shape]
     if not rows:
         pytest.skip(f"no golden vector at {shape}")

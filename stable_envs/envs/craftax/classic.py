@@ -70,7 +70,7 @@ What this env covers, and what it still does not:
     ``jax.random.uniform(state.state_rng, (H, W)) * 95 + 32`` through a vignette, so a night frame is
     a function of the PRNG key as well as of the map — measured: changing ``state_rng`` moves 72% of
     the world layer's channels on a night frame and **0** on a daylight one.
-    ``stable_envs/render/prng.py`` reproduces JAX's threefry2x32 counter PRNG bit for bit and is
+    ``stable_envs/envs/craftax/prng.py`` reproduces JAX's threefry2x32 counter PRNG bit for bit and is
     shared with the full-Craftax renderer. Two bands cost nothing: ``light >= 0.5`` makes
     ``night_static_intensity`` exactly 0, so no PRNG is drawn (58.3% of a 300-step day), and
     ``light == 1.0`` makes the whole chain the identity on the world pixels, so the batch stays on
@@ -118,11 +118,11 @@ import zlib
 import numpy as np
 import torch
 
-from ..env import Env
-from ..registry import register
-from ..render import _resources as _RES
-from ..render import prng
-from ..spaces import Box, Dict, Discrete
+from ...env import Env
+from ...registry import register
+from ...render import _resources as _RES
+from ...spaces import Box, Dict, Discrete
+from . import prng
 
 TILE_PX_AGENT = 7
 TILE_PX_IMG = 16
@@ -184,7 +184,7 @@ N_STRIP = len(STRIP_NAMES)
 N_COUNT = 10  #: 0..9, the whole digit alphabet; ``number_textures[0]`` is the empty texture
 #: A ``state_rng`` key is two uint32, and a uint32 does NOT survive a float32 state row: only 2.008%
 #: of random uint32 round-trip through one (2**32 > 2**24). Split into 16-bit halves, 100% of 100,000
-#: do. So the key costs four slots, not two. See ``stable_envs/render/prng.py``.
+#: do. So the key costs four slots, not two. See ``stable_envs/envs/craftax/prng.py``.
 N_KEY_HALVES = 4
 #: ``night_texture`` -- the colour night is tinted towards, ``[[[0, 16, 64]]]`` in craftax's constants.
 NIGHT_TINT = (0.0, 16.0, 64.0)
@@ -584,7 +584,7 @@ def night_and_sleep(
     * **the noise field is drawn only for rows that can use it.** ``intensity`` is exactly 0 for
       ``light >= 0.5``, so ``(1 - 0)*world + 0*noise`` is ``world`` in float32 whatever the noise was;
       those rows get zeros and no threefry evaluation. 58.3% of a 300-step day is in that band.
-    * **int32 threefry** (``render/prng.py``): bit-identical to an int64-with-masking implementation
+    * **int32 threefry** (``craftax/prng.py``): bit-identical to an int64-with-masking implementation
       and 2.3x faster.
     * **a batch that is entirely at ``light == 1.0`` and awake never gets here at all** — ``render``
       keeps it on the uint8 gather, because ``1.0*world + 0.0*night`` is exactly ``world``.

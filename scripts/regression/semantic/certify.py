@@ -131,6 +131,8 @@ NO_BACKEND_MODULE_CLASS = {
     "craftax": "R",
     "craftax_full": "R",
     "_craftax_full": "R",
+    "stable_envs.envs.craftax.classic": "R",
+    "stable_envs.envs.craftax.full": "R",
     "minihack": "R",
     "swm_nav": "R",
     "navigation": "R",
@@ -161,10 +163,9 @@ def backend_class(env: str, census: dict) -> tuple[str, list[str]]:
         return "S", b
     if set(bearing) & R:
         return "R", b
-    mod = (decl.get("module") or "").rsplit(".", 1)[-1]
-    if mod in NO_BACKEND_MODULE_CLASS:
-        return NO_BACKEND_MODULE_CLASS[mod], b
-    return UNKNOWN, b
+    mod = decl.get("module") or ""
+    kind = NO_BACKEND_MODULE_CLASS.get(mod, NO_BACKEND_MODULE_CLASS.get(mod.rsplit(".", 1)[-1], UNKNOWN))
+    return kind, b
 
 
 def merge(shard_paths) -> dict:

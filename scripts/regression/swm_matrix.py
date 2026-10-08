@@ -304,7 +304,7 @@ OBSERVATION_SUBSETS: dict[str, dict] = {
         "kind": "same_scene_partial_observation",
         "detail": (
             "the renderer identity is settled, and what it draws is the WORLD LAYER of the 63x63 "
-            "agent observation, not the whole observation. `stable_envs/envs/craftax.py` declares "
+            "agent observation, not the whole observation. `stable_envs/envs/craftax/classic.py` declares "
             "three exclusions and measures the rest: (1) the 2-row INVENTORY STRIP, rows 49-63, is a "
             "function of twelve inventory counts and four intrinsics rather than of the map window "
             "and is not rendered; (2) NIGHT frames (`light_level < 0.5`) mix in a noise field drawn "
@@ -315,7 +315,7 @@ OBSERVATION_SUBSETS: dict[str, dict] = {
             "capability: swm renders 63x63 at the 7 px agent tile size, our default_size is 16 px "
             "(112x144 for the 7x9 map window), and the class is measured at both."
         ),
-        "source": ["stable_envs/envs/craftax.py (class docstring)"],
+        "source": ["stable_envs/envs/craftax/classic.py (class docstring)"],
     },
 }
 

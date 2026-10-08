@@ -26,8 +26,9 @@ import torch
 
 import stable_envs as snv
 from stable_envs import _dynamics as dynamics
-from stable_envs.envs import _craftax_full, craftax
 from stable_envs.envs import rocket_landing as RL
+from stable_envs.envs.craftax import classic as craftax
+from stable_envs.envs.craftax import full as _craftax_full
 from tests.helpers.stepping import branch_step, branch_steps
 
 CRAFTAX = ("CraftaxClassic", "CraftaxFull")
@@ -264,10 +265,10 @@ def test_the_rocket_is_registered_exactly_when_it_can_render():
 # ------------------------------------------------------------------ the module split
 
 
-def test_craftax_full_registers_from_the_private_module():
-    """``discover()`` loads ``_craftax_full`` explicitly; there is no ``craftax_full.py`` shim."""
+def test_craftax_full_registers_from_the_family_package():
+    """Discovery registers the full-game implementation from the Craftax package."""
     assert snv.CraftaxFull is _craftax_full.CraftaxFull
-    assert snv.CraftaxFull.__module__ == "stable_envs.envs._craftax_full"
+    assert snv.CraftaxFull.__module__ == "stable_envs.envs.craftax.full"
     for n in (
         "N_BLOCK",
         "N_STRIP",
@@ -355,7 +356,7 @@ def test_the_two_craftax_modules_could_not_have_been_merged():
 
 
 def test_a_missing_craftax_is_recorded_under_the_historical_module_key():
-    """Discovery loads ``_craftax_full`` explicitly and records a missing extra as ``craftax_full``."""
+    """Dependency diagnostics retain their keys after moving into the family package."""
     errs = snv.import_errors()
     assert "_craftax_full" not in errs
     assert "_craftax_full_tex" not in errs

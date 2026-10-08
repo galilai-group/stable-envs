@@ -218,21 +218,27 @@ def test_unpublished_step8_shims_are_gone():
 
 
 @pytest.mark.parametrize("error", [ImportError("missing extra"), RuntimeError("broken family")])
-def test_discover_records_private_module_failures_without_raising(monkeypatch, error):
+def test_craftax_import_failures_are_isolated(monkeypatch, error):
+    import importlib
+
+    import stable_envs.envs.craftax as craftax
     import stable_envs.registry as registry
 
-    assert ("_craftax_full", "craftax_full") in registry._EXPLICIT_ENV_MODULES
     monkeypatch.setattr(registry, "_IMPORT_ERRORS", {})
+    attempted = []
 
     def fail_import(name):
-        assert name == "stable_envs.envs._craftax_full"
+        attempted.append(name)
         raise error
 
     monkeypatch.setattr(registry.importlib, "import_module", fail_import)
-    registry._import_env_module("_craftax_full", "craftax_full")
-    message = registry.import_errors()["craftax_full"]
-    assert f"{type(error).__name__}: {error}" in message
-    assert ("unexpected" in message) == isinstance(error, RuntimeError)
+    importlib.reload(craftax)
+    assert attempted == [f"stable_envs.envs.craftax.{name}" for name in ("classic", "full", "semantics")]
+    errors = registry.import_errors()
+    assert set(errors) == {"craftax", "craftax_full", "craftax_semantics"}
+    for message in errors.values():
+        assert f"{type(error).__name__}: {error}" in message
+        assert ("unexpected" in message) == isinstance(error, RuntimeError)
 
 
 def _is_banned(mod: str) -> bool:

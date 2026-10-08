@@ -131,7 +131,7 @@ def main():
     ap.add_argument("--corpus", default=None)
     ap.add_argument("--skip-gate-a", action="store_true")
     a = ap.parse_args()
-    from stable_envs.envs.craftax_full import OBS_H, CraftaxFull
+    from stable_envs.envs.craftax.full import OBS_H, CraftaxFull
 
     global CF_OBS_H
     CF_OBS_H = OBS_H

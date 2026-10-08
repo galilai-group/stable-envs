@@ -451,7 +451,11 @@ def test_family_device_caches_release_on_eviction():
     root = pathlib.Path(__file__).resolve().parents[2] / "stable_envs"
     checks = [
         (root / "envs" / "fetch.py", 'BoundedCache(6, name="fetch.ctx"', "release_cached_ctx"),
-        (root / "envs" / "ogbench" / "manipulation.py", 'ContextCache(on_evict=_release_context', "release_cached_ctx"),
+        (
+            root / "envs" / "ogbench" / "manipulation.py",
+            "ContextCache(on_evict=_release_context",
+            "release_cached_ctx",
+        ),
         (root / "envs" / "robocasa.py", 'BoundedCache(4, name="robocasa.ctx"', "release_cached_ctx"),
         (root / "envs" / "robocasa.py", "BoundedCache(", "robocasa.correctors"),
         (root / "envs" / "humanoidbench.py", 'BoundedCache(32, name="humanoidbench.ctx"', "release_cached_ctx"),
@@ -484,8 +488,8 @@ def test_family_device_caches_release_on_eviction():
         (root / "envs" / "pgx.py", 'BoundedCache(_PLATE_CACHE_MAX, name="pgx.plate"'),
         (root / "render" / "raster2d.py", 'BoundedCache(_BASE_CACHE_MAX, name="raster2d.base"'),
         (root / "render" / "raycast3d.py", "_Memo = _RES.BoundedCache"),
-        (root / "envs" / "craftax.py", 'BoundedCache(_MAX_ENTRIES, name="craftax.composite"'),
-        (root / "envs" / "_craftax_full.py", 'BoundedCache(_MAX_ENTRIES, name="craftax_full.tables"'),
+        (root / "envs" / "craftax" / "classic.py", 'BoundedCache(_MAX_ENTRIES, name="craftax.composite"'),
+        (root / "envs" / "craftax" / "full.py", 'BoundedCache(_MAX_ENTRIES, name="craftax_full.tables"'),
     ]
     for path, needle in cpu:
         src = path.read_text(encoding="utf-8")

@@ -263,10 +263,6 @@ _IMPORT_ERRORS: dict[str, str] = {}
 _DISCOVERED = False
 
 
-#: Explicit private-module imports and their public diagnostic keys.
-_EXPLICIT_ENV_MODULES: tuple[tuple[str, str], ...] = (("_craftax_full", "craftax_full"),)
-
-
 def _import_env_module(mod_name: str, error_key: str) -> None:
     """Import a family and record failure, distinguishing missing dependencies from other exceptions."""
     try:
@@ -286,8 +282,9 @@ def _import_env_module(mod_name: str, error_key: str) -> None:
 def discover(force: bool = False) -> dict[str, str]:
     """Import environment modules to populate the registry and return recorded failures.
 
-    Skip private names except explicit entries. Failed imports leave other families
-    available; force repeats discovery without clearing registered classes.
+    Skip private names; family packages import their own submodules. Failed
+    imports leave other families available. Force repeats discovery without
+    clearing registered classes.
     """
     global _DISCOVERED
     if _DISCOVERED and not force:
@@ -300,8 +297,6 @@ def discover(force: bool = False) -> dict[str, str]:
         if mod.name.startswith("_"):
             continue
         _import_env_module(mod.name, mod.name)
-    for mod_name, error_key in _EXPLICIT_ENV_MODULES:
-        _import_env_module(mod_name, error_key)
     _DISCOVERED = True
     return dict(_IMPORT_ERRORS)
 

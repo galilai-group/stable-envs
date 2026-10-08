@@ -21,8 +21,8 @@ import numpy as np
 import pytest
 import torch
 
-from stable_envs.envs import _craftax_full as CF
-from stable_envs.envs._craftax_full import CraftaxFull
+from stable_envs.envs.craftax import full as CF
+from stable_envs.envs.craftax.full import CraftaxFull
 
 GOLDEN = json.loads(
     (
@@ -151,7 +151,7 @@ def test_the_night_skip_changes_no_bits():
     sleep = torch.tensor([False, True, False, True])
     got = CF.light_night_and_sleep(world.clone(), lm, day, sleep, keys)
 
-    from stable_envs.render import prng
+    from stable_envs.envs.craftax import prng
 
     px = world * lm
     noise = (prng.uniform(keys, (h, w)) * 95 + 32).unsqueeze(-1)
