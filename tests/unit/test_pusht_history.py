@@ -4,9 +4,9 @@ import numpy as np
 import pytest
 import torch
 
-from stable_envs._adapters.pusht.history import stack_states
-from stable_envs._adapters.pusht.replay_batch import PushTReplayAdapter
 from stable_envs.env import Env
+from stable_envs.envs.pusht.simulation.history import stack_states
+from stable_envs.envs.pusht.simulation.replay_batch import PushTReplayAdapter
 from stable_envs.spaces import Dict
 
 

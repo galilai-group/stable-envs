@@ -6,10 +6,10 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ..env import Env
-from ..registry import register
-from ..render.scene import Scene2D, SceneBuilder
-from ..spaces import Box, Dict, Discrete, RGBBox
+from ...env import Env
+from ...registry import register
+from ...render.scene import Scene2D, SceneBuilder
+from ...spaces import Box, Dict, Discrete, RGBBox
 
 SCREEN = 512.0
 
@@ -64,7 +64,7 @@ class PushT(Env):
 
     Packed render states contain agent position, block origin and block angle
     on a 512-unit board. Actions are absolute agent target positions.
-    Use ``pusht_semantics.PushT`` for source-aligned simulation and replay State.
+    Use ``pusht.semantics.PushT`` for source-aligned simulation and replay State.
     """
 
     family = "pusht"
@@ -399,7 +399,7 @@ class PushT(Env):
         """Advance absolute agent targets ``(B, 2)`` and return State.
 
         This approximate solver does not compute reward or termination. The
-        source-aligned public PushT classes are defined in ``pusht_semantics``.
+        source-aligned public PushT classes are defined in ``pusht.semantics``.
         """
         self._check_open("step")
         # Require B target rows: copy_ would otherwise broadcast one target across the captured batch.

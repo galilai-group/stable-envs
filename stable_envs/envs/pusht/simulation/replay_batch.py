@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ..._execution.protocol import SimulatorAdapter
+from ...._execution.protocol import SimulatorAdapter
 from .replay import HISTORY_KEYS, PushTReplay, validate_seed
 
 

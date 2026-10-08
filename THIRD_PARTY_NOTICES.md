@@ -31,8 +31,8 @@ local source-compatible Variation helpers and temporary-file cleanup. It does
 not contain the PyFlyt physics engine or PyBullet native implementation. Those
 remain external dependencies under their own licenses (PyFlyt MIT; Bullet zlib).
 
-The private PushT task modules `pusht_task.py`, `pusht_spaces.py`,
-`pusht_draw.py`, and `pusht_quantizer.py` under `stable_envs/_adapters/` are
+The private PushT task modules `task.py`, `spaces.py` and `quantizer.py`
+under `stable_envs/envs/pusht/simulation/`, and `stable_envs/envs/pusht/draw.py`, are
 adapted from the same pinned project and authors. Their sources are
 `stable_worldmodel/envs/pusht/env.py`, `env_discrete.py`,
 `stable_worldmodel/spaces.py`, `stable_worldmodel/envs/utils.py`, and
