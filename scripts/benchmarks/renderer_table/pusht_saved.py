@@ -166,7 +166,8 @@ def benchmark(args):
         poses, reference = data["poses"].copy(), data["images"].copy()
     if args.device == "cuda":
         assert "3090" in torch.cuda.get_device_name()
-    env = se.make("PushTDiscrete" if "Discrete" in args.registration else "PushT", device=args.device, size=224)
+    name = "PushTDiscrete" if "Discrete" in args.registration else "PushT"
+    env = se.make(name, device=args.device, size=224)
     result = dict(
         registration=args.registration,
         device=args.device,
@@ -204,7 +205,9 @@ def benchmark(args):
             source = make_source(args.registration)
             owners.append(source)
             source.reset(seed=meta["frames"][i]["seed"])
-            env.reset(seed=meta["frames"][i]["seed"])
+            # Each saved source owner starts fresh, including reset-retained fields.
+            env.close()
+            env = se.make(name, device=args.device, size=224, seed=meta["frames"][i]["seed"])
             source.action_space.seed(10000 + meta["frames"][i]["seed"])
             for _ in range(meta["frames"][i]["step"]):
                 action = source.action_space.sample()
