@@ -390,7 +390,7 @@ def test_a_cpu_scene_releases_every_owned_tensor_and_refuses_reuse():
 def test_the_module_level_cast_memo_is_bounded():
     """``mjwarp_lightspec._CASTS_CACHE`` was an unbounded dict, i.e. one entry per model, forever."""
     pytest.importorskip("mujoco_warp")
-    import stable_envs.render.mjwarp_lightspec as LS
+    import stable_envs.render.mjwarp.lightspec as LS
 
     assert isinstance(LS._CASTS_CACHE, RES.BoundedCache)
     assert LS._CASTS_CACHE.capacity == LS.CASTS_CACHE_MAX
@@ -428,7 +428,7 @@ def _code_of(name: str) -> str:
 
 
 @pytest.mark.unit
-@pytest.mark.parametrize("name", ["mjwarp.py", "mjwarp_lightspec.py", "nvdiff.py", "rendernet.py", "_resources.py"])
+@pytest.mark.parametrize("name", ["mjwarp/__init__.py", "mjwarp/lightspec.py", "nvdiff.py", "rendernet.py", "_resources.py"])
 def test_nothing_in_the_render_backends_releases_an_egl_context(name):
     """The rule ``testing/resource_guard.py`` enforces at zero tolerance, checked at the source.
 

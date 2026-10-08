@@ -57,7 +57,11 @@ def test_a_core_module_imports_no_backend_and_no_environment(name):
     )
 
 
-@pytest.mark.parametrize("path", sorted((PKG / "render").glob("*.py")), ids=lambda p: p.name)
+@pytest.mark.parametrize(
+    "path",
+    sorted((PKG / "render").rglob("*.py")),
+    ids=lambda p: p.relative_to(PKG / "render").as_posix(),
+)
 def test_a_renderer_knows_nothing_about_environments_or_stable_worldmodel(path):
     bad = [
         m

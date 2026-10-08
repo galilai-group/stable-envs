@@ -4,7 +4,7 @@ from unittest.mock import Mock
 import pytest
 
 pytest.importorskip("mujoco_warp")
-from stable_envs.render import mjwarp_lightspec as lights
+from stable_envs.render.mjwarp import lightspec as lights
 
 
 @pytest.mark.parametrize("version,shared", [("3.12.0", True), ("3.11.0", False)])

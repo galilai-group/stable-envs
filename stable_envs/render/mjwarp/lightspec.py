@@ -40,7 +40,7 @@ from mujoco_warp._src import math  # noqa: F401  (referenced by the vendored fun
 from mujoco_warp._src import render as _upstream
 from mujoco_warp._src.types import MJ_MAXVAL, Data, Model, ObjType, RenderContext
 
-from . import _resources
+from .. import _resources
 
 wp.set_module_options({"enable_backward": False})
 

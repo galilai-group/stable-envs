@@ -10,8 +10,8 @@ def test_lightspec_context_and_graph_match_stock(monkeypatch):
     mujoco = pytest.importorskip("mujoco")
     mjw = pytest.importorskip("mujoco_warp")
     wp = pytest.importorskip("warp")
-    from stable_envs.render import mjwarp_lightspec as lights
     from stable_envs.render.mjwarp import BatchRenderer
+    from stable_envs.render.mjwarp import lightspec as lights
 
     monkeypatch.delenv("STABLE_ENVS_LIGHTSPEC", raising=False)
     model = mujoco.MjModel.from_xml_string("""

@@ -3,8 +3,8 @@ from __future__ import annotations
 import torch
 
 from stable_envs.render import gfxdraw as G
-from stable_envs.render import gfxdraw_classic as C
-from stable_envs.render import gfxdraw_fused as F
+from stable_envs.render.gfxdraw import classic as C
+from stable_envs.render.gfxdraw import fused as F
 
 
 @torch.no_grad()

@@ -17,7 +17,7 @@ something *rounds* the result — and a renderer rounds everything.
 
 !!! danger "Measured twice, from opposite ends of the codebase"
 
-    **`render/gfxdraw_fused.py`** reimplements `pygame.draw.polygon`'s scanline rule, which divides
+    **`render/gfxdraw/fused.py`** reimplements `pygame.draw.polygon`'s scanline rule, which divides
     in float32 and then takes `floor` or `ceil` of the quotient. On one CarRacing wheel the exact
     quotient is `-42.0 / 14.0 = -3.0`. The approximate reciprocal returned a hair below `-3`, `floor`
     gave `-4`, the scanline crossing moved a whole pixel and the polygon lost a boundary pixel.
@@ -156,7 +156,7 @@ The rule that actually catches these is not a coding convention, it is that **ev
 keeps an independent implementation to be diffed against**:
 
 * `raster2d.render_torch` is the executable specification for the 2-D rasterizer;
-* `gfxdraw.py`'s per-primitive path is the specification for `gfxdraw_fused.py`;
+* `gfxdraw/__init__.py`'s per-primitive path is the specification for `gfxdraw/fused.py`;
 * and both are diffed against the *official* renderer in `tests/gpu/test_conformance.py`.
 
 Every bug on this page was found by a diff, none by reading the code — including the ones whose

@@ -3,9 +3,9 @@
 There are three implementations of one picture in this repository now, and the chain between them
 is what makes the fast one admissible:
 
-    gfxdraw.py            per primitive, batched torch      the executable specification
-    gfxdraw_classic.py    render_classic_torch              the same rules, per pixel, in torch
-    gfxdraw_classic.py    render_classic (Triton)           the same again, in one kernel
+    gfxdraw/__init__.py   per primitive, batched torch      the executable specification
+    gfxdraw/classic.py    render_classic_torch              the same rules, per pixel, in torch
+    gfxdraw/classic.py    render_classic (Triton)           the same again, in one kernel
 
 ``test_fast_paths.py`` asserts the end-to-end joint (``env.render`` with the kernel on and off) on
 the frozen corpus and on states chosen to be awkward. This file asserts the two joints separately,
@@ -29,7 +29,7 @@ import pytest
 torch = pytest.importorskip("torch")
 
 import stable_envs as se
-from stable_envs.render import gfxdraw_classic as FC
+from stable_envs.render.gfxdraw import classic as FC
 from tests.gpu._shared import assert_frames_identical, make_or_skip
 from tests.helpers.gfxdraw_reference import render_classic_torch
 

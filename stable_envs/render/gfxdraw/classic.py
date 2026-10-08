@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 import torch
 
-from . import gfxdraw as G
-from .gfxdraw_fused import (
+from .. import gfxdraw as G
+from .fused import (
     HAVE_TRITON,
     edge_table,
 )
@@ -160,7 +160,7 @@ class Ops:
 
 
 if HAVE_TRITON:
-    from .gfxdraw_fused import (
+    from .fused import (
         _blend,
         _polygon_fill,
         _wu_edge,

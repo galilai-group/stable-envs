@@ -7,7 +7,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 R3 = pytest.importorskip("stable_envs.render.raycast3d")
-from stable_envs.render._raycast_reference import composite_window
+from tests.helpers.raycast_reference import composite_window
 
 
 def _camera():

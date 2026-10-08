@@ -8,7 +8,7 @@ import torch
 from ..env import Env
 from ..registry import register
 from ..render import gfxdraw as G
-from ..render import gfxdraw_fused as F
+from ..render.gfxdraw import fused as F
 from ..spaces import Box, Dict, Discrete
 
 

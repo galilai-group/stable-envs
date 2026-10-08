@@ -195,7 +195,7 @@ def _context(
     c.wm.block_dim.render = 32
     c.wd = mjw.put_data(m, d0, nworld=int(nworld))
     # Capture inside both patches; replay otherwise retains the stock generated kernel.
-    from ..render import mjwarp_lightspec as LS
+    from ..render.mjwarp import lightspec as LS
 
     profile = {} if backface_cull is None else {"enable_backface_culling": bool(backface_cull)}
     with MW.gl_rounding(), LS.specialised_lights():

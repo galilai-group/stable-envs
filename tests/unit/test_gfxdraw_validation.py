@@ -4,8 +4,8 @@ import pytest
 import torch
 
 from stable_envs.render import gfxdraw as G
-from stable_envs.render import gfxdraw_classic as C
-from stable_envs.render import gfxdraw_fused as F
+from stable_envs.render.gfxdraw import classic as C
+from stable_envs.render.gfxdraw import fused as F
 
 
 @pytest.mark.parametrize("count", [0, 1, 2, 5, 8])
