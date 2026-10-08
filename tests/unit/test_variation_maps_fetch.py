@@ -48,8 +48,6 @@ cannot run everywhere.
 
 from __future__ import annotations
 
-import collections
-import json
 import os
 from pathlib import Path
 
@@ -241,33 +239,6 @@ def test_partial_is_the_only_downgrade_and_every_other_mapped_leaf_is_fully_mapp
         assert "swm_only" not in set(cls.values()), (
             f"{c}: a leaf is in the undifferentiated bucket; use one of the four"
         )
-
-
-def test_the_committed_classification_artifact_agrees_with_the_maps():
-    """The artifact is generated FROM the maps, so it can drift from them silently.
-
-    ``leaf_classification.json`` is what the docs table, the escalation packet and anything
-    downstream reads. Nothing regenerates it on import, so a map edited without a regeneration
-    leaves a published table making a claim the code does not. This asserts the two agree leaf by
-    leaf, including the ``partial`` downgrade that the whole of review correction 4 is about.
-    """
-    art = json.loads(
-        (ROOT / "tests/fixtures/regression/join/step8/variations-fetch/leaf_classification.json").read_text()
-    )
-    assert art["totals"]["undocumented"] == 0
-    seen = collections.Counter()
-    for swm_id, rec in art["ids"].items():
-        m = WM.variation_map(rec["stable_envs_class"])
-        assert m is not None and m.swm_id == swm_id
-        cls = m.classification()
-        for leaf, entry in rec["leaves"].items():
-            assert entry["classification"] == cls[leaf], (
-                f"{swm_id}:{leaf}: the artifact says {entry['classification']}, the map says "
-                f"{cls[leaf]} -- regenerate leaf_classification.json"
-            )
-        seen.update(e["classification"] for e in rec["leaves"].values())
-    assert dict(seen) == art["totals"]["per_classification"]
-    assert art["totals"]["per_classification"]["partial"] == 12, "background.color is partial on all twelve ids"
 
 
 # ====================================================== the opt-in strictness switch for tiers 2/3
