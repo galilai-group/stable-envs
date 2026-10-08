@@ -515,14 +515,21 @@ def test_no_env_shadows_an_attribute_the_base_class_owns():
             changed = False
             for c in classes:
                 names = {b.id for b in c.bases if isinstance(b, ast.Name)}
-                names |= {b.attr for b in c.bases if isinstance(b, ast.Attribute)}
+                # ``gym.Env``/``gymnasium.Env`` are upstream simulators (e.g. PushT's source task under
+                # envs/pusht/simulation/), not stable_envs.Env; their attributes never meet ours.
+                names |= {
+                    b.attr
+                    for b in c.bases
+                    if isinstance(b, ast.Attribute)
+                    and not (isinstance(b.value, ast.Name) and b.value.id in {"gym", "gymnasium"})
+                }
                 if c.name not in derived and names & derived:
                     derived.add(c.name)
                     changed = True
         return [c for c in classes if c.name in derived]
 
     offenders: dict[str, set[str]] = {}
-    for path in sorted((root / "stable_envs" / "envs").glob("*.py")):
+    for path in sorted((root / "stable_envs" / "envs").rglob("*.py")):
         if path.name == "__init__.py":
             continue
         tree = ast.parse(path.read_text())
@@ -532,7 +539,7 @@ def test_no_env_shadows_an_attribute_the_base_class_owns():
         # cannot see that. It is left strict on purpose: an env that genuinely needs to restate a base
         # attribute should say so here rather than have the check quietly widened.
         if clash:
-            offenders[path.name] = clash
+            offenders[path.relative_to(root / "stable_envs").as_posix()] = clash
 
     assert not offenders, (
         "these env modules assign attributes that stable_envs/core/env.py also assigns, so whichever "
