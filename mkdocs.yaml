@@ -117,6 +117,7 @@ nav:
       - Test redundancy audit: testing-redundancy-audit.md
       - Docstring cleanup: docstring-cleanup.md
       - Package cleanup: package-cleanup.md
+      - Repository cleanup plan: repository-cleanup-plan.md
       - Fidelity methodology: concepts/fidelity-methodology.md
       - Fidelity tiers: concepts/fidelity-tiers.md
       - The Scene2D IR: concepts/scene-ir.md
