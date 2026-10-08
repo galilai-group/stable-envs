@@ -32,6 +32,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev,mujoco-locomotion]"
+      - name: Check adapter interfaces
+        if: matrix.python-version == '3.12'
+        run: python -m mypy --config-file tests/typing/mypy.ini
       - name: Run unit tests
         run: |
           python -m pytest tests/unit -m unit -q

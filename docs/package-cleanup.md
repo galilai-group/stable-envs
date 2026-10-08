@@ -75,68 +75,29 @@ Validation for the typing/navigation pass:
 - Ruff and the strict documentation build pass. This was not a GPU or performance
   acceptance run; no claim is made for the skipped cases.
 
-## Adapter refactor proposal
+## Adapter refactor
 
-Status: **implemented on the isolated adapter-cleanup branch; acceptance in progress**.
-See [Adapter cleanup](adapter-cleanup.md) for decisions and checks. Recorded after `6383c230`. This expands
-the earlier folder-grouping plan; only the typing/navigation work above is done.
-It is separate from the historical-report and fixture cleanup.
+The implementation is complete on the isolated `adapter-cleanup` branch;
+Oscar acceptance and integration are in progress. Decisions, limits and the
+validation record are in [Adapter cleanup](adapter-cleanup.md). The directory's `README.md` describes the resulting interfaces.
 
-The objective is to make a family straightforward to implement and verify while
-reducing duplicated execution code. Directory organization follows those boundaries.
+Family directories now own simulator logic, configuration and State conversion.
+Shared execution code selects processes and handles requests and typed buffers.
+`Env` continues to own action sequences, capture slices and rendering.
 
-| Observed problem | Proposed direction |
-|---|---|
-| `SimulatorAdapter` covers lifecycle, while stepping discovers optional methods dynamically. | Define small explicit interfaces for ordinary simulation and optional asynchronous stepping. Keep family-specific capabilities outside the common protocol. |
-| Five process adapters repeat worker startup, buffer allocation, State assembly and result retrieval. | Extract only mechanics shown to be common across multiple families. Keep simulator semantics in family implementations. |
-| Five routes across four `*_execution.py` files repeat the same process-selection conditions. | Extract the common selection policy before the pilot, preserving family eligibility, Linux/daemon checks, affinity handling, batch/CPU thresholds and the worker cap. Verify all existing routing cases. |
-| DMC repeats domain knowledge in `PROCESS_DOMAINS`, worker `make_local`, and the Reacher/Humanoid constructor special case. | Use one family factory for local and worker construction with a consistent call signature. Keep process eligibility explicit and preserve domain-specific defaults and seeding. |
-| Fetch environment code reads `_simulator._mass` directly. | Define a family interface for configuration and metadata instead of exposing internal storage. |
-| `ClassicControlAdapter` lives under `envs/`, while other simulator owners live under `_adapters/`. | Establish consistent ownership before moving files. |
-| `pusht_projection.py`, `pusht_draw.py` and `craftax_render.py` contain family rendering code under `_adapters/`. | Assign rendering to the owning family alongside its render implementation; retain explicit dependencies on simulator State decoding where required. |
-| Public spaces, `pusht_spaces.py` and `rocket_spaces.py` have overlapping types with different behavior. | Audit ownership and contracts before deduplicating. Preserve source-specific scalar precision, sampling order, constraints and default/current-value semantics. Keep attribution for derived code. |
-| Type hints are present but not systematically checked. | Add a focused static-checking target for adapter interfaces and their callers. Preserve concrete types where family operations require them. |
+The refactor preserves OGBench's prepare/commit restoration and family-specific
+space behavior. Fetch retains its distinct flat buffer layout. Worker loops
+remain explicit because their reset, task and restore protocols differ.
 
-Responsibilities:
-
-- Family simulation code owns upstream calls, task behavior, RNG and exact State conversion.
-- Execution code owns workers, lane partitioning, communication and shared buffers.
-- `Env` owns public action shapes, sequences, State/frame selection and rendering.
-
-First consolidate the repeated execution-selection policy as a separate change
-with unchanged routing behavior. Then start the interface pilot with Fetch and
-check it against DMC and OGBench before extracting worker/buffer machinery.
-OGBench's staged restoration must remain explicit:
-replacement worlds are prepared before committing the restore. A generic broadcast
-of `set_state` is not an equivalent implementation.
-
-Acceptance requirements:
-
-- Preserve public environment names, action shapes and State/frame slice semantics.
-- Preserve State, RNG, rewards, termination and inactive-lane behavior.
-- Returned snapshots remain independent while workers reuse shared buffers.
-- Preserve invalid-restore handling and cleanup after partial dispatch or worker failure.
-- Add no unnecessary State captures, full-State copies or synchronization to the stepping loop.
-- Compare simulation and step-plus-render throughput at representative batches with
-  action horizons 1 and 8, on the same hardware and workload as the baseline.
-- Run existing family/source contracts as applicable; document skips separately.
-- Keep the implementation small. Do not introduce a universal simulator base class,
-  generic framework or compatibility wrappers solely to support the reorganization.
-
-Still undecided: exact optional interface signatures, which buffer/worker functions
-can be shared, final package paths, and numeric performance acceptance thresholds.
-Resolve these against the pilot and its baseline measurements before expanding the
-refactor. The ownership inventory includes classic control and Craftax, even though
-Craftax remains outside simulation/performance work. Any Craftax relocation is a
-separate mechanical change, not authorization to resume its recovery or tuning.
+Acceptance requires unchanged State/RNG/task/lane behavior, owned snapshots,
+failure cleanup, source contracts, CPU/CUDA checks, and same-host simulation and
+step-plus-render comparisons at horizons 1 and 8. The advisor renderer table is
+a separate saved-state measurement; rollout time must not enter that timer.
 
 ## Remaining layout work, in order
 
-1. Consolidate execution selection, carry out the adapter pilot above, then group
-   simulation code by family: classic control, Fetch, DMC, OGBench, PushT and Rocket.
-   Account for Craftax in the ownership inventory with the limited scope above.
-   Leave shared process transport separate. Keep mechanical moves distinct from
-   behavior changes.
+1. Complete adapter acceptance and integrate the isolated branch. Family grouping,
+   interfaces, execution selection and shared-buffer extraction are implemented.
 2. Move `render/trackcom_texture.py` and `trackcom_reflection.py` beside DMC,
    their only family consumer.
 3. Group rendering engines with their helpers, for example MJWarp with its light
