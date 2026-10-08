@@ -59,3 +59,12 @@ that cell in the presentation CSV.
   Saved-state rendering and step-only measurements are separate workloads.
 - Saved Rocket replay on GPU and the new large-batch CPU runs and Manipulator CPU source repeat stability remain
   failed gates. Their errors are not replaced with zero FPS.
+
+A managed local collector (`collect.py`) now downloads completed archives every
+two minutes and writes fresh, **uncommitted** CSV snapshots under
+`branch-backups/presentation-20261008/latest-tables/`. It also copies raw archives
+into that backup directory. It does not change tracked files or push Git.
+`collector-status.json` records the most recent successful refresh; the log is
+`/private/tmp/se-presentation-20261008/collector.log`. Review that snapshot before
+updating the committed presentation tables. The collector stops after the
+campaign's queued/running jobs disappear.

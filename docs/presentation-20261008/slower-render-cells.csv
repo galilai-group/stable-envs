@@ -183,6 +183,7 @@ swm/PushT-v1,cuda,cpu,cpu,cuda,2048,0.7633795639007086,337.66099548900115,442.32
 swm/QuadrupedDMControl-v0,cpu,cpu,cpu,cpu,1,0.47744014611641605,5.941701257196548,12.44491336878018,0.00018548034001182172,adapter-cleanup/advisor-provenance.json:cpufull/79/result.json
 swm/QuadrupedDMControl-v0,cpu,cpu,cpu,cpu,64,0.5285854596902974,6.609429189806295,12.503993571217064,0.00012798817826763058,adapter-cleanup/advisor-provenance.json:cpufull/79/result.json
 swm/QuadrupedDMControl-v0,cpu,cpu,cpu,cpu,256,0.5267438996873987,6.584273928823801,12.49995288551287,0.00012798817826763058,adapter-cleanup/advisor-provenance.json:cpufull/79/result.json
+swm/QuadrupedDMControl-v0,cpu,cpu,cpu,cpu,1024,0.6770422347171826,9.865821793497265,14.571944389286829,0.0001279881910382617,results/advisor-142-7125386/measurement/result.json
 swm/ReacherDMControl-v0,cuda,cuda,cuda,cpu,1,0.3755945026044644,132.96054446811118,354.00024107416414,3.585308714989264e-05,adapter-cleanup/advisor-provenance.json:raw/38/result.json
 swm/ReacherDMControl-v0,cuda,cuda,cuda,cuda,1,0.3824529422629914,133.9357420731554,350.2018870103379,3.585308714989264e-05,adapter-cleanup/advisor-provenance.json:raw/38/result.json
 swm/ReacherDMControl-v0,cpu,cpu,cpu,cpu,256,0.8949042900410618,21.05698139832761,23.52986976670034,2.9077290383064992e-05,adapter-cleanup/advisor-provenance.json:cpufull/80/result.json
