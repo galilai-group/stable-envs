@@ -29,8 +29,8 @@ implementation while retaining different acceptance evidence.
   exists to reproduce its night noise; it is not a shared rendering backend.
 - Keep reusable rendering engines in `render/`. A helper used by one environment
   family belongs with that family, even when it deals with graphics.
-- Use `_adapters/` for simulator execution and State conversion. Group a family's
-  adapters together when it has several modules; shared process transport lives in `_execution/`.
+- Put a family's simulator adapter and State conversion in `envs/<family>/simulation/`.
+  Shared worker-process code lives in `_execution/`, shared internals in `_core/`.
 - Put reference comparisons and corpus utilities under `testing/`; experiment
   drivers belong under `scripts/`.
 
