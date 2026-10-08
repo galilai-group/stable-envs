@@ -4,7 +4,7 @@ import math
 
 import torch
 
-from .raster2d import tile_shape
+from ...render.raster2d import tile_shape
 
 # Below this alpha, float32 subtraction and uint8 truncation leave every contrast unchanged.
 ALPHA_FLOOR = 2.0**-25

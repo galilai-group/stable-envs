@@ -68,7 +68,7 @@ def main():
         Path("benchmarks/online/classic_source_pipeline.py"),
         Path("benchmarks/online/common.py"),
         Path("tests/helpers/reference/native_navigation_semantics.py"),
-        Path("stable_envs/envs/navigation.py"),
+        Path("stable_envs/envs/navigation/envs.py"),
         Path("stable_envs/env.py"),
         Path("stable_envs/_core/stepping.py"),
     ]

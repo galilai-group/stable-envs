@@ -5,12 +5,12 @@ import torch
 from gymnasium import spaces as gym_spaces
 from tensordict import TensorDict
 
-from ..env import Env, StepResult, check_states
-from ..registry import register
-from ..render import _resources as _RES
-from ..render import navdot
-from ..render.scene import Scene2D, SceneBuilder
-from ..spaces import Box, Dict, Discrete, RGBBox
+from ...env import Env, StepResult, check_states
+from ...registry import register
+from ...render import _resources as _RES
+from ...render.scene import Scene2D, SceneBuilder
+from ...spaces import Box, Dict, Discrete, RGBBox
+from . import navdot
 
 # Rendering constants use this fixed pixel canvas.
 IMG = 224
@@ -660,7 +660,7 @@ class _TorchNavBase(_GymReferencePort):
         Each window must contain the nearest in-frame pixel to the center. That
         keeps the normalization maximum equal to the full-frame maximum.
         """
-        from ..render.raster2d import row_groups
+        from ...render.raster2d import row_groups
 
         k = int(pos.shape[0])
         if self.device.type == "cuda":

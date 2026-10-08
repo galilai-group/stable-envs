@@ -220,7 +220,7 @@ def test_unrecovered_step_reports_only_its_implemented_state(name):
 
 
 def test_navigation_cells_live_in_the_merged_module():
-    from stable_envs.envs import navigation
+    from stable_envs.envs.navigation import envs as navigation
 
     for attr in (
         "IMG",
@@ -232,7 +232,7 @@ def test_navigation_cells_live_in_the_merged_module():
         "SimplePointMaze",
     ):
         assert hasattr(navigation, attr)
-    assert {c.__module__ for c in (snv.TwoRoom, snv.Piecewise, snv.SimplePointMaze)} == {"stable_envs.envs.navigation"}
+    assert {c.__module__ for c in (snv.TwoRoom, snv.Piecewise, snv.SimplePointMaze)} == {"stable_envs.envs.navigation.envs"}
 
 
 @pytest.mark.parametrize("name", ALL)

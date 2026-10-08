@@ -26,7 +26,7 @@ import pytest
 import torch
 
 import stable_envs as se
-from stable_envs.envs import navigation as SN
+from stable_envs.envs.navigation import envs as SN
 
 CONFIGS = ("TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones")
 

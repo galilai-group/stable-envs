@@ -12,8 +12,8 @@ from __future__ import annotations
 import pytest
 import torch
 
+from stable_envs.envs.navigation import navdot as NV
 from stable_envs.render import gfxdraw as G
-from stable_envs.render import navdot as NV
 from stable_envs.render import raster2d as R2
 from stable_envs.render.gfxdraw import classic as GC
 from stable_envs.render.gfxdraw import fused as GF
@@ -147,7 +147,7 @@ def test_the_classic_path_blends_through_gfxdraws_own_rule():
 
 
 def test_row_groups_is_one_function_under_two_names():
-    """The public spelling and the historical alias that ``envs/navigation.py`` still imports are the SAME
+    """The public spelling and the historical alias that ``envs/navigation/envs.py`` still imports are the SAME
     object -- a second function would be a second partition, and the two paths would group the batch
     differently."""
     assert R2.row_groups is R2._row_groups
