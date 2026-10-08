@@ -66,7 +66,9 @@ class OGBSource:
 
     def restore(self, state):
         if self.family == "Maze":
-            self.reference.set_state(TensorDict({key: torch.from_numpy(value) for key, value in state.items()}, [self.batch]))
+            self.reference.set_state(
+                TensorDict({key: torch.from_numpy(value) for key, value in state.items()}, [self.batch])
+            )
         else:
             for env, row in zip(self.envs, state, strict=True):
                 self.module.restore(env, row)
@@ -98,14 +100,20 @@ class OGBSource:
     def step(self, actions, frame_indices=None):
         actions = np.asarray(actions)
         dim = 2 if self.family == "Maze" else 5
-        if (actions.ndim != 3 or actions.shape[0] != self.batch or actions.shape[1] < 1
-                or actions.shape[2] != dim or actions.dtype not in (np.float32, np.float64)
-                or not np.isfinite(actions).all()):
+        if (
+            actions.ndim != 3
+            or actions.shape[0] != self.batch
+            or actions.shape[1] < 1
+            or actions.shape[2] != dim
+            or actions.dtype not in (np.float32, np.float64)
+            or not np.isfinite(actions).all()
+        ):
             raise ValueError("Require finite float32/float64 [B,T,A] source actions")
         if frame_indices is not None:
             frame_indices = tuple(frame_indices)
-            if (any(type(i) is not int or not 0 <= i < actions.shape[1] for i in frame_indices)
-                    or len(set(frame_indices)) != len(frame_indices)):
+            if any(type(i) is not int or not 0 <= i < actions.shape[1] for i in frame_indices) or len(
+                set(frame_indices)
+            ) != len(frame_indices):
                 raise ValueError("Frame indices must be unique in-range integers")
         frame_times = set(frame_indices or ())
         saved_frames, cached_frames = {}, [None] * self.batch
@@ -115,19 +123,22 @@ class OGBSource:
         for t in range(actions.shape[1]):
             validity.append(active.copy())
             if self.family == "Maze":
-                rows = [self.reference._in_legacy_rng(i, env.step, actions[i, t]) if active[i] else previous[i]
-                        for i, env in enumerate(self.envs)]
+                rows = [
+                    self.reference._in_legacy_rng(i, env.step, actions[i, t]) if active[i] else previous[i]
+                    for i, env in enumerate(self.envs)
+                ]
             else:
                 rows = [env.step(actions[i, t]) if active[i] else previous[i] for i, env in enumerate(self.envs)]
             previous = rows
             if frame_times:
                 for i in np.flatnonzero(active):
                     cached_frames[i] = None
-            tasks = {"reward": np.asarray([r[1] for r in rows], np.float64),
-                     "terminated": np.asarray([r[2] for r in rows], bool),
-                     "truncated": np.asarray([r[3] for r in rows], bool),
-                     "success": np.asarray([r[4]["success"] for r in rows],
-                                           np.float64 if self.family == "Maze" else bool)}
+            tasks = {
+                "reward": np.asarray([r[1] for r in rows], np.float64),
+                "terminated": np.asarray([r[2] for r in rows], bool),
+                "truncated": np.asarray([r[3] for r in rows], bool),
+                "success": np.asarray([r[4]["success"] for r in rows], np.float64 if self.family == "Maze" else bool),
+            }
             if self.family == "Maze":
                 tasks["observation"] = np.stack([r[0] for r in rows])
                 for key in ("xy", "prev_qpos", "prev_qvel", "qpos", "qvel"):
@@ -145,8 +156,11 @@ class OGBSource:
         result = {key: np.stack([row[key] for row in columns], axis=1) for key in columns[0]}
         result["valid"] = np.stack(validity, axis=1)
         if frame_indices is not None:
-            result["frames"] = (np.stack([saved_frames[t] for t in frame_indices], axis=1) if frame_indices else
-                                np.empty((self.batch, 0, self.render_size, self.render_size, 3), np.uint8))
+            result["frames"] = (
+                np.stack([saved_frames[t] for t in frame_indices], axis=1)
+                if frame_indices
+                else np.empty((self.batch, 0, self.render_size, self.render_size, 3), np.uint8)
+            )
             result["frame_valid"] = result["valid"][:, list(frame_indices)]
         return result
 
@@ -169,21 +183,20 @@ class OGBSourceShard(SourceShard):
     def __init__(self, *args, action_dim, render_size=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.render_size = render_size
-        self.action_space = gym.spaces.Box(-np.inf, np.inf,
-            (self.shard_size, self.horizon, action_dim), np.float64)
+        self.action_space = gym.spaces.Box(-np.inf, np.inf, (self.shard_size, self.horizon, action_dim), np.float64)
 
     def reset(self, *, seed=None, options=None):
         gym.Env.reset(self, seed=seed)
         torch.set_num_threads(1)
         if self.ref is not None:
             self.ref.close()
-        self.ref = OGBSource(self.domain, self.source_root, self.shard_size,
-                             seed=17 + self.start, render_size=self.render_size)
-        return {key: np.zeros(space.shape, dtype=space.dtype)
-                for key, space in self.observation_space.items()}, {}
+        self.ref = OGBSource(
+            self.domain, self.source_root, self.shard_size, seed=17 + self.start, render_size=self.render_size
+        )
+        return {key: np.zeros(space.shape, dtype=space.dtype) for key, space in self.observation_space.items()}, {}
 
     def step(self, actions):
-        return self.ref.step(actions, self.frame_indices), 0., False, False, {}
+        return self.ref.step(actions, self.frame_indices), 0.0, False, False, {}
 
     def snapshot(self):
         return self.ref.snapshot()
@@ -202,16 +215,22 @@ class OGBSourceShard(SourceShard):
             raise RuntimeError("Source renderer inspection failed:\n" + traceback.format_exc()) from None
 
     def inspection(self):
-        return dict(pid=os.getpid(), torch_threads=torch.get_num_threads(),
-                    start=self.start, size=self.shard_size, render_audit_count=self.ref.render_audit_count,
-                    renderers_absent=all((env.env.custom_renderer if self.domain == "Maze" else env._renderer)
-                                         is None for env in self.ref.envs))
+        return dict(
+            pid=os.getpid(),
+            torch_threads=torch.get_num_threads(),
+            start=self.start,
+            size=self.shard_size,
+            render_audit_count=self.ref.render_audit_count,
+            renderers_absent=all(
+                (env.env.custom_renderer if self.domain == "Maze" else env._renderer) is None for env in self.ref.envs
+            ),
+        )
 
     def restore(self, state):
         if self.domain == "Maze":
-            state = {key: value[self.start:self.start + self.shard_size] for key, value in state.items()}
+            state = {key: value[self.start : self.start + self.shard_size] for key, value in state.items()}
         else:
-            state = state[self.start:self.start + self.shard_size]
+            state = state[self.start : self.start + self.shard_size]
         self.ref.restore(state)
 
 
@@ -230,8 +249,9 @@ class ParallelOGBSource(ParallelSource):
             layout = {key: (value.shape[1:], value.dtype.str) for key, value in sample.items()}
             if frame_indices is not None:
                 frame_indices = tuple(frame_indices)
-                if (any(type(i) is not int or not 0 <= i < horizon for i in frame_indices)
-                        or len(set(frame_indices)) != len(frame_indices)):
+                if any(type(i) is not int or not 0 <= i < horizon for i in frame_indices) or len(
+                    set(frame_indices)
+                ) != len(frame_indices):
                     raise ValueError("Frame indices must be unique in-range integers")
                 layout["frames"] = ((len(frame_indices), render_size, render_size, 3), np.dtype(np.uint8).str)
                 layout["frame_valid"] = ((len(frame_indices),), np.dtype(bool).str)
@@ -248,11 +268,24 @@ class ParallelOGBSource(ParallelSource):
         finally:
             prototype.close()
         size = batch // workers
-        factories = [functools.partial(OGBSourceShard, family, str(root), size, i * size,
-                                      horizon, frame_indices, layout, action_dim=self.action_dim,
-                                      render_size=render_size) for i in range(workers)]
-        self.vector = gym.vector.AsyncVectorEnv(factories, shared_memory=True, copy=True,
-                                               context="spawn", autoreset_mode=gym.vector.AutoresetMode.DISABLED)
+        factories = [
+            functools.partial(
+                OGBSourceShard,
+                family,
+                str(root),
+                size,
+                i * size,
+                horizon,
+                frame_indices,
+                layout,
+                action_dim=self.action_dim,
+                render_size=render_size,
+            )
+            for i in range(workers)
+        ]
+        self.vector = gym.vector.AsyncVectorEnv(
+            factories, shared_memory=True, copy=True, context="spawn", autoreset_mode=gym.vector.AutoresetMode.DISABLED
+        )
         try:
             self.vector.reset()
         except BaseException:
@@ -265,8 +298,10 @@ class ParallelOGBSource(ParallelSource):
             raise ValueError("Source action shape differs from the configured batch/horizon")
         shaped = actions.reshape(self.workers, self.batch // self.workers, self.horizon, self.action_dim)
         observations, _, _, _, _ = self.vector.step(shaped)
-        return {key: torch.as_tensor(value.reshape(self.batch, *value.shape[2:]), device=device)
-                for key, value in observations.items()}
+        return {
+            key: torch.as_tensor(value.reshape(self.batch, *value.shape[2:]), device=device)
+            for key, value in observations.items()
+        }
 
     def snapshot(self):
         shards = self.vector.call("snapshot")

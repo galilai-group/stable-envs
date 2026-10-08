@@ -47,18 +47,44 @@ def summarize(results, source, source_root, source_manifest, batches):
         assert report["pid"] not in seen_pids
         seen_pids.add(report["pid"])
         assert report["source_pin"] == manifest["commit"] and report["source_files"] == manifest["files"]
-        assert set(report["versions"]) == {"torch", "numpy", "gymnasium", "mujoco", "dm-control", "tensordict", "mujoco-warp", "warp-lang"}
-        required = {"benchmarks/online/dmc_source_pipeline.py",
-                    "benchmarks/online/dmc_parallel_source.py",
-                    "benchmarks/online/classic_parallel_source.py",
-                    "benchmarks/online/common.py", "stable_envs/_stepping.py", "stable_envs/env.py"}
+        assert set(report["versions"]) == {
+            "torch",
+            "numpy",
+            "gymnasium",
+            "mujoco",
+            "dm-control",
+            "tensordict",
+            "mujoco-warp",
+            "warp-lang",
+        }
+        required = {
+            "benchmarks/online/dmc_source_pipeline.py",
+            "benchmarks/online/dmc_parallel_source.py",
+            "benchmarks/online/classic_parallel_source.py",
+            "benchmarks/online/common.py",
+            "stable_envs/_stepping.py",
+            "stable_envs/env.py",
+        }
         assert required <= set(report["candidate_files"])
-        for rel in ("stable_worldmodel/envs/dmcontrol/dmcontrol.py",
-                    f"stable_worldmodel/envs/dmcontrol/{report['domain']}.py"):
+        for rel in (
+            "stable_worldmodel/envs/dmcontrol/dmcontrol.py",
+            f"stable_worldmodel/envs/dmcontrol/{report['domain']}.py",
+        ):
             loaded = [h for f, h in report["source_runtime_files"].items() if f.endswith("/" + rel)]
             assert loaded == [manifest["files"][rel]], rel
-        key = {f: report[f] for f in ("domain", "host", "job", "affinity", "versions", "candidate_files",
-                                      "initial_state_policy", "action_policy")}
+        key = {
+            f: report[f]
+            for f in (
+                "domain",
+                "host",
+                "job",
+                "affinity",
+                "versions",
+                "candidate_files",
+                "initial_state_policy",
+                "action_policy",
+            )
+        }
         assert report["job"] is not None
         if provenance is None:
             provenance = key
@@ -80,10 +106,12 @@ def summarize(results, source, source_root, source_manifest, batches):
             workers = (0 if report["domain"] == "quadruped" else 8) if mode == "ours" else actors
             assert cell["physics_workers"] == workers
             assert cell["valid_steps"] == cell["batch"] * cell["horizon"]
-            frames = cell["batch"] * (cell["horizon"] if cell["selection"] == "all" else int(cell["selection"] == "final"))
+            frames = cell["batch"] * (
+                cell["horizon"] if cell["selection"] == "all" else int(cell["selection"] == "final")
+            )
             assert cell["frames_checked"] == frames
             if mode == "ours" and frames:
-                assert 0 <= cell["mse_mean"] <= cell["mse_max"] <= .001
+                assert 0 <= cell["mse_mean"] <= cell["mse_max"] <= 0.001
                 assert math.isfinite(cell["mse_sd"]) and cell["mse_sd"] >= 0
             else:
                 assert all(cell[k] is None for k in ("mse_mean", "mse_sd", "mse_max"))
@@ -99,12 +127,23 @@ def summarize(results, source, source_root, source_manifest, batches):
             assert key not in component_keys and mode == "ours"
             seconds = checked_seconds(cell["seconds"])
             rates = [cell["batch"] / t for t in seconds]
-            component_rows.append(dict(domain=report["domain"], device=device, batch=cell["batch"],
-                operation=cell["operation"], rate_mean=statistics.mean(rates), rate_sd=statistics.stdev(rates),
-                rate_unit="frames/s" if cell["operation"] == "render_saved_state" else
-                          ("states/s" if cell["operation"] == "get_state" else "steps/s"),
-                seconds_mean=statistics.mean(seconds), seconds_sd=statistics.stdev(seconds),
-                host=report["host"], job=report["job"]))
+            component_rows.append(
+                dict(
+                    domain=report["domain"],
+                    device=device,
+                    batch=cell["batch"],
+                    operation=cell["operation"],
+                    rate_mean=statistics.mean(rates),
+                    rate_sd=statistics.stdev(rates),
+                    rate_unit="frames/s"
+                    if cell["operation"] == "render_saved_state"
+                    else ("states/s" if cell["operation"] == "get_state" else "steps/s"),
+                    seconds_mean=statistics.mean(seconds),
+                    seconds_sd=statistics.stdev(seconds),
+                    host=report["host"],
+                    job=report["job"],
+                )
+            )
             component_keys.add(key)
         assert component_keys == (set(itertools.product(batches, OPERATIONS)) if mode == "ours" else set())
         reports[mode, device] = report
@@ -115,12 +154,25 @@ def summarize(results, source, source_root, source_manifest, batches):
             for field in ("initial_state_sha256", "endpoint_state_sha256", "source_tasks_sha256"):
                 assert len({cell[field] for cell in cells.values()}) == 1, (device, key, field)
             ours = cells["ours"]
-            row = dict(domain=provenance["domain"], device=device, batch=key[0], horizon=key[1], selection=key[2],
-                source_render_device=device, source_physics_device="cpu", source_gpu_supported=True,
-                source_parallel_workers=8, ours_physics_workers=ours["physics_workers"],
-                mse_mean=ours["mse_mean"], mse_sd=ours["mse_sd"], mse_max=ours["mse_max"],
-                frames_checked=ours["frames_checked"], valid_steps=ours["valid_steps"],
-                host=provenance["host"], job=provenance["job"])
+            row = dict(
+                domain=provenance["domain"],
+                device=device,
+                batch=key[0],
+                horizon=key[1],
+                selection=key[2],
+                source_render_device=device,
+                source_physics_device="cpu",
+                source_gpu_supported=True,
+                source_parallel_workers=8,
+                ours_physics_workers=ours["physics_workers"],
+                mse_mean=ours["mse_mean"],
+                mse_sd=ours["mse_sd"],
+                mse_max=ours["mse_max"],
+                frames_checked=ours["frames_checked"],
+                valid_steps=ours["valid_steps"],
+                host=provenance["host"],
+                job=provenance["job"],
+            )
             for mode, cell in cells.items():
                 rates = [cell["valid_steps"] / t for t in cell["seconds"]]
                 row[f"{mode}_steps_per_s_mean"] = statistics.mean(rates)

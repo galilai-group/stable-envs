@@ -43,19 +43,32 @@ def main():
         assert hashlib.sha256((args.source_root / f).read_bytes()).hexdigest() == h, f
     import_source(args.source_root)
     torch.set_num_threads(1)
-    files = [Path(__file__).relative_to(Path.cwd()),
-             Path("benchmarks/online/dmc_parallel_source.py"),
-             Path("benchmarks/online/classic_parallel_source.py"),
-             Path("benchmarks/online/common.py"),
-             Path("benchmarks/online/dmc_profile.py"),
-             *Path("stable_envs/_adapters").glob("dmcontrol*.py"),
-             Path("tests/helpers/reference/dmc_semantics.py")]
-    report = dict(status="RUNNING", scope="CPU B2/P2 source-transport versus local adapters; no public Env, rendering or timing",
-        host=platform.node(), domains=args.domains, source_pin=PIN, source_files=manifest["files"],
-        opengl_not_exercised=True, configured_gl=os.environ.get("MUJOCO_GL"),
+    files = [
+        Path(__file__).relative_to(Path.cwd()),
+        Path("benchmarks/online/dmc_parallel_source.py"),
+        Path("benchmarks/online/classic_parallel_source.py"),
+        Path("benchmarks/online/common.py"),
+        Path("benchmarks/online/dmc_profile.py"),
+        *Path("stable_envs/_adapters").glob("dmcontrol*.py"),
+        Path("tests/helpers/reference/dmc_semantics.py"),
+    ]
+    report = dict(
+        status="RUNNING",
+        scope="CPU B2/P2 source-transport versus local adapters; no public Env, rendering or timing",
+        host=platform.node(),
+        domains=args.domains,
+        source_pin=PIN,
+        source_files=manifest["files"],
+        opengl_not_exercised=True,
+        configured_gl=os.environ.get("MUJOCO_GL"),
         candidate_files={str(f): hashlib.sha256(f.read_bytes()).hexdigest() for f in files},
-        versions={n: importlib.metadata.version(n) for n in ("torch", "numpy", "dm-control", "mujoco", "gymnasium", "tensordict")},
-        source_runtime_files={}, cases=[])
+        versions={
+            n: importlib.metadata.version(n)
+            for n in ("torch", "numpy", "dm-control", "mujoco", "gymnasium", "tensordict")
+        },
+        source_runtime_files={},
+        cases=[],
+    )
     args.output.parent.mkdir(parents=True, exist_ok=True)
 
     def save():
@@ -93,11 +106,15 @@ def main():
                                 assert not bool(actual["terminated"].any() or actual["truncated"].any())
                                 equal_state(ref.get_state(), parallel.snapshot())
                                 equal_state(actual["state"][:, -1], ref.get_state())
-                                public_keys = {".".join(k) if isinstance(k, tuple) else k
-                                               for k in actual.exclude("state").keys(True, True)}
+                                public_keys = {
+                                    ".".join(k) if isinstance(k, tuple) else k
+                                    for k in actual.exclude("state").keys(True, True)
+                                }
                                 assert public_keys == set(expected) == set(batched)
                                 for key in expected:
-                                    torch.testing.assert_close(batched[key], expected[key], rtol=0, atol=0, equal_nan=True)
+                                    torch.testing.assert_close(
+                                        batched[key], expected[key], rtol=0, atol=0, equal_nan=True
+                                    )
                                     path = tuple(key.split(".")) if "." in key else key
                                     value = actual[path]
                                     torch.testing.assert_close(value, expected[key], rtol=0, atol=0, equal_nan=True)
@@ -106,9 +123,19 @@ def main():
                                 assert not torch.equal(next_output["observation"], held["observation"])
                                 for key in held:
                                     torch.testing.assert_close(batched[key], held[key], rtol=0, atol=0, equal_nan=True)
-                                report["cases"].append(dict(domain=domain, horizon=horizon, reset_boundary=boundary,
-                                    batch=2, workers=2, state_task="EXACT", output_ownership="PASS",
-                                    task_fields=sorted(public_keys), valid_steps=2 * horizon))
+                                report["cases"].append(
+                                    dict(
+                                        domain=domain,
+                                        horizon=horizon,
+                                        reset_boundary=boundary,
+                                        batch=2,
+                                        workers=2,
+                                        state_task="EXACT",
+                                        output_ownership="PASS",
+                                        task_fields=sorted(public_keys),
+                                        valid_steps=2 * horizon,
+                                    )
+                                )
                                 save()
                                 print(domain, horizon, "boundary" if boundary else "reset", "PASS", flush=True)
             finally:

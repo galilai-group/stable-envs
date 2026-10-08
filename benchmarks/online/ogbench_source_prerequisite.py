@@ -30,8 +30,11 @@ from tests.helpers.reference.ogbench_maze_semantics import OGBMazeReference
 
 
 def import_source(root):
-    for name, sub in (("stable_worldmodel", ""), ("stable_worldmodel.envs", "envs"),
-                      ("stable_worldmodel.envs.ogbench", "envs/ogbench")):
+    for name, sub in (
+        ("stable_worldmodel", ""),
+        ("stable_worldmodel.envs", "envs"),
+        ("stable_worldmodel.envs.ogbench", "envs/ogbench"),
+    ):
         if name in sys.modules:
             raise RuntimeError(f"Use a fresh interpreter; {name} is already loaded")
         package = types.ModuleType(name)
@@ -46,11 +49,14 @@ def ownership_module():
 
 
 def source_tasks(rows, family):
-    tasks = {"reward": torch.tensor([r[1] for r in rows], dtype=torch.float64),
-             "terminated": torch.tensor([r[2] for r in rows], dtype=torch.bool),
-             "truncated": torch.tensor([r[3] for r in rows], dtype=torch.bool),
-             "success": torch.tensor([r[4]["success"] for r in rows],
-                                     dtype=torch.float64 if family == "Maze" else torch.bool)}
+    tasks = {
+        "reward": torch.tensor([r[1] for r in rows], dtype=torch.float64),
+        "terminated": torch.tensor([r[2] for r in rows], dtype=torch.bool),
+        "truncated": torch.tensor([r[3] for r in rows], dtype=torch.bool),
+        "success": torch.tensor(
+            [r[4]["success"] for r in rows], dtype=torch.float64 if family == "Maze" else torch.bool
+        ),
+    }
     if family == "Maze":
         tasks["observation"] = torch.from_numpy(np.stack([r[0] for r in rows]))
         for name in ("xy", "prev_qpos", "prev_qvel", "qpos", "qvel"):
@@ -73,19 +79,30 @@ def main():
     import_source(args.source_root)
     module = ownership_module()
     torch.set_num_threads(1)
-    paths = [Path(__file__).relative_to(Path.cwd()),
-             Path("benchmarks/online/common.py"),
-             Path("tests/helpers/reference/ogbench_maze_semantics.py"),
-             Path("tests/helpers/reference/ogbench_manipulation_semantics.py"),
-             Path("tests/helpers/reference/ogbench_manipulation_source.py"),
-             *Path("stable_envs/_adapters").glob("ogbench*.py")]
-    report = dict(status="RUNNING", host=platform.node(), source_pin=PIN,
+    paths = [
+        Path(__file__).relative_to(Path.cwd()),
+        Path("benchmarks/online/common.py"),
+        Path("tests/helpers/reference/ogbench_maze_semantics.py"),
+        Path("tests/helpers/reference/ogbench_manipulation_semantics.py"),
+        Path("tests/helpers/reference/ogbench_manipulation_source.py"),
+        *Path("stable_envs/_adapters").glob("ogbench*.py"),
+    ]
+    report = dict(
+        status="RUNNING",
+        host=platform.node(),
+        source_pin=PIN,
         scope="CPU B2 direct-source/restore prerequisite only; no rendering, parallel transport, timing or CUDA",
-        versions={n: importlib.metadata.version(n) for n in
-                  ("ogbench", "mujoco", "dm-control", "torch", "numpy", "gymnasium", "tensordict")},
-        source_files=manifest["files"], runtime_files={},
+        versions={
+            n: importlib.metadata.version(n)
+            for n in ("ogbench", "mujoco", "dm-control", "torch", "numpy", "gymnasium", "tensordict")
+        },
+        source_files=manifest["files"],
+        runtime_files={},
         candidate_files={str(f): hashlib.sha256(f.read_bytes()).hexdigest() for f in paths},
-        renderer_construction_guard=True, source_close_probes={}, cases=[])
+        renderer_construction_guard=True,
+        source_close_probes={},
+        cases=[],
+    )
     args.output.parent.mkdir(parents=True, exist_ok=True)
 
     def save():
@@ -107,8 +124,10 @@ def main():
                                 restore = source.set_state
 
                                 def source_step(actions):
-                                    return [source._in_legacy_rng(i, env.step, action)
-                                            for i, (env, action) in enumerate(zip(raw, actions, strict=True))]
+                                    return [
+                                        source._in_legacy_rng(i, env.step, action)
+                                        for i, (env, action) in enumerate(zip(raw, actions, strict=True))
+                                    ]
 
                                 adapter = OGBMazeAdapter(2, seed=17)
                             else:
@@ -136,7 +155,9 @@ def main():
                                         fn = cls.__dict__.get(method)
                                         if inspect.isfunction(fn):
                                             f = Path(inspect.getsourcefile(fn))
-                                            report["runtime_files"][str(f)] = hashlib.sha256(f.read_bytes()).hexdigest()
+                                            report["runtime_files"][str(f)] = hashlib.sha256(
+                                                f.read_bytes()
+                                            ).hexdigest()
 
                             def verify():
                                 if family == "Maze":
@@ -147,8 +168,11 @@ def main():
 
                             verify()
                             source_initial, initial = capture(), adapter.get_state()
-                            actions = np.random.default_rng(31).uniform(-.5, .5,
-                                (2, horizon, 2 if family == "Maze" else 5)).astype(dtype)
+                            actions = (
+                                np.random.default_rng(31)
+                                .uniform(-0.5, 0.5, (2, horizon, 2 if family == "Maze" else 5))
+                                .astype(dtype)
+                            )
                             first_tasks = []
                             for replay in range(2):
                                 if replay:
@@ -163,8 +187,9 @@ def main():
                                 for t in range(horizon):
                                     outside = copy.deepcopy(np.random.get_state())
                                     tasks = source_tasks(source_step(actions[:, t]), family)
-                                    assert not bool(tasks["terminated"].any() or tasks["truncated"].any()), \
+                                    assert not bool(tasks["terminated"].any() or tasks["truncated"].any()), (
                                         "This bounded source workload must remain nonterminal"
+                                    )
                                     assert not module.differences(outside, np.random.get_state())
                                     result = adapter.step(actions[:, t], capture_state=False)
                                     assert set(result.keys(True, True)) == set(tasks)
@@ -180,10 +205,19 @@ def main():
                                     endpoint = adapter.get_state()
                                 else:
                                     equal_state(endpoint, adapter.get_state())
-                            report["cases"].append(dict(family=family, batch=2, horizon=horizon,
-                                action_dtype=np.dtype(dtype).name, source_task_parity="PASS",
-                                independent_engine_rng_witness="PASS", restore_replay="PASS",
-                                source_global_rng_preserved="PASS", valid_steps=2 * horizon))
+                            report["cases"].append(
+                                dict(
+                                    family=family,
+                                    batch=2,
+                                    horizon=horizon,
+                                    action_dtype=np.dtype(dtype).name,
+                                    source_task_parity="PASS",
+                                    independent_engine_rng_witness="PASS",
+                                    restore_replay="PASS",
+                                    source_global_rng_preserved="PASS",
+                                    valid_steps=2 * horizon,
+                                )
+                            )
                             if family not in report["source_close_probes"]:
                                 # Structural cleanup probe only: no actual GL resource or
                                 # memory measurement. The sentinel cannot render.
@@ -201,10 +235,12 @@ def main():
                                     raw[0].close()
                                     fn = type(target).close
                                     report["source_close_probes"][family] = dict(
-                                        render_field=field, close_calls=sentinel.close_calls,
+                                        render_field=field,
+                                        close_calls=sentinel.close_calls,
                                         reference_cleared=getattr(target, field) is None,
                                         delegated_close=f"{fn.__module__}.{fn.__qualname__}",
-                                        scope="sentinel only; no actual renderer or memory allocated")
+                                        scope="sentinel only; no actual renderer or memory allocated",
+                                    )
                                 finally:
                                     setattr(target, field, None)
                             save()

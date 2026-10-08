@@ -51,17 +51,21 @@ def main():
     if args.repeats < 2 or min(args.batches) < 1:
         parser.error("Require positive batches and at least two samples")
     torch.set_num_threads(1)
-    report = dict(status="RUNNING", family=args.family, host=platform.node(),
-                  job=os.environ.get("SLURM_JOB_ID"),
-                  affinity=sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
-                  gpu=torch.cuda.get_device_name() if "cuda" in args.devices else None,
-                  versions={p: importlib.metadata.version(p) for p in
-                            ("torch", "numpy", "gymnasium", "tensordict")},
-                  source_sha256={str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in
-                                 [Path("stable_envs/envs/_classic_semantics.py"),
-                                  Path(__file__).relative_to(Path.cwd())]},
-                  scope="adapter component diagnostic, CPU physics for both output devices; no rendering or source speedup",
-                  cells=[])
+    report = dict(
+        status="RUNNING",
+        family=args.family,
+        host=platform.node(),
+        job=os.environ.get("SLURM_JOB_ID"),
+        affinity=sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
+        gpu=torch.cuda.get_device_name() if "cuda" in args.devices else None,
+        versions={p: importlib.metadata.version(p) for p in ("torch", "numpy", "gymnasium", "tensordict")},
+        source_sha256={
+            str(p): hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in [Path("stable_envs/envs/_classic_semantics.py"), Path(__file__).relative_to(Path.cwd())]
+        },
+        scope="adapter component diagnostic, CPU physics for both output devices; no rendering or source speedup",
+        cells=[],
+    )
     args.output.parent.mkdir(parents=True, exist_ok=True)
 
     def save():
@@ -76,13 +80,20 @@ def main():
                 construction = time.perf_counter() - start
                 try:
                     initial = adapter.get_state()
-                    action = (np.random.default_rng(31).integers(0, 2 if args.family == "cartpole" else 3, (batch, 1))
-                              if args.family in ("cartpole", "acrobot", "mountain_car")
-                              else np.random.default_rng(31).uniform(-0.5, 0.5, (batch, 1)))
+                    action = (
+                        np.random.default_rng(31).integers(0, 2 if args.family == "cartpole" else 3, (batch, 1))
+                        if args.family in ("cartpole", "acrobot", "mountain_car")
+                        else np.random.default_rng(31).uniform(-0.5, 0.5, (batch, 1))
+                    )
                     adapter.step(action)
-                    cell = dict(batch=batch, device=device, construction_s=construction,
-                                state_bytes=sum(v.numel() * v.element_size() for v in initial.values(True, True)),
-                                state_leaves=len(initial.keys(True, True)), timings={})
+                    cell = dict(
+                        batch=batch,
+                        device=device,
+                        construction_s=construction,
+                        state_bytes=sum(v.numel() * v.element_size() for v in initial.values(True, True)),
+                        state_leaves=len(initial.keys(True, True)),
+                        timings={},
+                    )
 
                     def no_export():
                         with patch.object(adapter, "get_state", return_value=initial):
@@ -104,10 +115,13 @@ def main():
                             samples.append(time.perf_counter() - start)
                             del result
                         rates = [batch / t for t in samples]
-                        cell["timings"][name] = dict(seconds=samples, seconds_mean=statistics.mean(samples),
-                                                    seconds_sd=statistics.stdev(samples),
-                                                    lanes_per_s_mean=statistics.mean(rates),
-                                                    lanes_per_s_sd=statistics.stdev(rates))
+                        cell["timings"][name] = dict(
+                            seconds=samples,
+                            seconds_mean=statistics.mean(samples),
+                            seconds_sd=statistics.stdev(samples),
+                            lanes_per_s_mean=statistics.mean(rates),
+                            lanes_per_s_sd=statistics.stdev(rates),
+                        )
                     adapter.set_state(initial)
                     profile = cProfile.Profile()
                     profile.enable()

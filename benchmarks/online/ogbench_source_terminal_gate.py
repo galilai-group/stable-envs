@@ -35,11 +35,20 @@ NAMES = {"Maze": "PointMazeLargeNavigate", "Cube": "OGBCube", "Scene": "OGBScene
 def adapter_fixture(family):
     """Exercise the unchanged dispatcher without claiming public construction."""
     adapter = OGBMazeAdapter(2, seed=17) if family == "Maze" else OGBManipulationAdapter(family, 2, seed=17)
-    fixture = types.SimpleNamespace(num_envs=2, device=torch.device("cpu"), has_dynamics=True,
-        execution_mode="DELEGATED_CPU", action_spec=types.SimpleNamespace(shape=(2 if family == "Maze" else 5,),
-        dtype=torch.float64), _simulator=adapter, _check_open=lambda _: adapter._check_open(),
-        _step=adapter.step, _advance_without_snapshot=partial(adapter.step, capture_state=False),
-        get_state=adapter.get_state, set_state=adapter.set_state, close=adapter.close)
+    fixture = types.SimpleNamespace(
+        num_envs=2,
+        device=torch.device("cpu"),
+        has_dynamics=True,
+        execution_mode="DELEGATED_CPU",
+        action_spec=types.SimpleNamespace(shape=(2 if family == "Maze" else 5,), dtype=torch.float64),
+        _simulator=adapter,
+        _check_open=lambda _: adapter._check_open(),
+        _step=adapter.step,
+        _advance_without_snapshot=partial(adapter.step, capture_state=False),
+        get_state=adapter.get_state,
+        set_state=adapter.set_state,
+        close=adapter.close,
+    )
     fixture.step = partial(dispatch_step, fixture)
     return fixture
 
@@ -79,7 +88,9 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--source-root", type=Path, required=True)
     p.add_argument("--source-manifest", type=Path, required=True)
-    p.add_argument("--public", action="store_true", help="Use public constructors on Linux instead of the adapter fixture")
+    p.add_argument(
+        "--public", action="store_true", help="Use public constructors on Linux instead of the adapter fixture"
+    )
     p.add_argument("--output", type=Path, required=True)
     args = p.parse_args()
     if args.public and platform.system() != "Linux":
@@ -91,27 +102,38 @@ def main():
     for rel, digest in manifest["files"].items():
         assert hashlib.sha256((args.source_root / rel).read_bytes()).hexdigest() == digest, rel
     torch.set_num_threads(1)
-    paths = [Path(__file__).relative_to(Path.cwd()),
-             Path("benchmarks/online/ogbench_parallel_source.py"),
-             Path("benchmarks/online/ogbench_source_prerequisite.py"),
-             Path("benchmarks/online/ogbench_source_transport_gate.py"),
-             Path("benchmarks/online/classic_parallel_source.py"),
-             Path("tests/helpers/reference/ogbench_maze_semantics.py"),
-             Path("tests/helpers/reference/ogbench_manipulation_semantics.py"),
-             Path("tests/helpers/reference/ogbench_manipulation_source.py"),
-             Path("stable_envs/env.py"), Path("stable_envs/_stepping.py"),
-             *Path("stable_envs/_adapters").glob("ogbench*.py"),
-             Path("stable_envs/envs/ogbench/maze.py"),
-             Path("stable_envs/envs/ogbench/manipulation_semantics.py")]
-    report = dict(status="RUNNING", host=platform.node(), source_pin=PIN,
-        source_files=manifest["files"], runtime_files={},
+    paths = [
+        Path(__file__).relative_to(Path.cwd()),
+        Path("benchmarks/online/ogbench_parallel_source.py"),
+        Path("benchmarks/online/ogbench_source_prerequisite.py"),
+        Path("benchmarks/online/ogbench_source_transport_gate.py"),
+        Path("benchmarks/online/classic_parallel_source.py"),
+        Path("tests/helpers/reference/ogbench_maze_semantics.py"),
+        Path("tests/helpers/reference/ogbench_manipulation_semantics.py"),
+        Path("tests/helpers/reference/ogbench_manipulation_source.py"),
+        Path("stable_envs/env.py"),
+        Path("stable_envs/_stepping.py"),
+        *Path("stable_envs/_adapters").glob("ogbench*.py"),
+        Path("stable_envs/envs/ogbench/maze.py"),
+        Path("stable_envs/envs/ogbench/manipulation_semantics.py"),
+    ]
+    report = dict(
+        status="RUNNING",
+        host=platform.node(),
+        source_pin=PIN,
+        source_files=manifest["files"],
+        runtime_files={},
         candidate_files={str(f): hashlib.sha256(f.read_bytes()).hexdigest() for f in paths},
-        versions={n: importlib.metadata.version(n) for n in
-                  ("ogbench", "mujoco", "dm-control", "torch", "numpy", "gymnasium", "tensordict")},
+        versions={
+            n: importlib.metadata.version(n)
+            for n in ("ogbench", "mujoco", "dm-control", "torch", "numpy", "gymnasium", "tensordict")
+        },
         construction="PUBLIC_CPU" if args.public else "ADAPTER_DISPATCH_FIXTURE",
         scope="CPU B2/P2 no-frame source termination/zero padding/State history; no timing or CUDA",
         fixture="move task goals to current object/joint configuration, one or both lanes; no source function patching",
-        cases=[], worker_closures=[])
+        cases=[],
+        worker_closures=[],
+    )
     args.output.parent.mkdir(parents=True, exist_ok=True)
 
     def save():
@@ -119,15 +141,23 @@ def main():
 
     save()
     try:
-        guard = contextlib.nullcontext() if args.public else patch(
-            "mujoco.Renderer", side_effect=AssertionError("No rendering in adapter fixture gate"))
+        guard = (
+            contextlib.nullcontext()
+            if args.public
+            else patch("mujoco.Renderer", side_effect=AssertionError("No rendering in adapter fixture gate"))
+        )
         with guard:
             for family in NAMES:
                 for horizon in (1, 8):
-                    with contextlib.closing(OGBSource(family, args.source_root, 2)) as serial, \
-                            contextlib.closing(se.make(NAMES[family], num_envs=2, device="cpu", seed=17)
-                                if args.public else adapter_fixture(family)) as env, \
-                            ParallelOGBSource(family, args.source_root, 2, 2, horizon) as workers:
+                    with (
+                        contextlib.closing(OGBSource(family, args.source_root, 2)) as serial,
+                        contextlib.closing(
+                            se.make(NAMES[family], num_envs=2, device="cpu", seed=17)
+                            if args.public
+                            else adapter_fixture(family)
+                        ) as env,
+                        ParallelOGBSource(family, args.source_root, 2, 2, horizon) as workers,
+                    ):
                         original_source, original_public = serial.snapshot(), env.get_state()
                         report["runtime_files"].update(workers.runtime_files)
 
@@ -156,16 +186,20 @@ def main():
                                 actions = np.zeros((2, horizon, workers.action_dim), dtype=dtype)
                                 expected = serial.step(actions)
                                 actual = workers.step(actions)
-                                result = env.step(actions[:, 0] if horizon == 1 else actions,
-                                                  states=slice(None), frames=None)
+                                result = env.step(
+                                    actions[:, 0] if horizon == 1 else actions, states=slice(None), frames=None
+                                )
                                 compare(actual, expected)
                                 compare(public_tasks(result, horizon), expected)
                                 equal(workers.snapshot(), serial.snapshot())
                                 # The accepted witness reads source action_space,
                                 # incrementing its diagnostic access counter. Run
                                 # it only after both full source-snapshot comparisons.
-                                assert bool(result["terminated"][:reached].all()) if horizon == 1 else \
-                                    bool(result["terminated"][:reached, 0].all())
+                                assert (
+                                    bool(result["terminated"][:reached].all())
+                                    if horizon == 1
+                                    else bool(result["terminated"][:reached, 0].all())
+                                )
                                 expected_valid = torch.ones((2, horizon), dtype=torch.bool)
                                 expected_valid[:reached, 1:] = False
                                 assert torch.equal(result["valid"], expected_valid)
@@ -177,11 +211,12 @@ def main():
                                 held_state = result["state"].clone()
                                 # A new call begins normally, including after a prior
                                 # terminal result. No container auto-reset is invented.
-                                continuation = np.full_like(actions, .01)
+                                continuation = np.full_like(actions, 0.01)
                                 expected_next = serial.step(continuation)
                                 actual_next = workers.step(continuation)
-                                public_next = env.step(continuation[:, 0] if horizon == 1 else continuation,
-                                                       states=None, frames=None)
+                                public_next = env.step(
+                                    continuation[:, 0] if horizon == 1 else continuation, states=None, frames=None
+                                )
                                 compare(actual_next, expected_next)
                                 compare(public_tasks(public_next, horizon), expected_next)
                                 assert bool(actual_next["valid"][:, 0].all())
@@ -191,14 +226,28 @@ def main():
                                 witness()
                                 inspection = list(workers.vector.call("inspection"))
                                 assert all(row["renderers_absent"] and row["torch_threads"] == 1 for row in inspection)
-                                report["cases"].append(dict(family=family, batch=2, workers=2, horizon=horizon,
-                                    reached_lanes=reached, action_dtype=np.dtype(dtype).name,
-                                    valid_steps=int(expected_valid.sum()), task_state_witness="PASS",
-                                    zero_padding_and_validity="PASS", terminal_state_hold="PASS",
-                                    next_call_source_lifecycle="PASS", output_ownership="PASS", worker_info=inspection))
+                                report["cases"].append(
+                                    dict(
+                                        family=family,
+                                        batch=2,
+                                        workers=2,
+                                        horizon=horizon,
+                                        reached_lanes=reached,
+                                        action_dtype=np.dtype(dtype).name,
+                                        valid_steps=int(expected_valid.sum()),
+                                        task_state_witness="PASS",
+                                        zero_padding_and_validity="PASS",
+                                        terminal_state_hold="PASS",
+                                        next_call_source_lifecycle="PASS",
+                                        output_ownership="PASS",
+                                        worker_info=inspection,
+                                    )
+                                )
                                 save()
                                 print(family, horizon, reached, np.dtype(dtype).name, "PASS", flush=True)
-                    closure = [dict(pid=p.pid, exitcode=p.exitcode, alive=p.is_alive()) for p in workers.vector.processes]
+                    closure = [
+                        dict(pid=p.pid, exitcode=p.exitcode, alive=p.is_alive()) for p in workers.vector.processes
+                    ]
                     assert all(row["exitcode"] == 0 and not row["alive"] for row in closure)
                     report["worker_closures"].append(dict(family=family, horizon=horizon, workers=closure))
                     save()

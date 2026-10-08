@@ -32,7 +32,6 @@ def write(path, value):
     path.write_text(json.dumps(value, indent=2, allow_nan=False, default=lambda x: array(x).tolist()) + "\n")
 
 
-
 def array(value):
     if isinstance(value, torch.Tensor):
         return value.detach().cpu().numpy()

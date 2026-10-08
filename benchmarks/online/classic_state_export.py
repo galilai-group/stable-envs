@@ -26,8 +26,13 @@ from benchmarks.online.classic_profile import sync
 from stable_envs.envs._classic_semantics import _PHYSICS_SPACES
 from tests.helpers.reference.classic_state_export import classic_state
 
-NAMES = {"cartpole": "CartPole", "pendulum": "Pendulum", "acrobot": "Acrobot",
-         "mountain_car": "MountainCar", "mountain_car_continuous": "MountainCarContinuous"}
+NAMES = {
+    "cartpole": "CartPole",
+    "pendulum": "Pendulum",
+    "acrobot": "Acrobot",
+    "mountain_car": "MountainCar",
+    "mountain_car_continuous": "MountainCarContinuous",
+}
 DISCRETE = {"cartpole": 2, "acrobot": 3, "mountain_car": 3}
 
 
@@ -36,6 +41,7 @@ def actions_for(domain, batch, seed):
     if domain in DISCRETE:
         return rng.integers(0, DISCRETE[domain], (batch, 8, 1))
     return rng.uniform(-0.5, 0.5, (batch, 8, 1)).astype(np.float32)
+
 
 def equal(a, b):
     assert a.batch_size == b.batch_size
@@ -62,23 +68,41 @@ def main():
         p.error("Require positive batches and at least two repeats")
     reference_class = None
     if args.reference_classic is not None:
-        spec = importlib.util.spec_from_file_location("stable_envs.envs._classic_export_reference", args.reference_classic)
+        spec = importlib.util.spec_from_file_location(
+            "stable_envs.envs._classic_export_reference", args.reference_classic
+        )
         reference_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(reference_module)
         reference_class = reference_module.ClassicControlAdapter
-    reference_files = [args.reference_classic] if reference_class is not None else [Path("tests/helpers/reference/classic_state_export.py")]
+    reference_files = (
+        [args.reference_classic]
+        if reference_class is not None
+        else [Path("tests/helpers/reference/classic_state_export.py")]
+    )
     torch.set_num_threads(1)
-    report = dict(status="RUNNING", domain=args.domain, env=NAMES[args.domain],
-                  host=platform.node(), job=os.environ.get("SLURM_JOB_ID"),
-                  gpu=torch.cuda.get_device_name() if "cuda" in args.devices else None,
-                  versions={name: importlib.metadata.version(name) for name in ("torch", "numpy", "gymnasium", "tensordict")},
-                  reference_hashes={str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in reference_files},
-                  candidate_hashes={str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in [
-                      Path("stable_envs/envs/_classic_semantics.py"), Path("stable_envs/envs/classic_control.py"),
-                      Path("stable_envs/_adapters/state_columns.py"), Path("stable_envs/_stepping.py")]},
-                  script_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-                  scope="frozen accepted exporter vs column exporter; public step frames=None; same CPU physics for both output devices",
-                  gates=[], timings=[])
+    report = dict(
+        status="RUNNING",
+        domain=args.domain,
+        env=NAMES[args.domain],
+        host=platform.node(),
+        job=os.environ.get("SLURM_JOB_ID"),
+        gpu=torch.cuda.get_device_name() if "cuda" in args.devices else None,
+        versions={name: importlib.metadata.version(name) for name in ("torch", "numpy", "gymnasium", "tensordict")},
+        reference_hashes={str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in reference_files},
+        candidate_hashes={
+            str(p): hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in [
+                Path("stable_envs/envs/_classic_semantics.py"),
+                Path("stable_envs/envs/classic_control.py"),
+                Path("stable_envs/_adapters/state_columns.py"),
+                Path("stable_envs/_stepping.py"),
+            ]
+        },
+        script_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        scope="frozen accepted exporter vs column exporter; public step frames=None; same CPU physics for both output devices",
+        gates=[],
+        timings=[],
+    )
     args.output.parent.mkdir(parents=True, exist_ok=True)
 
     def save():
@@ -137,15 +161,22 @@ def main():
                     env.set_variation({"physics." + key: [bounds[2] * 1.1]})
                     env.reset(seed=42)
                 equal(reference.get_state(), candidate.get_state())
-                equal(reference.step(actions, frames=None if args.no_frames else slice(None)),
-                      candidate.step(actions, frames=None if args.no_frames else slice(None)))
+                equal(
+                    reference.step(actions, frames=None if args.no_frames else slice(None)),
+                    candidate.step(actions, frames=None if args.no_frames else slice(None)),
+                )
                 if args.domain in DISCRETE:
                     for env in (reference, candidate):
                         env.reset(seed=17)
-                    equal(reference.step(actions[:, 0, 0], frames=None),
-                          candidate.step(actions[:, 0, 0], frames=None))
-                report["gates"].append(dict(device=device, cases=cases, state_task_rng_lifecycle_ownership="PASS",
-                                             frame_mse_vs_legacy=None if args.no_frames else 0.0))
+                    equal(reference.step(actions[:, 0, 0], frames=None), candidate.step(actions[:, 0, 0], frames=None))
+                report["gates"].append(
+                    dict(
+                        device=device,
+                        cases=cases,
+                        state_task_rng_lifecycle_ownership="PASS",
+                        frame_mse_vs_legacy=None if args.no_frames else 0.0,
+                    )
+                )
                 save()
             for batch in args.batches:
                 with make(batch, device, True) as reference, make(batch, device) as candidate:
@@ -161,7 +192,9 @@ def main():
                                     order.reverse()
                                 for mode, env in order:
                                     env.set_state(initial)
-                                    fn = env.get_state if operation == "get_state" else lambda: env.step(a, frames=None)
+                                    fn = (
+                                        env.get_state if operation == "get_state" else lambda: env.step(a, frames=None)
+                                    )
                                     fn()
                                     for _ in range(args.repeats):
                                         env.set_state(initial)
@@ -176,9 +209,18 @@ def main():
                             for mode, seconds in samples.items():
                                 count = batch * (horizon if operation != "get_state" else 1)
                                 rates = [count / t for t in seconds]
-                                report["timings"].append(dict(batch=batch, device=device, horizon=horizon,
-                                    operation=operation, mode=mode, seconds=seconds,
-                                    rate_mean=statistics.mean(rates), rate_sd=statistics.stdev(rates)))
+                                report["timings"].append(
+                                    dict(
+                                        batch=batch,
+                                        device=device,
+                                        horizon=horizon,
+                                        operation=operation,
+                                        mode=mode,
+                                        seconds=seconds,
+                                        rate_mean=statistics.mean(rates),
+                                        rate_sd=statistics.stdev(rates),
+                                    )
+                                )
                             save()
                 print(args.domain, device, batch, "PASS", flush=True)
         report["status"] = "PASS"

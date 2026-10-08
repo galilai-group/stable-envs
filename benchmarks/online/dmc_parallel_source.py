@@ -20,18 +20,48 @@ import torch
 from benchmarks.online.classic_parallel_source import ParallelSource, SourceShard
 from tests.helpers.reference.dmc_semantics import DMCReference
 
-NAMES = dict(zip(
-    ("acrobot", "pendulum", "cartpole", "reacher", "cheetah", "hopper", "walker",
-     "ball_in_cup", "finger", "manipulator", "quadruped", "humanoid"),
-    ("DMCAcrobotBalance", "DMCPendulumSwingup", "DMCCartpoleSwingup", "DMCReacherHard",
-     "DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk", "DMCBallInCupCatch", "DMCFingerTurnHard",
-     "DMCManipulatorBringBall", "DMCQuadrupedWalk", "DMCHumanoidWalk"), strict=True))
+NAMES = dict(
+    zip(
+        (
+            "acrobot",
+            "pendulum",
+            "cartpole",
+            "reacher",
+            "cheetah",
+            "hopper",
+            "walker",
+            "ball_in_cup",
+            "finger",
+            "manipulator",
+            "quadruped",
+            "humanoid",
+        ),
+        (
+            "DMCAcrobotBalance",
+            "DMCPendulumSwingup",
+            "DMCCartpoleSwingup",
+            "DMCReacherHard",
+            "DMCCheetahRun",
+            "DMCHopperHop",
+            "DMCWalkerWalk",
+            "DMCBallInCupCatch",
+            "DMCFingerTurnHard",
+            "DMCManipulatorBringBall",
+            "DMCQuadrupedWalk",
+            "DMCHumanoidWalk",
+        ),
+        strict=True,
+    )
+)
 
 
 def import_source(root):
-    for name, sub in (("stable_worldmodel", ""), ("stable_worldmodel.envs", "envs"),
-                      ("stable_worldmodel.envs.dmcontrol", "envs/dmcontrol"),
-                      ("stable_worldmodel.envs.dmcontrol.custom_tasks", "envs/dmcontrol/custom_tasks")):
+    for name, sub in (
+        ("stable_worldmodel", ""),
+        ("stable_worldmodel.envs", "envs"),
+        ("stable_worldmodel.envs.dmcontrol", "envs/dmcontrol"),
+        ("stable_worldmodel.envs.dmcontrol.custom_tasks", "envs/dmcontrol/custom_tasks"),
+    ):
         if name not in sys.modules:
             package = types.ModuleType(name)
             package.__path__ = [str(root / "stable_worldmodel" / sub)]
@@ -55,8 +85,12 @@ def step_arrays(ref, actions, frame_indices):
         if any(row[2] or row[3] for row in rows):
             raise AssertionError("DMC source lifecycle differs from the accepted wrapper contract")
         tasks = {}
-        for key, index, dtype in (("observation", 0, None), ("reward", 1, np.float64),
-                                  ("terminated", 2, bool), ("truncated", 3, bool)):
+        for key, index, dtype in (
+            ("observation", 0, None),
+            ("reward", 1, np.float64),
+            ("terminated", 2, bool),
+            ("truncated", 3, bool),
+        ):
             values = np.stack([row[index] for row in rows])
             tasks[key] = values.astype(dtype) if dtype else values
         tasks["score"] = np.asarray([row[4]["score"] for row in rows], np.float64)
@@ -88,15 +122,17 @@ def renderer_info(ref):
     with ref.envs[0].env.physics.contexts.gl.make_current() as context:
         vendor = context.call(GL.glGetString, GL.GL_VENDOR).decode()
         renderer = context.call(GL.glGetString, GL.GL_RENDERER).decode()
-    return dict(vendor=vendor, renderer=renderer,
-                software=any(name in renderer.lower() for name in ("llvmpipe", "softpipe", "swrast")))
+    return dict(
+        vendor=vendor,
+        renderer=renderer,
+        software=any(name in renderer.lower() for name in ("llvmpipe", "softpipe", "swrast")),
+    )
 
 
 class DMCSourceShard(SourceShard):
     def __init__(self, *args, action_dim, **kwargs):
         super().__init__(*args, **kwargs)
-        self.action_space = gym.spaces.Box(-np.inf, np.inf,
-            (self.shard_size, self.horizon, action_dim), np.float64)
+        self.action_space = gym.spaces.Box(-np.inf, np.inf, (self.shard_size, self.horizon, action_dim), np.float64)
 
     def reset(self, *, seed=None, options=None):
         gym.Env.reset(self, seed=seed)
@@ -105,8 +141,7 @@ class DMCSourceShard(SourceShard):
             import_source(Path(self.source_root))
             self.ref = source(self.domain, self.shard_size)
         self.ref.reset(17 + self.start)
-        return {key: np.zeros(space.shape, dtype=space.dtype)
-                for key, space in self.observation_space.items()}, {}
+        return {key: np.zeros(space.shape, dtype=space.dtype) for key, space in self.observation_space.items()}, {}
 
     def step(self, action):
         return step_arrays(self.ref, action, self.frame_indices), 0.0, False, False, {}
@@ -127,18 +162,34 @@ class ParallelDMCSource(ParallelSource):
             sample = step_arrays(prototype, np.zeros((1, horizon, self.action_dim), np.float64), frame_indices)
             layout = {key: (value.shape[1:], value.dtype.str) for key, value in sample.items()}
             self.runtime_files = {}
-            for cls in (type(prototype.envs[0]), type(prototype.envs[0]).__bases__[0],
-                        type(prototype.envs[0].env._env), gym.vector.AsyncVectorEnv):
+            for cls in (
+                type(prototype.envs[0]),
+                type(prototype.envs[0]).__bases__[0],
+                type(prototype.envs[0].env._env),
+                gym.vector.AsyncVectorEnv,
+            ):
                 path = Path(inspect.getsourcefile(cls))
                 self.runtime_files[str(path)] = hashlib.sha256(path.read_bytes()).hexdigest()
         finally:
             prototype.close()
         size = batch // workers
-        factories = [functools.partial(DMCSourceShard, domain, str(source_root), size, i * size,
-                                       horizon, frame_indices, layout, action_dim=self.action_dim)
-                     for i in range(workers)]
-        self.vector = gym.vector.AsyncVectorEnv(factories, shared_memory=True, copy=True,
-                                               context="spawn", autoreset_mode=gym.vector.AutoresetMode.DISABLED)
+        factories = [
+            functools.partial(
+                DMCSourceShard,
+                domain,
+                str(source_root),
+                size,
+                i * size,
+                horizon,
+                frame_indices,
+                layout,
+                action_dim=self.action_dim,
+            )
+            for i in range(workers)
+        ]
+        self.vector = gym.vector.AsyncVectorEnv(
+            factories, shared_memory=True, copy=True, context="spawn", autoreset_mode=gym.vector.AutoresetMode.DISABLED
+        )
         try:
             self.vector.reset()
         except BaseException:
@@ -148,8 +199,10 @@ class ParallelDMCSource(ParallelSource):
     def step(self, actions, device):
         shaped = actions.reshape(self.workers, self.batch // self.workers, self.horizon, self.action_dim)
         observations, _, _, _, _ = self.vector.step(shaped)
-        return {key: torch.as_tensor(value.reshape(self.batch, *value.shape[2:]), device=device)
-                for key, value in observations.items()}
+        return {
+            key: torch.as_tensor(value.reshape(self.batch, *value.shape[2:]), device=device)
+            for key, value in observations.items()
+        }
 
     def renderer_info(self):
         return self.vector.call("renderer_info")

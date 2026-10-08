@@ -32,8 +32,11 @@ from tests.helpers.reference.native_classic_semantics import NativeClassicRefere
 
 def import_source(root):
     # Load the unchanged environment modules without unrelated policy/data deps.
-    for name, sub in (("stable_worldmodel", ""), ("stable_worldmodel.envs", "envs"),
-                      ("stable_worldmodel.envs.gymnasium_control", "envs/gymnasium_control")):
+    for name, sub in (
+        ("stable_worldmodel", ""),
+        ("stable_worldmodel.envs", "envs"),
+        ("stable_worldmodel.envs.gymnasium_control", "envs/gymnasium_control"),
+    ):
         package = types.ModuleType(name)
         package.__path__ = [str(root / "stable_worldmodel" / sub)]
         sys.modules[name] = package
@@ -54,18 +57,22 @@ def source_step(ref, actions, frame_indices, device):
     outputs, frames = [], []
     discrete = ref.domain in ("cartpole", "acrobot", "mountain_car")
     for t in range(actions.shape[1]):
-        rows = [env.step(actions[i, t, 0].item() if discrete else actions[i, t])
-                for i, env in enumerate(ref.envs)]
+        rows = [env.step(actions[i, t, 0].item() if discrete else actions[i, t]) for i, env in enumerate(ref.envs)]
         outputs.append(rows)
         if t in frame_indices:
             frames.append(np.stack([env.render() for env in ref.envs]))
     tasks = {}
-    for field, index, dtype in (("observation", 0, None), ("reward", 1, np.float64),
-                                ("terminated", 2, bool), ("truncated", 3, bool)):
+    for field, index, dtype in (
+        ("observation", 0, None),
+        ("reward", 1, np.float64),
+        ("terminated", 2, bool),
+        ("truncated", 3, bool),
+    ):
         values = np.stack([np.stack([r[index] for r in rows]) for rows in outputs], axis=1)
         tasks[field] = torch.as_tensor(values.astype(dtype) if dtype else values, device=device)
     tasks["info_state"] = torch.as_tensor(
-        np.stack([np.stack([r[4]["state"] for r in rows]) for rows in outputs], axis=1), device=device)
+        np.stack([np.stack([r[4]["state"] for r in rows]) for rows in outputs], axis=1), device=device
+    )
     if frames:
         tasks["frames"] = torch.as_tensor(np.stack(frames, axis=1), device=device)
     return tasks
@@ -102,25 +109,42 @@ def main():
         assert hashlib.sha256((args.source_root / rel).read_bytes()).hexdigest() == digest, rel
     import_source(args.source_root)
     torch.set_num_threads(1)
-    report = dict(status="RUNNING", domain=args.domain, name=NAMES[args.domain],
-                  host=platform.node(), job=os.environ.get("SLURM_JOB_ID"),
-                  affinity=sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
-                  gpu=torch.cuda.get_device_name() if "cuda" in args.devices else None,
-                  source_pin=PIN, source_files=manifest["files"], source_gpu_supported=False,
-                  source_render_device="cpu", source_execution="serial scalar CPU wrappers",
-                  source_active_simulation_workers=1,
-                  source_state_export_in_timing=False, candidate_state_history=False,
-                  candidate_mandatory_final_state=True,
-                  scope="direct serial upstream vs ordinary public adapter; matched output destination; no parallel-source superiority claim",
-                  versions={n: importlib.metadata.version(n) for n in ("torch", "numpy", "gymnasium", "pygame", "tensordict")},
-                  gates=[], timings=[], components=[], source_runtime_files={})
-    paths = [Path(__file__).relative_to(Path.cwd()), Path("stable_envs/envs/_classic_semantics.py"),
-             Path("stable_envs/envs/classic_control.py"), Path("stable_envs/_stepping.py"),
-             *Path("stable_envs/_adapters").glob("*classic*.py"),
-             Path("stable_envs/_adapters/acrobot_process.py"), Path("stable_envs/_adapters/process_requests.py"),
-             Path("benchmarks/online/classic_state_export.py"),
-             Path("benchmarks/online/common.py"),
-             Path("tests/helpers/reference/native_classic_semantics.py")]
+    report = dict(
+        status="RUNNING",
+        domain=args.domain,
+        name=NAMES[args.domain],
+        host=platform.node(),
+        job=os.environ.get("SLURM_JOB_ID"),
+        affinity=sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
+        gpu=torch.cuda.get_device_name() if "cuda" in args.devices else None,
+        source_pin=PIN,
+        source_files=manifest["files"],
+        source_gpu_supported=False,
+        source_render_device="cpu",
+        source_execution="serial scalar CPU wrappers",
+        source_active_simulation_workers=1,
+        source_state_export_in_timing=False,
+        candidate_state_history=False,
+        candidate_mandatory_final_state=True,
+        scope="direct serial upstream vs ordinary public adapter; matched output destination; no parallel-source superiority claim",
+        versions={n: importlib.metadata.version(n) for n in ("torch", "numpy", "gymnasium", "pygame", "tensordict")},
+        gates=[],
+        timings=[],
+        components=[],
+        source_runtime_files={},
+    )
+    paths = [
+        Path(__file__).relative_to(Path.cwd()),
+        Path("stable_envs/envs/_classic_semantics.py"),
+        Path("stable_envs/envs/classic_control.py"),
+        Path("stable_envs/_stepping.py"),
+        *Path("stable_envs/_adapters").glob("*classic*.py"),
+        Path("stable_envs/_adapters/acrobot_process.py"),
+        Path("stable_envs/_adapters/process_requests.py"),
+        Path("benchmarks/online/classic_state_export.py"),
+        Path("benchmarks/online/common.py"),
+        Path("tests/helpers/reference/native_classic_semantics.py"),
+    ]
     report["candidate_files"] = {str(f): hashlib.sha256(f.read_bytes()).hexdigest() for f in paths}
     args.output.parent.mkdir(parents=True, exist_ok=True)
 
@@ -158,9 +182,11 @@ def main():
                         for horizon in (1, 8):
                             a = actions[:, :horizon]
                             public_actions = a[:, 0] if horizon == 1 else a
-                            for selection, indices, frame_slice in (("none", (), None),
-                                    ("final", (horizon - 1,), slice(-1, None)),
-                                    ("all", tuple(range(horizon)), slice(None))):
+                            for selection, indices, frame_slice in (
+                                ("none", (), None),
+                                ("final", (horizon - 1,), slice(-1, None)),
+                                ("all", tuple(range(horizon)), slice(None)),
+                            ):
                                 ref.set_state(initial)
                                 env.set_state(initial.to(device))
                                 expected = source_step(ref, a, indices, device)
@@ -170,19 +196,40 @@ def main():
                                 for key in ("observation", "reward", "terminated", "truncated", "info_state"):
                                     value = actual[key].unsqueeze(1) if horizon == 1 else actual[key]
                                     torch.testing.assert_close(value, expected[key], rtol=0, atol=0)
-                                assert not bool(expected["terminated"][:, :-1].any() or expected["truncated"][:, :-1].any())
+                                assert not bool(
+                                    expected["terminated"][:, :-1].any() or expected["truncated"][:, :-1].any()
+                                )
                                 errors = image_errors(actual["frames"], expected["frames"]) if indices else []
-                                report["gates"].append(dict(device=device, batch=batch, horizon=horizon, selection=selection,
-                                    state_task="PASS", frames_checked=len(errors), mse_mean=statistics.mean(errors) if errors else None,
-                                    mse_sd=statistics.stdev(errors) if len(errors) > 1 else (0 if errors else None),
-                                    mse_max=max(errors) if errors else None,
-                                    mse_le_0_001=all(x <= .001 for x in errors) if errors else None))
+                                report["gates"].append(
+                                    dict(
+                                        device=device,
+                                        batch=batch,
+                                        horizon=horizon,
+                                        selection=selection,
+                                        state_task="PASS",
+                                        frames_checked=len(errors),
+                                        mse_mean=statistics.mean(errors) if errors else None,
+                                        mse_sd=statistics.stdev(errors)
+                                        if len(errors) > 1
+                                        else (0 if errors else None),
+                                        mse_max=max(errors) if errors else None,
+                                        mse_le_0_001=all(x <= 0.001 for x in errors) if errors else None,
+                                    )
+                                )
                                 del actual, expected
                                 samples = {"source_serial": [], "ours": []}
                                 for block in range(2):
-                                    for mode in (("source_serial", "ours") if block == 0 else ("ours", "source_serial")):
-                                        restore = (lambda: ref.set_state(initial)) if mode == "source_serial" else (lambda: env.set_state(initial.to(device)))
-                                        fn = (lambda: source_step(ref, a, indices, device)) if mode == "source_serial" else (lambda: env.step(public_actions, states=None, frames=frame_slice))
+                                    for mode in ("source_serial", "ours") if block == 0 else ("ours", "source_serial"):
+                                        restore = (
+                                            (lambda: ref.set_state(initial))
+                                            if mode == "source_serial"
+                                            else (lambda: env.set_state(initial.to(device)))
+                                        )
+                                        fn = (
+                                            (lambda: source_step(ref, a, indices, device))
+                                            if mode == "source_serial"
+                                            else (lambda: env.step(public_actions, states=None, frames=frame_slice))
+                                        )
                                         restore()
                                         fn()
                                         for _ in range(args.repeats):
@@ -191,17 +238,37 @@ def main():
                                             samples[mode].append(elapsed)
                                             del result
                                 for mode, seconds in samples.items():
-                                    report["timings"].append(dict(device=device, batch=batch, horizon=horizon,
-                                        selection=selection, mode=mode, **stats(seconds, batch * horizon),
-                                        frames=batch * len(indices), fps_mean=statistics.mean([batch * len(indices) / s for s in seconds]) if indices else None,
-                                        fps_sd=statistics.stdev([batch * len(indices) / s for s in seconds]) if indices else None,
-                                        candidate_processes=len(env._simulator.worker_info) if hasattr(env._simulator, "worker_info") else 0))
+                                    report["timings"].append(
+                                        dict(
+                                            device=device,
+                                            batch=batch,
+                                            horizon=horizon,
+                                            selection=selection,
+                                            mode=mode,
+                                            **stats(seconds, batch * horizon),
+                                            frames=batch * len(indices),
+                                            fps_mean=statistics.mean([batch * len(indices) / s for s in seconds])
+                                            if indices
+                                            else None,
+                                            fps_sd=statistics.stdev([batch * len(indices) / s for s in seconds])
+                                            if indices
+                                            else None,
+                                            candidate_processes=len(env._simulator.worker_info)
+                                            if hasattr(env._simulator, "worker_info")
+                                            else 0,
+                                        )
+                                    )
                                 save()
                         final = env.get_state()
                         ref.set_state(final.cpu())
-                        functions = (("ours_state_export", env.get_state),
-                                     ("ours_render_saved", lambda: env.render(final)),
-                                     ("source_render_saved", lambda: torch.as_tensor(np.stack([e.render() for e in ref.envs]), device=device)))
+                        functions = (
+                            ("ours_state_export", env.get_state),
+                            ("ours_render_saved", lambda: env.render(final)),
+                            (
+                                "source_render_saved",
+                                lambda: torch.as_tensor(np.stack([e.render() for e in ref.envs]), device=device),
+                            ),
+                        )
                         for operation, fn in functions:
                             fn()
                             samples = []
@@ -209,7 +276,9 @@ def main():
                                 elapsed, result = measure(fn, device)
                                 samples.append(elapsed)
                                 del result
-                            report["components"].append(dict(device=device, batch=batch, operation=operation, **stats(samples, batch)))
+                            report["components"].append(
+                                dict(device=device, batch=batch, operation=operation, **stats(samples, batch))
+                            )
                         save()
                         print(args.domain, device, batch, "PASS", flush=True)
                 finally:

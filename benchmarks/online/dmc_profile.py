@@ -63,14 +63,19 @@ def main():
         parser.error("Require positive batches and at least two repeats")
     torch.set_num_threads(1)
     report = dict(
-        status="RUNNING", domain=args.domain, host=platform.node(),
+        status="RUNNING",
+        domain=args.domain,
+        host=platform.node(),
         job=os.environ.get("SLURM_JOB_ID"),
         affinity=sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
         gpu=torch.cuda.get_device_name() if "cuda" in args.devices else None,
-        versions={name: importlib.metadata.version(name) for name in ("torch", "numpy", "dm-control", "mujoco", "tensordict")},
-        source_sha256={str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in [
-            *Path("stable_envs/_adapters").glob("dmcontrol*.py"), Path(__file__).relative_to(Path.cwd())
-        ]},
+        versions={
+            name: importlib.metadata.version(name) for name in ("torch", "numpy", "dm-control", "mujoco", "tensordict")
+        },
+        source_sha256={
+            str(p): hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in [*Path("stable_envs/_adapters").glob("dmcontrol*.py"), Path(__file__).relative_to(Path.cwd())]
+        },
         scope="adapter.step with complete State; diagnostic only, not public step or a source speedup",
         cells=[],
     )
@@ -88,13 +93,22 @@ def main():
                 construction = time.perf_counter() - start
                 try:
                     initial = adapter.get_state()
-                    actions = np.random.default_rng(21).uniform(-0.5, 0.5, (batch, adapter.envs[0].action_spec().shape[0]))
+                    actions = np.random.default_rng(21).uniform(
+                        -0.5, 0.5, (batch, adapter.envs[0].action_spec().shape[0])
+                    )
                     adapter.step(actions)
-                    cell = dict(batch=batch, device=device, construction_s=construction,
-                                state_bytes=sum(x.numel() * x.element_size() for x in initial.values(True, True)), timings={})
-                    for name, fn in (("step_with_state", lambda: adapter.step(actions)),
-                                     ("get_state", adapter.get_state),
-                                     ("set_state", lambda: adapter.set_state(initial))):
+                    cell = dict(
+                        batch=batch,
+                        device=device,
+                        construction_s=construction,
+                        state_bytes=sum(x.numel() * x.element_size() for x in initial.values(True, True)),
+                        timings={},
+                    )
+                    for name, fn in (
+                        ("step_with_state", lambda: adapter.step(actions)),
+                        ("get_state", adapter.get_state),
+                        ("set_state", lambda: adapter.set_state(initial)),
+                    ):
                         samples = []
                         for _ in range(args.repeats):
                             adapter.set_state(initial)
@@ -105,10 +119,13 @@ def main():
                             samples.append(time.perf_counter() - start)
                             del result
                         rates = [batch / seconds for seconds in samples]
-                        cell["timings"][name] = dict(seconds=samples, seconds_mean=statistics.mean(samples),
-                                                    seconds_sd=statistics.stdev(samples),
-                                                    lanes_per_s_mean=statistics.mean(rates),
-                                                    lanes_per_s_sd=statistics.stdev(rates))
+                        cell["timings"][name] = dict(
+                            seconds=samples,
+                            seconds_mean=statistics.mean(samples),
+                            seconds_sd=statistics.stdev(samples),
+                            lanes_per_s_mean=statistics.mean(rates),
+                            lanes_per_s_sd=statistics.stdev(rates),
+                        )
                     adapter.set_state(initial)
                     profile = cProfile.Profile()
                     profile.enable()
@@ -134,7 +151,9 @@ def main():
                     cell["boundary_truncated"] = first["truncated"].cpu().tolist()
                     report["cells"].append(cell)
                     save()
-                    print(args.domain, batch, device, cell["timings"]["step_with_state"]["lanes_per_s_mean"], flush=True)
+                    print(
+                        args.domain, batch, device, cell["timings"]["step_with_state"]["lanes_per_s_mean"], flush=True
+                    )
                 finally:
                     adapter.close()
         report["status"] = "PASS"

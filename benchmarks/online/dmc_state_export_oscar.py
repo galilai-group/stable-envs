@@ -13,7 +13,23 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--domain", required=True)
     p.add_argument("--reference-adapters", type=Path)
-    p.add_argument("--benchmark", choices=["dmc_state_export", "dmc_process_probe", "dmc_pipeline", "dmc_source_pipeline", "ogbench_state_export", "ogbench_maze_process", "ogbench_manipulation_process", "ogbench_render_defaults", "ogbench_source_frame_gate", "fetch_source_frame_gate", "fetch_source_pipeline"], default="dmc_state_export")
+    p.add_argument(
+        "--benchmark",
+        choices=[
+            "dmc_state_export",
+            "dmc_process_probe",
+            "dmc_pipeline",
+            "dmc_source_pipeline",
+            "ogbench_state_export",
+            "ogbench_maze_process",
+            "ogbench_manipulation_process",
+            "ogbench_render_defaults",
+            "ogbench_source_frame_gate",
+            "fetch_source_frame_gate",
+            "fetch_source_pipeline",
+        ],
+        default="dmc_state_export",
+    )
     p.add_argument("--source-root", type=Path)
     p.add_argument("--source-manifest", type=Path)
     p.add_argument("--image-gates", type=Path, help="Completed per-device Fetch image gate directory")
@@ -25,7 +41,10 @@ def main():
     args = p.parse_args()
     if args.benchmark == "dmc_state_export" and (args.reference_adapters is None or args.gates_only):
         p.error("Exporter comparison requires --reference-adapters and does not support --gates-only")
-    if args.production and (args.benchmark not in ("dmc_process_probe", "ogbench_maze_process", "ogbench_manipulation_process") or not args.gates_only):
+    if args.production and (
+        args.benchmark not in ("dmc_process_probe", "ogbench_maze_process", "ogbench_manipulation_process")
+        or not args.gates_only
+    ):
         p.error("Production route checks require a supported process probe with --gates-only")
     source_args = (args.source_root, args.source_manifest, args.source_mode)
     if args.benchmark in ("dmc_source_pipeline", "fetch_source_pipeline"):
@@ -51,15 +70,35 @@ def main():
         read_fd = None
         try:
             if device == "cpu":
-                env.update(MUJOCO_GL="glfw", PYOPENGL_PLATFORM="glx", LIBGL_ALWAYS_SOFTWARE="1", GALLIUM_DRIVER="llvmpipe", CUDA_VISIBLE_DEVICES="")
+                env.update(
+                    MUJOCO_GL="glfw",
+                    PYOPENGL_PLATFORM="glx",
+                    LIBGL_ALWAYS_SOFTWARE="1",
+                    GALLIUM_DRIVER="llvmpipe",
+                    CUDA_VISIBLE_DEVICES="",
+                )
                 read_fd, write_fd = os.pipe()
                 try:
                     with (args.output / "xvfb.log").open("w") as log:
                         # The GL proof closes its last client before public
                         # construction. A reset can invalidate the display and
                         # re-emit its number after the readiness pipe is closed.
-                        xvfb = subprocess.Popen(["Xvfb", "-displayfd", str(write_fd), "-noreset", "-screen", "0", "1024x768x24", "-nolisten", "tcp"],
-                                                pass_fds=(write_fd,), stdout=log, stderr=subprocess.STDOUT)
+                        xvfb = subprocess.Popen(
+                            [
+                                "Xvfb",
+                                "-displayfd",
+                                str(write_fd),
+                                "-noreset",
+                                "-screen",
+                                "0",
+                                "1024x768x24",
+                                "-nolisten",
+                                "tcp",
+                            ],
+                            pass_fds=(write_fd,),
+                            stdout=log,
+                            stderr=subprocess.STDOUT,
+                        )
                     os.close(write_fd)
                     write_fd = None
                     if not select.select([read_fd], [], [], 15)[0]:
@@ -75,12 +114,26 @@ def main():
                 env.update(MUJOCO_GL="egl", PYOPENGL_PLATFORM="egl")
                 for name in ("LIBGL_ALWAYS_SOFTWARE", "GALLIUM_DRIVER"):
                     env.pop(name, None)
-            command = [sys.executable, f"benchmarks/online/{args.benchmark}.py",
-                       "--domain", args.domain,
-                       "--devices", device, "--verify-gl", "--output", str(args.output / f"{device}.json")]
+            command = [
+                sys.executable,
+                f"benchmarks/online/{args.benchmark}.py",
+                "--domain",
+                args.domain,
+                "--devices",
+                device,
+                "--verify-gl",
+                "--output",
+                str(args.output / f"{device}.json"),
+            ]
             if args.benchmark in ("dmc_source_pipeline", "fetch_source_pipeline"):
-                command += ["--source-root", str(args.source_root), "--source-manifest", str(args.source_manifest),
-                            "--mode", args.source_mode]
+                command += [
+                    "--source-root",
+                    str(args.source_root),
+                    "--source-manifest",
+                    str(args.source_manifest),
+                    "--mode",
+                    args.source_mode,
+                ]
             if args.benchmark in ("ogbench_source_frame_gate", "fetch_source_frame_gate"):
                 command += ["--source-root", str(args.source_root), "--source-manifest", str(args.source_manifest)]
             if args.image_gates is not None:

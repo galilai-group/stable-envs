@@ -25,9 +25,12 @@ NAMES = {"two_room": "TwoRoom", "piecewise": "Piecewise", "simple_point_maze": "
 
 def import_source(root):
     # Skip unrelated package initializers, without modifying the environment code.
-    for name, sub in (("stable_worldmodel", ""), ("stable_worldmodel.envs", "envs"),
-                      ("stable_worldmodel.envs.two_room", "envs/two_room"),
-                      ("stable_worldmodel.envs.piecewise", "envs/piecewise")):
+    for name, sub in (
+        ("stable_worldmodel", ""),
+        ("stable_worldmodel.envs", "envs"),
+        ("stable_worldmodel.envs.two_room", "envs/two_room"),
+        ("stable_worldmodel.envs.piecewise", "envs/piecewise"),
+    ):
         if name not in sys.modules:
             package = types.ModuleType(name)
             package.__path__ = [str(root / "stable_worldmodel" / sub)]
@@ -50,18 +53,24 @@ def step_arrays(ref, actions, frame_indices):
     cached_frames = [None] * ref.num_envs
     for t in range(actions.shape[1]):
         validity.append(active.copy())
-        rows = [env.step(actions[i, t]) if active[i] else previous[i]
-                for i, env in enumerate(ref.envs)]
+        rows = [env.step(actions[i, t]) if active[i] else previous[i] for i, env in enumerate(ref.envs)]
         previous = rows
         for i in np.flatnonzero(active):
             cached_frames[i] = None
         tasks = {}
-        for field, index, dtype in (("observation", 0, None), ("reward", 1, np.float64),
-                                    ("terminated", 2, bool), ("truncated", 3, bool)):
+        for field, index, dtype in (
+            ("observation", 0, None),
+            ("reward", 1, np.float64),
+            ("terminated", 2, bool),
+            ("truncated", 3, bool),
+        ):
             values = np.stack([r[index] for r in rows])
             tasks[field] = values.astype(dtype) if dtype else values
-        keys = ("goal",) if ref.domain == "simple_point_maze" else (
-            "proprio", "state", "goal_state", "distance_to_target")
+        keys = (
+            ("goal",)
+            if ref.domain == "simple_point_maze"
+            else ("proprio", "state", "goal_state", "distance_to_target")
+        )
         for key in keys:
             tasks[f"info.{key}"] = np.stack([r[4][key] for r in rows])
         done = tasks["terminated"] | tasks["truncated"]
@@ -122,10 +131,15 @@ class ParallelNavigationSource(ParallelSource):
         finally:
             prototype.close()
         size = batch // workers
-        factories = [functools.partial(NavigationShard, domain, str(source_root), size, i * size,
-                                       horizon, frame_indices, layout) for i in range(workers)]
-        self.vector = gym.vector.AsyncVectorEnv(factories, shared_memory=True, copy=True,
-                                               context="spawn", autoreset_mode=gym.vector.AutoresetMode.DISABLED)
+        factories = [
+            functools.partial(
+                NavigationShard, domain, str(source_root), size, i * size, horizon, frame_indices, layout
+            )
+            for i in range(workers)
+        ]
+        self.vector = gym.vector.AsyncVectorEnv(
+            factories, shared_memory=True, copy=True, context="spawn", autoreset_mode=gym.vector.AutoresetMode.DISABLED
+        )
         try:
             self.vector.reset()
         except BaseException:
@@ -135,5 +149,7 @@ class ParallelNavigationSource(ParallelSource):
     def step(self, actions, device):
         shaped = actions.reshape(self.workers, self.batch // self.workers, self.horizon, 2)
         observations, _, _, _, _ = self.vector.step(shaped)
-        return {key: torch.as_tensor(value.reshape(self.batch, *value.shape[2:]), device=device)
-                for key, value in observations.items()}
+        return {
+            key: torch.as_tensor(value.reshape(self.batch, *value.shape[2:]), device=device)
+            for key, value in observations.items()
+        }
