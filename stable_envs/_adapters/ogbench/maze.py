@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .. import SimulatorAdapter
 from ..state_columns import owned_columns
 
 OGB_MAZE_FIELDS = {
@@ -47,7 +48,7 @@ def _make_point_large_maze():
     )
 
 
-class OGBMazeAdapter:
+class OGBMazeAdapter(SimulatorAdapter):
     """Independent CPU point/large-maze simulators with owned State snapshots.
 
     ``device`` selects output placement. Each lane owns both its environment PCG64

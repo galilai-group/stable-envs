@@ -159,7 +159,8 @@ active source stepping benchmarks to `benchmarks/online/`. This merge preserves
 those deletions and updates the maintained modules to the new adapter paths.
 The advisor rerun uses the archived harness at `5ca9ce0e` (PushT updates at
 `ed6a5bf9`); it does not reinstall the retired script tree into the package.
-All production adapter files remain byte-identical to the GPU-tested `1faa9671`.
+At integration commit `31ba5309`, all production adapter files were byte-identical
+to the GPU-tested `1faa9671`.
 
 Post-merge checks: 295 import/registry/routing/package tests passed, two optional
 profile/dependency skips; 47 Fetch/DMC source-helper checks and 89 benchmark/OGBench
@@ -190,3 +191,14 @@ comparisons with a GPU source renderer. CPU-only source fallbacks are separate.
 These counts describe this run, not statistical significance or new support.
 The archive preserves every attempt, raw timings, seals, launchers and exporter;
 CSV evidence paths resolve inside its `adapter-campaign/advisor-table/` directory.
+
+## Explicit interface inheritance
+
+All 17 concrete adapters inherit `SimulatorAdapter`; Fetch's process adapter
+inherits it through `FetchAdapter`. Required lifecycle methods are abstract so
+missing implementations prevent construction. Concrete method bodies and worker
+execution are unchanged. Static assignments also include PushT, Rocket and Craftax.
+
+Validation: mypy and Ruff pass; 414 focused CPU tests pass, with 31 local skips.
+All 17 classes resolve concrete lifecycle implementations. This declaration-only
+change does not rerun or replace the recorded GPU/performance measurements.

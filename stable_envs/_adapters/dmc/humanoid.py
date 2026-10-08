@@ -7,6 +7,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .. import SimulatorAdapter
 from .state import export_state
 
 HUMANOID_CONFIG = {
@@ -95,7 +96,7 @@ def _numeric_info(env, cumulative):
     }
 
 
-class DMCHumanoidAdapter:
+class DMCHumanoidAdapter(SimulatorAdapter):
     """Independent CPU Humanoid Walk simulators.
 
     Each action advances the source twice; ``device`` selects output placement.

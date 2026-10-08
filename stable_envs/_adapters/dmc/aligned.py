@@ -7,6 +7,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .. import SimulatorAdapter
 from .state import export_state
 
 CONFIG = {
@@ -153,7 +154,7 @@ def _numeric_info(domain, env, cumulative):
     return info, success, float(cumulative / 1000.0)
 
 
-class DMCAlignedAdapter:
+class DMCAlignedAdapter(SimulatorAdapter):
     """CPU adapters for BallInCup, Finger, Manipulator and Quadruped.
 
     Each action advances its source twice; ``device`` selects output placement.

@@ -8,6 +8,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .. import SimulatorAdapter
 from ..process_requests import ProcessRequests
 from ..shared_memory import allocate_buffers, buffer_views, owned_group
 from .local import ClassicControlAdapter, _from_limbs, validate_classic_state
@@ -87,7 +88,7 @@ def _worker(conn, start, count, batch, seed, cpus, buffers, specs):
             conn.close()
 
 
-class AcrobotProcessAdapter(ProcessRequests):
+class AcrobotProcessAdapter(ProcessRequests, SimulatorAdapter):
     """Run Acrobot CPU simulators in spawned processes with shared State/task columns.
 
     The parent validates all lanes before dispatch and returns owned output copies.

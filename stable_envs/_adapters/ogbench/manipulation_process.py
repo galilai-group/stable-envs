@@ -8,6 +8,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .. import SimulatorAdapter
 from ..process_requests import ProcessRequests
 from ..shared_memory import allocate_buffers, buffer_views, owned_group
 from .manipulation import OGBManipulationAdapter
@@ -99,7 +100,7 @@ def _worker(conn, family, start, count, batch, seed, reward_task_id, cpus, buffe
             conn.close()
 
 
-class OGBManipulationProcessAdapter(ProcessRequests):
+class OGBManipulationProcessAdapter(ProcessRequests, SimulatorAdapter):
     """Run Cube/Scene worlds in spawned processes with staged checkpoint restore.
 
     The parent retains one metadata instance for validation and configuration.

@@ -8,6 +8,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .. import SimulatorAdapter
 from ..state_columns import owned_columns
 from .compatibility import CUBE_SAMPLES, MODEL_VALUES, CompatibleCube, CompatibleScene, nodes
 
@@ -99,7 +100,7 @@ def task_payload(env, values):
     return result
 
 
-class OGBManipulationAdapter:
+class OGBManipulationAdapter(SimulatorAdapter):
     """CPU Cube/Scene simulators with versioned, fully restorable checkpoints.
 
     State includes integration fields, controller caches, task data and RNG trees.

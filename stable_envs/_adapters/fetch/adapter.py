@@ -7,6 +7,8 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .. import SimulatorAdapter
+
 FIELDS = {
     "qpos": (22, torch.float64),
     "qvel": (21, torch.float64),
@@ -38,7 +40,7 @@ def state_fields(nq, nv):
     return fields
 
 
-class FetchAdapter:
+class FetchAdapter(SimulatorAdapter):
     """CPU Fetch simulators with a 50-step time limit and optional lane threads.
 
     ``device`` selects returned tensor placement. State preserves controller caches

@@ -14,6 +14,8 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from . import SimulatorAdapter
+
 PROFILE = {
     "craftax": "1.5.0",
     "jax": "0.10.1",
@@ -104,7 +106,7 @@ def kernel(classic, pixels, platform):
     return upstream, reset_fn, step_fn, output_fn, terminal_fn, template
 
 
-class CraftaxAdapter:
+class CraftaxAdapter(SimulatorAdapter):
     def __init__(self, classic, pixels, batch, device, seed):
         import jax
 

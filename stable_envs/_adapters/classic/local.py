@@ -9,6 +9,8 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .. import SimulatorAdapter
+
 _NUMPY_DTYPES = {torch.float64: np.float64, torch.int64: np.int64, torch.bool: np.bool_}
 
 _RNG_FIELDS = {
@@ -160,7 +162,7 @@ def validate_classic_state(domain: str, state, *, batch: int | None = None) -> N
             raise ValueError(f"State field {key!r} contains non-finite values")
 
 
-class ClassicControlAdapter:
+class ClassicControlAdapter(SimulatorAdapter):
     """B independent pinned Gymnasium simulators, with no rendering responsibility."""
 
     def __init__(self, domain: str, num_envs: int, device="cpu", seed: int = 0):

@@ -8,6 +8,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .. import SimulatorAdapter
 from ..process_requests import ProcessRequests
 from ..shared_memory import allocate_buffers, buffer_views, owned_group
 from .maze import OGBMazeAdapter
@@ -98,7 +99,7 @@ def _worker(conn, start, count, batch, seed, cpus, buffers, specs):
             conn.close()
 
 
-class OGBMazeProcessAdapter(ProcessRequests):
+class OGBMazeProcessAdapter(ProcessRequests, SimulatorAdapter):
     """Run OGBench Maze simulators and isolated RNGs in spawned processes.
 
     State and task outputs use typed shared buffers and are copied on receipt.

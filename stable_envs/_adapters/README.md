@@ -1,8 +1,10 @@
 # Simulator adapters
 
 `SimulatorAdapter` in `__init__.py` describes reset, one transition per lane,
-get/set State and close. Implementations satisfy this protocol without a common
-base class. `Env` owns action sequences, capture slices and rendering.
+get/set State and close. Concrete adapters inherit this protocol; its abstract
+methods require implementations. Process adapters can inherit implementations
+from their local adapter or transport mixin. `Env` owns action sequences,
+capture slices and rendering.
 
 | Location | Ownership |
 |---|---|

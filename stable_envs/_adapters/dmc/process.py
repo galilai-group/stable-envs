@@ -8,6 +8,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .. import SimulatorAdapter
 from ..process_requests import ProcessRequests
 from ..shared_memory import allocate_buffers, buffer_views, owned_group
 from .factory import make_local
@@ -85,7 +86,7 @@ def _worker(conn, domain, start, count, batch, seed, cpus, buffers, specs):
             conn.close()
 
 
-class DMCProcessAdapter(ProcessRequests):
+class DMCProcessAdapter(ProcessRequests, SimulatorAdapter):
     """Run DMC adapters in persistent spawned processes with typed shared outputs.
 
     Copy State and task tensors into parent-owned storage after each completed

@@ -4,10 +4,11 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .. import SimulatorAdapter
 from .replay import HISTORY_KEYS, PushTReplay, validate_seed
 
 
-class PushTReplayAdapter:
+class PushTReplayAdapter(SimulatorAdapter):
     """Batch CPU PushT owners with CPU/CUDA State storage.
 
     Stage every lane before installing a reset or restored State. Export pads

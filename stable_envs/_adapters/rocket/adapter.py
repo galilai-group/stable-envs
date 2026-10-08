@@ -6,11 +6,12 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .. import SimulatorAdapter
 from .actions import validate_action
 from .replay import RocketReplay, generator_state, install_generator
 
 
-class RocketAdapter:
+class RocketAdapter(SimulatorAdapter):
     """Batch CPU Rocket owners with CPU/CUDA State storage.
 
     Validate every action before stepping any lane. Stage reset and restoration

@@ -7,6 +7,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .. import SimulatorAdapter
 from .state import export_state
 
 # These fields restore simulation; compact renderer columns cannot.
@@ -93,7 +94,7 @@ def _make_first_family(domain, seed):
     return action_scale.Wrapper(env, minimum=-1.0, maximum=1.0)
 
 
-class FirstFamilyAdapter:
+class FirstFamilyAdapter(SimulatorAdapter):
     """Independent CPU simulators with two source steps per action.
 
     ``device`` controls returned tensor placement. State includes lifecycle and
@@ -234,7 +235,7 @@ def _make_reacher(seed, arm_density=1000.0, finger_density=1000.0):
     return action_scale.Wrapper(control.Environment(physics, task, time_limit=20), minimum=-1.0, maximum=1.0)
 
 
-class ReacherAdapter:
+class ReacherAdapter(SimulatorAdapter):
     """Independent CPU Reacher simulators; ``device`` selects output placement.
 
     Each action advances the source twice. State includes target, lifecycle and RNG."""

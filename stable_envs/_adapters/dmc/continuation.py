@@ -7,6 +7,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .. import SimulatorAdapter
 from .state import export_state
 
 CONFIG = {
@@ -143,7 +144,7 @@ def _numeric_info(domain, env, cumulative):
     return {**common, **{key: np.asarray(value, np.float64) for key, value in extra.items()}}
 
 
-class DMCContinuationAdapter:
+class DMCContinuationAdapter(SimulatorAdapter):
     """Independent CPU Cheetah, Hopper or Walker simulators.
 
     Each action advances the source twice; ``device`` selects output placement.
