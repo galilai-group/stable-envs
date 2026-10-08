@@ -47,9 +47,9 @@ if not torch.cuda.is_available():
 from _shared import assert_frames_identical, family_params, make_or_skip, resolve_family, sampled_states
 
 import stable_envs as se
-from stable_envs.render import _raycast_reference as reference
 from stable_envs.render import raster2d as R2
 from stable_envs.render import raycast3d as R3
+from tests.helpers import raycast_reference as reference
 
 #: Env-module names that legitimately explain an empty family. Used by ``resolve_family`` to tell
 #: "this interpreter cannot import dm_control" (a skip) from "the sweep selected nothing" (a failure).
@@ -102,7 +102,7 @@ def _raster_size(env):
 
 def _classic_enabled() -> bool:
     try:
-        from stable_envs.render import gfxdraw_classic as FC
+        from stable_envs.render.gfxdraw import classic as FC
     except ImportError:
         return False
     return bool(FC.HAVE_TRITON)
@@ -431,8 +431,8 @@ CASES: tuple[FastPath, ...] = (
     FastPath(
         id="gfxdraw-classic-fused-vs-per-primitive",
         why=(
-            "``render/gfxdraw.py``'s per-primitive path is the executable specification of six "
-            "measured SDL_gfx rules, and ``render/gfxdraw_classic.py`` is a rewrite of the same "
+            "``render/gfxdraw/__init__.py``'s per-primitive path is the executable specification of six "
+            "measured SDL_gfx rules, and ``render/gfxdraw/classic.py`` is a rewrite of the same "
             "rules into one closed form per pixel. The rewrite is admissible only while the two "
             "agree to the bit, and the places they can stop agreeing are specific: the order two "
             "edges of a polygon write a shared vertex (a scatter reads every destination before "

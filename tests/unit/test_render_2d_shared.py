@@ -13,10 +13,10 @@ import pytest
 import torch
 
 from stable_envs.render import gfxdraw as G
-from stable_envs.render import gfxdraw_classic as GC
-from stable_envs.render import gfxdraw_fused as GF
 from stable_envs.render import navdot as NV
 from stable_envs.render import raster2d as R2
+from stable_envs.render.gfxdraw import classic as GC
+from stable_envs.render.gfxdraw import fused as GF
 
 pytestmark = pytest.mark.unit
 

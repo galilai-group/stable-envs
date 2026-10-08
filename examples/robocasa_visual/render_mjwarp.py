@@ -48,7 +48,7 @@ def load_mjwarp_helpers():
     gymnasium and torch-side env dependencies this venv deliberately does not have. The module itself
     has no package-internal imports, so loading the file is exact rather than a copy that can drift.
     """
-    spec = importlib.util.spec_from_file_location("se_mjwarp", os.path.join(REPO, "stable_envs/render/mjwarp.py"))
+    spec = importlib.util.spec_from_file_location("se_mjwarp", os.path.join(REPO, "stable_envs/render/mjwarp/__init__.py"))
     mod = importlib.util.module_from_spec(spec)
     sys.modules["se_mjwarp"] = mod  # @dataclass resolves annotations via sys.modules
     spec.loader.exec_module(mod)

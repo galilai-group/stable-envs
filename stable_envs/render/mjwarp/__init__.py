@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from . import _resources
+from .. import _resources
 
 os.environ.setdefault("WARP_CACHE_PATH", os.path.expanduser("~/.cache/warp"))
 

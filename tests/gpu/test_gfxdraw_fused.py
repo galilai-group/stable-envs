@@ -55,7 +55,7 @@ H, W = 256, 640
 
 def _tables(verts, colours, nvs, n_gfx):
     """``(vert, meta, edge)`` for ``render_surface`` from ``(B,P,V,2)`` float64 screen vertices."""
-    from stable_envs.render import gfxdraw_fused as F
+    from stable_envs.render.gfxdraw import fused as F
 
     B, P, V, _ = verts.shape
     vert = torch.trunc(verts).to(torch.int32)
@@ -119,7 +119,7 @@ def _random_polys(rng, B, P, dev, radius=40.0):
 
 @pytest.mark.parametrize("seed", [0, 1, 2])
 def test_matches_per_primitive_path(seed):
-    from stable_envs.render import gfxdraw_fused as F
+    from stable_envs.render.gfxdraw import fused as F
 
     dev = "cuda"
     rng = np.random.default_rng(seed)
@@ -149,7 +149,7 @@ def test_exact_integer_crossing_is_not_rounded_away():
     pinned by the quad that produced it rather than left to a random search.
     """
     _draw_poly_mask = _poly_mask()
-    from stable_envs.render import gfxdraw_fused as F
+    from stable_envs.render.gfxdraw import fused as F
 
     dev = "cuda"
     quad = torch.tensor(

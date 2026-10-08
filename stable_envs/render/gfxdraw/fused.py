@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import torch
 
-from . import gfxdraw as G
+from .. import gfxdraw as G
 
 try:
     import triton

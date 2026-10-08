@@ -2,7 +2,7 @@ import pytest
 import torch
 
 from stable_envs.render import raycast3d as R3
-from stable_envs.render._raycast_reference import composite_window
+from tests.helpers.raycast_reference import composite_window
 from tests.unit.test_raycast3d_composite_compact import _scene, _split
 from tests.unit.test_raycast3d_primitive_bounds import _rand_scene
 

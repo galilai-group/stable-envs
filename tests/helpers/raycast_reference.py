@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import torch
 
-from . import raycast3d as R3
+from stable_envs.render import raycast3d as R3
 
 
 @torch.no_grad()

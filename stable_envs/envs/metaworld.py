@@ -603,7 +603,7 @@ def _context(task: str, res: int, nworld: int) -> _Ctx:
         c.wd = mjw.put_data(m, d0, nworld=int(nworld))
         # Capture inside gl_rounding; patching only warmup leaves a truncating replay kernel.
         # Keep light specialization disabled here because it can change rounding.
-        from ..render import mjwarp_lightspec as LS
+        from ..render.mjwarp import lightspec as LS
 
         with MW.gl_rounding(), LS.specialised_lights(enabled=False):
             c.rc = MW.create_render_context(

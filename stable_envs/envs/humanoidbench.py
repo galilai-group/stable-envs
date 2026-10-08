@@ -268,7 +268,7 @@ def _context(robot: str, task: str, res: int, nworld: int) -> _Ctx:
     c.wd = mjw.put_data(m, d0, nworld=int(nworld))
     # Keep truncating output for the flat-floor approximation; GL rounding increases its bias.
     # Capture inside specialised_lights so replay uses the specialized kernel.
-    from ..render import mjwarp_lightspec as LS
+    from ..render.mjwarp import lightspec as LS
 
     with LS.specialised_lights():
         c.rc = MW.create_render_context(
