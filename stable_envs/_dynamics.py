@@ -7,6 +7,6 @@ def has_dynamics(env):
 
 def no_dynamics(env, what):
     raise NotImplementedError(
-        f"{type(env).__name__}.{what}: full simulator semantics are not implemented for this cell. "
-        "See docs/research/semantic_recovery_matrix.json. Compact renderer rows cannot substitute for State."
+        f"{type(env).__name__}.{what}: full simulator semantics are not implemented for this cell; "
+        "it renders supplied states only. Compact renderer rows cannot substitute for State."
     )

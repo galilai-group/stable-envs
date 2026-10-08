@@ -25,7 +25,7 @@ ONLINE = {
 
 
 def inventory():
-    matrix = json.loads((ROOT / "docs/research/semantic_recovery_matrix.json").read_text())
+    matrix = json.loads((ROOT / "tests/fixtures/semantic_recovery_matrix.json").read_text())
     profiles = {case.registration: profile for profile, cases in PROFILES.items() for case in cases}
     rows = []
     for row in matrix["rows"]:
