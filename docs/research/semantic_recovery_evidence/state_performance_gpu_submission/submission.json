@@ -1,7 +1,0 @@
-{
-  "job": 6693308,
-  "remote": "/oscar/scratch/sboughan/se-semantic-recovery/state-bench-gpu-8d153702",
-  "state_at_first_check": "PENDING",
-  "reason": "QOSGrpGRES",
-  "duplicate_submitted": false
-}

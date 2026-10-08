@@ -1,9 +1,0 @@
-{
-  "status": "PASS",
-  "comparisons_recomputed": 1728,
-  "frames": 432,
-  "registrations": 12,
-  "unchanged_default_frames": 333,
-  "cpu_reset_batch_checks": 351,
-  "images": 165
-}

@@ -1,8 +1,0 @@
-{
-  "updated_unix": 1790701240.7948768,
-  "statuses": {
-    "baseline": "COMPLETE",
-    "candidate": "COMPLETE"
-  },
-  "gate": "PASS: same allocation/States, exact baseline output, unchanged State; inspect speedups separately"
-}

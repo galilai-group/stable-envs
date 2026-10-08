@@ -1,8 +1,0 @@
-{
- "noise_arrays": [
-  "dof_damping",
-  "geom_rgba",
-  "mat_rgba",
-  "site_pos"
- ]
-}

@@ -130,5 +130,3 @@ omitting `variation=` at render time reproduces the same picture.
 
 - [State, Variation, Frame](state.md) — public State vs compact render state
 - [API: spaces](../api/spaces.md) — the `variation_space` tree
-- Contributor note: [variation collapses](../research/variation_collapses.md) — why
-  per-environment appearance is measured, not assumed

@@ -1,8 +1,0 @@
-{
-  "joint_type": 2,
-  "enum_int": 2,
-  "numpy_left_equality": true,
-  "enum_left_equality": false,
-  "tuple_membership": false,
-  "integer_tuple_membership": true
-}

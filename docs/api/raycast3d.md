@@ -45,9 +45,7 @@ restoration, and render-state preparation.
 
 These are archived results, not a fresh benchmark of this cleanup. Sixteen
 independent states were repeated into batches; each timing used three warmed
-samples. They do not establish speed or fidelity for other configurations.
-[Raw measurements and per-batch timing deviations](../research/semantic_recovery_evidence/dmc_cpu_bounds_components_20260929/collection_status.json)
-retain the source versions and evidence paths. See the
+samples. They do not establish speed or fidelity for other configurations. See the
 [fidelity methodology](../concepts/fidelity-methodology.md) for source comparison
 and [testing guide](../testing.md) for contributor checks.
 

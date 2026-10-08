@@ -89,9 +89,6 @@ CUDA_HOME=... CPATH=... TORCH_CUDA_ARCH_LIST=... \
   "git+https://github.com/NVlabs/nvdiffrast.git@v0.4.0"
 ```
 
-The measured source install, including the header-path failure mode, is in
-[nvdiffrast](research/nvdiffrast.md#1-install).
-
 ## Device honesty
 
 Device support depends on the family and backend. Cube, Scene and Fetch have

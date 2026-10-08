@@ -21,7 +21,7 @@ if os.environ.get("STABLE_ENVS_HUMANOIDBENCH", "") != "1":  # pragma: no cover
         "by default: mujoco_warp's batched render is not bit-reproducible inside a long conformance "
         "session, so 2-3 of ~660 tests fail every run on test_determinism and "
         "test_frame_i_is_independent_of_batch_size, by 1-2/255, on a different cell each time. Set "
-        "STABLE_ENVS_HUMANOIDBENCH=1 to register it anyway. See docs/research/humanoidbench.md"
+        "STABLE_ENVS_HUMANOIDBENCH=1 to register it anyway."
     )
 
 _VENV = "/mnt/vast/home/randall.balestriero/venvs/se-hb"
@@ -35,8 +35,7 @@ if _missing or _mjver < (3, 11):  # pragma: no cover
         + f"mujoco is {_mj.__version__} and mujoco_warp requires >= 3.11. Note that humanoid_bench "
         f"itself pins mujoco == 3.1.6 and gymnasium == 0.29.1, so it must be installed with "
         f"`pip install --no-deps -e .` beside a newer mujoco; `pip install stable-envs[humanoidbench]`"
-        f" pulls the renderer half. The envs were measured in {_VENV}. See "
-        f"docs/research/humanoidbench.md"
+        f" pulls the renderer half. The envs were measured in {_VENV}."
     )
 
 from ..env import Env

@@ -1,8 +1,0 @@
-[
-  "906bf85f6f6ea1341622eacf9d7674acfb4c507c docs: clarify reset entropy guarantees and seal Rocket starting checkpoint",
-  "3e24542c4453e5682d12481d6a458144e049d60f research: preserve Rocket source renderer preflight and pending handoff",
-  "b61cb7b42bc2dbfc4f9ba4980dcd0d1e55f869b3 research: verify Rocket source reset entropy and goal reconstruction boundary",
-  "6a95e2825692884b919e4ab61098838f474aba03 rocket: preserve source-derived private task candidate without public registration",
-  "70a99be9f249a9a9048e026a600da94f39aa9476 rocket: preserve exact rejected-control counterexample to bounded replay",
-  "4c57219ad1a097286e519accb6a0a5a795adf1f0 rocket: record passing Oscar renderer preflight and repaired checkpoint preservation"
-]

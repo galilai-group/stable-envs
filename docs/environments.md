@@ -33,8 +33,6 @@ env = snv.CartPole(num_envs=8)
 
 `reference_id` is provenance of the official simulator or renderer a cell is measured against (`gym_pusht/PushT-v0`, `dm_control/reacher-hard`, …). It is not a `make()` alias.
 
-Per-id certification measurements live in the [research archive](research/index.md).
-
 ## Families are declared, not derived
 
 `list_envs(family=…)` matches the class attribute `family`, which does not change if a file moves.

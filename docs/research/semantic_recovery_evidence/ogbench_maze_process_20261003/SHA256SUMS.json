@@ -1,9 +1,0 @@
-{
-  "README.md": "d5d7e29f6c28122fdcca8b4be6559c8b13ce9d555f23d8db72fe04ac61f20c0b",
-  "local/pytest-sparse-integration.xml": "bf6ffd93cd8cae0beee02864cde5f768ada520cfed72aef1d5750544f00ab619",
-  "local/pytest.xml": "e75a6ed26ed9c20ef164e24effa52fa1d521601acf2de231df102acfac1f7566",
-  "oscar/run.sh": "07023b9b15c1d68c171f6dd5f006953be3b11135eb96adb310dba6e5e858bd66",
-  "oscar/source_manifest.json": "3de73e5944460bfa91e194597ff32137204a3a66358c81f23a2f91e3a0aea1c6",
-  "oscar/source_overrides.json": "c87d1df19f9f91c69aabf80e3836fd989fb875da9c2f3eca037c9f784532e616",
-  "slurm-snapshot.txt": "33424b47845695f02630de20e23c242b64cd09d5a2dc23825328a69e3f115b26"
-}

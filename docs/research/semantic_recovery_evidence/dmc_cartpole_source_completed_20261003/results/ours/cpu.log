@@ -1,6 +1,0 @@
-cartpole cpu ours 64 1 none PASS
-cartpole cpu ours 64 1 final PASS
-cartpole cpu ours 64 1 all PASS
-cartpole cpu ours 64 8 none PASS
-cartpole cpu ours 64 8 final PASS
-cartpole cpu ours 64 8 all PASS

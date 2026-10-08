@@ -37,7 +37,7 @@ adapted from the same pinned project and authors. Their sources are
 `stable_worldmodel/envs/pusht/env.py`, `env_discrete.py`,
 `stable_worldmodel/spaces.py`, `stable_worldmodel/envs/utils.py`, and
 `stable_worldmodel/envs/quantizer.py`. Source hashes are recorded in the module
-headers and `docs/research/semantic_recovery_evidence/noncraftax_completion_20261003/pusht_task_sources.json`.
+headers.
 The adaptation replaces package imports with private local imports, combines
 the continuous/discrete task definitions, and omits the unused source
 MultiDiscrete Variation class. Pymunk/Munk2D remains an external dependency;

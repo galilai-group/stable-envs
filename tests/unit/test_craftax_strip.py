@@ -178,7 +178,7 @@ def test_the_two_unwritten_cells_stay_black_whatever_the_state(env, states, t):
 def test_the_strip_is_not_lit_and_not_desaturated(env, states, t):
     """The reference concatenates the strip AFTER the lighting chain, so sleep cannot touch it.
 
-    Crafter's port found this by failing (`docs/research/crafter.md`); here it is asserted.
+    Crafter's port found this by failing (`pre-repository-cleanup:docs/research/crafter.md`); here it is asserted.
     """
     w = OBS_H * t
     awake = env._render(_set(states, is_sleeping=0.0), size=t).numpy()
@@ -471,7 +471,7 @@ def test_the_declared_resolution_applicability_matches_measurement(env, states):
 
     ``check_resolution_consistency`` is declared applicable at ``light_level >= 0.5`` and not below,
     because the OFFICIAL renderer is itself inconsistent below it (the oracle experiment in
-    ``tests/fixtures/regression/join/step7/craftax-classic-full/oracle/``). What can be asserted without jax is
+    ``pre-repository-cleanup:tests/fixtures/regression/join/step7/craftax-classic-full/oracle/``). What can be asserted without jax is
     our side of it: that we meet the frozen bound where the declaration says we do, and do not where
     it says the check does not apply.
     """

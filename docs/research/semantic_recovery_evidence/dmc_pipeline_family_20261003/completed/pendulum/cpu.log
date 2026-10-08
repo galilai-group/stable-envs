@@ -1,6 +1,0 @@
-pendulum cpu 64 1 PASS
-pendulum cpu 64 8 PASS
-pendulum cpu 256 1 PASS
-pendulum cpu 256 8 PASS
-pendulum cpu 1024 1 PASS
-pendulum cpu 1024 8 PASS

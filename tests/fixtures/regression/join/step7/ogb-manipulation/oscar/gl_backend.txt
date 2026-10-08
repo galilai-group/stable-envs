@@ -1,1 +1,0 @@
-MUJOCO_GL=egl on node2351.oscar.ccv.brown.edu

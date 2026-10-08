@@ -1,8 +1,0 @@
-{
-  "index": 30,
-  "registration": "swm/OGBScene-v0",
-  "device": "cuda",
-  "tasks": [
-    30
-  ]
-}

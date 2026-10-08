@@ -1,7 +1,0 @@
-{
-  "source_commit": "1f717d12847cbcb998ad6c0bcc7ce7386249e560",
-  "stage": "navigation-diagnostic-1f717d1",
-  "archive_sha256": "9264cae322af524ae0fb0563d079ad73e136d4fa484f55fff6c83b09e4ecb387",
-  "runner": "oscar_simple_cohort_gate-98f7736.sbatch",
-  "driver": "family_renderer_boundary-1b5ef11.py"
-}

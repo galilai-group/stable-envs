@@ -1,8 +1,0 @@
-{
-  "status": "PASS_RAW_MIXED_TERMINAL_WITNESSES",
-  "cases": 24,
-  "cases_per_registration": 12,
-  "source_frames": 228,
-  "normalized_mse": 0.0,
-  "registration_promotion": false
-}

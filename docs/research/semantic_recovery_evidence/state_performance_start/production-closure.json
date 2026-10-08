@@ -1,5 +1,0 @@
-{
-  "covering_final_acceptance_commit": "badc193af3ee450ac486a75270bc88f47d9a1816",
-  "production_or_frozen_fixture_changes_since": [],
-  "note": "Earlier covering gates and successive preservation chains resolve through this final Craftax checkpoint; Rocket audit changed no production."
-}

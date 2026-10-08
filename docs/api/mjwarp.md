@@ -35,7 +35,6 @@ Both paths used the same saved states and output destination. State loading,
 rollout, restoration, and render-state preparation were excluded. These are
 archived renderer-only results, not a fresh benchmark of this cleanup or a
 claim about online stepping.
-[Full table and evidence paths](../research/semantic_recovery_evidence/paired_saved_rendering_20260929/paired_rendering_42_b256.csv).
 
 ### Cube default checkpoint
 

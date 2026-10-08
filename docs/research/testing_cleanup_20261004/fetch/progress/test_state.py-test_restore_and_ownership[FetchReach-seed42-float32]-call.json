@@ -1,6 +1,0 @@
-{
-  "detail": null,
-  "node": "tests/contracts/test_state.py::test_restore_and_ownership[FetchReach-seed42-float32]",
-  "phase": "call",
-  "status": "PASS"
-}

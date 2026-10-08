@@ -1,6 +1,0 @@
-{
-  "job": "6976233",
-  "remote": "/oscar/scratch/sboughan/se-semantic-recovery/fetch-sampling-probe-v2-20261003",
-  "stdout": "6976233\n",
-  "stderr": "/user/sboughan/.bashrc: line 51: module: command not found\n/user/sboughan/.bashrc: line 51: module: command not found\nsbatch: No max_nodes specified, defaulting to -N 1\n"
-}

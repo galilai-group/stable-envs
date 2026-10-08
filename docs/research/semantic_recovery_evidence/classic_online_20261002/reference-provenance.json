@@ -1,8 +1,0 @@
-{
-  "commit": "6ce4e82931a629b68218bbe5331296bdc0a946d2",
-  "source_sha256": "cff3849b67224f57de4775fb358afca530dde93c38b2107916e1b0642ada4680",
-  "reference_sha256": "e18a928d5aa19c001dc9e17f7bb12cc65770e9712967c145e6744692b529f2c1",
-  "adaptation": "Only rename get_state to classic_state; AST verified.",
-  "cpu_tests": "17 passed, 5 CUDA skips; 0.28 s",
-  "validity_check": "All five domains x B1/64/256 x T1/8 timing action workloads produced exactly B*T valid transitions on local CPU."
-}

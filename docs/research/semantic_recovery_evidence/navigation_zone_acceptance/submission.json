@@ -1,9 +1,0 @@
-{
-  "source_commit": "6ee8d8cb54031ff61eb1de24eafd1dd5c066fc3e",
-  "stage": "navigation-zone-fix-6ee8d8cb",
-  "archive_sha256": "185da82949590fb01ed45741f5a04b0c15ee6f1f62b0c80febb387581e976d00",
-  "runner": "oscar_simple_cohort_gate-98f7736.sbatch",
-  "runner_sha256": "98f773635d78a69fede783d1f4a2c78adca491be3e9c81975dca451709b6c6c0",
-  "driver": "family_renderer_boundary-1b5ef11.py",
-  "driver_sha256": "1b5ef11ffe3c8bf48c9949c7433035d2844a58e536ac8a5cd8232a1665c18459"
-}

@@ -78,8 +78,8 @@ Validation for the typing/navigation pass:
 ## Adapter refactor
 
 The adapter refactor has passed its CPU/CUDA source and process checks.
-Decisions, limits and the
-validation record are in [Adapter cleanup](adapter-cleanup.md). The directory's `README.md` describes the resulting interfaces.
+Decisions and validation are in [Adapter cleanup](adapter-cleanup.md).
+The directory's `README.md` describes the resulting interfaces.
 
 Family directories now own simulator logic, configuration and State conversion.
 Shared execution code selects processes and handles requests and typed buffers.
@@ -106,6 +106,10 @@ a separate saved-state measurement; rollout time must not enter that timer.
 4. Revisit the six obsolete Craftax tests against the current State/render
    boundary. Do not enable excluded Craftax acceptance or performance work as
    part of this housekeeping.
+6. Move `render/_raycast_reference.py` to `tests/helpers/`: only tests import it.
+   Fold the flat `envs/_classic_semantics.py`, `_fetch_semantics.py` and
+   `_rocket_raster.py` into per-family packages with their environments, as
+   Craftax, DMC and OGBench already are.
 
 A leading underscore means internal implementation. It is not a work-in-progress
 marker. Directory placement should follow ownership; file size alone does not

@@ -3,7 +3,7 @@
 ``Scene.from_triangles``, ``gather_material``, ``shade_tiny``, ``offset_clip`` and ``prepare_texture_array``
 are pure torch/numpy and need neither mujoco nor nvdiffrast. The shading numbers here are not chosen:
 they are the pixel values Bullet's TinyRenderer produced on synthetic scenes
-(``tests/fixtures/regression/join/step7/rocket-landing/phase0/tiny_law.json``, ``tiny_law2.json``,
+(``pre-repository-cleanup:tests/fixtures/regression/join/step7/rocket-landing/phase0/tiny_law.json``, ``tiny_law2.json``,
 ``phase0_light_sweep.json``), so a change to the law is caught by the renderer it emulates rather than
 by a number somebody typed.
 """
@@ -232,7 +232,7 @@ def test_from_triangles_clip_row_is_independent_of_batch_size():
     a property of the machine, not of this repo's arithmetic, so it is measured and recorded rather
     than asserted -- asserting it is exactly the mistake this test is correcting. Measured on x86-64
     (login010, torch 2.14.0+cu126, 1/2/4 threads;
-    ``tests/fixtures/regression/join/step7/rocket-landing/closure1/probe_clip_cpu_batch_x86_widthsweep.json``):
+    ``pre-repository-cleanup:tests/fixtures/regression/join/step7/rocket-landing/closure1/probe_clip_cpu_batch_x86_widthsweep.json``):
 
     ==========  ===================================  ==================================
     quantity    bitwise on x86-64 CPU                otherwise

@@ -7,7 +7,7 @@ is a real question is a hard version pin:
     mujoco_warp 3.11.0          requires mujoco >= 3.11
 
 so no interpreter can hold both robocasa and MJWarp. If the official frame can only be produced by
-``env.sim.render``, a visual-tier env cannot check itself. ``docs/research/robocasa.md`` Section 3
+``env.sim.render``, a visual-tier env cannot check itself. ``pre-repository-cleanup:docs/research/robocasa.md`` Section 3
 reports that restricting a bare ``mujoco.Renderer`` to geom group 1 reproduces ``env.sim.render``
 bit-identically -- but it reports it *within one MuJoCo version*, and the bridge this repo needs also
 has to cross 3.3.1 -> 3.11.0.

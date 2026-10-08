@@ -8,8 +8,8 @@ import json
 import pytest
 import torch
 
-from scripts.benchmarks.online_stepping.dmc_source_pipeline import compare_tasks, tasks_from_public
-from scripts.benchmarks.online_stepping.summarize_dmc_source import OPERATIONS, summarize
+from benchmarks.online.dmc_source_pipeline import compare_tasks, tasks_from_public
+from benchmarks.online.summarize_dmc_source import OPERATIONS, summarize
 
 
 @pytest.fixture
@@ -19,10 +19,10 @@ def synthetic(tmp_path):
     source.mkdir()
     upstream.mkdir()
     candidate_files = {}
-    for f in ("scripts/benchmarks/online_stepping/dmc_source_pipeline.py",
-              "scripts/benchmarks/online_stepping/dmc_parallel_source.py",
-              "scripts/benchmarks/online_stepping/classic_parallel_source.py",
-              "scripts/benchmarks/renderer_table/common.py", "stable_envs/_stepping.py", "stable_envs/env.py"):
+    for f in ("benchmarks/online/dmc_source_pipeline.py",
+              "benchmarks/online/dmc_parallel_source.py",
+              "benchmarks/online/classic_parallel_source.py",
+              "benchmarks/online/common.py", "stable_envs/_stepping.py", "stable_envs/env.py"):
         path = source / f
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("synthetic fixture, not benchmark evidence")
@@ -133,7 +133,7 @@ def test_single_step_normalization_preserves_frame_axis():
 def test_coordinator_rejects_incomplete_or_misapplied_source_options(tmp_path, monkeypatch, options):
     import sys
 
-    from scripts.benchmarks.online_stepping import dmc_state_export_oscar
+    from benchmarks.online import dmc_state_export_oscar
 
     output = tmp_path / "should-not-exist"
     monkeypatch.setattr(sys, "argv", ["coordinator", "--domain", "acrobot", "--output", str(output), *options])

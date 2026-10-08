@@ -272,8 +272,6 @@ near field spans black to white. A renderer that resolves one texel per pixel pa
 which is what caps `mujoco_warp` at 0.0017–0.0069% of far-field floor pixels bit-exact. nvdiffrast
 samples a prefiltered pyramid and reaches 66–81% of them; the same pipeline with the pyramid switched
 off lands back at 0.01%, which is the control that says the two were failing for one reason.
-[`docs/research/mujoco_locomotion.md`](../research/mujoco_locomotion.md) §7 is the landing and
-[`docs/research/nvdiffrast.md`](../research/nvdiffrast.md) is the backend study.
 
 **DM Control's five body-tracking domains** — `DMCCheetahRun`, `DMCWalkerWalk`, `DMCHopperHop`,
 `DMCHumanoidStand`, `DMCSwimmerSwimmer6` — rendered by `mujoco_warp`. Mean 4.35–8.07/255, 70.0–90.5%
@@ -285,8 +283,7 @@ DM Control's skybox is a gradient with `mark="random"` specks and MJWarp samples
 unfiltered tap, which is 48–89% of the frame on three of the five and is what holds SSIM down; the
 second is the same minified checker floor. nvdiffrast closes the floor and is **not** a drop-in here:
 these scenes' model lights are `trackcom` too, and `nvdiff.Lights` carries one position for the whole
-batch. [`docs/research/dmcontrol.md`](../research/dmcontrol.md) §8 is the investigation, including the
-sixth domain (`fish`) that is measured and does not ship.
+batch. A sixth domain (`fish`) was measured and does not ship.
 
 `RoboCasa` — four classes, one compiled kitchen each, rendered by `mujoco_warp`'s batch raytracer. The
 residual is one named mechanism: MJWarp derives texture UVs for `PLANE` and `MESH` only, so a textured
@@ -302,9 +299,8 @@ bit-reproducible across a long suite session — the cause is now known and is *
 `mujoco_warp` builds one BVH over `nworld x ngeom` primitives, so identical geometry in different
 world slots gets differently shaped subtrees and closest-hit ties break by visit order. Filling all 64
 worlds with the same `qpos` and comparing against slot 0 isolates it: `h1-balance_simple` differs on 2
-pixels at 1/255, in slots 21 and 42, and eight sibling cells differ on none.
-[`docs/research/humanoidbench.md`](../research/humanoidbench.md) has the measurement and the upstream
-fix it needs, a deterministic tie-break at equal ray parameter.
+pixels at 1/255, in slots 21 and 42, and eight sibling cells differ on none. The upstream fix it
+needs is a deterministic tie-break at equal ray parameter.
 
 That makes **thirty-two classes** in the tier: six MuJoCo locomotion, five DM Control, seventeen
 HumanoidBench and four RoboCasa, against 164 in the parity tier. A cell with a sealed corrector adds
@@ -315,5 +311,4 @@ current answer and marks the learned ones separately.
 [`examples/robocasa_visual/`](https://github.com/galilai-group/stable-envs/tree/main/examples/robocasa_visual)
 shows it side by side with the official frame and the difference amplified 4×, on the best and the worst
 of the four kitchens measured, so the quality can be judged rather than taken on the numbers.
-[`docs/research/robocasa.md`](../research/robocasa.md) is the full investigation, including the two
-prior verdicts — RoboCasa remains a **NO-GO for the parity tier**, and this tier does not overturn that.
+RoboCasa remains a **NO-GO for the parity tier**, and this tier does not overturn that.

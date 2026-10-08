@@ -1,7 +1,0 @@
-env,device,batch,operation,rate_mean,rate_sd,seconds_mean,seconds_sd,rate_unit,host,job
-swm/FetchPickAndPlaceDict-v3,cpu,64,task_no_state_with_ipc_transfer,6887.193109593696,12.757826176274886,0.009292636687556902,1.7247266841081064e-05,steps/s,gpu2107.oscar.ccv.brown.edu,6976160
-swm/FetchPickAndPlaceDict-v3,cpu,64,get_state,62630.50607913039,221.73365218959657,0.0010218769311904907,3.6224941996304287e-06,states/s,gpu2107.oscar.ccv.brown.edu,6976160
-swm/FetchPickAndPlaceDict-v3,cpu,64,state_cpu_to_device,300789.95540096605,1122.9320764528284,0.00021277554333209991,7.974061983172598e-07,states/s,gpu2107.oscar.ccv.brown.edu,6976160
-swm/FetchPickAndPlaceDict-v3,cuda,64,task_no_state_with_ipc_transfer,6750.724250936828,12.48864294278612,0.009480491280555725,1.7526193803500745e-05,steps/s,gpu2107.oscar.ccv.brown.edu,6976160
-swm/FetchPickAndPlaceDict-v3,cuda,64,get_state,49034.566956131814,355.39567380669064,0.001305259143312772,9.511339641973394e-06,states/s,gpu2107.oscar.ccv.brown.edu,6976160
-swm/FetchPickAndPlaceDict-v3,cuda,64,state_cpu_to_device,157647.39061913875,2685.2048499801977,0.0004060665766398112,6.854122195269406e-06,states/s,gpu2107.oscar.ccv.brown.edu,6976160

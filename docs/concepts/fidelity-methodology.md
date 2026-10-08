@@ -37,8 +37,7 @@ Concretely, that means:
    held to a looser bar. A mitred outline instead of a round one costs 2.2% of interior pixels and
    nothing visible in an all-pixel mean.
 5. **A negative result is a result.** Atari, RoboCasa, CarRacing, LunarLander and Procgen are written up
-   with the gate that rejected them, not omitted. See
-   [when does this pay off](../research/when_does_this_pay_off.md).
+   with the gate that rejected them, not omitted.
 
 The two published tiers — identity against the official renderer, versus a different rasterizer of
 the same scene — are [Fidelity tiers](fidelity-tiers.md). The worked port that applies this method

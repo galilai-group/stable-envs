@@ -33,18 +33,15 @@ theme:
     - toc.follow
   font: false
 
-# Anchors and links are validated. Historical research notes stay on disk and are linked
-# from the archive landing page rather than listed in the main nav. omitted_files stays
-# at its default (info) so a new research note does not break someone else's build.
+# Anchors and links are validated. omitted_files stays at its default (info).
 validation:
   links:
     anchors: warn
     unrecognized_links: warn
     absolute_links: warn
 
-# Built, but not listed individually. Reach them from research/index.md.
+# Built, but not listed individually.
 not_in_nav: |
-  research/**
   api/style.md
   api/scene.md
   api/gfxdraw.md
@@ -113,9 +110,6 @@ nav:
       - Renderer: adding/renderer.md
       - Previous contributor URL: adding-an-env.md
       - Testing: testing.md
-      - Testing infrastructure plan: testing-design.md
-      - Test redundancy audit: testing-redundancy-audit.md
-      - Docstring cleanup: docstring-cleanup.md
       - Package cleanup: package-cleanup.md
       - Repository cleanup plan: repository-cleanup-plan.md
       - Fidelity methodology: concepts/fidelity-methodology.md
@@ -132,4 +126,3 @@ nav:
       - Registered environments: api/envs.md
       - Sibling projects (API): api/compat.md
       - testing: api/testing.md
-  - Research archive: research/index.md

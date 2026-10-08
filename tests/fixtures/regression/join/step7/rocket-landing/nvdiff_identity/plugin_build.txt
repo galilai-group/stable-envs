@@ -1,1 +1,0 @@
-nvdiffrast ok NVIDIA GeForce RTX 3090

@@ -1,8 +1,0 @@
-{
-  "index": 2,
-  "registration": "swm/BallInCupDMControl-v0",
-  "device": "cuda",
-  "tasks": [
-    2
-  ]
-}

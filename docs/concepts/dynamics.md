@@ -146,5 +146,4 @@ implementation or deferred scheduling is not an upstream speedup.
 
 Timing tables report mean and sample standard deviation across repeated measured
 calls. Image MSE statistics instead summarize the checked matched-state frames,
-with pixel values normalized to [0,1]. The current registration-specific evidence
-and unfinished comparisons are in the [stepping backlog](../research/stepping_benchmark_backlog.csv).
+with pixel values normalized to [0,1].

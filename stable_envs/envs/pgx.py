@@ -18,7 +18,7 @@ except Exception as _e:  # pragma: no cover
         f"the PGX family needs pgx (which brings jax), resvg_py and Pillow, and this interpreter "
         f"cannot provide them: {type(_e).__name__}: {_e}. The envs were measured in {_VENV}, built "
         f"with a CLEAN `python -m venv` -- NOT --system-site-packages, which breaks jax's CUDA plugin "
-        f"discovery. See docs/research/pgx.md"
+        f"discovery."
     ) from _e
 
 try:
@@ -30,8 +30,7 @@ except Exception as _e:  # pragma: no cover
     raise ImportError(
         f"resvg_py imports but cannot rasterize ({type(_e).__name__}: {_e}). This is the failure mode "
         f"cairosvg has on this cluster's login node -- the import succeeds and every call raises -- "
-        f"which is why this check renders a document instead of importing a name. See "
-        f"docs/research/pgx.md"
+        f"which is why this check renders a document instead of importing a name."
     ) from _e
 
 from ..env import Env

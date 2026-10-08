@@ -1,6 +1,0 @@
-{
-  "index": 39,
-  "backend": "cpu",
-  "mse_normalized": 0.10315428121820625,
-  "difference": "absolute RGB difference, uint8, no amplification"
-}

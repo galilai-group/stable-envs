@@ -30,7 +30,7 @@ real bottleneck is pulling shards over a network is out of scope and will do wor
 column. And it compares one GPU against one core by construction, which is the right comparison for
 "should I store frames or regenerate them on the node I have" and the wrong one for a per-watt argument.
 
-    python examples/bench_vs_decode.py --out docs/research/artifacts/results
+    python examples/bench_vs_decode.py --out results
 """
 
 from __future__ import annotations
@@ -233,7 +233,7 @@ def main() -> None:
     ap.add_argument("--skip", default="")
     ap.add_argument("--tag", default="", help="suffix for the output files, e.g. the venv name")
     ap.add_argument("--scratch", default="/tmp")
-    ap.add_argument("--out", default="docs/research/artifacts/results")
+    ap.add_argument("--out", default="results")
     a = ap.parse_args()
 
     outdir = Path(a.out)

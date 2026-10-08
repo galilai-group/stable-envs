@@ -6,7 +6,7 @@ into ``tests/fixtures/regression/fidelity/craftax_full_golden.json`` by ``script
 records the craftax and jax versions it was frozen under -- a golden vector that does not say where it
 came from is worthless.
 
-The parity number itself lives in ``tests/fixtures/regression/join/step7/craftax-full/certify/`` and is taken by
+The parity number itself lives in ``pre-repository-cleanup:tests/fixtures/regression/join/step7/craftax-full/certify/`` and is taken by
 ``scripts/regression/craftax/certify.py`` in the jax venv; what is asserted here is everything that
 can be checked against the frozen facts and against the renderer's own internal invariants.
 """
@@ -394,7 +394,7 @@ def test_a_window_carrying_more_projectiles_than_the_simulator_can_hold_is_not_r
     It is asserted rather than left implicit because the boundary pool found it: eight projectiles
     disagreed with the official renderer on exactly the two tiles past the budget, max abs 114, while
     all 48 representable rows were byte-identical
-    (``tests/fixtures/regression/join/step7/craftax-full/certify/boundary_pool.json``).
+    (``pre-repository-cleanup:tests/fixtures/regression/join/step7/craftax-full/certify/boundary_pool.json``).
     """
     assert CF.MAX_MOB_PROJ + CF.MAX_PLAYER_PROJ == 6
     e = CraftaxFull(num_envs=32, device="cpu")

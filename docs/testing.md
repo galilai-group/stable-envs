@@ -6,10 +6,8 @@ from final acceptance. Registry-wide renderer tests do not prove a new task or
 exhaustive State: add independent semantic/restoration witnesses for each registration.
 A skipped required gate leaves the registration incomplete.
 
-The [testing strategy and infrastructure review](testing-design.md) records the
-current semantic-recovery approach and the incremental cleanup across State,
-simulation, tasks, rendering and online execution. The renderer-focused checks
-below do not replace full-State restoration and independent source gates.
+The renderer-focused checks below do not replace full-State restoration and
+independent source gates.
 
 ## Shared source contracts
 
@@ -23,8 +21,6 @@ action-boundary, physical Variation, rejected dtype-control and source-pixel wit
 Variation, rendering and process obligations. Passing a profile does not promote
 its siblings or replace those gates. Source helpers live in
 `tests/helpers/reference/`; benchmark drivers import them, never the reverse.
-Archived Python under `docs/research/` is retained evidence, not a live dependency
-of these 38 profiles.
 
 From the repository root, in the matching pinned family interpreter:
 
@@ -78,10 +74,8 @@ python -m pytest tests/unit/test_dmc_*oracle.py tests/unit/test_reacher_oracle.p
 
 It restores reached source States at steps 0, 7 and 24 and checks immediate State
 and exact continuation. It does not render or replace live-source acceptance.
-The [research migration map](testing-design.md#research-to-test-migration-rule)
-identifies additional pixel, contact, rejection and process witnesses that must
-survive cleanup. In particular, saved-trajectory capture equality uses our own
-renderer; source pixel parity still requires the independent family render gates.
+Saved-trajectory capture equality uses our own renderer; source pixel parity
+still requires the independent family render gates.
 
 The inventory covers all **38 non-Craftax registrations** using their accepted
 matrix scopes and existing gate paths. It records `NOT_RUN` for the current
@@ -762,8 +756,7 @@ PushT: **no inert variations** out of 14 leaves.
 Rules out: a knob wired into the space but not into `scene()` — advertised support that does not exist.
 
 It does *not* rule out a knob that changes the picture for the whole batch when it was supposed to change
-it per environment; see [what actually varies per environment](research/variation_collapses.md#what-actually-varies-per-environment)
-for the measured breakdown of that case.
+it per environment.
 
 ### Determinism
 

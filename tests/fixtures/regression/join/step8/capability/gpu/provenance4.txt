@@ -1,5 +1,0 @@
-host gpu1501.oscar.ccv.brown.edu
-job 6460478
-sha 64a38e7aa0d0de899ce7c90933224f270880bfe2
-NVIDIA RTX A6000, 575.57.08
- 23:19:22 up 91 days,  3:46,  0 users,  load average: 8.35, 10.07, 10.84

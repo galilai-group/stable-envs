@@ -22,7 +22,7 @@ if _missing or _mjver < (3, 11):  # pragma: no cover
         + (f"missing {', '.join(_missing)}; " if _missing else "")
         + f"mujoco is {_mj.__version__} and mujoco_warp requires >= 3.11 (metaworld itself pins "
         f"mujoco==3.3.0, which is why it is installed with --no-deps). The envs were measured in "
-        f"{_VENV}; see docs/research/metaworld.md and the `metaworld` extra in pyproject.toml"
+        f"{_VENV}; see the `metaworld` extra in pyproject.toml"
     )
 
 from ..env import Env
@@ -274,7 +274,7 @@ def _build_bundle(task: str) -> _Bundle:
         raise RuntimeError(
             f"metaworld's ALL_V3_ENVIRONMENTS no longer matches this module's TASKS table "
             f"(added {extra}, removed {gone}); the registry would silently be measuring a different "
-            f"benchmark from the one docs/research/metaworld.md reports"
+            f"benchmark from the one that was measured"
         )
 
     env = _make_task_env(task)
@@ -721,7 +721,7 @@ class MetaWorldBase(Env):
         "looks like and is NOT what a quantisation rule looks like (that signature is Fetch's "
         "{0: 86.8%, -1: 13.1%}, and it was found and fixed here too: mujoco_warp truncates float->uint8 "
         "where GL rounds, worth interior 0.791 -> 0.9988 on its own). It is the same limit "
-        "docs/research/ogbench.md refuted three ways, and it bites in proportion to the mover share: "
+        "the OGBench investigation refuted three ways, and it bites in proportion to the mover share: "
         "window-open (0.980766) has 16.7% of the frame moving, dial-turn (0.999830) has almost none. "
         "(2) THE SHADOW BOUNDARY. A mover's shadow on a static surface IS reproduced -- two bakes per "
         "episode, bright and with the casting light's diffuse and specular removed, selected by "
@@ -733,7 +733,7 @@ class MetaWorldBase(Env):
         "because MuJoCo paints texture x rgba and mat_rgba alone is the modulation factor without the "
         "thing it modulates -- on door-close-v3 that correction is worth mean 2.96 -> 1.10/255 and "
         "interior 0.98768 -> 0.99275. What is left is the texture's DETAIL, which is closed by "
-        "non-mesh texture UVs in mujoco_warp -- the same upstream gap docs/research/adroit.md needs -- "
+        "non-mesh texture UVs in mujoco_warp -- the same upstream gap Adroit needs -- "
         "and by nothing this repo can do locally. (4) TRANSLUCENT MOVERS. mujoco_warp's shader reads "
         "only color[0..2] and packs a constant 255, so window_glass (rgba='0 .3 .4 .1') would be "
         "painted opaque; it is blended against the layer behind it instead, which needs that layer "

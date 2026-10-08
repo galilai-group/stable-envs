@@ -1,8 +1,0 @@
-{
-  "job": "6968409",
-  "state": "FAILED",
-  "exit_code": "1:0",
-  "elapsed": "00:00:02",
-  "host": "gpu2113",
-  "failure": "se-step6 has no pip; no package installation or benchmark started"
-}

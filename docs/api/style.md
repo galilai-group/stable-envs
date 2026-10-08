@@ -7,6 +7,6 @@ Developer / internal. A `StyleTensor` is the compiled form of Variation: one fla
 
 This module records **the batch rule** — the single operation that is allowed to change a
 compiled row's batch, and the three shipped defects that existed because that operation
-was open-coded at each call site. See [variation collapses](../research/variation_collapses.md).
+was open-coded at each call site.
 
 ::: stable_envs._style

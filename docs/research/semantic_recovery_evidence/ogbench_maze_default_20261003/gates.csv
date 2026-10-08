@@ -1,3 +1,0 @@
-env,device,batch,processes,cases,frame_mse_vs_local,overlaps,host,gpu,job,report
-OGBMaze,cpu,64,8,22,0,20,gpu2109.oscar.ccv.brown.edu,,6966933,docs/research/semantic_recovery_evidence/ogbench_maze_default_20261003/results/cpu.json
-OGBMaze,cuda,64,8,22,0,20,gpu2109.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6966933,docs/research/semantic_recovery_evidence/ogbench_maze_default_20261003/results/cuda.json

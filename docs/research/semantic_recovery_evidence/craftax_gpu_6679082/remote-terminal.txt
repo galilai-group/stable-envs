@@ -1,5 +1,0 @@
-JobIDRaw|State|ExitCode|Elapsed|NodeList
-6679082|COMPLETED|0:0|00:58:35|gpu2110
-6679082.batch|COMPLETED|0:0|00:58:35|gpu2110
-6679082.extern|COMPLETED|0:0|00:58:35|gpu2110
-8f26f97ca5509606a32ca88f65224836ee70dbe67f759a80a2c1d4add6e2e932  /oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/craftax-evidence-6679082.tar.gz

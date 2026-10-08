@@ -1,7 +1,0 @@
-{
-  "job": "6968409",
-  "command": "scontrol update JobId=6968409 Partition=3090-gcondo QOS=cs-3090-gcondo",
-  "reason": "General queue stayed QOSMaxCpuPerUserLimit while new condo allocations started; same job retained without resubmission",
-  "partition": "3090-gcondo",
-  "qos": "cs-3090-gcondo"
-}

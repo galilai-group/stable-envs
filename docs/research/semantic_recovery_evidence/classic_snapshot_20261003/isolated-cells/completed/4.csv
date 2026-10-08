@@ -1,2 +1,0 @@
-domain,device,batch,horizon,states,frames,baseline_steps_per_s_mean,baseline_steps_per_s_sd,candidate_steps_per_s_mean,candidate_steps_per_s_sd,host,job,calls_per_strategy,exact_output,speedup_vs_baseline
-acrobot,cuda,1024,8,all,none,84101.43759013989,713.5562191663295,83469.00812888583,314.04747164586666,gpu2110.oscar.ccv.brown.edu,6971789,192,PASS,0.992480158730031

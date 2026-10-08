@@ -77,8 +77,6 @@ def test_maintained_product_files_do_not_cite_scratch_paths():
                 continue
             if key in _ALLOW_SCRATCH_MENTION or key.startswith("scripts/regression/"):
                 continue
-            if "fixtures/regression/join" in key:
-                continue
             try:
                 text = f.read_text(errors="replace")
             except OSError:
@@ -132,37 +130,21 @@ _NAV_OPTIONAL = {
 
 
 def test_every_docs_page_is_reachable_from_the_nav():
-    """User-guide and contributor pages must be in the nav. Research archive pages
-    other than the landing page are linked from ``docs/research/index.md``.
-    """
+    """User-guide and contributor pages must be in the nav."""
     yaml = pytest.importorskip("yaml")
     cfg = yaml.safe_load(re.sub(r"!![A-Za-z_.]+\s*", "", (ROOT / "mkdocs.yaml").read_text()))
     listed: list[str] = []
     _nav_targets(cfg.get("nav", []), listed)
     targets = set(listed)
-    assert "research/index.md" in targets, "the research archive landing page must be in the nav"
     pages = {name.removeprefix("docs/") for name in MAINTAINED_PATHS
              if name.startswith("docs/") and name.endswith(".md")}
-    allowed_orphans = {
-        p for p in pages if (p.startswith("research/") and p != "research/index.md") or p in _NAV_OPTIONAL
-    }
+    allowed_orphans = pages & _NAV_OPTIONAL
     orphans = sorted(pages - targets - allowed_orphans)
     assert not orphans, (
         f"these pages exist under docs/ and are in no nav section, so the site builds them and nothing "
         f"links to them: {orphans}"
     )
 
-
-def test_research_archive_landing_page_links_evergreen_and_history():
-    landing = (ROOT / "docs" / "research" / "index.md").read_text()
-    for needle in (
-        "when_does_this_pay_off.md",
-        "certification.md",
-        "step8_semantic_craftax.md",
-        "step8_closure.md",
-        "step9_closure.md",
-    ):
-        assert needle in landing, f"research archive landing page does not link to {needle}"
 
 
 # ------------------------------------------------------------------ the launchers

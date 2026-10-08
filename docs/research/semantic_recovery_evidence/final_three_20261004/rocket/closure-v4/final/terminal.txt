@@ -1,2 +1,0 @@
-GPU_EXIT=0
-CPU_EXIT=0

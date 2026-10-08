@@ -21,7 +21,7 @@ the bucket is a MEASUREMENT rather than a reading of the upstream docstring:
 ``VariationMap.swm_only`` can only hold one flat reason string per leaf, so the distinction between
 "we chose not to" and "upstream measured dead" would be lost if the reasons were the only record;
 the structured table is what the docs page and ``leaf_classification.json`` are generated from.
-See ``docs/research/step8_variations_newcells.md``.
+See ``pre-repository-cleanup:docs/research/step8_variations_newcells.md``.
 
 Cube/Scene recovery now maps the registered public semantic adapters. Their
 independent compiled models feed the unchanged frozen renderer; historical model
@@ -42,26 +42,26 @@ __all__ = ["NEWCELL_VARIATION_MAPS", "LEAF_CLASSIFICATION"]
 #: that produced a verdict rather than taking the verdict on trust.
 PROBES = {
     "rocket_liveness": (
-        "tests/fixtures/regression/join/step8/variations-newcells/probes/live_rocket.json -- each leaf resampled "
+        "pre-repository-cleanup:tests/fixtures/regression/join/step8/variations-newcells/probes/live_rocket.json -- each leaf resampled "
         "alone under 5 seeds, 3 frames of 480x480 (691,200 px) per reset, compared against the "
         "no-variation reset"
     ),
     "rocket_pad": (
-        "tests/fixtures/regression/join/step8/variations-newcells/probes/pad_color.json -- pad.color over 3 seeds, "
+        "pre-repository-cleanup:tests/fixtures/regression/join/step8/variations-newcells/probes/pad_color.json -- pad.color over 3 seeds, "
         "120 steps, 6 frames of 480x480, plus pybullet getVisualShapeData on the landing pad body"
     ),
     "ogb_model": (
-        "tests/fixtures/regression/join/step8/variations-newcells/probes/ogb_model_{Cube,Scene}.json -- every "
+        "pre-repository-cleanup:tests/fixtures/regression/join/step8/variations-newcells/probes/ogb_model_{Cube,Scene}.json -- every "
         "MjModel array diffed between a no-variation reset and a one-leaf-extreme reset, with each "
         "changed geom classified as a MOVER (drawn per world by mujoco_warp) or STATIC (baked into "
         "the plate)"
     ),
     "ogb_agent_color": (
-        "tests/fixtures/regression/join/step8/variations-newcells/probes/agent_color_dirty_flag.json -- "
+        "pre-repository-cleanup:tests/fixtures/regression/join/step8/variations-newcells/probes/agent_color_dirty_flag.json -- "
         "agent.color=RED alone vs agent.color=RED co-varied with light.intensity"
     ),
     "scene_noise": (
-        "tests/fixtures/regression/join/step8/variations-newcells/probes/scene_noise.json -- two IDENTICAL "
+        "pre-repository-cleanup:tests/fixtures/regression/join/step8/variations-newcells/probes/scene_noise.json -- two IDENTICAL "
         "seed=0 SceneEnv resets diffed, to separate reset noise from leaf effect"
     ),
 }
@@ -284,7 +284,7 @@ LEAF_CLASSIFICATION: dict[str, dict] = {
 # classifications and immutable historical probe files remain unchanged.
 for _family, _mapped in [("Cube", _OGB_CUBE_MAPPED), ("Scene", _OGB_SCENE_MAPPED)]:
     _evidence = (
-        "docs/research/semantic_recovery_evidence/ogb_renderer_retry/remote/evidence/"
+        "pre-repository-cleanup:docs/research/semantic_recovery_evidence/ogb_renderer_retry/remote/evidence/"
         + _family
         + "/result.json and cpu.log: exact source physics arrays and frozen pixels"
     )
@@ -363,14 +363,14 @@ BUCKETS = ("mapped", "unsupported", "dead_upstream", "not_applicable")
 
 _MAZE_PROBES = {
     "ogbmaze": (
-        "tests/fixtures/regression/join/step8/variations-newcells/probes/probe_ogbmaze.json -- each leaf set to "
+        "pre-repository-cleanup:tests/fixtures/regression/join/step8/variations-newcells/probes/probe_ogbmaze.json -- each leaf set to "
         "explicit values through options['variation_values'], 224x224 (50,176 px), with the task id "
         "and the qpos/qvel pinned and the global numpy seed fixed so the ~3,000-5,500 px reset noise "
         "floor (ogbench draws cur_task_id from the GLOBAL np.random) does not swamp the leaf; "
         "base-vs-base maxdiff 0"
     ),
     "spm": (
-        "tests/fixtures/regression/join/step8/variations-newcells/probes/probe_spm.json -- 500x500 (250,000 px). "
+        "pre-repository-cleanup:tests/fixtures/regression/join/step8/variations-newcells/probes/probe_spm.json -- 500x500 (250,000 px). "
         "SimplePointMazeEnv honours ONLY options['variation'] (a resample list) and silently ignores "
         "options['variation_values'], so exact values are set on the leaf after a no-variation reset; "
         "base-vs-base maxdiff 0"
@@ -428,7 +428,7 @@ _SPM_SWM_ONLY = {
     "`self.state`, never the leaf -- the leaf is a RESET distribution that seeds "
     "the state, so setting it after a reset moves 0 of 250,000 px",
     "goal.color": "not drawn: this class is the `show_goal=False` configuration, a pre-existing and "
-    "documented divergence (docs/research/swm_coverage.md). MEASURED: 0 of 250,000 px "
+    "documented divergence (pre-repository-cleanup:docs/research/swm_coverage.md). MEASURED: 0 of 250,000 px "
     "with show_goal=False, 1,324 px with show_goal=True. Our reference_env passes "
     "show_goal=False too, so the fidelity numbers compare like with like",
     "goal.radius": "as goal.color -- guarded by the same `if self.show_goal`. MEASURED: 0 px with "
@@ -551,7 +551,7 @@ LEAF_CLASSIFICATION.update(
             "our_envs": ["SimplePointMaze"],
             "config_note": (
                 "This class is the show_goal=False configuration, which the swm id itself registers as "
-                "True. That divergence predates the certified maps and is documented in docs/research/"
+                "True. That divergence predates the certified maps and is documented in pre-repository-cleanup:docs/research/"
                 "swm_coverage.md; reference_env passes show_goal=False so fidelity compares like with "
                 "like. It is why the three goal leaves are not_applicable rather than unsupported"
             ),

@@ -1,5 +1,5 @@
 """``stable_envs.envs.rocket_landing`` on the CPU: the state contract, the colour law, the tessellation,
-the camera and the lag, against the measurements in ``tests/fixtures/regression/join/step7/rocket-landing/``.
+the camera and the lag, against the measurements in ``pre-repository-cleanup:tests/fixtures/regression/join/step7/rocket-landing/``.
 
 Nothing here renders (nvdiffrast is CUDA-only); the render path is asserted on the certification card
 by the conformance suite. What can be checked without a GPU is everything between a state and a

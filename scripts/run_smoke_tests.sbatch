@@ -40,8 +40,8 @@
 # EXCLUDED NODES, and they must be the same list in all three launchers here. Every one of these has
 # been measured returning DIFFERENT PIXELS for the same scene from its own offscreen EGL rasterizer,
 # before any stable-envs code is involved -- 004, 058 and 068 are the ones caught red-handed, and
-# gpu-058 is written up twice (docs/research/metaworld.md and docs/research/ogbench.md both
-# record it); the rest were condemned by the scheduler during a run. A parity number measured on any of them is meaningless, and the failure reads as a
+# gpu-058 was caught twice, in the MetaWorld and OGBench
+# investigations; the rest were condemned by the scheduler during a run. A parity number measured on any of them is meaningless, and the failure reads as a
 # state-sufficiency violation in the renderer, which is where an afternoon goes. The node gate in
 # stable_envs/testing/node_health.py catches a node that goes bad DURING a run and exits 78; this list
 # is the ones already known. tests/unit/test_repo_contracts.py asserts the three lists agree.

@@ -3,9 +3,6 @@
 Correctness and performance are separate. This page is the latter: how fast a **state becomes a
 uint8 frame**, compared with decoding a stored JPEG.
 
-The long historical tables (PushT H200 batch sweeps, the 196-env family census, mid-port / old-kernel
-notes) live in the [research archive](research/throughput.md).
-
 ## What is measured
 
 A paired job on one card: take a state from the env's own reset distribution, produce a `(H, W, 3)`
@@ -55,7 +52,7 @@ clear hundreds of thousands to millions of frames a second, replacing thousands 
 visual-tier MuJoCo / Meta-World / Fetch sit near 1–7× a stored JPEG/core.
 
 The paper's per-family table uses eight worker processes batch-decoding JPEG-in-Lance, not one core.
-See `examples/bench_lance.py` and `docs/research/artifacts/paper/tables/family.tex`.
+See `examples/bench_lance.py`.
 
 ## Caveats / losers
 
@@ -75,8 +72,8 @@ See `examples/bench_lance.py` and `docs/research/artifacts/paper/tables/family.t
 ```bash
 python -m benchmarks.render --help
 python -m benchmarks.pipeline --help
-python examples/bench_gpu_vs_cpu.py --out docs/research/artifacts/results --envs PushT --sizes 96,224
-python examples/bench_gpu_vs_cpu.py --out docs/research/artifacts/results --sizes native
+python examples/bench_gpu_vs_cpu.py --out results --envs PushT --sizes 96,224
+python examples/bench_gpu_vs_cpu.py --out results --sizes native
 python examples/bench_vs_decode.py --help
 ```
 
@@ -86,4 +83,3 @@ column.
 
 Raw PushT H200 output:
 [`tests/fixtures/regression/references/bench_gpu_vs_cpu.json`](https://github.com/galilai-group/stable-envs/blob/main/tests/fixtures/regression/references/bench_gpu_vs_cpu.json).
-Historical family tables and kernel-era discussion: [research/throughput.md](research/throughput.md).

@@ -1,5 +1,0 @@
-/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/spaces/box.py:236: UserWarning: [33mWARN: Box low's precision lowered by casting to float32, current low.dtype=float64[0m
-  gym.logger.warn(
-/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/spaces/box.py:306: UserWarning: [33mWARN: Box high's precision lowered by casting to float32, current high.dtype=float64[0m
-  gym.logger.warn(
-OGB_RENDER_FIXTURES_PASS 35

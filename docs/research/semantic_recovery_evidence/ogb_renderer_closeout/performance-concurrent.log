@@ -1,9 +1,0 @@
-/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/spaces/box.py:236: UserWarning: [33mWARN: Box low's precision lowered by casting to float32, current low.dtype=float64[0m
-  gym.logger.warn(
-/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/spaces/box.py:306: UserWarning: [33mWARN: Box high's precision lowered by casting to float32, current high.dtype=float64[0m
-  gym.logger.warn(
-RESTORE_PERF Cube B=1 step_ms=1.171 get_ms=0.723 same_ms=179.328 changed_ms=179.148
-RESTORE_PERF Cube B=3 step_ms=3.056 get_ms=1.755 same_ms=598.078 changed_ms=591.988
-RESTORE_PERF Scene B=1 step_ms=1.454 get_ms=0.715 same_ms=226.855 changed_ms=224.904
-RESTORE_PERF Scene B=3 step_ms=3.870 get_ms=1.730 same_ms=733.719 changed_ms=755.559
-RESTORE_CHARACTERIZATION_PASS

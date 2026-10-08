@@ -11,7 +11,7 @@ comparison if it is missing:
 * **The joint LAYOUT, not just ``qpos``.** Stage B recompiles the same XML under a different MuJoCo,
   and two compilations of one scene need not order joints identically. A ``qpos`` copied by index is
   then a mis-POSED scene scored as a mis-BUILT one -- the single most expensive mistake in this
-  family's history (``docs/research/robocasa.md`` Section 9, the retracted 94.95 %). The names and
+  family's history (``pre-repository-cleanup:docs/research/robocasa.md`` Section 9, the retracted 94.95 %). The names and
   ``jnt_qposadr`` travel with the array so stage B can map by name and assert it did.
 * **The official frame comes from ``env.sim.render``**, i.e. robosuite's own offscreen context with
   ``vopt.geomgroup[1] = True`` and everything else off. A bare ``mujoco.Renderer`` defaults to geom
@@ -36,7 +36,7 @@ import numpy as np
 
 DEFAULT_OUT = "/mnt/vast/home/randall.balestriero/robocasa_visual_work"
 #: The two kitchens the fidelity table brackets: the best and the worst of the four measured
-#: (``docs/research/robocasa.md`` Section 11 -- within-8 0.992 against 0.188). Showing only the first
+#: (``pre-repository-cleanup:docs/research/robocasa.md`` Section 11 -- within-8 0.992 against 0.188). Showing only the first
 #: would be a demo; showing both is the measurement.
 KITCHENS = {"L52S03": (52, 3), "L45S33": (45, 33)}
 CAMERAS = ("robot0_agentview_left", "robot0_agentview_right", "robot0_eye_in_hand")

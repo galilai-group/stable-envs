@@ -6,7 +6,7 @@ WHY THIS FILE EXISTS. ``mujoco_warp``'s shader attenuates a spot light with a ha
 ``GL_INVALID_VALUE``, leaving the default 180 = not a spotlight. ``swm/OGBCube-v0`` has one spot at
 ``cutoff = 100, exponent = 10``, and the disagreement is the single largest fidelity term in that
 scene: neutralising it moves interior exactness from 0.0091 to 0.3507 on an RTX 3090
-(``tests/fixtures/regression/join/step7/ogb-manipulation/m1/``, ``m3/``).
+(``pre-repository-cleanup:tests/fixtures/regression/join/step7/ogb-manipulation/m1/``, ``m3/``).
 
 Two properties are asserted, and the second is the one that keeps this safe for five other families:
 

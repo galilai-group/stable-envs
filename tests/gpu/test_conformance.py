@@ -338,7 +338,7 @@ def test_a_declared_task_object_is_drawn_iff_the_reference_draws_it(env):
     no interior pixels and can appear or disappear without moving ``interior_exact_frac``. Measured,
     not supposed — two DM Control reacher renders that differ by an entire red disc report interior
     exactness identical to sixteen digits and the same ``interior_px``
-    (``tests/fixtures/regression/join/step5/reacher/parity_probe.json``), and the frame's ``interior_frac`` at 84 px
+    (``pre-repository-cleanup:tests/fixtures/regression/join/step5/reacher/parity_probe.json``), and the frame's ``interior_frac`` at 84 px
     is 0.000000, so the assertion there does not even apply.
 
     Nothing about the interior metric is changed to fix that. This asserts a SEPARATE bound on the

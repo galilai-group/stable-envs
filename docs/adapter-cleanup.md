@@ -152,3 +152,17 @@ The public environment API, State schema, render algorithms, process thresholds
 and eight-process cap are preserved. This work does not promote new environment
 or fidelity support. The final advisor-table collection remains separate from
 adapter acceptance; failed source replay/stability checks must remain visible.
+
+## Integration with repository cleanup
+
+The concurrent cleanup at `5534a87d` retired the historical scripts and moved
+active source stepping benchmarks to `benchmarks/online/`. This merge preserves
+those deletions and updates the maintained modules to the new adapter paths.
+The advisor rerun uses the archived harness at `5ca9ce0e` (PushT updates at
+`ed6a5bf9`); it does not reinstall the retired script tree into the package.
+All production adapter files remain byte-identical to the GPU-tested `1faa9671`.
+
+Post-merge checks: 295 import/registry/routing/package tests passed, two optional
+profile/dependency skips; 47 Fetch/DMC source-helper checks and 89 benchmark/OGBench
+source-helper checks passed in their matching environments. The nine-file mypy
+target and adapter/maintained-benchmark Ruff checks pass.

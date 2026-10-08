@@ -16,7 +16,7 @@ if _missing:  # pragma: no cover
         f"the Jumanji family builds its per-pixel atlas by CALLING the official matplotlib viewer, so "
         f"it cannot render without the reference package: missing {', '.join(_missing)}. The envs were "
         f"measured in {_VENV}, built with a CLEAN `python -m venv` — a --system-site-packages venv "
-        f"breaks jax's CUDA plugin discovery. See docs/research/jumanji.md"
+        f"breaks jax's CUDA plugin discovery."
     )
 try:
     _JVER = _md.version("jumanji")
@@ -394,8 +394,7 @@ def _build_atlas(spec: _Spec, size: int) -> dict:
     if conflicts:
         raise RuntimeError(
             f"{spec.env_id}: {conflicts} pixels are moved by MORE THAN ONE cell, so the frame is not a "
-            f"per-cell lookup and this construction is unsound for it. See docs/research/jumanji.md "
-            f"for the two ids where this fires and why"
+            f"per-cell lookup and this construction is unsound for it."
         )
     owner = np.where(n_own == 1, changed.argmax(0), -1).astype(np.int32)
     ys, xs = np.nonzero(owner >= 0)
@@ -511,7 +510,7 @@ class JumanjiGrid(Env):
                 f"{type(self).__name__} renders at {self.SPEC.verified_sizes} px, not {int(size)}. The "
                 f"atlas is exact only where the official viewer's cells provably separate, and that was "
                 f"measured per size rather than assumed — at an unverified size there is no atlas that "
-                f"is right, only one that would be silently wrong. See docs/research/jumanji.md"
+                f"is right, only one that would be silently wrong."
             )
 
     def make_variation_space(self) -> Dict:
