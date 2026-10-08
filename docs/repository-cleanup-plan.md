@@ -1,9 +1,35 @@
 # Repository cleanup plan
 
-Status: **approved after two reviews; corrections applied; not started.** Drafted on 2026-10-07
-against `sami-dev` at `6383c230`. Nothing listed here has been deleted or moved yet.
+Status: **carried out on 2026-10-08** from tag `pre-repository-cleanup` (`4a03d4a0`).
 This complements [Package cleanup](package-cleanup.md), which covers layout inside
-`stable_envs/`.
+`stable_envs/`. The plan below is kept as approved; the outcome and its deviations
+come first.
+
+## Outcome
+
+- Every move and deletion was compared with the pre-cleanup tree under the same
+  interpreter. The final non-GPU suite has no new failures; every test that is no
+  longer collected was removed or moved on purpose. The strict docs build passes.
+- Many semantic, OpenGL and Craftax tests already fail on the local Mac at the
+  baseline (no OpenGL route, off-pin interpreters). For those, identical outcomes
+  show only that moved code resolves; they still need the software-GL setup or
+  Oscar. The GPU suite has not been rerun.
+- Deviations from the plan:
+  - The online source-stepping harness was kept as a maintained benchmark in
+    `benchmarks/online/` instead of being retired; the Fetch comparisons it used
+    moved to `tests/helpers/reference/fetch_compare.py`.
+  - `docs/research/` was deleted entirely. Maintained docs no longer link to it;
+    code comments and evidence fields cite `pre-repository-cleanup:<path>`.
+  - Checks that read archived evidence but test live behavior kept small dedicated
+    fixtures (`tests/fixtures/saved/`, `tests/fixtures/swm/`,
+    `tests/fixtures/evidence/`) rather than being dropped.
+  - For the 15 Fetch, PushT and Rocket registrations whose recorded gates were
+    retired scripts, the inventory requires the shared state, simulation and task
+    contracts and keeps the script names in `historical_gates`.
+  - `scripts/submit_test_matrix.sh` stayed: it launches the GPU test matrix.
+- Not done: the Oscar evidence tarballs in `tests/fixtures/testing/` (about 140 MB,
+  no code consumer) await a decision; detached worktrees and untracked
+  `STEP_0x_AGENT_BRIEFS/` are left for the owner.
 
 ## Rule
 

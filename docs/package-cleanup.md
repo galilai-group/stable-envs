@@ -146,6 +146,10 @@ separate mechanical change, not authorization to resume its recovery or tuning.
 5. Revisit the six obsolete Craftax tests against the current State/render
    boundary. Do not enable excluded Craftax acceptance or performance work as
    part of this housekeeping.
+6. Move `render/_raycast_reference.py` to `tests/helpers/`: only tests import it.
+   Fold the flat `envs/_classic_semantics.py`, `_fetch_semantics.py` and
+   `_rocket_raster.py` into per-family packages with their environments, as
+   Craftax, DMC and OGBench already are.
 
 A leading underscore means internal implementation. It is not a work-in-progress
 marker. Directory placement should follow ownership; file size alone does not
