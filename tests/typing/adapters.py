@@ -2,13 +2,13 @@
 
 from stable_envs._adapters.classic.local import ClassicControlAdapter
 from stable_envs._adapters.classic.process import AcrobotProcessAdapter
-from stable_envs._adapters.fetch.adapter import FetchAdapter
-from stable_envs._adapters.fetch.process import FetchProcessAdapter
 from stable_envs._adapters.rocket.adapter import RocketAdapter
 from stable_envs._execution.protocol import SimulatorAdapter, StepPipeline
 from stable_envs.envs.craftax.simulation import CraftaxAdapter
 from stable_envs.envs.dmcontrol.simulation.factory import DMCAdapter
 from stable_envs.envs.dmcontrol.simulation.process import DMCProcessAdapter
+from stable_envs.envs.fetch.simulation.adapter import FetchAdapter
+from stable_envs.envs.fetch.simulation.process import FetchProcessAdapter
 from stable_envs.envs.ogbench.simulation.manipulation import OGBManipulationAdapter
 from stable_envs.envs.ogbench.simulation.manipulation_process import OGBManipulationProcessAdapter
 from stable_envs.envs.ogbench.simulation.maze import OGBMazeAdapter

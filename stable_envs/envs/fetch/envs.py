@@ -5,7 +5,7 @@ import os
 import numpy as np
 import torch
 
-from .._core.mujoco_gl import configure_mujoco_gl
+from ..._core.mujoco_gl import configure_mujoco_gl
 
 configure_mujoco_gl()
 
@@ -23,11 +23,11 @@ def _require_gpu_renderer():
         )
 
 
-from ..env import Env
-from ..registry import register
-from ..render import _resources as _RES
-from ..render import mjwarp as MW
-from ..spaces import Box, Dict
+from ...env import Env
+from ...registry import register
+from ...render import _resources as _RES
+from ...render import mjwarp as MW
+from ...spaces import Box, Dict
 
 SCENE_XML = {"Reach": "reach.xml", "Push": "push.xml", "Slide": "slide.xml", "PickAndPlace": "pick_and_place.xml"}
 
@@ -886,7 +886,7 @@ CELLS = (
 )
 
 
-from ._fetch_semantics import FetchSemantics as _FetchSemantics
+from .semantics import FetchSemantics as _FetchSemantics
 
 
 def _make_classes() -> dict[str, type]:

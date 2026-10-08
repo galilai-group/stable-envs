@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ..._execution.requests import ProcessRequests
+from ...._execution.requests import ProcessRequests
 from .adapter import FetchAdapter
 
 

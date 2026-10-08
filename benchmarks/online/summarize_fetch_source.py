@@ -52,8 +52,8 @@ def summarize(results, candidate, source, source_manifest, batches):
             "benchmarks/online/fetch_source_pipeline.py",
             "benchmarks/online/fetch_parallel_source.py",
             "stable_envs/_core/stepping.py",
-            "stable_envs/_adapters/fetch/process.py",
-            "stable_envs/envs/fetch_opengl.py",
+            "stable_envs/envs/fetch/simulation/process.py",
+            "stable_envs/envs/fetch/opengl.py",
         }
         assert required <= report["candidate_files"].keys()
         for rel, digest in report["candidate_files"].items():

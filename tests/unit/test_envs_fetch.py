@@ -39,7 +39,7 @@ import pytest
 pytestmark = pytest.mark.unit
 
 ROOT = Path(__file__).resolve().parents[2]
-SRC = ROOT / "stable_envs" / "envs" / "fetch.py"
+SRC = ROOT / "stable_envs" / "envs" / "fetch" / "envs.py"
 TREE = ast.parse(SRC.read_text(encoding="utf-8"))
 CLASSES = {n.name: n for n in ast.walk(TREE) if isinstance(n, ast.ClassDef)}
 FETCH_BASE = CLASSES["FetchBase"]
@@ -56,8 +56,8 @@ def test_fetch_base_derives_the_step9_env_and_not_the_step8_alias():
     bases = [ast.unparse(b) for b in FETCH_BASE.bases]
     assert bases == ["Env"], bases
     text = SRC.read_text(encoding="utf-8")
-    assert "from ..env import Env" in text
-    assert "from ..registry import register" in text
+    assert "from ...env import Env" in text
+    assert "from ...registry import register" in text
     assert "StableEnv" not in text, "the old alias should not survive the migration"
 
 
@@ -185,7 +185,7 @@ import numpy as np, torch
 for nm in ("warp", "mujoco_warp"):
     m = types.ModuleType(nm); m.__spec__ = im.ModuleSpec(nm, None); sys.modules[nm] = m
 import stable_envs as snv
-import stable_envs.envs.fetch as F
+import stable_envs.envs.fetch.envs as F
 
 states_dir = sys.argv[1]
 pools = {}

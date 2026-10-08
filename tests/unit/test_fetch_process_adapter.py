@@ -9,9 +9,9 @@ import torch
 pytest.importorskip("gymnasium_robotics")
 
 import stable_envs as snv
-import stable_envs.envs._fetch_semantics as semantics
-from stable_envs._adapters.fetch.adapter import FetchAdapter
-from stable_envs._adapters.fetch.process import FetchProcessAdapter
+import stable_envs.envs.fetch.semantics as semantics
+from stable_envs.envs.fetch.simulation.adapter import FetchAdapter
+from stable_envs.envs.fetch.simulation.process import FetchProcessAdapter
 
 
 def equal(a, b):
