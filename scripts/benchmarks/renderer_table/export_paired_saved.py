@@ -66,6 +66,7 @@ def main():
             record = dict(
                 env=r["registration"],
                 candidate_device=r["device"],
+                candidate_render_device=r.get("candidate_render_device", r["device"]),
                 source_render_device=r.get("source_render_device"),
                 output_device=m["output_device"],
                 batch=m["batch"],
@@ -107,6 +108,9 @@ def main():
             row[f"{label}_host"] = r.get("profile", {}).get("host", "")
             row[f"{label}_hardware"] = r.get("profile", {}).get("gpu" if device == "cuda" else "cpu", "")
             row[f"{label}_backend"] = r.get("backend", "")
+            row[f"{label}_candidate_render_device"] = (
+                r.get("candidate_render_device", device) if r.get("status") == "COMPLETE" else ""
+            )
             row[f"{label}_source_pixel_variation_note"] = (
                 r.get("source_pixel_variation", "") if r.get("source_warm_repeat_max_uint8", 0) > 1 else ""
             )
@@ -142,6 +146,7 @@ def main():
             item[f"{label}_hardware"] = row[f"{label}_hardware"]
             item[f"{label}_host"] = row[f"{label}_host"]
             item[f"{label}_backend"] = row[f"{label}_backend"]
+            item[f"ours_{label}_render_device"] = row[f"{label}_candidate_render_device"]
             item[f"{label}_source_pixel_variation_note"] = row[f"{label}_source_pixel_variation_note"]
             item[f"reference_device_for_{label}_comparison"] = row[f"{label}_source_render_device"]
             prefix = f"{label}_render_to_cpu"

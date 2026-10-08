@@ -77,8 +77,8 @@ Validation for the typing/navigation pass:
 
 ## Adapter refactor
 
-The implementation is complete on the isolated `adapter-cleanup` branch;
-Oscar acceptance and integration are in progress. Decisions, limits and the
+The adapter refactor has passed its CPU/CUDA source and process checks.
+Decisions, limits and the
 validation record are in [Adapter cleanup](adapter-cleanup.md). The directory's `README.md` describes the resulting interfaces.
 
 Family directories now own simulator logic, configuration and State conversion.
@@ -96,16 +96,14 @@ a separate saved-state measurement; rollout time must not enter that timer.
 
 ## Remaining layout work, in order
 
-1. Complete adapter acceptance and integrate the isolated branch. Family grouping,
-   interfaces, execution selection and shared-buffer extraction are implemented.
-2. Move `render/trackcom_texture.py` and `trackcom_reflection.py` beside DMC,
+1. Move `render/trackcom_texture.py` and `trackcom_reflection.py` beside DMC,
    their only family consumer.
-3. Group rendering engines with their helpers, for example MJWarp with its light
+2. Group rendering engines with their helpers, for example MJWarp with its light
    specialization and gfxdraw with its classic/fused implementations. Avoid
    generic `utils` or `misc` directories and unnecessary compatibility wrappers.
-4. Move root `_data.py` corpus utilities under `testing/`. Keep shared public
+3. Move root `_data.py` corpus utilities under `testing/`. Keep shared public
    types, registry and immediate implementation at the package root.
-5. Revisit the six obsolete Craftax tests against the current State/render
+4. Revisit the six obsolete Craftax tests against the current State/render
    boundary. Do not enable excluded Craftax acceptance or performance work as
    part of this housekeeping.
 

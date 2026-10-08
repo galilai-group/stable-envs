@@ -22,7 +22,7 @@ are unchanged. Craftax simulation and performance remain out of scope.
   default/current-value behavior differ from public spaces. No deduplication
   without independent semantic evidence.
 
-## Validation in progress (candidate `45c569d6`)
+## Validation
 
 Execution selection: 251 routing cases passed across all four families.
 Initial process/sequence tests: 290 passed, 86 skipped locally; skips are not
@@ -31,10 +31,9 @@ with MuJoCo 3.12 on both the baseline and candidate. A temporary MuJoCo 3.11
 overlay is used for the pinned Fetch checks. Static interface assignments pass. The pinned Fetch run passed all 31 tests;
 OGBench routing/process checks passed 73 tests with one CUDA skip.
 
-Required before closure: relocated imports and registry checks, family process
-and source contracts, CUDA output and pipeline checks, and same-host baseline
-versus candidate online timings at horizons 1 and 8. Rerun the saved-state advisor
-table independently: MSE, source and candidate CPU/GPU FPS, time mean/SD, equal
+Completed: relocated imports and registry checks, family process and source
+contracts, CUDA output/pipeline checks, and same-host baseline versus candidate
+online timings at horizons 1 and 8. The separate saved-state advisor rerun reports: MSE, source and candidate CPU/GPU FPS, time mean/SD, equal
 batches and output destinations, explicit CPU-only reference qualifications.
 Use fresh output directories; preserve previous measurements and fixture bytes.
 
@@ -107,11 +106,49 @@ source commit, not a newly measured GPU result.
 
 Fetch's first same-node comparison passed all its correctness checks. With all
 frames returned, throughput changed by -0.31% to +0.72% across B64/B256 and H1/H8.
-The B64/H8 step-only cell was 7.93% lower; a reversed-order repeat is pending.
+The B64/H8 step-only cell was 7.93% lower in the first run; a reversed-order repeat
+measured 4,826.8 baseline versus 4,824.0 candidate steps/s (-0.06%).
 Do not interpret the stable rendering result as proof that every timing cell is
 unchanged. DMC and OGBench before/after comparisons are also required.
+
+Scene OpenGL on one RTX3090 node measured 100.7 FPS for both baseline and
+candidate at B256. The much faster historical table value is not reproduced by
+either commit; it must not be attributed to this adapter refactor. Both current
+MSEs are approximately 0.000339665. The first OGBench pipeline attempt exhausted
+its 32 GB allocation during baseline restoration; its retry requests 64 GB.
+
+The old PushT table harness called the retired five-coordinate renderer. Its
+replacement witnesses complete candidate diagnostics against each fresh source
+owner, writes projected RenderState to disk, reloads it before timing, and calls
+the current public `render()`. Both discrete and continuous local smoke runs
+passed with MSE zero; a 24-frame/two-seed run also covers reset-retained fields.
+PushT currently renders through CPU Pygame on both output configurations; the
+CSV must show that CUDA output does not imply GPU rasterization.
 
 Local merged-checkpoint validation: 281 import/registry/routing tests passed with
 one profile skip; benchmark-surface tests passed 24/24 and Fetch source-pipeline
 helpers passed 32/32 in their matching pinned interpreters. Focused mypy checks
 pass for nine files. No new interpreter pins are imposed on other families.
+
+The wheel builds successfully and includes all 48 adapter modules and the three
+relocated drawing helpers. All 14 packaging checks pass.
+
+## Adapter acceptance
+
+All seven source profiles pass on CPU and CUDA output: **2,112/2,112 required
+checks**, no missing or duplicate required cases. Family process/unit commands
+also terminate successfully. All 18 source-result seals, including the retained
+failed attempts, verify. [Exact profiles and commits](adapter-cleanup/source-checks.json).
+
+The [before/after timing table](adapter-cleanup/online-before-after.csv) retains
+all three DMC runs and both Fetch runs, including the short-sample slowdowns.
+DMC's longer run uses 60 samples per mode: candidate changes range from -2.8% to
++9.1%; the earlier B64/H1 loss did not reproduce. This is evidence against a
+consistent refactor regression, not a claim of a new speedup. Cube changes are
+-0.52% to +0.23% across all six H1/H8 capture cases; sampled peak PSS is 42.31 GiB
+baseline and 42.62 GiB candidate. Both complete replay checks pass.
+
+The public environment API, State schema, render algorithms, process thresholds
+and eight-process cap are preserved. This work does not promote new environment
+or fidelity support. The final advisor-table collection remains separate from
+adapter acceptance; failed source replay/stability checks must remain visible.

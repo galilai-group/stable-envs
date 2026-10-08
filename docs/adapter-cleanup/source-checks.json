@@ -1,0 +1,486 @@
+{
+  "required_passed": 2112,
+  "source_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "remote_archive_directory": "/users/sboughan/se-adapter-cleanup-45c569d6-20261008",
+  "profiles": [
+    {
+      "attempt": "gate-6-7118395",
+      "profile": "rocket",
+      "device": "cpu",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "PASS",
+      "passed": 16,
+      "required": 16,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "fa3fd5997a75ec7e1b26d2b2e5599df118fcdcb76e0298488c2ad571a4316c76",
+      "archive": "gate-6-7118395.tar.gz"
+    },
+    {
+      "attempt": "gate-6-7118398",
+      "profile": "rocket",
+      "device": "cuda",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "PASS",
+      "passed": 16,
+      "required": 16,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "c6e510cce83c0f96da9e54b819feedb265cb9a8c8fd24a82f41e7e919833fe88",
+      "archive": "gate-6-7118398.tar.gz"
+    },
+    {
+      "attempt": "gate-0-7118401",
+      "profile": "native",
+      "device": "cpu",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "PASS",
+      "passed": 128,
+      "required": 128,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "aea16f7cc3300316b355c13f6d878917ecb6b271ca6a747a59b6937b6a822392",
+      "archive": "gate-0-7118401.tar.gz"
+    },
+    {
+      "attempt": "gate-1-7118402",
+      "profile": "fetch",
+      "device": "cpu",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "PASS",
+      "passed": 396,
+      "required": 396,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "9f6458393f6218b87ca45ce50f06fc61594d9eb1bf67de3d1e94b086eca70fa6",
+      "archive": "gate-1-7118402.tar.gz"
+    },
+    {
+      "attempt": "gate-2-7119519",
+      "profile": "dmc",
+      "device": "cpu",
+      "commit": "1faa9671348b1361394796e3456b5d25b51ea9e1",
+      "status": "PASS",
+      "passed": 288,
+      "required": 288,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "265419059d51578f56d916ae6b767b87e15ad4e84d8a8eb133d89a96e12f11af",
+      "archive": "gate-2-7119519.tar.gz"
+    },
+    {
+      "attempt": "gate-3-7118404",
+      "profile": "navigation",
+      "device": "cpu",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "PASS",
+      "passed": 96,
+      "required": 96,
+      "exit_codes": [
+        0
+      ],
+      "result_sha256": "c643b5ce5f4940745ad124eea0be1ed6aa9ea2956efe771bc3938b51e71a73ee",
+      "archive": "gate-3-7118404.tar.gz"
+    },
+    {
+      "attempt": "gate-0-7118409",
+      "profile": "native",
+      "device": "cuda",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "PASS",
+      "passed": 128,
+      "required": 128,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "8babe04de0f0302d1ca309f83f7a75aea9483a4108e4b6e4e15977d2beb453c1",
+      "archive": "gate-0-7118409.tar.gz"
+    },
+    {
+      "attempt": "gate-1-7118410",
+      "profile": "fetch",
+      "device": "cuda",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "PASS",
+      "passed": 396,
+      "required": 396,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "4710e5197245f4f61ac421e28521053e4cac47ede7e5ccdf71235ba02c3eaa87",
+      "archive": "gate-1-7118410.tar.gz"
+    },
+    {
+      "attempt": "gate-4-7119515",
+      "profile": "ogbench",
+      "device": "cpu",
+      "commit": "1faa9671348b1361394796e3456b5d25b51ea9e1",
+      "status": "PASS",
+      "passed": 72,
+      "required": 72,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "a3af43ae6f1086aa9db11194f34d9d2a9e9db339a80544bdbda1dee11e017982",
+      "archive": "gate-4-7119515.tar.gz"
+    },
+    {
+      "attempt": "gate-2-7119817",
+      "profile": "dmc",
+      "device": "cuda",
+      "commit": "1faa9671348b1361394796e3456b5d25b51ea9e1",
+      "status": "PASS",
+      "passed": 288,
+      "required": 288,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "055cd85dcda592204a8cd3bcf399b4ff44881032befff7c773f155dc1cc2231a",
+      "archive": "gate-2-7119817.tar.gz"
+    },
+    {
+      "attempt": "gate-5-7118526",
+      "profile": "pusht",
+      "device": "cpu",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "PASS",
+      "passed": 60,
+      "required": 60,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "1defdd924c582c212a9736d3f94684803626a42ec18a512af01a920a2a90e92c",
+      "archive": "gate-5-7118526.tar.gz"
+    },
+    {
+      "attempt": "gate-3-7118925",
+      "profile": "navigation",
+      "device": "cuda",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "PASS",
+      "passed": 96,
+      "required": 96,
+      "exit_codes": [
+        0
+      ],
+      "result_sha256": "970c914610abfef7870266ca896f1700f5df705bde02ceaff9429b1a62fb2a8d",
+      "archive": "gate-3-7118925.tar.gz"
+    },
+    {
+      "attempt": "gate-4-7119516",
+      "profile": "ogbench",
+      "device": "cuda",
+      "commit": "1faa9671348b1361394796e3456b5d25b51ea9e1",
+      "status": "PASS",
+      "passed": 72,
+      "required": 72,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "875766c5fde38f4484a4a8fa2b9c88d0202519b46c7741f6acf6d8c3f9b94497",
+      "archive": "gate-4-7119516.tar.gz"
+    },
+    {
+      "attempt": "gate-5-7119558",
+      "profile": "pusht",
+      "device": "cuda",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "PASS",
+      "passed": 60,
+      "required": 60,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "a66693aaa53f048af59278451d35df7f30f7c9a5dff4958ca66a54aec8a5ad2c",
+      "archive": "gate-5-7119558.tar.gz"
+    }
+  ],
+  "all_attempts": [
+    {
+      "attempt": "gate-6-7118395",
+      "profile": "rocket",
+      "device": "cpu",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "PASS",
+      "passed": 16,
+      "required": 16,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "fa3fd5997a75ec7e1b26d2b2e5599df118fcdcb76e0298488c2ad571a4316c76",
+      "archive": "gate-6-7118395.tar.gz"
+    },
+    {
+      "attempt": "gate-6-7118398",
+      "profile": "rocket",
+      "device": "cuda",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "PASS",
+      "passed": 16,
+      "required": 16,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "c6e510cce83c0f96da9e54b819feedb265cb9a8c8fd24a82f41e7e919833fe88",
+      "archive": "gate-6-7118398.tar.gz"
+    },
+    {
+      "attempt": "gate-0-7118401",
+      "profile": "native",
+      "device": "cpu",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "PASS",
+      "passed": 128,
+      "required": 128,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "aea16f7cc3300316b355c13f6d878917ecb6b271ca6a747a59b6937b6a822392",
+      "archive": "gate-0-7118401.tar.gz"
+    },
+    {
+      "attempt": "gate-1-7118402",
+      "profile": "fetch",
+      "device": "cpu",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "PASS",
+      "passed": 396,
+      "required": 396,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "9f6458393f6218b87ca45ce50f06fc61594d9eb1bf67de3d1e94b086eca70fa6",
+      "archive": "gate-1-7118402.tar.gz"
+    },
+    {
+      "attempt": "gate-2-7118403",
+      "profile": "dmc",
+      "device": "cpu",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "FAIL",
+      "passed": 192,
+      "required": 288,
+      "exit_codes": [
+        1,
+        0
+      ],
+      "result_sha256": "fce9c5442e812cfb59ae7527a7ff6178b7ed26539cfc9a97fe7bbb60143411a6",
+      "archive": "gate-2-7118403.tar.gz"
+    },
+    {
+      "attempt": "gate-3-7118404",
+      "profile": "navigation",
+      "device": "cpu",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "PASS",
+      "passed": 96,
+      "required": 96,
+      "exit_codes": [
+        0
+      ],
+      "result_sha256": "c643b5ce5f4940745ad124eea0be1ed6aa9ea2956efe771bc3938b51e71a73ee",
+      "archive": "gate-3-7118404.tar.gz"
+    },
+    {
+      "attempt": "gate-0-7118409",
+      "profile": "native",
+      "device": "cuda",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "PASS",
+      "passed": 128,
+      "required": 128,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "8babe04de0f0302d1ca309f83f7a75aea9483a4108e4b6e4e15977d2beb453c1",
+      "archive": "gate-0-7118409.tar.gz"
+    },
+    {
+      "attempt": "gate-1-7118410",
+      "profile": "fetch",
+      "device": "cuda",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "PASS",
+      "passed": 396,
+      "required": 396,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "4710e5197245f4f61ac421e28521053e4cac47ede7e5ccdf71235ba02c3eaa87",
+      "archive": "gate-1-7118410.tar.gz"
+    },
+    {
+      "attempt": "gate-4-7118484",
+      "profile": "ogbench",
+      "device": "cpu",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "FAIL",
+      "passed": 48,
+      "required": 72,
+      "exit_codes": [
+        1,
+        0
+      ],
+      "result_sha256": "b21a2a401407a57d8b0b7a3dbd0e39ff4651632a71976989ff269858a697aa74",
+      "archive": "gate-4-7118484.tar.gz"
+    },
+    {
+      "attempt": "gate-2-7118522",
+      "profile": "dmc",
+      "device": "cuda",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "FAIL",
+      "passed": 112,
+      "required": 288,
+      "exit_codes": [
+        1,
+        0
+      ],
+      "result_sha256": "1867a7ca085b3955818e0bf486b2389c84fbc09674ead4dfe7220bc1c90bdf1b",
+      "archive": "gate-2-7118522.tar.gz"
+    },
+    {
+      "attempt": "gate-5-7118526",
+      "profile": "pusht",
+      "device": "cpu",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "PASS",
+      "passed": 60,
+      "required": 60,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "1defdd924c582c212a9736d3f94684803626a42ec18a512af01a920a2a90e92c",
+      "archive": "gate-5-7118526.tar.gz"
+    },
+    {
+      "attempt": "gate-3-7118925",
+      "profile": "navigation",
+      "device": "cuda",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "PASS",
+      "passed": 96,
+      "required": 96,
+      "exit_codes": [
+        0
+      ],
+      "result_sha256": "970c914610abfef7870266ca896f1700f5df705bde02ceaff9429b1a62fb2a8d",
+      "archive": "gate-3-7118925.tar.gz"
+    },
+    {
+      "attempt": "gate-4-7119004",
+      "profile": "ogbench",
+      "device": "cuda",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "FAIL",
+      "passed": 48,
+      "required": 72,
+      "exit_codes": [
+        1,
+        0
+      ],
+      "result_sha256": "d2e38f12843cdd17be680d3a3ff0705b9f2dfc9254a9adf63d9534700a1a1095",
+      "archive": "gate-4-7119004.tar.gz"
+    },
+    {
+      "attempt": "gate-4-7119515",
+      "profile": "ogbench",
+      "device": "cpu",
+      "commit": "1faa9671348b1361394796e3456b5d25b51ea9e1",
+      "status": "PASS",
+      "passed": 72,
+      "required": 72,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "a3af43ae6f1086aa9db11194f34d9d2a9e9db339a80544bdbda1dee11e017982",
+      "archive": "gate-4-7119515.tar.gz"
+    },
+    {
+      "attempt": "gate-4-7119516",
+      "profile": "ogbench",
+      "device": "cuda",
+      "commit": "1faa9671348b1361394796e3456b5d25b51ea9e1",
+      "status": "PASS",
+      "passed": 72,
+      "required": 72,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "875766c5fde38f4484a4a8fa2b9c88d0202519b46c7741f6acf6d8c3f9b94497",
+      "archive": "gate-4-7119516.tar.gz"
+    },
+    {
+      "attempt": "gate-2-7119519",
+      "profile": "dmc",
+      "device": "cpu",
+      "commit": "1faa9671348b1361394796e3456b5d25b51ea9e1",
+      "status": "PASS",
+      "passed": 288,
+      "required": 288,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "265419059d51578f56d916ae6b767b87e15ad4e84d8a8eb133d89a96e12f11af",
+      "archive": "gate-2-7119519.tar.gz"
+    },
+    {
+      "attempt": "gate-5-7119558",
+      "profile": "pusht",
+      "device": "cuda",
+      "commit": "45c569d6b41c0a6f85236de33f22fb2a3e1df9f2",
+      "status": "PASS",
+      "passed": 60,
+      "required": 60,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "a66693aaa53f048af59278451d35df7f30f7c9a5dff4958ca66a54aec8a5ad2c",
+      "archive": "gate-5-7119558.tar.gz"
+    },
+    {
+      "attempt": "gate-2-7119817",
+      "profile": "dmc",
+      "device": "cuda",
+      "commit": "1faa9671348b1361394796e3456b5d25b51ea9e1",
+      "status": "PASS",
+      "passed": 288,
+      "required": 288,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "result_sha256": "055cd85dcda592204a8cd3bcf399b4ff44881032befff7c773f155dc1cc2231a",
+      "archive": "gate-2-7119817.tar.gz"
+    }
+  ],
+  "seals_verified": 18
+}
