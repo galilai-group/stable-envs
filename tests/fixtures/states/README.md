@@ -12,3 +12,13 @@ count). They were frozen once by the Step-4 fidelity sampler
 under `tests/fixtures/regression/join/step4/states/`; the sampler and its
 original location remain in Git history at tag `pre-repository-cleanup`.
 `SHA256SUMS` lists the file hashes, unchanged by the move.
+
+## `rocket_landing/`
+
+The PFRocketLanding reference corpus: `states.npz` (200 reached states over 24
+episodes), its `states.meta.json` sidecar, and `meta.json` describing the state
+and style layouts, recording policy and render validation. Read by
+`tests/unit/test_rocket_landing.py`. Previously
+`tests/fixtures/regression/join/step7/rocket-landing/reference/`; the recorded
+frames and validation records that were not test inputs remain in Git history at
+tag `pre-repository-cleanup`.
