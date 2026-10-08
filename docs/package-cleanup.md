@@ -88,8 +88,12 @@ reducing duplicated execution code. Directory organization follows those boundar
 |---|---|
 | `SimulatorAdapter` covers lifecycle, while stepping discovers optional methods dynamically. | Define small explicit interfaces for ordinary simulation and optional asynchronous stepping. Keep family-specific capabilities outside the common protocol. |
 | Five process adapters repeat worker startup, buffer allocation, State assembly and result retrieval. | Extract only mechanics shown to be common across multiple families. Keep simulator semantics in family implementations. |
+| Five routes across four `*_execution.py` files repeat the same process-selection conditions. | Extract the common selection policy before the pilot, preserving family eligibility, Linux/daemon checks, affinity handling, batch/CPU thresholds and the worker cap. Verify all existing routing cases. |
+| DMC repeats domain knowledge in `PROCESS_DOMAINS`, worker `make_local`, and the Reacher/Humanoid constructor special case. | Use one family factory for local and worker construction with a consistent call signature. Keep process eligibility explicit and preserve domain-specific defaults and seeding. |
 | Fetch environment code reads `_simulator._mass` directly. | Define a family interface for configuration and metadata instead of exposing internal storage. |
 | `ClassicControlAdapter` lives under `envs/`, while other simulator owners live under `_adapters/`. | Establish consistent ownership before moving files. |
+| `pusht_projection.py`, `pusht_draw.py` and `craftax_render.py` contain family rendering code under `_adapters/`. | Assign rendering to the owning family alongside its render implementation; retain explicit dependencies on simulator State decoding where required. |
+| Public spaces, `pusht_spaces.py` and `rocket_spaces.py` have overlapping types with different behavior. | Audit ownership and contracts before deduplicating. Preserve source-specific scalar precision, sampling order, constraints and default/current-value semantics. Keep attribution for derived code. |
 | Type hints are present but not systematically checked. | Add a focused static-checking target for adapter interfaces and their callers. Preserve concrete types where family operations require them. |
 
 Responsibilities:
@@ -98,8 +102,10 @@ Responsibilities:
 - Execution code owns workers, lane partitioning, communication and shared buffers.
 - `Env` owns public action shapes, sequences, State/frame selection and rendering.
 
-Start with Fetch, then check the proposed interfaces against DMC and OGBench before
-extracting shared machinery. OGBench's staged restoration must remain explicit:
+First consolidate the repeated execution-selection policy as a separate change
+with unchanged routing behavior. Then start the interface pilot with Fetch and
+check it against DMC and OGBench before extracting worker/buffer machinery.
+OGBench's staged restoration must remain explicit:
 replacement worlds are prepared before committing the restore. A generic broadcast
 of `set_state` is not an equivalent implementation.
 
@@ -119,13 +125,17 @@ Acceptance requirements:
 Still undecided: exact optional interface signatures, which buffer/worker functions
 can be shared, final package paths, and numeric performance acceptance thresholds.
 Resolve these against the pilot and its baseline measurements before expanding the
-refactor. Craftax is outside this simulation/performance work.
+refactor. The ownership inventory includes classic control and Craftax, even though
+Craftax remains outside simulation/performance work. Any Craftax relocation is a
+separate mechanical change, not authorization to resume its recovery or tuning.
 
 ## Remaining layout work, in order
 
-1. Carry out the adapter pilot above, then group `_adapters/` by family: Fetch,
-   DMC, OGBench, PushT and Rocket. Leave shared process transport separate.
-   Keep mechanical moves distinct from behavior changes.
+1. Consolidate execution selection, carry out the adapter pilot above, then group
+   simulation code by family: classic control, Fetch, DMC, OGBench, PushT and Rocket.
+   Account for Craftax in the ownership inventory with the limited scope above.
+   Leave shared process transport separate. Keep mechanical moves distinct from
+   behavior changes.
 2. Move `render/trackcom_texture.py` and `trackcom_reflection.py` beside DMC,
    their only family consumer.
 3. Group rendering engines with their helpers, for example MJWarp with its light
