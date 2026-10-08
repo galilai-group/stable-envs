@@ -9,7 +9,7 @@ import stable_envs as se
 pytest.importorskip('dm_control')
 pytest.importorskip('stable_worldmodel')
 
-from scripts.recovery.reacher_gate import run_gate
+from tests.helpers.reference.gates.reacher import run_gate
 
 
 def test_reacher_full_state_semantics():

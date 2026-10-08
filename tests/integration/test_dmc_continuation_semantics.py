@@ -12,7 +12,7 @@ from stable_envs._adapters.dmcontrol_continuation import CONFIG, CONTINUATION_FI
 pytest.importorskip("dm_control")
 pytest.importorskip("stable_worldmodel")
 
-from scripts.recovery.dmc_continuation_gate import CASES, run_gate
+from tests.helpers.reference.gates.dmc_continuation import CASES, run_gate
 
 
 def test_continuation_dmc_full_state_semantics():

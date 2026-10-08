@@ -1,4 +1,4 @@
-from scripts.recovery.native_navigation_gate import run_gate
+from tests.helpers.reference.gates.native_navigation import run_gate
 
 
 def test_native_navigation_cpu_gate():
