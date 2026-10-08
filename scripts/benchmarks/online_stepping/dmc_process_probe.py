@@ -157,7 +157,7 @@ def main():
                   job=os.environ.get("SLURM_JOB_ID"), gpu=torch.cuda.get_device_name() if "cuda" in a.devices else None,
                   versions={n: importlib.metadata.version(n) for n in ("torch", "numpy", "dm-control", "mujoco", "tensordict")},
                   source_sha256={str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in [
-                      *Path("stable_envs/_adapters").glob("dmcontrol*.py"), Path("stable_envs/_adapters/process_requests.py"),
+                      *Path("stable_envs/_adapters").rglob("*.py"), Path("stable_envs/_adapters/process_requests.py"),
                       Path("stable_envs/_stepping.py"), *Path("stable_envs/envs/dmcontrol").glob("*.py"), Path(__file__).relative_to(Path.cwd())]},
                   scope="public step + full States, frames disabled; local column exporter vs pure-process candidate",
                   production_default_gate=a.production, gate_batch=64 if a.production else 5,

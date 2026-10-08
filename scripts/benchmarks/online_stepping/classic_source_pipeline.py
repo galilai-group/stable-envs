@@ -116,7 +116,7 @@ def main():
                   gates=[], timings=[], components=[], source_runtime_files={})
     paths = [Path(__file__).relative_to(Path.cwd()), Path("stable_envs/envs/_classic_semantics.py"),
              Path("stable_envs/envs/classic_control.py"), Path("stable_envs/_stepping.py"),
-             *Path("stable_envs/_adapters").glob("*classic*.py"),
+             *Path("stable_envs/_adapters").rglob("*.py"),
              Path("stable_envs/_adapters/classic/process.py"), Path("stable_envs/_adapters/process_requests.py"),
              Path("scripts/benchmarks/online_stepping/classic_state_export.py"),
              Path("scripts/benchmarks/renderer_table/common.py"),

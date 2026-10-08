@@ -69,7 +69,7 @@ def main():
                   gpu=torch.cuda.get_device_name() if "cuda" in args.devices else None,
                   versions={name: importlib.metadata.version(name) for name in ("torch", "numpy", "dm-control", "mujoco", "tensordict")},
                   reference_hashes={str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in args.reference_adapters.glob("dmcontrol*.py")},
-                  candidate_hashes={str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in Path("stable_envs/_adapters").glob("dmcontrol*.py")},
+                  candidate_hashes={str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in Path("stable_envs/_adapters").rglob("*.py")},
                   script_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
                   scope="frozen accepted exporter vs column exporter; public step frames=None; same CPU physics for both output devices",
                   gates=[], timings=[])

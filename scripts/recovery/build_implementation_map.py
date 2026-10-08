@@ -138,7 +138,7 @@ def main(swm):
         "dmcontrol": (
             "07d7098",
             list((ROOT / "stable_envs/envs/dmcontrol").glob("*.py"))
-            + list((ROOT / "stable_envs/_adapters").glob("dmcontrol*.py")),
+            + list((ROOT / "stable_envs/_adapters/dmc").glob("*.py")),
         ),
         "classic_control": (
             "98c65cb",

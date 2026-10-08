@@ -27,7 +27,7 @@ def main():
         raise FileExistsError(args.output)
     assert len(os.sched_getaffinity(0)) == 8
     torch.set_num_threads(1)
-    files = [*Path("stable_envs/_adapters").glob("ogbench*.py"),
+    files = [*Path("stable_envs/_adapters").rglob("*.py"),
              *Path("stable_envs/envs/ogbench").glob("*.py"),
              Path("stable_envs/_adapters/process_requests.py"), Path("stable_envs/_stepping.py"),
              Path(__file__).relative_to(Path.cwd())]

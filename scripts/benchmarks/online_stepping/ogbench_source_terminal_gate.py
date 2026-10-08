@@ -100,7 +100,7 @@ def main():
              Path("tests/helpers/reference/ogbench_manipulation_semantics.py"),
              Path("tests/helpers/reference/ogbench_manipulation_source.py"),
              Path("stable_envs/env.py"), Path("stable_envs/_stepping.py"),
-             *Path("stable_envs/_adapters").glob("ogbench*.py"),
+             *Path("stable_envs/_adapters").rglob("*.py"),
              Path("stable_envs/envs/ogbench/maze.py"),
              Path("stable_envs/envs/ogbench/manipulation_semantics.py")]
     report = dict(status="RUNNING", host=platform.node(), source_pin=PIN,

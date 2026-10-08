@@ -48,7 +48,7 @@ def main():
              Path("scripts/benchmarks/online_stepping/classic_parallel_source.py"),
              Path("scripts/benchmarks/renderer_table/common.py"),
              Path("scripts/benchmarks/online_stepping/dmc_profile.py"),
-             *Path("stable_envs/_adapters").glob("dmcontrol*.py"),
+             *Path("stable_envs/_adapters").rglob("*.py"),
              Path("tests/helpers/reference/dmc_semantics.py")]
     report = dict(status="RUNNING", scope="CPU B2/P2 source-transport versus local adapters; no public Env, rendering or timing",
         host=platform.node(), domains=args.domains, source_pin=PIN, source_files=manifest["files"],

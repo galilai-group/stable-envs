@@ -57,7 +57,7 @@ def main():
                   gpu=torch.cuda.get_device_name() if "cuda" in args.devices else None,
                   versions={name: importlib.metadata.version(name) for name in ("torch", "numpy", "gymnasium", "ogbench", "mujoco", "tensordict")},
                   reference_hashes={str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in [Path("tests/helpers/reference/ogbench_state_export.py")]},
-                  candidate_hashes={str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in [*Path("stable_envs/_adapters").glob("ogbench*.py"), Path("stable_envs/_adapters/state_columns.py"), Path("stable_envs/_stepping.py"), *Path("stable_envs/envs/ogbench").glob("*.py")]},
+                  candidate_hashes={str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in [*Path("stable_envs/_adapters").rglob("*.py"), Path("stable_envs/_adapters/state_columns.py"), Path("stable_envs/_stepping.py"), *Path("stable_envs/envs/ogbench").glob("*.py")]},
                   script_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
                   scope="frozen accepted exporter vs column exporter; public step frames=None; same CPU physics for both output devices",
                   gates=[], timings=[])

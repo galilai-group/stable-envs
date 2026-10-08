@@ -67,7 +67,7 @@ def main():
              Path("stable_envs/envs/_classic_semantics.py"), Path("stable_envs/envs/classic_control.py"),
              Path("stable_envs/_stepping.py"), Path("stable_envs/_adapters/process_requests.py"),
              Path("stable_envs/_adapters/classic/process.py"),
-             *Path("stable_envs/_adapters").glob("*classic*.py")]
+             *Path("stable_envs/_adapters").rglob("*.py")]
     report = dict(status="RUNNING", domain=args.domain, name=NAMES[args.domain],
                   host=platform.node(), job=os.environ.get("SLURM_JOB_ID"),
                   affinity=sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,

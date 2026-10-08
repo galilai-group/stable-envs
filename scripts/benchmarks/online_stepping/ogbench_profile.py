@@ -59,7 +59,7 @@ def main():
                   versions={p: importlib.metadata.version(p) for p in
                             ("torch", "numpy", "gymnasium", "ogbench", "mujoco", "tensordict")},
                   source_sha256={str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in
-                                 [*Path("stable_envs/_adapters").glob("ogbench*.py"),
+                                 [*Path("stable_envs/_adapters").rglob("*.py"),
                                   Path(__file__).relative_to(Path.cwd())]},
                   scope="adapter component diagnostic, CPU physics for both output devices; no rendering or source speedup",
                   cells=[])

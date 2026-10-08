@@ -141,9 +141,7 @@ def main():
         p.error("Production routing checks require --gates-only")
     torch.set_num_threads(1)
     cpus = sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None
-    files = [Path("stable_envs/_adapters") / (n + ".py") for n in
-             ("ogbench_execution", "ogbench_manipulation", "ogbench_manipulation_process", "ogbench_manipulation_compat",
-              "ogbench_render_state", "state_columns", "process_requests")]
+    files = list(Path("stable_envs/_adapters").rglob("*.py"))
     files += [Path("stable_envs/_stepping.py"), Path("stable_envs/envs/ogbench/manipulation_semantics.py"),
               Path(__file__).relative_to(Path.cwd())]
     files += [Path("stable_envs/envs/ogbench") / (name + ".py") for name in

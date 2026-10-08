@@ -76,7 +76,7 @@ def main():
     cpus = sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None
     if process_count(min(args.batches), cpus, eligible=args.domain in PROCESS_DOMAINS) != 8:
         p.error("This comparison requires the accepted eight-owner Linux default")
-    files = list(Path("stable_envs/_adapters").glob("dmcontrol*.py"))
+    files = list(Path("stable_envs/_adapters").rglob("*.py"))
     files += list(Path("stable_envs/envs/dmcontrol").glob("*.py"))
     files += [Path("stable_envs/_stepping.py"), Path("stable_envs/_adapters/process_requests.py"),
               Path(__file__).relative_to(Path.cwd())]

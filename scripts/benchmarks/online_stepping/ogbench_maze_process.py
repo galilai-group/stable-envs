@@ -141,8 +141,7 @@ def main():
         p.error("Production routing checks require --gates-only")
     torch.set_num_threads(1)
     cpus = sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None
-    files = [Path("stable_envs/_adapters") / (n + ".py") for n in
-             ("ogbench", "ogbench_execution", "ogbench_maze_process", "state_columns", "process_requests")]
+    files = list(Path("stable_envs/_adapters").rglob("*.py"))
     files += [Path("stable_envs/_stepping.py"), Path("stable_envs/envs/ogbench/maze.py"),
               Path(__file__).relative_to(Path.cwd())]
     report = dict(status="RUNNING", domain="Maze", host=platform.node(), job=os.environ.get("SLURM_JOB_ID"),

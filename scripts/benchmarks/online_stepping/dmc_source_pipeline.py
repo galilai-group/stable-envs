@@ -102,7 +102,7 @@ def main():
     files = [Path(__file__).relative_to(Path.cwd()), Path("stable_envs/_stepping.py"),
              Path("stable_envs/env.py"), Path("stable_envs/_adapters/process_requests.py"),
              *Path("stable_envs/envs/dmcontrol").glob("*.py"),
-             *Path("stable_envs/_adapters").glob("dmcontrol*.py"),
+             *Path("stable_envs/_adapters").rglob("*.py"),
              Path("tests/helpers/reference/dmc_semantics.py"),
              Path("scripts/benchmarks/online_stepping/dmc_parallel_source.py"),
              Path("scripts/benchmarks/online_stepping/classic_parallel_source.py"),

@@ -121,7 +121,7 @@ def main():
     if args.verify_gl and len(args.devices) != 1:
         p.error("One GL output mode per process required")
     torch.set_num_threads(1)
-    files = [*Path("stable_envs/_adapters").glob("ogbench*.py"),
+    files = [*Path("stable_envs/_adapters").rglob("*.py"),
              *Path("stable_envs/envs/ogbench").glob("*.py"), Path("stable_envs/_stepping.py"),
              Path("stable_envs/_adapters/process_requests.py"),
              Path("tests/helpers/reference/ogbench_before_validation_columns.py"),

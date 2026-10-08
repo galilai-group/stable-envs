@@ -69,7 +69,7 @@ def main():
         gpu=torch.cuda.get_device_name() if "cuda" in args.devices else None,
         versions={name: importlib.metadata.version(name) for name in ("torch", "numpy", "dm-control", "mujoco", "tensordict")},
         source_sha256={str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in [
-            *Path("stable_envs/_adapters").glob("dmcontrol*.py"), Path(__file__).relative_to(Path.cwd())
+            *Path("stable_envs/_adapters").rglob("*.py"), Path(__file__).relative_to(Path.cwd())
         ]},
         scope="adapter.step with complete State; diagnostic only, not public step or a source speedup",
         cells=[],
