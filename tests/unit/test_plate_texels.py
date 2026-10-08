@@ -1,4 +1,4 @@
-"""``stable_envs.envs._plate_texels`` — the shared per-value texel substitution.
+"""``stable_envs._core.plate_texels`` — the shared per-value texel substitution.
 
 These run on a CPU stub, with no MuJoCo model and no GL context, because every property worth
 asserting about this module is arithmetic or bookkeeping and none of it should need a GPU to check:
@@ -20,7 +20,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from stable_envs.envs._plate_texels import quantise, substitute, texel_key, texel_slots
+from stable_envs._core.plate_texels import quantise, substitute, texel_key, texel_slots
 
 A = [0.1, 0.2, 0.3]
 B = [0.2, 0.3, 0.4]

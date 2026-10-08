@@ -70,7 +70,7 @@ def main():
         Path("tests/helpers/reference/native_navigation_semantics.py"),
         Path("stable_envs/envs/navigation.py"),
         Path("stable_envs/env.py"),
-        Path("stable_envs/_stepping.py"),
+        Path("stable_envs/_core/stepping.py"),
     ]
     report = dict(
         status="RUNNING",

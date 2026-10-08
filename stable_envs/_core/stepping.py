@@ -64,7 +64,7 @@ def _selection(value, length, name):
 def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
     env._check_open("step")
     if not env.has_dynamics:
-        from ._dynamics import no_dynamics
+        from .dynamics import no_dynamics
 
         no_dynamics(env, "step")
     acts, sequence = _actions(env, actions)

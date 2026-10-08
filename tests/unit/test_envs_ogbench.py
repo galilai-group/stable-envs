@@ -281,12 +281,12 @@ def test_frozen_renderer_cpu_is_refused_rather_than_served_from_the_gpu(cell):
 def test_the_plate_texel_helpers_are_the_shared_module_and_not_a_second_copy():
     """The plate texel helpers were lifted out of this family for ``dmcontrol`` to share.
 
-    The copy is gone. ``mj_quantise`` is asserted to BE ``_plate_texels.quantise`` — the same
+    The copy is gone. ``mj_quantise`` is asserted to BE ``plate_texels.quantise`` — the same
     function object, so the truncation rule cannot drift — and the two call sites are asserted to
     call the shared functions, because a comment saying they do is not enforcement. The behaviour
     those functions carry is unchanged and is checked by ``tests/unit/test_plate_texels.py``.
     """
-    from stable_envs.envs import _plate_texels as PX
+    from stable_envs._core import plate_texels as PX
 
     assert MANIP.mj_quantise is PX.quantise
     assert "_texel_slots(" in inspect.getsource(MANIP._grid_texture)

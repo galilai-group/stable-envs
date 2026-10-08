@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import numpy as np
 
-from ..._mujoco_gl import configure_mujoco_gl
+from ..._core.mujoco_gl import configure_mujoco_gl
 
 configure_mujoco_gl()
 
+from ..._core.plate_texels import quantise as _quantise
 from ...render import _resources as _RES
 from ...render import mjwarp as MW
-from .._plate_texels import quantise as _quantise
 
 # mjvLight type code for directional lights.
 LIGHT_DIRECTIONAL = 1

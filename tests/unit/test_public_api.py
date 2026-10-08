@@ -13,8 +13,8 @@ torch = pytest.importorskip("torch")
 pytest.importorskip("tensordict")
 
 import stable_envs as snv
-from stable_envs import _config
 from stable_envs import registry as R
+from stable_envs._core import config as _config
 
 pytestmark = pytest.mark.unit
 
@@ -27,7 +27,7 @@ def records():
     it saw at import, so pytest's stream capture does not necessarily see it, and what is under test is
     what stable-envs EMITS, not which file descriptor it lands on.
     """
-    from stable_envs._config import logger
+    from stable_envs._core.config import logger
 
     got: list[str] = []
     sink = logger.add(got.append, level="TRACE", filter=lambda r: r["extra"].get("package") == "stable_envs")
@@ -233,6 +233,6 @@ def test_testing_harness_asks_has_dynamics_not_hasattr_step():
     offenders = [
         str(p.relative_to(root.parent))
         for p in root.rglob("*.py")
-        if p.name != "_dynamics.py" and re.search(r'hasattr\(\s*\w+\s*,\s*"step"\s*\)', p.read_text())
+        if p.name != "dynamics.py" and re.search(r'hasattr\(\s*\w+\s*,\s*"step"\s*\)', p.read_text())
     ]
     assert offenders == [], offenders

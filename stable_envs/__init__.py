@@ -4,7 +4,7 @@ from typing import Any
 
 from . import registry as _registry
 from .__about__ import __version__  # noqa: F401
-from ._config import get_config, set  # noqa: A004,F401
+from ._core.config import get_config, set  # noqa: A004,F401
 from .env import Env, State, StepResult, VariationLike  # noqa: F401
 from .registry import import_errors, info, list_envs, list_families  # noqa: F401
 from .registry import make as _make

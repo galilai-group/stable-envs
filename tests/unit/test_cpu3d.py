@@ -12,7 +12,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from stable_envs._mujoco_gl import configure_mujoco_gl
+from stable_envs._core.mujoco_gl import configure_mujoco_gl
 
 configure_mujoco_gl()
 

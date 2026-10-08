@@ -101,7 +101,7 @@ def main():
     import_source(args.source_root)
     files = [
         Path(__file__).relative_to(Path.cwd()),
-        Path("stable_envs/_stepping.py"),
+        Path("stable_envs/_core/stepping.py"),
         Path("stable_envs/env.py"),
         Path("stable_envs/_adapters/process_requests.py"),
         *Path("stable_envs/envs/dmcontrol").glob("*.py"),

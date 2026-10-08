@@ -4,7 +4,7 @@ import importlib
 import pkgutil
 from typing import Any
 
-from ._config import log as _log
+from ._core.config import log as _log
 from .env import (
     FIDELITY_TIERS,
     MEASURED_WITH_KEY,
@@ -289,7 +289,7 @@ def discover(force: bool = False) -> dict[str, str]:
     global _DISCOVERED
     if _DISCOVERED and not force:
         return dict(_IMPORT_ERRORS)
-    from ._mujoco_gl import configure_mujoco_gl
+    from ._core.mujoco_gl import configure_mujoco_gl
 
     configure_mujoco_gl()
     pkg = importlib.import_module("stable_envs.envs")

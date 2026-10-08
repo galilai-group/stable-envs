@@ -216,7 +216,7 @@ Keep:
   `docs/research/` exclude.
 - `pyproject.toml`: any sdist exclude for `docs/research/`.
 - Package text: replace "See docs/research/..." in `humanoidbench.py`, `pgx.py`,
-  `jumanji.py`, `metaworld.py`, `robocasa.py`, `_dynamics.py`, `dmcontrol/_model.py`, and
+  `jumanji.py`, `metaworld.py`, `robocasa.py`, `_core/dynamics.py`, `dmcontrol/_model.py`, and
   the `evidence:` strings in `rocket_landing.py` and `craftax/*.py`, with short inline
   explanations or links to the published docs.
 - `stable_envs/testing/gate.py`: the `__main__` launcher should not read

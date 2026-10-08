@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 import torch
 
-from stable_envs._stepping import step
+from stable_envs._core.stepping import step
 from tests.unit.test_step_capture import Counter, PipelinedCounter
 
 _path = Path(__file__).parents[1] / "helpers/reference/step_capture.py"

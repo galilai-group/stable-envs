@@ -12,7 +12,7 @@ import os
 import sys
 import traceback
 
-from .._mujoco_gl import configure_mujoco_gl
+from .._core.mujoco_gl import configure_mujoco_gl
 
 configure_mujoco_gl()
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
@@ -45,7 +45,7 @@ def sample_inputs(env, n: int):
 
 def rollout_digests(env, n: int) -> dict:
     """Hash a short seeded rollout when the environment supplies private batched dynamics."""
-    from stable_envs._dynamics import has_dynamics
+    from stable_envs._core.dynamics import has_dynamics
 
     if not has_dynamics(env):
         return {}

@@ -31,7 +31,7 @@ import numpy as np
 import pytest
 import torch
 
-from stable_envs._style import StyleTensor
+from stable_envs._core.style import StyleTensor
 from stable_envs.envs.craftax.classic import (
     ATLAS_MAX_TILE_PX,
     N_BLOCK,

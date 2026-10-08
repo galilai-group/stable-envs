@@ -51,7 +51,7 @@ def summarize(results, candidate, source, source_manifest, batches):
         required = {
             "benchmarks/online/fetch_source_pipeline.py",
             "benchmarks/online/fetch_parallel_source.py",
-            "stable_envs/_stepping.py",
+            "stable_envs/_core/stepping.py",
             "stable_envs/_adapters/fetch/process.py",
             "stable_envs/envs/fetch_opengl.py",
         }

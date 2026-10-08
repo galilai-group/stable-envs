@@ -3,11 +3,11 @@ from __future__ import annotations
 import numpy as np
 import torch
 
+from ..._core.plate_texels import substitute as _substitute_texels
+from ..._core.plate_texels import texel_key as _texel_key
+from ..._core.plate_texels import texel_slots as _texel_slots
 from ...render import raycast3d as R3
 from ...spaces import Box, Dict
-from .._plate_texels import substitute as _substitute_texels
-from .._plate_texels import texel_key as _texel_key
-from .._plate_texels import texel_slots as _texel_slots
 from ._model import (
     _GRID_SLOTS,
     _SCENE_CACHE,

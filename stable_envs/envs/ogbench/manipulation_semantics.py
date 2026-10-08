@@ -5,7 +5,7 @@ import torch
 from tensordict import TensorDict
 
 from ..._adapters import StepPipeline, step_pipeline
-from ..._style import StyleTensor
+from ..._core.style import StyleTensor
 from ...env import Env
 from ...specs import CompositeSpec, Spec
 

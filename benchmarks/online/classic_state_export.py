@@ -95,7 +95,7 @@ def main():
                 Path("stable_envs/envs/_classic_semantics.py"),
                 Path("stable_envs/envs/classic_control.py"),
                 Path("stable_envs/_adapters/state_columns.py"),
-                Path("stable_envs/_stepping.py"),
+                Path("stable_envs/_core/stepping.py"),
             ]
         },
         script_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),

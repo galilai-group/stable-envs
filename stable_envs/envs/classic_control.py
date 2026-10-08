@@ -6,12 +6,12 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .._core import stepgraph as _stepgraph
 from ..env import Env
 from ..registry import register
 from ..render import _resources as _RES
 from ..render import gfxdraw as G
 from ..spaces import Dict, Discrete, RGBBox
-from . import _stepgraph
 from ._classic_semantics import ClassicControlSemantics
 
 WHITE = (255, 255, 255)

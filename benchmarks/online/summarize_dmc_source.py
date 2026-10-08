@@ -62,7 +62,7 @@ def summarize(results, source, source_root, source_manifest, batches):
             "benchmarks/online/dmc_parallel_source.py",
             "benchmarks/online/classic_parallel_source.py",
             "benchmarks/online/common.py",
-            "stable_envs/_stepping.py",
+            "stable_envs/_core/stepping.py",
             "stable_envs/env.py",
         }
         assert required <= set(report["candidate_files"])

@@ -1,4 +1,4 @@
-# `stable_envs._style`
+# `stable_envs._core.style`
 
 Developer / internal. A `StyleTensor` is the compiled form of Variation: one flat
 `(B, variation_dim)` float32 tensor plus the layout that says which columns are
@@ -9,4 +9,4 @@ This module records **the batch rule** — the single operation that is allowed 
 compiled row's batch, and the three shipped defects that existed because that operation
 was open-coded at each call site.
 
-::: stable_envs._style
+::: stable_envs._core.style

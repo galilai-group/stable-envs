@@ -17,7 +17,7 @@ import os
 import numpy as np
 import torch
 
-from .._mujoco_gl import configure_mujoco_gl
+from .._core.mujoco_gl import configure_mujoco_gl
 
 configure_mujoco_gl()
 

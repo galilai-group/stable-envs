@@ -800,7 +800,7 @@ def check_step_matches_reference(
     sim_state/set_sim_state when supplied, otherwise private render-row hooks.
     This fallback cannot establish complete simulator State parity.
     """
-    from stable_envs._dynamics import has_dynamics
+    from stable_envs._core.dynamics import has_dynamics
 
     cls = type(env)
     if not has_dynamics(env):

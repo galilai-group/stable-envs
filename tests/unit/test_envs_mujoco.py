@@ -37,7 +37,7 @@ pytest.importorskip("tensordict")
 
 import torch
 
-from stable_envs import _dynamics as D
+from stable_envs._core import dynamics as D
 from stable_envs.registry import REGISTRY
 
 pytestmark = pytest.mark.unit

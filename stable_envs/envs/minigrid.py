@@ -6,11 +6,11 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .._core import stepgraph as _stepgraph
 from ..env import Env
 from ..registry import register
 from ..render import tilemap as tm
 from ..spaces import Box, Dict, Discrete, RGBBox
-from . import _stepgraph
 
 VIEW_SIZE = 7  #: agent_view_size; 7 for every registered MiniGrid/BabyAI env
 WALL_CODE = (tm.T_WALL, tm.C_GREY, 0)  #: Grid.slice pads out-of-bounds with a grey Wall()

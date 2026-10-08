@@ -25,7 +25,7 @@ import pytest
 import torch
 
 import stable_envs as snv
-from stable_envs import _dynamics as dynamics
+from stable_envs._core import dynamics
 from stable_envs.envs import rocket_landing as RL
 from stable_envs.envs.craftax import classic as craftax
 from stable_envs.envs.craftax import full as _craftax_full

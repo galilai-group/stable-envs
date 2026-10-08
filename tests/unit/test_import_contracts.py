@@ -9,7 +9,15 @@ pytestmark = pytest.mark.unit
 
 ROOT = Path(__file__).resolve().parents[2]
 PKG = ROOT / "stable_envs"
-CORE = ["env.py", "_dynamics.py", "specs.py", "registry.py", "_config.py", "_style.py", "_mujoco_gl.py"]
+CORE = [
+    "env.py",
+    "_core/dynamics.py",
+    "specs.py",
+    "registry.py",
+    "_core/config.py",
+    "_core/style.py",
+    "_core/mujoco_gl.py",
+]
 
 
 def _imports(path: Path, top_level_only: bool) -> list[str]:
@@ -106,15 +114,15 @@ def test_runtime_identifiers_do_not_embed_source_adapter_names():
 
 
 def test_the_core_modules_have_no_cycle_among_themselves():
-    """``env`` may import ``_dynamics``; ``_dynamics`` may not import ``env``."""
+    """``env`` may import ``_core.dynamics``; ``_core.dynamics`` may not import ``env``."""
     edges = {
         name: {m for m in _imports(PKG / name, top_level_only=True) if m.startswith("stable_envs.")} for name in CORE
     }
-    assert "stable_envs.env" not in edges["_dynamics.py"], (
+    assert "stable_envs.env" not in edges["_core/dynamics.py"], (
         "dynamics must not import env: env imports dynamics, and the reverse arrow is how the pair "
         "becomes unimportable in the wrong order. Env sets `_se_dynamics_base` on itself instead."
     )
-    assert not (edges["specs.py"] | edges["_config.py"]) & {"stable_envs.env", "stable_envs.registry"}
+    assert not (edges["specs.py"] | edges["_core/config.py"]) & {"stable_envs.env", "stable_envs.registry"}
 
 
 def test_the_package_imports_with_no_environment_family_available(tmp_path):
@@ -163,7 +171,7 @@ def test_dm_control_import_does_not_hang_after_gl_configure():
 
     pytest.importorskip("dm_control")
     code = (
-        "from stable_envs._mujoco_gl import configure_mujoco_gl; "
+        "from stable_envs._core.mujoco_gl import configure_mujoco_gl; "
         "configure_mujoco_gl(); "
         "from dm_control import mujoco as dm_mujoco; "
         "dm_mujoco.Physics.from_xml_string('<mujoco/>'); "

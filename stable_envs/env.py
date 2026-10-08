@@ -26,9 +26,9 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from . import _dynamics
-from ._config import get_config as _get_config
-from ._style import StyleTensor
+from ._core import dynamics as _dynamics
+from ._core.config import get_config as _get_config
+from ._core.style import StyleTensor
 from .spaces import Dict as VariationDict
 from .specs import CompositeSpec, Spec
 
@@ -929,7 +929,7 @@ class Env:
         ``valid``, ``state_valid``, and ``frame_valid`` mark executed transitions;
         task outputs at unexecuted slots are zero.
         """
-        from ._stepping import step
+        from ._core.stepping import step
 
         return step(self, actions, states=states, frames=frames)
 

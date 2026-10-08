@@ -7,7 +7,7 @@ import torch
 from tensordict import TensorDict
 
 from .._adapters.rocket.adapter import RocketAdapter
-from .._style import StyleTensor
+from .._core.style import StyleTensor
 from ..env import Env
 from ..registry import REGISTRY, register
 from ..specs import CompositeSpec, Spec

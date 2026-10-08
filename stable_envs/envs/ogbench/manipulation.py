@@ -14,15 +14,15 @@ import copy
 import numpy as np
 import torch
 
+from ..._core.plate_texels import quantise as _quantise
+from ..._core.plate_texels import substitute as _substitute
+from ..._core.plate_texels import texel_key as _texel_key
+from ..._core.plate_texels import texel_slots as _texel_slots
 from ...env import Env
 from ...registry import register
 from ...render import _resources as _RES
 from ...render import mjwarp as MW
 from ...spaces import Box, Dict
-from .._plate_texels import quantise as _quantise
-from .._plate_texels import substitute as _substitute
-from .._plate_texels import texel_key as _texel_key
-from .._plate_texels import texel_slots as _texel_slots
 
 #: Groups ``mujoco.Renderer`` draws at the env's own ``MjvOption`` (``geomgroup = [1,1,1,0,0,0]``).
 VISIBLE_GROUPS = (0, 1, 2)

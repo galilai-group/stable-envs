@@ -22,7 +22,7 @@ def synthetic(tmp_path):
     for f in ("benchmarks/online/dmc_source_pipeline.py",
               "benchmarks/online/dmc_parallel_source.py",
               "benchmarks/online/classic_parallel_source.py",
-              "benchmarks/online/common.py", "stable_envs/_stepping.py", "stable_envs/env.py"):
+              "benchmarks/online/common.py", "stable_envs/_core/stepping.py", "stable_envs/env.py"):
         path = source / f
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("synthetic fixture, not benchmark evidence")
