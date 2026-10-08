@@ -22,7 +22,7 @@ def main():
     if args.registration not in names:
         p.error('Require an exact Fetch registration')
     args.output.mkdir(parents=True, exist_ok=False)
-    common = [sys.executable, 'scripts/benchmarks/online_stepping/dmc_state_export_oscar.py',
+    common = [sys.executable, 'benchmarks/online/dmc_state_export_oscar.py',
               '--domain', args.registration, '--source-root', str(args.source_root.resolve()),
               '--source-manifest', str(args.source_manifest.resolve())]
     image_args = []

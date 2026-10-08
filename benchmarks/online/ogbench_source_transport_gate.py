@@ -14,8 +14,8 @@ from unittest.mock import patch
 import numpy as np
 import torch
 
-from scripts.benchmarks.online_stepping.ogbench_parallel_source import OGBSource, ParallelOGBSource
-from scripts.benchmarks.renderer_table.common import PIN
+from benchmarks.online.common import PIN
+from benchmarks.online.ogbench_parallel_source import OGBSource, ParallelOGBSource
 
 
 def equal(a, b):
@@ -53,9 +53,9 @@ def main():
     frame_indices = () if args.empty_frames else None
     torch.set_num_threads(1)
     files = [Path(__file__).relative_to(Path.cwd()),
-             Path("scripts/benchmarks/online_stepping/ogbench_parallel_source.py"),
-             Path("scripts/benchmarks/online_stepping/ogbench_source_prerequisite.py"),
-             Path("scripts/benchmarks/online_stepping/classic_parallel_source.py"),
+             Path("benchmarks/online/ogbench_parallel_source.py"),
+             Path("benchmarks/online/ogbench_source_prerequisite.py"),
+             Path("benchmarks/online/classic_parallel_source.py"),
              Path("tests/helpers/reference/ogbench_maze_semantics.py"),
              Path("tests/helpers/reference/ogbench_manipulation_source.py"),
              Path("tests/helpers/reference/ogbench_manipulation_semantics.py")]

@@ -22,7 +22,7 @@ import numpy as np
 import torch
 
 import stable_envs as se
-from scripts.benchmarks.online_stepping.classic_profile import sync
+from benchmarks.online.classic_profile import sync
 from stable_envs.envs._classic_semantics import _PHYSICS_SPACES
 from tests.helpers.reference.classic_state_export import classic_state
 

@@ -21,15 +21,15 @@ import numpy as np
 import torch
 
 import stable_envs as se
-from scripts.benchmarks.online_stepping.classic_source_pipeline import image_errors
-from scripts.benchmarks.online_stepping.navigation_parallel_source import (
+from benchmarks.online.classic_source_pipeline import image_errors
+from benchmarks.online.common import PIN, equal_state
+from benchmarks.online.navigation_parallel_source import (
     NAMES,
     ParallelNavigationSource,
     import_source,
     source,
     source_step,
 )
-from scripts.benchmarks.renderer_table.common import PIN, equal_state
 
 
 def main():
@@ -58,10 +58,10 @@ def main():
         assert hashlib.sha256((args.source_root / rel).read_bytes()).hexdigest() == digest, rel
     import_source(args.source_root)
     paths = [Path(__file__).relative_to(Path.cwd()),
-             Path("scripts/benchmarks/online_stepping/navigation_parallel_source.py"),
-             Path("scripts/benchmarks/online_stepping/classic_parallel_source.py"),
-             Path("scripts/benchmarks/online_stepping/classic_source_pipeline.py"),
-             Path("scripts/benchmarks/renderer_table/common.py"),
+             Path("benchmarks/online/navigation_parallel_source.py"),
+             Path("benchmarks/online/classic_parallel_source.py"),
+             Path("benchmarks/online/classic_source_pipeline.py"),
+             Path("benchmarks/online/common.py"),
              Path("tests/helpers/reference/native_navigation_semantics.py"),
              Path("stable_envs/envs/navigation.py"), Path("stable_envs/env.py"),
              Path("stable_envs/_stepping.py")]

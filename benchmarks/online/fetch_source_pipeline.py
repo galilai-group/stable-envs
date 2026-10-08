@@ -22,14 +22,14 @@ from pathlib import Path
 import numpy as np
 import torch
 from tensordict import TensorDict
-from tests.helpers.reference.fetch_semantics import source_state
 
 import stable_envs as se
-from scripts.benchmarks.online_stepping.dmc_source_pipeline import require_gl, task_hash
-from scripts.benchmarks.online_stepping.fetch_parallel_source import FetchSource, ParallelFetchSource, import_source
-from scripts.benchmarks.online_stepping.fetch_source_frame_gate import compare
-from scripts.benchmarks.online_stepping.fetch_source_transport_gate import tasks
-from scripts.benchmarks.renderer_table.common import equal_state, state_hash
+from benchmarks.online.common import equal_state, state_hash
+from benchmarks.online.dmc_source_pipeline import require_gl, task_hash
+from benchmarks.online.fetch_parallel_source import FetchSource, ParallelFetchSource, import_source
+from benchmarks.online.fetch_source_frame_gate import compare
+from benchmarks.online.fetch_source_transport_gate import tasks
+from tests.helpers.reference.fetch_semantics import source_state
 
 MODES = ('source_serial', 'source_parallel', 'ours')
 REGISTRATIONS = [f'swm/Fetch{task}{suffix}-v3' for task in ('Reach', 'Push', 'Slide', 'PickAndPlace')
@@ -50,8 +50,8 @@ def require_image_gate(path, registration, device, source_manifest, *, candidate
     assert gate['source_pin'] == source_manifest['commit'] and gate['source_files'] == source_manifest['files']
     assert gate['batch'] == 4 and gate['source_workers'] == [1, 2]
     assert gate['source_internal_size'] == 480 and gate['output_size'] == 64
-    required = {'scripts/benchmarks/online_stepping/fetch_source_frame_gate.py',
-                'scripts/benchmarks/online_stepping/fetch_parallel_source.py'}
+    required = {'benchmarks/online/fetch_source_frame_gate.py',
+                'benchmarks/online/fetch_parallel_source.py'}
     assert required <= gate['candidate_files'].keys()
     assert set(gate['versions']) == {'numpy', 'mujoco', 'gymnasium', 'gymnasium-robotics', 'torch', 'tensordict'}
     for rel, digest in gate['candidate_files'].items():
@@ -117,8 +117,8 @@ def main():
     if args.output.exists():
         raise FileExistsError(args.output)
     import_source(args.source_root)
-    from scripts.benchmarks.online_stepping.fetch_source_render_lifecycle import PIN, differences
-    from scripts.recovery.fetch_public_gate import full_compare
+    from benchmarks.online.fetch_source_render_lifecycle import PIN, differences
+    from tests.helpers.reference.fetch_compare import full_compare
 
     assert importlib.metadata.version('mujoco') == '3.11.0'
     manifest = json.loads(args.source_manifest.read_text())
@@ -130,12 +130,12 @@ def main():
     torch.set_num_threads(8 if device == 'cpu' else 1)
     if device == 'cuda':
         assert '3090' in torch.cuda.get_device_name()
-    files = [*Path('scripts/benchmarks/online_stepping').glob('fetch*source*.py'),
-             Path('scripts/benchmarks/online_stepping/classic_parallel_source.py'),
-             Path('scripts/benchmarks/online_stepping/classic_source_pipeline.py'),
-             Path('scripts/benchmarks/online_stepping/dmc_source_pipeline.py'),
-             Path('scripts/benchmarks/renderer_table/common.py'),
-             Path('tests/helpers/reference/fetch_semantics.py'), Path('scripts/recovery/fetch_public_gate.py'), Path('scripts/recovery/fetch_pickandplace_adapter_probe.py'),
+    files = [*Path('benchmarks/online').glob('fetch*source*.py'),
+             Path('benchmarks/online/classic_parallel_source.py'),
+             Path('benchmarks/online/classic_source_pipeline.py'),
+             Path('benchmarks/online/dmc_source_pipeline.py'),
+             Path('benchmarks/online/common.py'),
+             Path('tests/helpers/reference/fetch_semantics.py'), Path('tests/helpers/reference/fetch_compare.py'),
              *Path('stable_envs').rglob('*.py')]
     report = dict(status='RUNNING', registration=args.registration, mode=args.mode, device=device,
         host=platform.node(), job=os.environ['SLURM_JOB_ID'], pid=os.getpid(), affinity=affinity,

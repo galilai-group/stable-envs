@@ -21,9 +21,9 @@ import numpy as np
 import torch
 
 import stable_envs as se
-from scripts.benchmarks.online_stepping.ogbench_parallel_source import OGBSource, ParallelOGBSource
-from scripts.benchmarks.online_stepping.ogbench_source_transport_gate import equal
-from scripts.benchmarks.renderer_table.common import PIN, equal_state
+from benchmarks.online.common import PIN, equal_state
+from benchmarks.online.ogbench_parallel_source import OGBSource, ParallelOGBSource
+from benchmarks.online.ogbench_source_transport_gate import equal
 from stable_envs._adapters.ogbench import OGBMazeAdapter
 from stable_envs._adapters.ogbench_manipulation import OGBManipulationAdapter
 from stable_envs._stepping import step as dispatch_step
@@ -92,10 +92,10 @@ def main():
         assert hashlib.sha256((args.source_root / rel).read_bytes()).hexdigest() == digest, rel
     torch.set_num_threads(1)
     paths = [Path(__file__).relative_to(Path.cwd()),
-             Path("scripts/benchmarks/online_stepping/ogbench_parallel_source.py"),
-             Path("scripts/benchmarks/online_stepping/ogbench_source_prerequisite.py"),
-             Path("scripts/benchmarks/online_stepping/ogbench_source_transport_gate.py"),
-             Path("scripts/benchmarks/online_stepping/classic_parallel_source.py"),
+             Path("benchmarks/online/ogbench_parallel_source.py"),
+             Path("benchmarks/online/ogbench_source_prerequisite.py"),
+             Path("benchmarks/online/ogbench_source_transport_gate.py"),
+             Path("benchmarks/online/classic_parallel_source.py"),
              Path("tests/helpers/reference/ogbench_maze_semantics.py"),
              Path("tests/helpers/reference/ogbench_manipulation_semantics.py"),
              Path("tests/helpers/reference/ogbench_manipulation_source.py"),

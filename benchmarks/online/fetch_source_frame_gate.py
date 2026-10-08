@@ -22,10 +22,10 @@ import numpy as np
 import torch
 
 import stable_envs as se
-from scripts.benchmarks.online_stepping.classic_source_pipeline import image_errors
-from scripts.benchmarks.online_stepping.dmc_source_pipeline import require_gl
-from scripts.benchmarks.online_stepping.fetch_parallel_source import FetchSource, ParallelFetchSource, import_source
-from scripts.benchmarks.online_stepping.fetch_source_transport_gate import tasks
+from benchmarks.online.classic_source_pipeline import image_errors
+from benchmarks.online.dmc_source_pipeline import require_gl
+from benchmarks.online.fetch_parallel_source import FetchSource, ParallelFetchSource, import_source
+from benchmarks.online.fetch_source_transport_gate import tasks
 
 REGISTRATIONS = [f'swm/Fetch{task}{suffix}-v3' for task in ('Reach', 'Push', 'Slide') for suffix in ('', 'Dense', 'Dict')]
 
@@ -57,8 +57,8 @@ def main():
     if args.output.exists():
         raise FileExistsError(args.output)
     import_source(args.source_root)
-    from scripts.benchmarks.online_stepping.fetch_source_render_lifecycle import PIN, differences
-    from scripts.recovery.fetch_public_gate import equal_state, full_compare
+    from benchmarks.online.fetch_source_render_lifecycle import PIN, differences
+    from tests.helpers.reference.fetch_compare import equal_state, full_compare
 
     assert mujoco.__version__ == '3.11.0'
     manifest = json.loads(args.source_manifest.read_text())
@@ -70,11 +70,11 @@ def main():
     if device == 'cuda':
         assert '3090' in torch.cuda.get_device_name()
     files = [Path(__file__).relative_to(Path.cwd()),
-             *Path('scripts/benchmarks/online_stepping').glob('fetch*source*.py'),
-             Path('scripts/benchmarks/online_stepping/classic_parallel_source.py'),
-             Path('scripts/benchmarks/online_stepping/classic_source_pipeline.py'),
-             Path('scripts/benchmarks/online_stepping/dmc_source_pipeline.py'),
-             Path('tests/helpers/reference/fetch_semantics.py'), Path('scripts/recovery/fetch_public_gate.py'), Path('scripts/recovery/fetch_pickandplace_adapter_probe.py'),
+             *Path('benchmarks/online').glob('fetch*source*.py'),
+             Path('benchmarks/online/classic_parallel_source.py'),
+             Path('benchmarks/online/classic_source_pipeline.py'),
+             Path('benchmarks/online/dmc_source_pipeline.py'),
+             Path('tests/helpers/reference/fetch_semantics.py'), Path('tests/helpers/reference/fetch_compare.py'),
              *Path('stable_envs').rglob('*.py')]
     report = dict(status='RUNNING', registration=registration, device=device, batch=4, source_workers=[1, 2],
         host=platform.node(), job=os.environ['SLURM_JOB_ID'], pid=os.getpid(), affinity=sorted(os.sched_getaffinity(0)),

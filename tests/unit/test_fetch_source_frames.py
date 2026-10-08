@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from scripts.benchmarks.online_stepping.fetch_parallel_source import FetchSource, ParallelFetchSource
+from benchmarks.online.fetch_parallel_source import FetchSource, ParallelFetchSource
 
 
 class World:
@@ -95,7 +95,7 @@ def test_no_hidden_cast_or_resize(value):
 def test_gate_rejects_one_bad_frame_despite_low_average():
     import torch
 
-    from scripts.benchmarks.online_stepping.fetch_source_frame_gate import compare
+    from benchmarks.online.fetch_source_frame_gate import compare
 
     source = torch.zeros((4, 8, 2, 2, 3), dtype=torch.uint8)
     candidate = source.clone()
@@ -115,7 +115,7 @@ def test_gate_rejects_one_bad_frame_despite_low_average():
 def test_image_gate_rejects_wrong_contract(defect):
     import torch
 
-    from scripts.benchmarks.online_stepping.fetch_source_frame_gate import compare
+    from benchmarks.online.fetch_source_frame_gate import compare
 
     expected = {'frames': torch.zeros((2, 1, 2, 2, 3), dtype=torch.uint8), 'reward': torch.zeros(2, 1)}
     actual = {k: v.clone() for k, v in expected.items()}
@@ -136,7 +136,7 @@ def test_normalize_tasks_preserves_selection_axes(horizon, count):
     import torch
     from tensordict import TensorDict
 
-    from scripts.benchmarks.online_stepping.fetch_source_transport_gate import tasks
+    from benchmarks.online.fetch_source_transport_gate import tasks
 
     result = TensorDict({
         'reward': torch.zeros((2,) if horizon == 1 else (2, horizon)),
@@ -159,7 +159,7 @@ def test_normalize_tasks_preserves_selection_axes(horizon, count):
 def test_coordinator_rejects_incompatible_options_before_launch(extra, monkeypatch, tmp_path):
     import sys
 
-    from scripts.benchmarks.online_stepping import dmc_state_export_oscar as coordinator
+    from benchmarks.online import dmc_state_export_oscar as coordinator
 
     def forbidden(*args, **kwargs):
         raise AssertionError('Must validate before launching any child')

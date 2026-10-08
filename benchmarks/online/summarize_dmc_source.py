@@ -48,10 +48,10 @@ def summarize(results, source, source_root, source_manifest, batches):
         seen_pids.add(report["pid"])
         assert report["source_pin"] == manifest["commit"] and report["source_files"] == manifest["files"]
         assert set(report["versions"]) == {"torch", "numpy", "gymnasium", "mujoco", "dm-control", "tensordict", "mujoco-warp", "warp-lang"}
-        required = {"scripts/benchmarks/online_stepping/dmc_source_pipeline.py",
-                    "scripts/benchmarks/online_stepping/dmc_parallel_source.py",
-                    "scripts/benchmarks/online_stepping/classic_parallel_source.py",
-                    "scripts/benchmarks/renderer_table/common.py", "stable_envs/_stepping.py", "stable_envs/env.py"}
+        required = {"benchmarks/online/dmc_source_pipeline.py",
+                    "benchmarks/online/dmc_parallel_source.py",
+                    "benchmarks/online/classic_parallel_source.py",
+                    "benchmarks/online/common.py", "stable_envs/_stepping.py", "stable_envs/env.py"}
         assert required <= set(report["candidate_files"])
         for rel in ("stable_worldmodel/envs/dmcontrol/dmcontrol.py",
                     f"stable_worldmodel/envs/dmcontrol/{report['domain']}.py"):

@@ -32,25 +32,6 @@ def write(path, value):
     path.write_text(json.dumps(value, indent=2, allow_nan=False, default=lambda x: array(x).tolist()) + "\n")
 
 
-def catalog():
-    matrix = json.loads((ROOT / "tests/fixtures/semantic_recovery_matrix.json").read_text())["rows"]
-    mapping = {
-        r["historical_id"]: r
-        for r in json.loads((ROOT / "docs/research/semantic_recovery_implementation_map.json").read_text())["rows"]
-    }
-    return {
-        r["historical_id"]: dict(
-            registration=r["historical_id"],
-            status=r["state_status"],
-            family=r["family"],
-            name=(
-                mapping[r["historical_id"]].get("accepted_classes")
-                or mapping[r["historical_id"]]["stable_envs_classes"]
-            )[0],
-        )
-        for r in matrix
-    }
-
 
 def array(value):
     if isinstance(value, torch.Tensor):

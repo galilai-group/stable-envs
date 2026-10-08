@@ -17,7 +17,7 @@ import gymnasium as gym
 import numpy as np
 import torch
 
-from scripts.benchmarks.online_stepping.classic_parallel_source import ParallelSource, SourceShard
+from benchmarks.online.classic_parallel_source import ParallelSource, SourceShard
 from tests.helpers.reference.native_navigation_semantics import NativeNavigationReference
 
 NAMES = {"two_room": "TwoRoom", "piecewise": "Piecewise", "simple_point_maze": "SimplePointMaze"}

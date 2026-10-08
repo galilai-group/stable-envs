@@ -5,12 +5,12 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from scripts.benchmarks.online_stepping.ogbench_parallel_source import OGBSource
+from benchmarks.online.ogbench_parallel_source import OGBSource
 
 
 @pytest.mark.parametrize('family', ['Cube', 'Scene'])
 def test_known_source_spotlight_error_is_recorded_before_identity(family):
-    from scripts.benchmarks.online_stepping.ogbench_parallel_source import source_gl_identity
+    from benchmarks.online.ogbench_parallel_source import source_gl_identity
 
     errors, calls = iter([1281, 0, 0]), []
     def get_error():
@@ -31,7 +31,7 @@ def test_known_source_spotlight_error_is_recorded_before_identity(family):
 @pytest.mark.parametrize('family,cutoffs,error', [('Maze', [100.], 1281), ('Cube', [45.], 1281),
                                                 ('Scene', [100.], 1280)])
 def test_unexpected_source_gl_error_is_not_suppressed(family, cutoffs, error):
-    from scripts.benchmarks.online_stepping.ogbench_parallel_source import source_gl_identity
+    from benchmarks.online.ogbench_parallel_source import source_gl_identity
 
     errors = iter([error, 0])
     gl = SimpleNamespace(GL_NO_ERROR=0, GL_INVALID_VALUE=1281, glGetError=lambda: next(errors))
@@ -55,7 +55,7 @@ def test_renderer_inspection_error_can_cross_worker_queue():
     import ctypes
     import pickle
 
-    from scripts.benchmarks.online_stepping.ogbench_parallel_source import OGBSourceShard
+    from benchmarks.online.ogbench_parallel_source import OGBSourceShard
 
     native_pointer = ctypes.pointer(ctypes.c_int(7))
 
@@ -192,7 +192,7 @@ def test_public_single_action_keeps_frame_and_validity_time_axes(horizon, count)
     import torch
     from tensordict import TensorDict
 
-    from scripts.benchmarks.online_stepping.ogbench_source_frame_gate import public_tasks
+    from benchmarks.online.ogbench_source_frame_gate import public_tasks
 
     result = TensorDict({
         'reward': torch.zeros((2,) if horizon == 1 else (2, horizon)),
@@ -210,7 +210,7 @@ def test_public_single_action_keeps_frame_and_validity_time_axes(horizon, count)
 
 
 def test_gate_rejects_source_transport_drift_and_excess_library_mse():
-    from scripts.benchmarks.online_stepping.ogbench_source_frame_gate import compare
+    from benchmarks.online.ogbench_source_frame_gate import compare
 
     expected = {'frames': np.zeros((2, 1, 2, 2, 3), np.uint8)}
     small = {'frames': np.ones((2, 1, 2, 2, 3), np.uint8)}
@@ -230,7 +230,7 @@ def test_gate_rejects_source_transport_drift_and_excess_library_mse():
 def test_coordinator_rejects_incomplete_or_misapplied_gate_args(monkeypatch, tmp_path, extra):
     import sys
 
-    from scripts.benchmarks.online_stepping.dmc_state_export_oscar import main
+    from benchmarks.online.dmc_state_export_oscar import main
 
     output = tmp_path / 'must-not-create'
     monkeypatch.setattr(sys, 'argv', ['gate', '--benchmark', 'ogbench_source_frame_gate',

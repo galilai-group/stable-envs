@@ -17,7 +17,7 @@ import numpy as np
 import torch
 from gymnasium.envs.mujoco.mujoco_rendering import MujocoRenderer
 
-from scripts.benchmarks.online_stepping.fetch_parallel_source import FetchSource, ParallelFetchSource, import_source
+from benchmarks.online.fetch_parallel_source import FetchSource, ParallelFetchSource, import_source
 from stable_envs._adapters.fetch_pickandplace import FetchAdapter
 from stable_envs._stepping import step as dispatch_step
 
@@ -58,9 +58,9 @@ def main():
     frame_slice = slice(20, 30) if args.empty_frames else None
     render_size = 64 if args.empty_frames else None
     import_source(args.source_root)
-    from scripts.benchmarks.online_stepping.fetch_source_pipeline import source_state
-    from scripts.benchmarks.online_stepping.fetch_source_render_lifecycle import IDS, PIN, differences
-    from scripts.recovery.fetch_public_gate import equal_state, full_compare
+    from benchmarks.online.fetch_source_pipeline import source_state
+    from benchmarks.online.fetch_source_render_lifecycle import IDS, PIN, differences
+    from tests.helpers.reference.fetch_compare import equal_state, full_compare
 
     manifest = json.loads(args.source_manifest.read_text())
     assert manifest['commit'] == PIN
@@ -69,11 +69,11 @@ def main():
     assert importlib.metadata.version('mujoco') == '3.11.0'
     torch.set_num_threads(1)
     files = [Path(__file__).relative_to(Path.cwd()),
-             Path('scripts/benchmarks/online_stepping/fetch_parallel_source.py'),
-             Path('scripts/benchmarks/online_stepping/fetch_source_pipeline.py'),
-             Path('scripts/benchmarks/online_stepping/fetch_source_render_lifecycle.py'),
-             Path('scripts/benchmarks/online_stepping/classic_parallel_source.py'),
-             Path('tests/helpers/reference/fetch_semantics.py'), Path('scripts/recovery/fetch_public_gate.py'), Path('scripts/recovery/fetch_pickandplace_adapter_probe.py'),
+             Path('benchmarks/online/fetch_parallel_source.py'),
+             Path('benchmarks/online/fetch_source_pipeline.py'),
+             Path('benchmarks/online/fetch_source_render_lifecycle.py'),
+             Path('benchmarks/online/classic_parallel_source.py'),
+             Path('tests/helpers/reference/fetch_semantics.py'), Path('tests/helpers/reference/fetch_compare.py'),
              Path('stable_envs/_stepping.py'), Path('stable_envs/_adapters/fetch_pickandplace.py'),
              Path('stable_envs/_adapters/fetch_observations.py')]
     report = dict(status='RUNNING', host=platform.node(), parent_pid=os.getpid(), source_pin=PIN,

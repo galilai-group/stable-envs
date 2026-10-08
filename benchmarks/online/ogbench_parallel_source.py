@@ -19,8 +19,8 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from scripts.benchmarks.online_stepping.classic_parallel_source import ParallelSource, SourceShard
-from scripts.benchmarks.online_stepping.ogbench_source_prerequisite import import_source, ownership_module
+from benchmarks.online.classic_parallel_source import ParallelSource, SourceShard
+from benchmarks.online.ogbench_source_prerequisite import import_source, ownership_module
 from tests.helpers.reference.ogbench_maze_semantics import OGBMazeReference
 from tests.helpers.reference.ogbench_pixels import source_gl_identity
 
@@ -77,7 +77,7 @@ class OGBSource:
         env = self.envs[lane]
         frame = np.asarray(env.render() if self.family == "Maze" else env.render(camera="front_pixels"))
         if auditing:
-            from scripts.benchmarks.online_stepping.ogbench_source_transport_gate import equal
+            from benchmarks.online.ogbench_source_transport_gate import equal
 
             equal(before, self.snapshot())
             self.render_audit_count += 1

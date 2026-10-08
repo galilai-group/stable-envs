@@ -75,7 +75,7 @@ def main():
                 env.update(MUJOCO_GL="egl", PYOPENGL_PLATFORM="egl")
                 for name in ("LIBGL_ALWAYS_SOFTWARE", "GALLIUM_DRIVER"):
                     env.pop(name, None)
-            command = [sys.executable, f"scripts/benchmarks/online_stepping/{args.benchmark}.py",
+            command = [sys.executable, f"benchmarks/online/{args.benchmark}.py",
                        "--domain", args.domain,
                        "--devices", device, "--verify-gl", "--output", str(args.output / f"{device}.json")]
             if args.benchmark in ("dmc_source_pipeline", "fetch_source_pipeline"):

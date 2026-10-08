@@ -17,15 +17,15 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from scripts.benchmarks.online_stepping.dmc_parallel_source import (
+from benchmarks.online.common import PIN, equal_state
+from benchmarks.online.dmc_parallel_source import (
     NAMES,
     ParallelDMCSource,
     import_source,
     source,
     source_step,
 )
-from scripts.benchmarks.online_stepping.dmc_profile import make as make_adapter
-from scripts.benchmarks.renderer_table.common import PIN, equal_state
+from benchmarks.online.dmc_profile import make as make_adapter
 
 
 def main():
@@ -44,10 +44,10 @@ def main():
     import_source(args.source_root)
     torch.set_num_threads(1)
     files = [Path(__file__).relative_to(Path.cwd()),
-             Path("scripts/benchmarks/online_stepping/dmc_parallel_source.py"),
-             Path("scripts/benchmarks/online_stepping/classic_parallel_source.py"),
-             Path("scripts/benchmarks/renderer_table/common.py"),
-             Path("scripts/benchmarks/online_stepping/dmc_profile.py"),
+             Path("benchmarks/online/dmc_parallel_source.py"),
+             Path("benchmarks/online/classic_parallel_source.py"),
+             Path("benchmarks/online/common.py"),
+             Path("benchmarks/online/dmc_profile.py"),
              *Path("stable_envs/_adapters").glob("dmcontrol*.py"),
              Path("tests/helpers/reference/dmc_semantics.py")]
     report = dict(status="RUNNING", scope="CPU B2/P2 source-transport versus local adapters; no public Env, rendering or timing",

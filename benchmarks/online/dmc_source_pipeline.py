@@ -20,8 +20,9 @@ import numpy as np
 import torch
 
 import stable_envs as se
-from scripts.benchmarks.online_stepping.classic_source_pipeline import image_errors
-from scripts.benchmarks.online_stepping.dmc_parallel_source import (
+from benchmarks.online.classic_source_pipeline import image_errors
+from benchmarks.online.common import PIN, equal_state, state_hash
+from benchmarks.online.dmc_parallel_source import (
     NAMES,
     ParallelDMCSource,
     import_source,
@@ -29,7 +30,6 @@ from scripts.benchmarks.online_stepping.dmc_parallel_source import (
     source,
     source_step,
 )
-from scripts.benchmarks.renderer_table.common import PIN, equal_state, state_hash
 
 MODES = ("source_serial", "source_parallel", "ours")
 
@@ -104,10 +104,10 @@ def main():
              *Path("stable_envs/envs/dmcontrol").glob("*.py"),
              *Path("stable_envs/_adapters").glob("dmcontrol*.py"),
              Path("tests/helpers/reference/dmc_semantics.py"),
-             Path("scripts/benchmarks/online_stepping/dmc_parallel_source.py"),
-             Path("scripts/benchmarks/online_stepping/classic_parallel_source.py"),
-             Path("scripts/benchmarks/online_stepping/classic_source_pipeline.py"),
-             Path("scripts/benchmarks/renderer_table/common.py")]
+             Path("benchmarks/online/dmc_parallel_source.py"),
+             Path("benchmarks/online/classic_parallel_source.py"),
+             Path("benchmarks/online/classic_source_pipeline.py"),
+             Path("benchmarks/online/common.py")]
     versions = {n: importlib.metadata.version(n) for n in
                 ("torch", "numpy", "gymnasium", "mujoco", "dm-control", "tensordict", "mujoco-warp", "warp-lang")}
     report = dict(status="RUNNING", domain=args.domain, mode=args.mode, device=device,

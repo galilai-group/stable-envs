@@ -21,7 +21,7 @@ import mujoco
 import numpy as np
 import torch
 
-from scripts.benchmarks.online_stepping.classic_parallel_source import ParallelSource, SourceShard
+from benchmarks.online.classic_parallel_source import ParallelSource, SourceShard
 
 
 def import_source(root):
@@ -83,7 +83,7 @@ def restore_world(env, state):
 class FetchSource:
     def __init__(self, registration, root, batch, seed=17, *, render_size=None):
         import_source(root)
-        from scripts.benchmarks.online_stepping.fetch_source_render_lifecycle import IDS, snapshot
+        from benchmarks.online.fetch_source_render_lifecycle import IDS, snapshot
 
         if registration not in IDS or type(batch) is not int or batch < 1:
             raise ValueError('Require a supported Fetch registration and positive batch')
@@ -122,7 +122,7 @@ class FetchSource:
         before = self._snapshot(self.envs[lane]) if auditing else None
         frame = np.asarray(self.envs[lane].render())
         if auditing:
-            from scripts.benchmarks.online_stepping.fetch_source_render_lifecycle import differences
+            from benchmarks.online.fetch_source_render_lifecycle import differences
 
             delta = differences(before, self._snapshot(self.envs[lane]))
             assert not delta, ('Source rendering mutated continuation State', delta)

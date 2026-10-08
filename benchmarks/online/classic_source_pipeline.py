@@ -25,8 +25,8 @@ import numpy as np
 import torch
 
 import stable_envs as se
-from scripts.benchmarks.online_stepping.classic_state_export import NAMES, actions_for
-from scripts.benchmarks.renderer_table.common import PIN, equal_state
+from benchmarks.online.classic_state_export import NAMES, actions_for
+from benchmarks.online.common import PIN, equal_state
 from tests.helpers.reference.native_classic_semantics import NativeClassicReference
 
 
@@ -118,8 +118,8 @@ def main():
              Path("stable_envs/envs/classic_control.py"), Path("stable_envs/_stepping.py"),
              *Path("stable_envs/_adapters").glob("*classic*.py"),
              Path("stable_envs/_adapters/acrobot_process.py"), Path("stable_envs/_adapters/process_requests.py"),
-             Path("scripts/benchmarks/online_stepping/classic_state_export.py"),
-             Path("scripts/benchmarks/renderer_table/common.py"),
+             Path("benchmarks/online/classic_state_export.py"),
+             Path("benchmarks/online/common.py"),
              Path("tests/helpers/reference/native_classic_semantics.py")]
     report["candidate_files"] = {str(f): hashlib.sha256(f.read_bytes()).hexdigest() for f in paths}
     args.output.parent.mkdir(parents=True, exist_ok=True)

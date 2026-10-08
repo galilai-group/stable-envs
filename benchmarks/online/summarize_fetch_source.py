@@ -9,8 +9,8 @@ import math
 import statistics
 from pathlib import Path
 
-from scripts.benchmarks.online_stepping.fetch_source_pipeline import MODES, REGISTRATIONS, require_image_gate
-from scripts.benchmarks.online_stepping.summarize_dmc_source import checked_seconds, require_gl
+from benchmarks.online.fetch_source_pipeline import MODES, REGISTRATIONS, require_image_gate
+from benchmarks.online.summarize_dmc_source import checked_seconds, require_gl
 
 
 def summarize(results, candidate, source, source_manifest, batches):
@@ -39,8 +39,8 @@ def summarize(results, candidate, source, source_manifest, batches):
         assert report['source_pin'] == manifest['commit'] and report['source_files'] == manifest['files']
         assert set(report['versions']) == {'numpy', 'mujoco', 'gymnasium', 'gymnasium-robotics', 'torch', 'tensordict'}
         assert report['versions']['mujoco'] == '3.11.0'
-        required = {'scripts/benchmarks/online_stepping/fetch_source_pipeline.py',
-                    'scripts/benchmarks/online_stepping/fetch_parallel_source.py',
+        required = {'benchmarks/online/fetch_source_pipeline.py',
+                    'benchmarks/online/fetch_parallel_source.py',
                     'stable_envs/_stepping.py', 'stable_envs/_adapters/fetch_process.py', 'stable_envs/envs/fetch_opengl.py'}
         assert required <= report['candidate_files'].keys()
         for rel, digest in report['candidate_files'].items():

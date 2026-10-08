@@ -14,13 +14,11 @@ EXCLUDED = frozenset(
     {"swm/CraftaxClassicPixels-v1", "swm/CraftaxClassicSymbolic-v1", "swm/CraftaxPixels-v1", "swm/CraftaxSymbolic-v1"}
 )
 ONLINE = {
-    "classic_control": "scripts/benchmarks/online_stepping/classic_source_pipeline.py",
-    "dmcontrol": "scripts/benchmarks/online_stepping/dmc_source_transport_gate.py",
-    "fetch": "scripts/benchmarks/online_stepping/fetch_source_transport_gate.py",
-    "navigation": "scripts/benchmarks/online_stepping/navigation_source_pipeline.py",
-    "ogbench": "scripts/benchmarks/online_stepping/ogbench_source_transport_gate.py",
-    "pusht": "scripts/research_replay/pusht_public_gate.py",
-    "rocket": "scripts/research_rocket_production/online_source_gate.py",
+    "classic_control": "benchmarks/online/classic_source_pipeline.py",
+    "dmcontrol": "benchmarks/online/dmc_source_transport_gate.py",
+    "fetch": "benchmarks/online/fetch_source_transport_gate.py",
+    "navigation": "benchmarks/online/navigation_source_pipeline.py",
+    "ogbench": "benchmarks/online/ogbench_source_transport_gate.py",
 }
 
 
@@ -35,7 +33,7 @@ def inventory():
         gates = [value.strip() for value in row["test"].split(";")]
         if profiles.get(registration) == "native":
             gates.append("tests/contracts/test_native_acceptance.py")
-        online = [ONLINE[row["family"]]]
+        online = [ONLINE[row["family"]]] if row["family"] in ONLINE else []
         if row["family"] == "rocket":
             online.append("tests/integration/test_rocket_source_pixels.py")
         profile = profiles.get(registration)

@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 import torch
 
-from scripts.benchmarks.online_stepping.fetch_source_pipeline import (
+from benchmarks.online.fetch_source_pipeline import (
     copy_state_to_device,
     require_image_gate,
     source_state,
@@ -40,8 +40,8 @@ def test_source_state_projection_preserves_owned_rng_and_controller_fields():
 def fake_gate():
     software = dict(vendor='Mesa', renderer='llvmpipe', software=True)
     manifest = {'commit': 'synthetic', 'files': {'source.py': 'synthetic'}}
-    files = ['scripts/benchmarks/online_stepping/fetch_source_frame_gate.py',
-             'scripts/benchmarks/online_stepping/fetch_parallel_source.py']
+    files = ['benchmarks/online/fetch_source_frame_gate.py',
+             'benchmarks/online/fetch_parallel_source.py']
     gate = dict(status='PASS', registration='swm/FetchReach-v3', device='cpu', source_pin=manifest['commit'],
         source_files=manifest['files'], batch=4, source_workers=[1, 2], source_internal_size=480, output_size=64,
         candidate_files={f: hashlib.sha256(Path(f).read_bytes()).hexdigest() for f in files},
@@ -113,7 +113,7 @@ def test_coordinator_runs_registration_gate_before_any_rendered_timing(registrat
     import subprocess
     import sys
 
-    from scripts.benchmarks.online_stepping import fetch_source_oscar
+    from benchmarks.online import fetch_source_oscar
 
     launched = []
     def launch(command, *, check):
@@ -141,7 +141,7 @@ def test_coordinator_runs_registration_gate_before_any_rendered_timing(registrat
 @pytest.mark.parametrize('defect', [None, 'host', 'job', 'version', 'duplicate_pid', 'state', 'task',
     'missing_cell', 'missing_component', 'zero_time', 'missing_sample', 'rendered_claim'])
 def test_summary_joins_only_complete_same_device_source_comparisons(defect, tmp_path):
-    from scripts.benchmarks.online_stepping.summarize_fetch_source import summarize
+    from benchmarks.online.summarize_fetch_source import summarize
 
     source = tmp_path/'source'
     source.mkdir()
@@ -154,8 +154,8 @@ def test_summary_joins_only_complete_same_device_source_comparisons(defect, tmp_
                     files={f: hashlib.sha256((source/f).read_bytes()).hexdigest() for f in files})
     manifest_path = tmp_path/'manifest.json'
     manifest_path.write_text(json.dumps(manifest))
-    candidate_files = ['scripts/benchmarks/online_stepping/fetch_source_pipeline.py',
-        'scripts/benchmarks/online_stepping/fetch_parallel_source.py', 'stable_envs/_stepping.py',
+    candidate_files = ['benchmarks/online/fetch_source_pipeline.py',
+        'benchmarks/online/fetch_parallel_source.py', 'stable_envs/_stepping.py',
         'stable_envs/_adapters/fetch_process.py', 'stable_envs/envs/fetch_opengl.py']
     reports = {}
     for i, mode in enumerate(('source_serial', 'source_parallel', 'ours')):

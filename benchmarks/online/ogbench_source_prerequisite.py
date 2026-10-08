@@ -22,7 +22,7 @@ from unittest.mock import patch
 import numpy as np
 import torch
 
-from scripts.benchmarks.renderer_table.common import PIN, equal_state
+from benchmarks.online.common import PIN, equal_state
 from stable_envs._adapters.ogbench import OGBMazeAdapter
 from stable_envs._adapters.ogbench_manipulation import OGBManipulationAdapter
 from tests.helpers.reference.ogbench_manipulation_semantics import assert_oracle, load_oracle
@@ -74,7 +74,7 @@ def main():
     module = ownership_module()
     torch.set_num_threads(1)
     paths = [Path(__file__).relative_to(Path.cwd()),
-             Path("scripts/benchmarks/renderer_table/common.py"),
+             Path("benchmarks/online/common.py"),
              Path("tests/helpers/reference/ogbench_maze_semantics.py"),
              Path("tests/helpers/reference/ogbench_manipulation_semantics.py"),
              Path("tests/helpers/reference/ogbench_manipulation_source.py"),

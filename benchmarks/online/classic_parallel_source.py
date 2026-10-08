@@ -15,7 +15,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from scripts.benchmarks.online_stepping.classic_source_pipeline import import_source, source
+from benchmarks.online.classic_source_pipeline import import_source, source
 
 
 def step_arrays(ref, actions, frame_indices):

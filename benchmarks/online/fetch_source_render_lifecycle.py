@@ -23,7 +23,8 @@ import numpy as np
 import stable_worldmodel
 import stable_worldmodel.envs  # noqa: F401
 from gymnasium.envs.mujoco.mujoco_rendering import MujocoRenderer
-from tests.helpers.reference.fetch_semantics import snapshot, differences
+
+from tests.helpers.reference.fetch_semantics import differences, snapshot
 
 PIN = '176d54532b3c0a251a4f509b74f2fdacc143a63d'
 IDS = [f'swm/Fetch{task}{suffix}-v3' for task in ('Reach', 'Push', 'Slide', 'PickAndPlace')
