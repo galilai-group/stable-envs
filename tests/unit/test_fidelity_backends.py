@@ -1,11 +1,40 @@
 """Supplied-state, batch, nonmutation and validation checks for explicit GL paths."""
 
+import hashlib
+import json
 import os
 
+import numpy as np
 import pytest
 import torch
+from tensordict import TensorDict
 
-from scripts.benchmarks.renderer_table.common import public_render, state_hash
+
+def _array(value):
+    return value.detach().cpu().numpy() if isinstance(value, torch.Tensor) else np.asarray(value)
+
+
+def _array_hash(value):
+    a = np.ascontiguousarray(_array(value))
+    h = hashlib.sha256()
+    h.update(json.dumps([a.dtype.str, list(a.shape)], separators=(",", ":")).encode())
+    h.update(a.tobytes())
+    return h.hexdigest()
+
+
+def state_hash(state):
+    """Digest of every leaf's dtype, shape and bytes, keyed by path."""
+    if isinstance(state, TensorDict):
+        state = {"/".join(k if isinstance(k, tuple) else (k,)): v for k, v in state.items(True, True)}
+    return hashlib.sha256(
+        json.dumps({k: _array_hash(v) for k, v in sorted(state.items())}, sort_keys=True).encode()
+    ).hexdigest()
+
+
+def public_render(env, state, **kwargs):
+    if hasattr(env, "to_render_state"):
+        return env.render(env.to_render_state(state), **kwargs)
+    return env.render(state, **kwargs)
 
 
 @pytest.mark.parametrize("name", ["OGBCube", "OGBScene", "DMCWalkerWalk", "FetchPush", "FetchReach"])
