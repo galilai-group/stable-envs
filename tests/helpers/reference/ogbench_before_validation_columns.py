@@ -10,7 +10,13 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from stable_envs._adapters.ogbench.compatibility import CUBE_SAMPLES, MODEL_VALUES, CompatibleCube, CompatibleScene, nodes
+from stable_envs._adapters.ogbench.compatibility import (
+    CUBE_SAMPLES,
+    MODEL_VALUES,
+    CompatibleCube,
+    CompatibleScene,
+    nodes,
+)
 from stable_envs._adapters.state_columns import owned_columns
 
 PARTS = (
