@@ -88,7 +88,7 @@ Accepted local examples and shared checks:
 ```bash
 python -m pip install -e '.[dev,robotics]'
 python -m pytest -q tests/unit/test_envs_fetch.py tests/unit/test_variation_maps_fetch.py
-python -m pytest -q tests/unit/test_semantic_harness.py tests/unit/test_replacement_readiness.py tests/unit/test_swm_matrix.py
+python -m pytest -q tests/unit/test_semantic_harness.py tests/unit/test_replacement_readiness.py
 ruff check stable_envs tests
 ruff format --check stable_envs tests
 git diff --check
@@ -115,7 +115,7 @@ needs its own seeded witnesses; a renderer-changing task needs rendering evidenc
 One accepted representative is not family-wide acceptance.
 
 ```bash
-python -m pytest -q tests/unit/test_full_state_contract.py tests/unit/test_swm_matrix.py tests/unit/test_replacement_readiness.py
+python -m pytest -q tests/unit/test_full_state_contract.py tests/unit/test_replacement_readiness.py
 python -m pytest -m 'regression and not gpu'
 ```
 

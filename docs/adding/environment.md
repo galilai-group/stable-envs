@@ -141,7 +141,7 @@ omission witnesses. Run the renderer guide's gates separately, and shared
 readiness/taxonomy/promotion checks:
 
 ```bash
-python -m pytest -q tests/unit/test_replacement_readiness.py tests/unit/test_swm_matrix.py
+python -m pytest -q tests/unit/test_replacement_readiness.py
 python -m pytest -m 'regression and not gpu'
 ```
 

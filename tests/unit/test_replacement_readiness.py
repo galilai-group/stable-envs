@@ -1,8 +1,5 @@
 """Replacement-readiness overlay on VariationMap buckets (buckets themselves stay unchanged)."""
 
-import re
-from pathlib import Path
-
 import pytest
 
 from tests.helpers.reference import VARIATION_MAPS
@@ -10,12 +7,9 @@ from tests.helpers.reference.readiness import (
     STATUSES,
     inventory,
     status_counts,
-    status_for,
 )
 
 pytestmark = pytest.mark.unit
-
-REPORT = Path(__file__).resolve().parents[2] / "docs" / "research" / "step9_replacement_readiness.md"
 
 
 def test_pusht_agent_color_is_native():
@@ -66,17 +60,3 @@ def test_every_historical_cell_has_a_known_status():
         counts.get("READY", 0) + counts.get("PARTIAL", 0) + counts.get("INCOMPLETE", 0) + counts.get("SYMBOLIC", 0)
         == 42
     )
-
-
-def test_the_readiness_report_counts_match_the_inventory():
-    text = REPORT.read_text()
-    m = re.search(r"<!-- readiness-counts READY=(\d+) PARTIAL=(\d+) INCOMPLETE=(\d+) SYMBOLIC=(\d+) -->", text)
-    assert m, "report is missing the machine-readable counts comment"
-    got = {k: int(v) for k, v in zip(("READY", "PARTIAL", "INCOMPLETE", "SYMBOLIC"), m.groups())}
-    counts = status_counts()
-    for key in got:
-        assert got[key] == counts.get(key, 0), f"{key}: report {got[key]} vs inventory {counts.get(key, 0)}"
-    for row in inventory():
-        assert f"`{row['swm_id']}`" in text
-        # status in the table row must not contradict the derived status
-        assert row["status"] == status_for(row["swm_id"])

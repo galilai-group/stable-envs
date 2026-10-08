@@ -67,7 +67,6 @@ _MAINTAINED = (
 )
 _ALLOW_SCRATCH_MENTION = {
     "tests/unit/test_repo_contracts.py",
-    "tests/regression/test_report_generator.py",
     "tests/packaging/test_distribution.py",
 }
 

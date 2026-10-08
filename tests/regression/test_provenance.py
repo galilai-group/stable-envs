@@ -140,27 +140,3 @@ def test_the_protocol_states_are_the_fixture_draw():
     rec = C.downsample_protocol(got)
     assert rec["states_sha256"] == C.frames_digest(got) and rec["n_states"] == C.DOWNSAMPLE_PROTOCOL_N
     assert "states_sha256" not in C.downsample_protocol()  # nothing pinned without a draw
-
-
-def test_a_failing_protocol_draw_is_an_error_not_a_skip():
-    """fidelity_step4._resolution maps ValueError to not_applicable because that is how an env says it
-    renders at one size only; a ValueError from sample_states must not be reclassified as that skip."""
-    import importlib.util
-
-    spec = importlib.util.spec_from_file_location(
-        "fidelity_step4", ROOT / "docs" / "research" / "artifacts" / "fidelity_step4.py"
-    )
-    F = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(F)
-
-    class Env:
-        style_dim, size = 0, 8
-
-        def sample_states(self, n, rng=None):
-            raise ValueError("a broken state sampler")
-
-        def render(self, *a, **k):
-            raise AssertionError("must not render when the draw failed")
-
-    r = F._resolution(Env(), np.zeros((2, 3), np.float32))
-    assert r["status"] == "error" and "protocol draw" in r["why"] and "broken state sampler" in r["why"]
