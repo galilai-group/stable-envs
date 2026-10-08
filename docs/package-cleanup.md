@@ -75,10 +75,57 @@ Validation for the typing/navigation pass:
 - Ruff and the strict documentation build pass. This was not a GPU or performance
   acceptance run; no claim is made for the skipped cases.
 
+## Adapter refactor proposal
+
+Status: **proposed, not implemented**. Recorded after `6383c230`. This expands
+the earlier folder-grouping plan; only the typing/navigation work above is done.
+It is separate from the historical-report and fixture cleanup.
+
+The objective is to make a family straightforward to implement and verify while
+reducing duplicated execution code. Directory organization follows those boundaries.
+
+| Observed problem | Proposed direction |
+|---|---|
+| `SimulatorAdapter` covers lifecycle, while stepping discovers optional methods dynamically. | Define small explicit interfaces for ordinary simulation and optional asynchronous stepping. Keep family-specific capabilities outside the common protocol. |
+| Five process adapters repeat worker startup, buffer allocation, State assembly and result retrieval. | Extract only mechanics shown to be common across multiple families. Keep simulator semantics in family implementations. |
+| Fetch environment code reads `_simulator._mass` directly. | Define a family interface for configuration and metadata instead of exposing internal storage. |
+| `ClassicControlAdapter` lives under `envs/`, while other simulator owners live under `_adapters/`. | Establish consistent ownership before moving files. |
+| Type hints are present but not systematically checked. | Add a focused static-checking target for adapter interfaces and their callers. Preserve concrete types where family operations require them. |
+
+Responsibilities:
+
+- Family simulation code owns upstream calls, task behavior, RNG and exact State conversion.
+- Execution code owns workers, lane partitioning, communication and shared buffers.
+- `Env` owns public action shapes, sequences, State/frame selection and rendering.
+
+Start with Fetch, then check the proposed interfaces against DMC and OGBench before
+extracting shared machinery. OGBench's staged restoration must remain explicit:
+replacement worlds are prepared before committing the restore. A generic broadcast
+of `set_state` is not an equivalent implementation.
+
+Acceptance requirements:
+
+- Preserve public environment names, action shapes and State/frame slice semantics.
+- Preserve State, RNG, rewards, termination and inactive-lane behavior.
+- Returned snapshots remain independent while workers reuse shared buffers.
+- Preserve invalid-restore handling and cleanup after partial dispatch or worker failure.
+- Add no unnecessary State captures, full-State copies or synchronization to the stepping loop.
+- Compare simulation and step-plus-render throughput at representative batches with
+  action horizons 1 and 8, on the same hardware and workload as the baseline.
+- Run existing family/source contracts as applicable; document skips separately.
+- Keep the implementation small. Do not introduce a universal simulator base class,
+  generic framework or compatibility wrappers solely to support the reorganization.
+
+Still undecided: exact optional interface signatures, which buffer/worker functions
+can be shared, final package paths, and numeric performance acceptance thresholds.
+Resolve these against the pilot and its baseline measurements before expanding the
+refactor. Craftax is outside this simulation/performance work.
+
 ## Remaining layout work, in order
 
-1. Group `_adapters/` by family: Fetch, DMC, OGBench, PushT and Rocket. Leave
-   shared process transport separate. Move files before changing their behavior.
+1. Carry out the adapter pilot above, then group `_adapters/` by family: Fetch,
+   DMC, OGBench, PushT and Rocket. Leave shared process transport separate.
+   Keep mechanical moves distinct from behavior changes.
 2. Move `render/trackcom_texture.py` and `trackcom_reflection.py` beside DMC,
    their only family consumer.
 3. Group rendering engines with their helpers, for example MJWarp with its light
