@@ -6,8 +6,8 @@ import torch
 
 pytest.importorskip("ogbench")
 
-from stable_envs._adapters.ogbench import OGBMazeAdapter
-from stable_envs._adapters.ogbench_manipulation import OGBManipulationAdapter
+from stable_envs._adapters.ogbench.maze import OGBMazeAdapter
+from stable_envs._adapters.ogbench.manipulation import OGBManipulationAdapter
 from tests.helpers.reference.ogbench_state_export import manipulation_state, maze_state
 
 

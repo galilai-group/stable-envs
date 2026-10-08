@@ -41,7 +41,7 @@ def summarize(results, candidate, source, source_manifest, batches):
         assert report['versions']['mujoco'] == '3.11.0'
         required = {'scripts/benchmarks/online_stepping/fetch_source_pipeline.py',
                     'scripts/benchmarks/online_stepping/fetch_parallel_source.py',
-                    'stable_envs/_stepping.py', 'stable_envs/_adapters/fetch_process.py', 'stable_envs/envs/fetch_opengl.py'}
+                    'stable_envs/_stepping.py', 'stable_envs/_adapters/fetch/process.py', 'stable_envs/envs/fetch_opengl.py'}
         assert required <= report['candidate_files'].keys()
         for rel, digest in report['candidate_files'].items():
             assert hashlib.sha256((candidate / rel).read_bytes()).hexdigest() == digest, rel

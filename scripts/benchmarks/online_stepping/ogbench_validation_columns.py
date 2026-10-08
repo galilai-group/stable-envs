@@ -23,7 +23,7 @@ import torch
 from tensordict import TensorDict
 
 import stable_envs as se
-from stable_envs._adapters.ogbench_manipulation import OGBManipulationAdapter
+from stable_envs._adapters.ogbench.manipulation import OGBManipulationAdapter
 from tests.helpers.reference.ogbench_before_validation_columns import OGBManipulationAdapter as Before
 from tests.unit.test_ogbench_state_export import equal
 

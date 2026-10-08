@@ -25,8 +25,8 @@ import torch
 
 import stable_envs as snv
 import stable_envs.envs._fetch_semantics as semantics
-from stable_envs._adapters.fetch_pickandplace import FetchAdapter
-from stable_envs._adapters.fetch_process import FetchProcessAdapter
+from stable_envs._adapters.fetch.adapter import FetchAdapter
+from stable_envs._adapters.fetch.process import FetchProcessAdapter
 
 LAYOUTS = {"threads_1x4": (1, 4), "pure_8x1": (8, 1), "hybrid_4x2": (4, 2)}
 
@@ -76,8 +76,8 @@ def main():
     if cpus is not None:
         assert len(cpus) == 8, cpus
     files = [Path(__file__), Path(semantics.__file__)]
-    import stable_envs._adapters.fetch_pickandplace as local_module
-    import stable_envs._adapters.fetch_process as process_module
+    import stable_envs._adapters.fetch.adapter as local_module
+    import stable_envs._adapters.fetch.process as process_module
 
     files += [Path(process_module.__file__), Path(local_module.__file__)]
     report = dict(

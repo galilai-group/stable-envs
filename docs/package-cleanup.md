@@ -77,7 +77,8 @@ Validation for the typing/navigation pass:
 
 ## Adapter refactor proposal
 
-Status: **proposed, not implemented**. Recorded after `6383c230`. This expands
+Status: **implemented on the isolated adapter-cleanup branch; acceptance in progress**.
+See [Adapter cleanup](adapter-cleanup.md) for decisions and checks. Recorded after `6383c230`. This expands
 the earlier folder-grouping plan; only the typing/navigation work above is done.
 It is separate from the historical-report and fixture cleanup.
 

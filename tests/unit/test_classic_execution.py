@@ -4,8 +4,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from stable_envs._adapters import acrobot_process
-from stable_envs._adapters import classic_execution as execution
+from stable_envs._adapters.classic import process as acrobot_process
+from stable_envs._adapters.classic import execution as execution
 from stable_envs._adapters import execution as policy
 
 

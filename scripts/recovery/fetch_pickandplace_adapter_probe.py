@@ -8,7 +8,7 @@ import numpy as np
 import torch
 import gymnasium as gym
 import stable_worldmodel
-from stable_envs._adapters.fetch_pickandplace import FetchPickAndPlaceAdapter
+from stable_envs._adapters.fetch.adapter import FetchPickAndPlaceAdapter
 
 
 def oracle(envs):

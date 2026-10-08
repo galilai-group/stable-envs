@@ -20,8 +20,8 @@ from OpenGL import GL
 from scripts.benchmarks.renderer_table import collect
 from scripts.benchmarks.renderer_table.common import catalog, load_state, profile, rgb, state_hash, timed, write
 from scripts.benchmarks.renderer_table.special import ManipulationBridge
-from stable_envs._adapters.ogbench_manipulation import FLAGS, pcg_decode, rngs, site_ids, task_payload
-from stable_envs._adapters.ogbench_manipulation_compat import CUBE_SAMPLES, MODEL_VALUES
+from stable_envs._adapters.ogbench.manipulation import FLAGS, pcg_decode, rngs, site_ids, task_payload
+from stable_envs._adapters.ogbench.compatibility import CUBE_SAMPLES, MODEL_VALUES
 
 
 def instrument_model_values(raw):

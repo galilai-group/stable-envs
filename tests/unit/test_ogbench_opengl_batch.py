@@ -18,9 +18,9 @@ MODEL_VALUES = ("cube.size", "agent.color", "floor.color", "camera.angle_delta",
 @pytest.fixture
 def opengl():
     """Load the real renderer with optional environment packages replaced at import."""
-    pixels = ModuleType("stable_envs._adapters.ogbench_render_state")
+    pixels = ModuleType("stable_envs._adapters.ogbench.render_state")
     pixels.validate = Mock()
-    compat = ModuleType("stable_envs._adapters.ogbench_manipulation_compat")
+    compat = ModuleType("stable_envs._adapters.ogbench.compatibility")
     compat.MODEL_VALUES = MODEL_VALUES
     compat.CompatibleCube = compat.CompatibleScene = object
     resources = ModuleType("stable_envs.render._resources")

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import torch
 
-from stable_envs._adapters.dmcontrol_process import DMCProcessAdapter, make_local
+from stable_envs._adapters.dmc.process import DMCProcessAdapter, make_local
 
 DOMAINS = ["acrobot", "pendulum", "cartpole", "reacher", "cheetah", "hopper", "walker",
            "ball_in_cup", "finger", "manipulator", "quadruped", "humanoid"]

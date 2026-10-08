@@ -67,7 +67,7 @@ def main():
                 # retain whether this host can exactly replay a foreign-host
                 # checkpoint; rendering must not be confounded with replay.
                 if label == "cuda" and t == 0:
-                    from stable_envs._adapters.rocket_replay import RocketReplay
+                    from stable_envs._adapters.rocket.replay import RocketReplay
 
                     get_state = RocketReplay.get_state
                     captured = []

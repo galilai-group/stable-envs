@@ -116,7 +116,7 @@ class CraftaxSemantics(Env):
         return super().frame_spec
 
     def to_render_state(self, state=None, *, size=None, supersample=None):
-        from ..._adapters.craftax_render import project
+        from .source_render import project
 
         self._render_options(size, supersample)
         return project(self._simulator, self.get_state() if state is None else state)
@@ -125,7 +125,7 @@ class CraftaxSemantics(Env):
         return self.to_render_state(state)
 
     def render(self, state=None, *, size=None, supersample=None, backend=None, chunk_size=None, out=None):
-        from ..._adapters.craftax_render import render
+        from .source_render import render
 
         self._render_options(size, supersample, backend)
         if state is None or isinstance(state, TensorDict) and "engine" in state.keys():

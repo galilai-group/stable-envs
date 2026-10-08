@@ -18,7 +18,7 @@ import torch
 from gymnasium.envs.mujoco.mujoco_rendering import MujocoRenderer
 
 from scripts.benchmarks.online_stepping.fetch_parallel_source import FetchSource, ParallelFetchSource, import_source
-from stable_envs._adapters.fetch_pickandplace import FetchAdapter
+from stable_envs._adapters.fetch.adapter import FetchAdapter
 from stable_envs._stepping import step as dispatch_step
 
 
@@ -74,8 +74,8 @@ def main():
              Path('scripts/benchmarks/online_stepping/fetch_source_render_lifecycle.py'),
              Path('scripts/benchmarks/online_stepping/classic_parallel_source.py'),
              Path('tests/helpers/reference/fetch_semantics.py'), Path('scripts/recovery/fetch_public_gate.py'), Path('scripts/recovery/fetch_pickandplace_adapter_probe.py'),
-             Path('stable_envs/_stepping.py'), Path('stable_envs/_adapters/fetch_pickandplace.py'),
-             Path('stable_envs/_adapters/fetch_observations.py')]
+             Path('stable_envs/_stepping.py'), Path('stable_envs/_adapters/fetch/adapter.py'),
+             Path('stable_envs/_adapters/fetch/observations.py')]
     report = dict(status='RUNNING', host=platform.node(), parent_pid=os.getpid(), source_pin=PIN,
         source_files=manifest['files'], candidate_files={str(f): hashlib.sha256(f.read_bytes()).hexdigest() for f in files},
         versions={n: importlib.metadata.version(n) for n in

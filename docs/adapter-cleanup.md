@@ -28,7 +28,8 @@ Execution selection: 251 routing cases passed across all four families.
 Initial process/sequence tests: 290 passed, 86 skipped locally; skips are not
 acceptance. Fetch's existing Mac environment fails inside Gymnasium Robotics
 with MuJoCo 3.12 on both the baseline and candidate. A temporary MuJoCo 3.11
-overlay is used for the pinned Fetch checks. Static interface assignments pass.
+overlay is used for the pinned Fetch checks. Static interface assignments pass. The pinned Fetch run passed all 31 tests;
+OGBench routing/process checks passed 73 tests with one CUDA skip.
 
 Required before closure: relocated imports and registry checks, family process
 and source contracts, CUDA output and pipeline checks, and same-host baseline

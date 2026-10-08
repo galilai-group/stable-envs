@@ -299,7 +299,7 @@ def main():
                 capture_profiles(lambda: one(0), a.device, a.output, stage)
             print(a.registration, a.device, a.backend, stage, timing["mean_ms"], flush=True)
         if row["name"].startswith("Craftax"):
-            from stable_envs._adapters.craftax_render import restore_draw
+            from stable_envs.envs.craftax.source_render import restore_draw
 
             adapter = env._simulator
             decoded = restore_draw(adapter, prepared[0])[0]

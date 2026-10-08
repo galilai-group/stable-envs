@@ -4,8 +4,8 @@ import torch
 from tensordict import TensorDict
 
 from ..._adapters import StepPipeline, step_pipeline
-from ..._adapters.dmcontrol_continuation import CONFIG, CONTINUATION_FIELDS, _make_env
-from ..._adapters.dmcontrol_execution import make_dmc_adapter
+from ..._adapters.dmc.continuation import CONFIG, CONTINUATION_FIELDS, _make_env
+from ..._adapters.dmc.execution import make_dmc_adapter
 from ...spaces import Box, Dict
 
 

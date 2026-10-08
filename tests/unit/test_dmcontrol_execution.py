@@ -7,7 +7,7 @@ import pytest
 from stable_envs._adapters import execution as policy
 
 pytest.importorskip("dm_control")
-from stable_envs._adapters import dmcontrol_execution as execution
+from stable_envs._adapters.dmc import execution as execution
 
 
 @pytest.mark.parametrize("domain", sorted(execution.PROCESS_DOMAINS) + ["quadruped"])

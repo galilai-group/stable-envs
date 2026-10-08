@@ -7,7 +7,7 @@ import pytest
 from stable_envs._adapters import execution as policy
 
 pytest.importorskip("ogbench")
-from stable_envs._adapters import ogbench_execution as execution
+from stable_envs._adapters.ogbench import execution as execution
 
 
 @pytest.mark.parametrize("family", ["Maze", "Cube", "Scene"])
@@ -39,7 +39,7 @@ def test_ogbench_routing(monkeypatch, family, device, platform, batch, cores, da
         kind, args, kwargs = execution.make_maze_adapter(batch, device, 17, local)
         expected_args = (batch, device, 17)
     else:
-        from stable_envs._adapters import ogbench_manipulation_process as manipulation
+        from stable_envs._adapters.ogbench import manipulation_process as manipulation
 
         monkeypatch.setattr(manipulation, "OGBManipulationProcessAdapter",
                             lambda *args, **kwargs: ("process", args, kwargs))

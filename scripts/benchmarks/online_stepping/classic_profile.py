@@ -24,7 +24,7 @@ from unittest.mock import patch
 import numpy as np
 import torch
 
-from stable_envs.envs._classic_semantics import CLASSIC_FIELDS, ClassicControlAdapter
+from stable_envs._adapters.classic.local import CLASSIC_FIELDS, ClassicControlAdapter
 
 
 def make(family, batch, device):

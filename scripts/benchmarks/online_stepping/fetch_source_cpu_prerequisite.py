@@ -23,7 +23,7 @@ from gymnasium.envs.mujoco.mujoco_rendering import MujocoRenderer
 
 from scripts.benchmarks.online_stepping.fetch_source_render_lifecycle import IDS, PIN
 from scripts.recovery.fetch_public_gate import equal_state, exact_array, full_compare
-from stable_envs._adapters.fetch_pickandplace import FetchAdapter
+from stable_envs._adapters.fetch.adapter import FetchAdapter
 
 
 def main():
@@ -42,7 +42,7 @@ def main():
     files = [Path(__file__).relative_to(Path.cwd()),
              Path('scripts/benchmarks/online_stepping/fetch_source_render_lifecycle.py'),
              Path('tests/helpers/reference/fetch_semantics.py'), Path('scripts/recovery/fetch_public_gate.py'), Path('scripts/recovery/fetch_pickandplace_adapter_probe.py'),
-             Path('stable_envs/_adapters/fetch_pickandplace.py'), Path('stable_envs/_adapters/fetch_observations.py')]
+             Path('stable_envs/_adapters/fetch/adapter.py'), Path('stable_envs/_adapters/fetch/observations.py')]
     report = dict(status='RUNNING', source_pin=PIN, source_files=manifest['files'], host=platform.node(),
         versions={n: importlib.metadata.version(n) for n in
                   ('numpy', 'mujoco', 'gymnasium', 'gymnasium-robotics', 'torch', 'tensordict')},

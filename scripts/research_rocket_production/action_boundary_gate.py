@@ -18,8 +18,8 @@ sys.path.insert(0, str(ROOT))
 from tests.helpers.reference.rocket_semantics import RocketLandingEnv as Oracle
 from tests.helpers.reference.rocket_semantics import capture, differences
 
-from stable_envs._adapters.rocket_spaces import nodes
-from stable_envs._adapters.rocket_task import RocketLandingEnv as Candidate
+from stable_envs._adapters.rocket.spaces import nodes
+from stable_envs._adapters.rocket.task import RocketLandingEnv as Candidate
 
 
 def snapshot(env):
@@ -136,9 +136,9 @@ def main():
         ROOT / p
         for p in [
             "tests/helpers/reference/rocket_semantics.py",
-            "stable_envs/_adapters/rocket_actions.py",
-            "stable_envs/_adapters/rocket_task.py",
-            "stable_envs/_adapters/rocket_spaces.py",
+            "stable_envs/_adapters/rocket/actions.py",
+            "stable_envs/_adapters/rocket/task.py",
+            "stable_envs/_adapters/rocket/spaces.py",
             "scripts/research_rocket_production/action_boundary_gate.py",
         ]
     ]

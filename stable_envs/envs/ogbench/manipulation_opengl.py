@@ -8,8 +8,8 @@ from importlib.metadata import version
 import numpy as np
 import torch
 
-from ..._adapters import ogbench_render_state as pixels
-from ..._adapters.ogbench_manipulation_compat import MODEL_VALUES, CompatibleCube, CompatibleScene
+from ..._adapters.ogbench import render_state as pixels
+from ..._adapters.ogbench.compatibility import MODEL_VALUES, CompatibleCube, CompatibleScene
 from ...render._resources import retain_process_lifetime
 
 _LOCK = threading.RLock()

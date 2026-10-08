@@ -53,7 +53,7 @@ def main():
     paths = [Path(__file__).relative_to(Path.cwd()), Path("stable_envs/envs/_classic_semantics.py"),
              Path("stable_envs/envs/classic_control.py"), Path("stable_envs/_stepping.py"),
              *Path("stable_envs/_adapters").glob("*classic*.py"),
-             Path("stable_envs/_adapters/acrobot_process.py"), Path("stable_envs/_adapters/process_requests.py"),
+             Path("stable_envs/_adapters/classic/process.py"), Path("stable_envs/_adapters/process_requests.py"),
              *Path("stable_envs/render").glob("gfxdraw*.py"),
              Path("scripts/benchmarks/online_stepping/classic_source_pipeline.py"),
              Path("scripts/benchmarks/online_stepping/classic_state_export.py"),

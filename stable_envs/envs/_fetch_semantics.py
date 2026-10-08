@@ -5,7 +5,7 @@ import torch
 from tensordict import TensorDict
 
 from .._adapters import StepPipeline, step_pipeline
-from .._adapters.fetch_execution import make_fetch_adapter as FetchAdapter
+from .._adapters.fetch.execution import make_fetch_adapter as FetchAdapter
 from ..env import Env
 from ..spaces import Box, Dict
 

@@ -4,8 +4,8 @@ import torch
 from tensordict import TensorDict
 
 from ..._adapters import StepPipeline, step_pipeline
-from ..._adapters.dmcontrol_execution import make_dmc_adapter
-from ..._adapters.dmcontrol_humanoid import HUMANOID_CONFIG, HUMANOID_FIELDS
+from ..._adapters.dmc.execution import make_dmc_adapter
+from ..._adapters.dmc.humanoid import HUMANOID_CONFIG, HUMANOID_FIELDS
 from ...spaces import Box, Dict
 
 

@@ -7,11 +7,7 @@ import pytest
 import torch
 from tensordict import TensorDict
 
-from stable_envs._adapters.dmcontrol_humanoid import (
-    HUMANOID_CONFIG,
-    HUMANOID_FIELDS,
-    DMCHumanoidAdapter,
-)
+from stable_envs._adapters.dmc.humanoid import HUMANOID_CONFIG, HUMANOID_FIELDS, DMCHumanoidAdapter
 
 
 def test_adapter_full_state_roundtrip_snapshot_independence_and_validation():
@@ -44,6 +40,6 @@ def test_adapter_full_state_roundtrip_snapshot_independence_and_validation():
 
 
 def test_production_adapter_does_not_import_stable_worldmodel():
-    import stable_envs._adapters.dmcontrol_humanoid as module
+    import stable_envs._adapters.dmc.humanoid as module
 
     assert "stable_worldmodel" not in inspect.getsource(module)

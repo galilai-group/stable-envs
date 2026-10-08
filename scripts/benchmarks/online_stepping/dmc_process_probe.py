@@ -24,8 +24,8 @@ from dmc_profile import DOMAINS, sync
 from dmc_state_export import NAMES, equal
 
 import stable_envs as se
-from stable_envs._adapters import dmcontrol_execution
-from stable_envs._adapters.dmcontrol_process import DMCProcessAdapter
+from stable_envs._adapters.dmc import execution as dmcontrol_execution
+from stable_envs._adapters.dmc.process import DMCProcessAdapter
 
 
 def make(domain, batch, device, processes, cpus):

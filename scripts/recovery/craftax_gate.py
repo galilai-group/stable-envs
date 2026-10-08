@@ -30,7 +30,7 @@ def main():
 
     import stable_envs as se
     from stable_envs._adapters.craftax import kernel, numeric_leaves
-    from stable_envs._adapters.craftax_render import fields as draw_fields
+    from stable_envs.envs.craftax.source_render import fields as draw_fields
     from tests.helpers.reference.craftax_source import (
         ACTIONS,
         assert_engine,

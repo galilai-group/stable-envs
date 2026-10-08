@@ -22,7 +22,7 @@ from tests.helpers.reference.rocket_semantics import RocketLandingEnv as Oracle
 from tests.helpers.reference.rocket_semantics import capture, differences
 
 import stable_envs
-from stable_envs._adapters.rocket_spaces import nodes
+from stable_envs._adapters.rocket.spaces import nodes
 from stable_envs.envs import rocket_landing as frozen
 from stable_envs.testing.conformance import pixel_agreement, ssim
 

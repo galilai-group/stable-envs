@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from .._adapters.rocket import RocketAdapter
+from .._adapters.rocket.adapter import RocketAdapter
 from .._style import StyleTensor
 from ..env import Env
 from ..registry import REGISTRY, register

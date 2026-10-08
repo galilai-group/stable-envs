@@ -17,8 +17,8 @@ import torch
 
 import stable_envs as se
 import stable_envs.envs.ogbench.maze as maze
-from stable_envs._adapters import ogbench_execution
-from stable_envs._adapters.ogbench_maze_process import OGBMazeProcessAdapter
+from stable_envs._adapters.ogbench import execution as ogbench_execution
+from stable_envs._adapters.ogbench.maze_process import OGBMazeProcessAdapter
 
 
 def equal(a, b):

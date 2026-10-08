@@ -16,7 +16,7 @@ from pusht_reset_anchor_gate import decode, reconstruct
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from stable_envs._adapters.pusht_task import PushT, PushTDiscrete
+from stable_envs._adapters.pusht.task import PushT, PushTDiscrete
 
 
 def main():

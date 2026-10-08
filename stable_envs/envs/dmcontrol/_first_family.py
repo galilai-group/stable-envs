@@ -4,8 +4,8 @@ import torch
 from tensordict import TensorDict
 
 from ..._adapters import StepPipeline, step_pipeline
-from ..._adapters.dmcontrol import FIRST_FAMILY_FIELDS
-from ..._adapters.dmcontrol_execution import make_dmc_adapter
+from ..._adapters.dmc.execution import make_dmc_adapter
+from ..._adapters.dmc.first_family import FIRST_FAMILY_FIELDS
 from ...spaces import Box, Dict
 
 

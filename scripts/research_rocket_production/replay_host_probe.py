@@ -13,7 +13,7 @@ from tensordict import TensorDict
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import stable_envs as se
-from stable_envs._adapters.rocket_replay import RocketReplay
+from stable_envs._adapters.rocket.replay import RocketReplay
 
 p = argparse.ArgumentParser(description=__doc__)
 p.add_argument("--input", type=Path, required=True)

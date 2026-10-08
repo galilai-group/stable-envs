@@ -145,7 +145,7 @@ def main(swm):
             [ROOT / "stable_envs/envs/classic_control.py", ROOT / "stable_envs/envs/_classic_semantics.py"],
         ),
         "navigation": ("6ee8d8cb", [ROOT / "stable_envs/envs/navigation.py"]),
-        "ogbench": ("7f2f3ae", [ROOT / "stable_envs/_adapters/ogbench.py", ROOT / "stable_envs/envs/ogbench/maze.py"]),
+        "ogbench": ("7f2f3ae", [ROOT / "stable_envs/_adapters/ogbench/maze.py", ROOT / "stable_envs/envs/ogbench/maze.py"]),
     }
     for family, (rev, paths) in groups.items():
         files = {}
@@ -228,7 +228,7 @@ def main(swm):
             action = "Pinned native step arithmetic, agent.speed and domain collision/zone rules; no wrapper repeat."
             common = None
         elif family == "ogbench" and r["state_status"] == "VERIFIED":
-            production = ["stable_envs/_adapters/ogbench.py"]
+            production = ["stable_envs/_adapters/ogbench/maze.py"]
             order = [
                 "restore qpos/qvel/time/target/task id",
                 "mj_forward",
@@ -238,7 +238,7 @@ def main(swm):
             action = "Point: add 0.2 * action; zero qvel; five MuJoCo substeps; no invented TimeLimit."
             common = None
         elif ident == "swm/FetchPickAndPlace-v3":
-            production = ["stable_envs/_adapters/fetch_pickandplace.py"]
+            production = ["stable_envs/_adapters/fetch/adapter.py"]
             order = [
                 "qpos/qvel/goal; zero unsupported external applied forces",
                 "mj_forward",

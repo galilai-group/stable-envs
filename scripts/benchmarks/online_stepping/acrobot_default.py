@@ -13,9 +13,9 @@ import numpy as np
 import torch
 
 import stable_envs as se
-from stable_envs._adapters import classic_execution
-from stable_envs._adapters.acrobot_process import AcrobotProcessAdapter
-from stable_envs.envs._classic_semantics import ClassicControlAdapter
+from stable_envs._adapters.classic import execution as classic_execution
+from stable_envs._adapters.classic.process import AcrobotProcessAdapter
+from stable_envs._adapters.classic.local import ClassicControlAdapter
 from tests.unit.test_classic_state_export import equal
 
 
@@ -110,7 +110,7 @@ def main():
     torch.set_num_threads(1)
     cpus = sorted(os.sched_getaffinity(0))
     assert len(cpus) == 8 and torch.cuda.is_available()
-    paths = [Path(n) for n in ("stable_envs/_adapters/classic_execution.py", "stable_envs/_adapters/acrobot_process.py",
+    paths = [Path(n) for n in ("stable_envs/_adapters/classic/execution.py", "stable_envs/_adapters/classic/process.py",
                               "stable_envs/_adapters/process_requests.py", "stable_envs/envs/_classic_semantics.py",
                               "stable_envs/envs/classic_control.py", "stable_envs/_stepping.py")]
     paths.append(Path(__file__).relative_to(Path.cwd()))

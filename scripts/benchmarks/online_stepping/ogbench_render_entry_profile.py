@@ -15,7 +15,7 @@ from pathlib import Path
 import torch
 
 import stable_envs as se
-from stable_envs._adapters import ogbench_render_state as pixels
+from stable_envs._adapters.ogbench import render_state as pixels
 
 
 def main():

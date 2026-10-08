@@ -10,8 +10,8 @@ import torch
 pytest.importorskip("ogbench")
 
 import stable_envs as se
-from stable_envs._adapters.ogbench_manipulation import OGBManipulationAdapter
-from stable_envs._adapters.ogbench_manipulation_process import OGBManipulationProcessAdapter, _worker
+from stable_envs._adapters.ogbench.manipulation import OGBManipulationAdapter
+from stable_envs._adapters.ogbench.manipulation_process import OGBManipulationProcessAdapter, _worker
 from tests.unit.test_ogbench_manipulation_cpu import equal
 
 
@@ -83,7 +83,7 @@ def test_process_state_rng_variations_and_owned_outputs(family):
 
 @pytest.mark.parametrize("family", ["Cube", "Scene"])
 def test_all_shards_discard_after_real_late_restore_failure(family, monkeypatch):
-    import stable_envs._adapters.ogbench_manipulation_process as module
+    import stable_envs._adapters.ogbench.manipulation_process as module
 
     monkeypatch.setattr(module, "_worker", failing_restore_worker)
     remote = OGBManipulationProcessAdapter(family, 2, seed=17, processes=2)
@@ -105,7 +105,7 @@ def test_all_shards_discard_after_real_late_restore_failure(family, monkeypatch)
 
 @pytest.mark.parametrize("family", ["Cube", "Scene"])
 def test_public_metadata_chunks_and_anchor_reset(family, monkeypatch):
-    import stable_envs._adapters.ogbench_manipulation as module
+    import stable_envs._adapters.ogbench.manipulation as module
 
     with se.make("OGB" + family, num_envs=2, device="cpu", seed=17) as local:
         with monkeypatch.context() as m:

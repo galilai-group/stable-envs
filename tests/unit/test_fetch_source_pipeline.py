@@ -156,7 +156,7 @@ def test_summary_joins_only_complete_same_device_source_comparisons(defect, tmp_
     manifest_path.write_text(json.dumps(manifest))
     candidate_files = ['scripts/benchmarks/online_stepping/fetch_source_pipeline.py',
         'scripts/benchmarks/online_stepping/fetch_parallel_source.py', 'stable_envs/_stepping.py',
-        'stable_envs/_adapters/fetch_process.py', 'stable_envs/envs/fetch_opengl.py']
+        'stable_envs/_adapters/fetch/process.py', 'stable_envs/envs/fetch_opengl.py']
     reports = {}
     for i, mode in enumerate(('source_serial', 'source_parallel', 'ours')):
         for j, device in enumerate(('cpu', 'cuda')):

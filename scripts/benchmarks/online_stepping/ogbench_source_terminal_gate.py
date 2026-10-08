@@ -24,8 +24,8 @@ import stable_envs as se
 from scripts.benchmarks.online_stepping.ogbench_parallel_source import OGBSource, ParallelOGBSource
 from scripts.benchmarks.online_stepping.ogbench_source_transport_gate import equal
 from scripts.benchmarks.renderer_table.common import PIN, equal_state
-from stable_envs._adapters.ogbench import OGBMazeAdapter
-from stable_envs._adapters.ogbench_manipulation import OGBManipulationAdapter
+from stable_envs._adapters.ogbench.maze import OGBMazeAdapter
+from stable_envs._adapters.ogbench.manipulation import OGBManipulationAdapter
 from stable_envs._stepping import step as dispatch_step
 from tests.helpers.reference.ogbench_manipulation_semantics import assert_oracle
 

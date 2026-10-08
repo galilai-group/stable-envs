@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from stable_envs._adapters.dmcontrol_continuation import DMCContinuationAdapter
+from stable_envs._adapters.dmc.continuation import DMCContinuationAdapter
 from tests.helpers.reference.oracle import assert_outputs, state_at
 from tests.helpers.reference.semantics import compare_state
 

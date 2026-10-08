@@ -66,7 +66,7 @@ def main():
              Path("tests/helpers/reference/native_classic_semantics.py"),
              Path("stable_envs/envs/_classic_semantics.py"), Path("stable_envs/envs/classic_control.py"),
              Path("stable_envs/_stepping.py"), Path("stable_envs/_adapters/process_requests.py"),
-             Path("stable_envs/_adapters/acrobot_process.py"),
+             Path("stable_envs/_adapters/classic/process.py"),
              *Path("stable_envs/_adapters").glob("*classic*.py")]
     report = dict(status="RUNNING", domain=args.domain, name=NAMES[args.domain],
                   host=platform.node(), job=os.environ.get("SLURM_JOB_ID"),

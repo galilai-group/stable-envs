@@ -143,7 +143,7 @@ class RocketBridge:
 
 
 def rocket_plans(row):
-    from stable_envs._adapters.rocket_spaces import nodes
+    from stable_envs._adapters.rocket.spaces import nodes
     from tests.helpers.reference.rocket_semantics import RocketLandingEnv
 
     config = {"render_mode": "rgb_array", "render_resolution": (480, 480)}

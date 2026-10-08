@@ -21,8 +21,8 @@ class ManipulationSemantics:
     def __init__(
         self, num_envs=1, size=None, supersample=None, device="cpu", backend="auto", seed=0, *, reward_task_id=None
     ):
-        from ..._adapters.ogbench_execution import make_manipulation_adapter
-        from ..._adapters.ogbench_manipulation import OGBManipulationAdapter
+        from ..._adapters.ogbench.execution import make_manipulation_adapter
+        from ..._adapters.ogbench.manipulation import OGBManipulationAdapter
 
         device = Env.resolve_device(device)
         self._simulator = make_manipulation_adapter(
@@ -152,7 +152,7 @@ class ManipulationSemantics:
         return TensorDict(values, batch_size=[len(rows)], device=self.device)
 
     def to_render_state(self, state=None, *, size=None, supersample=None):
-        from ..._adapters import ogbench_render_state as pixels
+        from ..._adapters.ogbench import render_state as pixels
 
         self._check_open("to_render_state")
         state = self.get_state() if state is None else state
@@ -162,7 +162,7 @@ class ManipulationSemantics:
         )
 
     def render(self, state=None, *, size=None, supersample=None, backend=None, chunk_size=None, out=None):
-        from ..._adapters import ogbench_render_state as pixels
+        from ..._adapters.ogbench import render_state as pixels
         from . import manipulation_renderer
 
         self._check_open("render")

@@ -22,8 +22,8 @@ import torch
 
 import stable_envs as se
 import stable_envs.envs._classic_semantics as semantics
-from stable_envs._adapters import classic_execution
-from stable_envs._adapters.acrobot_process import AcrobotProcessAdapter
+from stable_envs._adapters.classic import execution as classic_execution
+from stable_envs._adapters.classic.process import AcrobotProcessAdapter
 from tests.unit.test_classic_state_export import equal
 
 
@@ -62,8 +62,8 @@ def main():
     if cpus is not None and len(cpus) < max(args.processes):
         p.error("Insufficient allocated CPUs")
     files = [Path(name) for name in (
-        "stable_envs/_adapters/acrobot_process.py", "stable_envs/_adapters/process_requests.py",
-        "stable_envs/_adapters/classic_execution.py",
+        "stable_envs/_adapters/classic/process.py", "stable_envs/_adapters/process_requests.py",
+        "stable_envs/_adapters/classic/execution.py",
         "stable_envs/envs/_classic_semantics.py", "stable_envs/envs/classic_control.py",
         "stable_envs/_stepping.py", "tests/unit/test_acrobot_process.py")]
     files.append(Path(__file__).relative_to(Path.cwd()))

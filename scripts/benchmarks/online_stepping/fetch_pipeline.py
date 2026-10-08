@@ -23,7 +23,7 @@ from fetch_family import make
 from fetch_process_adapter import equal, sync
 
 import stable_envs as snv
-from stable_envs._adapters.fetch_process import FetchProcessAdapter
+from stable_envs._adapters.fetch.process import FetchProcessAdapter
 
 
 class Deferred:
@@ -148,7 +148,7 @@ def main():
         timings=[],
         source_sha256={
             str(p): hashlib.sha256(p.read_bytes()).hexdigest()
-            for p in [Path(__file__), Path("stable_envs/_stepping.py"), Path("stable_envs/_adapters/fetch_process.py")]
+            for p in [Path(__file__), Path("stable_envs/_stepping.py"), Path("stable_envs/_adapters/fetch/process.py")]
         },
         scope="CPU simulation, eight single-threaded process owners. All States retained. Same allocation and rendering fidelity for every schedule. CUDA synchronized timing; reset, warmup and exact equality outside timing. No policy inference. Render reference is serial executor, not a new upstream parity study.",
     )

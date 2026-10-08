@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import pytest
 
 from stable_envs._adapters import execution as policy
-from stable_envs._adapters import fetch_execution as execution
+from stable_envs._adapters.fetch import execution as execution
 
 
 @pytest.mark.parametrize(

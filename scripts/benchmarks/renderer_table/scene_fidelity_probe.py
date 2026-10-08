@@ -52,7 +52,7 @@ def main():
             import mujoco
             from OpenGL import GL
 
-            from stable_envs._adapters.ogbench_manipulation_compat import MODEL_VALUES, CompatibleCube, CompatibleScene
+            from stable_envs._adapters.ogbench.compatibility import MODEL_VALUES, CompatibleCube, CompatibleScene
 
             r = rs[0].cpu()
             key = hashlib.sha256(b"".join(r["appearance", k].numpy().tobytes() for k in MODEL_VALUES)).hexdigest()

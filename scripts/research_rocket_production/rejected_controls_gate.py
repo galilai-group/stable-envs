@@ -21,7 +21,7 @@ sys.path.insert(0, str(ROOT))
 from tests.helpers.reference.rocket_semantics import RocketLandingEnv as Oracle
 from tests.helpers.reference.rocket_semantics import capture, differences
 
-from stable_envs._adapters.rocket_task import RocketLandingEnv as Candidate
+from stable_envs._adapters.rocket.task import RocketLandingEnv as Candidate
 
 
 def reject(env, action):
@@ -134,7 +134,7 @@ def main():
         ROOT / "tests/helpers/reference/rocket_semantics.py",
         Path(inspect.getfile(Oracle)),
         Path(inspect.getfile(Candidate)),
-        ROOT / "stable_envs/_adapters/rocket_spaces.py",
+        ROOT / "stable_envs/_adapters/rocket/spaces.py",
     ]
     import PyFlyt
 

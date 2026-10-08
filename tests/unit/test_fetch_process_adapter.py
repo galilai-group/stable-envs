@@ -10,8 +10,8 @@ pytest.importorskip("gymnasium_robotics")
 
 import stable_envs as snv
 import stable_envs.envs._fetch_semantics as semantics
-from stable_envs._adapters.fetch_pickandplace import FetchAdapter
-from stable_envs._adapters.fetch_process import FetchProcessAdapter
+from stable_envs._adapters.fetch.adapter import FetchAdapter
+from stable_envs._adapters.fetch.process import FetchProcessAdapter
 
 
 def equal(a, b):

@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 import torch
 
-from stable_envs._adapters.pusht_replay_batch import PushTReplayAdapter
+from stable_envs._adapters.pusht.replay_batch import PushTReplayAdapter
 
 
 def stats(samples):

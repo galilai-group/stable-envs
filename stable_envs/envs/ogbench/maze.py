@@ -9,8 +9,8 @@ from ..._mujoco_gl import configure_mujoco_gl
 
 configure_mujoco_gl()
 
-from ..._adapters.ogbench import OGB_MAZE_FIELDS, OGBMazeAdapter
-from ..._adapters.ogbench_execution import make_maze_adapter
+from ..._adapters.ogbench.execution import make_maze_adapter
+from ..._adapters.ogbench.maze import OGB_MAZE_FIELDS, OGBMazeAdapter
 from ...env import Env
 from ...registry import register
 from ...render import _resources as _RES

@@ -19,7 +19,7 @@ def test_scene_button_materials_preserve_shading_and_independent_colors(lock_col
     pytest.importorskip("ogbench")
     import mujoco
 
-    from stable_envs._adapters.ogbench_render_state import build_model
+    from stable_envs._adapters.ogbench.render_state import build_model
     from stable_envs.envs.ogbench import OGBScene
 
     with OGBScene(seed=17) as env:

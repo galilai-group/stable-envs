@@ -24,8 +24,8 @@ from unittest.mock import patch
 import numpy as np
 import torch
 
-from stable_envs._adapters.ogbench import OGBMazeAdapter
-from stable_envs._adapters.ogbench_manipulation import OGBManipulationAdapter
+from stable_envs._adapters.ogbench.maze import OGBMazeAdapter
+from stable_envs._adapters.ogbench.manipulation import OGBManipulationAdapter
 
 
 def make(family, batch, device):

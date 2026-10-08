@@ -6,7 +6,7 @@ import pytest
 import torch
 
 import stable_envs as se
-from stable_envs._adapters.dmcontrol_aligned import ALIGNED_FIELDS, CONFIG
+from stable_envs._adapters.dmc.aligned import ALIGNED_FIELDS, CONFIG
 
 pytest.importorskip("dm_control")
 pytest.importorskip("stable_worldmodel")

@@ -65,7 +65,7 @@ def source_instance(row, frame, recipe, state, env):
     if name == "PyFlytRocketLanding":
         from PyFlyt.gym_envs.rocket_envs.rocket_base_env import RocketBaseEnv
 
-        from stable_envs._adapters.rocket import RocketAdapter
+        from stable_envs._adapters.rocket.adapter import RocketAdapter
 
         adapter = RocketAdapter(1, "cpu", frame["seed"], recipe.get("simulator_config"))
         adapter.set_state(state)
@@ -79,7 +79,7 @@ def source_instance(row, frame, recipe, state, env):
         return adapter, upstream_render, lambda: state_hash(adapter.get_state())
     bridge = bridge_for(row, frame["seed"], recipe["reset_options"])
     if name in {"OGBCube", "OGBScene"}:
-        from stable_envs._adapters.ogbench_manipulation_compat import CUBE_SAMPLES, MODEL_VALUES
+        from stable_envs._adapters.ogbench.compatibility import CUBE_SAMPLES, MODEL_VALUES
 
         from .manipulation_source_replay import install, instrument_model_values
 
@@ -130,7 +130,7 @@ def source_instance(row, frame, recipe, state, env):
         if name.startswith("Fetch"):
             import mujoco
 
-            from stable_envs._adapters.fetch_pickandplace import FetchAdapter, state_fields
+            from stable_envs._adapters.fetch.adapter import FetchAdapter, state_fields
 
             # Reuse numeric State installation only; source model/rendering stays upstream-owned.
             adapter = object.__new__(FetchAdapter)

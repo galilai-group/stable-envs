@@ -4,8 +4,8 @@ import torch
 from tensordict import TensorDict
 
 from ..._adapters import StepPipeline, step_pipeline
-from ..._adapters.dmcontrol_aligned import ALIGNED_FIELDS, CONFIG
-from ..._adapters.dmcontrol_execution import make_dmc_adapter
+from ..._adapters.dmc.aligned import ALIGNED_FIELDS, CONFIG
+from ..._adapters.dmc.execution import make_dmc_adapter
 from ...spaces import Box, Dict, Discrete
 
 

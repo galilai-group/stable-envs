@@ -4,12 +4,12 @@ import numpy as np
 import pytest
 import torch
 
-from stable_envs._adapters.dmcontrol import FirstFamilyAdapter, ReacherAdapter
-from stable_envs._adapters.dmcontrol_aligned import CONFIG as ALIGNED
-from stable_envs._adapters.dmcontrol_aligned import DMCAlignedAdapter
-from stable_envs._adapters.dmcontrol_continuation import CONFIG as CONTINUATION
-from stable_envs._adapters.dmcontrol_continuation import DMCContinuationAdapter
-from stable_envs._adapters.dmcontrol_humanoid import DMCHumanoidAdapter
+from stable_envs._adapters.dmc.first_family import FirstFamilyAdapter, ReacherAdapter
+from stable_envs._adapters.dmc.aligned import CONFIG as ALIGNED
+from stable_envs._adapters.dmc.aligned import DMCAlignedAdapter
+from stable_envs._adapters.dmc.continuation import CONFIG as CONTINUATION
+from stable_envs._adapters.dmc.continuation import DMCContinuationAdapter
+from stable_envs._adapters.dmc.humanoid import DMCHumanoidAdapter
 
 CASES = [
     (FirstFamilyAdapter, (domain,)) for domain in ("acrobot", "pendulum", "cartpole")

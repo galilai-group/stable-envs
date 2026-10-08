@@ -51,8 +51,8 @@ class PushT(Env):
         render_action=False,
         with_target=True,
     ):
-        from .._adapters.pusht_projection import PushTProjection
-        from .._adapters.pusht_replay_batch import PushTReplayAdapter
+        from .._adapters.pusht.replay_batch import PushTReplayAdapter
+        from ._pusht_projection import PushTProjection
 
         if backend not in ("auto", "pygame"):
             raise ValueError("Source-aligned PushT currently supports backend='pygame' only")
@@ -129,12 +129,12 @@ class PushT(Env):
 
     @staticmethod
     def _stack_states(values):
-        from .._adapters.pusht_history import stack_states
+        from .._adapters.pusht.history import stack_states
 
         return stack_states(values)
 
     def _variation_rows(self, attribute):
-        from .._adapters.pusht_numeric import nodes
+        from .._adapters.pusht.numeric import nodes
 
         rows = []
         for lane in self._simulator.envs:
@@ -183,7 +183,7 @@ class PushT(Env):
 
     def set_variation(self, variation=None, **overrides):
         """Configure typed future-reset values; current physics is unchanged."""
-        from .._adapters.pusht_numeric import nodes
+        from .._adapters.pusht.numeric import nodes
 
         self._check_open("set_variation")
         if isinstance(variation, dict):

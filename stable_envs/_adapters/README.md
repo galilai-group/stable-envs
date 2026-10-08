@@ -1,52 +1,55 @@
 # Simulator adapters
 
-Start with `SimulatorAdapter` in `__init__.py`. It describes the common methods
-for an owned batch of simulators: reset, step, get/set State and close. It is a
-Python `Protocol`, so implementations do not need to inherit from it.
+`SimulatorAdapter` in `__init__.py` describes reset, one transition per lane,
+get/set State and close. Implementations satisfy this protocol without a common
+base class. `Env` owns action sequences, capture slices and rendering.
 
-An adapter advances **one transition per lane**. The public `Env.step()` handles
-action sequences, State/frame selection and coordination with the renderer.
-Changing the renderer or output device does not by itself move physics to a GPU.
-
-| Files | Responsibility |
+| Location | Ownership |
 |---|---|
-| `*_execution.py` | Choose local or process execution for a family. |
-| `fetch_pickandplace.py`, `dmcontrol*.py`, `ogbench*.py` | Wrap upstream simulators and translate complete State. Start with files without a `_process` suffix. |
-| `*_process.py` | Own persistent workers, partition lanes and copy shared outputs. |
-| `process_requests.py` | Send requests, wait for results and clean up failed workers. |
-| `state_columns.py` | Assemble State tensors from simulator fields. |
-| `pusht_*`, `rocket_*` | Restore task and simulator state, including replay where direct restoration is insufficient. |
-| `craftax.py`, `craftax_render.py` | Delegate the registered Craftax configurations to upstream JAX. |
+| `classic/` | Gymnasium classic control and the Acrobot process route |
+| `fetch/` | Fetch simulation, observations and execution selection |
+| `dmc/` | DMC domains; `factory.py` selects the same implementation locally and in workers |
+| `ogbench/` | Maze and manipulation, including staged world restoration |
+| `pusht/`, `rocket/` | Source task behavior, complete replay and family-specific spaces |
+| `craftax.py` | Upstream JAX simulation; rendering belongs to `envs/craftax/` |
+| `execution.py` | Shared process-selection policy |
+| `process_requests.py` | Request lifecycle and worker-failure cleanup |
+| `shared_memory.py`, `state_columns.py` | Typed shared outputs and owned State assembly |
 
-For a concrete path, read `fetch_execution.py`, then `fetch_pickandplace.py`, then
-`fetch_process.py`. The process implementation uses the local implementation in
-its workers; it does not implement a different physics model.
+For a concrete path, read `fetch/execution.py`, `fetch/adapter.py`, then
+`fetch/process.py`. Workers call the local simulator implementation; they do
+not define another physics model. Selecting CUDA output does not move CPU
+physics to the GPU.
 
-## Types
+## Interfaces and ownership
 
-Use `adapter: SimulatorAdapter` when the caller only needs the common methods.
-Use a concrete family type when it needs extra fields or methods, such as Fetch
-object masses or model access. Factory type variables are bounded by the common
-protocol and retain the selected family's type. Fetch's process adapter inherits
-from its local adapter, so its factory returns `FetchAdapter`.
+Use `SimulatorAdapter` when only lifecycle operations are needed. Keep family
+configuration explicitly typed: for example, Fetch's `object_mass` returns an
+owned copy. `StepPipeline` describes optional submit/receive/abort operations.
+The pipeline receives independent outputs before workers reuse shared storage.
 
-`reset()` and `get_state()` return owned `TensorDict` snapshots. `set_state()`
-restores those snapshots. A normal `step()` returns a `TensorDict` with State and
-the task outputs defined by the family. Some implementations also support
-skipping State capture, inactive lanes or asynchronous `submit_step()` /
-`receive_step()`; those options are not universal protocol requirements.
+Family code owns State validation, RNG, reset, task behavior and inactive lanes.
+Shared transport owns request delivery and failure cleanup. OGBench prepares
+replacement worlds before committing restoration; do not replace that protocol
+with a generic `set_state` broadcast.
 
-These hints document interfaces and help static checking. They neither enforce
-runtime validation nor add worker dispatch or synchronization.
+Keep source space types local: their precision, sampling order and default/value
+semantics differ from the public spaces. Drawing helpers live with their owning
+environments, not with process transport.
 
-## Editing
+## Checks
 
-Preserve hidden simulator, task, lifecycle and RNG fields when changing State
-handling. Keep shared-buffer ownership and worker-failure cleanup explicit.
-Test local/process agreement, restoration after different histories, output
-ownership and termination. See `tests/unit/test_fetch_process_adapter.py` for
-an existing example. Source comparisons and device gates remain separate tests.
+`tests/unit/test_fetch_process_adapter.py` illustrates snapshot ownership,
+continuation, inactive lanes and worker failure checks. Each process route also
+needs its family/source and device gates; serial agreement alone is insufficient.
 
-The next layout pass should group these files by family. Keep shared request
-transport separate; do not introduce a common adapter base class merely to
-force different simulators into the same implementation.
+Run the focused static checks from the repository root with an interpreter that
+has Torch and TensorDict installed:
+
+```sh
+mypy --config-file tests/typing/mypy.ini --python-executable /path/to/venv/bin/python
+```
+
+These checks cover the shared interfaces and family factory boundaries, not all
+simulation internals. Keep the public action and capture APIs unchanged and
+compare horizon-1 and horizon-8 throughput when execution mechanics change.

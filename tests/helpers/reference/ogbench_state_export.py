@@ -9,8 +9,8 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from stable_envs._adapters.ogbench import OGB_MAZE_FIELDS, _uint128_bytes
-from stable_envs._adapters.ogbench_manipulation import FLAGS, MODEL_VALUES, pcg_encode, rngs, site_ids, task_values
+from stable_envs._adapters.ogbench.maze import OGB_MAZE_FIELDS, _uint128_bytes
+from stable_envs._adapters.ogbench.manipulation import FLAGS, MODEL_VALUES, pcg_encode, rngs, site_ids, task_values
 
 
 def maze_state(self):

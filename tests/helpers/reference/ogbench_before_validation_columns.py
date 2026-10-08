@@ -10,13 +10,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from stable_envs._adapters.ogbench_manipulation_compat import (
-    CUBE_SAMPLES,
-    MODEL_VALUES,
-    CompatibleCube,
-    CompatibleScene,
-    nodes,
-)
+from stable_envs._adapters.ogbench.compatibility import CUBE_SAMPLES, MODEL_VALUES, CompatibleCube, CompatibleScene, nodes
 from stable_envs._adapters.state_columns import owned_columns
 
 PARTS = (
@@ -393,7 +387,7 @@ class OGBManipulationAdapter:
         return self.envs[0].model.nq
 
     def make_variation_space(self):
-        from stable_envs._adapters.ogbench_manipulation_compat import variation_tree
+        from stable_envs._adapters.ogbench.compatibility import variation_tree
 
         tree = variation_tree(self.envs[0])
         if self.family == "Scene":

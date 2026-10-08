@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from stable_envs.envs._classic_semantics import _limbs
+from stable_envs._adapters.classic.local import _limbs
 
 
 def classic_state(self) -> TensorDict:

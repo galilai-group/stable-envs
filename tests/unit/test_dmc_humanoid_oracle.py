@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from stable_envs._adapters.dmcontrol_humanoid import DMCHumanoidAdapter
+from stable_envs._adapters.dmc.humanoid import DMCHumanoidAdapter
 from tests.helpers.reference.oracle import assert_outputs, state_at
 from tests.helpers.reference.semantics import compare_state
 

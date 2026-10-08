@@ -112,7 +112,7 @@ def main():
     assert terminal["status"] == "COMPLETED" and terminal["exit_code"] == "0:0" and terminal["marker"] == gpu["status"]
     actual = read("rocket_task_layer_candidate/result.json")
     assert len(actual["records"]) == 24
-    for p, h in [("stable_envs/_adapters/rocket_task.py", actual["candidate_sha256"])]:
+    for p, h in [("stable_envs/_adapters/rocket/task.py", actual["candidate_sha256"])]:
         assert hashlib.sha256((ROOT / p).read_bytes()).hexdigest() == h
     result = dict(
         status="BLOCKER_WITNESS_AND_PRESERVATION_VERIFIED",
@@ -137,7 +137,7 @@ def main():
         gpu_source_frames=102,
         gpu_groups=17,
         gpu_metrics_independently_recomputed=True,
-        production_files_added=["stable_envs/_adapters/rocket_task.py", "stable_envs/_adapters/rocket_spaces.py"],
+        production_files_added=["stable_envs/_adapters/rocket/task.py", "stable_envs/_adapters/rocket/spaces.py"],
         public_adapter_implemented=False,
         promotions=[],
         shared_contract_changes=[],

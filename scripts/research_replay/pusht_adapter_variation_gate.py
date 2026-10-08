@@ -13,7 +13,7 @@ import numpy as np
 from pusht_adapter_gate import ROOT, sha
 from pusht_replay_gate import PIN, action, diagnostics, equal, import_source
 
-from stable_envs._adapters.pusht_replay_batch import PushTReplayAdapter
+from stable_envs._adapters.pusht.replay_batch import PushTReplayAdapter
 
 
 def main():

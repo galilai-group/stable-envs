@@ -23,8 +23,8 @@ import numpy as np
 import torch
 
 from scripts.benchmarks.renderer_table.common import PIN, equal_state
-from stable_envs._adapters.ogbench import OGBMazeAdapter
-from stable_envs._adapters.ogbench_manipulation import OGBManipulationAdapter
+from stable_envs._adapters.ogbench.maze import OGBMazeAdapter
+from stable_envs._adapters.ogbench.manipulation import OGBManipulationAdapter
 from tests.helpers.reference.ogbench_manipulation_semantics import assert_oracle, load_oracle
 from tests.helpers.reference.ogbench_maze_semantics import OGBMazeReference
 

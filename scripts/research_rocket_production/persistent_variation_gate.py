@@ -18,7 +18,7 @@ from tests.helpers.reference.rocket_semantics import RocketLandingEnv as Oracle
 from tests.helpers.reference.rocket_semantics import capture, differences
 
 import stable_envs
-from stable_envs._adapters.rocket_spaces import nodes
+from stable_envs._adapters.rocket.spaces import nodes
 
 
 def main():

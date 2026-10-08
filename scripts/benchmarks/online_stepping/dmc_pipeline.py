@@ -24,8 +24,8 @@ import torch
 from dmc_state_export import NAMES, equal
 
 import stable_envs as se
-from stable_envs._adapters.dmcontrol_execution import PROCESS_DOMAINS
-from stable_envs._adapters.dmcontrol_process import DMCProcessAdapter
+from stable_envs._adapters.dmc.execution import PROCESS_DOMAINS
+from stable_envs._adapters.dmc.process import DMCProcessAdapter
 from stable_envs._adapters.execution import process_count
 
 

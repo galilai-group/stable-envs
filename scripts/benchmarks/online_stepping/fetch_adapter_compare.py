@@ -13,7 +13,7 @@ import numpy as np
 import torch
 from fetch_probe import equal
 
-from stable_envs._adapters.fetch_pickandplace import FetchAdapter
+from stable_envs._adapters.fetch.adapter import FetchAdapter
 
 
 def main():

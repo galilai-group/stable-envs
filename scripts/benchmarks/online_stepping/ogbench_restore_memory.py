@@ -17,7 +17,7 @@ from pathlib import Path
 
 import torch
 
-from stable_envs._adapters.ogbench_manipulation import OGBManipulationAdapter
+from stable_envs._adapters.ogbench.manipulation import OGBManipulationAdapter
 
 
 def main():
@@ -31,8 +31,8 @@ def main():
     if args.output.exists():
         raise FileExistsError(args.output)
     torch.set_num_threads(1)
-    files = [Path("stable_envs/_adapters/ogbench_manipulation.py"),
-             Path("stable_envs/_adapters/ogbench_manipulation_compat.py"), Path(__file__).relative_to(Path.cwd())]
+    files = [Path("stable_envs/_adapters/ogbench/manipulation.py"),
+             Path("stable_envs/_adapters/ogbench/compatibility.py"), Path(__file__).relative_to(Path.cwd())]
     report = dict(status="RUNNING", family=args.family, batch=args.batch, explicit_collection=args.collect,
                   host=platform.node(), job=os.environ.get("SLURM_JOB_ID"), samples=[],
                   versions={n: importlib.metadata.version(n) for n in ("torch", "numpy", "mujoco", "ogbench")},

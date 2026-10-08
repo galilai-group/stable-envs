@@ -50,7 +50,7 @@ def full_compare(state, refs):
         )
         # compare_state independently extracts all older fields; also enforce
         # their complete declared tensor shapes/dtypes at the public boundary.
-    from stable_envs._adapters.fetch_pickandplace import state_fields
+    from stable_envs._adapters.fetch.adapter import state_fields
 
     FIELDS = state_fields(refs[0].unwrapped.model.nq, refs[0].unwrapped.model.nv)
 

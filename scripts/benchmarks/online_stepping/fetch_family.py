@@ -26,8 +26,8 @@ from fetch_process_adapter import equal, sync
 
 import stable_envs as snv
 import stable_envs.envs._fetch_semantics as semantics
-from stable_envs._adapters.fetch_pickandplace import FetchAdapter
-from stable_envs._adapters.fetch_process import FetchProcessAdapter
+from stable_envs._adapters.fetch.adapter import FetchAdapter
+from stable_envs._adapters.fetch.process import FetchProcessAdapter
 
 
 def make(name, batch, device, layout, cpus, size):
@@ -118,8 +118,8 @@ def main():
     cpus = sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None
     if cpus is not None:
         assert len(cpus) == 8, cpus
-    import stable_envs._adapters.fetch_pickandplace as local_module
-    import stable_envs._adapters.fetch_process as process_module
+    import stable_envs._adapters.fetch.adapter as local_module
+    import stable_envs._adapters.fetch.process as process_module
 
     files = [Path(__file__), Path(local_module.__file__), Path(process_module.__file__), Path(semantics.__file__)]
     report = dict(

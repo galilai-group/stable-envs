@@ -16,9 +16,9 @@ import numpy as np
 import torch
 
 import stable_envs as se
-import stable_envs._adapters.ogbench_manipulation as manipulation
-from stable_envs._adapters import ogbench_execution
-from stable_envs._adapters.ogbench_manipulation_process import OGBManipulationProcessAdapter
+import stable_envs._adapters.ogbench.manipulation as manipulation
+from stable_envs._adapters.ogbench import execution as ogbench_execution
+from stable_envs._adapters.ogbench.manipulation_process import OGBManipulationProcessAdapter
 
 
 def equal(a, b):
