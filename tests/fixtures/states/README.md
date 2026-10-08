@@ -22,3 +22,10 @@ and style layouts, recording policy and render validation. Read by
 `tests/fixtures/regression/join/step7/rocket-landing/reference/`; the recorded
 frames and validation records that were not test inputs remain in Git history at
 tag `pre-repository-cleanup`.
+
+## `ogb_manipulation/`
+
+OGBCube and OGBScene reached-state corpora (`<Cell>.npz`, with `states` and JSON
+`meta`) and the pools they were selected from (`<Cell>_pool.npz`). Read by
+`tests/unit/test_ogb_manip.py` to check that the recorded selection indexes the
+kept pool. Previously `tests/fixtures/regression/join/step7/ogb-manipulation/states/`.
