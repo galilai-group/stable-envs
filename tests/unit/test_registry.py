@@ -2,9 +2,9 @@
 
 TWO ORACLES, and they are different in kind:
 
-  * the 42 SWM ids are asserted against the ACCEPTED STEP-8 SUPPORT MATRIX
-    (``tests/fixtures/regression/support_matrix.json``), which is the frozen behavioral oracle this tree is not
-    allowed to change. The test-only crosswalk is derived from that file.
+  * the 42 SWM ids are asserted against the frozen SWM-id -> cell mapping
+    (``tests/fixtures/swm/frozen_cells.json``, extracted from the accepted Step-8 support matrix), which this
+    tree is not allowed to change. The test-only crosswalk is read from that file.
   * the canonical class names are asserted against the BASELINE REGISTRY TABLE recorded from
     ``21cb306`` into the frozen registry baseline
     (``tests/fixtures/regression/references/registry_baseline.json``) — same interpreter, same optional
@@ -39,14 +39,14 @@ from tests.helpers.reference import (
 pytestmark = pytest.mark.unit
 
 ROOT = Path(__file__).resolve().parents[2]
-MATRIX = ROOT / "tests" / "fixtures" / "regression" / "support_matrix.json"
+MATRIX = ROOT / "tests" / "fixtures" / "swm" / "frozen_cells.json"
 BASELINE = ROOT / "tests" / "fixtures" / "regression" / "references" / "registry_baseline.json"
 SWM_IDS_IN_MATRIX = sorted({r["swm_id"] for r in json.loads(MATRIX.read_text())["rows"]})
 
 
-def test_the_swm_crosswalk_is_the_step8_support_matrix_row_for_row():
+def test_the_swm_crosswalk_is_the_frozen_mapping_row_for_row():
     rows = json.loads(MATRIX.read_text())["rows"]
-    assert len(rows) == 42, "the oracle is 42 SWM ids; this file is not the accepted matrix"
+    assert len(rows) == 42, "the oracle is 42 SWM ids; this file is not the accepted mapping"
     expected = {r["swm_id"]: tuple(r["stable_envs_cells"]) for r in rows}
     assert SWM_IDS == expected
     assert len(SWM_IDS) == 42

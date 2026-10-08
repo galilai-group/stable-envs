@@ -1,6 +1,6 @@
 """Frozen SWM id -> stable-envs cell correspondence.
 
-Derived from ``tests/fixtures/regression/support_matrix.json`` (42 rows, 40 pixel,
+Read from ``tests/fixtures/swm/frozen_cells.json`` (42 rows, 40 pixel,
 2 symbolic). Live class names for pre-v0 spellings live here, not in the
 production registry: ``snv.make`` does not resolve SWM ids or historical names.
 """
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from stable_envs.env import Env
 
 _ROOT = Path(__file__).resolve().parents[3]
-_MATRIX = _ROOT / "tests" / "fixtures" / "regression" / "support_matrix.json"
+_MATRIX = _ROOT / "tests" / "fixtures" / "swm" / "frozen_cells.json"
 
 
 def _swm_ids_from_matrix() -> dict[str, tuple[str, ...]]:
@@ -23,7 +23,7 @@ def _swm_ids_from_matrix() -> dict[str, tuple[str, ...]]:
     return {r["swm_id"]: tuple(r["stable_envs_cells"]) for r in rows}
 
 
-#: SWM id -> frozen support-matrix cell spelling(s). Equal to the committed matrix.
+#: SWM id -> frozen cell spelling(s), as recorded in the frozen mapping.
 SWM_IDS: dict[str, tuple[str, ...]] = _swm_ids_from_matrix()
 
 SYMBOLIC_IDS = tuple(sorted(k for k, v in SWM_IDS.items() if not v))
