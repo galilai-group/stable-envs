@@ -108,14 +108,13 @@ Fetch's first same-node comparison passed all its correctness checks. With all
 frames returned, throughput changed by -0.31% to +0.72% across B64/B256 and H1/H8.
 The B64/H8 step-only cell was 7.93% lower in the first run; a reversed-order repeat
 measured 4,826.8 baseline versus 4,824.0 candidate steps/s (-0.06%).
-Do not interpret the stable rendering result as proof that every timing cell is
-unchanged. DMC and OGBench before/after comparisons are also required.
+DMC and OGBench comparisons are recorded below under Adapter acceptance.
 
 Scene OpenGL on one RTX3090 node measured 100.7 FPS for both baseline and
 candidate at B256. The much faster historical table value is not reproduced by
 either commit; it must not be attributed to this adapter refactor. Both current
 MSEs are approximately 0.000339665. The first OGBench pipeline attempt exhausted
-its 32 GB allocation during baseline restoration; its retry requests 64 GB.
+its 32 GB allocation during baseline restoration; the 64 GB retry passed.
 
 The old PushT table harness called the retired five-coordinate renderer. Its
 replacement witnesses complete candidate diagnostics against each fresh source
@@ -166,3 +165,28 @@ Post-merge checks: 295 import/registry/routing/package tests passed, two optiona
 profile/dependency skips; 47 Fetch/DMC source-helper checks and 89 benchmark/OGBench
 source-helper checks passed in their matching environments. The nine-file mypy
 target and adapter/maintained-benchmark Ruff checks pass.
+
+## Completed advisor table
+
+- [Summary: MSE, CPU/GPU FPS, speedup and timing mean/SD](adapter-cleanup/paired_rendering_summary.csv).
+- [All batches and output destinations](adapter-cleanup/paired_rendering_all_batches.csv).
+- [B256 detailed table](adapter-cleanup/paired_rendering_42_b256.csv).
+- [Commits, jobs, hashes, sampling and raw evidence location](adapter-cleanup/advisor-provenance.json).
+
+All 76 requested non-Craftax device configurations terminated: **74 COMPLETE,
+2 ERROR**. Each device configuration has 37/38 completed registrations; 36/38
+have both. Craftax's eight cells remain EXCLUDED. Failed cells have empty metrics:
+Manipulator CPU failed source repeat-render stability; Rocket CUDA output failed
+saved-state replay. Neither failure is replaced with historical measurements.
+
+All completed configurations have measured mean and maximum normalized MSE below
+0.001. The largest recorded per-frame MSE is 0.000495774 (Cube CUDA). Most rows
+use 16 saved poses, not 1,000 independent frames; PushT uses 1,024. Both PushT
+registrations have zero measured MSE, but their current public renderer draws on
+CPU even with CUDA output. The render-device columns distinguish those cases.
+
+At B256 with CPU image output, ours is faster in 18/37 CPU comparisons and 25/27
+comparisons with a GPU source renderer. CPU-only source fallbacks are separate.
+These counts describe this run, not statistical significance or new support.
+The archive preserves every attempt, raw timings, seals, launchers and exporter;
+CSV evidence paths resolve inside its `adapter-campaign/advisor-table/` directory.
