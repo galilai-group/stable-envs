@@ -18,8 +18,11 @@ from pathlib import Path
 
 import numpy as np
 import torch
+from tensordict import TensorDict
 
-from .common import PIN, array_hash, profile, state_hash, write
+from tests.helpers.reference.pusht_semantics import diagnostics, equal
+
+from .common import PIN, profile, save_state, state_hash, write
 from .paired_saved import statistics_for
 
 
@@ -163,14 +166,12 @@ def benchmark(args):
         poses, reference = data["poses"].copy(), data["images"].copy()
     if args.device == "cuda":
         assert "3090" in torch.cuda.get_device_name()
-    env = se.make("PushT", device=args.device, size=224)
-    live_hash = state_hash(env.get_state())
-    tensor = torch.as_tensor(poses, dtype=torch.float32, device=args.device)
-    tensor_hash = array_hash(tensor)
+    env = se.make("PushTDiscrete" if "Discrete" in args.registration else "PushT", device=args.device, size=224)
     result = dict(
         registration=args.registration,
         device=args.device,
-        backend="auto",
+        backend="pygame",
+        candidate_render_device="cpu",
         status="RUNNING",
         profile=profile(),
         measurements=[],
@@ -179,9 +180,9 @@ def benchmark(args):
         source_render_device="cpu",
         source_gpu_availability="CPU_ONLY",
         source_gpu_availability_notes="Pinned PushT._render_frame uses pygame.Surface/debug_draw, surfarray and cv2.resize; no GPU renderer/device API. Discrete inherits this method.",
-        scope="RENDERER_ONLY: saved source poses; full State and dynamics remain INCOMPLETE. Default appearance, 224x224, ss=1.",
+        scope="RENDERER_ONLY: saved source poses and witnessed RenderState; this benchmark does not certify simulation. Default appearance, 224x224, ss=1. Both renderers run on CPU; CUDA selects output storage.",
         source_batch_method="Serial upstream render() over independent source owners, then stack. Owners are reconstructed before timing by seeded replay and checked byte-exact against disk images; this retains upstream collision-debug marks. No replay, rollout, file I/O or input upload timed.",
-        candidate_render_api="PushT._render(prepared compact RenderState); scene construction and output transfer included; full-State projection excluded as in the existing table.",
+        candidate_render_api="PushT.render(prepared RenderState loaded from disk); rendering, validation and output transfer included; full-State capture excluded as in the existing table.",
         corpus_sha256=meta["corpus_sha256"],
         source_pin=PIN,
         source_hashes=source_hashes(args.oracle),
@@ -191,26 +192,42 @@ def benchmark(args):
                 Path(inspect.getfile(type(env))).read_bytes()
             ).hexdigest()
         },
-        semantic_state_acceptance="INCOMPLETE",
+        semantic_state_acceptance="NOT_MEASURED",
         renderer_nonmutation_passed=False,
     )
     save = lambda: write(args.output / "result.json", result)
     save()
-    owners = []
+    owners, projected = [], []
     try:
         # One source owner per pose: preparation is excluded equally from timers.
         for i, value in enumerate(poses):
             source = make_source(args.registration)
+            owners.append(source)
             source.reset(seed=meta["frames"][i]["seed"])
+            env.reset(seed=meta["frames"][i]["seed"])
             source.action_space.seed(10000 + meta["frames"][i]["seed"])
             for _ in range(meta["frames"][i]["step"]):
-                source.step(source.action_space.sample())
+                action = source.action_space.sample()
+                source.step(action.copy())
+                env.step(action[None].copy(), frames=None, states=None)
             np.testing.assert_array_equal(pose(source.unwrapped), value)
             np.testing.assert_array_equal(source.render(), reference[i], err_msg=f"source replay frame {i}")
-            owners.append(source)
+            equal(diagnostics(source.unwrapped), diagnostics(env._simulator.envs[0].env))
+            projected.append(env.to_render_state().cpu())
+        prepared_path = args.output / "render-states.npz"
+        save_state(prepared_path, torch.cat(projected))
+        projected.clear()
+        with np.load(prepared_path, allow_pickle=False) as data:
+            tensor = TensorDict(
+                {tuple(json.loads(key)): torch.from_numpy(data[key].copy()).to(args.device) for key in data.files},
+                [len(poses)], device=args.device,
+            )
+        result["prepared_render_states_sha256"] = hashlib.sha256(prepared_path.read_bytes()).hexdigest()
+        tensor_hash = state_hash(tensor)
+        live_hash = state_hash(env.get_state())
         outputs = []
         for start in range(0, len(poses), 32):
-            outputs.append(env._render(tensor[start : start + 32]).cpu().numpy())
+            outputs.append(env.render(tensor[start : start + 32]).cpu().numpy())
         actual = np.concatenate(outputs)
         errors = mse(actual, reference)
         result["paired_mse"] = dist(errors)
@@ -236,7 +253,7 @@ def benchmark(args):
             for destination in ["cpu", "cuda"] if args.device == "cuda" else ["cpu"]:
 
                 def ours():
-                    return [env._render(x).to(destination) for x in chunks]
+                    return [env.render(x).to(destination) for x in chunks]
 
                 def original():
                     return [
@@ -284,10 +301,11 @@ def benchmark(args):
         for owner, value in zip(owners, poses):
             np.testing.assert_allclose(pose(owner.unwrapped), value, atol=1e-10, rtol=0)
         assert state_hash(env.get_state()) == live_hash
-        assert array_hash(tensor) == tensor_hash
+        assert state_hash(tensor) == tensor_hash
         result.update(
             status="COMPLETE",
             renderer_nonmutation_passed=True,
+            state_nonmutation_passed=True,
             nonmutation_scope="Candidate live snapshot and input poses; source render poses. No exhaustive source State acceptance claimed.",
         )
         save()
