@@ -2,8 +2,8 @@
 
 All twelve Fetch cells use parameterized delegated CPU semantics. These legacy
 renderer tests construct FetchBase directly to protect its unchanged renderer
-contract; the full public family gates live in scripts/recovery/fetch_public_gate.py
-and scripts/recovery/fetch_alias_gate.py.
+contract; the public family is checked against source by the shared contracts
+(tests/contracts, profile ``fetch``).
 
 **Tier 1 reads the SOURCE.** That ``FetchBase`` derives ``Env``, that its constructor takes
 ``num_envs=``, that it assigns ``state_layout`` per instance and

@@ -13,6 +13,11 @@ ROOT = Path(__file__).resolve().parents[3]
 EXCLUDED = frozenset(
     {"swm/CraftaxClassicPixels-v1", "swm/CraftaxClassicSymbolic-v1", "swm/CraftaxPixels-v1", "swm/CraftaxSymbolic-v1"}
 )
+SHARED_CONTRACTS = [
+    "tests/contracts/test_state.py",
+    "tests/contracts/test_simulation.py",
+    "tests/contracts/test_task.py",
+]
 ONLINE = {
     "classic_control": "benchmarks/online/classic_source_pipeline.py",
     "dmcontrol": "benchmarks/online/dmc_source_transport_gate.py",
@@ -30,7 +35,13 @@ def inventory():
         registration = row["historical_id"]
         if registration in EXCLUDED:
             continue
-        gates = [value.strip() for value in row["test"].split(";")]
+        recorded = [value.strip() for value in row["test"].split(";")]
+        # Historical acceptance drivers outside tests/ were retired; the shared contract
+        # profiles cover every registration here and replace them as the required gates.
+        historical = [path for path in recorded if not path.startswith("tests/")]
+        gates = [path for path in recorded if path.startswith("tests/")]
+        if historical:
+            gates += SHARED_CONTRACTS
         if profiles.get(registration) == "native":
             gates.append("tests/contracts/test_native_acceptance.py")
         online = [ONLINE[row["family"]]] if row["family"] in ONLINE else []
@@ -46,6 +57,7 @@ def inventory():
                 family=row["family"],
                 source_scope=row["verification_scope"],
                 source_audit=row.get("audit_report"),
+                historical_gates=historical,
                 required_gates={
                     "state": gates,
                     "simulation": gates,
