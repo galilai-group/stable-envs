@@ -462,7 +462,7 @@ def test_both_frozen_craftax_classic_corpora_are_kept_and_both_replay():
 
     root = Path(__file__).resolve().parents[2]
     step4 = np.load(root / "tests/fixtures/states/fidelity/CraftaxClassic.npz")["states"]
-    step7 = np.load(root / "tests/fixtures/regression/join/step7/craftax-classic-full/corpus/states.npz")["states"]
+    step7 = np.load(root / "tests/fixtures/states/craftax_classic/states.npz")["states"]
     assert step4.shape == (64, 127) and step7.shape == (64, 149)
     env = snv.CraftaxClassic(num_envs=64, device="cpu")
     with pytest.raises(ValueError, match="expects state_dim 149, got 127"):

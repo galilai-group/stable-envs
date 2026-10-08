@@ -436,11 +436,8 @@ def test_the_arrow_guard_leaves_the_frozen_corpus_untouched():
             Path(__file__).resolve().parents[2]
             / "tests"
             / "fixtures"
-            / "regression"
-            / "join"
-            / "step7"
-            / "craftax-full"
-            / "corpus"
+            / "states"
+            / "craftax_full"
             / "corpus.json"
         ).read_text()
     )

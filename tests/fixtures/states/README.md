@@ -29,3 +29,11 @@ OGBCube and OGBScene reached-state corpora (`<Cell>.npz`, with `states` and JSON
 `meta`) and the pools they were selected from (`<Cell>_pool.npz`). Read by
 `tests/unit/test_ogb_manip.py` to check that the recorded selection indexes the
 kept pool. Previously `tests/fixtures/regression/join/step7/ogb-manipulation/states/`.
+
+## `craftax_classic/` and `craftax_full/`
+
+Step-7 Craftax reached-state corpora: `states.npz`, its `states.meta.json`
+sidecar, and `corpus.json` with the seed, pool size, selected indices and
+hashes. `test_envs_craftax_rocket.py` renders the Classic array;
+`test_craftax_full.py` regenerates the Full pool from `corpus.json` and checks
+its hashes. Previously `tests/fixtures/regression/join/step7/<cell>/corpus/`.
