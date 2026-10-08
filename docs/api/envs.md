@@ -8,7 +8,7 @@ Each module's docstring is where its measured constants live: the reference id, 
 
 ## PushT
 
-::: stable_envs.envs.pusht.legacy
+::: stable_envs.envs.pusht.semantics
 
 ## The other families
 
