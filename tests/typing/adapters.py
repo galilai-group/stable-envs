@@ -2,7 +2,6 @@
 
 from stable_envs._adapters.classic.local import ClassicControlAdapter
 from stable_envs._adapters.classic.process import AcrobotProcessAdapter
-from stable_envs._adapters.rocket.adapter import RocketAdapter
 from stable_envs._execution.protocol import SimulatorAdapter, StepPipeline
 from stable_envs.envs.craftax.simulation import CraftaxAdapter
 from stable_envs.envs.dmcontrol.simulation.factory import DMCAdapter
@@ -14,6 +13,7 @@ from stable_envs.envs.ogbench.simulation.manipulation_process import OGBManipula
 from stable_envs.envs.ogbench.simulation.maze import OGBMazeAdapter
 from stable_envs.envs.ogbench.simulation.maze_process import OGBMazeProcessAdapter
 from stable_envs.envs.pusht.simulation.replay_batch import PushTReplayAdapter
+from stable_envs.envs.rocket.simulation.adapter import RocketAdapter
 
 
 def local_adapters(

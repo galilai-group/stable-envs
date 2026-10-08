@@ -89,7 +89,7 @@ def install_on_classes() -> None:
 
     rocket = REGISTRY.get("PyFlytRocketLanding")
     if rocket is not None:
-        import stable_envs.envs.rocket_landing as rl
+        import stable_envs.envs.rocket.legacy as rl
 
         def _cert_rocket(size: int):
             hit = rl._REF_CACHE.get(size)

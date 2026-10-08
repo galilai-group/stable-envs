@@ -1,4 +1,4 @@
-"""``stable_envs.envs.rocket_landing`` on the CPU: the state contract, the colour law, the tessellation,
+"""``stable_envs.envs.rocket.legacy`` on the CPU: the state contract, the colour law, the tessellation,
 the camera and the lag, against the measurements in ``pre-repository-cleanup:tests/fixtures/regression/join/step7/rocket-landing/``.
 
 Nothing here renders (nvdiffrast is CUDA-only); the render path is asserted on the certification card
@@ -15,7 +15,7 @@ import numpy as np
 import pytest
 
 pytest.importorskip("scipy")
-from stable_envs.envs import rocket_landing as RL  # noqa: E402
+from stable_envs.envs.rocket import legacy as RL  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 REF = ROOT / "tests" / "fixtures" / "states" / "rocket_landing"

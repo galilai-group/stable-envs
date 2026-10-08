@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from stable_envs.envs import rocket_render as R
+from stable_envs.envs.rocket import render as R
 
 
 @pytest.mark.parametrize("chunk", [0, -1, 1.5, True, "4"])

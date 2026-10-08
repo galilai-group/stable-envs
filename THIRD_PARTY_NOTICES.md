@@ -14,7 +14,7 @@ cast shadows, retaining upstream light evaluation order and arithmetic.
 ## Migrated environment tasks
 
 The private Rocket task and Variation helpers in
-`stable_envs/_adapters/rocket_task.py` and `rocket_spaces.py` are adapted from
+`stable_envs/envs/rocket/simulation/task.py` and `spaces.py` are adapted from
 stable-worldmodel, commit `176d54532b3c0a251a4f509b74f2fdacc143a63d`:
 
 - `stable_worldmodel/envs/rocket_landing/pyflyt_rocketlanding.py`
