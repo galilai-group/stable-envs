@@ -67,7 +67,7 @@ def main():
         source_helper_sha256=hashlib.sha256((ROOT / "tests/helpers/reference/pusht_semantics.py").read_bytes()).hexdigest(),
         helper_sha256=sha(Path(__file__).with_name("pusht_replay_gate.py")),
         production_files={
-            str(p.relative_to(ROOT)): sha(p) for p in sorted((ROOT / "stable_envs/_adapters").glob("pusht_*.py"))
+            str(p.relative_to(ROOT)): sha(p) for p in sorted((ROOT / "stable_envs").rglob("*.py"))
         },
         source_files=source_hashes,
         versions={

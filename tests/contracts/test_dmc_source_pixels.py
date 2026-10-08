@@ -24,7 +24,7 @@ def test_source_rollout_pixels(
     if case.family != "dmc":
         pytest.skip("DM Control source pixels belong to the dmc profile")
     device = request.config.getoption("--contract-device")
-    trace, identity = dmc_trace(case, seed, dtype, horizon, device)
+    trace, identity = dmc_trace(case, seed, dtype, horizon, device, source_identity["root"])
     record_property("source_physics_device", "cpu")
     record_property("source_render_device", device)
     for key, value in identity.items():

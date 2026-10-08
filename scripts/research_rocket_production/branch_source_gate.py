@@ -28,7 +28,7 @@ def main():
     records = []
     source_hashes = {
         str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
-        for p in sorted(ROOT.glob("stable_envs/_adapters/rocket*.py"))
+        for p in sorted(ROOT.glob("stable_envs/_adapters/rocket/*.py"))
         + [ROOT / "stable_envs/envs/rocket_semantics.py"]
     }
     for seed in [0, 17, 42]:

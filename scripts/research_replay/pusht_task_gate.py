@@ -35,7 +35,7 @@ def main():
         public_acceptance=False,
         production_files={
             str(f.relative_to(ROOT)): hashlib.sha256(f.read_bytes()).hexdigest()
-            for f in sorted((ROOT / "stable_envs/_adapters").glob("pusht_*.py"))
+            for f in sorted((ROOT / "stable_envs").rglob("*.py"))
         },
     )
 

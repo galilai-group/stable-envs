@@ -60,7 +60,7 @@ def main():
         script_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         production_files={
             str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
-            for p in sorted((ROOT / "stable_envs/_adapters").glob("pusht_*.py"))
+            for p in sorted((ROOT / "stable_envs").rglob("*.py"))
         },
         cases=[],
     )

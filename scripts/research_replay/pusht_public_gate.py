@@ -63,7 +63,7 @@ def main():
             k: md.version(k) for k in ("pymunk", "pygame", "numpy", "torch", "tensordict", "opencv-python-headless")
         },
         production_files={
-            str(p.relative_to(ROOT)): sha(p) for p in sorted((ROOT / "stable_envs/_adapters").glob("pusht_*.py"))
+            str(p.relative_to(ROOT)): sha(p) for p in sorted((ROOT / "stable_envs").rglob("*.py"))
         },
         script_sha256=sha(Path(__file__)),
     )

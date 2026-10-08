@@ -179,7 +179,7 @@ def main():
                         if oracle.modified_pad_urdf:
                             Path(oracle.modified_pad_urdf).unlink(missing_ok=True)
     np.savez_compressed(args.output / "frames.npz", ours=frames, source=references)
-    files = [ROOT / "tests/helpers/reference/rocket_semantics.py"] + list(ROOT.glob("stable_envs/_adapters/rocket*.py")) + list(ROOT.glob("stable_envs/envs/rocket*.py"))
+    files = [ROOT / "tests/helpers/reference/rocket_semantics.py"] + list(ROOT.glob("stable_envs/_adapters/rocket/*.py")) + list(ROOT.glob("stable_envs/envs/rocket*.py"))
     files += [
         ROOT / "stable_envs/_stepping.py",
         ROOT / "stable_envs/env.py",

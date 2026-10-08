@@ -46,7 +46,7 @@ def main():
         public_acceptance=False,
         script_sha256=sha(Path(__file__)),
         production_files={
-            str(p.relative_to(ROOT)): sha(p) for p in sorted((ROOT / "stable_envs/_adapters").glob("pusht_*.py"))
+            str(p.relative_to(ROOT)): sha(p) for p in sorted((ROOT / "stable_envs").rglob("*.py"))
         },
         cases=[],
     )

@@ -6,6 +6,8 @@ import numpy as np
 import torch
 
 import stable_envs as se
+from tests.helpers.reference.bridges import load_source
+from tests.helpers.reference.isolated import isolated_call
 from tests.helpers.reference.ogbench_manipulation_semantics import assert_oracle, load_oracle
 from tests.helpers.reference.ogbench_maze_semantics import OGBMazeReference
 from tests.helpers.reference.pixels import PixelTrace
@@ -65,8 +67,15 @@ def _close_renderer(owner, attribute: str) -> None:
 
 
 def ogbench_trace(
-    case: Registration, seed: int, dtype: str, horizon: int, device: str
+    case: Registration, seed: int, dtype: str, horizon: int, device: str, source_root: str
 ) -> tuple[PixelTrace, list[dict]]:
+    return isolated_call(__name__, "_ogbench_trace", (case, seed, dtype, horizon, device, source_root))
+
+
+def _ogbench_trace(
+    case: Registration, seed: int, dtype: str, horizon: int, device: str, source_root: str
+) -> tuple[PixelTrace, list[dict]]:
+    load_source(source_root, "ogbench")
     actions = np.random.default_rng(seed + 1000).uniform(-0.2, 0.2, (2, horizon, case.width)).astype(dtype)
     if case.domain == "Maze":
         return _maze_trace(seed, actions, device)

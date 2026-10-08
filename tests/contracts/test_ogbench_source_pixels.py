@@ -25,7 +25,7 @@ def test_source_rollout_pixels(
     if case.family != "ogbench":
         pytest.skip("OGBench source pixels belong to the OGBench profile")
     device = request.config.getoption("--contract-device")
-    trace, identities = ogbench_trace(case, seed, dtype, horizon, device)
+    trace, identities = ogbench_trace(case, seed, dtype, horizon, device, source_identity["root"])
     backend = "auto"
     with se.make(case.name, num_envs=2, size=64, device=device, backend=backend) as env:
         errors = []

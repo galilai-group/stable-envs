@@ -1,10 +1,5 @@
 import importlib
-import pickle
-import subprocess
-import sys
 from contextlib import ExitStack, closing
-from pathlib import Path
-from tempfile import TemporaryDirectory
 
 import gymnasium as gym
 import numpy as np
@@ -13,6 +8,7 @@ from numpy.typing import NDArray
 
 from tests.helpers.reference.bridges import load_source, task_columns
 from tests.helpers.reference.fetch_semantics import differences, snapshot, source_state
+from tests.helpers.reference.isolated import isolated_call
 from tests.helpers.reference.pixels import PixelTrace
 from tests.helpers.reference.profiles import Registration
 
@@ -52,25 +48,11 @@ def _render(source: gym.Env, device: str) -> tuple[NDArray[np.uint8], dict]:
     return result
 
 
-def _isolated(mode: str, args: tuple):
-    # Source close() terminates GLFW globally; isolate it from candidate contexts.
-    with TemporaryDirectory(prefix="fetch-source-pixels-") as directory:
-        request, response = Path(directory) / "request.pkl", Path(directory) / "response.pkl"
-        request.write_bytes(pickle.dumps((mode, args)))
-        subprocess.run(
-            [sys.executable, "-m", __name__, str(request), str(response)],
-            cwd=Path(__file__).resolve().parents[3],
-            check=True,
-            timeout=300,
-        )
-        return pickle.loads(response.read_bytes())
-
-
 def fetch_trace(
     case: Registration, seed: int, dtype: str, horizon: int, scenario: str, device: str, source_root: str
 ) -> tuple[PixelTrace, list[dict]]:
-    mode = "branches" if case.domain == "PickAndPlace" else "trace"
-    return _isolated(mode, (case, seed, dtype, horizon, scenario, device, source_root))
+    function = "_pickandplace_trace" if case.domain == "PickAndPlace" else "_fetch_trace"
+    return isolated_call(__name__, function, (case, seed, dtype, horizon, scenario, device, source_root))
 
 
 def _fetch_trace(
@@ -230,7 +212,7 @@ def _pickandplace_trace(
 
 
 def fetch_mutation_witness(case: Registration, seed: int, dtype: str, device: str, source_root: str) -> dict:
-    return _isolated("mutation", (case, seed, dtype, device, source_root))
+    return isolated_call(__name__, "_pickandplace_mutation", (case, seed, dtype, device, source_root))
 
 
 def _pickandplace_mutation(case: Registration, seed: int, dtype: str, device: str, source_root: str) -> dict:
@@ -259,8 +241,3 @@ def _pickandplace_mutation(case: Registration, seed: int, dtype: str, device: st
                 return dict(step=step, mutation=mutation, continuation=continuation, source_gl=identity)
         raise AssertionError("Expected PickAndPlace continuous-render mutation was not witnessed")
 
-
-if __name__ == "__main__":
-    mode, args = pickle.loads(Path(sys.argv[1]).read_bytes())
-    function = {"trace": _fetch_trace, "branches": _pickandplace_trace, "mutation": _pickandplace_mutation}[mode]
-    Path(sys.argv[2]).write_bytes(pickle.dumps(function(*args)))

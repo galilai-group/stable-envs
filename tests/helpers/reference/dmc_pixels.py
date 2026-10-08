@@ -3,17 +3,27 @@ from contextlib import closing
 import numpy as np
 import torch
 
+from tests.helpers.reference.bridges import load_source
 from tests.helpers.reference.dmc_semantics import DMCReference
+from tests.helpers.reference.isolated import isolated_call
 from tests.helpers.reference.pixels import PixelTrace
 from tests.helpers.reference.profiles import Registration
 from tests.helpers.reference.semantics import compare_state
 
 
 def dmc_trace(
-    case: Registration, seed: int, dtype: str, horizon: int, device: str
+    case: Registration, seed: int, dtype: str, horizon: int, device: str, source_root: str
+) -> tuple[PixelTrace, dict[str, str | bool]]:
+    return isolated_call(__name__, "_dmc_trace", (case, seed, dtype, horizon, device, source_root))
+
+
+def _dmc_trace(
+    case: Registration, seed: int, dtype: str, horizon: int, device: str, source_root: str
 ) -> tuple[PixelTrace, dict[str, str | bool]]:
     """Witness forward source rollouts and verify the actual source GL device."""
     from OpenGL import GL
+
+    load_source(source_root, "dmc")
 
     with closing(DMCReference(case.domain, 2)) as source:
         source.reset(seed)
