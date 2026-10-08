@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import multiprocessing as mp
-import os
-import sys
 from typing import TYPE_CHECKING
+
+from .execution import cpu_affinity, process_count
 
 if TYPE_CHECKING:
     import torch
@@ -20,10 +19,10 @@ def make_fetch_adapter(
     reward_type: str = "sparse",
 ) -> FetchAdapter:
     # Daemonic workers cannot spawn children; keep their simulators local.
-    cpus = sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None
-    available = len(cpus) if cpus is not None else 1
-    if sys.platform == "linux" and num_envs >= 64 and available >= 4 and not mp.current_process().daemon:
+    cpus = cpu_affinity()
+    count = process_count(num_envs, cpus)
+    if count:
         return FetchProcessAdapter(
-            num_envs, device, seed, task, reward_type, processes=min(8, available), threads_per_process=1, cpus=cpus
+            num_envs, device, seed, task, reward_type, processes=count, threads_per_process=1, cpus=cpus
         )
     return FetchAdapter(num_envs, device, seed, task, reward_type)

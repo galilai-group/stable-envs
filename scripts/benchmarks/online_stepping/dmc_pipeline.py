@@ -24,8 +24,9 @@ import torch
 from dmc_state_export import NAMES, equal
 
 import stable_envs as se
-from stable_envs._adapters.dmcontrol_execution import process_count
+from stable_envs._adapters.dmcontrol_execution import PROCESS_DOMAINS
 from stable_envs._adapters.dmcontrol_process import DMCProcessAdapter
+from stable_envs._adapters.execution import process_count
 
 
 class Deferred:
@@ -73,7 +74,7 @@ def main():
         p.error("Use one GL device mode per interpreter")
     torch.set_num_threads(1)
     cpus = sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None
-    if process_count(args.domain, min(args.batches), cpus) != 8:
+    if process_count(min(args.batches), cpus, eligible=args.domain in PROCESS_DOMAINS) != 8:
         p.error("This comparison requires the accepted eight-owner Linux default")
     files = list(Path("stable_envs/_adapters").glob("dmcontrol*.py"))
     files += list(Path("stable_envs/envs/dmcontrol").glob("*.py"))

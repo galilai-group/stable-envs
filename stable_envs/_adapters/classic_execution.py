@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import multiprocessing as mp
-import os
-import sys
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 from typing import TYPE_CHECKING, TypeVar
 
 from . import SimulatorAdapter
+from .execution import cpu_affinity, process_count
 
 if TYPE_CHECKING:
     import torch
@@ -17,19 +15,6 @@ if TYPE_CHECKING:
 _AdapterT = TypeVar("_AdapterT", bound=SimulatorAdapter)
 
 
-def process_count(domain: str, num_envs: int, cpus: Sequence[int] | None) -> int:
-    available = len(cpus) if cpus is not None else 1
-    if (
-        domain == "acrobot"
-        and sys.platform == "linux"
-        and num_envs >= 64
-        and available >= 4
-        and not mp.current_process().daemon
-    ):
-        return min(8, available)
-    return 0
-
-
 def make_classic_adapter(
     domain: str,
     num_envs: int,
@@ -37,8 +22,8 @@ def make_classic_adapter(
     seed: int,
     local_factory: Callable[..., _AdapterT],
 ) -> _AdapterT | AcrobotProcessAdapter:
-    cpus = sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None
-    count = process_count(domain, num_envs, cpus)
+    cpus = cpu_affinity()
+    count = process_count(num_envs, cpus, eligible=domain == "acrobot")
     if count:
         from .acrobot_process import AcrobotProcessAdapter
 

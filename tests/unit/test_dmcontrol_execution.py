@@ -4,6 +4,8 @@ from types import SimpleNamespace
 
 import pytest
 
+from stable_envs._adapters import execution as policy
+
 pytest.importorskip("dm_control")
 from stable_envs._adapters import dmcontrol_execution as execution
 
@@ -19,9 +21,9 @@ from stable_envs._adapters import dmcontrol_execution as execution
     ("darwin", 64, 8, False, 0),
 ])
 def test_routing_preserves_local_fallback(monkeypatch, domain, platform, batch, cores, daemon, expected):
-    monkeypatch.setattr(execution.sys, "platform", platform)
-    monkeypatch.setattr(execution.os, "sched_getaffinity", lambda _: set(range(cores)), raising=False)
-    monkeypatch.setattr(execution.mp, "current_process", lambda: SimpleNamespace(daemon=daemon))
+    monkeypatch.setattr(policy.sys, "platform", platform)
+    monkeypatch.setattr(policy.os, "sched_getaffinity", lambda _: set(range(cores)), raising=False)
+    monkeypatch.setattr(policy.mp, "current_process", lambda: SimpleNamespace(daemon=daemon))
     monkeypatch.setattr(execution, "DMCProcessAdapter", lambda *args, **kwargs: ("process", args, kwargs))
     local = lambda *args: ("local", args, {})
     kind, args, kwargs = execution.make_dmc_adapter(domain, batch, "cpu", 17, local)

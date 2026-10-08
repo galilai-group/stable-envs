@@ -4,6 +4,8 @@ from types import SimpleNamespace
 
 import pytest
 
+from stable_envs._adapters import execution as policy
+
 pytest.importorskip("ogbench")
 from stable_envs._adapters import ogbench_execution as execution
 
@@ -23,14 +25,14 @@ from stable_envs._adapters import ogbench_execution as execution
     ("linux", 64, None, False, 0),
 ])
 def test_ogbench_routing(monkeypatch, family, device, platform, batch, cores, daemon, expected):
-    monkeypatch.setattr(execution.sys, "platform", platform)
+    monkeypatch.setattr(policy.sys, "platform", platform)
     if cores is None:
-        monkeypatch.delattr(execution.os, "sched_getaffinity", raising=False)
+        monkeypatch.delattr(policy.os, "sched_getaffinity", raising=False)
     else:
         # Real affinity IDs need not be contiguous or start at zero.
         cpus = [2 * i + 1 for i in range(cores)]
-        monkeypatch.setattr(execution.os, "sched_getaffinity", lambda _: set(cpus), raising=False)
-    monkeypatch.setattr(execution.mp, "current_process", lambda: SimpleNamespace(daemon=daemon))
+        monkeypatch.setattr(policy.os, "sched_getaffinity", lambda _: set(cpus), raising=False)
+    monkeypatch.setattr(policy.mp, "current_process", lambda: SimpleNamespace(daemon=daemon))
     monkeypatch.setattr(execution, "OGBMazeProcessAdapter", lambda *args, **kwargs: ("process", args, kwargs))
     local = lambda *args: ("local", args, {})
     if family == "Maze":

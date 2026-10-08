@@ -36,9 +36,9 @@ def sync(device):
 def make(batch, device, processes, cpus):
     options = dict(num_envs=batch, device=device, seed=17, size=64)
     if not processes:
-        with patch.object(ogbench_execution, "maze_process_count", return_value=0):
+        with patch.object(ogbench_execution, "process_count", return_value=0):
             return se.make("PointMazeLargeNavigate", **options)
-    with (patch.object(ogbench_execution, "maze_process_count", return_value=0),
+    with (patch.object(ogbench_execution, "process_count", return_value=0),
           patch.object(maze, "OGBMazeAdapter", partial(OGBMazeProcessAdapter, processes=processes, cpus=cpus))):
         return se.make("PointMazeLargeNavigate", **options)
 

@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from stable_envs._adapters import execution as policy
 from stable_envs._adapters import fetch_execution as execution
 
 
@@ -20,9 +21,9 @@ from stable_envs._adapters import fetch_execution as execution
     ],
 )
 def test_private_execution_selection(monkeypatch, platform, batch, cores, daemon, processes):
-    monkeypatch.setattr(execution.sys, "platform", platform)
-    monkeypatch.setattr(execution.os, "sched_getaffinity", lambda _: set(range(cores)), raising=False)
-    monkeypatch.setattr(execution.mp, "current_process", lambda: SimpleNamespace(daemon=daemon))
+    monkeypatch.setattr(policy.sys, "platform", platform)
+    monkeypatch.setattr(policy.os, "sched_getaffinity", lambda _: set(range(cores)), raising=False)
+    monkeypatch.setattr(policy.mp, "current_process", lambda: SimpleNamespace(daemon=daemon))
     monkeypatch.setattr(execution, "FetchAdapter", lambda *a, **kw: ("local", a, kw))
     monkeypatch.setattr(execution, "FetchProcessAdapter", lambda *a, **kw: ("process", a, kw))
     mode, args, kwargs = execution.make_fetch_adapter(batch, "cpu", 17, "Push", "dense")
