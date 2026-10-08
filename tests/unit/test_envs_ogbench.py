@@ -423,7 +423,7 @@ def test_a_renderer_only_cell_refuses_step_and_transition_and_says_why(_ogbench,
                 getattr(env, call)(*args)
             msg = str(e.value)
             assert cell in msg and "full simulator semantics" in msg
-            assert "semantic_recovery_matrix.json" in msg
+            assert "renders supplied states only" in msg
         assert env._render().shape == (2, 224, 224, 3)
 
 

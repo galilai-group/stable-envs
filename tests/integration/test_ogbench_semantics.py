@@ -10,7 +10,7 @@ import stable_envs as se
 pytest.importorskip("ogbench")
 pytest.importorskip("stable_worldmodel")
 
-from scripts.recovery.ogbench_maze_gate import run_gate
+from tests.helpers.reference.gates.ogbench_maze import run_gate
 
 
 def test_ogbench_maze_full_state_semantics():

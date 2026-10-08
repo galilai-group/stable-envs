@@ -120,6 +120,22 @@ def test_measure_warmup_is_untimed_and_repeats_are_retained():
     assert timing["min_ms"] <= timing["median_ms"] <= timing["max_ms"]
 
 
+def test_measure_percentiles_come_from_retained_samples_not_warmup(monkeypatch):
+    clock = [0.0]
+    durations = iter([9.99, 0.010, 0.020, 0.030, 0.040])
+    monkeypatch.setattr(_common.time, "perf_counter", lambda: clock[0])
+
+    def fn():
+        clock[0] += next(durations)
+
+    timing = _common.measure(fn, device=torch.device("cpu"), warmup=1, repeats=4)
+    assert timing["samples_ms"] == pytest.approx([10.0, 20.0, 30.0, 40.0])
+    assert timing["median_ms"] == pytest.approx(25.0)
+    assert timing["p25_ms"] == pytest.approx(17.5)
+    assert timing["p75_ms"] == pytest.approx(32.5)
+    assert timing["max_ms"] == pytest.approx(40.0)
+
+
 def test_cuda_peak_reset_happens_after_warmup(monkeypatch):
     calls = []
 

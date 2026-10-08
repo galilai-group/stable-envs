@@ -18,7 +18,7 @@ pytest.importorskip("scipy")
 from stable_envs.envs import rocket_landing as RL  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
-REF = ROOT / "tests" / "fixtures" / "regression" / "join" / "step7" / "rocket-landing" / "reference"
+REF = ROOT / "tests" / "fixtures" / "states" / "rocket_landing"
 
 
 def _corpus():

@@ -10,7 +10,7 @@ import numpy as np
 import torch
 
 ROOT = Path(__file__).resolve().parents[3]
-EVIDENCE = ROOT / "docs/research/semantic_recovery_evidence/craftax_source_audit"
+EVIDENCE = ROOT / "tests/fixtures/craftax_source"
 NAMES = ("CraftaxClassicPixels", "CraftaxClassicSymbolic", "CraftaxPixels", "CraftaxSymbolic")
 ACTIONS = {
     "mine_tree": 5,

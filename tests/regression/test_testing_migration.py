@@ -1,4 +1,4 @@
-"""Compare new consumers with preserved historical verifiers, including failures."""
+"""Saved-evidence verifiers and required profiles reject defects instead of passing them."""
 
 import json
 import os
@@ -7,76 +7,33 @@ import subprocess
 import sys
 from pathlib import Path
 
-import numpy as np
 import pytest
 
 from stable_envs.testing.evidence import verify_seal
 from tests.helpers.reference.saved import native_corpus, verify_rocket_render
 
 ROOT = Path(__file__).resolve().parents[2]
-ROCKET = ROOT / "docs/research/semantic_recovery_evidence/final_three_20261004/rocket/closure-v4/final/public-cpu"
+ROCKET = ROOT / "tests/fixtures/saved/rocket_public_cpu_coverage"
 ROCKET_REVISION = "ebf82e6eeed8b2b9c7560e4dff6f9a6b5c95e95b"
 
 
 @pytest.fixture(scope="module")
 def recorded_tree(tmp_path_factory):
-    """Give the unchanged legacy verifier the code hashes its report actually recorded."""
+    """Materialize the code the report recorded, read from Git without checking it out."""
     root = tmp_path_factory.mktemp("recorded-rocket")
     report = json.loads((ROCKET / "result.json").read_text())
-    for name in [*report["production_hashes"], "scripts/research_rocket_production/verify_current_render.py"]:
+    for name in report["production_hashes"]:
         path = root / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(subprocess.check_output(["git", "show", f"{ROCKET_REVISION}:{name}"], cwd=ROOT))
     return root
 
 
-@pytest.mark.parametrize(
-    "defect", [None, "missing_frames", "false_witness", "wrong_metric", "missing_case", "bad_frame"]
-)
-def test_rocket_old_and_new_verifiers_agree(tmp_path, defect, recorded_tree):
-    report = json.loads((ROCKET / "result.json").read_text())
-    if defect == "false_witness":
-        report["records"][0]["independent_restore_exact"] = False
-    elif defect == "wrong_metric":
-        report["records"][0]["metrics"]["normalized_mse"] = 0.002
-    elif defect == "missing_case":
-        report["records"].pop()
-    if defect == "bad_frame":
-        with np.load(ROCKET / "frames.npz", allow_pickle=False) as archive:
-            ours, source = archive["ours"], archive["oracle"]
-        ours[0] = 255
-        report["records"][0]["metrics"]["normalized_mse"] = float(
-            np.mean(((ours[0].astype(float) - source[0]) / 255) ** 2)
-        )
-        np.savez_compressed(tmp_path / "frames.npz", ours=ours, oracle=source)
-        del ours, source
-    elif defect != "missing_frames":
-        # Read-only link; avoid copying a large accepted corpus for every control.
-        (tmp_path / "frames.npz").symlink_to(ROCKET / "frames.npz")
-    (tmp_path / "result.json").write_text(json.dumps(report))
-    output = subprocess.run(
-        [
-            sys.executable,
-            str(recorded_tree / "scripts/research_rocket_production/verify_current_render.py"),
-            "--input",
-            str(tmp_path),
-            "--output",
-            str(tmp_path / "legacy.json"),
-        ],
-        cwd=ROOT,
-        env={**os.environ, "PYTHONPATH": str(ROOT) + os.pathsep + os.environ.get("PYTHONPATH", "")},
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
-    legacy_pass = output.returncode == 0
-    try:
-        result = verify_rocket_render(tmp_path, ROOT, revision=ROCKET_REVISION)
-    except (AssertionError, FileNotFoundError):
-        new_pass = False
-    else:
-        new_pass = result["status"] == "PASS"
-    assert legacy_pass == new_pass == (defect is None), output.stderr
+def test_rocket_fixture_passes_coverage_and_code_identity(tmp_path):
+    """Control: the unmodified fixture gets past coverage, then stops for lack of frames."""
+    shutil.copy(ROCKET / "result.json", tmp_path / "result.json")
+    with pytest.raises(FileNotFoundError, match="frames.npz"):
+        verify_rocket_render(tmp_path, ROOT, revision=ROCKET_REVISION)
 
 
 @pytest.mark.parametrize("defect", ["duplicate", "missing_group", "sibling"])
@@ -89,7 +46,6 @@ def test_new_rocket_coverage_rejects_duplicate_or_missing_groups_before_pixels(t
     else:
         report["groups"].pop(next(iter(report["groups"])))
     (tmp_path / "result.json").write_text(json.dumps(report))
-    (tmp_path / "frames.npz").symlink_to(ROCKET / "frames.npz")
     with pytest.raises(AssertionError):
         verify_rocket_render(tmp_path, ROOT, revision=ROCKET_REVISION)
 

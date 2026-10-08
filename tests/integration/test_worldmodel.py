@@ -1,4 +1,4 @@
-"""Certification/provenance for the frozen SWM correspondence. Not a public interop contract."""
+"""The frozen SWM correspondence and the test-only bridge. Not a public interop contract."""
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ from tests.helpers.reference import (
 pytestmark = pytest.mark.integration
 
 ROOT = Path(__file__).resolve().parents[2]
-FROZEN_MATRIX = ROOT / "tests" / "fixtures" / "regression" / "gate_f_matrix.json"
+FROZEN_MATRIX = ROOT / "tests" / "fixtures" / "swm" / "frozen_cells.json"
 
 
 def _frozen_rows() -> list[dict]:

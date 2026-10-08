@@ -12,7 +12,7 @@ from stable_envs._adapters.dmc.first_family import FIRST_FAMILY_FIELDS
 pytest.importorskip("dm_control")
 pytest.importorskip("stable_worldmodel")
 
-from scripts.recovery.dmc_first_family_gate import CASES, run_gate
+from tests.helpers.reference.gates.dmc_first_family import CASES, run_gate
 
 
 def test_first_dmc_family_full_state_semantics():

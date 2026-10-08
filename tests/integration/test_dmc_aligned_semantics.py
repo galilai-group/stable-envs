@@ -10,7 +10,7 @@ from stable_envs._adapters.dmc.aligned import ALIGNED_FIELDS, CONFIG
 
 pytest.importorskip("dm_control")
 pytest.importorskip("stable_worldmodel")
-from scripts.recovery.dmc_aligned_gate import CASES, run_gate
+from tests.helpers.reference.gates.dmc_aligned import CASES, run_gate
 
 
 def test_aligned_full_state_specs_and_gate():

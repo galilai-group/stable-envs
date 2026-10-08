@@ -255,7 +255,7 @@ def test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose():
     # any_blocking-shaped bound (cheaper than the cast_nearest branch that actually decides this) and
     # applied a margin scaled by a single run's timing spread. Three runs whose ratios agree to 1-3 %
     # produced three DIFFERENT predicates under that margin, which is what retired it.
-    root = Path(R3.__file__).resolve().parents[2] / "tests/fixtures/regression/join/step6/raycast3d/experiments"
+    root = Path(R3.__file__).resolve().parents[2] / "tests/fixtures/measurements/raycast3d"
     f = root / "r6_kind_cost.json"
     if not f.is_file():
         pytest.skip(f"no committed measurement at {f}")
@@ -273,7 +273,7 @@ def test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose():
     # Step-6 file is frozen; absent that file the kind is unbounded and must not be in the table.
     f7 = (
         Path(R3.__file__).resolve().parents[2]
-        / "tests/fixtures/regression/join/step7/dmc-quadruped/phase1/cpu_oscar/kind_cost_ellipsoid.json"
+        / "tests/fixtures/measurements/raycast3d/kind_cost_ellipsoid.json"
     )
     if f7.is_file():
         m7 = json.loads(f7.read_text())

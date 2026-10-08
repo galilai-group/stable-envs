@@ -150,7 +150,7 @@ def test_fk_is_unchanged_on_the_frozen_ball_in_cup_states():
 
     import stable_envs as se
 
-    npz = Path(__file__).resolve().parents[2] / "tests/fixtures/regression/join/step4/states/DMCBallInCupCatch.npz"
+    npz = Path(__file__).resolve().parents[2] / "tests/fixtures/states/fidelity/DMCBallInCupCatch.npz"
     if not npz.is_file():
         pytest.skip("frozen DMCBallInCupCatch corpus not present")
     try:

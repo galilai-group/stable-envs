@@ -71,7 +71,7 @@ def _states(env, kind, n, seed):
 
         npz = (
             Path(__file__).resolve().parents[2]
-            / "tests/fixtures/regression/join/step4/states"
+            / "tests/fixtures/states/fidelity"
             / f"{type(env).__name__}.npz"
         )
         if not npz.is_file():

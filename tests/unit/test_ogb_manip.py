@@ -277,7 +277,7 @@ def test_the_frozen_corpus_is_a_subset_of_the_pool_committed_beside_it(cname):
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[2]
-    d = root / "tests/fixtures/regression/join/step7/ogb-manipulation/states"
+    d = root / "tests/fixtures/states/ogb_manipulation"
     sp, pp = d / f"{cname}.npz", d / f"{cname}_pool.npz"
     if not (sp.exists() and pp.exists()):
         pytest.skip("the corpora are written by the GPU measurement job")

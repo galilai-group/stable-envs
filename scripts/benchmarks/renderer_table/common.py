@@ -33,7 +33,7 @@ def write(path, value):
 
 
 def catalog():
-    matrix = json.loads((ROOT / "docs/research/semantic_recovery_matrix.json").read_text())["rows"]
+    matrix = json.loads((ROOT / "tests/fixtures/semantic_recovery_matrix.json").read_text())["rows"]
     mapping = {
         r["historical_id"]: r
         for r in json.loads((ROOT / "docs/research/semantic_recovery_implementation_map.json").read_text())["rows"]

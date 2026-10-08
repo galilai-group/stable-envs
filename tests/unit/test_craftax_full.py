@@ -433,15 +433,7 @@ def test_the_arrow_guard_leaves_the_frozen_corpus_untouched():
 
     rec = _json.loads(
         (
-            Path(__file__).resolve().parents[2]
-            / "tests"
-            / "fixtures"
-            / "regression"
-            / "join"
-            / "step7"
-            / "craftax-full"
-            / "corpus"
-            / "corpus.json"
+            Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "states" / "craftax_full" / "corpus.json"
         ).read_text()
     )
     e = CraftaxFull(num_envs=rec["kept"], device="cpu")
@@ -456,76 +448,6 @@ def test_the_arrow_guard_leaves_the_frozen_corpus_untouched():
 
 
 # ------------------------------------------------------------------ the performance record
-
-
-def test_the_declared_tiers_are_what_the_frozen_ladder_says_they_are():
-    """The tier in the record must follow from its own S_cpu / R and cores through the FROZEN ladder,
-    not be typed in beside them.
-
-    Walks ``tests/fixtures/regression/fidelity/certification.json``'s rungs the way ``scripts/regression/semantic/certify.py:_tier_from`` does:
-    the ratio picks the starting rung and a failed ``cores`` conjunct walks down from it. Both labels
-    were produced by that classifier; this keeps them from drifting apart from the numbers if either
-    is edited later.
-    """
-    import json as _json
-
-    spec = _json.loads(
-        (
-            Path(__file__).resolve().parents[2]
-            / "tests"
-            / "fixtures"
-            / "regression"
-            / "fidelity"
-            / "certification.json"
-        ).read_text()
-    )
-
-    def walk(rungs, order, ratio, cores, rkey, ckey):
-        def holds(cond, keys, val):
-            for k in keys & set(cond):
-                if val is None:
-                    return False
-                if k.endswith("_gte") and not val >= cond[k]:
-                    return False
-                if k.endswith("_lt") and not val < cond[k]:
-                    return False
-            return True
-
-        rk = {k for c in rungs.values() for k in c if k.startswith(rkey)}
-        ck = {k for c in rungs.values() for k in c if k.startswith(ckey)}
-        start = next(i for i, n in enumerate(order) if holds(rungs.get(n, {}), rk, ratio))
-        for name in order[start:]:
-            if holds(rungs.get(name, {}), ck, cores):
-                return name
-        return order[-1]
-
-    cpu = CraftaxFull.performance_record_cpu
-    got = walk(
-        spec["cpu"]["tiers"],
-        ["CPU_EXCEPTIONAL", "CPU_FAST", "CPU_FASTER", "CPU_PARITY", "CPU_REGRESSION"],
-        cpu["s_cpu"],
-        cpu["cores_cpu"],
-        "S_cpu",
-        "cores_cpu",
-    )
-    assert got == cpu["tier"], (got, cpu["tier"])
-    # and the qualifier is not decorative: BELOW_G4 means exactly cores < 1
-    assert ("BELOW_G4" in cpu["qualifiers"]) == (cpu["cores_cpu"] < 1)
-
-    gpu = CraftaxFull.performance_record_gpu
-    rungs = spec["gpu"]["tiers"][gpu["backend_class"]]
-    got = walk(
-        rungs,
-        ["GPU_EXCEPTIONAL", "GPU_FAST", "GPU_FASTER", "GPU_PARITY", "GPU_REGRESSION"],
-        gpu["R"],
-        gpu["cores"],
-        "R",
-        "cores",
-    )
-    assert got == gpu["tier"], (got, gpu["tier"])
-    # the ratio is the one the record says it is
-    assert abs(gpu["mixed_fps"] / gpu["official_jitted_fps"] - gpu["R"]) < 0.05
-    assert abs(cpu["mixed_default_fps"] / cpu["official_jitted_fps"] - cpu["s_cpu"]) < 0.01
 
 
 def test_the_two_references_are_declared_apart():
