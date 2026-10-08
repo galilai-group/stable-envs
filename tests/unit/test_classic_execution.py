@@ -4,9 +4,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from stable_envs._adapters.classic import execution as execution
-from stable_envs._adapters.classic import process as acrobot_process
 from stable_envs._execution import policy
+from stable_envs.envs.classic_control.simulation import execution as execution
+from stable_envs.envs.classic_control.simulation import process as acrobot_process
 
 
 @pytest.mark.parametrize("domain", ["acrobot", "cartpole", "pendulum", "mountain_car", "mountain_car_continuous"])

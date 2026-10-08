@@ -3,7 +3,7 @@ import pytest
 import torch
 
 import stable_envs as se
-from stable_envs._adapters.classic.local import CLASSIC_FIELDS
+from stable_envs.envs.classic_control.simulation.local import CLASSIC_FIELDS
 from tests.helpers.stepping import branch_step
 
 

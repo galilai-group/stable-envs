@@ -8,9 +8,9 @@ import pytest
 import torch
 
 import stable_envs as se
-import stable_envs.envs._classic_semantics as semantics
-from stable_envs._adapters.classic.process import AcrobotProcessAdapter
-from stable_envs._adapters.classic.local import ClassicControlAdapter
+import stable_envs.envs.classic_control.semantics as semantics
+from stable_envs.envs.classic_control.simulation.local import ClassicControlAdapter
+from stable_envs.envs.classic_control.simulation.process import AcrobotProcessAdapter
 from tests.unit.test_classic_state_export import equal
 
 

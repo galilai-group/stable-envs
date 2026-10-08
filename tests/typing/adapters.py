@@ -1,7 +1,5 @@
 """Static assignments checked by mypy; this module is not executed."""
 
-from stable_envs._adapters.classic.local import ClassicControlAdapter
-from stable_envs._adapters.classic.process import AcrobotProcessAdapter
 from stable_envs._adapters.craftax import CraftaxAdapter
 from stable_envs._adapters.dmc.factory import DMCAdapter
 from stable_envs._adapters.dmc.process import DMCProcessAdapter
@@ -14,6 +12,8 @@ from stable_envs._adapters.ogbench.maze_process import OGBMazeProcessAdapter
 from stable_envs._adapters.pusht.replay_batch import PushTReplayAdapter
 from stable_envs._adapters.rocket.adapter import RocketAdapter
 from stable_envs._execution.protocol import SimulatorAdapter, StepPipeline
+from stable_envs.envs.classic_control.simulation.local import ClassicControlAdapter
+from stable_envs.envs.classic_control.simulation.process import AcrobotProcessAdapter
 
 
 def local_adapters(

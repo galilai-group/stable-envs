@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ..._execution.protocol import SimulatorAdapter
+from ...._execution.protocol import SimulatorAdapter
 
 _NUMPY_DTYPES = {torch.float64: np.float64, torch.int64: np.int64, torch.bool: np.bool_}
 

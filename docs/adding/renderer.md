@@ -26,7 +26,7 @@ not invent velocities/RNG to impersonate exhaustive State. No public
 `pack_render_state`/`unpack_render_state` methods are part of the current API.
 
 Reuse the authoritative renderer or the accepted native rendering path. CartPole's
-accepted implementation in `stable_envs/envs/classic_control.py` uses the native
+accepted implementation in `stable_envs/envs/classic_control/envs.py` uses the native
 `gfxdraw` path. Other families delegate to MuJoCo/MJWarp. Scene2D is optional;
 forcing an upstream tile or mesh renderer through a second scene representation
 is not required. Renderer internals and fidelity declarations are documented in

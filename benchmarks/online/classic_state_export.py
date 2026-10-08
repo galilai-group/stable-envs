@@ -23,7 +23,7 @@ import torch
 
 import stable_envs as se
 from benchmarks.online.classic_profile import sync
-from stable_envs.envs._classic_semantics import _PHYSICS_SPACES
+from stable_envs.envs.classic_control.semantics import _PHYSICS_SPACES
 from tests.helpers.reference.classic_state_export import classic_state
 
 NAMES = {
@@ -92,8 +92,8 @@ def main():
         candidate_hashes={
             str(p): hashlib.sha256(p.read_bytes()).hexdigest()
             for p in [
-                Path("stable_envs/envs/_classic_semantics.py"),
-                Path("stable_envs/envs/classic_control.py"),
+                Path("stable_envs/envs/classic_control/semantics.py"),
+                Path("stable_envs/envs/classic_control/envs.py"),
                 Path("stable_envs/_execution/state_columns.py"),
                 Path("stable_envs/_core/stepping.py"),
             ]

@@ -135,12 +135,12 @@ def main():
     )
     paths = [
         Path(__file__).relative_to(Path.cwd()),
-        Path("stable_envs/envs/_classic_semantics.py"),
-        Path("stable_envs/envs/classic_control.py"),
+        Path("stable_envs/envs/classic_control/semantics.py"),
+        Path("stable_envs/envs/classic_control/envs.py"),
         Path("stable_envs/_core/stepping.py"),
         *Path("stable_envs/_adapters").rglob("*.py"),
         *Path("stable_envs/_execution").rglob("*.py"),
-        Path("stable_envs/_adapters/classic/process.py"),
+        Path("stable_envs/envs/classic_control/simulation/process.py"),
         Path("stable_envs/_execution/requests.py"),
         Path("benchmarks/online/classic_state_export.py"),
         Path("benchmarks/online/common.py"),

@@ -1,6 +1,6 @@
 """The classic-control windows and per-edge ``kmax`` are BOUNDS, and a bound needs adversarial input.
 
-Step 6 made three claims about `stable_envs/envs/classic_control.py` that the frozen corpus cannot
+Step 6 made three claims about `stable_envs/envs/classic_control/envs.py` that the frozen corpus cannot
 check, because the corpus is 64 states chosen for coverage of the reachable set and a bound is only
 interesting outside it:
 
@@ -29,7 +29,7 @@ import pytest
 torch = pytest.importorskip("torch")
 
 import stable_envs as se
-from stable_envs.envs import classic_control as CC
+from stable_envs.envs.classic_control import envs as CC
 
 CLASSIC = ("Acrobot", "CartPole", "MountainCar", "MountainCarContinuous", "Pendulum")
 

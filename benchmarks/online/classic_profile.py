@@ -24,7 +24,7 @@ from unittest.mock import patch
 import numpy as np
 import torch
 
-from stable_envs._adapters.classic.local import CLASSIC_FIELDS, ClassicControlAdapter
+from stable_envs.envs.classic_control.simulation.local import CLASSIC_FIELDS, ClassicControlAdapter
 
 
 def make(family, batch, device):
@@ -61,7 +61,7 @@ def main():
         versions={p: importlib.metadata.version(p) for p in ("torch", "numpy", "gymnasium", "tensordict")},
         source_sha256={
             str(p): hashlib.sha256(p.read_bytes()).hexdigest()
-            for p in [Path("stable_envs/envs/_classic_semantics.py"), Path(__file__).relative_to(Path.cwd())]
+            for p in [Path("stable_envs/envs/classic_control/semantics.py"), Path(__file__).relative_to(Path.cwd())]
         },
         scope="adapter component diagnostic, CPU physics for both output devices; no rendering or source speedup",
         cells=[],
