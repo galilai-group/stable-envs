@@ -4,7 +4,7 @@ import dataclasses
 
 import numpy as np
 
-from .texture_mip import plane_grid, plane_texgen
+from ...render.texture_mip import plane_grid, plane_texgen
 
 
 class Reflection:

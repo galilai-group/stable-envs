@@ -3,10 +3,10 @@ from __future__ import annotations
 import torch
 from tensordict import TensorDict
 
-from ..._adapters.dmc.execution import make_dmc_adapter
-from ..._adapters.dmc.humanoid import HUMANOID_CONFIG, HUMANOID_FIELDS
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...spaces import Box, Dict
+from .simulation.execution import make_dmc_adapter
+from .simulation.humanoid import HUMANOID_CONFIG, HUMANOID_FIELDS
 
 
 class DMCHumanoidSemantics:

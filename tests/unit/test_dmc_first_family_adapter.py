@@ -5,7 +5,7 @@ import pytest
 import torch
 from tensordict import TensorDict
 
-from stable_envs._adapters.dmc.first_family import FIRST_FAMILY_FIELDS, FirstFamilyAdapter
+from stable_envs.envs.dmcontrol.simulation.first_family import FIRST_FAMILY_FIELDS, FirstFamilyAdapter
 
 
 @pytest.mark.parametrize("domain", ["acrobot", "pendulum", "cartpole"])

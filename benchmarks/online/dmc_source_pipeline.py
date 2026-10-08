@@ -105,7 +105,7 @@ def main():
         Path("stable_envs/env.py"),
         Path("stable_envs/_execution/requests.py"),
         *Path("stable_envs/envs/dmcontrol").glob("*.py"),
-        *Path("stable_envs/_adapters").rglob("*.py"),
+        *Path("stable_envs/envs/dmcontrol/simulation").rglob("*.py"),
         *Path("stable_envs/_execution").rglob("*.py"),
         Path("tests/helpers/reference/dmc_semantics.py"),
         Path("benchmarks/online/dmc_parallel_source.py"),

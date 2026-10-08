@@ -5,7 +5,7 @@ import pytest
 import torch
 from tensordict import TensorDict
 
-from stable_envs._adapters.dmc.aligned import ALIGNED_FIELDS, CONFIG, DMCAlignedAdapter
+from stable_envs.envs.dmcontrol.simulation.aligned import ALIGNED_FIELDS, CONFIG, DMCAlignedAdapter
 
 
 @pytest.mark.parametrize("domain", ALIGNED_FIELDS)
@@ -34,6 +34,6 @@ def test_aligned_adapter_roundtrip_independence_and_validation(domain):
 def test_production_adapter_has_no_swm_runtime_import():
     import inspect
 
-    import stable_envs._adapters.dmc.aligned as module
+    import stable_envs.envs.dmcontrol.simulation.aligned as module
 
     assert "stable_worldmodel" not in inspect.getsource(module)

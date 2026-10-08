@@ -7,7 +7,7 @@ import pytest
 import torch
 
 import stable_envs as se
-from stable_envs._adapters.dmc.first_family import FIRST_FAMILY_FIELDS
+from stable_envs.envs.dmcontrol.simulation.first_family import FIRST_FAMILY_FIELDS
 
 pytest.importorskip("dm_control")
 pytest.importorskip("stable_worldmodel")

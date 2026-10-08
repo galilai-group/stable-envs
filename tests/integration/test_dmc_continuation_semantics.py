@@ -7,7 +7,7 @@ import pytest
 import torch
 
 import stable_envs as se
-from stable_envs._adapters.dmc.continuation import CONFIG, CONTINUATION_FIELDS
+from stable_envs.envs.dmcontrol.simulation.continuation import CONFIG, CONTINUATION_FIELDS
 
 pytest.importorskip("dm_control")
 pytest.importorskip("stable_worldmodel")
