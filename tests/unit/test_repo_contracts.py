@@ -18,18 +18,10 @@ SELF = Path(__file__).resolve()
 MAINTAINED_PATHS = maintained_paths(ROOT)
 
 REQUIRED_FIXTURES = (
-    "tests/fixtures/regression/support_matrix.json",
-    "tests/fixtures/regression/gate_f_matrix.json",
-    "tests/fixtures/regression/performance_tiers.json",
-    "tests/fixtures/regression/support_matrix_diff.json",
-    "tests/fixtures/regression/fidelity/certification.json",
-    "tests/fixtures/regression/fidelity/swm_matrix.json",
+    "tests/fixtures/swm/frozen_cells.json",
+    "tests/fixtures/semantic_recovery_matrix.json",
     "tests/fixtures/regression/census/assignment.json",
-    "tests/fixtures/regression/census/union.json",
-    "tests/fixtures/regression/references/reference_arm.json",
     "tests/fixtures/regression/references/registry_baseline.json",
-    "tests/fixtures/regression/references/frozen_oracle/SHA256SUMS",
-    "tests/fixtures/regression/references/frozen_oracle/step8_support_matrix.json",
 )
 
 

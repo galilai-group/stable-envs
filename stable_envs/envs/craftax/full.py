@@ -972,9 +972,9 @@ class CraftaxFull(Env):
     #: different references on purpose, because the jitted renderer disagrees with itself in uint8
     #: and the un-jitted one is not what anybody runs.
     #:
-    #: Both rungs come from the repo's own classifier (``scripts/regression/semantic/certify.py:classify``) walked
-    #: over the frozen ladder in ``tests/fixtures/regression/fidelity/certification.json``, not from reading the thresholds by
-    #: hand.
+    #: Both rungs came from the Step-3 classifier walked over the frozen certification ladder, not from
+    #: reading the thresholds by hand (``pre-repository-cleanup:scripts/regression/semantic/certify.py``,
+    #: ``pre-repository-cleanup:tests/fixtures/regression/fidelity/certification.json``).
     performance_record_cpu = {
         "tier": "CPU_FASTER",
         "qualifiers": ["BELOW_G4"],
