@@ -302,7 +302,7 @@ def test_classic_physical_only_helpers_cannot_bypass_full_state(name):
 
 def test_a_classic_cell_whose_layout_does_not_cover_its_packed_row_fails_at_import():
     """The check that lets ``_Classic.state`` skip the base class's per-call hidden-field guard."""
-    from stable_envs.envs.classic_control import _Classic
+    from stable_envs.envs.classic_control.envs import _Classic
 
     with pytest.raises(TypeError, match="packed column"):
 

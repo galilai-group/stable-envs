@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import torch
 
-from stable_envs._adapters.classic.local import CLASSIC_FIELDS, ClassicControlAdapter
+from stable_envs.envs.classic_control.simulation.local import CLASSIC_FIELDS, ClassicControlAdapter
 from tests.helpers.reference.classic_state_export import classic_state
 
 

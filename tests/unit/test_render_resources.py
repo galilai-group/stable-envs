@@ -483,7 +483,7 @@ def test_family_device_caches_release_on_eviction():
         (root / "envs" / "dmcontrol" / "_model.py", 'BoundedCache(_SCENE_CACHE_MAX, name="dmcontrol.scene"'),
         (root / "envs" / "mujoco_locomotion.py", 'BoundedCache(_SCENE_CACHE_MAX, name="mujoco_locomotion.scene"'),
         (root / "envs" / "maze2d.py", 'BoundedCache(_SCENE_CACHE_MAX, name="maze2d.scene"'),
-        (root / "envs" / "classic_control.py", 'BoundedCache(_TERRAIN_CACHE_MAX, name="classic.terrain"'),
+        (root / "envs" / "classic_control" / "envs.py", 'BoundedCache(_TERRAIN_CACHE_MAX, name="classic.terrain"'),
         (root / "envs" / "navigation" / "envs.py", 'BoundedCache(_BAKE_CACHE_MAX, name="navigation.bake"'),
         (root / "envs" / "pgx.py", 'BoundedCache(_PLATE_CACHE_MAX, name="pgx.plate"'),
         (root / "render" / "raster2d.py", 'BoundedCache(_BASE_CACHE_MAX, name="raster2d.base"'),

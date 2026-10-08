@@ -3,10 +3,10 @@ from __future__ import annotations
 import numpy as np
 import torch
 
-from .._adapters.classic.local import _PHYSICS_SPACES, CLASSIC_FIELDS, ClassicControlAdapter, validate_classic_state
-from .._execution.protocol import StepPipeline, step_pipeline
-from ..spaces import Box, Dict
-from ..specs import Spec
+from ..._execution.protocol import StepPipeline, step_pipeline
+from ...spaces import Box, Dict
+from ...specs import Spec
+from .simulation.local import _PHYSICS_SPACES, CLASSIC_FIELDS, ClassicControlAdapter, validate_classic_state
 
 
 class ClassicControlSemantics:
@@ -16,7 +16,7 @@ class ClassicControlSemantics:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        from .._adapters.classic.execution import make_classic_adapter
+        from .simulation.execution import make_classic_adapter
 
         self._simulator = make_classic_adapter(
             self.CLASSIC_DOMAIN, self.B, self.device, self._seed, ClassicControlAdapter

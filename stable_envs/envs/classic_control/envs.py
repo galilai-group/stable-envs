@@ -6,13 +6,13 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from .._core import stepgraph as _stepgraph
-from ..env import Env
-from ..registry import register
-from ..render import _resources as _RES
-from ..render import gfxdraw as G
-from ..spaces import Dict, Discrete, RGBBox
-from ._classic_semantics import ClassicControlSemantics
+from ..._core import stepgraph as _stepgraph
+from ...env import Env
+from ...registry import register
+from ...render import _resources as _RES
+from ...render import gfxdraw as G
+from ...spaces import Dict, Discrete, RGBBox
+from .semantics import ClassicControlSemantics
 
 WHITE = (255, 255, 255)
 
@@ -260,7 +260,7 @@ class _Classic(Env):
         sty = self.resolve_style(style, variation, batch=n)
         o = None if out is None else out.reshape(-1, H, W, 3)
         if self._use_fused():
-            from ..render.gfxdraw import classic as F
+            from ...render.gfxdraw import classic as F
 
             img = F.render_classic(self._ops(s, sty).finish(), out=o)
         else:
@@ -279,7 +279,7 @@ class _Classic(Env):
         """Select the fused renderer only when enabled and CUDA/Triton are available."""
         if not (self.fused_capable and self.use_fused_render and self.device.type == "cuda"):
             return False
-        from ..render.gfxdraw import classic as F
+        from ...render.gfxdraw import classic as F
 
         return F.HAVE_TRITON
 
@@ -298,7 +298,7 @@ class _Classic(Env):
         raise NotImplementedError
 
     def _ops_begin(self, s, sty):
-        from ..render.gfxdraw import classic as F
+        from ...render.gfxdraw import classic as F
 
         H, W = self.native
         ops = F.Ops(s.shape[0], H, W, self.device)

@@ -26,7 +26,7 @@ A simulator-backed `Env` exposes:
 The private `stable_envs._execution.protocol.SimulatorAdapter` protocol comprises `num_envs`,
 reset/get/set/step/close. It has no rendering or transition method. See the accepted
 `ClassicControlAdapter` and `ClassicControlSemantics` in
-`stable_envs/envs/_classic_semantics.py`, and the delegated Fetch adapter in
+`stable_envs/envs/classic_control/semantics.py`, and the delegated Fetch adapter in
 `stable_envs/envs/fetch/simulation/adapter.py`. Family mixins compose those backends
 with existing renderers. New public classes use `@register` from
 `stable_envs.registry`; unique class names are lookup keys. Family, domain, slug
