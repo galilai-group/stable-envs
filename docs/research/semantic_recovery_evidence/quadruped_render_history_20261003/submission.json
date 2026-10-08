@@ -1,7 +1,0 @@
-{
-  "job_id": "6967610",
-  "remote_stage": "/oscar/scratch/sboughan/se-semantic-recovery/quadruped-render-history-v1-20261003",
-  "node_requested": "gpu2109",
-  "status_at_submission": "SUBMITTED",
-  "acceptance": false
-}

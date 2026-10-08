@@ -35,6 +35,3 @@ stable-envs does not own dataset storage or policy rollouts.
 - [`dino_agreement.py`](dino_agreement.py) — DINO agreement measurement
 - [`rendernet/`](rendernet/README.md) — residual corrector training
 - [`robocasa_visual/`](robocasa_visual/README.md) — RoboCasa visual pipeline
-
-Frozen measurement harnesses, paper tables, and historical result dumps live under
-[`docs/research/artifacts/`](../docs/research/artifacts/README.md).

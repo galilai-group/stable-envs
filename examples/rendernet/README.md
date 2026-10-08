@@ -55,9 +55,7 @@ and the key is verified at load; a mismatch raises `CellMismatch` rather than fa
 file under another cell's name does not work, because the key is inside it.
 
 Handing the network the renderer's own depth and per-geom identity does not fix this and was measured:
-worth 0.14/255 in distribution, costs 3.6 µs a frame, and makes the cross-kitchen SSIM *worse*. The
-full study, including that negative result and the frontier sweep behind the architecture choice, is
-`docs/research/rendernet.md`.
+worth 0.14/255 in distribution, costs 3.6 µs a frame, and makes the cross-kitchen SSIM *worse*.
 
 ## What it changes, and what it does not
 

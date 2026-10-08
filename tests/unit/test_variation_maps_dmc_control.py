@@ -26,7 +26,7 @@ What each test is FOR, because a variation map fails in ways a smoke test cannot
 
 The swm-dependent tests skip when ``stable_worldmodel`` is not importable, which is the case in the
 repository's default test venv; they are run in a venv that has it (see
-``docs/research/step8_variations_dmc_control.md``).
+``pre-repository-cleanup:docs/research/step8_variations_dmc_control.md``).
 """
 
 from __future__ import annotations

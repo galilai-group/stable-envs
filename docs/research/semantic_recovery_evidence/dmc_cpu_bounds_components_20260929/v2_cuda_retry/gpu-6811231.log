@@ -1,9 +1,0 @@
-## SLURM PROLOG ###############################################################
-##    Job ID : 6811231
-##  Job Name : se-dmc-components-v2-cuda
-##  Nodelist : gpu2111
-##      CPUs : 
-##  Mem/Node : 16384 MB
-## Directory : /oscar/home/sboughan
-##   Job Started : Tue Sep 29 02:02:53 PM EDT 2026
-###############################################################################

@@ -1,9 +1,0 @@
-{
-  "starting_checkpoint": "5f9df41bd8db83a32c50dd03631e7787c17d2122",
-  "previously_sealed_files": 463,
-  "changed_summary_files": [
-    "README.md",
-    "status.json"
-  ],
-  "all_prior_raw_witnesses_preserved": true
-}

@@ -1,8 +1,0 @@
-{
-  "job": "6703024",
-  "state": "COMPLETED",
-  "exit_code": "0:0",
-  "elapsed": "02:16:34",
-  "node": "gpu2109",
-  "command": "sacct -X -n -P -j 6703024 --format=JobID,State,ExitCode,Elapsed,NodeList"
-}

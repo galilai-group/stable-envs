@@ -1,5 +1,0 @@
-{
-  "status": "COLLECTOR_ERROR_SUPERSEDED",
-  "final_evidence": "../replay_rocket_v3/result.json",
-  "reason": "Invalid divergent ignition action"
-}

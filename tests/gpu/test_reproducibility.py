@@ -475,7 +475,7 @@ DOWNSAMPLE_MARGIN = 0.005
 #:                                 for the record, not asserted: 0.850842 (cpu and cuda, closure2).
 #:
 #: Both numbers live with their provenance in
-#: ``tests/fixtures/regression/join/step8/certification/downsample_provenance.json``.
+#: ``pre-repository-cleanup:tests/fixtures/regression/join/step8/certification/downsample_provenance.json``.
 DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     "AntmazeGiantNavigate": 0.708287,  # mean 1.1419/255
     "AntmazeGiantStitch": 0.708287,  # mean 1.1419/255
@@ -504,8 +504,8 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: either (world rows 0.1634 for both, the same number), so the class declares
     #: ``resolution_consistency_applicability`` and this test judges the applicable band. On the
     #: protocol's own 8-state draw that is 6 states and they measure exactly 1.000000.
-    #: Oracle: tests/fixtures/regression/join/step7/craftax-classic-full/oracle/resolution_oracle_S16.json.
-    #: Ruling: Sami 2026-09-15 (tests/fixtures/regression/join/step7/dashboard.yaml, decisions).
+    #: Oracle: pre-repository-cleanup:tests/fixtures/regression/join/step7/craftax-classic-full/oracle/resolution_oracle_S16.json.
+    #: Ruling: Sami 2026-09-15 (pre-repository-cleanup:tests/fixtures/regression/join/step7/dashboard.yaml, decisions).
     "CraftaxClassic": 1.000000,  # mean 0.0000/255 on light >= 0.5; see applicability
     "DMCCartpoleSwingup": 0.282065,  # mean 1.4428/255  see DM Control note below
     "DMCPointMassEasy": 0.730424,  # mean 0.2418/255
@@ -524,7 +524,7 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: minimum over the four committed Step-7 runs -- cpu 0.8118772 (closure2) and 0.8118797
     #: (closure), cuda 0.8120117 and 0.8120217, at mujoco 3.11.0 and 3.12.0 -- so the floor holds on
     #: every device and reference pair measured, and the whole spread is 2.5e-05 wide inside a
-    #: 0.005 margin. Artifacts: tests/fixtures/regression/join/step7/closure2/gate_a/{cpu,cuda}_vis311.json.
+    #: 0.005 margin. Artifacts: pre-repository-cleanup:tests/fixtures/regression/join/step7/closure2/gate_a/{cpu,cuda}_vis311.json.
     "DMCQuadrupedWalk": 0.811877,  # mean 0.6329/255
     "DMCHopperHop": 0.550220,  # mean 2.9202/255
     "DMCHumanoidStand": 0.603650,  # mean 2.4394/255
@@ -551,7 +551,7 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: so no static plate exists), and it carries no PLATE_PATHS -- so every cell is measured in
     #: its own right. They sit together at 0.95-0.97 because the two things 2S resamples
     #: differently are both small here: the floor's texture is REPLACED by its dominant colour
-    #: (docs/research/humanoidbench.md Section 3.4), so the only rate-dependent content left is
+    #: (pre-repository-cleanup:docs/research/humanoidbench.md Section 3.4), so the only rate-dependent content left is
     #: the H1's mesh silhouettes and its shadow edge. Spoon is the low end because it is the one
     #: cell here with textured primitives on the table, which 2S resamples at a finer rate.
     "HumanoidBenchH1BalanceSimple": 0.967609,  # mean 0.8579/255
@@ -588,7 +588,7 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: JumanjiConnector is deliberately ABSENT: its cell borders are 1 POINT wide, which quantises to
     #: fully-black pixels at dpi 20 and to a two-cell blend at dpi 40, so the per-cell model is false at
     #: 400 px and the env raises ValueError rather than render there. This test skips it for that
-    #: reason -- see docs/research/jumanji.md.
+    #: reason -- see pre-repository-cleanup:docs/research/jumanji.md.
     "JumanjiMaze": 1.000000,  # mean 0.0000/255
     "JumanjiMinesweeper": 0.832503,  # mean 9.0860/255
     "JumanjiRubiksCube": 0.855150,  # mean 4.1042/255
@@ -648,7 +648,7 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: 0.4.0, MUJOCO_GL unused: exact 0.9561372, mean 0.9923/255, max 255 -- the same number in the
     #: closure and closure2 sweeps. 0.956137 is 0.95614 to five decimals, which is the value the
     #: frozen carry-over recorded. There is no cpu row: PyFlytRocketLanding raises on device="cpu" by
-    #: design. Artifact: tests/fixtures/regression/join/step7/closure2/gate_a/cuda_rocket.json.
+    #: design. Artifact: pre-repository-cleanup:tests/fixtures/regression/join/step7/closure2/gate_a/cuda_rocket.json.
     "PFRocketLanding": 0.956137,  # mean 0.9923/255
     "PointMazeLarge": 0.913387,  # mean 0.2794/255  (measured on PointMazeMedium)
     "PointMazeMedium": 0.913387,  # mean 0.2794/255

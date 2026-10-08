@@ -1,7 +1,0 @@
-registration,output_device,simulation_device,host,gpu,job,partition,batch,horizon,stage,layout,samples,seconds_mean,seconds_sd,speedup_vs_current,exact_state_task_parity,frame_mse_vs_current,image_size,evidence,steps_s_mean,steps_s_sd,frames_s_mean,frames_s_sd
-swm/FetchSlideDense-v3,cpu,cpu,cis1b1zs2j3.ad.brown.edu,,,,8,1,step_state,current,2,0.005399791523814201,1.9269341575828357e-05,1.0,PASS,,64,smoke.json,1481.5481121432726,5.286955340406641,0.0,0.0
-swm/FetchSlideDense-v3,cpu,cpu,cis1b1zs2j3.ad.brown.edu,,,,8,8,step_state,current,2,0.03833024995401502,4.065853792285308e-06,1.0,PASS,,64,smoke.json,1669.6995307058323,0.17711218103301696,0.0,0.0
-swm/FetchSlideDense-v3,cpu,cpu,cis1b1zs2j3.ad.brown.edu,,,,8,1,step_state,process4,2,0.0022764791501685977,0.00012777986042579196,2.3757199281397225,PASS,,64,smoke.json,3519.743374516557,197.5648742915226,0.0,0.0
-swm/FetchSlideDense-v3,cpu,cpu,cis1b1zs2j3.ad.brown.edu,,,,8,8,step_state,process4,2,0.015945375431329012,0.0009753356971865364,2.4083527824707476,PASS,,64,smoke.json,4021.225510665493,245.96754111435342,0.0,0.0
-swm/FetchSlideDense-v3,cpu,cpu,cis1b1zs2j3.ad.brown.edu,,,,8,1,step_state,process8,2,0.0018422080902382731,2.4041648989052127e-05,2.931382745460064,PASS,,64,smoke.json,4342.984572505721,56.67791342917506,0.0,0.0
-swm/FetchSlideDense-v3,cpu,cpu,cis1b1zs2j3.ad.brown.edu,,,,8,8,step_state,process8,2,0.012329749995842576,0.0008898938278150805,3.116879473890821,PASS,,64,smoke.json,5204.252194822146,375.6144210650584,0.0,0.0

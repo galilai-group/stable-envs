@@ -1,7 +1,0 @@
-registration,host,gpu,job,output_device,simulation_device,processes,threads_per_process,cpu_cores,batch,horizon,frames,mode,samples,speedup_vs_serial_fused,speedup_vs_serial_legacy,exact_state_task_parity,frame_mse,image_size,evidence,steps_s_mean,steps_s_sd,frames_s_mean,frames_s_sd
-swm/FetchReach-v3,cis1b1zs2j3.ad.brown.edu,,,cpu,cpu,8,1,,8,1,none,serial_legacy,2,0.6937365306376921,1.0,PASS,,64,smoke.json,2985.0406863267062,562.4091502189378,0.0,0.0
-swm/FetchReach-v3,cis1b1zs2j3.ad.brown.edu,,,cpu,cpu,8,1,,8,1,none,serial_fused,2,1.0,1.4414694279985318,PASS,,64,smoke.json,4302.844890671702,1382.4455841223516,0.0,0.0
-swm/FetchReach-v3,cis1b1zs2j3.ad.brown.edu,,,cpu,cpu,8,1,,8,1,none,pipeline,2,1.0818088647748694,1.5593944055107722,PASS,,64,smoke.json,4654.855746479901,935.2831981051892,0.0,0.0
-swm/FetchReach-v3,cis1b1zs2j3.ad.brown.edu,,,cpu,cpu,8,1,,8,8,none,serial_legacy,2,2.4921264626228634,1.0,PASS,,64,smoke.json,2595.2910881022995,1146.311206950955,0.0,0.0
-swm/FetchReach-v3,cis1b1zs2j3.ad.brown.edu,,,cpu,cpu,8,1,,8,8,none,serial_fused,2,1.0,0.4012637460410175,PASS,,64,smoke.json,1041.396224078797,684.8210807149212,0.0,0.0
-swm/FetchReach-v3,cis1b1zs2j3.ad.brown.edu,,,cpu,cpu,8,1,,8,8,none,pipeline,2,2.7636050461076356,1.1089345133790087,PASS,,64,smoke.json,2878.0078598616014,141.07876622323045,0.0,0.0

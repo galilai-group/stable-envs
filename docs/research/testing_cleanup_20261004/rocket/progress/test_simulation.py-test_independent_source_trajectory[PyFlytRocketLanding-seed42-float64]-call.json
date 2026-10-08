@@ -1,6 +1,0 @@
-{
-  "detail": null,
-  "node": "tests/contracts/test_simulation.py::test_independent_source_trajectory[PyFlytRocketLanding-seed42-float64]",
-  "phase": "call",
-  "status": "PASS"
-}

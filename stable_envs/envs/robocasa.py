@@ -43,7 +43,7 @@ if _missing or _mjver < (3, 11):  # pragma: no cover
         + (f"missing {', '.join(_missing)}; " if _missing else "")
         + f"mujoco is {_mj.__version__} and mujoco_warp requires >= 3.11. Note that robocasa itself "
         f"pins mujoco == 3.3.1, so the interpreter that BUILDS a kitchen is never the one that "
-        f"renders it; see the module docstring. See docs/research/robocasa.md"
+        f"renders it; see the module docstring."
     )
 
 from ..env import Env
@@ -92,7 +92,7 @@ if not available_kitchens():  # pragma: no cover
         f"and mujoco_warp needs >= 3.11, so the kitchen has to be built by a different interpreter "
         f"and cached:\n\n    " + _BUILD_CMD.format(kitchen="L52S03") + "\n\n"
         "It needs robocasa's 24 GB asset library. Set STABLE_ENVS_ROBOCASA_CACHE to point somewhere "
-        "else. See docs/research/robocasa.md"
+        "else."
     )
 
 

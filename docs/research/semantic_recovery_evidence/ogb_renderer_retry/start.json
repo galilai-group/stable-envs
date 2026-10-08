@@ -1,8 +1,0 @@
-{
-  "starting_head": "b59df7599eac1951dfd1ac5682b41452db0ac8f5",
-  "starting_status": "clean",
-  "authorization": "User: Feel free to submit more jobs since that one failed.",
-  "scope": "Cube/Scene pending CPU-profile and GPU acceptance only; no frozen renderer or shared contract changes",
-  "bundle": "/private/tmp/ogb-renderer-294675f0-complete",
-  "bundle_sha256": "18e0a6f194a26e9789e0535d2b4c14861b1d20ab3e910f9329d280e6f3f39beb"
-}

@@ -1,6 +1,0 @@
-pendulum cuda source_serial 64 1 none PASS
-pendulum cuda source_serial 64 1 final PASS
-pendulum cuda source_serial 64 1 all PASS
-pendulum cuda source_serial 64 8 none PASS
-pendulum cuda source_serial 64 8 final PASS
-pendulum cuda source_serial 64 8 all PASS

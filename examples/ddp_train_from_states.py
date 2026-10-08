@@ -91,7 +91,7 @@ def main() -> None:
     ap.add_argument("--batch", type=int, default=128, help="per rank")
     ap.add_argument("--steps", type=int, default=100)
     ap.add_argument("--size", type=int, default=0, help="0 = the env's native size")
-    ap.add_argument("--out", default="docs/research/artifacts/results")
+    ap.add_argument("--out", default="results")
     a = ap.parse_args()
 
     local_rank = int(os.environ.get("LOCAL_RANK", 0))

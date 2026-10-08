@@ -1,7 +1,0 @@
-Traceback (most recent call last):
-  File "/Users/samib/stable-envs/.worktrees/render-config-fixes/scripts/benchmarks/online_stepping/summarize_dmc_state_export.py", line 74, in <module>
-    main()
-  File "/Users/samib/stable-envs/.worktrees/render-config-fixes/scripts/benchmarks/online_stepping/summarize_dmc_state_export.py", line 32, in main
-    assert report["status"] == "PASS" and report["domain"] == domain and report["env"] == NAMES[domain], path
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: docs/research/semantic_recovery_evidence/dmc_column_closure_20261003/results/quadruped/cuda.json

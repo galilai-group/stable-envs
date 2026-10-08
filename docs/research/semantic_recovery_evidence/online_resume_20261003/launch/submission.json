@@ -1,6 +1,0 @@
-{
-  "submitter_job": "6976159",
-  "stdout": "6976159\n",
-  "stderr": "/user/sboughan/.bashrc: line 51: module: command not found\n/user/sboughan/.bashrc: line 51: module: command not found\nsbatch: No max_nodes specified, defaulting to -N 1\n",
-  "remote": "/oscar/scratch/sboughan/se-semantic-recovery/source-resume-20261003-v1"
-}

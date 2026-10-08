@@ -59,8 +59,7 @@ separate renders:
 
 ![Scale and toggle sweep](assets/media/PushT/variation_sweep.png)
 
-Which leaves vary per environment and which do not is
-[measured and tabulated](research/variation_collapses.md#what-actually-varies-per-environment); the split is
+Which leaves vary per environment and which do not is measured, not assumed; the split is
 a property of `PushT.scene` and the static-prefix bake, not of the `Scene2D` layout.
 
 ## The tile-atlas family
@@ -96,8 +95,7 @@ draws from the env's own distribution rather than a trajectory: the reference's 
 there is no way to read the compact state back out of a rollout, and interpolating between integer cell
 codes would put impossible frames on screen. And no batched variation sheet is generated for them,
 because the measurement that decides what goes in one found that
-[no leaf varies per environment](research/variation_collapses.md#the-tile-family-reads-variation-per-call-not-per-environment)
-on this path — the palette is baked into an atlas per call.
+no leaf varies per environment on this path — the palette is baked into an atlas per call.
 
 ## MiniHack
 

@@ -45,7 +45,7 @@ measured curve says it gets there:
 | 65,536 | 131.9 | 155.2 |
 
 Those are whole-`render()` figures, so they include building the scene. The rasterizer on its own reaches
-**155.0 GB/s** at 96px and **162.1 GB/s** at 224px; see [where the time goes](../research/throughput.md#where-the-time-goes).
+**155.0 GB/s** at 96px and **162.1 GB/s** at 224px.
 
 At 96px a frame is 27 KB, so even 16,384 of them is only 0.45 GB of output — small enough that per-launch
 overhead is still visible. The 224px column saturates earlier for the same reason it costs more: more
@@ -114,7 +114,6 @@ it from the steady state.
 have different cost models and the split matters, because at small batch the total is dominated by the
 half that is not the kernel. `scene()` is a few dozen small torch ops issued from Python, so its cost is
 launch-overhead-bound and nearly independent of the batch, while the rasterizer is one launch that scales
-with output pixels. The [throughput page](../research/throughput.md#where-the-time-goes) has the measured split;
-the short version is that below roughly a thousand environments you are timing Python, not the GPU.
+with output pixels. Below roughly a thousand environments you are timing Python, not the GPU.
 
 API details: [`stable_envs.render.raster2d`](../api/raster2d.md).

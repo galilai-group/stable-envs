@@ -118,7 +118,7 @@ def test_every_argparse_script_can_print_its_own_help(path: Path):
     options sharing a flag, or a module-level line that is doing real work.
 
     A missing optional dependency SKIPS. ``examples/rendernet/train_corrector.py`` needs robocasa and
-    ``docs/research/artifacts/step5_lewm_pusht/`` needs hydra and a policy checkpoint; neither absence says anything about
+    ``pre-repository-cleanup:docs/research/artifacts/step5_lewm_pusht/`` needs hydra and a policy checkpoint; neither absence says anything about
     the script, and failing on it is the exact mistake that put four red marks on this suite today for
     a Box2D the code under test does not use.
     """

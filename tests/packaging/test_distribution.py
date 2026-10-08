@@ -131,7 +131,6 @@ def test_pre_commit_hygiene_excludes_only_frozen_artifacts() -> None:
     assert "stable_envs/" in ruff["files"]
     whitespace = next(hook for repo in cfg["repos"] for hook in repo["hooks"] if hook["id"] == "trailing-whitespace")
     exclude = whitespace.get("exclude") or ""
-    assert "docs/research/" in exclude
     assert "tests/fixtures/" in exclude
     assert "docs/assets/" in exclude
     assert r".*\.md$" not in exclude

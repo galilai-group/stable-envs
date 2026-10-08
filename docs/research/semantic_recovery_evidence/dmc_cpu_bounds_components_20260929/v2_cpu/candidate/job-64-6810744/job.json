@@ -1,8 +1,0 @@
-{
-  "index": 64,
-  "registration": "swm/FingerDMControl-v0",
-  "device": "cpu",
-  "tasks": [
-    64
-  ]
-}

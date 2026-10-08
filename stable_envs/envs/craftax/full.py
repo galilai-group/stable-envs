@@ -35,7 +35,7 @@ exists instead of a generalisation of :mod:`stable_envs.envs.craftax`:
 
 Parity: measured on 64 sampled states at 10 px and 16 px over the whole observation and over all
 five cost bands. **100% of all pixels exact, max abs diff 0** against the **un-jitted** reference.
-See ``tests/fixtures/regression/join/step7/craftax-full/findings.md``.
+See ``pre-repository-cleanup:tests/fixtures/regression/join/step7/craftax-full/findings.md``.
 
 **One ULP, and it decides the parity number.** craftax normalises the night vignette as
 ``ntx / ntx.max()`` under jax, and XLA lowers a float32 divide by a scalar as a **reciprocal
@@ -229,7 +229,7 @@ def _tent_np(x):
 
 
 #: The values craftax's own light maps take, measured over every level of four generated worlds
-#: (``tests/fixtures/regression/join/step7/craftax-full/phase0/chain.json``: 23 distinct values, min 0.0, max 1.0).
+#: (``pre-repository-cleanup:tests/fixtures/regression/join/step7/craftax-full/phase0/chain.json``: 23 distinct values, min 0.0, max 1.0).
 #: Used only by ``sample_states``, so a drawn dark tile looks like a tile the simulator produces
 #: rather than like a uniform draw.
 LIGHT_MAP_ALPHABET = np.array(
@@ -843,7 +843,7 @@ class CraftaxFull(Env):
     :meth:`sample_states` never produces such a row and
     ``tests/unit/test_craftax_full.py::test_a_window_carrying_more_projectiles_than_the_simulator_can_hold_is_not_representable``
     asserts both halves. The boundary pool keeps one such row deliberately, scored apart
-    (``tests/fixtures/regression/join/step7/craftax-full/certify/boundary_pool.json``).
+    (``pre-repository-cleanup:tests/fixtures/regression/join/step7/craftax-full/certify/boundary_pool.json``).
     """
 
     family = "craftax"
@@ -876,7 +876,7 @@ class CraftaxFull(Env):
     #: which a sleeping or lit row's desaturation can turn into a rounding flip. Historical
     #: jitted-wrapper measurements live in ``tests.helpers.reference.craftax_jit``. The
     #: identity-recheck evidence
-    #: (``tests/fixtures/regression/join/step8/semantic/identity_recheck.json``) establishes the
+    #: (``pre-repository-cleanup:tests/fixtures/regression/join/step8/semantic/identity_recheck.json``) establishes the
     #: un-jitted byte-identity this class certifies.
     parity_all_exact_min = 1.0
     parity_note = (
@@ -926,7 +926,7 @@ class CraftaxFull(Env):
         "is drawn at the frame's own resolution",
         "scope_note": "broader than CraftaxClassic.resolution_consistency_applicability, which marks "
         "only light_level < 0.5 inapplicable and keeps the frozen bound above it",
-        "evidence": "tests/fixtures/regression/join/step7/craftax-full/phase0/resolution_and_dead_dims.json",
+        "evidence": "pre-repository-cleanup:tests/fixtures/regression/join/step7/craftax-full/phase0/resolution_and_dead_dims.json",
         "measured_against": "craftax 1.6.1 un-jitted, jax 0.11.1, jax_threefry_partitionable=True",
         "still_required": "exact parity against the official renderer at 10 px and at 16 px",
     }
@@ -1378,7 +1378,7 @@ class CraftaxFull(Env):
         inside its own cell), and the simulator caps every count at 99. A 4,000-step random-policy
         rollout leaves **25 of the 41 strip slots at zero for every step** and never descends past
         level 0, so a pool built from rollouts alone would present ~25 dead dimensions -- the failure
-        ``docs/research/pixel_native.md`` records for Procgen miner and heist.
+        ``pre-repository-cleanup:docs/research/pixel_native.md`` records for Procgen miner and heist.
 
         Mob budgets are the simulator's (``max_melee_mobs=3, max_passive_mobs=3, max_ranged_mobs=2``,
         three projectiles each way) and no entity is placed on the centre tile, so ``player_visible``

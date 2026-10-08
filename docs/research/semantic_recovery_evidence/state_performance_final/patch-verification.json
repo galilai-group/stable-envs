@@ -1,8 +1,0 @@
-{
-  "v2_patch_exact_against_original_source_distribution": true,
-  "patched_files": [
-    "examples/SharedMemory/PhysicsServerCommandProcessor.cpp",
-    "Extras/Serialize/BulletWorldImporter/btMultiBodyWorldImporter.cpp"
-  ],
-  "patch_sha256": "2a6da6691f54e2cbfc158acfee2e9f59a6c91b79d4a70fa9464a85cea98ebbcf"
-}

@@ -73,8 +73,7 @@ pgx = ["jax", "pgx", "pillow", "resvg-py"]
 procgen = ["pillow", "procgen2"]
 # Optional render/data surfaces. nvdiffrast is intentionally not metadata:
 # PyPI rejects direct-URL requirements and its CUDA extension needs a matching
-# local toolkit. The measured source install remains documented in
-# docs/research/nvdiffrast.md.
+# local toolkit. The source install is documented in docs/install.md.
 mjwarp = [
   "mujoco>=3.11,<3.13",
   "mujoco-warp>=3.11,<3.13",

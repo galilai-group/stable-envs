@@ -1,5 +1,0 @@
-Using CPython 3.12.9 interpreter at: /oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python
-Resolved 1 package in 260ms
-Prepared 1 package in 650ms
-Installed 1 package in 348ms
- + pymunk==7.2.0

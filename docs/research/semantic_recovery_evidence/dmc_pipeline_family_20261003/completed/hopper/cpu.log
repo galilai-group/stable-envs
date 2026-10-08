@@ -1,6 +1,0 @@
-hopper cpu 64 1 PASS
-hopper cpu 64 8 PASS
-hopper cpu 256 1 PASS
-hopper cpu 256 8 PASS
-hopper cpu 1024 1 PASS
-hopper cpu 1024 8 PASS

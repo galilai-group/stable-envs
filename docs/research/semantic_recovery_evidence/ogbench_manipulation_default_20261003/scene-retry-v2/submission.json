@@ -1,7 +1,0 @@
-{
-  "job_id": "6968217",
-  "remote_stage": "/oscar/scratch/sboughan/se-semantic-recovery/ogbench-scene-default-v2-20261003",
-  "source_unchanged": true,
-  "memory_gib": 128,
-  "status_at_submission": "SUBMITTED"
-}

@@ -96,11 +96,11 @@ Three measured facts that shaped the implementation:
     Rendering at 32 px and box-downsampling to 16 px therefore reproduces the 16 px render exactly at
     ``light >= 0.5`` (``exact_frac`` 1.000) and not below it (0.282 at 0.45, 0.035 at 0.10, max abs
     diff 32). No port can design that away without changing pixels. See
-    ``tests/fixtures/regression/join/step7/craftax-classic-full/findings.md``.
+    ``pre-repository-cleanup:tests/fixtures/regression/join/step7/craftax-classic-full/findings.md``.
   * **The strip's counts cannot come from a random rollout.** Over 4,000 steps, ten of the twelve
     inventory cells never leave zero, because a random policy never crafts. A pool built from one
     presents ten dead state dimensions, which is indistinguishable from a wrong state contract — the
-    failure ``docs/research/pixel_native.md`` records for Procgen miner and heist. ``sample_states``
+    failure ``pre-repository-cleanup:docs/research/pixel_native.md`` records for Procgen miner and heist. ``sample_states``
     samples the counts over 0..9 directly instead, which is sound because the strip is a function of
     the counts alone and the simulator caps every count at 9.
 
@@ -638,8 +638,8 @@ def _strip_cells(device: torch.device, t: int) -> torch.Tensor:
     and after the sleeping desaturation, so it is the same picture at midnight and at noon. Measured
     over 64 real states at both tile sizes: bit-identical under every ``light_level`` and
     ``is_sleeping``, and 0 channels move when ``state_rng`` changes
-    (``tests/fixtures/regression/join/step7/craftax-classic-full/phase0/components.json``). The Crafter port found
-    the same thing by failing first (``docs/research/crafter.md``); here it was measured first.
+    (``pre-repository-cleanup:tests/fixtures/regression/join/step7/craftax-classic-full/phase0/components.json``). The Crafter port found
+    the same thing by failing first (``pre-repository-cleanup:docs/research/crafter.md``); here it was measured first.
 
     Built at a reference tile size and then resampled *as a finished cell*, never as ingredients: an
     icon edge is ``int(0.8*t)`` and a digit edge ``int(0.6*t)``, and neither scales by an exact
@@ -696,7 +696,7 @@ class _Composite:
     frame against a 48.4 KB frame**. That is why throughput FELL with batch — 1,876 f/s at B=16 down
     to 1,113 f/s at B=256 on one core of ``node1831`` — rather than rising: 16 frames of temporaries
     are 31 MB and still fit that node's ~35.8 MiB of last-level cache, and 256 frames are 495 MB and
-    do not. Measured in ``tests/fixtures/regression/join/step6/tilemap/profile_before/``.
+    do not. Measured in ``pre-repository-cleanup:tests/fixtures/regression/join/step6/tilemap/profile_before/``.
 
     None of that work depends on the state. A tile's pixels are a function of exactly three small
     integers, so the whole composite is a 680-entry table that is built once per (device, tile size)
@@ -805,7 +805,7 @@ class CraftaxClassic(Env):
     #: own renderer (un-jitted, each state's own ``state_rng``, craftax's own
     #: ``load_all_textures_given_size(32)``) over the frozen corpus splits into two
     #: independent mechanisms, each confined to one region of the frame
-    #: (``tests/fixtures/regression/join/step7/craftax-classic-full/oracle/resolution_oracle_S16.json``):
+    #: (``pre-repository-cleanup:tests/fixtures/regression/join/step7/craftax-classic-full/oracle/resolution_oracle_S16.json``):
     #:
     #: * **world rows.** Official 1.0000 at daylight and at dusk; **0.1634 at night**, because the
     #:   noise field is drawn at ``(7t, 9t)`` -- the frame's own resolution -- so element ``i`` of the
@@ -863,7 +863,7 @@ class CraftaxClassic(Env):
     #: Oscar ``node2356``, frozen throughput harness ``--device cpu --threads 1``, paired against a
     #: pristine 76dc511 measured either side of it in the same job (spread 1.0045, baseline at 1.44x
     #: its previously certified value, node load 0.86 per core). Artifacts under
-    #: ``tests/fixtures/regression/join/step7/craftax-classic-full/sweep/``.
+    #: ``pre-repository-cleanup:tests/fixtures/regression/join/step7/craftax-classic-full/sweep/``.
     performance_record_cpu = {
         "mixed_default_fps": 1150.6,
         "mixed_default_batch": 64,
@@ -930,7 +930,7 @@ class CraftaxClassic(Env):
             "were computed (CPU 5.39 vs 2.80, GPU 304.5 vs 316.0) "
             "and give the same label on both devices"
         ),
-        "evidence": "tests/fixtures/regression/join/step7/craftax-classic-full/sweep/tier_three_ways_*.json",
+        "evidence": "pre-repository-cleanup:tests/fixtures/regression/join/step7/craftax-classic-full/sweep/tier_three_ways_*.json",
     }
     #: The GPU side of :attr:`performance_record_cpu`. Oscar ``gpu2107``, one RTX 3090, paired
     #: against a pristine 76dc511 either side of it in the same allocation: baselines 1,174,913 and
@@ -959,7 +959,7 @@ class CraftaxClassic(Env):
         "light_level >= 0.5": "asserted at the frozen DOWNSAMPLE_EXACT_FRAC; measured 1.000",
         "light_level < 0.5": "not_applicable: the reference is itself resolution-inconsistent there "
         "(official world rows 0.1634; this renderer 0.1634, the same number)",
-        "evidence": "tests/fixtures/regression/join/step7/craftax-classic-full/oracle/resolution_oracle_S16.json",
+        "evidence": "pre-repository-cleanup:tests/fixtures/regression/join/step7/craftax-classic-full/oracle/resolution_oracle_S16.json",
         "measured_against": "craftax 1.6.1 un-jitted, jax 0.11.1, jax_threefry_partitionable=True",
     }
     #: 100% of all pixels exact over the whole observation, so the strong bound is declared rather
@@ -1332,7 +1332,7 @@ class CraftaxClassic(Env):
         # not a shortcut: measured over a 4,000-step random-policy rollout, ten of the twelve
         # inventory cells never leave zero (wood reaches 2, sapling 1, the rest nothing) because a
         # random policy never crafts, so a pool built from one would present ten dead state
-        # dimensions -- exactly the failure ``docs/research/pixel_native.md`` records for Procgen
+        # dimensions -- exactly the failure ``pre-repository-cleanup:docs/research/pixel_native.md`` records for Procgen
         # miner and heist, and it looks identical to a wrong state contract. Sampling the counts is
         # sound here because the strip is a function of the counts alone (each cell's two writes stay
         # inside its own tile, asserted at generation time) and because the simulator caps every

@@ -1,6 +1,0 @@
-pendulum cpu source_serial 64 1 none PASS
-pendulum cpu source_serial 64 1 final PASS
-pendulum cpu source_serial 64 1 all PASS
-pendulum cpu source_serial 64 8 none PASS
-pendulum cpu source_serial 64 8 final PASS
-pendulum cpu source_serial 64 8 all PASS

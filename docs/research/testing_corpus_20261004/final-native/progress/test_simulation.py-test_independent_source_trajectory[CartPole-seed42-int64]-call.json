@@ -1,6 +1,0 @@
-{
-  "detail": null,
-  "node": "tests/contracts/test_simulation.py::test_independent_source_trajectory[CartPole-seed42-int64]",
-  "phase": "call",
-  "status": "PASS"
-}

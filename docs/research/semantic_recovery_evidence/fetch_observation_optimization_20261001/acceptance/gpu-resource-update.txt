@@ -1,1 +1,0 @@
-Job 6926105 submitted using gpu-general.sbatch. Both 3090 requests were estimated to start the following day. Read-only sinfo showed an idle L40S node. Applied: scontrol update JobId=6926105 Features='geforce3090|l40s'. This broadens only the CUDA correctness gate; all paired CPU timings retain their original allocations.

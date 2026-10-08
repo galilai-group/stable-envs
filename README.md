@@ -87,8 +87,6 @@ python examples/batched_env.py --help
 python examples/functional_dynamics.py --help
 ```
 
-Historical training loops, GPU sweeps and paper tables stay under [`docs/research/`](docs/research/). They are evidence, not the getting-started path.
-
 ## Keep your training loop. Delete your image dataset.
 
 `render(full_state)` produces frames without advancing simulation. Learner-visible
@@ -125,7 +123,6 @@ mkdocs serve
 | [Install](docs/install.md) | extras, pins, nvdiffrast |
 | [Adding a component](docs/adding/index.md) | environment, task and renderer guides |
 | [Testing](docs/testing.md) | what each check rules out |
-| [Research archive](docs/research/index.md) | per-family studies, including the no-gos |
 
 ## License
 

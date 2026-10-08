@@ -1,9 +1,0 @@
-{
-  "equal_to_original_candidate": {
-    "actual/frames": true,
-    "rerender/reference_0": true,
-    "rerender/reference_1": true,
-    "rerender/candidate_0": true,
-    "rerender/candidate_1": true
-  }
-}

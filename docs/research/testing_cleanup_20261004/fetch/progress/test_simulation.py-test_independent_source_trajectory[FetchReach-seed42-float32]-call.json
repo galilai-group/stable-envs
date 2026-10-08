@@ -1,6 +1,0 @@
-{
-  "detail": null,
-  "node": "tests/contracts/test_simulation.py::test_independent_source_trajectory[FetchReach-seed42-float32]",
-  "phase": "call",
-  "status": "PASS"
-}

@@ -1,6 +1,0 @@
-manipulator cpu 64 1 PASS
-manipulator cpu 64 8 PASS
-manipulator cpu 256 1 PASS
-manipulator cpu 256 8 PASS
-manipulator cpu 1024 1 PASS
-manipulator cpu 1024 8 PASS

@@ -22,8 +22,8 @@
 # EXCLUDED NODES, and they must be the same list in all three launchers here. Every one of these has
 # been measured returning DIFFERENT PIXELS for the same scene from its own offscreen EGL rasterizer,
 # before any stable-envs code is involved -- 004, 058 and 068 are the ones caught red-handed, and
-# gpu-058 is written up twice (docs/research/metaworld.md and docs/research/ogbench.md both
-# record it); the rest were condemned by the scheduler during a run.
+# gpu-058 was caught twice, in the MetaWorld and OGBench
+# investigations; the rest were condemned by the scheduler during a run.
 #SBATCH --exclude=gb-west-a1-gpu-004,gb-west-a1-gpu-047,gb-west-a1-gpu-058,gb-west-a1-gpu-068,gb-west-a1-gpu-070,gb-west-a1-gpu-082,gb-west-a1-gpu-120,gb-west-a1-gpu-184
 #SBATCH --output=/mnt/vast/home/randall.balestriero/rjepa_bench_logs/se_unit_%j.out
 set -uo pipefail

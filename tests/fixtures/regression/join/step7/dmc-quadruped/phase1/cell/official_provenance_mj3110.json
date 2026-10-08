@@ -1,6 +1,0 @@
-{
- "mujoco": "3.11.0",
- "dm_control": "1.0.44",
- "model_digest": "773d2fa599a48db3",
- "MUJOCO_GL": "glfw"
-}

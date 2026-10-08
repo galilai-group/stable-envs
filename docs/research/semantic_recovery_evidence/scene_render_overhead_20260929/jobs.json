@@ -1,8 +1,0 @@
-{
-  "gpu": 6805950,
-  "cpu": 6806083,
-  "cpu_stage": 6806009,
-  "superseded_cpu_dependency": 6805962,
-  "supplemental_gpu": 6806113,
-  "remote": "/oscar/scratch/sboughan/se-semantic-recovery/scene-render-overhead-20260929"
-}

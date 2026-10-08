@@ -1,4 +1,0 @@
-# SLURM stdout and hydra working dirs are run artefacts, not evidence. The per-run JSONs under
-# results/ carry the per-episode outcomes and the episode indices, which is what a claim here rests on.
-logs/
-results/pusht_results_*.txt

@@ -1,8 +1,0 @@
-{
-  "status": "PASS",
-  "candidate_captures": 321,
-  "independent_mse_comparisons": 1284,
-  "arrays_hashed": 1284,
-  "cube_control_frames": 57,
-  "baseline_csv_sha256": "b4c77325afe04b695d5d09cea71295029dcca75f1103e5d941d43fa6345a9167"
-}

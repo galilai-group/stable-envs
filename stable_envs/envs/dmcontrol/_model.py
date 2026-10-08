@@ -13,7 +13,7 @@ from .._plate_texels import quantise as _quantise
 # mjvLight type code for directional lights.
 LIGHT_DIRECTIONAL = 1
 
-# Effective specular scale fitted to the reference cartpole face; see docs/research/dmcontrol.md.
+# Effective specular scale fitted to the reference cartpole face.
 SPECULAR_SCALE = 0.988
 
 # Default MuJoCo geom/site visibility groups.
@@ -67,7 +67,7 @@ def _check_dm_control_works() -> None:
             f"{mujoco.__version__}: {e}. This is a version skew, not a missing package — no "
             f"dm_control release works with mujoco 3.9. Consistent pairs: mujoco==3.11.0 with "
             f"dm_control==1.0.44, mujoco==3.10.0 with dm_control==1.0.43, mujoco==3.8.1 with "
-            f"dm_control==1.0.41. See docs/research/dmcontrol.md."
+            f"dm_control==1.0.41."
         ) from e
 
 

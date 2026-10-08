@@ -1,7 +1,0 @@
-{
-  "status": "DIAGNOSTIC_FAILED",
-  "gate_sha256": "42051469f997e296f05d7963cf9a5b2a6b79993315293ef21851ba2fb0e65ad0",
-  "driver_sha256": "8bf18128d5fca550cd06e7773bf4e7c9571b94a5ce534a291e2cb6676cc15f5a",
-  "frame_checks": [],
-  "error": "AttributeError(\"'StyleTensor' object has no attribute 'items'\")"
-}

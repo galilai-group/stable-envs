@@ -1,5 +1,0 @@
-env,device,batch,processes,cases,backend,frame_mse_vs_local,overlaps,host,gpu,job,report
-OGBCube,cpu,64,8,22,auto,0,20,gpu2110.oscar.ccv.brown.edu,,6967385,docs/research/semantic_recovery_evidence/ogbench_manipulation_default_20261003/closure/results/Cube/cpu.json
-OGBCube,cuda,64,8,22,auto,0,20,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6967385,docs/research/semantic_recovery_evidence/ogbench_manipulation_default_20261003/closure/results/Cube/cuda.json
-OGBScene,cpu,64,8,22,auto,0,20,gpu2111.oscar.ccv.brown.edu,,6968217,docs/research/semantic_recovery_evidence/ogbench_manipulation_default_20261003/closure/results/Scene/cpu.json
-OGBScene,cuda,64,8,22,auto,0,20,gpu2111.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968217,docs/research/semantic_recovery_evidence/ogbench_manipulation_default_20261003/closure/results/Scene/cuda.json

@@ -53,8 +53,6 @@ OGBench `light.intensity` / `camera.angle_delta` / `cube.size` and Scene `lock_c
 - `HumanoidMazeGiantNavigate` on CUDA is not process-reproducible across runs on at least one measured card (`gpu1503`).
 - Craftax's live official wrapper JITs `reset`/`step`. Certified pixel identity is against the **un-jitted** official renderer. Historical jitted-wrapper measurements live in `tests.helpers.reference.craftax_jit`.
 
-The measurement record is in the [research archive](../research/index.md).
-
 ## Sibling libraries
 
 There is no runtime interop contract with other stable-* packages. See [Sibling projects](worldmodel.md).

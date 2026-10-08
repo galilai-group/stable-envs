@@ -208,7 +208,7 @@ def main() -> None:
     ap.add_argument("--envs", default="")
     ap.add_argument("--skip", default="")
     ap.add_argument("--tag", default="")
-    ap.add_argument("--out", default="docs/research/artifacts/results/storage")
+    ap.add_argument("--out", default="results/storage")
     ap.add_argument(
         "--fresh",
         action="store_true",

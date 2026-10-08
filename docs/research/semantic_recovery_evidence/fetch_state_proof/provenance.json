@@ -1,9 +1,0 @@
-{
-  "integration_base": "c9eeec46424d70b277a06caae659a6f93f50d100",
-  "swm_tracked_status": "",
-  "command": "PYTHONPATH=/Users/samib/stable-worldmodel /private/tmp/fetch-authority-swm-lock/bin/python docs/research/semantic_recovery_evidence/fetch_state_proof/source_restore_probe.py",
-  "exit_code": 0,
-  "status": "SOURCE_EXPERIMENT_ONLY",
-  "production_changes": false,
-  "candidate_gate_complete": false
-}

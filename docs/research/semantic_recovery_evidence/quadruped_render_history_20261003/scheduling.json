@@ -1,8 +1,0 @@
-{
-  "job_id": "6967610",
-  "initial_partition": "3090-gcondo",
-  "initial_qos": "cs-3090-gcondo",
-  "observed_pending_reason": "QOSGrpGRES",
-  "update_command": "scontrol update JobId=6967610 Partition=gpu QOS=norm-gpu",
-  "result": "Confirmed Partition=gpu QOS=norm-gpu; same job and required gpu2109, no duplicate submission."
-}

@@ -34,7 +34,7 @@ materials (``geom_matid[i] = -1``) the first time any visual leaf is active, whi
 to 102/255; and swm's declared leaf defaults are not the official appearance either (table 0.3 vs
 0.93, light 0.7 vs 0.8, object (0.8,0.1,0.1) vs 0.2 grey). Both are recorded as upstream findings
 and as an explicit Gate-F status line in
-``tests/fixtures/regression/join/step8/variations-fetch/findings.md``.
+``pre-repository-cleanup:tests/fixtures/regression/join/step8/variations-fetch/findings.md``.
 
 MAKING A CERTIFICATION RUN UNABLE TO PASS BY SKIPPING
 ------------------------------------------------------
@@ -64,7 +64,7 @@ SUFFIXES = ("", "Dense", "Dict")
 CLASSES = [f"Fetch{s}{x}" for s in SCENES for x in SUFFIXES]
 
 #: Enumerated from the live ``FetchWrapper`` (stable_worldmodel 176d545, gymnasium-robotics 1.4.2,
-#: mujoco 3.12.0) — see ``tests/fixtures/regression/join/step8/variations-fetch/leaf_classification.json``. Reach
+#: mujoco 3.12.0) — see ``pre-repository-cleanup:tests/fixtures/regression/join/step8/variations-fetch/leaf_classification.json``. Reach
 #: carries no ``block.*`` because it has no object; everything else is identical across the twelve.
 SWM_LEAVES = {
     "Reach": (
@@ -222,7 +222,7 @@ def test_background_is_partial_not_mapped_and_carries_the_measured_residual():
         # in the baked plate -- and the reason that replaces it is about the DEFAULT, not the
         # mechanism. Asserted so the corrected reason cannot quietly revert to the refuted one.
         assert "render context per value" not in why, (
-            f"{c}: the refuted reason is back; see tests/fixtures/regression/join/step8/capability/fetch_skybox_probe.json"
+            f"{c}: the refuted reason is back; see pre-repository-cleanup:tests/fixtures/regression/join/step8/capability/fetch_skybox_probe.json"
         )
         assert "gradient" in why and "default" in why.lower(), (
             f"{c}: the residual no longer says why the leaf is blocked"

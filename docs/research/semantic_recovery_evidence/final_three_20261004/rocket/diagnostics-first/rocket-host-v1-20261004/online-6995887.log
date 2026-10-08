@@ -1,9 +1,0 @@
-## SLURM PROLOG ###############################################################
-##    Job ID : 6995887
-##  Job Name : rocket-lowres-probe
-##  Nodelist : gpu3001
-##      CPUs : 
-##  Mem/Node : 32768 MB
-## Directory : /oscar/home/sboughan
-##   Job Started : Sun Oct  4 02:08:02 AM EDT 2026
-###############################################################################

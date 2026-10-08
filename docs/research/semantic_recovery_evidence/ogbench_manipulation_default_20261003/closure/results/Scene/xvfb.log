@@ -1,3 +1,0 @@
-_XSERVTransSocketUNIXCreateListener: ...SocketCreateListener() failed
-_XSERVTransMakeAllCOTSServerListeners: server already running
-_XSERVTransmkdir: ERROR: euid != 0,directory /tmp/.X11-unix will not be created.

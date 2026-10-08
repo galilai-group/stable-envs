@@ -96,8 +96,7 @@ git diff --check
 
 Run a family-specific driver in the pinned source/profile with a new output
 location; inspect its entry point before running archived drivers that write fixed evidence paths. Optional-dependency skips in the unit suite do not prove Fetch
-semantics. The [accepted family report](../research/fetch_family_recovery.md)
-shows a concrete evidence structure; its local setup is not a contributor requirement.
+semantics.
 
 ## Promotion and certification
 

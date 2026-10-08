@@ -179,7 +179,7 @@ def main() -> None:
     ap.add_argument("--shared", default="/mnt/vast/home/randall.balestriero/tmp_lance")
     ap.add_argument("--gpu", action="store_true", help="also time nvJPEG decode")
     ap.add_argument("--envs", default="")
-    ap.add_argument("--out", default="docs/research/artifacts/results/storage/lance.json")
+    ap.add_argument("--out", default="results/storage/lance.json")
     a = ap.parse_args()
 
     try:

@@ -1,7 +1,0 @@
-{
-  "status": "OSCAR_PENDING",
-  "benchmark_array": 6960146,
-  "single_action_diagnostic": 6960152,
-  "reason": "Avoid unnecessary GPU scalar synchronization on the known-all-active first transition. Repeat validation and timings after the small-batch single-action Slide concern in v2.",
-  "single_action_protocol": "v2 then v3 on gpu2501, each has four alternating-order blocks of ten samples per mode; preserve both."
-}

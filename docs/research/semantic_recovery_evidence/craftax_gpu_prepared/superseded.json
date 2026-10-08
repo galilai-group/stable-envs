@@ -1,6 +1,0 @@
-{
-  "status": "SUPERSEDED_NOT_SUBMITTED",
-  "old_source": "f8c0a37bd7e68b7fb578fc16942cd11c45d4d292",
-  "reason": "Exact full-symbolic reset gate exposed a required source cache leaf. Source proof and bounded correction committed subsequently. Old archives preserved untouched outside repository.",
-  "old_local_bundle": "/private/tmp/stable-envs-craftax-f8c0a37b-gpu"
-}

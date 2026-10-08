@@ -1,7 +1,0 @@
-{
-  "status": "PRE_RETRY_PRESERVATION_PASS",
-  "checkpoint": "b59df7599eac1951dfd1ac5682b41452db0ac8f5",
-  "prior_checkpoint_hashes_verified": 217,
-  "frozen_renderer_sha256": "bac4b1ea3e29a04faa5eeec33de0c212cb87bbf488ae0466ea762bd3a140576a",
-  "production_diff": []
-}

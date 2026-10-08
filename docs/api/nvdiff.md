@@ -32,9 +32,8 @@ poses were already on device; this excludes simulation and state preparation.
 The report does not supply timing standard deviations. These are historical
 backend measurements, not current end-to-end or source-renderer speedups.
 
-The [original report](../research/nvdiffrast.md#5-throughput-and-memory-3-5x-slower-than-mjwarp-and-it-ooms-first)
-contains the configuration and memory measurements. Its old anisotropic-filter
-conclusion predates the corrected derivative layout and should not guide tuning.
+An earlier anisotropic-filter conclusion predates the corrected derivative layout
+and should not guide tuning.
 Use the [testing guide](../testing.md) for a new source comparison.
 
 ::: stable_envs.render.nvdiff

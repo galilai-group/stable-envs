@@ -57,8 +57,6 @@ A frame is `f(state, variation)`. Where native dynamics exist, `next_state = g(s
 - [The fused rasterizer](concepts/rasterizer.md)
 - [Variation spaces](concepts/variation-spaces.md)
 
-Research notes, including families that were examined and rejected, stay in the [research archive](research/index.md). A no-go is a result, not a gap to hide: [when does this pay off](research/when_does_this_pay_off.md).
-
 ## Building these docs
 
 ```bash
