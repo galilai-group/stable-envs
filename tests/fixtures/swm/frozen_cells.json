@@ -1,0 +1,256 @@
+{
+ "rows": [
+  {
+   "swm_id": "swm/AcrobotControl-v1",
+   "stable_envs_cells": [
+    "Acrobot"
+   ]
+  },
+  {
+   "swm_id": "swm/AcrobotDMControl-v0",
+   "stable_envs_cells": [
+    "DMCAcrobotSwingup"
+   ]
+  },
+  {
+   "swm_id": "swm/BallInCupDMControl-v0",
+   "stable_envs_cells": [
+    "DMCBallInCupCatch"
+   ]
+  },
+  {
+   "swm_id": "swm/CartPoleControl-v1",
+   "stable_envs_cells": [
+    "CartPole"
+   ]
+  },
+  {
+   "swm_id": "swm/CartpoleDMControl-v0",
+   "stable_envs_cells": [
+    "DMCCartpoleBalance",
+    "DMCCartpoleSwingup"
+   ]
+  },
+  {
+   "swm_id": "swm/CheetahDMControl-v0",
+   "stable_envs_cells": [
+    "DMCCheetahRun"
+   ]
+  },
+  {
+   "swm_id": "swm/CraftaxClassicPixels-v1",
+   "stable_envs_cells": [
+    "CraftaxClassic"
+   ]
+  },
+  {
+   "swm_id": "swm/CraftaxClassicSymbolic-v1",
+   "stable_envs_cells": []
+  },
+  {
+   "swm_id": "swm/CraftaxPixels-v1",
+   "stable_envs_cells": [
+    "CraftaxFull"
+   ]
+  },
+  {
+   "swm_id": "swm/CraftaxSymbolic-v1",
+   "stable_envs_cells": []
+  },
+  {
+   "swm_id": "swm/FetchPickAndPlace-v3",
+   "stable_envs_cells": [
+    "FetchPickAndPlace"
+   ]
+  },
+  {
+   "swm_id": "swm/FetchPickAndPlaceDense-v3",
+   "stable_envs_cells": [
+    "FetchPickAndPlaceDense"
+   ]
+  },
+  {
+   "swm_id": "swm/FetchPickAndPlaceDict-v3",
+   "stable_envs_cells": [
+    "FetchPickAndPlaceDict"
+   ]
+  },
+  {
+   "swm_id": "swm/FetchPush-v3",
+   "stable_envs_cells": [
+    "FetchPush"
+   ]
+  },
+  {
+   "swm_id": "swm/FetchPushDense-v3",
+   "stable_envs_cells": [
+    "FetchPushDense"
+   ]
+  },
+  {
+   "swm_id": "swm/FetchPushDict-v3",
+   "stable_envs_cells": [
+    "FetchPushDict"
+   ]
+  },
+  {
+   "swm_id": "swm/FetchReach-v3",
+   "stable_envs_cells": [
+    "FetchReach"
+   ]
+  },
+  {
+   "swm_id": "swm/FetchReachDense-v3",
+   "stable_envs_cells": [
+    "FetchReachDense"
+   ]
+  },
+  {
+   "swm_id": "swm/FetchReachDict-v3",
+   "stable_envs_cells": [
+    "FetchReachDict"
+   ]
+  },
+  {
+   "swm_id": "swm/FetchSlide-v3",
+   "stable_envs_cells": [
+    "FetchSlide"
+   ]
+  },
+  {
+   "swm_id": "swm/FetchSlideDense-v3",
+   "stable_envs_cells": [
+    "FetchSlideDense"
+   ]
+  },
+  {
+   "swm_id": "swm/FetchSlideDict-v3",
+   "stable_envs_cells": [
+    "FetchSlideDict"
+   ]
+  },
+  {
+   "swm_id": "swm/FingerDMControl-v0",
+   "stable_envs_cells": [
+    "DMCFingerTurnHard"
+   ]
+  },
+  {
+   "swm_id": "swm/HopperDMControl-v0",
+   "stable_envs_cells": [
+    "DMCHopperHop"
+   ]
+  },
+  {
+   "swm_id": "swm/HumanoidDMControl-v0",
+   "stable_envs_cells": [
+    "DMCHumanoidStand"
+   ]
+  },
+  {
+   "swm_id": "swm/ManipulatorDMControl-v0",
+   "stable_envs_cells": [
+    "DMCManipulatorBringBall"
+   ]
+  },
+  {
+   "swm_id": "swm/MountainCarContinuousControl-v0",
+   "stable_envs_cells": [
+    "MountainCarContinuous"
+   ]
+  },
+  {
+   "swm_id": "swm/MountainCarControl-v0",
+   "stable_envs_cells": [
+    "MountainCar"
+   ]
+  },
+  {
+   "swm_id": "swm/OGBCube-v0",
+   "stable_envs_cells": [
+    "OGBCube"
+   ]
+  },
+  {
+   "swm_id": "swm/OGBMaze-v0",
+   "stable_envs_cells": [
+    "PointmazeLargeNavigate",
+    "PointmazeLargeStitch"
+   ]
+  },
+  {
+   "swm_id": "swm/OGBScene-v0",
+   "stable_envs_cells": [
+    "OGBScene"
+   ]
+  },
+  {
+   "swm_id": "swm/PFRocketLanding-v0",
+   "stable_envs_cells": [
+    "PFRocketLanding"
+   ]
+  },
+  {
+   "swm_id": "swm/PendulumControl-v1",
+   "stable_envs_cells": [
+    "Pendulum"
+   ]
+  },
+  {
+   "swm_id": "swm/PendulumDMControl-v0",
+   "stable_envs_cells": [
+    "DMCPendulumSwingup"
+   ]
+  },
+  {
+   "swm_id": "swm/Piecewise-v0",
+   "stable_envs_cells": [
+    "Piecewise",
+    "PiecewiseZones"
+   ]
+  },
+  {
+   "swm_id": "swm/PushT-Discrete-v1",
+   "stable_envs_cells": [
+    "PushT"
+   ]
+  },
+  {
+   "swm_id": "swm/PushT-v1",
+   "stable_envs_cells": [
+    "PushT"
+   ]
+  },
+  {
+   "swm_id": "swm/QuadrupedDMControl-v0",
+   "stable_envs_cells": [
+    "DMCQuadrupedWalk"
+   ]
+  },
+  {
+   "swm_id": "swm/ReacherDMControl-v0",
+   "stable_envs_cells": [
+    "DMCReacherHard"
+   ]
+  },
+  {
+   "swm_id": "swm/SimplePointMaze-v0",
+   "stable_envs_cells": [
+    "SimplePointMaze"
+   ]
+  },
+  {
+   "swm_id": "swm/TwoRoom-v1",
+   "stable_envs_cells": [
+    "TwoRoom",
+    "TwoRoomTarget"
+   ]
+  },
+  {
+   "swm_id": "swm/WalkerDMControl-v0",
+   "stable_envs_cells": [
+    "DMCWalkerWalk"
+   ]
+  }
+ ]
+}
