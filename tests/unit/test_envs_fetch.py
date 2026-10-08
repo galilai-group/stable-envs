@@ -256,7 +256,7 @@ def built() -> dict:
     env["PYTHONPATH"] = str(ROOT)
     env.pop("MUJOCO_GL", None)
     r = subprocess.run(
-        [sys.executable, "-c", textwrap.dedent(PROBE), str(ROOT / "tests/fixtures/regression/join/step4/states")],
+        [sys.executable, "-c", textwrap.dedent(PROBE), str(ROOT / "tests/fixtures/states/fidelity")],
         capture_output=True,
         text=True,
         cwd=str(ROOT),

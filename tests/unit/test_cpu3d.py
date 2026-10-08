@@ -35,7 +35,7 @@ def _states(cell: str, n: int) -> np.ndarray:
     if cell == "DMCHumanoidWalk":
         path = ROOT / "tests/fixtures/semantics/dmc_humanoid/humanoid_walk_swm_176d545_mujoco312.npz"
         return np.load(path)["state/qpos"].reshape(-1, 28)[:n]
-    return np.load(ROOT / f"tests/fixtures/regression/join/step4/states/{cell}.npz")["states"][:n]
+    return np.load(ROOT / f"tests/fixtures/states/fidelity/{cell}.npz")["states"][:n]
 
 
 def test_cpu3d_imports_no_gpu_runtime():
