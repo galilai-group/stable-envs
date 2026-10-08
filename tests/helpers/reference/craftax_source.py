@@ -38,7 +38,7 @@ def oracle(name):
 
 
 def fixture(env, name, case):
-    from stable_envs._adapters.craftax import decode
+    from stable_envs.envs.craftax.simulation import decode
 
     state = env.get_state()
     with np.load(EVIDENCE / (name + "Wrapper-" + case + ".npz"), allow_pickle=False) as arrays:
@@ -61,7 +61,7 @@ def fixture(env, name, case):
 def restore_oracle(source, env, state):
     import jax.numpy as jnp
 
-    from stable_envs._adapters.craftax import decode
+    from stable_envs.envs.craftax.simulation import decode
 
     source._state = decode(source._state, {k: state[("engine", *k)][0].cpu().numpy() for k in env._simulator.engine})
     source._key = jnp.asarray(state["rng", "wrapper_key"][0].cpu().numpy().astype(np.uint32))
@@ -70,7 +70,7 @@ def restore_oracle(source, env, state):
 
 
 def assert_engine(source, env, state):
-    from stable_envs._adapters.craftax import numeric_leaves
+    from stable_envs.envs.craftax.simulation import numeric_leaves
 
     for key, value in numeric_leaves(source._state):
         np.testing.assert_array_equal(state[("engine", *key)][0].cpu().numpy(), value, err_msg="/".join(key))
@@ -85,7 +85,7 @@ def assert_state_equal(a, b):
 
 def symbolic_output(env, lane=0, state=None):
     """Test-side learner output selection; full symbolic retains the source cache."""
-    from stable_envs._adapters.craftax import decode
+    from stable_envs.envs.craftax.simulation import decode
 
     state = env.get_state() if state is None else state
     if env._simulator.retains_symbolic_output:
