@@ -214,10 +214,10 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
     def resolve_style(self, style=None, variation=None, batch=None):
         if style is None:
             style = self.to_render_state()["renderer", "style"]
-        if isinstance(style, StyleTensor):
-            return style
-        layout = frozen.PyFlytRocketLanding.make_variation_space(self).flat_layout()
-        return StyleTensor(torch.as_tensor(style, dtype=torch.float32, device=self.device), layout)
+        if not isinstance(style, StyleTensor):
+            layout = frozen.PyFlytRocketLanding.make_variation_space(self).flat_layout()
+            style = StyleTensor(torch.as_tensor(style, dtype=torch.float32, device=self.device), layout)
+        return style if batch is None else style.for_batch(int(batch), owner=f"{type(self).__name__}.render")
 
     def render(self, state=None, *, size=None, supersample=None, backend=None, chunk_size=None, out=None):
         self._check_open("render")
