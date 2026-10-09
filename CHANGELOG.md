@@ -1,46 +1,42 @@
 # Changelog
 
-## Unreleased
-
-- Replace public `transition`, `unroll`, and `Dynamics` with a single stateful
-  `step(actions, states=slice(None), frames=slice(-1,None))`: `[B,A]` for one transition, `[B,T,A]` for a sequence.
-- Capture final frames by default, with intermediate complete States for sequences.
-  Independent slices select State/frame histories; `None` disables either.
-- Stop sequence lanes at termination/truncation, report a validity mask, and retain
-  complete final checkpoints without silently resetting episodes.
-- Bulk-export Fetch State fields and avoid intermediate snapshot exports when only
-  the final frame is requested. Large Fetch batches use a bounded persistent worker pool, respecting CPU affinity.
-- Migrate physics-only callers to explicit `frames=None`.
-
 ## 0.1.0
 
 First public release of `stable-envs`: a batched environment library with explicit state,
-dynamics, and variation, plus fast state-driven rendering. Store compact states; choose the
-camera and the configuration afterwards.
+dynamics and variation, and state-driven rendering. Store compact states; choose the camera and
+the configuration afterwards.
 
 ### What you get
 
-- Class-first public API: `snv.PushT(num_envs=..., device=...)`, plus `snv.make` / `snv.info` /
-  `snv.list_envs` / `snv.list_families` for configs.
-- TensorDict `State` with `pack_render_state` / `unpack_render_state` to the compact render
-  row every renderer and certification corpus uses.
-- Stateful `step` and functional `transition` / `unroll` (known actions only). There is no
-  `env.rollout(policy=...)`.
-- `close()` / context-manager lifecycle on every environment.
-- Public developer library: `stable_envs.testing` (measurement, numpy.testing-style).
-  Not advertised at `snv.*`.
-- Optional family extras. A missing extra costs that family; `snv.import_errors()` names it.
-- Explicit renderer resource ownership (`Closeable`, `BoundedCache`) for MJWarp / nvdiffrast /
-  rendernet, including family-cache eviction and LRU CPU working-set caches.
-- MkDocs, example CLIs, and the `benchmarks/` harness. Throughput numbers are tied to
+- 75 registered environments in seven families: classic control, Craftax, DM Control, Fetch,
+  navigation, OGBench and PushT. PyFlyt Rocket Landing is an eighth family when its extra is
+  installed.
+- Class-first API: `snv.CartPole(num_envs=..., device=...)`, plus `snv.make`, `snv.info`,
+  `snv.list_envs` and `snv.list_families`.
+- Exhaustive TensorDict `State` with `get_state` / `set_state`, and `render(state)` that draws a
+  frame without advancing the simulation.
+- One stateful `step(actions, states=slice(None), frames=slice(-1, None))`: `[B, A]` actions for
+  one transition, `[B, T, A]` for a sequence. Sequence lanes stop at termination or truncation
+  and report a validity mask; episodes are not reset silently. `frames=None` skips rendering.
+- Variation and style spaces with `sample_variation` / `set_variation` and
+  `sample_style` / `set_style`.
+- `close()` and context-manager lifecycle on every environment.
+- `stable_envs.testing`: the measurement helpers the test suite uses, for checking an env or
+  renderer against its reference.
+- Optional family extras. A missing extra costs that family only; `snv.import_errors()` names it.
+- MkDocs documentation, examples, and the `benchmarks/` harness. Throughput numbers come with the
   [benchmark methodology](docs/benchmarks.md).
+
+Renderer-only ports of other families (MiniGrid, Sokoban, Meta-World, HumanoidBench and others)
+live in the repository's `contrib/` directory. They are not part of the released package.
 
 ### Limitations
 
-- Fetch `background.color` is partial (floor mapped; skybox residual measured).
-- `HumanoidMazeGiantNavigate` on CUDA is not process-reproducible on some measured nodes.
+- PushT physics and rendering run on CPU through the source Pygame renderer. `device="cuda"`
+  places outputs on the GPU but does not render there.
+- Fetch, OGBCube and OGBScene render on CPU through software OpenGL and on GPU through MJWarp.
+- Fetch `background.color` is partial: the floor is mapped, the skybox is not.
+- `HumanoidMazeGiantNavigate` on CUDA is not process-reproducible on at least one measured card.
 - There is no runtime interop contract with other stable-* packages.
-- OGBCube, OGBScene and PyFlytRocketLanding refuse CPU rather than silently falling back.
-- Fetch has no CPU backend.
 
 See [limitations](docs/concepts/limitations.md).
