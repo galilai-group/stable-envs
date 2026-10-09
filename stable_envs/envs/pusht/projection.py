@@ -24,19 +24,20 @@ class PushTProjection:
     Geometry changes rebuild the scene; other frames install poses, colours and
     captured contact segments. Rendering never steps the physics owner or replays
     action history. CUDA output placement does not make this a GPU renderer."""
+
     def __init__(self):
         self.scenes = []
 
     def _scene(self, lane, row):
-        # The reset recipe determines geometry and goal pose. Current colors
-        # are installed below; RNG and action history never enter this key.
-        keys = sorted(
-            k
-            for k in row
-            if k.startswith("anchor/") and ("/current/" in k or k.startswith(("anchor/start", "anchor/goal/")))
+        # Only body shapes and scales are baked into the pymunk scene; poses,
+        # colours and the goal pose are installed on every render.
+        key = tuple(
+            row[f"anchor/variation/{body}/{leaf}/current/{part}"].tobytes()
+            for body in ("agent", "block")
+            for leaf in ("shape", "scale")
+            for part in ("value", "type")
         )
-        key = tuple((k, row[k].dtype.str, row[k].shape, row[k].tobytes()) for k in keys)
-        key += (("config", row["recipe/config"].tobytes()),)
+        key += (row["recipe/config"].tobytes(),)
         while len(self.scenes) <= lane:
             self.scenes.append(None)
         cached = self.scenes[lane]
@@ -75,6 +76,10 @@ class PushTProjection:
                 body.angle = float(row[f"current/body/{name}/angle"])
                 body.position = row[f"current/body/{name}/position"].tolist()
                 scene.space.reindex_shapes_for_body(body)
+            goal = "anchor/variation/goal/"
+            scene.goal_pose = np.concatenate(
+                [get_value(row, goal + "position/current"), [get_value(row, goal + "angle/current")]]
+            )
             scene.latest_action = get_value(row, "current/latest") if row["current/latest_present"] else None
             count = int(row["current/render_segment_count"])
             segments = row["current/render_segments"]
