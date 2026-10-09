@@ -15,29 +15,30 @@ those numbers are a property of the node's processor under its load. Every GPU r
 files carries `cpu%` (or `cpu_frac`).
 
 OSS-facing harnesses: `python -m benchmarks.render` and `python -m benchmarks.pipeline`. The
-representative numbers below were taken with `examples/bench_gpu_vs_cpu.py` and
+numbers below were taken with `examples/bench_pusht_source.py`, `examples/bench_gpu_vs_cpu.py` and
 `examples/bench_vs_decode.py`.
 
-## Representative CPU / GPU numbers
+## PushT
 
-**PushT, 96×96, NVIDIA H200** (native `default_supersample=1`). Official CPU renderer: **491 frames/s**
-(`set_state` + render). GPU:
+The released PushT draws with the source's own pygame code on CPU; `device="cuda"` only places the
+output. Its frames equal the pinned stable-worldmodel source, so the comparison that matters is cost
+per frame against that source on the same core. `examples/bench_pusht_source.py` renders States saved
+from four episodes both ways on one thread (224 px):
 
-| batch | frames/s | speedup vs CPU |
-|---|---|---|
-| 1 | 558 | 1.14× |
-| 1,024 | 380,586 | 775× |
-| 16,384 | **2,914,271** | **5,931×** |
-| 65,536 | 2,103,552 | 4,281× |
+| CPU | batch | first `env.render` ms/frame | warm `env.render` ms/frame | source ms/frame | warm vs source |
+|---|---:|---:|---:|---:|---:|
+| Apple M5 Pro | 64 | 1.08 | 0.55 | 0.66 | 1.22× |
+| Apple M5 Pro | 1,024 | 0.88 | 0.59 | 0.67 | 1.13× |
+| Xeon Platinum 8268 | 64 | 4.98 | 3.69 | 3.04 | 0.83× |
+| Xeon Platinum 8268 | 1,024 | 5.19 | 4.02 | 3.28 | 0.82× |
 
-Batch 1 is mostly Python scene construction, not rasterization. The working point this repo quotes is
-**16,384**, not the largest batch: at 65,536 the per-frame time is *worse* (0.48 µs vs 0.34 µs).
+The first render of a batch builds one pymunk scene per lane; later renders reuse it. Batch 1 also
+pays a fixed per-call cost for State validation. The pygame drawing is the same on both sides; the
+difference is Python work per frame, which weighs more on the slower Xeon core.
 
-At 224×224 the official renderer is nearly resolution-independent (438 frames/s, always draws at 512
-and resizes). Ours pays for the pixels: **839,360 frames/s** at batch 16,384 (1,915×).
-
-Storage ratio before compression: a 96×96×3 frame is 27,648 B; PushT's compact render row is 20 B
-(**1,382×**). Regenerating a 96 px frame costs 0.34 µs at the quoted batch.
+`contrib/pusht_torch/` holds an unreleased batched torch renderer whose frames equal `env.render` on
+Linux x86-64. On an RTX A5000 node it takes 0.32 ms/frame at batch 1,024, 5× `env.render` on that
+node's CPU. It reproduces LGPL pygame code and is not part of the package; see its README.
 
 ## State → render vs stored JPEG decode → H2D
 
@@ -53,7 +54,7 @@ kept as measured.
 
 Tile-atlas families (MiniGrid, Griddly, Sokoban, Overcooked) gather from a precomputed atlas and
 clear hundreds of thousands to millions of frames a second, replacing thousands of JPEG-decode cores.
-2-D rasterized PushT is ~100× a stored JPEG/core. Ray-cast 3-D families are slower and host-bound;
+Ray-cast 3-D families are slower and host-bound;
 visual-tier MuJoCo / Meta-World / Fetch sit near 1–7× a stored JPEG/core.
 
 The paper's per-family table uses eight worker processes batch-decoding JPEG-in-Lance, not one core.
@@ -67,7 +68,6 @@ See `examples/bench_lance.py`.
   host-bound. `DMCBallInCupCatch` measured 3,664 f/s idle and 271–978 contended on the same card.
 * **Visual-tier 3-D** (Fetch, HumanoidBench, Meta-World, RoboCasa, nvdiffrast locomotion) replace few
   JPEG-decode cores. Use them for live training data, not as a substitute for stored official pixels.
-* PushT is nine primitives. Nothing here says how a heavier 2-D scene scales.
 * The official-renderer side is single-process; those envs offer no batched entry point.
 * `--ss` must be `native` (the class's `default_supersample`). Forcing `1` on the 44 classes that
   declare `2` measures a different, cheaper picture than `snv.make(name)` returns.
@@ -77,7 +77,7 @@ See `examples/bench_lance.py`.
 ```bash
 python -m benchmarks.render --help
 python -m benchmarks.pipeline --help
-python examples/bench_gpu_vs_cpu.py --out results --envs PushT --sizes 96,224
+python examples/bench_pusht_source.py --help
 python examples/bench_gpu_vs_cpu.py --out results --sizes native
 python examples/bench_vs_decode.py --help
 ```
@@ -85,6 +85,3 @@ python examples/bench_vs_decode.py --help
 `bench_gpu_vs_cpu.py` walks `snv.list_envs()`, writes after every env, and merges per env so a sweep
 can split across allocations. Envs without a reference renderer get GPU columns and no speedup
 column.
-
-Raw PushT H200 output:
-[`tests/fixtures/regression/references/bench_gpu_vs_cpu.json`](https://github.com/galilai-group/stable-envs/blob/main/tests/fixtures/regression/references/bench_gpu_vs_cpu.json).
