@@ -42,7 +42,6 @@ set -uo pipefail
 # Repo root is hardcoded: $BASH_SOURCE is the staged copy under SLURM, not this file.
 cd /mnt/vast/home/randall.balestriero/code/stable-envs
 export PYTHONPATH=. MUJOCO_GL=egl SDL_VIDEODRIVER=dummy
-export STABLE_ENVS_HUMANOIDBENCH=1        # the family does not register by default; see pyproject
 # THE interpreter, holding 191 of 196 envs. It used to be miniconda3/envs/test, whose registry held
 # 64: every test parameterised over the other 132 skipped with an individually honest reason, and the
 # run was green having never exercised two thirds of the library. Built by

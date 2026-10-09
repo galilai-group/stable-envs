@@ -36,7 +36,6 @@ VENV=$1; shift
 
 cd /mnt/vast/home/randall.balestriero/code/stable-envs
 export PYTHONPATH=. MUJOCO_GL=egl SDL_VIDEODRIVER=dummy
-export STABLE_ENVS_HUMANOIDBENCH=1
 PY=/mnt/vast/home/randall.balestriero/venvs/$VENV/bin/python
 [ -x "$PY" ] || { echo "no interpreter at $PY"; exit 2; }
 
