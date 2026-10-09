@@ -12,6 +12,19 @@ Copyright 2026 The Newton Developers. Licensed under the Apache License, Version
 The modification removes shadow traversals at compile time for lights that cannot
 cast shadows, retaining upstream light evaluation order and arithmetic.
 
+## PushT torch renderer
+
+`contrib/pusht_torch/pgdraw.py` (in the repository's `contrib/` directory, not in the released
+distributions) reproduces drawing algorithms from [pygame](https://github.com/pygame/pygame) 2.6.1,
+source path `src_c/draw.c`. pygame is licensed under the GNU Lesser General Public License,
+version 2.1 or later; that file is distributed under the same license, whose text is in
+[LICENSES/LGPL-2.1-or-later.txt](LICENSES/LGPL-2.1-or-later.txt).
+
+`contrib/pusht_torch/cvresize.py` reproduces the fixed-point `INTER_LINEAR` resize of
+[OpenCV](https://github.com/opencv/opencv) 5.0.0, source path `modules/imgproc/src/resize.cpp`.
+OpenCV is licensed under the Apache License, Version 2.0; see
+[LICENSES/Apache-2.0.txt](LICENSES/Apache-2.0.txt).
+
 ## Migrated environment tasks
 
 The private Rocket task and Variation helpers in

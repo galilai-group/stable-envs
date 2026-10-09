@@ -32,6 +32,9 @@ package:
 | `robocasa.py` | `RoboCasaCounterToSink`, … | none; see the module docstring and `examples/robocasa_visual/` |
 | `sokoban.py` | `Sokoban` | `requirements/sokoban.txt` |
 
+`pusht_torch/` is a batched torch renderer for the released PushT classes whose frames equal
+`env.render(state)`; see `pusht_torch/README.md`.
+
 Render engines used only by these families are in `render/`: `rendernet.py` (the RoboCasa learned
 corrector, see `examples/rendernet/`) and `lightspec.py` (MJWarp light specialization for
 HumanoidBench, Meta-World and RoboCasa).
