@@ -61,16 +61,22 @@ class PushTProjection:
                 raise
             if cached is not None:
                 cached[1].close()
-            self.scenes[lane] = (key, scene)
-        return self.scenes[lane][1]
+            leaves = [path for path, node in nodes(scene.variation_space) if not hasattr(node, "spaces")]
+            self.scenes[lane] = [key, scene, leaves, None]
+        return self.scenes[lane]
 
     def render(self, rows, size):
         frames = []
         for lane, row in enumerate(rows):
-            scene = self._scene(lane, row)
-            for path, node in nodes(scene.variation_space):
-                if not hasattr(node, "spaces"):
-                    node.set_value(get_value(row, "owned/variation" + path + "/current"))
+            cached = self._scene(lane, row)
+            scene, leaves = cached[1], cached[2]
+            fields = ["owned/variation" + path + "/current" for path in leaves]
+            installed = tuple(row[f + part].tobytes() for f in fields for part in ("/value", "/type"))
+            if installed != cached[3]:
+                for path, node in nodes(scene.variation_space):
+                    if not hasattr(node, "spaces"):
+                        node.set_value(get_value(row, "owned/variation" + path + "/current"))
+                cached[3] = installed
             for name in ("agent", "block"):
                 body = getattr(scene, name)
                 body.angle = float(row[f"current/body/{name}/angle"])

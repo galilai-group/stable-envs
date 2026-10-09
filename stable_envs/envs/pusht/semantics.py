@@ -74,6 +74,11 @@ class PushT(Env):
             super().__init__(num_envs, resolution, 1, device, "pygame", 0 if seed is None else seed)
             row = self._simulator.envs[0].get_state()
             self._fixed_fields = {k: (v.shape, v.dtype) for k, v in row.items() if not k.startswith("history/")}
+            self._render_fields = [
+                (tuple(k.split("/")), shape, torch.from_numpy(np.empty((), dtype)).dtype)
+                for k, (shape, dtype) in self._fixed_fields.items()
+                if k.startswith(("recipe/", "anchor/", "current/", "owned/variation/")) and k != "current/goal_image"
+            ]
         except BaseException:
             self._simulator.close()
             self._projection.close()
@@ -232,26 +237,27 @@ class PushT(Env):
 
     def to_render_state(self, state=None):
         """Owned, history-free numeric projection for the source CPU renderer."""
+        state = self.get_state() if state is None else state
+        self._render_fields_of(state)
+        return state.select(*(key for key, _, _ in self._render_fields)).clone()
+
+    def _render_fields_of(self, state):
         self._check_open("to_render_state")
         state = self.get_state() if state is None else state
         if not isinstance(state, TensorDict) or len(state.batch_size) != 1 or not state.batch_size[0]:
             raise ValueError("PushT render requires a nonempty State batch")
-        keys = [
-            tuple(k.split("/"))
-            for k in self._fixed_fields
-            if k.startswith(("recipe/", "anchor/", "current/", "owned/variation/")) and k != "current/goal_image"
-        ]
-        for key in keys:
-            shape, dtype = self._fixed_fields["/".join(key)]
-            value = state[key]
-            if (
-                value.shape != (*state.batch_size, *shape)
-                or value.dtype != torch.from_numpy(np.empty((), dtype)).dtype
-            ):
+        flat = dict(state.items(include_nested=True, leaves_only=True))
+        fields = {}
+        for key, shape, dtype in self._render_fields:
+            value = flat.get(key)
+            if value is None:
+                raise KeyError(key)
+            if value.shape != (*state.batch_size, *shape) or value.dtype != dtype:
                 raise ValueError(f"Invalid PushT render field: {key}")
-            if not torch.isfinite(value).all():
+            if value.is_floating_point() and not torch.isfinite(value).all():
                 raise ValueError(f"Nonfinite PushT render field: {key}")
-        return state.select(*keys).clone()
+            fields["/".join(key)] = value
+        return fields
 
     def render(self, state=None, *, size=None, out=None):
         self._check_open("render")
@@ -260,9 +266,8 @@ class PushT(Env):
             raise ValueError("PushT render size must be a positive integer")
         if self._simulator.envs[0].config["render_action"] and size < 96:
             raise ValueError("Source PushT action markers require size >= 96")
-        projected = self.to_render_state(state).cpu()
-        fields = {"/".join(k): v.numpy() for k, v in projected.items(True, True)}
-        rows = [{k: v[i] for k, v in fields.items()} for i in range(projected.batch_size[0])]
+        fields = {k: v.cpu().numpy() for k, v in self._render_fields_of(state).items()}
+        rows = [{k: v[i] for k, v in fields.items()} for i in range(len(fields["recipe/config"]))]
         frames = torch.as_tensor(self._projection.render(rows, size), device=self.device)
         if out is not None:
             if (
