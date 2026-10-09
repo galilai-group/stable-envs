@@ -21,6 +21,11 @@ class FetchSemantics:
     action_dtype = torch.float32
     action_low, action_high = -1.0, 1.0
     cpu_render_support = "CPU_BACKEND_MISSING"
+
+    @property
+    def dynamics_variation_leaves(self):
+        return frozenset({"block.mass"}) & set(self.variation_names)
+
     _reset_keys = {
         "agent.start_position",
         "block.start_position",

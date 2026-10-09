@@ -239,6 +239,13 @@ class _DMCModel(Env):
                     used.append(mid)
         return [mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_MATERIAL, i) or f"mat{i}" for i in used]
 
+    @property
+    def dynamics_variation_leaves(self):
+        """Gravity and body densities change the physics, never a single rendered frame."""
+        return frozenset(
+            n for n in self.variation_names if n.startswith(("gravity.", "agent_physics.")) or n.endswith("_density")
+        )
+
     def make_variation_space(self) -> Dict:
         """Derive supported appearance leaves and defaults from the pristine model.
 
