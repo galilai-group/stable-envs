@@ -528,12 +528,16 @@ def test_no_env_shadows_an_attribute_the_base_class_owns():
                     changed = True
         return [c for c in classes if c.name in derived]
 
+    # Base attributes an env deliberately restates WITH THE BASE MEANING. Navigation's reset()
+    # sets ``_live_rows = self.B`` after installing a full batch, exactly as ``Env.set_state`` does.
+    restated = {"envs/navigation/envs.py": {"_live_rows"}}
     offenders: dict[str, set[str]] = {}
     for path in sorted((root / "stable_envs" / "envs").rglob("*.py")):
         if path.name == "__init__.py":
             continue
         tree = ast.parse(path.read_text())
         clash = set().union(*(self_attrs(c) for c in env_classes(tree)), set()) & owned
+        clash -= restated.get(path.relative_to(root / "stable_envs").as_posix(), set())
         # ``device``/``B``/``size`` are re-derived by some envs from their own arguments before
         # delegating; the collision that matters is one where the two meanings DIFFER, and the guard
         # cannot see that. It is left strict on purpose: an env that genuinely needs to restate a base
