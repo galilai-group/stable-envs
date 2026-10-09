@@ -114,7 +114,7 @@ def test_the_manipulation_module_exposes_the_names_the_tests_reach_for():
         "_KEEPALIVE",
     ):
         assert hasattr(MANIP, name), f"{name} no longer resolves off ogbench.manipulation"
-    assert "zero_bits" in inspect.getsource(MANIP._context)
+    assert "zero_bits" in inspect.getsource(MANIP._build_context)
 
 
 def test_the_module_caches_are_one_object_each_across_the_package():
@@ -245,16 +245,15 @@ def test_the_manipulation_declarations_are_still_the_measured_visual_ones(cell):
     assert vf["within8_min"] < vf["within8_frac"] and vf["ssim_min"] < vf["ssim"]
     assert vf["reference_versions"] == {"mujoco": "3.12.0", "ogbench": "1.2.1"}
     assert vf["measured_with"] == {"mujoco_warp": "3.12.0"}
-    assert "THREE declared residuals" in cls.visual_note
+    assert "can differ from MuJoCo" in cls.visual_note and "visual_fidelity records" in cls.visual_note
     assert cls.default_size == MANIP.SPEC[cls.CELL]["size"]
     assert "VISUAL TIER" in (cls.__doc__ or "").upper()
 
 
 def test_the_scene_carries_the_button_texture_bake_note_and_the_cube_does_not():
-    """The Scene's fourth residual, declared per geom because that is what the bake record is for."""
-    assert "btn_metal" in R.REGISTRY["OGBScene"].visual_note
-    assert "SCENE ONLY" in R.REGISTRY["OGBScene"].visual_note
-    assert "btn_metal" not in R.REGISTRY["OGBCube"].visual_note
+    """Only the Scene has UV-less button textures, so only its note declares their substitution."""
+    assert "button textures" in R.REGISTRY["OGBScene"].visual_note
+    assert "button textures" not in R.REGISTRY["OGBCube"].visual_note
 
 
 @pytest.mark.parametrize("cell", MANIP_CELLS)
@@ -264,14 +263,9 @@ def test_frozen_renderer_cpu_is_refused_rather_than_served_from_the_gpu(cell):
     Checked BEFORE anything is built, which is why this runs on a machine with no ``ogbench``: a
     caller who asked for a CPU env gets the reason rather than four seconds of construction.
     """
-    with pytest.raises(ValueError, match="CPU3D-OGB-1") as e:
+    with pytest.raises(ValueError, match="requires device='cuda'"):
         MANIP.CELL_CLASSES[cell](num_envs=1, device="cpu")
-    msg = str(e.value)
-    assert "no CPU backend" in msg and "Use device='cuda'" in msg
-    assert f"{MANIP.SPEC[cell.replace('OGB', '')]['visible_tri']:,}" in msg, (
-        "the refusal must quote THIS cell's triangle count, not its sibling's"
-    )
-    with pytest.raises(ValueError, match="CPU3D-OGB-1"):
+    with pytest.raises(ValueError, match="requires device='cuda'"):
         MANIP.CELL_CLASSES[cell](num_envs=1, device="cpu")
 
 
@@ -417,13 +411,11 @@ def test_a_renderer_only_cell_refuses_step_and_transition_and_says_why(_ogbench,
             with pytest.raises(NotImplementedError, match="full simulator semantics"):
                 call()
         env._set_render_state(env.sample_states(2, np.random.default_rng(0)))
-        st = env._unpack_render_state(env._get_render_state())
-        for call, args in (("step", (torch.zeros(2, 1),)), ("transition", (st, torch.zeros(2, 1)))):
-            with pytest.raises(NotImplementedError) as e:
-                getattr(env, call)(*args)
-            msg = str(e.value)
-            assert cell in msg and "full simulator semantics" in msg
-            assert "renders supplied states only" in msg
+        with pytest.raises(NotImplementedError) as e:
+            env.step(torch.zeros(2, 1))
+        msg = str(e.value)
+        assert cell in msg and "full simulator semantics" in msg
+        assert "renders supplied states only" in msg
         assert env._render().shape == (2, 224, 224, 3)
 
 

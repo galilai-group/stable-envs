@@ -25,10 +25,12 @@ ACTIONS = {
 
 
 def oracle(name):
-    source = (
-        Path(os.environ.get("SWM_ROOT", "/Users/samib/stable-worldmodel"))
-        / "stable_worldmodel/envs/craftax/craftax.py"
-    )
+    root = Path(os.environ.get("SWM_ROOT") or Path(__file__).resolve().parents[3].parent / "stable-worldmodel")
+    source = root / "stable_worldmodel/envs/craftax/craftax.py"
+    if not source.exists():
+        import pytest
+
+        pytest.skip(f"no stable-worldmodel checkout at {root}; set SWM_ROOT to compare against the Craftax source")
     spec = importlib.util.spec_from_file_location("craftax_test_oracle", source)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

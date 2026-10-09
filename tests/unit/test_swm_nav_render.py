@@ -137,7 +137,7 @@ def test_the_bake_is_not_a_function_of_call_history(cfg):
     first = env._render(st).clone()
     solo = se.make(cfg, num_envs=1, device="cpu")  # warms and could corrupt the shared cache
     for i in range(8):
-        assert torch.equal(solo.render(st[i : i + 1])[0], first[i]), f"{cfg}: row {i} at batch 1"
+        assert torch.equal(solo._render(st[i : i + 1])[0], first[i]), f"{cfg}: row {i} at batch 1"
     assert torch.equal(env._render(st), first), f"{cfg}: render is not pure"
     perm = np.array([3, 1, 7, 0, 5, 2, 6, 4])
     assert torch.equal(env._render(np.ascontiguousarray(st[perm]))[np.argsort(perm)], first), (
@@ -225,7 +225,7 @@ def test_two_styles_with_repeats_take_the_gather_branch(cfg):
     ), f"{cfg}: gather branch is not order invariant"
     solo = se.make(cfg, num_envs=1, device="cpu")
     for i in range(6):
-        assert torch.equal(solo.render(st[i : i + 1], style=rows[i : i + 1])[0], got[i]), (
+        assert torch.equal(solo._render(st[i : i + 1], style=rows[i : i + 1])[0], got[i]), (
             f"{cfg}: row {i} differs when rendered alone, so a plate is stale or misindexed"
         )
 

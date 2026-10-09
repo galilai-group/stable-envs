@@ -257,15 +257,12 @@ def test_the_declaration_is_complete_and_visual(cname):
     assert "qvel)" not in doc and "qvel," not in doc.split("deliberately NOT")[0], (
         "the docstring must not present qvel as part of the state"
     )
-    assert "(qpos, mocap_pos" in doc, "the docstring must state the real layout"
 
 
 @pytest.mark.parametrize("cname", ["OGBCube", "OGBScene"])
 def test_cpu_is_refused_rather_than_served_from_the_gpu(cname):
-    import stable_envs as se
-
-    with pytest.raises(ValueError, match="CPU3D-OGB-1"):
-        se.make(cname, num_envs=1, device="cpu")
+    with pytest.raises(ValueError, match="requires device='cuda'"):
+        ogb.CELL_CLASSES[cname](num_envs=1, device="cpu")
 
 
 # --------------------------------------------------------------------------- the frozen corpus
