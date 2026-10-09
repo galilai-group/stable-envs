@@ -775,7 +775,7 @@ class FetchBase(Env):
         alone leaves the arm unchanged. It is shared by variants of each scene.
         """
         rng = rng or self.rng
-        pool = _state_pool(self.SCENE, self.REF_ID, self.state_dim, self._b.nq)
+        pool = _state_pool(self.SCENE, self.REF_ID, self.state_dim, self.state_dim - 3)
         return pool[rng.integers(0, len(pool), int(batch))].copy()
 
     @classmethod
