@@ -24,7 +24,7 @@ A missing optional extra costs **that family**, not the package. `snv.import_err
 
 CUDA is required for the 3-D and most MuJoCo families. PushT, classic control, navigation and several 2-D families run on CPU.
 
-Family extras that cannot share an interpreter, the Fetch MuJoCo pin, and the nvdiffrast source build: [Install](docs/install.md).
+The Fetch MuJoCo pin and the nvdiffrast source build: [Install](docs/install.md).
 
 Editable install (from a clone) lives under [Contributing](CONTRIBUTING.md).
 
@@ -108,7 +108,9 @@ snv.import_errors()  # {module: "ModuleNotFoundError: ..."}
 snv.list_families()  # stable family ids that registered
 ```
 
-Device honesty is part of the contract: OGBCube, OGBScene and PyFlytRocketLanding refuse CPU rather than silently falling back; Fetch has no CPU backend; HumanoidBench registers only under `STABLE_ENVS_HUMANOIDBENCH=1`. Details: [limitations](docs/concepts/limitations.md).
+Device honesty is part of the contract: OGBCube, OGBScene and PyFlytRocketLanding refuse CPU rather than silently falling back; Fetch has no CPU backend. Details: [limitations](docs/concepts/limitations.md).
+
+Renderer-only ports of other families (MiniGrid, Highway, RoboCasa, …) are kept in the repository under [`contrib/`](contrib/README.md). They are not checked against their upstream State and are not part of the released package.
 
 ## Documentation
 

@@ -15,13 +15,14 @@
 #            on SimplePointMaze, 23s on Acrobot, 19s on MiniHack and 13s on Highway, because it renders
 #            once per declared variation leaf. The only ways under two minutes with all nine are to
 #            weaken that check or to drop a family, and both cost more than the ninety seconds.
-#   --fast   0.9 min, 133 passed / 10 skipped. Four envs, chosen by RENDER BACKEND rather than by
+#   --fast   0.9 min, 133 passed / 10 skipped, measured with a fourth env, MiniGridEmpty (the
+#            tile-atlas path), whose family is now in contrib/ and not registered by the package. Three
+#            envs, chosen by RENDER BACKEND rather than by
 #            family, which is the partition that actually predicts what a code change can break:
 #              PushT                    the analytic 2-D rasterizer (render/raster2d.py, Triton)
-#              MiniGridEmpty            the tile-atlas path (render/tilemap.py)
 #              PointmazeMediumNavigate  the 3-D ray caster and the MuJoCo plate bake (render/raycast3d)
 #              CraftaxClassic           the native pixel gather
-#            Every other family renders through one of those four. This is the loop to run while
+#            Every other family renders through one of those three. This is the loop to run while
 #            editing a kernel; the default is the one to run before pushing.
 #
 # What NEITHER covers: the cross-process reproducibility check (it boots a second interpreter and
@@ -54,7 +55,7 @@ PY=/mnt/vast/home/randall.balestriero/miniconda3/envs/test/bin/python
 
 if [ "${1:-}" = "--fast" ]; then
   shift
-  export SE_SMOKE_ENVS=PushT,MiniGridEmpty,PointmazeMediumNavigate,CraftaxClassic
+  export SE_SMOKE_ENVS=PushT,PointmazeMediumNavigate,CraftaxClassic
 fi
 
 RUN=/mnt/vast/home/randall.balestriero/rjepa_bench_logs/se_smoke_${SLURM_JOB_ID:-manual}

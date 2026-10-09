@@ -8,8 +8,9 @@ pip install -e ".[dev]"
 
 That is numpy, torch, gymnasium, tensordict, loguru, plus pytest and ruff. Add family extras as
 needed (`"[dev,pusht]"`, `"[dev,dmcontrol]"`). Extra incompatibilities, the Fetch MuJoCo pin,
-Overcooked's private interpreter, and the nvdiffrast source build live on the
-[installation page](docs/install.md).
+and the nvdiffrast source build live on the [installation page](docs/install.md). The unreleased
+renderer-only ports in `contrib/` have their own requirements and tests; see
+[contrib/README.md](contrib/README.md).
 
 ## Format
 

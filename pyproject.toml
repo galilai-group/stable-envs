@@ -45,32 +45,20 @@ Source = "https://github.com/galilai-group/stable-envs"
 pusht = ["pygame", "pymunk==7.2.0", "opencv-python-headless", "shapely"]
 # Historical gym-pusht corpus checks use their own reference environment.
 pusht-reference = ["gym-pusht"]
-box2d = ["gymnasium[box2d]>=1.0", "pygame"]
 # SimplePointMaze's exact cached info.goal image uses Matplotlib Agg.
 # Navigation dynamics and the public renderer remain native Torch.
 navigation = ["matplotlib>=3.10"]
-minigrid = ["minigrid"]
 ogbench = ["mujoco>=3.11,<3.13", "ogbench==1.2.1"]
 # Cube/Scene unified semantic + renderer profile. Other OGBench cells retain their extra above.
 ogbench-manipulation = ["ogbench==1.2.1", "mujoco==3.12.0", "numpy==2.2.6", "gymnasium==1.2.3", "dm-control==1.0.41"]
 ogbench-manipulation-gpu = ["ogbench==1.2.1", "mujoco==3.12.0", "numpy==2.2.6", "gymnasium==1.2.3", "dm-control==1.0.41", "mujoco-warp==3.12.0", "warp-lang==1.17.0"]
-highway = ["highway-env"]
 craftax = ["craftax", "jax"]
 # Audited registered Craftax semantics; legacy atlas renderer extra remains separate.
 craftax-semantics = ["craftax==1.5.0", "jax==0.10.1", "jaxlib==0.10.1", "flax==0.12.7", "gymnax==0.0.9", "numpy==2.2.6", "chex==0.1.92", "gymnasium==1.2.3", "torch==2.14.0", "tensordict==0.14.2"]
 craftax-semantics-gpu = ["craftax==1.5.0", "jax[cuda12]==0.10.1", "jaxlib==0.10.1", "flax==0.12.7", "gymnax==0.0.9", "numpy==2.2.6", "chex==0.1.92", "gymnasium==1.2.3", "torch==2.14.0", "tensordict==0.14.2"]
-minihack = ["minihack", "nle"]
-sokoban = ["gym-sokoban", "imageio"]
 dmcontrol = ["dm-control>=1.0.44", "mujoco>=3.11,<3.13"]
-mujoco-locomotion = ["gymnasium[mujoco]>=1.0", "mujoco>=3.11,<3.13"]
 # gymnasium-robotics 1.4.2's Fetch setters fail with MuJoCo 3.12.
 robotics = ["gymnasium-robotics", "mujoco>=3.11,<3.12", "opencv-python-headless"]
-crafter = ["crafter"]
-overcooked = ["jax", "jaxmarl", "matplotlib"]
-griddly = ["griddly==1.6.7", "pyyaml"]
-jumanji = ["jax", "jumanji", "matplotlib"]
-pgx = ["jax", "pgx", "pillow", "resvg-py"]
-procgen = ["pillow", "procgen2"]
 # Optional render/data surfaces. nvdiffrast is intentionally not metadata:
 # PyPI rejects direct-URL requirements and its CUDA extension needs a matching
 # local toolkit. The source install is documented in docs/install.md.
@@ -79,18 +67,12 @@ mjwarp = [
   "mujoco-warp>=3.11,<3.13",
   "warp-lang>=1.16",
 ]
-# Needed to render: Meta-World scenes come from the package's own MjModel.
-# Install metaworld with --no-deps; it pins mujoco==3.3.0 on paper and runs on 3.11.
-metaworld = ["metaworld>=3.1", "mujoco>=3.11,<3.13", "mujoco-warp>=3.11,<3.13"]
-# humanoid_bench is not on PyPI. Install it from git with --no-deps; this extra
-# is only the PyPI-installable remainder.
-humanoidbench = ["dm-control", "gymnasium", "jax", "mujoco>=3.11,<3.13", "mujoco-warp>=3.11,<3.13"]
 # Official replay-backed Rocket dynamics; GPU rendering also requires nvdiffrast and Triton.
 rocket = ["pillow", "scipy", "PyFlyt==0.29.0", "pybullet==3.2.7", "numpy==2.5.3", "gymnasium==1.3.0"]
 hf = ["datasets>=2.14"]
 examples = ["imageio", "imageio-ffmpeg", "opencv-python"]
-# No `all` extra: Fetch needs mujoco<3.12, Overcooked needs its own interpreter,
-# and nvdiffrast cannot be expressed as PyPI metadata.
+# No `all` extra: Fetch needs mujoco<3.12, and nvdiffrast cannot be expressed
+# as PyPI metadata.
 docs = [
   "mkdocs-material>=9.5",
   "mkdocstrings[python]>=0.27",
@@ -132,7 +114,7 @@ ignore = ["E402", "E731", "E741"]
 # Re-exports and registration side-effect imports.
 "**/__init__.py" = ["F401"]
 # Generated MJWarp kernels: unused typing imports and `int()` casts are load-bearing for Warp.
-"stable_envs/render/mjwarp/lightspec.py" = ["UP006", "UP018", "UP035"]
+"contrib/render/lightspec.py" = ["UP006", "UP018", "UP035"]
 "stable_envs/render/mjwarp/__init__.py" = ["UP018"]
 # Forward references kept unimported to avoid cycles; annotations are not evaluated.
 "stable_envs/env.py" = ["F821"]
@@ -140,7 +122,7 @@ ignore = ["E402", "E731", "E741"]
 # Public `Union[...]` alias; `|` would change the runtime type object.
 "stable_envs/render/scene.py" = ["UP007"]
 # Measured `"%04i" % reward` atlas keys / pygame font contract.
-"stable_envs/envs/carracing.py" = ["UP031"]
+"contrib/carracing.py" = ["UP031"]
 "examples/robocasa_visual/calibrate_tier.py" = ["UP031"]
 # Lambdas close over names `del`'d in the same function; ruff treats them as unbound.
 "examples/bench_gpu_vs_cpu.py" = ["F821"]

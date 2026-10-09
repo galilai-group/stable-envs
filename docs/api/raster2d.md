@@ -16,7 +16,7 @@ scene configurations. Agreement with an upstream environment is a separate
 measurement: its antialiasing and resize rules may differ. Supersampling changes
 edge coverage and cost, and does not by itself establish source parity.
 
-Classic control and CarRacing use the separate `gfxdraw` kernels to reproduce
+Classic control uses the separate `gfxdraw` kernels to reproduce
 SDL primitive blending and edge rules. Their regression tests compare the fused
 kernels against a Torch reference and the per-primitive implementation.
 

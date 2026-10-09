@@ -517,7 +517,7 @@ def test_a_learned_decoder_beats_the_render_it_replaces(env):
     0.763, and that is the whole failure.
 
     ``examples/rendernet/train_corrector.py`` runs the same three comparisons before it will write a
-    checkpoint, and ``tests/gpu/test_rendernet.py`` asserts them on the declaration. This one asserts
+    checkpoint, and ``contrib/tests/gpu/test_rendernet.py`` asserts them on the declaration. This one asserts
     them on frames, in this interpreter, against this machine's official renderer — which is the only
     one of the three that can notice a render path that has drifted since the weights were sealed.
     """

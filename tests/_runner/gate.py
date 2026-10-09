@@ -8,7 +8,7 @@ EXCLUDED: dict[str, str] = {
         "2023 JAX ecosystem (brax, then jaxopt, ...) and arrives at an interpreter where nothing has "
         "verified that Overcooked still renders correctly on modern jax — which is worse than not "
         "running it, because the suite would go green either way. The other 191 envs share one "
-        "interpreter; these 5 need their own, and stable_envs/envs/overcooked.py says so at the top. "
+        "interpreter; these 5 need their own, and contrib/overcooked.py says so at the top. "
         "The permanent fix is to embed the atlas the way craftax/crafter/minihack embed theirs, which "
         "would make jaxmarl build-time-only; until then this is an honest carve-out rather than a "
         "silent skip."

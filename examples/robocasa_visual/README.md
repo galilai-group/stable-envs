@@ -45,7 +45,7 @@ robosuite itself produced, `env.sim.render` at geom group 1.
 here because it is the honest measure of what the visual tier gave up, not as something to pass.
 
 The registered classes declare slightly different numbers ([`calibrate_tier.py`](calibrate_tier.py),
-copied into `FIDELITY` in `stable_envs/envs/robocasa.py`) because they are measured on a different
+copied into `FIDELITY` in `contrib/robocasa.py`) because they are measured on a different
 distribution: `sample_states` is this trajectory with every free joint's yaw randomised, which is a
 state the env reaches the moment the gripper touches an object and which the recorded rollout barely
 visits. It moves the room-scale cameras by ~0.05/255 and the **wrist** camera from 6.36 to 9.89, with a
@@ -160,6 +160,6 @@ the probe recorded in `manifest.json`:
 ## The envs
 
 The four classes this directory calibrates are in
-[`stable_envs/envs/robocasa.py`](../../stable_envs/envs/robocasa.py) and are **visual tier** — see
+[`contrib/robocasa.py`](../../contrib/robocasa.py) and are **visual tier** — see
 [`docs/concepts/fidelity-tiers.md`](../../docs/concepts/fidelity-tiers.md) for what that licenses and,
 more importantly, what it does not.

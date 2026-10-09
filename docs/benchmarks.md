@@ -46,6 +46,11 @@ the case most favourable to a corpus. Across a registry sweep, reading a warm lo
 it runs at 0.45–1.95× the speed of decoding the same bytes already in memory (median 0.96×): a
 stored-frame pipeline is decode-bound, not IO-bound.
 
+Some families named below (MiniGrid, Griddly, Sokoban, Overcooked, CarRacing, D4RL PointMaze,
+HumanoidBench, Meta-World, RoboCasa, the nvdiffrast Gymnasium MuJoCo locomotion cells) are renderer-only
+ports kept in the repository's `contrib/` directory, not part of the released package; their numbers are
+kept as measured.
+
 Tile-atlas families (MiniGrid, Griddly, Sokoban, Overcooked) gather from a precomputed atlas and
 clear hundreds of thousands to millions of frames a second, replacing thousands of JPEG-decode cores.
 2-D rasterized PushT is ~100× a stored JPEG/core. Ray-cast 3-D families are slower and host-bound;

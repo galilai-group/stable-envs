@@ -3,7 +3,7 @@
 The side-by-side pipeline scores a recorded trajectory; the conformance suite scores
 ``env.sample_states``, which is that trajectory with every free joint's yaw randomised. Those are
 different distributions and the tier's declared numbers must be the ones the suite will see, so they
-are measured here and copied into ``stable_envs/envs/robocasa.py``'s ``FIDELITY`` by hand -- a
+are measured here and copied into ``contrib/robocasa.py``'s ``FIDELITY`` by hand -- a
 threshold a script writes into the file it then tests is not a threshold.
 
 Also prints the per-class state width and its live-qpos share, the throughput at the env's own
@@ -24,8 +24,12 @@ os.environ.setdefault("MUJOCO_GL", "egl")
 
 import torch
 
+import contrib
 import stable_envs as se
 from stable_envs.testing import conformance as C
+
+# RoboCasa is a contrib family: stable_envs does not discover it.
+contrib.load()
 
 
 def main() -> None:
@@ -109,7 +113,7 @@ def main() -> None:
 
 
 def _nq(cls):
-    from stable_envs.envs.robocasa import _scene
+    from contrib.robocasa import _scene
 
     return _scene(cls.KITCHEN).qpos_names
 

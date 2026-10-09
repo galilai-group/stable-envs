@@ -1,0 +1,3 @@
+# procgen (formerly the `procgen` extra)
+pillow
+procgen2

@@ -2,7 +2,7 @@
 
     python examples/rendernet/train_corrector.py RoboCasaCounterToSink
 
-This is the documented way to get the weights ``stable_envs/render/rendernet.py`` looks for, and the
+This is the documented way to get the weights ``contrib/render/rendernet.py`` looks for, and the
 ONLY supported one. The repository ships code, not weights — the same rule that makes it ship no
 compiled RoboCasa kitchen and no MiniGrid atlas — so a corrector is built on the machine that wants it
 and cached under ``~/.cache/stable-envs/rendernet/``. On one H200 the whole run is about 40 minutes,
@@ -52,9 +52,13 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+import contrib
 import stable_envs as se
-from stable_envs.render import rendernet as RN
+from contrib.render import rendernet as RN
 from stable_envs.testing import conformance as C
+
+# RoboCasa and HumanoidBench are contrib families: stable_envs does not discover them.
+contrib.load()
 
 #: The recommended configuration per family, measured in the render-corrector study.
 #: A RoboCasa room camera gives away resolution almost for free once a corrector exists (256 -> 112 px
@@ -90,7 +94,7 @@ def split_states(cls, split: str, n: int, seed: int, p_interp: float = 0.3) -> n
         )
     import mujoco
 
-    import stable_envs.envs.robocasa as RC
+    import contrib.robocasa as RC
 
     s = RC._scene(cls.KITCHEN)
     live = RC._live_dims(cls.KITCHEN, cls.CAMERA, 256)
@@ -354,7 +358,7 @@ def main() -> None:
         raise SystemExit(
             f"{a.env} does not declare a corrector_cell_key(), so a checkpoint could "
             f"not be locked to it. That lock is the only thing standing between a "
-            f"corrector and the cell it silently ruins; see render/rendernet.py."
+            f"corrector and the cell it silently ruins; see contrib/render/rendernet.py."
         )
     cell = dict(cls.corrector_cell_key())
     cell["env_class"] = f"{a.env}Corrected"
@@ -539,7 +543,7 @@ def main() -> None:
 
 def _corrected_base(family: str):
     if family == "robocasa":
-        from stable_envs.envs.robocasa import RoboCasaCorrectedBase
+        from contrib.robocasa import RoboCasaCorrectedBase
 
         return RoboCasaCorrectedBase
     raise SystemExit(f"no corrected base class for the {family!r} family")

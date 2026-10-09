@@ -43,11 +43,12 @@ env = snv.CartPole(num_envs=8)
 | `classic_control` | `CartPole`, `Pendulum` |
 | `dmcontrol` | `DMCReacherHard`, `DMCCheetahRun` (`domain="reacher"`, `"cheetah"`, …) |
 | `ogbench` | `PointMazeLargeNavigate`, `OGBCube` (`domain="pointmaze"`, `"cube"`, …) |
-| `mujoco` | `MuJoCoAnt`, `MuJoCoHalfCheetah` |
 | `pyflyt` | `PyFlytRocketLanding` |
 | `fetch` | `FetchReach`, `FetchPush`, … |
 
 When in doubt, `list_families()` and `info(name)["family"]` / `["domain"]` are the source of truth.
+
+Renderer-only ports of other families (MiniGrid, Highway, RoboCasa, …) are kept in the repository, not released, and not checked against their upstream State: see [contrib/README.md](https://github.com/galilai-group/stable-envs/blob/main/contrib/README.md).
 
 ## Fidelity
 

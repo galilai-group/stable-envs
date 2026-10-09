@@ -31,10 +31,10 @@ repos:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
         types_or: [python, pyi]
-        files: ^(stable_envs/|tests/|benchmarks/|scripts/|examples/|conftest\.py)
+        files: ^(stable_envs/|contrib/|tests/|benchmarks/|scripts/|examples/|conftest\.py)
       - id: ruff-format
         types_or: [python, pyi]
-        files: ^(stable_envs/|tests/|benchmarks/|scripts/|examples/|conftest\.py)
+        files: ^(stable_envs/|contrib/|tests/|benchmarks/|scripts/|examples/|conftest\.py)
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.11.0.1

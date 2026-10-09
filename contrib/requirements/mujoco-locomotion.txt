@@ -1,0 +1,3 @@
+# mujoco_locomotion (formerly the `mujoco-locomotion` extra)
+gymnasium[mujoco]>=1.0
+mujoco>=3.11,<3.13

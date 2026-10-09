@@ -308,8 +308,6 @@ def test_a_foreign_keepalive_fallback_warns_and_retains_past_the_cap(monkeypatch
         ("stable_envs.render.mjwarp", "BatchRenderer"),
         ("stable_envs.render.nvdiff", "BatchRenderer"),
         ("stable_envs.render.nvdiff", "Scene"),
-        ("stable_envs.render.rendernet", "LoadedCorrector"),
-        ("stable_envs.render.rendernet", "_Runner"),
     ],
 )
 def test_every_backend_object_honours_the_close_protocol(module, cls):
@@ -327,15 +325,12 @@ def test_every_backend_object_honours_the_close_protocol(module, cls):
 def test_every_backend_construction_path_declares_itself_open():
     from stable_envs.render import mjwarp as MW
     from stable_envs.render import nvdiff as ND
-    from stable_envs.render import rendernet as RN
 
     paths = (
         MW.BatchRenderer.__init__,
         ND.Scene.__init__,
         ND.Scene.from_triangles.__func__,
         ND.BatchRenderer.__init__,
-        RN._Runner.__init__,
-        RN.LoadedCorrector.__init__,
     )
     for path in paths:
         assert "._opened()" in inspect.getsource(path), f"{path.__qualname__} forgot _opened()"
@@ -387,16 +382,6 @@ def test_a_cpu_scene_releases_every_owned_tensor_and_refuses_reuse():
 
 
 @pytest.mark.unit
-def test_the_module_level_cast_memo_is_bounded():
-    """``mjwarp_lightspec._CASTS_CACHE`` was an unbounded dict, i.e. one entry per model, forever."""
-    pytest.importorskip("mujoco_warp")
-    import stable_envs.render.mjwarp.lightspec as LS
-
-    assert isinstance(LS._CASTS_CACHE, RES.BoundedCache)
-    assert LS._CASTS_CACHE.capacity == LS.CASTS_CACHE_MAX
-
-
-@pytest.mark.unit
 def test_the_per_renderer_ray_cache_is_bounded():
     """``nvdiff.BatchRenderer._ray_cache``, checked without building a renderer (it needs CUDA)."""
     import stable_envs.render.nvdiff as ND
@@ -428,7 +413,7 @@ def _code_of(name: str) -> str:
 
 
 @pytest.mark.unit
-@pytest.mark.parametrize("name", ["mjwarp/__init__.py", "mjwarp/lightspec.py", "nvdiff.py", "rendernet.py", "_resources.py"])
+@pytest.mark.parametrize("name", ["mjwarp/__init__.py", "nvdiff.py", "_resources.py"])
 def test_nothing_in_the_render_backends_releases_an_egl_context(name):
     """The rule ``tests/_runner/resource_guard.py`` enforces at zero tolerance, checked at the source.
 
@@ -456,36 +441,21 @@ def test_family_device_caches_release_on_eviction():
             "ContextCache(on_evict=_release_context",
             "release_cached_ctx",
         ),
-        (root / "envs" / "robocasa.py", 'BoundedCache(4, name="robocasa.ctx"', "release_cached_ctx"),
-        (root / "envs" / "robocasa.py", "BoundedCache(", "robocasa.correctors"),
-        (root / "envs" / "humanoidbench.py", 'BoundedCache(32, name="humanoidbench.ctx"', "release_cached_ctx"),
-        (root / "envs" / "metaworld.py", 'BoundedCache(3, name="metaworld.ctx"', "release_cached_ctx"),
         (root / "envs" / "dmcontrol" / "_model.py", 'BoundedCache(3, name="dmcontrol.tc"', "release_cached_ctx"),
-        (
-            root / "envs" / "mujoco_locomotion.py",
-            'BoundedCache(16, name="mujoco_locomotion.nvd"',
-            "close_cached_renderer",
-        ),
         (root / "envs" / "rocket" / "legacy.py", 'BoundedCache(8, name="rocket.nvd"', "close_cached_renderer"),
         (root / "envs" / "rocket" / "legacy.py", "owns_scene = True", "owns_scene"),
     ]
     for path, needle, label in checks:
         src = path.read_text(encoding="utf-8")
         assert needle in src, f"{path.relative_to(root.parent)} missing {label}: {needle!r}"
-    robocasa = (root / "envs" / "robocasa.py").read_text(encoding="utf-8")
-    assert "on_evict=lambda c: c.close()" in robocasa
     cpu = [
         (root / "envs" / "fetch" / "envs.py", 'BoundedCache(32, name="fetch.plate"'),
         (root / "envs" / "fetch" / "envs.py", 'BoundedCache(256, name="fetch.cam"'),
         (root / "envs" / "ogbench" / "maze.py", 'BoundedCache(_SCENE_CACHE_MAX, name="ogbench.maze"'),
         (root / "envs" / "ogbench" / "manipulation.py", 'BoundedCache(_PLATE_CACHE_MAX, name="ogbench.plate"'),
-        (root / "envs" / "metaworld.py", 'BoundedCache(_PLATE_CACHE_MAX, name="metaworld.plate"'),
         (root / "envs" / "dmcontrol" / "_model.py", 'BoundedCache(_SCENE_CACHE_MAX, name="dmcontrol.scene"'),
-        (root / "envs" / "mujoco_locomotion.py", 'BoundedCache(_SCENE_CACHE_MAX, name="mujoco_locomotion.scene"'),
-        (root / "envs" / "maze2d.py", 'BoundedCache(_SCENE_CACHE_MAX, name="maze2d.scene"'),
         (root / "envs" / "classic_control" / "envs.py", 'BoundedCache(_TERRAIN_CACHE_MAX, name="classic.terrain"'),
         (root / "envs" / "navigation" / "envs.py", 'BoundedCache(_BAKE_CACHE_MAX, name="navigation.bake"'),
-        (root / "envs" / "pgx.py", 'BoundedCache(_PLATE_CACHE_MAX, name="pgx.plate"'),
         (root / "render" / "raster2d.py", 'BoundedCache(_BASE_CACHE_MAX, name="raster2d.base"'),
         (root / "render" / "raycast3d.py", "_Memo = _RES.BoundedCache"),
         (root / "envs" / "craftax" / "classic.py", 'BoundedCache(_MAX_ENTRIES, name="craftax.composite"'),

@@ -10,27 +10,13 @@ import tomllib
 
 ROOT = Path(__file__).resolve().parents[2]
 FAMILY_EXTRAS = {
-    "box2d": ("box2d-py", "pygame"),
     "craftax": ("craftax", "jax"),
-    "crafter": ("crafter",),
     "dmcontrol": ("dm-control", "mujoco"),
-    "griddly": ("griddly",),
-    "highway": ("highway-env",),
-    "humanoidbench": ("jax", "mujoco"),
-    "jumanji": ("jumanji", "jax"),
-    "metaworld": ("metaworld", "mujoco"),
-    "minigrid": ("minigrid",),
-    "minihack": ("minihack", "nle"),
     "mjwarp": ("mujoco", "mujoco-warp", "warp-lang"),
-    "mujoco-locomotion": ("mujoco",),
     "ogbench": ("ogbench", "mujoco"),
-    "overcooked": ("jaxmarl", "jax", "matplotlib"),
-    "pgx": ("pgx",),
-    "procgen": ("procgen2",),
     "pusht": ("gym-pusht", "pygame", "pymunk"),
     "robotics": ("gymnasium-robotics", "mujoco"),
     "rocket": ("pybullet", "pillow", "scipy"),
-    "sokoban": ("gym-sokoban", "imageio"),
 }
 
 

@@ -1,7 +1,7 @@
 name: extras-smoke
 
 # Compatible extra groups only. There is no [all] extra: Fetch needs mujoco<3.12,
-# Overcooked needs its own interpreter, and nvdiffrast is not PyPI metadata.
+# and nvdiffrast is not PyPI metadata.
 on:
   pull_request:
     branches: [main]
@@ -15,7 +15,7 @@ on:
         description: Extra smoke profile
         required: true
         type: choice
-        options: [cheap, mujoco, robotics, jax, overcooked]
+        options: [cheap, mujoco, robotics, jax]
 
 permissions:
   contents: read
@@ -35,12 +35,10 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - name: System deps for Box2D
-        run: sudo apt-get update && sudo apt-get install -y swig
       - name: Install cheap extras
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[dev,pusht,box2d,minigrid,highway,sokoban,crafter]"
+          python -m pip install -e ".[dev,pusht]"
       - name: Smoke cheap extras
         env:
           SDL_VIDEODRIVER: dummy
@@ -60,7 +58,7 @@ jobs:
       - name: Install MuJoCo extras
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[dev,dmcontrol,ogbench,mujoco-locomotion]"
+          python -m pip install -e ".[dev,dmcontrol,ogbench]"
       - name: Smoke MuJoCo extras
         env:
           MUJOCO_GL: osmesa
@@ -100,27 +98,8 @@ jobs:
       - name: Install JAX extras
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[dev,craftax,jumanji,pgx]"
+          python -m pip install -e ".[dev,craftax]"
       - name: Smoke JAX extras
         env:
           SE_SKIP_NODE_GATE: "1"
         run: python scripts/ci/smoke_extra.py --profile jax
-
-  overcooked:
-    if: github.event_name == 'workflow_dispatch' && inputs.profile == 'overcooked'
-    name: overcooked extra
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-      - name: Install overcooked extra
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e ".[dev,overcooked]"
-      - name: Smoke overcooked extra
-        env:
-          SE_SKIP_NODE_GATE: "1"
-        run: python scripts/ci/smoke_extra.py --profile overcooked

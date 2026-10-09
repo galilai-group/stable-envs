@@ -693,10 +693,10 @@ corrector fitted at one camera pose scores 3.25/255 there and 9.06 under the env
 pan — worse than not correcting at all. `register()` refuses a learned decoder that does not declare
 `variation_fidelity`, so the measurement cannot be skipped by omission.
 
-`tests/gpu/test_rendernet.py` covers what is left: that the delivered frame is exactly the cheap render
+`contrib/tests/gpu/test_rendernet.py` covers what is left: that the delivered frame is exactly the cheap render
 put through the corrector, that the corrector was actually applied (a checkpoint that failed to load
 still produces a perfectly reasonable picture), that a caller's batch size cannot reach the autotuner's
-decision, and that a checkpoint keyed to one cell refuses every other. `tests/unit/test_rendernet_identity.py`
+decision, and that a checkpoint keyed to one cell refuses every other. `contrib/tests/unit/test_rendernet_identity.py`
 asserts the refusals on synthetic checkpoints, with no GPU and no cache.
 
 ### Legacy render-projection round-trip

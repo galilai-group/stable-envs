@@ -18,11 +18,11 @@ import stable_envs as snv
 
 PROFILES: dict[str, dict] = {
     "cheap": {
-        "expect": ("PushT", "CartPole", "LunarLander", "MiniGridEmpty", "Crafter", "Highway", "Sokoban"),
+        "expect": ("PushT", "CartPole"),
         "render": ("PushT", "CartPole"),
     },
     "mujoco": {
-        "expect": ("DMCReacherEasy", "PointMazeMediumNavigate", "MuJoCoAnt"),
+        "expect": ("DMCReacherEasy", "PointMazeMediumNavigate"),
         "render": ("PointMazeMediumNavigate",),
     },
     "robotics": {
@@ -32,10 +32,6 @@ PROFILES: dict[str, dict] = {
     "jax": {
         "expect": ("CraftaxClassic",),
         "render": ("CraftaxClassic",),
-    },
-    "overcooked": {
-        "expect": ("OvercookedCrampedRoom",),
-        "render": (),
     },
     "special-import": {
         "expect": (),

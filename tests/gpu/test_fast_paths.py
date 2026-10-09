@@ -53,8 +53,8 @@ from tests.helpers import raycast_reference as reference
 
 #: Env-module names that legitimately explain an empty family. Used by ``resolve_family`` to tell
 #: "this interpreter cannot import dm_control" (a skip) from "the sweep selected nothing" (a failure).
-RAYCAST_MODULES = ("dmcontrol", "mujoco_locomotion", "ogbench", "maze2d")
-MOVER_MODULES = ("dmcontrol", "mujoco_locomotion")
+RAYCAST_MODULES = ("dmcontrol", "ogbench")
+MOVER_MODULES = ("dmcontrol",)
 
 
 @contextlib.contextmanager
@@ -360,7 +360,7 @@ CASES: tuple[FastPath, ...] = (
             "union is over ray POSITIONS, not pixels, because the window moves per environment."
         ),
         names=tuple(n for n in sorted(se.registry.REGISTRY) if n.startswith(("AntMaze", "PointMaze", "HumanoidMaze"))),
-        modules=("ogbench", "maze2d"),
+        modules=("ogbench",),
         num_envs=8,
         seed=0,
         sizes=(None,),
@@ -368,7 +368,7 @@ CASES: tuple[FastPath, ...] = (
         frames=_composite_frames,
         inapplicable=lambda env: (
             None
-            if type(env).__module__.rsplit(".", 1)[-1] in ("ogbench", "maze2d")
+            if type(env).__module__.rsplit(".", 1)[-1] in ("ogbench",)
             else "does not render through raycast3d.composite"
         ),
     ),
@@ -392,7 +392,7 @@ CASES: tuple[FastPath, ...] = (
             "building a giant maze at 84 px shortens exactly the thing under test."
         ),
         names=tuple(n for n in sorted(se.registry.REGISTRY) if n.startswith(("AntMaze", "PointMaze", "HumanoidMaze"))),
-        modules=("ogbench", "maze2d"),
+        modules=("ogbench",),
         num_envs=8,
         seed=1,
         sizes=(None,),
@@ -400,7 +400,7 @@ CASES: tuple[FastPath, ...] = (
         frames=_compact_merge_frames,
         inapplicable=lambda env: (
             None
-            if type(env).__module__.rsplit(".", 1)[-1] in ("ogbench", "maze2d")
+            if type(env).__module__.rsplit(".", 1)[-1] in ("ogbench",)
             else "does not render through raycast3d.composite"
         ),
     ),

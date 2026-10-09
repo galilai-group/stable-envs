@@ -7,17 +7,14 @@ against an unpublished predecessor.
 
 `pip install stable-envs` gives the core. Each family extra installs what that family's
 **reference** needs (parity, CPU-vs-GPU benches, gallery). Most extras are not required to
-*render* — the exceptions are called out on the [installation page](../install.md)
-(nvdiffrast for visual-tier MuJoCo locomotion; jaxmarl for Overcooked).
+*render* — the exceptions are called out on the [installation page](../install.md).
 
 ```python
 snv.import_errors()     # families this interpreter could not import
 ```
 
-Overcooked is the one extra that needs its **own interpreter** (`jaxmarl` pins). HumanoidBench
-registers only when `STABLE_ENVS_HUMANOIDBENCH=1` is set: `mujoco_warp`'s batched render is not
-bit-reproducible across a long conformance session, which violates "the same state gives the
-same frame".
+Renderer-only ports of other families live in the repository's `contrib/` directory and are not
+part of this release; see `contrib/README.md`.
 
 ## Device honesty
 

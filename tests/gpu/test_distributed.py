@@ -33,10 +33,10 @@ from _shared import assert_frames_identical, make_or_skip, sampled_states
 import stable_envs as se
 from stable_envs.testing._data import render_states
 
-#: One env per RENDER BACKEND rather than per family: the 2-D rasterizer, the tile atlas and the 3-D
-#: ray caster are the three places a device-blind cache can live, and every other registered env
-#: renders through one of them.
-ENVS = ["PushT", "MiniGridEmpty", "PointMazeMediumNavigate"]
+#: One env per RENDER BACKEND rather than per family: the 2-D rasterizer and the 3-D ray caster are
+#: places a device-blind cache can live. The tile-atlas case (``MiniGridEmpty``) is a contrib family and
+#: runs in ``contrib/tests/gpu/test_contrib_distributed.py``.
+ENVS = ["PushT", "PointMazeMediumNavigate"]
 
 #: The states both halves of this file draw. A CONSTANT, and not the env's own generator: the
 #: cross-device and cross-process comparisons are only meaningful if both sides drew the same numbers,

@@ -46,7 +46,6 @@ not_in_nav: |
   api/scene.md
   api/gfxdraw.md
   api/tilemap.md
-  api/rendernet.md
   api/spaces.md
 
 markdown_extensions:

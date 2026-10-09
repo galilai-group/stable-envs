@@ -7,7 +7,7 @@ each at the moment it is adopted — measured numbers, thresholds, a stated mech
 class docstring that a reader will actually see — and ``register`` enforces that.
 
 WHY THIS FILE EXISTS. Until now the whole ``render_decoder`` / ``variation_fidelity`` contract was
-exercised in exactly one place: ``tests/gpu/test_rendernet.py``, parameterised over the classes with a
+exercised in exactly one place: ``contrib/tests/gpu/test_rendernet.py``, parameterised over the classes with a
 sealed corrector on the machine. That means it needed a GPU, a RoboCasa install and a trained
 checkpoint — and on every interpreter without all three it collected zero cases and asserted nothing,
 which is precisely the coverage hole this suite has twice been caught in. The enforcement itself is
@@ -472,7 +472,7 @@ def test_no_env_shadows_an_attribute_the_base_class_owns():
     ``sample_states`` started returning ``(4,)`` where it had returned ``(4, 40)``.
 
     It was caught only because the release gate was fanned out over the interpreters that can actually
-    build a kitchen, so ``tests/gpu/test_rendernet.py`` ran for the first time instead of skipping.
+    build a kitchen, so ``contrib/tests/gpu/test_rendernet.py`` ran for the first time instead of skipping.
     Five tests failed at once; before the fan-out, all five had been a green skip.
 
     Checked STATICALLY, from the source text, on purpose: constructing an env needs a GPU, an EGL
@@ -575,38 +575,6 @@ def test_every_gate_exclusion_states_its_mechanism():
             f"gate.EXCLUDED[{name!r}] does not name a version constraint. Every real exclusion so far "
             f"has been two packages whose pins cannot both hold; if this one is not, it is probably a "
             f"missing install rather than an exclusion."
-        )
-
-
-def test_gate_envs_removes_exactly_the_excluded_and_nothing_else():
-    """``gate_envs`` is subtraction, not filtering-by-availability."""
-    from tests._runner import gate
-
-    names = ["PushT", "OvercookedCrampedRoom", "DMCWalkerWalk", "OvercookedCoordRing"]
-    assert gate.gate_envs(names) == ["DMCWalkerWalk", "PushT"]
-    assert gate.is_excluded("PushT") is None
-    assert gate.is_excluded("OvercookedCrampedRoom")
-    # An excluded env is still a first-class env: the carve-out is about which INTERPRETER runs the
-    # gate, never about removing the family. If this ever fails, someone deleted an env believing the
-    # exclusion licensed it.
-    assert (Path(__file__).resolve().parents[2] / "stable_envs" / "envs" / "overcooked.py").exists()
-
-
-def test_the_excluded_family_documents_itself_where_a_user_would_look():
-    """The exclusion must be in the module's own docstring, not only in the gate's table.
-
-    Someone hitting this reads the env module or its ImportError; they do not read the test harness.
-    """
-    src = (Path(__file__).resolve().parents[2] / "stable_envs" / "envs" / "overcooked.py").read_text()
-    # Case-insensitive: this is prose, and the first version of this test asserted "own interpreter"
-    # against a docstring that shouts "OWN INTERPRETER". A guard that fails on capitalisation trains
-    # people to edit the guard, which is the opposite of what it is for.
-    head = src[: src.index('"""', 3) + 3].lower()
-    for token in ("scipy", "own interpreter", "gate.py"):
-        assert token in head, (
-            f"stable_envs/envs/overcooked.py's module docstring does not mention {token!r}. The "
-            f"family is excluded from the release gate, and a user who hits that must be able to "
-            f"find out why from the module itself."
         )
 
 

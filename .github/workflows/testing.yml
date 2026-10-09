@@ -31,7 +31,7 @@ jobs:
       - name: Install editable development environment
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[dev,mujoco-locomotion]"
+          python -m pip install -e ".[dev]" "gymnasium[mujoco]>=1.0" "mujoco>=3.11,<3.13"
       - name: Check adapter interfaces
         if: matrix.python-version == '3.12'
         run: python -m mypy --config-file tests/typing/mypy.ini
@@ -55,7 +55,7 @@ jobs:
       - name: Install MuJoCo profile
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[dev,mujoco-locomotion]"
+          python -m pip install -e ".[dev]" "gymnasium[mujoco]>=1.0" "mujoco>=3.11,<3.13"
       - name: Run unit and integration tests
         shell: bash
         run: |
@@ -64,6 +64,36 @@ jobs:
             paths+=(tests/integration)
           fi
           python -m pytest "${paths[@]}" -m "unit or integration" -q
+
+  # contrib/ is not released; its CPU-installable requirements and its non-GPU tests.
+  contrib:
+    name: contrib (renderer-only ports, not released)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: System deps for Box2D
+        run: sudo apt-get update && sudo apt-get install -y swig
+      - name: Install contrib requirements
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+          python -m pip install \
+            -r contrib/requirements/box2d.txt \
+            -r contrib/requirements/crafter.txt \
+            -r contrib/requirements/highway.txt \
+            -r contrib/requirements/minigrid.txt \
+            -r contrib/requirements/mujoco-locomotion.txt \
+            -r contrib/requirements/sokoban.txt
+      - name: Run contrib tests
+        env:
+          SDL_VIDEODRIVER: dummy
+          MUJOCO_GL: osmesa
+          SE_SKIP_NODE_GATE: "1"
+        run: python -m pytest contrib/tests -m "not gpu" -q
 
   package:
     name: build distributions

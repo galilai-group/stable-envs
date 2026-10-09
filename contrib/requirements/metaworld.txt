@@ -1,0 +1,6 @@
+# metaworld (formerly the `metaworld` extra)
+# Needed to render: Meta-World scenes come from the package's own MjModel.
+# Install metaworld with --no-deps; it pins mujoco==3.3.0 on paper and runs on 3.11.
+metaworld>=3.1
+mujoco>=3.11,<3.13
+mujoco-warp>=3.11,<3.13

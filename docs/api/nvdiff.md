@@ -1,9 +1,8 @@
 # Triangle rendering with nvdiffrast
 
 `nvdiff` provides CUDA triangle rasterization, texture sampling, lighting, and
-uint8 output. MuJoCo locomotion can select this backend. Rocket reuses its scene
-and shading support with a family-specific rasterizer that follows Bullet's
-triangle coverage rules. Neither path is a CPU renderer.
+uint8 output. Rocket reuses its scene and shading support with a family-specific
+rasterizer that follows Bullet's triangle coverage rules. It is not a CPU renderer.
 
 ## Rendering contract
 

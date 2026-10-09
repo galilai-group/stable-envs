@@ -65,7 +65,7 @@ def test_optional_extras_are_installable_on_pypi() -> None:
     extras = _pyproject()["project"]["optional-dependencies"]
     assert "all" not in extras
     assert "dev" in extras and "docs" in extras and "mjwarp" in extras
-    assert "metaworld" in extras and "humanoidbench" in extras
+    assert "metaworld" not in extras and "humanoidbench" not in extras, "contrib-only extras are not released"
     blob = "\n".join(req for reqs in extras.values() for req in reqs)
     assert "nvdiffrast" not in blob
     assert " @ " not in blob

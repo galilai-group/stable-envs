@@ -64,6 +64,10 @@ a property of `PushT.scene` and the static-prefix bake, not of the `Scene2D` lay
 
 ## The tile-atlas family
 
+MiniGrid, BabyAI and MiniHack (below) are renderer-only ports kept in the repository's `contrib/`
+directory; they are not part of the released package and `snv.list_envs()` does not list them. Their
+media were generated while the package still registered them.
+
 MiniGrid and BabyAI do not go through `Scene2D` at all. A frame there is a gather from a precomputed
 atlas of tile images, which makes it exact by construction rather than by matching a rasterizer — and the
 measurement says so: **every pixel of every frame is identical to the official renderer, max absolute

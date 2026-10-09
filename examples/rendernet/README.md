@@ -26,7 +26,7 @@ python examples/rendernet/train_corrector.py RoboCasaCounterToSink
 About forty minutes on one GPU, most of it the official renderer producing targets. It writes
 `~/.cache/stable-envs/rendernet/RoboCasaCounterToSinkCorrected.pt` (override the location with
 `STABLE_ENVS_RENDERNET_CACHE`), and `RoboCasaCounterToSinkCorrected` appears in the registry on the
-next import. **The repository ships code, not weights** — the same rule that makes it ship no compiled
+next `contrib.load()` (RoboCasa is a contrib family; see `contrib/README.md`). **The repository ships code, not weights** — the same rule that makes it ship no compiled
 RoboCasa kitchen and no MiniGrid atlas.
 
 Useful flags: `--no-seal` measures and reports without writing; `--report FILE` dumps every draw;
@@ -72,4 +72,4 @@ declare `render_decoder = "learned"`, and anyone who will be evaluated on offici
 record which of the two produced their training frames, because it is not visible in the picture.
 
 See [`docs/concepts/fidelity-tiers.md`](../../docs/concepts/fidelity-tiers.md) for the contract and
-`stable_envs/render/rendernet.py` for the loader and the identity lock.
+`contrib/render/rendernet.py` for the loader and the identity lock.

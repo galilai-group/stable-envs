@@ -2,7 +2,8 @@
 
 ## MuJoCo Warp renderer specialization
 
-`stable_envs/render/mjwarp/lightspec.py` contains modified code from
+`contrib/render/lightspec.py` (in the repository's `contrib/` directory, not in the released
+distributions) contains modified code from
 [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp), version 3.11.0,
 source path `mujoco_warp/_src/render.py`.
 

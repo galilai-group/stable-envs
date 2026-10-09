@@ -20,10 +20,6 @@ Each module's docstring is where its measured constants live: the reference id, 
     options:
       members: false
 
-::: stable_envs.envs.minigrid
-    options:
-      members: false
-
 ::: stable_envs.envs.ogbench
     options:
       members: false
@@ -44,10 +40,6 @@ Each module's docstring is where its measured constants live: the reference id, 
     options:
       members: false
 
-::: stable_envs.envs.highway
-    options:
-      members: false
-
 ::: stable_envs.envs.craftax.classic
     options:
       members: false
@@ -57,49 +49,5 @@ Each module's docstring is where its measured constants live: the reference id, 
       members: false
 
 ::: stable_envs.envs.rocket
-    options:
-      members: false
-
-::: stable_envs.envs.minihack
-    options:
-      members: false
-
-::: stable_envs.envs.mujoco_locomotion
-    options:
-      members: false
-
-::: stable_envs.envs.crafter
-    options:
-      members: false
-
-::: stable_envs.envs.sokoban
-    options:
-      members: false
-
-::: stable_envs.envs.lunarlander
-    options:
-      members: false
-
-::: stable_envs.envs.procgen
-    options:
-      members: false
-
-::: stable_envs.envs.carracing
-    options:
-      members: false
-
-::: stable_envs.envs.jumanji
-    options:
-      members: false
-
-::: stable_envs.envs.pgx
-    options:
-      members: false
-
-::: stable_envs.envs.griddly
-    options:
-      members: false
-
-::: stable_envs.envs.overcooked
     options:
       members: false

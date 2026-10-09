@@ -9,7 +9,7 @@ from tests.helpers.stepping import branch_step
 
 
 @pytest.mark.parametrize(
-    "name", ["CartPole", "Pendulum", "Acrobot", "PushT", "PushTDiscrete", "MiniGridEmpty", "TwoRoom"]
+    "name", ["CartPole", "Pendulum", "Acrobot", "PushT", "PushTDiscrete", "TwoRoom"]
 )
 def test_full_snapshot_restores_future_and_has_no_aliases(name):
     with se.make(name, num_envs=2, device="cpu") as env:
@@ -33,7 +33,7 @@ def test_full_snapshot_restores_future_and_has_no_aliases(name):
         assert (env.get_state() == expected["state"]).all()
 
 
-@pytest.mark.parametrize("name", ["CartPole", "Pendulum", "PushT", "PushTDiscrete", "MiniGridEmpty"])
+@pytest.mark.parametrize("name", ["CartPole", "Pendulum", "PushT", "PushTDiscrete"])
 def test_lossy_projection_is_rejected_and_full_state_renders(name):
     with se.make(name, num_envs=2, device="cpu") as env:
         state = env.reset(seed=4)

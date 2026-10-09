@@ -37,6 +37,7 @@ def test_scratch_is_not_part_of_the_maintained_tree():
 _CITE = re.compile(r"(?<!oscar/)scratch/[A-Za-z0-9_./{}*,\\-]+")
 _MAINTAINED = (
     "stable_envs",
+    "contrib",
     "tests/unit",
     "tests/integration",
     "tests/gpu",
@@ -124,7 +125,6 @@ _NAV_OPTIONAL = {
     "api/tilemap.md",
     "api/raycast3d.md",
     "api/mjwarp.md",
-    "api/rendernet.md",
     "api/spaces.md",
 }
 

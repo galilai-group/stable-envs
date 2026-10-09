@@ -7,8 +7,12 @@ docstring says it, and the conformance suite applies a different assertion to ea
 ```python
 import stable_envs as snv
 print(snv.info("PushT")["fidelity_tier"])                     # 'parity'
-print(snv.info("RoboCasaCounterToSink")["fidelity_tier"])     # 'visual' (if that extra imported)
+print(snv.info("RoboCasaCounterToSink")["fidelity_tier"])     # 'visual' (after contrib.load(), see below)
 ```
+
+RoboCasa, used as the example on this page, is a renderer-only port kept in the repository's `contrib/`
+directory and is not part of the released package; `import contrib; contrib.load()` from a checkout
+registers it.
 
 There is a **second, independent field**, and a consumer of the visual tier has to read both:
 
@@ -120,6 +124,9 @@ the first thing a person reads is `help(cls)`, and a marker that depends on reme
 the kind of rule this repo makes impossible instead of asking for.
 
 ## The learned decoder
+
+The only learned decoder in the repository, RoboCasa's (`contrib/render/rendernet.py`), is in
+`contrib/` and is not part of the released package.
 
 A visual-tier cell may additionally ship a **learned render corrector**: a small convolutional network
 (441 k parameters, 7.9 µs a frame) that maps a deliberately cheap render — 112 px, textures at mip
@@ -262,6 +269,9 @@ cold-cache runs on two H200 nodes plus a warm run all produced the same frame di
 
 ## What is in the tier today
 
+The Gymnasium MuJoCo locomotion, RoboCasa and HumanoidBench cells described here are renderer-only
+ports kept in `contrib/`; they are not part of the released package.
+
 **Gymnasium's six MuJoCo locomotion domains** — HalfCheetah, Hopper, Walker2d, Ant, Humanoid, Swimmer
 — rendered by `nvdiffrast` (`stable_envs/render/nvdiff.py`). Mean 1.97–4.39/255, 83.9–94.5% of pixels
 within 8/255, SSIM 0.947–0.981, at 23–27× the official rasterizer at batch 256. The residual is one
@@ -292,7 +302,7 @@ kitchen has 178–401 such geoms. A marble counter is drawn as one grey.
 
 **HumanoidBench's seventeen H1 and H1-hands cells** — rendered by `mujoco_warp`. Mean 2.62–8.40/255,
 79.5–95.8% within 8/255, SSIM 0.849–0.931, with per-cell `ssim_min` declared between 0.80 and 0.89
-(`stable_envs/envs/humanoidbench.py`, `FIDELITY`). Every camera is `trackcom`, so there is no static
+(`contrib/humanoidbench.py`, `FIDELITY`). Every camera is `trackcom`, so there is no static
 plate here either, and the same minified-checker mechanism as the Gymnasium six applies. These are
 registered only under `STABLE_ENVS_HUMANOIDBENCH=1`, because `mujoco_warp`'s batched render is not
 bit-reproducible across a long suite session — the cause is now known and is **not** in this repo:
@@ -302,8 +312,9 @@ worlds with the same `qpos` and comparing against slot 0 isolates it: `h1-balanc
 pixels at 1/255, in slots 21 and 42, and eight sibling cells differ on none. The upstream fix it
 needs is a deterministic tie-break at equal ray parameter.
 
-That makes **thirty-two classes** in the tier: six MuJoCo locomotion, five DM Control, seventeen
-HumanoidBench and four RoboCasa, against 164 in the parity tier. A cell with a sealed corrector adds
+That made **thirty-two classes** in the tier while the package registered all of them: six MuJoCo
+locomotion, five DM Control, seventeen HumanoidBench and four RoboCasa, against 164 in the parity tier.
+Of these, only the DM Control cells remain in the released package. A cell with a sealed corrector adds
 one more — `RoboCasaCounterToSinkCorrected` — and the count is machine-dependent for the reason
 [above](#how-a-class-comes-to-exist): no weights, no class. `stable_envs.format_registry()` prints the
 current answer and marks the learned ones separately.

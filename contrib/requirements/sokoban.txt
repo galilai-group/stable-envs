@@ -1,0 +1,3 @@
+# sokoban (formerly the `sokoban` extra)
+gym-sokoban
+imageio

@@ -42,7 +42,7 @@ STEPPING = tuple(n for n, c in sorted(se.registry.REGISTRY.items()) if "_step" i
 
 #: Env modules that ship a simulator. If none of them imported, an empty sweep is a fact about the
 #: interpreter; if they did import and the sweep is still empty, the ports have gone missing.
-STEP_MODULES = ("minigrid", "classic_control", "pusht", "lunarlander")
+STEP_MODULES = ("classic_control", "pusht")
 
 
 @pytest.mark.parametrize("name", family_params(STEPPING, family="stepping envs", modules=STEP_MODULES))

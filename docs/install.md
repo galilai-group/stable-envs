@@ -36,19 +36,12 @@ Two kinds, and they are easy to mix up.
 | *(none)* | classic control, navigation | core install is enough |
 | `pusht` | PushT / PushTDiscrete | Pymunk 7.2.0, pygame, OpenCV and Shapely |
 | `pusht-reference` | no | historical gym-pusht corpus checks, in a separate reference environment |
-| `box2d` | LunarLander / CarRacing reference path | Gymnasium Box2D |
-| `minigrid` | MiniGrid / BabyAI | MiniGrid |
 | `ogbench` | OGBench mazes (and manip, with CUDA) | `ogbench` + MuJoCo |
 | `dmcontrol` | DM Control cells | `dm_control` + MuJoCo |
-| `mujoco-locomotion` | Gymnasium MuJoCo locomotion | Gymnasium MuJoCo |
 | `robotics` | Fetch | gymnasium-robotics (MuJoCo pin), OpenCV for source-sized OpenGL output |
 | `mjwarp` | Fetch / some visual 3-D cells | MuJoCo Warp render backend |
-| `metaworld` | Meta-World | scenes come from the package's own MjModel |
-| `humanoidbench` | HumanoidBench remainder | env package is not on PyPI |
-| `craftax` / `crafter` | Craftax / Crafter | jax / Crafter |
-| `overcooked` | Overcooked | needs its **own interpreter** |
+| `craftax` | Craftax | jax |
 | `rocket` | PyFlyt rocket (CUDA + nvdiffrast) | pillow / pybullet / scipy |
-| `highway` / `minihack` / `sokoban` / `griddly` / `jumanji` / `pgx` / `procgen` | those families | those packages |
 | `docs` / `dev` / `examples` / `hf` | no | documentation, tests, gallery helpers, HuggingFace |
 
 `pip install "stable-envs[pusht]"` is required to construct public `PushT` and
@@ -58,23 +51,12 @@ it does not turn that renderer into a GPU renderer.
 
 ## Extra incompatibilities
 
-Fetch (`robotics`) needs `mujoco<3.12`. DM Control, OGBench and MuJoCo locomotion accept
+Fetch (`robotics`) needs `mujoco<3.12`. DM Control and OGBench accept
 `mujoco<3.13`. Do not install `robotics` into the same environment as extras that want 3.12.
 
-Overcooked's `jaxmarl` pin is incompatible with the rest of the stack. Use a dedicated
-interpreter for that extra.
-
-Meta-World pins `mujoco==3.3.0` on paper and runs on 3.11. Install it with `--no-deps`:
-
-```bash
-pip install --no-deps metaworld
-pip install "stable-envs[metaworld]"
-```
-
-HumanoidBench is not on PyPI. Install the env from git with `--no-deps`, then
-`pip install "stable-envs[humanoidbench]"`. The family registers only when
-`STABLE_ENVS_HUMANOIDBENCH=1` is set: `mujoco_warp`'s batched render is not bit-reproducible
-across a long conformance session.
+The renderer-only ports kept in the repository's `contrib/` directory are not released and have no
+extras; their requirements files are described in
+[contrib/README.md](https://github.com/galilai-group/stable-envs/blob/main/contrib/README.md).
 
 ## nvdiffrast
 

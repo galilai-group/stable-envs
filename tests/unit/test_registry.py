@@ -42,6 +42,31 @@ ROOT = Path(__file__).resolve().parents[2]
 MATRIX = ROOT / "tests" / "fixtures" / "swm" / "frozen_cells.json"
 BASELINE = ROOT / "tests" / "fixtures" / "regression" / "references" / "registry_baseline.json"
 SWM_IDS_IN_MATRIX = sorted({r["swm_id"] for r in json.loads(MATRIX.read_text())["rows"]})
+#: Env modules that left the package for ``contrib/`` after the baseline was recorded. Their baseline rows
+#: and import errors are compared in ``contrib/tests/unit/test_contrib_registry.py``; this file compares
+#: only the packaged classes.
+CONTRIB_MODULES = frozenset(
+    {
+        "carracing",
+        "crafter",
+        "griddly",
+        "highway",
+        "humanoidbench",
+        "jumanji",
+        "lunarlander",
+        "maze2d",
+        "metaworld",
+        "minigrid",
+        "minihack",
+        "mujoco_locomotion",
+        "overcooked",
+        "pgx",
+        "procgen",
+        "robocasa",
+        "sokoban",
+    }
+)
+CONTRIB_BASELINE_MODULES = frozenset(f"stable_envs.envs.{name}" for name in CONTRIB_MODULES)
 
 
 def test_the_swm_crosswalk_is_the_frozen_mapping_row_for_row():
@@ -81,14 +106,19 @@ def test_every_canonical_class_name_resolves_to_the_same_class_as_at_the_baselin
     if not BASELINE.exists():
         pytest.skip(f"no baseline registry table recorded at {BASELINE}")
     base = json.loads(BASELINE.read_text())
-    if set(base["import_errors"]) != set(snv.import_errors()):
+    base_errors = {k for k in base["import_errors"] if k not in CONTRIB_MODULES}
+    if base_errors != set(snv.import_errors()):
         pytest.skip(
             "this interpreter imports a different set of env families than the one the "
-            f"baseline was recorded on: baseline {sorted(base['import_errors'])} vs "
+            f"baseline was recorded on: baseline {sorted(base_errors)} vs "
             f"{sorted(snv.import_errors())}"
         )
-    now = {r["class_name"]: r for r in R.registry_table()}
-    then = {canonical_from_frozen(r["name"]): r for r in base["registry_table"]}
+    now = {r["class_name"]: r for r in R.registry_table() if not r["module"].startswith("contrib.")}
+    then = {
+        canonical_from_frozen(r["name"]): r
+        for r in base["registry_table"]
+        if r["module"] not in CONTRIB_BASELINE_MODULES
+    }
     assert sorted(set(now) - {"PushTDiscrete"}) == sorted(then), "unexpected registered class change"
     skip_keys = {
         "module",

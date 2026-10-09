@@ -1,0 +1,2 @@
+# contrib/ holds renderer-only ports that are not released; see contrib/README.md.
+prune contrib

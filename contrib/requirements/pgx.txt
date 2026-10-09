@@ -1,0 +1,5 @@
+# pgx (formerly the `pgx` extra)
+jax
+pgx
+pillow
+resvg-py

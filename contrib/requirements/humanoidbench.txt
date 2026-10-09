@@ -1,0 +1,8 @@
+# humanoidbench (formerly the `humanoidbench` extra)
+# humanoid_bench is not on PyPI. Install it from git with --no-deps; this file
+# is only the PyPI-installable remainder.
+dm-control
+gymnasium
+jax
+mujoco>=3.11,<3.13
+mujoco-warp>=3.11,<3.13
