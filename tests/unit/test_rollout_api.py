@@ -269,6 +269,42 @@ def test_the_random_policy_honours_bounds_given_explicitly_over_the_env_s():
     assert float(a.min()) >= 0.25 and float(a.max()) <= 0.5
 
 
+def test_the_random_policy_draws_integer_actions_for_an_integer_action_spec():
+    """CartPole's spec is int64 in [0, 1]; float draws are rejected by the upstream environment."""
+    import stable_envs as snv
+
+    env = snv.CartPole(num_envs=8, device="cpu")
+    try:
+        tr = sample(env, steps=6, seed=0)
+        a = tr["actions"]
+        assert a.dtype == torch.int64
+        assert set(torch.unique(a).tolist()) <= {0, 1}
+        p = RandomPolicy(seed=0)
+        p.set_env(env)
+        p.set_env(env)  # a second call must keep the spec's range, not the continuous defaults
+        assert (p.low, p.high) == (0, 1)
+    finally:
+        env.close()
+
+
+def test_the_discrete_flag_overrides_the_action_spec():
+    env = IntegratorEnv()
+    p = RandomPolicy(low=0, high=3, seed=0, discrete=True)
+    p.set_env(env)
+    a = p.get_action(env._get_render_state())
+    assert not a.is_floating_point() and int(a.min()) >= 0 and int(a.max()) <= 3
+
+    import stable_envs as snv
+
+    cartpole = snv.CartPole(num_envs=4, device="cpu")
+    try:
+        p = RandomPolicy(seed=0, discrete=False)
+        p.set_env(cartpole)
+        assert p.get_action(cartpole._get_render_state()).is_floating_point()
+    finally:
+        cartpole.close()
+
+
 def test_a_scripted_policy_is_given_the_state_and_the_timestep():
     """``fn(state, t)``. The timestep is what makes an open-loop schedule expressible at all."""
     seen = []

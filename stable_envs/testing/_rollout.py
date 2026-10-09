@@ -25,19 +25,38 @@ class BasePolicy:
 
 
 class RandomPolicy(BasePolicy):
-    """Draw seeded uniform actions within configured or environment bounds."""
+    """Draw seeded uniform actions within configured or environment bounds.
 
-    def __init__(self, low=None, high=None, seed: int = 0, **kw):
+    ``discrete`` chooses the action type: ``False`` draws floats uniform in ``[low, high)``
+    (bounds default to the env's ``action_low``/``action_high``); ``True`` draws integers in
+    the inclusive ``[low, high]`` range (bounds default to the env's ``action_spec``) with
+    the spec's dtype. ``None`` decides once, in ``set_env``, from the action spec's dtype.
+    """
+
+    def __init__(self, low=None, high=None, seed: int = 0, discrete: bool | None = None, **kw):
         super().__init__(**kw)
         self.low, self.high, self.seed = low, high, int(seed)
+        self.discrete = discrete
+        self._given = (low, high)  # set_env replaces low/high with the bounds it adopts
+        self._range = None
         self._gen = None
 
     def set_env(self, env) -> None:
         self.env = env
-        if self.low is None:
-            self.low = getattr(env, "action_low", -1.0)
-        if self.high is None:
-            self.high = getattr(env, "action_high", 1.0)
+        spec = getattr(env, "action_spec", None)
+        dtype = getattr(spec, "dtype", torch.float32)
+        discrete = (not dtype.is_floating_point) if self.discrete is None else self.discrete
+        given_low, given_high = self._given
+        if discrete:
+            low = int(spec.low if given_low is None else given_low)
+            high = int(spec.high if given_high is None else given_high)
+            self._range = (low, high, dtype if not dtype.is_floating_point else torch.int64)
+        else:
+            low = getattr(env, "action_low", -1.0) if given_low is None else given_low
+            high = getattr(env, "action_high", 1.0) if given_high is None else given_high
+            self._range = (low, high, torch.float32)
+        self.low, self.high = low, high
+        self._discrete = discrete
         self._gen = torch.Generator(device=env.device).manual_seed(self.seed)
 
     def reset(self, batch: int) -> None:
@@ -46,9 +65,13 @@ class RandomPolicy(BasePolicy):
 
     def get_action(self, obs, **kw) -> torch.Tensor:
         env = self.env
-        lo = torch.as_tensor(self.low, device=env.device, dtype=torch.float32)
-        hi = torch.as_tensor(self.high, device=env.device, dtype=torch.float32)
-        u = torch.rand(env.B, env.action_dim, generator=self._gen, device=env.device)
+        low, high, dtype = self._range
+        shape = (env.B, env.action_dim)
+        if self._discrete:
+            return torch.randint(low, high + 1, shape, generator=self._gen, device=env.device, dtype=dtype)
+        lo = torch.as_tensor(low, device=env.device, dtype=dtype)
+        hi = torch.as_tensor(high, device=env.device, dtype=dtype)
+        u = torch.rand(*shape, generator=self._gen, device=env.device)
         return lo + u * (hi - lo)
 
 
@@ -116,7 +139,8 @@ def sample(
     acts = []
     for t in range(int(steps)):
         a = policy.get_action(render_rows(), t=t)
-        a = torch.as_tensor(a, device=env.device, dtype=torch.float32).reshape(B, -1)
+        a = torch.as_tensor(a, device=env.device)
+        a = (a if not a.is_floating_point() else a.to(torch.float32)).reshape(B, -1)
         env.step(a, frames=None)
         acts.append(a)
         st.append(render_rows().clone())
