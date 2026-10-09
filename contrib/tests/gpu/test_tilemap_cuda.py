@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from stable_envs.render import tilemap
+from contrib.render import tilemap
 
 pytestmark = pytest.mark.gpu
 

@@ -6,9 +6,9 @@ import zlib
 import numpy as np
 import torch
 
+from contrib.render import tilemap as tm
 from stable_envs.env import Env
 from stable_envs.registry import register
-from stable_envs.render import tilemap as tm
 from stable_envs.spaces import Box, Dict, Discrete
 
 VIEW = 9  #: Source default view width.

@@ -122,7 +122,6 @@ _NAV_OPTIONAL = {
     "api/scene.md",
     "api/raster2d.md",
     "api/gfxdraw.md",
-    "api/tilemap.md",
     "api/raycast3d.md",
     "api/mjwarp.md",
     "api/spaces.md",

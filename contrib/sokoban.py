@@ -8,10 +8,10 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from contrib.render import tilemap as tm
 from stable_envs.env import Env
 from stable_envs.registry import register
 from stable_envs.render import _resources as _RES
-from stable_envs.render import tilemap as tm
 from stable_envs.spaces import Dict, RGBBox
 
 # Tile order must match the source room_to_rgb surfaces.

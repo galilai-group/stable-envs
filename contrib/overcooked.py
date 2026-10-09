@@ -5,11 +5,11 @@ import os
 import numpy as np
 import torch
 
+from contrib.render import tilemap as tm
+from contrib.render._cache import cache_path
 from stable_envs.env import Env
 from stable_envs.registry import register
 from stable_envs.render import _resources as _RES
-from stable_envs.render import tilemap as tm
-from stable_envs.render._cache import cache_path
 from stable_envs.spaces import Dict, RGBBox
 
 #: ``OvercookedVisualizer.TILE_PIXELS``; also the size the atlas is measured at

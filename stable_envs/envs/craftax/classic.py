@@ -746,7 +746,7 @@ class _Composite:
 
         ``device`` is always a tensor's own ``.device`` here, which carries an explicit index, so the
         string key cannot conflate ``"cuda"`` on one GPU with ``"cuda"`` on another — the failure
-        ``render/tilemap.py:MiniGridAtlas.get`` documents and resolves the long way round.
+        ``contrib/render/tilemap.py:MiniGridAtlas.get`` documents and resolves the long way round.
         """
         key = (str(device), int(t))
         have = cls._cache.get(key)

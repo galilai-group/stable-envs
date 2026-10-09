@@ -6,8 +6,8 @@ import numpy as np
 import pytest
 import torch
 
-from stable_envs.render import tilemap
-from stable_envs.render._cache import cache_path
+from contrib.render import tilemap
+from contrib.render._cache import cache_path
 
 
 @pytest.mark.parametrize("triton_available", [False, True])

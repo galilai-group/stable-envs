@@ -11,7 +11,8 @@ from zipfile import BadZipFile
 import numpy as np
 import torch
 
-from . import _resources as _RES
+from stable_envs.render import _resources as _RES
+
 from ._cache import cache_path
 
 try:  # triton is optional; the torch path is the readable one

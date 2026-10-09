@@ -6,10 +6,10 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from contrib.render import tilemap as tm
 from stable_envs._core import stepgraph as _stepgraph
 from stable_envs.env import Env
 from stable_envs.registry import register
-from stable_envs.render import tilemap as tm
 from stable_envs.spaces import Box, Dict, Discrete, RGBBox
 
 VIEW_SIZE = 7  #: agent_view_size; 7 for every registered MiniGrid/BabyAI env
