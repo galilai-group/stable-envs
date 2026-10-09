@@ -31,6 +31,7 @@ stable-envs does not own dataset storage or policy rollouts.
 - [`dump_frames.py`](dump_frames.py) — write frames from stored states
 - [`gallery.py`](gallery.py) — side-by-side media on identical states
 - [`bench_gpu_vs_cpu.py`](bench_gpu_vs_cpu.py) / [`bench_vs_decode.py`](bench_vs_decode.py) — renderer throughput
+- [`bench_pusht_source.py`](bench_pusht_source.py) — PushT `env.render` against the pinned source, same core
 - [`bench_storage.py`](bench_storage.py) / [`bench_lance.py`](bench_lance.py) — storage pipeline baselines
 - [`dino_agreement.py`](dino_agreement.py) — DINO agreement measurement
 - [`rendernet/`](rendernet/README.md) — residual corrector training
