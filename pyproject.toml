@@ -7,8 +7,8 @@ name = "stable-envs"
 description = "A batched research-environment library with explicit state, dynamics, variation spaces, and fast state-driven CPU/GPU rendering"
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
-license = "MIT AND Apache-2.0"
-license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md", "LICENSES/*.txt"]
+license = "MIT"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
 authors = [
   { name = "Randall Balestriero" },
   { name = "Sami BuGhanem" },
