@@ -41,19 +41,20 @@ frames = TorchRenderer("cuda").render(env, state)  # (1024, 224, 224, 3) uint8 o
 
 ## Measurements
 
-One RTX A5000 node (Oscar `gpu2603`), one CPU thread, 224 px, States from four episodes. Both
-columns are State to frames, `env.render` on CPU and `TorchRenderer` on CUDA:
+One RTX A5000 node, one CPU thread, 224 px, States from four episodes. Both columns are State to
+frames on the same node, `env.render` on CPU and `TorchRenderer` on CUDA:
 
 | batch | `env.render` ms/frame | `TorchRenderer` ms/frame | speedup |
 |---:|---:|---:|---:|
-| 1 | 20.8 | 30.7 | 0.7x |
-| 16 | 5.39 | 2.24 | 2.4x |
-| 64 | 4.69 | 0.88 | 5.3x |
-| 256 | 4.54 | 0.56 | 8.1x |
-| 1,024 | 4.47 | 0.45 | 10.0x |
-| 2,048 | 4.51 | 0.45 | 10.0x |
+| 1 | 12.7 | 20.3 | 0.6x |
+| 16 | 2.24 | 1.52 | 1.5x |
+| 64 | 1.72 | 0.65 | 2.6x |
+| 256 | 1.58 | 0.42 | 3.7x |
+| 1,024 | 1.59 | 0.32 | 5.0x |
+| 2,048 | 1.63 | 0.31 | 5.2x |
 
-The `env.render` column depends on the node's CPU; another A5000 node measured 2.8 ms/frame for it.
+`env.render` depends on the node's CPU. On a Xeon Platinum 8268 core it takes 3.7 to 4.0 ms/frame
+(`docs/benchmarks.md`).
 
 ## Licensing
 
