@@ -119,3 +119,10 @@ For each move, update maintained imports and documentation, compare registration
 and dependency behavior, and run the relevant existing tests. If executable
 rendering or simulation behavior changes, run the applicable CPU/GPU source gates
 as well. Preserve old measurements as immutable records of the versions measured.
+
+## Known issues
+
+- `tests/helpers/reference/step_capture.py` still imports `from ._dynamics import no_dynamics`
+  on its no-dynamics branch. The module is a frozen copy whose hash is recorded in the
+  fixtures, so it is not edited. Its one test never takes that branch. If the copy is
+  ever re-captured, the import becomes `from stable_envs._core.dynamics import no_dynamics`.
