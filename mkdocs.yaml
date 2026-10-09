@@ -108,8 +108,6 @@ nav:
       - Renderer: adding/renderer.md
       - Previous contributor URL: adding-an-env.md
       - Testing: testing.md
-      - Package cleanup: package-cleanup.md
-      - Repository cleanup plan: repository-cleanup-plan.md
       - Fidelity methodology: concepts/fidelity-methodology.md
       - Fidelity tiers: concepts/fidelity-tiers.md
       - The Scene2D IR: concepts/scene-ir.md
