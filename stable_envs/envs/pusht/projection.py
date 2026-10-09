@@ -61,22 +61,21 @@ class PushTProjection:
                 raise
             if cached is not None:
                 cached[1].close()
-            leaves = [path for path, node in nodes(scene.variation_space) if not hasattr(node, "spaces")]
-            self.scenes[lane] = [key, scene, leaves, None]
+            leaves = [("owned/variation" + path + "/current", node) for path, node in nodes(scene.variation_space)]
+            leaves = [(field, node) for field, node in leaves if not hasattr(node, "spaces")]
+            self.scenes[lane] = [key, scene, leaves, [None] * len(leaves)]
         return self.scenes[lane]
 
     def render(self, rows, size):
         frames = []
         for lane, row in enumerate(rows):
             cached = self._scene(lane, row)
-            scene, leaves = cached[1], cached[2]
-            fields = ["owned/variation" + path + "/current" for path in leaves]
-            installed = tuple(row[f + part].tobytes() for f in fields for part in ("/value", "/type"))
-            if installed != cached[3]:
-                for path, node in nodes(scene.variation_space):
-                    if not hasattr(node, "spaces"):
-                        node.set_value(get_value(row, "owned/variation" + path + "/current"))
-                cached[3] = installed
+            scene, leaves, installed = cached[1], cached[2], cached[3]
+            for i, (field, node) in enumerate(leaves):
+                current = (row[field + "/value"].tobytes(), row[field + "/type"].tobytes())
+                if current != installed[i]:
+                    node.set_value(get_value(row, field))
+                    installed[i] = current
             for name in ("agent", "block"):
                 body = getattr(scene, name)
                 body.angle = float(row[f"current/body/{name}/angle"])
