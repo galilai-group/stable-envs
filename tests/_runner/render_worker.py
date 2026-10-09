@@ -37,7 +37,7 @@ def rollout_digests(env, n: int) -> dict:
 
     if not has_dynamics(env):
         return {}
-    from stable_envs.testing._rollout import sample
+    from tests.helpers.rollout import sample
 
     tr = sample(env, steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
     out = {"rollout_states_sha": _digest(tr["states"].detach().cpu().numpy())}

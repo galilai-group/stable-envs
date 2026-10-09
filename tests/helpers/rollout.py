@@ -5,7 +5,7 @@ from typing import Any
 import numpy as np
 import torch
 
-from .._core.dynamics import has_dynamics
+from stable_envs._core.dynamics import has_dynamics
 
 
 class BasePolicy:

@@ -341,7 +341,7 @@ def test_rollout_seed_reproduces_in_a_fresh_process(env, fresh_process):
     the actions are checked separately because a reproducible action sequence driving a
     non-reproducible simulator and the reverse are different bugs.
     """
-    from stable_envs.testing._rollout import sample
+    from tests.helpers.rollout import sample
 
     name = type(env).__name__
     rec = _record(fresh_process, name)

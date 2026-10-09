@@ -53,7 +53,7 @@ def test_a_core_module_imports_no_backend_and_no_environment(name):
                 "stable_envs.compat",
                 "stable_envs.testing",
                 "stable_envs.data",
-                "stable_envs.testing._rollout",
+                "tests.",
                 "stable_worldmodel",
             )
         )

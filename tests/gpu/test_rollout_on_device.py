@@ -1,4 +1,4 @@
-"""Private ``testing._rollout.sample`` against the envs that really ship a batched GPU simulator.
+"""Private ``tests.helpers.rollout.sample`` against the envs that really ship a batched GPU simulator.
 
 ``tests/unit/test_rollout_api.py`` pins the contract on an integrator whose trajectory is known in
 closed form — shapes, the actions/states correspondence, the seeding, the refusals. What it cannot
@@ -32,7 +32,7 @@ if not torch.cuda.is_available():
 from _shared import family_params, make_or_skip, resolve_family
 
 import stable_envs as se
-from stable_envs.testing._rollout import RandomPolicy, ScriptedPolicy, sample
+from tests.helpers.rollout import RandomPolicy, ScriptedPolicy, sample
 
 N, STEPS, SEED = 4, 4, 20260812
 
