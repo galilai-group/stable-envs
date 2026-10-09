@@ -437,7 +437,9 @@ class PushT(gym.Env):
 
             # the clock is already ticked during in step for "human"
 
-        img = np.transpose(np.array(pygame.surfarray.pixels3d(canvas)), axes=(1, 0, 2))
+        img = np.frombuffer(pygame.image.tobytes(canvas, "RGB"), np.uint8).reshape(
+            self.window_size, self.window_size, 3
+        )
         img = cv2.resize(img, (self.render_size, self.render_size))
         if self.render_action:
             if self.render_action and (self.latest_action is not None):

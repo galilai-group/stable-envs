@@ -53,9 +53,11 @@ adapted from the same pinned project and authors. Their sources are
 `stable_worldmodel/envs/quantizer.py`. Source hashes are recorded in the module
 headers.
 The adaptation replaces package imports with private local imports, combines
-the continuous/discrete task definitions, and omits the unused source
-MultiDiscrete Variation class. Pymunk/Munk2D remains an external dependency;
-no native physics implementation is copied here. This private task migration
+the continuous/discrete task definitions, omits the unused source
+MultiDiscrete Variation class, and reads the finished canvas with
+`pygame.image.tobytes`, which gives the same pixels without a strided copy.
+Pymunk/Munk2D remains an external dependency; no native physics implementation
+is copied here. This private task migration
 does not establish acceptance of the public PushT registrations.
 
 MIT permission notice for the adapted code follows:
