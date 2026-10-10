@@ -1,66 +1,33 @@
 # Gallery
 
-Produced by [`examples/gallery.py`](https://github.com/galilai-group/stable-envs/blob/main/examples/gallery.py),
-which walks `snv.list_envs()` and writes one directory of media per env. Nothing here is upscaled
-except the videos, and those use nearest-neighbour so the pixels on screen are the pixels the renderer
-produced.
-
-The repo is under active development and the registry grows between runs; this page is a snapshot of the
-envs that were registered when the media was generated. Parity numbers, file sizes and the probed video
-codec for every env are in
+Frames straight from the renderers, at native resolution. Nothing here is upscaled except the videos, and
+those use nearest-neighbour, so the pixels on screen are the pixels the renderer produced. Parity numbers,
+file sizes and the probed video codec for the tile-atlas and MiniHack media are in
 [`docs/assets/media/manifest.json`](https://github.com/galilai-group/stable-envs/blob/main/docs/assets/media/manifest.json).
 
 ## PushT
 
-State: 5 floats — `agent_x, agent_y, block_x, block_y, block_angle`. Reference: `gym_pusht/PushT-v0`.
+State: a complete replay State (234 numeric leaves: the current bodies and goal, the action history
+and the Variation it replays from), not a pose vector. See [State](concepts/state.md#pusht-checkpoints).
+Reference: `gym_pusht/PushT-v0`.
 
-### The official renderer and this one, on the same states
-
-120 states from a real `gym_pusht` rollout (the agent is scripted to push the T toward the goal), written
-to disk as 2,528 bytes of `states.npy`, then rendered twice: once by the official CPU renderer, once by
-the GPU kernel. Left is official, right is ours, 3× nearest-neighbour.
-
-<video controls loop muted playsinline width="580" style="max-width:100%">
-  <source src="../assets/media/PushT/sidebyside.mp4" type="video/mp4">
-  Your browser does not play H.264 mp4; the GIF below shows the same clip.
-</video>
-
-![Side-by-side, GIF fallback](assets/media/PushT/sidebyside.gif)
-
-Over those 120 frames: **100.00%** of interior pixels exact, 90.61% of all pixels exact, mean absolute
-difference 2.56/255. The residual is the anti-aliased outline, which the third column below isolates.
-
-The mp4 is H.264 baseline in an mp4 container — `ffprobe` reports
-`Video: h264 (Constrained Baseline) (avc1 / 0x31637661), yuv420p, 580x314`. That is not a formality:
-`cv2.VideoWriter` with the `mp4v` fourcc writes MPEG-4 Part 2, which desktop players open and no browser
-plays, so the page renders as an empty box with controls and looks like a broken build.
-
-### Per-frame comparison
-
-Official, ours, and the absolute difference (red where they differ), at four points in the same rollout:
-
-![CPU official, GPU, and the difference](assets/media/PushT/parity.png)
+The released PushT draws its frames with the source's own pygame code on CPU, so there is no second
+renderer to put beside it: a frame is the source frame for the same State. `device="cuda"` places the
+returned tensors on the GPU and leaves the drawing on CPU. `contrib/pusht_torch/` holds an unreleased
+batched torch renderer; see [Benchmarks](benchmarks.md#pusht) for its agreement and throughput.
 
 ### States from the reset distribution
 
-32 states drawn from `sample_states`, rendered in one launch at native 96px:
+24 lanes after `reset(seed=0)`, rendered at 96 px:
 
-![32 PushT states, one kernel launch](assets/media/PushT/grid.png)
+![24 PushT reset states](assets/media/PushT/grid.png)
 
 ### Appearance variation
 
-One state, 32 environments, four colour leaves sampled independently per environment — **one kernel
-launch**. This is what "domain randomisation is a tensor, not a loop" means concretely:
+The same 24 lanes with the four colour leaves (`agent`, `background`, `block`, `goal`) sampled
+independently per lane through `set_variation` before the reset:
 
-![Per-environment colour variation](assets/media/PushT/variation_batch.png)
-
-The scale and toggle knobs are read per call rather than per environment, so they are swept across
-separate renders:
-
-![Scale and toggle sweep](assets/media/PushT/variation_sweep.png)
-
-Which leaves vary per environment and which do not is measured, not assumed; the split is
-a property of `PushT.scene` and the static-prefix bake, not of the `Scene2D` layout.
+![Per-lane colour variation](assets/media/PushT/variation_batch.png)
 
 ## The tile-atlas family
 
@@ -111,12 +78,22 @@ the GPU render alone.
 
 ## Reproducing
 
-```bash
-python examples/gallery.py --out docs/assets/media          # the whole registry
-python examples/gallery.py --out docs/assets/media --envs PushT   # or one env
+The PushT images come from the released env, on CPU:
+
+```python
+import numpy as np
+import stable_envs as snv
+
+with snv.PushT(num_envs=24, device="cpu", size=96) as env:
+    env.reset(seed=0)
+    grid = env.render()
+    colors = [p for p in env.variation_names if p.endswith(".color")]
+    env.set_variation(env.sample_variation(paths=colors, rng=np.random.default_rng(0)))
+    env.reset(seed=0)
+    varied = env.render()
 ```
 
-Each env directory gets `grid.png`, `variation_sweep.png`, `states.npy`, `sidebyside.mp4`,
-`sidebyside.gif`, plus `parity.png` when the env has a reference renderer and `variation_batch.png` when
-at least one variation leaf was measured to vary per environment. Regenerating a single env merges into
-the existing `manifest.json` rather than replacing it.
+The tile-atlas and MiniHack media were written by
+[`examples/gallery.py`](https://github.com/galilai-group/stable-envs/blob/main/examples/gallery.py)
+while those envs were registered; it walks `snv.list_envs()` and writes `grid.png`, `sidebyside.mp4`,
+`parity.png` and the variation sheets for each env.

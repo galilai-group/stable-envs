@@ -603,35 +603,19 @@ exists for is MuJoCo's Gouraud shading of tessellated geometry, which no per-pix
 reproduces exactly.
 
 **All-pixel agreement is held to a much looser bar** (`ALL_EXACT_MIN = 0.90`, `MEAN_ABS_MAX = 4.0`). Edge
-pixels are the two rasterizers' anti-aliasing rules landing on different sides of a rounding. gym_pusht
-draws at 512 and `cv2.resize`s down, so its edges are its own resampling filter rather than true
-coverage; demanding exactness there would force us to reimplement pygame's coverage rules instead of
-rendering the scene correctly.
+pixels are the two rasterizers' anti-aliasing rules landing on different sides of a rounding; demanding
+exactness there would mean reimplementing each reference's coverage rule instead of rendering the scene
+correctly.
 
-Folding the two together is the thing to avoid. A real geometry error is small in aggregate — the block
-outline being mitred instead of round costs 2.2% of interior pixels, which is invisible in an all-pixel
-average but is exactly 0 versus 1.0 in the interior column.
+Folding the two together is the thing to avoid. A real geometry error is small in aggregate — an outline
+mitred instead of round can cost a few percent of interior pixels, which is invisible in an all-pixel
+average but is exactly the gap between 1.0 and less than 1.0 in the interior column.
 
-Measured, PushT vs `gym_pusht/PushT-v0`, 64 sampled states:
+Measured, `TwoRoom` against `swm/TwoRoom-v1` on 64 sampled states (RTX A5000):
 
-| | interior exact | all exact | mean abs. diff | interior share of frame |
-|---|---|---|---|---|
-| 96px, ss=1 | **100.00%** | 90.70% | 2.47 / 255 | 78.8% |
-| 96px, ss=2 | **100.00%** | 93.79% | 1.35 / 255 | 78.8% |
-| 224px, ss=1 | 99.9985% | 95.60% | 1.19 / 255 | 86.4% |
-| 224px, ss=2 | 99.9985% | 97.04% | 0.57 / 255 | 86.4% |
-
-The 224px row is 41 disagreeing pixels out of 2.75 M interior pixels across 64 frames. The likely
-explanation is the mask rather than the render: interior-ness is defined by a flat 3×3 neighbourhood *in
-the reference*, and the reference's 512→224 downsample can leave a patch flat while the pixel itself is
-a blend, which classifies a few edge pixels as interior. The default resolution, which is where the
-parity claim is stated, is exact.
-
-Visually, on frames from a real `gym_pusht` rollout:
-
-![CPU official, GPU, and the absolute difference](assets/media/PushT/parity.png)
-
-The red in the third column is the anti-aliased outline of the T and the agent, and nothing else.
+| interior exact | interior pixels | all exact | mean abs. diff |
+|---|---|---|---|
+| **100.00%** | 2,510,519 (78.9% of the frame) | 99.994% | 0.00006 / 255 |
 
 **This test is not relaxed for the visual tier.** An env that declares `fidelity_tier = "visual"` is
 *skipped* here and asserted separately, below. The floor above stays `INTERIOR_EXACT_MIN = 1.0` for
@@ -716,7 +700,7 @@ contain invisible RNG, task and lifecycle fields.
 
 Each dimension is overwritten with the value that dimension takes in another sampled state, and the frame
 must change; a dimension is declared dead only if several donors and then a set of additive nudges all
-leave the frame bit-identical. Measured for PushT: **no dead dimensions**.
+leave the frame bit-identical. Measured for `TwoRoom`: **no dead dimensions**.
 
 Rules out two different failures at once. A dimension the renderer ignores means either the state is not
 minimal — you are storing something that does not matter — or the renderer is wrong and is drawing
@@ -732,7 +716,7 @@ bounded ranges and wrap-around without knowing anything about them.
 
 ### Batch invariance
 
-Frame *i* of a batch must equal the frame rendered on its own. Measured for PushT: max difference
+Frame *i* of a batch must equal the frame rendered on its own. Measured for `TwoRoom`: max difference
 **0/255**.
 
 Rules out: the entire performance story being a lie. Every throughput number in this repo assumes
@@ -741,8 +725,8 @@ are different paths.
 
 ### Backend agreement
 
-The fused Triton kernel must agree with the readable torch reference implementation. Measured for PushT:
-**100.00%** of pixels exact, max difference **0**.
+The fused Triton kernel must agree with the readable torch reference implementation on a `Scene2D`.
+Measured for `SimplePointMaze`: **100.00%** of pixels exact, max difference **0**.
 
 Rules out: a fast kernel nobody can check. The torch path is short enough to read as a definition of what
 the picture should be; keeping it and diffing against it is what makes the kernel trustworthy rather than
@@ -750,8 +734,9 @@ merely tested against itself.
 
 ### Variation coverage
 
-Every declared variation leaf is moved to the far end of its range; the frame must change. Measured for
-PushT: **no inert variations** out of 14 leaves.
+Every drawn variation leaf is moved to the far end of its range; the frame must change. Leaves an env
+declares in `dynamics_variation_leaves` or `undrawn_variation_leaves` are skipped. Measured for `TwoRoom`:
+**no inert variations** out of its 4 drawn leaves.
 
 Rules out: a knob wired into the space but not into `scene()` — advertised support that does not exist.
 
@@ -760,7 +745,7 @@ it per environment.
 
 ### Determinism
 
-The same states must render identically twice. Measured for PushT: identical.
+The same states must render identically twice. Measured for `TwoRoom`: identical.
 
 Rules out: any dependence on allocation order, cache state, or a stale static-prefix bake.
 
@@ -798,9 +783,9 @@ Neither is a rendering bug and neither would have been found by comparing pixels
 | `Env.parity_interior_min` | 1.0 | per-env override of the interior floor; requires `parity_note` |
 | `Env.visual_fidelity` | — | the visual tier's own thresholds, set from the SPREAD over independent state draws; required in full, or `register()` refuses the class |
 
-If a new env cannot reach interior 1.0, the right move is to find the constant that is wrong — see the
-[measured-constants table](adding/renderer.md#identify-authority) for the five that
-were wrong in PushT — not to lower the bar. The [visual tier](concepts/fidelity-tiers.md) is not an
+If a new env cannot reach interior 1.0, the right move is to find the constant that is wrong — pin
+the reference's own constants as [Identify authority](adding/renderer.md#identify-authority)
+describes — not to lower the bar. The [visual tier](concepts/fidelity-tiers.md) is not an
 escape from that: it is for an env whose *renderer* provably cannot be the official one, it makes a
 weaker and separately-stated claim, and it disqualifies the env from the use the strong claim licenses.
 

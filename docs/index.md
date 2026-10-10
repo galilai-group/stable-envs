@@ -32,7 +32,7 @@ Concrete classes are canonical. `snv.make("CartPole", …)` is the string API fo
 - **[Sibling projects](concepts/worldmodel.md)** — where this package ends
 - **[Limitations](concepts/limitations.md)** — devices, extras, accepted limits
 - **[Throughput](benchmarks.md)** — methodology, then the measured tables
-- **[Gallery](gallery.md)** — official renderer and ours, same states
+- **[Gallery](gallery.md)** — frames at native resolution
 - **[Adding a component](adding/index.md)** — environment, task and renderer responsibilities
 
 </div>

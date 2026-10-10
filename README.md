@@ -97,7 +97,7 @@ For contributor-only compact corpus handling, see the
 [renderer guide](docs/adding/renderer.md). Public applications keep full State
 snapshots; compact rows cannot be used to restore omitted simulator fields.
 
-Side-by-side against the official renderer, same recorded states: [Gallery](docs/gallery.md).
+Frames at native resolution: [Gallery](docs/gallery.md).
 
 ## Optional families
 
