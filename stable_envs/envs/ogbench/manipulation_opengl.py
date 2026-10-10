@@ -12,13 +12,16 @@ from ...render._resources import retain_process_lifetime
 from .simulation import render_state as pixels
 from .simulation.compatibility import MODEL_VALUES, CompatibleCube, CompatibleScene
 
+# agent.color is applied per row to the agent materials, so it does not select a compiled model.
+COMPILED_VALUES = tuple(name for name in MODEL_VALUES if name != "agent.color")
+
 _LOCK = threading.RLock()
 _CACHE = {}
 
 
 def _key(family, row, resolution):
     h = hashlib.sha256(f"{family}:{resolution}".encode())
-    for k in MODEL_VALUES:
+    for k in COMPILED_VALUES:
         h.update(row["appearance", k].numpy().tobytes())
     return h.hexdigest()
 
@@ -59,7 +62,7 @@ def _configuration_groups(host):
     """Group exact model bytes without constructing a TensorDict for each row."""
     parts = [
         np.ascontiguousarray(host["appearance", name].numpy()).reshape(len(host), -1).view(np.uint8)
-        for name in MODEL_VALUES
+        for name in COMPILED_VALUES
     ]
     packed = np.concatenate(parts, axis=1)
     groups = {}
@@ -121,6 +124,7 @@ def render(family, state, device, chunk_size=None):
     size, ss = (int(host["renderer", k][0, 0]) for k in ("size", "supersample"))
     poses = {name: host["pose", name].numpy() for name in ("qpos", "mocap_pos", "mocap_quat")}
     cube_colors = host["appearance", "cube.color"].numpy()
+    agent_colors = host["appearance", "agent.color"].numpy()
     if family == "Scene":
         lock_colors = host["appearance", "lock_color"].numpy()
         buttons = host["pose", "buttons"].numpy()
@@ -142,6 +146,8 @@ def render(family, state, device, chunk_size=None):
                 for name, values in poses.items():
                     getattr(env.data, name)[:] = values[index]
                 env.variation_space._walk("cube.color")._value = cube_colors[index].copy()
+                for material in pixels.AGENT_MATERIALS:
+                    env.model.material(material).rgba[:3] = agent_colors[index]
                 env._cube_colors_from_variation()
                 for ids in env._cube_target_geom_ids_list:
                     env.model.geom_rgba[ids, 3] = 0.2

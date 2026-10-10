@@ -11,7 +11,9 @@ from .compatibility import CompatibleCube, CompatibleScene
 OBJECT_QPOS_ADR = 14
 TARGET_ALPHA = 0.2
 
-STATIC = ("cube.size", "agent.color", "camera.angle_delta", "light.intensity")
+STATIC = ("cube.size", "camera.angle_delta", "light.intensity")
+# agent.color is these materials' RGB, written per world by the renderers.
+AGENT_MATERIALS = ("ur5e/robotiq/black", "ur5e/robotiq/pad_gray")
 
 
 class _RenderScene(CompatibleScene):
@@ -92,7 +94,7 @@ def project(family, state, size, supersample):
     values = header(family, b, size, supersample, device)
     for name in ("qpos", "mocap_pos", "mocap_quat"):
         values["pose", name] = state["physics", name].clone()
-    for name in (*STATIC, "floor.color"):
+    for name in (*STATIC, "agent.color", "floor.color"):
         values["appearance", name] = state["model", "compiled", name].clone()
     values["appearance", "cube.color"] = state["variation", "current", "cube.color"].clone()
     if family == "Scene":
@@ -164,7 +166,7 @@ def build_model(family, row):
             env.variation_space._walk(name)._value = row["appearance", name].detach().cpu().numpy().copy()
         if family == "Scene":
             env.variation_space._walk("lock_color").set_value(row["appearance", "lock_color"].cpu().numpy().copy())
-        # Floor/cube RGB use the renderer’s per-world colour paths.
+        # Floor, cube and agent RGB use the renderer’s per-world colour paths.
         env._mjcf_model = env.modify_mjcf_model(env.build_mjcf_model())
         env.compile_model_and_data()
         env._cube_colors_from_variation()

@@ -18,7 +18,10 @@ def context(mujoco):
     mujoco.MjvOption = lambda: SimpleNamespace(flags=np.zeros(32, dtype=bool), frame=0, label=0)
     mujoco.mj_kinematics = Mock()
     mujoco.mj_camlight = Mock()
-    materials = {name: SimpleNamespace(rgba=np.zeros(4)) for name in ["drawer_handle", "window_handle"]}
+    materials = {
+        name: SimpleNamespace(rgba=np.zeros(4))
+        for name in ["drawer_handle", "window_handle", "ur5e/robotiq/black", "ur5e/robotiq/pad_gray"]
+    }
     model = SimpleNamespace(
         nflex=0,
         nskin=0,

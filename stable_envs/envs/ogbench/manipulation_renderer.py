@@ -80,6 +80,9 @@ class _ConfiguredRenderer(core.OGBManipBase):
             columns.append(state["pose", "buttons"])
         return torch.cat(columns, dim=-1).to(self.device, torch.float32)
 
+    def _agent(self, state):
+        return state["appearance", "agent.color"].reshape(len(state), 3).to(self.device, torch.float32)
+
     def raster(self, state):
         cube = self._cube_colours(
             {"cube.color": state["appearance", "cube.color"].detach().cpu().numpy().reshape(len(state), 3)},
@@ -90,12 +93,14 @@ class _ConfiguredRenderer(core.OGBManipBase):
             self.size,
             cube,
             state["pose", "mocap_quat"].reshape(len(state), self._b.nmocap, 4),
+            self._agent(state),
         )
 
     def draw(self, state):
         return super()._render(
             self._rows(state),
             mocap_quat=state["pose", "mocap_quat"].reshape(len(state), self._b.nmocap, 4),
+            agent_color=self._agent(state),
             variation={
                 "cube.color": state["appearance", "cube.color"].reshape(len(state), 3),
                 "floor.color": state["appearance", "floor.color"].reshape(len(state), 6),

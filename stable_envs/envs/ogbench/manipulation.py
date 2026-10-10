@@ -135,6 +135,7 @@ class _Bundle:
         "unwrapped",
         "button_tables",
         "cube_geoms",
+        "agent_mats",
         "grid_tex",
         "var_defaults",
         "plate_checked",
@@ -188,6 +189,7 @@ def build_bundle(env, *, camera, size, nbuttons):
     b.button_tables = _button_tables(u, m, b.nbuttons)
     b.var_defaults = _variation_defaults(u)
     b.cube_geoms = _cube_geoms(u, m)
+    b.agent_mats = _agent_materials(m, b.movers)
     b.grid_tex = _grid_texture(m, b.var_defaults["floor.color"])
     b.plate_checked = False
     b.sample_pattern = "grid"
@@ -270,6 +272,20 @@ def _cube_geoms(u, m) -> np.ndarray:
             if g >= 0 and g not in ids:
                 ids.append(int(g))
     return np.asarray(sorted(set(ids)), np.int64)
+
+
+def _agent_materials(m, movers) -> np.ndarray:
+    """Return the agent.color material IDs, which must only colour moving geoms."""
+    import mujoco
+
+    from .simulation.render_state import AGENT_MATERIALS
+
+    ids = [mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_MATERIAL, name) for name in AGENT_MATERIALS]
+    ids = np.asarray([i for i in ids if i >= 0], np.int64)
+    static = [g for g in range(m.ngeom) if int(m.geom_matid[g]) in ids and g not in set(movers)]
+    if static:
+        raise ValueError(f"agent.color materials also colour static geoms {static}; the plate would bake them")
+    return ids
 
 
 def _grid_texture(m, floor_default) -> dict | None:
@@ -703,8 +719,10 @@ class OGBManipBase(Env):
         out=None,
         *,
         mocap_quat=None,
+        agent_color=None,
     ) -> torch.Tensor:
-        """Render (..., state_dim) rows to (..., H, W, 3) uint8, with optional (B, nmocap, 4) orientations."""
+        """Render (..., state_dim) rows to (..., H, W, 3) uint8, with optional (B, nmocap, 4) orientations
+        and (B, 3) agent RGB."""
         s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim).to(torch.float32)
@@ -738,6 +756,7 @@ class OGBManipBase(Env):
                 res,
                 None if cube is None else cube[lo:hi],
                 None if mocap_quat is None else mocap_quat[lo:hi],
+                None if agent_color is None else agent_color[lo:hi],
             )
             # Use the mover mask: a nonnegative segmentation ID may instead identify the static floor.
             mv = lut.index_select(0, (seg + 1).reshape(-1)).view(seg.shape)
@@ -763,7 +782,7 @@ class OGBManipBase(Env):
                 buf[lo:hi] = torch.where(any_mv.unsqueeze(-1), small, pl1)
         return buf.view(*lead, size, size, 3) if lead else buf
 
-    def _raster(self, chunk, res, cube, mocap_quat):
+    def _raster(self, chunk, res, cube, mocap_quat, agent=None):
         """Draw one chunk; segmentation aliases the context until its next replay."""
         n = len(chunk)
         if not 1 <= n <= MJW_CHUNK:
@@ -782,6 +801,8 @@ class OGBManipBase(Env):
         # Upload buttons first: their whole-row color write would otherwise overwrite cube RGB.
         if cube is not None:
             self._upload_cube_colours(c, cube, n)
+        if agent is not None and len(b.agent_mats):
+            self._upload_agent_colours(c, agent, n)
         # Synchronize Torch uploads and Warp graph replay before reading shared buffers.
         torch.cuda.synchronize()
         wp.capture_launch(c.graph)
@@ -857,6 +878,15 @@ class OGBManipBase(Env):
         geom = c.wp.to_torch(c.wm.geom_rgba)
         idx = self._cube_geom_index()
         geom[:n, idx] = rgba[:n]
+
+    def _upload_agent_colours(self, c, rgb, n: int) -> None:
+        """Write each world's agent RGB into the agent materials, keeping their alpha."""
+        cache = self.__dict__.setdefault("_idx_cache", {})
+        idx = cache.get("agent_mats")
+        if idx is None:
+            idx = cache["agent_mats"] = torch.as_tensor(self._b.agent_mats, device=self.device)
+        mat = c.wp.to_torch(c.wm.mat_rgba)
+        mat[:n, idx, :3] = rgb[:n, None, :].to(mat.dtype)
 
     def _upload_button_colours(self, c, chunk, n: int) -> None:
         """Upload each world's button colors from its state bits."""

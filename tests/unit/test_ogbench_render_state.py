@@ -143,11 +143,8 @@ def test_render_model_configuration_no_steps_or_rng_mutation(family, cls):
         # Scene button tables intentionally place the private model at a known base.
         # The render-only Scene model adds two button materials. Compare named
         # materials; insertion can renumber unrelated compiled material IDs.
-        for name in ["black", "pad_gray"]:
-            assert np.array_equal(
-                source.model.material("ur5e/robotiq/" + name).rgba,
-                b.model.material("ur5e/robotiq/" + name).rgba,
-            )
+        # agent.color is uploaded per world, so it names materials rather than compiling them.
+        assert [b.model.material(int(i)).name for i in b.agent_mats] == list(pixels.AGENT_MATERIALS)
         assert b.cam >= 0 and b.nbuttons == (2 if family == "Scene" else 0)
         # Exercise the inherited style API without claiming a GPU render.
         obj = object.__new__(renderer._ConfiguredRenderer)
@@ -179,11 +176,11 @@ def test_renderstate_configuration_grouping(family, cls):
     with cls(seed=0) as env:
         rs = env.to_render_state()
         key = renderer.configuration_key(family, rs[0])
-        for leaf in ["cube.color", "floor.color"]:
+        for leaf in ["cube.color", "floor.color", "agent.color"]:
             other = rs.clone()
             other["appearance", leaf].fill_(0.2)
             assert renderer.configuration_key(family, other[0]) == key
-        for leaf in ["cube.size", "agent.color", "camera.angle_delta", "light.intensity"]:
+        for leaf in ["cube.size", "camera.angle_delta", "light.intensity"]:
             other = rs.clone()
             other["appearance", leaf].add_(0.001)
             assert renderer.configuration_key(family, other[0]) != key

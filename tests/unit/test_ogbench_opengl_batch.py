@@ -20,6 +20,7 @@ def opengl():
     """Load the real renderer with optional environment packages replaced at import."""
     pixels = ModuleType("stable_envs.envs.ogbench.simulation.render_state")
     pixels.validate = Mock()
+    pixels.AGENT_MATERIALS = ("ur5e/robotiq/black", "ur5e/robotiq/pad_gray")
     compat = ModuleType("stable_envs.envs.ogbench.simulation.compatibility")
     compat.MODEL_VALUES = MODEL_VALUES
     compat.CompatibleCube = compat.CompatibleScene = object
@@ -73,7 +74,7 @@ def test_grouped_render_keeps_order_state_and_one_forward(opengl, family, supers
     def renderer(family, row, resolution):
         env = SimpleNamespace(
             data=SimpleNamespace(qpos=np.zeros(1), mocap_pos=np.zeros(3), mocap_quat=np.zeros(4)),
-            model=SimpleNamespace(geom_rgba=np.zeros((1, 4))),
+            model=SimpleNamespace(geom_rgba=np.zeros((1, 4)), material=lambda name: SimpleNamespace(rgba=np.zeros(4))),
             variation_space=SimpleNamespace(_walk=lambda name: SimpleNamespace(_value=None)),
             _cube_colors_from_variation=lambda: None,
             _cube_target_geom_ids_list=[[0]],
@@ -103,11 +104,12 @@ def test_grouped_render_keeps_order_state_and_one_forward(opengl, family, supers
     assert module.version.call_count == 2
 
 
-def test_grouping_includes_every_model_value_and_exact_float_bytes(opengl):
+def test_grouping_includes_every_compiled_value_and_exact_float_bytes(opengl):
     module, _ = opengl
     rs = state()
     assert list(module._configuration_groups(rs)) == [[0, 2], [1, 4], [3]]
     for name in MODEL_VALUES:
         changed = rs.clone()
         changed["appearance", name][2, 0] = -0.0 if name != "cube.size" else 7
-        assert list(module._configuration_groups(changed)) == [[0], [1, 4], [2], [3]]
+        want = [[0, 2], [1, 4], [3]] if name == "agent.color" else [[0], [1, 4], [2], [3]]
+        assert list(module._configuration_groups(changed)) == want
