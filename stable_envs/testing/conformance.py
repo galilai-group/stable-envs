@@ -31,6 +31,33 @@ def reference_env(cls, size: int):
     return hit
 
 
+def sample_render_rows(env, n: int, rng: np.random.Generator | None = None) -> np.ndarray:
+    """Render rows for the checks: the env's own sampler, or rows packed from short rollouts.
+
+    Envs that cannot sample render rows but simulate (``has_dynamics``) are reset with seeds from
+    ``rng`` and stepped with random actions; their State before the call is restored afterwards.
+    """
+    try:
+        return env.sample_states(int(n)) if rng is None else env.sample_states(int(n), rng=rng)
+    except NotImplementedError:
+        if not getattr(env, "has_dynamics", False):
+            raise
+    rng = rng if rng is not None else np.random.default_rng(0)
+    try:
+        saved = env.get_state()
+    except Exception:  # never reset: nothing to restore
+        saved = None
+    rows = []
+    while sum(len(r) for r in rows) < int(n):
+        env.reset(seed=int(rng.integers(0, 2**31 - 1)))
+        for _ in range(int(rng.integers(0, 20))):
+            env.step(env.action_spec.sample(env.B, rng), frames=None)
+        rows.append(torch.as_tensor(env._pack_render_state(env.get_state())).detach().cpu().numpy())
+    if saved is not None:
+        env.set_state(saved)
+    return np.concatenate(rows)[: int(n)].astype(np.float32)
+
+
 def frames_digest(frames) -> str:
     """Hash shape, dtype, and contiguous logical array bytes for cross-process comparison."""
     if torch.is_tensor(frames):
@@ -50,7 +77,7 @@ def check_reference_renderer_is_stable(cls, size: int, n: int = 4) -> dict:
     """
     ref = reference_env(cls, size)
     env = cls(num_envs=1, size=size, device="cuda")
-    st = env.sample_states(n, rng=np.random.default_rng(0))
+    st = sample_render_rows(env, n, rng=np.random.default_rng(0))
     a = cls.reference_render(ref, st)
     b = cls.reference_render(ref, st)
     return {"max_abs_diff": int(np.abs(a.astype(np.int16) - b.astype(np.int16)).max())}
@@ -166,7 +193,7 @@ def check_visual_fidelity_under_variation(env, n: int = 64, seed: int = 0) -> di
         }
     ref = reference_env(cls, env.size)
     rng = np.random.default_rng(int(seed))
-    states = env.sample_states(int(n), rng=rng)
+    states = sample_render_rows(env, int(n), rng=rng)
     style = env.sample_style(int(n), rng=rng)
     official = cls.reference_render(ref, states, style=style)
     ours = env._render(states, style=style).cpu().numpy()
@@ -183,7 +210,7 @@ def check_visual_fidelity(env, n: int = 64) -> dict:
     """Measure pixel error and SSIM against the source at default appearance."""
     cls = type(env)
     ref = reference_env(cls, env.size)
-    states = env.sample_states(int(n))
+    states = sample_render_rows(env, int(n))
     official = cls.reference_render(ref, states)
     ours = env._render(states).cpu().numpy()
     if ours.shape != official.shape:
@@ -199,7 +226,7 @@ def check_render_state_roundtrip(env, n: int = 64) -> dict:
 
     This does not test full simulator State restoration.
     """
-    st = env.sample_states(env.B)
+    st = sample_render_rows(env, env.B)
     env._set_render_state(st)
     back = env._get_render_state().cpu().numpy()
     return {"max_abs_err": float(np.abs(back - st).max())}
@@ -210,17 +237,28 @@ def check_state_roundtrip(env, n: int = 64) -> dict:
     return check_render_state_roundtrip(env, n=n)
 
 
+def _objects_shown(env) -> dict | None:
+    """Variation overrides that draw the objects an env hides by default, or None when it hides none."""
+    shown = {
+        p: 1
+        for p in env.variation_space.names()
+        if p.split(".")[0] == "visibility" and not int(np.asarray(env.variation_space._walk(p).value))
+    }
+    return shown or None
+
+
 def check_state_dims_matter(env, n: int = 8, eps: float = 25.0, donors: int = 4) -> dict:
     """Probe whether each render-projection dimension changes pixels.
 
     Try sampled donor values, then additive perturbations. Dead dimensions can
     be excluded only when the scene signature validates a declared sphere-rotation
     invariant. Report exclusions and refusals separately; this is not a requirement
-    that every full simulator State leaf be visible.
+    that every full simulator State leaf be visible. Objects an env can hide are drawn.
     """
-    st = env.sample_states(env.B)
-    base = env._render(st).cpu().numpy()
-    pool = [env.sample_states(env.B) for _ in range(max(1, donors))]
+    shown = _objects_shown(env)
+    st = sample_render_rows(env, env.B)
+    base = env._render(st, variation=shown).cpu().numpy()
+    pool = [sample_render_rows(env, env.B) for _ in range(max(1, donors))]
     candidates = set(_render_invariant_candidates(env))
     dead, excluded, refused = [], {}, {}
     for d in range(env.state_dim):
@@ -230,14 +268,14 @@ def check_state_dims_matter(env, n: int = 8, eps: float = 25.0, donors: int = 4)
             pert[:, d] = donor[:, d]
             if np.array_equal(pert[:, d], st[:, d]):
                 continue  # donor happened to match; proves nothing either way
-            if not np.array_equal(env._render(pert).cpu().numpy(), base):
+            if not np.array_equal(env._render(pert, variation=shown).cpu().numpy(), base):
                 alive = True
                 break
         if not alive:  # fall back to an additive nudge
             for step in (eps, -eps, 1.0, 0.5):
                 pert = st.copy()
                 pert[:, d] = pert[:, d] + step
-                if not np.array_equal(env._render(pert).cpu().numpy(), base):
+                if not np.array_equal(env._render(pert, variation=shown).cpu().numpy(), base):
                     alive = True
                     break
         if alive:
@@ -386,7 +424,7 @@ def _validate_render_invariant(env, states, d: int, variation=None) -> tuple:
 
 def check_batch_invariance(env, n: int = 8) -> dict:
     """Compare sampled batch rows against their singleton renders."""
-    st = env.sample_states(env.B)
+    st = sample_render_rows(env, env.B)
     batched = env._render(st).cpu().numpy()
     worst = 0
     for i in range(min(n, env.B)):
@@ -405,7 +443,7 @@ def check_backend_agreement(env, n: int = 4, max_size: int = 96) -> dict:
     if not HAVE_TRITON:
         return {"skipped": "triton unavailable"}
     b_n = min(int(n), env.B)
-    st = env.sample_states(env.B)[:b_n]
+    st = sample_render_rows(env, env.B)[:b_n]
     try:
         sc = env.scene(torch.as_tensor(st, device=env.device))
     except NotImplementedError:
@@ -422,23 +460,30 @@ def check_backend_agreement(env, n: int = 4, max_size: int = 96) -> dict:
 
 
 def _frame_variation_paths(env):
-    """Yield appearance leaves, excluding declared dynamics/reset/task controls."""
-    skip = set(getattr(env, "dynamics_variation_leaves", ()) or ())
+    """Yield appearance leaves, excluding declared dynamics/reset/task controls and undrawn leaves."""
+    skip = set(getattr(env, "dynamics_variation_leaves", ()) or ()) | set(
+        getattr(env, "undrawn_variation_leaves", ()) or ()
+    )
     for path in env.variation_space.names():
         if path not in skip:
             yield path
 
 
 def check_variations_do_something(env) -> dict:
-    """Report appearance leaves whose alternate value fails to change the sampled frames."""
-    st = env.sample_states(env.B)
-    base = env._render(st).cpu().numpy()
+    """Report appearance leaves whose alternate value fails to change the sampled frames.
+
+    Objects an env can hide are drawn, so their appearance leaves are visible; a visibility leaf is
+    tested by hiding its object.
+    """
+    shown = _objects_shown(env) or {}
+    st = sample_render_rows(env, env.B)
+    base = env._render(st, variation=shown or None).cpu().numpy()
     inert = []
     for path in _frame_variation_paths(env):
         node = env.variation_space
         for part in path.split("."):
             node = node[part]
-        default = node.value
+        default = shown.get(path, node.value)
         try:
             if hasattr(node, "n"):  # Discrete: flip it
                 alt = 0 if int(default) != 0 else 1
@@ -447,7 +492,7 @@ def check_variations_do_something(env) -> dict:
                 hi = np.broadcast_to(node.high, node.shape).astype(np.float64)
                 d = np.asarray(default, np.float64)
                 alt = np.where(np.abs(d - lo) > np.abs(d - hi), lo, hi).astype(node.dtype)
-            frames = env._render(st, variation={path: alt}).cpu().numpy()
+            frames = env._render(st, variation={**shown, path: alt}).cpu().numpy()
             if np.array_equal(frames, base):
                 inert.append(path)
         except Exception as e:  # a variation that cannot be set is inert too
@@ -462,7 +507,7 @@ def check_per_env_variation(env) -> dict:
     """
     if env.B < 2:
         return {"skipped": "batch too small"}
-    st = env.sample_states(env.B)
+    st = sample_render_rows(env, env.B)
     collapsed = []
     for path in _frame_variation_paths(env):
         node = env.variation_space
@@ -489,7 +534,7 @@ def check_style_is_state(env) -> dict:
     """Restore render rows and style in a fresh instance and measure frame disagreement."""
     if env.style_dim == 0:
         return {"skipped": "env declares no style"}
-    st = env.sample_states(env.B)
+    st = sample_render_rows(env, env.B)
     sty = env.sample_style(env.B)
     a = env._render(st, style=sty).cpu().numpy()
     fresh = type(env)(num_envs=env.B, size=env.size, supersample=env.ss, device=str(env.device))
@@ -502,7 +547,7 @@ def check_default_style_is_official(env) -> dict:
     """Compare implicit and explicit default style; this check does not render the source."""
     if env.style_dim == 0:
         return {"skipped": "env declares no style"}
-    st = env.sample_states(env.B)
+    st = sample_render_rows(env, env.B)
     a = env._render(st).cpu().numpy()
     b = env._render(st, style=env.default_style()).cpu().numpy()
     return {"max_abs_diff": int(np.abs(a.astype(np.int16) - b.astype(np.int16)).max())}
@@ -614,10 +659,13 @@ def partition_colour_exactness(result: dict) -> dict:
 def check_colors_apply_exactly(env) -> dict:
     """Probe RGB leaves with two target colors and report targets absent from the image."""
     layout = {p: (o, w) for p, o, w in env.variation_space.flat_layout()}
-    st = env.sample_states(env.B)
+    st = sample_render_rows(env, env.B)
     wrong = []
     best: dict[str, int] = {}
+    drawn = set(_frame_variation_paths(env))
     for path, (off, w) in layout.items():
+        if path not in drawn:
+            continue
         node = env.variation_space
         for part in path.split("."):
             node = node[part]
@@ -643,24 +691,27 @@ def check_colors_apply_exactly(env) -> dict:
 PRESENCE_TOL = 8
 
 
-def check_task_object_visibility(env, states=None, n: int = 16, seed: int = 0) -> dict:
+def check_task_object_visibility(env, states=None, n: int = 16, seed: int = 0, reference=None) -> dict:
     """Measure visibility toggles on their changed-pixel footprint.
 
     Alternate rows also test per-row style handling. When a source is available,
     report error for the declared and flipped appearances on the same footprint.
     The margin is 1 - declared_error/flipped_error; it is None when undefined.
     A missing source or empty footprint cannot establish source agreement.
+    ``reference`` (``states -> frames``) replaces the class's own reference renderer.
     """
     paths = [p for p in env.variation_space.names() if p.split(".")[0] == "visibility"]
     if not paths:
         return {"skipped": "the env declares no visibility.* leaf"}
     if states is None:
-        states = env.sample_states(int(n), rng=np.random.default_rng(int(seed)))
+        states = sample_render_rows(env, int(n), rng=np.random.default_rng(int(seed)))
     states = np.asarray(states)
     layout = {p: (o, w) for p, o, w in env.variation_space.flat_layout()}
     cls = type(env)
     official, why_ref = None, "no official renderer is declared"
-    if getattr(cls, "reference_id", None) and hasattr(cls, "reference_env"):
+    if reference is not None:
+        official = np.asarray(reference(states)).astype(np.int16)
+    elif getattr(cls, "reference_id", None) and hasattr(cls, "reference_env"):
         try:
             # Borrow from the process-lifetime cache so returning does not release the reference context.
             official = cls.reference_render(reference_env(cls, env.size), states).astype(np.int16)
@@ -726,7 +777,7 @@ def check_task_object_visibility(env, states=None, n: int = 16, seed: int = 0) -
 
 
 def check_determinism(env) -> dict:
-    st = env.sample_states(env.B)
+    st = sample_render_rows(env, env.B)
     return {"identical": bool(np.array_equal(env._render(st).cpu().numpy(), env._render(st).cpu().numpy()))}
 
 
@@ -1243,7 +1294,7 @@ def check_set_state_copies(env) -> dict:
 
     This does not test the public set_state contract.
     """
-    st = env.sample_states(env.B, rng=np.random.default_rng(0))
+    st = sample_render_rows(env, env.B, rng=np.random.default_rng(0))
     buf = np.array(st, np.float32)
     before = env._get_render_state().data_ptr()
     env._set_render_state(buf)
