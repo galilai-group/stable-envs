@@ -13,6 +13,7 @@ from ...env import Env
 from ...registry import register
 from ...render import _resources as _RES
 from ...render import raycast3d as R3
+from ...render.primitives import dot3
 from ...spaces import Box, Dict, Discrete
 from .simulation.execution import make_maze_adapter
 from .simulation.maze import OGB_MAZE_FIELDS, OGBMazeAdapter
@@ -98,6 +99,7 @@ class _Scene:
         "agent_base",
         "agent_is_self",
         "prims_base",
+        "passes",
     )
 
 
@@ -120,6 +122,235 @@ def _mat_and_tex(m, g):
             u = np.unique(reg.reshape(-1, 3), axis=0)
             tex = u[0] if len(u) == 1 else reg.reshape(-1, 3).mean(0)
     return mat, tex
+
+
+def _spec_shin(m, g):
+    """Material specular and GL shininess exponent; MuJoCo's defaults without a material."""
+    mid = int(m.geom_matid[g])
+    if mid < 0:
+        return 0.5, 64.0
+    return float(m.mat_specular[mid]), float(m.mat_shininess[mid]) * 128.0
+
+
+def _light_pass(n, v, terms, c, tex, ms, shin):
+    """One framebuffer pass of GL fixed-function lighting, rounded to bytes.
+
+    ``terms`` holds (unit vector to light, attenuation*spot gain, (ambient, diffuse,
+    specular)) per enabled light. Lights sum and clamp before the texture modulates."""
+    col = torch.zeros_like(c)
+    for to_light, gain, (amb, dif, spec) in terms:
+        ndl = dot3(n, to_light).clamp(min=0)
+        h = to_light + v
+        h = h / torch.sqrt(dot3(h, h)).clamp(min=1e-12).unsqueeze(-1)
+        hl = torch.where(ndl > 0, dot3(n, h).clamp(min=0) ** shin, torch.zeros_like(ndl))
+        lit = amb * c + dif * c * ndl.unsqueeze(-1) + spec * (ms * hl).unsqueeze(-1)
+        col = col + lit * gain.unsqueeze(-1)
+    return torch.round(torch.clamp(col, 0, 1) * tex * 255.0)
+
+
+_SHADOW_EPS = 1e-3  # shadow-ray origin offset along the surface normal
+
+
+class _LightPasses:
+    """MuJoCo's light passes for a scene with a spotlight that tracks the agent.
+
+    The renderer draws non-shadowing lights in one pass, then adds each shadowing light
+    in its own blended pass (``mjr_render``), so every pass rounds to bytes before the
+    sum saturates. The plate holds the static passes without the tracking light; per
+    row this adds that light's shaded and shadowed contribution to static pixels,
+    removes the agent's shadow from them, and shades the moving primitives pass by pass."""
+
+    def __init__(self, scene, m, d, track, static_ids, static_hit, albedo, agent_ids, device):
+        """``static_hit`` is (world point, normal, index into ``static_ids``, hit mask) per pixel."""
+        import mujoco
+
+        f = lambda x: torch.as_tensor(np.asarray(x, np.float64), device=device, dtype=torch.float32)  # noqa: E731
+        self.base, self.shadowed = [], []
+        self.spot = None
+        for i in range(int(scene.nlight)):
+            sl = scene.lights[i]
+            colours = (f(sl.ambient), f(sl.diffuse), f(sl.specular))
+            if int(sl.id) == track:
+                D = np.asarray(sl.dir, np.float64)
+                D = D / np.linalg.norm(D)
+                up = np.cross(D, [-1.0, 0.0, 0.0])
+                if up @ up <= 0.01:
+                    up = np.cross(D, [0.0, 1.0, 0.0])
+                s = np.cross(D, up / np.linalg.norm(up))
+                s = s / np.linalg.norm(s)
+                fov = min(2.0 * float(sl.cutoff) * float(m.vis.map.shadowscale), 160.0)
+                self.spot = dict(
+                    offset=f(np.asarray(sl.pos, np.float64) - np.array([d.qpos[0], d.qpos[1], 0.0])),
+                    D=f(D),
+                    cos_cut=float(np.cos(np.deg2rad(float(sl.cutoff)))),
+                    exponent=float(sl.exponent),
+                    att=[float(a) for a in sl.attenuation],
+                    colours=colours,
+                    castshadow=bool(sl.castshadow),
+                    s=f(s),
+                    u=f(np.cross(s, D)),
+                    tan_half=float(np.tan(np.deg2rad(fov / 2.0))),
+                    cutoff=float(sl.cutoff),
+                )
+                continue
+            if int(sl.type) != int(mujoco.mjtLightType.mjLIGHT_DIRECTIONAL):
+                raise NotImplementedError("only directional lights besides the tracking spotlight")
+            L = -np.asarray(sl.dir, np.float64)
+            entry = dict(to_light=f(L / np.linalg.norm(L)), colours=colours)
+            if sl.castshadow:
+                # The orthographic shadow map clips casters nearer than the camera's near plane.
+                entry.update(pos=f(sl.pos), fwd=f(-L / np.linalg.norm(L)), near=float(scene.camera[0].frustum_near))
+                self.shadowed.append(entry)
+            else:
+                self.base.append(entry)
+        self.eye = f(np.mean([np.asarray(scene.camera[k].pos, np.float64) for k in (0, 1)], 0))
+
+        walls = [g for g in static_ids if int(m.geom_type[g]) != 0]  # planes cast no shadow upward
+        self.wall_kinds = [int(m.geom_type[g]) for g in walls]
+        self.wall_size = f(np.stack([m.geom_size[g] for g in walls]))[None]
+        self.wall_pos = f(np.stack([d.geom_xpos[g] for g in walls]))[None]
+        self.wall_rot = f(np.stack([d.geom_xmat[g].reshape(3, 3) for g in walls]))[None]
+
+        self.hit, self.normal, which, self.valid = static_hit
+        mats = f(np.stack([_mat_and_tex(m, g)[0] for g in static_ids]))
+        ss = np.array([_spec_shin(m, g) for g in static_ids])
+        self.mat = mats[which]
+        self.tex = torch.as_tensor(albedo, device=device, dtype=torch.float32).reshape(-1, 3) / 255.0
+        self.ms = f(ss[:, 0])[which]
+        self.shin = f(ss[:, 1])[which]
+        z = self.hit[self.valid, 2]
+        self.zrange = (float(z.min()), float(z.max())) if z.numel() else (0.0, 0.0)
+
+        pss = np.array([_spec_shin(m, g) for g in agent_ids])
+        self.prim_ms, self.prim_shin = f(pss[:, 0]), f(pss[:, 1])
+
+    def light_pos(self, xy: torch.Tensor) -> torch.Tensor:
+        lp = torch.zeros(xy.shape[0], 3, device=xy.device, dtype=torch.float32)
+        lp[:, :2] = xy
+        return lp + self.spot["offset"]
+
+    def _spot_terms(self, X, lpos):
+        sp = self.spot
+        L = lpos - X
+        dist = torch.sqrt(dot3(L, L))
+        L = L / dist.clamp(min=1e-12).unsqueeze(-1)
+        sd = -dot3(L, sp["D"])
+        gain = torch.where(sd >= sp["cos_cut"], sd.clamp(min=0) ** sp["exponent"], torch.zeros_like(sd))
+        k0, k1, k2 = sp["att"]
+        gain = gain / (k0 + k1 * dist + k2 * dist * dist)
+        return L, dist, gain
+
+    def _spot_shadow(self, X, n, L, dist, lpos, agent, skip):
+        """Shadowed by walls or agent, within the square shadow-map frustum; lit outside it."""
+        sp = self.spot
+        if not sp["castshadow"]:
+            return torch.zeros(X.shape[:-1], device=X.device, dtype=torch.bool)
+        rel = X - lpos
+        depth = dot3(rel, sp["D"])
+        reach = sp["tan_half"] * depth
+        inside = (depth > 0) & (dot3(rel, sp["s"]).abs() <= reach) & (dot3(rel, sp["u"]).abs() <= reach)
+        o = X + _SHADOW_EPS * n
+        lim = dist - _SHADOW_EPS
+        flat = o.reshape(1, -1, 3)
+        wk = len(self.wall_kinds)
+        walls = R3.any_blocking(
+            self.wall_kinds,
+            self.wall_size.expand(1, wk, 3),
+            self.wall_pos,
+            self.wall_rot,
+            flat,
+            L.reshape(1, -1, 3).contiguous(),
+            lim.reshape(1, -1),
+        ).view(X.shape[:-1])
+        kinds, size, pos, rot = agent
+        moving = R3.any_blocking(kinds, size, pos, rot, o, L.contiguous(), lim, skip)
+        return inside & (walls | moving)
+
+    def _dir_shadow(self, X, n, light, agent, skip):
+        o = X + _SHADOW_EPS * n
+        lim = dot3(X - light["pos"], light["fwd"]) - light["near"]
+        d = light["to_light"].expand_as(o).contiguous()
+        kinds, size, pos, rot = agent
+        return R3.any_blocking(kinds, size, pos, rot, o, d, lim, skip)
+
+    def _window(self, cam, lpos, H, W):
+        """Flat (B, T*T) pixel indices covering the spotlight's footprint on static geometry."""
+        B = lpos.shape[0]
+        zlo, zhi = self.zrange
+        cut = self.spot["cutoff"]
+        if cut >= 89.0:
+            return torch.arange(H * W, device=lpos.device).expand(B, H * W)
+        reach = (float(self.spot["offset"][2]) - zlo) * float(np.tan(np.deg2rad(cut))) + 1.0
+        corners = []
+        for sx in (-reach, reach):
+            for sy in (-reach, reach):
+                for z in (zlo, zhi):
+                    p = lpos.clone()
+                    p[:, 0] += sx
+                    p[:, 1] += sy
+                    p[:, 2] = z
+                    corners.append(p)
+        ndc = cam.project(torch.stack(corners, 1), aspect=W / H)
+        px = (ndc[..., 0] + 1) * 0.5 * W
+        py = (1 - ndc[..., 1]) * 0.5 * H
+        x0 = px.amin(1).floor().long() - 1
+        y0 = py.amin(1).floor().long() - 1
+        span = torch.stack([(px.amax(1).ceil().long() + 1 - x0).max(), (py.amax(1).ceil().long() + 1 - y0).max()])
+        need = int(span.max())
+        if need >= min(H, W):
+            return torch.arange(H * W, device=lpos.device).expand(B, H * W)
+        x0 = x0.clamp(0, W - need)
+        y0 = y0.clamp(0, H - need)
+        ar = torch.arange(need, device=lpos.device)
+        return ((y0.view(B, 1, 1) + ar.view(1, -1, 1)) * W + (x0.view(B, 1, 1) + ar.view(1, 1, -1))).reshape(B, -1)
+
+    def plates(self, plate, cam, lpos, agent):
+        """Per-row plates: static pixels gain the tracking light and lose the agent's shadow."""
+        H, W = plate.shape[:2]
+        B = lpos.shape[0]
+        idx = self._window(cam, lpos, H, W)
+        X, n = self.hit[idx], self.normal[idx]
+        c, tex, ms, shin = self.mat[idx], self.tex[idx], self.ms[idx], self.shin[idx]
+        v = self.eye - X
+        v = v / torch.sqrt(dot3(v, v)).clamp(min=1e-12).unsqueeze(-1)
+        lp = lpos.unsqueeze(1).expand(B, idx.shape[1], 3)
+        L, dist, gain = self._spot_terms(X, lp)
+        add = _light_pass(n, v, [(L, gain, self.spot["colours"])], c, tex, ms, shin)
+        add = torch.where(self._spot_shadow(X, n, L, dist, lp, agent, None).unsqueeze(-1), 0.0, add)
+        one = torch.ones_like(gain)
+        for light in self.shadowed:
+            lost = _light_pass(n, v, [(light["to_light"].expand_as(n), one, light["colours"])], c, tex, ms, shin)
+            add = add - torch.where(self._dir_shadow(X, n, light, agent, None).unsqueeze(-1), lost, 0.0)
+        add = torch.where(self.valid[idx].unsqueeze(-1), add, 0.0)
+        flat = plate.reshape(H * W, 3)
+        patch = (flat[idx].to(torch.float32) + add).clamp(0, 255).to(torch.uint8)
+        out = flat.unsqueeze(0).repeat(B, 1, 1)
+        out.scatter_(1, idx.unsqueeze(-1).expand(B, idx.shape[1], 3), patch)
+        return out.view(B, H, W, 3)
+
+    def shader(self, lpos, agent):
+        """Composite shader: each moving-primitive sample summed over byte-rounded passes."""
+        kinds, size, pos, rot = agent
+
+        def run(rows, X, n, v, ih, mat):
+            tex = torch.ones_like(mat)
+            ms, shin = self.prim_ms[ih], self.prim_shin[ih]
+            one = torch.ones_like(ms)
+            terms = [(b["to_light"].expand_as(n), one, b["colours"]) for b in self.base]
+            total = _light_pass(n, v, terms, mat, tex, ms, shin)
+            mine = (kinds, size[rows], pos[rows], rot[rows])
+            Xr, nr, skip = X.unsqueeze(1), n.unsqueeze(1), ih.unsqueeze(1)
+            for light in self.shadowed:
+                got = _light_pass(n, v, [(light["to_light"].expand_as(n), one, light["colours"])], mat, tex, ms, shin)
+                dark = self._dir_shadow(Xr, nr, light, mine, skip).squeeze(1)
+                total = total + torch.where(dark.unsqueeze(-1), 0.0, got)
+            lp = lpos[rows]
+            L, dist, gain = self._spot_terms(X, lp)
+            got = _light_pass(n, v, [(L, gain, self.spot["colours"])], mat, tex, ms, shin)
+            dark = self._spot_shadow(Xr, nr, L.unsqueeze(1), dist.unsqueeze(1), lp.unsqueeze(1), mine, skip).squeeze(1)
+            return torch.clamp(total + torch.where(dark.unsqueeze(-1), 0.0, got), max=255.0)
+
+        return run
 
 
 def _build_reference(loco: str, maze: str, size: int, ob_type: str = "pixels"):
@@ -304,6 +535,8 @@ class OGBenchMaze(Env):
 
         Keep RGB in [0, 1]; uint8 quantization changes MuJoCo material shading."""
         agent_rgb = [0.7, 0.5, 0.3] if self.LOCO in ("point", "ant") else [0.7, 0.5, 0.3]
+        # Pixel observations recolour the XML's white walls; state observations keep them.
+        wall_rgb = [1.0, 1.0, 1.0] if getattr(self, "RENDER_OB_TYPE", "pixels") == "states" else [0.6, 0.6, 0.6]
         return Dict(
             {
                 "agent": Dict(
@@ -314,7 +547,7 @@ class OGBenchMaze(Env):
                     }
                 ),
                 "floor": Dict({"tint": Box(low=0.0, high=1.0, shape=(3,), init_value=[1.0, 1.0, 1.0])}),
-                "walls": Dict({"color": Box(low=0.0, high=1.0, shape=(3,), init_value=[0.6, 0.6, 0.6])}),
+                "walls": Dict({"color": Box(low=0.0, high=1.0, shape=(3,), init_value=wall_rgb)}),
                 "camera": Dict(
                     {
                         "distance_scale": Box(low=0.6, high=1.8, shape=(1,), init_value=[1.0]),
@@ -414,8 +647,14 @@ class OGBenchMaze(Env):
             # built AFTER the texture write for this key, so it uploads the right floor; every later
             # bake with the same key writes the same bytes, so reuse is exact
             r = pr["renderers"][rkey] = mujoco.Renderer(m, width=size, height=size)
+        # A light that tracks the agent cannot be baked; it is added per row instead.
+        trackcom = int(mujoco.mjtCamLight.mjCAMLIGHT_TRACKCOM)
+        track = [i for i in range(m.nlight) if m.light_active[i] and int(m.light_mode[i]) == trackcom]
+        m.light_active[track] = 0
         r.update_scene(d, camera=cam)
         plate = r.render().copy()
+        albedo = self._bake_albedo(m, r, d, cam, static) if track else None
+        m.light_active[track] = 1
         m.geom_rgba[agent] = keep
         r.update_scene(d, camera=cam)
         camera = R3.Camera.from_mjv(r.scene.camera[0], r.scene.camera[1])
@@ -479,7 +718,41 @@ class OGBenchMaze(Env):
                 specular=np.array([np.mean(r.scene.lights[i].specular) for i in range(L)]),
                 exponent=float(m.mat_shininess[selfmat]) * 128,
             )
+        sc.passes = None
+        if track:
+            assert len(track) == 1 and self.LOCO == "point", "a tracking light is modelled for the point body only"
+            f = lambda x: torch.as_tensor(np.asarray(x), device=self.device, dtype=torch.float32)[None]  # noqa: E731
+            o, ray = R3.cached_rays(camera, size, size, self.device)
+            t, nrm, which = R3.cast_nearest(
+                sprims.kind,
+                f(sprims.size),
+                f(np.stack([d.geom_xpos[g] for g in static])),
+                f(np.stack([d.geom_xmat[g].reshape(3, 3) for g in static])),
+                o.expand(1, size * size, 3),
+                ray[None],
+            )
+            t, hit = t[0], o + t[0].clamp(max=1e6).unsqueeze(-1) * ray
+            sc.passes = _LightPasses(
+                r.scene, m, d, track[0], static, (hit, nrm[0], which[0], t < R3.INF / 2), albedo, agent, self.device
+            )
         return sc
+
+    @staticmethod
+    def _bake_albedo(m, r, d, cam, static):
+        """Static texels as bytes: white materials under a unit ambient headlight, agent hidden."""
+        hl = m.vis.headlight
+        saved = (hl.ambient.copy(), hl.diffuse.copy(), hl.specular.copy(), m.light_active.copy())
+        mat, geom = m.mat_rgba.copy(), m.geom_rgba.copy()
+        hl.ambient[:], hl.diffuse[:], hl.specular[:] = 1.0, 0.0, 0.0
+        m.light_active[:] = 0
+        m.mat_rgba[:, :3] = 1.0
+        m.geom_rgba[static, :3] = 1.0
+        try:
+            r.update_scene(d, camera=cam)
+            return r.render().copy()
+        finally:
+            hl.ambient[:], hl.diffuse[:], hl.specular[:], m.light_active[:] = saved
+            m.mat_rgba[:], m.geom_rgba[:] = mat, geom
 
 
     def _fk(self, states: torch.Tensor, sc: _Scene):
@@ -553,11 +826,18 @@ class OGBenchMaze(Env):
             sub = torch.as_tensor(idx, device=self.device, dtype=torch.long)
             mat, scale = self._agent_appearance(sc, sty, sub)
             xpos, xmat = self._fk(s[sub], sc)
+            plate, shader = sc.plate, None
+            if sc.passes is not None:
+                size_b = torch.as_tensor(np.asarray(sc.prims_base.size), device=self.device, dtype=torch.float32)
+                agent = (list(sc.prims_base.kind), size_b * scale.view(-1, 1, 1), xpos, xmat)
+                lpos = sc.passes.light_pos(s[sub][:, :2])
+                plate = sc.passes.plates(sc.plate, sc.cam, lpos, agent)
+                shader = sc.passes.shader(lpos, agent)
             # Advanced indexing makes buf[sub] a copy. With multiple groups, render to a
             # temporary and assign back explicitly; one group can write directly into buf.
             dst = buf if len(uniq) == 1 else None
             got = R3.composite(
-                sc.plate,
+                plate,
                 sc.plate_t,
                 sc.cam,
                 sc.prims_base,
@@ -571,6 +851,7 @@ class OGBenchMaze(Env):
                 tile=self.TILE,
                 mat_rgb=mat,
                 size_scale=scale,
+                shader=shader,
             )
             if dst is None:
                 buf[sub] = got
@@ -653,6 +934,19 @@ class _HistoricalDefaultSemantics:
     # Pixel observations replace the XML checker with a position-encoding
     # gradient. The registered simulator uses states, so its renderer must too.
     RENDER_OB_TYPE = "states"
+    parity_note = (
+        "AGENT-PIXEL PARITY, state-observation scene (supersample 2, against MuJoCo 3.12.0 / ogbench 1.2.1 at "
+        "offsamples=4, 64 states, RTX A5000). This scene keeps the XML's white walls, global ambient light, the "
+        "goal disc and a torso spotlight that tracks the agent. The plate is baked without that spotlight; per "
+        "row its GL fixed-function contribution (cone, exponent, specular, and wall and agent shadows inside the "
+        "square shadow-map frustum) is added to static pixels, the agent's global-light shadow is removed from "
+        "them, and agent and goal are shaded as MuJoCo's separately byte-rounded light passes. Interior pixels "
+        "are 100% bit-identical; all pixels are 97.3% exact, mean 0.075/255. No interior pixel lies in the lit "
+        "floor disc, which is shaded per pixel and is off by 1/255 on part of it (83% of disagreeing pixels are "
+        "off by 1/255); Gouraud interpolation over MuJoCo's plane grid does not close that gap on the NVIDIA "
+        "driver. The rest is agent, goal-rim and one-pixel wall-face edges under the reference's multisampling "
+        "and sphere tessellation."
+    )
     action_dim = 2
     action_dtype = torch.float32
     action_low, action_high = -1.0, 1.0

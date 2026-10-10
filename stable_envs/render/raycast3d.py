@@ -1130,13 +1130,16 @@ def composite(
     tile: int | None = None,
     mat_rgb: torch.Tensor | None = None,
     size_scale: torch.Tensor | None = None,
+    shader=None,
 ) -> torch.Tensor:
     """Draw moving primitives over a static plate; return (B, H, W, 3) uint8.
 
-    ``plate`` is (H, W, 3) uint8 and ``plate_t`` is (H*W,) radial ray depth.
-    Poses are (B, P, 3) positions and (B, P, 3, 3) rotations. ``tile`` caps the
-    conservative screen window; an oversized bound falls back to the full frame.
-    ``mat_rgb`` (B, P, 3) and ``size_scale`` (B,) override appearance per environment.
+    ``plate`` is (H, W, 3) or per-environment (B, H, W, 3) uint8 and ``plate_t`` is
+    (H*W,) radial ray depth. Poses are (B, P, 3) positions and (B, P, 3, 3) rotations.
+    ``tile`` caps the conservative screen window; an oversized bound falls back to the
+    full frame. ``mat_rgb`` (B, P, 3) and ``size_scale`` (B,) override appearance per
+    environment. ``shader(rows, hit, normal, view, prim, mat)`` replaces ``lights``
+    and returns covered-sample colour in [0, 255].
     A supplied ``out`` buffer is filled and returned as a (B, H, W, 3) view."""
 
     device = plate.device
@@ -1190,40 +1193,45 @@ def composite(
         cols = flat - rows * N
         ih = i_hit[rows, cols]
         mat = P["mat"][ih] if mat_rgb is None else mat_rgb[rows, ih]
-        c = (
-            shade(
-                n[rows, cols],
-                -dd[rows, cols],
-                ldir,
-                lamb,
-                ldif,
-                lspec,
-                lights.exponent,
-                mat,
-                P["tex"][ih],
-                P["spec"][ih],
+        if shader is not None:
+            ray = dd[rows, cols]
+            hit = oo[rows, cols] + t[rows, cols].unsqueeze(-1) * ray
+            c = shader(rows, hit, n[rows, cols], -ray, ih, mat)
+        else:
+            c = (
+                shade(
+                    n[rows, cols],
+                    -dd[rows, cols],
+                    ldir,
+                    lamb,
+                    ldif,
+                    lspec,
+                    lights.exponent,
+                    mat,
+                    P["tex"][ih],
+                    P["spec"][ih],
+                )
+                * 255.0
             )
-            * 255.0
-        )
         col.view(-1, 3).index_copy_(0, flat, c)
 
     covf = cov.to(col.dtype)
     if org is None:
         col = col.view(B, H, ss, W, ss, 3).sum((2, 4)) / (ss * ss)
         covf = covf.view(B, H, ss, W, ss).sum((2, 4)) / (ss * ss)
-        base = plate.to(col.dtype).unsqueeze(0)
+        base = plate.to(col.dtype).view(-1, H, W, 3)
         out.copy_(torch.clamp(torch.round(base * (1 - covf.unsqueeze(-1)) + col), 0, 255).to(torch.uint8))
         return out
 
     col = col.view(B, tile, ss, tile, ss, 3).sum((2, 4)) / (ss * ss)
     covf = covf.view(B, tile, ss, tile, ss).sum((2, 4)) / (ss * ss)
-    out.copy_(plate.view(1, H, W, 3).expand(B, H, W, 3))
+    out.copy_(plate.view(-1, H, W, 3).expand(B, H, W, 3))
     covf = covf.reshape(B, -1)
     # Uncovered output pixels already contain the plate byte; blend only the covered union.
     ps = torch.nonzero((covf > 0).any(0), as_tuple=False).reshape(-1)
     if ps.numel():
         oidx = obase[:, ps].unsqueeze(-1).expand(B, ps.numel(), 3)
-        patch = torch.gather(plate.reshape(1, H * W, 3).expand(B, H * W, 3), 1, oidx).to(col.dtype)
+        patch = torch.gather(plate.reshape(-1, H * W, 3).expand(B, H * W, 3), 1, oidx).to(col.dtype)
         merged = patch * (1 - covf[:, ps].unsqueeze(-1)) + col.reshape(B, -1, 3)[:, ps]
         out.view(B, H * W, 3).scatter_(1, oidx, torch.clamp(torch.round(merged), 0, 255).to(torch.uint8))
     return out

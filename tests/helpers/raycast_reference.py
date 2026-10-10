@@ -21,6 +21,7 @@ def composite_window(
     tile: int | None = None,
     mat_rgb: torch.Tensor | None = None,
     size_scale: torch.Tensor | None = None,
+    shader=None,
     *,
     cover_compaction: bool = True,
 ) -> torch.Tensor:
@@ -65,37 +66,61 @@ def composite_window(
     t, n, i_hit = R3.cast_nearest(P["kind"], sz.expand(B, nprim, 3), xpos, xmat, oo, dd)
     cov = t < bt
 
+    def by_shader(cols, ih, mat):
+        rows = torch.arange(B, device=device).unsqueeze(1).expand_as(cols).reshape(-1)
+        cols = cols.reshape(-1)
+        ray = dd[rows, cols]
+        hit = oo[rows, cols] + t[rows, cols].clamp(max=1e6).unsqueeze(-1) * ray
+        c = shader(rows, hit, n[rows, cols], -ray, ih.reshape(-1), mat.reshape(-1, 3))
+        return c.view(B, -1, 3)
+
     if cover_compaction:
         col = torch.zeros((B, N, 3), device=device, dtype=n.dtype)
         js = torch.nonzero(cov.any(0), as_tuple=False).reshape(-1)
         if js.numel():
             ih = i_hit[:, js]
             mat = P["mat"][ih] if mat_rgb is None else mat_rgb[torch.arange(B, device=device).unsqueeze(1), ih]
-            c = (
-                R3.shade(
-                    n[:, js], -dd[:, js], ldir, lamb, ldif, lspec, lights.exponent, mat, P["tex"][ih], P["spec"][ih]
+            if shader is not None:
+                c = by_shader(js.unsqueeze(0).expand(B, -1), ih, mat)
+            else:
+                c = (
+                    R3.shade(
+                        n[:, js],
+                        -dd[:, js],
+                        ldir,
+                        lamb,
+                        ldif,
+                        lspec,
+                        lights.exponent,
+                        mat,
+                        P["tex"][ih],
+                        P["spec"][ih],
+                    )
+                    * 255.0
                 )
-                * 255.0
-            )
             col.index_copy_(1, js, torch.where(cov[:, js].unsqueeze(-1), c, torch.zeros_like(c)))
     else:  # the expression above is the identity of this one
         mat = P["mat"][i_hit] if mat_rgb is None else mat_rgb[torch.arange(B, device=device).unsqueeze(1), i_hit]
-        c = R3.shade(n, -dd, ldir, lamb, ldif, lspec, lights.exponent, mat, P["tex"][i_hit], P["spec"][i_hit]) * 255.0
+        if shader is not None:
+            c = by_shader(torch.arange(N, device=device).unsqueeze(0).expand(B, -1), i_hit, mat)
+        else:
+            c = R3.shade(n, -dd, ldir, lamb, ldif, lspec, lights.exponent, mat, P["tex"][i_hit], P["spec"][i_hit])
+            c = c * 255.0
         col = torch.where(cov.unsqueeze(-1), c, torch.zeros_like(c))
 
     covf = cov.to(col.dtype)
     if org is None:
         col = col.view(B, H, ss, W, ss, 3).sum((2, 4)) / (ss * ss)
         covf = covf.view(B, H, ss, W, ss).sum((2, 4)) / (ss * ss)
-        base = plate.to(col.dtype).unsqueeze(0)
+        base = plate.to(col.dtype).view(-1, H, W, 3)
         out.copy_(torch.clamp(torch.round(base * (1 - covf.unsqueeze(-1)) + col), 0, 255).to(torch.uint8))
         return out
 
     col = col.view(B, tile, ss, tile, ss, 3).sum((2, 4)) / (ss * ss)
     covf = covf.view(B, tile, ss, tile, ss).sum((2, 4)) / (ss * ss)
     oidx = R3._expand_tile(org, tile, 1, W, device).unsqueeze(-1).expand(B, tile * tile, 3)
-    out.copy_(plate.view(1, H, W, 3).expand(B, H, W, 3))
-    patch = torch.gather(plate.reshape(1, H * W, 3).to(col.dtype).expand(B, H * W, 3), 1, oidx)
+    out.copy_(plate.view(-1, H, W, 3).expand(B, H, W, 3))
+    patch = torch.gather(plate.reshape(-1, H * W, 3).to(col.dtype).expand(B, H * W, 3), 1, oidx)
     merged = patch * (1 - covf.reshape(B, -1, 1)) + col.reshape(B, -1, 3)
     out.view(B, H * W, 3).scatter_(1, oidx, torch.clamp(torch.round(merged), 0, 255).to(torch.uint8))
     return out
