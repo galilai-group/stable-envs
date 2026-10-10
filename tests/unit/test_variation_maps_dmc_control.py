@@ -44,7 +44,13 @@ from tests.helpers.reference import (
     variation_from_style,
     variation_map,
 )
-from tests.helpers.reference.variation_maps.dmc_control import EXPECTED_COUNTS, LIGHT_RANGE, MAPS, swm_defaults
+from tests.helpers.reference.variation_maps.dmc_control import (
+    EXPECTED_COUNTS,
+    EXPECTED_COUNTS_BY_CELL,
+    LIGHT_RANGE,
+    MAPS,
+    swm_defaults,
+)
 
 _HAVE_SWM = True
 try:  # pragma: no cover - environment dependent
@@ -108,7 +114,7 @@ def test_classification_counts_match_the_declaration(cell):
     got = {"total": len(r["classification"])}
     for label in ("mapped", "unsupported", "dead_upstream", "not_applicable"):
         got[label] = sum(1 for v in r["classification"].values() if v == label)
-    assert got == EXPECTED_COUNTS[variation_map(env).swm_id], cell
+    assert got == EXPECTED_COUNTS_BY_CELL.get(cell, EXPECTED_COUNTS[variation_map(env).swm_id]), cell
 
 
 @needs_swm
@@ -275,8 +281,8 @@ def test_round_trip(cell):
                     (got * 255.0 + 0.5).astype(np.uint8), (np.clip(want, 0, 1) * 255.0 + 0.5).astype(np.uint8)
                 ), f"{cell}: {path} does not round-trip to the same uint8"
             else:
-                # float32 is the style row's dtype, so 3e-7 is the representation and not slack.
-                assert np.allclose(got, want, atol=3e-7), f"{cell}: {path} {got} != {want}"
+                # float32 is the style row's dtype, so this is the representation and not slack.
+                assert np.allclose(got, want, rtol=6e-8, atol=3e-7), f"{cell}: {path} {got} != {want}"
 
 
 def test_rgb255_is_swm_quantisation():

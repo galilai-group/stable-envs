@@ -407,12 +407,13 @@ def test_both_pointmaze_large_cells_share_one_mapping():
     assert a.pairs() == b.pairs() and dict(a.swm_only) == dict(b.swm_only)
 
 
-def test_simple_point_maze_maps_appearance_and_speed():
+def test_simple_point_maze_maps_appearance_speed_and_start():
     m = _map_for(SPM)
     assert set(m.pairs()) == {
         "agent.color",
         "agent.radius",
         "agent.speed",
+        "agent.position",
         "background.color",
         "walls.color",
         "walls.number",
@@ -432,17 +433,20 @@ def test_simple_point_maze_goal_appearance_is_mapped_and_its_position_is_state()
     assert "show_goal=True" in LEAF_CLASSIFICATION[SPM]["config_note"]
 
 
-def test_simple_point_maze_position_is_not_style():
-    assert LEAF_CLASSIFICATION[SPM]["leaves"]["agent.position"]["classification"] == "not_applicable"
+def test_simple_point_maze_position_is_a_reset_leaf_not_style():
+    spm = pytest.importorskip("stable_envs.envs.navigation.envs")
+    assert LEAF_CLASSIFICATION[SPM]["leaves"]["agent.position"]["classification"] == "mapped"
     assert LEAF_CLASSIFICATION[SPM]["leaves"]["agent.speed"]["classification"] == "mapped"
+    assert "agent.position" in {leaf.path for leaf in spm.SimplePointMaze.reset_leaves}
+    assert "agent.position" not in spm.SimplePointMaze.make_variation_space(spm.SimplePointMaze).names()
 
 
 def test_simple_point_maze_mapped_leaves_are_dims_of_our_own_space():
-    """The map names OUR paths. If a path is not a leaf of our variation space, the mapping silently
-    does nothing -- which is the failure mode `renamed` exists to prevent."""
+    """The map names OUR paths. If a path is neither a leaf of our variation space nor one of our reset
+    leaves, the mapping silently does nothing -- which is the failure mode `renamed` exists to prevent."""
     spm = pytest.importorskip("stable_envs.envs.navigation.envs")
     space = spm.SimplePointMaze.make_variation_space(spm.SimplePointMaze)
-    ours = set(space.names())
+    ours = set(space.names()) | {leaf.path for leaf in spm.SimplePointMaze.reset_leaves}
     for leaf in _map_for(SPM).pairs():
         assert leaf in ours, f"{leaf} is mapped but is not a leaf of SimplePointMaze's own space"
 

@@ -330,6 +330,17 @@ _GRAVITY_PHYS = (
 )
 
 
+_PHYSICS_MAPPED = (
+    "MAPPED through the physics hook (stable_envs._core.physics): the value is written into each "
+    "lane's compiled model as swm writes it after its recompile, and travels in State under "
+    "('physics', *leaf) as float64, so a restored State keeps its physics. The style column is "
+    "float32; an explicit float64 value set through reset options or State is kept exactly. "
+    "Gated by tests/integration/test_variation_pilots.py: 0 State error over 40 steps against swm "
+    "stepping the same per-lane values, with the knob moving swm's trajectory by 9.4e7 times the "
+    "1e-9 tolerance"
+)
+
+
 def _density_phys(what: str) -> str:
     return (
         f"PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or "
@@ -389,6 +400,7 @@ def _dmc(
     shape: tuple[str, tuple[int, ...]] | None = None,
     unsupported=None,
     physics_only=None,
+    physics_mapped=(),
     dead_upstream=None,
     notes=None,
     ours_only=None,
@@ -403,13 +415,14 @@ def _dmc(
     parity = cell in _PARITY_FLOOR
     return VariationMap(
         swm_id=swm_id,
-        identical=(("floor.color",) if parity else ()),
+        identical=(("floor.color",) if parity else ()) + tuple(physics_mapped),
         renamed=renamed,
         scaled={"light.diffuse_scale": ("light.intensity", 1.0 / base)},
         enum=({shape[0]: ("target.shape", shape[1])} if shape else {}),
         notes={
             "light.intensity": _light_reason(base),
             **({"floor.color": _FLOOR_MAPPED} if parity else {}),
+            **{leaf: _PHYSICS_MAPPED for leaf in physics_mapped},
             **(notes or {}),
         },
         # ``physics_only`` is merged into ``unsupported`` rather than kept as its own bucket: plan
@@ -674,7 +687,9 @@ _DMC_MAPS = {
 # distribution and in nothing the appearance mapping can see, so they carry the same map built twice
 # rather than one shared object — ``_LIGHT_BASE`` is keyed by cell and a shared instance would hide a
 # future divergence behind an alias.
+# Only the swing-up cell simulates; its gravity leaves go through the physics hook.
 for _cell in ("DMCCartpoleBalance", "DMCCartpoleSwingup"):
+    _gravity = tuple(f"gravity.{a}" for a in "xyz") if _cell == "DMCCartpoleSwingup" else ()
     _DMC_MAPS[_cell] = _dmc(
         _cell,
         "swm/CartpoleDMControl-v0",
@@ -686,8 +701,9 @@ for _cell in ("DMCCartpoleBalance", "DMCCartpoleSwingup"):
         },
         physics_only={
             "agent.cart_mass": _density_phys("the cart's mass"),
-            **{f"gravity.{a}": _GRAVITY_PHYS for a in "xyz"},
+            **{leaf: _GRAVITY_PHYS for leaf in (f"gravity.{a}" for a in "xyz") if leaf not in _gravity},
         },
+        physics_mapped=_gravity,
         ours_only={**_GRID_OURS, **_FOVY_OURS, **_DECOR_OURS},
     )
 
@@ -737,6 +753,12 @@ EXPECTED_COUNTS: dict[str, dict[str, int]] = {
     "swm/QuadrupedDMControl-v0": {"total": 10, "mapped": 2, "unsupported": 7, "dead_upstream": 1, "not_applicable": 0},
     "swm/ReacherDMControl-v0": {"total": 9, "mapped": 5, "unsupported": 3, "dead_upstream": 1, "not_applicable": 0},
     "swm/WalkerDMControl-v0": {"total": 11, "mapped": 2, "unsupported": 8, "dead_upstream": 1, "not_applicable": 0},
+}
+
+
+#: Cells whose counts differ from the first cell of their swm id, which EXPECTED_COUNTS records.
+EXPECTED_COUNTS_BY_CELL: dict[str, dict[str, int]] = {
+    "DMCCartpoleSwingup": {"total": 9, "mapped": 6, "unsupported": 1, "dead_upstream": 2, "not_applicable": 0},
 }
 
 

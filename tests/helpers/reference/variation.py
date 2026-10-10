@@ -296,10 +296,12 @@ _PIECEWISE_SWM_ONLY = {
 
 #: our class name -> how its appearance relates to the official swm env's
 VARIATION_MAPS: dict[str, VariationMap] = {
+    # ``agent.position`` is a per-lane reset distribution (``Env.reset_leaves``) that lands in State,
+    # not a style column; tests/integration/test_variation_pilots.py gates it against swm.
     "TwoRoom": VariationMap(
         swm_id="swm/TwoRoom-v1",
-        identical=("agent.color", "agent.radius", "agent.speed") + _TWOROOM_STRUCTURE,
-        swm_only=_TWOROOM_SWM_ONLY,
+        identical=("agent.color", "agent.radius", "agent.speed", "agent.position") + _TWOROOM_STRUCTURE,
+        swm_only={k: v for k, v in _TWOROOM_SWM_ONLY.items() if k != "agent.position"},
     ),
     "TwoRoomTarget": VariationMap(
         swm_id="swm/TwoRoom-v1",

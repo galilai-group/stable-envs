@@ -423,10 +423,16 @@ _OGBMAZE_OURS_ONLY = {
     "camera.elevation": "as camera.distance_scale",
 }
 
+_SPM_AGENT_POSITION = (
+    "a per-lane reset distribution (Env.reset_leaves) that seeds State, not a style column: "
+    "reset(options={'variation': ['agent.position']}) draws it per lane from the same seeded "
+    "tree swm samples, and options['variation_values'] sets it explicitly. swm's "
+    "SimplePointMazeEnv ignores options['variation_values'], so the matching swm start is the "
+    "leaf's value. Gated by tests/integration/test_variation_pilots.py: reset State exact and "
+    "first-frame interior exact"
+)
+
 _SPM_SWM_ONLY = {
-    "agent.position": "this is our STATE, not our style. MEASURED: swm's render() draws "
-    "`self.state`, never the leaf -- the leaf is a RESET distribution that seeds "
-    "the state, so setting it after a reset moves 0 of 250,000 px",
     "goal.position": "this is our STATE (render columns goal_x, goal_y), not our style. MEASURED: "
     "2,648 px moved with show_goal=True",
 }
@@ -443,6 +449,7 @@ NEWCELL_VARIATION_MAPS.update(
                 "agent.color",
                 "agent.radius",
                 "agent.speed",
+                "agent.position",
                 "background.color",
                 "walls.color",
                 "walls.number",
@@ -452,6 +459,7 @@ NEWCELL_VARIATION_MAPS.update(
                 "goal.radius",
             ),
             swm_only=_SPM_SWM_ONLY,
+            notes={"agent.position": _SPM_AGENT_POSITION},
         ),
         **{
             name: VariationMap(
@@ -580,10 +588,10 @@ LEAF_CLASSIFICATION.update(
                     "mapped", "identical path, (6,2) in world units 0-5", _MAZE_PROBES["spm"] + " -- 46,153 px moved"
                 ),
                 "agent.position": _cls(
-                    "not_applicable",
-                    _SPM_SWM_ONLY["agent.position"],
+                    "mapped",
+                    _SPM_AGENT_POSITION,
                     _MAZE_PROBES["spm"] + " -- 0 of 250,000 px when set after reset",
-                    mechanism="render() draws self.state; the leaf only seeds it",
+                    mechanism="render() draws self.state; the leaf only seeds it at reset",
                 ),
                 "agent.speed": _cls(
                     "mapped",
