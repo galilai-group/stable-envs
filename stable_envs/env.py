@@ -322,6 +322,8 @@ class Env:
     reference_id: str | None = None
     #: Variation leaves that change dynamics and must be excluded from appearance-only checks.
     dynamics_variation_leaves: frozenset[str] = frozenset()
+    #: Variation leaves the source declares but never draws; appearance checks skip them too.
+    undrawn_variation_leaves: frozenset[str] = frozenset()
     #: Minimum exact interior-pixel fraction; lowering it requires a mechanism in parity_note.
     parity_interior_min: float | None = 1.0
     #: Override the shared all-pixel exactness threshold, or use its default with None.

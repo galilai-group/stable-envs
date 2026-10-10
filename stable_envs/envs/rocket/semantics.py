@@ -7,7 +7,7 @@ import torch
 from tensordict import TensorDict
 
 from ..._core.style import StyleTensor
-from ...env import Env
+from ...env import Env, _split_appearance
 from ...registry import REGISTRY, register
 from ...specs import CompositeSpec, Spec
 from . import legacy as frozen
@@ -27,6 +27,13 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
     action_dtype = torch.float64
     action_low = (-1.0, -1.0, -1.0, 0.0, 0.0, -1.0, -1.0)
     action_high = (1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
+    dynamics_variation_leaves = frozenset(
+        {"environment.start_height_ratio", "environment.start_horizontal_offset", "environment.start_tilt"}
+    )
+    undrawn_variation_leaves = frozenset({"environment.sky_color"})
+    #: The source loads its original white pad unless reset options ask for colour variations.
+    DRAWN_PAD_DEFAULT = (255.0, 255.0, 255.0)
+    _render_style = None
 
     def __init__(
         self, num_envs=1, size=None, supersample=None, device="cpu", backend="auto", seed=0, *, simulator_config=None
@@ -211,13 +218,73 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         # projection cannot be passed to set_state or impersonate full State.
         return TensorDict({("renderer", "pose"): rows.clone()}, [len(rows)], device=self.device)
 
+    def default_style(self):
+        """The default Variation row with the pad colour the source actually draws by default."""
+        row = np.array(super().default_style(), np.float32)
+        off, width = next((o, w) for p, o, w in self.variation_space.flat_layout() if p == "pad.color")
+        row[off : off + width] = self.DRAWN_PAD_DEFAULT
+        return row
+
+    def _as_rows(self, value):
+        if torch.is_tensor(value):
+            return value.to(device=self.device, dtype=torch.float32)
+        return torch.as_tensor(np.asarray(value, np.float32), device=self.device)
+
+    def _renderer_rows(self, rows):
+        """Variation-layout rows -> renderer style rows (flame off; ignition is State, not appearance)."""
+        rows = self._as_rows(rows).reshape(-1, self.variation_dim)
+        source = {p: (o, w) for p, o, w in self.variation_space.flat_layout()}
+        out = torch.zeros((len(rows), frozen.style_dim()), dtype=torch.float32, device=self.device)
+        for path, (off, width) in frozen.style_layout().items():
+            if path in source:
+                o, w = source[path]
+                out[:, off : off + width] = rows[:, o : o + w]
+        return out
+
     def resolve_style(self, style=None, variation=None, batch=None):
-        if style is None:
-            style = self.to_render_state()["renderer", "style"]
-        if not isinstance(style, StyleTensor):
-            layout = frozen.PyFlytRocketLanding.make_variation_space(self).flat_layout()
-            style = StyleTensor(torch.as_tensor(style, dtype=torch.float32, device=self.device), layout)
+        """Renderer appearance: an explicit style, else one set for rendering, else the State's."""
+        overrides, style = _split_appearance(variation, style)
+        if isinstance(style, StyleTensor):
+            rows = style.values
+        elif style is not None:
+            rows = self._as_rows(style)
+            rows = (
+                rows.reshape(-1, frozen.style_dim())
+                if rows.shape[-1] == frozen.style_dim()
+                else self._renderer_rows(rows)
+            )
+        elif self._render_style is not None:
+            rows = self._render_style
+        else:
+            rows = self.to_render_state()["renderer", "style"]
+        if overrides:
+            rows = rows.clone()
+            layout = frozen.style_layout()
+            for path, value in overrides.items():
+                if path not in self.variation_names:
+                    raise KeyError(f"unknown Rocket Variation path {path!r}")
+                if path in layout:
+                    off, width = layout[path]
+                    rows[:, off : off + width] = torch.as_tensor(value, dtype=rows.dtype, device=rows.device).reshape(
+                        -1, width
+                    )
+        layout = frozen.PyFlytRocketLanding.make_variation_space(self).flat_layout()
+        style = StyleTensor(rows, layout)
         return style if batch is None else style.for_batch(int(batch), owner=f"{type(self).__name__}.render")
+
+    def set_style(self, style=None, **overrides):
+        """Set the appearance used when rendering supplied rows; None returns to the State's."""
+        if style is None and not overrides:
+            self._render_style = None
+            return self.to_render_state()["renderer", "style"]
+        self._render_style = self.resolve_style(style, overrides or None, batch=self.B).values
+        return self._render_style
+
+    def _set_render_state(self, states, variation=None, style=None):
+        Env._set_render_state(self, states)
+        if style is not None or variation is not None:
+            self._render_style = self.resolve_style(style, variation, batch=self._live_rows).values
+        return self
 
     def render(self, state=None, *, size=None, supersample=None, backend=None, chunk_size=None, out=None):
         self._check_open("render")
