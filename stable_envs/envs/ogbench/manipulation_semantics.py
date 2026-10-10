@@ -4,9 +4,9 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ..._core.style import StyleTensor
+from ..._core.style import StyleTensor, rows_are_equal
 from ..._execution.protocol import StepPipeline, step_pipeline
-from ...env import Env
+from ...env import Env, _split_appearance
 from ...specs import CompositeSpec, Spec
 
 
@@ -17,6 +17,11 @@ class ManipulationSemantics:
     action_dim = 5
     action_dtype = torch.float32
     action_low, action_high = -1.0, 1.0
+    undrawn_variation_leaves = frozenset(
+        {"agent.ee_start_position", "cube.goal_position", "cube.goal_yaw", "cube.start_position", "cube.start_yaw"}
+    )
+    _render_style = None
+    _rows_installed = False
 
     def __init__(
         self, num_envs=1, size=None, supersample=None, device="cpu", backend="auto", seed=0, *, reward_task_id=None
@@ -53,6 +58,26 @@ class ManipulationSemantics:
     def _sync_style(self):
         layout = self.variation_space.flat_layout()
         self._style = StyleTensor(self._simulator.variation_values(layout).to(torch.float32), layout)
+        self._render_style = None
+        self._rows_installed = False
+
+    def _drawn_columns(self):
+        return [
+            off + i
+            for name, off, width in self.variation_space.flat_layout()
+            if name not in self.undrawn_variation_leaves
+            for i in range(width)
+        ]
+
+    def resolve_style(self, style=None, variation=None, batch=None):
+        B = int(self.B if batch is None else batch)
+        variation, style = _split_appearance(variation, style)
+        if style is None:
+            style = (self._style if self._render_style is None else self._render_style).values
+            # Lanes differing only in reset-time leaves share one appearance.
+            if len(style) != B and rows_are_equal(style[:, self._drawn_columns()]):
+                style = style[:1]
+        return StyleTensor.from_space(self.variation_space, B, device=self.device, values=style, overrides=variation)
 
     def _layout(self):
         offsets = {
@@ -94,10 +119,12 @@ class ManipulationSemantics:
 
     def _step(self, actions, *, active=None):
         self._check_open("step")
+        self._rows_installed = False
         return self._simulator.step(actions, active=active)
 
     def _advance_without_snapshot(self, actions, *, active=None):
         self._check_open("step")
+        self._rows_installed = False
         return self._simulator.step(actions, active=active, capture_state=False)
 
     def _step_pipeline(self) -> StepPipeline | None:
@@ -192,8 +219,72 @@ class ManipulationSemantics:
             return out
         return result
 
-    def _render(self, state=None, **kwargs):
-        return self.render(state, **kwargs)
+    def _set_render_state(self, states, variation=None, style=None):
+        Env._set_render_state(self, states)
+        self._render_style = (
+            None if style is None and not variation else self.resolve_style(style, variation, self._live_rows)
+        )
+        self._rows_installed = True
+        return self
+
+    def _rows_to_render_state(self, rows, style, size, supersample):
+        from .simulation import render_state as pixels
+
+        family = self.CELL
+        b, nq = len(rows), self._nq
+        rows = rows.to(torch.float64)
+        values = pixels.header(family, b, size, supersample, self.device)
+        qpos = rows[:, :nq].clone()
+        # MuJoCo normalises free-joint quaternions (identity below its minimum norm) before drawing.
+        quat = qpos[:, pixels.OBJECT_QPOS_ADR + 3 : pixels.OBJECT_QPOS_ADR + 7]
+        norm = torch.linalg.vector_norm(quat, dim=-1, keepdim=True)
+        identity = torch.tensor([1.0, 0.0, 0.0, 0.0], dtype=torch.float64, device=self.device)
+        quat.copy_(torch.where(norm < 1e-15, identity, quat / norm.clamp_min(1e-15)))
+        values["pose", "qpos"] = qpos
+        values["pose", "mocap_pos"] = rows[:, nq : nq + 3].clone()
+        values["pose", "mocap_quat"] = torch.tensor([1.0, 0.0, 0.0, 0.0], dtype=torch.float64, device=self.device)
+        values["pose", "mocap_quat"] = values["pose", "mocap_quat"].expand(b, 4).clone()
+        if family == "Scene":
+            values["pose", "buttons"] = rows[:, nq + 3 :].round().clamp(0, 1).to(torch.int64)
+        schema = pixels.fields(family)
+        host = style.values.detach().cpu().numpy()
+        for name, (off, width) in style.layout.items():
+            key = ("appearance", name)
+            if key in schema:
+                # Shortest float32 decimals recover the float64 values the State path compiles,
+                # so both paths share one compiled model.
+                exact = np.array([float(str(v)) for v in host[:, off : off + width].ravel()], np.float64)
+                values[key] = torch.as_tensor(exact, device=self.device).reshape(b, *schema[key][0])
+        return TensorDict(values, [b], device=self.device)
+
+    @torch.no_grad()
+    def _render(self, states=None, size=None, supersample=None, variation=None, style=None, out=None, **kwargs):
+        if isinstance(states, TensorDict) or (
+            states is None and not self._rows_installed and style is None and not variation
+        ):
+            return self.render(states, size=size, supersample=supersample, out=out, **kwargs)
+        if states is None:
+            rows = self._get_render_state() if self._rows_installed else self._pack_render_state(self.get_state())
+        else:
+            rows = torch.as_tensor(
+                np.ascontiguousarray(states) if isinstance(states, np.ndarray) else states, device=self.device
+            )
+        lead = tuple(rows.shape[:-1])
+        rows = rows.reshape(-1, self.state_dim)
+        sty = self.resolve_style(style, variation, batch=len(rows))
+        size = int(self.size if size is None else size)
+        supersample = int(self.ss if supersample is None else supersample)
+        frames = self.render(self._rows_to_render_state(rows, sty, size, supersample), out=out, **kwargs)
+        return frames.reshape(*lead, *frames.shape[1:])
+
+    @classmethod
+    def reference_env(cls, size=None):
+        """MuJoCo's own OpenGL renderer drawing the same compiled Cube/Scene model."""
+        return cls(num_envs=1, size=size, device="cuda", backend="opengl")
+
+    @classmethod
+    def reference_render(cls, env, states):
+        return env._render(states).cpu().numpy()
 
     def sample_states(self, batch, rng=None):
         self._check_open("sample_states")

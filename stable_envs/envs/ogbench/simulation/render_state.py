@@ -73,18 +73,23 @@ def fields(family):
     return result
 
 
-def project(family, state, size, supersample):
+def header(family, b, size, supersample, device):
+    """Renderer fields shared by every row of a RenderState batch."""
     if type(size) is not int or type(supersample) is not int:
         raise ValueError("Render size and supersample must be integers")
-    b = len(state)
-    device = state.device or state["physics", "qpos"].device
-    values = {
+    return {
         ("renderer", "signature"): torch.as_tensor(signature(family), device=device).expand(b, 32).clone(),
         ("renderer", "size"): torch.full((b, 1), size, dtype=torch.int64, device=device),
         ("renderer", "supersample"): torch.full((b, 1), supersample, dtype=torch.int64, device=device),
         ("renderer", "camera"): torch.zeros((b, 1), dtype=torch.int64, device=device),
         ("appearance", "target_alpha"): torch.full((b, 1), TARGET_ALPHA, dtype=torch.float32, device=device),
     }
+
+
+def project(family, state, size, supersample):
+    b = len(state)
+    device = state.device or state["physics", "qpos"].device
+    values = header(family, b, size, supersample, device)
     for name in ("qpos", "mocap_pos", "mocap_quat"):
         values["pose", name] = state["physics", name].clone()
     for name in (*STATIC, "floor.color"):

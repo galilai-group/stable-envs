@@ -895,7 +895,7 @@ class OGBManipBase(Env):
             mq = IDENTITY_QUAT(b.nmocap)
             bits = s[i : i + b.nbuttons]
             if b.nbuttons:
-                u.set_state(qpos, qvel, **{f"button_state_{k}": int(round(float(bits[k]))) for k in range(b.nbuttons)})
+                u.set_state(qpos, qvel, np.rint(bits).astype(np.int64))
             else:
                 u.set_state(qpos, qvel)
             u.data.mocap_pos[:] = mp
