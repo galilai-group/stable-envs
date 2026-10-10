@@ -4,10 +4,13 @@ import numpy as np
 import pytest
 import torch
 
-from stable_envs.env import Env
-from stable_envs.envs.pusht.simulation.history import stack_states
-from stable_envs.envs.pusht.simulation.replay_batch import PushTReplayAdapter
-from stable_envs.spaces import Dict
+pytest.importorskip("pymunk")
+pytest.importorskip("cv2")
+
+from stable_envs.env import Env  # noqa: E402
+from stable_envs.envs.pusht.simulation.history import stack_states  # noqa: E402
+from stable_envs.envs.pusht.simulation.replay_batch import PushTReplayAdapter  # noqa: E402
+from stable_envs.spaces import Dict  # noqa: E402
 
 
 class ReplayStepHarness(Env):

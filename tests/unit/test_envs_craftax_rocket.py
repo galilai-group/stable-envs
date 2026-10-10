@@ -29,7 +29,6 @@ from stable_envs._core import dynamics
 from stable_envs.envs.craftax import classic as craftax
 from stable_envs.envs.craftax import full as _craftax_full
 from stable_envs.envs.rocket import legacy as RL
-from tests.helpers.stepping import branch_step, branch_steps
 
 CRAFTAX = ("CraftaxClassic", "CraftaxFull")
 
@@ -143,7 +142,7 @@ def test_a_state_the_caller_keeps_is_not_a_view_of_the_env(envs, name):
     a = torch.as_tensor(env.sample_states(4), dtype=torch.float32)
     b = torch.as_tensor(env.sample_states(4, np.random.default_rng(7)), dtype=torch.float32)
     env._set_render_state(a)
-    st = env.state
+    st = env._unpack_render_state(env._get_render_state())
     snap = st["world", "blocks"].clone()
     env._set_render_state(b)
     assert torch.equal(st["world", "blocks"], snap)
@@ -177,7 +176,7 @@ def test_render_takes_a_state_a_packed_row_or_nothing(envs, name):
     env = envs[name]
     rows = torch.as_tensor(env.sample_states(4), dtype=torch.float32)
     env._set_render_state(rows)
-    st = env.state
+    st = env._unpack_render_state(env._get_render_state())
     px = env._render(st)
     assert torch.equal(px, env._render(rows))
     assert torch.equal(px, env._render())
@@ -228,17 +227,11 @@ def test_these_cells_have_no_dynamics_and_say_so_precisely(envs, name):
     env = envs[name]
     assert not env.has_dynamics and not dynamics.has_dynamics(env)
     a = torch.zeros(env.num_envs, 1)
-    st = env.state
-    for call in (
-        lambda: env.step(a, frames=None),
-        lambda: branch_step(env, st, a),
-        lambda: branch_steps(env, st, a.unsqueeze(0)),
-        lambda: env.action_spec,
-    ):
+    for call in (lambda: env.step(a, frames=None), env.reset, env.get_state, lambda: env.action_spec):
         with pytest.raises(NotImplementedError) as e:
             call()
-        assert "ships a renderer and no batched simulator" in str(e.value)
-        assert "reset() and render() work as usual" in str(e.value)
+        assert name in str(e.value) and "full simulator semantics" in str(e.value)
+        assert "renders supplied states only" in str(e.value)
 
 
 def test_the_rocket_refuses_a_cpu_device_by_design():

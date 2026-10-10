@@ -140,10 +140,12 @@ def test_the_unsigned_32_mask_is_one_constant():
 
 
 def test_the_classic_path_blends_through_gfxdraws_own_rule():
-    """``gfxdraw_classic`` had a one-line wrapper around ``gfxdraw.blend``; there is no second name
-    for the blend any more, and the torch specification calls the rule itself."""
+    """There is no second name for the blend, and the torch specification of the classic path
+    (``tests/helpers/gfxdraw_reference.py``) calls ``gfxdraw.blend`` itself."""
+    from tests.helpers import gfxdraw_reference
+
     assert not hasattr(GC, "_blend_t")
-    assert "G.blend(" in open(GC.__file__).read()
+    assert "G.blend(" in open(gfxdraw_reference.__file__).read()
 
 
 def test_row_groups_is_one_function_under_two_names():

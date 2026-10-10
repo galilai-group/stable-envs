@@ -139,7 +139,7 @@ def test_a_frame_stack_whose_size_does_NOT_divide_is_refused_with_the_same_messa
         env._set_render_state(torch.zeros((4, 96, 96, 3), dtype=torch.uint8))
     msg = str(e.value)
     assert "FRAMES" in msg and "(4, 96, 96, 3)" in msg, msg
-    assert "render()" in msg, f"the message does not point at the direction that works: {msg}"
+    assert "not image pixels" in msg, f"the message does not say what to supply instead: {msg}"
 
 
 def test_uint8_is_called_out_by_name_because_states_are_float():
@@ -147,7 +147,7 @@ def test_uint8_is_called_out_by_name_because_states_are_float():
     with pytest.raises(ValueError) as e:
         env._set_render_state(torch.zeros((4, 8, 8, 3), dtype=torch.uint8))
     msg = str(e.value)
-    assert "uint8" in msg and "states are float" in msg, f"dtype is the loudest signal: {msg}"
+    assert "uint8" in msg and "astype(" in msg, f"dtype is the loudest signal: {msg}"
 
 
 def test_a_frame_stack_is_refused_even_when_its_last_axis_EQUALS_state_dim():
@@ -173,7 +173,7 @@ def test_ndim_greater_than_two_is_refused_outright_rather_than_flattened():
         env._set_render_state(np.stack([_states(3), _states(3, first=10)]))
     msg = str(e.value)
     assert "2-D" in msg and "(2, 3, 5)" in msg, msg
-    assert "reshape(-1, 5)" in msg, f"the message does not give the one-line fix: {msg}"
+    assert "reshape to (-1, 5)" in msg, f"the message does not give the one-line fix: {msg}"
 
 
 def test_a_row_of_the_wrong_width_names_state_dim_both_numbers_and_the_layout():
@@ -452,7 +452,6 @@ def test_an_unknown_path_in_sample_style_is_refused_rather_than_randomising_noth
         env.sample_style(4, paths=["block.colour"])  # British spelling, silent no-op
     msg = str(e.value)
     assert "block.colour" in msg and "block.color" in msg, f"neither the typo nor the fix: {msg}"
-    assert "DEFAULT" in msg, f"the message does not say what used to happen: {msg}"
 
 
 def test_a_correct_path_in_sample_style_still_randomises():

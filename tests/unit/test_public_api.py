@@ -209,7 +209,7 @@ def test_close_is_idempotent_and_a_closed_env_refuses_to_render():
         with pytest.raises(RuntimeError) as e:
             call()
         assert "closed" in str(e.value) and f"PushT.{what}" in str(e.value)
-        assert "num_envs=2" in str(e.value), "the message must say how to get a working env back"
+        assert "Create a new environment" in str(e.value), "the message must say how to get a working env back"
 
 
 def test_the_context_manager_closes_and_does_not_swallow_exceptions():

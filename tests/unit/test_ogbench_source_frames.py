@@ -5,7 +5,9 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from benchmarks.online.ogbench_parallel_source import OGBSource
+pytest.importorskip("ogbench")
+
+from benchmarks.online.ogbench_parallel_source import OGBSource  # noqa: E402
 
 
 @pytest.mark.parametrize('family', ['Cube', 'Scene'])
