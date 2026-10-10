@@ -52,6 +52,8 @@ MODEL_FIELDS = {
     ),
 }
 ALIGNED = {"ball_in_cup", "finger", "manipulator", "quadruped"}
+# Domains whose stable-envs State carries gravity under ("physics", "gravity", axis); read from SWM's model.
+GRAVITY_IN_STATE = {"acrobot", "pendulum", "cartpole"}
 
 
 class DMCReference:
@@ -104,12 +106,17 @@ class DMCReference:
                 row[key] = torch.tensor(getattr(physics.named.model, field)[index].copy())
             if self.domain == "quadruped":
                 row["activation"] = torch.tensor(physics.data.act.copy())
+            if self.domain in GRAVITY_IN_STATE:
+                for i, axis in enumerate("xyz"):
+                    row["physics", "gravity", axis] = torch.tensor([physics.model.opt.gravity[i]], dtype=torch.float64)
             rows.append(row)
         return torch.stack(rows)
 
     def set_state(self, state):
         for wrapper, row in zip(self.envs, state.cpu().unbind(0), strict=True):
             env, physics = wrapper.env._env, wrapper.env.physics
+            if self.domain in GRAVITY_IN_STATE:
+                wrapper.set_gravity([float(row["physics", "gravity", axis]) for axis in "xyz"])
             for key, field, index in MODEL_FIELDS.get(self.domain, ()):
                 getattr(physics.named.model, field)[index] = row[key].numpy()
             if self.domain in ALIGNED:

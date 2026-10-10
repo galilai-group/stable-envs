@@ -17,7 +17,6 @@ import numpy as np
 import torch
 
 import stable_envs as se
-from stable_envs._core.physics import state_key
 from tests.helpers.reference.dmc_semantics import DMCReference
 from tests.helpers.reference.native_navigation_semantics import NativeNavigationReference
 from tests.helpers.reference.semantics import compare_state
@@ -140,11 +139,14 @@ def reset_leaf_gate(domain: str, seed: int = 17) -> dict:
 
 
 class _Lanes:
-    """SWM DMC wrappers, one per lane, each with its own explicit physics values."""
+    """SWM DMC wrappers, one per lane, each reset with its own explicit physics values.
 
-    def __init__(self, domain, values: dict[str, np.ndarray], leaves):
+    ``DMCReference`` reads gravity from each SWM model into State, so the comparison
+    covers the physics SWM actually ran, not the values asked for.
+    """
+
+    def __init__(self, domain, values: dict[str, np.ndarray]):
         batch = len(next(iter(values.values())))
-        self.leaves = leaves
         self.refs = [
             DMCReference(
                 domain,
@@ -156,23 +158,11 @@ class _Lanes:
             for lane in range(batch)
         ]
 
-    def _with_physics(self, states):
-        for lane, ref in enumerate(self.refs):
-            gravity = np.asarray(ref.envs[0].env.physics.model.opt.gravity, np.float64)
-            for i, axis in enumerate("xyz"):
-                key = state_key(f"gravity.{axis}")
-                if f"gravity.{axis}" in self.leaves:
-                    if key not in states.keys(True, True):
-                        states[key] = torch.zeros(len(self.refs), 1, dtype=torch.float64)
-                    states[key][lane, 0] = float(gravity[i])
-        return states
-
     def reset(self, seed):
-        return self._with_physics(torch.cat([ref.reset(seed=seed + lane) for lane, ref in enumerate(self.refs)]))
+        return torch.cat([ref.reset(seed=seed + lane) for lane, ref in enumerate(self.refs)])
 
     def step(self, actions):
-        out = [ref.step(actions[lane : lane + 1]) for lane, ref in enumerate(self.refs)]
-        return self._with_physics(torch.cat([row["state"] for row in out]))
+        return torch.cat([ref.step(actions[lane : lane + 1])["state"] for lane, ref in enumerate(self.refs)])
 
     def close(self):
         for ref in self.refs:
@@ -212,7 +202,7 @@ def physics_gate(stable_env="DMCCartpoleSwingup", domain="cartpole", seed=11, st
         # Explicit per-lane gravity.z, including the registered value on lane 0.
         gz = np.asarray([[-9.81], [-3.25], [-17.5]], np.float64)
         ours0 = env.reset(seed=seed, options={"variation_values": {"gravity.z": gz}})
-        lanes = _Lanes(domain, {"gravity.z": gz}, leaves)
+        lanes = _Lanes(domain, {"gravity.z": gz})
         try:
             compare_state(ours0, lanes.reset(seed), atol=0.0)
             ours = _rollout_ours(env, actions)
@@ -249,7 +239,7 @@ def physics_gate(stable_env="DMCCartpoleSwingup", domain="cartpole", seed=11, st
         lo, hi = env.variation_spec.low, env.variation_spec.high
         col = {p: o for p, o, _ in env.variation_space.flat_layout()}["gravity.z"]
         assert ((gz >= lo[col]) & (gz <= hi[col])).all()
-        lanes = _Lanes(domain, {"gravity.z": gz}, leaves)
+        lanes = _Lanes(domain, {"gravity.z": gz})
         try:
             compare_state(drawn, lanes.reset(seed + 1), atol=0.0)
             error = _max_state_error(_rollout_ours(env, actions), _rollout_theirs(lanes, actions))
@@ -264,7 +254,7 @@ def physics_gate(stable_env="DMCCartpoleSwingup", domain="cartpole", seed=11, st
             "gravity.z": np.asarray([[-7.5], [-12.0], [-1.5]]),
         }
         env.reset(seed=seed + 2, options={"variation_values": vector})
-        lanes = _Lanes(domain, vector, leaves)
+        lanes = _Lanes(domain, vector)
         try:
             lanes.reset(seed + 2)
             prefix = actions[:5]
