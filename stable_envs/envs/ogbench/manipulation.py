@@ -115,7 +115,7 @@ def _ogbench_make(cell: str, kw: dict):
     if cell == "Scene":
         from ogbench.manipspace.envs.scene_env import SceneEnv
 
-        return SceneEnv(ob_type="states", height=size, width=size)
+        return SceneEnv(env_type="scene", ob_type="states", height=size, width=size)
     raise KeyError(f"no OGBench constructor for {cell!r}")
 
 

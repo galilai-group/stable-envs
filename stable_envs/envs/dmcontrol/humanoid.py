@@ -42,4 +42,7 @@ DMCHumanoidWalk.__doc__ = """Historical SWM Humanoid Walk using authoritative CP
 The public identity names Humanoid(move_speed=1, pure_state=False), selected by
 swm/HumanoidDMControl-v0. Full State includes physical, RNG and lifecycle fields.
 CUDA selects State/render placement; simulation remains delegated to CPU.
+
+VISUAL TIER: rendered with MJWarp on CUDA or cpu3d on CPU, so pixels approximate the source
+rasterizer; see visual_note and visual_fidelity.
 """
