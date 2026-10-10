@@ -578,7 +578,7 @@ def batch_mjwarp_options(wm, names: Sequence[str], nworld: int) -> None:
         if group not in ("opt", "stat"):
             continue
         holder = getattr(wm, group)
-        current = getattr(holder, field)
+        current = getattr(holder, field, None)
         if not isinstance(current, wp.array) or current.shape[0] == int(nworld):
             continue
         rows = np.repeat(current.numpy()[:1], int(nworld), axis=0)
@@ -595,7 +595,7 @@ def write_mjwarp(wm, arrays: Mapping[str, np.ndarray], lo: int = 0) -> None:
     for name, rows in arrays.items():
         group, _, field = name.rpartition(".")
         holder = getattr(wm, group) if group else wm
-        target = getattr(holder, field)
+        target = getattr(holder, field, None)
         if not isinstance(target, wp.array):
             continue
         view = wp.to_torch(target)
