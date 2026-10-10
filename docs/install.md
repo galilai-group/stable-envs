@@ -38,6 +38,7 @@ Two kinds, and they are easy to mix up.
 | `pusht-reference` | no | historical gym-pusht corpus checks, in a separate reference environment |
 | `ogbench` | OGBench mazes (and manip, with CUDA) | `ogbench` + MuJoCo |
 | `dmcontrol` | DM Control cells | `dm_control` + MuJoCo |
+| `dmcontrol-gpu` | DM Control on CUDA with TrackCom floor reflections | MuJoCo and MuJoCo Warp 3.12; on 3.11 TrackCom renders without the reflection |
 | `robotics` | Fetch | gymnasium-robotics (MuJoCo pin), OpenCV for source-sized OpenGL output |
 | `mjwarp` | Fetch / some visual 3-D cells | MuJoCo Warp render backend |
 | `craftax` | Craftax | jax |

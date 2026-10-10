@@ -57,6 +57,9 @@ craftax = ["craftax", "jax"]
 craftax-semantics = ["craftax==1.5.0", "jax==0.10.1", "jaxlib==0.10.1", "flax==0.12.7", "gymnax==0.0.9", "numpy==2.2.6", "chex==0.1.92", "gymnasium==1.2.3", "torch==2.14.0", "tensordict==0.14.2"]
 craftax-semantics-gpu = ["craftax==1.5.0", "jax[cuda12]==0.10.1", "jaxlib==0.10.1", "flax==0.12.7", "gymnax==0.0.9", "numpy==2.2.6", "chex==0.1.92", "gymnasium==1.2.3", "torch==2.14.0", "tensordict==0.14.2"]
 dmcontrol = ["dm-control>=1.0.44", "mujoco>=3.11,<3.13"]
+# GPU DM Control with the TrackCom floor reflection, which needs MuJoCo Warp 3.12. Fetch keeps MuJoCo 3.11
+# through the robotics extra; without this extra TrackCom renders on 3.11 without the reflection.
+dmcontrol-gpu = ["dm-control>=1.0.45", "mujoco==3.12.0", "mujoco-warp==3.12.0", "warp-lang>=1.16"]
 # gymnasium-robotics 1.4.2's Fetch setters fail with MuJoCo 3.12.
 robotics = ["gymnasium-robotics", "mujoco>=3.11,<3.12", "opencv-python-headless"]
 # Optional render/data surfaces. nvdiffrast is intentionally not metadata:

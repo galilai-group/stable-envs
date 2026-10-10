@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 import torch
 
@@ -90,7 +92,7 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
         from .trackcom_texture import Textures
 
         c.textures = Textures(m, c.rc, _sky_plate(cls, int(res)))
-        c.reflection = Reflection(c.wm, c.wd, c.rc, m)
+        c.reflection = Reflection(c.wm, c.wd, c.rc, m) if _reflection_supported(c.rc) else None
         _tc_frame(c)
         wp.synchronize()
     import torch
@@ -101,6 +103,23 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
     c.graph = cap.graph
     _TC_CACHE.put(key, c)
     return c
+
+
+def _reflection_supported(rc) -> bool:
+    """The floor reflection reuses MJWarp 3.12 render internals; older versions render without it."""
+    try:
+        from mujoco_warp._src import render as upstream
+    except ImportError:
+        return False
+    if hasattr(rc, "splat_count") and hasattr(upstream, "_make_cast_ray"):
+        return True
+    warnings.warn(
+        "TrackCom floor reflections need mujoco-warp 3.12; rendering without them, so frames differ from "
+        "the measured appearance. Install stable-envs[dmcontrol-gpu] for the full renderer.",
+        RuntimeWarning,
+        stacklevel=3,
+    )
+    return False
 
 
 def _tc_frame(c: _TCtx) -> None:
