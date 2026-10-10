@@ -289,6 +289,31 @@ def test_the_swm_reference_bridge_uses_the_source_default_goal_visibility():
     assert snv.SimplePointMaze.reference_kwargs == {"show_goal": True}
 
 
+def test_simple_point_maze_goal_is_an_agg_alpha_composite():
+    """The source's alpha=0.5 goal disc can never show a requested RGB literally."""
+    pytest.importorskip("matplotlib")
+    from matplotlib.backends.backend_agg import FigureCanvasAgg
+    from matplotlib.figure import Figure
+    from matplotlib.patches import Circle
+
+    decl = snv.SimplePointMaze.color_exactness_applicability
+    assert decl["leaves"] == ("goal.color",) and decl["max_shading_factor"] == 128 / 255
+    bg = np.array([255, 255, 255])
+    for target in ([17, 33, 200], [200, 17, 33]):
+        fig = Figure(figsize=(1, 1))
+        FigureCanvasAgg(fig)
+        ax = fig.add_axes((0, 0, 1, 1))
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.set_axis_off()
+        fig.patch.set_facecolor(bg / 255.0)
+        ax.add_patch(Circle((0.5, 0.5), 0.4, facecolor=np.asarray(target) / 255.0, alpha=0.5))
+        fig.canvas.draw()
+        centre = np.asarray(fig.canvas.buffer_rgba())[50, 50, :3].astype(int)
+        assert centre.tolist() == np.floor(bg + (np.asarray(target) - bg) * 128 / 255).astype(int).tolist()
+        assert centre.tolist() != target
+
+
 @pytest.mark.parametrize("name", CLASSIC)
 def test_classic_physical_only_helpers_cannot_bypass_full_state(name):
     with _env(name) as env:

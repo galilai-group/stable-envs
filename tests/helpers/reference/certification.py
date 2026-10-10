@@ -14,7 +14,7 @@ CERT_GYM_IDS: dict[str, dict] = {
     "TwoRoomTarget": {"gym_id": "swm/TwoRoom-v1", "kwargs": {"render_target": True}},
     "Piecewise": {"gym_id": "swm/Piecewise-v0", "kwargs": {}},
     "PiecewiseZones": {"gym_id": "swm/Piecewise-v0", "kwargs": {}, "render_zones_init": 1},
-    "SimplePointMaze": {"gym_id": "swm/SimplePointMaze-v0", "kwargs": {"show_goal": False}},
+    "SimplePointMaze": {"gym_id": "swm/SimplePointMaze-v0", "kwargs": {"show_goal": True}},
     "PyFlytRocketLanding": {
         "gym_id": "swm/PFRocketLanding-v0",
         "render_resolution": True,

@@ -1108,6 +1108,16 @@ class SimplePointMaze(_GymReferencePort):
     }
 
     speed = MAZE_AGENT_SPEED
+    color_exactness_applicability = {
+        "leaves": ("goal.color",),
+        "mechanism": "the source draws the goal as a matplotlib Circle with alpha=0.5, which Agg "
+        "composites as floor(bg + (c - bg) * 128/255) over the background",
+        "max_shading_factor": 128 / 255,
+        "official_renderer_fails_the_same_check": True,
+        "official_renderer_evidence": "on the default white background the official goal centre is "
+        "[135, 143, 227] for [17, 33, 200] and [227, 135, 143] for [200, 17, 33], the composite above",
+        "evidence": ("tests/unit/test_envs_classic_nav.py::test_simple_point_maze_goal_is_an_agg_alpha_composite",),
+    }
     dynamics_variation_leaves = frozenset(
         {
             "agent.speed",
@@ -1181,6 +1191,13 @@ class SimplePointMaze(_GymReferencePort):
         self._render_state[:, 0:2].copy_(agent.to(torch.float32))
         self._state_is_float64.copy_(state_is_float64)
         self._regenerate_cached_goal()
+
+    def _set_render_state(self, states, variation=None, style=None):
+        super()._set_render_state(states, variation=variation, style=style)
+        n = self._live_rows
+        self._agent_position[:n].copy_(self._render_state[:n, 0:2].to(torch.float64))
+        self._state_is_float64[:n].zero_()
+        return self
 
     def _position_collides(self, value, lane):
         p = np.asarray(value, np.float32)

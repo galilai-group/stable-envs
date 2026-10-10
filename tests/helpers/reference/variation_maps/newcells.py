@@ -427,14 +427,8 @@ _SPM_SWM_ONLY = {
     "agent.position": "this is our STATE, not our style. MEASURED: swm's render() draws "
     "`self.state`, never the leaf -- the leaf is a RESET distribution that seeds "
     "the state, so setting it after a reset moves 0 of 250,000 px",
-    "goal.color": "not drawn: this class is the `show_goal=False` configuration, a pre-existing and "
-    "documented divergence (pre-repository-cleanup:docs/research/swm_coverage.md). MEASURED: 0 of 250,000 px "
-    "with show_goal=False, 1,324 px with show_goal=True. Our reference_env passes "
-    "show_goal=False too, so the fidelity numbers compare like with like",
-    "goal.radius": "as goal.color -- guarded by the same `if self.show_goal`. MEASURED: 0 px with "
-    "show_goal=False, 1,264-6,812 px with it on. It still affects `terminated`, "
-    "which is task semantics rather than appearance",
-    "goal.position": "as goal.color. MEASURED: 0 px with show_goal=False, 2,648 px with it on",
+    "goal.position": "this is our STATE (render columns goal_x, goal_y), not our style. MEASURED: "
+    "2,648 px moved with show_goal=True",
 }
 
 NEWCELL_VARIATION_MAPS.update(
@@ -454,6 +448,8 @@ NEWCELL_VARIATION_MAPS.update(
                 "walls.number",
                 "walls.shape",
                 "walls.positions",
+                "goal.color",
+                "goal.radius",
             ),
             swm_only=_SPM_SWM_ONLY,
         ),
@@ -550,10 +546,8 @@ LEAF_CLASSIFICATION.update(
         "swm/SimplePointMaze-v0": {
             "our_envs": ["SimplePointMaze"],
             "config_note": (
-                "This class is the show_goal=False configuration, which the swm id itself registers as "
-                "True. That divergence predates the certified maps and is documented in pre-repository-cleanup:docs/research/"
-                "swm_coverage.md; reference_env passes show_goal=False so fidelity compares like with "
-                "like. It is why the three goal leaves are not_applicable rather than unsupported"
+                "This class is the show_goal=True configuration, the swm default; reference_env passes "
+                "show_goal=True so fidelity compares like with like. The goal disc is drawn at alpha 0.5"
             ),
             "leaves": {
                 "agent.color": _cls(
@@ -598,14 +592,14 @@ LEAF_CLASSIFICATION.update(
                     mechanism="step(): state + speed*action; now a native variation leaf",
                 ),
                 "goal.color": _cls(
-                    "not_applicable",
-                    _SPM_SWM_ONLY["goal.color"],
-                    _MAZE_PROBES["spm"] + " -- 0 of 250,000 px with show_goal=False, 1,324 px with show_goal=True",
+                    "mapped",
+                    "identical path, RGBBox 0-255, composited over the background at alpha 0.5",
+                    _MAZE_PROBES["spm"] + " -- 1,324 px moved with show_goal=True",
                 ),
                 "goal.radius": _cls(
-                    "not_applicable",
-                    _SPM_SWM_ONLY["goal.radius"],
-                    _MAZE_PROBES["spm"] + " -- 0 px with show_goal=False, 1,264-6,812 px with show_goal=True",
+                    "mapped",
+                    "identical path, world units 0.05-0.5; also sets `terminated`",
+                    _MAZE_PROBES["spm"] + " -- 1,264-6,812 px moved with show_goal=True",
                 ),
                 "goal.position": _cls(
                     "not_applicable",

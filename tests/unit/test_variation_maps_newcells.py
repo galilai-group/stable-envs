@@ -418,20 +418,18 @@ def test_simple_point_maze_maps_appearance_and_speed():
         "walls.number",
         "walls.shape",
         "walls.positions",
+        "goal.color",
+        "goal.radius",
     }
     for ours, (theirs, factor) in m.pairs().items():
         assert ours == theirs and factor == 1.0
 
 
-def test_simple_point_maze_goal_leaves_are_not_applicable_because_show_goal_is_off():
-    """Not `unsupported`: the renderer could draw a goal. This registration does not have one, which
-    is a different statement, and it is the pre-existing documented divergence rather than a mapping
-    decision."""
-    for leaf in ("goal.color", "goal.radius", "goal.position"):
-        rec = LEAF_CLASSIFICATION[SPM]["leaves"][leaf]
-        assert rec["classification"] == "not_applicable"
-        assert "show_goal" in rec["reason"]
-    assert "show_goal=False" in LEAF_CLASSIFICATION[SPM]["config_note"]
+def test_simple_point_maze_goal_appearance_is_mapped_and_its_position_is_state():
+    for leaf in ("goal.color", "goal.radius"):
+        assert LEAF_CLASSIFICATION[SPM]["leaves"][leaf]["classification"] == "mapped"
+    assert LEAF_CLASSIFICATION[SPM]["leaves"]["goal.position"]["classification"] == "not_applicable"
+    assert "show_goal=True" in LEAF_CLASSIFICATION[SPM]["config_note"]
 
 
 def test_simple_point_maze_position_is_not_style():
