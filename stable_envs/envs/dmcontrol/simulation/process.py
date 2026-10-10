@@ -127,6 +127,7 @@ class DMCProcessAdapter(ProcessRequests, SimulatorAdapter):
             self._configuration_methods = {
                 name
                 for name in (
+                    "configure_physics",
                     "configure_gravity",
                     "configure_density",
                     "configure_proximal_density",
@@ -134,6 +135,9 @@ class DMCProcessAdapter(ProcessRequests, SimulatorAdapter):
                 )
                 if hasattr(prototype, name)
             }
+            physics = getattr(prototype, "physics", None)
+            self.physics_layout = None if physics is None else physics.layout
+            self._physics_dim = 0 if physics is None else physics.spec.dim
             for name in ("proximal_density", "upper_arm_density"):
                 if hasattr(prototype, "_" + name):
                     self._config[name] = np.repeat(getattr(prototype, "_" + name), num_envs)
@@ -256,6 +260,9 @@ class DMCProcessAdapter(ProcessRequests, SimulatorAdapter):
         self._request("configure", [(method, values[rows], force) for rows in self._slices])
         if force:
             self._config[name] = values
+
+    def configure_physics(self, values):
+        self._configure("physics", values, self._physics_dim)
 
     def configure_gravity(self, values):
         self._configure("gravity", values, 3)

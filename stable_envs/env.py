@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import functools
 from collections.abc import Mapping
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -308,6 +309,34 @@ def _check_reference_versions_shape(cls, where: str, rv) -> None:
             )
 
 
+@dataclass(frozen=True)
+class ResetLeaf:
+    """A per-lane reset distribution that seeds State.
+
+    ``reset`` draws the leaf from ``reset_space()`` when it is sampled, uses an
+    explicit ``options["variation_values"]`` entry when one is given, and
+    otherwise uses ``default``. ``sampled`` leaves are drawn when the options
+    name no ``"variation"`` list; ``sampleable=False`` leaves accept explicit
+    values only.
+    """
+
+    path: str
+    default: tuple[float, ...]
+    sampled: bool = True
+    sampleable: bool = True
+    dtype: str = "float32"
+
+
+def _lane_value(value, lane: int, batch: int, width: int) -> np.ndarray:
+    """Select lane ``lane`` from one shared value or one value per lane."""
+    v = np.asarray(value)
+    if v.size == width:
+        return v.reshape(width).copy()
+    if v.size == batch * width:
+        return v.reshape(batch, width)[lane].copy()
+    raise ValueError(f"expected {width} value(s) shared by the batch or ({batch}, {width}) per lane, got {v.shape}")
+
+
 class Env:
     """Base class for batched simulation, restorable State, and rendering."""
 
@@ -346,6 +375,13 @@ class Env:
     #: Entries are (key_path, width, render_offset[, public_dtype]); None offsets denote hidden fields.
     #: Hidden fields must be supplied by the simulator, not reconstructed from compact rows.
     state_layout: tuple[tuple, ...] = ()
+
+    #: Per-lane reset distributions that seed State, in sampling order.
+    reset_leaves: tuple[ResetLeaf, ...] = ()
+    #: Variation leaves ``reset`` accepts in ``options["variation_values"]``; they persist like set_variation.
+    reset_value_paths: frozenset[str] = frozenset()
+    #: Variation leaves ``reset`` samples per lane when named in ``options["variation"]``.
+    reset_sample_paths: frozenset[str] = frozenset()
 
     def __init__(
         self,
@@ -639,6 +675,166 @@ class Env:
 
     def variation_values(self) -> dict:
         return self.variation_space.value
+
+    def reset_space(self):
+        """Return a fresh per-lane distribution tree for ``reset_leaves``; reset seeds it with ``seed + lane``."""
+        factory = getattr(self, "reset_tree_factory", None)
+        if factory is None:
+            raise NotImplementedError(f"{type(self).__name__} declares reset_leaves without a reset_space")
+        return factory()
+
+    def _reset_value_ok(self, path: str, value, lane: int) -> bool:
+        """Accept or reject a sampled reset value; rejected draws are resampled."""
+        del path, value, lane
+        return True
+
+    def _reset_request(self, options: Mapping | None) -> tuple[tuple[str, ...], dict]:
+        """Validate reset options and return ``(sampled paths, explicit values)``."""
+        options = dict(options or {})
+        default = tuple(leaf.path for leaf in self.reset_leaves if leaf.sampled)
+        sampled = options.get("variation", default)
+        if not isinstance(sampled, (list, tuple)):
+            raise ValueError("variation option must be a Sequence containing variations names")
+        values = dict(options.get("variation_values", {}))
+        sampleable = {leaf.path for leaf in self.reset_leaves if leaf.sampleable} | set(self.reset_sample_paths)
+        unsupported = set(sampled) - sampleable
+        if unsupported:
+            raise NotImplementedError(
+                f"{type(self).__name__}.reset does not certify sampled variation leaves {sorted(unsupported)}"
+            )
+        unsupported = set(values) - {leaf.path for leaf in self.reset_leaves} - set(self.reset_value_paths)
+        if unsupported:
+            raise NotImplementedError(
+                f"{type(self).__name__}.reset does not certify variation_values {sorted(unsupported)}"
+            )
+        return tuple(sampled), values
+
+    def _draw_reset_lane(self, tree, lane: int, sampled, values) -> dict[str, np.ndarray]:
+        """Draw every reset leaf for one lane from its seeded tree, in declaration order."""
+        out = {}
+        for leaf in self.reset_leaves:
+            value = np.asarray(leaf.default, leaf.dtype)
+            if leaf.path in sampled:
+                node = tree
+                for part in leaf.path.split("."):
+                    node = node[part]
+                for _ in range(1000):
+                    candidate = node.sample()
+                    if self._reset_value_ok(leaf.path, candidate, lane):
+                        value = candidate
+                        break
+                else:
+                    raise RuntimeError(f"{leaf.path} rejection sampling did not converge")
+            if leaf.path in values:
+                value = _lane_value(values[leaf.path], lane, self.B, len(leaf.default)).astype(leaf.dtype)
+            out[leaf.path] = value
+        return out
+
+    def _sample_variation_leaf(self, path: str, seed: int | None) -> np.ndarray:
+        """Draw ``(B, width)`` values of one Variation leaf, one generator per lane."""
+        node = self.variation_space
+        for part in path.split("."):
+            node = node[part]
+        rows = []
+        for lane in range(self.B):
+            rng = self.rng if seed is None else np.random.default_rng((int(seed), lane))
+            if hasattr(node, "low"):
+                rows.append(node.batch_sample(1, rng).reshape(-1))
+            else:
+                rows.append(np.asarray([rng.integers(0, int(node.n))]) + int(getattr(node, "start", 0)))
+        return np.stack(rows)
+
+    def draw_reset_values(self, seed: int | None = None, options: Mapping | None = None) -> dict[str, np.ndarray]:
+        """Resolve reset options into ``{path: (num_envs, ...)}`` values.
+
+        Variation leaves (``reset_value_paths`` and ``reset_sample_paths``) are installed
+        with :meth:`set_variation` before reset leaves are drawn, so rejection tests see
+        them. Reset leaves are drawn from ``reset_space()`` seeded with ``seed + lane``.
+        """
+        sampled, values = self._reset_request(options)
+        reset_paths = {leaf.path for leaf in self.reset_leaves}
+        variation = {path: self._sample_variation_leaf(path, seed) for path in sampled if path not in reset_paths}
+        for path, value in values.items():
+            if path not in reset_paths:
+                variation[path] = value
+        if variation:
+            self._install_reset_variation(variation)
+        out = {path: np.asarray(value) for path, value in variation.items()}
+        if not self.reset_leaves:
+            return out
+        lanes = []
+        for lane in range(self.B):
+            tree = self.reset_space()
+            tree.seed(None if seed is None else int(seed) + lane)
+            lanes.append(self._draw_reset_lane(tree, lane, sampled, values))
+        for path in lanes[0]:
+            out[path] = np.stack([row[path] for row in lanes])
+        return out
+
+    def _install_reset_variation(self, values: Mapping[str, Any]) -> None:
+        self.set_variation(dict(values))
+        exact = {path: values[path] for path in self.physics_variation_leaves if path in values}
+        if exact:
+            self._configure_physics(exact)
+
+    @property
+    def physics_variation_leaves(self) -> tuple[str, ...]:
+        """Variation leaves that set per-lane simulator model parameters and travel in State."""
+        layout = self._physics_layout()
+        return () if layout is None else tuple(layout.leaves)
+
+    def _physics_layout(self):
+        return getattr(getattr(self, "_simulator", None), "physics_layout", None)
+
+    def _physics_rows(self, exact: Mapping[str, Any] | None = None) -> np.ndarray:
+        """Return float64 ``(num_envs, dim)`` physics rows for the current Variation.
+
+        A float32 style column keeps the float64 value it encodes when it still equals
+        the installed or registered value; ``exact`` entries replace it outright.
+        """
+        layout = self._physics_layout()
+        style = self.get_variation().detach().cpu().numpy()
+        cols = {p: (o, w) for p, o, w in self.variation_space.flat_layout()}
+        installed = getattr(self, "_physics_installed", None)
+        rows = np.tile(np.asarray(layout.nominal, np.float64), (self.B, 1))
+        for leaf, off, width in zip(layout.leaves, layout.offsets, layout.widths, strict=True):
+            o, w = cols[leaf]
+            encoded = style[:, o : o + w]
+            nominal = np.broadcast_to(rows[:, off : off + width], encoded.shape)
+            value = np.where(encoded == nominal.astype(np.float32), nominal, encoded.astype(np.float64))
+            if installed is not None:
+                kept = installed[:, off : off + width]
+                value = np.where(encoded == kept.astype(np.float32), kept, value)
+            if exact is not None and leaf in exact:
+                value = np.broadcast_to(np.asarray(exact[leaf], np.float64).reshape(-1, width), (self.B, width)).copy()
+            rows[:, off : off + width] = value
+        return rows
+
+    def _configure_physics(self, exact: Mapping[str, Any] | None = None) -> None:
+        """Install the current Variation's physics rows on the simulator."""
+        if self._physics_layout() is None:
+            return
+        rows = self._physics_rows(exact)
+        self._simulator.configure_physics(rows)
+        self._physics_installed = rows
+
+    def _adopt_physics_state(self, state: TensorDict) -> None:
+        """Make Variation agree with the physics a restored State carries."""
+        layout = self._physics_layout()
+        if layout is None:
+            return
+        from ._core.physics import state_key
+
+        values = self._style.values.clone()
+        cols = {p: (o, w) for p, o, w in self.variation_space.flat_layout()}
+        rows = np.empty((self.B, int(sum(layout.widths))))
+        for leaf, off, width in zip(layout.leaves, layout.offsets, layout.widths, strict=True):
+            v = state[state_key(leaf)].detach().to(torch.float64).cpu().reshape(self.B, width)
+            rows[:, off : off + width] = v.numpy()
+            o, _ = cols[leaf]
+            values[:, o : o + width] = v.to(device=values.device, dtype=values.dtype)
+        self._style = StyleTensor(values, self.variation_space.flat_layout())
+        self._physics_installed = rows
 
     def describe(self) -> dict[str, Any]:
         """Return environment specs, renderer fidelity declarations, and their stated limitations."""

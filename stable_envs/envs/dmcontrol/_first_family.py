@@ -43,15 +43,16 @@ class FirstFamilySemantics:
     def set_variation(self, variation=None, **overrides):
         result = super().set_variation(variation, **overrides)
         if hasattr(self, "_simulator"):
-            layout = {name: (off, width) for name, off, width in self.variation_space.flat_layout()}
-            cols = [layout[f"gravity.{axis}"][0] for axis in "xyz"]
-            gravity = self.get_style()[:, cols].to(torch.float64)
-            # Preserve nominal gravity in float64 when a float32 style row encodes its default.
-            encoded_default = torch.tensor([0.0, 0.0, -9.81], dtype=torch.float32, device=self.device)
-            exact_default = torch.tensor([0.0, 0.0, -9.81], dtype=torch.float64, device=self.device)
-            gravity = torch.where(self.get_style()[:, cols] == encoded_default, exact_default, gravity)
-            self._simulator.configure_gravity(gravity.cpu().numpy())
+            self._configure_physics()
         return result
+
+    @property
+    def reset_value_paths(self):
+        return frozenset(self.physics_variation_leaves)
+
+    @property
+    def reset_sample_paths(self):
+        return frozenset(self.physics_variation_leaves)
 
     def _layout(self):
         return tuple(
@@ -72,8 +73,10 @@ class FirstFamilySemantics:
         rows = torch.as_tensor(rows, device=self.device).reshape(-1, nq)
         return TensorDict({"qpos": rows.clone()}, [len(rows)], device=self.device)
 
-    def reset(self, seed=None):
+    def reset(self, seed=None, options=None):
+        """Reset every lane; ``options`` sample or set physics leaves per lane, as SWM's reset does."""
         self._check_open("reset")
+        self.draw_reset_values(seed, options)
         return self._simulator.reset(seed)
 
     def get_state(self):
@@ -83,6 +86,7 @@ class FirstFamilySemantics:
     def set_state(self, state):
         self._check_open("set_state")
         self._simulator.set_state(state)
+        self._adopt_physics_state(state)
 
     def _step_pipeline(self) -> StepPipeline | None:
         owner = self._simulator

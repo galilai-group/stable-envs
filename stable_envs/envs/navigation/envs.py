@@ -5,7 +5,7 @@ import torch
 from gymnasium import spaces as gym_spaces
 from tensordict import TensorDict
 
-from ...env import Env, StepResult, check_states
+from ...env import Env, ResetLeaf, StepResult, check_states
 from ...registry import register
 from ...render import _resources as _RES
 from ...render.scene import Scene2D, SceneBuilder
@@ -365,7 +365,10 @@ class _HiddenTargetSemantics:
         ("target", "position"): (POS_LO, POS_HI),
     }
     reset_tree_factory = None
-    reset_value_paths = frozenset()
+    reset_leaves = (
+        ResetLeaf("agent.position", (60.0, 112.0)),
+        ResetLeaf("target.position", (164.0, 112.0)),
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -391,58 +394,16 @@ class _HiddenTargetSemantics:
             return value[lane].copy()
         raise ValueError(f"reset position option must have shape (2,) or ({batch}, 2), got {value.shape}")
 
-    def _agent_sample_ok(self, value, lane):
-        del value, lane
-        return True
-
     def reset(self, seed=None, options=None):
         self._check_open("reset")
         options = dict(options or {})
-        variations = options.get("variation", ("agent.position", "target.position"))
-        if not isinstance(variations, (list, tuple)):
-            raise ValueError("variation option must be a Sequence containing variations names")
-        values = dict(options.get("variation_values", {}))
-        unsupported_samples = set(variations) - {"agent.position", "target.position"}
-        if unsupported_samples:
-            raise NotImplementedError(
-                f"{type(self).__name__}.reset does not certify sampled variation leaves {sorted(unsupported_samples)}"
-            )
-        supported_values = {"agent.position", "target.position"} | set(self.reset_value_paths)
-        unsupported_values = set(values) - supported_values
-        if unsupported_values:
-            raise NotImplementedError(
-                f"{type(self).__name__}.reset does not certify variation_values {sorted(unsupported_values)}"
-            )
-        style_values = {key: value for key, value in values.items() if key in self.reset_value_paths}
-        if style_values:
-            self.set_variation(style_values)
-        agent_rows, target_rows = [], []
+        values = self.draw_reset_values(seed, options)
+        agent_rows, target_rows = list(values["agent.position"]), list(values["target.position"])
         for lane in range(self.B):
-            tree = self.reset_tree_factory()
-            tree.seed(None if seed is None else int(seed) + lane)
-            agent_leaf, target_leaf = tree["agent"]["position"], tree["target"]["position"]
-            agent = np.asarray([60.0, 112.0], np.float32)
-            target = np.asarray([164.0, 112.0], np.float32)
-            if "agent.position" in variations:
-                for _ in range(1000):
-                    candidate = agent_leaf.sample()
-                    if self._agent_sample_ok(candidate, lane):
-                        agent = candidate
-                        break
-                else:
-                    raise RuntimeError("agent.position rejection sampling did not converge")
-            if "target.position" in variations:
-                target = target_leaf.sample()
-            if "agent.position" in values:
-                agent = np.asarray(values["agent.position"], np.float32)
-            if "target.position" in values:
-                target = np.asarray(values["target.position"], np.float32)
             if "state" in options:
-                agent = self._option_position(options["state"], lane, self.B)
+                agent_rows[lane] = self._option_position(options["state"], lane, self.B)
             if "target_state" in options:
-                target = self._option_position(options["target_state"], lane, self.B)
-            agent_rows.append(agent)
-            target_rows.append(target)
+                target_rows[lane] = self._option_position(options["target_state"], lane, self.B)
         self._set_render_state(np.stack(agent_rows))
         self._target_position.copy_(torch.as_tensor(np.stack(target_rows), device=self.device))
         self._live_rows = self.B
@@ -840,7 +801,9 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
     def _step(self, action, *, active=None) -> TensorDict:
         return super()._step(action, active=active)
 
-    def _agent_sample_ok(self, value, lane):
+    def _reset_value_ok(self, path, value, lane):
+        if path != "agent.position":
+            return True
         axis = int(self._style["wall.axis"][lane].item())
         thickness = int(self._style["wall.thickness"][lane].item())
         radius = float(self._style["agent.radius"][lane].item())
@@ -1108,6 +1071,12 @@ class SimplePointMaze(_GymReferencePort):
     }
 
     speed = MAZE_AGENT_SPEED
+    reset_tree_factory = staticmethod(_simple_maze_reset_tree)
+    reset_leaves = (
+        ResetLeaf("agent.position", (0.5, 0.5)),
+        ResetLeaf("goal.position", MAZE_GOAL_POS, sampled=False, sampleable=False),
+    )
+    reset_value_paths = frozenset({"agent.speed", "goal.radius"})
     color_exactness_applicability = {
         "leaves": ("goal.color",),
         "mechanism": "the source draws the goal as a matplotlib Circle with alpha=0.5, which Agg "
@@ -1213,54 +1182,29 @@ class SimplePointMaze(_GymReferencePort):
                 return True
         return False
 
+    def _reset_value_ok(self, path, value, lane):
+        return path != "agent.position" or not self._position_collides(value, lane)
+
+    def _draw_reset_lane(self, tree, lane, sampled, values):
+        out = super()._draw_reset_lane(tree, lane, sampled, values)
+        leaf = tree["agent"]["position"]
+        for _ in range(1000):
+            candidate = leaf.sample()
+            if not self._position_collides(candidate, lane):
+                out["task.cached_goal_agent_position"] = candidate
+                return out
+        raise RuntimeError("agent.position rejection sampling did not converge")
+
     def reset(self, seed=None, options=None):
         self._check_open("reset")
-        options = dict(options or {})
-        variations = options.get("variation", ("agent.position",))
-        if not isinstance(variations, (list, tuple)):
-            raise ValueError("variation option must be a Sequence containing variations names")
-        values = dict(options.get("variation_values", {}))
-        unsupported_samples = set(variations) - {"agent.position"}
-        if unsupported_samples:
-            raise NotImplementedError(
-                "SimplePointMaze.reset certifies sampled agent.position only; unsupported leaves "
-                f"{sorted(unsupported_samples)}"
-            )
-        supported_values = {"agent.position", "goal.position", "agent.speed", "goal.radius"}
-        unsupported_values = set(values) - supported_values
-        if unsupported_values:
-            raise NotImplementedError(
-                f"SimplePointMaze.reset does not certify variation_values {sorted(unsupported_values)}"
-            )
-        style_values = {key: value for key, value in values.items() if key in {"agent.speed", "goal.radius"}}
-        if style_values:
-            self.set_variation(style_values)
-        starts, cached, goals = [], [], []
-        for lane in range(self.B):
-            tree = _simple_maze_reset_tree()
-            tree.seed(None if seed is None else int(seed) + lane)
-            leaf = tree["agent"]["position"]
-
-            def sample_free():
-                for _ in range(1000):
-                    candidate = leaf.sample()
-                    if not self._position_collides(candidate, lane):
-                        return candidate
-                raise RuntimeError("agent.position rejection sampling did not converge")
-
-            start = sample_free() if "agent.position" in variations else np.asarray([0.5, 0.5], np.float32)
-            if "agent.position" in values:
-                start = np.asarray(values["agent.position"], np.float32)
-            cached_position = sample_free()
-            goal = np.asarray(values.get("goal.position", MAZE_GOAL_POS), np.float32)
-            starts.append(start)
-            cached.append(cached_position)
-            goals.append(goal)
-        rows = np.concatenate([np.stack(starts), np.stack(goals)], axis=1)
-        self._set_render_state(rows)
-        self._agent_position.copy_(torch.as_tensor(np.stack(starts), device=self.device, dtype=torch.float64))
+        values = self.draw_reset_values(seed, options)
+        starts, goals = values["agent.position"], values["goal.position"]
+        self._set_render_state(np.concatenate([starts, goals], axis=1))
+        self._agent_position.copy_(torch.as_tensor(starts, device=self.device, dtype=torch.float64))
         self._state_is_float64.zero_()
-        self._cached_goal_agent_position.copy_(torch.as_tensor(np.stack(cached), device=self.device))
+        self._cached_goal_agent_position.copy_(
+            torch.as_tensor(values["task.cached_goal_agent_position"], device=self.device)
+        )
         self._live_rows = self.B
         self._regenerate_cached_goal()
         return self.get_state()

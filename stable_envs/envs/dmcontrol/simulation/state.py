@@ -5,7 +5,7 @@ from tensordict import TensorDict
 _DTYPES = {torch.float64: np.float64, torch.int64: np.int64, torch.bool: np.bool_}
 
 
-def export_state(envs, cumulative, fields, device):
+def export_state(envs, cumulative, fields, device, extra=None):
     """Export fresh State columns with one device transfer per field.
 
     Read live lane owners into owned host arrays. CPU tensors retain those arrays;
@@ -38,6 +38,8 @@ def export_state(envs, cumulative, fields, device):
             columns["model", "target_body_qwqy"][i] = physics.named.model.body_quat["target_ball", ["qw", "qy"]]
         if "activation" in columns:
             columns["activation"][i] = data.act
+    for key, value in (extra or {}).items():
+        columns[key][:] = value
     # On CPU, from_numpy retains these fresh arrays. No owner/buffer is reused
     # by a later step, reset or export; CUDA conversion also owns its storage.
     return TensorDict({key: torch.from_numpy(value).to(device) for key, value in columns.items()}, [batch], device=device)

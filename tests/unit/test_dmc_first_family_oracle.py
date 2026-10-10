@@ -5,12 +5,23 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+import torch
 
+from stable_envs._core.physics import state_key
 from stable_envs.envs.dmcontrol.simulation.first_family import FirstFamilyAdapter
 from tests.helpers.reference.oracle import assert_outputs, state_at
 from tests.helpers.reference.semantics import compare_state
 
 ROOT = Path(__file__).parents[1] / "fixtures/semantics/dmc_first_family"
+
+
+def _registered_physics(state, layout):
+    """The corpus predates State physics fields; it was recorded at the wrappers' registered physics."""
+    batch = state.batch_size[0]
+    for leaf, offset, width in zip(layout.leaves, layout.offsets, layout.widths, strict=True):
+        value = torch.tensor(layout.nominal[offset : offset + width], dtype=torch.float64)
+        state[state_key(leaf)] = value.expand(batch, width).clone()
+    return state
 
 
 def test_acrobot_identity_preserves_oracle_and_rejects_old_public_name():
@@ -45,11 +56,14 @@ def test_dmc_first_family_replays_independent_full_state_corpus(domain):
         try:
             # Restore reached source states after a different candidate history.
             for start in (0, 7, 24):
-                env.set_state(state_at(data, start, batch=3))
-                compare_state(env.get_state(), state_at(data, start, batch=3))
+                expected = _registered_physics(state_at(data, start, batch=3), env.physics_layout)
+                env.set_state(expected)
+                compare_state(env.get_state(), expected)
                 for t, action in enumerate(data["actions"][start:], start=start):
                     result = env.step(action)
-                    compare_state(result["state"], state_at(data, t + 1, batch=3))
+                    compare_state(
+                        result["state"], _registered_physics(state_at(data, t + 1, batch=3), env.physics_layout)
+                    )
                     assert_outputs(
                         result,
                         data,

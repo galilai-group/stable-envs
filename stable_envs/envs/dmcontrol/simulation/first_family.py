@@ -7,8 +7,11 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._core import physics as _physics
 from ...._execution.protocol import SimulatorAdapter
 from .state import export_state
+
+GRAVITY = tuple(_physics.ModelField(f"gravity.{axis}", "opt.gravity", index=i) for i, axis in enumerate("xyz"))
 
 # These fields restore simulation; compact renderer columns cannot.
 REACHER_FIELDS = {
@@ -44,10 +47,18 @@ def _resume_fields(nq, nv):
     }
 
 
+#: Physics leaves each lane carries in its model and in State.
+PHYSICS_KNOBS = {"acrobot": GRAVITY, "pendulum": GRAVITY, "cartpole": GRAVITY}
+
+
+def _with_physics(fields, knobs):
+    return {**fields, **{key: (width, torch.float64) for key, width in _physics.state_fields(knobs).items()}}
+
+
 FIRST_FAMILY_FIELDS = {
-    "acrobot": _resume_fields(2, 2),
-    "pendulum": _resume_fields(1, 1),
-    "cartpole": _resume_fields(2, 2),
+    "acrobot": _with_physics(_resume_fields(2, 2), PHYSICS_KNOBS["acrobot"]),
+    "pendulum": _with_physics(_resume_fields(1, 1), PHYSICS_KNOBS["pendulum"]),
+    "cartpole": _with_physics(_resume_fields(2, 2), PHYSICS_KNOBS["cartpole"]),
 }
 
 
@@ -108,8 +119,8 @@ class FirstFamilyAdapter(SimulatorAdapter):
         self.num_envs = int(num_envs)
         self.device = torch.device(device)
         self.envs = [_make_first_family(domain, int(seed) + i) for i in range(self.num_envs)]
+        self.physics = _physics.PhysicsLanes(PHYSICS_KNOBS[domain], [env.physics.model.ptr for env in self.envs])
         self._cumulative = np.zeros(self.num_envs, np.float64)
-        self._gravity = np.tile(np.array([0.0, 0.0, -9.81]), (self.num_envs, 1))
         self._closed = False
         self.reset(seed=seed)
 
@@ -117,13 +128,20 @@ class FirstFamilyAdapter(SimulatorAdapter):
         if self._closed:
             raise RuntimeError("FirstFamilyAdapter is closed")
 
+    @property
+    def physics_layout(self):
+        return self.physics.layout
+
+    def configure_physics(self, values):
+        """Install ``(num_envs, dim)`` physics rows in ``physics_layout.leaves`` order."""
+        self._check_open()
+        self.physics.configure(values)
+
     def configure_gravity(self, values):
         values = np.asarray(values, np.float64).reshape(self.num_envs, 3)
         if not np.isfinite(values).all():
             raise ValueError("Gravity must be finite")
-        for env, gravity in zip(self.envs, values, strict=True):
-            env.physics.model.opt.gravity[:] = gravity
-        self._gravity = values.copy()
+        self.physics.configure({f"gravity.{axis}": values[:, i : i + 1] for i, axis in enumerate("xyz")})
 
     def reset(self, seed=None):
         self._check_open()
@@ -136,12 +154,13 @@ class FirstFamilyAdapter(SimulatorAdapter):
 
     def get_state(self):
         self._check_open()
-        return export_state(self.envs, self._cumulative, self.fields, self.device)
+        return export_state(self.envs, self._cumulative, self.fields, self.device, self.physics.export())
 
     def set_state(self, state):
         self._check_open()
         if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):
             raise TypeError("Recovered DMC tasks require full TensorDict State with batch [num_envs]")
+        rows = self.physics.rows_from_state(state)
         for key, (width, dtype) in self.fields.items():
             if key not in state.keys(True, True):
                 raise ValueError(f"Full State missing {key}")
@@ -149,6 +168,7 @@ class FirstFamilyAdapter(SimulatorAdapter):
             if value.shape != (self.num_envs, width) or value.dtype != dtype or not torch.isfinite(value).all():
                 raise ValueError(f"Invalid State field {key}")
         host = state.cpu()
+        self.physics.configure(rows)
         for i, env in enumerate(self.envs):
             row, physics, base = host[i], env.physics, env._env
             physics.data.qpos[:] = row["qpos"].numpy()
