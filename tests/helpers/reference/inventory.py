@@ -14,7 +14,7 @@ EXCLUDED = frozenset(
     {"swm/CraftaxClassicPixels-v1", "swm/CraftaxClassicSymbolic-v1", "swm/CraftaxPixels-v1", "swm/CraftaxSymbolic-v1"}
 )
 SHARED_CONTRACTS = [
-    "tests/contracts/test_state.py",
+    "tests/contracts/test_contract_state.py",
     "tests/contracts/test_simulation.py",
     "tests/contracts/test_task.py",
 ]

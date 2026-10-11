@@ -96,7 +96,7 @@ PINS = {
 # Every profile requires these functions for every declared registration, seed and
 # action dtype. A -k/-m selection is useful development, but cannot pass a profile.
 CONTRACTS = {
-    "test_state.py::test_restore_and_ownership": "state",
+    "test_contract_state.py::test_restore_and_ownership": "state",
     "test_simulation.py::test_independent_source_trajectory": "simulation",
     "test_task.py::test_independent_source_task_outputs": "task",
     "test_online.py::test_selected_states_follow_source": "online",

@@ -122,7 +122,7 @@ def test_required_profile_does_not_import_unverified_installed_source(tmp_path):
             "-m",
             "pytest",
             "-q",
-            "tests/contracts/test_state.py",
+            "tests/contracts/test_contract_state.py",
             "--contract-profile",
             "native",
             "--contract-output",
