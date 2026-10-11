@@ -143,9 +143,11 @@ def render(family, state, device, backend="auto", chunk_size=None):
                 for offset in range(0, count, core.MJW_CHUNK):
                     n = min(core.MJW_CHUNK, count - offset)
                     nw = 1 << (n - 1).bit_length()
-                    active.add((device_index, token, size * ss, nw))
                     if backend == "mjwarp_fidelity":
+                        active.add((device_index, token + "/fidelity/glass", size, nw))
                         active.add((device_index, token + "/fidelity/opaque", size * ss, nw))
+                    else:
+                        active.add((device_index, token, size * ss, nw))
         with core._CTX_CACHE.working_set(active):
             for token, bundle, indices in prepared:
                 if backend == "mjwarp_fidelity":

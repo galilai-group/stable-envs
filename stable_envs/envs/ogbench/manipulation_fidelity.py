@@ -53,7 +53,13 @@ def draw(token, bundle, state, device, size, supersample):
             alternate.pristine["geom_group"] = alternate.model.geom_group.copy()
             core.register_bundle(key, alternate)
 
-    def raster(key, rows, *, composite=False):
+    glass = token + "/fidelity/glass"
+    if core.get_bundle(glass) is None:
+        single = copy.copy(bundle)
+        single.sample_pattern = "grid"
+        core.register_bundle(glass, single)
+
+    def raster(key, rows, *, composite=False, res=res):
         renderer = _ConfiguredRenderer(key, core.get_bundle(key), device, res, 1)
         try:
             if not composite:
@@ -80,22 +86,19 @@ def draw(token, bundle, state, device, size, supersample):
     for start in range(0, len(state), core.MJW_CHUNK):
         rows = state[start : start + core.MJW_CHUNK]
         nw = 1 << (len(rows) - 1).bit_length()
-        keys = [(torch.cuda.current_device(), key, res, nw) for key in (token, token + "/fidelity/opaque")]
+        keys = [
+            (torch.cuda.current_device(), token + "/fidelity/opaque", res, nw),
+            (torch.cuda.current_device(), glass, size, nw),
+        ]
         # Both passes' segmentation views remain live until composition completes.
         with core._CTX_CACHE.lease(keys):
-            first, first_seg = raster(token, rows)
+            first, first_seg = raster(glass, rows, res=size)
             opaque, shadowed, opaque_seg = raster(token + "/fidelity/opaque", rows, composite=True)
             ratio = ((shadowed.float() / reference).clamp(0, 1) - 0.3).div(0.7).clamp(0, 1)
             moving = movers[(opaque_seg + 1).long()]
             shadows = torch.where(moving[..., None], opaque.float(), opaque.float() * ratio)
+            shadows = shadows.reshape(len(rows), size, supersample, size, supersample, 3).mean((2, 4))
             amount = opacity[(first_seg + 1).long()][..., None]
             image = torch.where(amount < 1, amount * first.float() + (1 - amount) * shadows, shadows)
-            image = (
-                image.reshape(len(rows), size, supersample, size, supersample, 3)
-                .mean((2, 4))
-                .round()
-                .clamp(0, 255)
-                .byte()
-            )
-            images.append(image)
+            images.append(image.round().clamp(0, 255).byte())
     return torch.cat(images)
