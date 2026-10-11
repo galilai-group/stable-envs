@@ -228,6 +228,15 @@ def test_set_variation_repaints_the_current_episode_and_restores(pair):
     tampered["variation", "rocket", "body_color", "value"][0, 0] = 10
     with pytest.raises(ValueError):
         destination.set_state(tampered)
+    # Every later reset draws the configured defaults, and Variation reports what is drawn.
+    for options in [None, {"variation": ["environment.start_tilt"]}]:
+        plain = e.reset(seed=18, options=options)
+        assert torch.equal(plain["render", "rgba"][:, [0, 4]], saved["render", "rgba"][:, [0, 4]])
+        assert torch.equal(
+            plain["variation", "rocket", "body_color", "value"], saved["variation", "rocket", "body_color", "value"]
+        )
+        destination.set_state(plain)
+        exact(plain, destination.get_state())
 
 
 def test_variation_values_last_one_reset_and_restore(pair):

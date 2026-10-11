@@ -82,8 +82,9 @@ Families that wrap the stable-worldmodel source (PushT, Rocket, OGBench Cube/Sce
 applies its appearance leaves (`PushT.immediate_variation_leaves`: colours, goal pose,
 `rendering.render_goal`) to the running episode; body shapes and scales need a rebuilt
 physics space and start poses exist only at reset, so those wait for the next reset.
-Rocket also repaints its colour leaves on the current episode at once; its start leaves (drop
-height, lateral offset, tilt) describe how an episode begins, so they wait for the next reset.
+Rocket also repaints its colour leaves on the current episode at once, and every later reset
+draws them, so `get_variation` always matches the drawn colours; its start leaves (drop height,
+lateral offset, tilt) describe how an episode begins, so they wait for the next reset.
 
 ## One Variation vs B independent Variations
 

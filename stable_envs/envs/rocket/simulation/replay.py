@@ -126,6 +126,7 @@ class RocketReplay:
         if self.capacity < 2:
             raise ValueError("Rocket horizon must be positive")
         self.names = [p[1:].replace("/", ".") for p, _ in nodes(self.env.variation_space) if p]
+        self.registered = {path: self.env.variation_space._walk(path).init_value.copy() for path in PAINTED}
         if initialize:
             try:
                 self.reset(seed, options)
@@ -171,8 +172,11 @@ class RocketReplay:
         finally:
             for path, value in defaults.items():
                 self.env.variation_space._walk(path)._init_value = value
-        for path in values:
-            if path in PAINTED:
+        # Unlike the source, a configured colour default is drawn by every reset, not only sampling ones.
+        for path in PAINTED:
+            if path in values or not np.array_equal(
+                self.env.variation_space._walk(path).init_value, self.registered[path]
+            ):
                 paint(self.env, path)
         self.history = np.zeros((self.capacity, 7), np.float64)
         self.dtypes = np.zeros(self.capacity, np.uint8)
