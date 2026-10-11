@@ -23,7 +23,7 @@ repos:
       - id: mixed-line-ending
       - id: check-added-large-files
         args: [--maxkb=1000]
-        exclude: ^docs/assets/media/
+        exclude: ^(?:docs/assets/media/|uv\.lock$)
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.0

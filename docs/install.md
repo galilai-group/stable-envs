@@ -43,7 +43,7 @@ Two kinds, and they are easy to mix up.
 | `robotics` | Fetch | gymnasium-robotics (MuJoCo pin), OpenCV for source-sized OpenGL output |
 | `mjwarp` | Fetch / some visual 3-D cells | MuJoCo Warp render backend |
 | `craftax` | Craftax | jax |
-| `craftax-semantics` / `-gpu` | registered Craftax semantics | Craftax, JAX, Flax, Gymnax, Chex; construction checks the exact Craftax 1.5.0 / JAX 0.10.1 profile on Python 3.12 |
+| `craftax-semantics` / `-gpu` | registered Craftax semantics | Craftax, JAX, Flax, Gymnax, Chex; construction checks the exact Craftax 1.5.0 / JAX 0.10.1 profile (`pin-craftax`) on Python 3.12 |
 | `rocket` | PyFlyt rocket (CUDA + nvdiffrast) | PyFlyt 0.29.0 / pybullet 3.2.7 / pillow / scipy; pip resolves numpy<2 from PyFlyt's metadata |
 | `docs` / `dev` / `examples` / `hf` | no | documentation, tests, gallery helpers, HuggingFace |
 
@@ -51,6 +51,18 @@ Two kinds, and they are easy to mix up.
 `PushTDiscrete`. Both now use the source-aligned task and complete replay State.
 Their current public renderer is CPU Pygame. CUDA selects output storage;
 it does not turn that renderer into a GPU renderer.
+
+## Reference profiles
+
+Extras declare compatible ranges. Bit-exact or MSE-bounded parity with an upstream renderer is
+certified only under that family's reference profile: the `pin-<profile>` dependency groups in
+`pyproject.toml` (`pin-classic`, `pin-navigation`, `pin-pusht`, `pin-dmc`, `pin-fetch`,
+`pin-ogbench`, `pin-rocket`, `pin-craftax`, `pin-craftax-render`). They are development-only,
+mutually exclusive, Python 3.12 only, and all resolved in the repository's single `uv.lock`:
+
+```bash
+uv sync --python 3.12 --extra dmcontrol --group pin-dmc --group test
+```
 
 ## Extra incompatibilities
 

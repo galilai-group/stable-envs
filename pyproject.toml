@@ -41,7 +41,8 @@ Source = "https://github.com/galilai-group/stable-envs"
 
 [project.optional-dependencies]
 # Family extras declare compatible ranges: any resolution inside them constructs, steps
-# and renders the family. Exact pins appear only where the family checks a version itself.
+# and renders the family. Exact pins appear only where the family checks a version itself;
+# the versions parity is certified under live in the pin-* dependency groups below.
 # Backends remain separate so users do not install CUDA extensions merely to compare
 # against an official CPU renderer.
 # PushT replay checks this exact Pymunk at construction.
@@ -89,6 +90,7 @@ hf = ["datasets>=2.14"]
 examples = ["imageio", "imageio-ffmpeg", "opencv-python"]
 # No `all` extra: Fetch needs mujoco<3.12, and nvdiffrast cannot be expressed
 # as PyPI metadata.
+# docs and dev repeat the dependency groups of the same name for pip installs.
 docs = [
   "mkdocs-material>=9.5",
   "mkdocstrings[python]>=0.27",
@@ -107,6 +109,127 @@ dev = [
   "tomli>=2; python_version < '3.11'",
   "twine>=6",
 ]
+
+[dependency-groups]
+test = [
+  "pygame",
+  "pytest>=8",
+  "pytest-timeout>=2.3",
+  "pytest-xdist>=3.6",
+  "pyyaml>=6",
+  "tomli>=2; python_version < '3.11'",
+]
+lint = ["ruff>=0.12", "mypy>=1.15", "pre-commit>=4.0"]
+build = ["build>=1.2", "twine>=6"]
+docs = [
+  "mkdocs-material>=9.5",
+  "mkdocstrings[python]>=0.27",
+  "pymdown-extensions>=10.0",
+]
+dev = [{ include-group = "test" }, { include-group = "lint" }, { include-group = "build" }]
+# torch-cpu keeps Linux jobs off the CUDA wheels; torch-cuda takes PyPI's build.
+torch-cpu = ["torch>=2.2"]
+torch-cuda = ["torch>=2.2"]
+# Reference profiles: the exact versions parity is certified under, Python 3.12 only.
+# tests/unit/test_reference_pins.py keeps them equal to tests/helpers/reference/profiles.py::PINS.
+pin-classic = [
+  "numpy==2.5.3; python_version >= '3.12'",
+  "gymnasium==1.3.0; python_version >= '3.12'",
+  "pygame==2.6.1; python_version >= '3.12'",
+]
+pin-navigation = [
+  "numpy==2.5.3; python_version >= '3.12'",
+  "gymnasium==1.3.0; python_version >= '3.12'",
+  "matplotlib==3.10.9; python_version >= '3.12'",
+]
+pin-pusht = [
+  "numpy==2.2.6; python_version >= '3.12'",
+  "gymnasium==1.2.3; python_version >= '3.12'",
+  "pymunk==7.2.0; python_version >= '3.12'",
+  "pygame==2.6.1; python_version >= '3.12'",
+]
+pin-dmc = [
+  "numpy==2.5.3; python_version >= '3.12'",
+  "gymnasium==1.3.0; python_version >= '3.12'",
+  "dm-control==1.0.45; python_version >= '3.12'",
+  "mujoco==3.12.0; python_version >= '3.12'",
+]
+pin-fetch = [
+  "numpy==2.5.3; python_version >= '3.12'",
+  "gymnasium==1.3.0; python_version >= '3.12'",
+  "gymnasium-robotics==1.4.2; python_version >= '3.12'",
+  "mujoco==3.11.0; python_version >= '3.12'",
+]
+pin-ogbench = [
+  "numpy==2.2.6; python_version >= '3.12'",
+  "gymnasium==1.2.3; python_version >= '3.12'",
+  "ogbench==1.2.1; python_version >= '3.12'",
+  "mujoco==3.12.0; python_version >= '3.12'",
+  "dm-control==1.0.45; python_version >= '3.12'",
+]
+pin-rocket = [
+  "numpy==2.5.3; python_version >= '3.12'",
+  "gymnasium==1.3.0; python_version >= '3.12'",
+  "PyFlyt==0.29.0; python_version >= '3.12'",
+  "pybullet==3.2.7; python_version >= '3.12'",
+]
+pin-craftax = [
+  "craftax==1.5.0; python_version >= '3.12'",
+  "jax==0.10.1; python_version >= '3.12'",
+  "jaxlib==0.10.1; python_version >= '3.12'",
+  "flax==0.12.7; python_version >= '3.12'",
+  "gymnax==0.0.9; python_version >= '3.12'",
+  "chex==0.1.92; python_version >= '3.12'",
+  "numpy==2.2.6; python_version >= '3.12'",
+  "gymnasium==1.2.3; python_version >= '3.12'",
+  "tensordict==0.14.2; python_version >= '3.12'",
+  "torch==2.14.0; python_version >= '3.12'",
+]
+pin-craftax-render = ["craftax==1.6.1; python_version >= '3.12'", "jax==0.11.1; python_version >= '3.12'"]
+# GPU add-on, combinable with pin-dmc or pin-ogbench.
+gpu-mjwarp = ["mujoco-warp==3.12.0; python_version >= '3.12'", "warp-lang==1.17.0; python_version >= '3.12'"]
+
+[tool.uv]
+environments = ["sys_platform == 'darwin'", "sys_platform == 'linux'"]
+conflicts = [
+  [{ group = "torch-cpu" }, { group = "torch-cuda" }],
+  [
+    { group = "pin-classic" },
+    { group = "pin-navigation" },
+    { group = "pin-pusht" },
+    { group = "pin-dmc" },
+    { group = "pin-fetch" },
+    { group = "pin-ogbench" },
+    { group = "pin-rocket" },
+    { group = "pin-craftax" },
+    { group = "pin-craftax-render" },
+  ],
+  # Fetch needs MuJoCo 3.11; these need 3.12.
+  [{ extra = "robotics" }, { group = "pin-dmc" }],
+  [{ extra = "robotics" }, { group = "pin-ogbench" }],
+  [{ extra = "robotics" }, { group = "gpu-mjwarp" }],
+  [{ extra = "robotics" }, { extra = "dmcontrol-gpu" }],
+  [{ extra = "robotics" }, { extra = "ogbench-manipulation" }],
+  [{ extra = "robotics" }, { extra = "ogbench-manipulation-gpu" }],
+  [{ extra = "dmcontrol-gpu" }, { group = "pin-fetch" }],
+  [{ extra = "ogbench-manipulation" }, { group = "pin-fetch" }],
+  [{ extra = "ogbench-manipulation-gpu" }, { group = "pin-fetch" }],
+]
+
+# PyFlyt 0.29.0 declares numpy<2 but runs on 2.5.3 in the rocket reference profile. This
+# replaces its metadata for uv only; pip still resolves the rocket extra to numpy<2.
+[[tool.uv.dependency-metadata]]
+name = "pyflyt"
+version = "0.29.0"
+requires-dist = ["numba", "numpy", "scipy", "gymnasium", "pettingzoo", "pybullet", "pyyaml"]
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", group = "torch-cpu", marker = "sys_platform == 'linux'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [tool.setuptools.packages.find]
 include = ["stable_envs*"]
