@@ -150,6 +150,19 @@ _OGB_SCENE_SWM_ONLY = {
 
 # ====================================================================== Rocket
 
+#: Reset distributions for the drop pose. They are Variation on both sides (per lane, sampled with
+#: ``seed + lane`` or set through ``variation_values``) and reach pixels by moving the rocket.
+ROCKET_START_LEAVES = (
+    "environment.start_height_ratio",
+    "environment.start_horizontal_offset",
+    "environment.start_tilt",
+)
+ROCKET_GATE = (
+    "tests/helpers/reference/gates/variation_pilots.py::rocket_reset_leaf_gate -- explicit per-lane "
+    "values, seeded per-lane samples and a plain reset back to the defaults give bit-identical "
+    "observations to swm over a 40-step rollout"
+)
+
 _ROCKET_SWM_ONLY = {
     "environment.sky_color": (
         "DEAD UPSTREAM, MEASURED. swm declares an RGBBox and nothing ever reads it: the string "
@@ -158,18 +171,6 @@ _ROCKET_SWM_ONLY = {
         "over 5 seeds spanning the RGB cube -- drawn values as far apart as (43,202,87) and "
         "(149,165,44) -- moved 0 of 691,200 pixels, max channel difference 0, and all three frame "
         "stacks hash to the same digest. Offering it would advertise a knob that cannot work"
-    ),
-    "environment.start_height_ratio": (
-        "a RESET distribution for the drop altitude, not an appearance. It reaches the frame only by "
-        "moving the rocket, which is our state; sample_states covers 1.9-489 m directly"
-    ),
-    "environment.start_horizontal_offset": (
-        "a RESET distribution for the lateral start, not an appearance; our state carries the "
-        "position and sample_states covers lateral drift to 190 m"
-    ),
-    "environment.start_tilt": (
-        "a RESET distribution for the initial attitude; our state carries the quaternion and "
-        "sample_states draws tumbling and near-upright attitudes"
     ),
 }
 
@@ -194,7 +195,14 @@ NEWCELL_VARIATION_MAPS: dict[str, VariationMap] = {
         # reference render camera's view in the sampled regime, so a pixel probe cannot see it, but
         # getVisualShapeData confirms our material_table reproduces the 3-decimal URDF quantisation
         # swm applies (e.g. (104,60,3) -> 0.408/0.235/0.012, matching f"{v:.3f}").
-        identical=("rocket.body_color", "rocket.fin_color", "rocket.leg_color", "rocket.booster_color", "pad.color"),
+        identical=(
+            "rocket.body_color",
+            "rocket.fin_color",
+            "rocket.leg_color",
+            "rocket.booster_color",
+            "pad.color",
+            *ROCKET_START_LEAVES,
+        ),
         swm_only=_ROCKET_SWM_ONLY,
         ours_only={
             "flame.ignited": "swm has no ignition leaf: PyFlyt recolours the flame link from the "
@@ -261,19 +269,19 @@ LEAF_CLASSIFICATION: dict[str, dict] = {
                 "TinyRenderer's clear colour is fixed",
             ),
             "environment.start_height_ratio": _cls(
-                "not_applicable",
-                "a reset distribution; the resulting pose is our STATE",
-                PROBES["rocket_liveness"] + " -- moves pixels (18 px) only by moving the rocket",
+                "mapped",
+                "reset distribution for the drop altitude, identical path and units",
+                ROCKET_GATE,
             ),
             "environment.start_horizontal_offset": _cls(
-                "not_applicable",
-                "a reset distribution; the resulting pose is our STATE",
-                PROBES["rocket_liveness"] + " -- moves pixels (28 px) only by moving the rocket",
+                "mapped",
+                "reset distribution for the lateral start, identical path and units",
+                ROCKET_GATE,
             ),
             "environment.start_tilt": _cls(
-                "not_applicable",
-                "a reset distribution; the resulting attitude is our STATE",
-                PROBES["rocket_liveness"] + " -- moves pixels (55,257 px) only by re-posing the rocket",
+                "mapped",
+                "reset distribution for the initial attitude, identical path and units",
+                ROCKET_GATE,
             ),
         },
     },

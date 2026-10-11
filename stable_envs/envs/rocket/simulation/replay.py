@@ -4,6 +4,7 @@ import copy
 from importlib.metadata import version
 
 import numpy as np
+import pybullet as p
 
 from .actions import validate_action
 from .numeric import capture
@@ -11,6 +12,33 @@ from .spaces import nodes
 from .task import RocketLandingEnv
 
 DTYPES = (None, np.dtype("float32"), np.dtype("float64"), np.dtype("uint8"))
+#: Colour leaves in ``render/rgba`` row order; they and the undrawn sky act on the live episode.
+PAINTED = ("rocket.body_color", "rocket.fin_color", "rocket.leg_color", "rocket.booster_color", "pad.color")
+IMMEDIATE = (*PAINTED, "environment.sky_color")
+
+
+def paint(env, path):
+    """Draw one colour leaf's current value the way the source's reset does."""
+    value = env.variation_space._walk(path).value / 255.0
+    client = env.env._client
+    if path == "pad.color":
+        # The source writes a 3-decimal URDF material, which PyBullet holds in float32.
+        body, links = env.landing_pad_id, [-1]
+        rgba = [float(np.float32(float(f"{c:.3f}"))) for c in value] + [1.0]
+    else:
+        body, part = env.env.drones[0].Id, path.split(".")[1].removesuffix("_color")
+        links = (
+            [-1]
+            if part == "body"
+            else [
+                i
+                for i in range(p.getNumJoints(body, physicsClientId=client))
+                if part in p.getJointInfo(body, i, physicsClientId=client)[12].decode("utf-8").lower()
+            ]
+        )
+        rgba = list(value) + [1.0]
+    for link in links:
+        p.changeVisualShape(body, link, rgbaColor=rgba, physicsClientId=client)
 
 
 def encode_rng(state):
@@ -105,7 +133,8 @@ class RocketReplay:
                 self.close()
                 raise
 
-    def reset(self, seed=None, options=None):
+    def reset(self, seed=None, options=None, values=None):
+        """``values`` sets leaves for this episode only; the drawn colours among them are painted."""
         if seed is not None and (
             isinstance(seed, (bool, np.bool_)) or not isinstance(seed, (int, np.integer)) or not 0 <= seed < 2**63
         ):
@@ -119,19 +148,46 @@ class RocketReplay:
         for key in ["randomize_drop", "accelerate_drop", "randoimize_drop"]:
             if key in options and type(options[key]) is not bool:
                 raise ValueError("Reset flags must be bool")
-        self.seed = -1 if seed is None else int(seed)
-        self.options = options
-        self.anchor_values = {
-            p: copy.deepcopy(node.init_value)
-            for p, node in nodes(self.env.variation_space)
-            if not hasattr(node, "spaces")
-        }
-        output = self.env.reset(seed=seed, options=copy.deepcopy(options))
+        values = dict(values or {})
+        for path, value in values.items():
+            node = self.env.variation_space._walk(path) if path in self.names else None
+            if node is None or hasattr(node, "spaces") or not node.contains(value):
+                raise ValueError(f"Invalid Rocket Variation value: {path}")
+            if any(k == "all" or path == k or path.startswith(k + ".") for k in selection):
+                raise ValueError(f"Rocket Variation {path} is both sampled and set")
+        # An explicit value is this episode's default, so the replay anchor reproduces it.
+        defaults = {path: self.env.variation_space._walk(path).init_value for path in values}
+        for path, value in values.items():
+            self.env.variation_space._walk(path)._init_value = copy.deepcopy(value)
+        try:
+            self.seed = -1 if seed is None else int(seed)
+            self.options = options
+            self.anchor_values = {
+                p: copy.deepcopy(node.init_value)
+                for p, node in nodes(self.env.variation_space)
+                if not hasattr(node, "spaces")
+            }
+            output = self.env.reset(seed=seed, options=copy.deepcopy(options))
+        finally:
+            for path, value in defaults.items():
+                self.env.variation_space._walk(path)._init_value = value
+        for path in values:
+            if path in PAINTED:
+                paint(self.env, path)
         self.history = np.zeros((self.capacity, 7), np.float64)
         self.dtypes = np.zeros(self.capacity, np.uint8)
         self.length = self.post = 0
         self.last_dtype = 2
         return output
+
+    def configure(self, row):
+        for path, value in row.items():
+            node = self.env.variation_space._walk(path)
+            node.set_init_value(copy.deepcopy(value))
+            if path in IMMEDIATE:
+                node.set_value(copy.deepcopy(value))
+            if path in PAINTED:
+                paint(self.env, path)
 
     def step(self, action):
         validate_action(action)
@@ -314,6 +370,7 @@ class RocketReplay:
                     if not node.contains(value):
                         raise ValueError("Invalid future Variation value")
                     node._init_value = value
+            staged._adopt_appearance(state)
             actual = staged.get_state()
             mismatch = [key for key in state if not np.array_equal(state[key], actual[key])]
             if mismatch:
@@ -322,6 +379,25 @@ class RocketReplay:
         except BaseException:
             staged.close()
             raise
+
+    def _adopt_appearance(self, state):
+        """Install appearance values set during the episode and repaint what they changed.
+
+        The caller's full comparison then rejects any rgba the values do not imply."""
+        replayed = self.get_state()
+        for path in IMMEDIATE:
+            key = "variation/" + path.replace(".", "/") + "/value"
+            value = decode_value(state[key], state[key + "_dtype"])
+            node = self.env.variation_space._walk(path)
+            if not node.contains(value):
+                raise ValueError("Invalid current Variation value")
+            node.set_value(value)
+            if path in PAINTED:
+                i = PAINTED.index(path)
+                if not np.array_equal(state[key], replayed[key]) or not np.array_equal(
+                    state["render/rgba"][i], replayed["render/rgba"][i]
+                ):
+                    paint(self.env, path)
 
     def set_state(self, state):
         staged = self.reconstruct(state)

@@ -11,6 +11,7 @@ from tests.helpers.reference.gates.variation_pilots import (  # noqa: E402
     physics_gate,
     reset_leaf_gate,
     reset_rule_gate,
+    rocket_reset_leaf_gate,
 )
 
 
@@ -48,3 +49,9 @@ def test_classic_physics_matches_swm(domain):
     evidence = classic_physics_gate(domain)
     assert evidence["plain_reset_restores_defaults"]
     assert any(all(leaf["moved_vs_default"]) for leaf in evidence["leaves"].values())
+
+
+def test_rocket_start_leaves_and_reset_colours_match_swm():
+    pytest.importorskip("PyFlyt")
+    evidence = rocket_reset_leaf_gate()
+    assert all(evidence[case]["exact"] for case in ("explicit", "sampled", "colours"))

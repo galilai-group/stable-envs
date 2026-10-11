@@ -25,6 +25,7 @@ from tests.helpers.reference.variation_maps.newcells import (
     NEWCELL_VARIATION_MAPS,
     RECORDED_OURS_LEAVES,
     RECORDED_SWM_LEAVES,
+    ROCKET_START_LEAVES,
 )
 
 IDS = sorted(RECORDED_SWM_LEAVES)
@@ -132,15 +133,12 @@ def test_every_unmapped_leaf_explains_itself(swm_id):
 ROCKET = "swm/PFRocketLanding-v0"
 
 
-def test_rocket_maps_exactly_the_five_material_colours():
+ROCKET_COLOURS = {"rocket.body_color", "rocket.fin_color", "rocket.leg_color", "rocket.booster_color", "pad.color"}
+
+
+def test_rocket_maps_the_five_material_colours_and_the_start_leaves():
     m = _map_for(ROCKET)
-    assert set(m.pairs()) == {
-        "rocket.body_color",
-        "rocket.fin_color",
-        "rocket.leg_color",
-        "rocket.booster_color",
-        "pad.color",
-    }
+    assert set(m.pairs()) == ROCKET_COLOURS | set(ROCKET_START_LEAVES)
     for ours, (theirs, factor) in m.pairs().items():
         assert ours == theirs, f"{ours} should map by identical path, not to {theirs}"
         assert factor == 1.0, (
@@ -165,12 +163,12 @@ def test_rocket_sky_color_is_dead_upstream_and_not_quietly_mapped():
     assert "0 of 691,200" in rec["evidence"]
 
 
-def test_rocket_start_state_leaves_are_state_not_style():
-    """They move pixels -- by moving the rocket. That makes them our STATE, and mapping them to
-    style would put the same information in two places."""
-    for leaf in ("environment.start_height_ratio", "environment.start_horizontal_offset", "environment.start_tilt"):
-        rec = LEAF_CLASSIFICATION[ROCKET]["leaves"][leaf]
-        assert rec["classification"] == "not_applicable"
+def test_rocket_start_leaves_are_mapped_variation_but_not_renderer_style():
+    """They move pixels by moving the rocket, so the renderer reads the pose from State, never them."""
+    rl = pytest.importorskip("stable_envs.envs.rocket.legacy")
+    assert not set(ROCKET_START_LEAVES) & set(rl.style_layout())
+    for leaf in ROCKET_START_LEAVES:
+        assert LEAF_CLASSIFICATION[ROCKET]["leaves"][leaf]["classification"] == "mapped"
 
 
 def test_rocket_default_variation_round_trips_through_the_style_layout():
@@ -182,6 +180,8 @@ def test_rocket_default_variation_round_trips_through_the_style_layout():
     default = np.asarray(rl._default_style_row(), np.float64)
     m = _map_for(ROCKET)
     for ours, (theirs, factor) in m.pairs().items():
+        if ours in ROCKET_START_LEAVES:
+            continue
         assert ours in layout, f"{ours} is mapped but is not a dim of the env's style layout"
         o, w = layout[ours]
         back = default[o : o + w] / factor
@@ -195,7 +195,7 @@ def test_rocket_mapped_leaves_are_disjoint_slices_of_the_style_row():
     layout = rl.style_layout()
     m = _map_for(ROCKET)
     seen = {}
-    for ours in m.pairs():
+    for ours in set(m.pairs()) - set(ROCKET_START_LEAVES):
         o, w = layout[ours]
         for i in range(o, o + w):
             assert i not in seen, f"{ours} and {seen[i]} both own style dim {i}"

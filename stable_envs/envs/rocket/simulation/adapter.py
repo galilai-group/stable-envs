@@ -76,7 +76,7 @@ class RocketAdapter(SimulatorAdapter):
         for env in previous:
             env.close()
 
-    def reset(self, seed=None, options=None):
+    def reset(self, seed=None, options=None, values=None):
         # Stage reset with persistent configuration and owned RNG only; no physics
         # replay is needed because authoritative reset discards the old episode.
         staged = []
@@ -87,7 +87,7 @@ class RocketAdapter(SimulatorAdapter):
                 target.env.variation_space = copy.deepcopy(env.env.variation_space)
                 install_generator(target.env, generator_state(env.env))
                 install_generator(target.env.action_space, generator_state(env.env.action_space))
-                target.reset(None if seed is None else seed + lane, options)
+                target.reset(None if seed is None else seed + lane, options, None if values is None else values[lane])
         except BaseException:
             for env in staged:
                 env.close()
@@ -105,8 +105,10 @@ class RocketAdapter(SimulatorAdapter):
             raise ValueError("Rocket actions require shape [num_envs, 7]")
         for action in actions:
             validate_action(action)
-        results = [env.step(action) if active is None or active[i] else self._last_outputs[i]
-                   for i, (env, action) in enumerate(zip(self.envs, actions, strict=True))]
+        results = [
+            env.step(action) if active is None or active[i] else self._last_outputs[i]
+            for i, (env, action) in enumerate(zip(self.envs, actions, strict=True))
+        ]
         self._last_outputs = results
         return TensorDict(
             dict(
@@ -127,8 +129,7 @@ class RocketAdapter(SimulatorAdapter):
                 if hasattr(node, "spaces") or not node.contains(value):
                     raise ValueError(f"Invalid Rocket Variation: {key}")
         for env, row in zip(self.envs, values, strict=True):
-            for key, value in row.items():
-                env.env.variation_space._walk(key).set_init_value(copy.deepcopy(value))
+            env.configure(row)
 
     def close(self):
         for env in self.envs:

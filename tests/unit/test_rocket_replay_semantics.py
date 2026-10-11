@@ -206,3 +206,38 @@ def test_sampled_configurations_are_supported_and_restorable(pair):
     assert torch.equal(e.get_variation(), torch.from_numpy(sampled))
     destination.set_state(e.get_state())
     exact(e.step(np.zeros((2, 7)), frames=None), destination.step(np.zeros((2, 7)), frames=None))
+
+
+def test_set_variation_repaints_the_current_episode_and_restores(pair):
+    e, destination = pair
+    e.reset(seed=17)
+    before = e.get_state()
+    red, pad = np.array([200, 30, 90], np.uint8), np.array([104, 60, 3], np.uint8)
+    tilt = np.full(2, 0.1, np.float32)
+    e.set_variation({"rocket.body_color": red, "pad.color": pad, "environment.start_tilt": tilt})
+    saved = e.get_state()
+    np.testing.assert_array_equal(saved["render", "rgba"][:, 0, :3].numpy(), np.tile(red / 255.0, (2, 1)))
+    pad_rgba = np.float32([0.408, 0.235, 0.012]).astype(np.float64)
+    np.testing.assert_array_equal(saved["render", "rgba"][:, 4, :3].numpy(), np.tile(pad_rgba, (2, 1)))
+    # The start leaves describe how an episode begins, so they wait for the next reset.
+    for key in [("current", "wrapper", "state"), ("variation", "environment", "start_tilt", "value")]:
+        assert torch.equal(saved[key], before[key])
+    destination.set_state(saved)
+    exact(saved, destination.get_state())
+    tampered = saved.clone()
+    tampered["variation", "rocket", "body_color", "value"][0, 0] = 10
+    with pytest.raises(ValueError):
+        destination.set_state(tampered)
+
+
+def test_variation_values_last_one_reset_and_restore(pair):
+    e, destination = pair
+    tilt = np.array([[0.1, -0.1], [-0.2, 0.05]], np.float32)
+    values = {"environment.start_tilt": tilt, "rocket.body_color": np.array([12, 140, 250], np.uint8)}
+    saved = e.reset(seed=17, options={"variation": ["rocket.fin_color"], "variation_values": values})
+    np.testing.assert_array_equal(saved["variation", "environment", "start_tilt", "value"].numpy(), tilt)
+    destination.set_state(saved)
+    exact(saved, destination.get_state())
+    assert not e.reset(seed=17)["variation", "environment", "start_tilt", "value"].any()
+    with pytest.raises(ValueError, match="both sampled and set"):
+        e.reset(seed=17, options={"variation": ["environment"], "variation_values": values})
