@@ -97,18 +97,19 @@ class DelegatedSemantics:
     def render(self, state=None, **kwargs):
         """A State's own physics values draw the leaves that move pixels, unless the call names them."""
         state = self.get_state() if state is None else state
-        if "style" not in kwargs and isinstance(state, TensorDict):
+        leaves = sorted(self.FRAME_PHYSICS)
+        if leaves and "style" not in kwargs and isinstance(state, TensorDict):
             keys = set(state.keys(True, True))
             variation = dict(kwargs.pop("variation", None) or {})
-            for leaf in self.FRAME_PHYSICS:
-                key = ("physics", *leaf.split("."))
-                if key not in keys or leaf in variation:
-                    continue
-                value = state[key].to(device=self.device, dtype=torch.float32)
-                current = self._style[leaf]
+            drawn = [p for p in leaves if ("physics", *p.split(".")) in keys and p not in variation]
+            if drawn:
+                values = torch.cat([state[("physics", *p.split("."))] for p in drawn], 1)
+                values = values.to(device=self.device, dtype=torch.float32)
+                rows = self._style.values.shape[0]
+                current = torch.cat([self._style[p].reshape(rows, -1) for p in drawn], 1)
                 # The live style already draws a State this env produced; skip the per-call override.
-                if value.shape != current.shape or not torch.equal(value, current):
-                    variation[leaf] = value
+                if values.shape != current.shape or not torch.equal(values, current):
+                    variation.update({p: values[:, i : i + 1] for i, p in enumerate(drawn)})
             kwargs["variation"] = variation or None
         return super().render(state, **kwargs)
 

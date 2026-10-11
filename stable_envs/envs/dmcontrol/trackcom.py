@@ -392,9 +392,10 @@ class DMControlTrackCom(_DMCModel):
         capacity = 256 if size <= 84 else MJW_CHUNK
         worlds = min(capacity, 1 << max(0, B - 1).bit_length())
         c = self._context(size, worlds)
+        masses = self._row_masses(sty, 0, B)
         for lo in range(0, B, worlds):
             hi = min(B, lo + worlds)
-            self._upload(c, s[lo:hi], sty, lo, hi)
+            self._upload(c, s[lo:hi], sty, lo, hi, masses)
             torch.cuda.synchronize()
             c.wp.capture_launch(c.graph)
             c.wp.synchronize()
@@ -426,7 +427,7 @@ class DMControlTrackCom(_DMCModel):
         cls._slot_rows_cache = rows
         return rows
 
-    def _upload(self, c: _TCtx, s: torch.Tensor, sty, lo: int, hi: int) -> None:
+    def _upload(self, c: _TCtx, s: torch.Tensor, sty, lo: int, hi: int, masses=None) -> None:
         """Write compact rows and styles into the context’s per-world buffers."""
         import mujoco
 
@@ -441,10 +442,9 @@ class DMControlTrackCom(_DMCModel):
             for j, comp in comps:
                 row[:, comp] = s[:, self.nq + j]
             dst[:n, eid] = row
-        masses = self._row_masses(sty, lo, hi)
         if masses is not None:
             for name, value in masses.items():
-                wp.to_torch(getattr(c.wm, name))[:n] = value.to(torch.float32)
+                wp.to_torch(getattr(c.wm, name))[:n] = value[lo:hi].to(torch.float32)
             c.masses_varied = True
         elif c.masses_varied:
             for name, value in self._mass_rows()._constants(self.device).items():

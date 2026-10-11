@@ -254,6 +254,20 @@ def test_reset_sets_or_samples_named_physics_and_restores_the_rest(cartpole):
         cartpole.reset(options={"variation_values": {"material.self": [1.0, 0.0, 0.0]}})
 
 
+def test_a_state_draws_its_own_frame_moving_physics():
+    """Ball-in-cup draws the ball at its radius: another env renders the State as its producer does."""
+    pytest.importorskip("dm_control")
+    sizes = np.asarray([[0.012], [0.048]])
+    with (
+        se.make("DMCBallInCupCatch", num_envs=2, device="cpu") as env,
+        se.make("DMCBallInCupCatch", num_envs=2, device="cpu") as other,
+    ):
+        state = env.reset(seed=3, options={"variation_values": {"ball.size": sizes}})
+        frames = env.render(state)
+        assert torch.equal(other.render(state), frames)
+        assert not torch.equal(other.render(state, variation={"ball.size": [0.025]}), frames)
+
+
 def test_set_variation_sets_the_default_and_a_restored_state_does_not(cartpole):
     gz = np.asarray([[-2.0], [-3.0], [-4.0]])
     cartpole.set_variation({"gravity.z": [-6.0]})
