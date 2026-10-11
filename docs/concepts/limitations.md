@@ -35,9 +35,7 @@ part of this release; see `contrib/README.md`.
 - **Parity tier:** interior pixels match the official renderer (floor 1.0 unless a named `parity_note` mechanism is declared).
 - **Visual tier:** a different rasterizer of the same scene. Suitable for live training frames; **not** interchangeable with official pixels at eval. `info(name)["fidelity_tier"]` reports it.
 
-Fetch `background.color` is **partial**: the floor half is mapped; the skybox half is not. The official wrapper flat-fills a 16-colour gradient. Supporting the skybox would move the family's frozen default frame.
-
-Fetch `rendering.transparent_arm` has no alpha path in `mujoco_warp`.
+Fetch `sky.color` at its default draws the registered gradient skybox, which the official wrapper's `background.color` cannot express: it always fills the sky flat.
 
 DMC trackcom `floor.color` has no baked plate (the camera rides the body).
 

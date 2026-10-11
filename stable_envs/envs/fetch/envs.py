@@ -27,7 +27,7 @@ from ...env import Env
 from ...registry import register
 from ...render import _resources as _RES
 from ...render import mjwarp as MW
-from ...spaces import Box, Dict
+from ...spaces import Box, Dict, Discrete
 
 SCENE_XML = {"Reach": "reach.xml", "Push": "push.xml", "Slide": "slide.xml", "PickAndPlace": "pick_and_place.xml"}
 
@@ -58,6 +58,8 @@ BLUE = (0.086, 0.506, 0.767)
 DEFAULT_SPECULAR, DEFAULT_SHININESS, DEFAULT_EMISSION = 0.5, 0.5, 0.0
 HIDDEN_GROUP = MW.HIDDEN_GROUP
 VISIBLE_GROUPS = MW.DEFAULT_GROUPS
+# Alpha stable-worldmodel writes into every robot0: geom for rendering.transparent_arm.
+ARM_ALPHA = 0.3
 # Worlds per render context; larger chunks reduce launches but increase framebuffer memory.
 MJW_CHUNK = 256
 
@@ -101,8 +103,39 @@ def _effective_rgba(m, g) -> np.ndarray:
     return rgba
 
 
+def _skybox(m) -> int:
+    import mujoco
+
+    return next(t for t in range(m.ntex) if int(m.tex_type[t]) == int(mujoco.mjtTexture.mjTEXTURE_SKYBOX))
+
+
+def _sky_texels(m) -> np.ndarray:
+    """A writable ``(texels, nchannel)`` view of the skybox texture."""
+    t = _skybox(m)
+    adr, nc = int(m.tex_adr[t]), int(m.tex_nchannel[t])
+    return m.tex_data[adr : adr + int(m.tex_width[t]) * int(m.tex_height[t]) * nc].reshape(-1, nc)
+
+
+def sky_color(m) -> np.ndarray:
+    """The registered skybox's first texel; ``sky.color`` at this value draws the registered gradient."""
+    return _sky_texels(m)[0, :3].astype(np.float64) / 255.0
+
+
+def _flat_sky(m, color) -> bool:
+    """Fill the skybox with ``color`` unless it is the registered default; return whether it did.
+
+    Channels are truncated to uint8 as stable-worldmodel's ``background.color`` does.
+    """
+    color = np.asarray(color, np.float64).reshape(3)
+    if np.array_equal(np.round(color, 6), np.round(sky_color(m), 6)):
+        return False
+    _sky_texels(m)[:, :3] = (np.clip(color, 0.0, 1.0) * 255.0).astype(np.uint8)
+    return True
+
+
 def _restore(m, pr) -> None:
-    """Restore shared model colors, lighting and camera poses before and after baking."""
+    """Restore shared model colors, lighting, camera poses and skybox before and after baking."""
+    _sky_texels(m)[:] = pr["sky"]
     m.mat_rgba[:] = pr["mat_rgba"]
     m.geom_rgba[:] = pr["geom_rgba"]
     m.light_diffuse[:] = pr["light_diffuse"]
@@ -179,6 +212,7 @@ class _Bundle:
         "nq",
         "has_object",
         "state_names",
+        "blender",
     )
 
 
@@ -317,6 +351,8 @@ def _build_bundle(scene: str) -> _Bundle:
         goal_mocap=int(m.body_mocapid[mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, "se:goalbody")]),
         translucent=translucent,
         names={g: (gname(g) or f"geom{g}") for g in range(m.ngeom)},
+        robot=[g for g in range(m.ngeom) if "robot0:" in gname(g)],
+        sky=_skybox(m),
     )
     b.cam_defaults = cam_defaults
     b.pristine = dict(
@@ -326,7 +362,9 @@ def _build_bundle(scene: str) -> _Bundle:
         geom_group=np.array(m.geom_group, copy=True),
         cam_pos=np.array(m.cam_pos, copy=True),
         cam_quat=np.array(m.cam_quat, copy=True),
+        sky=np.array(_sky_texels(m), copy=True),
     )
+    b.blender = None
     # Only geometry welded to the world can be baked; the goal must stay in the moving pass.
     b.static = [
         g
@@ -368,12 +406,13 @@ class _Ctx:
     __slots__ = ("wm", "wd", "rc", "bgra", "seg", "graph", "nworld", "res", "wp", "mjw")
 
 
-def _context(scene: str, res: int, nworld: int) -> _Ctx:
+def _context(scene: str, res: int, nworld: int, translucent: bool = False) -> _Ctx:
+    """A batched MJWarp context; ``translucent`` leaves the robot out and also renders depth."""
     import mujoco
     import mujoco_warp as mjw
     import warp as wp
 
-    key = (scene, int(res), int(nworld))
+    key = (scene, int(res), int(nworld), bool(translucent))
     hit = _CTX_CACHE.get(key)
     if hit is not None:
         return hit
@@ -384,23 +423,31 @@ def _context(scene: str, res: int, nworld: int) -> _Ctx:
     c = _Ctx()
     c.wp, c.mjw, c.nworld, c.res = wp, mjw, int(nworld), int(res)
     batched = {k: int(nworld) for k in ("mat_rgba", "light_diffuse", "cam_pos", "cam_quat")}
-    c.wm = mjw.put_model(m, batch_sizes=batched)
-    c.wd = mjw.put_data(m, d0, nworld=int(nworld))
-    # Capture inside gl_rounding so graph replay uses the rounding kernel, not truncation.
+    groups = np.array(m.geom_group, copy=True)
+    if translucent:
+        m.geom_group[b.info["robot"]] = HIDDEN_GROUP
+    try:
+        c.wm = mjw.put_model(m, batch_sizes=batched)
+        c.wd = mjw.put_data(m, d0, nworld=int(nworld))
+        # Capture inside gl_rounding so graph replay uses the rounding kernel, not truncation.
+        with MW.gl_rounding():
+            c.rc = MW.create_render_context(
+                m,
+                nworld=int(nworld),
+                cam_res=(int(res), int(res)),
+                render_rgb=True,
+                render_seg=True,
+                render_depth=bool(translucent),
+                cam_active=[i == b.info["cam"] for i in range(m.ncam)],
+                enabled_geom_groups=list(VISIBLE_GROUPS),
+                use_textures=True,
+                use_shadows=False,
+                render_skybox=True,
+                enable_specular=True,
+            )
+    finally:
+        m.geom_group[:] = groups
     with MW.gl_rounding():
-        c.rc = MW.create_render_context(
-            m,
-            nworld=int(nworld),
-            cam_res=(int(res), int(res)),
-            render_rgb=True,
-            render_seg=True,
-            cam_active=[i == b.info["cam"] for i in range(m.ncam)],
-            enabled_geom_groups=list(VISIBLE_GROUPS),
-            use_textures=True,
-            use_shadows=False,
-            render_skybox=True,
-            enable_specular=True,
-        )
         _frame(c)
         wp.synchronize()
         # Keep a view of the live Warp buffer. Channel-swapping here would copy and freeze the frame.
@@ -438,6 +485,7 @@ class FetchBase(Env):
     PLATE_PATHS = (
         "floor.color",
         "table.color",
+        "sky.color",
         "light.diffuse",
         "camera.distance_scale",
         "camera.azimuth_delta",
@@ -513,8 +561,9 @@ class FetchBase(Env):
     def make_variation_space(self) -> Dict:
         """Define colors, lighting and camera settings from the compiled model defaults.
 
-        Colors remain floating point to preserve MuJoCo material values.
-        Headlight settings and gradient skybox colors are not exposed by this renderer.
+        Colors remain floating point to preserve MuJoCo material values. ``sky.color`` at
+        its default draws the registered gradient skybox; any other value fills it flat.
+        ``rendering.transparent_arm`` draws every robot geom at alpha 0.3.
         """
         b = _build_bundle(self.SCENE)
         _, info = b.model, b.info
@@ -548,6 +597,8 @@ class FetchBase(Env):
                     )
                 }
             ),
+            "sky": Dict({"color": Box(low=0.0, high=1.0, shape=(3,), init_value=sky_color(b.model).tolist())}),
+            "rendering": Dict({"transparent_arm": Discrete(2, init_value=0)}),
             "light": Dict({"diffuse": Box(low=0.0, high=2.0, shape=(1,), init_value=[1.0])}),
             "camera": Dict(
                 {
@@ -619,6 +670,11 @@ class FetchBase(Env):
         pos, quat = self._camera(variation)
         m.cam_pos[info["cam"]] = pos
         m.cam_quat[info["cam"]] = quat
+        r = _renderer(self.SCENE, int(res))
+        flat = _flat_sky(m, self._var(variation, "sky.color"))
+        if flat:
+            r._gl_context.make_current()
+            mujoco.mjr_uploadTexture(m, r._mjr_context, info["sky"])
 
         keep = np.array(m.geom_group, copy=True)
         m.geom_group[b.movers] = HIDDEN_GROUP
@@ -626,11 +682,13 @@ class FetchBase(Env):
             d.qpos[:] = np.asarray(states, np.float64)[: b.nq]
         d.qvel[:] = 0.0
         mujoco.mj_forward(m, d)
-        r = _renderer(self.SCENE, int(res))
         r.update_scene(d, camera=info["cam"])
         img = r.render().copy()
         m.geom_group[:] = keep
         _restore(m, pr)
+        if flat:
+            r._gl_context.make_current()
+            mujoco.mjr_uploadTexture(m, r._mjr_context, info["sky"])
         return torch.as_tensor(img, device=self.device)
 
     @torch.no_grad()
@@ -672,23 +730,27 @@ class FetchBase(Env):
         grp = torch.as_tensor(inv, device=self.device, dtype=torch.long)
         # Camera grouping is batch-wide; repeating it per chunk adds host transfers and synchronization.
         campos, camquat = self._camera_batch(sty, B)
-        lut = self._mover_lut()
+        arm = self._translucent_lanes(sty, B)
         for lo in range(0, B, MJW_CHUNK):
             hi = min(lo + MJW_CHUNK, B)
             n = hi - lo
             nw = 1 if n <= 1 else min(MJW_CHUNK, 1 << (n - 1).bit_length())
-            c = _context(self.SCENE, res, nw)
-            self._upload(c, s[lo:hi], sty, lo, hi, nw, campos, camquat)
-            # Torch writes and Warp replay use different streams; synchronize before and after replay.
-            torch.cuda.synchronize()
-            c.wp.capture_launch(c.graph)
-            c.wp.synchronize()
-            rgb, seg = c.bgra[:n][..., [2, 1, 0]], c.seg[:n]
-            # Index with int32 segmentation IDs to avoid a full-frame int64 temporary.
-            mv = lut.index_select(0, (seg + 1).reshape(-1)).view(seg.shape)
             g = grp[lo:hi]
             pl = plates_t[0] if len(uniq) == 1 else plates_t[g]
-            comp = torch.where(mv.unsqueeze(-1), rgb, pl)
+            flags = None if arm is None else arm[lo:hi]
+            comp = mv = None
+            if flags is None or not flags.all():
+                comp, mv = self._composite(_context(self.SCENE, res, nw), s, sty, lo, hi, nw, campos, camquat, pl)
+            if flags is not None and flags.any():
+                c = _context(self.SCENE, res, nw, translucent=True)
+                comp_t, mv_t = self._composite(c, s, sty, lo, hi, nw, campos, camquat, pl)
+                self._blend_arm(c, comp_t, mv_t, flags)
+                if comp is None:
+                    comp, mv = comp_t, mv_t
+                else:
+                    lane = torch.as_tensor(flags, device=self.device).view(n, 1, 1)
+                    comp = torch.where(lane.unsqueeze(-1), comp_t, comp)
+                    mv = torch.where(lane, mv_t, mv)
             if ss == 1:
                 buf[lo:hi] = comp
             else:
@@ -704,6 +766,52 @@ class FetchBase(Env):
                 pl1 = plates1_t[0] if len(uniq) == 1 else plates1_t[g]
                 buf[lo:hi] = torch.where(any_mv.unsqueeze(-1), small, pl1)
         return buf.view(*lead, size, size, 3) if lead else buf
+
+    def _composite(self, c: _Ctx, s, sty, lo, hi, nw, campos, camquat, pl):
+        """Ray-cast one chunk and composite its movers over the plate; return the frame and mover mask."""
+        n = hi - lo
+        self._upload(c, s[lo:hi], sty, lo, hi, nw, campos, camquat)
+        # Torch writes and Warp replay use different streams; synchronize before and after replay.
+        torch.cuda.synchronize()
+        c.wp.capture_launch(c.graph)
+        c.wp.synchronize()
+        rgb, seg = c.bgra[:n][..., [2, 1, 0]], c.seg[:n]
+        # Index with int32 segmentation IDs to avoid a full-frame int64 temporary.
+        mv = self._mover_lut().index_select(0, (seg + 1).reshape(-1)).view(seg.shape)
+        return torch.where(mv.unsqueeze(-1), rgb, pl), mv
+
+    def _translucent_lanes(self, sty, B: int):
+        """Host bool mask of lanes drawing a transparent arm, or None when no lane does."""
+        if "rendering.transparent_arm" not in sty.layout:
+            return None
+        flags = sty["rendering.transparent_arm"].reshape(-1)[:B].cpu().numpy() > 0.5
+        return flags if flags.any() else None
+
+    def _blend_arm(self, c: _Ctx, comp: torch.Tensor, mv: torch.Tensor, flags: np.ndarray) -> None:
+        """Blend the translucent robot into ``comp`` in place and add the pixels it covers to ``mv``."""
+        from .transparency import ArmBlender
+
+        b = self._b
+        if b.blender is None:
+            b.blender = ArmBlender(b.model, b.info["robot"])
+        n = int(comp.shape[0])
+        frame = comp.view(n, -1, 3)
+        touched = torch.empty(frame.shape[:2], dtype=torch.uint8, device=self.device)
+        lanes = torch.as_tensor(flags.astype(np.int32), device=self.device)
+        torch.cuda.synchronize()
+        wp = c.wp
+        b.blender.launch(
+            c.wm,
+            c.wd,
+            c.rc,
+            b.info["cam"],
+            wp.from_torch(lanes),
+            wp.from_torch(frame),
+            wp.from_torch(touched),
+            ARM_ALPHA,
+        )
+        wp.synchronize()
+        mv |= touched.view(mv.shape).bool()
 
     def _camera_batch(self, sty, B: int):
         """Return device camera positions ``(B, 3)`` and quaternions ``(B, 4)`` for a batch."""

@@ -6,8 +6,9 @@ from tensordict import TensorDict
 
 from ..._core.style import StyleTensor
 from ..._execution.protocol import StepPipeline, step_pipeline
-from ...env import Env
-from ...spaces import Box, Dict
+from ...env import Env, _lane_value
+from ...spaces import Box, Dict, Discrete
+from .simulation.adapter import VISUAL_LEAVES
 from .simulation.execution import make_fetch_adapter as FetchAdapter
 
 
@@ -34,6 +35,10 @@ class FetchSemantics:
         "block.mass",
         "goal.start_position",
         "object.color",
+        "background.color",
+        "light.intensity",
+        "camera.angle_delta",
+        "rendering.transparent_arm",
     }
 
     def __init__(self, num_envs=1, size=None, supersample=None, device="cpu", backend="auto", seed=0):
@@ -65,7 +70,7 @@ class FetchSemantics:
 
     def make_variation_space(self):
         # Read defaults from the owned simulator without allocating a render context.
-        from .envs import BLUE, _effective_rgba
+        from .envs import BLUE, _effective_rgba, sky_color
 
         m = self._simulator.reference_model()
         floor = _effective_rgba(m, m.geom("floor0").id)[:3]
@@ -96,6 +101,8 @@ class FetchSemantics:
                 ]
             }
         )
+        result["sky"] = Dict({"color": Box(low=0.0, high=1.0, shape=(3,), init_value=sky_color(m).tolist())})
+        result["rendering"] = Dict({"transparent_arm": Discrete(2, init_value=0)})
         if self._has_object:
             result["block"] = Dict(
                 {"mass": Box(low=0.01, high=50.0, shape=(1,), init_value=self._simulator.object_mass[:1].tolist())}
@@ -135,6 +142,7 @@ class FetchSemantics:
             raise ValueError("Uncertified Fetch reset Variation")
         # Variation reset uses its own Gymnasium space tree and reseeds even
         # for seed=None, as SWM does. It never consumes simulator PCG64.
+        leaves = _historical_sampling_tree(self._has_object)
         values = []
         for lane in range(self.B):
             v = {}
@@ -142,14 +150,13 @@ class FetchSemantics:
                 spaces = _historical_sampling_tree(self._has_object)
                 spaces.seed(None if seed is None else int(seed) + lane)
                 for key in sampled:
-                    node = spaces
-                    for part in key.split("."):
-                        node = node[part]
-                    v[key] = node.sample()
-            v.update(explicit)
+                    v[key] = _leaf(spaces, key).sample()
+            for key, value in explicit.items():
+                shape = _leaf(leaves, key).shape or ()
+                v[key] = _lane_value(value, lane, self.B, int(np.prod(shape))).reshape(shape)
             values.append(v)
         self._restore_variation()
-        self._reset_visual_colors(values)
+        self._reset_appearance(values)
         state = self._simulator.reset(seed, values)
         if self._has_object and any("block.mass" in v for v in values):
             off = next(off for name, off, _ in self.variation_space.flat_layout() if name == "block.mass")
@@ -160,23 +167,37 @@ class FetchSemantics:
             self._variation_is_default = False
         return state
 
-    def _reset_visual_colors(self, values):
-        """Copy this episode's effective colors into the installed Variation.
+    def _reset_appearance(self, values):
+        """Copy this episode's appearance into the installed Variation.
 
-        Selecting table or object color also detaches the floor material, revealing
-        its geom color (grey 0.5 instead of material grey 0.2). The next reset
-        restores the registered materials first."""
-        selected = any("table.color" in v or "object.color" in v for v in values)
+        Any source visual leaf detaches the table, floor and object materials, revealing
+        their geom colors (grey 0.5 instead of the material colors). ``background.color``
+        colors the floor and fills the sky; ``light.intensity`` is absolute where
+        ``light.diffuse`` scales the registered light. The next reset restores the
+        registered materials first."""
+        selected = any(VISUAL_LEAVES & v.keys() for v in values)
         if not (selected or self._colors_detached):
             return
         colors = self._simulator.reset_visual_colors(values)
         self._colors_detached = selected
+        light0 = float(self._simulator.reference_model().light_diffuse[0, 0])
         style = self._style.values.clone()
         layout = {name: (off, width) for name, off, width in self.variation_space.flat_layout()}
-        for lane, chosen in enumerate(colors):
-            for name, rgb in chosen.items():
+        for lane, (chosen, value) in enumerate(zip(colors, values)):
+            chosen = dict(chosen)
+            if "background.color" in value:
+                chosen["sky.color"] = value["background.color"]
+            if "light.intensity" in value:
+                chosen["light.diffuse"] = np.asarray(value["light.intensity"], np.float64).reshape(-1)[:1] / light0
+            if "rendering.transparent_arm" in value:
+                chosen["rendering.transparent_arm"] = [
+                    int(np.asarray(value["rendering.transparent_arm"]).reshape(-1)[0])
+                ]
+            for name, v in chosen.items():
                 off, width = layout[name]
-                style[lane, off : off + width] = torch.as_tensor(rgb, device=self.device, dtype=style.dtype)
+                style[lane, off : off + width] = torch.as_tensor(
+                    np.asarray(v, np.float64).reshape(-1), device=self.device, dtype=style.dtype
+                )
         self._style = StyleTensor(style, self.variation_space.flat_layout())
 
     def get_state(self):
@@ -229,6 +250,12 @@ class FetchSemantics:
     def _close(self):
         self._simulator.close()
         super()._close()
+
+
+def _leaf(tree, path):
+    for part in path.split("."):
+        tree = tree[part]
+    return tree
 
 
 def _historical_sampling_tree(has_object=True):

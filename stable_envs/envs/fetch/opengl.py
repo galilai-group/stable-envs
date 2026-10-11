@@ -115,8 +115,18 @@ def render(env, states=None, size=None, supersample=None, variation=None, style=
         if env.device.type == "cuda" and (software or "nvidia" not in vendor.lower()):
             raise RuntimeError(f"CUDA rendering requires NVIDIA OpenGL, found {vendor}: {gl_device}")
         readback = _Readback(renderer, size, len(rows)) if ss == 1 else None
+        sky = None
         for i, row in enumerate(rows):
             fetch._restore(model, b.pristine)
+            want = None
+            if "sky.color" in values and fetch._flat_sky(model, values["sky.color"][i]):
+                want = tuple(np.round(values["sky.color"][i].astype(np.float64), 6).tolist())
+            if want != sky:
+                renderer._gl_context.make_current()
+                mujoco.mjr_uploadTexture(model, renderer._mjr_context, b.info["sky"])
+                sky = want
+            if "rendering.transparent_arm" in values and values["rendering.transparent_arm"].reshape(-1)[i] > 0.5:
+                model.geom_rgba[b.info["robot"], 3] = fetch.ARM_ALPHA
             for name, geoms in (
                 ("floor", [b.info["floor"]]),
                 ("table", [b.info["table"]]),
@@ -151,6 +161,10 @@ def render(env, states=None, size=None, supersample=None, variation=None, style=
                 image = renderer.render()
                 image = np.rint(image.reshape(native_size, ss, native_size, ss, 3).mean((1, 3))).astype(np.uint8)
                 images.append(cv2.resize(image, (size, size)))
+        if sky is not None:
+            fetch._restore(model, b.pristine)
+            renderer._gl_context.make_current()
+            mujoco.mjr_uploadTexture(model, renderer._mjr_context, b.info["sky"])
     images = readback.images if readback is not None else np.stack(images)
     result = torch.as_tensor(images, device=env.device).reshape(*lead, size, size, 3)
     if out is not None:

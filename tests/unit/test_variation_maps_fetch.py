@@ -157,7 +157,12 @@ def test_reach_differs_from_the_object_scenes_in_exactly_two_ways():
     assert "object.color" in push.identical and "object.color" not in reach.identical
     assert reach.classification()["object.color"] == "dead_upstream"
     assert "empty geom list" in reach.dead_upstream["object.color"]
-    assert set(push.unmapped()) - set(reach.unmapped()) == {"block.start_position", "block.angle", "block.mass"}
+    assert set(push.identical) - set(reach.identical) == {
+        "object.color",
+        "block.start_position",
+        "block.angle",
+        "block.mass",
+    }
     assert set(reach.unmapped()) - set(push.unmapped()) == {"object.color"}
 
 
@@ -175,22 +180,16 @@ def test_the_light_factor_is_exact_and_covers_the_whole_swm_range():
     assert 0.0 * factor >= 0.0 and 1.0 * factor <= 2.0  # swm Box(0,1) -> our Box(0,2)
 
 
-def test_the_dead_and_unsupported_leaves_carry_their_mechanism():
+def test_the_dead_leaf_carries_its_mechanism_and_every_live_leaf_is_mapped():
     """A reason that does not name a mechanism is a shrug with a docstring."""
     m, cls = WM.variation_map("FetchPush"), WM.variation_map("FetchPush").classification()
-    # the bucket IS the classification now, so assert both the label and the mechanism in the reason
     assert cls["camera.angle_delta"] == "dead_upstream"
     assert "FREE camera" in m.dead_upstream["camera.angle_delta"]
-    assert cls["rendering.transparent_arm"] == "unsupported"
-    assert "alpha" in m.unsupported["rendering.transparent_arm"]
-    assert cls["block.mass"] == "not_applicable" and "dynamics only" in m.not_applicable["block.mass"]
+    assert {p for p, k in cls.items() if k != "mapped"} == {"camera.angle_delta"}
     for leaf in ("agent.start_position", "goal.start_position", "block.start_position", "block.angle"):
-        assert cls[leaf] == "not_applicable" and "STATE" in m.not_applicable[leaf], leaf
-    assert not m.swm_only, (
-        "this family uses the four-way taxonomy; the undifferentiated "
-        "swm_only bucket must stay empty or classification() loses the "
-        "distinction it exists to make"
-    )
+        assert "State" in m.notes[leaf], leaf
+    assert "alpha" in m.notes["rendering.transparent_arm"]
+    assert not (m.swm_only or m.unsupported or m.not_applicable or m.partial)
 
 
 def test_the_dead_camera_leaf_is_not_quietly_mapped_onto_our_working_camera():
@@ -201,44 +200,27 @@ def test_the_dead_camera_leaf_is_not_quietly_mapped_onto_our_working_camera():
         assert set(m.ours_only) >= {"camera.azimuth_delta", "camera.elevation_delta", "camera.distance_scale"}
 
 
-def test_background_is_partial_not_mapped_and_carries_the_measured_residual():
-    """swm's "background" is floor geoms PLUS a skybox texture; we render only the floor half.
+def test_background_drives_the_floor_and_the_sky():
+    """swm's "background" is the floor geoms PLUS the skybox texture; ours is two leaves.
 
-    The rename stays — the floor half is genuinely what swm writes and we write it exactly — and the
-    CLASSIFICATION is ``partial``, which is the whole point of the field: a generated completeness
-    table must not be able to count this leaf as full support. The reason has to carry the measured
-    residual, because "partially supported" without a number is a shrug.
+    The floor comes last so that the inverse mapping reads the floor colour: the sky's registered
+    gradient has no swm spelling.
     """
     for c in CLASSES:
         m = WM.variation_map(c)
-        assert m.renamed["floor.color"] == "background.color", f"{c}: the floor rename is gone"
-        assert m.classification()["background.color"] == "partial", (
-            f"{c}: background.color is classified {m.classification()['background.color']}, not partial"
-        )
-        why = m.partial["background.color"]
-        assert "skybox" in why and "61.7-73.0 %" in why, f"{c}: the residual is not in the reason"
-        # Capability patch: the REASON changed and the classification did not. The old reason
-        # ("a per-value skybox costs a render context per value") was measured wrong -- the skybox is
-        # in the baked plate -- and the reason that replaces it is about the DEFAULT, not the
-        # mechanism. Asserted so the corrected reason cannot quietly revert to the refuted one.
-        assert "render context per value" not in why, (
-            f"{c}: the refuted reason is back; see pre-repository-cleanup:tests/fixtures/regression/join/step8/capability/fetch_skybox_probe.json"
-        )
-        assert "gradient" in why and "default" in why.lower(), (
-            f"{c}: the residual no longer says why the leaf is blocked"
-        )
+        assert m.renamed == {"sky.color": "background.color", "floor.color": "background.color"}, c
+        assert list(m.renamed)[-1] == "floor.color"
+        assert m.classification()["background.color"] == "mapped", c
+        assert "sky.color" in m.notes["background.color"]
     assert "skybox" in FM.__doc__ and "gradient" in FM.__doc__
 
 
-def test_partial_is_the_only_downgrade_and_every_other_mapped_leaf_is_fully_mapped():
-    """One partial leaf, named. A second one appearing silently is the failure this catches."""
+def test_no_leaf_is_partial_or_unsupported():
     for c in CLASSES:
-        cls = WM.variation_map(c).classification()
-        assert {p for p, k in cls.items() if k == "partial"} == {"background.color"}, c
-        assert cls["table.color"] == "mapped" and cls["light.intensity"] == "mapped", c
-        assert "swm_only" not in set(cls.values()), (
-            f"{c}: a leaf is in the undifferentiated bucket; use one of the four"
-        )
+        m = WM.variation_map(c)
+        cls = m.classification()
+        assert set(cls.values()) <= {"mapped", "dead_upstream"}, c
+        assert set(m.replacement_class().values()) <= {"NATIVE", "DEAD_UPSTREAM"}, c
 
 
 # ====================================================== the opt-in strictness switch for tiers 2/3
@@ -330,15 +312,10 @@ def test_check_mapping_reads_a_fetch_variation_space_through_the_public_function
     assert got["swm_id"] == "swm/FetchPush-v3"
     assert got["undocumented"] == [], f"undocumented Fetch leaves: {got['undocumented']}"
     assert set(got["classification"]) == set(space.names())
-    assert got["classification"]["background.color"] == "partial"
-    assert got["classification"]["table.color"] == "mapped"
     assert got["classification"]["camera.angle_delta"] == "dead_upstream"
-    assert got["classification"]["rendering.transparent_arm"] == "unsupported"
-    assert got["classification"]["block.mass"] == "not_applicable"
-    assert "background.color" in got["covered"], (
-        "a partial leaf is still a mapped leaf; it must stay in covered, and be qualified by the "
-        "classification rather than dropped from it"
-    )
+    for leaf in ("background.color", "table.color", "rendering.transparent_arm", "block.mass"):
+        assert got["classification"][leaf] == "mapped", leaf
+    assert set(got["covered"]) == set(space.names()) - {"camera.angle_delta"}
 
 
 # ============================================================== tier 3: against a built env
@@ -373,7 +350,8 @@ def test_the_mapped_and_ours_only_paths_are_real_leaves_of_our_space(envs, scene
     env = envs[scene]
     ours = set(env.variation_space.names())
     m = WM.variation_map(f"Fetch{scene}")
-    assert set(m.pairs()) <= ours, f"{scene}: maps from paths we do not have: {set(m.pairs()) - ours}"
+    resets = set(FM.STATE_LEAVES) | (set(FM.BLOCK_STATE_LEAVES) if scene != "Reach" else set())
+    assert set(m.pairs()) - resets <= ours, f"{scene}: maps from paths we do not have: {set(m.pairs()) - ours}"
     assert set(m.ours_only) <= ours, f"{scene}: {set(m.ours_only) - ours}"
     assert ours - set(m.pairs()) - set(m.ours_only) == set(), (
         f"{scene}: our leaves with no entry in either direction: {sorted(ours - set(m.pairs()) - set(m.ours_only))}"
@@ -396,19 +374,29 @@ def test_registered_default_is_byte_identical_through_the_mapping(envs, scene):
 
 @pytest.mark.parametrize("scene", SCENES)
 def test_the_default_style_round_trips_to_swm_units_and_back(envs, scene):
-    """``style -> swm config -> style`` is the identity, including the 1.25 light factor."""
+    """``style -> swm config -> style`` is the identity, including the 1.25 light factor.
+
+    Except the sky: swm's background always flattens it, and its registered gradient comes back
+    as the floor colour.
+    """
     env = envs[scene]
     default = np.asarray(env.default_style(), np.float32)
     cfg = WM.variation_from_style(env, default)
     assert np.isclose(cfg["light.intensity"], FM.LIGHT_DIFFUSE_0), (
         "our default light multiplier must express swm's own 0.8, not its declared 0.7"
     )
-    assert np.array_equal(WM.style_from_variation(env, cfg), default)
+    layout = {p: (o, w) for p, o, w in env.variation_space.flat_layout()}
+    o, w = layout["sky.color"]
+    back = WM.style_from_variation(env, cfg)
+    floor = layout["floor.color"]
+    assert np.array_equal(back[o : o + w], default[floor[0] : floor[0] + floor[1]])
+    back[o : o + w] = default[o : o + w]
+    assert np.array_equal(back, default)
 
 
 @pytest.mark.parametrize("scene", SCENES)
 def test_a_mapped_leaf_changes_only_its_own_style_slot(envs, scene):
-    """Isolation, at the level the mapping owns: one swm leaf touches one of our leaves."""
+    """Isolation, at the level the mapping owns: one swm leaf touches only the leaves mapped from it."""
     env = envs[scene]
     layout = {p: (o, w) for p, o, w in env.variation_space.flat_layout()}
     default = np.asarray(env.default_style(), np.float32)
@@ -417,41 +405,41 @@ def test_a_mapped_leaf_changes_only_its_own_style_slot(envs, scene):
         "background.color": [0.9, 0.05, 0.9],
         "object.color": [0.05, 0.95, 0.2],
         "light.intensity": [0.55],
+        "rendering.transparent_arm": 1,
+        "block.mass": [40.0],
     }
     m = WM.variation_map(f"Fetch{scene}")
-    inv = {theirs: ours for ours, (theirs, _) in m.pairs().items()}
     for theirs, value in probes.items():
-        if theirs not in inv:
+        mine = [ours for ours, (t, _) in m.pairs().items() if t == theirs and ours in layout]
+        if not mine:
             continue
-        ours = inv[theirs]
         row = WM.style_from_variation(env, {theirs: value})
-        o, w = layout[ours]
-        assert not np.array_equal(row[o : o + w], default[o : o + w]), f"{theirs} moved nothing"
         rest = np.ones(row.shape, bool)
-        rest[o : o + w] = False
-        assert np.array_equal(row[rest], default[rest]), f"{scene}: {theirs} changed style slots other than {ours}"
+        for ours in mine:
+            o, w = layout[ours]
+            assert not np.array_equal(row[o : o + w], default[o : o + w]), f"{theirs} moved nothing in {ours}"
+            rest[o : o + w] = False
+        assert np.array_equal(row[rest], default[rest]), f"{scene}: {theirs} changed style slots other than {mine}"
 
 
 @pytest.mark.parametrize("scene", SCENES)
 def test_an_unmapped_leaf_moves_nothing(envs, scene):
-    """The other half of isolation: a leaf we declare unsupported must not leak into the style."""
+    """The other half of isolation: a dead leaf or a State reset option must not leak into the style."""
     env = envs[scene]
     default = np.asarray(env.default_style(), np.float32)
     values = {
         "camera.angle_delta": [[10.0, 10.0]],
-        "rendering.transparent_arm": 1,
-        "block.mass": [40.0],
         "agent.start_position": [1.45, 0.9],
         "goal.start_position": [1.45, 0.9, 0.4247],
         "block.start_position": [1.45, 0.9],
         "block.angle": [1.5],
     }
     m = WM.variation_map(f"Fetch{scene}")
-    for leaf in m.unmapped():
-        if leaf not in values:  # object.color on Reach: dead, and not a style
+    for leaf in set(m.unmapped()) | set(FM.STATE_LEAVES) | set(FM.BLOCK_STATE_LEAVES):
+        if leaf not in values or (scene == "Reach" and leaf.startswith("block.")):
             continue
         assert np.array_equal(WM.style_from_variation(env, {leaf: values[leaf]}), default), (
-            f"{scene}: the unmapped leaf {leaf} moved our style"
+            f"{scene}: {leaf} moved our style"
         )
 
 

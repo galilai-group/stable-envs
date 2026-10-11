@@ -265,6 +265,9 @@ def test_fetch_reset_restores_colors_and_mass():
             "table.color": np.array([0.2, 0.7, 0.4]),
             "object.color": np.array([0.8, 0.1, 0.3]),
             "block.mass": np.array([0.9]),
+            "background.color": np.array([0.1, 0.2, 0.3]),
+            "rendering.transparent_arm": np.array([1, 0]),
+            "agent.start_position": np.array([1.4, 0.85]),
         }
     }
     with (
@@ -276,9 +279,13 @@ def test_fetch_reset_restores_colors_and_mass():
         env.reset(seed=1, options=options)
         assert not torch.equal(env.get_variation(), registered)
         assert (env._simulator.object_mass == 0.9).all()
+        assert env._style["rendering.transparent_arm"].reshape(-1).tolist() == [1.0, 0.0]
         env.reset(seed=1)
         assert torch.equal(env.get_variation(), registered)
         np.testing.assert_array_equal(env._simulator.object_mass, mass)
+        assert torch.equal(
+            env.get_state()["task", "initial_gripper_xpos"], fresh.get_state()["task", "initial_gripper_xpos"]
+        )
         only_object = {"variation_values": {"object.color": np.array([0.1, 0.2, 0.3])}}
         assert torch.equal(
             env.reset(seed=2, options=only_object)["qpos"], fresh.reset(seed=2, options=only_object)["qpos"]

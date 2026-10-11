@@ -24,10 +24,10 @@ def test_nav_speed_and_piecewise_bias_are_native():
         assert VARIATION_MAPS["Piecewise"].replacement_class()[f"zones.bias_{i}"] == "NATIVE"
 
 
-def test_fetch_block_mass_is_unsupported_meaningful():
+def test_fetch_block_mass_is_native():
     m = VARIATION_MAPS["FetchPush"]
-    assert m.classification()["block.mass"] == "not_applicable"
-    assert m.replacement_class()["block.mass"] == "UNSUPPORTED_MEANINGFUL"
+    assert m.classification()["block.mass"] == "mapped"
+    assert m.replacement_class()["block.mass"] == "NATIVE"
 
 
 def test_fetch_camera_angle_delta_is_dead_upstream():
@@ -36,10 +36,10 @@ def test_fetch_camera_angle_delta_is_dead_upstream():
     assert m.replacement_class()["camera.angle_delta"] == "DEAD_UPSTREAM"
 
 
-def test_fetch_background_color_is_partial():
+def test_fetch_background_color_is_native():
     m = VARIATION_MAPS["FetchPush"]
-    assert m.classification()["background.color"] == "partial"
-    assert m.replacement_class()["background.color"] == "PARTIAL"
+    assert m.classification()["background.color"] == "mapped"
+    assert m.replacement_class()["background.color"] == "NATIVE"
 
 
 def test_ready_forbids_meaningful_gaps():

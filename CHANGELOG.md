@@ -35,7 +35,6 @@ live in the repository's `contrib/` directory. They are not part of the released
 - PushT physics and rendering run on CPU through the source Pygame renderer. `device="cuda"`
   places outputs on the GPU but does not render there.
 - Fetch, OGBCube and OGBScene render on CPU through software OpenGL and on GPU through MJWarp.
-- Fetch `background.color` is partial: the floor is mapped, the skybox is not.
 - `HumanoidMazeGiantNavigate` on CUDA is not process-reproducible on at least one measured card.
 - There is no runtime interop contract with other stable-* packages.
 

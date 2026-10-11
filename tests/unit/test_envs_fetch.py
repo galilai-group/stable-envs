@@ -118,7 +118,7 @@ def test_the_frozen_fidelity_declarations_still_say_what_step_8_froze():
     }, "the family is parity by inheritance; declaring the tier here would be a second source"
 
 
-def test_the_plate_paths_are_the_six_leaves_that_change_the_static_scene():
+def test_the_plate_paths_are_the_leaves_that_change_the_static_scene():
     """Everything else is a mover property and is applied per environment inside the ray-cast."""
     got = next(
         ast.literal_eval(n.value)
@@ -128,6 +128,7 @@ def test_the_plate_paths_are_the_six_leaves_that_change_the_static_scene():
     assert got == (
         "floor.color",
         "table.color",
+        "sky.color",
         "light.diffuse",
         "camera.distance_scale",
         "camera.azimuth_delta",

@@ -26,6 +26,25 @@ FIELDS = {
 }
 
 
+#: Source leaves that apply visual variations, and so detach the table, floor and object materials.
+VISUAL_LEAVES = frozenset(
+    {
+        "table.color",
+        "object.color",
+        "background.color",
+        "light.intensity",
+        "camera.angle_delta",
+        "rendering.transparent_arm",
+    }
+)
+#: Style leaf -> (source leaf that colors it, materials of its geoms).
+_VISUAL_GROUPS = {
+    "table.color": ("table.color", {"table_mat"}),
+    "floor.color": ("background.color", {"floor_mat"}),
+    "object.color": ("object.color", {"block_mat", "puck_mat"}),
+}
+
+
 def _words(integer):
     return [(int(integer) >> (32 * i)) & 0xFFFFFFFF for i in range(4)]
 
@@ -69,6 +88,7 @@ class FetchAdapter(SimulatorAdapter):
         self._mass = np.array(
             [e.unwrapped.model.body_mass[i] if i >= 0 else 0.0 for e, i in zip(self.envs, self._object)]
         )
+        self._anchor = [e.unwrapped.initial_gripper_xpos.copy() for e in self.envs]
         self._closed = False
         self._executor = None
         self._workers = 1
@@ -120,7 +140,7 @@ class FetchAdapter(SimulatorAdapter):
 
     def reset_visual_colors(self, values):
         """Restore the registered materials, then detach table, floor and object materials
-        when table/object color is selected."""
+        when any source visual leaf is selected."""
         self._check_open()
         if not hasattr(self, "_visual_geoms"):
             self._visual_geoms = []
@@ -128,11 +148,7 @@ class FetchAdapter(SimulatorAdapter):
             for env in self.envs:
                 model = env.unwrapped.model
                 groups = {}
-                for name, materials in {
-                    "table.color": {"table_mat"},
-                    "floor.color": {"floor_mat"},
-                    "object.color": {"block_mat", "puck_mat"},
-                }.items():
+                for name, (_, materials) in _VISUAL_GROUPS.items():
                     groups[name] = [
                         g
                         for g in range(model.ngeom)
@@ -148,12 +164,13 @@ class FetchAdapter(SimulatorAdapter):
             geoms, matid, rgba = registered
             model.geom_matid[geoms] = matid
             model.geom_rgba[geoms] = rgba
-            if {"table.color", "object.color"} & selected.keys():
+            if VISUAL_LEAVES & selected.keys():
                 for name, geoms in groups.items():
                     if geoms:
                         model.geom_matid[geoms] = -1
-                        if name in selected:
-                            model.geom_rgba[geoms, :3] = selected[name]
+                        source = _VISUAL_GROUPS[name][0]
+                        if source in selected:
+                            model.geom_rgba[geoms, :3] = selected[source]
                         colors[name] = model.geom_rgba[geoms[0], :3].copy()
             result.append(colors)
         return result
@@ -163,6 +180,8 @@ class FetchAdapter(SimulatorAdapter):
         for lane, e in enumerate(self.envs):
             values = {} if variations is None else variations[lane]
             u = e.unwrapped
+            # An episode that does not name the start returns to the registered anchor.
+            u.initial_gripper_xpos[:] = self._anchor[lane]
             if "agent.start_position" in values:
                 u.initial_gripper_xpos[:2] = values["agent.start_position"]
             e.reset(seed=None if seed is None else int(seed) + lane)
