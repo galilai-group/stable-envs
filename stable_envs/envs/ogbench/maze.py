@@ -886,7 +886,11 @@ class OGBenchMaze(Env):
         buf = out.view(B, size, size, 3)
 
         plate_key = torch.cat([sty[p].reshape(B, -1) for p in self.PLATE_PATHS], 1).cpu().numpy()
-        uniq, inv = np.unique(np.round(plate_key.astype(np.float64), 6), axis=0, return_inverse=True)
+        plate_key = np.round(plate_key.astype(np.float64), 6)
+        if (plate_key == plate_key[:1]).all():  # one shared scene: skip the row sort
+            uniq, inv = plate_key[:1], np.zeros(B, np.intp)
+        else:
+            uniq, inv = np.unique(plate_key, axis=0, return_inverse=True)
         for gi in range(len(uniq)):
             idx = np.flatnonzero(inv == gi)
             over = {p: uniq[gi][o : o + w] for p, (o, w) in zip(self.PLATE_PATHS, _offsets(self.PLATE_PATHS, sty))}
