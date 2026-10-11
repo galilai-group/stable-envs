@@ -379,6 +379,9 @@ def _build_context(cell: str, res: int, nworld: int) -> _Ctx:
         b.unwrapped._cur_button_states = list(saved_bits)
         b.unwrapped._apply_button_states()
     prepared = MW.prepare_model(m, VISIBLE_GROUPS)
+    # A cone-free spot still takes pow(cos, 0); fast math makes that NaN behind the light,
+    # which packs to black. OpenGL treats a 180-degree cutoff as a point light.
+    m.light_type[prepared.neutralised_spots] = mujoco.mjtLightType.mjLIGHT_POINT
     # Bake unsupported UV-less textures before MJWarp can access them.
     baked = MW.bake_unsamplable_textures(m, VISIBLE_GROUPS)
     d0 = mujoco.MjData(m)
