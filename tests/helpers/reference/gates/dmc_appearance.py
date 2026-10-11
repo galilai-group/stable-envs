@@ -75,18 +75,21 @@ def _swm_value(path, value):
 
 
 class _Renderer:
-    def __init__(self, physics, size, camera):
+    """MuJoCo's renderer on SWM's live model. It and SWM's wrapper stay open for the process:
+    tearing a GL context down corrupts the contexts the cells' renderers bake from."""
+
+    _alive: list = []
+
+    def __init__(self, ref, size, camera):
         import mujoco
 
-        self.physics, self.camera = physics, camera
-        self.renderer = mujoco.Renderer(physics.model.ptr, height=size, width=size)
+        self.physics, self.camera = ref.envs[0].env.physics, camera
+        self.renderer = mujoco.Renderer(self.physics.model.ptr, height=size, width=size)
+        self._alive.append((self.renderer, ref))
 
     def __call__(self):
         self.renderer.update_scene(self.physics.data.ptr, camera=self.camera)
         return self.renderer.render().copy()
-
-    def close(self):
-        self.renderer.close()
 
 
 def _mse(a, b):
@@ -106,20 +109,16 @@ def frames(cell, cfg, seed=13, steps=8, device="cpu"):
         env.set_variation(row)
         ref.reset(seed=seed)
         # SWM compiles a new model on reset when the options change it.
-        renderer = _Renderer(ref.envs[0].env.physics, env.size, env.CAMERA)
-        try:
-            env.reset(seed=seed)
-            actions = np.random.default_rng(seed).uniform(-1, 1, (steps, 1, env.action_dim))
-            theirs, ours, ignored = [], [], []
-            for action in actions:
-                state = env.step(action, states=None, frames=None)["state"]
-                ref.step(action)
-                theirs.append(renderer())
-                ours.append(env.render(state)[0].cpu().numpy())
-                ignored.append(env.render(state, style=torch.as_tensor(default_row[None]))[0].cpu().numpy())
-        finally:
-            renderer.close()
-            ref.close()
+        renderer = _Renderer(ref, env.size, env.CAMERA)
+        env.reset(seed=seed)
+        actions = np.random.default_rng(seed).uniform(-1, 1, (steps, 1, env.action_dim))
+        theirs, ours, ignored = [], [], []
+        for action in actions:
+            state = env.step(action, states=None, frames=None)["state"]
+            ref.step(action)
+            theirs.append(renderer())
+            ours.append(env.render(state)[0].cpu().numpy())
+            ignored.append(env.render(state, style=torch.as_tensor(default_row[None]))[0].cpu().numpy())
     return np.stack(theirs), np.stack(ours), np.stack(ignored)
 
 

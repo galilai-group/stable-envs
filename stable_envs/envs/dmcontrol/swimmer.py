@@ -27,8 +27,6 @@ TRACKCOM_RENDER_FLAGS: dict[str, dict] = {
     "DMCSwimmerSwimmer6": {"enable_specular": False},
 }
 
-CPU_UNCERTIFIED_REASON = "no CPU certification (certification deferred)"
-
 VISUAL_FIDELITY: dict[str, dict] = {
     "DMCSwimmerSwimmer6": {
         "mean_abs": 3.45,
@@ -64,7 +62,6 @@ DMCSwimmerSwimmer6 = trackcom_cell(
     VISUAL_FIDELITY["DMCSwimmerSwimmer6"],
     render_flags=TRACKCOM_RENDER_FLAGS["DMCSwimmerSwimmer6"],
     note_suffix=SPECULAR_NOTE,
-    CPU_UNCERTIFIED_REASON=CPU_UNCERTIFIED_REASON,
     bases=(DMCAlignedSemantics,),
     SIMULATOR="swimmer-swimmer6",
 )

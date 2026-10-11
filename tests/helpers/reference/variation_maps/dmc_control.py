@@ -346,8 +346,9 @@ _PHYSICS_MAPPED = (
     "('physics', *leaf) as float64, so a restored State keeps its physics. The style column is "
     "float32; an explicit float64 value set through reset options or State is kept exactly. Gated by "
     "tests/integration/test_dmc_physics_variation.py against swm stepping the same per-lane values: "
-    "direct writes 0 State error, mass leaves at most 1.1e-7 (relative, humanoid over 40 contact-rich "
-    "steps), while the leaf moves swm's own trajectory by 5e-3 to 2.7"
+    "direct writes 0 State error, mass leaves at most 3e-7 (relative, humanoid's torso over 40 "
+    "contact-rich steps; 1e-12 in the model itself), while the leaf moves swm's own trajectory by 3e-3 "
+    "to 2.7"
 )
 
 #: Leaves swm accepts and its own dynamics never feel, measured on its trajectory.

@@ -111,8 +111,8 @@ WRITTEN_IN = {
     "DMCWalkerWalk": "walker",
 }
 
-#: Cells that refuse a device, and which. One cell, by name, with a reason — see ``swimmer.py``.
-CPU_REFUSED = ("DMCSwimmerSwimmer6",)
+#: Cells that refuse a device, by name, with a reason.
+CPU_REFUSED = ()
 
 
 def _build(name, **kw):
