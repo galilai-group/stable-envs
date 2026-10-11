@@ -517,7 +517,7 @@ class DMControlSuite(_DMCModel):
             _SCENE_CACHE.clear()
         return out
 
-    def _fk(self, states: torch.Tensor, sc: _Scene, gravity=None):
+    def _fk(self, states: torch.Tensor, sc: _Scene, rows=None):
         """Return per-row mover positions, rotations, sizes and colours as device tensors.
 
         Source kinematics runs on CPU. Tendons need mj_forward for constraint-dependent
@@ -535,6 +535,11 @@ class DMControlSuite(_DMCModel):
         xp = np.empty((B, P, 3))
         xm = np.empty((B, P, 3, 3))
         size = np.tile(np.asarray(sc.prims.size, np.float64), (B, 1, 1))
+        rows = rows or {}
+        gravity = rows.get("gravity")
+        for key, radius in rows.items():
+            if key.startswith("radius:"):
+                size[:, gmov.index(int(key[7:])), 0] = radius
         rgb = np.tile(np.asarray(sc.prims.mat_rgb, np.float64), (B, 1, 1))
         m, d = sc.model, sc.data
         slots = self._slots()
@@ -636,7 +641,7 @@ class DMControlSuite(_DMCModel):
             w = int(sty.layout[p][1])
             offs.append((o, w))
             o += w
-        gravity = self._frame_gravity(sty, B)
+        frame_rows = self._frame_rows(sty, B)
         for gi in range(len(uniq)):
             sub = np.flatnonzero(inv == gi)
             over = {p: uniq[gi][a : a + w] for p, (a, w) in zip(self.PLATE_PATHS, offs)}
@@ -645,7 +650,7 @@ class DMControlSuite(_DMCModel):
             step = max(1, int(self.RAY_BUDGET // max(1, size * size * ss * ss)))
             for a in range(0, len(sub), step):
                 part = idx[a : a + step]
-                rows = None if gravity is None else gravity[sub[a : a + step]]
+                rows = {k: v[sub[a : a + step]] for k, v in frame_rows.items()}
                 buf[part] = self._render_group(sc, s[part], size, ss, rows)
         return buf.view(*lead, size, size, 3) if lead else buf
 
@@ -657,12 +662,23 @@ class DMControlSuite(_DMCModel):
     # Disable in differential tests to shade every candidate ray.
     COVER_COMPACTION = True
 
-    def _mover_idx(self, sc: _Scene, xpos: torch.Tensor, size: int, ss: int):
+    @staticmethod
+    def _bound_scale(sc: _Scene, rows) -> float:
+        """Grow every mover bound by the largest per-row radius over its baked radius."""
+        scale = 1.0
+        for key, radius in (rows or {}).items():
+            if key.startswith("radius:"):
+                baked = float(sc.prims.size[sc.movers[0].index(int(key[7:])), 0])
+                scale = max(scale, float(np.max(radius)) / baked)
+        # Round up so the bound cache sees few distinct scales.
+        return float(np.ceil(scale * 8.0) / 8.0)
+
+    def _mover_idx(self, sc: _Scene, xpos: torch.Tensor, size: int, ss: int, bound_scale: float = 1.0):
         """Return a conservative mover window, or None to cast the full frame.
 
         Project bounds once, then choose the smallest fitting host-side window.
         Padding must preserve every sample that a mover can reach."""
-        span = R3.screen_span(sc.cam, sc.prims, xpos, size, size, xpos.device)
+        span = R3.screen_span(sc.cam, sc.prims, xpos, size, size, xpos.device, bound_scale)
         if span is None:
             return None
         x0, y0, w, h = span
@@ -692,17 +708,25 @@ class DMControlSuite(_DMCModel):
             )
         return hit
 
-    def _frame_gravity(self, sty, B: int):
-        """Per-row gravity for a drawn catenary, or None when the frame does not depend on gravity.
+    def _frame_rows(self, sty, B: int) -> dict:
+        """Per-row physics values a frame depends on: ``gravity`` for a drawn catenary, and a
+        ``radius:<geom id>`` per SPHERE_SIZES leaf. A float32 style column that still encodes the
+        model's value keeps its exact value."""
+        import mujoco
 
-        A float32 style column that still encodes the model's gravity keeps its exact value."""
-        if "gravity.x" not in self.FRAME_PHYSICS:
-            return None
-        nominal = np.asarray(self._model().opt.gravity, np.float64)
-        rows = np.stack([sty[f"gravity.{a}"].reshape(B).detach().cpu().numpy() for a in "xyz"], axis=1)
-        return np.where(rows == nominal.astype(np.float32), nominal, rows.astype(np.float64))
+        m, out = self._model(), {}
+        if "gravity.x" in self.FRAME_PHYSICS:
+            nominal = np.asarray(m.opt.gravity, np.float64)
+            rows = np.stack([sty[f"gravity.{a}"].reshape(B).detach().cpu().numpy() for a in "xyz"], axis=1)
+            out["gravity"] = np.where(rows == nominal.astype(np.float32), nominal, rows.astype(np.float64))
+        for path, geom in self.SPHERE_SIZES.items():
+            gid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, geom)
+            nominal = float(self._pristine()["geom_size"][gid, 0])
+            rows = sty[path].reshape(B).detach().cpu().numpy()
+            out[f"radius:{gid}"] = np.where(rows == np.float32(nominal), nominal, rows.astype(np.float64))
+        return out
 
-    def _render_group(self, sc: _Scene, s: torch.Tensor, size: int, ss: int, gravity=None) -> torch.Tensor:
+    def _render_group(self, sc: _Scene, s: torch.Tensor, size: int, ss: int, rows=None) -> torch.Tensor:
         dev = self.device
         B = s.shape[0]
         R = size * ss
@@ -711,7 +735,7 @@ class DMControlSuite(_DMCModel):
         oo = o.expand(B, N, 3)
         dd = d.view(1, N, 3).expand(B, N, 3)
 
-        xpos, xmat, sizes, mat_rgb = self._fk(s, sc, gravity)
+        xpos, xmat, sizes, mat_rgb = self._fk(s, sc, rows)
         P = xpos.shape[1]
         sl = sc.shadow_light
         st = self._static_t(sc, ss).view(1, N).expand(B, N)
@@ -720,7 +744,7 @@ class DMControlSuite(_DMCModel):
 
         # Conservative windows exclude only rays movers cannot hit; fall back to a full
         # frame if none fits.
-        widx = self._mover_idx(sc, xpos, size, ss)
+        widx = self._mover_idx(sc, xpos, size, ss, self._bound_scale(sc, rows))
         base = plate_f.expand(B, N, 3).clone()
         if widx is None:
             oo_w, dd_w = oo, dd

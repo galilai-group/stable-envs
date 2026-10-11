@@ -4,14 +4,15 @@
 Seventeen ``stable_worldmodel`` ids, 161 variation leaves. Every one of them is exactly one of:
 
 ``mapped``
-    reachable through a stable-envs leaf. 109 leaves. Every DM Control physics leaf (gravity,
+    reachable through a stable-envs leaf. 110 leaves. Every DM Control physics leaf (gravity,
     densities, masses, friction) goes through the physics hook and is gated against swm stepping the
     same values (tests/integration/test_dmc_physics_variation.py); the ones that also move pixels
-    (the ten ``trackcom`` mass leaves and ball-in-cup's gravity) are drawn from the same values.
+    (the ten ``trackcom`` mass leaves, ball-in-cup's gravity and ball size) are drawn from the same
+    values.
 ``unsupported``
-    the leaf has a real effect upstream that THIS cell cannot express. 31 leaves: the classic-control
-    dynamics constants, the floor colour on the five ``trackcom`` cells, walker's floor tilt and
-    ball-in-cup's ball size, each with the mechanism in its reason.
+    the leaf has a real effect upstream that THIS cell cannot express. 30 leaves: the classic-control
+    dynamics constants, the floor colour on the five ``trackcom`` cells and walker's floor tilt, each
+    with the mechanism in its reason.
 ``dead_upstream``
     the leaf reaches no pixel and no state in ``stable_worldmodel`` ITSELF. The reason carries the
     measurement. 21 leaves.
@@ -515,12 +516,6 @@ _DMC_MAPS = {
     "DMCBallInCupCatch": _dmc(
         "DMCBallInCupCatch",
         "swm/BallInCupDMControl-v0",
-        unsupported={
-            "ball.size": "the ball's radius, which is GEOMETRY and DYNAMICS at once: swm recompiles the "
-            "sphere's size, collision bounds and mass (density times the new volume). 902 disagreeing "
-            "pixels of 8x84x84 at 0.0475. The physics hook scales a primitive's mass at a fixed size "
-            "and the renderer draws the compiled radius; a size knob needs both to follow the leaf.",
-        },
         dead_upstream={
             "ball.color": _never_read(
                 "The ball is drawn with material `self`, which ``agent.color`` already reaches."
@@ -531,8 +526,13 @@ _DMC_MAPS = {
             "target.color": _target_group(4, "(site `target`, rgba on the site itself)"),
             "target.shape": _target_group(4, "(site `target`; the leaf does move site_type)"),
         },
-        physics_mapped=(*_GRAVITY, "agent.density", "ball.density"),
-        notes={f"gravity.{a}": _CATENARY for a in "xyz"},
+        physics_mapped=(*_GRAVITY, "agent.density", "ball.density", "ball.size"),
+        notes={
+            **{f"gravity.{a}": _CATENARY for a in "xyz"},
+            "ball.size": _PHYSICS_MAPPED + ". The radius is geometry as well: the ball's size, collision "
+            "bounds, mass (its density times the new volume) and inertia follow it in the simulator, and "
+            "the renderer draws each row's ball at that row's radius",
+        },
         ours_only={**_GRID_OURS, **_FOVY_OURS, **_EFFECTOR_OURS},
     ),
     "DMCCheetahRun": _trackcom(
@@ -704,7 +704,7 @@ EXPECTED_COUNTS: dict[str, dict[str, int]] = {
         "not_applicable": 0,
     },
     "swm/AcrobotDMControl-v0": {"total": 11, "mapped": 6, "unsupported": 0, "dead_upstream": 5, "not_applicable": 0},
-    "swm/BallInCupDMControl-v0": {"total": 13, "mapped": 8, "unsupported": 1, "dead_upstream": 4, "not_applicable": 0},
+    "swm/BallInCupDMControl-v0": {"total": 13, "mapped": 9, "unsupported": 0, "dead_upstream": 4, "not_applicable": 0},
     "swm/CartpoleDMControl-v0": {"total": 9, "mapped": 7, "unsupported": 0, "dead_upstream": 2, "not_applicable": 0},
     "swm/CheetahDMControl-v0": {"total": 10, "mapped": 8, "unsupported": 1, "dead_upstream": 1, "not_applicable": 0},
     "swm/FingerDMControl-v0": {"total": 11, "mapped": 11, "unsupported": 0, "dead_upstream": 0, "not_applicable": 0},

@@ -39,6 +39,8 @@ class _DMCModel(Env):
     SHAPE_KNOBS: dict[str, tuple[tuple[int, tuple[float, float, float]], ...]] = {}
     # ``group -> geom names`` whose explicit rgba a ``<group>.color`` leaf writes, overriding their material.
     GEOM_COLORS: dict[str, tuple[str, ...]] = {}
+    # ``physics leaf -> sphere geom`` drawn at the leaf's radius per row.
+    SPHERE_SIZES: dict[str, str] = {}
 
     # Empty when CPU rendering is supported; otherwise names the certification gap.
     CPU_UNCERTIFIED_REASON: str = ""

@@ -31,7 +31,7 @@ _PHYSICAL = (
 )
 
 
-def _compile(domain, geom=None, density=None, keep_total=True):
+def _compile(domain, geom=None, density=None, keep_total=True, size=None):
     pytest.importorskip("dm_control")
     from dm_control import mjcf
 
@@ -44,6 +44,8 @@ def _compile(domain, geom=None, density=None, keep_total=True):
     )
     if density is not None:
         model.find("geom", geom).density = density
+    if size is not None:
+        model.find("geom", geom).size = [size]
     if not keep_total:
         model.compiler.settotalmass = None
     with tempfile.TemporaryDirectory() as directory:
@@ -110,19 +112,35 @@ def test_geom_mass_matches_a_recompile(domain):
     assert all(np.array_equal(before[k], after[k]) for k in before), "the registered row must restore every array"
 
 
+def test_sphere_radius_and_density_match_a_recompile():
+    from stable_envs.envs.dmcontrol.simulation.physics import SphereKnobs, knobs
+
+    nominal = _compile("ball_in_cup")
+    recompiled = _compile("ball_in_cup", "ball", 1300.0, size=0.04)
+    spec = SphereKnobs(knobs("ball_in_cup"), nominal)
+    mine = copy.copy(nominal)
+    spec.apply(mine, spec.as_row({"ball.density": 1300.0, "ball.size": 0.04}))
+    ours, theirs = _model_arrays(mine), _model_arrays(recompiled)
+    for name in (*_PHYSICAL, "body_inertia", "geom_size", "geom_rbound", "geom_aabb"):
+        np.testing.assert_allclose(ours[name], theirs[name], rtol=1e-12, atol=1e-14, err_msg=name)
+    np.testing.assert_allclose(_roll(mine), _roll(recompiled), atol=1e-10)
+    spec.apply(mine, spec.nominal)
+    before, after = _model_arrays(nominal), _model_arrays(mine)
+    assert all(np.array_equal(before[k], after[k]) for k in before), "the registered row must restore every array"
+
+
 def test_geom_mass_scales_a_body_it_covers_without_rotating_its_frame():
-    """Every ball-in-cup cup part shares one leaf, so the cup's inertial frame (and simple flag) survive."""
+    """Every ball-in-cup cup part shares one leaf, so the cup's inertial frame survives."""
     from stable_envs.envs.dmcontrol.simulation.physics import knobs
 
     nominal = _compile("ball_in_cup")
     spec = PhysicsKnobs([k for k in knobs("ball_in_cup") if isinstance(k, GeomMass)], nominal)
     mine = copy.copy(nominal)
-    spec.apply(mine, spec.as_row({"agent.density": 700.0, "ball.density": 1300.0}))
-    for geoms, density in ((("cup_part_0",), 700.0), (("ball",), 1300.0)):
-        body = int(nominal.geom_bodyid[mujoco.mj_name2id(nominal, mujoco.mjtObj.mjOBJ_GEOM, geoms[0])])
-        np.testing.assert_allclose(mine.body_mass[body], nominal.body_mass[body] * density / 1000.0, rtol=1e-14)
-        np.testing.assert_array_equal(mine.body_iquat[body], nominal.body_iquat[body])
-        np.testing.assert_array_equal(mine.body_ipos[body], nominal.body_ipos[body])
+    spec.apply(mine, spec.as_row({"agent.density": 700.0}))
+    body = int(nominal.geom_bodyid[mujoco.mj_name2id(nominal, mujoco.mjtObj.mjOBJ_GEOM, "cup_part_0")])
+    np.testing.assert_allclose(mine.body_mass[body], nominal.body_mass[body] * 0.7, rtol=1e-14)
+    np.testing.assert_array_equal(mine.body_iquat[body], nominal.body_iquat[body])
+    np.testing.assert_array_equal(mine.body_ipos[body], nominal.body_ipos[body])
 
 
 @pytest.mark.parametrize("cell", ["DMCCheetahRun", "DMCQuadrupedWalk"])
@@ -139,10 +157,10 @@ def test_render_masses_match_the_simulated_model(cell):
     values = {rows.paths[0]: 650.0, rows.paths[1]: 1400.0}
     mine = copy.copy(model)
     spec.apply(mine, spec.as_row(values))
-    mass, ipos, subtree = rows(torch.tensor([[values[p] for p in rows.paths]]))
-    np.testing.assert_allclose(mass[0].numpy(), mine.body_mass, rtol=1e-12)
-    np.testing.assert_allclose(ipos[0].numpy(), mine.body_ipos, atol=1e-12)
-    np.testing.assert_allclose(subtree[0].numpy(), mine.body_subtreemass, rtol=1e-12)
+    got = rows(torch.tensor([[values[p] for p in rows.paths]]))
+    for name in _mass_rows.ARRAYS:
+        np.testing.assert_allclose(got[name][0].numpy(), getattr(mine, name), rtol=1e-12, atol=1e-12, err_msg=name)
+    assert not np.allclose(mine.cam_poscom0, model.cam_poscom0), "the leaves must move the tracking camera"
 
 
 def test_model_fields_write_through_a_transform():

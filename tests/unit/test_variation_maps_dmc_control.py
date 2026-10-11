@@ -128,7 +128,7 @@ def test_the_seventeen_ids_total_161_leaves():
         for k in totals:
             totals[k] += EXPECTED_COUNTS[m.swm_id][k]
     assert len(seen) == 17
-    assert totals == {"mapped": 133, "unsupported": 7, "dead_upstream": 21, "not_applicable": 0}
+    assert totals == {"mapped": 134, "unsupported": 6, "dead_upstream": 21, "not_applicable": 0}
     assert sum(totals.values()) == 161
 
 

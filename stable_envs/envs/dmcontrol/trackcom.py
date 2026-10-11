@@ -8,6 +8,7 @@ import torch
 from ...render import _resources as _RES
 from ...render import cpu3d as C3
 from ...render import mjwarp as MW
+from ._mass_rows import ARRAYS as _MASS_ARRAYS
 from ._mass_rows import MassRows
 from ._model import _TC_CACHE, MJW_CHUNK, VISIBLE_GROUPS, _effective_alpha, _row_width, _slot_element
 from .base import _DMCModel
@@ -70,7 +71,7 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
     d0.qpos[:] = m.qpos0
     mujoco.mj_forward(m, d0)
     batched = sorted(
-        {"mat_rgba", "light_diffuse"} | {a for a, _ in slots} | (_MASS_ARRAYS if cls._mass_rows() else set())
+        {"mat_rgba", "light_diffuse"} | {a for a, _ in slots} | (set(_MASS_ARRAYS) if cls._mass_rows() else set())
     )
     c.wm = mjw.put_model(m, batch_sizes={k: int(nworld) for k in batched})
     c.wd = mjw.put_data(m, d0, nworld=int(nworld))
@@ -106,9 +107,6 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
     c.graph = cap.graph
     _TC_CACHE.put(key, c)
     return c
-
-
-_MASS_ARRAYS = {"body_mass", "body_ipos", "body_subtreemass"}
 
 
 def _reflection_supported(rc) -> bool:
@@ -294,13 +292,13 @@ class DMControlTrackCom(_DMCModel):
         ld = np.empty((B, m.nlight, 3))
         slots = self._slots()
         if masses is not None:
-            masses = [x.detach().cpu().numpy() for x in masses]
+            masses = {name: value.detach().cpu().numpy() for name, value in masses.items()}
         try:
             for i in range(B):
                 for (arr, k), v in zip(slots, ep[i]):
                     getattr(m, arr).reshape(-1)[k] = v
-                if masses is not None:
-                    m.body_mass[:], m.body_ipos[:], m.body_subtreemass[:] = (x[i] for x in masses)
+                for name, value in (masses or {}).items():
+                    getattr(m, name)[:] = value[i]
                 d.qpos[:] = q[i]
                 mujoco.mj_kinematics(m, d)
                 mujoco.mj_comPos(m, d)
@@ -429,7 +427,7 @@ class DMControlTrackCom(_DMCModel):
             dst[:n, eid] = row
         masses = self._row_masses(sty, lo, hi)
         if masses is not None:
-            for name, value in zip(("body_mass", "body_ipos", "body_subtreemass"), masses, strict=True):
+            for name, value in masses.items():
                 wp.to_torch(getattr(c.wm, name))[:n] = value.to(torch.float32)
         m, pr = self._model(), self._pristine()
         mr = wp.to_torch(c.wm.mat_rgba)

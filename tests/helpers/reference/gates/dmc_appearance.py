@@ -42,7 +42,13 @@ SWM_IDS = {
 }
 _SHOWN = {"rendering.render_target": 1}
 CASES = {
-    "DMCBallInCupCatch": [{"gravity.x": 2.5}, {"gravity.y": -2.5}, {"gravity.z": -2.5}],
+    "DMCBallInCupCatch": [
+        {"gravity.x": 2.5},
+        {"gravity.y": -2.5},
+        {"gravity.z": -2.5},
+        {"ball.size": 0.04},
+        {"ball.size": 0.015},
+    ],
     "DMCFingerTurnHard": [
         {"spinner.color": [0.1, 0.8, 0.2]},
         {**_SHOWN, "target.shape": 0},

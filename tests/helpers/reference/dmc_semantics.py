@@ -59,7 +59,7 @@ PHYSICS_LEAVES = {
     "acrobot": _GRAVITY,
     "pendulum": _GRAVITY,
     "cartpole": (*_GRAVITY, "agent.cart_mass"),
-    "ball_in_cup": (*_GRAVITY, "agent.density", "ball.density"),
+    "ball_in_cup": (*_GRAVITY, "agent.density", "ball.density", "ball.size"),
     "finger": ("agent.proximal_density", "agent.fingertip_density", "spinner.density", "spinner.friction"),
     "manipulator": ("agent.upper_arm_density", "agent.hand_density"),
     "reacher": ("agent.arm_density", "agent.finger_density"),

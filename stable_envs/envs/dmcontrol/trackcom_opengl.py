@@ -43,15 +43,15 @@ def render(env, states, style, size, out):
         colors = {name: style[f"material.{name}"].detach().cpu().numpy() for name in env._used_materials()}
         lights = style["light.diffuse_scale"].detach().cpu().numpy()
         masses = env._row_masses(style, 0, len(rows))
-        masses = None if masses is None else [x.detach().cpu().numpy() for x in masses]
+        masses = {name: value.detach().cpu().numpy() for name, value in (masses or {}).items()}
         for i, row in enumerate(rows):
             for name, value in pr.items():
                 getattr(model, name)[:] = value
             for name, values in colors.items():
                 model.material(name).rgba[:3] = values[i]
             model.light_diffuse[:] = np.clip(pr["light_diffuse"] * lights[i], 0, 1)
-            if masses is not None:
-                model.body_mass[:], model.body_ipos[:], model.body_subtreemass[:] = (x[i] for x in masses)
+            for name, value in masses.items():
+                getattr(model, name)[:] = value[i]
             for (name, k), value in zip(env._slots(), row[env.nq :]):
                 getattr(model, name).reshape(-1)[k] = value
             data.qpos[:] = row[: env.nq]
