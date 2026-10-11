@@ -3,7 +3,7 @@
   "seed": 17,
   "batch": 3,
   "steps": 32,
-  "generator": "scripts/recovery/freeze_native_classic_remaining_oracle.py",
+  "generator": "scripts/testing/freeze_native_classic_remaining_oracle.py",
   "versions": {
     "numpy": "2.5.3",
     "gymnasium": "1.3.0",
@@ -16,7 +16,7 @@
     "acrobot": {
       "historical_id": "swm/AcrobotControl-v1",
       "file": "acrobot_swm_176d545_gymnasium130.npz",
-      "sha256": "0fa54f79e12578177975ebd35df170372797661324b9cf3f35b71560f77aab0e",
+      "sha256": "4f46f54affc564d9603173fbb60c008bf1a3acc18fcdccb5e32016697014f27d",
       "arrays": {
         "actions": {
           "shape": [
@@ -98,6 +98,62 @@
           ],
           "dtype": "int64"
         },
+        "state/physics/link_length_1": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/link_length_2": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/link_mass_1": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/link_mass_2": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/link_com_pos_1": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/link_com_pos_2": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/link_moi": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
         "reward": {
           "shape": [
             32,
@@ -140,7 +196,7 @@
     "mountain_car": {
       "historical_id": "swm/MountainCarControl-v0",
       "file": "mountain_car_swm_176d545_gymnasium130.npz",
-      "sha256": "4d8281ce784985585e8fbeb4da5ab2c84a735c3dba5ab6ea72b2c1dabf0a1155",
+      "sha256": "e4455a0c1f3ea11b1d9134d1123b0336a56a23eb92912f046cfeb3b07bcf8f99",
       "arrays": {
         "actions": {
           "shape": [
@@ -205,6 +261,30 @@
             1
           ],
           "dtype": "int64"
+        },
+        "state/physics/gravity": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/force": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/max_speed": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
         },
         "reward": {
           "shape": [
@@ -248,7 +328,7 @@
     "mountain_car_continuous": {
       "historical_id": "swm/MountainCarContinuousControl-v0",
       "file": "mountain_car_continuous_swm_176d545_gymnasium130.npz",
-      "sha256": "68081ac40c6352d370c968296467ce1b53acaadc39c4be8dbb23e9cdf807b78d",
+      "sha256": "fee4a7e8cfb18292e6bb6fdae7265be0432d9b3fdc8bd3a0b832eb75c4ec6cc5",
       "arrays": {
         "actions": {
           "shape": [
@@ -273,14 +353,6 @@
             1
           ],
           "dtype": "float64"
-        },
-        "state/task/state_is_float32": {
-          "shape": [
-            33,
-            3,
-            1
-          ],
-          "dtype": "bool"
         },
         "state/lifecycle/elapsed_steps": {
           "shape": [
@@ -321,6 +393,30 @@
             1
           ],
           "dtype": "int64"
+        },
+        "state/task/state_is_float32": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "bool"
+        },
+        "state/physics/power": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/max_speed": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
         },
         "reward": {
           "shape": [

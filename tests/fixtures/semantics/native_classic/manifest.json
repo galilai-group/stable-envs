@@ -3,7 +3,7 @@
   "seed": 17,
   "batch": 3,
   "steps": 32,
-  "generator": "scripts/recovery/freeze_native_classic_oracle.py",
+  "generator": "scripts/testing/freeze_native_classic_oracle.py",
   "versions": {
     "numpy": "2.5.3",
     "gymnasium": "1.3.0",
@@ -16,7 +16,7 @@
     "cartpole": {
       "historical_id": "swm/CartPoleControl-v1",
       "file": "cartpole_swm_176d545_gymnasium130.npz",
-      "sha256": "b9a11d147d2eb2129e73dd25cff8e724744024b8cfe201c75d3c3a7f8828a932",
+      "sha256": "cbe20ee207c140e0f8355b54f61fc3e8c31535dfcaeea451ff1b464e82612160",
       "arrays": {
         "actions": {
           "shape": [
@@ -66,22 +66,6 @@
           ],
           "dtype": "int64"
         },
-        "state/task/steps_beyond_terminated": {
-          "shape": [
-            33,
-            3,
-            1
-          ],
-          "dtype": "int64"
-        },
-        "state/task/has_steps_beyond_terminated": {
-          "shape": [
-            33,
-            3,
-            1
-          ],
-          "dtype": "bool"
-        },
         "state/rng/state": {
           "shape": [
             33,
@@ -113,6 +97,70 @@
             1
           ],
           "dtype": "int64"
+        },
+        "state/task/steps_beyond_terminated": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "int64"
+        },
+        "state/task/has_steps_beyond_terminated": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "bool"
+        },
+        "state/physics/gravity": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/masscart": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/masspole": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/length": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/force_mag": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/tau": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
         },
         "reward": {
           "shape": [
@@ -156,7 +204,7 @@
     "pendulum": {
       "historical_id": "swm/PendulumControl-v1",
       "file": "pendulum_swm_176d545_gymnasium130.npz",
-      "sha256": "c9c7f077e2288fd7f829c9fafa943a05d91490ef6373ca6e3ff1d2be89df281a",
+      "sha256": "45c2ab5a70c8a33f52545bf91d8cf09832dd8f22eaf829d538afd112e620c8ee",
       "arrays": {
         "actions": {
           "shape": [
@@ -181,22 +229,6 @@
             1
           ],
           "dtype": "float64"
-        },
-        "state/torque": {
-          "shape": [
-            33,
-            3,
-            1
-          ],
-          "dtype": "float64"
-        },
-        "state/task/has_last_u": {
-          "shape": [
-            33,
-            3,
-            1
-          ],
-          "dtype": "bool"
         },
         "state/lifecycle/elapsed_steps": {
           "shape": [
@@ -237,6 +269,70 @@
             1
           ],
           "dtype": "int64"
+        },
+        "state/torque": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/task/has_last_u": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "bool"
+        },
+        "state/physics/g": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/m": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/l": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/max_torque": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/max_speed": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/dt": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
         },
         "reward": {
           "shape": [

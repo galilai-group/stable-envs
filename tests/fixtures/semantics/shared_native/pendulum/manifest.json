@@ -39,6 +39,54 @@
         1
       ]
     },
+    "state/physics/dt": {
+      "dtype": "float64",
+      "shape": [
+        33,
+        3,
+        1
+      ]
+    },
+    "state/physics/g": {
+      "dtype": "float64",
+      "shape": [
+        33,
+        3,
+        1
+      ]
+    },
+    "state/physics/l": {
+      "dtype": "float64",
+      "shape": [
+        33,
+        3,
+        1
+      ]
+    },
+    "state/physics/m": {
+      "dtype": "float64",
+      "shape": [
+        33,
+        3,
+        1
+      ]
+    },
+    "state/physics/max_speed": {
+      "dtype": "float64",
+      "shape": [
+        33,
+        3,
+        1
+      ]
+    },
+    "state/physics/max_torque": {
+      "dtype": "float64",
+      "shape": [
+        33,
+        3,
+        1
+      ]
+    },
     "state/rng/has_uint32": {
       "dtype": "int64",
       "shape": [
@@ -121,39 +169,53 @@
   "batch": 3,
   "format": "stable-envs.state-task-trajectory.v1",
   "producer": {
-    "commit": "6af4e1df6732a29c28de88f6cca141bbf2f40c07",
+    "commit": "5c9f3ee126e148902e238a97b819861611719c0f",
     "files": {
       "scripts/testing/freeze_native.py": "ab7f1e127e48b750a5c9361a54d3ca5d784133f85a6e992042472c2241da494a",
-      "stable_envs/testing/corpus.py": "f69cf9d4206de6bd971c082da99045a91f93bb11adf80082447541abaa78f6b9",
+      "stable_envs/testing/corpus.py": "aa91f2363236b7c3647e617e1bc22c44cd0945340433461d4309d111ad6088b9",
       "tests/helpers/reference/__init__.py": "978fc29f567bd6ea9f457451ee075b696a8c286ef8b90cc54513c8388596996d",
-      "tests/helpers/reference/bridges.py": "c910985386f9683e568876efb66c4dac2582391c17a69eba87c4d28483ad1361",
+      "tests/helpers/reference/bridges.py": "344457c6b8a7baf4d8c12f590c6a4f9590c6b3c2ee998b96100f6a8180c314af",
       "tests/helpers/reference/cases.py": "ab97f27d7eda44a6b612f8e403594872b9d6f27bef946c0ef86d7298e34a7ad3",
-      "tests/helpers/reference/certification.py": "200ee05dcf197cc4a243b5dfa6b7c180e00029869e203e6ef98a85e25e0b5f54",
-      "tests/helpers/reference/classic_state_export.py": "e18a928d5aa19c001dc9e17f7bb12cc65770e9712967c145e6744692b529f2c1",
+      "tests/helpers/reference/certification.py": "b81ec8aeafec58136eb5d8fb4a1e799f90b2c6964c3f574ab2a993196a6c3d2d",
+      "tests/helpers/reference/classic_state_export.py": "8da230e32099c1103e9e2900aec63501a15c70e0396562b020e020f0db553260",
       "tests/helpers/reference/craftax_jit.py": "3f7081451d63eee797b1c2f617e4569f7cc1e4e23fe9d60a6045012630a42fe8",
-      "tests/helpers/reference/craftax_source.py": "782b4b743df6b6bc2b6ec6a5c7c5f433b6717624a0b593f28537664e16e1b19e",
-      "tests/helpers/reference/crosswalk.py": "d0474e913a85c4547fcdfa5f1ed571a878ea1435d87b7d413cb807276bf80ea5",
-      "tests/helpers/reference/dmc_aligned_semantics.py": "51620f3185f167033dfe3e465e990ac3bffa7ff1e0646c646f5aca8146ea031b",
-      "tests/helpers/reference/dmc_continuation_semantics.py": "6dfbe7111c26211b4d5a775e6b48cb5244d95dee5446854de479bb60e44bb64c",
-      "tests/helpers/reference/dmc_first_family_semantics.py": "af2c88ce1e4d5d35d8f5ce155588b2979812008710a592618e3842971f0d6af5",
-      "tests/helpers/reference/dmc_humanoid_semantics.py": "b2907cb05d65baf7191e30dc9cb454caa0e1ac4ed10fc262e53bd1ca09ef9864",
-      "tests/helpers/reference/inventory.py": "501dd1f6282b7536f761e938dcafb1795635bef353a3ae464abb2d88555d084a",
-      "tests/helpers/reference/native_classic_remaining_semantics.py": "9ebb17ccc2c366345a07eeb7ea0272b79ebb34292ee78ec516fe29916db04a55",
-      "tests/helpers/reference/native_classic_semantics.py": "2247c14634c4ae50e8396b1c95af7f917b3f3cc47b1e9c7133229ead4b1e5690",
-      "tests/helpers/reference/native_navigation_semantics.py": "24cdc4084d1bf358289e1e1b58dd52f3ca43ee038fc0c60e1f270ee0cec4085c",
-      "tests/helpers/reference/ogbench_before_validation_columns.py": "5c8c55acfe25735faf2cc6e1bdd1b5a565358ef88abc24649ae4c8248ec08538",
-      "tests/helpers/reference/ogbench_maze_semantics.py": "2d1d0fb472105353fd610f065b1cbd715b0efad3ec73ef6c9fd204f19627ea03",
-      "tests/helpers/reference/ogbench_state_export.py": "5381455843a855ddd8f79616c3b079ecc8413e2ca8108e94f02d16e405b91490",
-      "tests/helpers/reference/profiles.py": "cd513705182e8abc8f56e8aaba6b61ddbf2ca3fb4518bb9f2c0444cf3b3ef788",
-      "tests/helpers/reference/reacher_semantics.py": "f689d371e370a2756a93fbe7e7740f410cc6a0bc17fcf395a623cfbe55c8c2bc",
+      "tests/helpers/reference/craftax_source.py": "68726bb8b104e295e407a53b2ea08eea7898e93c20614b4dfa71024c118995ab",
+      "tests/helpers/reference/crosswalk.py": "f321cac9024826480d60958df8af3d7e2495b4ececbf82c11478fc3eb30b15a6",
+      "tests/helpers/reference/dmc_pixels.py": "99d9467d92b529140250c6efc4fc85df6c13db2a52f0e005904537d77e2de576",
+      "tests/helpers/reference/dmc_semantics.py": "8b8608b54a338ab75c9d63f1e95b10c35610444979c5dc5942ce08be25ca9f96",
+      "tests/helpers/reference/dmc_source_render.py": "c3e66265a4230c7dd6187e1120ffb9d70751f7964757d012e8f4a8dd2076fef7",
+      "tests/helpers/reference/dmc_suite.py": "f227348c7b9b6830d5ea310d62ebf36df5dac4d361498cb7d61ec6c99f86c704",
+      "tests/helpers/reference/fetch_compare.py": "369dfed49dce3f7e9ef7899ec2f2cf4ec86732e727661b28cd1cba314007e588",
+      "tests/helpers/reference/fetch_pixels.py": "3c9f2f5722717b3d3ffd5ce1a59f1fb239374f5224df19b9e8aafa5f08d84b86",
+      "tests/helpers/reference/fetch_semantics.py": "167558b2edc1aef3d33823285de0385ebdd42e272a3df4af70d93f25d847b983",
+      "tests/helpers/reference/inventory.py": "6d31129df53d7271814f3a3ca28d30c08c3a22b823d555fa8ebb0e44e46ebbee",
+      "tests/helpers/reference/isolated.py": "54f1f6be70ff7cd70c238e860568c2d3211a87a33c3171d081d9b696fd60b29b",
+      "tests/helpers/reference/native_acceptance.py": "5d98544be217af8e6992dc02a54211e66a6d32196d7ef666542427f2a0e6a5ac",
+      "tests/helpers/reference/native_classic_semantics.py": "a7e354bd5a7728c1dbac9315ac59b1c045752367e549ed8059f6bf45fefc2b57",
+      "tests/helpers/reference/native_navigation_semantics.py": "d8f1aeeebd53c1d24e4b19c186fac27264e9434af0c5a46a21eec33af7dbdb59",
+      "tests/helpers/reference/native_pixels.py": "7a122f793036f9efdf579a2638ae4a87bc24c48e4669aa57235b82edfa9b24e7",
+      "tests/helpers/reference/navigation_pixels.py": "318f892ce8f309f692014b0f947ca2fd0f8f77b367504de18c662c0164cb910f",
+      "tests/helpers/reference/ogbench_before_validation_columns.py": "7037d87728d7e1f1f9d75f8aa1ae6664d75cbcf99b9a50734659caf06e09360b",
+      "tests/helpers/reference/ogbench_manipulation_semantics.py": "4fa2adf3ae7317c327ca3d6ab233fdcef1579f6e1d1cf9de6dd17e1da9cb3ceb",
+      "tests/helpers/reference/ogbench_manipulation_source.py": "f2f2125f6c7589ca124305f640e2beedff91dc602e858c77c70d11dacd5fac5c",
+      "tests/helpers/reference/ogbench_maze_semantics.py": "f0ecd84cf65552dcf6481c14c5a42a69dd36dc57e4e1d366a2c6a8267c78b40b",
+      "tests/helpers/reference/ogbench_pixels.py": "7b927c1e5a92900cc4334d185f3f8965ed006dad902d50f182f4136f491bd7cf",
+      "tests/helpers/reference/ogbench_state_export.py": "dde6b51b1ed4e1cf6181f150545b2a26ac55399d6bf8aeb4798f9d93308adca3",
+      "tests/helpers/reference/oracle.py": "f5ac001c54579200d7e05e63ce17160dbd6f2d7f41f73cf3da15ae837f10a8cb",
+      "tests/helpers/reference/pixels.py": "6ec38a30a554f1fedc9c4fd084f46d69865baf09a8e1b2a89d8aad26b02564bf",
+      "tests/helpers/reference/profiles.py": "55e09cba64d44ed366c4aab4e7fcb73632cb402eb47dc6e8a82c2979e7f8d4c5",
+      "tests/helpers/reference/pusht_pixels.py": "b6a990738723344c6ca1ac012227a4461176b68db6e19a9cad53b1d4090d2b55",
+      "tests/helpers/reference/pusht_semantics.py": "dec2de2d6ad4382da4a5460e5696a46d9267486351f2453865b4ab2d5c6c2bb6",
       "tests/helpers/reference/readiness.py": "e9589c8cbd831783e5a274a5517466a5fc476b026e67e2795adaaa718885163b",
-      "tests/helpers/reference/saved.py": "9fcaa18340a9f513459811e9535201425541bf4f5be3abfd4a854a6287d70f33",
+      "tests/helpers/reference/rocket_pixels.py": "5ce29d1e9ed902b179ad689900b19c1e3108e3d89e217c6ec198c15e2d81a30d",
+      "tests/helpers/reference/rocket_semantics.py": "fbcae5522cddc4e98ca2a1dda43a175e1dfcf77ba2356b57b35c83dda4afb0ed",
+      "tests/helpers/reference/saved.py": "64036f237c2e3433f48da1240f382b6dea3e042bdb002677aab38b825895bd15",
       "tests/helpers/reference/semantics.py": "abec2cb4a1752633a911b425e1816a38cb97e9fed0f711d17c40abfe3c8b51aa",
-      "tests/helpers/reference/step_capture.py": "8176c3c0fe2c17bb91dd126b198296a60d64082a57780c44c1d1e798fcdf33b7",
+      "tests/helpers/reference/step_capture.py": "3a261586d1a8a73a818b4f1c3f3f2a4993ecbf04025c9ef3f45f06d9fefe9814",
       "tests/helpers/reference/swap_renderer.py": "085cd0b50234cf9b713f3886ae14f3a88f5a8bf937dbceaa42714b4e5e5c6f92",
-      "tests/helpers/reference/variation.py": "2dae48384032f9bfb66c6a445e4a0fae325e028a14c2ce7ca1d8091494a974a4"
+      "tests/helpers/reference/variation.py": "b7a48d4e5fcb4e418c38d5bf8d1100e8f8c56de8f3fda3080afe85036bd03784"
     },
-    "tracked_dirty": true
+    "tracked_dirty": false
   },
   "registration": "swm/PendulumControl-v1",
   "seed": 17,
@@ -369,7 +431,8 @@
     "root": "/Users/samib/stable-worldmodel",
     "versions": {
       "gymnasium": "1.3.0",
-      "numpy": "2.5.3"
+      "numpy": "2.5.3",
+      "pygame": "2.6.1"
     }
   },
   "steps": 32
