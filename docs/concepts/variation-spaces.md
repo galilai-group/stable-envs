@@ -78,13 +78,17 @@ env.reset(seed=1)                                         # gravity.z is -5.0 ag
 ```
 
 Families that wrap the stable-worldmodel source (PushT, Rocket, OGBench Cube/Scene) apply
-`set_variation` to the source's defaults, which take effect at the next reset. PushT also
-applies its appearance leaves (`PushT.immediate_variation_leaves`: colours, goal pose,
-`rendering.render_goal`) to the running episode; body shapes and scales need a rebuilt
-physics space and start poses exist only at reset, so those wait for the next reset.
-Rocket also repaints its colour leaves on the current episode at once, and every later reset
-draws them, so `get_variation` always matches the drawn colours; its start leaves (drop height,
-lateral offset, tilt) describe how an episode begins, so they wait for the next reset.
+`set_variation` to the source's defaults, which take effect at the next reset, and each also
+applies some leaves to the running episode:
+
+- PushT: its appearance leaves (`PushT.immediate_variation_leaves`: colours, goal pose,
+  `rendering.render_goal`). Body shapes and scales need a rebuilt physics space and start poses
+  exist only at reset, so those wait for the next reset.
+- Rocket: its colour leaves; every later reset draws them, so `get_variation` always matches the
+  drawn colours. Its start leaves (drop height, lateral offset, tilt) wait for the next reset.
+- OGBench Cube/Scene: cube size and colour, floor colour, camera angle, light intensity and lock
+  colour. Reset-time placements wait for the next reset, and `agent.color` follows the source's
+  compile rule.
 
 ## One Variation vs B independent Variations
 

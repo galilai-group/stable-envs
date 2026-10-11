@@ -10,7 +10,7 @@ from tensordict import TensorDict
 
 from ...._execution.protocol import SimulatorAdapter
 from ...._execution.state_columns import owned_columns
-from .compatibility import CUBE_SAMPLES, MODEL_VALUES, CompatibleCube, CompatibleScene, nodes
+from .compatibility import MODEL_VALUES, CompatibleCube, CompatibleScene, nodes
 
 PARTS = (
     "TIME",
@@ -56,11 +56,7 @@ def rngs(env):
         "environment": env.np_random,
         "action": env.action_space.np_random,
         "variation_parent": env.variation_parent,
-        **{
-            name: node.np_random
-            for name, node in nodes(env.variation_space)
-            if env.family != "Scene" or name.removeprefix("variation/").replace("/", ".") not in CUBE_SAMPLES
-        },
+        **{name: node.np_random for name, node in nodes(env.variation_space)},
     }
 
 
@@ -138,9 +134,9 @@ class OGBManipulationAdapter(SimulatorAdapter):
         self._check_open()
         if seed is not None and (not isinstance(seed, (int, np.integer)) or seed < 0):
             raise ValueError("seed must be a nonnegative integer or None")
-        options = self.envs[0].validate_options(options)
+        lanes = options if isinstance(options, list) else self.envs[0].lane_options(options, self.num_envs)
         for lane, env in enumerate(self.envs):
-            env.reset(seed=None if seed is None else int(seed) + lane, options=options)
+            env.reset(seed=None if seed is None else int(seed) + lane, options=lanes[lane])
         return self.get_state()
 
     def _values(self, env):
@@ -402,16 +398,20 @@ class OGBManipulationAdapter(SimulatorAdapter):
     def make_variation_space(self):
         from .compatibility import variation_tree
 
-        tree = variation_tree(self.envs[0])
-        if self.family == "Scene":
-            for key in CUBE_SAMPLES:
-                del tree["cube"].spaces[key.split(".")[1]]
-        return tree
+        return variation_tree(self.envs[0])
 
     def variation_values(self, layout, *, anchor=False):
-        rows = [np.concatenate([np.asarray(getattr(env.variation_space._walk(name),
-                               "init_value" if anchor else "value")).reshape(-1)
-                               for name, _, _ in layout]) for env in self.envs]
+        rows = [
+            np.concatenate(
+                [
+                    np.asarray(getattr(env.variation_space._walk(name), "init_value" if anchor else "value")).reshape(
+                        -1
+                    )
+                    for name, _, _ in layout
+                ]
+            )
+            for env in self.envs
+        ]
         return torch.as_tensor(np.stack(rows), dtype=torch.float64, device=self.device)
 
     def configure(self, values):
@@ -421,11 +421,7 @@ class OGBManipulationAdapter(SimulatorAdapter):
         for env, value in zip(self.envs, values):
             env.validate_options({"variation": [], "variation_values": value})
         for env, value in zip(self.envs, values):
-            for key, val in value.items():
-                node = env.variation_space._walk(key)
-                current = node.value.copy()
-                node.set_init_value(val)
-                node.set_value(current)
+            env.configure_variation(value)
 
     def step(self, actions, *, active=None, capture_state=True):
         active = None if active is None else np.asarray(active.detach().cpu(), dtype=bool)
@@ -439,8 +435,10 @@ class OGBManipulationAdapter(SimulatorAdapter):
             or not np.isfinite(actions).all()
         ):
             raise ValueError("Actions must be finite float32/float64 [num_envs, 5]")
-        results = [env.step(action) if active is None or active[i] else self._last_outputs[i]
-                   for i, (env, action) in enumerate(zip(self.envs, actions))]
+        results = [
+            env.step(action) if active is None or active[i] else self._last_outputs[i]
+            for i, (env, action) in enumerate(zip(self.envs, actions))
+        ]
         self._last_outputs = results
         return TensorDict(
             {

@@ -25,8 +25,8 @@ See ``pre-repository-cleanup:docs/research/step8_variations_newcells.md``.
 
 Cube/Scene recovery now maps the registered public semantic adapters. Their
 independent compiled models feed the unchanged frozen renderer; historical model
-probes below remain provenance. Reset configuration is part of Variation. Scene's
-four historical Cube start/goal controls remain explicitly outside public scope.
+probes below remain provenance. Reset configuration is part of Variation, with
+one value per lane through ``variation_values``.
 """
 
 from __future__ import annotations
@@ -138,11 +138,11 @@ _OGB_APPEARANCE = {
 }
 
 _OGB_CUBE_MAPPED = tuple(sorted((*_OGB_STATE_LEAVES, *(k for k in _OGB_APPEARANCE if k != "lock_color"))))
-_OGB_SCENE_MAPPED = tuple(sorted(("agent.ee_start_position", *_OGB_APPEARANCE)))
-_OGB_SCENE_SWM_ONLY = {
-    k: "The historical Cube start/goal control is not exposed by the registered Scene adapter. "
-    "Scene initialization is task-driven; exhaustive State and task restoration do not certify "
-    "these four public Variation controls. Explicit use continues to refuse."
+_OGB_SCENE_MAPPED = tuple(sorted((*_OGB_STATE_LEAVES, *_OGB_APPEARANCE)))
+_OGB_PLACEMENT_NOTES = {
+    k: "SWM CubeEnv/SceneEnv read this leaf only in data_collection mode; the registered env runs in task "
+    "mode, where it is sampled, stored and seeded but moves no physics. Ours carries the same value "
+    "and RNG stream in State (gate: tests/helpers/reference/gates/ogb_variation.py)."
     for k in _OGB_STATE_LEAVES
     if k != "agent.ee_start_position"
 }
@@ -182,11 +182,12 @@ NEWCELL_VARIATION_MAPS: dict[str, VariationMap] = {
     "OGBCube": VariationMap(
         swm_id="swm/OGBCube-v0",
         identical=_OGB_CUBE_MAPPED,
+        notes=_OGB_PLACEMENT_NOTES,
     ),
     "OGBScene": VariationMap(
         swm_id="swm/OGBScene-v0",
         identical=_OGB_SCENE_MAPPED,
-        swm_only=_OGB_SCENE_SWM_ONLY,
+        notes=_OGB_PLACEMENT_NOTES,
     ),
     "PFRocketLanding": VariationMap(
         swm_id="swm/PFRocketLanding-v0",
@@ -310,8 +311,8 @@ for _family, _mapped in [("Cube", _OGB_CUBE_MAPPED), ("Scene", _OGB_SCENE_MAPPED
         "color is distinct from compiled color. Repeated/co-varied application changes pixels; "
         "an isolated pending change must not be rendered before source compilation."
     )
-    if _family == "Scene":
-        _leaves.update({k: _cls("unsupported", v, _evidence) for k, v in _OGB_SCENE_SWM_ONLY.items()})
+    for _k, _note in _OGB_PLACEMENT_NOTES.items():
+        _leaves[_k]["reason"] = _note
     LEAF_CLASSIFICATION["swm/OGB" + _family + "-v0"] = {"our_envs": ["OGB" + _family], "leaves": _leaves}
 
 

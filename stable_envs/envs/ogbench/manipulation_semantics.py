@@ -159,7 +159,7 @@ class ManipulationSemantics:
             for i in range(self.B):
                 values[i][key] = value[i].copy()
         self._simulator.configure(values)
-        # Persistent reset anchors take effect on reset; current model/style remains unchanged.
+        self._sync_style()
         return self._simulator.variation_values(self.variation_space.flat_layout(), anchor=True)
 
     def _pack_render_state(self, state):

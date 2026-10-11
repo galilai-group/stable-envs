@@ -182,7 +182,9 @@ def test_variation_anchors_model_restore_and_rejections(family):
         original = a.get_state()
         a.set_variation({"cube.size": np.array([0.025]), "agent.ee_start_position": np.array([0.43, 0.04, 0.29])})
         pending = a.get_state()
-        assert torch.equal(original["variation", "current", "cube.size"], pending["variation", "current", "cube.size"])
+        start = ("variation", "current", "agent.ee_start_position")
+        assert torch.equal(original[start], pending[start])
+        assert (pending["variation", "current", "cube.size"] == 0.025).all()
         b.set_state(pending)
         equal(a.reset(), b.reset())
         saved = a.get_state()
@@ -217,6 +219,18 @@ def test_variation_anchors_model_restore_and_rejections(family):
         with pytest.raises(ValueError, match="NumPy arrays"):
             a.reset(options={"task_info": payload})
         equal(before, a.get_state())
+
+
+@pytest.mark.parametrize("family", CLASSES)
+def test_variation_values_take_one_row_per_lane(family):
+    with CLASSES[family](num_envs=2, seed=3) as env:
+        sizes = np.array([[0.012], [0.028]])
+        state = env.reset(3, {"variation_values": {"cube.size": sizes, "cube.goal_yaw": np.array([0.5])}})
+        assert np.array_equal(state["model", "compiled", "cube.size"].numpy(), sizes)
+        assert (state["variation", "current", "cube.goal_yaw"] == 0.5).all()
+        with pytest.raises(ValueError):
+            env.reset(3, {"variation_values": {"cube.size": np.array([[0.012], [0.02], [0.028]])}})
+        equal(state, env.get_state())
 
 
 @pytest.mark.parametrize("cls", [CompatibleCube, CompatibleScene])

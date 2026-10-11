@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import copy
+import threading
+from collections import OrderedDict
 from importlib.metadata import version
 
 import gymnasium as gym
@@ -16,6 +18,31 @@ from ....spaces import Box, Dict
 MODEL_VALUES = ("cube.size", "agent.color", "floor.color", "camera.angle_delta", "light.intensity")
 
 CUBE_SAMPLES = ("cube.start_position", "cube.start_yaw", "cube.goal_position", "cube.goal_yaw")
+
+# set_variation applies these to the running episode. The rest are reset-only, and
+# agent.color waits for the source's own compile rule.
+IMMEDIATE = ("cube.size", "floor.color", "camera.angle_delta", "light.intensity", "cube.color", "lock_color")
+COMPILED = ("cube.size", "floor.color", "camera.angle_delta", "light.intensity")
+# Every MjModel array a compile derives from COMPILED; tex_data only for the grid texture.
+COMPILED_FIELDS = (
+    "body_inertia",
+    "body_invweight0",
+    "body_mass",
+    "body_subtreemass",
+    "bvh_aabb",
+    "cam_mat0",
+    "cam_poscom0",
+    "cam_quat",
+    "dof_M0",
+    "dof_invweight0",
+    "dof_length",
+    "geom_aabb",
+    "geom_rbound",
+    "geom_size",
+    "light_diffuse",
+    "light_poscom0",
+    "tex_data",
+)
 
 
 def nodes(tree, prefix="variation"):
@@ -98,8 +125,6 @@ class Compatibility:
         self.variation_space.seed(0)
         self.action_space  # Own the genuine Box before any checker/property-triggered reset.
         self.supported_variations = set(self.variation_space.names())
-        if self.family == "Scene":
-            self.supported_variations -= set(CUBE_SAMPLES)
         self._camera_basis = None
         self._size_float32 = False
 
@@ -142,6 +167,58 @@ class Compatibility:
             if value.shape != node.shape or not np.isfinite(value).all() or not node.contains(value):
                 raise ValueError(f"Invalid Variation {key}")
         return options
+
+    def lane_options(self, options, batch):
+        """Validated options per lane; a ``variation_values`` entry may hold one value per lane."""
+        if options is not None and not isinstance(options, dict):
+            raise TypeError("Reset options must be a dictionary")
+        values = (options or {}).get("variation_values")
+        if not isinstance(values, dict):
+            return [self.validate_options(options)] * batch
+        lanes = []
+        for lane in range(batch):
+            per_lane = {key: self._lane_value(key, value, lane, batch) for key, value in values.items()}
+            lanes.append(self.validate_options({**options, "variation_values": per_lane}))
+        return lanes
+
+    def _lane_value(self, key, value, lane, batch):
+        if key not in self.supported_variations:
+            return value
+        if hasattr(value, "detach"):
+            value = value.detach().cpu().numpy()
+        shape = self.variation_space._walk(key).shape
+        if np.shape(value) == (batch, *shape) and np.shape(value) != shape:
+            return value[lane]
+        return value
+
+    def configure_variation(self, values):
+        """Install reset defaults; IMMEDIATE leaves also apply to the running episode."""
+        changed = set()
+        for key, value in values.items():
+            node = self.variation_space._walk(key)
+            current = node.value.copy()
+            node.set_init_value(value)
+            if key in IMMEDIATE:
+                node.set_value(value)
+                if not np.array_equal(node.value, current):
+                    changed.add(key)
+            else:
+                node.set_value(current)
+        if changed & set(COMPILED):
+            target = dict(self._model_values)
+            target.update({k: self.variation_space._walk(k).value for k in changed & set(COMPILED)})
+            fields, compiled = compiled_fields(self.family, target)
+            for name, value in fields.items():
+                if name == "tex_data":
+                    start = int(self.model.tex_adr[self.model.texture("grid").id])
+                    self.model.tex_data[start : start + len(value)] = value
+                else:
+                    getattr(self.model, name)[:] = value
+            self._model_values = copy.deepcopy(compiled)
+        if "cube.color" in changed:
+            self._cube_colors_from_variation()
+        if "lock_color" in changed:
+            self._lock_colors()
 
     def validate_task(self, task):
         expected = self.task_infos[0]
@@ -295,8 +372,45 @@ class CompatibleScene(Compatibility, SceneEnv):
 
     def _apply_button_states(self):
         super()._apply_button_states()
+        self._lock_colors()
+
+    def _lock_colors(self):
         for i, state in enumerate(self._cur_button_states):
             color = self.variation_space["lock_color"].value[i] if state == 0 else self._colors["white"][:3]
             for gid in self._button_geom_ids_list[i]:
                 self.model.geom_rgba[gid] = [*color, 1.0]
             self.model.material(("drawer_handle", "window_handle")[i]).rgba[:] = [*color, 1.0]
+
+
+_FAMILIES = {"Cube": CompatibleCube, "Scene": CompatibleScene}
+_COMPILE_LOCK = threading.Lock()
+_SCRATCH: dict = {}
+_COMPILED_CACHE: OrderedDict = OrderedDict()
+_COMPILED_CACHE_MAX = 64
+
+
+def compiled_fields(family, values):
+    """Model arrays and compiled values of one MODEL_VALUES configuration, cached per distinct value."""
+    key = (family, *(np.asarray(values[k], np.float64).tobytes() for k in MODEL_VALUES))
+    with _COMPILE_LOCK:
+        hit = _COMPILED_CACHE.get(key)
+        if hit is not None:
+            _COMPILED_CACHE.move_to_end(key)
+            return hit
+        env = _SCRATCH.get(family)
+        if env is None:
+            env = _SCRATCH[family] = _FAMILIES[family](seed=0)
+        for k in MODEL_VALUES:
+            env.variation_space._walk(k)._value = np.array(values[k], np.float64)
+        env._mjcf_model = env.modify_mjcf_model(env.build_mjcf_model())
+        env.compile_model_and_data()
+        m = env.model
+        grid = m.texture("grid").id
+        start = int(m.tex_adr[grid])
+        size = int(m.tex_height[grid] * m.tex_width[grid] * m.tex_nchannel[grid])
+        fields = {name: np.array(getattr(m, name), copy=True) for name in COMPILED_FIELDS if name != "tex_data"}
+        fields["tex_data"] = np.array(m.tex_data[start : start + size], copy=True)
+        hit = _COMPILED_CACHE[key] = (fields, copy.deepcopy(env._model_values))
+        if len(_COMPILED_CACHE) > _COMPILED_CACHE_MAX:
+            _COMPILED_CACHE.popitem(last=False)
+        return hit

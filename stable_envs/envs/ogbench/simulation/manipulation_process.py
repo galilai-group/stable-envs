@@ -223,8 +223,10 @@ class OGBManipulationProcessAdapter(ProcessRequests, SimulatorAdapter):
         self._check_idle()
         if seed is not None and (not isinstance(seed, (int, np.integer)) or seed < 0):
             raise ValueError("seed must be a nonnegative integer or None")
-        options = self._metadata.envs[0].validate_options(options)
-        self._request("reset", [(None if seed is None else int(seed) + rows.start, options) for rows in self._slices])
+        lanes = self._metadata.envs[0].lane_options(options, self.num_envs)
+        self._request(
+            "reset", [(None if seed is None else int(seed) + rows.start, lanes[rows]) for rows in self._slices]
+        )
         return self._owned("state")
 
     def configure(self, values):

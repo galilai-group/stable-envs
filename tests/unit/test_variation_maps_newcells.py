@@ -222,8 +222,8 @@ def test_ogb_maps_recovered_public_configuration(swm_id):
     m = _map_for(swm_id)
     cell = "OGBCube" if "Cube" in swm_id else "OGBScene"
     assert set(m.pairs()) == set(RECORDED_OURS_LEAVES[cell])
-    assert len(m.pairs()) == (11 if cell == "OGBCube" else 8)
-    assert set(m.swm_only) == set(RECORDED_SWM_LEAVES[swm_id]) - set(m.pairs())
+    assert set(m.pairs()) == set(RECORDED_SWM_LEAVES[swm_id])
+    assert not m.swm_only
 
 
 @pytest.mark.parametrize("swm_id", ["swm/OGBCube-v0", "swm/OGBScene-v0"])
@@ -235,9 +235,7 @@ def test_ogb_reset_configuration_scope_is_explicit(swm_id):
         "cube.goal_position",
         "cube.goal_yaw",
     ):
-        rec = LEAF_CLASSIFICATION[swm_id]["leaves"][leaf]
-        expected = "unsupported" if "Scene" in swm_id and leaf.startswith("cube.") else "mapped"
-        assert rec["classification"] == expected
+        assert LEAF_CLASSIFICATION[swm_id]["leaves"][leaf]["classification"] == "mapped"
 
 
 @pytest.mark.parametrize("swm_id", ["swm/OGBCube-v0", "swm/OGBScene-v0"])

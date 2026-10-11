@@ -63,15 +63,22 @@ def test_process_state_rng_variations_and_owned_outputs(family):
         layout = local.make_variation_space().flat_layout()
         for adapter in (local, remote):
             adapter.configure(values)
-        torch.testing.assert_close(local.variation_values(layout, anchor=True), remote.variation_values(layout, anchor=True), rtol=0, atol=0)
+        torch.testing.assert_close(
+            local.variation_values(layout, anchor=True), remote.variation_values(layout, anchor=True), rtol=0, atol=0
+        )
         equal(local.reset(), remote.reset())
         equal(local.reset(42, {"task_id": 4, "variation": []}), remote.reset(42, {"task_id": 4, "variation": []}))
+        lanes = {"variation_values": {"cube.size": np.array([[0.012], [0.02], [0.028]])}}
+        equal(local.reset(5, lanes), remote.reset(5, lanes))
         remote.set_state(initial)
         equal(initial, remote.get_state())
         snapshot = remote.get_state()
-        for call in (lambda: remote.reset(-1), lambda: remote.reset(1, {"task_id": 99}),
-                     lambda: remote.configure([{}, {}, {"cube.size": [99]}]),
-                     lambda: remote.step(np.zeros((3, 5), np.int64))):
+        for call in (
+            lambda: remote.reset(-1),
+            lambda: remote.reset(1, {"task_id": 99}),
+            lambda: remote.configure([{}, {}, {"cube.size": [99]}]),
+            lambda: remote.step(np.zeros((3, 5), np.int64)),
+        ):
             with pytest.raises(ValueError):
                 call()
             equal(snapshot, remote.get_state())
@@ -118,7 +125,10 @@ def test_public_metadata_chunks_and_anchor_reset(family, monkeypatch):
                     for env in (local, remote):
                         env.set_state(before)
                     actions = np.zeros((2, 5) if horizon == 1 else (2, horizon, 5), np.float64)
-                    equal(local.step(actions, states=selection, frames=None), remote.step(actions, states=selection, frames=None))
+                    equal(
+                        local.step(actions, states=selection, frames=None),
+                        remote.step(actions, states=selection, frames=None),
+                    )
             kwargs = {"cube.size": [0.025], "agent.color": [0.2, 0.7, 0.4]}
             torch.testing.assert_close(local.set_variation(kwargs), remote.set_variation(kwargs), rtol=0, atol=0)
             equal(local.reset(31, {"variation": []}), remote.reset(31, {"variation": []}))
