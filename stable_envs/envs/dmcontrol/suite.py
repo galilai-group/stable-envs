@@ -38,6 +38,8 @@ class DMControlSuite(_DMCModel):
     default_supersample = 1
     # Bound rays per chunk, including supersamples and intermediate shading buffers.
     RAY_BUDGET = 1 << 24
+    # Smaller chunks stay cache-resident on CPU.
+    CPU_RAY_BUDGET = 1 << 21
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
@@ -647,7 +649,8 @@ class DMControlSuite(_DMCModel):
             over = {p: uniq[gi][a : a + w] for p, (a, w) in zip(self.PLATE_PATHS, offs)}
             sc = self._scene(size, over)
             idx = torch.as_tensor(sub, device=self.device, dtype=torch.long)
-            step = max(1, int(self.RAY_BUDGET // max(1, size * size * ss * ss)))
+            budget = self.CPU_RAY_BUDGET if self.device.type == "cpu" else self.RAY_BUDGET
+            step = max(1, int(budget // max(1, size * size * ss * ss)))
             for a in range(0, len(sub), step):
                 part = idx[a : a + step]
                 rows = {k: v[sub[a : a + step]] for k, v in frame_rows.items()}

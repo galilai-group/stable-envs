@@ -101,4 +101,5 @@ DMCQuadrupedWalk = trackcom_cell(
     VISUAL_FIDELITY["DMCQuadrupedWalk"],
     note_suffix=QUADRUPED_NOTE,
     bases=(DMCAlignedSemantics, _TranscribedQuadrupedModel),
+    CPU_RENDER_CHUNK=32,
 )
