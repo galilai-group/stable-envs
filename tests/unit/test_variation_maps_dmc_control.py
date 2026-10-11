@@ -131,10 +131,8 @@ def test_the_seventeen_ids_total_161_leaves():
     assert len(seen) == 17
     # mapped 46 -> 53 and unsupported 94 -> 87 in the capability patch: ``floor.color`` moved
     # on the seven DM Control ids whose cells bake a plate. The total cannot move.
-    # The classic-control physics leaves are mapped; the three that also change the official frame
-    # (CartPole length, Acrobot link lengths) are ``partial`` and counted in neither bucket here.
-    assert totals == {"mapped": 74, "unsupported": 63, "dead_upstream": 21, "not_applicable": 0}
-    assert sum(totals.values()) + 3 == 161
+    assert totals == {"mapped": 77, "unsupported": 63, "dead_upstream": 21, "not_applicable": 0}
+    assert sum(totals.values()) == 161
 
 
 # --------------------------------------------------------------------- the registered default

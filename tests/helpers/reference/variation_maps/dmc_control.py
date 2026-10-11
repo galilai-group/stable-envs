@@ -133,14 +133,18 @@ _DYNAMICS_MAPPED = (
 )
 
 
+_GEOMETRY_MAPPED = (
+    _DYNAMICS_MAPPED + " The official render also draws this leaf ({what}), and so does ours, per lane; the same gate "
+    "compares every reset and step frame with swm's own, explicit and sampled, at worst-frame "
+    "normalized MSE 0."
+)
+
+
 def _dyn(*names: str, notes: dict[str, str], geometry: dict[str, str] | None = None) -> dict:
-    """``identical``, ``notes`` and ``partial`` for the physics leaves of one classic cell."""
+    """``identical`` and ``notes`` for the physics leaves of one classic cell."""
     leaves = tuple(f"physics.{n}" for n in names)
-    return {
-        "identical": leaves,
-        "notes": {**{leaf: _DYNAMICS_MAPPED for leaf in leaves}, **notes},
-        "partial": {f"physics.{n}": why for n, why in (geometry or {}).items()},
-    }
+    drawn = {f"physics.{n}": _GEOMETRY_MAPPED.format(what=what) for n, what in (geometry or {}).items()}
+    return {"identical": leaves, "notes": {**{leaf: _DYNAMICS_MAPPED for leaf in leaves}, **drawn, **notes}}
 
 
 _CLASSIC_MAPS = {
@@ -161,11 +165,9 @@ _CLASSIC_MAPS = {
             "link_com_pos_2",
             "link_moi",
             geometry={
-                "link_length_1": "dynamics only: AcrobotEnv.render also draws each link at LINK_LENGTH_1 * scale, "
-                "and moving it to 1.45 moves 37,966 px of 8x500x500 in the official frame. The stable-envs "
-                "renderer holds SCALE and the unit-length link quad as class constants, so the frame does "
-                "not follow the leaf.",
-                "link_length_2": "dynamics only: the same on the second link, 38,258 px of 8x500x500 at 1.45.",
+                "link_length_1": "the first link at LINK_LENGTH_1 * scale, with scale = 500 / (2 * (l1 + l2 + "
+                "0.2)) resizing the whole picture, joint radius and ground line included",
+                "link_length_2": "the second link at LINK_LENGTH_2 * scale, with the same picture scale",
             },
             notes={k: _RECOLOR_NOTE for k in ("visuals.bg", "visuals.link", "visuals.joint", "visuals.line")},
         ),
@@ -190,11 +192,7 @@ _CLASSIC_MAPS = {
             "length",
             "force_mag",
             "tau",
-            geometry={
-                "length": "dynamics only: CartPoleEnv.render also sets polelen = scale * 2 * length, and 0.725 "
-                "moves 6,621 px of 8x400x600 in the official frame. POLELEN is a class constant on the "
-                "stable-envs renderer, so the frame does not follow the leaf."
-            },
+            geometry={"length": "the pole at polelen = scale * (2 * length)"},
             notes={
                 "visuals.bg": _RECOLOR_NOTE,
                 "visuals.pole": _RECOLOR_NOTE,
@@ -749,8 +747,8 @@ LIGHT_RANGE: dict[str, tuple[float, float, float, str]] = {
 #: The four-way count this module claims, asserted by tests/unit/test_variation_maps_dmc_control.py
 #: against the LIVE swm variation spaces rather than against this table.
 EXPECTED_COUNTS: dict[str, dict[str, int]] = {
-    "swm/AcrobotControl-v1": {"total": 11, "mapped": 9, "unsupported": 0, "dead_upstream": 0, "not_applicable": 0},
-    "swm/CartPoleControl-v1": {"total": 10, "mapped": 9, "unsupported": 0, "dead_upstream": 0, "not_applicable": 0},
+    "swm/AcrobotControl-v1": {"total": 11, "mapped": 11, "unsupported": 0, "dead_upstream": 0, "not_applicable": 0},
+    "swm/CartPoleControl-v1": {"total": 10, "mapped": 10, "unsupported": 0, "dead_upstream": 0, "not_applicable": 0},
     "swm/PendulumControl-v1": {"total": 9, "mapped": 9, "unsupported": 0, "dead_upstream": 0, "not_applicable": 0},
     "swm/MountainCarControl-v0": {"total": 5, "mapped": 5, "unsupported": 0, "dead_upstream": 0, "not_applicable": 0},
     "swm/MountainCarContinuousControl-v0": {

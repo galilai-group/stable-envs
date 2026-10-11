@@ -84,9 +84,15 @@ def _blit_torch(ops, m, col, ypre, xs, box):
 
 
 def _disc_torch(ops, m, col, ypre, xs, box, aa, sh, c3):
-    r = int(m[0, C.CM_D])
+    """Each environment's disc at its own radius; environments sharing one are drawn together."""
+    for r, base in sorted(set(zip(m[:, C.CM_D].tolist(), m[:, C.CM_C].tolist(), strict=True))):
+        rows = ((m[:, C.CM_D] == r) & (m[:, C.CM_C] == base)).view(-1, 1, 1)
+        col = _disc_rows(ops, m, col, ypre, xs, box & rows, aa, sh, c3, int(r), int(base))
+    return col
+
+
+def _disc_rows(ops, m, col, ypre, xs, box, aa, sh, c3, r, base):
     d = 2 * r + 1
-    base = int(m[0, C.CM_C])
     hw = ops.discs.flat[base : base + r + 1].to(torch.int64)
     w0 = ops.discs.flat[base + r + 1 : base + r + 1 + d * d].to(torch.int64).view(d, d)
     w1 = ops.discs.flat[base + r + 1 + d * d : base + r + 1 + 2 * d * d].to(torch.int64).view(d, d)

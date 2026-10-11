@@ -69,11 +69,7 @@ def _states(env, kind, n, seed):
     if kind == "corpus":
         from pathlib import Path
 
-        npz = (
-            Path(__file__).resolve().parents[2]
-            / "tests/fixtures/states/fidelity"
-            / f"{type(env).__name__}.npz"
-        )
+        npz = Path(__file__).resolve().parents[2] / "tests/fixtures/states/fidelity" / f"{type(env).__name__}.npz"
         if not npz.is_file():
             pytest.skip(f"no frozen corpus for {type(env).__name__} in this checkout")
         pool = np.load(npz)["states"]
@@ -101,12 +97,18 @@ def per_row_style(env, groups: int = 4, seed: int = 3):
     return style
 
 
+def _ops(env, s, sty):
+    """The env's op list at the geometry its render draws, per-lane physics lengths included."""
+    geo = env._varied_geometry(sty, own=False)
+    return env._ops(s, sty, *(() if geo is None else (geo,)))
+
+
 def _described(env, states, style=None):
     """``render_classic_torch`` over the env's own op list: the middle implementation."""
     s = torch.as_tensor(np.asarray(states, np.float32), device=env.device)
     s = s.reshape(-1, env.state_dim).to(torch.float64)
     sty = env.resolve_style(style, None, batch=s.shape[0])
-    return render_classic_torch(env._ops(s, sty).finish())
+    return render_classic_torch(_ops(env, s, sty).finish())
 
 
 def _per_primitive(env, states, style=None):
@@ -194,7 +196,7 @@ def test_the_kernel_is_the_description(name, kind, style_kind):
             pytest.skip(f"{name} declares no variation")
     s = torch.as_tensor(states, device=env.device).reshape(-1, env.state_dim).to(torch.float64)
     sty = env.resolve_style(style, None, batch=s.shape[0])
-    ops = env._ops(s, sty).finish()
+    ops = _ops(env, s, sty).finish()
 
     if style_kind == "per-row":
         # The mixed-row paths must actually be mixed, or this case is the default one with more

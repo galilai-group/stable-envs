@@ -453,3 +453,33 @@ def test_piecewise_draws_its_hidden_target_only_from_full_state():
         assert not torch.equal(env.render(state), plain)
         with pytest.raises(ValueError, match="full State"):
             env._render(env._pack_render_state(state).clone())
+
+
+@pytest.mark.parametrize("name", ("CartPole", "Acrobot"))
+def test_drawn_physics_lengths_render_as_the_official_frame(name):
+    """Per-lane pole and link lengths, including every Acrobot joint radius the range reaches (7-20)."""
+    pytest.importorskip("gymnasium")
+    pytest.importorskip("pygame")
+    if name == "CartPole":
+        lengths = {"physics.length": np.asarray([0.25, 0.4, 0.6, 0.75], np.float32)}
+    else:
+        total = np.asarray([min(25 / (r + 0.5) - 0.2, 2.98) for r in range(7, 21)])
+        lengths = {f"physics.link_length_{i}": (total / 2).astype(np.float32) for i in (1, 2)}
+    n = len(next(iter(lengths.values())))
+    with _env(name, 1) as env:
+        states = env.sample_states(n, np.random.default_rng(5))
+        ours = env._render(torch.as_tensor(states), variation={k: v.reshape(n, 1) for k, v in lengths.items()})
+        ref = env.reference_env()
+        ref.reset(seed=0)
+        radii = set()
+        for i in range(n):
+            if name == "CartPole":
+                ref.length = float(lengths["physics.length"][i])
+            else:
+                ref.LINK_LENGTH_1 = float(lengths["physics.link_length_1"][i])
+                ref.LINK_LENGTH_2 = float(lengths["physics.link_length_2"][i])
+                radii.add(int(0.1 * 500 / ((ref.LINK_LENGTH_1 + ref.LINK_LENGTH_2 + 0.2) * 2)))
+            env.reference_set_state(ref, states[i])
+            assert np.array_equal(ours[i].numpy(), ref.render()), (name, i)
+        ref.close()
+    assert name == "CartPole" or radii == set(range(7, 21))

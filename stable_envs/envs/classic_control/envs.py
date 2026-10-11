@@ -258,15 +258,17 @@ class _Classic(Env):
         s = s.reshape(-1, self.state_dim).to(torch.float64)
         n = s.shape[0]
         sty = self.resolve_style(style, variation, batch=n)
+        geo = self._varied_geometry(sty, own=style is None and not variation)
+        extra = () if geo is None else (geo,)
         o = None if out is None else out.reshape(-1, H, W, 3)
         if self._use_fused():
             from ...render.gfxdraw import classic as F
 
-            img = F.render_classic(self._ops(s, sty).finish(), out=o)
+            img = F.render_classic(self._ops(s, sty, *extra).finish(), out=o)
         else:
             cv = _StyleCanvas(self.gfx, n, sty["background.color"])
             cv.aa = sty["rendering.antialias"] > 0.5
-            self._draw(cv, s, sty)
+            self._draw(cv, s, sty, *extra)
             img = cv.rgb(o)
         return img.view(*lead, H, W, 3) if lead else img
 
@@ -274,6 +276,27 @@ class _Classic(Env):
     def frame_shape(self) -> tuple[int, int]:
         """Return native (H, W); size denotes width and the canvas need not be square."""
         return self.native
+
+    #: physics leaves the frame's geometry reads, each with the value the class-constant geometry encodes.
+    geometry_leaves: dict[str, float] = {}
+    _geometry_of = None
+    _geometry_host = None
+
+    def _varied_geometry(self, sty, own: bool) -> np.ndarray | None:
+        """Return host (n, k) float64 geometry-leaf values, or None when every lane draws the constant geometry.
+
+        The answer is cached per installed Variation, so rendering the env's own appearance reads
+        nothing back from the device after the first frame.
+        """
+        if not self.geometry_leaves:
+            return None
+        src = self._style if own else sty
+        if self._geometry_of is not src:
+            host = torch.stack([src[p].reshape(-1) for p in self.geometry_leaves], 1).cpu().numpy()
+            const = np.asarray(list(self.geometry_leaves.values()), np.float32)
+            self._geometry_host = None if (host == const).all() else host.astype(np.float64)
+            self._geometry_of = src
+        return self._geometry_host
 
     def _use_fused(self) -> bool:
         """Select the fused renderer only when enabled and CUDA/Triton are available."""
@@ -445,7 +468,26 @@ class CartPole(ClassicControlSemantics, _Classic):
     KMAX_CART = (32, 52, 32, 52)
     KMAX_POLE = (132, 16, 132, 16)
 
-    def _draw(self, cv, s, sty) -> None:
+    geometry_leaves = {"physics.length": LENGTH}
+
+    def _pole(self, B, sty, geo):
+        """Pole quad before rotation, its per-edge step bounds and its row window."""
+        g = self.gfx
+        if geo is None:
+            ploc = (
+                g.verts([(-5.0, -5.0), (-5.0, self.POLELEN - 5.0), (5.0, self.POLELEN - 5.0), (5.0, -5.0)])
+                .view(1, 4, 2)
+                .expand(B, 4, 2)
+            )
+            return ploc, self.KMAX_POLE, self.WIN_POLE
+        ploc = g.verts([(-5.0, -5.0), (-5.0, 0.0), (5.0, 0.0), (5.0, -5.0)]).view(1, 4, 2).repeat(B, 1, 1)
+        ploc[:, 1:3, 1] = (self.SCALE * (2 * sty["physics.length"].to(torch.float64)) - 5.0).view(B, 1)
+        polelen = self.SCALE * (2 * float(geo.max()))
+        reach = math.hypot(5.0, polelen - 5.0)
+        k = int(polelen) + 8
+        return ploc, (k, 16, k, 16), (int(self.CARTY + self.AXLEOFF - reach), int(self.CARTY + self.AXLEOFF + reach))
+
+    def _draw(self, cv, s, sty, geo=None) -> None:
         g, B = self.gfx, s.shape[0]
         H, W = self.native
         bi = g.batch_index(B)
@@ -456,13 +498,9 @@ class CartPole(ClassicControlSemantics, _Classic):
         cart = g.verts([(-25.0, -15.0), (-25.0, 15.0), (25.0, 15.0), (25.0, -15.0)]).view(1, 4, 2) + ctr
         _poly(cv, cart, sty["cart.color"], bi, self.KMAX_CART, _box(H, W, *self.WIN_CART, 0, W - 1))
 
-        ploc = (
-            g.verts([(-5.0, -5.0), (-5.0, self.POLELEN - 5.0), (5.0, self.POLELEN - 5.0), (5.0, -5.0)])
-            .view(1, 4, 2)
-            .expand(B, 4, 2)
-        )
+        ploc, kmax, win = self._pole(B, sty, geo)
         pole = G.rotate(ploc, (-s[:, 1]).view(B, 1)) + torch.stack([cartx, carty + self.AXLEOFF], -1).view(B, 1, 2)
-        _poly(cv, pole, sty["pole.color"], bi, self.KMAX_POLE, _box(H, W, *self.WIN_POLE, 0, W - 1))
+        _poly(cv, pole, sty["pole.color"], bi, kmax, _box(H, W, *win, 0, W - 1))
 
         cxi = torch.trunc(cartx).to(torch.int64)
         cyi = torch.full_like(cxi, int(self.CARTY + self.AXLEOFF))
@@ -473,7 +511,7 @@ class CartPole(ClassicControlSemantics, _Classic):
     disc_radii = (AXLE_R,)
     fused_capable = True
 
-    def _ops(self, s, sty):
+    def _ops(self, s, sty, geo=None):
         """Describe the ordered primitives for the fused renderer."""
         g, B = self.gfx, s.shape[0]
         ops = self._ops_begin(s, sty)
@@ -484,11 +522,7 @@ class CartPole(ClassicControlSemantics, _Classic):
             g.verts([(-25.0, -15.0), (-25.0, 15.0), (25.0, 15.0), (25.0, -15.0)]).view(1, 4, 2) + ctr,
             sty["cart.color"],
         )
-        ploc = (
-            g.verts([(-5.0, -5.0), (-5.0, self.POLELEN - 5.0), (5.0, self.POLELEN - 5.0), (5.0, -5.0)])
-            .view(1, 4, 2)
-            .expand(B, 4, 2)
-        )
+        ploc = self._pole(B, sty, geo)[0]
         ops.polygon(
             G.rotate(ploc, (-s[:, 1]).view(B, 1)) + torch.stack([cartx, carty + self.AXLEOFF], -1).view(B, 1, 2),
             sty["pole.color"],
@@ -721,6 +755,8 @@ class Acrobot(ClassicControlSemantics, _Classic):
         super().__init__(*a, **kw)
         # Upload constants at construction; host-to-device creation inside capture can yield an empty CUDA graph.
         self._torque = torch.tensor(self.AVAIL_TORQUE, dtype=torch.float64, device=self.device)
+        self._varied_discs = {}
+        self._varied_host = None
 
     # Reference angles wrap at ±pi, so compare them modulo a full turn.
     step_reference_groups = (
@@ -803,7 +839,51 @@ class Acrobot(ClassicControlSemantics, _Classic):
     WIN_LINK = ((int(OFF - _REACH), int(OFF + _REACH)), (int(OFF - SCALE - _REACH), int(OFF + SCALE + _REACH)))
     KMAX_LINK = (28, 120, 28, 120)  # the quad starts on its short side
 
-    def _draw(self, cv, s, sty) -> None:
+    geometry_leaves = {"physics.link_length_1": L1, "physics.link_length_2": L1}
+
+    def _varied_bounds(self, geo):
+        """Joint radii present, and each link's per-edge step bounds and window, over every lane."""
+        if self._varied_host is not None and self._varied_host[0] is geo:
+            return self._varied_host[1]
+        H, W = self.native
+        off = self.OFF
+        sc = 500 / ((geo[:, 0] + geo[:, 1] + 0.2) * 2)
+        radii = tuple(int(v) for v in np.unique(np.trunc(0.1 * sc)))
+        bounds = []
+        for i in range(2):
+            span = geo[:, i] * sc
+            reach = float((geo[:, 0] * sc * i + np.hypot(span, 0.1 * sc)).max())
+            kl, ks = int(span.max()) + 8, int(0.2 * sc.max()) + 8
+            bounds.append(((ks, kl, ks, kl), _box(H, W, off - reach, off + reach, off - reach, off + reach)))
+        self._varied_host = (geo, (radii, bounds))
+        return radii, bounds
+
+    def _varied(self, s, sty):
+        """Per-lane ground row and joint radius, then both links' (B, 2, ...) quads and joint centres.
+
+        The whole picture scales with 500 / (2 * (l1 + l2 + 0.2)), as AcrobotEnv.render draws it.
+        """
+        B, W = s.shape[0], self.native[1]
+        ln = torch.stack([sty["physics.link_length_1"], sty["physics.link_length_2"]], 1).to(torch.float64)
+        sc, off = 500 / ((ln[:, 0] + ln[:, 1] + 0.2) * 2), self.OFF
+        t1, t2 = s[:, 0], s[:, 1]
+        ground = (
+            torch.trunc(1 * sc + off).to(torch.int64),
+            torch.trunc(-2.2 * sc + off).to(torch.int64).clamp_min(0),
+            torch.trunc(2.2 * sc + off).to(torch.int64).clamp_max(W - 1),
+        )
+        jx = torch.stack([torch.zeros_like(t1), ln[:, 0] * torch.sin(t1) * sc], 1) + off
+        jy = torch.stack([torch.zeros_like(t1), -ln[:, 0] * torch.cos(t1) * sc], 1) + off
+        size = torch.stack([ln * sc.view(B, 1), (0.1 * sc).view(B, 1).expand(B, 2)], -1).view(B, 2, 1, 2)
+        quad = self.gfx.verts([(0.0, -1.0), (0.0, 1.0), (1.0, 1.0), (1.0, -1.0)]).view(1, 1, 4, 2) * size
+        th = torch.stack([t1 - math.pi / 2, t1 + t2 - math.pi / 2], 1)
+        quads = G.rotate(quad, th.view(B, 2, 1)) + torch.stack([jx, jy], -1).view(B, 2, 1, 2)
+        i64 = torch.int64
+        return ground, torch.trunc(0.1 * sc).to(i64), quads, torch.trunc(jx).to(i64), torch.trunc(jy).to(i64)
+
+    def _draw(self, cv, s, sty, geo=None) -> None:
+        if geo is not None:
+            return self._draw_varied(cv, s, sty, geo)
         g, B = self.gfx, s.shape[0]
         H, W = self.native
         bi = g.batch_index(B)
@@ -838,10 +918,31 @@ class Acrobot(ClassicControlSemantics, _Classic):
                 g,
             )
 
+    def _draw_varied(self, cv, s, sty, geo) -> None:
+        g, B = self.gfx, s.shape[0]
+        bi = g.batch_index(B)
+        radii, bounds = self._varied_bounds(geo)
+        (gy, gx0, gx1), r, quads, jx, jy = self._varied(s, sty)
+        hit = (g.xs.view(1, -1) >= gx0.view(B, 1)) & (g.xs.view(1, -1) <= gx1.view(B, 1))
+        row = cv.buf[:, bi, gy]
+        cv.buf[:, bi, gy] = torch.where(hit.unsqueeze(0), _u8(sty["ground.color"]).t().unsqueeze(-1), row)
+        lc, jc = sty["link.color"], sty["joint.color"]
+        # Each radius draws only its own lanes, so a batch spanning many radii costs about one disc pass.
+        lanes = [(rad, at) for rad in radii if len(at := (r == rad).nonzero().view(-1))]
+        for i, (kmax, win) in enumerate(bounds):
+            _poly(cv, quads[:, i], lc, bi, kmax, win)
+            cv.use(jc)
+            for rad, at in lanes:
+                G.circle(
+                    cv, jx[at, i], jy[at, i], rad, None, None, at, None, g.stencil(rad), disc=g.disc(rad), lanes=at
+                )
+
     disc_radii = (JOINT_R,)
     fused_capable = True
 
-    def _ops(self, s, sty):
+    def _ops(self, s, sty, geo=None):
+        if geo is not None:
+            return self._ops_varied(s, sty, geo)
         g, B = self.gfx, s.shape[0]
         ops = self._ops_begin(s, sty)
         sc, off = self.SCALE, self.OFF
@@ -859,6 +960,21 @@ class Acrobot(ClassicControlSemantics, _Classic):
             ops.disc(
                 torch.trunc(jx[i] + off).to(torch.int64), torch.trunc(jy[i] + off).to(torch.int64), self.JOINT_R, jc
             )
+        return ops
+
+    def _ops_varied(self, s, sty, geo):
+        from ...render.gfxdraw import classic as F
+
+        ops = self._ops_begin(s, sty)
+        radii, _ = self._varied_bounds(geo)
+        (gy, gx0, gx1), r, quads, jx, jy = self._varied(s, sty)
+        if radii not in self._varied_discs:
+            self._varied_discs[radii] = F.DiscTables(radii, self.device)
+        ops.discs = self._varied_discs[radii]
+        ops.hline(gy, sty["ground.color"], gx0, gx1)
+        for i in range(2):
+            ops.polygon(quads[:, i], sty["link.color"])
+            ops.disc(jx[:, i], jy[:, i], r, sty["joint.color"])
         return ops
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:

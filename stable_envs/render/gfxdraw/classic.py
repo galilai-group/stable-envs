@@ -60,13 +60,16 @@ class DiscTables:
         self.flat = torch.as_tensor(
             np.concatenate(blocks) if blocks else np.zeros(1, np.int32), dtype=torch.int32, device=device
         )
+        lut = np.zeros(max(self.offset, default=0) + 1, np.int32)
+        lut[list(self.offset)] = list(self.offset.values())
+        self.lut = torch.as_tensor(lut, device=device)
 
 
 class Ops:
     """Batched classic-control draw operations in painter order.
 
-    Geometry and colors vary per environment; canvas dimensions and disc radii
-    are fixed. Call finish() before rendering."""
+    Geometry, colors and disc radii vary per environment; canvas dimensions are
+    fixed. Call finish() before rendering."""
 
     def __init__(self, B, H, W, device):
         self.B, self.H, self.W, self.device = B, H, W, device
@@ -129,14 +132,16 @@ class Ops:
         )
 
     def disc(self, cx, cy, r, color):
-        """Add an antialiased disc with a fixed integer radius."""
-        r = int(r)
-        self._row(
-            OP_DISC, color, cx - r - 1, cy - r - 1, cx + r + 1, cy + r + 1, a=cx, b=cy, c=self.discs.offset[r], d=r
-        )
+        """Add an antialiased disc with an integer radius, fixed or one per environment."""
+        if torch.is_tensor(r):
+            at = self.discs.lut[r]
+        else:
+            r = int(r)
+            at = self.discs.offset[r]
+        self._row(OP_DISC, color, cx - r - 1, cy - r - 1, cx + r + 1, cy + r + 1, a=cx, b=cy, c=at, d=r)
 
-    def hline(self, y, color):
-        self._row(OP_HLINE, color, 0, y, self.W - 1, y, a=y)
+    def hline(self, y, color, x0=0, x1=None):
+        self._row(OP_HLINE, color, x0, y, self.W - 1 if x1 is None else x1, y, a=y)
 
     def vline(self, x, y0, y1, color):
         self._row(OP_VLINE, color, x, y0, x, y1, a=x, b=y0, c=y1)
@@ -253,7 +258,7 @@ if HAVE_TRITON:
                 pd = tl.load(pm + cCM_D)
 
                 if op == cOP_HLINE:
-                    hit = Y == pa
+                    hit = (Y == pa) & (X >= bx0) & (X <= bx1)
                     cr = tl.where(hit, fr, cr)
                     cg = tl.where(hit, fg, cg)
                     cb = tl.where(hit, fb, cb)
