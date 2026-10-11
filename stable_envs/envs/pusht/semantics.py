@@ -186,8 +186,28 @@ class PushT(Env):
             result[:, offset : offset + width] = values
         return result
 
+    #: Leaves only the frame reads; ``set_variation`` applies them to the running episode as well.
+    #: Body shapes and scales need a rebuilt pymunk space, and start poses and velocity exist only
+    #: at reset, so those wait for the next reset.
+    immediate_variation_leaves = frozenset(
+        {
+            "agent.color",
+            "block.color",
+            "goal.color",
+            "goal.scale",
+            "goal.position",
+            "goal.angle",
+            "background.color",
+            "rendering.render_goal",
+        }
+    )
+
     def set_variation(self, variation=None, **overrides):
-        """Configure typed future-reset values; current physics is unchanged."""
+        """Configure the values every later reset restores.
+
+        Appearance leaves (``immediate_variation_leaves``) also apply to the running episode;
+        the others take effect at the next reset.
+        """
         from .simulation.numeric import nodes
 
         self._check_open("set_variation")
@@ -230,9 +250,12 @@ class PushT(Env):
                 if not node.contains(converted):
                     raise ValueError(f"Invalid PushT Variation range/dtype: {key}")
                 node.set_init_value(converted)
+                if key in self.immediate_variation_leaves:
+                    node.set_value(copy.deepcopy(converted))
             staged.append(space)
         for replay, space in zip(self._simulator.envs, staged, strict=True):
             replay.env.variation_space = space
+            replay.env.goal_pose = np.concatenate([space["goal"]["position"].value, [space["goal"]["angle"].value]])
         return self._variation_rows("init_value")
 
     def to_render_state(self, state=None):

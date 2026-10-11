@@ -364,40 +364,34 @@ VARIATION_MAPS: dict[str, VariationMap] = {
         swm_only=_PIECEWISE_SWM_ONLY,
         dead_upstream=_MIN_STEPS_DEAD,
     ),
+    # The public PushT owns swm's variation space leaf for leaf (same paths, units, ranges and
+    # defaults) and runs the same reset and physics, so every leaf is identical. Start positions,
+    # block.angle and agent.velocity are reset values that land in State; agent.shape and
+    # block.shape rebuild the pymunk bodies. Gated per lane against swm, explicit and sampled, by
+    # tests/integration/test_variation_pusht.py.
     "PushT": VariationMap(
         swm_id="swm/PushT-v1",
         identical=(
             "agent.color",
+            "agent.scale",
+            "agent.shape",
+            "agent.angle",
+            "agent.start_position",
+            "agent.velocity",
             "block.color",
+            "block.scale",
+            "block.shape",
+            "block.angle",
+            "block.start_position",
             "goal.color",
+            "goal.scale",
             "goal.position",
             "goal.angle",
             "background.color",
             "rendering.render_goal",
         ),
-        # ours is a MULTIPLIER on the reference geometry (default 1.0); swm's is an ABSOLUTE size in
-        # Box(20, 60) with default 40. Mapping them by name alone is wrong by a factor of 40.
-        scaled={
-            "agent.scale": ("agent.scale", 1.0 / 40.0),
-            "block.scale": ("block.scale", 1.0 / 40.0),
-            "goal.scale": ("goal.scale", 1.0 / 40.0),
-        },
-        swm_only={
-            "agent.shape": "swm's PushT can swap the agent between 8 pymunk shapes; ours is "
-            "gym_pusht's disc, which is shape index 0 and the default",
-            "block.shape": "same: 8 shapes, of which ours is the T (index 2, the default)",
-            "agent.angle": "the disc agent is rotationally symmetric, so it changes no pixel",
-            "block.angle": "swm's RESET angle for the block; ours is state dimension block_angle",
-            "agent.start_position": "a reset distribution, not an appearance; ours is the state",
-            "block.start_position": "a reset distribution, not an appearance; ours is the state",
-            "agent.velocity": "dynamics; gym_pusht's observation does not carry it either",
-        },
-        ours_only={
-            "agent.inner_color": "pymunk's debug draw paints a lighter inner disc; swm derives it "
-            "from agent.color with light_color() and does not expose it",
-            "block.outline_color": "same: derived from block.color in swm, separate here",
-            "walls.color": "swm hard-codes LightGray on the four wall segments",
-            "walls.visible": "swm always draws the walls",
+        notes={
+            "agent.angle": "turns only a non-circular agent.shape; the default disc is symmetric",
         },
     ),
 }

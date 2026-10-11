@@ -84,12 +84,31 @@ class PushTReplayAdapter(SimulatorAdapter):
             raise
         self._swap(staged)
 
+    def _lane_options(self, options, lane):
+        """Select lane ``lane`` of each ``variation_values`` entry shaped ``(num_envs, *leaf.shape)``."""
+        values = (options or {}).get("variation_values")
+        if not isinstance(values, dict):
+            return options
+        space = self.envs[0].env.variation_space
+        selected = {}
+        for key, value in values.items():
+            node = space
+            for part in str(key).split("."):
+                node = getattr(node, "spaces", {}).get(part)
+            array = np.asarray(value) if node is not None and not hasattr(node, "spaces") else None
+            if array is not None and array.shape == (self.num_envs, *node.shape):
+                value = array[lane].copy() if node.shape else array[lane]
+            selected[key] = value
+        return {**options, "variation_values": selected}
+
     def reset(self, seed=None, options=None):
         validate_seed(seed)
         staged = []
         try:
             for lane, env in enumerate(self.envs):
-                staged.append(env.reset_candidate(None if seed is None else int(seed) + lane, options))
+                staged.append(
+                    env.reset_candidate(None if seed is None else int(seed) + lane, self._lane_options(options, lane))
+                )
         except BaseException:
             for env in staged:
                 env.close()

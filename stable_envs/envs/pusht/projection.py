@@ -81,7 +81,7 @@ class PushTProjection:
                 body.angle = float(row[f"current/body/{name}/angle"])
                 body.position = row[f"current/body/{name}/position"].tolist()
                 scene.space.reindex_shapes_for_body(body)
-            goal = "anchor/variation/goal/"
+            goal = "owned/variation/goal/"
             scene.goal_pose = np.concatenate(
                 [get_value(row, goal + "position/current"), [get_value(row, goal + "angle/current")]]
             )

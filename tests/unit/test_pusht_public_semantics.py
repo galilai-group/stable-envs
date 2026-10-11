@@ -126,6 +126,19 @@ def test_persistent_variation_and_reset_checkpoint(name):
         same(before, env.get_state())
 
 
+def test_set_variation_applies_appearance_now_and_bodies_at_reset(name):
+    with se.make(name, num_envs=2, size=32, device="cpu") as env:
+        env.reset(seed=8, options={"variation": [], "variation_values": {"block.shape": np.asarray([1, 4])}})
+        moment = env.get_state()["current", "body", "block", "moment"].clone()
+        env.set_variation({"agent.color": np.asarray([[1, 2, 3], [4, 5, 6]], np.uint8), "block.shape": 6})
+        col = {p: o for p, o, _ in env.variation_space.flat_layout()}
+        assert env.get_variation()[:, col["agent.color"]].tolist() == [1.0, 4.0]
+        assert env.get_variation()[:, col["block.shape"]].tolist() == [1.0, 4.0]
+        assert torch.equal(env.get_state()["current", "body", "block", "moment"], moment)
+        env.reset(seed=8, options={"variation": []})
+        assert env.get_variation()[:, col["block.shape"]].tolist() == [6.0, 6.0]
+
+
 def test_public_device_and_backend_are_explicit(name):
     with se.make(name, device="cpu", size=32) as env:
         assert env.backend == "pygame"

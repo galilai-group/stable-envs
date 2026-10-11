@@ -146,6 +146,8 @@ class PushTReplay:
             if not hasattr(node, "spaces"):
                 node.set_init_value(get_value(data, "variation" + path + "/initial"))
                 node.set_value(get_value(data, "variation" + path + "/current"))
+        goal = e.variation_space["goal"]
+        e.goal_pose = np.concatenate([goal["position"].value, [goal["angle"].value]])
 
     def step(self, action):
         self.validate_action(action)
