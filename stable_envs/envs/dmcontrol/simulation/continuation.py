@@ -25,8 +25,7 @@ def _apply_registered_defaults(domain, model):
     """Apply registered reset values before compiling the model."""
     model.find("texture", "grid").rgb1 = [0.1, 0.2, 0.3]
     model.find("texture", "grid").rgb2 = [0.2, 0.3, 0.4]
-    color = [0.6, 0.3, 0.3, 1.0] if domain == "cheetah" else [0.7, 0.5, 0.3, 1.0]
-    model.find("material", "self").rgba = np.asarray(color, np.float32)
+    model.find("material", "self").rgba = np.asarray([0.7, 0.5, 0.3, 1.0], np.float32)
 
     floor_name = "ground" if domain == "cheetah" else "floor"
     floor = model.find("geom", floor_name)

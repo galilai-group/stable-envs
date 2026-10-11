@@ -26,7 +26,7 @@ from gymnasium.envs.mujoco.mujoco_rendering import MujocoRenderer
 
 from tests.helpers.reference.fetch_semantics import differences, snapshot
 
-PIN = "176d54532b3c0a251a4f509b74f2fdacc143a63d"
+PIN = "21446f1ede6d5284e981bd7b47f432b994e6d812"
 IDS = [
     f"swm/Fetch{task}{suffix}-v3"
     for task in ("Reach", "Push", "Slide", "PickAndPlace")

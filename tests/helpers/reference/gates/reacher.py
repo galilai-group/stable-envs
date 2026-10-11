@@ -22,7 +22,7 @@ from tests.helpers.reference.semantics import (
     compare_state,
 )
 
-SWM_PIN = "176d54532b3c0a251a4f509b74f2fdacc143a63d"
+SWM_PIN = "21446f1ede6d5284e981bd7b47f432b994e6d812"
 
 
 def run_gate(device="cpu"):

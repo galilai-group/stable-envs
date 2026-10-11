@@ -15,7 +15,7 @@ import torch
 from tensordict import TensorDict
 
 ROOT = Path(__file__).resolve().parents[3]
-PIN = "176d54532b3c0a251a4f509b74f2fdacc143a63d"
+PIN = "21446f1ede6d5284e981bd7b47f432b994e6d812"
 METRICS = {
     "mse_normalized": "mean((candidate.astype(float64)/255 - oracle.astype(float64)/255)**2) over H*W*3",
     "mse_uint8": "mean((candidate.astype(float64) - oracle.astype(float64))**2) over H*W*3",

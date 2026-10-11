@@ -150,7 +150,7 @@ def test_summary_joins_only_complete_same_device_source_comparisons(defect, tmp_
         path = source/f
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text('synthetic source input')
-    manifest = dict(commit='176d54532b3c0a251a4f509b74f2fdacc143a63d',
+    manifest = dict(commit='21446f1ede6d5284e981bd7b47f432b994e6d812',
                     files={f: hashlib.sha256((source/f).read_bytes()).hexdigest() for f in files})
     manifest_path = tmp_path/'manifest.json'
     manifest_path.write_text(json.dumps(manifest))

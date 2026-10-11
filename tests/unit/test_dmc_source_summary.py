@@ -35,7 +35,7 @@ def synthetic(tmp_path):
         (upstream / f).write_text(f"synthetic source {i}")
         hashes[f] = hashlib.sha256((upstream / f).read_bytes()).hexdigest()
     manifest = tmp_path / "manifest.json"
-    manifest.write_text(json.dumps(dict(commit="176d54532b3c0a251a4f509b74f2fdacc143a63d", files=hashes)))
+    manifest.write_text(json.dumps(dict(commit="21446f1ede6d5284e981bd7b47f432b994e6d812", files=hashes)))
     results = tmp_path / "results"
     for pid, (mode, device) in enumerate(itertools.product(("source_serial", "source_parallel", "ours"), ("cpu", "cuda"))):
         identity = dict(renderer="synthetic llvmpipe" if device == "cpu" else "synthetic GPU", vendor="Mesa" if device == "cpu" else "NVIDIA", software=device == "cpu")
@@ -55,7 +55,7 @@ def synthetic(tmp_path):
             gpu=None if device == "cpu" else "synthetic RTX 3090", source_physics_device="cpu", source_render_device=device,
             source_gpu_supported=True, source_readback_in_timing=True, source_state_export_in_timing=False,
             ours_state_history=False, ours_mandatory_final_state=True, oracle_closed_before_population=True,
-            fresh_strategy_process=True, pid=pid, source_pin="176d54532b3c0a251a4f509b74f2fdacc143a63d",
+            fresh_strategy_process=True, pid=pid, source_pin="21446f1ede6d5284e981bd7b47f432b994e6d812",
             source_files=hashes, domain="acrobot", host="synthetic", job="synthetic", versions={n: "synthetic" for n in ("torch", "numpy", "gymnasium", "mujoco", "dm-control", "tensordict", "mujoco-warp", "warp-lang")},
             source_runtime_files={str(upstream / f): h for f, h in hashes.items()}, candidate_files=candidate_files, initial_state_policy="synthetic", action_policy="synthetic",
             opengl=identity, cells=cells, components=[dict(batch=64, operation=op, seconds=[1., 2., 3., 1., 2., 3.])

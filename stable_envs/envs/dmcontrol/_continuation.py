@@ -9,5 +9,4 @@ class DMCContinuationSemantics(DelegatedSemantics):
 
     @classmethod
     def _load_env(cls, seed: int):
-        # Registered Cheetah uses a different material from the suite default.
         return _make_env(cls.DOMAIN, seed)

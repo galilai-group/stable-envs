@@ -2,7 +2,7 @@
 
 Adapted from stable-worldmodel (MIT), by Lucas Maes, Quentin Le Lidec,
 Randall Balestriero and contributors, commit
-176d54532b3c0a251a4f509b74f2fdacc143a63d.
+21446f1ede6d5284e981bd7b47f432b994e6d812.
 See THIRD_PARTY_NOTICES.md for attribution and the MIT license.
 Physics remains official Pymunk 7.2.0 / Munk2D. No stable-worldmodel runtime import.
 """

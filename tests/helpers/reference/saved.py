@@ -17,7 +17,9 @@ from stable_envs.testing.metrics import normalized_mse, summarize_errors
 from stable_envs.testing.provenance import verify_recorded_code
 from tests.helpers.reference.cases import CaseKey, coverage
 
-SWM_PIN = "176d54532b3c0a251a4f509b74f2fdacc143a63d"
+SWM_PIN = "21446f1ede6d5284e981bd7b47f432b994e6d812"
+# Commit the frozen native corpora were recorded against; their envs are unchanged at SWM_PIN.
+CORPUS_PIN = "176d54532b3c0a251a4f509b74f2fdacc143a63d"
 ROCKET_SOURCE = "5ede3640ce1e2add32b6b0a6c36e190bb1130e38bb258ab182af12a6fbedee23"
 
 # Cross-machine frozen trajectories only. The independent Linux/Mac source audit
@@ -51,7 +53,7 @@ def assert_frozen_state(actual, expected):
 def native_corpus(directory, domain):
     root = Path(directory)
     manifest = json.loads((root / "manifest.json").read_text())
-    assert manifest["reference_commit"] == SWM_PIN
+    assert manifest["reference_commit"] == CORPUS_PIN
     entry = manifest["domains"][domain]
     path = root / entry["file"]
     assert path.resolve().parent == root.resolve()

@@ -1,7 +1,7 @@
 """Bounded SWM Rocket Variation behavior, including scalar types and sampling order.
 
 Derived from stable-worldmodel (MIT), commit
-176d54532b3c0a251a4f509b74f2fdacc143a63d, by Lucas Maes,
+21446f1ede6d5284e981bd7b47f432b994e6d812, by Lucas Maes,
 Quentin Le Lidec, Randall Balestriero and contributors. This module covers only
 Rocket's unconstrained Box/RGBBox/Dict surface; shared spaces are unchanged.
 """

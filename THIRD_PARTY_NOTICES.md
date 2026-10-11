@@ -29,16 +29,16 @@ OpenCV is licensed under the Apache License, Version 2.0; see
 
 The private Rocket task and Variation helpers in
 `stable_envs/envs/rocket/simulation/task.py` and `spaces.py` are adapted from
-stable-worldmodel, commit `176d54532b3c0a251a4f509b74f2fdacc143a63d`:
+stable-worldmodel, commit `21446f1ede6d5284e981bd7b47f432b994e6d812`:
 
 - `stable_worldmodel/envs/rocket_landing/pyflyt_rocketlanding.py`
 - the Rocket-used Box, RGBBox and Dict behaviors in `stable_worldmodel/spaces.py`
 
-The pinned project's `pyproject.toml` declares the MIT license and lists Lucas
-Maes, Quentin Le Lidec and Randall Balestriero as authors. That source tree has
-no separate LICENSE file. The task source SHA256 is
+The pinned project is MIT-licensed (its `LICENSE` reads "Copyright (c) 2026
+GalilAI-group"), and its `pyproject.toml` lists Lucas Maes, Quentin Le Lidec and
+Randall Balestriero as authors. The task source SHA256 is
 `5ede3640ce1e2add32b6b0a6c36e190bb1130e38bb258ab182af12a6fbedee23`.
-Source: https://github.com/galilai-group/stable-worldmodel/tree/176d54532b3c0a251a4f509b74f2fdacc143a63d
+Source: https://github.com/galilai-group/stable-worldmodel/tree/21446f1ede6d5284e981bd7b47f432b994e6d812
 
 The adaptation removes an unused URDF helper and adds reset-anchor hooks,
 local source-compatible Variation helpers and temporary-file cleanup. It does

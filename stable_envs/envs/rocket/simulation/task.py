@@ -2,7 +2,7 @@
 
 Adapted from stable-worldmodel, MIT, by Lucas Maes, Quentin Le Lidec,
 Randall Balestriero and contributors, commit
-176d54532b3c0a251a4f509b74f2fdacc143a63d:
+21446f1ede6d5284e981bd7b47f432b994e6d812:
 stable_worldmodel/envs/rocket_landing/pyflyt_rocketlanding.py
 SHA256 5ede3640ce1e2add32b6b0a6c36e190bb1130e38bb258ab182af12a6fbedee23.
 Only the unused rocket-URDF helper is omitted. Numeric replay anchor capture,

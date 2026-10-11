@@ -2,20 +2,22 @@
 
 Adapted from stable-worldmodel (MIT), by Lucas Maes, Quentin Le Lidec,
 Randall Balestriero and contributors, commit
-176d54532b3c0a251a4f509b74f2fdacc143a63d.
+21446f1ede6d5284e981bd7b47f432b994e6d812.
 See THIRD_PARTY_NOTICES.md for attribution and the MIT license.
 Physics remains official Pymunk 7.2.0 / Munk2D. No stable-worldmodel runtime import.
 """
 
 # Upstream: spaces.py
-# SHA256: 73079b2a66dace087abc7c417691e3cc339887866915553e21d0936a362229eb
+# SHA256: 69e583dd06fa754e226f2430d4ff459e2dc8d7534fdb27cf7f9f5921bdec8018
 
+import logging
 import time
 from collections.abc import Callable, Generator, Iterable, Sequence
 from typing import Any
 
 from gymnasium import spaces
-from loguru import logger as logging
+
+logger = logging.getLogger(__name__)
 
 
 def _get_in(mapping, path):
@@ -124,7 +126,7 @@ class Discrete(spaces.Discrete):
             True if the current value is valid, False otherwise.
         """
         if not self.constrain_fn(self.value):
-            logging.warning(f"Discrete: value {self.value} does not satisfy constrain_fn")
+            logger.warning(f"Discrete: value {self.value} does not satisfy constrain_fn")
             return False
         return super().contains(self.value)
 
@@ -159,7 +161,7 @@ class Discrete(spaces.Discrete):
                     self._value = sample
                 return sample
             if warn_after_s is not None and (time.time() - start) > warn_after_s:
-                logging.warning("rejection sampling: rejection sampling is taking a while...")
+                logger.warning("rejection sampling: rejection sampling is taking a while...")
         raise RuntimeError(f"rejection sampling: predicate not satisfied after {max_tries} draws")
 
     def set_init_value(self, value: int) -> None:
@@ -248,7 +250,7 @@ class Box(spaces.Box):
             True if the current value is valid, False otherwise.
         """
         if not self.constrain_fn(self.value):
-            logging.warning(f"Box: value {self.value} does not satisfy constrain_fn")
+            logger.warning(f"Box: value {self.value} does not satisfy constrain_fn")
             return False
         return self.contains(self.value)
 
@@ -283,7 +285,7 @@ class Box(spaces.Box):
                     self._value = sample
                 return sample
             if warn_after_s is not None and (time.time() - start) > warn_after_s:
-                logging.warning("rejection sampling: rejection sampling is taking a while...")
+                logger.warning("rejection sampling: rejection sampling is taking a while...")
         raise RuntimeError(f"rejection sampling: predicate not satisfied after {max_tries} draws")
 
     def set_init_value(self, value: Any) -> None:
@@ -375,7 +377,7 @@ class Dict(spaces.Dict):
             self._sampling_order = list(self.spaces.keys())
         elif len(sampling_order) != len(self.spaces):
             missing_keys = set(self.spaces.keys()).difference(set(sampling_order))
-            logging.warning(
+            logger.warning(
                 f"Dict sampling_order is missing keys {missing_keys}, adding them at the end of the sampling order"
             )
             self._sampling_order = list(sampling_order) + [str(k) for k in missing_keys]
@@ -395,7 +397,7 @@ class Dict(spaces.Dict):
             if hasattr(v, "init_value"):
                 init_val[k] = v.init_value
             else:
-                logging.warning(
+                logger.warning(
                     f"Space {k} of type {type(v)} does not have init_value property, using default sample instead"
                 )
                 init_val[k] = v.sample()
@@ -503,7 +505,7 @@ class Dict(spaces.Dict):
             if hasattr(v, "check"):
                 if not v.check():
                     if debug:
-                        logging.warning(f"Dict: space {k} failed check()")
+                        logger.warning(f"Dict: space {k} failed check()")
                     return False
         return True
 
@@ -558,7 +560,7 @@ class Dict(spaces.Dict):
                 return sample
 
             if warn_after_s is not None and (time.time() - start) > warn_after_s:
-                logging.warning("rejection sampling is taking a while...")
+                logger.warning("rejection sampling is taking a while...")
 
         raise RuntimeError(f"constrain_fn not satisfied after {max_tries} draws")
 

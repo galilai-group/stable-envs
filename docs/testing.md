@@ -33,6 +33,8 @@ python -m pytest tests/contracts --contract-profile native \
 Choose the family profile and optionally `--contract-device cuda` on a CUDA host.
 Source pins are explicit in
 `tests/helpers/reference/profiles.py`. The source checkout must be clean at
+`21446f1ede6d5284e981bd7b47f432b994e6d812` (galilai-group/stable-worldmodel `main`). Frozen
+corpora named `swm_176d545` were recorded at the earlier pin
 `176d54532b3c0a251a4f509b74f2fdacc143a63d`. Source environment code is loaded unchanged;
 unrelated learning-stack package initializers are omitted. Profiles compare CPU
 physics with CPU or CUDA State/output delivery. All 38 non-Craftax registrations

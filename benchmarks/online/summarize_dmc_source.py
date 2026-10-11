@@ -26,7 +26,7 @@ def checked_seconds(values):
 
 def summarize(results, source, source_root, source_manifest, batches):
     manifest = json.loads(source_manifest.read_text())
-    assert manifest["commit"] == "176d54532b3c0a251a4f509b74f2fdacc143a63d" and len(manifest["files"]) == 20
+    assert manifest["commit"] == "21446f1ede6d5284e981bd7b47f432b994e6d812" and len(manifest["files"]) == 20
     for f, h in manifest["files"].items():
         assert hashlib.sha256((source_root / f).read_bytes()).hexdigest() == h, f
     reports, seen_pids, all_cells, component_rows = {}, set(), {}, []
