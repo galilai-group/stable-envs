@@ -52,13 +52,47 @@ MODEL_FIELDS = {
     ),
 }
 ALIGNED = {"ball_in_cup", "finger", "manipulator", "quadruped"}
-# Domains whose stable-envs State carries gravity under ("physics", "gravity", axis); read from SWM's model.
-GRAVITY_IN_STATE = {"acrobot", "pendulum", "cartpole"}
+_GRAVITY = ("gravity.x", "gravity.y", "gravity.z")
+# Physics leaves stable-envs State carries under ("physics", *leaf), with how SWM holds each one:
+# gravity and friction are read from SWM's compiled model, masses from the values SWM recompiled with.
+PHYSICS_LEAVES = {
+    "acrobot": _GRAVITY,
+    "pendulum": _GRAVITY,
+    "cartpole": (*_GRAVITY, "agent.cart_mass"),
+    "ball_in_cup": (*_GRAVITY, "agent.density", "ball.density"),
+    "finger": ("agent.proximal_density", "agent.fingertip_density", "spinner.density", "spinner.friction"),
+    "manipulator": ("agent.upper_arm_density", "agent.hand_density"),
+    "reacher": ("agent.arm_density", "agent.finger_density"),
+    **{
+        domain: (*_GRAVITY, "agent.torso_density", f"agent.{foot}_density", "floor.friction")
+        for domain, foot in (
+            ("cheetah", "back_foot"),
+            ("hopper", "foot"),
+            ("walker", "left_foot"),
+            ("humanoid", "right_lower_arm"),
+            ("quadruped", "foot_back_left"),
+        )
+    },
+}
+_FLOOR = {"cheetah": "ground"}
+
+
+def swm_physics(wrapper, domain, leaf):
+    """The value SWM actually ran for one physics leaf."""
+    physics = wrapper.env.physics
+    if leaf.startswith("gravity."):
+        return float(physics.model.opt.gravity["xyz".index(leaf[-1])])
+    if leaf == "floor.friction":
+        return float(physics.named.model.geom_friction[_FLOOR.get(domain, "floor"), 0])
+    if leaf == "spinner.friction":
+        return float(np.asarray(physics.named.model.dof_frictionloss["hinge"]).reshape(-1)[0])
+    group, name = leaf.split(".")
+    return float(np.asarray(wrapper.variation_space[group][name].value).reshape(-1)[0])
 
 
 class DMCReference:
-    def __init__(self, domain, num_envs=1, options=None):
-        cls = getattr(
+    def __init__(self, domain, num_envs=1, options=None, wrapper=None):
+        cls = wrapper or getattr(
             importlib.import_module(f"stable_worldmodel.envs.dmcontrol.{domain}"),
             WRAPPERS[domain] + "DMControlWrapper",
         )
@@ -106,17 +140,23 @@ class DMCReference:
                 row[key] = torch.tensor(getattr(physics.named.model, field)[index].copy())
             if self.domain == "quadruped":
                 row["activation"] = torch.tensor(physics.data.act.copy())
-            if self.domain in GRAVITY_IN_STATE:
-                for i, axis in enumerate("xyz"):
-                    row["physics", "gravity", axis] = torch.tensor([physics.model.opt.gravity[i]], dtype=torch.float64)
+            for leaf in PHYSICS_LEAVES.get(self.domain, ()):
+                value = swm_physics(wrapper, self.domain, leaf)
+                row[("physics", *leaf.split("."))] = torch.tensor([value], dtype=torch.float64)
             rows.append(row)
         return torch.stack(rows)
 
     def set_state(self, state):
         for wrapper, row in zip(self.envs, state.cpu().unbind(0), strict=True):
             env, physics = wrapper.env._env, wrapper.env.physics
-            if self.domain in GRAVITY_IN_STATE:
-                wrapper.set_gravity([float(row["physics", "gravity", axis]) for axis in "xyz"])
+            for leaf in PHYSICS_LEAVES.get(self.domain, ()):
+                value = float(row[("physics", *leaf.split("."))])
+                if leaf.startswith("gravity."):
+                    gravity = physics.model.opt.gravity.copy()
+                    gravity["xyz".index(leaf[-1])] = value
+                    wrapper.set_gravity(gravity)
+                elif value != swm_physics(wrapper, self.domain, leaf):
+                    raise NotImplementedError(f"SWM changes {leaf} by recompiling; reset it through options instead")
             for key, field, index in MODEL_FIELDS.get(self.domain, ()):
                 getattr(physics.named.model, field)[index] = row[key].numpy()
             if self.domain in ALIGNED:

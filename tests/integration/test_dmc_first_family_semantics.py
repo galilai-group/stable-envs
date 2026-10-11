@@ -29,8 +29,6 @@ def test_first_dmc_family_full_state_semantics():
                 env._simulator.envs[0].physics.model.opt.gravity,
                 np.array([0.0, 0.0, -9.81], np.float64),
             )
-    with se.make("DMCCartpoleBalance", device="cpu", num_envs=1) as env:
-        assert not env.has_dynamics
     result = run_gate(os.environ.get("SE_DMC_FIRST_FAMILY_DEVICE", "cpu"))
     assert result["execution_mode"] == "DELEGATED_CPU"
     assert all(case.get("max_state_error", 0) == 0 for case in result["cases"])

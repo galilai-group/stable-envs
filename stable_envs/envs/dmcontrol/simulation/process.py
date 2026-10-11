@@ -67,9 +67,7 @@ def _worker(conn, domain, start, count, batch, seed, cpus, buffers, specs):
             elif command == "reset":
                 write_state(adapter.reset(payload))
             elif command == "configure":
-                name, values, force = payload
-                method = getattr(adapter, name)
-                method(values, force=True) if force else method(values)
+                adapter.configure_physics(payload)
             else:
                 raise ValueError(f"Unknown DMC worker command {command}")
             conn.send((True, None))
@@ -105,7 +103,6 @@ class DMCProcessAdapter(ProcessRequests, SimulatorAdapter):
         self.domain, self.num_envs, self.device = domain, num_envs, torch.device(device)
         self._closed, self._pending = False, None
         self._connections, self._processes = [], []
-        self._config = {}
         # Discover exact nested task shapes/dtypes from one independent owner;
         # no parent-side live batch or renderer contexts are constructed here.
         prototype = make_local(domain, 1, seed=int(seed))
@@ -124,23 +121,9 @@ class DMCProcessAdapter(ProcessRequests, SimulatorAdapter):
                     for key, value in initial.items(True, True)
                 }
             )
-            self._configuration_methods = {
-                name
-                for name in (
-                    "configure_physics",
-                    "configure_gravity",
-                    "configure_density",
-                    "configure_proximal_density",
-                    "configure_upper_arm_density",
-                )
-                if hasattr(prototype, name)
-            }
-            physics = getattr(prototype, "physics", None)
+            physics = prototype.physics
             self.physics_layout = None if physics is None else physics.layout
             self._physics_dim = 0 if physics is None else physics.spec.dim
-            for name in ("proximal_density", "upper_arm_density"):
-                if hasattr(prototype, "_" + name):
-                    self._config[name] = np.repeat(getattr(prototype, "_" + name), num_envs)
         finally:
             prototype.close()
         self._slices = [
@@ -244,34 +227,11 @@ class DMCProcessAdapter(ProcessRequests, SimulatorAdapter):
     def abort_step(self):
         self._abort()
 
-    def _configure(self, name, values, width):
+    def configure_physics(self, values):
         self._check_idle()
-        method = "configure_" + name
-        if method not in self._configuration_methods:
-            raise ValueError(f"{self.domain} does not support {method}")
-        shape = (self.num_envs,) if width == 1 else (self.num_envs, width)
-        values = np.asarray(values, np.float64).reshape(shape).copy()
+        if self.physics_layout is None:
+            raise ValueError(f"{self.domain} declares no physics Variation")
+        values = np.asarray(values, np.float64).reshape(self.num_envs, self._physics_dim).copy()
         if not np.isfinite(values).all():
             raise ValueError("Configuration values must be finite")
-        force = name in self._config
-        if force and np.array_equal(values, self._config[name]):
-            return
-        # Density changes reset the source batch; force every shard to reset even if its values are unchanged.
-        self._request("configure", [(method, values[rows], force) for rows in self._slices])
-        if force:
-            self._config[name] = values
-
-    def configure_physics(self, values):
-        self._configure("physics", values, self._physics_dim)
-
-    def configure_gravity(self, values):
-        self._configure("gravity", values, 3)
-
-    def configure_density(self, values):
-        self._configure("density", values, 2)
-
-    def configure_proximal_density(self, values):
-        self._configure("proximal_density", values, 1)
-
-    def configure_upper_arm_density(self, values):
-        self._configure("upper_arm_density", values, 1)
+        self._request("configure", [values[rows] for rows in self._slices])

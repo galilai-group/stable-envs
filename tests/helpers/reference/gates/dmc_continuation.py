@@ -86,7 +86,7 @@ def _assert_bad_actions_rejected(env, action_dim):
         np.full((env.B, action_dim), np.inf),
     ):
         try:
-            env.step(action, frames=None)
+            env.step(action, states=None, frames=None).exclude("valid")
         except ValueError:
             pass
         else:
@@ -118,22 +118,21 @@ def _warmstart_experiment(domain, env, reference):
     check_step_matches_reference(env, reference, actions[:prefix_steps])
     saved = env.get_state()
     for action in -actions[prefix_steps : prefix_steps + 9]:
-        env.step(action, frames=None)
+        env.step(action, states=None, frames=None).exclude("valid")
     omitted = saved.clone()
     omitted["warmstart"] = env.get_state()["warmstart"]
     env.set_state(omitted)
     continuation = actions[prefix_steps : prefix_steps + 8]
-    bad_outputs = [env.step(action, frames=None) for action in continuation]
+    bad_outputs = [env.step(action, states=None, frames=None).exclude("valid") for action in continuation]
     expected_outputs = [reference.step(action) for action in continuation]
     error_without = max(
         _max_error(actual, expected, exclude=(("state", "warmstart"),))
         for actual, expected in zip(bad_outputs, expected_outputs, strict=True)
     )
     env.set_state(saved)
-    good_outputs = [env.step(action, frames=None) for action in continuation]
+    good_outputs = [env.step(action, states=None, frames=None).exclude("valid") for action in continuation]
     error_with_schema = max(
-        _max_error(actual, expected)
-        for actual, expected in zip(good_outputs, expected_outputs, strict=True)
+        _max_error(actual, expected) for actual, expected in zip(good_outputs, expected_outputs, strict=True)
     )
     assert error_without > 0
     assert error_with_schema == 0
@@ -170,9 +169,7 @@ def run_gate(device="cpu"):
             "walker": "CustomPlanarWalker(goal='walk', move_speed=1): default branch delegates to PlanarWalker.get_reward",
         },
         "state_schema": {
-            "common": [
-                "qpos", "qvel", "time", "lifecycle counters", "task.cumulative_reward", "MT19937 state"
-            ],
+            "common": ["qpos", "qvel", "time", "lifecycle counters", "task.cumulative_reward", "MT19937 state"],
             "domain_specific": {
                 "cheetah": ["qacc_warmstart"],
                 "hopper": ["qacc_warmstart"],
@@ -215,16 +212,14 @@ def run_gate(device="cpu"):
                         saved["rng", "keys"].add_(1)
                         compare_state(env.get_state(), live)
 
-                        actions = np.random.default_rng(seed + 200).uniform(
-                            -1, 1, (32, batch, ref.action_dim)
-                        )
+                        actions = np.random.default_rng(seed + 200).uniform(-1, 1, (32, batch, ref.action_dim))
                         check_state_roundtrip(env, actions=actions[:4])
                         compare_state(env.get_state(), ref.get_state())
                         steps = check_step_matches_reference(env, ref, actions)
 
                         other.reset(seed=seed + 991)
                         for action in -actions[:9]:
-                            other.step(action, frames=None)
+                            other.step(action, states=None, frames=None).exclude("valid")
                         snapshot = env.get_state()
                         env.set_state(snapshot)
                         other.set_state(snapshot)
@@ -268,8 +263,9 @@ def run_gate(device="cpu"):
                     reward_state = _positive_state(domain, ref.get_state())
                     env.set_state(reward_state)
                     ref.set_state(reward_state)
-                    got, expected = env.step(np.zeros((batch, ref.action_dim)), frames=None), ref.step(
-                        np.zeros((batch, ref.action_dim))
+                    got, expected = (
+                        env.step(np.zeros((batch, ref.action_dim)), states=None, frames=None).exclude("valid"),
+                        ref.step(np.zeros((batch, ref.action_dim))),
                     )
                     compare_state(got, expected)
                     assert (got["reward"] > 0).all()
@@ -292,9 +288,7 @@ def run_gate(device="cpu"):
                     rng_before = near_limit.select("rng").clone()
                     check_step_matches_reference(env, ref, boundary_actions[public_at_last - 1 :])
                     after = env.get_state()
-                    assert any(
-                        not torch.equal(rng_before[key], after[key]) for key in rng_before.keys(True, True)
-                    )
+                    assert any(not torch.equal(rng_before[key], after[key]) for key in rng_before.keys(True, True))
                     other.reset(seed=77)
                     check_two_histories_same_state(env, other, near_limit, boundary_actions[:4])
                     evidence["cases"].append(
@@ -314,7 +308,7 @@ def run_gate(device="cpu"):
                         _assert_bad_actions_rejected(env, ref.action_dim)
                         check_reset_matches_reference(env, ref, seed=31)
                         outside = np.full((1, ref.action_dim), 1.1)
-                        compare_state(env.step(outside, frames=None), ref.step(outside))
+                        compare_state(env.step(outside, states=None, frames=None).exclude("valid"), ref.step(outside))
                         evidence.setdefault("action_validation", {})[domain] = {
                             "shape_and_nonfinite_rejected": True,
                             "finite_out_of_bounds_matches_historical_passthrough": True,
@@ -341,27 +335,6 @@ def run_gate(device="cpu"):
             finally:
                 ref.close()
 
-        options = {
-            "variation_values": {
-                "gravity.x": np.array([1.25], np.float64),
-                "gravity.y": np.array([-0.75], np.float64),
-                "gravity.z": np.array([-7.5], np.float64),
-            }
-        }
-        ref = DMCContinuationReference(domain, 1, options=options)
-        with se.make(env_name, num_envs=1, device=device) as env:
-            try:
-                env.set_variation({"gravity.x": [1.25], "gravity.y": [-0.75], "gravity.z": [-7.5]})
-                check_reset_matches_reference(env, ref, seed=11)
-                actions = np.random.default_rng(11).uniform(-1, 1, (32, 1, ref.action_dim))
-                check_step_matches_reference(env, ref, actions)
-                evidence.setdefault("physical_variation", {})[domain] = {
-                    "gravity": [1.25, -0.75, -7.5],
-                    "steps": 32,
-                    "max_error": 0.0,
-                }
-            finally:
-                ref.close()
     return evidence
 
 

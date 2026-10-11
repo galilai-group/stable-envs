@@ -25,11 +25,11 @@ def test_reacher_replays_independent_full_state_corpus():
         try:
             # Restore reached source states after a different candidate history.
             for start in (0, 7, 24):
-                env.set_state(state_at(data, start, batch=3))
-                compare_state(env.get_state(), state_at(data, start, batch=3))
+                env.set_state(state_at(data, start, batch=3, physics=env.physics_layout))
+                compare_state(env.get_state(), state_at(data, start, batch=3, physics=env.physics_layout))
                 for t, action in enumerate(data["actions"][start:], start=start):
                     result = env.step(action)
-                    compare_state(result["state"], state_at(data, t + 1, batch=3))
+                    compare_state(result["state"], state_at(data, t + 1, batch=3, physics=env.physics_layout))
                     assert_outputs(
                         result,
                         data,

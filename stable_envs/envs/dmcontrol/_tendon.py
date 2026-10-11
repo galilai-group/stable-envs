@@ -188,10 +188,10 @@ def _tendon_frame(m, d, td: _Tendon):
     return pos, mat, half, rgb
 
 
-def _tendon_polyline(m, d, td: _Tendon):
+def _tendon_polyline(m, d, td: _Tendon, gravity=None):
     """Return owned polyline points and RGB after mj_forward.
 
-    Slack tendons use a catenary; taut tendons use wrap endpoints and interpolate
+    Slack tendons use a catenary under ``gravity``, the model's when None; taut tendons use wrap endpoints and interpolate
     constraint color by efc_KBIP impedance. Point count varies by branch, so callers
     group polylines before batching capsule construction.
     """
@@ -200,7 +200,7 @@ def _tendon_polyline(m, d, td: _Tendon):
     adr, num = int(d.ten_wrapadr[td.id]), int(d.ten_wrapnum[td.id])
     w = np.asarray(d.wrap_xpos, np.float64).reshape(-1, 3)[adr : adr + num]
     if float(d.ten_length[td.id]) < td.upper:
-        return catenary(w[0], w[1], td.gravity, td.upper, td.ncat), td.grey
+        return catenary(w[0], w[1], td.gravity if gravity is None else gravity, td.upper, td.ncat), td.grey
     # Copy the live wrap buffer: the next row's mj_forward would overwrite a retained view.
     pts = np.array(w[:2])
     imp = 0.0

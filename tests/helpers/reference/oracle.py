@@ -5,13 +5,20 @@ from numpy.typing import NDArray
 from tensordict import TensorDict
 
 
-def state_at(arrays: Mapping[str, NDArray], index: int, *, batch: int) -> TensorDict:
-    """Copy a full State from the legacy reference-only NPZ layout."""
+def state_at(arrays: Mapping[str, NDArray], index: int, *, batch: int, physics=None) -> TensorDict:
+    """Copy a full State from the legacy reference-only NPZ layout.
+
+    The corpora predate State physics fields and were recorded at the registered physics;
+    ``physics`` is a ``PhysicsLayout`` whose nominal values are added."""
     state = TensorDict({}, [batch])
     for key in arrays:
         if key.startswith("state/"):
             state[tuple(key[6:].split("/"))] = torch.from_numpy(arrays[key][index].copy())
     assert len(state.keys(True, True)), "Oracle has no State fields"
+    if physics is not None:
+        for leaf, offset, width in zip(physics.leaves, physics.offsets, physics.widths, strict=True):
+            value = torch.tensor(physics.nominal[offset : offset + width], dtype=torch.float64)
+            state[("physics", *leaf.split("."))] = value.expand(batch, width).clone()
     return state
 
 

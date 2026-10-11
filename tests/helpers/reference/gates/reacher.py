@@ -61,7 +61,7 @@ def run_gate(device="cpu"):
                     assert (saved == other.reset(seed=seed)).all()
                     other.reset(seed=seed + 991)
                     for action in -actions[:9]:
-                        other.step(action, frames=None)
+                        other.step(action, states=None, frames=None).exclude("valid")
                     snapshot = env.get_state()
                     history = check_two_histories_same_state(env, other, snapshot, actions[:8])
                     frame = env.render(snapshot)
@@ -102,7 +102,10 @@ def run_gate(device="cpu"):
                     reward_state["task", "target_pos"][i, :2] = torch.as_tensor(wrapper.info["finger_pos"])
                 env.set_state(reward_state)
                 ref.set_state(reward_state)
-                got, expected = env.step(np.zeros((batch, 2)), frames=None), ref.step(np.zeros((batch, 2)))
+                got, expected = (
+                    env.step(np.zeros((batch, 2)), states=None, frames=None).exclude("valid"),
+                    ref.step(np.zeros((batch, 2))),
+                )
                 compare_state(got, expected)
                 assert (got["reward"] == 2).all()
                 evidence["cases"].append(dict(batch=batch, positive_reward=2.0, terminated=False, truncated=False))
@@ -127,25 +130,6 @@ def run_gate(device="cpu"):
                 )
             finally:
                 ref.close()
-    # Shared physical Variation must reach the delegated model, then match SWM reset and steps.
-    ref = ReacherReference(
-        1,
-        options={
-            "variation_values": {
-                "agent.arm_density": np.array([650], np.float32),
-                "agent.finger_density": np.array([1350], np.float32),
-            }
-        },
-    )
-    with se.make("DMCReacherHard", num_envs=1, device=device) as env:
-        try:
-            env.set_variation({"agent.arm_density": [650.0], "agent.finger_density": [1350.0]})
-            check_reset_matches_reference(env, ref, seed=11)
-            actions = np.random.default_rng(11).uniform(-1, 1, (32, 1, 2))
-            check_step_matches_reference(env, ref, actions)
-            evidence["physical_variation"] = dict(arm_density=650, finger_density=1350, steps=32, max_error=0.0)
-        finally:
-            ref.close()
     return evidence
 
 

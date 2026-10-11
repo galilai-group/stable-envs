@@ -67,10 +67,20 @@ TRACKCOM = (
 )
 ALL = PARITY + TRACKCOM
 CONTINUATION = ("DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk")
-ALIGNED = ("DMCBallInCupCatch", "DMCFingerTurnHard", "DMCManipulatorBringBall", "DMCQuadrupedWalk")
+ALIGNED = (
+    "DMCBallInCupCatch",
+    "DMCFingerSpin",
+    "DMCFingerTurnEasy",
+    "DMCFingerTurnHard",
+    "DMCManipulatorBringBall",
+    "DMCPointMassEasy",
+    "DMCQuadrupedWalk",
+    "DMCSwimmerSwimmer6",
+)
 HUMANOID = ("DMCHumanoidWalk",)
 RECOVERED = (
-    ("DMCReacherHard", "DMCAcrobotBalance", "DMCPendulumSwingup", "DMCCartpoleSwingup")
+    ("DMCReacherEasy", "DMCReacherHard", "DMCAcrobotBalance", "DMCPendulumSwingup")
+    + ("DMCCartpoleBalance", "DMCCartpoleSwingup")
     + CONTINUATION
     + ALIGNED
     + HUMANOID
@@ -205,7 +215,7 @@ def test_the_package_tables_are_views_of_the_cells_and_not_a_second_copy():
     assert set(dmc.VISUAL_FIDELITY) == set(TRACKCOM)
     for n, vf in dmc.VISUAL_FIDELITY.items():
         assert snv.registry.REGISTRY[n].visual_fidelity is vf
-    assert set(dmc.TRACKCOM_BASES) == {"DMCQuadrupedWalk", *CONTINUATION, *HUMANOID}
+    assert set(dmc.TRACKCOM_BASES) == {"DMCQuadrupedWalk", "DMCSwimmerSwimmer6", *CONTINUATION, *HUMANOID}
     from stable_envs.envs.dmcontrol._aligned import DMCAlignedSemantics
 
     assert dmc.TRACKCOM_BASES["DMCQuadrupedWalk"] == (DMCAlignedSemantics, dmc._TranscribedQuadrupedModel)
@@ -235,7 +245,7 @@ def test_a_cell_is_a_declaration_and_overrides_no_renderer_method(name):
     )
     assert not callables, f"{name} overrides {callables}; a cell should be a declaration"
     extra_bases = tuple(b for b in cls.__bases__ if b is not tier)
-    if name == "DMCReacherHard":
+    if name in ("DMCReacherEasy", "DMCReacherHard"):
         from stable_envs.envs.dmcontrol.reacher import _ReacherSemantics
 
         expected = (_ReacherSemantics,)
@@ -353,36 +363,12 @@ def test_private_projection_roundtrips_the_frozen_renderer_layout(name):
         env._set_render_state(env.sample_states(4, np.random.default_rng(0)))
         rows = env._get_render_state()
         projection = env._unpack_render_state(rows)
-        if name in RECOVERED:
-            state = env.get_state()
-            assert "qvel" in state
-            assert env._pack_render_state(state).shape == rows.shape
-            assert any(off is None for _, _, off in env._layout())
-            with pytest.raises((TypeError, ValueError)):
-                env.set_state(projection)
-        else:
-            assert torch.equal(env._pack_render_state(projection), rows)
-            with pytest.raises(NotImplementedError, match="full simulator semantics"):
-                env.get_state()
-
-
-@pytest.mark.parametrize("name", [n for n in ALL if n not in RECOVERED])
-def test_a_renderer_only_cell_refuses_public_simulator_operations(name):
-    """Unrecovered cells explicitly refuse simulator State, reset and dynamics."""
-    if name in CPU_REFUSED:
-        pytest.skip(f"{name} declares no CPU backend")
-    with _build(name, num_envs=2, device="cpu") as env:
-        assert env.has_dynamics is False
-        action = torch.zeros(2, 1, device=env.device)
-        projection = env._unpack_render_state(env._get_render_state())
-        for call, args in (
-            ("get_state", ()),
-            ("reset", ()),
-            ("step", (action,)),
-            ("set_state", (projection,)),
-        ):
-            with pytest.raises(NotImplementedError, match="full simulator semantics"):
-                getattr(env, call)(*args)
+        state = env.get_state()
+        assert "qvel" in state
+        assert env._pack_render_state(state).shape == rows.shape
+        assert any(off is None for _, _, off in env._layout())
+        with pytest.raises((TypeError, ValueError)):
+            env.set_state(projection)
 
 
 @pytest.mark.parametrize("name", ALL)
@@ -391,16 +377,10 @@ def test_private_render_takes_a_projection_a_packed_row_or_nothing(name):
     if name in CPU_REFUSED:
         pytest.skip(f"{name} declares no CPU backend")
     with _build(name, num_envs=2, device="cpu") as env:
-        if name in RECOVERED:
-            st = env.get_state()
-            rows = env._pack_render_state(st)
-            env._set_render_state(rows)
-            a = env.render(st)
-        else:
-            env._set_render_state(env.sample_states(2, np.random.default_rng(0)))
-            rows = env._get_render_state()
-            st = env._unpack_render_state(rows)
-            a = env._render(st)
+        st = env.get_state()
+        rows = env._pack_render_state(st)
+        env._set_render_state(rows)
+        a = env.render(st)
         b, c = env._render(rows), env._render()
         assert torch.equal(a, b) and torch.equal(a, c)
         assert tuple(a.shape) == (2, env.size, env.size, 3) and a.dtype == torch.uint8

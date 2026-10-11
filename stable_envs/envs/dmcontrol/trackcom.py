@@ -8,6 +8,7 @@ import torch
 from ...render import _resources as _RES
 from ...render import cpu3d as C3
 from ...render import mjwarp as MW
+from ._mass_rows import MassRows
 from ._model import _TC_CACHE, MJW_CHUNK, VISIBLE_GROUPS, _effective_alpha, _row_width, _slot_element
 from .base import _DMCModel
 
@@ -68,7 +69,9 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
     d0 = mujoco.MjData(m)
     d0.qpos[:] = m.qpos0
     mujoco.mj_forward(m, d0)
-    batched = sorted({"mat_rgba", "light_diffuse"} | {a for a, _ in slots})
+    batched = sorted(
+        {"mat_rgba", "light_diffuse"} | {a for a, _ in slots} | (_MASS_ARRAYS if cls._mass_rows() else set())
+    )
     c.wm = mjw.put_model(m, batch_sizes={k: int(nworld) for k in batched})
     c.wd = mjw.put_data(m, d0, nworld=int(nworld))
     c.textures = c.reflection = None
@@ -103,6 +106,9 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
     c.graph = cap.graph
     _TC_CACHE.put(key, c)
     return c
+
+
+_MASS_ARRAYS = {"body_mass", "body_ipos", "body_subtreemass"}
 
 
 def _reflection_supported(rc) -> bool:
@@ -189,6 +195,26 @@ class DMControlTrackCom(_DMCModel):
         return _tc_context(type(self), int(size), int(nworld))
 
     @classmethod
+    def _mass_rows(cls) -> MassRows | None:
+        """Mass leaves move the tracking camera through subtree centres of mass; None without them."""
+        if "_mass_rows_cache" not in cls.__dict__:
+            key = cls._simulator_key() if hasattr(cls, "_simulator_key") else None
+            rows = None if key is None else MassRows(key, cls._model())
+            cls._mass_rows_cache = rows if rows is not None and rows.paths else None
+        return cls._mass_rows_cache
+
+    @property
+    def FRAME_PHYSICS(self) -> frozenset[str]:  # noqa: N802
+        rows = self._mass_rows()
+        return frozenset(rows.paths) if rows else frozenset()
+
+    def _row_masses(self, sty, lo: int, hi: int):
+        rows = self._mass_rows()
+        if rows is None:
+            return None
+        return rows(torch.cat([sty[p][lo:hi].reshape(hi - lo, 1) for p in rows.paths], 1))
+
+    @classmethod
     def _used_materials(cls) -> list[str]:
         """Expose materials on visible geoms only; these backends do not render sites."""
         import mujoco
@@ -249,7 +275,7 @@ class DMControlTrackCom(_DMCModel):
         )
         return cache.put(int(size), sc)
 
-    def _cpu_poses(self, s: torch.Tensor, sc: C3.Scene):
+    def _cpu_poses(self, s: torch.Tensor, sc: C3.Scene, masses=None):
         """Compute camera, mover and light poses on CPU from compact render rows.
 
         Preserve kinematics → comPos → camlight order so tracking uses current
@@ -267,10 +293,14 @@ class DMControlTrackCom(_DMCModel):
         lp = np.empty((B, m.nlight, 3))
         ld = np.empty((B, m.nlight, 3))
         slots = self._slots()
+        if masses is not None:
+            masses = [x.detach().cpu().numpy() for x in masses]
         try:
             for i in range(B):
                 for (arr, k), v in zip(slots, ep[i]):
                     getattr(m, arr).reshape(-1)[k] = v
+                if masses is not None:
+                    m.body_mass[:], m.body_ipos[:], m.body_subtreemass[:] = (x[i] for x in masses)
                 d.qpos[:] = q[i]
                 mujoco.mj_kinematics(m, d)
                 mujoco.mj_comPos(m, d)
@@ -283,6 +313,8 @@ class DMControlTrackCom(_DMCModel):
         finally:
             for arr in {a for a, _ in slots}:
                 getattr(m, arr)[:] = pr[arr]
+            if masses is not None:
+                self._mass_rows().restore(m)
         t = lambda x: torch.tensor(x, device=self.device, dtype=torch.float32)  # noqa: E731
         return t(cam), t(xp), t(xm), t(lp), t(ld)
 
@@ -292,7 +324,7 @@ class DMControlTrackCom(_DMCModel):
         sc = self._cpu_scene(size)
         m, pr = self._model(), self._pristine()
         B = int(s.shape[0])
-        cam, xp, xm, lp, ld = self._cpu_poses(s, sc)
+        cam, xp, xm, lp, ld = self._cpu_poses(s, sc, self._row_masses(sty, 0, B))
         mat = (
             torch.as_tensor(pr["mat_rgba"][:, :3], dtype=torch.float32, device=self.device)
             .unsqueeze(0)
@@ -395,6 +427,10 @@ class DMControlTrackCom(_DMCModel):
             for j, comp in comps:
                 row[:, comp] = s[:, self.nq + j]
             dst[:n, eid] = row
+        masses = self._row_masses(sty, lo, hi)
+        if masses is not None:
+            for name, value in zip(("body_mass", "body_ipos", "body_subtreemass"), masses, strict=True):
+                wp.to_torch(getattr(c.wm, name))[:n] = value.to(torch.float32)
         m, pr = self._model(), self._pristine()
         mr = wp.to_torch(c.wm.mat_rgba)
         for name in self._used_materials():

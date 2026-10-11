@@ -76,22 +76,20 @@ def _omission_experiments(domain, env, reference):
             env.reset(seed=991)
         else:
             for action in -actions[prefix : prefix + 9]:
-                env.step(action, frames=None)
+                env.step(action, states=None, frames=None).exclude("valid")
         omitted = saved.clone()
         omitted[omitted_key] = env.get_state()[omitted_key]
         env.set_state(omitted)
         continuation = actions[prefix : prefix + 8]
-        bad = [env.step(action, frames=None) for action in continuation]
+        bad = [env.step(action, states=None, frames=None).exclude("valid") for action in continuation]
         expected = [reference.step(action) for action in continuation]
         error_without = max(
             _max_error(actual, wanted, exclude=(("state", *omitted_key),))
             for actual, wanted in zip(bad, expected, strict=True)
         )
         env.set_state(saved)
-        good = [env.step(action, frames=None) for action in continuation]
-        error_with = max(
-            _max_error(actual, wanted) for actual, wanted in zip(good, expected, strict=True)
-        )
+        good = [env.step(action, states=None, frames=None).exclude("valid") for action in continuation]
+        error_with = max(_max_error(actual, wanted) for actual, wanted in zip(good, expected, strict=True))
         diagnostic = {
             "domain": domain,
             "omitted_key": "/".join(omitted_key),
@@ -151,24 +149,11 @@ def _assert_bad_actions(env, action_dim):
         np.full((env.B, action_dim), np.inf),
     ):
         try:
-            env.step(action, frames=None)
+            env.step(action, states=None, frames=None).exclude("valid")
         except ValueError:
             pass
         else:
             raise AssertionError("Invalid action accepted")
-
-
-def _variation_case(domain):
-    if domain in ("ball_in_cup", "quadruped"):
-        candidate = {"gravity.x": [1.25], "gravity.y": [-0.75], "gravity.z": [-7.5]}
-        reference = {key: np.asarray(value, np.float64) for key, value in candidate.items()}
-    elif domain == "finger":
-        candidate = {"agent_physics.proximal_density": [750.0]}
-        reference = {"agent.proximal_density": np.array([750.0], np.float32)}
-    else:
-        candidate = {"agent_physics.upper_arm_density": [850.0]}
-        reference = {"agent.upper_arm_density": np.array([850.0], np.float32)}
-    return candidate, {"variation_values": reference}
 
 
 def _positive_sparse_state(domain, reference):
@@ -218,9 +203,10 @@ def run_gate(device="cpu"):
     for domain, env_name in CASES.items():
         for batch in (1, 3):
             reference = DMCAlignedReference(domain, batch)
-            with se.make(env_name, num_envs=batch, device=device) as env, se.make(
-                env_name, num_envs=batch, device=device
-            ) as other:
+            with (
+                se.make(env_name, num_envs=batch, device=device) as env,
+                se.make(env_name, num_envs=batch, device=device) as other,
+            ):
                 try:
                     if batch == 1:
                         check_reset_matches_reference(env, reference, seed=0)
@@ -234,25 +220,21 @@ def run_gate(device="cpu"):
                             "control_timestep": reference.envs[0].env._env.control_timestep(),
                             "step_limit": reference.step_limit,
                         }
-                        evidence["state_omission_experiments"][domain] = _omission_experiments(
-                            domain, env, reference
-                        )
+                        evidence["state_omission_experiments"][domain] = _omission_experiments(domain, env, reference)
                     for seed in (0, 17, 42):
                         check_reset_matches_reference(env, reference, seed=seed)
                         saved, live = env.get_state(), env.get_state()
                         saved["qpos"].add_(1)
                         saved["rng", "keys"].add_(1)
                         compare_state(env.get_state(), live)
-                        actions = np.random.default_rng(seed + 200).uniform(
-                            -1, 1, (32, batch, reference.action_dim)
-                        )
+                        actions = np.random.default_rng(seed + 200).uniform(-1, 1, (32, batch, reference.action_dim))
                         check_state_roundtrip(env, actions=actions[:4])
                         compare_state(env.get_state(), reference.get_state())
                         steps = check_step_matches_reference(env, reference, actions)
                         snapshot = env.get_state()
                         other.reset(seed=seed + 991)
                         for action in -actions[:9]:
-                            other.step(action, frames=None)
+                            other.step(action, states=None, frames=None).exclude("valid")
                         history = check_two_histories_same_state(env, other, snapshot, actions[:8])
                         frame = env.render(snapshot)
                         assert torch.equal(frame, env._render(env._pack_render_state(snapshot)))
@@ -260,12 +242,20 @@ def run_gate(device="cpu"):
                         env.render(snapshot)
                         compare_state(env.get_state(), before)
                         _assert_lossy_rejected(env, snapshot)
-                        evidence["cases"].append({
-                            "domain": domain, "batch": batch, "seed": seed,
-                            "reset": True, "snapshot_independent": True, "roundtrip": True,
-                            "steps": len(steps), "different_history_steps": len(history),
-                            "full_state_render": True, "max_error": 0.0,
-                        })
+                        evidence["cases"].append(
+                            {
+                                "domain": domain,
+                                "batch": batch,
+                                "seed": seed,
+                                "reset": True,
+                                "snapshot_independent": True,
+                                "roundtrip": True,
+                                "steps": len(steps),
+                                "different_history_steps": len(history),
+                                "full_state_render": True,
+                                "max_error": 0.0,
+                            }
+                        )
                     check_reset_matches_reference(env, reference, seed=5)
                     boundary = np.zeros((502, batch, reference.action_dim))
                     check_step_matches_reference(env, reference, boundary[:499])
@@ -276,22 +266,31 @@ def run_gate(device="cpu"):
                     assert any(not torch.equal(rng_before[key], after[key]) for key in rng_before.keys(True, True))
                     other.reset(seed=77)
                     check_two_histories_same_state(env, other, near_limit, boundary[:4])
-                    evidence["cases"].append({
-                        "domain": domain, "batch": batch, "lifecycle_public_steps": 502,
-                        "implicit_reset_rng_changes": True, "lifecycle_replay": True,
-                    })
+                    evidence["cases"].append(
+                        {
+                            "domain": domain,
+                            "batch": batch,
+                            "lifecycle_public_steps": 502,
+                            "implicit_reset_rng_changes": True,
+                            "lifecycle_replay": True,
+                        }
+                    )
                     if batch == 1:
                         check_reset_matches_reference(env, reference, seed=31)
                         _assert_bad_actions(env, reference.action_dim)
                         check_reset_matches_reference(env, reference, seed=31)
                         outside = np.full((1, reference.action_dim), 1.1)
-                        compare_state(env.step(outside, frames=None), reference.step(outside))
+                        compare_state(
+                            env.step(outside, states=None, frames=None).exclude("valid"), reference.step(outside)
+                        )
                         if domain in ("ball_in_cup", "finger"):
                             check_reset_matches_reference(env, reference, seed=13)
                             positive = _positive_sparse_state(domain, reference)
                             env.set_state(positive)
                             reference.set_state(positive)
-                            got = env.step(np.zeros((1, reference.action_dim)), frames=None)
+                            got = env.step(np.zeros((1, reference.action_dim)), states=None, frames=None).exclude(
+                                "valid"
+                            )
                             expected = reference.step(np.zeros((1, reference.action_dim)))
                             compare_state(got, expected)
                             assert got["reward"].item() > 0
@@ -315,34 +314,6 @@ def run_gate(device="cpu"):
             finally:
                 reference.close()
 
-        candidate_variation, options = _variation_case(domain)
-        reference = DMCAlignedReference(domain, 1, options=options)
-        with se.make(env_name, num_envs=1, device=device) as env, se.make(
-            env_name, num_envs=1, device=device
-        ) as baseline:
-            try:
-                env.set_variation(candidate_variation)
-                check_reset_matches_reference(env, reference, seed=11)
-                baseline.reset(seed=11)
-                actions = np.random.default_rng(11).uniform(-1, 1, (32, 1, reference.action_dim))
-                divergence = 0.0
-                for action in actions:
-                    varied, expected = env.step(action, frames=None), reference.step(action)
-                    compare_state(varied, expected)
-                    default = baseline.step(action, frames=None)
-                    divergence = max(
-                        divergence,
-                        _max_error(varied.exclude("state"), default.exclude("state")),
-                    )
-                assert divergence > 0, (domain, candidate_variation)
-                evidence.setdefault("physical_variation", {})[domain] = {
-                    "candidate": candidate_variation,
-                    "steps": 32,
-                    "max_reference_error": 0.0,
-                    "max_observable_divergence_from_default": divergence,
-                }
-            finally:
-                reference.close()
     return evidence
 
 

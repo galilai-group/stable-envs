@@ -4,6 +4,36 @@ from tensordict import TensorDict
 
 _DTYPES = {torch.float64: np.float64, torch.int64: np.int64, torch.bool: np.bool_}
 
+#: State fields that hold episode-drawn model entries: ``key -> (named model field, index)``.
+MODEL_FIELDS = {
+    ("task", "target_pos"): ("geom_pos", "target"),
+    ("model", "target_site_xz"): ("site_pos", ("target", ["x", "z"])),
+    ("model", "target_body_xz"): ("body_pos", ("target_ball", ["x", "z"])),
+    ("model", "target_body_qwqy"): ("body_quat", ("target_ball", ["qw", "qy"])),
+    ("model", "target_geom_xy"): ("geom_pos", ("target", ["x", "y"])),
+    ("model", "target_light_xy"): ("light_pos", ("target_light", ["x", "y"])),
+}
+
+
+def core_fields(nq, nv, na=0):
+    """Fields that resume a dm_control lane: physics, lifecycle, reward and task RNG."""
+    fields = {
+        "qpos": (nq, torch.float64),
+        "qvel": (nv, torch.float64),
+        "time": (1, torch.float64),
+        "warmstart": (nv, torch.float64),
+        ("lifecycle", "step_count"): (1, torch.int64),
+        ("lifecycle", "reset_next_step"): (1, torch.bool),
+        ("task", "cumulative_reward"): (1, torch.float64),
+        ("rng", "keys"): (624, torch.int64),
+        ("rng", "position"): (1, torch.int64),
+        ("rng", "has_gauss"): (1, torch.bool),
+        ("rng", "cached_gaussian"): (1, torch.float64),
+    }
+    if na:
+        fields["activation"] = (na, torch.float64)
+    return fields
+
 
 def export_state(envs, cumulative, fields, device, extra=None):
     """Export fresh State columns with one device transfer per field.
@@ -12,6 +42,7 @@ def export_state(envs, cumulative, fields, device, extra=None):
     later simulation and exports cannot overwrite the snapshot."""
     batch = len(envs)
     columns = {key: np.empty((batch, width), dtype=_DTYPES[dtype]) for key, (width, dtype) in fields.items()}
+    model_fields = [(key, *MODEL_FIELDS[key]) for key in columns if key in MODEL_FIELDS]
     for i, env in enumerate(envs):
         physics, base = env.physics, env._env
         data = physics.data
@@ -29,17 +60,42 @@ def export_state(envs, cumulative, fields, device, extra=None):
         columns["rng", "position"][i] = position
         columns["rng", "has_gauss"][i] = has_gauss
         columns["rng", "cached_gaussian"][i] = cached
-        if ("task", "target_pos") in columns:
-            columns["task", "target_pos"][i] = physics.named.model.geom_pos["target"]
-        if ("model", "target_site_xz") in columns:
-            columns["model", "target_site_xz"][i] = physics.named.model.site_pos["target", ["x", "z"]]
-        if ("model", "target_body_xz") in columns:
-            columns["model", "target_body_xz"][i] = physics.named.model.body_pos["target_ball", ["x", "z"]]
-            columns["model", "target_body_qwqy"][i] = physics.named.model.body_quat["target_ball", ["qw", "qy"]]
+        for key, field, index in model_fields:
+            columns[key][i] = getattr(physics.named.model, field)[index]
         if "activation" in columns:
             columns["activation"][i] = data.act
     for key, value in (extra or {}).items():
         columns[key][:] = value
     # On CPU, from_numpy retains these fresh arrays. No owner/buffer is reused
     # by a later step, reset or export; CUDA conversion also owns its storage.
-    return TensorDict({key: torch.from_numpy(value).to(device) for key, value in columns.items()}, [batch], device=device)
+    return TensorDict(
+        {key: torch.from_numpy(value).to(device) for key, value in columns.items()}, [batch], device=device
+    )
+
+
+def restore_lane(env, row, fields, cumulative, lane):
+    """Write one exported State row back into a lane, model entries before forward kinematics."""
+    physics, base = env.physics, env._env
+    for key in fields:
+        if key in MODEL_FIELDS:
+            field, index = MODEL_FIELDS[key]
+            getattr(physics.named.model, field)[index] = row[key].numpy()
+    physics.data.qpos[:] = row["qpos"].numpy()
+    physics.data.qvel[:] = row["qvel"].numpy()
+    physics.data.time = row["time"].item()
+    if "activation" in fields:
+        physics.data.act[:] = row["activation"].numpy()
+    physics.forward()
+    physics.data.qacc_warmstart[:] = row["warmstart"].numpy()
+    base._step_count = row["lifecycle", "step_count"].item()
+    base._reset_next_step = row["lifecycle", "reset_next_step"].item()
+    env.task.random.set_state(
+        (
+            "MT19937",
+            row["rng", "keys"].numpy().astype(np.uint32),
+            row["rng", "position"].item(),
+            int(row["rng", "has_gauss"].item()),
+            row["rng", "cached_gaussian"].item(),
+        )
+    )
+    cumulative[lane] = row["task", "cumulative_reward"].item()

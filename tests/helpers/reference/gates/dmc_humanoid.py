@@ -37,9 +37,7 @@ def _max_error(actual, expected, *, exclude=()):
         if left.dtype == torch.bool:
             delta = float((left != right).any())
         else:
-            delta = float(
-                (left.to(torch.float64) - right.to(torch.float64)).abs().nan_to_num().max()
-            )
+            delta = float((left.to(torch.float64) - right.to(torch.float64)).abs().nan_to_num().max())
         error = max(error, delta)
     return error
 
@@ -90,7 +88,7 @@ def _assert_bad_actions_rejected(env):
         np.full((env.B, 21), np.inf),
     ):
         try:
-            env.step(action, frames=None)
+            env.step(action, states=None, frames=None).exclude("valid")
         except ValueError:
             pass
         else:
@@ -103,16 +101,12 @@ def _warmstart_experiment(env, reference):
     check_reset_matches_reference(env, reference, seed=0)
     check_step_matches_reference(env, reference, actions[:1])
     saved = env.get_state()
-    saved_control = np.stack(
-        [item.physics.data.ctrl.copy() for item in env._simulator.envs]
-    )
+    saved_control = np.stack([item.physics.data.ctrl.copy() for item in env._simulator.envs])
     for action in -actions[1:10]:
-        env.step(action, frames=None)
+        env.step(action, states=None, frames=None).exclude("valid")
     divergent_warmstart = env.get_state()["warmstart"].clone()
     assert not torch.equal(saved["warmstart"], divergent_warmstart)
-    divergent_control = np.stack(
-        [item.physics.data.ctrl.copy() for item in env._simulator.envs]
-    )
+    divergent_control = np.stack([item.physics.data.ctrl.copy() for item in env._simulator.envs])
     control_diverged = not np.array_equal(saved_control, divergent_control)
     assert control_diverged, {
         "seed": 0,
@@ -125,7 +119,7 @@ def _warmstart_experiment(env, reference):
     omitted["warmstart"] = divergent_warmstart
     env.set_state(omitted)
     continuation = actions[1:9]
-    bad_outputs = [env.step(action, frames=None) for action in continuation]
+    bad_outputs = [env.step(action, states=None, frames=None).exclude("valid") for action in continuation]
     expected_outputs = [reference.step(action) for action in continuation]
     error_without = max(
         _max_error(actual, expected, exclude=(("state", "warmstart"),))
@@ -133,10 +127,9 @@ def _warmstart_experiment(env, reference):
     )
 
     env.set_state(saved)
-    good_outputs = [env.step(action, frames=None) for action in continuation]
+    good_outputs = [env.step(action, states=None, frames=None).exclude("valid") for action in continuation]
     error_with = max(
-        _max_error(actual, expected)
-        for actual, expected in zip(good_outputs, expected_outputs, strict=True)
+        _max_error(actual, expected) for actual, expected in zip(good_outputs, expected_outputs, strict=True)
     )
     result = {
         "seed": 0,
@@ -150,14 +143,6 @@ def _warmstart_experiment(env, reference):
     assert error_without > 0, result
     assert error_with == 0, result
     return result
-
-
-def _physical_error(varied, nominal):
-    return max(
-        _max_error(varied, nominal),
-        float((varied["reward"].detach().cpu() - nominal["reward"].detach().cpu()).abs().max()),
-        float((varied["observation"].detach().cpu() - nominal["observation"].detach().cpu()).abs().max()),
-    )
 
 
 def run_gate(device="cpu"):
@@ -239,7 +224,7 @@ def run_gate(device="cpu"):
 
                     other.reset(seed=seed + 991)
                     for action in -actions[:9]:
-                        other.step(action, frames=None)
+                        other.step(action, states=None, frames=None).exclude("valid")
                     snapshot = env.get_state()
                     env.set_state(snapshot)
                     other.set_state(snapshot)
@@ -279,7 +264,7 @@ def run_gate(device="cpu"):
 
                 check_reset_matches_reference(env, reference, seed=18)
                 zeros = np.zeros((batch, 21))
-                got, expected = env.step(zeros, frames=None), reference.step(zeros)
+                got, expected = env.step(zeros, states=None, frames=None).exclude("valid"), reference.step(zeros)
                 compare_state(got, expected)
                 assert (got["reward"] > 0).all()
                 evidence["cases"].append(
@@ -296,7 +281,7 @@ def run_gate(device="cpu"):
                 rng_before = env.get_state().select("rng").clone()
                 boundary_state = None
                 for public_step in range(1, 503):
-                    got, expected = env.step(zeros, frames=None), reference.step(zeros)
+                    got, expected = env.step(zeros, states=None, frames=None).exclude("valid"), reference.step(zeros)
                     compare_state(got, expected)
                     if public_step in (499, 500, 501, 502):
                         state = got["state"]
@@ -304,27 +289,20 @@ def run_gate(device="cpu"):
                             boundary_state = state.clone()
                         checkpoints[str(public_step)] = {
                             "step_count": int(state["lifecycle", "step_count"][0].item()),
-                            "reset_next_step": bool(
-                                state["lifecycle", "reset_next_step"][0].item()
-                            ),
+                            "reset_next_step": bool(state["lifecycle", "reset_next_step"][0].item()),
                             "time": float(state["time"][0].item()),
                         }
                 after = env.get_state()
-                assert any(
-                    not torch.equal(rng_before[key], after[key]) for key in rng_before.keys(True, True)
-                )
+                assert any(not torch.equal(rng_before[key], after[key]) for key in rng_before.keys(True, True))
                 assert checkpoints["500"]["reset_next_step"]
                 assert checkpoints["501"]["step_count"] == 1
                 assert boundary_state is not None
                 other.reset(seed=77)
                 boundary_rng = boundary_state.select("rng").clone()
-                boundary_history = check_two_histories_same_state(
-                    env, other, boundary_state, np.zeros((4, batch, 21))
-                )
+                boundary_history = check_two_histories_same_state(env, other, boundary_state, np.zeros((4, batch, 21)))
                 replayed = env.get_state()
                 replay_rng_changed = any(
-                    not torch.equal(boundary_rng[key], replayed[key])
-                    for key in boundary_rng.keys(True, True)
+                    not torch.equal(boundary_rng[key], replayed[key]) for key in boundary_rng.keys(True, True)
                 )
                 assert replay_rng_changed
                 evidence["cases"].append(
@@ -344,7 +322,9 @@ def run_gate(device="cpu"):
                     _assert_bad_actions_rejected(env)
                     check_reset_matches_reference(env, reference, seed=31)
                     outside = np.full((1, 21), 1.1)
-                    compare_state(env.step(outside, frames=None), reference.step(outside))
+                    compare_state(
+                        env.step(outside, states=None, frames=None).exclude("valid"), reference.step(outside)
+                    )
                     evidence["action_validation"] = {
                         "shape_and_nonfinite_rejected": True,
                         "finite_out_of_bounds_matches_historical_passthrough": True,
@@ -371,36 +351,6 @@ def run_gate(device="cpu"):
         finally:
             nominal.close()
 
-    values = {"gravity.x": [1.25], "gravity.y": [-0.75], "gravity.z": [-7.5]}
-    options = {"variation_values": {key: np.asarray(value, np.float64) for key, value in values.items()}}
-    reference = DMCHumanoidReference(1, options=options)
-    nominal = DMCHumanoidReference(1)
-    with se.make(ENV_NAME, num_envs=1, device=device) as env:
-        try:
-            env.set_variation(values)
-            check_reset_matches_reference(env, reference, seed=11)
-            nominal.reset(seed=11)
-            actions = np.random.default_rng(11).uniform(-1, 1, (32, 1, 21))
-            varied_outputs, nominal_outputs = [], []
-            for action in actions:
-                got, expected = env.step(action, frames=None), reference.step(action)
-                compare_state(got, expected)
-                varied_outputs.append(got)
-                nominal_outputs.append(nominal.step(action, frames=None))
-            divergence = max(
-                _physical_error(varied, default)
-                for varied, default in zip(varied_outputs, nominal_outputs, strict=True)
-            )
-            assert divergence > 0
-            evidence["physical_variation"] = {
-                "gravity": [1.25, -0.75, -7.5],
-                "steps": 32,
-                "max_reference_error": 0.0,
-                "max_default_divergence": divergence,
-            }
-        finally:
-            reference.close()
-            nominal.close()
     return evidence
 
 

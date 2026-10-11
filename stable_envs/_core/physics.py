@@ -297,6 +297,15 @@ class PhysicsKnobs:
         self.dim = int(sum(self.widths))
         self._fields = [_ResolvedField(model, k) for k in self.knobs if isinstance(k, ModelField)]
         self._masses = [_ResolvedMass(model, k, self._compile_scale) for k in self.knobs if isinstance(k, GeomMass)]
+        # Bodies whose whole mass comes from declared geoms; one shared factor then scales them exactly.
+        declared: dict[int, list] = {}
+        for mass in self._masses:
+            declared.setdefault(mass.body, []).append(float(mass.part[0]))
+        self._whole = {
+            body: len(parts)
+            for body, parts in declared.items()
+            if abs(sum(parts) - float(model.body_mass[body])) <= 1e-9 * float(model.body_mass[body])
+        }
         self._derived = bool(self._masses) or any(f.knob.field in _SETCONST_INPUTS for f in self._fields)
         self._nominal_model = copy.copy(model)
         self.nominal = self._read_nominal(model)
@@ -372,6 +381,13 @@ class PhysicsKnobs:
                 changed.setdefault(mass.body, []).append((mass, s))
                 extra += (s - 1.0) * mass.unscaled_mass
         for body, entries in changed.items():
+            factors = {s for _, s in entries}
+            if len(entries) == self._whole.get(body) and len(factors) == 1:
+                # Scaling every contribution keeps the inertial frame; re-diagonalizing could rotate it.
+                factor = factors.pop()
+                model.body_mass[body] = n.body_mass[body] * factor
+                model.body_inertia[body] = n.body_inertia[body] * factor
+                continue
             total = list(_body_moments(n.body_mass[body], n.body_ipos[body], n.body_iquat[body], n.body_inertia[body]))
             for mass, s in entries:
                 total = [t + (s - 1.0) * p for t, p in zip(total, mass.part, strict=True)]

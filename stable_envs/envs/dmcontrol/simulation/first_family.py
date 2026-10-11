@@ -5,59 +5,38 @@ import tempfile
 
 import numpy as np
 import torch
-from tensordict import TensorDict
 
-from ...._core import physics as _physics
-from ...._execution.protocol import SimulatorAdapter
-from .state import export_state
+from . import physics as _physics
+from .lanes import DMCLanes
+from .state import core_fields
 
-GRAVITY = tuple(_physics.ModelField(f"gravity.{axis}", "opt.gravity", index=i) for i, axis in enumerate("xyz"))
+
+def suite_env(domain, task, seed):
+    """dm_control's own registered task, with actions normalized to [-1, 1]."""
+    from dm_control import suite
+    from dm_control.suite.wrappers import action_scale
+
+    env = suite.load(domain, task, task_kwargs={"random": seed})
+    return action_scale.Wrapper(env, minimum=-1.0, maximum=1.0)
+
+
+def _with_physics(key, fields):
+    return {**fields, **_physics.state_fields(key)}
+
+
+_FIRST_CORE = {
+    "acrobot": core_fields(2, 2),
+    "pendulum": core_fields(1, 1),
+    "cartpole": core_fields(2, 2),
+    "cartpole-balance": core_fields(2, 2),
+}
+FIRST_FAMILY_FIELDS = {key: _with_physics(key, fields) for key, fields in _FIRST_CORE.items()}
 
 # These fields restore simulation; compact renderer columns cannot.
+_REACHER_CORE = {**core_fields(2, 2), ("task", "target_pos"): (3, torch.float64)}
 REACHER_FIELDS = {
-    "qpos": (2, torch.float64),
-    "qvel": (2, torch.float64),
-    "time": (1, torch.float64),
-    "warmstart": (2, torch.float64),
-    ("task", "target_pos"): (3, torch.float64),
-    ("lifecycle", "step_count"): (1, torch.int64),
-    ("lifecycle", "reset_next_step"): (1, torch.bool),
-    ("task", "cumulative_reward"): (1, torch.float64),
-    ("rng", "keys"): (624, torch.int64),
-    ("rng", "position"): (1, torch.int64),
-    ("rng", "has_gauss"): (1, torch.bool),
-    ("rng", "cached_gaussian"): (1, torch.float64),
-}
-
-
-def _resume_fields(nq, nv):
-    """Continuation fields shared by Acrobot, Pendulum and Cartpole."""
-    return {
-        "qpos": (nq, torch.float64),
-        "qvel": (nv, torch.float64),
-        "time": (1, torch.float64),
-        "warmstart": (nv, torch.float64),
-        ("lifecycle", "step_count"): (1, torch.int64),
-        ("lifecycle", "reset_next_step"): (1, torch.bool),
-        ("task", "cumulative_reward"): (1, torch.float64),
-        ("rng", "keys"): (624, torch.int64),
-        ("rng", "position"): (1, torch.int64),
-        ("rng", "has_gauss"): (1, torch.bool),
-        ("rng", "cached_gaussian"): (1, torch.float64),
-    }
-
-
-PHYSICS_KNOBS = {"acrobot": GRAVITY, "pendulum": GRAVITY, "cartpole": GRAVITY}
-
-
-def _with_physics(fields, knobs):
-    return {**fields, **{key: (width, torch.float64) for key, width in _physics.state_fields(knobs).items()}}
-
-
-FIRST_FAMILY_FIELDS = {
-    "acrobot": _with_physics(_resume_fields(2, 2), PHYSICS_KNOBS["acrobot"]),
-    "pendulum": _with_physics(_resume_fields(1, 1), PHYSICS_KNOBS["pendulum"]),
-    "cartpole": _with_physics(_resume_fields(2, 2), PHYSICS_KNOBS["cartpole"]),
+    "reacher": _with_physics("reacher", _REACHER_CORE),
+    "reacher-easy": _with_physics("reacher-easy", _REACHER_CORE),
 }
 
 
@@ -67,6 +46,8 @@ def _make_first_family(domain, seed):
     from dm_control.rl import control
     from dm_control.suite.wrappers import action_scale
 
+    if domain == "cartpole-balance":
+        return suite_env("cartpole", "balance", seed)
     if domain == "acrobot":
         from dm_control.suite import acrobot as module
 
@@ -104,126 +85,17 @@ def _make_first_family(domain, seed):
     return action_scale.Wrapper(env, minimum=-1.0, maximum=1.0)
 
 
-class FirstFamilyAdapter(SimulatorAdapter):
-    """Independent CPU simulators with two source steps per action.
-
-    ``device`` controls returned tensor placement. State includes lifecycle and
-    task RNG fields; it is separate from the renderer’s compact pose columns."""
+class FirstFamilyAdapter(DMCLanes):
+    """Acrobot, Pendulum and Cartpole lanes."""
 
     def __init__(self, domain, num_envs, device="cpu", seed=0):
         if domain not in FIRST_FAMILY_FIELDS:
             raise ValueError(f"Unsupported recovered DMC domain {domain!r}")
         self.domain = domain
-        self.fields = FIRST_FAMILY_FIELDS[domain]
-        self.num_envs = int(num_envs)
-        self.device = torch.device(device)
-        self.envs = [_make_first_family(domain, int(seed) + i) for i in range(self.num_envs)]
-        self.physics = _physics.PhysicsLanes(PHYSICS_KNOBS[domain], [env.physics.model.ptr for env in self.envs])
-        self._cumulative = np.zeros(self.num_envs, np.float64)
-        self._closed = False
-        self.reset(seed=seed)
-
-    def _check_open(self):
-        if self._closed:
-            raise RuntimeError("FirstFamilyAdapter is closed")
-
-    @property
-    def physics_layout(self):
-        return self.physics.layout
-
-    def configure_physics(self, values):
-        self._check_open()
-        self.physics.configure(values)
-
-    def configure_gravity(self, values):
-        values = np.asarray(values, np.float64).reshape(self.num_envs, 3)
-        if not np.isfinite(values).all():
-            raise ValueError("Gravity must be finite")
-        self.physics.configure({f"gravity.{axis}": values[:, i : i + 1] for i, axis in enumerate("xyz")})
-
-    def reset(self, seed=None):
-        self._check_open()
-        for i, env in enumerate(self.envs):
-            if seed is not None:
-                env.task._random = np.random.RandomState(int(seed) + i)
-            env.reset()
-        self._cumulative.fill(0)
-        return self.get_state()
-
-    def get_state(self):
-        self._check_open()
-        return export_state(self.envs, self._cumulative, self.fields, self.device, self.physics.export())
-
-    def set_state(self, state):
-        self._check_open()
-        if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):
-            raise TypeError("Recovered DMC tasks require full TensorDict State with batch [num_envs]")
-        rows = self.physics.rows_from_state(state)
-        for key, (width, dtype) in self.fields.items():
-            if key not in state.keys(True, True):
-                raise ValueError(f"Full State missing {key}")
-            value = state[key]
-            if value.shape != (self.num_envs, width) or value.dtype != dtype or not torch.isfinite(value).all():
-                raise ValueError(f"Invalid State field {key}")
-        host = state.cpu()
-        self.physics.configure(rows)
-        for i, env in enumerate(self.envs):
-            row, physics, base = host[i], env.physics, env._env
-            physics.data.qpos[:] = row["qpos"].numpy()
-            physics.data.qvel[:] = row["qvel"].numpy()
-            physics.data.time = row["time"].item()
-            physics.forward()
-            physics.data.qacc_warmstart[:] = row["warmstart"].numpy()
-            base._step_count = row["lifecycle", "step_count"].item()
-            base._reset_next_step = row["lifecycle", "reset_next_step"].item()
-            env.task.random.set_state(
-                (
-                    "MT19937",
-                    row["rng", "keys"].numpy().astype(np.uint32),
-                    row["rng", "position"].item(),
-                    int(row["rng", "has_gauss"].item()),
-                    row["rng", "cached_gaussian"].item(),
-                )
-            )
-            self._cumulative[i] = row["task", "cumulative_reward"].item()
-
-    def step(self, actions, *, capture_state=True):
-        self._check_open()
-        if torch.is_tensor(actions):
-            actions = actions.detach().cpu().numpy()
-        actions = np.asarray(actions, np.float64)
-        if actions.shape != (self.num_envs, 1) or not np.isfinite(actions).all():
-            raise ValueError("Recovered DMC action must have finite shape (num_envs, 1)")
-        rewards, observations = [], []
-        for i, env in enumerate(self.envs):
-            reward = 0.0
-            for _ in range(2):
-                result = env.step(actions[i].astype(env.action_spec().dtype))
-                reward += result.reward or 0.0
-            self._cumulative[i] += reward
-            rewards.append(reward)
-            observations.append(np.concatenate([v.flatten() for v in result.observation.values()], dtype=np.float32))
-        return TensorDict(
-            {
-                **({"state": self.get_state()} if capture_state else {}),
-                "reward": torch.tensor(rewards, dtype=torch.float64, device=self.device),
-                "terminated": torch.zeros(self.num_envs, dtype=torch.bool, device=self.device),
-                "truncated": torch.zeros(self.num_envs, dtype=torch.bool, device=self.device),
-                "observation": torch.as_tensor(np.stack(observations), device=self.device),
-                "score": torch.tensor(self._cumulative / 1000.0, device=self.device),
-            },
-            [self.num_envs],
-            device=self.device,
-        )
-
-    def close(self):
-        if not self._closed:
-            for env in self.envs:
-                env.close()
-            self._closed = True
+        super().__init__(domain, num_envs, device, seed, lambda s: _make_first_family(domain, s), _FIRST_CORE[domain])
 
 
-def _make_reacher(seed, arm_density=1000.0, finger_density=1000.0):
+def _make_reacher(seed):
     """Construct Reacher’s hard task with the registered model and action scaling."""
     from dm_control import mjcf
     from dm_control.rl import control
@@ -236,8 +108,8 @@ def _make_reacher(seed, arm_density=1000.0, finger_density=1000.0):
         model_dir=os.path.dirname(reacher.__file__),
         assets=assets or {},
     )
-    model.find("geom", "arm").density = arm_density
-    model.find("geom", "finger").density = finger_density
+    model.find("geom", "arm").density = 1000.0
+    model.find("geom", "finger").density = 1000.0
     model.find("geom", "target").type = "sphere"
     model.find("geom", "target").size = np.array([0.015], np.float32)
     # Apply registered appearance defaults before compiling the model.
@@ -253,116 +125,10 @@ def _make_reacher(seed, arm_density=1000.0, finger_density=1000.0):
     return action_scale.Wrapper(control.Environment(physics, task, time_limit=20), minimum=-1.0, maximum=1.0)
 
 
-class ReacherAdapter(SimulatorAdapter):
-    """Independent CPU Reacher simulators; ``device`` selects output placement.
+class ReacherAdapter(DMCLanes):
+    """Reacher lanes; State includes the target, which an implicit reset redraws."""
 
-    Each action advances the source twice. State includes target, lifecycle and RNG."""
-
-    def __init__(self, num_envs, device="cpu", seed=0):
-        self.num_envs = int(num_envs)
-        self.device = torch.device(device)
-        self.envs = [_make_reacher(int(seed) + i) for i in range(self.num_envs)]
-        self._cumulative = np.zeros(self.num_envs, np.float64)
-        self._density = np.full((self.num_envs, 2), 1000.0)
-        self._closed = False
-        self.reset(seed=seed)
-
-    def _check_open(self):
-        if self._closed:
-            raise RuntimeError("ReacherAdapter is closed")
-
-    def configure_density(self, values):
-        """Recompile changed arm/finger densities and restore the current State."""
-        values = np.asarray(values, np.float64).reshape(self.num_envs, 2)
-        if np.array_equal(values, self._density):
-            return
-        saved = self.get_state()
-        for i, (new, old) in enumerate(zip(values, self._density, strict=True)):
-            if not np.array_equal(new, old):
-                replacement = _make_reacher(0, *new)
-                replacement.reset()
-                self.envs[i].close()
-                self.envs[i] = replacement
-        self._density = values.copy()
-        self.set_state(saved)
-
-    def reset(self, seed=None):
-        self._check_open()
-        for i, env in enumerate(self.envs):
-            if seed is not None:
-                env.task._random = np.random.RandomState(int(seed) + i)
-            env.reset()
-        self._cumulative.fill(0)
-        return self.get_state()
-
-    def get_state(self):
-        self._check_open()
-        return export_state(self.envs, self._cumulative, REACHER_FIELDS, self.device)
-
-    def set_state(self, state):
-        self._check_open()
-        if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):
-            raise TypeError("Reacher requires full TensorDict State with batch [num_envs]")
-        # Validate the entire batch before mutating any authoritative simulator.
-        for key, (width, dtype) in REACHER_FIELDS.items():
-            if key not in state.keys(True, True):
-                raise ValueError(f"Full State missing {key}")
-            value = state[key]
-            if value.shape != (self.num_envs, width) or value.dtype != dtype or not torch.isfinite(value).all():
-                raise ValueError(f"Invalid State field {key}")
-        host = state.cpu()
-        for i, env in enumerate(self.envs):
-            s, physics, base = host[i], env.physics, env._env
-            physics.named.model.geom_pos["target"] = s["task", "target_pos"].numpy()
-            physics.data.qpos[:] = s["qpos"].numpy()
-            physics.data.qvel[:] = s["qvel"].numpy()
-            physics.data.time = s["time"].item()
-            physics.forward()
-            physics.data.qacc_warmstart[:] = s["warmstart"].numpy()
-            base._step_count = s["lifecycle", "step_count"].item()
-            base._reset_next_step = s["lifecycle", "reset_next_step"].item()
-            env.task.random.set_state(
-                (
-                    "MT19937",
-                    s["rng", "keys"].numpy().astype(np.uint32),
-                    s["rng", "position"].item(),
-                    int(s["rng", "has_gauss"].item()),
-                    s["rng", "cached_gaussian"].item(),
-                )
-            )
-            self._cumulative[i] = s["task", "cumulative_reward"].item()
-
-    def step(self, actions, *, capture_state=True):
-        self._check_open()
-        if torch.is_tensor(actions):
-            actions = actions.detach().cpu().numpy()
-        actions = np.asarray(actions, np.float64)
-        if actions.shape != (self.num_envs, 2) or not np.isfinite(actions).all():
-            raise ValueError("Reacher action must have finite shape (num_envs, 2)")
-        rewards, observations = [], []
-        for i, env in enumerate(self.envs):
-            reward = 0.0
-            for _ in range(2):
-                result = env.step(actions[i].astype(env.action_spec().dtype))
-                reward += result.reward or 0.0
-            self._cumulative[i] += reward
-            rewards.append(reward)
-            observations.append(np.concatenate([v.flatten() for v in result.observation.values()], dtype=np.float32))
-        return TensorDict(
-            {
-                **({"state": self.get_state()} if capture_state else {}),
-                "reward": torch.tensor(rewards, dtype=torch.float64, device=self.device),
-                "terminated": torch.zeros(self.num_envs, dtype=torch.bool, device=self.device),
-                "truncated": torch.zeros(self.num_envs, dtype=torch.bool, device=self.device),
-                "observation": torch.as_tensor(np.stack(observations), device=self.device),
-                "score": torch.tensor(self._cumulative / 1000.0, device=self.device),
-            },
-            [self.num_envs],
-            device=self.device,
-        )
-
-    def close(self):
-        if not self._closed:
-            for env in self.envs:
-                env.close()
-            self._closed = True
+    def __init__(self, num_envs, device="cpu", seed=0, task="hard"):
+        key = "reacher" if task == "hard" else f"reacher-{task}"
+        make = _make_reacher if task == "hard" else (lambda s: suite_env("reacher", task, s))
+        super().__init__(key, num_envs, device, seed, make, _REACHER_CORE)

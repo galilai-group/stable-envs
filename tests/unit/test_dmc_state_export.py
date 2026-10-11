@@ -1,5 +1,7 @@
 """Column export retains owned snapshots, typed fields and lane RNG replay."""
 
+from functools import partial
+
 import numpy as np
 import pytest
 import torch
@@ -11,10 +13,9 @@ from stable_envs.envs.dmcontrol.simulation.continuation import DMCContinuationAd
 from stable_envs.envs.dmcontrol.simulation.first_family import FirstFamilyAdapter, ReacherAdapter
 from stable_envs.envs.dmcontrol.simulation.humanoid import DMCHumanoidAdapter
 
-CASES = [
-    (FirstFamilyAdapter, (domain,)) for domain in ("acrobot", "pendulum", "cartpole")
-] + [
+CASES = [(FirstFamilyAdapter, (domain,)) for domain in ("acrobot", "pendulum", "cartpole", "cartpole-balance")] + [
     (ReacherAdapter, ()),
+    (partial(ReacherAdapter, task="easy"), ()),
     *[(DMCAlignedAdapter, (domain,)) for domain in ALIGNED],
     *[(DMCContinuationAdapter, (domain,)) for domain in CONTINUATION],
     (DMCHumanoidAdapter, ()),

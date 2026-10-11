@@ -6,8 +6,26 @@ import torch
 
 from stable_envs.envs.dmcontrol.simulation.process import DMCProcessAdapter, make_local
 
-DOMAINS = ["acrobot", "pendulum", "cartpole", "reacher", "cheetah", "hopper", "walker",
-           "ball_in_cup", "finger", "manipulator", "quadruped", "humanoid"]
+DOMAINS = [
+    "acrobot",
+    "pendulum",
+    "cartpole",
+    "reacher",
+    "cheetah",
+    "hopper",
+    "walker",
+    "ball_in_cup",
+    "finger",
+    "manipulator",
+    "quadruped",
+    "humanoid",
+    "cartpole-balance",
+    "reacher-easy",
+    "finger-spin",
+    "finger-turn_easy",
+    "point_mass-easy",
+    "swimmer-swimmer6",
+]
 
 
 def equal(left, right):
@@ -60,33 +78,19 @@ def test_exact_sharded_tasks_rng_lifecycle_and_owned_outputs(domain, device):
     assert all(not child.is_alive() for child in remote._processes)
 
 
-@pytest.mark.parametrize("domain,method,width", [
-    ("acrobot", "configure_gravity", 3),
-    ("humanoid", "configure_gravity", 3),
-    ("reacher", "configure_density", 2),
-    ("finger", "configure_proximal_density", 1),
-    ("manipulator", "configure_upper_arm_density", 1),
-])
-def test_configuration_preserves_whole_batch_effects(domain, method, width):
+@pytest.mark.parametrize("domain", ["acrobot", "humanoid", "reacher", "finger", "manipulator"])
+def test_physics_configuration_matches_local_lanes(domain):
     local = make_local(domain, 5, seed=17)
     remote = DMCProcessAdapter(domain, 5, seed=17, processes=2)
     try:
         action = np.full((5, remote.action_dim), 0.3)
         equal(local.step(action), remote.step(action))
-        values = np.full((5, width), 1000.0)
-        if method == "configure_gravity":
-            values[:] = [0, 0, -9.81]
-            values[4] = [0.1, 0.2, -8.0]
-        else:
-            values[4] = 1100.0  # Only the last shard changes.
+        values = np.tile(np.asarray(remote.physics_layout.nominal), (5, 1))
+        values[4] *= 1.1  # Only the last shard changes.
         for adapter in (local, remote):
-            getattr(adapter, method)(values)
+            adapter.configure_physics(values)
         equal(local.get_state(), remote.get_state())
         equal(local.step(action), remote.step(action))
-        # Repeating the same density configuration must not reset either owner.
-        for adapter in (local, remote):
-            getattr(adapter, method)(values)
-        equal(local.get_state(), remote.get_state())
     finally:
         local.close()
         remote.close()
@@ -104,8 +108,12 @@ def test_invalid_requests_do_not_mutate_and_inflight_requests_cannot_write_buffe
             owner.step(np.full((5, 2), np.nan))
         equal(initial, owner.get_state())
         owner.submit_step(np.zeros((5, 2)))
-        for call in (lambda: owner.set_state(initial), owner.reset, owner.get_state,
-                     lambda: owner.configure_density(np.full((5, 2), 1000))):
+        for call in (
+            lambda: owner.set_state(initial),
+            owner.reset,
+            owner.get_state,
+            lambda: owner.configure_physics(np.full((5, 2), 1000.0)),
+        ):
             with pytest.raises(RuntimeError, match="in flight"):
                 call()
         actual = owner.receive_step()

@@ -110,6 +110,41 @@ def test_geom_mass_matches_a_recompile(domain):
     assert all(np.array_equal(before[k], after[k]) for k in before), "the registered row must restore every array"
 
 
+def test_geom_mass_scales_a_body_it_covers_without_rotating_its_frame():
+    """Every ball-in-cup cup part shares one leaf, so the cup's inertial frame (and simple flag) survive."""
+    from stable_envs.envs.dmcontrol.simulation.physics import knobs
+
+    nominal = _compile("ball_in_cup")
+    spec = PhysicsKnobs([k for k in knobs("ball_in_cup") if isinstance(k, GeomMass)], nominal)
+    mine = copy.copy(nominal)
+    spec.apply(mine, spec.as_row({"agent.density": 700.0, "ball.density": 1300.0}))
+    for geoms, density in ((("cup_part_0",), 700.0), (("ball",), 1300.0)):
+        body = int(nominal.geom_bodyid[mujoco.mj_name2id(nominal, mujoco.mjtObj.mjOBJ_GEOM, geoms[0])])
+        np.testing.assert_allclose(mine.body_mass[body], nominal.body_mass[body] * density / 1000.0, rtol=1e-14)
+        np.testing.assert_array_equal(mine.body_iquat[body], nominal.body_iquat[body])
+        np.testing.assert_array_equal(mine.body_ipos[body], nominal.body_ipos[body])
+
+
+@pytest.mark.parametrize("cell", ["DMCCheetahRun", "DMCQuadrupedWalk"])
+def test_render_masses_match_the_simulated_model(cell):
+    """The tracking camera's per-row masses are the ones PhysicsKnobs writes into the simulator."""
+    pytest.importorskip("dm_control")
+    from stable_envs.envs.dmcontrol import _mass_rows
+    from stable_envs.envs.dmcontrol.simulation.physics import compile_options, knobs
+
+    cls = se.registry.REGISTRY[cell]
+    key, model = cls._simulator_key(), cls._model()
+    rows = _mass_rows.MassRows(key, model)
+    spec = PhysicsKnobs(knobs(key), model, **compile_options(key))
+    values = {rows.paths[0]: 650.0, rows.paths[1]: 1400.0}
+    mine = copy.copy(model)
+    spec.apply(mine, spec.as_row(values))
+    mass, ipos, subtree = rows(torch.tensor([[values[p] for p in rows.paths]]))
+    np.testing.assert_allclose(mass[0].numpy(), mine.body_mass, rtol=1e-12)
+    np.testing.assert_allclose(ipos[0].numpy(), mine.body_ipos, atol=1e-12)
+    np.testing.assert_allclose(subtree[0].numpy(), mine.body_subtreemass, rtol=1e-12)
+
+
 def test_model_fields_write_through_a_transform():
     spec = mujoco.MjSpec()
     body = spec.worldbody.add_body(name="b")
@@ -140,7 +175,9 @@ def test_process_shards_carry_and_restore_per_lane_physics():
     remote = DMCProcessAdapter("cartpole", 4, seed=5, processes=2)
     try:
         assert remote.physics_layout == local.physics_layout
-        rows = np.asarray([[0.0, 0.0, -9.81], [0.0, 0.0, -2.0], [1.0, 0.0, -9.81], [0.0, 0.0, -15.0]])
+        rows = np.asarray(
+            [[0.0, 0.0, -9.81, 1.0], [0.0, 0.0, -2.0, 1.0], [1.0, 0.0, -9.81, 0.7], [0.0, 0.0, -15.0, 1.4]]
+        )
         for owner in (local, remote):
             owner.configure_physics(rows)
         action = np.full((4, 1), 0.4)
@@ -149,7 +186,7 @@ def test_process_shards_carry_and_restore_per_lane_physics():
             torch.testing.assert_close(expected[key], actual[key], rtol=0, atol=0, msg=str(key))
         saved = remote.get_state()
         for owner in (local, remote):
-            owner.configure_physics(np.tile([0.0, 0.0, -9.81], (4, 1)))
+            owner.configure_physics(np.tile([0.0, 0.0, -9.81, 1.0], (4, 1)))
             owner.set_state(saved)
         torch.testing.assert_close(remote.get_state()[state_key("gravity.z")], saved[state_key("gravity.z")])
         with pytest.raises(ValueError, match="does not record the physics"):
@@ -180,7 +217,7 @@ def cartpole():
 
 
 def test_reset_sets_or_samples_named_physics_and_restores_the_rest(cartpole):
-    assert cartpole.physics_variation_leaves == ("gravity.x", "gravity.y", "gravity.z")
+    assert cartpole.physics_variation_leaves == ("gravity.x", "gravity.y", "gravity.z", "agent.cart_mass")
     registered = np.tile([0.0, 0.0, -9.81], (3, 1))
     gz = np.asarray([[-1.1], [-2.2], [-19.99]])
     cartpole.reset(seed=1, options={"variation_values": {"gravity.z": gz}})

@@ -34,9 +34,11 @@ class _DMCModel(Env):
     CAMERA_KNOB = True
     # Renderer capability: cached MJWarp contexts fix visibility at construction.
     VISIBILITY_KNOB = True
-    # Per-geom alternatives: ((mjtGeom, (sx, sy, sz)), ...). Exactly one must
+    # Per-geom or per-site alternatives: ((mjtGeom, (sx, sy, sz)), ...). Exactly one must
     # match the compiled model; shape changes are shared within an appearance group.
     SHAPE_KNOBS: dict[str, tuple[tuple[int, tuple[float, float, float]], ...]] = {}
+    # ``group -> geom names`` whose explicit rgba a ``<group>.color`` leaf writes, overriding their material.
+    GEOM_COLORS: dict[str, tuple[str, ...]] = {}
 
     # Empty when CPU rendering is supported; otherwise names the certification gap.
     CPU_UNCERTIFIED_REASON: str = ""
@@ -68,11 +70,9 @@ class _DMCModel(Env):
         )
         assert len(self.state_names) == self.state_dim
 
-
     def _close(self) -> None:
         """Drop instance CPU scenes; shared GL and MJWarp contexts remain cached."""
         self.__dict__.pop("_cpu_scenes", None)
-
 
     @classmethod
     def _load_env(cls, seed: int):
@@ -113,6 +113,8 @@ class _DMCModel(Env):
             # Restore shape arrays for every appearance, including domains without shape knobs.
             geom_type=np.array(m.geom_type, copy=True),
             geom_size=np.array(m.geom_size, copy=True),
+            site_type=np.array(m.site_type, copy=True),
+            site_size=np.array(m.site_size, copy=True),
         )
         for arr in {a for a, _ in slots}:
             pristine[arr] = np.array(getattr(m, arr), copy=True)
@@ -165,7 +167,6 @@ class _DMCModel(Env):
                         f"name both kinds"
                     )
                 if not ids:
-
                     continue
                 kind, name = "geom", (mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_BODY, eid) or f"body{eid}")
             elif kind in ("geom", "site"):
@@ -185,6 +186,20 @@ class _DMCModel(Env):
             seen[name] = (kind, ids)
             out.append((kind, name, ids))
         return tuple(out)
+
+    @classmethod
+    def _shape_element(cls, name: str) -> tuple[str, int]:
+        """Resolve a SHAPE_KNOBS name to a geom, or to a site when no geom has it."""
+        import mujoco
+
+        m = cls._model()
+        for kind, obj in (("geom", mujoco.mjtObj.mjOBJ_GEOM), ("site", mujoco.mjtObj.mjOBJ_SITE)):
+            ident = mujoco.mj_name2id(m, obj, name)
+            if ident >= 0:
+                return kind, ident
+        raise RuntimeError(
+            f"{cls.__name__}: SHAPE_KNOBS names {name!r}, which this model has as neither geom nor site"
+        )
 
     @classmethod
     def _model(cls):
@@ -217,7 +232,6 @@ class _DMCModel(Env):
                 out.append(nm)
         return tuple(out)
 
-
     @classmethod
     def _used_materials(cls) -> list[str]:
         """List materials on visible geoms/sites using pristine groups and resolved alpha."""
@@ -239,12 +253,14 @@ class _DMCModel(Env):
                     used.append(mid)
         return [mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_MATERIAL, i) or f"mat{i}" for i in used]
 
+    #: Physics Variation leaves of the simulator; the renderer keys appearance on the others.
+    _physics_paths: frozenset[str] = frozenset()
+    #: Physics leaves that also move pixels at a fixed state.
+    FRAME_PHYSICS: frozenset[str] = frozenset()
+
     @property
     def dynamics_variation_leaves(self):
-        """Gravity and body densities change the physics, never a single rendered frame."""
-        return frozenset(
-            n for n in self.variation_names if n.startswith(("gravity.", "agent_physics.")) or n.endswith("_density")
-        )
+        return frozenset(self._physics_paths) - self.FRAME_PHYSICS
 
     def make_variation_space(self) -> Dict:
         """Derive supported appearance leaves and defaults from the pristine model.
@@ -274,22 +290,24 @@ class _DMCModel(Env):
                 vis[name] = Discrete(2, init_value=int(any(float(a[i]) > 0 for i in eids)))
         if vis:
             space["visibility"] = Dict(vis)
+        for group, geoms in self.GEOM_COLORS.items():
+            gid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, geoms[0])
+            mid, rgba = int(m.geom_matid[gid]), pr["geom_rgba"][gid]
+            rgb = pr["mat_rgba"][mid][:3] if mid >= 0 and np.allclose(rgba, [0.5, 0.5, 0.5, 1.0]) else rgba[:3]
+            space[group] = Dict({"color": Box(low=0.0, high=1.0, shape=(3,), init_value=[float(x) for x in rgb])})
         for gname, alts in self.SHAPE_KNOBS.items():
-            gid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, gname)
-            if gid < 0:
-                raise RuntimeError(
-                    f"{type(self).__name__}: SHAPE_KNOBS names geom {gname!r}, which this model does not have"
-                )
+            kind, gid = self._shape_element(gname)
+            ptype, psize = pr[f"{kind}_type"][gid], pr[f"{kind}_size"][gid]
             cur = [
                 k
                 for k, (t, s) in enumerate(alts)
-                if int(t) == int(pr["geom_type"][gid]) and np.allclose(np.asarray(s, np.float64), pr["geom_size"][gid])
+                if int(t) == int(ptype) and np.allclose(np.asarray(s, np.float64), psize)
             ]
             if len(cur) != 1:
                 raise RuntimeError(
                     f"{type(self).__name__}: {len(cur)} of the {len(alts)} declared shapes for "
-                    f"{gname!r} match the compiled model (type {int(pr['geom_type'][gid])}, size "
-                    f"{list(pr['geom_size'][gid])}); exactly one must, or this env's DEFAULT STYLE "
+                    f"{gname!r} match the compiled model (type {int(ptype)}, size "
+                    f"{list(psize)}); exactly one must, or this env's DEFAULT STYLE "
                     f"stops being a render of the compiled model — which is the appearance every "
                     f"parity number here is measured under, and which "
                     f"check_default_style_is_official cannot see (it compares the default style "
@@ -313,7 +331,6 @@ class _DMCModel(Env):
             node = node[part]
         return np.asarray(node.value, np.float64).reshape(-1)
 
-
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """Sample compact render rows from source resets followed by random actions.
 
@@ -335,7 +352,6 @@ class _DMCModel(Env):
             for j, (arr, k) in enumerate(slots):
                 out[i, self.nq + j] = np.asarray(getattr(m, arr)).reshape(-1)[k]
         return out.astype(np.float32)
-
 
     @classmethod
     def reference_env(cls, size: int | None = None):

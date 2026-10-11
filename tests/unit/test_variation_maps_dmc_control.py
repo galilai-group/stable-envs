@@ -6,11 +6,11 @@ What each test is FOR, because a variation map fails in ways a smoke test cannot
     the completeness claim. Read against the LIVE swm variation space, not against a transcribed
     list, so a leaf swm adds tomorrow fails here instead of being silently unmapped.
 ``test_registered_default_*``
-    Certification asks that "the registered default is reproducible through the mapping". For ten of
-    the eighteen cells the mapped default IS the cell's default style and the render is byte-identical;
-    for the other five the swm default is a DIFFERENT appearance from the compiled model's and is
-    reached through named leaves. Both are asserted, and the second names the leaves, so a cell that
-    quietly starts needing a sixth leaf fails.
+    Certification asks that "the registered default is reproducible through the mapping". For most
+    cells the mapped default IS the cell's default style and the render is byte-identical; for the
+    cells in ``DEFAULT_REACHED_THROUGH`` the swm default is a DIFFERENT appearance from the compiled
+    model's and is reached through named leaves. Both are asserted, and the second names the leaves,
+    so a cell that quietly starts needing another leaf fails.
 ``test_*_isolation``
     a mapped leaf must move its own style slots and nothing else.
 ``test_round_trip``
@@ -67,14 +67,13 @@ needs_dmc = pytest.mark.skipif(
 )
 
 CELLS = sorted(MAPS)
-#: The five cells whose swm REGISTERED default is a different appearance from the compiled model's,
+#: The cells whose swm REGISTERED default is a different appearance from the compiled model's,
 #: and the exact style leaves the mapping moves to reach it. Measured; see the research doc.
 DEFAULT_REACHED_THROUGH = {
     "DMCBallInCupCatch": {"light.diffuse_scale"},
     "DMCCheetahRun": {"material.self"},
-    "DMCFingerTurnHard": {"light.diffuse_scale", "visibility.target"},
+    "DMCFingerTurnHard": {"light.diffuse_scale"},
     "DMCManipulatorBringBall": {"light.diffuse_scale", "target_ball.shape", "visibility.target_ball"},
-    "DMCReacherHard": {"visibility.target"},
 }
 
 
@@ -129,9 +128,7 @@ def test_the_seventeen_ids_total_161_leaves():
         for k in totals:
             totals[k] += EXPECTED_COUNTS[m.swm_id][k]
     assert len(seen) == 17
-    # mapped 46 -> 53 and unsupported 94 -> 87 in the capability patch: ``floor.color`` moved
-    # on the seven DM Control ids whose cells bake a plate. The total cannot move.
-    assert totals == {"mapped": 77, "unsupported": 63, "dead_upstream": 21, "not_applicable": 0}
+    assert totals == {"mapped": 133, "unsupported": 7, "dead_upstream": 21, "not_applicable": 0}
     assert sum(totals.values()) == 161
 
 

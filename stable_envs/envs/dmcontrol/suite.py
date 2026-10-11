@@ -80,8 +80,7 @@ class DMControlSuite(_DMCModel):
     @property
     def PLATE_PATHS(self) -> tuple[str, ...]:  # noqa: N802
         """Return every appearance leaf; any may affect static surfaces through shared materials."""
-        return tuple(p for p, _, _ in self.variation_space.flat_layout())
-
+        return tuple(p for p, _, _ in self.variation_space.flat_layout() if p not in self._physics_paths)
 
     def _plate_key(self, size, variation):
         """Key texture colours by their stored uint8 bytes and other leaves to six decimals."""
@@ -115,6 +114,8 @@ class DMControlSuite(_DMCModel):
         m.mat_reflectance[:] = pr["mat_reflectance"]
         m.geom_type[:] = pr["geom_type"]
         m.geom_size[:] = pr["geom_size"]
+        m.site_type[:] = pr["site_type"]
+        m.site_size[:] = pr["site_size"]
         # groups too, so a bake that raises part-way cannot leave the movers hidden for the next one
         m.geom_group[:] = pr["geom_group"]
         m.site_group[:] = pr["site_group"]
@@ -129,14 +130,18 @@ class DMControlSuite(_DMCModel):
         m.light_diffuse[:] = np.clip(pr["light_diffuse"] * float(self._var(variation, "light.diffuse_scale")[0]), 0, 1)
         m.light_specular[:] = pr["light_specular"]
         # Render-only shape edits: see the collision-bound restriction in this method’s contract.
+        for group, geoms in self.GEOM_COLORS.items():
+            rgba = np.r_[self._var(variation, f"{group}.color"), 1.0]
+            for name in geoms:
+                m.geom_rgba[mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, name)] = rgba
         for gname, alts in self.SHAPE_KNOBS.items():
-            gid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, gname)
+            kind, gid = self._shape_element(gname)
             k = int(round(float(self._var(variation, f"{gname}.shape")[0])))
             if not 0 <= k < len(alts):
                 raise ValueError(f"{type(self).__name__}: {gname}.shape = {k} is outside [0, {len(alts)})")
             t, s = alts[k]
-            m.geom_type[gid] = int(t)
-            m.geom_size[gid] = np.asarray(s, np.float64)
+            getattr(m, f"{kind}_type")[gid] = int(t)
+            getattr(m, f"{kind}_size")[gid] = np.asarray(s, np.float64)
         # Hide the element rather than its material, which may also be worn by other elements.
         for kind, name, eids in self._hideable():
             # Styles store discrete visibility as float32; threshold manually supplied rows too.
@@ -423,7 +428,6 @@ class DMControlSuite(_DMCModel):
         sc.static_t[int(ss)] = t
         return t
 
-
     # Candidates only: conformance must validate each against render_scene_signature.
     RENDER_INVARIANT_DIMS: tuple[str, ...] = ()
 
@@ -487,7 +491,6 @@ class DMControlSuite(_DMCModel):
                 "geom_type": kind,
                 "geom_rgba": rgba,
                 "geom_matid": matid,
-
                 "mat_rgba": np.array(m.mat_rgba, copy=True),
                 "mat_reflectance": np.array(m.mat_reflectance, copy=True),
                 "mat_specular": np.array(m.mat_specular, copy=True),
@@ -514,8 +517,7 @@ class DMControlSuite(_DMCModel):
             _SCENE_CACHE.clear()
         return out
 
-
-    def _fk(self, states: torch.Tensor, sc: _Scene):
+    def _fk(self, states: torch.Tensor, sc: _Scene, gravity=None):
         """Return per-row mover positions, rotations, sizes and colours as device tensors.
 
         Source kinematics runs on CPU. Tendons need mj_forward for constraint-dependent
@@ -561,7 +563,7 @@ class DMControlSuite(_DMCModel):
                     np.take(d.site_xmat, sid, axis=0, out=xm[i, len(gmov) : nmov].reshape(-1, 9))
                 if td is not None:
                     # Collect source polylines here; build capsule chains across rows below.
-                    pts, trgb = _tendon_polyline(m, d, td)
+                    pts, trgb = _tendon_polyline(m, d, td, None if gravity is None else gravity[i])
                     polys.append(pts)
                     rgb[i, nmov:] = trgb
         finally:
@@ -580,7 +582,6 @@ class DMControlSuite(_DMCModel):
                 size[idx, nmov:, 1] = half
         t = lambda x: torch.tensor(x, device=self.device, dtype=torch.float32)  # noqa: E731
         return t(xp), t(xm), t(size), t(rgb)
-
 
     @staticmethod
     def _cast(sc, o, d, xpos, xmat, sizes):
@@ -604,7 +605,6 @@ class DMControlSuite(_DMCModel):
             d = v / lim.unsqueeze(-1)
         o = p + d * eps
         return R3.any_blocking(sc.prims.kind, sizes, xpos, xmat, o, d, lim, skip=skip)
-
 
     @torch.no_grad()
     def _render(
@@ -636,6 +636,7 @@ class DMControlSuite(_DMCModel):
             w = int(sty.layout[p][1])
             offs.append((o, w))
             o += w
+        gravity = self._frame_gravity(sty, B)
         for gi in range(len(uniq)):
             sub = np.flatnonzero(inv == gi)
             over = {p: uniq[gi][a : a + w] for p, (a, w) in zip(self.PLATE_PATHS, offs)}
@@ -644,7 +645,8 @@ class DMControlSuite(_DMCModel):
             step = max(1, int(self.RAY_BUDGET // max(1, size * size * ss * ss)))
             for a in range(0, len(sub), step):
                 part = idx[a : a + step]
-                buf[part] = self._render_group(sc, s[part], size, ss)
+                rows = None if gravity is None else gravity[sub[a : a + step]]
+                buf[part] = self._render_group(sc, s[part], size, ss, rows)
         return buf.view(*lead, size, size, 3) if lead else buf
 
     # Window divisors, ordered from smallest footprint to largest.
@@ -690,7 +692,17 @@ class DMControlSuite(_DMCModel):
             )
         return hit
 
-    def _render_group(self, sc: _Scene, s: torch.Tensor, size: int, ss: int) -> torch.Tensor:
+    def _frame_gravity(self, sty, B: int):
+        """Per-row gravity for a drawn catenary, or None when the frame does not depend on gravity.
+
+        A float32 style column that still encodes the model's gravity keeps its exact value."""
+        if "gravity.x" not in self.FRAME_PHYSICS:
+            return None
+        nominal = np.asarray(self._model().opt.gravity, np.float64)
+        rows = np.stack([sty[f"gravity.{a}"].reshape(B).detach().cpu().numpy() for a in "xyz"], axis=1)
+        return np.where(rows == nominal.astype(np.float32), nominal, rows.astype(np.float64))
+
+    def _render_group(self, sc: _Scene, s: torch.Tensor, size: int, ss: int, gravity=None) -> torch.Tensor:
         dev = self.device
         B = s.shape[0]
         R = size * ss
@@ -699,7 +711,7 @@ class DMControlSuite(_DMCModel):
         oo = o.expand(B, N, 3)
         dd = d.view(1, N, 3).expand(B, N, 3)
 
-        xpos, xmat, sizes, mat_rgb = self._fk(s, sc)
+        xpos, xmat, sizes, mat_rgb = self._fk(s, sc, gravity)
         P = xpos.shape[1]
         sl = sc.shadow_light
         st = self._static_t(sc, ss).view(1, N).expand(B, N)

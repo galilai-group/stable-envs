@@ -4,15 +4,14 @@
 Seventeen ``stable_worldmodel`` ids, 161 variation leaves. Every one of them is exactly one of:
 
 ``mapped``
-    reachable through a stable-envs leaf. 46 leaves.
+    reachable through a stable-envs leaf. 109 leaves. Every DM Control physics leaf (gravity,
+    densities, masses, friction) goes through the physics hook and is gated against swm stepping the
+    same values (tests/integration/test_dmc_physics_variation.py); the ones that also move pixels
+    (the ten ``trackcom`` mass leaves and ball-in-cup's gravity) are drawn from the same values.
 ``unsupported``
-    the leaf has a real effect upstream that THIS cell cannot express. 94 leaves, of three kinds, and
-    the reason on every one of them says which: appearance the cell has no knob for (floor colour,
-    floor tilt, ball size, a per-geom rgba, a target shape); appearance the cell has no knob for that
-    arrives through the PHYSICS (the ten ``trackcom`` mass leaves and ball-in-cup's gravity, S4); and
-    PHYSICS-ONLY leaves of a render-from-state cell, which are unsupported-by-this-cell rather than
-    not-applicable because they do ask something of stable-envs — a dynamics surface these cells do
-    not have — even though they move no pixel.
+    the leaf has a real effect upstream that THIS cell cannot express. 31 leaves: the classic-control
+    dynamics constants, the floor colour on the five ``trackcom`` cells, walker's floor tilt and
+    ball-in-cup's ball size, each with the mechanism in its reason.
 ``dead_upstream``
     the leaf reaches no pixel and no state in ``stable_worldmodel`` ITSELF. The reason carries the
     measurement. 21 leaves.
@@ -20,18 +19,13 @@ Seventeen ``stable_worldmodel`` ids, 161 variation leaves. Every one of them is 
     reserved by the taxonomy and UNUSED by this family: every leaf these seventeen ids offer does ask
     something of stable-envs, even the ones that ask for a simulator. 0 leaves.
 
-Why the physics leaves are ``unsupported`` and not ``not_applicable``
----------------------------------------------------------------------
+Why the classic-control physics leaves are ``unsupported`` and not ``not_applicable``
+-------------------------------------------------------------------------------------
 
 The five classic-control cells ship a batched simulator whose trajectories are certified against the
-official env, so ``physics.gravity`` is a feature they could carry and do not. The thirteen DM
-Control cells ship a renderer over states and no simulator at all (``hasattr(env, 'step')`` is
-``False`` on every one), so ``agent.torso_density`` asks them for a dynamics surface that does not
-exist. Both are the same answer to the caller — "this cell cannot honour that leaf" — and both carry
-the mechanism and the measured 0-pixel result in their reason. Calling the second kind
-``not_applicable`` would say the leaf asks nothing of stable-envs, and it does; it asks for a
-simulator. The distinction between the two kinds is preserved in the REASON text, which names which
-it is, rather than in the label.
+official env, so ``physics.gravity`` is a feature they could carry and do not. That is "this cell
+cannot honour that leaf", and the reason carries the mechanism and the measured 0-pixel result.
+Calling it ``not_applicable`` would say the leaf asks nothing of stable-envs, and it does.
 
 The exception, and the most interesting measurement in this workstream, is the ``trackcom`` group
 below: there a mass leaf is not physics-only at all.
@@ -344,44 +338,39 @@ _FLOOR_COLOR = (
     "DOCUMENTED_LIMITATION, five ids (Cheetah, Walker, Hopper, Humanoid, Quadruped)."
 )
 
-_GRAVITY_PHYS = (
-    "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity "
-    "is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that "
-    "exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states "
-    "with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable "
-    "is the trajectory."
-)
-
-
 _PHYSICS_MAPPED = (
     "MAPPED through the physics hook (stable_envs._core.physics): the value is written into each "
-    "lane's compiled model as swm writes it after its recompile, and travels in State under "
+    "lane's compiled model as swm writes it after its recompile (a direct field write, or an analytic "
+    "mass change that agrees with the recompile to 1e-12), and travels in State under "
     "('physics', *leaf) as float64, so a restored State keeps its physics. The style column is "
-    "float32; an explicit float64 value set through reset options or State is kept exactly. "
-    "Gated by tests/integration/test_variation_pilots.py: 0 State error over 40 steps against swm "
-    "stepping the same per-lane values, with the knob moving swm's trajectory by 9.4e7 times the "
-    "1e-9 tolerance"
+    "float32; an explicit float64 value set through reset options or State is kept exactly. Gated by "
+    "tests/integration/test_dmc_physics_variation.py against swm stepping the same per-lane values: "
+    "direct writes 0 State error, mass leaves at most 1.1e-7 (relative, humanoid over 40 contact-rich "
+    "steps), while the leaf moves swm's own trajectory by 5e-3 to 2.7"
 )
 
+#: Leaves swm accepts and its own dynamics never feel, measured on its trajectory.
+_INERT = {
+    "gravity.y": "Mapped and exact, and inert upstream: every joint of this planar model moves in the "
+    "x-z plane, so y gravity does no work and swm's own trajectory does not move (0 qpos shift).",
+    "hopper": "Mapped and exact, and inert upstream: every hopper geom carries friction 1.0 and MuJoCo "
+    "combines a contact's friction by max, so swm's own trajectory does not move (0 qpos shift over 200 "
+    "steps at 0.25 and 0.9).",
+    "quadruped": "Mapped and exact, and inert upstream: the feet carry friction 1.5 and MuJoCo combines "
+    "a contact's friction by max, so swm's own trajectory does not move (0 qpos shift over 200 steps).",
+}
 
-def _density_phys(what: str) -> str:
-    return (
-        f"PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or "
-        f"not-applicable: {what} is a real dynamics parameter of the swm env, and this cell is a "
-        f"render-from-state cell that exposes no dynamics parameters to map it through. Measured "
-        f"0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing "
-        f"about the FRAME is lost; what is not reachable is the trajectory."
-    )
+_TRACKCOM_MASS = (
+    _PHYSICS_MAPPED + '. This cell renders through a mode="trackcom" camera whose position comes from '
+    "subtree_com, so the mass also moves the camera: the renderer derives each row's body masses, "
+    "centres of mass and subtree masses from the leaf with the same arithmetic as the simulator, and "
+    "uploads them per world"
+)
 
-
-def _density_trackcom(px: int, n_px: int) -> str:
-    return (
-        f'UNSUPPORTED, not merely physics: this cell renders through a mode="trackcom" camera, '
-        f"whose position comes from subtree_com, so a mass change MOVES THE CAMERA. Measured "
-        f"{px:,} disagreeing pixels of {n_px:,} over 8 states with qpos and geom_xpos bit-"
-        f"identical. The cell declares no mass leaf and its camera follows the compiled model's "
-        f"own COM, so the appearance is not reachable."
-    )
+_CATENARY = (
+    _PHYSICS_MAPPED + ". The cup-ball tendon is drawn as a catenary hanging along gravity, so x and y "
+    "move pixels at a fixed state; the renderer evaluates each row's catenary under that row's gravity"
+)
 
 
 _LOCKED_DEAD = (
@@ -421,8 +410,8 @@ def _dmc(
     mapped_target: str | None = None,
     visibility: str | None = None,
     shape: tuple[str, tuple[int, ...]] | None = None,
+    mapped=(),
     unsupported=None,
-    physics_only=None,
     physics_mapped=(),
     dead_upstream=None,
     notes=None,
@@ -438,7 +427,7 @@ def _dmc(
     parity = cell in _PARITY_FLOOR
     return VariationMap(
         swm_id=swm_id,
-        identical=(("floor.color",) if parity else ()) + tuple(physics_mapped),
+        identical=(("floor.color",) if parity else ()) + tuple(mapped) + tuple(physics_mapped),
         renamed=renamed,
         scaled={"light.diffuse_scale": ("light.intensity", 1.0 / base)},
         enum=({shape[0]: ("target.shape", shape[1])} if shape else {}),
@@ -448,14 +437,8 @@ def _dmc(
             **{leaf: _PHYSICS_MAPPED for leaf in physics_mapped},
             **(notes or {}),
         },
-        # ``physics_only`` is merged into ``unsupported`` rather than kept as its own bucket: plan
-        # S9's taxonomy has four labels and a physics leaf of a render-from-state cell is
-        # "unsupported by this cell", not "not applicable" — the coordinator's ruling, and the right
-        # one, because ``not_applicable`` would say the leaf asks nothing of stable-envs and it does.
-        # The separate keyword survives so the REASON is uniform and the count is auditable.
         unsupported={
             **({} if parity else {"floor.color": _FLOOR_COLOR}),
-            **(physics_only or {}),
             **(unsupported or {}),
         },
         dead_upstream=dict(dead_upstream or {}),
@@ -482,6 +465,34 @@ _DECOR_OURS = {
 }
 _EFFECTOR_OURS = {"material.effector": "the effector material; swm has no leaf that reaches it"}
 
+_GRAVITY = tuple(f"gravity.{a}" for a in "xyz")
+
+
+def _trackcom(cell, swm_id, densities, *, ours_only, unsupported=None, dead_upstream=None, floor_note=None):
+    """The five trackcom cells: gravity, floor friction and two densities, all through the physics hook."""
+    notes = {leaf: _TRACKCOM_MASS for leaf in densities}
+    if cell not in ("DMCHumanoidStand", "DMCQuadrupedWalk"):
+        notes["gravity.y"] = _INERT["gravity.y"]
+    if floor_note:
+        notes["floor.friction"] = floor_note
+    return _dmc(
+        cell,
+        swm_id,
+        physics_mapped=(*_GRAVITY, "floor.friction", *densities),
+        notes=notes,
+        unsupported=unsupported,
+        dead_upstream=dead_upstream,
+        ours_only=ours_only,
+    )
+
+
+_SHAPE_NOTE = (
+    "MAPPED at both alternatives: SHAPE_KNOBS declares swm's box and sphere at the task's target size, "
+    "and the sphere is the compiled model's own, so the default style stays a render of it. Visible only "
+    "with rendering.render_target = 1, which swm's registered default is not. The task reads only the "
+    "target's first size, which both alternatives share, so the shape never reaches the dynamics."
+)
+
 _DMC_MAPS = {
     "DMCAcrobotBalance": _dmc(
         "DMCAcrobotBalance",
@@ -497,27 +508,18 @@ _DMC_MAPS = {
             "target.color": _target_group(3, "(site `target`, material `target`)"),
             "target.shape": _target_group(3, "(site `target`; the leaf does move site_type and site_size)"),
         },
-        physics_only={f"gravity.{a}": _GRAVITY_PHYS for a in "xyz"},
+        physics_mapped=_GRAVITY,
+        notes={"gravity.y": _INERT["gravity.y"]},
         ours_only={**_GRID_OURS, **_FOVY_OURS, **_DECOR_OURS},
     ),
     "DMCBallInCupCatch": _dmc(
         "DMCBallInCupCatch",
         "swm/BallInCupDMControl-v0",
         unsupported={
-            "ball.size": "the ball's radius, which is GEOMETRY: 902 disagreeing pixels of 8x84x84 at "
-            "0.0475. The cell declares colour, light and (elsewhere) visibility leaves "
-            "and no size leaf, so the appearance is not reachable.",
-            **{
-                f"gravity.{a}": (
-                    "UNSUPPORTED rather than physics-only: ball_in_cup's cup and ball are joined by a "
-                    "SPATIAL TENDON, which MuJoCo draws as a hanging catenary through mjv_catenary, and "
-                    "mjv_catenary reads the model's gravity. Measured at a fixed qpos: gravity.x moves "
-                    "178 px and gravity.y 110 px of 8x84x84 (gravity.z alone moves 0, because scaling z "
-                    "does not rotate the gravity direction). The cell reproduces mjv_catenary from the "
-                    "compiled model's gravity and declares no gravity leaf."
-                )
-                for a in "xyz"
-            },
+            "ball.size": "the ball's radius, which is GEOMETRY and DYNAMICS at once: swm recompiles the "
+            "sphere's size, collision bounds and mass (density times the new volume). 902 disagreeing "
+            "pixels of 8x84x84 at 0.0475. The physics hook scales a primitive's mass at a fixed size "
+            "and the renderer draws the compiled radius; a size knob needs both to follow the leaf.",
         },
         dead_upstream={
             "ball.color": _never_read(
@@ -529,24 +531,15 @@ _DMC_MAPS = {
             "target.color": _target_group(4, "(site `target`, rgba on the site itself)"),
             "target.shape": _target_group(4, "(site `target`; the leaf does move site_type)"),
         },
-        physics_only={
-            "agent.density": _density_phys("the cup's density"),
-            "ball.density": _density_phys("the ball's density"),
-        },
+        physics_mapped=(*_GRAVITY, "agent.density", "ball.density"),
+        notes={f"gravity.{a}": _CATENARY for a in "xyz"},
         ours_only={**_GRID_OURS, **_FOVY_OURS, **_EFFECTOR_OURS},
     ),
-    "DMCCheetahRun": _dmc(
+    "DMCCheetahRun": _trackcom(
         "DMCCheetahRun",
         "swm/CheetahDMControl-v0",
-        unsupported={
-            "agent.torso_density": _density_trackcom(2115, 8 * 84 * 84),
-            "agent.back_foot_density": _density_trackcom(4521, 8 * 84 * 84),
-        },
+        ("agent.torso_density", "agent.back_foot_density"),
         dead_upstream={"agent.back_foot_locked": _never_read()},
-        physics_only={
-            "floor.friction": _density_phys("the floor's sliding friction"),
-            **{f"gravity.{a}": _GRAVITY_PHYS for a in "xyz"},
-        },
         ours_only=_GRID_OURS,
     ),
     "DMCFingerTurnHard": _dmc(
@@ -554,52 +547,28 @@ _DMC_MAPS = {
         "swm/FingerDMControl-v0",
         mapped_target="material.target",
         visibility="visibility.target",
-        unsupported={
-            "spinner.color": "the spinner's colour is a per-geom ``rgba`` OVERRIDE (the leaf moves "
-            "geom_rgba, not mat_rgba) and this cell's colour knobs are material-"
-            "level, one per material carried by a visible element. Measured 2,191 "
-            "disagreeing pixels of 8x84x84, so the leaf is real; there is simply no "
-            "leaf here that reaches a single geom's rgba.",
-            "target.shape": "the target site's box/sphere alternative. Measured 459 disagreeing "
-            "pixels of 8x84x84 WITH the target visible, so the leaf is real. This "
-            "cell declares SHAPE_KNOBS = {} — only DMCManipulatorBringBall carries a "
-            "shape leaf — so the default (sphere, index 1) is the compiled model's "
-            "own and reproduces exactly, and the box alternative is unreachable.",
-        },
-        physics_only={
-            "agent.fingertip_density": _density_phys("the fingertip's density"),
-            "agent.proximal_density": _density_phys("the proximal link's density"),
-            "spinner.density": _density_phys("the spinner's density"),
-            "spinner.friction": _density_phys("the spinner joint's friction loss"),
+        mapped=("spinner.color", "target.shape"),
+        physics_mapped=("agent.fingertip_density", "agent.proximal_density", "spinner.density", "spinner.friction"),
+        notes={
+            "spinner.color": "MAPPED: the leaf writes cap1's and cap2's explicit rgba, as swm's does, so the "
+            "spinner stops following material.self exactly where swm's stops following agent.color.",
+            "target.shape": _SHAPE_NOTE,
         },
         ours_only={**_GRID_OURS, **_FOVY_OURS, **_DECOR_OURS, **_EFFECTOR_OURS},
     ),
-    "DMCHopperHop": _dmc(
+    "DMCHopperHop": _trackcom(
         "DMCHopperHop",
         "swm/HopperDMControl-v0",
-        unsupported={
-            "agent.torso_density": _density_trackcom(10918, 8 * 84 * 84),
-            "agent.foot_density": _density_trackcom(11167, 8 * 84 * 84),
-        },
+        ("agent.torso_density", "agent.foot_density"),
         dead_upstream={"agent.foot_locked": _never_read()},
-        physics_only={
-            "floor.friction": _density_phys("the floor's sliding friction"),
-            **{f"gravity.{a}": _GRAVITY_PHYS for a in "xyz"},
-        },
+        floor_note=_INERT["hopper"],
         ours_only=_GRID_OURS,
     ),
-    "DMCHumanoidStand": _dmc(
+    "DMCHumanoidStand": _trackcom(
         "DMCHumanoidStand",
         "swm/HumanoidDMControl-v0",
-        unsupported={
-            "agent.torso_density": _density_trackcom(36302, 8 * 84 * 84),
-            "agent.right_lower_arm_density": _density_trackcom(25419, 8 * 84 * 84),
-        },
+        ("agent.torso_density", "agent.right_lower_arm_density"),
         dead_upstream={"agent.left_knee_locked": _never_read()},
-        physics_only={
-            "floor.friction": _density_phys("the floor's sliding friction"),
-            **{f"gravity.{a}": _GRAVITY_PHYS for a in "xyz"},
-        },
         ours_only=_GRID_OURS,
     ),
     "DMCManipulatorBringBall": _dmc(
@@ -629,10 +598,7 @@ _DMC_MAPS = {
                 "read; recorded in Step 7 and re-measured here."
             )
         },
-        physics_only={
-            "agent.hand_density": _density_phys("the hand's density"),
-            "agent.upper_arm_density": _density_phys("the upper arm's density"),
-        },
+        physics_mapped=("agent.hand_density", "agent.upper_arm_density"),
         ours_only={
             **_GRID_OURS,
             **_FOVY_OURS,
@@ -649,21 +615,16 @@ _DMC_MAPS = {
             "agent.mass_density": _density_dead('pendulum.xml\'s <geom name="mass" ... mass="1"/>'),
             "agent.pole_density": _density_dead('pendulum.xml\'s <geom name="pole" ... mass="0"/>'),
         },
-        physics_only={f"gravity.{a}": _GRAVITY_PHYS for a in "xyz"},
+        physics_mapped=_GRAVITY,
+        notes={"gravity.y": _INERT["gravity.y"]},
         ours_only={**_GRID_OURS, **_FOVY_OURS, **_DECOR_OURS, **_EFFECTOR_OURS},
     ),
-    "DMCQuadrupedWalk": _dmc(
+    "DMCQuadrupedWalk": _trackcom(
         "DMCQuadrupedWalk",
         "swm/QuadrupedDMControl-v0",
-        unsupported={
-            "agent.torso_density": _density_trackcom(135622, 8 * 224 * 224),
-            "agent.foot_back_left_density": _density_trackcom(137533, 8 * 224 * 224),
-        },
+        ("agent.torso_density", "agent.foot_back_left_density"),
         dead_upstream={"agent.knee_back_left_locked": _never_read()},
-        physics_only={
-            "floor.friction": _density_phys("the floor's sliding friction"),
-            **{f"gravity.{a}": _GRAVITY_PHYS for a in "xyz"},
-        },
+        floor_note=_INERT["quadruped"],
         ours_only={**_GRID_OURS, **_EFFECTOR_OURS},
     ),
     "DMCReacherHard": _dmc(
@@ -671,37 +632,25 @@ _DMC_MAPS = {
         "swm/ReacherDMControl-v0",
         mapped_target="material.target",
         visibility="visibility.target",
-        unsupported={
-            "target.shape": "the target geom's box/sphere alternative. Measured 236 "
-            "disagreeing pixels of 8x84x84 WITH the target visible, so the "
-            "leaf is real. This cell declares SHAPE_KNOBS = {}, so the "
-            "default (sphere, index 1) is the compiled model's own and "
-            "reproduces exactly, and the box alternative is unreachable."
-        },
+        mapped=("target.shape",),
+        notes={"target.shape": _SHAPE_NOTE},
         dead_upstream={"agent.finger_locked": _never_read()},
-        physics_only={
-            "agent.arm_density": _density_phys("the arm's density"),
-            "agent.finger_density": _density_phys("the finger's density"),
-        },
+        physics_mapped=("agent.arm_density", "agent.finger_density"),
         ours_only={**_GRID_OURS, **_FOVY_OURS, **_DECOR_OURS, **_EFFECTOR_OURS},
     ),
-    "DMCWalkerWalk": _dmc(
+    "DMCWalkerWalk": _trackcom(
         "DMCWalkerWalk",
         "swm/WalkerDMControl-v0",
+        ("agent.torso_density", "agent.left_foot_density"),
         unsupported={
-            "agent.torso_density": _density_trackcom(26328, 8 * 84 * 84),
-            "agent.left_foot_density": _density_trackcom(21374, 8 * 84 * 84),
             "floor.rotation_y": "walker is the one domain whose swm wrapper TILTS the floor: the leaf "
             "writes the floor geom's quat and moves 24,004 disagreeing pixels of "
-            "8x84x84 at 9 degrees. The cell bakes the floor plane from the "
-            "compiled model and declares no pose leaf, so the tilt is not "
-            "reachable. Its default, 0, is the compiled model's own.",
+            "8x84x84 at 9 degrees, and the walker then stands on a slope. The "
+            "tracking-camera renderer's floor texture, reflection and shadow passes "
+            "take the floor as the z = 0 plane of the compiled model, so a per-row "
+            "tilt is not reachable. Its default, 0, is the compiled model's own.",
         },
         dead_upstream={"agent.right_knee_locked": _never_read()},
-        physics_only={
-            "floor.friction": _density_phys("the floor's sliding friction"),
-            **{f"gravity.{a}": _GRAVITY_PHYS for a in "xyz"},
-        },
         ours_only=_GRID_OURS,
     ),
 }
@@ -709,10 +658,9 @@ _DMC_MAPS = {
 # The two cartpole cells are one swm id. The balance and swingup tasks differ in their reset
 # distribution and in nothing the appearance mapping can see, so they carry the same map built twice
 # rather than one shared object — ``_LIGHT_BASE`` is keyed by cell and a shared instance would hide a
-# future divergence behind an alias.
-# Only the swing-up cell simulates; its gravity leaves go through the physics hook.
+# future divergence behind an alias. Both simulate; the balance cell is gated against swm's wrapper
+# with dm_control's Balance task swapped in.
 for _cell in ("DMCCartpoleBalance", "DMCCartpoleSwingup"):
-    _gravity = tuple(f"gravity.{a}" for a in "xyz") if _cell == "DMCCartpoleSwingup" else ()
     _DMC_MAPS[_cell] = _dmc(
         _cell,
         "swm/CartpoleDMControl-v0",
@@ -722,11 +670,8 @@ for _cell in ("DMCCartpoleBalance", "DMCCartpoleSwingup"):
                 "cartpole.xml's ``pole`` default class, which sets an explicit mass on every pole geom"
             ),
         },
-        physics_only={
-            "agent.cart_mass": _density_phys("the cart's mass"),
-            **{leaf: _GRAVITY_PHYS for leaf in (f"gravity.{a}" for a in "xyz") if leaf not in _gravity},
-        },
-        physics_mapped=_gravity,
+        physics_mapped=(*_GRAVITY, "agent.cart_mass"),
+        notes={"gravity.y": _INERT["gravity.y"]},
         ours_only={**_GRID_OURS, **_FOVY_OURS, **_DECOR_OURS},
     )
 
@@ -758,31 +703,29 @@ EXPECTED_COUNTS: dict[str, dict[str, int]] = {
         "dead_upstream": 0,
         "not_applicable": 0,
     },
-    "swm/AcrobotDMControl-v0": {"total": 11, "mapped": 3, "unsupported": 3, "dead_upstream": 5, "not_applicable": 0},
-    "swm/BallInCupDMControl-v0": {"total": 13, "mapped": 3, "unsupported": 6, "dead_upstream": 4, "not_applicable": 0},
-    "swm/CartpoleDMControl-v0": {"total": 9, "mapped": 3, "unsupported": 4, "dead_upstream": 2, "not_applicable": 0},
-    "swm/CheetahDMControl-v0": {"total": 10, "mapped": 2, "unsupported": 7, "dead_upstream": 1, "not_applicable": 0},
-    "swm/FingerDMControl-v0": {"total": 11, "mapped": 5, "unsupported": 6, "dead_upstream": 0, "not_applicable": 0},
-    "swm/HopperDMControl-v0": {"total": 10, "mapped": 2, "unsupported": 7, "dead_upstream": 1, "not_applicable": 0},
-    "swm/HumanoidDMControl-v0": {"total": 10, "mapped": 2, "unsupported": 7, "dead_upstream": 1, "not_applicable": 0},
+    "swm/AcrobotDMControl-v0": {"total": 11, "mapped": 6, "unsupported": 0, "dead_upstream": 5, "not_applicable": 0},
+    "swm/BallInCupDMControl-v0": {"total": 13, "mapped": 8, "unsupported": 1, "dead_upstream": 4, "not_applicable": 0},
+    "swm/CartpoleDMControl-v0": {"total": 9, "mapped": 7, "unsupported": 0, "dead_upstream": 2, "not_applicable": 0},
+    "swm/CheetahDMControl-v0": {"total": 10, "mapped": 8, "unsupported": 1, "dead_upstream": 1, "not_applicable": 0},
+    "swm/FingerDMControl-v0": {"total": 11, "mapped": 11, "unsupported": 0, "dead_upstream": 0, "not_applicable": 0},
+    "swm/HopperDMControl-v0": {"total": 10, "mapped": 8, "unsupported": 1, "dead_upstream": 1, "not_applicable": 0},
+    "swm/HumanoidDMControl-v0": {"total": 10, "mapped": 8, "unsupported": 1, "dead_upstream": 1, "not_applicable": 0},
     "swm/ManipulatorDMControl-v0": {
         "total": 9,
-        "mapped": 6,
-        "unsupported": 2,
+        "mapped": 8,
+        "unsupported": 0,
         "dead_upstream": 1,
         "not_applicable": 0,
     },
-    "swm/PendulumDMControl-v0": {"total": 9, "mapped": 3, "unsupported": 3, "dead_upstream": 3, "not_applicable": 0},
-    "swm/QuadrupedDMControl-v0": {"total": 10, "mapped": 2, "unsupported": 7, "dead_upstream": 1, "not_applicable": 0},
-    "swm/ReacherDMControl-v0": {"total": 9, "mapped": 5, "unsupported": 3, "dead_upstream": 1, "not_applicable": 0},
-    "swm/WalkerDMControl-v0": {"total": 11, "mapped": 2, "unsupported": 8, "dead_upstream": 1, "not_applicable": 0},
+    "swm/PendulumDMControl-v0": {"total": 9, "mapped": 6, "unsupported": 0, "dead_upstream": 3, "not_applicable": 0},
+    "swm/QuadrupedDMControl-v0": {"total": 10, "mapped": 8, "unsupported": 1, "dead_upstream": 1, "not_applicable": 0},
+    "swm/ReacherDMControl-v0": {"total": 9, "mapped": 8, "unsupported": 0, "dead_upstream": 1, "not_applicable": 0},
+    "swm/WalkerDMControl-v0": {"total": 11, "mapped": 8, "unsupported": 2, "dead_upstream": 1, "not_applicable": 0},
 }
 
 
 #: Cells whose counts differ from the first cell of their swm id, which EXPECTED_COUNTS records.
-EXPECTED_COUNTS_BY_CELL: dict[str, dict[str, int]] = {
-    "DMCCartpoleSwingup": {"total": 9, "mapped": 6, "unsupported": 1, "dead_upstream": 2, "not_applicable": 0},
-}
+EXPECTED_COUNTS_BY_CELL: dict[str, dict[str, int]] = {}
 
 
 #: The swm registered DEFAULT variation config for each id, as a dotted dict. Written down because it

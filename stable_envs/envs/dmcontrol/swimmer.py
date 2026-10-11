@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from ._aligned import DMCAlignedSemantics
 from ._cells import trackcom_cell
 
 # This measurement uses the swimmer-specific render flags below.
@@ -64,4 +65,6 @@ DMCSwimmerSwimmer6 = trackcom_cell(
     render_flags=TRACKCOM_RENDER_FLAGS["DMCSwimmerSwimmer6"],
     note_suffix=SPECULAR_NOTE,
     CPU_UNCERTIFIED_REASON=CPU_UNCERTIFIED_REASON,
+    bases=(DMCAlignedSemantics,),
+    SIMULATOR="swimmer-swimmer6",
 )
