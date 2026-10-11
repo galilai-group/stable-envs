@@ -78,7 +78,10 @@ env.reset(seed=1)                                         # gravity.z is -5.0 ag
 ```
 
 Families that wrap the stable-worldmodel source (PushT, Rocket, OGBench Cube/Scene) apply
-`set_variation` to the source's defaults, which take effect at the next reset.
+`set_variation` to the source's defaults, which take effect at the next reset. PushT also
+applies its appearance leaves (`PushT.immediate_variation_leaves`: colours, goal pose,
+`rendering.render_goal`) to the running episode; body shapes and scales need a rebuilt
+physics space and start poses exist only at reset, so those wait for the next reset.
 
 ## One Variation vs B independent Variations
 
