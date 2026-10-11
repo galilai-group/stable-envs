@@ -7,11 +7,34 @@ from tensordict import TensorDict
 from ...._execution.protocol import SimulatorAdapter
 from ...._execution.state_columns import owned_columns
 
-OGB_MAZE_FIELDS = {
-    ("root", "position"): (2, torch.float64),
-    ("root", "velocity"): (2, torch.float64),
-    ("simulator", "time"): (1, torch.float64),
-    ("simulator", "warmstart"): (2, torch.float64),
+#: body -> (qpos fields, qvel fields, action width). Legged qpos splits at the free joint.
+BODIES = {
+    "point": (((("root", "position"), 2),), ((("root", "velocity"), 2),), 2),
+    "ant": (
+        ((("root", "position"), 3), (("root", "orientation"), 4), (("joints", "position"), 8)),
+        ((("root", "velocity"), 6), (("joints", "velocity"), 8)),
+        8,
+    ),
+    "humanoid": (
+        ((("root", "position"), 3), (("root", "orientation"), 4), (("joints", "position"), 21)),
+        ((("root", "velocity"), 6), (("joints", "velocity"), 21)),
+        21,
+    ),
+}
+
+
+def maze_fields(loco: str) -> dict:
+    qpos, qvel, _ = BODIES[loco]
+    nv = sum(width for _, width in qvel)
+    return {
+        **{key: (width, torch.float64) for key, width in qpos + qvel},
+        ("simulator", "time"): (1, torch.float64),
+        ("simulator", "warmstart"): (nv, torch.float64),
+        **_TASK_RNG_FIELDS,
+    }
+
+
+_TASK_RNG_FIELDS = {
     ("task", "goal_pos"): (3, torch.float64),
     ("task", "id"): (1, torch.int64),
     ("rng", "env_state"): (16, torch.uint8),
@@ -23,9 +46,11 @@ OGB_MAZE_FIELDS = {
     ("rng", "global_has_gauss"): (1, torch.bool),
     ("rng", "global_cached_gaussian"): (1, torch.float64),
 }
+OGB_MAZE_FIELDS = maze_fields("point")
 
 
 _NUMPY_DTYPES = {torch.float64: np.float64, torch.int64: np.int64, torch.bool: np.bool_, torch.uint8: np.uint8}
+
 
 def _uint128_bytes(value: int) -> np.ndarray:
     return np.frombuffer(int(value).to_bytes(16, "little"), dtype=np.uint8).copy()
@@ -35,13 +60,25 @@ def _bytes_uint128(value: torch.Tensor) -> int:
     return int.from_bytes(value.numpy().tobytes(), "little")
 
 
-def _make_point_large_maze():
+def _split(fields, values):
+    out, start = {}, 0
+    for key, width in fields:
+        out[key] = values[start : start + width].copy()
+        start += width
+    return out
+
+
+def _join(fields, row):
+    return np.concatenate([row[key].numpy() for key, _ in fields])
+
+
+def _make_maze(loco, maze):
     from ogbench.locomaze.maze import make_maze_env
 
     return make_maze_env(
-        loco_env_type="point",
+        loco_env_type=loco,
         maze_env_type="maze",
-        maze_type="large",
+        maze_type=maze,
         ob_type="states",
         width=224,
         height=224,
@@ -49,15 +86,18 @@ def _make_point_large_maze():
 
 
 class OGBMazeAdapter(SimulatorAdapter):
-    """Independent CPU point/large-maze simulators with owned State snapshots.
+    """Independent CPU locomotion-maze simulators with owned State snapshots.
 
     ``device`` selects output placement. Each lane owns both its environment PCG64
     and the legacy NumPy RNG used by upstream; calls must be serialized."""
 
-    def __init__(self, num_envs, device="cpu", seed=0):
+    def __init__(self, num_envs, device="cpu", seed=0, *, loco="point", maze="large"):
         self.num_envs = int(num_envs)
         self.device = torch.device(device)
-        self.envs = [_make_point_large_maze() for _ in range(self.num_envs)]
+        self.loco, self.maze = loco, maze
+        self.fields = maze_fields(loco)
+        self._qpos, self._qvel, self.action_dim = BODIES[loco]
+        self.envs = [_make_maze(loco, maze) for _ in range(self.num_envs)]
         self._global_rng = [np.random.RandomState(int(seed) + i).get_state() for i in range(self.num_envs)]
         self._closed = False
         self.reset(seed=seed)
@@ -90,8 +130,8 @@ class OGBMazeAdapter(SimulatorAdapter):
         pcg = env.np_random.bit_generator.state
         assert pcg["bit_generator"] == "PCG64"
         values = {
-            ("root", "position"): env.data.qpos.copy(),
-            ("root", "velocity"): env.data.qvel.copy(),
+            **_split(self._qpos, env.data.qpos),
+            **_split(self._qvel, env.data.qvel),
             ("simulator", "time"): [env.data.time],
             ("simulator", "warmstart"): env.data.qacc_warmstart.copy(),
             ("task", "goal_pos"): env.model.geom("target").pos.copy(),
@@ -105,19 +145,17 @@ class OGBMazeAdapter(SimulatorAdapter):
             ("rng", "global_has_gauss"): [has_gauss],
             ("rng", "global_cached_gaussian"): [cached],
         }
-        return {key: np.asarray(value, dtype=_NUMPY_DTYPES[OGB_MAZE_FIELDS[key][1]])
-                for key, value in values.items()}
+        return {key: np.asarray(value, dtype=_NUMPY_DTYPES[self.fields[key][1]]) for key, value in values.items()}
 
     def get_state(self):
         self._check_open()
-        return owned_columns((self._values(i, env) for i, env in enumerate(self.envs)),
-                             self.num_envs, self.device)
+        return owned_columns((self._values(i, env) for i, env in enumerate(self.envs)), self.num_envs, self.device)
 
     def validate(self, state):
         self._check_open()
         if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):
             raise TypeError("OGBMaze requires full TensorDict State with batch [num_envs]")
-        for key, (width, dtype) in OGB_MAZE_FIELDS.items():
+        for key, (width, dtype) in self.fields.items():
             if key not in state.keys(True, True):
                 raise ValueError(f"Full State missing {key}")
             value = state[key]
@@ -160,8 +198,8 @@ class OGBMazeAdapter(SimulatorAdapter):
             env.cur_goal_xy = row["task", "goal_pos"][:2].numpy().copy()
             env.cur_task_id = task_id or None
             env.cur_task_info = None if task_id == 0 else env.task_infos[task_id - 1]
-            env.data.qpos[:] = row["root", "position"].numpy()
-            env.data.qvel[:] = row["root", "velocity"].numpy()
+            env.data.qpos[:] = _join(self._qpos, row)
+            env.data.qvel[:] = _join(self._qvel, row)
             env.data.time = row["simulator", "time"].item()
             mujoco.mj_forward(env.model, env.data)
             env.data.qacc_warmstart[:] = row["simulator", "warmstart"].numpy()
@@ -174,8 +212,8 @@ class OGBMazeAdapter(SimulatorAdapter):
         if torch.is_tensor(actions):
             actions = actions.detach().cpu().numpy()
         actions = np.asarray(actions)
-        if actions.shape != (self.num_envs, 2) or not np.isfinite(actions).all():
-            raise ValueError("OGBMaze action must have finite shape (num_envs, 2)")
+        if actions.shape != (self.num_envs, self.action_dim) or not np.isfinite(actions).all():
+            raise ValueError(f"OGBMaze action must have finite shape (num_envs, {self.action_dim})")
         outputs = [
             self._in_legacy_rng(i, env.step, action) if active is None or active[i] else self._last_outputs[i]
             for i, (env, action) in enumerate(zip(self.envs, actions, strict=True))

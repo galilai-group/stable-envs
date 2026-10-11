@@ -162,14 +162,12 @@ def test_every_cell_reports_its_canonical_module():
 
 
 def test_a_maze_cell_is_a_declaration_and_overrides_no_renderer_method():
-    """Every cell preserves the renderer; only the recovered default adds simulator composition."""
+    """Every cell composes the simulator over the renderer; only point/large/navigate swaps the scene."""
     for cell in MAZE_CELLS:
         cls = R.REGISTRY[cell]
-        expected = (
-            (MAZE._HistoricalDefaultSemantics, MAZE.OGBenchMaze)
-            if cell == "PointMazeLargeNavigate"
-            else (MAZE.OGBenchMaze,)
-        )
+        expected = (MAZE.MazeSemantics, MAZE.OGBenchMaze)
+        if cell == "PointMazeLargeNavigate":
+            expected = (MAZE._StatesScene, *expected)
         assert cls.__bases__ == expected
         callables = [k for k, v in vars(cls).items() if callable(v) and not k.startswith("__")]
         assert not callables, f"{cell} defines {callables}; a cell is a declaration"
@@ -404,19 +402,15 @@ def test_the_private_projection_packs_back_to_the_frozen_row(_ogbench, cell):
 
 
 @pytest.mark.parametrize("cell", BODY_SAMPLE)
-def test_a_renderer_only_cell_refuses_step_and_transition_and_says_why(_ogbench, cell):
+def test_a_cell_steps_its_body_and_renders_the_qpos_projection(_ogbench, cell):
     with R.REGISTRY[cell](num_envs=2, device="cpu") as env:
-        assert env.has_dynamics is False
-        for call in (env.reset, env.get_state):
-            with pytest.raises(NotImplementedError, match="full simulator semantics"):
-                call()
-        env._set_render_state(env.sample_states(2, np.random.default_rng(0)))
-        with pytest.raises(NotImplementedError) as e:
-            env.step(torch.zeros(2, 1))
-        msg = str(e.value)
-        assert cell in msg and "full simulator semantics" in msg
-        assert "renders supplied states only" in msg
-        assert env._render().shape == (2, 224, 224, 3)
+        assert env.has_dynamics
+        state = env.reset(seed=3)
+        out = env.step(torch.zeros(2, env.action_dim), frames=None)
+        assert out["state"].batch_size == torch.Size([2])
+        rows = env._pack_render_state(state)
+        assert rows.shape == (2, len(MAZE.BODY_STATE[env.LOCO]))
+        assert torch.equal(env.render(state), env._render(rows))
 
 
 @pytest.mark.parametrize("cell", BODY_SAMPLE)

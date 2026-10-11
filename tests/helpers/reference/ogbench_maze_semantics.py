@@ -1,4 +1,6 @@
-"""Pinned historical OGBMaze oracle. Imports SWM itself, never the candidate adapter."""
+"""Pinned OGBMaze oracle over SWM's MazeEnv or the official ogbench registration.
+
+Imports the source itself, never the candidate adapter."""
 
 import numpy as np
 import torch
@@ -13,12 +15,64 @@ def _bytes_uint128(value: torch.Tensor) -> int:
     return int.from_bytes(value.numpy().tobytes(), "little")
 
 
-class OGBMazeReference:
-    def __init__(self, num_envs=1, seed=0, *, width=224, height=224):
-        from stable_worldmodel.envs.ogbench.maze_env import MazeEnv
+def _body(model, qpos, qvel):
+    """Split qpos/qvel at a leading free joint, as the public State names them."""
+    import mujoco
 
+    if int(model.jnt_type[0]) != int(mujoco.mjtJoint.mjJNT_FREE):
+        return {"root": {"position": qpos, "velocity": qvel}}
+    return {
+        "root": {"position": qpos[:3], "orientation": qpos[3:7], "velocity": qvel[:6]},
+        "joints": {"position": qpos[7:], "velocity": qvel[6:]},
+    }
+
+
+def _qpos_qvel(row):
+    if "orientation" not in row["root"].keys():
+        return row["root", "position"].numpy(), row["root", "velocity"].numpy()
+    qpos = np.concatenate([row["root", "position"], row["root", "orientation"], row["joints", "position"]])
+    return qpos, np.concatenate([row["root", "velocity"], row["joints", "velocity"]])
+
+
+class _Official:
+    """``gymnasium.make`` of the registered ogbench id, without its TimeLimit and checkers."""
+
+    def __init__(self, loco, maze, width, height):
+        import gymnasium
+        import ogbench  # noqa: F401
+
+        self.env = gymnasium.make(f"{loco}maze-{maze}-v0", width=width, height=height).unwrapped
+
+    def reset(self, **kwargs):
+        return self.env.reset(**kwargs)
+
+    def step(self, action):
+        ob, reward, terminated, truncated, info = self.env.step(action)
+        return ob, reward, terminated, truncated, {**info, "env_name": None}
+
+    def set_state(self, qpos, qvel):
+        self.env.set_state(qpos, qvel)
+
+    def close(self):
+        self.env.close()
+
+
+class OGBMazeReference:
+    def __init__(
+        self, num_envs=1, seed=0, *, width=224, height=224, loco="point", maze="large", source="swm", options=None
+    ):
         self.num_envs = int(num_envs)
-        self.envs = [MazeEnv(width=width, height=height) for _ in range(self.num_envs)]
+        self.options = options
+        if source == "swm":
+            from stable_worldmodel.envs.ogbench.maze_env import MazeEnv
+
+            self.envs = [
+                MazeEnv(loco_env_type=loco, maze_type=maze, width=width, height=height) for _ in range(self.num_envs)
+            ]
+            self.env_name = f"{loco.capitalize()}Maze"
+        else:
+            self.envs = [_Official(loco, maze, width, height) for _ in range(self.num_envs)]
+            self.env_name = None
         self._global_rng = [np.random.RandomState(int(seed) + i).get_state() for i in range(self.num_envs)]
 
     def _in_legacy_rng(self, lane, function, *args, **kwargs):
@@ -34,8 +88,16 @@ class OGBMazeReference:
         for i, wrapper in enumerate(self.envs):
             if seed is not None:
                 self._global_rng[i] = np.random.RandomState(int(seed) + i).get_state()
-            self._in_legacy_rng(i, wrapper.reset, seed=None if seed is None else int(seed) + i)
+            self._in_legacy_rng(
+                i, wrapper.reset, seed=None if seed is None else int(seed) + i, options=self._lane_options(i)
+            )
         return self.get_state()
+
+    def _lane_options(self, lane):
+        if self.options is None:
+            return None
+        values = self.options.get("variation_values", {})
+        return {**self.options, "variation_values": {k: np.asarray(v)[lane] for k, v in values.items()}}
 
     def get_state(self):
         rows = []
@@ -48,10 +110,11 @@ class OGBMazeReference:
             rows.append(
                 TensorDict(
                     {
-                        "root": {
-                            "position": torch.as_tensor(env.data.qpos.copy(), dtype=torch.float64),
-                            "velocity": torch.as_tensor(env.data.qvel.copy(), dtype=torch.float64),
-                        },
+                        **_body(
+                            env.model,
+                            torch.as_tensor(env.data.qpos.copy(), dtype=torch.float64),
+                            torch.as_tensor(env.data.qvel.copy(), dtype=torch.float64),
+                        ),
                         "simulator": {
                             "time": torch.tensor([env.data.time], dtype=torch.float64),
                             "warmstart": torch.as_tensor(env.data.qacc_warmstart.copy(), dtype=torch.float64),
@@ -86,7 +149,7 @@ class OGBMazeReference:
             task_id = row["task", "id"].item()
             env.cur_task_id = task_id or None
             env.cur_task_info = None if task_id == 0 else env.task_infos[task_id - 1]
-            wrapper.set_state(row["root", "position"].numpy(), row["root", "velocity"].numpy())
+            wrapper.set_state(*_qpos_qvel(row))
             env.data.time = row["simulator", "time"].item()
             mujoco.mj_forward(env.model, env.data)
             env.data.qacc_warmstart[:] = row["simulator", "warmstart"].numpy()
@@ -113,7 +176,7 @@ class OGBMazeReference:
             for i, (wrapper, action) in enumerate(zip(self.envs, actions, strict=True))
         ]
         infos = [o[4] for o in outputs]
-        assert all(info["env_name"] == "PointMaze" for info in infos)
+        assert all(info["env_name"] == self.env_name for info in infos)
         return TensorDict(
             {
                 "state": self.get_state(),

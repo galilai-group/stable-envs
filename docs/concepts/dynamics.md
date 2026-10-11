@@ -77,17 +77,18 @@ There is no `capture`, `transition`, `unroll`, `step_sequence`, or public
 `step`. Contributors implement the private `_step` kernel; terminating families
 also support an active-lane mask, without stepping and restoring inactive lanes.
 
-Large Fetch, supported DMC, classic Acrobot and the three accepted OGBench
-registrations on Linux use persistent simulation processes when at least
+Large Fetch, supported DMC, classic Acrobot and the OGBench registrations on
+Linux use persistent simulation processes when at least
 four CPU cores are available: batches of at least 64 use up to eight processes,
 with one simulation thread per process, respecting the allocated CPU affinity.
 Small batches, other platforms, and daemon workers retain the local execution
 path. Physics remains on CPU even with CUDA rendering. The enabled DMC tasks
 are Acrobot, Pendulum, Cartpole, Reacher, Cheetah, Hopper, Walker, Ball-in-Cup,
-Finger, Manipulator and Humanoid. The OGBench routes cover `swm/OGBMaze-v0`
-(`PointMazeLargeNavigate`), `swm/OGBCube-v0` (`OGBCube`) and `swm/OGBScene-v0`
-(`OGBScene`). Classic Acrobot is `swm/AcrobotControl-v1` (`Acrobot`). These are
-27 accepted registrations with process routing. The three navigation tasks keep
+Finger, Manipulator and Humanoid. The OGBench routes cover the 25 point, ant
+and humanoid maze cells (`PointMazeLargeNavigate` is the `swm/OGBMaze-v0`
+default), `swm/OGBCube-v0` (`OGBCube`) and `swm/OGBScene-v0` (`OGBScene`).
+Classic Acrobot is `swm/AcrobotControl-v1` (`Acrobot`). These are 51
+registrations with process routing. The three navigation tasks keep
 native Torch batching. Quadruped and the other four classic tasks retain local
 execution; process overhead is not assumed worthwhile for every simulator.
 

@@ -10,7 +10,8 @@ import stable_envs as se
 pytest.importorskip("ogbench")
 pytest.importorskip("stable_worldmodel")
 
-from tests.helpers.reference.gates.ogbench_maze import run_gate
+from stable_envs.envs.ogbench.maze import CELL_CLASSES  # noqa: E402
+from tests.helpers.reference.gates.ogbench_maze import cell_gate, run_gate  # noqa: E402
 
 
 def test_ogbench_maze_full_state_semantics():
@@ -22,3 +23,9 @@ def test_ogbench_maze_full_state_semantics():
     result = run_gate(os.environ.get("SE_OGBENCH_DEVICE", "cpu"))
     assert result["execution_mode"] == "DELEGATED_CPU"
     assert all(case.get("max_state_error", 0) == 0 for case in result["cases"])
+
+
+@pytest.mark.parametrize("cell", sorted(CELL_CLASSES))
+def test_every_maze_cell_matches_the_official_env(cell):
+    evidence = cell_gate(cell)
+    assert len(evidence["cases"]) >= 2

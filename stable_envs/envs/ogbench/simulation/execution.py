@@ -21,12 +21,15 @@ def make_maze_adapter(
     device: str | torch.device,
     seed: int,
     local_factory: Callable[..., _AdapterT],
+    *,
+    loco: str = "point",
+    maze: str = "large",
 ) -> _AdapterT | OGBMazeProcessAdapter:
     cpus = cpu_affinity()
     count = process_count(num_envs, cpus)
     if count:
-        return OGBMazeProcessAdapter(num_envs, device, seed, processes=count, cpus=cpus)
-    return local_factory(num_envs, device, seed)
+        return OGBMazeProcessAdapter(num_envs, device, seed, processes=count, cpus=cpus, loco=loco, maze=maze)
+    return local_factory(num_envs, device, seed, loco=loco, maze=maze)
 
 
 def make_manipulation_adapter(

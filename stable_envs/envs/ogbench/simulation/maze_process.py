@@ -18,13 +18,13 @@ def _path(key):
     return key if isinstance(key, tuple) else (key,)
 
 
-def _worker(conn, start, count, batch, seed, cpus, buffers, specs):
+def _worker(conn, start, count, batch, seed, cpus, buffers, specs, body):
     adapter, prepared = None, None
     try:
         if cpus is not None and hasattr(os, "sched_setaffinity"):
             os.sched_setaffinity(0, cpus)
         torch.set_num_threads(1)
-        adapter = OGBMazeAdapter(count, seed=seed + start)
+        adapter = OGBMazeAdapter(count, seed=seed + start, **body)
         views = buffer_views(buffers, specs, batch)
         rows = slice(start, start + count)
 
@@ -109,7 +109,7 @@ class OGBMazeProcessAdapter(ProcessRequests, SimulatorAdapter):
 
     _worker_family = "OGBench Maze"
 
-    def __init__(self, num_envs, device="cpu", seed=0, *, processes=8, cpus=None):
+    def __init__(self, num_envs, device="cpu", seed=0, *, processes=8, cpus=None, loco="point", maze="large"):
         if type(num_envs) is not int or num_envs < 1:
             raise ValueError("num_envs must be a positive integer")
         if type(processes) is not int or not 1 <= processes <= num_envs:
@@ -119,11 +119,13 @@ class OGBMazeProcessAdapter(ProcessRequests, SimulatorAdapter):
         self.num_envs, self.device = num_envs, torch.device(device)
         self._closed, self._pending = False, None
         self._connections, self._processes = [], []
-        prototype = OGBMazeAdapter(1, seed=int(seed))
+        body = dict(loco=loco, maze=maze)
+        prototype = OGBMazeAdapter(1, seed=int(seed), **body)
         try:
+            self.action_dim = prototype.action_dim
             state = prototype.get_state()
             self.fields = {key: (tuple(value.shape[1:]), value.dtype) for key, value in state.items(True, True)}
-            result = prototype.step(np.zeros((1, 2)))
+            result = prototype.step(np.zeros((1, self.action_dim)))
             self._specs = {
                 ("task", *_path(key)): (tuple(value.shape[1:]), value.numpy().dtype)
                 for key, value in result.exclude("state").items(True, True)
@@ -157,6 +159,7 @@ class OGBMazeProcessAdapter(ProcessRequests, SimulatorAdapter):
                         group,
                         self._buffers,
                         self._specs,
+                        body,
                     ),
                 )
                 try:
@@ -219,8 +222,8 @@ class OGBMazeProcessAdapter(ProcessRequests, SimulatorAdapter):
     def submit_step(self, actions, *, active=None, capture_state=True):
         self._check_idle()
         actions = actions.detach().cpu().numpy() if torch.is_tensor(actions) else np.asarray(actions)
-        if actions.shape != (self.num_envs, 2) or not np.isfinite(actions).all():
-            raise ValueError("OGBMaze action must have finite shape (num_envs, 2)")
+        if actions.shape != (self.num_envs, self.action_dim) or not np.isfinite(actions).all():
+            raise ValueError(f"OGBMaze action must have finite shape (num_envs, {self.action_dim})")
         if active is not None:
             active = active.detach().cpu().numpy() if torch.is_tensor(active) else np.asarray(active)
             if active.shape != (self.num_envs,) or active.dtype != np.bool_:

@@ -16,7 +16,7 @@ from ...render import raycast3d as R3
 from ...render.primitives import dot3
 from ...spaces import Box, Dict, Discrete
 from .simulation.execution import make_maze_adapter
-from .simulation.maze import OGB_MAZE_FIELDS, OGBMazeAdapter
+from .simulation.maze import BODIES, OGBMazeAdapter, maze_fields
 
 # Shading totals fitted on point-agent interiors, not baked floor pixels.
 SHADE_AMBIENT, SHADE_DIFFUSE, SHADE_SPECULAR, SHADE_EXPONENT = 0.078438, 1.416189, 0.230554, 45.0
@@ -409,9 +409,7 @@ def _scene_env(loco: str, maze: str, size: int, ob_type: str = "pixels"):
 class OGBenchMaze(Env):
     """Render OGBench maze bodies over cached source backgrounds.
 
-    Pixel-mode rows contain qpos; state-observation mode also carries the goal.
-    Only PointMazeLargeNavigate adds the full-State CPU simulator adapter.
-    The remaining registrations provide pose rendering without stepping."""
+    Pixel-mode rows contain qpos; state-observation mode also carries the goal."""
 
     family = "ogbench"
 
@@ -918,62 +916,60 @@ class OGBenchMaze(Env):
         return np.stack(out)
 
 
-class _HistoricalDefaultSemantics:
-    """Compose full-State CPU simulation for the registered point/large default.
+class MazeSemantics:
+    """Compose full-State CPU simulation of the source maze with state observations.
 
-    The source uses state observations, a checker floor and a visible goal.
-    CUDA selects output placement; simulation remains on CPU."""
+    CUDA selects output placement; simulation remains on CPU. The renderer projection
+    is qpos, followed by the goal when the scene draws it."""
 
-    # Pixel observations replace the XML checker with a position-encoding
-    # gradient. The registered simulator uses states, so its renderer must too.
-    RENDER_OB_TYPE = "states"
-    parity_note = (
-        "AGENT-PIXEL PARITY, state-observation scene (supersample 2, against MuJoCo 3.12.0 / ogbench 1.2.1 at "
-        "offsamples=4, 64 states, RTX A5000). This scene keeps the XML's white walls, global ambient light, the "
-        "goal disc and a torso spotlight that tracks the agent. The plate is baked without that spotlight; per "
-        "row its GL fixed-function contribution (cone, exponent, specular, and wall and agent shadows inside the "
-        "square shadow-map frustum) is added to static pixels, the agent's global-light shadow is removed from "
-        "them, and agent and goal are shaded as MuJoCo's separately byte-rounded light passes. Interior pixels "
-        "are 100% bit-identical; all pixels are 97.3% exact, mean 0.075/255. No interior pixel lies in the lit "
-        "floor disc, which is shaded per pixel and is off by 1/255 on part of it (83% of disagreeing pixels are "
-        "off by 1/255); Gouraud interpolation over MuJoCo's plane grid does not close that gap on the NVIDIA "
-        "driver. The rest is agent, goal-rim and one-pixel wall-face edges under the reference's multisampling "
-        "and sphere tessellation."
-    )
-    action_dim = 2
     action_dtype = torch.float32
     action_low, action_high = -1.0, 1.0
     execution_mode = "DELEGATED_CPU"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._simulator = make_maze_adapter(self.B, self.device, self._seed, OGBMazeAdapter)
-
-    def _layout(self):
-        return tuple(
-            (key, width, {("root", "position"): 0, ("task", "goal_pos"): 2}.get(key))
-            for key, (width, _) in OGB_MAZE_FIELDS.items()
+        self._simulator = make_maze_adapter(
+            self.B, self.device, self._seed, OGBMazeAdapter, loco=self.LOCO, maze=self.MAZE
         )
 
+    @property
+    def _qpos_fields(self):
+        return BODIES[self.LOCO][0]
+
+    def _draws_goal(self):
+        return getattr(self, "RENDER_OB_TYPE", "pixels") == "states"
+
+    def _layout(self):
+        offsets, start = {}, 0
+        for key, width in self._qpos_fields:
+            offsets[key] = start
+            start += width
+        if self._draws_goal():
+            offsets[("task", "goal_pos")] = start
+        return tuple((key, width, offsets.get(key)) for key, (width, _) in maze_fields(self.LOCO).items())
+
     def _layout_dtypes(self):
-        return {key: dtype for key, (_, dtype) in OGB_MAZE_FIELDS.items()}
+        return {key: dtype for key, (_, dtype) in maze_fields(self.LOCO).items()}
+
+    def _render_fields(self):
+        return self._qpos_fields + (((("task", "goal_pos"), 3),) if self._draws_goal() else ())
 
     def _pack_render_state(self, state):
         if not isinstance(state, TensorDict):
             raise TypeError("Expected full OGBMaze State")
-        return torch.cat([state["root", "position"], state["task", "goal_pos"]], dim=-1).to(self.device, torch.float32)
+        return torch.cat([state[key] for key, _ in self._render_fields()], dim=-1).to(self.device, torch.float32)
 
     def _unpack_render_state(self, rows):
-        rows = torch.as_tensor(rows, device=self.device).reshape(-1, 5)
-        return TensorDict(
-            {("root", "position"): rows[:, :2].clone(), ("task", "goal_pos"): rows[:, 2:5].clone()},
-            [len(rows)],
-            device=self.device,
-        )
+        rows = torch.as_tensor(rows, device=self.device).reshape(-1, self.state_dim)
+        out, start = {}, 0
+        for key, width in self._render_fields():
+            out[key] = rows[:, start : start + width].clone()
+            start += width
+        return TensorDict(out, [len(rows)], device=self.device)
 
-    def reset(self, seed=None):
+    def reset(self, seed=None, options=None):
         self._check_open("reset")
-        self.draw_reset_values(seed)
+        self.draw_reset_values(seed, options)
         return self._simulator.reset(seed)
 
     def get_state(self):
@@ -1001,23 +997,40 @@ class _HistoricalDefaultSemantics:
             self._simulator.close()
 
 
+class _StatesScene:
+    """Render the state-observation scene: checker floor, white walls and the goal disc."""
+
+    RENDER_OB_TYPE = "states"
+    parity_note = (
+        "AGENT-PIXEL PARITY, state-observation scene (supersample 2, against MuJoCo 3.12.0 / ogbench 1.2.1 at "
+        "offsamples=4, 64 states, RTX A5000). This scene keeps the XML's white walls, global ambient light, the "
+        "goal disc and a torso spotlight that tracks the agent. The plate is baked without that spotlight; per "
+        "row its GL fixed-function contribution (cone, exponent, specular, and wall and agent shadows inside the "
+        "square shadow-map frustum) is added to static pixels, the agent's global-light shadow is removed from "
+        "them, and agent and goal are shaded as MuJoCo's separately byte-rounded light passes. Interior pixels "
+        "are 100% bit-identical; all pixels are 97.3% exact, mean 0.075/255. No interior pixel lies in the lit "
+        "floor disc, which is shaded per pixel and is off by 1/255 on part of it (83% of disagreeing pixels are "
+        "off by 1/255); Gouraud interpolation over MuJoCo's plane grid does not close that gap on the NVIDIA "
+        "driver. The rest is agent, goal-rim and one-pixel wall-face edges under the reference's multisampling "
+        "and sphere tessellation."
+    )
+
+
 #: ``__module__`` is pinned to the package so ``stable_envs.envs.ogbench.<Cell>`` still resolves.
 #: Family identity is the explicit ``family = "ogbench"`` on :class:`OGBenchMaze`, not this path.
 _MODULE = "stable_envs.envs.ogbench"
 
 
 def _make_classes():
-    """Register dataset-specific names, adding simulation only for point/large/navigate."""
+    """Register dataset-specific names; point/large/navigate renders the state-observation scene."""
     made = {}
     aliases = {}
     for loco, maze, dataset in CELLS:
         old = f"{loco.capitalize()}maze{maze.capitalize()}{dataset.capitalize()}"
         cname = f"{loco.capitalize()}Maze{maze.capitalize()}{dataset.capitalize()}"
-        bases = (
-            (_HistoricalDefaultSemantics, OGBenchMaze)
-            if (loco, maze, dataset) == ("point", "large", "navigate")
-            else (OGBenchMaze,)
-        )
+        bases = (MazeSemantics, OGBenchMaze)
+        if (loco, maze, dataset) == ("point", "large", "navigate"):
+            bases = (_StatesScene, *bases)
         cls = register(
             type(
                 cname,
@@ -1025,6 +1038,7 @@ def _make_classes():
                 dict(
                     LOCO=loco,
                     MAZE=maze,
+                    action_dim=BODIES[loco][2],
                     __module__=_MODULE,
                     domain=f"{loco}maze",
                     name=f"{loco}maze-{maze}-{dataset}",

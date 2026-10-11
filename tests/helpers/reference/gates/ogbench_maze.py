@@ -29,6 +29,64 @@ def _np_state_equal(first, second):
     return first[0] == second[0] and np.array_equal(first[1], second[1]) and first[2:] == second[2:]
 
 
+def _plain_step(env, action):
+    return env.step(action, states=None, frames=None).exclude("valid")
+
+
+def _xy(state):
+    return state["root", "position"][:, :2].cpu().numpy()
+
+
+def cell_gate(cell, *, batch=2, seeds=(0, 17), steps=50, source="ogbench"):
+    """One registered maze cell against the official ogbench env with the same seeds and actions.
+
+    Covers seeded reset, a random-action rollout (State, reward, flags, observation, info),
+    a round trip through ``get_state``/``set_state`` into the same and a fresh env, and for
+    teleport mazes a step from every inbound teleport, which draws the outbound one from the
+    legacy global RNG that State carries.
+    """
+    cls = se.registry.REGISTRY[cell]
+    evidence = {"cell": cell, "source": source, "batch": batch, "cases": []}
+    ref = OGBMazeReference(batch, loco=cls.LOCO, maze=cls.MAZE, source=source)
+    try:
+        with se.make(cell, num_envs=batch, device="cpu") as env:
+            outside = np.random.get_state()
+            for seed in seeds:
+                check_reset_matches_reference(env, ref, seed=seed)
+                actions = np.random.default_rng(seed + 200).uniform(-1, 1, (steps, batch, cls.action_dim))
+                actions = actions.astype(np.float32)
+                rollout = check_step_matches_reference(env, ref, actions)
+                snapshot = env.get_state()
+                with se.make(cell, num_envs=batch, device="cpu", seed=seed + 991) as fresh:
+                    fresh.reset(seed=seed + 991)
+                    check_state_roundtrip(env, actions=actions[:3])
+                    history = check_two_histories_same_state(env, fresh, snapshot, -actions[:4])
+                    fresh.set_state(snapshot)
+                    compare_state(fresh.get_state(), snapshot)
+                assert _np_state_equal(outside, np.random.get_state())
+                evidence["cases"].append(
+                    dict(seed=seed, reset=True, steps=len(rollout), roundtrip=True, fresh_env_steps=len(history))
+                )
+            if cls.MAZE == "teleport":
+                inbound = ref.envs[0].env._teleport_info["teleport_in_xys"]
+                outbound = np.asarray(ref.envs[0].env._teleport_info["teleport_out_xys"])
+                for k, xy in enumerate(inbound):
+                    check_reset_matches_reference(env, ref, seed=40 + k)
+                    state = env.get_state()
+                    state["root", "position"][:, :2] = torch.as_tensor(xy, dtype=torch.float64)
+                    env.set_state(state)
+                    ref.set_state(state)
+                    zero = np.zeros((batch, cls.action_dim), np.float32)
+                    got = check_step_matches_reference(env, ref, zero[None])
+                    landed = _xy(env.get_state())
+                    nearest = np.linalg.norm(landed[:, None] - outbound[None], axis=-1).min(1)
+                    assert (nearest < 1.5).all(), (landed, outbound)
+                    evidence["cases"].append(dict(teleport_in=list(xy), landed=landed.tolist(), steps=len(got)))
+    finally:
+        ref.close()
+    return evidence
+
+
 def run_gate(device="cpu"):
     import stable_worldmodel
 
@@ -175,13 +233,16 @@ def run_gate(device="cpu"):
                 success_state["root", "velocity"].zero_()
                 env.set_state(success_state)
                 ref.set_state(success_state)
-                got, expected = env.step(np.zeros((batch, 2), np.float32), frames=None), ref.step(np.zeros((batch, 2), np.float32))
+                got, expected = (
+                    _plain_step(env, np.zeros((batch, 2), np.float32)),
+                    ref.step(np.zeros((batch, 2), np.float32)),
+                )
                 compare_state(got, expected)
                 assert (got["reward"] == 1).all() and got["success"].bool().all()
                 assert got["terminated"].all() and not got["truncated"].any()
                 # Termination is a returned boundary, not an implicit reset or a step prohibition.
                 got, expected = (
-                    env.step(np.full((batch, 2), 0.25, np.float32), frames=None),
+                    _plain_step(env, np.full((batch, 2), 0.25, np.float32)),
                     ref.step(np.full((batch, 2), 0.25, np.float32)),
                 )
                 compare_state(got, expected)
@@ -201,7 +262,7 @@ def run_gate(device="cpu"):
                 check_reset_matches_reference(env, ref, seed=5)
                 zeros = np.zeros((batch, 2), np.float32)
                 for _ in range(1001):
-                    got, expected = env.step(zeros, frames=None), ref.step(zeros)
+                    got, expected = _plain_step(env, zeros), ref.step(zeros)
                     compare_state(got, expected)
                     assert not got["terminated"].any() and not got["truncated"].any()
                 elapsed = env.get_state()["simulator", "time"]
