@@ -89,8 +89,8 @@ def affected(session: nox.Session) -> None:
 
 @nox.session
 def lint(session: nox.Session) -> None:
-    """pre-commit over the whole tree."""
-    session.run("uvx", "pre-commit", "run", "--all-files", *session.posargs, external=True)
+    """pre-commit over the whole tree, or over the given range: ``-- --from-ref A --to-ref B``."""
+    session.run("uvx", "pre-commit", "run", *(session.posargs or ["--all-files"]), external=True)
 
 
 @nox.session

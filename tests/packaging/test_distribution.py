@@ -16,11 +16,10 @@ yaml = pytest.importorskip("yaml")
 
 EXPECTED_AUTHORS = ["Randall Balestriero", "Sami BuGhanem"]
 WORKFLOWS = (
+    "ci.yml",
     "regression.yml",
     "docs.yml",
-    "pre-commit.yml",
     "release.yml",
-    "testing.yml",
     "extras-smoke.yml",
 )
 
@@ -50,9 +49,9 @@ def test_about_merges_integration_author_spelling() -> None:
 def test_requires_python_matches_the_ci_matrix() -> None:
     """Metadata and CI must tell the same story. 3.13+ is not claimed until a job runs there."""
     assert _pyproject()["project"]["requires-python"] == ">=3.10,<3.13"
-    testing = (ROOT / ".github" / "workflows" / "testing.yml").read_text()
-    assert '"3.10"' in testing and '"3.11"' in testing and '"3.12"' in testing
-    assert '"3.13"' not in testing
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text()
+    assert '"3.10"' in ci and '"3.11"' in ci and '"3.12"' in ci
+    assert '"3.13"' not in ci
 
 
 def test_core_dependencies_are_minimal() -> None:
@@ -138,11 +137,11 @@ def test_pre_commit_hygiene_excludes_only_frozen_artifacts() -> None:
 
 
 def test_lightweight_regression_and_macos_run_on_ordinary_ci() -> None:
-    testing = (ROOT / ".github" / "workflows" / "testing.yml").read_text()
-    assert "regression and not gpu" in testing
-    assert "STABLE_ENVS_CI_PROFILE: core" in testing
-    assert "macos-latest" in testing
-    assert "scripts/ci/smoke_macos.py" in testing
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text()
+    assert "macos-latest" in ci
+    assert "scripts/ci/smoke_macos.py" in ci
+    noxfile = (ROOT / "noxfile.py").read_text()
+    assert '"tests/regression"' in noxfile and "not gpu" in noxfile
     extras = (ROOT / ".github" / "workflows" / "extras-smoke.yml").read_text()
     assert "scripts/ci/smoke_extra.py" in extras
     assert "workflow_dispatch" in extras
@@ -156,10 +155,41 @@ def test_ordinary_ci_does_not_invoke_scratch() -> None:
         if path.suffix in {".yml", ".yaml"} and "scratch/" in path.read_text()
     ]
     assert hits == []
-    testing = (github / "workflows" / "testing.yml").read_text()
+    ci = (github / "workflows" / "ci.yml").read_text()
     release = (github / "workflows" / "release.yml").read_text()
-    assert "tests/packaging/test_distribution.py" in testing
-    assert "scripts/ci/audit_dist.py" in testing
-    assert "scripts/ci/smoke_installed.py" in testing
+    assert "tests/packaging/test_distribution.py" in ci
+    assert "scripts/ci/audit_dist.py" in ci
+    assert "scripts/ci/smoke_installed.py" in ci
     assert "scripts/ci/audit_dist.py" in release
     assert "scripts/ci/smoke_installed.py" in release
+
+
+def test_ci_ok_is_the_one_aggregate_of_every_gating_job() -> None:
+    """Branch protection requires only ci-ok, so a new matrix entry never needs a settings change."""
+    jobs = _workflow("ci.yml")["jobs"]
+    ok = jobs["ci-ok"]
+    assert ok["if"] == "always()"
+    assert set(ok["needs"]) == {"plan", "static", "core", "family", "docs", "package", "install"}
+    assert "re-actors/alls-green" in str(ok["steps"])
+    allowed = {name.strip() for name in ok["steps"][0]["with"]["allowed-skips"].split(",")}
+    assert {"static", "docs", "plan"}.isdisjoint(allowed)
+    assert "continue-on-error" in jobs["contrib"] and "contrib" not in ok["needs"]
+
+
+def test_pull_requests_test_affected_families_and_main_tests_all() -> None:
+    data = _workflow("ci.yml")
+    assert set(data["on"]) >= {"pull_request", "push", "workflow_dispatch"}
+    assert data["on"]["push"]["branches"] == ["main"]
+    plan = "\n".join(str(step) for step in data["jobs"]["plan"]["steps"])
+    assert "scripts/ci/plan.py" in plan
+    assert '"$EVENT" == push' in plan and "scope=all" in plan
+    family = data["jobs"]["family"]
+    assert family["strategy"]["matrix"] == "${{ fromJSON(needs.plan.outputs.families) }}"
+    assert "nox -s" in str(family["steps"]) and "CI" in str(family["steps"])
+
+
+def test_ordinary_ci_installs_from_the_lockfile() -> None:
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text()
+    assert 'UV_FROZEN: "1"' in ci and "uv lock --check" in ci
+    assert not (ROOT / ".github" / "workflows" / "testing.yml").exists()
+    assert not (ROOT / ".github" / "workflows" / "pre-commit.yml").exists()

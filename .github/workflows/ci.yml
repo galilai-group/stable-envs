@@ -1,0 +1,250 @@
+name: ci
+
+# Pull requests run the families their diff touches plus core (scripts/ci/plan.py); pushes to
+# main and manual runs test every family. ci-ok is the single required
+# check. GPU and live stable-worldmodel parity stay manual (regression.yml) for now.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  merge_group:
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: Profiles to test
+        type: choice
+        options: [all, affected]
+        default: all
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  UV_FROZEN: "1"
+  SE_SKIP_NODE_GATE: "1"
+  SDL_VIDEODRIVER: dummy
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      core: ${{ steps.plan.outputs.core }}
+      families: ${{ steps.plan.outputs.families }}
+      docs_only: ${{ steps.plan.outputs.docs_only }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
+      - id: plan
+        env:
+          EVENT: ${{ github.event_name }}
+          SCOPE: ${{ inputs.scope }}
+          FULL_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'ci:full') }}
+          BASE: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
+          HEAD: ${{ github.sha }}
+        run: |
+          scope=affected
+          if [[ "$EVENT" == push || "$EVENT" == merge_group ]]; then scope=all; fi
+          if [[ "$EVENT" == workflow_dispatch && "$SCOPE" != affected ]]; then scope=all; fi
+          if [[ "$FULL_LABEL" == true ]]; then scope=all; fi
+          uv run --no-project --python 3.12 scripts/ci/plan.py --scope "$scope" --base "$BASE" --head "$HEAD" >> "$GITHUB_OUTPUT"
+          cat "$GITHUB_OUTPUT"
+
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-suffix: static
+      # Pull requests are held to the hooks on the files they change; other runs check the tree.
+      - name: pre-commit
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [[ -n "$BASE" ]]; then
+            uvx nox -s lint -- --from-ref "$BASE" --to-ref HEAD
+          else
+            uvx nox -s lint
+          fi
+      - name: Lockfile matches pyproject.toml
+        run: uv lock --check
+      - name: Adapter interfaces
+        run: uvx nox -s typecheck
+      - name: Packaging and workflow contracts
+        run: .venvs/typecheck-py3.12/bin/python -m pytest tests/packaging/test_distribution.py -q
+
+  core:
+    needs: plan
+    if: needs.plan.outputs.core == 'true'
+    name: core (${{ matrix.os }}, Python ${{ matrix.python }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, python: "3.10" }
+          - { os: ubuntu-latest, python: "3.11" }
+          - { os: ubuntu-latest, python: "3.12" }
+          - { os: macos-latest, python: "3.12" }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-suffix: core-${{ matrix.os }}-${{ matrix.python }}
+      - name: Core tests
+        env:
+          CI: "1"
+          SE_PYTHON: ${{ matrix.python }}
+        run: uvx nox -s "test(core)" -- -q --junitxml=junit-core-${{ matrix.os }}-${{ matrix.python }}.xml
+      - name: device=auto smoke
+        if: matrix.os == 'macos-latest'
+        run: .venvs/core-py3.12/bin/python scripts/ci/smoke_macos.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-core-${{ matrix.os }}-${{ matrix.python }}
+          path: junit-*.xml
+
+  family:
+    needs: plan
+    if: needs.plan.outputs.families != '{"include":[]}' && needs.plan.outputs.families != ''
+    name: family (${{ matrix.profile }})
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.families) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Software OpenGL for CPU rendering
+        run: sudo apt-get update && sudo apt-get install -y libosmesa6-dev libgl1 libegl1
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-suffix: ${{ matrix.profile }}
+      - name: Family tests under the reference profile
+        env:
+          CI: "1"
+        run: uvx nox -s "test(${{ matrix.profile }})" -- -q --junitxml=junit-${{ matrix.profile }}.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-${{ matrix.profile }}
+          path: junit-*.xml
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-suffix: docs
+      - run: uvx nox -s docs
+
+  package:
+    name: build distributions
+    needs: plan
+    if: needs.plan.outputs.docs_only != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Build wheel and source distribution
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build twine
+          python -m build
+          python -m twine check dist/*
+          python scripts/ci/audit_dist.py dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: distributions
+          path: dist/
+          if-no-files-found: error
+
+  install:
+    name: install ${{ matrix.distribution }}
+    needs: package
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        distribution: [wheel, sdist]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/download-artifact@v4
+        with:
+          name: distributions
+          path: dist
+      - name: Install and smoke-test distribution
+        shell: bash
+        run: |
+          python -m venv .dist-venv
+          if [[ "${{ matrix.distribution }}" == "wheel" ]]; then
+            artifact=(dist/*.whl)
+          else
+            artifact=(dist/*.tar.gz)
+          fi
+          .dist-venv/bin/python -m pip install --upgrade pip
+          .dist-venv/bin/python -m pip install "${artifact[0]}"
+          .dist-venv/bin/python scripts/ci/smoke_installed.py
+
+  # contrib/ is not released; its CPU-installable requirements and its non-GPU tests.
+  # Reported without blocking: these ports are not released and already failed before the move.
+  contrib:
+    name: contrib (renderer-only ports, not released)
+    needs: plan
+    if: needs.plan.outputs.docs_only != 'true'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: System deps for Box2D
+        run: sudo apt-get update && sudo apt-get install -y swig
+      - name: Install contrib requirements
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+          python -m pip install \
+            -r contrib/requirements/box2d.txt \
+            -r contrib/requirements/crafter.txt \
+            -r contrib/requirements/highway.txt \
+            -r contrib/requirements/minigrid.txt \
+            -r contrib/requirements/mujoco-locomotion.txt \
+            -r contrib/requirements/sokoban.txt
+      - name: Run contrib tests
+        env:
+          MUJOCO_GL: osmesa
+        run: python -m pytest contrib/tests -m "not gpu" -q
+
+  # The only check branch protection requires. Jobs the plan skipped count as passing.
+  ci-ok:
+    if: always()
+    needs: [plan, static, core, family, docs, package, install]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: re-actors/alls-green@release/v1
+        with:
+          allowed-skips: core, family, package, install
+          jobs: ${{ toJSON(needs) }}
