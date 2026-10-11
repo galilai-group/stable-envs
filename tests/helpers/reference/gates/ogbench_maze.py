@@ -325,7 +325,7 @@ def _check_frames(case, frames, shift):
     assert shift is None or shift["least"] > frames["worst"], (case, frames, shift)
 
 
-def appearance_gate(case, cell="PointMazeLargeNavigate", *, seed=23, steps=20):
+def appearance_gate(case, cell="PointMazeLargeNavigate", *, seed=23, steps=20, device="cpu"):
     """One swm/OGBMaze-v0 appearance case against swm in the state scene, three lanes.
 
     swm recompiles the MJCF, so the same seed and per-lane ``variation_values`` must give the exact
@@ -335,7 +335,7 @@ def appearance_gate(case, cell="PointMazeLargeNavigate", *, seed=23, steps=20):
     cls = se.registry.REGISTRY[cell]
     values = STATE_CASES[case]
     options = {"variation_values": values} if values else None
-    with se.make(cell, num_envs=3, device="cpu") as env:
+    with se.make(cell, num_envs=3, device=device) as env:
         env.reset(seed=seed)
         default = env.render().cpu().numpy()
         ref = OGBMazeReference(3, loco=cls.LOCO, maze=cls.MAZE, source="swm", options=options)
@@ -360,7 +360,7 @@ def appearance_gate(case, cell="PointMazeLargeNavigate", *, seed=23, steps=20):
     )
 
 
-def pixel_appearance_gate(cell, case, *, seed=23):
+def pixel_appearance_gate(cell, case, *, seed=23, device="cpu"):
     """One appearance case in a pixel scene against swm's ``ob_type='pixels'`` env at its qpos.
 
     swm's own default reset applies ``floor.pixel_encoding=0`` (its init value), so every case
@@ -387,7 +387,7 @@ def pixel_appearance_gate(cell, case, *, seed=23):
         theirs.append(np.asarray(swm.render()))
     theirs = np.stack(theirs)
     rows = torch.as_tensor(np.stack(qpos), dtype=torch.float32)
-    with se.make(cell, num_envs=2, device="cpu") as env:
+    with se.make(cell, num_envs=2, device=device) as env:
         default = env._render(rows).cpu().numpy()
         env.reset(seed=seed, options={"variation_values": _ours(values, 2)})
         frames = _mse(env._render(rows).cpu().numpy(), theirs)
