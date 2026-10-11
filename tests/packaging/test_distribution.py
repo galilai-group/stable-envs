@@ -178,11 +178,11 @@ def test_ci_ok_is_the_one_aggregate_of_every_gating_job() -> None:
 
 def test_pull_requests_test_affected_families_and_main_tests_all() -> None:
     data = _workflow("ci.yml")
-    assert set(data["on"]) >= {"pull_request", "push", "workflow_dispatch"}
+    assert set(data["on"]) >= {"pull_request", "push", "schedule", "workflow_dispatch"}
     assert data["on"]["push"]["branches"] == ["main"]
     plan = "\n".join(str(step) for step in data["jobs"]["plan"]["steps"])
     assert "scripts/ci/plan.py" in plan
-    assert '"$EVENT" == push' in plan and "scope=all" in plan
+    assert '"$EVENT" == push || "$EVENT" == schedule' in plan and "scope=all" in plan
     family = data["jobs"]["family"]
     assert family["strategy"]["matrix"] == "${{ fromJSON(needs.plan.outputs.families) }}"
     assert "nox -s" in str(family["steps"]) and "CI" in str(family["steps"])
@@ -193,3 +193,12 @@ def test_ordinary_ci_installs_from_the_lockfile() -> None:
     assert 'UV_FROZEN: "1"' in ci and "uv lock --check" in ci
     assert not (ROOT / ".github" / "workflows" / "testing.yml").exists()
     assert not (ROOT / ".github" / "workflows" / "pre-commit.yml").exists()
+
+
+def test_a_red_full_run_opens_one_tracking_issue() -> None:
+    data = _workflow("ci.yml")
+    assert data["on"]["schedule"][0]["cron"]
+    report = data["jobs"]["report"]
+    assert report["needs"] == "ci-ok"
+    assert "failure()" in report["if"] and "push" in report["if"] and "schedule" in report["if"]
+    assert report["permissions"] == {"issues": "write"}

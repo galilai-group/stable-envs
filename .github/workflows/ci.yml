@@ -1,7 +1,7 @@
 name: ci
 
 # Pull requests run the families their diff touches plus core (scripts/ci/plan.py); pushes to
-# main and manual runs test every family. ci-ok is the single required
+# main, the nightly schedule and manual runs test every family. ci-ok is the single required
 # check. GPU and live stable-worldmodel parity stay manual (regression.yml) for now.
 on:
   pull_request:
@@ -9,6 +9,8 @@ on:
   push:
     branches: [main]
   merge_group:
+  schedule:
+    - cron: "23 5 * * *"
   workflow_dispatch:
     inputs:
       scope:
@@ -50,7 +52,7 @@ jobs:
           HEAD: ${{ github.sha }}
         run: |
           scope=affected
-          if [[ "$EVENT" == push || "$EVENT" == merge_group ]]; then scope=all; fi
+          if [[ "$EVENT" == push || "$EVENT" == schedule || "$EVENT" == merge_group ]]; then scope=all; fi
           if [[ "$EVENT" == workflow_dispatch && "$SCOPE" != affected ]]; then scope=all; fi
           if [[ "$FULL_LABEL" == true ]]; then scope=all; fi
           uv run --no-project --python 3.12 scripts/ci/plan.py --scope "$scope" --base "$BASE" --head "$HEAD" >> "$GITHUB_OUTPUT"
@@ -248,3 +250,27 @@ jobs:
         with:
           allowed-skips: core, family, package, install
           jobs: ${{ toJSON(needs) }}
+
+  # A red full run on main or the nightly schedule opens (or comments on) one tracking issue.
+  report:
+    needs: ci-ok
+    if: failure() && (github.event_name == 'push' || github.event_name == 'schedule')
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EVENT: ${{ github.event_name }}
+          SHA: ${{ github.sha }}
+        run: |
+          title="ci: main is red"
+          body="The $EVENT run on $SHA failed: $RUN"
+          number=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[0].number')
+          if [[ -n "$number" ]]; then
+            gh issue comment "$number" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body"
+          fi

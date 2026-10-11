@@ -73,6 +73,18 @@ Each guide separates local development tests from final promotion evidence.
 Construct with `num_envs=`. Concrete classes register by unique class name.
 Do not promote a registration from renderer parity or a sibling's passing task alone.
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every pull request, every push to `main` and nightly.
+`scripts/ci/plan.py` maps the diff to profiles through `ci/families.toml`: documentation alone
+runs the docs build; a shared path (core modules, conftests, `pyproject.toml`, `uv.lock`, CI
+files) selects every profile; otherwise the touched families plus `core`. The label `ci:full`
+forces every profile on a pull request. Pushes to `main`, the nightly run and manual runs test
+every profile. The only required check is `ci-ok`.
+
+A red run on `main` or the nightly opens or updates the issue "ci: main is red". Revert the
+offending change first unless a fix is merged within about two hours; the issue names the run.
+
 ## Pull requests
 
 - Do not relax a parity criterion or modify a frozen fixture to make a test pass. A proposed
