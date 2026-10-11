@@ -9,6 +9,8 @@ import torch
 import stable_envs as se
 from stable_envs.envs.fetch import opengl as fetch_opengl
 
+pytestmark = pytest.mark.egl
+
 
 @pytest.fixture(scope="module")
 def gl_device() -> str:

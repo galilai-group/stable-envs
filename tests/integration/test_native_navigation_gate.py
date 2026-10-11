@@ -1,6 +1,9 @@
+import pytest
+
 from tests.helpers.reference.gates.native_navigation import run_gate
 
 
+@pytest.mark.swm
 def test_native_navigation_cpu_gate():
     evidence = run_gate("cpu")
     assert len(evidence["cases"]) == 18

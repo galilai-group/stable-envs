@@ -47,8 +47,10 @@ pytest tests/ -v -rs                           # the same, if you already hold a
 A family this interpreter lacks (or holds at a version its code refuses) does not fail its tests:
 they are reported as skipped with the cause, and the run ends with a count of skips by cause. CI
 profile jobs set `SE_REQUIRE_FAMILIES` / `SE_REQUIRE_CAPABILITIES`, which turn that absence into an
-error. Mark a test that needs dm_control's OpenGL renderer `@pytest.mark.gl`, and a test that uses
-another family's environments `@pytest.mark.family("<name>")`.
+error. Mark a test that needs dm_control's OpenGL renderer `@pytest.mark.gl`, one that needs an EGL
+library `@pytest.mark.egl`, one that imports stable-worldmodel without `importorskip`
+`@pytest.mark.swm`, and a test that uses another family's environments
+`@pytest.mark.family("<name>")`.
 
 The full suite requires CUDA by design and skips loudly rather than going green without it. Run it
 through `tests._runner.supervisor` (which is what the sbatch scripts do): a segfault or

@@ -174,6 +174,7 @@ def test_variation_getter_tracks_reset_and_restore(pair):
         )
 
 
+@pytest.mark.swm
 @pytest.mark.parametrize("scalar_type", [float, np.float32, np.float64])
 def test_persistent_height_preserves_source_precision(pair, scalar_type):
     from stable_worldmodel.envs.rocket_landing.pyflyt_rocketlanding import RocketLandingEnv as Oracle

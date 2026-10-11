@@ -3,12 +3,14 @@
 A test belongs to one family: an explicit ``@pytest.mark.family("<name>")``, else the first family
 whose ``tests`` globs match its file name, else ``core``. A family whose ``requires`` are not
 installed at the stated versions is absent: its failures are reported as skips with that reason,
-and ``SE_REQUIRE_FAMILIES`` makes the absence a usage error. Capabilities (``gl``, ``swm``) are
+and ``SE_REQUIRE_FAMILIES`` makes the absence a usage error. Capabilities (``gl``, ``egl``, ``swm``) are
 probed once per process.
 """
 
 from __future__ import annotations
 
+import ctypes
+import ctypes.util
 import fnmatch
 import importlib.metadata
 import importlib.util
@@ -46,6 +48,7 @@ sys.exit(0 if _render.BACKEND not in (None, "off", "disable") else 1)
 
 CAPABILITIES = {
     "gl": "dm_control has no OpenGL rendering backend here",
+    "egl": "no EGL library is loadable here",
     "swm": "stable_worldmodel is not importable",
 }
 
@@ -92,6 +95,16 @@ def absent(family: str) -> str | None:
     return f"family {family} not installed ({'; '.join(missing)})"
 
 
+def _loads(library: str | None) -> bool:
+    if not library:
+        return False
+    try:
+        ctypes.CDLL(library)
+    except OSError:
+        return False
+    return True
+
+
 @cache
 def have(capability: str) -> bool:
     cached = os.environ.get(f"SE_CAPABILITY_{capability.upper()}")
@@ -99,6 +112,8 @@ def have(capability: str) -> bool:
         return cached == "1"
     if capability == "swm":
         ok = importlib.util.find_spec("stable_worldmodel") is not None
+    elif capability == "egl":
+        ok = _loads(ctypes.util.find_library("EGL"))
     elif capability == "gl":
         env = {**os.environ, "PYTHONPATH": os.pathsep.join(filter(None, [str(ROOT), os.environ.get("PYTHONPATH")]))}
         try:
