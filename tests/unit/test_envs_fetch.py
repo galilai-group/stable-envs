@@ -206,7 +206,7 @@ for name in ("FetchReach", "FetchPush"):
     corpus = np.load(f"{states_dir}/{name}.npz")["states"].astype(np.float32)[:6]
     env = legacy_class(name)(num_envs=6, device="cpu")
     env._set_render_state(corpus)
-    st = env.state
+    st = env._unpack_render_state(env._get_render_state())
     rec = {
         "num_envs": int(env.num_envs), "len": len(env),
         "state_keys": [".".join(k) if isinstance(k, tuple) else k for k in st.keys(True, True)],
@@ -224,11 +224,11 @@ for name in ("FetchReach", "FetchPush"):
         "plate_is_state_independent": True,
         "movers": np.asarray(env._b.movers, np.int64).tolist(),
         "mover_lut_sum": int(env._mover_lut().sum()),
-        "swm_doc": env.__doc__.split(" ")[1] if env.__doc__ else "",
+        "swm_doc": env.__doc__.split(":")[0] if env.__doc__ else "",
     }
-    for what in ("step", "transition"):
+    for what, call in (("step", lambda: env.step(None)), ("reset", env.reset), ("get_state", env.get_state)):
         try:
-            env.step(None) if what == "step" else env.transition(st, None)
+            call()
             rec[what] = None
         except (NotImplementedError, AttributeError) as e:
             rec[what] = str(e)
@@ -292,14 +292,13 @@ def test_num_envs_is_accepted(built):
         assert r["constructed_num_envs"] == 2
 
 
-def test_a_renderer_only_cell_refuses_step_and_transition_and_says_why(built):
-    """PushT has dynamics; Fetch does not, and the refusal says so rather than raising AttributeError."""
+def test_a_renderer_only_cell_refuses_simulation_and_says_why(built):
+    """The legacy renderer has no simulator, and the refusal says so rather than raising AttributeError."""
     for name, r in built.items():
         assert r["has_dynamics"] is False
-        for what in ("step", "transition"):
-            assert r[what] and "no batched simulator" in r[what], r[what]
-            assert "PushT has dynamics" in r[what]
-            assert "render() and" not in r[what]
+        for what in ("step", "reset", "get_state"):
+            assert r[what] and name in r[what] and "full simulator semantics" in r[what], r[what]
+            assert "renders supplied states only" in r[what]
 
 
 def test_close_is_idempotent_drops_the_instance_cache_and_then_refuses_to_render(built):
@@ -322,6 +321,6 @@ def test_the_plate_is_baked_and_the_mover_mask_still_covers_the_robot(built):
 
 
 def test_every_cell_names_its_swm_id_in_its_docstring(built):
-    """``scripts/regression/swm_matrix.py``'s declared_docstring rung reads exactly this."""
+    """The docstring opens with the gymnasium-robotics id the cell reproduces."""
     for name, r in built.items():
-        assert r["swm_doc"].startswith("Fetch") or r["swm_doc"].endswith("-v4"), r["swm_doc"]
+        assert r["swm_doc"] == f"{name}-v4", r["swm_doc"]
