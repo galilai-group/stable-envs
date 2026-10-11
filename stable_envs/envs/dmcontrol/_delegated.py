@@ -94,6 +94,19 @@ class DelegatedSemantics:
             offset += width
         return TensorDict(values, [len(rows)], device=self.device)
 
+    def render(self, state=None, **kwargs):
+        """A State's own physics values draw the leaves that move pixels, unless the call names them."""
+        state = self.get_state() if state is None else state
+        if "style" not in kwargs and isinstance(state, TensorDict):
+            keys = set(state.keys(True, True))
+            variation = dict(kwargs.pop("variation", None) or {})
+            for leaf in self.FRAME_PHYSICS:
+                key = ("physics", *leaf.split("."))
+                if key in keys:
+                    variation.setdefault(leaf, state[key].to(torch.float32))
+            kwargs["variation"] = variation or None
+        return super().render(state, **kwargs)
+
     def reset(self, seed=None, options=None):
         self._check_open("reset")
         self.draw_reset_values(seed, options)
