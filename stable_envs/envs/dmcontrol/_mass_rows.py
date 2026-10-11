@@ -52,35 +52,59 @@ class MassRows:
         self.xmat0 = np.array(data.xmat, np.float64).reshape(nbody, 3, 3)
         self.cam_body = np.array(model.cam_bodyid, np.int64)
         self.light_body = np.array(model.light_bodyid, np.int64)
+        self._device: dict = {}
+
+    def _constants(self, device) -> dict[str, torch.Tensor]:
+        hit = self._device.get(str(device))
+        if hit is None:
+            t = lambda x: torch.as_tensor(x, device=device, dtype=torch.float64)  # noqa: E731
+            hit = {name: t(value) for name, value in self.nominal.items()}
+            hit.update(
+                leaf_nominal=t(self.leaf_nominal),
+                leaf_nominal32=t(self.leaf_nominal).to(torch.float32),
+                part_mass=t(self.part_mass),
+                part_moment=t(self.part_moment),
+                unscaled=t(self.unscaled),
+                ancestor=t(self.ancestor),
+                xpos0=t(self.xpos0),
+                xmat0=t(self.xmat0),
+            )
+            hit["com0"] = self._com0(
+                hit, hit["body_mass"][None], hit["body_ipos"][None], hit["body_subtreemass"][None]
+            )
+            self._device[str(device)] = hit
+        return hit
+
+    def registered(self, values: torch.Tensor) -> bool:
+        """Whether every row holds the registered value of every leaf."""
+        return bool((values == self._constants(values.device)["leaf_nominal32"]).all())
 
     def __call__(self, values: torch.Tensor) -> dict[str, torch.Tensor]:
         """``values`` is ``(B, len(paths))``; return float64 rows for every name in ``ARRAYS``."""
-        t = lambda x: torch.as_tensor(x, device=values.device, dtype=torch.float64)  # noqa: E731
-        s = values.to(torch.float64) / t(self.leaf_nominal) - 1.0
-        mass0, ipos0 = t(self.nominal["body_mass"]), t(self.nominal["body_ipos"])
-        mass = mass0 + s @ t(self.part_mass)
-        moment = mass0[:, None] * ipos0 + torch.einsum("bp,pnk->bnk", s, t(self.part_moment))
+        c = self._constants(values.device)
+        s = values.to(torch.float64) / c["leaf_nominal"] - 1.0
+        mass0, ipos0 = c["body_mass"], c["body_ipos"]
+        mass = mass0 + s @ c["part_mass"]
+        moment = mass0[:, None] * ipos0 + torch.einsum("bp,pnk->bnk", s, c["part_moment"])
         ipos = torch.where(mass[..., None] > 0, moment / mass.clamp_min(1e-300)[..., None], ipos0)
         if self.unscaled_total is not None:
             total = self.unscaled_total
-            mass = mass * (total / (total + s @ t(self.unscaled)))[:, None]
-        ancestor = t(self.ancestor)
-        subtree = mass @ ancestor.T
-        base = self._com0(mass0[None], ipos0[None], t(self.nominal["body_subtreemass"])[None], ancestor)
-        shift = base - self._com0(mass, ipos, subtree, ancestor)
+            mass = mass * (total / (total + s @ c["unscaled"]))[:, None]
+        subtree = mass @ c["ancestor"].T
+        shift = c["com0"] - self._com0(c, mass, ipos, subtree)
         return {
             "body_mass": mass,
             "body_ipos": ipos,
             "body_subtreemass": subtree,
-            "cam_poscom0": t(self.nominal["cam_poscom0"]) + shift[:, self.cam_body],
-            "light_poscom0": t(self.nominal["light_poscom0"]) + shift[:, self.light_body],
+            "cam_poscom0": c["cam_poscom0"] + shift[:, self.cam_body],
+            "light_poscom0": c["light_poscom0"] + shift[:, self.light_body],
         }
 
-    def _com0(self, mass, ipos, subtree, ancestor):
+    @staticmethod
+    def _com0(c, mass, ipos, subtree):
         """Subtree centres of mass at qpos0, ``(B, nbody, 3)``."""
-        t = lambda x: torch.as_tensor(x, device=mass.device, dtype=torch.float64)  # noqa: E731
-        xipos = t(self.xpos0) + torch.einsum("nij,bnj->bni", t(self.xmat0), ipos)
-        weighted = torch.einsum("cn,bnk->bck", ancestor, mass[..., None] * xipos)
+        xipos = c["xpos0"] + torch.einsum("nij,bnj->bni", c["xmat0"], ipos)
+        weighted = torch.einsum("cn,bnk->bck", c["ancestor"], mass[..., None] * xipos)
         return weighted / subtree.clamp_min(1e-300)[..., None]
 
     def restore(self, model) -> None:

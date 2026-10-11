@@ -48,7 +48,7 @@ def test_gpu_batch_capacity_and_per_row_style(name: str, fixture: str, size: int
     states = _saved_states(fixture)
     with se.make(name, num_envs=1, size=size, device="cuda") as env:
         # The corpus predates State physics fields; it was recorded at the registered physics.
-        layout = env.physics_layout
+        layout = env._physics_layout()
         for leaf, offset, width in zip(layout.leaves, layout.offsets, layout.widths, strict=True):
             value = torch.tensor(layout.nominal[offset : offset + width], dtype=torch.float64, device="cuda")
             states[("physics", *leaf.split("."))] = value.expand(len(states), width).clone()

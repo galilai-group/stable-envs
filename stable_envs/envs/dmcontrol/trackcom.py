@@ -17,7 +17,20 @@ from .base import _DMCModel
 class _TCtx:
     """Hold a captured MJWarp render graph and the per-world arrays it reads and writes."""
 
-    __slots__ = ("wm", "wd", "rc", "bgra", "graph", "nworld", "res", "wp", "mjw", "textures", "reflection")
+    __slots__ = (
+        "wm",
+        "wd",
+        "rc",
+        "bgra",
+        "graph",
+        "nworld",
+        "res",
+        "wp",
+        "mjw",
+        "textures",
+        "reflection",
+        "masses_varied",
+    )
 
 
 def _sky_plate(cls, size: int) -> np.ndarray:
@@ -76,6 +89,7 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
     c.wm = mjw.put_model(m, batch_sizes={k: int(nworld) for k in batched})
     c.wd = mjw.put_data(m, d0, nworld=int(nworld))
     c.textures = c.reflection = None
+    c.masses_varied = False
     # Keep GL-style rounding active during source generation and first compilation,
     # including the warm-up render.
     with MW.gl_rounding():
@@ -207,10 +221,12 @@ class DMControlTrackCom(_DMCModel):
         return frozenset(rows.paths) if rows else frozenset()
 
     def _row_masses(self, sty, lo: int, hi: int):
+        """Per-row mass arrays, or None when every row draws the compiled model's masses."""
         rows = self._mass_rows()
         if rows is None:
             return None
-        return rows(torch.cat([sty[p][lo:hi].reshape(hi - lo, 1) for p in rows.paths], 1))
+        values = torch.cat([sty[p][lo:hi].reshape(hi - lo, 1) for p in rows.paths], 1)
+        return None if rows.registered(values) else rows(values)
 
     @classmethod
     def _used_materials(cls) -> list[str]:
@@ -429,6 +445,12 @@ class DMControlTrackCom(_DMCModel):
         if masses is not None:
             for name, value in masses.items():
                 wp.to_torch(getattr(c.wm, name))[:n] = value.to(torch.float32)
+            c.masses_varied = True
+        elif c.masses_varied:
+            for name, value in self._mass_rows()._constants(self.device).items():
+                if name in _MASS_ARRAYS:
+                    wp.to_torch(getattr(c.wm, name))[:] = value.to(torch.float32)
+            c.masses_varied = False
         m, pr = self._model(), self._pristine()
         mr = wp.to_torch(c.wm.mat_rgba)
         for name in self._used_materials():

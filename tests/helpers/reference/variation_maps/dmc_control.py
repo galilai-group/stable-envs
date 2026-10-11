@@ -365,13 +365,17 @@ _INERT = {
 _TRACKCOM_MASS = (
     _PHYSICS_MAPPED + '. This cell renders through a mode="trackcom" camera whose position comes from '
     "subtree_com, so the mass also moves the camera: the renderer derives each row's body masses, "
-    "centres of mass and subtree masses from the leaf with the same arithmetic as the simulator, and "
-    "uploads them per world"
+    "centres of mass, subtree masses and the cameras' qpos0 offsets from the leaf with the same "
+    "arithmetic as the simulator, and uploads them per world. Gated by tests/integration/test_dmc_appearance_variation.py against swm's own frames over 8 steps at 550 and 1450: the residual stays at the "
+    "cell's registered-default residual (walker torso: normalized MSE 0.00039, as at the default, "
+    "against 0.022 with the leaf ignored)"
 )
 
 _CATENARY = (
     _PHYSICS_MAPPED + ". The cup-ball tendon is drawn as a catenary hanging along gravity, so x and y "
-    "move pixels at a fixed state; the renderer evaluates each row's catenary under that row's gravity"
+    "move pixels at a fixed state; the renderer evaluates each row's catenary under that row's gravity. "
+    "Gated by tests/integration/test_dmc_appearance_variation.py: gravity.x = 2.5 renders at normalized MSE 0.00026 against swm's "
+    "frames (0.00025 at the default, 0.00036 with the leaf ignored)"
 )
 
 
@@ -492,7 +496,9 @@ _SHAPE_NOTE = (
     "MAPPED at both alternatives: SHAPE_KNOBS declares swm's box and sphere at the task's target size, "
     "and the sphere is the compiled model's own, so the default style stays a render of it. Visible only "
     "with rendering.render_target = 1, which swm's registered default is not. The task reads only the "
-    "target's first size, which both alternatives share, so the shape never reaches the dynamics."
+    "target's first size, which both alternatives share, so the shape never reaches the dynamics. "
+    "Normalized MSE against swm's frames with the box drawn: finger 0.00032, reacher 0.00025 (defaults "
+    "0.00026 and 0.00016; 0.0011 and 0.00072 with the leaf ignored)."
 )
 
 _DMC_MAPS = {
@@ -532,7 +538,8 @@ _DMC_MAPS = {
             **{f"gravity.{a}": _CATENARY for a in "xyz"},
             "ball.size": _PHYSICS_MAPPED + ". The radius is geometry as well: the ball's size, collision "
             "bounds, mass (its density times the new volume) and inertia follow it in the simulator, and "
-            "the renderer draws each row's ball at that row's radius",
+            "the renderer draws each row's ball at that row's radius: normalized MSE 0.00026 against swm's "
+            "frames at 0.04 (0.00079 with the leaf ignored)",
         },
         ours_only={**_GRID_OURS, **_FOVY_OURS, **_EFFECTOR_OURS},
     ),
@@ -552,7 +559,9 @@ _DMC_MAPS = {
         physics_mapped=("agent.fingertip_density", "agent.proximal_density", "spinner.density", "spinner.friction"),
         notes={
             "spinner.color": "MAPPED: the leaf writes cap1's and cap2's explicit rgba, as swm's does, so the "
-            "spinner stops following material.self exactly where swm's stops following agent.color.",
+            "spinner stops following material.self exactly where swm's stops following agent.color. "
+            "Normalized MSE 0.00026 against swm's frames, the default's own residual (0.0064 with the "
+            "leaf ignored).",
             "target.shape": _SHAPE_NOTE,
         },
         ours_only={**_GRID_OURS, **_FOVY_OURS, **_DECOR_OURS, **_EFFECTOR_OURS},

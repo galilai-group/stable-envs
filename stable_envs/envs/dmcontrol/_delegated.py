@@ -102,8 +102,13 @@ class DelegatedSemantics:
             variation = dict(kwargs.pop("variation", None) or {})
             for leaf in self.FRAME_PHYSICS:
                 key = ("physics", *leaf.split("."))
-                if key in keys:
-                    variation.setdefault(leaf, state[key].to(torch.float32))
+                if key not in keys or leaf in variation:
+                    continue
+                value = state[key].to(device=self.device, dtype=torch.float32)
+                current = self._style[leaf]
+                # The live style already draws a State this env produced; skip the per-call override.
+                if value.shape != current.shape or not torch.equal(value, current):
+                    variation[leaf] = value
             kwargs["variation"] = variation or None
         return super().render(state, **kwargs)
 
