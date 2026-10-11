@@ -73,6 +73,23 @@ FULL_KEYS = {
     ]
     + RNG_KEYS,
 }
+PHYSICS = {
+    "CartPole": ("gravity", "masscart", "masspole", "length", "force_mag", "tau"),
+    "Pendulum": ("g", "m", "l", "max_torque", "max_speed", "dt"),
+    "Acrobot": (
+        "link_length_1",
+        "link_length_2",
+        "link_mass_1",
+        "link_mass_2",
+        "link_com_pos_1",
+        "link_com_pos_2",
+        "link_moi",
+    ),
+    "MountainCar": ("gravity", "force", "max_speed"),
+    "MountainCarContinuous": ("power", "max_speed"),
+}
+for _name, _leaves in PHYSICS.items():
+    FULL_KEYS[_name] = FULL_KEYS[_name] + [("physics", leaf) for leaf in _leaves]
 
 
 def _initialize(env, name, seed):
