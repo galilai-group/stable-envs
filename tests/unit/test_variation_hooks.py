@@ -243,8 +243,8 @@ def test_reset_leaves_take_one_value_per_lane_and_follow_the_rule():
         with pytest.raises(ValueError, match="per lane"):
             env.reset(options={"variation_values": {"agent.position": np.zeros((3, 2))}})
     with se.make("SimplePointMaze", num_envs=2, device="cpu") as env:
-        with pytest.raises(NotImplementedError, match="goal.position"):
-            env.reset(options={"variation": ["goal.position"]})
+        goals = env.reset(seed=4, options={"variation": ["goal.position"]})["goal", "position"].numpy()
+        assert len({tuple(row) for row in goals.tolist()} - {(4.5, 4.5)}) == 2
         state = env.reset(seed=4, options={"variation": [], "variation_values": {"goal.position": [2.5, 1.5]}})
         np.testing.assert_array_equal(state["goal", "position"].numpy(), [[2.5, 1.5]] * 2)
 

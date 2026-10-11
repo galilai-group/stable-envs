@@ -276,53 +276,93 @@ _TWOROOM_STRUCTURE = (
 )
 _TWOROOM_SWM_ONLY = {
     "agent.position": "this is our STATE, not our style — see state_names",
-    "task.min_steps": "a task definition, not an appearance; changes no pixel",
     "wall.border_color": "declared by TwoRoomEnv and read by nothing (measured: 0/255 diff)",
     "rendering.render_target": "selects TwoRoom vs TwoRoomTarget, which are separate classes",
     "target.color": "drawn only when render_target is on; see TwoRoomTarget",
     "target.radius": "drawn only when render_target is on; see TwoRoomTarget",
     "target.position": "TwoRoomTarget carries it in the STATE, because the frame reads it",
 }
+#: Read by nothing in SWM: TwoRoom's ``_constrain_target_by_min_steps`` is commented out as the
+#: target leaf's ``constrain_fn`` and Piecewise has no reader at all.
+_MIN_STEPS_DEAD = {
+    "task.min_steps": "dead upstream, measured by variation_navigation.min_steps_probe: min_steps 15 "
+    "and 114 against the default 25, 5 seeds x (reset + 8 steps) on TwoRoom and Piecewise, give "
+    "identical State and 0 of 4,515,840 px moved per env",
+}
 _PIECEWISE_SWM_ONLY = {
     "agent.position": "this is our STATE, not our style",
-    "task.min_steps": "a task definition; changes no pixel",
-    "target.color": "drawn only when render_target is on, which this port does not reproduce",
-    "target.radius": "drawn only when render_target is on",
-    "target.position": "drawn only when render_target is on",
-    "rendering.render_target": "not reproduced; see the swm_nav module docstring",
+    "target.color": "drawn only when render_target is on; see Piecewise",
+    "target.radius": "drawn only when render_target is on; see Piecewise",
+    "target.position": "Piecewise carries it in the STATE",
+    "rendering.render_target": "drawn by Piecewise, which carries the target in its State",
     "rendering.render_zones": "selects Piecewise vs PiecewiseZones, which are separate classes",
-    "rendering.render_bias_field": "rasterises a matplotlib quiver; not reproduced, see swm_nav",
 }
+_PIECEWISE_GATE = (
+    "gated by tests/integration/test_variation_navigation.py against swm: reset State, rollout State and frames"
+)
 
 #: our class name -> how its appearance relates to the official swm env's
 VARIATION_MAPS: dict[str, VariationMap] = {
-    # ``agent.position`` is a per-lane reset distribution (``Env.reset_leaves``) that lands in State,
-    # not a style column; tests/integration/test_variation_pilots.py gates it against swm.
+    # ``agent.position`` and ``target.position`` are per-lane reset distributions (``Env.reset_leaves``)
+    # that land in State, not style columns; tests/integration/test_variation_pilots.py and
+    # test_variation_navigation.py gate them against swm.
     "TwoRoom": VariationMap(
         swm_id="swm/TwoRoom-v1",
-        identical=("agent.color", "agent.radius", "agent.speed", "agent.position") + _TWOROOM_STRUCTURE,
-        swm_only={k: v for k, v in _TWOROOM_SWM_ONLY.items() if k != "agent.position"},
+        identical=("agent.color", "agent.radius", "agent.speed", "agent.position", "target.position")
+        + _TWOROOM_STRUCTURE,
+        swm_only={k: v for k, v in _TWOROOM_SWM_ONLY.items() if k not in ("agent.position", "target.position")},
+        dead_upstream=_MIN_STEPS_DEAD,
     ),
     "TwoRoomTarget": VariationMap(
         swm_id="swm/TwoRoom-v1",
         identical=("agent.color", "agent.radius", "agent.speed", "target.color", "target.radius") + _TWOROOM_STRUCTURE,
         swm_only={k: v for k, v in _TWOROOM_SWM_ONLY.items() if k not in ("target.color", "target.radius")},
+        dead_upstream=_MIN_STEPS_DEAD,
     ),
     "Piecewise": VariationMap(
         swm_id="swm/Piecewise-v0",
-        identical=("agent.color", "agent.radius", "agent.speed", "background.color", "border.color")
+        identical=(
+            "agent.color",
+            "agent.radius",
+            "agent.speed",
+            "agent.position",
+            "background.color",
+            "border.color",
+            "target.color",
+            "target.radius",
+            "target.position",
+            "rendering.render_target",
+            "rendering.render_bias_field",
+        )
         + tuple(f"zones.bias_{i}" for i in range(4)),
         swm_only={
-            **_PIECEWISE_SWM_ONLY,
+            "rendering.render_zones": _PIECEWISE_SWM_ONLY["rendering.render_zones"],
             **{f"zones.color_{i}": "drawn only with render_zones; see PiecewiseZones" for i in range(4)},
+        },
+        dead_upstream=_MIN_STEPS_DEAD,
+        notes={
+            "agent.position": "a per-lane reset leaf in State; " + _PIECEWISE_GATE,
+            "target.position": "a per-lane reset leaf in State; " + _PIECEWISE_GATE,
+            "rendering.render_target": "the target is drawn from the full State's hidden target; "
+            "compact rows alone cannot draw it. " + _PIECEWISE_GATE,
+            "rendering.render_bias_field": "the arrows are rasterised by the same Matplotlib Agg quiver "
+            "as swm, so their pixels are exact only at the same Matplotlib version. " + _PIECEWISE_GATE,
         },
     ),
     "PiecewiseZones": VariationMap(
         swm_id="swm/Piecewise-v0",
-        identical=("agent.color", "agent.radius", "agent.speed", "background.color", "border.color")
+        identical=(
+            "agent.color",
+            "agent.radius",
+            "agent.speed",
+            "background.color",
+            "border.color",
+            "rendering.render_bias_field",
+        )
         + tuple(f"zones.color_{i}" for i in range(4))
         + tuple(f"zones.bias_{i}" for i in range(4)),
         swm_only=_PIECEWISE_SWM_ONLY,
+        dead_upstream=_MIN_STEPS_DEAD,
     ),
     "PushT": VariationMap(
         swm_id="swm/PushT-v1",

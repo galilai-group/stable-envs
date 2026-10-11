@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import torch
 from gymnasium import spaces as gym_spaces
@@ -82,6 +84,65 @@ def _zone_map(device) -> torch.Tensor:
             x1 = BORDER + int((col + 1) * play / GRID_N)
             z[y0:y1, x0:x1] = row * GRID_N + col
     return z
+
+
+def _bias_field_rgba(biases) -> np.ndarray:
+    """Draw the per-zone bias arrows as uint8 RGBA ``(H, W, 4)`` with Matplotlib Agg.
+
+    The reference rasterises a quiver plot, so the arrows are reproduced by the same
+    rasteriser rather than approximated by primitives.
+    """
+    try:
+        from matplotlib.backends.backend_agg import FigureCanvasAgg
+        from matplotlib.figure import Figure
+    except ImportError as exc:
+        raise ImportError("Piecewise rendering.render_bias_field requires matplotlib") from exc
+
+    samples = 3
+    play = IMG - 2 * BORDER
+    xs, ys, us, vs = [], [], [], []
+    for row in range(GRID_N):
+        for col in range(GRID_N):
+            bx, by = (float(v) for v in biases[row * GRID_N + col])
+            y_lo, y_hi = BORDER + row * play / GRID_N, BORDER + (row + 1) * play / GRID_N
+            x_lo, x_hi = BORDER + col * play / GRID_N, BORDER + (col + 1) * play / GRID_N
+            for si in range(samples):
+                for sj in range(samples):
+                    xs.append(x_lo + (sj + 0.5) * (x_hi - x_lo) / samples)
+                    ys.append(y_lo + (si + 0.5) * (y_hi - y_lo) / samples)
+                    us.append(bx)
+                    vs.append(by)
+    dpi = 100
+    fig = Figure(figsize=(IMG / dpi, IMG / dpi), dpi=dpi)
+    canvas = FigureCanvasAgg(fig)
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.set_xlim(0, IMG)
+    ax.set_ylim(IMG, 0)
+    ax.axis("off")
+    fig.patch.set_alpha(0.0)
+    ax.patch.set_alpha(0.0)
+    scale = 5.0 * math.sqrt(2) / (play / GRID_N * 0.15)
+    ax.quiver(
+        xs,
+        ys,
+        us,
+        vs,
+        color="#111111",
+        alpha=0.85,
+        scale=scale,
+        scale_units="xy",
+        angles="xy",
+        width=0.006,
+        headwidth=4,
+        headlength=4,
+        headaxislength=3.5,
+        minlength=0.5,
+    )
+    canvas.draw()
+    buf, (w, h) = canvas.print_to_buffer()
+    rgba = np.frombuffer(buf, dtype=np.uint8).reshape(h, w, 4).copy()
+    fig.clear()
+    return rgba
 
 
 def _u(env):
@@ -916,12 +977,60 @@ class _PiecewiseBase(_TorchNavBase):
         {"agent.speed", "agent.radius", *(f"zones.bias_{i}" for i in range(N_ZONES))}
     )
 
+    #: Discrete rendering flags that need the layered compositing path when any lane sets them.
+    layer_flags: tuple[str, ...] = ("rendering.render_bias_field",)
+    _layered = False
+    _FIELD_CACHE = _RES.BoundedCache(16, name="navigation.bias_field")
+
     def _common_space(self) -> dict:
         return {
             "agent": Dict(self._agent_space()),
             "background": Dict({"color": RGBBox(init_value=BG_C)}),
             "border": Dict({"color": RGBBox(init_value=BORDER_C)}),
+            "rendering": Dict({flag.split(".")[1]: Discrete(2, init_value=0) for flag in self.layer_flags}),
         }
+
+    def _configure_variation(self, exact=None) -> None:
+        super()._configure_variation(exact)
+        self._layered = any(bool((self._style[flag] > 0.5).any()) for flag in self.layer_flags)
+
+    def _render_chunk(self, s, sty, lo: int, hi: int) -> torch.Tensor:
+        # The installed Variation's flags are cached on the host, so the default path never synchronises.
+        if sty is self._style:
+            layered = self._layered
+        else:
+            layered = any(bool((sty[flag][lo:hi] > 0.5).any()) for flag in self.layer_flags)
+        if not layered:
+            return super()._render_chunk(s, sty, lo, hi)
+        k = hi - lo
+        sl = lambda p: sty[p][lo:hi]
+        img = self._base_image(sty, lo, hi).expand(k, IMG, IMG, 3)
+        img = self._target_layer(img, s, sl, lo, hi)
+        on = (sl("rendering.render_bias_field") > 0.5).view(k, 1, 1, 1)
+        img = torch.where(on, self._bias_layer(img, sl, k), img)
+        return self._blend_dot(img, s[lo:hi, 0:2], sl("agent.radius"), sl("agent.color"))
+
+    def _target_layer(self, img, s, sl, lo, hi):
+        return img
+
+    def _bias_layer(self, img, sl, k) -> torch.Tensor:
+        """Composite each lane's bias arrows over ``img`` in float32, truncating to uint8."""
+        biases = torch.stack([sl(f"zones.bias_{i}").reshape(k, 2) for i in range(N_ZONES)], dim=1)
+        host = biases.detach().cpu().numpy().astype(np.float32)
+        layers = []
+        for lane in range(k):
+            key = (str(self.device), host[lane].tobytes())
+            hit = _PiecewiseBase._FIELD_CACHE.get(key)
+            if hit is None:
+                rgba = torch.as_tensor(_bias_field_rgba(host[lane]))
+                alpha = rgba[..., 3:].to(torch.float32) / 255.0
+                hit = _PiecewiseBase._FIELD_CACHE.put(
+                    key, (alpha.to(self.device), rgba[..., :3].to(torch.float32).to(self.device))
+                )
+            layers.append(hit)
+        alpha = torch.stack([a for a, _ in layers])
+        overlay = torch.stack([o for _, o in layers])
+        return (img.to(torch.float32) * (1.0 - alpha) + overlay * alpha).to(torch.uint8)
 
     def _zone_bias_space(self) -> dict:
         return {
@@ -966,16 +1075,56 @@ class Piecewise(_HiddenTargetSemantics, _PiecewiseBase):
     # Zone tint is a Variation leaf, not a PiecewiseEnv constructor argument.
     reference_kwargs: dict = {}
     reset_tree_factory = staticmethod(_piecewise_reset_tree)
-    reset_value_paths = frozenset({"agent.speed", *(f"zones.bias_{i}" for i in range(N_ZONES))})
+    reset_value_paths = frozenset(
+        {
+            "agent.speed",
+            "target.color",
+            "target.radius",
+            "rendering.render_target",
+            "rendering.render_bias_field",
+            *(f"zones.bias_{i}" for i in range(N_ZONES)),
+        }
+    )
+
+    layer_flags = ("rendering.render_target", "rendering.render_bias_field")
 
     def make_variation_space(self) -> Dict:
-        return Dict({**self._common_space(), "zones": Dict(self._zone_bias_space())})
+        target = {
+            "color": RGBBox(init_value=TARGET_C),
+            "radius": Box(low=7.0, high=14.0, shape=(1,), init_value=[TARGET_R]),
+        }
+        return Dict({**self._common_space(), "target": Dict(target), "zones": Dict(self._zone_bias_space())})
 
     def _step(self, action, *, active=None) -> TensorDict:
         return super()._step(action, active=active)
 
     def base_image(self, sl, k) -> torch.Tensor:
         return self._paint(self._fill(k, sl("background.color")), self._border, sl("border.color"))
+
+    _frame_targets = None
+
+    def render(self, state=None, **kwargs) -> torch.Tensor:
+        """Render full State; the target, hidden from the compact rows, is drawn from it when enabled."""
+        state = self.get_state() if state is None else state
+        if isinstance(state, TensorDict):
+            self._frame_targets = state["target", "position"]
+        try:
+            return super().render(state, **kwargs)
+        finally:
+            self._frame_targets = None
+
+    def _target_layer(self, img, s, sl, lo, hi):
+        targets = self._frame_targets
+        if targets is None:
+            if int(s.shape[0]) != self._live_rows or s.data_ptr() != self._get_render_state().data_ptr():
+                raise ValueError(
+                    "Piecewise draws rendering.render_target from the hidden target position, which "
+                    "compact rows do not carry; render a full State instead"
+                )
+            targets = self._target_position[: self._live_rows]
+        pos = torch.as_tensor(targets, device=self.device, dtype=torch.float32).reshape(-1, 2)[lo:hi]
+        on = (sl("rendering.render_target") > 0.5).view(-1, 1, 1, 1)
+        return torch.where(on, self._blend_dot(img, pos, sl("target.radius"), sl("target.color")), img)
 
 
 @register
@@ -1073,7 +1222,7 @@ class SimplePointMaze(_GymReferencePort):
     reset_tree_factory = staticmethod(_simple_maze_reset_tree)
     reset_leaves = (
         ResetLeaf("agent.position", (0.5, 0.5)),
-        ResetLeaf("goal.position", MAZE_GOAL_POS, sampled=False, sampleable=False),
+        ResetLeaf("goal.position", MAZE_GOAL_POS, sampled=False),
     )
     reset_value_paths = frozenset({"agent.speed", "goal.radius"})
     color_exactness_applicability = {
@@ -1167,12 +1316,12 @@ class SimplePointMaze(_GymReferencePort):
         self._state_is_float64[:n].zero_()
         return self
 
-    def _position_collides(self, value, lane):
+    def _position_collides(self, value, lane, entity="agent"):
         p = np.asarray(value, np.float32)
         number = int(self._style["walls.number"][lane].item())
         positions = self._style["walls.positions"][lane].detach().cpu().numpy().reshape(MAX_WALLS, 2)
         shapes = self._style["walls.shape"][lane].detach().cpu().numpy().reshape(MAX_WALLS, 2)
-        radius = float(self._style["agent.radius"][lane].item())
+        radius = float(self._style[f"{entity}.radius"][lane].item())
         for corner, shape in zip(positions[:number], shapes[:number], strict=True):
             lo = np.minimum(corner, corner + shape)
             hi = np.maximum(corner, corner + shape)
@@ -1182,7 +1331,9 @@ class SimplePointMaze(_GymReferencePort):
         return False
 
     def _reset_value_ok(self, path, value, lane):
-        return path != "agent.position" or not self._position_collides(value, lane)
+        if path in ("agent.position", "goal.position"):
+            return not self._position_collides(value, lane, path.split(".")[0])
+        return True
 
     def _draw_reset_lane(self, tree, lane, sampled, values):
         out = super()._draw_reset_lane(tree, lane, sampled, values)

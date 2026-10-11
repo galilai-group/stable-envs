@@ -432,10 +432,14 @@ _SPM_AGENT_POSITION = (
     "first-frame interior exact"
 )
 
-_SPM_SWM_ONLY = {
-    "goal.position": "this is our STATE (render columns goal_x, goal_y), not our style. MEASURED: "
-    "2,648 px moved with show_goal=True",
-}
+_SPM_GOAL_POSITION = (
+    "a per-lane reset leaf (Env.reset_leaves) that seeds State columns goal_x, goal_y. Not drawn by "
+    "default, as in swm: reset(options={'variation': ['goal.position']}) draws it per lane from the "
+    "seeded tree with swm's wall-collision rejection at the goal radius, and "
+    "options['variation_values'] sets it explicitly (swm ignores variation_values, so the matching "
+    "swm goal is the leaf's value). Gated by tests/integration/test_variation_navigation.py: reset "
+    "State, rollout State and first frame"
+)
 
 NEWCELL_VARIATION_MAPS.update(
     {
@@ -457,9 +461,9 @@ NEWCELL_VARIATION_MAPS.update(
                 "walls.positions",
                 "goal.color",
                 "goal.radius",
+                "goal.position",
             ),
-            swm_only=_SPM_SWM_ONLY,
-            notes={"agent.position": _SPM_AGENT_POSITION},
+            notes={"agent.position": _SPM_AGENT_POSITION, "goal.position": _SPM_GOAL_POSITION},
         ),
         **{
             name: VariationMap(
@@ -610,9 +614,10 @@ LEAF_CLASSIFICATION.update(
                     _MAZE_PROBES["spm"] + " -- 1,264-6,812 px moved with show_goal=True",
                 ),
                 "goal.position": _cls(
-                    "not_applicable",
-                    _SPM_SWM_ONLY["goal.position"],
+                    "mapped",
+                    _SPM_GOAL_POSITION,
                     _MAZE_PROBES["spm"] + " -- 0 px with show_goal=False, 2,648 px with show_goal=True",
+                    mechanism="render() draws the goal leaf's value; reset samples it only when named",
                 ),
             },
         },

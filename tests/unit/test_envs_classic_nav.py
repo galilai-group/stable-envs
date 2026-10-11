@@ -232,7 +232,9 @@ def test_navigation_cells_live_in_the_merged_module():
         "SimplePointMaze",
     ):
         assert hasattr(navigation, attr)
-    assert {c.__module__ for c in (snv.TwoRoom, snv.Piecewise, snv.SimplePointMaze)} == {"stable_envs.envs.navigation.envs"}
+    assert {c.__module__ for c in (snv.TwoRoom, snv.Piecewise, snv.SimplePointMaze)} == {
+        "stable_envs.envs.navigation.envs"
+    }
 
 
 @pytest.mark.parametrize("name", ALL)
@@ -441,3 +443,13 @@ def test_recovered_classic_reports_authoritative_outputs_and_typed_state(name):
         assert set(result["state"].keys(True, True)) == {key[0] if len(key) == 1 else key for key in FULL_KEYS[name]}
         for key in result["state"].keys(True, True):
             assert result["state"][key].dtype == env.state_spec[key].dtype
+
+
+def test_piecewise_draws_its_hidden_target_only_from_full_state():
+    with _env("Piecewise", 2) as env:
+        state = env.reset(seed=0)
+        plain = env.render(state)
+        env.set_variation({"rendering.render_target": [1]})
+        assert not torch.equal(env.render(state), plain)
+        with pytest.raises(ValueError, match="full State"):
+            env._render(env._pack_render_state(state).clone())

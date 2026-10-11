@@ -421,24 +421,24 @@ def test_simple_point_maze_maps_appearance_speed_and_start():
         "walls.positions",
         "goal.color",
         "goal.radius",
+        "goal.position",
     }
     for ours, (theirs, factor) in m.pairs().items():
         assert ours == theirs and factor == 1.0
 
 
-def test_simple_point_maze_goal_appearance_is_mapped_and_its_position_is_state():
+def test_simple_point_maze_goal_appearance_is_mapped():
     for leaf in ("goal.color", "goal.radius"):
         assert LEAF_CLASSIFICATION[SPM]["leaves"][leaf]["classification"] == "mapped"
-    assert LEAF_CLASSIFICATION[SPM]["leaves"]["goal.position"]["classification"] == "not_applicable"
     assert "show_goal=True" in LEAF_CLASSIFICATION[SPM]["config_note"]
 
 
-def test_simple_point_maze_position_is_a_reset_leaf_not_style():
+@pytest.mark.parametrize("leaf", ["agent.position", "goal.position"])
+def test_simple_point_maze_positions_are_reset_leaves_not_style(leaf):
     spm = pytest.importorskip("stable_envs.envs.navigation.envs")
-    assert LEAF_CLASSIFICATION[SPM]["leaves"]["agent.position"]["classification"] == "mapped"
-    assert LEAF_CLASSIFICATION[SPM]["leaves"]["agent.speed"]["classification"] == "mapped"
-    assert "agent.position" in {leaf.path for leaf in spm.SimplePointMaze.reset_leaves}
-    assert "agent.position" not in spm.SimplePointMaze.make_variation_space(spm.SimplePointMaze).names()
+    assert LEAF_CLASSIFICATION[SPM]["leaves"][leaf]["classification"] == "mapped"
+    assert leaf in {reset.path for reset in spm.SimplePointMaze.reset_leaves}
+    assert leaf not in spm.SimplePointMaze.make_variation_space(spm.SimplePointMaze).names()
 
 
 def test_simple_point_maze_mapped_leaves_are_dims_of_our_own_space():

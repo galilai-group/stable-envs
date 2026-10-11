@@ -455,15 +455,15 @@ def test_dead_upstream_leaves_really_are_dead(tmp_path):
 def test_the_four_pre_step8_maps_are_untouched(cell):
     """The extra mapping fields are additive: the maps that predate them behave exactly as they did.
 
-    ``unmapped()`` must equal the old ``swm_only`` and ``mapped_swm_paths()`` the old
+    ``unmapped()`` must equal ``swm_only`` plus measured ``dead_upstream`` and ``mapped_swm_paths()`` the old
     ``{t for t, _ in pairs().values()}``, because those two expressions are what the old
     ``style_from_variation``/``check_mapping`` used.
     """
     m = VARIATION_MAPS[cell]
-    assert m.unmapped() == dict(m.swm_only)
+    assert m.unmapped() == {**m.swm_only, **m.dead_upstream}
     assert m.mapped_swm_paths() == {t for t, _ in m.pairs().values()}
     assert not m.rgb255 and not m.enum and not m.affine and not m.unsupported
-    assert not m.dead_upstream and not m.not_applicable and not m.notes
+    assert not m.not_applicable
     # ``affine_pairs`` is the general view and must agree with ``pairs`` when ``affine`` is empty
     assert m.affine_pairs() == {o: (t, f, 0.0) for o, (t, f) in m.pairs().items()}
 
