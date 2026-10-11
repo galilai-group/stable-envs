@@ -327,6 +327,36 @@ def test_reset_refuses_leaves_it_cannot_set_on_envs_without_reset_options():
             env.reset(seed=0, options={"variation": ["pole.color"]})
 
 
+@pytest.mark.parametrize(
+    "name,leaf,default,values",
+    [
+        ("CartPole", "physics.gravity", 12.0, [5.5, 14.0]),
+        ("Pendulum", "physics.g", 12.0, [5.5, 14.0]),
+        ("Acrobot", "physics.link_mass_2", 1.2, [0.6, 1.4]),
+        ("MountainCar", "physics.force", 0.0012, [0.0006, 0.0014]),
+        ("MountainCarContinuous", "physics.power", 0.0018, [0.0008, 0.0022]),
+    ],
+)
+def test_classic_state_restores_its_physics_for_the_episode(name, leaf, default, values):
+    key = state_key(leaf.removeprefix("physics."))
+    with se.make(name, num_envs=2, device="cpu") as env:
+        action = torch.full((2, 1), env.action_spec.high, dtype=env.action_spec.dtype)
+        env.set_variation({leaf: [default]})
+        saved = env.reset(seed=5, options={"variation_values": {leaf: np.asarray([[v] for v in values], np.float32)}})
+        assert saved[key].dtype == torch.float64
+        np.testing.assert_array_equal(saved[key].numpy(), np.float32([[v] for v in values]).astype(np.float64))
+        rollout = [env.step(action, frames=None)["state"] for _ in range(8)]
+        plain = env.reset(seed=5)
+        np.testing.assert_array_equal(plain[key].numpy(), np.float32([[default]] * 2).astype(np.float64))
+        env.set_state(saved)
+        assert env._style[leaf].reshape(-1).tolist() == np.float32(values).tolist()
+        for want in rollout:
+            assert (env.step(action, frames=None)["state"] == want).all()
+        assert torch.equal(env.reset(seed=5)[key], plain[key])
+        with pytest.raises(ValueError, match="physics it was produced under"):
+            env.set_state(saved.exclude(key))
+
+
 def test_fetch_reset_restores_colors_and_mass():
     pytest.importorskip("gymnasium_robotics")
     options = {

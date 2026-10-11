@@ -9,6 +9,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._core.physics import state_key
 from ...._execution.protocol import SimulatorAdapter
 
 _NUMPY_DTYPES = {torch.float64: np.float64, torch.int64: np.int64, torch.bool: np.bool_}
@@ -18,61 +19,6 @@ _RNG_FIELDS = {
     ("rng", "increment"): (4, torch.int64),
     ("rng", "has_uint32"): (1, torch.int64),
     ("rng", "uinteger"): (1, torch.int64),
-}
-
-CLASSIC_FIELDS = {
-    "cartpole": {
-        "x": (1, torch.float64),
-        "x_dot": (1, torch.float64),
-        "theta": (1, torch.float64),
-        "theta_dot": (1, torch.float64),
-        ("lifecycle", "elapsed_steps"): (1, torch.int64),
-        ("task", "steps_beyond_terminated"): (1, torch.int64),
-        ("task", "has_steps_beyond_terminated"): (1, torch.bool),
-        **_RNG_FIELDS,
-    },
-    "pendulum": {
-        "theta": (1, torch.float64),
-        "theta_dot": (1, torch.float64),
-        # ``last_u`` retains the caller's accepted float dtype.  Float64 is a
-        # lossless common representation for both the declared float32 Action
-        # and Gymnasium's warning-only acceptance of float64 arrays.
-        "torque": (1, torch.float64),
-        ("task", "has_last_u"): (1, torch.bool),
-        ("lifecycle", "elapsed_steps"): (1, torch.int64),
-        **_RNG_FIELDS,
-    },
-    "acrobot": {
-        "theta1": (1, torch.float64),
-        "theta2": (1, torch.float64),
-        "dtheta1": (1, torch.float64),
-        "dtheta2": (1, torch.float64),
-        ("lifecycle", "elapsed_steps"): (1, torch.int64),
-        **_RNG_FIELDS,
-    },
-    "mountain_car": {
-        "position": (1, torch.float64),
-        "velocity": (1, torch.float64),
-        ("lifecycle", "elapsed_steps"): (1, torch.int64),
-        **_RNG_FIELDS,
-    },
-    "mountain_car_continuous": {
-        "position": (1, torch.float64),
-        "velocity": (1, torch.float64),
-        # Reset installs float64 state; every step installs float32 state.  The
-        # dtype changes the next NumPy update, so it is continuation state.
-        ("task", "state_is_float32"): (1, torch.bool),
-        ("lifecycle", "elapsed_steps"): (1, torch.int64),
-        **_RNG_FIELDS,
-    },
-}
-
-_ENV_IDS = {
-    "cartpole": "CartPole-v1",
-    "pendulum": "Pendulum-v1",
-    "acrobot": "Acrobot-v1",
-    "mountain_car": "MountainCar-v0",
-    "mountain_car_continuous": "MountainCarContinuous-v0",
 }
 
 _PHYSICS_SPACES = {
@@ -125,6 +71,75 @@ _PHYSICS_ATTRIBUTES = {
 }
 
 
+def physics_state_key(leaf: str) -> tuple[str, ...]:
+    return state_key(leaf.removeprefix("physics."))
+
+
+def _physics_fields(domain: str) -> dict:
+    return {physics_state_key(name): (1, torch.float64) for name in _PHYSICS_SPACES[domain]}
+
+
+CLASSIC_FIELDS = {
+    "cartpole": {
+        "x": (1, torch.float64),
+        "x_dot": (1, torch.float64),
+        "theta": (1, torch.float64),
+        "theta_dot": (1, torch.float64),
+        ("lifecycle", "elapsed_steps"): (1, torch.int64),
+        ("task", "steps_beyond_terminated"): (1, torch.int64),
+        ("task", "has_steps_beyond_terminated"): (1, torch.bool),
+        **_RNG_FIELDS,
+        **_physics_fields("cartpole"),
+    },
+    "pendulum": {
+        "theta": (1, torch.float64),
+        "theta_dot": (1, torch.float64),
+        # ``last_u`` retains the caller's accepted float dtype.  Float64 is a
+        # lossless common representation for both the declared float32 Action
+        # and Gymnasium's warning-only acceptance of float64 arrays.
+        "torque": (1, torch.float64),
+        ("task", "has_last_u"): (1, torch.bool),
+        ("lifecycle", "elapsed_steps"): (1, torch.int64),
+        **_RNG_FIELDS,
+        **_physics_fields("pendulum"),
+    },
+    "acrobot": {
+        "theta1": (1, torch.float64),
+        "theta2": (1, torch.float64),
+        "dtheta1": (1, torch.float64),
+        "dtheta2": (1, torch.float64),
+        ("lifecycle", "elapsed_steps"): (1, torch.int64),
+        **_RNG_FIELDS,
+        **_physics_fields("acrobot"),
+    },
+    "mountain_car": {
+        "position": (1, torch.float64),
+        "velocity": (1, torch.float64),
+        ("lifecycle", "elapsed_steps"): (1, torch.int64),
+        **_RNG_FIELDS,
+        **_physics_fields("mountain_car"),
+    },
+    "mountain_car_continuous": {
+        "position": (1, torch.float64),
+        "velocity": (1, torch.float64),
+        # Reset installs float64 state; every step installs float32 state.  The
+        # dtype changes the next NumPy update, so it is continuation state.
+        ("task", "state_is_float32"): (1, torch.bool),
+        ("lifecycle", "elapsed_steps"): (1, torch.int64),
+        **_RNG_FIELDS,
+        **_physics_fields("mountain_car_continuous"),
+    },
+}
+
+_ENV_IDS = {
+    "cartpole": "CartPole-v1",
+    "pendulum": "Pendulum-v1",
+    "acrobot": "Acrobot-v1",
+    "mountain_car": "MountainCar-v0",
+    "mountain_car_continuous": "MountainCarContinuous-v0",
+}
+
+
 def _limbs(value: int) -> np.ndarray:
     """A PCG64 unsigned 128-bit integer as four named-base uint32 limbs."""
     value = int(value)
@@ -145,6 +160,14 @@ def validate_classic_state(domain: str, state, *, batch: int | None = None) -> N
         raise ValueError(f"Expected State batch [{batch or 'N'}], got {list(state.batch_size)}")
     have, want = set(state.keys(True, True)), set(fields)
     if have != want:
+        physics = sorted((want - have) & set(_physics_fields(domain)))
+        if physics and have >= want - set(physics):
+            registered = {f"physics.{name}": value[2] for name, value in _PHYSICS_SPACES[domain].items()}
+            raise ValueError(
+                f"State has no {['.'.join(key) for key in physics]}: it does not record the physics it was "
+                f"produced under, and restoring it would keep this environment's current physics instead. Add "
+                f"the fields (the registered values are {registered}) or restore a State this environment produced."
+            )
         missing, extra = sorted(want - have, key=str), sorted(have - want, key=str)
         raise ValueError(
             "Full State keys do not match the classic-control resume schema"
@@ -173,6 +196,19 @@ class ClassicControlAdapter(SimulatorAdapter):
         self.num_envs = int(num_envs)
         self.device = torch.device(device)
         self.envs = [gym.make(_ENV_IDS[domain]) for _ in range(self.num_envs)]
+        self._physics_names = tuple(_PHYSICS_SPACES[domain])
+        self._physics_attributes = {
+            name: _PHYSICS_ATTRIBUTES.get(domain, {}).get(name, name) for name in self._physics_names
+        }
+        self._physics = np.asarray(
+            [
+                [float(getattr(env.unwrapped, self._physics_attributes[name])) for name in self._physics_names]
+                for env in self.envs
+            ],
+            np.float64,
+        ).reshape(self.num_envs, len(self._physics_names))
+        self._physics_keys = tuple(physics_state_key(name) for name in self._physics_names)
+        self._lane_fields = tuple(key for key in self.fields if key not in self._physics_keys)
         self._closed = False
 
     def _check_open(self) -> None:
@@ -182,14 +218,18 @@ class ClassicControlAdapter(SimulatorAdapter):
     def configure(self, values: Mapping[str, np.ndarray]) -> None:
         """Apply one exact SWM physical-Variation row to each Gymnasium env."""
         self._check_open()
-        for i, env in enumerate(self.envs):
-            base = env.unwrapped
-            for name, rows in values.items():
-                attribute = _PHYSICS_ATTRIBUTES.get(self.domain, {}).get(name, name)
-                setattr(base, attribute, float(np.asarray(rows)[i]))
-            if self.domain == "cartpole":
-                base.total_mass = base.masspole + base.masscart
-                base.polemass_length = base.masspole * base.length
+        columns = {name: np.asarray(rows) for name, rows in values.items()}
+        for i in range(self.num_envs):
+            self._apply_physics(i, {name: float(rows[i]) for name, rows in columns.items()})
+
+    def _apply_physics(self, lane: int, values: Mapping[str, float]) -> None:
+        base = self.envs[lane].unwrapped
+        for name, value in values.items():
+            setattr(base, self._physics_attributes[name], value)
+            self._physics[lane, self._physics_names.index(name)] = value
+        if self.domain == "cartpole":
+            base.total_mass = base.masspole + base.masscart
+            base.polemass_length = base.masspole * base.length
 
     def reset(self, seed: int | None = None, options: dict | None = None) -> TensorDict:
         self._check_open()
@@ -232,15 +272,23 @@ class ClassicControlAdapter(SimulatorAdapter):
         self._check_open()
         # The pinned field schema supplies shapes/dtypes once for the batch.
         # Assign source values directly, without a temporary array per lane/field.
-        columns = {key: np.empty((self.num_envs, width), dtype=_NUMPY_DTYPES[dtype])
-                   for key, (width, dtype) in self.fields.items()}
+        columns = {
+            key: np.empty((self.num_envs, width), dtype=_NUMPY_DTYPES[dtype])
+            for key, (width, dtype) in self.fields.items()
+        }
+        lane_columns = [(key, columns[key]) for key in self._lane_fields]
         for index, env in enumerate(self.envs):
             values = self._state_values(env)
-            for key, column in columns.items():
+            for key, column in lane_columns:
                 column[index] = values[key]
+        for j, key in enumerate(self._physics_keys):
+            columns[key][:, 0] = self._physics[:, j]
         # Fresh arrays belong to this snapshot alone, including on CPU.
-        return TensorDict({key: torch.from_numpy(value).to(self.device) for key, value in columns.items()},
-                          [self.num_envs], device=self.device)
+        return TensorDict(
+            {key: torch.from_numpy(value).to(self.device) for key, value in columns.items()},
+            [self.num_envs],
+            device=self.device,
+        )
 
     def set_state(self, state: TensorDict) -> None:
         self._check_open()
@@ -248,6 +296,9 @@ class ClassicControlAdapter(SimulatorAdapter):
         host = state.cpu()
         for i, env in enumerate(self.envs):
             row, base = host[i], env.unwrapped
+            self._apply_physics(
+                i, {name: row[key].item() for name, key in zip(self._physics_names, self._physics_keys, strict=True)}
+            )
             if self.domain == "cartpole":
                 base.state = np.asarray(
                     [row[name].item() for name in ("x", "x_dot", "theta", "theta_dot")], np.float64
@@ -309,8 +360,10 @@ class ClassicControlAdapter(SimulatorAdapter):
     def step(self, actions, *, active=None) -> TensorDict:
         active = None if active is None else np.asarray(active.detach().cpu(), dtype=bool)
         self._check_open()
-        outputs = [env.step(action) if active is None or active[i] else self._last_outputs[i]
-                   for i, (env, action) in enumerate(zip(self.envs, self._actions(actions), strict=True))]
+        outputs = [
+            env.step(action) if active is None or active[i] else self._last_outputs[i]
+            for i, (env, action) in enumerate(zip(self.envs, self._actions(actions), strict=True))
+        ]
         self._last_outputs = outputs
         observations = np.stack([out[0] for out in outputs])
         return TensorDict(
@@ -333,5 +386,3 @@ class ClassicControlAdapter(SimulatorAdapter):
             for env in self.envs:
                 env.close()
             self._closed = True
-
-

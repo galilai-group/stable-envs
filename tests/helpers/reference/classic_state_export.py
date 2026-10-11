@@ -1,4 +1,4 @@
-"""Frozen 6ce4e829 classic State exporter; only the function name is adapted."""
+"""Per-lane classic State exporter that reads every field from the Gymnasium env itself."""
 
 import numpy as np
 import torch
@@ -38,6 +38,8 @@ def classic_state(self) -> TensorDict:
             values["position"], values["velocity"] = np.asarray(base.state)
             if self.domain == "mountain_car_continuous":
                 values[("task", "state_is_float32")] = [np.asarray(base.state).dtype == np.float32]
+        for name, key in zip(self._physics_names, self._physics_keys, strict=True):
+            values[key] = [float(getattr(base, self._physics_attributes[name]))]
 
         row = TensorDict({}, batch_size=[], device=self.device)
         for key, (width, dtype) in self.fields.items():

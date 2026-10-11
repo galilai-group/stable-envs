@@ -22,6 +22,25 @@ PHYSICAL = {
     "mountain_car": ("position", "velocity"),
     "mountain_car_continuous": ("position", "velocity"),
 }
+# SWM's physics leaves and the Gymnasium attribute each one writes.
+PHYSICS = {
+    "cartpole": {name: name for name in ("gravity", "masscart", "masspole", "length", "force_mag", "tau")},
+    "pendulum": {name: name for name in ("g", "m", "l", "max_torque", "max_speed", "dt")},
+    "acrobot": {
+        name: name.upper()
+        for name in (
+            "link_length_1",
+            "link_length_2",
+            "link_mass_1",
+            "link_mass_2",
+            "link_com_pos_1",
+            "link_com_pos_2",
+            "link_moi",
+        )
+    },
+    "mountain_car": {name: name for name in ("gravity", "force", "max_speed")},
+    "mountain_car_continuous": {name: name for name in ("power", "max_speed")},
+}
 COMMON = {
     ("lifecycle", "elapsed_steps"): (1, torch.int64),
     ("rng", "state"): (4, torch.int64),
@@ -35,6 +54,8 @@ FIELDS["cartpole"].update(
 )
 FIELDS["pendulum"].update({"torque": (1, torch.float64), ("task", "has_last_u"): (1, torch.bool)})
 FIELDS["mountain_car_continuous"][("task", "state_is_float32")] = (1, torch.bool)
+for domain, names in PHYSICS.items():
+    FIELDS[domain].update({("physics", name): (1, torch.float64) for name in names})
 
 
 def _limbs(value):
@@ -88,6 +109,8 @@ class NativeClassicReference:
                 values[("task", "has_last_u")] = [last_u is not None]
             elif self.domain == "mountain_car_continuous":
                 values[("task", "state_is_float32")] = [physical.dtype == np.float32]
+            for name, attribute in PHYSICS[self.domain].items():
+                values[("physics", name)] = [float(getattr(base, attribute))]
             row = TensorDict({}, batch_size=[])
             for key, (width, dtype) in FIELDS[self.domain].items():
                 row[key] = torch.as_tensor(values[key], dtype=dtype).reshape(width).clone()
@@ -98,6 +121,11 @@ class NativeClassicReference:
         host = state.cpu()
         for i, wrapper in enumerate(self.envs):
             row, env, base = host[i], wrapper.env, wrapper.env.unwrapped
+            for name, attribute in PHYSICS[self.domain].items():
+                setattr(base, attribute, row["physics", name].item())
+            if self.domain == "cartpole":
+                base.total_mass = base.masspole + base.masscart
+                base.polemass_length = base.masspole * base.length
             dtype = (
                 np.float32
                 if self.domain == "mountain_car_continuous" and row["task", "state_is_float32"].item()

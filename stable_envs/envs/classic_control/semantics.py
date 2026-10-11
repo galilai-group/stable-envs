@@ -3,10 +3,17 @@ from __future__ import annotations
 import numpy as np
 import torch
 
+from ..._core.style import StyleTensor
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...spaces import Box, Dict
 from ...specs import Spec
-from .simulation.local import _PHYSICS_SPACES, CLASSIC_FIELDS, ClassicControlAdapter, validate_classic_state
+from .simulation.local import (
+    _PHYSICS_SPACES,
+    CLASSIC_FIELDS,
+    ClassicControlAdapter,
+    physics_state_key,
+    validate_classic_state,
+)
 
 
 class ClassicControlSemantics:
@@ -51,6 +58,16 @@ class ClassicControlSemantics:
             for name in _PHYSICS_SPACES[self.CLASSIC_DOMAIN]
         }
         self._simulator.configure(values)
+
+    def _adopt_physics_state(self, state):
+        """Show a restored State's physics in the Variation for this episode; defaults stay."""
+        values = self._style.values.clone()
+        offsets = {path: off for path, off, _ in self.variation_space.flat_layout()}
+        for name in _PHYSICS_SPACES[self.CLASSIC_DOMAIN]:
+            leaf = f"physics.{name}"
+            values[:, offsets[leaf]] = state[physics_state_key(leaf)].reshape(-1).to(values.device, values.dtype)
+        self._style = StyleTensor(values, self.variation_space.flat_layout())
+        self._variation_is_default = False
 
     def _configure_variation(self, exact=None):
         super()._configure_variation(exact)
@@ -117,6 +134,7 @@ class ClassicControlSemantics:
         self._check_open("set_state")
         self._simulator.set_state(state)
         self._sync_authoritative_state(state)
+        self._adopt_physics_state(state)
 
     def _step_pipeline(self) -> StepPipeline | None:
         owner = self._simulator

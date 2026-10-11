@@ -418,7 +418,11 @@ def classic_physics_gate(domain: str, seed: int = 13, steps: int = 24) -> dict:
             )
             last, baseline = states[-1], baselines[fast]
             moved = [
-                any(not torch.equal(last[k][lane], baseline[k][lane]) for k in last.keys(True, True) if k[0] != "rng")
+                any(
+                    not torch.equal(last[k][lane], baseline[k][lane])
+                    for k in last.keys(True, True)
+                    if k[0] not in ("rng", "physics")
+                )
                 for lane in (0, 2)
             ]
             evidence["leaves"][leaf] = {"values": values.reshape(-1).tolist(), "moved_vs_default": moved}
