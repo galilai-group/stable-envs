@@ -364,7 +364,6 @@ class _HiddenTargetSemantics:
         ("agent", "position"): (POS_LO, POS_HI),
         ("target", "position"): (POS_LO, POS_HI),
     }
-    reset_tree_factory = None
     reset_leaves = (
         ResetLeaf("agent.position", (60.0, 112.0)),
         ResetLeaf("target.position", (164.0, 112.0)),

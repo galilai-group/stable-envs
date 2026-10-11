@@ -311,13 +311,9 @@ def _check_reference_versions_shape(cls, where: str, rv) -> None:
 
 @dataclass(frozen=True)
 class ResetLeaf:
-    """A per-lane reset distribution that seeds State.
+    """A State value ``reset`` samples, takes from ``variation_values``, or leaves at ``default``.
 
-    ``reset`` draws the leaf from ``reset_space()`` when it is sampled, uses an
-    explicit ``options["variation_values"]`` entry when one is given, and
-    otherwise uses ``default``. ``sampled`` leaves are drawn when the options
-    name no ``"variation"`` list; ``sampleable=False`` leaves accept explicit
-    values only.
+    ``sampled`` leaves are drawn when the options name no ``"variation"`` list.
     """
 
     path: str
@@ -328,7 +324,6 @@ class ResetLeaf:
 
 
 def _lane_value(value, lane: int, batch: int, width: int) -> np.ndarray:
-    """Select lane ``lane`` from one shared value or one value per lane."""
     v = np.asarray(value)
     if v.size == width:
         return v.reshape(width).copy()
@@ -376,8 +371,9 @@ class Env:
     #: Hidden fields must be supplied by the simulator, not reconstructed from compact rows.
     state_layout: tuple[tuple, ...] = ()
 
-    #: Per-lane reset distributions that seed State, in sampling order.
     reset_leaves: tuple[ResetLeaf, ...] = ()
+    #: Returns a fresh distribution tree for ``reset_leaves``; reset seeds it with ``seed + lane``.
+    reset_tree_factory = None
     #: Variation leaves ``reset`` accepts in ``options["variation_values"]``; they persist like set_variation.
     reset_value_paths: frozenset[str] = frozenset()
     #: Variation leaves ``reset`` samples per lane when named in ``options["variation"]``.
@@ -676,20 +672,12 @@ class Env:
     def variation_values(self) -> dict:
         return self.variation_space.value
 
-    def reset_space(self):
-        """Return a fresh per-lane distribution tree for ``reset_leaves``; reset seeds it with ``seed + lane``."""
-        factory = getattr(self, "reset_tree_factory", None)
-        if factory is None:
-            raise NotImplementedError(f"{type(self).__name__} declares reset_leaves without a reset_space")
-        return factory()
-
     def _reset_value_ok(self, path: str, value, lane: int) -> bool:
-        """Accept or reject a sampled reset value; rejected draws are resampled."""
+        """Rejected draws are resampled."""
         del path, value, lane
         return True
 
     def _reset_request(self, options: Mapping | None) -> tuple[tuple[str, ...], dict]:
-        """Validate reset options and return ``(sampled paths, explicit values)``."""
         options = dict(options or {})
         default = tuple(leaf.path for leaf in self.reset_leaves if leaf.sampled)
         sampled = options.get("variation", default)
@@ -710,7 +698,6 @@ class Env:
         return tuple(sampled), values
 
     def _draw_reset_lane(self, tree, lane: int, sampled, values) -> dict[str, np.ndarray]:
-        """Draw every reset leaf for one lane from its seeded tree, in declaration order."""
         out = {}
         for leaf in self.reset_leaves:
             value = np.asarray(leaf.default, leaf.dtype)
@@ -731,7 +718,6 @@ class Env:
         return out
 
     def _sample_variation_leaf(self, path: str, seed: int | None) -> np.ndarray:
-        """Draw ``(B, width)`` values of one Variation leaf, one generator per lane."""
         node = self.variation_space
         for part in path.split("."):
             node = node[part]
@@ -745,11 +731,9 @@ class Env:
         return np.stack(rows)
 
     def draw_reset_values(self, seed: int | None = None, options: Mapping | None = None) -> dict[str, np.ndarray]:
-        """Resolve reset options into ``{path: (num_envs, ...)}`` values.
+        """Resolve SWM-style reset options into ``{path: (num_envs, ...)}`` values.
 
-        Variation leaves (``reset_value_paths`` and ``reset_sample_paths``) are installed
-        with :meth:`set_variation` before reset leaves are drawn, so rejection tests see
-        them. Reset leaves are drawn from ``reset_space()`` seeded with ``seed + lane``.
+        Variation leaves are installed first, so reset-leaf rejection tests see them.
         """
         sampled, values = self._reset_request(options)
         reset_paths = {leaf.path for leaf in self.reset_leaves}
@@ -764,7 +748,7 @@ class Env:
             return out
         lanes = []
         for lane in range(self.B):
-            tree = self.reset_space()
+            tree = self.reset_tree_factory()
             tree.seed(None if seed is None else int(seed) + lane)
             lanes.append(self._draw_reset_lane(tree, lane, sampled, values))
         for path in lanes[0]:
@@ -779,7 +763,6 @@ class Env:
 
     @property
     def physics_variation_leaves(self) -> tuple[str, ...]:
-        """Variation leaves that set per-lane simulator model parameters and travel in State."""
         layout = self._physics_layout()
         return () if layout is None else tuple(layout.leaves)
 
@@ -787,10 +770,10 @@ class Env:
         return getattr(getattr(self, "_simulator", None), "physics_layout", None)
 
     def _physics_rows(self, exact: Mapping[str, Any] | None = None) -> np.ndarray:
-        """Return float64 ``(num_envs, dim)`` physics rows for the current Variation.
+        """Float64 rows for the current Variation.
 
-        A float32 style column keeps the float64 value it encodes when it still equals
-        the installed or registered value; ``exact`` entries replace it outright.
+        Style columns are float32, so a column that still encodes the installed or
+        registered value keeps that float64 value; ``exact`` entries replace it.
         """
         layout = self._physics_layout()
         style = self.get_variation().detach().cpu().numpy()
@@ -811,7 +794,6 @@ class Env:
         return rows
 
     def _configure_physics(self, exact: Mapping[str, Any] | None = None) -> None:
-        """Install the current Variation's physics rows on the simulator."""
         if self._physics_layout() is None:
             return
         rows = self._physics_rows(exact)
@@ -819,7 +801,6 @@ class Env:
         self._physics_installed = rows
 
     def _adopt_physics_state(self, state: TensorDict) -> None:
-        """Make Variation agree with the physics a restored State carries."""
         layout = self._physics_layout()
         if layout is None:
             return

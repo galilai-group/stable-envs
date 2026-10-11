@@ -1,15 +1,6 @@
 """Per-lane MuJoCo model parameters driven by Variation leaves.
 
-A family declares each physics leaf once, as a ``ModelField`` (a direct write
-through an affine transform) or a ``GeomMass`` (a geom's density or explicit
-mass). ``PhysicsKnobs`` resolves the declarations against the compiled model
-and writes any value row into a CPU ``MjModel``, including the body inertials
-and the ``mj_setConst`` quantities a recompile would produce. The same rows
-can be turned into per-world arrays for an MJWarp model.
-
-``PhysicsLanes`` owns one value row per simulator lane. Its values travel in
-State under ``("physics", *leaf.split("."))`` so a restored State always
-carries the physics it was produced under.
+Values travel in State under ``("physics", *leaf.split("."))``.
 """
 
 from __future__ import annotations
@@ -97,8 +88,6 @@ Knob = ModelField | GeomMass
 
 @dataclass(frozen=True)
 class PhysicsLayout:
-    """Leaf order, column offsets and registered values of a physics value row."""
-
     leaves: tuple[str, ...]
     widths: tuple[int, ...]
     offsets: tuple[int, ...]
@@ -110,7 +99,6 @@ def state_key(leaf: str) -> tuple[str, ...]:
 
 
 def state_fields(knobs: Sequence[Knob]) -> dict[tuple[str, ...], int]:
-    """State keys and widths the declarations add, in declaration order."""
     out: dict[tuple[str, ...], int] = {}
     for knob in knobs:
         out.setdefault(state_key(knob.leaf), int(knob.width))
@@ -312,9 +300,6 @@ class PhysicsKnobs:
         self._derived = bool(self._masses) or any(f.knob.field in _SETCONST_INPUTS for f in self._fields)
         self._nominal_model = copy.copy(model)
         self.nominal = self._read_nominal(model)
-        self._scratch = None
-        self._touched = None
-        self._row_cache: dict[bytes, dict[str, np.ndarray]] = {}
 
     def _read_nominal(self, m) -> np.ndarray:
         row = np.zeros(self.dim)
@@ -331,7 +316,7 @@ class PhysicsKnobs:
         return row
 
     def as_row(self, values: Mapping[str, object] | np.ndarray | None) -> np.ndarray:
-        """Return a float64 ``(dim,)`` row; mapping entries override the nominal values."""
+        """Mapping entries override the nominal values."""
         if values is None:
             return self.nominal.copy()
         if not isinstance(values, Mapping):
@@ -346,12 +331,7 @@ class PhysicsKnobs:
             row[self.offsets[i] : self.offsets[i] + self.widths[i]] = np.asarray(value, np.float64).reshape(-1)
         return row
 
-    def leaf_value(self, row: np.ndarray, leaf: str) -> np.ndarray:
-        i = self.leaves.index(leaf)
-        return np.asarray(row, np.float64)[..., self.offsets[i] : self.offsets[i] + self.widths[i]]
-
     def apply(self, model, row, data=None) -> None:
-        """Write a value row into ``model``; ``data`` is scratch storage for ``mj_setConst``."""
         mj = _mujoco()
         row = np.asarray(row, np.float64).reshape(self.dim)
         if not np.isfinite(row).all():
@@ -407,71 +387,9 @@ class PhysicsKnobs:
         for body in changed:
             _refresh_bvh(model, body)
 
-    def touched_fields(self) -> tuple[str, ...]:
-        """Model fields any declared value can change, found by applying a probe row.
-
-        Names are ``MjModel`` attributes, or ``opt.<name>``/``stat.<name>``.
-        """
-        if self._touched is None:
-            probe = self.nominal * 1.37 + 0.11
-            scratch = copy.copy(self._nominal_model)
-            self.apply(scratch, probe)
-            after = _model_arrays(scratch)
-            self._touched = tuple(
-                name
-                for name, before in _model_arrays(self._nominal_model).items()
-                if not np.array_equal(before, after[name], equal_nan=True)
-            )
-        return self._touched
-
-    def model_arrays(self, rows: np.ndarray) -> dict[str, np.ndarray]:
-        """Return ``{field: (n, *shape)}`` host arrays for every touched field and value row."""
-        rows = np.asarray(rows, np.float64).reshape(-1, self.dim)
-        names = self.touched_fields()
-        if self._scratch is None:
-            model = copy.copy(self._nominal_model)
-            self._scratch = (model, _mujoco().MjData(model))
-        out = {name: [] for name in names}
-        for row in rows:
-            key = row.tobytes()
-            hit = self._row_cache.get(key)
-            if hit is None:
-                model, data = self._scratch
-                self.apply(model, row, data)
-                arrays = _model_arrays(model)
-                hit = {name: arrays[name].copy() for name in names}
-                if len(self._row_cache) >= 1024:
-                    self._row_cache.clear()
-                self._row_cache[key] = hit
-            for name in names:
-                out[name].append(hit[name])
-        return {name: np.stack(values) for name, values in out.items()}
-
-
-def _model_arrays(m) -> dict[str, np.ndarray]:
-    out = {}
-    for name in dir(m):
-        if name.startswith("_"):
-            continue
-        try:
-            value = getattr(m, name)
-        except Exception:  # noqa: BLE001 - some attributes are not readable on every build
-            continue
-        if isinstance(value, np.ndarray) and value.dtype.kind in "fiu":
-            out[name] = np.array(value)
-    for group in ("opt", "stat"):
-        holder = getattr(m, group)
-        for name in dir(holder):
-            if name.startswith("_"):
-                continue
-            value = getattr(holder, name)
-            if isinstance(value, (int, float, np.ndarray)) and not isinstance(value, bool):
-                out[f"{group}.{name}"] = np.array(value, np.float64)
-    return out
-
 
 class PhysicsLanes:
-    """Per-lane physics values for a batch of CPU models."""
+    """One physics value row per CPU model."""
 
     def __init__(self, knobs: Sequence[Knob], models: Sequence, **compile_options):
         if not models:
@@ -490,16 +408,6 @@ class PhysicsLanes:
         spec = self.spec
         return PhysicsLayout(spec.leaves, spec.widths, spec.offsets, tuple(float(x) for x in spec.nominal))
 
-    def rebind(self, models: Sequence) -> None:
-        """Adopt replacement models for the same lanes and reapply their current values."""
-        if len(models) != len(self.models):
-            raise ValueError("rebind keeps the lane count")
-        self.models = list(models)
-        self._data = [None] * len(self.models)
-        for lane, row in enumerate(self.values):
-            if not np.array_equal(row, self.spec.nominal):
-                self._apply(lane, row)
-
     def _apply(self, lane: int, row: np.ndarray) -> None:
         mj = _mujoco()
         if self._data[lane] is None and self.spec._derived:
@@ -507,7 +415,7 @@ class PhysicsLanes:
         self.spec.apply(self.models[lane], row, self._data[lane])
 
     def configure(self, values) -> None:
-        """Install ``(num_envs, dim)`` rows, a mapping of leaf overrides, or one shared row."""
+        """Install ``(num_envs, dim)`` rows, one shared row, or a mapping of leaf overrides."""
         if isinstance(values, Mapping):
             rows = self.values.copy()
             for leaf, value in values.items():
@@ -533,7 +441,6 @@ class PhysicsLanes:
         }
 
     def rows_from_state(self, state) -> np.ndarray:
-        """Read ``(num_envs, dim)`` rows from a State; every physics field must be present."""
         keys = set(state.keys(True, True))
         missing = [".".join(k) for k in self.state_fields() if k not in keys]
         if missing:
@@ -549,58 +456,3 @@ class PhysicsLanes:
             value = value.detach().cpu().numpy() if hasattr(value, "detach") else np.asarray(value)
             rows[:, o : o + w] = np.asarray(value, np.float64).reshape(len(self.models), w)
         return rows
-
-
-def mjwarp_batch_sizes(names: Sequence[str], nworld: int) -> dict[str, int]:
-    """``put_model`` batch sizes for the top-level fields in ``names`` that MJWarp batches."""
-    import dataclasses
-
-    from mujoco_warp._src import types
-
-    batched = {
-        f.name
-        for f in dataclasses.fields(types.Model)
-        if getattr(f.type, "shape", ()) and getattr(f.type, "shape", ())[0] == "*"
-    }
-    return {name: int(nworld) for name in names if name in batched}
-
-
-def batch_mjwarp_options(wm, names: Sequence[str], nworld: int) -> None:
-    """Give ``opt.<name>``/``stat.<name>`` fields one row per world.
-
-    ``put_model`` batches top-level fields only. Kernels index these arrays by
-    ``worldid % shape[0]``, so replacing them before any graph capture is enough.
-    """
-    import warp as wp
-
-    for name in names:
-        group, _, field = name.partition(".")
-        if group not in ("opt", "stat"):
-            continue
-        holder = getattr(wm, group)
-        current = getattr(holder, field, None)
-        if not isinstance(current, wp.array) or current.shape[0] == int(nworld):
-            continue
-        rows = np.repeat(current.numpy()[:1], int(nworld), axis=0)
-        replacement = wp.array(rows, dtype=current.dtype, device=current.device)
-        replacement._is_batched = True
-        setattr(holder, field, replacement)
-
-
-def write_mjwarp(wm, arrays: Mapping[str, np.ndarray], lo: int = 0) -> None:
-    """Copy ``(n, ...)`` host rows into worlds ``[lo, lo + n)`` in place, keeping captured graphs valid."""
-    import torch
-    import warp as wp
-
-    for name, rows in arrays.items():
-        group, _, field = name.rpartition(".")
-        holder = getattr(wm, group) if group else wm
-        target = getattr(holder, field, None)
-        if not isinstance(target, wp.array):
-            continue
-        view = wp.to_torch(target)
-        rows = torch.as_tensor(np.asarray(rows), dtype=view.dtype, device=view.device)
-        n = int(rows.shape[0])
-        if view.shape[0] < lo + n:
-            raise ValueError(f"MJWarp field {name} has {view.shape[0]} world row(s); batch it with nworld rows first")
-        view[lo : lo + n] = rows.reshape(n, *view.shape[1:])

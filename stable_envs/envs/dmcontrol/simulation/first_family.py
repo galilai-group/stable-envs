@@ -47,7 +47,6 @@ def _resume_fields(nq, nv):
     }
 
 
-#: Physics leaves each lane carries in its model and in State.
 PHYSICS_KNOBS = {"acrobot": GRAVITY, "pendulum": GRAVITY, "cartpole": GRAVITY}
 
 
@@ -133,7 +132,6 @@ class FirstFamilyAdapter(SimulatorAdapter):
         return self.physics.layout
 
     def configure_physics(self, values):
-        """Install ``(num_envs, dim)`` physics rows in ``physics_layout.leaves`` order."""
         self._check_open()
         self.physics.configure(values)
 

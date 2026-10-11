@@ -10,7 +10,7 @@ import pytest
 import torch
 
 import stable_envs as se
-from stable_envs._core.physics import GeomMass, ModelField, PhysicsKnobs, PhysicsLanes, _model_arrays, state_key
+from stable_envs._core.physics import GeomMass, ModelField, PhysicsKnobs, state_key
 
 mujoco = pytest.importorskip("mujoco")
 
@@ -49,6 +49,21 @@ def _compile(domain, geom=None, density=None, keep_total=True):
     with tempfile.TemporaryDirectory() as directory:
         mjcf.export_with_assets(model, directory, out_file_name="m.xml")
         return mujoco.MjModel.from_xml_path(os.path.join(directory, "m.xml"))
+
+
+def _model_arrays(m):
+    out = {}
+    for name in dir(m):
+        value = None if name.startswith("_") else getattr(m, name, None)
+        if isinstance(value, np.ndarray) and value.dtype.kind in "fiu":
+            out[name] = np.array(value)
+    for group in ("opt", "stat"):
+        holder = getattr(m, group)
+        for name in dir(holder):
+            value = None if name.startswith("_") else getattr(holder, name)
+            if isinstance(value, (int, float, np.ndarray)) and not isinstance(value, bool):
+                out[f"{group}.{name}"] = np.array(value, np.float64)
+    return out
 
 
 def _full_inertia(m):
@@ -95,7 +110,7 @@ def test_geom_mass_matches_a_recompile(domain):
     assert all(np.array_equal(before[k], after[k]) for k in before), "the registered row must restore every array"
 
 
-def test_model_fields_write_through_a_transform_and_report_what_they_touch():
+def test_model_fields_write_through_a_transform():
     spec = mujoco.MjSpec()
     body = spec.worldbody.add_body(name="b")
     joint = body.add_joint(name="hinge", type=mujoco.mjtJoint.mjJNT_HINGE)
@@ -113,10 +128,6 @@ def test_model_fields_write_through_a_transform_and_report_what_they_touch():
     np.testing.assert_allclose(knobs.nominal, [-9.81, 1.0, 0.05])
     knobs.apply(m, knobs.as_row({"gravity.z": -3.0, "floor.friction": 0.4, "spinner.friction": 0.25}))
     assert m.opt.gravity[2] == -3.0 and m.geom_friction[0, 0] == 0.4 and m.dof_frictionloss[0] == 0.5
-    assert set(knobs.touched_fields()) == {"opt.gravity", "geom_friction", "dof_frictionloss"}
-    arrays = knobs.model_arrays(np.asarray([knobs.nominal, [-1.0, 0.7, 0.3]]))
-    np.testing.assert_allclose(arrays["opt.gravity"][:, 2], [-9.81, -1.0])
-    np.testing.assert_allclose(arrays["dof_frictionloss"][:, 0], [0.1, 0.6])
     with pytest.raises(KeyError, match="no geom named"):
         PhysicsKnobs([ModelField("x", "geom_friction", "geom", "missing", 0)], m)
 
@@ -202,14 +213,3 @@ def test_reset_leaves_take_one_value_per_lane():
             env.reset(options={"variation": ["goal.position"]})
         state = env.reset(seed=4, options={"variation": [], "variation_values": {"goal.position": [2.5, 1.5]}})
         np.testing.assert_array_equal(state["goal", "position"].numpy(), [[2.5, 1.5]] * 2)
-
-
-def test_lanes_rebind_reapplies_varied_values():
-    spec = mujoco.MjSpec()
-    spec.worldbody.add_body().add_geom(size=[0.1, 0, 0])
-    models = [spec.compile(), spec.compile()]
-    lanes = PhysicsLanes([ModelField("gravity.z", "opt.gravity", index=2)], models)
-    lanes.configure({"gravity.z": np.asarray([[-9.81], [-2.0]])})
-    fresh = [spec.compile(), spec.compile()]
-    lanes.rebind(fresh)
-    assert fresh[1].opt.gravity[2] == -2.0 and fresh[0].opt.gravity[2] == -9.81

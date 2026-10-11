@@ -74,7 +74,6 @@ class FirstFamilySemantics:
         return TensorDict({"qpos": rows.clone()}, [len(rows)], device=self.device)
 
     def reset(self, seed=None, options=None):
-        """Reset every lane; ``options`` sample or set physics leaves per lane, as SWM's reset does."""
         self._check_open("reset")
         self.draw_reset_values(seed, options)
         return self._simulator.reset(seed)
