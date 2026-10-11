@@ -40,6 +40,7 @@ def test_shipped_package_has_no_interop_module():
         __import__("stable_envs.interop")
 
 
+@pytest.mark.family("dmc")
 def test_all_42_frozen_swm_ids_join_the_same_canonical_classes():
     expected = {row["swm_id"]: tuple(row["stable_envs_cells"]) for row in _frozen_rows()}
     assert SWM_IDS == expected
@@ -74,6 +75,7 @@ def test_swm_ids_are_not_registry_aliases():
     assert info["class_name"] == "PushT"
 
 
+@pytest.mark.family("pusht")
 def test_variation_map_bridge_is_test_only():
     env = snv.PushT(num_envs=1, device="cpu", size=32)
     try:

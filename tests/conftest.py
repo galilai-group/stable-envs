@@ -25,6 +25,13 @@ Directory markers are applied below so ``pytest -m unit`` / ``-m integration`` /
 ``-m "regression and not gpu"`` / ``-m "regression and gpu"`` select the matching
 bucket even when a file forgot ``pytestmark``. Existing per-file markers are kept.
 
+Every test also gets one ``family_<name>`` marker from ``ci/families.toml`` (see
+``tests/helpers/families.py``). A test that fails while its family is not installed here (missing,
+or at a version the family code refuses) is reported as skipped with that cause; a test that passes
+without the family still counts. A ``gl`` test on a machine without dm_control rendering is skipped
+up front. The summary groups skips by cause. ``SE_REQUIRE_FAMILIES`` / ``SE_REQUIRE_CAPABILITIES``
+(set by CI profile jobs) make the same absence a usage error before anything runs.
+
 THE EMPTY-RUN GUARD, below, and why it is a hook rather than a test. Twice now this suite has been
 green while covering nothing: the DM Control family's 16 envs were absent from the suite interpreter
 for a version skew, so every test parameterised over them collected ZERO cases and the run said so in
@@ -44,12 +51,21 @@ CI_PROFILE = os.environ.get("STABLE_ENVS_CI_PROFILE", "")
 
 import pytest
 
+from tests.helpers import families
 from tests.helpers.reference.certification import install_on_classes
 
 install_on_classes()
 
 
 def pytest_configure(config):
+    config.addinivalue_line("markers", "family(name): the ci/families.toml family this test needs installed")
+    for name in families.FAMILIES:
+        config.addinivalue_line("markers", f"family_{name}: stamped from ci/families.toml")
+    for name, absent in families.CAPABILITIES.items():
+        config.addinivalue_line("markers", f"{name}: skipped where {absent}")
+    problems = families.check_required()
+    if problems:
+        raise pytest.UsageError("\n".join(problems))
     # An explicit source profile verifies and imports its requested checkout in
     # its fixture. Importing an installed copy first would select another oracle
     # before the source pin is checked. Legacy certification still registers IDs.
@@ -58,6 +74,29 @@ def pytest_configure(config):
             import stable_worldmodel  # noqa: F401
         except ImportError:
             pass
+
+
+_FAMILY = pytest.StashKey[str]()
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    report = (yield).get_result()
+    if report.failed and report.when in ("setup", "call"):
+        reason = families.absent(item.stash.get(_FAMILY, "core"))
+        if reason:
+            report.outcome = "skipped"
+            report.longrepr = (report.location[0], report.location[1] or 0, f"Skipped: {reason}")
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_make_collect_report(collector):
+    report = (yield).get_result()
+    if report.failed and isinstance(collector, pytest.Module):
+        reason = families.absent(families.family_of_file(collector.path.name))
+        if reason:
+            report.outcome = "skipped"
+            report.longrepr = (str(collector.path), 0, f"Skipped: {reason}")
 
 
 #: GPU files that are also the frozen regression oracle (parity / reproducibility / fast==slow).
@@ -77,6 +116,12 @@ def pytest_collection_modifyitems(config, items):
     """
     del config
     for item in items:
+        family = families.family_of(item)
+        item.stash[_FAMILY] = family
+        item.add_marker(getattr(pytest.mark, f"family_{family}"))
+        missing = [name for name in families.CAPABILITIES if item.get_closest_marker(name) and not families.have(name)]
+        if missing:
+            item.add_marker(pytest.mark.skip(reason=f"needs {missing[0]}: {families.CAPABILITIES[missing[0]]}"))
         path = Path(getattr(item, "path", item.fspath))
         parts = path.parts
         try:
@@ -165,6 +210,11 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
     line or not at all, and raising from there risks an INTERNALERROR that buries the sentence this
     exists to print.
     """
+    skipped = terminalreporter.stats.get("skipped", [])
+    if skipped:
+        terminalreporter.write_sep("-", f"{len(skipped)} skipped, by cause")
+        for line in families.grouped(skipped):
+            terminalreporter.write_line(line)
     why = _verdict(terminalreporter._session, exitstatus)
     if why:
         terminalreporter.write_sep("=", "EMPTY RUN", red=True, bold=True)

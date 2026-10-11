@@ -37,7 +37,16 @@ def public_render(env, state, **kwargs):
     return env.render(state, **kwargs)
 
 
-@pytest.mark.parametrize("name", ["OGBCube", "OGBScene", "DMCWalkerWalk", "FetchPush", "FetchReach"])
+@pytest.mark.parametrize(
+    "name",
+    [
+        pytest.param("OGBCube", marks=pytest.mark.family("ogbench")),
+        pytest.param("OGBScene", marks=pytest.mark.family("ogbench")),
+        pytest.param("DMCWalkerWalk", marks=[pytest.mark.family("dmc"), pytest.mark.gl]),
+        pytest.param("FetchPush", marks=pytest.mark.family("fetch")),
+        pytest.param("FetchReach", marks=pytest.mark.family("fetch")),
+    ],
+)
 def test_opengl_supplied_state_and_out(name):
     import stable_envs as se
 

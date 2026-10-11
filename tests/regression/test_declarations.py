@@ -751,6 +751,7 @@ def _declared_reference_versions() -> list[tuple[str, dict, str]]:
     return rows
 
 
+@pytest.mark.family("dmc")
 def test_every_declared_reference_version_is_the_one_measured_at_names():
     """Nothing invented: a declared version must appear, package and version, in ``measured_at``.
 
@@ -770,6 +771,7 @@ def test_every_declared_reference_version_is_the_one_measured_at_names():
     assert not bad, "\n  ".join(bad)
 
 
+@pytest.mark.family("dmc")
 def test_the_dm_control_trackcom_declarations_name_the_reference_they_were_measured_against():
     """The measured case this field exists for: declared under mujoco 3.11.0, judged under 3.12.0 in
     Step 4, and 3.12.0 re-anchors finite-plane textures (changelog item 15, commit cc7fb98c)."""
@@ -785,6 +787,7 @@ def test_the_dm_control_trackcom_declarations_name_the_reference_they_were_measu
 OUR_RENDERER_PACKAGES = ("mujoco_warp", "mujoco-warp", "warp", "warp-lang", "nvdiffrast", "torch", "triton")
 
 
+@pytest.mark.family("dmc")
 def test_reference_versions_never_name_our_own_renderer():
     """The field gates: with mujoco_warp in it, bumping OUR renderer would turn a real regression of
     ours into blocked_environment. Our side goes in measured_with, which is recorded and never compared."""

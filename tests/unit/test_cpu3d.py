@@ -48,6 +48,7 @@ def test_cpu3d_imports_no_gpu_runtime():
     assert "torch.cuda" not in code
 
 
+@pytest.mark.gl
 @pytest.mark.parametrize("cell", CELLS)
 def test_cpu_device_builds_the_cpu_backend_and_no_mjwarp_context(se, cell):
     env = se.make(cell, num_envs=2, device="cpu")
@@ -129,12 +130,14 @@ def test_the_transcribed_quadruped_mixin_overrides_only_the_loader_hook_and_the_
     assert cls.default_size == 224 and D._DMCModel.default_size == 84
 
 
+@pytest.mark.gl
 def test_no_gpu_runtime_is_loaded_by_a_cpu_render(se):
     env = se.make("DMCCheetahRun", num_envs=2, device="cpu")
     env._render(_states("DMCCheetahRun", 2))
     assert "warp" not in sys.modules and "mujoco_warp" not in sys.modules
 
 
+@pytest.mark.gl
 @pytest.mark.parametrize("cell", CELLS)
 @pytest.mark.parametrize("size", [42, 84, 168])
 def test_window_and_footprint_bounds_are_exact(se, cell, size):
@@ -158,6 +161,7 @@ def test_window_and_footprint_bounds_are_exact(se, cell, size):
     assert np.array_equal(allhits, ref), "footprint-bounded shadows differ from testing every hit"
 
 
+@pytest.mark.gl
 @pytest.mark.parametrize("cell", CELLS)
 def test_batch_chunk_and_order_invariance(se, cell):
     from stable_envs.render import cpu3d
@@ -186,6 +190,7 @@ def test_batch_chunk_and_order_invariance(se, cell):
     assert not np.array_equal(d1, a), "the per-row styles should have changed the picture"
 
 
+@pytest.mark.gl
 def test_render_at_another_resolution_is_a_pure_function_of_size(se):
     env = se.make("DMCCheetahRun", num_envs=2, device="cpu")
     st = _states("DMCCheetahRun", 2)
