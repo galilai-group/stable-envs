@@ -1,4 +1,4 @@
-"""Per-lane reset distributions and per-lane physics model parameters."""
+"""Per-lane physics knobs and the reset rule: unnamed Variation leaves return to their defaults."""
 
 import copy
 import importlib
@@ -132,28 +132,6 @@ def test_model_fields_write_through_a_transform():
         PhysicsKnobs([ModelField("x", "geom_friction", "geom", "missing", 0)], m)
 
 
-def test_lanes_carry_physics_in_state_and_refuse_a_state_without_it():
-    from stable_envs.envs.dmcontrol.simulation.first_family import FirstFamilyAdapter
-
-    pytest.importorskip("dm_control")
-    adapter = FirstFamilyAdapter("cartpole", 2)
-    try:
-        layout = adapter.physics_layout
-        assert layout.leaves == ("gravity.x", "gravity.y", "gravity.z")
-        rows = np.asarray([[0.0, 0.0, -9.81], [0.5, -0.25, -4.0]])
-        adapter.configure_physics(rows)
-        state = adapter.get_state()
-        assert state[state_key("gravity.z")].dtype == torch.float64
-        np.testing.assert_array_equal(state[state_key("gravity.z")].numpy().reshape(-1), [-9.81, -4.0])
-        adapter.configure_physics(np.tile([0.0, 0.0, -9.81], (2, 1)))
-        adapter.set_state(state)
-        np.testing.assert_array_equal(np.stack([e.physics.model.opt.gravity for e in adapter.envs]), rows)
-        with pytest.raises(ValueError, match="does not record the physics"):
-            adapter.set_state(state.exclude(state_key("gravity.y")))
-    finally:
-        adapter.close()
-
-
 def test_process_shards_carry_and_restore_per_lane_physics():
     from stable_envs.envs.dmcontrol.simulation.process import DMCProcessAdapter, make_local
 
@@ -174,6 +152,8 @@ def test_process_shards_carry_and_restore_per_lane_physics():
             owner.configure_physics(np.tile([0.0, 0.0, -9.81], (4, 1)))
             owner.set_state(saved)
         torch.testing.assert_close(remote.get_state()[state_key("gravity.z")], saved[state_key("gravity.z")])
+        with pytest.raises(ValueError, match="does not record the physics"):
+            local.set_state(saved.exclude(state_key("gravity.y")))
         expected, actual = local.step(action), remote.step(action)
         for key in expected.keys(True, True):
             torch.testing.assert_close(expected[key], actual[key], rtol=0, atol=0, msg=str(key))
@@ -182,34 +162,125 @@ def test_process_shards_carry_and_restore_per_lane_physics():
         remote.close()
 
 
-def test_reset_options_set_or_sample_physics_per_lane():
+def _gravity(env):
+    state = env.get_state()
+    sim = np.stack([e.physics.model.opt.gravity for e in env._simulator.envs])
+    style = np.concatenate([env._style[f"gravity.{axis}"].reshape(-1, 1).cpu().numpy() for axis in "xyz"], axis=1)
+    rows = torch.cat([state["physics", "gravity", axis] for axis in "xyz"], dim=1).numpy()
+    np.testing.assert_array_equal(rows, sim)
+    np.testing.assert_array_equal(style, sim.astype(np.float32))
+    return sim
+
+
+@pytest.fixture
+def cartpole():
     pytest.importorskip("dm_control")
     with se.make("DMCCartpoleSwingup", num_envs=3, device="cpu") as env:
-        assert env.physics_variation_leaves == ("gravity.x", "gravity.y", "gravity.z")
-        exact = np.asarray([[-1.1], [-2.2], [-19.99]])
-        state = env.reset(seed=1, options={"variation_values": {"gravity.z": exact}})
-        np.testing.assert_array_equal(state["physics", "gravity", "z"].numpy(), exact)
-        np.testing.assert_array_equal([e.physics.model.opt.gravity[2] for e in env._simulator.envs], exact[:, 0])
-        first = env.reset(seed=9, options={"variation": ["gravity.z"]})["physics", "gravity", "z"]
-        again = env.reset(seed=9, options={"variation": ["gravity.z"]})["physics", "gravity", "z"]
-        assert torch.equal(first, again) and len(set(first.reshape(-1).tolist())) == 3
-        assert bool((env.reset(seed=2)["physics", "gravity", "z"] == -9.81).all())
-        with pytest.raises(NotImplementedError, match="sampled variation leaves"):
-            env.reset(options={"variation": ["agent.color"]})
-        with pytest.raises(NotImplementedError, match="variation_values"):
-            env.reset(options={"variation_values": {"material.self": [1.0, 0.0, 0.0]}})
+        yield env
 
 
-def test_reset_leaves_take_one_value_per_lane():
-    starts = np.asarray([[31.25, 47.5], [180.0, 60.0], [40.0, 200.0]], np.float32)
-    with se.make("TwoRoom", num_envs=3, device="cpu") as env:
+def test_reset_sets_or_samples_named_physics_and_restores_the_rest(cartpole):
+    assert cartpole.physics_variation_leaves == ("gravity.x", "gravity.y", "gravity.z")
+    registered = np.tile([0.0, 0.0, -9.81], (3, 1))
+    gz = np.asarray([[-1.1], [-2.2], [-19.99]])
+    cartpole.reset(seed=1, options={"variation_values": {"gravity.z": gz}})
+    np.testing.assert_array_equal(_gravity(cartpole)[:, 2:], gz)
+    cartpole.reset(seed=1, options={"variation_values": {"gravity.x": [1.25]}})
+    np.testing.assert_array_equal(_gravity(cartpole), np.tile([1.25, 0.0, -9.81], (3, 1)))
+    first = cartpole.reset(seed=9, options={"variation": ["gravity.y"]})["physics", "gravity", "y"]
+    again = cartpole.reset(seed=9, options={"variation": ["gravity.y"]})["physics", "gravity", "y"]
+    assert torch.equal(first, again) and len(set(first.reshape(-1).tolist())) == 3
+    np.testing.assert_array_equal(_gravity(cartpole)[:, [0, 2]], registered[:, [0, 2]])
+    cartpole.reset()
+    np.testing.assert_array_equal(_gravity(cartpole), registered)
+    with pytest.raises(NotImplementedError, match="sampled variation leaves"):
+        cartpole.reset(options={"variation": ["agent.color"]})
+    with pytest.raises(NotImplementedError, match="variation_values"):
+        cartpole.reset(options={"variation_values": {"material.self": [1.0, 0.0, 0.0]}})
+
+
+def test_set_variation_sets_the_default_and_a_restored_state_does_not(cartpole):
+    gz = np.asarray([[-2.0], [-3.0], [-4.0]])
+    cartpole.set_variation({"gravity.z": [-6.0]})
+    np.testing.assert_array_equal(_gravity(cartpole)[:, 2], [-6.0] * 3)
+    saved = cartpole.reset(seed=6, options={"variation_values": {"gravity.z": gz}})
+    cartpole.reset(seed=6)
+    np.testing.assert_array_equal(_gravity(cartpole), np.tile([0.0, 0.0, -6.0], (3, 1)))
+    cartpole.set_state(saved)
+    np.testing.assert_array_equal(_gravity(cartpole)[:, 2:], gz)
+    cartpole.reset(seed=6)
+    np.testing.assert_array_equal(_gravity(cartpole), np.tile([0.0, 0.0, -6.0], (3, 1)))
+
+
+def test_style_leaves_follow_the_rule():
+    with se.make("TwoRoom", num_envs=2, device="cpu") as env:
+        registered = float(env._style["agent.speed"][0])
+        env.reset(seed=1, options={"variation_values": {"agent.speed": [6.5]}})
+        assert (env._style["agent.speed"] == 6.5).all()
+        env.reset(seed=1)
+        assert (env._style["agent.speed"] == registered).all()
+
+        env.set_variation({"agent.speed": [4.0], "agent.color": [10, 20, 30]})
+        env.reset(seed=2, options={"variation_values": {"agent.speed": [[6.5], [7.0]]}})
+        assert env._style["agent.speed"].tolist() == [6.5, 7.0]
+        assert env._style["agent.color"].tolist() == [[10.0, 20.0, 30.0]] * 2
+        env.reset(seed=2)
+        assert (env._style["agent.speed"] == 4.0).all()
+        assert env._style["agent.color"].tolist() == [[10.0, 20.0, 30.0]] * 2
+
+
+def test_reset_leaves_take_one_value_per_lane_and_follow_the_rule():
+    starts = np.asarray([[31.25, 47.5], [180.0, 60.0]], np.float32)
+    with se.make("TwoRoom", num_envs=2, device="cpu") as env:
         assert [leaf.path for leaf in env.reset_leaves] == ["agent.position", "target.position"]
+        sampled = env.reset(seed=3)["agent", "position"]
         state = env.reset(seed=3, options={"variation_values": {"agent.position": starts}})
         np.testing.assert_array_equal(state["agent", "position"].numpy(), starts)
+        assert torch.equal(env.reset(seed=3)["agent", "position"], sampled)
+        state = env.reset(seed=3, options={"variation": []})
+        np.testing.assert_array_equal(state["agent", "position"].numpy(), [[60.0, 112.0]] * 2)
+        np.testing.assert_array_equal(state["target", "position"].numpy(), [[164.0, 112.0]] * 2)
         with pytest.raises(ValueError, match="per lane"):
-            env.reset(options={"variation_values": {"agent.position": np.zeros((2, 2))}})
+            env.reset(options={"variation_values": {"agent.position": np.zeros((3, 2))}})
     with se.make("SimplePointMaze", num_envs=2, device="cpu") as env:
         with pytest.raises(NotImplementedError, match="goal.position"):
             env.reset(options={"variation": ["goal.position"]})
         state = env.reset(seed=4, options={"variation": [], "variation_values": {"goal.position": [2.5, 1.5]}})
         np.testing.assert_array_equal(state["goal", "position"].numpy(), [[2.5, 1.5]] * 2)
+
+
+def test_reset_refuses_leaves_it_cannot_set_on_envs_without_reset_options():
+    with se.make("CartPole", num_envs=2, device="cpu") as env:
+        env.set_variation({"physics.gravity": [12.0]})
+        env.reset(seed=0)
+        assert (env._style["physics.gravity"] == 12.0).all()
+        with pytest.raises(NotImplementedError, match="sampled variation leaves"):
+            env.reset(seed=0, options={"variation": ["physics.gravity"]})
+
+
+def test_fetch_reset_restores_colors_and_mass():
+    pytest.importorskip("gymnasium_robotics")
+    options = {
+        "variation_values": {
+            "table.color": np.array([0.2, 0.7, 0.4]),
+            "object.color": np.array([0.8, 0.1, 0.3]),
+            "block.mass": np.array([0.9]),
+        }
+    }
+    with (
+        se.make("FetchPush", num_envs=2, device="cpu", backend="opengl") as env,
+        se.make("FetchPush", num_envs=2, device="cpu", backend="opengl") as fresh,
+    ):
+        registered = env.get_variation().clone()
+        mass = env._simulator.object_mass
+        env.reset(seed=1, options=options)
+        assert not torch.equal(env.get_variation(), registered)
+        assert (env._simulator.object_mass == 0.9).all()
+        env.reset(seed=1)
+        assert torch.equal(env.get_variation(), registered)
+        np.testing.assert_array_equal(env._simulator.object_mass, mass)
+        only_object = {"variation_values": {"object.color": np.array([0.1, 0.2, 0.3])}}
+        assert torch.equal(
+            env.reset(seed=2, options=only_object)["qpos"], fresh.reset(seed=2, options=only_object)["qpos"]
+        )
+        assert torch.equal(env.get_variation(), fresh.get_variation())
