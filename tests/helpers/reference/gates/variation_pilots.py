@@ -278,10 +278,80 @@ def physics_gate(stable_env="DMCCartpoleSwingup", domain="cartpole", seed=11, st
     return evidence
 
 
+def reset_rule_gate(stable_env="DMCCartpoleSwingup", domain="cartpole", seed=23, steps=10) -> dict:
+    """``reset(options)`` then ``reset()``: leaves the second reset does not name return to their defaults.
+
+    First the registered defaults, then defaults installed by ``set_variation``, which SWM
+    spells ``variation_space.set_init_value``. Gravity is read from each SWM model.
+    """
+    evidence = {"stable_env": stable_env, "domain": domain, "seed": seed, "steps": steps}
+    actions = np.random.default_rng(seed).uniform(-1, 1, (steps, 3, 1))
+    gz = np.asarray([[-3.25], [-17.5], [-9.81]], np.float64)
+    gx = np.asarray([[1.5], [0.0], [-2.0]], np.float64)
+    configured = -5.0
+    with se.make(stable_env, num_envs=3, device="cpu") as env:
+        lanes = _Lanes(domain, {"gravity.z": gz})
+        try:
+            compare_state(
+                env.reset(seed=seed, options={"variation_values": {"gravity.z": gz}}), lanes.reset(seed), atol=0.0
+            )
+            for ref in lanes.refs:
+                ref.options = None
+            ours = env.reset(seed=seed + 1)
+            compare_state(ours, lanes.reset(seed + 1), atol=0.0)
+            assert bool((ours["physics", "gravity", "z"] == -9.81).all())
+            registered = _max_state_error(_rollout_ours(env, actions), _rollout_theirs(lanes, actions))
+
+            env.set_variation({"gravity.z": [configured]})
+            for lane, ref in enumerate(lanes.refs):
+                leaf = ref.envs[0].variation_space["gravity"]["z"]
+                leaf.set_init_value(np.asarray([configured], leaf.dtype))
+                ref.options = {"variation_values": {"gravity.x": gx[lane]}}
+            compare_state(
+                env.reset(seed=seed + 2, options={"variation_values": {"gravity.x": gx}}),
+                lanes.reset(seed + 2),
+                atol=0.0,
+            )
+            for ref in lanes.refs:
+                ref.options = None
+            ours = env.reset(seed=seed + 3)
+            compare_state(ours, lanes.reset(seed + 3), atol=0.0)
+            assert bool((ours["physics", "gravity", "x"] == 0.0).all())
+            assert bool((ours["physics", "gravity", "z"] == configured).all())
+            configured_error = _max_state_error(_rollout_ours(env, actions), _rollout_theirs(lanes, actions))
+        finally:
+            lanes.close()
+    evidence["registered_defaults"] = {"max_state_error": registered}
+    evidence["set_variation_defaults"] = {"value": configured, "max_state_error": configured_error}
+    return evidence
+
+
+def navigation_reset_rule_gate(seed=29, steps=8) -> dict:
+    """TwoRoom ``agent.speed`` set by one reset's options, then a plain reset, stepped against SWM."""
+    speed = np.asarray([6.5], np.float32)
+    actions = np.random.default_rng(seed).uniform(-1, 1, (steps, 3, 2)).astype(np.float32)
+    with se.make("TwoRoom", num_envs=3, device="cpu") as env:
+        ref = NativeNavigationReference("two_room", 3, options={"variation_values": {"agent.speed": speed}})
+        try:
+            compare_state(env.reset(seed=seed, options={"variation_values": {"agent.speed": speed}}), ref.reset(seed))
+            ref.options = None
+            compare_state(env.reset(seed=seed + 1), ref.reset(seed + 1))
+            default = float(env.variation_space["agent"]["speed"].value[0])
+            assert bool((env._style["agent.speed"] == default).all())
+            assert all(float(e.variation_space["agent"]["speed"].value[0]) == default for e in ref.envs)
+            for action in actions:
+                compare_state(env.step(action, frames=None)["state"], ref.step(action)["state"])
+        finally:
+            ref.close()
+    return {"stable_env": "TwoRoom", "leaf": "agent.speed", "value": float(speed[0]), "steps": steps}
+
+
 def run_gate() -> dict:
     return {
         "reset_leaf": [reset_leaf_gate(domain) for domain in NAVIGATION],
         "physics": physics_gate(),
+        "reset_rule": reset_rule_gate(),
+        "navigation_reset_rule": navigation_reset_rule_gate(),
     }
 
 
