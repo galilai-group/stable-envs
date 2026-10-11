@@ -491,11 +491,14 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     "DMCPointMassEasy": 0.730424,  # mean 0.2418/255
     #: The five VISUAL-tier DM Control cells draw the whole scene through MJWarp with no plate, so
     #: PLATE_REPRESENTATIVES does not cover them and each one is measured in its own right. They sit
-    #: together at 0.53-0.63 for one reason: 2S resolves the speckled skybox and the checker floor at a
+    #: at 0.28-0.63 for one reason: 2S resolves the speckled skybox and the checker floor at a
     #: finer rate and the box filter does not invert either, so the number is a property of those two
     #: textures rather than of the geometry. It is still a live detector — the bodies and the camera
     #: are what a regression would move, and moving them collapses it.
-    "DMCCheetahRun": 0.533850,  # mean 3.0869/255
+    #: MEASURED under this table's own protocol (8 states at render_worker.STATE_SEED, default
+    #: appearance with material self rgba .7 .5 .3), RTX 3090 / driver 575.57.08, mujoco 3.12.0 +
+    #: mujoco-warp 3.12.0, MUJOCO_GL=egl.
+    "DMCCheetahRun": 0.278752,  # mean 2.0157/255
     #: A sixth VISUAL-tier cell belongs here for the same reason:
     #: DMCQuadrupedWalk draws the whole scene through MJWarp with no plate, so PLATE_REPRESENTATIVES
     #: does not cover it. It sits ABOVE the other five because its camera is much closer to the body
