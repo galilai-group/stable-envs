@@ -386,39 +386,28 @@ _MAZE_PROBES = {
     ),
 }
 
-#: OGBMaze leaves that our raycast3d port reproduces, and the ones it does not. Measured in
-#: ``ob_type='pixels'``, which is the configuration our renderer is certified against
-#: (``reference_id`` is ``ogbench/pointmaze-large-v0``, not the swm id).
-_OGBMAZE_SWM_ONLY = {
-    "floor.color": (
-        "the checker floor texture's rgb1/rgb2. DEAD AT THE APPEARANCE WE REPRODUCE, MEASURED: it "
-        "has an effect only when floor.pixel_encoding==0, and the official OGBench appearance is "
-        "encoding 1 (the position-encoding gradient), where the recompile overwrites tex_data and "
-        "the leaf moves 0 of 50,176 px. At encoding 0 it moves 21,029 px. Our floor.tint is a "
-        "different knob -- a multiplier on whatever texture is bound -- not a checker rgb1/rgb2, so "
-        "it is not offered as this leaf's counterpart"
-    ),
-    "floor.pixel_encoding": (
-        "our `rendering.decolor_floor` is the same switch with the OPPOSITE sense: swm's encoding=1 "
-        "is the position-encoding gradient, which is our decolor_floor=0, and both defaults are the "
-        "official gradient. VariationMap can express `ours = theirs * factor` and nothing else, so "
-        "an inverting relation (`ours = 1 - theirs`) has no representation here -- this is a "
-        "capability gap in the shared class, reported to the workstream that owns it, not a "
-        "renderer gap. UNSUPPORTED-PENDING-A, and pending a second measurement that the affine "
-        "capability does NOT settle: swm's encoding=0 restores the XML CHECKER (2 colours) while "
-        "our decolor_floor=1 paints flat slate. An affine `(factor, offset)` resolves whether the "
-        "relation can be WRITTEN DOWN; it says nothing about whether the two settings draw the same "
-        "picture, and that has not been measured. Mapping it on A's merge alone would invert the "
-        "semantics for every caller and call a different floor the same floor"
-    ),
-    "light.intensity": (
-        "the global directional light's diffuse term (MEASURED: writes light_diffuse row 0 only; "
-        "intensity 0 moves 43,931 px, 0.5 moves 43,931 px at maxdiff 84, and 1.0 -- the default -- "
-        "moves 0). Our renderer does not carry a light leaf: its lighting is a FITTED law with a "
-        "fixed per-light split calibrated at the default intensity, so scaling the diffuse term is "
-        "not obviously the same operation the official renderer performs. Offering it would need "
-        "the law re-derived as a function of intensity and re-certified. ESCALATED"
-    ),
+#: Gate evidence for the appearance leaves, measured on the CPU ray-caster against MuJoCo 3.12.0 /
+#: ogbench 1.2.1 / swm 176d545 at 224x224 (three state-scene lanes, two pixel-scene lanes per case),
+#: each lane a fresh swm env.
+_OGBMAZE_GATE = (
+    "tests/helpers/reference/gates/ogbench_maze.py: appearance_gate (state scene, PointMazeLargeNavigate: "
+    "same seed and per-lane variation_values give the exact reset State and a 20-step rollout, since the "
+    "recompile never reaches physics) and pixel_appearance_gate (pixel scenes, point/ant/humanoid at swm's "
+    "qpos). Worst-frame normalized MSE <= 1e-3 and every varied lane moves swm's frame off our default by more than "
+    "our residual"
+)
+
+_OGBMAZE_NOTES = {
+    "floor.color": "the checker's rgb1/rgb2, written as texels into the baked plate. Drawn wherever swm "
+    "draws it: always in the state scene, and in pixel scenes only at floor.pixel_encoding=0 -- the "
+    "position-encoding gradient (encoding 1) overwrites the checker on both sides",
+    "floor.pixel_encoding": "same switch and sense as swm (1 gradient, 0 XML checker). DEFAULTS DIFFER: "
+    "ours is 1, the official ogbench appearance; swm's init_value is 0, which its first reset applies, "
+    "so a default swm pixels env shows the checker from then on. Pass the value explicitly to compare. "
+    "Like swm, the state scene ignores it",
+    "light.intensity": "the global light's diffuse term, written into the model before the plate bake. "
+    "Static pixels are MuJoCo's; agent shading in pixel scenes scales the global share of the fitted "
+    "diffuse law, and in the state scene reads the scene's lights directly",
 }
 
 _OGBMAZE_OURS_ONLY = {
@@ -477,7 +466,7 @@ NEWCELL_VARIATION_MAPS.update(
         **{
             name: VariationMap(
                 swm_id="swm/OGBMaze-v0",
-                identical=("agent.color",),
+                identical=("agent.color", "floor.color", "floor.pixel_encoding", "light.intensity"),
                 # swm spells it `wall.color`, singular; we spell it `walls.color`. Same units (float 0-1)
                 # and the same absolute semantics -- MEASURED: swm writes the `wall` MATERIAL's mat_rgba and
                 # never geom_rgba, and setting it to our default 0.6 reproduces the default frame bit-exactly
@@ -485,8 +474,8 @@ NEWCELL_VARIATION_MAPS.update(
                 # init_value from the loaded XML, and ogbench rewrites wall rgba to 0.6 only in pixels mode,
                 # so the 1.0 that a states-mode env reports is not the appearance we render.
                 renamed={"walls.color": "wall.color"},
-                swm_only=_OGBMAZE_SWM_ONLY,
                 ours_only=_OGBMAZE_OURS_ONLY,
+                notes=_OGBMAZE_NOTES,
             )
             for name in ("PointmazeLargeNavigate", "PointmazeLargeStitch")
         },
@@ -518,12 +507,11 @@ LEAF_CLASSIFICATION.update(
         "swm/OGBMaze-v0": {
             "our_envs": ["PointmazeLargeNavigate", "PointmazeLargeStitch"],
             "config_note": (
-                "Classified in ob_type='pixels'. UPSTREAM FINDING: the registered id swm/OGBMaze-v0 "
-                "defaults to ob_type='states', and in THAT configuration all five leaves move 0 pixels "
-                "-- swm's compile_model() rebuilds ogbench's `custom_renderer` only for 'pixels', so a "
-                "states-mode render keeps drawing the pre-recompile model even though mat_rgba provably "
-                "changed. Our port reproduces the OGBench pixel renderer (reference_id "
-                "ogbench/pointmaze-large-v0), so the pixels-mode semantics are the ones that bind here"
+                "Gated in both scenes. The registered swm/OGBMaze-v0 default is ob_type='states', which "
+                "PointMazeLargeNavigate renders; the other cells render ob_type='pixels'. UPSTREAM FINDING: "
+                "swm's compile_model() rebuilds ogbench's `custom_renderer` only for 'pixels', so in "
+                "'states' a leaf reaches swm's frame only if that env had not rendered before the "
+                "recompile; the gate uses a fresh swm env per lane and case"
             ),
             "leaves": {
                 "agent.color": _cls(
@@ -541,26 +529,24 @@ LEAF_CLASSIFICATION.update(
                     "geom_rgba is never written",
                 ),
                 "floor.color": _cls(
-                    "dead_upstream",
-                    _OGBMAZE_SWM_ONLY["floor.color"],
-                    _MAZE_PROBES["ogbmaze"] + " -- 0 of 50,176 px at pixel_encoding=1 (the official "
-                    "appearance); 21,029 px at encoding=0",
-                    mechanism="checker texture rgb1/rgb2, overwritten by the position-encoding gradient",
+                    "mapped",
+                    _OGBMAZE_NOTES["floor.color"],
+                    _OGBMAZE_GATE + " -- state scene worst 1.4e-4 (swm shift >= 0.079); pixel scenes at "
+                    "encoding 0 worst 7.3e-5 (shift >= 0.059)",
+                    mechanism="checker texels of texture 'grid' in the baked plate",
                 ),
                 "floor.pixel_encoding": _cls(
-                    "unsupported",
-                    _OGBMAZE_SWM_ONLY["floor.pixel_encoding"],
-                    _MAZE_PROBES["ogbmaze"] + " -- encoding 1 vs 0 moves 21,029 px at maxdiff 224",
-                    mechanism="VariationMap cannot express an inverting relation , AND "
-                    "checker-versus-flat equivalence is unmeasured; both must resolve before "
-                    "this can be mapped",
+                    "mapped",
+                    _OGBMAZE_NOTES["floor.pixel_encoding"],
+                    _OGBMAZE_GATE + " -- encoding 0 worst 7.3e-5 (shift >= 0.059); gradient worst 7.6e-5",
+                    mechanism="plate floor texture: ogbench gradient (1) or XML checker (0)",
                 ),
                 "light.intensity": _cls(
-                    "unsupported",
-                    _OGBMAZE_SWM_ONLY["light.intensity"],
-                    _MAZE_PROBES["ogbmaze"] + " -- 43,931 px at intensity 0 and 0.5; 0 px at 1.0",
-                    mechanism="light_diffuse row 0; our fitted lighting law is calibrated at the "
-                    "default intensity. Escalation candidate",
+                    "mapped",
+                    _OGBMAZE_NOTES["light.intensity"],
+                    _OGBMAZE_GATE + " -- state scene worst 2.1e-5 (shift >= 8.0e-4); pixel scenes worst "
+                    "3.3e-5 (shift >= 0.045)",
+                    mechanism="light_diffuse of light 'global' in the bake and the agent shading law",
                 ),
             },
         },
@@ -671,6 +657,9 @@ RECORDED_OURS_LEAVES: dict[str, tuple[str, ...]] = {
         "agent.color",
         "agent.scale",
         "floor.tint",
+        "floor.color",
+        "floor.pixel_encoding",
+        "light.intensity",
         "walls.color",
         "camera.distance_scale",
         "camera.elevation",
@@ -680,6 +669,9 @@ RECORDED_OURS_LEAVES: dict[str, tuple[str, ...]] = {
         "agent.color",
         "agent.scale",
         "floor.tint",
+        "floor.color",
+        "floor.pixel_encoding",
+        "light.intensity",
         "walls.color",
         "camera.distance_scale",
         "camera.elevation",

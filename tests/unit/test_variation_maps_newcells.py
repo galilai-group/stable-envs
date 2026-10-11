@@ -313,23 +313,17 @@ def test_ogbmaze_records_that_the_registered_states_mode_config_renders_every_le
     assert "pixels" in note
 
 
-def test_ogbmaze_floor_color_is_dead_at_the_appearance_we_actually_render():
-    rec = LEAF_CLASSIFICATION[MAZE]["leaves"]["floor.color"]
-    assert rec["classification"] == "dead_upstream"
-    assert "0 of 50,176" in rec["evidence"], (
-        "the dead verdict is conditional on the official pixel_encoding=1 appearance; the evidence "
-        "must carry that count or the verdict cannot be checked"
-    )
+def test_ogbmaze_appearance_leaves_are_mapped_on_gate_evidence():
+    """floor.color, floor.pixel_encoding and light.intensity are rendered and gated against swm.
 
-
-def test_ogbmaze_pixel_encoding_is_unsupported_because_the_map_cannot_invert():
-    """Our `rendering.decolor_floor` IS the same switch, with the opposite sense. It is recorded as
-    unsupported rather than mapped because VariationMap can only express `ours = theirs * factor`,
-    and quietly mapping it would invert the semantics for every caller."""
-    rec = LEAF_CLASSIFICATION[MAZE]["leaves"]["floor.pixel_encoding"]
-    assert rec["classification"] == "unsupported"
-    assert "1 - theirs" in _map_for(MAZE).swm_only["floor.pixel_encoding"]
-    assert "decolor_floor" not in {o for o in _map_for(MAZE).pairs()}
+    pixel_encoding keeps swm's sense, so it maps by identity; its default differs and the note says so."""
+    m = _map_for(MAZE)
+    for leaf in ("floor.color", "floor.pixel_encoding", "light.intensity"):
+        assert m.pairs()[leaf] == (leaf, 1.0)
+        rec = LEAF_CLASSIFICATION[MAZE]["leaves"][leaf]
+        assert rec["classification"] == "mapped" and "appearance_gate" in rec["evidence"]
+    assert "init_value is 0" in m.notes["floor.pixel_encoding"]
+    assert not m.unmapped()
 
 
 @pytest.mark.parametrize("cell", sorted(RECORDED_OURS_LEAVES))
@@ -716,16 +710,6 @@ def test_a_swm_shaped_cube_colour_survives_the_round_trip_through_our_style_row(
     back = variation_from_style(env, row)
     assert np.asarray(back["cube.color"]).reshape(-1) == pytest.approx([0.1, 0.2, 0.3])
     assert np.asarray(back["floor.color"]).reshape(-1).shape == (6,)
-
-
-def test_pixel_encoding_reason_does_not_promise_that_the_affine_flag_alone_maps_it():
-    """Reviewer finding 4. An affine `(factor, offset)` makes the relation WRITEABLE; it does not
-    make swm's two-colour checker and our flat slate the same picture, and that is unmeasured. The
-    reason must say both, because the first half alone reads as "mapped once A merges"."""
-    reason = _map_for(MAZE).swm_only["floor.pixel_encoding"]
-    assert "PENDING-A" in reason.upper()
-    assert "has not been measured" in reason
-    assert "checker" in reason.lower() and "slate" in reason.lower()
 
 
 def test_the_whole_style_row_crosses_to_the_host_in_one_read():

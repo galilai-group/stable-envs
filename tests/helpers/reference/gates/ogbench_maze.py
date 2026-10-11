@@ -1,4 +1,4 @@
-"""Run the bounded historical-default OGBMaze recovery gate; emit evidence only."""
+"""OGBMaze gates against the official ogbench env and pinned swm; emit evidence only."""
 
 from __future__ import annotations
 
@@ -279,6 +279,121 @@ def run_gate(device="cpu"):
             finally:
                 ref.close()
     return evidence
+
+
+#: Per-lane explicit values (three lanes) for each swm/OGBMaze-v0 appearance leaf.
+APPEARANCE_CASES = {
+    "floor.color": [
+        [[0.9, 0.1, 0.1], [0.1, 0.1, 0.9]],
+        [[0.5, 0.5, 0.5], [0.2, 0.7, 0.2]],
+        [[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]],
+    ],
+    "light.intensity": [[0.0], [0.5], [0.25]],
+    "agent.color": [[0.1, 0.9, 0.1], [0.9, 0.1, 0.9], [0.0, 0.0, 0.0]],
+    "wall.color": [[0.9, 0.2, 0.2], [0.0, 0.0, 0.0], [0.3, 0.6, 0.9]],
+}
+STATE_CASES = {"default": {}, **{k: {k: v} for k, v in APPEARANCE_CASES.items()}, "all": APPEARANCE_CASES}
+#: Two lanes each: a swm pixels env holds two GL contexts once its recompile rebuilds the renderer.
+PIXEL_CASES = {
+    "gradient": {"floor.pixel_encoding": [1, 1]},
+    "checker_colour": {"floor.pixel_encoding": [0, 0], "floor.color": APPEARANCE_CASES["floor.color"][:2]},
+    "light": {"floor.pixel_encoding": [1, 1], "light.intensity": APPEARANCE_CASES["light.intensity"][1:]},
+    "all": {"floor.pixel_encoding": [0, 1], **{k: v[:2] for k, v in APPEARANCE_CASES.items()}},
+}
+#: Worst-frame normalized MSE accepted between our first frame and swm's.
+FRAME_MSE_MAX = 1e-3
+_OURS = {"wall.color": "walls.color"}
+#: Every swm env and renderer a gate builds stays referenced: releasing a GL context corrupts the
+#: other live contexts in the process.
+_LIVE = []
+
+
+def _ours(values, lanes):
+    return {_OURS.get(k, k): np.asarray(v, np.float32).reshape(lanes, -1) for k, v in values.items()}
+
+
+def _mse(ours, theirs):
+    from stable_envs.testing.metrics import normalized_mse
+
+    errors = normalized_mse(np.asarray(ours), np.asarray(theirs))
+    return dict(mean=float(errors.mean()), worst=float(errors.max()), least=float(errors.min()))
+
+
+def _check_frames(case, frames, shift):
+    """Within the bar, and every varied lane moved swm's frame off our default by more than our residual."""
+    assert frames["worst"] <= FRAME_MSE_MAX, (case, frames)
+    assert shift is None or shift["least"] > frames["worst"], (case, frames, shift)
+
+
+def appearance_gate(case, cell="PointMazeLargeNavigate", *, seed=23, steps=20):
+    """One swm/OGBMaze-v0 appearance case against swm in the state scene, three lanes.
+
+    swm recompiles the MJCF, so the same seed and per-lane ``variation_values`` must give the exact
+    reset State and rollout, and the first frame must agree. swm's states-mode renderer is built on
+    first render and never rebuilt, so every case uses fresh swm envs.
+    """
+    cls = se.registry.REGISTRY[cell]
+    values = STATE_CASES[case]
+    options = {"variation_values": values} if values else None
+    with se.make(cell, num_envs=3, device="cpu") as env:
+        env.reset(seed=seed)
+        default = env.render().cpu().numpy()
+        ref = OGBMazeReference(3, loco=cls.LOCO, maze=cls.MAZE, source="swm", options=options)
+        _LIVE.append(ref)
+        expected = ref.reset(seed=seed)
+        theirs = np.stack([np.asarray(w.render()) for w in ref.envs])
+        got = env.reset(seed=seed, options={"variation_values": _ours(values, 3)} if values else None)
+        compare_state(got, expected)
+        frames = _mse(env.render().cpu().numpy(), theirs)
+        actions = np.random.default_rng(seed).uniform(-1, 1, (steps, 3, cls.action_dim)).astype(np.float32)
+        rollout = check_step_matches_reference(env, ref, actions)
+    shift = _mse(theirs, default) if values else None
+    _check_frames(case, frames, shift)
+    return dict(
+        cell=cell,
+        case=case,
+        seed=seed,
+        state_exact=True,
+        rollout_steps=len(rollout),
+        first_frame_mse=frames,
+        swm_shift_mse=shift,
+    )
+
+
+def pixel_appearance_gate(cell, case, *, seed=23):
+    """One appearance case in a pixel scene against swm's ``ob_type='pixels'`` env at its qpos.
+
+    swm's own default reset applies ``floor.pixel_encoding=0`` (its init value), so every case
+    passes the encoding explicitly; ours defaults to the official gradient, encoding 1.
+    """
+    from stable_worldmodel.envs.ogbench.maze_env import MazeEnv
+
+    cls = se.registry.REGISTRY[cell]
+    values = PIXEL_CASES[case]
+    theirs, qpos = [], []
+    for lane in range(2):
+        swm = MazeEnv(loco_env_type=cls.LOCO, maze_type=cls.MAZE, ob_type="pixels", width=224, height=224)
+        _LIVE.extend([swm, swm.env.custom_renderer])
+        lane_values = {k: np.asarray(v)[lane] for k, v in values.items()}
+        lane_values["floor.pixel_encoding"] = int(lane_values["floor.pixel_encoding"])
+        outside = np.random.get_state()
+        np.random.seed(seed + lane)  # ogbench draws the task from the global RNG
+        try:
+            swm.reset(seed=seed + lane, options={"variation_values": lane_values})
+        finally:
+            np.random.set_state(outside)
+        _LIVE.append(swm.env.custom_renderer)
+        qpos.append(swm.env.data.qpos.copy())
+        theirs.append(np.asarray(swm.render()))
+    theirs = np.stack(theirs)
+    rows = torch.as_tensor(np.stack(qpos), dtype=torch.float32)
+    with se.make(cell, num_envs=2, device="cpu") as env:
+        default = env._render(rows).cpu().numpy()
+        env.reset(seed=seed, options={"variation_values": _ours(values, 2)})
+        frames = _mse(env._render(rows).cpu().numpy(), theirs)
+    shift = None if case == "gradient" else _mse(theirs, default)
+    _check_frames(case, frames, shift)
+    return dict(cell=cell, case=case, seed=seed, first_frame_mse=frames, swm_shift_mse=shift)
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ import torch
 from tensordict import TensorDict
 
 from ..._core.mujoco_gl import configure_mujoco_gl
+from ..._core.plate_texels import quantise
 from ..._execution.protocol import StepPipeline, step_pipeline
 
 configure_mujoco_gl()
@@ -23,6 +24,8 @@ SHADE_AMBIENT, SHADE_DIFFUSE, SHADE_SPECULAR, SHADE_EXPONENT = 0.078438, 1.41618
 # Split fitted totals by source headlight/global proportions when directions diverge.
 _NOMINAL = dict(amb=(0.1, 0.0), dif=(0.4, 1.0), spec=(0.5, 0.1))
 MAT_SPECULAR = 0.5  # every material in every OGBench maze scene
+#: The XML checker texture's rgb1/rgb2, shared by the three body assets.
+CHECKER_RGB = ((0.08, 0.11, 0.16), (0.15, 0.18, 0.25))
 
 #: locomotion body -> (state_dim, state_names). Verified against the compiled model at construction.
 _FREE = ("root_x", "root_y", "root_z", "root_quat_w", "root_quat_x", "root_quat_y", "root_quat_z")
@@ -388,11 +391,16 @@ def _scene_env(loco: str, maze: str, size: int, ob_type: str = "pixels"):
         tex=np.array(getattr(m, attr)[a0 : a0 + 3 * th * tw], copy=True),
         tex_adr=a0,
         tex_n=3 * th * tw,
+        tex_id=int(tex.id),
+        checker=_checker_masks(loco),
+        global_light=mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_LIGHT, "global"),
+        light_diffuse=np.array(m.light_diffuse, copy=True),
         cam_distance=float(u.custom_camera.distance),
         cam_elevation=float(u.custom_camera.elevation),
         mat_rgba=np.array(m.mat_rgba, copy=True),
         geom_rgba=np.array(m.geom_rgba, copy=True),
-        # Texture bytes upload at context creation, so cache a renderer per texture mode.
+        # Texture bytes upload at context creation, so cache a renderer per texture mode;
+        # recoloured checkers share one renderer and upload their texels explicitly.
         # Keep contexts alive to avoid corrupting other live renderers during teardown.
         renderers={},
         agent=[
@@ -404,6 +412,19 @@ def _scene_env(loco: str, maze: str, size: int, ob_type: str = "pixels"):
     )
     _ENV_CACHE[key] = (env, u, pristine)
     return _ENV_CACHE[key]
+
+
+def _checker_masks(loco: str):
+    """Texel masks of the XML checker's two colours; pixel scenes overwrite it at construction."""
+    import importlib
+
+    import mujoco
+
+    from ..._core.plate_texels import texel_slots
+
+    module = importlib.import_module(f"ogbench.locomaze.{loco}")
+    asset = getattr(module, f"{loco.capitalize()}Env").xml_file
+    return texel_slots(mujoco.MjModel.from_xml_path(asset), "grid", CHECKER_RGB)["masks"]
 
 
 class OGBenchMaze(Env):
@@ -542,7 +563,15 @@ class OGBenchMaze(Env):
                         "scale": Box(low=0.25, high=6.0, shape=(1,), init_value=[1.0]),
                     }
                 ),
-                "floor": Dict({"tint": Box(low=0.0, high=1.0, shape=(3,), init_value=[1.0, 1.0, 1.0])}),
+                "floor": Dict(
+                    {
+                        "tint": Box(low=0.0, high=1.0, shape=(3,), init_value=[1.0, 1.0, 1.0]),
+                        "color": Box(low=0.0, high=1.0, shape=(2, 3), init_value=CHECKER_RGB),
+                        # Pixel scenes only: 1 keeps the position-encoding gradient, 0 the checker.
+                        "pixel_encoding": Discrete(2, init_value=1),
+                    }
+                ),
+                "light": Dict({"intensity": Box(low=0.0, high=1.0, shape=(1,), init_value=[1.0])}),
                 "walls": Dict({"color": Box(low=0.0, high=1.0, shape=(3,), init_value=wall_rgb)}),
                 "camera": Dict(
                     {
@@ -557,7 +586,21 @@ class OGBenchMaze(Env):
 
     #: Style leaves that change the STATIC scene and therefore the baked plate. Everything else is a
     #: property of the agent's primitives and is applied per environment inside the ray-cast.
-    PLATE_PATHS = ("floor.tint", "walls.color", "camera.distance_scale", "camera.elevation", "rendering.decolor_floor")
+    PLATE_PATHS = (
+        "floor.tint",
+        "walls.color",
+        "camera.distance_scale",
+        "camera.elevation",
+        "rendering.decolor_floor",
+        "floor.color",
+        "floor.pixel_encoding",
+        "light.intensity",
+    )
+    #: Appearance leaves ``reset`` accepts by value or by sampling, as swm's OGBMaze does.
+    reset_value_paths = frozenset(
+        {"agent.color", "walls.color", "floor.color", "floor.pixel_encoding", "light.intensity"}
+    )
+    reset_sample_paths = reset_value_paths
 
     def _var(self, variation, path):
         if variation is not None and path in variation:
@@ -578,8 +621,23 @@ class OGBenchMaze(Env):
             float(np.round(self._var(variation, "camera.distance_scale")[0], 6)),
             float(np.round(self._var(variation, "camera.elevation")[0], 6)),
             int(self._var(variation, "rendering.decolor_floor")[0]),
+            self._floor_key(variation),
+            float(np.round(self._var(variation, "light.intensity")[0], 6)),
             str(self.device),
         )
+
+    def _checker_shown(self, variation) -> bool:
+        if int(self._var(variation, "rendering.decolor_floor")[0]):
+            return False
+        return getattr(self, "RENDER_OB_TYPE", "pixels") == "states" or not int(
+            self._var(variation, "floor.pixel_encoding")[0]
+        )
+
+    def _floor_key(self, variation):
+        """Checker bytes when the checker is drawn, so equal textures share a plate."""
+        if not self._checker_shown(variation):
+            return None
+        return tuple(int(x) for x in quantise(self._var(variation, "floor.color")))
 
     def _scene(self, size=None, variation=None) -> _Scene:
         size = int(size or self.size)
@@ -614,12 +672,17 @@ class OGBenchMaze(Env):
             if (mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, g) or "").startswith("block_"):
                 m.geom_rgba[g, :3] = wall
         buf = getattr(m, attr)
+        floor = buf[pr["tex_adr"] : pr["tex_adr"] + pr["tex_n"]]
         if int(self._var(variation, "rendering.decolor_floor")[0]):
-            buf[pr["tex_adr"] : pr["tex_adr"] + pr["tex_n"]] = np.tile(
-                np.array([60, 64, 72], buf.dtype), pr["tex_n"] // 3
-            )
+            floor[:] = np.tile(np.array([60, 64, 72], buf.dtype), pr["tex_n"] // 3)
+        elif self._checker_shown(variation):
+            texels = floor.reshape(-1, 3)
+            for mask, colour in zip(pr["checker"], self._var(variation, "floor.color").reshape(2, 3), strict=True):
+                texels[mask] = quantise(colour)
         else:
-            buf[pr["tex_adr"] : pr["tex_adr"] + pr["tex_n"]] = pr["tex"]
+            floor[:] = pr["tex"]
+        m.light_diffuse[:] = pr["light_diffuse"]
+        m.light_diffuse[pr["global_light"]] = float(self._var(variation, "light.intensity")[0])
 
         cam = u.custom_camera
         cam.distance = pr["cam_distance"] * float(self._var(variation, "camera.distance_scale")[0])
@@ -637,11 +700,16 @@ class OGBenchMaze(Env):
         keep = m.geom_rgba[agent].copy()
         m.geom_rgba[agent, 3] = 0.0  # hide the agent, bake what is left
         rkey = int(self._var(variation, "rendering.decolor_floor")[0])
+        custom = not rkey and not np.array_equal(floor, pr["tex"])
+        rkey = "custom" if custom else rkey
         r = pr["renderers"].get(rkey)
         if r is None:
             # built AFTER the texture write for this key, so it uploads the right floor; every later
             # bake with the same key writes the same bytes, so reuse is exact
             r = pr["renderers"][rkey] = mujoco.Renderer(m, width=size, height=size)
+        if custom:
+            r._gl_context.make_current()
+            mujoco.mjr_uploadTexture(m, r._mjr_context, pr["tex_id"])
         # A light that tracks the agent cannot be baked; it is added per row instead.
         trackcom = int(mujoco.mjtCamLight.mjCAMLIGHT_TRACKCOM)
         track = [i for i in range(m.nlight) if m.light_active[i] and int(m.light_mode[i]) == trackcom]
@@ -695,13 +763,20 @@ class OGBenchMaze(Env):
         # mode retains them, so its light table must come from the actual scene.
         L = nlight
         dirs = ldir / np.linalg.norm(ldir, axis=1, keepdims=True)
+        # The fitted split is calibrated at unit intensity; the global light's diffuse share scales.
+        dimmed = np.array(
+            [
+                m.light_diffuse[pr["global_light"], 0] if int(r.scene.lights[i].id) == pr["global_light"] else 1.0
+                for i in range(len(_NOMINAL["dif"][:L]))
+            ]
+        )
         ka = SHADE_AMBIENT / max(sum(_NOMINAL["amb"]), 1e-9)
         kd = SHADE_DIFFUSE / max(sum(_NOMINAL["dif"]), 1e-9)
         ks = SHADE_SPECULAR / max(sum(_NOMINAL["spec"]) * MAT_SPECULAR, 1e-9)
         sc.lights = R3.Lights(
             dirs=dirs,
             ambient=np.array(_NOMINAL["amb"][:L]) * ka,
-            diffuse=np.array(_NOMINAL["dif"][:L]) * kd,
+            diffuse=np.array(_NOMINAL["dif"][:L]) * kd * dimmed,
             specular=np.array(_NOMINAL["spec"][:L]) * ks,
             exponent=SHADE_EXPONENT,
         )

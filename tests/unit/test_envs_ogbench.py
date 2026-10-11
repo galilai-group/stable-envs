@@ -199,6 +199,9 @@ def test_the_maze_declarations_are_still_exactly_what_step_8_declared(cell):
         "camera.distance_scale",
         "camera.elevation",
         "rendering.decolor_floor",
+        "floor.color",
+        "floor.pixel_encoding",
+        "light.intensity",
     )
     assert "AGENT-PIXEL PARITY" in cls.parity_note
     assert cls.reference_id == f"ogbench/{cls.LOCO}maze-{cls.MAZE}-v0"
@@ -316,14 +319,8 @@ def test_the_maze_render_layout_covers_the_packed_row(loco, dim):
         assert [k for k, _, _ in layout] == [("root", "position"), ("root", "orientation"), ("joints",)]
 
 
-def test_the_maze_variation_taxonomy_is_the_step8_one():
-    """The appearance knobs, leaf for leaf, including the one whose SWM counterpart is unsupported.
-
-    ``rendering.decolor_floor`` is the OPPOSITE-SENSE twin of swm's ``floor.pixel_encoding``, which
-    the VariationMap records as UNSUPPORTED-PENDING because an inverting relation has no
-    representation there. That taxonomy is the thing this workstream must not move, so it is pinned
-    here as well as compared by the oracle.
-    """
+def test_the_maze_variation_taxonomy():
+    """The appearance knobs, leaf for leaf, with swm's floor, encoding and light leaves at our defaults."""
     for loco in ("point", "ant", "humanoid"):
         space = MAZE.OGBenchMaze.make_variation_space(types.SimpleNamespace(LOCO=loco, MAZE="medium"))
         # ``names()`` is sorted, which is the packed-row order the oracle compares against the baseline.
@@ -332,7 +329,10 @@ def test_the_maze_variation_taxonomy_is_the_step8_one():
             "agent.scale",
             "camera.distance_scale",
             "camera.elevation",
+            "floor.color",
+            "floor.pixel_encoding",
             "floor.tint",
+            "light.intensity",
             "rendering.decolor_floor",
             "walls.color",
         ]
@@ -340,6 +340,9 @@ def test_the_maze_variation_taxonomy_is_the_step8_one():
         assert np.allclose(space["walls"]["color"].value, [0.6, 0.6, 0.6])
         assert np.allclose(space["camera"]["elevation"].value, [-90.0])
         assert int(np.asarray(space["rendering"]["decolor_floor"].value).reshape(-1)[0]) == 0
+        assert int(np.asarray(space["floor"]["pixel_encoding"].value).reshape(-1)[0]) == 1
+        assert np.allclose(space["floor"]["color"].value, MAZE.CHECKER_RGB)
+        assert np.allclose(space["light"]["intensity"].value, [1.0])
 
 
 def test_the_manipulation_variation_taxonomy_is_the_two_mapped_leaves():
@@ -438,3 +441,13 @@ def test_the_dataset_siblings_of_one_scene_draw_the_same_frame(_ogbench):
                 states = env.sample_states(2, np.random.default_rng(0))
             digests.append(env._render(torch.as_tensor(states)).cpu().numpy().tobytes())
     assert digests[0] == digests[1]
+
+
+@pytest.mark.parametrize("cell", ["PointMazeLargeNavigate", "AntMazeMediumNavigate"])
+def test_a_recoloured_floor_and_dimmed_light_leave_the_default_plate_unchanged(_ogbench, cell):
+    """Recoloured checkers share one renderer and upload texels; the default bake must not see them."""
+    with R.REGISTRY[cell](num_envs=1, device="cpu") as env:
+        default = env._bake(env.size, None).plate
+        varied = {"floor.color": [0.9, 0.1, 0.1, 0.1, 0.1, 0.9], "floor.pixel_encoding": [0], "light.intensity": [0.4]}
+        assert not torch.equal(env._bake(env.size, varied).plate, default)
+        assert torch.equal(env._bake(env.size, None).plate, default)
