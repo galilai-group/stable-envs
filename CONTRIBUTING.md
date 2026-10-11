@@ -2,12 +2,25 @@
 
 ## Install
 
+Test environments come from the one `uv.lock`, one per profile, through [nox](https://nox.thea.codes)
+and [uv](https://docs.astral.sh/uv/):
+
 ```bash
-pip install -e ".[dev]"
+uvx nox -l                              # every session
+uvx nox -s "test(core)"                 # core tests, floating dependencies, no family extras
+uvx nox -s "test(dmc)" -- -k reacher    # one family under its exact reference pins
+uvx nox -s affected                     # the profiles CI selects for this branch
+SE_PYTHON=3.10 uvx nox -s "test(core)"  # the core profile on another interpreter
 ```
 
-That is numpy, torch, gymnasium, tensordict, loguru, plus pytest and ruff. Add family extras as
-needed (`"[dev,pusht]"`, `"[dev,dmcontrol]"`). Extra incompatibilities, the Fetch MuJoCo pin,
+`test(<profile>)` runs `uv sync --frozen --extra <family extras> --group pin-<profile> --group test`
+into `.venvs/<profile>-py3.12` and then the family's unit, integration and CPU regression tests.
+Profiles are `core`, `classic`, `navigation`, `pusht`, `dmc`, `fetch`, `ogbench`, `rocket` and
+`craftax`; [`ci/families.toml`](ci/families.toml) says which paths and tests each owns and what it
+needs installed. To work in one directly, `uv sync --python 3.12 --extra dmcontrol --group pin-dmc
+--group test` and `uv run pytest ...`.
+
+A plain `pip install -e ".[dev]"` also works. Extra incompatibilities, the Fetch MuJoCo pin,
 and the nvdiffrast source build live on the [installation page](docs/install.md). The unreleased
 renderer-only ports in `contrib/` have their own requirements and tests; see
 [contrib/README.md](contrib/README.md).
@@ -24,11 +37,18 @@ ruff check .
 Nothing in this repo is measured on a login node, and nothing that measures is measured on a busy one.
 
 ```bash
-pytest -m unit                                 # CPU-only family/unit contracts
+uvx nox -s "test(<profile>)"                   # what CI runs for one profile
+pytest -m unit                                 # CPU-only family/unit contracts, any interpreter
 sbatch scripts/run_smoke_tests.sbatch          # one env per family, ~3.4 min
 sbatch scripts/run_gpu_tests.sbatch            # full conformance suite
 pytest tests/ -v -rs                           # the same, if you already hold a GPU
 ```
+
+A family this interpreter lacks (or holds at a version its code refuses) does not fail its tests:
+they are reported as skipped with the cause, and the run ends with a count of skips by cause. CI
+profile jobs set `SE_REQUIRE_FAMILIES` / `SE_REQUIRE_CAPABILITIES`, which turn that absence into an
+error. Mark a test that needs dm_control's OpenGL renderer `@pytest.mark.gl`, and a test that uses
+another family's environments `@pytest.mark.family("<name>")`.
 
 The full suite requires CUDA by design and skips loudly rather than going green without it. Run it
 through `tests._runner.supervisor` (which is what the sbatch scripts do): a segfault or

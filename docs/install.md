@@ -64,6 +64,9 @@ mutually exclusive, Python 3.12 only, and all resolved in the repository's singl
 uv sync --python 3.12 --extra dmcontrol --group pin-dmc --group test
 ```
 
+`uvx nox -s "test(dmc)"` builds the same environment in `.venvs/dmc-py3.12` and runs the family's
+tests; see [Contributing](https://github.com/galilai-group/stable-envs/blob/main/CONTRIBUTING.md).
+
 ## Extra incompatibilities
 
 Fetch (`robotics`) needs `mujoco<3.12`. DM Control and OGBench accept

@@ -39,6 +39,7 @@ paths = [
   "tests/helpers/reference/*.py",
   "pyproject.toml",
   "uv.lock",
+  "noxfile.py",
   "ci/**",
   "scripts/ci/**",
   ".github/workflows/**",
