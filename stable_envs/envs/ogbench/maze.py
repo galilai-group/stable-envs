@@ -529,7 +529,6 @@ class OGBenchMaze(Env):
                 f"the sphere is not simply translated by qpos"
             )
 
-
     def make_variation_space(self) -> Dict:
         """Expose body, floor, wall and camera appearance with source float colour defaults.
 
@@ -542,7 +541,6 @@ class OGBenchMaze(Env):
                 "agent": Dict(
                     {
                         "color": Box(low=0.0, high=1.0, shape=(3,), init_value=agent_rgb),
-
                         "scale": Box(low=0.25, high=6.0, shape=(1,), init_value=[1.0]),
                     }
                 ),
@@ -570,7 +568,6 @@ class OGBenchMaze(Env):
         for part in path.split("."):
             node = node[part]
         return np.asarray(node.value, np.float64).reshape(-1)
-
 
     def _plate_key(self, size, variation):
         return (
@@ -754,7 +751,6 @@ class OGBenchMaze(Env):
             hl.ambient[:], hl.diffuse[:], hl.specular[:], m.light_active[:] = saved
             m.mat_rgba[:], m.geom_rgba[:] = mat, geom
 
-
     def _fk(self, states: torch.Tensor, sc: _Scene):
         """Return agent geom positions ``(B, P, 3)`` and rotations ``(B, P, 3, 3)``.
 
@@ -790,7 +786,6 @@ class OGBenchMaze(Env):
             torch.tensor(xp, device=self.device, dtype=torch.float32),
             torch.tensor(xm.reshape(B, P, 3, 3), device=self.device, dtype=torch.float32),
         )
-
 
     @torch.no_grad()
     def _render(
@@ -868,7 +863,6 @@ class OGBenchMaze(Env):
         mat[:, is_self] = acol.unsqueeze(1).expand(-1, int(is_self.sum()), 3)
         return mat, sty["agent.scale"][sub].to(torch.float32).reshape(-1)
 
-
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """Sample synthetic poses in free cells, with torso and joint noise for legged bodies.
 
@@ -901,7 +895,6 @@ class OGBenchMaze(Env):
             goals[:, 1] = goal_cells[:, 0] * sc.maze_unit - sc.offset[1]
             q = np.concatenate([q, goals], axis=-1)
         return q.astype(np.float32)
-
 
     @classmethod
     def reference_env(cls, size: int = 224):
@@ -980,6 +973,7 @@ class _HistoricalDefaultSemantics:
 
     def reset(self, seed=None):
         self._check_open("reset")
+        self.draw_reset_values(seed)
         return self._simulator.reset(seed)
 
     def get_state(self):

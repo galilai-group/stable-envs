@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ..._core.style import StyleTensor
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env
 from ...spaces import Box, Dict
@@ -46,7 +47,8 @@ class FetchSemantics:
         if not self._has_object:
             self._reset_keys -= {"block.mass", "block.angle", "block.start_position", "object.color"}
         self._reset_keys.add("table.color")
-        self._configured_mass = self._simulator.object_mass
+        self._registered_mass = self._simulator.object_mass
+        self._colors_detached = False
         self.state_dim = self._nq + 3  # Private renderer width, not full State width.
         from .envs import GOAL_NAMES, OBJECT_JOINT, ROBOT_JOINTS
 
@@ -146,31 +148,36 @@ class FetchSemantics:
                     v[key] = node.sample()
             v.update(explicit)
             values.append(v)
+        self._restore_variation()
         self._reset_visual_colors(values)
-        self._simulator.configure_object_mass(self._configured_mass)
         state = self._simulator.reset(seed, values)
-        if self._has_object:
+        if self._has_object and any("block.mass" in v for v in values):
             off = next(off for name, off, _ in self.variation_space.flat_layout() if name == "block.mass")
-            self._style.values[:, off] = torch.as_tensor(
-                self._simulator.object_mass, device=self.device, dtype=torch.float32
-            )
+            style = self._style.values.clone()
+            style[:, off] = torch.as_tensor(self._simulator.object_mass, device=self.device, dtype=torch.float32)
+            self._style = StyleTensor(style, self.variation_space.flat_layout())
+        if any(values):
+            self._variation_is_default = False
         return state
 
     def _reset_visual_colors(self, values):
-        """Persist source material detachment and copy effective colors into style.
+        """Copy this episode's effective colors into the installed Variation.
 
         Selecting table or object color also detaches the floor material, revealing
-        its geom color (grey 0.5 instead of material grey 0.2)."""
-        if not any("table.color" in v or "object.color" in v for v in values):
+        its geom color (grey 0.5 instead of material grey 0.2). The next reset
+        restores the registered materials first."""
+        selected = any("table.color" in v or "object.color" in v for v in values)
+        if not (selected or self._colors_detached):
             return
         colors = self._simulator.reset_visual_colors(values)
-        style = self.get_style().clone()
+        self._colors_detached = selected
+        style = self._style.values.clone()
         layout = {name: (off, width) for name, off, width in self.variation_space.flat_layout()}
-        for lane, selected in enumerate(colors):
-            for name, rgb in selected.items():
+        for lane, chosen in enumerate(colors):
+            for name, rgb in chosen.items():
                 off, width = layout[name]
                 style[lane, off : off + width] = torch.as_tensor(rgb, device=self.device, dtype=style.dtype)
-        Env.set_variation(self, style)
+        self._style = StyleTensor(style, self.variation_space.flat_layout())
 
     def get_state(self):
         self._check_open("get_state")
@@ -193,15 +200,15 @@ class FetchSemantics:
         # Local/threaded owners retain the synchronous reference path.
         return step_pipeline(self._simulator)
 
-    def set_variation(self, variation=None, **overrides):
-        result = super().set_variation(variation, **overrides)
+    def _configure_variation(self, exact=None):
+        super()._configure_variation(exact)
         if not self._has_object:
-            return result
-        layout = {name: (off, width) for name, off, width in self.variation_space.flat_layout()}
-        off, _ = layout["block.mass"]
-        self._configured_mass = self.get_style()[:, off].cpu().numpy().astype(np.float64).copy()
-        self._simulator.configure_object_mass(self._configured_mass)
-        return result
+            return
+        off = next(off for name, off, _ in self.variation_space.flat_layout() if name == "block.mass")
+        encoded = self.get_style()[:, off].cpu().numpy()
+        registered = self._registered_mass
+        mass = np.where(encoded == registered.astype(np.float32), registered, encoded.astype(np.float64))
+        self._simulator.configure_object_mass(mass)
 
     def _render(self, *args, **kwargs):
         backend = kwargs.pop("backend", self.backend)

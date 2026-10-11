@@ -73,6 +73,7 @@ class CraftaxSemantics(Env):
 
     def reset(self, seed=None, options=None):
         self._check_open("reset")
+        self.draw_reset_values(seed)
         return self._simulator.reset(seed, options)
 
     def get_state(self):

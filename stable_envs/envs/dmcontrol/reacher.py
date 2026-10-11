@@ -40,13 +40,12 @@ class _ReacherSemantics:
             }
         )
 
-    def set_variation(self, variation=None, **overrides):
-        result = super().set_variation(variation, **overrides)
+    def _configure_variation(self, exact=None):
+        super()._configure_variation(exact)
         if hasattr(self, "_simulator"):
             layout = {name: (off, width) for name, off, width in self.variation_space.flat_layout()}
             cols = [layout[f"agent.{part}_density"][0] for part in ("arm", "finger")]
             self._simulator.configure_density(self.get_style()[:, cols].cpu().numpy())
-        return result
 
     def _layout(self):
         return tuple(
@@ -71,6 +70,7 @@ class _ReacherSemantics:
 
     def reset(self, seed=None):
         self._check_open("reset")
+        self.draw_reset_values(seed)
         return self._simulator.reset(seed)
 
     def get_state(self):

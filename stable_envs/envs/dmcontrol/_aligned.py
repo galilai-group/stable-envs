@@ -61,10 +61,10 @@ class DMCAlignedSemantics:
             (kind, name, sites if kind == "site" and name == "target" else ids) for kind, name, ids in entries
         )
 
-    def set_variation(self, variation=None, **overrides):
-        result = super().set_variation(variation, **overrides)
+    def _configure_variation(self, exact=None):
+        super()._configure_variation(exact)
         if not hasattr(self, "_simulator"):
-            return result
+            return
         layout = {name: (offset, width) for name, offset, width in self.variation_space.flat_layout()}
         style = self.get_style()
         if self.DOMAIN in ("ball_in_cup", "quadruped"):
@@ -81,7 +81,6 @@ class DMCAlignedSemantics:
         else:
             column = layout["agent_physics.upper_arm_density"][0]
             self._simulator.configure_upper_arm_density(style[:, column].cpu().numpy())
-        return result
 
     def _layout(self):
         offset = 0
@@ -126,6 +125,7 @@ class DMCAlignedSemantics:
 
     def reset(self, seed=None):
         self._check_open("reset")
+        self.draw_reset_values(seed)
         return self._simulator.reset(seed)
 
     def get_state(self):

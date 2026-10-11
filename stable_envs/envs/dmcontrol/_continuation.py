@@ -46,8 +46,8 @@ class DMCContinuationSemantics:
             }
         )
 
-    def set_variation(self, variation=None, **overrides):
-        result = super().set_variation(variation, **overrides)
+    def _configure_variation(self, exact=None):
+        super()._configure_variation(exact)
         if hasattr(self, "_simulator"):
             layout = {name: (offset, width) for name, offset, width in self.variation_space.flat_layout()}
             columns = [layout[f"gravity.{axis}"][0] for axis in "xyz"]
@@ -57,7 +57,6 @@ class DMCContinuationSemantics:
             exact_default = torch.tensor([0.0, 0.0, -9.81], dtype=torch.float64, device=self.device)
             gravity = torch.where(encoded == encoded_default, exact_default, gravity)
             self._simulator.configure_gravity(gravity.cpu().numpy())
-        return result
 
     def _layout(self):
         return tuple(
@@ -80,6 +79,7 @@ class DMCContinuationSemantics:
 
     def reset(self, seed=None):
         self._check_open("reset")
+        self.draw_reset_values(seed)
         return self._simulator.reset(seed)
 
     def get_state(self):

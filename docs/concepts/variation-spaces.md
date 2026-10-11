@@ -61,6 +61,25 @@ not a silent no-op.
 Install a row on the env with `env.set_variation(rows)` or pass it into `render` (below).
 `get_variation()` returns the currently installed `(n, variation_dim)` tensor.
 
+## Reset
+
+`reset(seed, options)` follows stable-worldmodel's rule. Leaves named in
+`options["variation"]` are sampled per lane (lane `i` seeded with `seed + i`); leaves in
+`options["variation_values"]` are set, with one value shared by the batch or one per lane.
+Every other leaf returns to its default, including physics leaves on the simulator and in
+State. The defaults are the registered values until `set_variation` replaces them, so a reset
+with no options returns to whatever `set_variation` last installed. Values a reset's options
+choose, or a physics value adopted from a restored State, last for that episode only.
+
+```python
+env.set_variation({"gravity.z": [-5.0]})
+env.reset(seed=0, options={"variation": ["gravity.z"]})   # sampled for this episode
+env.reset(seed=1)                                         # gravity.z is -5.0 again
+```
+
+Families that wrap the stable-worldmodel source (PushT, Rocket, OGBench Cube/Scene) apply
+`set_variation` to the source's defaults, which take effect at the next reset.
+
 ## One Variation vs B independent Variations
 
 `num_envs` is how many copies the object holds. Configuration follows the same batch axis:

@@ -44,11 +44,10 @@ class ClassicControlSemantics:
         }
         self._simulator.configure(values)
 
-    def set_variation(self, variation=None, **overrides):
-        result = super().set_variation(variation, **overrides)
+    def _configure_variation(self, exact=None):
+        super()._configure_variation(exact)
         if hasattr(self, "_simulator"):
             self._configure_simulator()
-        return result
 
     def _layout(self):
         offsets = {self.sim_state_names[index]: packed for packed, index in enumerate(self.render_from_sim)}
@@ -97,6 +96,7 @@ class ClassicControlSemantics:
 
     def reset(self, seed=None, options=None):
         self._check_open("reset")
+        self.draw_reset_values(seed, options)
         state = self._simulator.reset(seed=seed, options=options)
         self._sync_authoritative_state(state)
         return state
@@ -119,7 +119,6 @@ class ClassicControlSemantics:
         result = self._simulator.step(actions, active=active)
         self._sync_authoritative_state(result["state"])
         return result
-
 
     def _close(self):
         if hasattr(self, "_simulator"):

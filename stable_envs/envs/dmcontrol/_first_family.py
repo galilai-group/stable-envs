@@ -40,12 +40,6 @@ class FirstFamilySemantics:
             }
         )
 
-    def set_variation(self, variation=None, **overrides):
-        result = super().set_variation(variation, **overrides)
-        if hasattr(self, "_simulator"):
-            self._configure_physics()
-        return result
-
     @property
     def reset_value_paths(self):
         return frozenset(self.physics_variation_leaves)

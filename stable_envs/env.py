@@ -374,7 +374,7 @@ class Env:
     reset_leaves: tuple[ResetLeaf, ...] = ()
     #: Returns a fresh distribution tree for ``reset_leaves``; reset seeds it with ``seed + lane``.
     reset_tree_factory = None
-    #: Variation leaves ``reset`` accepts in ``options["variation_values"]``; they persist like set_variation.
+    #: Variation leaves ``reset`` accepts in ``options["variation_values"]`` for that episode.
     reset_value_paths: frozenset[str] = frozenset()
     #: Variation leaves ``reset`` samples per lane when named in ``options["variation"]``.
     reset_sample_paths: frozenset[str] = frozenset()
@@ -406,6 +406,9 @@ class Env:
         # Track valid rows separately while keeping renderer buffer addresses stable.
         self._live_rows = self.B
         self._style = StyleTensor.from_space(self.variation_space, self.B, device=self.device)
+        self._default_style = self._style
+        self._default_physics = None
+        self._variation_is_default = True
         # Explicit close controls resource lifetime; no finalizer is required.
         self._closed = False
         self._seed = int(seed)
@@ -582,16 +585,43 @@ class Env:
     def set_variation(self, variation: VariationLike | None = None, **overrides) -> torch.Tensor:
         """Install a configuration row or mapping of overrides and return the compiled tensor.
 
-        Keyword overrides take precedence over mapping entries. Per-lane configuration
-        is built for the number of live renderer rows.
+        The result is also the default that every later ``reset`` restores for leaves its
+        options do not name. Keyword overrides take precedence over mapping entries.
+        Per-lane configuration is built for the number of live renderer rows.
         """
         if isinstance(variation, dict):
             overrides = {**variation, **overrides}
             variation = None
-        self._style = StyleTensor.from_space(
+        style = StyleTensor.from_space(
             self.variation_space, self._live_rows, device=self.device, values=variation, overrides=overrides or None
         )
+        self._install_variation(style)
+        self._default_style = self._style
+        self._default_physics = getattr(self, "_physics_installed", None)
+        self._variation_is_default = True
         return self._style.values
+
+    def _install_variation(self, style: StyleTensor, exact: Mapping[str, Any] | None = None) -> None:
+        self._style = style
+        self._configure_variation(exact)
+
+    def _configure_variation(self, exact: Mapping[str, Any] | None = None) -> None:
+        """Push the installed Variation into the simulator; ``exact`` holds float64 physics values."""
+        self._configure_physics(exact)
+
+    def _restore_variation(self, overrides: Mapping[str, Any] | None = None) -> None:
+        """Install the defaults, with ``overrides`` for this episode only."""
+        if not overrides and self._variation_is_default:
+            return
+        style = self._default_style.for_batch(self.B, owner=f"{type(self).__name__}.reset")
+        if overrides:
+            style = StyleTensor.from_space(
+                self.variation_space, self.B, device=self.device, values=style.values, overrides=dict(overrides)
+            )
+        exact = {path: overrides[path] for path in self.physics_variation_leaves if overrides and path in overrides}
+        self._physics_installed = self._default_physics
+        self._install_variation(style, exact or None)
+        self._variation_is_default = not overrides
 
     def sample_variation(
         self, batch: int | None = None, paths=None, rng: np.random.Generator | None = None
@@ -733,7 +763,10 @@ class Env:
     def draw_reset_values(self, seed: int | None = None, options: Mapping | None = None) -> dict[str, np.ndarray]:
         """Resolve SWM-style reset options into ``{path: (num_envs, ...)}`` values.
 
-        Variation leaves are installed first, so reset-leaf rejection tests see them.
+        Every ``reset`` goes through here. Variation leaves the options do not name return
+        to their defaults (the registered values, or the last ``set_variation``); named
+        leaves are sampled or set for this episode. Variation is installed before reset
+        leaves are drawn, so their rejection tests see it.
         """
         sampled, values = self._reset_request(options)
         reset_paths = {leaf.path for leaf in self.reset_leaves}
@@ -741,8 +774,7 @@ class Env:
         for path, value in values.items():
             if path not in reset_paths:
                 variation[path] = value
-        if variation:
-            self._install_reset_variation(variation)
+        self._restore_variation(variation)
         out = {path: np.asarray(value) for path, value in variation.items()}
         if not self.reset_leaves:
             return out
@@ -754,12 +786,6 @@ class Env:
         for path in lanes[0]:
             out[path] = np.stack([row[path] for row in lanes])
         return out
-
-    def _install_reset_variation(self, values: Mapping[str, Any]) -> None:
-        self.set_variation(dict(values))
-        exact = {path: values[path] for path in self.physics_variation_leaves if path in values}
-        if exact:
-            self._configure_physics(exact)
 
     @property
     def physics_variation_leaves(self) -> tuple[str, ...]:
@@ -816,6 +842,7 @@ class Env:
             values[:, o : o + width] = v.to(device=values.device, dtype=values.dtype)
         self._style = StyleTensor(values, self.variation_space.flat_layout())
         self._physics_installed = rows
+        self._variation_is_default = False
 
     def describe(self) -> dict[str, Any]:
         """Return environment specs, renderer fidelity declarations, and their stated limitations."""
@@ -1094,6 +1121,7 @@ class Env:
         if seed is not None:
             self.rng = np.random.default_rng(int(seed))
             self._seed = int(seed)
+        self.draw_reset_values(seed)
         self._set_render_state(self.sample_states(self.B, self.rng))
         return self.state
 

@@ -119,10 +119,12 @@ class FetchAdapter(SimulatorAdapter):
             env._max_episode_steps = int(limit)
 
     def reset_visual_colors(self, values):
-        """Detach table, floor and object materials when table/object color is selected."""
+        """Restore the registered materials, then detach table, floor and object materials
+        when table/object color is selected."""
         self._check_open()
         if not hasattr(self, "_visual_geoms"):
             self._visual_geoms = []
+            self._visual_registered = []
             for env in self.envs:
                 model = env.unwrapped.model
                 groups = {}
@@ -136,12 +138,17 @@ class FetchAdapter(SimulatorAdapter):
                         for g in range(model.ngeom)
                         if model.geom_matid[g] >= 0 and model.material(int(model.geom_matid[g])).name in materials
                     ]
+                geoms = [g for group in groups.values() for g in group]
                 self._visual_geoms.append(groups)
+                self._visual_registered.append((geoms, model.geom_matid[geoms].copy(), model.geom_rgba[geoms].copy()))
         result = []
-        for env, groups, selected in zip(self.envs, self._visual_geoms, values):
+        for env, groups, registered, selected in zip(self.envs, self._visual_geoms, self._visual_registered, values):
             colors = {}
+            model = env.unwrapped.model
+            geoms, matid, rgba = registered
+            model.geom_matid[geoms] = matid
+            model.geom_rgba[geoms] = rgba
             if {"table.color", "object.color"} & selected.keys():
-                model = env.unwrapped.model
                 for name, geoms in groups.items():
                     if geoms:
                         model.geom_matid[geoms] = -1

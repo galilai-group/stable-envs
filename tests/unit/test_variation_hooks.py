@@ -193,7 +193,7 @@ def test_reset_options_set_or_sample_physics_per_lane():
         first = env.reset(seed=9, options={"variation": ["gravity.z"]})["physics", "gravity", "z"]
         again = env.reset(seed=9, options={"variation": ["gravity.z"]})["physics", "gravity", "z"]
         assert torch.equal(first, again) and len(set(first.reshape(-1).tolist())) == 3
-        assert float(env.reset(seed=2)["physics", "gravity", "z"][0]) == float(first[0])
+        assert bool((env.reset(seed=2)["physics", "gravity", "z"] == -9.81).all())
         with pytest.raises(NotImplementedError, match="sampled variation leaves"):
             env.reset(options={"variation": ["agent.color"]})
         with pytest.raises(NotImplementedError, match="variation_values"):
