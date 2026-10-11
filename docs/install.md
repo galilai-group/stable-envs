@@ -37,12 +37,14 @@ Two kinds, and they are easy to mix up.
 | `pusht` | PushT / PushTDiscrete | Pymunk 7.2.0, pygame, OpenCV and Shapely |
 | `pusht-reference` | no | historical gym-pusht corpus checks, in a separate reference environment |
 | `ogbench` | OGBench mazes (and manip, with CUDA) | `ogbench` + MuJoCo |
+| `ogbench-manipulation` / `-gpu` | Cube / Scene | the exact MuJoCo 3.12.0 / OGBench 1.2.1 (and MuJoCo Warp 3.12.0 / Warp 1.17.0) their renderers check, plus dm_control |
 | `dmcontrol` | DM Control cells | `dm_control` + MuJoCo |
 | `dmcontrol-gpu` | DM Control on CUDA with TrackCom floor reflections | MuJoCo and MuJoCo Warp 3.12; on 3.11 TrackCom renders without the reflection |
 | `robotics` | Fetch | gymnasium-robotics (MuJoCo pin), OpenCV for source-sized OpenGL output |
 | `mjwarp` | Fetch / some visual 3-D cells | MuJoCo Warp render backend |
 | `craftax` | Craftax | jax |
-| `rocket` | PyFlyt rocket (CUDA + nvdiffrast) | pillow / pybullet / scipy |
+| `craftax-semantics` / `-gpu` | registered Craftax semantics | Craftax, JAX, Flax, Gymnax, Chex; construction checks the exact Craftax 1.5.0 / JAX 0.10.1 profile on Python 3.12 |
+| `rocket` | PyFlyt rocket (CUDA + nvdiffrast) | PyFlyt 0.29.0 / pybullet 3.2.7 / pillow / scipy; pip resolves numpy<2 from PyFlyt's metadata |
 | `docs` / `dev` / `examples` / `hf` | no | documentation, tests, gallery helpers, HuggingFace |
 
 `pip install "stable-envs[pusht]"` is required to construct public `PushT` and
