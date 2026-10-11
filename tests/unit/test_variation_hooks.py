@@ -255,7 +255,7 @@ def test_reset_refuses_leaves_it_cannot_set_on_envs_without_reset_options():
         env.reset(seed=0)
         assert (env._style["physics.gravity"] == 12.0).all()
         with pytest.raises(NotImplementedError, match="sampled variation leaves"):
-            env.reset(seed=0, options={"variation": ["physics.gravity"]})
+            env.reset(seed=0, options={"variation": ["pole.color"]})
 
 
 def test_fetch_reset_restores_colors_and_mass():

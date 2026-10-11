@@ -35,6 +35,14 @@ class ClassicControlSemantics:
     def dynamics_variation_leaves(self):
         return frozenset(f"physics.{name}" for name in _PHYSICS_SPACES[self.CLASSIC_DOMAIN])
 
+    @property
+    def reset_value_paths(self):
+        return self.dynamics_variation_leaves
+
+    @property
+    def reset_sample_paths(self):
+        return self.dynamics_variation_leaves
+
     def _configure_simulator(self):
         layout = {name: (off, width) for name, off, width in self.variation_space.flat_layout()}
         style = self.get_variation()

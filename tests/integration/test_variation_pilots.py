@@ -6,6 +6,7 @@ pytest.importorskip("stable_worldmodel")
 
 from tests.helpers.reference.gates.variation_pilots import (  # noqa: E402
     PHYSICS_ATOL,
+    classic_physics_gate,
     navigation_reset_rule_gate,
     physics_gate,
     reset_leaf_gate,
@@ -40,3 +41,10 @@ def test_plain_reset_restores_defaults_as_swm_does():
 
 def test_plain_reset_restores_the_navigation_default_as_swm_does():
     assert navigation_reset_rule_gate()["steps"] > 0
+
+
+@pytest.mark.parametrize("domain", ["cartpole", "pendulum", "acrobot", "mountain_car", "mountain_car_continuous"])
+def test_classic_physics_matches_swm(domain):
+    evidence = classic_physics_gate(domain)
+    assert evidence["plain_reset_restores_defaults"]
+    assert any(all(leaf["moved_vs_default"]) for leaf in evidence["leaves"].values())

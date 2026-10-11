@@ -59,7 +59,8 @@ class NativeClassicReference:
 
     def reset(self, seed=None):
         for i, wrapper in enumerate(self.envs):
-            wrapper.reset(seed=None if seed is None else int(seed) + i, options=self.options)
+            options = self.options[i] if isinstance(self.options, list) else self.options
+            wrapper.reset(seed=None if seed is None else int(seed) + i, options=options)
         return self.get_state()
 
     def get_state(self):

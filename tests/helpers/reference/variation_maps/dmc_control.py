@@ -111,11 +111,6 @@ _AA_ONLY = {
     "such switch. See _Classic._aa_space for what it costs."
 }
 
-#: The dynamics leaves the five cells hold as CLASS CONSTANTS. Each of these is a real feature of the
-#: swm wrapper (it writes the attribute on the official env and the trajectory changes) and a real
-#: absence here: ``_Classic`` certifies its integrator against the reference AT the reference's own
-#: constants, and a per-environment value would be a new state/parameter dimension, not a style row.
-#: Measured at 0 disagreeing pixels over 8 states, so the RENDER is unaffected; the TRAJECTORY is not.
 #: The mapped-colour caveat every classic-control cell carries. See the module docstring for the
 #: measured table; the numbers here are the worst case over the five envs.
 _RECOLOR_NOTE = (
@@ -129,15 +124,22 @@ _RECOLOR_NOTE = (
 )
 
 
-def _dyn(*names: str) -> dict[str, str]:
+_DYNAMICS_MAPPED = (
+    "MAPPED, identical path and units: the value is written onto each lane's Gymnasium env exactly as "
+    "swm writes it (a float32 Box value widened to float64), sampled per lane under `variation` or set "
+    "under `variation_values`, and plain resets restore the default. Gated by "
+    "tests/integration/test_variation_pilots.py::test_classic_physics_matches_swm: reset State and every "
+    "step output equal swm's exactly over 24 steps, with lanes at 10/50/90 % of the range."
+)
+
+
+def _dyn(*names: str, notes: dict[str, str], geometry: dict[str, str] | None = None) -> dict:
+    """``identical``, ``notes`` and ``partial`` for the physics leaves of one classic cell."""
+    leaves = tuple(f"physics.{n}" for n in names)
     return {
-        f"physics.{n}": (
-            "dynamics only, and this cell simulates: the value is a class constant on the stable-envs "
-            "cell, whose integrator is certified against the reference at the reference's own constants. "
-            "A per-environment value is a dynamics parameter, not a style row. Measured 0 disagreeing "
-            "pixels over 8 states of the official render."
-        )
-        for n in names
+        "identical": leaves,
+        "notes": {**{leaf: _DYNAMICS_MAPPED for leaf in leaves}, **notes},
+        "partial": {f"physics.{n}": why for n, why in (geometry or {}).items()},
     }
 
 
@@ -150,15 +152,23 @@ _CLASSIC_MAPS = {
             "joint.color": "visuals.joint",
             "ground.color": "visuals.line",
         },
-        unsupported={
-            **_dyn("link_mass_1", "link_mass_2", "link_com_pos_1", "link_com_pos_2", "link_moi"),
-            "physics.link_length_1": "GEOMETRY as well as dynamics: AcrobotEnv.render draws each link at LINK_LENGTH_1 * "
-            "scale, and moving it to 1.45 moves 37,966 px of 8x500x500 in the official frame. "
-            "The stable-envs cell holds SCALE and the unit-length link quad as class constants "
-            "and declares no geometry leaf, so the appearance is not reachable.",
-            "physics.link_length_2": "the same, on the second link: 38,258 px of 8x500x500 at 1.45.",
-        },
-        notes={k: _RECOLOR_NOTE for k in ("visuals.bg", "visuals.link", "visuals.joint", "visuals.line")},
+        **_dyn(
+            "link_length_1",
+            "link_length_2",
+            "link_mass_1",
+            "link_mass_2",
+            "link_com_pos_1",
+            "link_com_pos_2",
+            "link_moi",
+            geometry={
+                "link_length_1": "dynamics only: AcrobotEnv.render also draws each link at LINK_LENGTH_1 * scale, "
+                "and moving it to 1.45 moves 37,966 px of 8x500x500 in the official frame. The stable-envs "
+                "renderer holds SCALE and the unit-length link quad as class constants, so the frame does "
+                "not follow the leaf.",
+                "link_length_2": "dynamics only: the same on the second link, 38,258 px of 8x500x500 at 1.45.",
+            },
+            notes={k: _RECOLOR_NOTE for k in ("visuals.bg", "visuals.link", "visuals.joint", "visuals.line")},
+        ),
         ours_only=_AA_ONLY,
     ),
     "CartPole": VariationMap(
@@ -173,27 +183,40 @@ _CLASSIC_MAPS = {
             "pole.color": "visuals.pole",
             "axle.color": "visuals.axle",
         },
-        unsupported={
-            **_dyn("gravity", "masscart", "masspole", "force_mag", "tau"),
-            "physics.length": "GEOMETRY as well as dynamics: CartPoleEnv.render sets polelen = scale * 2 * length, "
-            "and 0.725 moves 6,621 px of 8x400x600 in the official frame. POLELEN is a class "
-            "constant here (it is also what WIN_POLE and KMAX_POLE are derived from) and there is "
-            "no geometry leaf, so the appearance is not reachable.",
-        },
-        notes={
-            "visuals.bg": _RECOLOR_NOTE,
-            "visuals.pole": _RECOLOR_NOTE,
-            "visuals.axle": _RECOLOR_NOTE,
-            "visuals.cart": _RECOLOR_NOTE + " ONE-TO-MANY: this leaf also drives `track.color`, "
-            "because the reference paints the track black too.",
-        },
+        **_dyn(
+            "gravity",
+            "masscart",
+            "masspole",
+            "length",
+            "force_mag",
+            "tau",
+            geometry={
+                "length": "dynamics only: CartPoleEnv.render also sets polelen = scale * 2 * length, and 0.725 "
+                "moves 6,621 px of 8x400x600 in the official frame. POLELEN is a class constant on the "
+                "stable-envs renderer, so the frame does not follow the leaf."
+            },
+            notes={
+                "visuals.bg": _RECOLOR_NOTE,
+                "visuals.pole": _RECOLOR_NOTE,
+                "visuals.axle": _RECOLOR_NOTE,
+                "visuals.cart": _RECOLOR_NOTE + " ONE-TO-MANY: this leaf also drives `track.color`, "
+                "because the reference paints the track black too.",
+            },
+        ),
         ours_only=_AA_ONLY,
     ),
     "Pendulum": VariationMap(
         swm_id="swm/PendulumControl-v1",
         rgb255={"background.color": "visuals.bg", "rod.color": "visuals.rod", "axle.color": "visuals.hub"},
-        unsupported=_dyn("g", "m", "l", "max_torque", "max_speed", "dt"),
-        notes={k: _RECOLOR_NOTE for k in ("visuals.bg", "visuals.rod", "visuals.hub")},
+        **_dyn(
+            "g",
+            "m",
+            "l",
+            "max_torque",
+            "max_speed",
+            "dt",
+            notes={k: _RECOLOR_NOTE for k in ("visuals.bg", "visuals.rod", "visuals.hub")},
+        ),
         ours_only=_AA_ONLY,
     ),
 }
@@ -215,13 +238,15 @@ def _mountain_car(swm_id: str, *dyn: str) -> VariationMap:
             "terrain.color": "visuals.fg",
             "flag.pole_color": "visuals.fg",
         },
-        unsupported=_dyn(*dyn),
-        notes={
-            "visuals.bg": _RECOLOR_NOTE,
-            "visuals.fg": _RECOLOR_NOTE + " ONE-TO-MANY: this leaf drives `car.color`, "
-            "`terrain.color` AND `flag.pole_color`, because the "
-            "reference paints all three black.",
-        },
+        **_dyn(
+            *dyn,
+            notes={
+                "visuals.bg": _RECOLOR_NOTE,
+                "visuals.fg": _RECOLOR_NOTE + " ONE-TO-MANY: this leaf drives `car.color`, "
+                "`terrain.color` AND `flag.pole_color`, because the "
+                "reference paints all three black.",
+            },
+        ),
         ours_only={
             **_AA_ONLY,
             "flag.color": "the flag cloth is (204, 204, 0) in the reference and swm swaps only "
@@ -724,14 +749,14 @@ LIGHT_RANGE: dict[str, tuple[float, float, float, str]] = {
 #: The four-way count this module claims, asserted by tests/unit/test_variation_maps_dmc_control.py
 #: against the LIVE swm variation spaces rather than against this table.
 EXPECTED_COUNTS: dict[str, dict[str, int]] = {
-    "swm/AcrobotControl-v1": {"total": 11, "mapped": 4, "unsupported": 7, "dead_upstream": 0, "not_applicable": 0},
-    "swm/CartPoleControl-v1": {"total": 10, "mapped": 4, "unsupported": 6, "dead_upstream": 0, "not_applicable": 0},
-    "swm/PendulumControl-v1": {"total": 9, "mapped": 3, "unsupported": 6, "dead_upstream": 0, "not_applicable": 0},
-    "swm/MountainCarControl-v0": {"total": 5, "mapped": 2, "unsupported": 3, "dead_upstream": 0, "not_applicable": 0},
+    "swm/AcrobotControl-v1": {"total": 11, "mapped": 9, "unsupported": 0, "dead_upstream": 0, "not_applicable": 0},
+    "swm/CartPoleControl-v1": {"total": 10, "mapped": 9, "unsupported": 0, "dead_upstream": 0, "not_applicable": 0},
+    "swm/PendulumControl-v1": {"total": 9, "mapped": 9, "unsupported": 0, "dead_upstream": 0, "not_applicable": 0},
+    "swm/MountainCarControl-v0": {"total": 5, "mapped": 5, "unsupported": 0, "dead_upstream": 0, "not_applicable": 0},
     "swm/MountainCarContinuousControl-v0": {
         "total": 4,
-        "mapped": 2,
-        "unsupported": 2,
+        "mapped": 4,
+        "unsupported": 0,
         "dead_upstream": 0,
         "not_applicable": 0,
     },
