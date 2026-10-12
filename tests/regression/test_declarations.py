@@ -700,12 +700,13 @@ def _dmc_declaration_table() -> dict:
         "_SWIMMER_AT_MEASURED_WITH",
         "_QUADRUPED_AT",
         "_QUADRUPED_AT_MEASURED_WITH",
+        "_FROZEN_STAND_VISUAL_FIDELITY",
         "VISUAL_FIDELITY",
     }
-    # ``__init__.py`` is skipped: its ``VISUAL_FIDELITY`` is a VIEW of the per-domain tables
-    # (``{n: globals()[n].visual_fidelity ...}``), not a declaration, and reading it would either
-    # need the classes or hide the literals this check exists to read.
-    skip = {"_cells.py", "__init__.py"}
+    # ``__init__.py`` and ``_family.py`` are skipped: their ``VISUAL_FIDELITY`` is a VIEW of the
+    # per-domain tables (``{n: globals()[n].visual_fidelity ...}``), not a declaration, and reading
+    # it would either need the classes or hide the literals this check exists to read.
+    skip = {"_cells.py", "__init__.py", "_family.py"}
     paths = [pkg / "_cells.py"] + sorted(p for p in pkg.glob("*.py") if p.name not in skip)
     ns: dict = {}
     table: dict = {}
@@ -776,7 +777,7 @@ def test_the_dm_control_trackcom_declarations_name_the_reference_they_were_measu
     """The measured case this field exists for: declared under mujoco 3.11.0, judged under 3.12.0 in
     Step 4, and 3.12.0 re-anchors finite-plane textures (changelog item 15, commit cc7fb98c)."""
     table = _dmc_declaration_table()
-    for name in ("DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk", "DMCHumanoidStand"):
+    for name in ("DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk", "DMCHumanoidWalk"):
         assert table[name][REFERENCE_VERSIONS_KEY] == {"mujoco": "3.11.0"}
         assert table[name][MEASURED_WITH_KEY] == {"mujoco_warp": "3.11.0"}
         assert table[name]["measured_at"].startswith("84 px")  # the text is kept as it was
