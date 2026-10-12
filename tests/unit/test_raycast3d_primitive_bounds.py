@@ -271,10 +271,7 @@ def test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose():
     measured = {names[n] for n, on in m["predicate"].items() if on}
     # ELLIPSOID (Step 7) is priced in its own committed aggregate, by the same rule, because the
     # Step-6 file is frozen; absent that file the kind is unbounded and must not be in the table.
-    f7 = (
-        Path(R3.__file__).resolve().parents[2]
-        / "tests/fixtures/measurements/raycast3d/kind_cost_ellipsoid.json"
-    )
+    f7 = Path(R3.__file__).resolve().parents[2] / "tests/fixtures/measurements/raycast3d/kind_cost_ellipsoid.json"
     if f7.is_file():
         m7 = json.loads(f7.read_text())
         if m7["predicate"].get("ELLIPSOID"):

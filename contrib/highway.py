@@ -33,7 +33,6 @@ NONE, STRIPED, CONTINUOUS, CONTINUOUS_LINE = 0, 1, 2, 3
 
 
 class _Lane:
-
     def __init__(self, width, line_types):
         self.width = float(width)
         self.line_types = tuple(int(t) for t in line_types)
@@ -205,7 +204,6 @@ class HighwayEnvBase(Env):
         self._plan_cache = {}
         self._obj_runs = None
 
-
     def screen(self, size: int | None = None) -> _Screen:
         """Derive output geometry without changing instance defaults.
 
@@ -256,7 +254,6 @@ class HighwayEnvBase(Env):
         S = pix(length)
         return S, (0, pix(length / 2 - width / 2), pix(length), pix(width)), None, None
 
-
     def make_variation_space(self) -> Dict:
         """Expose only appearance leaves used by the declared vehicles and road objects."""
         space: dict = {}
@@ -290,7 +287,6 @@ class HighwayEnvBase(Env):
             }
         )
         return Dict(space)
-
 
     def scene(self, states, variation: dict | None = None, style=None, size: int | None = None) -> Scene2D:
         """Build screen-pixel geometry; ``size`` changes field of view at fixed scale.
@@ -772,7 +768,6 @@ class HighwayEnvBase(Env):
         cy = torch.where(axis, flat, torch.full_like(wr, -0.5))
         return cx.float(), cy.float()
 
-
     @torch.no_grad()
     def _render(
         self,
@@ -799,7 +794,6 @@ class HighwayEnvBase(Env):
             out=out,
         )
         return img.view(*lead, *img.shape[1:]) if lead else img
-
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         rng = rng or self.rng
@@ -840,7 +834,6 @@ class HighwayEnvBase(Env):
 
     def object_spawn(self, k: int, batch, rng) -> np.ndarray:
         raise NotImplementedError
-
 
     @classmethod
     def reference_env(cls, size: int | None = None):

@@ -50,6 +50,7 @@ def maze_state(self):
         rows.append(row)
     return torch.stack(rows)
 
+
 def manipulation_row(self, env):
     values = {("compatibility", "signature"): self.signature}
     for name, flag in FLAGS.items():
@@ -68,9 +69,7 @@ def manipulation_row(self, env):
             ("output", "prev_qvel"): env._prev_qvel.copy(),
             ("task", "goal_observation"): env._cur_goal_ob.copy(),
             ("task", "id"): np.array([-1 if env.cur_task_id is None else env.cur_task_id], np.int64),
-            ("task", "reward_id"): np.array(
-                [-1 if env._reward_task_id is None else env._reward_task_id], np.int64
-            ),
+            ("task", "reward_id"): np.array([-1 if env._reward_task_id is None else env._reward_task_id], np.int64),
             ("task", "success"): np.array([env._success], bool),
             ("lifecycle", "reset_next_step"): np.array([env._reset_next_step], bool),
         }
@@ -106,6 +105,7 @@ def manipulation_row(self, env):
         batch_size=[],
         device=self.device,
     )
+
 
 def manipulation_state(self):
     self._check_open()

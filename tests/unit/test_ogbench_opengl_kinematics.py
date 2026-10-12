@@ -65,7 +65,7 @@ def context(mujoco):
         "label",
     ],
 )
-def test_unsupported_features_require_full_forward(opengl, field):
+def test_unsupported_features_require_full_forward(opengl, field):  # noqa: F811
     module, mujoco = opengl
     env, renderer = context(mujoco)
     assert module._can_use_render_kinematics(env, renderer)
@@ -83,7 +83,7 @@ def test_unsupported_features_require_full_forward(opengl, field):
 
 
 @pytest.mark.parametrize("buttons", [[0, 0], [0, 1], [1, 0], [1, 1]])
-def test_button_colors_include_every_geom_and_handle(opengl, buttons):
+def test_button_colors_include_every_geom_and_handle(opengl, buttons):  # noqa: F811
     module, mujoco = opengl
     env, _ = context(mujoco)
     env._cur_button_states[:] = buttons
@@ -105,7 +105,7 @@ def test_button_colors_include_every_geom_and_handle(opengl, buttons):
 @pytest.mark.parametrize(
     "family,unsupported,fast", [("Scene", False, True), ("Scene", True, False), ("Cube", False, False)]
 )
-def test_pose_updates_use_fast_path_only_for_supported_scene(opengl, family, unsupported, fast):
+def test_pose_updates_use_fast_path_only_for_supported_scene(opengl, family, unsupported, fast):  # noqa: F811
     module, mujoco = opengl
     env, renderer = context(mujoco)
     if unsupported:

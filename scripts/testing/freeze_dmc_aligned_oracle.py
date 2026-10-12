@@ -25,10 +25,16 @@ assert pin == PIN
 assert not subprocess.check_output(["git", "-C", str(source), "diff", "HEAD", "--"], text=True)
 assert importlib.metadata.version("mujoco") == "3.12.0"
 manifest = {
-    "reference_commit": pin, "seed": 17, "batch": 3, "steps": 32,
+    "reference_commit": pin,
+    "seed": 17,
+    "batch": 3,
+    "steps": 32,
     "generator": "scripts/testing/freeze_dmc_aligned_oracle.py",
-    "versions": {name: importlib.metadata.version(name) for name in ("numpy", "mujoco", "dm-control", "stable-worldmodel")},
-    "source": "Real pinned SWM wrappers only; independent of candidate adapter", "domains": {},
+    "versions": {
+        name: importlib.metadata.version(name) for name in ("numpy", "mujoco", "dm-control", "stable-worldmodel")
+    },
+    "source": "Real pinned SWM wrappers only; independent of candidate adapter",
+    "domains": {},
 }
 for domain in DOMAINS:
     ref = DMCAlignedReference(domain, 3)
@@ -39,7 +45,9 @@ for domain in DOMAINS:
         values = {"actions": actions}
         for key in initial.keys(True, True):
             name = key if isinstance(key, str) else "/".join(key)
-            values[f"state/{name}"] = np.stack([initial[key].numpy(), *[row["state"][key].numpy() for row in outcomes]])
+            values[f"state/{name}"] = np.stack(
+                [initial[key].numpy(), *[row["state"][key].numpy() for row in outcomes]]
+            )
         for key in outcomes[0].keys(True, True):
             if key == "state" or (isinstance(key, tuple) and key[0] == "state"):
                 continue
@@ -48,7 +56,8 @@ for domain in DOMAINS:
         path = PATHS[domain]
         np.savez_compressed(path, **values)
         manifest["domains"][domain] = {
-            "file": path.name, "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "file": path.name,
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
             "arrays": {key: {"shape": list(value.shape), "dtype": str(value.dtype)} for key, value in values.items()},
         }
     finally:

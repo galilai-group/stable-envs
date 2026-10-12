@@ -17,15 +17,23 @@ from stable_envs.envs.rocket.simulation.adapter import RocketAdapter
 
 
 def local_adapters(
-    classic: ClassicControlAdapter, fetch: FetchAdapter, dmc: DMCAdapter,
-    maze: OGBMazeAdapter, manipulation: OGBManipulationAdapter,
-    pusht: PushTReplayAdapter, rocket: RocketAdapter, craftax: CraftaxAdapter,
+    classic: ClassicControlAdapter,
+    fetch: FetchAdapter,
+    dmc: DMCAdapter,
+    maze: OGBMazeAdapter,
+    manipulation: OGBManipulationAdapter,
+    pusht: PushTReplayAdapter,
+    rocket: RocketAdapter,
+    craftax: CraftaxAdapter,
 ) -> tuple[SimulatorAdapter, ...]:
     return classic, fetch, dmc, maze, manipulation, pusht, rocket, craftax
 
 
 def process_adapters(
-    classic: AcrobotProcessAdapter, fetch: FetchProcessAdapter, dmc: DMCProcessAdapter,
-    maze: OGBMazeProcessAdapter, manipulation: OGBManipulationProcessAdapter,
+    classic: AcrobotProcessAdapter,
+    fetch: FetchProcessAdapter,
+    dmc: DMCProcessAdapter,
+    maze: OGBMazeProcessAdapter,
+    manipulation: OGBManipulationProcessAdapter,
 ) -> tuple[tuple[SimulatorAdapter, StepPipeline], ...]:
     return (classic, classic), (fetch, fetch), (dmc, dmc), (maze, maze), (manipulation, manipulation)

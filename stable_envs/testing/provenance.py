@@ -18,9 +18,7 @@ class CodeIdentity(TypedDict):
     files: dict[str, str]
 
 
-def verify_recorded_code(
-    files: Mapping[str, str], root: str | Path, *, revision: str | None = None
-) -> CodeIdentity:
+def verify_recorded_code(files: Mapping[str, str], root: str | Path, *, revision: str | None = None) -> CodeIdentity:
     """Verify recorded file hashes against a worktree or an explicit Git commit.
 
     Historical verification reads Git objects without checking out or executing

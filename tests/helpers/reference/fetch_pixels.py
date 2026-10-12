@@ -240,4 +240,3 @@ def _pickandplace_mutation(case: Registration, seed: int, dtype: str, device: st
                 assert continuation, "Recorded render mutation did not change the following transition"
                 return dict(step=step, mutation=mutation, continuation=continuation, source_gl=identity)
         raise AssertionError("Expected PickAndPlace continuous-render mutation was not witnessed")
-

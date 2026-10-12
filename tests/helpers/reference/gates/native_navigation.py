@@ -35,7 +35,6 @@ CASES = {
 }
 
 
-
 _DIAGNOSTIC_CONTEXT = None
 
 
@@ -65,9 +64,17 @@ def _diagnostic_case(env, ref, domain, case):
     """Observe the family gate without changing comparisons or simulator inputs."""
     global _DIAGNOSTIC_CONTEXT
     previous = _DIAGNOSTIC_CONTEXT
-    context = {"domain": domain, "historical_id": CASES[domain]["historical_id"],
-               "case": case, "probe": case, "batch": env.B, "lanes": list(range(env.B)),
-               "seed": None, "candidate": {}, "reference": {}}
+    context = {
+        "domain": domain,
+        "historical_id": CASES[domain]["historical_id"],
+        "case": case,
+        "probe": case,
+        "batch": env.B,
+        "lanes": list(range(env.B)),
+        "seed": None,
+        "candidate": {},
+        "reference": {},
+    }
     _DIAGNOSTIC_CONTEXT = context
     saved = []
 
@@ -114,9 +121,7 @@ def _diagnostic_case(env, ref, domain, case):
                 context[label]["goal"] = _diagnostic_value(state[goal, "position"])
             except Exception as snapshot_error:
                 context[label]["snapshot_error"] = repr(snapshot_error)
-        context["candidate_variation"] = {
-            path: _diagnostic_value(env._style[path]) for path in env._style.paths
-        }
+        context["candidate_variation"] = {path: _diagnostic_value(env._style[path]) for path in env._style.paths}
         print("NAVIGATION_FAILURE_CONTEXT " + json.dumps(context), flush=True)
         raise
     finally:
@@ -277,7 +282,10 @@ def _boundary_case(domain, device):
                         state["target", "position"] = torch.tensor([[190.0, 190.0]], dtype=torch.float32)
                     env.set_state(state)
                     ref.set_state(state)
-                    got, expected = env.step(np.asarray([action], np.float32), frames=None), ref.step(np.asarray([action], np.float32))
+                    got, expected = (
+                        env.step(np.asarray([action], np.float32), frames=None),
+                        ref.step(np.asarray([action], np.float32)),
+                    )
                     compare_state(got, expected)
                     observed[name] = got["state", "agent", "position"][0].detach().cpu().tolist()
                 return observed
@@ -314,14 +322,16 @@ def _piecewise_zone_boundaries(device):
                         actions = _actions("piecewise", 701 + index, 8, batch)
                         actions[0].fill(0)
                         steps = check_step_matches_reference(env, ref, actions)
-                        cases.append({
-                            "batch": batch,
-                            "seed": 5,
-                            "positions": np.asarray(rows).tolist(),
-                            "steps": len(steps),
-                            "first_action_zero": True,
-                            "max_error": 0.0,
-                        })
+                        cases.append(
+                            {
+                                "batch": batch,
+                                "seed": 5,
+                                "positions": np.asarray(rows).tolist(),
+                                "steps": len(steps),
+                                "first_action_zero": True,
+                                "max_error": 0.0,
+                            }
+                        )
             finally:
                 ref.close()
     return {
@@ -346,7 +356,11 @@ def _reward_and_lifecycle(domain, device):
                     boundary = state.clone()
                     boundary["target", "position"] = torch.tensor([[80.0, 80.0]])
                     boundary["agent", "position"] = torch.tensor([[64.0, 80.0]])
-                    hold = np.asarray([[-0.4, 0.0]], np.float32) if domain == "piecewise" else np.zeros((1, 2), np.float32)
+                    hold = (
+                        np.asarray([[-0.4, 0.0]], np.float32)
+                        if domain == "piecewise"
+                        else np.zeros((1, 2), np.float32)
+                    )
                     env.set_state(boundary)
                     ref.set_state(boundary)
                     got, expected = env.step(hold, frames=None), ref.step(hold)
@@ -398,7 +412,10 @@ def _simple_goal_distinction(device):
                 cached = state["task", "cached_goal_agent_position"]
                 reward_goal = state["goal", "position"]
                 assert not torch.equal(cached, reward_goal)
-                got, expected = env.step(np.zeros((1, 2), np.float32), frames=None), ref.step(np.zeros((1, 2), np.float32))
+                got, expected = (
+                    env.step(np.zeros((1, 2), np.float32), frames=None),
+                    ref.step(np.zeros((1, 2), np.float32)),
+                )
                 compare_state(got, expected)
                 assert torch.equal(got["info", "goal"].cpu(), expected["info", "goal"])
                 return {
@@ -490,13 +507,15 @@ def _simple_action_dtypes(device):
                 blocked["task", "state_is_float64"].zero_()
                 env.set_state(blocked)
                 ref.set_state(blocked)
-                got, expected = env.step(np.asarray([[0.1, 0.0]], np.float64), frames=None), ref.step(
-                    np.asarray([[0.1, 0.0]], np.float64)
+                got, expected = (
+                    env.step(np.asarray([[0.1, 0.0]], np.float64), frames=None),
+                    ref.step(np.asarray([[0.1, 0.0]], np.float64)),
                 )
                 compare_state(got, expected)
                 assert not bool(got["state", "task", "state_is_float64"].item())
-                follow, expected_follow = env.step(np.asarray([[0.0, 0.0]], np.float32), frames=None), ref.step(
-                    np.asarray([[0.0, 0.0]], np.float32)
+                follow, expected_follow = (
+                    env.step(np.asarray([[0.0, 0.0]], np.float32), frames=None),
+                    ref.step(np.asarray([[0.0, 0.0]], np.float32)),
                 )
                 compare_state(follow, expected_follow)
                 return {
@@ -523,7 +542,10 @@ def _simple_reward_boundary(device):
                 state["task", "state_is_float64"].zero_()
                 env.set_state(state)
                 ref.set_state(state)
-                got, expected = env.step(np.zeros((1, 2), np.float32), frames=None), ref.step(np.zeros((1, 2), np.float32))
+                got, expected = (
+                    env.step(np.zeros((1, 2), np.float32), frames=None),
+                    ref.step(np.zeros((1, 2), np.float32)),
+                )
                 compare_state(got, expected)
                 assert not bool(got["terminated"].item())
 
@@ -532,7 +554,10 @@ def _simple_reward_boundary(device):
                 inside["agent", "position"] = torch.tensor([[inside_x, 4.0]], dtype=torch.float64)
                 env.set_state(inside)
                 ref.set_state(inside)
-                got, expected = env.step(np.zeros((1, 2), np.float32), frames=None), ref.step(np.zeros((1, 2), np.float32))
+                got, expected = (
+                    env.step(np.zeros((1, 2), np.float32), frames=None),
+                    ref.step(np.zeros((1, 2), np.float32)),
+                )
                 compare_state(got, expected)
                 assert bool(got["terminated"].item()) and float(got["reward"].item()) == 1.0
 
@@ -540,7 +565,10 @@ def _simple_reward_boundary(device):
                 state64["task", "state_is_float64"].fill_(True)
                 env.set_state(state64)
                 ref.set_state(state64)
-                got, expected = env.step(np.zeros((1, 2), np.float64), frames=None), ref.step(np.zeros((1, 2), np.float64))
+                got, expected = (
+                    env.step(np.zeros((1, 2), np.float64), frames=None),
+                    ref.step(np.zeros((1, 2), np.float64)),
+                )
                 compare_state(got, expected)
                 assert not bool(got["terminated"].item())
                 inside64 = state64.clone()
@@ -549,7 +577,10 @@ def _simple_reward_boundary(device):
                 )
                 env.set_state(inside64)
                 ref.set_state(inside64)
-                got, expected = env.step(np.zeros((1, 2), np.float64), frames=None), ref.step(np.zeros((1, 2), np.float64))
+                got, expected = (
+                    env.step(np.zeros((1, 2), np.float64), frames=None),
+                    ref.step(np.zeros((1, 2), np.float64)),
+                )
                 compare_state(got, expected)
                 assert bool(got["terminated"].item())
                 return {

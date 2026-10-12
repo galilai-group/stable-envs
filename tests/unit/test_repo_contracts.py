@@ -135,15 +135,15 @@ def test_every_docs_page_is_reachable_from_the_nav():
     listed: list[str] = []
     _nav_targets(cfg.get("nav", []), listed)
     targets = set(listed)
-    pages = {name.removeprefix("docs/") for name in MAINTAINED_PATHS
-             if name.startswith("docs/") and name.endswith(".md")}
+    pages = {
+        name.removeprefix("docs/") for name in MAINTAINED_PATHS if name.startswith("docs/") and name.endswith(".md")
+    }
     allowed_orphans = pages & _NAV_OPTIONAL
     orphans = sorted(pages - targets - allowed_orphans)
     assert not orphans, (
         f"these pages exist under docs/ and are in no nav section, so the site builds them and nothing "
         f"links to them: {orphans}"
     )
-
 
 
 # ------------------------------------------------------------------ the launchers

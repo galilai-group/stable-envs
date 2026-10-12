@@ -39,9 +39,9 @@ def test_adapter_full_state_roundtrip_snapshot_independence_and_validation(domai
 
 
 def test_production_adapter_does_not_import_stable_worldmodel():
-    source = __import__(
-        "inspect"
-    ).getsource(__import__("stable_envs.envs.dmcontrol.simulation.continuation", fromlist=["*"]))
+    source = __import__("inspect").getsource(
+        __import__("stable_envs.envs.dmcontrol.simulation.continuation", fromlist=["*"])
+    )
     assert "stable_worldmodel" not in source
 
 

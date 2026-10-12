@@ -402,9 +402,17 @@ class OGBManipulationAdapter:
         return tree
 
     def variation_values(self, layout, *, anchor=False):
-        rows = [np.concatenate([np.asarray(getattr(env.variation_space._walk(name),
-                               "init_value" if anchor else "value")).reshape(-1)
-                               for name, _, _ in layout]) for env in self.envs]
+        rows = [
+            np.concatenate(
+                [
+                    np.asarray(getattr(env.variation_space._walk(name), "init_value" if anchor else "value")).reshape(
+                        -1
+                    )
+                    for name, _, _ in layout
+                ]
+            )
+            for env in self.envs
+        ]
         return torch.as_tensor(np.stack(rows), dtype=torch.float64, device=self.device)
 
     def configure(self, values):
@@ -432,8 +440,10 @@ class OGBManipulationAdapter:
             or not np.isfinite(actions).all()
         ):
             raise ValueError("Actions must be finite float32/float64 [num_envs, 5]")
-        results = [env.step(action) if active is None or active[i] else self._last_outputs[i]
-                   for i, (env, action) in enumerate(zip(self.envs, actions))]
+        results = [
+            env.step(action) if active is None or active[i] else self._last_outputs[i]
+            for i, (env, action) in enumerate(zip(self.envs, actions))
+        ]
         self._last_outputs = results
         return TensorDict(
             {

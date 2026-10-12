@@ -70,7 +70,9 @@ def test_the_velocity_is_real_state_and_carrying_it_is_what_makes_transition_pur
     moving = st.clone()
     moving["agent", "velocity"] = torch.full_like(moving["agent", "velocity"], 25.0)
     a = _actions(6, 3)
-    assert not torch.equal(env._pack_render_state(branch_step(env, st, a)), env._pack_render_state(branch_step(env, moving, a)))
+    assert not torch.equal(
+        env._pack_render_state(branch_step(env, st, a)), env._pack_render_state(branch_step(env, moving, a))
+    )
 
 
 def test_snapshot_branch_sequence_matches_repeated_steps(env):
@@ -101,7 +103,10 @@ def test_a_cell_without_dynamics_says_so_precisely():
 
     e = Renderless(num_envs=2, device="cpu")
     assert not e.has_dynamics
-    for call in (lambda: e.step(torch.zeros(2, 2), frames=None), lambda: branch_step(e, e.reset(seed=0), torch.zeros(2, 2))):
+    for call in (
+        lambda: e.step(torch.zeros(2, 2), frames=None),
+        lambda: branch_step(e, e.reset(seed=0), torch.zeros(2, 2)),
+    ):
         with pytest.raises(NotImplementedError) as exc:
             call()
         assert "full simulator semantics" in str(exc.value) and "Renderless" in str(exc.value)
@@ -154,7 +159,10 @@ def test_the_hook_reports_the_live_velocity_and_env_state_round_trips_through_st
     assert torch.equal(live, env._hidden_state()[("agent", "velocity")])
     # the whole point: state -> transition must reproduce the next step exactly
     a = _actions(6, 7)
-    assert torch.equal(env._pack_render_state(branch_step(env, env.state, a)), env._pack_render_state(env.step(a, frames=None)["state"]))
+    assert torch.equal(
+        env._pack_render_state(branch_step(env, env.state, a)),
+        env._pack_render_state(env.step(a, frames=None)["state"]),
+    )
 
 
 def test_pusht_declares_that_it_has_dynamics(env):

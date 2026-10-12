@@ -374,7 +374,6 @@ class CarRacing(Env):
         self.sx = _Shrink(W, 96, dev)
         self.sy = _Shrink(H, 96, dev)
 
-
     def make_variation_space(self) -> Dict:
         """Expose visited-tile repainting and antialiasing.
 
@@ -418,7 +417,6 @@ class CarRacing(Env):
         out[:, 26] = rng.uniform(TEXT_LO, TEXT_HI - 1, batch)
         out[:, 27] = rng.uniform(0.85, 3.0, batch)
         return out.astype(np.float32)
-
 
     @torch.no_grad()
     def _render(
@@ -687,7 +685,6 @@ class CarRacing(Env):
         ]
         dst = buf[:, y0 : y0 + th, win_lo : win_lo + win_w, :]
         dst.copy_(torch.where(ok.view(-1, 1, win_w, 1), g.unsqueeze(-1).expand(-1, -1, -1, 3), dst))
-
 
     @staticmethod
     def reference_env(size: int | None = None):

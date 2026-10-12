@@ -105,19 +105,32 @@ def test_every_leaf_structure_dtype_and_nonfinite_rejection(adapter):
 def test_semantic_final_lane_rejections(adapter):
     state = adapter.get_state()
     edits = [
-        (("physics", "time"), -1), (("task", "id"), 6), (("task", "reward_id"), 6),
-        (("physics", "mocap_quat"), 0), (("controller", "site_xmat"), 0),
-        (("rng", "action", "increment"), 0), (("rng", "environment", "has_uint32"), 2),
-        (("rng", "action", "uinteger"), 2**32), (("rng", "task", "position"), 625),
-        (("rng", "task", "key"), 0), (("rng", "task", "has_gauss"), 2),
-        (("compatibility", "signature"), 0), (("lifecycle", "reset_next_step"), True),
-        (("variation", "current", "cube.size"), .3), (("variation", "anchor", "cube.size"), .3),
-        (("model", "compiled", "cube.size"), .3), (("model", "mjcf", "cube.size"), .3),
+        (("physics", "time"), -1),
+        (("task", "id"), 6),
+        (("task", "reward_id"), 6),
+        (("physics", "mocap_quat"), 0),
+        (("controller", "site_xmat"), 0),
+        (("rng", "action", "increment"), 0),
+        (("rng", "environment", "has_uint32"), 2),
+        (("rng", "action", "uinteger"), 2**32),
+        (("rng", "task", "position"), 625),
+        (("rng", "task", "key"), 0),
+        (("rng", "task", "has_gauss"), 2),
+        (("compatibility", "signature"), 0),
+        (("lifecycle", "reset_next_step"), True),
+        (("variation", "current", "cube.size"), 0.3),
+        (("variation", "anchor", "cube.size"), 0.3),
+        (("model", "compiled", "cube.size"), 0.3),
+        (("model", "mjcf", "cube.size"), 0.3),
     ]
     if adapter.family == "Scene":
-        edits += [(("scene", "cur_button_states"), 2), (("scene", "prev_button_states"), 2),
-                  (("scene", "target_button_states"), 2), (("scene", "target_drawer_pos"), 1),
-                  (("scene", "target_window_pos"), 1)]
+        edits += [
+            (("scene", "cur_button_states"), 2),
+            (("scene", "prev_button_states"), 2),
+            (("scene", "target_button_states"), 2),
+            (("scene", "target_drawer_pos"), 1),
+            (("scene", "target_window_pos"), 1),
+        ]
     for key, value in edits:
         bad = state.clone()
         bad[key][-1] = value
@@ -130,7 +143,7 @@ def test_variation_rng_and_restored_continuation(adapter):
         state["rng", "environment", "has_uint32"][-1] = 1
         state["rng", "environment", "uinteger"][-1] = 2**32 - 1
         state["rng", "task", "has_gauss"][-1] = True
-        state["rng", "task", "cached_gaussian"][-1] = .25
+        state["rng", "task", "cached_gaussian"][-1] = 0.25
         same_rows(adapter.validate(state), Before.validate(adapter, state))
         adapter.set_state(state)
         action = np.zeros((3, 5))

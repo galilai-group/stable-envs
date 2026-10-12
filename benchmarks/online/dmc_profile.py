@@ -74,7 +74,11 @@ def main():
         },
         source_sha256={
             str(p): hashlib.sha256(p.read_bytes()).hexdigest()
-            for p in [*Path("stable_envs/envs/dmcontrol/simulation").rglob("*.py"), *Path("stable_envs/_execution").rglob("*.py"), Path(__file__).relative_to(Path.cwd())]
+            for p in [
+                *Path("stable_envs/envs/dmcontrol/simulation").rglob("*.py"),
+                *Path("stable_envs/_execution").rglob("*.py"),
+                Path(__file__).relative_to(Path.cwd()),
+            ]
         },
         scope="adapter.step with complete State; diagnostic only, not public step or a source speedup",
         cells=[],

@@ -7,7 +7,9 @@ from .factory import PROCESS_DOMAINS, DMCAdapter, make_local
 from .process import DMCProcessAdapter
 
 
-def make_dmc_adapter(domain: str, num_envs: int, device: str | torch.device, seed: int) -> DMCAdapter | DMCProcessAdapter:
+def make_dmc_adapter(
+    domain: str, num_envs: int, device: str | torch.device, seed: int
+) -> DMCAdapter | DMCProcessAdapter:
     cpus = cpu_affinity()
     count = process_count(num_envs, cpus, eligible=domain in PROCESS_DOMAINS)
     if count:

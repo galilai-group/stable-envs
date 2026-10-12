@@ -133,9 +133,7 @@ def test_render_is_the_fused_path_and_is_still_invariant(cfg):
     first = env.render(st).clone()
     assert torch.equal(env.render(st), first), f"{cfg}: render is not pure"
     perm = np.array([3, 1, 7, 0, 5, 2, 6, 4])
-    assert torch.equal(env.render(st[perm])[np.argsort(perm)], first), (
-        f"{cfg}: render is not order invariant"
-    )
+    assert torch.equal(env.render(st[perm])[np.argsort(perm)], first), f"{cfg}: render is not order invariant"
     solo = se.make(cfg, num_envs=1, device="cuda")
     for i in (0, 3, 7):
         assert torch.equal(solo.render(st[i : i + 1])[0], first[i]), f"{cfg}: batch-1 row {i}"

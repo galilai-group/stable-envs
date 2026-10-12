@@ -194,7 +194,6 @@ class PointMaze(Env):
         sc = self._scene()
         assert sc.radius > 0, f"{type(self).__name__}: the particle site has no radius"
 
-
     def make_variation_space(self) -> Dict:
         """Expose float RGB materials, agent scale, target alpha, camera and floor style.
 
@@ -245,7 +244,6 @@ class PointMaze(Env):
         for part in path.split("."):
             node = node[part]
         return np.asarray(node.value, np.float64).reshape(-1)
-
 
     def _plate_key(self, size, variation):
         return (
@@ -364,7 +362,6 @@ class PointMaze(Env):
             exponent=SHADE_EXPONENT,
         )
         return sc
-
 
     @torch.no_grad()
     def _render(
@@ -503,7 +500,6 @@ class PointMaze(Env):
         rt = (sc.radius * scale / nt).clamp(max=1.0)
         return (torch.arccos(cos) < torch.arcsin(rb) + torch.arcsin(rt)) & (nb < nt)
 
-
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """Sample ball and goal positions independently from the cached eligible cells.
 
@@ -514,7 +510,6 @@ class PointMaze(Env):
         pick = cells[rng.integers(0, len(cells), (batch, 2))]  # (batch, 2, 2)
         noise = rng.uniform(-POSITION_NOISE, POSITION_NOISE, (batch, 2, 2)) * sc.scaling
         return (pick + noise).reshape(batch, 4).astype(np.float32)
-
 
     @classmethod
     def reference_env(cls, size: int = 224):

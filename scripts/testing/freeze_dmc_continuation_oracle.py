@@ -18,9 +18,7 @@ ROOT.mkdir(parents=True, exist_ok=True)
 PATHS = {domain: ROOT / f"{domain}_swm_176d545_mujoco312.npz" for domain in DOMAINS}
 existing = [str(path) for path in PATHS.values() if path.exists()]
 if existing or (ROOT / "manifest.json").exists():
-    raise FileExistsError(
-        f"Refusing to overwrite frozen semantic oracle: {existing or [ROOT / 'manifest.json']}"
-    )
+    raise FileExistsError(f"Refusing to overwrite frozen semantic oracle: {existing or [ROOT / 'manifest.json']}")
 
 source = Path(stable_worldmodel.__file__).resolve().parents[1]
 pin = subprocess.check_output(["git", "-C", str(source), "rev-parse", "HEAD"], text=True).strip()
@@ -35,8 +33,7 @@ manifest = {
     "steps": 32,
     "generator": "scripts/testing/freeze_dmc_continuation_oracle.py",
     "versions": {
-        name: importlib.metadata.version(name)
-        for name in ("numpy", "mujoco", "dm-control", "stable-worldmodel")
+        name: importlib.metadata.version(name) for name in ("numpy", "mujoco", "dm-control", "stable-worldmodel")
     },
     "source": "Real pinned SWM wrappers only; independent of candidate adapter",
     "domains": {},
@@ -63,10 +60,7 @@ for domain in DOMAINS:
         manifest["domains"][domain] = {
             "file": path.name,
             "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
-            "arrays": {
-                key: {"shape": list(value.shape), "dtype": str(value.dtype)}
-                for key, value in values.items()
-            },
+            "arrays": {key: {"shape": list(value.shape), "dtype": str(value.dtype)} for key, value in values.items()},
         }
     finally:
         ref.close()

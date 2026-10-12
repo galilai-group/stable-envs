@@ -11,6 +11,7 @@ class _CachedObservations:
 
     Read positions, velocities and timestep afresh. Replacing the model invalidates
     topology; the upstream observation builder assembles the returned fields."""
+
     def generate_mujoco_observations(self):
         model, data = self.model, self.data
         if getattr(self, "_observation_model", None) is not model:

@@ -90,7 +90,6 @@ class _TileEnv(Env):
         self._pool = None
         self._default_t = None
 
-
     def _tile(self, size: int) -> int:
         t, r = divmod(int(size), self.grid_h)
         if r or t < 3:
@@ -99,7 +98,6 @@ class _TileEnv(Env):
                 f"{self.grid_h} grid; use a multiple of {self.grid_h} that is at least {3 * self.grid_h}"
             )
         return t
-
 
     def make_variation_space(self) -> Dict:
         """Expose source palette entries, chrome, visibility highlighting and optional lava.
@@ -129,7 +127,6 @@ class _TileEnv(Env):
         if self.has_lava:
             space["lava_color"] = RGBBox(init_value=tm.DEFAULT_LAVA)
         return Dict(space)
-
 
     def _values(self, row: np.ndarray) -> dict:
         """Unpack one style row, truncating colours before atlas recolouring."""
@@ -182,7 +179,6 @@ class _TileEnv(Env):
         diff = torch.remainder(torch.trunc(ov[:, :3]).unsqueeze(1) - p, 256.0)
         ph = torch.floor(torch.clamp(p + ov[:, 3].view(B, 1, 1) * diff, 0, 255))
         return torch.cat([p, ph], 1)
-
 
     @torch.no_grad()
     def _render(
@@ -265,7 +261,6 @@ class _TileEnv(Env):
         """Round and wrap cell codes into the render alphabet, returning integer triples."""
         return self.code_table[torch.round(codes).long() % tm.N_CODE]
 
-
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """Sample compact render rows from a cached pool of source rollouts."""
         rng = rng or self.rng
@@ -306,7 +301,6 @@ class MiniGridTopDown(_TileEnv):
     Box contents, rewards and episode counters are not modelled; simulation
     comparisons require empty boxes. Cells beyond the grid act as walls."""
 
-
     # Actions: left, right, forward, pickup, drop, toggle, done.
     # Flooring a sample from [0, 7) selects one of these seven actions.
     N_ACTIONS = 7
@@ -340,7 +334,6 @@ class MiniGridTopDown(_TileEnv):
         self._carry.fill_(CARRY_NONE)
         return self
 
-
     def _restore_state(self, state: TensorDict) -> None:
         self._set_render_state(self._pack_render_state(state))
         self._carry.copy_(state["agent", "carrying"].reshape(-1).long())
@@ -348,7 +341,6 @@ class MiniGridTopDown(_TileEnv):
     def _hidden_state(self) -> dict[tuple[str, ...], torch.Tensor]:
         """Include the live carried object when exporting full State."""
         return {("agent", "carrying"): self._carry[: self._live_rows].reshape(-1, 1).to(torch.float32)}
-
 
     def sim_state(self) -> torch.Tensor:
         """Return float64 ``(B, state_dim + 1)`` rows with carrying appended for comparison."""
@@ -558,7 +550,6 @@ class MiniGridTopDown(_TileEnv):
         env.close()
         return np.stack(out).astype(np.float32)
 
-
     @classmethod
     def reference_env(cls, size: int | None = None):
         env = cls._official()
@@ -685,7 +676,6 @@ def topdown(
                 (("agent", "carrying"), 1, None),
             ),
             "default_size": h * tile,
-
             "sim_state_names": _cell_names(w, h) + ("agent_x", "agent_y", "agent_dir", "carrying"),
             # Compare grid, position, direction and carrying separately; use Euclidean position error.
             "step_reference_groups": (

@@ -18,7 +18,6 @@ import pytest
 torch = pytest.importorskip("torch")
 pytest.importorskip("tensordict")
 
-import stable_envs as snv
 from stable_envs.envs.pusht.legacy import PushT as LegacyPushT
 from stable_envs.specs import CompositeSpec, Spec
 
@@ -180,7 +179,9 @@ def test_unpack_and_state_never_alias_the_env_buffer():
     assert torch.equal(st["block", "position"], snap2)
     td = env._unpack_render_state(env._get_render_state())
     td["agent", "position"].add_(1.0)
-    assert not torch.equal(td["agent", "position"], env._unpack_render_state(env._get_render_state())["agent", "position"])
+    assert not torch.equal(
+        td["agent", "position"], env._unpack_render_state(env._get_render_state())["agent", "position"]
+    )
 
 
 def test_live_state_hook_overrides_the_widened_row():

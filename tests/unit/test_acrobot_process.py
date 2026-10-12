@@ -23,7 +23,7 @@ def test_state_task_rng_variation_and_inactive_lanes(dtype):
         initial = local.get_state()
         initial["rng", "has_uint32"][-1] = 1
         initial["rng", "uinteger"][-1] = 2**32 - 1
-        values = {"link_mass_1": np.linspace(.5, 1.5, 5)}
+        values = {"link_mass_1": np.linspace(0.5, 1.5, 5)}
         for adapter in (local, remote):
             adapter.configure(values)
             adapter.set_state(initial)
@@ -36,7 +36,7 @@ def test_state_task_rng_variation_and_inactive_lanes(dtype):
         equal(local.get_state(), remote.get_state())
         equal(held, initial)
         equal(local.reset(), remote.reset())
-        equal(local.reset(42, {"low": -.2, "high": .3}), remote.reset(42, {"low": -.2, "high": .3}))
+        equal(local.reset(42, {"low": -0.2, "high": 0.3}), remote.reset(42, {"low": -0.2, "high": 0.3}))
         changed = remote.get_state()
         changed["theta1"].zero_()
         equal(local.get_state(), remote.get_state())
@@ -51,7 +51,7 @@ def test_invalid_last_lane_does_not_mutate_other_owners():
     try:
         initial = remote.get_state()
         invalid = initial.clone()
-        invalid["theta1"][0] += .25
+        invalid["theta1"][0] += 0.25
         invalid["rng", "state"][-1].fill_(-1)
         with pytest.raises((ValueError, OverflowError)):
             remote.set_state(invalid)
@@ -61,8 +61,11 @@ def test_invalid_last_lane_does_not_mutate_other_owners():
         with pytest.raises(ValueError):
             remote.set_state(bad)
         equal(initial, remote.get_state())
-        for actions, error in [(np.ones((5, 1), np.float32), TypeError),
-                               (np.full((5, 1), 3), IndexError), (np.ones((4, 1)), ValueError)]:
+        for actions, error in [
+            (np.ones((5, 1), np.float32), TypeError),
+            (np.full((5, 1), 3), IndexError),
+            (np.ones((4, 1)), ValueError),
+        ]:
             with pytest.raises(error):
                 remote.step(actions)
             equal(initial, remote.get_state())
@@ -79,8 +82,12 @@ def test_one_request_owned_outputs_and_close():
     initial = remote.get_state()
     try:
         remote.submit_step(np.ones((3, 1), np.int64), capture_state=False)
-        for call in (remote.get_state, remote.reset, lambda: remote.set_state(initial),
-                     lambda: remote.submit_step(np.ones((3, 1), np.int64))):
+        for call in (
+            remote.get_state,
+            remote.reset,
+            lambda: remote.set_state(initial),
+            lambda: remote.submit_step(np.ones((3, 1), np.int64)),
+        ):
             with pytest.raises(RuntimeError, match="in flight"):
                 call()
         result = remote.receive_step()
@@ -142,7 +149,9 @@ def test_public_chunks_slices_early_stop_and_current_render(pipeline, device):
         for env in (local, remote):
             env.set_variation({"physics.link_mass_1": [1.3]})
             env.reset(31)
-        equal(local.step(torch.as_tensor(actions, device=device)), remote.step(torch.as_tensor(actions, device=device)))
+        equal(
+            local.step(torch.as_tensor(actions, device=device)), remote.step(torch.as_tensor(actions, device=device))
+        )
     finally:
         local.close()
         remote.close()

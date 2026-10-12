@@ -34,7 +34,11 @@ def test_classic_export_continuation_and_ownership(domain, device):
             adapter.envs[2].unwrapped.steps_beyond_terminated = 7
             equal(adapter.get_state(), classic_state(adapter))
             adapter.set_state(initial)
-        action = np.ones((3, 1), np.int64) if domain in ("cartpole", "acrobot", "mountain_car") else np.full((3, 1), 0.25, np.float32)
+        action = (
+            np.ones((3, 1), np.int64)
+            if domain in ("cartpole", "acrobot", "mountain_car")
+            else np.full((3, 1), 0.25, np.float32)
+        )
         for _ in range(8):
             result = adapter.step(action)
             equal(result["state"], classic_state(adapter))

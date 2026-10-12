@@ -357,7 +357,6 @@ class Sokoban(Env):
         self._advance()
         return self._step_result(self._step_state())
 
-
     def _close(self) -> None:
         """Release instance caches while retaining the shared tile atlas."""
         self._pool = None

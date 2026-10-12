@@ -56,7 +56,9 @@ class RenderOnlyEnv:
         return self
 
     def _render(self, states=None, **kw):
-        s = torch.as_tensor(self._render_state if states is None else states, dtype=torch.float32).reshape(-1, self.state_dim)
+        s = torch.as_tensor(self._render_state if states is None else states, dtype=torch.float32).reshape(
+            -1, self.state_dim
+        )
         img = torch.zeros((s.shape[0], 2, 3, 3), dtype=torch.uint8)
         img[:, 0, 0, :] = (s[:, 0].to(torch.int64) % 251).to(torch.uint8).unsqueeze(-1)
         return img

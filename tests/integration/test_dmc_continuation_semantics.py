@@ -33,6 +33,5 @@ def test_continuation_dmc_full_state_semantics():
     assert result["execution_mode"] == "DELEGATED_CPU"
     assert all(case.get("max_state_error", 0) == 0 for case in result["cases"])
     assert all(
-        result["warmstart_experiment"][domain]["max_observable_error_without_warmstart"] > 0
-        for domain in CASES
+        result["warmstart_experiment"][domain]["max_observable_error_without_warmstart"] > 0 for domain in CASES
     )

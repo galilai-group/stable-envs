@@ -52,17 +52,13 @@ manifest = {
     "steps": 32,
     "generator": "scripts/testing/freeze_dmc_humanoid_oracle.py",
     "versions": {
-        name: importlib.metadata.version(name)
-        for name in ("numpy", "mujoco", "dm-control", "stable-worldmodel")
+        name: importlib.metadata.version(name) for name in ("numpy", "mujoco", "dm-control", "stable-worldmodel")
     },
     "source": "Real pinned SWM HumanoidDMControlWrapper default Walk only; independent of candidate adapter",
     "domain": {
         "file": PATH.name,
         "sha256": hashlib.sha256(PATH.read_bytes()).hexdigest(),
-        "arrays": {
-            key: {"shape": list(value.shape), "dtype": str(value.dtype)}
-            for key, value in values.items()
-        },
+        "arrays": {key: {"shape": list(value.shape), "dtype": str(value.dtype)} for key, value in values.items()},
     },
 }
 MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n")

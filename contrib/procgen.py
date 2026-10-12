@@ -856,7 +856,6 @@ class _ProcgenEnv(Env):
             }
         )
 
-
     def _unpack(self, s: torch.Tensor) -> dict:
         d = self.spec.dim
         n = self.n_cells
@@ -1073,7 +1072,6 @@ class _ProcgenEnv(Env):
             syg = torch.where(t, fy, syg)
         return m, sxg, syg
 
-
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """Sample compact render rows from cached source rollouts."""
         rng = rng or self.rng
@@ -1125,7 +1123,6 @@ class _ProcgenEnv(Env):
             if len(rows) >= n:
                 break
         return np.stack(rows[:n]).astype(np.float32)
-
 
     @classmethod
     def reference_env(cls, size: int = 64):

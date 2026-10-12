@@ -58,8 +58,7 @@ for domain in DOMAINS:
                 [initial[key].numpy(), *[outcome["state"][key].numpy() for outcome in outcomes]]
             )
         output_keys = set(outcomes[0].keys(True, True)) - {
-            ("state", *key) if isinstance(key, tuple) else ("state", key)
-            for key in initial.keys(True, True)
+            ("state", *key) if isinstance(key, tuple) else ("state", key) for key in initial.keys(True, True)
         }
         for key in sorted(output_keys, key=str):
             if key == "state" or (isinstance(key, tuple) and key[0] == "state"):

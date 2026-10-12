@@ -58,9 +58,7 @@ class NativeNavigationReference:
             return TensorDict(
                 {
                     "agent": {
-                        "position": torch.as_tensor(
-                            np.stack([env.state for env in self.envs]), dtype=torch.float64
-                        )
+                        "position": torch.as_tensor(np.stack([env.state for env in self.envs]), dtype=torch.float64)
                     },
                     "goal": {
                         "position": torch.as_tensor(
@@ -81,12 +79,8 @@ class NativeNavigationReference:
             )
         return TensorDict(
             {
-                "agent": {
-                    "position": torch.stack([env.agent_position.detach().clone() for env in self.envs])
-                },
-                "target": {
-                    "position": torch.stack([env.target_position.detach().clone() for env in self.envs])
-                },
+                "agent": {"position": torch.stack([env.agent_position.detach().clone() for env in self.envs])},
+                "target": {"position": torch.stack([env.target_position.detach().clone() for env in self.envs])},
             },
             batch_size=[self.num_envs],
         )
@@ -96,8 +90,8 @@ class NativeNavigationReference:
         for lane, env in enumerate(self.envs):
             if self.domain == "simple_point_maze":
                 is_float64 = bool(host[lane]["task", "state_is_float64"].item())
-                agent = host[lane]["agent", "position"].numpy().astype(
-                    np.float64 if is_float64 else np.float32, copy=True
+                agent = (
+                    host[lane]["agent", "position"].numpy().astype(np.float64 if is_float64 else np.float32, copy=True)
                 )
                 goal = host[lane]["goal", "position"].numpy().copy()
                 cached = host[lane]["task", "cached_goal_agent_position"].numpy().copy()
@@ -134,9 +128,7 @@ class NativeNavigationReference:
             "observation": observation,
         }
         if self.domain == "simple_point_maze":
-            common["info"] = {
-                "goal": torch.as_tensor(np.stack([out[4]["goal"] for out in outputs])).clone()
-            }
+            common["info"] = {"goal": torch.as_tensor(np.stack([out[4]["goal"] for out in outputs])).clone()}
         else:
             common["info"] = {
                 "proprio": torch.as_tensor(np.stack([out[4]["proprio"] for out in outputs])).clone(),

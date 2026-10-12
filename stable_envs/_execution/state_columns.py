@@ -26,5 +26,6 @@ def owned_columns(rows, batch, device):
         raise ValueError("State row count differs from batch")
     # Each array belongs to this result alone. Subsequent steps/exports cannot
     # overwrite a returned CPU snapshot; device transfers likewise own storage.
-    return TensorDict({key: torch.from_numpy(value).to(device) for key, value in columns.items()},
-                      [batch], device=device)
+    return TensorDict(
+        {key: torch.from_numpy(value).to(device) for key, value in columns.items()}, [batch], device=device
+    )

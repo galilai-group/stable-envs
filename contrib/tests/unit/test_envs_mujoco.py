@@ -127,7 +127,9 @@ def test_the_declared_state_layout_tiles_the_packed_row(name):
         for key, w, _ in layout:
             assert tuple(state[key].shape) == (env.num_envs, w), f"{name}: {key}"
         assert torch.equal(env._pack_render_state(state), env._get_render_state())
-        assert torch.equal(env._pack_render_state(env._unpack_render_state(env._get_render_state())), env._get_render_state())
+        assert torch.equal(
+            env._pack_render_state(env._unpack_render_state(env._get_render_state())), env._get_render_state()
+        )
     finally:
         env.close()
 

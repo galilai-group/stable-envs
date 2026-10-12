@@ -21,12 +21,13 @@ def allocate_buffers(context: BaseContext, specs: BufferSpecs, batch: int) -> di
 
 def buffer_views(buffers: Mapping, specs: BufferSpecs, batch: int) -> dict[tuple[str, ...], np.ndarray]:
     return {
-        key: np.frombuffer(buffers[key], dtype=dtype).reshape(batch, *shape)
-        for key, (shape, dtype) in specs.items()
+        key: np.frombuffer(buffers[key], dtype=dtype).reshape(batch, *shape) for key, (shape, dtype) in specs.items()
     }
 
 
-def owned_group(views: Mapping[tuple[str, ...], np.ndarray], group: str, batch: int, device: torch.device) -> TensorDict:
+def owned_group(
+    views: Mapping[tuple[str, ...], np.ndarray], group: str, batch: int, device: torch.device
+) -> TensorDict:
     # Copy before the next request: workers will overwrite these buffers.
     return TensorDict(
         {key[1:]: torch.from_numpy(value.copy()).to(device) for key, value in views.items() if key[0] == group},

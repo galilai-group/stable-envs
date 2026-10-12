@@ -11,15 +11,18 @@ from stable_envs.envs.dmcontrol.simulation import execution as execution
 
 
 @pytest.mark.parametrize("domain", sorted(execution.PROCESS_DOMAINS) + ["quadruped"])
-@pytest.mark.parametrize("platform,batch,cores,daemon,expected", [
-    ("linux", 64, 8, False, 8),
-    ("linux", 256, 32, False, 8),
-    ("linux", 64, 4, False, 4),
-    ("linux", 63, 8, False, 0),
-    ("linux", 64, 2, False, 0),
-    ("linux", 64, 8, True, 0),
-    ("darwin", 64, 8, False, 0),
-])
+@pytest.mark.parametrize(
+    "platform,batch,cores,daemon,expected",
+    [
+        ("linux", 64, 8, False, 8),
+        ("linux", 256, 32, False, 8),
+        ("linux", 64, 4, False, 4),
+        ("linux", 63, 8, False, 0),
+        ("linux", 64, 2, False, 0),
+        ("linux", 64, 8, True, 0),
+        ("darwin", 64, 8, False, 0),
+    ],
+)
 def test_routing_preserves_local_fallback(monkeypatch, domain, platform, batch, cores, daemon, expected):
     monkeypatch.setattr(policy.sys, "platform", platform)
     monkeypatch.setattr(policy.os, "sched_getaffinity", lambda _: set(range(cores)), raising=False)

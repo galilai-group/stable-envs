@@ -14,9 +14,7 @@ def test_adapter_full_state_roundtrip_snapshot_independence_and_validation():
     adapter = DMCHumanoidAdapter(2)
     try:
         state = adapter.reset(seed=17)
-        assert set(state.keys(True, True)) == {
-            key if isinstance(key, tuple) else key for key in HUMANOID_FIELDS
-        }
+        assert set(state.keys(True, True)) == {key if isinstance(key, tuple) else key for key in HUMANOID_FIELDS}
         adapter.step(np.full((2, HUMANOID_CONFIG["nu"]), 0.25))
         adapter.set_state(state)
         for key in state.keys(True, True):
