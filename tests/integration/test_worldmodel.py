@@ -14,6 +14,7 @@ from tests.helpers.reference import (
     SWM_IDS,
     SYMBOLIC_IDS,
     VariationMap,
+    canonical_from_frozen,
     canonical_names,
     class_for_frozen_cell,
     pusht_state,
@@ -47,7 +48,7 @@ def test_all_42_frozen_swm_ids_join_the_same_canonical_classes():
     assert len(expected) == 42
 
     for swm_id, class_names in expected.items():
-        assert canonical_names(swm_id) == class_names
+        assert canonical_names(swm_id) == tuple(canonical_from_frozen(c) for c in class_names)
         for class_name in class_names:
             cls = class_for_frozen_cell(class_name)
             if cls is not None:
