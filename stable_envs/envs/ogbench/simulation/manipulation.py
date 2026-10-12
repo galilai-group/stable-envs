@@ -10,7 +10,7 @@ from tensordict import TensorDict
 
 from ...._execution.protocol import SimulatorAdapter
 from ...._execution.state_columns import owned_columns
-from .compatibility import MODEL_VALUES, CompatibleCube, CompatibleScene, nodes
+from .compatibility import MODEL_VALUES, CompatibleCube, CompatibleScene, LanePool, nodes
 
 PARTS = (
     "TIME",
@@ -111,8 +111,9 @@ class OGBManipulationAdapter(SimulatorAdapter):
             raise ValueError("Cube/Scene require a positive integer batch")
         self.family, self.num_envs, self.device = family, num_envs, torch.device(device)
         self.cls = CompatibleCube if family == "Cube" else CompatibleScene
+        self._pool = LanePool()
         self.envs = [
-            self.cls(seed=None if seed is None else int(seed) + i, reward_task_id=reward_task_id)
+            self.cls(seed=None if seed is None else int(seed) + i, reward_task_id=reward_task_id, pool=self._pool)
             for i in range(num_envs)
         ]
         self._closed = False
@@ -294,7 +295,7 @@ class OGBManipulationAdapter(SimulatorAdapter):
 
     def _restore(self, row):
         # A temporary authoritative instance makes compilation/restore atomic even on failure.
-        env = self.cls(seed=0)
+        env = self.cls(seed=0, pool=self._pool)
         try:
             for name in MODEL_VALUES:
                 env.variation_space._walk(name)._value = row["model", "compiled", name].copy()

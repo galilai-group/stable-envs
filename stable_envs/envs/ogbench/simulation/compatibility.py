@@ -8,7 +8,7 @@ from importlib.metadata import version
 import gymnasium as gym
 import mujoco
 import numpy as np
-from ogbench.manipspace import lie
+from ogbench.manipspace import lie, mjcf_utils
 from ogbench.manipspace.envs.cube_env import CubeEnv
 from ogbench.manipspace.envs.manipspace_env import ManipSpaceEnv
 from ogbench.manipspace.envs.scene_env import SceneEnv
@@ -43,6 +43,8 @@ COMPILED_FIELDS = (
     "light_poscom0",
     "tex_data",
 )
+# MjModel arrays written per lane after compilation; lanes sharing a model swap them in.
+LANE_FIELDS = ("geom_rgba", "mat_rgba", "site_pos", "dof_damping", "actuator_gainprm", "actuator_biasprm")
 
 
 def nodes(tree, prefix="variation"):
@@ -99,6 +101,101 @@ def variation_tree(env):
     return Dict(result)
 
 
+class _SharedModel:
+    __slots__ = ("model", "key", "pristine", "active", "users")
+
+    def __init__(self, model, key):
+        self.model, self.key, self.active, self.users = model, key, None, 0
+        self.pristine = {name: getattr(model, name).copy() for name in LANE_FIELDS}
+
+    def activate(self, lane):
+        if self.active is not None:
+            for name, value in self.active._lane_fields.items():
+                np.copyto(value, getattr(self.model, name))
+        for name, value in lane._lane_fields.items():
+            getattr(self.model, name)[...] = value
+        self.active = lane
+
+
+class _SharedTree:
+    def __init__(self, root, attributes):
+        self.root, self.attributes, self.active = root, attributes, None
+        self.slots = [(root.find("texture", "grid"), "rgb1"), (root.find("texture", "grid"), "rgb2")]
+        self.slots += [(root.find("material", "ur5e/robotiq/" + name), "rgba") for name in ("black", "pad_gray")]
+        for body in ("object_0", "object_target_0"):
+            self.slots += [(geom, "size") for geom in root.find("body", body).find_all("geom")]
+        self.slots += [(root.find("camera", "front_pixels"), "xyaxes"), (root.find("light", "global"), "diffuse")]
+        self.pristine = self.read()
+
+    def read(self):
+        return [None if (v := getattr(element, attr)) is None else np.array(v) for element, attr in self.slots]
+
+    def activate(self, lane):
+        if self.active is not lane:
+            if self.active is not None:
+                self.active._tree_values = self.read()
+            for (element, attr), value in zip(self.slots, lane._tree_values):
+                setattr(element, attr, None if value is None else value.copy())
+            self.active = lane
+        return self.root
+
+
+class LanePool:
+    """Compiled models, MJCF tree and IK solver shared by the lanes of one adapter.
+
+    Lanes whose MJCF compiles to the same XML share one MjModel; a Variation write
+    to compiled arrays moves the lane to a copy keyed by the written values. Each
+    lane keeps its own LANE_FIELDS and MJCF Variation attributes, swapped in when
+    it next touches the shared object. Lanes of one pool must not run concurrently."""
+
+    def __init__(self):
+        self.ik = None
+        self.tree = None
+        self.models = {}
+
+    def join(self, lane, key, compile_model):
+        self.leave(lane)
+        shared = self.models.get(key)
+        if shared is None:
+            shared = self.models[key] = _SharedModel(compile_model(), key)
+        shared.users += 1
+        lane._shared = shared
+        lane._lane_fields = {name: value.copy() for name, value in shared.pristine.items()}
+
+    def derive(self, lane, values):
+        """Move ``lane`` to its model with compiled arrays for ``values``; True if that model is new."""
+        current = lane._shared
+        key = (current.key if isinstance(current.key, str) else current.key[0], values)
+        if key == current.key:
+            return False
+        shared = self.models.get(key)
+        fresh = shared is None
+        if fresh:
+            shared = self.models[key] = _SharedModel(copy.copy(current.model), key)
+        lane_fields = lane._lane_fields
+        if current.active is lane:
+            for name, value in lane_fields.items():
+                np.copyto(value, getattr(current.model, name))
+        self.leave(lane)
+        shared.users += 1
+        lane._shared, lane._lane_fields = shared, lane_fields
+        return fresh
+
+    def leave(self, lane):
+        shared, lane._shared = lane._shared, None
+        if shared is not None:
+            if shared.active is lane:
+                shared.active = None
+            shared.users -= 1
+            if not shared.users:
+                del self.models[shared.key]
+
+    def release(self, lane):
+        self.leave(lane)
+        if self.tree is not None and self.tree.active is lane:
+            self.tree.active = None
+
+
 class Compatibility:
     """Registered reset, Variation and output rules over OGBench 1.2.1.
 
@@ -106,12 +203,16 @@ class Compatibility:
     a configured position instead of sampling three coordinates, so RNG draw order
     must be preserved when changing initialization."""
 
-    def __init__(self, *, seed=0, reward_task_id=None):
+    _pool = None
+    _shared = None
+
+    def __init__(self, *, seed=0, reward_task_id=None, pool=None):
         if version("ogbench") != "1.2.1":
             raise RuntimeError("Cube/Scene CPU semantics require unmodified ogbench==1.2.1")
         if reward_task_id is not None and (type(reward_task_id) is not int or reward_task_id not in range(6)):
             raise ValueError("reward_task_id must be None or an integer in 0..5")
         self._action_box = None
+        self._pool = pool
         self._seed_owned(seed)
         super().__init__(
             env_type="single" if self.family == "Cube" else "scene",
@@ -127,6 +228,60 @@ class Compatibility:
         self.supported_variations = set(self.variation_space.names())
         self._camera_basis = None
         self._size_float32 = False
+        if pool is not None:
+            if pool.ik is None:
+                pool.ik = self._ik
+            self._ik = pool.ik
+
+    @property
+    def _model(self):
+        shared = self._shared
+        if shared is None:
+            return self.__dict__.get("_own_model")
+        if shared.active is not self:
+            shared.activate(self)
+        return shared.model
+
+    @_model.setter
+    def _model(self, value):
+        self.__dict__["_own_model"] = value
+
+    @property
+    def _mjcf_model(self):
+        if self._pool is None:
+            return self.__dict__.get("_own_mjcf_model")
+        return None if self.__dict__.get("_tree_values") is None else self._pool.tree.activate(self)
+
+    @_mjcf_model.setter
+    def _mjcf_model(self, value):
+        if self._pool is None:
+            self.__dict__["_own_mjcf_model"] = value
+        elif value is None:
+            self._tree_values = None
+        elif value is not self._pool.tree.root:
+            raise ValueError("Pooled lanes use their pool's MJCF tree")
+
+    def build_mjcf_model(self):
+        pool = self._pool
+        if pool is None:
+            return super().build_mjcf_model()
+        if pool.tree is None:
+            before = dict(vars(self))
+            root = super().build_mjcf_model()
+            pool.tree = _SharedTree(
+                root, {k: v for k, v in vars(self).items() if k not in before or before[k] is not v}
+            )
+        else:
+            self.__dict__.update(pool.tree.attributes)
+        if pool.tree.active is self:
+            pool.tree.active = None
+        self._tree_values = pool.tree.pristine
+        return pool.tree.activate(self)
+
+    def close(self):
+        if self._pool is not None:
+            self._pool.release(self)
+        super().close()
 
     def _seed_owned(self, seed):
         root = np.random.SeedSequence(seed)
@@ -208,12 +363,13 @@ class Compatibility:
             target = dict(self._model_values)
             target.update({k: self.variation_space._walk(k).value for k in changed & set(COMPILED)})
             fields, compiled = compiled_fields(self.family, target)
-            for name, value in fields.items():
-                if name == "tex_data":
-                    start = int(self.model.tex_adr[self.model.texture("grid").id])
-                    self.model.tex_data[start : start + len(value)] = value
-                else:
-                    getattr(self.model, name)[:] = value
+            if self._pool is None or self._pool.derive(self, values_key(target)):
+                for name, value in fields.items():
+                    if name == "tex_data":
+                        start = int(self.model.tex_adr[self.model.texture("grid").id])
+                        self.model.tex_data[start : start + len(value)] = value
+                    else:
+                        getattr(self.model, name)[:] = value
             self._model_values = copy.deepcopy(compiled)
         if "cube.color" in changed:
             self._cube_colors_from_variation()
@@ -359,8 +515,27 @@ class Compatibility:
         return model
 
     def compile_model_and_data(self):
-        super().compile_model_and_data()
+        if self._pool is None:
+            super().compile_model_and_data()
+        else:
+            self._compile_shared()
         self._model_values = copy.deepcopy(self._mjcf_values)
+
+    def _compile_shared(self):
+        root = self._mjcf_model
+        getattr(root.visual, "global").offwidth = self._render_width
+        getattr(root.visual, "global").offheight = self._render_height
+        xml = mjcf_utils.to_string(root)
+        self._pool.join(self, xml, lambda: mujoco.MjModel.from_xml_string(xml=xml, assets=mjcf_utils.get_assets(root)))
+        self._data = mujoco.MjData(self._model)
+        self._model.opt.timestep = self._physics_timestep
+        mujoco.mj_resetData(self._model, self._data)
+        mujoco.mj_forward(self._model, self._data)
+        if self._renderer is not None:
+            self._renderer.close()
+            self._initialize_renderer()
+        self.post_compilation()
+        self._dirty = False
 
 
 class CompatibleCube(Compatibility, CubeEnv):
@@ -389,9 +564,13 @@ _COMPILED_CACHE: OrderedDict = OrderedDict()
 _COMPILED_CACHE_MAX = 64
 
 
+def values_key(values):
+    return tuple(np.asarray(values[k], np.float64).tobytes() for k in MODEL_VALUES)
+
+
 def compiled_fields(family, values):
     """Model arrays and compiled values of one MODEL_VALUES configuration, cached per distinct value."""
-    key = (family, *(np.asarray(values[k], np.float64).tobytes() for k in MODEL_VALUES))
+    key = (family, *values_key(values))
     with _COMPILE_LOCK:
         hit = _COMPILED_CACHE.get(key)
         if hit is not None:
