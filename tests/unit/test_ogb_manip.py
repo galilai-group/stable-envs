@@ -33,14 +33,14 @@ except ImportError as e:
 
 
 @pytest.mark.parametrize("cell,nq,nbuttons", [("Cube", 21, 0), ("Scene", 25, 2)])
-def test_state_layout_is_qpos_mocap_pos_and_bits(cell, nq, nbuttons):
+def test_state_layout_is_qpos_goal_and_buttons(cell, nq, nbuttons):
     b = ogb._bundle(cell)
     assert b.nq == nq and b.nbuttons == nbuttons
     names = list(b.state_names)
     assert len(names) == nq + 3 + nbuttons
-    assert names[:nq] == [f"qpos[{i}]" for i in range(nq)]
-    assert names[nq : nq + 3] == [f"mocap_pos[{i}]" for i in range(3)]
-    assert names[nq + 3 :] == [f"button_state_{i}" for i in range(nbuttons)]
+    assert names[:nq] == [f"qpos_{i}" for i in range(nq)]
+    assert names[nq : nq + 3] == ["goal_x", "goal_y", "goal_z"]
+    assert names[nq + 3 :] == [f"button_{i}" for i in range(nbuttons)]
 
 
 @pytest.mark.parametrize("cell", ["Cube", "Scene"])
@@ -162,12 +162,12 @@ def test_button_deltas_are_the_same_whatever_task_the_env_starts_in():
 def test_the_context_forces_all_zero_bits_before_copying_the_model():
     """The base itself, asserted from the source rather than from a GPU render.
 
-    `_context` cannot be exercised without CUDA, so this checks the invariant it must maintain: that
+    `_build_context` cannot be exercised without CUDA, so this checks the invariant it must maintain: that
     it forces the reference to all-zero bits around the deep copy and restores what it found.
     """
     import inspect
 
-    src = inspect.getsource(ogb._context)
+    src = inspect.getsource(ogb._build_context)
     assert "zero_bits" in src and "_apply_button_states" in src
     assert "saved_bits" in src, "the reference's own bits must be restored after the copy"
     assert src.index("_cur_button_states") < src.index("copy.deepcopy"), (
