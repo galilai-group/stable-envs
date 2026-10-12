@@ -34,6 +34,6 @@ def test_frozen_native_navigation_oracles_replay_exactly():
                 for key in output["state"].keys(True, True):
                     name = key if isinstance(key, str) else "/".join(key)
                     assert np.array_equal(_array(output["state"][key]), fixture[f"state/{name}"][step + 1])
-                for key in output.exclude("state").keys(True, True):
-                    name = key if isinstance(key, str) else "/".join(key)
-                    assert np.array_equal(_array(output[key]), fixture[f"output/{name}"][step])
+                assert _array(output["valid"]).all()
+                for name in (k.removeprefix("output/") for k in fixture.files if k.startswith("output/")):
+                    assert np.array_equal(_array(output[tuple(name.split("/"))]), fixture[f"output/{name}"][step])
