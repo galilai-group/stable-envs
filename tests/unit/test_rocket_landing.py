@@ -253,16 +253,15 @@ def test_missing_backend_names_every_optional_dependency():
             assert msg is not None and mod in msg
 
 
-def test_registered_iff_every_backend_dependency_is_present():
+def test_registered_iff_the_public_class_imports():
     import stable_envs as se
 
+    errors = se.import_errors()
+    assert ("PyFlytRocketLanding" in se.registry.REGISTRY) == ("rocket_semantics" not in errors)
+    assert "rocket_landing" not in errors  # the render backend is absent cleanly, not broken
     if RL.missing_backend() is None:
-        assert "PyFlytRocketLanding" in se.registry.REGISTRY
         with pytest.raises(NotImplementedError, match="CPU"):
             RL.PyFlytRocketLanding(num_envs=1, device="cpu")
-    else:
-        assert "PyFlytRocketLanding" not in se.registry.REGISTRY
-        assert "rocket_landing" not in se.import_errors()  # absent cleanly, not broken
 
 
 def test_reference_render_returns_owned_flags_and_preserves_default_frames(monkeypatch):
