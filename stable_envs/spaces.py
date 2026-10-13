@@ -1,3 +1,10 @@
+"""Variation spaces with current values, dotted leaf paths and SWM-ordered sampling.
+
+Sampling order, rejection sampling and reset semantics follow stable-worldmodel (MIT) spaces.py at
+commit 21446f1ede6d5284e981bd7b47f432b994e6d812, by Lucas Maes, Quentin Le Lidec, Randall Balestriero
+and contributors; see THIRD_PARTY_NOTICES.md.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Sequence
@@ -26,11 +33,12 @@ class _Valued:
     def reset(self) -> None:
         self._value = self._init_value
 
-    def set_init_value(self, value) -> None:
+    def set_init_value(self, value, reset_value: bool = True) -> None:
         if not super().contains(value):
             raise ValueError(f"{type(self).__name__}: {value!r} is not in the space")
         self._init_value = value
-        self._value = value
+        if reset_value:
+            self._value = value
 
     def set_value(self, value) -> None:
         if not super().contains(value):
@@ -60,23 +68,28 @@ class Discrete(_Valued, gspaces.Discrete):
 
 
 class Box(_Valued, gspaces.Box):
-    def __init__(self, low, high, shape=None, dtype=np.float32, init_value=None, constrain_fn=None, **kw):
+    def __init__(self, low, high, shape=None, dtype=np.float32, init_value=None, constrain_fn=None, exact=False, **kw):
+        """``exact`` keeps init and set values as given (Python floats stay float64) instead of casting to ``dtype``."""
         gspaces.Box.__init__(self, low, high, shape=shape, dtype=dtype, **kw)
+        self._exact = exact
         if init_value is None:
             init_value = np.zeros(self.shape, dtype=self.dtype)
             init_value = np.clip(init_value, self.low, self.high).astype(self.dtype)
-        else:
+        elif not exact:
             init_value = np.asarray(init_value, dtype=self.dtype).reshape(self.shape)
         _Valued.__init__(self, init_value, constrain_fn)
+
+    def _coerce(self, value):
+        return value if self._exact else np.asarray(value, dtype=self.dtype).reshape(self.shape)
 
     def contains(self, x) -> bool:
         return gspaces.Box.contains(self, np.asarray(x, dtype=self.dtype)) and self.constrain_fn(x)
 
     def set_value(self, value) -> None:
-        _Valued.set_value(self, np.asarray(value, dtype=self.dtype).reshape(self.shape))
+        _Valued.set_value(self, self._coerce(value))
 
-    def set_init_value(self, value) -> None:
-        _Valued.set_init_value(self, np.asarray(value, dtype=self.dtype).reshape(self.shape))
+    def set_init_value(self, value, reset_value: bool = True) -> None:
+        _Valued.set_init_value(self, self._coerce(value), reset_value)
 
     def sample(self, mask=None, max_tries: int = 1000, set_value: bool = True, **kw):
         for _ in range(max_tries):
@@ -108,10 +121,35 @@ class RGBBox(Box):
 
 
 class Dict(gspaces.Dict):
-    """Nested variation spaces with current values and dotted leaf paths."""
+    """Nested variation spaces with current values and dotted leaf paths.
 
-    def __init__(self, spaces_dict: dict, **kw):
+    Passing ``sampling_order`` makes ``sample`` and ``update`` draw top-level keys in that order
+    (unlisted keys follow in insertion order), as SWM spaces with an explicit order do; without
+    it ``update`` resamples the requested names in the order given.
+    """
+
+    def __init__(self, spaces_dict: dict, sampling_order: Sequence[str] | None = None, **kw):
         super().__init__(spaces_dict, **kw)
+        unknown = set(sampling_order or ()) - set(self.spaces)
+        if unknown:
+            raise ValueError(f"sampling_order contains keys not in spaces: {sorted(unknown)}")
+        order = list(sampling_order or ())
+        self._sampling_order = order + [k for k in self.spaces if k not in order]
+        self._ordered = sampling_order is not None
+
+    def ordered_names(self, prefix: str = ""):
+        """Yield every dotted path, subtrees included, in sampling order."""
+        for key in self._sampling_order:
+            path = f"{prefix}{key}"
+            yield path
+            if isinstance(self.spaces[key], Dict):
+                yield from self.spaces[key].ordered_names(path + ".")
+
+    def sample(self, mask=None, set_value: bool = True, **kw) -> dict:
+        return {
+            k: self.spaces[k].sample(mask=None if mask is None else mask.get(k), set_value=set_value)
+            for k in self._sampling_order
+        }
 
     @property
     def init_value(self) -> dict:
@@ -150,6 +188,15 @@ class Dict(gspaces.Dict):
 
     def update(self, keys: Iterable[str]) -> None:
         """Resample named leaves or all leaves of named subtrees, leaving other values unchanged."""
+        if self._ordered:
+            selected = set(keys)
+            if selected == {"all"}:
+                self.sample()
+                return
+            for name in self.ordered_names():
+                if name in selected:
+                    self._walk(name).sample()
+            return
         for k in keys:
             node = self._walk(k)
             if isinstance(node, Dict):
@@ -162,9 +209,9 @@ class Dict(gspaces.Dict):
         for k, v in values.items():
             self._walk(k).set_value(v)
 
-    def set_init_value(self, values: dict) -> None:
+    def set_init_value(self, values: dict, reset_value: bool = True) -> None:
         for k, v in values.items():
-            self._walk(k).set_init_value(v)
+            self._walk(k).set_init_value(v, reset_value)
 
     def flat_layout(self) -> list[tuple[str, int, int]]:
         """Return (path, offset, width) entries sorted by leaf path.

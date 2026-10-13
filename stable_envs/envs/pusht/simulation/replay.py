@@ -144,7 +144,7 @@ class PushTReplay:
         for path, node in nodes(e.variation_space):
             install_rng(node, decode_rng(data["variation" + path + "/rng"]))
             if not hasattr(node, "spaces"):
-                node.set_init_value(get_value(data, "variation" + path + "/initial"))
+                node.set_init_value(get_value(data, "variation" + path + "/initial"), reset_value=False)
                 node.set_value(get_value(data, "variation" + path + "/current"))
         goal = e.variation_space["goal"]
         e.goal_pose = np.concatenate([goal["position"].value, [goal["angle"].value]])
@@ -233,7 +233,7 @@ class PushTReplay:
             for path, node in nodes(target.env.variation_space):
                 if hasattr(node, "spaces"):
                     continue
-                node.set_init_value(get_value(anchor, "variation" + path + "/initial"))
+                node.set_init_value(get_value(anchor, "variation" + path + "/initial"), reset_value=False)
                 branch = values
                 names = path.strip("/").split("/")
                 for name in names[:-1]:

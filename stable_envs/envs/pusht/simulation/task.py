@@ -7,8 +7,9 @@ See THIRD_PARTY_NOTICES.md for attribution and the MIT license.
 Physics remains official Pymunk 7.2.0 / Munk2D. No stable-worldmodel runtime import.
 """
 
-# Upstream: envs/pusht/env.py
-# SHA256: 6b71f441a72ae94e631fc80c756717e8c5b229b964a9b197e2962675fae6f864
+# Upstream: envs/pusht/env.py (modified)
+
+from functools import partial
 
 import cv2
 import gymnasium as gym
@@ -19,9 +20,13 @@ import pymunk.pygame_util
 from gymnasium import spaces
 from pymunk.vec2d import Vec2d
 
+from ....spaces import Box as VariationBox
+from ....spaces import Dict, Discrete, RGBBox, reset_variation_space
 from ..draw import DrawOptions
-from . import spaces as swm_spaces
 from .quantizer import PolarQuantizer
+
+# Source leaves keep Python scalars as given rather than casting to the space dtype.
+Box = partial(VariationBox, exact=True)
 
 DEFAULT_VARIATIONS = (
     "agent.start_position",
@@ -55,7 +60,6 @@ class PushT(gym.Env):
         self.relative = relative
         self.action_scale = 100
 
-        # physics
         self.control_hz = self.metadata["render_fps"]
         self.k_p, self.k_v = 100, 20
         self.dt = 0.01
@@ -70,8 +74,7 @@ class PushT(gym.Env):
             "Z": np.pi,
         }
 
-        # Velocities are last two components of proprio and state; they can be negative
-        # (Pymunk). Declaring low=0 made passive_env_checker reject valid observations.
+        # The last two components of proprio and state are velocities and can be negative.
         self.observation_space = spaces.Dict(
             {
                 "proprio": spaces.Box(
@@ -87,41 +90,36 @@ class PushT(gym.Env):
             }
         )
 
-        # positional goal for agent
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(2,), dtype=np.float32)
 
-        self.variation_space = swm_spaces.Dict(
+        self.variation_space = Dict(
             {
-                "agent": swm_spaces.Dict(
+                "agent": Dict(
                     {
-                        # "shape": swm_spaces.Categorical(
-                        #     categories=["circle", "square", "triangle"],   SHOULD IMPLEMENT THIS
-                        #     init_value="circle",
-                        # ),
-                        "color": swm_spaces.RGBBox(init_value=np.array(pygame.Color("RoyalBlue")[:3], dtype=np.uint8)),
-                        "scale": swm_spaces.Box(
+                        "color": RGBBox(init_value=np.array(pygame.Color("RoyalBlue")[:3], dtype=np.uint8)),
+                        "scale": Box(
                             low=20,
                             high=60,
                             init_value=40,
                             shape=(),
                             dtype=np.float32,
                         ),
-                        "shape": swm_spaces.Discrete(len(self.shapes), start=0, init_value=0),
-                        "angle": swm_spaces.Box(
+                        "shape": Discrete(len(self.shapes), start=0, init_value=0),
+                        "angle": Box(
                             low=-2 * np.pi,
                             high=2 * np.pi,
                             init_value=0.0,
                             shape=(),
                             dtype=np.float64,
                         ),
-                        "start_position": swm_spaces.Box(
+                        "start_position": Box(
                             low=50,
                             high=450,
                             init_value=np.array((256, 400), dtype=np.float64),
                             shape=(2,),
                             dtype=np.float64,
                         ),
-                        "velocity": swm_spaces.Box(
+                        "velocity": Box(
                             low=0,
                             high=ws,
                             init_value=np.array((0.0, 0.0), dtype=np.float64),
@@ -130,30 +128,30 @@ class PushT(gym.Env):
                         ),
                     }
                 ),
-                "block": swm_spaces.Dict(
+                "block": Dict(
                     {
-                        "color": swm_spaces.RGBBox(
+                        "color": RGBBox(
                             init_value=np.array(
                                 pygame.Color("LightSlateGray")[:3],
                                 dtype=np.uint8,
                             )
                         ),
-                        "scale": swm_spaces.Box(
+                        "scale": Box(
                             low=20,
                             high=60,
                             init_value=30,
                             shape=(),
                             dtype=np.float32,
                         ),
-                        "shape": swm_spaces.Discrete(len(self.shapes) - 1, start=1, init_value=2),
-                        "angle": swm_spaces.Box(
+                        "shape": Discrete(len(self.shapes) - 1, start=1, init_value=2),
+                        "angle": Box(
                             low=-2 * np.pi,
                             high=2 * np.pi,
                             init_value=0.0,
                             shape=(),
                             dtype=np.float64,
                         ),
-                        "start_position": swm_spaces.Box(
+                        "start_position": Box(
                             low=100,
                             high=400,
                             init_value=np.array((400, 100), dtype=np.float64),
@@ -162,26 +160,24 @@ class PushT(gym.Env):
                         ),
                     }
                 ),
-                "goal": swm_spaces.Dict(
+                "goal": Dict(
                     {
-                        "color": swm_spaces.RGBBox(
-                            init_value=np.array(pygame.Color("LightGreen")[:3], dtype=np.uint8)
-                        ),
-                        "scale": swm_spaces.Box(
+                        "color": RGBBox(init_value=np.array(pygame.Color("LightGreen")[:3], dtype=np.uint8)),
+                        "scale": Box(
                             low=20,
                             high=60,
                             init_value=40,
                             shape=(),
                             dtype=np.float32,
                         ),
-                        "angle": swm_spaces.Box(
+                        "angle": Box(
                             low=-2 * np.pi,
                             high=2 * np.pi,
                             init_value=np.pi / 4,
                             shape=(),
                             dtype=np.float64,
                         ),
-                        "position": swm_spaces.Box(
+                        "position": Box(
                             low=50,
                             high=450,
                             init_value=np.array([256, 256], dtype=np.float64),
@@ -190,12 +186,12 @@ class PushT(gym.Env):
                         ),
                     }
                 ),
-                "background": swm_spaces.Dict(
+                "background": Dict(
                     {
-                        "color": swm_spaces.RGBBox(init_value=np.array(np.array([255, 255, 255], dtype=np.uint8))),
+                        "color": RGBBox(init_value=np.array(np.array([255, 255, 255], dtype=np.uint8))),
                     }
                 ),
-                "rendering": swm_spaces.Dict({"render_goal": swm_spaces.Discrete(2, init_value=1)}),
+                "rendering": Dict({"render_goal": Discrete(2, init_value=1)}),
             },
             sampling_order=[
                 "background",
@@ -206,7 +202,7 @@ class PushT(gym.Env):
             ],
         )
         if init_value is not None:
-            self.variation_space.set_init_value(init_value)
+            self.variation_space.set_init_value(init_value, reset_value=False)
 
         # TODO ADD CONSTRAINT TO NOT SAMPLE OVERLAPPING START POSITIONS (block and agent)
 
@@ -215,13 +211,6 @@ class PushT(gym.Env):
         self.render_action = render_action
         self.render_mode = render_mode
 
-        """
-        If human-rendering is used, `self.window` will be a reference
-        to the window that we draw to. `self.clock` will be a clock that is used
-        to ensure that the environment is rendered at the correct framerate in
-        human-mode. They will remain `None` until human-mode is used for the
-        first time.
-        """
         self.window = None
         self.clock = None
         self.screen = None
@@ -240,14 +229,13 @@ class PushT(gym.Env):
         self.rng = np.random.default_rng(seed)
         options = options or {}
 
-        swm_spaces.reset_variation_space(
+        reset_variation_space(
             self.variation_space,
             seed,
             options,
             DEFAULT_VARIATIONS,
         )
 
-        ### setup pymunk space
         self._setup()
 
         if self.block_cog is not None:
@@ -255,7 +243,6 @@ class PushT(gym.Env):
         if self.damping is not None:
             self.space.damping = self.damping
 
-        ### get the state
         if options is not None and "goal_state" in options:
             goal_state = options["goal_state"]
         else:
@@ -268,12 +255,10 @@ class PushT(gym.Env):
                 ]
             )
 
-        ### generate goal
         self._set_state(goal_state)
         self._set_goal_state(goal_state)
         self._goal = self.render()
 
-        # restore original pos
         if options is not None and "state" in options:
             state = options["state"]
         else:
@@ -288,7 +273,6 @@ class PushT(gym.Env):
 
         self._set_state(state)
 
-        #### OBS
         state = self._get_obs()
         proprio = np.concatenate((state[:2], state[-2:]))
 
@@ -305,27 +289,21 @@ class PushT(gym.Env):
 
         if self.relative:
             action = self.agent.position + action * self.action_scale
-            # action = np.clip(action, 0, self.window_size)
 
         for _ in range(n_steps):
-            # Step PD control.
             acceleration = self.k_p * (action - self.agent.position) + self.k_v * (Vec2d(0, 0) - self.agent.velocity)
             self.agent.velocity += acceleration * self.dt
 
-            # Step physics.
             self.space.step(self.dt)
 
-        # make the observation
         state = self._get_obs()
         proprio = np.concatenate((state[:2], state[-2:]))
         observation = {"proprio": proprio, "state": state}
 
-        # collect info
         info = self._get_info()
 
-        # compute reward and termination
         terminated, distance = self.eval_state(self.goal_state, state)
-        reward = -distance  # the closer the better
+        reward = -distance
 
         truncated = False
         return observation, reward, terminated, truncated, info
@@ -366,8 +344,6 @@ class PushT(gym.Env):
         mass = 1
         inertia = pymunk.moment_for_box(mass, (50, 100))
         body = pymunk.Body(mass, inertia)
-        # preserving the legacy assignment order for compatibility
-        # the order here doesn't matter somehow, maybe because CoM is aligned with body origin
         body.position = pose[:2].tolist()
         body.angle = pose[2]
         return body
@@ -406,7 +382,6 @@ class PushT(gym.Env):
 
         draw_options = DrawOptions(canvas)
 
-        # Draw goal pose (optional).
         render_goal = bool(self.variation_space["rendering"]["render_goal"].value) and self.with_target
         if render_goal:
             goal_body = self._get_goal_pose_body(self.goal_pose)
@@ -435,22 +410,16 @@ class PushT(gym.Env):
                         goal_points,
                     )
 
-        # change agent color
         self._set_body_color(self.agent, self.variation_space["agent"]["color"].value.tolist())
 
-        # change block color
         self._set_body_color(self.block, self.variation_space["block"]["color"].value.tolist())
 
-        # Draw agent and block.
         self.space.debug_draw(draw_options)
 
         if mode == "human":
-            # The following line copies our drawings from `canvas` to the visible window
             self.window.blit(canvas, canvas.get_rect())
             pygame.event.pump()
             pygame.display.update()
-
-            # the clock is already ticked during in step for "human"
 
         img = np.frombuffer(pygame.image.tobytes(canvas, "RGB"), np.uint8).reshape(
             self.window_size, self.window_size, 3
@@ -497,20 +466,17 @@ class PushT(gym.Env):
         self.block.angle = rot_block
         self.block.position = pos_block
 
-        # Run physics to take effect
         self.space.step(self.dt)
 
     def _set_goal_state(self, goal_state):
         self.goal_state = goal_state
 
     def _setup(self):
-        ## create the space with physics
         self.space = pymunk.Space()
         self.space.gravity = 0, 0  # TODO add physics support
         self.space.damping = 0
         self.render_buffer = []
 
-        # Add walls.
         walls = [
             self._add_segment((5, 506), (5, 5), 2),
             self._add_segment((5, 5), (506, 5), 2),
@@ -519,8 +485,6 @@ class PushT(gym.Env):
         ]
 
         self.space.add(*walls)
-
-        #### agent ####
 
         agent_params = {
             "position": self.variation_space["agent"]["start_position"].value.tolist(),
@@ -531,8 +495,6 @@ class PushT(gym.Env):
         }
 
         self.agent = self.add_shape(**agent_params)
-
-        #### block ####
 
         block_params = {
             "position": self.variation_space["block"]["start_position"].value.tolist(),
@@ -551,7 +513,6 @@ class PushT(gym.Env):
             ]
         )
 
-        # Add collision handling
         self.space.on_collision(0, 0, post_solve=self._handle_collision)
         self.n_contact_points = 0
 
@@ -894,8 +855,6 @@ class PushTDiscrete(PushT):
             init_value=init_value,
         )
 
-        # override action space to be discrete
-        # rem: new actions are discrete bin
         self.quantizer = quantizer or PolarQuantizer(16, 16, max_action_distance=1.0)
         self.action_space = spaces.MultiDiscrete(self.quantizer.action_shape)
 
