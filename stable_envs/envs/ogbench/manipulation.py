@@ -1,8 +1,9 @@
 """Shared GPU rendering for OGBench Cube and Scene.
 
-MJWarp draws articulated objects over a cached MuJoCo background. Bundles are
-keyed by compiled configuration; per-world colors and poses are uploaded on
-every render. Mocap orientation is explicit, with identity as its default.
+MJWarp draws articulated objects over a cached MuJoCo background. One bundle
+serves every configuration; per-world colors, poses, cube size, camera and light
+are uploaded on every render, and backgrounds are cached per camera and light.
+Mocap orientation is explicit, with identity as its default.
 
 Plate rigs own private models. Their GL contexts remain alive for the process
 because releasing one can invalidate other live contexts on supported drivers."""
@@ -38,6 +39,10 @@ def IDENTITY_QUAT(nmocap: int) -> np.ndarray:
 #: MJWarp worlds per launch. Same constant and the same reason as Fetch: a context is per (res,
 #: nworld) and an unbounded batch would build one per batch size.
 MJW_CHUNK = 256
+#: Compiled arrays that vary across Cube/Scene configurations and that fixed-camera MJWarp passes read.
+WORLD_FIELDS = ("geom_size", "cam_quat", "light_diffuse")
+#: The subset that also changes the static background.
+VIEW_FIELDS = ("cam_quat", "light_diffuse")
 # Reset variation leaves sampled explicitly from the caller's RNG.
 DEFAULT_VARIATION_PATHS = {
     "Cube": ("cube.start_position", "cube.start_yaw", "cube.goal_position", "cube.goal_yaw"),
@@ -56,7 +61,7 @@ def _release_context(context):
 
 
 _CTX_CACHE = ContextCache(on_evict=_release_context, memory_info=torch.cuda.mem_get_info)
-_PLATE_CACHE_MAX = 8
+_PLATE_CACHE_MAX = 256
 _PLATE_CACHE = _RES.BoundedCache(_PLATE_CACHE_MAX, name="ogbench.plate")
 _BUNDLE_CACHE: dict = {}
 _REF_CACHE: dict = {}
@@ -120,7 +125,7 @@ def _ogbench_make(cell: str, kw: dict):
 
 
 class _Bundle:
-    """Compiled model and derived render metadata, shared by configuration key."""
+    """Compiled model and derived render metadata, shared by cache key."""
 
     __slots__ = (
         "cam",
@@ -332,6 +337,8 @@ class _Ctx:
         "prepared",
         "baked",
         "button_tables",
+        "colour_base",
+        "lock_tables",
     )
 
 
@@ -389,7 +396,7 @@ def _build_context(cell: str, res: int, nworld: int) -> _Ctx:
     c = _Ctx()
     c.wp, c.mjw, c.nworld, c.res, c.prepared, c.baked = (wp, mjw, int(nworld), int(res), prepared, baked)
     # Per-world color arrays allow independent button states within one launch.
-    c.wm = mjw.put_model(m, batch_sizes={"geom_rgba": int(nworld), "mat_rgba": int(nworld)})
+    c.wm = mjw.put_model(m, batch_sizes={name: int(nworld) for name in ("geom_rgba", "mat_rgba", *WORLD_FIELDS)})
     c.wd = mjw.put_data(m, d0, nworld=int(nworld))
     # Capture inside gl_rounding so the graph retains the patched quantizer.
     with MW.gl_rounding():
@@ -419,25 +426,31 @@ def _build_context(cell: str, res: int, nworld: int) -> _Ctx:
         with wp.ScopedCapture() as cap:
             _frame(c)
         c.graph = cap.graph
-    c.button_tables = _ctx_button_tables(b, m, res, device="cuda")
+    c.colour_base = (np.array(m.geom_rgba, copy=True), np.array(m.mat_rgba, copy=True))
+    c.button_tables = _ctx_button_tables(b, c.colour_base, b.button_tables)
+    c.lock_tables = _RES.BoundedCache(1024, name="ogbench.lock_tables")
     return c
 
 
-def _ctx_button_tables(b: _Bundle, m, res: int, device: str = "cuda") -> dict | None:
-    """Build device button-color tables as deltas from the all-zero reference state.
+def _ctx_button_tables(b: _Bundle, base, tables, device: str = "cuda") -> dict | None:
+    """Build device button-color tables as deltas from the bundle's all-zero reference state.
 
-    Apply deltas to the prepared context model so button changes preserve texture
+    Apply deltas to the prepared context colours so button changes preserve texture
     bakes; overlapping material edits are rejected."""
-    if not b.nbuttons or b.button_tables is None:
+    if not b.nbuttons or tables is None:
         return None
-    # `m` was deep-copied from the reference while it was forced to all-zero bits (see `_context`),
-    # so the all-zero table is the right delta base. Asserted below rather than assumed.
-    base_g = np.array(m.geom_rgba, copy=True)
-    base_m = np.array(m.mat_rgba, copy=True)
+    # The context model was deep-copied from the reference while it was forced to all-zero bits
+    # (see `_build_context`), so the all-zero table is the right delta base. Asserted below.
+    base_g, base_m = base
     zero = tuple([0] * b.nbuttons)
     ref_g0, ref_m0 = b.button_tables[zero]
     touched = sorted(
-        {int(i) for bits, (rg, rm) in b.button_tables.items() for i in np.nonzero(np.any(rg != ref_g0, axis=1))[0]}
+        {
+            int(i)
+            for table in (b.button_tables, tables)
+            for rg, _ in table.values()
+            for i in np.nonzero(np.any(rg != ref_g0, axis=1))[0]
+        }
     )
     assert np.array_equal(base_g[touched], ref_g0[touched]), (
         "the context model was copied at button bits other than all-zero, so every delta below "
@@ -446,7 +459,7 @@ def _ctx_button_tables(b: _Bundle, m, res: int, device: str = "cuda") -> dict | 
     # Compare prepared materials against the same all-zero button baseline to isolate texture bakes.
     baked_rows = np.nonzero(np.any(base_m != ref_m0, axis=1))[0]
     out = {}
-    for bits, (rg, rm) in b.button_tables.items():
+    for bits, (rg, rm) in tables.items():
         dg, dm = rg - ref_g0, rm - ref_m0
         if len(baked_rows):
             assert not np.any(dm[baked_rows]), (
@@ -643,20 +656,20 @@ class OGBManipBase(Env):
 
     # ---- the plate ------------------------------------------------------------------------
 
-    def _plate(self, res: int, floor=None) -> torch.Tensor:
-        """Return the background cached by configuration, resolution, device, and quantized floor RGB."""
+    def _plate(self, res: int, floor=None, view=None) -> torch.Tensor:
+        """Return the background cached by configuration, resolution, device, quantized floor RGB and view."""
         fq = self._floor_key(floor)
-        key = (self.CELL, int(res), str(self.device), fq)
+        key = (self.CELL, int(res), str(self.device), fq, None if view is None else view.key)
         hit = _PLATE_CACHE.get(key)
         if hit is not None:
             return hit
-        return _PLATE_CACHE.put(key, self._bake_plate(res, floor=floor))
+        return _PLATE_CACHE.put(key, self._bake_plate(res, floor=floor, view=view))
 
     def _floor_key(self, floor):
         """Return the checker texture byte key, or None for the default appearance."""
         return _texel_key(self._b.grid_tex, floor)
 
-    def _bake_plate(self, res: int, states=None, floor=None) -> torch.Tensor:
+    def _bake_plate(self, res: int, states=None, floor=None, view=None) -> torch.Tensor:
         """Render the static background through a private model, checking its shape and appearance."""
         import mujoco
 
@@ -676,6 +689,8 @@ class OGBManipBase(Env):
             f"assertion is what keeps that measurement honest"
         )
         self._apply_floor(rig, floor)
+        for name in VIEW_FIELDS:
+            getattr(rig.model, name)[:] = rig.view_default[name] if view is None else view.fields[name]
         d = rig.data
         if states is None:
             d.qpos[:] = b.data.qpos
@@ -723,9 +738,10 @@ class OGBManipBase(Env):
         *,
         mocap_quat=None,
         agent_color=None,
+        worlds=None,
     ) -> torch.Tensor:
-        """Render (..., state_dim) rows to (..., H, W, 3) uint8, with optional (B, nmocap, 4) orientations
-        and (B, 3) agent RGB."""
+        """Render (..., state_dim) rows to (..., H, W, 3) uint8, with optional (B, nmocap, 4) orientations,
+        (B, 3) agent RGB and per-world configuration arrays."""
         s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim).to(torch.float32)
@@ -744,7 +760,7 @@ class OGBManipBase(Env):
         sty = self.resolve_style(style, variation, batch=B)
         # Use one floor grouping at both resolutions so each row receives the same background.
         host = self._style_host(sty)
-        reps, gidx = self._floor_plan(host, B)
+        reps, gidx = self._floor_plan(host, B, worlds)
         plates = self._floor_plates(reps, res)
         plates1 = plates if ss == 1 else self._floor_plates(reps, size)
         plate = plates[0] if gidx is None else None
@@ -760,6 +776,7 @@ class OGBManipBase(Env):
                 None if cube is None else cube[lo:hi],
                 None if mocap_quat is None else mocap_quat[lo:hi],
                 None if agent_color is None else agent_color[lo:hi],
+                None if worlds is None else worlds[lo:hi],
             )
             # Use the mover mask: a nonnegative segmentation ID may instead identify the static floor.
             mv = lut.index_select(0, (seg + 1).reshape(-1)).view(seg.shape)
@@ -785,7 +802,7 @@ class OGBManipBase(Env):
                 buf[lo:hi] = torch.where(any_mv.unsqueeze(-1), small, pl1)
         return buf.view(*lead, size, size, 3) if lead else buf
 
-    def _raster(self, chunk, res, cube, mocap_quat, agent=None):
+    def _raster(self, chunk, res, cube, mocap_quat, agent=None, worlds=None):
         """Draw one chunk; segmentation aliases the context until its next replay."""
         n = len(chunk)
         if not 1 <= n <= MJW_CHUNK:
@@ -799,8 +816,12 @@ class OGBManipBase(Env):
             mp = chunk[:, nq : nq + 3 * nmoc].reshape(n, nmoc, 3)
             wp.to_torch(c.wd.mocap_pos)[:n] = mp
             wp.to_torch(c.wd.mocap_quat)[:n] = self._identity_quat(nmoc, n) if mocap_quat is None else mocap_quat
+        if worlds is not None:
+            for name, value in worlds.fields.items():
+                target = wp.to_torch(getattr(c.wm, name))
+                target[:n] = value.reshape(len(value), *target.shape[1:])
         if b.nbuttons:
-            self._upload_button_colours(c, chunk, n)
+            self._upload_button_colours(c, chunk, n, worlds)
         # Upload buttons first: their whole-row color write would otherwise overwrite cube RGB.
         if cube is not None:
             self._upload_cube_colours(c, cube, n)
@@ -834,25 +855,27 @@ class OGBManipBase(Env):
             hit = cache["mover_lut"] = lut
         return hit
 
-    def _floor_plan(self, host, B: int):
-        """Group environments by quantized floor color; return original float rows and group indices.
+    def _floor_plan(self, host, B: int, worlds=None):
+        """Group environments by quantized floor color and view; return representatives and group indices.
 
         Use bytes for grouping and original floats for baking: decoding and requantizing
         bytes can lose a level. A uniform batch returns None for its group indices."""
         f = host["floor.color"]  # (B, 6)
-        q = mj_quantise(f.reshape(B, 2, 3)).reshape(B, 6)
+        q = mj_quantise(f.reshape(B, 2, 3)).reshape(B, 6).astype(np.int64)
+        if worlds is not None:
+            q = np.concatenate([q, worlds.view[:, None]], axis=1)
         uniq, first, inv = np.unique(q, axis=0, return_index=True, return_inverse=True)
-        reps = [f[i].reshape(2, 3) for i in first]
+        reps = [(f[i].reshape(2, 3), None if worlds is None else worlds.views[worlds.view[i]]) for i in first]
         if len(uniq) == 1:
             return reps, None
         inv = np.asarray(inv, np.int64).reshape(-1)  # numpy >= 2.0 shapes this per input, not flat
         return reps, torch.as_tensor(inv, device=self.device)
 
     def _floor_plates(self, reps, res: int) -> torch.Tensor:
-        """Return (G, res, res, 3) cached backgrounds for the floor groups."""
+        """Return (G, res, res, 3) cached backgrounds for the floor and view groups."""
         if len(reps) == 1:
-            return self._plate(res, floor=reps[0]).unsqueeze(0)  # a VIEW: no copy on the hot path
-        return torch.stack([self._plate(res, floor=r) for r in reps])
+            return self._plate(res, *reps[0]).unsqueeze(0)  # a VIEW: no copy on the hot path
+        return torch.stack([self._plate(res, *r) for r in reps])
 
     def _cube_colours(self, host, B: int):
         """Return (B, len(cube_geoms), 4) colors, preserving each geom's original alpha.
@@ -891,18 +914,33 @@ class OGBManipBase(Env):
         mat = c.wp.to_torch(c.wm.mat_rgba)
         mat[:n, idx, :3] = rgb[:n, None, :].to(mat.dtype)
 
-    def _upload_button_colours(self, c, chunk, n: int) -> None:
-        """Upload each world's button colors from its state bits."""
+    def _upload_button_colours(self, c, chunk, n: int, worlds=None) -> None:
+        """Upload each world's button colors from its state bits and, when given, its lock colours."""
         b = self._b
         bits = chunk[:, -b.nbuttons :].round().clamp(0, 1).to(torch.int64).cpu().numpy()
         codes = (bits * (1 << np.arange(b.nbuttons))).sum(1)
         geom = c.wp.to_torch(c.wm.geom_rgba)
         mat = c.wp.to_torch(c.wm.mat_rgba)
+        if worlds is not None and worlds.locks is not None:
+            locks, inverse = np.unique(worlds.lock, return_inverse=True)
+            tables = [self._lock_tables(c, worlds.locks[i]) for i in locks]
+            index = torch.as_tensor(inverse.reshape(-1) * (1 << b.nbuttons) + codes, device=self.device)
+            geom[:n] = torch.cat([g for g, _ in tables])[index]
+            mat[:n] = torch.cat([m for _, m in tables])[index]
+            return
         for code in np.unique(codes):
             sel = torch.as_tensor(np.nonzero(codes == code)[0], device=self.device)
             g, mt = c.button_tables[int(code)]
             geom.index_copy_(0, sel, g.unsqueeze(0).expand(len(sel), *g.shape))
             mat.index_copy_(0, sel, mt.unsqueeze(0).expand(len(sel), *mt.shape))
+
+    def _lock_tables(self, c, lock):
+        """Return one lock colour's (codes, ngeom, 4) and (codes, nmat, 4) device tables for a context."""
+        hit = c.lock_tables.get(lock.key)
+        if hit is None:
+            out = _ctx_button_tables(self._b, c.colour_base, lock.tables)
+            hit = c.lock_tables.put(lock.key, tuple(torch.stack([out[k][i] for k in range(len(out))]) for i in (0, 1)))
+        return hit
 
     # ---- the reference --------------------------------------------------------------------
 
@@ -987,7 +1025,7 @@ def _appearance_digest(m, sitegroup=None) -> str:
 class _PlateRig:
     """Private model, data, and retained GL renderer for one cached background resolution."""
 
-    __slots__ = ("model", "data", "renderer", "appearance", "shape", "floor")
+    __slots__ = ("model", "data", "renderer", "appearance", "shape", "floor", "view_default")
 
 
 def _plate_rig(cell: str, res: int) -> _PlateRig:
@@ -1014,6 +1052,7 @@ def _plate_rig(cell: str, res: int) -> _PlateRig:
     else:
         rig.model.geom_rgba[:] = b.pristine["geom_rgba"]
         rig.model.mat_rgba[:] = b.pristine["mat_rgba"]
+    rig.view_default = {name: np.array(getattr(rig.model, name), copy=True) for name in VIEW_FIELDS}
     rig.data = mujoco.MjData(rig.model)
     # Enlarge the private framebuffer before constructing a renderer at the requested resolution.
     rig.model.vis.global_.offwidth = max(int(rig.model.vis.global_.offwidth), int(res))

@@ -5,7 +5,7 @@ import torch
 
 from . import manipulation as core
 
-_REFERENCE = core._RES.BoundedCache(32, name="ogbench.fidelity_reference")
+_REFERENCE = core._RES.BoundedCache(256, name="ogbench.fidelity_reference")
 
 
 def rotate_four_samples(rays: torch.Tensor) -> None:
@@ -29,7 +29,7 @@ def sample_plate(image: torch.Tensor) -> torch.Tensor:
     return result
 
 
-def draw(token, bundle, state, device, size, supersample):
+def draw(token, bundle, state, device, size, supersample, worlds):
     """Composite transparency and moving shadows using two MJWarp passes.
 
     Remove the pinned shader's 0.3 shadow transmission before applying shadows
@@ -59,23 +59,29 @@ def draw(token, bundle, state, device, size, supersample):
         single.sample_pattern = "grid"
         core.register_bundle(glass, single)
 
-    def raster(key, rows, *, composite=False, res=res):
+    def raster(key, rows, worlds, *, composite=False, res=res):
         renderer = _ConfiguredRenderer(key, core.get_bundle(key), device, res, 1)
         try:
             if not composite:
-                return renderer.raster(rows)
-            image = renderer.draw(rows)
+                return renderer.raster(rows, worlds)
+            image = renderer.draw(rows, worlds)
             nw = 1 if len(rows) == 1 else 1 << (len(rows) - 1).bit_length()
             context = core._context(key, res, nw)
             return image, context.bgra[: len(rows)][..., [2, 1, 0]], context.seg[: len(rows)]
         finally:
             renderer.close()
 
-    reference_key = token, res, str(device)
-    reference = _REFERENCE.get(reference_key)
-    if reference is None:
-        reference = raster(token + "/fidelity/static", state[:1])[0].clone().float().clamp_min(1)
-        _REFERENCE.put(reference_key, reference)
+    # The static pass hides every mover, so its image depends only on the camera and light.
+    references = {}
+    for view in np.unique(worlds.view):
+        first = int(np.flatnonzero(worlds.view == view)[0])
+        reference_key = token, res, str(device), worlds.views[view].key
+        reference = _REFERENCE.get(reference_key)
+        if reference is None:
+            rows = slice(first, first + 1)
+            reference = raster(token + "/fidelity/static", state[rows], worlds[rows])[0].clone()
+            _REFERENCE.put(reference_key, reference)
+        references[int(view)] = reference.float().clamp_min(1)
     movers = torch.zeros(bundle.model.ngeom + 1, dtype=torch.bool, device=device)
     movers[torch.as_tensor(np.asarray(bundle.movers) + 1, device=device)] = True
     opacity = torch.ones(bundle.model.ngeom + 1, device=device)
@@ -85,6 +91,7 @@ def draw(token, bundle, state, device, size, supersample):
     images = []
     for start in range(0, len(state), core.MJW_CHUNK):
         rows = state[start : start + core.MJW_CHUNK]
+        chunk = worlds[start : start + core.MJW_CHUNK]
         nw = 1 << (len(rows) - 1).bit_length()
         keys = [
             (torch.cuda.current_device(), token + "/fidelity/opaque", res, nw),
@@ -92,9 +99,17 @@ def draw(token, bundle, state, device, size, supersample):
         ]
         # Both passes' segmentation views remain live until composition completes.
         with core._CTX_CACHE.lease(keys):
-            first, first_seg = raster(glass, rows, res=size)
-            opaque, shadowed, opaque_seg = raster(token + "/fidelity/opaque", rows, composite=True)
-            ratio = ((shadowed.float() / reference).clamp(0, 1) - 0.3).div(0.7).clamp(0, 1)
+            first, first_seg = raster(glass, rows, chunk, res=size)
+            opaque, shadowed, opaque_seg = raster(token + "/fidelity/opaque", rows, chunk, composite=True)
+            views = np.unique(chunk.view)
+            if len(views) == 1:
+                ratio = shadowed.float() / references[int(views[0])]
+            else:
+                ratio = torch.empty(shadowed.shape, device=shadowed.device)
+                for view in views:
+                    selected = torch.as_tensor(np.flatnonzero(chunk.view == view), device=shadowed.device)
+                    ratio[selected] = shadowed[selected].float() / references[int(view)]
+            ratio = (ratio.clamp(0, 1) - 0.3).div(0.7).clamp(0, 1)
             moving = movers[(opaque_seg + 1).long()]
             shadows = torch.where(moving[..., None], opaque.float(), opaque.float() * ratio)
             shadows = shadows.reshape(len(rows), size, supersample, size, supersample, 3).mean((2, 4))
