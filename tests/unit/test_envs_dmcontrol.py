@@ -285,13 +285,12 @@ def test_the_preserved_declarations_are_still_exactly_what_step_8_declared():
     Written out so that a change to any of them fails HERE, in a test whose name says what was
     changed, rather than only in the oracle's diff of two trees.
     """
-    # mujoco 3.11 certification provenance: the declared arm is authoritative
+    # measurement provenance: the declared arm is authoritative
     for n in TRACKCOM:
         vf = snv.registry.REGISTRY[n].visual_fidelity
-        version = "3.12.0" if n == "DMCCheetahRun" else "3.11.0"
-        assert vf["reference_versions"] == {"mujoco": version}, n
-        assert vf["measured_with"] in ({"mujoco_warp": version}, {"warp": "1.16.0"}), n
-        assert version in vf["measured_at"], n
+        assert vf["reference_versions"] == {"mujoco": "3.12.0"}, n
+        assert vf["measured_with"] == {"mujoco_warp": "3.12.0"}, n
+        assert "3.12.0" in vf["measured_at"], n
     # the one declared all-pixel floor, and the interior floor NOT relaxed anywhere
     assert dmc.ALL_EXACT_FLOOR == {"DMCFingerTurnEasy": 0.89}
     assert snv.registry.REGISTRY["DMCFingerTurnEasy"].parity_all_exact_min == 0.89

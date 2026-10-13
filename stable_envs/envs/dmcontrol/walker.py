@@ -1,25 +1,30 @@
 from __future__ import annotations
 
-from ._cells import _AT, _AT_MEASURED_WITH, _AT_VERSIONS, trackcom_cell  # noqa: F401
+from ._cells import trackcom_cell
 from ._continuation import DMCContinuationSemantics
 
 VISUAL_FIDELITY: dict[str, dict] = {
     "DMCWalkerWalk": {
-        "mean_abs": 8.07,
-        "within8_frac": 0.700,
-        "ssim": 0.826,
-        "interior_exact_frac": 0.0046,
-        "interior_frac": 0.0010,
-        "all_exact_frac": 0.205,
+        "mean_abs": 1.75,
+        "within8_frac": 0.953,
+        "ssim": 0.991,
+        "interior_exact_frac": 0.9955,
+        "interior_frac": 0.0087,
+        "all_exact_frac": 0.716,
         "skybox_share": 0.478,
         "floor_share": 0.448,
-        "draw_spread": {"mean_abs": [7.636, 8.302], "within8_frac": [0.6887, 0.7199], "ssim": [0.8170, 0.8306]},
-        "mean_abs_max": 10.5,
-        "within8_min": 0.65,
-        "ssim_min": 0.77,
-        "measured_at": _AT,
-        "reference_versions": _AT_VERSIONS,
-        "measured_with": _AT_MEASURED_WITH,
+        "draw_spread": {"mean_abs": [1.655, 1.811], "within8_frac": [0.9519, 0.9556], "ssim": [0.9900, 0.9915]},
+        "mean_abs_max": 2.3,
+        "within8_min": 0.91,
+        "ssim_min": 0.95,
+        "measured_at": (
+            "84 px, 64 states x 4 independent draws from sample_states (the domain's own initialize_episode "
+            "plus a 0-40 step random-action rollout), default appearance (material self rgba .7 .5 .3), "
+            "RTX 3090 / driver 575.57.08 / MUJOCO_GL=egl, mujoco 3.12.0 + mujoco-warp 3.12.0, against "
+            "dm_control's physics.render at camera 0"
+        ),
+        "reference_versions": {"mujoco": "3.12.0"},
+        "measured_with": {"mujoco_warp": "3.12.0"},
     },
 }
 

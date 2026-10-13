@@ -3,15 +3,15 @@ from __future__ import annotations
 import numpy as np
 
 from ._aligned import DMCAlignedSemantics
-from ._cells import _AT_VERSIONS, trackcom_cell
+from ._cells import trackcom_cell
 
 _QUADRUPED_AT = (
     "224 px, camera 2 ('y', trackcom), 64 states x 3 independent draws from sample_states "
     "(certified model and default appearance: material self rgba .6 .3 .3, foot_back_left "
-    "density 1000), RTX 3090 / driver 575.57.08 / MUJOCO_GL=egl, mujoco 3.11.0 + "
-    "mujoco-warp 3.11.0, against dm_control's physics.render at camera 2"
+    "density 1000), RTX 3090 / driver 575.57.08 / MUJOCO_GL=egl, mujoco 3.12.0 + "
+    "mujoco-warp 3.12.0, against dm_control's physics.render at camera 2"
 )
-_QUADRUPED_AT_MEASURED_WITH = {"mujoco_warp": "3.11.0"}
+_QUADRUPED_AT_MEASURED_WITH = {"mujoco_warp": "3.12.0"}
 
 
 def _transcribed_quadruped_env(seed: int):
@@ -75,20 +75,20 @@ QUADRUPED_NOTE = (
 
 VISUAL_FIDELITY: dict[str, dict] = {
     "DMCQuadrupedWalk": {
-        "mean_abs": 3.52,
-        "within8_frac": 0.897,
-        "ssim": 0.955,
-        "interior_exact_frac": 0.206,
-        "interior_frac": 0.0284,
-        "all_exact_frac": 0.171,
+        "mean_abs": 1.16,
+        "within8_frac": 0.986,
+        "ssim": 0.994,
+        "interior_exact_frac": 0.959,
+        "interior_frac": 0.0282,
+        "all_exact_frac": 0.441,
         "skybox_share": 0.148,
         "floor_share": 0.806,
-        "draw_spread": {"mean_abs": [3.520, 3.527], "within8_frac": [0.8964, 0.8987], "ssim": [0.9536, 0.9557]},
-        "mean_abs_max": 4.6,
-        "within8_min": 0.85,
-        "ssim_min": 0.90,
+        "draw_spread": {"mean_abs": [1.152, 1.165], "within8_frac": [0.9856, 0.9861], "ssim": [0.9939, 0.9941]},
+        "mean_abs_max": 1.5,
+        "within8_min": 0.94,
+        "ssim_min": 0.95,
         "measured_at": _QUADRUPED_AT,
-        "reference_versions": _AT_VERSIONS,
+        "reference_versions": {"mujoco": "3.12.0"},
         "measured_with": _QUADRUPED_AT_MEASURED_WITH,
     },
 }
