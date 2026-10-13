@@ -157,15 +157,21 @@ def validate(family, state):
     return state
 
 
-def build_model(family, row):
-    """Compile renderer assets and configuration without resetting or stepping physics."""
+def build_model(family, row=None, names=None):
+    """Compile renderer assets and configuration without resetting or stepping physics.
+
+    ``names`` selects the row's leaves to compile; the others keep their defaults."""
     cls = CompatibleCube if family == "Cube" else _RenderScene
     env = cls(seed=0)
+    if names is None:
+        names = () if row is None else (*STATIC, *(("lock_color",) if family == "Scene" else ()))
     try:
-        for name in STATIC:
-            env.variation_space._walk(name)._value = row["appearance", name].detach().cpu().numpy().copy()
-        if family == "Scene":
-            env.variation_space._walk("lock_color").set_value(row["appearance", "lock_color"].cpu().numpy().copy())
+        for name in names:
+            value = row["appearance", name].detach().cpu().numpy().copy()
+            if name == "lock_color":
+                env.variation_space._walk(name).set_value(value)
+            else:
+                env.variation_space._walk(name)._value = value
         # Floor, cube and agent RGB use the renderer’s per-world colour paths.
         env._mjcf_model = env.modify_mjcf_model(env.build_mjcf_model())
         env.compile_model_and_data()

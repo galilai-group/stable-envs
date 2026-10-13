@@ -30,32 +30,45 @@ def test_scene_samples_match_opengl_positions_and_plate():
 
 
 def test_scene_sampling_has_separate_model_cache():
-    from tests.helpers.ogbench_golden import FIXTURES, load
-
-    state, _ = load(FIXTURES / "Scene-mjwarp.npz")
-    regular_key, regular = renderer.configured_bundle("Scene", state[0])
-    sampled_key, sampled = renderer.configured_bundle("Scene", state[0], "gl4")
+    regular_key, regular = renderer.configured_bundle("Scene")
+    sampled_key, sampled = renderer.configured_bundle("Scene", "gl4")
     assert regular_key != sampled_key and regular is not sampled
     assert regular.sample_pattern == "grid" and sampled.sample_pattern == "gl4"
-    assert renderer.configured_bundle("Scene", state[0]) == (regular_key, regular)
+    assert renderer.configured_bundle("Scene") == (regular_key, regular)
 
 
 @pytest.mark.parametrize("family", ["Cube", "Scene"])
-def test_configuration_groups_preserve_exact_static_keys(family):
+def test_per_world_arrays_match_each_rows_own_compile(family):
     from tests.helpers.ogbench_golden import FIXTURES, load
 
     state, _ = load(FIXTURES / f"{family}-mjwarp.npz")
-    keys = (*pixels.STATIC, *(("lock_color",) if family == "Scene" else ()))
-    for index, key in enumerate(keys):
-        state["appearance", key][index].reshape(-1)[0] += 0.001
-    # These per-world inputs must not create new compiled-model groups.
-    state["pose", "qpos"][-1, 0] += 0.1
-    state["appearance", "cube.color"][-1] = 0.2
-    expected = {}
+    state = state[:6].clone()
+    state["appearance", "cube.size"][1] = 0.013
+    state["appearance", "light.intensity"][2] = 0.35
+    state["appearance", "camera.angle_delta"][3] = state["appearance", "camera.angle_delta"].new_tensor([[4.0, -3.0]])
+    if family == "Scene":
+        state["appearance", "lock_color"][4] = state["appearance", "lock_color"].new_tensor([[0.1, 0.8, 0.2]] * 2)
+    # Colours and poses are uploaded per world already and must not split anything.
+    state["pose", "qpos"][5, 0] += 0.1
+    state["appearance", "cube.color"][5] = 0.2
+    token, bundle = renderer.configured_bundle(family)
+    worlds = renderer._worlds(family, token, bundle, state, "cpu")
+    assert worlds.view.tolist() == [0, 0, 1, 2, 0, 0]
+    assert worlds.lock is None if family == "Cube" else worlds.lock.tolist() == [0, 0, 0, 0, 1, 0]
     for index, row in enumerate(state):
-        expected.setdefault(renderer.configuration_key(family, row), []).append(index)
-    assert list(renderer._configuration_groups(family, state)) == list(expected.values())
-    assert len(expected) == len(keys) + 1
+        env = pixels.build_model(family, row)
+        try:
+            for name in core.WORLD_FIELDS:
+                want = torch.as_tensor(getattr(env.model, name), dtype=torch.float32)
+                got = worlds.fields[name][index if len(worlds.fields[name]) > 1 else 0]
+                assert torch.equal(got.reshape(want.shape), want), (index, name)
+            if family == "Scene":
+                want = core._button_tables(env.unwrapped, env.model, 2)
+                got = worlds.locks[worlds.lock[index]].tables
+                for bits, (g, m) in want.items():
+                    assert np.array_equal(got[bits][0], g) and np.array_equal(got[bits][1], m), (index, bits)
+        finally:
+            env.close()
 
 
 @pytest.mark.parametrize("family,cls", [("Cube", OGBCube), ("Scene", OGBScene)])
@@ -135,11 +148,13 @@ def test_render_model_configuration_no_steps_or_rng_mutation(family, cls):
             patch.object(candidate_cls, "step", side_effect=AssertionError("renderer stepped")),
             patch.object(candidate_cls, "reset", side_effect=AssertionError("renderer reset")),
         ):
-            token, b = renderer.configured_bundle(family, rs[0])
-        assert renderer.configured_bundle(family, rs[0])[1] is b
+            token, b = renderer.configured_bundle(family)
+            worlds = renderer._worlds(family, token, b, rs.cpu(), "cpu")
+        assert renderer.configured_bundle(family)[1] is b
         source = env._simulator.envs[0]
-        for name in ["geom_size", "body_mass", "body_inertia", "cam_pos", "cam_quat", "light_diffuse"]:
-            assert np.array_equal(getattr(source.model, name), getattr(b.model, name)), name
+        for name in core.WORLD_FIELDS:
+            want = torch.as_tensor(getattr(source.model, name), dtype=torch.float32)
+            assert torch.equal(worlds.fields[name][0].reshape(want.shape), want), name
         # Scene button tables intentionally place the private model at a known base.
         # The render-only Scene model adds two button materials. Compare named
         # materials; insertion can renumber unrelated compiled material IDs.
@@ -172,18 +187,9 @@ def test_render_model_configuration_no_steps_or_rng_mutation(family, cls):
 
 
 @pytest.mark.parametrize("family,cls", [("Cube", OGBCube), ("Scene", OGBScene)])
-def test_renderstate_configuration_grouping(family, cls):
+def test_renderstate_size_validation(family, cls):
     with cls(seed=0) as env:
         rs = env.to_render_state()
-        key = renderer.configuration_key(family, rs[0])
-        for leaf in ["cube.color", "floor.color", "agent.color"]:
-            other = rs.clone()
-            other["appearance", leaf].fill_(0.2)
-            assert renderer.configuration_key(family, other[0]) == key
-        for leaf in ["cube.size", "camera.angle_delta", "light.intensity"]:
-            other = rs.clone()
-            other["appearance", leaf].add_(0.001)
-            assert renderer.configuration_key(family, other[0]) != key
         with pytest.raises(ValueError):
             env.to_render_state(size=224.5)
         with pytest.raises(ValueError, match="integers"):

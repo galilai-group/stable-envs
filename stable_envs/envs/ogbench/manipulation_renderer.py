@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import threading
 from functools import lru_cache
 from importlib.metadata import version
@@ -22,42 +21,159 @@ def _check_versions():
         raise ImportError("Cube/Scene frozen GPU rendering requires mujoco-warp==3.12.0 and warp-lang==1.17.0")
 
 
-def configuration_key(family, row):
-    h = hashlib.sha256(family.encode())
-    for key in (*pixels.STATIC, *(("lock_color",) if family == "Scene" else ())):
-        h.update(row["appearance", key].detach().cpu().contiguous().numpy().tobytes())
-    return f"stable-envs-{family}-{h.hexdigest()}"
+VIEW = ("camera.angle_delta", "light.intensity")
+# Compiled arrays a configuration changes that the fixed-camera MJWarp and OpenGL passes never read.
+_INERT = (
+    "body_inertia",
+    "body_invweight0",
+    "body_mass",
+    "body_subtreemass",
+    "bvh_aabb",
+    "cam_mat0",
+    "cam_poscom0",
+    "dof_M0",
+    "dof_invweight0",
+    "dof_length",
+    "geom_aabb",
+    "geom_rbound",
+    "light_poscom0",
+)
+_VIEWS = core._RES.BoundedCache(1024, name="ogbench.view")
+_LOCKS = core._RES.BoundedCache(1024, name="ogbench.lock")
 
 
-def _configuration_groups(family, host):
-    """Group exact model bytes without constructing a TensorDict for every row."""
-    keys = (*pixels.STATIC, *(("lock_color",) if family == "Scene" else ()))
+def _groups(host, names):
+    """Group rows by the exact bytes of the named appearance leaves; return keys, first rows and row groups."""
     columns = [
-        np.ascontiguousarray(host["appearance", key].numpy()).reshape(len(host), -1).view(np.uint8) for key in keys
+        np.ascontiguousarray(host["appearance", name].numpy()).reshape(len(host), -1).view(np.uint8) for name in names
     ]
-    groups = {}
+    keys, first, group = {}, [], np.empty(len(host), np.int64)
     for index, row in enumerate(np.concatenate(columns, axis=1)):
-        groups.setdefault(row.tobytes(), []).append(index)
-    return groups.values()
+        key = row.tobytes()
+        if key not in keys:
+            keys[key] = len(first)
+            first.append(index)
+        group[index] = keys[key]
+    return list(keys), first, group
 
 
-def configured_bundle(family, row, sample_pattern="grid"):
-    """Cache the compiled render model under its immutable configuration key."""
-    token = configuration_key(family, row)
-    if sample_pattern != "grid":
-        token += "/" + sample_pattern
+def configured_bundle(family, sample_pattern="grid"):
+    """Compile the family's render model once, at default configuration."""
+    token = f"stable-envs-{family}" + ("" if sample_pattern == "grid" else "/" + sample_pattern)
     with _LOCK:
         bundle = core.get_bundle(token)
         if bundle is None:
-            env = pixels.build_model(family, row)
+            import mujoco
+
+            env = pixels.build_model(family)
             if int(env.model.joint("object_joint_0").qposadr[0]) != pixels.OBJECT_QPOS_ADR:
                 raise ValueError(f"{family}: object_joint_0 has an unexpected qpos address")
+            fixed = mujoco.mjtCamLight.mjCAMLIGHT_FIXED
+            if np.any(env.model.cam_mode != fixed) or np.any(env.model.light_mode != fixed):
+                raise ValueError(f"{family}: per-world cameras and lights assume fixed modes")
             bundle = core.build_bundle(
                 env, camera="front_pixels", size=core.SPEC[family]["size"], nbuttons=2 if family == "Scene" else 0
             )
             bundle.sample_pattern = sample_pattern
             core.register_bundle(token, bundle)
         return token, bundle
+
+
+class _View:
+    __slots__ = ("key", "fields")
+
+
+def _view(family, bundle, host, index, value):
+    """Camera and light arrays of a configuration, from its own compile at default cube size."""
+    key = (family, value)
+    hit = _VIEWS.get(key)
+    if hit is not None:
+        return hit
+    env = pixels.build_model(family, host[index], VIEW)
+    try:
+        changed = [
+            name
+            for name in dir(env.model)
+            if isinstance(value := getattr(env.model, name, None), np.ndarray)
+            and not np.array_equal(value, getattr(bundle.model, name))
+        ]
+        if set(changed) - {*core.VIEW_FIELDS, *_INERT}:
+            raise ValueError(f"{family}: camera/light configuration changed unbatched arrays {changed}")
+        view = _View()
+        view.key = key
+        view.fields = {name: np.array(getattr(env.model, name), copy=True) for name in core.VIEW_FIELDS}
+    finally:
+        env.close()
+    return _VIEWS.put(key, view)
+
+
+class _Lock:
+    __slots__ = ("key", "tables")
+
+
+def _lock(token, bundle, value):
+    """Scene button colour tables for one lock_color, applied by the source rule to the shared model."""
+    key = (token, value.tobytes())
+    hit = _LOCKS.get(key)
+    if hit is not None:
+        return hit
+    u = bundle.unwrapped
+    node = u.variation_space._walk("lock_color")
+    saved = node.value.copy()
+    node.set_value(value.copy())
+    try:
+        tables = core._button_tables(u, bundle.model, bundle.nbuttons)
+    finally:
+        node.set_value(saved)
+        u._apply_button_states()
+    zero_g, zero_m = bundle.button_tables[(0,) * bundle.nbuttons]
+    geoms = {int(i) for g, _ in tables.values() for i in np.flatnonzero(np.any(g != zero_g, axis=1))}
+    materials = {int(i) for _, m in tables.values() for i in np.flatnonzero(np.any(m != zero_m, axis=1))}
+    static = [g for g in range(bundle.model.ngeom) if g not in set(bundle.movers)]
+    if geoms - set(bundle.movers) or materials & {int(bundle.model.geom_matid[g]) for g in static}:
+        raise ValueError("lock_color colours a static geom, which the cached background would bake")
+    lock = _Lock()
+    lock.key = key
+    lock.tables = tables
+    return _LOCKS.put(key, lock)
+
+
+class _Worlds:
+    """Per-world configuration arrays of one RenderState batch, sliced alongside its rows."""
+
+    __slots__ = ("fields", "view", "views", "lock", "locks")
+
+    def __getitem__(self, index):
+        out = _Worlds()
+        out.fields = {name: value if len(value) == 1 else value[index] for name, value in self.fields.items()}
+        out.view, out.views = self.view[index], self.views
+        out.lock, out.locks = (None, None) if self.locks is None else (self.lock[index], self.locks)
+        return out
+
+
+def _worlds(family, token, bundle, host, device):
+    worlds = _Worlds()
+    keys, first, worlds.view = _groups(host, VIEW)
+    worlds.views = [_view(family, bundle, host, index, key) for key, index in zip(keys, first)]
+    # Cube and target are boxes whose compiled size is the leaf itself; every other geom keeps its size.
+    size = host["appearance", "cube.size"].numpy()
+    size = size[:1] if np.all(size == size[0]) else size
+    geom_size = torch.as_tensor(bundle.model.geom_size, device=device, dtype=torch.float32)
+    geom_size = geom_size.expand(len(size), *geom_size.shape).clone()
+    geom_size[:, torch.as_tensor(bundle.cube_geoms, device=device)] = torch.as_tensor(
+        size[:, :, None], device=device, dtype=torch.float32
+    )
+    worlds.fields = {"geom_size": geom_size}
+    for name in core.VIEW_FIELDS:
+        stack = torch.as_tensor(np.stack([view.fields[name] for view in worlds.views]), device=device)
+        stack = stack.to(torch.float32)
+        worlds.fields[name] = stack if len(stack) == 1 else stack[torch.as_tensor(worlds.view, device=device)]
+    worlds.lock = worlds.locks = None
+    if family == "Scene":
+        _, first, worlds.lock = _groups(host, ("lock_color",))
+        lock = host["appearance", "lock_color"].numpy()
+        worlds.locks = [_lock(token, bundle, lock[index]) for index in first]
+    return worlds
 
 
 class _ConfiguredRenderer(core.OGBManipBase):
@@ -83,7 +199,7 @@ class _ConfiguredRenderer(core.OGBManipBase):
     def _agent(self, state):
         return state["appearance", "agent.color"].reshape(len(state), 3).to(self.device, torch.float32)
 
-    def raster(self, state):
+    def raster(self, state, worlds):
         cube = self._cube_colours(
             {"cube.color": state["appearance", "cube.color"].detach().cpu().numpy().reshape(len(state), 3)},
             len(state),
@@ -94,9 +210,10 @@ class _ConfiguredRenderer(core.OGBManipBase):
             cube,
             state["pose", "mocap_quat"].reshape(len(state), self._b.nmocap, 4),
             self._agent(state),
+            worlds,
         )
 
-    def draw(self, state):
+    def draw(self, state, worlds):
         return super()._render(
             self._rows(state),
             mocap_quat=state["pose", "mocap_quat"].reshape(len(state), self._b.nmocap, 4),
@@ -105,6 +222,7 @@ class _ConfiguredRenderer(core.OGBManipBase):
                 "cube.color": state["appearance", "cube.color"].reshape(len(state), 3),
                 "floor.color": state["appearance", "floor.color"].reshape(len(state), 6),
             },
+            worlds=worlds,
         )
 
 
@@ -130,40 +248,36 @@ def render(family, state, device, backend="auto", chunk_size=None):
     import warp as wp
 
     with _LOCK, torch.cuda.device(device), wp.ScopedDevice(str(device)):
-        prepared = []
+        pattern = "gl4" if family == "Scene" and backend == "mjwarp_fidelity" and ss == 2 else "grid"
+        token, bundle = configured_bundle(family, pattern)
+        worlds = _worlds(family, token, bundle, host, device)
+        limit = chunk_size or len(state)
         active = set()
         device_index = torch.cuda.current_device()
-        for indices in _configuration_groups(family, host):
-            pattern = "gl4" if family == "Scene" and backend == "mjwarp_fidelity" and ss == 2 else "grid"
-            token, bundle = configured_bundle(family, host[indices[0]], pattern)
-            prepared.append((token, bundle, indices))
-            limit = chunk_size or len(indices)
-            for start in range(0, len(indices), limit):
-                count = min(limit, len(indices) - start)
-                for offset in range(0, count, core.MJW_CHUNK):
-                    n = min(core.MJW_CHUNK, count - offset)
-                    nw = 1 << (n - 1).bit_length()
-                    if backend == "mjwarp_fidelity":
-                        active.add((device_index, token + "/fidelity/glass", size, nw))
-                        active.add((device_index, token + "/fidelity/opaque", size * ss, nw))
-                    else:
-                        active.add((device_index, token, size * ss, nw))
-        with core._CTX_CACHE.working_set(active):
-            for token, bundle, indices in prepared:
+        for start in range(0, len(state), limit):
+            count = min(limit, len(state) - start)
+            for offset in range(0, count, core.MJW_CHUNK):
+                nw = 1 << (min(core.MJW_CHUNK, count - offset) - 1).bit_length()
                 if backend == "mjwarp_fidelity":
-                    from . import manipulation_fidelity
+                    active.add((device_index, token + "/fidelity/glass", size, nw))
+                    active.add((device_index, token + "/fidelity/opaque", size * ss, nw))
+                else:
+                    active.add((device_index, token, size * ss, nw))
+        with core._CTX_CACHE.working_set(active):
+            if backend == "mjwarp_fidelity":
+                from . import manipulation_fidelity
 
-                    limit = chunk_size or len(indices)
-                    for start in range(0, len(indices), limit):
-                        selected = indices[start : start + limit]
-                        result[selected] = manipulation_fidelity.draw(token, bundle, state[selected], device, size, ss)
-                    continue
-                renderer = _ConfiguredRenderer(token, bundle, device, size, ss)
-                try:
-                    limit = chunk_size or len(indices)
-                    for start in range(0, len(indices), limit):
-                        selected = indices[start : start + limit]
-                        result[selected] = renderer.draw(state[selected])
-                finally:
-                    renderer.close()
+                for start in range(0, len(state), limit):
+                    selected = slice(start, start + limit)
+                    result[selected] = manipulation_fidelity.draw(
+                        token, bundle, state[selected], device, size, ss, worlds[selected]
+                    )
+                return result
+            renderer = _ConfiguredRenderer(token, bundle, device, size, ss)
+            try:
+                for start in range(0, len(state), limit):
+                    selected = slice(start, start + limit)
+                    result[selected] = renderer.draw(state[selected], worlds[selected])
+            finally:
+                renderer.close()
     return result

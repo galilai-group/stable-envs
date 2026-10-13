@@ -660,13 +660,10 @@ def _ogb_space(cell):
     import types
 
     pytest.importorskip("ogbench")
-    from stable_envs.envs.ogbench import OGBCube, OGBScene
     from stable_envs.envs.ogbench.manipulation import OGBManipBase
     from stable_envs.envs.ogbench.manipulation_renderer import configured_bundle
 
-    cls = OGBCube if cell == "Cube" else OGBScene
-    with cls(seed=0) as env:
-        token, _ = configured_bundle(cell, env.to_render_state()[0])
+    token, _ = configured_bundle(cell)
     return OGBManipBase.make_variation_space(types.SimpleNamespace(CELL=token))
 
 
