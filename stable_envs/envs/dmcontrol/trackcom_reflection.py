@@ -4,14 +4,20 @@ import dataclasses
 
 import numpy as np
 
+from ...render.cpu3d import texture_array
 from ...render.texture_mip import plane_grid, plane_texgen
 
 
 class Reflection:
-    """Reuse the primary renderer's segmentation, BVH and lighting on floor hits."""
+    """Reuse the primary renderer's segmentation, BVH and lighting on floor hits.
 
-    def __init__(self, model, data, context, source_model):
+    ``palette`` (texel slots of the floor checker) lets each world recolour those
+    texels: the floor samples a texture of per-texel palette weights instead, and
+    the texels outside the slots keep their one shared colour."""
+
+    def __init__(self, model, data, context, source_model, palette=None):
         import mujoco
+        import torch
         import warp as wp
         from mujoco_warp._src import render as upstream
 
@@ -60,6 +66,39 @@ class Reflection:
             )
             for i in range(2)
         ]
+        recolour = palette is not None and plane_texture >= 0
+        nworld = int(data.nworld)
+        device = data.geom_xpos.device
+        if recolour:
+            texels = texture_array(source_model, plane_texture).reshape(-1, 3)
+            masks = np.stack([np.asarray(m, bool).reshape(-1) for m in palette["masks"]])
+            rest = ~masks.any(0)
+            if not (texels[rest] == texels[rest][:1]).all():
+                raise ValueError("TrackCom floor recolouring requires the unslotted texels to share one colour")
+            colours = np.stack([texels[m][0] for m in (*masks, rest)]).astype(np.float32) / 255
+            weights = np.stack([*masks, rest, np.ones_like(rest)], -1).astype(np.float32)
+            weights = weights.reshape(texture_height, texture_width, 4)
+            texture = wp.Texture2D(
+                weights,
+                num_mip_levels=0,
+                filter_mode=wp.TextureFilterMode.LINEAR,
+                address_mode=wp.TextureAddressMode.WRAP,
+            )
+            extra = {
+                "floor_weights": wp.array([texture], dtype=wp.Texture2D, device=device),
+                "floor_palette": wp.array(np.tile(colours, (nworld, 1, 1)), dtype=wp.vec3, device=device),
+                "floor_recolour": wp.zeros(nworld, dtype=int, device=device),
+            }
+            self._default = torch.as_tensor(colours[:-1], device=wp.device_to_torch(device))
+            # The array holds only the texture's handle; the object must outlive the kernel's reads.
+            self._weights = texture
+        else:
+            extra = {
+                "floor_weights": context.textures,
+                "floor_palette": wp.zeros((1, 3), dtype=wp.vec3, device=device),
+                "floor_recolour": wp.zeros(1, dtype=int, device=device),
+            }
+        self.palette = palette if recolour else None
 
         @wp.struct
         class Scene:
@@ -113,6 +152,9 @@ class Reflection:
             rgb_data: wp.array2d[wp.uint32]
             grid_x: wp.array[float]
             grid_y: wp.array[float]
+            floor_weights: wp.array[wp.Texture2D]
+            floor_palette: wp.array2d[wp.vec3]
+            floor_recolour: wp.array[int]
 
         @wp.func
         def blocked(
@@ -451,7 +493,16 @@ class Reflection:
                 )
                 uv -= wp.vec2(wp.floor(uv[0]), wp.floor(uv[1]))
                 tap = wp.texture_sample(s.textures[wp.static(plane_texture)], uv, dtype=wp.vec4, lod=lod)
-                surface = wp.cw_mul(surface, wp.vec3(tap[0], tap[1], tap[2]))
+                texel = wp.vec3(tap[0], tap[1], tap[2])
+                if wp.static(recolour):
+                    if s.floor_recolour[world] != 0:
+                        w = wp.texture_sample(s.floor_weights[0], uv, dtype=wp.vec4, lod=lod)
+                        texel = (
+                            w[0] * s.floor_palette[world, 0]
+                            + w[1] * s.floor_palette[world, 1]
+                            + w[2] * s.floor_palette[world, 2]
+                        )
+                surface = wp.cw_mul(surface, texel)
             result = surface
             reflected = direction - 2.0 * wp.dot(direction, normal_plane) * normal_plane
             ray_origin = on_plane + normal_plane * 1.0e-4
@@ -517,6 +568,7 @@ class Reflection:
             name: wp.array(values, dtype=float, device=data.geom_xpos.device)
             for name, values in zip(("grid_x", "grid_y"), grids, strict=True)
         }
+        grid_arrays.update(extra)
         for name in Scene.vars:
             if name in grid_arrays:
                 setattr(scene, name, grid_arrays[name])
@@ -526,6 +578,16 @@ class Reflection:
         self._wp, self._kernel, self._scene = wp, reflected_pixels, scene
         self._shape = (int(data.nworld), int(context.total_rays))
         self._device = data.geom_xpos.device
+
+    def recolour(self, rows) -> None:
+        """Draw the first ``len(rows)`` worlds' checker in ``rows`` (n,P,3); None draws the compiled texture."""
+        flags = self._wp.to_torch(self._scene.floor_recolour)
+        flags.zero_()
+        if rows is None:
+            return
+        n = int(rows.shape[0])
+        self._wp.to_torch(self._scene.floor_palette)[:n, : rows.shape[1]] = rows
+        flags[:n] = (rows != self._default).flatten(1).any(1).to(flags.dtype)
 
     def render(self):
         self._wp.launch(self._kernel, dim=self._shape, inputs=[self._scene], device=self._device)

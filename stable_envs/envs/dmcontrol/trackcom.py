@@ -5,13 +5,26 @@ import warnings
 import numpy as np
 import torch
 
+from ..._core.plate_texels import quantise as _quantise
+from ..._core.plate_texels import texel_slots as _texel_slots
 from ...render import _resources as _RES
 from ...render import cpu3d as C3
 from ...render import mjwarp as MW
+from ...spaces import Box, Dict
 from ._mass_rows import ARRAYS as _MASS_ARRAYS
 from ._mass_rows import MassRows
-from ._model import _TC_CACHE, MJW_CHUNK, VISIBLE_GROUPS, _effective_alpha, _row_width, _slot_element
+from ._model import (
+    _TC_CACHE,
+    MJW_CHUNK,
+    VISIBLE_GROUPS,
+    _effective_alpha,
+    _grid_defaults,
+    _grid_masks,
+    _row_width,
+    _slot_element,
+)
 from .base import _DMCModel
+from .simulation import physics as _sim_physics
 
 
 class _TCtx:
@@ -30,6 +43,7 @@ class _TCtx:
         "textures",
         "reflection",
         "masses_varied",
+        "floor_tilted",
     )
 
 
@@ -89,7 +103,7 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
     c.wm = mjw.put_model(m, batch_sizes={k: int(nworld) for k in batched})
     c.wd = mjw.put_data(m, d0, nworld=int(nworld))
     c.textures = c.reflection = None
-    c.masses_varied = False
+    c.masses_varied = c.floor_tilted = False
     # Keep GL-style rounding active during source generation and first compilation,
     # including the warm-up render.
     with MW.gl_rounding():
@@ -110,7 +124,8 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
         from .trackcom_texture import Textures
 
         c.textures = Textures(m, c.rc, _sky_plate(cls, int(res)))
-        c.reflection = Reflection(c.wm, c.wd, c.rc, m) if _reflection_supported(c.rc) else None
+        supported = _reflection_supported(c.rc)
+        c.reflection = Reflection(c.wm, c.wd, c.rc, m, cls._floor_slots()) if supported else None
         _tc_frame(c)
         wp.synchronize()
     import torch
@@ -218,7 +233,66 @@ class DMControlTrackCom(_DMCModel):
     @property
     def FRAME_PHYSICS(self) -> frozenset[str]:  # noqa: N802
         rows = self._mass_rows()
-        return frozenset(rows.paths) if rows else frozenset()
+        tilt = self._floor_tilt()
+        return frozenset((*(rows.paths if rows else ()), *((tilt[0],) if tilt else ())))
+
+    @classmethod
+    def _floor_slots(cls) -> dict | None:
+        """Texel slots of the floor's checker colours, or None without the suite's grid texture."""
+        if "_floor_slots_cache" not in cls.__dict__:
+            import mujoco
+
+            m = cls._model()
+            t = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_TEXTURE, "grid")
+            slots = None if t < 0 else _texel_slots(m, t, _grid_defaults()[:2], masks=_grid_masks(m, t))
+            cls._floor_slots_cache = slots
+        return cls._floor_slots_cache
+
+    @classmethod
+    def _floor_tilt(cls) -> tuple[str, int] | None:
+        """The simulator's floor-tilt leaf and its plane geom, or None when the floor cannot tilt."""
+        if "_floor_tilt_cache" not in cls.__dict__:
+            import mujoco
+
+            key = cls._simulator_key() if hasattr(cls, "_simulator_key") else None
+            tilts = [k for k in (_sim_physics.knobs(key) if key else ()) if isinstance(k, _sim_physics.PlaneTilt)]
+            cls._floor_tilt_cache = None
+            if tilts:
+                geom = mujoco.mj_name2id(cls._model(), mujoco.mjtObj.mjOBJ_GEOM, tilts[0].geom)
+                cls._floor_tilt_cache = (tilts[0].leaf, geom)
+        return cls._floor_tilt_cache
+
+    def make_variation_space(self) -> Dict:
+        """Add the floor checker's two RGB colours, defaulting to the suite's material file."""
+        space = super().make_variation_space()
+        slots = self._floor_slots()
+        if slots is None:
+            return space
+        color = Box(low=0.0, high=1.0, shape=(2, 3), init_value=slots["default"].tolist())
+        return Dict({**{k: space[k] for k in space}, "floor": Dict({"color": color})})
+
+    def _row_floor(self, sty, lo: int, hi: int):
+        """Per-row floor orientations (n,3,3), or None when every row keeps the compiled level floor."""
+        tilt = self._floor_tilt()
+        if tilt is None:
+            return None
+        angle = torch.deg2rad(sty[tilt[0]][lo:hi].reshape(-1).to(torch.float64))
+        if not bool((angle != 0).any()):
+            return None
+        s, c = torch.sin(angle).float(), torch.cos(angle).float()
+        z, o = torch.zeros_like(s), torch.ones_like(s)
+        return torch.stack((c, z, s, z, o, z, -s, z, c), -1).reshape(-1, 3, 3)
+
+    def _row_palette(self, sty, lo: int, hi: int):
+        """Per-row checker colours as the compiled texture stores them, or None when every row has the default."""
+        slots = self._floor_slots()
+        if slots is None:
+            return None
+        rows = torch.floor(sty["floor.color"][lo:hi].reshape(-1, 2, 3).to(torch.float64) * 255).clamp(0, 255)
+        default = torch.as_tensor(_quantise(slots["default"]), dtype=rows.dtype, device=rows.device)
+        if torch.equal(rows, default.expand_as(rows)):
+            return None
+        return (rows / 255).float()
 
     def _row_masses(self, sty, lo: int, hi: int):
         """Per-row mass arrays, or None when every row draws the compiled model's masses."""
@@ -275,6 +349,7 @@ class DMControlTrackCom(_DMCModel):
                 enable_specular=bool(flags.get("enable_specular", True)),
                 use_shadows=True,
                 device=self.device,
+                plane_palette=None if self._floor_slots() is None else self._floor_slots()["masks"],
             )
         except ValueError as e:
             # Report unsupported CPU geometry or lighting at construction.
@@ -353,7 +428,20 @@ class DMControlTrackCom(_DMCModel):
         chunk = self._CPU_RENDER_CHUNKS.get((self.DOMAIN, size), self.CPU_RENDER_CHUNK)
         # An explicit instance override is used by controlled chunk sweeps.
         chunk = vars(self).get("CPU_RENDER_CHUNK", chunk)
-        C3.render(sc, cam, xp, xm, lp, ld, mat, ldif, out=buf, chunk_size=chunk)
+        C3.render(
+            sc,
+            cam,
+            xp,
+            xm,
+            lp,
+            ld,
+            mat,
+            ldif,
+            out=buf,
+            chunk_size=chunk,
+            plane_mat=self._row_floor(sty, 0, B),
+            plane_palette=self._row_palette(sty, 0, B),
+        )
 
     @torch.no_grad()
     def _render(
@@ -451,6 +539,24 @@ class DMControlTrackCom(_DMCModel):
                 if name in _MASS_ARRAYS:
                     wp.to_torch(getattr(c.wm, name))[:] = value.to(torch.float32)
             c.masses_varied = False
+        tilt = self._floor_tilt()
+        if tilt is not None:
+            floor = self._row_floor(sty, lo, hi)
+            xmat = wp.to_torch(c.wd.geom_xmat)
+            if floor is not None:
+                xmat[:n, tilt[1]] = floor
+                c.floor_tilted = True
+            elif c.floor_tilted:
+                xmat[:, tilt[1]] = torch.eye(3, device=xmat.device, dtype=xmat.dtype)
+                c.floor_tilted = False
+        palette = self._row_palette(sty, lo, hi)
+        if c.reflection is not None and c.reflection.palette is not None:
+            c.reflection.recolour(palette)
+        elif palette is not None:
+            raise RuntimeError(
+                f"{type(self).__name__}: floor.color is drawn by the floor reflection pass, which needs "
+                f"mujoco-warp 3.12; install stable-envs[dmcontrol-gpu]"
+            )
         m, pr = self._model(), self._pristine()
         mr = wp.to_torch(c.wm.mat_rgba)
         for name in self._used_materials():

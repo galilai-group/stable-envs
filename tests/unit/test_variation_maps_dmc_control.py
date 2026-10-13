@@ -127,7 +127,7 @@ def test_the_seventeen_ids_total_161_leaves():
         for k in totals:
             totals[k] += EXPECTED_COUNTS[m.swm_id][k]
     assert len(seen) == 17
-    assert totals == {"mapped": 134, "unsupported": 6, "dead_upstream": 21, "not_applicable": 0}
+    assert totals == {"mapped": 140, "unsupported": 0, "dead_upstream": 21, "not_applicable": 0}
     assert sum(totals.values()) == 161
 
 
@@ -544,16 +544,13 @@ def test_strict_accepts_the_whole_swm_space(cell):
 def test_the_parity_floor_set_is_the_plate_baking_tier():
     """``_PARITY_FLOOR`` is transcribed, so derive it from the classes and assert it.
 
-    The set decides which seven swm ids report ``floor.color`` as mapped, and the module cannot
+    The set decides which mechanism each cell's ``floor.color`` note describes, and the module cannot
     import ``stable_envs.envs`` to derive it. A cell that moved between the two DM Control tiers
-    would otherwise leave the map claiming support the renderer no longer has -- or withholding
-    support it does have -- and nothing else in this file would notice.
+    would otherwise leave the map describing a renderer it no longer has.
     """
     from stable_envs.envs.dmcontrol import DMControlSuite
     from tests.helpers.reference.variation_maps.dmc_control import _PARITY_FLOOR
 
-    # Every DM Control id declares swm's floor.color, so "which of our cells can honour it" is
-    # exactly "which of our cells bake a plate", which is the DMControlSuite tier.
     derived = {c for c in MAPS if c in REGISTRY and issubclass(REGISTRY[c], DMControlSuite)}
     assert derived == set(_PARITY_FLOOR), (
         f"the plate-baking tier is {sorted(derived)} but the map declares {sorted(_PARITY_FLOOR)}"
@@ -572,6 +569,12 @@ def test_floor_color_is_a_leaf_and_the_default_is_the_identity(cell):
     ``common/materials.xml`` grid texture, so a correct implementation renders the registered default
     BYTE-IDENTICALLY to the pre-patch frame -- the leaf must add reach without moving the picture.
     """
+    import sys
+
+    from stable_envs.envs.dmcontrol import DMControlSuite
+
+    if sys.platform == "darwin" and not issubclass(REGISTRY[cell], DMControlSuite):
+        pytest.skip("the trackcom CPU scene caches its sky through dm_control physics.render, disabled on macOS")
     env = make(cell, num_envs=2, size=84, device="cpu")
     layout = dict((p, (o, w)) for p, o, w in env.variation_space.flat_layout())
     assert "floor.color" in layout and layout["floor.color"][1] == 6, layout

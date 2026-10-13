@@ -9,7 +9,15 @@ pytest.importorskip("dm_control")
 pytest.importorskip("stable_worldmodel")
 pytestmark = pytest.mark.skipif(sys.platform == "darwin", reason="DM Control frames are certified on Linux GL")
 
-from tests.helpers.reference.gates.dmc_appearance import CASES, run_gate  # noqa: E402
+from tests.helpers.reference.gates.dmc_appearance import (  # noqa: E402
+    CASES,
+    FLOOR_CASES,
+    FLOOR_COLORS,
+    _mse,
+    frames,
+    leaf_gate,
+    run_gate,
+)
 
 #: The contract's worst-frame bar for DM Control source pixels.
 MSE_MAX = 0.001
@@ -23,3 +31,22 @@ def test_leaf_frames_match_swm(cell):
         assert case["mse"]["worst"] <= MSE_MAX, case
         # The leaf adds no residual beyond the cell's own at swm's registered default.
         assert case["mse"]["mean"] <= 1.5 * default["mean"] + 1e-4, (case, default)
+
+
+_BRIGHT_FLOOR_ON_CUDA = (
+    "mujoco_warp's own floor shading residual grows with the floor's albedo; the recolour is "
+    "bit-identical to a render context built on swm's substituted texture"
+)
+
+
+@pytest.mark.parametrize(("cell", "case"), [(c, i) for c, cases in FLOOR_CASES.items() for i in range(len(cases))])
+def test_floor_leaf_frames_match_swm(cell, case):
+    device = os.environ.get("SE_DMC_APPEARANCE_DEVICE", "cpu")
+    cfg = FLOOR_CASES[cell][case]
+    if device == "cuda" and cfg.get("floor.color") == FLOOR_COLORS[0]:
+        pytest.xfail(_BRIGHT_FLOOR_ON_CUDA)
+    theirs, ours, _ = frames(cell, {}, device=device)
+    default = _mse(ours, theirs)
+    got = leaf_gate(cell, cfg, device=device)
+    assert got["mse"]["worst"] <= MSE_MAX, got
+    assert got["mse"]["mean"] <= 1.5 * default["mean"] + 1e-4, (got, default)
