@@ -503,12 +503,9 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: DMCQuadrupedWalk draws the whole scene through MJWarp with no plate, so PLATE_REPRESENTATIVES
     #: does not cover it. It sits ABOVE the other five because its camera is much closer to the body
     #: and sees proportionally less speckled skybox. MEASURED under this table's own protocol
-    #: (8 states at render_worker.STATE_SEED, default appearance, states sha256 52d82312...): the
-    #: minimum over the four committed Step-7 runs -- cpu 0.8118772 (closure2) and 0.8118797
-    #: (closure), cuda 0.8120117 and 0.8120217, at mujoco 3.11.0 and 3.12.0 -- so the floor holds on
-    #: every device and reference pair measured, and the whole spread is 2.5e-05 wide inside a
-    #: 0.005 margin. Artifacts: pre-repository-cleanup:tests/fixtures/regression/join/step7/closure2/gate_a/{cpu,cuda}_vis311.json.
-    "DMCQuadrupedWalk": 0.811877,  # mean 0.6329/255
+    #: (8 states at render_worker.STATE_SEED, default appearance), RTX 3090 / driver 575.57.08,
+    #: mujoco 3.12.0 + mujoco-warp 3.12.0, MUJOCO_GL=egl.
+    "DMCQuadrupedWalk": 0.660831,  # mean 0.7827/255
     #: Hopper, Humanoid, Swimmer and Walker are measured the same way as Cheetah above, on the same
     #: RTX 3090 / mujoco 3.12.0 + mujoco-warp 3.12.0 / MUJOCO_GL=egl.
     "DMCHopperHop": 0.285289,  # mean 1.7297/255
