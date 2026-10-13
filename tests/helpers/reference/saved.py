@@ -23,20 +23,24 @@ CORPUS_PIN = "176d54532b3c0a251a4f509b74f2fdacc143a63d"
 ROCKET_SOURCE = "5ede3640ce1e2add32b6b0a6c36e190bb1130e38bb258ab182af12a6fbedee23"
 
 # Cross-machine frozen trajectories only. The independent Linux/Mac source audit
-# measured up to 8e-15 over 32 steps. Live same-runtime source contracts and
-# immediate State restoration retain exact comparisons. This is an absolute
-# roundoff budget, not a source acceptance or pixel threshold.
+# measured up to 8e-15 over 32 steps; replayed DM Control corpora differ by up to
+# 1.4e-15. Live same-runtime source contracts and immediate State restoration
+# retain exact comparisons. This is an absolute roundoff budget, not a source
+# acceptance or pixel threshold.
 FROZEN_FLOAT64_ATOL = 1e-12
 
 
-def assert_frozen_equal(actual, expected):
-    actual = actual.detach().cpu() if torch.is_tensor(actual) else torch.tensor(actual)
-    expected = expected.detach().cpu() if torch.is_tensor(expected) else torch.tensor(expected)
+def assert_frozen_equal(actual, expected, *, equal_nan=False, msg=None):
+    """Floats within FROZEN_FLOAT64_ATOL; integers, bools, shape and dtype exact."""
+    actual = actual.detach().cpu() if torch.is_tensor(actual) else torch.as_tensor(actual)
+    expected = expected.detach().cpu() if torch.is_tensor(expected) else torch.as_tensor(expected)
     torch.testing.assert_close(
         actual,
         expected,
         rtol=0,
-        atol=FROZEN_FLOAT64_ATOL if expected.dtype == torch.float64 else 0,
+        atol=FROZEN_FLOAT64_ATOL if expected.is_floating_point() else 0,
+        equal_nan=equal_nan,
+        msg=msg,
     )
 
 

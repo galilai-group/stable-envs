@@ -38,7 +38,7 @@ def test_full_output_comparison_rejects_schema_and_numeric_changes(defect):
     elif defect == "dtype":
         actual["reward"] = actual["reward"].float()
     elif defect == "value":
-        actual["reward"] += 1e-15
+        actual["reward"] += 1e-9
     elif defect == "shape":
         actual["reward"] = actual["reward"][:, None]
     elif defect == "empty_oracle":

@@ -4,6 +4,8 @@ import torch
 from numpy.typing import NDArray
 from tensordict import TensorDict
 
+from tests.helpers.reference.saved import assert_frozen_equal
+
 
 def state_at(arrays: Mapping[str, NDArray], index: int, *, batch: int, physics=None) -> TensorDict:
     """Copy a full State from the legacy reference-only NPZ layout.
@@ -30,7 +32,7 @@ def assert_outputs(
     keys: Sequence[str] | None = None,
     equal_nan: bool,
 ) -> None:
-    """Compare exact outputs; explicit keys select older unprefixed corpora."""
+    """Compare outputs, floats within the frozen-corpus tolerance; explicit keys select older unprefixed corpora."""
     if keys is None:
         expected = {key[7:]: arrays[key][index] for key in arrays if key.startswith("output/")}
         observed = {
@@ -44,11 +46,9 @@ def assert_outputs(
         expected = {key: arrays[key][index] for key in keys}
         observed = {key: actual[key] for key in keys}
     for key, value in expected.items():
-        torch.testing.assert_close(
-            observed[key].cpu(),
-            torch.from_numpy(value),
-            atol=0,
-            rtol=0,
+        assert_frozen_equal(
+            observed[key],
+            value,
             equal_nan=equal_nan,
             msg=lambda message, key=key: f"Output {key}: {message}",
         )
