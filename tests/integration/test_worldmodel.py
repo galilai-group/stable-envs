@@ -91,9 +91,9 @@ def test_variation_map_bridge_is_test_only():
         env.close()
 
 
+@pytest.mark.swm
 def test_swap_renderer_keeps_the_live_swm_pusht_and_replaces_only_pixels():
     gymnasium = pytest.importorskip("gymnasium")
-    pytest.importorskip("stable_worldmodel")
 
     official = gymnasium.make("swm/PushT-v1", render_mode="rgb_array")
     renderer = None

@@ -10,7 +10,7 @@ import stable_envs as se
 from stable_envs.envs.dmcontrol.simulation.first_family import FIRST_FAMILY_FIELDS
 
 pytest.importorskip("dm_control")
-pytest.importorskip("stable_worldmodel")
+pytestmark = pytest.mark.swm
 
 from tests.helpers.reference.gates.dmc_first_family import CASES, run_gate
 

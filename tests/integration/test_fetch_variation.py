@@ -2,7 +2,7 @@
 
 import pytest
 
-pytest.importorskip("stable_worldmodel")
+pytestmark = pytest.mark.swm
 pytest.importorskip("gymnasium_robotics")
 
 from tests.helpers.reference.gates.fetch_variation import fetch_variation_gate  # noqa: E402

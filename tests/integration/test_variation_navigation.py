@@ -2,12 +2,13 @@
 
 import pytest
 
-pytest.importorskip("stable_worldmodel")
+pytestmark = pytest.mark.swm
 
 from tests.helpers.reference.gates.variation_navigation import (  # noqa: E402
     GATES,
     appearance_gate,
     min_steps_probe,
+    navigation_reset_rule_gate,
     reset_leaf_gate,
     zones_bias_field_gate,
 )
@@ -31,3 +32,7 @@ def test_piecewise_target_and_bias_field_match_swm():
 
 def test_min_steps_is_dead_upstream():
     assert all(case["px_moved"] == 0 for case in min_steps_probe().values())
+
+
+def test_plain_reset_restores_the_navigation_default_as_swm_does():
+    assert navigation_reset_rule_gate()["steps"] > 0

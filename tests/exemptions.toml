@@ -6,19 +6,19 @@
 [[exemption]]
 env = "TwoRoomTarget"
 family = "navigation"
-checks = ["source"]
+checks = ["original", "swm"]
 reason = "no CPU test compares it with swm/TwoRoom-v1(render_target=True); the navigation gates exclude it and only tests/gpu conformance renders it against the source"
 
 [[exemption]]
 env = "Fetch*Dense"
 family = "fetch"
-checks = ["source"]
+checks = ["original", "swm"]
 reason = "the Fetch source gate drives only the base tasks; dense rewards are never compared with gymnasium-robotics"
 
 [[exemption]]
 env = "Fetch*Dict"
 family = "fetch"
-checks = ["source"]
+checks = ["original", "swm"]
 reason = "the Fetch source gate drives only the base tasks; dict observations are never compared with gymnasium-robotics"
 
 [[exemption]]
@@ -60,11 +60,35 @@ reason = "symbolic observation only: the registration produces no RGB frames"
 [[exemption]]
 env = "CraftaxClassic"
 family = "craftax"
-checks = ["source", "variation_map"]
+checks = ["original", "swm", "variation_map"]
 reason = "renderer only, so there is no rollout to compare; its pixels are compared with craftax only in tests/gpu, and swm's Craftax wrappers set variation_space = None"
 
 [[exemption]]
 env = "CraftaxFull"
 family = "craftax"
-checks = ["source", "variation_map"]
+checks = ["original", "swm", "variation_map"]
 reason = "renderer only, so there is no rollout to compare; its pixels are compared with craftax only in tests/gpu, and swm's Craftax wrappers set variation_space = None"
+
+[[exemption]]
+env = "PiecewiseZones"
+family = "navigation"
+checks = ["original"]
+reason = "stable-worldmodel is its original and no corpus has been recorded from it; only the swm layer compares it"
+
+[[exemption]]
+env = "PushT*"
+family = "pusht"
+checks = ["original"]
+reason = "stable-worldmodel is its original and no corpus has been recorded from it; only the swm layer compares it"
+
+[[exemption]]
+env = "OGB*"
+family = "ogbench"
+checks = ["original"]
+reason = "the only oracle is swm's CubeEnv/SceneEnv fork; ogbench's own cube_env/scene_env defaults are not yet compared"
+
+[[exemption]]
+env = "PyFlytRocketLanding"
+family = "rocket"
+checks = ["original"]
+reason = "the only oracle is swm's fork of PyFlyt's RocketLandingEnv; PyFlyt's own env is not yet compared"

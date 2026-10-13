@@ -28,6 +28,7 @@ def test_anisotropic_taps_follow_screen_axis(monkeypatch):
     torch.testing.assert_close(calls[1], torch.tensor([[[[0.6, 0.575]]]]))
 
 
+@pytest.mark.family("fetch")
 def test_filtered_empty_scene_has_clear_error():
     mujoco = pytest.importorskip("mujoco")
     model = mujoco.MjModel.from_xml_string('<mujoco><worldbody><geom type="sphere" size="1"/></worldbody></mujoco>')

@@ -168,6 +168,7 @@ def test_package_import_returns_before_a_gl_hang(mujoco_gl):
     assert r.stdout.startswith("ok "), r.stdout
 
 
+@pytest.mark.family("dmc")
 def test_dm_control_import_does_not_hang_after_gl_configure():
     """Discovery imports dm_control. With GLFW that never returns; configure() must make it return."""
     import subprocess

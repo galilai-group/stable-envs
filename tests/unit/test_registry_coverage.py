@@ -1,10 +1,15 @@
-"""Every registered env has an owning family, a source comparison and, where its source varies, a variation map.
+"""Every registered env has an owning family, source comparisons and, where its source varies, a variation map.
 
-Waivers live only in ``tests/exemptions.toml``, and that file is checked here for stale entries.
+Source comparisons come in two layers. ``ORIGINAL_GATES`` compare with the library an env ports (or a
+corpus recorded from it) and import no stable_worldmodel. ``SWM_GATES`` compare with
+live stable-worldmodel and carry the ``swm`` mark; they go when that layer is removed. Every test file
+runs in a profile that installs what it imports. Waivers live only in ``tests/exemptions.toml``, and
+that file is checked here for stale entries.
 """
 
 from __future__ import annotations
 
+import ast
 import fnmatch
 import re
 
@@ -13,7 +18,7 @@ import pytest
 import stable_envs as se
 from tests.helpers import families
 from tests.helpers.exemptions import CHECKS, ENTRIES, owners, param, source_owners
-from tests.helpers.reference.cases import SOURCE_GATES
+from tests.helpers.reference.cases import ORIGINAL_GATES, SWM_GATES
 from tests.helpers.reference.crosswalk import swm_ids_for_class
 from tests.helpers.reference.variation import variation_map
 
@@ -43,14 +48,121 @@ def test_env_has_one_owning_family(name):
     assert len(found) == 1, f"{name}: ci/families.toml must give its module exactly one family, found {found}"
 
 
-@pytest.mark.parametrize("name", envs("source"))
-def test_env_is_compared_with_its_source(name):
-    gate = SOURCE_GATES.get(name)
-    assert gate, f"{name}: no source comparison in tests/helpers/reference/cases.py::SOURCE_GATES"
-    assert _defines(gate), f"{name}: its source gate {gate} does not exist"
+def _tree(path: str) -> ast.Module:
+    return ast.parse((families.ROOT / path).read_text())
+
+
+def _marked(nodeid: str, mark: str) -> bool:
+    """Whether the test function carries ``pytest.mark.<mark>``: itself, through its module or an alias."""
+    path, _, function = nodeid.partition("::")
+    tree = _tree(path)
+    carriers = {
+        t.id
+        for node in tree.body
+        if isinstance(node, ast.Assign) and f"mark.{mark}" in ast.unparse(node.value)
+        for t in node.targets
+        if isinstance(t, ast.Name)
+    }
+    defined = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == function)
+    return "pytestmark" in carriers or any(
+        f"mark.{mark}" in ast.unparse(d) or ast.unparse(d) in carriers for d in defined.decorator_list
+    )
+
+
+def _imports(tree: ast.Module) -> set[str]:
+    """Top-level names of the modules a file imports or importorskips, anywhere in it."""
+    found = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            found |= {alias.name.split(".")[0] for alias in node.names}
+        elif isinstance(node, ast.ImportFrom) and node.module and not node.level:
+            found.add(node.module.split(".")[0])
+        elif (
+            isinstance(node, ast.Call)
+            and ast.unparse(node.func).endswith("importorskip")
+            and node.args
+            and isinstance(node.args[0], ast.Constant)
+        ):
+            found.add(str(node.args[0].value).split(".")[0])
+    return found
+
+
+def _gate(name: str, table: dict, label: str) -> str:
+    gate = table.get(name)
+    assert gate, f"{name}: no entry in tests/helpers/reference/cases.py::{label}"
+    assert _defines(gate), f"{name}: its gate {gate} does not exist"
     owner = families.family_of_file(gate.partition("::")[0].rsplit("/", 1)[-1])
     family = owners(se.registry.REGISTRY[name])
-    assert [owner] == family, f"{name}: its source gate {gate} runs in profile {owner}, not {family}"
+    assert [owner] == family, f"{name}: its gate {gate} runs in profile {owner}, not {family}"
+    return gate
+
+
+def _swm_source(name: str) -> bool:
+    cls = se.registry.REGISTRY[name]
+    return bool(swm_ids_for_class(name)) or str(getattr(cls, "reference_id", "") or "").startswith("swm/")
+
+
+@pytest.mark.parametrize("name", envs("original"))
+def test_env_is_compared_with_the_library_it_ports(name):
+    gate = _gate(name, ORIGINAL_GATES, "ORIGINAL_GATES")
+    assert "stable_worldmodel" not in _imports(_tree(gate.partition("::")[0])), f"{gate} imports stable_worldmodel"
+    assert not _marked(gate, "swm"), f"{gate} is marked swm; the original layer must not need stable-worldmodel"
+
+
+@pytest.mark.parametrize("name", envs("swm"))
+def test_env_with_a_swm_source_is_compared_with_it(name):
+    if not _swm_source(name):
+        assert name not in SWM_GATES, f"{name} has no stable-worldmodel registration; drop its SWM_GATES entry"
+        return
+    gate = _gate(name, SWM_GATES, "SWM_GATES")
+    assert _marked(gate, "swm"), f"{gate} compares with stable-worldmodel and must carry pytest.mark.swm"
+
+
+#: Installed in every profile by the test dependency group.
+_EVERYWHERE = {"pygame"}
+
+
+def _requires(family: str) -> set[str]:
+    spec = families.FAMILIES[family]
+    names = {re.split(r"[<>=!\[; ]", entry)[0].replace("-", "_") for entry in spec.get("requires", ())}
+    return names | ({"stable_worldmodel"} if "swm" in spec.get("capabilities", ()) else set())
+
+
+_FAMILY_MARK = re.compile(r"mark\.family\(['\"](\w+)['\"]\)")
+_FAMILY_IMPORTS = {"stable_worldmodel"}.union(*(_requires(f) for f in families.FAMILIES)) - _EVERYWHERE
+_TEST_FILES = sorted(
+    p.relative_to(families.ROOT).as_posix()
+    for bucket in ("unit", "integration", "regression")
+    for p in (families.ROOT / "tests" / bucket).glob("test_*.py")
+)
+
+
+@pytest.mark.parametrize("path", _TEST_FILES)
+def test_a_test_file_runs_in_a_profile_that_installs_its_imports(path):
+    """A family's requirements imported where no profile running the file installs them would only ever skip."""
+    text = (families.ROOT / path).read_text()
+    tree = _tree(path)
+    imports = _imports(tree)
+    family = families.family_of_file(path.rsplit("/", 1)[-1])
+    named = _FAMILY_MARK.findall(text)
+    missing = (imports & _FAMILY_IMPORTS) - set().union(*(_requires(f) for f in {family, *named}))
+    assert not missing, (
+        f"{path} runs in profiles {sorted({family, *named})}, none of which installs {sorted(missing)}: give the "
+        f"file (ci/families.toml `tests`) or the test (pytest.mark.family) to a family that does"
+    )
+    module = [
+        m
+        for n in tree.body
+        if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "pytestmark" for t in n.targets)
+        for m in _FAMILY_MARK.findall(ast.unparse(n.value))
+    ]
+    for test in (n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name.startswith("test_")):
+        marks = [m for d in test.decorator_list for m in _FAMILY_MARK.findall(ast.unparse(d))]
+        owner = (marks or module or [family])[0]
+        missing = (_imports(test) & _FAMILY_IMPORTS) - _requires(owner)
+        assert not missing, f"{path}::{test.name} runs in profile {owner}, which does not install {sorted(missing)}"
+    if "stable_worldmodel" in imports:
+        assert "mark.swm" in text, f"{path} imports stable_worldmodel without pytest.mark.swm"
 
 
 @pytest.mark.parametrize("name", envs("variation_map"))

@@ -3,7 +3,8 @@
 ``reset_leaf_gate`` covers a per-lane reset distribution (start and target/goal positions):
 explicit values and seeded per-lane draws must give the same reset State and first frame as
 SWM, and a short rollout must keep matching. ``appearance_gate`` covers Piecewise leaves that
-only the frame reads.
+only the frame reads. ``navigation_reset_rule_gate`` checks that a plain reset restores a leaf the
+previous reset's options set.
 """
 
 from __future__ import annotations
@@ -16,18 +17,65 @@ import numpy as np
 import torch
 
 import stable_envs as se
-from tests.helpers.reference.gates.variation_pilots import _frames_agree, _start_frames
 from tests.helpers.reference.native_navigation_semantics import NativeNavigationReference
 from tests.helpers.reference.semantics import compare_state
 
 ENVS = {"two_room": "TwoRoom", "piecewise": "Piecewise", "simple_point_maze": "SimplePointMaze"}
 EXPLICIT = {
+    ("two_room", "agent.position"): [[31.25, 47.5], [180.0, 60.0], [40.0, 200.0]],
+    ("simple_point_maze", "agent.position"): [[0.3, 4.1], [4.6, 0.4], [2.75, 0.2]],
     ("two_room", "target.position"): [[31.25, 47.5], [180.0, 60.0], [40.0, 200.0]],
     ("piecewise", "agent.position"): [[31.25, 47.5], [180.0, 60.0], [40.0, 200.0]],
     ("piecewise", "target.position"): [[100.0, 30.0], [20.5, 150.0], [190.0, 190.0]],
     ("simple_point_maze", "goal.position"): [[0.3, 4.1], [4.6, 0.4], [2.75, 0.2]],
 }
 STEPS = 8
+#: Pixels within this many of the start's pixel are reported separately.
+WINDOW = 16
+
+
+def _pixel(domain, position):
+    x, y = (float(v) for v in position)
+    if domain == "simple_point_maze":
+        return int(round(500 - 100 * y)), int(round(100 * x))
+    return int(round(y)), int(round(x))
+
+
+def _start_frames(domain, starts, ours, theirs, floor) -> dict:
+    """First-frame agreement with SWM under the cell's declared parity floor, plus a window at each start.
+
+    The floor applies to ``interior_mask`` pixels, the parity contract of these cells: antialiased
+    shape edges are not interior, and a dot's edge is where the renderers' residual lives.
+    """
+    from stable_envs.testing.conformance import interior_mask, pixel_agreement
+
+    agreement = pixel_agreement(ours, theirs)
+    diff = np.abs(ours.astype(np.int16) - theirs.astype(np.int16)).max(-1)
+    interior = interior_mask(theirs)
+    window = []
+    for lane, start in enumerate(starts):
+        r, c = _pixel(domain, start)
+        rows, cols = slice(max(r - WINDOW, 0), r + WINDOW + 1), slice(max(c - WINDOW, 0), c + WINDOW + 1)
+        patch, flat = diff[lane, rows, cols], interior[lane, rows, cols]
+        window.append(
+            {
+                "pixels_differing": int((patch > 0).sum()),
+                "interior_pixels_differing": int((patch[: flat.shape[0], : flat.shape[1]][flat] > 0).sum()),
+                "max_abs": int(patch.max()),
+            }
+        )
+    return {
+        "interior_exact_frac": agreement["interior_exact_frac"],
+        "interior_bad_px": agreement["interior_bad_px"],
+        "parity_interior_min": floor,
+        "exact_frac": agreement["exact_frac"],
+        "max_abs": agreement["max_abs"],
+        "window": window,
+    }
+
+
+def _frames_agree(frames: dict) -> bool:
+    return frames["interior_exact_frac"] is not None and frames["interior_exact_frac"] >= frames["parity_interior_min"]
 
 
 def _references(domain, leaf, explicit, options):
@@ -239,11 +287,33 @@ def min_steps_probe(seeds=range(5), steps: int = 8) -> dict:
 
 
 GATES = (
+    ("two_room", "agent.position"),
+    ("simple_point_maze", "agent.position"),
     ("two_room", "target.position"),
     ("piecewise", "agent.position"),
     ("piecewise", "target.position"),
     ("simple_point_maze", "goal.position"),
 )
+
+
+def navigation_reset_rule_gate(seed=29, steps=8) -> dict:
+    """TwoRoom ``agent.speed`` set by one reset's options, then a plain reset, stepped against SWM."""
+    speed = np.asarray([6.5], np.float32)
+    actions = np.random.default_rng(seed).uniform(-1, 1, (steps, 3, 2)).astype(np.float32)
+    with se.make("TwoRoom", num_envs=3, device="cpu") as env:
+        ref = NativeNavigationReference("two_room", 3, options={"variation_values": {"agent.speed": speed}})
+        try:
+            compare_state(env.reset(seed=seed, options={"variation_values": {"agent.speed": speed}}), ref.reset(seed))
+            ref.options = None
+            compare_state(env.reset(seed=seed + 1), ref.reset(seed + 1))
+            default = float(env.variation_space["agent"]["speed"].value[0])
+            assert bool((env._style["agent.speed"] == default).all())
+            assert all(float(e.variation_space["agent"]["speed"].value[0]) == default for e in ref.envs)
+            for action in actions:
+                compare_state(env.step(action, frames=None)["state"], ref.step(action)["state"])
+        finally:
+            ref.close()
+    return {"stable_env": "TwoRoom", "leaf": "agent.speed", "value": float(speed[0]), "steps": steps}
 
 
 def run_gate() -> dict:
@@ -252,6 +322,7 @@ def run_gate() -> dict:
         "appearance": appearance_gate(),
         "zones_bias_field": zones_bias_field_gate(),
         "min_steps_probe": min_steps_probe(),
+        "reset_rule": navigation_reset_rule_gate(),
     }
 
 

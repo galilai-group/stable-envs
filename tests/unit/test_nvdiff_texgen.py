@@ -21,6 +21,7 @@ import numpy as np
 import pytest
 
 mujoco = pytest.importorskip("mujoco")
+pytestmark = pytest.mark.family("fetch")
 
 from stable_envs.render import nvdiff as ND  # noqa: E402
 

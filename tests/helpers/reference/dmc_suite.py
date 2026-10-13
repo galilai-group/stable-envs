@@ -11,7 +11,7 @@ from tensordict import TensorDict
 #: Episode-drawn model entries each task writes: ``State key -> (named model field, index)``.
 EPISODE_FIELDS = {
     ("finger", "turn_easy"): {("model", "target_site_xz"): ("site_pos", ("target", ["x", "z"]))},
-    ("reacher", "easy"): {("task", "target_pos"): ("geom_pos", "target")},
+    **dict.fromkeys((("reacher", "easy"), ("reacher", "hard")), {("task", "target_pos"): ("geom_pos", "target")}),
     ("swimmer", "swimmer6"): {
         ("model", "target_geom_xy"): ("geom_pos", ("target", ["x", "y"])),
         ("model", "target_light_xy"): ("light_pos", ("target_light", ["x", "y"])),

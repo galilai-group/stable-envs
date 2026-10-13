@@ -248,6 +248,7 @@ def test_lock_color_is_scene_only():
 # ---------------------------------------------------------------- against the LIVE wrapper
 
 
+@pytest.mark.swm
 @pytest.mark.parametrize("swm_id", IDS)
 def test_the_recorded_inventory_still_matches_the_live_wrapper(swm_id):
     """Everything above is measured against a recorded list. This is the test that keeps that list

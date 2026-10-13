@@ -1,5 +1,6 @@
 """Native navigation Variation leaves that configure dynamics."""
 
+import numpy as np
 import pytest
 import torch
 
@@ -39,3 +40,40 @@ def test_piecewise_zone_bias_shifts_only_the_step_taken_in_that_zone():
     expected = torch.tensor([[7.0, 0.0]]) - torch.tensor([ZONE_BIAS[moved[0]]])
     assert torch.allclose(shifts[moved[0]], expected)
     env.close()
+
+
+def test_style_leaves_follow_the_rule():
+    with snv.make("TwoRoom", num_envs=2, device="cpu") as env:
+        registered = float(env._style["agent.speed"][0])
+        env.reset(seed=1, options={"variation_values": {"agent.speed": [6.5]}})
+        assert (env._style["agent.speed"] == 6.5).all()
+        env.reset(seed=1)
+        assert (env._style["agent.speed"] == registered).all()
+
+        env.set_variation({"agent.speed": [4.0], "agent.color": [10, 20, 30]})
+        env.reset(seed=2, options={"variation_values": {"agent.speed": [[6.5], [7.0]]}})
+        assert env._style["agent.speed"].tolist() == [6.5, 7.0]
+        assert env._style["agent.color"].tolist() == [[10.0, 20.0, 30.0]] * 2
+        env.reset(seed=2)
+        assert (env._style["agent.speed"] == 4.0).all()
+        assert env._style["agent.color"].tolist() == [[10.0, 20.0, 30.0]] * 2
+
+
+def test_reset_leaves_take_one_value_per_lane_and_follow_the_rule():
+    starts = np.asarray([[31.25, 47.5], [180.0, 60.0]], np.float32)
+    with snv.make("TwoRoom", num_envs=2, device="cpu") as env:
+        assert [leaf.path for leaf in env.reset_leaves] == ["agent.position", "target.position"]
+        sampled = env.reset(seed=3)["agent", "position"]
+        state = env.reset(seed=3, options={"variation_values": {"agent.position": starts}})
+        np.testing.assert_array_equal(state["agent", "position"].numpy(), starts)
+        assert torch.equal(env.reset(seed=3)["agent", "position"], sampled)
+        state = env.reset(seed=3, options={"variation": []})
+        np.testing.assert_array_equal(state["agent", "position"].numpy(), [[60.0, 112.0]] * 2)
+        np.testing.assert_array_equal(state["target", "position"].numpy(), [[164.0, 112.0]] * 2)
+        with pytest.raises(ValueError, match="per lane"):
+            env.reset(options={"variation_values": {"agent.position": np.zeros((3, 2))}})
+    with snv.make("SimplePointMaze", num_envs=2, device="cpu") as env:
+        goals = env.reset(seed=4, options={"variation": ["goal.position"]})["goal", "position"].numpy()
+        assert len({tuple(row) for row in goals.tolist()} - {(4.5, 4.5)}) == 2
+        state = env.reset(seed=4, options={"variation": [], "variation_values": {"goal.position": [2.5, 1.5]}})
+        np.testing.assert_array_equal(state["goal", "position"].numpy(), [[2.5, 1.5]] * 2)

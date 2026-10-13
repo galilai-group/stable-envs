@@ -190,6 +190,7 @@ def _live_leaves(swm_id):
     return sorted(_live_space(swm_id).names())
 
 
+@pytest.mark.swm
 @pytest.mark.parametrize("cls", CLASSES)
 def test_the_frozen_leaf_snapshot_is_still_what_the_wrapper_offers(cls):
     """An upstream leaf added or renamed must fail HERE, not become an unclassified leaf."""
@@ -198,6 +199,7 @@ def test_the_frozen_leaf_snapshot_is_still_what_the_wrapper_offers(cls):
     assert _live_leaves(m.swm_id) == sorted(leaves_for(scene))
 
 
+@pytest.mark.swm
 def test_check_mapping_reads_the_variation_space_through_the_fetch_wrapper():
     """``check_mapping`` must reach the swm space past ``FetchWrapper`` and classify every leaf."""
     _need("stable_worldmodel")

@@ -4,7 +4,7 @@ from importlib.metadata import PackageNotFoundError, version
 
 import pytest
 
-pytest.importorskip("stable_worldmodel")
+pytestmark = pytest.mark.swm
 pytest.importorskip("pygame")
 try:
     if version("pymunk") != "7.2.0":

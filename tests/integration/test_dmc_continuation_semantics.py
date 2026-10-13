@@ -9,10 +9,9 @@ import torch
 import stable_envs as se
 from stable_envs.envs.dmcontrol.simulation.continuation import CONFIG, CONTINUATION_FIELDS
 
-pytestmark = pytest.mark.gl
+pytestmark = [pytest.mark.gl, pytest.mark.swm]
 
 pytest.importorskip("dm_control")
-pytest.importorskip("stable_worldmodel")
 
 from tests.helpers.reference.gates.dmc_continuation import CASES, run_gate
 

@@ -2,7 +2,7 @@
 
 import pytest
 
-pytest.importorskip("stable_worldmodel")
+pytestmark = pytest.mark.swm
 pytest.importorskip("ogbench")
 
 from tests.helpers.reference.gates.ogb_variation import reset_options_gate, set_variation_gate  # noqa: E402

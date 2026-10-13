@@ -8,10 +8,9 @@ import torch
 import stable_envs as se
 from stable_envs.envs.dmcontrol.simulation.aligned import ALIGNED_FIELDS, CONFIG
 
-pytestmark = pytest.mark.gl
+pytestmark = [pytest.mark.gl, pytest.mark.swm]
 
 pytest.importorskip("dm_control")
-pytest.importorskip("stable_worldmodel")
 from tests.helpers.reference.gates.dmc_aligned import CASES, run_gate
 
 

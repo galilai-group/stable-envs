@@ -43,7 +43,9 @@ one line among a dozen other import notes. ``test_conformance.py`` closed that a
 
 from __future__ import annotations
 
+import importlib.abc
 import os
+import sys
 from pathlib import Path
 
 #: Set by CI profile jobs (``core``, ``dmcontrol``, ``ogbench``, ``fetch``, GPU profiles).
@@ -53,6 +55,7 @@ CI_PROFILE = os.environ.get("STABLE_ENVS_CI_PROFILE", "")
 import pytest
 
 from tests.helpers import families
+from tests.helpers.reference.cases import ORIGINAL_GATES
 from tests.helpers.reference.certification import install_on_classes
 
 install_on_classes()
@@ -152,6 +155,34 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pytest.mark.gpu)
             if path.name in _GPU_REGRESSION:
                 item.add_marker(pytest.mark.regression)
+
+
+_ORIGINAL = frozenset(ORIGINAL_GATES.values())
+
+
+class _NoStableWorldmodel(importlib.abc.MetaPathFinder):
+    def find_spec(self, name, path=None, target=None):
+        if name.partition(".")[0] == "stable_worldmodel":
+            raise ImportError(f"{name} is blocked: an ORIGINAL_GATES test must stand without stable-worldmodel")
+        return None
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_call(item):
+    """An ``ORIGINAL_GATES`` test runs with stable_worldmodel unimportable."""
+    if f"{item.nodeid.partition('::')[0]}::{getattr(item, 'originalname', item.name)}" not in _ORIGINAL:
+        yield
+        return
+    hidden = {
+        name: sys.modules.pop(name) for name in list(sys.modules) if name.partition(".")[0] == "stable_worldmodel"
+    }
+    blocker = _NoStableWorldmodel()
+    sys.meta_path.insert(0, blocker)
+    try:
+        yield
+    finally:
+        sys.meta_path.remove(blocker)
+        sys.modules.update(hidden)
 
 
 #: Set to anything to allow a run in which nothing passed or failed. For a deliberately narrow

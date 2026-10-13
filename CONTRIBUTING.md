@@ -86,14 +86,22 @@ Every registered class is picked up automatically, in its family's CI profile:
   as in a batch.
 - **Ownership** (`tests/unit/test_registry_coverage.py`): its module lies under exactly one family's
   `paths` in `ci/families.toml`, and that family's env modules import wherever its `requires` are met.
-- **Source comparison**: an entry in `SOURCE_GATES` (`tests/helpers/reference/cases.py`) naming a CPU
-  test that compares it with its source, live or through a corpus recorded from it, owned by the same
-  family.
+- **Source comparisons**, in two layers (`tests/helpers/reference/cases.py`). An `ORIGINAL_GATES` entry
+  names a CPU test, owned by the same family, comparing it with the library it ports (dm_control,
+  gymnasium-robotics, ogbench, ...) or a corpus recorded from it; that test imports no
+  stable-worldmodel (it runs with the import blocked). Where stable-worldmodel
+  registers the env, a `SWM_GATES` entry names a test marked `swm` comparing it with live
+  stable-worldmodel.
 - **Variation map**: when its stable-worldmodel source has a variation space, a `VariationMap` in
   `tests/helpers/reference/variation_maps/`.
 
-Families whose gates compare against stable-worldmodel declare the `swm` capability; their profile
-then installs it at `[swm].commit` and, in CI, a test that skips for want of it fails. A check that
+Every test that needs stable-worldmodel carries `pytest.mark.swm`, and families with such tests
+declare the `swm` capability; their profile then installs it at `[swm].commit` and, in CI, a test that
+skips for want of it fails. A test file must run in a profile that installs what it imports: give the
+file to a family in `ci/families.toml`, or a single test to one with `pytest.mark.family("<name>")`.
+When stable-worldmodel drops its envs, the SWM layer goes in one change: delete `SWM_GATES`, the `swm`
+tests and their gate helpers, the `swm` capability and `[swm]` block in `ci/families.toml`, and
+`_install_swm` in `noxfile.py`; `ORIGINAL_GATES` then stands alone. A check that
 truly cannot apply (a renderer-only cell has no `step`) is waived only in `tests/exemptions.toml`, with
 the env, its family, the check and the reason; that file has a code owner. A waived check keeps
 running, and the suite fails once it passes, so the entry is removed in the change that fixes it.

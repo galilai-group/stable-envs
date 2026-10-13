@@ -8,6 +8,7 @@ import pytest
 _RETAINED_REFERENCES = []  # Keep GL contexts alive until process exit.
 
 
+@pytest.mark.family("ogbench")
 @pytest.mark.parametrize(
     "lock_colors",
     [
@@ -80,6 +81,7 @@ def test_scene_button_materials_preserve_shading_and_independent_colors(lock_col
             renderer.close()
 
 
+@pytest.mark.family("dmc")
 def test_finger_visibility_groups_the_source_material_sites():
     pytest.importorskip("dm_control")
     from stable_envs.envs.dmcontrol import DMCFingerTurnHard
@@ -91,6 +93,7 @@ def test_finger_visibility_groups_the_source_material_sites():
         assert env.resolve_style()["visibility.target"].item() == 0
 
 
+@pytest.mark.family("ogbench")
 def test_maze_observation_modes_have_separate_textures_and_cache_entries():
     pytest.importorskip("ogbench")
     from stable_envs.envs.ogbench.maze import _scene_env
@@ -104,6 +107,7 @@ def test_maze_observation_modes_have_separate_textures_and_cache_entries():
     assert len(np.unique(pixels[2]["tex"].reshape(-1, 3), axis=0)) > 2
 
 
+@pytest.mark.family("ogbench")
 def test_maze_goal_is_rendered_from_supplied_state():
     pytest.importorskip("ogbench")
     import torch

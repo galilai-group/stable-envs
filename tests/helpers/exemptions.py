@@ -22,7 +22,7 @@ except ImportError:  # Python 3.10
 
 FILE = ROOT / "tests" / "exemptions.toml"
 CONFORMANCE = ("specs", "seeded", "lanes", "state", "variation", "batch_render")
-COVERAGE = ("owner", "source", "variation_map")
+COVERAGE = ("owner", "original", "swm", "variation_map")
 CHECKS = CONFORMANCE + COVERAGE
 ENTRIES: list[dict] = tomllib.loads(FILE.read_text()).get("exemption", [])
 

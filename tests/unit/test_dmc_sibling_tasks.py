@@ -1,4 +1,4 @@
-"""The six sibling-task cells simulate dm_control's own registered tasks exactly."""
+"""The DM Control cells simulate dm_control's own registered tasks exactly."""
 
 import numpy as np
 import pytest
@@ -18,11 +18,23 @@ CELLS = {
     "DMCReacherEasy": ("reacher", "easy"),
     "DMCSwimmerSwimmer6": ("swimmer", "swimmer6"),
 }
+#: Historical cells against the suite task each simulates. The aligned cells (SWM's MJCF round trip)
+#: and walker (SWM's task reward) replay corpora instead, in test_dmc_oracle_replay.py.
+HISTORICAL = {
+    "DMCAcrobotBalance": ("acrobot", "swingup_sparse"),
+    "DMCPendulumSwingup": ("pendulum", "swingup"),
+    "DMCCartpoleSwingup": ("cartpole", "swingup_sparse"),
+    "DMCCheetahRun": ("cheetah", "run"),
+    "DMCHopperHop": ("hopper", "hop"),
+    "DMCHumanoidWalk": ("humanoid", "walk"),
+    "DMCReacherHard": ("reacher", "hard"),
+}
+TRACKCOM = {"DMCSwimmerSwimmer6", "DMCCheetahRun", "DMCHopperHop", "DMCHumanoidWalk"}
 
 
 def _make(name):
-    # The swimmer renders through MJWarp; its simulation does not need the renderer.
-    return se.make(name, num_envs=2, device="cpu", **({"backend": "opengl"} if name == "DMCSwimmerSwimmer6" else {}))
+    # These render through MJWarp; their simulation does not need the renderer.
+    return se.make(name, num_envs=2, device="cpu", **({"backend": "opengl"} if name in TRACKCOM else {}))
 
 
 def _source_fields(state):
@@ -65,5 +77,18 @@ def test_cell_matches_the_source_task_and_restores_into_a_fresh_env(name):
                 _rollout(fresh, ref, actions[16:])
                 env.set_state(fresh.get_state())
                 compare_state(env.get_state(), fresh.get_state())
+    finally:
+        ref.close()
+
+
+@pytest.mark.parametrize("name", HISTORICAL)
+def test_historical_cell_matches_the_source_task(name):
+    seed = 7
+    ref = SuiteReference(*HISTORICAL[name], 2)
+    try:
+        with _make(name) as env:
+            actions = np.random.default_rng(seed).uniform(-1, 1, (24, 2, env.action_dim))
+            compare_state(_source_fields(env.reset(seed=seed)), ref.reset(seed))
+            _rollout(env, ref, actions)
     finally:
         ref.close()

@@ -26,14 +26,7 @@ from tests.helpers.reference.variation_maps.dmc_control import (
     swm_defaults,
 )
 
-_HAVE_SWM = True
-try:  # pragma: no cover - environment dependent
-    import gymnasium  # noqa: F401
-    import stable_worldmodel  # noqa: F401
-except Exception:  # pragma: no cover
-    _HAVE_SWM = False
-
-needs_swm = pytest.mark.skipif(not _HAVE_SWM, reason="stable_worldmodel is not installed")
+needs_swm = pytest.mark.swm
 #: The DM Control cells register only when dm_control and a GL backend are importable; the two
 #: tests below are the only ones that need a DM Control cell and no swm.
 needs_dmc = pytest.mark.skipif(

@@ -6,8 +6,10 @@ import sys
 import pytest
 
 pytest.importorskip("dm_control")
-pytest.importorskip("stable_worldmodel")
-pytestmark = pytest.mark.skipif(sys.platform == "darwin", reason="DM Control frames are certified on Linux GL")
+pytestmark = [
+    pytest.mark.swm,
+    pytest.mark.skipif(sys.platform == "darwin", reason="DM Control frames are certified on Linux GL"),
+]
 
 from tests.helpers.reference.gates.dmc_appearance import (  # noqa: E402
     CASES,

@@ -234,6 +234,51 @@ def sampled_and_restored_gate(name, seed=29, steps=20):
     return {"leaves": leaves, "max_state_error": error, "restored_max_state_error": restored}
 
 
+def reset_rule_gate(name="DMCCartpoleSwingup", seed=23, steps=10) -> dict:
+    """``reset(options)`` then ``reset()``: leaves the second reset does not name return to their defaults.
+
+    First the registered defaults, then defaults installed by ``set_variation``, which SWM
+    spells ``variation_space.set_init_value``. Gravity is read from each SWM model.
+    """
+    gz = np.asarray([[-3.25], [-17.5], [-9.81]])
+    gx = np.asarray([[1.5], [0.0], [-2.0]])
+    configured = -5.0
+    with _make(name) as env:
+        actions = np.random.default_rng(seed).uniform(-1, 1, (steps, 3, env.action_dim))
+        lanes = _Lanes(name, {"gravity.z": gz})
+        try:
+            assert (
+                _compare(env.reset(seed=seed, options={"variation_values": {"gravity.z": gz}}), lanes.reset(seed)) == 0
+            )
+            for ref in lanes.refs:
+                ref.options = None
+            ours = env.reset(seed=seed + 1)
+            assert _compare(ours, lanes.reset(seed + 1)) == 0
+            assert bool((ours["physics", "gravity", "z"] == -9.81).all())
+            registered, _ = _rollout(env, lanes, actions)
+
+            env.set_variation({"gravity.z": [configured]})
+            for lane, ref in enumerate(lanes.refs):
+                leaf = ref.envs[0].variation_space["gravity"]["z"]
+                leaf.set_init_value(np.asarray([configured], leaf.dtype))
+                ref.options = {"variation_values": {"gravity.x": _swm_dtype("gravity.x", gx[lane])}}
+            ours = env.reset(seed=seed + 2, options={"variation_values": {"gravity.x": gx}})
+            assert _compare(ours, lanes.reset(seed + 2)) == 0
+            for ref in lanes.refs:
+                ref.options = None
+            ours = env.reset(seed=seed + 3)
+            assert _compare(ours, lanes.reset(seed + 3)) == 0
+            assert bool((ours["physics", "gravity", "x"] == 0.0).all())
+            assert bool((ours["physics", "gravity", "z"] == configured).all())
+            configured_error, _ = _rollout(env, lanes, actions)
+        finally:
+            lanes.close()
+    return {
+        "registered_defaults": {"max_state_error": registered},
+        "set_variation_defaults": {"value": configured, "max_state_error": configured_error},
+    }
+
+
 def run_gate(cells=None) -> dict:
     out = {}
     for name in cells or CELLS:

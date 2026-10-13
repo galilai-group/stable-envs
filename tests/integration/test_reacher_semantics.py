@@ -8,7 +8,7 @@ import torch
 import stable_envs as se
 
 pytest.importorskip("dm_control")
-pytest.importorskip("stable_worldmodel")
+pytestmark = pytest.mark.swm
 
 from tests.helpers.reference.gates.reacher import run_gate
 

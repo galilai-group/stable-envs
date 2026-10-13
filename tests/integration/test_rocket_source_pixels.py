@@ -9,7 +9,7 @@ import stable_envs as se
 from tests.helpers.reference.pixels import check_online_pixels
 from tests.helpers.reference.rocket_pixels import SCENARIOS, rocket_trace
 
-pytestmark = [pytest.mark.integration, pytest.mark.reference]
+pytestmark = [pytest.mark.integration, pytest.mark.reference, pytest.mark.swm]
 
 SELECTIONS = (None, slice(9, 10), slice(None), slice(None, None, -2))
 
@@ -28,7 +28,6 @@ def test_source_rollout_pixels(
 ) -> None:
     pytest.importorskip("PyFlyt")
     pytest.importorskip("pybullet")
-    pytest.importorskip("stable_worldmodel")
     if device == "cuda" and not torch.cuda.is_available():
         pytest.skip("CUDA source-pixel tests run on Oscar")
     with rocket_trace(scenario, dtype, horizon) as (config, trace):

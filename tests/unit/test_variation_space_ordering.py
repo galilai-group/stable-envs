@@ -41,6 +41,8 @@ def swm_spaces():
     return pytest.importorskip("stable_worldmodel.spaces")
 
 
+@pytest.mark.swm
+@pytest.mark.family("classic")
 @pytest.mark.parametrize("keys", [["all"], ["z", "a.x", "b.c"], ["a"], ["a.k", "z"]])
 def test_update_draws_match_swm_when_a_sampling_order_is_given(swm_spaces, keys):
     order = ["z", "b", "a"]
@@ -53,6 +55,8 @@ def test_update_draws_match_swm_when_a_sampling_order_is_given(swm_spaces, keys)
     assert any(v != _values(_tree(ours, order=order))[k] for k, v in _values(mine).items())
 
 
+@pytest.mark.swm
+@pytest.mark.family("classic")
 def test_sample_returns_the_dict_in_sampling_order_and_stores_it(swm_spaces):
     order = ["z", "b", "a"]
     mine, theirs = _tree(ours, order=order), _tree(swm_spaces, order=order)

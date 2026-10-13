@@ -24,6 +24,8 @@
   (`uvx nox -s "test(<profile>)"`), a diff-to-profile plan from `ci/families.toml`, a single `ci-ok`
   check and a nightly run of every profile. Family profiles that compare against stable-worldmodel
   install it at the pinned commit and run those gates live.
+- Two source-comparison layers per env: `ORIGINAL_GATES` against the library it ports, run with
+  stable-worldmodel unimportable, and `SWM_GATES` against live stable-worldmodel, marked `swm`.
 - Registry-wide rules for every registered class: the generic contract
   (`tests/unit/test_registry_conformance.py`), family ownership, a source comparison and a variation
   map (`tests/unit/test_registry_coverage.py`). Waivers live in `tests/exemptions.toml`, which has a

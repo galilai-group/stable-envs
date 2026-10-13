@@ -302,43 +302,6 @@ def test_set_variation_sets_the_default_and_a_restored_state_does_not(cartpole):
     np.testing.assert_array_equal(_gravity(cartpole), np.tile([0.0, 0.0, -6.0], (3, 1)))
 
 
-def test_style_leaves_follow_the_rule():
-    with se.make("TwoRoom", num_envs=2, device="cpu") as env:
-        registered = float(env._style["agent.speed"][0])
-        env.reset(seed=1, options={"variation_values": {"agent.speed": [6.5]}})
-        assert (env._style["agent.speed"] == 6.5).all()
-        env.reset(seed=1)
-        assert (env._style["agent.speed"] == registered).all()
-
-        env.set_variation({"agent.speed": [4.0], "agent.color": [10, 20, 30]})
-        env.reset(seed=2, options={"variation_values": {"agent.speed": [[6.5], [7.0]]}})
-        assert env._style["agent.speed"].tolist() == [6.5, 7.0]
-        assert env._style["agent.color"].tolist() == [[10.0, 20.0, 30.0]] * 2
-        env.reset(seed=2)
-        assert (env._style["agent.speed"] == 4.0).all()
-        assert env._style["agent.color"].tolist() == [[10.0, 20.0, 30.0]] * 2
-
-
-def test_reset_leaves_take_one_value_per_lane_and_follow_the_rule():
-    starts = np.asarray([[31.25, 47.5], [180.0, 60.0]], np.float32)
-    with se.make("TwoRoom", num_envs=2, device="cpu") as env:
-        assert [leaf.path for leaf in env.reset_leaves] == ["agent.position", "target.position"]
-        sampled = env.reset(seed=3)["agent", "position"]
-        state = env.reset(seed=3, options={"variation_values": {"agent.position": starts}})
-        np.testing.assert_array_equal(state["agent", "position"].numpy(), starts)
-        assert torch.equal(env.reset(seed=3)["agent", "position"], sampled)
-        state = env.reset(seed=3, options={"variation": []})
-        np.testing.assert_array_equal(state["agent", "position"].numpy(), [[60.0, 112.0]] * 2)
-        np.testing.assert_array_equal(state["target", "position"].numpy(), [[164.0, 112.0]] * 2)
-        with pytest.raises(ValueError, match="per lane"):
-            env.reset(options={"variation_values": {"agent.position": np.zeros((3, 2))}})
-    with se.make("SimplePointMaze", num_envs=2, device="cpu") as env:
-        goals = env.reset(seed=4, options={"variation": ["goal.position"]})["goal", "position"].numpy()
-        assert len({tuple(row) for row in goals.tolist()} - {(4.5, 4.5)}) == 2
-        state = env.reset(seed=4, options={"variation": [], "variation_values": {"goal.position": [2.5, 1.5]}})
-        np.testing.assert_array_equal(state["goal", "position"].numpy(), [[2.5, 1.5]] * 2)
-
-
 def test_reset_refuses_leaves_it_cannot_set_on_envs_without_reset_options():
     with se.make("CartPole", num_envs=2, device="cpu") as env:
         env.set_variation({"physics.gravity": [12.0]})
@@ -378,6 +341,7 @@ def test_classic_state_restores_its_physics_for_the_episode(name, leaf, default,
             env.set_state(saved.exclude(key))
 
 
+@pytest.mark.family("fetch")
 def test_fetch_reset_restores_colors_and_mass():
     pytest.importorskip("gymnasium_robotics")
     options = {

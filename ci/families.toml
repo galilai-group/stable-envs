@@ -68,6 +68,7 @@ tests = [
   "test_saved_native.py",
 ]
 requires = ["pygame"]
+capabilities = ["swm"]
 
 [family.navigation]
 aliases = ["nav_", "tworoom", "two_room", "pointmaze"]
@@ -120,6 +121,8 @@ tests = [
   "test_reacher_*",
   "test_cpu3d*",
   "test_variation_maps_dmc_*",
+  "test_variation_hooks.py",
+  "test_mjwarp_*",
   "test_plate_texels.py",
 ]
 requires = ["dm-control", "mujoco"]

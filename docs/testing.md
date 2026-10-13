@@ -19,9 +19,11 @@ profile, so a family this interpreter lacks is skipped with the cause rather tha
   actions; `get_state`/`set_state` restores bit-exactly into memory the snapshot owns; a variation
   installed in one env round-trips through another; a lane renders the same alone as in a batch.
 - `tests/unit/test_registry_coverage.py`: the class's module lies under exactly one family's
-  `paths` in `ci/families.toml`; it has a `SOURCE_GATES` entry (`tests/helpers/reference/cases.py`)
-  naming a CPU test that compares it with its source; and, where its stable-worldmodel source has a
-  variation space, a `VariationMap` in `tests/helpers/reference/variation_maps/`.
+  `paths` in `ci/families.toml`; it has an `ORIGINAL_GATES` entry (`tests/helpers/reference/cases.py`)
+  naming a CPU test that compares it with the library it ports and imports no stable-worldmodel, and, where stable-worldmodel registers it, a `SWM_GATES` entry naming a test
+  marked `swm`; where its stable-worldmodel source has a variation space, a `VariationMap` in
+  `tests/helpers/reference/variation_maps/`. Every test file runs in a profile that installs the
+  family packages it imports.
 - `tests/exemptions.toml` is the only place a check is waived, by env (a glob over class names),
   family, check name and reason. A waived check still runs and must keep failing; once it passes the
   entry is stale and the suite fails until it is removed. `.github/CODEOWNERS` assigns the file a

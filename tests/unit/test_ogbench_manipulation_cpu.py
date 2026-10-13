@@ -40,6 +40,7 @@ def oracle():
     return load_oracle()
 
 
+@pytest.mark.swm
 @pytest.mark.parametrize("family", CLASSES)
 @pytest.mark.parametrize("seed", [0, 17, 42])
 @pytest.mark.parametrize("task", [None, 1, 2, 3, 4, 5, "custom"])
@@ -86,6 +87,7 @@ def test_controlled_oracle_reset_and_action_parity(family, seed, task, oracle):
         raw.close()
 
 
+@pytest.mark.swm
 @pytest.mark.parametrize("family", CLASSES)
 @pytest.mark.parametrize("reward_task", [0, 1, 5])
 def test_reward_routes_delegate_without_task_draw(family, reward_task, oracle):
@@ -326,6 +328,7 @@ def test_step_delegation_substeps_and_no_implicit_restore(family):
         assert np.array_equal(raw.unnormalize_action(np.ones(5)), np.array([0.05, 0.05, 0.05, 0.3, 1.0]))
 
 
+@pytest.mark.swm
 @pytest.mark.parametrize("interaction", ["cube", "button", "drawer", "window"])
 def test_contact_histories_oracle_and_independent_restore(interaction, oracle):
     family = "Cube" if interaction == "cube" else "Scene"
@@ -482,6 +485,7 @@ def test_seed_metadata_is_not_needed_after_arbitrary_width_seed(family):
         equal(a.step(np.zeros((1, 5)), frames=None), b.step(np.zeros((1, 5)), frames=None))
 
 
+@pytest.mark.swm
 @pytest.mark.parametrize("family", CLASSES)
 @pytest.mark.parametrize("size", [np.array([0.01]), np.array([0.025], np.float32), [0.025], [0.03]])
 def test_size_dtype_model_reconstruction_and_oracle(family, size, oracle):
@@ -501,6 +505,7 @@ def test_size_dtype_model_reconstruction_and_oracle(family, size, oracle):
         raw.close()
 
 
+@pytest.mark.swm
 @pytest.mark.parametrize("family", CLASSES)
 def test_owned_variation_child_streams_and_no_recompilation_branch(family, oracle):
     cls = CompatibleCube if family == "Cube" else CompatibleScene
@@ -529,6 +534,7 @@ def test_owned_variation_child_streams_and_no_recompilation_branch(family, oracl
         b.close()
 
 
+@pytest.mark.swm
 @pytest.mark.parametrize("family", CLASSES)
 @pytest.mark.parametrize("seed", [0, 17, 42])
 def test_identical_genuine_box_settling_actions(family, seed, oracle):

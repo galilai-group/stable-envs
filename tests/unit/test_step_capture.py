@@ -245,6 +245,7 @@ def test_classic_stops_at_distinct_time_limits_without_step_or_reset(monkeypatch
         assert out["state"]["lifecycle", "elapsed_steps"][:, 0].tolist() == calls
 
 
+@pytest.mark.family("navigation")
 @pytest.mark.parametrize("name", ["TwoRoom", "Piecewise", "SimplePointMaze"])
 def test_navigation_sequence_matches_scalar_calls(name):
     if name == "SimplePointMaze":
