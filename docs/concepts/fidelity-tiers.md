@@ -283,17 +283,27 @@ which is what caps `mujoco_warp` at 0.0017–0.0069% of far-field floor pixels b
 samples a prefiltered pyramid and reaches 66–81% of them; the same pipeline with the pyramid switched
 off lands back at 0.01%, which is the control that says the two were failing for one reason.
 
-**DM Control's five body-tracking domains** — `DMCCheetahRun`, `DMCWalkerWalk`, `DMCHopperHop`,
-`DMCHumanoidWalk`, `DMCSwimmerSwimmer6` — rendered by `mujoco_warp`. Mean 4.35–8.07/255, 70.0–90.5%
-within 8/255, SSIM 0.661–0.964, at 225–364× the official renderer at batch 1024. Camera 0 on these is
-`mode="trackcom"`: it rides the body's centre of mass, so the static half of the scene moves with the
-state and the plate that makes the other eleven DM Control cells parity does not exist for them. Two
-named mechanisms, and the first is the one that separates this family from the Gymnasium six above —
-DM Control's skybox is a gradient with `mark="random"` specks and MJWarp samples it with one
-unfiltered tap, which is 48–89% of the frame on three of the five and is what holds SSIM down; the
-second is the same minified checker floor. nvdiffrast closes the floor and is **not** a drop-in here:
-these scenes' model lights are `trackcom` too, and `nvdiff.Lights` carries one position for the whole
-batch. A sixth domain (`fish`) was measured and does not ship.
+**DM Control's six body-tracking cells** — `DMCCheetahRun`, `DMCHopperHop`, `DMCHumanoidWalk`,
+`DMCQuadrupedWalk`, `DMCSwimmerSwimmer6`, `DMCWalkerWalk` — rendered by `mujoco_warp`. Their
+`visual_fidelity` declarations (`VISUAL_FIDELITY` in each cell's module under
+`stable_envs/envs/dmcontrol/`) measure against `dm_control`'s `physics.render` at camera 0 on mujoco
+3.12.0: mean 0.89–2.53/255, 95.3–98.6% of pixels within 8/255, SSIM 0.984–0.994. Camera 0 on these is
+`mode="trackcom"` (Quadruped's measured camera is 2, also trackcom): it rides the body's centre of
+mass, so the static half of the scene moves with the state and the plate that makes the other twelve
+DM Control cells parity does not exist for them. The share of the frame that is skybox is 0.0 for
+Humanoid and Swimmer, 0.148 for Quadruped, 0.478 for Walker, 0.831 for Cheetah and 0.893 for Hopper;
+the floor share is 0.959, 0.981, 0.806, 0.448, 0.127 and 0.082 in the same order. nvdiffrast is
+**not** a drop-in here: these scenes' model lights are `trackcom` too, and `nvdiff.Lights` carries
+one position for the whole batch.
+
+| cell | mean abs /255 | within 8/255 | SSIM |
+|---|---:|---:|---:|
+| `DMCCheetahRun` | 1.29 | 0.964 | 0.990 |
+| `DMCHopperHop` | 0.89 | 0.976 | 0.990 |
+| `DMCHumanoidWalk` | 2.23 | 0.967 | 0.984 |
+| `DMCQuadrupedWalk` | 1.16 | 0.986 | 0.994 |
+| `DMCSwimmerSwimmer6` | 2.53 | 0.963 | 0.994 |
+| `DMCWalkerWalk` | 1.75 | 0.953 | 0.991 |
 
 `RoboCasa` — four classes, one compiled kitchen each, rendered by `mujoco_warp`'s batch raytracer. The
 residual is one named mechanism: MJWarp derives texture UVs for `PLANE` and `MESH` only, so a textured
@@ -312,9 +322,9 @@ worlds with the same `qpos` and comparing against slot 0 isolates it: `h1-balanc
 pixels at 1/255, in slots 21 and 42, and eight sibling cells differ on none. The upstream fix it
 needs is a deterministic tie-break at equal ray parameter.
 
-That made **thirty-two classes** in the tier while the package registered all of them: six MuJoCo
-locomotion, five DM Control, seventeen HumanoidBench and four RoboCasa, against 164 in the parity tier.
-Of these, only the DM Control cells remain in the released package. A cell with a sealed corrector adds
+The released package holds eight visual-tier classes among the 75 that register without PyFlyt: the
+six DM Control cells above, `OGBCube` and `OGBScene`; the other 67 are parity tier. The `contrib/`
+ports add six MuJoCo locomotion, seventeen HumanoidBench and four RoboCasa classes. A cell with a sealed corrector adds
 one more — `RoboCasaCounterToSinkCorrected` — and the count is machine-dependent for the reason
 [above](#how-a-class-comes-to-exist): no weights, no class. `stable_envs.format_registry()` prints the
 current answer and marks the learned ones separately.

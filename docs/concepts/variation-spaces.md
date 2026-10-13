@@ -46,6 +46,18 @@ env.variation_names         # leaf paths, one per leaf (an RGB colour is still o
 `variation_spec` is a `snv.Spec`, not environment metadata. Use `snv.info("PushT")` for
 family / domain / slug.
 
+`env.variation_space` is a `stable_envs.spaces.Dict` of nested `Dict`, `Box`, `RGBBox` and
+`Discrete` leaves ([API](../api/spaces.md)):
+
+- `Dict(spaces, sampling_order=[...])` draws top-level keys in that order, with unlisted keys after
+  them in insertion order; `sample()` and `update()` follow it, and `ordered_names()` yields every
+  dotted path in that order. A key in `sampling_order` that is not in `spaces` is a `ValueError`.
+- `Box(..., exact=True)` keeps `init_value` and later values as given, so a Python float stays
+  float64; without it values are cast to the leaf's `dtype` and shape. A `Box` given an explicit
+  `init_value` holds it as a 0-d array when its shape is `()`.
+- `set_init_value(value, reset_value=True)` replaces a leaf's default; with `reset_value=False` the
+  current value is left alone. `Dict.set_init_value` forwards both arguments.
+
 ## Defaults and samples
 
 ```python
@@ -89,6 +101,22 @@ applies some leaves to the running episode:
 - OGBench Cube/Scene: cube size and colour, floor colour, camera angle, light intensity and lock
   colour. Reset-time placements wait for the next reset, and `agent.color` follows the source's
   compile rule.
+
+## Coverage against stable-worldmodel
+
+For each class with a stable-worldmodel counterpart that has a variation space, a `VariationMap`
+in `tests/helpers/reference/variation_maps/` (and `tests/helpers/reference/variation.py`) places
+every swm leaf in exactly one of: mapped (identical, renamed, scaled, affine, colour or enum),
+unsupported, dead upstream, not applicable or swm-only. The maps are test evidence, not a shipped
+API, and `CONTRIBUTING.md` requires one for a new class whose source varies.
+
+- DM Control: `floor.color` is mapped on all 13 mapped cells. On the five trackcom cells with a
+  map the checker is drawn from a texture of per-texel palette weights times each row's colours, so
+  one MJWarp context serves every colour. `DMCWalkerWalk` also maps `floor.rotation_y`, a physics
+  leaf that tilts the floor geom and that every renderer draws per row.
+- OGBench Cube and Scene: `camera.angle_delta`, `light.intensity`, `cube.size` and, on Scene,
+  `lock_color` are per-world inputs of one MJWarp context per family, so a single batch renders
+  any mix of their values; Cube maps 11 swm leaves and Scene 12.
 
 ## One Variation vs B independent Variations
 

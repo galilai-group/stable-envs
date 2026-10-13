@@ -99,9 +99,28 @@ snapshots; compact rows cannot be used to restore omitted simulator fields.
 
 Frames at native resolution: [Gallery](docs/gallery.md).
 
-## Optional families
+## Environments
 
-`len(snv.list_envs())` is the current answer **on this interpreter**. The union over every extra is larger; a machine without `mujoco` simply does not register DM Control, Fetch, OGBench manipulation, and so on.
+With every extra installed, `snv.list_envs()` returns 76 environments:
+
+| family | environments |
+|---|---:|
+| `classic_control` | 5 |
+| `craftax` | 6 |
+| `dmcontrol` | 18 |
+| `fetch` | 12 |
+| `navigation` | 5 |
+| `ogbench` | 27 |
+| `pusht` | 2 |
+| `pyflyt` | 1 |
+
+Every registered environment simulates except `CraftaxClassic` and `CraftaxFull`, which are
+renderer-only: `reset` and `step` raise, and `CraftaxClassicPixels` and `CraftaxPixels` carry the
+simulation. The waivers are listed in [`tests/exemptions.toml`](tests/exemptions.toml).
+
+`len(snv.list_envs())` is the answer **on this interpreter**. A family registers only when its
+dependencies import, so a machine without `mujoco` does not register DM Control, Fetch or OGBench
+manipulation, and without PyFlyt the count is 75.
 
 ```python
 snv.import_errors()  # {module: "ModuleNotFoundError: ..."}
@@ -111,6 +130,17 @@ snv.list_families()  # stable family ids that registered
 Device honesty is part of the contract: OGBCube, OGBScene and PyFlytRocketLanding refuse CPU rather than silently falling back; Fetch has no CPU backend. Details: [limitations](docs/concepts/limitations.md).
 
 Renderer-only ports of other families (MiniGrid, Highway, RoboCasa, …) are kept in the repository under [`contrib/`](contrib/README.md). They are not checked against their upstream State and are not part of the released package.
+
+## Testing
+
+`uvx nox -s "test(<profile>)"` builds one family's pinned environment from `uv.lock` and runs its
+tests; `ci/families.toml` says which paths and test files each profile owns. Every registered class
+is held to the generic contract in `tests/unit/test_registry_conformance.py`, and
+`tests/unit/test_registry_coverage.py` requires it to have one owning family, a source comparison
+and, where stable-worldmodel has a variation space, a variation map. A waiver of either rule lives
+only in `tests/exemptions.toml`, which has a code owner. Profiles whose gates compare against
+stable-worldmodel run it live at the commit pinned in `ci/families.toml`. See
+[Contributing](CONTRIBUTING.md).
 
 ## Documentation
 

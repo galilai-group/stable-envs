@@ -103,7 +103,7 @@ An aggregate over a batch of frames cannot see a small number of badly wrong pix
 aggregates this repo declares are means over 64 frames. So "the metrics did not move" is not evidence
 that the picture did not move, and the two have been observed to disagree by 112/255.
 
-Measured on the five DM Control TrackCom cells, comparing `enable_backface_culling=False` against the
+Measured on five of the six DM Control TrackCom cells, comparing `enable_backface_culling=False` against the
 shipped context. The frontier sweep reported **all four fidelity metrics unchanged to four decimal
 places on every cell** — mean |diff| moved by less than 0.005, within-8 and SSIM by less than 0.0001.
 A byte comparison over 4 draws x 64 states says something else:
@@ -113,7 +113,7 @@ A byte comparison over 4 draws x 64 states says something else:
 | cheetah-run | **0/255** | **0/255** |
 | walker-walk | 0/255 | 92/255 |
 | hopper-hop | 0/255 | 76/255 |
-| humanoid-stand | 68/255 | 112/255 |
+| humanoid | 68/255 | 112/255 |
 | swimmer6 | 95/255 | 109/255 |
 
 The flag is free on one cell of five, and the aggregate said it was free on all five. It also says

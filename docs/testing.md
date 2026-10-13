@@ -9,9 +9,34 @@ A skipped required gate leaves the registration incomplete.
 The renderer-focused checks below do not replace full-State restoration and
 independent source gates.
 
+## Registry rules and CI profiles
+
+Every registered class is checked without being listed anywhere. The rules apply per family
+profile, so a family this interpreter lacks is skipped with the cause rather than failed.
+
+- `tests/unit/test_registry_conformance.py`: reset, step and render match `state_spec`,
+  `action_spec` and `frame_spec`; one seed gives one rollout; a lane does not see its neighbours'
+  actions; `get_state`/`set_state` restores bit-exactly into memory the snapshot owns; a variation
+  installed in one env round-trips through another; a lane renders the same alone as in a batch.
+- `tests/unit/test_registry_coverage.py`: the class's module lies under exactly one family's
+  `paths` in `ci/families.toml`; it has a `SOURCE_GATES` entry (`tests/helpers/reference/cases.py`)
+  naming a CPU test that compares it with its source; and, where its stable-worldmodel source has a
+  variation space, a `VariationMap` in `tests/helpers/reference/variation_maps/`.
+- `tests/exemptions.toml` is the only place a check is waived, by env (a glob over class names),
+  family, check name and reason. A waived check still runs and must keep failing; once it passes the
+  entry is stale and the suite fails until it is removed. `.github/CODEOWNERS` assigns the file a
+  code owner. Renderer-only `CraftaxClassic` and `CraftaxFull` are waived there from every check except family ownership.
+- `ci/families.toml` maps source paths and test files to profiles. A profile declaring the `swm`
+  capability installs stable-worldmodel at `[swm].commit` (`noxfile.py`), so its live source gates run
+  in CI and a test that skips for want of it fails. `SE_REQUIRE_FAMILIES` and
+  `SE_REQUIRE_CAPABILITIES` turn a missing dependency into an error in CI.
+
+`uvx nox -s "test(<profile>)"` runs one profile; [Contributing](https://github.com/galilai-group/stable-envs/blob/main/CONTRIBUTING.md)
+has the commands and what a new environment needs.
+
 ## Shared source contracts
 
-Shared profiles in `tests/contracts/` cover all 38 non-Craftax registrations:
+Shared profiles in `tests/contracts/` cover 38 representative registrations:
 `native` (5), `fetch` (12), `dmc` (12), `navigation` (3), `ogbench` (3),
 `pusht` (2), and `rocket` (1). Each uses an independent source bridge
 and separate State, simulation, task and online checks. These are small regression
@@ -37,7 +62,7 @@ Source pins are explicit in
 corpora named `swm_176d545` were recorded at the earlier pin
 `176d54532b3c0a251a4f509b74f2fdacc143a63d`. Source environment code is loaded unchanged;
 unrelated learning-stack package initializers are omitted. Profiles compare CPU
-physics with CPU or CUDA State/output delivery. All 38 non-Craftax registrations
+physics with CPU or CUDA State/output delivery. All 38 profile registrations
 also have maintained independent source-pixel checks, using the declared family
 backends below. Profiles do not measure throughput. DMC and Maze constructors
 require a working GL context even when frames are omitted; use Oscar EGL when local GL is unavailable. Cube/Scene retain
@@ -68,7 +93,7 @@ python -m scripts.testing.inventory
 ```
 
 With MuJoCo 3.12.0 and the DMC dependencies, the read-only frozen-oracle selection
-checks all 12 DMC domains without importing stable-worldmodel:
+checks the profile's 12 DMC domains without importing stable-worldmodel:
 
 ```bash
 python -m pytest tests/unit/test_dmc_oracle_replay.py tests/unit/test_reference_oracle.py
@@ -79,7 +104,7 @@ and exact continuation. It does not render or replace live-source acceptance.
 Saved-trajectory capture equality uses our own renderer; source pixel parity
 still requires the independent family render gates.
 
-The inventory covers all **38 non-Craftax registrations** using their accepted
+The inventory covers the **38 profile registrations** using their accepted
 matrix scopes and existing gate paths. It records `NOT_RUN` for the current
 checkout; inventory presence is not an acceptance result. Craftax is explicitly
 excluded. Repository navigation checks use Git-index membership (or files in an
@@ -216,7 +241,7 @@ remains unchanged; it records the earlier checkpoint, not current acceptance.
 The [Oscar validation record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/parallel-source-pixels-oscar-validation.json)
 records that checkpoint and links a hashed archive of code snapshots, sealed
 reports, raw failed witnesses, JUnit results, dependencies and terminal job status.
-That checkpoint established shared source-pixel coverage for **25/38 non-Craftax registrations**: Rocket,
+That checkpoint established shared source-pixel coverage for **25/38 profile registrations**: Rocket,
 five native controls, three Navigation, seven DMC and nine Fetch registrations.
 Each counted registration passed its own required CPU/CUDA cases. This is test
 migration, not a new promotion matrix or a claim about every rendering backend.
@@ -274,20 +299,14 @@ ownership, context switching, and a partial readback chunk. Hardware interpolati
 can differ from OpenCV by two channel levels; the test bounds both channel error
 and RMS error. The independent source-pixel limit remains 0.001.
 
-For a paired renderer benchmark, export the previous high-fidelity implementation
-and run on a compute node with the Fetch dependencies and GL environment above:
-
-```bash
-git show a2f8f820:stable_envs/envs/fetch_opengl.py > /tmp/fetch-before-readback.py
-python -m scripts.benchmarks.fetch_readback --device cuda \
-  --baseline-file /tmp/fetch-before-readback.py --output /tmp/fetch-readback-results
-```
-
-The benchmark saves and reloads 1,024 rollout States per scene. State generation,
-disk loading and initial device transfer are outside timing; public `env.render`
-and output synchronization are inside. It alternates implementation order and
-records twelve paired measurements after warmup. Its MSE compares the two library
-implementations, not the source simulator; use the source profile for that claim.
+The Fetch readback benchmark is not a maintained script. The saved
+[CSV](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/fetch-readback-performance.csv)
+holds the paired measurements: 1,024 rollout States per scene, with State generation, disk
+loading and the initial device transfer outside timing and public `env.render` plus output
+synchronization inside, alternating implementation order over twelve paired measurements after
+warmup. Its MSE compares two library implementations, not the source simulator; use the source
+profile for that claim. Maintained render throughput is measured by `benchmarks/render.py`
+([methodology](benchmarks.md)).
 
 Navigation includes reached and mixed-terminal scenarios. DMC uses ordinary
 reached states; existing lifecycle/process/Variation gates remain required. DMC's
@@ -300,7 +319,7 @@ normalized MSE limit of 0.001 on CPU and CUDA. Both complete profiles pass
 **288/288 required cases**, including 96 source-pixel cases and 1,536 frame
 comparisons per device. CPU renderer regressions pass 57 tests; the separate
 Apple MPS check is skipped on Linux. The source profiles have no required skips.
-That checkpoint established shared source-pixel coverage for **30/38 non-Craftax registrations**.
+That checkpoint established shared source-pixel coverage for **30/38 profile registrations**.
 
 | DMC registration | CPU max MSE | CUDA max MSE |
 | --- | ---: | ---: |
@@ -355,23 +374,13 @@ and [timing CSV](https://github.com/galilai-group/stable-envs/blob/sami-dev/test
 retain raw timing samples, latency and MSE mean/SD, code hashes, source gates,
 batch regressions and rejected experiments. The earlier correction evidence remains unchanged.
 
-For paired timing of the five body-tracking DMC renderers, use the same pinned
-DMC dependencies and GL configuration as the source profile:
-
-```bash
-python -m scripts.benchmarks.dmc_render --device cuda \
-  --baseline-root /path/to/baseline-checkout \
-  --source-root /path/to/pinned-stable-worldmodel \
-  --output /path/to/new-dmc-benchmark
-```
-
-This saves 32 independently reached source States per domain (two seeds, two
-lanes, eight transitions) and reloads them in separate baseline/candidate workers.
-Larger batches repeat that corpus. Timing includes public rendering and output
-synchronization, but excludes rollout, disk loading, initial transfer, and batch
-indexing. The report preserves twelve latency samples after warmup, mean/SD,
-code and corpus hashes, and source-image MSE. Throughput compares our two
-implementations on the same device; it does not measure source-renderer FPS.
+The paired DMC timing is not a maintained script either. The report and CSV above retain its
+protocol: 32 independently reached source States per domain (two seeds, two lanes, eight
+transitions), reloaded in separate baseline and candidate workers, with larger batches repeating
+that corpus. Timing includes public rendering and output synchronization and excludes rollout,
+disk loading, initial transfer and batch indexing; the report preserves twelve latency samples
+after warmup, mean/SD, code and corpus hashes, and source-image MSE. Throughput compares two
+implementations on the same device and does not measure source-renderer FPS.
 
 ## Scene default CUDA renderer acceptance
 
@@ -435,7 +444,7 @@ recorded; acceptance uses separate complete source and golden-test runs.
 
 ## Completed source-pixel adapter coverage
 
-Maintained independent source-pixel checks cover **38/38 non-Craftax registrations**.
+Maintained independent source-pixel checks cover **38/38 profile registrations**.
 The original final-cohort checkpoint added both PushT registrations, Maze/Cube/Scene
 and all three Fetch PickAndPlace variants. Both output-device profiles passed
 their complete required cases, without missing, duplicated or skipped cases:
@@ -515,7 +524,7 @@ limit is unchanged. Saved GPU pixels are historical GPU evidence, not a fresh
 CUDA run. New verification output never overwrites the original corpus.
 
 Markers: `unit`, `integration`, `gpu`, `regression`, `slow`. The extra markers
-`reference`, `smoke` and `selftest` stay. Directory markers are applied automatically, so a
+`reference`, `smoke` and `selftest` stay. `gl`, `egl`, `swm` and `family("<name>")` mark a test that needs dm_control's OpenGL renderer, an EGL library, stable-worldmodel imported without `importorskip`, or another family's environments. Directory markers are applied automatically, so a
 file that forgot `pytestmark` is still selected by its folder.
 
 ```bash

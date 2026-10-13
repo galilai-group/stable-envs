@@ -37,13 +37,13 @@ part of this release; see `contrib/README.md`.
 
 Fetch `sky.color` at its default draws the registered gradient skybox, which the official wrapper's `background.color` cannot express: it always fills the sky flat.
 
-DMC trackcom `floor.color` has no baked plate (the camera rides the body).
+DMC trackcom cells (the camera rides the body) have no baked plate: `floor.color` is drawn from a per-texel palette texture, and `DMCWalkerWalk` `floor.rotation_y` tilts the floor per row.
 
-OGBench `light.intensity` / `camera.angle_delta` / `cube.size` and Scene `lock_color` are not wired onto per-world model arrays.
+OGBench `light.intensity`, `camera.angle_delta`, `cube.size` and Scene `lock_color` are per-world inputs of one MJWarp context per family; they do not multiply contexts or compiled models.
 
 ## Certification / provenance
 
-- DM Control certification interpreter is `mujoco==3.11.0` + `dm_control==1.0.44`. `mujoco >= 3.12` re-anchors finite-plane textures; the 3.12 arm is recorded as reference drift, not as our renderer moving.
+- The DM Control reference profile (`pin-dmc`) is `mujoco==3.12.0` + `dm-control==1.0.45`; the `VISUAL_FIDELITY` declarations of the trackcom cells record the versions they were measured at.
 - nvdiff on x86 CPU has a documented sparse-stage one-ULP batch dependence. There is no CPU consumer of that path in the historical 42-id set.
 - `HumanoidMazeGiantNavigate` on CUDA is not process-reproducible across runs on at least one measured card (`gpu1503`).
 - Craftax's live official wrapper JITs `reset`/`step`. Certified pixel identity is against the **un-jitted** official renderer. Historical jitted-wrapper measurements live in `tests.helpers.reference.craftax_jit`.

@@ -37,14 +37,21 @@ env = snv.CartPole(num_envs=8)
 
 `list_envs(family=…)` matches the class attribute `family`, which does not change if a file moves.
 
-| family | examples |
-|---|---|
-| `pusht` | `PushT`, `PushTDiscrete` |
-| `classic_control` | `CartPole`, `Pendulum` |
-| `dmcontrol` | `DMCReacherHard`, `DMCCheetahRun` (`domain="reacher"`, `"cheetah"`, …) |
-| `ogbench` | `PointMazeLargeNavigate`, `OGBCube` (`domain="pointmaze"`, `"cube"`, …) |
-| `pyflyt` | `PyFlytRocketLanding` |
-| `fetch` | `FetchReach`, `FetchPush`, … |
+| family | environments | examples |
+|---|---:|---|
+| `classic_control` | 5 | `CartPole`, `Pendulum` |
+| `craftax` | 6 | `CraftaxClassicPixels`, `CraftaxSymbolic` |
+| `dmcontrol` | 18 | `DMCReacherHard`, `DMCCheetahRun` (`domain="reacher"`, `"cheetah"`, …) |
+| `fetch` | 12 | `FetchReach`, `FetchPush`, … |
+| `navigation` | 5 | `TwoRoom`, `Piecewise`, `SimplePointMaze` |
+| `ogbench` | 27 | `PointMazeLargeNavigate`, `OGBCube` (`domain="pointmaze"`, `"cube"`, …) |
+| `pusht` | 2 | `PushT`, `PushTDiscrete` |
+| `pyflyt` | 1 | `PyFlytRocketLanding` |
+
+These 76 are the registrations with every extra installed; without PyFlyt there are 75. Every one
+simulates except `CraftaxClassic` and `CraftaxFull`, which are renderer-only (`reset` and `step`
+raise); `CraftaxClassicPixels` and `CraftaxPixels` carry their simulation. See
+[`tests/exemptions.toml`](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/exemptions.toml).
 
 When in doubt, `list_families()` and `info(name)["family"]` / `["domain"]` are the source of truth.
 
