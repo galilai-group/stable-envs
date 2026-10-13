@@ -2,10 +2,8 @@
 # PushT checkpoint semantics are covered by test_pusht_public_semantics.py.
 """The State: what ``pack``/``unpack`` promise, what ``reset`` promises, and what the specs report.
 
-The load-bearing claim of the public State is that NOTHING MOVED. The entity-grouped TensorDict is
-a view of the same five floats a PushT corpus has always stored, in the same order, so every frozen
-digest and every certification check still sees the packed row. These tests assert that as an identity
-rather than as an intention.
+The entity-grouped TensorDict is a view of the same five floats PushT stores, in the same order, so
+frozen digests and certification checks see the packed row. These tests assert that as an identity.
 
 CPU only; PushT needs no reference package to be constructed and rendered.
 """
@@ -41,7 +39,7 @@ def test_the_state_keys_are_the_entities_and_not_the_packed_row(env):
     assert list(st.batch_size) == [8]
 
 
-def test_the_packed_row_is_the_step8_layout_unchanged(env):
+def test_the_packed_row_layout_matches_the_entity_grouped_state(env):
     assert env.state_dim == 5 == env.render_state_dim
     assert env.state_names == ("agent_x", "agent_y", "block_x", "block_y", "block_angle")
     assert env.render_state_names == env.state_names

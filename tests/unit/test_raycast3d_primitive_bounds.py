@@ -1,7 +1,6 @@
 """Per-primitive bounds must be the IDENTITY, not an approximation of it.
 
-``raycast3d``'s CPU cast used to evaluate every primitive against every ray. It now skips the rays
-whose line passes further from a primitive's origin than that primitive's bounding radius, which
+``raycast3d``'s CPU cast skips the rays whose line passes further from a primitive's origin than that primitive's bounding radius, which
 cannot change an answer — such a ray gets ``t = INF`` and loses the ``t < best`` test — but which CAN
 change one if the bound is ever computed too small. The failure mode is a handful of pixels on a
 silhouette, which no mean-absolute-difference catches, so the threshold here is zero and the
@@ -149,19 +148,17 @@ CASES = [
         rng=18, B=2, K=5, N=512, far=100.0, tangent=True, kinds=(R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX)
     ),
     dict(rng=19, B=3, K=6, N=333, kinds=(R3.SPHERE, R3.CAPSULE) * 3, degenerate=True),
-    # AT THE EDGE OF THE ADMISSION WINDOW, at the lever arm that broke the first bound. Review of
-    # 3b9e81c showed the old 1e-4 tolerance admitted bundles on which the identity is FALSE: the
-    # cap-sphere test drops the leading |d|^2, so at |d|^2 = 1 + 9e-5 and 100 m a probe lost 113,008
-    # of 126,184 unbounded hits. These feed |d|^2 = 1 +/- (_UNIT_D_TOL - 1 ulp) -- the worst bundle
-    # the check still lets through -- at far=100. They are the cases that say the window is sized
-    # correctly, and they FAIL against the old tolerance.
+    # At the edge of the admission window, at a long lever arm: the cap-sphere test drops the leading
+    # |d|^2, so a tolerance looser than _UNIT_D_TOL makes the identity false (at |d|^2 = 1 + 9e-5 and
+    # 100 m a probe lost 113,008 of 126,184 unbounded hits). These feed |d|^2 = 1 +/- (_UNIT_D_TOL - 1
+    # ulp), the worst bundle the check still admits, at far=100.
     dict(rng=20, B=2, K=6, N=512, far=100.0, tangent=True, dd_at_tol=+1),
     dict(rng=21, B=2, K=6, N=512, far=100.0, tangent=True, dd_at_tol=-1),
     dict(
         rng=22, B=2, K=5, N=512, far=100.0, dd_at_tol=+1, kinds=(R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX)
     ),
-    # ELLIPSOID (Step 7): unbounded by the table, so it takes the verbatim body beside bounded
-    # kinds; pinned alone, mixed, degenerate, tangent-at-distance and at the admission edge.
+    # ELLIPSOID is unbounded by the table, so it takes the verbatim body beside bounded kinds; pinned
+    # alone, mixed, degenerate, tangent-at-distance and at the admission edge.
     dict(rng=23, B=2, K=4, N=333, kinds=(R3.ELLIPSOID,) * 4),
     dict(rng=24, B=2, K=6, N=333, kinds=(R3.ELLIPSOID, R3.CAPSULE) * 3),
     dict(rng=25, B=3, K=6, N=333, kinds=(R3.ELLIPSOID, R3.SPHERE) * 3, degenerate=True),
@@ -269,8 +266,8 @@ def test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose():
         "ELLIPSOID": R3.ELLIPSOID,
     }
     measured = {names[n] for n, on in m["predicate"].items() if on}
-    # ELLIPSOID (Step 7) is priced in its own committed aggregate, by the same rule, because the
-    # Step-6 file is frozen; absent that file the kind is unbounded and must not be in the table.
+    # ELLIPSOID is priced in its own committed aggregate by the same rule; absent that file the kind is
+    # unbounded and must not be in the table.
     f7 = Path(R3.__file__).resolve().parents[2] / "tests/fixtures/measurements/raycast3d/kind_cost_ellipsoid.json"
     if f7.is_file():
         m7 = json.loads(f7.read_text())
@@ -283,11 +280,9 @@ def test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose():
         f"_BOUNDED_KINDS is {sorted(R3._BOUNDED_KINDS)} but the committed measurement "
         f"({f.name}) chose {sorted(measured)}"
     )
-    # And the rule behind it must still hold in the numbers, not merely in the summary field. The rule
-    # is "bounded iff the worst ratio is > 1 in EVERY run", so its complement is "some run's worst
-    # ratio is <= 1" -- NOT "the best ratio is < 1", which the first version asserted: a kind whose
-    # ratio straddles 1 (ELLIPSOID on a loaded node: worst 0.69-0.90, best 1.21-1.43) is honestly
-    # unbounded under the rule and was unsatisfiable under the old assertion either way.
+    # The rule must hold in the numbers, not merely the summary field: bounded iff the worst ratio is
+    # > 1 in EVERY run, so unbounded means some run's worst ratio is <= 1 (a kind straddling 1, e.g.
+    # ELLIPSOID on a loaded node, is unbounded).
     for kind, on in m["predicate"].items():
         if kind not in m["ratio_worst_per_run"]:
             continue

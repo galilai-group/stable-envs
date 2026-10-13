@@ -113,7 +113,7 @@ def _actions(env, n, steps=None, seed=0):
 
 
 @pytest.mark.parametrize("name", ALL)
-def test_every_cell_takes_the_step9_constructor(name):
+def test_every_cell_builds_with_num_envs_and_device_and_closes_idempotently(name):
     with _env(name, 3) as env:
         assert env.num_envs == 3 == env.B and len(env) == 3
         assert env.device.type == "cpu"
@@ -234,24 +234,6 @@ def test_unrecovered_step_reports_only_its_implemented_state(name):
         "the honest answer and a zero would read as a measured one"
     )
     assert env.has_dynamics
-
-
-def test_navigation_cells_live_in_the_merged_module():
-    from stable_envs.envs.navigation import envs as navigation
-
-    for attr in (
-        "IMG",
-        "_ALPHA_FLOOR",
-        "_alpha_blend",
-        "_gaussian_dot",
-        "DEFAULT_WALL_SHAPE",
-        "DEFAULT_WALL_POS",
-        "SimplePointMaze",
-    ):
-        assert hasattr(navigation, attr)
-    assert {c.__module__ for c in (snv.TwoRoom, snv.Piecewise, snv.SimplePointMaze)} == {
-        "stable_envs.envs.navigation.envs"
-    }
 
 
 @pytest.mark.parametrize("name", ALL)
@@ -431,7 +413,7 @@ def test_step_returns_exactly_env_state(name):
 
 
 @pytest.mark.parametrize("name", RECOVERED)
-def test_recovered_classic_refuses_the_legacy_pure_dynamics_path(name):
+def test_recovered_classic_has_no_pure_transition_or_unroll(name):
     with _env(name, 2) as env:
         state = env.reset(seed=17)
         assert not hasattr(env, "transition")

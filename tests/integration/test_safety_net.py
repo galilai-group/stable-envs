@@ -190,12 +190,8 @@ def test_innocent():
 
 
 def test_the_resource_guard_fails_the_test_that_broke_the_rule(tmp_path):
-    """Each of the four historical incidents becomes a named failure on the test that caused it.
-
-    Named, and greppable: ``EGL_CONTEXT_RELEASED`` in a log should be enough to know which incident has
-    come back without reading anything else. And the innocent test in the same module must still pass —
-    a guard that fails the run wholesale would be no more diagnosable than the corruption it replaces.
-    """
+    """Each guarded rule violation fails the offending test under a greppable name (for example
+    ``EGL_CONTEXT_RELEASED``), while an innocent test in the same module still passes."""
     (tmp_path / "test_guard.py").write_text(GUARD_PROBE)
     p = subprocess.run(
         [

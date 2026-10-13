@@ -181,11 +181,8 @@ CASES = [
     ("plate-t-band-two-movers", dict(seed=16, K=2, plate_t="band"), dict(tile=16)),
     ("box-and-cylinder", dict(seed=11, K=2, kinds=(R3.BOX, R3.CYLINDER)), dict(tile=16)),
     ("far-behind-camera", dict(seed=12, depth=-4.0), dict(tile=16)),
-    # ``mover-at-frame-edge`` used to be ``spread=0.05``, which lands the sphere dead CENTRE and
-    # clamps nothing -- a case named for a boundary it never reached. ``offset`` moves the movers
-    # until ``_fit_tile``'s ``x0.clamp(0, W - t)`` actually engages, and
-    # ``test_the_edge_cases_actually_clamp`` asserts that it still does, so this cannot silently go
-    # back to being a centred sphere.
+    # ``offset`` moves the movers until ``_fit_tile``'s ``x0.clamp(0, W - t)`` engages;
+    # ``test_the_edge_cases_actually_clamp`` asserts that it does.
     (
         "mover-clamped-left",
         dict(seed=13, B=6, K=1, kinds=(R3.SPHERE,), spread=0.35, offset=(-1.4, 0.0)),
@@ -300,12 +297,7 @@ CLAMPED_IDS = (
 
 @pytest.mark.parametrize("cid", CLAMPED_IDS)
 def test_the_edge_cases_actually_clamp(cid):
-    """A case named for the origin clamp has to reach it, or it is testing the centred sphere again.
-
-    This is the check that the previous ``mover-at-frame-edge`` lacked and needed: it was
-    ``spread=0.05``, which puts the movers in the middle of the frame, so ``x0.clamp(0, W - t)`` was
-    the identity on every row and the case had been passing for years of the wrong reason.
-    """
+    """A case named for the origin clamp must reach it; a centred mover makes ``x0.clamp(0, W - t)`` the identity."""
     skw = dict(next(c[1] for c in CASES if c[0] == cid))
     ckw = next(c[2] for c in CASES if c[0] == cid)
     cx, cy, t = _clamp_counts(_scene(**skw), ckw["tile"])

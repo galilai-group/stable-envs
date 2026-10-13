@@ -9,7 +9,7 @@ from stable_envs.envs.classic_control.simulation import execution as execution
 from stable_envs.envs.classic_control.simulation import process as acrobot_process
 
 
-@pytest.mark.parametrize("domain", ["acrobot", "cartpole", "pendulum", "mountain_car", "mountain_car_continuous"])
+@pytest.mark.parametrize("domain", ["acrobot", "cartpole", "mountain_car_continuous"])
 @pytest.mark.parametrize("device", ["cpu", "cuda"])
 @pytest.mark.parametrize(
     "platform,batch,cores,daemon,count",

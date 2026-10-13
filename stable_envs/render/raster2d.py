@@ -190,9 +190,6 @@ def row_groups(box, r0: int, r1: int, c0: int, c1: int) -> list[tuple]:
     return groups
 
 
-_row_groups = row_groups
-
-
 def _output_shape(size: int | tuple[int, int]) -> tuple[int, int]:
     return (int(size), int(size)) if isinstance(size, int) else size
 

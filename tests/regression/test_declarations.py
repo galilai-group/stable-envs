@@ -130,12 +130,7 @@ def test_an_unknown_tier_is_refused_by_name():
 
 
 def test_a_parity_env_carrying_visual_fidelity_is_refused():
-    """An env makes exactly ONE of the two claims; carrying both blurs which one is being asserted.
-
-    It is also the shape a half-finished tier change leaves behind — the numbers added, the tier not
-    yet moved — and the suite would then hold it to the parity gate while a reader saw a visual
-    declaration.
-    """
+    """An env makes exactly one of the two claims; carrying both blurs which one is asserted."""
     with pytest.raises(ValueError, match="declares fidelity_tier='parity' and also carries"):
         register(_cls("Bad", "doc", visual_fidelity=dict(VF)))
 
@@ -415,7 +410,7 @@ def test_the_declared_numbers_beat_the_render_they_replace_wherever_a_baseline_i
             ("variation_fidelity", dict(getattr(cls, "variation_fidelity", {}) or {})),
         ):
             if "plain_mean_abs" not in decl:
-                continue  # sealed before the baseline was recorded alongside it
+                continue  # no plain baseline recorded alongside this declaration
             checked += 1
             assert decl["mean_abs"] < decl["plain_mean_abs"], f"{name} {label}: mean is not better"
             assert decl["within8_frac"] > decl["plain_within8_frac"], f"{name} {label}: within-8"
@@ -585,14 +580,8 @@ def test_every_gate_exclusion_states_its_mechanism():
 def test_the_live_context_cap_scales_with_the_registry():
     """The EGL tripwire must not fire on an interpreter that simply holds more envs.
 
-    A context is created once per env that owns one and then deliberately NEVER released, so the
-    legitimate live count grows with the registry. As a fixed 192 this was comfortable at 64 envs and
-    became a false positive the moment the library moved into one interpreter: a 191-env run reached
-    193 live contexts doing exactly what the design requires, and every test after that failed
-    ``EGL_CONTEXTS_RUNAWAY`` — 1,776 of them having created no context at all.
-
-    The rate-based rules are the ones that catch real runaway creation, and they are per-test, so
-    scaling this one costs nothing they were covering.
+    A context is created once per env that owns one and never released, so the legitimate live count
+    grows with the registry; the per-test rate rules are the ones that catch runaway creation.
     """
     from tests._runner import resource_guard as RG
 
@@ -675,18 +664,12 @@ def test_a_malformed_reference_version_field_is_refused(bad):
 
 
 def _dmc_declaration_table() -> dict:
-    """``stable_envs.envs.dmcontrol.VISUAL_FIDELITY``, read off the SOURCE rather than the module.
+    """``stable_envs.envs.dmcontrol.VISUAL_FIDELITY``, read off the source rather than the module.
 
-    The DM Control family is read off the SOURCE rather than imported so the claim under test is
-    about the declaration table even on a host whose GL backend cannot register the cells (or that
-    used to hang inside ``dm_control._render`` before ``configure_mujoco_gl``). Only the
-    module-level assignments the table is built from are executed, in one shared namespace.
-
-    ``envs/dmcontrol.py`` into ``envs/dmcontrol/``, where each trackcom domain declares
-    its OWN ``VISUAL_FIDELITY`` entry beside the cell it describes and the shared provenance strings
-    live in ``_cells.py``. So the walk is over every module of the package, ``_cells`` first because
-    the per-domain entries name ``_AT``/``_AT_VERSIONS``/``_AT_MEASURED_WITH``, and the tables are
-    merged. The claim is unchanged: the same entries, read off the source, never imported.
+    Reading the source keeps the claim about the declaration table valid on hosts whose GL backend cannot
+    register the cells. Only the module-level assignments the table is built from are executed, in one
+    shared namespace: every module of the package is walked, ``_cells`` first because per-domain entries
+    name ``_AT``/``_AT_VERSIONS``/``_AT_MEASURED_WITH``, and the tables are merged.
     """
     import ast
 
@@ -774,13 +757,12 @@ def test_every_declared_reference_version_is_the_one_measured_at_names():
 
 @pytest.mark.family("dmc")
 def test_the_dm_control_trackcom_declarations_name_the_reference_they_were_measured_against():
-    """The measured case this field exists for: declared under mujoco 3.11.0, judged under 3.12.0 in
-    Step 4, and 3.12.0 re-anchors finite-plane textures (changelog item 15, commit cc7fb98c)."""
+    """Declared under mujoco 3.11.0; 3.12.0 re-anchors finite-plane textures (changelog item 15, commit cc7fb98c)."""
     table = _dmc_declaration_table()
     for name in ("DMCHopperHop", "DMCWalkerWalk", "DMCHumanoidWalk"):
         assert table[name][REFERENCE_VERSIONS_KEY] == {"mujoco": "3.11.0"}
         assert table[name][MEASURED_WITH_KEY] == {"mujoco_warp": "3.11.0"}
-        assert table[name]["measured_at"].startswith("84 px")  # the text is kept as it was
+        assert table[name]["measured_at"].startswith("84 px")
     assert table["DMCCheetahRun"][REFERENCE_VERSIONS_KEY] == {"mujoco": "3.12.0"}
     assert table["DMCCheetahRun"][MEASURED_WITH_KEY] == {"mujoco_warp": "3.12.0"}
     assert table["DMCSwimmerSwimmer6"][REFERENCE_VERSIONS_KEY] == {"mujoco": "3.11.0"}

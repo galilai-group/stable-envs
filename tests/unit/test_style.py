@@ -1,21 +1,9 @@
-"""``StyleTensor``, and the one operation three shipped defects went through: ``for_batch``.
+"""``StyleTensor`` and ``for_batch``, the single operation that changes a style's batch.
 
-"A per-environment appearance silently became environment 0's" has been a shipped defect in this
-repository THREE times, in three different files — PushT's ``_var`` doing ``.reshape(-1)[:1].expand(B)``,
-the static-prefix bake taking ``scene.kind[:1]``, and ``StableEnv.resolve_style`` falling back to
-``self._style.values[:1]`` whenever the render batch differed from the env's. Every one of them passed
-the conformance suite of its day, because those checks compare an env against itself under ONE
-appearance, where row 3 and row 0 are equal and a collapse is invisible.
-
-``core/style.py`` responded by making the operation singular: there is exactly one function that changes
-a style's batch, and a collapse can no longer be reintroduced by editing an env, only by editing that
-rule. This file is the test of the rule itself — the level at which the defect actually lives.
-
-It runs on CPU with no env, no renderer and no CUDA, and that is the point: every existing check of this
-property (``test_rendering_a_sub_batch_refuses_environment_0_s_style`` and its two neighbours in
-``tests/gpu/test_reproducibility.py``) needs a GPU, a built env and a rendered frame to reach a rule that
-is twelve lines of tensor arithmetic. Those tests assert that the envs GO THROUGH the rule and must
-stay; this asserts what the rule IS.
+A per-environment appearance must never collapse to environment 0's. Conformance checks compare an env
+against itself under one appearance, where row 3 and row 0 are equal and a collapse is invisible, so the
+rule is tested directly here on CPU with no env or renderer. The GPU reproducibility tests assert that
+envs go through the rule; this file asserts what the rule is.
 """
 
 from __future__ import annotations
@@ -59,15 +47,11 @@ def _style(rows, shared=None):
 # ------------------------------------------------------------------ rows_are_equal
 
 
-def test_rows_are_equal_reads_the_VALUES_not_how_the_tensor_was_made():
-    """THE bug this function replaced: a strided view whose rows happen to be equal IS batch-uniform.
+def test_rows_are_equal_reads_the_values_not_how_the_tensor_was_made():
+    """A strided slice whose rows are equal is batch-uniform; one whose rows differ is not.
 
-    ``SceneBuilder`` used to answer "is this batch-uniform?" with ``stride(0) != 0``, which is a test
-    for how a tensor was constructed rather than for what it holds. A ``(B, w)`` slice of a real style
-    tensor has a non-zero row stride whether or not its rows differ, so the answer was
-    "per-environment" for every batched scene ever built and the static-prefix bake it guarded never
-    fired above ``B == 1``. Both halves are asserted here: a strided-but-uniform slice is EQUAL, and a
-    strided slice that genuinely differs is NOT.
+    A ``(B, w)`` slice of a real style tensor has a non-zero row stride whether or not its rows
+    differ, so a stride test cannot answer the question.
     """
     base = torch.tensor([[1.0, 2.0, 3.0, 4.0]] * 8)
     view = base[:, 1:3]
@@ -113,13 +97,8 @@ def test_rows_are_equal_is_the_conjunction_over_everything_it_is_given():
 # ------------------------------------------------------------------ for_batch: the rule
 
 
-def test_a_matching_batch_returns_the_SAME_object_untouched():
-    """The render hot path must not pay for this, and must not be able to change the answer.
-
-    Identity rather than equality on purpose: ``for_batch`` is called on every render, and returning a
-    copy would both cost an allocation per frame and give the caller a tensor that is no longer the
-    env's own, so a later ``set_style`` would silently not be reflected in it.
-    """
+def test_a_matching_batch_returns_the_same_object_untouched():
+    """Identity, not equality: a copy would cost an allocation per render and detach from ``set_style``."""
     s = _style([[1, 2, 3, 0.4], [5, 6, 7, 0.8]])
     assert s.for_batch(2) is s
 
@@ -244,7 +223,7 @@ def test_an_env_with_no_variation_still_gets_a_well_formed_style():
 
 @pytest.mark.parametrize("rows", [2, 3, 7])
 def test_a_row_count_that_is_neither_one_nor_the_batch_is_refused(rows):
-    """The mistake is sliced states with unsliced style, and it used to broadcast instead of raising."""
+    """Sliced states with unsliced style must raise, not broadcast."""
     vals = np.zeros((rows, 4), np.float32)
     with pytest.raises(ValueError) as e:
         StyleTensor.from_space(_space(), 5, device=DEV, values=vals)
@@ -291,12 +270,7 @@ def test_a_per_environment_override_whose_rows_happen_to_agree_is_still_uniform(
 
 @pytest.mark.parametrize("bad", [2, 5, 11])
 def test_an_override_count_that_is_neither_is_refused_by_name(bad):
-    """A count that is neither ``w`` nor ``batch*w`` used to be taken as "the first w, broadcast".
-
-    That is environment 0's value for everybody under a third name, and it is the reason the error
-    message spells the arithmetic out: the caller who writes ``color=[255, 0]`` or passes a (2, 3)
-    array for a batch of 4 is not going to work out ``w`` from a shape mismatch three frames later.
-    """
+    """A count that is neither ``w`` nor ``batch*w`` is refused with the arithmetic spelled out."""
     with pytest.raises(ValueError) as e:
         StyleTensor.from_space(_space(), 4, device=DEV, overrides={"block.color": np.zeros(bad, np.float32)})
     msg = str(e.value)

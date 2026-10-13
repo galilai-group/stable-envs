@@ -66,8 +66,8 @@ def test_lossy_projection_is_rejected_and_full_state_renders(name):
                 env.set_state(wrong)
             with pytest.raises((TypeError, ValueError)):
                 branch_step(env, wrong, torch.zeros(2, env.action_dim))
-        for name in ("pack", "unpack", "pack_render_state", "unpack_render_state", "_state"):
-            assert not hasattr(env, name)
+        for attr in ("pack", "unpack", "pack_render_state", "unpack_render_state", "_state"):
+            assert not hasattr(env, attr)
 
 
 def test_renderer_only_cell_does_not_claim_full_state():

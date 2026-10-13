@@ -14,17 +14,14 @@ from ...render.scene import Scene2D, SceneBuilder
 from ...spaces import Box, Dict, Discrete, RGBBox
 from . import navdot
 
-# Rendering constants use this fixed pixel canvas.
 IMG = 224
 # Playfield inset, distinct from the border stroke width.
 BORDER = 14
-# Reference border stroke width.
 BORDER_T = 4
 WALL_CENTER = 112
 MAX_DOOR = 3
 # Extra door clearance used by the reference collision test.
 DOOR_MARGIN = 1.75
-# Distance to push the agent back from a blocked wall face.
 WALL_PUSHBACK = 0.5
 GRID_N = 2  # PiecewiseEnv's default grid_n
 N_ZONES = GRID_N * GRID_N
