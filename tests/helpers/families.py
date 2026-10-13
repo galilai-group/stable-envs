@@ -95,6 +95,16 @@ def absent(family: str) -> str | None:
     return f"family {family} not installed ({'; '.join(missing)})"
 
 
+def forbidden_skip(family: str, report) -> str | None:
+    """The cause of a skip for want of stable-worldmodel where this run requires both it and ``family``."""
+    if hasattr(report, "wasxfail") or family not in required(REQUIRE_FAMILIES):
+        return None
+    if "swm" not in required(REQUIRE_CAPABILITIES):
+        return None
+    cause = skip_cause(report)
+    return cause if "stable_worldmodel" in cause or "stable-worldmodel" in cause else None
+
+
 def _loads(library: str | None) -> bool:
     if not library:
         return False

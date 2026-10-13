@@ -75,6 +75,29 @@ Each guide separates local development tests from final promotion evidence.
 Construct with `num_envs=`. Concrete classes register by unique class name.
 Do not promote a registration from renderer parity or a sibling's passing task alone.
 
+### What a new environment needs to pass CI
+
+Every registered class is picked up automatically, in its family's CI profile:
+
+- **Generic contract** (`tests/unit/test_registry_conformance.py`): reset, step and render match
+  `state_spec`, `action_spec` and `frame_spec`; the same seed gives the same rollout; a lane does not
+  see its neighbours' actions; `get_state`/`set_state` restores bit-exactly and the snapshot owns its
+  memory; a variation installed in one env round-trips through another; a lane renders the same alone
+  as in a batch.
+- **Ownership** (`tests/unit/test_registry_coverage.py`): its module lies under exactly one family's
+  `paths` in `ci/families.toml`, and that family's env modules import wherever its `requires` are met.
+- **Source comparison**: an entry in `SOURCE_GATES` (`tests/helpers/reference/cases.py`) naming a CPU
+  test that compares it with its source, live or through a corpus recorded from it, owned by the same
+  family.
+- **Variation map**: when its stable-worldmodel source has a variation space, a `VariationMap` in
+  `tests/helpers/reference/variation_maps/`.
+
+Families whose gates compare against stable-worldmodel declare the `swm` capability; their profile
+then installs it at `[swm].commit` and, in CI, a test that skips for want of it fails. A check that
+truly cannot apply (a renderer-only cell has no `step`) is waived only in `tests/exemptions.toml`, with
+the env, its family, the check and the reason; that file has a code owner. A waived check keeps
+running, and the suite fails once it passes, so the entry is removed in the change that fixes it.
+
 ## Continuous integration
 
 `.github/workflows/ci.yml` runs on every pull request, every push to `main` and nightly.

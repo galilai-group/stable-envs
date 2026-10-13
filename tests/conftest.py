@@ -30,7 +30,8 @@ Every test also gets one ``family_<name>`` marker from ``ci/families.toml`` (see
 or at a version the family code refuses) is reported as skipped with that cause; a test that passes
 without the family still counts. A ``gl`` test on a machine without dm_control rendering is skipped
 up front. The summary groups skips by cause. ``SE_REQUIRE_FAMILIES`` / ``SE_REQUIRE_CAPABILITIES``
-(set by CI profile jobs) make the same absence a usage error before anything runs.
+(set by CI profile jobs) make the same absence a usage error before anything runs, and with ``swm``
+required a required family's test that skips for want of stable-worldmodel fails instead.
 
 THE EMPTY-RUN GUARD, below, and why it is a hook rather than a test. Twice now this suite has been
 green while covering nothing: the DM Control family's 16 envs were absent from the suite interpreter
@@ -87,6 +88,11 @@ def pytest_runtest_makereport(item, call):
         if reason:
             report.outcome = "skipped"
             report.longrepr = (report.location[0], report.location[1] or 0, f"Skipped: {reason}")
+    elif report.skipped:
+        cause = families.forbidden_skip(item.stash.get(_FAMILY, "core"), report)
+        if cause:
+            report.outcome = "failed"
+            report.longrepr = f"{families.REQUIRE_CAPABILITIES} requires swm, and this skipped: {cause}"
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -97,6 +103,11 @@ def pytest_make_collect_report(collector):
         if reason:
             report.outcome = "skipped"
             report.longrepr = (str(collector.path), 0, f"Skipped: {reason}")
+    elif report.skipped and isinstance(collector, pytest.Module):
+        cause = families.forbidden_skip(families.family_of_file(collector.path.name), report)
+        if cause:
+            report.outcome = "failed"
+            report.longrepr = f"{families.REQUIRE_CAPABILITIES} requires swm, and this module skipped: {cause}"
 
 
 #: GPU files that are also the frozen regression oracle (parity / reproducibility / fast==slow).

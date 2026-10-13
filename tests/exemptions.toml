@@ -1,0 +1,70 @@
+# Waivers of the registry-wide rules in tests/unit/test_registry_conformance.py and
+# tests/unit/test_registry_coverage.py; the checks are named in tests/helpers/exemptions.py and `env`
+# may be a glob over class names. A waived check still runs and must keep failing: once it passes, the
+# entry is stale and the suite fails until it is removed. Changes need CODEOWNERS review.
+
+[[exemption]]
+env = "TwoRoomTarget"
+family = "navigation"
+checks = ["source"]
+reason = "no CPU test compares it with swm/TwoRoom-v1(render_target=True); the navigation gates exclude it and only tests/gpu conformance renders it against the source"
+
+[[exemption]]
+env = "Fetch*Dense"
+family = "fetch"
+checks = ["source"]
+reason = "the Fetch source gate drives only the base tasks; dense rewards are never compared with gymnasium-robotics"
+
+[[exemption]]
+env = "Fetch*Dict"
+family = "fetch"
+checks = ["source"]
+reason = "the Fetch source gate drives only the base tasks; dict observations are never compared with gymnasium-robotics"
+
+[[exemption]]
+env = "Fetch*"
+family = "fetch"
+checks = ["specs", "batch_render"]
+reason = "backend='auto' on a CPU device does not fall back to the OpenGL renderer: frames raise CPU_BACKEND_MISSING unless backend='opengl' is passed"
+
+[[exemption]]
+env = "PyFlytRocketLanding"
+family = "rocket"
+checks = ["batch_render"]
+reason = "render() refuses a State whose batch is not num_envs (ValueError: Rocket full State requires batch [num_envs])"
+
+[[exemption]]
+env = "OGB*"
+family = "ogbench"
+checks = ["batch_render"]
+reason = "render() refuses a State whose batch is not num_envs (TypeError: Full Cube/Scene TensorDict State with batch [num_envs] required)"
+
+[[exemption]]
+env = "CraftaxClassic"
+family = "craftax"
+checks = ["specs", "seeded", "lanes", "state", "variation", "batch_render"]
+reason = "renderer-only cell: reset and step raise 'full simulator semantics are not implemented'; CraftaxClassicPixels carries the simulation"
+
+[[exemption]]
+env = "CraftaxFull"
+family = "craftax"
+checks = ["specs", "seeded", "lanes", "state", "variation", "batch_render"]
+reason = "renderer-only cell: reset and step raise 'full simulator semantics are not implemented'; CraftaxPixels carries the simulation"
+
+[[exemption]]
+env = "Craftax*Symbolic"
+family = "craftax"
+checks = ["specs", "batch_render"]
+reason = "symbolic observation only: the registration produces no RGB frames"
+
+[[exemption]]
+env = "CraftaxClassic"
+family = "craftax"
+checks = ["source", "variation_map"]
+reason = "renderer only, so there is no rollout to compare; its pixels are compared with craftax only in tests/gpu, and swm's Craftax wrappers set variation_space = None"
+
+[[exemption]]
+env = "CraftaxFull"
+family = "craftax"
+checks = ["source", "variation_map"]
+reason = "renderer only, so there is no rollout to compare; its pixels are compared with craftax only in tests/gpu, and swm's Craftax wrappers set variation_space = None"
