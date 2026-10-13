@@ -1,7 +1,8 @@
 """``--shard I/N`` keeps the I-th of N duration-balanced shares of the selected tests.
 
 Costs are seconds per node id from ``ci/durations.json``, which lists tests of at least ``LISTED``
-seconds; an unlisted test counts as ``UNKNOWN``.
+seconds; an unlisted test counts as ``UNKNOWN``. Tests parametrized by one env name share a shard,
+so the env's per-process caches (official envs, baked scenes) are built in one job, not in each.
 Every process computes the same split from the same selection, so the N shards are disjoint and
 together are the whole selection, with or without xdist. ``--record-durations PATH`` merges this
 run's per-test times into PATH (how ``ci/durations.json`` is refreshed).
@@ -10,6 +11,7 @@ run's per-test times into PATH (how ``ci/durations.json`` is refreshed).
 from __future__ import annotations
 
 import json
+import re
 from collections import defaultdict
 from pathlib import Path
 
@@ -20,6 +22,7 @@ LISTED = 0.5
 UNKNOWN = 0.1
 
 _TIMES: dict[str, float] = defaultdict(float)
+_ENV_PARAM = re.compile(r"\[([A-Z][A-Za-z0-9]+)\]$")
 
 
 def pytest_addoption(parser):
@@ -29,13 +32,18 @@ def pytest_addoption(parser):
 
 
 def split(nodeids, count: int, durations: dict[str, float]) -> dict[str, int]:
-    """Zero-based shard of each node id: longest first, each onto the least loaded shard."""
+    """Zero-based shard of each node id: groups longest first, each onto the least loaded shard."""
+    groups: dict[str, list[str]] = defaultdict(list)
+    for nodeid in nodeids:
+        env = _ENV_PARAM.search(nodeid)
+        groups[env[1] if env else nodeid].append(nodeid)
+    cost = {key: sum(durations.get(n, UNKNOWN) for n in members) for key, members in groups.items()}
     loads = [0.0] * count
     out = {}
-    for nodeid in sorted(nodeids, key=lambda n: (-durations.get(n, UNKNOWN), n)):
+    for key in sorted(groups, key=lambda k: (-cost[k], k)):
         shard = loads.index(min(loads))
-        loads[shard] += durations.get(nodeid, UNKNOWN)
-        out[nodeid] = shard
+        loads[shard] += cost[key]
+        out.update(dict.fromkeys(groups[key], shard))
     return out
 
 
