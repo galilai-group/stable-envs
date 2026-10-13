@@ -604,12 +604,12 @@ class OGBManipBase(Env):
         """Return float32 render rows from seeded resets followed by 0–25 random actions."""
         rng = np.random.default_rng(0) if rng is None else rng
         b = self._b
-        env = _reference_env(self.CELL, role="sample")  # reset many times; never rendered
-        u = env.unwrapped
-        out = []
-        # Upstream reset also consumes NumPy's global RNG; restore its state after sampling.
+        # Building and resetting the upstream env consume NumPy's global RNG; restore it after sampling.
         gstate = np.random.get_state()
         try:
+            env = _reference_env(self.CELL, role="sample")  # reset many times; never rendered
+            u = env.unwrapped
+            out = []
             for k in range(int(batch)):
                 sd = int(rng.integers(0, 1 << 30))
                 np.random.seed(int(rng.integers(0, 1 << 31)))
