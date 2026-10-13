@@ -100,6 +100,19 @@ class Reflection:
             }
         self.palette = palette if recolour else None
         self._recoloured = False
+        # Small floor grids are shaded once per cell corner and shadow mask, then gathered per pixel.
+        cells = (len(grids[0]) - 1) * (len(grids[1]) - 1)
+        shadow_masks = 1 << nlight if flags["use_shadows"] else 1
+        tabulate = nlight <= 4 and cells * 4 * shadow_masks <= width * height
+        extra["tabulated"] = wp.array([int(tabulate)], dtype=int, device=device)
+        extra["vertex_shade"] = wp.zeros(
+            (nworld, cells * 4 * shadow_masks if tabulate else 1), dtype=wp.vec3, device=device
+        )
+        # Per-world bounds of every non-floor geom: rays that miss them cannot hit anything but the floor.
+        extra["scene_lower"] = wp.zeros(nworld, dtype=wp.vec3, device=device)
+        extra["scene_upper"] = wp.zeros(nworld, dtype=wp.vec3, device=device)
+        extra["geom_lower"] = context.lower
+        extra["geom_upper"] = context.upper
 
         @wp.struct
         class Scene:
@@ -156,6 +169,32 @@ class Reflection:
             floor_weights: wp.array[wp.Texture2D]
             floor_palette: wp.array2d[wp.vec3]
             floor_recolour: wp.array[int]
+            vertex_shade: wp.array2d[wp.vec3]
+            tabulated: wp.array[int]
+            scene_lower: wp.array[wp.vec3]
+            scene_upper: wp.array[wp.vec3]
+            geom_lower: wp.array[wp.vec3]
+            geom_upper: wp.array[wp.vec3]
+
+        ray_plane = upstream.ray_plane
+
+        @wp.func
+        def misses(s: Scene, world: int, origin: wp.vec3, direction: wp.vec3):
+            lower = s.scene_lower[world]
+            upper = s.scene_upper[world]
+            near = float(-1.0e30)  # noqa: UP018
+            far = float(1.0e30)  # noqa: UP018
+            for axis in range(3):
+                if direction[axis] == 0.0:
+                    if origin[axis] < lower[axis] or origin[axis] > upper[axis]:
+                        return True
+                else:
+                    inverse = 1.0 / direction[axis]
+                    t1 = (lower[axis] - origin[axis]) * inverse
+                    t2 = (upper[axis] - origin[axis]) * inverse
+                    near = wp.max(near, wp.min(t1, t2))
+                    far = wp.min(far, wp.max(t1, t2))
+            return far < 0.0 or far < near
 
         @wp.func
         def blocked(
@@ -167,6 +206,17 @@ class Reflection:
                 delta = pos - point
                 shadow_direction = wp.normalize(delta)
                 limit = wp.length(delta) - 1.0e-3
+            start = point + normal * 1.0e-4
+            if misses(s, world, start, shadow_direction):
+                floor, floor_normal = ray_plane(
+                    s.geom_xpos[world, wp.static(plane)],
+                    s.geom_xmat[world, wp.static(plane)],
+                    s.geom_size[world % s.geom_size.shape[0], wp.static(plane)],
+                    start,
+                    shadow_direction,
+                )
+                if floor < 0.0:
+                    return False
             blocker, distance, hit_normal, u, v, face, mesh = shadow_cast(
                 s.geom_type,
                 s.geom_dataid,
@@ -189,7 +239,7 @@ class Reflection:
                 s.flex_geom_edgeid,
                 s.flex_bvh_id,
                 s.flex_group_root,
-                point + normal * 1.0e-4,
+                start,
                 shadow_direction,
                 limit,
                 wp.static(flags["enable_backface_culling"]),
@@ -393,6 +443,71 @@ class Reflection:
             # Each GL shadow-light pass clamps independently, then adds to the regular pass.
             return result + shadow_passes
 
+        @wp.func
+        def pack(colour: wp.vec3):
+            rgb = colour * 255.0
+            red = wp.uint32(wp.clamp(rgb[0] + 0.5, 0.0, 255.0))
+            green = wp.uint32(wp.clamp(rgb[1] + 0.5, 0.0, 255.0))
+            blue = wp.uint32(wp.clamp(rgb[2] + 0.5, 0.0, 255.0))
+            return (wp.uint32(255) << wp.uint32(24)) | (red << wp.uint32(16)) | (green << wp.uint32(8)) | blue
+
+        @wp.func
+        def shade_vertex(s: Scene, world: int, x: float, y: float, blocked_mask: int):
+            camera = s.cam_id_map[0]
+            origin = s.cam_xpos[world, camera]
+            rotation = s.cam_xmat[world, camera]
+            plane_rotation = s.geom_xmat[world, wp.static(plane)]
+            vertex = s.geom_xpos[world, wp.static(plane)] + plane_rotation @ wp.vec3(x, y, 0.0)
+            return shade(
+                s,
+                world,
+                wp.static(plane),
+                vertex,
+                plane_rotation[:, 2],
+                wp.normalize(origin - vertex),
+                -rotation[:, 2],
+                origin,
+                0.0,
+                0.0,
+                -1,
+                -1,
+                0.0,
+                1.0,
+                blocked_mask,
+            )
+
+        @wp.kernel(module="unique", enable_backward=False)
+        def vertex_pixels(s: Scene):
+            world, square, mask = wp.tid()
+            ix = square % wp.static(len(grids[0]) - 1)
+            iy = square // wp.static(len(grids[0]) - 1)
+            x0, x1 = s.grid_x[ix] + 0.0, s.grid_x[ix + 1] + 0.0
+            y0, y1 = s.grid_y[iy] + 0.0, s.grid_y[iy + 1] + 0.0
+            for corner in range(4):
+                vx, vy = x0, y0
+                if corner == 1:
+                    vx = x1
+                elif corner == 2:
+                    vy = y1
+                elif corner == 3:
+                    vx, vy = x1, y1
+                index = (square * 4 + corner) * wp.static(shadow_masks) + mask
+                s.vertex_shade[world, index] = shade_vertex(s, world, vx, vy, mask)
+
+        @wp.kernel(module="unique", enable_backward=False)
+        def scene_bounds(s: Scene):
+            world = wp.tid()
+            lower = wp.vec3(1.0e30)
+            upper = wp.vec3(-1.0e30)
+            for local in range(wp.static(flags["bvh_ngeom"])):
+                if s.enabled_geom_ids[local] != wp.static(plane):
+                    lower = wp.min(lower, s.geom_lower[world * wp.static(flags["bvh_ngeom"]) + local])
+                    upper = wp.max(upper, s.geom_upper[world * wp.static(flags["bvh_ngeom"]) + local])
+            pad = 1.0e-3 * (1.0 + wp.max(wp.max(wp.abs(lower[0]), wp.abs(lower[1])), wp.abs(lower[2])))
+            pad = wp.max(pad, 1.0e-3 * (1.0 + wp.max(wp.max(wp.abs(upper[0]), wp.abs(upper[1])), wp.abs(upper[2]))))
+            s.scene_lower[world] = lower - wp.vec3(pad)
+            s.scene_upper[world] = upper + wp.vec3(pad)
+
         @wp.kernel(module="unique", enable_backward=False)
         def reflected_pixels(s: Scene):
             world, pixel = wp.tid()
@@ -469,24 +584,13 @@ class Reflection:
                     vx, vy = x1, y1
                     weight = wp.min(fx, fy)
                 if weight > 0.0:
-                    vertex = plane_pos + plane_rotation @ wp.vec3(vx, vy, 0.0)
-                    surface += weight * shade(
-                        s,
-                        world,
-                        wp.static(plane),
-                        vertex,
-                        normal_plane,
-                        wp.normalize(origin - vertex),
-                        -rotation[:, 2],
-                        origin,
-                        0.0,
-                        0.0,
-                        -1,
-                        -1,
-                        0.0,
-                        1.0,
-                        blocked_mask,
-                    )
+                    # A runtime branch: compiling the per-vertex shading out reorders the pixel's own float math.
+                    if s.tabulated[0] != 0:
+                        cell_index = iy * wp.static(len(grids[0]) - 1) + ix
+                        index = (cell_index * 4 + corner) * wp.static(shadow_masks) + blocked_mask
+                        surface += weight * s.vertex_shade[world, index]
+                    else:
+                        surface += weight * shade_vertex(s, world, vx, vy, blocked_mask)
             if wp.static(flags["use_textures"] and plane_texture >= 0):
                 uv = wp.vec2(
                     0.5 * local[0] * wp.static(uv_sx) + wp.static(uv_ox),
@@ -507,6 +611,9 @@ class Reflection:
             result = surface
             reflected = direction - 2.0 * wp.dot(direction, normal_plane) * normal_plane
             ray_origin = on_plane + normal_plane * 1.0e-4
+            if misses(s, world, ray_origin, reflected):
+                s.rgb_data[world, pixel] = pack(surface)
+                return
             geom, distance, normal, u, v, face, mesh = cast(
                 s.geom_type,
                 s.geom_dataid,
@@ -556,13 +663,7 @@ class Reflection:
                 )
                 # MuJoCo adds the lit plane; reflectance scales mirror RGB, not specular.
                 result = surface + mirror
-            rgb = result * 255.0
-            red = wp.uint32(wp.clamp(rgb[0] + 0.5, 0.0, 255.0))
-            green = wp.uint32(wp.clamp(rgb[1] + 0.5, 0.0, 255.0))
-            blue = wp.uint32(wp.clamp(rgb[2] + 0.5, 0.0, 255.0))
-            s.rgb_data[world, pixel] = (
-                (wp.uint32(255) << wp.uint32(24)) | (red << wp.uint32(16)) | (green << wp.uint32(8)) | blue
-            )
+            s.rgb_data[world, pixel] = pack(result)
 
         scene = Scene()
         grid_arrays = {
@@ -577,6 +678,8 @@ class Reflection:
             owner = next(owner for owner in (model, data, context) if hasattr(owner, name))
             setattr(scene, name, getattr(owner, name))
         self._wp, self._kernel, self._scene = wp, reflected_pixels, scene
+        self._bounds = scene_bounds
+        self._vertices = (vertex_pixels, (nworld, cells, shadow_masks)) if tabulate else None
         self._shape = (int(data.nworld), int(context.total_rays))
         self._device = data.geom_xpos.device
 
@@ -594,4 +697,8 @@ class Reflection:
         flags[:n] = (rows != self._default).flatten(1).any(1).to(flags.dtype)
 
     def render(self):
-        self._wp.launch(self._kernel, dim=self._shape, inputs=[self._scene], device=self._device)
+        launch = self._wp.launch
+        launch(self._bounds, dim=self._shape[0], inputs=[self._scene], device=self._device)
+        if self._vertices is not None:
+            launch(self._vertices[0], dim=self._vertices[1], inputs=[self._scene], device=self._device)
+        launch(self._kernel, dim=self._shape, inputs=[self._scene], device=self._device)
