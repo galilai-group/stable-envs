@@ -412,7 +412,7 @@ def _context(scene: str, res: int, nworld: int, translucent: bool = False) -> _C
     import mujoco_warp as mjw
     import warp as wp
 
-    key = (scene, int(res), int(nworld), bool(translucent))
+    key = (str(wp.get_device()), scene, int(res), int(nworld), bool(translucent))
     hit = _CTX_CACHE.get(key)
     if hit is not None:
         return hit

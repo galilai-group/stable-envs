@@ -245,7 +245,17 @@ class FetchSemantics:
             _require_gpu_renderer()
             self._b = _build_bundle(self.SCENE)
             self._check_plate_is_constant()
-        return super()._render(*args, **kwargs)
+        import warp as wp
+
+        wp.init()
+        if not wp.is_cuda_available():
+            # Warp would otherwise fall back to CPU arrays and fail later on a cross-device index.
+            raise RuntimeError(
+                f"Fetch GPU rendering: Warp {wp.config.version} sees no CUDA device; "
+                "its CUDA toolkit may need a newer driver than this machine has"
+            )
+        with wp.ScopedDevice(str(self.device)):
+            return super()._render(*args, **kwargs)
 
     def _close(self):
         self._simulator.close()
