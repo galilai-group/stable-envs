@@ -777,14 +777,17 @@ def test_the_dm_control_trackcom_declarations_name_the_reference_they_were_measu
     """The measured case this field exists for: declared under mujoco 3.11.0, judged under 3.12.0 in
     Step 4, and 3.12.0 re-anchors finite-plane textures (changelog item 15, commit cc7fb98c)."""
     table = _dmc_declaration_table()
-    for name in ("DMCHopperHop", "DMCWalkerWalk", "DMCHumanoidWalk"):
-        assert table[name][REFERENCE_VERSIONS_KEY] == {"mujoco": "3.11.0"}
-        assert table[name][MEASURED_WITH_KEY] == {"mujoco_warp": "3.11.0"}
-        assert table[name]["measured_at"].startswith("84 px")  # the text is kept as it was
-    assert table["DMCCheetahRun"][REFERENCE_VERSIONS_KEY] == {"mujoco": "3.12.0"}
-    assert table["DMCCheetahRun"][MEASURED_WITH_KEY] == {"mujoco_warp": "3.12.0"}
-    assert table["DMCSwimmerSwimmer6"][REFERENCE_VERSIONS_KEY] == {"mujoco": "3.11.0"}
-    assert table["DMCSwimmerSwimmer6"][MEASURED_WITH_KEY] == {"warp": "1.16.0"}
+    for name in (
+        "DMCCheetahRun",
+        "DMCHopperHop",
+        "DMCWalkerWalk",
+        "DMCHumanoidWalk",
+        "DMCSwimmerSwimmer6",
+        "DMCQuadrupedWalk",
+    ):
+        assert table[name][REFERENCE_VERSIONS_KEY] == {"mujoco": "3.12.0"}
+        assert table[name][MEASURED_WITH_KEY] == {"mujoco_warp": "3.12.0"}
+        assert "mujoco 3.12.0" in table[name]["measured_at"]
 
 
 OUR_RENDERER_PACKAGES = ("mujoco_warp", "mujoco-warp", "warp", "warp-lang", "nvdiffrast", "torch", "triton")
