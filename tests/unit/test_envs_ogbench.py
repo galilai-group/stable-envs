@@ -163,7 +163,7 @@ def test_the_maze_variation_taxonomy():
         assert np.allclose(space["walls"]["color"].value, [0.6, 0.6, 0.6])
         assert np.allclose(space["camera"]["elevation"].value, [-90.0])
         assert int(np.asarray(space["rendering"]["decolor_floor"].value).reshape(-1)[0]) == 0
-        assert int(np.asarray(space["floor"]["pixel_encoding"].value).reshape(-1)[0]) == 1
+        assert int(np.asarray(space["floor"]["pixel_encoding"].value).reshape(-1)[0]) == 0
         assert np.allclose(space["floor"]["color"].value, MAZE.CHECKER_RGB)
         assert np.allclose(space["light"]["intensity"].value, [1.0])
 

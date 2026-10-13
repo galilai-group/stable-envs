@@ -307,13 +307,13 @@ def test_ogbmaze_records_that_the_registered_states_mode_config_renders_every_le
 def test_ogbmaze_appearance_leaves_are_mapped_on_gate_evidence():
     """floor.color, floor.pixel_encoding and light.intensity are rendered and gated against swm.
 
-    pixel_encoding keeps swm's sense, so it maps by identity; its default differs and the note says so."""
+    pixel_encoding keeps swm's sense and default, so it maps by identity."""
     m = _map_for(MAZE)
     for leaf in ("floor.color", "floor.pixel_encoding", "light.intensity"):
         assert m.pairs()[leaf] == (leaf, 1.0)
         rec = LEAF_CLASSIFICATION[MAZE]["leaves"][leaf]
         assert rec["classification"] == "mapped" and "appearance_gate" in rec["evidence"]
-    assert "init_value is 0" in m.notes["floor.pixel_encoding"]
+    assert "DEFAULTS DIFFER" not in m.notes["floor.pixel_encoding"]
     assert not m.unmapped()
 
 

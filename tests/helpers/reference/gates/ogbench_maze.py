@@ -364,7 +364,7 @@ def pixel_appearance_gate(cell, case, *, seed=23, device="cpu"):
     """One appearance case in a pixel scene against swm's ``ob_type='pixels'`` env at its qpos.
 
     swm's own default reset applies ``floor.pixel_encoding=0`` (its init value), so every case
-    passes the encoding explicitly; ours defaults to the official gradient, encoding 1.
+    passes the encoding explicitly.
     """
     from stable_worldmodel.envs.ogbench.maze_env import MazeEnv
 

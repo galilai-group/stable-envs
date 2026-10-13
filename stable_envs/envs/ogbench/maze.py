@@ -558,8 +558,8 @@ class OGBenchMaze(Env):
                     {
                         "tint": Box(low=0.0, high=1.0, shape=(3,), init_value=[1.0, 1.0, 1.0]),
                         "color": Box(low=0.0, high=1.0, shape=(2, 3), init_value=CHECKER_RGB),
-                        # Pixel scenes only: 1 keeps the position-encoding gradient, 0 the checker.
-                        "pixel_encoding": Discrete(2, init_value=1),
+                        # Pixel scenes only: 0 draws the checker, 1 the position-encoding gradient.
+                        "pixel_encoding": Discrete(2, init_value=0),
                     }
                 ),
                 "light": Dict({"intensity": Box(low=0.0, high=1.0, shape=(1,), init_value=[1.0])}),
