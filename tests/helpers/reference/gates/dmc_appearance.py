@@ -109,8 +109,43 @@ def _mse(a, b):
     return {"mean": float(per_frame.mean()), "worst": float(per_frame.max())}
 
 
-def frames(cell, cfg, seed=13, steps=8, device="cpu"):
-    """Render both sides along one trajectory; return SWM's frames and ours with and without ``cfg``."""
+def _swm_texture_frames(env, ref, states, default_row):
+    """Render ``states`` at the default style on our model compiled with SWM's grid texture."""
+    import mujoco
+
+    from stable_envs.envs.dmcontrol._model import _SCENE_CACHE, _TC_CACHE
+
+    swm = ref.envs[0].env.physics.model
+    swm = swm.ptr if hasattr(swm, "ptr") else swm
+    m = type(env)._model()
+
+    def grid(model):
+        t = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_TEXTURE, "grid")
+        adr = int(model.tex_adr[t])
+        return slice(adr, adr + int(model.tex_width[t]) * int(model.tex_height[t]) * int(model.tex_nchannel[t]))
+
+    ours_span, swm_span = grid(m), grid(swm)
+    assert ours_span.stop - ours_span.start == swm_span.stop - swm_span.start
+    kept = np.array(m.tex_data[ours_span], copy=True)
+
+    def evict():
+        env.__dict__.pop("_cpu_scenes", None)
+        _TC_CACHE.clear()
+        _SCENE_CACHE.clear()
+
+    m.tex_data[ours_span] = swm.tex_data[swm_span]
+    evict()
+    try:
+        return np.stack([env.render(s, style=torch.as_tensor(default_row[None]))[0].cpu().numpy() for s in states])
+    finally:
+        m.tex_data[ours_span] = kept
+        evict()
+
+
+def frames(cell, cfg, seed=13, steps=8, device="cpu", substituted=False):
+    """Render both sides along one trajectory; return SWM's frames and ours with and without ``cfg``.
+
+    With ``substituted``, also return our default-style frames on a model carrying SWM's compiled grid texture."""
     domain = DOMAINS[cell]
     swm_cfg = {k: _swm_value(k, v) for k, v in cfg.items()}
     ref = DMCReference(domain, 1, options={"variation_values": swm_cfg})
@@ -123,14 +158,18 @@ def frames(cell, cfg, seed=13, steps=8, device="cpu"):
         renderer = _Renderer(ref, env.size, env.CAMERA)
         env.reset(seed=seed)
         actions = np.random.default_rng(seed).uniform(-1, 1, (steps, 1, env.action_dim))
-        theirs, ours, ignored = [], [], []
+        theirs, ours, ignored, states = [], [], [], []
         for action in actions:
             state = env.step(action, states=None, frames=None)["state"]
+            states.append(state)
             ref.step(action)
             theirs.append(renderer())
             ours.append(env.render(state)[0].cpu().numpy())
             ignored.append(env.render(state, style=torch.as_tensor(default_row[None]))[0].cpu().numpy())
-    return np.stack(theirs), np.stack(ours), np.stack(ignored)
+        out = np.stack(theirs), np.stack(ours), np.stack(ignored)
+        if substituted:
+            out += (_swm_texture_frames(env, ref, states, default_row),)
+    return out
 
 
 def leaf_gate(cell, cfg, **kw):
@@ -139,6 +178,16 @@ def leaf_gate(cell, cfg, **kw):
         "values": {k: np.asarray(v).tolist() for k, v in cfg.items()},
         "mse": _mse(ours, theirs),
         "mse_ignoring_leaf": _mse(ignored, theirs),
+    }
+
+
+def floor_gate(cell, cfg, **kw):
+    """Our recolour against our renderer on SWM's substituted texture, and against SWM's frames."""
+    theirs, ours, _, built = frames(cell, cfg, substituted=True, **kw)
+    return {
+        "values": {k: np.asarray(v).tolist() for k, v in cfg.items()},
+        "max_abs_vs_substituted": int(np.abs(ours.astype(np.int16) - built.astype(np.int16)).max()),
+        "mse": _mse(ours, theirs),
     }
 
 
