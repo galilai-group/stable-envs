@@ -84,9 +84,11 @@ def test_adapter_replays_every_recorded_step_from_restored_states(directory, dom
                 compare_state(env.get_state(), expected)
                 for t, action in enumerate(data["actions"][start:], start=start):
                     result = env.step(action)
+                    # The solver's warm start is a starting guess; across platforms the
+                    # physics it converges to is what must match.
                     compare_state(
-                        result["state"],
-                        state_at(data, t + 1, batch=3, physics=env.physics_layout),
+                        result["state"].exclude("warmstart"),
+                        state_at(data, t + 1, batch=3, physics=env.physics_layout).exclude("warmstart"),
                         atol=FROZEN_FLOAT64_ATOL,
                     )
                     assert_outputs(result, data, t, **compare)
