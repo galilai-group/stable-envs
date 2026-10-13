@@ -10,7 +10,7 @@ from tensordict import TensorDict
 
 from ...._execution.protocol import SimulatorAdapter
 from ...._execution.state_columns import owned_columns
-from .compatibility import MODEL_VALUES, CompatibleCube, CompatibleScene, LanePool, nodes
+from .compatibility import MODEL_VALUES, CompatibleCube, CompatibleScene, LanePool, nodes, variation_tree
 
 PARTS = (
     "TIME",
@@ -397,8 +397,6 @@ class OGBManipulationAdapter(SimulatorAdapter):
         return self.envs[0].model.nq
 
     def make_variation_space(self):
-        from .compatibility import variation_tree
-
         return variation_tree(self.envs[0])
 
     def variation_values(self, layout, *, anchor=False):

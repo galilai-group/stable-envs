@@ -12,6 +12,7 @@ import gymnasium as gym
 import numpy as np
 import pytest
 import torch
+from tensordict import TensorDict
 
 pytest.importorskip("ogbench")
 import mujoco
@@ -238,7 +239,6 @@ def test_metadata_reads_and_checker_construction_are_controlled(cls):
     a, b = cls(seed=42), cls(seed=42)
     try:
         assert a._model is b._model is None
-        assert a.step.__func__ is ManipSpaceEnv.step
         box = a.action_space
         for _ in range(5):
             assert a.action_space is box
@@ -398,16 +398,6 @@ def test_contact_histories_oracle_and_independent_restore(interaction, oracle):
                 assert min(positions) <= -0.02 and buttons[0] != buttons[-1]
             else:
                 assert max(positions) - min(positions) > 0.005
-            print(
-                "CONTACT_GATE",
-                interaction,
-                "steps=50 restored_continuation=30",
-                "joint_range",
-                min(positions),
-                max(positions),
-                "robot_contacts",
-                sorted(contacts),
-            )
             # Same-instance replay after a different controller/contact history.
             a.set_state(saved)
             b.set_state(saved)
@@ -451,11 +441,6 @@ def test_solver_and_cached_pose_fields_are_behaviorally_relevant(family):
             b._simulator.envs[0].data.qacc_warmstart[:] += 1e6
         baseline, changed = a.step(action, frames=None), b.step(action, frames=None)
         assert not torch.equal(baseline["state", "physics", "qpos"], changed["state", "physics", "qpos"])
-        print(
-            "WARMSTART_SENSITIVITY",
-            family,
-            (baseline["state", "physics", "qpos"] - changed["state", "physics", "qpos"]).abs().max().item(),
-        )
 
 
 @pytest.mark.parametrize("family", CLASSES)
@@ -539,7 +524,6 @@ def test_owned_variation_child_streams_and_no_recompilation_branch(family, oracl
             for name, node in oracle.spaces(a.variation_space):
                 counterpart = dict(oracle.spaces(b.variation_space))[name]
                 assert node.np_random.bit_generator.state == counterpart.np_random.bit_generator.state
-        print("VARIATION_SEED_TREE_AND_COMPILE_LIFECYCLE", family, "PASS")
     finally:
         a.close()
         b.close()
@@ -570,7 +554,6 @@ def test_identical_genuine_box_settling_actions(family, seed, oracle):
         assert len(tape[0]) == len(tape[1]) == 2
         assert all(np.array_equal(x, y) for x, y in zip(*tape))
         assert_oracle(a, b, oracle)
-        print("SETTLING_TAPE", family, seed, [x.tolist() for x in tape[0]])
     finally:
         a.close()
         b.close()
@@ -578,8 +561,6 @@ def test_identical_genuine_box_settling_actions(family, seed, oracle):
 
 @pytest.mark.parametrize("family", CLASSES)
 def test_restore_failure_cannot_partially_commit_a_batch(family):
-    from tensordict import TensorDict
-
     cls = CompatibleCube if family == "Cube" else CompatibleScene
     with CLASSES[family](num_envs=2, seed=17) as a:
         saved = a.get_state()

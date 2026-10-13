@@ -55,8 +55,6 @@ def nodes(tree, prefix="variation"):
 
 
 def variation_tree(env):
-    """Build owned Variation values; Gym determines the sorted child-seeding order."""
-
     def box(low, high, shape, initial):
         return Box(low, high, shape=shape, dtype=np.float64, init_value=initial)
 
@@ -424,8 +422,8 @@ class Compatibility:
         # SWM visits requested leaves in the tree's sorted order, not request order.
         tree.update([name for name in tree.names() if name in selected])
         explicit_size = options.get("variation_values", {}).get("cube.size")
-        # NumPy 2 weak Python scalars multiply the source float32 size vector in
-        # float32; typed float64 samples/overrides promote it. Retain that effect.
+        # NumPy 2 weak Python scalars keep the source float32 size vector in float32;
+        # typed float64 samples/overrides promote it.
         self._size_float32 = explicit_size is not None and (
             not isinstance(explicit_size, np.ndarray) or explicit_size.dtype == np.float32
         )
