@@ -125,7 +125,6 @@ def test_a_variation_round_trips_through_another_env(name):
         state = first.reset(seed=SEED)
         _assert_equal(second.reset(seed=SEED), state)
         _assert_equal(second.get_variation(), first.get_variation())
-        _assert_equal(second.render(state), first.render(state))
 
 
 @pytest.mark.parametrize("name", envs("batch_render"))

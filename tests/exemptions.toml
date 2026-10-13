@@ -24,7 +24,7 @@ reason = "the Fetch source gate drives only the base tasks; dict observations ar
 [[exemption]]
 env = "Fetch*"
 family = "fetch"
-checks = ["specs", "variation", "batch_render"]
+checks = ["specs", "batch_render"]
 reason = "backend='auto' on a CPU device does not fall back to the OpenGL renderer: frames raise CPU_BACKEND_MISSING unless backend='opengl' is passed"
 
 [[exemption]]
@@ -32,6 +32,12 @@ env = "PyFlytRocketLanding"
 family = "rocket"
 checks = ["batch_render"]
 reason = "render() refuses a State whose batch is not num_envs (ValueError: Rocket full State requires batch [num_envs])"
+
+[[exemption]]
+env = "OGB*"
+family = "ogbench"
+checks = ["batch_render"]
+reason = "render() refuses a State whose batch is not num_envs (TypeError: Full Cube/Scene TensorDict State with batch [num_envs] required)"
 
 [[exemption]]
 env = "CraftaxClassic"
