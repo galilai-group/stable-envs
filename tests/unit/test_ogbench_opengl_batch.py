@@ -1,7 +1,6 @@
 """Batch bookkeeping checks without a graphics context; GPU parity is gated separately."""
 
 import importlib.util
-import os
 import sys
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
@@ -29,7 +28,6 @@ def opengl():
     mujoco = ModuleType("mujoco")
     mujoco.mj_forward = Mock()
     path = Path(__file__).parents[2] / "stable_envs/envs/ogbench/manipulation_opengl.py"
-    path = Path(os.environ.get("STABLE_ENVS_OPENGL_TEST_CANDIDATE", path))
     spec = importlib.util.spec_from_file_location("stable_envs.envs.ogbench._opengl_test", path)
     module = importlib.util.module_from_spec(spec)
     with patch.dict(

@@ -10,7 +10,9 @@ because releasing one can invalidate other live contexts on supported drivers.""
 
 from __future__ import annotations
 
+import contextlib
 import copy
+import os
 
 import numpy as np
 import torch
@@ -24,6 +26,7 @@ from ...registry import register
 from ...render import _resources as _RES
 from ...render import mjwarp as MW
 from ...spaces import Box, Dict
+from .context_cache import ContextCache, allocation_bytes
 
 #: Groups ``mujoco.Renderer`` draws at the env's own ``MjvOption`` (``geomgroup = [1,1,1,0,0,0]``).
 VISIBLE_GROUPS = (0, 1, 2)
@@ -48,9 +51,6 @@ DEFAULT_VARIATION_PATHS = {
     "Cube": ("cube.start_position", "cube.start_yaw", "cube.goal_position", "cube.goal_yaw"),
     "Scene": ("cube.start_position", "cube.start_yaw", "cube.goal_position", "cube.goal_yaw"),
 }
-# Caches share compiled configuration, mutable contexts, and static backgrounds.
-# Per-world appearance must be uploaded on every draw, including default values.
-from .context_cache import ContextCache, allocation_bytes
 
 
 def _release_context(context):
@@ -67,10 +67,7 @@ _BUNDLE_CACHE: dict = {}
 _REF_CACHE: dict = {}
 
 
-import contextlib as _contextlib
-
-
-@_contextlib.contextmanager
+@contextlib.contextmanager
 def _seeded_action_space(u, seed: int):
     """Temporarily seed the upstream action-space descriptor for reproducible sampling.
 
@@ -99,19 +96,13 @@ def _reference_env(cell: str, size: int | None = None, role: str = "render"):
     kw = {}
     if size:
         kw = {"width": int(size), "height": int(size)}
-    env = _construct_reference(cell, kw)
+    env = _ogbench_make(cell, kw)
     env.reset(seed=0)
     _REF_CACHE[key] = env
     return env
 
 
-def _construct_reference(cell: str, kw: dict):
-    """Build the certified reference env from OGBench constructors."""
-    return _ogbench_make(cell, kw)
-
-
 def _ogbench_make(cell: str, kw: dict):
-    """Upstream OGBench construction at the certified size / observation type."""
     size = int(kw.get("height") or kw.get("width") or SPEC[cell]["size"])
     if cell == "Cube":
         from ogbench.manipspace.envs.cube_env import CubeEnv
@@ -237,11 +228,7 @@ def _variation_defaults(u) -> dict:
     """Read default cube RGB (3,) and checker RGB (2, 3) from the upstream variation space."""
     vs = getattr(u, "variation_space", None)
     ncube = int(getattr(u, "_num_cubes", 1) or 1)
-    assert ncube == 1, (
-        f"this cell has {ncube} cubes, and the (3,) cube.color contract assumes one. A multi-cube "
-        f"configuration needs the leaf widened to (num_cubes, 3) on BOTH sides, plus per-cube geom "
-        f"groups in _cube_geoms; it is not a shape that can be fixed at the Box alone"
-    )
+    assert ncube == 1, f"cube.color is (3,), which assumes one cube; this cell has {ncube}"
     out = {}
     for path, fallback in (
         ("cube.color", [[0.96, 0.26, 0.33]]),
@@ -257,8 +244,7 @@ def _variation_defaults(u) -> dict:
             except Exception:
                 val = None
         out[path] = np.asarray(fallback, np.float64) if val is None else val
-    # upstream (num_cubes, 3) -> our flat (3,); asserted one cube above, so this cannot silently drop
-    # a second cube's colour.
+    # Upstream (num_cubes, 3) flattens to (3,); the single-cube assert above rules out dropping a cube.
     out["cube.color"] = np.asarray(out["cube.color"], np.float64).reshape(-1)[:3]
     out["floor.color"] = np.asarray(out["floor.color"], np.float64).reshape(2, 3)
     return out
@@ -311,11 +297,10 @@ def _button_tables(u, m, nbuttons: int) -> dict | None:
         out[bits] = (np.array(m.geom_rgba, copy=True), np.array(m.mat_rgba, copy=True))
     u._cur_button_states = saved
     u._apply_button_states()
-    # The tables must actually DIFFER, or the bits are not colours and this design is wrong.
+    # The tables must differ, otherwise button bits would not select colours.
     first = out[tuple([0] * nbuttons)]
     assert any(not np.array_equal(first[0], v[0]) or not np.array_equal(first[1], v[1]) for v in out.values()), (
-        "button states produce identical colour tables: either SceneEnv's rule changed or this cell "
-        "is capturing the wrong arrays, and carrying the bits in the state would be a lie either way"
+        "button states produce identical colour tables: SceneEnv's colour rule changed or the wrong arrays were captured"
     )
     return out
 
@@ -374,8 +359,7 @@ def _build_context(cell: str, res: int, nworld: int) -> _Ctx:
     import warp as wp
 
     b = _bundle(cell)
-    # Prepare a private model copy so rendering cannot alter the reference.
-    # Copy at all-zero button bits, the base used by the per-world color deltas.
+    # Copy at all-zero button bits, the base of the per-world colour deltas.
     zero_bits = [0] * b.nbuttons
     saved_bits = list(getattr(b.unwrapped, "_cur_button_states", []))
     if b.nbuttons:
@@ -439,8 +423,7 @@ def _ctx_button_tables(b: _Bundle, base, tables, device: str = "cuda") -> dict |
     bakes; overlapping material edits are rejected."""
     if not b.nbuttons or tables is None:
         return None
-    # The context model was deep-copied from the reference while it was forced to all-zero bits
-    # (see `_build_context`), so the all-zero table is the right delta base. Asserted below.
+    # The context model was copied at all-zero button bits, so the all-zero table is the delta base.
     base_g, base_m = base
     zero = tuple([0] * b.nbuttons)
     ref_g0, ref_m0 = b.button_tables[zero]
@@ -452,10 +435,7 @@ def _ctx_button_tables(b: _Bundle, base, tables, device: str = "cuda") -> dict |
             for i in np.nonzero(np.any(rg != ref_g0, axis=1))[0]
         }
     )
-    assert np.array_equal(base_g[touched], ref_g0[touched]), (
-        "the context model was copied at button bits other than all-zero, so every delta below "
-        "would be applied to the wrong base; see _context's forced-zero block"
-    )
+    assert np.array_equal(base_g[touched], ref_g0[touched]), "context model was not copied at all-zero button bits"
     # Compare prepared materials against the same all-zero button baseline to isolate texture bakes.
     baked_rows = np.nonzero(np.any(base_m != ref_m0, axis=1))[0]
     out = {}
@@ -463,9 +443,8 @@ def _ctx_button_tables(b: _Bundle, base, tables, device: str = "cuda") -> dict |
         dg, dm = rg - ref_g0, rm - ref_m0
         if len(baked_rows):
             assert not np.any(dm[baked_rows]), (
-                f"the texture bake and the button colour rule both write material rows "
-                f"{sorted(set(baked_rows) & set(np.nonzero(np.any(dm, axis=1))[0]))}; applying one "
-                f"as a delta over the other would undo it"
+                "texture bake and button colour rule both write material rows "
+                f"{sorted(set(baked_rows) & set(np.nonzero(np.any(dm, axis=1))[0]))}"
             )
         code = sum(bit << k for k, bit in enumerate(bits))
         out[code] = (
@@ -548,8 +527,6 @@ class OGBManipBase(Env):
         self.__dict__.pop("_idx_cache", None)
         self.__dict__.pop("_style_host_cache", None)
 
-    # ---- the assumption the whole design rests on, checked rather than assumed -------------
-
     def _check_plate_is_constant(self) -> None:
         """Check once per compiled bundle that the baked background is pose-independent."""
         if self._b.plate_checked:
@@ -568,8 +545,6 @@ class OGBManipBase(Env):
         if not torch.equal(a, c):
             raise ValueError("baked static background depends on articulated or mocap pose")
         b.plate_checked = True
-
-    # ---- state ----------------------------------------------------------------------------
 
     def _split(self, s: np.ndarray):
         """Split a packed render row into qpos, mocap position, default orientation, and buttons."""
@@ -624,10 +599,8 @@ class OGBManipBase(Env):
                 out.append(np.concatenate([d.qpos.copy(), d.mocap_pos.ravel().copy(), np.asarray(bits, np.float64)]))
         finally:
             np.random.set_state(gstate)
-        # Match float32 render inputs before rendering either candidate or reference.
+        # float32 matches the render inputs of both candidate and reference.
         return np.stack(out).astype(np.float32)
-
-    # ---- variation ------------------------------------------------------------------------
 
     def make_variation_space(self) -> Dict:
         """Expose per-world cube RGB and per-background checker RGB."""
@@ -654,8 +627,6 @@ class OGBManipBase(Env):
         self.__dict__["_style_host_cache"] = (v, v._version, out)
         return out
 
-    # ---- the plate ------------------------------------------------------------------------
-
     def _plate(self, res: int, floor=None, view=None) -> torch.Tensor:
         """Return the background cached by configuration, resolution, device, quantized floor RGB and view."""
         fq = self._floor_key(floor)
@@ -677,16 +648,10 @@ class OGBManipBase(Env):
         rig = _plate_rig(self.CELL, int(res) * (2 if b.sample_pattern == "gl4" else 1))
         live = b.model
         shape = (int(live.ngeom), int(live.nq), int(live.nmocap))
-        assert shape == rig.shape, (
-            f"{self.CELL}: the env recompiled to a different model shape {shape} than the plate rig "
-            f"was built for {rig.shape}; the cached plate would be a picture of the old scene"
-        )
+        assert shape == rig.shape, f"{self.CELL}: model shape {shape} differs from the plate rig's {rig.shape}"
         now = _appearance_digest(live, b.unwrapped._scene_option.sitegroup)
         assert now == rig.appearance, (
-            f"{self.CELL}: an appearance array changed since the plate rig was built "
-            f"({rig.appearance} -> {now}). The cached plate is a picture of the scene as it was, so "
-            f"it is now wrong; phase 0 measured these arrays identical across resets and this "
-            f"assertion is what keeps that measurement honest"
+            f"{self.CELL}: an appearance array changed since the plate rig was built ({rig.appearance} -> {now})"
         )
         self._apply_floor(rig, floor)
         for name in VIEW_FIELDS:
@@ -723,8 +688,6 @@ class OGBManipBase(Env):
         want = want.reshape(2, 3)
         _substitute(rig.model, rig.renderer, g, want)
         rig.floor = want.copy()
-
-    # ---- render ---------------------------------------------------------------------------
 
     @torch.no_grad()
     def _render(
@@ -942,8 +905,6 @@ class OGBManipBase(Env):
             hit = c.lock_tables.put(lock.key, tuple(torch.stack([out[k][i] for k in range(len(out))]) for i in (0, 1)))
         return hit
 
-    # ---- the reference --------------------------------------------------------------------
-
     @classmethod
     def reference_env(cls, size: int | None = None):
         return _reference_env(cls.CELL, size, role="render")
@@ -1016,9 +977,7 @@ def _appearance_digest(m, sitegroup=None) -> str:
             h.update(repr(a.shape).encode())
             h.update(a.tobytes())
             n += 1
-    assert n >= 20, (
-        f"appearance digest covered only {n} arrays -- an empty hash would certify staleness it never looked at"
-    )
+    assert n >= 20, f"appearance digest covered only {n} arrays"
     return h.hexdigest()
 
 
@@ -1029,8 +988,6 @@ class _PlateRig:
 
 
 def _plate_rig(cell: str, res: int) -> _PlateRig:
-    import copy
-
     import mujoco
 
     key = (cell, int(res))
@@ -1040,11 +997,11 @@ def _plate_rig(cell: str, res: int) -> _PlateRig:
     b = _bundle(cell)
     live = b.model
     rig = _PlateRig()
-    rig.floor = None  # which floor.color the GL context currently holds
+    rig.floor = None  # floor.color currently uploaded to the GL context
     rig.appearance = _appearance_digest(live, b.unwrapped._scene_option.sitegroup)
     rig.shape = (int(live.ngeom), int(live.nq), int(live.nmocap))
     rig.model = copy.deepcopy(live)
-    # Movers are hidden for the life of the rig -- this model exists only to draw the static scene.
+    # The rig only draws the static scene.
     rig.model.geom_group[b.movers] = MW.HIDDEN_GROUP
     zero = (b.button_tables or {}).get(tuple([0] * b.nbuttons))
     if zero is not None:
@@ -1058,23 +1015,12 @@ def _plate_rig(cell: str, res: int) -> _PlateRig:
     rig.model.vis.global_.offwidth = max(int(rig.model.vis.global_.offwidth), int(res))
     rig.model.vis.global_.offheight = max(int(rig.model.vis.global_.offheight), int(res))
     rig.renderer = mujoco.Renderer(rig.model, height=int(res), width=int(res))
-    _KEEPALIVE.append(rig.renderer)  # the rule, enforced directly: never released
-    _PLATE_RIGS[key] = rig  # never evicted; the renderer is never closed
-    if __debug__ and _os.environ.get("SE7_OGB_RIGDEBUG") == "1":  # diagnostics, off unless asked
-        import sys
-
-        mods = [n for n, m in sys.modules.items() if getattr(m, "__name__", None) == __name__ and m is not None]
-        print(
-            f"[rigdebug] built {key}: rigs={len(_PLATE_RIGS)} keepalive={len(_KEEPALIVE)} "
-            f"dict_id={id(_PLATE_RIGS)} module_copies={len(mods)} {mods}",
-            flush=True,
-        )
+    _KEEPALIVE.append(rig.renderer)
+    _PLATE_RIGS[key] = rig
     return rig
 
 
-# Recorded fidelity measurements and declared acceptance margins.
-import os as _os
-
+# Recorded fidelity measurements; acceptance margins derive from them.
 _MEASURED: dict = {
     "Cube": {
         "all_exact_frac": 0.870012,
@@ -1105,8 +1051,7 @@ _MEASURED: dict = {
         "within8_frac": 0.855483,
     },
 }
-#: OUR side: the batch raytracer that drew the movers.
-_UNMEASURED = str(_os.environ.get("SE7_OGB_UNMEASURED", "")) == "1"
+_UNMEASURED = str(os.environ.get("SE7_OGB_UNMEASURED", "")) == "1"
 
 # Pin the upstream renderer and scene package independently of our rendering backend.
 _REFERENCE_VERSIONS = {"mujoco": "3.12.0", "ogbench": "1.2.1"}
@@ -1118,10 +1063,8 @@ def _fidelity(cell: str) -> dict:
     if cell not in _MEASURED:
         if not _UNMEASURED:
             raise RuntimeError(
-                f"ogb_manip: {cell} has no MEASURED visual_fidelity. This module refuses to register "
-                f"a visual cell with invented numbers. Re-measure Gate-F fidelity, paste its "
-                f"worst-of-eight into _MEASURED, and re-import. Set SE7_OGB_UNMEASURED=1 only "
-                f"inside that measuring job."
+                f"ogb_manip: {cell} has no measured visual_fidelity; add its worst-of-eight to _MEASURED. "
+                "Set SE7_OGB_UNMEASURED=1 only inside the measuring job."
             )
         return {
             "mean_abs": -1.0,
@@ -1156,10 +1099,9 @@ def _fidelity(cell: str) -> dict:
             "a reset followed by 0–25 random actions. Measured by check_visual_fidelity; "
             "draw_spread records the observed range."
         ),
-        # The REFERENCE side, which the certifier compares: mujoco is what OGBench's render() draws with.
+        # Reference side, compared by the certifier.
         "reference_versions": _REFERENCE_VERSIONS,
-        # OUR side, recorded and never compared: a bump of our own renderer that moves these numbers
-        # is a regression to be seen, not a reason to block the check.
+        # Our side, recorded but never compared.
         "measured_with": _MEASURED_WITH,
     }
 

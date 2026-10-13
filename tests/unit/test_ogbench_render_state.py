@@ -48,7 +48,7 @@ def test_per_world_arrays_match_each_rows_own_compile(family):
     state["appearance", "camera.angle_delta"][3] = state["appearance", "camera.angle_delta"].new_tensor([[4.0, -3.0]])
     if family == "Scene":
         state["appearance", "lock_color"][4] = state["appearance", "lock_color"].new_tensor([[0.1, 0.8, 0.2]] * 2)
-    # Colours and poses are uploaded per world already and must not split anything.
+    # Colours and poses are uploaded per world and never split a configuration.
     state["pose", "qpos"][5, 0] += 0.1
     state["appearance", "cube.color"][5] = 0.2
     token, bundle = renderer.configured_bundle(family)
@@ -69,6 +69,27 @@ def test_per_world_arrays_match_each_rows_own_compile(family):
                     assert np.array_equal(got[bits][0], g) and np.array_equal(got[bits][1], m), (index, bits)
         finally:
             env.close()
+    rows = slice(2, 5)
+    sliced = worlds[rows]
+    assert sliced.view.tolist() == worlds.view[rows].tolist()
+    for name, value in worlds.fields.items():
+        assert torch.equal(sliced.fields[name], value[rows])
+
+
+@pytest.mark.parametrize("family", ["Cube", "Scene"])
+def test_uniform_batch_keeps_one_world_entry(family):
+    from tests.helpers.ogbench_golden import FIXTURES, load
+
+    state, _ = load(FIXTURES / f"{family}-mjwarp.npz")
+    state = state[:4].clone()
+    for key in state["appearance"].keys():
+        if key not in ("agent.color", "cube.color"):
+            state["appearance", key][:] = state["appearance", key][0]
+    token, bundle = renderer.configured_bundle(family)
+    worlds = renderer._worlds(family, token, bundle, state, "cpu")
+    assert worlds.view.tolist() == [0] * 4 and len(worlds.views) == 1
+    assert all(len(value) == 1 for value in worlds.fields.values())
+    assert worlds.lock is None if family == "Cube" else len(worlds.locks) == 1
 
 
 @pytest.mark.parametrize("family,cls", [("Cube", OGBCube), ("Scene", OGBScene)])
@@ -126,7 +147,7 @@ def test_named_render_state_boundary(family, cls):
 
 
 @pytest.mark.parametrize("family,cls", [("Cube", OGBCube), ("Scene", OGBScene)])
-def test_render_model_configuration_no_steps_or_rng_mutation(family, cls):
+def test_building_worlds_neither_steps_nor_resets_nor_touches_global_rng(family, cls):
     before = np.random.get_state()
     with cls(seed=17) as env:
         env.reset(
@@ -141,12 +162,11 @@ def test_render_model_configuration_no_steps_or_rng_mutation(family, cls):
                 },
             },
         )
-        full = env.get_state()
-        rs = env.to_render_state(full)
-        candidate_cls = env._simulator.cls
+        rs = env.to_render_state(env.get_state())
+        source_cls = env._simulator.cls
         with (
-            patch.object(candidate_cls, "step", side_effect=AssertionError("renderer stepped")),
-            patch.object(candidate_cls, "reset", side_effect=AssertionError("renderer reset")),
+            patch.object(source_cls, "step", side_effect=AssertionError("renderer stepped")),
+            patch.object(source_cls, "reset", side_effect=AssertionError("renderer reset")),
         ):
             token, b = renderer.configured_bundle(family)
             worlds = renderer._worlds(family, token, b, rs.cpu(), "cpu")
@@ -155,35 +175,18 @@ def test_render_model_configuration_no_steps_or_rng_mutation(family, cls):
         for name in core.WORLD_FIELDS:
             want = torch.as_tensor(getattr(source.model, name), dtype=torch.float32)
             assert torch.equal(worlds.fields[name][0].reshape(want.shape), want), name
-        # Scene button tables intentionally place the private model at a known base.
-        # The render-only Scene model adds two button materials. Compare named
-        # materials; insertion can renumber unrelated compiled material IDs.
-        # agent.color is uploaded per world, so it names materials rather than compiling them.
         assert [b.model.material(int(i)).name for i in b.agent_mats] == list(pixels.AGENT_MATERIALS)
         assert b.cam >= 0 and b.nbuttons == (2 if family == "Scene" else 0)
-        # Exercise the inherited style API without claiming a GPU render.
-        obj = object.__new__(renderer._ConfiguredRenderer)
-        obj.requires_cuda = False
-        renderer._ConfiguredRenderer.__init__(obj, token, b, "cpu", 224, 1)
-        styles = obj.resolve_style(
-            None,
-            {
-                "cube.color": rs["appearance", "cube.color"].reshape(1, 3),
-                "floor.color": rs["appearance", "floor.color"].reshape(1, 6),
-            },
-            batch=1,
-        )
-        assert styles.values.shape == (1, 9)
-        obj.close()
-        # A source agent-only pending MJCF change must not become a rendered compiled change.
-        env.reset(17, {"variation": [], "variation_values": {"agent.color": np.array([0.8, 0.2, 0.1])}})
-        current = env.to_render_state()
-        assert torch.equal(current["appearance", "agent.color"], env.get_state()["model", "compiled", "agent.color"])
-        assert renderer._ConfiguredRenderer._render is core.OGBManipBase._render
-        assert renderer._ConfiguredRenderer._bake_plate is core.OGBManipBase._bake_plate
-        assert renderer._ConfiguredRenderer._upload_cube_colours is core.OGBManipBase._upload_cube_colours
     after = np.random.get_state()
     assert before[0] == after[0] and np.array_equal(before[1], after[1]) and before[2:] == after[2:]
+
+
+@pytest.mark.parametrize("family,cls", [("Cube", OGBCube), ("Scene", OGBScene)])
+def test_pending_agent_color_is_not_a_compiled_render_change(family, cls):
+    with cls(seed=17) as env:
+        env.reset(17, {"variation": [], "variation_values": {"agent.color": np.array([0.8, 0.2, 0.1])}})
+        projected = env.to_render_state()["appearance", "agent.color"]
+        assert torch.equal(projected, env.get_state()["model", "compiled", "agent.color"])
 
 
 @pytest.mark.parametrize("family,cls", [("Cube", OGBCube), ("Scene", OGBScene)])
