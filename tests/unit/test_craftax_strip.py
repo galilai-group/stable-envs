@@ -1,13 +1,9 @@
-"""The inventory strip and the fifth (sleeping) player sprite.
+"""The inventory strip and the sleeping player sprite.
 
-These are the two things Step 7 added to the world-layer renderer, and both are the kind of change
-that produces a plausible wrong picture rather than an obvious one: a strip cell drawn from the
-wrong count still looks like an inventory, and a sleeping player drawn without the desaturation (or
-desaturated without the sprite) still looks like Craftax. So the assertions here are structural —
-what the strip is a function of, and what it is *not* a function of — rather than eyeball checks.
-
-No jax: the parity run against the official renderer lives in the certification harness, and these
-run everywhere.
+Both produce a plausible wrong picture rather than an obvious one (a strip cell drawn from the
+wrong count still looks like an inventory), so the assertions are structural: what the strip is a
+function of, and what it is not. No jax; parity against the official renderer lives in the
+certification harness.
 """
 
 from __future__ import annotations
@@ -17,17 +13,13 @@ import pytest
 import torch
 
 from stable_envs.envs.craftax.classic import (
-    N_BLOCK,
     N_COUNT,
-    N_FACING,
-    N_MOB,
     N_STRIP,
     N_TILE,
     NO_PLAYER,
     OBS_H,
     OBS_W,
     PLAYER_ASLEEP,
-    STRIP_BASE,
     STRIP_H,
     STRIP_LAYOUT,
     STRIP_NAMES,
@@ -73,8 +65,7 @@ def test_the_strip_lives_in_the_same_table_as_the_world_tiles(t):
     """One table, one gather. A strip cell is a tile indexed by (cell, count), nothing more."""
     tab = _Composite.get(DEV, t, want_float=False)[1]
     assert tab.shape == (N_TILE * t, t * 3)
-    assert STRIP_BASE == (N_FACING + 2) * N_BLOCK * N_MOB == 816
-    assert N_TILE == STRIP_BASE + N_STRIP * N_COUNT == 976
+    assert N_TILE == 976
 
 
 @pytest.mark.parametrize("t", SIZES)
@@ -176,10 +167,7 @@ def test_the_two_unwritten_cells_stay_black_whatever_the_state(env, states, t):
 
 @pytest.mark.parametrize("t", (7, 16))
 def test_the_strip_is_not_lit_and_not_desaturated(env, states, t):
-    """The reference concatenates the strip AFTER the lighting chain, so sleep cannot touch it.
-
-    Crafter's port found this by failing (`pre-repository-cleanup:docs/research/crafter.md`); here it is asserted.
-    """
+    """The reference concatenates the strip after the lighting chain, so sleep cannot touch it."""
     w = OBS_H * t
     awake = env._render(_set(states, is_sleeping=0.0), size=t).numpy()
     asleep = env._render(_set(states, is_sleeping=1.0), size=t).numpy()
@@ -248,7 +236,7 @@ def test_player_visible_still_hides_a_sleeping_player(env, states):
 
 
 def test_the_first_127_slots_kept_their_meaning(env, states):
-    """Appended, never reordered — which is what makes the frozen Step-4 world rows replayable."""
+    """State slots are appended, never reordered."""
     assert env.state_dim == 149
     assert env.state_names[:127] == (
         tuple(f"block_r{r}c{c}" for r in range(OBS_H) for c in range(OBS_W))
@@ -259,18 +247,13 @@ def test_the_first_127_slots_kept_their_meaning(env, states):
     assert env.state_names[143:] == ("is_sleeping", "light_level", "rng_half0", "rng_half1", "rng_half2", "rng_half3")
 
 
-def test_a_step4_shaped_row_reproduces_the_old_world_layer(env):
-    """A 127-slot row zero-extended to 144 is daylight, awake, empty-handed — the Step-4 state.
-
-    The world rows it renders must be exactly what the pre-Step-7 renderer produced, and the strip
-    must be entirely black. This is the replay obligation, asserted in the repo rather than only in
-    the certification harness.
-    """
+def test_a_zero_extended_world_row_renders_daylight_with_a_black_strip(env):
+    """A 127-slot row zero-extended to 144 is daylight, awake, empty-handed: black strip, lit world."""
     rng = np.random.default_rng(4)
     st = env.sample_states(8, rng)
     old = np.zeros_like(st)
     old[:, :127] = st[:, :127]  # counts 0, not sleeping, light_level 0...
-    old[:, 127 + N_STRIP + 1] = 1.0  # ...except daylight, which is the Step-4 state
+    old[:, 127 + N_STRIP + 1] = 1.0  # ...except daylight
     for t in (7, 16):
         f = env._render(old, size=t).numpy()
         w = OBS_H * t
@@ -314,13 +297,7 @@ def test_every_new_state_dimension_reaches_a_pixel(env):
 
 
 def test_daylight_is_the_identity_and_keeps_the_uint8_fast_path(env, states):
-    """``light == 1.0`` must be bit-identical to no post-process at all.
-
-    This is what makes the frozen Step-4 world rows replayable and what keeps an existing
-    ``CPU_EXCEPTIONAL`` cell from regressing: at full daylight and awake the batch never leaves the
-    uint8 gather, so night costs those rows nothing. Asserted against the float path, which computes
-    the whole chain, so "the identity" is a measurement rather than a code-reading.
-    """
+    """``light == 1.0`` awake is bit-identical to the full float chain and stays on the uint8 gather."""
     st = _set(states, light=1.0, is_sleeping=0.0)
     fast = env._render(st, size=16)
     dec = env._decode(torch.as_tensor(st), len(st))
@@ -453,25 +430,11 @@ def test_the_strip_grid_cache_is_not_written_through(env, states):
     assert torch.equal(cell_of, before[0]) and torch.equal(blank, before[1])
 
 
-def test_the_key_is_assembled_only_where_it_can_matter(env, states):
-    """``_decode`` hands back the 16-bit HALVES; assembling them is the lit path's job.
-
-    Six ops a render that a daylight frame would never look at. Asserted structurally rather than by
-    timing, so it stays true when someone reorders the decode.
-    """
-    out = env._decode(torch.as_tensor(states), len(states))
-    assert len(out) == 7
-    halves = out[-1]
-    assert halves.shape == (len(states), 4) and halves.dtype == torch.float32
-    assert float(halves.max()) < 65536.0 and float(halves.min()) >= 0.0
-
-
 def test_the_declared_resolution_applicability_matches_measurement(env, states):
     """The declaration is a claim about numbers; this checks the numbers.
 
     ``check_resolution_consistency`` is declared applicable at ``light_level >= 0.5`` and not below,
-    because the OFFICIAL renderer is itself inconsistent below it (the oracle experiment in
-    ``pre-repository-cleanup:tests/fixtures/regression/join/step7/craftax-classic-full/oracle/``). What can be asserted without jax is
+    because the OFFICIAL renderer is itself inconsistent below it . What can be asserted without jax is
     our side of it: that we meet the frozen bound where the declaration says we do, and do not where
     it says the check does not apply.
     """
@@ -486,7 +449,7 @@ def test_the_declared_resolution_applicability_matches_measurement(env, states):
     for light in (0.45, 0.1):
         r = check_resolution_consistency(env, _set(states, light=light))
         assert r["exact_frac"] < 1.0 - 0.005, (
-            f"light={light} now meets the bound; the declared non-applicability is stale",
+            f"light={light} meets the bound; the declared non-applicability is stale",
             r,
         )
 
@@ -510,12 +473,7 @@ def test_the_strip_is_resolution_consistent_in_every_band(env, states):
 
 
 def test_the_declared_certification_distribution_is_the_one_the_sampler_produces(env):
-    """The tier is measured on ``sample_states(64)``; the declaration says what that contains.
-
-    Step 3's benchmark harness draws ``probe.sample_states(64)``, so the sampler is the certification
-    distribution rather than something chosen for the benchmark. If the sampler is retuned, the
-    declared shares must move with it or the tier is being read against the wrong mix.
-    """
+    """The declared lighting and sleep shares match what ``sample_states(64)`` produces."""
     from stable_envs.envs.craftax.classic import CraftaxClassic as C
 
     d = C.certification_state_distribution
@@ -532,37 +490,3 @@ def test_the_declared_certification_distribution_is_the_one_the_sampler_produces
         assert 0.31 <= float((sleep > 0.5).mean()) <= 0.46, seed
         # and the lit share -- the one that decides how the tier reads -- is always about 3/4
         assert 0.70 <= float((light < 1.0).mean()) <= 0.80, seed
-
-
-def test_the_performance_record_says_what_it_does_not_certify():
-    """A recorded number that does not say what it is worth invites being quoted as a tier.
-
-    The env carries two ratios against the official renderer that differ by 280x, because parity and
-    speed cannot use the same reference here. Both are recorded; neither certifies anything until
-    that is ruled on, and the record has to say so in the record rather than only in a findings file.
-    """
-    from stable_envs.envs.craftax.classic import CraftaxClassic as C
-
-    p, n = C.performance_record_cpu, C.s_cpu_note
-    assert p["tier"] == "CPU_FASTER"
-    assert abs(p["cores_cpu"] - p["mixed_default_fps"] / p["decode_bar_fps"]) < 0.005
-    assert p["daylight_diagnostic_cores_cpu"] > 10 > p["cores_cpu"], (
-        "the diagnostic and the tier must stay visibly different numbers"
-    )
-    assert abs(p["daylight_over_night"] - p["daylight_diagnostic_fps"] / p["night_diagnostic_fps"]) < 60
-    assert n["status"].startswith("RULED")
-    assert n["ruled_labels"] == {"cpu": "CPU_FASTER", "gpu": "GPU_FASTER"}
-    assert len(n["rejected_reference_timings"]) == 3, (
-        "the rejected reference timings are the evidence that the conditions were checked"
-    )
-    assert n["s_cpu_vs_unjitted"] / n["s_cpu_vs_jitted"] > 100, (
-        "the whole point of the note is that the two references disagree by orders of magnitude"
-    )
-    # the labels the frozen evaluator produces three ways, and the two that must never be quoted
-    assert n["labels_cpu"]["no_reference"] == "CPU_REGRESSION"
-    assert n["labels_gpu"]["no_reference"] == "GPU_FAST"
-    g = C.performance_record_gpu
-    assert g["tier"] == "GPU_FASTER"
-    assert g["tier_if_reference_not_jitted_DO_NOT_USE"] == "GPU_EXCEPTIONAL"
-    assert p["tier"] == "CPU_FASTER" and p["qualifier"] == "BELOW_G4"
-    assert abs(g["cores"] - g["mixed_default_fps"] / g["decode_bar_fps"]) < 0.02

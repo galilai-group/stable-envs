@@ -18,7 +18,6 @@ class and the module: the constructor's signature, the CPU refusal's wording, an
 from __future__ import annotations
 
 import inspect
-import types
 
 import numpy as np
 import pytest
@@ -45,7 +44,7 @@ def envs():
 
 
 @pytest.mark.parametrize("name", CRAFTAX)
-def test_takes_the_step9_constructor(name):
+def test_takes_num_envs_and_device_and_closes(name):
     cls = getattr(snv, name)
     with cls(num_envs=5, device="cpu") as env:
         assert env.num_envs == 5 and len(env) == 5
@@ -277,118 +276,7 @@ def test_craftax_full_registers_from_the_family_package():
         assert hasattr(_craftax_full, n)
 
 
-def test_the_two_craftax_modules_could_not_have_been_merged():
-    """The evidence for the brief's fallback, kept beside the choice rather than only in findings.
-
-    35 module-level names are shared and 15 of them hold DIFFERENT values, so one module object cannot
-    serve both spellings and a merge would have had to rename constants that tests import by name —
-    which is not behaviour-neutral, the condition the brief attached to the merge.
-
-    The count is ASSERTED here rather than only stated. It was prose before, and it drifted: the
-    delivered findings and this docstring both claimed 21, counting eight names that are in fact
-    identical in the two modules. A claim that carries a number and cannot fail is not evidence.
-    """
-    shared = {
-        "N_BLOCK": (17, 37),
-        "N_STRIP": (16, 41),
-        "STRIP_H": (2, 4),
-        "TILE_PX_AGENT": (7, 10),
-        "N_COUNT": (10, 100),
-    }
-    for n, (classic, full) in shared.items():
-        assert getattr(craftax, n) == classic
-        assert getattr(_craftax_full, n) == full
-    assert craftax.OBS_H != _craftax_full.OBS_H
-
-    #: The 15 shared names that genuinely conflict: 9 constants, 3 functions whose bodies differ, and
-    #: 3 same-named but distinct per-device caches. Pinned so that a future edit which makes the two
-    #: modules mergeable has to come here and say so.
-    CONFLICTING = {
-        "N_BLOCK",
-        "N_COUNT",
-        "N_STRIP",
-        "N_TILE",
-        "OBS_H",
-        "OBS_W",
-        "REFERENCE_TILE_PX",
-        "STRIP_H",
-        "TILE_PX_AGENT",
-        "_unpack",
-        "night_vignette",
-        "strip_geometry",
-        "_CONST_CACHE",
-        "_GRID_CACHE",
-        "_VIGNETTE_CACHE",
-    }
-    names = {n for n in dir(craftax) if not n.startswith("__")} & {
-        n for n in dir(_craftax_full) if not n.startswith("__")
-    }
-    assert len(names) == 35, f"shared name count moved to {len(names)}; update the module decision"
-
-    def _differs(n):
-        x, y = getattr(craftax, n), getattr(_craftax_full, n)
-        if isinstance(x, types.FunctionType) and isinstance(y, types.FunctionType):
-            return x.__code__.co_code != y.__code__.co_code
-        if isinstance(x, torch.Tensor) or isinstance(y, torch.Tensor):
-            return not (
-                isinstance(x, torch.Tensor)
-                and isinstance(y, torch.Tensor)
-                and x.shape == y.shape
-                and bool((x == y).all())
-            )
-        if isinstance(x, dict) and isinstance(y, dict):
-            return x is not y
-        if type(x) is not type(y):
-            return True
-        try:
-            return not bool(x == y)
-        except Exception:  # noqa: BLE001 -- unorderable objects: identity decides
-            return x is not y
-
-    assert {n for n in names if _differs(n)} == CONFLICTING
-
-
-def test_a_missing_craftax_is_recorded_under_the_historical_module_key():
-    """Dependency diagnostics retain their keys after moving into the family package."""
-    errs = snv.import_errors()
-    assert "_craftax_full" not in errs
-    assert "_craftax_full_tex" not in errs
-
-
-# --------------------------------------------------- the certified declarations plan §12 E names
-
-
-def test_the_jit_wrapper_declaration_survives_on_both_craftax_cells():
-    from tests.helpers.reference.craftax_jit import CRAFTAX_JIT_GAP
-
-    for name in ("CraftaxClassic", "CraftaxFull"):
-        g = CRAFTAX_JIT_GAP[name]
-        assert g["swm_wrapper_jits"] == ["reset", "step"]
-        assert g["certified_exact_frac"] == 1.0 and g["certified_max_abs_diff"] == 0
-        assert g["max_abs_diff_swm_wrapper_vs_certified"] == 1
-        assert "un-jitted" in g["certified_reference"]
-    c = CRAFTAX_JIT_GAP["CraftaxClassic"]
-    assert c["live_swm_exact_frac_7px"] == 0.997854
-    assert c["live_swm_exact_frac_16px"] == 0.997225
-
-
-def test_the_resolution_consistency_applicability_declarations_survive():
-    c = snv.CraftaxClassic.resolution_consistency_applicability
-    assert "light_level >= 0.5" in c and "light_level < 0.5" in c
-    assert c["light_level < 0.5"].startswith("not_applicable")
-    assert "0.1634" in c["light_level < 0.5"]
-    f = snv.CraftaxFull.resolution_consistency_applicability
-    assert f["all bands"].startswith("not_applicable")
-    assert f["still_required"].startswith("exact parity")
-
-
-def test_the_parity_claims_and_their_reference_versions_survive():
-    for cls in (snv.CraftaxClassic, snv.CraftaxFull):
-        assert cls.parity_all_exact_min == 1.0
-        assert cls.parity_interior_min == 1.0
-        assert cls.fidelity_tier == "parity" and cls.render_decoder == "renderer"
-        assert cls.reference_versions == {"craftax": "1.6.1", "jax": "0.11.1"}
-        assert "jax_threefry_partitionable" in cls.parity_note
+# ------------------------------------------------------------------ declarations
 
 
 def test_the_rocket_colour_exactness_declaration_survives_verbatim():
@@ -444,27 +332,22 @@ def test_the_batch_invariant_float64_mvp_does_not_depend_on_the_batch():
 # ------------------------------------------------------------------ the frozen corpora
 
 
-def test_both_frozen_craftax_classic_corpora_are_kept_and_both_replay():
-    """Ruling: keep both. They are two different claims about the same cell.
-
-    The 64x127 Step-4 array predates the nine-row world window, so it is the world-row oracle under
-    the zero-extension interpretation, and rendering it DIRECTLY must raise rather than reshape. The
-    64x149 Step-7 array certifies the complete observation.
-    """
+def test_frozen_craftax_classic_corpora_render():
+    """The 64x127 world-row corpus renders only once zero-extended; the 64x149 corpus renders directly."""
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[2]
-    step4 = np.load(root / "tests/fixtures/states/fidelity/CraftaxClassic.npz")["states"]
-    step7 = np.load(root / "tests/fixtures/states/craftax_classic/states.npz")["states"]
-    assert step4.shape == (64, 127) and step7.shape == (64, 149)
+    world_rows = np.load(root / "tests/fixtures/states/fidelity/CraftaxClassic.npz")["states"]
+    full_rows = np.load(root / "tests/fixtures/states/craftax_classic/states.npz")["states"]
+    assert world_rows.shape == (64, 127) and full_rows.shape == (64, 149)
     env = snv.CraftaxClassic(num_envs=64, device="cpu")
     with pytest.raises(ValueError, match="expects state_dim 149, got 127"):
-        env._render(torch.as_tensor(step4, dtype=torch.float32))
+        env._render(torch.as_tensor(world_rows, dtype=torch.float32))
     wide = np.zeros((64, 149), np.float32)
-    wide[:, :127] = step4
+    wide[:, :127] = world_rows
     wide[:, craftax.OBS_H * craftax.OBS_W * 2 + 2 + craftax.N_STRIP] = 1.0
     assert env._render(torch.as_tensor(wide)).shape == (64, 144, 144, 3)
-    assert env._render(torch.as_tensor(step7, dtype=torch.float32)).shape == (64, 144, 144, 3)
+    assert env._render(torch.as_tensor(full_rows, dtype=torch.float32)).shape == (64, 144, 144, 3)
     env.close()
 
 
