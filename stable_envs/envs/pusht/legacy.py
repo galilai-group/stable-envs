@@ -388,7 +388,7 @@ class PushT(Env):
 
     def _hidden_state(self) -> dict[tuple[str, ...], torch.Tensor]:
         """Supply live agent velocity when reconstructing full State from the compact pose."""
-        return {("agent", "velocity"): self._agent_v[: self._live_rows].clone()}
+        return {("agent", "velocity"): self._agent_v[: self._live_rows]}
 
     def _target(self, action) -> torch.Tensor:
         """Convert absolute PD targets to device float32 rows ``(n, 2)``."""
