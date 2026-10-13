@@ -104,6 +104,7 @@ def test_classification_counts_match_the_declaration(cell):
 # --------------------------------------------------------------------- the registered default
 
 
+@pytest.mark.nightly
 @needs_swm
 @pytest.mark.parametrize("cell", _gl(CELLS))
 def test_registered_default_is_reproducible_through_the_mapping(cell):

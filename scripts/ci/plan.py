@@ -2,12 +2,13 @@
 
     python scripts/ci/plan.py --base origin/main --head HEAD            # GitHub outputs
     python scripts/ci/plan.py --base origin/main --profiles-only        # e.g. "core dmc"
-    python scripts/ci/plan.py --scope all
+    python scripts/ci/plan.py --scope all --tier nightly
 
 Docs-only changes need no profile. A change to a shared path selects every profile. Otherwise
 the profiles whose source paths or test files the change touches are selected (other files under
 ``tests/`` by the family name or an alias in their path), and ``core`` always runs. Without a
-usable base (a new branch, a force push) everything runs.
+usable base (a new branch, a force push) everything runs. Each family profile is split into the
+``shards`` its families.toml entry gives for the tier (``pr`` leaves out the ``nightly`` tests).
 """
 
 from __future__ import annotations
@@ -86,11 +87,24 @@ def plan(files: list[str] | None) -> dict:
     return {"profiles": [p for p in ALL if p in selected], "docs_only": False, "reason": "affected families"}
 
 
+def shards(profile: str, tier: str) -> int:
+    return int(FAMILIES[profile].get("shards", {}).get(tier, 1))
+
+
+def matrix(profiles, tier: str) -> dict:
+    return {
+        "include": [
+            {"profile": p, "shard": f"{i}/{shards(p, tier)}"} for p in profiles for i in range(1, shards(p, tier) + 1)
+        ]
+    }
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--base", default="origin/main")
     parser.add_argument("--head", default="HEAD")
     parser.add_argument("--scope", choices=("affected", "all"), default="affected")
+    parser.add_argument("--tier", choices=("pr", "nightly"), default="pr")
     parser.add_argument("--profiles-only", action="store_true", help="print the selected profiles, space separated")
     args = parser.parse_args(argv)
 
@@ -102,7 +116,8 @@ def main(argv=None) -> int:
         return 0
     families = [p for p in result["profiles"] if p != "core"]
     print(f"core={'true' if 'core' in result['profiles'] else 'false'}")
-    print(f"families={json.dumps({'include': [{'profile': p} for p in families]}, separators=(',', ':'))}")
+    print(f"families={json.dumps(matrix(families, args.tier), separators=(',', ':'))}")
+    print(f"tier={args.tier}")
     print(f"docs_only={'true' if result['docs_only'] else 'false'}")
     print(f"reason={result['reason']}", file=sys.stderr)
     return 0

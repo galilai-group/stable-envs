@@ -20,7 +20,8 @@ profile, so a family this interpreter lacks is skipped with the cause rather tha
   installed in one env round-trips through another; a lane renders the same alone as in a batch.
 - `tests/unit/test_registry_coverage.py`: the class's module lies under exactly one family's
   `paths` in `ci/families.toml`; it has an `ORIGINAL_GATES` entry (`tests/helpers/reference/cases.py`)
-  naming a CPU test that compares it with the library it ports and imports no stable-worldmodel, and, where stable-worldmodel registers it, a `SWM_GATES` entry naming a test
+  naming a CPU test that compares it with the library it ports, imports no stable-worldmodel and runs
+  on pull requests, and, where stable-worldmodel registers it, a `SWM_GATES` entry naming a test
   marked `swm`; where its stable-worldmodel source has a variation space, a `VariationMap` in
   `tests/helpers/reference/variation_maps/`. Every test file runs in a profile that installs the
   family packages it imports.
@@ -33,7 +34,11 @@ profile, so a family this interpreter lacks is skipped with the cause rather tha
   in CI and a test that skips for want of it fails. `SE_REQUIRE_FAMILIES` and
   `SE_REQUIRE_CAPABILITIES` turn a missing dependency into an error in CI.
 
-`uvx nox -s "test(<profile>)"` runs one profile; [Contributing](https://github.com/galilai-group/stable-envs/blob/main/CONTRIBUTING.md)
+CI splits the suite into a pull-request tier and a `nightly` tier (multi-minute tests, run on
+`main`, the schedule and manual runs) and each family profile into duration-balanced shards
+(`shards` in `ci/families.toml`, `ci/durations.json`). `uvx nox -s "test(<profile>)"` runs one
+profile's pull-request tier; `SE_NIGHTLY=1` adds the nightly tests and `SE_SHARD=i/n` picks one
+shard. [Contributing](https://github.com/galilai-group/stable-envs/blob/main/CONTRIBUTING.md)
 has the commands and what a new environment needs.
 
 ## Shared source contracts

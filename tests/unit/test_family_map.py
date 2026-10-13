@@ -74,3 +74,27 @@ def test_every_swm_pin_constant_is_the_families_toml_commit():
     }
     assert "tests/helpers/reference/saved.py" in found
     assert {path: value for path, value in found.items() if value != pin} == {}
+
+
+def test_ci_runs_every_shard_of_every_profile_and_the_shards_partition_a_selection():
+    import importlib.util
+
+    from tests._runner.shard import UNKNOWN, split
+
+    spec = importlib.util.spec_from_file_location("plan", ROOT / "scripts" / "ci" / "plan.py")
+    plan = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(plan)
+    for tier in ("pr", "nightly"):
+        jobs = plan.matrix(list(FAMILIES), tier)["include"]
+        for family, entry in FAMILIES.items():
+            count = int(entry.get("shards", {}).get(tier, 1))
+            assert [job["shard"] for job in jobs if job["profile"] == family] == [
+                f"{i}/{count}" for i in range(1, count + 1)
+            ]
+    ids = [f"tests/unit/test_x.py::test_{i}" for i in range(40)]
+    durations = {nodeid: float(i % 7) for i, nodeid in enumerate(ids[::2])}
+    for count in (1, 3, 8):
+        shard = split(reversed(ids), count, durations)
+        assert shard == split(ids, count, durations) and set(shard) == set(ids)
+        loads = [sum(durations.get(n, UNKNOWN) for n in ids if shard[n] == k) for k in range(count)]
+        assert max(loads) - min(loads) <= max(durations.values())

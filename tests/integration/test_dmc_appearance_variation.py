@@ -8,6 +8,7 @@ import pytest
 pytest.importorskip("dm_control")
 pytestmark = [
     pytest.mark.swm,
+    pytest.mark.nightly,
     pytest.mark.skipif(sys.platform == "darwin", reason="DM Control frames are certified on Linux GL"),
 ]
 

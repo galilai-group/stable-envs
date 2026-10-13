@@ -1,7 +1,7 @@
 """Every registered env has an owning family, source comparisons and, where its source varies, a variation map.
 
 Source comparisons come in two layers. ``ORIGINAL_GATES`` compare with the library an env ports (or a
-corpus recorded from it) and import no stable_worldmodel. ``SWM_GATES`` compare with
+corpus recorded from it), import no stable_worldmodel and run on pull requests. ``SWM_GATES`` compare with
 live stable-worldmodel and carry the ``swm`` mark; they go when that layer is removed. Every test file
 runs in a profile that installs what it imports. Waivers live only in ``tests/exemptions.toml``, and
 that file is checked here for stale entries.
@@ -107,6 +107,7 @@ def test_env_is_compared_with_the_library_it_ports(name):
     gate = _gate(name, ORIGINAL_GATES, "ORIGINAL_GATES")
     assert "stable_worldmodel" not in _imports(_tree(gate.partition("::")[0])), f"{gate} imports stable_worldmodel"
     assert not _marked(gate, "swm"), f"{gate} is marked swm; the original layer must not need stable-worldmodel"
+    assert not _marked(gate, "nightly"), f"{gate} is nightly; every env needs a source comparison on pull requests"
 
 
 @pytest.mark.parametrize("name", envs("swm"))

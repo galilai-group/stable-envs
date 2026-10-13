@@ -21,6 +21,7 @@ from tests.helpers.reference.gates.ogbench_maze import (  # noqa: E402
 
 
 @pytest.mark.swm
+@pytest.mark.nightly
 def test_ogbench_maze_full_state_semantics():
     with se.make("PointMazeLargeNavigate", device="cpu", num_envs=1) as env:
         assert env.action_spec.dtype == torch.float32
@@ -39,12 +40,14 @@ def test_every_maze_cell_matches_the_official_env(cell):
 
 
 @pytest.mark.swm
+@pytest.mark.nightly
 @pytest.mark.parametrize("case", sorted(STATE_CASES))
 def test_ogbmaze_appearance_matches_swm_in_the_state_scene(case):
     assert appearance_gate(case)["state_exact"]
 
 
 @pytest.mark.swm
+@pytest.mark.nightly
 @pytest.mark.parametrize("case", sorted(PIXEL_CASES))
 @pytest.mark.parametrize("cell", ["PointMazeMediumNavigate", "AntMazeLargeNavigate", "HumanoidMazeMediumNavigate"])
 def test_ogbmaze_appearance_matches_swm_in_the_pixel_scene(cell, case):

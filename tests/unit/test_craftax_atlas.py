@@ -127,6 +127,7 @@ def _decode(env: CraftaxClassic, states: np.ndarray):
     return env._decode(s, s.shape[0])
 
 
+@pytest.mark.nightly
 @pytest.mark.parametrize("size", SIZES)
 def test_atlas_path_equals_the_per_frame_composite(size):
     """Same pixels, not similar ones."""

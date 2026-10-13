@@ -116,7 +116,7 @@ def test_no_gpu_runtime_is_loaded_by_a_cpu_render(se):
 
 @pytest.mark.gl
 @pytest.mark.parametrize("cell", CELLS)
-@pytest.mark.parametrize("size", [42, 84, 168])
+@pytest.mark.parametrize("size", [42, 84, pytest.param(168, marks=pytest.mark.nightly)])
 def test_window_and_footprint_bounds_are_exact(se, cell, size):
     """The mover window and the shadow footprint are conservative BOUNDS: casting every ray and
     shadow-testing every lit hit must give the identical frame, byte for byte, at every size."""
@@ -138,6 +138,7 @@ def test_window_and_footprint_bounds_are_exact(se, cell, size):
     assert np.array_equal(allhits, ref), "footprint-bounded shadows differ from testing every hit"
 
 
+@pytest.mark.nightly
 @pytest.mark.gl
 @pytest.mark.parametrize("cell", CELLS)
 def test_batch_chunk_and_order_invariance(se, cell):

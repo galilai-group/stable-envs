@@ -12,6 +12,9 @@
 #                    makes noxfile.py install stable-worldmodel at [swm].commit into the profile
 #   swm_with         distributions installed beside stable-worldmodel that the profile's gates need
 #   linux_env        environment for the profile's test run on Linux
+#   shards           CI jobs the profile's tests are split into, per tier: { pr = N, nightly = M }; default 1.
+#                    Sized from ci/durations.json so a pull-request job stays near 10 minutes on a
+#                    4-vCPU runner and a nightly one near 30
 
 # The stable-worldmodel commit the reference gates compare against; tests/unit/test_family_map.py
 # keeps SWM_PIN in tests/helpers/reference and the benchmark PIN constants equal to it.
@@ -128,6 +131,7 @@ tests = [
 requires = ["dm-control", "mujoco"]
 capabilities = ["gl", "swm"]
 linux_env = { MUJOCO_GL = "osmesa", PYOPENGL_PLATFORM = "osmesa" }
+shards = { pr = 3, nightly = 4 }
 
 [family.fetch]
 extras = ["robotics"]
@@ -153,6 +157,7 @@ requires = ["ogbench", "mujoco"]
 capabilities = ["swm"]
 swm_with = ["pymunk", "shapely"]
 linux_env = { MUJOCO_GL = "osmesa", PYOPENGL_PLATFORM = "osmesa" }
+shards = { pr = 6, nightly = 6 }
 
 [family.rocket]
 extras = ["rocket"]
@@ -170,3 +175,4 @@ paths = ["stable_envs/envs/craftax/**"]
 tests = ["test_craftax_*", "test_envs_craftax_rocket.py"]
 requires = ["craftax", "jax"]
 capabilities = ["swm"]
+shards = { pr = 4, nightly = 4 }

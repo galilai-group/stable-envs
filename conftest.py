@@ -13,7 +13,8 @@ friction that ends with a suite nobody runs.
 non-top-level conftest, and putting ``-p tests._runner.safety_plugin`` in ``addopts`` instead
 would try to import the package before the line above has run. So the order is not incidental.
 
-See ``tests/_runner/safety_plugin.py`` for what the plugin does and why each part of it exists.
+See ``tests/_runner/safety_plugin.py`` for what the plugin does and why each part of it exists;
+``tests/_runner/shard.py`` adds ``--shard I/N`` for CI's duration-balanced shards.
 """
 
 from __future__ import annotations
@@ -25,4 +26,4 @@ _ROOT = str(Path(__file__).resolve().parent)
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
-pytest_plugins = ("tests._runner.safety_plugin",)
+pytest_plugins = ("tests._runner.safety_plugin", "tests._runner.shard")

@@ -254,6 +254,7 @@ def _rotate(states, names, dim, amount=0.6):
     return p
 
 
+@pytest.mark.nightly
 def test_the_declared_dims_are_excluded_and_reported_never_silently_passed(cell):
     """The three are excluded and reported with a reason; no dimension is dead."""
     from stable_envs.testing import conformance as C
@@ -267,6 +268,7 @@ def test_the_declared_dims_are_excluded_and_reported_never_silently_passed(cell)
         assert "sphere orientation" in why, (name, why)
 
 
+@pytest.mark.nightly
 def test_excluded_dims_leave_pixels_byte_unchanged_at_both_sizes(cell):
     """The invariance claim is about pixels, so it is asserted on pixels."""
     for size in (224, 84):
@@ -279,6 +281,7 @@ def test_excluded_dims_leave_pixels_byte_unchanged_at_both_sizes(cell):
             assert np.array_equal(base, moved), f"{nm} changed pixels at {size} px"
 
 
+@pytest.mark.nightly
 def test_the_target_quat_dims_are_live_again_when_the_target_is_a_box(cell):
     """With a box target the two quaternion dims move pixels and the exclusion must refuse them.
 
@@ -315,6 +318,7 @@ def test_a_dimension_that_moves_position_is_refused_for_exclusion(cell):
         assert not ok, f"{nm} was granted a render-invariance exclusion: {why}"
 
 
+@pytest.mark.nightly
 def test_an_env_that_declares_nothing_is_unaffected(cell):
     """Exclusion is opt-in: with no declaration, the three dims are reported dead."""
     from stable_envs.testing import conformance as C

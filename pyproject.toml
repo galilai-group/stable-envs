@@ -278,6 +278,7 @@ markers = [
   "gpu: requires a CUDA device (skipped otherwise)",
   "reference: requires the official reference env to be installed",
   "slow: long-running throughput benchmark",
+  "nightly: heavy source comparison; CI runs it on main and nightly, not on pull requests",
   "smoke: one env per family; the fast pre-commit subset (scripts/run_smoke_tests.sbatch)",
   "selftest: deliberately crashes the interpreter; skipped unless SE_SELFTEST_CRASH=1",
 ]

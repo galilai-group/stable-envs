@@ -5,6 +5,8 @@
     nox -s "test(dmc)" -- -k reacher    # one family under its reference pins
     nox -s affected                     # the profiles CI selects for this branch
     SE_PYTHON=3.10 nox -s "test(core)"  # another interpreter for the core profile
+    SE_NIGHTLY=1 nox -s "test(dmc)"     # also the heavy `nightly` gates (push to main, schedule)
+    SE_SHARD=2/3 nox -s "test(dmc)"     # the second of three duration-balanced shards
 
 Each profile syncs into ``.venvs/<profile>-py<version>`` with ``uv sync --frozen``. With ``CI`` set,
 the profile's family and capabilities become required (``SE_REQUIRE_FAMILIES``,
@@ -100,13 +102,18 @@ def test(session: nox.Session, profile: str) -> None:
         env["SE_REQUIRE_FAMILIES"] = profile
         env["SE_REQUIRE_CAPABILITIES"] = ",".join(spec.get("capabilities", ()))
     workers = os.environ.get("SE_WORKERS", "auto")
+    marks = f"family_{profile} and not gpu and not slow"
+    if not os.environ.get("SE_NIGHTLY"):
+        marks += " and not nightly"
+    shard = os.environ.get("SE_SHARD")
     session.run(
         str(python),
         "-m",
         "pytest",
         *TEST_PATHS,
         "-m",
-        f"family_{profile} and not gpu and not slow",
+        marks,
+        *(["--shard", shard] if shard else []),
         *(["-n", workers] if workers != "0" else []),
         *session.posargs,
         env=env,

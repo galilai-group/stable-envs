@@ -9,7 +9,7 @@ import torch
 import stable_envs as se
 from stable_envs.envs.dmcontrol.simulation.humanoid import HUMANOID_FIELDS
 
-pytestmark = [pytest.mark.gl, pytest.mark.swm]
+pytestmark = [pytest.mark.gl, pytest.mark.swm, pytest.mark.nightly]
 
 pytest.importorskip("dm_control")
 

@@ -18,6 +18,7 @@ DEVICE = os.environ.get("CRAFTAX_DEVICE", "cpu")
 PIXELS = ("CraftaxClassicPixels", "CraftaxPixels")
 
 
+@pytest.mark.nightly
 @pytest.mark.parametrize("name", PIXELS)
 @pytest.mark.parametrize("seed", [0, 17, 42])
 def test_initial_and_trajectory_source_frames(name, seed):
@@ -38,6 +39,7 @@ def test_initial_and_trajectory_source_frames(name, seed):
             assert_state_equal(saved, env.get_state())
 
 
+@pytest.mark.nightly
 @pytest.mark.parametrize("name", PIXELS)
 @pytest.mark.parametrize("case", list(ACTIONS))
 def test_gameplay_source_frames_and_nonmutation(name, case, monkeypatch):

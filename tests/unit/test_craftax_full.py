@@ -262,8 +262,7 @@ def test_exactly_one_mob_sprite_is_fully_opaque_and_the_sampler_knows():
 
 
 # ------------------------------------------------------------------ the sampler's stratification
-
-
+@pytest.mark.nightly
 def test_the_sampler_stratifies_so_a_batch_of_one_still_has_every_dimension_live():
     from stable_envs.testing.conformance import check_state_dims_matter
 

@@ -89,7 +89,7 @@ Every registered class is picked up automatically, in its family's CI profile:
 - **Source comparisons**, in two layers (`tests/helpers/reference/cases.py`). An `ORIGINAL_GATES` entry
   names a CPU test, owned by the same family, comparing it with the library it ports (dm_control,
   gymnasium-robotics, ogbench, ...) or a corpus recorded from it; that test imports no
-  stable-worldmodel (it runs with the import blocked). Where stable-worldmodel
+  stable-worldmodel (it runs with the import blocked) and is not `nightly`. Where stable-worldmodel
   registers the env, a `SWM_GATES` entry names a test marked `swm` comparing it with live
   stable-worldmodel.
 - **Variation map**: when its stable-worldmodel source has a variation space, a `VariationMap` in
@@ -113,7 +113,17 @@ running, and the suite fails once it passes, so the entry is removed in the chan
 runs the docs build; a shared path (core modules, conftests, `pyproject.toml`, `uv.lock`, CI
 files) selects every profile; otherwise the touched families plus `core`. The label `ci:full`
 forces every profile on a pull request. Pushes to `main`, the nightly run and manual runs test
-every profile. The only required check is `ci-ok`.
+every profile. The only required check is `ci-ok`, which waits for every shard.
+
+Tests marked `nightly` (the multi-minute ones, chosen from measured durations: the live DM Control
+and OGBench SWM gates and the heaviest CPU-renderer checks) run on pushes to `main`, the nightly
+schedule, manual runs and `ci:full`, not on other pull requests; `ORIGINAL_GATES` never carry it.
+Each family profile runs as `shards` jobs (`ci/families.toml`, per tier), split by
+`tests/_runner/shard.py` from the per-test seconds in `ci/durations.json`, with xdist inside each
+job. Locally `uvx nox -s "test(dmc)"` runs the whole pull-request tier; `SE_NIGHTLY=1` adds the
+`nightly` tests and `SE_SHARD=2/4` runs one shard. Refresh `ci/durations.json` from the
+`durations-*.json` a CI run uploads (or `--record-durations ci/durations.json` locally on a 4-CPU
+Linux machine) when shards drift out of balance.
 
 A red run on `main` or the nightly opens or updates the issue "ci: main is red". Revert the
 offending change first unless a fix is merged within about two hours; the issue names the run.

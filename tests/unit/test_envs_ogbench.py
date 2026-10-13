@@ -253,6 +253,7 @@ def test_the_dataset_siblings_of_one_scene_draw_the_same_frame(_ogbench):
     assert digests[0] == digests[1]
 
 
+@pytest.mark.nightly
 @pytest.mark.parametrize("cell", ["PointMazeLargeNavigate", "AntMazeMediumNavigate"])
 def test_a_recoloured_floor_and_dimmed_light_leave_the_default_plate_unchanged(_ogbench, cell):
     """Recoloured checkers upload texels into a shared renderer; the default bake must not see them."""
