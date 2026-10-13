@@ -79,9 +79,10 @@ def _fake(cell):
 
 @pytest.mark.parametrize("cell", ["Cube", "Scene"])
 def test_sample_states_leaves_the_global_numpy_rng_alone(cell):
+    fake = _fake(cell)
     np.random.seed(1234)
     before = np.random.get_state()[1][:8].copy()
-    ogb.OGBManipBase.sample_states(_fake(cell), 2, np.random.default_rng(0))
+    ogb.OGBManipBase.sample_states(fake, 2, np.random.default_rng(0))
     assert np.array_equal(np.random.get_state()[1][:8], before)
 
 
