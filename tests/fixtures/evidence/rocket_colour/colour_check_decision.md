@@ -27,10 +27,10 @@ def check_colors_apply_exactly(env) -> dict:
         for part in path.split("."):
             node = node[part]
         if w != 3 or not hasattr(node, "high") or int(np.max(node.high)) != 255:
-            continue                                   # only RGB leaves have a checkable answer
-        for target in ([17, 33, 200], [200, 17, 33]):   # two, so a channel swap cannot pass both
+            continue  # only RGB leaves have a checkable answer
+        for target in ([17, 33, 200], [200, 17, 33]):  # two, so a channel swap cannot pass both
             sty = np.tile(env.default_style(), (env.B, 1))
-            sty[:, off:off + w] = np.asarray(target, np.float32)
+            sty[:, off : off + w] = np.asarray(target, np.float32)
             f = env.render(st, style=sty).cpu().numpy()
             if not (np.abs(f.astype(np.int16) - np.asarray(target, np.int16)).sum(-1) == 0).any():
                 wrong.append(f"{path}->{target}")
