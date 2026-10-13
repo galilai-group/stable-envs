@@ -40,6 +40,19 @@ needs_dmc = pytest.mark.skipif(
     "DMCManipulatorBringBall" not in REGISTRY, reason="the DM Control cells did not register (dm_control/MUJOCO_GL)"
 )
 
+
+def _gl(cells):
+    """Trackcom cells build their dm_control source through a GL context."""
+    from stable_envs.envs.dmcontrol import DMControlSuite
+
+    return [
+        pytest.param(c, marks=pytest.mark.gl)
+        if c.startswith("DMC") and c in REGISTRY and not issubclass(REGISTRY[c], DMControlSuite)
+        else c
+        for c in cells
+    ]
+
+
 CELLS = sorted(MAPS)
 #: Cells whose swm registered default differs in appearance from the compiled model's, with the
 #: style leaves the mapping moves to reach it.
@@ -68,7 +81,7 @@ def _swm_space(m):
 
 
 @needs_swm
-@pytest.mark.parametrize("cell", CELLS)
+@pytest.mark.parametrize("cell", _gl(CELLS))
 def test_every_leaf_is_classified(cell):
     """No swm leaf is silently unmapped, and none of our leaves is undocumented either."""
     env = _env(cell)
@@ -84,7 +97,7 @@ def test_every_leaf_is_classified(cell):
 
 
 @needs_swm
-@pytest.mark.parametrize("cell", CELLS)
+@pytest.mark.parametrize("cell", _gl(CELLS))
 def test_classification_counts_match_the_declaration(cell):
     """The four-way counts this module claims, re-derived from the live swm space."""
     env = _env(cell)
@@ -99,7 +112,7 @@ def test_classification_counts_match_the_declaration(cell):
 
 
 @needs_swm
-@pytest.mark.parametrize("cell", CELLS)
+@pytest.mark.parametrize("cell", _gl(CELLS))
 def test_registered_default_is_reproducible_through_the_mapping(cell):
     """``style_from_variation`` at swm's own init_values, rendered against the cell's default style.
 
@@ -153,7 +166,7 @@ def test_classic_default_matches_the_official_swm_render(cell):
 
 
 @needs_swm
-@pytest.mark.parametrize("cell", CELLS)
+@pytest.mark.parametrize("cell", _gl(CELLS))
 def test_mapped_leaves_are_isolated(cell):
     """Moving one swm leaf moves only its own style slots; one-to-many leaves move every slot the map names.
 
@@ -204,7 +217,7 @@ def _probe(leaf):
 
 
 @needs_swm
-@pytest.mark.parametrize("cell", CELLS)
+@pytest.mark.parametrize("cell", _gl(CELLS))
 def test_round_trip(cell):
     """swm value -> style row -> swm value, at the default and at a probe on every mapped leaf."""
     env = _env(cell)
@@ -247,7 +260,7 @@ def test_rgb255_is_swm_quantisation():
 
 
 @needs_swm
-@pytest.mark.parametrize("cell", sorted(LIGHT_RANGE))
+@pytest.mark.parametrize("cell", _gl(sorted(LIGHT_RANGE)))
 def test_light_intensity_lands_on_the_model(cell):
     """swm writes intensity absolutely, ours scales the model's own diffuse: they agree over the reachable range."""
     env = _env(cell)
