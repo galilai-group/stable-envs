@@ -284,7 +284,7 @@ samples a prefiltered pyramid and reaches 66–81% of them; the same pipeline wi
 off lands back at 0.01%, which is the control that says the two were failing for one reason.
 
 **DM Control's five body-tracking domains** — `DMCCheetahRun`, `DMCWalkerWalk`, `DMCHopperHop`,
-`DMCHumanoidStand`, `DMCSwimmerSwimmer6` — rendered by `mujoco_warp`. Mean 4.35–8.07/255, 70.0–90.5%
+`DMCHumanoidWalk`, `DMCSwimmerSwimmer6` — rendered by `mujoco_warp`. Mean 4.35–8.07/255, 70.0–90.5%
 within 8/255, SSIM 0.661–0.964, at 225–364× the official renderer at batch 1024. Camera 0 on these is
 `mode="trackcom"`: it rides the body's centre of mass, so the static half of the scene moves with the
 state and the plate that makes the other eleven DM Control cells parity does not exist for them. Two

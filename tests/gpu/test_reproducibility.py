@@ -509,7 +509,7 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: Hopper, Humanoid, Swimmer and Walker are measured the same way as Cheetah above, on the same
     #: RTX 3090 / mujoco 3.12.0 + mujoco-warp 3.12.0 / MUJOCO_GL=egl.
     "DMCHopperHop": 0.285289,  # mean 1.7297/255
-    "DMCHumanoidStand": 0.369827,  # mean 1.5758/255
+    "DMCHumanoidWalk": 0.369827,  # mean 1.5758/255
     "DMCSwimmerSwimmer6": 0.591164,  # mean 1.1612/255
     "DMCWalkerWalk": 0.444320,  # mean 1.7281/255
     "HumanoidmazeGiantNavigate": 0.712624,  # mean 1.1539/255

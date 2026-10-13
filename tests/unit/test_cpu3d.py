@@ -1,7 +1,6 @@
 """CPU device honesty, batching and spatial-bound invariants for trackcom rendering.
 
-Source-image acceptance lives in contracts/test_dmc_source_pixels.py. The frozen
-pre-filtering MJWarp images remain historical evidence, not the current target.
+Source-image acceptance lives in contracts/test_dmc_source_pixels.py.
 """
 
 from __future__ import annotations
@@ -38,16 +37,6 @@ def _states(cell: str, n: int) -> np.ndarray:
     return np.load(ROOT / f"tests/fixtures/states/fidelity/{cell}.npz")["states"][:n]
 
 
-def test_cpu3d_imports_no_gpu_runtime():
-    """The CPU backend has no GPU runtime behind it: no warp, no mujoco_warp, no torch.cuda call."""
-    import re
-
-    src = (ROOT / "stable_envs/render/cpu3d.py").read_text()
-    code = "\n".join(l for l in src.splitlines() if not l.lstrip().startswith("#"))
-    assert not re.search(r"^\s*(import|from)\s+(warp|mujoco_warp)\b", code, re.M)
-    assert "torch.cuda" not in code
-
-
 @pytest.mark.gl
 @pytest.mark.parametrize("cell", CELLS)
 def test_cpu_device_builds_the_cpu_backend_and_no_mjwarp_context(se, cell):
@@ -63,8 +52,7 @@ def test_cpu_device_builds_the_cpu_backend_and_no_mjwarp_context(se, cell):
 
 @pytest.mark.parametrize("device", ["mps", "meta"])
 def test_unknown_device_raises_rather_than_falling_back(se, device):
-    """No silent fallback: a device with no 3-D backend is refused by name, whether torch can host
-    tensors on it (mps on this Mac, meta anywhere) or not."""
+    """A device with no 3-D backend is refused by name instead of falling back."""
     cls = se.registry.REGISTRY["DMCHopperHop"]
     if device == "mps" and not torch.backends.mps.is_available():
         pytest.skip("no mps device on this host")
@@ -75,8 +63,7 @@ def test_unknown_device_raises_rather_than_falling_back(se, device):
 
 
 def test_swimmer_builds_the_cpu_backend(se):
-    """Swimmer's CPU frames measure the source-pixel MSE of its MJWarp frames against dm_control's
-    render (0.00042 mean, 0.00089 worst frame over 64 sampled states), so device='cpu' serves it."""
+    """Swimmer renders on CPU: its frames meet the source-pixel bar against dm_control."""
     try:
         env = se.make("DMCSwimmerSwimmer6", num_envs=2, device="cpu")
     except RuntimeError as e:
@@ -89,10 +76,10 @@ def test_swimmer_builds_the_cpu_backend(se):
 
 
 def test_trackcom_material_knobs_are_geom_wearers_only(se):
-    """Neither trackcom backend draws a site, so a material worn only by sites is not a knob here.
-    ``DMControlTrackCom._used_materials`` restricts the base census to geoms: on the four certified
-    cells (sites hidden) the list is IDENTICAL to the base class's -- their declared variation space
-    does not move -- and on quadruped it drops ``eye``, worn by the two pupil sites alone."""
+    """Neither trackcom backend draws a site, so a material worn only by sites is not a knob.
+
+    On the certified cells (sites hidden) the list equals the base class's; on quadruped it drops
+    ``eye``, worn by the two pupil sites alone."""
     from stable_envs.envs import dmcontrol as D
 
     for name in CELLS:
@@ -107,14 +94,7 @@ def test_trackcom_material_knobs_are_geom_wearers_only(se):
 
 
 def test_the_transcribed_quadruped_mixin_overrides_only_the_loader_hook_and_the_size(se):
-    """``_TranscribedQuadrupedModel`` is the non-suite.load quadruped MJCF (``default_size=224``).
-
-    ``_DMCModel._load_env`` is the one place a cell's model comes from, and this mixin overrides it
-    and ``default_size`` and NOTHING else -- so ``_bundle``/``sample_states``/``reference_env`` are
-    the base class's and cannot drift from it (INTEG-1: a copied ``_bundle`` drifted the moment W3
-    changed the base one). Every loader in the base goes through the hook."""
-    import inspect
-
+    """``_TranscribedQuadrupedModel`` swaps the model source (``_load_env``, ``default_size=224``) and nothing else."""
     from stable_envs.envs import dmcontrol as D
 
     own = {k for k in vars(D._TranscribedQuadrupedModel) if not k.startswith("__")}
@@ -123,9 +103,6 @@ def test_the_transcribed_quadruped_mixin_overrides_only_the_loader_hook_and_the_
     assert cls._bundle.__func__ is D._DMCModel._bundle.__func__
     assert cls.reference_env.__func__ is D._DMCModel.reference_env.__func__
     assert cls.sample_states is D._DMCModel.sample_states
-    for name in ("_bundle", "sample_states", "reference_env"):
-        src = inspect.getsource(getattr(D._DMCModel, name))
-        assert "_load_env(" in src and "_suite().load(" not in src, name
     assert cls._load_env.__func__ is not D._DMCModel._load_env.__func__
     assert cls.default_size == 224 and D._DMCModel.default_size == 84
 

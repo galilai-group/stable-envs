@@ -9,10 +9,8 @@ asserting about this module is arithmetic or bookkeeping and none of it should n
 ``substitute``        writes every masked texel, leaves everything else alone, and ALWAYS uploads.
 ``texel_key``         the quantised bytes, and ``None`` at the registered default.
 
-The GL half — that the upload goes to the renderer's own context — cannot be asserted here and is
-asserted where it is observable: ``tests/unit/test_variation_maps_dmc_control.py`` renders, and the
-byte-equality evidence against a full recompile is in
-``pre-repository-cleanup:tests/fixtures/regression/join/step8/capability/bake_vs_recompile_probe*.json``.
+The GL half (the upload goes to the renderer's own context) is observable only where a render
+happens: ``tests/unit/test_variation_maps_dmc_control.py``.
 """
 
 from __future__ import annotations

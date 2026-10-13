@@ -1,16 +1,7 @@
-"""The batched tendon FK must be the IDENTITY, not an approximation of it.
+"""Batched tendon kinematics is bit-identical to a scalar per-polyline reference.
 
-``DMControlSuite._fk`` used to build ``ball_in_cup``'s 28 tendon capsules once per environment: at
-batch 256 on a 3090 that was 512 ``numpy.cross`` and 768 ``numpy.linalg.norm`` dispatches on
-``(28,3)`` arrays, 46% of ``_fk``, and ``_fk`` was 90.7% of the render while the card sat 5.3%
-utilised. The fix gives that arithmetic a batch axis and vectorises ``catenary``'s interior-point
-loop.
-
-Both are claims of BIT-IDENTITY, and a ray-caster is where that matters: a one-ulp change in a
-capsule pose enters the ray quadratic as ``disc = b*b - a*c``, which on a silhouette ray amplifies it
-by ~1e3-1e4, and ``disc > 0`` is a HIT/MISS decision that flips a whole pixel (see
-``stable_envs/render/raycast3d.py``'s note on ``_mv``). So the pre-optimisation expressions are
-written out below and the new ones are held to them exactly — ``==``, not ``allclose``.
+A one-ulp change in a capsule pose enters the ray quadratic as ``disc = b*b - a*c`` and flips a
+hit/miss decision on silhouette rays, so every comparison here is exact (``==``), not ``allclose``.
 """
 
 from __future__ import annotations
@@ -29,24 +20,16 @@ except ImportError as exc:  # dm_control / mujoco absent: legitimately skippable
         allow_module_level=True,
     )
 except RuntimeError as exc:
-    # A machine with no usable offscreen GL raises RuntimeError out of mujoco's gl_context at import
-    # (``invalid value for environment variable MUJOCO_GL: egl`` on a laptop), which importorskip does
-    # not catch -- so the whole file used to ERROR at collection there.
-    #
-    # NARROW ON PURPOSE. Catching every exception would mean that a dmcontrol.py broken by an edit --
-    # a SyntaxError, a NameError, a bad module-level constant -- SKIPS the bit-identity tests instead
-    # of failing them, and these are the tests standing between a one-ulp change in a capsule pose and
-    # a silently different picture. Anything that is not a missing GL context must reach the runner.
-    if "MUJOCO_GL" not in str(exc) and "GL" not in str(exc):
+    # Narrow on purpose: only a missing GL context skips; any other import failure must fail the file.
+    if "GL" not in str(exc):
         raise
     pytest.skip(f"no usable offscreen GL context here ({exc})", allow_module_level=True)
 
 
 def _catenary_reference(x0, x1, gravity, length: float, npoints: int) -> np.ndarray:
-    """``dmcontrol.catenary`` exactly as it stood before the interior points were vectorised.
+    """``catenary`` with a scalar loop over the interior points.
 
-    Only the final loop differs from the shipped function; everything above it is called from the
-    module so that this stays a test of the change and not a second implementation of MuJoCo's solve.
+    Only the final loop differs from the shipped function; the solve above it is the module's own.
     """
     x0 = np.asarray(x0, dtype=np.float64)
     x1 = np.asarray(x1, dtype=np.float64)
@@ -70,14 +53,14 @@ def _catenary_reference(x0, x1, gravity, length: float, npoints: int) -> np.ndar
     v_off = -D._cosh_sinh(h_off / bh)[0] * bh
     pts = np.empty((npoints, 3))
     pts[0], pts[npoints - 1] = x0, x1
-    for i in range(1, npoints - 1):  # THE LOOP THE CHANGE REPLACED
+    for i in range(1, npoints - 1):
         hor = i * h / npoints
         pts[i] = x0 + ac * hor + up * (bh * D._cosh_sinh((hor - h_off) / bh)[0] + v_off)
     return pts
 
 
 def _chain_reference(polys, nseg):
-    """``_chain_capsules`` per polyline, i.e. the loop ``_chain_capsules_batch`` replaced."""
+    """``_chain_capsules`` applied per polyline."""
     out = [D._chain_capsules(p, nseg) for p in polys]
     return (np.stack([o[0] for o in out]), np.stack([o[1] for o in out]), np.stack([o[2] for o in out]))
 
@@ -102,7 +85,7 @@ def _sweep():
 
 
 def test_catenary_interior_points_are_bit_identical():
-    """The vectorised interior points must equal the scalar loop's, pattern for pattern."""
+    """The vectorised interior points equal the scalar loop's bit for bit."""
     seen = set()
     for x0, x1, length in _sweep():
         got = D.catenary(x0, x1, GRAVITY, length, 29)
@@ -117,7 +100,7 @@ def test_catenary_interior_points_are_bit_identical():
 
 
 def test_chain_capsules_batch_matches_the_per_polyline_version():
-    """Same arithmetic with one more leading axis — asserted, not argued."""
+    """The batched capsule chain equals the per-polyline chain, in float64 and after the float32 cast."""
     nseg = 28
     for npts in (2, 3, 29):  # K = 1, 2, 28, all divisors of 28
         polys = [p for p in (D.catenary(a, b, GRAVITY, L, 29) for a, b, L in _sweep()) if len(p) == npts]
@@ -138,12 +121,8 @@ def test_chain_capsules_batch_matches_the_per_polyline_version():
             )
 
 
-def test_fk_is_unchanged_on_the_frozen_ball_in_cup_states():
-    """End to end on the frozen Step-4 corpus: the batched ``_fk`` must equal the per-env one.
-
-    The reference is built by putting the pre-optimisation callables back, so this compares the two
-    code paths through the same MuJoCo, on the states Step 4 certified.
-    """
+def test_batched_fk_matches_per_env_fk_on_frozen_ball_in_cup_states():
+    """End to end on the frozen corpus, with the scalar reference callables patched in."""
     from pathlib import Path
 
     import torch
@@ -163,11 +142,8 @@ def test_fk_is_unchanged_on_the_frozen_ball_in_cup_states():
 
     got = env._fk(states, sc)
 
-    # The two callables are substituted WHERE THEY ARE LOOKED UP, which since the package
-    # split is the module that calls each: ``suite`` calls ``_chain_capsules_batch`` and
-    # ``_tendon._tendon_polyline`` calls ``catenary``. Patching the package attribute instead would
-    # leave the real implementations running on both sides and this test would pass vacuously, so
-    # the substitution is COUNTED and the count is asserted.
+    # Patched where they are looked up: ``suite`` calls the batch chain, ``_tendon`` calls ``catenary``.
+    # The call counts guard against patching a name the code path never reads.
     calls = {"chain": 0, "cat": 0}
 
     def _chain_patched(pts, nseg):
@@ -185,14 +161,10 @@ def test_fk_is_unchanged_on_the_frozen_ball_in_cup_states():
         want = env._fk(states, sc)
     finally:
         D.suite._chain_capsules_batch, D._tendon.catenary = real_batch, real_cat
-    assert calls["chain"] and calls["cat"], (
-        f"the reference implementations were never called ({calls}), so the comparison below would "
-        f"be the batched path against itself"
-    )
+    assert calls["chain"] and calls["cat"], f"the reference implementations were never called ({calls})"
 
     for name, g, w in zip(("xpos", "xmat", "size", "rgb"), got, want):
         g, w = g.numpy(), w.numpy()
         assert np.array_equal(g.view(np.uint32), w.view(np.uint32)), (
-            f"_fk's {name} differs by {np.abs(g - w).max():.3e} over 64 frozen states — the batched "
-            f"tendon build is not the identity it claims to be"
+            f"_fk's {name} differs by {np.abs(g - w).max():.3e} over 64 frozen states"
         )

@@ -3,8 +3,8 @@ from __future__ import annotations
 from ._cells import trackcom_cell
 from ._humanoid import DMCHumanoidSemantics
 
-_FROZEN_STAND_VISUAL_FIDELITY: dict[str, dict] = {
-    "DMCHumanoidStand": {
+VISUAL_FIDELITY: dict[str, dict] = {
+    "DMCHumanoidWalk": {
         "mean_abs": 2.23,
         "within8_frac": 0.967,
         "ssim": 0.984,
@@ -27,8 +27,6 @@ _FROZEN_STAND_VISUAL_FIDELITY: dict[str, dict] = {
         "measured_with": {"mujoco_warp": "3.12.0"},
     },
 }
-
-VISUAL_FIDELITY: dict[str, dict] = {"DMCHumanoidWalk": _FROZEN_STAND_VISUAL_FIDELITY["DMCHumanoidStand"]}
 
 DMCHumanoidWalk = trackcom_cell(
     "DMCHumanoidWalk",

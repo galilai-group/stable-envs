@@ -71,7 +71,7 @@ With MuJoCo 3.12.0 and the DMC dependencies, the read-only frozen-oracle selecti
 checks all 12 DMC domains without importing stable-worldmodel:
 
 ```bash
-python -m pytest tests/unit/test_dmc_*oracle.py tests/unit/test_reacher_oracle.py tests/unit/test_reference_oracle.py
+python -m pytest tests/unit/test_dmc_oracle_replay.py tests/unit/test_reference_oracle.py
 ```
 
 It restores reached source States at steps 0, 7 and 24 and checks immediate State

@@ -1,10 +1,14 @@
-"""Column export retains owned snapshots, typed fields and lane RNG replay."""
+"""DM Control adapter State: owned typed snapshots, lane RNG replay, input validation."""
 
+import importlib
+import inspect
+import pkgutil
 from functools import partial
 
 import numpy as np
 import pytest
 import torch
+from tensordict import TensorDict
 
 from stable_envs.envs.dmcontrol.simulation.aligned import CONFIG as ALIGNED
 from stable_envs.envs.dmcontrol.simulation.aligned import DMCAlignedAdapter
@@ -72,3 +76,28 @@ def test_owned_typed_state_across_steps_reset_and_rng_boundary(factory, args, de
         adapter.get_state()
     with pytest.raises(RuntimeError, match="closed"):
         adapter.step(actions, capture_state=False)
+
+
+@pytest.mark.parametrize("factory,args", CASES)
+def test_malformed_input_is_rejected_without_touching_state(factory, args):
+    adapter = factory(*args, 2, device="cpu", seed=17)
+    try:
+        state = adapter.reset(seed=17)
+        before = state.clone()
+        width = adapter.envs[0].action_spec().shape[0]
+        with pytest.raises((TypeError, ValueError)):
+            adapter.set_state(TensorDict({"qpos": state["qpos"]}, [2]))
+        with pytest.raises(ValueError):
+            adapter.step(np.zeros((2, width + 1)))
+        with pytest.raises(ValueError):
+            adapter.step(np.full((2, width), np.nan))
+        equal(before, adapter.get_state())
+    finally:
+        adapter.close()
+
+
+def test_simulation_modules_do_not_import_stable_worldmodel():
+    package = importlib.import_module("stable_envs.envs.dmcontrol.simulation")
+    for info in pkgutil.iter_modules(package.__path__):
+        source = inspect.getsource(importlib.import_module(f"{package.__name__}.{info.name}"))
+        assert "stable_worldmodel" not in source, info.name
