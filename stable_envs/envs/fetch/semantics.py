@@ -142,12 +142,12 @@ class FetchSemantics:
             raise ValueError("Uncertified Fetch reset Variation")
         # Variation reset uses its own Gymnasium space tree and reseeds even
         # for seed=None, as SWM does. It never consumes simulator PCG64.
-        leaves = _historical_sampling_tree(self._has_object)
+        leaves = _source_sampling_tree(self._has_object)
         values = []
         for lane in range(self.B):
             v = {}
             if sampled:
-                spaces = _historical_sampling_tree(self._has_object)
+                spaces = _source_sampling_tree(self._has_object)
                 spaces.seed(None if seed is None else int(seed) + lane)
                 for key in sampled:
                     v[key] = _leaf(spaces, key).sample()
@@ -258,7 +258,7 @@ def _leaf(tree, path):
     return tree
 
 
-def _historical_sampling_tree(has_object=True):
+def _source_sampling_tree(has_object=True):
     """Build the source Gymnasium seeding tree, including unexposed leaves."""
     import gymnasium as gym
 

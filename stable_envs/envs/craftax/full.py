@@ -1,110 +1,67 @@
 """Full Craftax: nine levels, a 130x110 window, and a composite that is a stencil rather than a blend.
 
-Reference: ``Craftax-Pixels-v1`` (JAX), registered at
-``BLOCK_PIXEL_SIZE_AGENT = 10``. The observation is
-``craftax.craftax.renderer.make_craftax_pixel_renderer(10)(state) / 255`` — a 9x11 window of one of
+Reference: ``Craftax-Pixels-v1`` (JAX) at ``BLOCK_PIXEL_SIZE_AGENT = 10``. The observation is
+``craftax.craftax.renderer.make_craftax_pixel_renderer(10)(state) / 255``: a 9x11 window of one of
 nine 48x48 levels, an item layer over it, the player, up to eight mobs and six projectiles, a
-per-tile ``light_map``, the day/night chain, a sleep dim, and a **4-row** inventory strip below.
+per-tile ``light_map``, the day/night chain, a sleep dim, and a 4-row inventory strip below.
 130x110x3 at the registered size; 208x176x3 at craftax's 16 px size.
 
-**This is a different renderer from Craftax Classic, and the difference is structural rather than a
-matter of scale.** Every overlay alpha in the full game is exactly ``{0, 1}`` — craftax's
-``load_texture`` forces ``alpha // 255``, measured over every alpha table at 10, 16 and 64 px — so a
-layer is a **stencil select**, not a blend. Three things follow, and all three are why this file
-exists instead of a generalisation of :mod:`stable_envs.envs.craftax`:
+This is structurally different from Classic. Every overlay alpha is exactly ``{0, 1}`` (craftax's
+``load_texture`` forces ``alpha // 255``), so a layer is a stencil select, not a blend:
 
-* **The product cannot be baked.** Classic's ``_Composite`` bakes ``(player, block, mob)`` into 816
-  tiles because its alphas are ``{0, 128/255, 1}`` and a blend has no cheaper exact form. Here the
-  product is ``block x item x player x mob x projectile`` = **732,600** tiles, 563 MB at 16 px. What
-  is baked instead is ``block x item`` (185) and ``mob x projectile`` (660), and the player and the
-  strip digits ride as two more thin stencil layers: **one background gather and three stencil
-  layers**, which is seven ``index_select``s (a colour and a mask per layer) and three selects, four
-  of them touching only part of the frame.
-* **The lighting chain is not Classic's.** It has no luminance "enhance" step, it multiplies the
-  per-tile ``light_map`` into the picture *before* anything else, it forces
-  ``daylight = 1.0`` off level 0, and it sleeps towards black rather than towards a desaturated blue.
-  Offered the reference's own inputs, ``craftax.night_and_sleep`` reproduces it on 4 of 49 real
-  states with ``max |diff| 230``. The vignette is a different function too: a normalised radial
-  distance, not Classic's Gaussian.
-* **The strip is not Classic's.** 4 rows x 11 columns, 36 written cells, counts capped at **99**
-  rather than 9 (``game_logic.clip_inventory_and_intrinsics``), two-digit numbers, a level digit,
-  four attribute digits, and five cells carrying a second alpha-blended enchantment icon.
+* The product cannot be baked: ``block x item x player x mob x projectile`` is 732,600 tiles. Baked
+  instead are ``block x item`` (185) and ``mob x projectile`` (660); the player and the strip digits
+  ride as two more thin stencil layers: one background gather and three stencil layers.
+* The lighting chain is not Classic's: no luminance "enhance" step, the per-tile ``light_map`` is
+  multiplied in first, ``daylight`` is forced to 1.0 off level 0, sleeping dims towards black, and
+  the vignette is a normalised radial distance rather than a Gaussian.
+* The strip is not Classic's: 4 rows x 11 columns, 36 written cells, counts capped at 99
+  (``game_logic.clip_inventory_and_intrinsics``), two-digit numbers, a level digit, four attribute
+  digits, and five cells carrying a second alpha-blended enchantment icon.
 
-``stable_envs/envs/craftax/prng.py`` **is** shared, and is used unchanged: the noise field is
-``prng.uniform(key, (9t, 11t)) * 95 + 32``, which is character for character what craftax writes.
+``prng.py`` is shared unchanged: the noise field is ``prng.uniform(key, (9t, 11t)) * 95 + 32``.
 
-Parity: measured on 64 sampled states at 10 px and 16 px over the whole observation and over all
-five cost bands. **100% of all pixels exact, max abs diff 0** against the **un-jitted** reference.
-See ``pre-repository-cleanup:tests/fixtures/regression/join/step7/craftax-full/findings.md``.
+Parity is a uint8 claim against the un-jitted official renderer (under ``jax.jit`` XLA fuses the
+float32 arithmetic differently, by up to ~1.5e-05, which flips uint8 roundings where the picture is
+compressed towards one value); :meth:`CraftaxFull.reference_env` returns the un-jitted function.
 
-**One ULP, and it decides the parity number.** craftax normalises the night vignette as
-``ntx / ntx.max()`` under jax, and XLA lowers a float32 divide by a scalar as a **reciprocal
-multiply**. Against a true float32 divide that disagrees on 2,265 of the 9,900 vignette elements by
-one ULP each, and one ULP in the vignette is one ULP in the night mask, which is enough to move a
-uint8 pixel: the chain went from 35/49 bit-exact to **49/49** when the divide became
-``v * (1 / v.max())``. :func:`night_vignette` writes it that way and
-``tests/unit/test_craftax_full.py::test_the_vignette_is_a_reciprocal_multiply_and_not_a_divide``
-pins it -- against a sha256 frozen from craftax, six exact probe values, and the fact that the naive
-divide is still wrong.
+Two traps:
 
-**A second trap, silent rather than subtle.** ``ItemType.NONE`` is slot 0 of the item table and the
-reference's scan starts at 1, so it is *never drawn* — and its texture is ``debug.png``, which is
-opaque. An implementation that gathers slot 0 like any other slot paints a debug tile over every
-empty square. ``_craftax_full_tex`` zeroes slot 0's alpha at bake time, so the gather needs no
-special case.
+* craftax normalises the night vignette as ``ntx / ntx.max()`` and XLA lowers a float32 divide by a
+  scalar as a reciprocal multiply. A true divide differs by one ULP on 2,265 of 9,900 elements, which
+  moves uint8 pixels. :func:`night_vignette` writes ``v * (1 / v.max())`` and
+  ``test_the_vignette_is_a_reciprocal_multiply_and_not_a_divide`` pins it.
+* ``ItemType.NONE`` is slot 0 of the item table and the reference never draws it, but its texture is
+  the opaque ``debug.png``. ``_craftax_full_tex`` zeroes slot 0's alpha at bake time so the gather
+  needs no special case.
 
-**"The official frame" is not one object.** Under ``jax.jit`` XLA fuses the reference's arithmetic
-differently and it disagrees with its own un-jitted self by up to 1.53e-05 in float32 **on the
-49-state phase-0 pool** -- independent review measured 3.05e-05 over 402 states, so the figure is a
-property of the pool rather than a bound. On that phase-0 pool 48 of 49 frames stayed
-uint8-identical and one differed on 0.0023% of pixels by 1. The claim
-certified here is therefore a **uint8** claim against the **un-jitted** renderer, exactly as for
-Classic, and :meth:`CraftaxFull.reference_env` returns the un-jitted function.
+What the window carries and what it does not:
 
-What this carries and what it does not:
+  * One mob slot and one projectile slot per tile, and a six-projectile bridge budget. A mob and a
+    projectile on one tile are representable (the baked ``mob x projectile`` table draws the pair). A
+    second entity of the same kind on one tile is not: the window keeps the last one drawn and the
+    reference composites both, so the disagreement is confined to that tile. craftax's ``mob_map``
+    keeps mob classes off each other's tiles, so only two projectiles can collide in play. The
+    reference bridge carries at most ``MAX_MOB_PROJ + MAX_PLAYER_PROJ`` = 6 projectiles (``EnvState``'s
+    masks are ``(9, 3)`` each); a window holding seven renders here and cannot be scored against the
+    reference. See :class:`CraftaxFull`.
+  * ``player_xp`` above 9 is clamped, not wrapped: the reference gathers ``number_textures[player_xp]``
+    from a 10-entry table and jax clamps an out-of-range gather, so xp 12 draws a "9". The state slot
+    carries the digit that is drawn.
+  * The two global substitutions are resolved into the stored tile id: ``NECROMANCER ->
+    NECROMANCER_VULNERABLE`` (a function of every mob on the level) and ``LADDER_DOWN ->
+    LADDER_DOWN_BLOCKED`` (a function of ``monsters_killed``). Each moves pixels only on tiles holding
+    that id, so neither needs a state dimension.
+  * ``do_night_noise`` and ``jax_threefry_partitionable`` are part of the reference: the registered env
+    uses the default ``True`` and :meth:`reference_env` builds it that way.
 
-  * **one mob slot and one projectile slot per tile, and a six-projectile bridge budget.** A mob and
-    a projectile on the same tile ARE representable -- the baked overlay table is the ``mob x
-    projectile`` product and draws the pair, which an earlier version of this docstring wrongly said
-    it could not. What is not representable is a **second entity of the same kind** on one tile: two
-    mobs, or two projectiles. The window keeps the last one drawn, the reference composites
-    both, and **the disagreement is confined to that tile** -- its size depends on which pair
-    collides, so no single number describes it. Measured on an ``EnvState`` built with the pair
-    on one tile: two melee mobs **156** at both sizes, two mob projectiles **237** at 10 px and
-    **253** at 16 px; independent review measured 113-187 on its own pairs. craftax's
-    ``mob_map`` keeps the three mob classes off each other's tiles, so the mob case does not
-    arise in play; two projectiles on one tile can. Measured over 800 frames of a 4,000-step
-    random-policy rollout, the most entities ever on one tile was **1**.
-
-    Separately, the **reference bridge** carries at most
-    ``MAX_MOB_PROJ + MAX_PLAYER_PROJ`` = 6 projectiles, because ``EnvState``'s projectile masks are
-    ``(9, 3)`` and ``(9, 3)`` and a seventh cannot exist in a state at all. A window holding seven
-    renders here and cannot be scored against the reference, which drops the extra. See
-    :class:`CraftaxFull` and
-    ``tests/unit/test_craftax_full.py::test_a_window_carrying_more_projectiles_than_the_simulator_can_hold_is_not_representable``.
-  * ``player_xp`` above 9 is **clamped, not wrapped** — the reference gathers
-    ``number_textures[player_xp]`` from a 10-entry table and jax clamps an out-of-range gather, so an
-    xp of 12 draws a "9". The state slot carries the digit that is drawn.
-  * the two global substitutions are **resolved into the stored tile id**:
-    ``NECROMANCER -> NECROMANCER_VULNERABLE`` (a function of every mob on the level, on-screen or
-    not) and ``LADDER_DOWN -> LADDER_DOWN_BLOCKED`` (a function of ``monsters_killed``). Measured:
-    each moves pixels only on the tiles holding that id, so neither needs a state dimension.
-  * ``do_night_noise`` is part of the reference the way ``jax_threefry_partitionable`` is: the
-    registered env uses the default ``True`` and :meth:`reference_env` builds it that way.
-
-The render window is **544 float32 numbers, 2,176 bytes**, against a 42,900-byte frame at the
-registered size (**19.7x**) and 109,824 bytes at 16 px (**50.5x**). craftax's own ``EnvState`` is
-273,276 bytes — **6.37x larger than the frame it draws** — because it carries all nine levels of
+The render window is 544 float32 numbers; craftax's own ``EnvState`` carries all nine levels of
 ``map``, ``item_map`` and ``light_map`` while the frame shows one 9x11 window of one of them.
-Twenty-one ``EnvState`` fields the window omits were each perturbed and moved **0** pixels
-(``phase0/purity_and_state_window.json``).
 
-Out-of-range ids and counts **wrap** rather than clamp, for the reason Classic's do: a clamping
-decoder makes a slot that already holds the last class insensitive to the conformance suite's ``+25``
-probe, and that is reported as a dead state dimension when it is an artifact of the probe. The two
-exceptions are stated where they are made: ``light_level`` and the per-tile ``light_map`` fold on a
-tent of period 2 (identity on ``[0, 1]``, so an in-range value passes through bit-exact), and the
-health slot is lifted to at least 1 because the reference draws ``max(floor(health), 1)``.
+Out-of-range ids and counts wrap rather than clamp, as in Classic: a clamping decoder makes a slot
+already holding the last class insensitive to the conformance suite's ``+25`` probe. The exceptions:
+``light_level`` and the per-tile ``light_map`` fold on a tent of period 2 (identity on ``[0, 1]``), and
+the health slot is lifted to at least 1 because the reference draws ``max(floor(health), 1)``.
 """
 
 from __future__ import annotations
@@ -142,24 +99,20 @@ N_FACING = 4  #: left, right, up, down -- the values ``player_direction - 1`` ta
 PLAYER_ASLEEP = 4  #: ``player_texture_index = select(is_sleeping, 4, player_direction - 1)``
 NO_PLAYER = 5  #: the sixth player slot: "nothing is drawn here". Mask is all false.
 N_PLAYER_SLOT = 6
-#: Counts the strip can show. ``clip_inventory_and_intrinsics`` does ``jnp.minimum(x, 99)`` over the
-#: whole ``Inventory``, and the intrinsic ceilings are ``8 + strength`` / ``7 + 2*dexterity`` /
-#: ``6 + 3*intelligence`` with ``max_attribute = 5``. So a strip cell renders a TWO-digit number and
-#: the alphabet is 100, not Classic's 10.
+#: Counts the strip can show. ``clip_inventory_and_intrinsics`` caps the inventory at 99 and the
+#: intrinsic ceilings are ``8 + strength`` / ``7 + 2*dexterity`` / ``6 + 3*intelligence`` with
+#: ``max_attribute = 5``, so a cell renders a two-digit number and the alphabet is 100.
 N_COUNT = 100
 N_DIGIT = 10
-#: ``state_rng`` is two uint32 and a uint32 does NOT survive a float32 state row -- only 2.008% of
-#: random uint32 round-trip through one. Split into 16-bit halves, 100% do. Four slots, not two.
-#: See ``stable_envs/envs/craftax/prng.py``.
+#: A uint32 survives a float32 state row only 2% of the time, so the two-uint32 ``state_rng`` key is
+#: stored as four 16-bit halves.
 N_KEY_HALVES = 4
 #: ``night_texture``: the colour night is tinted towards, ``[[[0, 16, 64]]]`` in craftax's constants.
 NIGHT_TINT = (0.0, 16.0, 64.0)
 #: Below this ``light_level`` the reference mixes in a noise field; at or above it
-#: ``night_intensity = max(2*(0.5 - daylight), 0)`` is exactly 0, so ``(1-0)*px + 0*noise`` is ``px``
-#: in float32 whatever the noise was, and no PRNG is drawn at all.
+#: ``night_intensity = max(2*(0.5 - daylight), 0)`` is exactly 0 and no PRNG is drawn.
 NIGHT_THRESHOLD = 0.5
-#: craftax's day length; used only by ``sample_states`` to give ``light_level`` the distribution the
-#: simulator produces rather than a uniform one.
+#: craftax's day length; ``sample_states`` draws ``light_level`` from the simulator's day cycle.
 DAY_LENGTH = 300
 #: ``monsters_killed[level] >= MONSTERS_KILLED_TO_CLEAR_LEVEL`` opens the down ladder.
 MONSTERS_KILLED_TO_CLEAR_LEVEL = 8
@@ -171,10 +124,9 @@ MAX_MOB_PROJ, MAX_PLAYER_PROJ = 3, 3
 #: Sprites per class, as the baked mob table lays them out: slot 0 is "no mob".
 N_MELEE, N_PASSIVE, N_RANGED = 8, 3, 8
 N_PROJ_TYPE = 8
-#: ``o -> (flip, transpose)``. The renderer classifies a direction as
-#: ``flip = (d0 > 0) or (d1 > 0)`` and ``transpose = d1 != 0``, so the inverse is this table and NOT
-#: the one pairing orientations with directions in the obvious order -- the same trap Classic's
-#: ``ARROW_DIR`` documents, where getting it wrong swaps two ids and two whole tiles per frame.
+#: ``o -> (flip, transpose)``. The renderer classifies a direction as ``flip = (d0 > 0) or (d1 > 0)``
+#: and ``transpose = d1 != 0``, so the inverse is this table, not the obvious pairing (the same trap
+#: as Classic's ``ARROW_DIR``).
 PROJ_DIR = ((-1, 0), (0, -1), (1, 0), (0, 1))
 
 #: ``BlockType`` ids the renderer or the state bridge needs by name.
@@ -197,11 +149,9 @@ _TRANSPARENT_MOBS: dict = {}
 def transparent_mob_slots(src: int) -> np.ndarray:
     """Mob slots whose sprite leaves at least one pixel of the tile beneath it visible.
 
-    Exactly one of the twenty is fully opaque at every baked size (ranged type 5), and a tile under it
-    has four dead state dimensions -- block, item, mob and projectile are all unobservable there,
-    which is a true statement about the reference and an unhelpful one for a ``batch=1``
-    ``check_state_dims_matter``. ``sample_states`` keeps it out of the one band a batch of 1 draws;
-    every other band may use it.
+    Exactly one of the twenty (ranged type 5) is fully opaque at every baked size; a tile under it
+    has four unobservable state dimensions, which would fail ``check_state_dims_matter`` at
+    ``batch=1``. ``sample_states`` keeps it out of the one band a batch of 1 draws.
     """
     if src not in _TRANSPARENT_MOBS:
         a = _unpack("mob_a", src).astype(bool)
@@ -212,11 +162,9 @@ def transparent_mob_slots(src: int) -> np.ndarray:
 def _tent(x: torch.Tensor) -> torch.Tensor:
     """Fold a float back into ``[0, 1]`` on a tent of period 2, identity inside it.
 
-    ``light_level`` and every per-tile ``light_map`` value live in ``[0, 1]``, and neither a clamp nor
-    the obvious wrap will do. A clamp leaves a fully lit slot insensitive to the conformance suite's
-    ``+25`` probe, which is reported as a dead state dimension; ``x - floor(x)`` sends 1.0 to 0.0 and
-    turns every lit state into darkness. The tent does neither, and because it is applied only outside
-    ``[0, 1]`` an in-range value passes through bit-exact instead of through two float32 roundings.
+    A clamp leaves a fully lit slot insensitive to the conformance suite's ``+25`` probe, and
+    ``x - floor(x)`` sends 1.0 to 0.0. The tent is applied only outside ``[0, 1]``, so an in-range
+    value passes through bit-exact.
     """
     tent = 1.0 - (x.remainder(2.0) - 1.0).abs()
     return torch.where((x >= 0.0) & (x <= 1.0), x, tent)
@@ -228,10 +176,8 @@ def _tent_np(x):
     return np.where((x >= 0.0) & (x <= 1.0), x, tent).astype(np.float32)
 
 
-#: The values craftax's own light maps take, measured over every level of four generated worlds
-#: (``pre-repository-cleanup:tests/fixtures/regression/join/step7/craftax-full/phase0/chain.json``: 23 distinct values, min 0.0, max 1.0).
-#: Used only by ``sample_states``, so a drawn dark tile looks like a tile the simulator produces
-#: rather than like a uniform draw.
+#: The 23 distinct values craftax's own light maps take over generated worlds (min 0.0, max 1.0).
+#: Used only by ``sample_states``, so a drawn dark tile resembles one the simulator produces.
 LIGHT_MAP_ALPHABET = np.array(
     [
         0.0,
@@ -268,8 +214,7 @@ def strip_geometry(t: int):
     The reference's own expressions: the icon occupies ``[left : t - right]`` in both axes with
     ``left = (t - int(0.8t)) // 2``; the ones digit ``[t - int(0.4t) : t]`` and the tens digit
     ``[t - 2*int(0.4t) : t - int(0.4t)]`` in the column axis, both at rows ``[t - int(0.4t) : t]``.
-    Every span lies inside the cell, which is what makes the strip a per-cell table rather than a
-    sequence of blits.
+    Every span lies inside the cell, so the strip is a per-cell table.
     """
     s = int(0.8 * t)
     left = (t - s) // 2
@@ -285,13 +230,10 @@ def _unpack(name: str, src: int) -> np.ndarray:
 def _source_size(t: int) -> int:
     """Which baked size a ``t``-px render resamples from.
 
-    **A baked size that DIVIDES ``t`` wins over a nearer one that does not**, and that is what makes
-    this renderer resolution-consistent where the reference is not. ``check_resolution_consistency``
-    renders at S and 2S; at the registered S=10 that is 20, and 16 is nearer to 20 than 10 is. Taking
-    the nearer source would resample a 16 px tile up to 20 px and the 2S frame would be a different
-    picture rather than a 2x replication of the S one -- measured: ``exact_frac`` 0.32 with the
-    nearest rule against 1.000 on the world rows with this one. The largest such divisor is preferred
-    so a 32 px render comes from the 16 px art rather than from the 10 px art doubled three times.
+    A baked size that divides ``t`` wins over a nearer one that does not, which makes the renderer
+    resolution-consistent where the reference is not: at S=10 the check renders 20 px, and the
+    nearer 16 px source would give a 2S frame that is not a 2x replication of the S one. The largest
+    such divisor is preferred, so 32 px comes from the 16 px art.
     """
     t = int(t)
     if t in TABLES:
@@ -303,13 +245,11 @@ def _source_size(t: int) -> int:
 
 
 def _resample(a: np.ndarray, src: int, t: int, axes=(-3, -2)) -> np.ndarray:
-    """Nearest-resample a finished tile from ``src`` to ``t`` px, the repo's own rule.
+    """Nearest-resample a finished tile from ``src`` to ``t`` px.
 
-    ``((i + 0.5) * src / t).long()`` — exact 2x pixel replication at ``t = 2*src``. The **finished
-    cell** is resampled, never the ingredients: craftax re-lays-out the strip and re-loads every
-    texture at each size with ``Image.NEAREST``, so re-deriving at 2S would give a picture that is not
-    a 2x replication of the S one and would make a resolution-consistency bound unmeetable for a
-    reason that is a resampling rule rather than a renderer change.
+    ``((i + 0.5) * src / t).long()``: exact 2x replication at ``t = 2*src``. The finished cell is
+    resampled, never the ingredients: craftax re-lays-out the strip and reloads every texture at each
+    size, so re-deriving at 2S would not be a 2x replication of the S frame.
     """
     if int(t) == int(src):
         return a
@@ -421,9 +361,7 @@ N_DIGIT_ENTRY = N_ONES * N_TENS
 
 
 def _blend(px, rgb, a):
-    """The reference's own ``px * (1 - a) + rgb`` on integer arrays. ``a`` is 0/1, so this is a select
-    -- but it is written the reference's way so a non-premultiplied texture would show up here rather
-    than silently, and :func:`_check_premultiplied` asserts the equivalence at build time."""
+    """The reference's ``px * (1 - a) + rgb`` on integer arrays; ``a`` is 0/1, so this is a select."""
     return px * (1 - a) + rgb
 
 
@@ -437,17 +375,15 @@ def _check_premultiplied(rgb, a, what):
 
 
 def _strip_icon_tiles(src: int) -> np.ndarray:
-    """``(N_STRIP_ICON, src, src, 3)`` — every strip cell's background picture.
+    """``(N_STRIP_ICON, src, src, 3)``: every strip cell's background picture.
 
-    A cell's background is its **icon**, because ``_render_icon`` *sets* its square and leaves the
-    rest of the cell black; the digits then blend over it. Two families of cell carry more than an
-    icon here:
+    A cell's background is its icon (``_render_icon`` sets its square and leaves the rest black); the
+    digits blend over it. Two families carry more than an icon:
 
-    * the sword and the four armour slots fold their **enchantment** in, because the reference draws
-      it after an icon and those cells have no digits, so the composition is unambiguous;
-    * the **arrows** cell is baked whole -- 100 counts x 3 enchantments -- because its enchantment is
-      drawn *after* its digits and covers the icon square, which overlaps the digit squares. Folding
-      it into the icon would put it underneath the digits it is meant to cover.
+    * the sword and the four armour slots fold their enchantment in, since the reference draws it
+      after an icon and those cells have no digits;
+    * the arrows cell is baked whole (100 counts x 3 enchantments) because its enchantment is drawn
+      after its digits and covers the icon square, which overlaps the digit squares.
     """
     t = src
     lo, hi, oc, tc, d = strip_geometry(t)
@@ -527,7 +463,7 @@ def _strip_icon_tiles(src: int) -> np.ndarray:
 
 
 def _bg_tiles(src: int) -> np.ndarray:
-    """``(N_BG, src, src, 3)`` — the whole frame's background in one table."""
+    """``(N_BG, src, src, 3)``: the whole frame's background in one table."""
     block = _unpack("block", src).astype(np.int64)  # (37, s, s, 3)
     irgb = _unpack("item_rgb", src).astype(np.int64)  # (5, s, s, 3)
     ia = _unpack("item_a", src).astype(np.int64)[..., None]  # (5, s, s, 1)
@@ -540,9 +476,8 @@ def _bg_tiles(src: int) -> np.ndarray:
 def _overlay_tiles(src: int):
     """``(N_OVERLAY, s, s, 3)`` rgb and ``(N_OVERLAY, s, s)`` mask: ``mob`` then ``projectile``.
 
-    Both alphas are binary, so ``where(proj_a, proj, where(mob_a, mob, bg))`` collapses to one
-    lookup: the pair's colour is the projectile where it is opaque and the mob otherwise, and the
-    pair's mask is the union. Projectile over mob is the reference's order.
+    Both alphas are binary, so ``where(proj_a, proj, where(mob_a, mob, bg))`` collapses to one lookup:
+    the colour is the projectile where opaque and the mob otherwise, and the mask is the union.
     """
     mr, ma = _unpack("mob_rgb", src).astype(np.int64), _unpack("mob_a", src).astype(bool)
     jr, ja = _unpack("proj_rgb", src).astype(np.int64), _unpack("proj_a", src).astype(bool)
@@ -552,7 +487,7 @@ def _overlay_tiles(src: int):
 
 
 def _player_tiles(src: int):
-    """``(6, s, s, 3)`` rgb and mask. Slot 5 is ``NO_PLAYER``: an all-false mask, exactly the identity."""
+    """``(6, s, s, 3)`` rgb and mask. Slot 5 is ``NO_PLAYER``: an all-false mask, the identity."""
     pr, pa = _unpack("player_rgb", src).astype(np.int64), _unpack("player_a", src).astype(bool)
     rgb = np.concatenate([pr, np.zeros((1, *pr.shape[1:]), np.int64)])
     mask = np.concatenate([pa, np.zeros((1, *pa.shape[1:]), bool)])
@@ -562,9 +497,9 @@ def _player_tiles(src: int):
 def _digit_tiles(src: int):
     """``(200, s, s, 3)`` rgb and mask for ``ones * 10 + tens``.
 
-    ``ones`` 0..9 is ``number_textures`` (slot 0 empty, which is how a value of 0 draws nothing) and
-    10..19 is ``number_textures_with_zero``; ``tens`` is ``number_textures``, whose slot 0 suppresses
-    a leading zero. Entry 0 is (empty, empty) — the no-op a cell without digits takes.
+    ``ones`` 0..9 is ``number_textures`` (slot 0 empty, so 0 draws nothing) and 10..19 is
+    ``number_textures_with_zero``; ``tens`` is ``number_textures``, whose slot 0 suppresses a
+    leading zero. Entry 0 is (empty, empty): the no-op a cell without digits takes.
     """
     t = src
     _, _, oc, tc, _ = strip_geometry(t)
@@ -585,14 +520,12 @@ def _digit_tiles(src: int):
 class _Tables:
     """Every table this renderer gathers from, decoded once per ``(device, tile size)``.
 
-    Four tables and nothing else, all small enough to stay resident at any size craftax draws at:
-    ``bg`` (596 tiles: 185 ``block x item`` composites, a black tile, 410 strip icon cells),
-    ``ov`` (660 ``mob x projectile`` pairs), ``pl`` (6 player slots), ``dg`` (200 digit pairs).
+    ``bg`` (596 tiles: 185 ``block x item`` composites, a black tile, 410 strip icon cells), ``ov``
+    (660 ``mob x projectile`` pairs), ``pl`` (6 player slots), ``dg`` (200 digit pairs).
 
-    **uint8 only, and that is exact rather than a compromise.** Every craftax texture is integral in
-    0..255 and a stencil composite of integers is an integer, so a float32 table would hold the same
-    numbers; the lit path converts the finished uint8 composite instead of gathering four times the
-    bytes, which is worth about 3x on a lit frame.
+    uint8 only, which is exact: every craftax texture is integral in 0..255 and a stencil composite
+    of integers is an integer, so the lit path converts the finished uint8 composite instead of
+    gathering four times the bytes (about 3x faster on a lit frame).
     """
 
     _MAX_ENTRIES = 6
@@ -622,17 +555,12 @@ class _Tables:
         dg_rgb, dg_m = _resample(dg_rgb, src, t), _resample(dg_m, src, t, axes=(-2, -1))
 
         def pack(rgb, m=None):
-            # uint8 only. The composite is a stencil select over integral textures, so it never needs
-            # a float table: the float chain converts the finished uint8 composite, which is exact
-            # because the float table would have held the same numbers.
+            # uint8 only: the float chain converts the finished uint8 composite, which is exact.
             u8 = cls._rows(rgb.astype(np.uint8), t, device)
             if m is None:
                 return {"u8": u8}
-            # The mask is stored with all THREE channels, which looks wasteful and is not. A
-            # one-channel mask moves a third of the bytes and lets ``torch.where`` broadcast -- and
-            # measured on this CPU it is **1.7x slower** on a fully lit frame (18,928 -> 10,852 f/s
-            # at 10 px, B=256), because the broadcast costs more than the bytes it saves. Tried,
-            # measured, reverted; the comment is here so it is not tried again.
+            # The mask keeps all three channels: a one-channel mask relies on ``torch.where`` broadcasting,
+            # which is slower on a fully lit frame than the extra bytes.
             return {"u8": u8, "m": cls._rows(np.repeat(m[..., None], 3, -1), t, device)}
 
         tab = {"bg": pack(bg), "ov": pack(ov_rgb, ov_m), "pl": pack(pl_rgb, pl_m), "dg": pack(dg_rgb, dg_m), "t": t}
@@ -645,17 +573,15 @@ _GRID_CACHE: dict = {}
 
 
 def night_vignette(device: torch.device, h: int, w: int) -> torch.Tensor:
-    """``(h, w, 1)`` float32 — full Craftax's ``night_noise_intensity_texture``.
+    """``(h, w, 1)`` float32 copy of full Craftax's ``night_noise_intensity_texture``.
 
-    A **normalised radial distance** ``sqrt((x - h//2)^2 + (y - w//2)^2) / max``: zero at the frame
-    centre, one at the farthest corner. Classic's is a Gaussian on a ``linspace(-1, 1)`` grid, which
-    is why :func:`stable_envs.envs.craftax.classic.night_vignette` cannot serve here.
+    A normalised radial distance ``sqrt((x - h//2)^2 + (y - w//2)^2) / max``: zero at the frame
+    centre, one at the farthest corner (Classic's is a Gaussian, so
+    :func:`stable_envs.envs.craftax.classic.night_vignette` cannot serve here).
 
-    **The normalisation is a reciprocal multiply and not a divide.** craftax computes it under jax,
-    and XLA lowers a float32 divide by a scalar as ``x * (1/s)``; against a true float32 divide that
-    disagrees on 2,265 of the 9,900 elements at the registered size, by one ULP each, and one ULP
-    here is one ULP in the night mask, which moves uint8 pixels. Measured: the lighting chain went
-    from 35/49 bit-exact to 49/49 when this line changed.
+    The normalisation is a reciprocal multiply, not a divide: craftax computes it under jax, where
+    XLA lowers a float32 divide by a scalar as ``x * (1/s)``, and a true divide differs by one ULP on
+    thousands of elements, enough to move uint8 pixels.
     """
     key = (str(device), int(h), int(w))
     if key not in _VIGNETTE_CACHE:
@@ -677,24 +603,17 @@ def _night_tint(device: torch.device) -> torch.Tensor:
 def light_night_and_sleep(
     world: torch.Tensor, light_map: torch.Tensor, daylight: torch.Tensor, sleeping: torch.Tensor, keys: torch.Tensor
 ) -> torch.Tensor:
-    """Full Craftax's lighting chain, in the reference's own order, op for op.
+    """Full Craftax's lighting chain, in the reference's order, op for op.
 
     ``world`` ``(n, h, w, 3)`` float32 pre-lighting pixels; ``light_map`` ``(n, h, w, 1)`` the
     per-tile multiplier expanded to pixels; ``daylight`` ``(n,)`` already carrying the
     ``select(player_level == 0, light_level, 1.0)`` override; ``sleeping`` ``(n,)`` bool; ``keys``
     ``(n, 2)`` int32 threefry keys.
 
-    **Deliberately not algebraically collapsed.** The chain folds into two scalars and a per-pixel
-    constant in real arithmetic and into a different rounding at every step in float32, and this
-    renderer's claim is bit equality rather than closeness. The reductions taken are the ones that
-    change no bits:
-
-    * the noise field is drawn **only for rows that can use it**. ``night_intensity`` is exactly 0
-      for ``daylight >= 0.5``, so ``(1 - 0)*px + 0*noise`` is ``px`` in float32 whatever the noise
-      was, and those rows get no threefry evaluation at all. Eight of the nine levels are in that
-      band unconditionally, because ``daylight`` is forced to 1.0 off level 0;
-    * a batch that is entirely fully lit, awake and at unit gain never reaches here -- ``render``
-      keeps it on the uint8 gather.
+    Not algebraically collapsed: the folded form rounds differently in float32 and the claim is bit
+    equality. The only reductions change no bits: noise is drawn only for rows with
+    ``daylight < 0.5`` (elsewhere ``(1 - 0)*px + 0*noise`` is ``px``), and a batch that is fully lit,
+    awake and at unit gain never reaches here.
     """
     n, h, w, _ = world.shape
     dev = world.device
@@ -835,15 +754,10 @@ class CraftaxFull(Env):
     Rendering and Variation handling are provided by stable-envs. Dynamics stay in Craftax/JAX;
     this cell currently renders stored windows (``has_dynamics`` is False).
 
-    **The render window is wider than the reference bridge in one place, and it is stated here rather
-    than discovered.** The window has room for a projectile on each of its 99 tiles; an ``EnvState``
-    has room for ``MAX_MOB_PROJ + MAX_PLAYER_PROJ`` = **6**, because its two projectile masks are
-    ``(9, 3)`` each and a seventh cannot exist in a state at all. A window carrying seven renders
-    here and **cannot be scored against the reference**, which places six and drops the rest.
-    :meth:`sample_states` never produces such a row and
-    ``tests/unit/test_craftax_full.py::test_a_window_carrying_more_projectiles_than_the_simulator_can_hold_is_not_representable``
-    asserts both halves. The boundary pool keeps one such row deliberately, scored apart
-    (``pre-repository-cleanup:tests/fixtures/regression/join/step7/craftax-full/certify/boundary_pool.json``).
+    The window has room for a projectile on each of its 99 tiles, but an ``EnvState`` holds
+    ``MAX_MOB_PROJ + MAX_PLAYER_PROJ`` = 6 (two ``(9, 3)`` masks). A window carrying seven renders
+    here and cannot be scored against the reference, which drops the extra. :meth:`sample_states`
+    never produces such a row.
     """
 
     family = "craftax"
@@ -867,56 +781,27 @@ class CraftaxFull(Env):
     #: the parity claim is headlined on; 16 is craftax's other shipped size and is certified too.
     default_size = TILE_PX_AGENT
     reference_id = "Craftax-Pixels-v1"
-    #: REFERENCE-side versions the parity numbers were measured against. ``craftax`` pins the atlas,
-    #: the strip layout and the texture resampling; ``jax`` is load-bearing for the reason
-    #: :meth:`reference_env` refuses to build a reference whose PRNG path differs.
+    #: Reference versions the parity was measured against. ``craftax`` pins the atlas, the strip layout
+    #: and the texture resampling; ``jax`` matters because :meth:`reference_env` refuses a PRNG path
+    #: that differs.
     reference_versions = {"craftax": "1.6.1", "jax": "0.11.1"}
-    #: Certified against un-jitted Craftax. A jitted wrapper of the same renderer can differ by
-    #: at most 1 uint8 because ``jax.jit`` fuses the float32 arithmetic differently (up to 1.5e-05),
-    #: which a sleeping or lit row's desaturation can turn into a rounding flip. Historical
-    #: jitted-wrapper measurements live in ``tests.helpers.reference.craftax_jit``. The
-    #: identity-recheck evidence
-    #: (``pre-repository-cleanup:tests/fixtures/regression/join/step8/semantic/identity_recheck.json``) establishes the
-    #: un-jitted byte-identity this class certifies.
+    #: Exact over the whole observation against the un-jitted reference.
     parity_all_exact_min = 1.0
     parity_note = (
-        "Measured on the frozen corpus at 10 px (the registered observation) and 16 px, over "
-        "the WHOLE observation -- the 9x11 world window and the 4-row inventory strip -- and over all "
-        "five cost bands: level 0 at full daylight, level 0 at dusk, level 0 at night (the noise "
-        "field drawn), levels 1-8 fully lit, and levels 1-8 in darkness, with sleeping rows "
-        "throughout. Against craftax 1.6.1 under jax 0.11.1 with jax_threefry_partitionable at its "
-        "default True and do_night_noise at its default True: 100% of all pixels exact, max abs diff "
-        "0. The claim is a UINT8 claim and deliberately not a float one, because the reference does "
-        "not have one float value to be equal to: under jax.jit XLA fuses its arithmetic differently "
-        "and it disagrees with its own un-jitted self by up to 1.53e-05, which is invisible in uint8 "
-        "on a fully lit frame and not invisible wherever the picture is compressed towards one value "
-        "-- which the light_map multiply, the night blend and the sleep halving all do. On a 49-state "
-        "phase-0 pool 48 of 49 jitted frames were uint8-identical to the un-jitted ones and one "
-        "differed on 0.0023% of pixels by 1. reference_env therefore returns the un-jitted function, "
-        "which is the renderer as written. jax is a declared reference version because "
-        "jax_threefry_partitionable selects between two threefry counter layouts that agree on 0 of "
-        "448 draws, and the night noise field is drawn from one of them."
+        "Measured at 10 px (the registered observation) and 16 px over the whole observation (9x11 world "
+        "window and 4-row strip) and all five cost bands: level 0 at full daylight, dusk and night (noise "
+        "drawn), levels 1-8 fully lit and in darkness, sleeping rows throughout. Against craftax 1.6.1 "
+        "under jax 0.11.1 with jax_threefry_partitionable and do_night_noise at their default True: 100% "
+        "of pixels exact, max abs diff 0. The claim is a UINT8 claim against the UN-JITTED reference: "
+        "under jax.jit XLA fuses the arithmetic differently (up to 1.53e-05), which flips uint8 "
+        "roundings wherever the picture is compressed towards one value (the light_map multiply, the "
+        "night blend, the sleep halving). jax is a declared reference version because "
+        "jax_threefry_partitionable selects between two threefry counter layouts that agree on 0 of 448 "
+        "draws."
     )
-    #: Where ``check_resolution_consistency`` applies, decided by running the check's own protocol on
-    #: the OFFICIAL renderer rather than by argument from this one -- W1's ruling (Sami's decision A)
-    #: applied by precedent. At S=10 / 2S=20 over the phase-0 pool, craftax itself scores
-    #: ``exact_frac`` 0.4895 overall: **0.4817 on the world rows in full daylight**, 0.0991 at night,
-    #: and 0.94 on the strip rows in every band, with ``max_abs`` 191. Two mechanisms, neither a
-    #: geometry question:
-    #:
-    #: * ``load_texture`` re-reads and **resamples each PNG with ``Image.NEAREST`` at every size**, so
-    #:   the 20 px textures are not a 2x replication of the 10 px ones. This is the daylight number,
-    #:   measured with no noise and no lighting at all;
-    #: * the noise field is drawn at ``(9t, 11t)`` -- the frame's own resolution -- so element ``i`` of
-    #:   the 20 px field is a different threefry counter from element ``i`` of the 10 px one.
-    #:
-    #: The scope is therefore **all bands**, which is broader than Classic's band-scoped declaration
-    #: (there, only ``light_level < 0.5`` was inapplicable): here the reference is resolution-
-    #: inconsistent even in full daylight, so there is no band in which the check measures what it is
-    #: defined to measure. This renderer resamples the FINISHED tile, which makes it exactly
-    #: 2x-consistent where the reference is not; matching craftax's per-size resample instead would
-    #: buy no parity at a size that has no official frame. The frozen threshold is not edited,
-    #: and exact parity at each supported size is unaffected and still required.
+    #: The official renderer is itself resolution-inconsistent in every band: ``load_texture`` resamples
+    #: each PNG with ``Image.NEAREST`` at every size, and the night noise field is drawn at the frame's
+    #: own resolution. This renderer resamples the finished tile, so it is exactly 2x-consistent.
     resolution_consistency_applicability = {
         "all bands": "not_applicable: the official renderer is itself resolution-inconsistent in "
         "every band -- world rows 0.4817 in full daylight and 0.0991 at night, strip "
@@ -930,11 +815,8 @@ class CraftaxFull(Env):
         "measured_against": "craftax 1.6.1 un-jitted, jax 0.11.1, jax_threefry_partitionable=True",
         "still_required": "exact parity against the official renderer at 10 px and at 16 px",
     }
-    #: The distribution the single registered performance tier is measured on. The frozen throughput
-    #: harness draws ``probe.sample_states(64)``, so this env's own sampler IS the
-    #: certification distribution and its shares are a declared property of the cell rather than a
-    #: weighting invented for the benchmark. Bands are assigned by row index (``i % 6``), so the
-    #: shares are exact rather than drawn.
+    #: Throughput-harness state distribution: ``sample_states`` assigns bands by row index (``i % 6``),
+    #: so the shares are exact when the batch is a multiple of six.
     certification_state_distribution = {
         "draw": "CraftaxFull.sample_states(64) -- the throughput harness protocol",
         "band_assignment": "stratified by row index (i % 6); values inside a band from craftax's own "
@@ -944,13 +826,8 @@ class CraftaxFull(Env):
         "level0_night_share": 2 / 6,
         "underground_lit_share": 1 / 6,
         "underground_dark_share": 1 / 6,
-        #: **0.25, not the 2/6 the lighting bands alone suggest.** The two fully-lit bands are 2/6 of
-        #: the draw, but ``is_sleeping`` is stratified independently on ``i % 4`` and a sleeping row
-        #: takes the float chain whatever its lighting is. Over the twelve-row period of the two
-        #: stratifications, rows 2, 8 and 9 are the only ones that stay on the uint8 gather: 3/12.
-        #: The frozen corpus measures 14 of 64, which is the same number after selection. An earlier
-        #: value of 2/6 survived because the test that checks this declaration allowed 0.1 of slack
-        #: and the error was 0.083.
+        #: 0.25, not 2/6: ``is_sleeping`` is stratified independently on ``i % 4`` and a sleeping row takes
+        #: the float chain, so only 3 of each twelve rows stay on the uint8 gather.
         "uint8_fast_path_share": 0.25,
         "sleeping_share": 0.25,
         "note": "a row stays on the uint8 gather only if it is fully lit AND awake AND at unit gain, "
@@ -962,115 +839,12 @@ class CraftaxFull(Env):
         "against 1/3, while the fast-path share is exactly 0.25 at that batch",
     }
 
-    #: **The measured performance record, at the labels Sami's reference ruling produces.** The rule
-    #: applied literally: if the official renderer can be timed on the certification host under the
-    #: required conditions -- one core for CPU, same card and same job for GPU, **jitted as craftax
-    #: executes it**, warm, compile excluded -- then it IS the reference and the ratio is computed
-    #: from it; ``NO_REFERENCE`` is what you retain when it cannot be timed there, never a number
-    #: carried over from another machine. Parity is unaffected and stays against the **un-jitted**
-    #: function as a uint8 claim (:attr:`parity_note`): the speed ratio and the parity claim use
-    #: different references on purpose, because the jitted renderer disagrees with itself in uint8
-    #: and the un-jitted one is not what anybody runs.
-    #:
-    #: Both rungs came from the Step-3 classifier walked over the frozen certification ladder, not from
-    #: reading the thresholds by hand (``pre-repository-cleanup:scripts/regression/semantic/certify.py``,
-    #: ``pre-repository-cleanup:tests/fixtures/regression/fidelity/certification.json``).
-    performance_record_cpu = {
-        "tier": "CPU_FASTER",
-        "qualifiers": ["BELOW_G4"],
-        "mixed_default_fps": 1469.1,
-        "mixed_default_batch": 64,
-        "official_jitted_fps": 613.4,
-        "s_cpu": 2.395,
-        "decode_bar_fps": 4294.0,
-        "cores_cpu": 0.342,
-        "host": "node2339.oscar.ccv.brown.edu",
-        "job": "6409963",
-        #: The one-core condition, enforced by the cgroup and logged rather than asserted.
-        #: ``taskset -c 0`` does not work inside a SLURM cpuset, so the allocation itself is one core.
-        "condition": (
-            "--cpus-per-task=1; Cpus_allowed_list 1; nproc 1; sched_getaffinity [1]; "
-            "torch threads 1; jax default_backend cpu"
-        ),
-        "paired_verdict": (
-            "USABLE -- baseline legs 101,598 and 105,684 f/s (spread 1.040), the "
-            "baseline reproduces its known 115,166 f/s to 0.90x, load 0.92 per node "
-            "core"
-        ),
-        "superseded": (
-            "an earlier take on node2352 under --cpus-per-task=4 read S_cpu 3.810. It is "
-            "NOT the number: torch.set_num_threads(1) binds torch and says nothing about "
-            "jax, whose CPU backend has its own pool, so the reference could use four "
-            "cores while ours used one. The two takes also differ by node, so the drop "
-            "from 3.810 to 2.395 is not cleanly attributable to the core budget -- what "
-            "is attributable is that only the second was taken under the condition the "
-            "ladder is defined at"
-        ),
-    }
-    #: R is a real ratio here rather than ``NO_REFERENCE``, because the official renderer **could** be
-    #: timed on the same card in the same job -- and measuring it **demoted** this cell. On the
-    #: cores-only ``NO_REFERENCE`` ladder 21.8 cores of decode reads ``GPU_FAST``; against the
-    #: reference the class-R ladder wants ``R >= 500`` for that rung and R is 101, which is
-    #: ``GPU_FASTER``. Retaining ``NO_REFERENCE`` would have been the more flattering label and was
-    #: available by simply not measuring, which is the reason to measure.
-    performance_record_gpu = {
-        "tier": "GPU_FASTER",
-        "backend_class": "R",
-        "mixed_fps": 94343.9,
-        "mixed_batch": 4096,
-        "size": 10,
-        "official_jitted_fps": 934.5,
-        "R": 100.96,
-        "decode_bar_fps": 4323.3,
-        "cores": 21.82,
-        "card": "NVIDIA GeForce RTX 3090",
-        "host": "gpu2109.oscar.ccv.brown.edu",
-        "job": "6410052",
-        "condition": (
-            "same card, same job; the official timed from $SCR/venvs/se7-craftax-gpu with "
-            "jax.default_backend() == 'gpu' and devices ['cuda:0'] ASSERTED before timing, "
-            "jitted, warm, 6.72 s of compile excluded; ours timed from "
-            "$SCR/venvs/se7-craftax on the same allocation"
-        ),
-        "batch_scales": (
-            "425x (fps(4096)/fps(1)) against the 20x bar, measured on the sibling "
-            "gpu2106 run of the same code, job 6397699; the R run drew B=256 and 4096 "
-            "only, so its own record carries no B=1 cell"
-        ),
-        "why_not_no_reference": (
-            "$SCR/venvs/se7-craftax is a jax[cpu] build, so jax.default_backend() "
-            "is 'cpu' inside a GPU job whatever JAX_PLATFORMS says; job 6409535 "
-            "would have timed the 'same-card reference' on the CPU and was "
-            "cancelled before it ran. W1's jax[cuda12] venv was reused rather "
-            "than a second one built, and it carries no torch, so the two "
-            "interpreters share one allocation"
-        ),
-    }
-    #: What the two references are, and why they are allowed to differ.
-    reference_labels = {
-        "parity": "the UN-JITTED renderer -- a uint8 claim; see parity_note",
-        "speed": "the JITTED renderer, as craftax executes it, timed on the certification host",
-        "official_unjitted_fps_cpu": 0.43,
-        "official_jitted_fps_cpu": 613.4,
-        "ratio_between_the_two_references": 1426,
-        "note": (
-            "S_cpu against the un-jitted function would read 1,808 and certify nothing real. "
-            "The ruling is applied literally: the speed ratio uses the renderer as a user runs "
-            "it, and NO_REFERENCE is retained only where it cannot be timed on the host."
-        ),
-    }
-
-    # ------------------------------------------------------------------ state
+    # -------------------------------------------------------------- state
     #
-    # The public :data:`State` groups the 544 packed numbers by what they describe. Five per-tile
-    # planes (the block, the item drawn over it, the mob slot, the projectile slot and the light-map
-    # value), the player's own four scalars, the day-cycle key, and the 41 inventory/attribute slots
-    # the 4-row strip reads. Every offset is the packed column it has always been, in the order
-    # ``state_names`` gives, so ``pack`` writes the frozen row and the frozen corpus round-trips
-    # unchanged.
-    #
-    # No field has offset ``None``: there is no hidden dynamical state because there is no simulator
-    # here at all (``step`` raises the contract's refusal), so the packed row IS the whole state.
+    # The public State groups the 544 packed numbers by what they describe: five per-tile planes, the
+    # player's four scalars, the PRNG key halves, and the 41 inventory/attribute slots the strip reads.
+    # Offsets follow the packed column order of ``state_names``. There is no hidden dynamical state,
+    # so the packed row is the whole state.
     state_layout = (
         (("world", "blocks"), N_TILE, 0),
         (("world", "items"), N_TILE, N_TILE),
@@ -1086,23 +860,17 @@ class CraftaxFull(Env):
 
     @property
     def frame_shape(self) -> tuple[int, int]:
-        """``(H, W)`` of one frame. ``size`` is the TILE edge here, not the frame edge.
-
-        ``Env.frame_spec`` assumes a square frame of ``size`` pixels, and this frame is neither
-        ``size`` pixels nor square: at the registered 10 px tile it is ``(130, 110)``. A consumer
-        allocating from the spec would get a buffer of the wrong shape AND the wrong size, so the cell
-        answers for its own geometry, exactly as the classic-control family does for its 400x600.
+        """``(H, W)`` of one frame. ``size`` is the tile edge: the frame is neither ``size`` pixels
+        nor square (``(130, 110)`` at the registered 10 px).
         """
         return ((OBS_H + STRIP_H) * self.size, OBS_W * self.size)
 
     def make_variation_space(self) -> Dict:
-        """Knobs that are the identity at their defaults and genuinely move pixels off them.
+        """Knobs that are the identity at their defaults and move pixels off them.
 
-        No per-block colour knob, for Classic's reason: craftax's blocks are 16x16 pixel-art PNGs
-        resampled to the tile size, not procedurally drawn shapes, so a "grass colour" would have to
-        invent a recolouring rule the reference does not have. ``channel_gain`` is the one global
-        recolouring that is exactly the identity at 1.0; the two visibility flags are ablations a
-        world-model experiment actually wants.
+        There is no per-block colour knob: the blocks are pixel-art PNGs, so a recolouring rule would be
+        invented. ``channel_gain`` is the one global recolouring that is exact at 1.0; the two
+        visibility flags are ablations.
         """
         return Dict(
             {
@@ -1117,16 +885,9 @@ class CraftaxFull(Env):
     def _decode(self, s: torch.Tensor, n: int):
         """The state row -> the small integers and floats the tables are indexed and scaled by.
 
-        Every class id is a **wrap**, never a clamp: ``check_state_dims_matter`` probes a dimension by
-        adding 25 to it, and a clamping decoder leaves a slot that already holds the last class
-        insensitive to the probe, which is reported as a dead state dimension when it is an artifact
-        of the probe. Real states are always in range so the rule never fires in practice.
-
-        The two floats fold instead of wrapping. ``light_level`` and each per-tile ``light_map`` value
-        live in ``[0, 1]`` and a plain ``x - floor(x)`` would send 1.0 to 0.0, turning every fully lit
-        state into darkness; a **tent of period 2** is the identity on ``[0, 1]`` and folds everything
-        else back into it. It is applied only outside ``[0, 1]``, so an in-range value passes through
-        bit-exact rather than through two float32 roundings.
+        Class ids wrap rather than clamp (a clamp leaves a slot already at its last class insensitive
+        to the conformance suite's ``+25`` probe). ``light_level`` and each ``light_map`` value fold on
+        a tent of period 2 instead, since ``x - floor(x)`` would send 1.0 to 0.0.
         """
         k = N_TILE
         blk = s[:, 0:k].round().remainder(N_BLOCK).long().view(n, OBS_H, OBS_W)
@@ -1149,10 +910,10 @@ class CraftaxFull(Env):
     # ---------------------------------------------------------------- tile ids
 
     def _tile_ids(self, dec, sty):
-        """``(bg (n,13,11), ov (n,9,11), dg (n,4,11), player_slot (n,))`` -- one table row per tile.
+        """``(bg (n,13,11), ov (n,9,11), dg (n,4,11), player_slot (n,))``: one table row per tile.
 
-        Everything that could have been a branch is folded in here, so one batch may hold any mixture
-        of levels, lighting bands, sleeping and awake players and appearances.
+        Branches are folded into the ids, so one batch may mix levels, lighting bands, sleeping and
+        awake players and appearances.
         """
         blk, itm, mob, prj, _lm, facing, sleeping, level, _l, _d, _h, cnt = dec
         n, dev = blk.shape[0], blk.device
@@ -1234,16 +995,15 @@ class CraftaxFull(Env):
         style=None,
         out=None,
     ) -> torch.Tensor:
-        """``(..., 544)`` -> ``(..., 13*size, 11*size, 3)`` uint8, in the reference's own order.
+        """``(..., 544)`` -> ``(..., 13*size, 11*size, 3)`` uint8.
 
         There is no ``scene()``: the frame is a gather from texture tables with three stencil selects
-        over it, not a rasterisation of vector primitives. One gather draws the whole background --
-        world tiles and the strip's icon cells come out of the same table -- then the player lands on
-        one tile, the mob/projectile pair on the world rows and the digit pair on the strip rows.
+        over it. One gather draws the whole background (world tiles and the strip's icon cells), then
+        the player lands on one tile, the mob/projectile pair on the world rows and the digit pair on
+        the strip rows.
 
-        A batch that is **fully lit, awake and at unit gain** never leaves uint8: the composite is a
-        select and a select of rounded values is the rounding of a select, so the uint8 tables give
-        exactly what the float path would. Anything else takes the float tables, because the
+        A batch that is fully lit, awake and at unit gain never leaves uint8: a select of rounded
+        values is the rounding of a select. Anything else takes the float chain, because the
         ``light_map`` multiply, the night chain, the sleep halving and ``channel_gain`` all happen
         before the rounding.
         """
@@ -1267,14 +1027,10 @@ class CraftaxFull(Env):
         return img.view(*lead, *img.shape[1:]) if lead else img
 
     def _render_atlas(self, dec, sty, t, out) -> torch.Tensor:
-        """The gather. **The composite never leaves uint8**, whatever the lighting.
+        """The gather. The composite stays uint8 whatever the lighting.
 
-        Every table entry is an integer -- craftax's textures are integral in 0..255 and a stencil
-        composite of integers is an integer -- so the uint8 composite and the float one are the same
-        numbers, and converting afterwards is exact rather than a rounding. That is worth about 3x on
-        a lit frame, because the background gather and the three stencil layers -- seven
-        ``index_select``s and three selects in all -- move one byte a channel instead of four, and the
-        4 of 13 rows the strip occupies never become float at all at unit gain.
+        Every table entry is an integer, so the uint8 composite and the float one are the same numbers
+        and converting afterwards is exact. The strip rows never become float at unit gain.
         """
         blk, itm, mob, prj, lm, facing, sleeping, level, light, daylight, halves, cnt = dec
         n, dev = blk.shape[0], blk.device
@@ -1283,11 +1039,8 @@ class CraftaxFull(Env):
         tab = _Tables.get(dev, t)
         bg_id, ov_id, dg_id, pslot = self._tile_ids(dec, sty)
 
-        # One host read, not four: each is a device->host synchronisation on CUDA, and the two
-        # questions -- "is the appearance the default one" and "can this batch skip the float chain
-        # entirely" -- are answered from one stack. The chain is the identity when every tile is fully
-        # lit (``light_map == 1`` multiplies by one), the daylight override has left every row at 1.0
-        # (``1*px + 0*night`` is exactly ``px``) and nothing is asleep.
+        # One host read: the chain is the identity when every tile is fully lit, the daylight override
+        # has left every row at 1.0 (``1*px + 0*night`` is exactly ``px``) and nothing is asleep.
         gain = sty["channel_gain"]
         flags = torch.stack(
             [torch.all(gain == 1.0), torch.all(daylight == 1.0) & torch.all(lm == 1.0) & ~sleeping.any()]
@@ -1335,13 +1088,10 @@ class CraftaxFull(Env):
             return light_night_and_sleep(world, lmp, daylight, sleeping, prng.key_from_halves(halves))
 
         if unit_gain:
-            # ``plain`` already returned, so the chain is NOT the identity here. The strip is never
-            # lit, so at unit gain it stays exactly as gathered and only the 9 of 13 world rows make
-            # the float round trip.
+            # The strip is never lit, so at unit gain only the world rows make the float round trip.
             img[:, :wh] = lit(img[:, :wh].to(torch.float32)).round_().clamp_(0, 255).to(torch.uint8)
             return img
-        # a non-default channel_gain multiplies before the rounding, so the WHOLE frame -- strip
-        # included -- has to be float. This is off the certified appearance by construction.
+        # a non-default channel_gain multiplies before the rounding, so the whole frame is float
         px = img.to(torch.float32)
         if not identity_chain:
             px[:, :wh] = lit(px[:, :wh])
@@ -1353,9 +1103,8 @@ class CraftaxFull(Env):
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """States stratified over (level, lighting band, light map, sleeping), with the strip drawn.
 
-        **Stratified by row index, not by luck**, for the reason W1's Classic sampler is: three
-        families of state dimension are unobservable outside a specific band, and every one of them is
-        a property of the reference rather than of this renderer.
+        Stratified by row index, because several state dimensions are unobservable outside a specific
+        band, all as properties of the reference:
 
         ===============================  ==========================================================
         dimension                        reaches a pixel only when
@@ -1363,30 +1112,22 @@ class CraftaxFull(Env):
         the four ``state_rng`` halves    ``player_level == 0`` **and** ``light_level < 0.5``
         ``light_level``                  ``player_level == 0`` (``daylight`` is forced to 1.0 above)
         the 99 ``light_map`` slots        the tile is not fully lit
+        ``ench_bow``                     the inventory holds arrows
         ===============================  ==========================================================
 
-        plus a fourth: ``ench_bow`` reaches no pixel on a row holding no arrows, because the reference
-        draws ``arrow_enchantment_textures[bow_enchantment * (arrows > 0)]``.
+        Row 0 is therefore always the richest band (level 0, night, dark tiles, player awake, at
+        least one arrow), so a ``batch=1`` instance has every dimension live. The other bands follow
+        on ``i % 6`` and cover the two uint8 fast paths, dusk, and underground darkness.
 
-        So **row 0 is always the richest band** -- level 0, night, dark tiles in the window, the
-        player awake and at least one arrow in the inventory -- and a ``batch=1`` instance still has
-        every dimension live. The five other
-        bands follow on ``i % 6`` and cover the two uint8 fast paths, dusk, and underground darkness.
+        The strip is drawn directly rather than harvested from rollouts: each cell is a function of
+        its own value alone, the simulator caps every count at 99, and a random-policy rollout leaves
+        about 25 of the 41 slots at zero.
 
-        **The strip is drawn directly rather than harvested**, and that is sound rather than
-        convenient: each cell is a function of its own value alone (measured -- every write lies
-        inside its own cell), and the simulator caps every count at 99. A 4,000-step random-policy
-        rollout leaves **25 of the 41 strip slots at zero for every step** and never descends past
-        level 0, so a pool built from rollouts alone would present ~25 dead dimensions -- the failure
-        ``pre-repository-cleanup:docs/research/pixel_native.md`` records for Procgen miner and heist.
+        Mob budgets are the simulator's (3 melee, 3 passive, 2 ranged, three projectiles each way)
+        and no entity is placed on the centre tile, so ``player_visible`` is never inert.
 
-        Mob budgets are the simulator's (``max_melee_mobs=3, max_passive_mobs=3, max_ranged_mobs=2``,
-        three projectiles each way) and no entity is placed on the centre tile, so ``player_visible``
-        is never inert on a sampled frame.
-
-        Sub-1 ``light_map`` values on level 0 are what the renderer itself sees at the map border,
-        where it pads the light map with 0; intermediate values there are drawn directly, which the
-        renderer treats identically and which :meth:`reference_render` writes back verbatim.
+        Sub-1 ``light_map`` values on level 0 are what the renderer sees at the map border, where it
+        pads the light map with 0.
         """
         rng = np.random.default_rng() if rng is None else rng
         b = int(batch)
@@ -1394,11 +1135,9 @@ class CraftaxFull(Env):
         k = N_TILE
         st[:, 0:k] = rng.integers(2, N_BLOCK, size=(b, k))  # 0/1 are INVALID/OUT_OF_BOUNDS
         st[:, k : 2 * k] = rng.integers(1, N_ITEM, size=(b, k)) * (rng.random((b, k)) < 0.30)
-        # The centre tile is under the player sprite, so most of it is hidden. TORCH is a small icon
-        # that lands exactly where the player is opaque and is invisible there at 10 px; a ladder is
-        # not. Every other row therefore carries a ladder at the centre, so the ``item_r4c5``
-        # dimension is reachable at any batch size -- measured: without this it reported dead at batch
-        # 1 through 8 while being demonstrably live, which is the shape of a wrong state contract.
+        # The centre tile is mostly hidden by the player sprite. TORCH is a small icon invisible there at
+        # 10 px; a ladder is not. Every other row carries a ladder at the centre so ``item_r4c5`` is
+        # reachable at any batch size.
         centre = (OBS_H // 2) * OBS_W + (OBS_W // 2)
         even = np.arange(b) % 2 == 0
         st[even, k + centre] = rng.integers(I_LADDER_DOWN, N_ITEM, size=int(even.sum()))
@@ -1407,16 +1146,10 @@ class CraftaxFull(Env):
         lvl = np.where(np.isin(band, (3, 4)), rng.integers(1, N_LEVEL, size=b), 0)
         light = np.empty(b, np.float32)
         lit = np.ones((b, k), np.float32)
-        # the alphabet without its endpoints: a tile at light_map 0 is BLACK whatever block, item, mob
-        # or projectile it holds, so its four id dimensions die with it, and a tile already at 1.0 is
-        # insensitive to the conformance suite's +25 probe (the tent sends 25 to exactly 1.0).
-        # Band 0 -- the richest band, and the one a batch of 1 gets -- therefore dims without
-        # extinguishing, and the darker draws live in band 4.
-        # ... and not too far from 1 either, for a reason that is arithmetic rather than aesthetic:
-        # the frame is uint8, so a dim tile ROUNDS a small colour change away. At light_map 0.11 a
-        # block/item swap worth four levels lands inside one uint8 step and the dimension reads as
-        # dead. Band 0 dims to 0.6 and below, band 4 carries the deep values -- and the same argument
-        # caps band 0's night depth at 0.3, since the night blend halves the range again.
+        # The alphabet without its endpoints: a tile at light_map 0 is black whatever it holds, and a tile at
+        # 1.0 is insensitive to the +25 probe (the tent sends 25 to exactly 1.0). Values below 0.6 round a
+        # small colour change away in uint8, so band 0 dims to 0.6 and above and band 4 carries the deep
+        # values; the same argument caps band 0's night depth at 0.3.
         partial = LIGHT_MAP_ALPHABET[(LIGHT_MAP_ALPHABET >= 0.6) & (LIGHT_MAP_ALPHABET < 1.0)]
         for i in range(b):
             if band[i] == 5:
@@ -1429,18 +1162,12 @@ class CraftaxFull(Env):
                 light[i] = 1.0
             if band[i] == 0:
                 lit[i] = rng.choice(partial, size=k)
-                # DARKNESS renders as an all-zero tile, and zero times any light is still zero, so a
-                # DARKNESS tile has a dead light dimension. Band 0 carries none.
+                # DARKNESS renders all-zero whatever the light, so its light dimension is dead; band 0 has none.
                 dark_block = st[i, 0:k] == B_DARKNESS
                 st[i, 0:k] = np.where(dark_block, B_GRASS, st[i, 0:k])
-                # **Every tile in band 0 carries a ladder**, and that is the one place this sampler
-                # departs from a plain draw. The item alphabet is NONE, TORCH and three ladders, and
-                # ``check_state_dims_matter``'s fallback nudge on a NONE slot is ``+1``, which lands
-                # on TORCH -- a small icon that disappears entirely under the opaque part of a mob or
-                # projectile sprite. Measured: with a plain draw, a ``batch=1`` instance reported one
-                # or two ``item_r*c*`` dimensions dead on half of twelve seeds, every one of them a
-                # tile under an overlay. With ladders it reports none, and a ladder still leaves the
-                # block beneath it visible, so no other dimension is traded away for it.
+                # Every tile in band 0 carries a ladder: the fallback nudge on a NONE item slot is +1, which
+                # lands on TORCH, a small icon that vanishes under the opaque part of a mob or projectile
+                # sprite. A ladder leaves the block beneath it visible.
                 st[i, k : 2 * k] = rng.integers(I_LADDER_DOWN, N_ITEM, size=k)
             elif band[i] == 4:
                 dark = rng.random(k) < 0.5
@@ -1454,17 +1181,10 @@ class CraftaxFull(Env):
         for c, name in enumerate(STRIP_SLOTS):
             st[:, j + 4 + N_KEY_HALVES + c] = rng.integers(0, STRIP_MOD[c], size=b)
         st[:, j + 4 + N_KEY_HALVES + _SLOT["health"]] = rng.integers(1, N_COUNT, size=b)
-        # **Fifth guard, and the last one independent review found.** The reference draws the arrow
-        # enchantment as ``arrow_enchantment_textures[bow_enchantment * (arrows > 0)]``, so on a row
-        # holding no arrows the ``ench_bow`` slot reaches no pixel at all -- and a ``batch=1``
-        # instance is one row. Measured before this line existed: ``inv_ench_bow`` read dead on 3 of
-        # 200 seeds (100, 202, 248). Band 0 therefore always carries at least one arrow.
-        #
-        # It is a CLAMP and not a redraw, deliberately: a redraw would consume a further draw from
-        # ``rng`` and shift every subsequent value, which would change the frozen corpus. No band-0
-        # row in the frozen pool holds zero arrows, so this line moves nothing there --
-        # ``test_the_arrow_guard_leaves_the_frozen_corpus_untouched`` asserts that against the
-        # recorded sha256 rather than asserting it in prose.
+        # The reference draws the arrow enchantment as ``arrow_enchantment_textures[bow_enchantment *
+        # (arrows > 0)]``, so ``ench_bow`` reaches no pixel on a row without arrows. Band 0 therefore always
+        # carries at least one arrow. A clamp rather than a redraw, so the rng stream is unchanged
+        # (``test_the_arrow_guard_leaves_the_frozen_corpus_untouched``).
         arrows_at = j + 4 + N_KEY_HALVES + _SLOT["arrows"]
         st[band == 0, arrows_at] = np.maximum(st[band == 0, arrows_at], 1.0)
 
@@ -1500,22 +1220,16 @@ class CraftaxFull(Env):
         """The official full-Craftax renderer at ``size`` px per tile, plus a template ``EnvState``.
 
         A tuple rather than a gym env because Craftax is a functional JAX env: the renderer is a pure
-        function of ``EnvState``. Only the sizes craftax ships textures for are accepted -- anything
-        else has no official frame, and inventing one by resampling would compare this renderer
-        against a second implementation of itself.
+        function of ``EnvState``. Only the sizes craftax ships textures for are accepted; resampling
+        one would compare this renderer against a second implementation of itself.
 
-        **Not jitted, and that is a correctness decision rather than a performance one.** Under
-        ``jax.jit`` XLA fuses the arithmetic differently and the reference disagrees with its own
-        un-jitted self by up to 1.53e-05 in float32 -- invisible in uint8 on a fully lit frame, and
-        not invisible wherever the picture is compressed towards one value, which the ``light_map``
-        multiply, the night blend and the sleep halving all do. The un-jitted function is the renderer
-        as written, so it is the one certified against. It costs about 0.34 s a frame instead of
-        0.00066 s, which is the right trade for a check that runs on tens of states and is the whole
-        basis of a parity claim -- and it is why the ``S_cpu`` denominator is reported against both.
+        Not jitted, as a correctness decision: under ``jax.jit`` XLA fuses the arithmetic differently
+        (up to 1.53e-05 in float32), which flips uint8 roundings wherever the picture is compressed
+        towards one value (the ``light_map`` multiply, the night blend, the sleep halving). The
+        un-jitted function is the renderer as written.
 
-        ``jax_threefry_partitionable`` is asserted rather than assumed: jax has two threefry code
-        paths, they agree on 0 of 448 draws, and the flag's default flipped to ``True`` in jax 0.4.36.
-        ``do_night_noise`` is left at its default ``True``, which is what the registered env uses.
+        ``jax_threefry_partitionable`` is asserted: jax has two threefry code paths that agree on 0 of
+        448 draws. ``do_night_noise`` stays at its default ``True``, as in the registered env.
         """
         if int(size) not in REFERENCE_TILE_PX:
             raise ValueError(
@@ -1540,22 +1254,19 @@ class CraftaxFull(Env):
 
     @staticmethod
     def reference_render(env, states) -> np.ndarray:
-        """Official frames for the given render states -- the WHOLE observation, no crop.
+        """Official frames for the given render states: the whole observation, no crop.
 
         The window is written back into a full ``EnvState``: the block and item windows go into the
         middle of the player's own level with the player at their centre, the per-tile ``light_map``
-        goes in beside them, each occupied tile becomes one mob of the right class and type or one
-        projectile whose direction is chosen to classify to the stored orientation, and the 41 strip
-        numbers go into the intrinsics, the inventory, the enchantments and the learned spells.
+        beside them, each occupied tile becomes one mob of its class and type or one projectile whose
+        direction classifies to the stored orientation, and the 41 strip numbers go into the
+        intrinsics, inventory, enchantments and learned spells.
 
-        **The two global substitutions are pinned rather than reproduced.**
-        ``boss_timesteps_to_spawn_this_round`` is set to 1, which makes ``is_boss_vulnerable`` false
-        whatever the mobs are doing, so a stored ``NECROMANCER`` renders as ``NECROMANCER`` and the
-        vulnerable sprite is reached by storing its own id (which the substitution does not touch).
+        The two global substitutions are pinned rather than reproduced:
+        ``boss_timesteps_to_spawn_this_round = 1`` makes ``is_boss_vulnerable`` false, so a stored
+        ``NECROMANCER`` renders as itself and the vulnerable sprite is reached by its own id;
         ``monsters_killed[level]`` is set to the clear threshold, so a stored ``LADDER_DOWN`` renders
-        open and the blocked sprite is reached by storing ``LADDER_DOWN_BLOCKED`` directly. Both
-        substitutions are thereby absorbed into the tile id, which is what makes them cost no state
-        dimension.
+        open and the blocked sprite is reached by ``LADDER_DOWN_BLOCKED``.
         """
         import jax
         import jax.numpy as jnp

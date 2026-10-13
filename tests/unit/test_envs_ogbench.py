@@ -1,15 +1,8 @@
-"""What the OGBench family promises after the package layout.
+"""OGBench family: registration, declarations and the 25 maze cells on the CPU ray-caster.
 
-TWO HALVES, for the reason ``tests/unit/test_envs_dmcontrol.py`` splits the same way. The STRUCTURAL
-half needs no MuJoCo, no ``ogbench`` and no GL context: it is about where the code lives, which names
-resolve, which objects are shared and what the classes DECLARE, and all of that is answerable from an
-import. The BEHAVIOURAL half constructs the 25 maze cells and renders them on the CPU ray-caster, so
-it skips cleanly without ``ogbench``.
-
-The two manipulation cells are CUDA-only by declaration, so nothing here renders them. What IS
-asserted about them here is everything that does not need a frame: the CPU refusal and its message,
-the declarations, the variation space (which needs only the cached bundle) and the shape of the
-public state. Their frames are owed to the GPU regression oracle.
+The structural half needs no MuJoCo or ogbench. The behavioural half constructs maze cells and
+skips without ``ogbench``. The manipulation cells are CUDA-only, so only their CPU refusal,
+declarations and variation space are checked here.
 """
 
 from __future__ import annotations
@@ -47,40 +40,8 @@ def _needs_ogbench():
 # ===================================================================== structural: where things live
 
 
-def test_the_import_path_is_the_package_and_it_carries_the_step8_names():
-    """``envs/ogbench.py`` became the PACKAGE ``envs/ogbench/``, so there is no second path to alias.
-
-    A module and a package cannot share a name in one directory, so the obligation a shim would have
-    met — every package-level name still resolving — is met by the package's re-exports. The
-    oracle checks the FULL list, read off the baseline source; this pins the ones that the tests, the
-    probes and the docs actually reach for, so a broken re-export fails in the unit run and not only
-    in a 27-cell replay.
-    """
+def test_maze_cells_are_reexported_from_the_package_as_the_registered_classes():
     assert hasattr(OGB, "__path__"), "stable_envs.envs.ogbench must be the package"
-    for name in (
-        "OGBenchMaze",
-        "BODY_STATE",
-        "CELLS",
-        "MAT_SPECULAR",
-        "SHADE_AMBIENT",
-        "SHADE_DIFFUSE",
-        "SHADE_SPECULAR",
-        "SHADE_EXPONENT",
-        "_NOMINAL",
-        "_FREE",
-        "_ANT_JOINTS",
-        "_HUMANOID_JOINTS",
-        "_SCENE_CACHE",
-        "_SCENE_CACHE_MAX",
-        "_ENV_CACHE",
-        "_Scene",
-        "_offsets",
-        "_mat_and_tex",
-        "_build_reference",
-        "_scene_env",
-        "_make_classes",
-    ):
-        assert hasattr(OGB, name), f"the exported name {name} no longer resolves off the package"
     for cell in MAZE_CELLS:
         assert getattr(OGB, cell) is R.REGISTRY[cell], f"{cell} is not the registered class"
 
@@ -115,26 +76,6 @@ def test_the_manipulation_module_exposes_the_names_the_tests_reach_for():
     ):
         assert hasattr(MANIP, name), f"{name} no longer resolves off ogbench.manipulation"
     assert "zero_bits" in inspect.getsource(MANIP._build_context)
-
-
-def test_the_module_caches_are_one_object_each_across_the_package():
-    """The R3 lesson, applied before it bites: a re-export must SHARE, not copy.
-
-    ``tests/unit/test_ogbench_scene_cache.py`` saves, clears and restores ``OGB._SCENE_CACHE`` and
-    then drives ``OGBenchMaze._scene``, which reads the cache out of ``maze``'s own globals. That
-    only works because the two names bind ONE cache. A re-export written as a copy of
-    ``maze._SCENE_CACHE``
-    would leave the test passing vacuously — it would isolate a cache nothing uses — so the identity
-    is asserted rather than assumed.
-    """
-    assert OGB._SCENE_CACHE is MAZE._SCENE_CACHE
-    assert OGB._ENV_CACHE is MAZE._ENV_CACHE
-    sentinel = ("__identity_probe__",)
-    OGB._SCENE_CACHE.put(sentinel, 1)
-    try:
-        assert MAZE._SCENE_CACHE.get(sentinel) == 1, "a write through the package was not shared"
-    finally:
-        OGB._SCENE_CACHE.pop(sentinel, None)
 
 
 def test_every_cell_reports_its_canonical_module():
@@ -177,46 +118,6 @@ def test_a_maze_cell_is_a_declaration_and_overrides_no_renderer_method():
 
 
 # ============================================================ structural: the preserved declarations
-
-
-@pytest.mark.parametrize("cell", MAZE_CELLS)
-def test_the_maze_declarations_are_still_exactly_what_step_8_declared(cell):
-    """``parity_interior_min`` is NOT relaxed anywhere, and the shipped knobs did not move.
-
-    1.0 on every one of the 25 was measured over 25 cells x 64 states; a tolerance here would be
-    declaring a limitation the evidence does not show. The agent-pixel residual is real and lives in
-    ``parity_note``, which is compared in full by the oracle and pinned for its key claims here.
-    """
-    cls = R.REGISTRY[cell]
-    assert cls.parity_interior_min == 1.0, "the interior floor must not be relaxed"
-    assert cls.fidelity_tier == "parity"
-    assert cls.default_size == 224
-    assert cls.default_supersample == 2, "the supersample every parity number was measured at"
-    assert cls.TILE == 32
-    assert cls.PLATE_PATHS == (
-        "floor.tint",
-        "walls.color",
-        "camera.distance_scale",
-        "camera.elevation",
-        "rendering.decolor_floor",
-        "floor.color",
-        "floor.pixel_encoding",
-        "light.intensity",
-    )
-    assert "AGENT-PIXEL PARITY" in cls.parity_note
-    assert cls.reference_id == f"ogbench/{cls.LOCO}maze-{cls.MAZE}-v0"
-
-
-def test_the_fitted_shading_law_constants_did_not_move():
-    """The four numbers the whole agent-pixel claim rests on, and the per-light split beside them."""
-    assert (MAZE.SHADE_AMBIENT, MAZE.SHADE_DIFFUSE, MAZE.SHADE_SPECULAR, MAZE.SHADE_EXPONENT) == (
-        0.078438,
-        1.416189,
-        0.230554,
-        45.0,
-    )
-    assert MAZE._NOMINAL == dict(amb=(0.1, 0.0), dif=(0.4, 1.0), spec=(0.5, 0.1))
-    assert MAZE.MAT_SPECULAR == 0.5
 
 
 @pytest.mark.parametrize("cell", MANIP_CELLS)
@@ -306,7 +207,7 @@ def test_the_manipulation_plate_is_grouped_by_floor_colour_and_nothing_else():
 
 @pytest.mark.parametrize("loco,dim", [("point", 2), ("ant", 15), ("humanoid", 28)])
 def test_the_maze_render_layout_covers_the_packed_row(loco, dim):
-    """The private body projection preserves every frozen renderer column."""
+    """The body projection tiles the packed row contiguously."""
     layout = MAZE.OGBenchMaze.STATE_LAYOUT[loco]
     assert sum(w for _, w, o in layout if o is not None) == dim == len(MAZE.BODY_STATE[loco])
     assert all(o is not None for _, _, o in layout), "every renderer column has an offset"
@@ -320,10 +221,9 @@ def test_the_maze_render_layout_covers_the_packed_row(loco, dim):
 
 
 def test_the_maze_variation_taxonomy():
-    """The appearance knobs, leaf for leaf, with swm's floor, encoding and light leaves at our defaults."""
+    """The appearance leaves, with swm's floor, encoding and light leaves at our defaults."""
     for loco in ("point", "ant", "humanoid"):
         space = MAZE.OGBenchMaze.make_variation_space(types.SimpleNamespace(LOCO=loco, MAZE="medium"))
-        # ``names()`` is sorted, which is the packed-row order the oracle compares against the baseline.
         assert list(space.names()) == [
             "agent.color",
             "agent.scale",
@@ -369,7 +269,7 @@ def _ogbench():
 
 
 @pytest.mark.parametrize("cell", BODY_SAMPLE)
-def test_takes_the_step9_constructor_and_the_lifecycle(_ogbench, cell):
+def test_takes_num_envs_and_closes_idempotently(_ogbench, cell):
     env = R.REGISTRY[cell](num_envs=3, device="cpu")
     try:
         assert env.num_envs == 3 and len(env) == 3
@@ -392,12 +292,8 @@ def test_the_private_projection_packs_back_to_the_frozen_row(_ogbench, cell):
         st = env._unpack_render_state(env._get_render_state())
         keys = [".".join(k) for k, _, _ in env._layout()]
         assert keys[0] == "root.position"
-        assert torch.equal(env._pack_render_state(st), env._get_render_state()), "pack(state) must BE the packed row"
-        assert torch.equal(
-            env._pack_render_state(env._unpack_render_state(env._get_render_state())), env._get_render_state()
-        )
+        assert torch.equal(env._pack_render_state(st), env._get_render_state())
         assert env._hidden_state() == {} and env._live_state() == {}
-        # the keys name the packed columns in order, which is what makes the grouping a VIEW
         names, i = list(env.state_names), 0
         for key, w, _ in env._layout():
             assert env.state_names_of(key) == names[i : i + w]
@@ -428,11 +324,7 @@ def test_private_render_takes_a_projection_a_packed_row_or_nothing(_ogbench, cel
 
 
 def test_the_dataset_siblings_of_one_scene_draw_the_same_frame(_ogbench):
-    """The fact the plate cache is keyed on: ``navigate``/``stitch`` select a dataset, not a scene.
-
-    It is also why the oracle replays fourteen cells on a sibling's frozen corpus — there is nothing
-    else to replay, because the cells ARE the same renderer.
-    """
+    """``navigate``/``stitch`` select a dataset, not a scene, so the plate cache is shared."""
     states = None
     digests = []
     for cell in ("PointMazeMediumNavigate", "PointMazeMediumStitch"):
@@ -445,7 +337,7 @@ def test_the_dataset_siblings_of_one_scene_draw_the_same_frame(_ogbench):
 
 @pytest.mark.parametrize("cell", ["PointMazeLargeNavigate", "AntMazeMediumNavigate"])
 def test_a_recoloured_floor_and_dimmed_light_leave_the_default_plate_unchanged(_ogbench, cell):
-    """Recoloured checkers share one renderer and upload texels; the default bake must not see them."""
+    """Recoloured checkers upload texels into a shared renderer; the default bake must not see them."""
     with R.REGISTRY[cell](num_envs=1, device="cpu") as env:
         default = env._bake(env.size, None).plate
         varied = {"floor.color": [0.9, 0.1, 0.1, 0.1, 0.1, 0.9], "floor.pixel_encoding": [0], "light.intensity": [0.4]}

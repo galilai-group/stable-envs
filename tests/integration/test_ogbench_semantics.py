@@ -1,4 +1,4 @@
-"""Bounded full-State recovery gate for the exact historical OGBMaze default."""
+"""Maze full-State, per-cell and appearance gates against the official env and stable-worldmodel."""
 
 import os
 

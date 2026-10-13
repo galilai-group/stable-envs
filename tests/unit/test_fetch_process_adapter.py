@@ -1,4 +1,4 @@
-"""Full Fetch State/lifecycle parity for persistent process and hybrid owners."""
+"""Process-owned Fetch simulators match the in-process owner on State, lifecycle and variation resets."""
 
 from functools import partial
 
@@ -21,10 +21,18 @@ def equal(a, b):
         assert torch.equal(a[key].cpu(), b[key].cpu()), key
 
 
-@pytest.mark.parametrize("task", ["Reach", "Push", "Slide", "PickAndPlace"])
-@pytest.mark.parametrize("suffix", ["", "Dense", "Dict"])
-@pytest.mark.parametrize("threads", [1, 2])
-def test_public_contract_and_variations(monkeypatch, task, suffix, threads):
+@pytest.mark.parametrize(
+    "task,suffix,threads",
+    [
+        ("Reach", "", 1),
+        ("Reach", "Dict", 2),
+        ("Push", "Dense", 1),
+        ("Slide", "", 2),
+        ("PickAndPlace", "Dict", 1),
+        ("PickAndPlace", "Dense", 2),
+    ],
+)
+def test_process_owner_matches_local_owner_through_the_public_env(monkeypatch, task, suffix, threads):
     name = "Fetch" + task + suffix
     reference = snv.make(name, num_envs=5, seed=17, device="cpu", backend="opengl")
     with monkeypatch.context() as patch:

@@ -1,28 +1,17 @@
-"""The Craftax composited-tile atlas is the pre-Step-6 per-frame composite, precomputed.
+"""The composited-tile atlas must reproduce the per-frame blend exactly.
 
-Step 6 replaced a dozen ``B x 7t x 9t x 3`` float32 temporaries per frame with a gather from a
-table of already-composited tiles; Step 7 grew that table to 976 entries — a sixth player slot for
-the sleeping sprite, and the inventory strip's 160 ``(cell, count)`` cells — so that the whole
-observation is still one gather. That is only admissible because the table holds exactly what the
-per-frame arithmetic produced, so this module is the differential test that says so —
-``CraftaxClassic._render_blend`` is that arithmetic written out, and every case below asserts the
-atlas path reproduces it on every pixel rather than approximately.
+``CraftaxClassic._render_blend`` is the per-frame arithmetic; every case asserts the atlas gather
+matches it on every pixel, not approximately. Cases that would each hide an invisible bug:
 
-Three of the assertions are not about speed at all and would each hide a plausible, invisible bug:
+* ``mobs_visible = 0`` is folded into mob id 0, which is the identity only because mob 0's alpha
+  table is exactly zero, so the table is checked.
+* ``player_visible = 0`` and every non-centre tile share slot :data:`NO_PLAYER`, which must be the
+  block texture untouched, not the texture blended with a transparent sprite.
+* ``is_sleeping`` leaves the uint8 fast path because the desaturation multiplies before rounding;
+  the fuzz mixes sleeping and awake rows inside one batch.
+* The table is a cache: rendering must not write through it, so its bytes are checked afterwards.
 
-* ``mobs_visible = 0`` is folded into mob id 0 rather than into a zeroed alpha. That is the identity
-  only because mob 0's alpha table is exactly zero, so the table is checked, not assumed.
-* ``player_visible = 0`` and every non-centre tile share player slot :data:`NO_PLAYER` (5 since the
-  sleeping sprite took slot 4), which must be the block texture untouched — not "the block texture
-  blended with a transparent sprite", which would be a different float32 expression.
-* ``is_sleeping`` takes the batch off the uint8 fast path, because the desaturation multiplies before
-  the rounding. The two paths must still agree exactly, so the fuzz mixes sleeping and awake rows
-  inside one batch rather than testing them separately.
-* The table is a cache. A render that wrote through it would corrupt every later frame in the
-  process, and nothing downstream would flag it, so the table's bytes are checked after rendering.
-
-The fuzz deliberately includes out-of-range class ids: ``render`` wraps them (see the module
-docstring in ``stable_envs/envs/craftax/classic.py``) and wrapping has to survive the new index arithmetic.
+The fuzz includes out-of-range class ids, which ``render`` wraps.
 """
 
 from __future__ import annotations
@@ -139,8 +128,8 @@ def _decode(env: CraftaxClassic, states: np.ndarray):
 
 
 @pytest.mark.parametrize("size", SIZES)
-def test_atlas_path_equals_the_pre_step6_per_frame_composite(size):
-    """The differential test the patch rests on: same pixels, not similar ones."""
+def test_atlas_path_equals_the_per_frame_composite(size):
+    """Same pixels, not similar ones."""
     rng = np.random.default_rng(20260913 + size)
     env = _env(size)
     n = 8
@@ -155,23 +144,16 @@ def test_atlas_path_equals_the_pre_step6_per_frame_composite(size):
 
 
 def test_mob_zero_alpha_is_exactly_zero():
-    """``mobs_visible = 0`` is folded into mob id 0. That is the identity only if this holds.
-
-    The pre-Step-6 path multiplied the mob alpha by the flag, so hiding mobs computed
-    ``px*(1-0) + tex*0``. The atlas path instead looks up the "no mob" composite, which computes
-    ``px*(1-malpha[0]) + tex[0]*malpha[0]``. The two agree for every possible texture exactly when
-    ``malpha[0]`` is zero — not small, zero — because a 1-ULP alpha would move a pixel by less than
-    half a level in most tiles and by a whole level in some.
-    """
+    """``mobs_visible = 0`` is folded into mob id 0, which is the identity only if mob 0's alpha is exactly zero."""
     for size in SIZES:
         *_, malpha = _Assets.get(torch.device("cpu"), size)
         assert torch.equal(malpha[0], torch.zeros_like(malpha[0])), (
-            f"mob id 0 has a non-zero alpha at size {size}; hiding mobs is no longer a no-op"
+            f"mob id 0 has a non-zero alpha at size {size}; hiding mobs would not be a no-op"
         )
 
 
 @pytest.mark.parametrize("size", (7, 16))
-def test_player_slot_4_is_the_block_texture_untouched(size):
+def test_no_player_slot_is_the_block_texture_untouched(size):
     """Non-centre tiles and ``player_visible = 0`` both use NO_PLAYER, which must add nothing."""
     block, *_ = _Assets.get(torch.device("cpu"), size)
     f32 = _Composite.get(torch.device("cpu"), size, want_float=True)[0]
@@ -196,12 +178,12 @@ def test_atlas_is_not_written_through_by_a_render(size):
     env._render(states, variation={"player_visible": 0, "mobs_visible": 0})
     after_f32, after_u8 = _Composite.get(dev, size, want_float=True)
     assert torch.equal(before_f32, after_f32) and torch.equal(before_u8, after_u8), (
-        "rendering mutated the composited atlas; every later frame in the process is now wrong"
+        "rendering mutated the composited atlas; every later frame in the process is wrong"
     )
 
 
 def test_atlas_shape_and_budget():
-    """The table is 976 tiles, and the size at which it stops being a table is documented."""
+    """The table has 976 tiles and is not built above the tile-size budget."""
     from stable_envs.envs.craftax.classic import N_COMPOSITE, STRIP_BASE
 
     assert N_COMPOSITE == (N_PLAYER + 1) * N_BLOCK * N_MOB == 816

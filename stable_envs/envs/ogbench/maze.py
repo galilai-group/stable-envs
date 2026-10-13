@@ -456,16 +456,7 @@ class OGBenchMaze(Env):
         "their agreement is a statement about a silhouette under the reference's coverage rule. "
         "Against a NON-multisampled reference the same shader reaches 92.4% within 1/255 over 13,069 "
         "pooled agent-interior pixels (mean 0.88/255), which localises most of the remaining gap in "
-        "MSAA sample positions -- GPU-specific, not recoverable by fitting -- rather than in shading. "
-        "Three mechanisms were tried and are recorded so they are not retried: the fixed-function "
-        "composition (FIXED - specular is additive and white and the texture modulates the whole "
-        "primary colour, which took wall tops from 13/255 worst to 2/255 and made vertical wall faces "
-        "bit-exact); Gouraud interpolation over MuJoCo's sphere/capsule tessellation (REFUTED - ten "
-        "(slices, stacks, phase, diagonal) variants all scored 0.0-0.2% exact against 1.6% for plain "
-        "per-pixel, which is also what sub-pixel triangles predict); and a mis-shaped specular lobe "
-        "(REFUTED - a 24-knot piecewise-linear lobe fitted under four light/specular geometries, "
-        "headlight directional or point crossed with Blinn or Phong, could not explain floor and "
-        "agent with one curve)."
+        "MSAA sample positions -- GPU-specific, not recoverable by fitting -- rather than in shading."
     )
 
     # Pose layout by body: point slides, or free-joint pose followed by hinges.
@@ -1103,9 +1094,7 @@ _MODULE = "stable_envs.envs.ogbench"
 def _make_classes():
     """Register dataset-specific names; point/large/navigate renders the state-observation scene."""
     made = {}
-    aliases = {}
     for loco, maze, dataset in CELLS:
-        old = f"{loco.capitalize()}maze{maze.capitalize()}{dataset.capitalize()}"
         cname = f"{loco.capitalize()}Maze{maze.capitalize()}{dataset.capitalize()}"
         bases = (MazeSemantics, OGBenchMaze)
         if (loco, maze, dataset) == ("point", "large", "navigate"):
@@ -1134,11 +1123,10 @@ def _make_classes():
             )
         )
         made[cname] = cls
-        aliases[old] = cname
-    return made, aliases
+    return made
 
 
 #: ``{name: class}`` for every registered cell this module declares, so the package ``__init__``
 #: can re-export them by NAME without transcribing the naming rule a second time.
-CELL_CLASSES, CELL_ALIASES = _make_classes()
+CELL_CLASSES = _make_classes()
 globals().update(CELL_CLASSES)
