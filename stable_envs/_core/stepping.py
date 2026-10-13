@@ -14,10 +14,11 @@ from tensordict import TensorDict
 def _actions(env, actions):
     # Keep action dtype and device: upstream scaling arithmetic can depend on dtype.
     a = actions if torch.is_tensor(actions) else np.asarray(actions)
-    shape = tuple(env.action_spec.shape)
+    spec = env.action_spec
+    shape = tuple(spec.shape)
     b = env.num_envs
     # Accept discrete [B] actions without treating an ambiguous [B,T] array as a sequence.
-    if shape == (1,) and a.shape == (b,) and not env.action_spec.dtype.is_floating_point:
+    if shape == (1,) and a.shape == (b,) and not spec.dtype.is_floating_point:
         a = a.reshape(b, 1)
     if tuple(a.shape) == (b, *shape):
         return a, False
@@ -37,18 +38,22 @@ def _done(result):
     return done
 
 
-def _masked_outputs(result, active, *, all_active):
-    """Zero invalid task outputs while retaining held endpoint States."""
+def _task_outputs(result, active, *, all_active):
+    """Own the task outputs and zero them where a lane had already finished."""
     out = result.exclude("state").clone()
-    if "state" in result.keys():
-        out["state"] = result["state"]
     if not all_active:
         inactive = (~active).nonzero(as_tuple=True)[0]
-        for key, value in out.items(True, True):
-            path = (key,) if isinstance(key, str) else key
-            if path[0] != "state":
-                value.index_fill_(0, inactive, 0)
+        for value in out.values(True, True):
+            value.index_fill_(0, inactive, 0)
     return out
+
+
+def _stack_states(values):
+    """Stack owned State snapshots along a new time axis, leaf by leaf."""
+    first = values[0]
+    return first.apply(
+        lambda *leaves: torch.stack(leaves, dim=1), *values[1:], batch_size=[*first.batch_size, len(values)]
+    )
 
 
 def _selection(value, length, name):
@@ -58,6 +63,14 @@ def _selection(value, length, name):
         raise TypeError(f"{name} must be a slice or None")
     # Python handles clipping, negative indices/strides, and rejects zero strides.
     return tuple(range(length)[value])
+
+
+def _columns(valid, indices):
+    """Copy the selected time columns; forward strides avoid uploading an index tensor."""
+    stride = indices[1] - indices[0] if len(indices) > 1 else 1
+    if not indices or stride < 0:
+        return valid[:, list(indices)]
+    return valid[:, indices[0] : indices[-1] + 1 : stride].clone()
 
 
 @torch.no_grad()
@@ -99,7 +112,8 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
             submit(0, active, all_active)
             pending = True
         for t in range(length):
-            validity.append(active.clone())
+            # The all-true mask is never handed to the family, so it needs no copy.
+            validity.append(active if all_active else active.clone())
             if pipeline is not None:
                 if pending:
                     result = pipeline.receive_step()
@@ -122,7 +136,7 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
                 # Received outputs own their storage, so workers can reuse buffers while the parent renders.
                 submit(t + 1, next_active, next_all_active)
                 pending = True
-            history.append(_masked_outputs(result, active, all_active=all_active).exclude("state"))
+            history.append(_task_outputs(result, active, all_active=all_active))
             if t in state_times:
                 saved_states[t] = live_state
             if t in frame_times:
@@ -136,23 +150,22 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
             pipeline.abort_step()
         raise
 
-    out = TensorDict({"state": live_state}, [env.num_envs], device=env.device)
-    out.update(torch.stack(history, dim=1) if sequence else history[0])
-    out["valid"] = torch.stack(validity, dim=1)
+    valid = torch.stack(validity, dim=1)
+    out = {"state": live_state}
+    out.update((torch.stack(history, dim=1) if sequence else history[0]).items())
+    out["valid"] = valid
     if state_indices is not None:
         out["states"] = (
-            getattr(env, "_stack_states", lambda values: torch.stack(values, dim=1))(
-                [saved_states[t] for t in state_indices]
-            )
+            getattr(env, "_stack_states", _stack_states)([saved_states[t] for t in state_indices])
             if state_indices
             else live_state.unsqueeze(1)[:, :0].clone()
         )
-        out["state_valid"] = out["valid"][:, list(state_indices)]
+        out["state_valid"] = _columns(valid, state_indices)
     if frame_indices is not None:
         out["frames"] = (
             torch.stack([saved_frames[t] for t in frame_indices], dim=1)
             if frame_indices
             else torch.empty((env.num_envs, 0, *env.frame_spec.shape), dtype=env.frame_spec.dtype, device=env.device)
         )
-        out["frame_valid"] = out["valid"][:, list(frame_indices)]
-    return out
+        out["frame_valid"] = _columns(valid, frame_indices)
+    return TensorDict(out, [env.num_envs], device=env.device)
