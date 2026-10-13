@@ -8,7 +8,7 @@ regression scripts.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 import numpy as np
@@ -402,6 +402,9 @@ VARIATION_MAPS: dict[str, VariationMap] = {
 from .variation_maps import install as _install_variation_maps
 
 _install_variation_maps(VARIATION_MAPS)  # noqa: E402,E501
+
+# swm's PushTDiscrete subclasses PushT and keeps its variation space; test_variation_pusht gates both classes.
+VARIATION_MAPS["PushTDiscrete"] = replace(VARIATION_MAPS["PushT"], swm_id="swm/PushT-Discrete-v1")
 
 
 def _flatten(values: Mapping[str, Any], prefix: str = "") -> dict[str, Any]:

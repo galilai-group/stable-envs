@@ -1,0 +1,2 @@
+# Waivers of the registry-wide rules every env is held to.
+/tests/exemptions.toml @sami-bg
