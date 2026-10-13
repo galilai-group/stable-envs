@@ -148,6 +148,15 @@ def _nonfinite_report(s: torch.Tensor, names: tuple[str, ...]) -> str | None:
     )
 
 
+def _keyed(fields) -> dict:
+    return {tuple(k) if isinstance(k, (tuple, list)) else (k,): v for k, v in (fields or {}).items()}
+
+
+def _as_field(value, dtype: torch.dtype) -> torch.Tensor:
+    """Read a tensor as is; convert other array-likes straight to ``dtype`` so no precision is lost."""
+    return value if torch.is_tensor(value) else torch.as_tensor(value, dtype=dtype)
+
+
 def render_states_arg(env, states) -> torch.Tensor:
     """Resolve private renderer input to live rows or a validated compact projection.
 
@@ -473,14 +482,20 @@ class Env:
             raise TypeError("Expected full State (TensorDict); compact RenderState rows cannot restore dynamics")
         if len(state.batch_size) != 1 or (batch is not None and state.batch_size != torch.Size([batch])):
             raise ValueError(f"Expected State batch [{batch or 'N'}], got {list(state.batch_size)}")
-        for key, width, _ in self._layout():
-            if key not in state.keys(include_nested=True, leaves_only=True):
+        present = {(k,) if isinstance(k, str) else tuple(k) for k in state.keys(include_nested=True, leaves_only=True)}
+        values = []
+        for key, width, _, _ in self._state_plan():
+            if key not in present:
                 raise ValueError(f"Full State is missing {'.'.join(key)}; a render projection is not restorable")
             value = state[key]
             if value.shape != (*state.batch_size, width):
                 raise ValueError(f"State field {'.'.join(key)} has invalid shape {tuple(value.shape)}")
-            if not torch.isfinite(value).all():
-                raise ValueError(f"State field {'.'.join(key)} contains non-finite values")
+            values.append((key, value))
+        # One host synchronization for the whole State; the per-field pass only names the culprit.
+        if values and not bool(torch.stack([torch.isfinite(v).all() for _, v in values]).all()):
+            for key, value in values:
+                if not torch.isfinite(value).all():
+                    raise ValueError(f"State field {'.'.join(key)} contains non-finite values")
 
     def set_state(self, state: State) -> None:
         """Restore a full State with exactly ``num_envs`` lanes under the current Variation."""
@@ -976,40 +991,63 @@ class Env:
         return TensorDict(out, batch_size=[n], device=self.device)
 
     def _hidden_state(self) -> dict[tuple[str, ...], torch.Tensor]:
-        """Supply live simulator fields whose layout entries have no render offset."""
+        """Supply live simulator fields whose layout entries have no render offset.
+
+        Values may be views of live buffers; ``get_state`` copies each one exactly once.
+        """
         return {}
 
     def _live_state(self) -> dict[tuple[str, ...], torch.Tensor]:
-        """Supply drawn fields at simulator precision before the float32 projection."""
+        """Supply drawn fields at simulator precision before the float32 projection; views are fine."""
         return {}
+
+    def _state_plan(self) -> tuple[tuple[tuple[str, ...], int, int | None, torch.dtype], ...]:
+        """Return ``(key, width, render_offset, dtype)`` layout entries.
+
+        The entries are cached while ``state_layout`` and ``state_dim`` are unchanged, unless
+        a subclass computes its layout in ``_layout`` or ``_layout_dtypes``.
+        """
+        cls = type(self)
+        static = cls._layout is Env._layout and cls._layout_dtypes is Env._layout_dtypes
+        cached = self.__dict__.get("_state_plan_cache")
+        if static and cached is not None and cached[0] is self.state_layout and cached[1] == self.state_dim:
+            return cached[2]
+        dtypes = self._layout_dtypes()
+        plan = tuple((key, w, off, dtypes.get(key, torch.float32)) for key, w, off in self._layout())
+        if static:
+            self.__dict__["_state_plan_cache"] = (self.state_layout, self.state_dim, plan)
+        return plan
 
     def get_state(self) -> State:
         """Return an independent full simulator snapshot, including hidden fields and native precision."""
         self._require_state("get_state")
-        td = self._unpack_render_state(self._get_render_state())
-        hidden = {
-            tuple(k) if isinstance(k, (tuple, list)) else (k,): v for k, v in (self._hidden_state() or {}).items()
-        }
-        n = int(td.batch_size[0])
-        dtypes = self._layout_dtypes()
-        live = {tuple(k) if isinstance(k, (tuple, list)) else (k,): v for k, v in (self._live_state() or {}).items()}
-        for key, w, off in self._layout():
-            if off is not None and key in live:
-                td[key] = (
-                    torch.as_tensor(live[key], device=self.device, dtype=dtypes.get(key, torch.float32))
-                    .reshape(-1, w)[:n]
-                    .clone()
-                )
+        plan = self._state_plan()
+        if sum(w for _, w, off, _ in plan if off is not None) != int(self.state_dim):
+            self._check_layout()
+        rows = self._get_render_state()
+        if not bool(torch.isfinite(rows).all()):
+            check_states(self, rows, f"{type(self).__name__}.unpack")
+        n = int(rows.shape[0])
+        hidden = _keyed(self._hidden_state())
+        live = _keyed(self._live_state())
+        tree: dict = {}
         missing = []
-        for key, w, off in self._layout():
-            if off is not None:
-                continue
-            if key not in hidden:
-                missing.append(".".join(key))
-                continue
-            td[key] = torch.as_tensor(hidden[key], device=self.device, dtype=dtypes.get(key, torch.float32)).reshape(
-                -1, w
-            )[:n]
+        # Drawn fields come first, then hidden ones, each in layout order.
+        for key, w, off, dt in sorted(plan, key=lambda entry: entry[2] is None):
+            if off is None:
+                if key not in hidden:
+                    missing.append(".".join(key))
+                    continue
+                value = _as_field(hidden[key], dt).reshape(-1, w)[:n]
+            elif key in live:
+                value = _as_field(live[key], dt).reshape(-1, w)[:n]
+            else:
+                value = rows[:, off : off + w]
+            node = tree
+            for part in key[:-1]:
+                node = node.setdefault(part, {})
+            # The one copy that makes the snapshot independent of every live buffer.
+            node[key[-1]] = value.to(device=self.device, dtype=dt, copy=True)
         if missing:
             raise NotImplementedError(
                 f"{type(self).__name__}.state: {missing} is declared in state_layout with offset "
@@ -1019,7 +1057,7 @@ class Env:
                 f"look fine while restoration would change subsequent step(action) results. "
                 f"Return {{{missing[0]!r}: <the live tensor>}} from _hidden_state()."
             )
-        return td.clone()
+        return TensorDict(tree, batch_size=[n], device=self.device)
 
     def _step_result(self, state: TensorDict, **extras) -> TensorDict:
         """Build a result with State and only the task outputs supplied by the family."""

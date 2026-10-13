@@ -209,3 +209,16 @@ def test_live_state_hook_overrides_the_widened_row():
     env._set_render_state(torch.tensor([[0.1, 0.2]], dtype=torch.float32))
     assert torch.equal(env.state["x"], torch.tensor([[0.1, 0.2]], dtype=torch.float64))
     assert not torch.equal(env._unpack_render_state(env._get_render_state())["x"], env.state["x"])
+
+
+def test_non_finite_values_are_refused_by_get_state_and_named_by_set_state():
+    e = LegacyPushT(num_envs=2, device="cpu")
+    e.reset(seed=0)
+    bad = e.get_state()
+    bad["agent", "velocity"][1, 0] = float("nan")
+    with pytest.raises(ValueError, match="agent.velocity contains non-finite"):
+        e.set_state(bad)
+    e._render_state[1, 4] = float("inf")
+    with pytest.raises(ValueError, match="block_angle"):
+        e.get_state()
+    e.close()

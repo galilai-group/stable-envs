@@ -155,21 +155,17 @@ class _Classic(Env):
             )
 
     def _sim_columns(self, drawn: bool) -> dict:
-        """Copy live float64 simulation columns selected by their presence in render rows."""
+        """Select live float64 simulation columns by their presence in render rows."""
         want = set(self.render_from_sim)
         n = self._live_rows
-        return {
-            (nm,): self._sim[:n, i : i + 1].clone()
-            for i, nm in enumerate(self.sim_state_names)
-            if (i in want) == drawn
-        }
+        return {(nm,): self._sim[:n, i : i + 1] for i, nm in enumerate(self.sim_state_names) if (i in want) == drawn}
 
     def _hidden_state(self) -> dict:
-        """Copy numerical variables omitted from the packed render row."""
+        """Numerical variables omitted from the packed render row."""
         return self._sim_columns(drawn=False)
 
     def _live_state(self) -> dict:
-        """Copy drawn variables at simulation precision, avoiding a float32 round trip."""
+        """Drawn variables at simulation precision, avoiding a float32 round trip."""
         return self._sim_columns(drawn=True)
 
     def _state_td(self, sim: torch.Tensor) -> TensorDict:

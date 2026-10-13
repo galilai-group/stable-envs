@@ -5,6 +5,7 @@ import torch
 from tensordict import TensorDict
 
 from ...._execution.protocol import SimulatorAdapter
+from ...._execution.state_columns import require_columns
 from . import physics as _physics
 from .state import export_state, restore_lane
 
@@ -62,12 +63,7 @@ class DMCLanes(SimulatorAdapter):
             raise TypeError(f"{self.key} requires full TensorDict State with batch [num_envs]")
         # Validate the entire batch before mutating any lane.
         rows = None if self.physics is None else self.physics.rows_from_state(state)
-        for key, (width, dtype) in self.fields.items():
-            if key not in state.keys(True, True):
-                raise ValueError(f"Full State missing {key}")
-            value = state[key]
-            if value.shape != (self.num_envs, width) or value.dtype != dtype or not torch.isfinite(value).all():
-                raise ValueError(f"Invalid State field {key}")
+        require_columns(state, {key: ((self.num_envs, width), dtype) for key, (width, dtype) in self.fields.items()})
         host = state.cpu()
         if rows is not None:
             self.physics.configure(rows)

@@ -5,7 +5,7 @@ import torch
 from tensordict import TensorDict
 
 from ...._execution.protocol import SimulatorAdapter
-from ...._execution.state_columns import owned_columns
+from ...._execution.state_columns import owned_columns, require_columns
 
 #: body -> (qpos fields, qvel fields, action width). Legged qpos splits at the free joint.
 BODIES = {
@@ -155,12 +155,7 @@ class OGBMazeAdapter(SimulatorAdapter):
         self._check_open()
         if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):
             raise TypeError("OGBMaze requires full TensorDict State with batch [num_envs]")
-        for key, (width, dtype) in self.fields.items():
-            if key not in state.keys(True, True):
-                raise ValueError(f"Full State missing {key}")
-            value = state[key]
-            if value.shape != (self.num_envs, width) or value.dtype != dtype or not torch.isfinite(value).all():
-                raise ValueError(f"Invalid State field {key}")
+        require_columns(state, {key: ((self.num_envs, width), dtype) for key, (width, dtype) in self.fields.items()})
         host = state.cpu()
         decoded = []
         for row in host.unbind(0):

@@ -434,7 +434,7 @@ class _HiddenTargetSemantics:
         self._target_position[:, 1] = 112.0
 
     def _hidden_state(self):
-        return {("target", "position"): self._target_position[: self._live_rows].clone()}
+        return {("target", "position"): self._target_position[: self._live_rows]}
 
     def _restore_state(self, state):
         self._set_render_state(self._pack_render_state(state))
@@ -1280,12 +1280,12 @@ class SimplePointMaze(_GymReferencePort):
 
     def _hidden_state(self):
         return {
-            ("task", "cached_goal_agent_position"): self._cached_goal_agent_position[: self._live_rows].clone(),
-            ("task", "state_is_float64"): self._state_is_float64[: self._live_rows].clone(),
+            ("task", "cached_goal_agent_position"): self._cached_goal_agent_position[: self._live_rows],
+            ("task", "state_is_float64"): self._state_is_float64[: self._live_rows],
         }
 
     def _live_state(self):
-        return {("agent", "position"): self._agent_position[: self._live_rows].clone()}
+        return {("agent", "position"): self._agent_position[: self._live_rows]}
 
     def _restore_state(self, state):
         self._set_render_state(self._pack_render_state(state))
