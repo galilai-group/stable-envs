@@ -251,10 +251,9 @@ def _trackcom_prepare(seed: int):
 
 
 def _trackcom_reflection(env):
-    from stable_envs.envs.dmcontrol._model import MJW_CHUNK
+    from stable_envs.envs.dmcontrol.trackcom import _launch_worlds
 
-    capacity = 256 if env.size <= 84 else MJW_CHUNK
-    return env._context(env.size, min(capacity, 1 << max(0, env.B - 1).bit_length())).reflection
+    return env._context(env.size, _launch_worlds(env.size, env.B)).reflection
 
 
 def _trackcom_floor_frames(env, payload, fast: bool):

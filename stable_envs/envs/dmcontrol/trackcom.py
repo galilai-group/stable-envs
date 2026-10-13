@@ -137,6 +137,16 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
     return c
 
 
+# Rays per captured launch: up to 256 worlds while a launch stays within 256 frames of 224 px, so
+# per-launch uploads amortize over more worlds and large images keep the memory bound.
+_RAYS_PER_LAUNCH = 256 * 224 * 224
+
+
+def _launch_worlds(size: int, batch: int) -> int:
+    capacity = max(MJW_CHUNK, min(256, _RAYS_PER_LAUNCH // (int(size) * int(size))))
+    return min(capacity, 1 << max(0, int(batch) - 1).bit_length())
+
+
 def _reflection_supported(rc) -> bool:
     """The floor reflection reuses MJWarp 3.12 render internals; older versions render without it."""
     try:
@@ -201,7 +211,7 @@ class DMControlTrackCom(_DMCModel):
         if self.backend == "opengl":
             return  # The explicit fidelity backend owns a separate model/context.
         if self.device.type == "cuda":
-            self._context(self.size)  # build and capture up front, not mid-render
+            self._context(self.size, _launch_worlds(self.size, self.B))  # build and capture up front
         elif self.device.type == "cpu":
             reason = type(self).CPU_UNCERTIFIED_REASON or None
             if reason:
@@ -481,9 +491,7 @@ class DMControlTrackCom(_DMCModel):
         if self.device.type == "cpu":
             self._render_cpu(s, sty, size, buf)
             return buf.view(*lead, size, size, 3) if lead else buf
-        # Small images amortize uploads across more worlds; large ones keep the memory bound.
-        capacity = 256 if size <= 84 else MJW_CHUNK
-        worlds = min(capacity, 1 << max(0, B - 1).bit_length())
+        worlds = _launch_worlds(size, B)
         c = self._context(size, worlds)
         masses = self._row_masses(sty, 0, B)
         floor, palette = self._row_floor(sty, 0, B), self._row_palette(sty, 0, B)
