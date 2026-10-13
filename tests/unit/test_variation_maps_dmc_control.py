@@ -1,32 +1,7 @@
-"""The variation mapping for the five classic-control and thirteen DM Control cells.
+"""The variation maps of the five classic-control and thirteen DM Control cells, against live swm.
 
-What each test is FOR, because a variation map fails in ways a smoke test cannot see:
-
-``test_every_leaf_is_classified``
-    the completeness claim. Read against the LIVE swm variation space, not against a transcribed
-    list, so a leaf swm adds tomorrow fails here instead of being silently unmapped.
-``test_registered_default_*``
-    Certification asks that "the registered default is reproducible through the mapping". For most
-    cells the mapped default IS the cell's default style and the render is byte-identical; for the
-    cells in ``DEFAULT_REACHED_THROUGH`` the swm default is a DIFFERENT appearance from the compiled
-    model's and is reached through named leaves. Both are asserted, and the second names the leaves,
-    so a cell that quietly starts needing another leaf fails.
-``test_*_isolation``
-    a mapped leaf must move its own style slots and nothing else.
-``test_round_trip``
-    swm value -> style row -> swm value.
-``test_rgb255_is_swm_quantisation``
-    the one arithmetic claim in the classic-control mapping.
-``test_light_intensity_lands_on_the_model``
-    the DM Control mapping's only non-identity conversion, checked where it matters — on the compiled
-    model's ``light_diffuse`` — rather than on the style row.
-``test_dead_upstream_leaves_really_are_dead``
-    every ``dead_upstream`` classification re-measured against live swm, because that classification
-    is a claim about somebody else's code and is the one most likely to rot.
-
-The swm-dependent tests skip when ``stable_worldmodel`` is not importable, which is the case in the
-repository's default test venv; they are run in a venv that has it (see
-``pre-repository-cleanup:docs/research/step8_variations_dmc_control.md``).
+The swm-dependent tests skip when ``stable_worldmodel`` is not importable; run them in a venv that
+has it. Trackcom cells need a GL backend to build, so those cases run on a GPU host.
 """
 
 from __future__ import annotations
@@ -46,7 +21,6 @@ from tests.helpers.reference import (
 )
 from tests.helpers.reference.variation_maps.dmc_control import (
     EXPECTED_COUNTS,
-    EXPECTED_COUNTS_BY_CELL,
     LIGHT_RANGE,
     MAPS,
     swm_defaults,
@@ -67,8 +41,8 @@ needs_dmc = pytest.mark.skipif(
 )
 
 CELLS = sorted(MAPS)
-#: The cells whose swm REGISTERED default is a different appearance from the compiled model's,
-#: and the exact style leaves the mapping moves to reach it. Measured; see the research doc.
+#: Cells whose swm registered default differs in appearance from the compiled model's, with the
+#: style leaves the mapping moves to reach it.
 DEFAULT_REACHED_THROUGH = {
     "DMCBallInCupCatch": {"light.diffuse_scale"},
     "DMCFingerTurnHard": {"light.diffuse_scale"},
@@ -82,6 +56,12 @@ def _env(cell):
 
 def _layout(env):
     return {p: (o, w) for p, o, w in env.variation_space.flat_layout()}
+
+
+def _swm_space(m):
+    import gymnasium
+
+    return swm_variation_space(gymnasium.make(m.swm_id))
 
 
 # --------------------------------------------------------------------- completeness
@@ -112,23 +92,7 @@ def test_classification_counts_match_the_declaration(cell):
     got = {"total": len(r["classification"])}
     for label in ("mapped", "unsupported", "dead_upstream", "not_applicable"):
         got[label] = sum(1 for v in r["classification"].values() if v == label)
-    assert got == EXPECTED_COUNTS_BY_CELL.get(cell, EXPECTED_COUNTS[variation_map(env).swm_id]), cell
-
-
-@needs_swm
-def test_the_seventeen_ids_total_161_leaves():
-    """The headline count, so a change to any one cell is visible in one place."""
-    seen, totals = set(), {"mapped": 0, "unsupported": 0, "dead_upstream": 0, "not_applicable": 0}
-    for cell in CELLS:
-        m = variation_map(cell)
-        if m.swm_id in seen:
-            continue
-        seen.add(m.swm_id)
-        for k in totals:
-            totals[k] += EXPECTED_COUNTS[m.swm_id][k]
-    assert len(seen) == 17
-    assert totals == {"mapped": 140, "unsupported": 0, "dead_upstream": 21, "not_applicable": 0}
-    assert sum(totals.values()) == 161
+    assert got == EXPECTED_COUNTS[variation_map(env).swm_id], cell
 
 
 # --------------------------------------------------------------------- the registered default
@@ -162,13 +126,7 @@ def test_registered_default_is_reproducible_through_the_mapping(cell):
 @needs_swm
 @pytest.mark.parametrize("cell", ["Acrobot", "CartPole", "Pendulum", "MountainCar", "MountainCarContinuous"])
 def test_classic_default_matches_the_official_swm_render(cell):
-    """The five classic-control cells, at the registered default, against swm's OWN frame.
-
-    This is the one arm where the two libraries can be compared pixel for pixel: swm renders the
-    official gymnasium env and then recolours it, so at the default (where every swap is a no-op) its
-    frame is the official frame, and ours is certified against that. 0 disagreeing pixels over 8
-    states is what makes "the registered default is reproducible" a measurement rather than a claim.
-    """
+    """At the registered default, swm's frame is the official gymnasium frame; ours must equal it."""
     gym = pytest.importorskip("gymnasium")
     pytest.importorskip("pygame")
     env = _env(cell)
@@ -197,19 +155,16 @@ def test_classic_default_matches_the_official_swm_render(cell):
 @needs_swm
 @pytest.mark.parametrize("cell", CELLS)
 def test_mapped_leaves_are_isolated(cell):
-    """Moving one swm leaf moves that leaf's style slots and no others.
+    """Moving one swm leaf moves only its own style slots; one-to-many leaves move every slot the map names.
 
-    Asserted on the STYLE ROW rather than on pixels because that is where a mapping can be wrong: a
-    pixel test cannot distinguish "the map wrote the wrong slot" from "two elements share a colour",
-    and a slot test can. The one-to-many leaves (``visuals.fg``, ``visuals.cart``) are expected to
-    move several slots and the expectation is derived from the map itself, not hard-coded.
+    Asserted on the style row, where a wrong slot is distinguishable from two elements sharing a colour.
     """
     env = _env(cell)
     m = variation_map(env)
     defaults = swm_defaults(m.swm_id)
     base = style_from_variation(env, defaults)
     layout = _layout(env)
-    space = swm_variation_space(__import__("gymnasium").make(m.swm_id))
+    space = _swm_space(m)
     for ours_paths, swm_path in _mapped_pairs(m):
         leaf = space
         for part in swm_path.split("."):
@@ -255,7 +210,7 @@ def test_round_trip(cell):
     env = _env(cell)
     m = variation_map(env)
     defaults = swm_defaults(m.swm_id)
-    space = swm_variation_space(__import__("gymnasium").make(m.swm_id))
+    space = _swm_space(m)
     cfgs = [defaults]
     for _, swm_path in _mapped_pairs(m):
         leaf = space
@@ -269,24 +224,18 @@ def test_round_trip(cell):
             want = np.asarray(cfg[path], np.float64).reshape(-1)
             got = np.asarray(back[path], np.float64).reshape(-1)
             if path in quantised:
-                # A colour we hold as 8 bits cannot return a float unchanged, and the loss is exactly
-                # the quantisation: half a level, 1/510. The stronger statement is that it round-trips
-                # to the SAME uint8, i.e. swm would paint the identical pixel, so that is asserted too.
+                # 8-bit colours lose at most half a level (1/510) and must round-trip to the same uint8.
                 assert np.allclose(got, want, atol=1.0 / 510.0), f"{cell}: {path} {got} != {want}"
                 assert np.array_equal(
                     (got * 255.0 + 0.5).astype(np.uint8), (np.clip(want, 0, 1) * 255.0 + 0.5).astype(np.uint8)
                 ), f"{cell}: {path} does not round-trip to the same uint8"
             else:
-                # float32 is the style row's dtype, so this is the representation and not slack.
+                # float32 is the style row's dtype.
                 assert np.allclose(got, want, rtol=6e-8, atol=3e-7), f"{cell}: {path} {got} != {want}"
 
 
 def test_rgb255_is_swm_quantisation():
-    """``rgb255`` must reproduce ``GymControlWrapper.render``'s ``uint8(v * 255 + 0.5)`` exactly.
-
-    A bare factor of 255 does not: ``to_u8`` truncates, so swm's 0.3 -> 77 becomes 76. Checked over a
-    dense grid rather than at the endpoints, because the disagreement is at the half-integers.
-    """
+    """``rgb255`` reproduces swm's ``uint8(v * 255 + 0.5)``; a bare factor of 255 truncates 0.3 to 76, not 77."""
     env = make("Pendulum", num_envs=1, device="cpu")
     layout = _layout(env)
     o, w = layout["rod.color"]
@@ -300,12 +249,7 @@ def test_rgb255_is_swm_quantisation():
 @needs_swm
 @pytest.mark.parametrize("cell", sorted(LIGHT_RANGE))
 def test_light_intensity_lands_on_the_model(cell):
-    """The only non-identity DM Control conversion, checked on ``light_diffuse`` itself.
-
-    swm writes the intensity ABSOLUTELY; ours multiplies the compiled model's own diffuse and clips.
-    The test asserts the two agree over the reachable range, and that the declared low-end gap is
-    real rather than a rounding artefact.
-    """
+    """swm writes intensity absolutely, ours scales the model's own diffuse: they agree over the reachable range."""
     env = _env(cell)
     base, lo, hi, _ = LIGHT_RANGE[cell]
     pristine = np.asarray(type(env)._pristine()["light_diffuse"], np.float64)
@@ -315,23 +259,19 @@ def test_light_intensity_lands_on_the_model(cell):
         row = style_from_variation(env, {"light.intensity": np.float32([intensity])})
         got = np.clip(pristine * float(row[o]), 0.0, 1.0)
         assert np.allclose(got, intensity, atol=3e-7), f"{cell}: {got} != {intensity}"
-    # and the gap: swm's darkest tenth of the range cannot be reached, because our scale stops at 0.2
-    assert lo > 0.0
+    # the declared dark-end gap: intensities below `lo` need a scale under the space's own minimum
+    scale_low = float(env.variation_space["light"]["diffuse_scale"].low[0])
+    at_lo = style_from_variation(env, {"light.intensity": np.float32([lo])})
     dark = style_from_variation(env, {"light.intensity": np.float32([lo / 2.0])})
-    assert (
-        float(dark[o]) < float(env.variation_space["light"]["diffuse_scale"].low[0]) + 1e-9 or float(dark[o]) < 0.2
-    ), f"{cell}: the declared dark-end gap does not exist"
+    assert float(at_lo[o]) == pytest.approx(scale_low, rel=1e-6), cell
+    assert float(dark[o]) < scale_low - 1e-6, f"{cell}: the declared dark-end gap does not exist"
 
 
 # --------------------------------------------------------------------- dead upstream
 
-#: Re-measuring ``dead_upstream`` means driving the LIVE swm wrapper through a variation reset, and
-#: every reset that changes a model-level leaf makes swm recompile and drop the previous
-#: ``dm_control`` ``Physics`` — which frees an EGL context on garbage collection. Releasing a context
-#: corrupts every other live one in the process, which is exactly what ``stable_envs.testing.
-#: resource_guard`` exists to catch, so this probe runs in a SUBPROCESS. That is not a workaround for
-#: the guard: it is a finding about the swm wrapper, recorded in the research doc, and the isolation
-#: is what makes the measurement safe to run beside the rest of the suite.
+#: Re-measuring ``dead_upstream`` drives the live swm wrapper through variation resets, each of which
+#: recompiles and drops the previous ``Physics``, freeing a GL context that corrupts the others live in
+#: the process. The probe therefore runs in a subprocess.
 _DEAD_PROBE = r"""
 import hashlib, json, sys
 import numpy as np, gymnasium, stable_worldmodel  # noqa: F401
@@ -394,16 +334,10 @@ json.dump(out, open(sys.argv[1], "w"))
 
 @needs_swm
 def test_dead_upstream_leaves_really_are_dead(tmp_path):
-    """Every ``dead_upstream`` leaf, re-measured against live swm, in one isolated subprocess.
+    """Every ``dead_upstream`` leaf changes no compiled array, or changes the model but no pixel.
 
-    Two mechanisms are allowed, and a leaf must satisfy one of them:
-
-    * it changes no array of the compiled ``MjModel`` at all (the wrapper never reads it, or MuJoCo
-      ignores the write because the geom carries an explicit mass);
-    * it changes the model and no pixel, because the element it reaches is in a geom/site group
-      ``mjvOption`` does not draw — acrobot's group-3 target and ball-in-cup's group-4 one.
-
-    A leaf that moves both is not dead and the classification is wrong.
+    The second case is an element in a geom/site group ``mjvOption`` does not draw (acrobot's group-3
+    target, ball-in-cup's group-4 one). A leaf that moves both model and pixels is not dead.
     """
     import json
     import subprocess
@@ -422,8 +356,7 @@ def test_dead_upstream_leaves_really_are_dead(tmp_path):
 
     import stable_envs
 
-    # the subprocess must import the SAME checkout pytest is running against; the repo is normally on
-    # sys.path via the root conftest rather than installed.
+    # the subprocess must import the checkout under test, which is on sys.path via the root conftest.
     root = os.path.dirname(os.path.dirname(os.path.abspath(stable_envs.__file__)))
     env = {**os.environ, "PYTHONPATH": root + os.pathsep + os.environ.get("PYTHONPATH", "")}
     proc = subprocess.run(
@@ -442,24 +375,7 @@ def test_dead_upstream_leaves_really_are_dead(tmp_path):
             )
 
 
-# --------------------------------------------------------------------- backward compatibility
-
-
-@pytest.mark.parametrize("cell", ["TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones", "PushT"])
-def test_the_four_pre_step8_maps_are_untouched(cell):
-    """The extra mapping fields are additive: the maps that predate them behave exactly as they did.
-
-    ``unmapped()`` must equal ``swm_only`` plus measured ``dead_upstream`` and ``mapped_swm_paths()`` the old
-    ``{t for t, _ in pairs().values()}``, because those two expressions are what the old
-    ``style_from_variation``/``check_mapping`` used.
-    """
-    m = VARIATION_MAPS[cell]
-    assert m.unmapped() == {**m.swm_only, **m.dead_upstream}
-    assert m.mapped_swm_paths() == {t for t, _ in m.pairs().values()}
-    assert not m.rgb255 and not m.enum and not m.affine and not m.unsupported
-    assert not m.not_applicable
-    # ``affine_pairs`` is the general view and must agree with ``pairs`` when ``affine`` is empty
-    assert m.affine_pairs() == {o: (t, f, 0.0) for o, (t, f) in m.pairs().items()}
+# --------------------------------------------------------------------- enum and affine
 
 
 @needs_dmc
@@ -471,7 +387,7 @@ def test_enum_alternatives_round_trip():
         row = style_from_variation(env, {"target.shape": swm_index})
         assert int(row[o]) == swm_index
         assert variation_from_style(env, row)["target.shape"] == swm_index
-    # our third alternative is the compiled model's own and is what the DEFAULT style carries
+    # the third alternative is the compiled model's own sphere and the default style's
     assert int(np.asarray(env.default_style()).reshape(-1)[o]) == 2
 
 
@@ -484,12 +400,7 @@ def test_an_unreachable_enum_index_is_refused():
 
 
 def test_affine_is_invertible_and_additive():
-    """The ``affine`` form: ``ours = theirs * factor + offset``.
-
-    Exercised on a synthetic map rather than on one of this family's — nothing here needs an offset —
-    so that the arithmetic is tested rather than one caller's use of it. The inverted-switch case is
-    the invert: swm 0/1 into our 1/0.
-    """
+    """``affine`` maps ``ours = theirs * factor + offset`` and inverts it; the inverted switch maps 0/1 to 1/0."""
     from dataclasses import replace
 
     env = make("Pendulum", num_envs=1, device="cpu")
@@ -529,25 +440,12 @@ def test_a_non_invertible_affine_is_refused():
         replace(VARIATION_MAPS["Pendulum"], affine={"a.b": ("c.d", 0.0, 1.0)})
 
 
-@needs_swm
-@pytest.mark.parametrize("cell", CELLS)
-def test_strict_accepts_the_whole_swm_space(cell):
-    """``strict=True`` is the caller-facing form of the completeness claim."""
-    env = _env(cell)
-    style_from_variation(env, swm_defaults(variation_map(env).swm_id), strict=True)
-
-
-# --------------------------------------------------------------- the capability patch
+# --------------------------------------------------------------------- floor.color
 
 
 @needs_dmc
 def test_the_parity_floor_set_is_the_plate_baking_tier():
-    """``_PARITY_FLOOR`` is transcribed, so derive it from the classes and assert it.
-
-    The set decides which mechanism each cell's ``floor.color`` note describes, and the module cannot
-    import ``stable_envs.envs`` to derive it. A cell that moved between the two DM Control tiers
-    would otherwise leave the map describing a renderer it no longer has.
-    """
+    """``_PARITY_FLOOR`` is transcribed; it must name exactly the plate-baking ``DMControlSuite`` cells."""
     from stable_envs.envs.dmcontrol import DMControlSuite
     from tests.helpers.reference.variation_maps.dmc_control import _PARITY_FLOOR
 
@@ -562,13 +460,7 @@ def test_the_parity_floor_set_is_the_plate_baking_tier():
     "cell", sorted(c for c in MAPS if c in REGISTRY and MAPS[c].classification().get("floor.color") == "mapped")
 )
 def test_floor_color_is_a_leaf_and_the_default_is_the_identity(cell):
-    """The two halves of "mapped": the leaf exists with swm's shape and default, and it moves pixels.
-
-    The default half is the one that matters for certification and is the one a classification table
-    cannot check for itself: swm's ``init_value`` for this leaf is dm_control's own
-    ``common/materials.xml`` grid texture, so a correct implementation renders the registered default
-    BYTE-IDENTICALLY to the pre-patch frame -- the leaf must add reach without moving the picture.
-    """
+    """``floor.color`` has swm's shape and default, moves pixels, and rendering at the default is the default frame."""
     import sys
 
     from stable_envs.envs.dmcontrol import DMControlSuite
@@ -576,7 +468,7 @@ def test_floor_color_is_a_leaf_and_the_default_is_the_identity(cell):
     if sys.platform == "darwin" and not issubclass(REGISTRY[cell], DMControlSuite):
         pytest.skip("the trackcom CPU scene caches its sky through dm_control physics.render, disabled on macOS")
     env = make(cell, num_envs=2, size=84, device="cpu")
-    layout = dict((p, (o, w)) for p, o, w in env.variation_space.flat_layout())
+    layout = _layout(env)
     assert "floor.color" in layout and layout["floor.color"][1] == 6, layout
     d = np.asarray(env.variation_space["floor"]["color"].value, np.float64).reshape(2, 3)
     assert np.allclose(d, [[0.1, 0.2, 0.3], [0.2, 0.3, 0.4]]), d

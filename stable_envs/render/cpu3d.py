@@ -434,8 +434,7 @@ class Scene:
         return torch.cat([mat_rgb, pad, own], 1)
 
 
-# ``_dot`` is ``primitives.dot3``, imported at the top: the same unrolled expression the
-# intersectors use, for the same reproducibility reason, from one definition instead of two.
+# ``_dot`` is ``primitives.dot3``: the intersectors' unrolled expression, kept bit-identical.
 
 
 def _normalize(v: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:

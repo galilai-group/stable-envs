@@ -139,7 +139,7 @@ def _swm_values(name, leaf):
 
 
 def _compare(ours, theirs) -> float:
-    """Return the largest absolute floating error; integer and boolean leaves must match exactly."""
+    """Largest relative floating error; integer and boolean leaves must match exactly."""
     assert set(ours.keys(True, True)) == set(theirs.keys(True, True))
     error = 0.0
     for key in theirs.keys(True, True):

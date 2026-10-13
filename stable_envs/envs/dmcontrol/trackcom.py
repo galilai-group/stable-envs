@@ -75,8 +75,9 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
     if hit is not None:
         return hit
     _, m, _, pr, _, slots = cls._bundle(cls.default_size)
-    for arr in {a for a, _ in slots}:  # a canonical model, so the context is a
-        getattr(m, arr)[:] = pr[arr]  # function of the domain and nothing else
+    # Canonical model: the context depends on the domain alone.
+    for arr in {a for a, _ in slots}:
+        getattr(m, arr)[:] = pr[arr]
     m.mat_rgba[:] = pr["mat_rgba"]
     m.light_diffuse[:] = pr["light_diffuse"]
     if not MW.needs_com_pos(m):
@@ -128,8 +129,6 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
         c.reflection = Reflection(c.wm, c.wd, c.rc, m, cls._floor_slots()) if supported else None
         _tc_frame(c)
         wp.synchronize()
-    import torch
-
     c.bgra = wp.to_torch(c.rc.rgb_data).view(torch.uint8).reshape(int(nworld), int(res), int(res), 4)
     with wp.ScopedCapture() as cap:
         _tc_frame(c)
@@ -331,7 +330,7 @@ class DMControlTrackCom(_DMCModel):
         if hit is not None:
             return hit
         m, pr = self._model(), self._pristine()
-        for arr in {a for a, _ in self._slots()}:  # the canonical model, as _tc_context
+        for arr in {a for a, _ in self._slots()}:  # canonical model, as in _tc_context
             getattr(m, arr)[:] = pr[arr]
         m.mat_rgba[:] = pr["mat_rgba"]
         m.light_diffuse[:] = pr["light_diffuse"]
@@ -432,7 +431,7 @@ class DMControlTrackCom(_DMCModel):
         base = torch.as_tensor(pr["light_diffuse"], dtype=torch.float32, device=self.device)
         ldif = torch.clamp(base.unsqueeze(0) * sty["light.diffuse_scale"][:B].reshape(B, 1, 1), 0, 1)
         chunk = self._CPU_RENDER_CHUNKS.get((self.DOMAIN, size), self.CPU_RENDER_CHUNK)
-        # An explicit instance override is used by controlled chunk sweeps.
+        # An instance-level CPU_RENDER_CHUNK overrides the measured table.
         chunk = vars(self).get("CPU_RENDER_CHUNK", chunk)
         C3.render(
             sc,
@@ -482,7 +481,7 @@ class DMControlTrackCom(_DMCModel):
         if self.device.type == "cpu":
             self._render_cpu(s, sty, size, buf)
             return buf.view(*lead, size, size, 3) if lead else buf
-        # Small images can amortize uploads across more worlds; keep the existing large-image bound.
+        # Small images amortize uploads across more worlds; large ones keep the memory bound.
         capacity = 256 if size <= 84 else MJW_CHUNK
         worlds = min(capacity, 1 << max(0, B - 1).bit_length())
         c = self._context(size, worlds)

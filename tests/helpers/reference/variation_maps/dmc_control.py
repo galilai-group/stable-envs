@@ -26,11 +26,10 @@ official env, so ``physics.gravity`` is a feature they could carry and do not. T
 cannot honour that leaf", and the reason carries the mechanism and the measured 0-pixel result.
 Calling it ``not_applicable`` would say the leaf asks nothing of stable-envs, and it does.
 
-The exception, and the most interesting measurement in this workstream, is the ``trackcom`` group
-below: there a mass leaf is not physics-only at all.
+The exception is the ``trackcom`` group below: there a mass leaf is not physics-only at all.
 
-Three things this module measured that were not previously written down
------------------------------------------------------------------------
+Measurements behind the DM Control classifications
+---------------------------------------------------
 
 **1. Sixteen SWM DM Control leaves never reach the compiled model.** Probed by hashing every
 ``numpy`` array on ``MjModel`` (110+ arrays, plus ``opt.gravity`` and the size scalars) at the leaf's
@@ -39,7 +38,7 @@ live wrapper. Two distinct mechanisms, both dead:
 
 * *the wrapper never reads it* — all seven ``*_locked`` leaves, ``BallInCup.ball.color``,
   ``Cartpole.agent.cart_shape``, ``Pendulum.agent.mass_shape``, ``Manipulator.agent.upper_arm_length``
-  (the last one already recorded in Step 7 with the ``# TODO should modify length of arm`` beside it).
+  (the source carries ``# TODO should modify length of arm`` beside it).
 * *MuJoCo ignores the write* — ``Acrobot.agent.{upper,lower}_arm_density``,
   ``Cartpole.agent.pole_density`` and ``Pendulum.agent.{mass,pole}_density`` are written onto the
   geom's ``density``, but those geoms carry an explicit ``mass``: acrobot's
@@ -266,7 +265,7 @@ _LIGHT_BASE = {
     "DMCCheetahRun": 0.7,
     "DMCFingerTurnHard": 0.6,
     "DMCHopperHop": 0.7,
-    "DMCHumanoidStand": 0.7,
+    "DMCHumanoidWalk": 0.7,
     "DMCManipulatorBringBall": 0.6,
     "DMCPendulumSwingup": 0.7,
     "DMCQuadrupedWalk": 0.7,
@@ -291,9 +290,8 @@ def _light_reason(base: float) -> str:
 #: movers, so the floor is plate-only and a texel substitution on the plate rig reaches it. The other
 #: five (``DMControlTrackCom``) hand the whole scene to mujoco_warp and have no plate.
 #:
-#: Written down rather than derived with ``issubclass`` because this module must import without
-#: ``stable_envs.envs``; ``test_the_parity_floor_set_is_the_plate_baking_tier`` derives it from the
-#: classes and asserts this set, so the transcription cannot drift.
+#: Transcribed rather than derived because this module must import without ``stable_envs.envs``;
+#: ``test_the_parity_floor_set_is_the_plate_baking_tier`` checks it against the classes.
 _PARITY_FLOOR = frozenset(
     {
         "DMCAcrobotBalance",
@@ -307,7 +305,7 @@ _PARITY_FLOOR = frozenset(
     }
 )
 
-#: The floor, on the eight parity cells: MAPPED, identically, as of the capability patch.
+#: The floor, on the eight parity cells: MAPPED, identically.
 _FLOOR_MAPPED = (
     "Our ``floor.color`` is swm's leaf in shape, order, units and default: (2,3) rgb1/rgb2 of the "
     "builtin ``grid`` checker, with the default READ from dm_control's own common/materials.xml -- "
@@ -317,7 +315,7 @@ _FLOOR_MAPPED = (
     "GL context, which needs no recompile and no second render context. VERIFIED byte-for-byte, not "
     "argued: over all twelve parity cells, three probe colours and eight states at 84 px, the "
     "substituted ``tex_data`` and the rendered frames are IDENTICAL to a full recompile of the suite "
-    "at the same floor.color (pre-repository-cleanup:tests/fixtures/regression/join/step8/capability/bake_vs_recompile_probe{0,1,2}.json). "
+    "at the same floor.color. "
     "The suite's markrgb equals its rgb2, so the 1,196 edge-mark texels are separated positionally "
     "and left alone exactly as swm's recompile leaves them."
 )
@@ -490,7 +488,7 @@ def _trackcom(cell, swm_id, densities, *, ours_only, tilt=False, dead_upstream=N
     notes = {leaf: _TRACKCOM_MASS for leaf in densities}
     if tilt:
         notes["floor.rotation_y"] = _FLOOR_TILT
-    if cell not in ("DMCHumanoidStand", "DMCQuadrupedWalk"):
+    if cell not in ("DMCHumanoidWalk", "DMCQuadrupedWalk"):
         notes["gravity.y"] = _INERT["gravity.y"]
     if floor_note:
         notes["floor.friction"] = floor_note
@@ -586,8 +584,8 @@ _DMC_MAPS = {
         floor_note=_INERT["hopper"],
         ours_only=_GRID_OURS,
     ),
-    "DMCHumanoidStand": _trackcom(
-        "DMCHumanoidStand",
+    "DMCHumanoidWalk": _trackcom(
+        "DMCHumanoidWalk",
         "swm/HumanoidDMControl-v0",
         ("agent.torso_density", "agent.right_lower_arm_density"),
         dead_upstream={"agent.left_knee_locked": _never_read()},
@@ -616,8 +614,7 @@ _DMC_MAPS = {
         },
         dead_upstream={
             "agent.upper_arm_length": _never_read(
-                "The swm source carries ``# TODO should modify length of arm`` at the point it would be "
-                "read; recorded in Step 7 and re-measured here."
+                "The swm source carries ``# TODO should modify length of arm`` at the point it would be read."
             )
         },
         physics_mapped=("agent.hand_density", "agent.upper_arm_density"),
@@ -670,11 +667,8 @@ _DMC_MAPS = {
     ),
 }
 
-# The two cartpole cells are one swm id. The balance and swingup tasks differ in their reset
-# distribution and in nothing the appearance mapping can see, so they carry the same map built twice
-# rather than one shared object — ``_LIGHT_BASE`` is keyed by cell and a shared instance would hide a
-# future divergence behind an alias. Both simulate; the balance cell is gated against swm's wrapper
-# with dm_control's Balance task swapped in.
+# The two cartpole cells are one swm id and differ only in their reset distribution, which the
+# mapping cannot see; each gets its own map instance so a divergence is not hidden by an alias.
 for _cell in ("DMCCartpoleBalance", "DMCCartpoleSwingup"):
     _DMC_MAPS[_cell] = _dmc(
         _cell,
@@ -739,19 +733,10 @@ EXPECTED_COUNTS: dict[str, dict[str, int]] = {
 }
 
 
-#: Cells whose counts differ from the first cell of their swm id, which EXPECTED_COUNTS records.
-EXPECTED_COUNTS_BY_CELL: dict[str, dict[str, int]] = {}
-
-
-#: The swm registered DEFAULT variation config for each id, as a dotted dict. Written down because it
-#: is what "the registered default is reproducible through the mapping" is measured against, and
-#: reading it off a live wrapper makes the test depend on the wrapper it is testing.
 def swm_defaults(swm_id: str) -> dict:
-    """The leaf defaults of ``swm_id``'s variation space, read from the live wrapper.
+    """The registered default of every leaf in ``swm_id``'s variation space, read from the live wrapper.
 
-    Deliberately live rather than transcribed: the claim under test is about the CURRENT swm, and a
-    transcribed table would keep passing after swm moved. The test that uses it also asserts the
-    values it cares about against the numbers in this module's docstring.
+    Read live rather than transcribed so the claim stays about the installed swm.
     """
     import gymnasium
     import stable_worldmodel  # noqa: F401
