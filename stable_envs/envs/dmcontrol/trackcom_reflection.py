@@ -476,6 +476,7 @@ class Reflection:
                 blocked_mask,
             )
 
+        # Repeats the pixel kernel's corner loop so the compiler rounds each corner's shade alike in both.
         @wp.kernel(module="unique", enable_backward=False)
         def vertex_pixels(s: Scene):
             world, square, mask = wp.tid()

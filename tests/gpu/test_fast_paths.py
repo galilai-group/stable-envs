@@ -238,6 +238,48 @@ def _bounds_frames(env, states, fast: bool):
         return env._render(states).clone()
 
 
+def _trackcom_prepare(seed: int):
+    """The env's states and a per-lane variation that recolours the floor, from one generator."""
+
+    def prepare(env):
+        import numpy as np
+
+        style = env.sample_variation(env.B, rng=np.random.default_rng(seed + 1))
+        return sampled_states(env, env.B, seed), torch.as_tensor(style, device=env.device)
+
+    return prepare
+
+
+def _trackcom_reflection(env):
+    from stable_envs.envs.dmcontrol._model import MJW_CHUNK
+
+    capacity = 256 if env.size <= 84 else MJW_CHUNK
+    return env._context(env.size, min(capacity, 1 << max(0, env.B - 1).bit_length())).reflection
+
+
+def _trackcom_floor_frames(env, payload, fast: bool):
+    """The floor pass gathering corner shades from its per-world table, then shading every corner in place."""
+    states, style = payload
+    flag = _trackcom_reflection(env)._scene.tabulated
+    was = int(flag.numpy()[0])
+    try:
+        flag.fill_(int(fast and was))
+        return torch.cat([env._render(states).clone(), env._render(states, style=style).clone()])
+    finally:
+        flag.fill_(was)
+
+
+def _trackcom_inapplicable(env):
+    if not hasattr(env, "_floor_slots") or env.device.type != "cuda":
+        return "draws no TrackCom floor reflection pass"
+    reflection = _trackcom_reflection(env)
+    if reflection is None:
+        return "draws no TrackCom floor reflection pass"
+    if not reflection._scene.tabulated.numpy()[0]:
+        return "its floor pass shades every corner in place"
+    return None
+
+
 def _scene_prepare(seed: int):
     return lambda env: _scene(env, env.B, seed)
 
@@ -496,6 +538,25 @@ CASES: tuple[FastPath, ...] = (
             if (_raster_size(env) if isinstance(_raster_size(env), int) else max(_raster_size(env))) <= 512
             else "supersampling a frame this large is not worth the test time"
         ),
+    ),
+    FastPath(
+        id="trackcom-floor-table-vs-in-place",
+        why=(
+            "The TrackCom floor pass shades each floor-grid cell corner once per world and shadow mask "
+            "into a table and gathers it per pixel; pixels outside a large grid's window shade their "
+            "corners in place. The table kernel repeats the pixel kernel's corner loop so the compiler "
+            "rounds both alike, and the pixel kernel keeps the in-place shading behind a runtime flag "
+            "because compiling it out reorders the pixel's own float math. A difference means one of "
+            "those two arrangements no longer holds."
+        ),
+        names=tuple(n for n in sorted(se.registry.REGISTRY) if n.startswith("DMC")),
+        modules=MOVER_MODULES,
+        num_envs=48,
+        seed=0,
+        sizes=(None,),
+        prepare=_trackcom_prepare(0),
+        frames=_trackcom_floor_frames,
+        inapplicable=_trackcom_inapplicable,
     ),
 )
 
