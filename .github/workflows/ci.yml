@@ -2,7 +2,8 @@ name: ci
 
 # Pull requests run the families their diff touches plus core (scripts/ci/plan.py); pushes to
 # main, the nightly schedule and manual runs test every family. ci-ok is the single required
-# check. GPU and live stable-worldmodel parity stay manual (regression.yml) for now.
+# check. Family profiles with the swm capability install stable-worldmodel at ci/families.toml's
+# [swm] commit (noxfile.py) and fail when its CPU gates skip; GPU parity stays manual (regression.yml).
 on:
   pull_request:
     branches: [main]

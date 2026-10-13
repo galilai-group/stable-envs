@@ -8,7 +8,9 @@
 
 Each profile syncs into ``.venvs/<profile>-py<version>`` with ``uv sync --frozen``. With ``CI`` set,
 the profile's family and capabilities become required (``SE_REQUIRE_FAMILIES``,
-``SE_REQUIRE_CAPABILITIES``), so a lost dependency fails instead of skipping.
+``SE_REQUIRE_CAPABILITIES``), so a lost dependency fails instead of skipping. A profile with the ``swm``
+capability also gets stable-worldmodel at ``[swm].commit``, cloned once into ``.venvs/`` (or the checkout
+``SE_SWM_SOURCE`` names).
 """
 
 from __future__ import annotations
@@ -28,7 +30,9 @@ nox.options.default_venv_backend = "none"
 nox.options.sessions = ["test(core)"]
 
 ROOT = Path(__file__).resolve().parent
-FAMILIES = tomllib.loads((ROOT / "ci" / "families.toml").read_text())["family"]
+CONFIG = tomllib.loads((ROOT / "ci" / "families.toml").read_text())
+FAMILIES = CONFIG["family"]
+SWM = CONFIG["swm"]
 TEST_PATHS = ("tests/unit", "tests/integration", "tests/regression")
 # Linux takes CPU-only torch; macOS wheels carry no CUDA.
 TORCH = ["torch-cpu"] if sys.platform == "linux" else []
@@ -43,6 +47,38 @@ def _sync(session: nox.Session, name: str, *, extras=(), groups=(), python: str 
     return venv / "bin" / "python"
 
 
+def _install_swm(session: nox.Session, python: Path, extra=()) -> Path:
+    """Editable stable-worldmodel at the [swm] commit, without moving any locked version.
+
+    The gates read the checkout's git HEAD, so it is a clone rather than a wheel. ``SE_SWM_SOURCE`` names an
+    existing checkout instead. ``extra`` are distributions the profile's gates need beside it.
+    """
+    source = Path(os.environ.get("SE_SWM_SOURCE") or ROOT / ".venvs" / f"stable-worldmodel-{SWM['commit'][:12]}")
+    if not (source / ".git").exists():
+        session.run("git", "init", "-q", str(source), external=True)
+        session.run("git", "-C", str(source), "fetch", "-q", "--depth", "1", SWM["url"], SWM["commit"], external=True)
+        session.run("git", "-C", str(source), "checkout", "-q", "FETCH_HEAD", external=True)
+    frozen = session.run("uv", "pip", "freeze", "--python", str(python), silent=True, external=True)
+    constraints = python.parents[1] / "swm-constraints.txt"
+    constraints.write_text("".join(f"{line}\n" for line in frozen.splitlines() if "==" in line))
+    session.run(
+        "uv",
+        "pip",
+        "install",
+        "--python",
+        str(python),
+        "-c",
+        str(constraints),
+        # On Linux torch is the CPU build, and swm's torchvision has to come from the same index.
+        *(["--extra-index-url", "https://download.pytorch.org/whl/cpu"] if TORCH else []),
+        "-e",
+        str(source),
+        *extra,
+        external=True,
+    )
+    return source
+
+
 @nox.session
 @nox.parametrize("profile", [nox.param(name, id=name) for name in FAMILIES])
 def test(session: nox.Session, profile: str) -> None:
@@ -55,7 +91,9 @@ def test(session: nox.Session, profile: str) -> None:
         groups=["test", *TORCH, *spec.get("groups", ())],
         python=os.environ.get("SE_PYTHON", "3.12"),
     )
-    env = {"SE_SKIP_NODE_GATE": "1", "SDL_VIDEODRIVER": "dummy"}
+    env = {"SE_SKIP_NODE_GATE": "1", "SDL_VIDEODRIVER": "dummy", "MPLBACKEND": "Agg"}
+    if "swm" in spec.get("capabilities", ()):
+        env["SWM_ROOT"] = str(_install_swm(session, python, spec.get("swm_with", ())))
     if sys.platform == "linux":
         env.update(spec.get("linux_env", {}))
     if os.environ.get("CI"):

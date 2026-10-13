@@ -251,6 +251,11 @@ def _variation_case(domain, device):
             ref.close()
 
 
+def _step(env, action):
+    """One transition with only the outputs the source has."""
+    return env.step(action, states=None, frames=None).exclude("valid")
+
+
 def _boundary_case(domain, device):
     ref = NativeNavigationReference(domain, 1)
     with se.make(CASES[domain]["stable_env"], num_envs=1, device=device) as env:
@@ -283,7 +288,7 @@ def _boundary_case(domain, device):
                     env.set_state(state)
                     ref.set_state(state)
                     got, expected = (
-                        env.step(np.asarray([action], np.float32), frames=None),
+                        _step(env, np.asarray([action], np.float32)),
                         ref.step(np.asarray([action], np.float32)),
                     )
                     compare_state(got, expected)
@@ -363,7 +368,7 @@ def _reward_and_lifecycle(domain, device):
                     )
                     env.set_state(boundary)
                     ref.set_state(boundary)
-                    got, expected = env.step(hold, frames=None), ref.step(hold)
+                    got, expected = _step(env, hold), ref.step(hold)
                     compare_state(got, expected)
                     assert not bool(got["terminated"].item())
 
@@ -373,7 +378,7 @@ def _reward_and_lifecycle(domain, device):
                     )
                     env.set_state(inside)
                     ref.set_state(inside)
-                    got, expected = env.step(hold, frames=None), ref.step(hold)
+                    got, expected = _step(env, hold), ref.step(hold)
                     compare_state(got, expected)
                     assert bool(got["terminated"].item())
                     state["target", "position"] = torch.tensor([[80.0, 80.0]])
@@ -381,7 +386,7 @@ def _reward_and_lifecycle(domain, device):
                 env.set_state(state)
                 ref.set_state(state)
                 zero = np.zeros((1, 2), np.float32)
-                got, expected = env.step(zero, frames=None), ref.step(zero)
+                got, expected = _step(env, zero), ref.step(zero)
                 compare_state(got, expected)
                 assert bool(got["terminated"].item())
                 expected_reward = 1.0 if domain == "simple_point_maze" else 0.0
@@ -389,7 +394,7 @@ def _reward_and_lifecycle(domain, device):
 
                 # None of these source envs owns a horizon or elapsed-step counter.
                 for _ in range(256):
-                    got, expected = env.step(zero, frames=None), ref.step(zero)
+                    got, expected = _step(env, zero), ref.step(zero)
                     compare_state(got, expected)
                     assert not bool(got["truncated"].item())
                 return {
@@ -413,7 +418,7 @@ def _simple_goal_distinction(device):
                 reward_goal = state["goal", "position"]
                 assert not torch.equal(cached, reward_goal)
                 got, expected = (
-                    env.step(np.zeros((1, 2), np.float32), frames=None),
+                    _step(env, np.zeros((1, 2), np.float32)),
                     ref.step(np.zeros((1, 2), np.float32)),
                 )
                 compare_state(got, expected)
@@ -447,7 +452,7 @@ def _field_necessity(domain, device):
                 else:
                     wrong["target", "position"] = other_state["target", "position"].clone()
                 env.set_state(wrong)
-                omitted = env.step(np.zeros((1, 2), np.float32), frames=None)
+                omitted = _step(env, np.zeros((1, 2), np.float32))
                 if domain == "simple_point_maze":
                     assert not torch.equal(omitted["info", "goal"].cpu(), expected["info", "goal"])
                     field = "task.cached_goal_agent_position"
@@ -457,7 +462,7 @@ def _field_necessity(domain, device):
                     )
                     field = "target.position"
                 env.set_state(snapshot)
-                compare_state(env.step(np.zeros((1, 2), np.float32), frames=None), expected)
+                compare_state(_step(env, np.zeros((1, 2), np.float32)), expected)
                 return {"field": field, "omission_changes_next_output": True, "complete_restore_exact": True}
         finally:
             ref.close()
@@ -475,7 +480,7 @@ def _simple_action_dtypes(device):
                     env.set_state(initial)
                     ref.reset(seed=17)
                     action = np.asarray([[0.1234567890123, -0.07]], dtype=dtype)
-                    got, expected = env.step(action, frames=None), ref.step(action)
+                    got, expected = _step(env, action), ref.step(action)
                     compare_state(got, expected)
                     observed[np.dtype(dtype).name] = {
                         "state_is_float64": bool(got["state", "task", "state_is_float64"].item()),
@@ -488,12 +493,12 @@ def _simple_action_dtypes(device):
                 wrong_flag = promoted.clone()
                 wrong_flag["task", "state_is_float64"].zero_()
                 env.set_state(wrong_flag)
-                omitted = env.step(continuation_action, frames=None)
+                omitted = _step(env, continuation_action)
                 assert not torch.equal(
                     omitted["state", "agent", "position"].cpu(), expected["state", "agent", "position"]
                 )
                 env.set_state(promoted)
-                compare_state(env.step(continuation_action, frames=None), expected)
+                compare_state(_step(env, continuation_action), expected)
 
                 # A proposed float64 move that touches a wall is discarded by source assignment
                 # ``next_state = self.state`` and therefore must retain the prior float32 dtype.
@@ -508,13 +513,13 @@ def _simple_action_dtypes(device):
                 env.set_state(blocked)
                 ref.set_state(blocked)
                 got, expected = (
-                    env.step(np.asarray([[0.1, 0.0]], np.float64), frames=None),
+                    _step(env, np.asarray([[0.1, 0.0]], np.float64)),
                     ref.step(np.asarray([[0.1, 0.0]], np.float64)),
                 )
                 compare_state(got, expected)
                 assert not bool(got["state", "task", "state_is_float64"].item())
                 follow, expected_follow = (
-                    env.step(np.asarray([[0.0, 0.0]], np.float32), frames=None),
+                    _step(env, np.asarray([[0.0, 0.0]], np.float32)),
                     ref.step(np.asarray([[0.0, 0.0]], np.float32)),
                 )
                 compare_state(follow, expected_follow)
@@ -543,7 +548,7 @@ def _simple_reward_boundary(device):
                 env.set_state(state)
                 ref.set_state(state)
                 got, expected = (
-                    env.step(np.zeros((1, 2), np.float32), frames=None),
+                    _step(env, np.zeros((1, 2), np.float32)),
                     ref.step(np.zeros((1, 2), np.float32)),
                 )
                 compare_state(got, expected)
@@ -555,7 +560,7 @@ def _simple_reward_boundary(device):
                 env.set_state(inside)
                 ref.set_state(inside)
                 got, expected = (
-                    env.step(np.zeros((1, 2), np.float32), frames=None),
+                    _step(env, np.zeros((1, 2), np.float32)),
                     ref.step(np.zeros((1, 2), np.float32)),
                 )
                 compare_state(got, expected)
@@ -566,7 +571,7 @@ def _simple_reward_boundary(device):
                 env.set_state(state64)
                 ref.set_state(state64)
                 got, expected = (
-                    env.step(np.zeros((1, 2), np.float64), frames=None),
+                    _step(env, np.zeros((1, 2), np.float64)),
                     ref.step(np.zeros((1, 2), np.float64)),
                 )
                 compare_state(got, expected)
@@ -578,7 +583,7 @@ def _simple_reward_boundary(device):
                 env.set_state(inside64)
                 ref.set_state(inside64)
                 got, expected = (
-                    env.step(np.zeros((1, 2), np.float64), frames=None),
+                    _step(env, np.zeros((1, 2), np.float64)),
                     ref.step(np.zeros((1, 2), np.float64)),
                 )
                 compare_state(got, expected)
