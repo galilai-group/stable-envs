@@ -1,8 +1,7 @@
 """The public namespace, the config, and resource lifetime.
 
-Every assertion here is about the PROMISE rather than about an implementation: ``dir(snv)`` is the
-P0 contract, closing is explicit and idempotent, and a closed env refuses to draw rather than
-handing back a frame through a backend that may no longer exist.
+``dir(snv)`` is the public contract, closing is explicit and idempotent, and a closed env refuses to
+draw rather than hand back a frame through a backend that may be gone.
 """
 
 from __future__ import annotations
@@ -47,7 +46,7 @@ def _clean_config():
 
 
 def test_dir_advertises_the_documented_namespace_and_the_environments_only():
-    """Contract §1: the top level exposes the happy path, not backend machinery."""
+    """The top level exposes the happy path, not backend machinery."""
     listed = set(dir(snv))
     assert {"Env", "State", "StepResult", "VariationLike", "make", "info", "PushT"} <= listed
     assert not listed & {
@@ -69,7 +68,7 @@ def test_dir_advertises_the_documented_namespace_and_the_environments_only():
             getattr(snv, name)
 
 
-def test_unpublished_step8_names_do_not_resolve():
+def test_internal_names_do_not_resolve_at_top_level():
     for name in (
         "StableEnv",
         "REGISTRY",

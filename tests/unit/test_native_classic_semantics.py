@@ -83,19 +83,6 @@ def test_pendulum_action_clipping_and_zero_reward_state():
         assert out["state", "torque"].item() == 2.0
 
 
-def test_swm_float32_physics_defaults_are_applied_exactly():
-    with se.make("CartPole", num_envs=1, device="cpu") as cart:
-        base = cart._simulator.envs[0].unwrapped
-        assert base.gravity == float(np.float32(9.8))
-        assert base.masspole == float(np.float32(0.1))
-        assert base.tau == float(np.float32(0.02))
-        assert base.total_mass == base.masspole + base.masscart
-        assert base.polemass_length == base.masspole * base.length
-    with se.make("Pendulum", num_envs=1, device="cpu") as pendulum:
-        base = pendulum._simulator.envs[0].unwrapped
-        assert base.dt == float(np.float32(0.05))
-
-
 @pytest.mark.parametrize("name", ["Acrobot", "MountainCar"])
 def test_remaining_discrete_action_contract(name):
     with se.make(name, num_envs=1, device="cpu") as env:
@@ -135,8 +122,10 @@ def test_continuous_mountain_car_dtype_transition_and_unclipped_action_cost():
         assert clipped["reward"].item() == -0.4
 
 
-def test_remaining_swm_float32_physics_defaults_are_applied_exactly():
+def test_swm_float32_physics_defaults_are_applied_exactly():
     cases = {
+        "CartPole": {"gravity": 9.8, "masspole": 0.1, "tau": 0.02},
+        "Pendulum": {"dt": 0.05},
         "Acrobot": {"LINK_LENGTH_1": 1.0, "LINK_COM_POS_1": 0.5, "LINK_MOI": 1.0},
         "MountainCar": {"gravity": 0.0025, "force": 0.001, "max_speed": 0.07},
         "MountainCarContinuous": {"power": 0.0015, "max_speed": 0.07},
@@ -145,4 +134,7 @@ def test_remaining_swm_float32_physics_defaults_are_applied_exactly():
         with se.make(name, num_envs=1, device="cpu") as env:
             base = env._simulator.envs[0].unwrapped
             for attribute, value in expected.items():
-                assert getattr(base, attribute) == float(np.float32(value))
+                assert getattr(base, attribute) == float(np.float32(value)), (name, attribute)
+            if name == "CartPole":
+                assert base.total_mass == base.masspole + base.masscart
+                assert base.polemass_length == base.masspole * base.length

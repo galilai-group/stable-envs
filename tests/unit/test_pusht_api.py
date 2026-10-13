@@ -1,8 +1,6 @@
-# Frozen compact-renderer/approximate-solver regressions. Public source-aligned
-# PushT checkpoint semantics are covered by test_pusht_public_semantics.py.
-"""Snapshot branching and state ownership for the existing PushT implementation.
+"""Snapshot branching and state ownership for the compact PushT renderer and approximate solver.
 
-These checks do not establish upstream contact-history equivalence or promote PushT.
+Source-aligned PushT checkpoint semantics are covered by test_pusht_public_semantics.py.
 """
 
 from __future__ import annotations
@@ -39,7 +37,8 @@ def test_step_is_stateful_and_returns_a_stepresult_carrying_the_state(env):
     assert set(out.keys()) == {"state", "states", "valid", "state_valid"}, (
         "PushT has no reward and no termination in stable-envs and must omit them rather than fabricate zeros"
     )
-    assert list(out.batch_size) == [6]
+    assert isinstance(out, snv.StepResult) and list(out.batch_size) == [6] and out.device == env.device
+    assert env.has_dynamics and snv.info("PushT")["has_dynamics"]
     assert torch.equal(env._pack_render_state(out["state"]), env._get_render_state())
     assert not torch.equal(before, env._get_render_state()), "step must advance the env's held state"
 
@@ -118,10 +117,6 @@ def test_a_cell_without_dynamics_says_so_precisely():
 def test_the_step_result_is_built_by_the_shared_helper(env):
     """One helper, so forty cells cannot each get the batch size or the device subtly different."""
     env.reset(seed=0)
-    out = env.step(_actions(6), frames=None)
-    assert isinstance(out, snv.StepResult)
-    assert list(out.batch_size) == [6] and out.device == env.device
-
     built = env._step_result(env.state, reward=torch.zeros(6), done=torch.zeros(6, dtype=torch.bool))
     assert set(built.keys()) == {"state", "reward", "done"}
     assert list(built["reward"].shape) == [6] and list(built["done"].shape) == [6]
@@ -163,7 +158,3 @@ def test_the_hook_reports_the_live_velocity_and_env_state_round_trips_through_st
         env._pack_render_state(branch_step(env, env.state, a)),
         env._pack_render_state(env.step(a, frames=None)["state"]),
     )
-
-
-def test_pusht_declares_that_it_has_dynamics(env):
-    assert env.has_dynamics and snv.info("PushT")["has_dynamics"]

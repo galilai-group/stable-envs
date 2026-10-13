@@ -187,7 +187,7 @@ class RocketReplay:
     def configure(self, row):
         for path, value in row.items():
             node = self.env.variation_space._walk(path)
-            node.set_init_value(copy.deepcopy(value))
+            node.set_init_value(copy.deepcopy(value), reset_value=False)
             if path in IMMEDIATE:
                 node.set_value(copy.deepcopy(value))
             if path in PAINTED:

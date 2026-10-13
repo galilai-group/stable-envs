@@ -1,36 +1,13 @@
-"""Every place user data enters, and the refusal it now gets instead of a plausible picture.
+"""User data entering the env is refused when it could be silently reinterpreted.
 
-THE DEFECT THIS FILE EXISTS FOR. ``set_state`` did
-``torch.as_tensor(states, ...).reshape(-1, self.state_dim)``. Hand that a frame stack and, whenever the
-flattened size happens to divide by ``state_dim``, it reshapes without complaint and the env renders a
-plausible-looking picture built out of pixel bytes read as coordinates. No exception, no warning, a
-frame that looks like a frame. Whether the size divides is arithmetic, not intent — PushT is 5 numbers
-against a 96x96x3 frame — so sooner or later it divides.
+``set_state`` must not reshape a frame stack into states just because its size divides ``state_dim``
+(PushT is 5 numbers against a 96x96x3 frame). The rule is shape-based: a state array is 2-D and its
+last axis is exactly ``state_dim``; ``render`` and ``render_states`` relax the rank and keep the
+last-axis rule. The same principle is checked for the style path, the dataset constructors, unknown
+``variation`` keys, ``sample_style(paths=)`` and ``out=`` buffers.
 
-The rule that replaces it is shape-based rather than size-based, which is what makes it impossible
-rather than unlikely: **a state array is 2-D and its last axis is exactly ``state_dim``**. Divisibility
-is never consulted for a multi-axis input. ``render`` and ``render_states``, whose documented contract
-is "arbitrary leading dims", relax the rank and keep the last-axis rule, which was the load-bearing
-half.
-
-THE SAME QUESTION, ASKED EVERYWHERE ELSE. The owner's phrasing is a principle, not a bug report: any
-place user data is reshaped, broadcast or index-cast in a way that can silently REINTERPRET it instead
-of refusing it. The siblings are covered below, one section each — the style path (which has collapsed
-a per-environment quantity to environment 0 three separate times in this repo's history), the two
-dataset constructors, ``variation`` dicts with unknown keys, ``sample_style(paths=)``, and ``out=``
-buffers.
-
-NO GPU, DELIBERATELY, AND THIS FILE MUST STAY THAT WAY. Shape, dtype, width and finiteness are all
-settled before anything touches a renderer, so none of it needs CUDA — and a guard test that lives in
-``tests/gpu/`` is SKIPPED on any machine without a device, which reads as coverage while measuring
-nothing. This repo has had two incidents of exactly that shape. Everything here runs on CPU tensors
-against a ``StableEnv`` subclass built with ``device="cpu"``; the base class's buffers, its style
-tensor and its ``__init_subclass__`` render hook are all real, so what is under test is the shipped
-path and not a mock of it.
-
-Every check asserts the MESSAGE, not only the exception type. ``pytest.raises(ValueError)`` passes just
-as well against ``ValueError("")``, and the entire point of a diagnostic is that a human reads it and
-knows what they did and what to do instead.
+Everything runs on CPU against a real ``Env`` subclass, so the base-class buffers, style tensor and
+render hook are the shipped ones. Each check asserts the message, not only the exception type.
 """
 
 from __future__ import annotations
@@ -51,13 +28,10 @@ NAMES = ("agent_x", "agent_y", "block_x", "block_y", "block_angle")
 
 
 class TinyEnv(StableEnv):
-    """5-wide state, a 3x4 frame, one 3-wide appearance knob. Draws WHICH state and WHICH colour.
+    """5-wide state, a 3x4 frame, one 3-wide appearance knob.
 
-    A real ``StableEnv`` subclass rather than a duck-typed stand-in, because half of what is under test
-    lives in the base class and in the ``__init_subclass__`` hook that wraps every subclass's
-    ``render``. Not registered: registration is about the fidelity declarations, and none of this is
-    about pixels. Pixel (0,0) carries ``state[0]`` and pixel (0,1) carries the block colour, so "did
-    row 3 get row 3's appearance" is an assertion on bytes.
+    Pixel (0,0) carries ``state[0]`` and pixel (0,1) the block colour, so "did row 3 get row 3's
+    appearance" is an assertion on bytes. Not registered.
     """
 
     name = "tiny"
@@ -69,9 +43,7 @@ class TinyEnv(StableEnv):
         return spaces.Dict({"block": spaces.Dict({"color": spaces.RGBBox(init_value=(10, 20, 30))})})
 
     def _render(self, states=None, size=None, supersample=None, variation=None, style=None, out=None):
-        # The first line of all 26 shipped render overrides, verbatim, including the unchecked
-        # ``as_tensor`` + ``reshape`` this file exists to make unreachable. The hook on the base class
-        # is what validates and substitutes before this body runs.
+        # Mirrors the unchecked as_tensor + reshape of shipped renders; the base-class hook validates first.
         s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
@@ -83,11 +55,7 @@ class TinyEnv(StableEnv):
 
 
 class ThreeWideEnv(TinyEnv):
-    """A 3-wide state, which is what makes a ``(..., 3)`` frame array ambiguous by SHAPE as well.
-
-    The interesting adversary: for this env a frame stack's last axis equals ``state_dim``, so a rule
-    that only compared widths would let ``(H, W, 3)`` through as a corpus of states.
-    """
+    """A 3-wide state: a frame stack's last axis equals ``state_dim``, so a width-only rule would admit it."""
 
     state_dim = 3
     state_names = ("x", "y", "z")
@@ -115,12 +83,8 @@ def _colors(frames: torch.Tensor) -> list[int]:
 # ============================================================ frames where states were meant
 
 
-def test_a_frame_stack_whose_size_DIVIDES_is_refused():
-    """THE bug. 8*5*5*3 is 600 numbers, an exact multiple of 5, so this used to reshape and RENDER.
-
-    This is the only case in the file where the old code produced pixels rather than a traceback, and
-    it is the reason the rule is on the shape rather than on whether the reshape happens to work.
-    """
+def test_a_frame_stack_whose_size_divides_is_refused():
+    """8*5*5*3 is 600 numbers, a multiple of 5, so a size-based rule would reshape and render it."""
     env = _env(120)  # 600 / 5 = 120, so even the batch lined up
     frames = torch.zeros((8, 5, 5, 3), dtype=torch.uint8)
     assert frames.numel() % env.state_dim == 0, "the fixture must be the DIVISIBLE case"
@@ -132,8 +96,8 @@ def test_a_frame_stack_whose_size_DIVIDES_is_refused():
     assert "TinyEnv.set_state" in msg, f"the message does not name the env: {msg}"
 
 
-def test_a_frame_stack_whose_size_does_NOT_divide_is_refused_with_the_same_message():
-    """The loud case, so that the two failures read alike instead of one being a reshape traceback."""
+def test_a_frame_stack_whose_size_does_not_divide_is_refused_with_the_same_message():
+    """A non-dividing frame stack fails with the same message as a dividing one."""
     env = _env(4)
     with pytest.raises(ValueError) as e:
         env._set_render_state(torch.zeros((4, 96, 96, 3), dtype=torch.uint8))
@@ -150,7 +114,7 @@ def test_uint8_is_called_out_by_name_because_states_are_float():
     assert "uint8" in msg and "astype(" in msg, f"dtype is the loudest signal: {msg}"
 
 
-def test_a_frame_stack_is_refused_even_when_its_last_axis_EQUALS_state_dim():
+def test_a_frame_stack_is_refused_even_when_its_last_axis_equals_state_dim():
     """A 3-wide env makes ``(H, W, 3)`` ambiguous by width, so rank has to carry the refusal."""
     env = _env(4, cls=ThreeWideEnv)
     with pytest.raises(ValueError) as e:
@@ -442,11 +406,7 @@ def test_an_unknown_variation_key_is_refused_rather_than_ignored():
 
 
 def test_an_unknown_path_in_sample_style_is_refused_rather_than_randomising_nothing():
-    """It used to match nothing and hand back the DEFAULT appearance for every environment.
-
-    That is indistinguishable, in the output, from a randomisation study whose randomisation had no
-    effect — which is the worst possible way for a typo to present.
-    """
+    """A typo must not silently yield the default appearance for every environment."""
     env = _env(4)
     with pytest.raises(KeyError) as e:
         env.sample_style(4, paths=["block.colour"])  # British spelling, silent no-op
@@ -470,8 +430,7 @@ def test_check_style_accepts_the_two_documented_forms():
 
 
 def test_a_state_dataset_refuses_a_frame_stack():
-    """It used to take its width from the INPUT — ``reshape(-1, st.shape[-1])`` — so any array at all
-    was a valid corpus and the mismatch surfaced (or did not) much later, at render time."""
+    """The corpus width comes from the env, not the input, so a frame stack is rejected at construction."""
     with pytest.raises(ValueError) as e:
         StateDataset(_env(1), torch.zeros((4, 8, 8, 3), dtype=torch.uint8), device=DEV)
     assert "FRAMES" in str(e.value) and "StateDataset" in str(e.value)
@@ -488,10 +447,7 @@ def test_a_state_dataset_still_flattens_a_leading_trajectory_axis():
 
 
 def test_a_trajectory_dataset_refuses_a_rank_three_frame_for_a_three_wide_env():
-    """``(H, W, 3)`` is rank 3, which ``_flatten`` reads as H trajectories of W 3-wide states.
-
-    For an env whose state happens to be 3 numbers wide that used to be accepted in full.
-    """
+    """``(H, W, 3)`` is rank 3 and would read as H trajectories of W 3-wide states."""
     with pytest.raises(ValueError) as e:
         TrajectoryDataset(_env(1, cls=ThreeWideEnv), torch.zeros((6, 8, 3), dtype=torch.uint8), device=DEV)
     assert "FRAMES" in str(e.value), str(e.value)
@@ -513,8 +469,7 @@ def test_a_trajectory_dataset_still_accepts_a_dense_corpus():
 
 
 def test_a_strided_out_buffer_is_refused_by_name():
-    """It used to be accepted and SCATTER the frames across the caller's neighbouring slices, because
-    ``Tensor.view`` hands a strided tensor straight back when the requested shape is the one it has."""
+    """A strided ``out`` would scatter frames across the caller's neighbouring slices."""
     buf = torch.zeros((4, 3, 8, 8, 3), dtype=torch.uint8)
     with pytest.raises(ValueError) as e:
         require_contiguous_out("test", buf[:, 1])

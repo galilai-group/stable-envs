@@ -1,27 +1,12 @@
-"""``examples/`` is unverified code that produces published numbers. This is the floor under it.
+"""``examples/`` scripts produce published numbers, so each is checked without running a benchmark.
 
-A mistake in library code raises. A mistake in a benchmark script does not — it produces a plausible
-number that goes into a table and is read as a measurement, which is why
-``tests/unit/test_benchmarks.py`` exists at all and why every guard in it replaced a published number
-that was wrong. But that file covers the DECISION FUNCTIONS of two scripts. The other twenty-four were
-covered by nothing: not their syntax, not their imports, not their argument parsing.
+  parses            every script under ``examples/`` compiles.
+  argument surface  every argparse script runs ``--help`` in a subprocess: that imports the module,
+                    builds the parser and exits 0, catching moved imports and import-time defaults that
+                    depend on something gone.
+  guarded           nothing heavier than building a parser happens at import time.
 
-The failure that motivates the cheapest of these checks is not hypothetical for a repository whose
-examples are the documentation: a script that no longer parses, or whose ``--flag`` was renamed under
-it, is indistinguishable from a working one until somebody runs it — and these are run on GPU nodes,
-through sbatch, with a twenty-minute queue in front of the traceback.
-
-Three levels, in ascending cost, and none of them RUNS a benchmark:
-
-  parses            every script under ``examples/`` compiles. Catches the edit that was never run.
-  argument surface  every script with an argparse gets ``--help`` executed in a subprocess. That
-                    imports the module, builds the parser and exits 0, so it also catches an import
-                    that moved, a decorator that now raises, and a default that is computed at import
-                    time from something that is gone.
-  guarded           nothing heavier than building a parser may happen at import time.
-
-Scripts whose import needs an optional dependency this interpreter does not have SKIP with the reason;
-see ``tests/gpu/_shared.py`` on why that rule is written down rather than assumed.
+Scripts whose import needs an optional dependency this interpreter lacks skip with the reason.
 """
 
 from __future__ import annotations
@@ -110,17 +95,10 @@ def test_the_argparse_sweep_below_is_not_empty():
 
 @pytest.mark.parametrize("path", ARGPARSE, ids=ARGPARSE_IDS)
 def test_every_argparse_script_can_print_its_own_help(path: Path):
-    """``--help`` imports the module, builds the parser, prints and exits 0. Cheap, and it finds a lot.
+    """``--help`` imports the module, builds the parser, prints and exits 0.
 
-    What a failure here means, in descending order of likelihood: an import that moved (this repo
-    renamed ``stable_envs.metrics`` and ``stable_envs.callbacks`` and the scripts are the last place
-    that gets updated), a default computed at import time from something deleted, a parser with two
-    options sharing a flag, or a module-level line that is doing real work.
-
-    A missing optional dependency SKIPS. ``examples/rendernet/train_corrector.py`` needs robocasa and
-    ``pre-repository-cleanup:docs/research/artifacts/step5_lewm_pusht/`` needs hydra and a policy checkpoint; neither absence says anything about
-    the script, and failing on it is the exact mistake that put four red marks on this suite today for
-    a Box2D the code under test does not use.
+    A failure means a moved import, a default computed at import time from something deleted, two options
+    sharing a flag, or a module-level line doing real work. A missing optional dependency skips.
     """
     env = dict(os.environ)
     env["PYTHONPATH"] = os.pathsep.join([str(ROOT), str(EXAMPLES), env.get("PYTHONPATH", "")]).rstrip(os.pathsep)

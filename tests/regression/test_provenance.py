@@ -1,11 +1,9 @@
 """``stable_envs.testing.provenance``: a bound measured against one reference version is not judged
 against another.
 
-The measured case: DM Control's trackcom cells, declared under mujoco 3.11.0, were judged in Step 4
-under 3.12.0, whose finite-plane texture re-anchoring (changelog 3.12.0 item 15, commit cc7fb98c) had
-phase-shifted the reference's floor checker. Three renderer FAILs were recorded for a version drift.
-The rule here is the existing one -- a dependency failure is not a fidelity failure -- applied one
-step later: the reference at the wrong version is a comparison that could not be made.
+A dependency failure is not a fidelity failure: a reference at the wrong version (for example mujoco
+3.12.0, whose finite-plane texture re-anchoring phase-shifts the floor checker declared under 3.11.0)
+is a comparison that could not be made.
 """
 
 from __future__ import annotations
@@ -32,8 +30,7 @@ def test_a_different_version_is_named_with_both_sides():
 
 
 def test_an_unrecorded_or_unknown_version_cannot_confirm_a_match():
-    """``fidelity_step4.provenance`` wrote "present" for a package with no ``__version__``; "could
-    not confirm" is the blocked case, not the passing one."""
+    """A package with no ``__version__`` (recorded as "present") cannot confirm a match."""
     for recorded in ({}, {"mujoco": None}, {"mujoco": "present"}, {"mujoco": ""}):
         bad = reference_version_mismatch({"mujoco": "3.11.0"}, recorded)
         assert bad == ["mujoco: declared 3.11.0, version not recorded by the measuring interpreter"], recorded

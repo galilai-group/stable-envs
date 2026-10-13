@@ -1,4 +1,4 @@
-"""The CPU memory-layout optimization preserves the previous bound predicate."""
+"""The CPU packed-layout bound predicate equals the plain packed-vector expression."""
 
 import pytest
 import torch
@@ -7,8 +7,8 @@ from stable_envs.render import raycast3d as rays
 from stable_envs.render.primitives import dot3
 
 
-def previous_bound(pos, rad, origins, directions, dd):
-    """Frozen pre-optimization packed-vector expression, independent of dispatch."""
+def reference_bound(pos, rad, origins, directions, dd):
+    """Plain packed-vector expression, independent of dispatch."""
     offset = pos - origins
     cross = torch.cross(offset.expand_as(directions), directions, dim=-1)
     radius = rad * rays._BOUND_SLACK_REL + rays._BOUND_SLACK_ABS
@@ -19,7 +19,7 @@ def previous_bound(pos, rad, origins, directions, dd):
 @pytest.mark.parametrize("dtype", [torch.float32, torch.float64])
 @pytest.mark.parametrize("distance", [0.001, 1.0, 100.0, 100000.0])
 @pytest.mark.parametrize("strided", [False, True])
-def test_tangent_masks_match_previous_bound(dtype, distance, strided):
+def test_tangent_masks_match_reference_bound(dtype, distance, strided):
     generator = torch.Generator().manual_seed(1209)
     axis = torch.randn(4, 1, 3, generator=generator, dtype=dtype)
     axis /= axis.norm(dim=-1, keepdim=True)
@@ -35,12 +35,12 @@ def test_tangent_masks_match_previous_bound(dtype, distance, strided):
     perturb = 1 + torch.linspace(-32, 32, 1026, dtype=dtype) * torch.finfo(dtype).eps
     sine = (effective / distance) * perturb
     directions = axis * torch.sqrt(1 - sine * sine).unsqueeze(-1) + side * sine.unsqueeze(-1)
-    directions[:, ::19] = 0  # Degenerate directions must retain legacy behavior.
+    directions[:, ::19] = 0  # Degenerate directions must still be handled.
     directions[:, 1::19] *= -1  # Include bound spheres behind the ray.
     if strided:
         origins, directions = origins[:, ::2], directions[:, ::2]
     dd = dot3(directions, directions)
-    expected = previous_bound(pos, rad, origins, directions, dd)
+    expected = reference_bound(pos, rad, origins, directions, dd)
     actual = rays._rays_near(pos, rad, origins, directions, dd)
     assert bool(expected.any()) and bool((~expected).any())
     assert torch.equal(actual, expected)

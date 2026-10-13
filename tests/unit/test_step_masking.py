@@ -1,4 +1,4 @@
-"""Compare shared routing/padding against the frozen pre-optimization dispatcher."""
+"""Compare shared routing/padding against the reference dispatcher."""
 
 import importlib.util
 from pathlib import Path

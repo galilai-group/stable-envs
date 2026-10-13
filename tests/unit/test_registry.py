@@ -1,18 +1,14 @@
-"""The registry knows stable-envs class names. The 42 SWM ids live in regression helpers.
+"""The registry knows stable-envs class names; the 42 SWM ids live in the test-only crosswalk.
 
-TWO ORACLES, and they are different in kind:
+Two oracles:
 
-  * the 42 SWM ids are asserted against the frozen SWM-id -> cell mapping
-    (``tests/fixtures/swm/frozen_cells.json``, extracted from the accepted Step-8 support matrix), which this
-    tree is not allowed to change. The test-only crosswalk is read from that file.
-  * the canonical class names are asserted against the BASELINE REGISTRY TABLE recorded from
-    ``21cb306`` into the frozen registry baseline
-    (``tests/fixtures/regression/references/registry_baseline.json``) — same interpreter, same optional
-    dependencies, so "the same classes as before" is a comparison and not an impression.
+  * the SWM ids are asserted against the frozen SWM-id -> cell mapping
+    (``tests/fixtures/swm/frozen_cells.json``), from which the crosswalk is read;
+  * the canonical class names are asserted against the frozen registry baseline
+    (``tests/fixtures/regression/references/registry_baseline.json``).
 
-Which env modules import depends on what is installed, so the recorded fingerprint (the set of modules
-that failed to import) is compared first and the class-by-class comparison is skipped, loudly, if the
-interpreter is not the one the baseline was taken on.
+Which env modules import depends on what is installed, so the baseline's import-failure set is compared
+first and the class-by-class comparison is skipped if this interpreter differs.
 """
 
 from __future__ import annotations
@@ -42,9 +38,8 @@ ROOT = Path(__file__).resolve().parents[2]
 MATRIX = ROOT / "tests" / "fixtures" / "swm" / "frozen_cells.json"
 BASELINE = ROOT / "tests" / "fixtures" / "regression" / "references" / "registry_baseline.json"
 SWM_IDS_IN_MATRIX = sorted({r["swm_id"] for r in json.loads(MATRIX.read_text())["rows"]})
-#: Env modules that left the package for ``contrib/`` after the baseline was recorded. Their baseline rows
-#: and import errors are compared in ``contrib/tests/unit/test_contrib_registry.py``; this file compares
-#: only the packaged classes.
+#: Env modules that live in ``contrib/``; their baseline rows are compared in
+#: ``contrib/tests/unit/test_contrib_registry.py``.
 CONTRIB_MODULES = frozenset(
     {
         "carracing",
@@ -131,15 +126,13 @@ def test_every_canonical_class_name_resolves_to_the_same_class_as_at_the_baselin
         "reference_id",
     }
     for name, row in then.items():
-        # ``module`` may move when unpublished shims are retired. The class is still the same
-        # object, reachable at its canonical module; the old import path is gone on purpose.
-        # Family/domain/render_state_dim are new explicit metadata, not a behavior change.
+        # The module path and the explicit family/domain/width metadata may differ; the class must not.
         now_cmp = {k: v for k, v in now[name].items() if k not in skip_keys}
         then_cmp = {k: v for k, v in row.items() if k not in skip_keys}
         assert now_cmp == then_cmp, f"the registry row for {name} changed"
         if now[name]["module"] != row["module"]:
             assert getattr(importlib.import_module(now[name]["module"]), name) is R.REGISTRY[name]
-        assert R.make.__module__ and R._resolve(name) is R.REGISTRY[name]
+        assert R._resolve(name) is R.REGISTRY[name]
 
 
 def test_list_envs_and_info_answer_without_constructing_anything():
@@ -157,8 +150,8 @@ def test_list_envs_and_info_answer_without_constructing_anything():
     assert snv.info is R.info
 
 
-def test_unpublished_historical_class_names_do_not_resolve():
-    """Pre-v0 renames are not public aliases. Frozen SWM ids are not either."""
+def test_renamed_class_names_do_not_resolve():
+    """Renamed classes and frozen SWM ids are not public aliases."""
     samples = ("DMCAcrobotSwingup", "PointmazeLargeNavigate", "MujocoAnt", "PFRocketLanding")
     for old in samples:
         live = canonical_from_frozen(old)

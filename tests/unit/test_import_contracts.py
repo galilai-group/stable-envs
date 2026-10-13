@@ -216,7 +216,7 @@ BANNED_IMPORTS = (
 )
 
 
-def test_unpublished_step8_shims_are_gone():
+def test_removed_shim_modules_are_absent():
     remaining = []
     for rel in GONE_SHIMS:
         path = ROOT / rel

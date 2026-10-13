@@ -1,27 +1,17 @@
-"""The torch rasterizer still draws what it drew at the Step 5 baseline, on CPU, byte for byte.
+"""``render_torch`` matches a frozen copy of the unoptimised torch rasterizer, on CPU, byte for byte.
 
-``render_torch`` is the executable specification the fused kernel is diffed against, and Step 6
-rewrote where it evaluates its arithmetic -- primitive families the slot does not have are skipped,
-so are outlines and rings nothing asks for, so are padded degenerate edges, so is every pixel outside
-a primitive's world-space bound, and rows whose bounds sit in different parts of the frame are
-grouped and windowed separately. Every one of those is a claim that some evaluation could not have
-reached a pixel, and each is exactly the kind of claim that a later edit breaks quietly.
+``render_torch`` is the executable specification the fused kernel is diffed against. It skips
+primitive families a slot lacks, unrequested outlines and rings, padded degenerate edges, pixels outside
+a primitive's world-space bound, and groups rows with distant bounds into separate windows. Each skip
+claims that no pixel could have changed.
 
-``tests/gpu/test_conformance.py::test_backend_agreement`` checks this function against the kernel,
-and that test needs a CUDA device. This one needs nothing: it is the same guarantee on the machine a
-renderer edit is actually made on, which is where the mistake gets made.
+The oracle is the pre-optimisation ``render_torch`` (commit ``89fa5ca8``), kept in
+``scripts/regression/raster2d/fuzz_render_torch.py``; comparing the current renderer with itself
+would pass whatever it drew. ``tests/gpu/test_conformance.py::test_backend_agreement`` checks the
+kernel on CUDA; this runs anywhere.
 
-THE ORACLE IS FROZEN AND IS NOT THIS REPO'S CURRENT CODE. It is ``render_torch`` as it stood at
-``89fa5ca8`` -- the completed Step 5 baseline, before any Step 6 renderer change -- kept in
-``scripts/regression/raster2d/fuzz_render_torch.py`` and loaded from there so there is one copy rather than
-two that can drift. Checked against the git blob when it was written: the two function bodies are
-AST-identical, the only differences being the parameter's type annotation, the docstring, and
-``_pixel_grid`` spelled through the module. Comparing the current renderer against itself would pass
-no matter what it drew.
-
-The generated scenes are deliberately the awkward ones, because the real envs are a narrow sample --
-every registered Scene2D env renders at supersample 1, none has a collinear polygon, none has a
-negative radius.
+The generated scenes are the awkward ones the real envs never produce: every registered Scene2D env
+renders at supersample 1, none has a collinear polygon, none has a negative radius.
 """
 
 from __future__ import annotations
@@ -58,10 +48,9 @@ def _same(want, got, what):
         return
     d = (want.to(torch.int16) - got.to(torch.int16)).abs()
     raise AssertionError(
-        f"{what}: render_torch no longer draws what the Step 5 baseline drew. "
+        f"{what}: render_torch differs from the frozen baseline. "
         f"{int((d.amax(-1) > 0).sum())} pixels differ, max |diff| {int(d.max())} of 255. "
-        f"Every Step 6 skip in this function is a claim that some evaluation could not reach a "
-        f"pixel; one of them is now wrong."
+        f"One of render_torch's skips discards work that reaches a pixel."
     )
 
 
@@ -202,7 +191,7 @@ def test_matches_the_frozen_baseline_on_named_cases(fuzz, tag, scene):
 def test_row_grouping_is_exercised_by_this_suite(fuzz):
     """A guard on the guard: if nothing above ever groups, the grouped path is untested and green.
 
-    ``_row_groups`` only engages where the batch-union window is much larger than a single row's
+    ``row_groups`` only engages where the batch-union window is much larger than a single row's
     box AND the cost model says the grouping pays for its own dispatch, which the named cases above
     deliberately are not. This builds the case that does: one disc per row, scattered, so every row
     lands in its own cell, at a batch where the model accepts. The batch is part of the test -- at
@@ -217,7 +206,7 @@ def test_row_grouping_is_exercised_by_this_suite(fuzz):
     sc = _scene(torch.ones(B, 1, dtype=torch.int32), g)
     plan = R2._prim_plan(sc, S, S)
     assert len(plan[0][6]) > 1, (
-        "no primitive in this suite is drawn through a grouped window, so _row_groups is never "
+        "no primitive in this suite is drawn through a grouped window, so row_groups is never "
         "exercised and every assertion above passes without touching it"
     )
     _same(fuzz.render_torch_baseline(sc, S, 1), R2.render_torch(sc, S, 1), "grouped rows")

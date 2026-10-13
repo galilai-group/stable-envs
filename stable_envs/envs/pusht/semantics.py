@@ -249,7 +249,7 @@ class PushT(Env):
                         converted = int(converted)
                 if not node.contains(converted):
                     raise ValueError(f"Invalid PushT Variation range/dtype: {key}")
-                node.set_init_value(converted)
+                node.set_init_value(converted, reset_value=False)
                 if key in self.immediate_variation_leaves:
                     node.set_value(copy.deepcopy(converted))
             staged.append(space)

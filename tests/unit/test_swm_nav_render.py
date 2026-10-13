@@ -1,4 +1,4 @@
-"""swm_nav still draws what it drew before Step 6 baked its background and cropped its dots.
+"""swm_nav's baked background and cropped dots draw exactly the full-frame composition.
 
 Two optimisations live behind ``render()`` for TwoRoom, TwoRoomTarget, Piecewise and PiecewiseZones,
 and each is a claim that some work could not have reached a pixel:
@@ -127,9 +127,8 @@ def test_matches_across_the_declared_radius_range(cfg, radius):
 def test_the_bake_is_not_a_function_of_call_history(cfg):
     """Purity, order invariance and batch-size invariance, with the cache deliberately warm.
 
-    The bake is the one piece of state Step 6 added to this path, and the failure it can have is a
-    plate that was mutated after it was cached -- which happened once, when the agent was painted
-    into the plate at batch 1 and every later render of that style came back with a stale dot on it.
+    The failure to catch is a cached plate mutated after caching, e.g. the agent painted into it at
+    batch 1 so later renders of that style show a stale dot.
     """
     env = se.make(cfg, num_envs=8, device="cpu")
     env.rng = np.random.default_rng(2)

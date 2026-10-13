@@ -76,7 +76,7 @@ def bin_primitives(
     ov = (oy.unsqueeze(-1) & ox.unsqueeze(-2)).permute(0, 2, 3, 1).reshape(B, nby * nbx, P)
     ai = ov.to(torch.int32)
     cnt = ai.sum(-1)
-    K = max(int(cnt.max().item()), 1)  # the one synchronisation per frame
+    K = max(int(cnt.max().item()), 1)
     pos = ai.cumsum(-1) - ai
     slot = torch.where(ov, pos, torch.full_like(pos, K)).to(torch.int64)
     lst = torch.zeros((B, nby * nbx, K + 1), dtype=torch.int32, device=dev)
@@ -293,7 +293,7 @@ if HAVE_TRITON:
                     lt = tl.zeros([BH, BW], dtype=tl.int32)
                     le = tl.zeros([BH, BW], dtype=tl.int32)
                     nact = tl.zeros([BH, BW], dtype=tl.int32)
-                    extra = X < 0  # an all-false tile-shaped mask
+                    extra = X < 0
                     for e in range(0, nv):
                         j = (e + nv - 1) % nv
                         ax = tl.load(vb + 2 * j + 0)

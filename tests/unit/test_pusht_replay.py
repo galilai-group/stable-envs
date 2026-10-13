@@ -1,8 +1,4 @@
-"""Private replay candidate: ownership, dynamic history and atomic failure.
-
-Source acceptance is a separate independent-oracle gate; these regression tests
-do not promote either public PushT registration.
-"""
+"""PushT replay engine: ownership, dynamic history and atomic failure."""
 
 import os
 

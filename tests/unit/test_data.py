@@ -1,29 +1,17 @@
 """``render_states``, ``StateDataset`` and ``TrajectoryDataset``: the indexing, not the pixels.
 
-``tests/gpu/test_reproducibility.py`` already drives all three over the whole registry with real
-renderers and asserts the thing that matters most — that a stored corpus regenerates bit-identical
-frames, through the loader, through ``all_frames``, and through a HuggingFace save/load. What it cannot
-do is reach the failures that are NOT about pixels, because they need a corpus that is deliberately
-malformed and an env whose frames say which state and which style produced them:
+The GPU reproducibility tests cover pixel-exact regeneration over the registry. This file covers the
+malformed-corpus failures that still produce a plausible tensor of the right shape:
 
-  * a window straddling an episode boundary teaches a transition that never happened and is invisible
-    in a loss curve;
-  * ``repeat`` instead of ``repeat_interleave`` gives trajectory j's appearance to trajectory i's
-    states and renders without complaint (this one is called out by name in ``data.py`` and had no
-    direct test);
-  * padded input whose padding gets indexed produces frames of a state the env never reached;
-  * a style with the wrong number of rows used to broadcast rather than raise.
+  * a window straddling an episode boundary teaches a transition that never happened;
+  * ``repeat`` instead of ``repeat_interleave`` gives trajectory j's appearance to trajectory i's states;
+  * padded input whose padding gets indexed renders a state the env never reached;
+  * a style with the wrong number of rows must raise rather than broadcast.
 
-Every one of them produces a plausible tensor of the right shape, which is why they are asserted here
-rather than left to a shape check somewhere.
-
-THE STAND-IN ENV. Nothing below needs a renderer, so it uses one that RECORDS what it was asked to
-draw and encodes the answer in the frame: pixel (0,0) carries ``state[0]`` and pixel (0,1) carries
-``style[0]``. That turns "did trajectory 1's states get trajectory 1's appearance" into an assertion on
-bytes rather than an appeal to reading the code. It is 3x5 rather than square on purpose — several real
-envs are not square (highway-env draws 150x600, Craftax 112x144) and a compression ratio computed from
-``size**2`` is wrong by up to 4x for them, in the flattering direction. The convention of standing in
-for an env with a small recording class is the one ``tests/unit/test_benchmarks.py`` already uses.
+The stand-in env records what it was asked to draw: pixel (0,0) carries ``state[0]`` and pixel (0,1)
+carries ``style[0]``, so "did trajectory 1's states get trajectory 1's appearance" is an assertion on
+bytes. It is 3x5 rather than square because several real envs are not square and a compression ratio
+computed from ``size**2`` is wrong for them.
 """
 
 from __future__ import annotations
@@ -210,12 +198,7 @@ def test_a_strided_out_buffer_is_refused_rather_than_silently_scattered():
 
 
 def test_a_numpy_out_buffer_is_filled_rather_than_crashed_on():
-    """numpy >= 2 arrays carry a ``.device`` attribute, and the old duck-typed check died on it.
-
-    ``getattr(flat, "device")`` is the string ``'cpu'`` for a numpy array, so ``.device.type`` raised
-    "'str' object has no attribute 'type'" — for a caller doing the ordinary thing of rendering into an
-    array they already own.
-    """
+    """numpy >= 2 arrays carry a string ``.device``, which must not be read as a torch device."""
     env = RecordingEnv()
     out = np.zeros((6, env.H, env.W, 3), np.uint8)
     got = render_states(env, _states(6), out=out, chunk=4, device="cpu")
@@ -299,14 +282,7 @@ def test_compression_measures_the_frame_rather_than_assuming_it_is_square():
 
 
 def test_compression_works_on_a_dataset_whose_style_is_per_row():
-    """It used to RAISE here, and the cause is worth keeping: the probe renders ONE state.
-
-    An env carrying a per-environment style refuses a one-row render, correctly and by design
-    (``core/style.py``), so a shape probe that left the appearance to the env blew up on exactly the
-    datasets that used domain randomisation. The dataset already knows the answer — it stores the style
-    it renders with — so it passes row 0 of that, and the frame SHAPE is what is being measured, which
-    no appearance changes.
-    """
+    """The shape probe renders one state, so it passes row 0 of the stored style rather than leaving it to the env."""
     env = RecordingEnv()
     sty = np.stack([np.full(2, 300 + i, np.float32) for i in range(20)])
     ds = StateDataset(env, _states(20), style=sty, device="cpu")

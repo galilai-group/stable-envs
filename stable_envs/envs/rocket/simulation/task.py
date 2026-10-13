@@ -26,7 +26,8 @@ import PyFlyt
 from gymnasium.spaces import Box
 from PyFlyt.gym_envs.rocket_envs.rocket_base_env import RocketBaseEnv
 
-from . import spaces as source_spaces
+from ....spaces import Box as VariationBox
+from ....spaces import Dict, RGBBox
 from .actions import validate_action
 from .spaces import nodes
 
@@ -60,19 +61,6 @@ class RocketLandingEnv(RocketBaseEnv):
         render_mode: None | Literal["human", "rgb_array"] = None,
         render_resolution: tuple[int, int] = (480, 480),
     ):
-        """__init__.
-
-        Args:
-            sparse_reward (bool): whether to use sparse rewards or not.
-            ceiling (float): the absolute ceiling of the flying area.
-            max_displacement (float): the maximum horizontal distance the rocket can go.
-            max_duration_seconds (float): maximum simulation time of the environment.
-            angle_representation (Literal["euler", "quaternion"]): can be "euler" or "quaternion".
-            agent_hz (int): looprate of the agent to environment interaction.
-            render_mode (None | Literal["human", "rgb_array"]): render_mode
-            render_resolution (tuple[int, int]): render_resolution.
-
-        """
         super().__init__(
             start_pos=np.array([[0.0, 0.0, ceiling * 0.9]]),
             start_orn=np.array([[0.0, 0.0, 0.0]]),
@@ -85,70 +73,64 @@ class RocketLandingEnv(RocketBaseEnv):
             render_resolution=render_resolution,
         )
 
-        """GYMNASIUM STUFF"""
-        # the space is the standard space + pad touch indicator
+        # The standard observation space plus a pad touch indicator.
         self.observation_space = Box(
             low=np.array([*self.combined_space.low, 0.0]),
             high=np.array([*self.combined_space.high, 1.0]),
             dtype=np.float64,
         )
 
-        # the landing pad
-        # file_dir = os.path.dirname(os.path.realpath(__file__))
-        # self.targ_obj_dir = os.path.join(file_dir, "../../models/landing_pad.urdf")
-
         pyflyt_dir = os.path.dirname(os.path.realpath(PyFlyt.__file__))
         self.targ_obj_dir = os.path.join(pyflyt_dir, "models/landing_pad.urdf")
 
-        """CONSTANTS"""
         self.sparse_reward = sparse_reward
 
-        """VARIATION SPACE"""
-        self.variation_space = source_spaces.Dict(
+        self.variation_space = Dict(
             {
-                "rocket": source_spaces.Dict(
+                "rocket": Dict(
                     {
-                        "body_color": source_spaces.RGBBox(
+                        "body_color": RGBBox(
                             init_value=np.array([255, 204, 0], dtype=np.uint8)  # yellow
                         ),
-                        "fin_color": source_spaces.RGBBox(
+                        "fin_color": RGBBox(
                             init_value=np.array([51, 51, 51], dtype=np.uint8)  # grey
                         ),
-                        "leg_color": source_spaces.RGBBox(
+                        "leg_color": RGBBox(
                             init_value=np.array([0, 0, 0], dtype=np.uint8)  # black
                         ),
-                        "booster_color": source_spaces.RGBBox(
+                        "booster_color": RGBBox(
                             init_value=np.array([51, 51, 51], dtype=np.uint8)  # grey
                         ),
                     }
                 ),
-                "pad": source_spaces.Dict(
+                "pad": Dict(
                     {
-                        "color": source_spaces.RGBBox(
+                        "color": RGBBox(
                             init_value=np.array([200, 200, 200], dtype=np.uint8)  # light grey
                         ),
                     }
                 ),
-                "environment": source_spaces.Dict(
+                "environment": Dict(
                     {
-                        "sky_color": source_spaces.RGBBox(
+                        "sky_color": RGBBox(
                             init_value=np.array([135, 206, 235], dtype=np.uint8)  # sky blue
                         ),
-                        "start_height_ratio": source_spaces.Box(
+                        "start_height_ratio": VariationBox(
                             low=0.7,
                             high=0.95,
                             init_value=0.9,
                             shape=(),
                             dtype=np.float32,
+                            exact=True,
                         ),
-                        "start_horizontal_offset": source_spaces.Box(
+                        "start_horizontal_offset": VariationBox(
                             low=-2.0,
                             high=2.0,
                             init_value=np.array([0.0, 0.0], dtype=np.float32),
                             shape=(2,),
                             dtype=np.float32,
                         ),
-                        "start_tilt": source_spaces.Box(
+                        "start_tilt": VariationBox(
                             low=-0.2,
                             high=0.2,
                             init_value=np.array([0.0, 0.0], dtype=np.float32),
@@ -161,11 +143,9 @@ class RocketLandingEnv(RocketBaseEnv):
             sampling_order=["environment", "rocket", "pad"],
         )
 
-        # Store original parameters
         self.ceiling = ceiling
         self.original_start_pos = np.array([[0.0, 0.0, ceiling * 0.9]])
 
-        # Track modified URDF paths
         self.modified_rocket_urdf = None
         self.modified_pad_urdf = None
         self._spawn_offset_limit = 2.0  # meters
@@ -177,14 +157,12 @@ class RocketLandingEnv(RocketBaseEnv):
         Returns:
             Path to the modified URDF file.
         """
-        # Parse the original landing pad URDF
         tree = ET.parse(self.targ_obj_dir)
         root = tree.getroot()
 
         # Get color from variation space (convert from 0-255 to 0-1)
         pad_color = self.variation_space["pad"]["color"].value / 255.0
 
-        # Add material if it doesn't exist
         material = root.find(".//material[@name='pad_material']")
         if material is None:
             material = ET.Element("material", name="pad_material")
@@ -201,7 +179,6 @@ class RocketLandingEnv(RocketBaseEnv):
                 f"{pad_color[0]:.3f} {pad_color[1]:.3f} {pad_color[2]:.3f} 1.0",
             )
 
-        # Apply material to visual
         visual = root.find(".//visual")
         if visual is not None:
             mat_ref = visual.find("material")
@@ -209,7 +186,6 @@ class RocketLandingEnv(RocketBaseEnv):
                 mat_ref = ET.SubElement(visual, "material")
             mat_ref.set("name", "pad_material")
 
-        # Write to temporary file
         temp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".urdf", delete=False)
         tree.write(temp_file.name)
         temp_file.close()
@@ -233,7 +209,6 @@ class RocketLandingEnv(RocketBaseEnv):
         options.setdefault("randomize_drop", False)
         options.setdefault("accelerate_drop", True)
 
-        # Handle variations
         self.variation_space.seed(seed)
         if getattr(self, "_replay_anchor", None) is not None:
             for path, node in nodes(self.variation_space):
@@ -292,7 +267,6 @@ class RocketLandingEnv(RocketBaseEnv):
             drone_options={"starting_fuel_ratio": 0.05},
         )
 
-        # reset the tracked parameters
         self.landing_pad_contact = 0.0
         self.ang_vel = np.zeros((3,))
         self.lin_vel = np.zeros((3,))
@@ -348,7 +322,6 @@ class RocketLandingEnv(RocketBaseEnv):
         else:
             pad_urdf_path = self.targ_obj_dir
 
-        # Load the landing pad
         self.landing_pad_id = self.env.loadURDF(
             pad_urdf_path,
             basePosition=np.array([0.0, 0.0, 0.1]),
@@ -365,7 +338,6 @@ class RocketLandingEnv(RocketBaseEnv):
             leg_color = self.variation_space["rocket"]["leg_color"].value / 255.0
             booster_color = self.variation_space["rocket"]["booster_color"].value / 255.0
 
-            # Get number of links in the rocket
             num_joints = p.getNumJoints(rocket_id, physicsClientId=self.env._client)
 
             # Change colors for each link based on joint names
@@ -429,14 +401,6 @@ class RocketLandingEnv(RocketBaseEnv):
         return state, info
 
     def step(self, action: np.ndarray) -> tuple[np.ndarray, float, bool, bool, dict]:
-        """Step the environment.
-
-        Args:
-            action: the action to take
-
-        Returns:
-            state, reward, terminated, truncated, info
-        """
         validate_action(action)
         state, reward, terminated, truncated, info = super().step(action)
         info["goal"] = self.current_goal
@@ -456,13 +420,11 @@ class RocketLandingEnv(RocketBaseEnv):
         - previous_action (vector of 4 values)
         - auxiliary information (vector of 4 values)
         """
-        # update the previous values to current values
         self.previous_ang_vel = self.ang_vel.copy()
         self.previous_lin_vel = self.lin_vel.copy()
         self.previous_lin_pos = self.lin_pos.copy()
         self.previous_ground_lin_vel = self.ground_lin_vel.copy()
 
-        # update current values
         (
             self.ang_vel,
             self.ang_pos,

@@ -1,9 +1,6 @@
-"""``stable_envs.envs.rocket.legacy`` on the CPU: the state contract, the colour law, the tessellation,
-the camera and the lag, against the measurements in ``pre-repository-cleanup:tests/fixtures/regression/join/step7/rocket-landing/``.
+"""CPU checks of the legacy Rocket landing cell: state layout, colour law, tessellation, camera and link lag.
 
-Nothing here renders (nvdiffrast is CUDA-only); the render path is asserted on the certification card
-by the conformance suite. What can be checked without a GPU is everything between a state and a
-triangle in clip space, and that is where every silent failure of this cell would live.
+Nothing here renders (nvdiffrast is CUDA-only); these cover everything between a state and a clip-space triangle.
 """
 
 from __future__ import annotations
@@ -23,7 +20,7 @@ REF = ROOT / "tests" / "fixtures" / "states" / "rocket_landing"
 
 def _corpus():
     if not (REF / "states.npz").exists():
-        pytest.skip("the M1 reference corpus is not checked out")
+        pytest.skip("the rocket reference corpus is not checked out")
     return np.load(REF / "states.npz")
 
 
@@ -35,8 +32,7 @@ def test_state_is_the_env_observation_prefix():
 
 
 def test_lagged_pose_reproduces_the_cached_link_pose_of_the_corpus():
-    """The links and the camera are drawn one substep behind the base; the corpus recorded where PyBullet
-    held link 0 after each step, and ``lagged_pose`` must land there from the observation alone."""
+    """Links and camera are drawn one substep behind the base; ``lagged_pose`` must land on PyBullet's link 0 pose."""
     S = _corpus()
     pos, q, pos_prev, q_prev, v, w = RL.lagged_pose(S["obs30"][:, :13])
     cached = S["cached_link0"]
@@ -147,9 +143,8 @@ def test_camera_is_pyflyts_rocket_camera():
     )
     if val.exists():
         v = json.load(open(val))
-        # PyBullet's computeViewMatrix runs in float32 at translations of hundreds of metres, so the
-        # comparison is against a float32 view matrix: 400 m * 2^-23 ~ 5e-5 per element, 1e-3 measured
-        # worst (1.009e-3 against PyFlyt's live view_mat in review), ~0.1 px at 3 m.
+        # PyBullet's computeViewMatrix runs in float32 at translations of hundreds of metres
+        # (400 m * 2^-23 ~ 5e-5 per element); the measured worst case is ~1e-3, ~0.1 px at 3 m.
         assert v["camera_view_and_proj_max_err"] < 3e-3 and v["link_frames_max_err"] < 1e-5
 
 
@@ -186,7 +181,7 @@ def test_default_style_row_is_the_variation_space_default():
 
 
 def test_lagged_pose_renormalises_a_float32_quaternion():
-    """RC-1: a float32 state carries |q| = 1 +- 3e-8; the lag law and the reference must see a unit one."""
+    """A float32 state carries |q| = 1 +- 3e-8; the lag law must still see a unit quaternion."""
     S = _corpus()
     q32 = S["state13"][:, 3:7]
     assert np.abs(np.linalg.norm(q32.astype(np.float64), axis=1) - 1).max() > 1e-9  # it really is off
@@ -195,24 +190,10 @@ def test_lagged_pose_renormalises_a_float32_quaternion():
     assert np.abs(np.linalg.norm(q_prev, axis=1) - 1).max() < 1e-12
 
 
-def test_the_visual_declaration_is_complete_and_measured():
-    """M6: every required key is a MEASURED number, the thresholds leave the measurement real margin,
-    and the declaration passes the registry's own check without a GPU.
+def test_visual_declaration_is_complete_with_margin():
+    """Every required key is a number, the thresholds leave margin over the measurement, and the registry accepts it.
 
-    This replaces ``..._and_marked_unmeasured``, which pinned every value at ``None`` so that a
-    consumer reading ``describe()`` could not mistake a Phase-0 estimate for a measurement (review
-    item RC-4). The measurement arrived with job 6410105 and the placeholder is gone, so the test's
-    job changes with it: it pins the SHAPE of an honest declaration rather than the values. Nothing is
-    None; ``measured_at`` no longer says UNMEASURED and still names the resolution, the protocol, the
-    reference build and the card; each threshold sits on the correct side of its measurement WITH
-    margin rather than on top of it, because a ceiling equal to the measurement is a test that fails
-    on the next driver; and the reference bridge's contact-band exclusion is declared with the share
-    it was measured at rather than left implicit.
-
-    The values themselves are deliberately NOT asserted here. A CPU test that re-stated the numbers
-    would be the declaration checking a copy of itself. What asserts them is
-    ``tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity``, on a card,
-    against the official PyFlyt renderer.
+    The values themselves are asserted against a card in tests/gpu/test_conformance.py.
     """
     from stable_envs.env import REQUIRED_VISUAL_FIDELITY
     from stable_envs.registry import check_decoder_declaration, check_fidelity_declaration
@@ -225,17 +206,14 @@ def test_the_visual_declaration_is_complete_and_measured():
         assert token in vf["measured_at"], f"measured_at does not say {token!r}"
     assert vf["reference_versions"] == {"PyFlyt": "0.29.0", "pybullet": "3.2.7"}
     assert set(vf["measured_with"]) == {"nvdiffrast", "torch"}
-    # the thresholds bound the measurement, and do so with margin
     assert vf["mean_abs"] < vf["mean_abs_max"]
     assert vf["within8_frac"] > vf["within8_min"]
     assert vf["ssim"] > vf["ssim_min"]
     assert vf["mean_abs_max"] >= 1.2 * vf["mean_abs"], "a ceiling sitting on the measurement is fragile"
     assert vf["within8_min"] <= 0.97 * vf["within8_frac"]
     assert vf["ssim_min"] <= 0.97 * vf["ssim"]
-    # the worst draw is the declared one, and the spread contains it
     lo, hi = vf["draw_spread"]["mean_abs"]
     assert lo <= hi and abs(vf["mean_abs"] - hi) < 0.01
-    # defect B's exclusion is declared, at the share it was measured at
     assert vf["reference_unreachable_share"] == RL.REFERENCE_UNREACHABLE_SHARE == 1.0 / 960.0
     assert vf["reference_unreachable_rows_in_draws"] == 0
     check_fidelity_declaration(RL.PyFlytRocketLanding)

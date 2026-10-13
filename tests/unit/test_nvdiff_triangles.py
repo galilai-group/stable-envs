@@ -1,4 +1,4 @@
-"""The Step-7 generic pieces of ``stable_envs.render.nvdiff``, on the CPU, against MEASURED numbers.
+"""The generic pieces of ``stable_envs.render.nvdiff``, on the CPU, against MEASURED numbers.
 
 ``Scene.from_triangles``, ``gather_material``, ``shade_tiny``, ``offset_clip`` and ``prepare_texture_array``
 are pure torch/numpy and need neither mujoco nor nvdiffrast. The shading numbers here are not chosen:

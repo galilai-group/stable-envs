@@ -164,14 +164,7 @@ def test_there_are_launchers_to_check():
 
 
 def test_all_launchers_exclude_the_same_measured_faulty_nodes():
-    """A node that returns different pixels for the same scene invalidates every number measured on it.
-
-    The lists used to disagree — the DM Control launcher excluded ``gpu-068`` and ``gpu-082`` and the
-    other two did not — which means the full suite and the smoke subset were both still schedulable
-    onto hardware the DM Control run had already been told to avoid. The failure that produces is not a
-    crash: it is 25 OGBench cells disagreeing by 69-90/255 and reading exactly like a state-sufficiency
-    violation in the ray caster, followed by a SIGABRT that no ``try``/``except`` catches.
-    """
+    """A node that renders different pixels for the same scene invalidates every number measured on it."""
     lists = {p.name: _sbatch_directive(p, "exclude") for p in LAUNCHERS}
     missing = [n for n, v in lists.items() if not v]
     assert not missing, f"these launchers exclude no nodes at all: {missing}"

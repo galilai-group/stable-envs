@@ -400,7 +400,7 @@ class CartPole(ClassicControlSemantics, _Classic):
     POLELEN = 125.0  # scale * 2 * length
     CARTY = 100.0
     AXLEOFF = 30.0 / 4.0
-    AXLE_R = 5  # int(polewidth / 2)
+    AXLE_R = 5
 
     # Preserve source arithmetic expressions: replacing products with decimal literals can change rounding.
     sim_state_names = ("x", "x_dot", "theta", "theta_dot")
@@ -411,7 +411,7 @@ class CartPole(ClassicControlSemantics, _Classic):
     MASSCART = 1.0
     MASSPOLE = 0.1
     TOTAL_MASS = MASSPOLE + MASSCART
-    LENGTH = 0.5  # actually half the pole's length
+    LENGTH = 0.5
     POLEMASS_LENGTH = MASSPOLE * LENGTH
     FORCE_MAG = 10.0
     TAU = 0.02
@@ -506,7 +506,7 @@ class CartPole(ClassicControlSemantics, _Classic):
         cyi = torch.full_like(cxi, int(self.CARTY + self.AXLEOFF))
         _circ(cv, cxi, cyi, self.AXLE_R, sty["axle.color"], bi, g)
 
-        _row(cv, int(self.CARTY), sty["track.color"])  # gfxdraw.hline, drawn LAST, over the cart
+        _row(cv, int(self.CARTY), sty["track.color"])
 
     disc_radii = (AXLE_R,)
     fused_capable = True
@@ -596,8 +596,8 @@ class Pendulum(ClassicControlSemantics, _Classic):
         Round the torque product before adding gravity, matching NumPy scalar promotion.
         """
         th, thdot = s[:, 0], s[:, 1]
-        u = a[:, 0].clamp(-self.MAX_TORQUE, self.MAX_TORQUE)  # float32, as the ref
-        drive = (3.0 / (self.M * self.L**2) * u).to(torch.float64)  # float32 mul, then widen
+        u = a[:, 0].clamp(-self.MAX_TORQUE, self.MAX_TORQUE)
+        drive = (3.0 / (self.M * self.L**2) * u).to(torch.float64)
         newthdot = thdot + (3 * self.G / (2 * self.L) * torch.sin(th) + drive) * self.DT
         newthdot = newthdot.clamp(-self.MAX_SPEED, self.MAX_SPEED)
         return torch.stack([th + newthdot * self.DT, newthdot, u.to(torch.float64)], 1)
@@ -678,7 +678,7 @@ class Pendulum(ClassicControlSemantics, _Classic):
         flip = (u > 0).to(torch.int64)
         w = self.WIN
         i = torch.arange(w, device=self.device)
-        off = (w // 2) - torch.div(n, 2, rounding_mode="floor")  # 56 - n//2
+        off = (w // 2) - torch.div(n, 2, rounding_mode="floor")
         ly = i.view(1, -1) - off.view(-1, 1)  # (B,w)
         lx = ly
         valid = ((ly >= 0) & (ly < n.view(-1, 1))).view(B, w, 1) & ((lx >= 0) & (lx < n.view(-1, 1))).view(B, 1, w)
@@ -1115,7 +1115,6 @@ class MountainCar(ClassicControlSemantics, _Classic):
                 g,
             )
 
-        # gfxdraw.vline, the flag pole
         cv.buf[:, :, self.flagy1 : self.flagy2 + 1, self.flagx] = _u8(sty["flag.pole_color"]).t().unsqueeze(-1)
         tri = (
             g.verts(
