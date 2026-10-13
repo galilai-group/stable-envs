@@ -276,9 +276,10 @@ class DMControlTrackCom(_DMCModel):
         tilt = self._floor_tilt()
         if tilt is None:
             return None
-        angle = torch.deg2rad(sty[tilt[0]][lo:hi].reshape(-1).to(torch.float64))
-        if not bool((angle != 0).any()):
+        degrees = sty[tilt[0]][lo:hi].reshape(-1)
+        if not bool(degrees.any()):
             return None
+        angle = torch.deg2rad(degrees.to(torch.float64))
         s, c = torch.sin(angle).float(), torch.cos(angle).float()
         z, o = torch.zeros_like(s), torch.ones_like(s)
         return torch.stack((c, z, s, z, o, z, -s, z, c), -1).reshape(-1, 3, 3)
@@ -288,9 +289,14 @@ class DMControlTrackCom(_DMCModel):
         slots = self._floor_slots()
         if slots is None:
             return None
-        rows = torch.floor(sty["floor.color"][lo:hi].reshape(-1, 2, 3).to(torch.float64) * 255).clamp(0, 255)
-        default = torch.as_tensor(_quantise(slots["default"]), dtype=rows.dtype, device=rows.device)
-        if torch.equal(rows, default.expand_as(rows)):
+        colours = sty["floor.color"][lo:hi].reshape(-1, 2, 3)
+        default = torch.as_tensor(slots["default"], dtype=colours.dtype, device=colours.device)
+        if bool((colours == default).all()):
+            return None
+        rows = torch.floor(colours.to(torch.float64) * 255).clamp(0, 255)
+        if torch.equal(
+            rows, torch.as_tensor(_quantise(slots["default"]), dtype=rows.dtype, device=rows.device).expand_as(rows)
+        ):
             return None
         return (rows / 255).float()
 
@@ -481,9 +487,15 @@ class DMControlTrackCom(_DMCModel):
         worlds = min(capacity, 1 << max(0, B - 1).bit_length())
         c = self._context(size, worlds)
         masses = self._row_masses(sty, 0, B)
+        floor, palette = self._row_floor(sty, 0, B), self._row_palette(sty, 0, B)
+        if palette is not None and (c.reflection is None or c.reflection.palette is None):
+            raise RuntimeError(
+                f"{type(self).__name__}: floor.color is drawn by the floor reflection pass, which needs "
+                f"mujoco-warp 3.12; install stable-envs[dmcontrol-gpu]"
+            )
         for lo in range(0, B, worlds):
             hi = min(B, lo + worlds)
-            self._upload(c, s[lo:hi], sty, lo, hi, masses)
+            self._upload(c, s[lo:hi], sty, lo, hi, masses, floor, palette)
             torch.cuda.synchronize()
             c.wp.capture_launch(c.graph)
             c.wp.synchronize()
@@ -515,7 +527,7 @@ class DMControlTrackCom(_DMCModel):
         cls._slot_rows_cache = rows
         return rows
 
-    def _upload(self, c: _TCtx, s: torch.Tensor, sty, lo: int, hi: int, masses=None) -> None:
+    def _upload(self, c: _TCtx, s: torch.Tensor, sty, lo: int, hi: int, masses=None, floor=None, palette=None) -> None:
         """Write compact rows and styles into the context’s per-world buffers."""
         import mujoco
 
@@ -540,23 +552,15 @@ class DMControlTrackCom(_DMCModel):
                     wp.to_torch(getattr(c.wm, name))[:] = value.to(torch.float32)
             c.masses_varied = False
         tilt = self._floor_tilt()
-        if tilt is not None:
-            floor = self._row_floor(sty, lo, hi)
+        if floor is not None:
+            wp.to_torch(c.wd.geom_xmat)[:n, tilt[1]] = floor[lo:hi]
+            c.floor_tilted = True
+        elif c.floor_tilted:
             xmat = wp.to_torch(c.wd.geom_xmat)
-            if floor is not None:
-                xmat[:n, tilt[1]] = floor
-                c.floor_tilted = True
-            elif c.floor_tilted:
-                xmat[:, tilt[1]] = torch.eye(3, device=xmat.device, dtype=xmat.dtype)
-                c.floor_tilted = False
-        palette = self._row_palette(sty, lo, hi)
+            xmat[:, tilt[1]] = torch.eye(3, device=xmat.device, dtype=xmat.dtype)
+            c.floor_tilted = False
         if c.reflection is not None and c.reflection.palette is not None:
-            c.reflection.recolour(palette)
-        elif palette is not None:
-            raise RuntimeError(
-                f"{type(self).__name__}: floor.color is drawn by the floor reflection pass, which needs "
-                f"mujoco-warp 3.12; install stable-envs[dmcontrol-gpu]"
-            )
+            c.reflection.recolour(None if palette is None else palette[lo:hi])
         m, pr = self._model(), self._pristine()
         mr = wp.to_torch(c.wm.mat_rgba)
         for name in self._used_materials():

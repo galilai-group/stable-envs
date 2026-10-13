@@ -99,6 +99,7 @@ class Reflection:
                 "floor_recolour": wp.zeros(1, dtype=int, device=device),
             }
         self.palette = palette if recolour else None
+        self._recoloured = False
 
         @wp.struct
         class Scene:
@@ -581,8 +582,11 @@ class Reflection:
 
     def recolour(self, rows) -> None:
         """Draw the first ``len(rows)`` worlds' checker in ``rows`` (n,P,3); None draws the compiled texture."""
+        if rows is None and not self._recoloured:
+            return
         flags = self._wp.to_torch(self._scene.floor_recolour)
         flags.zero_()
+        self._recoloured = rows is not None
         if rows is None:
             return
         n = int(rows.shape[0])
