@@ -29,3 +29,22 @@ def owned_columns(rows, batch, device):
     return TensorDict(
         {key: torch.from_numpy(value).to(device) for key, value in columns.items()}, [batch], device=device
     )
+
+
+def require_columns(state, shapes):
+    """Check that State holds every ``{key: (shape, dtype)}`` column and that all are finite.
+
+    Finiteness is reduced over every column before a single host read."""
+    present = {(key,) if isinstance(key, str) else key for key in state.keys(True, True)}
+    values = []
+    for key, (shape, dtype) in shapes.items():
+        if ((key,) if isinstance(key, str) else key) not in present:
+            raise ValueError(f"Full State missing {key}")
+        value = state[key]
+        if value.shape != shape or value.dtype != dtype:
+            raise ValueError(f"Invalid State field {key}")
+        values.append((key, value))
+    if values and not bool(torch.stack([torch.isfinite(value).all() for _, value in values]).all()):
+        raise ValueError(
+            f"Invalid State field {next(key for key, value in values if not torch.isfinite(value).all())}"
+        )
