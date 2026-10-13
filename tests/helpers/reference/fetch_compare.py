@@ -1,9 +1,4 @@
-"""Exact comparisons between candidate Fetch State/outputs and pinned source environments.
-
-Copied unchanged from the historical public Fetch gate and adapter probe
-(pre-repository-cleanup:scripts/recovery/fetch_public_gate.py and
-fetch_pickandplace_adapter_probe.py). Values, shapes and dtypes are compared exactly.
-"""
+"""Exact comparisons between candidate Fetch State/outputs and pinned source environments."""
 
 import gymnasium as gym
 import numpy as np

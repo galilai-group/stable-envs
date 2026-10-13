@@ -362,7 +362,3 @@ class FetchAdapter(SimulatorAdapter):
             for e in self.envs:
                 e.close()
             self._closed = True
-
-
-# Retained for external replay and acceptance scripts.
-FetchPickAndPlaceAdapter = FetchAdapter

@@ -493,25 +493,14 @@ class FetchBase(Env):
     )
     parity_interior_min = 0.99
     parity_note = (
-        "TWO declared residuals, measured separately, both structural to the backend rather than to "
-        "this scene. (1) THE ROBOT'S 18 MESHES ARE SHADED PER PIXEL AND MuJoCo SHADES THEM PER VERTEX. "
-        "MuJoCo draws meshes as triangles with Gouraud interpolation of vertex colours; an analytic "
-        "per-pixel Blinn-Phong evaluation lands within a level or two of it and not on it. The robot "
-        "is 8.9% of the frame and carries essentially all of the interior residual -- 0.8% of interior "
-        "pixels, at an interior mean of 0.009/255, i.e. the disagreement is one level where it exists "
-        "at all. This is the same limit the OGBench port records and refuted three ways (Gouraud over "
-        "MuJoCo's own tessellation scored WORSE than plain per-pixel there), and it bites here because "
-        "a Fetch mover is 9% of the frame rather than 20 pixels. (2) THE TRANSLUCENT MOCAP MARKERS ARE "
-        "NOT DRAWN. robot0:mocap carries a 1 cm cube at alpha 0.7 and three 2 m crosshair bars at "
-        "alpha 0.1; mujoco_warp's shader reads only color[0..2] and packs a constant 255, so it has no "
-        "alpha path at all and would paint them opaque saturated green. Measured against a reference "
-        "with them hidden: they are 1.2-1.5% of ALL pixels (mean 0.32/255) and 0.000002 of INTERIOR "
-        "pixels -- a translucent bar over a flat surface leaves no flat 3x3 neighbourhood, so none of "
-        "it reaches the interior metric. That is also why mocap is not in the state: it reaches no "
-        "other pixel. What is NOT in these numbers, because it was found and fixed: the float->uint8 "
-        "quantisation rule (mujoco_warp truncates, GL rounds), worth interior 0.791 -> 0.9988 on its "
-        "own. The static 91% of the frame -- floor, table, skybox -- is exact by construction, because "
-        "it is baked through MuJoCo itself."
+        "Two declared residuals, both structural to the MJWarp backend. (1) The robot's 18 meshes are "
+        "shaded per pixel while MuJoCo shades them per vertex (Gouraud), so they differ by a level or two "
+        "where they differ at all: 0.8% of interior pixels, mean 0.009/255. The robot is 8.9% of the "
+        "frame. (2) The translucent mocap markers (a 1 cm cube at alpha 0.7, three 2 m crosshair bars at "
+        "alpha 0.1) are not drawn: mujoco_warp has no alpha path and would paint them opaque. They cover "
+        "1.2-1.5% of all pixels (mean 0.32/255) but 0.000002 of interior pixels, since a translucent bar "
+        "over a flat surface leaves no flat 3x3 neighbourhood. The static 91% of the frame (floor, table, "
+        "skybox) is baked through MuJoCo itself and is exact."
     )
 
     def __init__(
