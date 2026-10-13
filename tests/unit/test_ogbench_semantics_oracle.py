@@ -1,4 +1,4 @@
-"""Replay the independent frozen OGBMaze full-State oracle without importing SWM."""
+"""Replay the frozen OGBMaze full-State corpus (recorded from stable-worldmodel) without importing it."""
 
 import hashlib
 import importlib.metadata
