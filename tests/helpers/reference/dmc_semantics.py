@@ -74,6 +74,7 @@ PHYSICS_LEAVES = {
         )
     },
 }
+PHYSICS_LEAVES["walker"] = (*PHYSICS_LEAVES["walker"], "floor.rotation_y")
 _FLOOR = {"cheetah": "ground"}
 
 

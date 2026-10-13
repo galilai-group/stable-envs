@@ -91,8 +91,9 @@ def _make(name):
 
 
 def _swm_dtype(leaf, value):
-    # SWM holds gravity in float64 and every other physics leaf in float32.
-    return np.asarray(value, np.float64 if leaf.startswith("gravity.") else np.float32).reshape(-1)
+    # SWM holds gravity and the floor tilt in float64 and every other physics leaf in float32.
+    wide = leaf.startswith("gravity.") or leaf == "floor.rotation_y"
+    return np.asarray(value, np.float64 if wide else np.float32).reshape(-1)
 
 
 class _Lanes:
@@ -216,7 +217,7 @@ def sampled_and_restored_gate(name, seed=29, steps=20):
         values = {leaf: drawn[("physics", *leaf.split("."))].numpy() for leaf in leaves}
         for leaf, value in values.items():
             assert len(set(value.reshape(-1).tolist())) == 3, (leaf, value)
-            if not leaf.startswith("gravity."):
+            if not (leaf.startswith("gravity.") or leaf == "floor.rotation_y"):
                 # SWM holds these leaves in float32; our draw is a float32 style value.
                 assert np.array_equal(value, value.astype(np.float32).astype(np.float64)), (leaf, value)
         lanes = _Lanes(name, values)

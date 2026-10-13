@@ -4,15 +4,13 @@
 Seventeen ``stable_worldmodel`` ids, 161 variation leaves. Every one of them is exactly one of:
 
 ``mapped``
-    reachable through a stable-envs leaf. 110 leaves. Every DM Control physics leaf (gravity,
-    densities, masses, friction) goes through the physics hook and is gated against swm stepping the
-    same values (tests/integration/test_dmc_physics_variation.py); the ones that also move pixels
-    (the ten ``trackcom`` mass leaves, ball-in-cup's gravity and ball size) are drawn from the same
-    values.
+    reachable through a stable-envs leaf. 140 leaves. Every DM Control physics leaf (gravity,
+    densities, masses, friction, walker's floor tilt) goes through the physics hook and is gated
+    against swm stepping the same values (tests/integration/test_dmc_physics_variation.py); the ones
+    that also move pixels (the ten ``trackcom`` mass leaves, walker's floor tilt, ball-in-cup's gravity
+    and ball size) are drawn from the same values.
 ``unsupported``
-    the leaf has a real effect upstream that THIS cell cannot express. 30 leaves: the classic-control
-    dynamics constants, the floor colour on the five ``trackcom`` cells and walker's floor tilt, each
-    with the mechanism in its reason.
+    the leaf has a real effect upstream that THIS cell cannot express. 0 leaves.
 ``dead_upstream``
     the leaf reaches no pixel and no state in ``stable_worldmodel`` ITSELF. The reason carries the
     measurement. 21 leaves.
@@ -324,19 +322,23 @@ _FLOOR_MAPPED = (
     "and left alone exactly as swm's recompile leaves them."
 )
 
-#: The floor, on the five trackcom cells: still unsupported, and now for a narrower reason.
-_FLOOR_COLOR = (
-    "UNSUPPORTED on this cell, and it is a RANGE gap rather than a default gap. swm writes the "
-    "builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. This cell is in "
-    "the ``DMControlTrackCom`` tier: the camera rides the body, there is no static half of the scene "
-    "and therefore no baked plate, and the whole scene is handed to mujoco_warp, which uploads its "
-    "textures when the render context is BUILT -- so a per-value floor here is one render context "
-    "per value, which is the one thing this repo will not scale. The capability that closed this "
-    "leaf on the eight parity cells (per-value texel substitution on a baked plate) does not apply "
-    "where there is no plate. What IS reachable is the one value that matters for certification: "
-    "swm's init_value is character-for-character common/materials.xml's own grid texture, so the "
-    "REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all. "
-    "DOCUMENTED_LIMITATION, five ids (Cheetah, Walker, Hopper, Humanoid, Quadruped)."
+#: The floor, on the five trackcom cells.
+_FLOOR_TRACKCOM = (
+    "Our ``floor.color`` is swm's leaf in shape, order, units and default, read from dm_control's "
+    "common/materials.xml as on the parity cells. swm rewrites the builtin ``grid`` texture's rgb1/rgb2 "
+    "and recompiles; these cells hand the whole scene to mujoco_warp, which fixes its textures when the "
+    "render context is built, so the floor is instead drawn from a second texture holding each texel's "
+    "palette weights (rgb1, rgb2, and the edge marks, which keep markrgb as swm's recompile does). "
+    "Texture filtering is linear in the texels, so weights times each row's colours, stored as the "
+    "compiled texture stores them, are the substituted texture's own samples: one render context serves "
+    "every colour; on CUDA the recoloured frames are bit-identical to a render context built on the "
+    "substituted texture. The CPU renderer does the same per row and the OpenGL backend substitutes the "
+    "texels. Gated by tests/integration/test_dmc_appearance_variation.py against swm's frames over 8 "
+    "steps, normalized MSE mean (worst frame) over the five cells: a dim checker ((.3,.25,.05), "
+    "(.05,.1,.35)) at most 0.00038 (0.00044) on CPU and 0.00056 (0.00061) on CUDA, near each cell's "
+    "default residual (0.0001-0.0004); a saturated one ((.9,.1,.1), (.1,.8,.2)) at most 0.00053 "
+    "(0.00074) on CPU and 0.0015 (0.0015, humanoid) on CUDA, whose floor shading residual grows with "
+    "the floor's albedo; 0.002-0.12 with the leaf ignored. The OpenGL backend matches swm at MSE 0."
 )
 
 _PHYSICS_MAPPED = (
@@ -361,6 +363,19 @@ _INERT = {
     "quadruped": "Mapped and exact, and inert upstream: the feet carry friction 1.5 and MuJoCo combines "
     "a contact's friction by max, so swm's own trajectory does not move (0 qpos shift over 200 steps).",
 }
+
+_FLOOR_TILT = (
+    _PHYSICS_MAPPED + ". swm writes the floor geom's zaxis = (sin, 0, cos) in float32 and recompiles; "
+    "the physics hook writes the geom_quat that compile produces (MuJoCo's own z-to-vector rule, "
+    "bit-identical), its frame flag and the world body's bounding box, which is 0 State error over the "
+    "physics gate. The floor turns about its own centre (x = 248), so any tilt moves the walker's "
+    "contact by metres. The renderer takes each row's floor orientation from the same value: the "
+    "mujoco_warp path uploads the floor's per-world pose, which its floor shading, reflection and shadow "
+    "passes already read; the CPU path intersects, textures, shades and reflects per-row planes. "
+    "Against swm's frames over 8 steps at 0.125 and -0.25 degrees, normalized MSE mean 0.00036 and "
+    "0.00041 on CPU and on CUDA, as at the default (0.00039), against 0.0051 and 0.0069 with the tilt "
+    "left out of the render; the OpenGL backend at most 1.5e-9"
+)
 
 _TRACKCOM_MASS = (
     _PHYSICS_MAPPED + '. This cell renders through a mode="trackcom" camera whose position comes from '
@@ -433,33 +448,29 @@ def _dmc(
     parity = cell in _PARITY_FLOOR
     return VariationMap(
         swm_id=swm_id,
-        identical=(("floor.color",) if parity else ()) + tuple(mapped) + tuple(physics_mapped),
+        identical=("floor.color",) + tuple(mapped) + tuple(physics_mapped),
         renamed=renamed,
         scaled={"light.diffuse_scale": ("light.intensity", 1.0 / base)},
         enum=({shape[0]: ("target.shape", shape[1])} if shape else {}),
         notes={
             "light.intensity": _light_reason(base),
-            **({"floor.color": _FLOOR_MAPPED} if parity else {}),
+            "floor.color": _FLOOR_MAPPED if parity else _FLOOR_TRACKCOM,
             **{leaf: _PHYSICS_MAPPED for leaf in physics_mapped},
             **(notes or {}),
         },
-        unsupported={
-            **({} if parity else {"floor.color": _FLOOR_COLOR}),
-            **(unsupported or {}),
-        },
+        unsupported=dict(unsupported or {}),
         dead_upstream=dict(dead_upstream or {}),
         ours_only=dict(ours_only or {}),
     )
 
 
-#: ``ours_only`` entries that recur. ``material.grid`` is our floor knob and is deliberately NOT the
-#: mapping for ``floor.color`` — see ``_FLOOR_COLOR``.
+#: ``ours_only`` entries that recur. ``material.grid`` is our floor material knob and is deliberately
+#: NOT the mapping for ``floor.color``, which is the checker texture.
 _GRID_OURS = {
     "material.grid": "a 3-vector multiplying the floor MATERIAL's rgba, which is a "
     "different knob from the checker TEXTURE and composes with it: swm "
     "has no material-level floor knob. Our floor.color is swm's "
-    "floor.color and is mapped `identical` on the parity cells; on the "
-    "five trackcom cells this is the only floor knob there is"
+    "floor.color and is mapped `identical`"
 }
 _FOVY_OURS = {
     "camera.fovy_scale": "a field-of-view multiplier; swm's DMControlWrapper renders at the "
@@ -474,9 +485,11 @@ _EFFECTOR_OURS = {"material.effector": "the effector material; swm has no leaf t
 _GRAVITY = tuple(f"gravity.{a}" for a in "xyz")
 
 
-def _trackcom(cell, swm_id, densities, *, ours_only, unsupported=None, dead_upstream=None, floor_note=None):
-    """The five trackcom cells: gravity, floor friction and two densities, all through the physics hook."""
+def _trackcom(cell, swm_id, densities, *, ours_only, tilt=False, dead_upstream=None, floor_note=None):
+    """The five trackcom cells: gravity, floor friction, two densities and walker's tilt, through the physics hook."""
     notes = {leaf: _TRACKCOM_MASS for leaf in densities}
+    if tilt:
+        notes["floor.rotation_y"] = _FLOOR_TILT
     if cell not in ("DMCHumanoidStand", "DMCQuadrupedWalk"):
         notes["gravity.y"] = _INERT["gravity.y"]
     if floor_note:
@@ -484,9 +497,8 @@ def _trackcom(cell, swm_id, densities, *, ours_only, unsupported=None, dead_upst
     return _dmc(
         cell,
         swm_id,
-        physics_mapped=(*_GRAVITY, "floor.friction", *densities),
+        physics_mapped=(*_GRAVITY, "floor.friction", *densities, *(("floor.rotation_y",) if tilt else ())),
         notes=notes,
-        unsupported=unsupported,
         dead_upstream=dead_upstream,
         ours_only=ours_only,
     )
@@ -652,14 +664,7 @@ _DMC_MAPS = {
         "DMCWalkerWalk",
         "swm/WalkerDMControl-v0",
         ("agent.torso_density", "agent.left_foot_density"),
-        unsupported={
-            "floor.rotation_y": "walker is the one domain whose swm wrapper TILTS the floor: the leaf "
-            "writes the floor geom's quat and moves 24,004 disagreeing pixels of "
-            "8x84x84 at 9 degrees, and the walker then stands on a slope. The "
-            "tracking-camera renderer's floor texture, reflection and shadow passes "
-            "take the floor as the z = 0 plane of the compiled model, so a per-row "
-            "tilt is not reachable. Its default, 0, is the compiled model's own.",
-        },
+        tilt=True,
         dead_upstream={"agent.right_knee_locked": _never_read()},
         ours_only=_GRID_OURS,
     ),
@@ -716,10 +721,10 @@ EXPECTED_COUNTS: dict[str, dict[str, int]] = {
     "swm/AcrobotDMControl-v0": {"total": 11, "mapped": 6, "unsupported": 0, "dead_upstream": 5, "not_applicable": 0},
     "swm/BallInCupDMControl-v0": {"total": 13, "mapped": 9, "unsupported": 0, "dead_upstream": 4, "not_applicable": 0},
     "swm/CartpoleDMControl-v0": {"total": 9, "mapped": 7, "unsupported": 0, "dead_upstream": 2, "not_applicable": 0},
-    "swm/CheetahDMControl-v0": {"total": 10, "mapped": 8, "unsupported": 1, "dead_upstream": 1, "not_applicable": 0},
+    "swm/CheetahDMControl-v0": {"total": 10, "mapped": 9, "unsupported": 0, "dead_upstream": 1, "not_applicable": 0},
     "swm/FingerDMControl-v0": {"total": 11, "mapped": 11, "unsupported": 0, "dead_upstream": 0, "not_applicable": 0},
-    "swm/HopperDMControl-v0": {"total": 10, "mapped": 8, "unsupported": 1, "dead_upstream": 1, "not_applicable": 0},
-    "swm/HumanoidDMControl-v0": {"total": 10, "mapped": 8, "unsupported": 1, "dead_upstream": 1, "not_applicable": 0},
+    "swm/HopperDMControl-v0": {"total": 10, "mapped": 9, "unsupported": 0, "dead_upstream": 1, "not_applicable": 0},
+    "swm/HumanoidDMControl-v0": {"total": 10, "mapped": 9, "unsupported": 0, "dead_upstream": 1, "not_applicable": 0},
     "swm/ManipulatorDMControl-v0": {
         "total": 9,
         "mapped": 8,
@@ -728,9 +733,9 @@ EXPECTED_COUNTS: dict[str, dict[str, int]] = {
         "not_applicable": 0,
     },
     "swm/PendulumDMControl-v0": {"total": 9, "mapped": 6, "unsupported": 0, "dead_upstream": 3, "not_applicable": 0},
-    "swm/QuadrupedDMControl-v0": {"total": 10, "mapped": 8, "unsupported": 1, "dead_upstream": 1, "not_applicable": 0},
+    "swm/QuadrupedDMControl-v0": {"total": 10, "mapped": 9, "unsupported": 0, "dead_upstream": 1, "not_applicable": 0},
     "swm/ReacherDMControl-v0": {"total": 9, "mapped": 8, "unsupported": 0, "dead_upstream": 1, "not_applicable": 0},
-    "swm/WalkerDMControl-v0": {"total": 11, "mapped": 8, "unsupported": 2, "dead_upstream": 1, "not_applicable": 0},
+    "swm/WalkerDMControl-v0": {"total": 11, "mapped": 10, "unsupported": 0, "dead_upstream": 1, "not_applicable": 0},
 }
 
 

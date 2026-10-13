@@ -31,7 +31,7 @@ _PHYSICAL = (
 )
 
 
-def _compile(domain, geom=None, density=None, keep_total=True, size=None):
+def _compile(domain, geom=None, density=None, keep_total=True, size=None, tilt=None):
     pytest.importorskip("dm_control")
     from dm_control import mjcf
 
@@ -48,6 +48,9 @@ def _compile(domain, geom=None, density=None, keep_total=True, size=None):
         model.find("geom", geom).size = [size]
     if not keep_total:
         model.compiler.settotalmass = None
+    if tilt is not None:
+        angle = np.deg2rad(tilt)
+        model.find("geom", "floor").zaxis = np.array([np.sin(angle), 0.0, np.cos(angle)], np.float32)
     with tempfile.TemporaryDirectory() as directory:
         mjcf.export_with_assets(model, directory, out_file_name="m.xml")
         return mujoco.MjModel.from_xml_path(os.path.join(directory, "m.xml"))
@@ -124,6 +127,24 @@ def test_sphere_radius_and_density_match_a_recompile():
     for name in (*_PHYSICAL, "body_inertia", "geom_size", "geom_rbound", "geom_aabb"):
         np.testing.assert_allclose(ours[name], theirs[name], rtol=1e-12, atol=1e-14, err_msg=name)
     np.testing.assert_allclose(_roll(mine), _roll(recompiled), atol=1e-10)
+    spec.apply(mine, spec.nominal)
+    before, after = _model_arrays(nominal), _model_arrays(mine)
+    assert all(np.array_equal(before[k], after[k]) for k in before), "the registered row must restore every array"
+
+
+def test_floor_tilt_matches_a_recompile():
+    from stable_envs.envs.dmcontrol.simulation.physics import TiltKnobs, knobs
+
+    nominal = _compile("walker")
+    spec = TiltKnobs(knobs("walker"), nominal)
+    for degrees in (-7.3, 1e-9, 9.0):
+        mine, recompiled = copy.copy(nominal), _compile("walker", tilt=degrees)
+        spec.apply(mine, spec.as_row({"floor.rotation_y": degrees}))
+        ours, theirs = _model_arrays(mine), _model_arrays(recompiled)
+        for name in ours:
+            np.testing.assert_allclose(ours[name], theirs[name], rtol=1e-14, atol=0, err_msg=name)
+        np.testing.assert_array_equal(mine.geom_quat, recompiled.geom_quat)
+        np.testing.assert_array_equal(mine.geom_sameframe, recompiled.geom_sameframe)
     spec.apply(mine, spec.nominal)
     before, after = _model_arrays(nominal), _model_arrays(mine)
     assert all(np.array_equal(before[k], after[k]) for k in before), "the registered row must restore every array"

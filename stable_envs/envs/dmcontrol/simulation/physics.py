@@ -82,11 +82,92 @@ class SphereKnobs(_physics.PhysicsKnobs):
             _physics._refresh_bvh(model, body)
 
 
+@dataclass(frozen=True)
+class PlaneTilt:
+    """A world-body plane tilted about y by the leaf in degrees, compiled as MJCF ``zaxis`` in float32."""
+
+    leaf: str
+    geom: str
+    width = 1
+
+
+def _normalize(v: np.ndarray) -> float:
+    """MuJoCo's compiler normalization (user_util ``mjuu_normvec``), in place."""
+    norm = float(np.sum(v * v))
+    if norm < 1e-14:
+        return 0.0
+    norm = float(np.sqrt(norm))
+    if abs(norm - 1.0) > 1e-14:
+        v /= norm
+    return norm
+
+
+def tilt_quat(degrees: float) -> np.ndarray:
+    """The geom_quat MuJoCo compiles from ``zaxis = (sin, 0, cos)`` held in float32."""
+    angle = np.deg2rad(float(degrees))
+    zaxis = np.array([np.sin(angle), 0.0, np.cos(angle)], np.float32).astype(np.float64)
+    _normalize(zaxis)
+    quat = np.empty(4)
+    quat[1:] = (0.0 * zaxis[2] - 1.0 * zaxis[1], 1.0 * zaxis[0] - 0.0 * zaxis[2], 0.0 * zaxis[1] - 0.0 * zaxis[0])
+    sine = _normalize(quat[1:])
+    if sine < 1e-10:
+        quat[1:] = (1.0, 0.0, 0.0)
+    half = np.arctan2(sine, zaxis[2]) / 2
+    quat[0] = np.cos(half)
+    quat[1:] *= np.sin(half)
+    _normalize(quat)
+    return quat
+
+
+class TiltKnobs(_physics.PhysicsKnobs):
+    """PhysicsKnobs plus plane tilts, written as a recompile writes them: quat, frame flag and world BVH."""
+
+    def __init__(self, knobs, model, **options):
+        import mujoco
+
+        self._tilts = []
+        for knob in knobs:
+            if isinstance(knob, PlaneTilt):
+                geom = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_GEOM, knob.geom)
+                if geom < 0 or int(model.geom_type[geom]) != int(mujoco.mjtGeom.mjGEOM_PLANE):
+                    raise KeyError(f"{knob.leaf}: no plane geom named {knob.geom!r}")
+                if int(model.geom_bodyid[geom]) != 0:
+                    raise ValueError(f"{knob.leaf}: {knob.geom!r} must belong to the world body")
+                self._tilts.append((geom, knob))
+        super().__init__(knobs, model, **options)
+
+    def _read_nominal(self, m):
+        row = super()._read_nominal(m)
+        for geom, knob in self._tilts:
+            if not np.array_equal(m.geom_quat[geom], tilt_quat(0.0)):
+                raise ValueError(f"{knob.leaf}: {knob.geom!r} is not compiled level")
+            row[self.offsets[self.leaves.index(knob.leaf)]] = 0.0
+        return row
+
+    def apply(self, model, row, data=None) -> None:
+        super().apply(model, row, data)
+        n = self._nominal_model
+        for geom, knob in self._tilts:
+            quat = tilt_quat(row[self.offsets[self.leaves.index(knob.leaf)]])
+            model.geom_quat[geom] = quat
+            level = np.array_equal(quat, n.geom_quat[geom])
+            model.geom_sameframe[geom] = n.geom_sameframe[geom] if level else 0
+        if self._tilts:
+            _physics._refresh_bvh(model, 0)
+
+
 class SphereLanes(_physics.PhysicsLanes):
+    KNOBS = SphereKnobs
+
     def __init__(self, knobs, models, **options):
-        super().__init__([k for k in knobs if not isinstance(k, (SphereRadius, SphereDensity))], models, **options)
-        self.spec = SphereKnobs(knobs, models[0], **options)
+        plain = [k for k in knobs if isinstance(k, (_physics.ModelField, _physics.GeomMass))]
+        super().__init__(plain, models, **options)
+        self.spec = self.KNOBS(knobs, models[0], **options)
         self.values = np.tile(self.spec.nominal, (len(self.models), 1))
+
+
+class TiltLanes(SphereLanes):
+    KNOBS = TiltKnobs
 
 
 @dataclass(frozen=True)
@@ -166,6 +247,7 @@ LEAVES: dict[str, tuple[Leaf, ...]] = {
         _density("agent.torso_density", "torso"),
         _density("agent.left_foot_density", "left_foot"),
         _floor_friction("floor"),
+        Leaf("floor.rotation_y", -10.0, 10.0, 0.0, (PlaneTilt("floor.rotation_y", "floor"),)),
     ),
     "humanoid": (
         *_gravity(),
@@ -201,5 +283,10 @@ def make_lanes(key: str, models):
     declared = knobs(key)
     if not declared:
         return None
-    spheres = any(isinstance(k, (SphereRadius, SphereDensity)) for k in declared)
-    return (SphereLanes if spheres else _physics.PhysicsLanes)(declared, models, **compile_options(key))
+    if any(isinstance(k, (SphereRadius, SphereDensity)) for k in declared):
+        lanes = SphereLanes
+    elif any(isinstance(k, PlaneTilt) for k in declared):
+        lanes = TiltLanes
+    else:
+        lanes = _physics.PhysicsLanes
+    return lanes(declared, models, **compile_options(key))

@@ -66,12 +66,23 @@ CASES = {
         )
     },
 }
+TRACKCOM = ("DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk", "DMCHumanoidWalk", "DMCQuadrupedWalk")
+#: Checker colours for the trackcom floor: a saturated pair and a dim one.
+FLOOR_COLORS = ([[0.9, 0.1, 0.1], [0.1, 0.8, 0.2]], [[0.3, 0.25, 0.05], [0.05, 0.1, 0.35]])
+#: The trackcom floor leaves. Walker's floor turns about x = 248, so a fraction of a degree already
+#: lifts or sinks it under the walker.
+FLOOR_CASES = {cell: [{"floor.color": c} for c in FLOOR_COLORS] for cell in TRACKCOM}
+FLOOR_CASES["DMCWalkerWalk"] += [{"floor.rotation_y": 0.125}, {"floor.rotation_y": -0.25}]
 
 
 def _swm_value(path, value):
     # SWM's float32 leaves refuse float64 values.
-    dtype = np.float64 if path.startswith("gravity.") or path.endswith("color") else np.float32
-    return np.asarray(value, dtype).reshape(-1) if not isinstance(value, int) else value
+    wide = path.startswith("gravity.") or path.endswith("color") or path == "floor.rotation_y"
+    dtype = np.float64 if wide else np.float32
+    if isinstance(value, int):
+        return value
+    value = np.asarray(value, dtype)
+    return value if value.ndim > 1 else value.reshape(-1)
 
 
 class _Renderer:
@@ -131,13 +142,13 @@ def leaf_gate(cell, cfg, **kw):
     }
 
 
-def run_gate(cells=None, device="cpu") -> dict:
+def run_gate(cells=None, device="cpu", cases=CASES) -> dict:
     out = {}
-    for cell in cells or CASES:
+    for cell in cells or cases:
         theirs, ours, _ = frames(cell, {}, device=device)
         out[cell] = {
             "registered_default_mse": _mse(ours, theirs),
-            "cases": [leaf_gate(cell, c, device=device) for c in CASES[cell]],
+            "cases": [leaf_gate(cell, c, device=device) for c in cases[cell]],
         }
     return out
 
@@ -149,6 +160,8 @@ if __name__ == "__main__":
     parser.add_argument("cells", nargs="*")
     args = parser.parse_args()
     result = run_gate(args.cells or None, args.device)
+    floor = [c for c in args.cells or FLOOR_CASES if c in FLOOR_CASES]
+    result["floor"] = run_gate(floor, args.device, FLOOR_CASES) if floor else {}
     text = json.dumps(result, indent=2)
     if args.output:
         Path(args.output).write_text(text + "\n")
