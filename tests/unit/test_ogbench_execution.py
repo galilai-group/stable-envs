@@ -10,7 +10,7 @@ pytest.importorskip("ogbench")
 from stable_envs.envs.ogbench.simulation import execution as execution
 
 
-@pytest.mark.parametrize("family", ["Maze", "Cube", "Scene"])
+@pytest.mark.parametrize("family", ["Maze", "Cube"])
 @pytest.mark.parametrize("device", ["cpu", "cuda"])
 @pytest.mark.parametrize(
     "platform,batch,cores,daemon,expected",

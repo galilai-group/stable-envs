@@ -53,7 +53,6 @@ def _renderer(family, row, resolution):
 
 @lru_cache(maxsize=1)
 def _check_versions():
-    # Distribution metadata does not change during the lifetime of a renderer.
     if version("mujoco") != "3.12.0" or version("ogbench") != "1.2.1":
         raise ImportError("Cube/Scene OpenGL rendering requires mujoco==3.12.0 and ogbench==1.2.1")
 

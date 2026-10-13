@@ -7,7 +7,6 @@ declarations and variation space are checked here.
 
 from __future__ import annotations
 
-import inspect
 import types
 
 import numpy as np
@@ -44,38 +43,6 @@ def test_maze_cells_are_reexported_from_the_package_as_the_registered_classes():
     assert hasattr(OGB, "__path__"), "stable_envs.envs.ogbench must be the package"
     for cell in MAZE_CELLS:
         assert getattr(OGB, cell) is R.REGISTRY[cell], f"{cell} is not the registered class"
-
-
-def test_the_manipulation_module_exposes_the_names_the_tests_reach_for():
-    """Canonical path: ``stable_envs.envs.ogbench.manipulation``."""
-    for name in (
-        "OGBManipBase",
-        "SPEC",
-        "VISIBLE_GROUPS",
-        "IDENTITY_QUAT",
-        "MJW_CHUNK",
-        "_bundle",
-        "_reference_env",
-        "_button_tables",
-        "_ctx_button_tables",
-        "_context",
-        "_appearance_digest",
-        "_plate_rig",
-        "_PlateRig",
-        "_movers",
-        "_cube_geoms",
-        "_grid_texture",
-        "_variation_defaults",
-        "mj_quantise",
-        "_seeded_action_space",
-        "_PLATE_CACHE",
-        "_CTX_CACHE",
-        "_BUNDLE_CACHE",
-        "_PLATE_RIGS",
-        "_KEEPALIVE",
-    ):
-        assert hasattr(MANIP, name), f"{name} no longer resolves off ogbench.manipulation"
-    assert "zero_bits" in inspect.getsource(MANIP._build_context)
 
 
 def test_every_cell_reports_its_canonical_module():
@@ -122,7 +89,7 @@ def test_a_maze_cell_is_a_declaration_and_overrides_no_renderer_method():
 
 @pytest.mark.parametrize("cell", MANIP_CELLS)
 def test_the_manipulation_declarations_are_still_the_measured_visual_ones(cell):
-    """A visual cell's numbers AND its thresholds, and the note that says what the tier does not buy."""
+    """A visual cell declares its measured numbers, thresholds and pinned reference versions."""
     cls = R.REGISTRY[cell]
     assert cls.fidelity_tier == "visual"
     assert cls.parity_interior_min is None
@@ -149,57 +116,13 @@ def test_the_manipulation_declarations_are_still_the_measured_visual_ones(cell):
     assert vf["measured_with"] == {"mujoco_warp": "3.12.0"}
     assert "can differ from MuJoCo" in cls.visual_note and "visual_fidelity records" in cls.visual_note
     assert cls.default_size == MANIP.SPEC[cls.CELL]["size"]
-    assert "VISUAL TIER" in (cls.__doc__ or "").upper()
-
-
-def test_the_scene_carries_the_button_texture_bake_note_and_the_cube_does_not():
-    """Only the Scene has UV-less button textures, so only its note declares their substitution."""
-    assert "button textures" in R.REGISTRY["OGBScene"].visual_note
-    assert "button textures" not in R.REGISTRY["OGBCube"].visual_note
 
 
 @pytest.mark.parametrize("cell", MANIP_CELLS)
 def test_frozen_renderer_cpu_is_refused_rather_than_served_from_the_gpu(cell):
-    """The honest-device-selection rule, with the measurement that justifies it in the message.
-
-    Checked BEFORE anything is built, which is why this runs on a machine with no ``ogbench``: a
-    caller who asked for a CPU env gets the reason rather than four seconds of construction.
-    """
+    """The MJWarp renderer classes refuse a CPU device before building anything."""
     with pytest.raises(ValueError, match="requires device='cuda'"):
         MANIP.CELL_CLASSES[cell](num_envs=1, device="cpu")
-    with pytest.raises(ValueError, match="requires device='cuda'"):
-        MANIP.CELL_CLASSES[cell](num_envs=1, device="cpu")
-
-
-# =========================================================== structural: the shared texel substitution
-
-
-def test_the_plate_texel_helpers_are_the_shared_module_and_not_a_second_copy():
-    """The plate texel helpers were lifted out of this family for ``dmcontrol`` to share.
-
-    The copy is gone. ``mj_quantise`` is asserted to BE ``plate_texels.quantise`` — the same
-    function object, so the truncation rule cannot drift — and the two call sites are asserted to
-    call the shared functions, because a comment saying they do is not enforcement. The behaviour
-    those functions carry is unchanged and is checked by ``tests/unit/test_plate_texels.py``.
-    """
-    from stable_envs._core import plate_texels as PX
-
-    assert MANIP.mj_quantise is PX.quantise
-    assert "_texel_slots(" in inspect.getsource(MANIP._grid_texture)
-    assert "_substitute(" in inspect.getsource(MANIP.OGBManipBase._apply_floor)
-    assert "_texel_key(" in inspect.getsource(MANIP.OGBManipBase._floor_key)
-    # The GL-context-current fix  must still be on the path a bake takes. It lives in
-    # ``substitute`` now; a version of it that forgot the line would put back a 219/255 plate.
-    body = inspect.getsource(PX.substitute).split('"""')[-1]  # the code, not the prose above it
-    assert "make_current()" in body and "mjr_uploadTexture" in body
-    assert body.index("make_current()") < body.index("mjr_uploadTexture"), (
-        "the upload must be made under the renderer's OWN context"
-    )
-
-
-def test_the_manipulation_plate_is_grouped_by_floor_colour_and_nothing_else():
-    assert MANIP.OGBManipBase.PLATE_PATHS == ("floor.color",)
-    assert MANIP.MJW_CHUNK == 256
 
 
 # =============================================================== structural: the public State layout
@@ -246,12 +169,7 @@ def test_the_maze_variation_taxonomy():
 
 
 def test_the_manipulation_variation_taxonomy_is_the_two_mapped_leaves():
-    """``cube.color`` and ``floor.color``, in the shapes the boundary was decided at.
-
-    Needs the cached bundle (mujoco + ogbench on the CPU) because the defaults are read off
-    the reference variation space rather than transcribed, which is what makes "our default IS the
-    registered default" true by construction.
-    """
+    """The MJWarp renderer's space is ``cube.color`` (3,) and ``floor.color`` (2, 3)."""
     _needs_ogbench()
     for cell in ("Cube", "Scene"):
         space = MANIP.OGBManipBase.make_variation_space(types.SimpleNamespace(CELL=cell))

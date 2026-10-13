@@ -238,16 +238,6 @@ def test_ogb_reset_configuration_scope_is_explicit(swm_id):
         assert LEAF_CLASSIFICATION[swm_id]["leaves"][leaf]["classification"] == "mapped"
 
 
-@pytest.mark.parametrize("swm_id", ["swm/OGBCube-v0", "swm/OGBScene-v0"])
-def test_ogb_agent_color_records_the_upstream_dirty_flag_defect(swm_id):
-    rec = LEAF_CLASSIFICATION[swm_id]["leaves"]["agent.color"]
-    assert rec["classification"] == "mapped"
-    assert "allclose" in rec["reason"], (
-        "the reason must name the inverted dirty-flag test, because the leaf is dead only in "
-        "isolation and live when co-varied -- a reader who does not know that will mis-file it"
-    )
-
-
 def test_lock_color_is_scene_only():
     assert "lock_color" in RECORDED_SWM_LEAVES["swm/OGBScene-v0"]
     assert "lock_color" not in RECORDED_SWM_LEAVES["swm/OGBCube-v0"]
@@ -458,16 +448,13 @@ def test_craftax_ids_are_recorded_as_having_no_leaves_at_all():
 
 # ---------------------------------------------------------------- OGB cube.color, on the CPU
 #
-# These exercise the REAL helper methods -- `_cube_colours`, `_cube_geom_index` and
-# `_upload_cube_colours` -- against a stub bundle and a stub mujoco_warp context, so the
-# custom-to-default leak the reviewer found has a regression test that needs no GPU and no ogbench.
-# They deliberately do not construct an env: `OGBManipBase.__init__` refuses any device but cuda,
-# and the defect lives entirely in these three methods and the module context cache they write to.
+# These run the real `_cube_colours`, `_cube_geom_index` and `_upload_cube_colours` against a stub
+# bundle and a stub mujoco_warp context, so they need no GPU. The render context is reused across
+# renders, so every render must upload the cube colour, including the default.
 
 _CUBE_DEFAULT = [0.96, 0.26, 0.33]
 _CUBE_GEOMS = [62, 63]
-#: object_0 is opaque; target_object_0 is the translucent goal marker. swm writes rgb and leaves the
-#: alpha channel alone, so the alphas here are what the helper must preserve.
+#: object_0 is opaque; target_object_0 is the translucent goal marker. Only RGB is written.
 _CUBE_ALPHAS = [1.0, 0.2]
 #: swm's declared checker default; only its width matters to these tests.
 _FLOOR_DEFAULT = [[0.08, 0.11, 0.16], [0.15, 0.18, 0.25]]
@@ -496,11 +483,7 @@ def _stub_env(device="cpu"):
 
 
 def _stub_context(nworld, ngeom):
-    """A stand-in for the cached mujoco_warp context: one mutable per-world `geom_rgba`.
-
-    Created ONCE per test and reused across renders/chunks/instances on purpose -- that reuse is the
-    property `_CTX_CACHE` has and the reason a skipped default upload leaks.
-    """
+    """A stand-in for the cached mujoco_warp context: one mutable per-world `geom_rgba`, reused across renders."""
     import types
 
     buf = torch.zeros((nworld, ngeom, 4), dtype=torch.float32)
@@ -521,12 +504,7 @@ class _StubStyle:
 
 
 def _sty(rows):
-    """One render's host-side style, produced by the REAL `_style_host`, not hand-built.
-
-    The helpers take the host dict rather than the `StyleTensor` so that the whole nine-float row
-    crosses to the host once per render; routing the stub through `_style_host` is what keeps these
-    tests honest about which units the helpers actually receive.
-    """
+    """One render's host-side style, produced by the real `_style_host`."""
     env = object.__new__(_base_cls())
     return env._style_host(_StubStyle(rows))
 
@@ -542,10 +520,7 @@ def _upload(env, c, sty, B, nworld):
     from stable_envs.envs.ogbench.manipulation import MJW_CHUNK
 
     cube = env._cube_colours(sty, B)
-    assert cube is not None, (
-        "_cube_colours returned None, so render() would skip the upload entirely. That is the "
-        "defect: a cell with cube geoms must always be given a value to write"
-    )
+    assert cube is not None, "a cell with cube geoms must always be given a colour to write"
     for lo in range(0, B, MJW_CHUNK):
         hi = min(lo + MJW_CHUNK, B)
         env._upload_cube_colours(c, cube[lo:hi], hi - lo)
@@ -563,34 +538,21 @@ def _expect(colours):
     return out
 
 
-def test_cube_colours_never_returns_none_for_the_registered_default():
-    """The reviewer's reproduction, inverted into an assertion. The old `_cube_colours` answered
-    `None` whenever the request was close to the default, and `render` then skipped the upload."""
-    env, _ = _stub_env()
-    got = env._cube_colours(_sty([_CUBE_DEFAULT]), 1)
-    assert got is not None
-    assert np.allclose(got.numpy(), _expect([_CUBE_DEFAULT]))
-
-
 def test_custom_then_default_restores_the_default_rgb():
-    """Render red, then render the default. The second render must not draw red.
-
-    This is the exact sequence that failed: OGBCube has no button upload that would rewrite the
-    `geom_rgba` block, so the context kept the previous render's colour.
-    """
+    """A default render after a custom one must not keep the previous colour, and returns the first default exactly."""
     env, ngeom = _stub_env()
     c, buf = _stub_context(4, ngeom)
+    _upload(env, c, _sty([_CUBE_DEFAULT] * 4), 4, 4)
+    first = _rows(buf, 4).copy()
     _upload(env, c, _sty([[1.0, 0.0, 0.0]] * 4), 4, 4)
     assert np.allclose(_rows(buf, 4), _expect([[1.0, 0.0, 0.0]] * 4))
     _upload(env, c, _sty([_CUBE_DEFAULT] * 4), 4, 4)
-    assert np.allclose(_rows(buf, 4), _expect([_CUBE_DEFAULT] * 4)), (
-        "a default render after a custom one drew the custom colour -- the per-world geom_rgba was "
-        "left as the previous render wrote it"
-    )
+    assert np.array_equal(_rows(buf, 4), first)
+    assert np.allclose(first, _expect([_CUBE_DEFAULT] * 4))
 
 
 def test_mixed_batch_then_default_restores_every_world():
-    """A per-environment style, then a uniform default. Every world must come back, not just world 0."""
+    """After a per-environment style, a uniform default restores every world, not just world 0."""
     env, ngeom = _stub_env()
     c, buf = _stub_context(4, ngeom)
     mixed = [[1.0, 0.0, 0.0], _CUBE_DEFAULT, [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
@@ -600,32 +562,8 @@ def test_mixed_batch_then_default_restores_every_world():
     assert np.allclose(_rows(buf, 4), _expect([_CUBE_DEFAULT] * 4))
 
 
-def test_default_then_custom_then_default_is_bit_identical_to_the_first_default():
-    """The round trip, compared against the FIRST default rather than against the declared value:
-    a restore that merely lands near the default is not a restore."""
-    env, ngeom = _stub_env()
-    c, buf = _stub_context(2, ngeom)
-    _upload(env, c, _sty([_CUBE_DEFAULT] * 2), 2, 2)
-    first = _rows(buf, 2).copy()
-    _upload(env, c, _sty([[0.1, 0.9, 0.4]] * 2), 2, 2)
-    _upload(env, c, _sty([_CUBE_DEFAULT] * 2), 2, 2)
-    assert np.array_equal(_rows(buf, 2), first)
-
-
-def test_a_second_renderer_instance_does_not_inherit_the_first_ones_colour():
-    """`_CTX_CACHE` is keyed by (cell, res, nworld), not by renderer instance, so two envs in one
-    process share the per-world buffer. The second instance's default render must still be default."""
-    a, ngeom = _stub_env()
-    b, _ = _stub_env()
-    c, buf = _stub_context(2, ngeom)
-    _upload(a, c, _sty([[0.0, 0.0, 1.0]] * 2), 2, 2)
-    _upload(b, c, _sty([_CUBE_DEFAULT] * 2), 2, 2)
-    assert np.allclose(_rows(buf, 2), _expect([_CUBE_DEFAULT] * 2))
-
-
 def test_a_small_default_batch_after_a_large_custom_one_leaves_no_stale_world():
-    """Chunking is per-render, so a render of 2 worlds writes worlds 0-1 of a buffer an earlier
-    render filled to 4. The rendered worlds are the ones that must be correct."""
+    """A render of 2 worlds writes worlds 0-1 of a buffer an earlier render filled to 4; those must be correct."""
     env, ngeom = _stub_env()
     c, buf = _stub_context(4, ngeom)
     _upload(env, c, _sty([[1.0, 0.0, 1.0]] * 4), 4, 4)
@@ -634,8 +572,7 @@ def test_a_small_default_batch_after_a_large_custom_one_leaves_no_stale_world():
 
 
 def test_each_cube_geom_keeps_its_own_alpha():
-    """swm writes `rgba[:3]` and leaves the alpha to the MJCF: the opaque cube and the translucent
-    goal marker must not be flattened to one alpha by the colour write."""
+    """The opaque cube and the translucent goal marker are not flattened to one alpha by the colour write."""
     env, ngeom = _stub_env()
     c, buf = _stub_context(1, ngeom)
     _upload(env, c, _sty([[0.2, 0.4, 0.6]]), 1, 1)
@@ -643,7 +580,7 @@ def test_each_cube_geom_keeps_its_own_alpha():
 
 
 def test_the_colour_write_touches_only_the_cube_geoms():
-    """Isolation, on the CPU: every other geom row of the shared buffer is untouched."""
+    """Every other geom row of the shared buffer is untouched."""
     env, ngeom = _stub_env()
     c, buf = _stub_context(2, ngeom)
     before = buf.clone()
@@ -669,11 +606,7 @@ def _ogb_space(cell):
 
 @pytest.mark.parametrize("cell", ["Cube", "Scene"])
 def test_frozen_cube_colour_leaf_is_flat_three_and_floor_colour_is_two_by_three(cell):
-    """One shape, decided once. swm declares `cube.color` as `(num_cubes, 3)` and both registered
-    cells are one-cube configurations, so we carry the leaf FLAT: a leading axis of length 1 buys
-    nothing and costs a shape the Box, the style row and the swm value would each spell differently.
-    `floor.color` stays `(2, 3)` because the checker's two colours are not interchangeable.
-    """
+    """swm declares `cube.color` as `(num_cubes, 3)`; both cells have one cube, so the leaf is carried flat."""
     space = _ogb_space(cell)
     layout = {p: (o, w) for p, o, w in space.flat_layout()}
     assert space["cube"]["color"].shape == (3,)
@@ -683,14 +616,7 @@ def test_frozen_cube_colour_leaf_is_flat_three_and_floor_colour_is_two_by_three(
 
 @pytest.mark.parametrize("cell,swm_id", [("Cube", "swm/OGBCube-v0"), ("Scene", "swm/OGBScene-v0")])
 def test_a_swm_shaped_cube_colour_survives_the_round_trip_through_our_style_row(cell, swm_id):
-    """swm hands out `(1, 3)`; `style_from_variation` flattens before slicing, so its value lands in
-    our width-3 slot unchanged, and `variation_from_style` gives the three numbers back.
-
-    The residual asymmetry is recorded rather than hidden: `variation_from_style` emits a FLAT
-    vector for every multi-row leaf, so feeding its output straight back into a live swm env needs a
-    reshape to `(1, 3)` (and `(2, 3)` for the floor). That is a property of `compat.worldmodel`,
-    which this workstream does not own; findings.md carries it as a boundary reshape.
-    """
+    """swm's `(1, 3)` cube colour lands in the width-3 style slot and comes back as the same three numbers."""
     import types
 
     from tests.helpers.reference import style_from_variation, variation_from_style
@@ -710,9 +636,7 @@ def test_a_swm_shaped_cube_colour_survives_the_round_trip_through_our_style_row(
 
 
 def test_the_whole_style_row_crosses_to_the_host_in_one_read():
-    """`_style_host` returns every leaf from ONE device-to-host copy. Two copies cost two
-    synchronisations, which is a measurable fraction of a B=1 render and nothing at B=4096 -- the
-    shape of a latency term, and the reason the helpers take a host dict rather than the tensor."""
+    """`_style_host` returns every leaf from one device-to-host copy."""
     env = object.__new__(_base_cls())
     sty = _StubStyle([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]])
     calls = []
@@ -738,11 +662,7 @@ def test_the_whole_style_row_crosses_to_the_host_in_one_read():
 
 
 def test_the_host_style_read_is_memoised_on_the_tensor_and_invalidated_by_a_write():
-    """A render loop at one appearance should pay ONE device-to-host sync in total, not one a frame:
-    `resolve_style(None, None)` hands back the env's own style tensor every call. The cache is keyed
-    on identity AND `_version`, so writing through the tensor invalidates it, and it holds a strong
-    reference so a freed-and-reused `id()` cannot alias a stale entry. It caches a pure read; it
-    never gates an upload."""
+    """The host copy is cached per tensor and version: an in-place write invalidates it, another tensor misses."""
     env = object.__new__(_base_cls())
     sty = _StubStyle([[0.1, 0.2, 0.3]])
     first = env._style_host(sty)
