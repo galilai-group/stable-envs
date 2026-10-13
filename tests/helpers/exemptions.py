@@ -52,12 +52,18 @@ def family_of_env(cls) -> str:
     return found[0] if len(found) == 1 else "core"
 
 
+# Envs whose CPU frames come from MuJoCo's OpenGL renderer.
+EGL_RENDERED = ("OGBCube*", "OGBScene*")
+
+
 def param(name: str, cls, check: str):
     """``name`` as a parameter owned by its env's family, expected to fail when ``check`` is waived."""
     family = family_of_env(cls)
     marks = [pytest.mark.family(family)]
     if check in CONFORMANCE and "gl" in FAMILIES[family].get("capabilities", ()):
         marks.append(pytest.mark.gl)
+    if check in ("specs", "batch_render") and any(fnmatch.fnmatchcase(name, glob) for glob in EGL_RENDERED):
+        marks.append(pytest.mark.egl)
     reason = waiver(name, check)
     if reason:
         marks.append(pytest.mark.xfail(reason=f"exempt: {reason}", strict=True))
