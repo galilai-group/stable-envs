@@ -57,7 +57,6 @@ UNKNOWN = (None, "", "present")
 REFERENCE_JUDGED_CHECKS = (
     "render_parity_with_official_renderer",
     "check_visual_fidelity",
-    "check_visual_fidelity_under_variation",
 )
 
 

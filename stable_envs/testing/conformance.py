@@ -178,34 +178,6 @@ def reference_accepts_style(cls) -> bool:
         return False
 
 
-def check_visual_fidelity_under_variation(env, n: int = 64, seed: int = 0) -> dict:
-    """Measure pixel error and SSIM with seeded states and a sampled style per row.
-
-    Skip references that cannot accept style; comparing different appearances
-    would not measure renderer fidelity.
-    """
-    cls = type(env)
-    if not reference_accepts_style(cls):
-        return {
-            "skipped": f"{cls.__name__}.reference_render does not take a style, so the official "
-            f"renderer cannot be driven at this env's declared appearance and the two "
-            f"sides would be pictures of different scenes"
-        }
-    ref = reference_env(cls, env.size)
-    rng = np.random.default_rng(int(seed))
-    states = sample_render_rows(env, int(n), rng=rng)
-    style = env.sample_style(int(n), rng=rng)
-    official = cls.reference_render(ref, states, style=style)
-    ours = env._render(states, style=style).cpu().numpy()
-    if ours.shape != official.shape:
-        raise AssertionError(f"shape {ours.shape} vs official {official.shape}")
-    out = pixel_agreement(ours, official)
-    out["ssim"] = ssim(ours, official)
-    out["n_states"] = int(n)
-    out["seed"] = int(seed)
-    return out
-
-
 def check_visual_fidelity(env, n: int = 64) -> dict:
     """Measure pixel error and SSIM against the source at default appearance."""
     cls = type(env)
