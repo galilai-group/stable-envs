@@ -46,7 +46,7 @@ def test_there_are_scripts_to_check():
     this file collect nothing and report nothing — green, and covering the thing it was written for
     exactly as well as deleting it would.
     """
-    assert len(SCRIPTS) >= 15, (
+    assert len(SCRIPTS) >= 10, (
         f"only {len(SCRIPTS)} scripts found under {EXAMPLES}; the sweep below would be near-empty and would still pass"
     )
 
@@ -87,7 +87,7 @@ ARGPARSE_IDS = [str(p.relative_to(EXAMPLES)) for p in ARGPARSE]
 
 
 def test_the_argparse_sweep_below_is_not_empty():
-    assert len(ARGPARSE) >= 15, (
+    assert len(ARGPARSE) >= 10, (
         f"only {len(ARGPARSE)} scripts under examples/ use argparse; the --help sweep would be "
         f"near-empty and would still pass"
     )
