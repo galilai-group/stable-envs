@@ -6,7 +6,7 @@ import pytest
 import torch
 
 import stable_envs as se
-from tests.helpers.reference.pixels import check_online_pixels
+from tests.helpers.reference.pixels import check_online_selections
 from tests.helpers.reference.rocket_pixels import SCENARIOS, rocket_trace
 
 pytestmark = [pytest.mark.integration, pytest.mark.reference, pytest.mark.swm]
@@ -32,18 +32,11 @@ def test_source_rollout_pixels(
         pytest.skip("requires CUDA")
     with rocket_trace(scenario, dtype, horizon) as (config, trace):
         with se.make("PyFlytRocketLanding", num_envs=2, device=device, size=96, simulator_config=config) as env:
-            errors = []
-            for i, (states, frames) in enumerate([(s, s) for s in SELECTIONS] + [(None, slice(-1, None))]):
-                errors.extend(
-                    check_online_pixels(
-                        env,
-                        trace,
-                        states=states,
-                        frames=frames,
-                        mse_max=0.001,
-                        failure_dir=tmp_path / f"selection-{i}",
-                    ).reshape(-1)
-                )
+            check_online_selections(
+                env,
+                trace,
+                tmp_path,
+                record_property,
+                selections=[(s, s) for s in SELECTIONS] + [(None, slice(-1, None))],
+            )
             record_property("source_device", "cpu")
-            record_property("mse_max", float(max(errors)))
-            record_property("frames", len(errors))
