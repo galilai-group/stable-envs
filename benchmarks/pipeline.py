@@ -242,7 +242,7 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     record["methodology"] = {
         "timed_operation": (
             "host numeric RenderState.to(device) -> renderer(out=reused_uint8_buffer); "
-            "structured projections use env.render, historical packed rows use env._render"
+            "structured projections use env.render, packed state rows use env._render"
         ),
         "setup_excluded": [
             "environment construction",

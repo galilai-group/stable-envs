@@ -1,10 +1,16 @@
+"""Cluster node health check run before measuring.
+
+Reads the node's state from the cluster scheduler (``sinfo``), when one is available, and renders the
+same states twice through an official reference renderer to confirm the host draws deterministically.
+"""
+
 from __future__ import annotations
 
 import os
 import platform
 import subprocess
 
-# Compare alphabetic state stems, ignoring SLURM suffixes.
+# Compare alphabetic state stems, ignoring scheduler suffixes.
 # Reservations are valid allocations and are not condemned states.
 CONDEMNED_STATES = frozenset(
     {
@@ -106,10 +112,8 @@ def gate(candidates=None, check_scheduler: bool = True, check_renderer: bool = T
             out["ok"] = False
             out["why"] = (
                 f"the scheduler has condemned this node: state={st['state']!r} "
-                f"reason={st.get('reason') or '(none given)'!r}. A host the cluster's own health "
-                f"checker has flagged is not a host to measure a renderer on — this exact situation "
-                f"once produced 25 parity failures and a SIGABRT that were read as a repo bug for "
-                f"hours. Resubmit elsewhere: --exclude={host}"
+                f"reason={st.get('reason') or '(none given)'!r}. Do not measure a renderer on a host "
+                f"the cluster's health checker has flagged. Resubmit elsewhere: --exclude={host}"
             )
             return out
     if check_renderer:

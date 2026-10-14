@@ -5,7 +5,7 @@ which is only worth asserting with the official renderer's own cost on the same 
 measures the same transformation twice — ``state -> uint8 frame`` — once through the GPU path and once
 through the reference env, and reports the ratio.
 
-Two CPU timings are reported because the honest comparison is ambiguous by one step:
+Two CPU timings are reported because the comparison is ambiguous by one step:
 
   ``set_state + render``   what the GPU path actually does: place the world at a stored state, then draw
                            it. This is the number that matters for re-rendering a dataset, and it is the
@@ -19,8 +19,7 @@ concession: the kernel is bandwidth-bound on its own output, so per-frame cost o
 once the launch is saturated, and a batch of 1 is reported as well to show exactly how far off launch
 overhead is.
 
-NEITHER COLUMN IS UNCONDITIONALLY REPRODUCIBLE, and each row now carries the evidence for its own case
-rather than inheriting a claim made here.
+NEITHER COLUMN IS UNCONDITIONALLY REPRODUCIBLE, so each row carries the evidence for its own case.
 
 The CPU column is a single-threaded Python renderer competing with whatever else the node is running,
 and the same measurement has produced 422 frames/s on an idle node and 3 frames/s with three other jobs
@@ -147,8 +146,7 @@ def _median_and_cpu(fn, reps: int) -> tuple[float, float]:
     measures how fast Python can enqueue work, which for this kernel is roughly two orders of magnitude
     off.
 
-    The CPU fraction is the honest label on the number and it was added because this file's own claim
-    about reproducibility turned out to be false for a whole family. ``time.process_time`` counts only
+    The CPU fraction says whether the number is portable. ``time.process_time`` counts only
     seconds this process spent ON a CPU, so a render blocked on the device costs wall time and no CPU
     time: a fraction near 0 means the device is the limit and the row travels between nodes, and a
     fraction at or above 1 means the host is busy for the whole render and the row is a property of
@@ -255,7 +253,7 @@ def _peak_gb() -> float:
 
     They are not the same quantity and the field does not pretend they are -- the row carries its own
     ``device``, so a reader can tell which one this is. The CPU number is a high-water mark for the
-    whole process rather than for this cell, which is the honest limit of what ``resource`` can report.
+    whole process rather than for this cell, which is the limit of what ``resource`` can report.
     """
     if DEVICE == "cuda":
         return torch.cuda.max_memory_allocated() / 1e9
@@ -488,10 +486,7 @@ def markdown(results: dict) -> str:
                     why = row.get("skipped") or row.get("error")
                     L.append(f"| {row['batch']:,} | {why} | | | | | | |")
                     continue
-                # Two decimals below 10x, none above. A batch-1 cell where the GPU path is BEHIND the
-                # reference is the honest shape of a batched renderer called one frame at a time, and
-                # `,.0f` rounded 0.88x up to "1x" — the one place in the table where the formatting was
-                # deciding the result.
+                # Two decimals below 10x, none above, so a batch-1 ratio below 1x is not rounded up to "1x".
                 r_ = row["fps"] / cpu["set_state_render"]["fps"] if cpu and "error" not in cpu else None
                 sp = "-" if r_ is None else (f"{r_:.2f}x" if r_ < 10 else f"{r_:,.0f}x")
                 cf = row.get("cpu_frac")
