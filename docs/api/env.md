@@ -1,42 +1,38 @@
 # `stable_envs.env`
 
-Concrete classes such as `snv.CartPole` are the primary API. The shared `Env`
-provides the simulator/rendering boundary; family adapters implement authoritative
-simulation without adding a shared Observation class.
+Concrete classes such as `snv.CartPole` are the main API. The shared `Env` defines the simulator and
+rendering interface:
 
-- `reset`, `get_state` and `state` return independent exhaustive State snapshots
-  where simulator semantics are supported.
-- `set_state(full_state)` restores all required fields and returns `None`.
-- `step` returns State and the task's defined reward/success/done values.
-- `step(actions, states=slice(None), frames=slice(-1,None))` accepts `[B,A]` or `[B,T,A]`. See [output selection](../concepts/dynamics.md).
-- `render(full_state)` projects internally and returns a uint8 Frame.
-- `close` and context-manager methods implement resource ownership.
-- State/action/frame/Variation specs describe shapes and dtypes; family validators
-  enforce complete schemas and semantic constraints before restoration.
+- `reset`, `get_state` and `state` return independent full State snapshots.
+- `set_state(full_state)` restores every required field and returns `None`.
+- `step(actions, states=slice(None), frames=slice(-1,None))` accepts `[B,A]` or `[B,T,A]` and returns
+  State and the task's reward, success and done values. See [Stepping](../concepts/dynamics.md).
+- `render(full_state)` returns a uint8 Frame.
+- `close` and the context manager release owned resources.
+- The State, action, frame and Variation specs describe shapes and dtypes. Family validators check
+  full schemas before restoring.
 
-State is a TensorDict checkpoint, potentially privileged, not the learner
-observation. Variation can affect physics, reset, task or appearance.
+State is a TensorDict checkpoint. It can be privileged and is not the learner observation. Variation
+can affect physics, reset, task or appearance.
 
-For Cube and Scene, `backend="auto"` selects software OpenGL on CPU. On CUDA,
-both use the two-pass MJWarp fidelity renderer with 2× sampling by default.
-Scene aligns its four samples with NVIDIA OpenGL, including its cached static
-background. An explicit `supersample` argument or a supplied RenderState's
-sampling setting is preserved. Use `supersample=2` when rendering an older
-1× RenderState with this default sampling configuration.
-CPU rendering requires
-Mesa software OpenGL configured before importing MuJoCo; a hardware GL context
-is rejected for CPU measurements. An explicit `backend="mjwarp"` still requires
-CUDA. Selecting a backend does not change where physics runs: it remains CPU.
+## OGBench Cube and Scene backends
 
-Contributor/internal interfaces include `_pack_render_state`,
-`_unpack_render_state`, `_get_render_state`, `_set_render_state`, `_render`,
-`state_dim`/`state_names`, `scene`, and style helpers. Compact RenderState layouts
-are not full State schemas. The old public `pack_render_state`/`unpack_render_state`
-methods are absent. Renderer input shape/finite-value checks do not replace
-full-State restoration validation.
+- On CPU, `backend="auto"` selects software OpenGL. Configure Mesa software OpenGL before importing
+  MuJoCo. A hardware GL context is rejected for CPU rendering.
+- On CUDA, `backend="auto"` selects the two-pass MJWarp renderer with 2× sampling. Scene aligns its
+  four samples with NVIDIA OpenGL, including its cached static background.
+- An explicit `supersample` argument, or the sampling setting stored in a supplied RenderState, is
+  kept. To render a 1× RenderState with the default sampling, pass `supersample=2`.
+- An explicit `backend="mjwarp"` requires CUDA.
+- Physics runs on CPU whatever the backend.
 
-See [State](../concepts/state.md), [lifecycle](../concepts/lifecycle.md) and
-[adding a component](../adding/index.md). Existing source comments about compact
-renderer layouts should be read within this private rendering boundary.
+## Internal interfaces
+
+Contributor interfaces include `_pack_render_state`, `_unpack_render_state`, `_get_render_state`,
+`_set_render_state`, `_render`, `state_dim` / `state_names`, `scene` and the style helpers. Compact
+RenderState layouts are not State schemas. Renderer input checks do not replace State validation.
+
+See [State](../concepts/state.md), [Lifecycle](../concepts/lifecycle.md) and
+[Adding a component](../adding/index.md).
 
 ::: stable_envs.env

@@ -1,49 +1,39 @@
 # Adding an environment backend
 
-Use this guide for new dynamics, a simulator/controller, an action mechanism or
-an exhaustive State schema. For a reward/reset change on the same backend, use
-the [task guide](task.md); for pixels alone, use the [renderer guide](renderer.md).
+Use this guide for new dynamics, a simulator or controller, an action mechanism, or a State schema.
+For a reward or reset change on an existing backend, see the [task guide](task.md). For pixels only,
+see the [renderer guide](renderer.md).
 
-## Responsibility and interface
+## Interface
 
-The backend owns authoritative simulation and all state needed to resume it.
-Delegate to the upstream engine and controller. Stable-envs owns the public
-State contract and its validation; stable-worldmodel owns observation selection.
-The [layer overview](index.md) defines that boundary.
+The backend owns simulation and every field needed to resume it. Call the upstream engine and
+controller. A simulating `Env` provides:
 
-A simulator-backed `Env` exposes:
-
-| Operation | Contract |
+| operation | contract |
 |---|---|
-| `reset(seed=None, options=...)` where supported | Return independent full State; preserve source reset and seeding semantics |
-| `get_state()` / `state` | Independent TensorDict snapshot; named field shapes/dtypes documented |
-| `set_state(state)` | Validate the entire input before mutation; restore all relevant fields; return `None` |
-| `step(actions)` | Advance the live authoritative simulator; return State and defined reward/success/termination/truncation values |
-| `state_spec`, `action_spec` | Match actual field/action shapes and dtypes; document constraints beyond the descriptive spec |
-| `render(state=None, ...)`, `frame_spec` | Project internally to the renderer; do not change live simulation |
-| `close()` / context manager | Idempotent owned-resource cleanup; operations after close refuse |
+| `reset(seed=None, options=...)` | return an independent full State; keep the source's reset and seeding semantics |
+| `get_state()` / `state` | independent TensorDict snapshot; field shapes and dtypes documented |
+| `set_state(state)` | validate the whole input before changing anything; restore every field; return `None` |
+| `step(actions)` | advance the upstream simulator; return State and reward, success, termination, truncation |
+| `state_spec`, `action_spec` | match the actual fields and actions; document constraints the spec cannot express |
+| `render(state=None, ...)`, `frame_spec` | render without changing the live simulation |
+| `close()` / context manager | idempotent cleanup of owned resources; later calls refuse |
 
-The private `stable_envs._execution.protocol.SimulatorAdapter` protocol comprises `num_envs`,
-reset/get/set/step/close. It has no rendering or transition method. See the accepted
-`ClassicControlAdapter` and `ClassicControlSemantics` in
-`stable_envs/envs/classic_control/semantics.py`, and the delegated Fetch adapter in
-`stable_envs/envs/fetch/simulation/adapter.py`. Family mixins compose those backends
-with existing renderers. New public classes use `@register` from
-`stable_envs.registry`; unique class names are lookup keys. Family, domain, slug
-and default configuration should be explicit. Module discovery is automatic;
-`import_errors()` reports unavailable optional dependencies.
+The private protocol `stable_envs._execution.protocol.SimulatorAdapter` has `num_envs`, reset, get, set,
+step and close. It has no rendering method. Examples:
 
-Ordinary sequential `step()` must not snapshot and restore internally on every
-step. That can discard warmstart/controller history and silently change the
-source trajectory. Implement `_step(actions)` and masked advancement for terminal
-lanes; shared `step` handles action sequences and capture.
+- `ClassicControlAdapter` and `ClassicControlSemantics` in `stable_envs/envs/classic_control/semantics.py`
+- the Fetch adapter in `stable_envs/envs/fetch/simulation/adapter.py`
 
-## Complete example: independent restoration using an accepted backend
+Family mixins combine these backends with renderers. Register public classes with `@register` from
+`stable_envs.registry`. Class names are the lookup keys. Set family, domain and default configuration
+explicitly. `import_errors()` reports missing optional dependencies.
 
-This executable example exercises the integration pattern in accepted CartPole.
-It uses the shipped implementation rather than sketching a second physics engine.
-The implementation to adapt is the adapter/mixin pair named above, including
-its full-field validator, RNG serializer and wrapper lifecycle restoration.
+Implement `_step(actions)` and masked stepping for terminated lanes. The shared `step` handles action
+sequences and capture. Do not snapshot and restore inside ordinary `step()`. That can discard
+controller or warm-start history and change the trajectory.
+
+## Example: restoring into an independent instance
 
 ```python
 import numpy as np
@@ -66,47 +56,41 @@ with se.CartPole(num_envs=2, device="cpu") as source, \
     assert (saved == held).all()
 
     before = restored.get_state()
-    saved["x"].add_(1)  # snapshots do not alias live simulator storage
+    saved["x"].add_(1)  # snapshots do not share storage with the simulator
     assert (restored.get_state() == before).all()
 ```
 
-Source-derived schemas differ by engine. Do not copy CartPole's or Fetch's fields
-into a new family without tracing that family's physics, controller and task.
-A static model/configuration can remain outside State only under a documented
-same-configuration restore precondition. Changing supported persistent Variation
-must configure the receiving simulator consistently.
+Each engine needs its own schema. Do not copy CartPole's or Fetch's fields without tracing the new
+family's physics, controller and task.
 
-## Authority and State design
+## Designing State
 
-Read registration defaults, all wrappers, reset and step, integration/controller
-helpers and the engine's state API. Identify continuation-relevant integration
-state, control targets, actuator state, applied forces, contact caches, task
-bookkeeping, RNG state and reset anchors. Include a field when the source or an
-omission witness shows relevance; do not minimize away necessary bytes.
+Read the registration defaults, wrappers, reset, step, controller helpers and the engine's state API.
+Find every field that affects the future:
 
-Record restore order: which engine synchronization recomputes derived arrays,
-which fields must be restored after it, and which setters have side effects.
-Validate missing/extra keys, batch shape, dtype, finite values/ranges and semantic
-constraints before changing any lane. A malformed later field must not leave an
-earlier lane partially modified. Specs alone do not prove the runtime validator.
+- integration state, control targets and actuator state;
+- applied forces and contact caches;
+- task bookkeeping and reset anchors;
+- RNG state.
 
-PushT remains incomplete: body transforms/velocities plus inspected numeric
-contact fields did not reproduce a different contact history. Rebuilding two
-spaces until they agree is insufficient; the restored continuation must match
-an untouched source simulator. If a safe engine-supported mechanism is missing,
-stop without weakening State or excluding contacts.
+Record the restore order: which engine call recomputes derived arrays, which fields must be set after
+it, and which setters have side effects.
 
-## Fast development checks
+Validate before changing any lane: missing or extra keys, batch shape, dtype, finite values, ranges and
+semantic constraints. A bad field must not leave earlier lanes half-restored.
 
-Add targeted tests alongside the accepted family tests:
+A static model or configuration can stay outside State only if restoring requires the same
+configuration, and that requirement is documented.
 
-- Field key/shape/dtype/range validation and rejection before mutation.
-- Independent snapshots and independence of source/target simulator instances.
-- Reset parity on fixed seeds and fixed Variation, and full State roundtrip.
-- One-step and several-action continuation, then different-history restoration.
-- Action dtypes, bounds, clipping/rejection/scaling and simultaneous components.
-- Explicit refusal of raw compact rows and lossy decoded RenderState.
-- Persistent physics Variation versus one-reset overrides; unsupported leaves refuse.
+## Local checks
+
+- Field validation, and rejection before any change.
+- Snapshots are independent of each other and of the simulator.
+- Reset matches the source on fixed seeds and fixed Variation.
+- One-step and multi-step continuation, then restoration after a different history.
+- Action dtypes, bounds, and clipping or rejection.
+- `set_state` refuses compact render rows.
+- Persistent physics Variation versus one-reset overrides.
 
 ```bash
 python -m pip install -e '.[dev]'
@@ -118,55 +102,38 @@ ruff format --check stable_envs tests
 git diff --check
 ```
 
-The last integration test is an accepted example, not automatic coverage of your
-new class. Pin its oracle dependencies and add an equivalent independent driver
-for your registration; do not regenerate an oracle with the candidate code.
+The integration test is an example for CartPole, not coverage of a new class. Write an equivalent
+driver for your registration with pinned dependencies. Do not generate its reference data with the
+candidate code.
 
-## Final certification
+## Final acceptance
 
-Require independent source/candidate reset and next-State/reward/done comparisons
-for the declared seed set (including 0, 17 and 42 where following the existing
-recovery gates). Compare every State field. Exercise contacts, controller history,
-random draws and lifecycle boundaries, not only motion in free space.
-
-Prove seeded reset and unseeded reset/RNG replay wherever promised. A reset(None)
-that requests fresh external entropy upstream needs an explicit bounded claim;
-saving one generator must not be presented as capturing all entropy. Record
-reset anchors and complete generator states losslessly.
-
-Determine whether `TimeLimit` belongs to the registration or a caller's wrapper.
-Restore elapsed steps if owned by the backend; compare termination and truncation
-separately at the boundary. Test physics-affecting Variation and meaningful
-omission witnesses. Run the renderer guide's gates separately, and shared
-readiness/taxonomy/promotion checks:
+- Compare source and candidate reset, next State, reward and done for a fixed seed set. Compare every
+  State field.
+- Cover contacts, controller history, random draws and episode boundaries.
+- Check seeded and unseeded reset wherever replay is promised. Store reset anchors and generator states
+  without loss.
+- Decide whether `TimeLimit` belongs to the registration or to a caller's wrapper. If the backend owns
+  it, restore elapsed steps. Compare termination and truncation separately.
+- Test physics Variation.
+- Run the renderer checks separately.
 
 ```bash
 python -m pytest -q tests/unit/test_replacement_readiness.py
 python -m pytest -m 'regression and not gpu'
 ```
 
-Then run the applicable family and frozen-renderer GPU gates on a GPU when claimed.
-These commands do not replace a new registration's semantic evidence. Record
-all skips, missing dependencies and device restrictions.
+Run the family and GPU checks on a GPU where you claim GPU support. Record skips, missing dependencies
+and device limits. See [Definition of done](index.md#definition-of-done).
 
-## Evidence and definition of done
+Common mistakes: saving only `qpos`, dropping reset RNG or anchors, wrong restore order, a setter that
+changes hidden history, casting float64 source arithmetic to float32, silently clipping actions.
 
-Use the [common evidence requirements](index.md#evidence-definition-of-done-and-review).
-Include a field/dtype table, restore-order explanation, pinned source hashes,
-action/controller details, reset/lifecycle ownership, per-Variation scope and
-raw comparisons. Done means exact branching under the declared profile and
-configuration plus the required task/renderer gates. State sufficiency cannot be
-inferred from a matching image or an in-place roundtrip.
+## Review checklist
 
-Common failures: serializing only qpos, dropping reset RNG/anchors, wrong restore
-order, a setter changing hidden history, casting source float64 arithmetic to
-float32, silently clipping actions, or exposing exhaustive State as learner input.
-
-PR-review checklist:
-
-- [ ] Upstream simulator/controller is delegated; sequential step is untouched.
-- [ ] Schema, dtypes, validation and restore order are source-derived.
-- [ ] Independent and different-history tests include contacts/controller histories.
+- [ ] The upstream simulator and controller are called; sequential `step` is untouched.
+- [ ] Schema, dtypes, validation and restore order come from the source.
+- [ ] Restoration tests include different histories with contacts and controller state.
 - [ ] Task, RNG, lifecycle and physics Variation are covered.
-- [ ] Lossy render projections cannot restore the simulator.
-- [ ] Evidence covers every claimed profile; required skips block promotion.
+- [ ] Compact render rows cannot restore the simulator.
+- [ ] Results cover every claimed profile; required skips block acceptance.

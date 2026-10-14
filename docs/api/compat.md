@@ -1,8 +1,8 @@
 # Sibling projects
 
-`stable-envs` does not ship a runtime interop layer for other stable-* packages.
+`stable-envs` has no runtime interop layer for other stable-* packages.
 
-Environment lookup is by canonical class name (`snv.make("PushT")`). Historical SWM identifiers
-and variation-correspondence tables live in the regression suite as certification evidence.
+Look up environments by class name (`snv.make("PushT")`). The mapping from stable-worldmodel ids and
+variation leaves to these classes lives in the test suite.
 
 See [Sibling projects](../concepts/worldmodel.md).

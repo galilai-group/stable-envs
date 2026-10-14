@@ -1,78 +1,57 @@
 # Adding an environment, task, or renderer
 
-Use these guides when extending stable-envs. Identify the layer being changed
-before choosing an implementation or a test plan.
-
-A registration is approximately:
+First identify which layer you are changing. A registration combines three responsibilities:
 
 ```text
 Registration = Environment + Task + renderer/default configuration
 ```
 
-These are responsibilities, not three required Python base classes. The existing
-API has `Env` and a private simulator-adapter protocol; it does not require a new
-`Task`, `Renderer`, or `Observation` class. Several registrations can share an
-implementation while retaining different acceptance evidence.
+These are responsibilities, not base classes. The API has `Env` and a private simulator-adapter
+protocol. There is no `Task`, `Renderer` or `Observation` class to subclass.
 
-| Change being added | Guide |
+| you are adding | guide |
 |---|---|
-| New simulator, dynamics, action mechanism, or State schema | [Environment](environment.md) |
-| New reward, goal, reset distribution, success rule, or task configuration on an existing backend | [Task](task.md) |
-| New pixels, camera, visual backend, or rendering implementation without changing semantics | [Renderer](renderer.md) |
-| New model inputs, observation packaging, or learner-visible filtering | [stable-worldmodel](../concepts/worldmodel.md) |
+| a simulator, dynamics, action mechanism or State schema | [Environment](environment.md) |
+| a reward, goal, reset distribution, success rule or task configuration on an existing backend | [Task](task.md) |
+| pixels, a camera or a rendering backend, without changing semantics | [Renderer](renderer.md) |
+| model inputs, observation packaging or learner-visible filtering | [stable-worldmodel](../concepts/worldmodel.md) |
 
-## Where code belongs
+## Where code goes
 
-- Keep the package root for shared public types and their immediate implementation:
-  `Env`, State/specs, spaces, registration and configuration.
-- Put family-specific code in `envs/<family>/`. Craftax's `prng.py`, for example,
-  exists to reproduce its night noise; it is not a shared rendering backend.
-- Keep reusable rendering engines in `render/`. A helper used by one environment
-  family belongs with that family, even when it deals with graphics.
-- Put a family's simulator adapter and State conversion in `envs/<family>/simulation/`.
-  Shared worker-process code lives in `_execution/`, shared internals in `_core/`.
-- Put reference comparisons and corpus utilities under `testing/`; experiment
-  drivers belong under `scripts/`.
+| code | location |
+|---|---|
+| shared public types: `Env`, State, specs, spaces, registration, configuration | package root |
+| family-specific code | `envs/<family>/` |
+| a family's simulator adapter and State conversion | `envs/<family>/simulation/` |
+| reusable rendering engines | `render/` |
+| shared worker-process code | `_execution/` |
+| shared internals | `_core/` |
+| reference comparisons and corpus utilities | `testing/` |
+| experiment drivers | `scripts/` |
 
-A leading underscore marks an internal module or helper. It should communicate
-privacy, not development history. Public support is defined by the documented
-API, not by the absence of an underscore. Create a subpackage when several files
-share an owner or backend; avoid directories that merely rename a single file.
+A helper used by one family lives with that family, even if it is graphics code. A leading underscore
+marks an internal module. Create a subpackage only when several files share an owner.
 
-## Ownership and minimum interface
+## Values and who owns them
 
-Stable-envs owns exhaustive simulator State, `get_state()`, `set_state()`, reset,
-step, actions, reward/success/done, RNG, bounded Variation, State-to-RenderState
-projection and rendering. Calling the authoritative upstream simulator is the
-intended implementation. A second implementation of its dynamics is unnecessary.
+stable-envs owns full State, `get_state`, `set_state`, reset, step, actions, reward, success, done,
+RNG, Variation and rendering. Call the upstream simulator for dynamics. stable-worldmodel owns learner
+observations. Do not add an Observation class or a State-filtering layer here.
 
-Stable-worldmodel owns learner-visible pixels/proprioception/goals, flat or dict
-packaging, model input keys and dataset filtering. Stable-envs supplies frames and
-semantic goal state; the learner's selection and packaging belong downstream.
-Do not introduce an Observation class or State-filtering layer here. Observation
-integration remains deferred; no runtime SWM dependency is required.
-
-| Value | Meaning | Can restore dynamics? |
+| value | meaning | restores dynamics? |
 |---|---|---|
-| `State` | Independent TensorDict checkpoint of every future-relevant simulator/task/RNG/lifecycle field, under the documented persistent configuration | Yes, on a certified simulator |
-| `RenderState` | Private projection sufficient for a claimed renderer; often a compact float32 row | Only if independently proven complete; a lossy projection must be refused |
-| `Frame` | Rendered uint8 pixels, usually `(B,H,W,3)` | No |
-| Learner observation | Downstream selection/packaging of frames, proprioception, goals or other authorized inputs | Not necessarily |
+| `State` | TensorDict checkpoint of every simulator, task, RNG and lifecycle field needed for the future | yes |
+| `RenderState` | private renderer input, often a compact float32 row | no; `set_state` must refuse it |
+| `Frame` | uint8 pixels, `(B,H,W,3)` | no |
+| learner observation | downstream selection of frames, proprioception, goals | not necessarily |
 
-State can contain privileged information. Returning it from a simulator does not
-make it the default input to a learner. Pixel equality does not establish State
-sufficiency. PushT's parked recovery is a concrete failure case: matching body
-transforms and ordinary velocities did not restore hidden contact history.
+Matching pixels do not prove that State is complete.
 
-The [environment interface](../api/env.md) supplies reset/get/set/step/close,
-State/action/frame specifications and `render(full_state)`. Renderer-only cells
-must refuse simulator operations. Implement a private `_step` kernel; the shared
-public `step` provides sequence execution and capture.
+The [Env interface](../api/env.md) provides reset, get/set, step, close, the specs and
+`render(full_state)`. Implement the private `_step` kernel. The shared public `step` handles action
+sequences and capture. Renderer-only classes must refuse simulator operations.
 
-## Complete small starting example
-
-This uses accepted CartPole semantics and its renderer. Run it from a checkout
-installed with the development dependencies:
+## Small example
 
 ```python
 import numpy as np
@@ -85,28 +64,19 @@ with se.CartPole(num_envs=1, device="cpu") as env:
     actual = env.step(np.array([[1]], dtype=np.int64))
     assert (actual == expected).all()
     frame = env.render(saved)
-    assert frame.dtype.is_floating_point is False
+    assert not frame.dtype.is_floating_point
 ```
 
-Follow the layer-specific guide for implementation examples and deeper checks.
-This smoke test is not a promotion gate.
+## Read the source first
 
-## Establish authority before implementation
+Read the full construction path: registration, wrappers, reset, controller, physics, reward and done,
+RNG and rendering. Pin upstream versions and record hashes of the source and assets you use. Include
+dependency versions that change arithmetic. Record which wrapper owns the time limit.
 
-Read the complete construction path: registration, wrappers, reset, controller,
-physics, task reward/done, RNG and rendering. Pin upstream commits or package
-versions and hash the actual source/assets used. Include dependency versions that
-change arithmetic or engine behavior. Record wrapper ownership of a time limit
-rather than assuming a trainer's episode cap belongs in the raw environment.
+Keep unusual upstream behaviour (dtype conversions, no-op knobs, odd task rules) and document it. Then
+check your reading with runtime comparisons. See [Fidelity methodology](../concepts/fidelity-methodology.md).
 
-An official implementation can contain unusual dtype conversions, no-op knobs or
-counterintuitive task rules. Preserve the claimed behavior and document it.
-Runtime witnesses verify the source interpretation; guessing from rendered images
-does not replace reading the source.
-
-## Development versus promotion
-
-Fast local development checks:
+## Local checks
 
 ```bash
 python -m pip install -e '.[dev,docs]'
@@ -118,40 +88,29 @@ ruff format --check .
 git diff --check
 ```
 
-Install family dependencies in a compatible, explicitly pinned profile; see
-[installation](../install.md). Run the new family's targeted tests as well.
-`mkdocs --strict` checks documentation links and anchors. The repository-contract
-tests check navigation and fixture references.
+Install the family's pinned profile (see [Install](../install.md)) and run its tests. The registry-wide
+checks in CI are described in [Testing](../testing.md).
 
-Final certification needs source closure, independent reference comparisons,
-State restoration across different histories, task/configuration coverage and
-renderer gates on every claimed device/backend. Run the relevant integration,
-regression and GPU suites on machines supporting those profiles. A skipped gate
-is not a pass. The [testing page](../testing.md) lists the existing runners;
-cluster-specific submission commands are not a contributor requirement.
+## Definition of done
 
-## Evidence, definition of done, and review
+A new registration is done when:
 
-Keep a reproducible driver, immutable source identity, dependency/platform record,
-raw logs, per-check results and artifact hashes. A remote gate needs local/remote
-source hashes and an exact success marker in its retained terminal log. Keep
-baseline and candidate results distinct. Never edit a frozen fixture or threshold
-to obtain acceptance. Update registration status only after its required gates
-pass; one sibling's result cannot promote another automatically.
+- the claim is implemented and every required check passes;
+- unsupported paths refuse explicitly;
+- each claim traces to a test or a recorded comparison.
 
-A contribution is done when its bounded claim is implemented, every required
-check passes, unsupported paths refuse explicitly, and a reviewer can trace each
-claim to evidence. A documented blocker leaves the registration incomplete.
-Common failures are omitting hidden State, making learner packaging part of the
-simulator, using renderer parity to infer physics parity, or reporting optional
-skips as certification.
+A skipped required check is not a pass. Do not edit a frozen fixture or a threshold to make a check
+pass. A sibling's result does not cover another registration.
 
-PR-review checklist:
+Keep for review: the driver script, source versions and hashes, dependency and platform versions, raw
+logs and per-check results.
+
+## Review checklist
 
 - [ ] The layer and every affected registration are named.
-- [ ] Authority, versions, source hashes and supported configuration are explicit.
-- [ ] State, RenderState, frames and learner observations remain distinct.
-- [ ] The relevant environment/task/renderer checklist is complete.
+- [ ] Source versions, hashes and supported configuration are stated.
+- [ ] State, RenderState, frames and learner observations stay separate.
+- [ ] The environment, task or renderer checklist is complete.
 - [ ] Fast tests and final acceptance results are reported separately.
-- [ ] Existing evidence and frozen baselines are preserved.
-- [ ] No unsupported device, configuration or sibling inherits a claim by association.
+- [ ] Frozen fixtures and baselines are unchanged.
+- [ ] No device, configuration or sibling class inherits a claim it was not tested for.

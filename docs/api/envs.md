@@ -1,10 +1,14 @@
 # `stable_envs.envs`
 
-The registered environments. The package auto-discovers its modules, so adding a file here is the whole registration step, and `snv.import_errors()` names any module that did not load — a missing optional reference package costs that family and not the package.
+The registered environments. The package discovers these modules automatically, so adding a file is
+the registration step. `snv.import_errors()` lists modules that did not load. A missing optional
+package disables only that family.
 
-List what this interpreter actually imported with `snv.list_envs()` / `snv.info(name)`; the narrative index is [Environments](../environments.md).
+Use `snv.list_envs()` and `snv.info(name)` to see what this interpreter registered. The overview is
+[Environments](../environments.md).
 
-Each module's docstring is where its measured constants live: the reference id, the state layout, and every value that was recovered by pixel-diffing rather than read off the reference's source. Those are reproduced below, one per family, without their class members. PushT is rendered in full because it is the worked example the [porting guide](../adding/index.md) follows.
+Each module docstring records its reference id, state layout and measured constants. They are shown
+below, one per family, without class members. PushT is shown in full.
 
 ## PushT
 

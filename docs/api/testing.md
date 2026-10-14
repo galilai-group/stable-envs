@@ -1,21 +1,20 @@
 # `stable_envs.testing`
 
-Conformance checks as plain functions returning numbers, so they can be called from a report or a
-benchmark and not only from pytest.
+Conformance checks as plain functions that return numbers. Call them from pytest, a report or a
+benchmark.
 
 ::: stable_envs.testing.conformance
 
-## Running the suite safely
+## Test runner
 
-Use the supervisor for suites that initialize native renderers. It records the active test,
-restarts after a crash, and includes crashed tests in the combined failure report. CPU-only unit
-tests can run directly through pytest. See [the testing guide](../testing.md) for source profiles
-and acceptance requirements.
+Use the supervisor for suites that initialize native renderers. It records the running test,
+restarts after a crash, and reports crashed tests as failures. CPU-only unit tests can run with plain
+pytest. See [Testing](../testing.md).
 
-```
+```bash
 python -m tests._runner.supervisor -- tests/ -v      # full suite, crash-isolated
 python -m tests._runner.supervisor --smoke           # one env per family
-python -m tests._runner.node_health                  # is this host fit to measure on?
+python -m tests._runner.node_health                  # host check before measuring
 uvx nox -s "test(<profile>)"                         # one CI profile
 ```
 
@@ -27,7 +26,6 @@ uvx nox -s "test(<profile>)"                         # one CI profile
 
 ::: tests._runner.render_worker
 
-`tests/_runner/safety_plugin.py` supplies the pytest hooks for resource accounting, flushed
-progress events, node checks, and smoke selection. The supervisor consumes those events; node checks
-can be unavailable or skipped, so inspect their details rather than treating `ok` alone as proof
-that the host is healthy.
+`tests/_runner/safety_plugin.py` provides the pytest hooks for resource accounting, progress events,
+host checks and smoke selection. Host checks can be skipped. Read their details; `ok` alone does not
+prove the host is healthy.

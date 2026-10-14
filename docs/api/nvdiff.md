@@ -12,27 +12,21 @@ a different matrix-multiply rounding path. Texture origin, output row direction,
 and byte rounding are explicit. MuJoCo view arrays are copied before later
 simulator calls can mutate them.
 
-Mipmapping and optional anisotropic filtering control texture footprints;
-antialiasing and supersampling control edge coverage. These settings have
-different costs and need separate source-image checks. Anisotropic sampling uses
-the screen-x derivatives `(du/dx, dv/dx)` and screen-y derivatives
-`(du/dy, dv/dy)`. The default remains one tap.
+Mipmapping and optional anisotropic filtering control texture footprints.
+Antialiasing and supersampling control edge coverage. Each setting has its own
+cost and needs its own source-image check. Anisotropic sampling uses the
+screen-x derivatives `(du/dx, dv/dx)` and screen-y derivatives `(du/dy, dv/dy)`.
+The default is one tap.
 
 This backend does not guarantee bit-exact upstream OpenGL or TinyRenderer
-images. Lighting, texture filtering, transparency, shadows, and triangle edge
-rules must be evaluated for each environment and configuration. Internal exact
-tests protect batch invariance and unchanged output during refactoring.
+images. Check lighting, texture filtering, transparency, shadows and triangle
+edge rules for each environment. Internal exact tests check batch invariance.
 
-## Recorded performance
+## Performance
 
-The archived textured antmaze-medium scene benchmark measured **12,992 FPS at
-batch 256** and **15,994 FPS at batch 4,096**, at 224 px on one H200. Geometry
-poses were already on device; this excludes simulation and state preparation.
-The report does not supply timing standard deviations. These are historical
-backend measurements, not current end-to-end or source-renderer speedups.
+A textured antmaze-medium scene rendered at 12,992 FPS at batch 256 and 15,994 FPS at batch 4,096, at
+224 px on one H200. Poses were already on the GPU. Simulation and state preparation are not included.
 
-An earlier anisotropic-filter conclusion predates the corrected derivative layout
-and should not guide tuning.
-Use the [testing guide](../testing.md) for a new source comparison.
+See the [testing guide](../testing.md) for source comparisons.
 
 ::: stable_envs.render.nvdiff

@@ -1,12 +1,9 @@
 # `stable_envs._core.style`
 
-Developer / internal. A `StyleTensor` is the compiled form of Variation: one flat
-`(B, variation_dim)` float32 tensor plus the layout that says which columns are
-`block.color`. Ordinary callers use `variation_spec` / `default_variation` /
-`sample_variation` / `render(..., variation=)`.
+Internal. A `StyleTensor` is the compiled form of Variation: one flat `(B, variation_dim)` float32
+tensor plus a layout that maps columns to leaves such as `block.color`. Normal code uses
+`variation_spec`, `default_variation`, `sample_variation` and `render(..., variation=)`.
 
-This module records **the batch rule** — the single operation that is allowed to change a
-compiled row's batch, and the three shipped defects that existed because that operation
-was open-coded at each call site.
+The module defines the batch rule: the only operation allowed to change a compiled row's batch size.
 
 ::: stable_envs._core.style

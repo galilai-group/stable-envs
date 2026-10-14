@@ -1,30 +1,25 @@
 # Adding a task or task registration
 
-Use this guide when reward, goal, reset distribution, success, termination or task
-configuration changes on an existing simulator. New dynamics/controller/action
-mechanisms need the [environment guide](environment.md). Learner flat/dict
-packaging belongs to stable-worldmodel, not a new simulator abstraction.
+Use this guide when the reward, goal, reset distribution, success rule, termination or task
+configuration changes on an existing simulator. New dynamics, controllers or action mechanisms need
+the [environment guide](environment.md). Learner observation packaging belongs to stable-worldmodel.
 
-## Responsibility and minimum interface
+## Interface
 
-A task supplies the source-defined reset/goal rules, reward/success and lifecycle
-semantics through the same `Env.reset`, `step`, `get_state` and `set_state`
-interface. Goal, task identifier, reset anchors and counters belong in State when
-needed for future transitions/resets. Bounded task Variation must be routed to
-its real source consumer. There is no required public Task base class.
+A task supplies reset and goal rules, reward, success and lifecycle through the same `Env.reset`,
+`step`, `get_state` and `set_state`. There is no Task base class.
 
-A registration selects a backend, task and renderer/default configuration.
-Shared code does not erase per-registration obligations. Fetch's accepted family
-uses one `FetchAdapter`, with task-specific configuration and sparse/dense reward
-selection. Its twelve classes compose `FetchSemantics` with `FetchBase`; the
-`CELLS` table and `_make_classes` in `stable_envs/envs/fetch/envs.py` define the public
-classes. The native registry uses class names, not historical SWM IDs.
+- Goal, task id, reset anchors and counters go in State when future transitions or resets need them.
+- Task Variation must reach the code in the source that uses it.
 
-## Complete example: shared Fetch backend, distinct task semantics
+A registration picks a backend, a task and a renderer configuration. Shared code does not remove
+per-registration checks. Example: the twelve Fetch classes share one `FetchAdapter` with
+task-specific configuration and sparse or dense reward. They combine `FetchSemantics` with `FetchBase`.
+The `CELLS` table and `_make_classes` in `stable_envs/envs/fetch/envs.py` define the classes.
 
-Install the compatible robotics profile described in [Install](../install.md).
-This CPU example needs no renderer or GPU. It executes three accepted registrations
-and verifies their shared transition while preserving the dense/sparse distinction:
+## Example: shared Fetch backend, different rewards
+
+Install the robotics profile from [Install](../install.md). This runs on CPU without a renderer:
 
 ```python
 from contextlib import ExitStack
@@ -49,41 +44,33 @@ with ExitStack() as stack:
     assert outputs[1]["reward"].item() <= 0.0
 ```
 
-The Dict class retains historical registration correspondence; this example does
-not construct a dict learner observation. The source's goal-distance threshold
-and exact sparse/dense formulas are tested separately in the family gate. These
-assertions do not certify another Fetch task by association.
+The Dict class does not build a dict observation here. The goal-distance threshold and the exact
+reward formulas are tested in the family's own tests.
 
-## Find and pin the authoritative task
+## Read the source task
 
-Trace the upstream registration, constructor defaults, wrapper stack, goal/reset
-sampler, reward and success functions, and TimeLimit. Read the controller and
-physics path far enough to prove that selecting the task still delegates to the
-same engine. Record version/commit and source/asset hashes, including any wrapper
-that changes semantics. Fetch uses authoritative gymnasium-robotics/MuJoCo;
-its pinned historical wrapper also supplies reset/Variation behavior. Importing
-stable-worldmodel at runtime is not part of the accepted backend design.
+Trace the upstream registration, constructor defaults, wrappers, goal and reset sampler, reward and
+success functions, and `TimeLimit`. Confirm that the task still calls the same engine. Record versions
+and hashes of the source and any wrapper that changes semantics. Fetch uses gymnasium-robotics and
+MuJoCo.
 
-Document goal state separately from rendered goal decoration and learner goal
-images. Document the default task and every task ID/configuration exposed by the
-registration. Distinguish constructor configuration, persistent Variation and
-one-reset overrides. Refuse unsupported options instead of silently ignoring them.
+- Keep goal State separate from the rendered goal marker and from learner goal images.
+- Document the default task and every task id the registration exposes.
+- Distinguish constructor configuration, persistent Variation and one-reset overrides.
+- Refuse unsupported options. Do not ignore them.
 
-## Fast development tests
+## Local checks
 
 For each configuration, test:
 
-- Reset distribution, deterministic fixed-seed parity and goal/reset anchors.
-- Reward/success formulas, task IDs and default selection.
-- Threshold equality and immediate representable neighbours below/above; use the
-  source arithmetic dtype. Include simultaneous boundaries and angle wrap if used.
-- Termination versus truncation, horizon ownership and elapsed-step restoration.
-- Seeded/unseeded RNG behavior, task-affecting Variation and reset scope.
-- Dense/sparse/alias equivalence of physics and expected differences in reward.
-- The public class actually calls the real simulator/controller, including during
-  consecutive steps; tests must detect a duplicate hand-written transition path.
-
-Accepted local examples and shared checks:
+- reset distribution, fixed-seed parity and reset anchors;
+- reward and success formulas, task ids and defaults;
+- thresholds at the boundary and at the nearest representable values on each side, in the source's
+  dtype;
+- termination versus truncation, who owns the horizon, and elapsed-step restoration;
+- seeded and unseeded RNG, and task Variation;
+- that dense, sparse and alias classes share physics and differ only in reward;
+- that the public class calls the real simulator on every step.
 
 ```bash
 python -m pip install -e '.[dev,robotics]'
@@ -94,53 +81,39 @@ ruff format --check stable_envs tests
 git diff --check
 ```
 
-Run a family-specific driver in the pinned source/profile with a new output
-location; inspect its entry point before running archived drivers that write fixed evidence paths. Optional-dependency skips in the unit suite do not prove Fetch
-semantics.
+Skips for missing optional dependencies do not prove Fetch semantics. Run the family tests in the
+pinned profile.
 
-## Promotion and certification
+## Final acceptance
 
-Run independent source-versus-candidate comparisons for reset and multi-step
-continuation under each registration/configuration. Compare full State, reward,
-success and both done flags. Restore into independent simulators with different
-contact/controller histories. Replay reset anchors and RNG wherever promised.
-Cover task-affecting and visual-only Variation separately.
+- Compare source and candidate reset and multi-step continuation for each registration and
+  configuration: full State, reward, success and both done flags.
+- Restore into simulators with different contact and controller histories.
+- Replay reset anchors and RNG wherever promised.
+- Test task Variation and visual-only Variation separately.
 
-Shared evidence may be referenced when the exact code path and configuration are
-identical. Still execute each public registration, validate its constructor/action
-spec/lifecycle/reward configuration, and record registration-specific results.
-A new reward branch needs its own boundaries; a different reset distribution
-needs its own seeded witnesses; a renderer-changing task needs rendering evidence.
-One accepted representative is not family-wide acceptance.
+You may reuse results only when the code path and configuration are identical. Still run each public
+class and check its constructor, action spec, lifecycle and reward configuration. A new reward branch
+needs its own boundary tests. A new reset distribution needs its own seeded tests.
 
 ```bash
 python -m pytest -q tests/unit/test_full_state_contract.py tests/unit/test_replacement_readiness.py
 python -m pytest -m 'regression and not gpu'
 ```
 
-Also run your registration's independent semantic driver and required renderer/GPU
-gates. GPU renderer acceptance proves rendering under that profile, not physics
-parity under a different dependency profile. Missing required gates leave that
-registration incomplete; siblings may be accepted independently.
+GPU rendering results do not prove physics under another dependency profile. See
+[Definition of done](index.md#definition-of-done).
 
-## Evidence, definition of done, and review
+Common mistakes: confusing the visual goal with the reward goal, changing `<` to `<=`, dropping
+velocity terms from a dense reward, using a trainer's horizon as the simulator's, accepting siblings by
+name.
 
-Follow the [common provenance rules](index.md#evidence-definition-of-done-and-review).
-Keep a per-registration table of task IDs, defaults, source functions, aliases,
-reset/reward/lifecycle tests and renderer coverage. Record exact source versions,
-hashes, comparison records, terminal results and unsupported scope.
+## Review checklist
 
-Done means the registration's complete task behavior is proven on the real backend
-and all required acceptance gates pass. Typical failures are confusing visual and
-reward goals, changing `<` to `<=`, dropping velocity terms from a dense reward,
-using trainer horizons as simulator horizons, and certifying siblings by name.
-
-PR-review checklist:
-
-- [ ] Backend delegation is unchanged and tested.
-- [ ] Goal/reset/reward/success and lifecycle ownership are source-derived.
-- [ ] Threshold neighbours use the correct source dtype.
-- [ ] Every exposed task/configuration and public registration executes.
-- [ ] Shared evidence has an explicit identical-path justification.
-- [ ] Variation/reset/RNG and renderer differences have their own witnesses.
-- [ ] Observation packaging remains downstream; status changes are evidence-backed.
+- [ ] The backend still calls the upstream simulator, and a test checks it.
+- [ ] Goal, reset, reward, success and lifecycle come from the source.
+- [ ] Threshold tests use the source dtype.
+- [ ] Every exposed task, configuration and public class runs.
+- [ ] Shared results have an identical-path justification.
+- [ ] Variation, reset, RNG and renderer differences have their own tests.
+- [ ] Observation packaging stays downstream.
