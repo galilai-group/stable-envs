@@ -59,9 +59,8 @@ def test_every_source_path_glob_matches_a_file():
     assert [glob for glob in globs if not fnmatch.filter(files, glob)] == []
 
 
-def test_every_swm_pin_constant_is_the_families_toml_commit():
-    """ci/families.toml [swm] names the stable-worldmodel commit; the gate constants must agree."""
-    pin = CONFIG["swm"]["commit"]
+def test_the_swm_pin_is_defined_once_as_the_families_toml_commit():
+    """ci/families.toml [swm] names the stable-worldmodel commit; saved.py holds the one test constant for it."""
     files = [
         ROOT / "tests/helpers/reference/saved.py",
         *sorted((ROOT / "tests/helpers/reference/gates").glob("*.py")),
@@ -71,8 +70,7 @@ def test_every_swm_pin_constant_is_the_families_toml_commit():
         for path in files
         for value in re.findall(r'^(?:SWM_PIN|PIN) = "([0-9a-f]{40})"', path.read_text(), re.M)
     }
-    assert "tests/helpers/reference/saved.py" in found
-    assert {path: value for path, value in found.items() if value != pin} == {}
+    assert found == {"tests/helpers/reference/saved.py": CONFIG["swm"]["commit"]}
 
 
 def test_ci_runs_every_shard_of_every_profile_and_the_shards_partition_a_selection():

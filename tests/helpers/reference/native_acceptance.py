@@ -11,6 +11,7 @@ import stable_envs as se
 from tests.helpers.reference.native_classic_semantics import NativeClassicReference
 from tests.helpers.reference.profiles import PROFILES
 from tests.helpers.reference.semantics import (
+    assert_lossy_projection_rejected,
     check_reset_matches_reference,
     check_state_roundtrip,
     check_step_matches_reference,
@@ -56,17 +57,6 @@ def _assert_independent_snapshot(env, snapshot):
     snapshot[first_float].add_(1)
     snapshot["rng", "state"].add_(1)
     compare_state(env.get_state(), frozen)
-
-
-def _assert_lossy_rejected(env, snapshot):
-    packed = env._pack_render_state(snapshot)
-    for bad in (packed, env._unpack_render_state(packed)):
-        try:
-            env.set_state(bad)
-        except (TypeError, ValueError):
-            pass
-        else:
-            raise AssertionError("Lossy renderer projection was accepted")
 
 
 def _candidate_restore_against_uninterrupted_reference(domain, env, ref, actions):
@@ -352,7 +342,7 @@ def run_case(domain, batch, device):
                 before = env.get_state()
                 env.render(resume)
                 compare_state(env.get_state(), before)
-                _assert_lossy_rejected(env, resume)
+                assert_lossy_projection_rejected(env, resume)
                 check_reset_matches_reference(env, ref, seed=None)
                 if domain not in EARLY:
                     custom_ref = NativeClassicReference(domain, batch, options={"low": -0.02, "high": 0.03})

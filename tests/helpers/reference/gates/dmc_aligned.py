@@ -14,15 +14,18 @@ import torch
 
 import stable_envs as se
 from tests.helpers.reference.dmc_semantics import DMCReference as DMCAlignedReference
+from tests.helpers.reference.dmc_semantics import compare_models
+from tests.helpers.reference.saved import SWM_PIN
 from tests.helpers.reference.semantics import (
+    assert_lossy_projection_rejected,
     check_reset_matches_reference,
     check_state_roundtrip,
     check_step_matches_reference,
     check_two_histories_same_state,
     compare_state,
+    max_state_error,
 )
 
-SWM_PIN = "21446f1ede6d5284e981bd7b47f432b994e6d812"
 CASES = {
     "ball_in_cup": "DMCBallInCupCatch",
     "finger": "DMCFingerTurnHard",
@@ -42,22 +45,6 @@ OMISSIONS = {
 # Ball-in-Cup prefix 6 is a contact snapshot whose omitted fields change later outputs on both
 # ARM/MuJoCo 3.12 and x86/MuJoCo 3.11; at prefix 5 the omission has no effect on x86/3.11.
 PREFIXES = {"ball_in_cup": 6, "finger": 7, "manipulator": 1, "quadruped": 1}
-
-
-def _max_error(actual, expected, *, exclude=()):
-    assert set(actual.keys(True, True)) == set(expected.keys(True, True))
-    error = 0.0
-    for key in actual.keys(True, True):
-        if key in exclude:
-            continue
-        left, right = actual[key].detach().cpu(), expected[key].detach().cpu()
-        assert left.dtype == right.dtype and left.shape == right.shape
-        if left.dtype == torch.bool:
-            delta = float((left != right).any())
-        else:
-            delta = float((left.double() - right.double()).abs().nan_to_num().max())
-        error = max(error, delta)
-    return error
 
 
 def _omission_experiments(domain, env, reference):
@@ -83,12 +70,12 @@ def _omission_experiments(domain, env, reference):
         bad = [env.step(action, states=None, frames=None).exclude("valid") for action in continuation]
         expected = [reference.step(action) for action in continuation]
         error_without = max(
-            _max_error(actual, wanted, exclude=(("state", *omitted_key),))
+            max_state_error(actual, wanted, exclude=(("state", *omitted_key),))
             for actual, wanted in zip(bad, expected, strict=True)
         )
         env.set_state(saved)
         good = [env.step(action, states=None, frames=None).exclude("valid") for action in continuation]
-        error_with = max(_max_error(actual, wanted) for actual, wanted in zip(good, expected, strict=True))
+        error_with = max(max_state_error(actual, wanted) for actual, wanted in zip(good, expected, strict=True))
         diagnostic = {
             "domain": domain,
             "omitted_key": "/".join(omitted_key),
@@ -111,34 +98,6 @@ def _omission_experiments(domain, env, reference):
             "max_error_with_schema": error_with,
         }
     return results
-
-
-def _compare_models(candidate, reference):
-    actual, expected = candidate._simulator.envs[0].physics.model, reference.envs[0].env.physics.model
-    compared = 0
-    for name in dir(actual):
-        if name.startswith("_") or not hasattr(expected, name):
-            continue
-        try:
-            left, right = np.asarray(getattr(actual, name)), np.asarray(getattr(expected, name))
-        except Exception:
-            continue
-        if left.dtype.kind not in "biufc" or right.dtype.kind not in "biufc":
-            continue
-        assert left.shape == right.shape, (name, left.shape, right.shape)
-        assert np.array_equal(left, right, equal_nan=True), name
-        compared += 1
-    assert compared >= 500
-    return compared
-
-
-def _assert_lossy_rejected(env, snapshot):
-    projection = env._unpack_render_state(env._pack_render_state(snapshot))
-    try:
-        env.set_state(projection)
-    except (TypeError, ValueError):
-        return
-    raise AssertionError("Lossy renderer projection was accepted")
 
 
 def _assert_bad_actions(env, action_dim):
@@ -210,7 +169,7 @@ def run_gate(device="cpu"):
                     if batch == 1:
                         check_reset_matches_reference(env, reference, seed=0)
                         evidence["construction"][domain] = {
-                            "numeric_model_arrays_exact": _compare_models(env, reference),
+                            "numeric_model_arrays_exact": compare_models(env, reference, minimum=500),
                             "nq": env._simulator.envs[0].physics.model.nq,
                             "nv": env._simulator.envs[0].physics.model.nv,
                             "na": env._simulator.envs[0].physics.model.na,
@@ -240,7 +199,7 @@ def run_gate(device="cpu"):
                         before = env.get_state()
                         env.render(snapshot)
                         compare_state(env.get_state(), before)
-                        _assert_lossy_rejected(env, snapshot)
+                        assert_lossy_projection_rejected(env, snapshot)
                         evidence["cases"].append(
                             {
                                 "domain": domain,

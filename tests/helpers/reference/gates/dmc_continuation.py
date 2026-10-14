@@ -14,34 +14,24 @@ import torch
 
 import stable_envs as se
 from tests.helpers.reference.dmc_semantics import DMCReference as DMCContinuationReference
+from tests.helpers.reference.dmc_semantics import compare_models
+from tests.helpers.reference.saved import SWM_PIN
 from tests.helpers.reference.semantics import (
+    assert_lossy_projection_rejected,
     check_reset_matches_reference,
     check_state_roundtrip,
     check_step_matches_reference,
     check_two_histories_same_state,
     compare_state,
+    max_state_error,
 )
 
-SWM_PIN = "21446f1ede6d5284e981bd7b47f432b994e6d812"
 CASES = {
     "cheetah": "DMCCheetahRun",
     "hopper": "DMCHopperHop",
     "walker": "DMCWalkerWalk",
 }
 POSITIVE_SPEED = {"cheetah": 15.0, "hopper": 3.0, "walker": 1.0}
-
-
-def _assert_lossy_rows_rejected(env, snapshot):
-    for bad in (
-        env._pack_render_state(snapshot),
-        env._unpack_render_state(env._pack_render_state(snapshot)),
-    ):
-        try:
-            env.set_state(bad)
-        except (TypeError, ValueError):
-            pass
-        else:
-            raise AssertionError("Lossy renderer projection was accepted")
 
 
 def _positive_state(domain, state):
@@ -56,29 +46,6 @@ def _positive_state(domain, state):
     return state
 
 
-def _compare_models(candidate, reference):
-    actual = candidate._simulator.envs[0].physics.model
-    expected = reference.envs[0].env.physics.model
-    compared = 0
-    for name in dir(actual):
-        if name.startswith("_"):
-            continue
-        try:
-            left, right = np.asarray(getattr(actual, name)), np.asarray(getattr(expected, name))
-        except Exception:
-            continue
-        if left.shape != right.shape or left.dtype.kind not in "biufc":
-            continue
-        assert np.array_equal(left, right, equal_nan=True), name
-        compared += 1
-    assert compared >= 500
-    candidate_base, reference_base = candidate._simulator.envs[0]._env, reference.envs[0].env._env
-    assert candidate_base._n_sub_steps == reference_base._n_sub_steps
-    assert candidate_base._step_limit == reference_base._step_limit
-    assert candidate_base.control_timestep() == reference_base.control_timestep()
-    return compared
-
-
 def _assert_bad_actions_rejected(env, action_dim):
     for action in (
         np.zeros((env.B, action_dim + 1)),
@@ -91,22 +58,6 @@ def _assert_bad_actions_rejected(env, action_dim):
             pass
         else:
             raise AssertionError("Invalid action was accepted")
-
-
-def _max_error(actual, expected, *, exclude=()):
-    assert set(actual.keys(True, True)) == set(expected.keys(True, True))
-    error = 0.0
-    for key in actual.keys(True, True):
-        if key in exclude:
-            continue
-        left, right = actual[key].detach().cpu(), expected[key].detach().cpu()
-        assert left.dtype == right.dtype and left.shape == right.shape
-        if left.dtype == torch.bool:
-            delta = float((left != right).any())
-        else:
-            delta = float((left.to(torch.float64) - right.to(torch.float64)).abs().nan_to_num().max())
-        error = max(error, delta)
-    return error
 
 
 def _warmstart_experiment(domain, env, reference):
@@ -126,13 +77,13 @@ def _warmstart_experiment(domain, env, reference):
     bad_outputs = [env.step(action, states=None, frames=None).exclude("valid") for action in continuation]
     expected_outputs = [reference.step(action) for action in continuation]
     error_without = max(
-        _max_error(actual, expected, exclude=(("state", "warmstart"),))
+        max_state_error(actual, expected, exclude=(("state", "warmstart"),))
         for actual, expected in zip(bad_outputs, expected_outputs, strict=True)
     )
     env.set_state(saved)
     good_outputs = [env.step(action, states=None, frames=None).exclude("valid") for action in continuation]
     error_with_schema = max(
-        _max_error(actual, expected) for actual, expected in zip(good_outputs, expected_outputs, strict=True)
+        max_state_error(actual, expected) for actual, expected in zip(good_outputs, expected_outputs, strict=True)
     )
     assert error_without > 0
     assert error_with_schema == 0
@@ -195,7 +146,7 @@ def run_gate(device="cpu"):
                 try:
                     if batch == 1:
                         check_reset_matches_reference(env, ref, seed=0)
-                        arrays = _compare_models(env, ref)
+                        arrays = compare_models(env, ref, minimum=500)
                         evidence.setdefault("construction", {})[domain] = {
                             "numeric_model_arrays_exact": arrays,
                             "control_timestep": ref.envs[0].env._env.control_timestep(),
@@ -239,7 +190,7 @@ def run_gate(device="cpu"):
                         before = env.get_state()
                         env.render(snapshot)
                         compare_state(env.get_state(), before)
-                        _assert_lossy_rows_rejected(env, snapshot)
+                        assert_lossy_projection_rejected(env, snapshot)
                         evidence["cases"].append(
                             {
                                 "domain": domain,
