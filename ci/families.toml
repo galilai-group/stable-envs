@@ -15,6 +15,8 @@
 #   shards           CI jobs the profile's tests are split into, per tier: { pr = N, nightly = M }; default 1.
 #                    Sized from ci/durations.json so a pull-request job stays near 10 minutes on a
 #                    4-vCPU runner and a nightly one near 30
+#   env_affinity     true runs the tests with --env-affinity (tests/_runner/shard.py): the tests of one
+#                    env share an xdist worker, so each worker caches its own envs rather than all of them
 
 # The stable-worldmodel commit the reference gates compare against; tests/unit/test_family_map.py
 # keeps SWM_PIN in tests/helpers/reference and the benchmark PIN constants equal to it.
@@ -158,6 +160,7 @@ capabilities = ["swm"]
 swm_with = ["pymunk", "shapely"]
 linux_env = { MUJOCO_GL = "osmesa", PYOPENGL_PLATFORM = "osmesa" }
 shards = { pr = 6, nightly = 6 }
+env_affinity = true
 
 [family.rocket]
 extras = ["rocket"]
