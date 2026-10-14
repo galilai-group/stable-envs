@@ -222,8 +222,8 @@ def test_player_visible_still_hides_a_sleeping_player(env, states):
 # ---------------------------------------------------------------- the state contract
 
 
-def test_the_first_127_slots_kept_their_meaning(env, states):
-    """State slots are appended, never reordered."""
+def test_state_slots_are_world_facing_inventory_then_sleep_light_and_rng(env, states):
+    """The 149 State slots in order: block and mob grids, facing, inventory, then sleep, light and RNG."""
     assert env.state_dim == 149
     assert env.state_names[:127] == (
         tuple(f"block_r{r}c{c}" for r in range(OBS_H) for c in range(OBS_W))

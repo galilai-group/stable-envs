@@ -385,7 +385,7 @@ def test_step_returns_exactly_env_state(name):
 
 
 @pytest.mark.parametrize("name", CLASSIC)
-def test_recovered_classic_reports_authoritative_outputs_and_typed_state(name):
+def test_classic_reports_authoritative_outputs_and_typed_state(name):
     with _env(name, 2) as env:
         result = env.step(_actions(env, 2), frames=None)
         assert {

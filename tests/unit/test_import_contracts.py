@@ -191,7 +191,7 @@ def test_dm_control_import_does_not_hang_after_gl_configure():
     assert r.stdout.strip() == "ok"
 
 
-GONE_SHIMS = (
+UNSUPPORTED_MODULE_PATHS = (
     "stable_envs/core",
     "stable_envs/compat",
     "stable_envs/interop.py",
@@ -215,9 +215,9 @@ BANNED_IMPORTS = (
 )
 
 
-def test_removed_shim_modules_are_absent():
+def test_unsupported_module_paths_do_not_exist():
     remaining = []
-    for rel in GONE_SHIMS:
+    for rel in UNSUPPORTED_MODULE_PATHS:
         path = ROOT / rel
         files = path.rglob("*") if path.is_dir() else [path]
         if any(
@@ -256,7 +256,7 @@ def _is_banned(mod: str) -> bool:
     return any(mod == b or mod.startswith(b + ".") for b in BANNED_IMPORTS)
 
 
-def test_maintained_tests_and_examples_do_not_import_deleted_modules():
+def test_maintained_tests_and_examples_import_no_unsupported_module():
     offenders = {}
     for folder in ("tests", "examples", "stable_envs"):
         for path in (ROOT / folder).rglob("*.py"):

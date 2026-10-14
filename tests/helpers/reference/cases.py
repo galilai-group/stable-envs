@@ -56,7 +56,7 @@ def coverage(required, results) -> dict:
 _CLASSIC = "tests/integration/test_native_classic_gate.py::test_frozen_source_state_and_tasks"
 _NAVIGATION = "tests/integration/test_native_navigation_oracle.py::test_frozen_native_navigation_oracles_replay"
 _DMC_SUITE = "tests/unit/test_dmc_sibling_tasks.py::test_cell_matches_the_source_task_and_restores_into_a_fresh_env"
-_DMC_HISTORICAL = "tests/unit/test_dmc_sibling_tasks.py::test_historical_cell_matches_the_source_task"
+_DMC_SWM_CELL = "tests/unit/test_dmc_sibling_tasks.py::test_swm_cell_matches_the_suite_task"
 _DMC_CORPUS = "tests/unit/test_dmc_oracle_replay.py::test_adapter_replays_every_recorded_step_from_restored_states"
 _MAZE = "tests/integration/test_ogbench_semantics.py::test_every_maze_cell_matches_the_official_env"
 _MAZES = tuple(
@@ -87,7 +87,7 @@ ORIGINAL_GATES: dict[str, str] = {
             "DMCHumanoidWalk",
             "DMCReacherHard",
         ),
-        _DMC_HISTORICAL,
+        _DMC_SWM_CELL,
     ),
     **dict.fromkeys(
         ("DMCBallInCupCatch", "DMCFingerTurnHard", "DMCManipulatorBringBall", "DMCQuadrupedWalk", "DMCWalkerWalk"),

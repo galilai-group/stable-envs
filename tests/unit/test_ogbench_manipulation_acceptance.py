@@ -7,7 +7,7 @@ from tests.helpers.reference.readiness import execution_for, status_for
 
 
 @pytest.mark.parametrize("family,count", [("Cube", 11), ("Scene", 12)])
-def test_live_recovered_configuration_matches_readiness(family, count):
+def test_variation_configuration_matches_readiness(family, count):
     pytest.importorskip("ogbench")
     from stable_envs.envs.ogbench import OGBCube, OGBScene
 

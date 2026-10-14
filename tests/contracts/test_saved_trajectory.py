@@ -26,7 +26,7 @@ def corpus(case):
 
 
 @pytest.mark.parametrize("case", CASES, ids=lambda case: case.name)
-def test_old_and_new_source_corpora_agree(case):
+def test_native_and_shared_source_corpora_agree(case):
     folder = "native_classic" if case.domain in {"cartpole", "pendulum"} else "native_classic_remaining"
     manifest, old = native_corpus(ROOT / folder, case.domain)
     new = corpus(case)
