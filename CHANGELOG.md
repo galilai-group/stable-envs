@@ -1,6 +1,24 @@
 # Changelog
 
-## 0.1.0 — initial release
+All notable changes to this project are listed here. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [0.1.0] - 2026-10-14
+
+Initial release.
+
+### Added
 
 - Batched environments in seven families: classic control, DM Control, Fetch, navigation,
   OGBench, PushT and PyFlyt Rocket Landing. 70 environments register when every extra is
@@ -18,4 +36,7 @@
 - `stable-envs doctor` checks the driver, Warp and MuJoCo OpenGL setup per env family.
 - `stable_envs.testing` measurement helpers, the `benchmarks/` harness and MkDocs documentation.
 
-See [limitations](docs/concepts/limitations.md) for known gaps.
+See [Limitations](https://galilai-group.github.io/stable-envs/concepts/limitations/) for known gaps.
+
+[Unreleased]: https://github.com/galilai-group/stable-envs/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/galilai-group/stable-envs/releases/tag/v0.1.0
