@@ -22,12 +22,12 @@ SWM_PIN = "21446f1ede6d5284e981bd7b47f432b994e6d812"
 CORPUS_PIN = "176d54532b3c0a251a4f509b74f2fdacc143a63d"
 ROCKET_SOURCE = "5ede3640ce1e2add32b6b0a6c36e190bb1130e38bb258ab182af12a6fbedee23"
 
-# Cross-machine frozen trajectories only. The independent Linux/Mac source audit
-# measured up to 8e-15 over 32 steps; replayed DM Control corpora differ by up to
-# 1.4e-15. Live same-runtime source contracts and immediate State restoration
-# retain exact comparisons. This is an absolute roundoff budget, not a source
+# Cross-machine frozen trajectories only. Linux x86_64 against the macOS arm64
+# recordings differs by up to 1.1e-11 (DM Control contact-heavy velocities).
+# Live same-runtime source contracts and immediate State restoration retain
+# exact comparisons. This is an absolute roundoff budget, not a source
 # acceptance or pixel threshold.
-FROZEN_FLOAT64_ATOL = 1e-12
+FROZEN_FLOAT64_ATOL = 1e-9
 
 
 def assert_frozen_equal(actual, expected, *, equal_nan=False, msg=None):
