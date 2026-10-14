@@ -106,11 +106,9 @@ def sample(
     """
     if not has_dynamics(env):
         raise NotImplementedError(
-            f"{type(env).__name__} ships a renderer but no batched GPU simulator, so it cannot generate "
-            f"trajectories. That is a deliberate split: rendering and simulation are separable, and an "
-            f"env earns a step() only where its dynamics can be ported AND checked. Either supply "
-            f"states you already have, or roll out the official environment and render the states it "
-            f"produces."
+            f"{type(env).__name__} has a renderer but no batched simulator, so it cannot generate "
+            f"trajectories. Supply states you already have, or roll out the official environment and "
+            f"render the states it produces."
         )
 
     B = int(batch or env.B)
@@ -128,7 +126,7 @@ def sample(
             env.set_variation(style)
         env.reset(seed=seed)
         if init_states is not None:
-            env.set_state(init_states)  # Requires full State, never a lossy corpus row.
+            env.set_state(init_states)
 
         def render_rows():
             return env._pack_render_state(env.get_state())

@@ -9,12 +9,11 @@ from stable_envs.render.gfxdraw import fused as F
 
 @torch.no_grad()
 def render_classic_torch(ops: C.Ops, out: torch.Tensor | None = None) -> torch.Tensor:
-    """The fused semantics, in torch, over the whole frame. The readable specification.
+    """Reference torch implementation of the fused gfxdraw kernel over the whole frame.
 
-    Every branch the Triton kernel takes is taken here in the same order over the same closed form;
-    the difference is that this evaluates all pixels of all primitives and keeps ``(B,H,W,3)``
-    intermediates, which is exactly the cost the kernel exists to remove. Slow on purpose: this is
-    an oracle, and an oracle that shares an optimisation with the thing it checks is not one.
+    Takes every branch the Triton kernel takes, in the same order and over the same closed form,
+    but evaluates all pixels of all primitives with ``(B,H,W,3)`` intermediates. It shares no
+    optimisation with the kernel it checks.
     """
     B, H, W, dev = ops.B, ops.H, ops.W, ops.device
     sh = torch.tensor(G.SHIFT, dtype=torch.int64, device=dev)
