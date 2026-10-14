@@ -114,7 +114,7 @@ def run_gate(device="cpu"):
             k: importlib.metadata.version(k)
             for k in ("torch", "numpy", "gymnasium", "ogbench", "mujoco", "tensordict", "stable-worldmodel")
         },
-        "scope_limit": "Exact empty-kwargs default semantics only; nondefault reset options/tasks and complete historical appearance mapping are uncertified.",
+        "scope_limit": "Exact empty-kwargs default semantics only; nondefault reset options/tasks and the full SWM appearance mapping are not covered.",
         "cases": [],
     }
     for batch in (1, 3):
@@ -179,9 +179,9 @@ def run_gate(device="cpu"):
                             reward_done_observation_info_error=0.0,
                         )
                     )
-                # OGBench samples five warm-up actions while making a discarded goal
-                # observation. Different action-space RNG histories must therefore still produce
-                # the same continuation after the complete env/global RNG snapshot is restored.
+                # OGBench samples five warm-up actions while making a discarded goal observation, so
+                # different action-space RNG histories must give the same continuation once the env
+                # and global RNG State is restored.
                 check_reset_matches_reference(env, ref, seed=31)
                 snapshot = ref.get_state()
                 other.reset(seed=777)
@@ -209,9 +209,8 @@ def run_gate(device="cpu"):
                         env_and_legacy_rng_restored=True,
                     )
                 )
-                # The historical registration exposes visual knobs but no physical default knob.
-                # Prove that a persistent nondefault appearance still consumes the full State via
-                # the preserved private qpos projection and cannot mutate delegated physics.
+                # The SWM registration exposes appearance leaves but no physical ones. A persistent
+                # nondefault appearance still renders from the full State and leaves the physics untouched.
                 env.set_variation({"agent.color": [0.2, 0.8, 0.4]})
                 varied_state = env.get_state()
                 varied_before = varied_state.clone()
@@ -257,8 +256,7 @@ def run_gate(device="cpu"):
                     )
                 )
 
-                # The wrapped raw OGBench env has no TimeLimit. Prove continued parity past the
-                # conventional 1000-step boundary rather than inventing a truncation lifecycle.
+                # The raw OGBench env has no TimeLimit: parity continues past 1000 steps without truncation.
                 check_reset_matches_reference(env, ref, seed=5)
                 zeros = np.zeros((batch, 2), np.float32)
                 for _ in range(1001):

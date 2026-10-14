@@ -1,4 +1,4 @@
-"""Run the bounded Acrobot/Pendulum/Cartpole recovery gate and emit evidence."""
+"""Semantic gate for DMC Acrobot, Pendulum and Cartpole swing-up against pinned SWM."""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ CASES = {
 }
 
 
-def _positive_reward_state(domain, state):
+def _positive_reward_state(state):
     state = state.clone()
     state["qpos"].zero_()
     state["qvel"].zero_()
@@ -72,7 +72,7 @@ def run_gate(device="cpu"):
             for name in ("torch", "numpy", "dm-control", "mujoco", "tensordict", "stable-worldmodel")
         },
         "mappings": CASES,
-        "excluded_mapping": {"DMCCartpoleBalance": "historical default is sparse swing-up, not dense balance"},
+        "excluded_mapping": {"DMCCartpoleBalance": "the SWM default is sparse swing-up, not dense balance"},
         "cases": [],
     }
     for domain, env_name in CASES.items():
@@ -127,7 +127,7 @@ def run_gate(device="cpu"):
 
                     # All three sparse/default tasks have a known reward-1 configuration.
                     check_reset_matches_reference(env, ref, seed=18)
-                    reward_state = _positive_reward_state(domain, ref.get_state())
+                    reward_state = _positive_reward_state(ref.get_state())
                     env.set_state(reward_state)
                     ref.set_state(reward_state)
                     got, expected = (

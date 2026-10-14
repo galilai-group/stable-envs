@@ -1,4 +1,4 @@
-"""Exact semantic gate for the three historical native navigation defaults."""
+"""Exact semantic gate for TwoRoom, Piecewise and SimplePointMaze against pinned SWM."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Gate four source-aligned historical DMC defaults."""
+"""Semantic gate for the four DMC tasks aligned with their pinned SWM registrations."""
 
 from __future__ import annotations
 
@@ -39,9 +39,8 @@ OMISSIONS = {
     ],
     "quadruped": [("warmstart",), ("activation",)],
 }
-# Ball-in-Cup prefix 5 has a zero omission witness on x86/MuJoCo 3.11.
-# Prefix 6 is a contact snapshot with nonzero observable omission error on
-# both the ARM/3.12 and x86/3.11 profiles; restore stays exact.
+# Ball-in-Cup prefix 6 is a contact snapshot whose omitted fields change later outputs on both
+# ARM/MuJoCo 3.12 and x86/MuJoCo 3.11; at prefix 5 the omission has no effect on x86/3.11.
 PREFIXES = {"ball_in_cup": 6, "finger": 7, "manipulator": 1, "quadruped": 1}
 
 

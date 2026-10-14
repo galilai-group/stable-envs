@@ -1,4 +1,4 @@
-"""Gate the bounded Cheetah run, Hopper hop and Walker walk recovery."""
+"""Semantic gate for DMC Cheetah run, Hopper hop and Walker walk against pinned SWM."""
 
 from __future__ import annotations
 
@@ -311,7 +311,7 @@ def run_gate(device="cpu"):
                         compare_state(env.step(outside, states=None, frames=None).exclude("valid"), ref.step(outside))
                         evidence.setdefault("action_validation", {})[domain] = {
                             "shape_and_nonfinite_rejected": True,
-                            "finite_out_of_bounds_matches_historical_passthrough": True,
+                            "finite_out_of_bounds_matches_swm_passthrough": True,
                         }
                 finally:
                     ref.close()

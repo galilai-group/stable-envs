@@ -1,4 +1,4 @@
-"""Gate historical ``swm/HumanoidDMControl-v0`` as Humanoid Walk."""
+"""Semantic gate for DMC Humanoid Walk against pinned ``swm/HumanoidDMControl-v0``."""
 
 from __future__ import annotations
 
@@ -163,7 +163,7 @@ def run_gate(device="cpu"):
             for name in ("torch", "numpy", "dm-control", "mujoco", "tensordict", "stable-worldmodel")
         },
         "mapping": {"swm/HumanoidDMControl-v0": ENV_NAME},
-        "task_identity": "Humanoid(move_speed=1, pure_state=False), historical default task='walk'",
+        "task_identity": "Humanoid(move_speed=1, pure_state=False), SWM default task='walk'",
         "state_schema": {
             "included": [
                 "qpos[28]",
@@ -327,7 +327,7 @@ def run_gate(device="cpu"):
                     )
                     evidence["action_validation"] = {
                         "shape_and_nonfinite_rejected": True,
-                        "finite_out_of_bounds_matches_historical_passthrough": True,
+                        "finite_out_of_bounds_matches_swm_passthrough": True,
                     }
             finally:
                 reference.close()

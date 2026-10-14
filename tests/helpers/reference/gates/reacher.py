@@ -1,4 +1,4 @@
-"""Run the bounded Reacher recovery gate; emit evidence, never benchmark claims."""
+"""Semantic gate for DMC Reacher Hard against pinned SWM; returns evidence."""
 
 from __future__ import annotations
 
@@ -94,7 +94,7 @@ def run_gate(device="cpu"):
                             reward_done_error=0.0,
                         )
                     )
-                # Positive reward is checked, not just a trajectory of zero rewards.
+                # A state with positive reward.
                 env.reset(seed=18)
                 ref.reset(seed=18)
                 reward_state = ref.get_state()
@@ -109,8 +109,8 @@ def run_gate(device="cpu"):
                 compare_state(got, expected)
                 assert (got["reward"] == 2).all()
                 evidence["cases"].append(dict(batch=batch, positive_reward=2.0, terminated=False, truncated=False))
-                # An underlying LAST does not truncate SWM's hard task. The next substep resets,
-                # consumes RNG and changes target geometry. Replay must preserve this exact behavior.
+                # An underlying LAST does not truncate SWM's hard task: the next substep resets,
+                # consumes RNG and changes the target geometry.
                 check_reset_matches_reference(env, ref, seed=5)
                 actions = np.zeros((502, batch, 2))
                 check_step_matches_reference(env, ref, actions[:499])
