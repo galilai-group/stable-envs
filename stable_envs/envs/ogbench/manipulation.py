@@ -41,8 +41,8 @@ def IDENTITY_QUAT(nmocap: int) -> np.ndarray:
     return q
 
 
-#: MJWarp worlds per launch. Same constant and the same reason as Fetch: a context is per (res,
-#: nworld) and an unbounded batch would build one per batch size.
+#: MJWarp worlds per launch. A context is per (res, nworld), so an unbounded batch would build one
+#: per batch size.
 MJW_CHUNK = 256
 #: Compiled arrays that vary across Cube/Scene configurations and that fixed-camera MJWarp passes read.
 WORLD_FIELDS = ("geom_size", "cam_quat", "light_diffuse")
@@ -457,9 +457,8 @@ def _ctx_button_tables(b: _Bundle, base, tables, device: str = "cuda") -> dict |
     return out
 
 
-#: Per-cell facts. Native OGBench constructors are the certified reference.
+#: Per-cell camera, image size, visible triangle count and packed render-row width.
 SPEC = {
-    # Registered camera, image size, and packed render-row width.
     "Cube": {
         "camera": "front_pixels",
         "size": 224,
@@ -595,7 +594,7 @@ class OGBManipBase(Env):
                 u.np_random = np.random.default_rng(sd)
                 with _seeded_action_space(u, sd):
                     env.reset(seed=sd, options={"variation_values": self._variation_values(rng)})
-                    _m, d = u.model, u.data
+                    d = u.data
                     for _ in range(int(rng.integers(0, 26))):
                         env.step(u.action_space.sample())
                 bits = [float(x) for x in list(getattr(u, "_cur_button_states", []))[: b.nbuttons]]
@@ -690,7 +689,6 @@ class OGBManipBase(Env):
         want = self._b.var_defaults["floor.color"] if floor is None else np.asarray(floor, np.float64)
         want = want.reshape(2, 3)
         _substitute(rig.model, rig.renderer, g, want)
-        rig.floor = want.copy()
 
     @torch.no_grad()
     def _render(
@@ -840,7 +838,7 @@ class OGBManipBase(Env):
     def _floor_plates(self, reps, res: int) -> torch.Tensor:
         """Return (G, res, res, 3) cached backgrounds for the floor and view groups."""
         if len(reps) == 1:
-            return self._plate(res, *reps[0]).unsqueeze(0)  # a VIEW: no copy on the hot path
+            return self._plate(res, *reps[0]).unsqueeze(0)  # a view, not a copy
         return torch.stack([self._plate(res, *r) for r in reps])
 
     def _cube_colours(self, host, B: int):
@@ -987,7 +985,7 @@ def _appearance_digest(m, sitegroup=None) -> str:
 class _PlateRig:
     """Private model, data, and retained GL renderer for one cached background resolution."""
 
-    __slots__ = ("model", "data", "renderer", "appearance", "shape", "floor", "view_default")
+    __slots__ = ("model", "data", "renderer", "appearance", "shape", "view_default")
 
 
 def _plate_rig(cell: str, res: int) -> _PlateRig:
@@ -1000,7 +998,6 @@ def _plate_rig(cell: str, res: int) -> _PlateRig:
     b = _bundle(cell)
     live = b.model
     rig = _PlateRig()
-    rig.floor = None  # floor.color currently uploaded to the GL context
     rig.appearance = _appearance_digest(live, b.unwrapped._scene_option.sitegroup)
     rig.shape = (int(live.ngeom), int(live.nq), int(live.nmocap))
     rig.model = copy.deepcopy(live)
@@ -1067,7 +1064,7 @@ def _fidelity(cell: str) -> dict:
         if not _UNMEASURED:
             raise RuntimeError(
                 f"ogb_manip: {cell} has no measured visual_fidelity; add its worst-of-eight to _MEASURED. "
-                "Set SE7_OGB_UNMEASURED=1 only inside the measuring job."
+                "Set SE7_OGB_UNMEASURED=1 only while measuring."
             )
         return {
             "mean_abs": -1.0,
@@ -1076,8 +1073,8 @@ def _fidelity(cell: str) -> dict:
             "mean_abs_max": -1.0,
             "within8_min": -1.0,
             "ssim_min": -1.0,
-            "measured_at": "UNMEASURED PLACEHOLDER - SE7_OGB_UNMEASURED=1 is set, so these are "
-            "NOT measurements and this build must not ship or be certified.",
+            "measured_at": "UNMEASURED placeholder: SE7_OGB_UNMEASURED=1 is set, so these are "
+            "not measurements and this build must not ship or be certified.",
         }
     d = _MEASURED[cell]
     spec = SPEC[cell]

@@ -89,7 +89,8 @@ class OGBMazeAdapter(SimulatorAdapter):
     """Independent CPU locomotion-maze simulators with owned State snapshots.
 
     ``device`` selects output placement. Each lane owns both its environment PCG64
-    and the legacy NumPy RNG used by upstream; calls must be serialized."""
+    and its own copy of NumPy's legacy global RNG (``np.random`` MT19937), which
+    upstream draws from; calls must be serialized."""
 
     def __init__(self, num_envs, device="cpu", seed=0, *, loco="point", maze="large"):
         self.num_envs = int(num_envs)
@@ -115,7 +116,7 @@ class OGBMazeAdapter(SimulatorAdapter):
         return self.get_state()
 
     def _in_legacy_rng(self, lane, function, *args, **kwargs):
-        """Install a lane’s legacy RNG for one call, restoring the caller’s RNG on exit."""
+        """Install a lane's NumPy legacy global RNG state for one call, restoring the caller's on exit."""
         outside = np.random.get_state()
         np.random.set_state(self._global_rng[lane])
         try:

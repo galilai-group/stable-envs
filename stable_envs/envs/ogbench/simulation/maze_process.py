@@ -104,7 +104,7 @@ class OGBMazeProcessAdapter(ProcessRequests, SimulatorAdapter):
     """Run OGBench Maze simulators and isolated RNGs in spawned processes.
 
     State and task outputs use typed shared buffers and are copied on receipt.
-    Validate every shard before committing a checkpoint; validation failure leaves
+    Validate every shard before committing a restore; validation failure leaves
     live simulators available, while worker failure closes the whole adapter.
     """
 

@@ -128,8 +128,7 @@ class ManipulationSemantics:
         return self._simulator.step(actions, active=active, capture_state=False)
 
     def _step_pipeline(self) -> StepPipeline | None:
-        owner = self._simulator
-        return step_pipeline(owner)
+        return step_pipeline(self._simulator)
 
     def set_variation(self, variation=None, **overrides):
         self._check_open("set_variation")
@@ -288,7 +287,7 @@ class ManipulationSemantics:
 
     def sample_states(self, batch, rng=None):
         self._check_open("sample_states")
-        raise NotImplementedError("Historical Cube/Scene dataset sampling is outside the CPU compatibility checkpoint")
+        raise NotImplementedError("Cube/Scene dataset sampling is not supported")
 
     def _close(self):
         self._simulator.close()

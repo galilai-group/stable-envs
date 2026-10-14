@@ -19,7 +19,7 @@ def _check_versions():
     if version("mujoco") != "3.12.0" or version("ogbench") != "1.2.1":
         raise ImportError("Cube/Scene unified rendering requires mujoco==3.12.0 and ogbench==1.2.1")
     if version("mujoco-warp") != "3.12.0" or version("warp-lang") != "1.17.0":
-        raise ImportError("Cube/Scene frozen GPU rendering requires mujoco-warp==3.12.0 and warp-lang==1.17.0")
+        raise ImportError("Cube/Scene GPU rendering requires mujoco-warp==3.12.0 and warp-lang==1.17.0")
 
 
 VIEW = ("camera.angle_delta", "light.intensity")
@@ -178,7 +178,7 @@ def _worlds(family, token, bundle, host, device):
 
 
 class _ConfiguredRenderer(core.OGBManipBase):
-    """Only model/input wiring differs; the render and plate algorithms are inherited."""
+    """Renderer over a configured bundle; render and plate algorithms are inherited."""
 
     def __init__(self, token, bundle, device, size, supersample):
         super().__init__(
@@ -245,7 +245,7 @@ def render(family, state, device, backend="auto", chunk_size=None):
         raise ValueError("chunk_size must be a positive integer")
     size, ss = (int(host["renderer", key][0, 0]) for key in ("size", "supersample"))
     result = torch.empty((len(state), size, size, 3), dtype=torch.uint8, device=device)
-    # Frozen caches hold mutable render buffers; serialize users of this caller boundary.
+    # Shared caches hold mutable render buffers; serialize callers.
     wp = require_warp_cuda("OGBench manipulation GPU rendering")
     with _LOCK, torch.cuda.device(device), wp.ScopedDevice(str(device)):
         pattern = "gl4" if family == "Scene" and backend == "mjwarp_fidelity" and ss == 2 else "grid"

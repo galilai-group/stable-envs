@@ -445,7 +445,7 @@ class OGBenchMaze(Env):
     parity_interior_min = 1.0
 
     parity_note = (
-        "AGENT-PIXEL PARITY (supersample 2, against MuJoCo at its default offsamples=4, 25 cells x 64 "
+        "Agent-pixel parity (supersample 2, against MuJoCo at its default offsamples=4, 25 cells x 64 "
         "states). Every disagreement is inside the agent's own silhouette: the baked plate is exact by "
         "construction, non-agent pixels are 99.88-99.99% bit-identical, and that residual is the "
         "reference's multisampling bleeding agent colour into neighbouring wall/floor pixels. On "
@@ -454,7 +454,7 @@ class OGBenchMaze(Env):
         "The legged numbers are not a shading result: at the official whole-maze camera the ant is "
         "12-70 px and the humanoid 4-21 px of 50176, and eroding leaves as few as 1 interior pixel, so "
         "their agreement is a statement about a silhouette under the reference's coverage rule. "
-        "Against a NON-multisampled reference the same shader reaches 92.4% within 1/255 over 13,069 "
+        "Against a non-multisampled reference the same shader reaches 92.4% within 1/255 over 13,069 "
         "pooled agent-interior pixels (mean 0.88/255), which localises most of the remaining gap in "
         "MSAA sample positions -- GPU-specific, not recoverable by fitting -- rather than in shading."
     )
@@ -509,8 +509,6 @@ class OGBenchMaze(Env):
             nm = mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_JOINT, j) or f"joint{j}"
             if int(m.jnt_type[j]) == int(mujoco.mjtJoint.mjJNT_FREE):
                 got += list(_FREE)
-            elif int(m.jnt_type[j]) == int(mujoco.mjtJoint.mjJNT_SLIDE):
-                got.append(nm)
             else:
                 got.append(nm)
         if self.LOCO == "point":
@@ -543,7 +541,7 @@ class OGBenchMaze(Env):
         """Expose body, floor, wall and camera appearance with source float colour defaults.
 
         Keep RGB in [0, 1]; uint8 quantization changes MuJoCo material shading."""
-        agent_rgb = [0.7, 0.5, 0.3] if self.LOCO in ("point", "ant") else [0.7, 0.5, 0.3]
+        agent_rgb = [0.7, 0.5, 0.3]
         # Pixel observations recolour the XML's white walls; state observations keep them.
         wall_rgb = [1.0, 1.0, 1.0] if getattr(self, "RENDER_OB_TYPE", "pixels") == "states" else [0.6, 0.6, 0.6]
         return Dict(
@@ -575,8 +573,8 @@ class OGBenchMaze(Env):
             }
         )
 
-    #: Style leaves that change the STATIC scene and therefore the baked plate. Everything else is a
-    #: property of the agent's primitives and is applied per environment inside the ray-cast.
+    #: Style leaves that change the static scene and therefore the baked plate. The rest belong to the
+    #: agent's primitives and are applied per environment inside the ray-cast.
     PLATE_PATHS = (
         "floor.tint",
         "walls.color",
@@ -695,8 +693,8 @@ class OGBenchMaze(Env):
         rkey = "custom" if custom else rkey
         r = pr["renderers"].get(rkey)
         if r is None:
-            # built AFTER the texture write for this key, so it uploads the right floor; every later
-            # bake with the same key writes the same bytes, so reuse is exact
+            # Built after the texture write for this key, so it uploads the right floor; every later
+            # bake with the same key writes the same bytes, so reuse is exact.
             r = pr["renderers"][rkey] = mujoco_renderer(m, width=size, height=size)
         if custom:
             r._gl_context.make_current()
@@ -966,7 +964,7 @@ class OGBenchMaze(Env):
 
     @classmethod
     def reference_env(cls, size: int = 224):
-        """Construct an independent source environment for history comparisons.
+        """Construct an independent source environment for reference comparisons.
 
         Keep its GL context alive while other renderers are in use."""
         return _build_reference(cls.LOCO, cls.MAZE, size, getattr(cls, "RENDER_OB_TYPE", "pixels"))
@@ -1059,8 +1057,7 @@ class MazeSemantics:
         return self._simulator.step(actions, active=active, capture_state=False)
 
     def _step_pipeline(self) -> StepPipeline | None:
-        owner = self._simulator
-        return step_pipeline(owner)
+        return step_pipeline(self._simulator)
 
     def _close(self):
         if hasattr(self, "_simulator"):
@@ -1072,7 +1069,7 @@ class _StatesScene:
 
     RENDER_OB_TYPE = "states"
     parity_note = (
-        "AGENT-PIXEL PARITY, state-observation scene (supersample 2, against MuJoCo 3.12.0 / ogbench 1.2.1 at "
+        "Agent-pixel parity, state-observation scene (supersample 2, against MuJoCo 3.12.0 / ogbench 1.2.1 at "
         "offsamples=4, 64 states, RTX A5000). This scene keeps the XML's white walls, global ambient light, the "
         "goal disc and a torso spotlight that tracks the agent. The plate is baked without that spotlight; per "
         "row its GL fixed-function contribution (cone, exponent, specular, and wall and agent shadows inside the "
@@ -1086,8 +1083,7 @@ class _StatesScene:
     )
 
 
-#: ``__module__`` is pinned to the package so ``stable_envs.envs.ogbench.<Cell>`` still resolves.
-#: Family identity is the explicit ``family = "ogbench"`` on :class:`OGBenchMaze`, not this path.
+#: ``__module__`` is pinned to the package so ``stable_envs.envs.ogbench.<Cell>`` resolves.
 _MODULE = "stable_envs.envs.ogbench"
 
 
@@ -1126,7 +1122,6 @@ def _make_classes():
     return made
 
 
-#: ``{name: class}`` for every registered cell this module declares, so the package ``__init__``
-#: can re-export them by NAME without transcribing the naming rule a second time.
+#: ``{name: class}`` for every registered cell this module declares; the package ``__init__`` re-exports them.
 CELL_CLASSES = _make_classes()
 globals().update(CELL_CLASSES)
