@@ -1,8 +1,4 @@
-"""The repo's own promises about itself: fixtures resolve and docs are reachable.
-
-None of this is about the renderer. It is about claims the repository makes that nothing else
-checks: the regression fixtures the suite loads and the MkDocs nav.
-"""
+"""Repository checks: required fixtures exist, no scratch paths are cited, and every docs page is in the nav."""
 
 from __future__ import annotations
 
@@ -14,7 +10,6 @@ import pytest
 from tests.helpers.repository import maintained_paths
 
 ROOT = Path(__file__).resolve().parents[2]
-SELF = Path(__file__).resolve()
 MAINTAINED_PATHS = maintained_paths(ROOT)
 
 REQUIRED_FIXTURES = (
@@ -62,7 +57,7 @@ _ALLOW_SCRATCH_MENTION = {
 
 
 def test_maintained_product_files_do_not_cite_scratch_paths():
-    """Historical probes live on milestone tags. The product tree must not point at them."""
+    """Maintained files do not cite ``scratch/`` paths."""
     hits = []
     for rel in _MAINTAINED:
         path = ROOT / rel
@@ -100,7 +95,7 @@ def _nav_targets(node, out):
 
 
 def test_every_page_in_the_mkdocs_nav_exists():
-    """A nav entry with no page behind it is a 404 in the built site and a warning nobody reads."""
+    """A nav entry with no page behind it is a 404 in the built site."""
     yaml = pytest.importorskip("yaml")
     cfg = yaml.safe_load(re.sub(r"!![A-Za-z_.]+\s*", "", (ROOT / "mkdocs.yaml").read_text()))
     targets: list[str] = []
@@ -110,8 +105,7 @@ def test_every_page_in_the_mkdocs_nav_exists():
     assert not missing, f"mkdocs.yaml lists pages that are not there: {missing}"
 
 
-# Historical research notes and internal API pages are linked from the archive
-# landing page / contributor docs rather than listed in the main nav.
+# Internal API pages linked from the contributor docs rather than listed in the nav.
 _NAV_OPTIONAL = {
     "api/style.md",
     "api/scene.md",

@@ -95,7 +95,7 @@ def test_branch_reference_refuses_actions_without_a_time_axis(env):
 
 
 def test_a_cell_without_dynamics_says_so_precisely():
-    """Renderer-only cells are the majority and the refusal is a design statement, not a gap."""
+    """A renderer-only cell refuses ``step`` with a message naming the cell, and still renders."""
 
     class Renderless(LegacyPushT):
         _step = snv.Env._step
@@ -109,13 +109,12 @@ def test_a_cell_without_dynamics_says_so_precisely():
         with pytest.raises(NotImplementedError) as exc:
             call()
         assert "full simulator semantics" in str(exc.value) and "Renderless" in str(exc.value)
-    # reset and render still work, which is the other half of the statement
     assert e._render(e.sample_states(2)).shape[0] == 2
     e.close()
 
 
 def test_the_step_result_is_built_by_the_shared_helper(env):
-    """One helper, so forty cells cannot each get the batch size or the device subtly different."""
+    """``_step_result`` builds the StepResult, omitting keys passed as ``None``."""
     env.reset(seed=0)
     built = env._step_result(env.state, reward=torch.zeros(6), done=torch.zeros(6, dtype=torch.bool))
     assert set(built.keys()) == {"state", "reward", "done"}
@@ -126,11 +125,7 @@ def test_the_step_result_is_built_by_the_shared_helper(env):
 
 
 def test_a_cell_with_hidden_state_and_no_hook_fails_loudly_instead_of_reporting_zeros():
-    """The one template hazard worth a test: forgetting the hook must not be a silent wrong answer.
-
-    A hidden field left unfilled would come back as zeros — ``env.state`` looking fine while
-    ``transition(env.state, a)`` quietly stopped matching ``step(a)``.
-    """
+    """A hidden field with no ``_hidden_state`` hook raises instead of reading back as zeros."""
 
     class Forgetful(LegacyPushT):
         _hidden_state = snv.Env._hidden_state
@@ -152,7 +147,7 @@ def test_the_hook_reports_the_live_velocity_and_env_state_round_trips_through_st
     live = env.state["agent", "velocity"]
     assert float(live.abs().max()) > 0.0, "after a step the agent is moving and state must say so"
     assert torch.equal(live, env._hidden_state()[("agent", "velocity")])
-    # the whole point: state -> transition must reproduce the next step exactly
+    # state -> transition must reproduce the next step exactly
     a = _actions(6, 7)
     assert torch.equal(
         env._pack_render_state(branch_step(env, env.state, a)),

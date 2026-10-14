@@ -131,12 +131,12 @@ def test_cpu_render_supplied_state_is_exact_and_nonmutating():
 
 
 def test_render_projection_matches_actual_engine_materials(pair):
-    from stable_envs.envs.rocket import legacy as frozen
+    from stable_envs.envs.rocket import legacy
 
     e = pair[0]
     e.reset(seed=17, options={"variation": ["all"]})
     projected = e.to_render_state()
-    materials = frozen.material_table(projected["renderer", "style"].numpy())
+    materials = legacy.material_table(projected["renderer", "style"].numpy())
     rgba = e.get_state()["render", "rgba"].numpy()
     for material, source in [(1, 0), (4, 1), (8, 2), (3, 3), (12, 4)]:
         np.testing.assert_allclose(materials[:, material], rgba[:, source, :3], rtol=0, atol=1e-7)

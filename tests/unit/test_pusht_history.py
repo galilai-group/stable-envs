@@ -66,8 +66,7 @@ def test_real_history_slice_roundtrip(discrete, device, sequence, selection):
         assert selected.batch_size == torch.Size([2, len(indices)])
         for index, time in enumerate(indices):
             state = selected[:, index]
-            # Every selected State is independently restorable, even with
-            # padding to a longer selected sibling's history.
+            # Each selected State restores on its own, even when padded to a longer sibling's history.
             env.adapter.set_state(state)
             assert (env.get_state() == expected[time]).all()
             lengths = state["history", "lengths"]

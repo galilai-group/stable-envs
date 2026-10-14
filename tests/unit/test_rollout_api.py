@@ -1,21 +1,8 @@
-"""Policies and ``sample``: the contract, on CPU, with a simulator whose answer is known by hand.
+"""Policies and ``tests.helpers.rollout.sample`` on CPU, against a stand-in env with a known answer.
 
-``tests.helpers.rollout.sample`` is the helper that answers "I have no states yet". It had no direct
-test — ``tests/gpu/test_reproducibility.py`` asserts that ``testing.sample(seed=)`` reproduces in a fresh
-interpreter, which is the strongest thing to say about it and says nothing about what it RETURNS. The
-failures below all produce a dict of tensors with the right keys and the right shapes:
-
-  * a policy whose ``reset`` does not re-seed makes the second rollout of a seeded pair differ from the
-    first, and only when something else consumed from the generator in between;
-  * ``actions`` that are not the actions the simulator was driven with give a corpus whose transitions
-    do not hold, which no shape or dtype check can see;
-  * a step applied before the initial state is recorded loses ``t=0``, so every stored trajectory is
-    off by one against the actions beside it;
-  * ``states`` that alias the env's own buffer come back as ``steps+1`` copies of the final state.
-
-The stand-in env integrates: ``state' = state + action``. That makes the whole trajectory predictable in
-closed form, so "are these the actions that produced these states" is an assertion rather than a
-plausibility check, and it needs no GPU, no renderer and no reference simulator.
+The stand-in integrates ``state' = state + action``, so the trajectory is known in closed form and
+"these are the actions that produced these states" is an exact assertion. The checks cover seeding,
+recorded actions, the ``t=0`` state, and states that must not alias the env's buffer.
 """
 
 from __future__ import annotations
@@ -29,7 +16,7 @@ from tests.helpers.rollout import BasePolicy, RandomPolicy, ScriptedPolicy, samp
 
 
 class RenderOnlyEnv:
-    """An env that ships a renderer and NO batched simulator. Most of the registry is this."""
+    """An env with a renderer and no batched simulator."""
 
     state_dim = 3
     style_dim = 0
@@ -77,7 +64,7 @@ class IntegratorEnv(RenderOnlyEnv):
 
 
 class DiscreteEnv(IntegratorEnv):
-    """Half-open integer bounds, as MiniGrid's seven actions and CartPole's two declare them."""
+    """Half-open integer bounds ``[0, 7)``."""
 
     action_dim = 1
     action_low = 0.0
@@ -88,13 +75,7 @@ class DiscreteEnv(IntegratorEnv):
 
 
 def test_an_env_with_no_simulator_says_so_and_points_at_the_alternative():
-    """The split is deliberate, so the message has to read as a design statement and not as a gap.
-
-    Rendering and simulation are separable and an env earns a ``step()`` only where its dynamics can be
-    ported AND checked, so most of the registry has none. Without this the failure is an
-    ``AttributeError: 'X' object has no attribute 'step'`` from inside a loop, which reads as a bug in
-    the library.
-    """
+    """``sample`` on a renderer-only env raises ``NotImplementedError`` naming the env and the alternative."""
     with pytest.raises(NotImplementedError) as e:
         sample(RenderOnlyEnv(), steps=2)
     msg = str(e.value)
@@ -112,12 +93,7 @@ def test_a_batch_that_is_not_the_env_s_batch_is_refused_at_the_top():
 
 
 def test_the_trajectory_has_one_more_state_than_it_has_actions():
-    """``steps+1`` states and ``steps`` actions: the initial state is recorded BEFORE the first step.
-
-    Off by one in the other direction is the tempting implementation (step, then record) and it loses
-    ``t=0`` entirely, so every stored trajectory is shifted against the actions stored beside it and
-    the corpus teaches a transition nobody took.
-    """
+    """``steps+1`` states and ``steps`` actions: the initial state is recorded before the first step."""
     env = IntegratorEnv(batch=4)
     tr = sample(env, steps=5, seed=0)
     assert tr["states"].shape == (4, 6, 3)
@@ -126,12 +102,7 @@ def test_the_trajectory_has_one_more_state_than_it_has_actions():
 
 
 def test_the_returned_actions_ARE_the_actions_the_simulator_was_driven_with():
-    """The integrator makes this exact: ``state[t+1] - state[t]`` must equal ``action[t]``.
-
-    A rollout that returns a policy's PROPOSED actions while stepping with something else — a clipped
-    copy, a reshaped one, the next timestep's — produces a corpus whose transitions simply do not hold,
-    and every shape, dtype and range check passes on it.
-    """
+    """``state[t+1] - state[t]`` equals ``action[t]`` for the integrator."""
     env = IntegratorEnv(batch=4)
     tr = sample(env, steps=6, seed=1)
     delta = tr["states"][:, 1:] - tr["states"][:, :-1]
@@ -139,10 +110,7 @@ def test_the_returned_actions_ARE_the_actions_the_simulator_was_driven_with():
 
 
 def test_each_recorded_state_is_a_COPY_and_not_the_env_s_live_buffer():
-    """Without the clone, every stored step aliases one tensor and the corpus is the last state, N times.
-
-    Silent: the shape is right, the dtype is right, and a loss computed on it converges to something.
-    """
+    """Without a copy, every stored step would alias one tensor holding the last state."""
     env = IntegratorEnv(batch=4)
     tr = sample(env, steps=4, seed=2)
     assert not torch.allclose(tr["states"][:, 0], tr["states"][:, -1]), (
@@ -160,13 +128,7 @@ def test_init_states_are_used_verbatim_as_step_zero():
 
 
 def test_frames_are_OFF_by_default_and_correct_when_asked_for():
-    """707 MB of pixels against 512 kB of states, and the states re-render at any resolution later.
-
-    Materialising frames during collection re-creates exactly the problem this repo exists to remove,
-    so the default is the assertion. When they ARE asked for, frame ``t`` has to be the render of state
-    ``t`` — the loop writes them one timestep at a time into a preallocated buffer, which is where an
-    off-by-one or a stale row lives.
-    """
+    """No frames by default; when requested, frame ``t`` is the render of state ``t``."""
     env = IntegratorEnv(batch=4)
     assert "frames" not in sample(env, steps=3, seed=0)
 
@@ -178,12 +140,7 @@ def test_frames_are_OFF_by_default_and_correct_when_asked_for():
 
 
 def test_a_seed_makes_the_whole_rollout_reproducible():
-    """Same seed, same trajectory; different seed, different trajectory.
-
-    The second half is not padding: a rollout that ignores the seed entirely satisfies the first half
-    perfectly, and that is the failure mode — a policy that seeds on ``set_env`` but never re-seeds
-    looks reproducible until something else advances the generator.
-    """
+    """Same seed, same trajectory; different seed, different trajectory (so the seed is not ignored)."""
     env = IntegratorEnv(batch=4)
     a = sample(env, steps=5, seed=42)["states"]
     b = sample(env, steps=5, seed=42)["states"]
@@ -217,7 +174,7 @@ def test_the_base_policy_is_an_interface_and_says_so():
 
 
 def test_the_random_policy_adopts_the_env_s_declared_bounds():
-    """No arguments needed, because the bounds are the env's to declare — and it must READ them."""
+    """With no arguments, the policy reads the env's declared bounds."""
     env = IntegratorEnv()
     p = RandomPolicy(seed=0)
     p.set_env(env)
@@ -225,11 +182,7 @@ def test_the_random_policy_adopts_the_env_s_declared_bounds():
 
 
 def test_the_random_policy_stays_inside_the_bounds_including_half_open_discrete_ones():
-    """``[0, n)`` and floor, so a uniform float is a uniform action and an integer tensor still works.
-
-    The high bound is EXCLUSIVE for the discrete envs (MiniGrid's seven actions, CartPole's two), and a
-    policy that could return exactly ``n`` would index one past the end of a transition table.
-    """
+    """Draws stay in ``[low, high)``; the high bound is exclusive for discrete envs."""
     env = DiscreteEnv()
     p = RandomPolicy(seed=3)
     p.set_env(env)
@@ -242,13 +195,7 @@ def test_the_random_policy_stays_inside_the_bounds_including_half_open_discrete_
 
 
 def test_the_random_policy_re_seeds_on_reset_so_two_rollouts_agree():
-    """THE property that makes a seeded rollout reproducible more than once in a process.
-
-    Without it the generator carries on from wherever the previous rollout left it, so the first
-    rollout after construction reproduces and the second does not — which is the shape of bug that
-    survives every test written as "run it twice with the same seed" if that test constructs a fresh
-    policy each time. This one deliberately reuses ONE policy object.
-    """
+    """``reset`` re-seeds, so one policy object gives the same actions after each reset."""
     env = IntegratorEnv()
     p = RandomPolicy(seed=11)
     p.set_env(env)
@@ -308,7 +255,7 @@ def test_the_discrete_flag_overrides_the_action_spec():
 
 
 def test_a_scripted_policy_is_given_the_state_and_the_timestep():
-    """``fn(state, t)``. The timestep is what makes an open-loop schedule expressible at all."""
+    """``ScriptedPolicy`` calls ``fn(state, t)`` with an advancing timestep."""
     seen = []
 
     def fn(state, t):
@@ -324,7 +271,7 @@ def test_a_scripted_policy_is_given_the_state_and_the_timestep():
 
 
 def test_a_policy_gets_set_env_and_reset_before_the_first_action():
-    """Order matters: a stateful policy sizes its buffers in ``reset`` and needs the env before that."""
+    """``set_env`` precedes ``reset``, which precedes the first action."""
     calls = []
 
     class _Recording(BasePolicy):
@@ -345,7 +292,7 @@ def test_a_policy_gets_set_env_and_reset_before_the_first_action():
 
 
 def test_env_does_not_offer_a_policy_sample_shorthand():
-    """Policy rollouts are not an environment API. Use ``step`` / ``unroll`` or the private helper."""
+    """Policy rollouts are not an environment API; ``tests.helpers.rollout.sample`` provides them."""
     from stable_envs.env import Env
 
     assert "sample" not in Env.__dict__

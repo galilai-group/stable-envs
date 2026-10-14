@@ -18,22 +18,6 @@ from stable_envs._core import config as _config
 pytestmark = pytest.mark.unit
 
 
-@pytest.fixture()
-def records():
-    """Collect what this package logs.
-
-    Through a loguru sink rather than ``capsys``: loguru binds its default handler to the ``sys.stderr``
-    it saw at import, so pytest's stream capture does not necessarily see it, and what is under test is
-    what stable-envs EMITS, not which file descriptor it lands on.
-    """
-    from stable_envs._core.config import logger
-
-    got: list[str] = []
-    sink = logger.add(got.append, level="TRACE", filter=lambda r: r["extra"].get("package") == "stable_envs")
-    yield got
-    logger.remove(sink)
-
-
 @pytest.fixture(autouse=True)
 def _clean_config():
     before = _config.get_config()
@@ -120,11 +104,7 @@ def test_state_and_stepresult_are_the_tensordict_type_and_not_private_subclasses
     from tensordict import TensorDict
 
     assert snv.State is TensorDict and snv.StepResult is TensorDict
-    assert "StepResult" in snv.__all__, (
-        "`StepResult` is the name five docstrings and the contract "
-        "use for what step returns; it must be exported so cells do "
-        "not each hand-roll the TensorDict call"
-    )
+    assert "StepResult" in snv.__all__, "`StepResult` names what step returns and must be exported"
 
 
 # ------------------------------------------------------------------ constructor
@@ -140,7 +120,7 @@ def test_make_takes_num_envs():
 
 
 def test_no_registered_class_declares_batch_as_the_constructor_spelling():
-    """``batch=`` was never a tagged-release spelling of ``num_envs=``."""
+    """``batch=`` is not a constructor spelling of ``num_envs=``."""
     import inspect
 
     holdouts = sorted(
@@ -149,7 +129,7 @@ def test_no_registered_class_declares_batch_as_the_constructor_spelling():
         if "batch" in inspect.signature(c.__init__).parameters
         and "num_envs" not in inspect.signature(c.__init__).parameters
     )
-    assert holdouts == [], f"registered classes still take batch= as the constructor: {holdouts}"
+    assert holdouts == [], f"registered classes take batch= as the constructor: {holdouts}"
 
 
 def test_batch_is_not_a_spelling_of_num_envs():

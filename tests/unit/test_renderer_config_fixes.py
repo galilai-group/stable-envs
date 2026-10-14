@@ -31,9 +31,9 @@ def test_scene_button_materials_preserve_shading_and_independent_colors(lock_col
         renderer = build_model("Scene", row)
         try:
             model = renderer.model
-            old = model.material("btn_red").id
+            source_mat = model.material("btn_red").id
             ids = [model.material(f"se_button_{i}").id for i in range(2)]
-            assert len(set([old, *ids])) == 3
+            assert len(set([source_mat, *ids])) == 3
             for attr in [
                 "mat_specular",
                 "mat_shininess",
@@ -43,7 +43,7 @@ def test_scene_button_materials_preserve_shading_and_independent_colors(lock_col
                 "mat_emission",
             ]:
                 for mid in ids:
-                    np.testing.assert_array_equal(getattr(model, attr)[mid], getattr(model, attr)[old])
+                    np.testing.assert_array_equal(getattr(model, attr)[mid], getattr(model, attr)[source_mat])
             for bits in itertools.product([0, 1], repeat=2):
                 renderer._cur_button_states = np.array(bits)
                 renderer._apply_button_states()
@@ -73,7 +73,7 @@ def test_scene_button_materials_preserve_shading_and_independent_colors(lock_col
                 for i, bit in enumerate(bits):
                     expected = [0.9] * 3 if bit else row["appearance", "lock_color"][i].numpy()
                     if np.array_equal(expected, [0.5] * 3):
-                        expected = model.mat_rgba[old, :3]
+                        expected = model.mat_rgba[source_mat, :3]
                     np.testing.assert_allclose(model.mat_rgba[ids[i], :3], expected, atol=3e-8, rtol=0)
                     gid = renderer._button_geom_ids_list[i][0]
                     np.testing.assert_array_equal(resolved[0][gid], resolved[1][gid])

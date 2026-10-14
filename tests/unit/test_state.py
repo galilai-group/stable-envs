@@ -1,11 +1,8 @@
-# Frozen compact-renderer/approximate-solver regressions. Public source-aligned
-# PushT checkpoint semantics are covered by test_pusht_public_semantics.py.
-"""The State: what ``pack``/``unpack`` promise, what ``reset`` promises, and what the specs report.
+"""The State of the compact PushT renderer: ``pack``/``unpack``, ``reset``, and the specs.
 
 The entity-grouped TensorDict is a view of the same five floats PushT stores, in the same order, so
-frozen digests and certification checks see the packed row. These tests assert that as an identity.
-
-CPU only; PushT needs no reference package to be constructed and rendered.
+frozen digests and certification checks see the packed row. Source-aligned PushT checkpoint semantics
+are in test_pusht_public_semantics.py.
 """
 
 from __future__ import annotations
@@ -134,8 +131,6 @@ def test_num_envs_is_the_batch_and_len_agrees(env):
 
 def test_state_layout_entry_may_name_a_public_dtype():
     """A fourth ``state_layout`` element is the field's public dtype; pack still writes float32."""
-    import torch
-
     from stable_envs.env import Env
 
     class F64(Env):
@@ -161,11 +156,7 @@ def test_state_layout_entry_may_name_a_public_dtype():
 
 def test_unpack_and_state_never_alias_the_env_buffer():
     """A StepResult or ``env.state`` must not change under the caller's feet at the next step."""
-    import torch
-
-    from stable_envs.envs.pusht.legacy import PushT
-
-    env = PushT(num_envs=4, device="cpu")
+    env = LegacyPushT(num_envs=4, device="cpu")
     env.reset(seed=0)
     a = torch.zeros(4, 2)
     out = env.step(a, frames=None)
@@ -183,8 +174,6 @@ def test_unpack_and_state_never_alias_the_env_buffer():
 
 
 def test_live_state_hook_overrides_the_widened_row():
-    import torch
-
     from stable_envs.env import Env
     from stable_envs.spaces import Dict
 
