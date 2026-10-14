@@ -6,6 +6,10 @@ pip install "stable-envs[pusht]"              # source-aligned PushT simulation 
 pip install "stable-envs[dmcontrol,ogbench]"  # add family extras as needed
 ```
 
+Then run `stable-envs doctor`: it checks the NVIDIA driver, torch, Warp and MuJoCo's OpenGL
+backends, and says for each installed family what works on this machine and what to change. See
+[System setup](system-setup.md) for the driver and OpenGL setup per machine.
+
 There is no `[all]` extra. A missing optional extra costs **that family**, not the package.
 `snv.import_errors()` names the modules that did not load.
 

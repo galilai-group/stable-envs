@@ -33,6 +33,9 @@ dependencies = [
   "torch>=2.2",
 ]
 
+[project.scripts]
+stable-envs = "stable_envs.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/galilai-group/stable-envs"
 Documentation = "https://galilai-group.github.io/stable-envs/"

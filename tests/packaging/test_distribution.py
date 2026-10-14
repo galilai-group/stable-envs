@@ -71,6 +71,11 @@ def test_optional_extras_are_installable_on_pypi() -> None:
     assert "git+" not in blob
 
 
+def test_console_script_points_at_the_cli() -> None:
+    assert _pyproject()["project"]["scripts"] == {"stable-envs": "stable_envs.cli:main"}
+    assert "def main(" in (ROOT / "stable_envs" / "cli.py").read_text()
+
+
 def test_dynamic_version_reads_about() -> None:
     project = _pyproject()
     assert project["project"]["dynamic"] == ["version"]
