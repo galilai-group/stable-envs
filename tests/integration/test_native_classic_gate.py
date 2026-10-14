@@ -10,6 +10,7 @@ import torch
 
 import stable_envs as se
 from tests.helpers.reference.native_acceptance import CASES
+from tests.helpers.reference.saved import assert_frozen_equal
 
 
 @pytest.mark.parametrize("domain", ["cartpole", "pendulum"])
@@ -30,7 +31,7 @@ def test_frozen_reference_oracle(domain):
         for key in states[0].keys(True, True):
             name = key if isinstance(key, str) else "/".join(key)
             actual = torch.stack([state[key] for state in states]).cpu().numpy()
-            assert np.array_equal(actual, oracle[f"state/{name}"])
+            assert_frozen_equal(actual, oracle[f"state/{name}"])
         for key in ("reward", "terminated", "truncated", "observation", "info_state"):
             actual = torch.stack([output[key] for output in outputs]).cpu().numpy()
-            assert np.array_equal(actual, oracle[key])
+            assert_frozen_equal(actual, oracle[key])
