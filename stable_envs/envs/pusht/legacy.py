@@ -504,8 +504,7 @@ class PushT(Env):
             if err > 1e-6:
                 raise AssertionError(
                     f"reference env did not reach the requested state (max err {err:.3e}); "
-                    f"asked {np.asarray(st)}, got {got}. Parity measured against this frame would "
-                    f"be comparing two different scenes."
+                    f"asked {np.asarray(st)}, got {got}."
                 )
             out.append(u._render(visualize=False).copy())
         return np.stack(out)

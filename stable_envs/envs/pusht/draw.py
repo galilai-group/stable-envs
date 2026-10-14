@@ -1,4 +1,4 @@
-"""Private source-aligned PushT task support; not a semantic promotion.
+"""Source-aligned PushT task support.
 
 Adapted from stable-worldmodel (MIT), by Lucas Maes, Quentin Le Lidec,
 Randall Balestriero and contributors, commit
@@ -7,7 +7,7 @@ See THIRD_PARTY_NOTICES.md for attribution and the MIT license.
 Physics remains official Pymunk 7.2.0 / Munk2D. No stable-worldmodel runtime import.
 """
 
-# Upstream: envs/utils.py (unused helpers dropped)
+# Upstream: envs/utils.py (subset)
 
 from collections.abc import Sequence
 

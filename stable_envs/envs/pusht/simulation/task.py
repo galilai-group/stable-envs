@@ -1,4 +1,4 @@
-"""Private source-aligned PushT task support; not a semantic promotion.
+"""Source-aligned PushT task support.
 
 Adapted from stable-worldmodel (MIT), by Lucas Maes, Quentin Le Lidec,
 Randall Balestriero and contributors, commit

@@ -1,8 +1,8 @@
-"""Source-aligned public PushT state, actions and CPU rendering.
+"""Public PushT environments built on the source task.
 
-The older compact renderer/approximate solver lives in ``envs.pusht.legacy`` for
-historical corpus checks. Public construction uses these complete replay
-States. Neither registration is promoted by the act of registering a class.
+``PushT`` and ``PushTDiscrete`` expose complete, replayable State and render on
+CPU with the source Pygame renderer. They take the ``PushT`` registry name from
+the compact renderer in ``envs.pusht.legacy``.
 """
 
 import copy
@@ -21,7 +21,7 @@ from . import legacy
 class PushT(Env):
     """Source-aligned continuous PushT with complete, replayable numeric State.
 
-    Actions are relative controls in [-1, 1], not legacy pixel targets.
+    Actions are relative controls in [-1, 1], not absolute pixel targets.
     Physics and the exact Pygame renderer run on CPU. ``device='cuda'``
     selects tensor/output storage, not GPU simulation or GPU rasterization.
     Restoring a checkpoint replays its history; ordinary stepping does not.
@@ -55,7 +55,7 @@ class PushT(Env):
         from .simulation.replay_batch import PushTReplayAdapter
 
         if backend not in ("auto", "pygame"):
-            raise ValueError("Source-aligned PushT currently supports backend='pygame' only")
+            raise ValueError("Source-aligned PushT supports backend='pygame' only")
         if supersample != 1:
             raise ValueError("The source PushT renderer has no supersample setting")
         device = Env.resolve_device(device)
@@ -96,8 +96,7 @@ class PushT(Env):
 
     @property
     def state_spec(self):
-        # History has a finite, growing axis. This describes the current
-        # checkpoint, not an artificial horizon for future checkpoints.
+        # History has a growing axis; the spec describes the current checkpoint only.
         fields = {}
         for key, value in self.get_state().items(True, True):
             branch = fields
@@ -259,7 +258,7 @@ class PushT(Env):
         return self._variation_rows("init_value")
 
     def to_render_state(self, state=None):
-        """Owned, history-free numeric projection for the source CPU renderer."""
+        """Return an owned, history-free copy of the State fields the CPU renderer reads."""
         state = self.get_state() if state is None else state
         self._render_fields_of(state)
         return state.select(*(key for key, _, _ in self._render_fields)).clone()

@@ -13,9 +13,8 @@ class ContactSegments(pymunk.SpaceDebugDrawOptions):
 
 
 def capture_contacts(space):
-    # A supported scene has at most ten shapes; Munk2D has at most two
-    # contacts per shape pair. Fail explicitly if that bound ever changes.
     """Return padded contact segments and their count for immediate source rendering."""
+    # A supported scene has at most ten shapes and Munk2D at most two contacts per shape pair.
     collector = ContactSegments()
     space.debug_draw(collector)
     count = len(collector.segments)
