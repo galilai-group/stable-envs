@@ -1,4 +1,4 @@
-# `stable_envs.env`
+# Env
 
 Concrete classes such as `snv.CartPole` are the main API. The shared `Env` defines the simulator and
 rendering interface:

@@ -84,7 +84,8 @@ class OGBManipulationAdapter(SimulatorAdapter):
     State includes integration fields, controller caches, task data and RNG trees.
     Only initialized checkpoints from the same dependency profile are accepted.
     Restore builds and verifies all replacement simulators before installing them;
-    ``device`` selects returned tensor placement."""
+    ``device`` selects returned tensor placement.
+    """
 
     execution_mode = "DELEGATED_CPU"
 

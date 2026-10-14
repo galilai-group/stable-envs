@@ -90,4 +90,4 @@ training loop.
 torch ops from Python, so its cost is nearly independent of the batch. The rasterizer is one launch
 that scales with output pixels. Below about a thousand environments, `scene()` dominates.
 
-API details: [`stable_envs.render.raster2d`](../api/raster2d.md).
+API details: [2D raster rendering](../api/raster2d.md).

@@ -25,16 +25,19 @@ walkthrough is the [Quickstart](quickstart.md).
 
 - **[Quickstart](quickstart.md)**: install, `reset` / `step` / `render`, specs
 - **[Install](install.md)**: extras, pins, nvdiffrast
+- **[System setup](system-setup.md)**: driver, OpenGL and `stable-envs doctor`
 - **[Environments](environments.md)**: `list_envs`, `info`, optional extras
-- **[State, Action, Variation, Frame](concepts/state.md)**: what each value holds
-- **[Stepping and capture](concepts/dynamics.md)**: single actions, sequences, States and frames
+- **[State, Action, Variation and Frame](concepts/state.md)**: what each value holds
+- **[Stepping](concepts/dynamics.md)**: single actions, sequences, States and frames
 - **[Variations](concepts/variation-spaces.md)**: persistent environment configuration
 - **[Lifecycle](concepts/lifecycle.md)**: `close()`, context manager, short batches
 - **[Sibling projects](concepts/worldmodel.md)**: where this package ends
 - **[Limitations](concepts/limitations.md)**: devices, extras, known limits
 - **[Benchmarks](benchmarks.md)**: method and measured tables
 - **[Gallery](gallery.md)**: frames at native resolution
+- **[Command line](api/cli.md)**: `stable-envs doctor`
 - **[Adding a component](adding/index.md)**: environment, task and renderer guides
+- **[Changelog](changelog.md)**: changes in each release
 
 </div>
 

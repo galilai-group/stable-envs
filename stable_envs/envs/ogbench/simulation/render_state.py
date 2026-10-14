@@ -20,7 +20,8 @@ class _RenderScene(CompatibleScene):
     """Give each button its own render material while preserving source material parameters.
 
     MuJoCo honours geom RGB overrides; MJWarp reads material RGB. Independent
-    materials let the two button-state bits select different colours."""
+    materials let the two button-state bits select different colours.
+    """
 
     def modify_mjcf_model(self, model):
         model = super().modify_mjcf_model(model)
@@ -160,7 +161,8 @@ def validate(family, state):
 def build_model(family, row=None, names=None):
     """Compile renderer assets and configuration without resetting or stepping physics.
 
-    ``names`` selects the row's leaves to compile; the others keep their defaults."""
+    ``names`` selects the row's leaves to compile; the others keep their defaults.
+    """
     cls = CompatibleCube if family == "Cube" else _RenderScene
     env = cls(seed=0)
     if names is None:

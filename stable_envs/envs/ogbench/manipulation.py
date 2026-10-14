@@ -6,7 +6,8 @@ are uploaded on every render, and backgrounds are cached per camera and light.
 Mocap orientation is explicit, with identity as its default.
 
 Plate rigs own private models. Their GL contexts remain alive for the process
-because releasing one can invalidate other live contexts on supported drivers."""
+because releasing one can invalidate other live contexts on supported drivers.
+"""
 
 from __future__ import annotations
 
@@ -74,7 +75,8 @@ def _seeded_action_space(u, seed: int):
     """Temporarily seed the upstream action-space descriptor for reproducible sampling.
 
     Upstream creates a fresh space on each property access. The class-wide patch
-    must not overlap state sampling in another thread."""
+    must not overlap state sampling in another thread.
+    """
     owner = next((k for k in type(u).__mro__ if "action_space" in k.__dict__), None)
     if owner is None:
         yield
@@ -423,7 +425,8 @@ def _ctx_button_tables(b: _Bundle, base, tables, device: str = "cuda") -> dict |
     """Build device button-color tables as deltas from the bundle's all-zero reference state.
 
     Apply deltas to the prepared context colours so button changes preserve texture
-    bakes; overlapping material edits are rejected."""
+    bakes; overlapping material edits are rejected.
+    """
     if not b.nbuttons or tables is None:
         return None
     # The context model was copied at all-zero button bits, so the all-zero table is the delta base.
@@ -682,7 +685,8 @@ class OGBManipBase(Env):
         """Write checker texels and upload them in the rig's current GL context.
 
         The upload is unconditional: shared mutable textures cannot infer their current
-        contents from another caller's cached floor value."""
+        contents from another caller's cached floor value.
+        """
         g = self._b.grid_tex
         if g is None:
             return
@@ -704,8 +708,11 @@ class OGBManipBase(Env):
         agent_color=None,
         worlds=None,
     ) -> torch.Tensor:
-        """Render (..., state_dim) rows to (..., H, W, 3) uint8, with optional (B, nmocap, 4) orientations,
-        (B, 3) agent RGB and per-world configuration arrays."""
+        """Render (..., state_dim) rows to (..., H, W, 3) uint8.
+
+        Optional inputs are (B, nmocap, 4) orientations, (B, 3) agent RGB and per-world
+        configuration arrays.
+        """
         s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim).to(torch.float32)
@@ -823,7 +830,8 @@ class OGBManipBase(Env):
         """Group environments by quantized floor color and view; return representatives and group indices.
 
         Use bytes for grouping and original floats for baking: decoding and requantizing
-        bytes can lose a level. A uniform batch returns None for its group indices."""
+        bytes can lose a level. A uniform batch returns None for its group indices.
+        """
         f = host["floor.color"]  # (B, 6)
         q = mj_quantise(f.reshape(B, 2, 3)).reshape(B, 6).astype(np.int64)
         if worlds is not None:
@@ -845,7 +853,8 @@ class OGBManipBase(Env):
         """Return (B, len(cube_geoms), 4) colors, preserving each geom's original alpha.
 
         Always upload defaults too, since render contexts retain per-world colors
-        between calls. Return None only if the model has no cube geoms."""
+        between calls. Return None only if the model has no cube geoms.
+        """
         b = self._b
         gids = b.cube_geoms
         if gids is None or not len(gids):

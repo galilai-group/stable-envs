@@ -175,7 +175,8 @@ def lagged_pose(state: np.ndarray):
     """Convert (B, 13) observation rows to current and previous poses and world velocities.
 
     The camera and links lag the body by one physics substep. Return float64
-    (pos_t, q_t, pos_prev, q_prev, v_world, w_world)."""
+    (pos_t, q_t, pos_prev, q_prev, v_world, w_world).
+    """
     s = np.asarray(state, np.float64).reshape(-1, 13)
     # Normalize in float64 to match Bullet before computing either current or lagged rotations.
     q = s[:, 3:7]
@@ -193,7 +194,8 @@ def camera_pose(pos_prev: np.ndarray, q_prev: np.ndarray):
     """Return camera eye (B, 3) and right/up/back axes (B, 3, 3) from the lagged link pose.
 
     The camera offset rotates with the link. Its up vector uses the link Euler
-    angles with CAM_PITCH_DEG added to pitch; the target is the link origin."""
+    angles with CAM_PITCH_DEG added to pitch; the target is the link origin.
+    """
     R = quat_to_mat(q_prev)
     eye = pos_prev + np.einsum("bij,j->bi", R, CAM_OFFSET)
     rpy = euler_from_quat(q_prev)
@@ -212,7 +214,8 @@ def tiny_cylinder(length: float, radius: float, steps: int = CYL_STEPS, margin: 
     """Build Bullet cylinder hull vertices, unit normals, and outward-wound triangles.
 
     Support-point ties follow Bullet ring order. Normals are normalized vertex
-    positions; SciPy may triangulate planar caps differently from Bullet."""
+    positions; SciPy may triangulate planar caps differently from Bullet.
+    """
     from scipy.spatial import ConvexHull
 
     i = np.arange(steps)
@@ -354,7 +357,8 @@ def material_table(style: np.ndarray) -> np.ndarray:
     """Map (B, style_dim) appearance rows to (B, 13, 3) material colors.
 
     Rocket colors use value/255; pad colors use the URDF three-decimal rounding.
-    The flame ignition bit selects its material, and the textured ground stays white."""
+    The flame ignition bit selects its material, and the textured ground stays white.
+    """
     lay = style_layout()
     st = np.asarray(style, np.float64).reshape(-1, style_dim())
     B = len(st)
@@ -376,7 +380,8 @@ def material_table(style: np.ndarray) -> np.ndarray:
 def checker_texture() -> np.ndarray:
     """Load the checker texture as vertically flipped (H, W, 3) uint8.
 
-    TinyRenderer indexes v from the bottom; nvdiffrast indexes from row zero."""
+    TinyRenderer indexes v from the bottom; nvdiffrast indexes from row zero.
+    """
     import pybullet_data
     from PIL import Image
 
@@ -405,7 +410,8 @@ def _optional_import_errors() -> dict:
 def missing_backend() -> str | None:
     """Return the missing render dependency explanation, or None.
 
-    Rendering requires nvdiffrast, SciPy, pybullet_data, and Pillow."""
+    Rendering requires nvdiffrast, SciPy, pybullet_data, and Pillow.
+    """
     parts = []
     if NVDIFF_IMPORT_ERROR is not None:
         parts.append(f"nvdiffrast: {NVDIFF_IMPORT_ERROR}")
@@ -465,7 +471,8 @@ def _reference_frame_flagged(env, state: np.ndarray, style_row: np.ndarray, cont
     """Return (frame, unreachable) using the previous-substep velocity fixed point.
 
     When contact prevents reconstruction, contact_fallback returns a synchronized
-    frame flagged for exclusion. Other reconstruction failures raise."""
+    frame flagged for exclusion. Other reconstruction failures raise.
+    """
     import pybullet as p
 
     u = env.unwrapped
@@ -552,7 +559,8 @@ class PyFlytRocketLanding(Env):
 
     This base renders stored poses with CUDA. The registered semantic subclass
     adds simulation and CPU rendering. Silhouettes, checker filtering, and cylinder
-    cap triangulation can differ from official TinyRenderer pixels; see visual_fidelity."""
+    cap triangulation can differ from official TinyRenderer pixels; see visual_fidelity.
+    """
 
     family = "pyflyt"
     domain = "rocket_landing"
@@ -692,14 +700,16 @@ class PyFlytRocketLanding(Env):
     def make_variation_space(self) -> Dict:
         """Return body, fin, leg, booster, pad colors and the flame ignition bit.
 
-        Defaults match reset appearance. Dynamics parameters are not render variation."""
+        Defaults match reset appearance. Dynamics parameters are not render variation.
+        """
         return _make_variation_space()
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """Sample (batch, 13) observation rows with body-frame velocities.
 
         Half the samples cover high-altitude flight; half cover log-uniform descent.
-        These are geometry samples, not complete simulator snapshots."""
+        These are geometry samples, not complete simulator snapshots.
+        """
         rng = rng or self.rng
         B = int(batch)
         h = np.where(
@@ -734,7 +744,8 @@ class PyFlytRocketLanding(Env):
     ) -> torch.Tensor:
         """Render (..., 13) pose rows and per-row appearance to uint8 RGB.
 
-        This visual-tier path can differ from the source renderer."""
+        This visual-tier path can differ from the source renderer.
+        """
         s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
@@ -777,7 +788,8 @@ class PyFlytRocketLanding(Env):
 
         Contact-band reconstruction failures return synchronized frames with True
         flags. The same flags are stored in last_reference_unreachable, which is
-        shared mutable class state; prefer return_flags=True for concurrent callers."""
+        shared mutable class state; prefer return_flags=True for concurrent callers.
+        """
         st = np.asarray(states, np.float64).reshape(-1, 13)
         if style is None:
             sty = np.tile(_default_style_row(), (len(st), 1))

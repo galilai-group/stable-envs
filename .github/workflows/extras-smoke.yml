@@ -4,7 +4,8 @@ name: extras-smoke
 # and nvdiffrast is not PyPI metadata.
 on:
   pull_request:
-    branches: [main]
+    branches: [main, v1-dev]
+    types: [opened, reopened, synchronize, ready_for_review]
   push:
     branches: [main]
   schedule:
@@ -26,7 +27,7 @@ concurrency:
 
 jobs:
   cheap:
-    if: github.event_name != 'schedule' && (github.event_name != 'workflow_dispatch' || inputs.profile == 'cheap')
+    if: github.event_name != 'schedule' && (github.event_name != 'workflow_dispatch' || inputs.profile == 'cheap') && (github.event_name != 'pull_request' || !github.event.pull_request.draft)
     name: cheap extras
     runs-on: ubuntu-latest
     steps:

@@ -66,7 +66,8 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
 
     Run com_pos between kinematics and camlight: tracking cameras read subtree_com,
     which kinematics does not update. Capture the complete frame sequence to avoid
-    repeated host launches."""
+    repeated host launches.
+    """
     import mujoco
     import mujoco_warp as mjw
 
@@ -181,7 +182,8 @@ class DMControlTrackCom(_DMCModel):
 
     The moving view requires a full scene render. Texture filtering and shading
     differ from source OpenGL; an explicit opengl backend uses its separate context.
-    This path supports one sample per pixel and refuses uncertified CPU cells."""
+    This path supports one sample per pixel and refuses uncertified CPU cells.
+    """
 
     fidelity_tier = "visual"
     parity_interior_min = None
@@ -383,7 +385,8 @@ class DMControlTrackCom(_DMCModel):
         """Compute camera, mover and light poses on CPU from compact render rows.
 
         Preserve kinematics → comPos → camlight order so tracking uses current
-        subtree centres of mass. Restore episode model entries after the batch."""
+        subtree centres of mass. Restore episode model entries after the batch.
+        """
         import mujoco
 
         m, d = self._model(), self._bundle(self.default_size)[2]
@@ -515,7 +518,8 @@ class DMControlTrackCom(_DMCModel):
         """Map world-body position slots to derived data rows requiring direct uploads.
 
         MJWarp kinematics skips world-body geoms/sites. Updating only their model
-        positions leaves stale world poses; the identity parent frame permits direct copies."""
+        positions leaves stale world poses; the identity parent frame permits direct copies.
+        """
         hit = cls.__dict__.get("_slot_rows_cache")
         if hit is not None:
             return hit

@@ -32,7 +32,8 @@ class DMControlSuite(_DMCModel):
 
     Plates store the lit background, its shadowed colour, and its unreflected
     surface. Subclasses declare the domain, task and camera. Shared model mutation
-    during baking and kinematics requires serialized access."""
+    during baking and kinematics requires serialized access.
+    """
 
     # One ray per pixel by default; higher supersampling changes silhouette coverage.
     default_supersample = 1
@@ -66,7 +67,8 @@ class DMControlSuite(_DMCModel):
         """Add the checker’s two RGB colours to the model-derived appearance space.
 
         The source material file supplies their defaults. Texture substitution uploads
-        into the existing GL context rather than creating another renderer."""
+        into the existing GL context rather than creating another renderer.
+        """
         space = super().make_variation_space()
         slots = self._grid_slots()
         if slots is None:
@@ -107,7 +109,8 @@ class DMControlSuite(_DMCModel):
 
         Shape edits leave compiled collision bounds stale. They are restricted to
         noncolliding render targets; extending them to physics requires recomputing
-        model constants or recompilation. Visibility is applied after shape changes."""
+        model constants or recompilation. Visibility is applied after shape changes.
+        """
         import mujoco
 
         m.mat_rgba[:] = pr["mat_rgba"]
@@ -163,7 +166,8 @@ class DMControlSuite(_DMCModel):
         """Select visible geoms/sites moved by joints or episode-specific model entries.
 
         World-body landmarks can move between episodes and must stay out of plates.
-        Body slots already enter through attached geoms; light IDs are not geometry IDs."""
+        Body slots already enter through attached geoms; light IDs are not geometry IDs.
+        """
         ep_g, ep_s = set(), set()
         for arr, i in self._slots():
             kind, eid = _slot_element(m, arr, i)
@@ -180,7 +184,8 @@ class DMControlSuite(_DMCModel):
         """Assign floor texels absolutely and upload with the renderer’s GL context current.
 
         Both model and context retain the previous bake’s colours, so every bake
-        must assign its own texture, including the default."""
+        must assign its own texture, including the default.
+        """
         slots = self._grid_slots()
         if slots is None:
             return
@@ -286,7 +291,8 @@ class DMControlSuite(_DMCModel):
         """Build primitive attributes and poses from geoms, sites and tendon segments.
 
         Tendon count is fixed at bake time; kinematics replaces its placeholder poses,
-        half-lengths and colours for each row."""
+        half-lengths and colours for each row.
+        """
         kind, size, rgb, tex, spec, shin, pos, mat = [], [], [], [], [], [], [], []
         for i in geoms:
             mid = int(m.geom_matid[i])
@@ -341,7 +347,8 @@ class DMControlSuite(_DMCModel):
     def _shadow_candidates(self, sc: _Scene, ss: int):
         """Cache static samples whose lit and shadowed plates differ.
 
-        Skipping other samples is exact: their occlusion result cannot change a pixel."""
+        Skipping other samples is exact: their occlusion result cannot change a pixel.
+        """
         key = (int(ss), bool(self.SHADOW_COMPACTION))
         hit = sc.shadow_candidates.get(key)
         if hit is not None:
@@ -386,7 +393,8 @@ class DMControlSuite(_DMCModel):
     def _static_t(self, sc: _Scene, ss: int) -> torch.Tensor:
         """Cast and cache static depth at the requested supersampling grid.
 
-        Upsampling output-resolution depth would place edge samples on wrong surfaces."""
+        Upsampling output-resolution depth would place edge samples on wrong surfaces.
+        """
         hit = sc.static_t.get(int(ss))
         if hit is not None:
             return hit
@@ -415,7 +423,8 @@ class DMControlSuite(_DMCModel):
 
         Only drawn geoms/sites are included. Conformance checks use these attributes
         to validate proposed invariant dimensions; declarations alone grant no exclusion.
-        Live geometry types ensure a sphere-rotation exemption fails for a box style."""
+        Live geometry types ensure a sphere-rotation exemption fails for a box style.
+        """
         import mujoco
 
         m, d = self._bundle(self.size)[1], self._bundle(self.size)[2]
@@ -498,7 +507,8 @@ class DMControlSuite(_DMCModel):
 
         Source kinematics runs on CPU. Tendons need mj_forward for constraint-dependent
         colour; their polylines are grouped by length for batched capsule construction.
-        Restore episode model entries before returning, including on failure."""
+        Restore episode model entries before returning, including on failure.
+        """
         import mujoco
 
         gmov, smov = sc.movers
@@ -567,7 +577,6 @@ class DMControlSuite(_DMCModel):
     @staticmethod
     def _cast(sc, o, d, xpos, xmat, sizes):
         """Return nearest mover distance, normal and primitive index for each ray."""
-
         return R3.cast_nearest(sc.prims.kind, sizes, xpos, xmat, o, d)
 
     @staticmethod
@@ -575,7 +584,8 @@ class DMControlSuite(_DMCModel):
         """Return whether movers block rays from ``p`` to light ``sl``.
 
         ``skip`` excludes each ray’s originating convex primitive. Its front-facing
-        surface cannot occlude itself; back-facing illumination is already zero."""
+        surface cannot occlude itself; back-facing illumination is already zero.
+        """
         shape = (1,) * (p.dim() - 1) + (3,)
         if L["kind"][sl] == LIGHT_DIRECTIONAL:
             d = (-_norm(L["dir"][sl].view(shape))).expand_as(p)
@@ -654,7 +664,8 @@ class DMControlSuite(_DMCModel):
         """Return a conservative mover window, or None to cast the full frame.
 
         Project bounds once, then choose the smallest fitting host-side window.
-        Padding must preserve every sample that a mover can reach."""
+        Padding must preserve every sample that a mover can reach.
+        """
         span = R3.screen_span(sc.cam, sc.prims, xpos, size, size, xpos.device, bound_scale)
         if span is None:
             return None
@@ -686,9 +697,11 @@ class DMControlSuite(_DMCModel):
         return hit
 
     def _frame_rows(self, sty, B: int) -> dict:
-        """Per-row physics values a frame depends on: ``gravity`` for a drawn catenary, and a
-        ``radius:<geom id>`` per SPHERE_SIZES leaf. A float32 style column that still encodes the
-        model's value keeps its exact value."""
+        """Return the per-row physics values a frame depends on.
+
+        These are ``gravity`` for a drawn catenary, and a ``radius:<geom id>`` per SPHERE_SIZES
+        leaf. A float32 style column that still encodes the model's value keeps its exact value.
+        """
         import mujoco
 
         m, out = self._model(), {}
@@ -778,7 +791,8 @@ class DMControlSuite(_DMCModel):
         """Replace mirror hits using ``r * mover_colour + (1-r) * unreflected_surface``.
 
         Blending onto the reflected plate would keep the plate's own reflection underneath.
-        Only hit samples are shaded; other pixels keep the existing background."""
+        Only hit samples are shaded; other pixels keep the existing background.
+        """
         idx, ro, rd, surf = self._floor_rays(sc, ss)
         if idx.numel() == 0:
             return base

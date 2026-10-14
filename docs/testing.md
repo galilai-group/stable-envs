@@ -1,4 +1,4 @@
-# Testing and conformance
+# Testing
 
 Simulation, task and rendering claims are tested separately. A rendering check does not prove that
 State is complete, and a State check does not prove that pixels are right. A skipped required check is
@@ -63,7 +63,7 @@ pytest -m "regression and gpu"          # GPU regression, needs CUDA
 ## Pull requests, nightly and shards
 
 - Pull requests run the profiles the diff selects (`scripts/ci/plan.py`), without `nightly` tests.
-- Pushes to `main`, the nightly schedule, manual runs and the `ci:full` label run every profile and
+- Pushes to `main`, the weekly schedule, manual runs and the `ci:full` label run every profile and
   include `nightly` tests.
 - Each profile is split into `shards` jobs (`ci/families.toml`, per tier). `tests/_runner/shard.py`
   balances them with the per-test seconds in `ci/durations.json`. Tests of one env stay in one shard.
@@ -230,4 +230,4 @@ C.check_backend_agreement(env)       # {'exact_frac': 1.0, 'max_abs': 0, ...}
 C.pixel_agreement(ours, official)    # all-pixel and interior-pixel agreement
 ```
 
-API details: [`stable_envs.testing`](api/testing.md).
+API details: [Testing helpers](api/testing.md).

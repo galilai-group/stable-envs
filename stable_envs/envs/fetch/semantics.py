@@ -17,7 +17,8 @@ class FetchSemantics:
     """Compose Fetch CPU simulation with lazily constructed render backends.
 
     Public State includes controller, lifecycle and RNG fields; the qpos/goal
-    projection is for rendering only and cannot restore the simulator."""
+    projection is for rendering only and cannot restore the simulator.
+    """
 
     execution_mode = "DELEGATED_CPU"
     action_dim = 4
@@ -174,7 +175,8 @@ class FetchSemantics:
         their geom colors (grey 0.5 instead of the material colors). ``background.color``
         colors the floor and fills the sky; ``light.intensity`` is absolute where
         ``light.diffuse`` scales the registered light. The next reset restores the
-        registered materials first."""
+        registered materials first.
+        """
         selected = any(VISUAL_LEAVES & v.keys() for v in values)
         if not (selected or self._colors_detached):
             return

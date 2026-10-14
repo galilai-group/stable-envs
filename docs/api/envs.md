@@ -1,4 +1,4 @@
-# `stable_envs.envs`
+# Registered environments
 
 The registered environments. The package discovers these modules automatically, so adding a file is
 the registration step. `snv.import_errors()` lists modules that did not load. A missing optional

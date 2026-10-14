@@ -110,7 +110,8 @@ class RocketReplay:
 
     Restoration rebuilds native contact caches through source steps, then verifies
     the resulting fields before swapping engines. State contains no native handles;
-    restore cost grows with the recorded physical action count."""
+    restore cost grows with the recorded physical action count.
+    """
 
     def __init__(self, config=None, seed=0, options=None, *, initialize=True):
         for name, required in [("PyFlyt", "0.29.0"), ("pybullet", "3.2.7")]:
@@ -388,7 +389,8 @@ class RocketReplay:
     def _adopt_appearance(self, state):
         """Install appearance values set during the episode and repaint what they changed.
 
-        The caller's full comparison then rejects any rgba the values do not imply."""
+        The caller's full comparison then rejects any rgba the values do not imply.
+        """
         replayed = self.get_state()
         for path in IMMEDIATE:
             key = "variation/" + path.replace(".", "/") + "/value"

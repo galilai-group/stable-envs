@@ -1,4 +1,4 @@
-# State, RenderState, Action, Variation, and Frame
+# State, Action, Variation and Frame
 
 | Value | Meaning |
 |---|---|

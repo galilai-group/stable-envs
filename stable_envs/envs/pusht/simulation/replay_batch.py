@@ -13,7 +13,8 @@ class PushTReplayAdapter(SimulatorAdapter):
 
     Stage every lane before installing a reset or restored State. Export pads
     histories to the longest lane with zero, invalid entries; padding adds no
-    episode time limit."""
+    episode time limit.
+    """
 
     def __init__(self, batch, device="cpu", seed=0, *, discrete=False, config=None):
         if type(batch) is not int or batch < 1:

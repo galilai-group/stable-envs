@@ -18,7 +18,8 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
     """Rocket CPU dynamics with replay-backed State and CPU/CUDA rendering; VISUAL TIER.
 
     PyFlyt 0.29.0/PyBullet 3.2.7 run physics on CPU. Explicit body and cached camera
-    poses drive TinyRenderer on CPU or the nvdiffrast path on CUDA."""
+    poses drive TinyRenderer on CPU or the nvdiffrast path on CUDA.
+    """
 
     requires_cuda = False
     execution_mode = "DELEGATED_CPU"
@@ -74,8 +75,11 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         return CompositeSpec(fields, device=self.device)
 
     def reset(self, seed=None, options=None):
-        """Reset every lane; ``options["variation_values"]`` sets leaves for this episode only,
-        one value shared by the batch or one per lane."""
+        """Reset every lane.
+
+        ``options["variation_values"]`` sets leaves for this episode only, with one value shared by
+        the batch or one per lane.
+        """
         self._check_open("reset")
         options = dict(options or {})
         values = options.pop("variation_values", None)
@@ -117,7 +121,8 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         """Sample configurations with integer RGB leaves using the supplied or metadata RNG.
 
         This does not consume simulator reset RNGs. Use reset options to randomize
-        the next episode through those streams."""
+        the next episode through those streams.
+        """
         self._check_open("sample_variation")
         batch = self.B if batch is None else batch
         if type(batch) is not int or batch < 1:
@@ -139,7 +144,8 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
     def set_variation(self, variation=None, **overrides):
         """Install defaults for later resets; appearance leaves also apply to the current episode.
 
-        The start leaves describe how an episode begins, so they act from the next reset."""
+        The start leaves describe how an episode begins, so they act from the next reset.
+        """
         self._check_open("set_variation")
         if isinstance(variation, dict):
             overrides = {**variation, **overrides}

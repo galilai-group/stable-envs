@@ -39,7 +39,8 @@ def export_state(envs, cumulative, fields, device, extra=None):
     """Export fresh State columns with one device transfer per field.
 
     Read live lane owners into owned host arrays. CPU tensors retain those arrays;
-    later simulation and exports cannot overwrite the snapshot."""
+    later simulation and exports cannot overwrite the snapshot.
+    """
     batch = len(envs)
     columns = {key: np.empty((batch, width), dtype=_DTYPES[dtype]) for key, (width, dtype) in fields.items()}
     model_fields = [(key, *MODEL_FIELDS[key]) for key in columns if key in MODEL_FIELDS]

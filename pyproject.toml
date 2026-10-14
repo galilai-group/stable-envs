@@ -93,7 +93,8 @@ examples = ["imageio", "imageio-ffmpeg", "opencv-python"]
 # as PyPI metadata.
 # docs and dev repeat the dependency groups of the same name for pip installs.
 docs = [
-  "mkdocs-material>=9.5",
+  "mkdocs>=1.6,<2",
+  "mkdocs-material>=9.7,<10",
   "mkdocstrings[python]>=0.27",
   "pymdown-extensions>=10.0",
 ]
@@ -123,7 +124,8 @@ test = [
 lint = ["ruff>=0.12", "mypy>=1.15", "pre-commit>=4.0"]
 build = ["build>=1.2", "twine>=6"]
 docs = [
-  "mkdocs-material>=9.5",
+  "mkdocs>=1.6,<2",
+  "mkdocs-material>=9.7,<10",
   "mkdocstrings[python]>=0.27",
   "pymdown-extensions>=10.0",
 ]
@@ -235,13 +237,27 @@ line-length = 119
 extend-exclude = ["docs/assets"]
 
 [tool.ruff.lint]
-select = ["E4", "E7", "E9", "F", "I", "UP"]
+select = ["E4", "E7", "E9", "F", "I", "UP", "D"]
 # E402: late imports are load-bearing (importorskip, optional deps, sys.path, env vars).
 # E731: lambda -> def changes __name__ / pickle.
 # E741: renaming `l`/`O` is an identifier change, not formatting.
-ignore = ["E402", "E731", "E741"]
+# D1: missing docstrings are not enforced yet; the D rules check the format of existing ones.
+ignore = ["E402", "E731", "E741", "D1"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
+# Docstring rules apply to the public API only.
+"stable_envs/_*/**" = ["D"]
+"stable_envs/**/_*.py" = ["D"]
+"tests/**" = ["D"]
+"scripts/**" = ["D"]
+"benchmarks/**" = ["D"]
+"examples/**" = ["D"]
+"docs/**" = ["D"]
+"conftest.py" = ["D"]
+"noxfile.py" = ["D"]
 # Re-exports and registration side-effect imports.
 "**/__init__.py" = ["F401"]
 # Generated MJWarp kernels: `int()` casts are load-bearing for Warp.

@@ -1,6 +1,76 @@
 # Contributing
 
-## Set up
+## Your first contribution
+
+### Get access
+
+The repository is private. A maintainer adds you as a collaborator on GitHub. Accept the
+invitation, then clone the repository. Do not fork it.
+
+```bash
+git clone git@github.com:galilai-group/stable-envs.git
+cd stable-envs
+```
+
+### Make a branch
+
+Branch off `v1-dev`. Name the branch `<your-name>/<short-topic>`, for example `alice/pusht-docs`.
+
+```bash
+git switch v1-dev
+git pull
+git switch -c alice/pusht-docs
+```
+
+### Set up
+
+Install [uv](https://docs.astral.sh/uv/). Then install the development tools and the git hooks:
+
+```bash
+uv sync --python 3.12 --group dev
+uv run pre-commit install
+```
+
+The hooks run ruff and a few file checks on each commit.
+
+### Run the tests
+
+Run the core tests, then the tests of the family you changed:
+
+```bash
+uvx nox -s "test(core)"
+uvx nox -s "test(<profile>)"
+```
+
+The profiles are `core`, `classic`, `navigation`, `pusht`, `dmc`, `fetch`, `ogbench` and `rocket`.
+[`ci/families.toml`](ci/families.toml) lists the files each profile owns. `uvx nox -s affected`
+prints the profiles your branch touches. If you changed the docs, also run `uvx nox -s docs`.
+
+GPU tests need a CUDA machine. Run them with `pytest tests/gpu -v` if you changed GPU code.
+`stable-envs doctor` checks a machine's setup.
+
+### Open a pull request
+
+1. Push your branch and open a draft pull request into `v1-dev`.
+2. Fill in the pull request template.
+3. When the work is done and the tests pass locally, click "Ready for review".
+
+CI runs only on pull requests that are ready for review. Draft pull requests do not run CI. CI
+minutes are limited, so keep the pull request in draft while you work on it.
+
+### Review
+
+A code owner reviews every pull request. The reviewer may ask for changes. Push new commits to the
+same branch to answer them. Do not force-push once review has started. The pull request is merged
+when a reviewer approves it and the `ci-ok` check passes.
+
+Add a line to `CHANGELOG.md` under `Unreleased` for any change a user would notice.
+
+### Ask questions
+
+Comment on your pull request, open an issue, or ask a maintainer directly.
+
+## Test environments
 
 Test environments are built from the single `uv.lock`, one per profile, with
 [nox](https://nox.thea.codes) and [uv](https://docs.astral.sh/uv/):
@@ -68,6 +138,21 @@ initializes native renderers. The supervisor isolates crashes and names the test
 
 The full test layout and what each check rules out: [Testing](docs/testing.md).
 
+## Pull request rules
+
+- Do not relax a parity threshold or edit a frozen fixture to make a test pass.
+- Do not release an EGL context or close a `mujoco.Renderer`. It corrupts rendering in other live
+  contexts. `tests/_runner/resource_guard.py` fails the test that does it.
+- Do not create contexts, renderers or envs per state, per style value or per call.
+- Read the upstream source, then confirm your reading by comparing against the official renderer.
+  See [Fidelity methodology](docs/concepts/fidelity-methodology.md).
+- Do not commit local artifacts (scratch output, screenshots, one-off JSON). Fixtures that a committed
+  script regenerates live under `tests/fixtures/`.
+
+## Adding a component
+
+See the [environment, task and renderer guides](docs/adding/index.md).
+
 ## What a new environment needs to pass CI
 
 Every registered class is picked up automatically, in its family's CI profile:
@@ -89,16 +174,37 @@ Every registered class is picked up automatically, in its family's CI profile:
 A test file must run in a profile that installs what it imports. Assign the file to a family in
 `ci/families.toml`, or mark a single test with `pytest.mark.family("<name>")`.
 
-The stable-worldmodel layer is built to be removed in one change. To remove it, delete:
+## Maintainers
 
-- `SWM_GATES` in `tests/helpers/reference/cases.py`;
-- the tests marked `swm` and the gate helpers only they use;
-- the `swm` capability and the `[swm]` block in `ci/families.toml`;
-- `_install_swm` in `noxfile.py`.
+The sections below cover CI internals and rules that most contributions do not need.
 
-`ORIGINAL_GATES` then stands alone.
+### Continuous integration
 
-## Exemptions
+`.github/workflows/ci.yml` runs on ready (non-draft) pull requests into `main` and `v1-dev`, on pushes to `main`, and weekly. Pull requests test core on Python 3.12 only.
+`scripts/ci/plan.py` maps the diff to profiles through `ci/families.toml`:
+
+- A docs-only change runs the docs build.
+- A shared path (core modules, conftests, `pyproject.toml`, `uv.lock`, CI files) selects every profile.
+- Otherwise CI runs the touched families plus `core`.
+
+The label `ci:full` runs every profile on a pull request. The only required check is `ci-ok`.
+
+Tests marked `nightly` run on pushes to `main`, the weekly schedule, manual runs and `ci:full`.
+Each family profile is split into `shards` jobs (`ci/families.toml`) by `tests/_runner/shard.py`,
+using per-test times from `ci/durations.json`. Locally:
+
+```bash
+SE_NIGHTLY=1 uvx nox -s "test(dmc)"   # include nightly tests
+SE_SHARD=2/4 uvx nox -s "test(dmc)"   # run one shard
+```
+
+Refresh `ci/durations.json` from the `durations-*.json` files a CI run uploads when shards become
+unbalanced.
+
+A red run on `main` or the nightly opens or updates the issue "ci: main is red". Revert the change
+that broke it unless a fix is merged within about two hours.
+
+### Exemptions
 
 If a check cannot apply (for example, a renderer-only class has no `step`), waive it in
 `tests/exemptions.toml`:
@@ -115,43 +221,13 @@ Known checks are `specs`, `seeded`, `lanes`, `state`, `variation`, `batch_render
 `original`, `swm` and `variation_map`. A waived check still runs and must keep failing. Once it
 passes, the suite fails until you remove the entry. The file has a code owner.
 
-## Continuous integration
+### Removing the stable-worldmodel layer
 
-`.github/workflows/ci.yml` runs on pull requests, pushes to `main`, and nightly.
-`scripts/ci/plan.py` maps the diff to profiles through `ci/families.toml`:
+The stable-worldmodel layer is built to be removed in one change. To remove it, delete:
 
-- A docs-only change runs the docs build.
-- A shared path (core modules, conftests, `pyproject.toml`, `uv.lock`, CI files) selects every profile.
-- Otherwise CI runs the touched families plus `core`.
+- `SWM_GATES` in `tests/helpers/reference/cases.py`;
+- the tests marked `swm` and the gate helpers only they use;
+- the `swm` capability and the `[swm]` block in `ci/families.toml`;
+- `_install_swm` in `noxfile.py`.
 
-The label `ci:full` runs every profile on a pull request. The only required check is `ci-ok`.
-
-Tests marked `nightly` run on pushes to `main`, the nightly schedule, manual runs and `ci:full`.
-Each family profile is split into `shards` jobs (`ci/families.toml`) by `tests/_runner/shard.py`,
-using per-test times from `ci/durations.json`. Locally:
-
-```bash
-SE_NIGHTLY=1 uvx nox -s "test(dmc)"   # include nightly tests
-SE_SHARD=2/4 uvx nox -s "test(dmc)"   # run one shard
-```
-
-Refresh `ci/durations.json` from the `durations-*.json` files a CI run uploads when shards become
-unbalanced.
-
-A red run on `main` or the nightly opens or updates the issue "ci: main is red". Revert the change
-that broke it unless a fix is merged within about two hours.
-
-## Pull request rules
-
-- Do not relax a parity threshold or edit a frozen fixture to make a test pass.
-- Do not release an EGL context or close a `mujoco.Renderer`. It corrupts rendering in other live
-  contexts. `tests/_runner/resource_guard.py` fails the test that does it.
-- Do not create contexts, renderers or envs per state, per style value or per call.
-- Read the upstream source, then confirm your reading by comparing against the official renderer.
-  See [Fidelity methodology](docs/concepts/fidelity-methodology.md).
-- Do not commit local artifacts (scratch output, screenshots, one-off JSON). Fixtures that a committed
-  script regenerates live under `tests/fixtures/`.
-
-## Adding a component
-
-See the [environment, task and renderer guides](docs/adding/index.md).
+`ORIGINAL_GATES` then stands alone.

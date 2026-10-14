@@ -1,4 +1,4 @@
-# Lifecycle and resource ownership
+# Lifecycle
 
 Use an environment as a context manager or call `close()` explicitly. Close is
 idempotent; correctness must not depend on a finalizer. Closed instances refuse

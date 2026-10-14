@@ -1,4 +1,4 @@
-# `stable_envs.testing`
+# Testing helpers
 
 Conformance checks as plain functions that return numbers. Call them from pytest, a report or a
 benchmark.

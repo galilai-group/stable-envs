@@ -5,7 +5,8 @@ def validate_action(action: np.ndarray) -> None:
     """Validate finite float32/float64 commands before touching the engine.
 
     PyFlyt can apply forces before rejecting booster or gimbal bounds. This check
-    must precede stepping so rejected calls cannot alter replay history."""
+    must precede stepping so rejected calls cannot alter replay history.
+    """
     if not isinstance(action, np.ndarray) or action.dtype not in (np.dtype("float32"), np.dtype("float64")):
         raise TypeError("Rocket action must be a float32 or float64 numpy array")
     if action.shape != (7,):

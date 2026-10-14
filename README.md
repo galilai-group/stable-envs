@@ -97,14 +97,17 @@ See [Limitations](docs/concepts/limitations.md).
 |---|---|
 | [Quickstart](docs/quickstart.md) | `reset`, `step`, `render`, specs |
 | [Install](docs/install.md) | extras, pins, nvdiffrast |
+| [System setup](docs/system-setup.md) | driver, OpenGL and `stable-envs doctor` |
 | [Environments](docs/environments.md) | listing, metadata, fidelity tier |
-| [State, Variation, Frame](docs/concepts/state.md) | what each value holds |
+| [State, Action, Variation and Frame](docs/concepts/state.md) | what each value holds |
 | [Stepping](docs/concepts/dynamics.md) | action sequences and output selection |
 | [Lifecycle](docs/concepts/lifecycle.md) | `close()` and the context manager |
 | [Limitations](docs/concepts/limitations.md) | devices and backends |
 | [Benchmarks](docs/benchmarks.md) | how throughput is measured |
 | [Adding a component](docs/adding/index.md) | environment, task and renderer guides |
 | [Testing](docs/testing.md) | test layout and CI profiles |
+| [Command line](docs/api/cli.md) | `stable-envs doctor` |
+| [Changelog](CHANGELOG.md) | changes in each release |
 
 Build the site locally:
 

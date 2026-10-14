@@ -1,4 +1,4 @@
-# Environment listing
+# Environments
 
 `snv.list_envs()` lists the environments registered **on this interpreter**. The package discovers
 `stable_envs/envs/*` automatically. If an optional dependency is missing, that family does not register,
@@ -66,5 +66,5 @@ them in place of official pixels at evaluation. See [Fidelity tiers](concepts/fi
 
 ## API reference
 
-- [Env contract](api/env.md)
-- [Registered families](api/envs.md)
+- [Env](api/env.md)
+- [Registered environments](api/envs.md)

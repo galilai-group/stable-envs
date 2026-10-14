@@ -1,4 +1,8 @@
-# Adding an environment, task, or renderer
+# Adding a component
+
+New contributors start with
+[CONTRIBUTING.md](https://github.com/galilai-group/stable-envs/blob/main/CONTRIBUTING.md). It covers
+access, branches, tests and pull requests.
 
 First identify which layer you are changing. A registration combines three responsibilities:
 
@@ -11,10 +15,10 @@ protocol. There is no `Task`, `Renderer` or `Observation` class to subclass.
 
 | you are adding | guide |
 |---|---|
-| a simulator, dynamics, action mechanism or State schema | [Environment](environment.md) |
-| a reward, goal, reset distribution, success rule or task configuration on an existing backend | [Task](task.md) |
-| pixels, a camera or a rendering backend, without changing semantics | [Renderer](renderer.md) |
-| model inputs, observation packaging or learner-visible filtering | [stable-worldmodel](../concepts/worldmodel.md) |
+| a simulator, dynamics, action mechanism or State schema | [Adding an environment backend](environment.md) |
+| a reward, goal, reset distribution, success rule or task configuration on an existing backend | [Adding a task](task.md) |
+| pixels, a camera or a rendering backend, without changing semantics | [Adding a renderer](renderer.md) |
+| model inputs, observation packaging or learner-visible filtering | [Sibling projects](../concepts/worldmodel.md) |
 
 ## Where code goes
 

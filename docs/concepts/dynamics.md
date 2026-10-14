@@ -1,4 +1,4 @@
-# Stepping and selecting outputs
+# Stepping
 
 ```python
 step(actions, states=slice(None), frames=slice(-1, None))

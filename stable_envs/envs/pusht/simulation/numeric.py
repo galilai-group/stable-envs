@@ -1,7 +1,8 @@
 """Numeric replay values preserve Python/NumPy representation and dtype tags.
 
 Scalar-versus-array distinctions affect source arithmetic. PCG64 words and
-seed metadata remain integers; replay recipes contain no engine handles."""
+seed metadata remain integers; replay recipes contain no engine handles.
+"""
 
 from __future__ import annotations
 

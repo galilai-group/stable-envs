@@ -44,7 +44,8 @@ M32 = G.M32
 def edge_table(vx: torch.Tensor, vy: torch.Tensor, H: int, W: int) -> torch.Tensor:
     """Clip edges and prepare Wu-line constants for integer quad vertices (M, 4).
 
-    Return (M, 4, EG_W) int32 entries for the four directed edges."""
+    Return (M, 4, EG_W) int32 entries for the four directed edges.
+    """
     M = vx.shape[0]
     nx, ny = vx.roll(-1, 1), vy.roll(-1, 1)
     a, b, c, d = (t.reshape(-1) for t in (vx, vy, nx, ny))
@@ -67,7 +68,8 @@ def bin_primitives(
     """Return primitive lists (B, NB, K), counts (B, NB), and horizontal bin count.
 
     Input boxes (B, P, 4) use output coordinates (x0, y0, x1, y1).
-    A stable prefix sum preserves painter order where primitives overlap."""
+    A stable prefix sum preserves painter order where primitives overlap.
+    """
     B, P, _ = box.shape
     nby, nbx = -(-H // bin_h), -(-W // bin_w)
     dev = box.device
@@ -383,7 +385,8 @@ def render_surface(
     Vertices are (B, P, VMAX, 2) int32; metadata is (B, P, PM_W).
     The first PG polygons are gfxdraw quads with edge tables (B, PG, 4, EG_W).
     The remainder use pygame.draw fill rules. Polygons from PPOST onward
-    already use flipped coordinates. Requires CUDA and Triton."""
+    already use flipped coordinates. Requires CUDA and Triton.
+    """
     if not vert.is_cuda:
         raise ValueError("render_surface requires CUDA; CarRacing has no CPU renderer")
     if not HAVE_TRITON:

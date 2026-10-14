@@ -144,7 +144,8 @@ class LanePool:
     Lanes whose MJCF compiles to the same XML share one MjModel; a Variation write
     to compiled arrays moves the lane to a copy keyed by the written values. Each
     lane keeps its own LANE_FIELDS and MJCF Variation attributes, swapped in when
-    it next touches the shared object. Lanes of one pool must not run concurrently."""
+    it next touches the shared object. Lanes of one pool must not run concurrently.
+    """
 
     def __init__(self):
         self.ik = None
@@ -199,7 +200,8 @@ class Compatibility:
 
     Physics, task construction, controller and IK remain upstream. Arm reset uses
     a configured position instead of sampling three coordinates, so RNG draw order
-    must be preserved when changing initialization."""
+    must be preserved when changing initialization.
+    """
 
     _pool = None
     _shared = None
