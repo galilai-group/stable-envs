@@ -1,4 +1,4 @@
-"""Controlled independent Cube/Scene oracle shared by active acceptance tests."""
+"""Comparisons of a Cube/Scene env against the source-owned oracle classes."""
 
 import numpy as np
 

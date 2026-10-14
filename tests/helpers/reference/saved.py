@@ -1,7 +1,6 @@
-"""Read-only policies for existing native and Rocket corpora.
+"""Read-only checks over the saved native and Rocket corpora.
 
-Historical drivers remain executable and unchanged. These consumers use shared
-measurements without regenerating trajectories or relabeling them as fresh runs.
+They verify recorded measurements without regenerating trajectories.
 """
 
 from __future__ import annotations
@@ -22,11 +21,9 @@ SWM_PIN = "21446f1ede6d5284e981bd7b47f432b994e6d812"
 CORPUS_PIN = "176d54532b3c0a251a4f509b74f2fdacc143a63d"
 ROCKET_SOURCE = "5ede3640ce1e2add32b6b0a6c36e190bb1130e38bb258ab182af12a6fbedee23"
 
-# Cross-machine frozen trajectories only. Linux x86_64 against the macOS arm64
-# recordings differs by up to 1.1e-11 (DM Control contact-heavy velocities).
-# Live same-runtime source contracts and immediate State restoration retain
-# exact comparisons. This is an absolute roundoff budget, not a source
-# acceptance or pixel threshold.
+# Absolute roundoff budget for cross-machine frozen trajectories only: Linux x86_64
+# against the macOS arm64 recordings differs by up to 1.1e-11 (DM Control
+# contact-heavy velocities). Live source contracts and State restoration stay exact.
 FROZEN_FLOAT64_ATOL = 1e-9
 
 
@@ -106,7 +103,7 @@ def rocket_cases():
 
 
 def verify_rocket_render(directory, candidate_root, *, revision=None):
-    """Preserve the 204-case public gate, including all visual group criteria."""
+    """Verify the saved 204-case Rocket render report, including its per-group visual criteria."""
     root = Path(directory)
     report = json.loads((root / "result.json").read_text())
     assert report["status"] in ("PUBLIC_CPU_RENDER_PASS", "PUBLIC_GPU_PASS")
@@ -135,7 +132,7 @@ def verify_rocket_render(directory, candidate_root, *, revision=None):
         assert error <= 0.001
     from stable_envs.testing.conformance import ssim
 
-    # Frozen policy for this 204-case report format, independent of current declarations.
+    # Fixed limits for this report format, independent of the env's declared thresholds.
     limits = dict(mean_abs_max=10.0, within8_min=0.91, ssim_min=0.80)
     for label, group in report["groups"].items():
         indices = [i for i, row in enumerate(report["records"]) if row["label"] == label]

@@ -8,9 +8,9 @@ from tests.helpers.reference.saved import assert_frozen_equal
 
 
 def state_at(arrays: Mapping[str, NDArray], index: int, *, batch: int, physics=None) -> TensorDict:
-    """Copy a full State from the legacy reference-only NPZ layout.
+    """Copy a full State from a reference NPZ corpus.
 
-    The corpora predate State physics fields and were recorded at the registered physics;
+    The corpora carry no State physics fields and were recorded at the registered physics;
     ``physics`` is a ``PhysicsLayout`` whose nominal values are added."""
     state = TensorDict({}, [batch])
     for key in arrays:
@@ -32,7 +32,7 @@ def assert_outputs(
     keys: Sequence[str] | None = None,
     equal_nan: bool,
 ) -> None:
-    """Compare outputs, floats within the frozen-corpus tolerance; explicit keys select older unprefixed corpora."""
+    """Compare outputs, floats within the frozen-corpus tolerance; explicit keys select corpora without ``output/``."""
     if keys is None:
         expected = {key[7:]: arrays[key][index] for key in arrays if key.startswith("output/")}
         observed = {

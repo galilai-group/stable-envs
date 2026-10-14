@@ -1,7 +1,7 @@
-"""Frozen f0716916 OGBench row exporters for exact paired export checks.
+"""Reference OGBench per-row State exporters for exact paired export checks.
 
-Only function names/calls are adapted; formulas and dtype conversions are the
-accepted pre-column implementation. This is test/benchmark reference code.
+A fixed copy of the export formulas and dtype conversions, kept separate from the
+env's column-based exporter so the two can be compared.
 """
 
 import mujoco

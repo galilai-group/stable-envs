@@ -1,7 +1,4 @@
-"""Validation helper: official dynamics, stable-envs pixels.
-
-This is a certification/experiment tool, not a public sibling-library API.
-"""
+"""Test helper that keeps an official env's dynamics and renders it with stable-envs."""
 
 from __future__ import annotations
 

@@ -16,13 +16,11 @@ from tests.helpers.reference.semantics import compare_state
 
 
 def source_gl_identity(gl, family, cutoffs):
-    """Inspect identity without attributing the source's stale GL error to it.
+    """Drain the source's pending GL errors, then read the GL vendor and renderer.
 
-    The pinned Cube/Scene XML sets GL_SPOT_CUTOFF=100. MuJoCo submits
-    that value unchanged; Mesa reports GL_INVALID_VALUE in glLight. The
-    renderer still draws using GL's retained cutoff, as in the frozen visual
-    oracle. Record that error before querying identity; never rewrite its light
-    or disable PyOpenGL checking. Unexpected errors remain gate failures.
+    The pinned Cube/Scene XML sets GL_SPOT_CUTOFF=100, which Mesa rejects with
+    GL_INVALID_VALUE in glLight; the renderer keeps GL's retained cutoff. That
+    error is recorded and allowed; any other pending error raises.
     """
     prior = []
     for _ in range(16):

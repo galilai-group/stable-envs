@@ -1,9 +1,9 @@
-"""Shared public action-shape/capture contract, independent of execution strategy.
+"""Reference step dispatcher: the action-shape and state/frame capture contract.
 
-The serial sequence executor is the correctness reference for optimized executors.
-An optional process executor overlaps the next transition with rendering owned
-snapshots. Only one transition is in flight; no renderer runs in a worker thread.
-Neither snapshot restoration nor implicit reset is used to advance a sequence.
+Transitions run serially, or through an optional process pipeline that overlaps the
+next transition with rendering of owned snapshots. Only one transition is in flight;
+no renderer runs in a worker thread. A sequence never advances by snapshot
+restoration or implicit reset.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ def _actions(env, actions):
     a = actions if torch.is_tensor(actions) else np.asarray(actions)
     shape = tuple(env.action_spec.shape)
     b = env.num_envs
-    # Preserve the existing discrete scalar spelling without making [B,T] ambiguous.
+    # Accept [B] for a scalar discrete action without making [B, T] ambiguous.
     if shape == (1,) and a.shape == (b,) and not env.action_spec.dtype.is_floating_point:
         a = a.reshape(b, 1)
     if tuple(a.shape) == (b, *shape):

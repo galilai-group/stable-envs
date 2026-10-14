@@ -1,9 +1,7 @@
-"""Machine-auditable replacement-readiness inventory.
-
-Status is derived, not editorial:
+"""Replacement-readiness inventory, derived from the variation maps and execution sets.
 
     SYMBOLIC     no pixel cell
-    INCOMPLETE   stable-envs currently only has enough capability to render
+    INCOMPLETE   stable-envs only renders this id
     PARTIAL      native or delegated step exists, but UNSUPPORTED_MEANINGFUL or PARTIAL leaves remain
     READY        execution is NATIVE or DELEGATED_CPU, and
                  UNSUPPORTED_MEANINGFUL = 0 and PARTIAL = 0
@@ -18,7 +16,7 @@ from collections import Counter
 from .crosswalk import SWM_IDS, SYMBOLIC_IDS, canonical_from_frozen
 from .variation import VARIATION_MAPS
 
-#: Historical SWM ids whose stable-envs port implements transition/step itself.
+#: SWM ids whose stable-envs port implements the step itself.
 NATIVE_SWM_IDS = frozenset(
     {
         "swm/Piecewise-v0",
@@ -57,7 +55,6 @@ DELEGATED_CPU_SWM_IDS = frozenset(
 )
 
 STATUSES = ("READY", "PARTIAL", "INCOMPLETE", "SYMBOLIC")
-EXECUTIONS = ("NATIVE", "DELEGATED_CPU", "INCOMPLETE", "SYMBOLIC")
 
 
 def execution_for(swm_id: str) -> str:
@@ -140,11 +137,3 @@ def inventory() -> list[dict]:
 
 def status_counts() -> dict[str, int]:
     return dict(Counter(status_for(sid) for sid in SWM_IDS))
-
-
-def execution_counts() -> dict[str, int]:
-    return dict(Counter(execution_for(sid) for sid in SWM_IDS))
-
-
-def all_remaining(status: str) -> dict[str, tuple[str, ...]]:
-    return {sid: remaining_leaves(sid, status) for sid in SWM_IDS if remaining_leaves(sid, status)}

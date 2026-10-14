@@ -1,7 +1,4 @@
-"""Small explicit source profiles; each is a regression subset, not promotion.
-
-No production environment imports this module.
-"""
+"""Source profiles: the registrations, action dtypes and package pins of each contract profile."""
 
 from dataclasses import dataclass
 
@@ -93,7 +90,7 @@ PINS = {
     "rocket": {"numpy": "2.5.3", "gymnasium": "1.3.0", "PyFlyt": "0.29.0", "pybullet": "3.2.7"},
 }
 # Every profile requires these functions for every declared registration, seed and
-# action dtype. A -k/-m selection is useful development, but cannot pass a profile.
+# action dtype; a -k/-m selection cannot pass a profile.
 CONTRACTS = {
     "test_contract_state.py::test_restore_and_ownership": "state",
     "test_simulation.py::test_independent_source_trajectory": "simulation",

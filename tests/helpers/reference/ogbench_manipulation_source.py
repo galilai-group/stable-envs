@@ -1,8 +1,7 @@
-"""Independent source-owned entropy and engine capture for Cube/Scene.
+"""Source Cube/Scene classes with explicitly owned entropy, and engine/state capture.
 
-Extracted from the accepted source-only ownership experiment; source reset, task,
-physics and rendering still delegate to the pinned SWM/OGBench implementations.
-Archived experiment scripts are evidence, never runtime imports.
+Reset, task, physics and rendering delegate to the pinned SWM/OGBench implementations;
+only the RNG boundaries are owned here.
 """
 
 import copy
@@ -109,9 +108,6 @@ def differences(left, right, prefix=""):
 GETTER = ManipSpaceEnv.action_space.fget
 
 
-BOX_SAMPLE = gym.spaces.Box.sample
-
-
 def spaces(root, prefix="variation"):
     yield prefix, root
     if isinstance(root, gym.spaces.Dict):
@@ -148,14 +144,11 @@ class OwnedVariation(swm_spaces.Dict):
 
 
 class Ownership:
-    """Mixin for authoritative classes; changes entropy boundaries only."""
+    """Mixin that derives the action, variation and task RNG streams from one seed."""
 
-    def __init__(self, *args, entropy_seed=0, design="A", **kwargs):
-        self.design = design
+    def __init__(self, *args, entropy_seed=0, **kwargs):
         self.action_box = None
-        self.last_box = None
         self.access_count = 0
-        self.child_seeds = []
         self.variation_seeds = []
         self.settling_actions = []
         self.reset_sequence = []
@@ -163,8 +156,7 @@ class Ownership:
         self._seed_owned(entropy_seed)
         super().__init__(*args, **kwargs)
         self.variation_space = OwnedVariation(self.variation_space, self)
-        # The first property read constructs and seeds the genuine Box lazily.
-        self.variation_space.seed(0)  # No external entropy before first checkpoint.
+        self.variation_space.seed(0)  # No external entropy before the first reset.
         gym.Env.reset(self, seed=self.entropy_seed)
 
     def _seed_owned(self, seed):
@@ -172,7 +164,6 @@ class Ownership:
         root = np.random.SeedSequence(seed)
         children = root.spawn(3)
         self.action_seed = int(children[0].generate_state(1, dtype=np.uint64)[0])
-        self.action_parent = np.random.default_rng(children[0])
         self.variation_parent = np.random.default_rng(children[1])
         self.task_rng = np.random.RandomState(int(children[2].generate_state(1)[0]))
         self.entropy_seed = int(root.entropy)
@@ -182,19 +173,11 @@ class Ownership:
     @property
     def action_space(self):
         self.access_count += 1
-        if self.design == "A":
-            if self.action_box is None:
-                self.action_box = GETTER(self)
-                self.action_box.seed(self.action_seed)
-            result = self.action_box
-        else:
-            result = GETTER(self)
-            if self.design == "B":
-                seed = int(self.action_parent.integers(0, 2**63, dtype=np.int64))
-                result.seed(seed)
-                self.child_seeds.append(seed)
-        self.last_box = result
-        return result
+        if self.action_box is None:
+            # The source's own Box, built and seeded on first read.
+            self.action_box = GETTER(self)
+            self.action_box.seed(self.action_seed)
+        return self.action_box
 
     def reset(self, seed=None, options=None, **kwargs):
         if seed is not None:
@@ -245,28 +228,12 @@ def capture(env):
     state["variation"] = {k: space_state(v) for k, v in spaces(env.variation_space)}
     state["ownership"] = {
         name: copy.deepcopy(getattr(env, name))
-        for name in ["design", "access_count", "action_seed", "entropy_seed", "child_seeds", "variation_seeds"]
+        for name in ["access_count", "action_seed", "entropy_seed", "variation_seeds"]
         if hasattr(env, name)
     }
-    for name in ["action_parent", "variation_parent"]:
-        if hasattr(env, name):
-            state["ownership"][name] = copy.deepcopy(getattr(env, name).bit_generator.state)
+    if hasattr(env, "variation_parent"):
+        state["ownership"]["variation_parent"] = copy.deepcopy(env.variation_parent.bit_generator.state)
     if hasattr(env, "task_rng"):
         state["ownership"]["task_rng"] = copy.deepcopy(env.task_rng.get_state())
     state["action_box"] = None if getattr(env, "action_box", None) is None else space_state(env.action_box)
-    # A diagnostic last Box is retained per instance, but not a future entropy owner.
-    state["last_box"] = None if getattr(env, "last_box", None) is None else space_state(env.last_box)
     return state
-
-
-def result(env, output):
-    state = capture(env)
-    # Access count and identities are instrumentation, not semantic/RNG state.
-    state["ownership"].pop("access_count", None)
-    state.pop("last_box")
-    return {
-        "state": state,
-        "output": copy.deepcopy(output),
-        "settling_actions": copy.deepcopy(getattr(env, "settling_actions", [])),
-        "sequence": copy.deepcopy(getattr(env, "reset_sequence", [])),
-    }
