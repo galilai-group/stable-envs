@@ -295,6 +295,11 @@ def test_the_declared_certification_distribution_matches_the_sampler():
     assert abs((day < CF.NIGHT_THRESHOLD).mean() - d["level0_night_share"]) <= 1 / 64
 
 
+def test_the_sampler_without_an_rng_draws_from_the_seeded_env_rng():
+    a, b = (CraftaxFull(num_envs=1, device="cpu", seed=3) for _ in range(2))
+    np.testing.assert_array_equal(a.sample_states(4), b.sample_states(4))
+
+
 def test_the_sampler_respects_the_simulators_mob_budgets():
     """Sampled rows stay within the ``EnvState`` mob and projectile budgets and off the centre tile."""
     e = CraftaxFull(num_envs=32, device="cpu")

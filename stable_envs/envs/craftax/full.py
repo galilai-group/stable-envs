@@ -1127,7 +1127,7 @@ class CraftaxFull(Env):
         Sub-1 ``light_map`` values on level 0 are what the renderer sees at the map border, where it
         pads the light map with 0.
         """
-        rng = np.random.default_rng() if rng is None else rng
+        rng = rng or self.rng
         b = int(batch)
         st = np.zeros((b, self.state_dim), np.float32)
         k = N_TILE
