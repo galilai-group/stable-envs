@@ -121,27 +121,6 @@ NIGHT_THRESHOLD = 0.5
 #: craftax's day length; ``sample_states`` draws ``light_level`` from the simulator's day cycle.
 DAY_LENGTH = 300
 
-#: block id -> name, straight from craftax.craftax_classic.constants.BlockType
-BLOCK_NAMES = (
-    "invalid",
-    "out_of_bounds",
-    "grass",
-    "water",
-    "stone",
-    "tree",
-    "wood",
-    "path",
-    "coal",
-    "iron",
-    "diamond",
-    "crafting_table",
-    "furnace",
-    "sand",
-    "lava",
-    "plant",
-    "ripe_plant",
-)
-
 _BLOCK_TEX_7_SHAPE = (17, 7, 7, 3)
 _BLOCK_TEX_7_B64 = (
     "eNrtWUFIFVEUnbLMQCoXSRJRkARBUAs3ReH/bwpaKNmmTduIli1cBC2UFvFpEdJKIkIkRCKkVURIRESISLSQiAiRiGgRESLiQqJ3nTvN+a9/vncapUV/"
@@ -331,7 +310,7 @@ _STRIP_DIGIT_ALPHA_16_B64 = (
 )
 
 #: mob ids, matching the reference's draw order; 4-7 are the arrow's (flip, transpose) orientations
-MOB_NONE, MOB_ZOMBIE, MOB_COW, MOB_SKELETON = 0, 1, 2, 3
+MOB_ZOMBIE, MOB_COW, MOB_SKELETON = 1, 2, 3
 MOB_ARROW = (4, 5, 6, 7)
 #: StaticEnvParams caps for Craftax Classic — the sampler must respect them or no EnvState can be
 #: built for the reference comparison

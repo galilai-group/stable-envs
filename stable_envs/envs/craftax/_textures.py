@@ -9,8 +9,6 @@ Generated data; do not hand-edit. A new craftax version needs new tables and a n
 
 from __future__ import annotations
 
-CRAFTAX_VERSION = "1.6.1"
-SIZES = (10, 16)
 MOB_BASE = {"melee": 1, "passive": 9, "ranged": 12}
 N_MOB_SLOT = 20
 N_PROJ_SLOT = 33
