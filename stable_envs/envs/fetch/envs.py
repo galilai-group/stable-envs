@@ -28,6 +28,7 @@ from ...env import Env
 from ...registry import register
 from ...render import _resources as _RES
 from ...render import mjwarp as MW
+from ...render.nvdiff import effective_rgba
 from ...spaces import Box, Dict, Discrete
 
 SCENE_XML = {"Reach": "reach.xml", "Push": "push.xml", "Slide": "slide.xml", "PickAndPlace": "pick_and_place.xml"}
@@ -89,15 +90,6 @@ def _asset_dir() -> str:
     import gymnasium_robotics as gr
 
     return os.path.join(os.path.dirname(gr.__file__), "envs", "assets", "fetch")
-
-
-def _effective_rgba(m, g) -> np.ndarray:
-    """Resolve MuJoCo color: use the material only when geom RGBA has the default value."""
-    rgba = np.asarray(m.geom_rgba[g], np.float64)
-    mid = int(m.geom_matid[g])
-    if mid >= 0 and np.allclose(rgba, [0.5, 0.5, 0.5, 1.0]):
-        return np.asarray(m.mat_rgba[mid], np.float64)
-    return rgba
 
 
 def _skybox(m) -> int:
@@ -288,7 +280,7 @@ def _build_bundle(scene: str) -> _Bundle:
             spec_, shin, emis = DEFAULT_SPECULAR, DEFAULT_SHININESS, DEFAULT_EMISSION
         else:
             b = back[g]
-            rgba = _effective_rgba(base, b)
+            rgba = effective_rgba(base, b)
             mid = int(base.geom_matid[b])
             if mid >= 0:
                 spec_ = float(base.mat_specular[mid])

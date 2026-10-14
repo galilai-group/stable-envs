@@ -1126,16 +1126,6 @@ class StyleCanvas(Canvas):
         c = to_u8(self.col if color is None else color).t().reshape(3, self.B, 1, 1)
         select_(self.window(window), mask.contiguous().unsqueeze(0), c)
 
-    def paint_at(self, offsets, color=None, gate=None) -> None:
-        """Scatter colors at fixed frame-relative offsets, honoring a per-environment gate."""
-        g = self.gate if gate is None else gate
-        n = int(offsets.numel())
-        idx = torch.arange(self.B, device=self.device).view(-1, 1) * (self.H * self.W) + offsets.view(1, -1)
-        if g is not None:
-            idx = torch.where(g.view(-1, 1), idx, torch.full_like(idx, self.trash))
-        c = to_u8(self.col if color is None else color)
-        self.flat[:, idx.reshape(-1)] = c.t().reshape(3, self.B, 1).expand(3, self.B, n).reshape(3, -1)
-
     def paint_disc(self, cy, cx, off, color=None, lanes=None) -> None:
         B, S = cy.shape[0], off.shape[0]
         idx = self._disc_index(cy, cx, off, self.gate, lanes)

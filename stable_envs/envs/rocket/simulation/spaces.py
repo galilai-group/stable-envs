@@ -1,7 +1,5 @@
 from __future__ import annotations
 
+from ...._core.space_nodes import nodes
 
-def nodes(space, path=""):
-    yield path, space
-    for key, value in getattr(space, "spaces", {}).items():
-        yield from nodes(value, path + "/" + key)
+__all__ = ["nodes"]

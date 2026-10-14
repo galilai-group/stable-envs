@@ -1,25 +1,22 @@
 from __future__ import annotations
 
 import multiprocessing as mp
-import os
-import traceback
 
 import numpy as np
 import torch
 from tensordict import TensorDict
 
 from ...._execution.protocol import SimulatorAdapter
-from ...._execution.requests import ProcessRequests
-from ...._execution.shared_memory import allocate_buffers, buffer_views, owned_group
+from ...._execution.requests import SharedOutputProcess, lane_slices
+from ...._execution.shared_memory import allocate_buffers, buffer_views, key_path
+from ...._execution.workers import pin_worker, send_failure, send_ready
 from .manipulation import OGBManipulationAdapter
 
 
 def _worker(conn, family, start, count, batch, seed, reward_task_id, cpus, buffers, specs):
     adapter: OGBManipulationAdapter | None = None
     try:
-        if cpus is not None and hasattr(os, "sched_setaffinity"):
-            os.sched_setaffinity(0, cpus)
-        torch.set_num_threads(1)
+        pin_worker(cpus)
         adapter = OGBManipulationAdapter(
             family, count, seed=None if seed is None else seed + start, reward_task_id=reward_task_id
         )
@@ -27,19 +24,10 @@ def _worker(conn, family, start, count, batch, seed, reward_task_id, cpus, buffe
 
         def write(group, value):
             for key, tensor in value.items(True, True):
-                key = (key,) if isinstance(key, str) else key
-                views[(group, *key)][rows] = tensor.numpy()
+                views[(group, *key_path(key))][rows] = tensor.numpy()
 
         write("state", adapter.get_state())
-        conn.send(
-            (
-                True,
-                dict(
-                    pid=os.getpid(),
-                    affinity=sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
-                ),
-            )
-        )
+        send_ready(conn)
         while True:
             command, payload = conn.recv()
             reply = None
@@ -88,10 +76,7 @@ def _worker(conn, family, start, count, batch, seed, reward_task_id, cpus, buffe
                 raise ValueError(f"Unknown Cube/Scene worker command {command}")
             conn.send((True, reply))
     except BaseException:
-        try:
-            conn.send((False, traceback.format_exc()))
-        except (BrokenPipeError, EOFError, OSError):
-            pass
+        send_failure(conn)
     finally:
         try:
             if adapter is not None:
@@ -100,7 +85,7 @@ def _worker(conn, family, start, count, batch, seed, reward_task_id, cpus, buffe
             conn.close()
 
 
-class OGBManipulationProcessAdapter(ProcessRequests, SimulatorAdapter):
+class OGBManipulationProcessAdapter(SharedOutputProcess, SimulatorAdapter):
     """Run Cube/Scene worlds in spawned processes with staged checkpoint restore.
 
     The parent retains one metadata instance for validation and configuration.
@@ -110,6 +95,7 @@ class OGBManipulationProcessAdapter(ProcessRequests, SimulatorAdapter):
     """
 
     _worker_family = "OGBench manipulation"
+    _step_family = "Cube/Scene"
     execution_mode = "DELEGATED_CPU"
 
     def __init__(self, family, num_envs=1, device="cpu", seed=0, reward_task_id=None, *, processes=8, cpus=None):
@@ -142,47 +128,29 @@ class OGBManipulationProcessAdapter(ProcessRequests, SimulatorAdapter):
                     )
                 }
             )
-            self._slices = [
-                slice(int(lanes[0]), int(lanes[-1]) + 1) for lanes in np.array_split(np.arange(num_envs), processes)
-            ]
+            self._slices = lane_slices(num_envs, processes)
             context = mp.get_context("spawn")
             self._buffers = allocate_buffers(context, self._specs, num_envs)
             self._views = buffer_views(self._buffers, self._specs, num_envs)
-            groups = [None] * processes if cpus is None else [g.tolist() for g in np.array_split(cpus, processes)]
-            for rows, group in zip(self._slices, groups, strict=True):
-                parent, child = context.Pipe()
-                process = context.Process(
-                    target=_worker,
-                    args=(
-                        child,
-                        family,
-                        rows.start,
-                        rows.stop - rows.start,
-                        num_envs,
-                        seed,
-                        reward_task_id,
-                        group,
-                        self._buffers,
-                        self._specs,
-                    ),
-                )
-                try:
-                    process.start()
-                except BaseException:
-                    parent.close()
-                    raise
-                finally:
-                    child.close()
-                self._connections.append(parent)
-                self._processes.append(process)
-            self.worker_info = self._responses(timeout=300)
+            self._spawn_workers(
+                context,
+                _worker,
+                cpus,
+                lambda rows, group: (
+                    family,
+                    rows.start,
+                    rows.stop - rows.start,
+                    num_envs,
+                    seed,
+                    reward_task_id,
+                    group,
+                    self._buffers,
+                    self._specs,
+                ),
+            )
         except BaseException:
             self._abort()
             raise
-
-    def _check_open(self):
-        if self._closed:
-            raise RuntimeError("OGBManipulationProcessAdapter is closed")
 
     def _abort(self):
         try:
@@ -190,13 +158,6 @@ class OGBManipulationProcessAdapter(ProcessRequests, SimulatorAdapter):
         finally:
             if self._metadata is not None:
                 self._metadata.close()
-
-    def _owned(self, group):
-        return owned_group(self._views, group, self.num_envs, self.device)
-
-    def get_state(self):
-        self._request("get_state")
-        return self._owned("state")
 
     def validate(self, state):
         self._check_open()
@@ -268,20 +229,6 @@ class OGBManipulationProcessAdapter(ProcessRequests, SimulatorAdapter):
             [(actions[rows], None if active is None else active[rows]) for rows in self._slices],
         )
 
-    def receive_step(self):
-        self._check_open()
-        if self._pending not in ("step", "advance"):
-            raise RuntimeError("No Cube/Scene step in flight")
-        capture = self._pending == "step"
-        self._receive()
-        result = self._owned("task")
-        if capture:
-            result["state"] = self._owned("state")
-        return result
-
     def step(self, actions, *, active=None, capture_state=True):
         self.submit_step(actions, active=active, capture_state=capture_state)
         return self.receive_step()
-
-    def abort_step(self):
-        self._abort()

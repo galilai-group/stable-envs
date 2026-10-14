@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     import torch
 
 #: mjtGeom codes, read directly from an MjModel.
-PLANE, HFIELD, SPHERE, CAPSULE, ELLIPSOID, CYLINDER, BOX, MESH = 0, 1, 2, 3, 4, 5, 6, 7
+PLANE, SPHERE, CAPSULE, ELLIPSOID, CYLINDER, BOX, MESH = 0, 2, 3, 4, 5, 6, 7
 
 #: Match the default visible geom groups in MuJoCo MjvOption.
 DEFAULT_GROUPS = (0, 1, 2)
@@ -268,15 +268,15 @@ def _is_cube(m, g: int) -> bool:
 
 
 def texture_array(m, tex: int) -> np.ndarray:
-    """Read a MuJoCo texture as an (H, W, 3) uint8 array."""
-    buf = getattr(m, "tex_data", None)
-    if buf is None:
-        buf = m.tex_rgb
+    """Read texture ``tex`` of a compiled model as an (H, W, 3) uint8 array."""
     w, h = int(m.tex_width[tex]), int(m.tex_height[tex])
     nc = int(m.tex_nchannel[tex]) if hasattr(m, "tex_nchannel") else 3
     a0 = int(m.tex_adr[tex])
+    buf = getattr(m, "tex_data", None)
+    if buf is None:
+        buf = m.tex_rgb
     a = np.asarray(buf[a0 : a0 + w * h * nc], np.uint8).reshape(h, w, nc)
-    return np.repeat(a, 3, -1) if nc == 1 else a[..., :3]
+    return np.repeat(a, 3, -1) if nc == 1 else np.ascontiguousarray(a[..., :3])
 
 
 def half_extent(m, g: int, drawn_plane: float = 0.0) -> np.ndarray:

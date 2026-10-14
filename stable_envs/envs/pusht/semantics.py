@@ -138,7 +138,7 @@ class PushT(Env):
         return stack_states(values)
 
     def _variation_rows(self, attribute):
-        from .simulation.numeric import nodes
+        from ..._core.space_nodes import nodes
 
         rows = []
         for lane in self._simulator.envs:
@@ -207,7 +207,7 @@ class PushT(Env):
         Appearance leaves (``immediate_variation_leaves``) also apply to the running episode;
         the others take effect at the next reset.
         """
-        from .simulation.numeric import nodes
+        from ..._core.space_nodes import nodes
 
         self._check_open("set_variation")
         if isinstance(variation, dict):

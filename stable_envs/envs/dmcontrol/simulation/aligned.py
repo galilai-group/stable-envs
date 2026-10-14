@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-import os
-import tempfile
-
 import numpy as np
 import torch
 
 from . import physics as _physics
 from .first_family import suite_env
 from .lanes import DMCLanes
+from .registered import apply_appearance, apply_floor_friction, compile_physics, normalized, source_model
 from .state import core_fields
 
 CONFIG = {
@@ -42,19 +40,10 @@ def _core(domain):
 ALIGNED_FIELDS = {domain: {**_core(domain), **_physics.state_fields(domain)} for domain in CONFIG}
 
 
-def _common_defaults(model, color):
-    grid = model.find("texture", "grid")
-    grid.rgb1, grid.rgb2 = [0.1, 0.2, 0.3], [0.2, 0.3, 0.4]
-    model.find("material", "self").rgba = np.array([*color, 1.0], np.float32)
-    model.find("light", "light").diffuse = np.full(3, 0.7, np.float32)
-
-
 def _make_env(domain, seed):
     if "-" in domain:
         return suite_env(*domain.split("-"), seed)
-    from dm_control import mjcf
     from dm_control.rl import control
-    from dm_control.suite.wrappers import action_scale
 
     if domain == "ball_in_cup":
         from dm_control.suite import ball_in_cup as module
@@ -78,13 +67,9 @@ def _make_env(domain, seed):
         task = module.Move(desired_speed=0.5, random=seed)
     else:
         raise ValueError(f"Unsupported aligned DMC domain {domain!r}")
-    model = mjcf.from_xml_string(
-        xml.replace(b'file="./common/', b'file="common/'),
-        model_dir=os.path.dirname(module.__file__),
-        assets=assets or {},
-    )
+    model = source_model(module, xml, assets)
     if domain == "ball_in_cup":
-        _common_defaults(model, (0.7, 0.5, 0.3))
+        apply_appearance(model)
         for name in ("cup_part_0", "cup_part_1", "cup_part_2", "cup_part_3", "cup_part_4"):
             model.find("geom", name).density = 1000.0
         ball = model.find("geom", "ball")
@@ -94,7 +79,7 @@ def _make_env(domain, seed):
         target.type = "sphere"
         target.size = np.array([0.05, 0.006, 0.05], np.float32)
     elif domain == "finger":
-        _common_defaults(model, (0.7, 0.5, 0.3))
+        apply_appearance(model)
         model.find("geom", "proximal").density = 1000.0
         model.find("geom", "fingertip").density = 1000.0
         for name in ("cap1", "cap2"):
@@ -105,31 +90,20 @@ def _make_env(domain, seed):
         target = model.find("site", "target")
         target.type, target.size = "sphere", [0.03]
     elif domain == "manipulator":
-        _common_defaults(model, (0.7, 0.5, 0.3))
+        apply_appearance(model)
         model.find("geom", "upper_arm").density = 1000.0
         model.find("geom", "hand").density = 1000.0
         model.find("material", "target").rgba = [0.6, 0.3, 0.3, 0.0]
         target = model.find("geom", "target_ball")
         target.type, target.size = "sphere", np.array([0.015], np.float32)
     else:
-        _common_defaults(model, (0.6, 0.3, 0.3))
-        floor = model.find("geom", "floor")
-        friction = (
-            np.array([1.0, 0.005, 0.0001], np.float32)
-            if floor.friction is None
-            else np.asarray(floor.friction, np.float32).copy()
-        )
-        friction[0] = 1.0
-        floor.friction = friction
+        apply_appearance(model, (0.6, 0.3, 0.3))
+        apply_floor_friction(model.find("geom", "floor"))
         model.find("geom", "torso").density = 1000.0
         model.find("geom", "foot_back_left").density = 1000.0
-    with tempfile.TemporaryDirectory() as directory:
-        filename = f"{domain}.xml"
-        mjcf.export_with_assets(model, directory, out_file_name=filename)
-        physics = module.Physics.from_xml_path(os.path.join(directory, filename))
+    physics = compile_physics(module.Physics, model, f"{domain}.xml")
     cfg = CONFIG[domain]
-    env = control.Environment(physics, task, time_limit=cfg["time_limit"], control_timestep=cfg["dt"])
-    return action_scale.Wrapper(env, minimum=-1.0, maximum=1.0)
+    return normalized(control.Environment(physics, task, time_limit=cfg["time_limit"], control_timestep=cfg["dt"]))
 
 
 class DMCAlignedAdapter(DMCLanes):

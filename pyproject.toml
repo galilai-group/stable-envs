@@ -50,7 +50,7 @@ Source = "https://github.com/galilai-group/stable-envs"
 # against an official CPU renderer.
 # PushT replay checks this exact Pymunk at construction.
 pusht = ["pygame>=2.5", "pymunk==7.2.0", "opencv-python-headless", "shapely"]
-# Historical gym-pusht corpus checks use their own reference environment.
+# PushT reference checks run against gym-pusht.
 pusht-reference = ["gym-pusht"]
 # SimplePointMaze's exact cached info.goal image uses Matplotlib Agg.
 # Navigation dynamics and the public renderer remain native Torch.
@@ -68,7 +68,7 @@ ogbench-manipulation-gpu = [
 ]
 craftax = ["craftax", "jax"]
 # Registered Craftax semantics run only under the pin-craftax reference profile on Python 3.12,
-# which they check at construction; the legacy atlas renderer extra remains separate.
+# which they check at construction; the `craftax` extra above covers rendering only.
 craftax-semantics = ["craftax>=1.5", "jax", "flax", "gymnax", "chex"]
 craftax-semantics-gpu = ["craftax>=1.5", "jax[cuda12]", "flax", "gymnax", "chex"]
 dmcontrol = ["dm-control>=1.0.44", "mujoco>=3.11,<3.13"]
@@ -243,7 +243,7 @@ version = { attr = "stable_envs.__about__.__version__" }
 [tool.ruff]
 target-version = "py310"
 line-length = 119
-extend-exclude = ["docs/assets", "docs/research"]
+extend-exclude = ["docs/assets"]
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F", "I", "UP"]

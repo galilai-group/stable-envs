@@ -11,6 +11,7 @@ from tensordict import TensorDict
 from ...._execution.protocol import SimulatorAdapter
 from ...._execution.state_columns import owned_columns
 from .compatibility import MODEL_VALUES, CompatibleCube, CompatibleScene, LanePool, nodes, variation_tree
+from .pcg import pcg_decode, pcg_encode
 
 PARTS = (
     "TIME",
@@ -30,25 +31,6 @@ PARTS = (
 )
 FLAGS = {p.lower(): getattr(mujoco.mjtState, "mjSTATE_" + p) for p in PARTS}
 assert np.bitwise_or.reduce([int(f) for f in FLAGS.values()]) == int(mujoco.mjtState.mjSTATE_INTEGRATION)
-
-
-def pcg_encode(rng):
-    r = rng.bit_generator.state
-    return {
-        "state": np.frombuffer(r["state"]["state"].to_bytes(16, "little"), np.uint8).copy(),
-        "increment": np.frombuffer(r["state"]["inc"].to_bytes(16, "little"), np.uint8).copy(),
-        "has_uint32": np.array([r["has_uint32"]], np.int64),
-        "uinteger": np.array([r["uinteger"]], np.int64),
-    }
-
-
-def pcg_decode(values):
-    state = int.from_bytes(values["state"].tobytes(), "little")
-    inc = int.from_bytes(values["increment"].tobytes(), "little")
-    flag, cached = int(values["has_uint32"][0]), int(values["uinteger"][0])
-    if inc % 2 != 1 or flag not in (0, 1) or not 0 <= cached < 2**32:
-        raise ValueError("Invalid PCG64 increment/cache")
-    return {"bit_generator": "PCG64", "state": {"state": state, "inc": inc}, "has_uint32": flag, "uinteger": cached}
 
 
 def rngs(env):

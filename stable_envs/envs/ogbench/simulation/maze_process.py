@@ -1,48 +1,33 @@
 from __future__ import annotations
 
 import multiprocessing as mp
-import os
-import traceback
 
 import numpy as np
 import torch
 from tensordict import TensorDict
 
 from ...._execution.protocol import SimulatorAdapter
-from ...._execution.requests import ProcessRequests
-from ...._execution.shared_memory import allocate_buffers, buffer_views, owned_group
+from ...._execution.requests import SharedOutputProcess, lane_slices
+from ...._execution.shared_memory import allocate_buffers, buffer_views, key_path
 from ...._execution.state_columns import require_columns
+from ...._execution.workers import pin_worker, send_failure, send_ready
 from .maze import OGBMazeAdapter
-
-
-def _path(key):
-    return key if isinstance(key, tuple) else (key,)
 
 
 def _worker(conn, start, count, batch, seed, cpus, buffers, specs, body):
     adapter, prepared = None, None
     try:
-        if cpus is not None and hasattr(os, "sched_setaffinity"):
-            os.sched_setaffinity(0, cpus)
-        torch.set_num_threads(1)
+        pin_worker(cpus)
         adapter = OGBMazeAdapter(count, seed=seed + start, **body)
         views = buffer_views(buffers, specs, batch)
         rows = slice(start, start + count)
 
         def write(group, value):
             for key, tensor in value.items(True, True):
-                views[(group, *_path(key))][rows] = tensor.numpy()
+                views[(group, *key_path(key))][rows] = tensor.numpy()
 
         write("state", adapter.get_state())
-        conn.send(
-            (
-                True,
-                dict(
-                    pid=os.getpid(),
-                    affinity=sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
-                ),
-            )
-        )
+        send_ready(conn)
         while True:
             command, payload = conn.recv()
             reply = None
@@ -88,10 +73,7 @@ def _worker(conn, start, count, batch, seed, cpus, buffers, specs, body):
                 raise ValueError(f"Unknown Maze worker command {command}")
             conn.send((True, reply))
     except BaseException:
-        try:
-            conn.send((False, traceback.format_exc()))
-        except (BrokenPipeError, EOFError, OSError):
-            pass
+        send_failure(conn)
     finally:
         try:
             if adapter is not None:
@@ -100,7 +82,7 @@ def _worker(conn, start, count, batch, seed, cpus, buffers, specs, body):
             conn.close()
 
 
-class OGBMazeProcessAdapter(ProcessRequests, SimulatorAdapter):
+class OGBMazeProcessAdapter(SharedOutputProcess, SimulatorAdapter):
     """Run OGBench Maze simulators and isolated RNGs in spawned processes.
 
     State and task outputs use typed shared buffers and are copied on receipt.
@@ -109,6 +91,7 @@ class OGBMazeProcessAdapter(ProcessRequests, SimulatorAdapter):
     """
 
     _worker_family = "OGBench Maze"
+    _step_family = "Maze"
 
     def __init__(self, num_envs, device="cpu", seed=0, *, processes=8, cpus=None, loco="point", maze="large"):
         if type(num_envs) is not int or num_envs < 1:
@@ -128,65 +111,40 @@ class OGBMazeProcessAdapter(ProcessRequests, SimulatorAdapter):
             self.fields = {key: (tuple(value.shape[1:]), value.dtype) for key, value in state.items(True, True)}
             result = prototype.step(np.zeros((1, self.action_dim)))
             self._specs = {
-                ("task", *_path(key)): (tuple(value.shape[1:]), value.numpy().dtype)
+                ("task", *key_path(key)): (tuple(value.shape[1:]), value.numpy().dtype)
                 for key, value in result.exclude("state").items(True, True)
             }
             self._specs.update(
                 {
-                    ("state", *_path(key)): (tuple(value.shape[1:]), value.numpy().dtype)
+                    ("state", *key_path(key)): (tuple(value.shape[1:]), value.numpy().dtype)
                     for key, value in state.items(True, True)
                 }
             )
         finally:
             prototype.close()
-        self._slices = [
-            slice(int(lanes[0]), int(lanes[-1]) + 1) for lanes in np.array_split(np.arange(num_envs), processes)
-        ]
+        self._slices = lane_slices(num_envs, processes)
         context = mp.get_context("spawn")
         self._buffers = allocate_buffers(context, self._specs, num_envs)
         self._views = buffer_views(self._buffers, self._specs, num_envs)
-        groups = [None] * processes if cpus is None else [group.tolist() for group in np.array_split(cpus, processes)]
         try:
-            for rows, group in zip(self._slices, groups, strict=True):
-                parent, child = context.Pipe()
-                process = context.Process(
-                    target=_worker,
-                    args=(
-                        child,
-                        rows.start,
-                        rows.stop - rows.start,
-                        num_envs,
-                        int(seed),
-                        group,
-                        self._buffers,
-                        self._specs,
-                        body,
-                    ),
-                )
-                try:
-                    process.start()
-                except BaseException:
-                    parent.close()
-                    raise
-                finally:
-                    child.close()
-                self._connections.append(parent)
-                self._processes.append(process)
-            self.worker_info = self._responses(timeout=300)
+            self._spawn_workers(
+                context,
+                _worker,
+                cpus,
+                lambda rows, group: (
+                    rows.start,
+                    rows.stop - rows.start,
+                    num_envs,
+                    int(seed),
+                    group,
+                    self._buffers,
+                    self._specs,
+                    body,
+                ),
+            )
         except BaseException:
             self._abort()
             raise
-
-    def _check_open(self):
-        if self._closed:
-            raise RuntimeError("OGBMazeProcessAdapter is closed")
-
-    def _owned(self, group):
-        return owned_group(self._views, group, self.num_envs, self.device)
-
-    def get_state(self):
-        self._request("get_state")
-        return self._owned("state")
 
     def set_state(self, state):
         self._check_idle()
@@ -195,7 +153,7 @@ class OGBMazeProcessAdapter(ProcessRequests, SimulatorAdapter):
         require_columns(state, {key: ((self.num_envs, *shape), dtype) for key, (shape, dtype) in self.fields.items()})
         host = state.cpu()
         for key in self.fields:
-            self._views[("state", *_path(key))][:] = host[key].numpy()
+            self._views[("state", *key_path(key))][:] = host[key].numpy()
         replies = self._request("prepare_restore")
         errors = [reply for reply in replies if not reply["prepared"]]
         if errors:
@@ -227,20 +185,6 @@ class OGBMazeProcessAdapter(ProcessRequests, SimulatorAdapter):
         payloads = [(actions[rows], None if active is None else active[rows]) for rows in self._slices]
         self._submit("step" if capture_state else "advance", payloads)
 
-    def receive_step(self):
-        self._check_open()
-        if self._pending not in ("step", "advance"):
-            raise RuntimeError("No Maze step in flight")
-        capture = self._pending == "step"
-        self._receive()
-        result = self._owned("task")
-        if capture:
-            result["state"] = self._owned("state")
-        return result
-
     def step(self, actions, *, active=None, capture_state=True):
         self.submit_step(actions, active=active, capture_state=capture_state)
         return self.receive_step()
-
-    def abort_step(self):
-        self._abort()

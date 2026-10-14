@@ -1,25 +1,16 @@
 from __future__ import annotations
 
 import threading
-from functools import lru_cache
-from importlib.metadata import version
 
 import numpy as np
 import torch
 
 from ..._core.warp_cuda import require_warp_cuda
 from . import manipulation as core
+from .manipulation_opengl import check_versions
 from .simulation import render_state as pixels
 
 _LOCK = threading.RLock()
-
-
-@lru_cache(maxsize=1)
-def _check_versions():
-    if version("mujoco") != "3.12.0" or version("ogbench") != "1.2.1":
-        raise ImportError("Cube/Scene unified rendering requires mujoco==3.12.0 and ogbench==1.2.1")
-    if version("mujoco-warp") != "3.12.0" or version("warp-lang") != "1.17.0":
-        raise ImportError("Cube/Scene GPU rendering requires mujoco-warp==3.12.0 and warp-lang==1.17.0")
 
 
 VIEW = ("camera.angle_delta", "light.intensity")
@@ -240,7 +231,7 @@ def render(family, state, device, backend="auto", chunk_size=None):
         raise ValueError("Cube/Scene rendering supports mjwarp, mjwarp_fidelity, or explicit opengl backend")
     if torch.device(device).type != "cuda":
         raise NotImplementedError("Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA")
-    _check_versions()
+    check_versions("unified", warp=True)
     if chunk_size is not None and (type(chunk_size) is not int or chunk_size < 1):
         raise ValueError("chunk_size must be a positive integer")
     size, ss = (int(host["renderer", key][0, 0]) for key in ("size", "supersample"))

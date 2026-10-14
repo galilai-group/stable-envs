@@ -31,20 +31,24 @@ GL_SPOT_CUTOFF_MAX = 90.0
 GL_SPOT_CUTOFF_OFF = 180.0
 
 
-def effective_alpha(m, kind: str = "geom") -> np.ndarray:
+def effective_alpha(m, kind: str = "geom", rgba=None, mat_rgba=None) -> np.ndarray:
     """Resolve geom or site alpha using MuJoCo's material precedence.
 
     The element's RGBA wins unless it matches the compiler default; then its
-    material supplies the alpha. Return one value per element.
+    material supplies the alpha. Return one value per element. ``rgba`` and
+    ``mat_rgba`` replace the model's arrays, e.g. with pristine snapshots when a
+    shared live model may carry another render's visibility overrides.
     """
-    rgba = np.asarray(m.geom_rgba if kind == "geom" else m.site_rgba, np.float64)
+    if rgba is None:
+        rgba = m.geom_rgba if kind == "geom" else m.site_rgba
+    rgba = np.asarray(rgba, np.float64)
     matid = np.asarray(m.geom_matid if kind == "geom" else m.site_matid, np.int64)
     out = rgba[:, 3].copy()
     default = np.all(np.isclose(rgba, [0.5, 0.5, 0.5, 1.0]), axis=1)
     has_mat = matid >= 0
     take = default & has_mat
     if take.any():
-        out[take] = np.asarray(m.mat_rgba, np.float64)[matid[take], 3]
+        out[take] = np.asarray(m.mat_rgba if mat_rgba is None else mat_rgba, np.float64)[matid[take], 3]
     return out
 
 

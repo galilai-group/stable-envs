@@ -39,3 +39,8 @@ def owned_group(
         [batch],
         device=device,
     )
+
+
+def key_path(key) -> tuple[str, ...]:
+    """Return a TensorDict leaf key as a tuple."""
+    return key if isinstance(key, tuple) else (key,)

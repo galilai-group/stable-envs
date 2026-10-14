@@ -1051,7 +1051,7 @@ _MEASURED: dict = {
         "within8_frac": 0.855483,
     },
 }
-_UNMEASURED = str(os.environ.get("SE7_OGB_UNMEASURED", "")) == "1"
+_UNMEASURED = str(os.environ.get("STABLE_ENVS_OGB_UNMEASURED", "")) == "1"
 
 # Pin the upstream renderer and scene package independently of our rendering backend.
 _REFERENCE_VERSIONS = {"mujoco": "3.12.0", "ogbench": "1.2.1"}
@@ -1064,7 +1064,7 @@ def _fidelity(cell: str) -> dict:
         if not _UNMEASURED:
             raise RuntimeError(
                 f"ogb_manip: {cell} has no measured visual_fidelity; add its worst-of-eight to _MEASURED. "
-                "Set SE7_OGB_UNMEASURED=1 only while measuring."
+                "Set STABLE_ENVS_OGB_UNMEASURED=1 only while measuring."
             )
         return {
             "mean_abs": -1.0,
@@ -1073,7 +1073,7 @@ def _fidelity(cell: str) -> dict:
             "mean_abs_max": -1.0,
             "within8_min": -1.0,
             "ssim_min": -1.0,
-            "measured_at": "UNMEASURED placeholder: SE7_OGB_UNMEASURED=1 is set, so these are "
+            "measured_at": "UNMEASURED placeholder: STABLE_ENVS_OGB_UNMEASURED=1 is set, so these are "
             "not measurements and this build must not ship or be certified.",
         }
     d = _MEASURED[cell]

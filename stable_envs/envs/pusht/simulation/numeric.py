@@ -12,12 +12,6 @@ import numpy as np
 DTYPES = tuple(np.dtype(v) for v in ("float32", "float64", "uint8", "int32", "int64", "bool"))
 
 
-def nodes(space, path=""):
-    yield path, space
-    for key, child in getattr(space, "spaces", {}).items():
-        yield from nodes(child, path + "/" + key)
-
-
 def put_value(result, key, value):
     array = np.asarray(value)
     if type(value) is float:

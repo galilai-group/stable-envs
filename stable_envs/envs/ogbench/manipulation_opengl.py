@@ -20,6 +20,15 @@ _LOCK = threading.RLock()
 _CACHE = {}
 
 
+@lru_cache
+def check_versions(renderer, *, warp=False):
+    """Raise ImportError unless the pinned MuJoCo and OGBench, and with ``warp`` MJWarp and Warp, are installed."""
+    if version("mujoco") != "3.12.0" or version("ogbench") != "1.2.1":
+        raise ImportError(f"Cube/Scene {renderer} rendering requires mujoco==3.12.0 and ogbench==1.2.1")
+    if warp and (version("mujoco-warp") != "3.12.0" or version("warp-lang") != "1.17.0"):
+        raise ImportError("Cube/Scene GPU rendering requires mujoco-warp==3.12.0 and warp-lang==1.17.0")
+
+
 def _key(family, row, resolution):
     h = hashlib.sha256(f"{family}:{resolution}".encode())
     for k in COMPILED_VALUES:
@@ -50,12 +59,6 @@ def _renderer(family, row, resolution):
         )
         _CACHE[key] = entry
     return _CACHE[key]
-
-
-@lru_cache(maxsize=1)
-def _check_versions():
-    if version("mujoco") != "3.12.0" or version("ogbench") != "1.2.1":
-        raise ImportError("Cube/Scene OpenGL rendering requires mujoco==3.12.0 and ogbench==1.2.1")
 
 
 def _configuration_groups(host):
@@ -115,7 +118,7 @@ def render(family, state, device, chunk_size=None):
     # rather than synchronizing CUDA once for every scalar validation predicate.
     host = state.detach().cpu()
     pixels.validate(family, host)
-    _check_versions()
+    check_versions("OpenGL")
     if chunk_size is not None and (type(chunk_size) is not int or chunk_size < 1):
         raise ValueError("chunk_size must be a positive integer")
     device = torch.device(device)

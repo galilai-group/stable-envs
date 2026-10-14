@@ -6,6 +6,7 @@ Generators and verifiers for the sealed fixtures under `tests/fixtures/`.
 |---|---|
 | `freeze_native.py` | shared native trajectory corpus (`tests/fixtures/semantics/shared_native`) |
 | `freeze_*_oracle.py` | per-family semantic oracles (`tests/fixtures/semantics/<family>`) |
+| `_oracle.py` | pin check, rollout and manifest helpers the oracle generators share |
 | `capture_ogbench_golden.py` | OGBench Cube/Scene golden frames |
 | `verify_saved.py` | saved-corpus verification |
 

@@ -87,41 +87,7 @@ def _gpu_context(env, size, ss):
     cache = env.__dict__.setdefault("_rocket_pixel_gpu", {})
     key = (size, ss)
     if key not in cache:
-        vertices, normals, faces, geom, uv = geometry.build_scene_arrays()
-        rgba = np.ones((geometry.N_GEOMS, 4))
-        rgba[FLAME_GEOM] = geometry.FLAME_RGBA
-        texture = np.full(geometry.N_GEOMS, -1, np.int64)
-        texture[GROUND_GEOM] = 0
-        scene = _Scene.from_triangles(
-            vertices,
-            normals,
-            faces,
-            geom,
-            rgba,
-            uv=uv,
-            textures={0: geometry.checker_texture()},
-            tex_of_geom=texture,
-            device=str(env.device),
-            tex_policy="none",
-        )
-        renderer = _Renderer(
-            None,
-            res=size,
-            device=str(env.device),
-            supersample=ss,
-            mipmap=False,
-            skybox=False,
-            quant="trunc",
-            scene=scene,
-            shading="tiny",
-            tiny=ND.TinyShading(),
-            tex_filter="nearest",
-            sample_offset=(0.5, 0.5),
-        )
-        renderer.owns_scene = True
-        renderer.background = np.ones(3)
-        per_world = geometry.NVD_BYTES_PER_PIXEL * (size * ss) ** 2 + geometry.NVD_BYTES_PER_VERTEX * scene.V
-        cache[key] = renderer, max(1, int(geometry.NVD_BUDGET_BYTES // per_world))
+        cache[key] = geometry.nvd_renderer(size, ss, env.device, _Scene, _Renderer)
     return cache[key]
 
 

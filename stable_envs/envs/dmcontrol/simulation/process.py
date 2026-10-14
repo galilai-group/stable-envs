@@ -1,52 +1,37 @@
 from __future__ import annotations
 
 import multiprocessing as mp
-import os
-import traceback
 
 import numpy as np
 import torch
 from tensordict import TensorDict
 
 from ...._execution.protocol import SimulatorAdapter
-from ...._execution.requests import ProcessRequests
-from ...._execution.shared_memory import allocate_buffers, buffer_views, owned_group
+from ...._execution.requests import SharedOutputProcess, lane_slices
+from ...._execution.shared_memory import allocate_buffers, buffer_views, key_path
 from ...._execution.state_columns import require_columns
+from ...._execution.workers import pin_worker, send_failure, send_ready
 from .factory import make_local
-
-
-def _path(key):
-    return key if isinstance(key, tuple) else (key,)
 
 
 def _worker(conn, domain, start, count, batch, seed, cpus, buffers, specs):
     adapter = None
     try:
-        if cpus is not None and hasattr(os, "sched_setaffinity"):
-            os.sched_setaffinity(0, cpus)
-        torch.set_num_threads(1)
+        pin_worker(cpus)
         adapter = make_local(domain, count, seed=seed + start)
         views = buffer_views(buffers, specs, batch)
         rows = slice(start, start + count)
 
         def write_state(state):
             for key, value in state.items(True, True):
-                views[("state", *_path(key))][rows] = value.numpy()
+                views[("state", *key_path(key))][rows] = value.numpy()
 
         def write_task(result):
             for key, value in result.exclude("state").items(True, True):
-                views[("task", *_path(key))][rows] = value.numpy()
+                views[("task", *key_path(key))][rows] = value.numpy()
 
         write_state(adapter.get_state())
-        conn.send(
-            (
-                True,
-                dict(
-                    pid=os.getpid(),
-                    affinity=sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
-                ),
-            )
-        )
+        send_ready(conn)
         while True:
             command, payload = conn.recv()
             if command == "close":
@@ -73,10 +58,7 @@ def _worker(conn, domain, start, count, batch, seed, cpus, buffers, specs):
                 raise ValueError(f"Unknown DMC worker command {command}")
             conn.send((True, None))
     except BaseException:
-        try:
-            conn.send((False, traceback.format_exc()))
-        except (BrokenPipeError, EOFError, OSError):
-            pass
+        send_failure(conn)
     finally:
         try:
             if adapter is not None:
@@ -85,7 +67,7 @@ def _worker(conn, domain, start, count, batch, seed, cpus, buffers, specs):
             conn.close()
 
 
-class DMCProcessAdapter(ProcessRequests, SimulatorAdapter):
+class DMCProcessAdapter(SharedOutputProcess, SimulatorAdapter):
     """Run DMC adapters in persistent spawned processes with typed shared outputs.
 
     Copy State and task tensors into parent-owned storage after each completed
@@ -93,6 +75,7 @@ class DMCProcessAdapter(ProcessRequests, SimulatorAdapter):
     """
 
     _worker_family = "DMC"
+    _step_family = "DMC"
 
     def __init__(self, domain, num_envs, device="cpu", seed=0, *, processes=8, cpus=None):
         if type(num_envs) is not int or num_envs < 1:
@@ -113,12 +96,12 @@ class DMCProcessAdapter(ProcessRequests, SimulatorAdapter):
             self.fields = {key: (value.shape[1], value.dtype) for key, value in initial.items(True, True)}
             result = prototype.step(np.zeros((1, self.action_dim)))
             self._specs = {
-                ("task", *_path(key)): (tuple(value.shape[1:]), value.numpy().dtype)
+                ("task", *key_path(key)): (tuple(value.shape[1:]), value.numpy().dtype)
                 for key, value in result.exclude("state").items(True, True)
             }
             self._specs.update(
                 {
-                    ("state", *_path(key)): (tuple(value.shape[1:]), value.numpy().dtype)
+                    ("state", *key_path(key)): (tuple(value.shape[1:]), value.numpy().dtype)
                     for key, value in initial.items(True, True)
                 }
             )
@@ -127,54 +110,29 @@ class DMCProcessAdapter(ProcessRequests, SimulatorAdapter):
             self._physics_dim = 0 if physics is None else physics.spec.dim
         finally:
             prototype.close()
-        self._slices = [
-            slice(int(lanes[0]), int(lanes[-1]) + 1) for lanes in np.array_split(np.arange(num_envs), processes)
-        ]
+        self._slices = lane_slices(num_envs, processes)
         context = mp.get_context("spawn")
         self._buffers = allocate_buffers(context, self._specs, num_envs)
         self._views = buffer_views(self._buffers, self._specs, num_envs)
-        groups = [None] * processes if cpus is None else [group.tolist() for group in np.array_split(cpus, processes)]
         try:
-            for rows, group in zip(self._slices, groups, strict=True):
-                parent, child = context.Pipe()
-                process = context.Process(
-                    target=_worker,
-                    args=(
-                        child,
-                        domain,
-                        rows.start,
-                        rows.stop - rows.start,
-                        num_envs,
-                        int(seed),
-                        group,
-                        self._buffers,
-                        self._specs,
-                    ),
-                )
-                try:
-                    process.start()
-                except BaseException:
-                    parent.close()
-                    raise
-                finally:
-                    child.close()
-                self._connections.append(parent)
-                self._processes.append(process)
-            self.worker_info = self._responses(timeout=300)
+            self._spawn_workers(
+                context,
+                _worker,
+                cpus,
+                lambda rows, group: (
+                    domain,
+                    rows.start,
+                    rows.stop - rows.start,
+                    num_envs,
+                    int(seed),
+                    group,
+                    self._buffers,
+                    self._specs,
+                ),
+            )
         except BaseException:
             self._abort()
             raise
-
-    def _check_open(self):
-        if self._closed:
-            raise RuntimeError("DMCProcessAdapter is closed")
-
-    def _owned(self, group):
-        return owned_group(self._views, group, self.num_envs, self.device)
-
-    def get_state(self):
-        self._request("get_state")
-        return self._owned("state")
 
     def set_state(self, state):
         self._check_idle()
@@ -183,7 +141,7 @@ class DMCProcessAdapter(ProcessRequests, SimulatorAdapter):
         require_columns(state, {key: ((self.num_envs, width), dtype) for key, (width, dtype) in self.fields.items()})
         host = state.cpu()
         for key in self.fields:
-            self._views[("state", *_path(key))][:] = host[key].numpy()
+            self._views[("state", *key_path(key))][:] = host[key].numpy()
         self._request("set_state")
 
     def reset(self, seed=None):
@@ -205,23 +163,9 @@ class DMCProcessAdapter(ProcessRequests, SimulatorAdapter):
                 )
         self._submit("step" if capture_state else "advance", [actions[rows] for rows in self._slices])
 
-    def receive_step(self):
-        self._check_open()
-        if self._pending not in ("step", "advance"):
-            raise RuntimeError("No DMC step in flight")
-        capture = self._pending == "step"
-        self._receive()
-        result = self._owned("task")
-        if capture:
-            result["state"] = self._owned("state")
-        return result
-
     def step(self, actions, *, capture_state=True):
         self.submit_step(actions, capture_state=capture_state)
         return self.receive_step()
-
-    def abort_step(self):
-        self._abort()
 
     def configure_physics(self, values):
         self._check_idle()

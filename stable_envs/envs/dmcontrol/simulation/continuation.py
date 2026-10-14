@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import os
-import tempfile
-
 import numpy as np
 
 from . import physics as _physics
 from .lanes import DMCLanes
+from .registered import apply_appearance, apply_floor_friction, compile_physics, normalized, source_model
 from .state import core_fields
 
 CONFIG = {
@@ -23,19 +21,9 @@ CONTINUATION_FIELDS = {
 
 def _apply_registered_defaults(domain, model):
     """Apply registered reset values before compiling the model."""
-    model.find("texture", "grid").rgb1 = [0.1, 0.2, 0.3]
-    model.find("texture", "grid").rgb2 = [0.2, 0.3, 0.4]
-    model.find("material", "self").rgba = np.asarray([0.7, 0.5, 0.3, 1.0], np.float32)
-
-    floor_name = "ground" if domain == "cheetah" else "floor"
-    floor = model.find("geom", floor_name)
-    friction = (
-        np.array([1.0, 0.005, 0.0001], np.float32)
-        if floor.friction is None
-        else np.asarray(floor.friction, np.float32).copy()
-    )
-    friction[0] = 1.0
-    floor.friction = friction
+    apply_appearance(model, light="top" if domain == "hopper" else "light")
+    floor = model.find("geom", "ground" if domain == "cheetah" else "floor")
+    apply_floor_friction(floor)
 
     density_geoms = {
         "cheetah": ("torso", "bfoot"),
@@ -47,15 +35,11 @@ def _apply_registered_defaults(domain, model):
 
     if domain == "walker":
         floor.zaxis = np.array([0.0, 0.0, 1.0], np.float32)
-    light_name = "top" if domain == "hopper" else "light"
-    model.find("light", light_name).diffuse = np.full(3, 0.7, np.float32)
 
 
 def _make_env(domain, seed):
     """Construct Cheetah Run, Hopper Hop or Walker Walk with registered defaults."""
-    from dm_control import mjcf
     from dm_control.rl import control
-    from dm_control.suite.wrappers import action_scale
 
     if domain == "cheetah":
         from dm_control.suite import cheetah as module
@@ -73,22 +57,14 @@ def _make_env(domain, seed):
         raise ValueError(f"Unsupported continuation domain {domain!r}")
 
     xml, assets = module.get_model_and_assets()
-    model = mjcf.from_xml_string(
-        xml.replace(b'file="./common/', b'file="common/'),
-        model_dir=os.path.dirname(module.__file__),
-        assets=assets or {},
-    )
+    model = source_model(module, xml, assets)
     _apply_registered_defaults(domain, model)
-    with tempfile.TemporaryDirectory() as directory:
-        name = f"{domain}.xml"
-        mjcf.export_with_assets(model, directory, out_file_name=name)
-        physics = module.Physics.from_xml_path(os.path.join(directory, name))
+    physics = compile_physics(module.Physics, model, f"{domain}.xml")
     cfg = CONFIG[domain]
     kwargs = {"time_limit": cfg["time_limit"]}
     if cfg["control_timestep"] is not None:
         kwargs["control_timestep"] = cfg["control_timestep"]
-    env = control.Environment(physics, task, **kwargs)
-    return action_scale.Wrapper(env, minimum=-1.0, maximum=1.0)
+    return normalized(control.Environment(physics, task, **kwargs))
 
 
 class DMCContinuationAdapter(DMCLanes):
