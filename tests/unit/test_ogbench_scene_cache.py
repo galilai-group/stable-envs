@@ -54,10 +54,7 @@ def test_a_hot_key_survives_far_more_distinct_inserts_than_the_cap():
     for i in range(300):
         _scene(stub, 224, f"cold-{i}")
         got = _scene(stub, 224, "hot")  # the caller is still using it
-        assert got is hot, (
-            f"the hot scene was evicted and re-baked after {i + 1} distinct inserts (cap {cap}) — a "
-            f"cache eviction can change the plate, so a key in use must not be the one dropped"
-        )
+        assert got is hot, f"the hot scene was evicted and re-baked after {i + 1} distinct inserts (cap {cap})"
 
     assert len(stub.bakes) == 301, "1 hot bake + 300 cold ones; the hot key was re-baked"
     assert len(OGB._SCENE_CACHE) <= cap, f"the cache holds {len(OGB._SCENE_CACHE)} entries against a cap of {cap}"
@@ -75,8 +72,7 @@ def test_eviction_drops_one_entry_and_not_the_whole_cache():
     _scene(stub, 224, "overflow")  # so k1 is the one that goes
 
     assert len(OGB._SCENE_CACHE) == cap, (
-        f"after one insert past the cap the cache holds {len(OGB._SCENE_CACHE)} entries; a wholesale "
-        f"clear() would have left 1"
+        f"after one insert past the cap the cache holds {len(OGB._SCENE_CACHE)} entries, not {cap}"
     )
     assert stub._plate_key(224, "k0") in OGB._SCENE_CACHE, "the most recently used key was evicted"
     assert stub._plate_key(224, "k1") not in OGB._SCENE_CACHE, "the least recently used key survived"

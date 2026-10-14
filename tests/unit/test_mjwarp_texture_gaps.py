@@ -1,22 +1,10 @@
-"""``texture_gaps`` must be a safe all-clear, not a geom-type check wearing one.
+"""``texture_gaps`` reports every geom whose texture MJWarp cannot sample.
 
-``stable_envs.render.mjwarp.texture_gaps`` answers one question for every MJWarp-backed family:
-"are this scene's textures ones MJWarp can sample?" A geom-type check alone (``PLANE`` and ``MESH``
-fine, everything else samples texel (0,0)) ignores the KIND of texture, which is a false all-clear
-that does not fail quietly. ``swm/OGBScene-v0`` returned an EMPTY gap
-list and then killed the renderer with ``Warp CUDA error 700: an illegal memory access``, raised
-from inside the warm-up frame with no mention of textures in the traceback. The cause, bisected on
-an RTX 3090:
-its ``btn_metal`` material wears a 512x512 **CUBE** map on two button MESH geoms. MJWarp builds
-``wp.Texture2D`` and samples with 2-D coordinates, so a cube map is not drawn badly — it is indexed
-out of bounds. Disabling the graph capture, the skybox or shadows all still crashed; ``textures=False``
-rendered; and detaching that ONE cube map, leaving every 2-D texture and the skybox in place,
-rendered.
-
-The tests are built on SYNTHETIC models, one per rule, because a rule is only proved by a model that
-breaks it and the repository's own registered families are exactly the ones that must NOT change.
-The last test is the regression tripwire the fix is worth: a cube map on a MESH — the geom type the
-old rule declared safe.
+MJWarp builds ``wp.Texture2D`` and samples with 2-D coordinates. A gap is (1) a 2-D texture on a
+primitive geom, which has no UVs and renders one texel; (2) a non-2-D texture (cube or skybox) worn by
+any geom, which is indexed out of bounds; or (3) a textured mesh without texcoords, which reads
+``mesh_texcoord`` from a negative offset. ``swm/OGBScene-v0``'s cube map on UV-less button meshes hits
+(2) and (3) and crashes with ``Warp CUDA error 700``. Each rule is checked on a synthetic model.
 """
 
 from __future__ import annotations
@@ -28,9 +16,8 @@ mujoco = pytest.importorskip("mujoco")
 
 from stable_envs.render.mjwarp import TEXTURE_SAMPLER_OK, TEXTURED_OK, texture_gaps
 
-#: A tetrahedron with per-vertex UVs. Meshes default to CARRYING texcoords, because a mesh without
-#: them is itself a gap (condition 3) and a fixture that omitted them would make every mesh case in
-#: this file test that one condition by accident instead of the condition it names.
+#: A tetrahedron with per-vertex UVs. Mesh fixtures carry texcoords by default, since a mesh without
+#: them is a gap under condition 3.
 _MESH_UV = 'vertex="0 0 0  1 0 0  0 1 0  0 0 1" texcoord="0 0  1 0  0 1  1 1"'
 _MESH_NO_UV = 'vertex="0 0 0  1 0 0  0 1 0  0 0 1"'
 
@@ -77,7 +64,7 @@ def test_2d_texture_on_a_uv_able_geom_is_not_a_gap(geom):
 
 @pytest.mark.parametrize("geom", ["box", "sphere", "cylinder", "capsule"])
 def test_2d_texture_on_a_primitive_is_a_gap(geom):
-    """Condition 1, unchanged: MJWarp cannot derive UVs, so the surface renders as one texel."""
+    """Condition 1: MJWarp cannot derive UVs, so the surface renders as one texel."""
     gaps = texture_gaps(_model("2d", geom))
     assert len(gaps) == 1
     assert gaps[0][2] == int(getattr(mujoco.mjtGeom, f"mjGEOM_{geom.upper()}"))
@@ -95,12 +82,7 @@ def test_geoms_outside_the_rendered_groups_are_ignored():
 
 @pytest.mark.parametrize("geom", ["mesh", "plane"])
 def test_a_cube_map_on_a_uv_able_geom_IS_a_gap(geom):
-    """The regression this fix exists for.
-
-    A cube map on a MESH is the exact shape of ``swm/OGBScene-v0``'s crash, and it is the case the
-    geom-type rule declared safe: MESH is in ``TEXTURED_OK``, so the old check returned an empty list
-    and the renderer then died with an illegal memory access.
-    """
+    """Condition 2: a cube map is a gap even on a geom type in ``TEXTURED_OK``."""
     gaps = texture_gaps(_model("cube", geom))
     assert len(gaps) == 1, "a cube map worn by a geom must be reported whatever the geom type"
     assert gaps[0][2] == int(getattr(mujoco.mjtGeom, f"mjGEOM_{geom.upper()}"))
@@ -111,12 +93,7 @@ def test_a_cube_map_on_a_primitive_is_still_a_gap():
 
 
 def test_a_skybox_material_worn_by_a_geom_is_a_gap():
-    """A skybox texture NOT attached to any geom is invisible to this function by construction.
-
-    The function only ever looks at ``geom_matid``, so a model's own skybox — which no geom wears —
-    cannot be flagged. This asserts the other half: if a geom actually wears one, it is reported,
-    because ``wp.Texture2D`` cannot address it any better than a cube map.
-    """
+    """A skybox texture worn by a geom is a gap; ``texture_gaps`` only looks at ``geom_matid``."""
     assert len(texture_gaps(_model("skybox", "mesh"))) == 1
 
 
@@ -133,17 +110,13 @@ def test_the_models_own_skybox_is_not_flagged():
 
 
 def test_every_texture_role_is_examined_not_only_the_largest_id():
-    """A material can wear a 2-D albedo and a cube environment map; only the second is fatal.
-
-    The previous implementation reduced ``mat_texid`` with ``np.max``, which picks one id by numeric
-    accident. Asserted directly on the array so the test fails if that reduction comes back.
-    """
+    """Every ``mat_texid`` role is examined: a cube map in any role is a gap, a 2-D texture is not."""
     m = _model("2d", "mesh")
     assert texture_gaps(m) == []
     T = np.atleast_2d(np.asarray(m.mat_texid))
     if T.shape[1] < 2:
         pytest.skip("this mujoco build has a scalar mat_texid; role sweep is not expressible")
-    # add a cube texture in a second role on the same material
+    # Add a cube texture in a second role on the same material.
     m2 = mujoco.MjModel.from_xml_string(
         "<mujoco><asset>"
         '<texture name="a" type="2d" builtin="checker" rgb1="1 0 0" rgb2="0 1 0" width="8" height="8"/>'
@@ -156,24 +129,18 @@ def test_every_texture_role_is_examined_not_only_the_largest_id():
     two_d = [i for i in range(m2.ntex) if int(m2.tex_type[i]) == 0][0]
     assert texture_gaps(m2) == []
     role = np.asarray(m2.mat_texid).shape[1] - 1  # a role the 2-D texture does not occupy
-    assert cube > two_d, "the cube must have the LARGER id, so np.max would have caught it anyway"
+    assert cube > two_d, "the fixture expects the cube texture to have the larger id"
     m2.mat_texid[0, role] = two_d  # smaller id in another role: still fine
     assert texture_gaps(m2) == []
-    m2.mat_texid[0, role] = cube  # a cube in ANY role is fatal
+    m2.mat_texid[0, role] = cube  # a cube in any role is a gap
     assert len(texture_gaps(m2)) == 1
 
 
 def test_a_textured_mesh_with_no_texcoords_is_a_gap():
-    """Condition 3 — the one that actually predicts the crash.
+    """Condition 3, checked with a 2-D texture so it is independent of condition 2.
 
-    ``sample_texture``'s MESH branch reads
-    ``mesh_texcoord[mesh_texcoord_offsets[mesh_id] + mesh_facetexcoord[face_adr][i]]`` with no guard,
-    so a mesh whose material is textured but which carries no texture coordinates indexes that array
-    from a negative offset. Measured on ``swm/OGBScene-v0``: its two button geoms wear mesh
-    ``stopbuttonrim`` with ``texcoordadr = -1, texcoordnum = 0``.
-
-    This asserts the condition with a **2-D** texture, so it is independent of the cube-map rule: a
-    plain checker on a UV-less mesh must be flagged too.
+    ``sample_texture``'s mesh branch indexes ``mesh_texcoord`` without a guard, so a textured mesh with
+    no texcoords reads from a negative offset.
     """
     m = _model("2d", "mesh", texcoord=False)
     assert int(m.mesh_texcoordnum[0]) == 0, "this fixture deliberately carries no UVs"
@@ -181,11 +148,7 @@ def test_a_textured_mesh_with_no_texcoords_is_a_gap():
 
 
 def test_a_textured_mesh_WITH_texcoords_is_not_a_gap():
-    """The other side of condition 3: real UVs, 2-D texture, UV-able geom -> nothing to report.
-
-    Without this the new clause could be satisfied by flagging every mesh, which would make the
-    helper useless rather than wrong.
-    """
+    """A 2-D textured mesh with real UVs is not a gap."""
     m = mujoco.MjModel.from_xml_string(
         "<mujoco><asset>"
         '<texture name="t" type="2d" builtin="checker" rgb1="1 0 0" rgb2="0 1 0" width="8" height="8"/>'

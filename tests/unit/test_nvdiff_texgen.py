@@ -1,9 +1,4 @@
-"""Guard the constants in ``stable_envs.render.nvdiff`` that were MEASURED against MuJoCo.
-
-Every one of these was wrong on a first reading and right only after a frame said so
-They are cheap to state and expensive to rediscover, so
-they are asserted here rather than left to the GPU parity run: this file needs numpy and ``mujoco``
-and no CUDA, no nvdiffrast and no reference env.
+"""Constants and laws in ``stable_envs.render.nvdiff`` measured against MuJoCo, checked without CUDA.
 
 The texgen law:
 
@@ -81,7 +76,7 @@ def test_cube_texture_is_a_direction_not_a_uv():
 
 
 def test_effective_rgba_prefers_the_geoms_own_colour():
-    """MuJoCo's resolution order, which MJWarp inverts: the material only wins on the DEFAULT rgba."""
+    """MuJoCo's resolution order, which MJWarp inverts: the material wins only on the default rgba."""
     m = mujoco.MjModel.from_xml_string("""
     <mujoco><asset><material name="m" rgba="0.1 0.2 0.3 0.4"/></asset>
     <worldbody>
@@ -95,13 +90,10 @@ def test_effective_rgba_prefers_the_geoms_own_colour():
 
 
 def test_pow2_resample_is_lossless_on_a_two_by_two_checker():
-    """Why the locomotion floor survives the resample nvdiffrast forces, stated as a test.
+    """The 100x100 2x2 checker resamples to 128x128 unchanged.
 
-    nvdiffrast will not build a pyramid over an odd extent, so Gymnasium's 100x100 checker has to be
-    resampled to 128x128 before it can be minified at all. That is a change to the picture in general
-    and NOT a change to this picture: every 50-texel source block maps onto a whole 64-texel
-    destination block, so the resampled texture is the same 2x2 checker. OGBench's 300x300 per-texel
-    gradient is the case where it does cost something, and that cost is measured, not asserted here.
+    nvdiffrast needs power-of-two extents for a mip pyramid; each 50-texel block maps onto a whole
+    64-texel block, so the nearest resample is exact here.
     """
     a = np.zeros((100, 100, 3), np.float32)
     a[:50, :50] = a[50:, 50:] = 1.0

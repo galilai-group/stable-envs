@@ -1,4 +1,4 @@
-"""Column export preserves every pre-change OGBench field and owned snapshot."""
+"""Column export matches the reference OGBench fields and returns owned snapshots."""
 
 import numpy as np
 import pytest

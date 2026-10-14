@@ -1,21 +1,11 @@
-"""MuJoCo discards an out-of-range spot cutoff; ``prepare_model`` must make MJWarp discard it too.
+"""``prepare_model`` makes MJWarp discard an out-of-range spot cutoff, as MuJoCo does.
 
-WHY THIS FILE EXISTS. ``mujoco_warp``'s shader attenuates a spot light with a hard cone plus
-``pow(cos_theta, exponent)``. MuJoCo does neither when the cutoff is out of range, because OpenGL's
-``GL_SPOT_CUTOFF`` accepts ``[0, 90]`` or the sentinel ``180`` and rejects everything else with
-``GL_INVALID_VALUE``, leaving the default 180 = not a spotlight. ``swm/OGBCube-v0`` has one spot at
-``cutoff = 100, exponent = 10``, and the disagreement is the single largest fidelity term in that
-scene: neutralising it moves interior exactness from 0.0091 to 0.3507 on an RTX 3090.
+OpenGL's ``GL_SPOT_CUTOFF`` accepts ``[0, 90]`` or the sentinel ``180``; MuJoCo leaves any other cutoff
+at 180 (not a spotlight), while ``mujoco_warp`` always applies the cone and ``pow(cos_theta, exponent)``.
+``swm/OGBCube-v0`` has one spot at ``cutoff = 100, exponent = 10``.
 
-Two properties are asserted, and the second is the one that keeps this safe for five other families:
-
-* a spot whose cutoff MuJoCo would REJECT loses its angular term;
-* a spot whose cutoff MuJoCo HONOURS is left exactly alone, as is every non-spot light.
-
-The counter-finding is asserted too, because it is the mistake a reader is most likely to make: on
-the MuJoCo side a POINT light is NOT equivalent to "spot with the cutoff discarded" -- it renders
-identically to the light being switched off. That asymmetry is why the correction touches only what
-MJWarp reads, and a test that silently allowed re-typing would invite it back.
+A spot with an illegal cutoff loses its cone and exponent; legal spots and non-spot lights are untouched;
+the light type is never rewritten, because in MuJoCo a point light renders like a switched-off light.
 """
 
 from __future__ import annotations
@@ -52,12 +42,10 @@ def test_the_constants_are_the_gl_rule():
 
 @pytest.mark.parametrize("bad", ["100", "120", "180", "-5"])
 def test_an_out_of_range_cutoff_loses_BOTH_halves_of_its_attenuation(bad):
-    """Exponent AND cone. The first version of this rule cleared only the exponent.
+    """Both the exponent and the cone are cleared.
 
-    ``mujoco_warp`` runs ``if cos_theta < cos(cutoff_rad): return`` before it applies the exponent,
-    so clearing the exponent alone leaves the cone. At ``cutoff = 100`` that still discards
-    everything past 100 degrees, which MuJoCo does not -- and at a NEGATIVE cutoff it is far worse,
-    because ``cos(-5 deg) = 0.996`` is a 5-degree cone that extinguishes almost the whole scene.
+    ``mujoco_warp`` returns early when ``cos_theta < cos(cutoff_rad)``, before the exponent, so clearing
+    the exponent alone would leave the cone (a 5-degree one at ``cutoff = -5``).
     """
     m = _m(bad)
     hit, restore = neutralise_illegal_spots(m)
@@ -71,12 +59,7 @@ def test_an_out_of_range_cutoff_loses_BOTH_halves_of_its_attenuation(bad):
 
 
 def test_a_negative_cutoff_would_have_left_a_five_degree_cone():
-    """The regression the reviewer caught, asserted as a number rather than as a rule.
-
-    Written against ``np.cos`` directly so it fails if someone reverts to clearing the exponent
-    only: with ``cutoff = -5`` left in place, ``mujoco_warp``'s test is ``cos_theta < 0.996``, i.e.
-    everything more than 5 degrees off-axis is unlit.
-    """
+    """A ``-5`` cutoff, a 5-degree cone in ``mujoco_warp``, is replaced by one with ``cos(cutoff) == -1``."""
     m = _m("-5")
     assert float(np.cos(np.deg2rad(-5.0))) > 0.99, "a -5 cutoff is a tight cone, not a wide one"
     neutralise_illegal_spots(m)
@@ -110,17 +93,15 @@ def test_non_spot_lights_are_never_touched():
 
 
 def test_the_light_type_is_never_rewritten():
-    """The counter-finding, asserted so it cannot creep back in.
+    """The light type is never rewritten.
 
-    Re-typing an illegal-cutoff spot to POINT is the obvious reading of "GL disables the spot", and
-    it is measurably wrong on the REFERENCE side: in MuJoCo a POINT light in OGBCube renders
-    identically to the light being switched off, 9.5 levels of mean darker than shipped
-    (``m1/m1_mujoco_spot_cutoff.json``, ``verdict_point_equals_disabled``).
+    In MuJoCo a point light in OGBCube renders like the light switched off, so re-typing an illegal spot
+    to point would not match the reference.
     """
     m = _m()
     types_before = np.array(m.light_type, copy=True)
     neutralise_illegal_spots(m)
-    assert np.array_equal(m.light_type, types_before), "only light_exponent may be written"
+    assert np.array_equal(m.light_type, types_before), "the light type must not be rewritten"
 
 
 def test_prepare_model_restores_the_cutoff_too():
@@ -149,7 +130,7 @@ def test_prepare_model_restores_it():
 
 
 def test_prepare_model_can_opt_out():
-    """A caller reproducing a number taken without the correction must be able to turn it off."""
+    """``spot_semantics=False`` leaves the spot unchanged."""
     m = _m()
     p = prepare_model(m, spot_semantics=False)
     assert p.neutralised_spots == []

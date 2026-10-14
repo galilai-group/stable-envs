@@ -252,5 +252,5 @@ def test_the_appearance_digest_still_sees_a_site_that_is_drawn():
     finally:
         m.site_group[:] = group
         m.site_pos[:] = pos
-    assert moved != base, "a DRAWN site moved and the digest did not notice"
+    assert moved != base, "a drawn site moved and the digest did not change"
     assert ogb._appearance_digest(m, sitegroup) == base, "the restore did not put the model back"

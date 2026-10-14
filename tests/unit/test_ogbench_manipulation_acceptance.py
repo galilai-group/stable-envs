@@ -1,4 +1,4 @@
-"""The recovered public Cube/Scene configuration must agree with its readiness record."""
+"""The public Cube/Scene variation configuration agrees with its readiness record."""
 
 import pytest
 

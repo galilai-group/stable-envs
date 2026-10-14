@@ -1,15 +1,8 @@
-"""A texture MJWarp cannot read at all: bake it to its mean colour, and declare that you did.
+"""``bake_unsamplable_textures`` flattens textures MJWarp cannot sample to their mean colour.
 
-WHY A SECOND BAKE HELPER. ``bake_primitive_textures`` answers "the UVs are wrong on this geom, is a
-flat colour closer?" -- a fidelity trade it measurably LOSES on RoboCasa. ``bake_unsamplable_textures``
-answers a different question: "this texture cannot be sampled at all, so the choice is a flat colour
-or a renderer that dies." ``swm/OGBScene-v0`` is the worked example -- one 512x512 CUBE map on two
-UV-less button meshes, and ``Warp CUDA error 700: an illegal memory access`` without it.
-
-Keeping them separate is the point of this file. Merging them would let a crash workaround silently
-flatten scenes that render perfectly well, which is exactly what the RoboCasa measurement says not to
-do. So the tests assert both that the new helper reaches the crash cases and that it leaves the
-merely-badly-UV'd ones alone.
+It covers textures that crash the sampler (e.g. ``swm/OGBScene-v0``'s cube map on UV-less button meshes,
+which raises ``Warp CUDA error 700``), and leaves merely badly UV'd geoms, which still render, alone.
+The bake returns a record that names what it removed.
 """
 
 from __future__ import annotations
@@ -64,7 +57,7 @@ def test_a_cube_map_on_a_uvless_mesh_is_baked():
 
 
 def test_a_2d_texture_on_a_uvless_mesh_is_baked_too():
-    """The condition is 'cannot be sampled', not 'is a cube map'. A UV-less mesh crashes either way."""
+    """Any texture on a UV-less mesh is unsamplable, not only a cube map."""
     m = _2d_on_uvless_mesh()
     assert unsamplable_texture_materials(m) == {0: [0]}
     assert bake_unsamplable_textures(m)["n_geoms"] == 1
@@ -80,8 +73,7 @@ def test_a_textured_mesh_with_uvs_is_left_alone():
 
 
 def test_a_badly_uvd_primitive_is_NOT_this_helpers_business():
-    """A textured box renders one flat texel -- wrong, but it renders. That is the other helper's
-    trade to make, and RoboCasa says it loses. This one must not touch it."""
+    """A textured box is a UV gap but still renders, so this helper leaves it alone."""
     m = _2d_on_box()
     assert texture_gaps(m), "the box IS a UV gap"
     assert unsamplable_texture_materials(m) == {}, "but it is not an unsamplable one"
@@ -103,7 +95,7 @@ def test_the_bake_is_reversible():
 
 
 def test_the_record_is_declarable_not_just_a_count():
-    """A caller has to be able to STATE the residual, so the return names geoms, texture and colour."""
+    """The bake record names the material, texture, type, mean colour and geoms."""
     m = _cube_on_uvless_mesh()
     rec = bake_unsamplable_textures(m)["baked"][0]
     for k in ("material", "material_name", "texture", "texture_name", "tex_type", "mean_rgb", "geoms", "geom_names"):
@@ -113,7 +105,7 @@ def test_the_record_is_declarable_not_just_a_count():
 
 
 def test_the_mean_colour_is_actually_the_textures_mean():
-    """A red/green checker must average to something between the two, not to either."""
+    """A red/green checker averages to something between the two."""
     m = _cube_on_uvless_mesh()
     r, g, b_ = bake_unsamplable_textures(m)["baked"][0]["mean_rgb"]
     assert 0.2 < r < 0.8 and 0.2 < g < 0.8, (r, g, b_)
@@ -128,11 +120,9 @@ def test_an_untextured_model_is_a_no_op():
 
 
 def test_the_record_names_EVERY_removed_texture_not_just_the_rgb_role():
-    """The multi-role misattribution the reviewer caught.
+    """The record names every texture role the bake clears, not only the RGB role.
 
-    A material can wear a 2-D albedo in the RGB role and a CUBE map in another. The bake clears ALL
-    roles, so a record that names only the RGB one reports ``tex_type = 0`` for a removal whose
-    whole reason was a cube map — a declaration describing the wrong object.
+    A material can wear a 2-D albedo in the RGB role and a cube map in another; the bake clears both.
     """
     m = mujoco.MjModel.from_xml_string(
         "<mujoco><asset>"
@@ -150,9 +140,9 @@ def test_the_record_names_EVERY_removed_texture_not_just_the_rgb_role():
     rec = bake_unsamplable_textures(m)["baked"][0]
     assert rec["n_removed"] == 2, "both roles were cleared, so both must be recorded"
     types = sorted(r["tex_type"] for r in rec["removed_textures"])
-    assert types == [0, 1], f"the record must name the 2-D AND the cube texture, got {types}"
+    assert types == [0, 1], f"the record must name the 2-D and the cube texture, got {types}"
     assert any(r["unsamplable"] for r in rec["removed_textures"]), (
-        "the record must say WHICH removed texture the sampler could not address"
+        "the record must say which removed texture the sampler could not address"
     )
 
 

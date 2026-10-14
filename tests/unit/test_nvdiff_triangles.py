@@ -1,9 +1,6 @@
-"""The generic pieces of ``stable_envs.render.nvdiff``, on the CPU, against MEASURED numbers.
+"""The generic pieces of ``stable_envs.render.nvdiff`` on CPU, without mujoco or nvdiffrast.
 
-``Scene.from_triangles``, ``gather_material``, ``shade_tiny``, ``offset_clip`` and ``prepare_texture_array``
-are pure torch/numpy and need neither mujoco nor nvdiffrast. The shading numbers here are not chosen:
-they are the pixel values Bullet's TinyRenderer produced on synthetic scenes, so a change to the law
-is caught by the renderer it emulates rather than by a number somebody typed.
+The shading values are pixels measured from Bullet's TinyRenderer on synthetic scenes.
 """
 
 from __future__ import annotations
@@ -138,9 +135,8 @@ def _px(col):
         # tilt 10 deg about y: r_z 0.664 -> 112 (specular only), n.l 0.7757 -> 197 (diffuse only)
         (ND.TinyShading(ambient=0.0, diffuse=0.0, specular=1.0), "tilt10y", 112),
         (ND.TinyShading(ambient=0.0, diffuse=1.0, specular=0.0), "tilt10y", 197),
-        # a face turned AWAY from the light is not ambient-only (153): TinyRenderer builds the reflection
-        # from the UNCLAMPED n.l, so r_z is +0.8639 on the downward face and the specular term survives.
-        # Measured 162 and 158, predicted 153 by the clamped law, 162 / 158 here.
+        # A face turned away from the light is not ambient-only (153): TinyRenderer builds the reflection
+        # from the unclamped n.l, so r_z is +0.8639 on the downward face and the specular term survives.
         (ND.TinyShading(), (0, 0, -1), 162),
         (ND.TinyShading(), "away150x", 158),
     ],
@@ -157,9 +153,10 @@ def test_shade_tiny_reproduces_the_measured_tinyrenderer_pixels(law, normal, exp
 
 
 def test_shade_tiny_is_world_fixed_and_multiplies_the_specular_into_the_material():
-    """Two measured facts: the light does not follow the camera (no camera enters the
-    law at all), and a black material stays black however specular the law is (TinyRenderer multiplies
-    ``specular`` into ``color``, unlike MuJoCo's additive white highlight)."""
+    """The light does not follow the camera, and a black material stays black under any specular term.
+
+    TinyRenderer multiplies ``specular`` into ``color``, unlike MuJoCo's additive white highlight.
+    """
     law = ND.TinyShading(ambient=0.0, diffuse=0.0, specular=1.0)
     n = torch.as_tensor(np.asarray(law.unit_dir(), np.float32)).view(1, 1, 1, 3)
     assert _px(ND.shade_tiny(n, torch.ones(1, 1, 1, 3), law)) == int(255 * law.unit_dir()[2] ** 2)
@@ -191,8 +188,10 @@ def test_prepare_texture_array_accepts_uint8_rgba_and_flags_non_pow2():
 
 
 def test_mvp_rows_is_bitwise_independent_of_batch_composition():
-    """Row 0's model-view-projection must not change with how many rows share the call.
-    (cuBLAS's batched 4x4 GEMM changed kernel between 13*24 and 13*31 products and flipped pixels.)"""
+    """``mvp_rows`` is bitwise independent of how many rows share the call.
+
+    cuBLAS's batched 4x4 GEMM changes kernel with the number of products, which flips pixels.
+    """
     rng = np.random.default_rng(3)
     B, G = 4096, 13
     proj = torch.as_tensor(rng.normal(size=(4, 4)), dtype=torch.float32)
@@ -206,7 +205,7 @@ def test_mvp_rows_is_bitwise_independent_of_batch_composition():
     # a row in the middle, alone vs in place
     i = 1234
     assert torch.equal(ND.mvp_rows(proj, view[i : i + 1], M[i : i + 1])[0], full[i])
-    # and it IS the product, correctly rounded from float64
+    # It is the float64 product, correctly rounded.
     ref = (proj.double() @ view.double())[:, None] @ M.double()
     assert torch.equal(full, ref.to(torch.float32))
     # the unbatched-view form
@@ -215,46 +214,12 @@ def test_mvp_rows_is_bitwise_independent_of_batch_composition():
 
 
 def test_from_triangles_clip_row_is_independent_of_batch_size():
-    """``Scene.clip`` row ``i`` must not depend on how many rows share the call -- as CERTIFIED.
+    """``Scene.clip`` row ``i`` does not depend on how many rows share the call.
 
-    This test originally asserted bitwise invariance at every width on whatever device it ran on, and
-    that over-claimed: the x86-64 CPU sweep found it failing. Corrected here to
-    assert what the repo certifies (no second re-freeze of those cells).
-
-    **cuda, when available: bitwise at every width.** This is the certified device -- every nvdiff cell
-    renders on it -- and it is enforced per env by the mandatory ``check_batch_size_invariance``
-    (measured 0 at 1, 3, 7, 8, 64, 256 for the six locomotion cells and at 1, 7, 64, 4096 for
-    ``PyFlytRocketLanding``).
-
-    **cpu: within ONE float32 ulp at every width**, which is the portable claim. Bitwise-ness on CPU is
-    a property of the machine, not of this repo's arithmetic, so it is measured and recorded rather
-    than asserted -- asserting it is exactly the mistake this test is correcting. Measured on x86-64
-    (torch 2.14.0+cu126, 1/2/4 threads):
-
-    ==========  ===================================  ==================================
-    quantity    bitwise on x86-64 CPU                otherwise
-    ==========  ===================================  ==================================
-    positions   widths >= 7                          widths 1-6, one ulp (3.05e-05)
-    normals     every width except 4 and 8           widths 4, 8, one ulp (5.96e-08)
-    world pos   every width                          --
-    ==========  ===================================  ==================================
-
-    Everything is bitwise at every width on arm64 (Apple M5) and on cuda. A width sample that skips
-    4-6 misses part of this: it reports the positions as recovering at width 3 and the normals as
-    never moving.
-
-    The cause is measured and is NOT this repo's arithmetic: ``mvp_rows`` -- the float64 elementwise
-    ``proj @ view @ M`` -- is bit-identical at every width on every machine measured. The residual is
-    ``torch.sparse.mm``, whose four-term row sums (``S4``/``S3`` carry four and three nonzeros per row)
-    are reordered by a kernel chosen from the dense operand's column count.
-
-    DOCUMENTED_LIMITATION, also on ``rocket.legacy.DOCUMENTED_LIMITATIONS`` and so in
-    ``describe()``: this reaches no shipped frame, because nothing in the registry draws through nvdiff
-    on ``device="cpu"``. A fix for the POSITIONS is written and measured, and is not applied
-    because on cuda it moves four of the six re-frozen locomotion cells by 2.7e-07 of mean_abs and
-    1e-09 of SSIM, and a re-freeze needs a certification failure with a causal reason rather than an
-    implementation that merely differs. Note that it addresses the positions only; the normals
-    share the same sparse stage and would need the same treatment.
+    On cuda this is bitwise at every width (``check_batch_size_invariance`` also enforces it per env).
+    On CPU it is within one float32 ulp: ``torch.sparse.mm`` picks a kernel from the dense operand's
+    column count, which can reorder the ``S4``/``S3`` row sums on x86-64. No registered env draws through
+    nvdiff on CPU; the limitation is listed in ``rocket.legacy.DOCUMENTED_LIMITATIONS``.
     """
     v, n, f = _box_soup((0.5, 0.25, 1.0))
     rng = np.random.default_rng(5)
@@ -279,18 +244,11 @@ def test_from_triangles_clip_row_is_independent_of_batch_size():
             for name, g, fl in zip(("positions", "normals", "world positions"), got, full):
                 ref = fl[:b]
                 if dev == "cuda":
-                    assert torch.equal(g, ref), (
-                        f"cuda: clip {name} depend on the batch width at {b} -- this is a "
-                        f"certification failure; check_batch_size_invariance enforces it per env"
-                    )
+                    assert torch.equal(g, ref), f"cuda: clip {name} depend on the batch width at {b}"
                 else:
-                    # the portable CPU claim: one float32 ulp at the quantity's own scale. An
-                    # assertion, not an exemption -- it fails the moment the residual grows past what
-                    # a reordered four-term sum can account for.
+                    # One float32 ulp at the quantity's own scale: what a reordered four-term sum allows.
                     d = float((g.double() - ref.double()).abs().max())
                     ulp = float(np.spacing(np.float32(float(ref.abs().max()))))
                     assert d <= ulp, (
-                        f"cpu: clip {name} moved by {d:.3e} at width {b}, more than the one float32 "
-                        f"ulp ({ulp:.3e}) the sparse kernel's summation order can account for -- that "
-                        f"is no longer the documented limitation, it is a defect"
+                        f"cpu: clip {name} moved by {d:.3e} at width {b}, more than one float32 ulp ({ulp:.3e})"
                     )

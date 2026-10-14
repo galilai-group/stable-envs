@@ -59,9 +59,8 @@ def test_a_core_module_imports_no_backend_and_no_environment(name):
         )
     ]
     assert bad == [], (
-        f"stable_envs/{name} imports {bad} at module scope. The core vocabulary of the package must "
-        f"not depend on a backend, an environment or an interop target — that arrow points the other "
-        f"way, and a cycle here is a review BLOCK (contract §8)."
+        f"stable_envs/{name} imports {bad} at module scope; core modules must not depend on a backend, "
+        f"an environment or an interop target"
     )
 
 
@@ -123,8 +122,7 @@ def test_the_core_modules_have_no_cycle_among_themselves():
         name: {m for m in _imports(PKG / name, top_level_only=True) if m.startswith("stable_envs.")} for name in CORE
     }
     assert "stable_envs.env" not in edges["_core/dynamics.py"], (
-        "dynamics must not import env: env imports dynamics, and the reverse arrow is how the pair "
-        "becomes unimportable in the wrong order. Env sets `_se_dynamics_base` on itself instead."
+        "dynamics must not import env: env imports dynamics and sets `_se_dynamics_base` on itself"
     )
     assert not (edges["specs.py"] | edges["_core/config.py"]) & {"stable_envs.env", "stable_envs.registry"}
 
@@ -144,7 +142,7 @@ def test_package_import_returns_before_a_gl_hang(mujoco_gl):
     """``import stable_envs`` must not block inside GLFW.
 
     On macOS, ``MUJOCO_GL=glfw`` (or unset, which is glfw) hangs in ``dm_control._render`` at
-    package import; ``egl`` is what cluster scripts export and is not a mujoco backend here.
+    package import; ``egl`` is not a MuJoCo backend there.
     """
     import os
     import subprocess

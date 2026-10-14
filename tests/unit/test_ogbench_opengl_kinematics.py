@@ -1,4 +1,4 @@
-"""Guard and routing regressions for Scene's rendering-only pose update."""
+"""Guard and routing checks for Scene's rendering-only pose update."""
 
 from types import SimpleNamespace
 from unittest.mock import Mock

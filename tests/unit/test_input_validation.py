@@ -87,7 +87,7 @@ def test_a_frame_stack_whose_size_divides_is_refused():
     """8*5*5*3 is 600 numbers, a multiple of 5, so a size-based rule would reshape and render it."""
     env = _env(120)  # 600 / 5 = 120, so even the batch lined up
     frames = torch.zeros((8, 5, 5, 3), dtype=torch.uint8)
-    assert frames.numel() % env.state_dim == 0, "the fixture must be the DIVISIBLE case"
+    assert frames.numel() % env.state_dim == 0, "the fixture size must divide by state_dim"
     with pytest.raises(ValueError) as e:
         env._set_render_state(frames)
     msg = str(e.value)
@@ -111,7 +111,7 @@ def test_uint8_is_called_out_by_name_because_states_are_float():
     with pytest.raises(ValueError) as e:
         env._set_render_state(torch.zeros((4, 8, 8, 3), dtype=torch.uint8))
     msg = str(e.value)
-    assert "uint8" in msg and "astype(" in msg, f"dtype is the loudest signal: {msg}"
+    assert "uint8" in msg and "astype(" in msg, f"the message does not name uint8 or suggest astype: {msg}"
 
 
 def test_a_frame_stack_is_refused_even_when_its_last_axis_equals_state_dim():
@@ -127,11 +127,7 @@ def test_a_frame_stack_is_refused_even_when_its_last_axis_equals_state_dim():
 
 
 def test_ndim_greater_than_two_is_refused_outright_rather_than_flattened():
-    """Even when every axis is innocent: ``(2, 3, 5)`` is a window batch, and it must be said out loud.
-
-    Flattening it silently is the same operation that turned a frame stack into states. The message
-    names the explicit reshape, so the legitimate case costs the caller one line and no ambiguity.
-    """
+    """A ``(2, 3, 5)`` window batch is refused, and the message names the explicit reshape."""
     env = _env(6)
     with pytest.raises(ValueError) as e:
         env._set_render_state(np.stack([_states(3), _states(3, first=10)]))
@@ -147,7 +143,7 @@ def test_a_row_of_the_wrong_width_names_state_dim_both_numbers_and_the_layout():
     msg = str(e.value)
     assert "state_dim 5, got 7" in msg, f"the message does not name the field and both widths: {msg}"
     assert "TinyEnv" in msg, f"the message does not name the env: {msg}"
-    assert "block_angle" in msg, f"the message does not say what the 5 numbers ARE: {msg}"
+    assert "block_angle" in msg, f"the message does not list the state names: {msg}"
     assert "(4, 7)" in msg and "state_names" in msg, msg
 
 
@@ -159,7 +155,7 @@ def test_a_flat_input_that_is_not_a_whole_number_of_states_is_refused():
 
 
 def test_a_flat_input_that_is_a_whole_number_of_states_still_works():
-    """15 numbers for a 5-wide env is 3 states, and always was. The refusal above is about 12."""
+    """15 numbers for a 5-wide env are 3 states."""
     env = _env(3)
     env._set_render_state(np.repeat([1.0, 2.0, 3.0], 5).astype(np.float32))
     assert env._get_render_state().shape == (3, 5)
@@ -182,11 +178,7 @@ def test_an_empty_batch_is_refused():
 
 
 def test_non_finite_states_name_the_rows_and_the_named_columns():
-    """A NaN state renders silently, so the frame looks like data and the loss curve looks like a run.
-
-    The row and the column are both in the message because they answer different questions: a single
-    bad row is a bad sample, and a whole bad column is a bad transform.
-    """
+    """Non-finite states are refused; the message names the rows, the columns and the kind."""
     env = _env(6)
     st = _states(6)
     st[1, 2] = np.nan
@@ -194,7 +186,7 @@ def test_non_finite_states_name_the_rows_and_the_named_columns():
     with pytest.raises(ValueError) as e:
         env._set_render_state(st)
     msg = str(e.value)
-    assert "[1, 4]" in msg, f"the message does not say WHICH rows: {msg}"
+    assert "[1, 4]" in msg, f"the message does not say which rows: {msg}"
     assert "block_x" in msg, f"the message does not name the column: {msg}"
     assert "NaN" in msg and "inf" in msg, f"the message does not say which kind: {msg}"
     assert "2 of 6" in msg, f"the message does not say how many of how many: {msg}"
@@ -210,12 +202,7 @@ def test_a_single_nan_names_only_its_own_row():
 
 
 def test_the_non_finite_scan_runs_on_the_caller_s_tensor_before_any_device_copy():
-    """Which is what makes it unconditional rather than a flag.
-
-    In the recommended idiom the states arrive from a host-side ``DataLoader``, so the scan is a CPU
-    reduction over a few kilobytes and costs no device synchronisation at all. Asserted structurally:
-    the reporter is handed a CPU tensor and must answer without moving it.
-    """
+    """The non-finite reporter answers on a CPU tensor without moving it to a device."""
     from stable_envs.env import _nonfinite_report
 
     st = torch.zeros(4, 5)
@@ -237,9 +224,7 @@ def test_a_trajectory_batch_dict_says_which_key_holds_the_states():
 
 
 def test_the_one_tuple_a_tensordataset_yields_is_accepted_rather_than_refused():
-    """``DataLoader(TensorDataset(states))`` yields ``[states]``, which is the recommended idiom's
-    most common shape. ``torch.as_tensor`` on it raises "only one element tensors can be converted to
-    Python scalars", naming neither the caller nor the fix; stacking it is simply right."""
+    """The one-element list ``DataLoader(TensorDataset(states))`` yields is accepted."""
     env = _env(4)
     env._set_render_state([torch.as_tensor(_states(4))])
     assert _ids(env._render()) == [0, 1, 2, 3]
@@ -256,14 +241,7 @@ def test_something_that_is_not_an_array_at_all_names_the_type_and_what_is_wanted
 
 
 def test_a_partial_final_batch_is_accepted_and_renders_exactly_those_rows():
-    """The normal case under the recommended idiom, not user error.
-
-    Every ``DataLoader`` built with ``drop_last=False`` — torch's default — ends its epoch with a short
-    batch, so refusing one makes the ordinary loop the exception. Measured cost of servicing it, on one
-    H200: PushT at 96 px renders 4,095 states in 3.371 ms against 3.341 ms for 4,096, and 1,023 in
-    2.773 ms against 2.771 for 1,024. Nothing in the renderer or in the static-prefix cache is keyed on
-    the batch.
-    """
+    """A short final batch (``drop_last=False``, torch's default) is accepted and renders only its rows."""
     env = _env(8)
     env._set_render_state(_states(5))
     assert env._get_render_state().shape == (5, 5), "get_state must hand back only the rows set_state wrote"
@@ -289,7 +267,7 @@ def test_a_batch_longer_than_the_env_names_both_numbers_and_the_two_fixes():
         env._set_render_state(_states(9))
     msg = str(e.value)
     assert "4" in msg and "9" in msg, f"the message does not name both batches: {msg}"
-    assert "SHORTER" in msg, f"the message does not say which direction IS allowed: {msg}"
+    assert "SHORTER" in msg, f"the message does not say which direction is allowed: {msg}"
     assert "num_envs=9" in msg, f"the message does not give the constructor fix: {msg}"
     assert "env._render(states)" in msg, f"the message does not give the no-buffer fix: {msg}"
 
@@ -303,11 +281,7 @@ def test_set_state_returns_the_env_so_render_chains_off_it():
 
 
 def test_render_refuses_a_frame_stack_too():
-    """``render`` has the same reshape and the same failure; the hook applies the same rule to it.
-
-    It relaxes the RANK, because "arbitrary leading dims" is its documented contract, and keeps the
-    last-axis rule, which is the half that was load-bearing.
-    """
+    """``render`` refuses a frame stack; it accepts any leading dims but keeps the last-axis rule."""
     env = _env(4)
     with pytest.raises(ValueError) as e:
         env._render(torch.zeros((4, 8, 8, 3), dtype=torch.uint8))
@@ -355,17 +329,13 @@ def test_render_states_refuses_a_non_finite_corpus():
 
 
 def test_a_transposed_style_is_refused_rather_than_regrouped():
-    """The style path's version of the same defect, on the quantity that has collapsed three times.
+    """A ``(style_dim, B)`` style is refused by shape; its row count alone would pass.
 
-    ``reshape(-1, style_dim)`` succeeds on a ``(style_dim, B)`` array and the row-count check
-    downstream then PASSES, because the count is right — every row is a mixture of other environments'
-    knobs, and it renders without complaint. Refusing on the SHAPE is what catches it; the exactly
-    square case (batch == style_dim) is genuinely ambiguous and no rule can separate it, which is why
-    the check is stated as "the last axis is style_dim" rather than as "detect transposes".
+    The square case (batch == style_dim) is ambiguous, so the rule is "the last axis is style_dim".
     """
     space = TinyEnv(num_envs=1, device=DEV).variation_space  # style_dim 3
     transposed = np.arange(15, dtype=np.float32).reshape(3, 5)  # meant to be (5, 3)
-    assert transposed.size == 5 * 3, "the fixture must hold exactly the right NUMBER of values"
+    assert transposed.size == 5 * 3, "the fixture must hold exactly 5 * 3 values"
     with pytest.raises(ValueError) as e:
         StyleTensor.from_space(space, 5, device=DEV, values=transposed)
     assert "3 number(s) wide" in str(e.value) and "(3, 5)" in str(e.value)
@@ -387,11 +357,7 @@ def test_a_style_with_the_wrong_ROW_count_is_still_refused_by_name():
 
 
 def test_a_transposed_per_environment_variation_value_is_refused():
-    """``variation={"block.color": (3, B)}`` holds the right NUMBER of values in the wrong arrangement.
-
-    Reshaping it by size gives environment i a mixture of the other environments' colours and renders
-    without complaint, which is the same class of defect one level down.
-    """
+    """``variation={"block.color": (3, B)}`` is refused, and the message suggests the transpose."""
     space = TinyEnv(num_envs=1, device=DEV).variation_space
     with pytest.raises(ValueError) as e:
         StyleTensor.from_space(space, 8, device=DEV, overrides={"block.color": np.zeros((3, 8), np.float32)})
@@ -478,11 +444,9 @@ def test_a_strided_out_buffer_is_refused_by_name():
 
 
 def test_a_float_out_buffer_is_refused_for_every_env_not_just_the_rasterizer_ones():
-    """The shared guard, so the tile families and the ray-caster get the rasterizer's contract too.
+    """``require_contiguous_out`` refuses a float ``out`` for every renderer, not only the rasterizers.
 
-    Those envs reach ``out`` through their own ``view``/``reshape``, which does not object to a float
-    destination: the shape is right and the write succeeds, and the caller gets 0..255 floats where
-    they asked for pixels. Only the two ``Scene2D`` backends checked it before.
+    A ``view``/``reshape`` into a float buffer would otherwise succeed and write 0..255 floats.
     """
     with pytest.raises(ValueError) as e:
         require_contiguous_out("test", torch.zeros((4, 8, 8, 3), dtype=torch.float32))
@@ -507,11 +471,7 @@ def test_an_out_buffer_of_the_wrong_size_or_dtype_is_refused():
 
 
 def test_check_states_is_reusable_and_does_not_know_about_the_env_batch():
-    """The validator is separate from the batch rule on purpose: ``render`` takes any batch.
-
-    So ``check_states`` returns what it was given and lets the caller decide, which is what lets
-    ``render(states)`` keep accepting a batch the env's buffer could not hold.
-    """
+    """``check_states`` ignores the env batch size, so ``render(states)`` can take any batch."""
     env = _env(2)
     out = check_states(env, _states(7))
     assert out.shape == (7, 5) and out.dtype == torch.float32
