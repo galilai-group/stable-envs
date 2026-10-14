@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 
@@ -17,11 +18,16 @@ import torch
 from stable_envs.envs.craftax import full as CF
 from stable_envs.envs.craftax.full import CraftaxFull
 
-GOLDEN = json.loads(
-    (
-        Path(__file__).resolve().parents[1] / "fixtures" / "regression" / "fidelity" / "craftax_full_golden.json"
-    ).read_text()
-)
+ROOT = Path(__file__).resolve().parents[2]
+GOLDEN_PATH = ROOT / "tests" / "fixtures" / "regression" / "fidelity" / "craftax_full_golden.json"
+GOLDEN = json.loads(GOLDEN_PATH.read_text())
+
+
+def test_the_golden_script_writes_the_file_this_test_reads():
+    spec = importlib.util.spec_from_file_location("gen_golden", ROOT / "scripts/regression/craftax/gen_golden.py")
+    script = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(script)
+    assert Path(script.OUT).resolve() == GOLDEN_PATH
 
 
 @pytest.fixture(scope="module")

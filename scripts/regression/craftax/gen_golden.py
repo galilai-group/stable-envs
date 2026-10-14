@@ -13,7 +13,15 @@ import sys
 import numpy as np
 
 OUT = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "tests", "fixtures", "craftax_full_golden.json"
+    os.path.dirname(os.path.abspath(__file__)),
+    "..",
+    "..",
+    "..",
+    "tests",
+    "fixtures",
+    "regression",
+    "fidelity",
+    "craftax_full_golden.json",
 )
 
 
