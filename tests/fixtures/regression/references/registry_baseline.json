@@ -17,7 +17,6 @@
  "python": "/Users/samib/se6-venv/bin/python",
  "registry_table": [
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.classic_control",
    "name": "Acrobot",
    "reference_id": "Acrobot-v1",
@@ -25,7 +24,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "AntmazeGiantNavigate",
    "reference_id": "ogbench/antmaze-giant-v0",
@@ -33,7 +31,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "AntmazeGiantStitch",
    "reference_id": "ogbench/antmaze-giant-v0",
@@ -41,7 +38,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "AntmazeLargeExplore",
    "reference_id": "ogbench/antmaze-large-v0",
@@ -49,7 +45,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "AntmazeLargeNavigate",
    "reference_id": "ogbench/antmaze-large-v0",
@@ -57,7 +52,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "AntmazeLargeStitch",
    "reference_id": "ogbench/antmaze-large-v0",
@@ -65,7 +59,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "AntmazeMediumExplore",
    "reference_id": "ogbench/antmaze-medium-v0",
@@ -73,7 +66,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "AntmazeMediumNavigate",
    "reference_id": "ogbench/antmaze-medium-v0",
@@ -81,7 +73,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "AntmazeMediumStitch",
    "reference_id": "ogbench/antmaze-medium-v0",
@@ -89,7 +80,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "AntmazeTeleportExplore",
    "reference_id": "ogbench/antmaze-teleport-v0",
@@ -97,7 +87,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "AntmazeTeleportNavigate",
    "reference_id": "ogbench/antmaze-teleport-v0",
@@ -105,7 +94,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "AntmazeTeleportStitch",
    "reference_id": "ogbench/antmaze-teleport-v0",
@@ -113,7 +101,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.minigrid",
    "name": "BabyAIGoToLocal",
    "reference_id": "BabyAI-GoToLocal-v0",
@@ -121,7 +108,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.classic_control",
    "name": "CartPole",
    "reference_id": "CartPole-v1",
@@ -129,7 +115,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.craftax",
    "name": "CraftaxClassic",
    "reference_id": "Craftax-Classic-Pixels-v1",
@@ -137,7 +122,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.craftax_full",
    "name": "CraftaxFull",
    "reference_id": "Craftax-Pixels-v1",
@@ -145,7 +129,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.crafter",
    "name": "Crafter",
    "reference_id": "CrafterReward-v1",
@@ -153,7 +136,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.dmcontrol",
    "name": "DMCAcrobotSwingup",
    "reference_id": "dm_control/acrobot-swingup",
@@ -161,7 +143,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.dmcontrol",
    "name": "DMCBallInCupCatch",
    "reference_id": "dm_control/ball_in_cup-catch",
@@ -169,7 +150,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.dmcontrol",
    "name": "DMCCartpoleBalance",
    "reference_id": "dm_control/cartpole-balance",
@@ -177,7 +157,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.dmcontrol",
    "name": "DMCCartpoleSwingup",
    "reference_id": "dm_control/cartpole-swingup",
@@ -185,7 +164,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.dmcontrol",
    "name": "DMCCheetahRun",
    "reference_id": "dm_control/cheetah-run",
@@ -193,7 +171,6 @@
    "tier": "visual"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.dmcontrol",
    "name": "DMCFingerSpin",
    "reference_id": "dm_control/finger-spin",
@@ -201,7 +178,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.dmcontrol",
    "name": "DMCFingerTurnEasy",
    "reference_id": "dm_control/finger-turn_easy",
@@ -209,7 +185,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.dmcontrol",
    "name": "DMCFingerTurnHard",
    "reference_id": "dm_control/finger-turn_hard",
@@ -217,7 +192,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.dmcontrol",
    "name": "DMCHopperHop",
    "reference_id": "dm_control/hopper-hop",
@@ -225,7 +199,6 @@
    "tier": "visual"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.dmcontrol",
    "name": "DMCHumanoidStand",
    "reference_id": "dm_control/humanoid-stand",
@@ -233,7 +206,6 @@
    "tier": "visual"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.dmcontrol",
    "name": "DMCManipulatorBringBall",
    "reference_id": "dm_control/manipulator-bring_ball",
@@ -241,7 +213,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.dmcontrol",
    "name": "DMCPendulumSwingup",
    "reference_id": "dm_control/pendulum-swingup",
@@ -249,7 +220,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.dmcontrol",
    "name": "DMCPointMassEasy",
    "reference_id": "dm_control/point_mass-easy",
@@ -257,7 +227,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.dmcontrol",
    "name": "DMCQuadrupedWalk",
    "reference_id": "dm_control/quadruped-walk",
@@ -265,7 +234,6 @@
    "tier": "visual"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.dmcontrol",
    "name": "DMCReacherEasy",
    "reference_id": "dm_control/reacher-easy",
@@ -273,7 +241,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.dmcontrol",
    "name": "DMCReacherHard",
    "reference_id": "dm_control/reacher-hard",
@@ -281,7 +248,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.dmcontrol",
    "name": "DMCSwimmerSwimmer6",
    "reference_id": "dm_control/swimmer-swimmer6",
@@ -289,7 +255,6 @@
    "tier": "visual"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.dmcontrol",
    "name": "DMCWalkerWalk",
    "reference_id": "dm_control/walker-walk",
@@ -297,7 +262,6 @@
    "tier": "visual"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.highway",
    "name": "Highway",
    "reference_id": "highway-v0",
@@ -305,7 +269,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "HumanoidmazeGiantNavigate",
    "reference_id": "ogbench/humanoidmaze-giant-v0",
@@ -313,7 +276,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "HumanoidmazeGiantStitch",
    "reference_id": "ogbench/humanoidmaze-giant-v0",
@@ -321,7 +283,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "HumanoidmazeLargeNavigate",
    "reference_id": "ogbench/humanoidmaze-large-v0",
@@ -329,7 +290,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "HumanoidmazeLargeStitch",
    "reference_id": "ogbench/humanoidmaze-large-v0",
@@ -337,7 +297,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "HumanoidmazeMediumNavigate",
    "reference_id": "ogbench/humanoidmaze-medium-v0",
@@ -345,7 +304,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "HumanoidmazeMediumStitch",
    "reference_id": "ogbench/humanoidmaze-medium-v0",
@@ -353,7 +311,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.highway",
    "name": "Intersection",
    "reference_id": "intersection-v0",
@@ -361,7 +318,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.highway",
    "name": "Merge",
    "reference_id": "merge-v0",
@@ -369,7 +325,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.minigrid",
    "name": "MiniGridDoorKey",
    "reference_id": "MiniGrid-DoorKey-8x8-v0",
@@ -377,7 +332,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.minigrid",
    "name": "MiniGridEmpty",
    "reference_id": "MiniGrid-Empty-8x8-v0",
@@ -385,7 +339,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.minigrid",
    "name": "MiniGridFourRooms",
    "reference_id": "MiniGrid-FourRooms-v0",
@@ -393,7 +346,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.minigrid",
    "name": "MiniGridKeyCorridor",
    "reference_id": "MiniGrid-KeyCorridorS4R3-v0",
@@ -401,7 +353,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.minigrid",
    "name": "MiniGridLavaCrossing",
    "reference_id": "MiniGrid-LavaCrossingS9N2-v0",
@@ -409,7 +360,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.minigrid",
    "name": "MiniGridPOVFetch",
    "reference_id": "MiniGrid-Fetch-8x8-N3-v0",
@@ -417,7 +367,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.minihack",
    "name": "MiniHack",
    "reference_id": "minihack.tiles.glyph_mapper.GlyphMapper",
@@ -425,7 +374,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.classic_control",
    "name": "MountainCar",
    "reference_id": "MountainCar-v0",
@@ -433,7 +381,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.classic_control",
    "name": "MountainCarContinuous",
    "reference_id": "MountainCarContinuous-v0",
@@ -441,7 +388,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.mujoco_locomotion",
    "name": "MujocoInvertedDoublePendulum",
    "reference_id": "gymnasium/InvertedDoublePendulum-v5",
@@ -449,7 +395,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.mujoco_locomotion",
    "name": "MujocoInvertedPendulum",
    "reference_id": "gymnasium/InvertedPendulum-v5",
@@ -457,7 +402,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.mujoco_locomotion",
    "name": "MujocoPusher",
    "reference_id": "gymnasium/Pusher-v5",
@@ -465,7 +409,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.mujoco_locomotion",
    "name": "MujocoReacher",
    "reference_id": "gymnasium/Reacher-v5",
@@ -473,7 +416,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogb_manip",
    "name": "OGBCube",
    "reference_id": "swm/OGBCube-v0",
@@ -481,7 +423,6 @@
    "tier": "visual"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogb_manip",
    "name": "OGBScene",
    "reference_id": "swm/OGBScene-v0",
@@ -489,7 +430,6 @@
    "tier": "visual"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.highway",
    "name": "Parking",
    "reference_id": "parking-v0",
@@ -497,7 +437,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.classic_control",
    "name": "Pendulum",
    "reference_id": "Pendulum-v1",
@@ -505,7 +444,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.swm_nav",
    "name": "Piecewise",
    "reference_id": "swm/Piecewise-v0",
@@ -513,7 +451,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.swm_nav",
    "name": "PiecewiseZones",
    "reference_id": "swm/Piecewise-v0",
@@ -521,7 +458,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.maze2d",
    "name": "PointMazeLarge",
    "reference_id": "PointMaze_Large-v3",
@@ -529,7 +465,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.maze2d",
    "name": "PointMazeMedium",
    "reference_id": "PointMaze_Medium-v3",
@@ -537,7 +472,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.maze2d",
    "name": "PointMazeOpen",
    "reference_id": "PointMaze_Open-v3",
@@ -545,7 +479,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.maze2d",
    "name": "PointMazeUMaze",
    "reference_id": "PointMaze_UMaze-v3",
@@ -553,7 +486,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "PointmazeGiantNavigate",
    "reference_id": "ogbench/pointmaze-giant-v0",
@@ -561,7 +493,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "PointmazeGiantStitch",
    "reference_id": "ogbench/pointmaze-giant-v0",
@@ -569,7 +500,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "PointmazeLargeNavigate",
    "reference_id": "ogbench/pointmaze-large-v0",
@@ -577,7 +507,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "PointmazeLargeStitch",
    "reference_id": "ogbench/pointmaze-large-v0",
@@ -585,7 +514,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "PointmazeMediumNavigate",
    "reference_id": "ogbench/pointmaze-medium-v0",
@@ -593,7 +521,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "PointmazeMediumStitch",
    "reference_id": "ogbench/pointmaze-medium-v0",
@@ -601,7 +528,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "PointmazeTeleportNavigate",
    "reference_id": "ogbench/pointmaze-teleport-v0",
@@ -609,7 +535,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.ogbench",
    "name": "PointmazeTeleportStitch",
    "reference_id": "ogbench/pointmaze-teleport-v0",
@@ -617,7 +542,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.pusht",
    "name": "PushT",
    "reference_id": "gym_pusht/PushT-v0",
@@ -625,7 +549,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.highway",
    "name": "Racetrack",
    "reference_id": "racetrack-v0",
@@ -633,7 +556,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.highway",
    "name": "Roundabout",
    "reference_id": "roundabout-v0",
@@ -641,7 +563,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.simple_point_maze",
    "name": "SimplePointMaze",
    "reference_id": "swm/SimplePointMaze-v0",
@@ -649,7 +570,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.swm_nav",
    "name": "TwoRoom",
    "reference_id": "swm/TwoRoom-v1",
@@ -657,7 +577,6 @@
    "tier": "parity"
   },
   {
-   "decoder": "renderer",
    "module": "stable_envs.envs.swm_nav",
    "name": "TwoRoomTarget",
    "reference_id": "swm/TwoRoom-v1",

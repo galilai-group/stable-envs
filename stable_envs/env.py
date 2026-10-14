@@ -271,9 +271,6 @@ def check_states(
 #: A declared tier alone is not evidence that those checks passed.
 FIDELITY_TIERS = ("parity", "visual")
 
-#: Distinguish a renderer from a fixed learned approximation of its output.
-RENDER_DECODERS = ("renderer", "learned")
-
 #: Visual declarations report both measured metrics and the acceptance limits to assert.
 REQUIRED_VISUAL_FIDELITY = (
     "mean_abs",
@@ -369,10 +366,6 @@ class Env:
     visual_fidelity: dict[str, Any] = {}
     #: Explain residual visual differences and limits on using the frames.
     visual_note: str = ""
-    #: Declare whether frames come from a renderer or a learned approximation.
-    render_decoder: str = "renderer"
-    #: Agreement under sampled Variation; required for learned decoders.
-    variation_fidelity: dict[str, Any] = {}
     #: Source package versions for parity evidence; visual evidence stores these in visual_fidelity.
     reference_versions: dict[str, str] = {}
 
@@ -873,7 +866,6 @@ class Env:
             "variation_names": list(self.variation_names),
             "reference_id": self.reference_id,
             "fidelity_tier": self.fidelity_tier,
-            "render_decoder": self.render_decoder,
             "variations": self.variation_space.names(),
         }
         if self.fidelity_tier == "visual":
@@ -883,19 +875,10 @@ class Env:
                 "evaluating a policy on official pixels after training on these — the "
                 "frames are a different render of the same scene, not the same frame"
             )
-        if self.variation_fidelity:
-            d["variation_fidelity"] = dict(self.variation_fidelity)
         rv = reference_versions_of(type(self))
         if rv:
             d[REFERENCE_VERSIONS_KEY] = rv
-        if self.render_decoder == "learned" and "not_for" in d:
-            d["not_for"] += (
-                ", and here that different render is a LEARNED approximation: a fixed "
-                "neural checkpoint drew part of it, so detail on textured surfaces is "
-                "synthesised rather than measured"
-            )
-        else:
-            d["parity_interior_min"] = self.parity_interior_min
+        d["parity_interior_min"] = self.parity_interior_min
         return d
 
     @property

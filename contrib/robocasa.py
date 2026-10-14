@@ -1,11 +1,9 @@
 """Render cached RoboCasa kitchens without importing RoboCasa in the render process.
 
 Build the kitchen XML and trajectory with RoboCasa's own dependencies using
-``examples/robocasa_visual/dump_trajectory.py``. Point
+``contrib/robocasa_dump.py``. Point
 ``STABLE_ENVS_ROBOCASA_CACHE`` at that cache. Rendering uses a separate MuJoCo/
 MJWarp installation; only cached, declared kitchen/camera pairs register.
-
-Plain and learned-corrector classes are separate visual-tier registrations.
 """
 
 from __future__ import annotations
@@ -30,7 +28,7 @@ import mujoco as _mj
 CACHE_ROOT = os.path.expanduser(os.environ.get("STABLE_ENVS_ROBOCASA_CACHE", "~/.cache/stable-envs/robocasa"))
 
 _BUILD_CMD = (
-    "conda run -n robocasa python examples/robocasa_visual/dump_trajectory.py "
+    "conda run -n robocasa python contrib/robocasa_dump.py "
     "--kitchen {kitchen} --steps 200 --res 256 --out " + CACHE_ROOT
 )
 
@@ -46,7 +44,6 @@ if _missing or _mjver < (3, 11):  # pragma: no cover
         f"renders it; see the module docstring."
     )
 
-from contrib.render import rendernet as RN
 from stable_envs.env import Env
 from stable_envs.registry import register
 from stable_envs.render import _resources as _RES
@@ -169,8 +166,7 @@ def _context(
 ) -> _Ctx:
     """Cache a graph by kitchen, camera, resolution, world count, and render profile.
 
-    Texture LOD and culling belong in the key: plain and corrected classes can
-    coexist. None leaves culling at the backend default.
+    None leaves culling at the backend default.
     """
     import mujoco
     import mujoco_warp as mjw
@@ -260,7 +256,6 @@ class RoboCasaBase(Env):
     default_size = 256
     fidelity_tier = "visual"
     parity_interior_min = None
-    # Plain profile; corrected subclasses take their profile from the checkpoint.
     TEX_LOD: int = 1
     BACKFACE_CULL: bool | None = None
 
@@ -472,17 +467,6 @@ class RoboCasaBase(Env):
             m.cam_quat[cid] = base_quat
             m.light_diffuse[:] = base_light
         return out
-
-    @classmethod
-    def corrector_cell_key(cls) -> dict:
-        """Identify corrector weights by class, family, kitchen, camera, and XML hash."""
-        return {
-            "env_class": cls.__name__,
-            "family": "robocasa",
-            "scene": cls.KITCHEN,
-            "camera": cls.CAMERA,
-            "scene_sha": _scene(cls.KITCHEN).sha,
-        }
 
 
 def _yawed_pool(kitchen: str) -> np.ndarray:
@@ -700,8 +684,7 @@ VISUAL_NOTE = (
     "textured BOX, CYLINDER, SPHERE or CAPSULE samples texel (0,0) and the entire surface takes that "
     "one corner texel. A RoboCasa kitchen has 178-401 such geoms in geom group 1 -- counters, "
     "backsplashes, cabinet fronts, sink basins -- between a third and a half of everything drawn, so "
-    "a marble counter comes out one grey. It is visible: examples/robocasa_visual/ shows it beside "
-    "the official frame with the difference amplified 4x. It is also why the spread between kitchens "
+    "a marble counter comes out one grey. It is also why the spread between kitchens "
     "is a factor of five rather than noise -- the kitchens with more textured boxes score worse, and "
     "both ends are registered rather than only the good one. Baking those materials to their "
     "texture's MEAN colour instead of its corner texel was tried and measured and does NOT pay "
@@ -718,156 +701,6 @@ VISUAL_NOTE = (
 )
 
 
-# Each cached corrector owns a CUDA graph and fixed input/output buffers.
-_CORRECTOR_CACHE = _RES.BoundedCache(4, name="robocasa.correctors", on_evict=lambda c: c.close())
-
-
-class RoboCasaCorrectedBase(RoboCasaBase):
-    """VISUAL TIER, LEARNED decoder for a specific kitchen and camera.
-
-    A checkpoint supplies the low-resolution MJWarp profile and the network
-    that maps it to the output resolution. State and appearance use the plain
-    class's contracts; synthesized detail is not source renderer output.
-    """
-
-    render_decoder = "learned"
-    # Training may supply an unsealed corrector to measure its eventual declaration.
-    _corrector_override = None
-
-    def corrector(self):
-        """Return the cached verified corrector, or the explicit training override."""
-        if self._corrector_override is not None:
-            return self._corrector_override
-        cls = type(self)
-        hit = _CORRECTOR_CACHE.get(cls.__name__)
-        if hit is None:
-            hit = _CORRECTOR_CACHE.put(cls.__name__, RN.load(cls.corrector_cell_key()))
-        return hit
-
-    @torch.no_grad()
-    def _render(
-        self,
-        states=None,
-        size: int | None = None,
-        supersample: int | None = None,
-        variation: dict | None = None,
-        style=None,
-        out=None,
-    ) -> torch.Tensor:
-        """Apply the corrector at its checkpoint output size and supersample 1.
-
-        Reject other sizes rather than silently resampling the network output.
-        """
-        corr = self.corrector()
-        size = int(size or self.size)
-        ss = int(self.ss if supersample is None else supersample)
-        if size != corr.out_size or ss != 1:
-            raise ValueError(
-                f"{type(self).__name__} delivers {corr.out_size}x{corr.out_size} at supersample 1 "
-                f"and nothing else -- that is the map its checkpoint was fitted on -- and was asked "
-                f"for {size}x{size} at supersample {ss}. Serving it would mean resizing the "
-                f"{corr.out_size} px frame, which is a different picture from the one every declared "
-                f"number here describes. Use "
-                f"{type(self).__name__.removesuffix('Corrected')!r}, the plain visual-tier class for "
-                f"this cell, which renders at any size."
-            )
-        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
-        lead = tuple(s.shape[:-1])
-        s = s.reshape(-1, self.state_dim)
-        b = int(s.shape[0])
-        if out is None:
-            out = torch.empty((b, size, size, 3), dtype=torch.uint8, device=self.device)
-        buf = out.view(b, size, size, 3)
-        low = super()._render(s, size=corr.render_size, supersample=1, variation=variation, style=style)
-        corr(low, out=buf)
-        return buf.view(*lead, size, size, 3) if lead else buf
-
-
-def _corrected_note(base_note: str, hdr: dict) -> str:
-    vf, base = hdr["visual_fidelity"], hdr.get("baseline") or {}
-    return (
-        "A LEARNED DECODER DREW THIS FRAME. MJWarp renders this cell at "
-        f"{hdr['render']['render_size']} px with textures at LOD {hdr['render']['tex_lod']}, and a "
-        f"{hdr['net']} convolutional corrector fitted on THIS cell maps that to "
-        f"{hdr['render']['out_size']} px. The frame is still a pure deterministic function of "
-        "(state, style) -- the checkpoint is fixed and the render feeding it was already such a "
-        "function -- so render is still f(get_state()), still batch-invariant, still reproducible "
-        "bit-for-bit by anyone holding the weights. WHAT CHANGED IS THE DECODER: this is no longer "
-        "MuJoCo's renderer approximated, it is a learned approximation of MuJoCo's renderer, with "
-        "declared error. It is closer to the official frame than the plain class on every declared "
-        f"number at once (mean |diff| {base.get('mean_abs', float('nan')):.2f} -> "
-        f"{vf['mean_abs']:.2f}/255, within-8 {base.get('within8_frac', float('nan')):.3f} -> "
-        f"{vf['within8_frac']:.3f}, SSIM {base.get('ssim', float('nan')):.3f} -> {vf['ssim']:.3f}) "
-        "AND the detail it restores on textured surfaces is SYNTHESISED rather than measured: right "
-        "statistics, wrong pixels, which a frozen pretrained encoder can tell apart even where the "
-        "pixel metrics improve by 2.5x. It is specific to this scene and this camera -- applied to a "
-        "sibling cell it is measured as worse than not correcting at all, and the loader refuses to "
-        "do it. WHAT THIS DOES NOT LICENSE: everything the plain class does not license, and one "
-        "more -- do not describe these frames as MuJoCo's renderer at reduced fidelity.\n\nTHE "
-        "UNDERLYING RENDER'S OWN RESIDUAL, unchanged and still present under the correction: " + base_note
-    )
-
-
-def _make_corrected_classes() -> dict:
-    """Register separate corrected classes only for available sealed checkpoints.
-
-    Read rendering profiles and fidelity declarations from checkpoint headers;
-    missing weights leave the plain classes unchanged.
-    """
-    made = {}
-    have = set(available_kitchens())
-    heads = RN.available()
-    for cname, kitchen, camera in CELLS:
-        hdr = heads.get(cname + "Corrected")
-        if hdr is None or kitchen not in have:
-            continue
-        cell = hdr.get("cell") or {}
-        if cell.get("scene") != kitchen or cell.get("camera") != camera:
-            continue  # the loader will say why; do not register a wrong class
-        vf = dict(hdr["visual_fidelity"])
-        made[cname + "Corrected"] = register(
-            type(
-                cname + "Corrected",
-                (RoboCasaCorrectedBase,),
-                dict(
-                    KITCHEN=kitchen,
-                    CAMERA=camera,
-                    TEX_LOD=int(hdr["render"]["tex_lod"]),
-                    BACKFACE_CULL=hdr["render"]["backface_cull"],
-                    default_size=int(hdr["render"]["out_size"]),
-                    name=f"robocasa-{kitchen.lower()}-{camera.replace('robot0_', '').replace('_', '-')}-corrected",
-                    reference_id=f"robocasa:PickPlaceCounterToSink/{kitchen}/{camera}",
-                    visual_fidelity=vf,
-                    variation_fidelity=dict(hdr.get("variation_fidelity") or {}),
-                    visual_note=_corrected_note(VISUAL_NOTE, hdr),
-                    __doc__=(
-                        f"RoboCasa PickPlaceCounterToSink, kitchen {kitchen}, camera {camera}, through a "
-                        f"LEARNED render corrector.\n\n"
-                        f"VISUAL TIER, LEARNED DECODER — these are NOT the official pixels, and they are not "
-                        f"a renderer's output either. MJWarp draws this cell at "
-                        f"{hdr['render']['render_size']} px and a {hdr['net']} network fitted on this cell "
-                        f"maps that to {hdr['render']['out_size']} px, correcting both the resolution and "
-                        f"mujoco_warp's missing texture coordinates on BOX/CYLINDER primitives. Measured "
-                        f"against MuJoCo's own raster of this scene, 64 states x 4 draws at "
-                        f"{hdr['render']['out_size']} px, worst draw: mean |diff| {vf['mean_abs']:.2f}/255, "
-                        f"{100 * vf['within8_frac']:.1f}% of pixels within 8/255, SSIM {vf['ssim']:.4f} — "
-                        f"against {vf.get('plain_mean_abs', float('nan')):.2f}, "
-                        f"{100 * vf.get('plain_within8_frac', float('nan')):.1f}% and "
-                        f"{vf.get('plain_ssim', float('nan')):.4f} for {cname}, the plain class, on the same "
-                        f"draws.\n\n"
-                        f"CLOSER TO THE OFFICIAL FRAME AND PARTLY SYNTHESISED — both, at the same time. The "
-                        f"texture it puts back on a marble counter came out of its weights, not out of the "
-                        f"frame it was given. Suitable for generating training frames live; NOT a substitute "
-                        f"for a stored dataset when a policy will be evaluated on official RoboCasa pixels, "
-                        f"and not describable as MuJoCo's renderer. See visual_note and "
-                        f"contrib/render/rendernet.py."
-                    ),
-                ),
-            )
-        )
-    return made
-
-
 def missing_kitchens() -> dict[str, str]:
     """Map missing declared kitchens to commands that build their local caches."""
     have = set(available_kitchens())
@@ -875,4 +708,3 @@ def missing_kitchens() -> dict[str, str]:
 
 
 globals().update(_make_classes())
-globals().update(_make_corrected_classes())

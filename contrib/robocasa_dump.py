@@ -1,25 +1,21 @@
-"""Stage A — record one RoboCasa trajectory and the frames the OFFICIAL renderer produced for it.
+"""Record one RoboCasa trajectory and the frames the official renderer produced for it.
 
-Runs in the ``robocasa`` conda env (robosuite 1.5.2, robocasa 1.0.1, mujoco 3.3.1). It writes
-everything stage B needs and nothing that requires robosuite to read back: the expanded MJCF carries
-absolute asset paths and compiles standalone, so the MJWarp half runs in a different interpreter with
-a different MuJoCo.
+``contrib/robocasa.py`` renders from the cache this script writes. Run it in an interpreter with
+RoboCasa installed (robosuite 1.5.2, robocasa 1.0.1, mujoco 3.3.1). The output needs no robosuite to
+read back: the expanded MJCF has absolute asset paths and compiles on its own, so the renderer can run
+in a different interpreter with a different MuJoCo.
 
-Three things are recorded that a naive dump would omit, each of which silently invalidates the
-comparison if it is missing:
+Three things are recorded with the trajectory:
 
-* **The joint LAYOUT, not just ``qpos``.** Stage B recompiles the same XML under a different MuJoCo,
-  and two compilations of one scene need not order joints identically. A ``qpos`` copied by index is
-  then a mis-POSED scene scored as a mis-BUILT one -- the single most expensive mistake in this
-  family's history (``pre-repository-cleanup:docs/research/robocasa.md`` Section 9, the retracted 94.95 %). The names and
-  ``jnt_qposadr`` travel with the array so stage B can map by name and assert it did.
-* **The official frame comes from ``env.sim.render``**, i.e. robosuite's own offscreen context with
+* **The joint layout, not just ``qpos``.** The reader recompiles the same XML under a different
+  MuJoCo, and two compilations of one scene need not order joints the same way. The joint names and
+  ``jnt_qposadr`` are saved so the reader can map ``qpos`` by name.
+* **The official frame comes from ``env.sim.render``**, robosuite's own offscreen context with
   ``vopt.geomgroup[1] = True`` and everything else off. A bare ``mujoco.Renderer`` defaults to geom
-  groups 0-2 and paints robosuite's ~730 COLLISION primitives over the scene, producing a frame
-  RoboCasa never shows. The frame is flipped vertically because ``sim.render`` returns bottom-up.
-* **A steady-state throughput number for that same renderer**, measured after the model is compiled
-  and the context is live, so the ratio stage C prints is loop-against-loop rather than
-  loop-against-setup.
+  groups 0-2 and draws robosuite's collision primitives over the scene. The frame is flipped
+  vertically because ``sim.render`` returns it bottom-up.
+* **A check that the frames are a pure function of ``qpos``**, done by re-rendering saved states
+  into a fresh ``MjData``.
 """
 
 from __future__ import annotations
@@ -34,10 +30,8 @@ os.environ.setdefault("PYOPENGL_PLATFORM", "egl")
 
 import numpy as np
 
-DEFAULT_OUT = "/mnt/vast/home/randall.balestriero/robocasa_visual_work"
-#: The two kitchens the fidelity table brackets: the best and the worst of the four measured
-#: (``pre-repository-cleanup:docs/research/robocasa.md`` Section 11 -- within-8 0.992 against 0.188). Showing only the first
-#: would be a demo; showing both is the measurement.
+DEFAULT_OUT = os.path.expanduser(os.environ.get("STABLE_ENVS_ROBOCASA_CACHE", "~/.cache/stable-envs/robocasa"))
+#: The kitchens ``contrib/robocasa.py`` registers.
 KITCHENS = {"L52S03": (52, 3), "L45S33": (45, 33)}
 CAMERAS = ("robot0_agentview_left", "robot0_agentview_right", "robot0_eye_in_hand")
 
@@ -102,12 +96,6 @@ def main() -> None:
             frames[c][t] = sim.render(width=args.res, height=args.res, camera_name=c)[::-1]
         a[:n_arm] = np.clip(0.85 * a[:n_arm] + 0.5 * rng.normal(size=n_arm), lo[:n_arm], hi[:n_arm])
         env.step(a)
-
-    # The official renderer's throughput is NOT measured here. It is measured in
-    # ``check_reference_bridge.py``, which warms each variant separately and takes the best of two
-    # passes -- an unwarmed single pass measured the raster at 345 f/s and the strictly larger
-    # restore-and-raster at 479, which is impossible, and one bad throughput number is worse than
-    # none. Keeping one measurement path also keeps the two halves of a ratio on one clock.
 
     # The claim the whole comparison rests on, asserted here rather than assumed downstream: with the
     # compiled model held fixed, the recorded frame is a pure function of the recorded qpos. Checked

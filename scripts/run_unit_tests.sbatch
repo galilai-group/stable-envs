@@ -4,8 +4,8 @@
 #   sbatch scripts/run_unit_tests.sbatch -k style           # extra args go straight to pytest
 #
 # Everything here runs on CPU and is the loop to use while editing a contract rather than a kernel:
-# the style batching rule, the dataset indexing, the policy/rollout API, the fidelity and decoder
-# declarations, the corrector's refusals, the benchmark scripts' guards, and the repo's own citations
+# the style batching rule, the dataset indexing, the policy/rollout API, the fidelity declarations,
+# the benchmark scripts' guards, and the repo's own citations
 # and docs nav. It still asks the scheduler for a node -- nothing in this project runs on the login
 # node, and `import torch` plus the env auto-discovery is not free.
 #

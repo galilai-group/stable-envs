@@ -1,23 +1,12 @@
-"""What an env is allowed to CLAIM: the fidelity tier, the render decoder, and what registration refuses.
+"""What an env is allowed to CLAIM: the fidelity tier, and what registration refuses.
 
-Two declarations decide how the rest of the suite judges an env, and both of them are ways to make a
-strong assertion stop applying. ``fidelity_tier = "visual"`` removes the parity gate;
-``render_decoder = "learned"`` says a neural checkpoint drew part of the frame. ``core/env.py`` pays for
-each at the moment it is adopted — measured numbers, thresholds, a stated mechanism, and words in the
-class docstring that a reader will actually see — and ``register`` enforces that.
+``fidelity_tier = "visual"`` removes the parity gate. ``core/env.py`` asks for something in return:
+measured numbers, thresholds, a stated mechanism, and words in the class docstring that a reader will
+see. ``register`` enforces that.
 
-WHY THIS FILE EXISTS. Until now the whole ``render_decoder`` / ``variation_fidelity`` contract was
-exercised in exactly one place: ``contrib/tests/gpu/test_rendernet.py``, parameterised over the classes with a
-sealed corrector on the machine. That means it needed a GPU, a RoboCasa install and a trained
-checkpoint — and on every interpreter without all three it collected zero cases and asserted nothing,
-which is precisely the coverage hole this suite has twice been caught in. The enforcement itself is
-twelve lines of string and dict checking and needs none of that.
-
-So the refusals are asserted here against SYNTHETIC classes, one per rule, on CPU. The synthetic class
-is the honest instrument: a rule is only proved by a class that breaks it, and no real env in this
-repository breaks any of them (that is what ``register`` is for). The registry-wide half of the file
-then asserts that the real classes still satisfy the rules — the tripwire for the enforcement being
-bypassed or weakened, on every env rather than on the ones that happen to have weights here.
+The refusals are asserted here against SYNTHETIC classes, one per rule, on CPU. A rule is only proved
+by a class that breaks it, and no real env in this repository breaks any of them. The registry-wide
+half of the file then asserts that the real classes still satisfy the rules.
 """
 
 from __future__ import annotations
@@ -34,7 +23,6 @@ from stable_envs import spaces
 from stable_envs.env import REQUIRED_VISUAL_FIDELITY
 from stable_envs.env import Env as StableEnv
 from stable_envs.registry import (
-    check_decoder_declaration,
     check_fidelity_declaration,
     format_registry,
     make,
@@ -52,7 +40,6 @@ VF = {
     "within8_min": 0.88,
     "ssim_min": 0.92,
     "measured_at": "a test",
-    "decoder": "espcn_112t128_w48_d4_u2",
 }
 
 
@@ -97,18 +84,6 @@ def _visual(name="Vis", **over):
     return _cls(name, "A test env. VISUAL TIER: the frames are a different render.", **attrs)
 
 
-def _learned(name="Lrn", **over):
-    """A LEARNED-decoder class, complete except for whatever the caller breaks.
-
-    Built on ``_visual`` because a learned decoder is only admissible inside the visual tier — the one
-    test that needs it outside builds its class directly, so that the illegal combination cannot be
-    produced here by accident.
-    """
-    attrs = {"render_decoder": "learned", "variation_fidelity": dict(VF)}
-    attrs.update(over)
-    return _visual(name, **attrs)
-
-
 # ------------------------------------------------------------------ the tier
 
 
@@ -116,12 +91,7 @@ def test_a_well_formed_declaration_of_each_kind_registers():
     """The control. Without it every refusal below could be passing for an unrelated reason."""
     register(_cls("Plain", "An ordinary parity env."))
     register(_visual("GoodVisual"))
-    register(
-        _learned(
-            "GoodLearnedCorrected", __doc__="A test env. VISUAL TIER, LEARNED decoder: a network drew the detail."
-        )
-    )
-    assert {"Plain", "GoodVisual", "GoodLearnedCorrected"} <= set(se.registry.REGISTRY)
+    assert {"Plain", "GoodVisual"} <= set(se.registry.REGISTRY)
 
 
 def test_an_unknown_tier_is_refused_by_name():
@@ -176,67 +146,6 @@ def test_a_visual_env_that_does_not_say_so_in_its_docstring_is_refused():
         register(_visual("Bad", __doc__="A fast env with no warning in it."))
 
 
-# ------------------------------------------------------------------ the decoder
-
-
-def test_an_unknown_decoder_is_refused_by_name():
-    with pytest.raises(ValueError, match="render_decoder must be one of"):
-        register(_cls("Bad", "doc", render_decoder="diffusion"))
-
-
-def test_a_learned_decoder_outside_the_visual_tier_is_refused():
-    """A frame a network drew is not the official frame and cannot make the parity claim.
-
-    Whatever it measures — and a good corrector measures BETTER than the renderer it replaces on every
-    declared number, which is exactly why this has to be blocked structurally rather than by judgement.
-    """
-    with pytest.raises(ValueError, match="declares render_decoder='learned' outside the VISUAL tier"):
-        register(_cls("Bad", "doc. LEARNED.", render_decoder="learned", variation_fidelity=dict(VF)))
-
-
-def test_a_learned_decoder_whose_numbers_do_not_name_the_checkpoint_is_refused():
-    """``visual_fidelity`` for a learned decoder describes a (renderer, checkpoint) PAIR.
-
-    Without the second half the numbers read as a claim about the renderer, which is the one misreading
-    this field exists to prevent — and a checkpoint replaced without its declaration would otherwise
-    keep being described by the previous one's numbers.
-    """
-    vf = {k: v for k, v in VF.items() if k != "decoder"}
-    with pytest.raises(ValueError, match="no 'decoder' entry naming the checkpoint"):
-        register(_learned("BadCorrected", visual_fidelity=vf))
-
-
-@pytest.mark.parametrize(
-    "missing", ["mean_abs", "within8_frac", "ssim", "mean_abs_max", "within8_min", "ssim_min", "measured_at"]
-)
-def test_a_learned_decoder_without_a_complete_variation_measurement_is_refused(missing):
-    """THE asymmetry, and it is measured rather than stylistic.
-
-    A rasterizer that agrees with the official renderer at one camera agrees at another — same
-    arithmetic pointed somewhere else — so one declaration at the default appearance describes the
-    whole variation space. A learned decoder does not generalise that way: fitted at one camera pose it
-    scores 3.25/255 there and 9.06 under the env's own declared ±8° of pan, which is worse than not
-    correcting at all (8.91) AND worse than the render it replaces (7.93). So for a decoder the
-    default-appearance declaration is not the claim, it is the BEST CASE, and the variation regime is
-    measured or the class does not register.
-    """
-    vf = {k: v for k, v in VF.items() if k != missing}
-    with pytest.raises(ValueError, match="variation_fidelity is missing"):
-        register(_learned("BadCorrected", variation_fidelity=vf))
-
-
-def test_a_learned_decoder_with_no_variation_fidelity_at_all_is_refused():
-    with pytest.raises(ValueError, match="variation_fidelity is missing"):
-        register(_learned("BadCorrected", variation_fidelity={}))
-
-
-def test_a_learned_decoder_that_does_not_say_so_in_its_docstring_is_refused():
-    """The difference between "MuJoCo's renderer approximated" and "a learned approximation of MuJoCo's
-    renderer" is INVISIBLE IN THE PICTURE, and ``help(cls)`` is where someone finds it."""
-    with pytest.raises(ValueError, match="does not say so in its class docstring"):
-        register(_learned("BadCorrected", __doc__="A test env. VISUAL TIER: a fast re-render of the same scene."))
-
-
 # ------------------------------------------------------------------ registration itself
 
 
@@ -271,26 +180,19 @@ def test_an_unknown_env_name_lists_the_ones_that_exist():
 # ------------------------------------------------------------------ what the listing shows
 
 
-def test_the_listing_marks_a_visual_env_and_a_learned_one_differently():
+def test_the_listing_marks_a_visual_env():
     """``sorted(REGISTRY)`` says nothing about what the frames are worth, which is why this exists.
 
     Anything that shows a user the registry shows this instead, so the envs whose frames are not the
-    official pixels cannot be picked by name alone — and the two marks are different because the two
-    facts are different: a visual env's residual is a rasterizer disagreeing, a learned decoder's is
-    partly SYNTHESISED.
+    official pixels cannot be picked by name alone.
     """
     register(_cls("PlainOne", "An ordinary parity env."))
     register(_visual("VisualOne"))
-    register(
-        _learned("LearnedOneCorrected", __doc__="A test env. VISUAL TIER, LEARNED decoder: a network drew the detail.")
-    )
     rows = {r["name"]: r for r in registry_table()}
-    assert rows["PlainOne"]["tier"] == "parity" and rows["PlainOne"]["decoder"] == "renderer"
-    assert rows["VisualOne"]["tier"] == "visual" and rows["VisualOne"]["decoder"] == "renderer"
-    assert rows["LearnedOneCorrected"]["decoder"] == "learned"
+    assert rows["PlainOne"]["tier"] == "parity"
+    assert rows["VisualOne"]["tier"] == "visual"
 
     txt = format_registry()
-    assert "VISUAL TIER — LEARNED decoder" in txt
     assert "not the official pixels" in txt
     for line in txt.splitlines():
         if line.strip().startswith("PlainOne"):
@@ -310,29 +212,21 @@ def test_describe_tells_a_consumer_what_the_frames_are_not_for():
     """The answer to "can I train on these and evaluate on the official ones" is not in the other fields.
 
     A caller who prints ``describe()`` and reads nothing else still must not mistake a visual env for a
-    parity one, and must not mistake a learned decoder for a rasterizer — so the learned case adds its
-    own sentence in the caller's own words rather than leaving it to ``visual_note``.
+    parity one.
     """
     plain = _cls("P2", "doc")(num_envs=1, device="cpu").describe()
-    assert plain["fidelity_tier"] == "parity" and plain["render_decoder"] == "renderer"
+    assert plain["fidelity_tier"] == "parity"
     assert "not_for" not in plain and plain["parity_interior_min"] == 1.0
 
     vis = _visual("V2")(num_envs=1, device="cpu").describe()
     assert "different render of the same scene" in vis["not_for"]
     assert vis["visual_fidelity"]["ssim_min"] == 0.92
 
-    lrn = _learned("L2Corrected", __doc__="A test env. VISUAL TIER, LEARNED decoder.")(
-        num_envs=1, device="cpu"
-    ).describe()
-    assert "LEARNED approximation" in lrn["not_for"]
-    assert "synthesised rather than measured" in lrn["not_for"]
-    assert lrn["variation_fidelity"]["ssim_min"] == 0.92
-
 
 # ------------------------------------------------------------------ the real registry
 
 
-def test_every_registered_class_still_satisfies_both_declarations():
+def test_every_registered_class_still_satisfies_its_fidelity_declaration():
     """The tripwire. ``register`` already enforces this, which is exactly why it is asserted again.
 
     If the enforcement is ever weakened, bypassed (a class put into ``REGISTRY`` directly), or reached
@@ -343,83 +237,11 @@ def test_every_registered_class_still_satisfies_both_declarations():
     """
     bad = []
     for name, cls in sorted(se.registry.REGISTRY.items()):
-        for check in (check_fidelity_declaration, check_decoder_declaration):
-            try:
-                check(cls)
-            except ValueError as e:
-                bad.append(f"{name}: {e}")
+        try:
+            check_fidelity_declaration(cls)
+        except ValueError as e:
+            bad.append(f"{name}: {e}")
     assert not bad, "registered classes with an inadmissible declaration:\n  " + "\n  ".join(bad)
-
-
-def test_a_variation_fidelity_declared_by_anyone_is_complete():
-    """Optional for a renderer, required for a decoder — but never PARTIAL, whoever declares it.
-
-    ``register`` only checks completeness for the learned case, so a renderer that declared three of the
-    seven fields would carry a dict that ``describe()`` publishes and no test reads. Half a measurement
-    published as a measurement is the failure this closes.
-    """
-    bad = []
-    for name, cls in sorted(se.registry.REGISTRY.items()):
-        vf = dict(getattr(cls, "variation_fidelity", {}) or {})
-        if not vf:
-            continue
-        missing = [k for k in REQUIRED_VISUAL_FIDELITY if k not in vf]
-        if missing:
-            bad.append(f"{name} declares variation_fidelity without {missing}")
-    assert not bad, "\n  ".join(bad)
-
-
-def test_a_learned_class_has_the_plain_sibling_its_claim_is_relative_to():
-    """A learned decoder is a SECOND way to draw a cell that already exists.
-
-    Everything it claims — better mean, better within-8, better SSIM — is relative to the renderer it
-    replaces, so without that sibling registered there is nothing to compare it against and the three
-    numbers in its declaration describe nothing. Asserted on the class rather than on frames (which
-    ``tests/gpu/test_conformance.py`` does) so it holds in interpreters with no checkpoint at all.
-    """
-    for name, cls in sorted(se.registry.REGISTRY.items()):
-        if getattr(cls, "render_decoder", "renderer") != "learned":
-            continue
-        base = name.removesuffix("Corrected")
-        assert base != name, (
-            f"{name} draws through a learned decoder but is not named <Plain>Corrected, so the sibling "
-            f"it is a correction OF cannot be found by name"
-        )
-        assert base in se.registry.REGISTRY, f"{name} has no plain sibling {base} in the registry"
-        assert se.registry.REGISTRY[base].render_decoder == "renderer", (
-            f"{base} is supposed to be the plain way to draw this cell and it is not"
-        )
-
-
-def test_the_declared_numbers_beat_the_render_they_replace_wherever_a_baseline_is_declared():
-    """A learned decoder that is not better than the renderer it replaces must not exist.
-
-    Asserted on the DECLARATION, which is free and runs without weights, in addition to the live-frame
-    version in ``tests/gpu/test_conformance.py``. The measured reason it is a gate and not a
-    preference: applied where it does not belong a corrector is WORSE than a plain resize — 5.94/255 on
-    a camera 40 cm from the one it was fitted on against 6.14 for doing nothing — and it fails by
-    painting plausible texture the official frame does not contain, so the mean does not catch it and
-    SSIM and within-8 do.
-    """
-    checked = 0
-    for name, cls in sorted(se.registry.REGISTRY.items()):
-        if getattr(cls, "render_decoder", "renderer") != "learned":
-            continue
-        for label, decl in (
-            ("visual_fidelity", dict(getattr(cls, "visual_fidelity", {}) or {})),
-            ("variation_fidelity", dict(getattr(cls, "variation_fidelity", {}) or {})),
-        ):
-            if "plain_mean_abs" not in decl:
-                continue  # no plain baseline recorded alongside this declaration
-            checked += 1
-            assert decl["mean_abs"] < decl["plain_mean_abs"], f"{name} {label}: mean is not better"
-            assert decl["within8_frac"] > decl["plain_within8_frac"], f"{name} {label}: within-8"
-            assert decl["ssim"] > decl["plain_ssim"], f"{name} {label}: SSIM is not better"
-    if not checked:
-        pytest.skip(
-            "no registered class declares a learned decoder with a recorded plain baseline; "
-            "the live-frame version of this check is in tests/gpu/test_conformance.py"
-        )
 
 
 def test_the_import_error_report_is_a_readable_mapping_and_costs_nothing():
@@ -465,10 +287,6 @@ def test_no_env_shadows_an_attribute_the_base_class_owns():
     was written, for something entirely different — the indices of the qpos dimensions the camera can
     actually see. Nothing raised. Nothing warned. The base class simply won, and RoboCasa's
     ``sample_states`` started returning ``(4,)`` where it had returned ``(4, 40)``.
-
-    It was caught only because the release gate was fanned out over the interpreters that can actually
-    build a kitchen, so ``contrib/tests/gpu/test_rendernet.py`` ran for the first time instead of skipping.
-    Five tests failed at once; before the fan-out, all five had been a green skip.
 
     Checked STATICALLY, from the source text, on purpose: constructing an env needs a GPU, an EGL
     context and — for RoboCasa — a compiled kitchen, so a test that instantiated things would itself

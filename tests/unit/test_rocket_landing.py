@@ -196,7 +196,7 @@ def test_visual_declaration_is_complete_with_margin():
     The values themselves are asserted against a card in tests/gpu/test_conformance.py.
     """
     from stable_envs.env import REQUIRED_VISUAL_FIDELITY
-    from stable_envs.registry import check_decoder_declaration, check_fidelity_declaration
+    from stable_envs.registry import check_fidelity_declaration
 
     vf = RL.PyFlytRocketLanding.visual_fidelity
     assert all(k in vf for k in REQUIRED_VISUAL_FIDELITY)
@@ -217,7 +217,6 @@ def test_visual_declaration_is_complete_with_margin():
     assert vf["reference_unreachable_share"] == RL.REFERENCE_UNREACHABLE_SHARE == 1.0 / 960.0
     assert vf["reference_unreachable_rows_in_draws"] == 0
     check_fidelity_declaration(RL.PyFlytRocketLanding)
-    check_decoder_declaration(RL.PyFlytRocketLanding)
 
 
 def test_missing_backend_names_every_optional_dependency():

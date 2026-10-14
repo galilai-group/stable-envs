@@ -9,7 +9,6 @@ from .env import (
     FIDELITY_TIERS,
     MEASURED_WITH_KEY,
     REFERENCE_VERSIONS_KEY,
-    RENDER_DECODERS,
     REQUIRED_VISUAL_FIDELITY,
     Env,
     _check_reference_versions_shape,
@@ -73,54 +72,6 @@ def check_fidelity_declaration(cls: type[Env]) -> None:
         )
 
 
-def check_decoder_declaration(cls: type[Env]) -> None:
-    """Require learned decoders to declare visual fidelity, checkpoint identity, and variation metrics.
-
-    Their class docstring must contain LEARNED.
-    """
-    dec = getattr(cls, "render_decoder", "renderer")
-    if dec not in RENDER_DECODERS:
-        raise ValueError(f"{cls.__name__}: render_decoder must be one of {RENDER_DECODERS}, got {dec!r}")
-    if dec == "renderer":
-        return
-    if getattr(cls, "fidelity_tier", "parity") != "visual":
-        raise ValueError(
-            f"{cls.__name__} declares render_decoder='learned' outside the VISUAL tier. A frame a "
-            f"network drew is not the official frame and cannot make the parity claim, whatever it "
-            f"measures; the two must not be able to be declared together."
-        )
-    vf = dict(getattr(cls, "visual_fidelity", {}) or {})
-    if not str(vf.get("decoder", "")).strip():
-        raise ValueError(
-            f"{cls.__name__} declares a LEARNED decoder and its visual_fidelity has no 'decoder' "
-            f"entry naming the checkpoint the numbers were measured through. Those numbers describe "
-            f"a (renderer, checkpoint) pair; without the second half they read as a claim about the "
-            f"renderer, which is the one misreading this field exists to prevent."
-        )
-    missing = [
-        k
-        for k in ("mean_abs", "within8_frac", "ssim", "mean_abs_max", "within8_min", "ssim_min", "measured_at")
-        if k not in (getattr(cls, "variation_fidelity", {}) or {})
-    ]
-    if missing:
-        raise ValueError(
-            f"{cls.__name__} declares a LEARNED decoder and its variation_fidelity is missing "
-            f"{missing}. A network fitted at one appearance is measured at 9.06/255 under a declared "
-            f"variation it never saw, against 8.91 for doing nothing and 7.93 for the render it "
-            f"replaces -- so for this decoder the default-appearance declaration is not the claim, it "
-            f"is the best case. The variation regime is measured or the class does not register."
-        )
-    doc = (cls.__doc__ or "").upper()
-    if "LEARNED" not in doc:
-        raise ValueError(
-            f"{cls.__name__} draws its frames through a LEARNED decoder and does not say so in its "
-            f"class docstring. Put the word 'LEARNED' in it, with what the network supplies; the "
-            f"difference between 'MuJoCo's renderer approximated' and 'a learned approximation of "
-            f"MuJoCo's renderer' is invisible in the picture and help({cls.__name__}) is where "
-            f"someone finds it."
-        )
-
-
 def register(cls: type[Env]) -> type[Env]:
     """Register by canonical class name after metadata validation; reject name collisions."""
     key = cls.__name__
@@ -141,20 +92,18 @@ def register(cls: type[Env]) -> type[Env]:
     elif not domain:
         cls.domain = family
     check_fidelity_declaration(cls)
-    check_decoder_declaration(cls)
     REGISTRY[key] = cls
     return cls
 
 
 def registry_table() -> list[dict[str, Any]]:
-    """Return sorted environment metadata rows, including fidelity tier and decoder type."""
+    """Return sorted environment metadata rows, including the fidelity tier."""
     # Instance-dependent widths are unavailable here; report None instead of a misleading zero.
     return [
         {
             "class_name": n,
             "name": n,
             "tier": getattr(c, "fidelity_tier", "parity"),
-            "decoder": getattr(c, "render_decoder", "renderer"),
             "family": getattr(c, "family", "") or None,
             "domain": getattr(c, "domain", "") or None,
             "render_state_dim": (int(c.state_dim) or None) if isinstance(getattr(c, "state_dim", None), int) else None,
@@ -166,35 +115,18 @@ def registry_table() -> list[dict[str, Any]]:
 
 
 def format_registry(width: int = 34) -> str:
-    """Format the registry with visual-tier and learned-decoder labels."""
+    """Format the registry with visual-tier labels."""
     rows = registry_table()
     n_visual = sum(r["tier"] == "visual" for r in rows)
-    n_learned = sum(r["decoder"] == "learned" for r in rows)
-    out = [
-        f"{len(rows)} environments; {len(rows) - n_visual} parity, {n_visual} visual"
-        + (f" ({n_learned} of them through a LEARNED decoder)" if n_learned else "")
-    ]
+    out = [f"{len(rows)} environments; {len(rows) - n_visual} parity, {n_visual} visual"]
     for r in rows:
-        mark = (
-            "   [VISUAL TIER — LEARNED decoder, not the official pixels]"
-            if r["decoder"] == "learned"
-            else "   [VISUAL TIER — not the official pixels]"
-            if r["tier"] == "visual"
-            else ""
-        )
+        mark = "   [VISUAL TIER — not the official pixels]" if r["tier"] == "visual" else ""
         out.append(f"  {r['name']:<{width}}{mark}")
     if n_visual:
         out.append(
             "  visual tier: fast re-render of the same scene by a different rasterizer. Good "
             "for live training data; NOT a substitute for a stored dataset when a policy will "
             "be evaluated on official pixels. See each env's visual_fidelity / visual_note."
-        )
-    if n_learned:
-        out.append(
-            "  learned decoder: that re-render was then passed through a fixed neural "
-            "checkpoint fitted to predict the official frame, so it is closer to the official "
-            "pixels on every declared number AND part of it is synthesised rather than drawn. "
-            "The frame is still a pure function of (state, style). See render_decoder."
         )
     return "\n".join(out)
 
@@ -236,7 +168,6 @@ def info(name: str) -> dict[str, Any]:
         "default_size": getattr(cls, "default_size", None),
         "reference_id": getattr(cls, "reference_id", None),
         "fidelity_tier": getattr(cls, "fidelity_tier", "parity"),
-        "render_decoder": getattr(cls, "render_decoder", "renderer"),
         "action_dim": getattr(cls, "action_dim", None),
         "has_dynamics": getattr(cls, "_step", None) is not Env._step,
         "requires_cuda": bool(getattr(cls, "requires_cuda", False)),
@@ -308,7 +239,6 @@ def import_errors() -> dict[str, str]:
 
 __all__ = [
     "REGISTRY",
-    "check_decoder_declaration",
     "check_fidelity_declaration",
     "discover",
     "format_registry",

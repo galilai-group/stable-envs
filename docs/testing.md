@@ -547,7 +547,7 @@ sbatch scripts/run_unit_tests.sbatch           # CPU contracts + CPU regression
 ```
 
 `tests/unit/` includes CPU rendering and contract checks: the style batching rule, the dataset indexing and episode
-boundaries, the policy and rollout API, the corrector's refusals, the benchmark scripts' guards,
+boundaries, the policy and rollout API, the benchmark scripts' guards,
 and the repository's own citations, docs nav and launcher agreement. `tests/regression/` is
 the frozen regression oracle (corpora, digests, declarations, provenance). Green on
 `-m unit` says the contracts hold and says nothing about the frames;
@@ -670,36 +670,6 @@ A visual env must set `parity_interior_min = None`; `register()` refuses it othe
 cannot be applied to it, loosened for it, or passed by it. `test_fidelity_tier_is_fully_declared` runs for
 every env and re-asserts that enforcement, so an under-declared tier fails loudly rather than falling
 between the two tests.
-
-### A learned decoder: two more assertions, and neither is an aggregate
-
-A visual-tier class may draw its frame through a fixed neural checkpoint
-([the learned decoder](concepts/fidelity-tiers.md#the-learned-decoder)). Such a class declares
-`render_decoder = "learned"` and is asserted by everything above *plus* two tests that exist only
-because a network is in the path:
-
-| test | asserts |
-|---|---|
-| `test_a_learned_decoder_beats_the_render_it_replaces` | on the same states, against this machine's official renderer, the learned frame is better than the plain class's on **mean_abs, within8_frac AND ssim** — separately |
-| `test_a_learned_decoder_holds_up_under_its_declared_variation` | the same three, re-measured with a per-state appearance drawn from `variation_space`, against the class's `variation_fidelity` |
-
-The three comparisons are separate and never combined, and that is the whole design. A corrector
-applied off its training distribution **lowers a frame's average error while making more of its pixels
-wrong**: on a kitchen it was not fitted for, the mean ties (33.19 against 32.85 for a plain resize) and
-SSIM falls (0.763 against 0.792) because it paints marble-like speckle onto plain cabinet fronts. A
-single aggregate would have passed that.
-
-The second test exists because for a *renderer* it would be redundant and for a *network* it is the
-whole risk: a rasterizer that agrees with the official one at one camera agrees at another, while a
-corrector fitted at one camera pose scores 3.25/255 there and 9.06 under the env's own declared ±8° of
-pan — worse than not correcting at all. `register()` refuses a learned decoder that does not declare
-`variation_fidelity`, so the measurement cannot be skipped by omission.
-
-`contrib/tests/gpu/test_rendernet.py` covers what is left: that the delivered frame is exactly the cheap render
-put through the corrector, that the corrector was actually applied (a checkpoint that failed to load
-still produces a perfectly reasonable picture), that a caller's batch size cannot reach the autotuner's
-decision, and that a checkpoint keyed to one cell refuses every other. `contrib/tests/unit/test_rendernet_identity.py`
-asserts the refusals on synthetic checkpoints, with no GPU and no cache.
 
 ### Legacy render-projection round-trip
 

@@ -29,15 +29,17 @@ package:
 | `overcooked.py` | `OvercookedCrampedRoom`, … | `requirements/overcooked.txt` |
 | `pgx.py` | PGX board games | `requirements/pgx.txt` |
 | `procgen.py` | `ProcgenMaze`, … | `requirements/procgen.txt` |
-| `robocasa.py` | `RoboCasaCounterToSink`, … | none; see the module docstring and `examples/robocasa_visual/` |
+| `robocasa.py` | `RoboCasaCounterToSink`, … | none; see the module docstring and `robocasa_dump.py` |
 | `sokoban.py` | `Sokoban` | `requirements/sokoban.txt` |
 
 `pusht_torch/` is a batched torch renderer for the released PushT classes whose frames equal
 `env.render(state)`; see `pusht_torch/README.md`.
 
-Render engines used only by these families are in `render/`: `rendernet.py` (the RoboCasa learned
-corrector, see `examples/rendernet/`) and `lightspec.py` (MJWarp light specialization for
-HumanoidBench, Meta-World and RoboCasa).
+`robocasa_dump.py` builds the kitchen cache that `robocasa.py` renders from. It runs in an interpreter
+with RoboCasa installed.
+
+Render engines used only by these families are in `render/`, for example `lightspec.py` (MJWarp light
+specialization for HumanoidBench, Meta-World and RoboCasa).
 
 ## Use from a checkout
 

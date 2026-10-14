@@ -122,9 +122,7 @@ def test_every_argparse_script_can_print_its_own_help(path: Path):
 def test_the_readme_lists_the_scripts_that_exist():
     """``examples/README.md`` is the index somebody reads before running any of this.
 
-    Only the top level is required to be listed — the sub-projects (``robocasa_visual/``,
-    ``rendernet/``) carry their own READMEs — but a top-level
-    script that the index does not mention is one nobody will find, and an index entry with no script
+    A script that the index does not mention is one nobody will find, and an index entry with no script
     behind it is a command that fails.
     """
     readme = (EXAMPLES / "README.md").read_text()

@@ -15,7 +15,7 @@ snv.import_errors()                  # {module: exception}, families this machin
 
 `info(name)` does **not** construct the env. Construction needs a device, and for several families a GPU, an EGL context or a compiled scene.
 
-Returned fields include `class_name`, `id` (slug), `family`, `domain`, `reference_id`, `render_state_dim`, `render_state_names`, `default_size`, `fidelity_tier`, `render_decoder`, `action_dim`, `has_dynamics`, `requires_cuda`.
+Returned fields include `class_name`, `id` (slug), `family`, `domain`, `reference_id`, `render_state_dim`, `render_state_names`, `default_size`, `fidelity_tier`, `action_dim`, `has_dynamics`, `requires_cuda`.
 
 `snv.Spec` is a tensor contract (`env.frame_spec`, `env.state_spec`, …). `snv.info` is metadata. They are different types with similar English names on purpose — do not confuse them.
 

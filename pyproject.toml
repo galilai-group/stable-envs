@@ -262,7 +262,6 @@ ignore = ["E402", "E731", "E741"]
 "stable_envs/render/scene.py" = ["UP007"]
 # Measured `"%04i" % reward` atlas keys / pygame font contract.
 "contrib/carracing.py" = ["UP031"]
-"examples/robocasa_visual/calibrate_tier.py" = ["UP031"]
 # Lambdas close over names `del`'d in the same function; ruff treats them as unbound.
 "examples/bench_gpu_vs_cpu.py" = ["F821"]
 "examples/domain_randomization.py" = ["F821"]

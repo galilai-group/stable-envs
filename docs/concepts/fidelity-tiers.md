@@ -14,18 +14,6 @@ RoboCasa, used as the example on this page, is a renderer-only port kept in the 
 directory and is not part of the released package; `import contrib; contrib.load()` from a checkout
 registers it.
 
-There is a **second, independent field**, and a consumer of the visual tier has to read both:
-
-```python
-snv.info("RoboCasaCounterToSink")["render_decoder"]            # 'renderer'
-snv.info("RoboCasaCounterToSinkCorrected")["render_decoder"]   # 'learned'
-```
-
-`render_decoder` says *what drew the frame*: a rasterizer, or a rasterizer followed by a fixed neural
-checkpoint trained to predict the official frame. [The learned decoder](#the-learned-decoder) below is
-the whole of it, and it is not a footnote — the difference between "MuJoCo's renderer approximated"
-and "a learned approximation of MuJoCo's renderer" is invisible in the picture and visible only here.
-
 ## What the two tiers claim
 
 | | **parity** | **visual** |
@@ -117,155 +105,11 @@ class MyEnv(Env):
 The measurements and the thresholds are both required and are deliberately different numbers: a
 threshold equal to the measurement flakes on the next state draw, and a measurement inferred from a
 threshold is not a measurement. Set the thresholds from the *spread over independent state draws*, not
-from one; `examples/robocasa_visual/calibrate_tier.py` is the worked example.
+from one: measure several seeded draws and keep each threshold clear of the worst one.
 
 The docstring check is mechanical on purpose. `describe()` and the registry listing carry the mark, but
 the first thing a person reads is `help(cls)`, and a marker that depends on remembering to write it is
 the kind of rule this repo makes impossible instead of asking for.
-
-## The learned decoder
-
-The only learned decoder in the repository, RoboCasa's (`contrib/render/rendernet.py`), is in
-`contrib/` and is not part of the released package.
-
-A visual-tier cell may additionally ship a **learned render corrector**: a small convolutional network
-(441 k parameters, 7.9 µs a frame) that maps a deliberately cheap render — 112 px, textures at mip
-level 2 — to the 256 px frame MuJoCo's own renderer would have drawn. Such a class declares
-`render_decoder = "learned"`, and it is a **separate registry entry** from the plain cell:
-
-```python
-snv.make("RoboCasaCounterToSink")           # MJWarp at 256 px.        render_decoder 'renderer'
-snv.make("RoboCasaCounterToSinkCorrected")  # MJWarp at 112 px + a CNN. render_decoder 'learned'
-```
-
-It is faster **and** closer to the official frame, at the same time. On `RoboCasaCounterToSink`, 64
-states × 4 draws at 256 px, worst draw, end to end including inference:
-
-| | f/s | mean \|diff\| | within 8/255 | SSIM |
-|---|---:|---:|---:|---:|
-| `RoboCasaCounterToSink` — MJWarp at 256 px | 5,756 | 6.41 | 0.833 | 0.907 |
-| `RoboCasaCounterToSinkCorrected` | **16,959** | **2.48** | **0.935** | **0.970** |
-
-**It needs a batch, and this is the one thing to check before switching.** The network runs at a fixed
-batch of 128 (see [below](#reproducibility-and-the-one-thing-to-record)), so a caller who asks for
-fewer frames pays for 128 anyway. At the env's own surface on one H200:
-
-| batch | 1 | 16 | 64 | 256 | 1024 |
-|---|---:|---:|---:|---:|---:|
-| `RoboCasaCounterToSink` f/s | 828 | 4,174 | 5,338 | 5,697 | 5,756 |
-| `RoboCasaCounterToSinkCorrected` f/s | 416 | 5,137 | 11,889 | 16,365 | 16,959 |
-| ratio | **0.50×** | 1.23× | 2.23× | 2.87× | 2.95× |
-
-It crosses over between 16 and 64 and beats the 15,937 f/s disk read from 256 up. **Single-frame
-rendering is half the speed of the plain class**, so a per-step interactive loop is the case where the
-plain cell is still the right answer; a training loop that renders a batch is the case this is for.
-
-### What it does not change
-
-**The contract.** The corrector is a fixed checkpoint applied to a render that is already a pure
-function of `(state, style)`, so `render` is still `f(get_state())`, still batch-invariant, still
-deterministic, still reproducible bit-for-bit by anyone holding the weights. Every test in
-`tests/gpu/test_reproducibility.py` applies to these classes unchanged and unrelaxed.
-
-### What it does change
-
-**What the picture is made of.** Most of the win is that the network *paints a marble texture its
-input does not contain*: `mujoco_warp` draws RoboCasa's textured `BOX` primitives as one flat colour,
-so the detail the corrector supplies came out of its weights, not out of the frame. It has the right
-statistics and the wrong pixels — and a frozen pretrained encoder can tell the difference even where
-the pixel metrics improve by 2.5×. In DINOv2 and ResNet-18 embeddings the corrected frame sits
-1.2–1.7× *further* from the official one than the plain render does, while being 2.5× closer in pixels.
-Nothing here licenses "a model would not notice".
-
-!!! danger "Say which one your dataset came from"
-    Someone evaluating a policy on official RoboCasa pixels needs to know whether their training
-    frames came from *MuJoCo's renderer approximated* or from *a learned approximation of MuJoCo's
-    renderer*. **That is not visible in the picture, only in the declaration.** Record
-    `describe()["render_decoder"]` alongside the states, and do not describe these frames as MuJoCo's
-    renderer at reduced fidelity.
-
-### A corrector is per (scene, camera), and a mismatched one is worse than nothing
-
-This is the property everything else is built around, because it fails silently. Zero-shot, the
-`RoboCasaCounterToSink` corrector applied to cells it was not fitted on:
-
-| applied to | corrector | bilinear resize | the render it replaces |
-|---|---:|---:|---:|
-| same kitchen, camera moved 40 cm | 5.94 | 6.14 | 4.75 |
-| same kitchen, wrist camera | 11.35 | **4.39** | 3.94 |
-| a different kitchen | 33.19 (SSIM 0.763) | 32.85 (SSIM 0.792) | 32.20 (SSIM 0.815) |
-
-On the different kitchen it paints marble-like speckle onto plain cabinet fronts that carry no texture
-in the official frame. Read the last row twice: **the mean ties and SSIM and within-8 are worse.** A
-corrector can lower a frame's average error while making more of its pixels wrong, which is why the
-gates below are three separate comparisons and never an aggregate.
-
-So it is a lock rather than a warning. Every checkpoint is keyed to `(env class, family, scene,
-camera, MJCF hash)`; `load` verifies that key against the env and **raises `CellMismatch`** on any
-disagreement. There is no fallback to a neighbour's weights, no "close enough", and copying the file
-under another name does not work — the key is inside it.
-
-### How a class comes to exist
-
-**No checkpoint, no class.** The repository ships code, not weights, exactly as it ships no compiled
-RoboCasa kitchen and no MiniGrid atlas. A corrector is built on the machine that wants it:
-
-```
-python examples/rendernet/train_corrector.py RoboCasaCounterToSink
-```
-
-which generates its own pairs from the env and its official reference renderer, fits the network,
-measures the corrected path **and the plain class on the same draws**, and seals a checkpoint into
-`~/.cache/stable-envs/rendernet/` — but only if the corrector beats the plain render on mean |diff|,
-within-8 **and** SSIM, both at the default appearance and under the env's own declared variation
-space. A corrector that is not better than the renderer it replaces cannot be produced by the
-supported path. With no checkpoint present, nothing is registered and the plain cell is untouched: the
-absence of weights removes an env, it never changes one.
-
-The declaration travels **inside** the weights file, because `visual_fidelity` here describes a
-(renderer, checkpoint) pair rather than a class. A new sealed checkpoint dropped into the cache
-directory registers a new class carrying its own measured numbers, with no code change.
-
-### The second declaration, and why a renderer does not need one
-
-A learned class declares `variation_fidelity` as well as `visual_fidelity`: the same three quantities,
-measured with a per-state appearance drawn from `variation_space` instead of at the default.
-`register()` refuses a learned decoder without it.
-
-The asymmetry is measured. A rasterizer that agrees with the official one at one camera agrees at
-another — same arithmetic, pointed somewhere else — so one declaration at the default appearance
-describes the whole space. A network does not generalise that way: a corrector fitted at one camera
-pose scores **3.25/255 there and 9.06 under the same env's declared ±8° of pan**, which is worse than
-not correcting at all (8.91) *and* worse than the render it replaces (7.93). A default-appearance
-declaration would have said 3.25 while every consumer using the variation knobs — the reason this
-family exists — got the worst of the three. Training on the declared variation costs nothing and
-improves the default case too (2.65 against 3.25), so the shipped correctors are fitted that way and
-`test_a_learned_decoder_holds_up_under_its_declared_variation` re-measures it.
-
-### Reproducibility, and the one thing to record
-
-The network runs in fp16, `channels_last`, compiled with
-`torch.compile(mode="max-autotune-no-cudagraphs")` at a **fixed batch of 128** and replayed from a CUDA
-graph. Two of those are correctness rather than speed:
-
-* **The fixed batch.** Inductor's autotuner benchmarks per shape, and two convolution tile
-  configurations sum a 3×3×C window in different orders; fp16 carries 11 bits of mantissa and the last
-  act of the network is to round to 1/255. The same checkpoint at a network batch of 64 and at 128
-  produces *different pixels*. Every call is therefore padded to exactly 128 rows and the padding
-  discarded, which makes batch invariance and batch-size independence hold by construction — the same
-  argument `humanoidbench.render` makes for pinning MJWarp's world count.
-* **Inductor is allowed here and nowhere else.**
-  [Writing a bit-exact Triton kernel](bit-exact-triton.md) keeps the rasterizer and ray-casters off
-  Inductor because it fuses floating-point operations, and those are parity-tier paths where a 1-ulp
-  change disqualifies the claim. This path is a network's approximation of another renderer: fp fusion
-  here is arithmetic, not a defect, and the fidelity it produces is re-measured rather than assumed.
-  Measured cost of the fusion: ~11% of pixels move by 1/255 against the eager path, for 22.1 µs →
-  7.9 µs a frame.
-
-`STABLE_ENVS_RENDERNET_COMPILE` and `STABLE_ENVS_RENDERNET_BATCH` change the arithmetic, so **a dataset
-generated through a learned decoder should record them** along with the states — they are the only two
-settings in this repository that do. The autotuner's choice was measured to be stable: three
-cold-cache runs on two H200 nodes plus a warm run all produced the same frame digest.
 
 ## What is in the tier today
 
@@ -324,12 +168,7 @@ needs is a deterministic tie-break at equal ray parameter.
 
 The released package holds eight visual-tier classes among the 75 that register without PyFlyt: the
 six DM Control cells above, `OGBCube` and `OGBScene`; the other 67 are parity tier. The `contrib/`
-ports add six MuJoCo locomotion, seventeen HumanoidBench and four RoboCasa classes. A cell with a sealed corrector adds
-one more — `RoboCasaCounterToSinkCorrected` — and the count is machine-dependent for the reason
-[above](#how-a-class-comes-to-exist): no weights, no class. `stable_envs.format_registry()` prints the
-current answer and marks the learned ones separately.
+ports add six MuJoCo locomotion, seventeen HumanoidBench and four RoboCasa classes.
+`stable_envs.format_registry()` prints the current answer.
 
-[`examples/robocasa_visual/`](https://github.com/galilai-group/stable-envs/tree/main/examples/robocasa_visual)
-shows it side by side with the official frame and the difference amplified 4×, on the best and the worst
-of the four kitchens measured, so the quality can be judged rather than taken on the numbers.
 RoboCasa remains a **NO-GO for the parity tier**, and this tier does not overturn that.

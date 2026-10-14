@@ -514,8 +514,6 @@
 "tests/unit/test_examples.py::test_every_argparse_script_can_print_its_own_help[ddp_train_from_states.py]": 9.4,
 "tests/unit/test_examples.py::test_every_argparse_script_can_print_its_own_help[dino_agreement.py]": 8.2,
 "tests/unit/test_examples.py::test_every_argparse_script_can_print_its_own_help[dump_frames.py]": 7.7,
-"tests/unit/test_examples.py::test_every_argparse_script_can_print_its_own_help[rendernet/train_corrector.py]": 7.8,
-"tests/unit/test_examples.py::test_every_argparse_script_can_print_its_own_help[robocasa_visual/calibrate_tier.py]": 7.8,
 "tests/unit/test_examples.py::test_every_argparse_script_can_print_its_own_help[train_from_states.py]": 7.6,
 "tests/unit/test_fetch_process_adapter.py::test_inactive_lanes_match_local_owner_before_first_step": 14.2,
 "tests/unit/test_fetch_process_adapter.py::test_inflight_exclusion_ownership_and_close": 16.4,
