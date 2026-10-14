@@ -6,6 +6,7 @@ GL backends are probed in subprocesses with a timeout because context creation c
 from __future__ import annotations
 
 import ctypes
+import ctypes.util
 import importlib.metadata
 import importlib.util
 import json
@@ -100,7 +101,7 @@ class FamilyReport:
     cpu: str = SKIP
     gpu: str = SKIP
     detail: str = ""
-    fix: str = ""
+    fixes: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -365,6 +366,9 @@ def _gl_fix(working: list[str], environ, driver) -> str:
     return " ".join(hints)
 
 
+_GL_LIBRARIES = {"egl": "EGL", "osmesa": "OSMesa"}
+
+
 def gl_checks(environ, driver) -> tuple[list[Check], Check]:
     """Environment and per-backend probe checks, and the check that decides the ``gl`` capability."""
     if importlib.util.find_spec("mujoco") is None:
@@ -379,8 +383,15 @@ def gl_checks(environ, driver) -> tuple[list[Check], Check]:
     if headless:
         probes["glfw"] = (SKIP, "no DISPLAY")
     for backend, (status, detail) in probes.items():
-        mark = " (selected)" if backend == selected else ""
-        checks.append(Check(f"gl {backend}{mark}", status, detail))
+        if backend == selected:
+            checks.append(Check(f"gl {backend} (selected)", status, detail))
+        elif (
+            status == FAIL and _GL_LIBRARIES.get(backend) and ctypes.util.find_library(_GL_LIBRARIES[backend]) is None
+        ):
+            checks.append(Check(f"gl {backend}", SKIP, f"lib{_GL_LIBRARIES[backend]} not found"))
+        else:
+            # Only the selected backend decides whether the families render.
+            checks.append(Check(f"gl {backend}", WARN if status == FAIL else status, detail))
     working = [b for b, (s, _) in probes.items() if s == OK and b != selected]
     env_fail = next((c for c in checks if c.status == FAIL and not c.name.startswith("gl ")), None)
     status, detail = probes.get(selected, (FAIL, f"MUJOCO_GL={selected} is not a backend"))
@@ -403,11 +414,11 @@ def _worst(statuses) -> str:
 def family_report(fam: Family, errors: dict[str, str], caps: dict[str, Check], has_gpu: bool) -> FamilyReport:
     install = f'pip install "stable-envs[{fam.extra}]"' if fam.extra else ""
     if fam.dist is not None and _dist_version(fam.dist) is None:
-        return FamilyReport(fam.name, SKIP, detail="not installed", fix=install)
+        return FamilyReport(fam.name, SKIP, detail="not installed", fixes=[install])
     failed = {m: errors[m] for m in fam.modules if m in errors}
     if len(failed) == len(fam.modules):
         first = next(iter(failed.values()))
-        return FamilyReport(fam.name, FAIL, FAIL, FAIL, f"does not import: {first}", install)
+        return FamilyReport(fam.name, FAIL, FAIL, FAIL, f"does not import: {first}", [install] if install else [])
     notes, fixes = [], []
     if failed:
         notes.append("not imported: " + "; ".join(f"{m} ({e})" for m, e in failed.items()))
@@ -431,7 +442,7 @@ def family_report(fam: Family, errors: dict[str, str], caps: dict[str, Check], h
         notes.append(f"{fam.warp_cells} need Warp on CUDA: {caps['warp'].detail}")
         gpu = _worst([gpu, WARN])
     status = _worst([cpu, gpu, WARN if failed else OK])
-    return FamilyReport(fam.name, status, cpu, gpu, "; ".join(notes), " | ".join(fixes))
+    return FamilyReport(fam.name, status, cpu, gpu, "; ".join(notes), fixes)
 
 
 def run(environ=None) -> Report:
@@ -493,8 +504,9 @@ def format_report(report: Report, colour: bool = False) -> str:
         else:
             row = f"{_label(f.cpu, colour)} {_label(f.gpu, colour)} {f.detail}"
         lines.append(f"  {_label(f.status, colour)} {f.name:<17} {row}".rstrip())
-        if f.fix and f.status != OK:
-            lines.append(f"  {'':<5} {'':<17} {'fix' if f.status != SKIP else 'install'}: {f.fix}")
+        if f.status != OK:
+            for fix in f.fixes:
+                lines.append(f"  {'':<5} {'':<17} {'fix' if f.status != SKIP else 'install'}: {fix}")
     lines.append("")
     lines.append(
         "All installed families can render here."

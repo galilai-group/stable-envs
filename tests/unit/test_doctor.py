@@ -19,6 +19,9 @@ pytestmark = pytest.mark.unit
     ("environ", "platform_name", "expected"),
     [
         ({}, "linux", "egl"),
+        ({"PYOPENGL_PLATFORM": "osmesa"}, "linux", "osmesa"),
+        ({"PYOPENGL_PLATFORM": "glx"}, "linux", "egl"),
+        ({"MUJOCO_GL": "egl", "PYOPENGL_PLATFORM": "osmesa"}, "linux", "egl"),
         ({"MUJOCO_GL": "osmesa"}, "linux", "osmesa"),
         ({}, "darwin", "cgl"),
         ({"MUJOCO_GL": "egl"}, "darwin", "cgl"),
@@ -77,6 +80,14 @@ def test_a_failed_gl_context_is_chained_and_a_size_error_is_not(monkeypatch):
     _fake_mujoco(monkeypatch, _raises(ValueError("Image width 9 > framebuffer width 8")))
     with pytest.raises(ValueError, match="framebuffer"):
         mujoco_gl.mujoco_renderer(object(), height=9, width=9)
+
+
+def test_a_pyopengl_conflict_leads_the_message(monkeypatch):
+    cause = ImportError("Cannot use EGL rendering platform. The PYOPENGL_PLATFORM environment variable is set to {!r}")
+    _fake_mujoco(monkeypatch, _raises(cause))
+    monkeypatch.setenv("PYOPENGL_PLATFORM", "osmesa")
+    with pytest.raises(RuntimeError, match="^PYOPENGL_PLATFORM=osmesa conflicts with MUJOCO_GL=egl"):
+        mujoco_gl.mujoco_renderer(object(), height=8, width=8)
 
 
 def _fake_warp(monkeypatch, available, toolkit=(13, 0), driver=(12, 9)):
@@ -170,18 +181,21 @@ def test_family_verdicts(monkeypatch, installed, errors, caps, has_gpu, expected
     monkeypatch.setattr(doctor, "_dist_version", lambda name: "1.0" if installed else None)
     row = doctor.family_report(DMC, errors, caps, has_gpu)
     assert (row.status, row.cpu, row.gpu) == expected[:3]
-    assert expected[3] in row.fix
+    assert any(expected[3] in fix for fix in row.fixes) or not expected[3]
 
 
 @pytest.mark.parametrize(("family_status", "code"), [(doctor.WARN, 0), (doctor.FAIL, 1)])
 def test_cli_exit_code_and_json(monkeypatch, capsys, family_status, code):
     report = doctor.Report(
         system=[doctor.Check("python", doctor.OK, "3.12")],
-        families=[doctor.FamilyReport("fetch", family_status, doctor.OK, family_status, fix="do this")],
+        families=[
+            doctor.FamilyReport("fetch", family_status, doctor.OK, family_status, fixes=["do this", "and this"])
+        ],
     )
     monkeypatch.setattr(doctor, "run", lambda: report)
     assert cli.main(["doctor", "--json"]) == code
     out = json.loads(capsys.readouterr().out)
-    assert out["ok"] is (code == 0) and out["families"][0]["fix"] == "do this"
+    assert out["ok"] is (code == 0) and out["families"][0]["fixes"] == ["do this", "and this"]
     assert cli.main(["doctor"]) == code
-    assert "fix: do this" in capsys.readouterr().out
+    text = capsys.readouterr().out
+    assert "fix: do this\n" in text and "fix: and this" in text

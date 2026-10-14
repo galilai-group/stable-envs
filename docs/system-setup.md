@@ -25,8 +25,9 @@ fixes them.
 
 The MuJoCo families draw each scene's static background once per appearance with MuJoCo's own
 OpenGL renderer and draw the moving bodies on top, on the CPU or on CUDA. So they need an OpenGL
-backend on GPU machines too. MuJoCo picks it from `MUJOCO_GL`: stable-envs sets `egl` on Linux
-when it is unset, and uses `cgl` on macOS.
+backend on GPU machines too. MuJoCo picks it from `MUJOCO_GL`. When that is unset on Linux,
+stable-envs uses the backend `PYOPENGL_PLATFORM` names (`egl` or `osmesa`) so the two agree, and
+`egl` otherwise; on macOS it uses `cgl`.
 
 ## GPU machines: the driver
 

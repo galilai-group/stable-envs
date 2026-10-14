@@ -14,6 +14,7 @@ import os
 import sys
 
 _DARWIN_MUJOCO = frozenset({"cgl", "glfw"})
+_LINUX_MUJOCO = frozenset({"egl", "osmesa", "glfw"})
 GL_VARS = ("MUJOCO_GL", "PYOPENGL_PLATFORM", "MUJOCO_EGL_DEVICE_ID")
 #: The GL variables as the process received them, before configure_mujoco_gl fills defaults.
 INITIAL_GL_ENV = {name: os.environ.get(name) for name in GL_VARS}
@@ -27,11 +28,18 @@ NO_RENDERER_FIX = (
 
 
 def selected_backend(environ=None, platform: str = sys.platform) -> str:
-    """Return the MUJOCO_GL backend MuJoCo binds when stable_envs imports it."""
-    backend = (os.environ if environ is None else environ).get("MUJOCO_GL")
+    """Return the MUJOCO_GL backend MuJoCo binds when stable_envs imports it.
+
+    Unset on Linux, it follows a PYOPENGL_PLATFORM that names a MuJoCo backend, else EGL.
+    """
+    environ = os.environ if environ is None else environ
+    backend = environ.get("MUJOCO_GL")
     if platform == "darwin":
         return backend if backend in _DARWIN_MUJOCO else "cgl"
-    return "egl" if backend is None else backend
+    if backend is not None:
+        return backend
+    pyopengl = (environ.get("PYOPENGL_PLATFORM") or "").lower()
+    return pyopengl if pyopengl in _LINUX_MUJOCO else "egl"
 
 
 def configure_mujoco_gl() -> str:
@@ -54,7 +62,7 @@ def configure_mujoco_gl() -> str:
         # imported (or absent), so restoring glfw does not re-enter GLFW init in this process.
         os.environ["MUJOCO_GL"] = "glfw"
         return os.environ["MUJOCO_GL"]
-    os.environ.setdefault("MUJOCO_GL", "egl")
+    os.environ.setdefault("MUJOCO_GL", selected_backend())
     return os.environ["MUJOCO_GL"]
 
 
@@ -88,5 +96,11 @@ def mujoco_renderer(model, *, height: int, width: int):
         except Exception as e:  # noqa: BLE001 — re-raised with the fix
             cause = e
             detail = f"MuJoCo could not create an OpenGL context with MUJOCO_GL={backend}"
+    pyopengl = os.environ.get("PYOPENGL_PLATFORM")
+    if cause is not None and "PYOPENGL_PLATFORM" in str(cause) and pyopengl:
+        raise RuntimeError(
+            f"PYOPENGL_PLATFORM={pyopengl} conflicts with MUJOCO_GL={backend}: unset PYOPENGL_PLATFORM "
+            f"or set both to the same backend. {NO_RENDERER_FIX}"
+        ) from cause
     reason = f" ({type(cause).__name__}: {cause})" if cause is not None else ""
     raise RuntimeError(f"{detail}{reason}. {NO_RENDERER_FIX}") from cause
