@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ...env import Env
+from ...env import Env, _split_appearance
 from ...registry import register
 from ...render import _resources as _RES
 from ...render import gfxdraw as G
@@ -194,6 +194,7 @@ class _Classic(Env):
         # arithmetic lands on the wrong integer whenever a vertex falls within ~1e-5 of one.
         s = s.reshape(-1, self.state_dim).to(torch.float64)
         n = s.shape[0]
+        variation, style = _split_appearance(variation, style)
         sty = self.resolve_style(style, variation, batch=n)
         geo = self._varied_geometry(sty, own=style is None and not variation)
         extra = () if geo is None else (geo,)
