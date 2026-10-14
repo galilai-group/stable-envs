@@ -1,21 +1,16 @@
-"""What is in this directory, how it differs from ``stable_envs/testing/``, and the empty-run guard.
+"""Suite-wide hooks: directory and family markers, family-absence skips, and the empty-run guard.
 
-``tests/`` is this repository's OWN suite: the assertions, the thresholds, and the per-env floors that
-were measured before they were declared. ``stable_envs/testing/`` is the library that supplies the
-measurements — public, importable, used by ``examples/`` and by env authors outside this repo — and it
-deliberately asserts nothing. The dependency runs one way: everything here imports from there.
-``stable_envs/testing/`` stays in the package (like ``numpy.testing``); it is not this directory.
+``tests/`` holds this repository's own assertions and thresholds. ``stable_envs/testing/`` is the
+public library that supplies the measurements and asserts nothing; tests import from it, never the
+reverse.
 
     tests/
       unit/                       family/unit contracts. No GPU, no reference env, no checkpoint.
-      integration/                several components together, including the CPU safety-net
+      integration/                several components together, including the CPU safety net
                                   (``test_safety_net.py``) and the SWM interop suite.
-      gpu/                        the release gate, parameterised over the registry. Needs CUDA by
-                                  design — the product is a GPU renderer, so a suite that passes on
-                                  CPU-only CI proves nothing about it.
-        _shared.py                the three conventions the GPU files kept getting wrong. Read it
-                                  before adding a file here.
-        conftest.py               puts every shared env back at its default appearance per test.
+      gpu/                        the registry-wide GPU suite. Needs CUDA.
+        _shared.py                skip/fail conventions for family sweeps and frame comparison.
+        conftest.py               resets each shared env to its default appearance per test.
       regression/                 frozen corpora, digests, declarations, provenance,
                                   and the support-matrix oracle. CPU unless also under ``gpu/``.
       fixtures/                   golden JSON the unit/regression readers assert against.
@@ -23,7 +18,7 @@ deliberately asserts nothing. The dependency runs one way: everything here impor
 
 Directory markers are applied below so ``pytest -m unit`` / ``-m integration`` /
 ``-m "regression and not gpu"`` / ``-m "regression and gpu"`` select the matching
-bucket even when a file forgot ``pytestmark``. Existing per-file markers are kept.
+bucket even when a file has no ``pytestmark``. Existing per-file markers are kept.
 
 Every test also gets one ``family_<name>`` marker from ``ci/families.toml`` (see
 ``tests/helpers/families.py``). A test that fails while its family is not installed here (missing,
@@ -33,12 +28,9 @@ up front. The summary groups skips by cause. ``SE_REQUIRE_FAMILIES`` / ``SE_REQU
 (set by CI profile jobs) make the same absence a usage error before anything runs, and with ``swm``
 required a required family's test that skips for want of stable-worldmodel fails instead.
 
-THE EMPTY-RUN GUARD, below, and why it is a hook rather than a test. Twice now this suite has been
-green while covering nothing: the DM Control family's 16 envs were absent from the suite interpreter
-for a version skew, so every test parameterised over them collected ZERO cases and the run said so in
-one line among a dozen other import notes. ``test_conformance.py`` closed that at the FAMILY level
-(``SE_REQUIRE_ENV_MODULES``) and ``tests/gpu/_shared.py`` closes it at the SWEEP level
-(``resolve_family``). This closes it at the RUN level, which neither of those can see.
+The empty-run guard fails a run in which nothing passed, failed or errored (for example every test
+skipped because its envs are not installed). It complements ``SE_REQUIRE_ENV_MODULES`` in
+``tests/gpu/test_conformance.py`` and ``resolve_family`` in ``tests/gpu/_shared.py``.
 """
 
 from __future__ import annotations
@@ -70,9 +62,9 @@ def pytest_configure(config):
     problems = families.check_required()
     if problems:
         raise pytest.UsageError("\n".join(problems))
-    # An explicit source profile verifies and imports its requested checkout in
-    # its fixture. Importing an installed copy first would select another oracle
-    # before the source pin is checked. Legacy certification still registers IDs.
+    # An explicit source profile verifies and imports its requested checkout in its fixture;
+    # importing an installed copy first would select another oracle before the pin is checked.
+    # Otherwise import the installed copy so its IDs are registered for certification.
     if not config.getoption("--contract-profile", default=None):
         try:
             import stable_worldmodel  # noqa: F401
@@ -185,26 +177,22 @@ def pytest_runtest_call(item):
         sys.modules.update(hidden)
 
 
-#: Set to anything to allow a run in which nothing passed or failed. For a deliberately narrow
-#: selection on a machine that cannot service it — ``pytest tests/gpu -k RoboCasa`` in an interpreter
-#: without robocasa — "everything skipped" is the honest answer rather than a fault.
+#: Set to anything to allow a run in which nothing passed or failed, e.g. a narrow ``-k`` selection
+#: in an interpreter without that family installed.
 ALLOW_EMPTY = "SE_ALLOW_EMPTY_RUN"
 
-#: Set by the supervisor when it RESUMES after a crash. A resumed segment is handed only the tests the
-#: previous segments did not finish, so a final segment made entirely of skips is normal and says
-#: nothing about coverage — the run as a whole is what the guard is about, and the supervisor
-#: aggregates that itself.
+#: Set by the supervisor when it resumes after a crash. A resumed segment may be all skips; the
+#: supervisor aggregates the whole run itself.
 RESUME = "SE_TEST_DESELECT"
 
 _COUNTS: dict[str, int] = {}
 
 
 def pytest_runtest_logreport(report):
-    """Count REAL outcomes — a pass, a failure, or an error — separately from skips.
+    """Count passes, failures and errors separately from skips.
 
-    Counted from the reports rather than read off ``terminalreporter.stats`` so the answer is the same
-    under ``-q``, under the supervisor's resumed segments and under xdist, none of which is guaranteed
-    to leave the same stats dict behind.
+    Counted from reports rather than ``terminalreporter.stats`` so the result is the same under ``-q``,
+    resumed supervisor segments and xdist.
     """
     if report.when == "call" or (report.when == "setup" and report.outcome == "skipped"):
         _COUNTS[report.outcome] = _COUNTS.get(report.outcome, 0) + 1
@@ -218,8 +206,7 @@ def _verdict(session, exitstatus) -> str | None:
         return None
     if getattr(session.config.option, "collectonly", False):
         return None
-    # An exit for a node fault (78) or an internal error already carries its own diagnosis, and a run
-    # that failed has by definition produced a real outcome. Only 0 and "nothing collected" can lie.
+    # Other exit codes (node fault 78, internal error, failures) already carry their own diagnosis.
     if exitstatus not in (0, int(pytest.ExitCode.NO_TESTS_COLLECTED)):
         return None
     if _COUNTS.get("passed", 0) + _COUNTS.get("failed", 0) + _COUNTS.get("error", 0):
@@ -228,29 +215,22 @@ def _verdict(session, exitstatus) -> str | None:
     n = len(getattr(session, "items", []) or [])
     if n == 0:
         return (
-            "this run selected NO tests at all. That is not a pass: pytest exits 5 for it, a shell "
-            "that only checks for zero reads 5 as failure and 0 as success, and a launcher that "
-            "passes its arguments straight through to pytest makes a mistyped -k or -m "
-            "come back looking like a run that finished. Check the selection, or set "
-            f"{ALLOW_EMPTY}=1 if selecting nothing is genuinely the right answer here."
+            "this run selected no tests at all; check the -k/-m selection, or set "
+            f"{ALLOW_EMPTY}=1 if selecting nothing is intended."
         )
     return (
-        f"this run collected {n} test(s), {_COUNTS.get('skipped', 0)} of them SKIPPED, and NOTHING "
-        f"passed, failed or errored. pytest reports that as success, and it is the exact shape of "
-        f"both coverage incidents this suite has had: the tests existed, they were parameterised "
-        f"over envs this interpreter does not have, and the run was green having measured nothing. "
-        f"Run with -rs to see the reasons; set SE_REQUIRE_ENV_MODULES to make a named family's "
-        f"absence fatal, or {ALLOW_EMPTY}=1 if an all-skipped run is what was wanted."
+        f"this run collected {n} test(s), {_COUNTS.get('skipped', 0)} of them skipped, and nothing "
+        f"passed, failed or errored, so it measured nothing. Run with -rs to see the reasons; set "
+        f"SE_REQUIRE_ENV_MODULES to make a named family's absence fatal, or {ALLOW_EMPTY}=1 if an "
+        f"all-skipped run is intended."
     )
 
 
 def pytest_terminal_summary(terminalreporter, exitstatus, config):
-    """Say it where a reader will see it. Written before the exit code is changed, not after.
+    """Print skips grouped by cause and the empty-run verdict.
 
-    Split from ``pytest_sessionfinish`` on purpose: the terminal reporter emits its summary from
-    within its own ``sessionfinish``, so a message produced there would land after the "== 0 passed =="
-    line or not at all, and raising from there risks an INTERNALERROR that buries the sentence this
-    exists to print.
+    Printed here rather than in ``pytest_sessionfinish``, where the terminal summary has already been
+    written.
     """
     skipped = terminalreporter.stats.get("skipped", [])
     if skipped:
