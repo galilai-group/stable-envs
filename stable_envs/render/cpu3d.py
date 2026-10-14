@@ -9,6 +9,7 @@ import numpy as np
 import torch
 
 from . import raycast3d as R3
+from .nvdiff import texture_array
 from .primitives import (
     GEOM_NAMES,
     INF,
@@ -46,18 +47,6 @@ SHADOW_TEST_ALL_HITS: bool = False
 CPU_CHUNK = 16
 # CUDA texture weights use eight fractional bits; zero selects floating-point weights.
 TEX_FRAC_BITS = 8
-
-
-def texture_array(m, tex: int) -> np.ndarray:
-    """Read texture ``tex`` of a compiled model as an (h, w, 3) uint8 array."""
-    w, h = int(m.tex_width[tex]), int(m.tex_height[tex])
-    nc = int(m.tex_nchannel[tex]) if hasattr(m, "tex_nchannel") else 3
-    a0 = int(m.tex_adr[tex])
-    buf = getattr(m, "tex_data", None)
-    if buf is None:
-        buf = m.tex_rgb
-    a = np.asarray(buf[a0 : a0 + w * h * nc], np.uint8).reshape(h, w, nc)
-    return np.repeat(a, 3, -1) if nc == 1 else np.ascontiguousarray(a[..., :3])
 
 
 def bilinear(tex: torch.Tensor, u: torch.Tensor, v: torch.Tensor, frac_bits: int | None = None) -> torch.Tensor:

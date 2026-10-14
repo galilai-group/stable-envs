@@ -71,23 +71,22 @@ class FetchSemantics:
 
     def make_variation_space(self):
         # Read defaults from the owned simulator without allocating a render context.
-        from .envs import BLUE, _effective_rgba, sky_color
+        from ...render.nvdiff import effective_rgba
+        from .envs import BLUE, sky_color
 
         m = self._simulator.reference_model()
-        floor = _effective_rgba(m, m.geom("floor0").id)[:3]
+        floor = effective_rgba(m, m.geom("floor0").id)[:3]
         table = next(
-            _effective_rgba(m, g)[:3]
+            effective_rgba(m, g)[:3]
             for g in range(m.ngeom)
             if m.geom_matid[g] >= 0 and m.material(int(m.geom_matid[g])).name == "table_mat"
         )
         arm = next(
-            _effective_rgba(m, g)[:3]
-            for g in range(m.ngeom)
-            if np.allclose(_effective_rgba(m, g)[:3], BLUE, atol=2e-3)
+            effective_rgba(m, g)[:3] for g in range(m.ngeom) if np.allclose(effective_rgba(m, g)[:3], BLUE, atol=2e-3)
         )
         colors = dict(floor=floor, table=table, arm=arm, goal=m.site_rgba[m.site("target0").id, :3])
         if self._has_object:
-            colors["object"] = _effective_rgba(m, m.geom("object0").id)[:3]
+            colors["object"] = effective_rgba(m, m.geom("object0").id)[:3]
         result = {
             k: Dict({"color": Box(low=0.0, high=1.0, shape=(3,), init_value=v.tolist())}) for k, v in colors.items()
         }

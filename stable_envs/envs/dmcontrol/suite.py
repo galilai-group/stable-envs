@@ -7,6 +7,7 @@ from ..._core.plate_texels import substitute as _substitute_texels
 from ..._core.plate_texels import texel_key as _texel_key
 from ..._core.plate_texels import texel_slots as _texel_slots
 from ...render import raycast3d as R3
+from ...render.mjwarp import effective_alpha
 from ...spaces import Box, Dict
 from ._model import (
     _GRID_SLOTS,
@@ -14,7 +15,6 @@ from ._model import (
     HIDDEN_GROUP,
     LIGHT_DIRECTIONAL,
     VISIBLE_GROUPS,
-    _effective_alpha,
     _grid_defaults,
     _grid_masks,
     _mat_rgb,
@@ -156,7 +156,7 @@ class DMControlSuite(_DMCModel):
         """Select elements with both a visible group and positive resolved alpha."""
         grp = m.geom_group if kind == "geom" else m.site_group
         n = m.ngeom if kind == "geom" else m.nsite
-        alpha = _effective_alpha(m, kind)
+        alpha = effective_alpha(m, kind)
         return [i for i in range(n) if int(grp[i]) in VISIBLE_GROUPS and alpha[i] > 0]
 
     def _movers(self, m) -> tuple[list[int], list[int]]:

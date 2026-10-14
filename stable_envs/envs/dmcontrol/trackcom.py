@@ -11,6 +11,7 @@ from ..._core.warp_cuda import require_warp_cuda
 from ...render import _resources as _RES
 from ...render import cpu3d as C3
 from ...render import mjwarp as MW
+from ...render.mjwarp import effective_alpha
 from ...spaces import Box, Dict
 from ._mass_rows import ARRAYS as _MASS_ARRAYS
 from ._mass_rows import MassRows
@@ -18,7 +19,6 @@ from ._model import (
     _TC_CACHE,
     MJW_CHUNK,
     VISIBLE_GROUPS,
-    _effective_alpha,
     _grid_defaults,
     _grid_masks,
     _row_width,
@@ -323,7 +323,7 @@ class DMControlTrackCom(_DMCModel):
         import mujoco
 
         m, pr = cls._model(), cls._pristine()
-        alpha = _effective_alpha(m, "geom", rgba=pr["geom_rgba"], mat_rgba=pr["mat_rgba"])
+        alpha = effective_alpha(m, "geom", rgba=pr["geom_rgba"], mat_rgba=pr["mat_rgba"])
         used: list[int] = []
         for i in range(m.ngeom):
             if int(pr["geom_group"][i]) not in VISIBLE_GROUPS or alpha[i] <= 0:
@@ -347,7 +347,7 @@ class DMControlTrackCom(_DMCModel):
         m.geom_group[:] = pr["geom_group"]
         # Match MJWarp’s visible geom set, excluding sites. Static non-plane geoms
         # also receive per-row poses; their transforms simply repeat.
-        alpha = _effective_alpha(m, "geom", rgba=pr["geom_rgba"], mat_rgba=pr["mat_rgba"])
+        alpha = effective_alpha(m, "geom", rgba=pr["geom_rgba"], mat_rgba=pr["mat_rgba"])
         movers = [
             g
             for g in range(m.ngeom)

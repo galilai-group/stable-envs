@@ -4,11 +4,11 @@ import numpy as np
 
 from ..._core.mujoco_gl import mujoco_renderer
 from ...env import Env
+from ...render.mjwarp import effective_alpha
 from ...spaces import Box, Dict, Discrete
 from ._model import (
     _ENV_CACHE,
     VISIBLE_GROUPS,
-    _effective_alpha,
     _episode_slots,
     _slot_element,
     _slot_name,
@@ -143,8 +143,8 @@ class _DMCModel(Env):
         import mujoco
 
         m, pr = cls._model(), cls._pristine()
-        galpha = _effective_alpha(m, "geom", rgba=pr["geom_rgba"], mat_rgba=pr["mat_rgba"])
-        salpha = _effective_alpha(m, "site", rgba=pr["site_rgba"], mat_rgba=pr["mat_rgba"])
+        galpha = effective_alpha(m, "geom", rgba=pr["geom_rgba"], mat_rgba=pr["mat_rgba"])
+        salpha = effective_alpha(m, "site", rgba=pr["site_rgba"], mat_rgba=pr["mat_rgba"])
         out: list[tuple[str, str, tuple[int, ...]]] = []
         seen: dict[str, tuple[str, tuple[int, ...]]] = {}
         for arr, k in cls._slots():
@@ -245,7 +245,7 @@ class _DMCModel(Env):
             ("geom", m.geom_matid, pr["geom_group"], m.ngeom),
             ("site", m.site_matid, pr["site_group"], m.nsite),
         ):
-            alpha = _effective_alpha(m, kind, rgba=pr[f"{kind}_rgba"], mat_rgba=pr["mat_rgba"])
+            alpha = effective_alpha(m, kind, rgba=pr[f"{kind}_rgba"], mat_rgba=pr["mat_rgba"])
             for i in range(n):
                 # Group membership alone includes transparent markers with no visible pixels.
                 if int(grp[i]) not in VISIBLE_GROUPS or alpha[i] <= 0:
@@ -287,7 +287,7 @@ class _DMCModel(Env):
         vis = {}
         if self.VISIBILITY_KNOB:
             for kind, name, eids in self._hideable():
-                a = _effective_alpha(m, kind, rgba=pr[f"{kind}_rgba"], mat_rgba=pr["mat_rgba"])
+                a = effective_alpha(m, kind, rgba=pr[f"{kind}_rgba"], mat_rgba=pr["mat_rgba"])
                 # A body landmark is visible if any of its pristine geoms are visible.
                 vis[name] = Discrete(2, init_value=int(any(float(a[i]) > 0 for i in eids)))
         if vis:

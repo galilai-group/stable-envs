@@ -1,6 +1,6 @@
 import numpy as np
 
-from ...render.cpu3d import texture_array
+from ...render.nvdiff import texture_array
 
 
 class Textures:

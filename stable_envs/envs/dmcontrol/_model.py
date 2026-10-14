@@ -181,22 +181,6 @@ def _tex_rgb(m, matid: int) -> np.ndarray:
     return u[0] if len(u) == 1 else reg.mean(0)
 
 
-def _effective_alpha(m, kind: str, rgba=None, mat_rgba=None) -> np.ndarray:
-    """Resolve geom/site alpha through the material when element RGBA is the default.
-
-    Supply pristine rgba and mat_rgba snapshots when inspecting class defaults;
-    shared live models may retain a previous bake's visibility overrides.
-    """
-    rgba = np.asarray(getattr(m, f"{kind}_rgba") if rgba is None else rgba, np.float64)
-    mat = np.asarray(m.mat_rgba if mat_rgba is None else mat_rgba, np.float64)
-    matid = np.asarray(getattr(m, f"{kind}_matid"), np.int64)
-    a = rgba[:, 3].copy()
-    default = np.all(np.isclose(rgba, [0.5, 0.5, 0.5, 1.0]), axis=1)
-    for i in np.flatnonzero(default & (matid >= 0)):
-        a[i] = float(mat[matid[i], 3])
-    return a
-
-
 def _row_width(m, arr: str) -> int:
     a = np.asarray(getattr(m, arr))
     return int(a.reshape(a.shape[0], -1).shape[1]) if a.ndim > 1 else 1
