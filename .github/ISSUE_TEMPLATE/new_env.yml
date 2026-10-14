@@ -1,0 +1,42 @@
+name: New environment
+description: Propose porting an environment to stable-envs.
+labels: [enhancement]
+body:
+  - type: input
+    id: source
+    attributes:
+      label: Source project
+      description: A link to the library or code the environment comes from.
+    validations:
+      required: true
+  - type: input
+    id: license
+    attributes:
+      label: Licence
+      description: The source project's licence.
+    validations:
+      required: true
+  - type: dropdown
+    id: state
+    attributes:
+      label: Can the source step from a given state and export its full state?
+      description: The port is tested against the source. For that, the source must save and restore its full state.
+      options:
+        - "Yes, both"
+        - "Only one of them"
+        - "No"
+        - "Not sure"
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: Who would use it, and what it adds to the existing environments.
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: The physics engine, the renderer, variation spaces, or anything else that matters for the port.
