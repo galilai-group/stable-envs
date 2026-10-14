@@ -77,21 +77,19 @@ def test_adapter_replays_every_recorded_step_from_restored_states(directory, dom
     with np.load(FIXTURES / directory / entry["file"], allow_pickle=False) as data:
         env = factory(3)
         try:
-            # Restore reached source states after a different candidate history.
-            for start in (0, 7, 24):
-                expected = state_at(data, start, batch=3, physics=env.physics_layout)
+            # Each step starts from the recorded state, so platform roundoff cannot compound
+            # through chaotic dynamics; the solver's warm start is only a starting guess.
+            for t, action in enumerate(data["actions"]):
+                expected = state_at(data, t, batch=3, physics=env.physics_layout)
                 env.set_state(expected)
                 compare_state(env.get_state(), expected)
-                for t, action in enumerate(data["actions"][start:], start=start):
-                    result = env.step(action)
-                    # The solver's warm start is a starting guess; across platforms the
-                    # physics it converges to is what must match.
-                    compare_state(
-                        result["state"].exclude("warmstart"),
-                        state_at(data, t + 1, batch=3, physics=env.physics_layout).exclude("warmstart"),
-                        atol=FROZEN_FLOAT64_ATOL,
-                    )
-                    assert_outputs(result, data, t, **compare)
+                result = env.step(action)
+                compare_state(
+                    result["state"].exclude("warmstart"),
+                    state_at(data, t + 1, batch=3, physics=env.physics_layout).exclude("warmstart"),
+                    atol=FROZEN_FLOAT64_ATOL,
+                )
+                assert_outputs(result, data, t, **compare)
         finally:
             env.close()
 
