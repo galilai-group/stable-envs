@@ -591,12 +591,8 @@ class PyFlytRocketLanding(Env):
         "official_renderer_evidence": "the official PyFlyt 0.29.0 / pybullet 3.2.7 frame's brightest "
         "body pixel is 0.991*int(255*c); the requested triple is absent "
         "from the OFFICIAL frames too",
-        "evidence": (
-            "tests/fixtures/evidence/rocket_colour/colour_law_ceiling.json",
-            "tests/fixtures/evidence/rocket_colour/colour_check_decision.md",
-        ),
+        "evidence": ("tests/fixtures/evidence/rocket_colour/colour_law_ceiling.json",),
         "measured_against": "PyFlyt 0.29.0, pybullet 3.2.7 (bullet3 TinyRenderer.cpp Shader::fragment)",
-        "ruled_by": "Sami, 2026-09-16, on tests/fixtures/evidence/rocket_colour/colour_check_decision.md",
         "scope_note": "scoped to these five lit leaves only; any other RGB leaf on this env stays "
         "judged against literal equality",
         "successor": "PROPOSAL only, not implemented and not mandatory: compare this renderer's "

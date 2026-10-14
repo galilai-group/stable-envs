@@ -51,7 +51,7 @@ env = snv.CartPole(num_envs=8)
 These 76 are the registrations with every extra installed; without PyFlyt there are 75. Every one
 simulates except `CraftaxClassic` and `CraftaxFull`, which are renderer-only (`reset` and `step`
 raise); `CraftaxClassicPixels` and `CraftaxPixels` carry their simulation. See
-[`tests/exemptions.toml`](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/exemptions.toml).
+[`tests/exemptions.toml`](https://github.com/galilai-group/stable-envs/blob/main/tests/exemptions.toml).
 
 When in doubt, `list_families()` and `info(name)["family"]` / `["domain"]` are the source of truth.
 

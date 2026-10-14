@@ -63,8 +63,7 @@ this 1.60× faster than the previous 2× fidelity implementation. It is still 22
 slower than the old default, whose mean MSE was 0.002059. B1 remains slower than
 source. This Cube checkpoint does not certify Scene; its separate gate follows
 in the [testing record](../testing.md).
-[CSV with latency and FPS dispersion](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/cube-default-cuda-performance.csv)
-and [acceptance scope](../testing.md#cube-default-cuda-renderer-acceptance).
+See the [acceptance scope](../testing.md#cube-default-cuda-renderer-acceptance).
 
 ### Scene default checkpoint
 
@@ -90,7 +89,6 @@ ours returns CUDA images. This is not an online or equal-output-destination test
 Mean normalized MSE is **0.000768 ± 0.000106**, worst **0.000950**. The old default
 was about 4.15× faster at B256 but exceeded the pixel limit (mean MSE 0.006595).
 The new path meets 0.001 on this corpus, not 0.0005, and remains slower at B1.
-[Acceptance scope](../testing.md#scene-default-cuda-renderer-acceptance) and
-[CSV with timing dispersion](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/scene-default-cuda-performance.csv).
+[Acceptance scope](../testing.md#scene-default-cuda-renderer-acceptance).
 
 ::: stable_envs.render.mjwarp
