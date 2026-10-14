@@ -33,7 +33,7 @@ unless another module imports them.
 ```python
 env = snv.PushT(num_envs=8)
 env = snv.CartPole(num_envs=8)
-# snv.DMCReacherHard, snv.OGBCube, snv.PointMazeLargeNavigate, …
+# snv.DMCReacherHard, snv.OGBCube, snv.CraftaxClassicPixels, snv.PointMazeLargeNavigate, …
 ```
 
 `dir(snv)` lists the documented namespace and the registered class names.
@@ -48,6 +48,7 @@ env = snv.CartPole(num_envs=8)
 | family | environments | examples |
 |---|---:|---|
 | `classic_control` | 5 | `CartPole`, `Pendulum` |
+| `craftax` | 4 | `CraftaxClassicPixels`, `CraftaxSymbolic` |
 | `dmcontrol` | 18 | `DMCReacherHard`, `DMCCheetahRun` (`domain="reacher"`, `"cheetah"`, …) |
 | `fetch` | 12 | `FetchReach`, `FetchPush`, … |
 | `navigation` | 5 | `TwoRoom`, `Piecewise`, `SimplePointMaze` |
@@ -55,7 +56,7 @@ env = snv.CartPole(num_envs=8)
 | `pusht` | 2 | `PushT`, `PushTDiscrete` |
 | `pyflyt` | 1 | `PyFlytRocketLanding` |
 
-These 70 register with every extra installed. Without PyFlyt there are 69.
+These 74 register with every extra installed. Without PyFlyt there are 73.
 
 ## Fidelity
 

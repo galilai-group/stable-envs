@@ -18,8 +18,9 @@ uvx nox -s docs                         # strict documentation build
 
 `test(<profile>)` runs `uv sync --frozen` with the family's extras and its `pin-<profile>` group into
 `.venvs/<profile>-py3.12`. It then runs the family's unit, integration and CPU regression tests.
-The profiles are `core`, `classic`, `navigation`, `pusht`, `dmc`, `fetch`, `ogbench` and `rocket`.
-[`ci/families.toml`](ci/families.toml) lists the paths and tests each profile owns and what it installs.
+The profiles are `core`, `classic`, `navigation`, `pusht`, `dmc`, `fetch`, `ogbench`, `rocket` and
+`craftax`. [`ci/families.toml`](ci/families.toml) lists the paths and tests each profile owns and what it
+installs.
 
 To work in one profile directly:
 

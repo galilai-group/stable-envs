@@ -169,3 +169,12 @@ tests = ["test_rocket_*", "test_nvdiff_*"]
 requires = ["PyFlyt==0.29.0", "pybullet==3.2.7"]
 capabilities = ["swm"]
 swm_with = ["cvxpy"]
+
+[family.craftax]
+extras = ["craftax"]
+groups = ["pin-craftax"]
+paths = ["stable_envs/envs/craftax/**"]
+tests = ["test_craftax*"]
+requires = ["craftax", "jax"]
+capabilities = ["swm"]
+shards = { pr = 1, nightly = 1 }

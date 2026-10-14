@@ -1,5 +1,14 @@
 # Third-party notices
 
+## Craftax
+
+The `craftax` family (`stable_envs/envs/craftax/`) runs
+[Craftax](https://github.com/MichaelTMatthews/Craftax), which is MIT-licensed ("Copyright (c) 2024
+Michael Matthews"), as an external dependency. Its simulator, renderer and textures are not copied
+here; frames are the pixel observations Craftax computes. The per-lane key handling and the uint8
+frame scaling follow stable-worldmodel's `stable_worldmodel/envs/craftax/craftax.py` at commit
+`21446f1ede6d5284e981bd7b47f432b994e6d812` (MIT).
+
 ## SDL_gfx drawing rules
 
 `stable_envs/render/gfxdraw/` reimplements in Torch the integer rasterization and

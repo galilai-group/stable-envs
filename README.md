@@ -72,11 +72,12 @@ snv.CartPole / snv.Pendulum / …                  concrete env classes
 
 ## Environments
 
-With every extra installed, `snv.list_envs()` returns 70 environments:
+With every extra installed, `snv.list_envs()` returns 74 environments:
 
 | family | environments |
 |---|---:|
 | `classic_control` | 5 |
+| `craftax` | 4 |
 | `dmcontrol` | 18 |
 | `fetch` | 12 |
 | `navigation` | 5 |
@@ -85,7 +86,7 @@ With every extra installed, `snv.list_envs()` returns 70 environments:
 | `pyflyt` | 1 |
 
 A family registers only when its dependencies import. Without `mujoco`, DM Control, Fetch and OGBench
-manipulation do not register. Without PyFlyt the count is 69.
+manipulation do not register. Without PyFlyt the count is 73.
 
 Device support differs by family and backend. For example, Fetch on CPU needs `backend="opengl"`.
 See [Limitations](docs/concepts/limitations.md).

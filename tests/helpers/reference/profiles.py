@@ -88,6 +88,7 @@ PINS = {
     "native": {"numpy": "2.5.3", "gymnasium": "1.3.0", "pygame": "2.6.1"},
     "fetch": {"numpy": "2.5.3", "gymnasium": "1.3.0", "gymnasium-robotics": "1.4.2", "mujoco": "3.11.0"},
     "rocket": {"numpy": "2.5.3", "gymnasium": "1.3.0", "PyFlyt": "0.29.0", "pybullet": "3.2.7"},
+    "craftax": {"craftax": "1.6.1", "jax": "0.11.2", "jaxlib": "0.11.2"},
 }
 # Every profile requires these functions for every declared registration, seed and
 # action dtype; a -k/-m selection cannot pass a profile.

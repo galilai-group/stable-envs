@@ -84,6 +84,9 @@ mjwarp = [
 # Rocket checks these exact PyFlyt and pybullet versions at construction. PyFlyt 0.29.0 declares
 # numpy<2; the rocket reference profile runs it on numpy 2.5.3.
 rocket = ["pillow", "scipy", "PyFlyt==0.29.0", "pybullet==3.2.7"]
+# Craftax on CPU; craftax-gpu takes JAX's CUDA 12 build for device="cuda".
+craftax = ["craftax>=1.6.1", "jax>=0.4.30"]
+craftax-gpu = ["craftax>=1.6.1", "jax[cuda12]>=0.4.30"]
 hf = ["datasets>=2.14"]
 examples = ["imageio", "imageio-ffmpeg", "opencv-python"]
 # No `all` extra: Fetch needs mujoco<3.12, and nvdiffrast cannot be expressed
@@ -171,6 +174,11 @@ pin-rocket = [
   "PyFlyt==0.29.0; python_version >= '3.12'",
   "pybullet==3.2.7; python_version >= '3.12'",
 ]
+pin-craftax = [
+  "craftax==1.6.1; python_version >= '3.12'",
+  "jax==0.11.2; python_version >= '3.12'",
+  "jaxlib==0.11.2; python_version >= '3.12'",
+]
 # GPU add-on, combinable with pin-dmc or pin-ogbench.
 gpu-mjwarp = ["mujoco-warp==3.12.0; python_version >= '3.12'", "warp-lang==1.17.0; python_version >= '3.12'"]
 
@@ -186,6 +194,7 @@ conflicts = [
     { group = "pin-fetch" },
     { group = "pin-ogbench" },
     { group = "pin-rocket" },
+    { group = "pin-craftax" },
   ],
   # Fetch needs MuJoCo 3.11; these need 3.12.
   [{ extra = "robotics" }, { group = "pin-dmc" }],
