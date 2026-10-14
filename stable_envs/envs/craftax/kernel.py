@@ -166,7 +166,6 @@ class Kernel:
         self._pack = jax.jit(pack)
         self._unpack = jax.jit(unpack)
         self._frames = jax.jit(frames)
-        self._packed_frames = jax.jit(lambda blocks: frames(unpack(blocks)[0]))
 
     @staticmethod
     def device(device: torch.device):
@@ -232,7 +231,7 @@ class Kernel:
         return torch.from_dlpack(self._frames(state))
 
     def render_state(self, td, device: torch.device) -> torch.Tensor:
-        return torch.from_dlpack(self._packed_frames(self._blocks(td, device)))
+        return self.render(self.restore(td, device)[0])
 
 
 @functools.cache
