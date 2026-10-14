@@ -1,18 +1,10 @@
 """The OGB / Rocket / maze VariationMaps: every offered swm leaf is classified, and the classification
-agrees with the map it is supposed to describe.
+agrees with the map.
 
-The point of these tests is NOT that the reasons are well written. It is that no swm leaf can be
-added upstream, or removed from a map here, without something failing: an unclassified leaf is
-exactly the Gate-F gap the maps exist to close, and it is invisible unless a test counts.
-
-Most of this runs without ``stable_worldmodel``, against the leaf inventory recorded from the live
-wrappers, because swm is not importable in every environment this suite runs in and a test that
-skips where it matters is not a test. The live enumeration runs as well wherever swm IS importable,
-and asserts the recorded inventory still matches the wrapper.
+Most checks run against the leaf inventory recorded from the live wrappers, so they need no
+``stable_worldmodel``. Where swm is importable, a live test asserts the recorded inventory still
+matches the wrapper.
 """
-
-# ruff: noqa: I001
-# worldmodel must load before newcells (circular MAPS install).
 
 import numpy as np
 import pytest
@@ -41,7 +33,7 @@ def _map_for(swm_id):
 
 
 def test_the_new_maps_are_registered_in_the_shared_table():
-    """The one line in compat/worldmodel.py is what makes these reachable from `variation_map`."""
+    """``tests/helpers/reference/variation.py`` installs these into ``VARIATION_MAPS``."""
     for name, m in NEWCELL_VARIATION_MAPS.items():
         assert VARIATION_MAPS.get(name) is m, f"{name} is not registered in VARIATION_MAPS"
         assert variation_map(name) is m
@@ -49,7 +41,7 @@ def test_the_new_maps_are_registered_in_the_shared_table():
 
 def test_registering_the_new_maps_did_not_disturb_the_pre_existing_ones():
     for name in ("TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones", "PushT"):
-        assert name in VARIATION_MAPS, f"{name} was lost when the new maps were merged in"
+        assert name in VARIATION_MAPS, f"{name} is missing from VARIATION_MAPS"
 
 
 # ---------------------------------------------------------------- completeness
@@ -64,9 +56,7 @@ def test_every_offered_leaf_is_in_exactly_one_bucket_of_the_map(swm_id):
     declared = set(m.swm_only)
     undocumented = leaves - mapped - declared
     assert not undocumented, (
-        f"{swm_id}: {sorted(undocumented)} are offered by swm and appear in NEITHER the mapped "
-        f"leaves nor swm_only. That is a silently unmapped leaf, which is the Gate-F gap the maps "
-        f"closes -- classify it rather than deleting this assertion"
+        f"{swm_id}: {sorted(undocumented)} are offered by swm and appear in neither the mapped leaves nor swm_only"
     )
     both = mapped & declared
     assert not both, f"{swm_id}: {sorted(both)} are both mapped and declared unmapped"
@@ -91,8 +81,7 @@ def test_every_verdict_is_one_of_the_four_buckets(swm_id):
 
 @pytest.mark.parametrize("swm_id", IDS)
 def test_the_structured_verdict_agrees_with_the_map(swm_id):
-    """`mapped` in the table must mean mapped in the VariationMap, and vice versa. Two records of
-    the same fact that can drift apart are worse than one."""
+    """`mapped` in the classification table means mapped in the VariationMap, and vice versa."""
     m = _map_for(swm_id)
     mapped = {t for t, _ in m.pairs().values()}
     for leaf, rec in LEAF_CLASSIFICATION[swm_id]["leaves"].items():
@@ -107,9 +96,7 @@ def test_the_structured_verdict_agrees_with_the_map(swm_id):
 
 @pytest.mark.parametrize("swm_id", IDS)
 def test_nothing_is_declared_dead_upstream_without_citing_a_measurement(swm_id):
-    """`dead_upstream` is a claim about the OFFICIAL renderer, not about our reading of its source.
-    It is the one verdict that lets us ship a knob-shaped hole, so it carries the highest evidence
-    bar: a probe, with counts."""
+    """A `dead_upstream` verdict cites a measurement of the official renderer (pixels or arrays)."""
     for leaf, rec in LEAF_CLASSIFICATION[swm_id]["leaves"].items():
         if rec["classification"] == "dead_upstream":
             ev = rec.get("evidence", "")
@@ -141,10 +128,7 @@ def test_rocket_maps_the_five_material_colours_and_the_start_leaves():
     assert set(m.pairs()) == ROCKET_COLOURS | set(ROCKET_START_LEAVES)
     for ours, (theirs, factor) in m.pairs().items():
         assert ours == theirs, f"{ours} should map by identical path, not to {theirs}"
-        assert factor == 1.0, (
-            f"{ours} carries factor {factor}; both sides are 0-255 RGB and a factor here would be "
-            f"the PushT scale bug in a new place"
-        )
+        assert factor == 1.0, f"{ours} carries factor {factor}; both sides are 0-255 RGB"
 
 
 def test_rocket_ignition_is_ours_only_because_swm_derives_it_from_the_action():
@@ -154,8 +138,7 @@ def test_rocket_ignition_is_ours_only_because_swm_derives_it_from_the_action():
 
 
 def test_rocket_sky_color_is_dead_upstream_and_not_quietly_mapped():
-    """The one leaf measured dead upstream. If a future edit maps it, this fails rather than shipping
-    a knob that moves nothing."""
+    """The one leaf measured dead upstream must stay unmapped."""
     m = _map_for(ROCKET)
     assert "environment.sky_color" not in {t for t, _ in m.pairs().values()}
     rec = LEAF_CLASSIFICATION[ROCKET]["leaves"]["environment.sky_color"]
@@ -172,9 +155,7 @@ def test_rocket_start_leaves_are_mapped_variation_but_not_renderer_style():
 
 
 def test_rocket_default_variation_round_trips_through_the_style_layout():
-    """The registered default must survive `variation -> style -> variation` unchanged. This is the
-    mapping half of "the registered default is reproducible through the mapping"; the pixel half is
-    the GPU artifact."""
+    """The registered default survives `variation -> style -> variation` unchanged."""
     rl = pytest.importorskip("stable_envs.envs.rocket.legacy")
     layout = rl.style_layout()
     default = np.asarray(rl._default_style_row(), np.float64)
@@ -189,8 +170,7 @@ def test_rocket_default_variation_round_trips_through_the_style_layout():
 
 
 def test_rocket_mapped_leaves_are_disjoint_slices_of_the_style_row():
-    """Isolation, structurally: two mapped leaves that overlap in the style row cannot be varied
-    independently no matter what the renderer does."""
+    """Mapped leaves occupy disjoint slices of the style row, so each varies independently."""
     rl = pytest.importorskip("stable_envs.envs.rocket.legacy")
     layout = rl.style_layout()
     m = _map_for(ROCKET)
@@ -203,9 +183,8 @@ def test_rocket_mapped_leaves_are_disjoint_slices_of_the_style_row():
 
 
 def test_rocket_pad_color_default_is_white_not_the_declared_two_hundred():
-    """swm declares pad.color init_value (200,200,200) but a plain reset loads the UNMODIFIED pad
-    URDF -- `_modify_pad_urdf` runs only when a variation is requested -- so the pad is white. Our
-    default is the one a plain reset produces, which is what "the registered default" means."""
+    """swm declares pad.color (200,200,200), but a plain reset loads the unmodified pad URDF
+    (`_modify_pad_urdf` runs only on a variation request), so the default is white."""
     rl = pytest.importorskip("stable_envs.envs.rocket.legacy")
     layout = rl.style_layout()
     o, w = layout["pad.color"]
@@ -251,9 +230,7 @@ def test_lock_color_is_scene_only():
 @pytest.mark.swm
 @pytest.mark.parametrize("swm_id", IDS)
 def test_the_recorded_inventory_still_matches_the_live_wrapper(swm_id):
-    """Everything above is measured against a recorded list. This is the test that keeps that list
-    honest: if swm adds, removes or renames a leaf, the recorded inventory is stale and every
-    completeness assertion above has been checking the wrong set."""
+    """The recorded leaf inventory the tests above use still matches the live wrapper."""
     gymnasium = pytest.importorskip("gymnasium")
     pytest.importorskip("stable_worldmodel")
     try:
@@ -277,8 +254,7 @@ SPM = "swm/SimplePointMaze-v0"
 
 
 def test_ogbmaze_wall_color_is_renamed_not_identical():
-    """swm spells it `wall.color`, we spell it `walls.color`. Mapping it as `identical` would map
-    nothing at all, silently, because neither side would find the other's path."""
+    """swm spells it `wall.color` and we spell it `walls.color`, so it must be renamed, not identical."""
     m = _map_for(MAZE)
     assert m.renamed.get("walls.color") == "wall.color"
     assert "wall.color" not in m.identical and "walls.color" not in m.identical
@@ -286,19 +262,17 @@ def test_ogbmaze_wall_color_is_renamed_not_identical():
 
 
 def test_ogbmaze_default_conflict_is_resolved_in_favour_of_the_pixel_mode_value():
-    """swm reads wall.color's init_value from the loaded XML, which is 1.0 in states mode and 0.6 in
-    pixels mode. Our renderer reproduces the pixel-mode appearance, so 0.6 is the right default and
-    the reason must say why rather than leaving a reader to rediscover the conflict."""
+    """swm's wall.color default is 1.0 in states mode and 0.6 in pixels mode; ours is the pixel-mode 0.6."""
     rec = LEAF_CLASSIFICATION[MAZE]["leaves"]["wall.color"]
     assert rec["classification"] == "mapped"
     assert "0.6" in rec["evidence"] and "0 of 50,176" in rec["evidence"]
 
 
 def test_ogbmaze_records_that_the_registered_states_mode_config_renders_every_leaf_dead():
-    """The sharpest upstream finding for this id: in ob_type='states' -- which is what the swm id
-    registers -- none of the five leaves reaches a pixel, because compile_model() rebuilds ogbench's
-    renderer only for 'pixels'. A classification that did not say which config it was measured in
-    would be unreadable."""
+    """The config note records that in the registered ob_type='states' no leaf reaches a pixel.
+
+    ``compile_model()`` rebuilds ogbench's renderer only for 'pixels'.
+    """
     note = LEAF_CLASSIFICATION[MAZE]["config_note"]
     assert "states" in note and "custom_renderer" in note
     assert "pixels" in note
@@ -319,15 +293,9 @@ def test_ogbmaze_appearance_leaves_are_mapped_on_gate_evidence():
 
 @pytest.mark.parametrize("cell", sorted(RECORDED_OURS_LEAVES))
 def test_every_own_side_leaf_is_mapped_or_carries_an_ours_only_reason(cell):
-    """The completeness check in the OTHER direction, and the one the reviewer found missing.
+    """Every own-side leaf is mapped (a key of `pairs()`) or carries a non-empty `ours_only` reason.
 
-    `test_every_offered_leaf_is_in_exactly_one_bucket_of_the_map` makes every SWM leaf account for
-    itself. Nothing made OUR leaves do the same, so a leaf we render with no swm counterpart could
-    sit in the space with no statement of why -- which is how OGBMaze shipped `floor.tint` and
-    `rendering.decolor_floor` undocumented while three sibling leaves had reasons.
-
-    Every own-side leaf must be either MAPPED (a key of `pairs()`) or carry a non-empty `ours_only`
-    reason, and `ours_only` may not name a leaf we do not actually have.
+    `ours_only` may not name a leaf our space does not have.
     """
     m = NEWCELL_VARIATION_MAPS[cell]
     ours = set(RECORDED_OURS_LEAVES[cell])
@@ -335,15 +303,12 @@ def test_every_own_side_leaf_is_mapped_or_carries_an_ours_only_reason(cell):
     declared = set(m.ours_only)
     unexplained = ours - mapped - declared
     assert not unexplained, (
-        f"{cell}: {sorted(unexplained)} are leaves of OUR variation space and appear in NEITHER the "
-        f"map nor ours_only. Give each one a reason -- 'swm has no counterpart' is a claim, and an "
-        f"undocumented leaf is the same Gate-F gap as an unclassified swm leaf, facing the other way"
+        f"{cell}: {sorted(unexplained)} are leaves of our variation space and appear in neither the map nor ours_only"
     )
     both = mapped & declared
     assert not both, f"{cell}: {sorted(both)} are both mapped and declared ours-only"
     assert not (declared - ours), (
-        f"{cell}: ours_only names {sorted(declared - ours)}, which our variation space does not "
-        f"offer; a reason for a leaf that does not exist explains nothing"
+        f"{cell}: ours_only names {sorted(declared - ours)}, which our variation space does not offer"
     )
     for leaf in declared:
         assert m.ours_only[leaf].strip(), f"{cell}:{leaf} has an empty ours_only reason"
@@ -355,14 +320,11 @@ def test_no_ours_only_leaf_is_secretly_offered_by_swm(cell):
     m = NEWCELL_VARIATION_MAPS[cell]
     theirs = set(RECORDED_SWM_LEAVES[m.swm_id])
     for leaf in m.ours_only:
-        assert leaf not in theirs, (
-            f"{cell}:{leaf} is declared ours-only but swm offers it too. Either map it or move the "
-            f"reason to swm_only, where it will be checked against the swm inventory"
-        )
+        assert leaf not in theirs, f"{cell}:{leaf} is declared ours-only but swm offers it too"
 
 
 def test_ogbmaze_ours_only_names_the_five_leaves_swm_has_no_counterpart_for():
-    """The specific inventory, so a leaf cannot silently leave the list either."""
+    """The exact ours_only inventory for OGBMaze."""
     m = _map_for(MAZE)
     assert set(m.ours_only) == {
         "agent.scale",
@@ -372,18 +334,16 @@ def test_ogbmaze_ours_only_names_the_five_leaves_swm_has_no_counterpart_for():
         "rendering.decolor_floor",
     }
     assert "checker" in m.ours_only["floor.tint"], (
-        "floor.tint's reason must say WHY it is not swm's floor.color: ours multiplies the bound "
-        "texture, swm replaces the checker's two RGB values"
+        "floor.tint's reason must say why it is not swm's floor.color (ours multiplies the bound "
+        "texture, swm replaces the checker's two RGB values)"
     )
     assert "pixel_encoding" in m.ours_only["rendering.decolor_floor"], (
-        "decolor_floor's reason must name pixel_encoding, because the two are the same switch and a "
-        "reader who does not know that will file this as an unmapped swm leaf"
+        "decolor_floor's reason must name pixel_encoding, which is the same switch"
     )
 
 
 def test_both_pointmaze_large_cells_share_one_mapping():
-    """navigate and stitch differ by dataset, not by appearance; two maps that can drift apart would
-    be two records of one fact."""
+    """Navigate and stitch differ by dataset, not appearance, so they share one mapping."""
     a = NEWCELL_VARIATION_MAPS["PointmazeLargeNavigate"]
     b = NEWCELL_VARIATION_MAPS["PointmazeLargeStitch"]
     assert a.swm_id == b.swm_id == MAZE
@@ -425,8 +385,7 @@ def test_simple_point_maze_positions_are_reset_leaves_not_style(leaf):
 
 
 def test_simple_point_maze_mapped_leaves_are_dims_of_our_own_space():
-    """The map names OUR paths. If a path is neither a leaf of our variation space nor one of our reset
-    leaves, the mapping silently does nothing -- which is the failure mode `renamed` exists to prevent."""
+    """Every mapped path is a leaf of our variation space or one of our reset leaves."""
     spm = pytest.importorskip("stable_envs.envs.navigation.envs")
     space = spm.SimplePointMaze.make_variation_space(spm.SimplePointMaze)
     ours = set(space.names()) | {leaf.path for leaf in spm.SimplePointMaze.reset_leaves}
@@ -435,8 +394,7 @@ def test_simple_point_maze_mapped_leaves_are_dims_of_our_own_space():
 
 
 def test_craftax_ids_are_recorded_as_having_no_leaves_at_all():
-    """Confirmed live: CraftaxWrapper.__init__ sets variation_space = None, so there is no Gate-F
-    variation gap for either id. Recorded so the completeness count has no implicit exception."""
+    """CraftaxWrapper sets variation_space = None, so both Craftax ids are recorded with no leaves."""
     from tests.helpers.reference.variation_maps.newcells import CRAFTAX_NO_LEAVES
 
     assert set(CRAFTAX_NO_LEAVES) == {"swm/CraftaxClassicPixels-v1", "swm/CraftaxPixels-v1"}
@@ -594,7 +552,7 @@ def test_the_colour_write_touches_only_the_cube_geoms():
 
 
 def _ogb_space(cell):
-    """Frozen internal color layout through the recovered model-provider boundary, without CUDA."""
+    """The OGB manipulation variation space for ``cell``, built without CUDA."""
     import types
 
     pytest.importorskip("ogbench")

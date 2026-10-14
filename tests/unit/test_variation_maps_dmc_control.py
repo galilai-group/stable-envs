@@ -27,8 +27,8 @@ from tests.helpers.reference.variation_maps.dmc_control import (
 )
 
 needs_swm = pytest.mark.swm
-#: The DM Control cells register only when dm_control and a GL backend are importable; the two
-#: tests below are the only ones that need a DM Control cell and no swm.
+#: The DM Control cells register only when dm_control and a GL backend are importable; this marks
+#: the tests that need a DM Control cell but not swm.
 needs_dmc = pytest.mark.skipif(
     "DMCManipulatorBringBall" not in REGISTRY, reason="the DM Control cells did not register (dm_control/MUJOCO_GL)"
 )
@@ -347,6 +347,7 @@ def test_dead_upstream_leaves_really_are_dead(tmp_path):
     target, ball-in-cup's group-4 one). A leaf that moves both model and pixels is not dead.
     """
     import json
+    import os
     import subprocess
     import sys
 
@@ -359,8 +360,6 @@ def test_dead_upstream_leaves_really_are_dead(tmp_path):
     script = tmp_path / "probe.py"
     script.write_text(_DEAD_PROBE)
     result = tmp_path / "out.json"
-    import os
-
     import stable_envs
 
     # the subprocess must import the checkout under test, which is on sys.path via the root conftest.

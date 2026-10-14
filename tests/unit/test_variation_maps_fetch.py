@@ -17,15 +17,12 @@ certification run cannot pass without exercising the live wrapper and the GPU.
 from __future__ import annotations
 
 import os
-from pathlib import Path
 
 import numpy as np
 import pytest
 
 from tests.helpers import reference as WM
 from tests.helpers.reference.variation_maps import fetch as FM
-
-ROOT = Path(__file__).resolve().parents[2]
 
 SCENES = ("Reach", "Push", "Slide", "PickAndPlace")
 SUFFIXES = ("", "Dense", "Dict")
@@ -155,7 +152,7 @@ def test_background_drives_the_floor_and_the_sky():
 
 # ====================================================== the opt-in strictness switch for tiers 2/3
 
-#: Under ``STABLE_ENVS_REQUIRE_LIVE_SWM=1`` a missing dependency in tier 2 or 3 is a FAILURE.
+#: Under ``STABLE_ENVS_REQUIRE_LIVE_SWM=1`` a missing dependency in tier 2 or 3 is a failure.
 REQUIRE_LIVE = os.environ.get("STABLE_ENVS_REQUIRE_LIVE_SWM", "").strip() not in ("", "0", "false")
 
 
@@ -193,7 +190,7 @@ def _live_leaves(swm_id):
 @pytest.mark.swm
 @pytest.mark.parametrize("cls", CLASSES)
 def test_the_frozen_leaf_snapshot_is_still_what_the_wrapper_offers(cls):
-    """An upstream leaf added or renamed must fail HERE, not become an unclassified leaf."""
+    """An upstream leaf added or renamed fails here rather than becoming an unclassified leaf."""
     m = WM.variation_map(cls)
     scene = cls[len("Fetch") :].replace("Dense", "").replace("Dict", "")
     assert _live_leaves(m.swm_id) == sorted(leaves_for(scene))
