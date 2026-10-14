@@ -347,14 +347,19 @@ class ClassicControlAdapter(SimulatorAdapter):
             return [array[i, 0].item() for i in range(self.num_envs)]
         return [array[i] for i in range(self.num_envs)]
 
+    @staticmethod
+    def _idle_output(env):
+        space = env.observation_space
+        return np.zeros(space.shape, space.dtype), 0.0, False, False, {}
+
     def step(self, actions, *, active=None) -> TensorDict:
         active = None if active is None else np.asarray(active.detach().cpu(), dtype=bool)
         self._check_open()
+        # An inactive lane does not advance and reports zero task outputs, as Env.step does.
         outputs = [
-            env.step(action) if active is None or active[i] else self._last_outputs[i]
+            env.step(action) if active is None or active[i] else self._idle_output(env)
             for i, (env, action) in enumerate(zip(self.envs, self._actions(actions), strict=True))
         ]
-        self._last_outputs = outputs
         observations = np.stack([out[0] for out in outputs])
         return TensorDict(
             {
