@@ -45,6 +45,7 @@ def test_classic_state_is_complete_independent_and_renderable(domain, name, owne
             env.sim_state()
         with pytest.raises(NotImplementedError, match="set_state"):
             env.set_sim_state(torch.zeros((2, len(env.sim_state_names))))
+        assert (env.get_state() == held).all()
 
 
 def test_cartpole_action_and_step_result_contract():

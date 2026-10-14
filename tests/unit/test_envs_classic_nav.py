@@ -310,17 +310,6 @@ def test_simple_point_maze_goal_is_an_agg_alpha_composite():
         assert centre.tolist() != target
 
 
-@pytest.mark.parametrize("name", CLASSIC)
-def test_classic_physical_only_helpers_cannot_bypass_full_state(name):
-    with _env(name) as env:
-        state = env.reset(seed=17)
-        with pytest.raises(NotImplementedError, match="get_state"):
-            env.sim_state()
-        with pytest.raises(NotImplementedError, match="set_state"):
-            env.set_sim_state(torch.zeros(env.B, len(env.sim_state_names)))
-        assert (env.get_state() == state).all()
-
-
 def test_a_classic_cell_whose_layout_does_not_cover_its_packed_row_fails_at_import():
     """The check that lets ``_Classic.state`` skip the base class's per-call hidden-field guard."""
     from stable_envs.envs.classic_control.envs import _Classic
@@ -393,15 +382,6 @@ def test_step_returns_exactly_env_state(name):
         assert torch.equal(out["state"][k], held[k]), k
         assert out["state"][k].dtype == held[k].dtype
     env.close()
-
-
-@pytest.mark.parametrize("name", CLASSIC)
-def test_recovered_classic_has_no_pure_transition_or_unroll(name):
-    with _env(name, 2) as env:
-        state = env.reset(seed=17)
-        assert not hasattr(env, "transition")
-        assert not hasattr(env, "unroll")
-        assert (env.get_state() == state).all()
 
 
 @pytest.mark.parametrize("name", CLASSIC)

@@ -59,7 +59,9 @@ def test_constants_say_what_they_mean():
 
 @pytest.mark.parametrize("geom", ["plane", "mesh"])
 def test_2d_texture_on_a_uv_able_geom_is_not_a_gap(geom):
-    assert texture_gaps(_model("2d", geom)) == []
+    m = _model("2d", geom)
+    assert geom != "mesh" or int(m.mesh_texcoordnum[0]) > 0, "this mesh does carry UVs"
+    assert texture_gaps(m) == []
 
 
 @pytest.mark.parametrize("geom", ["box", "sphere", "cylinder", "capsule"])
@@ -145,20 +147,6 @@ def test_a_textured_mesh_with_no_texcoords_is_a_gap():
     m = _model("2d", "mesh", texcoord=False)
     assert int(m.mesh_texcoordnum[0]) == 0, "this fixture deliberately carries no UVs"
     assert len(texture_gaps(m)) == 1, "a textured mesh with no texcoords must be reported"
-
-
-def test_a_textured_mesh_WITH_texcoords_is_not_a_gap():
-    """A 2-D textured mesh with real UVs is not a gap."""
-    m = mujoco.MjModel.from_xml_string(
-        "<mujoco><asset>"
-        '<texture name="t" type="2d" builtin="checker" rgb1="1 0 0" rgb2="0 1 0" width="8" height="8"/>'
-        '<material name="m" texture="t"/>'
-        '<mesh name="mm" vertex="0 0 0  1 0 0  0 1 0  0 0 1" texcoord="0 0  1 0  0 1  1 1"/>'
-        "</asset>"
-        '<worldbody><geom type="mesh" mesh="mm" group="1" material="m"/></worldbody></mujoco>'
-    )
-    assert int(m.mesh_texcoordnum[0]) > 0, "this mesh does carry UVs"
-    assert texture_gaps(m) == []
 
 
 def test_an_untextured_mesh_without_texcoords_is_not_a_gap():

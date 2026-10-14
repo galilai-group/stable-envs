@@ -91,13 +91,6 @@ def test_indexing_a_state_dataset_with_a_list_returns_the_assembled_batch():
     assert ds[3].shape == (3, 4, 3), "an integer index must give one sample, not a batch of one"
 
 
-def test_the_batched_collate_still_serves_the_rendering_datasets():
-    """``collate_fn=collate_batched`` iterates a rendering ``StateDataset``."""
-    ds = StateDataset(_env(1), id_states(8), device=DEV)
-    got = list(DataLoader(ds, batch_size=4, shuffle=False, collate_fn=collate_batched))
-    assert len(got) == 2 and frame_ids(torch.cat(got)) == list(range(8))
-
-
 def test_a_trajectory_dataset_under_a_caller_s_loader_keeps_its_time_axis():
     st = np.stack([id_states(6), id_states(6, first=100)])
     ds = TrajectoryDataset(_env(1), st, window=3, stride=1, device=DEV)

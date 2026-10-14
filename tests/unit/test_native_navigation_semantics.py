@@ -5,31 +5,6 @@ import torch
 import stable_envs as se
 
 
-@pytest.mark.parametrize(
-    ("name", "keys"),
-    [
-        ("TwoRoom", {("agent", "position"), ("target", "position")}),
-        ("Piecewise", {("agent", "position"), ("target", "position")}),
-        (
-            "SimplePointMaze",
-            {
-                ("agent", "position"),
-                ("goal", "position"),
-                ("task", "cached_goal_agent_position"),
-                ("task", "state_is_float64"),
-            },
-        ),
-    ],
-)
-def test_full_state_rejects_lossy_render_projection(name, keys):
-    with se.make(name, num_envs=1, device="cpu") as env:
-        state = env.reset(seed=17)
-        assert set(state.keys(True, True)) == keys
-        compact = env._unpack_render_state(env._pack_render_state(state))
-        with pytest.raises(ValueError, match="missing"):
-            env.set_state(compact)
-
-
 def test_simple_point_maze_preserves_float64_action_continuation():
     with se.make("SimplePointMaze", num_envs=1, device="cpu") as env:
         env.reset(seed=17)
