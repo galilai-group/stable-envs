@@ -1,8 +1,7 @@
 # Variation
 
-**Variation** is persistent environment configuration. It is not appearance-only. A leaf may
-change how the world looks, how it is shaped, how it integrates, how an episode is reset, or
-which task is being solved — without being folded into the instantaneous **State**.
+**Variation** is persistent environment configuration. It is separate from the instantaneous
+**State**. A leaf can change appearance, shape, dynamics, reset or task.
 
 ```text
 render-only          background.color, agent.color
@@ -11,12 +10,8 @@ reset / task         spawn distribution, task.min_steps
 render + dynamics    block.scale, morphology
 ```
 
-Do not invent knobs. Declare the factors the environment actually has. Variation may live on
-the env rather than on every method signature; `set_variation` / `render(..., variation=)`
-are the public surface.
-
-The world (`state["agent", "position"]`, …) is still the instantaneous dynamic state. A frame
-is `f(state, variation)`. Where native dynamics exist, `next_state = g(state, action, variation)`.
+A frame is `f(state, variation)`. Where native dynamics exist, `next_state = g(state, action, variation)`.
+Each env declares only the factors its source actually has.
 
 ```python
 import stable_envs as snv
@@ -26,62 +21,58 @@ state = env.reset(seed=0)
 frames = env.render(state, variation={"block.color": [220, 40, 40]})
 ```
 
-Defaults are the official configuration: rendering with no `variation=` (or with
-`default_variation()`) reproduces the reference picture. Render fidelity and contact-solver
-fidelity remain separate claims — a gravity leaf does not make a reimplemented solver bit-exact.
+The defaults are the official configuration. Rendering without `variation=` gives the reference
+picture.
 
 ## Inspect the space
 
-Every env declares a `variation_space` tree. The public tensor contract is the **flat row**.
+Every env has a `variation_space` tree. The public tensor form is a flat row.
 
 ```python
 env.variation_space.names()
 # ['agent.color', 'agent.inner_color', 'agent.scale', 'background.color', …]
 
-env.variation_spec          # one Spec: shape (variation_dim,), names per column
-env.variation_dim           # width of that row
-env.variation_names         # leaf paths, one per leaf (an RGB colour is still one name)
+env.variation_spec          # a Spec: shape (variation_dim,), names per column
+env.variation_dim           # row width
+env.variation_names         # one path per leaf (an RGB colour is one name)
 ```
 
-`variation_spec` is a `snv.Spec`, not environment metadata. Use `snv.info("PushT")` for
-family / domain / slug.
+`env.variation_space` is a `stable_envs.spaces.Dict` of nested `Dict`, `Box`, `RGBBox` and `Discrete`
+leaves ([API](../api/spaces.md)):
 
-`env.variation_space` is a `stable_envs.spaces.Dict` of nested `Dict`, `Box`, `RGBBox` and
-`Discrete` leaves ([API](../api/spaces.md)):
-
-- `Dict(spaces, sampling_order=[...])` draws top-level keys in that order, with unlisted keys after
-  them in insertion order; `sample()` and `update()` follow it, and `ordered_names()` yields every
-  dotted path in that order. A key in `sampling_order` that is not in `spaces` is a `ValueError`.
-- `Box(..., exact=True)` keeps `init_value` and later values as given, so a Python float stays
-  float64; without it values are cast to the leaf's `dtype` and shape. A `Box` given an explicit
-  `init_value` holds it as a 0-d array when its shape is `()`.
-- `set_init_value(value, reset_value=True)` replaces a leaf's default; with `reset_value=False` the
-  current value is left alone. `Dict.set_init_value` forwards both arguments.
+- `Dict(spaces, sampling_order=[...])` draws the listed keys first, then the others in insertion order.
+  `sample()`, `update()` and `ordered_names()` follow this order. An unknown key in `sampling_order`
+  raises `ValueError`.
+- `Box(..., exact=True)` keeps values as given, so a Python float stays float64. Without it, values are
+  cast to the leaf's `dtype` and shape.
+- `set_init_value(value, reset_value=True)` replaces a leaf's default. With `reset_value=False` the
+  current value is kept.
 
 ## Defaults and samples
 
 ```python
-row = env.default_variation()     # (variation_dim,) — official defaults
-rows = env.sample_variation(64)   # (64, variation_dim) independent draws
+row = env.default_variation()     # (variation_dim,): official defaults
+rows = env.sample_variation(64)   # (64, variation_dim): independent draws
 bg = env.sample_variation(64, paths=["background.color"])
 ```
 
-`sample_variation(batch)` draws **B independent** configurations. `paths=` randomises only
-those leaves; everything else stays at the official default. An unknown path is an error,
-not a silent no-op.
+`paths=` randomises only the named leaves. The others stay at the default. An unknown path raises an
+error.
 
-Install a row on the env with `env.set_variation(rows)` or pass it into `render` (below).
-`get_variation()` returns the currently installed `(n, variation_dim)` tensor.
+`env.set_variation(rows)` installs rows on the env. `get_variation()` returns the installed
+`(n, variation_dim)` tensor.
 
 ## Reset
 
-`reset(seed, options)` follows stable-worldmodel's rule. Leaves named in
-`options["variation"]` are sampled per lane (lane `i` seeded with `seed + i`); leaves in
-`options["variation_values"]` are set, with one value shared by the batch or one per lane.
-Every other leaf returns to its default, including physics leaves on the simulator and in
-State. The defaults are the registered values until `set_variation` replaces them, so a reset
-with no options returns to whatever `set_variation` last installed. Values a reset's options
-choose, or a physics value adopted from a restored State, last for that episode only.
+`reset(seed, options)` follows stable-worldmodel's rule:
+
+- Leaves named in `options["variation"]` are sampled per lane. Lane `i` uses seed `seed + i`.
+- Leaves in `options["variation_values"]` are set, with one value for the batch or one per lane.
+- Every other leaf returns to its default, including physics leaves.
+
+The defaults are the registered values until `set_variation` replaces them. A reset with no options
+returns to the values `set_variation` last installed. Values chosen through reset options last for that
+episode only.
 
 ```python
 env.set_variation({"gravity.z": [-5.0]})
@@ -89,101 +80,61 @@ env.reset(seed=0, options={"variation": ["gravity.z"]})   # sampled for this epi
 env.reset(seed=1)                                         # gravity.z is -5.0 again
 ```
 
-Families that wrap the stable-worldmodel source (PushT, Rocket, OGBench Cube/Scene) apply
-`set_variation` to the source's defaults, which take effect at the next reset, and each also
-applies some leaves to the running episode:
+PushT, Rocket and OGBench Cube/Scene wrap the stable-worldmodel source. `set_variation` changes the
+source's defaults, which apply at the next reset. Some leaves also apply to the running episode:
 
-- PushT: its appearance leaves (`PushT.immediate_variation_leaves`: colours, goal pose,
-  `rendering.render_goal`). Body shapes and scales need a rebuilt physics space and start poses
-  exist only at reset, so those wait for the next reset.
-- Rocket: its colour leaves; every later reset draws them, so `get_variation` always matches the
-  drawn colours. Its start leaves (drop height, lateral offset, tilt) wait for the next reset.
+- PushT: appearance leaves (`PushT.immediate_variation_leaves`: colours, goal pose,
+  `rendering.render_goal`). Shapes, scales and start poses wait for the next reset.
+- Rocket: colour leaves. Start leaves (drop height, lateral offset, tilt) wait for the next reset.
 - OGBench Cube/Scene: cube size and colour, floor colour, camera angle, light intensity and lock
-  colour. Reset-time placements wait for the next reset, and `agent.color` follows the source's
-  compile rule.
+  colour. Placements wait for the next reset.
 
-## Coverage against stable-worldmodel
-
-For each class with a stable-worldmodel counterpart that has a variation space, a `VariationMap`
-in `tests/helpers/reference/variation_maps/` (and `tests/helpers/reference/variation.py`) places
-every swm leaf in exactly one of: mapped (identical, renamed, scaled, affine, colour or enum),
-unsupported, dead upstream, not applicable or swm-only. The maps are test evidence, not a shipped
-API, and `CONTRIBUTING.md` requires one for a new class whose source varies.
-
-- DM Control: `floor.color` is mapped on all 13 mapped cells. On the five trackcom cells with a
-  map the checker is drawn from a texture of per-texel palette weights times each row's colours, so
-  one MJWarp context serves every colour. `DMCWalkerWalk` also maps `floor.rotation_y`, a physics
-  leaf that tilts the floor geom and that every renderer draws per row.
-- OGBench Cube and Scene: `camera.angle_delta`, `light.intensity`, `cube.size` and, on Scene,
-  `lock_color` are per-world inputs of one MJWarp context per family, so a single batch renders
-  any mix of their values; Cube maps 11 swm leaves and Scene 12.
-
-## One Variation vs B independent Variations
-
-`num_envs` is how many copies the object holds. Configuration follows the same batch axis:
+## One Variation or B Variations
 
 | you pass | meaning |
 |---|---|
-| nothing | current / default configuration, broadcast to the batch |
-| one row `(variation_dim,)` or a dict of scalars | **one** configuration, shared by every environment |
-| a `(B, variation_dim)` row | **B independent** configurations, one per environment |
+| nothing | current configuration, broadcast to the batch |
+| one row `(variation_dim,)` or a dict of scalars | one configuration shared by every lane |
+| a `(B, variation_dim)` tensor | one configuration per lane |
 
 ```python
 shared = env.default_variation()
 frames = env.render(state, variation=shared)          # one look, B frames
 
 many = env.sample_variation(env.num_envs, rng=env.rng)
-frames = env.render(state, variation=many)            # B looks, one launch
+frames = env.render(state, variation=many)            # B looks, one call
 ```
 
-Not every family paints a different appearance per environment. Tile-atlas families
-(MiniGrid, BabyAI) bake one palette per **call**, so a batched row still yields one look
-for that render. Scene-built families (PushT, …) do vary per environment. Count distinct
-frames if the distinction matters for your experiment.
+Some renderers apply one appearance per call, not per lane. Count distinct frames if this matters for
+your experiment.
 
-## Dict overrides vs flat / batched rows
+`render(..., variation=)` and `set_variation(...)` accept a mapping of leaf overrides, a flat row, or
+batched rows. With a mapping, unnamed leaves keep their current values. Do not pass a row together
+with the developer `style=` argument.
 
-`render(..., variation=)` and `set_variation(...)` accept `VariationLike`: a mapping of
-leaf overrides, **or** a flat / batched tensor or numpy array.
+## Storage
 
-```python
-# Mapping: named leaves. Unmentioned leaves stay at the current / default values.
-frames = env.render(state, variation={"block.color": [220, 40, 40], "agent.scale": 1.4})
-
-# Flat row: every column, official width.
-row = env.default_variation()
-frames = env.render(state, variation=row)
-
-# Batched rows: one configuration per environment.
-rows = env.sample_variation(env.num_envs)
-frames = env.render(state, variation=rows)
-```
-
-Do not pass both a non-mapping row and the developer `style=` argument.
-
-## Reproducibility and storage
-
-Variation is data. Store its row alongside the full State snapshot:
+Store the Variation row next to the full State:
 
 ```python
-snapshot = state.clone()                     # complete, owned State
+snapshot = state.clone()
 variation_row = env.get_variation()           # (n, variation_dim)
-# later
 frames = env.render(snapshot, variation=variation_row)
 ```
 
-Compact RenderState packing is private. To resume simulation, restore the full
-State under compatible persistent configuration; a render-only projection cannot
-restore missing velocities, RNG or lifecycle fields.
+To resume simulation, restore the full State under a compatible configuration.
 
-`sample_variation(..., rng=)` is deterministic given that generator. `reset(seed=0)`
-reseeds `env.rng`; pass an explicit `rng` when you want Variation draws independent of
-reset.
+`sample_variation(..., rng=)` is deterministic for a given generator. `reset(seed=0)` reseeds
+`env.rng`. Pass your own `rng` to keep Variation draws independent of reset.
 
-Defaults (`default_variation()`) are the official configuration. Saving them is optional;
-omitting `variation=` at render time reproduces the same picture.
+## Coverage against stable-worldmodel
+
+Each class with a stable-worldmodel counterpart that has a variation space has a `VariationMap` in
+`tests/helpers/reference/variation_maps/`. It places every stable-worldmodel leaf in one group:
+mapped (identical, renamed, scaled, affine, colour or enum), unsupported, dead upstream, not
+applicable, or swm-only. The maps are tests, not a shipped API.
 
 ## Next
 
-- [State, Variation, Frame](state.md) — public State vs compact render state
-- [API: spaces](../api/spaces.md) — the `variation_space` tree
+- [State, Variation, Frame](state.md)
+- [API: spaces](../api/spaces.md)

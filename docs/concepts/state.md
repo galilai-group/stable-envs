@@ -52,13 +52,12 @@ with snv.PushT(num_envs=2, device="cpu", size=96) as env:
 ```
 
 Continuous actions are relative controls in `[-1, 1]`. Discrete actions have
-shape `[B,2]` or `[B,T,2]`, with each polar-action index in `[0,16)`. This replaces
-the earlier approximate public PushT solver's absolute pixel-target actions.
-Old five-coordinate renderer datasets are not complete simulator checkpoints.
+shape `[B,2]` or `[B,T,2]`, with each polar-action index in `[0,16)`.
+A five-coordinate render row is not a simulator checkpoint.
 
-Rendering a saved State uses a separate scene and its numeric contact cache;
-it neither restores nor advances live physics. The current public PushT
-renderer executes on CPU, including when tensors are stored on CUDA.
+Rendering a saved State uses a separate scene and its numeric contact cache.
+It does not restore or advance live physics. The PushT renderer runs on CPU,
+even when tensors are stored on CUDA.
 `render_action=True` requires a resolution of at least 96, matching the source
 renderer's supported marker thickness.
 
@@ -70,8 +69,7 @@ float32 and retain frozen layouts. Decoding a lossy row does not invent omitted
 velocities, lifecycle or RNG fields. Such rows and partial dictionaries must be
 refused by `set_state()`.
 
-Applications render full snapshots with `env.render(state)`. The old public
-`pack_render_state`/`unpack_render_state` names are not supported. Contributor
+Applications render full snapshots with `env.render(state)`. Contributor
 examples for testing the private boundary are in the [renderer guide](../adding/renderer.md).
 Pixel equality is not proof of exact future simulation.
 
@@ -83,9 +81,8 @@ A Spec carries shape, dtype, device and applicable bounds/names. It is descripti
 the backend must still validate source-specific semantic constraints.
 
 `step(actions)` returns a StepResult containing `state` and the environment's
-defined reward, success and termination/truncation information. Existing families
-may carry additional reference diagnostic fields; those are not a learner
-observation-selection API. Renderer-only cells do not fabricate simulator results.
+defined reward, success and termination/truncation information. Some families
+add diagnostic fields; those are not a learner observation API. Renderer-only cells do not fabricate simulator results.
 
 Variation includes physics/task/reset leaves as well as appearance. See
 [Variation](variation-spaces.md), [dynamics](dynamics.md) and the

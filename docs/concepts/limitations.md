@@ -1,53 +1,64 @@
 # Backend and device limitations
 
-Accepted facts about this release. They are not hidden, and they are not treated as regressions
-against an unpublished predecessor.
+Known limits of this release.
 
 ## Optional dependencies
 
-`pip install stable-envs` gives the core. Each family extra installs what that family's
-**reference** needs (parity, CPU-vs-GPU benches, gallery). Most extras are not required to
-*render* — the exceptions are called out on the [installation page](../install.md).
+`pip install stable-envs` installs the core. Each family needs its extra; see the
+[installation page](../install.md).
 
 ```python
 snv.import_errors()     # families this interpreter could not import
 ```
 
-Renderer-only ports of other families live in the repository's `contrib/` directory and are not
-part of this release; see `contrib/README.md`.
+The renderer-only ports in `contrib/` are not part of this release. See `contrib/README.md`.
 
-## Device honesty
+## Devices
 
-| cells | CPU | GPU |
+| classes | CPU | GPU |
 |---|---|---|
-| PushT / PushTDiscrete | source physics and Pygame rendering | tensor/output storage only; no GPU renderer on this public path |
-| classic control, navigation, OGBench mazes, most 2-D | yes | yes |
-| Fetch (12 ids) | software OpenGL (`backend="opengl"`) | MJWarp or explicit NVIDIA OpenGL |
+| PushT, PushTDiscrete | source physics and pygame rendering | output storage only; rendering stays on CPU |
+| classic control, navigation, OGBench mazes | yes | yes |
+| Fetch (12 classes) | software OpenGL (`backend="opengl"`) | MJWarp or explicit NVIDIA OpenGL |
 | OGBCube, OGBScene | software OpenGL | MJWarp or explicit NVIDIA OpenGL |
-| PyFlytRocketLanding | TinyRenderer | public CUDA rendering path |
-| DM Control trackcom / visual-tier body-tracking | CPU3D path where declared | MJWarp |
-| nvdiff locomotion (visual tier) | not a supported consumer of the x86 sparse-stage path | nvdiffrast |
+| PyFlytRocketLanding | TinyRenderer | CUDA rendering |
+| DM Control body-tracking (visual tier) | CPU3D | MJWarp |
 
-`device=` is part of the constructor. A cell that cannot run on CPU says so at construction, not halfway through a sweep.
+`device=` is a constructor argument. A class that cannot run on a device refuses at construction.
+
+On CPU, Fetch with `backend="auto"` does not fall back to OpenGL. Pass `backend="opengl"`.
+
+For Cube and Scene, physics runs on CPU whatever the render backend. CPU rendering needs Mesa software
+OpenGL, configured before MuJoCo is imported. See [System setup](../system-setup.md).
 
 ## Fidelity
 
-- **Parity tier:** interior pixels match the official renderer (floor 1.0 unless a named `parity_note` mechanism is declared).
-- **Visual tier:** a different rasterizer of the same scene. Suitable for live training frames; **not** interchangeable with official pixels at eval. `info(name)["fidelity_tier"]` reports it.
+- **Parity tier**: interior pixels match the official renderer. The floor is 1.0 unless the class
+  declares a `parity_note` that names the cause.
+- **Visual tier**: a different rasterizer of the same scene. Use it for training frames. It is not
+  interchangeable with official pixels at evaluation. `info(name)["fidelity_tier"]` reports the tier.
 
-Fetch `sky.color` at its default draws the registered gradient skybox, which the official wrapper's `background.color` cannot express: it always fills the sky flat.
+See [Fidelity tiers](fidelity-tiers.md).
 
-DMC trackcom cells (the camera rides the body) have no baked plate: `floor.color` is drawn from a per-texel palette texture, and `DMCWalkerWalk` `floor.rotation_y` tilts the floor per row.
+## Rendering details
 
-OGBench `light.intensity`, `camera.angle_delta`, `cube.size` and Scene `lock_color` are per-world inputs of one MJWarp context per family; they do not multiply contexts or compiled models.
+- Fetch `sky.color` at its default draws the registered gradient skybox. The official wrapper's
+  `background.color` cannot express it, because it fills the sky with one colour.
+- DM Control body-tracking cells draw `floor.color` from a per-texel palette texture.
+  `DMCWalkerWalk` `floor.rotation_y` tilts the floor per row.
+- OGBench `light.intensity`, `camera.angle_delta`, `cube.size` and Scene `lock_color` are per-world
+  inputs of one MJWarp context per family. They do not add contexts or compiled models.
 
-## Certification / provenance
+## Versions and reproducibility
 
-- The DM Control reference profile (`pin-dmc`) is `mujoco==3.12.0` + `dm-control==1.0.45`; the `VISUAL_FIDELITY` declarations of the trackcom cells record the versions they were measured at.
-- nvdiff on x86 CPU has a documented sparse-stage one-ULP batch dependence. There is no CPU consumer of that path in the historical 42-id set.
-- `HumanoidMazeGiantNavigate` on CUDA is not process-reproducible across runs on at least one measured card (`gpu1503`).
-- Craftax's live official wrapper JITs `reset`/`step`. Certified pixel identity is against the **un-jitted** official renderer. Historical jitted-wrapper measurements live in `tests.helpers.reference.craftax_jit`.
+- The DM Control reference profile (`pin-dmc`) is `mujoco==3.12.0` and `dm-control==1.0.45`. The
+  `VISUAL_FIDELITY` declarations of the body-tracking cells record the versions they were measured with.
+- nvdiffrast on x86 CPU has a one-ULP batch dependence in a sparse stage. No registered class uses that
+  path on CPU.
+- `HumanoidMazeGiantNavigate` on CUDA is not reproducible across processes on at least one GPU.
+- Craftax's official wrapper JITs `reset` and `step`. Pixel identity is checked against the un-jitted
+  official renderer. Measurements of the jitted wrapper are in `tests.helpers.reference.craftax_jit`.
 
 ## Sibling libraries
 
-There is no runtime interop contract with other stable-* packages. See [Sibling projects](worldmodel.md).
+There is no runtime interop with other stable-* packages. See [Sibling projects](worldmodel.md).

@@ -1,29 +1,25 @@
 # Sibling projects and observation ownership
 
-Stable-envs owns the simulator and task: exhaustive State, reset/get/set/step,
-actions, reward/success/termination/truncation, RNG, bounded Variation,
-State-to-RenderState projection and rendering. Delegating to the authoritative
-upstream simulator is the intended implementation.
+stable-envs owns the simulator and the task: full State, `reset`/`get_state`/`set_state`/`step`,
+actions, reward, success, termination, truncation, RNG, bounded Variation and rendering. It calls the
+upstream simulator for dynamics.
 
-Stable-worldmodel owns learner-visible observations: pixel/proprioception/goal
-selection, flat/dict packaging, model input keys and dataset filtering. An
-exhaustive State can contain privileged information and is not the default learner
-input. Stable-envs does not add an Observation class or a State-filtering layer.
+stable-worldmodel owns learner observations: which pixels, proprioception and goals a model sees, how
+they are packaged, and dataset filtering. Full State can contain privileged information. It is not
+the default learner input. stable-envs has no Observation class and no State-filtering layer.
 
 ```text
-stable-worldmodel    learner observation selection, models, collection
-        ↓           observation integration remains deferred
-   stable-envs      simulator/task State, actions, Variation, rendering
+stable-worldmodel    observation selection, models, data collection
         ↓
- upstream simulator authoritative dynamics/controllers/task behavior
+   stable-envs      simulator and task State, actions, Variation, rendering
+        ↓
+ upstream simulator dynamics, controllers, task behaviour
 ```
 
-The stable-envs runtime does not import stable-worldmodel. There is no
-`snv.make("swm/...")` lookup API. Historical registration correspondence and
-evidence do not establish a runtime observation-container integration.
+The stable-envs runtime does not import stable-worldmodel. There is no `snv.make("swm/...")` lookup.
 
-Policy-driven rollouts, planning, datasets and training belong downstream.
-`step` consumes supplied single actions or action sequences, never a policy.
+Policy rollouts, planning, datasets and training belong downstream. `step` takes actions, never a
+policy.
 
 - [stable-worldmodel](https://github.com/galilai-group/stable-worldmodel)
 - [stable-datasets](https://github.com/galilai-group/stable-datasets)
