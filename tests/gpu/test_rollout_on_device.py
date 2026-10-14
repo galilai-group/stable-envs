@@ -1,22 +1,8 @@
-"""Private ``tests.helpers.rollout.sample`` against the envs that really ship a batched GPU simulator.
+"""``tests.helpers.rollout.sample`` on envs that ship a batched GPU simulator.
 
-``tests/unit/test_rollout_api.py`` pins the contract on an integrator whose trajectory is known in
-closed form — shapes, the actions/states correspondence, the seeding, the refusals. What it cannot
-reach is what happens when the simulator is a real one and the renderer is a real one:
-
-  * ``render=True`` is exercised NOWHERE else in this suite, and the loop that fills its frame buffer
-    is the one place in the repo that deliberately ASSIGNS rather than rendering into ``out=``. The
-    reason is measured: ``frames[:, t]`` of a ``(B, T+1, H, W, 3)`` buffer is a strided view, and
-    ``render(out=)`` refuses one — after a period in which it accepted one and scattered the frames
-    across the caller's buffer, because ``Tensor.view`` returns a strided tensor unchanged when the
-    requested shape is the one it already has. If anybody "optimises" that assignment back into an
-    ``out=``, this is what fails.
-  * a real ``step`` writes THROUGH the state buffer, and PushT captures the whole control step into a
-    CUDA graph that reads that buffer at a fixed address. A rollout that rebound it anywhere would
-    replay against dead memory and produce plausible, frozen trajectories.
-
-Kept small on purpose: 4 environments, 4 steps. Every property here is falsified at that size as surely
-as at 256x100, and the suite is a gate that has to finish.
+Covers what the closed-form integrator in ``tests/unit/test_rollout_api.py`` cannot: ``render=True``
+with a real renderer, and a real ``step`` that writes through the state buffer (PushT replays a CUDA
+graph at a fixed buffer address). 4 environments, 4 steps.
 """
 
 from __future__ import annotations
@@ -36,23 +22,16 @@ from tests.helpers.rollout import RandomPolicy, ScriptedPolicy, sample
 
 N, STEPS, SEED = 4, 4, 20260812
 
-#: Envs that DECLARE a step of their own. ``hasattr`` is too loose — it is inherited — and the claim
-#: being made is that this class ported its dynamics, not that some ancestor did.
+#: Envs whose class itself defines ``_step`` (not inherited).
 STEPPING = tuple(n for n, c in sorted(se.registry.REGISTRY.items()) if "_step" in c.__dict__)
 
-#: Env modules that ship a simulator. If none of them imported, an empty sweep is a fact about the
-#: interpreter; if they did import and the sweep is still empty, the ports have gone missing.
+#: Env modules that ship a simulator; their import failure explains an empty ``STEPPING``.
 STEP_MODULES = ("classic_control", "pusht")
 
 
-@pytest.mark.parametrize("name", family_params(STEPPING, family="stepping envs", modules=STEP_MODULES))
+@pytest.mark.parametrize("name", family_params(STEPPING, family="stepping envs"))
 def test_a_rollout_has_the_documented_shape_and_its_actions_account_for_its_states(name):
-    """``steps+1`` states, ``steps`` actions, one style row per environment — and all on device.
-
-    The initial state is recorded BEFORE the first step, so the off-by-one that loses ``t=0`` shows up
-    as a shape. The style is returned because it is part of the state: without it the stored trajectory
-    does not determine its own frames, which is the whole claim the corpus rests on.
-    """
+    """A rollout has ``steps+1`` states, ``steps`` actions and one style row per env, all on device."""
     resolve_family(name, family="stepping envs", modules=STEP_MODULES, subject="the batched-simulator rollout")
     env = make_or_skip(name, num_envs=N, device="cuda")
     tr = sample(env, steps=STEPS, batch=N, seed=SEED)
@@ -64,18 +43,15 @@ def test_a_rollout_has_the_documented_shape_and_its_actions_account_for_its_stat
         assert tr["actions"].shape[:2] == (N, STEPS)
         assert tr["actions"].device.type == "cuda"
     assert "frames" not in tr, (
-        "frames must be OFF by default — 256x100 at 96px is 707 MB of pixels against 512 kB of "
-        "states, and materialising them during collection re-creates the problem this repo removes"
+        "frames must be off by default; frame buffers are orders of magnitude larger than the states"
     )
 
 
-@pytest.mark.parametrize("name", family_params(STEPPING, family="stepping envs", modules=STEP_MODULES))
+@pytest.mark.parametrize("name", family_params(STEPPING, family="stepping envs"))
 def test_the_same_seed_gives_the_same_trajectory_and_a_different_one_does_not(name):
-    """Both halves, because a rollout that ignores the seed satisfies the first half perfectly.
+    """The same seed reproduces a rollout in-process, and a different seed changes it.
 
-    The cross-PROCESS version of this is in ``test_reproducibility.py`` and is the stronger claim; this
-    one is what localises a failure to the seed rather than to the process, and it is the only one that
-    can see a policy whose generator carries on from where the previous rollout left it.
+    ``test_reproducibility.py`` checks the cross-process case.
     """
     resolve_family(name, family="stepping envs", modules=STEP_MODULES, subject="seeded rollouts")
     env = make_or_skip(name, num_envs=N, device="cuda")
@@ -85,23 +61,19 @@ def test_the_same_seed_gives_the_same_trajectory_and_a_different_one_does_not(na
 
     c = sample(env, steps=STEPS, batch=N, seed=SEED + 1)["states"]
     if torch.equal(a, c):
-        # Not automatically a defect: an env whose reset distribution is a single point and whose
-        # actions do not move it would legitimately agree. Say which, rather than failing blind.
+        # A degenerate env (single-point reset, actions that do not move it) legitimately agrees.
         assert float(a.std()) == 0.0, (
             f"{name}: two different seeds gave the same non-degenerate trajectory, so the seed reaches "
             f"neither the initial states nor the policy"
         )
 
 
-@pytest.mark.parametrize("name", family_params(STEPPING, family="stepping envs", modules=STEP_MODULES))
+@pytest.mark.parametrize("name", family_params(STEPPING, family="stepping envs"))
 def test_rendered_frames_are_exactly_the_renders_of_the_states_beside_them(name):
-    """``frames[:, t] == render(states[:, t])``, byte for byte, for every t including 0.
+    """``frames[:, t] == render(states[:, t])`` byte for byte, for every t including 0.
 
-    This is the only exercise ``render=True`` gets anywhere. The buffer is filled one timestep at a
-    time and ``frames[:, t]`` is a STRIDED destination, which ``render(out=)`` refuses by design — so
-    the loop assigns, at the cost of one copy of the frame bytes per timestep against a step dominated
-    by the simulator. An implementation that rendered into the slice would either raise here or, before
-    the refusal existed, scatter the frames across the buffer and still return the right shape.
+    ``frames[:, t]`` is a strided view, which ``render(out=)`` refuses, so the rollout must assign
+    each frame rather than render into the slice.
     """
     resolve_family(name, family="stepping envs", modules=STEP_MODULES, subject="rendered rollouts")
     env = make_or_skip(name, num_envs=N, device="cuda")
@@ -118,19 +90,13 @@ def test_rendered_frames_are_exactly_the_renders_of_the_states_beside_them(name)
         d = (frames[:, t].to(torch.int16) - want.to(torch.int16)).abs()
         assert int(d.max()) == 0, (
             f"{name}: frame {t} differs from render(states[:, {t}]) by max {int(d.max())}/255 on "
-            f"{int((d > 0).any(-1).sum())} pixels — the rollout's frame buffer is not the render of "
-            f"the trajectory it is stored beside"
+            f"{int((d > 0).any(-1).sum())} pixels"
         )
 
 
-@pytest.mark.parametrize("name", family_params(STEPPING, family="stepping envs", modules=STEP_MODULES))
+@pytest.mark.parametrize("name", family_params(STEPPING, family="stepping envs"))
 def test_a_scripted_policy_drives_the_real_simulator(name):
-    """A fixed action sequence must actually reach ``step``, and must be what comes back in ``actions``.
-
-    ``RandomPolicy`` cannot show this: its actions are whatever the rollout says they are, so a loop
-    that recorded the proposal and stepped with something else would agree with itself. A scripted
-    policy is chosen by the TEST, so the two can disagree.
-    """
+    """A scripted action sequence is what the rollout records in ``actions``."""
     resolve_family(name, family="stepping envs", modules=STEP_MODULES, subject="scripted rollouts")
     env = make_or_skip(name, num_envs=N, device="cuda")
     adim = int(getattr(env, "action_dim", 1))
@@ -145,13 +111,11 @@ def test_a_scripted_policy_drives_the_real_simulator(name):
         )
 
 
-@pytest.mark.parametrize("name", family_params(STEPPING, family="stepping envs", modules=STEP_MODULES))
+@pytest.mark.parametrize("name", family_params(STEPPING, family="stepping envs"))
 def test_the_random_policy_stays_inside_the_env_s_declared_action_bounds(name):
-    """Declared bounds are a contract with the simulator, and the discrete ones are HALF-OPEN.
+    """``RandomPolicy`` actions lie in ``[action_low, action_high)``.
 
-    MiniGrid's seven actions, CartPole's two, MountainCar's and Acrobot's three all declare ``[0, n)``
-    and floor, so a policy that could return exactly ``n`` would index one past the end of a transition
-    table — which for a table-driven port is an out-of-bounds read rather than an error.
+    Discrete envs declare ``[0, n)`` and floor, so returning exactly ``n`` would index past the end.
     """
     resolve_family(name, family="stepping envs", modules=STEP_MODULES, subject="action bounds")
     env = make_or_skip(name, num_envs=N, device="cuda")
@@ -168,18 +132,9 @@ def test_the_random_policy_stays_inside_the_env_s_declared_action_bounds(name):
 
 
 def test_an_env_without_a_simulator_refuses_and_says_what_to_do_instead():
-    """Most of the registry ships a renderer and no ``step``, and that is a design statement.
-
-    Rendering and simulation are separable; an env earns a ``step()`` only where its dynamics can be
-    ported AND checked against the reference. So the refusal has to point at the alternative — bring
-    your own states — rather than reading like a missing feature, and it must arrive before any work
-    is done rather than as an ``AttributeError`` from inside a loop.
-    """
+    """Rolling out an env without ``_step`` raises ``NotImplementedError`` pointing to supplied states."""
     without = [n for n, c in sorted(se.registry.REGISTRY.items()) if "_step" not in c.__dict__]
-    assert without, (
-        "every registered env now declares a step, which would make this check vacuous; if that is "
-        "really true, delete it"
-    )
+    assert without, "every registered env declares a step, which makes this check vacuous"
     env = make_or_skip(without[0], num_envs=2, device="cuda")
     with pytest.raises(NotImplementedError) as e:
         sample(env, steps=2, batch=2)
@@ -188,19 +143,15 @@ def test_an_env_without_a_simulator_refuses_and_says_what_to_do_instead():
 
 
 def test_the_registry_still_contains_envs_that_can_be_rolled_out():
-    """The zero-collection rule for this file, stated once rather than per-sweep.
+    """``STEPPING`` is non-empty unless a simulator module failed to import.
 
-    Every test above is parameterised over ``STEPPING``. If a refactor stopped classes from declaring
-    ``step`` in their own ``__dict__`` — moving it to a mixin would do it — all five sweeps would
-    collect one skip apiece and this file would keep passing while asserting nothing about any
-    simulator in the repository.
+    Moving ``_step`` out of the classes' own ``__dict__`` (e.g. into a mixin) would empty every sweep here.
     """
     if not STEPPING:
         errs = {m: e for m, e in se.import_errors().items() if m in STEP_MODULES}
         assert errs, (
             "no registered class declares its own step(), and none of the env modules that ship one "
-            f"({', '.join(STEP_MODULES)}) failed to import to explain it — so every rollout sweep in "
-            "this file is empty and green"
+            f"({', '.join(STEP_MODULES)}) failed to import to explain it, so every rollout sweep is empty"
         )
         pytest.skip(f"the simulator-bearing modules are not importable here: {errs}")
     assert len(STEPPING) >= 2, f"only {list(STEPPING)} declares a step; the rollout sweeps are near-empty"

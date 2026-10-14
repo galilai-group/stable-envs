@@ -1,17 +1,8 @@
-"""Does the state->frame path survive DDP, and does it survive two devices in ONE process?
+"""Rendering under DDP and on two devices in one process.
 
-Two different questions, and only the first one is the one people ask.
-
-**DDP** is one process per GPU, so every module-level cache in this repository is per-rank by
-construction and the dataset is an ordinary map-style dataset that ``DistributedSampler`` shards like
-any image folder. The test asserts the property that actually matters and is easy to lose: the union of
-what the ranks render is BIT-IDENTICAL to what one process renders from the same states. A renderer
-that silently used a different device, a different atlas or a stale cached plate would still train, and
-would still produce a loss curve, and would be wrong.
-
-**Two devices in one process** is the case DDP does not cover and that ``DataParallel`` and any
-manual multi-GPU script hit immediately. It is tested separately because the caches are keyed by scene
-content, not by device.
+Under DDP, the union of what the ranks render must be bit-identical to one process rendering the same
+states. On two devices in one process (``DataParallel``, manual multi-GPU), frames must match across
+devices; module-level caches are keyed by scene content, not device.
 """
 
 from __future__ import annotations
@@ -33,25 +24,17 @@ from _shared import assert_frames_identical, make_or_skip, sampled_states
 import stable_envs as se
 from stable_envs.testing._data import render_states
 
-#: One env per RENDER BACKEND rather than per family: the 2-D rasterizer and the 3-D ray caster are
-#: places a device-blind cache can live.
+#: One env per render backend (2-D rasterizer, 3-D ray caster), where a device-blind cache could live.
 ENVS = ["PushT", "PointMazeMediumNavigate"]
 
-#: The states both halves of this file draw. A CONSTANT, and not the env's own generator: the
-#: cross-device and cross-process comparisons are only meaningful if both sides drew the same numbers,
-#: and ``sample_states(n)`` with no generator consumes from ``env.rng``, so it depended on how many
-#: draws each side had already made. The single-process reference below made none and the DDP child
-#: made one, which is how a difference between two RANKS and a difference between two DRAWS became
-#: indistinguishable.
+#: Seed for the states both sides of each comparison draw, so they draw the same states.
 STATE_SEED = 20260812
 
 
 def _registered_or_skip(name: str) -> None:
-    """A name this interpreter does not have is a fact about the interpreter, not a failure.
+    """Skip when ``name`` is not registered in this interpreter.
 
-    Kept as a skip rather than a family-emptiness failure (see ``_shared.resolve_family``) because
-    ``ENVS`` is three deliberately-chosen backends rather than a family sweep: if all three were
-    missing the registry itself would be empty, which ``test_registry_is_not_empty`` already fails on.
+    ``ENVS`` is a fixed pick of backends, not a family sweep, so ``resolve_family`` does not apply.
     """
     if name not in se.registry.REGISTRY:
         pytest.skip(f"{name} is not registered in this interpreter, so neither backend is reachable")
@@ -59,12 +42,10 @@ def _registered_or_skip(name: str) -> None:
 
 @pytest.mark.parametrize("name", ENVS)
 def test_two_devices_in_one_process(name):
-    """The same states on cuda:0 and cuda:1 must give the same pixels.
+    """The same states on cuda:0 and cuda:1 give the same pixels.
 
-    The static-prefix cache in ``render/raster2d.py`` is keyed by (resolution, world, geometry blob)
-    and NOT by device, and the tile atlas is keyed by ``str(device)`` -- which is the literal string
-    ``"cuda"`` on every rank, while ``torch.device("cuda")`` resolves to whichever device is current.
-    Either one can hand back a tensor that lives on the wrong GPU.
+    The ``render/raster2d.py`` static-prefix cache is not keyed by device, and the tile atlas is keyed
+    by ``str(device)``, which is ``"cuda"`` whichever device is current.
     """
     _registered_or_skip(name)
     if torch.cuda.device_count() < 2:
@@ -81,9 +62,8 @@ def test_two_devices_in_one_process(name):
         f0,
         f1,
         what=f"{name}: cuda:0 against cuda:1",
-        why="a device-blind cache is the first place to look — the static-prefix cache is keyed by "
-        "scene content and the tile atlas by the STRING 'cuda', which is the same on every rank "
-        "while the device it resolves to is not",
+        why="check device-blind caches: the static-prefix cache is keyed by scene content and the "
+        "tile atlas by the string 'cuda'",
     )
 
 
@@ -104,9 +84,8 @@ def _ddp_child(rank: int, world: int, name: str, n: int, q):
 
     ds = StateDataset(name, states, device=f"cuda:{rank}")
     sampler = DistributedSampler(ds, num_replicas=world, rank=rank, shuffle=False, drop_last=False)
-    # The caller's own DataLoader (``ds.loader()`` is gone). ``collate_batched`` because this dataset
-    # renders in ``__getitems__``; ``num_workers=0`` because those frames are already on this rank's
-    # GPU and a worker would only duplicate the CUDA context to ship them back.
+    # The dataset renders in ``__getitems__`` (hence ``collate_batched``) onto this rank's GPU, so
+    # workers would only duplicate the CUDA context.
     loader = DataLoader(ds, batch_size=16, shuffle=False, sampler=sampler, num_workers=0, collate_fn=collate_batched)
 
     idxs, frames = list(iter(sampler)), []
@@ -143,9 +122,7 @@ def test_ddp_shards_and_matches_single_process(name):
     assert sorted(all_idx) == list(range(n)), "DistributedSampler did not partition the states"
     assert len(set(got[0][0]) & set(got[1][0])) == 0, "ranks share states"
 
-    # 2. the union is what one process would have rendered, to the byte. Drawn from the same explicit
-    #    seed the children used, so "the ranks disagree with one process" cannot be "the two sides
-    #    drew different states".
+    # 2. the union is byte-identical to one process rendering the same seeded states
     proto = se.make(name, num_envs=1, device="cuda:0")
     states = proto.sample_states(n, rng=np.random.default_rng(STATE_SEED))
     del proto
@@ -158,9 +135,8 @@ def test_ddp_shards_and_matches_single_process(name):
             frames,
             ref[idxs],
             what=f"{name}: rank {r} against a single process",
-            why="every module-level cache in this repository is per-rank by construction, so a "
-            "difference means a rank rendered from a different device, atlas or cached plate — "
-            "which would still train and would still produce a loss curve",
+            why="module-level caches are per-rank, so a difference means a rank rendered from a "
+            "different device, atlas or cached plate",
         )
 
 

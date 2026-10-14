@@ -1,24 +1,14 @@
-"""The classic-control fused kernel, against the two things it has to be.
+"""The classic-control fused kernel against its op-list description and the per-primitive path.
 
-There are three implementations of one picture in this repository now, and the chain between them
-is what makes the fast one admissible:
+Three implementations draw the same picture:
 
-    gfxdraw/__init__.py   per primitive, batched torch      the executable specification
+    gfxdraw/__init__.py   per primitive, batched torch      the specification
     gfxdraw/classic.py    render_classic_torch              the same rules, per pixel, in torch
     gfxdraw/classic.py    render_classic (Triton)           the same again, in one kernel
 
-``test_fast_paths.py`` asserts the end-to-end joint (``env.render`` with the kernel on and off) on
-the frozen corpus and on states chosen to be awkward. This file asserts the two joints separately,
-because when they disagree the two failures want different files opened: a break at the first joint
-is a mis-DESCRIBED frame (the op list has the wrong geometry, colour or order) and a break at the
-second is a mis-CODED kernel (a Triton shape, an integer width, a branch). It also runs the first
-joint on the CPU, where Triton does not exist, so a description error is caught on a laptop.
-
-The per-primitive cases below are not a random sweep. Each one is a rule from ``gfxdraw.py``'s
-docstring that has its own failure mode: the scanline fill's two crossings, the disc's paint-once
-guards, the Wu fringe's clipping and its two-pixel pair, the axis-aligned short-circuit that gets no
-anti-aliasing at all, the two-pass ``aacircle`` fringe, SDL's blit rule against SDL_gfx's pixel
-writer, and painter's order between primitives that overlap.
+The first two are compared on CPU (a difference is a wrong op list: geometry, colour, order or
+window); the last two on CUDA (a difference is a Triton coding fault). ``test_fast_paths.py`` checks
+``env.render`` end to end with the kernel on and off.
 """
 
 from __future__ import annotations
@@ -35,12 +25,10 @@ from tests.helpers.gfxdraw_reference import render_classic_torch
 
 CLASSIC = ("Acrobot", "CartPole", "MountainCar", "MountainCarContinuous", "Pendulum")
 
-#: A fixed seed per state family. NOT ``hash(kind)``: string hashing is salted per interpreter, so
-#: that would draw different states every run -- a failure nobody could reproduce and a pass that is
-#: not evidence. ``tests/gpu/test_conformance.py`` documents the same trap for its parity draw.
+#: A fixed seed per state family (``hash(kind)`` is salted per interpreter).
 SEEDS = {"corpus": 0, "reachable": 101, "off-surface": 202, "far-angles": 303}
 
-#: State families, each chosen for a rule it stresses. See the module docstring.
+#: State families: the frozen corpus, reachable samples, and states past the reachable range.
 STATE_CLASSES = {
     "corpus": None,
     "reachable": lambda env, n, rng: np.asarray(env.sample_states(n, rng), np.float32),
@@ -50,7 +38,7 @@ STATE_CLASSES = {
 
 
 def _wide(env, n, rng, k):
-    """States scaled ``k`` times past the reachable range, so bounds are tested rather than assumed."""
+    """States drawn from ``k`` times the reachable range."""
     name = type(env).__name__
     if name == "CartPole":
         return np.stack([rng.uniform(-2.4 * k, 2.4 * k, n), rng.uniform(-0.21 * k, 0.21 * k, n)], 1).astype(np.float32)
@@ -78,13 +66,10 @@ def _states(env, kind, n, seed):
 
 
 def per_row_style(env, groups: int = 4, seed: int = 3):
-    """A style with several DISTINCT rows and both antialias settings inside one batch.
+    """A style with several distinct rows and both antialias settings in one batch.
 
-    Everything a style can change has to flow through the op list as data -- the colour of each
-    primitive, the anti-alias switch, and for MountainCar the baked terrain plate, which is keyed on
-    the two leaves that can move it. A kernel that cached any of them on anything but static
-    geometry passes the default-style test and fails here, and that is the entire reason a batch is
-    allowed to hold 4,096 appearances.
+    Primitive colours, the antialias switch and MountainCar's baked terrain plate must all flow
+    through the op list per row.
     """
     from stable_envs.testing import conformance as C
 
@@ -125,12 +110,7 @@ def _per_primitive(env, states, style=None):
 @pytest.mark.parametrize("name", CLASSIC)
 @pytest.mark.parametrize("kind", sorted(STATE_CLASSES))
 def test_the_described_frame_is_the_drawn_frame(name, kind):
-    """CPU. The op list must describe exactly what the per-primitive path draws.
-
-    Not marked ``gpu``: the description is device-independent and a mistake in it — a window that
-    clips a primitive, an order that swaps two of them, a colour taken from the wrong style path —
-    is the kind of error that should cost a laptop second, not a GPU job.
-    """
+    """CPU: ``render_classic_torch`` over the op list equals the per-primitive render."""
     env = make_or_skip(name, num_envs=8, device="cpu")
     if not getattr(env, "fused_capable", False):
         pytest.skip(f"{name} has no fused description")
@@ -146,11 +126,7 @@ def test_the_described_frame_is_the_drawn_frame(name, kind):
 
 @pytest.mark.parametrize("name", CLASSIC)
 def test_the_description_carries_per_row_appearance(name):
-    """CPU. Colours, the anti-alias switch and MountainCar's baked terrain are all per ENVIRONMENT.
-
-    A kernel that cached any of them on anything but static geometry would pass the default-style
-    test and fail here, which is the entire reason a batch is allowed to hold 4,096 appearances.
-    """
+    """CPU: the op-list description matches the per-primitive render under a per-row style."""
     env = make_or_skip(name, num_envs=8, device="cpu")
     if not getattr(env, "fused_capable", False):
         pytest.skip(f"{name} has no fused description")
@@ -162,8 +138,7 @@ def test_the_description_carries_per_row_appearance(name):
         _described(env, states, style),
         _per_primitive(env, states, style),
         what=f"{name} per-row style, mixed antialias",
-        why="every appearance knob must flow through the op list as data; a cached stencil or a "
-        "batch-wide colour would show up only here",
+        why="every appearance knob must flow through the op list per row",
     )
 
 
@@ -173,13 +148,9 @@ def test_the_description_carries_per_row_appearance(name):
 @pytest.mark.parametrize("kind", sorted(STATE_CLASSES))
 @pytest.mark.parametrize("style_kind", ["default", "per-row"])
 def test_the_kernel_is_the_description(name, kind, style_kind):
-    """CUDA. The Triton kernel against the torch form of the same closed expression.
+    """CUDA: the Triton kernel equals ``render_classic_torch`` on the same op list.
 
-    The ``per-row`` half is the guard for every mixed-row path the kernel has, and it is separate
-    from the CPU guard above because those are different code: on CUDA the per-environment colour,
-    the per-environment ``aa`` flag and MountainCar's per-environment plate are all loads inside the
-    kernel, and nothing else in this suite drives them. Until this existed they were covered only
-    by the corpus-style digest in the frozen replay, which is one style built one way.
+    The ``per-row`` case drives the kernel's per-environment colour, ``aa`` flag and plate loads.
     """
     if not torch.cuda.is_available():
         pytest.skip("needs a CUDA device")
@@ -199,10 +170,8 @@ def test_the_kernel_is_the_description(name, kind, style_kind):
     ops = _ops(env, s, sty).finish()
 
     if style_kind == "per-row":
-        # The mixed-row paths must actually be mixed, or this case is the default one with more
-        # steps. Both antialias settings present; at least two distinct colours for some primitive;
-        # and for MountainCar a plate with one row PER ENVIRONMENT, which is the PLATE_B = B
-        # specialisation of the kernel and is otherwise never reached.
+        # Check the batch really is mixed: both aa settings, distinct colours, and (MountainCar) one plate
+        # row per environment, the kernel's PLATE_B = B specialisation.
         assert len(set(ops.aa.tolist())) == 2, f"{name}: the batch does not hold both aa settings"
         cols = ops.meta_t[..., FC.CM_R : FC.CM_B + 1]
         assert int((cols != cols[:1]).any()), f"{name}: every environment drew the same colours"
@@ -217,18 +186,16 @@ def test_the_kernel_is_the_description(name, kind, style_kind):
         render_classic_torch(ops),
         what=f"{name} [{kind}, {style_kind}] kernel vs description",
         why="the two evaluate the same per-pixel expression; a difference is a Triton coding fault "
-        "(a shape, an integer width, a branch), not a rule",
+        "(a shape, an integer width, a branch)",
     )
 
 
 @pytest.mark.gpu
 @pytest.mark.parametrize("name", CLASSIC)
 def test_env_render_agrees_under_a_per_row_style(name):
-    """CUDA, end to end: ``env._render(states, style=...)`` with the kernel on and off.
+    """CUDA: ``env._render(states, style=...)`` is identical with the kernel on and off under a per-row style.
 
-    The description guard above compares two evaluations of one op list; this one goes through
-    ``render`` twice, so a per-row style that were resolved differently on the two paths -- rather
-    than evaluated differently -- would show up here and nowhere else.
+    Unlike the op-list comparison, this also covers style resolution on both paths.
     """
     if not (torch.cuda.is_available() and FC.HAVE_TRITON):
         pytest.skip("needs a CUDA device with triton")
@@ -258,12 +225,7 @@ def test_env_render_agrees_under_a_per_row_style(name):
 @pytest.mark.gpu
 @pytest.mark.parametrize("name", CLASSIC)
 def test_the_kernel_is_batch_and_chunk_invariant(name):
-    """CUDA. One state list rendered whole, in chunks, and out of order must give one answer.
-
-    A per-pixel kernel has no batch-dependent state to get wrong, which is exactly why a failure
-    here would mean something shared crept in — a cache keyed on ``B``, an op list built from an
-    aggregate over the batch.
-    """
+    """CUDA: the fused render is identical whole, in chunks and permuted."""
     if not (torch.cuda.is_available() and FC.HAVE_TRITON):
         pytest.skip("needs a CUDA device with triton")
     env = make_or_skip(name, num_envs=12, device="cuda")
@@ -289,13 +251,6 @@ def test_the_kernel_is_batch_and_chunk_invariant(name):
 @pytest.mark.gpu
 @pytest.mark.parametrize("name", CLASSIC)
 def test_the_cpu_path_is_untouched_by_the_kernel(name):
-    """A ``device="cpu"`` render must be the per-primitive one, kernel or no kernel.
-
-    Triton has no CPU backend here, so this is true by construction — and it is asserted anyway,
-    because "the fused path is CUDA-only" is a claim about a dispatch predicate and predicates rot.
-    """
+    """A ``device="cpu"`` env never selects the fused kernel."""
     cpu = make_or_skip(name, num_envs=4, device="cpu")
-    assert cpu._use_fused() is False, (
-        f"{name} on device='cpu' selected the fused kernel; the CPU path must stay the "
-        f"per-primitive one, whose pixels this ticket does not change"
-    )
+    assert cpu._use_fused() is False, f"{name} on device='cpu' selected the fused kernel"

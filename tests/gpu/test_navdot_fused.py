@@ -1,10 +1,4 @@
-"""The fused swm_nav kernel draws what the torch path draws, on the envs themselves.
-
-The pattern is ``tests/gpu/test_fast_paths.py``'s: a fast path is only safe to switch on by default
-if something renders the same scene BOTH ways and diffs them, on the registered envs rather than on
-a synthetic case. Here the two ways are ``navdot.blend_dots`` and the ``_alpha_blend``/
-``_gaussian_dot`` composition it replaces, and the switch is ``navdot.available``.
-"""
+"""The fused navigation dot kernel ``navdot.blend_dots`` equals the torch ``_alpha_blend``/``_gaussian_dot`` path."""
 
 from __future__ import annotations
 
@@ -78,17 +72,10 @@ def test_fused_matches_on_states_the_env_would_never_sample(cfg):
 
 @pytest.mark.parametrize("cfg", CONFIGS)
 def test_per_row_styles_against_the_class_s_own_torch_path(cfg):
-    """Every row a different dot colour and radius, checked against ``env.blend_dots``.
+    """Per-row dot colours and radii through the kernel match the class's own ``env.blend_dots``.
 
-    Two things this asserts that the tests above do not. First the REFERENCE is the class's own
-    method rather than a composition spelled out here, so if a subclass ever changes the order it
-    blends its dots in, or adds one, this fails instead of quietly comparing the kernel against a
-    copy of the old order. TwoRoomTarget blends target then agent and each blend quantises to uint8,
-    so a swap is a different picture wherever the two overlap — the frozen replay pins it and the
-    scratch fuzz pins it, and neither is run by pytest.
-
-    Second, per-row styles: the kernel indexes ``pos``, ``den``, ``max`` and ``colour`` by row, and a
-    kernel that read row 0 for the whole batch would pass every uniform-style test in this file.
+    The reference is the class method, so its dot order (each blend quantises to uint8) is what is
+    compared, and per-row styles catch a kernel reading row 0 for the whole batch.
     """
     B = 6
     env = se.make(cfg, num_envs=B, device="cuda")
@@ -126,7 +113,7 @@ def test_per_row_styles_against_the_class_s_own_torch_path(cfg):
 
 @pytest.mark.parametrize("cfg", CONFIGS)
 def test_render_is_the_fused_path_and_is_still_invariant(cfg):
-    """``render`` takes the kernel here, and the contracts hold across it."""
+    """``render`` uses the fused kernel and is pure, order-invariant and batch-size invariant."""
     env = se.make(cfg, num_envs=8, device="cuda")
     assert navdot.available(env.device), "this test is not exercising the fused path"
     st = env.reset(seed=1)
