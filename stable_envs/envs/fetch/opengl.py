@@ -1,8 +1,8 @@
-"""Explicit CPU/GPU OpenGL backend for the existing Fetch render-only model.
+"""OpenGL backend for the Fetch render-only model, on CPU (software GL) or GPU.
 
-Uses the same compact pose and appearance contract as MJWarp. The four hidden
-translucent mocap markers remain a declared limitation of that model.
-Match the source's 480px raster before resizing; supersampling adds density there.
+Uses the same compact pose and appearance contract as MJWarp, including the hidden
+translucent mocap markers. Frames are rasterized at the source's 480 px and then
+resized; supersampling raises that raster's density.
 """
 
 import copy

@@ -68,10 +68,6 @@ MJW_CHUNK = 256
 class _Cache(dict):
     """Process-lifetime cache for shared models, reference renderers and state pools."""
 
-    def __init__(self, name: str):
-        super().__init__()
-        self.name = name
-
     def get_or_build(self, key, build):
         hit = self.get(key)
         if hit is None:
@@ -82,9 +78,9 @@ class _Cache(dict):
 # MJWarp contexts may be evicted; shared EGL renderers remain alive for the process.
 _CTX_CACHE = _RES.BoundedCache(6, name="fetch.ctx", on_evict=MW.release_cached_ctx)
 _PLATE_CACHE = _RES.BoundedCache(32, name="fetch.plate")
-_MODEL_CACHE = _Cache("compiled model")
-_RENDERER_CACHE = _Cache("MuJoCo renderer")
-_POOL_CACHE = _Cache("state pool")
+_MODEL_CACHE = _Cache()
+_RENDERER_CACHE = _Cache()
+_POOL_CACHE = _Cache()
 # Cache free-camera poses to avoid repeated MjvScene allocation and scene updates.
 _CAM_CACHE = _RES.BoundedCache(256, name="fetch.cam")
 
@@ -350,8 +346,6 @@ def _build_bundle(scene: str) -> _Bundle:
         object=obj,
         arm=arm,
         goal_mocap=int(m.body_mocapid[mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, "se:goalbody")]),
-        translucent=translucent,
-        names={g: (gname(g) or f"geom{g}") for g in range(m.ngeom)},
         robot=[g for g in range(m.ngeom) if "robot0:" in gname(g)],
         sky=_skybox(m),
     )
@@ -360,7 +354,6 @@ def _build_bundle(scene: str) -> _Bundle:
         mat_rgba=np.array(m.mat_rgba, copy=True),
         geom_rgba=np.array(m.geom_rgba, copy=True),
         light_diffuse=np.array(m.light_diffuse, copy=True),
-        geom_group=np.array(m.geom_group, copy=True),
         cam_pos=np.array(m.cam_pos, copy=True),
         cam_quat=np.array(m.cam_quat, copy=True),
         sky=np.array(_sky_texels(m), copy=True),
@@ -542,8 +535,7 @@ class FetchBase(Env):
         d = int((a.to(torch.int16) - c.to(torch.int16)).abs().max())
         assert d == 0, (
             f"{type(self).__name__}: the baked static plate differs by {d}/255 between two states with "
-            f"every mover hidden, so the floor/table/skybox are NOT a function of the appearance alone "
-            f"and the plate design is unsound for this scene"
+            f"every mover hidden, so the floor/table/skybox depend on pose"
         )
 
     def make_variation_space(self) -> Dict:
@@ -554,7 +546,7 @@ class FetchBase(Env):
         ``rendering.transparent_arm`` draws every robot geom at alpha 0.3.
         """
         b = _build_bundle(self.SCENE)
-        _, info = b.model, b.info
+        info = b.info
         base = b.pristine["mat_rgba"]
         space = {
             "floor": Dict(
@@ -910,9 +902,7 @@ class FetchBase(Env):
             err = float(np.abs(got - st).max())
             if err > 1e-5:
                 raise AssertionError(
-                    f"{cls.__name__}: the reference env did not reach the requested state (max "
-                    f"{err:.3e}); every parity number computed from it would be comparing two "
-                    f"different scenes"
+                    f"{cls.__name__}: the reference env did not reach the requested state (max {err:.3e})"
                 )
             out.append(np.ascontiguousarray(u.render()))
             if not checked:
@@ -938,8 +928,7 @@ class FetchBase(Env):
                 f"{cls.__name__}: the official renderer's camera is "
                 f"(type {int(c.type)}, fixed {int(c.fixedcamid)}, distance {got[0]}, azimuth "
                 f"{got[1]}, elevation {got[2]}, lookat {np.asarray(c.lookat).tolist()}) but se:cam was "
-                f"built from (FREE, {exp}, lookat {want['lookat'].tolist()}). Every parity number "
-                f"would be comparing two different viewpoints"
+                f"built from (FREE, {exp}, lookat {want['lookat'].tolist()})"
             )
 
 

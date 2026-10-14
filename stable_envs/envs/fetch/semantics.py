@@ -140,7 +140,7 @@ class FetchSemantics:
         sampled = options.get("variation", [])
         explicit = options.get("variation_values", {})
         if (set(sampled) | set(explicit)) - self._reset_keys:
-            raise ValueError("Uncertified Fetch reset Variation")
+            raise ValueError("Unsupported Fetch reset Variation")
         # Variation reset uses its own Gymnasium space tree and reseeds even
         # for seed=None, as SWM does. It never consumes simulator PCG64.
         leaves = _source_sampling_tree(self._has_object)
