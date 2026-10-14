@@ -5,9 +5,8 @@ import numpy as np
 from ..._core.mujoco_gl import mujoco_renderer
 from ...env import Env
 from ...spaces import Box, Dict, Discrete
-from ._model import (  # noqa: F401
+from ._model import (
     _ENV_CACHE,
-    N_DRAWS,
     VISIBLE_GROUPS,
     _effective_alpha,
     _episode_slots,
