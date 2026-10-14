@@ -1,20 +1,8 @@
-"""Root conftest: make the repo importable, then load the safety plugin.
+"""Root conftest: put the repository on ``sys.path``, then load the test plugins.
 
-Two lines of real content, and both have to be here rather than anywhere else.
-
-``sys.path`` first. The package is not installed in the environment the GPU node runs (verified:
-``import stable_envs`` from outside the repo raises ``ModuleNotFoundError``), and ``tests/`` has no
-``__init__.py``, so pytest inserts ``tests/gpu`` on the path and not the root. Every test module starts
-with ``import stable_envs``, so without this a bare ``pytest`` from the repo root fails at collection
-and the only way to run the suite is to remember ``PYTHONPATH=.`` — which is exactly the kind of
-friction that ends with a suite nobody runs.
-
-``pytest_plugins`` second, and it must be in the ROOT conftest: pytest refuses ``pytest_plugins`` in a
-non-top-level conftest, and putting ``-p tests._runner.safety_plugin`` in ``addopts`` instead
-would try to import the package before the line above has run. So the order is not incidental.
-
-See ``tests/_runner/safety_plugin.py`` for what the plugin does and why each part of it exists;
-``tests/_runner/shard.py`` adds ``--shard I/N`` for CI's duration-balanced shards.
+The path insert lets a bare ``pytest`` import ``stable_envs`` without installing it. ``pytest_plugins``
+must live in the root conftest, and after the path insert, because the plugins are imported from
+``tests._runner``.
 """
 
 from __future__ import annotations
