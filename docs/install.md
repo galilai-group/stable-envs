@@ -43,15 +43,10 @@ package, which tests use for comparison.
 | `dmcontrol-gpu` | DM Control on CUDA with TrackCom floor reflections | MuJoCo and MuJoCo Warp 3.12 |
 | `robotics` | Fetch | gymnasium-robotics, MuJoCo < 3.12, OpenCV |
 | `mjwarp` | Fetch on CUDA | MuJoCo Warp |
-| `craftax` | Craftax | Craftax, JAX |
-| `craftax-semantics` / `-gpu` | Craftax simulation | Craftax, JAX, Flax, Gymnax, Chex |
 | `rocket` | PyFlytRocketLanding | PyFlyt 0.29.0, pybullet 3.2.7, Pillow, SciPy |
 | `docs` / `dev` / `examples` / `hf` | not needed to render | docs, tests, example helpers, HuggingFace |
 
 With `dmcontrol-gpu` on MuJoCo 3.11, TrackCom domains render without the floor reflection.
-
-Craftax simulation checks for the exact Craftax 1.5.0 / JAX 0.10.1 profile (`pin-craftax`) on
-Python 3.12.
 
 The `rocket` extra resolves numpy < 2 because of PyFlyt's metadata.
 
@@ -62,9 +57,8 @@ still runs on CPU.
 
 Extras declare compatible version ranges. Exact parity with an upstream renderer is checked only under
 that family's reference profile. These are the `pin-<profile>` dependency groups in `pyproject.toml`:
-`pin-classic`, `pin-navigation`, `pin-pusht`, `pin-dmc`, `pin-fetch`, `pin-ogbench`, `pin-rocket`,
-`pin-craftax` and `pin-craftax-render`. They are for development, cannot be combined, need Python 3.12,
-and resolve in the single `uv.lock`:
+`pin-classic`, `pin-navigation`, `pin-pusht`, `pin-dmc`, `pin-fetch`, `pin-ogbench` and `pin-rocket`.
+They are for development, cannot be combined, need Python 3.12, and resolve in the single `uv.lock`:
 
 ```bash
 uv sync --python 3.12 --extra dmcontrol --group pin-dmc --group test

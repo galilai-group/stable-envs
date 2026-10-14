@@ -44,14 +44,6 @@ below, one per family, without class members. PushT is shown in full.
     options:
       members: false
 
-::: stable_envs.envs.craftax.classic
-    options:
-      members: false
-
-::: stable_envs.envs.craftax.full
-    options:
-      members: false
-
 ::: stable_envs.envs.rocket
     options:
       members: false

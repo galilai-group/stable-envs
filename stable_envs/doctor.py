@@ -94,7 +94,6 @@ FAMILIES = (
         ("rocket_landing", "rocket_render", "rocket_semantics"),
         gpu=("cuda", "triton", "nvdiffrast"),
     ),
-    Family("craftax", "craftax-semantics", "craftax", ("craftax", "craftax_full", "craftax_semantics")),
 )
 
 

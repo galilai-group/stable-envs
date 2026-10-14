@@ -1,6 +1,6 @@
 """Test-only reference tables that tie stable-envs classes to stable-worldmodel.
 
-They map the 42 SWM ids in the frozen cell matrix to registered classes, hold the Gymnasium
+They map the 38 SWM ids in the frozen cell matrix to registered classes, hold the Gymnasium
 ids used to build reference envs, and map SWM variation spaces onto stable-envs styles. The
 installed package does not use them.
 """
@@ -11,11 +11,9 @@ from .certification import (
     has_reference_renderer,
     install_on_classes,
 )
-from .craftax_jit import CRAFTAX_JIT_GAP
 from .crosswalk import (
     HISTORICAL_CLASS_NAMES,
     SWM_IDS,
-    SYMBOLIC_IDS,
     canonical_from_frozen,
     canonical_names,
     class_for_frozen_cell,
@@ -36,10 +34,8 @@ from .variation import (
 
 __all__ = [
     "CERT_GYM_IDS",
-    "CRAFTAX_JIT_GAP",
     "HISTORICAL_CLASS_NAMES",
     "SWM_IDS",
-    "SYMBOLIC_IDS",
     "certification_gym_id",
     "has_reference_renderer",
     "install_on_classes",

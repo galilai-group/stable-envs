@@ -1,16 +1,5 @@
 # Third-party notices
 
-## Craftax textures
-
-`stable_envs/envs/craftax/_textures.py` and the texture tables in
-`stable_envs/envs/craftax/classic.py` hold texture data baked from
-[Craftax](https://github.com/MichaelTMatthews/Craftax) 1.6.1, which is MIT-licensed
-("Copyright (c) 2024 Michael Matthews"). Craftax's Classic texture images are the
-image files of [Crafter](https://github.com/danijar/crafter), also MIT-licensed
-("Copyright (c) 2021 Danijar Hafner"). The data is resized and alpha-thresholded
-as Craftax does at load time; it is otherwise unchanged. The MIT permission notice
-at the end of this file applies to it.
-
 ## SDL_gfx drawing rules
 
 `stable_envs/render/gfxdraw/` reimplements in Torch the integer rasterization and
@@ -54,7 +43,7 @@ Pymunk/Munk2D remains an external dependency; no native physics implementation
 is copied here. This private task migration
 does not establish acceptance of the public PushT registrations.
 
-MIT permission notice for the adapted code and the Craftax textures follows:
+MIT permission notice for the adapted code follows:
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -12,7 +12,6 @@ import stable_envs as snv
 from stable_envs import registry
 from tests.helpers.reference import (
     SWM_IDS,
-    SYMBOLIC_IDS,
     VariationMap,
     canonical_from_frozen,
     canonical_names,
@@ -32,7 +31,7 @@ FROZEN_MATRIX = ROOT / "tests" / "fixtures" / "swm" / "frozen_cells.json"
 
 def _frozen_rows() -> list[dict]:
     rows = json.loads(FROZEN_MATRIX.read_text())["rows"]
-    assert len(rows) == 42
+    assert len(rows) == 38
     return rows
 
 
@@ -42,10 +41,10 @@ def test_shipped_package_has_no_interop_module():
 
 
 @pytest.mark.family("dmc")
-def test_all_42_frozen_swm_ids_join_the_same_canonical_classes():
+def test_all_38_frozen_swm_ids_join_the_same_canonical_classes():
     expected = {row["swm_id"]: tuple(row["stable_envs_cells"]) for row in _frozen_rows()}
     assert SWM_IDS == expected
-    assert len(expected) == 42
+    assert len(expected) == 38
 
     for swm_id, class_names in expected.items():
         assert canonical_names(swm_id) == tuple(canonical_from_frozen(c) for c in class_names)
@@ -61,11 +60,6 @@ def test_all_42_frozen_swm_ids_join_the_same_canonical_classes():
             if live is not None:
                 with pytest.raises(KeyError, match="unknown env"):
                     snv.info(swm_id)
-
-    assert SYMBOLIC_IDS == (
-        "swm/CraftaxClassicSymbolic-v1",
-        "swm/CraftaxSymbolic-v1",
-    )
 
 
 def test_swm_ids_are_not_registry_aliases():

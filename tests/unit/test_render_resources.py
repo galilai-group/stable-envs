@@ -443,8 +443,6 @@ def test_family_device_caches_release_on_eviction():
         (root / "envs" / "navigation" / "envs.py", 'BoundedCache(_BAKE_CACHE_MAX, name="navigation.bake"'),
         (root / "render" / "raster2d.py", 'BoundedCache(_BASE_CACHE_MAX, name="raster2d.base"'),
         (root / "render" / "raycast3d.py", "_Memo = _RES.BoundedCache"),
-        (root / "envs" / "craftax" / "classic.py", 'BoundedCache(_MAX_ENTRIES, name="craftax.composite"'),
-        (root / "envs" / "craftax" / "full.py", 'BoundedCache(_MAX_ENTRIES, name="craftax_full.tables"'),
     ]
     for path, needle in cpu:
         src = path.read_text(encoding="utf-8")

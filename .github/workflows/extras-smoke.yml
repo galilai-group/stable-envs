@@ -15,7 +15,7 @@ on:
         description: Extra smoke profile
         required: true
         type: choice
-        options: [cheap, mujoco, robotics, jax]
+        options: [cheap, mujoco, robotics]
 
 permissions:
   contents: read
@@ -84,22 +84,3 @@ jobs:
           MUJOCO_GL: osmesa
           SE_SKIP_NODE_GATE: "1"
         run: python scripts/ci/smoke_extra.py --profile robotics
-
-  jax:
-    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.profile == 'jax')
-    name: JAX extras
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-      - name: Install JAX extras
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e ".[dev,craftax]"
-      - name: Smoke JAX extras
-        env:
-          SE_SKIP_NODE_GATE: "1"
-        run: python scripts/ci/smoke_extra.py --profile jax

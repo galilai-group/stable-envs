@@ -50,10 +50,3 @@ def test_lossy_projection_is_rejected_and_full_state_renders(name):
                 branch_step(env, wrong, torch.zeros(2, env.action_dim))
         for attr in ("pack", "unpack", "pack_render_state", "unpack_render_state", "_state"):
             assert not hasattr(env, attr)
-
-
-def test_renderer_only_cell_does_not_claim_full_state():
-    with se.make("CraftaxClassic", num_envs=1, device="cpu") as env:
-        for call in (env.get_state, env.reset):
-            with pytest.raises(NotImplementedError, match="full simulator semantics"):
-                call()

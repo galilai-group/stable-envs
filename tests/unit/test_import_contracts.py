@@ -200,7 +200,6 @@ UNSUPPORTED_MODULE_PATHS = (
     "stable_envs/envs/swm_nav.py",
     "stable_envs/envs/simple_point_maze.py",
     "stable_envs/envs/ogb_manip.py",
-    "stable_envs/envs/craftax_full.py",
 )
 BANNED_IMPORTS = (
     "stable_envs.core",
@@ -211,7 +210,6 @@ BANNED_IMPORTS = (
     "stable_envs.envs.swm_nav",
     "stable_envs.envs.simple_point_maze",
     "stable_envs.envs.ogb_manip",
-    "stable_envs.envs.craftax_full",
 )
 
 
@@ -226,30 +224,6 @@ def test_unsupported_module_paths_do_not_exist():
         ):
             remaining.append(rel)
     assert remaining == [], remaining
-
-
-@pytest.mark.parametrize("error", [ImportError("missing extra"), RuntimeError("broken family")])
-def test_craftax_import_failures_are_isolated(monkeypatch, error):
-    import importlib
-
-    import stable_envs.envs.craftax as craftax
-    import stable_envs.registry as registry
-
-    monkeypatch.setattr(registry, "_IMPORT_ERRORS", {})
-    attempted = []
-
-    def fail_import(name):
-        attempted.append(name)
-        raise error
-
-    monkeypatch.setattr(registry.importlib, "import_module", fail_import)
-    importlib.reload(craftax)
-    assert attempted == [f"stable_envs.envs.craftax.{name}" for name in ("classic", "full", "semantics")]
-    errors = registry.import_errors()
-    assert set(errors) == {"craftax", "craftax_full", "craftax_semantics"}
-    for message in errors.values():
-        assert f"{type(error).__name__}: {error}" in message
-        assert ("unexpected" in message) == isinstance(error, RuntimeError)
 
 
 def _is_banned(mod: str) -> bool:

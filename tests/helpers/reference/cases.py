@@ -70,7 +70,6 @@ _MAZES = tuple(
     for size in sizes
     for task in tasks
 )
-_CRAFTAX = "tests/unit/test_craftax_semantics.py::test_source_reset_all_actions_and_reset_replay"
 
 #: Registered env -> the CPU test comparing it with the library it ports, or with a corpus recorded from
 #: its source. None of these tests imports stable_worldmodel.
@@ -109,7 +108,6 @@ ORIGINAL_GATES: dict[str, str] = {
         for task in ("Reach", "Push", "Slide", "PickAndPlace")
     },
     **dict.fromkeys(_MAZES, _MAZE),
-    **dict.fromkeys(("CraftaxClassicPixels", "CraftaxClassicSymbolic", "CraftaxPixels", "CraftaxSymbolic"), _CRAFTAX),
 }
 
 _DMC_SWM = "tests/integration/test_dmc_swm_semantics.py::test_dmc_full_state_semantics"

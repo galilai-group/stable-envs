@@ -1,6 +1,6 @@
 """SWM id -> stable-envs cell correspondence.
 
-Read from ``tests/fixtures/swm/frozen_cells.json`` (42 rows, 40 pixel, 2 symbolic). The
+Read from ``tests/fixtures/swm/frozen_cells.json`` (38 rows). The
 matrix spells some cells differently from the registered class names; the mapping lives
 here because ``snv.make`` resolves neither SWM ids nor matrix spellings.
 """
@@ -25,8 +25,6 @@ def _swm_ids_from_matrix() -> dict[str, tuple[str, ...]]:
 
 #: SWM id -> frozen cell spelling(s), as recorded in the frozen mapping.
 SWM_IDS: dict[str, tuple[str, ...]] = _swm_ids_from_matrix()
-
-SYMBOLIC_IDS = tuple(sorted(k for k, v in SWM_IDS.items() if not v))
 
 #: Cell spelling in the frozen matrix -> registered class name.
 HISTORICAL_CLASS_NAMES: dict[str, str] = {

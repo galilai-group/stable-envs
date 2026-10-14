@@ -2,9 +2,9 @@
 
 ## 0.1.0 — initial release
 
-- Batched environments in eight families: classic control, Craftax, DM Control, Fetch,
-  navigation, OGBench, PushT and PyFlyt Rocket Landing. 76 environments register when every
-  extra is installed. A missing extra disables only its family; `snv.import_errors()` names it.
+- Batched environments in seven families: classic control, DM Control, Fetch, navigation,
+  OGBench, PushT and PyFlyt Rocket Landing. 70 environments register when every extra is
+  installed. A missing extra disables only its family; `snv.import_errors()` names it.
 - Class-first API: `snv.CartPole(num_envs=..., device=...)`, plus `snv.make`, `snv.info`,
   `snv.list_envs` and `snv.list_families`.
 - Batched stepping on CPU or GPU: one `step` call takes `[B, A]` actions for one transition or

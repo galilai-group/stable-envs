@@ -29,10 +29,6 @@ PROFILES: dict[str, dict] = {
         "expect": ("FetchReach",),
         "render": (),
     },
-    "jax": {
-        "expect": ("CraftaxClassic",),
-        "render": ("CraftaxClassic",),
-    },
     "special-import": {
         "expect": (),
         "render": (),

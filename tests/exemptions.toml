@@ -40,36 +40,6 @@ checks = ["batch_render"]
 reason = "render() refuses a State whose batch is not num_envs (TypeError: Full Cube/Scene TensorDict State with batch [num_envs] required)"
 
 [[exemption]]
-env = "CraftaxClassic"
-family = "craftax"
-checks = ["specs", "seeded", "lanes", "state", "variation", "batch_render"]
-reason = "renderer-only cell: reset and step raise 'full simulator semantics are not implemented'; CraftaxClassicPixels carries the simulation"
-
-[[exemption]]
-env = "CraftaxFull"
-family = "craftax"
-checks = ["specs", "seeded", "lanes", "state", "variation", "batch_render"]
-reason = "renderer-only cell: reset and step raise 'full simulator semantics are not implemented'; CraftaxPixels carries the simulation"
-
-[[exemption]]
-env = "Craftax*Symbolic"
-family = "craftax"
-checks = ["specs", "batch_render"]
-reason = "symbolic observation only: the registration produces no RGB frames"
-
-[[exemption]]
-env = "CraftaxClassic"
-family = "craftax"
-checks = ["original", "swm", "variation_map"]
-reason = "renderer only, so there is no rollout to compare; its pixels are compared with craftax only in tests/gpu, and swm's Craftax wrappers set variation_space = None"
-
-[[exemption]]
-env = "CraftaxFull"
-family = "craftax"
-checks = ["original", "swm", "variation_map"]
-reason = "renderer only, so there is no rollout to compare; its pixels are compared with craftax only in tests/gpu, and swm's Craftax wrappers set variation_space = None"
-
-[[exemption]]
 env = "PiecewiseZones"
 family = "navigation"
 checks = ["original"]

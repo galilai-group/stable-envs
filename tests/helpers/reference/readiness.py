@@ -1,6 +1,5 @@
 """Replacement-readiness inventory, derived from the variation maps and execution sets.
 
-    SYMBOLIC     no pixel cell
     INCOMPLETE   stable-envs only renders this id
     PARTIAL      native or delegated step exists, but UNSUPPORTED_MEANINGFUL or PARTIAL leaves remain
     READY        execution is NATIVE or DELEGATED_CPU, and
@@ -13,7 +12,7 @@ from __future__ import annotations
 
 from collections import Counter
 
-from .crosswalk import SWM_IDS, SYMBOLIC_IDS, canonical_from_frozen
+from .crosswalk import SWM_IDS, canonical_from_frozen
 from .variation import VARIATION_MAPS
 
 #: SWM ids whose stable-envs port implements the step itself.
@@ -54,12 +53,10 @@ DELEGATED_CPU_SWM_IDS = frozenset(
     }
 )
 
-STATUSES = ("READY", "PARTIAL", "INCOMPLETE", "SYMBOLIC")
+STATUSES = ("READY", "PARTIAL", "INCOMPLETE")
 
 
 def execution_for(swm_id: str) -> str:
-    if swm_id in SYMBOLIC_IDS:
-        return "SYMBOLIC"
     if swm_id in NATIVE_SWM_IDS:
         return "NATIVE"
     if swm_id in DELEGATED_CPU_SWM_IDS:
@@ -106,8 +103,6 @@ def remaining_leaves(swm_id: str, status: str) -> tuple[str, ...]:
 
 def status_for(swm_id: str) -> str:
     exe = execution_for(swm_id)
-    if exe == "SYMBOLIC":
-        return "SYMBOLIC"
     if exe == "INCOMPLETE":
         return "INCOMPLETE"
     counts = leaf_counts(swm_id)

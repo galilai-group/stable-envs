@@ -1,4 +1,4 @@
-"""The registry knows stable-envs class names; the 42 SWM ids live in the test-only crosswalk.
+"""The registry knows stable-envs class names; the 38 SWM ids live in the test-only crosswalk.
 
 Two oracles:
 
@@ -25,7 +25,6 @@ import stable_envs as snv
 from stable_envs import registry as R
 from tests.helpers.reference import (
     SWM_IDS,
-    SYMBOLIC_IDS,
     canonical_from_frozen,
     canonical_names,
     class_for_frozen_cell,
@@ -65,12 +64,11 @@ UNSHIPPED_BASELINE_MODULES = frozenset(f"stable_envs.envs.{name}" for name in UN
 
 def test_the_swm_crosswalk_is_the_frozen_mapping_row_for_row():
     rows = json.loads(MATRIX.read_text())["rows"]
-    assert len(rows) == 42, "the oracle is 42 SWM ids; this file is not the accepted mapping"
+    assert len(rows) == 38, "the oracle is 38 SWM ids; this file is not the accepted mapping"
     expected = {r["swm_id"]: tuple(r["stable_envs_cells"]) for r in rows}
     assert SWM_IDS == expected
-    assert len(SWM_IDS) == 42
-    assert sum(1 for v in SWM_IDS.values() if v) == 40, "40 pixel-producing ids"
-    assert SYMBOLIC_IDS == ("swm/CraftaxClassicSymbolic-v1", "swm/CraftaxSymbolic-v1")
+    assert len(SWM_IDS) == 38
+    assert all(SWM_IDS.values()), "every id produces pixels"
     assert not hasattr(R, "SWM_IDS")
     assert not hasattr(R, "SYMBOLIC_IDS")
     assert not hasattr(R, "canonical_names")
