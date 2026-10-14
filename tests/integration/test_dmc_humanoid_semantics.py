@@ -1,4 +1,4 @@
-"""Bounded semantic gate for historical Humanoid Walk."""
+"""Bounded full-State semantic gate for Humanoid Walk against pinned SWM."""
 
 import os
 

@@ -1,4 +1,4 @@
-"""Bounded full-State recovery gate against the pinned SWM Reacher wrapper."""
+"""Bounded full-State semantics gate against the pinned SWM Reacher wrapper."""
 
 import os
 

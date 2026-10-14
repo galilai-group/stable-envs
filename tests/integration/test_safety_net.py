@@ -1,16 +1,8 @@
-"""The safety net, tested. A suite that cannot survive a crashing test has to prove that it can.
+"""The test supervisor, resource guard and node gate, exercised on generated CPU-only test modules.
 
-Everything in ``tests/_runner/supervisor.py`` and ``resource_guard.py`` exists to convert a class
-of failure that kills the interpreter into one attributed test failure. That claim cannot be checked by
-reading the code: the whole point is what happens when the process is gone, and the only honest way to
-check it is to kill a process and look at what came back. So each test here generates a throwaway test
-module, runs the real supervisor or the real plugin over it in a subprocess, and asserts on the result.
-
-Deliberately CPU-only and dependency-free. The generated modules do not import torch, so a nested run
-costs about a second and these can live in the default suite instead of being a thing someone runs by
-hand once and then forgets. The GPU-side equivalents — a real env aborting with live EGL contexts, a
-real ``mujoco.egl.GLContext`` being released — are in ``tests/gpu/test_crash_isolation.py``, marked
-``selftest`` and opt-in, because running them by accident aborts the interpreter on purpose.
+Each test writes a throwaway test module, runs the real supervisor or plugin over it in a subprocess,
+and asserts on the result. The generated modules do not import torch, so each nested run takes about a
+second. GPU equivalents (real EGL contexts) are in ``tests/gpu/test_crash_isolation.py``.
 """
 
 from __future__ import annotations
@@ -27,11 +19,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def _clean_env(**extra) -> dict:
-    """A child environment with this run's supervisor wiring stripped out.
+    """A child environment without this run's ``SE_TEST_*`` supervisor variables.
 
-    Inheriting ``SE_TEST_EVENTS`` would make the nested run append its breadcrumbs to the OUTER run's
-    event log, and the outer supervisor would then attribute the nested crash to whatever it thought
-    was in flight — a bug that reads as the safety net failing when in fact the test harness leaked.
+    Otherwise the nested run would write to the outer run's event log.
     """
     env = {k: v for k, v in os.environ.items() if not k.startswith("SE_TEST_")}
     env["PYTHONPATH"] = os.pathsep.join([str(ROOT), env.get("PYTHONPATH", "")]).rstrip(os.pathsep)
@@ -40,10 +30,8 @@ def _clean_env(**extra) -> dict:
     return env
 
 
-#: A module with tests on both sides of two different fatal events. ``ctypes.string_at(0)`` is a real
-#: SIGSEGV in the C library and ``os.abort()`` a real SIGABRT — the two signals this suite has actually
-#: died from — and the passing tests around them are what proves the run RESUMED rather than merely
-#: reported. Names are ordered so pytest's file order is the execution order.
+#: Tests on both sides of a real SIGSEGV (``ctypes.string_at(0)``) and SIGABRT (``os.abort()``); the
+#: passing tests around them show the run resumed. Names sort in execution order.
 CRASHY = """
 import ctypes, os
 
@@ -74,10 +62,7 @@ def _run_supervisor(tmp_path: Path, module_src: str, *extra_args, timeout=300) -
         str(tmp_path / "test_generated.py"),
         "-p",
         "tests._runner.safety_plugin",
-        # The generated module lives in a tmp dir, so its rootdir is NOT this repo and it inherits
-        # none of our addopts -- including `-p no:randomly`. These tests assert on which test the
-        # crash is attributed to, which is an ORDER claim, so a shuffled child would fail them for
-        # a reason that has nothing to do with the safety net.
+        # The tmp rootdir inherits none of this repo's addopts; crash attribution depends on order.
         "-p",
         "no:randomly",
         "-p",
@@ -90,14 +75,7 @@ def _run_supervisor(tmp_path: Path, module_src: str, *extra_args, timeout=300) -
 
 
 def test_the_supervisor_survives_a_segfault_and_an_abort_and_finishes_the_run(tmp_path):
-    """Two fatal signals in one module must cost two tests. Everything else still runs and reports.
-
-    This is the whole thesis of the supervisor in one assertion. Without it, ``test_b_segfault`` ends
-    the interpreter and the four tests after it are never run, never reported, and the only artifact of
-    the whole thing is a shell exit code. With it, the two crashes are named, the four survivors are
-    reported with their real outcomes, and the ordinary failure at the end is still an ordinary
-    failure — the net must not turn a normal red into something exotic.
-    """
+    """Two fatal signals cost exactly two tests; the rest run and keep their real outcomes."""
     rc, res, log = _run_supervisor(tmp_path, CRASHY)
     assert res, f"the supervisor produced no result json:\n{log}"
     counts, crashed = res["counts"], res["crashed"]
@@ -114,12 +92,7 @@ def test_the_supervisor_survives_a_segfault_and_an_abort_and_finishes_the_run(tm
 
 
 def test_a_crash_does_not_re_run_the_tests_that_already_passed(tmp_path):
-    """Resuming must skip forward, not start over. Otherwise a crash near the end costs the run twice.
-
-    The deselect file is what makes resume affordable on a 21-minute suite: without it, a crash in the
-    last test would re-run the preceding twenty minutes, and the rational response to that would be to
-    stop using the supervisor.
-    """
+    """After a crash the supervisor resumes past finished tests instead of re-running them."""
     rc, res, log = _run_supervisor(tmp_path, CRASHY)
     ends = [
         json.loads(l)["nodeid"]
@@ -132,12 +105,10 @@ def test_a_crash_does_not_re_run_the_tests_that_already_passed(tmp_path):
 
 
 def test_a_c_level_exit_mid_test_is_treated_as_a_crash_not_as_a_test_failure(tmp_path):
-    """``os._exit(1)`` inside a test looks exactly like "some tests failed" to a shell. It is not.
+    """``os._exit(1)`` mid-test is recorded as a crash, not a test failure.
 
-    MuJoCo's own fatal path ends the process this way (``mju_error`` -> ``exit(1)``), so an exit code
-    is not sufficient evidence of an orderly finish. The breadcrumb is: pytest always closes out every
-    test it starts, so a start with no end means the process died inside that test whatever its status
-    was. This asserts the supervisor uses that and not the number.
+    MuJoCo's fatal path (``mju_error`` -> ``exit(1)``) exits this way; the supervisor detects a start
+    event with no end event rather than relying on the exit code.
     """
     src = "import os\ndef test_a(): assert True\ndef test_b_exit(): os._exit(1)\ndef test_c(): assert True\n"
     rc, res, log = _run_supervisor(tmp_path, src)
@@ -147,12 +118,10 @@ def test_a_c_level_exit_mid_test_is_treated_as_a_crash_not_as_a_test_failure(tmp
 
 
 def test_the_stall_watchdog_kills_a_hung_test_and_carries_on(tmp_path):
-    """A test that never returns must cost one test, and must not need anything in-process to notice.
+    """A hung test is killed by the external stall watchdog and the run continues.
 
-    ``pytest-timeout`` handles the case where the test is hung in Python. It cannot handle a thread
-    blocked inside a driver call, which is what a hung EGL or CUDA operation is, because the signal is
-    only delivered when the C call returns. The supervisor watches the events file from OUTSIDE the
-    process, so it does not care where the hang is.
+    ``pytest-timeout`` cannot interrupt a thread blocked in a driver call; the supervisor watches the
+    events file from outside the process.
     """
     src = "import time\ndef test_a(): assert True\ndef test_b_hangs(): time.sleep(600)\ndef test_c(): assert True\n"
     rc, res, log = _run_supervisor(tmp_path, src, "--stall-timeout", "12", timeout=300)
@@ -164,11 +133,8 @@ def test_the_stall_watchdog_kills_a_hung_test_and_carries_on(tmp_path):
 
 # ------------------------------------------------------------------ the resource guard
 
-#: Releases a context and creates one per batch row, through the guard's own accounting rather than
-#: through EGL. The point being checked here is the POLICY and the plumbing — that a violation becomes
-#: a named test failure at the moment it happens — which is independent of whether a real driver was
-#: involved. That the patch is really attached to ``mujoco.egl.GLContext`` is asserted separately, on
-#: the GPU, in tests/gpu/test_crash_isolation.py.
+#: Violates each guard rule through the guard's own accounting, without EGL. Attachment to
+#: ``mujoco.egl.GLContext`` is checked in tests/gpu/test_crash_isolation.py.
 GUARD_PROBE = """
 from tests._runner import resource_guard as G
 
@@ -256,13 +222,9 @@ def test_the_guard_can_be_put_in_report_only_mode_for_a_bisect(tmp_path):
 
 
 def test_the_per_test_timeout_is_applied_but_never_required(tmp_path):
-    """900s by default, an explicit ``--timeout`` still wins, and the suite runs without the plugin.
+    """The timeout defaults to 900s, an explicit ``--timeout`` wins, and the suite runs without pytest-timeout.
 
-    Three properties and each one is a way the timeout could be worse than useless. Not applied: a hung
-    test hangs the run, which is the thing it exists to stop. Not overridable: debugging the hang means
-    editing the repo. Required: a bare ``pytest`` on an environment without pytest-timeout dies at
-    startup with "unrecognized arguments", which is why the number is set from the plugin rather than
-    from ``addopts`` — a safety margin must not become a dependency.
+    The default is set by the plugin rather than ``addopts`` so pytest-timeout stays optional.
     """
     (tmp_path / "test_generated.py").write_text(
         "def test_timeout_is_set(request):\n"
@@ -318,14 +280,7 @@ def test_the_per_test_timeout_is_applied_but_never_required(tmp_path):
 
 
 def test_a_condemned_node_is_refused_by_name_before_anything_is_measured():
-    """The scheduler's own verdict, read and acted on. This is the incident that cost the most.
-
-    Twenty-five OGBench cells failed with 69-90/255 differences and the interpreter then aborted; the
-    node had been flagged ``NHC: auto-reboot`` 41 minutes before the job started. The suite was right
-    and the output never said so, because nothing in it named the host. So the assertion here is not
-    only that the gate closes but that the message carries the hostname and the scheduler's reason —
-    those two strings are the entire difference between a one-line diagnosis and an afternoon.
-    """
+    """A node the scheduler reports as drained closes the gate, naming the host, reason and ``--exclude=``."""
     from tests._runner import node_health as N
 
     real = N.slurm_node_status
@@ -344,11 +299,9 @@ def test_a_condemned_node_is_refused_by_name_before_anything_is_measured():
 
 
 def test_a_healthy_state_string_is_not_mistaken_for_a_condemned_one():
-    """``mix-``, ``alloc``, ``idle~`` are healthy. Over-reading them would refuse every run.
+    """Healthy SLURM states with ``*~#$-`` suffixes are not condemned; drain/down/fail states are.
 
-    A gate that fires on a healthy node is worse than no gate: it gets disabled, and then the real one
-    goes unnoticed. SLURM decorates states with ``*~#$`` suffixes, so the match is on the alphabetic
-    stem — which is exactly the kind of thing that is obvious until someone writes ``state == "drain"``.
+    The match is on the alphabetic stem.
     """
     from tests._runner.node_health import state_is_condemned
 
@@ -359,13 +312,9 @@ def test_a_healthy_state_string_is_not_mistaken_for_a_condemned_one():
 
 
 def test_an_unstable_reference_renderer_closes_the_gate_even_on_a_healthy_looking_node():
-    """The second question, and the one the scheduler cannot answer.
+    """A nondeterministic reference renderer closes the gate on a healthy node.
 
-    A node can be ``mix`` and idle and still have an offscreen rasterizer that returns two different
-    frames for the same scene — that is what produced 69-90/255 differences across 25 OGBench cells
-    followed by SIGABRT. So the gate asks the renderer directly and, when it disagrees with itself, the
-    message has to say that no stable-envs code was involved: otherwise the next reader spends the
-    afternoon in ``raycast3d.py``.
+    The message must say no stable-envs code was involved.
     """
     from tests._runner import node_health as N
 
@@ -383,17 +332,14 @@ def test_an_unstable_reference_renderer_closes_the_gate_even_on_a_healthy_lookin
     assert not g["ok"]
     assert "OFFICIAL" in g["why"] and "77/255" in g["why"], g["why"]
     assert "before any stable-envs code was involved" in g["why"], (
-        "the message must say the fault is the node's, or it will be read as a renderer bug"
+        "the message must say the fault is the host's rasterizer, not stable-envs code"
     )
 
 
 def test_a_condemned_node_ends_the_whole_run_with_code_78_and_an_artifact(tmp_path):
-    """End to end: the run stops before the first test, exits 78, and leaves the diagnosis on disk.
+    """A condemned node stops the run before the first test, exits 78 and writes ``node_fault.json``.
 
-    78 rather than 1 on purpose. "The tests failed" and "this machine is not fit to measure on" demand
-    completely different reactions — resubmit elsewhere versus go and read the code — and a CI that
-    cannot tell them apart will eventually treat one as the other, which is how this went wrong the
-    first time.
+    78 rather than 1 distinguishes an unfit host from failing tests.
     """
     (tmp_path / "conftest.py").write_text(
         "from tests._runner import node_health\n"
@@ -439,13 +385,7 @@ def _run_supervisor_env(tmp_path: Path, module_src: str, **envextra):
 
 
 def test_the_smoke_subset_covers_every_env_family_exactly_once():
-    """One env per family, computed from the registry rather than listed.
-
-    The failure this guards against is quiet: someone adds an env module, the fast subset silently does
-    not cover it, and the first anyone hears is a full-run failure days later. Deriving the set from
-    ``REGISTRY`` means a new family is covered the day it lands, and this asserts the derivation is
-    total — every family gets exactly one representative, and every representative is a real env.
-    """
+    """The smoke subset has exactly one registered representative per env family, derived from the registry."""
     pytest.importorskip("torch")
     import stable_envs as se
     from tests._runner.safety_plugin import _family_representatives, smoke_envs

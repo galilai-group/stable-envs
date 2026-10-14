@@ -1,4 +1,4 @@
-"""Bounded semantic gate for three pinned historical DMC registrations."""
+"""Bounded full-State semantic gate for the continuation DMC registrations against pinned SWM."""
 
 import os
 
