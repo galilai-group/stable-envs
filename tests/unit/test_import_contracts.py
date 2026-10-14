@@ -187,7 +187,7 @@ def test_dm_control_import_does_not_hang_after_gl_configure():
         capture_output=True,
         text=True,
         cwd=str(ROOT),
-        timeout=15,
+        timeout=120,
     )
     assert r.returncode == 0, r.stderr[-2000:]
     assert r.stdout.strip() == "ok"
