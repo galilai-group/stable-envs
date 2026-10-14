@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 from . import physics as _physics
@@ -7,7 +9,7 @@ from .lanes import DMCLanes
 from .registered import apply_appearance, apply_floor_friction, compile_physics, normalized, source_model
 from .state import core_fields
 
-CONFIG = {
+CONFIG: dict[str, dict[str, Any]] = {
     "cheetah": {"nq": 9, "nv": 9, "nu": 6, "time_limit": 25.0, "control_timestep": None},
     "hopper": {"nq": 7, "nv": 7, "nu": 4, "time_limit": 20.0, "control_timestep": 0.02},
     "walker": {"nq": 9, "nv": 9, "nu": 6, "time_limit": 25.0, "control_timestep": 0.025},

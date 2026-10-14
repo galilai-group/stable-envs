@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 import torch
 
@@ -9,7 +11,7 @@ from .lanes import DMCLanes
 from .registered import apply_appearance, apply_floor_friction, compile_physics, normalized, source_model
 from .state import core_fields
 
-CONFIG = {
+CONFIG: dict[str, dict[str, Any]] = {
     "ball_in_cup": {"nq": 4, "nv": 4, "nu": 2, "na": 0, "time_limit": 20.0, "dt": 0.02},
     "finger": {"nq": 3, "nv": 3, "nu": 2, "na": 0, "time_limit": 20.0, "dt": 0.02},
     "manipulator": {"nq": 11, "nv": 11, "nu": 5, "na": 0, "time_limit": 10.0, "dt": 0.01},
