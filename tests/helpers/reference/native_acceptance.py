@@ -1,7 +1,7 @@
-"""Specialized native-control acceptance witnesses shared by pytest and CLIs.
+"""Classic-control acceptance checks against pinned SWM, shared by pytest and a CLI.
 
-Case bodies preserve the historical seeds, batches, horizons, task/action edges,
-Variation values and rejected controls. Source fields never use candidate export.
+Seeds, batches, horizons, task/action edges, Variation values and rejected actions are fixed
+per case. Source fields are never read through the candidate's export.
 """
 
 import numpy as np
@@ -28,8 +28,7 @@ EARLY = {"cartpole", "pendulum"}
 
 
 def compare_state(actual, expected):
-    # Historical scalar gates predate chunk validity; the native profile checks
-    # validity separately. Preserve exact comparisons of every source output.
+    # Source outputs have no chunk validity; the native profile checks it separately.
     if "valid" in actual.keys() and "valid" not in expected.keys():
         assert bool(actual["valid"].all())
         actual = actual.exclude("valid")

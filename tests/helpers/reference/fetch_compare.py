@@ -2,7 +2,6 @@
 
 import gymnasium as gym
 import numpy as np
-import torch
 
 
 def oracle(envs):
@@ -65,9 +64,3 @@ def full_compare(state, refs):
     assert set(state.keys(True, True)) == set(fields)
     for key, (width, dtype) in fields.items():
         assert state[key].shape == (len(refs), width) and state[key].dtype == dtype, key
-
-
-def equal_state(a, b):
-    assert set(a.keys(True, True)) == set(b.keys(True, True))
-    for k in a.keys(True, True):
-        assert a[k].dtype == b[k].dtype and a[k].shape == b[k].shape and torch.equal(a[k], b[k]), k

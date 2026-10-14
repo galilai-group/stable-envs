@@ -1,9 +1,8 @@
-"""Family-specific witnesses composed by the small shared contracts.
+"""Per-family bridges that drive source envs beside a candidate and compare their State.
 
-The Rocket bridge compares independently captured native-engine fields, since
-its public replay recipe is not a source snapshot. Fetch and native bridges
-normalize source-owned fields to full TensorDicts. No oracle calls a candidate
-serializer to manufacture expected values.
+The Rocket bridge compares independently captured native-engine fields, since its public
+replay recipe is not a source snapshot. Fetch and native bridges normalize source-owned
+fields to full TensorDicts. No bridge uses the candidate's serializer to build expected values.
 """
 
 import importlib
@@ -34,8 +33,7 @@ def load_source(root, family):
         raise ValueError("Another stable-worldmodel checkout is already imported")
     for name in ("utils", "spaces", "envs"):
         setattr(module, name, importlib.import_module("stable_worldmodel." + name))
-    # Package initializers import optional expert policies; environment modules
-    # themselves are loaded unchanged from the verified checkout.
+    # Package initializers import optional expert policies, so these packages get bare namespaces.
     packages = {
         "rocket": ("rocket_landing",),
         "ogbench": ("ogbench",),

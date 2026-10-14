@@ -1,4 +1,4 @@
-"""Independent pinned-SWM oracle for the recovered classic-control defaults."""
+"""Pinned-SWM State and task oracle for the five classic-control envs."""
 
 from __future__ import annotations
 

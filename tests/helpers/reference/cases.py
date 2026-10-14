@@ -1,7 +1,7 @@
-"""Explicit case accounting, independent of optional runtime registration imports.
+"""Case accounting for gates, and the tables naming each registered env's reference test.
 
-These are gate requirements, not a new acceptance matrix. A sibling's result can
-never satisfy a registration's case. Family witnesses remain in their drivers.
+Cases are keyed per registration: one registration's result never satisfies another's case.
+The tables do not import optional runtime registrations.
 """
 
 from __future__ import annotations
@@ -74,7 +74,7 @@ _MAZES = tuple(
 _CRAFTAX = "tests/unit/test_craftax_semantics.py::test_source_reset_all_actions_and_reset_replay"
 
 #: Registered env -> the CPU test comparing it with the library it ports, or with a corpus recorded from
-#: its source. It must not import stable_worldmodel: this layer stays when the SWM layer is removed.
+#: its source. None of these tests imports stable_worldmodel.
 ORIGINAL_GATES: dict[str, str] = {
     **dict.fromkeys(("CartPole", "Pendulum"), _CLASSIC),
     **dict.fromkeys(("Acrobot", "MountainCar", "MountainCarContinuous"), _CLASSIC_REST),
@@ -120,7 +120,7 @@ _DMC_CONTINUATION = "tests/integration/test_dmc_continuation_semantics.py::test_
 _PUSHT = "tests/integration/test_variation_pusht.py::test_leaf_matches_swm_per_lane"
 
 #: Registered env with a stable-worldmodel registration -> the CPU test comparing it with live SWM
-#: (marked ``swm``). Removing the SWM layer deletes this table with the ``swm`` tests.
+#: (marked ``swm``).
 SWM_GATES: dict[str, str] = {
     **dict.fromkeys(
         ("CartPole", "Pendulum", "Acrobot", "MountainCar", "MountainCarContinuous"),

@@ -1,8 +1,8 @@
 """Render DM Control render rows through the pinned stable-worldmodel wrappers.
 
 The wrappers compile their own appearance into the model: target colour, shape and visibility, and
-the light. The released DMC classes take their default appearance from them, so this is the reference
-for what is drawn by default. Exact-pixel parity stays certified against plain dm_control, because
+the light. The DMC classes take their default appearance from them, so this is the reference for
+what is drawn by default. Exact-pixel parity is checked against plain dm_control instead, because
 the wrappers' scene edits change most pixels by a level or two.
 """
 

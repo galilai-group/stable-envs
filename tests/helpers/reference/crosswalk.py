@@ -1,8 +1,8 @@
-"""Frozen SWM id -> stable-envs cell correspondence.
+"""SWM id -> stable-envs cell correspondence.
 
-Read from ``tests/fixtures/swm/frozen_cells.json`` (42 rows, 40 pixel,
-2 symbolic). Live class names for pre-v0 spellings live here, not in the
-production registry: ``snv.make`` does not resolve SWM ids or historical names.
+Read from ``tests/fixtures/swm/frozen_cells.json`` (42 rows, 40 pixel, 2 symbolic). The
+matrix spells some cells differently from the registered class names; the mapping lives
+here because ``snv.make`` resolves neither SWM ids nor matrix spellings.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ SWM_IDS: dict[str, tuple[str, ...]] = _swm_ids_from_matrix()
 
 SYMBOLIC_IDS = tuple(sorted(k for k, v in SWM_IDS.items() if not v))
 
-#: Frozen-oracle / support-matrix cell spelling -> live class name.
+#: Cell spelling in the frozen matrix -> registered class name.
 HISTORICAL_CLASS_NAMES: dict[str, str] = {
     "DMCAcrobotSwingup": "DMCAcrobotBalance",
     "DMCHumanoidStand": "DMCHumanoidWalk",
@@ -72,12 +72,12 @@ HISTORICAL_CLASS_NAMES: dict[str, str] = {
 
 
 def canonical_from_frozen(name: str) -> str:
-    """Live class name for a frozen-oracle / SWM-cell spelling."""
+    """Registered class name for a frozen-matrix cell spelling."""
     return HISTORICAL_CLASS_NAMES.get(name, name)
 
 
 def frozen_from_canonical(name: str) -> str:
-    """Frozen-oracle spelling for a live class name."""
+    """Frozen-matrix cell spelling for a registered class name."""
     for old, new in HISTORICAL_CLASS_NAMES.items():
         if new == name:
             return old
@@ -85,7 +85,7 @@ def frozen_from_canonical(name: str) -> str:
 
 
 def class_for_frozen_cell(name: str) -> type[Env] | None:
-    """Look up a registered class by live name or frozen cell spelling."""
+    """Look up a registered class by class name or frozen-matrix cell spelling."""
     from stable_envs.registry import REGISTRY
 
     return REGISTRY.get(name) or REGISTRY.get(canonical_from_frozen(name))
@@ -104,6 +104,6 @@ def canonical_names(name: str) -> tuple[str, ...]:
 
 
 def swm_ids_for_class(name: str) -> tuple[str, ...]:
-    """SWM ids whose frozen cells name this live or historical class."""
+    """SWM ids whose frozen cells name this class, under either spelling."""
     frozen = frozen_from_canonical(name)
     return tuple(sorted(i for i, cells in SWM_IDS.items() if name in cells or frozen in cells))

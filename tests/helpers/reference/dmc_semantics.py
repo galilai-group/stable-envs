@@ -1,7 +1,7 @@
-"""Independent pinned-SWM State/task oracle for all twelve DMC defaults.
+"""Pinned-SWM State and task oracle for the twelve DMC tasks with SWM registrations.
 
-Capture source fields directly; never borrow the candidate's serializer or schema.
-The small model-field map is the only family-specific State handling.
+Source fields are read directly, never through the candidate's serializer or schema.
+``MODEL_FIELDS`` is the only domain-specific State handling.
 """
 
 import importlib
@@ -218,15 +218,6 @@ class DMCReference:
     @property
     def action_dim(self):
         return self.envs[0].action_space.shape[0]
-
-    def warmstarts(self):
-        return np.stack([env.env.physics.data.qacc_warmstart.copy() for env in self.envs])
-
-    def controls(self):
-        return np.stack([env.env.physics.data.ctrl.copy() for env in self.envs])
-
-    def task_caches(self):
-        return [{k: v for k, v in env.env.task.__dict__.items() if k != "_random"} for env in self.envs]
 
     def close(self):
         for env in self.envs:

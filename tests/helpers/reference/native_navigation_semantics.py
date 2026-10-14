@@ -1,4 +1,4 @@
-"""Independent pinned-SWM oracle for the three historical native navigation defaults."""
+"""Pinned-SWM State and task oracle for TwoRoom, Piecewise and SimplePointMaze."""
 
 from __future__ import annotations
 
