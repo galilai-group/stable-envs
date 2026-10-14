@@ -41,7 +41,7 @@ def test_cell_builds_resets_steps_and_restores_state(cell):
         out = env.step(actions, frames=None)
         assert out["valid"].all()
         assert torch.isfinite(out["state"]["qpos"]).all()
-        assert not torch.equal(out["state"]["qpos"], state["qpos"]), "the arm moved"
+        assert not torch.equal(out["state"]["qpos"], state["qpos"]), "the arm did not move"
         env.set_state(state)
         again = env.step(actions, frames=None)
         assert torch.equal(again["state"]["qpos"], out["state"]["qpos"])

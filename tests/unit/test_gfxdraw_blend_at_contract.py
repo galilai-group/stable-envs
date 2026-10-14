@@ -1,22 +1,7 @@
-"""``blend_at`` is an overridable seam, and its weight argument has a shape contract.
+"""``Canvas.blend_at`` overrides may index the weight by the write mask.
 
-``Canvas.blend_at`` blends a weight per write. It would be cheaper for a primitive to hand over ONE
-element when every write shares it — ``aaline``'s solid initial pixel and the two axis-aligned runs
-all write at ``pixelColor`` — and ``blend`` broadcasts, so the whole render still draws the right
-picture. But ``blend_at`` is overridden outside this module: ``LunarLander._AARecorder`` records
-what ``aaline`` WOULD write by indexing the weight with its own mask, so it bakes the flag fringe
-once at construction. A one-element weight against a ``B*(kmax+1)`` mask is an ``IndexError``
-there — raised inside ``LunarLander.__init__``, so ``se.make("LunarLander")`` fails outright on any
-host that has Box2D.
-
-That regression shipped once. It survived a hand-written recorder check because the quad that check
-used had four GENERAL edges, and a general edge never reaches the vline/hline scatters — so the
-offending weight was passed and never indexed. The axis-aligned case is the one that matters and is
-the one the flag triangle has.
-
-So: drive the recorder with the exact shapes ``aaline_emit`` emits, over an edge set that reaches
-every one of the five scatters, and assert the contract directly (``len(w) == len(valid)``) as well
-as the behaviour.
+Every scatter ``aaline`` issues must pass a weight shaped like the mask. The quads below reach all five
+scatters, including the axis-aligned vline/hline runs.
 """
 
 from __future__ import annotations
@@ -31,7 +16,7 @@ H = W = 32
 
 
 class _Recorder(G.Canvas):
-    """``LunarLander._AARecorder``, verbatim in shape: index the weight by the write mask."""
+    """A ``blend_at`` override that records writes, indexing the weight by the write mask."""
 
     def __init__(self, gfx):
         super().__init__(1, gfx.H, gfx.W, gfx.device, gfx.sh, gfx.ys, gfx.xs)
@@ -67,23 +52,20 @@ def _run(verts, kmax=64):
 
 @pytest.mark.parametrize("case", sorted(QUADS))
 def test_a_blend_at_override_may_index_the_weight_by_the_write_mask(case):
-    """The recorder must survive every scatter ``aaline`` issues, not only the general ones."""
+    """Every scatter ``aaline`` issues passes weight, mask and coordinates of the same shape."""
     rec = _run(QUADS[case])
     assert rec.shapes, "aaline issued no scatters at all"
     for w_shape, valid_shape, y_shape in rec.shapes:
         assert w_shape == valid_shape == y_shape, (
             f"aaline handed blend_at a weight of shape {w_shape} against a mask of {valid_shape} "
-            f"and coordinates of {y_shape}. An override that indexes the weight by the mask -- "
-            f"LunarLander._AARecorder, which runs inside __init__ -- needs all three to agree."
+            f"and coordinates of {y_shape}"
         )
 
 
 def test_the_axis_aligned_scatters_are_actually_reached():
-    """The guard on the guard: a test that never fires the vline/hline path cannot catch this.
+    """The axis-aligned quad records more writes than the all-general one, so vline/hline run.
 
-    The all-general quad is the shape the original check used; it reaches the solid-initial and Wu
-    scatters only. The axis-aligned quad must reach strictly more writes, which is what makes it the
-    case worth pinning.
+    The all-general quad reaches only the solid-initial and Wu scatters.
     """
     axis = _run(QUADS["axis-aligned-and-general"])
     general = _run(QUADS["all-general"])
@@ -91,14 +73,11 @@ def test_the_axis_aligned_scatters_are_actually_reached():
     n_general = sum(int(y.numel()) for y, _, _ in general.writes)
     assert n_axis > n_general, (
         f"the axis-aligned quad recorded {n_axis} writes and the all-general one {n_general}; the "
-        f"vline/hline short-circuit is not being exercised, so this file is not testing what it "
-        f"says it tests"
+        f"vline/hline short-circuit is not exercised"
     )
 
 
-#: The write list each quad class produces in the frozen baseline. Positions and
-#: weights, in order. LunarLander bakes this into its flag fringe, so the CONTENT is a contract and
-#: not only the shapes: a throughput edit is not allowed to change what the flags look like.
+#: Digest prefix and write count of each quad's recorded positions and weights, in order.
 BASELINE_DIGESTS = {
     "all-general": ("66998ca141c31551", 66),
     "axis-aligned-and-general": ("17e088394cd240cf", 68),
@@ -119,6 +98,5 @@ def test_the_recorded_fringe_matches_the_baseline(case):
     want, n_want = BASELINE_DIGESTS[case]
     n = sum(int(y.numel()) for y, _, _ in rec.writes)
     assert (h.hexdigest()[:16], n) == (want, n_want), (
-        f"the recorded aaline write list for the {case!r} quad changed against 89fa5ca "
-        f"({n} writes, digest {h.hexdigest()[:16]}); LunarLander bakes this into its flag fringe"
+        f"the recorded aaline write list for the {case!r} quad changed ({n} writes, digest {h.hexdigest()[:16]})"
     )

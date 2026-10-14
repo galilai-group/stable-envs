@@ -1,4 +1,4 @@
-"""Shared recovery gate: projections must never impersonate simulator snapshots."""
+"""Render projections are rejected where a full simulator State is required."""
 
 import pytest
 import torch

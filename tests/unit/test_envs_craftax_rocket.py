@@ -8,8 +8,8 @@ refusals, the frame spec and the certified declarations. Renderer pixels are cov
 These envs render stored states; Craftax/JAX and PyFlyt keep their own dynamics, so
 ``step``/``transition``/``unroll`` raise the contract's ``NotImplementedError``.
 
-``PyFlytRocketLanding`` cannot be CONSTRUCTED on a machine without nvdiffrast, so its tests are about the
-class and the module: the constructor's signature, the CPU refusal's wording, and the declarations.
+``PyFlytRocketLanding`` cannot be constructed without nvdiffrast, so its tests check the class and the
+module: the constructor's signature, the CPU refusal's wording, and the declarations.
 """
 
 from __future__ import annotations
@@ -55,9 +55,9 @@ def test_takes_num_envs_and_device_and_closes(name):
 
 
 def test_the_rocket_constructor_takes_num_envs():
-    """Asserted from the SIGNATURE, because this cell cannot be built without a CUDA host."""
+    """Checked on the signature: the cell cannot be built without a CUDA host."""
     p = inspect.signature(RL.PyFlytRocketLanding.__init__).parameters
-    assert list(p)[1] == "num_envs", "num_envs must sit in the slot batch sat in (positional callers)"
+    assert list(p)[1] == "num_envs", "num_envs must be the first positional parameter"
     assert p["num_envs"].default == 1
     assert "batch" not in p
     assert p["device"].default is None
@@ -139,7 +139,7 @@ def test_a_state_the_caller_keeps_is_not_a_view_of_the_env(envs, name):
 
 
 def test_the_rocket_state_is_one_rigid_body_grouped_by_what_it_is():
-    """Checked on the CLASS: the cell cannot be built without a CUDA host."""
+    """Checked on the class: the cell cannot be built without a CUDA host."""
     lay = RL.PyFlytRocketLanding.state_layout
     assert [tuple(k) for k, _, _ in lay] == [
         ("rocket", "angular_velocity"),
@@ -150,7 +150,7 @@ def test_the_rocket_state_is_one_rigid_body_grouped_by_what_it_is():
     assert [w for _, w, _ in lay] == [3, 4, 3, 3]
     assert [o for _, _, o in lay] == [0, 3, 7, 10]
     assert sum(w for _, w, _ in lay) == RL.PyFlytRocketLanding.state_dim == 13
-    # the offsets are the frozen obs layout, not a re-grouping of it
+    # The offsets follow the frozen observation layout.
     n = RL.PyFlytRocketLanding.state_names
     assert n[0:3] == ("ang_vel_x", "ang_vel_y", "ang_vel_z")
     assert n[3:7] == ("quat_x", "quat_y", "quat_z", "quat_w")
@@ -213,12 +213,10 @@ def test_these_cells_have_no_dynamics_and_say_so_precisely(envs, name):
 
 
 def test_the_rocket_refuses_a_cpu_device_by_design():
-    """A ``device="cpu"`` request is never quietly served by CUDA (plan §2's device honesty).
+    """A ``device="cpu"`` request is refused, never served by CUDA.
 
-    On a host WITH nvdiffrast the CPU request raises ``NotImplementedError`` naming the missing CPU
-    textured-triangle rasteriser; on a host without it the earlier ``ImportError`` fires first, which
-    is also correct — it says the renderer is unreachable rather than that the device is unsupported.
-    Both are asserted so the test means something on either kind of machine.
+    With nvdiffrast installed this raises ``NotImplementedError`` naming the missing CPU rasteriser;
+    without it the ``ImportError`` for the unreachable renderer fires first. Both are accepted.
     """
     with pytest.raises((NotImplementedError, ImportError)) as e:
         RL.PyFlytRocketLanding(num_envs=1, device="cpu")

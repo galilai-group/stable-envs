@@ -84,7 +84,7 @@ def test_a_maze_cell_is_a_declaration_and_overrides_no_renderer_method():
         assert MANIP.CELL_CLASSES[cell].__bases__ == (MANIP.OGBManipBase,)
 
 
-# ============================================================ structural: the preserved declarations
+# ============================================================ structural: the declarations
 
 
 @pytest.mark.parametrize("cell", MANIP_CELLS)

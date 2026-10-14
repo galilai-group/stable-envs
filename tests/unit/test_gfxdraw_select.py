@@ -1,14 +1,7 @@
-"""``render/gfxdraw.select_`` takes a different code path per device. They must agree on the bit.
+"""Both device branches of ``gfxdraw.select_`` draw bit-identical frames.
 
-The opaque write of every gfxdraw primitive is ``mask ? colour : surface``. ``torch.where`` is the
-obvious spelling and is what CUDA gets; on the CPU it takes a scalar path over a broadcast bool and
-the bitwise identity ``d ^= (d ^ s) * m`` is 3.7x faster, so the CPU gets that instead. The two
-compute the same integers -- that is the whole justification for choosing between them by device --
-and this is where that claim is checked rather than asserted, on a CPU host where only one of the
-two branches ever runs in anger.
-
-Without this, a divergence would surface as a GPU-only pixel difference in a renderer whose entire
-claim is that its frames are bit-identical to pygame's.
+The opaque write is ``mask ? colour : surface``: CUDA uses ``torch.where``, CPU uses the faster bitwise
+identity ``d ^= (d ^ s) * m``. The ``torch.where`` branch is forced on CPU to compare the two.
 """
 
 from __future__ import annotations
@@ -53,7 +46,7 @@ def test_both_select_branches_draw_the_same_frame(name, monkeypatch):
 
 @pytest.mark.parametrize("shape", [(3, 2, 5, 7), (3, 1, 1, 4)])
 def test_select_is_a_plain_integer_choice(shape):
-    """The identity itself, over every uint8 value rather than the ones a frame happens to hold."""
+    """``select_`` equals ``torch.where`` over random uint8 values."""
     g = torch.Generator().manual_seed(0)
     dst = torch.randint(0, 256, shape, dtype=torch.uint8, generator=g)
     src = torch.randint(0, 256, (shape[0], shape[1], 1, 1), dtype=torch.uint8, generator=g)
