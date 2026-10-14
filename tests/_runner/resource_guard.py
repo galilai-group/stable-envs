@@ -233,11 +233,10 @@ def violations(d: dict, batch: int | None = None) -> list[tuple[str, str]]:
             (
                 "EGL_CONTEXT_RELEASED",
                 (
-                    f"this test RELEASED {d['context_freed']} EGL context(s). Releasing one corrupts rendering "
-                    f"in every other live context in the process, silently, and the damage surfaces later as "
-                    f"pixel differences in an unrelated env — which is how a reference-env pool, a two-envs-"
-                    f"per-test parity check and a per-plate mujoco.Renderer each cost this repo a day. Cache "
-                    f"the object and keep it for the life of the process; do not close it.\n"
+                    f"this test released {d['context_freed']} EGL context(s). Releasing one silently corrupts "
+                    f"rendering in every other live context in the process, showing up later as pixel "
+                    f"differences in an unrelated env. Cache the object for the life of the process; do not "
+                    f"close it.\n"
                     f"  released at:\n{format_sites([s for s in d['sites'] if s[0].endswith('freed')])}"
                 ),
             )
@@ -248,9 +247,8 @@ def violations(d: dict, batch: int | None = None) -> list[tuple[str, str]]:
                 "MUJOCO_RENDERER_CLOSED",
                 (
                     f"this test closed {d['renderer_closed']} mujoco.Renderer(s). A Renderer owns an EGL "
-                    f"context, so closing one is the same defect as EGL_CONTEXT_RELEASED — it is reported "
-                    f"separately because the shape it took here before was a renderer constructed and closed "
-                    f"per baked plate, ~175 releases across 25 envs.\n"
+                    f"context, so closing one is the same defect as EGL_CONTEXT_RELEASED; a common cause is "
+                    f"constructing and closing a renderer per baked plate.\n"
                     f"  closed at:\n{format_sites([s for s in d['sites'] if s[0].endswith('closed')])}"
                 ),
             )
@@ -261,11 +259,10 @@ def violations(d: dict, batch: int | None = None) -> list[tuple[str, str]]:
             (
                 "EGL_CONTEXTS_SCALE_WITH_BATCH",
                 (
-                    f"this test created {n} EGL contexts with a batch of {batch}. Context creation that "
-                    f"tracks the batch size means a per-environment value is being turned into a per-"
-                    f"environment SCENE — a B-wide ramp of distinct style values re-bakes a MuJoCo plate per "
-                    f"row. Two distinct values falsify a collapse to environment 0 just as well and cost two "
-                    f"bakes; see check_per_env_variation and uniform_style.\n"
+                    f"this test created {n} EGL contexts with a batch of {batch}: a per-environment value is "
+                    f"being turned into a per-environment scene, e.g. a B-wide ramp of style values re-baking "
+                    f"a MuJoCo plate per row. Two distinct values suffice; see check_per_env_variation and "
+                    f"uniform_style.\n"
                     f"  created at:\n{format_sites([s for s in d['sites'] if s[0].endswith('created')])}"
                 ),
             )
@@ -276,9 +273,9 @@ def violations(d: dict, batch: int | None = None) -> list[tuple[str, str]]:
                 "EGL_CONTEXTS_PER_TEST",
                 (
                     f"this test created {n} EGL contexts, over the limit of {lim['per_test']} "
-                    f"(SE_MAX_CONTEXTS_PER_TEST). Nothing in a healthy run needs that many: the most expensive "
-                    f"legitimate test builds one cached ogbench env, its plate renderers and one reference "
-                    f"env. Creating them per state, per style value or per call is the bug.\n"
+                    f"(SE_MAX_CONTEXTS_PER_TEST). The most a test should need is one cached ogbench env, its "
+                    f"plate renderers and one reference env; check for creation per state, style value or "
+                    f"call.\n"
                     f"  created at:\n{format_sites([s for s in d['sites'] if s[0].endswith('created')])}"
                 ),
             )
@@ -289,9 +286,7 @@ def violations(d: dict, batch: int | None = None) -> list[tuple[str, str]]:
                 "EGL_CONTEXTS_RUNAWAY",
                 (
                     f"{d['context_live']} EGL contexts are live, over {lim['session_live']} "
-                    f"(SE_MAX_LIVE_CONTEXTS). 96 simultaneous contexts were measured to be harmless on this "
-                    f"hardware, so this bound is not a safety margin — it is a tripwire for something creating "
-                    f"contexts in a loop."
+                    f"(SE_MAX_LIVE_CONTEXTS); something is creating contexts in a loop."
                 ),
             )
         )

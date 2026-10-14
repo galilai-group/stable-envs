@@ -112,8 +112,7 @@ def gate(candidates=None, check_scheduler: bool = True, check_renderer: bool = T
             out["ok"] = False
             out["why"] = (
                 f"the scheduler has condemned this node: state={st['state']!r} "
-                f"reason={st.get('reason') or '(none given)'!r}. Do not measure a renderer on a host "
-                f"the cluster's health checker has flagged. Resubmit elsewhere: --exclude={host}"
+                f"reason={st.get('reason') or '(none given)'!r}. Resubmit elsewhere: --exclude={host}"
             )
             return out
     if check_renderer:
@@ -124,8 +123,7 @@ def gate(candidates=None, check_scheduler: bool = True, check_renderer: bool = T
             out["why"] = (
                 f"the OFFICIAL {r.get('env')} renderer produced two different frames for the SAME "
                 f"states on {host} (max {r['max_abs_diff']}/255), before any stable-envs code was "
-                f"involved. This is a node fault, not a repo fault. Every parity number measurable "
-                f"here is meaningless; rerun with --exclude={host}"
+                f"involved, so parity numbers measured on this host are unreliable; rerun with --exclude={host}"
                 + (
                     f". Scheduler says state={out['scheduler'].get('state')!r} "
                     f"reason={out['scheduler'].get('reason')!r}"

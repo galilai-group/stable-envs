@@ -189,8 +189,8 @@ def pytest_runtest_makereport(item, call):
             f"counted during this test: created {d['context_created']} EGL context(s), released "
             f"{d['context_freed']}; renderers created {d['renderer_created']}, closed "
             f"{d['renderer_closed']}; {d['context_live']} live now.\n"
-            f"The rule (stable_envs/testing/conformance.py): in this process an EGL context is created "
-            f"and NEVER released, and nothing may create them in proportion to the batch."
+            f"The rule (stable_envs/testing/conformance.py): an EGL context is never released in this "
+            f"process, and nothing may create them in proportion to the batch."
         )
     return report
 

@@ -84,9 +84,8 @@ def _run_segment(cmd: list[str], env: dict, events: Path, stall: float, max_wall
             last_size, last_change = size, now
         if now - last_change > stall:
             note = (
-                f"no test started or finished for {stall:.0f}s — killed as a stall. Nothing "
-                f"in-process can interrupt a thread blocked in a driver call, which is why this "
-                f"watchdog exists alongside the per-test timeout"
+                f"no test started or finished for {stall:.0f}s; killed as a stall (a thread blocked "
+                f"in a driver call cannot be interrupted in-process)"
             )
             _kill_tree(p)
             return p.wait(), note
@@ -173,9 +172,8 @@ def main(argv=None) -> int:
             if 0 <= rc <= 5:
                 break
             print(
-                f"\nSUPERVISOR: the run died with {_signal_name(rc)} and no test was in flight — "
-                f"this is a collection/import/session-level crash, which no per-test isolation can "
-                f"survive. Nothing to resume past.",
+                f"\nSUPERVISOR: the run died with {_signal_name(rc)} and no test was in flight: a "
+                f"collection, import or session-level crash, so there is nothing to resume past.",
                 flush=True,
             )
             rc = 1
