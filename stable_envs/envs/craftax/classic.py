@@ -670,7 +670,7 @@ class CraftaxClassic(Env):
         "light_level >= 0.5": "asserted at the frozen DOWNSAMPLE_EXACT_FRAC; measured 1.000",
         "light_level < 0.5": "not_applicable: the reference is itself resolution-inconsistent there "
         "(official world rows 0.1634; this renderer 0.1634, the same number)",
-        "evidence": "pre-repository-cleanup:tests/fixtures/regression/join/step7/craftax-classic-full/oracle/resolution_oracle_S16.json",
+        "evidence": "official-renderer resolution oracle at 16 px per tile against 32 px",
         "measured_against": "craftax 1.6.1 un-jitted, jax 0.11.1, jax_threefry_partitionable=True",
     }
     #: Exact over the whole observation; a different craftax or jax blocks the check via

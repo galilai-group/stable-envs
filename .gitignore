@@ -221,9 +221,7 @@ __marimo__/
 .streamlit/secrets.toml
 
 # ============================================================================================
-# Historical probe trees lived under scratch/ on milestone tags (step8-closure). They are not
-# part of the product branch. The patterns below remain so a mixed worktree that checks out an
-# older tag does not accidentally add generated blobs.
+# Generated blobs under scratch/ are never tracked.
 # ============================================================================================
 scratch/**/*.png
 scratch/**/*.jpg
@@ -286,9 +284,8 @@ examples/paper/main.pdf
 *.blg
 GIT_COMMIT
 
-# The commit of the tree an Oscar job measured, written by the sync step and carried across an
-# rsync that excludes .git. It must stay UNTRACKED: its content is the hash of the commit that
-# would contain it, so a tracked copy is always one commit stale.
+# The commit of a tree copied without .git. It must stay UNTRACKED: its content is the hash of the
+# commit that would contain it, so a tracked copy is always one commit stale.
 .git_sha
 
 

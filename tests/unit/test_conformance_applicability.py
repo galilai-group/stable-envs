@@ -13,7 +13,7 @@ from stable_envs.testing.conformance import (
 
 ROOT = Path(__file__).resolve().parents[2]
 
-#: The five leaves PFRocketLanding declares, and nothing else: the ruling is scoped by name.
+#: The five leaves PFRocketLanding declares, and nothing else: the declaration is scoped by name.
 ROCKET_LEAVES = ("pad.color", "rocket.body_color", "rocket.booster_color", "rocket.fin_color", "rocket.leg_color")
 
 

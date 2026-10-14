@@ -76,9 +76,8 @@ class VariationMap:
     #: ``background.color`` writes the floor material AND the skybox texture, and the map carries the
     #: floor half. Unlike ``notes`` this is a classification, not a caveat: ``classification`` reports
     #: such a leaf as ``partial`` so a generated completeness table cannot count it as full support,
-    #: and the reason must carry the measured residual. Added under
-    #: Sami's ruling that a feasible, required leaf is not declared unsupported for want of a renderer
-    #: capability; the capability decision is recorded separately.
+    #: and the reason must carry the measured residual. A feasible, required leaf is not declared
+    #: unsupported for want of a renderer capability.
     partial: Mapping[str, str] = field(default_factory=dict)
 
     def __post_init__(self):
@@ -304,8 +303,8 @@ _PIECEWISE_GATE = (
 #: our class name -> how its appearance relates to the official swm env's
 VARIATION_MAPS: dict[str, VariationMap] = {
     # ``agent.position`` and ``target.position`` are per-lane reset distributions (``Env.reset_leaves``)
-    # that land in State, not style columns; tests/integration/test_variation_pilots.py and
-    # test_variation_navigation.py gate them against swm.
+    # that land in State, not style columns; tests/integration/test_variation_navigation.py gates
+    # them against swm.
     "TwoRoom": VariationMap(
         swm_id="swm/TwoRoom-v1",
         identical=("agent.color", "agent.radius", "agent.speed", "agent.position", "target.position")

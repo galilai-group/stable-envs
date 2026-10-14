@@ -41,4 +41,4 @@ Concretely, that means:
 
 The two published tiers — identity against the official renderer, versus a different rasterizer of
 the same scene — are [Fidelity tiers](fidelity-tiers.md). The worked port that applies this method
-is [Adding an environment](../adding-an-env.md).
+is [Adding an environment](../adding/index.md).

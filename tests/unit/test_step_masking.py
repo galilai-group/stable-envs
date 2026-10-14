@@ -29,7 +29,7 @@ def equal(actual, expected):
 @pytest.mark.parametrize("selection", [None, slice(None), slice(None, None, -1), slice(5, 5)])
 def test_owned_nested_outputs_and_terminal_routing(device, pipeline, limits, length, sequence, selection):
     if device == "cuda" and not torch.cuda.is_available():
-        pytest.skip("CUDA requires Oscar")
+        pytest.skip("requires CUDA")
 
     class PayloadCounter(PipelinedCounter if pipeline else Counter):
         def __init__(self):

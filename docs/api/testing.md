@@ -16,8 +16,7 @@ and acceptance requirements.
 python -m tests._runner.supervisor -- tests/ -v      # full suite, crash-isolated
 python -m tests._runner.supervisor --smoke           # one env per family
 python -m tests._runner.node_health                  # is this host fit to measure on?
-sbatch scripts/run_gpu_tests.sbatch                        # the same, on a GPU node
-sbatch scripts/run_smoke_tests.sbatch
+uvx nox -s "test(<profile>)"                         # one CI profile
 ```
 
 ::: tests._runner.supervisor

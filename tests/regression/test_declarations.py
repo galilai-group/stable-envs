@@ -359,7 +359,7 @@ def test_no_env_shadows_an_attribute_the_base_class_owns():
             offenders[path.relative_to(root / "stable_envs").as_posix()] = clash
 
     assert not offenders, (
-        "these env modules assign attributes that stable_envs/core/env.py also assigns, so whichever "
+        "these env modules assign attributes that stable_envs/env.py also assigns, so whichever "
         "runs last silently wins and the other meaning is destroyed with no error:\n  "
         + "\n  ".join(f"{f}: {sorted(c)}" for f, c in sorted(offenders.items()))
         + "\n\nRename the env's attribute, or the base class's if the base class is the newcomer — "

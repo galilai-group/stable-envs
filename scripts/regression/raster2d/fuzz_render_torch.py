@@ -1,4 +1,4 @@
-"""Differential fuzz: the Step 6 ``render_torch`` against the pre-Step-6 one, byte for byte.
+"""Differential fuzz: ``render_torch`` against the earlier per-pixel implementation, byte for byte.
 
 The six frozen configurations and the eight registered Scene2D envs are real scenes, and real
 scenes are a narrow sample: every one of them renders at supersample 1, none has a collinear
@@ -8,8 +8,8 @@ degenerate padded edges, negative radii, inner discs, outlines wider than the sh
 entirely off the frame, primitives larger than the world, flip_y, non-square worlds, supersample 2
 -- and asserts the two implementations produce identical bytes.
 
-The baseline implementation is inlined below rather than imported. It is the code this workstream
-replaced; keeping a copy is what makes the comparison a comparison.
+The baseline implementation is inlined below rather than imported; keeping a copy is what makes the
+comparison a comparison.
 
     python scripts/regression/raster2d/fuzz_render_torch.py --cases 400
 """
@@ -40,7 +40,7 @@ from stable_envs.render.scene import KIND_DISC, KIND_POLY, KIND_SEGMENT, Scene2D
 
 @torch.no_grad()
 def render_torch_baseline(scene, out_size, supersample: int = 1) -> torch.Tensor:
-    """Verbatim ``render_torch`` at 89fa5ca8 (the Step 5 baseline)."""
+    """The earlier ``render_torch``, verbatim."""
     H = W = int(out_size) if isinstance(out_size, int) else out_size[0]
     if not isinstance(out_size, int):
         H, W = out_size

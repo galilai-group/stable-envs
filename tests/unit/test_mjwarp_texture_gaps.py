@@ -6,7 +6,7 @@ fine, everything else samples texel (0,0)) ignores the KIND of texture, which is
 that does not fail quietly. ``swm/OGBScene-v0`` returned an EMPTY gap
 list and then killed the renderer with ``Warp CUDA error 700: an illegal memory access``, raised
 from inside the warm-up frame with no mention of textures in the traceback. The cause, bisected on
-an RTX 3090 (``pre-repository-cleanup:tests/fixtures/regression/join/step7/ogb-manipulation/oscar/mjwarp/mjwarp_bisect_OGBScene.json``):
+an RTX 3090:
 its ``btn_metal`` material wears a 512x512 **CUBE** map on two button MESH geoms. MJWarp builds
 ``wp.Texture2D`` and samples with 2-D coordinates, so a cube map is not drawn badly — it is indexed
 out of bounds. Disabling the graph capture, the skybox or shadows all still crashed; ``textures=False``

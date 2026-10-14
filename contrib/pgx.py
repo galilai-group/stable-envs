@@ -8,7 +8,6 @@ import numpy as np
 import torch
 
 # Verify both optional imports and the SVG rasterization path before registering this family.
-_VENV = "/mnt/vast/home/randall.balestriero/venvs/se-pgx"
 try:
     import pgx as _pgx
     import resvg_py as _resvg
@@ -16,9 +15,8 @@ try:
 except Exception as _e:  # pragma: no cover
     raise ImportError(
         f"the PGX family needs pgx (which brings jax), resvg_py and Pillow, and this interpreter "
-        f"cannot provide them: {type(_e).__name__}: {_e}. The envs were measured in {_VENV}, built "
-        f"with a CLEAN `python -m venv` -- NOT --system-site-packages, which breaks jax's CUDA plugin "
-        f"discovery."
+        f"cannot provide them: {type(_e).__name__}: {_e}. Install them in a CLEAN `python -m venv`, "
+        f"NOT --system-site-packages, which breaks jax's CUDA plugin discovery."
     ) from _e
 
 try:

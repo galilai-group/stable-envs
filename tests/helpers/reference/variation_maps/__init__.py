@@ -2,9 +2,8 @@
 
 The four maps that predate the certified maps live inline in ``variation.py``. The certified maps
 live here instead, one module per family, for a reason that is about ownership rather than
-tidiness: the maps are written by different workstreams against different evidence, and a single
-dict literal in one file is a merge conflict per workstream and no way to say which measurement a
-given classification rests on.
+tidiness: each family's map rests on different evidence, and a single dict literal in one file would
+give no way to say which measurement a given classification rests on.
 
 A family module declares ``MAPS: dict[str, VariationMap]``, keyed by the stable-envs CLASS name — the
 same key ``VARIATION_MAPS`` uses, so ``variation_map(env)`` finds it with no extra lookup. Adding a
@@ -20,7 +19,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-#: Family modules, in the order they are installed. One line per workstream.
+#: Family modules, in the order they are installed. One line per family module.
 _MODULES = ("dmc_control", "fetch", "newcells")
 
 

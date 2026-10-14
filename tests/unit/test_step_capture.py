@@ -263,7 +263,7 @@ def test_navigation_sequence_matches_scalar_calls(name):
             assert (out["states"][:, t] == expected[t]).all()
 
 
-@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA validation runs on Oscar")
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="requires CUDA")
 @pytest.mark.parametrize("name", ["CartPole", "Pendulum", "TwoRoom", "Piecewise"])
 def test_gpu_sequence_frames_equal_repeated_steps(name):
     with snv.make(name, num_envs=3, device="cuda") as env:

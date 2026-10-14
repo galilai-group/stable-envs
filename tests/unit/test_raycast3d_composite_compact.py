@@ -311,7 +311,7 @@ def test_the_edge_cases_actually_clamp(cid):
 def test_the_fuzz_actually_reaches_empty_and_full_cover_rows():
     """A differential test that never varies the cover has verified one point, not an identity.
 
-    ``compare_dumps`` in this workstream once printed ``ALL_IDENTICAL=True`` over two empty
+    A dump comparison once printed ``ALL_IDENTICAL=True`` over two empty
     directories because ``all([])`` is True. The same shape of false green is available here: if
     every fuzz scene happened to put the movers off screen, both paths would return the plate and
     every assertion would pass having compared nothing.

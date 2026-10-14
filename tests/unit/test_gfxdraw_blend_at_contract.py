@@ -96,7 +96,7 @@ def test_the_axis_aligned_scatters_are_actually_reached():
     )
 
 
-#: The write list each quad class produces at 89fa5ca, the pre-Step-6 baseline. Positions and
+#: The write list each quad class produces in the frozen baseline. Positions and
 #: weights, in order. LunarLander bakes this into its flag fringe, so the CONTENT is a contract and
 #: not only the shapes: a throughput edit is not allowed to change what the flags look like.
 BASELINE_DIGESTS = {
@@ -108,7 +108,7 @@ BASELINE_DIGESTS = {
 
 
 @pytest.mark.parametrize("case", sorted(QUADS))
-def test_the_recorded_fringe_matches_the_pre_step6_baseline(case):
+def test_the_recorded_fringe_matches_the_baseline(case):
     import hashlib
 
     rec = _run(QUADS[case])

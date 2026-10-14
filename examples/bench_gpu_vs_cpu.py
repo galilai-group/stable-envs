@@ -81,9 +81,7 @@ def make_env(name: str, batch: int, size: int, ss: int | None):
     hard silhouette is the wrong answer at a mover's edge. ``se.make(name)`` gives a user ss=2 for
     those; passing ``supersample=1`` gives a DIFFERENT PICTURE, four times cheaper.
 
-    That substitution was live in this file, and it is why this script and ``bench_storage.py``
-    (which never passed a supersample) described different pictures for the same env. Measured in one
-    process on an idle node, ``supersample=1`` against the class's own value: DMCBallInCupCatch at
+    Measured in one process on an idle node, ``supersample=1`` against the class's own value: DMCBallInCupCatch at
     84px batch 4096 is 4,272 against 3,683 frames/s (1.16x), AntmazeLargeNavigate at 224px 70,598
     against 55,947 (1.26x), MujocoPusher at 240px 14,938 against 4,475 (3.3x). The ratio is not a
     constant because these renders are host-bound (see ``_median_and_cpu``) and ss=2 quadruples the
@@ -227,8 +225,7 @@ def gpu_throughput(
             torch.cuda.reset_peak_memory_stats()
         dt, cpu_frac = _median_and_cpu(lambda: env.render(st, out=out), reps)
         # The RESOLVED supersample, read off the object rather than off the flag. A row that does not
-        # carry it cannot be compared with a row from another script, which is exactly how this table
-        # and bench_storage.py came to describe different pictures for the same env and resolution.
+        # carry it cannot be compared with a row from another script.
         return {
             "batch": batch,
             "size": size,

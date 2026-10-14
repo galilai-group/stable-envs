@@ -32,7 +32,7 @@ CONFIGS = ("TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones")
 
 
 def _reference(env, states, sty):
-    """The pre-Step-6 render: base image per row, both dots over the whole frame."""
+    """The earlier full-frame render: base image per row, both dots over the whole frame."""
     s = torch.as_tensor(np.asarray(states, np.float32), device=env.device).reshape(-1, env.state_dim)
     k = int(s.shape[0])
     sl = lambda p: sty[p][0:k]  # noqa: E731

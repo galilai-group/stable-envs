@@ -20,7 +20,7 @@ def equal(a, b):
 @pytest.mark.parametrize("device", ["cpu", "cuda"])
 def test_classic_export_continuation_and_ownership(domain, device):
     if device == "cuda" and not torch.cuda.is_available():
-        pytest.skip("CUDA requires Oscar")
+        pytest.skip("requires CUDA")
     adapter = ClassicControlAdapter(domain, 3, device, 17)
     try:
         adapter.reset(17)

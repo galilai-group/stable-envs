@@ -444,9 +444,8 @@ def _reference_apply_style(p, c, rid, pad, style_row: np.ndarray) -> None:
 DOCUMENTED_LIMITATIONS = (
     "nvdiff's CPU transform is batch-size invariant to within one float32 ulp at every width, and "
     "bitwise at every width on arm64; on x86-64 the clip positions move by one ulp at widths 1-6 and "
-    "the normals at widths 4 and 8 (CLOSURE-1). Cuda, the certified device, is bitwise invariant at "
-    "every width. No frame this cell produces is affected: device='cpu' raises. Measurements: "
-    "pre-repository-cleanup:tests/fixtures/regression/join/step7/rocket-landing/closure1/."
+    "the normals at widths 4 and 8. Cuda, the certified device, is bitwise invariant at "
+    "every width. No frame this cell produces is affected: device='cpu' raises."
 )
 
 
@@ -570,9 +569,7 @@ class PyFlytRocketLanding(Env):
             "480 px, supersample 1, default appearance, worst of 4 independent 64-state draws of "
             "sample_states (default_rng(1000..1003)) over the rows the reference bridge reaches, "
             "against PyFlyt 0.29.0 / pybullet 3.2.7 TinyRenderer frames of the rocket-landing env "
-            "at the lagged pose; NVIDIA GeForce RTX 3090 gpu2106, SLURM job 6410105, tree 726241e, "
-            "torch 2.14.0+cu126, nvdiffrast 0.4.0 "
-            "(pre-repository-cleanup:tests/fixtures/regression/join/step7/rocket-landing/tier/job6410105/)"
+            "at the lagged pose; NVIDIA GeForce RTX 3090, torch 2.14.0+cu126, nvdiffrast 0.4.0"
         ),
         "reference_versions": {"PyFlyt": "0.29.0", "pybullet": "3.2.7"},
         "measured_with": {"nvdiffrast": "0.4.0", "torch": "2.14.0+cu126"},
@@ -591,12 +588,8 @@ class PyFlytRocketLanding(Env):
         "official_renderer_evidence": "the official PyFlyt 0.29.0 / pybullet 3.2.7 frame's brightest "
         "body pixel is 0.991*int(255*c); the requested triple is absent "
         "from the OFFICIAL frames too",
-        "evidence": (
-            "tests/fixtures/evidence/rocket_colour/colour_law_ceiling.json",
-            "tests/fixtures/evidence/rocket_colour/colour_check_decision.md",
-        ),
+        "evidence": ("tests/fixtures/evidence/rocket_colour/colour_law_ceiling.json",),
         "measured_against": "PyFlyt 0.29.0, pybullet 3.2.7 (bullet3 TinyRenderer.cpp Shader::fragment)",
-        "ruled_by": "Sami, 2026-09-16, on tests/fixtures/evidence/rocket_colour/colour_check_decision.md",
         "scope_note": "scoped to these five lit leaves only; any other RGB leaf on this env stays "
         "judged against literal equality",
         "successor": "PROPOSAL only, not implemented and not mandatory: compare this renderer's "

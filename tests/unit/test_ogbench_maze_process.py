@@ -112,7 +112,7 @@ def test_worker_death_fails_closed():
 
 
 @pytest.mark.skipif(
-    sys.platform == "darwin", reason="Maze constructor bakes a GL scene; CPU/software-GL gate runs on Oscar"
+    sys.platform == "darwin", reason="Maze constructor bakes a GL scene; the CPU/software-GL gate runs on Linux"
 )
 def test_public_chunks_and_early_stop(monkeypatch):
     import stable_envs.envs.ogbench.maze as module

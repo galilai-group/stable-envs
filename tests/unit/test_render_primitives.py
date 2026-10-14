@@ -31,7 +31,7 @@ def test_both_backends_read_the_kind_codes_from_one_place():
         assert getattr(R3, name) == getattr(P, name), name
     # cpu3d's movers are the intersectable kinds minus the plane, derived rather than re-listed
     assert C3.MOVER_KINDS == tuple(k for k in P.PRIMITIVE_KINDS if k != P.PLANE)
-    assert P.ELLIPSOID in C3.MOVER_KINDS, "the Step-7 quadruped torso is a mover"
+    assert P.ELLIPSOID in C3.MOVER_KINDS, "the quadruped torso is a mover"
 
 
 @pytest.mark.unit

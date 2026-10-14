@@ -1,4 +1,4 @@
-"""VariationMaps for the Step-7 new cells and the OGB / Rocket / maze families.
+"""VariationMaps for the OGB / Rocket / maze families.
 
 Five swm ids: ``OGBCube-v0``, ``OGBScene-v0``, ``PFRocketLanding-v0``, ``OGBMaze-v0`` and
 ``SimplePointMaze-v0``. Every leaf each of them offers is placed in exactly one of four buckets, and
@@ -21,7 +21,6 @@ the bucket is a MEASUREMENT rather than a reading of the upstream docstring:
 ``VariationMap.swm_only`` can only hold one flat reason string per leaf, so the distinction between
 "we chose not to" and "upstream measured dead" would be lost if the reasons were the only record;
 the structured table is what the docs page and ``leaf_classification.json`` are generated from.
-See ``pre-repository-cleanup:docs/research/step8_variations_newcells.md``.
 
 Cube/Scene recovery now maps the registered public semantic adapters. Their
 independent compiled models feed the unchanged frozen renderer; historical model
@@ -38,32 +37,25 @@ __all__ = ["NEWCELL_VARIATION_MAPS", "LEAF_CLASSIFICATION"]
 
 # ====================================================================== evidence vocabulary
 
-#: The probes these classifications rest on. Quoted in the reasons so a reader can re-run the one
-#: that produced a verdict rather than taking the verdict on trust.
+#: The probes these classifications rest on, quoted in the reasons with what each one measured.
 PROBES = {
     "rocket_liveness": (
-        "pre-repository-cleanup:tests/fixtures/regression/join/step8/variations-newcells/probes/live_rocket.json -- each leaf resampled "
+        "each leaf resampled "
         "alone under 5 seeds, 3 frames of 480x480 (691,200 px) per reset, compared against the "
         "no-variation reset"
     ),
     "rocket_pad": (
-        "pre-repository-cleanup:tests/fixtures/regression/join/step8/variations-newcells/probes/pad_color.json -- pad.color over 3 seeds, "
+        "pad.color over 3 seeds, "
         "120 steps, 6 frames of 480x480, plus pybullet getVisualShapeData on the landing pad body"
     ),
     "ogb_model": (
-        "pre-repository-cleanup:tests/fixtures/regression/join/step8/variations-newcells/probes/ogb_model_{Cube,Scene}.json -- every "
+        "every "
         "MjModel array diffed between a no-variation reset and a one-leaf-extreme reset, with each "
         "changed geom classified as a MOVER (drawn per world by mujoco_warp) or STATIC (baked into "
         "the plate)"
     ),
-    "ogb_agent_color": (
-        "pre-repository-cleanup:tests/fixtures/regression/join/step8/variations-newcells/probes/agent_color_dirty_flag.json -- "
-        "agent.color=RED alone vs agent.color=RED co-varied with light.intensity"
-    ),
-    "scene_noise": (
-        "pre-repository-cleanup:tests/fixtures/regression/join/step8/variations-newcells/probes/scene_noise.json -- two IDENTICAL "
-        "seed=0 SceneEnv resets diffed, to separate reset noise from leaf effect"
-    ),
+    "ogb_agent_color": ("agent.color=RED alone vs agent.color=RED co-varied with light.intensity"),
+    "scene_noise": ("two IDENTICAL seed=0 SceneEnv resets diffed, to separate reset noise from leaf effect"),
 }
 
 
@@ -91,8 +83,8 @@ _OGB_APPEARANCE = {
         "MEASURED: it changes exactly ONE model array, tex_data, and nothing else -- the floor is "
         "STATIC, so this is a plate-only leaf and the tractable one. Not offered yet because the "
         "plate cache and _PlateRig are keyed on (cell, resolution) alone; honouring it means adding "
-        "the appearance vector to that key, which is an additive change this workstream is NOT "
-        "authorised to make to a certified renderer without a pixel re-baseline. ESCALATED"
+        "the appearance vector to that key, which is an additive change a certified renderer does "
+        "not take without a pixel re-baseline."
     ),
     "light.intensity": (
         "the global directional light's diffuse term (MEASURED: writes light_diffuse row 0 and "
@@ -158,7 +150,7 @@ ROCKET_START_LEAVES = (
     "environment.start_tilt",
 )
 ROCKET_GATE = (
-    "tests/helpers/reference/gates/variation_pilots.py::rocket_reset_leaf_gate -- explicit per-lane "
+    "tests/helpers/reference/gates/variation_rocket.py::rocket_reset_leaf_gate -- explicit per-lane "
     "values, seeded per-lane samples and a plain reset back to the defaults give bit-identical "
     "observations to swm over a 40-step rollout"
 )
@@ -289,14 +281,9 @@ LEAF_CLASSIFICATION: dict[str, dict] = {
 }
 
 
-# The recovery records supersede only the two manipulation cells. Other families'
-# classifications and immutable historical probe files remain unchanged.
+# The recovery records supersede only the two manipulation cells.
 for _family, _mapped in [("Cube", _OGB_CUBE_MAPPED), ("Scene", _OGB_SCENE_MAPPED)]:
-    _evidence = (
-        "pre-repository-cleanup:docs/research/semantic_recovery_evidence/ogb_renderer_retry/remote/evidence/"
-        + _family
-        + "/result.json and cpu.log: exact source physics arrays and frozen pixels"
-    )
+    _evidence = f"OGB{_family}: exact source physics arrays and frozen pixels"
     _leaves = {
         k: _cls(
             "mapped",
@@ -372,14 +359,14 @@ BUCKETS = ("mapped", "unsupported", "dead_upstream", "not_applicable")
 
 _MAZE_PROBES = {
     "ogbmaze": (
-        "pre-repository-cleanup:tests/fixtures/regression/join/step8/variations-newcells/probes/probe_ogbmaze.json -- each leaf set to "
+        "each leaf set to "
         "explicit values through options['variation_values'], 224x224 (50,176 px), with the task id "
         "and the qpos/qvel pinned and the global numpy seed fixed so the ~3,000-5,500 px reset noise "
         "floor (ogbench draws cur_task_id from the GLOBAL np.random) does not swamp the leaf; "
         "base-vs-base maxdiff 0"
     ),
     "spm": (
-        "pre-repository-cleanup:tests/fixtures/regression/join/step8/variations-newcells/probes/probe_spm.json -- 500x500 (250,000 px). "
+        "500x500 (250,000 px). "
         "SimplePointMazeEnv honours ONLY options['variation'] (a resample list) and silently ignores "
         "options['variation_values'], so exact values are set on the leaf after a no-variation reset; "
         "base-vs-base maxdiff 0"
@@ -423,7 +410,7 @@ _SPM_AGENT_POSITION = (
     "reset(options={'variation': ['agent.position']}) draws it per lane from the same seeded "
     "tree swm samples, and options['variation_values'] sets it explicitly. swm's "
     "SimplePointMazeEnv ignores options['variation_values'], so the matching swm start is the "
-    "leaf's value. Gated by tests/integration/test_variation_pilots.py: reset State exact and "
+    "leaf's value. Gated by tests/integration/test_variation_navigation.py: reset State exact and "
     "first-frame interior exact"
 )
 

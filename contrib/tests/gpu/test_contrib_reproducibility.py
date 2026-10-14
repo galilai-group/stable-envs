@@ -73,8 +73,8 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: HumanoidBench draws the whole scene through MJWarp with no plate (its camera is TRACKCOM,
     #: so no static plate exists), and it carries no PLATE_PATHS -- so every cell is measured in
     #: its own right. They sit together at 0.95-0.97 because the two things 2S resamples
-    #: differently are both small here: the floor's texture is REPLACED by its dominant colour
-    #: (pre-repository-cleanup:docs/research/humanoidbench.md Section 3.4), so the only rate-dependent content left is
+    #: differently are both small here: the floor's texture is REPLACED by its dominant colour,
+    #: so the only rate-dependent content left is
     #: the H1's mesh silhouettes and its shadow edge. Spoon is the low end because it is the one
     #: cell here with textured primitives on the table, which 2S resamples at a finer rate.
     "HumanoidBenchH1BalanceSimple": 0.967609,  # mean 0.8579/255
@@ -105,7 +105,7 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: JumanjiConnector is deliberately ABSENT: its cell borders are 1 POINT wide, which quantises to
     #: fully-black pixels at dpi 20 and to a two-cell blend at dpi 40, so the per-cell model is false at
     #: 400 px and the env raises ValueError rather than render there. This test skips it for that
-    #: reason -- see pre-repository-cleanup:docs/research/jumanji.md.
+    #: reason.
     "JumanjiMaze": 1.000000,  # mean 0.0000/255
     "JumanjiMinesweeper": 0.832503,  # mean 9.0860/255
     "JumanjiRubiksCube": 0.855150,  # mean 4.1042/255

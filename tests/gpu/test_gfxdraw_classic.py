@@ -179,7 +179,7 @@ def test_the_kernel_is_the_description(name, kind, style_kind):
     from the CPU guard above because those are different code: on CUDA the per-environment colour,
     the per-environment ``aa`` flag and MountainCar's per-environment plate are all loads inside the
     kernel, and nothing else in this suite drives them. Until this existed they were covered only
-    by the corpus-style digest in the Step 4 replay, which is one style built one way.
+    by the corpus-style digest in the frozen replay, which is one style built one way.
     """
     if not torch.cuda.is_available():
         pytest.skip("needs a CUDA device")

@@ -811,7 +811,7 @@ class CraftaxFull(Env):
         "is drawn at the frame's own resolution",
         "scope_note": "broader than CraftaxClassic.resolution_consistency_applicability, which marks "
         "only light_level < 0.5 inapplicable and keeps the frozen bound above it",
-        "evidence": "pre-repository-cleanup:tests/fixtures/regression/join/step7/craftax-full/phase0/resolution_and_dead_dims.json",
+        "evidence": "official-renderer resolution sweep at 10 px and 20 px per tile, every light band",
         "measured_against": "craftax 1.6.1 un-jitted, jax 0.11.1, jax_threefry_partitionable=True",
         "still_required": "exact parity against the official renderer at 10 px and at 16 px",
     }

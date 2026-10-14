@@ -65,7 +65,6 @@ def test_every_swm_pin_constant_is_the_families_toml_commit():
     files = [
         ROOT / "tests/helpers/reference/saved.py",
         *sorted((ROOT / "tests/helpers/reference/gates").glob("*.py")),
-        *sorted((ROOT / "benchmarks/online").glob("*.py")),
     ]
     found = {
         path.relative_to(ROOT).as_posix(): value

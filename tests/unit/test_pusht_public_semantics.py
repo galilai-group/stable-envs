@@ -16,7 +16,7 @@ def name(request):
 @pytest.fixture(params=["cpu", "cuda"])
 def device(request):
     if request.param == "cuda" and not torch.cuda.is_available():
-        pytest.skip("CUDA output storage is validated on Oscar")
+        pytest.skip("requires CUDA")
     return request.param
 
 

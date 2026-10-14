@@ -25,6 +25,25 @@ version 2.1 or later; that file is distributed under the same license, whose tex
 OpenCV is licensed under the Apache License, Version 2.0; see
 [LICENSES/Apache-2.0.txt](LICENSES/Apache-2.0.txt).
 
+## Craftax textures
+
+`stable_envs/envs/craftax/_textures.py` and the texture tables in
+`stable_envs/envs/craftax/classic.py` hold texture data baked from
+[Craftax](https://github.com/MichaelTMatthews/Craftax) 1.6.1, which is MIT-licensed
+("Copyright (c) 2024 Michael Matthews"). Craftax's Classic texture images are the
+image files of [Crafter](https://github.com/danijar/crafter), also MIT-licensed
+("Copyright (c) 2021 Danijar Hafner"). The data is resized and alpha-thresholded
+as Craftax does at load time; it is otherwise unchanged. The MIT permission notice
+at the end of this file applies to it.
+
+## SDL_gfx drawing rules
+
+`stable_envs/render/gfxdraw/` reimplements in Torch the integer rasterization and
+packed-channel alpha-blending rules of SDL_gfx by Andreas Schiffler, which pygame's
+`gfxdraw` module uses. Upstream [SDL2_gfx](https://www.ferzkopp.net/wordpress/2016/01/02/sdl_gfx-sdl2_gfx/)
+is licensed under the zlib license; the copy bundled in pygame (`src_c/SDL_gfx/`) is
+marked LGPL. No SDL_gfx source is included.
+
 ## Migrated environment tasks
 
 The private Rocket task and Variation helpers in
@@ -60,7 +79,7 @@ Pymunk/Munk2D remains an external dependency; no native physics implementation
 is copied here. This private task migration
 does not establish acceptance of the public PushT registrations.
 
-MIT permission notice for the adapted code follows:
+MIT permission notice for the adapted code and the Craftax textures follows:
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -37,9 +37,8 @@ CRAFTAX_JIT_GAP: dict[str, dict] = {
         "live_swm_reference": "jitted craftax 1.6.1, via CraftaxWrapper",
         "certified_exact_frac": 1.0,
         "certified_max_abs_diff": 0,
-        "live_swm_exact_frac_phase0_pool": "48/49 states uint8-identical jitted vs un-jitted; 1/49 "
-        "differed on 0.0023% of pixels, max |diff| 1 (see "
-        "parity_note above, phase-0 pool)",
+        "live_swm_exact_frac_probe_pool": "48/49 states uint8-identical jitted vs un-jitted; 1/49 "
+        "differed on 0.0023% of pixels, max |diff| 1 (see parity_note above)",
         "max_abs_diff_swm_wrapper_vs_certified": 1,
         "note": "not hidden: a stated discrepancy between the certified claim and what a live "
         "stable_worldmodel workflow observes, not a renderer defect here.",

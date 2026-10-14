@@ -1300,7 +1300,7 @@ _TAIL = {
         ("orbs_collected", "i"),
         ("maze_dim", "i"),
     ],
-    # bigfish is NOT a shipped env (see pre-repository-cleanup:docs/research/pixel_native.md 2.9); its tail stays here
+    # bigfish is NOT a shipped env; its tail stays here
     # because the bigfish reference still drives through this parser.
     "bigfish": [("fish_eaten", "i"), ("r_inc", "f")],
 }

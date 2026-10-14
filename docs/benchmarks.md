@@ -15,8 +15,7 @@ those numbers are a property of the node's processor under its load. Every GPU r
 files carries `cpu%` (or `cpu_frac`).
 
 OSS-facing harnesses: `python -m benchmarks.render` and `python -m benchmarks.pipeline`. The
-numbers below were taken with `examples/bench_pusht_source.py`, `examples/bench_gpu_vs_cpu.py` and
-`examples/bench_vs_decode.py`.
+numbers below were taken with `examples/bench_pusht_source.py` and `examples/bench_gpu_vs_cpu.py`.
 
 ## PushT
 
@@ -58,7 +57,6 @@ Ray-cast 3-D families are slower and host-bound;
 visual-tier MuJoCo / Meta-World / Fetch sit near 1–7× a stored JPEG/core.
 
 The paper's per-family table uses eight worker processes batch-decoding JPEG-in-Lance, not one core.
-See `examples/bench_lance.py`.
 
 ## Caveats / losers
 
@@ -79,7 +77,6 @@ python -m benchmarks.render --help
 python -m benchmarks.pipeline --help
 python examples/bench_pusht_source.py --help
 python examples/bench_gpu_vs_cpu.py --out results --sizes native
-python examples/bench_vs_decode.py --help
 ```
 
 `bench_gpu_vs_cpu.py` walks `snv.list_envs()`, writes after every env, and merges per env so a sweep

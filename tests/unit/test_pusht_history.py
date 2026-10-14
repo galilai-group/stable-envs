@@ -43,7 +43,7 @@ class ReplayStepHarness(Env):
 )
 def test_real_history_slice_roundtrip(discrete, device, sequence, selection):
     if device == "cuda" and not torch.cuda.is_available():
-        pytest.skip("CUDA State storage requires Oscar")
+        pytest.skip("requires CUDA")
     with ReplayStepHarness(discrete, device) as env:
         dtype = np.int64 if discrete else np.float64
         action = np.array([4, 3] if discrete else [0.2, -0.3], dtype=dtype)

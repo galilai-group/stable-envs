@@ -205,7 +205,7 @@ Keep family contact/Variation/lifecycle cases in the adapter's test parameters.
 The initial migration passed all 32 CPU/CUDA cases on Oscar: 256 frame comparisons
 per device, CPU MSE zero, CUDA maximum normalized MSE 0.000373915. The scenario
 configurations and parameter set match the historical gate. The
-[validation record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/source-pixels-validation.json)
+validation record
 records job outcomes, hardware, versions and tested code hashes. Other families
 retain their existing pixel gates; this is the first adapter, not a 38-family
 source-pixel migration or a throughput benchmark.
@@ -231,7 +231,7 @@ including Rocket. It does not replace the classic-control performance benchmarks
 large-batch/process gates, or appearance-Variation tests. Those retain their
 separate obligations and historical evidence.
 
-The [native validation record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/native-source-pixels-validation.json)
+The native validation record
 records 128/128 passing required cases on each device, with no skips, on Oscar
 job 7072387 (RTX A5500). All 896 source-frame comparisons per device have MSE zero.
 Its hashed evidence archive preserves sealed reports, case identities, source/code
@@ -242,10 +242,10 @@ The Navigation/DMC/Fetch extension initially passed Native and Navigation's comp
 CPU/CUDA profiles. Seven DMC registrations passed every required case on both
 devices; five failed the pixel gate at that checkpoint. Fetch's explicit OpenGL
 profile passes all 336 required cases on each device. The original
-[pending cohort record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/parallel-source-pixels-validation.json)
+pending cohort record
 remains unchanged; it records the earlier checkpoint, not current acceptance.
 
-The [Oscar validation record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/parallel-source-pixels-oscar-validation.json)
+The Oscar validation record
 records that checkpoint and links a hashed archive of code snapshots, sealed
 reports, raw failed witnesses, JUnit results, dependencies and terminal job status.
 That checkpoint established shared source-pixel coverage for **25/38 profile registrations**: Rocket,
@@ -267,9 +267,9 @@ scenes, paired RTX A5500 measurements show 1.95–1.99× throughput at B64 and
 1.98–2.05× at B256 versus the previous high-fidelity implementation. Software-GL
 CPU throughput improves 2–3% at B64; single-frame results include a 0.6% regression.
 These are before/after library measurements, not speedups over the source
-simulator. The [CSV](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/fetch-readback-performance.csv)
+simulator. The CSV
 includes latency mean and SD; the
-[validation report](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/fetch-readback-oscar-validation.json)
+validation report
 links the raw evidence. The default MJWarp renderer is unchanged.
 That optimization checkpoint passed all 336 Fetch source-profile cases per device;
 maximum source MSE was 0.000253508 on CPU and 0.000248164 on CUDA. PickAndPlace
@@ -307,7 +307,7 @@ can differ from OpenCV by two channel levels; the test bounds both channel error
 and RMS error. The independent source-pixel limit remains 0.001.
 
 The Fetch readback benchmark is not a maintained script. The saved
-[CSV](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/fetch-readback-performance.csv)
+CSV
 holds the paired measurements: 1,024 rollout States per scene, with State generation, disk
 loading and the initial device transfer outside timing and public `env.render` plus output
 synchronization inside, alternating implementation order over twelve paired measurements after
@@ -345,10 +345,10 @@ These checks cover default appearance at 64px; separate Variation and lifecycle
 gates remain required. Historical `visual_fidelity` dictionaries still describe
 the older MuJoCo 3.11 measurement, not these fresh MuJoCo 3.12 results.
 
-The [validation report](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/dmc-render-oscar-validation.json)
+The validation report
 links sealed source reports, runtime/code hashes, diagnostic failures, saved
 States and terminal scheduler evidence. The
-[paired timing CSV](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/dmc-render-performance.csv)
+paired timing CSV
 records the fidelity correction's cost, including latency and MSE mean/SD.
 CPU B64 throughput is 0.60–0.68× the previous renderer.
 CUDA B256 throughput is 0.70–0.90× the previous renderer.
@@ -376,8 +376,8 @@ with the unchanged per-frame 0.001 limit. The final CPU regression bundle passes
 242 tests with only the Linux-unavailable MPS check skipped. Eight GPU tests check
 exact images across batch capacities, row order, per-row style and the 84/85px boundary.
 
-The [optimization report](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/dmc-render-opt-oscar-validation.json)
-and [timing CSV](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/dmc-render-opt-performance.csv)
+The optimization report
+and timing CSV
 retain raw timing samples, latency and MSE mean/SD, code hashes, source gates,
 batch regressions and rejected experiments. The earlier correction evidence remains unchanged.
 
@@ -411,9 +411,9 @@ reached 19,811 FPS but had mean MSE 0.006595 and worst 0.007631. B1 remains slow
 than source. Larger batches repeat the 32 States; no new all-38 or online benchmark
 is implied. [Timing protocol](api/mjwarp.md#scene-default-checkpoint).
 
-[Acceptance report](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/scene-default-oscar-validation.json),
-[CSV with mean and SD](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/scene-default-cuda-performance.csv),
-and [matched-state images](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/scene-default-comparison.png)
+Acceptance report,
+CSV with mean and SD,
+and [matched-state images](https://github.com/galilai-group/stable-envs/blob/main/tests/fixtures/testing/scene-default-comparison.png)
 preserve raw frames, source/code hashes, scheduler records and rejected experiments.
 Mesh-normal interpolation worsened agreement and was rejected; changing sampling
 without aligning the static background also missed the threshold.
@@ -443,11 +443,11 @@ at 64×64. At B256, ours renders **5,812 FPS** versus source NVIDIA OpenGL's
 this is neither an online measurement nor a refreshed 38-registration table.
 See [timing scope and tradeoffs](api/mjwarp.md#cube-default-checkpoint).
 
-[Acceptance report](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/cube-default-oscar-validation.json)
+Acceptance report
 links sealed source results, hardware, scheduler terminal records and the immutable
 pending archive. The earlier benchmark job's later collection failure remains
 recorded; acceptance uses separate complete source and golden-test runs.
-[CSV with mean and SD](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/cube-default-cuda-performance.csv).
+CSV with mean and SD.
 
 ## Completed source-pixel adapter coverage
 
@@ -500,7 +500,7 @@ physics trajectory. Twelve required rejected controls retain the continuous-rend
 source mutation witness. This proves matched-State pixels and pure candidate
 rendering, not equivalence to the source's render-mutated continuation.
 
-The [final cohort report](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/final-source-pixels-oscar-validation.json)
+The final cohort report
 records registration-specific results, backend scope, sealed evidence, dependency/code
 hashes and terminal scheduler status. Historical acceptance files remain unchanged.
 
@@ -540,23 +540,22 @@ pytest -m integration                          # multi-component (safety net)
 pytest -m "regression and not gpu"             # frozen corpora, digests, support matrix
 pytest -m "regression and gpu"                 # GPU regression (needs CUDA)
 pytest                                         # full suite
-sbatch scripts/run_gpu_tests.sbatch            # full suite, crash-isolated
-sbatch scripts/run_smoke_tests.sbatch          # one env per family              ~3.4 min
-sbatch scripts/run_smoke_tests.sbatch --fast   # one env per render backend      ~0.9 min
-sbatch scripts/run_unit_tests.sbatch           # CPU contracts + CPU regression
+python -m tests._runner.supervisor -- tests/ -v   # full suite, crash-isolated
+python -m tests._runner.supervisor --smoke     # one env per family
+uvx nox -s "test(<profile>)"                   # one CI profile
 ```
 
 `tests/unit/` includes CPU rendering and contract checks: the style batching rule, the dataset indexing and episode
 boundaries, the policy and rollout API, the benchmark scripts' guards,
-and the repository's own citations, docs nav and launcher agreement. `tests/regression/` is
+and the repository's own citations and docs nav. `tests/regression/` is
 the frozen regression oracle (corpora, digests, declarations, provenance). Green on
 `-m unit` says the contracts hold and says nothing about the frames;
-`scripts/run_gpu_tests.sbatch` is still the release gate.
+`pytest tests/gpu` on a CUDA host is still the release gate.
 
 The full suite's wall time tracks the registry, so it is quoted with the size it was measured at rather
 than as a property of the suite: **45.5 min for 2,580 passed / 648 skipped / 0 failed over a registry of
 64**, 3,228 collected, one segment, 133 EGL contexts created and 0 released, on one H200
-(gb-west-a1-gpu-021). `scripts/run_unit_tests.sbatch` is the CPU-only subset of that at 2.9 min.
+(gb-west-a1-gpu-021).
 
 The full suite and `-m gpu` require a CUDA device by design and skip loudly rather than passing
 without one. The product is a GPU renderer; a suite that goes green on CPU-only CI proves nothing
@@ -568,7 +567,7 @@ The suite has aborted its own interpreter four times in a week while being green
 do that is defective whatever its exit code says: `SIGABRT` out of MuJoCo, EGL or the CUDA driver is not
 an exception, so pytest writes no report for the test that died and never runs the ones after it.
 
-The sbatch scripts therefore go through `tests._runner.supervisor` rather than calling pytest
+Run the suite through `tests._runner.supervisor` rather than calling pytest
 directly. It writes one breadcrumb per test, and when the interpreter dies it names the test that killed
 it, records it as **CRASHED**, and resumes the run past it — a crash costs one test instead of the run.
 On a clean run it costs one extra process and nothing else. (`pytest --forked` is the obvious

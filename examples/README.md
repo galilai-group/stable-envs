@@ -16,10 +16,6 @@ python examples/action_sequences.py
 
 ## Training from stored State
 
-[`train_from_states.py`](train_from_states.py) and
-[`ddp_train_from_states.py`](ddp_train_from_states.py) are legacy experiments using
-compact rows and the former chaining API. They require migration before use with
-the current full-State contract; they are not validated getting-started examples.
 Current applications store complete State snapshots in their own dataset/loader
 and call `env.render(batch)` after transfer. Rendering does not require calling
 `set_state` first. See the [State contract](../docs/concepts/state.md).
@@ -28,9 +24,6 @@ stable-envs does not own dataset storage or policy rollouts.
 ## Other current examples
 
 - [`domain_randomization.py`](domain_randomization.py) — batched Variation / configuration
-- [`dump_frames.py`](dump_frames.py) — write frames from stored states
 - [`gallery.py`](gallery.py) — side-by-side media on identical states
-- [`bench_gpu_vs_cpu.py`](bench_gpu_vs_cpu.py) / [`bench_vs_decode.py`](bench_vs_decode.py) — renderer throughput
+- [`bench_gpu_vs_cpu.py`](bench_gpu_vs_cpu.py) — renderer throughput
 - [`bench_pusht_source.py`](bench_pusht_source.py) — PushT `env.render` against the pinned source, same core
-- [`bench_storage.py`](bench_storage.py) / [`bench_lance.py`](bench_lance.py) — storage pipeline baselines
-- [`dino_agreement.py`](dino_agreement.py) — DINO agreement measurement

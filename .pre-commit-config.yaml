@@ -7,10 +7,10 @@ repos:
     hooks:
       - id: trailing-whitespace
         exclude: >-
-          ^(?:docs/assets/|tests/fixtures/|STEP_.*_AGENT_BRIEFS/)
+          ^(?:docs/assets/|tests/fixtures/)
       - id: end-of-file-fixer
         exclude: >-
-          ^(?:docs/assets/|tests/fixtures/|STEP_.*_AGENT_BRIEFS/)
+          ^(?:docs/assets/|tests/fixtures/)
       - id: check-ast
       - id: check-case-conflict
       - id: check-json
@@ -40,11 +40,5 @@ repos:
     rev: v0.11.0.1
     hooks:
       - id: shellcheck
-        name: shellcheck (ordinary scripts)
         require_serial: true
-        exclude: ^(docs/|.*\.sbatch$)
-      - id: shellcheck
-        name: shellcheck (SLURM launchers)
-        require_serial: true
-        files: \.sbatch$
-        args: [--severity=error]
+        exclude: ^docs/

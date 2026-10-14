@@ -1,7 +1,7 @@
 """Guard the constants in ``stable_envs.render.nvdiff`` that were MEASURED against MuJoCo.
 
 Every one of these was wrong on a first reading and right only after a frame said so
-(``pre-repository-cleanup:docs/research/nvdiffrast.md`` Section 2). They are cheap to state and expensive to rediscover, so
+They are cheap to state and expensive to rediscover, so
 they are asserted here rather than left to the GPU parity run: this file needs numpy and ``mujoco``
 and no CUDA, no nvdiffrast and no reference env.
 
@@ -101,8 +101,7 @@ def test_pow2_resample_is_lossless_on_a_two_by_two_checker():
     resampled to 128x128 before it can be minified at all. That is a change to the picture in general
     and NOT a change to this picture: every 50-texel source block maps onto a whole 64-texel
     destination block, so the resampled texture is the same 2x2 checker. OGBench's 300x300 per-texel
-    gradient is the case where it does cost something, and that cost is measured in
-    pre-repository-cleanup:docs/research/nvdiffrast.md Section 3, not asserted here.
+    gradient is the case where it does cost something, and that cost is measured, not asserted here.
     """
     a = np.zeros((100, 100, 3), np.float32)
     a[:50, :50] = a[50:, 50:] = 1.0

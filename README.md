@@ -84,7 +84,7 @@ These three scripts use only the public `snv` surface and degrade honestly when 
 ```bash
 python examples/render.py --help
 python examples/batched_env.py --help
-python examples/functional_dynamics.py --help
+python examples/action_sequences.py
 ```
 
 ## Keep your training loop. Delete your image dataset.

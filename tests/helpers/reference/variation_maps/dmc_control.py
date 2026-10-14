@@ -120,7 +120,7 @@ _DYNAMICS_MAPPED = (
     "MAPPED, identical path and units: the value is written onto each lane's Gymnasium env exactly as "
     "swm writes it (a float32 Box value widened to float64), sampled per lane under `variation` or set "
     "under `variation_values`, and plain resets restore the default. Gated by "
-    "tests/integration/test_variation_pilots.py::test_classic_physics_matches_swm: reset State and every "
+    "tests/integration/test_classic_variation.py::test_classic_physics_matches_swm: reset State and every "
     "step output equal swm's exactly over 24 steps, with lanes at 10/50/90 % of the range."
 )
 
