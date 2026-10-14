@@ -5,6 +5,7 @@ from importlib.metadata import version
 
 import numpy as np
 
+from ...._core.space_nodes import nodes
 from .numeric import (
     capture,
     decode_rng,
@@ -13,7 +14,6 @@ from .numeric import (
     encode_seed,
     get_value,
     install_rng,
-    nodes,
     put_value,
     rng_of,
 )

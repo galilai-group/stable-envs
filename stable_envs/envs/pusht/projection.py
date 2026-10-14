@@ -1,7 +1,8 @@
 import numpy as np
 from pymunk.space_debug_draw_options import SpaceDebugColor
 
-from .simulation.numeric import get_value, nodes
+from ..._core.space_nodes import nodes
+from .simulation.numeric import get_value
 from .simulation.task import PushT, PushTDiscrete
 
 

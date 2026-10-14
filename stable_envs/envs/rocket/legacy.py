@@ -501,6 +501,45 @@ def _reference_frame_flagged(env, state: np.ndarray, style_row: np.ndarray, cont
     return np.asarray(u.render(), np.uint8)[..., :3].copy(), False
 
 
+def nvd_renderer(size, ss, device, scene_type=ND.Scene, renderer_type=ND.BatchRenderer):
+    """Build the textured-triangle renderer for one size and supersample; return it with its world chunk limit."""
+    vert, norm, face, vg, uv = build_scene_arrays()
+    rgba = np.ones((N_GEOMS, 4))
+    rgba[GEOM_NAMES.index("flame")] = FLAME_RGBA
+    tex_of_geom = np.full(N_GEOMS, -1, np.int64)
+    tex_of_geom[GEOM_NAMES.index("ground")] = 0
+    scene = scene_type.from_triangles(
+        vert,
+        norm,
+        face,
+        vg,
+        rgba,
+        uv=uv,
+        textures={0: checker_texture()},
+        tex_of_geom=tex_of_geom,
+        device=str(device),
+        tex_policy="none",
+    )
+    renderer = renderer_type(
+        None,
+        res=size,
+        device=str(device),
+        supersample=ss,
+        mipmap=False,
+        skybox=False,
+        quant="trunc",
+        scene=scene,
+        shading="tiny",
+        tiny=ND.TinyShading(),
+        tex_filter="nearest",
+        sample_offset=(0.5, 0.5),
+    )
+    renderer.owns_scene = True
+    renderer.background = np.array([1.0, 1.0, 1.0])  # TinyRenderer's clear colour
+    per_world = NVD_BYTES_PER_PIXEL * (size * ss) ** 2 + NVD_BYTES_PER_VERTEX * scene.V
+    return renderer, max(1, int(NVD_BUDGET_BYTES // per_world))
+
+
 class _Nvd:
     __slots__ = ("br", "size", "ss", "chunk")
 
@@ -644,43 +683,9 @@ class PyFlytRocketLanding(Env):
         hit = _NVD_CACHE.get(key)
         if hit is not None:
             return hit
-        vert, norm, face, vg, uv = build_scene_arrays()
-        rgba = np.ones((N_GEOMS, 4))
-        rgba[11] = FLAME_RGBA
-        tex_of_geom = np.full(N_GEOMS, -1, np.int64)
-        tex_of_geom[0] = 0
-        scene = ND.Scene.from_triangles(
-            vert,
-            norm,
-            face,
-            vg,
-            rgba,
-            uv=uv,
-            textures={0: checker_texture()},
-            tex_of_geom=tex_of_geom,
-            device=str(self.device),
-            tex_policy="none",
-        )
         c = _Nvd()
         c.size, c.ss = size, ss
-        c.br = ND.BatchRenderer(
-            None,
-            res=size,
-            device=str(self.device),
-            supersample=ss,
-            mipmap=False,
-            skybox=False,
-            quant="trunc",
-            scene=scene,
-            shading="tiny",
-            tiny=ND.TinyShading(),
-            tex_filter="nearest",
-            sample_offset=(0.5, 0.5),
-        )
-        c.br.owns_scene = True
-        c.br.background = np.array([1.0, 1.0, 1.0])  # TinyRenderer's clear colour
-        per_world = NVD_BYTES_PER_PIXEL * (size * ss) ** 2 + NVD_BYTES_PER_VERTEX * scene.V
-        c.chunk = max(1, int(NVD_BUDGET_BYTES // max(1, per_world)))
+        c.br, c.chunk = nvd_renderer(size, ss, self.device)
         _NVD_CACHE.put(key, c)
         return c
 

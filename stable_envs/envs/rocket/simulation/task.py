@@ -26,10 +26,10 @@ import PyFlyt
 from gymnasium.spaces import Box
 from PyFlyt.gym_envs.rocket_envs.rocket_base_env import RocketBaseEnv
 
+from ...._core.space_nodes import nodes
 from ....spaces import Box as VariationBox
 from ....spaces import Dict, RGBBox
 from .actions import validate_action
-from .spaces import nodes
 
 
 class RocketLandingEnv(RocketBaseEnv):
