@@ -40,11 +40,5 @@ repos:
     rev: v0.11.0.1
     hooks:
       - id: shellcheck
-        name: shellcheck (ordinary scripts)
         require_serial: true
-        exclude: ^(docs/|.*\.sbatch$)
-      - id: shellcheck
-        name: shellcheck (SLURM launchers)
-        require_serial: true
-        files: \.sbatch$
-        args: [--severity=error]
+        exclude: ^docs/

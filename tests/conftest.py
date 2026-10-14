@@ -229,9 +229,9 @@ def _verdict(session, exitstatus) -> str | None:
     if n == 0:
         return (
             "this run selected NO tests at all. That is not a pass: pytest exits 5 for it, a shell "
-            "that only checks for zero reads 5 as failure and 0 as success, and both sbatch "
-            "launchers pass their arguments straight through to pytest — so a mistyped -k or -m "
-            "comes back looking like a run that finished. Check the selection, or set "
+            "that only checks for zero reads 5 as failure and 0 as success, and a launcher that "
+            "passes its arguments straight through to pytest makes a mistyped -k or -m "
+            "come back looking like a run that finished. Check the selection, or set "
             f"{ALLOW_EMPTY}=1 if selecting nothing is genuinely the right answer here."
         )
     return (

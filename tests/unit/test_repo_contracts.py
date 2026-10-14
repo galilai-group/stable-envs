@@ -1,7 +1,7 @@
-"""The repo's own promises about itself: fixtures resolve, docs are reachable, launchers agree.
+"""The repo's own promises about itself: fixtures resolve and docs are reachable.
 
 None of this is about the renderer. It is about claims the repository makes that nothing else
-checks: the regression fixtures the suite loads, the MkDocs nav, and the cluster launchers.
+checks: the regression fixtures the suite loads and the MkDocs nav.
 """
 
 from __future__ import annotations
@@ -52,7 +52,6 @@ _MAINTAINED = (
     "docs/gallery.md",
     "docs/environments.md",
     "docs/benchmarks.md",
-    "docs/adding-an-env.md",
     "README.md",
     "CONTRIBUTING.md",
     "mkdocs.yaml",
@@ -71,7 +70,7 @@ def test_maintained_product_files_do_not_cite_scratch_paths():
         path = ROOT / rel
         files = [path] if path.is_file() else list(path.rglob("*")) if path.is_dir() else []
         for f in files:
-            if not f.is_file() or f.suffix not in {".py", ".md", ".yml", ".yaml", ".toml", ".sh", ".sbatch"}:
+            if not f.is_file() or f.suffix not in {".py", ".md", ".yml", ".yaml", ".toml", ".sh"}:
                 continue
             key = f.relative_to(ROOT).as_posix()
             if key not in MAINTAINED_PATHS:
@@ -144,59 +143,3 @@ def test_every_docs_page_is_reachable_from_the_nav():
         f"these pages exist under docs/ and are in no nav section, so the site builds them and nothing "
         f"links to them: {orphans}"
     )
-
-
-# ------------------------------------------------------------------ the launchers
-
-
-def _sbatch_directive(path: Path, key: str) -> str | None:
-    for line in path.read_text().splitlines():
-        if line.startswith(f"#SBATCH --{key}="):
-            return line.split("=", 1)[1].strip()
-    return None
-
-
-LAUNCHERS = sorted((ROOT / "scripts").glob("run_*.sbatch"))
-
-
-def test_there_are_launchers_to_check():
-    assert len(LAUNCHERS) >= 3, f"expected the three sbatch launchers, found {LAUNCHERS}"
-
-
-def test_all_launchers_exclude_the_same_measured_faulty_nodes():
-    """A node that renders different pixels for the same scene invalidates every number measured on it."""
-    lists = {p.name: _sbatch_directive(p, "exclude") for p in LAUNCHERS}
-    missing = [n for n, v in lists.items() if not v]
-    assert not missing, f"these launchers exclude no nodes at all: {missing}"
-    sets = {n: frozenset(v.split(",")) for n, v in lists.items()}
-    distinct = set(sets.values())
-    assert len(distinct) == 1, (
-        "the launchers do not agree on which nodes are unfit to measure on, so a run submitted through "
-        "one of them can land on hardware another has condemned:\n  "
-        + "\n  ".join(f"{n}: {sorted(s)}" for n, s in sorted(sets.items()))
-    )
-
-
-def test_every_launcher_names_both_the_partition_and_the_account():
-    """Setting one without the other is silently rejected by this scheduler."""
-    for p in LAUNCHERS:
-        for key in ("partition", "account", "qos", "gres"):
-            assert _sbatch_directive(p, key), f"{p.name} does not set --{key}"
-
-
-def test_every_launcher_runs_through_the_supervisor_rather_than_bare_pytest():
-    """A bare pytest reports NOTHING when the interpreter dies, which it has done four times in a week.
-
-    SIGABRT/SIGSEGV out of MuJoCo, EGL or the CUDA driver: the test that died is not named, every test
-    after it never runs, and the whole artifact of a twenty-minute job is a shell exit code. The
-    supervisor turns that into one CRASHED test and finishes the run, and it costs one extra process
-    when nothing crashes.
-    """
-    for p in LAUNCHERS:
-        src = p.read_text()
-        assert "tests._runner.supervisor" in src, (
-            f"{p.name} does not run through the supervisor, so a crash in it produces no report"
-        )
-        assert "--json" in src and "--rundir" in src, (
-            f"{p.name} does not ask the supervisor for its artifacts, so a preempted job leaves nothing behind to read"
-        )

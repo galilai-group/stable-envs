@@ -12,7 +12,6 @@ import importlib.util as _ilu
 
 import mujoco as _mj
 
-_VENV = "/mnt/vast/home/randall.balestriero/venvs/se-fetch"
 _missing = [_m for _m in ("metaworld", "warp", "mujoco_warp") if _ilu.find_spec(_m) is None]
 _mjver = tuple(int(x) for x in str(_mj.__version__).split(".")[:2])
 if _missing or _mjver < (3, 11):  # pragma: no cover
@@ -21,8 +20,8 @@ if _missing or _mjver < (3, 11):  # pragma: no cover
         "which this interpreter cannot run: "
         + (f"missing {', '.join(_missing)}; " if _missing else "")
         + f"mujoco is {_mj.__version__} and mujoco_warp requires >= 3.11 (metaworld itself pins "
-        f"mujoco==3.3.0, which is why it is installed with --no-deps). The envs were measured in "
-        f"{_VENV}; see contrib/requirements/metaworld.txt"
+        f"mujoco==3.3.0, which is why it is installed with --no-deps); see "
+        "contrib/requirements/metaworld.txt"
     )
 
 from stable_envs.env import Env

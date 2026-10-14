@@ -39,8 +39,8 @@ Nothing in this repo is measured on a login node, and nothing that measures is m
 ```bash
 uvx nox -s "test(<profile>)"                   # what CI runs for one profile
 pytest -m unit                                 # CPU-only family/unit contracts, any interpreter
-sbatch scripts/run_smoke_tests.sbatch          # one env per family, ~3.4 min
-sbatch scripts/run_gpu_tests.sbatch            # full conformance suite
+python -m tests._runner.supervisor --smoke     # one env per family
+pytest tests/gpu -v                            # full conformance suite, on a CUDA host
 pytest tests/ -v -rs                           # the same, if you already hold a GPU
 ```
 
@@ -53,7 +53,7 @@ library `@pytest.mark.egl`, one that imports stable-worldmodel without `importor
 `@pytest.mark.family("<name>")`.
 
 The full suite requires CUDA by design and skips loudly rather than going green without it. Run it
-through `tests._runner.supervisor` (which is what the sbatch scripts do): a segfault or
+through `tests._runner.supervisor`: a segfault or
 `SIGABRT` out of MuJoCo, EGL or the driver ends the interpreter, and a bare pytest then reports
 nothing at all about which test caused it.
 

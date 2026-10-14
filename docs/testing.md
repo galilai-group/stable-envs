@@ -540,23 +540,22 @@ pytest -m integration                          # multi-component (safety net)
 pytest -m "regression and not gpu"             # frozen corpora, digests, support matrix
 pytest -m "regression and gpu"                 # GPU regression (needs CUDA)
 pytest                                         # full suite
-sbatch scripts/run_gpu_tests.sbatch            # full suite, crash-isolated
-sbatch scripts/run_smoke_tests.sbatch          # one env per family              ~3.4 min
-sbatch scripts/run_smoke_tests.sbatch --fast   # one env per render backend      ~0.9 min
-sbatch scripts/run_unit_tests.sbatch           # CPU contracts + CPU regression
+python -m tests._runner.supervisor -- tests/ -v   # full suite, crash-isolated
+python -m tests._runner.supervisor --smoke     # one env per family
+uvx nox -s "test(<profile>)"                   # one CI profile
 ```
 
 `tests/unit/` includes CPU rendering and contract checks: the style batching rule, the dataset indexing and episode
 boundaries, the policy and rollout API, the corrector's refusals, the benchmark scripts' guards,
-and the repository's own citations, docs nav and launcher agreement. `tests/regression/` is
+and the repository's own citations and docs nav. `tests/regression/` is
 the frozen regression oracle (corpora, digests, declarations, provenance). Green on
 `-m unit` says the contracts hold and says nothing about the frames;
-`scripts/run_gpu_tests.sbatch` is still the release gate.
+`pytest tests/gpu` on a CUDA host is still the release gate.
 
 The full suite's wall time tracks the registry, so it is quoted with the size it was measured at rather
 than as a property of the suite: **45.5 min for 2,580 passed / 648 skipped / 0 failed over a registry of
 64**, 3,228 collected, one segment, 133 EGL contexts created and 0 released, on one H200
-(gb-west-a1-gpu-021). `scripts/run_unit_tests.sbatch` is the CPU-only subset of that at 2.9 min.
+(gb-west-a1-gpu-021).
 
 The full suite and `-m gpu` require a CUDA device by design and skip loudly rather than passing
 without one. The product is a GPU renderer; a suite that goes green on CPU-only CI proves nothing
@@ -568,7 +567,7 @@ The suite has aborted its own interpreter four times in a week while being green
 do that is defective whatever its exit code says: `SIGABRT` out of MuJoCo, EGL or the CUDA driver is not
 an exception, so pytest writes no report for the test that died and never runs the ones after it.
 
-The sbatch scripts therefore go through `tests._runner.supervisor` rather than calling pytest
+Run the suite through `tests._runner.supervisor` rather than calling pytest
 directly. It writes one breadcrumb per test, and when the interpreter dies it names the test that killed
 it, records it as **CRASHED**, and resumes the run past it — a crash costs one test instead of the run.
 On a clean run it costs one extra process and nothing else. (`pytest --forked` is the obvious

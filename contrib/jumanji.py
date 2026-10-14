@@ -9,14 +9,12 @@ os.environ.setdefault("MPLBACKEND", "Agg")
 os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
 
 # Detect optional packages without importing JAX or changing plotting state.
-_VENV = "/mnt/vast/home/randall.balestriero/venvs/se-jumanji"
 _missing = [m for m in ("jumanji", "jax", "matplotlib") if _ilu.find_spec(m) is None]
 if _missing:  # pragma: no cover
     raise ImportError(
         f"the Jumanji family builds its per-pixel atlas by CALLING the official matplotlib viewer, so "
-        f"it cannot render without the reference package: missing {', '.join(_missing)}. The envs were "
-        f"measured in {_VENV}, built with a CLEAN `python -m venv` — a --system-site-packages venv "
-        f"breaks jax's CUDA plugin discovery."
+        f"it cannot render without the reference package: missing {', '.join(_missing)}. Install it in a "
+        f"CLEAN `python -m venv`: a --system-site-packages venv breaks jax's CUDA plugin discovery."
     )
 try:
     _JVER = _md.version("jumanji")

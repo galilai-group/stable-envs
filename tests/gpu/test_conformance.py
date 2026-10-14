@@ -4,7 +4,7 @@ Requires a CUDA device by design. The repo's product is a GPU renderer, so a tes
 CPU-only CI proves nothing about it; these are marked ``gpu`` and skip loudly rather than silently
 weakening into something that can pass without the hardware.
 
-Run:  pytest tests/gpu -v          (on a GPU node; see scripts/run_gpu_tests.sbatch)
+Run:  pytest tests/gpu -v          (on a host with a CUDA device)
 """
 
 from __future__ import annotations
@@ -120,8 +120,8 @@ def test_required_env_modules_actually_imported():
     COLLECTED ZERO CASES. The suite was green and the family had no coverage at all, and nothing in
     the run said so louder than one line among a dozen other import notes.
 
-    A run cannot know by itself which families it was meant to cover, so the launcher says: the
-    DM Control sbatch exports the variable, and the run fails if the family it exists to test is not
+    A run cannot know by itself which families it was meant to cover, so the launcher says: a
+    DM Control job exports the variable, and the run fails if the family it exists to test is not
     there. Unset, this is a no-op and the print remains the right level for everything else.
     """
     want = [m.strip() for m in os.environ.get("SE_REQUIRE_ENV_MODULES", "").split(",") if m.strip()]
