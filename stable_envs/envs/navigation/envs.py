@@ -532,7 +532,6 @@ class _TorchNavBase(_GymReferencePort):
     action_low = -1.0
     action_high = 1.0
 
-    speed = AGENT_SPEED
     dynamics_variation_leaves = frozenset({"agent.speed"})
 
     def __init__(self, *args, **kwargs):
@@ -955,7 +954,6 @@ class _PiecewiseBase(_TorchNavBase):
     state_names = ("agent_x", "agent_y")
     state_layout = ((("agent", "position"), 2, 0),)
     state_bounds = {("agent", "position"): (POS_LO, POS_HI)}
-    zone_bias = ZONE_BIAS
     dynamics_variation_leaves = frozenset(
         {"agent.speed", "agent.radius", *(f"zones.bias_{i}" for i in range(N_ZONES))}
     )
@@ -1201,7 +1199,6 @@ class SimplePointMaze(_GymReferencePort):
         ("task", "state_is_float64"): (0, 1),
     }
 
-    speed = MAZE_AGENT_SPEED
     reset_tree_factory = staticmethod(_simple_maze_reset_tree)
     reset_leaves = (
         ResetLeaf("agent.position", (0.5, 0.5)),
