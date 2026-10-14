@@ -90,7 +90,8 @@ examples = ["imageio", "imageio-ffmpeg", "opencv-python"]
 # as PyPI metadata.
 # docs and dev repeat the dependency groups of the same name for pip installs.
 docs = [
-  "mkdocs-material>=9.5",
+  "mkdocs>=1.6,<2",
+  "mkdocs-material>=9.7,<10",
   "mkdocstrings[python]>=0.27",
   "pymdown-extensions>=10.0",
 ]
@@ -120,7 +121,8 @@ test = [
 lint = ["ruff>=0.12", "mypy>=1.15", "pre-commit>=4.0"]
 build = ["build>=1.2", "twine>=6"]
 docs = [
-  "mkdocs-material>=9.5",
+  "mkdocs>=1.6,<2",
+  "mkdocs-material>=9.7,<10",
   "mkdocstrings[python]>=0.27",
   "pymdown-extensions>=10.0",
 ]
