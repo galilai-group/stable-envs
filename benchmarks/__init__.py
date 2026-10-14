@@ -1,5 +1,1 @@
-"""OSS-facing performance benchmarks for stable-envs.
-
-The modules in this directory measure performance only. Correctness and fidelity belong to pytest
-and the certification suite.
-"""
+"""Performance benchmarks for stable-envs; correctness and fidelity are checked by the test suite."""

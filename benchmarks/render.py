@@ -73,8 +73,7 @@ def _point(name: str, batch: int, args: argparse.Namespace, device: torch.device
                 "estimated_output_mib": output_mib,
             }
 
-        # State is the final public TensorDict API. The first render resolves the actual frame shape
-        # and pays lazy setup outside the timing; warmup remains explicit and separately configured.
+        # The first render resolves the frame shape and pays lazy setup outside the timing.
         state = env.reset(seed=args.seed)
         first = env.render(state)
         out = torch.empty_like(first)

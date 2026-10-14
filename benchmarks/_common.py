@@ -146,8 +146,7 @@ def measure(fn: Callable[[], Any], *, device: torch.device, warmup: int, repeats
     for _ in range(warmup):
         fn()
     synchronize(device)
-    # Peak CUDA memory is a property of the timed region. Resetting before warmup would attribute
-    # autotune/lazy setup to the measurement the headline statistic excludes.
+    # Reset after warmup so autotune and lazy setup do not count toward peak memory.
     if device.type == "cuda":
         torch.cuda.reset_peak_memory_stats(device)
 
@@ -180,8 +179,7 @@ def env_kwargs(args: argparse.Namespace, batch: int) -> dict[str, Any]:
         "device": args.device,
         "seed": args.seed,
     }
-    # Absence is intentional: passing a synthetic value would benchmark a different picture than
-    # snv.PushT(num_envs=...) / snv.make(name) produce for environments with their own defaults.
+    # Unset options are omitted so each environment renders at its own defaults.
     if args.size is not None:
         kwargs["size"] = args.size
     if args.supersample is not None:
