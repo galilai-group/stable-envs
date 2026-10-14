@@ -1,25 +1,32 @@
 # Environment listing
 
-`snv.list_envs()` is the current answer **on this interpreter**. The package auto-discovers `stable_envs/envs/*`; a missing optional dependency costs that family and is recorded in `snv.import_errors()`, never silent.
+`snv.list_envs()` lists the environments registered **on this interpreter**. The package discovers
+`stable_envs/envs/*` automatically. If an optional dependency is missing, that family does not register,
+and `snv.import_errors()` records why.
 
 ```python
 import stable_envs as snv
 
-snv.list_envs()                      # sorted canonical class names that registered
+snv.list_envs()                      # sorted class names that registered
 snv.list_envs(family="classic_control")
 snv.list_envs(family="ogbench", domain="pointmaze")
-snv.list_families()                  # stable family ids, not module paths
-snv.info("PushT")                    # facts that do not need a device
-snv.import_errors()                  # {module: exception}, families this machine lacks
+snv.list_families()                  # family ids
+snv.info("PushT")                    # metadata; does not need a device
+snv.import_errors()                  # {module: exception} for families this machine lacks
 ```
 
-`info(name)` does **not** construct the env. Construction needs a device, and for several families a GPU, an EGL context or a compiled scene.
+`info(name)` does not construct the env. Construction needs a device, and some families need a GPU, an
+EGL context or a compiled scene.
 
-Returned fields include `class_name`, `id` (slug), `family`, `domain`, `reference_id`, `render_state_dim`, `render_state_names`, `default_size`, `fidelity_tier`, `action_dim`, `has_dynamics`, `requires_cuda`.
+`info` returns `class_name`, `id`, `family`, `domain`, `reference_id`, `render_state_dim`,
+`render_state_names`, `default_size`, `fidelity_tier`, `action_dim`, `has_dynamics` and `requires_cuda`.
 
-`snv.Spec` is a tensor contract (`env.frame_spec`, `env.state_spec`, …). `snv.info` is metadata. They are different types with similar English names on purpose — do not confuse them.
+`snv.Spec` is a tensor contract (`env.frame_spec`, `env.state_spec`, …). `snv.info` returns metadata.
+They are different things.
 
-Registration is the `@register` decorator in `stable_envs.registry`. Duplicate class names are an error. A class must declare `family=` explicitly; it is never inferred from the file path. Modules whose name starts with `_` are skipped by discovery unless another module imports them. Import failures are recorded, never swallowed.
+Registration uses the `@register` decorator in `stable_envs.registry`. Duplicate class names are an
+error. Each class declares `family=` explicitly. Discovery skips modules whose names start with `_`
+unless another module imports them.
 
 ## Concrete classes are canonical
 
@@ -29,13 +36,14 @@ env = snv.CartPole(num_envs=8)
 # snv.DMCReacherHard, snv.OGBCube, snv.CraftaxClassic, snv.PointMazeLargeNavigate, …
 ```
 
-`dir(snv)` lists the documented namespace **and** the registered class names. `stable_envs.testing` still imports for developers but is not advertised at `snv.*`.
+`dir(snv)` lists the documented namespace and the registered class names.
 
-`reference_id` is provenance of the official simulator or renderer a cell is measured against (`gym_pusht/PushT-v0`, `dm_control/reacher-hard`, …). It is not a `make()` alias.
+`reference_id` names the official simulator or renderer that a class is compared against
+(`gym_pusht/PushT-v0`, `dm_control/reacher-hard`, …). It is not a `make()` alias.
 
-## Families are declared, not derived
+## Families
 
-`list_envs(family=…)` matches the class attribute `family`, which does not change if a file moves.
+`list_envs(family=…)` matches the class attribute `family`.
 
 | family | environments | examples |
 |---|---:|---|
@@ -48,22 +56,21 @@ env = snv.CartPole(num_envs=8)
 | `pusht` | 2 | `PushT`, `PushTDiscrete` |
 | `pyflyt` | 1 | `PyFlytRocketLanding` |
 
-These 76 are the registrations with every extra installed; without PyFlyt there are 75. Every one
-simulates except `CraftaxClassic` and `CraftaxFull`, which are renderer-only (`reset` and `step`
-raise); `CraftaxClassicPixels` and `CraftaxPixels` carry their simulation. See
-[`tests/exemptions.toml`](https://github.com/galilai-group/stable-envs/blob/main/tests/exemptions.toml).
+These 76 register with every extra installed. Without PyFlyt there are 75.
 
-When in doubt, `list_families()` and `info(name)["family"]` / `["domain"]` are the source of truth.
+`CraftaxClassic` and `CraftaxFull` are renderer-only: `reset` and `step` raise. Use
+`CraftaxClassicPixels` and `CraftaxPixels` for simulation. Every other environment simulates.
 
-Renderer-only ports of other families (MiniGrid, Highway, RoboCasa, …) are kept in the repository, not released, and not checked against their upstream State: see [contrib/README.md](https://github.com/galilai-group/stable-envs/blob/main/contrib/README.md).
+Renderer-only ports of other families (MiniGrid, Highway, RoboCasa, …) are in the repository but not
+released. See [contrib/README.md](https://github.com/galilai-group/stable-envs/blob/main/contrib/README.md).
 
 ## Fidelity
 
-Every class declares exactly one of `parity` or `visual`. `info(name)["fidelity_tier"]` reports it. Visual-tier frames are a different render of the same scene, suitable for live training data and **not** a substitute for official pixels at eval time. See [Fidelity tiers](concepts/fidelity-tiers.md).
+Every class declares one tier: `parity` or `visual`. `info(name)["fidelity_tier"]` reports it.
+Visual-tier frames are a different render of the same scene. Use them for training data. Do not use
+them in place of official pixels at evaluation. See [Fidelity tiers](concepts/fidelity-tiers.md).
 
-## API reference by family
-
-Generated from the module docstrings:
+## API reference
 
 - [Env contract](api/env.md)
 - [Registered families](api/envs.md)

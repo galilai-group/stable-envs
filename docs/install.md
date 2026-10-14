@@ -2,88 +2,87 @@
 
 ```bash
 pip install stable-envs
-pip install "stable-envs[pusht]"              # source-aligned PushT simulation and CPU rendering
+pip install "stable-envs[pusht]"              # PushT simulation and CPU rendering
 pip install "stable-envs[dmcontrol,ogbench]"  # add family extras as needed
 ```
 
-Then run `stable-envs doctor`: it checks the NVIDIA driver, torch, Warp and MuJoCo's OpenGL
-backends, and says for each installed family what works on this machine and what to change. See
-[System setup](system-setup.md) for the driver and OpenGL setup per machine.
+Then run `stable-envs doctor`. It checks the NVIDIA driver, torch, Warp and MuJoCo's OpenGL backends.
+For each installed family it reports what works on this machine and what to change. See
+[System setup](system-setup.md) for driver and OpenGL setup.
 
-There is no `[all]` extra. A missing optional extra costs **that family**, not the package.
-`snv.import_errors()` names the modules that did not load.
-
-Supported CPython is **3.10, 3.11, and 3.12** — the range CI exercises. Newer versions are not
-claimed until a job runs there.
+There is no `[all]` extra. A missing extra disables only that family. `snv.import_errors()` lists the
+modules that did not load.
 
 ```python
 import stable_envs as snv
 snv.import_errors()     # {module: "ModuleNotFoundError: ..."}
-snv.list_families()     # stable family ids that registered
+snv.list_families()     # family ids that registered
 ```
 
-CUDA is required for the 3-D and most MuJoCo families. PushT, classic control, navigation and
-several 2-D families run on CPU.
+Supported CPython versions are 3.10, 3.11 and 3.12.
 
-From a clone, use an editable install — see [Contributing](https://github.com/galilai-group/stable-envs/blob/main/CONTRIBUTING.md).
+CUDA is required for the 3-D families and most MuJoCo families. PushT, classic control, navigation
+and several 2-D families run on CPU. Device support per family: [Limitations](concepts/limitations.md).
+
+For an editable install from a clone, see
+[Contributing](https://github.com/galilai-group/stable-envs/blob/main/CONTRIBUTING.md).
 
 ## Extras
 
-Two kinds, and they are easy to mix up.
+Some extras are needed to construct and render a family. Others install only the official reference
+package, which tests use for comparison.
 
-**Runtime** extras install what that family needs to **construct and render** in stable-envs.
-
-**Reference** extras install the official CPU renderer / env package used for parity tests, the gallery, and certification. They are not required to draw our frames.
-
-| extra | needed to render in stable-envs? | what the extra actually adds |
+| extra | needed for | adds |
 |---|---|---|
-| *(none)* | classic control, navigation | core install is enough |
-| `pusht` | PushT / PushTDiscrete | Pymunk 7.2.0, pygame, OpenCV and Shapely |
-| `pusht-reference` | no | historical gym-pusht corpus checks, in a separate reference environment |
-| `ogbench` | OGBench mazes (and manip, with CUDA) | `ogbench` + MuJoCo |
-| `ogbench-manipulation` / `-gpu` | Cube / Scene | the exact MuJoCo 3.12.0 / OGBench 1.2.1 (and MuJoCo Warp 3.12.0 / Warp 1.17.0) their renderers check, plus dm_control |
-| `dmcontrol` | DM Control cells | `dm_control` + MuJoCo |
-| `dmcontrol-gpu` | DM Control on CUDA with TrackCom floor reflections | MuJoCo and MuJoCo Warp 3.12; on 3.11 TrackCom renders without the reflection |
-| `robotics` | Fetch | gymnasium-robotics (MuJoCo pin), OpenCV for source-sized OpenGL output |
-| `mjwarp` | Fetch / some visual 3-D cells | MuJoCo Warp render backend |
-| `craftax` | Craftax | jax |
-| `craftax-semantics` / `-gpu` | registered Craftax semantics | Craftax, JAX, Flax, Gymnax, Chex; construction checks the exact Craftax 1.5.0 / JAX 0.10.1 profile (`pin-craftax`) on Python 3.12 |
-| `rocket` | PyFlyt rocket (CUDA + nvdiffrast) | PyFlyt 0.29.0 / pybullet 3.2.7 / pillow / scipy; pip resolves numpy<2 from PyFlyt's metadata |
-| `docs` / `dev` / `examples` / `hf` | no | documentation, tests, gallery helpers, HuggingFace |
+| *(none)* | classic control, navigation | nothing |
+| `pusht` | PushT, PushTDiscrete | Pymunk 7.2.0, pygame, OpenCV, Shapely |
+| `pusht-reference` | reference checks only | gym-pusht |
+| `ogbench` | OGBench mazes | `ogbench`, MuJoCo |
+| `ogbench-manipulation` / `-gpu` | OGBCube, OGBScene | MuJoCo 3.12.0, OGBench 1.2.1, dm_control; `-gpu` adds MuJoCo Warp 3.12.0 and Warp 1.17.0 |
+| `dmcontrol` | DM Control | `dm_control`, MuJoCo |
+| `dmcontrol-gpu` | DM Control on CUDA with TrackCom floor reflections | MuJoCo and MuJoCo Warp 3.12 |
+| `robotics` | Fetch | gymnasium-robotics, MuJoCo < 3.12, OpenCV |
+| `mjwarp` | Fetch on CUDA | MuJoCo Warp |
+| `craftax` | Craftax | Craftax, JAX |
+| `craftax-semantics` / `-gpu` | Craftax simulation | Craftax, JAX, Flax, Gymnax, Chex |
+| `rocket` | PyFlytRocketLanding | PyFlyt 0.29.0, pybullet 3.2.7, Pillow, SciPy |
+| `docs` / `dev` / `examples` / `hf` | not needed to render | docs, tests, example helpers, HuggingFace |
 
-`pip install "stable-envs[pusht]"` is required to construct public `PushT` and
-`PushTDiscrete`. Both now use the source-aligned task and complete replay State.
-Their current public renderer is CPU Pygame. CUDA selects output storage;
-it does not turn that renderer into a GPU renderer.
+With `dmcontrol-gpu` on MuJoCo 3.11, TrackCom domains render without the floor reflection.
+
+Craftax simulation checks for the exact Craftax 1.5.0 / JAX 0.10.1 profile (`pin-craftax`) on
+Python 3.12.
+
+The `rocket` extra resolves numpy < 2 because of PyFlyt's metadata.
+
+PushT renders with pygame on CPU. `device="cuda"` places the output tensors on the GPU. The drawing
+still runs on CPU.
 
 ## Reference profiles
 
-Extras declare compatible ranges. Bit-exact or MSE-bounded parity with an upstream renderer is
-certified only under that family's reference profile: the `pin-<profile>` dependency groups in
-`pyproject.toml` (`pin-classic`, `pin-navigation`, `pin-pusht`, `pin-dmc`, `pin-fetch`,
-`pin-ogbench`, `pin-rocket`, `pin-craftax`, `pin-craftax-render`). They are development-only,
-mutually exclusive, Python 3.12 only, and all resolved in the repository's single `uv.lock`:
+Extras declare compatible version ranges. Exact parity with an upstream renderer is checked only under
+that family's reference profile. These are the `pin-<profile>` dependency groups in `pyproject.toml`:
+`pin-classic`, `pin-navigation`, `pin-pusht`, `pin-dmc`, `pin-fetch`, `pin-ogbench`, `pin-rocket`,
+`pin-craftax` and `pin-craftax-render`. They are for development, cannot be combined, need Python 3.12,
+and resolve in the single `uv.lock`:
 
 ```bash
 uv sync --python 3.12 --extra dmcontrol --group pin-dmc --group test
 ```
 
-`uvx nox -s "test(dmc)"` builds the same environment in `.venvs/dmc-py3.12` and runs the family's
-tests; see [Contributing](https://github.com/galilai-group/stable-envs/blob/main/CONTRIBUTING.md).
+`uvx nox -s "test(dmc)"` builds the same environment in `.venvs/dmc-py3.12` and runs the family's tests.
 
-## Extra incompatibilities
+## Extra conflicts
 
-Fetch (`robotics`) needs `mujoco<3.12`. DM Control and OGBench accept
-`mujoco<3.13`. Do not install `robotics` into the same environment as extras that want 3.12.
+Fetch (`robotics`) needs `mujoco<3.12`. DM Control and OGBench accept `mujoco<3.13`. Do not install
+`robotics` in the same environment as an extra that needs MuJoCo 3.12.
 
-The renderer-only ports kept in the repository's `contrib/` directory are not released and have no
-extras; their requirements files are described in
+The ports in `contrib/` are not released and have no extras. See
 [contrib/README.md](https://github.com/galilai-group/stable-envs/blob/main/contrib/README.md).
 
 ## nvdiffrast
 
-nvdiffrast is **not** a PyPI extra. PyPI rejects direct-URL requirements, and the package
-builds a CUDA extension at install time against a matching local toolkit.
+nvdiffrast is not a PyPI extra. It builds a CUDA extension at install time against a local toolkit.
 
 ```bash
 # nvcc must match torch's CUDA major version.
@@ -92,10 +91,3 @@ CUDA_HOME=... CPATH=... TORCH_CUDA_ARCH_LIST=... \
   pip install --no-build-isolation \
   "git+https://github.com/NVlabs/nvdiffrast.git@v0.4.0"
 ```
-
-## Device honesty
-
-Device support depends on the family and backend. Cube, Scene and Fetch have
-software OpenGL CPU paths; their CUDA renderers require an NVIDIA GPU. Cube/Scene
-physics still runs on CPU. See [backend selection](api/env.md) and
-[limitations](concepts/limitations.md); CPU measurements must not use a hardware GL context.

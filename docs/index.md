@@ -4,7 +4,7 @@
 
 **A batched environment library for research: explicit state, dynamics, and variation, with fast state-driven rendering across CPU and GPU.**
 
-Keep exhaustive State for replay and branching; generate frames when needed. Compact RenderState is a private renderer projection, separate from simulator State and downstream learner observations.
+Store the full State. Render frames from it when you need them.
 
 Authors: **Randall Balestriero**, **Sami BuGhanem**.
 
@@ -18,44 +18,36 @@ with snv.CartPole(num_envs=64) as env:
     state = out["state"]
 ```
 
-Concrete classes are canonical. `snv.make("CartPole", …)` is the string API for those class names. The full walkthrough is the [Quickstart](quickstart.md).
+Class names are the canonical API. `snv.make("CartPole", …)` takes the same names as strings. The full
+walkthrough is the [Quickstart](quickstart.md).
 
 <div class="grid cards" markdown>
 
-- **[Quickstart](quickstart.md)** — install, `reset` / `step` / `render`, specs, logging
-- **[Install](install.md)** — extras, pins, nvdiffrast
-- **[Environments](environments.md)** — `list_envs`, `info`, optional extras
-- **[State, Action, Variation, Frame](concepts/state.md)** — the five nouns; compact render state; StepResult
-- **[Stepping and capture](concepts/dynamics.md)** — single actions, sequences, States and frames
-- **[Variations](concepts/variation-spaces.md)** — persistent environment configuration
-- **[Lifecycle](concepts/lifecycle.md)** — `close()`, context manager, short batches
-- **[Sibling projects](concepts/worldmodel.md)** — where this package ends
-- **[Limitations](concepts/limitations.md)** — devices, extras, accepted limits
-- **[Throughput](benchmarks.md)** — methodology, then the measured tables
-- **[Gallery](gallery.md)** — frames at native resolution
-- **[Adding a component](adding/index.md)** — environment, task and renderer responsibilities
+- **[Quickstart](quickstart.md)**: install, `reset` / `step` / `render`, specs
+- **[Install](install.md)**: extras, pins, nvdiffrast
+- **[Environments](environments.md)**: `list_envs`, `info`, optional extras
+- **[State, Action, Variation, Frame](concepts/state.md)**: what each value holds
+- **[Stepping and capture](concepts/dynamics.md)**: single actions, sequences, States and frames
+- **[Variations](concepts/variation-spaces.md)**: persistent environment configuration
+- **[Lifecycle](concepts/lifecycle.md)**: `close()`, context manager, short batches
+- **[Sibling projects](concepts/worldmodel.md)**: where this package ends
+- **[Limitations](concepts/limitations.md)**: devices, extras, known limits
+- **[Benchmarks](benchmarks.md)**: method and measured tables
+- **[Gallery](gallery.md)**: frames at native resolution
+- **[Adding a component](adding/index.md)**: environment, task and renderer guides
 
 </div>
 
-Storage and throughput benefits depend on the family and the retained State. [Throughput](benchmarks.md) describes the measured workloads and their limits.
-
-## State and pixels have different responsibilities
-
-`render(full_state)` produces pixels without advancing simulation. Stable-worldmodel
-selects and packages learner-visible frames, proprioception and goals. Exhaustive
-State may contain privileged information; it is not the learner observation.
-
-Renderer fidelity and simulator restoration need independent evidence. See
-[State](concepts/state.md), [the gallery](gallery.md), and
-[the contributor guides](adding/index.md).
-
 ## How it works
 
-A frame is `f(state, variation)`. Where native dynamics exist, `next_state = g(state, action, variation)`. Variation may live on the env rather than on every signature. Some families rasterize a `Scene2D`; tile-atlas families gather from a precomputed atlas; OGBench mazes ray-cast analytic primitives. Those override `render` and the suite applies the checks that still apply. Render fidelity and contact-solver fidelity stay separate claims.
+A frame is `f(state, variation)`. Where native dynamics exist, `next_state = g(state, action, variation)`.
+Families render in different ways:
 
-- [The Scene2D IR](concepts/scene-ir.md)
-- [The fused rasterizer](concepts/rasterizer.md)
-- [Variation spaces](concepts/variation-spaces.md)
+- 2-D families build a `Scene2D` and rasterize it. See [The Scene2D IR](concepts/scene-ir.md) and
+  [The fused rasterizer](concepts/rasterizer.md).
+- Tile-atlas families gather tiles from a precomputed atlas.
+- OGBench mazes ray-cast analytic primitives.
+- MuJoCo families use MuJoCo's OpenGL renderer or MJWarp.
 
 ## Building these docs
 
@@ -64,4 +56,4 @@ pip install "stable-envs[docs]"
 mkdocs build --strict     # or: mkdocs serve
 ```
 
-mkdocstrings reads source docstrings statically — the site build does not require torch or a GPU.
+mkdocstrings reads docstrings statically. The build does not need torch or a GPU.
