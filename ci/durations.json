@@ -46,7 +46,7 @@
 "tests/integration/test_native_classic_remaining_gate.py::test_frozen_remaining_reference_oracle[mountain_car]": 12.8,
 "tests/integration/test_native_classic_remaining_gate.py::test_frozen_remaining_reference_oracle[mountain_car_continuous]": 5.7,
 "tests/integration/test_native_navigation_gate.py::test_native_navigation_cpu_gate": 144.9,
-"tests/integration/test_native_navigation_oracle.py::test_frozen_native_navigation_oracles_replay_exactly": 115.3,
+"tests/integration/test_native_navigation_oracle.py::test_frozen_native_navigation_oracles_replay": 115.3,
 "tests/integration/test_ogb_variation.py::test_reset_option_leaves_match_swm_per_lane[Cube]": 10.9,
 "tests/integration/test_ogb_variation.py::test_reset_option_leaves_match_swm_per_lane[Scene]": 12.3,
 "tests/integration/test_ogb_variation.py::test_set_variation_applies_now_and_resets_as_swm[Cube]": 13.2,
