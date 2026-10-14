@@ -17,41 +17,12 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from stable_envs import spaces
 from stable_envs._core.style import StyleTensor
-from stable_envs.env import Env as StableEnv
 from stable_envs.env import check_states, require_contiguous_out
 from stable_envs.testing._data import StateDataset, TrajectoryDataset, check_style, render_states
+from tests.helpers.tiny_env import NAMES, TinyEnv, frame_ids, id_states
 
 DEV = "cpu"
-NAMES = ("agent_x", "agent_y", "block_x", "block_y", "block_angle")
-
-
-class TinyEnv(StableEnv):
-    """5-wide state, a 3x4 frame, one 3-wide appearance knob.
-
-    Pixel (0,0) carries ``state[0]`` and pixel (0,1) the block colour, so "did row 3 get row 3's
-    appearance" is an assertion on bytes. Not registered.
-    """
-
-    name = "tiny"
-    state_dim = 5
-    state_names = NAMES
-    default_size = 4
-
-    def make_variation_space(self):
-        return spaces.Dict({"block": spaces.Dict({"color": spaces.RGBBox(init_value=(10, 20, 30))})})
-
-    def _render(self, states=None, size=None, supersample=None, variation=None, style=None, out=None):
-        # Mirrors the unchecked as_tensor + reshape of shipped renders; the base-class hook validates first.
-        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
-        lead = tuple(s.shape[:-1])
-        s = s.reshape(-1, self.state_dim)
-        sty = self.resolve_style(style, variation, batch=int(s.shape[0]))
-        img = torch.zeros(s.shape[0], 3, 4, 3, dtype=torch.uint8, device=self.device)
-        img[:, 0, 0, 0] = s[:, 0].to(torch.uint8)
-        img[:, 0, 1, :] = sty["block.color"].to(torch.uint8)
-        return img.view(*lead, 3, 4, 3) if lead else img
 
 
 class ThreeWideEnv(TinyEnv):
@@ -63,17 +34,6 @@ class ThreeWideEnv(TinyEnv):
 
 def _env(num_envs: int = 8, cls=TinyEnv) -> TinyEnv:
     return cls(num_envs=num_envs, device=DEV)
-
-
-def _states(n: int, first: int = 0, width: int = 5) -> np.ndarray:
-    """``(n, width)`` whose column 0 is the row's identity, so a frame says which state drew it."""
-    out = np.zeros((n, width), np.float32)
-    out[:, 0] = np.arange(first, first + n, dtype=np.float32)
-    return out
-
-
-def _ids(frames: torch.Tensor) -> list[int]:
-    return frames[:, 0, 0, 0].tolist()
 
 
 def _colors(frames: torch.Tensor) -> list[int]:
@@ -130,7 +90,7 @@ def test_ndim_greater_than_two_is_refused_outright_rather_than_flattened():
     """A ``(2, 3, 5)`` window batch is refused, and the message names the explicit reshape."""
     env = _env(6)
     with pytest.raises(ValueError) as e:
-        env._set_render_state(np.stack([_states(3), _states(3, first=10)]))
+        env._set_render_state(np.stack([id_states(3), id_states(3, first=10)]))
     msg = str(e.value)
     assert "2-D" in msg and "(2, 3, 5)" in msg, msg
     assert "reshape to (-1, 5)" in msg, f"the message does not give the one-line fix: {msg}"
@@ -159,7 +119,7 @@ def test_a_flat_input_that_is_a_whole_number_of_states_still_works():
     env = _env(3)
     env._set_render_state(np.repeat([1.0, 2.0, 3.0], 5).astype(np.float32))
     assert env._get_render_state().shape == (3, 5)
-    assert _ids(env._render()) == [1, 2, 3]
+    assert frame_ids(env._render()) == [1, 2, 3]
 
 
 def test_a_scalar_is_refused_with_the_state_layout():
@@ -180,7 +140,7 @@ def test_an_empty_batch_is_refused():
 def test_non_finite_states_name_the_rows_and_the_named_columns():
     """Non-finite states are refused; the message names the rows, the columns and the kind."""
     env = _env(6)
-    st = _states(6)
+    st = id_states(6)
     st[1, 2] = np.nan
     st[4, 2] = np.inf
     with pytest.raises(ValueError) as e:
@@ -194,7 +154,7 @@ def test_non_finite_states_name_the_rows_and_the_named_columns():
 
 def test_a_single_nan_names_only_its_own_row():
     env = _env(4)
-    st = _states(4)
+    st = id_states(4)
     st[2, 0] = np.nan
     with pytest.raises(ValueError) as e:
         env._set_render_state(st)
@@ -219,15 +179,15 @@ def test_a_trajectory_batch_dict_says_which_key_holds_the_states():
     """``TrajectoryDataset`` yields a dict, and ``torch.as_tensor`` on it dies without naming a key."""
     env = _env(4)
     with pytest.raises(TypeError) as e:
-        env._set_render_state({"states": _states(4), "traj": 0})
+        env._set_render_state({"states": id_states(4), "traj": 0})
     assert "batch['states']" in str(e.value)
 
 
 def test_the_one_tuple_a_tensordataset_yields_is_accepted_rather_than_refused():
     """The one-element list ``DataLoader(TensorDataset(states))`` yields is accepted."""
     env = _env(4)
-    env._set_render_state([torch.as_tensor(_states(4))])
-    assert _ids(env._render()) == [0, 1, 2, 3]
+    env._set_render_state([torch.as_tensor(id_states(4))])
+    assert frame_ids(env._render()) == [0, 1, 2, 3]
 
 
 def test_something_that_is_not_an_array_at_all_names_the_type_and_what_is_wanted():
@@ -243,28 +203,28 @@ def test_something_that_is_not_an_array_at_all_names_the_type_and_what_is_wanted
 def test_a_partial_final_batch_is_accepted_and_renders_exactly_those_rows():
     """A short final batch (``drop_last=False``, torch's default) is accepted and renders only its rows."""
     env = _env(8)
-    env._set_render_state(_states(5))
+    env._set_render_state(id_states(5))
     assert env._get_render_state().shape == (5, 5), "get_state must hand back only the rows set_state wrote"
     frames = env._render()
     assert frames.shape[0] == 5, "render() drew the stale tail of the buffer as well as the live rows"
-    assert _ids(frames) == [0, 1, 2, 3, 4]
+    assert frame_ids(frames) == [0, 1, 2, 3, 4]
 
 
 def test_a_full_batch_after_a_short_one_uses_the_whole_buffer_again():
     """``_live_rows`` is per-call state, not a latch. A short batch must not shrink the env."""
     env = _env(8)
-    env._set_render_state(_states(3))
-    assert _ids(env._render()) == [0, 1, 2]
-    env._set_render_state(_states(8, first=100))
+    env._set_render_state(id_states(3))
+    assert frame_ids(env._render()) == [0, 1, 2]
+    env._set_render_state(id_states(8, first=100))
     assert env._get_render_state().shape == (8, 5)
-    assert _ids(env._render()) == [100, 101, 102, 103, 104, 105, 106, 107]
+    assert frame_ids(env._render()) == [100, 101, 102, 103, 104, 105, 106, 107]
 
 
 def test_a_batch_longer_than_the_env_names_both_numbers_and_the_two_fixes():
     """Shorter is fine, longer is not, and the message must not read like the short case's twin."""
     env = _env(4)
     with pytest.raises(ValueError) as e:
-        env._set_render_state(_states(9))
+        env._set_render_state(id_states(9))
     msg = str(e.value)
     assert "4" in msg and "9" in msg, f"the message does not name both batches: {msg}"
     assert "SHORTER" in msg, f"the message does not say which direction is allowed: {msg}"
@@ -274,7 +234,7 @@ def test_a_batch_longer_than_the_env_names_both_numbers_and_the_two_fixes():
 
 def test_set_state_returns_the_env_so_render_chains_off_it():
     env = _env(4)
-    assert env._set_render_state(_states(4)) is env
+    assert env._set_render_state(id_states(4)) is env
 
 
 # ============================================================ sibling: render(states=)
@@ -290,7 +250,7 @@ def test_render_refuses_a_frame_stack_too():
 
 def test_render_keeps_accepting_leading_dims():
     env = _env(4)
-    out = env._render(np.stack([_states(3), _states(3, first=10)]))
+    out = env._render(np.stack([id_states(3), id_states(3, first=10)]))
     assert tuple(out.shape[:2]) == (2, 3), "render must preserve leading dims, only the width is fixed"
 
 
@@ -303,7 +263,7 @@ def test_render_refuses_the_wrong_width():
 def test_render_takes_any_batch_because_it_does_not_touch_the_env_buffer():
     """The batch rule belongs to ``set_state``, not to the validator, and this pins the difference."""
     env = _env(4)
-    assert env._render(_states(9)).shape[0] == 9
+    assert env._render(id_states(9)).shape[0] == 9
 
 
 # ============================================================ sibling: render_states
@@ -318,7 +278,7 @@ def test_render_states_refuses_a_frame_stack():
 
 def test_render_states_refuses_a_non_finite_corpus():
     env = _env(4)
-    st = _states(4)
+    st = id_states(4)
     st[3, 1] = np.inf
     with pytest.raises(ValueError) as e:
         render_states(env, st, device=DEV)
@@ -408,7 +368,7 @@ def test_a_state_dataset_refuses_the_wrong_state_width():
 
 
 def test_a_state_dataset_still_flattens_a_leading_trajectory_axis():
-    ds = StateDataset(_env(1), np.stack([_states(4), _states(4, first=10)]), device=DEV)
+    ds = StateDataset(_env(1), np.stack([id_states(4), id_states(4, first=10)]), device=DEV)
     assert len(ds) == 8
 
 
@@ -420,14 +380,14 @@ def test_a_trajectory_dataset_refuses_a_rank_three_frame_for_a_three_wide_env():
 
 
 def test_a_trajectory_dataset_refuses_a_transposed_style():
-    st = np.stack([_states(4), _states(4, first=10)])
+    st = np.stack([id_states(4), id_states(4, first=10)])
     with pytest.raises(ValueError) as e:
         TrajectoryDataset(_env(1), st, style=np.zeros((3, 2), np.float32), device=DEV)
     assert "3 number(s) wide" in str(e.value)
 
 
 def test_a_trajectory_dataset_still_accepts_a_dense_corpus():
-    ds = TrajectoryDataset(_env(1), np.stack([_states(4), _states(4, first=10)]), window=2, device=DEV)
+    ds = TrajectoryDataset(_env(1), np.stack([id_states(4), id_states(4, first=10)]), window=2, device=DEV)
     assert ds.n_trajectories == 2 and len(ds) == 6
 
 
@@ -473,13 +433,13 @@ def test_an_out_buffer_of_the_wrong_size_or_dtype_is_refused():
 def test_check_states_is_reusable_and_does_not_know_about_the_env_batch():
     """``check_states`` ignores the env batch size, so ``render(states)`` can take any batch."""
     env = _env(2)
-    out = check_states(env, _states(7))
+    out = check_states(env, id_states(7))
     assert out.shape == (7, 5) and out.dtype == torch.float32
 
 
 def test_check_states_can_validate_without_moving_a_corpus_to_the_device():
     """``move=False`` is what lets ``render_states`` keep its bounded-peak-memory contract."""
     env = _env(2)
-    big = torch.as_tensor(_states(100))
+    big = torch.as_tensor(id_states(100))
     out = check_states(env, big, "t", leading=True, move=False)
     assert out.device.type == "cpu" and out.dtype == torch.float32

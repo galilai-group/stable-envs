@@ -7,8 +7,8 @@ import pytest
 import torch
 
 from stable_envs._core.stepping import step
+from tests.helpers.counter_env import Counter, PipelinedCounter
 from tests.helpers.reference.semantics import assert_same_state
-from tests.unit.test_step_capture import Counter, PipelinedCounter
 
 _path = Path(__file__).parents[1] / "helpers/reference/step_capture.py"
 _spec = importlib.util.spec_from_file_location("stable_envs._reference_stepping", _path)

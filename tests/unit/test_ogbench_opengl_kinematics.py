@@ -6,8 +6,8 @@ from unittest.mock import Mock
 import numpy as np
 import pytest
 import torch
-from test_ogbench_opengl_batch import opengl as opengl
-from test_ogbench_opengl_batch import state
+
+from tests.helpers.ogbench_opengl import opengl, state  # noqa: F401
 
 
 def context(mujoco):

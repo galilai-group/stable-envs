@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import numpy as np
 import torch
 
 from stable_envs.render import raycast3d as R3
+from stable_envs.render.primitives import dot3
 
 
 @torch.no_grad()
@@ -144,3 +146,194 @@ def _tile_origin(
     if w > tile or h > tile:
         return None
     return x0.clamp(0, W - tile), y0.clamp(0, H - tile)
+
+
+def _camera():
+    return R3.Camera(
+        pos=(0.0, -2.6, 1.1),
+        forward=(0.0, 1.0, -0.35),
+        up=(0.0, 0.35, 1.0),
+        near=0.05,
+        top=0.026,
+        bottom=-0.026,
+        center=0.0,
+    )
+
+
+def _lights():
+    return R3.Lights(
+        dirs=np.array([[0.3, -0.5, 0.81], [-0.6, 0.2, 0.77]]),
+        ambient=np.array([0.25, 0.1]),
+        diffuse=np.array([0.7, 0.4]),
+        specular=np.array([0.35, 0.2]),
+        exponent=12.0,
+    )
+
+
+def _prims(kinds, g):
+    K = len(kinds)
+    size = torch.rand(K, 3, generator=g).numpy() * 0.12 + 0.03
+    return R3.Primitives(
+        kind=np.asarray(kinds, int),
+        size=size,
+        mat_rgb=torch.rand(K, 3, generator=g).numpy(),
+        tex_rgb=torch.rand(K, 3, generator=g).numpy() * 0.5 + 0.5,
+        spec=torch.rand(K, generator=g).numpy(),
+    )
+
+
+#: ``t`` of a mover at this scene's default placement, from ``_camera()``. The "band" ``plate_t``
+#: is centred on it so the threshold cuts through the movers.
+_MOVER_T = 2.72
+
+
+def scene(
+    seed,
+    *,
+    B=5,
+    K=2,
+    H=41,
+    W=37,
+    ss=2,
+    spread=0.25,
+    depth=0.0,
+    kinds=(R3.SPHERE, R3.CAPSULE),
+    plate_t="floor",
+    offset=(0.0, 0.0),
+    scales=None,
+):
+    """A plate, its ray parameter, and a batch of mover poses in front of the camera.
+
+    ``plate_t`` selects the occlusion threshold:
+
+    * ``"floor"`` -- the analytic depth of a ground plane through the origin, behind the movers.
+    * ``"inf"`` -- nothing static in the way, so ``INF < INF`` has to stay False.
+    * ``"band"`` -- a finite per-pixel field that cuts through the movers, so a sample's coverage
+      depends on which pixel's ``plate_t`` it reads. Only this mode exercises the ``bt`` gather, which
+      must map ``(ty, a, tx, b) -> (y0+ty, x0+tx)``; a transposition is invisible under the other
+      modes. ``y`` and ``x`` have different periods so a transposition cannot alias onto itself, and
+      ``R3.INF`` never appears in the field.
+
+    ``offset`` shifts every mover in world x and z, pushing windows against a frame edge so the origin
+    clamp in ``_fit_tile`` engages. ``scales`` is a per-row ``size_scale``.
+    """
+    g = torch.Generator().manual_seed(seed)
+    cam = _camera()
+    prims = _prims(kinds[:K], g)
+    plate = (torch.rand(H, W, 3, generator=g) * 255).to(torch.uint8)
+    if plate_t == "inf":
+        plate_t_v = torch.full((H * W,), R3.INF)
+    elif plate_t == "band":
+        y = torch.arange(H).view(H, 1).to(torch.float32)
+        x = torch.arange(W).view(1, W).to(torch.float32)
+        phase = (3.0 * y + 7.0 * x) % 11.0 / 11.0 + 0.017 * ((y * 5 + x * 2) % 3)
+        plate_t_v = (_MOVER_T - 0.22 + 0.44 * phase).reshape(-1).contiguous()
+        assert torch.isfinite(plate_t_v).all() and float(plate_t_v.max()) < R3.INF
+    else:
+        floor = R3.Primitives(
+            kind=np.array([R3.PLANE]),
+            size=np.zeros((1, 3)),
+            mat_rgb=np.zeros((1, 3)),
+            tex_rgb=np.ones((1, 3)),
+            spec=np.zeros(1),
+        )
+        plate_t_v = R3.static_depth(cam, floor, np.zeros((1, 3)), np.eye(3).reshape(1, 3, 3), H, W, "cpu")
+    xpos = torch.zeros(B, K, 3)
+    xpos[..., 0] = (torch.rand(B, K, generator=g) - 0.5) * spread + offset[0]
+    xpos[..., 1] = (torch.rand(B, K, generator=g) - 0.5) * spread + depth
+    xpos[..., 2] = torch.rand(B, K, generator=g) * spread + 0.12 + offset[1]
+    xmat = torch.eye(3).view(1, 1, 3, 3).expand(B, K, 3, 3).contiguous()
+    sc = dict(
+        plate=plate,
+        plate_t=plate_t_v,
+        cam=cam,
+        prims=prims,
+        xpos=xpos,
+        xmat=xmat,
+        lights=_lights(),
+        H=H,
+        W=W,
+        supersample=ss,
+    )
+    if scales is not None:
+        sc["_scales"] = torch.as_tensor(scales, dtype=torch.float32)
+    return sc
+
+
+def split_scene(sc):
+    """The composite kwargs, and the per-row ``size_scale`` the scene carried beside them."""
+    sc = dict(sc)
+    return sc, sc.pop("_scales", None)
+
+
+KINDS = (R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX, R3.ELLIPSOID)
+
+
+def random_primitive_scene(
+    rng, B, K, N, *, degenerate=False, nonunit_d=False, tangent=False, far=0.0, kinds=None, dd_at_tol=0
+):
+    g = torch.Generator().manual_seed(rng)
+    r = lambda *s: torch.rand(*s, generator=g, dtype=torch.float32)  # noqa: E731
+    # Pinned ``kinds`` cover scenes that mix bounded and unbounded kinds writing into the same
+    # ``best`` / ``blocked`` on every run, rather than whenever sampling reaches them.
+    kinds = [KINDS[int(v)] for v in torch.randint(0, len(KINDS), (K,), generator=g)] if kinds is None else list(kinds)
+    K = len(kinds)
+    sizes = r(B, K, 3) * 0.4 + 0.02
+    if degenerate:
+        sizes[:, ::2] = 0.0  # zero radius / half-length / extent
+        sizes[0, 0] = 0.0
+    pos = (r(B, K, 3) - 0.5) * 1.5
+    q = torch.randn(B, K, 4, generator=g)
+    q = q / q.norm(dim=-1, keepdim=True)
+    w, x, y, z = q.unbind(-1)
+    R = torch.stack(
+        [
+            1 - 2 * (y * y + z * z),
+            2 * (x * y - w * z),
+            2 * (x * z + w * y),
+            2 * (x * y + w * z),
+            1 - 2 * (x * x + z * z),
+            2 * (y * z - w * x),
+            2 * (x * z - w * y),
+            2 * (y * z + w * x),
+            1 - 2 * (x * x + y * y),
+        ],
+        -1,
+    ).view(B, K, 3, 3)
+    # ``far`` puts the camera far from small primitives (~100 m to a 5 cm capsule). There
+    # |oc|^2|d|^2 and (oc.d)^2 are each ~1e4 and differ by ~r^2 ~ 2.5e-3, float32's resolution at that
+    # magnitude, so a bound that subtracts them can cancel away a true hit.
+    o = ((r(B, N, 3) - 0.5) * 0.2 + torch.tensor([0.0, -2.0, 0.4])).contiguous()
+    if far:
+        sizes = sizes * 0.05  # centimetre-scale primitives...
+        pos = pos * 0.05
+        o = o + torch.tensor([0.0, -float(far), 0.35 * float(far)])  # ...seen from far away
+    if tangent:
+        # aim a third of the rays exactly at each primitive's bound radius: the grazing case, which is
+        # where a bound that is one ulp too small drops a pixel.
+        tgt = pos[:, torch.randint(0, K, (N,), generator=g)]
+        rad = (sizes[:, :, 0] + sizes[:, :, 1]).mean()
+        off = torch.nn.functional.normalize(torch.randn(B, N, 3, generator=g), dim=-1)
+        tgt = tgt + off * rad
+        d = torch.nn.functional.normalize(tgt - o, dim=-1)
+    else:
+        d = torch.nn.functional.normalize((r(B, N, 3) - 0.5) + torch.tensor([0.0, 1.0, 0.0]), dim=-1)
+    if nonunit_d:
+        d = d * (r(B, N, 1) * 3.0)  # includes exact zeros
+    if dd_at_tol:
+        # Put |d|^2 just inside the admission window, the worst bundle ``_unit_rays`` lets through.
+        # f backs off from 0.9 until the float32 |d|^2 the cast computes is inside.
+        for f in (0.9, 0.7, 0.5, 0.3):
+            m = torch.tensor((1.0 + dd_at_tol * f * R3._UNIT_D_TOL) ** 0.5, dtype=torch.float32)
+            cand = (d * m).contiguous()
+            dd = dot3(cand, cand)
+            if bool(torch.all((dd - 1.0).abs() <= R3._UNIT_D_TOL)):
+                break
+        else:
+            raise AssertionError("could not place |d|^2 inside the admission window")
+        d = cand
+        assert float((dd - 1.0).abs().max()) > R3._UNIT_D_TOL / 4, (
+            "this case must sit at the edge of the window but landed near |d| = 1 "
+            f"(max |dd-1| = {float((dd - 1.0).abs().max()):.3e})"
+        )
+    return kinds, sizes.contiguous(), pos.contiguous(), R.contiguous(), o, d.contiguous()

@@ -2,9 +2,7 @@ import pytest
 import torch
 
 from stable_envs.render import raycast3d as R3
-from tests.helpers.raycast_reference import composite_window
-from tests.unit.test_raycast3d_composite_compact import _scene, _split
-from tests.unit.test_raycast3d_primitive_bounds import _rand_scene
+from tests.helpers.raycast_reference import composite_window, random_primitive_scene, scene, split_scene
 
 pytestmark = pytest.mark.gpu
 
@@ -16,7 +14,7 @@ def cuda():
 
 
 def _cuda_scene(kinds=R3.PRIMITIVE_KINDS):
-    kinds, *args = _rand_scene(rng=521, B=3, K=len(kinds), N=513, kinds=kinds)
+    kinds, *args = random_primitive_scene(rng=521, B=3, K=len(kinds), N=513, kinds=kinds)
     return kinds, *(t.cuda() for t in args)
 
 
@@ -67,7 +65,7 @@ def test_unsupported_explicit_triton_inputs_fail_and_auto_matches_torch(blocking
 @pytest.mark.parametrize("supersample", [1, 2])
 @pytest.mark.parametrize("tile", [None, 16])
 def test_gpu_composite_matches_both_window_references(supersample, tile):
-    sc, _ = _split(_scene(seed=81, B=5, K=1, kinds=(R3.SPHERE,)))
+    sc, _ = split_scene(scene(seed=81, B=5, K=1, kinds=(R3.SPHERE,)))
     sc = {k: v.cuda() if isinstance(v, torch.Tensor) else v for k, v in sc.items()}
     sc["supersample"] = supersample
     actual = R3.composite(**sc, tile=tile)
