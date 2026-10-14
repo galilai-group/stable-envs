@@ -259,7 +259,6 @@ ignore = ["E402", "E731", "E741"]
 "stable_envs/render/mjwarp/__init__.py" = ["UP018"]
 # Forward references kept unimported to avoid cycles; annotations are not evaluated.
 "stable_envs/env.py" = ["F821"]
-"stable_envs/envs/dmcontrol/suite.py" = ["F821"]
 # Public `Union[...]` alias; `|` would change the runtime type object.
 "stable_envs/render/scene.py" = ["UP007"]
 # Lambdas close over names `del`'d in the same function; ruff treats them as unbound.
