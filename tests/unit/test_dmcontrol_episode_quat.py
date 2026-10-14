@@ -210,7 +210,7 @@ def test_episode_slots_refuse_size_and_light_direction_and_allow_orientation():
     assert {a for a, _ in D._episode_slots(env, m)} == {"body_quat"}
     for array in ("geom_size", "light_dir"):
         env, m = _drawing_env(array)
-        with pytest.raises(RuntimeError, match="SIZE or a light's DIRECTION"):
+        with pytest.raises(RuntimeError, match="size or a light's direction"):
             D._episode_slots(env, m)
 
 

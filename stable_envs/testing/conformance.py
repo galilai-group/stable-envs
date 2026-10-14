@@ -308,7 +308,7 @@ _RENDER_INVARIANT_OPTIONAL: dict[str, str] = {}
 _MJGEOM_SPHERE = 2
 
 
-def _validate_render_invariant(env, states, d: int) -> tuple:
+def _validate_render_invariant(env, states, d: int, variation=None) -> tuple:
     """Validate an exclusion for rotation of analytic spheres; return (accepted, reason).
 
     Require every frozen field, derive sphere type from geom_type, and reject
@@ -323,11 +323,12 @@ def _validate_render_invariant(env, states, d: int) -> tuple:
             "render_scene_signature, so the claim cannot be validated"
         )
     row = np.asarray(states[:1]).copy()
-    a = sig(row)
+    kw = {} if variation is None else {"variation": variation}
+    a = sig(row, **kw)
     moved = row.copy()
     # Perturb only this component; judge the resulting scene, including normalized quaternion effects.
     moved[0, d] = moved[0, d] + 0.2
-    b = sig(moved)
+    b = sig(moved, **kw)
     if set(a) != set(b):
         return False, "render_scene_signature returned different keys for the two states"
     # Omitted fields cannot establish that the scene stayed unchanged.
