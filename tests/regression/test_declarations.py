@@ -1,12 +1,8 @@
-"""What an env is allowed to CLAIM: the fidelity tier, and what registration refuses.
+"""Fidelity-tier declarations, registration refusals, and reference-version declarations.
 
-``fidelity_tier = "visual"`` removes the parity gate. ``core/env.py`` asks for something in return:
-measured numbers, thresholds, a stated mechanism, and words in the class docstring that a reader will
-see. ``register`` enforces that.
-
-The refusals are asserted here against SYNTHETIC classes, one per rule, on CPU. A rule is only proved
-by a class that breaks it, and no real env in this repository breaks any of them. The registry-wide
-half of the file then asserts that the real classes still satisfy the rules.
+A ``visual`` tier env must declare measurements, thresholds, a ``visual_note`` and say so in its class
+docstring; ``register`` enforces this. Each refusal is checked against a synthetic class that breaks
+one rule, on CPU; the registry-wide tests check that the real classes satisfy the rules.
 """
 
 from __future__ import annotations
@@ -30,8 +26,7 @@ from stable_envs.registry import (
     registry_table,
 )
 
-#: A complete, self-consistent measurement. Individual tests below remove exactly one thing from it,
-#: which is what makes each of them a test of one rule rather than of the whole block.
+#: A complete measurement; tests below remove one field at a time.
 VF = {
     "mean_abs": 2.45,
     "within8_frac": 0.935,
@@ -45,11 +40,7 @@ VF = {
 
 @pytest.fixture(autouse=True)
 def _registry_is_restored():
-    """Every synthetic class below calls ``register``, which writes into the process-wide REGISTRY.
-
-    Leaking one would parameterise every registry-swept test in the GPU suite over a class that cannot
-    render, and the failure would surface in a completely unrelated file.
-    """
+    """Restore the process-wide REGISTRY after each test registers synthetic classes."""
     before = dict(se.registry.REGISTRY)
     yield
     se.registry.REGISTRY.clear()
@@ -57,7 +48,7 @@ def _registry_is_restored():
 
 
 def _cls(name: str, doc: str, **attrs):
-    """A minimal registerable env class. Nothing here renders; the declarations are the subject."""
+    """A minimal registerable env class that does not render."""
     body = {
         "__doc__": doc,
         "state_dim": 2,
@@ -73,7 +64,7 @@ def _cls(name: str, doc: str, **attrs):
 
 
 def _visual(name="Vis", **over):
-    """A well-formed VISUAL-tier class, before whatever the caller breaks."""
+    """A well-formed visual-tier class, with ``over`` applied."""
     attrs = {
         "fidelity_tier": "visual",
         "visual_fidelity": dict(VF),
@@ -88,7 +79,7 @@ def _visual(name="Vis", **over):
 
 
 def test_a_well_formed_declaration_of_each_kind_registers():
-    """The control. Without it every refusal below could be passing for an unrelated reason."""
+    """Well-formed parity and visual declarations register (the control for the refusals below)."""
     register(_cls("Plain", "An ordinary parity env."))
     register(_visual("GoodVisual"))
     assert {"Plain", "GoodVisual"} <= set(se.registry.REGISTRY)
@@ -100,18 +91,16 @@ def test_an_unknown_tier_is_refused_by_name():
 
 
 def test_a_parity_env_carrying_visual_fidelity_is_refused():
-    """An env makes exactly one of the two claims; carrying both blurs which one is asserted."""
+    """A parity-tier class that also carries ``visual_fidelity`` is refused."""
     with pytest.raises(ValueError, match="declares fidelity_tier='parity' and also carries"):
         register(_cls("Bad", "doc", visual_fidelity=dict(VF)))
 
 
 @pytest.mark.parametrize("missing", REQUIRED_VISUAL_FIDELITY)
 def test_a_visual_env_missing_any_required_measurement_is_refused(missing):
-    """Each of the seven separately, because a check written as "is the dict non-empty" passes on six.
+    """A visual env missing any one required ``visual_fidelity`` field is refused.
 
-    Three MEASURED numbers and three THRESHOLDS, kept apart on purpose: a threshold equal to the
-    measurement flakes on the next state draw, and a measurement inferred from a threshold is not a
-    measurement. ``measured_at`` is what makes either reproducible.
+    Measurements and thresholds are separate fields; ``measured_at`` records where they were taken.
     """
     vf = {k: v for k, v in VF.items() if k != missing}
     with pytest.raises(ValueError, match="declares the VISUAL tier without"):
@@ -119,29 +108,19 @@ def test_a_visual_env_missing_any_required_measurement_is_refused(missing):
 
 
 def test_a_visual_env_with_no_visual_note_is_refused():
-    """The note is what tells a reader which residual they are accepting, and what it disqualifies."""
+    """A visual env with an empty ``visual_note`` is refused."""
     with pytest.raises(ValueError, match="VISUAL tier with no visual_note"):
         register(_visual("Bad", visual_note=""))
 
 
 def test_a_visual_env_that_leaves_parity_interior_min_set_is_refused():
-    """Leaving a number there is how the strong claim ends up loosened to accommodate a weak one.
-
-    The two tiers are kept apart MECHANICALLY rather than by convention: with
-    ``parity_interior_min = None`` the parity assertion cannot be applied to this env, cannot be
-    silently relaxed for it, and cannot be passed by it.
-    """
+    """A visual env must set ``parity_interior_min = None`` so the parity assertion cannot apply to it."""
     with pytest.raises(ValueError, match="leaves parity_interior_min at"):
         register(_visual("Bad", parity_interior_min=1.0))
 
 
 def test_a_visual_env_that_does_not_say_so_in_its_docstring_is_refused():
-    """``help(cls)`` is where a user looks first and it must not read like a parity env.
-
-    Mechanical on purpose: ``describe()`` and the registry listing both mark the tier, but a marker
-    that depends on remembering to write it is the kind of rule this repo has learned to make
-    impossible instead.
-    """
+    """A visual env whose class docstring does not say VISUAL TIER is refused."""
     with pytest.raises(ValueError, match="does not say so in its class docstring"):
         register(_visual("Bad", __doc__="A fast env with no warning in it."))
 
@@ -150,11 +129,7 @@ def test_a_visual_env_that_does_not_say_so_in_its_docstring_is_refused():
 
 
 def test_two_classes_cannot_share_a_lookup_key():
-    """A silent overwrite would mean ``make("X")`` returning whichever module imported last.
-
-    Auto-discovery makes that reachable without anyone editing a shared file, so it is an error rather
-    than a warning, and the message names the module that got there first.
-    """
+    """Registering a different class under an existing name raises instead of overwriting."""
     a = register(_cls("Twin", "doc"))
     b = _cls("Twin", "a different class with the same name")
     with pytest.raises(ValueError, match="env name collision"):
@@ -163,7 +138,7 @@ def test_two_classes_cannot_share_a_lookup_key():
 
 
 def test_registering_the_same_class_twice_is_not_a_collision():
-    """Re-importing a module must be idempotent, or a reload turns into a spurious failure."""
+    """Registering the same class twice is idempotent."""
     a = _cls("Same", "doc")
     register(a)
     register(a)
@@ -181,11 +156,7 @@ def test_an_unknown_env_name_lists_the_ones_that_exist():
 
 
 def test_the_listing_marks_a_visual_env():
-    """``sorted(REGISTRY)`` says nothing about what the frames are worth, which is why this exists.
-
-    Anything that shows a user the registry shows this instead, so the envs whose frames are not the
-    official pixels cannot be picked by name alone.
-    """
+    """``registry_table`` and ``format_registry`` mark visual-tier envs and leave parity envs unmarked."""
     register(_cls("PlainOne", "An ordinary parity env."))
     register(_visual("VisualOne"))
     rows = {r["name"]: r for r in registry_table()}
@@ -200,20 +171,14 @@ def test_the_listing_marks_a_visual_env():
 
 
 def test_registry_table_reports_no_state_dim_rather_than_a_wrong_one():
-    """Envs that compute ``state_dim`` at construction (Fetch from its MJCF, RoboCasa from a measured
-    live-qpos set) carry the class default of 0, and reporting 0 is a number that is WRONG rather than
-    absent."""
+    """``registry_table`` reports ``None`` for a class whose ``state_dim`` is computed at construction (0)."""
     register(_cls("Deferred", "doc", state_dim=0))
     row = {r["name"]: r for r in registry_table()}["Deferred"]
     assert row["render_state_dim"] is None
 
 
 def test_describe_tells_a_consumer_what_the_frames_are_not_for():
-    """The answer to "can I train on these and evaluate on the official ones" is not in the other fields.
-
-    A caller who prints ``describe()`` and reads nothing else still must not mistake a visual env for a
-    parity one.
-    """
+    """``describe()`` of a visual env includes ``not_for`` and its thresholds; a parity env has neither."""
     plain = _cls("P2", "doc")(num_envs=1, device="cpu").describe()
     assert plain["fidelity_tier"] == "parity"
     assert "not_for" not in plain and plain["parity_interior_min"] == 1.0
@@ -227,13 +192,9 @@ def test_describe_tells_a_consumer_what_the_frames_are_not_for():
 
 
 def test_every_registered_class_still_satisfies_its_fidelity_declaration():
-    """The tripwire. ``register`` already enforces this, which is exactly why it is asserted again.
+    """Every registered class passes ``check_fidelity_declaration``.
 
-    If the enforcement is ever weakened, bypassed (a class put into ``REGISTRY`` directly), or reached
-    through a path that does not call ``register``, this is the line that fails and says which class
-    and which rule. It runs over the WHOLE registry on CPU with no env built, so it covers the families
-    whose reference package is not installed in this interpreter — which is where a bad declaration
-    would otherwise sit unnoticed, since every test that could see it needs the package.
+    Also catches classes added to ``REGISTRY`` without ``register``. Runs on CPU without building envs.
     """
     bad = []
     for name, cls in sorted(se.registry.REGISTRY.items()):
@@ -245,12 +206,7 @@ def test_every_registered_class_still_satisfies_its_fidelity_declaration():
 
 
 def test_the_import_error_report_is_a_readable_mapping_and_costs_nothing():
-    """``import_errors()`` is what makes "my env vanished" answerable in one line.
-
-    A machine without ``gym_pusht`` should lose exactly PushT, not the package — so the report has to
-    be a plain ``{module: reason}`` of strings, and it must not be able to fail while being read (it is
-    called from a test that runs before anything else, and from the suite's terminal summary).
-    """
+    """``import_errors()`` returns a fresh ``{module: "ExcType: reason"}`` dict of strings."""
     errs = se.import_errors()
     assert isinstance(errs, dict)
     for k, v in errs.items():
@@ -263,11 +219,7 @@ def test_the_import_error_report_is_a_readable_mapping_and_costs_nothing():
 
 
 def test_a_family_that_failed_to_import_contributed_no_envs_and_took_none_away():
-    """One module's failure removes its own envs and nothing else. The point of auto-discovery.
-
-    Asserted as the conjunction rather than by counting: for every module that did NOT import, no
-    registered class claims to come from it, and the registry is still non-empty.
-    """
+    """No registered class comes from a module that failed to import, and the registry is non-empty."""
     errs = se.import_errors()
     assert se.registry.REGISTRY, f"no envs registered at all; import errors: {errs}"
     for mod in errs:
@@ -279,11 +231,9 @@ def test_a_family_that_failed_to_import_contributed_no_envs_and_took_none_away()
 
 
 def test_no_env_shadows_an_attribute_the_base_class_owns():
-    """An env module must not assign ``self.<name>`` for a ``<name>`` ``StableEnv`` assigns itself.
+    """No env class assigns a ``self.<name>`` that the base ``StableEnv`` also assigns.
 
-    When both assign the same attribute for different meanings, whichever runs last wins with no
-    error. Checked statically, from the source text, so the check runs on machines that cannot build
-    the envs.
+    Checked statically from source, so it runs where the envs cannot be built.
     """
     import ast
 
@@ -302,17 +252,12 @@ def test_no_env_shadows_an_attribute_the_base_class_owns():
 
     owned = self_attrs(ast.parse((root / "stable_envs" / "env.py").read_text()))
     assert {"_render_state", "device", "_live_rows"} <= owned, (
-        f"read the base class wrong — it must assign self._render_state, self.device and self._live_rows, "
-        f"and it appears to assign {sorted(owned)}. The collision check below is worthless if this "
-        f"set is empty or partial, so it is asserted rather than trusted."
+        f"read the base class wrong: it must assign self._render_state, self.device and self._live_rows, "
+        f"and it appears to assign {sorted(owned)}"
     )
 
     def env_classes(tree: ast.Module) -> list[ast.ClassDef]:
-        """Only classes that actually INHERIT the base, transitively within the file.
-
-        Helper classes that live beside an env may own a ``device``. A helper sharing a name with a
-        base-class attribute is not a collision, because nothing ever assigns both to the same object.
-        """
+        """Classes that inherit the base, transitively within the file; helper classes are excluded."""
         classes = [n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]
         derived, changed = {"Env", "StableEnv"}, True
         while changed:
@@ -332,7 +277,7 @@ def test_no_env_shadows_an_attribute_the_base_class_owns():
                     changed = True
         return [c for c in classes if c.name in derived]
 
-    # Base attributes an env deliberately restates WITH THE BASE MEANING. Navigation's reset()
+    # Base attributes an env deliberately restates with the base meaning. Navigation's reset()
     # sets ``_live_rows = self.B`` after installing a full batch, exactly as ``Env.set_state`` does.
     restated = {"envs/navigation/envs.py": {"_live_rows"}}
     offenders: dict[str, set[str]] = {}
@@ -342,43 +287,36 @@ def test_no_env_shadows_an_attribute_the_base_class_owns():
         tree = ast.parse(path.read_text())
         clash = set().union(*(self_attrs(c) for c in env_classes(tree)), set()) & owned
         clash -= restated.get(path.relative_to(root / "stable_envs").as_posix(), set())
-        # ``device``/``B``/``size`` are re-derived by some envs from their own arguments before
-        # delegating; the collision that matters is one where the two meanings DIFFER, and the guard
-        # cannot see that. It is left strict on purpose: an env that genuinely needs to restate a base
-        # attribute should say so here rather than have the check quietly widened.
+        # Kept strict: an env that must restate a base attribute is listed in ``restated``.
         if clash:
             offenders[path.relative_to(root / "stable_envs").as_posix()] = clash
 
     assert not offenders, (
         "these env modules assign attributes that stable_envs/env.py also assigns, so whichever "
-        "runs last silently wins and the other meaning is destroyed with no error:\n  "
+        "runs last silently wins:\n  "
         + "\n  ".join(f"{f}: {sorted(c)}" for f, c in sorted(offenders.items()))
         + "\n\nRename the env's attribute, or the base class's if the base class is the newcomer."
     )
 
 
 def test_the_live_context_cap_scales_with_the_registry():
-    """The EGL tripwire must not fire on an interpreter that simply holds more envs.
-
-    A context is created once per env that owns one and never released, so the legitimate live count
-    grows with the registry; the per-test rate rules are the ones that catch runaway creation.
-    """
+    """The session live-context cap scales with registry size; the per-test rate cap stays at 8."""
     from tests._runner import resource_guard as RG
 
     lim = RG.limits()
-    assert lim["session_live"] >= 192, "the floor must never make an existing run's bound tighter"
+    assert lim["session_live"] >= 192, "the session cap must not drop below 192"
     assert lim["session_live"] >= 2 * len(se.registry.REGISTRY), (
         f"session_live is {lim['session_live']} for a registry of {len(se.registry.REGISTRY)}; one context per "
         f"env is legitimate and never released, so a cap below that fails healthy runs"
     )
     assert lim["per_test"] == 8, (
-        "per_test is the RATE bound and must stay fixed — it is what still "
-        "catches a context created per state, per style value or per call"
+        "per_test is the rate bound and must stay fixed; it catches a context created per state, "
+        "per style value or per call"
     )
 
 
 def test_a_test_that_creates_no_context_is_never_a_runaway():
-    """The exact shape of the false positive: zero created, zero freed, many live."""
+    """A test with no context created or freed is not a violation, however many are live."""
     from tests._runner import resource_guard as RG
 
     d = {
@@ -391,9 +329,8 @@ def test_a_test_that_creates_no_context_is_never_a_runaway():
     }
     names = [n for n, _ in RG.violations(d)]
     assert names == [], (
-        f"a test that created and released nothing was reported as {names}. Holding many live "
-        f"contexts is the DESIGN — they are cached for the life of the process — so it cannot by "
-        f"itself be a violation, or the guard fails every test that runs after the registry is warm."
+        f"a test that created and released nothing was reported as {names}; live contexts are cached "
+        f"for the life of the process, so a high live count alone is not a violation"
     )
 
 
@@ -407,10 +344,9 @@ RV = {"mujoco": "3.11.0", "mujoco_warp": "3.11.0"}
 
 
 def test_a_visual_env_may_declare_the_reference_versions_it_was_measured_against():
-    """The field the certifier compares with the measuring interpreter's ``reference_packages``.
+    """A visual env's ``visual_fidelity`` may declare reference versions, published by ``describe()``.
 
-    It lives next to ``measured_at`` because that is where the same fact was already written as prose;
-    ``describe()`` publishes it so a consumer can see which reference the numbers describe.
+    The certifier compares them with the measuring interpreter's ``reference_packages``.
     """
     cls = _visual("Versioned", visual_fidelity=dict(VF, **{REFERENCE_VERSIONS_KEY: dict(RV)}))
     register(cls)
@@ -436,7 +372,7 @@ def test_an_undeclared_reference_version_is_absent_not_empty():
 
 @pytest.mark.parametrize("bad", [[], "3.11.0", {}, {"mujoco": 3.11}, {"mujoco": ""}, {"": "3.11.0"}, {"mujoco": None}])
 def test_a_malformed_reference_version_field_is_refused(bad):
-    """A version the certifier cannot compare is worse than none, because it looks like provenance."""
+    """A reference-version field the certifier cannot compare is refused."""
     with pytest.raises(ValueError, match="reference_versions"):
         register(_visual("Bad", visual_fidelity=dict(VF, **{REFERENCE_VERSIONS_KEY: bad})))
     with pytest.raises(ValueError, match="reference_versions"):
@@ -500,12 +436,8 @@ def _declared_reference_versions() -> list[tuple[str, dict, str]]:
     for name, cls in sorted(se.registry.REGISTRY.items()):
         rv = reference_versions_of(cls)
         if rv:
-            # A visual env corroborates its declared versions with ``visual_fidelity["measured_at"]``.
-            # A PARITY env cannot: ``check_fidelity_declaration`` forbids it from carrying
-            # ``visual_fidelity`` at all, so its provenance text is ``parity_note`` -- the field that
-            # already exists to say what the declared bound is and is not. Either way the rule is the
-            # same and is the point of this check: a version may not be declared without prose in the
-            # class that says the same thing, so a bump to one without the other is caught.
+            # Visual envs state provenance in visual_fidelity["measured_at"]; parity envs cannot carry
+            # visual_fidelity, so theirs is parity_note.
             at = str((getattr(cls, "visual_fidelity", {}) or {}).get("measured_at", ""))
             rows.append((name, rv, at or str(getattr(cls, "parity_note", "") or "")))
     for name, vf in sorted(_dmc_declaration_table().items()):
@@ -517,13 +449,7 @@ def _declared_reference_versions() -> list[tuple[str, dict, str]]:
 
 @pytest.mark.family("dmc")
 def test_every_declared_reference_version_is_the_one_measured_at_names():
-    """Nothing invented: a declared version must appear, package and version, in ``measured_at``.
-
-    The field was populated FROM that text (the DM Control ``_AT`` string names mujoco 3.11.0 and
-    mujoco-warp 3.11.0 and no dm_control version, so no dm_control version is declared), and this
-    keeps the two from drifting apart: a bump to one without the other is a declaration that
-    disagrees with itself.
-    """
+    """Every declared reference version (package and version) appears in the class's ``measured_at`` text."""
     rows = _declared_reference_versions()
     assert rows, "no declaration in the tree names its reference versions; the DM Control table should"
     bad = []
@@ -557,8 +483,10 @@ OUR_RENDERER_PACKAGES = ("mujoco_warp", "mujoco-warp", "warp", "warp-lang", "nvd
 
 @pytest.mark.family("dmc")
 def test_reference_versions_never_name_our_own_renderer():
-    """The field gates: with mujoco_warp in it, bumping OUR renderer would turn a real regression of
-    ours into blocked_environment. Our side goes in measured_with, which is recorded and never compared."""
+    """``reference_versions`` never names this repo's own renderer packages.
+
+    The field gates certification; this repo's side goes in ``measured_with``, which is never compared.
+    """
     bad = []
     for name, rv, _ in _declared_reference_versions():
         if name.endswith(f".{MEASURED_WITH_KEY}"):
@@ -581,7 +509,7 @@ def test_measured_with_is_validated_like_reference_versions_but_is_not_a_referen
 
 
 def test_visual_fidelity_reference_versions_take_precedence_over_the_class_attribute():
-    """``reference_versions_of`` is the one reading; ``describe()`` and the certifier both use it."""
+    """``reference_versions_of`` merges both sources, with ``visual_fidelity`` winning on conflicts."""
     cls = _visual(
         "Both",
         reference_versions={"mujoco": "3.10.0", "gymnasium": "1.3.0"},

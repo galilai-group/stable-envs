@@ -37,7 +37,7 @@ def test_an_unrecorded_or_unknown_version_cannot_confirm_a_match():
 
 
 def test_nothing_declared_is_not_a_mismatch():
-    """The pre-field state of the world: every existing declaration is judged exactly as before."""
+    """With no versions declared or recorded, nothing is a mismatch."""
     assert reference_version_mismatch({}, {"mujoco": "3.12.0"}) == []
     assert reference_version_mismatch(None, None) == []
 
