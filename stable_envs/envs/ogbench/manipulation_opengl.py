@@ -8,6 +8,7 @@ from importlib.metadata import version
 import numpy as np
 import torch
 
+from ..._core.mujoco_gl import mujoco_renderer
 from ...render._resources import retain_process_lifetime
 from .simulation import render_state as pixels
 from .simulation.compatibility import MODEL_VALUES, CompatibleCube, CompatibleScene
@@ -27,7 +28,7 @@ def _key(family, row, resolution):
 
 
 def _renderer(family, row, resolution):
-    import mujoco
+    import mujoco  # noqa: F401 — selects PYOPENGL_PLATFORM before PyOpenGL loads
     from OpenGL import GL
 
     key = _key(family, row, resolution)
@@ -39,7 +40,7 @@ def _renderer(family, row, resolution):
         env.compile_model_and_data()
         env.model.vis.global_.offwidth = max(int(env.model.vis.global_.offwidth), resolution)
         env.model.vis.global_.offheight = max(int(env.model.vis.global_.offheight), resolution)
-        renderer = mujoco.Renderer(env.model, height=resolution, width=resolution)
+        renderer = mujoco_renderer(env.model, height=resolution, width=resolution)
         renderer._gl_context.make_current()
         vendor = GL.glGetString(GL.GL_VENDOR).decode()
         device = GL.glGetString(GL.GL_RENDERER).decode()

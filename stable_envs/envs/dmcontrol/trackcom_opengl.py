@@ -4,6 +4,7 @@ import threading
 import numpy as np
 import torch
 
+from ..._core.mujoco_gl import mujoco_renderer
 from ..._core.plate_texels import substitute, texel_key
 from ...render._resources import retain_process_lifetime
 from .simulation.physics import tilt_quat
@@ -27,7 +28,7 @@ def render(env, states, style, size, out):
             model.vis.global_.offwidth = max(int(model.vis.global_.offwidth), size)
             model.vis.global_.offheight = max(int(model.vis.global_.offheight), size)
             data = mujoco.MjData(model)
-            renderer = mujoco.Renderer(model, height=size, width=size)
+            renderer = mujoco_renderer(model, height=size, width=size)
             renderer._gl_context.make_current()
             vendor = GL.glGetString(GL.GL_VENDOR).decode()
             gl_device = GL.glGetString(GL.GL_RENDERER).decode()

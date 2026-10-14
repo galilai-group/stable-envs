@@ -17,10 +17,12 @@ import os
 import numpy as np
 import torch
 
+from ..._core.mujoco_gl import mujoco_renderer
 from ..._core.plate_texels import quantise as _quantise
 from ..._core.plate_texels import substitute as _substitute
 from ..._core.plate_texels import texel_key as _texel_key
 from ..._core.plate_texels import texel_slots as _texel_slots
+from ..._core.warp_cuda import require_warp_cuda
 from ...env import Env
 from ...registry import register
 from ...render import _resources as _RES
@@ -356,7 +358,8 @@ def _context(cell: str, res: int, nworld: int) -> _Ctx:
 def _build_context(cell: str, res: int, nworld: int) -> _Ctx:
     import mujoco
     import mujoco_warp as mjw
-    import warp as wp
+
+    wp = require_warp_cuda("OGBench manipulation GPU rendering")
 
     b = _bundle(cell)
     # Copy at all-zero button bits, the base of the per-world colour deltas.
@@ -1014,7 +1017,7 @@ def _plate_rig(cell: str, res: int) -> _PlateRig:
     # Enlarge the private framebuffer before constructing a renderer at the requested resolution.
     rig.model.vis.global_.offwidth = max(int(rig.model.vis.global_.offwidth), int(res))
     rig.model.vis.global_.offheight = max(int(rig.model.vis.global_.offheight), int(res))
-    rig.renderer = mujoco.Renderer(rig.model, height=int(res), width=int(res))
+    rig.renderer = mujoco_renderer(rig.model, height=int(res), width=int(res))
     _KEEPALIVE.append(rig.renderer)
     _PLATE_RIGS[key] = rig
     return rig

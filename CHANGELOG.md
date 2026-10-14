@@ -4,6 +4,13 @@
 
 ### Added
 
+- `stable-envs doctor` (also `python -m stable_envs doctor`, `--json`): checks the NVIDIA driver,
+  torch, Warp and each MuJoCo OpenGL backend, and reports per installed family whether its CPU and
+  GPU render paths work and what to change. [System setup](docs/system-setup.md) covers each kind
+  of machine.
+- GPU render paths that use Warp fail with the reason when Warp has fallen back to CPU (for example
+  a Warp build newer than the driver), and the MuJoCo families fail with the GL setup to change
+  when MuJoCo has no OpenGL renderer.
 - Simulation for every DM Control cell (the six that were renderer-only now run dm_control's own
   tasks on CPU lanes) and for every OGBench locomotion maze cell on CPU MuJoCo. 76 environments
   register with every extra installed; only `CraftaxClassic` and `CraftaxFull` are renderer-only.

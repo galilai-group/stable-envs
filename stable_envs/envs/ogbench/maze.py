@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ..._core.mujoco_gl import configure_mujoco_gl
+from ..._core.mujoco_gl import configure_mujoco_gl, mujoco_renderer
 from ..._core.plate_texels import quantise
 from ..._execution.protocol import StepPipeline, step_pipeline
 
@@ -697,7 +697,7 @@ class OGBenchMaze(Env):
         if r is None:
             # built AFTER the texture write for this key, so it uploads the right floor; every later
             # bake with the same key writes the same bytes, so reuse is exact
-            r = pr["renderers"][rkey] = mujoco.Renderer(m, width=size, height=size)
+            r = pr["renderers"][rkey] = mujoco_renderer(m, width=size, height=size)
         if custom:
             r._gl_context.make_current()
             mujoco.mjr_uploadTexture(m, r._mjr_context, pr["tex_id"])

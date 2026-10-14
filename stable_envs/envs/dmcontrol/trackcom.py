@@ -7,6 +7,7 @@ import torch
 
 from ..._core.plate_texels import quantise as _quantise
 from ..._core.plate_texels import texel_slots as _texel_slots
+from ..._core.warp_cuda import require_warp_cuda
 from ...render import _resources as _RES
 from ...render import cpu3d as C3
 from ...render import mjwarp as MW
@@ -68,8 +69,8 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
     repeated host launches."""
     import mujoco
     import mujoco_warp as mjw
-    import warp as wp
 
+    wp = require_warp_cuda("DM Control TrackCom GPU rendering")
     key = (cls.DOMAIN, cls.TASK, int(res), int(nworld), tuple(sorted(cls.RENDER_FLAGS.items())))
     hit = _TC_CACHE.get(key)
     if hit is not None:

@@ -5,6 +5,7 @@ import torch
 from tensordict import TensorDict
 
 from ..._core.style import StyleTensor
+from ..._core.warp_cuda import require_warp_cuda
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env, _lane_value
 from ...spaces import Box, Dict, Discrete
@@ -245,15 +246,7 @@ class FetchSemantics:
             _require_gpu_renderer()
             self._b = _build_bundle(self.SCENE)
             self._check_plate_is_constant()
-        import warp as wp
-
-        wp.init()
-        if not wp.is_cuda_available():
-            # Warp would otherwise fall back to CPU arrays and fail later on a cross-device index.
-            raise RuntimeError(
-                f"Fetch GPU rendering: Warp {wp.config.version} sees no CUDA device; "
-                "its CUDA toolkit may need a newer driver than this machine has"
-            )
+        wp = require_warp_cuda("Fetch GPU rendering")
         with wp.ScopedDevice(str(self.device)):
             return super()._render(*args, **kwargs)
 

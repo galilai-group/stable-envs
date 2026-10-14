@@ -92,6 +92,7 @@ nav:
       - Home: index.md
       - Quickstart: quickstart.md
       - Install: install.md
+      - System setup: system-setup.md
       - Environments: environments.md
       - State, Variation, Frame: concepts/state.md
       - Stateful vs functional: concepts/dynamics.md
