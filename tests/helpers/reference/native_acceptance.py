@@ -1,4 +1,4 @@
-"""Classic-control acceptance checks against pinned SWM, shared by pytest and a CLI.
+"""Classic-control acceptance checks against pinned SWM.
 
 Seeds, batches, horizons, task/action edges, Variation values and rejected actions are fixed
 per case. Source fields are never read through the candidate's export.
@@ -404,37 +404,3 @@ def run_case(domain, batch, device):
         finally:
             ref.close()
     return records
-
-
-def run_gate(domains, device="cpu"):
-    from pathlib import Path
-
-    import stable_worldmodel
-
-    from stable_envs.testing.provenance import pinned_source_identity
-    from tests.helpers.reference.profiles import PINS
-    from tests.helpers.reference.saved import SWM_PIN
-
-    identity = pinned_source_identity(Path(stable_worldmodel.__file__).resolve().parents[1], SWM_PIN, PINS["native"])
-    return dict(
-        source=identity,
-        device=device,
-        execution_mode="DELEGATED_CPU",
-        cases=[case for domain in domains for batch in (1, 3) for case in run_case(domain, batch, device)],
-        physical_variation={domain: _physical_variation(domain, device) for domain in domains},
-        dtype_control=_continuous_dtype_flag_necessity(device) if "mountain_car_continuous" in domains else None,
-    )
-
-
-def main(domains):
-    import argparse
-    import json
-    from pathlib import Path
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--device", default="cpu", choices=("cpu", "cuda"))
-    parser.add_argument("--output", required=True, type=Path)
-    args = parser.parse_args()
-    report = run_gate(domains, args.device)
-    with args.output.open("x") as stream:
-        json.dump(report, stream, indent=2)
