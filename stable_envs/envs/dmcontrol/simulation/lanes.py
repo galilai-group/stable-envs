@@ -14,7 +14,8 @@ class DMCLanes(SimulatorAdapter):
     """Independent CPU dm_control lanes; each action advances the source twice.
 
     ``device`` controls returned tensor placement. State holds physics, lifecycle,
-    task RNG, episode-drawn model entries and the lane's physics Variation."""
+    task RNG, episode-drawn model entries and the lane's physics Variation.
+    """
 
     def __init__(self, key, num_envs, device, seed, make, fields):
         self.key = key

@@ -84,7 +84,8 @@ class OGBMazeAdapter(SimulatorAdapter):
 
     ``device`` selects output placement. Each lane owns both its environment PCG64
     and its own copy of NumPy's legacy global RNG (``np.random`` MT19937), which
-    upstream draws from; calls must be serialized."""
+    upstream draws from; calls must be serialized.
+    """
 
     def __init__(self, num_envs, device="cpu", seed=0, *, loco="point", maze="large"):
         self.num_envs = int(num_envs)

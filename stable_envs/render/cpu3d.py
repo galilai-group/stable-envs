@@ -294,7 +294,8 @@ class Scene:
     def _plane_uv_gradients(self, rays=None, plane=None) -> torch.Tensor:
         """UV derivatives per unit signed camera-to-plane distance, for every ray by default.
 
-        ``rays`` and ``plane`` may instead pair each ray with its own plane orientation."""
+        ``rays`` and ``plane`` may instead pair each ray with its own plane orientation.
+        """
         rays = torch.as_tensor(self.dirs, device=self.device) if rays is None else rays
         rotation = torch.as_tensor(self.xmat, dtype=torch.float32, device=self.device)
         if plane is None:

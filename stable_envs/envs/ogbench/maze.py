@@ -139,7 +139,8 @@ def _light_pass(n, v, terms, c, tex, ms, shin):
     """One framebuffer pass of GL fixed-function lighting, rounded to bytes.
 
     ``terms`` holds (unit vector to light, attenuation*spot gain, (ambient, diffuse,
-    specular)) per enabled light. Lights sum and clamp before the texture modulates."""
+    specular)) per enabled light. Lights sum and clamp before the texture modulates.
+    """
     col = torch.zeros_like(c)
     for to_light, gain, (amb, dif, spec) in terms:
         ndl = dot3(n, to_light).clamp(min=0)
@@ -161,7 +162,8 @@ class _LightPasses:
     in its own blended pass (``mjr_render``), so every pass rounds to bytes before the
     sum saturates. The plate holds the static passes without the tracking light; per
     row this adds that light's shaded and shadowed contribution to static pixels,
-    removes the agent's shadow from them, and shades the moving primitives pass by pass."""
+    removes the agent's shadow from them, and shades the moving primitives pass by pass.
+    """
 
     def __init__(self, scene, m, d, track, static_ids, static_hit, albedo, agent_ids, device):
         """``static_hit`` is (world point, normal, index into ``static_ids``, hit mask) per pixel."""
@@ -430,7 +432,8 @@ def _checker_masks(loco: str):
 class OGBenchMaze(Env):
     """Render OGBench maze bodies over cached source backgrounds.
 
-    Pixel-mode rows contain qpos; state-observation mode also carries the goal."""
+    Pixel-mode rows contain qpos; state-observation mode also carries the goal.
+    """
 
     family = "ogbench"
 
@@ -540,7 +543,8 @@ class OGBenchMaze(Env):
     def make_variation_space(self) -> Dict:
         """Expose body, floor, wall and camera appearance with source float colour defaults.
 
-        Keep RGB in [0, 1]; uint8 quantization changes MuJoCo material shading."""
+        Keep RGB in [0, 1]; uint8 quantization changes MuJoCo material shading.
+        """
         agent_rgb = [0.7, 0.5, 0.3]
         # Pixel observations recolour the XML's white walls; state observations keep them.
         wall_rgb = [1.0, 1.0, 1.0] if getattr(self, "RENDER_OB_TYPE", "pixels") == "states" else [0.6, 0.6, 0.6]
@@ -640,7 +644,8 @@ class OGBenchMaze(Env):
         """Bake a plate after applying absolute style values to the pristine model.
 
         Reset pose before baking. The model and GL resources are shared, so baking
-        and kinematics calls must be serialized."""
+        and kinematics calls must be serialized.
+        """
         import mujoco
 
         env, u, pr = _scene_env(self.LOCO, self.MAZE, size, getattr(self, "RENDER_OB_TYPE", "pixels"))
@@ -817,7 +822,8 @@ class OGBenchMaze(Env):
         """Return agent geom positions ``(B, P, 3)`` and rotations ``(B, P, 3, 3)``.
 
         Point-body translation stays on device. Legged bodies use serial CPU
-        MuJoCo kinematics, gathering into preallocated arrays before one batch transfer."""
+        MuJoCo kinematics, gathering into preallocated arrays before one batch transfer.
+        """
         import mujoco
 
         B = states.shape[0]
@@ -861,7 +867,8 @@ class OGBenchMaze(Env):
     ) -> torch.Tensor:
         """Render compact rows to uint8 frames, preserving leading batch dimensions.
 
-        Group only by plate-affecting styles; body colour and scale remain per row."""
+        Group only by plate-affecting styles; body colour and scale remain per row.
+        """
         s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
@@ -921,7 +928,8 @@ class OGBenchMaze(Env):
     def _agent_appearance(self, sc: _Scene, sty, sub):
         """Return per-geom colours and per-row scale, preserving non-self materials.
 
-        The ant’s white leg geoms distinguish its heading and must not be recoloured."""
+        The ant’s white leg geoms distinguish its heading and must not be recoloured.
+        """
         base = torch.as_tensor(sc.agent_base, device=self.device, dtype=torch.float32)
         is_self = torch.as_tensor(sc.agent_is_self, device=self.device)
         acol = sty["agent.color"][sub].to(torch.float32)  # (b,3)
@@ -933,7 +941,8 @@ class OGBenchMaze(Env):
         """Sample synthetic poses in free cells, with torso and joint noise for legged bodies.
 
         Varying quaternion orientation also prevents fixed-offset probes from
-        normalizing straight back to the identity. These are not source rollout states."""
+        normalizing straight back to the identity. These are not source rollout states.
+        """
         rng = rng or self.rng
         sc = self._scene()
         cells = np.argwhere(sc.maze_map == 0)
@@ -966,7 +975,8 @@ class OGBenchMaze(Env):
     def reference_env(cls, size: int = 224):
         """Construct an independent source environment for reference comparisons.
 
-        Keep its GL context alive while other renderers are in use."""
+        Keep its GL context alive while other renderers are in use.
+        """
         return _build_reference(cls.LOCO, cls.MAZE, size, getattr(cls, "RENDER_OB_TYPE", "pixels"))
 
     @classmethod
@@ -988,7 +998,8 @@ class MazeSemantics:
     """Compose full-State CPU simulation of the source maze with state observations.
 
     CUDA selects output placement; simulation remains on CPU. The renderer projection
-    is qpos, followed by the goal when the scene draws it."""
+    is qpos, followed by the goal when the scene draws it.
+    """
 
     action_dtype = torch.float32
     action_low, action_high = -1.0, 1.0

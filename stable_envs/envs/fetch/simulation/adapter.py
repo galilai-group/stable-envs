@@ -91,7 +91,8 @@ class FetchAdapter(SimulatorAdapter):
     """CPU Fetch simulators with a 50-step time limit and optional lane threads.
 
     ``device`` selects returned tensor placement. State preserves controller caches
-    and warmstart in addition to poses, goals, lifecycle and RNG."""
+    and warmstart in addition to poses, goals, lifecycle and RNG.
+    """
 
     execution_mode = "DELEGATED_CPU"
 
@@ -165,8 +166,10 @@ class FetchAdapter(SimulatorAdapter):
             env._max_episode_steps = int(limit)
 
     def reset_visual_colors(self, values):
-        """Restore the registered materials, then detach table, floor and object materials
-        when any source visual leaf is selected."""
+        """Restore the registered materials.
+
+        Then detach the table, floor and object materials when any source visual leaf is selected.
+        """
         self._check_open()
         if not hasattr(self, "_visual_geoms"):
             self._visual_geoms = []

@@ -2,7 +2,8 @@
 
 Torch and Triton share intersection and shading conventions. Moving primitives
 are composited over a fixed RGB/depth plate; compact windows avoid casting the
-static background again. Float operation order is part of the pixel contract."""
+static background again. Float operation order is part of the pixel contract.
+"""
 
 from __future__ import annotations
 
@@ -45,7 +46,8 @@ except ImportError:  # reported by the renderer, never silent
 class Camera:
     """Pinhole camera with the near-plane frustum reported by ``mjvGLCamera``.
 
-    Keeping the frustum supports off-centre and stereo cameras."""
+    Keeping the frustum supports off-centre and stereo cameras.
+    """
 
     pos: tuple
     forward: tuple
@@ -101,7 +103,8 @@ class Camera:
     def project(self, pts: torch.Tensor, aspect: float = 1.0) -> torch.Tensor:
         """Project world points (..., 3) to normalised device coordinates (..., 2).
 
-        ``aspect`` is W/H. The result is used to choose conservative screen windows."""
+        ``aspect`` is W/H. The result is used to choose conservative screen windows.
+        """
         R, origin = _proj_tensors(self, pts.device, pts.dtype)
         rel = pts - origin
         # Keep projection independent of batch-dependent BLAS rounding at pixel boundaries.
@@ -182,7 +185,8 @@ def _ellipsoid(o, d, pos, R, size, normal=True):
     """Intersect an ellipsoid by scaling local rays to a unit sphere.
 
     Normals are normalised gradients in the local frame, rotated back to world space.
-    A nonpositive semi-axis produces a miss."""
+    A nonpositive semi-axis produces a miss.
+    """
     ol = mtv3(R, o - pos)
     dl = mtv3(R, d)
     inv = 1.0 / torch.clamp(size, min=1e-12)
@@ -325,7 +329,8 @@ def intersect(
     """Return ray parameters and world-space normals, with t=INF on misses.
 
     Poses (..., 3) and rotations (..., 3, 3) broadcast against rays (..., 3).
-    Unsupported MuJoCo geometry kinds raise ValueError."""
+    Unsupported MuJoCo geometry kinds raise ValueError.
+    """
     return _intersect(kind, size, pos, R, o, d, normal=True)
 
 
@@ -425,7 +430,8 @@ def cast_nearest_torch(
 
     ``kinds`` is a host sequence of K codes. Sizes and positions are (B, K, 3),
     rotations (B, K, 3, 3), and ray origins/directions (B, N, 3). Misses have t=INF.
-    With ``bounds=False``, every ray is tested against every primitive."""
+    With ``bounds=False``, every ray is tested against every primitive.
+    """
     if not bounds:
         return _cast_nearest_torch_unbounded(kinds, sizes, pos, R, o, d)
     # Avoid bound setup and reductions when none of the primitive kinds can benefit.
@@ -500,7 +506,8 @@ def any_blocking_torch(
     """Return a (B, N) mask of hits with 0 < t < lim, excluding each ray's skip index.
 
     Inputs follow ``cast_nearest_torch``; lim and skip have shape (B, N).
-    With ``bounds=False``, every ray is tested against every primitive."""
+    With ``bounds=False``, every ray is tested against every primitive.
+    """
     if not bounds:
         return _any_blocking_torch_unbounded(kinds, sizes, pos, R, o, d, lim, skip)
     # Avoid bound setup and reductions when none of the primitive kinds can benefit.
@@ -573,7 +580,8 @@ if HAVE_TRITON:
     ):
         """Intersect a ray block with a sphere, capsule, cylinder, ellipsoid, box, or plane.
 
-        Return (t, nx, ny, nz), with t=INF on misses. Each branch assigns every output."""
+        Return (t, nx, ny, nz), with t=INF on misses. Each branch assigns every output.
+        """
         zero = tl.zeros([BLOCK], dtype=tl.float32)
         never = tl.arange(0, BLOCK) < 0  # all-False mask
         t = zero + INF
@@ -1027,7 +1035,8 @@ def cast_nearest(
     """Return (ray parameter, world normal, primitive index); see ``cast_nearest_torch``.
 
     ``auto`` uses Triton for packed float32 inputs on CUDA, otherwise Torch.
-    An unknown backend or unsupported explicit ``triton`` request raises ValueError."""
+    An unknown backend or unsupported explicit ``triton`` request raises ValueError.
+    """
     if not _use_triton(backend, o, sizes, pos, R, d):
         return cast_nearest_torch(kinds, sizes, pos, R, o, d)
     return _launch(kinds, sizes, pos, R, o, d, None, None, 0)
@@ -1046,7 +1055,8 @@ def any_blocking(
 ) -> torch.Tensor:
     """Return a (B, N) mask of hits before lim, excluding each ray's optional skip index.
 
-    Backend selection and errors follow ``cast_nearest``."""
+    Backend selection and errors follow ``cast_nearest``.
+    """
     if not _use_triton(backend, o, sizes, pos, R, d, lim, skip=skip):
         return any_blocking_torch(kinds, sizes, pos, R, o, d, lim, skip)
     return _launch(kinds, sizes, pos, R, o, d, lim.expand(o.shape[0], o.shape[1]), skip, 1)
@@ -1080,7 +1090,8 @@ def shade(
     """Return RGB (..., 3) in [0, 1].
 
     White specular is added to the material-lit colour before texture modulation;
-    texturing only the diffuse term changes highlights on textured surfaces."""
+    texturing only the diffuse term changes highlights on textured surfaces.
+    """
     amb = lamb.sum()
     prim = mat * amb
     highlight = torch.zeros(n.shape[:-1], device=n.device, dtype=n.dtype)
@@ -1100,7 +1111,8 @@ def static_depth(cam: Camera, prims: Primitives, xpos, xmat, H: int, W: int, dev
     """Return nearest static-surface ray parameters (H*W,), in radial units.
 
     MuJoCo depth is perpendicular distance, t * dot(direction, forward).
-    Keeping radial t lets the mover composite compare hits without conversion."""
+    Keeping radial t lets the mover composite compare hits without conversion.
+    """
     o, d = cached_rays(cam, H, W, device)
     P = prims.to(device)
     best = torch.full((H * W,), INF, device=device)
@@ -1140,8 +1152,8 @@ def composite(
     full frame. ``mat_rgb`` (B, P, 3) and ``size_scale`` (B,) override appearance per
     environment. ``shader(rows, hit, normal, view, prim, mat)`` replaces ``lights``
     and returns covered-sample colour in [0, 255].
-    A supplied ``out`` buffer is filled and returned as a (B, H, W, 3) view."""
-
+    A supplied ``out`` buffer is filled and returned as a (B, H, W, 3) view.
+    """
     device = plate.device
     B = xpos.shape[0]
     ss = int(supersample)
@@ -1260,7 +1272,8 @@ def screen_span(cam: Camera, prims: Primitives, xpos: torch.Tensor, H: int, W: i
     """Return (x0, y0, width, height) for projected primitive bounds, or None if unbounded.
 
     Origins are per-row device tensors; extents are host integers covering the batch.
-    Projects all eight bounding-box corners and synchronises once."""
+    Projects all eight bounding-box corners and synchronises once.
+    """
     radt = prims.radii(device, xpos.dtype, bound_scale)
     if radt is None:  # host-side: a PLANE has no finite bound
         return None

@@ -35,7 +35,8 @@ class PushTReplay:
 
     Each step stores an owned action with its original dtype. Export copies the
     finite prefix without imposing a horizon; restoration replays it in O(T) and
-    checks all exported fields before returning the new engine."""
+    checks all exported fields before returning the new engine.
+    """
 
     def __init__(self, *, discrete=False, config=None, seed=0, options=None, initialize=True):
         if version("pymunk") != "7.2.0":

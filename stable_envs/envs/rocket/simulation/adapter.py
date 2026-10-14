@@ -15,7 +15,8 @@ class RocketAdapter(SimulatorAdapter):
     """Batch CPU Rocket owners with CPU/CUDA State storage.
 
     Validate every action before stepping any lane. Stage reset and restoration
-    for the whole batch before replacing its current engines."""
+    for the whole batch before replacing its current engines.
+    """
 
     def __init__(self, batch, device, seed, config=None):
         if type(batch) is not int or batch < 1:

@@ -111,7 +111,8 @@ def render(family, state, device, chunk_size=None):
     """Render named states serially through OpenGL using candidate assets.
 
     CPU output requires software OpenGL. CUDA output uses NVIDIA OpenGL plus
-    host readback and upload; its throughput is separate from batched MJWarp."""
+    host readback and upload; its throughput is separate from batched MJWarp.
+    """
     import mujoco
 
     # OpenGL consumes host model inputs anyway. Validate that same detached copy

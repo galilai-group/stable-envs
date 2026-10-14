@@ -27,7 +27,8 @@ def disc_table(r: int) -> np.ndarray:
     """Return integer disc spans and two ordered fringe-weight maps for radius r.
 
     Layout: r+1 row half-widths, followed by two flattened (2r+1)² weight maps.
-    Duplicate writes within a pass or unsupported fringe weights are rejected."""
+    Duplicate writes within a pass or unsupported fringe weights are rejected.
+    """
     r = int(r)
     d = 2 * r + 1
     hw = np.asarray(G.circle_hw(r), np.int32)
@@ -70,7 +71,8 @@ class Ops:
     """Batched classic-control draw operations in painter order.
 
     Geometry, colors and disc radii vary per environment; canvas dimensions are
-    fixed. Call finish() before rendering."""
+    fixed. Call finish() before rendering.
+    """
 
     def __init__(self, B, H, W, device):
         self.B, self.H, self.W, self.device = B, H, W, device
@@ -347,7 +349,8 @@ WARPS = 1
 def render_classic(ops: Ops, out: torch.Tensor | None = None) -> torch.Tensor:
     """Render operations to (B, H, W, 3) uint8 RGB, with the final vertical flip.
 
-    Requires CUDA and Triton. A supplied output buffer is overwritten and returned."""
+    Requires CUDA and Triton. A supplied output buffer is overwritten and returned.
+    """
     if torch.device(ops.device).type != "cuda":
         raise ValueError("render_classic requires CUDA; use the environment's Torch renderer on CPU")
     if not HAVE_TRITON:

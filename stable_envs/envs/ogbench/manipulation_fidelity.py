@@ -33,7 +33,8 @@ def draw(token, bundle, state, device, size, supersample, worlds):
     """Composite transparency and moving shadows using two MJWarp passes.
 
     Remove the pinned shader's 0.3 shadow transmission before applying shadows
-    to the static reference."""
+    to the static reference.
+    """
     import mujoco
 
     from .manipulation_renderer import _ConfiguredRenderer

@@ -10,7 +10,8 @@ def stack_states(states):
     """Return owned ``[B, selected_time]`` States with a common history width.
 
     Pad only the replay-history axis. Each snapshot retains its own valid mask
-    and history length; the selected-time axis is independent."""
+    and history length; the selected-time axis is independent.
+    """
     if not states:
         raise ValueError("PushT State collation requires at least one snapshot")
     capacity = max(state["history", "actions"].shape[1] for state in states)

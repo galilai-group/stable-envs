@@ -10,7 +10,8 @@ class _CachedObservations:
     """Cache topology and Jacobian workspace per simulator instance.
 
     Read positions, velocities and timestep afresh. Replacing the model invalidates
-    topology; the upstream observation builder assembles the returned fields."""
+    topology; the upstream observation builder assembles the returned fields.
+    """
 
     def generate_mujoco_observations(self):
         model, data = self.model, self.data

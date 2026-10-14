@@ -195,7 +195,6 @@ def _seed_leaf(shape=(1,), low=0.0, high=1.0, dtype=np.float32):
     Keep sibling leaves even when reset does not sample them: Dict.seed
     assigns child seeds according to the whole tree.
     """
-
     return gym_spaces.Box(low=low, high=high, shape=shape, dtype=dtype)
 
 
@@ -1345,7 +1344,6 @@ class SimplePointMaze(_GymReferencePort):
         Use Matplotlib Agg for this cached task image; stepping and normal
         rendering use the native implementation.
         """
-
         try:
             from matplotlib.backends.backend_agg import FigureCanvasAgg
             from matplotlib.figure import Figure
@@ -1532,7 +1530,6 @@ class SimplePointMaze(_GymReferencePort):
 
     def _advance_agent(self, agent, action, sty, state_is_float64):
         """Advance with the source NumPy dtype-promotion rules for float16/32/64 actions."""
-
         action_tensor = torch.as_tensor(action, device=self.device)
         if not action_tensor.is_floating_point():
             action_tensor = action_tensor.to(torch.float64)

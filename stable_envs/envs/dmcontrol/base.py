@@ -21,7 +21,8 @@ class _DMCModel(Env):
 
     Compact render rows contain qpos and episode-specific model entries. They are
     not restorable simulator State; registered environments compose a separate
-    simulation adapter that defines the full State schema."""
+    simulation adapter that defines the full State schema.
+    """
 
     family = "dmcontrol"
 
@@ -80,7 +81,8 @@ class _DMCModel(Env):
     def _load_env(cls, seed: int):
         """Load the common source used for models, sampling and reference frames.
 
-        Override here when a registration requires a model other than suite.load’s."""
+        Override here when a registration requires a model other than suite.load’s.
+        """
         return _suite().load(cls.DOMAIN, cls.TASK, task_kwargs={"random": seed})
 
     @classmethod
@@ -88,7 +90,8 @@ class _DMCModel(Env):
         """Cache ``(env, model, data, pristine, renderer, slots)`` by domain, task and size.
 
         Episode probing applies task model edits and separates constant appearance
-        from sampled fields. Its fixed seed makes the snapshot reproducible."""
+        from sampled fields. Its fixed seed makes the snapshot reproducible.
+        """
         key = (cls.DOMAIN, cls.TASK, int(size))
         hit = _ENV_CACHE.get(key)
         if hit is not None:
@@ -139,7 +142,8 @@ class _DMCModel(Env):
         """Resolve episode landmarks to ``(kind, name, element IDs)`` visibility leaves.
 
         A body slot covers its visible geoms; mixed geom/site bodies are rejected.
-        Use pristine alpha and groups so previous renders cannot change declarations."""
+        Use pristine alpha and groups so previous renders cannot change declarations.
+        """
         import mujoco
 
         m, pr = cls._model(), cls._pristine()
@@ -212,7 +216,8 @@ class _DMCModel(Env):
         """Return the canonical snapshot from before appearance changes.
 
         The shared model retains the last rendered style. Read defaults from this
-        snapshot to keep new instances independent of previous rendering."""
+        snapshot to keep new instances independent of previous rendering.
+        """
         return cls._bundle(cls.default_size)[3]
 
     @staticmethod
@@ -269,7 +274,8 @@ class _DMCModel(Env):
 
         Materials use float colours in [0, 1]. Visibility is binary because the
         analytic renderer does not blend partial alpha. Shape choices must contain
-        exactly one match for the compiled geometry, which becomes the default."""
+        exactly one match for the compiled geometry, which becomes the default.
+        """
         import mujoco
 
         m, pr = self._model(), self._pristine()
@@ -332,7 +338,8 @@ class _DMCModel(Env):
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """Sample compact render rows from source resets followed by random actions.
 
-        Read qpos and episode-specific model entries from the same trajectory."""
+        Read qpos and episode-specific model entries from the same trajectory.
+        """
         rng = rng or self.rng
         seed = int(rng.integers(0, 2**31 - 1))
         env = self._load_env(seed)
@@ -356,7 +363,8 @@ class _DMCModel(Env):
         """Construct a fresh source with its render resolution attached.
 
         Keep its GL context alive for the process lifetime to avoid cross-context
-        renderer corruption on teardown."""
+        renderer corruption on teardown.
+        """
         env = cls._load_env(0)
         env.reset()
         env._se_size = int(size or cls.default_size)
@@ -366,7 +374,8 @@ class _DMCModel(Env):
     def reference_render(cls, env, states) -> np.ndarray:
         """Restore compact rows in the source, verify them, and render the requested camera.
 
-        Velocity is set to zero because these compact rows describe geometry only."""
+        Velocity is set to zero because these compact rows describe geometry only.
+        """
         p = env.physics
         m = p.model.ptr if hasattr(p.model, "ptr") else p.model
         size = int(getattr(env, "_se_size", 0) or cls.default_size)

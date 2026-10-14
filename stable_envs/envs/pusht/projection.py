@@ -24,7 +24,8 @@ class PushTProjection:
 
     Geometry changes rebuild the scene; other frames install poses, colours and
     captured contact segments. Rendering never steps the physics owner or replays
-    action history. CUDA output placement does not make this a GPU renderer."""
+    action history. CUDA output placement does not make this a GPU renderer.
+    """
 
     def __init__(self):
         self.scenes = []

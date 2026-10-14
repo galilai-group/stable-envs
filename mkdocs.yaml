@@ -74,7 +74,7 @@ plugins:
         python:
           paths: [.]
           options:
-            docstring_style: null
+            docstring_style: google
             show_source: true
             show_root_heading: true
             show_root_full_path: true

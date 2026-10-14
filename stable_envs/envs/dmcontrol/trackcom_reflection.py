@@ -13,7 +13,8 @@ class Reflection:
 
     ``palette`` (texel slots of the floor checker) lets each world recolour those
     texels: the floor samples a texture of per-texel palette weights instead, and
-    the texels outside the slots keep their one shared colour."""
+    the texels outside the slots keep their one shared colour.
+    """
 
     def __init__(self, model, data, context, source_model, palette=None):
         import mujoco
