@@ -1,3 +1,5 @@
+"""Capture a fixed-buffer transition as a CUDA graph."""
+
 from __future__ import annotations
 
 import warnings

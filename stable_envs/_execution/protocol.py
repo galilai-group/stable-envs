@@ -1,3 +1,5 @@
+"""Interfaces between an environment and its batch of simulators."""
+
 from abc import abstractmethod
 from typing import Protocol, runtime_checkable
 
@@ -58,4 +60,5 @@ class StepPipeline(Protocol):
 
 
 def step_pipeline(adapter: SimulatorAdapter) -> StepPipeline | None:
+    """Return ``adapter`` when it supports submit/receive stepping, else None."""
     return adapter if isinstance(adapter, StepPipeline) else None

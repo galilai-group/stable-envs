@@ -1,3 +1,5 @@
+"""Substitute default colors in compiled MuJoCo textures and upload them to a renderer."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -40,13 +42,11 @@ def texel_slots(model, texture: str | int, default_colours, masks=None) -> dict 
             bad = int((flat[mk, :3] != quantise(cols[i])[None, :]).any(1).sum())
             assert bad == 0, (
                 f"mask {i} selects {bad} texels that do not hold default colour {i} "
-                f"({list(cols[i])}); the masks and the compiled texture disagree, so a substitution "
-                f"would paint texels the recompile does not paint"
+                f"({list(cols[i])}); the masks and the compiled texture disagree"
             )
     for i, mk in enumerate(masks):
         assert mk.any(), (
-            f"texture {texture!r} carries none of default colour {i} ({list(cols[i])}), so the texel "
-            f"mask would be empty and the leaf would silently do nothing"
+            f"texture {texture!r} carries none of default colour {i} ({list(cols[i])}); the texel mask is empty"
         )
     return {
         "texid": t,

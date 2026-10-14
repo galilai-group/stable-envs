@@ -19,7 +19,7 @@ def _version(pair) -> str:
 
 
 def warp_runtime():
-    """Warp's initialised runtime, which records the toolkit and driver CUDA versions."""
+    """Return Warp's initialized runtime, which records the toolkit and driver CUDA versions."""
     import warp as wp
 
     wp.init()

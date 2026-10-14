@@ -1,3 +1,8 @@
+"""Compiled appearance rows: a ``(B, style_dim)`` float32 tensor addressed by Variation path.
+
+``StyleTensor.for_batch`` is the only operation that changes the batch size of a compiled row.
+"""
+
 from __future__ import annotations
 
 import numpy as np
@@ -22,13 +27,16 @@ def _as_tensor(v, device, dtype=torch.float32) -> torch.Tensor:
 
 
 class StyleTensor:
-    """Appearance values of shape ``(B, style_dim)``, indexed by variation path."""
+    """Appearance values of shape ``(B, style_dim)``, indexed by Variation path.
+
+    ``layout`` lists ``(path, offset, width)`` for each leaf. ``shared`` records whether all
+    rows are known to be equal; None defers the check until :attr:`shared` is read.
+    """
 
     def __init__(self, values: torch.Tensor, layout: list[tuple[str, int, int]], shared: bool | None = None):
         self.values = values
         self.layout = {p: (o, w) for p, o, w in layout}
         self.paths = [p for p, _, _ in layout]
-        # Defer the device-to-host equality check until sharedness is needed.
         self._shared = shared
 
     @property
@@ -57,21 +65,23 @@ class StyleTensor:
         return v if w > 1 else v.reshape(-1)
 
     def get(self, path: str, default=None):
+        """Return the leaf view for ``path``, or ``default`` when the layout has no such leaf."""
         return self[path] if path in self.layout else default
 
     def _layout_list(self) -> list[tuple[str, int, int]]:
         return [(p, o, w) for p, (o, w) in self.layout.items()]
 
     def to(self, device=None, dtype=None) -> StyleTensor:
+        """Return a copy on ``device`` with ``dtype``, keeping the layout and known sharedness."""
         return StyleTensor(
             self.values.to(device=device, dtype=dtype or self.values.dtype), self._layout_list(), shared=self._shared
         )
 
     def for_batch(self, batch: int, owner: str = "render") -> StyleTensor:
-        """Return this style unchanged when its batch size matches.
+        """Return this style at ``batch`` rows.
 
-        Otherwise, broadcast equal rows to the requested size. Different per-lane
-        appearances cannot be resized without an explicit row selection.
+        A matching batch returns ``self``. A shared style broadcasts its row; a style
+        with differing rows raises ValueError, since no row selection is implied.
         """
         b = int(batch)
         if self.batch == b:
@@ -126,10 +136,8 @@ class StyleTensor:
             elif vals.shape[0] != b:
                 raise ValueError(
                     f"style has {vals.shape[0]} rows but {b} environment(s) are being rendered. A "
-                    f"style must be one row (shared by the whole batch) or exactly one row per "
-                    f"environment, in the same order as the states — anything else has no defined "
-                    f"meaning, and the row count is exactly what a caller gets wrong when they slice "
-                    f"the states and forget the style."
+                    f"style is one row shared by the batch or one row per environment, in the order "
+                    f"of the states; slice the style together with the states."
                 )
         if overrides:
             lut = {p: (o, w) for p, o, w in layout}
@@ -142,11 +150,8 @@ class StyleTensor:
                 if t.ndim >= 2 and t.shape[-1] != w and n == b * w:
                     raise ValueError(
                         f"variation {path!r}: expected one value per environment as ({b}, {w}) and "
-                        f"got {tuple(t.shape)}, which holds the right NUMBER of values in the wrong "
-                        f"arrangement — almost always a transpose. Reshaping it by size would give "
-                        f"environment i a mixture of the other environments' values and render "
-                        f"without complaint, so it is refused. Pass ({b}, {w}), or ({w},) to share "
-                        f"one value across the batch."
+                        f"got {tuple(t.shape)}, which looks like a transpose. Pass ({b}, {w}), or "
+                        f"({w},) to share one value across the batch."
                     )
                 if n == b * w and b != 1:
                     t = t.reshape(b, w)  # one value per environment

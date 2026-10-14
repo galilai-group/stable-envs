@@ -1,3 +1,5 @@
+"""Assemble and validate State columns from per-lane simulator rows."""
+
 import numpy as np
 import torch
 from tensordict import TensorDict
@@ -7,7 +9,8 @@ def owned_columns(rows, batch, device):
     """Collate nonempty NumPy rows into owned tensor columns on the requested device.
 
     Rows must agree in keys, shapes and dtypes. Copies isolate returned State
-    from reused simulator buffers; each column transfers once."""
+    from reused simulator buffers; each column transfers once.
+    """
     rows = iter(rows)
     first = next(rows)
     columns = {key: np.empty((batch, *value.shape), dtype=value.dtype) for key, value in first.items()}
@@ -24,8 +27,6 @@ def owned_columns(rows, batch, device):
         count += 1
     if count != batch:
         raise ValueError("State row count differs from batch")
-    # Each array belongs to this result alone. Subsequent steps/exports cannot
-    # overwrite a returned CPU snapshot; device transfers likewise own storage.
     return TensorDict(
         {key: torch.from_numpy(value).to(device) for key, value in columns.items()}, [batch], device=device
     )
@@ -34,7 +35,8 @@ def owned_columns(rows, batch, device):
 def require_columns(state, shapes):
     """Check that State holds every ``{key: (shape, dtype)}`` column and that all are finite.
 
-    Finiteness is reduced over every column before a single host read."""
+    Finiteness is reduced over every column before a single host read.
+    """
     present = {(key,) if isinstance(key, str) else key for key in state.keys(True, True)}
     values = []
     for key, (shape, dtype) in shapes.items():

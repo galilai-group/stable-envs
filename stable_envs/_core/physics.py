@@ -88,6 +88,8 @@ Knob = ModelField | GeomMass
 
 @dataclass(frozen=True)
 class PhysicsLayout:
+    """Leaf names, widths, row offsets and nominal values of a physics value row."""
+
     leaves: tuple[str, ...]
     widths: tuple[int, ...]
     offsets: tuple[int, ...]
@@ -95,10 +97,12 @@ class PhysicsLayout:
 
 
 def state_key(leaf: str) -> tuple[str, ...]:
+    """Return the State key path that stores ``leaf``."""
     return (PHYSICS_KEY, *leaf.split("."))
 
 
 def state_fields(knobs: Sequence[Knob]) -> dict[tuple[str, ...], int]:
+    """Return ``{state key: width}`` for the leaves the knobs declare."""
     out: dict[tuple[str, ...], int] = {}
     for knob in knobs:
         out.setdefault(state_key(knob.leaf), int(knob.width))
@@ -325,7 +329,7 @@ class PhysicsKnobs:
         return row
 
     def as_row(self, values: Mapping[str, object] | np.ndarray | None) -> np.ndarray:
-        """Mapping entries override the nominal values."""
+        """Return a ``(dim,)`` row: the nominal values, a full row, or nominal values with mapping entries replaced."""
         if values is None:
             return self.nominal.copy()
         if not isinstance(values, Mapping):
@@ -341,6 +345,7 @@ class PhysicsKnobs:
         return row
 
     def apply(self, model, row, data=None) -> None:
+        """Write ``row`` into ``model`` and recompute the constants that depend on the changed fields."""
         mj = _mujoco()
         row = np.asarray(row, np.float64).reshape(self.dim)
         if not np.isfinite(row).all():
@@ -448,15 +453,18 @@ class PhysicsLanes:
         self.values = np.array(rows, np.float64)
 
     def state_fields(self) -> dict[tuple[str, ...], int]:
+        """Return ``{state key: width}`` for each physics leaf."""
         return {state_key(leaf): w for leaf, w in zip(self.spec.leaves, self.spec.widths, strict=True)}
 
     def export(self) -> dict[tuple[str, ...], np.ndarray]:
+        """Return a copy of the installed values as ``{state key: (num_envs, width)}``."""
         return {
             state_key(leaf): self.values[:, o : o + w].copy()
             for leaf, o, w in zip(self.spec.leaves, self.spec.offsets, self.spec.widths, strict=True)
         }
 
     def rows_from_state(self, state) -> np.ndarray:
+        """Read ``(num_envs, dim)`` physics rows from State; every physics field must be present."""
         keys = set(state.keys(True, True))
         missing = [".".join(k) for k in self.state_fields() if k not in keys]
         if missing:

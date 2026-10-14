@@ -1,3 +1,5 @@
+"""Global verbosity and default-device settings, and the package logger."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -31,9 +33,8 @@ def set(**kwargs: Any) -> dict[str, Any]:  # noqa: A001 - the public spelling is
     unknown = [k for k in kwargs if k not in _DEFAULTS]
     if unknown:
         raise KeyError(
-            f"stable_envs.set: unknown config key(s) {unknown}. The whole configuration is "
-            f"{sorted(_DEFAULTS)}; anything else belongs on the environment itself (device, size, "
-            f"supersample and backend are constructor arguments)."
+            f"stable_envs.set: unknown config key(s) {unknown}; the keys are {sorted(_DEFAULTS)}. "
+            f"device, size, supersample and backend are environment constructor arguments."
         )
     if "verbose" in kwargs:
         v = str(kwargs["verbose"]).upper()
@@ -59,5 +60,6 @@ def reset_config() -> dict[str, Any]:
 
 
 def log(level: str, message: str) -> None:
+    """Log ``message`` through the package logger when ``level`` meets the configured verbosity."""
     if _LEVELS[level.upper()] >= _LEVELS[_CONFIG["verbose"]]:
         logger.opt(depth=1).log(level.upper(), message)
