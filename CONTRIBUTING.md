@@ -1,149 +1,149 @@
 # Contributing
 
-## Install
+## Set up
 
-Test environments come from the one `uv.lock`, one per profile, through [nox](https://nox.thea.codes)
-and [uv](https://docs.astral.sh/uv/):
+Test environments are built from the single `uv.lock`, one per profile, with
+[nox](https://nox.thea.codes) and [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uvx nox -l                              # every session
-uvx nox -s "test(core)"                 # core tests, floating dependencies, no family extras
-uvx nox -s "test(dmc)" -- -k reacher    # one family under its exact reference pins
+uvx nox -l                              # list sessions
+uvx nox -s "test(core)"                 # core tests, no family extras
+uvx nox -s "test(dmc)" -- -k reacher    # one family under its pinned versions
 uvx nox -s affected                     # the profiles CI selects for this branch
-SE_PYTHON=3.10 uvx nox -s "test(core)"  # the core profile on another interpreter
+SE_PYTHON=3.10 uvx nox -s "test(core)"  # core profile on another interpreter
+uvx nox -s lint                         # pre-commit over the tree
+uvx nox -s typecheck                    # mypy on the adapter interface
+uvx nox -s docs                         # strict documentation build
 ```
 
-`test(<profile>)` runs `uv sync --frozen --extra <family extras> --group pin-<profile> --group test`
-into `.venvs/<profile>-py3.12` and then the family's unit, integration and CPU regression tests.
-Profiles are `core`, `classic`, `navigation`, `pusht`, `dmc`, `fetch`, `ogbench`, `rocket` and
-`craftax`; [`ci/families.toml`](ci/families.toml) says which paths and tests each owns and what it
-needs installed. To work in one directly, `uv sync --python 3.12 --extra dmcontrol --group pin-dmc
---group test` and `uv run pytest ...`.
+`test(<profile>)` runs `uv sync --frozen` with the family's extras and its `pin-<profile>` group into
+`.venvs/<profile>-py3.12`. It then runs the family's unit, integration and CPU regression tests.
+The profiles are `core`, `classic`, `navigation`, `pusht`, `dmc`, `fetch`, `ogbench`, `rocket` and
+`craftax`. [`ci/families.toml`](ci/families.toml) lists the paths and tests each profile owns and what
+it installs.
 
-A plain `pip install -e ".[dev]"` also works. Extra incompatibilities, the Fetch MuJoCo pin,
-and the nvdiffrast source build live on the [installation page](docs/install.md). The unreleased
-renderer-only ports in `contrib/` have their own requirements and tests; see
-[contrib/README.md](contrib/README.md).
+To work in one profile directly:
 
-## Format
+```bash
+uv sync --python 3.12 --extra dmcontrol --group pin-dmc --group test
+uv run pytest ...
+```
+
+`pip install -e ".[dev]"` also works. Extra conflicts, the Fetch MuJoCo pin and the nvdiffrast build
+are on the [Install](docs/install.md) page. The ports in `contrib/` have their own requirements and
+tests; see [contrib/README.md](contrib/README.md).
+
+## Lint and format
 
 ```bash
 ruff format .
 ruff check .
+uvx pre-commit run --all-files
 ```
+
+CI runs the pre-commit hooks on the files a pull request changes.
 
 ## Tests
 
-Nothing in this repo is measured on a login node, and nothing that measures is measured on a busy one.
-
 ```bash
 uvx nox -s "test(<profile>)"                   # what CI runs for one profile
-pytest -m unit                                 # CPU-only family/unit contracts, any interpreter
+pytest -m unit                                 # CPU-only unit tests
 python -m tests._runner.supervisor --smoke     # one env per family
-pytest tests/gpu -v                            # full conformance suite, on a CUDA host
-pytest tests/ -v -rs                           # the same, if you already hold a GPU
+pytest tests/gpu -v                            # GPU conformance suite, on a CUDA machine
 ```
 
-A family this interpreter lacks (or holds at a version its code refuses) does not fail its tests:
-they are reported as skipped with the cause, and the run ends with a count of skips by cause. CI
-profile jobs set `SE_REQUIRE_FAMILIES` / `SE_REQUIRE_CAPABILITIES`, which turn that absence into an
-error. Mark a test that needs dm_control's OpenGL renderer `@pytest.mark.gl`, one that needs an EGL
-library `@pytest.mark.egl`, one that imports stable-worldmodel without `importorskip`
-`@pytest.mark.swm`, and a test that uses another family's environments
-`@pytest.mark.family("<name>")`.
+A family that is not installed is skipped, with the cause, not failed. CI sets
+`SE_REQUIRE_FAMILIES` and `SE_REQUIRE_CAPABILITIES`, which turn that skip into an error.
 
-The full suite requires CUDA by design and skips loudly rather than going green without it. Run it
-through `tests._runner.supervisor`: a segfault or
-`SIGABRT` out of MuJoCo, EGL or the driver ends the interpreter, and a bare pytest then reports
-nothing at all about which test caused it.
+Markers for tests that need something extra:
 
-**CPU baselines are not reproducible under contention** and GPU numbers are. The same
-official-renderer measurement gave 422 frames/s on an idle node and 3 frames/s with three other
-jobs resident, while the GPU column reproduces across nodes to 0.4%. Take a CPU baseline on a
-node you have to yourself, quote the ratio as an order of magnitude rather than to three digits,
-and say which it was.
+| marker | the test needs |
+|---|---|
+| `gl` | dm_control's OpenGL renderer |
+| `egl` | an EGL library |
+| `swm` | stable-worldmodel, imported without `importorskip` |
+| `family("<name>")` | another family's environments |
 
-What each check rules out: [Testing](docs/testing.md).
+The GPU suite requires CUDA and skips without it. Run it through `tests._runner.supervisor` when it
+initializes native renderers. The supervisor isolates crashes and names the test that crashed.
 
-## Adding a component
+The full test layout and what each check rules out: [Testing](docs/testing.md).
 
-Choose the [environment, task, or renderer guide](docs/adding/index.md).
-Simulation calls the authoritative upstream backend; full State is a replay checkpoint.
-Compact RenderState and learner observation packaging have different responsibilities.
-Each guide separates local development tests from final promotion evidence.
-
-Construct with `num_envs=`. Concrete classes register by unique class name.
-Do not promote a registration from renderer parity or a sibling's passing task alone.
-
-### What a new environment needs to pass CI
+## What a new environment needs to pass CI
 
 Every registered class is picked up automatically, in its family's CI profile:
 
-- **Generic contract** (`tests/unit/test_registry_conformance.py`): reset, step and render match
-  `state_spec`, `action_spec` and `frame_spec`; the same seed gives the same rollout; a lane does not
-  see its neighbours' actions; `get_state`/`set_state` restores bit-exactly and the snapshot owns its
-  memory; a variation installed in one env round-trips through another; a lane renders the same alone
-  as in a batch.
-- **Ownership** (`tests/unit/test_registry_coverage.py`): its module lies under exactly one family's
-  `paths` in `ci/families.toml`, and that family's env modules import wherever its `requires` are met.
-- **Source comparisons**, in two layers (`tests/helpers/reference/cases.py`). An `ORIGINAL_GATES` entry
-  names a CPU test, owned by the same family, comparing it with the library it ports (dm_control,
-  gymnasium-robotics, ogbench, ...) or a corpus recorded from it; that test imports no
-  stable-worldmodel (it runs with the import blocked) and is not `nightly`. Where stable-worldmodel
-  registers the env, a `SWM_GATES` entry names a test marked `swm` comparing it with live
-  stable-worldmodel.
-- **Variation map**: when its stable-worldmodel source has a variation space, a `VariationMap` in
+- **Generic contract** (`tests/unit/test_registry_conformance.py`). Reset, step and render match the
+  specs. The same seed gives the same rollout. A lane does not see its neighbours' actions.
+  `get_state`/`set_state` restores bit-exactly, and the snapshot owns its memory. A variation round-trips
+  through another env. A lane renders the same alone as in a batch.
+- **Ownership** (`tests/unit/test_registry_coverage.py`). The module lies under exactly one family's
+  `paths` in `ci/families.toml`.
+- **Source comparisons** (`tests/helpers/reference/cases.py`).
+  - `ORIGINAL_GATES` names a CPU test that compares the env with the library it ports, or with a corpus
+    recorded from it. That test must not import stable-worldmodel and must not be `nightly`.
+  - Where stable-worldmodel registers the env, `SWM_GATES` names a test marked `swm` that compares it
+    with live stable-worldmodel.
+- **Variation map.** If the stable-worldmodel source has a variation space, add a `VariationMap` in
   `tests/helpers/reference/variation_maps/`.
 
-Every test that needs stable-worldmodel carries `pytest.mark.swm`, and families with such tests
-declare the `swm` capability; their profile then installs it at `[swm].commit` and, in CI, a test that
-skips for want of it fails. A test file must run in a profile that installs what it imports: give the
-file to a family in `ci/families.toml`, or a single test to one with `pytest.mark.family("<name>")`.
-When stable-worldmodel drops its envs, the SWM layer goes in one change: delete `SWM_GATES`, the `swm`
-tests and their gate helpers, the `swm` capability and `[swm]` block in `ci/families.toml`, and
-`_install_swm` in `noxfile.py`; `ORIGINAL_GATES` then stands alone. A check that
-truly cannot apply (a renderer-only cell has no `step`) is waived only in `tests/exemptions.toml`, with
-the env, its family, the check and the reason; that file has a code owner. A waived check keeps
-running, and the suite fails once it passes, so the entry is removed in the change that fixes it.
+A test file must run in a profile that installs what it imports. Assign the file to a family in
+`ci/families.toml`, or mark a single test with `pytest.mark.family("<name>")`.
+
+## Exemptions
+
+If a check cannot apply (for example, a renderer-only class has no `step`), waive it in
+`tests/exemptions.toml`:
+
+```toml
+[[exemption]]
+env = "Fetch*Dense"          # class name or glob
+family = "fetch"
+checks = ["original", "swm"]
+reason = "why the check cannot apply"
+```
+
+Known checks are `specs`, `seeded`, `lanes`, `state`, `variation`, `batch_render`, `owner`,
+`original`, `swm` and `variation_map`. A waived check still runs and must keep failing. Once it
+passes, the suite fails until you remove the entry. The file has a code owner.
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on every pull request, every push to `main` and nightly.
-`scripts/ci/plan.py` maps the diff to profiles through `ci/families.toml`: documentation alone
-runs the docs build; a shared path (core modules, conftests, `pyproject.toml`, `uv.lock`, CI
-files) selects every profile; otherwise the touched families plus `core`. The label `ci:full`
-forces every profile on a pull request. Pushes to `main`, the nightly run and manual runs test
-every profile. The only required check is `ci-ok`, which waits for every shard.
+`.github/workflows/ci.yml` runs on pull requests, pushes to `main`, and nightly.
+`scripts/ci/plan.py` maps the diff to profiles through `ci/families.toml`:
 
-Tests marked `nightly` (the multi-minute ones, chosen from measured durations: the live DM Control
-and OGBench SWM gates and the heaviest CPU-renderer checks) run on pushes to `main`, the nightly
-schedule, manual runs and `ci:full`, not on other pull requests; `ORIGINAL_GATES` never carry it.
-Each family profile runs as `shards` jobs (`ci/families.toml`, per tier), split by
-`tests/_runner/shard.py` from the per-test seconds in `ci/durations.json`, with xdist inside each
-job. Locally `uvx nox -s "test(dmc)"` runs the whole pull-request tier; `SE_NIGHTLY=1` adds the
-`nightly` tests and `SE_SHARD=2/4` runs one shard. Refresh `ci/durations.json` from the
-`durations-*.json` a CI run uploads (or `--record-durations ci/durations.json` locally on a 4-CPU
-Linux machine) when shards drift out of balance.
+- A docs-only change runs the docs build.
+- A shared path (core modules, conftests, `pyproject.toml`, `uv.lock`, CI files) selects every profile.
+- Otherwise CI runs the touched families plus `core`.
 
-A red run on `main` or the nightly opens or updates the issue "ci: main is red". Revert the
-offending change first unless a fix is merged within about two hours; the issue names the run.
+The label `ci:full` runs every profile on a pull request. The only required check is `ci-ok`.
 
-## Pull requests
+Tests marked `nightly` run on pushes to `main`, the nightly schedule, manual runs and `ci:full`.
+Each family profile is split into `shards` jobs (`ci/families.toml`) by `tests/_runner/shard.py`,
+using per-test times from `ci/durations.json`. Locally:
 
-- Do not relax a parity criterion or modify a frozen fixture to make a test pass. A proposed
-  change to a fidelity claim requires independent evidence and review.
-- Do not release an EGL context or close a `mujoco.Renderer`. Releasing one corrupts rendering in
-  every other live context in the process, silently, and the damage surfaces later as pixel
-  differences in an unrelated env. `tests/_runner/resource_guard.py` fails the test that does it.
-- Do not create contexts, renderers or envs per state, per style value or per call. Context
-  creation that scales with the batch means a per-environment value is being turned into a
-  per-environment *scene*.
-- Read the authoritative source, then validate its interpretation against the official renderer. The method,
-  and the defects that produced it, are in
-  [Fidelity methodology](docs/concepts/fidelity-methodology.md).
+```bash
+SE_NIGHTLY=1 uvx nox -s "test(dmc)"   # include nightly tests
+SE_SHARD=2/4 uvx nox -s "test(dmc)"   # run one shard
+```
 
-## Artifacts
+Refresh `ci/durations.json` from the `durations-*.json` files a CI run uploads when shards become
+unbalanced.
 
-Do **not** commit ad-hoc local artifacts (scratch dumps, screenshots, one-off JSON from a laptop
-run). Canonical JSON fixtures that a committed script regenerates live under
-`tests/fixtures/`. Large binary corpora stay out of `main`.
+A red run on `main` or the nightly opens or updates the issue "ci: main is red". Revert the change
+that broke it unless a fix is merged within about two hours.
+
+## Pull request rules
+
+- Do not relax a parity threshold or edit a frozen fixture to make a test pass.
+- Do not release an EGL context or close a `mujoco.Renderer`. It corrupts rendering in other live
+  contexts. `tests/_runner/resource_guard.py` fails the test that does it.
+- Do not create contexts, renderers or envs per state, per style value or per call.
+- Read the upstream source, then confirm your reading by comparing against the official renderer.
+  See [Fidelity methodology](docs/concepts/fidelity-methodology.md).
+- Do not commit local artifacts (scratch output, screenshots, one-off JSON). Fixtures that a committed
+  script regenerates live under `tests/fixtures/`.
+
+## Adding a component
+
+See the [environment, task and renderer guides](docs/adding/index.md).
