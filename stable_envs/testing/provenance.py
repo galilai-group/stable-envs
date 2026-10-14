@@ -19,10 +19,10 @@ class CodeIdentity(TypedDict):
 
 
 def verify_recorded_code(files: Mapping[str, str], root: str | Path, *, revision: str | None = None) -> CodeIdentity:
-    """Verify recorded file hashes against a worktree or an explicit Git commit.
+    """Verify recorded file hashes against the worktree or, with ``revision``, a Git commit.
 
-    Historical verification reads Git objects without checking out or executing
-    old code. A hash match alone never establishes fresh acceptance.
+    A commit is read from Git objects without checking out or executing its code.
+    A hash match does not by itself establish acceptance.
     """
     root = Path(root).resolve(strict=True)
     if not files:
@@ -71,7 +71,7 @@ def pinned_source_identity(root, commit, versions) -> dict:
     versions alone do not establish cross-platform numerical equivalence.
     """
     if not commit or not versions or any(value in UNKNOWN for value in versions.values()):
-        raise ValueError("New source comparisons require a commit and explicit package pins")
+        raise ValueError("Source comparisons require a commit and explicit package pins")
     root = Path(root).resolve(strict=True)
 
     def git(*args):
@@ -152,8 +152,8 @@ def block_on_reference_mismatch(check: str, declared: dict | None, recorded: dic
         "why": (
             "reference version mismatch: the bound was measured against "
             + ", ".join(f"{k} {v}" for k, v in sorted((declared or {}).items()))
-            + "; this interpreter's reference is not that version, so the measurement is a "
-            "different comparison and cannot pass or fail the declaration (" + "; ".join(bad) + ")"
+            + "; this interpreter has a different reference version, so the measurement cannot "
+            "pass or fail the declaration (" + "; ".join(bad) + ")"
         ),
         "reference_version_mismatch": bad,
         "declared_reference_versions": dict(declared or {}),

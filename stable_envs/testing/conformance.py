@@ -308,7 +308,7 @@ _RENDER_INVARIANT_OPTIONAL: dict[str, str] = {}
 _MJGEOM_SPHERE = 2
 
 
-def _validate_render_invariant(env, states, d: int, variation=None) -> tuple:
+def _validate_render_invariant(env, states, d: int) -> tuple:
     """Validate an exclusion for rotation of analytic spheres; return (accepted, reason).
 
     Require every frozen field, derive sphere type from geom_type, and reject
@@ -323,21 +323,18 @@ def _validate_render_invariant(env, states, d: int, variation=None) -> tuple:
             "render_scene_signature, so the claim cannot be validated"
         )
     row = np.asarray(states[:1]).copy()
-    kw = {} if variation is None else {"variation": variation}
-    a = sig(row, **kw)
+    a = sig(row)
     moved = row.copy()
     # Perturb only this component; judge the resulting scene, including normalized quaternion effects.
     moved[0, d] = moved[0, d] + 0.2
-    b = sig(moved, **kw)
+    b = sig(moved)
     if set(a) != set(b):
         return False, "render_scene_signature returned different keys for the two states"
     # Omitted fields cannot establish that the scene stayed unchanged.
     missing = [k for k in _RENDER_INVARIANT_FROZEN if k not in a and k not in _RENDER_INVARIANT_OPTIONAL]
     if missing:
         return False, (
-            f"render_scene_signature does not emit {missing}, and the frozen enumeration "
-            f"is the whole bound on this exclusion -- a field that is not reported is a "
-            f"field that is not checked. Emit it, or add it to "
+            f"render_scene_signature does not emit {missing}; emit it, or add it to "
             f"_RENDER_INVARIANT_OPTIONAL with the reason it cannot change a pixel"
         )
     if "geom_type" not in a:
@@ -349,11 +346,7 @@ def _validate_render_invariant(env, states, d: int, variation=None) -> tuple:
     if claimed is not None:
         claimed = np.asarray(claimed, bool).reshape(-1)
         if claimed.shape != sphere.shape or not np.array_equal(claimed, sphere):
-            return False, (
-                "render_scene_signature's geom_is_sphere disagrees with the geom_type it "
-                "reports; sphere-ness is derived from geom_type here and a disagreement "
-                "means one of the two is wrong"
-            )
+            return False, "render_scene_signature's geom_is_sphere disagrees with the geom_type it reports"
     if sphere.size == 0 or not sphere.any():
         return False, "the model has no sphere geoms, so no dimension can be sphere-orientation-only"
     for k in _RENDER_INVARIANT_FROZEN:
@@ -369,28 +362,24 @@ def _validate_render_invariant(env, states, d: int, variation=None) -> tuple:
     changed = ~np.all(np.isclose(xa, xb, rtol=0, atol=0), axis=tuple(range(1, xa.ndim)))
     if not changed.any():
         return False, (
-            "perturbing this dimension changed nothing in the scene at all, so it is dead "
-            "in the MODEL and not merely invisible to the renderer"
+            "perturbing this dimension changed nothing in the scene, so it is dead in the model, "
+            "not merely invisible to the renderer"
         )
     bad = np.flatnonzero(changed & ~sphere)
     if bad.size:
         names = a.get("geom_names") or []
         which = [names[i] if i < len(names) else int(i) for i in bad]
         return False, (
-            f"perturbing this dimension rotated NON-sphere geoms {which}, whose orientation "
+            f"perturbing this dimension rotated non-sphere geoms {which}, whose orientation "
             f"a correct renderer must draw"
         )
     names = a.get("geom_names") or []
     which = [names[i] if i < len(names) else int(i) for i in np.flatnonzero(changed)]
     return True, (
         f"render-invariant: sphere orientation. Perturbing it rotates only the sphere "
-        f"geom(s) {which} and changes nothing else in the render-side scene (geom_xpos, "
-        f"geom_size, geom_type, every non-sphere geom_xmat, and every material, light and "
-        f"camera array are bit-identical). An analytic per-pixel sphere is exactly invariant "
-        f"under rotation about its centre, so no renderer of this design can make this "
-        f"dimension visible. MuJoCo's tessellated, per-vertex-shaded sphere is not invariant "
-        f"and does move a few hundred pixels at <= 55/255; that difference is declared in the "
-        f"env's state_dims_note."
+        f"geom(s) {which}; every other render-side scene field is bit-identical. An analytic "
+        f"sphere is invariant under rotation about its centre. MuJoCo's tessellated sphere is "
+        f"not; the env's state_dims_note declares that difference."
     )
 
 
@@ -561,7 +550,7 @@ def color_exactness_applicability(env, probes=None) -> dict:
             **none,
             "declaration": dict(decl),
             "rejected_because": missing,
-            "why": f"the declaration is missing {missing}, so it is REFUSED and every RGB leaf "
+            "why": f"the declaration is missing {missing}, so it is refused and every RGB leaf "
             f"stays judged; see _COLOR_APPLICABILITY_REQUIRED",
         }
     try:
@@ -574,15 +563,15 @@ def color_exactness_applicability(env, probes=None) -> dict:
             "declaration": dict(decl),
             "rejected_because": ["max_shading_factor"],
             "why": f"max_shading_factor {decl['max_shading_factor']!r} is not a measured ceiling "
-            f"strictly below 1, so the declaration is REFUSED and every leaf stays judged",
+            f"strictly below 1, so the declaration is refused and every leaf stays judged",
         }
     if decl["official_renderer_fails_the_same_check"] is not True:
         return {
             **none,
             "declaration": dict(decl),
             "rejected_because": ["official_renderer_fails_the_same_check"],
-            "why": "the declaration does not assert that the OFFICIAL renderer fails this check "
-            "too, so it is REFUSED and every leaf stays judged",
+            "why": "the declaration does not assert that the official renderer fails this check "
+            "too, so it is refused and every leaf stays judged",
         }
 
     leaves = [str(x) for x in decl["leaves"]]
@@ -687,7 +676,7 @@ def check_task_object_visibility(env, states=None, n: int = 16, seed: int = 0, r
         try:
             # Borrow from the process-lifetime cache so returning does not release the reference context.
             official = cls.reference_render(reference_env(cls, env.size), states).astype(np.int16)
-        except ImportError as e:  # the package is absent HERE, not broken
+        except ImportError as e:  # reference package not installed
             why_ref = f"the official renderer is not installed in this interpreter ({e})"
 
     out: dict = {"n_states": int(len(states)), "tol": int(PRESENCE_TOL), "objects": {}}
@@ -734,9 +723,8 @@ def check_task_object_visibility(env, states=None, n: int = 16, seed: int = 0, r
             row["presence_margin"] = (1.0 - float(da.mean()) / far) if far > 0 else None
             if far <= 0:
                 row["why_no_margin"] = (
-                    "the FLIPPED appearance is bit-exact against the official frame on the object's "
-                    "own pixels, so the official renderer is drawing the flipped configuration and "
-                    "the declared default is the wrong one"
+                    "the flipped appearance is bit-exact against the official frame on the object's "
+                    "own pixels, so the declared default is wrong"
                 )
             row["reference_id"] = cls.reference_id
         else:
@@ -755,13 +743,13 @@ def check_determinism(env) -> dict:
 
 # Diagnostic reference-hook contract; reference_sim_state is required.
 STEP_REFERENCE_HOOKS = """
-    sim_state_names        tuple[str, ...]        the FULL dynamical state being compared, which is
-                                                  usually a SUPERSET of state_names (velocities are
-                                                  not drawn, so they are not in the render state).
+    sim_state_names        tuple[str, ...]        the full dynamical state being compared, usually a
+                                                  superset of state_names (velocities are not drawn,
+                                                  so they are not in the render state).
                                                   Defaults to state_names.
     sim_state()            -> (B, D) tensor       read it off the GPU env. Defaults to get_state().
     set_sim_state(v)       (B, D)                 write it. Defaults to set_state(v).
-    reference_sim_state(ref) -> (D,) float64      REQUIRED. Read it off the reference.
+    reference_sim_state(ref) -> (D,) float64      required. Read it off the reference.
     reference_step(ref, a)                        advance the reference one control step.
                                                   Defaults to ref.step(a).
     step_reference_reset(ref, seed) -> (D,)       reset and read. Defaults to reset(seed=)+read.
@@ -772,7 +760,7 @@ STEP_REFERENCE_HOOKS = """
                                                   (max |diff| over the dims), 'euclidean' (vector
                                                   distance) or 'angle' (wrapped). Defaults to one
                                                   'abs' group per dimension, named after it.
-    step_reference_control str                    the group that must agree to FLOAT PRECISION over
+    step_reference_control str                    the group that must agree to float precision over
                                                   every step because nothing chaotic acts on it.
                                                   Defaults to none, and then the control is the
                                                   first-step error, which no divergence can inflate.
@@ -780,7 +768,7 @@ STEP_REFERENCE_HOOKS = """
                                                   episodes where it never moved are excluded from the
                                                   final-step statistics and counted. Defaults to none.
     step_reference_hold    int                    default ``hold``.
-    step_reference_exact   bool                   the env CLAIMS bit-exactness, so exact_frac is the
+    step_reference_exact   bool                   the env claims bit-exactness, so exact_frac is the
                                                   headline number and anything below 1.0 is a failure.
 """
 
@@ -834,8 +822,7 @@ def check_step_matches_reference(
     if not hasattr(cls, "reference_sim_state"):
         raise ValueError(
             f"{cls.__name__} ships a step() but declares no reference_sim_state(ref), so this check "
-            f"cannot read the reference's state. Guessing an attribute name is what this function used "
-            f"to do and it produces a silent mismatch rather than an error. Declare:\n"
+            f"cannot read the reference's state. Declare:\n"
             f"{STEP_REFERENCE_HOOKS}"
         )
 

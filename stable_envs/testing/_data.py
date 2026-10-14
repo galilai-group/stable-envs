@@ -38,11 +38,9 @@ def check_style(env, style, rows: int, owner: str, per: str = "state") -> torch.
     nd = int(getattr(k, "ndim", 0))
     if nd >= 2 and int(k.shape[-1]) != dim:
         raise ValueError(
-            f"{owner}: style rows are {dim} number(s) wide (env.style_names) and the last axis of "
-            f"this one is {int(k.shape[-1])} (shape {tuple(k.shape)}). Flattening it by size would "
-            f"succeed on a transpose and give each row a mixture of other rows' knobs, so it is "
-            f"refused. Pass ({rows}, {dim}) — one row per {per} — or ({dim},) to share one "
-            f"appearance."
+            f"{owner}: style rows are {dim} number(s) wide (env.style_names) but the last axis is "
+            f"{int(k.shape[-1])} (shape {tuple(k.shape)}). Pass ({rows}, {dim}), one row per {per}, "
+            f"or ({dim},) to share one appearance."
         )
     t = _states_tensor(style)
     if dim and t.numel() % dim:
@@ -154,9 +152,7 @@ class _RenderingDataset(torch.utils.data.Dataset):
             if k.ndim >= 2 and int(k.shape[-1]) != self.env.style_dim:
                 raise ValueError(
                     f"{type(self).__name__}.render: style rows are {self.env.style_dim} number(s) "
-                    f"wide and the last axis of this one is {int(k.shape[-1])} (shape "
-                    f"{tuple(k.shape)}). Flattening it by size succeeds on a transpose and gives each "
-                    f"row a mixture of other rows' knobs, so it is refused."
+                    f"wide but the last axis is {int(k.shape[-1])} (shape {tuple(k.shape)})"
                 )
             k = k.reshape(-1, self.env.style_dim)
             if k.shape[0] != s.shape[0]:
@@ -330,10 +326,7 @@ class TrajectoryDataset(_RenderingDataset):
         if st.ndim != 2:
             raise ValueError(f"states must be (n_traj,T,D), (N,D) or a list of (T_i,D); got {tuple(st.shape)}")
         if lengths is None:
-            raise ValueError(
-                "flat (N, state_dim) states need `lengths` — without episode boundaries a "
-                "window would silently span two trajectories"
-            )
+            raise ValueError("flat (N, state_dim) states need `lengths` so windows do not span two trajectories")
         lens = np.asarray(lengths, dtype=np.int64)
         if int(lens.sum()) != int(st.shape[0]):
             raise ValueError(f"lengths sum to {int(lens.sum())} but states hold {int(st.shape[0])} rows")
@@ -568,8 +561,7 @@ class TrajectoryDataset(_RenderingDataset):
         env = env or meta.get("env")
         if env is None:
             raise ValueError(
-                "this dataset does not name its env (no stable-envs metadata in the description) — "
-                'pass env="PushT" or a live env. The states alone do not say what they mean.'
+                'this dataset does not name its env (no stable-envs metadata); pass env="PushT" or a live env'
             )
         kw.setdefault("size", meta.get("size"))
 
@@ -590,11 +582,9 @@ def _require_datasets():
         import datasets
     except ImportError as e:
         raise ImportError(
-            "the HuggingFace round-trip needs the `datasets` package, which stable-envs does not "
-            "require: everything else here works on plain tensors and numpy. Install it with "
-            "`pip install datasets` (or `pip install stable-envs[hf]`), or save the corpus yourself — "
-            "a TrajectoryDataset is `states (N, state_dim)`, `lengths (n_traj,)` and "
-            "`style (n_traj, style_dim)`, three arrays that np.savez stores fine."
+            "the HuggingFace round-trip needs the optional `datasets` package: "
+            "`pip install datasets` (or `pip install stable-envs[hf]`). Without it, save "
+            "`states`, `lengths` and `style` with np.savez."
         ) from e
     return datasets
 
