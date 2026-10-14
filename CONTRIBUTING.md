@@ -116,7 +116,7 @@ passes, the suite fails until you remove the entry. The file has a code owner.
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on pull requests, pushes to `main`, and nightly.
+`.github/workflows/ci.yml` runs on ready (non-draft) pull requests into `main` and `v1-dev`, on pushes to `main`, and weekly. Pull requests test core on Python 3.12 only.
 `scripts/ci/plan.py` maps the diff to profiles through `ci/families.toml`:
 
 - A docs-only change runs the docs build.
@@ -125,7 +125,7 @@ passes, the suite fails until you remove the entry. The file has a code owner.
 
 The label `ci:full` runs every profile on a pull request. The only required check is `ci-ok`.
 
-Tests marked `nightly` run on pushes to `main`, the nightly schedule, manual runs and `ci:full`.
+Tests marked `nightly` run on pushes to `main`, the weekly schedule, manual runs and `ci:full`.
 Each family profile is split into `shards` jobs (`ci/families.toml`) by `tests/_runner/shard.py`,
 using per-test times from `ci/durations.json`. Locally:
 

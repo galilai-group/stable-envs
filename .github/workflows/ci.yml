@@ -1,7 +1,7 @@
 name: ci
 
 # Pull requests run the families their diff touches plus core (scripts/ci/plan.py); pushes to
-# main, the nightly schedule and manual runs test every family and add the `nightly` tests. Each
+# main, the weekly schedule and manual runs test every family and add the `nightly` tests. Each
 # family profile runs as duration-balanced shards (ci/families.toml `shards`, ci/durations.json).
 # ci-ok is the single required check. Family profiles with the swm capability install
 # stable-worldmodel at ci/families.toml's [swm] commit (noxfile.py) and fail when its CPU gates
@@ -14,7 +14,7 @@ on:
     branches: [main]
   merge_group:
   schedule:
-    - cron: "23 5 * * *"
+    - cron: "23 5 * * 1"
   workflow_dispatch:
     inputs:
       scope:
@@ -101,10 +101,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { os: ubuntu-latest, python: "3.10" }
-          - { os: ubuntu-latest, python: "3.11" }
-          - { os: ubuntu-latest, python: "3.12" }
+        os: [ubuntu-latest]
+        # Pull requests test the newest Python; main and scheduled runs test every supported one.
+        python: ${{ fromJSON(github.event_name == 'pull_request' && '["3.12"]' || '["3.10", "3.11", "3.12"]') }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -232,7 +231,7 @@ jobs:
           allowed-skips: core, family, package, install
           jobs: ${{ toJSON(needs) }}
 
-  # A red full run on main or the nightly schedule opens (or comments on) one tracking issue.
+  # A red full run on main or the weekly schedule opens (or comments on) one tracking issue.
   report:
     needs: ci-ok
     if: failure() && (github.event_name == 'push' || github.event_name == 'schedule')

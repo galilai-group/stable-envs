@@ -63,7 +63,7 @@ pytest -m "regression and gpu"          # GPU regression, needs CUDA
 ## Pull requests, nightly and shards
 
 - Pull requests run the profiles the diff selects (`scripts/ci/plan.py`), without `nightly` tests.
-- Pushes to `main`, the nightly schedule, manual runs and the `ci:full` label run every profile and
+- Pushes to `main`, the weekly schedule, manual runs and the `ci:full` label run every profile and
   include `nightly` tests.
 - Each profile is split into `shards` jobs (`ci/families.toml`, per tier). `tests/_runner/shard.py`
   balances them with the per-test seconds in `ci/durations.json`. Tests of one env stay in one shard.
