@@ -6,12 +6,12 @@ nine 48x48 levels, an item layer over it, the player, up to eight mobs and six p
 per-tile ``light_map``, the day/night chain, a sleep dim, and a 4-row inventory strip below.
 130x110x3 at the registered size; 208x176x3 at craftax's 16 px size.
 
-This is structurally different from Classic. Every overlay alpha is exactly ``{0, 1}`` (craftax's
-``load_texture`` forces ``alpha // 255``), so a layer is a stencil select, not a blend:
+Unlike Classic, every overlay alpha is exactly ``{0, 1}`` (craftax's ``load_texture`` forces
+``alpha // 255``), so a layer is a stencil select, not a blend:
 
-* The product cannot be baked: ``block x item x player x mob x projectile`` is 732,600 tiles. Baked
-  instead are ``block x item`` (185) and ``mob x projectile`` (660); the player and the strip digits
-  ride as two more thin stencil layers: one background gather and three stencil layers.
+* The full product ``block x item x player x mob x projectile`` is 732,600 tiles, too many to bake.
+  Baked instead are ``block x item`` (185) and ``mob x projectile`` (660); the player and the strip
+  digits are two more stencil layers, so a frame is one background gather and three stencil layers.
 * The lighting chain is not Classic's: no luminance "enhance" step, the per-tile ``light_map`` is
   multiplied in first, ``daylight`` is forced to 1.0 off level 0, sleeping dims towards black, and
   the vignette is a normalised radial distance rather than a Gaussian.
@@ -19,21 +19,20 @@ This is structurally different from Classic. Every overlay alpha is exactly ``{0
   (``game_logic.clip_inventory_and_intrinsics``), two-digit numbers, a level digit, four attribute
   digits, and five cells carrying a second alpha-blended enchantment icon.
 
-``prng.py`` is shared unchanged: the noise field is ``prng.uniform(key, (9t, 11t)) * 95 + 32``.
+``prng.py`` is shared with Classic: the noise field is ``prng.uniform(key, (9t, 11t)) * 95 + 32``.
 
-Parity is a uint8 claim against the un-jitted official renderer (under ``jax.jit`` XLA fuses the
+Parity is exact in uint8 against the un-jitted official renderer (under ``jax.jit`` XLA fuses the
 float32 arithmetic differently, by up to ~1.5e-05, which flips uint8 roundings where the picture is
 compressed towards one value); :meth:`CraftaxFull.reference_env` returns the un-jitted function.
 
-Two traps:
+Two details exact parity depends on:
 
 * craftax normalises the night vignette as ``ntx / ntx.max()`` and XLA lowers a float32 divide by a
   scalar as a reciprocal multiply. A true divide differs by one ULP on 2,265 of 9,900 elements, which
-  moves uint8 pixels. :func:`night_vignette` writes ``v * (1 / v.max())`` and
-  ``test_the_vignette_is_a_reciprocal_multiply_and_not_a_divide`` pins it.
+  moves uint8 pixels, so :func:`night_vignette` computes ``v * (1 / v.max())``.
 * ``ItemType.NONE`` is slot 0 of the item table and the reference never draws it, but its texture is
-  the opaque ``debug.png``. ``_craftax_full_tex`` zeroes slot 0's alpha at bake time so the gather
-  needs no special case.
+  the opaque ``debug.png``. The baked table has slot 0's alpha zeroed, so the gather needs no special
+  case.
 
 What the window carries and what it does not:
 
@@ -137,7 +136,7 @@ B_WOOD, B_STONE, B_COAL, B_IRON, B_DIAMOND, B_SAPPHIRE, B_RUBY = 6, 4, 8, 9, 10,
 #: ``ItemType`` ids.
 I_NONE, I_TORCH, I_LADDER_DOWN, I_LADDER_DOWN_BLOCKED = 0, 1, 2, 4
 
-#: Index into the baked ``icons`` table, in the order ``gen_consts.ICONS`` stacks them.
+#: Indices into the baked ``icons`` table.
 IC_HEALTH, IC_HUNGER, IC_THIRST, IC_ENERGY, IC_MANA = 0, 1, 2, 3, 4
 IC_SAPLING, IC_TORCH, IC_BOOK, IC_FIREBALL, IC_ICEBALL = 5, 6, 7, 8, 9
 IC_XP, IC_DEX, IC_STR, IC_INT, IC_EMPTY = 10, 11, 12, 13, 14
@@ -263,10 +262,10 @@ def _resample(a: np.ndarray, src: int, t: int, axes=(-3, -2)) -> np.ndarray:
 #: icon alphabet and whether the cell carries digits; the 8 positions absent from this table are never
 #: written and stay black.
 #:
-#: ``arrows`` is the one cell whose enchantment is drawn AFTER its digits (the enchantment covers the
+#: ``arrows`` is the one cell whose enchantment is drawn after its digits (the enchantment covers the
 #: icon square, which overlaps the digit squares), so it cannot fold its enchantment into the icon
-#: layer the way the sword and armour cells do. It is baked whole instead -- 100 counts x 3
-#: enchantments -- and takes the no-op digit entry.
+#: layer the way the sword and armour cells do. It is baked whole (100 counts x 3 enchantments) and
+#: takes the no-op digit entry.
 STRIP_CELLS = (
     (0, 0, "count", "health", ("icon", IC_HEALTH)),
     (1, 0, "count", "food", ("icon", IC_HUNGER)),
@@ -680,7 +679,7 @@ N_STRIP = len(STRIP_SLOTS)
 _SLOT = {name: i for i, name in enumerate(STRIP_SLOTS)}
 #: The ceiling each strip slot's value wraps at, so a decoded row always indexes a table entry that
 #: exists. Counts wrap at 100 (the simulator's own cap), tools/armour/enchantments at their sprite
-#: count, attribute digits at 10 (the reference gathers a 10-entry table and jax CLAMPS, so an xp of
+#: count, attribute digits at 10 (the reference gathers a 10-entry table and jax clamps, so an xp of
 #: 12 draws a "9"; the state slot carries the digit that is drawn).
 _SLOT_MOD = {n: N_COUNT for n in STRIP_SLOTS}
 _SLOT_MOD.update({n: N_DIGIT for n in ("xp", "dexterity", "strength", "intelligence")})
@@ -751,8 +750,8 @@ def _strip_index(device):
 class CraftaxFull(Env):
     """Full Craftax: nine levels, an item/mob/projectile stencil over a block window, and a 4-row strip.
 
-    Rendering and Variation handling are provided by stable-envs. Dynamics stay in Craftax/JAX;
-    this cell currently renders stored windows (``has_dynamics`` is False).
+    Renders stored render windows; ``has_dynamics`` is False. The delegated JAX simulator is
+    registered separately in :mod:`stable_envs.envs.craftax.semantics`.
 
     The window has room for a projectile on each of its 99 tiles, but an ``EnvState`` holds
     ``MAX_MOB_PROJ + MAX_PLAYER_PROJ`` = 6 (two ``(9, 3)`` masks). A window carrying seven renders
@@ -777,8 +776,8 @@ class CraftaxFull(Env):
         + tuple(f"rng_half{i}" for i in range(N_KEY_HALVES))
         + tuple(f"inv_{n}" for n in STRIP_SLOTS)
     )
-    #: The frame is ``((9 + 4) * size, 11 * size, 3)``. 10 is the registered default, and the size
-    #: the parity claim is headlined on; 16 is craftax's other shipped size and is certified too.
+    #: The frame is ``((9 + 4) * size, 11 * size, 3)``. 10 is the registered size; parity is also
+    #: certified at craftax's 16 px size.
     default_size = TILE_PX_AGENT
     reference_id = "Craftax-Pixels-v1"
     #: Reference versions the parity was measured against. ``craftax`` pins the atlas, the strip layout
@@ -826,8 +825,8 @@ class CraftaxFull(Env):
         "level0_night_share": 2 / 6,
         "underground_lit_share": 1 / 6,
         "underground_dark_share": 1 / 6,
-        #: 0.25, not 2/6: ``is_sleeping`` is stratified independently on ``i % 4`` and a sleeping row takes
-        #: the float chain, so only 3 of each twelve rows stay on the uint8 gather.
+        # 0.25, not 2/6: ``is_sleeping`` is stratified independently on ``i % 4`` and a sleeping row
+        # takes the float chain, so only 3 of every 12 rows stay on the uint8 gather.
         "uint8_fast_path_share": 0.25,
         "sleeping_share": 0.25,
         "note": "a row stays on the uint8 gather only if it is fully lit AND awake AND at unit gain, "
@@ -841,10 +840,9 @@ class CraftaxFull(Env):
 
     # -------------------------------------------------------------- state
     #
-    # The public State groups the 544 packed numbers by what they describe: five per-tile planes, the
-    # player's four scalars, the PRNG key halves, and the 41 inventory/attribute slots the strip reads.
-    # Offsets follow the packed column order of ``state_names``. There is no hidden dynamical state,
-    # so the packed row is the whole state.
+    # Public State groups the 544 packed numbers by what they describe: five per-tile planes, the
+    # player's four scalars, the PRNG key halves, and the 41 slots the strip reads. Offsets follow
+    # ``state_names``. There is no hidden state, so the packed row is the whole state.
     state_layout = (
         (("world", "blocks"), N_TILE, 0),
         (("world", "items"), N_TILE, N_TILE),
@@ -1109,7 +1107,7 @@ class CraftaxFull(Env):
         ===============================  ==========================================================
         dimension                        reaches a pixel only when
         ===============================  ==========================================================
-        the four ``state_rng`` halves    ``player_level == 0`` **and** ``light_level < 0.5``
+        the four ``state_rng`` halves    ``player_level == 0`` and ``light_level < 0.5``
         ``light_level``                  ``player_level == 0`` (``daylight`` is forced to 1.0 above)
         the 99 ``light_map`` slots        the tile is not fully lit
         ``ench_bow``                     the inventory holds arrows
@@ -1149,7 +1147,7 @@ class CraftaxFull(Env):
         # The alphabet without its endpoints: a tile at light_map 0 is black whatever it holds, and a tile at
         # 1.0 is insensitive to the +25 probe (the tent sends 25 to exactly 1.0). Values below 0.6 round a
         # small colour change away in uint8, so band 0 dims to 0.6 and above and band 4 carries the deep
-        # values; the same argument caps band 0's night depth at 0.3.
+        # values; for the same reason band 0's night depth stops at 0.3.
         partial = LIGHT_MAP_ALPHABET[(LIGHT_MAP_ALPHABET >= 0.6) & (LIGHT_MAP_ALPHABET < 1.0)]
         for i in range(b):
             if band[i] == 5:
@@ -1219,17 +1217,15 @@ class CraftaxFull(Env):
     def reference_env(size: int = TILE_PX_AGENT):
         """The official full-Craftax renderer at ``size`` px per tile, plus a template ``EnvState``.
 
-        A tuple rather than a gym env because Craftax is a functional JAX env: the renderer is a pure
-        function of ``EnvState``. Only the sizes craftax ships textures for are accepted; resampling
-        one would compare this renderer against a second implementation of itself.
+        A tuple rather than a gym env because the renderer is a pure function of ``EnvState``. Only
+        the sizes craftax draws at are accepted.
 
-        Not jitted, as a correctness decision: under ``jax.jit`` XLA fuses the arithmetic differently
-        (up to 1.53e-05 in float32), which flips uint8 roundings wherever the picture is compressed
-        towards one value (the ``light_map`` multiply, the night blend, the sleep halving). The
-        un-jitted function is the renderer as written.
+        The renderer is not jitted: under ``jax.jit`` XLA fuses the arithmetic differently (up to
+        1.53e-05 in float32), which flips uint8 roundings where the picture is compressed towards one
+        value (the ``light_map`` multiply, the night blend, the sleep halving).
 
-        ``jax_threefry_partitionable`` is asserted: jax has two threefry code paths that agree on 0 of
-        448 draws. ``do_night_noise`` stays at its default ``True``, as in the registered env.
+        ``jax_threefry_partitionable`` must be on: jax's two threefry code paths agree on 0 of 448
+        draws. ``do_night_noise`` stays at its default ``True``, as in the registered env.
         """
         if int(size) not in REFERENCE_TILE_PX:
             raise ValueError(

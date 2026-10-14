@@ -1,7 +1,6 @@
-"""Freeze, from craftax itself, the small facts the unit tests pin without importing jax.
+"""Freeze facts from craftax itself that the full-Craftax unit tests check without importing jax.
 
-The repo ships no jax, so a test that imported jax would skip everywhere and assert nothing -- the
-same reason the threefry golden vectors are frozen. Run it in a venv with craftax 1.6.1 and jax:
+Run in a venv with craftax 1.6.1 and jax:
 
     JAX_PLATFORMS=cpu python scripts/regression/craftax/gen_golden.py
 """
@@ -40,7 +39,7 @@ def main():
         tex = C.load_all_textures_given_size(t)
         v = np.asarray(tex["night_noise_intensity_texture"])[..., 0].astype(np.float32)
         rec["vignette_sha256"][str(t)] = hashlib.sha256(np.ascontiguousarray(v).tobytes()).hexdigest()
-        # a handful of exact values, so a failure says WHERE rather than only THAT
+        # a few exact values, so a failure says where the vignette differs
         h, w = v.shape
         rec["vignette_probe"][str(t)] = {
             f"{r},{c}": float(v[r, c])

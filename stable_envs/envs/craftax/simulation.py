@@ -1,4 +1,4 @@
-"""Delegated Craftax 1.5.0 semantics and owning numeric snapshots; no game logic."""
+"""Adapter that runs the upstream Craftax 1.5.0 JAX engine and exports its State as named numeric leaves."""
 
 from __future__ import annotations
 
@@ -42,7 +42,7 @@ def numeric_leaves(value, path=()):
 
 
 def decode(template, values, prefix=()):
-    """Recreate immutable upstream structs from named leaves; no serialized objects."""
+    """Rebuild upstream state structs from named numeric leaves."""
     import jax.numpy as jnp
 
     if dataclasses.is_dataclass(template):
@@ -76,7 +76,7 @@ def check_profile():
 
 @lru_cache(maxsize=8)
 def kernel(classic, pixels, platform):
-    """Immutable upstream configuration and compiled functions, never instance RNG/State."""
+    """Upstream env and its jitted functions for one configuration; holds no RNG or State."""
     import jax
     from craftax.craftax_env import make_craftax_env_from_name
 
@@ -332,7 +332,7 @@ class CraftaxAdapter(SimulatorAdapter):
 
         arrays, decoded = self.validate(state, self.num_envs)
         keys = [jnp.asarray(k.astype(np.uint32)) for k in arrays["rng", "wrapper_key"]]
-        # Every lane and all allocations have succeeded before changing owned state.
+        # Every lane is validated and copied before owned state changes.
         rewards = arrays["lifecycle", "reward"].copy()
         terminated = arrays["lifecycle", "terminated"].copy()
         truncated = arrays["lifecycle", "truncated"].copy()

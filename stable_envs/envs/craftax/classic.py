@@ -3,16 +3,16 @@
 Reference: ``Craftax-Classic-Pixels-v1`` (JAX), drawn by
 ``craftax.craftax_classic.renderer.make_craftax_pixel_renderer``: a 7x9 window of the map, the player
 sprite over the centre tile, zombies, cows, skeletons and arrows composited one tile each, a
-day/night post-process, a sleeping desaturation, then a 2-row inventory strip below. Everything is a
-gather from fixed tables plus alpha blends baked into an atlas.
+day/night post-process, a sleeping desaturation, then a 2-row inventory strip below. Every frame is a
+gather from fixed tables with the alpha blends baked into an atlas.
 
-The state is the render window rather than the simulator's ``EnvState``: 149 float32 values (63
-blocks, 63 mobs, facing, sixteen strip counts, sleeping flag, light level, PRNG key). A uint32 key
-survives a float32 slot only 2% of the time (2**32 > 2**24), so the key is stored as four 16-bit halves.
+The state is the render window, not the simulator's ``EnvState``: 149 float32 values (63 blocks, 63
+mobs, facing, sixteen strip counts, sleeping flag, light level, PRNG key). A uint32 does not fit a
+float32 slot exactly (2**32 > 2**24), so the key is stored as four 16-bit halves.
 
-Frames are uint8 roundings of the reference's fractional float32 output (alphas take {0, 128/255, 1}).
-Parity is a uint8 claim against the un-jitted official renderer: under ``jax.jit`` XLA fuses the float32
-arithmetic differently (up to 1.5e-05), which flips a rounding wherever the picture is compressed towards
+Frames are uint8 roundings of the reference's float32 output (alphas take {0, 128/255, 1}). Parity
+is exact in uint8 against the un-jitted official renderer; under ``jax.jit`` XLA fuses the float32
+arithmetic differently (up to 1.5e-05), which flips roundings where the picture is compressed towards
 one value (sleep desaturation, night blend, any lit row). See :meth:`CraftaxClassic.reference_env`.
 
 Coverage and invariants:
@@ -20,26 +20,25 @@ Coverage and invariants:
   * the world layer: terrain, the player's facing, the sleeping sprite, and the mobs and arrows on
     screen;
   * the inventory strip (rows 49-62 of the 63x63 agent observation, 112-143 of the 144x144 image
-    observation) is a function of twelve counts and four intrinsics only, drawn from a 160-entry
-    ``(cell, count)`` table folded into the same atlas. The reference concatenates it after the
-    lighting chain, so it is identical at midnight and noon;
-  * sleeping has two halves: ``is_sleeping`` selects a fifth player sprite and desaturates the world
-    rows. Missing either gives a plausible, wrong frame;
+    observation) depends only on twelve counts and four intrinsics, drawn from a 160-entry
+    ``(cell, count)`` table in the same atlas. The reference concatenates it after the lighting
+    chain, so it is the same at midnight and noon;
+  * ``is_sleeping`` selects a fifth player sprite and desaturates the world rows;
   * night: ``light_level < 0.5`` mixes in ``jax.random.uniform(state.state_rng, (H, W)) * 95 + 32``
     through a vignette, so night frames depend on the PRNG key (``prng.py`` reproduces threefry2x32
     bit for bit and is shared with full Craftax). At ``light >= 0.5`` no PRNG is drawn, and at
     ``light == 1.0`` the whole chain is the identity, so the batch stays on the uint8 gather;
-  * one mob per tile. An arrow may share a tile with a mob in the reference; that state is not
+  * one mob per tile. The reference allows an arrow and a mob on one tile; that state is not
     representable here and ``sample_states`` does not generate it;
-  * the player tables are zero away from the centre tile (asserted during extraction), so compositing
-    the player over the whole frame (reference) or into one tile (here) is the same arithmetic;
+  * the player tables are zero away from the centre tile, so compositing the player over the whole
+    frame (reference) or into one tile (here) is the same arithmetic;
   * night is not resolution-consistent in the reference itself: the noise field is drawn at
-    ``(7t, 9t)``, so element ``i`` at 32 px is a different threefry counter from element ``i`` at 16 px;
-  * strip counts are sampled directly over 0..9 rather than from a rollout, because a random policy
-    never crafts and ten of the twelve inventory cells would stay dead.
+    ``(7t, 9t)``, so element ``i`` at 32 px uses a different threefry counter from element ``i`` at 16 px;
+  * ``sample_states`` draws strip counts directly over 0..9, since a random policy never crafts and
+    ten of the twelve inventory cells would stay at zero.
 
-Out-of-range class ids and counts wrap rather than clamp: a clamping decoder makes a cell already at
-its last class insensitive to the conformance suite's +25 probe, reported as a dead state dimension.
+Out-of-range class ids and counts wrap rather than clamp, so a cell already at its last class still
+responds to the conformance suite's +25 probe.
 """
 
 from __future__ import annotations
@@ -453,8 +452,7 @@ def night_vignette(device: torch.device, h: int, w: int) -> torch.Tensor:
     """``(h, w, 1)`` float32 copy of craftax's ``night_noise_intensity_texture``.
 
     ``1 - exp(-0.5 (x^2 + y^2) / 0.5^2)`` on a ``linspace(-1, 1)`` grid, transposed. Computed in
-    float64 and narrowed to float32, as craftax does. Parameterised on ``(h, w)`` because full
-    Craftax draws it at its own window size.
+    float64 and narrowed to float32, as craftax does.
     """
     key = (str(device), int(h), int(w))
     if key not in _VIGNETTE_CACHE:
@@ -471,15 +469,14 @@ def night_and_sleep(
     keys: torch.Tensor,
     light_map: torch.Tensor | None = None,
 ) -> torch.Tensor:
-    """Craftax's day/night chain and sleeping desaturation, in the reference's order.
+    """Craftax Classic's day/night chain and sleeping desaturation, in the reference's order.
 
     ``world`` ``(n, h, w, 3)`` float32 pre-post-process pixels, ``light`` ``(n,)``, ``sleeping``
-    ``(n,)`` bool, ``keys`` ``(n, 2)`` int32 threefry keys. ``light_map`` is the per-pixel multiplier
-    full Craftax applies and Classic does not. Shared with the full-Craftax renderer.
+    ``(n,)`` bool, ``keys`` ``(n, 2)`` int32 threefry keys. ``light_map`` is an optional per-pixel
+    multiplier applied before the blend.
 
     The arithmetic is the reference's, op for op, and is not algebraically collapsed: the folded
-    form rounds differently in float32 and the claim is bit equality. The only reductions are ones
-    that change no bits:
+    form rounds differently in float32. The only reductions are ones that change no bits:
 
     * noise is drawn only for rows with ``light < 0.5``; elsewhere ``intensity`` is exactly 0, so
       ``(1 - 0)*world + 0*noise`` is ``world`` whatever the noise was;
@@ -524,23 +521,21 @@ def night_and_sleep(
 def _strip_cells(device: torch.device, t: int) -> torch.Tensor:
     """``(N_STRIP * N_COUNT, t, t, 3)`` float32: every ``(cell, count)`` picture the strip can show.
 
-    The strip is a function of sixteen counts (each capped at 9) and the reference draws each cell
-    with two writes inside its own tile, so it is a 16 x 10 table of finished tiles and drawing it is
-    a gather. It is concatenated after the day/night chain and the sleep desaturation, so it is never
-    lit and does not depend on ``state_rng``.
+    The strip depends on sixteen counts (each capped at 9) and the reference draws each cell with
+    two writes inside its own tile, so it is a 16 x 10 table of finished tiles. It is concatenated
+    after the day/night chain and the sleep desaturation, so it is never lit and does not depend on
+    ``state_rng``.
 
-    Built at a reference tile size and then resampled as a finished cell, never as ingredients: icon
-    and digit edges do not scale by an exact factor of two, so re-laying the cell out at 2S would
-    not be a 2x replication of the strip at S.
+    Built at a reference tile size and resampled as a finished cell: icon and digit edges do not
+    scale by exactly two, so re-laying the cell out at 2S would not be a 2x replication of S.
     """
     src = t if t in _STRIP_TABLES else min(REFERENCE_TILE_PX, key=lambda z: abs(z - t))
     icons, digits, dalpha = _StripAssets.get(device, src)
     lo, hi, dlo, dhi = strip_geometry(src)
     cell = torch.zeros(N_STRIP, N_COUNT, src, src, 3, dtype=torch.float32, device=device)
-    # count 0 leaves the icon out: the reference selects ``smaller_empty_texture`` on ``> 0``, and
-    # digit 0 is the empty texture with zero alpha, so a zero cell is entirely black. That is also
-    # what the two cells the reference never writes look like, which is why a blank needs no entry
-    # of its own — it is cell 0 holding count 0.
+    # Count 0 leaves the icon out (the reference selects ``smaller_empty_texture`` unless ``> 0``)
+    # and digit 0 is the empty texture with zero alpha, so a zero cell is black. The two cells the
+    # reference never writes reuse cell 0 holding count 0.
     cell[:, 1:, lo:hi, lo:hi, :] = icons.view(N_STRIP, 1, hi - lo, hi - lo, 3)
     patch = cell[:, :, dlo:dhi, dlo:dhi, :].clone()
     cell[:, :, dlo:dhi, dlo:dhi, :] = patch * (1 - dalpha.view(1, N_COUNT, dhi - dlo, dhi - dlo, 3)) + digits.view(
@@ -568,12 +563,12 @@ ATLAS_MAX_TILE_PX = 64
 
 
 class _Composite:
-    """The composited tile atlas: every (player slot, block, mob) tile the renderer can draw.
+    """The composited tile atlas: every (player slot, block, mob) tile, then every strip cell.
 
-    A tile's pixels depend on exactly three small integers, so the per-frame blends of the reference
-    are done once per (device, tile size) into a 680-entry table and each frame is a gather. The
-    arithmetic per tile is the reference's, elementwise float32 in the same order, so the result is
-    bit-identical.
+    A world tile's pixels depend on three small integers, so the reference's per-frame blends are
+    done once per (device, tile size) into an 816-entry table (plus the 160 strip cells) and each
+    frame is a gather. The per-tile arithmetic is the reference's, elementwise float32 in the same
+    order, so the result is bit-identical.
 
     Two forms are kept:
 
@@ -626,8 +621,8 @@ class _Composite:
 class CraftaxClassic(Env):
     """Craftax Classic: a 7x9 block window, the player, one mob per tile, and the inventory strip.
 
-    Rendering and Variation handling are provided by stable-envs. Dynamics stay in Craftax/JAX;
-    this cell currently renders stored windows (``has_dynamics`` is False).
+    Renders stored render windows; ``has_dynamics`` is False. The delegated JAX simulator is
+    registered separately in :mod:`stable_envs.envs.craftax.semantics`.
     """
 
     family = "craftax"
@@ -646,8 +641,8 @@ class CraftaxClassic(Env):
         + tuple(f"rng_half{i}" for i in range(N_KEY_HALVES))
     )
     #: Tile edge in pixels; the frame is ((7+2)*size, 9*size, 3). Craftax ships textures at 7 px (the
-    #: agent observation) and 16 px, both exact. The default is 16: at 7 px the dithered art leaves no
-    #: flat 3x3 neighbourhood, so the conformance suite's interior statistic would be NaN.
+    #: agent observation) and 16 px, both exact. The default is 16 because at 7 px the dithered art
+    #: has no flat 3x3 neighbourhood and the conformance suite's interior statistic is NaN.
     default_size = TILE_PX_IMG
     reference_id = "Craftax-Classic-Pixels-v1"
     #: Reference versions the parity was measured against. ``jax`` matters because
@@ -664,8 +659,8 @@ class CraftaxClassic(Env):
         "measured_over": "seeds 0-5, n=64",
         "band_assignment": "stratified by row index (i % 4); values from craftax's own day cycle",
     }
-    #: Night is not resolution-consistent in the reference itself (official world rows 0.1634), so the
-    #: bound applies at daylight and dusk only.
+    #: The reference is itself not resolution-consistent at night (world rows 0.1634), so the bound
+    #: applies at daylight and dusk only.
     resolution_consistency_applicability = {
         "light_level >= 0.5": "asserted at the frozen DOWNSAMPLE_EXACT_FRAC; measured 1.000",
         "light_level < 0.5": "not_applicable: the reference is itself resolution-inconsistent there "
@@ -673,8 +668,8 @@ class CraftaxClassic(Env):
         "evidence": "official-renderer resolution oracle at 16 px per tile against 32 px",
         "measured_against": "craftax 1.6.1 un-jitted, jax 0.11.1, jax_threefry_partitionable=True",
     }
-    #: Exact over the whole observation; a different craftax or jax blocks the check via
-    #: ``reference_versions`` instead of failing it.
+    #: Exact over the whole observation. A different craftax or jax skips the check through
+    #: ``reference_versions`` rather than failing it.
     parity_all_exact_min = 1.0
     parity_note = (
         "Measured on 64 sampled states at 7 px and 16 px over the whole observation (world window and "
@@ -689,9 +684,8 @@ class CraftaxClassic(Env):
         "448 draws."
     )
 
-    # The public State groups the render window by what it describes. Offsets follow the packed
-    # column order of ``state_names``. There is no hidden dynamical state, so the packed row is the
-    # whole state.
+    # Public State groups the render window by what it describes; offsets follow ``state_names``.
+    # There is no hidden state, so the packed row is the whole state.
     state_layout = (
         (
             (("world", "blocks"), OBS_H * OBS_W, 0),
@@ -826,10 +820,10 @@ class CraftaxClassic(Env):
         There is no ``scene()``: the frame is a gather from a texture atlas with the alpha blends
         baked in (:class:`_Composite`), strip included, so it is one ``index_select``.
 
-        Two things cannot fold into the gather: a ``channel_gain`` other than 1 (it multiplies
-        before the rounding) and a sleeping player (desaturation happens after compositing). Those
-        batches gather the float table instead; the uint8 table is defined as ``round -> clamp ->
-        uint8`` of it, so a non-sleeping row at unit gain is identical either way.
+        A ``channel_gain`` other than 1, a sleeping player or a light level below 1 cannot fold into
+        the gather, because each acts before the rounding. Those batches gather the float table
+        instead; the uint8 table is ``round -> clamp -> uint8`` of it, so a plain row is identical
+        either way.
         """
         s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
@@ -855,7 +849,7 @@ class CraftaxClassic(Env):
         return img.view(*lead, *img.shape[1:]) if lead else img
 
     def _render_atlas(self, blk, mob, facing, cnt, sleeping, light, halves, t, sty, out) -> torch.Tensor:
-        """One ``index_select`` per frame at the default appearance, with no float buffer."""
+        """Gather the uint8 atlas for a plain batch, else the float atlas plus the post-process."""
         n, dev = blk.shape[0], blk.device
         H = (OBS_H + STRIP_H) * t
         tile = self._tile_ids(blk, mob, facing, cnt, sleeping, sty)
@@ -1004,21 +998,16 @@ class CraftaxClassic(Env):
     def reference_env(size: int = TILE_PX_IMG):
         """The official Craftax renderer at ``size`` px per tile, plus a template ``EnvState``.
 
-        A tuple rather than a gym env because Craftax is a functional JAX env: the renderer is a pure
-        function of ``EnvState``. The template comes from a real ``reset`` so unread fields hold valid
-        values.
+        A tuple rather than a gym env because the renderer is a pure function of ``EnvState``. The
+        template comes from a real ``reset`` so unread fields hold valid values. Only the two sizes
+        craftax ships textures for are accepted.
 
-        Only the two sizes craftax ships textures for are accepted; at other sizes there is no
-        published art to certify against.
+        The renderer is not jitted: under ``jax.jit`` XLA fuses the arithmetic differently (up to
+        1.5e-05 in float32), which flips uint8 roundings where the picture is compressed towards one
+        value (sleep desaturation, night blend, any lit row). It costs about 0.25 s a frame.
 
-        The renderer is deliberately not jitted: under ``jax.jit`` XLA fuses the arithmetic
-        differently (up to 1.5e-05 in float32), which flips uint8 roundings wherever the picture is
-        compressed towards one value (sleep desaturation, night blend, any lit row, including awake
-        rows near ``light_level = 0.5``). The un-jitted function is the renderer as written. It costs
-        about 0.25 s a frame, which suits a check run on tens of states.
-
-        ``jax_threefry_partitionable`` is asserted: the two jax threefry paths give different bits for
-        the same key, so a parity number against the non-default one would be meaningless.
+        ``jax_threefry_partitionable`` must be on: the two jax threefry paths give different bits for
+        the same key.
         """
         if int(size) not in REFERENCE_TILE_PX:
             raise ValueError(

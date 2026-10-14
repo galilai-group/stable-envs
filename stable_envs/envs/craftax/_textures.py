@@ -4,7 +4,7 @@ uint8 and lossless: craftax's ``load_texture`` forces every alpha to exactly 0 o
 ``Image.NEAREST``. The only non-integral texture is ``night_noise_intensity_texture``, a function of
 the frame size built at runtime by :func:`stable_envs.envs.craftax.full.night_vignette`.
 
-Do not hand-edit. Re-run the generator against a new craftax and re-measure parity.
+Generated data; do not hand-edit. A new craftax version needs new tables and a new parity measurement.
 """
 
 from __future__ import annotations

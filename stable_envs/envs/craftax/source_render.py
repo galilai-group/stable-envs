@@ -1,4 +1,4 @@
-"""Named numeric render inputs for unchanged upstream Craftax pixel rendering."""
+"""Render inputs for the delegated Craftax pixel tasks, drawn by the upstream renderer."""
 
 from __future__ import annotations
 
@@ -10,8 +10,8 @@ from tensordict import TensorDict
 
 from .simulation import decode
 
-# Source-read inventory: both upstream render_craftax_pixels functions, including
-# full Craftax's is_boss_vulnerable helper. Entity health/cooldowns are not drawn.
+# State roots read by the upstream render_craftax_pixels functions, including full
+# Craftax's is_boss_vulnerable. Entity health and cooldowns are not drawn.
 CLASSIC_ROOTS = frozenset(
     {
         "map",
@@ -133,8 +133,8 @@ def render(adapter, state, chunk_size=None):
     if chunk_size is not None and (type(chunk_size) is not int or chunk_size <= 0):
         raise ValueError("chunk_size must be a positive integer")
     frames = []
-    # Each source output has the same scalar compilation boundary regardless of
-    # batch size/chunking. Do not assume vmap or eager floats round identically.
+    # One jitted call per state regardless of batch size or chunking: vmap and eager
+    # evaluation can round differently.
     for start in range(0, len(states), chunk_size or len(states)):
         outputs = [adapter.output_fn(s) for s in states[start : start + (chunk_size or len(states))]]
         jax.block_until_ready(outputs)

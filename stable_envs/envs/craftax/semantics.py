@@ -1,4 +1,4 @@
-"""Four bounded source configurations over the real Classic and full Craftax engines."""
+"""Registered Craftax tasks that delegate dynamics and rendering to the upstream JAX engines."""
 
 from __future__ import annotations
 
@@ -157,7 +157,7 @@ class CraftaxSemantics(Env):
 
 @register
 class CraftaxClassicPixels(CraftaxSemantics):
-    """Classic registered pixel task with exhaustive delegated JAX simulator State."""
+    """Classic pixel task with complete delegated JAX simulator State."""
 
     CLASSIC = True
     PIXELS = True
@@ -167,7 +167,7 @@ class CraftaxClassicPixels(CraftaxSemantics):
 
 @register
 class CraftaxClassicSymbolic(CraftaxSemantics):
-    """Classic symbolic task; learner output selection remains outside stable-envs."""
+    """Classic symbolic task; symbolic observations are not part of State."""
 
     CLASSIC = True
     default_size = 7
@@ -176,7 +176,7 @@ class CraftaxClassicSymbolic(CraftaxSemantics):
 
 @register
 class CraftaxPixels(CraftaxSemantics):
-    """Full Craftax registered pixel task with exhaustive delegated JAX State."""
+    """Full Craftax pixel task with complete delegated JAX simulator State."""
 
     PIXELS = True
     reference_id = "Craftax-Pixels-v1"

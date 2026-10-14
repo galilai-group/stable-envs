@@ -1,13 +1,11 @@
-"""Freeze golden vectors for ``stable_envs/envs/craftax/prng.py`` out of a real jax.
+"""Freeze golden vectors for ``stable_envs/envs/craftax/prng.py`` from jax.
 
 Run in a venv with craftax 1.6.1 and jax 0.11.1. Writes
-``tests/fixtures/regression/fidelity/prng_threefry_golden.json``, which ``tests/unit/test_craftax_prng.py`` asserts against
-so the test needs no jax at all — the repo ships no jax, so a test that imported jax would simply
-skip everywhere and assert nothing.
+``tests/fixtures/regression/fidelity/prng_threefry_golden.json``, which
+``tests/unit/test_craftax_prng.py`` checks without importing jax.
 
-Small shapes are frozen in full; the render-sized ones as a sha256 over the uint32 bytes plus their
-first and last eight values, because a digest catches any bit change and a 112x144 array does not
-belong in a source tree.
+Small shapes are stored in full; render-sized ones as a sha256 over the uint32 bytes plus their
+first and last eight values.
 """
 
 from __future__ import annotations
