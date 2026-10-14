@@ -6,9 +6,9 @@ from importlib.metadata import version
 import numpy as np
 import pybullet as p
 
+from ...._core.space_nodes import nodes
 from .actions import validate_action
 from .numeric import capture
-from .spaces import nodes
 from .task import RocketLandingEnv
 
 DTYPES = (None, np.dtype("float32"), np.dtype("float64"), np.dtype("uint8"))

@@ -1189,7 +1189,7 @@ def aaline_emit(cv: Canvas, p, color_t, kmax, bidx) -> None:
     """
     draw, sx, sy, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major, E, lo = p
     B = xx0.shape[0]
-    # Keep one weight per write: blend_at overrides may index weights with the validity mask.
+    # Keep one weight per write.
     # Expanding a cached scalar preserves that shape without allocating another buffer.
     solid = cv.solid()
     cv.blend_at(bidx, sy, sx, color_t, solid.expand(B), draw)

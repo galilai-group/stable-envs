@@ -259,8 +259,6 @@ ignore = ["E402", "E731", "E741"]
 "stable_envs/render/mjwarp/__init__.py" = ["UP018"]
 # Public `Union[...]` alias; `|` would change the runtime type object.
 "stable_envs/render/scene.py" = ["UP007"]
-# Availability probe: `import torch` inside try/except ImportError.
-"examples/render.py" = ["F401"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

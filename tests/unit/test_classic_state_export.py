@@ -67,7 +67,7 @@ def test_an_inactive_lane_on_the_first_step_holds_its_state_and_reports_zeros(do
     try:
         initial = adapter.reset(17)
         result = adapter.step(_action(domain, 2), active=torch.tensor([True, False]))
-        equal(result["state"][1:], initial[1:])
+        assert_same_state(result["state"][1:], initial[1:])
         for key in ("reward", "terminated", "truncated", "observation", "info_state"):
             assert not result[key][1].any(), key
     finally:

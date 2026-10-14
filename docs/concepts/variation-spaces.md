@@ -16,9 +16,9 @@ Each env declares only the factors its source actually has.
 ```python
 import stable_envs as snv
 
-env = snv.PushT(num_envs=64)
+env = snv.CartPole(num_envs=64)
 state = env.reset(seed=0)
-frames = env.render(state, variation={"block.color": [220, 40, 40]})
+frames = env.render(state, variation={"pole.color": [220, 40, 40]})
 ```
 
 The defaults are the official configuration. Rendering without `variation=` gives the reference
