@@ -7,6 +7,7 @@ from importlib.metadata import version
 import numpy as np
 import torch
 
+from ..._core.warp_cuda import require_warp_cuda
 from . import manipulation as core
 from .simulation import render_state as pixels
 
@@ -245,8 +246,7 @@ def render(family, state, device, backend="auto", chunk_size=None):
     size, ss = (int(host["renderer", key][0, 0]) for key in ("size", "supersample"))
     result = torch.empty((len(state), size, size, 3), dtype=torch.uint8, device=device)
     # Frozen caches hold mutable render buffers; serialize users of this caller boundary.
-    import warp as wp
-
+    wp = require_warp_cuda("OGBench manipulation GPU rendering")
     with _LOCK, torch.cuda.device(device), wp.ScopedDevice(str(device)):
         pattern = "gl4" if family == "Scene" and backend == "mjwarp_fidelity" and ss == 2 else "grid"
         token, bundle = configured_bundle(family, pattern)

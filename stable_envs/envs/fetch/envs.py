@@ -5,7 +5,8 @@ import os
 import numpy as np
 import torch
 
-from ..._core.mujoco_gl import configure_mujoco_gl
+from ..._core.mujoco_gl import configure_mujoco_gl, mujoco_renderer
+from ..._core.warp_cuda import require_warp_cuda
 
 configure_mujoco_gl()
 
@@ -395,10 +396,8 @@ def _renderer(scene: str, res: int):
     Keep its EGL context alive for the process; releasing it can invalidate
     other live renderers on supported drivers.
     """
-    import mujoco
-
     return _RENDERER_CACHE.get_or_build(
-        (scene, int(res)), lambda: mujoco.Renderer(_build_bundle(scene).model, width=int(res), height=int(res))
+        (scene, int(res)), lambda: mujoco_renderer(_build_bundle(scene).model, width=int(res), height=int(res))
     )
 
 
@@ -410,8 +409,8 @@ def _context(scene: str, res: int, nworld: int, translucent: bool = False) -> _C
     """A batched MJWarp context; ``translucent`` leaves the robot out and also renders depth."""
     import mujoco
     import mujoco_warp as mjw
-    import warp as wp
 
+    wp = require_warp_cuda("Fetch GPU rendering")
     key = (str(wp.get_device()), scene, int(res), int(nworld), bool(translucent))
     hit = _CTX_CACHE.get(key)
     if hit is not None:

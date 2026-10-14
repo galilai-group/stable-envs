@@ -11,6 +11,7 @@ import threading
 import numpy as np
 import torch
 
+from ..._core.mujoco_gl import mujoco_renderer
 from ...render._resources import retain_process_lifetime
 
 _LOCK = threading.RLock()
@@ -97,7 +98,7 @@ def render(env, states=None, size=None, supersample=None, variation=None, style=
             model.vis.global_.offwidth = max(model.vis.global_.offwidth, raster_size)
             model.vis.global_.offheight = max(model.vis.global_.offheight, raster_size)
             data = mujoco.MjData(model)
-            renderer = mujoco.Renderer(model, height=raster_size, width=raster_size)
+            renderer = mujoco_renderer(model, height=raster_size, width=raster_size)
             renderer._gl_context.make_current()
             entry = (
                 model,

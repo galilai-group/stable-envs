@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
+from ..._core.warp_cuda import require_warp_cuda
 from .. import _resources
 
 os.environ.setdefault("WARP_CACHE_PATH", os.path.expanduser("~/.cache/warp"))
@@ -438,8 +439,8 @@ class BatchRenderer(_resources.Closeable):
     ):
         import mujoco
         import mujoco_warp as mjw
-        import warp as wp
 
+        wp = require_warp_cuda("MJWarp batch rendering")
         self.prepared = prepare_model(m, groups) if prepare else None
         self.texture_gaps = texture_gaps(m, groups)
         self.needs_com = needs_com_pos(m)
