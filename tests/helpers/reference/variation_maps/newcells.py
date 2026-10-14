@@ -401,10 +401,7 @@ _OGBMAZE_NOTES = {
     "floor.color": "the checker's rgb1/rgb2, written as texels into the baked plate. Drawn wherever swm "
     "draws it: always in the state scene, and in pixel scenes only at floor.pixel_encoding=0 -- the "
     "position-encoding gradient (encoding 1) overwrites the checker on both sides",
-    "floor.pixel_encoding": "same switch and sense as swm (1 gradient, 0 XML checker). DEFAULTS DIFFER: "
-    "ours is 1, the official ogbench appearance; swm's init_value is 0, which its first reset applies, "
-    "so a default swm pixels env shows the checker from then on. Pass the value explicitly to compare. "
-    "Like swm, the state scene ignores it",
+    "floor.pixel_encoding": "same switch, sense and default as swm (1 gradient, 0 XML checker). Like swm, the state scene ignores it",
     "light.intensity": "the global light's diffuse term, written into the model before the plate bake. "
     "Static pixels are MuJoCo's; agent shading in pixel scenes scales the global share of the fitted "
     "diffuse law, and in the state scene reads the scene's lights directly",
