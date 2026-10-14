@@ -1,3 +1,5 @@
+"""Torch renderer for MuJoCo scenes of one floor plane and analytic movers, following MJWarp shading."""
+
 from __future__ import annotations
 
 import math
@@ -21,12 +23,12 @@ from .texture_mip import mip_pyramid, plane_grid, plane_texgen, sample_plane_fil
 MOVER_KINDS = tuple(k for k in PRIMITIVE_KINDS if k != PLANE)
 # Supported MuJoCo light types; point and image lights are rejected.
 LIGHT_SPOT, LIGHT_DIRECTIONAL = 0, 1
-#: MuJoCo's material defaults, which the megakernel uses for a geom without a material.
+#: MuJoCo material defaults, used for a geom without a material.
 DEFAULT_MAT_SPECULAR, DEFAULT_MAT_SHININESS, MAX_SHININESS = 0.5, 0.5, 128.0
 # Blocked direct lighting contributes nothing; an unlit scene retains the fallback ambient.
 SHADOW_VISIBLE = 0.0
 NO_LIGHT_AMBIENT_FALLBACK = 0.3
-#: The shadow-ray offsets the megakernel uses.
+#: Shadow-ray origin and length offsets.
 SHADOW_ORIGIN_EPS, SHADOW_MAX_T_EPS = 1.0e-4, 1.0e-3
 #: ``MJ_MINVAL``, the front-face threshold of ``ray_plane``.
 MJ_MINVAL = 1e-15
@@ -36,7 +38,7 @@ WINDOW_NEAR = 1e-3  # Use the full frame when a mover approaches the camera plan
 # MJWarp packs floats by truncation; rounding is an explicit alternate convention.
 QUANT = "trunc"
 
-# Oracle switches bypass spatial bounds without changing the expected pixels.
+# Test switches that bypass spatial bounds without changing the expected pixels.
 FORCE_FULL_FRAME: bool = False
 SHADOW_TEST_ALL_HITS: bool = False
 
@@ -47,7 +49,7 @@ TEX_FRAC_BITS = 8
 
 
 def texture_array(m, tex: int) -> np.ndarray:
-    """``(h, w, 3)`` uint8 for texture ``tex`` of a compiled model."""
+    """Read texture ``tex`` of a compiled model as an (h, w, 3) uint8 array."""
     w, h = int(m.tex_width[tex]), int(m.tex_height[tex])
     nc = int(m.tex_nchannel[tex]) if hasattr(m, "tex_nchannel") else 3
     a0 = int(m.tex_adr[tex])
@@ -90,22 +92,22 @@ def bilinear(tex: torch.Tensor, u: torch.Tensor, v: torch.Tensor, frac_bits: int
     c11 = flat[y1 * w + x1]
     fx = fx.unsqueeze(-1)
     fy = fy.unsqueeze(-1)
-    # the unit's own association: lerp along x on each row, then along y
+    # Lerp along x on each row, then along y, in the texture unit's order.
     top = c00 + (c10 - c00) * fx
     bot = c01 + (c11 - c01) * fx
     return top + (bot - top) * fy
 
 
 def sample_skybox(sky: torch.Tensor, face_w: int, d: torch.Tensor) -> torch.Tensor:
-    """``sample_skybox`` of ``mujoco_warp``: cube-map lookup of world directions ``d (...,3)``.
+    """Look up world directions ``d (..., 3)`` in a skybox, as ``mujoco_warp``'s ``sample_skybox``.
 
-    MuJoCo rotates a world direction into cube space by 90 degrees about X (S=x, T=z, R=-y); the
-    six faces are stacked vertically in OpenGL order +X,-X,+Y,-Y,+Z,-Z; ``t`` is clamped half a
-    texel inside its face so the linear filter never bleeds into the next one.
+    Directions rotate 90 degrees about X into cube space (S=x, T=z, R=-y). Faces are
+    stacked vertically in OpenGL order +X, -X, +Y, -Y, +Z, -Z; ``t`` is clamped half a
+    texel inside its face so the linear filter does not bleed into the next one.
     """
     rx, ry, rz = d[..., 0], d[..., 2], -d[..., 1]
     arx, ary, arz = rx.abs(), ry.abs(), rz.abs()
-    # the same three-way branch, in the same order, as the kernel
+    # Same three-way branch order as the kernel.
     mx = (arx >= ary) & (arx >= arz)
     my = ~mx & (ary >= arz)
     mz = ~mx & ~my
@@ -133,15 +135,17 @@ def sample_skybox(sky: torch.Tensor, face_w: int, d: torch.Tensor) -> torch.Tens
 
 @dataclass
 class Light:
+    """One compiled MuJoCo light."""
+
     kind: int  # LIGHT_SPOT or LIGHT_DIRECTIONAL
-    active: bool  # ``light_active``: the megakernel skips an inactive light entirely
+    active: bool  # inactive lights are skipped entirely
     castshadow: bool
     cutoff_deg: float
     exponent: float
     ambient: np.ndarray  # (3,)
-    diffuse: np.ndarray  # (3,) the model's own; scaled per env by the caller
+    diffuse: np.ndarray  # (3,) model value; the caller supplies per-env diffuse
     specular: np.ndarray  # (3,)
-    attenuation_default: bool  # (1, 0, 0) -> no distance term, as the kernel folds it
+    attenuation_default: bool  # (1, 0, 0): no distance term
 
 
 class Scene:
@@ -194,7 +198,7 @@ class Scene:
         self.fovy = float(m.cam_fovy[camera])
         self.dirs = self._rays(self.xmat, self.fovy, self.res)  # (N,3) float32 world
 
-        # the plane: exactly one, static (world body), textured or not
+        # Exactly one static plane on the world body.
         planes = [
             g
             for g in range(m.ngeom)
@@ -213,7 +217,7 @@ class Scene:
         self.plane_texoffset = np.full(2, -0.5)
         if self.plane_matid >= 0:
             t = m.mat_texid[self.plane_matid]
-            tex = int(t[1]) if np.ndim(t) else int(t)  # the RGB role, as MJWarp
+            tex = int(t[1]) if np.ndim(t) else int(t)  # RGB role, as in MJWarp
             if tex >= 0:
                 self.plane_tex = torch.as_tensor(texture_array(m, tex).astype(np.float32) / 255.0, device=self.device)
                 self.plane_texscale, self.plane_texoffset = plane_texgen(
@@ -253,7 +257,7 @@ class Scene:
         else:
             self.sky = torch.tensor(SKY_FALLBACK, device=self.device).expand(self.dirs.shape[0], 3)
 
-        # movers: the geoms whose pose the state decides
+        # Movers are the geoms whose pose comes from the state.
         self.movers = [int(g) for g in movers]
         kinds = [int(m.geom_type[g]) for g in self.movers]
         bad = sorted({k for k in kinds if k not in MOVER_KINDS})
@@ -274,7 +278,7 @@ class Scene:
             bound_radius(kinds, self.sizes.cpu().numpy()), dtype=torch.float32, device=self.device
         )
 
-        # materials: specular / shininess per material id, the kernel's defaults for none
+        # Per-material specular, shininess, and emission, plus a defaults slot at index nmat.
         nmat = int(m.nmat)
         spec = np.full(nmat + 1, DEFAULT_MAT_SPECULAR)
         shin = np.full(nmat + 1, DEFAULT_MAT_SHININESS * MAX_SHININESS)
@@ -295,18 +299,17 @@ class Scene:
         self.mat_shin = torch.as_tensor(shin, dtype=torch.float32, device=self.device)
         self.mat_emis = torch.as_tensor(emis, dtype=torch.float32, device=self.device)
         self.nmat = nmat
-        # per-primitive material index; -1 (no material) maps to the defaults slot ``nmat``
+        # Primitives without a material (-1) map to the defaults slot ``nmat``.
         mid = np.concatenate([[self.plane_matid], self.mover_matid])
         self.prim_mat = torch.as_tensor(np.where(mid >= 0, mid, nmat), dtype=torch.int64, device=self.device)
-        # a geom with no material carries its own rgba; the caller's ``mat_rgb`` table gets a row
-        # per primitive appended for those so the gather is uniform
+        # Geoms without a material use their own RGB, appended per primitive to the ``mat_rgb`` table.
         self.prim_own_rgb = torch.as_tensor(
             np.concatenate([[np.asarray(m.geom_rgba[g], np.float64)[:3]], self.mover_rgba[:, :3]]),
             dtype=torch.float32,
             device=self.device,
         )
 
-        # lights, in model order; the headlight from vis
+        # Lights in model order; the headlight comes from vis.
         self.lights = [
             Light(
                 kind=int(m.light_type[i])
@@ -434,11 +437,8 @@ class Scene:
         return torch.cat([mat_rgb, pad, own], 1)
 
 
-# ``_dot`` is ``primitives.dot3``: the intersectors' unrolled expression, kept bit-identical.
-
-
 def _normalize(v: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-    """``(v / |v|, |v|)``, leaving a zero vector alone rather than dividing by zero."""
+    """Return (v / |v|, |v|), leaving zero vectors unchanged."""
     n = torch.sqrt(_dot(v, v))
     return v / torch.where(n > 0, n, torch.ones_like(n)).unsqueeze(-1), n
 
@@ -456,7 +456,7 @@ def _mover_window(scene: Scene, xpos_rel: torch.Tensor) -> tuple[torch.Tensor, t
     B, K = xpos_rel.shape[:2]
     W = H = scene.res
     R = torch.as_tensor(scene.xmat, dtype=torch.float32, device=xpos_rel.device)
-    # camera coordinates: columns of xmat are right / up / back
+    # Camera coordinates: the columns of xmat are right, up, and back.
     loc = torch.stack([_dot(xpos_rel, R[:, 0]), _dot(xpos_rel, R[:, 1]), _dot(xpos_rel, R[:, 2])], -1)
     depth = -loc[..., 2]  # forward distance
     r = scene.radii.view(1, K)
@@ -488,7 +488,7 @@ def _mover_window(scene: Scene, xpos_rel: torch.Tensor) -> tuple[torch.Tensor, t
 
 
 def _window_index(x0: torch.Tensor, y0: torch.Tensor, w: int, h: int, W: int, device) -> torch.Tensor:
-    """``(B, h*w)`` flat pixel indices of each env's window."""
+    """Return (B, h*w) flat pixel indices of each environment's window."""
     ar_y = torch.arange(h, device=device).view(1, h, 1)
     ar_x = torch.arange(w, device=device).view(1, 1, w)
     return ((y0.view(-1, 1, 1) + ar_y) * W + (x0.view(-1, 1, 1) + ar_x)).reshape(x0.shape[0], -1)
@@ -545,11 +545,11 @@ def render(
     plane_mat: torch.Tensor | None = None,
     plane_palette: torch.Tensor | None = None,
 ) -> torch.Tensor:
-    """``(B,H,W,3)`` uint8.
+    """Render frames as (B, H, W, 3) uint8.
 
     ``cam_pos (B,3)``, ``xpos (B,K,3)``, ``xmat (B,K,3,3)`` world poses of the movers,
-    ``light_pos``/``light_dir (B,L,3)``, ``mat_rgb (B,nmat,3)``, ``light_diffuse (B,L,3)`` — all
-    float32 on the scene's device, all as MuJoCo's own ``mj_camlight`` produces them.
+    ``light_pos``/``light_dir (B,L,3)``, ``mat_rgb (B,nmat,3)``, ``light_diffuse (B,L,3)``: all
+    float32 on the scene's device, as MuJoCo's ``mj_camlight`` produces them.
     ``plane_mat (B,3,3)`` turns the floor per row about its compiled centre, and
     ``plane_palette (B,P,3)`` recolours the scene's floor palette masks per row.
     """
@@ -588,7 +588,7 @@ def _render_chunk(
     plane_mat: torch.Tensor | None = None,
     palette: torch.Tensor | None = None,
 ) -> torch.Tensor:
-    """One ``CPU_CHUNK``-sized group of frames: ``(B, N, 3)`` uint8, flat in the pixel axis."""
+    """Render one chunk of frames as (B, N, 3) uint8 with a flat pixel axis."""
     dev = scene.device
     B = int(cam.shape[0])
     K = len(scene.kinds)
@@ -597,7 +597,7 @@ def _render_chunk(
     d = torch.as_tensor(scene.dirs, device=dev)  # (N,3)
     dB = d.unsqueeze(0).expand(B, N, 3)
 
-    # ---- everything relative to the camera: the origin is 0 for every env
+    # Work relative to the camera, so every ray origin is zero.
     xpos_rel = xpos - cam.view(B, 1, 3)
     if K:
         inside = (torch.sqrt(_dot(xpos_rel, xpos_rel)) <= scene.radii.view(1, K)).any()
@@ -609,10 +609,9 @@ def _render_chunk(
             )
     ppos_w = torch.as_tensor(scene.plane_pos, dtype=torch.float32, device=dev)
     ppos = ppos_w.view(1, 3) - cam  # (B,3)
-    # A light on or below the floor gives the floor no diffuse term, so its shadow bound is moot there.
     pm = torch.as_tensor(scene.plane_mat, dtype=torch.float32, device=dev) if plane_mat is None else plane_mat
 
-    # ---- the plane, exactly ``ray_plane``: local frame, front-face only, bounded when size > 0
+    # Plane hits follow ``ray_plane``: local frame, front face only, bounded when size > 0.
     lo_p = torch.stack([_dot(-ppos, pm[..., 0]), _dot(-ppos, pm[..., 1]), _dot(-ppos, pm[..., 2])], -1)  # (B,3)
     if plane_mat is None:
         lv = [_dot(d, pm[:, k]).unsqueeze(0) for k in range(3)]  # (1,N) lvec
@@ -636,7 +635,7 @@ def _render_chunk(
     pn = pm[..., 2]
     nrm = pn.view(-1, 1, 3).expand(B, N, 3).clone()
 
-    # ---- the movers, cast only inside their window, through the shared intersectors
+    # Cast movers only inside their window, through the shared intersectors.
     win = WINDOW_EMPTY if not K else (None if FORCE_FULL_FRAME else _mover_window(scene, xpos_rel))
     if win != WINDOW_EMPTY:
         if win is None:
@@ -664,7 +663,7 @@ def _render_chunk(
             i3 = idx.unsqueeze(-1).expand(-1, -1, 3)
             nrm.scatter_(1, i3, torch.where(upd.unsqueeze(-1), nm, torch.gather(nrm, 1, i3)))
 
-    # ---- shade only the rays that hit something, compacted across the chunk
+    # Shade only rays that hit something, compacted across the chunk.
     hit = prim >= 0
     flat = torch.nonzero(hit.reshape(-1), as_tuple=False).reshape(-1)
     env = flat // N
@@ -682,7 +681,7 @@ def _render_chunk(
         mat_idx = scene.prim_mat[pid]  # material slot
         own = torch.where(mat_idx == scene.nmat, scene.nmat + 1 + pid, mat_idx)
         base = table[env, own]
-        # textured non-plane geoms: the megakernel's texel (0, 0); ones for the plane and untextured
+        # Textured non-plane geoms use texel (0, 0); the plane and untextured geoms use ones.
         base = base * torch.where((pid > 0).unsqueeze(-1), scene.mat_tex00[mat_idx], torch.ones_like(base))
         # Plane UVs follow the source texgen law; the projected footprint selects mip levels.
         if scene.plane_tex is not None:
@@ -730,7 +729,7 @@ def _render_chunk(
         _reflect(
             scene, rgb, prim, t_plane, cam, xpos_rel, xmat, light_pos, light_dir, mat_rgb, light_diffuse, plane_mat
         )
-    # ``pack_rgba_to_uint32``: C ``int()`` truncates; under ``gl_rounding`` it is int(x*255 + 0.5)
+    # ``pack_rgba_to_uint32`` truncates; ``gl_rounding`` uses int(x*255 + 0.5).
     q = rgb * 255.0
     if QUANT == "round":
         q = q + 0.5
@@ -849,7 +848,7 @@ def _shade_hits(
         if L.active:
             result = result + base * torch.as_tensor(L.ambient, dtype=torch.float32, device=dev)
 
-    # shadow candidates: mover hits, and plane hits inside the movers' light footprint
+    # Shadow candidates: mover hits, and plane hits inside the movers' light footprint.
     if use_shadows and K and any(L.castshadow for L in scene.lights):
         cand = pid > 0
         for li, L in enumerate(scene.lights):
@@ -879,8 +878,7 @@ def _shade_hits(
                 d_s = Ldir[q]
                 lim = dist[q] - SHADOW_MAX_T_EPS
                 blocked = _any_blocking_flat(scene, xpos_rel, xmat, env[q], o_s, d_s, lim)
-                # the plane occludes too (the megakernel shadows against its whole BVH):
-                # ``ray_plane`` from the shadow origin, front face only, inside the bounds
+                # The plane also occludes: ``ray_plane`` from the shadow origin, front face only, within bounds.
                 o_w = o_s + cam[env[q]]
                 pq = pm if plane_mat is None else pm[env[q]]
                 lz = _dot(d_s, pq[..., 2])

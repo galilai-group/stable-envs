@@ -1,3 +1,5 @@
+"""Batched nvdiffrast rendering of MuJoCo geometry with MuJoCo-style lighting, textures, and skybox."""
+
 from __future__ import annotations
 
 import math
@@ -11,7 +13,7 @@ from . import _resources
 if TYPE_CHECKING:
     import torch
 
-#: mjtGeom codes, so a scene can be built from an MjModel with no translation table.
+#: mjtGeom codes, read directly from an MjModel.
 PLANE, HFIELD, SPHERE, CAPSULE, ELLIPSOID, CYLINDER, BOX, MESH = 0, 1, 2, 3, 4, 5, 6, 7
 
 #: Match the default visible geom groups in MuJoCo MjvOption.
@@ -346,7 +348,7 @@ class Lights:
         g = lambda a: np.asarray(a, np.float64)  # noqa: E731
 
         def flag(i, name, fallback):
-            """Read either the light-type enum or the corresponding legacy boolean field."""
+            """Read a boolean light field, or derive it from the light-type enum when absent."""
             li = scn.lights[i]
             if hasattr(li, name):
                 return bool(getattr(li, name))
@@ -733,7 +735,7 @@ class Scene(_resources.Closeable):
         M[:, :, :3, :3] = xmat
         M[:, :, :3, 3] = xpos
         M[:, :, 3, 3] = 1.0
-        mvp = mvp_rows(proj, view, M)  # batch-invariant, see mvp_rows
+        mvp = mvp_rows(proj, view, M)
         pos = torch.sparse.mm(self.S4, mvp.permute(1, 3, 0, 2).reshape(4 * G, 4 * B))
         pos = pos.reshape(self.V, B, 4).permute(1, 0, 2).contiguous()
         nrm = torch.sparse.mm(self.S3, xmat.permute(1, 3, 0, 2).reshape(3 * G, 3 * B))
@@ -779,7 +781,7 @@ def prepare_texture_array(a: np.ndarray, dev, policy: str = "pot", cube: bool = 
             a = a.reshape(6, w, w, 3)
         elif h == w:
             a = np.repeat(a[None], 6, 0)
-        else:  # not a layout we can name
+        else:  # unrecognized layout: sample as a 2-D image
             cube = False
     hw = a.shape[-3:-1]
     ok = is_pow2(hw[0]) and is_pow2(hw[1])
@@ -995,7 +997,7 @@ class BatchRenderer(_resources.Closeable):
         img = torch.where(hit[..., None], col, self._background(cam, R, B, campos, camfwd))
         if self.ss > 1:
             img = img.view(B, self.res, self.ss, self.res, self.ss, 3).mean((2, 4))
-        img = QUANT(img, self.quant).flip(1)  # nvdiffrast row 0 is the BOTTOM
+        img = QUANT(img, self.quant).flip(1)  # nvdiffrast row 0 is the bottom
         if out is not None:
             out.view(B, self.res, self.res, 3).copy_(img)
             return out
@@ -1044,7 +1046,7 @@ class BatchRenderer(_resources.Closeable):
             h = h / h.norm(dim=-1, keepdim=True).clamp_min(1e-9)
             ndh = (n * h).sum(-1, keepdim=True).clamp_min(0.0)
             high = high + sp * spec.unsqueeze(-1) * torch.pow(ndh, exp) * att
-        return prim + high + base * emis.unsqueeze(-1)  # UNCLAMPED: see render()
+        return prim + high + base * emis.unsqueeze(-1)
 
     def _texture(self, S, rast, db, gid):
         """Sample texture modulation using interpolated UV derivatives for mip selection.
@@ -1065,8 +1067,7 @@ class BatchRenderer(_resources.Closeable):
             if not bool(sel.any()):
                 continue
             if spec["cube"]:
-                # MuJoCo maps a direction into cube space by rotating 90 degrees about X
-                # (S=x, T=z, R=-y), the same convention its skybox uses.
+                # MuJoCo rotates directions 90 degrees about X into cube space (S=x, T=z, R=-y).
                 d = torch.stack([uv3[..., 0], uv3[..., 2], -uv3[..., 1]], -1).contiguous()
                 c = dr.texture(spec["tex"][None], d, boundary_mode="cube", filter_mode="linear")
             else:
@@ -1144,7 +1145,7 @@ class BatchRenderer(_resources.Closeable):
             right, up, back = mat[:, :, 0], mat[:, :, 1], mat[:, :, 2]
             fwd = -back
             f = math.tan(math.radians(cam.fovy) / 2.0)
-            ys = (2.0 * (np.arange(R) + 0.5) / R - 1.0) * f  # row 0 at the BOTTOM
+            ys = (2.0 * (np.arange(R) + 0.5) / R - 1.0) * f  # row 0 at the bottom
             xs = (2.0 * (np.arange(R) + 0.5) / R - 1.0) * f
             X, Y = np.meshgrid(xs, ys)
             d = X[None, ..., None] * right[:, None, None] + Y[None, ..., None] * up[:, None, None] + fwd[:, None, None]

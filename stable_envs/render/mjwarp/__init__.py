@@ -19,7 +19,7 @@ os.environ.setdefault("WARP_CACHE_PATH", os.path.expanduser("~/.cache/warp"))
 
 #: Default visible groups in MuJoCo MjvOption.
 DEFAULT_GROUPS = (0, 1, 2)
-#: Where ``prepare_model`` parks geometry MJWarp would otherwise draw opaque.
+#: Group that ``prepare_model`` moves invisible geometry into, so MJWarp does not draw it opaque.
 HIDDEN_GROUP = 5
 #: mjtGeom codes whose UVs MJWarp can derive. Everything else samples texel (0,0) when textured.
 TEXTURED_OK = (0, 7)  # PLANE, MESH
@@ -59,6 +59,7 @@ class Prepared:
     neutralised_spots: list[int] = field(default_factory=list)
 
     def summary(self) -> str:
+        """Describe the hidden elements and adjusted spot lights in one line."""
         out = (
             f"{len(self.hidden_geoms)} invisible geoms and {len(self.hidden_sites)} invisible "
             f"sites moved out of groups {self.groups}"
@@ -86,7 +87,7 @@ def neutralise_illegal_spots(m) -> tuple[list[int], dict]:
     for i in range(int(m.nlight)):
         if hasattr(m, "light_type"):
             is_spot = int(m.light_type[i]) == 0
-        else:  # older mujoco: directional flag only
+        else:  # MuJoCo builds without light_type expose only the directional flag
             is_spot = not int(m.light_directional[i])
         if not is_spot:
             continue
@@ -381,8 +382,7 @@ def create_render_context(m, tex_lod: int = 1, **kw):
             rc._se_tex_lod_keep = keep
         except AttributeError:  # pragma: no cover
             for t in keep:
-                # Context types without ownership attributes require process-lifetime storage retention.
-                # Retain even past the warning threshold to avoid freeing memory still used by a texture.
+                # Without a settable attribute, retain the storage for the process lifetime, even past the cap.
                 _resources.retain_process_lifetime(t, TEX_KEEP_REASON, overflow="retain")
     return rc
 

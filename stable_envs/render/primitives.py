@@ -1,3 +1,5 @@
+"""MuJoCo primitive geometry codes, unrolled vector helpers, and conservative bounding radii."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -5,7 +7,7 @@ from dataclasses import dataclass
 import numpy as np
 import torch
 
-# MuJoCo geometry codes; no translation is needed when reading an MjModel.
+# mjtGeom codes, read directly from an MjModel.
 PLANE, SPHERE, CAPSULE, ELLIPSOID, CYLINDER, BOX = 0, 2, 3, 4, 5, 6
 
 # Supported analytic intersections, shared by backend validation.
@@ -78,7 +80,7 @@ def bound_radius(kind, size) -> np.ndarray:
         elif k == BOX:
             out[i] = float(np.linalg.norm(s[i]))
         elif k == ELLIPSOID:
-            out[i] = float(s[i].max())  # the largest semi-axis contains it
+            out[i] = float(s[i].max())
         else:
             out[i] = INF
     return out
@@ -94,7 +96,7 @@ def bound_radius_tensor(kind: int, size: torch.Tensor) -> torch.Tensor | None:
         return torch.sqrt(size[..., 0] ** 2 + size[..., 1] ** 2 + size[..., 2] ** 2)
     if kind == ELLIPSOID:
         return torch.maximum(torch.maximum(size[..., 0], size[..., 1]), size[..., 2])
-    return None  # PLANE, and any future unbounded kind: always tested
+    return None  # PLANE and other unbounded kinds are always tested
 
 
 @dataclass

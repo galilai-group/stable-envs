@@ -445,7 +445,7 @@ def cast_nearest_torch(
             js = torch.nonzero(_rays_near(pos[:, k : k + 1], rad, o, d, dd).any(0), as_tuple=False).reshape(-1)
             if js.numel() == 0:
                 continue
-            if js.numel() == N:  # nothing pruned; the gather would be pure overhead
+            if js.numel() == N:  # nothing pruned; skip the gather
                 js = None
         oo, ddir = (o, d) if js is None else (o[:, js], d[:, js])
         t, n = intersect(kind, sizes[:, k : k + 1], pos[:, k : k + 1], R[:, k : k + 1], oo, ddir)
@@ -575,13 +575,13 @@ if HAVE_TRITON:
 
         Return (t, nx, ny, nz), with t=INF on misses. Each branch assigns every output."""
         zero = tl.zeros([BLOCK], dtype=tl.float32)
-        never = tl.arange(0, BLOCK) < 0  # an all-False mask
+        never = tl.arange(0, BLOCK) < 0  # all-False mask
         t = zero + INF
         nx = zero
         ny = zero
         nz = zero
 
-        if kind == SPHERE:  # SPHERE
+        if kind == SPHERE:
             r = s0
             ocx = ox - px
             ocy = oy - py
@@ -599,7 +599,7 @@ if HAVE_TRITON:
             ny = tl.math.div_rn(ocy + tc * dy, r)
             nz = tl.math.div_rn(ocz + tc * dz, r)
 
-        elif kind == CAPSULE or kind == CYLINDER:  # CAPSULE (3) and CYLINDER (5)
+        elif kind == CAPSULE or kind == CYLINDER:
             r = s0
             hh = s1
             ax = ox - px
@@ -681,7 +681,7 @@ if HAVE_TRITON:
             ny = r10 * nlx + r11 * nly + r12 * nlz
             nz = r20 * nlx + r21 * nly + r22 * nlz
 
-        elif kind == ELLIPSOID:  # ELLIPSOID
+        elif kind == ELLIPSOID:
             ax = ox - px
             ay = oy - py
             az = oz - pz
@@ -725,7 +725,7 @@ if HAVE_TRITON:
             ny = r10 * nlx + r11 * nly + r12 * nlz
             nz = r20 * nlx + r21 * nly + r22 * nlz
 
-        elif kind == BOX:  # BOX
+        elif kind == BOX:
             ax = ox - px
             ay = oy - py
             az = oz - pz
@@ -1277,7 +1277,7 @@ def screen_span(cam: Camera, prims: Primitives, xpos: torch.Tensor, H: int, W: i
     y1 = py.amax(1).ceil().long() + 1
     probe = torch.stack(
         [(x1 - x0).max(), (y1 - y0).max(), torch.isfinite(ndc).all().long()]
-    ).cpu()  # the one synchronisation
+    ).cpu()  # the only synchronization
     if not int(probe[2]):
         return None
     return x0, y0, int(probe[0]), int(probe[1])

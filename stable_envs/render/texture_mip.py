@@ -1,4 +1,4 @@
-"""Texture minification from projected pixel footprints, without frame resampling."""
+"""Mip pyramids and footprint-filtered sampling for MuJoCo plane and skybox textures."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ class Pyramid(NamedTuple):
 
 
 def plane_texgen(size, repeat, uniform, version):
-    """Plane UV scale/offset for MuJoCo's legacy texgen or 3.12+ explicit UVs."""
+    """Return plane UV scale and offset for MuJoCo texgen before 3.12 or explicit UVs from 3.12."""
     size = np.asarray(size[:2], dtype=np.float64)
     repeat = np.asarray(repeat, dtype=np.float64)
     finite = size > 0
