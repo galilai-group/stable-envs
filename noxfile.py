@@ -102,6 +102,9 @@ def test(session: nox.Session, profile: str) -> None:
         env["SE_REQUIRE_FAMILIES"] = profile
         env["SE_REQUIRE_CAPABILITIES"] = ",".join(spec.get("capabilities", ()))
     workers = os.environ.get("SE_WORKERS", "auto")
+    if workers != "0":
+        # xdist starts a worker per CPU, so more intra-op threads per worker oversubscribe the cores.
+        env["OMP_NUM_THREADS"] = os.environ.get("OMP_NUM_THREADS", "1")
     marks = f"family_{profile} and not gpu and not slow"
     if not os.environ.get("SE_NIGHTLY"):
         marks += " and not nightly"
@@ -114,6 +117,7 @@ def test(session: nox.Session, profile: str) -> None:
         "-m",
         marks,
         *(["--shard", shard] if shard else []),
+        *(["--env-affinity"] if spec.get("env_affinity") else []),
         *(["-n", workers] if workers != "0" else []),
         *session.posargs,
         env=env,
