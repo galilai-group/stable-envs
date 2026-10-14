@@ -261,9 +261,6 @@ ignore = ["E402", "E731", "E741"]
 "stable_envs/env.py" = ["F821"]
 # Public `Union[...]` alias; `|` would change the runtime type object.
 "stable_envs/render/scene.py" = ["UP007"]
-# Lambdas close over names `del`'d in the same function; ruff treats them as unbound.
-"examples/bench_gpu_vs_cpu.py" = ["F821"]
-"examples/domain_randomization.py" = ["F821"]
 # Availability probe: `import torch` inside try/except ImportError.
 "examples/render.py" = ["F401"]
 

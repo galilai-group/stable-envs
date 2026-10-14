@@ -1,7 +1,8 @@
-"""Static and ``--help`` checks for the ``examples/`` scripts, without running a benchmark.
+"""Checks for the ``examples/`` scripts.
 
-Every script compiles, does no work at import time, and (if it uses argparse) prints ``--help`` in a
-subprocess. Scripts needing an optional dependency this interpreter lacks skip with the reason.
+Every script compiles, does no work at import time, prints ``--help`` if it uses argparse, and runs
+end to end on CPU with small arguments in a subprocess. Scripts needing an optional dependency or
+env this interpreter lacks skip with the reason.
 """
 
 from __future__ import annotations
@@ -48,13 +49,13 @@ def test_every_example_script_parses(path: Path):
 
 @pytest.mark.parametrize("path", SCRIPTS, ids=IDS)
 def test_a_runnable_script_does_its_work_behind_a_main_guard(path: Path):
-    """No module-level ``main()``/``run()``/``sweep()`` call; ``test_benchmarks.py`` imports these scripts."""
+    """No module-level ``main()``/``run()``/``sweep()`` call, so importing a script does no work."""
     tree = ast.parse(path.read_text(), str(path))
     calls = [n for n in tree.body if isinstance(n, ast.Expr) and isinstance(n.value, ast.Call)]
     named = [c for c in calls if isinstance(c.value.func, ast.Name) and c.value.func.id in {"main", "run", "sweep"}]
     assert not named, (
         f"{path.relative_to(ROOT)} calls {named[0].value.func.id}() at import time; put it behind "
-        f'`if __name__ == "__main__":` — tests/unit/test_benchmarks.py imports scripts from here'
+        f'`if __name__ == "__main__":`'
     )
 
 
@@ -66,25 +67,68 @@ def test_the_argparse_sweep_below_is_not_empty():
     assert len(ARGPARSE) >= 6, f"only {len(ARGPARSE)} scripts under examples/ use argparse"
 
 
-@pytest.mark.parametrize("path", ARGPARSE, ids=ARGPARSE_IDS)
-def test_every_argparse_script_can_print_its_own_help(path: Path):
-    """``--help`` imports the module, builds the parser, prints usage and exits 0."""
+def _run(path: Path, args: list[str]) -> subprocess.CompletedProcess:
+    """Run a script on CPU; skip when it stops on a package this interpreter does not have."""
     env = dict(os.environ)
     env["PYTHONPATH"] = os.pathsep.join([str(ROOT), str(EXAMPLES), env.get("PYTHONPATH", "")]).rstrip(os.pathsep)
+    env["CUDA_VISIBLE_DEVICES"] = ""
     env.setdefault("MUJOCO_GL", "egl")
     env.setdefault("SDL_VIDEODRIVER", "dummy")
     p = subprocess.run(
-        [sys.executable, str(path), "--help"], env=env, capture_output=True, text=True, timeout=300, cwd=str(ROOT)
+        [sys.executable, str(path), *args], env=env, capture_output=True, text=True, timeout=600, cwd=str(ROOT)
     )
     if p.returncode != 0:
         tail = (p.stderr or p.stdout)[-2500:]
         last = [ln for ln in (p.stderr or "").strip().splitlines() if ln.strip()]
         if last and last[-1].startswith(("ModuleNotFoundError", "ImportError")):
             pytest.skip(f"{path.relative_to(ROOT)} needs a package this interpreter does not have: {last[-1]}")
-        pytest.fail(f"{path.relative_to(ROOT)} --help exited {p.returncode}:\n{tail}")
+        pytest.fail(f"{path.relative_to(ROOT)} {' '.join(args)} exited {p.returncode}:\n{tail}")
+    return p
+
+
+@pytest.mark.parametrize("path", ARGPARSE, ids=ARGPARSE_IDS)
+def test_every_argparse_script_can_print_its_own_help(path: Path):
+    """``--help`` imports the module, builds the parser, prints usage and exits 0."""
+    p = _run(path, ["--help"])
     assert "usage" in (p.stdout + p.stderr).lower(), (
         f"{path.relative_to(ROOT)} --help exited 0 without printing a usage line"
     )
+
+
+#: Small CPU arguments per script, and the env each needs registered.
+SMOKE = {
+    "action_sequences.py": ("CartPole", []),
+    "batched_env.py": ("CartPole", ["--env", "CartPole", "--num-envs", "3", "--short", "2", "--device", "cpu"]),
+    "bench_gpu_vs_cpu.py": ("CartPole", ["--envs", "CartPole", "--batches", "1,4", "--pool", "2", "--reps", "1"]),
+    "bench_pusht_source.py": (
+        "PushT",
+        ["--batches", "1", "--sizes", "96", "--episodes", "1", "--repeats", "1", "--source-frames", "1"],
+    ),
+    "domain_randomization.py": ("CartPole", ["--num-envs", "4", "--device", "cpu", "--reps", "1"]),
+    "gallery.py": ("CartPole", ["--envs", "CartPole", "--num-envs", "2", "--steps", "2", "--device", "cpu"]),
+    "render.py": ("CartPole", ["--env", "CartPole", "--num-envs", "2", "--device", "cpu"]),
+}
+
+
+def test_every_script_has_smoke_arguments():
+    assert sorted(SMOKE) == sorted(IDS), "add small CPU arguments for each script to SMOKE"
+
+
+@pytest.mark.parametrize("path", SCRIPTS, ids=IDS)
+def test_every_script_runs_end_to_end(path: Path, tmp_path: Path):
+    """Each script runs to completion on CPU with small arguments."""
+    import stable_envs as snv
+
+    name, args = SMOKE[str(path.relative_to(EXAMPLES))]
+    if name not in snv.list_envs():
+        pytest.skip(f"{name} is not registered in this interpreter")
+    if path.name == "gallery.py":
+        args = [*args, "--out", str(tmp_path)]
+    _run(path, args)
+    if path.name == "gallery.py":
+        written = sorted(p.name for p in (tmp_path / "CartPole").iterdir())
+        assert written == ["reset.png", "rollout.png", "variation.png"], written
+        assert all((tmp_path / "CartPole" / n).read_bytes().startswith(b"\x89PNG") for n in written)
 
 
 def test_the_readme_lists_the_scripts_that_exist():
