@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import threading
+from functools import lru_cache
+from importlib.metadata import version
 
 import numpy as np
 import torch
@@ -16,6 +18,15 @@ COMPILED_VALUES = tuple(name for name in MODEL_VALUES if name != "agent.color")
 
 _LOCK = threading.RLock()
 _CACHE = {}
+
+
+@lru_cache
+def check_versions(renderer, *, warp=False):
+    """Raise ImportError unless the pinned MuJoCo and OGBench, and with ``warp`` MJWarp and Warp, are installed."""
+    if version("mujoco") != "3.12.0" or version("ogbench") != "1.2.1":
+        raise ImportError(f"Cube/Scene {renderer} rendering requires mujoco==3.12.0 and ogbench==1.2.1")
+    if warp and (version("mujoco-warp") != "3.12.0" or version("warp-lang") != "1.17.0"):
+        raise ImportError("Cube/Scene GPU rendering requires mujoco-warp==3.12.0 and warp-lang==1.17.0")
 
 
 def _key(family, row, resolution):
@@ -107,7 +118,7 @@ def render(family, state, device, chunk_size=None):
     # rather than synchronizing CUDA once for every scalar validation predicate.
     host = state.detach().cpu()
     pixels.validate(family, host)
-    pixels.check_versions("OpenGL")
+    check_versions("OpenGL")
     if chunk_size is not None and (type(chunk_size) is not int or chunk_size < 1):
         raise ValueError("chunk_size must be a positive integer")
     device = torch.device(device)
