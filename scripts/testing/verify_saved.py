@@ -14,7 +14,7 @@ def main():
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     identity = parser.add_mutually_exclusive_group(required=True)
-    identity.add_argument("--revision", help="Historical Git commit whose code produced the report")
+    identity.add_argument("--revision", help="Git commit whose code produced the report")
     identity.add_argument("--current", action="store_true", help="Require hashes to match the current worktree")
     args = parser.parse_args()
     run = EvidenceRun(args.output)

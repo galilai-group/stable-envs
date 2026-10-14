@@ -1,4 +1,4 @@
-"""Freeze additive real-reference-only oracles for three native navigation defaults."""
+"""Freeze reference-only oracles for three native navigation defaults."""
 
 import hashlib
 import importlib.metadata

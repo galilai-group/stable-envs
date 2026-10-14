@@ -1,4 +1,4 @@
-"""Freeze additive real-reference-only oracles for two classic-control defaults."""
+"""Freeze reference-only oracles for the CartPole and Pendulum classic-control defaults."""
 
 import hashlib
 import importlib.metadata

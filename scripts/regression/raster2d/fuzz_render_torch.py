@@ -1,15 +1,11 @@
-"""Differential fuzz: ``render_torch`` against the earlier per-pixel implementation, byte for byte.
+"""Differential fuzz: ``render_torch`` against a per-pixel reference implementation, byte for byte.
 
-The six frozen configurations and the eight registered Scene2D envs are real scenes, and real
-scenes are a narrow sample: every one of them renders at supersample 1, none has a collinear
-polygon, and none has a negative radius. The bounding and family-dispatch pre-pass is a claim about
-ALL scenes, so this generates the awkward ones on purpose -- disabled slots, zero-area polygons,
-degenerate padded edges, negative radii, inner discs, outlines wider than the shape, primitives
-entirely off the frame, primitives larger than the world, flip_y, non-square worlds, supersample 2
--- and asserts the two implementations produce identical bytes.
+Registered scenes cover few edge cases, so this generates awkward ones: disabled slots, zero-area
+and collinear polygons, degenerate padded edges, negative radii, inner discs, outlines wider than the
+shape, primitives off the frame or larger than the world, flip_y, non-square worlds and outputs, and
+supersample 2.
 
-The baseline implementation is inlined below rather than imported; keeping a copy is what makes the
-comparison a comparison.
+The reference implementation is inlined rather than imported so that the comparison is independent.
 
     python scripts/regression/raster2d/fuzz_render_torch.py --cases 400
 """
@@ -20,6 +16,8 @@ import argparse
 import sys
 from pathlib import Path
 
+import torch
+
 
 def _repo_root() -> Path:
     p = Path(__file__).resolve()
@@ -28,8 +26,6 @@ def _repo_root() -> Path:
             return cand
     raise RuntimeError("repo root not found")
 
-
-import torch
 
 ROOT = _repo_root()
 sys.path.insert(0, str(ROOT))
@@ -40,7 +36,7 @@ from stable_envs.render.scene import KIND_DISC, KIND_POLY, KIND_SEGMENT, Scene2D
 
 @torch.no_grad()
 def render_torch_baseline(scene, out_size, supersample: int = 1) -> torch.Tensor:
-    """The earlier ``render_torch``, verbatim."""
+    """Per-pixel reference ``render_torch``: one masked pass per primitive."""
     H = W = int(out_size) if isinstance(out_size, int) else out_size[0]
     if not isinstance(out_size, int):
         H, W = out_size
@@ -99,8 +95,7 @@ def render_torch_baseline(scene, out_size, supersample: int = 1) -> torch.Tensor
 
 
 def random_scene(gen: torch.Generator, device: str):
-    # Always drawn on the CPU and then moved: one generator, one stream of numbers, so
-    # --device cuda fuzzes the SAME scenes the cpu run did rather than a different sample.
+    # Drawn on the CPU and then moved, so --device cuda fuzzes the same scenes as a CPU run.
     device_out, device = device, "cpu"
     B = int(torch.randint(1, 5, (1,), generator=gen).item())
     N = int(torch.randint(1, 7, (1,), generator=gen).item())

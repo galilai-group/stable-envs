@@ -1,7 +1,6 @@
-"""Generate five independent source trajectories into a NEW sealed corpus.
+"""Generate five source trajectories into a new sealed corpus.
 
-The action plans match the historical native corpora, making migration equivalence
-measurable. Source calls alone produce the expected states and task outputs.
+Source calls alone produce the expected states and task outputs.
 """
 
 import argparse

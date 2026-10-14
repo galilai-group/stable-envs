@@ -1,4 +1,4 @@
-"""Create an additive full-State oracle from the pinned SWM wrapper only."""
+"""Freeze a full-State Reacher oracle from the pinned SWM wrapper only."""
 
 import hashlib
 import importlib.metadata

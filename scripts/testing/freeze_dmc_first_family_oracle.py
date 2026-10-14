@@ -1,4 +1,4 @@
-"""Create additive full-State oracles from only the three pinned SWM wrappers."""
+"""Freeze full-State oracles for the first DMC family from the pinned SWM wrappers only."""
 
 import hashlib
 import importlib.metadata
