@@ -533,24 +533,6 @@ LEAF_CLASSIFICATION.update(
     }
 )
 
-#: The two Craftax pixel ids, recorded so the completeness count accounts for every id. swm's
-#: `CraftaxWrapper.__init__` sets `self.variation_space = None`, so both offer zero leaves.
-CRAFTAX_NO_LEAVES = {
-    "swm/CraftaxClassicPixels-v1": {
-        "our_envs": ["CraftaxClassic"],
-        "n_swm_leaves": 0,
-        "classification": "not_applicable",
-        "evidence": "live: CraftaxClassicPixelsWrapper.variation_space is None; frame (63,63,3)",
-    },
-    "swm/CraftaxPixels-v1": {
-        "our_envs": ["CraftaxFull"],
-        "n_swm_leaves": 0,
-        "classification": "not_applicable",
-        "evidence": "live: CraftaxPixelsWrapper.variation_space is None; frame (130,110,3)",
-    },
-}
-
-
 #: Our own variation-space leaves, per cell, recorded from ``make_variation_space`` so every
 #: our-side leaf is checked for a mapping or an ``ours_only`` reason. Recorded because the OGB
 #: manipulation cells do not construct without CUDA; a live check asserts the table wherever the

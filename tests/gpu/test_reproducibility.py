@@ -290,13 +290,10 @@ MEASURED_ON = (
 #: shape by one pixel costs whole percent.
 DOWNSAMPLE_MARGIN = 0.005
 #: Why the floors differ by family:
-#:   1.000       Craftax: a bitmap atlas whose tile size scales exactly, so the box filter inverts 2S.
 #:   0.897       PushT: point-sampled analytic shape edges.
 #:   0.708-0.726 OGBench mazes: MuJoCo re-bakes the plate at 2S with its own multisampling.
 #:   0.282-0.730 DM Control: the same re-bake over a speckled skybox and a checker floor.
-#: Not listed: ``CraftaxFull`` (declares ``resolution_consistency_applicability`` as not applicable in
-#: all bands; the official renderer resamples textures per size) and ``DMCManipulatorBringBall`` (a
-#: plate cell covered by ``PLATE_REPRESENTATIVES``).
+#: Not listed: ``DMCManipulatorBringBall`` (a plate cell covered by ``PLATE_REPRESENTATIVES``).
 DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     "AntmazeGiantNavigate": 0.708287,  # mean 1.1419/255
     "AntmazeGiantStitch": 0.708287,  # mean 1.1419/255
@@ -309,9 +306,6 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     "AntmazeTeleportExplore": 0.717594,  # mean 1.1558/255
     "AntmazeTeleportNavigate": 0.717594,  # mean 1.1558/255
     "AntmazeTeleportStitch": 0.717594,  # mean 1.1558/255
-    #: Judged on light >= 0.5 only: the night noise field is drawn at the frame's resolution, and the
-    #: class declares that band via ``resolution_consistency_applicability``.
-    "CraftaxClassic": 1.000000,  # mean 0.0000/255 on light >= 0.5; see applicability
     "DMCCartpoleSwingup": 0.282065,  # mean 1.4428/255  see DM Control note below
     "DMCPointMassEasy": 0.730424,  # mean 0.2418/255
     #: DM Control cells drawn entirely through MJWarp (no plate), each measured on its own; the low
@@ -402,7 +396,7 @@ def test_resolution_applicability_is_read_from_the_declaration_and_moves_no_boun
     r = C.resolution_consistency_applicability(Bare(), st)
     assert r["applicable"] and r["indices"] is None, r
 
-    # 2. the CraftaxClassic shape: one applicable band and one not.
+    # 2. one applicable band and one not.
     class Banded:
         state_names = names
         resolution_consistency_applicability = {
@@ -425,7 +419,7 @@ def test_resolution_applicability_is_read_from_the_declaration_and_moves_no_boun
 
     assert C.resolution_consistency_applicability(OnlyBad(), st)["indices"] == [2, 3]
 
-    # 4. the CraftaxFull shape: the whole cell, answered without looking at a state.
+    # 4. the whole cell, answered without looking at a state.
     class AllBands:
         state_names = names
         resolution_consistency_applicability = {"all bands": "not_applicable: mechanism", "evidence": "oracle.json"}

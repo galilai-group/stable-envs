@@ -38,26 +38,6 @@
    ]
   },
   {
-   "swm_id": "swm/CraftaxClassicPixels-v1",
-   "stable_envs_cells": [
-    "CraftaxClassic"
-   ]
-  },
-  {
-   "swm_id": "swm/CraftaxClassicSymbolic-v1",
-   "stable_envs_cells": []
-  },
-  {
-   "swm_id": "swm/CraftaxPixels-v1",
-   "stable_envs_cells": [
-    "CraftaxFull"
-   ]
-  },
-  {
-   "swm_id": "swm/CraftaxSymbolic-v1",
-   "stable_envs_cells": []
-  },
-  {
    "swm_id": "swm/FetchPickAndPlace-v3",
    "stable_envs_cells": [
     "FetchPickAndPlace"

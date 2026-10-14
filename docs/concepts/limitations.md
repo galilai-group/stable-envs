@@ -54,8 +54,6 @@ See [Fidelity tiers](fidelity-tiers.md).
 - nvdiffrast on x86 CPU has a one-ULP batch dependence in a sparse stage. No registered class uses that
   path on CPU.
 - `HumanoidMazeGiantNavigate` on CUDA is not reproducible across processes on at least one GPU.
-- Craftax's official wrapper JITs `reset` and `step`. Pixel identity is checked against the un-jitted
-  official renderer. Measurements of the jitted wrapper are in `tests.helpers.reference.craftax_jit`.
 
 ## Sibling libraries
 

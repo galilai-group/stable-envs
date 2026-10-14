@@ -43,12 +43,6 @@ def test_each_reference_profile_has_a_pin_group_with_its_exact_versions(profile)
     assert _exact(group) == expected
 
 
-def test_the_craftax_pin_group_is_the_profile_craftax_semantics_checks_at_construction():
-    from stable_envs.envs.craftax.simulation import PROFILE
-
-    assert _exact("pin-craftax") == {canonicalize_name(name): version for name, version in PROFILE.items()}
-
-
 def test_every_pin_group_is_mutually_exclusive_with_the_others():
     pins = {name for name in GROUPS if name.startswith("pin-")}
     sets = [{entry.get("group") for entry in row} for row in PYPROJECT["tool"]["uv"]["conflicts"]]

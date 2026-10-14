@@ -3,7 +3,6 @@
 from stable_envs._execution.protocol import SimulatorAdapter, StepPipeline
 from stable_envs.envs.classic_control.simulation.local import ClassicControlAdapter
 from stable_envs.envs.classic_control.simulation.process import AcrobotProcessAdapter
-from stable_envs.envs.craftax.simulation import CraftaxAdapter
 from stable_envs.envs.dmcontrol.simulation.factory import DMCAdapter
 from stable_envs.envs.dmcontrol.simulation.process import DMCProcessAdapter
 from stable_envs.envs.fetch.simulation.adapter import FetchAdapter
@@ -24,9 +23,8 @@ def local_adapters(
     manipulation: OGBManipulationAdapter,
     pusht: PushTReplayAdapter,
     rocket: RocketAdapter,
-    craftax: CraftaxAdapter,
 ) -> tuple[SimulatorAdapter, ...]:
-    return classic, fetch, dmc, maze, manipulation, pusht, rocket, craftax
+    return classic, fetch, dmc, maze, manipulation, pusht, rocket
 
 
 def process_adapters(

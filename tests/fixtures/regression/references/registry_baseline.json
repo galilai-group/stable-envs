@@ -115,20 +115,6 @@
    "tier": "parity"
   },
   {
-   "module": "stable_envs.envs.craftax",
-   "name": "CraftaxClassic",
-   "reference_id": "Craftax-Classic-Pixels-v1",
-   "state_dim": 149,
-   "tier": "parity"
-  },
-  {
-   "module": "stable_envs.envs.craftax_full",
-   "name": "CraftaxFull",
-   "reference_id": "Craftax-Pixels-v1",
-   "state_dim": 544,
-   "tier": "parity"
-  },
-  {
    "module": "stable_envs.envs.crafter",
    "name": "Crafter",
    "reference_id": "CrafterReward-v1",

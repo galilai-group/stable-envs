@@ -33,7 +33,7 @@ unless another module imports them.
 ```python
 env = snv.PushT(num_envs=8)
 env = snv.CartPole(num_envs=8)
-# snv.DMCReacherHard, snv.OGBCube, snv.CraftaxClassic, snv.PointMazeLargeNavigate, …
+# snv.DMCReacherHard, snv.OGBCube, snv.PointMazeLargeNavigate, …
 ```
 
 `dir(snv)` lists the documented namespace and the registered class names.
@@ -48,7 +48,6 @@ env = snv.CartPole(num_envs=8)
 | family | environments | examples |
 |---|---:|---|
 | `classic_control` | 5 | `CartPole`, `Pendulum` |
-| `craftax` | 6 | `CraftaxClassicPixels`, `CraftaxSymbolic` |
 | `dmcontrol` | 18 | `DMCReacherHard`, `DMCCheetahRun` (`domain="reacher"`, `"cheetah"`, …) |
 | `fetch` | 12 | `FetchReach`, `FetchPush`, … |
 | `navigation` | 5 | `TwoRoom`, `Piecewise`, `SimplePointMaze` |
@@ -56,10 +55,7 @@ env = snv.CartPole(num_envs=8)
 | `pusht` | 2 | `PushT`, `PushTDiscrete` |
 | `pyflyt` | 1 | `PyFlytRocketLanding` |
 
-These 76 register with every extra installed. Without PyFlyt there are 75.
-
-`CraftaxClassic` and `CraftaxFull` are renderer-only: `reset` and `step` raise. Use
-`CraftaxClassicPixels` and `CraftaxPixels` for simulation. Every other environment simulates.
+These 70 register with every extra installed. Without PyFlyt there are 69.
 
 ## Fidelity
 

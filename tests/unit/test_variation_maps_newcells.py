@@ -393,18 +393,6 @@ def test_simple_point_maze_mapped_leaves_are_dims_of_our_own_space():
         assert leaf in ours, f"{leaf} is mapped but is not a leaf of SimplePointMaze's own space"
 
 
-def test_craftax_ids_are_recorded_as_having_no_leaves_at_all():
-    """CraftaxWrapper sets variation_space = None, so both Craftax ids are recorded with no leaves."""
-    from tests.helpers.reference.variation_maps.newcells import CRAFTAX_NO_LEAVES
-
-    assert set(CRAFTAX_NO_LEAVES) == {"swm/CraftaxClassicPixels-v1", "swm/CraftaxPixels-v1"}
-    for sid, rec in CRAFTAX_NO_LEAVES.items():
-        assert rec["n_swm_leaves"] == 0
-        assert rec["classification"] == "not_applicable"
-        assert "variation_space is None" in rec["evidence"]
-        assert sid not in RECORDED_SWM_LEAVES, f"{sid} offers no leaves; it needs no map"
-
-
 # ---------------------------------------------------------------- OGB cube.color, on the CPU
 #
 # These run the real `_cube_colours`, `_cube_geom_index` and `_upload_cube_colours` against a stub

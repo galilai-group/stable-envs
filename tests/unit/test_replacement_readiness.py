@@ -41,6 +41,6 @@ def test_ready_forbids_meaningful_gaps():
 
 def test_every_cell_has_a_known_status():
     rows = inventory()
-    assert len(rows) == 42
+    assert len(rows) == 38
     assert all(r["status"] in STATUSES for r in rows)
-    assert sum(status_counts().values()) == 42
+    assert sum(status_counts().values()) == 38
