@@ -64,7 +64,7 @@ def _make_first_family(domain, seed):
         task = module.Balance(swing_up=True, sparse=True, random=seed)
         time_limit = 10
     else:
-        raise ValueError(f"Unsupported recovered DMC domain {domain!r}")
+        raise ValueError(f"Unsupported DMC domain {domain!r}")
 
     xml, assets = module.get_model_and_assets()
     model = mjcf.from_xml_string(
@@ -90,7 +90,7 @@ class FirstFamilyAdapter(DMCLanes):
 
     def __init__(self, domain, num_envs, device="cpu", seed=0):
         if domain not in FIRST_FAMILY_FIELDS:
-            raise ValueError(f"Unsupported recovered DMC domain {domain!r}")
+            raise ValueError(f"Unsupported DMC domain {domain!r}")
         self.domain = domain
         super().__init__(domain, num_envs, device, seed, lambda s: _make_first_family(domain, s), _FIRST_CORE[domain])
 

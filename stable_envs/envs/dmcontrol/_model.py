@@ -48,7 +48,6 @@ _GRID_SLOTS: dict = {}
 _ENV_CACHE: dict = {}
 # Captured GPU contexts are bounded and released on eviction.
 _TC_CACHE = _RES.BoundedCache(3, name="dmcontrol.tc", on_evict=MW.release_cached_ctx)
-_TC_CACHE_MAX = 3
 # Maximum worlds per captured context; smaller calls reuse padded contexts.
 MJW_CHUNK = 64
 
@@ -102,11 +101,11 @@ def _grid_defaults() -> np.ndarray:
 
     xml = common.ASSETS["./common/materials.xml"].decode()
     mat = re.search(r'<texture[^>]*name="grid"[^>]*/>', xml)
-    assert mat, "dm_control's common/materials.xml no longer declares a texture named 'grid'"
+    assert mat, "dm_control's common/materials.xml does not declare a texture named 'grid'"
     out = []
     for attr in ("rgb1", "rgb2", "markrgb"):
         got = re.search(attr + r'="([^"]+)"', mat.group(0))
-        assert got, f"the suite's grid texture no longer declares {attr}"
+        assert got, f"the suite's grid texture does not declare {attr}"
         out.append([float(x) for x in got.group(1).split()])
     return np.asarray(out, np.float64)
 
@@ -156,8 +155,8 @@ def _grid_masks(m, texid: int) -> tuple[np.ndarray, np.ndarray]:
     rebuilt[mk] = _quantise(d[2])
     assert np.array_equal(rebuilt, real), (
         f"the probe masks plus the suite's declared grid colours rebuild {int((rebuilt != real).any(1).sum())} "
-        f"of {w * h} texels differently from the compiled texture; the probe no longer describes "
-        f"this texture and a substitution through it would paint the wrong texels"
+        f"of {w * h} texels differently from the compiled texture; a substitution through these "
+        f"masks would paint the wrong texels"
     )
     _GRID_MASKS[key] = (m1, m2)
     return _GRID_MASKS[key]
@@ -247,10 +246,8 @@ def _episode_slots(env, m) -> tuple[tuple[str, int], ...]:
         # Per-row size or light-direction changes would invalidate shared bake data; reject them.
         raise RuntimeError(
             f"{env.__class__.__name__}: the episode draws {[_slot_name(m, a, i) for a, i in bad]}, "
-            f"which change a primitive's SIZE or a light's DIRECTION rather than a pose. The mover "
-            f"primitives carry one size for the whole batch and the lights are captured once per "
-            f"bake, so this domain needs a per-row size/light path before it can be honest. "
-            f"(Orientation is NOT in this class: a per-episode *_quat goes through mj_kinematics "
-            f"into the per-row xmat and is supported.)"
+            f"which change a primitive's size or a light's direction rather than a pose. Mover "
+            f"primitives carry one size per batch and lights are captured once per bake, so these "
+            f"need a per-row size/light path. Per-episode *_quat entries are supported."
         )
     return tuple(slots)

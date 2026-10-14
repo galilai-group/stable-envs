@@ -181,13 +181,6 @@ def _find_tendon(m) -> _Tendon | None:
     return td
 
 
-def _tendon_frame(m, d, td: _Tendon):
-    """Return capsule positions, rotations, half-lengths, and RGB after mj_forward."""
-    pts, rgb = _tendon_polyline(m, d, td)
-    pos, mat, half = _chain_capsules(pts, td.nseg)
-    return pos, mat, half, rgb
-
-
 def _tendon_polyline(m, d, td: _Tendon, gravity=None):
     """Return owned polyline points and RGB after mj_forward.
 

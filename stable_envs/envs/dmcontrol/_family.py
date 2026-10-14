@@ -27,9 +27,6 @@ from . import (  # noqa: F401
     walker,
 )
 from ._cells import (  # noqa: F401
-    _AT,
-    _AT_MEASURED_WITH,
-    _AT_VERSIONS,
     DOMAINS,
     PARITY_NOTE,
     TRACKCOM_DOMAINS,
@@ -45,7 +42,6 @@ from ._model import (  # noqa: F401
     _SCENE_CACHE,
     _SCENE_CACHE_MAX,
     _TC_CACHE,
-    _TC_CACHE_MAX,
     EPISODE_ARRAYS,
     HIDDEN_GROUP,
     LIGHT_DIRECTIONAL,
@@ -77,7 +73,6 @@ from ._tendon import (  # noqa: F401
     _find_tendon,
     _solve_catenary,
     _Tendon,
-    _tendon_frame,
     _tendon_polyline,
     catenary,
 )

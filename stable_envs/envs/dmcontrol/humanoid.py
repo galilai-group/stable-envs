@@ -40,11 +40,11 @@ DMCHumanoidWalk = trackcom_cell(
 )
 DMCHumanoidWalk.name = "dmc-humanoid-walk"
 DMCHumanoidWalk.reference_id = "dm_control/humanoid-walk"
-DMCHumanoidWalk.__doc__ = """Historical SWM Humanoid Walk using authoritative CPU physics.
+DMCHumanoidWalk.__doc__ = """SWM Humanoid Walk with CPU dm_control physics.
 
-The public identity names Humanoid(move_speed=1, pure_state=False), selected by
-swm/HumanoidDMControl-v0. Full State includes physical, RNG and lifecycle fields.
-CUDA selects State/render placement; simulation remains delegated to CPU.
+Simulates Humanoid(move_speed=1, pure_state=False), the task swm/HumanoidDMControl-v0
+selects. Full State includes physical, RNG and lifecycle fields. CUDA selects State
+and render placement; simulation runs on CPU.
 
 VISUAL TIER: rendered with MJWarp on CUDA or cpu3d on CPU, so pixels approximate the source
 rasterizer; see visual_note and visual_fidelity.

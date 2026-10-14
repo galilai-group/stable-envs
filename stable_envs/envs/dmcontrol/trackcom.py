@@ -83,9 +83,8 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
     m.light_diffuse[:] = pr["light_diffuse"]
     if not MW.needs_com_pos(m):
         raise RuntimeError(
-            f"{cls.__name__}: no camera or light on this model tracks subtree_com, so it does not "
-            f"belong in the trackcom family; the plate design in DMControlSuite is strictly better "
-            f"for it"
+            f"{cls.__name__}: no camera or light on this model tracks subtree_com; render it with "
+            f"DMControlSuite instead"
         )
     m.vis.global_.offwidth = max(int(m.vis.global_.offwidth), int(res))
     m.vis.global_.offheight = max(int(m.vis.global_.offheight), int(res))
@@ -528,7 +527,7 @@ class DMControlTrackCom(_DMCModel):
                 continue
             bodyid = m.geom_bodyid if kind == "geom" else m.site_bodyid
             if int(bodyid[eid]) != 0:
-                continue  # kinematics DOES recompute this one
+                continue  # kinematics recomputes poses on non-world bodies
             rows.setdefault((kind, eid), [np.asarray(pr[arr], np.float64)[eid].copy(), []])[1].append(
                 (j, int(k % _row_width(m, arr)))
             )

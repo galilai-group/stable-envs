@@ -5,7 +5,7 @@ from ._cells import trackcom_cell
 
 # This measurement uses the swimmer-specific render flags below.
 _SWIMMER_AT = (
-    "84 px, 64 states x 4 independent draws from sample_states, WORST of the four, "
+    "84 px, 64 states x 4 independent draws from sample_states, worst of the four, "
     "default appearance, enable_specular=False, one RTX 3090 / driver 575.57.08 / MUJOCO_GL=egl, "
     "mujoco 3.12.0 + mujoco-warp 3.12.0, "
     "against dm_control's physics.render at camera 0"
@@ -18,8 +18,8 @@ _SWIMMER_AT_MEASURED_WITH = {"mujoco_warp": "3.12.0"}
 
 # Disabling specular is specific to this cell; do not apply it to the whole family.
 SPECULAR_NOTE = (
-    "This domain renders with enable_specular=False, which is measured to be BETTER "
-    "than the default on all four declared metrics as well as 1.30x faster."
+    "This domain renders with enable_specular=False, which measures better than the default "
+    "on all four declared metrics and is 1.30x faster."
 )
 
 TRACKCOM_RENDER_FLAGS: dict[str, dict] = {

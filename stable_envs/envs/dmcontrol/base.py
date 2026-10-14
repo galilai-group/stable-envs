@@ -21,8 +21,8 @@ class _DMCModel(Env):
     """Share compiled models, appearance defaults and source rendering for DM Control.
 
     Compact render rows contain qpos and episode-specific model entries. They are
-    not restorable simulator State; registered recovered environments compose a
-    separate simulation adapter that defines the full State schema."""
+    not restorable simulator State; registered environments compose a separate
+    simulation adapter that defines the full State schema."""
 
     family = "dmcontrol"
 
@@ -310,11 +310,7 @@ class _DMCModel(Env):
                 raise RuntimeError(
                     f"{type(self).__name__}: {len(cur)} of the {len(alts)} declared shapes for "
                     f"{gname!r} match the compiled model (type {int(ptype)}, size "
-                    f"{list(psize)}); exactly one must, or this env's DEFAULT STYLE "
-                    f"stops being a render of the compiled model — which is the appearance every "
-                    f"parity number here is measured under, and which "
-                    f"check_default_style_is_official cannot see (it compares the default style "
-                    f"against itself, never against the official renderer)"
+                    f"{list(psize)}); exactly one must, so the default style renders the compiled model"
                 )
             if gname in space:
                 # A geom name must not overwrite an existing variation group.
@@ -392,8 +388,7 @@ class _DMCModel(Env):
             if np.abs(got - st).max() > 1e-9:
                 raise AssertionError(
                     f"{cls.__name__}: the reference env did not reach the requested state "
-                    f"(max {np.abs(got - st).max():.3e}); every parity number computed from it would "
-                    f"be comparing two different scenes"
+                    f"(max {np.abs(got - st).max():.3e})"
                 )
             out.append(p.render(height=size, width=size, camera_id=cls.CAMERA).copy())
         return np.stack(out)

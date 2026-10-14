@@ -12,38 +12,23 @@ DOMAINS: dict[str, tuple[str, str, int]] = {}
 # The corresponding table for trackcom renderers.
 TRACKCOM_DOMAINS: dict[str, tuple[str, str, int]] = {}
 
-_AT = (
-    "84 px, 64 states per domain from sample_states (the domain's own initialize_episode plus a "
-    "0-40 step random-action rollout), default appearance, H200 / driver 590.48.01 / MUJOCO_GL=egl, "
-    "mujoco 3.11.0 + mujoco-warp 3.11.0, against dm_control's physics.render at camera 0"
-)
-
-# Reference pins gate source comparisons; candidate backend versions record measurement provenance.
-_AT_VERSIONS = {"mujoco": "3.11.0"}
-_AT_MEASURED_WITH = {"mujoco_warp": "3.11.0"}
-
 VISUAL_NOTE = (
     "Body-tracking cameras use analytic rendering with filtered textures, floor reflections, "
     "and source-derived floor lighting. Geometry edges and body shading can still differ from "
-    "source OpenGL. The visual_fidelity dictionary records the historical MuJoCo 3.11 benchmark; "
-    "current source-pixel acceptance is measured separately by the maintained contract tests."
+    "source OpenGL. The visual_fidelity dictionary records the measured agreement and its "
+    "measurement setup."
 )
 
 PARITY_NOTE = (
-    "parity_interior_min is NOT relaxed: interior-pixel agreement measures exactly 1.000000 -- 0 bad "
-    "pixels out of 9,834,291 -- over 201 independent draws of 64 states at the shipped "
-    "default_supersample = 1. What is declared is parity_all_exact_min, and the reason is arithmetic "
-    "rather than a tolerance -- all-pixel exactness is interior exactness WEIGHTED BY HOW MUCH OF THE "
-    "FRAME MOVES, and finger-turn_easy's seven movers cover 11.7% of an 84 px frame against "
-    "cartpole's 2.5%. Measured over those 201 draws: all-pixel 0.9103 at WORST and 0.9119 median, "
-    "i.e. it CLEARS the shared 0.90 bar on every draw. 100.0% of every disagreeing pixel is inside the "
-    "ray-cast mover pass and the baked plate is 1.00000 exact on the pixels it owns; the residual is a "
-    "one-level rim on curved silhouettes, where MuJoCo shades a tessellated capsule per vertex and an "
-    "analytic per-pixel evaluation lands within a few levels of it. finger-spin (0.9288 worst) and "
-    "finger-turn_hard (0.9241 worst) are the same renderer with fewer mover pixels and declare "
-    "nothing. Dropping the supersample IMPROVED all three -- at ss=2 the same draws gave 0.9053 / "
-    "0.9249 / 0.9200 -- because an aliased edge is bit-identical to MuJoCo wherever MuJoCo's own MSAA "
-    "happened to be fully covered, while a blended edge almost never is."
+    "parity_interior_min is not relaxed: interior-pixel agreement is 1.000000 (0 of 9,834,291 pixels "
+    "differ) over 201 draws of 64 states at default_supersample = 1. parity_all_exact_min is lowered "
+    "because all-pixel exactness scales with the moving area: finger-turn_easy's seven movers cover "
+    "11.7% of an 84 px frame against cartpole's 2.5%. Over those draws all-pixel exactness is 0.9103 "
+    "worst and 0.9119 median. Every disagreeing pixel is in the ray-cast mover pass, and the baked "
+    "plate is exact on the pixels it owns. The residual is a one-level rim on curved silhouettes, "
+    "where MuJoCo shades a tessellated capsule per vertex and the analytic per-pixel evaluation lands "
+    "within a few levels of it. At supersample 2 the finger cells score lower (turn_easy 0.9053, "
+    "spin 0.9249, turn_hard 0.9200 worst), because a blended edge rarely matches MuJoCo's MSAA exactly."
 )
 
 

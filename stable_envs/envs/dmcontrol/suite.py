@@ -23,7 +23,7 @@ from ._model import (
     _tex_rgb,
 )
 from ._shading import _dot, _Lights, _norm, _Scene, _shade, _upsample_rgb
-from ._tendon import _chain_capsules_batch, _find_tendon, _tendon_polyline
+from ._tendon import _chain_capsules_batch, _find_tendon, _Tendon, _tendon_polyline
 from .base import _DMCModel
 
 
@@ -219,8 +219,8 @@ class DMControlSuite(_DMCModel):
         lights = _Lights(r.scene)
         sl = lights.shadow_light()
 
-        # plate 2: the shadow-casting light contributing only its ambient. This IS the colour of a
-        # static surface the light does not reach, so nothing about MuJoCo's shadow MAP is modelled.
+        # plate 2: the shadow-casting light contributing only its ambient. This is the colour of a
+        # static surface the light does not reach, so MuJoCo's shadow map need not be modelled.
         if sl >= 0:
             head = 1 if int(m.vis.headlight.active) else 0
             mi = sl - head
@@ -263,7 +263,7 @@ class DMControlSuite(_DMCModel):
         sc.shadow_candidates = {}
         sc.rays = {}
         sc.const = {}
-        # the reflective plane, if any: MuJoCo only mirrors PLANES
+        # the reflective plane, if any: MuJoCo only mirrors planes
         sc.reflectance, sc.floor = 0.0, None
         for i in gstat:
             mid = int(m.geom_matid[i])
@@ -352,35 +352,9 @@ class DMControlSuite(_DMCModel):
             cand = (a != b).any(-1) & (self._static_t(sc, ss).view(-1) < R3.INF)
             idx = torch.nonzero(cand, as_tuple=False).reshape(-1)
         else:
-            idx = torch.arange(a.shape[0], device=a.device)  # the pass this compaction replaced
+            idx = torch.arange(a.shape[0], device=a.device)  # every static sample
         rows = _upsample_rgb(sc.plate_shadow, ss).reshape(-1, 3).to(torch.float32)[idx]
         sc.shadow_candidates[key] = hit = (idx, rows.unsqueeze(0))
-        return hit
-
-    def _static_shadow_rays(self, sc: _Scene, ss: int):
-        """Cache shadow origins, directions and limits for fixed surfaces and lights.
-
-        Only occlusion by moving geometry depends on the render row."""
-        key = ("shadow", int(ss), bool(self.SHADOW_COMPACTION))
-        hit = sc.const.get(key)
-        if hit is not None:
-            return hit
-        cand, dark = self._shadow_candidates(sc, ss)
-        o, d = self._per_chunk_constants(sc, ss)[:2]
-        N = (sc.size * int(ss)) ** 2
-        st = self._static_t(sc, ss).view(1, N)
-        p = o.expand(1, N, 3)[:, cand] + st[:, cand].clamp(max=1e6).unsqueeze(-1) * d.view(1, N, 3)[:, cand]
-        L = sc.lights.to(self.device)
-        sl = sc.shadow_light
-        shape = (1,) * (p.dim() - 1) + (3,)
-        if L["kind"][sl] == LIGHT_DIRECTIONAL:
-            rd = (-_norm(L["dir"][sl].view(shape))).expand_as(p)
-            lim = torch.full(p.shape[:-1], R3.INF, device=p.device)
-        else:
-            v = L["pos"][sl].view(shape) - p
-            lim = torch.sqrt(torch.clamp(_dot(v, v), min=1e-24))
-            rd = v / lim.unsqueeze(-1)
-        hit = sc.const[key] = (cand, dark, p + rd * sc.eps, rd, lim, st[:, cand] < R3.INF)
         return hit
 
     def _floor_rays(self, sc: _Scene, ss: int):
@@ -803,7 +777,7 @@ class DMControlSuite(_DMCModel):
     def _reflect(self, sc, base, xpos, xmat, sizes, mat_rgb, tex_rgb, spec, shin, L, ss, bi):
         """Replace mirror hits using ``r * mover_colour + (1-r) * unreflected_surface``.
 
-        Blending onto the reflected plate would retain the old reflection underneath.
+        Blending onto the reflected plate would keep the plate's own reflection underneath.
         Only hit samples are shaded; other pixels keep the existing background."""
         idx, ro, rd, surf = self._floor_rays(sc, ss)
         if idx.numel() == 0:

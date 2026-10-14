@@ -42,7 +42,7 @@ ACTION_DIMS = {
 }
 #: State fields that follow qpos in the compact render row, in order.
 RENDER_KEYS = MODEL_KEYS
-# Quadruped retains its local owner until its process route has passed the family gates.
+# Quadruped always runs in-process.
 PROCESS_DOMAINS = frozenset(FACTORIES) - {"quadruped"}
 
 
@@ -50,5 +50,5 @@ def make_local(domain: str, num_envs: int, device: str | torch.device = "cpu", s
     try:
         factory = FACTORIES[domain]
     except KeyError:
-        raise ValueError(f"Unsupported recovered DMC domain {domain!r}") from None
+        raise ValueError(f"Unsupported DMC domain {domain!r}") from None
     return factory(num_envs, device, seed)
