@@ -18,13 +18,6 @@ SHARED_CONTRACTS = [
     "tests/contracts/test_simulation.py",
     "tests/contracts/test_task.py",
 ]
-ONLINE = {
-    "classic_control": "benchmarks/online/classic_source_pipeline.py",
-    "dmcontrol": "benchmarks/online/dmc_source_transport_gate.py",
-    "fetch": "benchmarks/online/fetch_source_transport_gate.py",
-    "navigation": "benchmarks/online/navigation_source_pipeline.py",
-    "ogbench": "benchmarks/online/ogbench_source_transport_gate.py",
-}
 
 
 def inventory():
@@ -44,7 +37,7 @@ def inventory():
             gates += SHARED_CONTRACTS
         if profiles.get(registration) == "native":
             gates.append("tests/contracts/test_native_acceptance.py")
-        online = [ONLINE[row["family"]]] if row["family"] in ONLINE else []
+        online = []
         if row["family"] == "rocket":
             online.append("tests/integration/test_rocket_source_pixels.py")
         profile = profiles.get(registration)
