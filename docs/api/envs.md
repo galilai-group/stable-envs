@@ -4,7 +4,7 @@ The registered environments. The package auto-discovers its modules, so adding a
 
 List what this interpreter actually imported with `snv.list_envs()` / `snv.info(name)`; the narrative index is [Environments](../environments.md).
 
-Each module's docstring is where its measured constants live: the reference id, the state layout, and every value that was recovered by pixel-diffing rather than read off the reference's source. Those are reproduced below, one per family, without their class members. PushT is rendered in full because it is the worked example the [porting guide](../adding-an-env.md) follows.
+Each module's docstring is where its measured constants live: the reference id, the state layout, and every value that was recovered by pixel-diffing rather than read off the reference's source. Those are reproduced below, one per family, without their class members. PushT is rendered in full because it is the worked example the [porting guide](../adding/index.md) follows.
 
 ## PushT
 
