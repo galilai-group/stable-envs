@@ -60,43 +60,62 @@ class CraftaxEnv(Env):
             raise RuntimeError(f"{type(self).__name__}.{what}: call reset() first")
         return self._state
 
-    def _hidden_state(self):
-        return self._k.export(self._live("get_state"), self._keys)
+    def _snapshot(self, views) -> TensorDict:
+        tree: dict = {}
+        for key, value in views.items():
+            node = tree
+            for part in key[:-1]:
+                node = node.setdefault(part, {})
+            node[key[-1]] = value
+        return TensorDict(tree, batch_size=[self.B], device=self.device)
 
-    def _restore_state(self, state):
-        self._state, self._keys = self._k.restore(state, self.device, copy=True)
+    def _checked(self, state, what: str, batch: int | None = None):
+        self._check_open(what)
+        if not isinstance(state, TensorDict) or len(state.batch_size) != 1:
+            raise TypeError(f"{type(self).__name__}.{what}: expected a State TensorDict with one batch dimension")
+        if batch is not None and state.batch_size[0] != batch:
+            raise ValueError(
+                f"{type(self).__name__}.{what}: expected State batch [{batch}], got {list(state.batch_size)}"
+            )
+        return state
+
+    def get_state(self):
+        """An independent snapshot: each leaf a ``(num_envs, width)`` view of blocks only it uses."""
+        return self._snapshot(self._k.export(self._live("get_state"), self._keys))
+
+    def set_state(self, state):
+        """Restore every lane from a State with ``num_envs`` lanes; the State is copied."""
+        self._state, self._keys = self._k.restore(self._checked(state, "set_state", self.B), self.device)
 
     def reset(self, seed=None):
         """Reset every lane; lane ``i`` of ``reset(seed)`` is stable-worldmodel's reset with ``seed + i``."""
         self._check_open("reset")
         if seed is not None:
             self._keys = self._k.seed_keys(int(seed), self.B, self._device)
-        self._state, self._keys = self._k.reset(self._keys)
-        return self.get_state()
+        self._state, self._keys, views = self._k.reset(self._keys)
+        return self._snapshot(views)
 
     def _step(self, actions, *, active=None):
         state = self._live("step")
         a = torch.as_tensor(actions, device=self.device).reshape(self.B)
         if a.is_floating_point() or bool(((a < 0) | (a > self.action_high)).any()):
             raise ValueError(f"{type(self).__name__}: actions must be integers in [0, {self.action_high}]")
-        self._state, self._keys, reward, done, observation = self._k.step(self._keys, state, a, active)
+        self._state, self._keys, reward, done, observation, views = self._k.step(self._keys, state, a, active)
         result = {
-            "state": self.get_state(),
-            "reward": torch.from_dlpack(reward),
-            "terminated": torch.from_dlpack(done),
+            "state": self._snapshot(views),
+            "reward": reward,
+            "terminated": done,
             "truncated": torch.zeros(self.B, dtype=torch.bool, device=self.device),
         }
         if observation is not None:
-            result["observation"] = torch.from_dlpack(observation)
+            result["observation"] = observation
         return TensorDict(result, batch_size=[self.B], device=self.device)
 
     def render(self, state=None):
         """Draw ``(N, H, W, 3)`` uint8 frames from a State of any batch, or from the live lanes."""
         if state is None:
             return self._k.render(self._live("render"))
-        self._check_open("render")
-        self._validate_state(state)
-        return self._k.render(self._k.restore(state, self.device, copy=False)[0])
+        return self._k.render_state(self._checked(state, "render"), self.device)
 
     def _close(self):
         self._state = None
