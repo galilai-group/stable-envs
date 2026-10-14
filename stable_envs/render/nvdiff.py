@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     import torch
 
 #: mjtGeom codes, read directly from an MjModel.
-PLANE, HFIELD, SPHERE, CAPSULE, ELLIPSOID, CYLINDER, BOX, MESH = 0, 1, 2, 3, 4, 5, 6, 7
+PLANE, SPHERE, CAPSULE, ELLIPSOID, CYLINDER, BOX, MESH = 0, 2, 3, 4, 5, 6, 7
 
 #: Match the default visible geom groups in MuJoCo MjvOption.
 DEFAULT_GROUPS = (0, 1, 2)
