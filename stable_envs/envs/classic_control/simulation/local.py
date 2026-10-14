@@ -94,9 +94,7 @@ CLASSIC_FIELDS = {
     "pendulum": {
         "theta": (1, torch.float64),
         "theta_dot": (1, torch.float64),
-        # ``last_u`` retains the caller's accepted float dtype.  Float64 is a
-        # lossless common representation for both the declared float32 Action
-        # and Gymnasium's warning-only acceptance of float64 arrays.
+        # ``last_u`` keeps the caller's float dtype; float64 holds float32 and float64 actions losslessly.
         "torque": (1, torch.float64),
         ("task", "has_last_u"): (1, torch.bool),
         ("lifecycle", "elapsed_steps"): (1, torch.int64),
@@ -122,8 +120,7 @@ CLASSIC_FIELDS = {
     "mountain_car_continuous": {
         "position": (1, torch.float64),
         "velocity": (1, torch.float64),
-        # Reset installs float64 state; every step installs float32 state.  The
-        # dtype changes the next NumPy update, so it is continuation state.
+        # Reset installs float64 state and every step float32; the dtype changes the next NumPy update.
         ("task", "state_is_float32"): (1, torch.bool),
         ("lifecycle", "elapsed_steps"): (1, torch.int64),
         **_RNG_FIELDS,
@@ -141,7 +138,7 @@ _ENV_IDS = {
 
 
 def _limbs(value: int) -> np.ndarray:
-    """A PCG64 unsigned 128-bit integer as four named-base uint32 limbs."""
+    """Split a PCG64 unsigned 128-bit integer into four uint32 limbs, least significant first."""
     value = int(value)
     return np.asarray([(value >> (32 * i)) & 0xFFFF_FFFF for i in range(4)], dtype=np.int64)
 
@@ -190,7 +187,7 @@ class ClassicControlAdapter(SimulatorAdapter):
 
     def __init__(self, domain: str, num_envs: int, device="cpu", seed: int = 0):
         if domain not in CLASSIC_FIELDS:
-            raise ValueError(f"Unsupported recovered classic-control domain {domain!r}")
+            raise ValueError(f"Unsupported classic-control domain {domain!r}")
         self.domain = domain
         self.fields = CLASSIC_FIELDS[domain]
         self.num_envs = int(num_envs)
@@ -216,7 +213,7 @@ class ClassicControlAdapter(SimulatorAdapter):
             raise RuntimeError("ClassicControlAdapter is closed")
 
     def configure(self, values: Mapping[str, np.ndarray]) -> None:
-        """Apply one exact SWM physical-Variation row to each Gymnasium env."""
+        """Apply each lane's physics Variation values to its Gymnasium env."""
         self._check_open()
         columns = {name: np.asarray(rows) for name, rows in values.items()}
         for i in range(self.num_envs):
@@ -270,8 +267,6 @@ class ClassicControlAdapter(SimulatorAdapter):
 
     def get_state(self) -> TensorDict:
         self._check_open()
-        # The pinned field schema supplies shapes/dtypes once for the batch.
-        # Assign source values directly, without a temporary array per lane/field.
         columns = {
             key: np.empty((self.num_envs, width), dtype=_NUMPY_DTYPES[dtype])
             for key, (width, dtype) in self.fields.items()
@@ -283,7 +278,6 @@ class ClassicControlAdapter(SimulatorAdapter):
                 column[index] = values[key]
         for j, key in enumerate(self._physics_keys):
             columns[key][:, 0] = self._physics[:, j]
-        # Fresh arrays belong to this snapshot alone, including on CPU.
         return TensorDict(
             {key: torch.from_numpy(value).to(self.device) for key, value in columns.items()},
             [self.num_envs],
@@ -325,14 +319,11 @@ class ClassicControlAdapter(SimulatorAdapter):
                     else np.float64
                 )
                 values = [row["position"].item(), row["velocity"].item()]
-                # MountainCar itself stores a tuple after stepping, but only
-                # the scalar values affect continuation.  The continuous
-                # variant's ndarray dtype is semantically significant.
+                # Only the continuous variant's array dtype affects continuation.
                 base.state = np.asarray(values, dtype=dtype)
 
             env._elapsed_steps = row["lifecycle", "elapsed_steps"].item()
-            # A public State can only be captured after reset.  Restore that
-            # wrapper precondition as well as the numerical continuation.
+            # A State exists only after reset, so restore the wrapper's reset flag too.
             env.env._has_reset = True
             rng_state = {
                 "bit_generator": "PCG64",
@@ -350,10 +341,9 @@ class ClassicControlAdapter(SimulatorAdapter):
             actions = actions.detach().cpu().numpy()
         array = np.asarray(actions)
         if array.shape != (self.num_envs, 1):
-            raise ValueError(f"Recovered {self.domain} action must have shape ({self.num_envs}, 1), got {array.shape}")
+            raise ValueError(f"{self.domain} action must have shape ({self.num_envs}, 1), got {array.shape}")
         if self.domain in {"cartpole", "acrobot", "mountain_car"}:
-            # ``item`` retains the integer-vs-float distinction checked by
-            # Gymnasium's Discrete.contains assertion.
+            # ``item`` keeps the int/float distinction that Gymnasium's Discrete.contains checks.
             return [array[i, 0].item() for i in range(self.num_envs)]
         return [array[i] for i in range(self.num_envs)]
 
@@ -373,8 +363,7 @@ class ClassicControlAdapter(SimulatorAdapter):
                 "terminated": torch.tensor([out[2] for out in outputs], dtype=torch.bool, device=self.device),
                 "truncated": torch.tensor([out[3] for out in outputs], dtype=torch.bool, device=self.device),
                 "observation": torch.as_tensor(observations, device=self.device).clone(),
-                # SWM's only numeric info entry is an explicit float32 copy
-                # of the observation under ``info['state']``.
+                # ``info['state']`` is a float32 copy of the observation.
                 "info_state": torch.as_tensor(observations, dtype=torch.float32, device=self.device).clone(),
             },
             batch_size=[self.num_envs],

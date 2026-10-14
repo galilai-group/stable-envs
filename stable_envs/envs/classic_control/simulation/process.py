@@ -99,7 +99,7 @@ class AcrobotProcessAdapter(ProcessRequests, SimulatorAdapter):
 
     def __init__(self, domain, num_envs, device="cpu", seed=0, *, processes=8, cpus=None):
         if domain != "acrobot":
-            raise ValueError("The process candidate is bounded to Acrobot")
+            raise ValueError("AcrobotProcessAdapter is bounded to Acrobot")
         if type(num_envs) is not int or num_envs < 1:
             raise ValueError("num_envs must be a positive integer")
         if type(processes) is not int or not 1 <= processes <= num_envs:
@@ -110,7 +110,7 @@ class AcrobotProcessAdapter(ProcessRequests, SimulatorAdapter):
         self._closed, self._pending = False, None
         self._connections, self._processes = [], []
         seed = int(seed)
-        np.random.SeedSequence(seed)
+        np.random.SeedSequence(seed)  # rejects invalid seeds before workers spawn
         prototype = ClassicControlAdapter(domain, 1)
         try:
             state = prototype.reset(seed)
@@ -219,6 +219,7 @@ class AcrobotProcessAdapter(ProcessRequests, SimulatorAdapter):
             active = active.detach().cpu().numpy() if torch.is_tensor(active) else np.asarray(active)
             if active.shape != (self.num_envs,) or active.dtype != np.bool_:
                 raise ValueError("active must be a bool vector with shape [num_envs]")
+        # Index the torque table as Acrobot does, so an invalid action raises before dispatch.
         for i, action in enumerate(converted):
             if active is None or active[i]:
                 [-1.0, 0.0, 1.0][action]

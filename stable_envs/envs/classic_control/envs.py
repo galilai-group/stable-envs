@@ -56,8 +56,6 @@ class _Classic(Env):
     # Native (H, W); source primitive dimensions are fixed in pixels.
     native: tuple[int, int] = (0, 0)
 
-    # Compact render rows omit velocities. Numerical State retains float64 simulation values.
-
     # Numerical variables map explicitly to render columns; torque may be drawn while velocity is omitted.
     sim_state_names: tuple[str, ...] = ()
     #: index of each render-state dim inside ``sim_state_names``
@@ -70,8 +68,8 @@ class _Classic(Env):
     action_high: float = 1.0
     # Disable before first numerical step to avoid CUDA-graph capture.
     use_step_graph: bool = True
-    #: use the fused per-pixel kernel where it is available. Set False to force the per-primitive
-    #: path, which is what the identity tests compare against and what a CPU render always takes.
+    #: use the fused per-pixel kernel where it is available. False forces the per-primitive path,
+    #: which a CPU render always takes.
     use_fused_render: bool = True
     step_reference_checkable = True
     # Held reference actions exercise more of the state range than independent per-step noise.
@@ -236,16 +234,13 @@ class _Classic(Env):
         want = int(self.size if size is None else size)
         if want != W:
             raise ValueError(
-                f"{type(self).__name__} renders at its reference's native {H}x{W} and nothing else "
-                f"(got size={want}). The official renderer hardcodes every primitive in pixels, so a "
-                f"resized frame has no reference to be exact against; resample the output if you want "
-                f"one."
+                f"{type(self).__name__} renders only at its reference's native {H}x{W} (got size={want}); "
+                f"the reference draws every primitive in fixed pixels. Resample the output instead."
             )
         if supersample not in (None, 1):
             raise ValueError(
-                f"{type(self).__name__}: supersample={supersample} is not available. gfxdraw's "
-                f"geometry is integer and its anti-aliasing is Wu weights, not coverage — "
-                f"supersampling would average a picture the reference never draws."
+                f"{type(self).__name__}: supersample={supersample} is not available; gfxdraw geometry is "
+                f"integer and its anti-aliasing uses Wu weights, not coverage."
             )
         s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
@@ -309,7 +304,7 @@ class _Classic(Env):
 
     #: radii this environment's discs use. Static geometry, so the disc tables may be cached on it.
     disc_radii: tuple[int, ...] = ()
-    #: set False on a class whose frame the fused kernel does not describe yet.
+    #: False when the fused kernel does not describe this class's frame.
     fused_capable: bool = False
 
     def _ops(self, s, sty):
@@ -411,8 +406,8 @@ class CartPole(ClassicControlSemantics, _Classic):
     POLEMASS_LENGTH = MASSPOLE * LENGTH
     FORCE_MAG = 10.0
     TAU = 0.02
-    #: theta is unwrapped in the reference (the pole is allowed to go round), so 'abs' and not 'angle';
-    #: measuring it wrapped would quietly forgive a full-turn disagreement.
+    #: theta is unwrapped in the reference, so it is compared with 'abs', not 'angle'; wrapping would
+    #: hide a full-turn disagreement.
     step_reference_groups = (
         ("x", (0,), "abs"),
         ("x_dot", (1,), "abs"),
@@ -459,8 +454,8 @@ class CartPole(ClassicControlSemantics, _Classic):
         int(CARTY + AXLEOFF - math.hypot(5.0, POLELEN - 5.0)),
         int(CARTY + AXLEOFF + math.hypot(5.0, POLELEN - 5.0)),
     )
-    #: Per EDGE, because a 50x30 quad and a 10x125 one both have two long sides and two short ones,
-    #: and the Wu pass costs its bound in steps whether the edge is that long or not.
+    #: Per-edge step bounds: each quad has two long and two short sides, and the Wu pass costs its
+    #: bound in steps regardless of the actual edge length.
     KMAX_CART = (32, 52, 32, 52)
     KMAX_POLE = (132, 16, 132, 16)
 
@@ -582,8 +577,8 @@ class Pendulum(ClassicControlSemantics, _Classic):
     action_low, action_high = -2.0, 2.0
     G, M, L, DT = 10.0, 1.0, 1.0, 0.05
     MAX_SPEED, MAX_TORQUE = 8, 2.0
-    #: theta is NOT wrapped by the reference — it accumulates, and the render is periodic in it — so
-    #: the error is measured unwrapped. Wrapping it here would forgive a whole-turn disagreement.
+    #: The reference accumulates theta without wrapping, so the error is measured unwrapped; wrapping
+    #: would hide a whole-turn disagreement.
     step_reference_groups = (("theta", (0,), "abs"), ("theta_dot", (1,), "abs"), ("torque", (2,), "abs"))
 
     def _dynamics(self, s, a):
@@ -1057,7 +1052,7 @@ class MountainCar(ClassicControlSemantics, _Classic):
     def _terrain_base(self, bg, terrain) -> torch.Tensor:
         """Return a planar static background, baked per distinct background/terrain color pair.
 
-        Pygame quantizes each color blend, so coverage recovered from one baked color
+        Pygame quantizes each color blend, so coverage derived from one baked color
         pair cannot reproduce arbitrary other pairs exactly.
         """
         key = torch.cat([bg, terrain], 1).to(torch.uint8).cpu().numpy()
@@ -1090,7 +1085,7 @@ class MountainCar(ClassicControlSemantics, _Classic):
         cv.fill_from(self._terrain_base(sty["background.color"], sty["terrain.color"]))
 
         pos = s[:, 0]
-        ang = torch.cos(3 * pos).view(B, 1)  # the source rotates by cos(3*pos) IN RADIANS
+        ang = torch.cos(3 * pos).view(B, 1)  # the source rotates by cos(3*pos), in radians
         ctr = torch.stack(
             [(pos - self.MINP) * self.SCALE, 10.0 + (torch.sin(3 * pos) * 0.45 + 0.55) * self.SCALE], -1
         ).view(B, 1, 2)

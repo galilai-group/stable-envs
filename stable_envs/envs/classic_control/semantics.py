@@ -17,7 +17,7 @@ from .simulation.local import (
 
 
 class ClassicControlSemantics:
-    """Compose an existing exact renderer with the authoritative CPU simulator."""
+    """Pair the exact renderer with the authoritative Gymnasium CPU simulator."""
 
     execution_mode = "DELEGATED_CPU"
 
@@ -110,9 +110,7 @@ class ClassicControlSemantics:
         super().set_sim_state(sim)
 
     def sim_state(self):
-        raise NotImplementedError(
-            f"{type(self).__name__}.sim_state is unavailable for recovered semantics; use get_state()"
-        )
+        raise NotImplementedError(f"{type(self).__name__}.sim_state is unavailable; use get_state()")
 
     def set_sim_state(self, value):
         raise NotImplementedError(
@@ -137,8 +135,7 @@ class ClassicControlSemantics:
         self._adopt_physics_state(state)
 
     def _step_pipeline(self) -> StepPipeline | None:
-        owner = self._simulator
-        return step_pipeline(owner)
+        return step_pipeline(self._simulator)
 
     def _step(self, actions, *, active=None):
         self._check_open("step")
