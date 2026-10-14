@@ -16,6 +16,7 @@ from stable_envs.envs.dmcontrol.simulation.continuation import CONFIG as CONTINU
 from stable_envs.envs.dmcontrol.simulation.continuation import DMCContinuationAdapter
 from stable_envs.envs.dmcontrol.simulation.first_family import FirstFamilyAdapter, ReacherAdapter
 from stable_envs.envs.dmcontrol.simulation.humanoid import DMCHumanoidAdapter
+from tests.helpers.reference.semantics import assert_same_state
 
 CASES = [(FirstFamilyAdapter, (domain,)) for domain in ("acrobot", "pendulum", "cartpole", "cartpole-balance")] + [
     (ReacherAdapter, ()),
@@ -24,15 +25,6 @@ CASES = [(FirstFamilyAdapter, (domain,)) for domain in ("acrobot", "pendulum", "
     *[(DMCContinuationAdapter, (domain,)) for domain in CONTINUATION],
     (DMCHumanoidAdapter, ()),
 ]
-
-
-def equal(left, right):
-    assert left.batch_size == right.batch_size
-    assert set(left.keys(True, True)) == set(right.keys(True, True))
-    for key in left.keys(True, True):
-        assert left[key].dtype == right[key].dtype
-        assert left[key].device == right[key].device
-        torch.testing.assert_close(left[key], right[key], rtol=0, atol=0, equal_nan=True, msg=str(key))
 
 
 @pytest.mark.parametrize("factory,args", CASES)
@@ -47,9 +39,9 @@ def test_owned_typed_state_across_steps_reset_and_rng_boundary(factory, args, de
         actions = np.full((3, adapter.envs[0].action_spec().shape[0]), 0.25)
         adapter.step(actions)
         adapter.reset(seed=43)
-        equal(initial, retained)
+        assert_same_state(initial, retained)
         adapter.set_state(initial)
-        equal(initial, adapter.get_state())
+        assert_same_state(initial, adapter.get_state())
 
         # Lane 1 crosses a reset boundary and consumes a cached Gaussian; the
         # other lanes continue from different lifecycle positions.
@@ -59,17 +51,17 @@ def test_owned_typed_state_across_steps_reset_and_rng_boundary(factory, args, de
         boundary["lifecycle", "reset_next_step"][1] = True
         boundary["lifecycle", "step_count"][2] = 3
         adapter.set_state(boundary)
-        equal(boundary, adapter.get_state())
+        assert_same_state(boundary, adapter.get_state())
         expected = adapter.step(actions)
         adapter.set_state(boundary)
         actual = adapter.step(actions)
-        equal(expected, actual)
+        assert_same_state(expected, actual)
         held = actual.clone()
         # Caller writes must not mutate live physics or a sibling snapshot.
         live = adapter.get_state()
         for value in live.values(True, True):
             value.fill_(0)
-        equal(held["state"], adapter.get_state())
+        assert_same_state(held["state"], adapter.get_state())
     finally:
         adapter.close()
     with pytest.raises(RuntimeError, match="closed"):
@@ -91,7 +83,7 @@ def test_malformed_input_is_rejected_without_touching_state(factory, args):
             adapter.step(np.zeros((2, width + 1)))
         with pytest.raises(ValueError):
             adapter.step(np.full((2, width), np.nan))
-        equal(before, adapter.get_state())
+        assert_same_state(before, adapter.get_state())
     finally:
         adapter.close()
 

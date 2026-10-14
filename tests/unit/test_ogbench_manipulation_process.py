@@ -12,7 +12,7 @@ pytest.importorskip("ogbench")
 import stable_envs as se
 from stable_envs.envs.ogbench.simulation.manipulation import OGBManipulationAdapter
 from stable_envs.envs.ogbench.simulation.manipulation_process import OGBManipulationProcessAdapter, _worker
-from tests.unit.test_ogbench_manipulation_cpu import equal
+from tests.helpers.reference.semantics import assert_same_state
 
 
 def failing_restore_worker(*args):
@@ -38,7 +38,7 @@ def test_process_state_rng_variations_and_owned_outputs(family):
     try:
         assert len(remote._metadata.envs) == 1 and not hasattr(remote, "envs")
         initial = local.get_state()
-        equal(initial, remote.get_state())
+        assert_same_state(initial, remote.get_state())
         initial["rng", "task", "has_gauss"][2] = 1
         initial["rng", "task", "cached_gaussian"][2] = 0.25
         initial["rng", "environment", "has_uint32"][2] = 1
@@ -50,15 +50,15 @@ def test_process_state_rng_variations_and_owned_outputs(family):
         for t in range(8):
             mask = None if t == 0 else torch.tensor([True, False, True])
             action = actions[:, t].astype(np.float32 if t % 2 else np.float64)
-            equal(local.step(action, active=mask), remote.step(action, active=mask))
-        equal(held, initial)
+            assert_same_state(local.step(action, active=mask), remote.step(action, active=mask))
+        assert_same_state(held, initial)
         remote.submit_step(actions[:, 0], capture_state=False)
         with pytest.raises(RuntimeError, match="in flight"):
             remote.get_state()
         # Pure validation must not communicate with in-flight workers.
         remote.validate(initial)
-        equal(local.step(actions[:, 0], capture_state=False), remote.receive_step())
-        equal(local.get_state(), remote.get_state())
+        assert_same_state(local.step(actions[:, 0], capture_state=False), remote.receive_step())
+        assert_same_state(local.get_state(), remote.get_state())
         values = [{"cube.size": np.array([0.025]), "agent.color": np.array([0.1, 0.7, 0.4])}] * 3
         layout = local.make_variation_space().flat_layout()
         for adapter in (local, remote):
@@ -66,12 +66,14 @@ def test_process_state_rng_variations_and_owned_outputs(family):
         torch.testing.assert_close(
             local.variation_values(layout, anchor=True), remote.variation_values(layout, anchor=True), rtol=0, atol=0
         )
-        equal(local.reset(), remote.reset())
-        equal(local.reset(42, {"task_id": 4, "variation": []}), remote.reset(42, {"task_id": 4, "variation": []}))
+        assert_same_state(local.reset(), remote.reset())
+        assert_same_state(
+            local.reset(42, {"task_id": 4, "variation": []}), remote.reset(42, {"task_id": 4, "variation": []})
+        )
         lanes = {"variation_values": {"cube.size": np.array([[0.012], [0.02], [0.028]])}}
-        equal(local.reset(5, lanes), remote.reset(5, lanes))
+        assert_same_state(local.reset(5, lanes), remote.reset(5, lanes))
         remote.set_state(initial)
-        equal(initial, remote.get_state())
+        assert_same_state(initial, remote.get_state())
         snapshot = remote.get_state()
         for call in (
             lambda: remote.reset(-1),
@@ -81,7 +83,7 @@ def test_process_state_rng_variations_and_owned_outputs(family):
         ):
             with pytest.raises(ValueError):
                 call()
-            equal(snapshot, remote.get_state())
+            assert_same_state(snapshot, remote.get_state())
     finally:
         local.close()
         remote.close()
@@ -101,11 +103,11 @@ def test_all_shards_discard_after_real_late_restore_failure(family, monkeypatch)
         with pytest.raises(RuntimeError, match="late-shard compilation"):
             remote.set_state(requested)
         assert not remote._closed and remote._pending is None
-        equal(before, remote.get_state())
+        assert_same_state(before, remote.get_state())
         # Both live owners are usable, and a subsequent valid transaction commits.
         remote.step(np.zeros((2, 5)))
         remote.set_state(before)
-        equal(before, remote.get_state())
+        assert_same_state(before, remote.get_state())
     finally:
         remote.close()
 
@@ -125,17 +127,17 @@ def test_public_metadata_chunks_and_anchor_reset(family, monkeypatch):
                     for env in (local, remote):
                         env.set_state(before)
                     actions = np.zeros((2, 5) if horizon == 1 else (2, horizon, 5), np.float64)
-                    equal(
+                    assert_same_state(
                         local.step(actions, states=selection, frames=None),
                         remote.step(actions, states=selection, frames=None),
                     )
             kwargs = {"cube.size": [0.025], "agent.color": [0.2, 0.7, 0.4]}
             torch.testing.assert_close(local.set_variation(kwargs), remote.set_variation(kwargs), rtol=0, atol=0)
-            equal(local.reset(31, {"variation": []}), remote.reset(31, {"variation": []}))
+            assert_same_state(local.reset(31, {"variation": []}), remote.reset(31, {"variation": []}))
             torch.testing.assert_close(local.get_style(), remote.get_style(), rtol=0, atol=0)
             for env in (local, remote):
                 env.set_state(before)
-            equal(local.to_render_state(), remote.to_render_state())
+            assert_same_state(local.to_render_state(), remote.to_render_state())
 
 
 @pytest.mark.parametrize("family", ["Cube", "Scene"])

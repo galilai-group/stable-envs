@@ -38,6 +38,23 @@ def compare_state(actual: TensorDict, expected: TensorDict, *, atol=0.0) -> dict
     return errors
 
 
+def assert_same_state(actual, expected):
+    """Exact equality of a tensor or every TensorDict leaf: keys, batch size, device, dtype, shape and values.
+
+    NaN pairs compare equal.
+    """
+    if torch.is_tensor(actual):
+        torch.testing.assert_close(actual, expected, rtol=0, atol=0, equal_nan=True)
+        return
+    assert actual.batch_size == expected.batch_size and actual.device == expected.device
+    ak, ek = set(actual.keys(True, True)), set(expected.keys(True, True))
+    assert ak == ek, f"State keys differ: {ak ^ ek}"
+    for key in actual.keys(True, True):
+        torch.testing.assert_close(
+            actual[key], expected[key], rtol=0, atol=0, equal_nan=True, msg=lambda m, key=key: f"{key}: {m}"
+        )
+
+
 def check_reset_matches_reference(candidate, reference, *, seed, atol=0.0):
     return compare_state(candidate.reset(seed=seed), reference.reset(seed=seed), atol=atol)
 

@@ -5,6 +5,7 @@ import pytest
 import torch
 
 from stable_envs.envs.dmcontrol.simulation.process import DMCProcessAdapter, make_local
+from tests.helpers.reference.semantics import assert_same_state
 
 DOMAINS = [
     "acrobot",
@@ -28,13 +29,6 @@ DOMAINS = [
 ]
 
 
-def equal(left, right):
-    assert left.batch_size == right.batch_size
-    assert set(left.keys(True, True)) == set(right.keys(True, True))
-    for key in left.keys(True, True):
-        torch.testing.assert_close(left[key], right[key], rtol=0, atol=0, equal_nan=True, msg=str(key))
-
-
 @pytest.mark.parametrize("domain", DOMAINS)
 @pytest.mark.parametrize("device", ["cpu", "cuda"])
 def test_exact_sharded_tasks_rng_lifecycle_and_owned_outputs(domain, device):
@@ -44,7 +38,7 @@ def test_exact_sharded_tasks_rng_lifecycle_and_owned_outputs(domain, device):
     remote = DMCProcessAdapter(domain, 5, device, 17, processes=2)
     try:
         initial = local.get_state()
-        equal(initial, remote.get_state())
+        assert_same_state(initial, remote.get_state())
         initial["rng", "has_gauss"][3] = True
         initial["rng", "cached_gaussian"][3] = 0.125
         initial["lifecycle", "reset_next_step"][3] = True
@@ -61,17 +55,17 @@ def test_exact_sharded_tasks_rng_lifecycle_and_owned_outputs(domain, device):
             if t % 2:
                 assert "state" not in actual.keys()
                 actual["state"] = remote.get_state()
-            equal(expected, actual)
+            assert_same_state(expected, actual)
         retained = actual.clone()
         for owner in (local, remote):
             owner.set_state(initial)
-        equal(local.reset(), remote.reset())
-        equal(local.reset(seed=42), remote.reset(seed=42))
-        equal(retained, actual)
+        assert_same_state(local.reset(), remote.reset())
+        assert_same_state(local.reset(seed=42), remote.reset(seed=42))
+        assert_same_state(retained, actual)
         own = remote.get_state()
         snapshot = own.clone()
         own["qpos"].fill_(7)
-        equal(snapshot, remote.get_state())
+        assert_same_state(snapshot, remote.get_state())
     finally:
         local.close()
         remote.close()
@@ -84,13 +78,13 @@ def test_physics_configuration_matches_local_lanes(domain):
     remote = DMCProcessAdapter(domain, 5, seed=17, processes=2)
     try:
         action = np.full((5, remote.action_dim), 0.3)
-        equal(local.step(action), remote.step(action))
+        assert_same_state(local.step(action), remote.step(action))
         values = np.tile(np.asarray(remote.physics_layout.nominal), (5, 1))
         values[4] *= 1.1  # Only the last shard changes.
         for adapter in (local, remote):
             adapter.configure_physics(values)
-        equal(local.get_state(), remote.get_state())
-        equal(local.step(action), remote.step(action))
+        assert_same_state(local.get_state(), remote.get_state())
+        assert_same_state(local.step(action), remote.step(action))
     finally:
         local.close()
         remote.close()
@@ -106,7 +100,7 @@ def test_invalid_requests_do_not_mutate_and_inflight_requests_cannot_write_buffe
             owner.set_state(invalid)
         with pytest.raises(ValueError):
             owner.step(np.full((5, 2), np.nan))
-        equal(initial, owner.get_state())
+        assert_same_state(initial, owner.get_state())
         owner.submit_step(np.zeros((5, 2)))
         for call in (
             lambda: owner.set_state(initial),

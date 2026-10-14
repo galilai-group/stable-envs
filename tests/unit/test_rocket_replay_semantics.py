@@ -8,11 +8,7 @@ pytest.importorskip("PyFlyt")
 pytest.importorskip("pybullet")
 
 from stable_envs import make
-
-
-def exact(a, b):
-    assert set(a.keys(True, True)) == set(b.keys(True, True))
-    assert all(torch.equal(a[k], b[k]) for k in a.keys(True, True))
+from tests.helpers.reference.semantics import assert_same_state
 
 
 @pytest.fixture
@@ -35,8 +31,8 @@ def test_whole_batch_invalid_action_does_not_step_first_lane(pair):
     for _ in range(3):
         with pytest.raises(AssertionError):
             a.step(actions)
-    exact(saved, a.get_state())
-    exact(a.step(np.zeros((2, 7))), b.step(np.zeros((2, 7))))
+    assert_same_state(saved, a.get_state())
+    assert_same_state(a.step(np.zeros((2, 7))), b.step(np.zeros((2, 7))))
 
 
 @pytest.mark.parametrize(
@@ -62,9 +58,9 @@ def test_invalid_whole_state_is_atomic(pair, kind):
         corrupted["recipe", "main_rng"][1, 5] = 2
     with pytest.raises((ValueError, TypeError)):
         a.set_state(corrupted)
-    exact(original, a.get_state())
+    assert_same_state(original, a.get_state())
     b.set_state(original)
-    exact(a.step(np.zeros((2, 7))), b.step(np.zeros((2, 7))))
+    assert_same_state(a.step(np.zeros((2, 7))), b.step(np.zeros((2, 7))))
 
 
 def test_independent_storage_mixed_dtypes_and_different_histories(pair):
@@ -79,9 +75,9 @@ def test_independent_storage_mixed_dtypes_and_different_histories(pair):
     a.set_state(saved)
     saved["current", "wrapper", "reward"].fill_(123)
     for _ in range(3):
-        exact(a.step(np.zeros((2, 7))), b.step(np.zeros((2, 7))))
+        assert_same_state(a.step(np.zeros((2, 7))), b.step(np.zeros((2, 7))))
     assert a.get_state()["history", "length"].dtype == torch.int64
-    exact(a.to_render_state(), b.to_render_state())
+    assert_same_state(a.to_render_state(), b.to_render_state())
 
 
 def test_seeded_future_reset_and_fresh_entropy(pair):
@@ -90,18 +86,20 @@ def test_seeded_future_reset_and_fresh_entropy(pair):
     b.set_state(a.get_state())
     a.set_variation({"environment.start_tilt": np.array([0.1, -0.1], np.float32)})
     b.set_state(a.get_state())
-    exact(a.reset(seed=42, options={"variation": ["rocket"]}), b.reset(seed=42, options={"variation": ["rocket"]}))
+    assert_same_state(
+        a.reset(seed=42, options={"variation": ["rocket"]}), b.reset(seed=42, options={"variation": ["rocket"]})
+    )
     a.reset(seed=None, options={"variation": ["all"]})
     saved = a.get_state()
     b.set_state(saved)
-    exact(saved, b.get_state())
+    assert_same_state(saved, b.get_state())
     a.reset(seed=None, options={"variation": ["all"]})
     fresh = a.get_state()
     assert not torch.equal(
         saved["variation", "rocket", "body_color", "rng"], fresh["variation", "rocket", "body_color", "rng"]
     )
     b.set_state(fresh)
-    exact(a.step(np.zeros((2, 7))), b.step(np.zeros((2, 7))))
+    assert_same_state(a.step(np.zeros((2, 7))), b.step(np.zeros((2, 7))))
 
 
 def test_cpu_render_supplied_state_is_exact_and_nonmutating():
@@ -112,20 +110,20 @@ def test_cpu_render_supplied_state_is_exact_and_nonmutating():
         expected = np.stack([sim.env.render() for sim in env._simulator.envs])
         assert pixels.device.type == "cpu" and pixels.dtype == torch.uint8
         np.testing.assert_array_equal(pixels.numpy(), expected)
-        exact(state, env.get_state())
+        assert_same_state(state, env.get_state())
         projected = env.to_render_state(state)
         before = projected.clone()
         out = torch.empty_like(pixels)
         assert env.render(projected, out=out).data_ptr() == out.data_ptr()
         assert torch.equal(pixels, out)
-        exact(projected, before)
+        assert_same_state(projected, before)
         for i in range(env.B):
             assert torch.equal(env.render(projected[i : i + 1])[0], pixels[i])
         bad = projected.clone()
         bad["renderer", "camera_pose"][-1, 0] = float("nan")
         with pytest.raises(ValueError):
             env.render(bad)
-        exact(state, env.get_state())
+        assert_same_state(state, env.get_state())
     finally:
         env.close()
 
@@ -150,7 +148,7 @@ def test_compact_projection_cannot_restore_physics(pair):
     for incomplete in (rows, e._unpack_render_state(rows), e.to_render_state(saved)):
         with pytest.raises((ValueError, TypeError)):
             e.set_state(incomplete)
-        exact(saved, e.get_state())
+        assert_same_state(saved, e.get_state())
 
 
 def test_variation_getter_tracks_reset_and_restore(pair):
@@ -191,7 +189,7 @@ def test_persistent_height_preserves_source_precision(pair, scalar_type):
         saved = e.get_state()
         assert saved["variation", "environment", "start_height_ratio", "value"][0].item() == float(height)
         destination.set_state(saved)
-        exact(saved, destination.get_state())
+        assert_same_state(saved, destination.get_state())
         source.step(np.zeros(7))
         e.step(np.zeros((2, 7)), frames=None)
         np.testing.assert_array_equal(e._simulator.envs[0].env.state, source.state)
@@ -206,7 +204,7 @@ def test_sampled_configurations_are_supported_and_restorable(pair):
     e.reset(seed=17)
     assert torch.equal(e.get_variation(), torch.from_numpy(sampled))
     destination.set_state(e.get_state())
-    exact(e.step(np.zeros((2, 7)), frames=None), destination.step(np.zeros((2, 7)), frames=None))
+    assert_same_state(e.step(np.zeros((2, 7)), frames=None), destination.step(np.zeros((2, 7)), frames=None))
 
 
 def test_set_variation_repaints_the_current_episode_and_restores(pair):
@@ -224,7 +222,7 @@ def test_set_variation_repaints_the_current_episode_and_restores(pair):
     for key in [("current", "wrapper", "state"), ("variation", "environment", "start_tilt", "value")]:
         assert torch.equal(saved[key], before[key])
     destination.set_state(saved)
-    exact(saved, destination.get_state())
+    assert_same_state(saved, destination.get_state())
     tampered = saved.clone()
     tampered["variation", "rocket", "body_color", "value"][0, 0] = 10
     with pytest.raises(ValueError):
@@ -237,7 +235,7 @@ def test_set_variation_repaints_the_current_episode_and_restores(pair):
             plain["variation", "rocket", "body_color", "value"], saved["variation", "rocket", "body_color", "value"]
         )
         destination.set_state(plain)
-        exact(plain, destination.get_state())
+        assert_same_state(plain, destination.get_state())
 
 
 def test_variation_values_last_one_reset_and_restore(pair):
@@ -247,7 +245,7 @@ def test_variation_values_last_one_reset_and_restore(pair):
     saved = e.reset(seed=17, options={"variation": ["rocket.fin_color"], "variation_values": values})
     np.testing.assert_array_equal(saved["variation", "environment", "start_tilt", "value"].numpy(), tilt)
     destination.set_state(saved)
-    exact(saved, destination.get_state())
+    assert_same_state(saved, destination.get_state())
     assert not e.reset(seed=17)["variation", "environment", "start_tilt", "value"].any()
     with pytest.raises(ValueError, match="both sampled and set"):
         e.reset(seed=17, options={"variation": ["environment"], "variation_values": values})

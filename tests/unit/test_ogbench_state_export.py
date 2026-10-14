@@ -9,14 +9,7 @@ pytest.importorskip("ogbench")
 from stable_envs.envs.ogbench.simulation.manipulation import OGBManipulationAdapter
 from stable_envs.envs.ogbench.simulation.maze import OGBMazeAdapter
 from tests.helpers.reference.ogbench_state_export import manipulation_state, maze_state
-
-
-def equal(a, b):
-    assert a.batch_size == b.batch_size and a.device == b.device
-    assert set(a.keys(True, True)) == set(b.keys(True, True))
-    for key in a.keys(True, True):
-        assert a[key].shape == b[key].shape and a[key].dtype == b[key].dtype
-        torch.testing.assert_close(a[key], b[key], rtol=0, atol=0, equal_nan=True)
+from tests.helpers.reference.semantics import assert_same_state
 
 
 @pytest.mark.parametrize("family", ["Maze", "Cube", "Scene"])
@@ -37,26 +30,26 @@ def test_complete_owned_export(family, device):
             adapter.envs[2].task_rng.set_state(tuple(cached))
         initial = adapter.get_state()
         retained = initial.clone()
-        equal(initial, reference(adapter))
+        assert_same_state(initial, reference(adapter))
         action = np.random.default_rng(21).uniform(-0.5, 0.5, (3, 2 if family == "Maze" else 5))
         for _ in range(8):
             result = adapter.step(action)
-            equal(result["state"], reference(adapter))
-        equal(initial, retained)
+            assert_same_state(result["state"], reference(adapter))
+        assert_same_state(initial, retained)
         adapter.set_state(initial)
-        equal(adapter.get_state(), reference(adapter))
-        equal(adapter.get_state(), initial)
+        assert_same_state(adapter.get_state(), reference(adapter))
+        assert_same_state(adapter.get_state(), initial)
         adapter.reset(seed=None)
-        equal(adapter.get_state(), reference(adapter))
-        equal(initial, retained)
+        assert_same_state(adapter.get_state(), reference(adapter))
+        assert_same_state(initial, retained)
         edited = adapter.get_state()
         before = reference(adapter)
         for value in edited.values(True, True):
             value.zero_()
-        equal(adapter.get_state(), before)
+        assert_same_state(adapter.get_state(), before)
         if family != "Maze":
             adapter.reset(seed=42, options={"task_id": 4, "variation": ["cube.size", "camera.angle_delta"]})
-            equal(adapter.get_state(), reference(adapter))
+            assert_same_state(adapter.get_state(), reference(adapter))
         adapter.close()
         with pytest.raises(RuntimeError, match="closed"):
             adapter.get_state()
