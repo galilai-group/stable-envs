@@ -20,7 +20,7 @@ pytestmark = pytest.mark.regression
     ],
 )
 def test_frozen_source_state_and_tasks(domain, name):
-    """Replay pinned historical evidence without importing the source package."""
+    """Replay the frozen classic-control source corpus without importing the source package."""
     family = "native_classic" if domain in {"cartpole", "pendulum"} else "native_classic_remaining"
     root = Path(__file__).resolve().parents[1] / "fixtures/semantics" / family
     manifest, arrays = native_corpus(root, domain)
