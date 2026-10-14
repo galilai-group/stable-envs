@@ -168,13 +168,8 @@ def _gaussian_dot(gy, gx, pos, radius) -> torch.Tensor:
     return torch.where(m > 0, dot / m, dot)
 
 
-# Style-byte grouping and cropped-dot decisions run on the host.
-# Bypass them on CUDA to avoid synchronization in the render loop.
-_CUDA_IS_NOT_THE_CPU = True
-
-# Share the uint8 alpha cutoff and window bound with the fused renderer.
+# The uint8 alpha cutoff shared with the fused renderer.
 _ALPHA_FLOOR = navdot.ALPHA_FLOOR
-_DOT_SIGMAS = navdot.DOT_SIGMAS
 
 
 def _dot_window(pos, sigma):
@@ -527,14 +522,11 @@ class _TorchNavBase(_GymReferencePort):
     fixed_size = IMG
     parity_interior_min = 0.999995
     parity_note = (
-        "1 ulp of exp, not geometry. Run on the CPU with the reference's own float32 exp this "
-        "renderer reproduces the official frame BIT FOR BIT and the device contributes nothing "
-        "(measured both ways); the residual is entirely that our exp is correctly rounded and "
-        "torch's CPU float32 exp is only faithful. That ulp changes a pixel only where the dot's "
+        "1 ulp of exp, not geometry. With the reference's own float32 exp on the CPU this renderer "
+        "reproduces the official frame bit for bit; the residual is that this exp is correctly rounded "
+        "while torch's CPU float32 exp is only faithful. That ulp changes a pixel only where the dot's "
         "colour equals the background, because 255*(1-a)+255*a is the identity in exact arithmetic "
-        "and not in float32, and the 41 px Gaussian tail is flat enough that the reference's own 3x3 "
-        "neighbourhood cannot see the quantisation contour. Worst of 800 seeded draws: 2 pixels of "
-        "2.3 million, 1/255, one channel. See the module docstring."
+        "but not in float32. Worst of 800 seeded draws: 2 pixels of 2.3 million, 1/255, one channel."
     )
     action_dim = 2
     action_low = -1.0
@@ -561,10 +553,8 @@ class _TorchNavBase(_GymReferencePort):
 
     def scene(self, states, variation=None, style=None):
         raise NotImplementedError(
-            f"{type(self).__name__} is not drawn from vector primitives. The official renderer "
-            f"composites a normalised Gaussian alpha mask over the whole frame, which is a per-pixel "
-            f"function rather than a set of flat-coloured shapes; a Scene2D disc would reproduce the "
-            f"7-pixel core and none of the 40-pixel tail. It overrides render() instead."
+            f"{type(self).__name__} is not drawn from vector primitives: the reference composites a "
+            f"normalised Gaussian alpha mask over the whole frame, which a Scene2D disc cannot express."
         )
 
     @torch.no_grad()
@@ -584,26 +574,21 @@ class _TorchNavBase(_GymReferencePort):
         t = int(size or self.size)
         if t != self.fixed_size:
             raise ValueError(
-                f"{type(self).__name__} renders at {self.fixed_size}px only, and asking for {t} is not "
-                f"a resolution change. Every length in the reference is in output pixels — a 4 px "
-                f"border, a door half-extent in pixels, a Gaussian sigma in pixels, a wall at column "
-                f"112 — with no world-unit description underneath, so there is nothing to re-sample. "
-                f"Resize the frames afterwards if a different size is wanted."
+                f"{type(self).__name__} renders at {self.fixed_size}px only (got {t}); every length in "
+                f"the reference is in output pixels. Resize the frames afterwards instead."
             )
         if supersample not in (None, 1):
             raise ValueError(
-                f"{type(self).__name__}.render: supersample={supersample} has nothing to estimate. "
-                f"Supersampling exists to approximate sub-pixel coverage of analytic geometry; this "
-                f"frame is an exact per-pixel formula evaluated on the reference's own lattice."
+                f"{type(self).__name__}.render: supersample={supersample} is not available; the frame "
+                f"is an exact per-pixel formula on the reference's pixel lattice."
             )
         sty = self.resolve_style(style, variation, batch=n)
 
         if out is not None:
             if not out.is_contiguous():
                 raise ValueError(
-                    f"{type(self).__name__}.render(out=): the destination must be contiguous. A "
-                    f"strided view (frames[:, t] in a rollout buffer) would be written linearly from "
-                    f"its own offset and the frames would land across neighbouring slices."
+                    f"{type(self).__name__}.render(out=): the destination must be contiguous; a strided "
+                    f"view such as frames[:, t] would be written linearly across neighbouring slices."
                 )
             img = out.view(n, IMG, IMG, 3)
         else:
@@ -641,9 +626,10 @@ class _TorchNavBase(_GymReferencePort):
         """
         k = hi - lo
         if self.device.type == "cuda":
-            return self.base_image(lambda p: sty[p][lo:hi], k)  # see _CUDA_IS_NOT_THE_CPU
+            # Host-side grouping would synchronize the CUDA render loop.
+            return self.base_image(lambda p: sty[p][lo:hi], k)
         rows = sty.values[lo:hi]
-        # Use one host transfer for grouping and cache keys; the CUDA branch bypasses this path.
+        # One host transfer serves both grouping and cache keys.
         blob = rows.detach().cpu().contiguous().numpy().tobytes()
         w = blob and len(blob) // k or 0
         keys = [blob[i * w : (i + 1) * w] for i in range(k)] if w else [b""] * k
@@ -1406,17 +1392,6 @@ class SimplePointMaze(_GymReferencePort):
             fig.clear()
         self._cached_goal_image.copy_(torch.as_tensor(np.stack(images), device=self.device))
 
-    def _render_historical_rows(self, rows):
-        """Render two-column agent-only fixtures with the goal hidden.
-
-        Public rendering uses four columns, including the visible goal position.
-        """
-
-        old = torch.as_tensor(rows, device=self.device, dtype=torch.float32).reshape(-1, 2)
-        goal = torch.tensor(MAZE_GOAL_POS, device=self.device, dtype=torch.float32).expand(len(old), 2)
-        full = torch.cat([old, goal], dim=1)
-        return self._render(full, variation={"goal.color": MAZE_BG_C})
-
     def scene(self, states, variation: dict | None = None, style=None) -> Scene2D:
         s = torch.as_tensor(states, device=self.device, dtype=torch.float32).reshape(-1, 4)
         n = int(s.shape[0])
@@ -1469,9 +1444,8 @@ class SimplePointMaze(_GymReferencePort):
         t = int(size or self.size)
         if t != SIZE:
             raise ValueError(
-                f"SimplePointMaze renders at {SIZE}px only: the reference is a 5x5 inch matplotlib "
-                f"figure at 100 dpi and its axes spine is a 0.8 pt line, i.e. a constant in OUTPUT "
-                f"PIXELS with no world-unit description. Asked for {t}."
+                f"SimplePointMaze renders at {SIZE}px only (got {t}): the reference is a 5x5 inch "
+                f"matplotlib figure at 100 dpi whose axes spine is a fixed width in output pixels."
             )
         return super()._render(states, size=t, supersample=supersample, variation=variation, style=style, out=out)
 
