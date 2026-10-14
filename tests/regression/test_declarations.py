@@ -383,30 +383,25 @@ def _dmc_declaration_table() -> dict:
     """``stable_envs.envs.dmcontrol.VISUAL_FIDELITY``, read off the source rather than the module.
 
     Reading the source keeps the claim about the declaration table valid on hosts whose GL backend cannot
-    register the cells. Only the module-level assignments the table is built from are executed, in one
-    shared namespace: every module of the package is walked, ``_cells`` first because per-domain entries
-    name ``_AT``/``_AT_VERSIONS``/``_AT_MEASURED_WITH``, and the tables are merged.
+    register the cells. Only the module-level assignments the table is built from are executed: each
+    module's ``VISUAL_FIDELITY`` and the ``_<DOMAIN>_AT*`` provenance names it reads. The tables are merged.
     """
     import ast
 
     pkg = ROOT / "stable_envs" / "envs" / "dmcontrol"
     want = {
-        "_AT",
         "_SWIMMER_AT",
-        "_AT_VERSIONS",
         "_SWIMMER_AT_VERSIONS",
-        "_AT_MEASURED_WITH",
         "_SWIMMER_AT_MEASURED_WITH",
         "_QUADRUPED_AT",
         "_QUADRUPED_AT_MEASURED_WITH",
-        "_FROZEN_STAND_VISUAL_FIDELITY",
         "VISUAL_FIDELITY",
     }
     # ``__init__.py`` and ``_family.py`` are skipped: their ``VISUAL_FIDELITY`` is a VIEW of the
     # per-domain tables (``{n: globals()[n].visual_fidelity ...}``), not a declaration, and reading
     # it would either need the classes or hide the literals this check exists to read.
-    skip = {"_cells.py", "__init__.py", "_family.py"}
-    paths = [pkg / "_cells.py"] + sorted(p for p in pkg.glob("*.py") if p.name not in skip)
+    skip = {"__init__.py", "_family.py"}
+    paths = sorted(p for p in pkg.glob("*.py") if p.name not in skip)
     ns: dict = {}
     table: dict = {}
     for path in paths:
