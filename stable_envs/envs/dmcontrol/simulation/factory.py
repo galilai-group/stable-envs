@@ -37,7 +37,8 @@ FIELDS = {
 ACTION_DIMS = {
     **dict.fromkeys(FIRST_FAMILY_FIELDS, 1),
     **dict.fromkeys(REACHER_FIELDS, 2),
-    **{key: cfg["nu"] for key, cfg in {**ALIGNED, **CONTINUATION}.items()},
+    **{key: cfg["nu"] for key, cfg in ALIGNED.items()},
+    **{key: cfg["nu"] for key, cfg in CONTINUATION.items()},
     "humanoid": HUMANOID_CONFIG["nu"],
 }
 #: State fields that follow qpos in the compact render row, in order.

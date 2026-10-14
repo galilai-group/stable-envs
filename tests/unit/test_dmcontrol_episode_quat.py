@@ -300,7 +300,7 @@ def test_the_target_quat_dims_are_live_again_when_the_target_is_a_box(cell):
         assert not np.array_equal(base, moved), f"{nm} is dead even with a BOX target"
         ok, why = C._validate_render_invariant(env, st, d, variation=box)
         assert not ok, f"{nm} was excluded under a BOX target: {why}"
-        assert "NON-sphere" in why, why
+        assert "non-sphere" in why, why
     d = names.index("ball_y")
     ok, _ = C._validate_render_invariant(env, st, d, variation=box)
     assert ok, "ball_y orients the spherical ball prop and stays invariant whatever the target is"
@@ -396,7 +396,7 @@ def test_a_lying_sphere_flag_cannot_grant_an_exclusion(cell):
         d = names.index(nm)
         ok, why = C._validate_render_invariant(liar, st, d, variation=box)
         assert not ok, f"a lying geom_is_sphere granted {nm} with a BOX target: {why}"
-        assert "geom_is_sphere" in why or "NON-sphere" in why, why
+        assert "geom_is_sphere" in why or "non-sphere" in why, why
 
 
 def test_the_rule_derives_sphereness_even_when_the_env_omits_the_flag(cell):
