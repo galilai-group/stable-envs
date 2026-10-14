@@ -21,7 +21,7 @@ from __future__ import annotations
 import functools
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import torch
@@ -32,6 +32,9 @@ from ._core.config import get_config as _get_config
 from ._core.style import StyleTensor
 from .spaces import Dict as VariationDict
 from .specs import CompositeSpec, Spec
+
+if TYPE_CHECKING:
+    from .render.scene import Scene2D
 
 #: Full simulator State is a TensorDict with entity-grouped keys and batch size [num_envs].
 State = TensorDict

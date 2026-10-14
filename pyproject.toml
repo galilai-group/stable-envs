@@ -257,8 +257,6 @@ ignore = ["E402", "E731", "E741"]
 "**/__init__.py" = ["F401"]
 # Generated MJWarp kernels: `int()` casts are load-bearing for Warp.
 "stable_envs/render/mjwarp/__init__.py" = ["UP018"]
-# Forward references kept unimported to avoid cycles; annotations are not evaluated.
-"stable_envs/env.py" = ["F821"]
 # Public `Union[...]` alias; `|` would change the runtime type object.
 "stable_envs/render/scene.py" = ["UP007"]
 # Availability probe: `import torch` inside try/except ImportError.
