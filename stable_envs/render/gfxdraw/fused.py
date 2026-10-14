@@ -1,3 +1,5 @@
+"""Triton kernels for gfxdraw polygon surfaces and integer resampling, with their host-side tables."""
+
 from __future__ import annotations
 
 import torch

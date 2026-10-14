@@ -1,3 +1,5 @@
+"""Fused Triton kernel for classic-control gfxdraw scenes: polygons, discs, lines, and sprite blits."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -36,8 +38,7 @@ def disc_table(r: int) -> np.ndarray:
         key = (pas, dy, dx)
         assert key not in seen, (
             f"aacircle fringe for r={r} has two pass-{pas} writes at (dy={dy}, dx={dx}) "
-            f"(weights {seen[key]} and {wt}); a dense per-pass map can only hold one, so the "
-            f"fused path would drop the second while the per-primitive path makes both"
+            f"(weights {seen[key]} and {wt}); a per-pass map holds only one"
         )
         seen[key] = wt
     for dy, dx, wt, pas in G.AACIRCLE_FRINGE[r]:

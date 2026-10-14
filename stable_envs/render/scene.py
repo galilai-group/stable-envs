@@ -1,3 +1,5 @@
+"""Batched 2-D scene description and the builder that fills it, consumed by ``raster2d``."""
+
 from __future__ import annotations
 
 from collections.abc import Sequence

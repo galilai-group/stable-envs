@@ -13,11 +13,11 @@ from __future__ import annotations
 
 import torch
 
-#: mask for the unsigned-32 arithmetic SDL_gfx's blend relies on
+#: Mask for the unsigned 32-bit arithmetic of SDL_gfx blending.
 M32 = (1 << 32) - 1
-#: sentinel weight meaning ``pixelColor`` (write the colour outright) rather than ``pixelColorWeight``
+#: Weight that selects an opaque ``pixelColor`` write instead of ``pixelColorWeight``.
 SOLID = 256
-#: a plain ``pygame.Surface`` is 32-bit with masks (0xFF0000, 0xFF00, 0xFF), so R/G/B sit at 16/8/0
+#: Channel shifts of a 32-bit ``pygame.Surface`` with masks (0xFF0000, 0xFF00, 0xFF).
 SHIFT = (16, 8, 0)
 
 #: Circle fringe entries are (dy, dx, weight, pass); weight 256 is opaque.
@@ -1209,7 +1209,7 @@ def aaline_emit(cv: Canvas, p, color_t, kmax, bidx) -> None:
     run = solid.expand(n)
     bb = bidx.view(-1, 1).expand(B, kmax + 1).reshape(-1)
     dw = draw.view(-1, 1)
-    # axis-aligned edges: SDL_gfx short-circuits to a solid vline/hline, with no AA whatsoever
+    # SDL_gfx draws axis-aligned edges as solid vlines/hlines without antialiasing.
     cv.blend_at(
         bb,
         (yy0.view(-1, 1) + k).reshape(-1),

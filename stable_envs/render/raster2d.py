@@ -1,3 +1,5 @@
+"""Rasterize ``Scene2D`` discs, convex polygons, and capsules with Torch or a fused Triton kernel."""
+
 from __future__ import annotations
 
 import torch
@@ -567,7 +569,7 @@ def _static_base(scene: Scene2D, Rh: int, Rw: int, block: int) -> torch.Tensor |
         return None
     B = scene.batch
     if K * B * Rh * Rw < _BAKE_MIN_WORK * scene.n_prims:
-        return None  # too little work to earn the synchronisation
+        return None  # too little work to justify the synchronization
     rows = torch.cat(
         [
             _row_bytes(t, B)
@@ -586,7 +588,7 @@ def _static_base(scene: Scene2D, Rh: int, Rw: int, block: int) -> torch.Tensor |
     if B > 1:
         ok = (rows == rows[:1]).all().reshape(1).to(torch.uint8)
         row0 = torch.cat([row0, ok])
-    blob = row0.cpu().numpy().tobytes()  # the one synchronisation
+    blob = row0.cpu().numpy().tobytes()  # the only synchronization
     if B > 1:
         blob, uniform = blob[:-1], blob[-1]
         if not uniform:
@@ -618,11 +620,8 @@ def _destination(out, B: int, H: int, W: int) -> torch.Tensor | None:
         raise TypeError(f"render(out=) expects a torch tensor, got {type(out).__name__}")
     if not out.is_contiguous():
         raise ValueError(
-            "render(out=): the destination must be contiguous. The kernel writes the frames linearly "
-            "through a flat view of it, and a view of a strided tensor keeps its strides, so the "
-            "frames would be scattered across your buffer rather than written into it. `buf[:, t]` of "
-            "a (B, T, H, W, 3) rollout buffer is the usual way to reach this; assign into it instead "
-            "(`buf[:, t] = render(...)`), or lay the buffer out with the frame axis outermost."
+            "render(out=): the destination must be contiguous because frames are written through a flat "
+            "view. For a strided slice such as `buf[:, t]`, assign instead: `buf[:, t] = render(...)`."
         )
     if out.numel() != B * H * W * 3:
         raise ValueError(
@@ -749,8 +748,7 @@ def render(
     """
     if backend == "triton" and scene.kind.device.type != "cuda":
         raise ValueError(
-            f"render(backend='triton') on a scene that lives on {scene.kind.device}. The fused "
-            f"kernel is CUDA-only; use backend='torch', or build the scene on a cuda device."
+            f"render(backend='triton') requires a CUDA scene, got {scene.kind.device}; use backend='torch'."
         )
     if backend == "torch" or (backend == "auto" and not (HAVE_TRITON and scene.kind.device.type == "cuda")):
         H, W = _output_shape(out_size)
