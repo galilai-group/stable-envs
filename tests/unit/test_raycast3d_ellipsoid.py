@@ -1,13 +1,10 @@
-"""``raycast3d._ellipsoid`` is a closed form, so it is tested against closed forms.
+"""``raycast3d._ellipsoid`` against closed forms.
 
-Three claims, in the order they matter: (1) on rays whose answer can be written down -- axis-aligned
-rays at an axis-aligned ellipsoid, a rotation that permutes the axes, an origin inside -- the hit
-distance and normal are the written-down ones; (2) against an independent float64 reference (MuJoCo's
-own formulation, the ``1/size^2``-weighted quadratic, ``mujoco_warp/_src/ray.py::ray_ellipsoid``)
-the float32 intersector agrees on hit/miss and to float32 precision on ``t`` and the normal, over
-random anisotropic rotated scenes; (3) with three equal semi-axes it is ``_sphere`` -- the same hits,
-``t`` and normals to float32 -- and a zero semi-axis is a miss, never a NaN. The dispatch and the
-bound helpers know the kind. The bit-identity of the torch and Triton twins is
+(1) Axis-aligned rays, an axis-permuting rotation and an origin inside give the written-down hit
+distance and normal. (2) Against a float64 reference (MuJoCo's ``1/size^2``-weighted quadratic,
+``mujoco_warp/_src/ray.py::ray_ellipsoid``) it agrees on hit/miss and to float32 precision on ``t``
+and the normal, over random rotated scenes. (3) Three equal semi-axes give ``_sphere``; a zero
+semi-axis is a miss, never a NaN. Torch/Triton bit-identity is checked in
 ``tests/gpu/test_fast_paths.py::test_the_ellipsoid_twins_are_bit_identical_on_both_casts``.
 """
 
@@ -141,11 +138,9 @@ def test_fuzz_against_the_float64_reference(seed):
     assert (hit[decided] == hit_ref[decided]).all(), "hit/miss disagrees away from grazing incidence"
     both = hit & hit_ref & decided
     assert both.sum() > 1000, "the fuzz did not reach the ellipsoid"
-    # THE TOLERANCE IS DERIVED, NOT CHOSEN. ``disc = b*b - a*c`` cancels in float32 with terms of
-    # order ``|ol'|^2 = (|o - pos| / size_min)^2`` -- the cancellation ``_capsule`` documents at 100 m,
-    # reached here by a 2 cm semi-axis at 2.5 m -- so the relative error in ``t`` is ``~eps * |ol'|^2``
-    # (measured 0.2-2.1x of eps/2 over these seeds). The bound is 16 ulp of that, the module's own
-    # resolution term (``_BOUND_SLACK_NOISE``); it is 30x the worst measured error, not tight.
+    # Derived tolerance: ``disc = b*b - a*c`` cancels in float32 with terms of order
+    # ``|ol'|^2 = (|o - pos| / size_min)^2``, so the relative error in ``t`` is ``~eps * |ol'|^2``.
+    # The bound is 16 ulp of that (``_BOUND_SLACK_NOISE``), about 30x the worst measured error.
     cond = 16.0 * 2.0**-23 * float(((o - pos).norm(dim=-1).max() / size.min()) ** 2)
     rel = np.abs(t.numpy()[both] - t_ref[both]) / t_ref[both]
     assert rel.max() <= cond, (rel.max(), cond)

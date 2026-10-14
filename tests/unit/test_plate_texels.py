@@ -1,19 +1,17 @@
-"""``stable_envs._core.plate_texels`` — the shared per-value texel substitution.
+"""``stable_envs._core.plate_texels``: per-value texel substitution, on a CPU stub.
 
-These run on a CPU stub, with no MuJoCo model and no GL context, because every property worth
-asserting about this module is arithmetic or bookkeeping and none of it should need a GPU to check:
-
-``quantise``          MuJoCo TRUNCATES ``int(255 * v)``; the half-levels are where it shows.
-``texel_slots``       masks are taken from the PRISTINE texture, and a mask that disagrees with the
-                      texture it is handed is refused rather than silently painting the wrong texels.
-``substitute``        writes every masked texel, leaves everything else alone, and ALWAYS uploads.
+``quantise``          truncates ``int(255 * v)`` as MuJoCo does.
+``texel_slots``       takes masks from the pristine texture and refuses a mask that disagrees with it.
+``substitute``        writes every masked texel, leaves the rest alone, and always uploads.
 ``texel_key``         the quantised bytes, and ``None`` at the registered default.
 
-The GL half (the upload goes to the renderer's own context) is observable only where a render
-happens: ``tests/unit/test_variation_maps_dmc_control.py``.
+The GL upload is checked where a render happens, in ``tests/unit/test_variation_maps_dmc_control.py``.
 """
 
 from __future__ import annotations
+
+import sys
+import types
 
 import numpy as np
 import pytest
@@ -34,7 +32,7 @@ class _Ctx:
 
 
 class _Renderer:
-    """The two attributes ``substitute`` touches, and a count of what it did."""
+    """The two attributes ``substitute`` touches."""
 
     def __init__(self):
         self._gl_context = _Ctx()
@@ -50,7 +48,7 @@ class _Model:
         self.tex_height = np.array([1], np.int64)
         self.tex_nchannel = np.array([nch], np.int64)
         body = np.asarray(texels, np.uint8).reshape(-1, nch)
-        # deliberate leading padding: a helper that ignored ``tex_adr`` would still pass without it
+        # leading padding, so a helper that ignored ``tex_adr`` would fail
         self.tex_data = np.concatenate([np.full(lead, 199, np.uint8), body.reshape(-1)])
         self.lead = lead
 
@@ -61,12 +59,10 @@ def _checker(n_a=4, n_b=3, n_mark=2):
 
 @pytest.fixture()
 def uploads(monkeypatch):
-    """``mujoco.mjr_uploadTexture`` calls, recorded. The import is inside ``substitute``."""
+    """Record ``mujoco.mjr_uploadTexture`` calls; ``substitute`` imports mujoco lazily."""
     seen = []
-    import types
-
     fake = types.SimpleNamespace(mjr_uploadTexture=lambda m, con, t: seen.append(t))
-    monkeypatch.setitem(__import__("sys").modules, "mujoco", fake)
+    monkeypatch.setitem(sys.modules, "mujoco", fake)
     return seen
 
 
@@ -93,8 +89,7 @@ def test_quantise_clips_rather_than_wrapping():
 
 
 def test_quantise_is_what_swm_writes():
-    """swm's Fetch skybox write is ``(bg * 255).astype(np.uint8)`` — the same truncation, by a
-    different route. If these ever disagree, our texture is not swm's texture."""
+    """swm's Fetch skybox write ``(bg * 255).astype(np.uint8)`` truncates the same way."""
     v = np.linspace(0.0, 1.0, 101)
     assert np.array_equal(quantise(np.stack([v, v, v], 1)), (np.stack([v, v, v], 1) * 255).astype(np.uint8))
 
@@ -113,17 +108,13 @@ def test_masks_default_to_equality_and_report_their_coverage():
 
 
 def test_an_empty_mask_is_refused():
-    """A colour the texture does not carry means the leaf would silently do nothing."""
+    """A colour the texture does not carry would make the leaf a no-op."""
     with pytest.raises(AssertionError, match="none of default colour"):
         texel_slots(_checker(), 0, [A, [0.77, 0.77, 0.77]])
 
 
 def test_explicit_masks_are_checked_against_the_texture():
-    """The DM Control case: masks supplied because markrgb == rgb2 makes equality ambiguous.
-
-    A mask that selects a texel not holding its colour is the failure mode that matters — it would
-    paint texels swm's recompile leaves alone — so it is refused rather than trusted.
-    """
+    """Supplied masks (DM Control, where markrgb == rgb2) must select texels holding their colour."""
     m = _checker()
     good = [np.array([1, 1, 1, 1, 0, 0, 0, 0, 0], bool), np.array([0, 0, 0, 0, 1, 1, 1, 0, 0], bool)]
     s = texel_slots(m, 0, [A, B], masks=good)
@@ -154,9 +145,8 @@ def test_substitute_writes_the_masked_texels_and_nothing_else(uploads):
 
 
 def test_substitute_makes_the_context_current_before_every_upload(uploads):
-    """The load-bearing line. ``mujoco.Renderer`` makes its context current in its constructor and
-    in ``render()`` and nowhere else, and GL texture names are per-context, so an upload under
-    another rig's context overwrites an unrelated texture object in it."""
+    """GL texture names are per-context, and ``mujoco.Renderer`` makes its context current only in
+    its constructor and ``render()``, so an upload under another rig's context hits the wrong texture."""
     m, r = _checker(), _Renderer()
     s = texel_slots(m, 0, [A, B])
     substitute(m, r, s, [A, B])
@@ -165,9 +155,7 @@ def test_substitute_makes_the_context_current_before_every_upload(uploads):
 
 
 def test_substitute_is_unconditional_even_at_the_default(uploads):
-    """No "it already looks like that" shortcut: the rig's texture and context outlive any one bake
-    and carry whatever the last one left, so skipping the default write is what leaks a previous
-    render's floor into this one."""
+    """The rig's texture outlives a bake, so skipping the default write would leak the previous floor."""
     m, r = _checker(), _Renderer()
     s = texel_slots(m, 0, [A, B])
     substitute(m, r, s, [[0.9, 0.1, 0.1], B])  # a custom bake
@@ -178,8 +166,7 @@ def test_substitute_is_unconditional_even_at_the_default(uploads):
 
 
 def test_substitute_restores_exactly_after_any_sequence(uploads):
-    """Absolute assignment, so bake B after A is bake B: the masks are positional and never depend
-    on what the texture currently holds."""
+    """Masks are positional, so a bake never depends on what the texture currently holds."""
     m, r = _checker(), _Renderer()
     s = texel_slots(m, 0, [A, B])
     pristine = m.tex_data.copy()
@@ -190,9 +177,7 @@ def test_substitute_restores_exactly_after_any_sequence(uploads):
 
 
 def test_two_colours_colliding_cannot_corrupt_the_masks(uploads):
-    """The reason the masks come from the pristine texture. Paint both sets the SAME colour, then
-    ask for two different ones: a helper that re-derived its masks by equality would now have one
-    mask of seven texels and one empty, and the second request would be wrong."""
+    """Painting both sets one colour, then two, must not merge the masks (they come from the pristine texture)."""
     m, r = _checker(), _Renderer()
     s = texel_slots(m, 0, [A, B])
     substitute(m, r, s, [[0.5, 0.5, 0.5], [0.5, 0.5, 0.5]])

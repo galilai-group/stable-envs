@@ -1,16 +1,13 @@
-"""Per-primitive bounds must be the IDENTITY, not an approximation of it.
+"""Per-primitive ray bounds leave ``raycast3d``'s CPU cast bit-identical.
 
-``raycast3d``'s CPU cast skips the rays whose line passes further from a primitive's origin than that primitive's bounding radius, which
-cannot change an answer — such a ray gets ``t = INF`` and loses the ``t < best`` test — but which CAN
-change one if the bound is ever computed too small. The failure mode is a handful of pixels on a
-silhouette, which no mean-absolute-difference catches, so the threshold here is zero and the
+The cast skips rays whose line passes further from a primitive than its bounding radius. That cannot
+change an answer unless the bound is too small, which shows as a few silhouette pixels, so the
 comparison is on bit patterns.
 
-The envs are covered by ``tests/gpu/test_fast_paths.py``; this file is the differential fuzz, on
-scenes the envs do not reach: rays exactly tangent to a bound, primitives entirely behind the origin
-or off to the side, degenerate sizes, an origin inside the primitive, and a ``d`` that is not unit
-(the bound's derivation divides by ``|d|^2``, and the shipped form multiplies through instead
-precisely so that ``d = 0`` cannot produce a NaN that silently drops a ray).
+The envs are covered by ``tests/gpu/test_fast_paths.py``; this is a differential fuzz on scenes the
+envs do not reach: rays tangent to a bound, primitives behind or beside the origin, degenerate
+sizes, an origin inside the primitive, and non-unit ``d`` (the bound multiplies through by ``|d|^2``
+so that ``d = 0`` cannot produce a NaN).
 """
 
 from __future__ import annotations
@@ -28,11 +25,8 @@ KINDS = (R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX, R3.ELLIPSOID)
 def _rand_scene(rng, B, K, N, *, degenerate=False, nonunit_d=False, tangent=False, far=0.0, kinds=None, dd_at_tol=0):
     g = torch.Generator().manual_seed(rng)
     r = lambda *s: torch.rand(*s, generator=g, dtype=torch.float32)  # noqa: E731
-    # ``kinds`` PINNED rather than sampled is what makes the per-kind dispatch testable. RAYCAST-5
-    # applies the bound only to the kinds whose intersector costs more than the bound does, so a
-    # scene now mixes primitives that take the bounded path with primitives that take the verbatim
-    # unbounded body, and they write into the same ``best`` / ``blocked``. Sampling reaches those
-    # mixes eventually; pinning them means the boundary is covered on every run.
+    # Pinned ``kinds`` cover scenes that mix bounded and unbounded kinds writing into the same
+    # ``best`` / ``blocked`` on every run, rather than whenever sampling reaches them.
     kinds = [KINDS[int(v)] for v in torch.randint(0, len(KINDS), (K,), generator=g)] if kinds is None else list(kinds)
     K = len(kinds)
     sizes = r(B, K, 3) * 0.4 + 0.02
@@ -57,12 +51,9 @@ def _rand_scene(rng, B, K, N, *, degenerate=False, nonunit_d=False, tangent=Fals
         ],
         -1,
     ).view(B, K, 3, 3)
-    # ``far`` puts the camera metres away from a small cluster, which is the GIANT maze's geometry:
-    # ~100 m to a 5 cm capsule. That is the regime the first version of the bound got wrong, and the
-    # regime this file did not cover until the cluster found it -- |oc|^2|d|^2 and (oc.d)^2 are each
-    # ~1e4 there and differ by ~r^2 ~ 2.5e-3, which is float32's resolution at that magnitude, so the
-    # subtraction cancelled away exactly the quantity it was meant to produce and one true hit was
-    # pruned. Without this case the suite passed and one pixel of 3,211,264 still moved.
+    # ``far`` puts the camera far from small primitives (~100 m to a 5 cm capsule). There
+    # |oc|^2|d|^2 and (oc.d)^2 are each ~1e4 and differ by ~r^2 ~ 2.5e-3, float32's resolution at that
+    # magnitude, so a bound that subtracts them can cancel away a true hit.
     o = ((r(B, N, 3) - 0.5) * 0.2 + torch.tensor([0.0, -2.0, 0.4])).contiguous()
     if far:
         sizes = sizes * 0.05  # centimetre-scale primitives...
@@ -81,10 +72,8 @@ def _rand_scene(rng, B, K, N, *, degenerate=False, nonunit_d=False, tangent=Fals
     if nonunit_d:
         d = d * (r(B, N, 1) * 3.0)  # includes exact zeros
     if dd_at_tol:
-        # Put |d|^2 just INSIDE the admission window: the worst bundle ``_unit_rays`` still lets
-        # through. ``d`` is unit to ~1e-7, so scaling by sqrt(1 +/- f*TOL) moves |d|^2 to 1 +/- f*TOL
-        # up to that spread; f starts at 0.9 and backs off until the float32 quantity the CAST
-        # computes -- not the real number aimed at -- is inside. Checked, not assumed, below.
+        # Put |d|^2 just inside the admission window, the worst bundle ``_unit_rays`` lets through.
+        # f backs off from 0.9 until the float32 |d|^2 the cast computes is inside.
         for f in (0.9, 0.7, 0.5, 0.3):
             m = torch.tensor((1.0 + dd_at_tol * f * R3._UNIT_D_TOL) ** 0.5, dtype=torch.float32)
             cand = (d * m).contiguous()
@@ -95,8 +84,8 @@ def _rand_scene(rng, B, K, N, *, degenerate=False, nonunit_d=False, tangent=Fals
             raise AssertionError("could not place |d|^2 inside the admission window")
         d = cand
         assert float((dd - 1.0).abs().max()) > R3._UNIT_D_TOL / 4, (
-            "this case is meant to sit at the EDGE of the window; it landed near |d| = 1 and would "
-            f"test nothing new (max |dd-1| = {float((dd - 1.0).abs().max()):.3e})"
+            "this case must sit at the edge of the window but landed near |d| = 1 "
+            f"(max |dd-1| = {float((dd - 1.0).abs().max()):.3e})"
         )
     return kinds, sizes.contiguous(), pos.contiguous(), R.contiguous(), o, d.contiguous()
 
@@ -116,8 +105,7 @@ def _same(a, b, what):
         mx = float((a.float() - b.float()).abs().max())
         raise AssertionError(
             f"{what}: bounded and unbounded casts differ on {bad} of {diff.numel()} values, "
-            f"max {mx:.3e}. A bound that excludes a ray the primitive can actually hit drops a "
-            f"pixel, and it drops it on a silhouette where nothing else will notice."
+            f"max {mx:.3e}. The bound excludes a ray the primitive can hit."
         )
 
 
@@ -135,9 +123,7 @@ CASES = [
     dict(rng=9, B=2, K=6, N=512, far=100.0, tangent=True),
     dict(rng=10, B=2, K=6, N=512, far=300.0, tangent=True),
     dict(rng=11, B=1, K=9, N=1024, far=100.0),
-    # PINNED KIND MIXES (RAYCAST-5). Under the per-kind predicate a scene can hold primitives on both
-    # paths at once, so these pin the combinations rather than hoping the sampler finds them: every
-    # kind alone, the two sides of the predicate adjacent, and a scene with one of each.
+    # Pinned kind mixes: every kind alone, bounded and unbounded kinds adjacent, one of each.
     dict(rng=12, B=2, K=4, N=333, kinds=(R3.SPHERE,) * 4),
     dict(rng=13, B=2, K=4, N=333, kinds=(R3.CAPSULE,) * 4),
     dict(rng=14, B=2, K=4, N=333, kinds=(R3.PLANE,) * 4),
@@ -148,10 +134,8 @@ CASES = [
         rng=18, B=2, K=5, N=512, far=100.0, tangent=True, kinds=(R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX)
     ),
     dict(rng=19, B=3, K=6, N=333, kinds=(R3.SPHERE, R3.CAPSULE) * 3, degenerate=True),
-    # At the edge of the admission window, at a long lever arm: the cap-sphere test drops the leading
-    # |d|^2, so a tolerance looser than _UNIT_D_TOL makes the identity false (at |d|^2 = 1 + 9e-5 and
-    # 100 m a probe lost 113,008 of 126,184 unbounded hits). These feed |d|^2 = 1 +/- (_UNIT_D_TOL - 1
-    # ulp), the worst bundle the check still admits, at far=100.
+    # At the edge of the admission window at far=100: the cap-sphere test drops the leading |d|^2, so
+    # the identity holds only for |d|^2 within _UNIT_D_TOL of 1. These feed the worst admitted bundle.
     dict(rng=20, B=2, K=6, N=512, far=100.0, tangent=True, dd_at_tol=+1),
     dict(rng=21, B=2, K=6, N=512, far=100.0, tangent=True, dd_at_tol=-1),
     dict(
@@ -237,21 +221,10 @@ def test_a_ray_aimed_straight_at_a_primitive_is_never_pruned():
 
 
 def test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose():
-    """``_BOUNDED_KINDS`` must equal the table in the experiment file, not a hand-edited guess.
-
-    The predicate is the deliverable of RAYCAST-5 and its whole claim is that it was derived from a
-    measurement of intersector cost rather than fitted to eight sweep rows. A constant in the module
-    that has drifted from the JSON it cites would leave that claim true of the document and false of
-    the code, which is the failure this check exists to make impossible. If the measurement is re-run
-    and the table moves, this test is what says the constant has to move with it.
-    """
+    """``_BOUNDED_KINDS`` equals the predicate in the committed intersector-cost measurement."""
     import json
     from pathlib import Path
 
-    # r6_kind_cost.json is the AUTHORITATIVE table and supersedes r5_kind_cost.json, which priced the
-    # any_blocking-shaped bound (cheaper than the cast_nearest branch that actually decides this) and
-    # applied a margin scaled by a single run's timing spread. Three runs whose ratios agree to 1-3 %
-    # produced three DIFFERENT predicates under that margin, which is what retired it.
     root = Path(R3.__file__).resolve().parents[2] / "tests/fixtures/measurements/raycast3d"
     f = root / "r6_kind_cost.json"
     if not f.is_file():
@@ -280,9 +253,8 @@ def test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose():
         f"_BOUNDED_KINDS is {sorted(R3._BOUNDED_KINDS)} but the committed measurement "
         f"({f.name}) chose {sorted(measured)}"
     )
-    # The rule must hold in the numbers, not merely the summary field: bounded iff the worst ratio is
-    # > 1 in EVERY run, so unbounded means some run's worst ratio is <= 1 (a kind straddling 1, e.g.
-    # ELLIPSOID on a loaded node, is unbounded).
+    # The rule must hold in the numbers, not only the summary field: bounded iff the worst ratio is
+    # > 1 in every run.
     for kind, on in m["predicate"].items():
         if kind not in m["ratio_worst_per_run"]:
             continue
@@ -294,13 +266,9 @@ def test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose():
 
 
 def test_an_unbounded_kind_never_reaches_the_gather():
-    """A kind outside the table must take the verbatim unbounded body, bound or no bound.
+    """A kind outside ``_BOUNDED_KINDS`` skips the bound's ``nonzero``/gather entirely.
 
-    Pointmaze's regression was one SPHERE over a 200,704-ray bundle: the bound spent an O(N)
-    ``nonzero`` plus gather plus scatter to narrow the cheapest intersector in the file. The repair is
-    only real if the sphere genuinely stops going through that machinery, so this asserts on the call
-    rather than on the pixels -- pixels are identical either way, which is precisely why they cannot
-    detect the thing being fixed.
+    Pixels are identical either way, so this asserts on the call.
     """
     seen = []
     real = torch.nonzero
@@ -328,18 +296,13 @@ def test_an_unbounded_kind_never_reaches_the_gather():
 
 @pytest.mark.parametrize("rng", [21, 22, 23])
 def test_a_row_is_unchanged_by_the_rows_it_is_batched_WITH(rng):
-    """Row 0's pixels must not depend on rows 1..7, and for THIS design that is not free.
+    """Row 0's result does not depend on rows 1..7.
 
-    The bound's ray set for a primitive is the union over the batch -- the rays near it in ANY row --
-    because a per-row set would need a ragged gather. So batching changes WHICH rays reach the
-    intersector, and the claim that it does not change the ANSWER is a claim about the bound being
-    conservative, not an identity anyone can read off the code. The suite above compares bounded
-    against unbounded at a fixed B; this compares one row against ITSELF at two different B, which is
-    the property a dataset loader actually depends on and the one a too-tight bound would break
-    asymmetrically -- row 0 alone would lose a hit that row 0 in company keeps.
+    A primitive's ray set is the union over the batch, so batching changes which rays reach the
+    intersector; the answer must not change. This compares one row against itself at B=1 and B=8.
     """
     kinds, s1, p1, R1, o1, d1 = _rand_scene(rng=rng, B=1, K=6, N=311)
-    # Rows 1..7 are a DIFFERENT scene and different rays, so the union is genuinely wider.
+    # Rows 1..7 are a different scene and different rays, so the union is wider.
     _, s8, p8, R8, o8, d8 = _rand_scene(rng=rng + 100, B=8, K=6, N=311)
 
     def cat(one, many):  # row 0 from the B=1 case, rows 1..7 from the other

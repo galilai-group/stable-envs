@@ -1,10 +1,8 @@
-"""The shared 3-D primitive vocabulary: one definition, and the two spellings that must agree.
+"""``render/primitives.py``: the mjtGeom codes, 3-vector helpers and bounding-radius law shared by
+``raycast3d`` and ``cpu3d``.
 
-``render/primitives.py`` exists because ``raycast3d`` and ``cpu3d`` were each carrying their own
-copy of the mjtGeom codes, the unrolled 3-vector arithmetic and the bounding-radius law. Extracting
-them only helps if it is checked that the copies are really gone and that the one law that does
-exist in two spellings -- numpy for a baked scene, torch for sizes a per-environment scale may have
-moved -- cannot drift apart. Each of these was a way the two backends could have disagreed.
+Both backends must use the shared objects, and the bounding radius's two spellings (numpy for a baked
+scene, torch for scaled sizes) must agree.
 """
 
 from __future__ import annotations
@@ -36,8 +34,7 @@ def test_both_backends_read_the_kind_codes_from_one_place():
 
 @pytest.mark.unit
 def test_the_unrolled_vector_helpers_are_shared_objects_not_copies():
-    # identity, not equality: a second copy of the expression is exactly the failure mode the
-    # extraction removed, and it would still pass a value comparison
+    # identity, not equality: a second copy would still pass a value comparison
     assert R3.dot3 is P.dot3
     assert R3.mv3 is P.mv3
     assert R3.mtv3 is P.mtv3
@@ -58,11 +55,10 @@ def test_mv_and_mtv_are_the_matrix_product_and_its_transpose():
 
 @pytest.mark.unit
 def test_the_unrolled_product_does_not_depend_on_the_batch_size():
-    """The property the spelling exists for: an elementwise kernel cannot see its neighbours.
+    """An elementwise product cannot see its neighbours, so the batch size cannot move it.
 
-    ``einsum`` lowers to ``bmm`` and cuBLAS picks a kernel from the batch COUNT, which moves the
-    product by an ulp between batch sizes -- and an ulp in the ray quadratic is a hit/miss decision.
-    Checked bitwise on CPU here; ``tests/gpu`` carries the device version.
+    ``einsum`` lowers to ``bmm`` and cuBLAS picks a kernel by batch count, which can move the product
+    by an ulp, and an ulp in the ray quadratic is a hit/miss decision. ``tests/gpu`` checks the device.
     """
     g = torch.Generator().manual_seed(1)
     M = torch.rand(1, 3, 3, generator=g)
@@ -87,15 +83,11 @@ def test_the_two_bound_radius_spellings_agree(kind):
 
 @pytest.mark.unit
 def test_an_unbounded_kind_says_so_in_each_spellings_own_way():
-    """And the way the numpy one says it is a trap worth pinning down.
+    """``bound_radius_tensor`` returns ``None`` for a plane; the numpy form returns ``INF``.
 
-    ``bound_radius_tensor`` returns ``None`` for a plane, which is what the per-ray bound keys off.
-    The numpy form returns ``INF`` -- but ``INF`` here is ``1e30``, a FINITE float, so the
-    ``np.isfinite`` guard in ``Primitives.radii`` does NOT fire on a plane and the screen-space
-    caller is not protected by it. What actually rejects a plane there is ``screen_span``'s
-    ``torch.isfinite(ndc)`` probe on the PROJECTED corners, which do overflow. Both behaviours are
-    the original values and are preserved deliberately; this test exists so that a future reader who "fixes"
-    the guard finds out here rather than in a frame.
+    ``INF`` is ``1e30``, a finite float, so the ``np.isfinite`` guard in ``Primitives.radii`` does not
+    fire on a plane. ``screen_span`` rejects it instead, through ``torch.isfinite`` on the projected
+    corners, which overflow.
     """
     assert P.bound_radius_tensor(P.PLANE, torch.ones(4, 3)) is None
     r = P.bound_radius(np.array([P.PLANE]), np.ones((1, 3)))
@@ -147,8 +139,7 @@ def test_primitives_bound_radius_is_the_free_function():
     size = np.array([[0.2, 0, 0], [0.1, 0.3, 0], [0.2, 0.3, 0.4], [0.1, 0.5, 0.2], [1.0, 1.0, 0.1]])
     prims = P.Primitives(kind=kinds, size=size, mat_rgb=np.zeros((5, 3)), tex_rgb=np.ones((5, 3)), spec=np.zeros(5))
     assert np.array_equal(prims.bound_radius(), P.bound_radius(kinds, size))
-    # the memoised device form is the same numbers scaled, INF and all (see the test above for why
-    # the plane is not filtered out here), and it is memoised per (device, dtype, scale)
+    # the device form is the same numbers scaled, INF included, memoised per (device, dtype, scale)
     radii = prims.radii("cpu", torch.float32, 2.0)
     assert torch.allclose(radii, torch.as_tensor(P.bound_radius(kinds, size) * 2.0, dtype=torch.float32))
     assert prims.radii("cpu", torch.float32, 2.0) is radii

@@ -1,15 +1,10 @@
-"""Explicit resource lifetime: the close protocol, the bounded LRU cache, and the never-release rule.
+"""``render/_resources.py``: the close protocol, the bounded LRU cache, and the never-release rule.
 
-``render/_resources.py`` is the resource-lifetime design in the render backends, so what it promises
-is tested against a FAKE backend object rather than against MJWarp or nvdiffrast. That is not a
-convenience for a laptop with no CUDA: the promises are about ordering and idempotency — released
-once, released before the object is reusable, never released twice, never released by the collector —
-and a fake is the only way to observe them, because a real warp array's free is not visible from
-Python at all.
+The protocol is tested against a fake backend whose frees are observable, since a real warp array's
+free is not visible from Python: released once, before reuse, never twice, never by the collector.
 
-The four backend classes are checked separately, by their SHAPE (they honour the protocol and declare
-what they own) rather than by construction, which needs a GPU. The GPU arm asserts the counters
-across repeated create/close cycles; see the GPU resource-lifetime suite.
+The backend classes are checked by shape (they honour the protocol and declare what they own) rather
+than by construction, which needs a GPU; the GPU resource-lifetime suite covers construction.
 """
 
 from __future__ import annotations
@@ -67,8 +62,7 @@ def test_use_after_close_raises_instead_of_reading_freed_state():
     b.close()
     with pytest.raises(RES.UseAfterCloseError) as e:
         b.use()
-    # the message has to name the object and say what close() did, because the caller sees it far
-    # from the close that caused it
+    # the caller sees this far from the close, so the message names the object
     assert "FakeBackend.use" in str(e.value) and "closed" in str(e.value)
 
 
@@ -88,12 +82,10 @@ def test_the_context_manager_closes_on_the_way_out_including_on_an_exception():
 
 @pytest.mark.unit
 def test_correctness_never_depends_on_del():
-    """Dropping the last reference must NOT release: plan 2 forbids a GC-dependent lifetime.
+    """Dropping the last reference does not release; an unclosed object leaks, visibly and countably.
 
-    The test is the inverse of the usual one. A ``__del__`` that freed device memory would make every
-    other guarantee here conditional on when the collector runs, and would run at interpreter shutdown
-    after the CUDA bindings are gone. So the requirement is that an unclosed object leaks, visibly and
-    countably, rather than being tidied up invisibly.
+    A ``__del__`` that freed device memory would depend on when the collector runs and could run at
+    interpreter shutdown after the CUDA bindings are gone.
     """
     log = []
     FakeBackend(log)  # no reference kept
@@ -182,7 +174,7 @@ def test_the_cache_is_bounded():
 
 @pytest.mark.unit
 def test_eviction_is_least_recently_used_and_one_entry_at_a_time():
-    """The property the ``clear()``-on-full idiom does not have, and the reason this class exists."""
+    """Eviction drops only the least recently used entry, not the whole cache."""
     c = RES.BoundedCache(3, name="t")
     c.put("a", 1)
     c.put("b", 2)
@@ -196,12 +188,10 @@ def test_eviction_is_least_recently_used_and_one_entry_at_a_time():
 
 @pytest.mark.unit
 def test_a_key_in_use_survives_an_unrelated_insertion():
-    """A clear()-on-full cache fails this, and that is the correctness half of the change.
+    """A key read between insertions stays cached.
 
-    A caller holding the value for the key it is rendering with must not lose it because something
-    else inserted. ``mjwarp_lightspec._CASTS_CACHE`` is the sharp case: the warm-up render writes the
-    entry and the CAPTURING render reads it, and a miss there is a device-to-host copy that CUDA
-    refuses inside a graph capture.
+    A miss on a key the warm-up render wrote can mean a device-to-host copy inside a CUDA graph
+    capture, which CUDA refuses.
     """
     c = RES.BoundedCache(2, name="t")
     c.put("hot", "value")
@@ -386,18 +376,16 @@ def test_the_per_renderer_ray_cache_is_bounded():
     """``nvdiff.BatchRenderer._ray_cache``, checked without building a renderer (it needs CUDA)."""
     import stable_envs.render.nvdiff as ND
 
-    assert ND.RAY_CACHE_MAX == 8, "the bound is the one the uncapped dict already used"
+    assert ND.RAY_CACHE_MAX == 8
     src = _code_of("nvdiff.py")
     assert "_ray_cache = _resources . BoundedCache" in src
     assert "self . _ray_cache . put (" in src and "self . _ray_cache . get (" in src
 
 
 def _code_of(name: str) -> str:
-    """A module's source with every comment and string literal removed.
+    """A module's source with every comment and string literal removed, without importing it.
 
-    A plain substring search over the file finds the PROSE — these modules explain at length why an
-    EGL context is never freed — so the check has to look at code. ``tokenize`` is enough and needs no
-    import of the module, which matters because three of the five need CUDA to import.
+    The modules' prose mentions the forbidden calls, and some of them need CUDA to import.
     """
     import pathlib
     import tokenize
@@ -415,13 +403,10 @@ def _code_of(name: str) -> str:
 @pytest.mark.unit
 @pytest.mark.parametrize("name", ["mjwarp/__init__.py", "nvdiff.py", "_resources.py"])
 def test_nothing_in_the_render_backends_releases_an_egl_context(name):
-    """The rule ``tests/_runner/resource_guard.py`` enforces at zero tolerance, checked at the source.
+    """The rule ``tests/_runner/resource_guard.py`` enforces, checked at the source.
 
-    Releasing one EGL context corrupts rendering in every other live context in the process; four
-    separate incidents in this repository were exactly that, each surfacing as pixel differences in an
-    env that did nothing wrong. So ``close()`` on a render backend must never reach ``GLContext.free``
-    or ``mujoco.Renderer.close``, however tempting "release what you acquired" reads — and this file
-    is where a later reader who deletes that asymmetry as an oversight finds out.
+    Releasing one EGL context corrupts rendering in every other live context in the process, so
+    ``close()`` on a render backend must never reach ``GLContext.free`` or ``mujoco.Renderer.close``.
     """
     code = _code_of(name)
     for forbidden in (". free (", "GLContext", "eglDestroyContext", "mujoco . Renderer"):
@@ -430,7 +415,7 @@ def test_nothing_in_the_render_backends_releases_an_egl_context(name):
 
 @pytest.mark.unit
 def test_family_device_caches_release_on_eviction():
-    """the renderer-resource consumer list: overflow must call close/release, not drop to the collector."""
+    """Renderer-resource caches release on eviction rather than dropping to the collector."""
     import pathlib
 
     root = pathlib.Path(__file__).resolve().parents[2] / "stable_envs"

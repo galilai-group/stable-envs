@@ -44,10 +44,8 @@ def _prims(kinds, g):
     )
 
 
-#: ``t`` of a mover at this scene's default placement, from the camera in ``_camera()``. The
-#: occlusion band below is built around it: ``plate_t`` has to CUT THROUGH the movers to be a real
-#: threshold, and a band chosen without reference to where they are would sit entirely in front of
-#: them or entirely behind, which is the same as not varying at all.
+#: ``t`` of a mover at this scene's default placement, from ``_camera()``. The "band" ``plate_t``
+#: is centred on it so the threshold cuts through the movers.
 _MOVER_T = 2.72
 
 
@@ -68,27 +66,18 @@ def _scene(
 ):
     """A plate, its ray parameter, and a batch of mover poses in front of the camera.
 
-    ``plate_t`` selects the occlusion threshold, and the choice is load-bearing rather than
-    decorative:
+    ``plate_t`` selects the occlusion threshold:
 
-    * ``"floor"`` -- the analytic depth of a ground plane through the origin. Smooth, and far enough
-      behind the movers that every sample of the window is covered or not covered for reasons that
-      have nothing to do with which pixel's threshold it read.
+    * ``"floor"`` -- the analytic depth of a ground plane through the origin, behind the movers.
     * ``"inf"`` -- nothing static in the way, so ``INF < INF`` has to stay False.
-    * ``"band"`` -- **a FINITE per-pixel field that cuts through the movers**, so a sample's coverage
-      depends on WHICH pixel's ``plate_t`` it was handed. This is the only mode that exercises the
-      ``bt`` gather: the compact path reads ``plate_t`` at the window's output pixels and blows the
-      value up over the ``ss x ss`` subgrid, where the path it replaces blew the whole frame up first
-      and read the window out of that. Those are the same numbers only if the blow-up maps
-      ``(ty, a, tx, b) -> (y0+ty, x0+tx)``; transposing it is a real defect that the ``"floor"`` and
-      ``"inf"`` scenes cannot see, because under them every sample of a window shares an answer.
-      The field depends on ``y`` and ``x`` with different periods so a transposition cannot alias
-      back onto itself, and ``R3.INF`` never appears in it -- the sentinel would collapse the
-      comparison to ``t < INF`` and hide exactly what this mode is for.
+    * ``"band"`` -- a finite per-pixel field that cuts through the movers, so a sample's coverage
+      depends on which pixel's ``plate_t`` it reads. Only this mode exercises the ``bt`` gather, which
+      must map ``(ty, a, tx, b) -> (y0+ty, x0+tx)``; a transposition is invisible under the other
+      modes. ``y`` and ``x`` have different periods so a transposition cannot alias onto itself, and
+      ``R3.INF`` never appears in the field.
 
-    ``offset`` shifts every mover in world x and z, which is how a window gets pushed against a frame
-    edge and the origin clamp in ``_fit_tile`` is made to engage. ``scales`` is a per-row
-    ``size_scale``.
+    ``offset`` shifts every mover in world x and z, pushing windows against a frame edge so the origin
+    clamp in ``_fit_tile`` engages. ``scales`` is a per-row ``size_scale``.
     """
     g = torch.Generator().manual_seed(seed)
     cam = _camera()
@@ -155,8 +144,7 @@ def _assert_identical(a, b, what):
         n = int((diff > 0).sum())
         raise AssertionError(
             f"{what}: {n} of {diff.numel()} channel values differ, max |delta| {int(diff.max())}. "
-            "The compact tail is meant to be the identity of the window path, so any difference "
-            "is a defect in one of the three arguments in this file's docstring, not a tolerance."
+            "The compact tail must equal the full-window path exactly."
         )
 
 
@@ -174,8 +162,7 @@ CASES = [
     ("batch-of-one", dict(seed=8, B=1), dict(tile=16)),
     ("large-batch", dict(seed=9, B=32), dict(tile=16)),
     ("plate-t-infinite", dict(seed=10, plate_t="inf"), dict(tile=16)),
-    # the three cases below are the only ones in this file whose coverage depends on WHICH
-    # pixel's occlusion threshold a sample was handed -- see ``_scene``'s "band" mode
+    # coverage in these three depends on which pixel's threshold a sample reads; see ``_scene``
     ("plate-t-band-ss2", dict(seed=14, K=1, kinds=(R3.SPHERE,), plate_t="band"), dict(tile=16)),
     ("plate-t-band-ss1", dict(seed=15, K=1, kinds=(R3.SPHERE,), ss=1, plate_t="band"), dict(tile=16)),
     ("plate-t-band-two-movers", dict(seed=16, K=2, plate_t="band"), dict(tile=16)),
@@ -203,9 +190,7 @@ CASES = [
         dict(seed=19, B=6, K=1, kinds=(R3.SPHERE,), spread=0.35, offset=(-1.15, 0.95), plate_t="band"),
         dict(tile=16),
     ),
-    # the clamp and a per-row size_scale together: the scale feeds ``bound_scale``, so it moves the
-    # span the tile is fitted to AND the primitive the cast tests, on a window already pinned
-    # against two frame edges
+    # the clamp with a per-row size_scale, which moves both the fitted span and the cast primitive
     (
         "clamped-ss2-per-row-scale",
         dict(
@@ -256,8 +241,8 @@ def test_random_scenes_agree_on_every_byte(seed):
     _assert_identical(a, b, f"random seed {seed} H={H} W={W} ss={ss} K={K} tile={tile}")
 
 
-def _cover_fraction(sc, tile):
-    """What fraction of the window each row covers -- the quantity the fuzz has to span."""
+def _shaded_count(sc, tile):
+    """Number of samples ``composite`` shades for this scene."""
     sc, _ = _split(sc)
     seen = {}
     orig = R3.shade
@@ -309,15 +294,9 @@ def test_the_edge_cases_actually_clamp(cid):
 
 
 def test_the_fuzz_actually_reaches_empty_and_full_cover_rows():
-    """A differential test that never varies the cover has verified one point, not an identity.
-
-    A dump comparison once printed ``ALL_IDENTICAL=True`` over two empty
-    directories because ``all([])`` is True. The same shape of false green is available here: if
-    every fuzz scene happened to put the movers off screen, both paths would return the plate and
-    every assertion would pass having compared nothing.
-    """
+    """The fuzz reaches both an empty cover (the plate alone) and a full cover."""
     empty = _scene(seed=41, K=1, kinds=(R3.SPHERE,), depth=-6.0, spread=0.02)
-    assert _cover_fraction(empty, 16) == 0, "the empty-cover case is covering something"
+    assert _shaded_count(empty, 16) == 0, "the empty-cover case is covering something"
     a, b = _both(empty, tile=16)
     _assert_identical(a, b, "empty cover")
     assert torch.equal(a, empty["plate"].view(1, *empty["plate"].shape).expand(a.shape[0], *empty["plate"].shape)), (
@@ -341,7 +320,7 @@ def test_the_fuzz_actually_reaches_empty_and_full_cover_rows():
 
 
 def test_a_caller_supplied_buffer_and_a_fresh_one_agree():
-    """``maze2d`` reads ``with_t != plate`` to find the target, so every pixel of ``out`` is load-bearing."""
+    """Compositing into a caller's ``out`` writes every pixel and matches a fresh buffer."""
     sc, _ = _split(_scene(seed=51, B=6, K=1, kinds=(R3.SPHERE,)))
     buf = torch.full((6, sc["H"], sc["W"], 3), 7, dtype=torch.uint8)
     given = R3.composite(**sc, tile=16, out=buf).clone()
@@ -404,13 +383,9 @@ def test_compact_tail_matches_full_window_without_cover_compaction():
 
 @pytest.mark.parametrize("seed", range(8))
 def test_a_row_renders_the_same_alone_as_it_does_in_a_batch(seed):
-    """The fitted tile is derived from the batch's WORST span, so the batch can change the window.
+    """The fitted tile comes from the batch's worst span, so the batch can change the window.
 
-    It must not change the picture. That is not automatic and it is not what the identity argument
-    above says: the argument is that any admissible window gives the same frame, and this is the test
-    that the window the batch happens to pick is still admissible for every row in it. RAYCAST-4 made
-    the same distinction for its per-primitive bound -- batch invariance is a claim there, not an
-    identity -- and it earned its own test for the same reason.
+    It must not change the picture: the window the batch picks has to be admissible for every row.
     """
     sc, _ = _split(_scene(seed=4000 + seed, B=8, K=2, spread=0.2 + 0.1 * seed))
     together = R3.composite(**sc, tile=16).clone()

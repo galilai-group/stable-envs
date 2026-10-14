@@ -1,22 +1,15 @@
-"""swm_nav's baked background and cropped dots draw exactly the full-frame composition.
+"""Navigation's baked background and cropped dots draw exactly the full-frame composition.
 
-Two optimisations live behind ``render()`` for TwoRoom, TwoRoomTarget, Piecewise and PiecewiseZones,
-and each is a claim that some work could not have reached a pixel:
+Two shortcuts sit behind ``render()`` for TwoRoom, TwoRoomTarget, Piecewise and PiecewiseZones:
 
-  * ``_base_image`` builds the background, walls, doors, zones and border ONCE per distinct style row
-    and expands or gathers it back, instead of once per row of the batch. The claim is that the base
-    image is a function of the style and of nothing else -- not of the state, not of what was
-    rendered before.
-  * ``_blend_dot`` evaluates the Gaussian and the alpha blend only inside ``_dot_window``. The claim
-    is that outside it the normalised alpha is below ``_ALPHA_FLOOR``, where the blend is the
-    identity.
+  * ``_base_image`` builds the background, walls, doors, zones and border once per distinct style
+    row and expands or gathers it back. The base image must be a function of the style alone.
+  * ``_blend_dot`` evaluates the Gaussian and the alpha blend only inside ``_dot_window``. Outside it
+    the normalised alpha must be below ``_ALPHA_FLOOR``, where the blend is the identity.
 
-Both are checked here against the arithmetic they replaced -- the full-frame
-``_alpha_blend(img, _gaussian_dot(whole grid), colour)`` composition -- on the cases that make the
-claims hard rather than on the ones the envs happen to produce. The adversarial one is an agent
-OUTSIDE the frame: ``_gaussian_dot`` divides by the frame's own maximum, so a dot whose centre is off
-the picture is rescaled until its largest in-frame sample is 1.0, and a window derived from the
-un-normalised tail alone would crop a dot that is painting at full strength.
+Both are checked against the full-frame ``_alpha_blend(img, _gaussian_dot(whole grid), colour)``
+composition. ``_gaussian_dot`` divides by the frame's own maximum, so a dot centred outside the frame
+is rescaled until its largest in-frame sample is 1.0; the window must not crop it.
 """
 
 from __future__ import annotations
@@ -32,12 +25,12 @@ CONFIGS = ("TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones")
 
 
 def _reference(env, states, sty):
-    """The earlier full-frame render: base image per row, both dots over the whole frame."""
+    """Full-frame reference render: base image per row, both dots over the whole frame."""
     s = torch.as_tensor(np.asarray(states, np.float32), device=env.device).reshape(-1, env.state_dim)
     k = int(s.shape[0])
     sl = lambda p: sty[p][0:k]  # noqa: E731
     img = env.base_image(sl, k)
-    if hasattr(env, "_target_dot_is_drawn") or "Target" in type(env).__name__:
+    if "Target" in type(env).__name__:
         img = SN._alpha_blend(
             img, SN._gaussian_dot(env._gy, env._gx, s[:, 2:4], sl("target.radius")), sl("target.color")
         )
@@ -70,16 +63,12 @@ def test_matches_the_full_frame_composition_on_sampled_states(cfg, B):
 def test_matches_on_states_the_env_would_never_sample(cfg):
     """Agents outside the frame, on the border, on and between pixel centres.
 
-    ``render(states)`` takes whatever it is given -- only ``step`` clamps -- so a state outside the
-    picture is a legal input and is exactly where the frame-maximum normalisation stops being a
-    detail.
+    Only ``step`` clamps, so a state outside the picture is a legal ``render`` input.
     """
     env = se.make(cfg, num_envs=1, device="cpu")
-    # The MODERATE offsets are the ones that bite. A centre 400 px away underflows exp() to zero
-    # before the normalisation can rescale anything, so every windowing agrees on a blank dot; a
-    # centre 20-60 px outside still paints at full strength on the frame edge, and there the window
-    # has to carry the distance from the centre to the nearest in-frame sample or it crops a live
-    # dot. Dropping that term passes every extreme case and fails these.
+    # A centre 400 px away underflows exp() to zero, so every window agrees on a blank dot. A centre
+    # 20-60 px outside still paints at full strength on the edge, so the window has to include the
+    # distance from the centre to the nearest in-frame sample.
     pos = [
         (112.0, 112.0),
         (112.5, 112.5),
@@ -125,11 +114,7 @@ def test_matches_across_the_declared_radius_range(cfg, radius):
 
 @pytest.mark.parametrize("cfg", CONFIGS)
 def test_the_bake_is_not_a_function_of_call_history(cfg):
-    """Purity, order invariance and batch-size invariance, with the cache deliberately warm.
-
-    The failure to catch is a cached plate mutated after caching, e.g. the agent painted into it at
-    batch 1 so later renders of that style show a stale dot.
-    """
+    """Purity, order invariance and batch-size invariance with a warm cache (no plate mutated after caching)."""
     env = se.make(cfg, num_envs=8, device="cpu")
     env.rng = np.random.default_rng(2)
     st = np.asarray(env.sample_states(8), np.float32)
@@ -149,11 +134,7 @@ def test_the_bake_is_not_a_function_of_call_history(cfg):
 
 @pytest.mark.parametrize("cfg", CONFIGS)
 def test_a_per_row_style_is_not_collapsed_to_one_plate(cfg):
-    """Every row a different appearance: the bake must group by row and not paint row 0 everywhere.
-
-    This is the failure mode the style tensor's own docstring calls the three shipped collapses, and
-    a cache keyed on one row of a batch is the fourth way to have it.
-    """
+    """Every row a different appearance: the bake must group by row and not paint row 0 everywhere."""
     env = se.make(cfg, num_envs=6, device="cpu")
     env.rng = np.random.default_rng(3)
     st = np.asarray(env.sample_states(6), np.float32)
@@ -174,17 +155,11 @@ def test_a_per_row_style_is_not_collapsed_to_one_plate(cfg):
 
 @pytest.mark.parametrize("cfg", CONFIGS)
 def test_two_styles_with_repeats_take_the_gather_branch(cfg):
-    """The branch between "one plate, expanded" and "every row different, no bake".
+    """A few distinct styles with repeats take ``_base_image``'s gather branch.
 
-    ``_base_image`` has three outcomes: all rows identical (one plate, expanded), all rows distinct
-    (no bake at all), and the case in between -- a few distinct styles with repeats, which builds one
-    plate each and GATHERS them back with an index. Only the third exercises ``torch.cat(plates)[pick]``,
-    and until this test nothing did: the suite's per-row-style case has six distinct rows and takes the
-    fallback, and every other case has one. An index built in the wrong order there would hand row i
-    the wrong style's background and every digest above would still pass.
-
-    Two styles across six rows, interleaved rather than blocked, so a gather that merely preserved
-    grouping order would be caught.
+    All rows identical expands one plate and all rows distinct skips the bake; only repeats exercise
+    ``torch.cat(plates)[pick]``. Two styles across six rows, interleaved, so an index that only
+    preserved grouping order would be caught.
     """
     env = se.make(cfg, num_envs=6, device="cpu")
     env.rng = np.random.default_rng(11)
@@ -230,11 +205,7 @@ def test_two_styles_with_repeats_take_the_gather_branch(cfg):
 
 
 def test_the_alpha_floor_is_the_measured_one():
-    """The crop rests on this number; if somebody widens it the crop stops being a bound.
-
-    Re-measured here rather than asserted: the smallest alpha ``_alpha_blend`` can act on over every
-    uint8 contrast, found by bisection against that function itself.
-    """
+    """``_ALPHA_FLOOR`` is at most the smallest alpha ``_alpha_blend`` acts on, found by bisection."""
     smallest = 1.0
     for img_v in (0, 1, 127, 254, 255):
         for col_v in (0, 1, 127, 254, 255):

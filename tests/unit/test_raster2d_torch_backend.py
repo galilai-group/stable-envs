@@ -1,17 +1,14 @@
-"""``render_torch`` matches a frozen copy of the unoptimised torch rasterizer, on CPU, byte for byte.
+"""``render_torch`` matches a frozen unoptimised torch rasterizer, on CPU, byte for byte.
 
-``render_torch`` is the executable specification the fused kernel is diffed against. It skips
-primitive families a slot lacks, unrequested outlines and rings, padded degenerate edges, pixels outside
-a primitive's world-space bound, and groups rows with distant bounds into separate windows. Each skip
-claims that no pixel could have changed.
+``render_torch`` skips primitive families a slot lacks, unrequested outlines and rings, padded
+degenerate edges and pixels outside a primitive's world-space bound, and groups rows with distant
+bounds into separate windows. Each skip claims that no pixel could have changed.
 
-The oracle is the pre-optimisation ``render_torch`` (commit ``89fa5ca8``), kept in
-``scripts/regression/raster2d/fuzz_render_torch.py``; comparing the current renderer with itself
-would pass whatever it drew. ``tests/gpu/test_conformance.py::test_backend_agreement`` checks the
-kernel on CUDA; this runs anywhere.
+The oracle is the unoptimised rasterizer in ``scripts/regression/raster2d/fuzz_render_torch.py``.
+``tests/gpu/test_conformance.py::test_backend_agreement`` checks the fused kernel on CUDA.
 
-The generated scenes are the awkward ones the real envs never produce: every registered Scene2D env
-renders at supersample 1, none has a collinear polygon, none has a negative radius.
+The generated scenes cover cases the registered envs do not produce: supersample above 1, collinear
+polygons, negative radii.
 """
 
 from __future__ import annotations
@@ -91,12 +88,10 @@ def _quad(B, pts):
 
 
 def _cases():
-    """The cases a random generator reaches rarely or never, named one by one.
+    """Cases a random generator reaches rarely or never.
 
-    ``exactly collinear`` is the load-bearing one. The bound declines to cull a polygon whose twice
-    signed area is exactly zero, because its halfplane intersection is a line or a halfplane rather
-    than a polygon and is not bounded by the vertex hull. That branch is now what keeps the CPU path
-    correct as well as the kernel, and exact zero is not a value a uniform draw produces.
+    The bound does not cull a polygon with exactly zero signed area: its halfplane intersection is a
+    line or a halfplane, not bounded by the vertex hull. A uniform draw never produces exact zero.
     """
     B = 3
     yield (
@@ -189,14 +184,10 @@ def test_matches_the_frozen_baseline_on_named_cases(fuzz, tag, scene):
 
 
 def test_row_grouping_is_exercised_by_this_suite(fuzz):
-    """A guard on the guard: if nothing above ever groups, the grouped path is untested and green.
+    """At least one scene draws through a grouped window, so ``row_groups`` is exercised.
 
-    ``row_groups`` only engages where the batch-union window is much larger than a single row's
-    box AND the cost model says the grouping pays for its own dispatch, which the named cases above
-    deliberately are not. This builds the case that does: one disc per row, scattered, so every row
-    lands in its own cell, at a batch where the model accepts. The batch is part of the test -- at
-    B=64 and 64 px the model correctly declines, and asserting on a case it declines would be
-    asserting that the model is broken.
+    Grouping engages only where the batch-union window is much larger than one row's box and the cost
+    model accepts. One scattered disc per row at B=256 qualifies; at B=64 and 64 px the model declines.
     """
     B, S = 256, 64
     gen = torch.Generator().manual_seed(4)
@@ -206,19 +197,13 @@ def test_row_grouping_is_exercised_by_this_suite(fuzz):
     sc = _scene(torch.ones(B, 1, dtype=torch.int32), g)
     plan = R2._prim_plan(sc, S, S)
     assert len(plan[0][6]) > 1, (
-        "no primitive in this suite is drawn through a grouped window, so row_groups is never "
-        "exercised and every assertion above passes without touching it"
+        "no primitive in this suite is drawn through a grouped window, so row_groups is never exercised"
     )
     _same(fuzz.render_torch_baseline(sc, S, 1), R2.render_torch(sc, S, 1), "grouped rows")
 
 
 def test_the_grouped_and_ungrouped_windowings_agree(fuzz):
-    """The two windowings of the same bound must draw the same picture on the same scene.
-
-    The cost model decides between them from measured constants, so which one a scene gets is a
-    throughput decision. If it were also a picture decision, a machine with different constants
-    would render different pixels.
-    """
+    """Grouped and ungrouped windowings draw the same picture; the cost model only picks throughput."""
     B = 128
     gen = torch.Generator().manual_seed(5)
     g = torch.zeros(B, 1, 8)
