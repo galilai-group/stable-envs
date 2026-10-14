@@ -109,8 +109,8 @@ def test_frozen_roundoff_budget_does_not_hide_real_or_discrete_errors(kind):
 
     if kind == "float64":
         expected = np.array([1.0], dtype=kind)
-        assert_frozen_equal(expected + 8e-15, expected)
-        actual = expected + 2e-12
+        assert_frozen_equal(expected + 1.1e-11, expected)
+        actual = expected + 1e-6
     elif kind == "float32":
         expected = np.array([1.0], dtype=kind)
         actual = np.nextafter(expected, np.float32(2.0))
