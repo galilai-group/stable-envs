@@ -1,17 +1,9 @@
-"""The composited-tile atlas must reproduce the per-frame blend exactly.
+"""The Classic composited-tile atlas reproduces the per-frame blend on every pixel.
 
-``CraftaxClassic._render_blend`` is the per-frame arithmetic; every case asserts the atlas gather
-matches it on every pixel, not approximately. Cases that would each hide an invisible bug:
-
-* ``mobs_visible = 0`` is folded into mob id 0, which is the identity only because mob 0's alpha
-  table is exactly zero, so the table is checked.
-* ``player_visible = 0`` and every non-centre tile share slot :data:`NO_PLAYER`, which must be the
-  block texture untouched, not the texture blended with a transparent sprite.
-* ``is_sleeping`` leaves the uint8 fast path because the desaturation multiplies before rounding;
-  the fuzz mixes sleeping and awake rows inside one batch.
-* The table is a cache: rendering must not write through it, so its bytes are checked afterwards.
-
-The fuzz includes out-of-range class ids, which ``render`` wraps.
+``CraftaxClassic._render_blend`` is the per-frame arithmetic. Covered cases: ``mobs_visible = 0``
+folded into mob id 0 (zero alpha), ``player_visible = 0`` and non-centre tiles sharing slot
+:data:`NO_PLAYER`, sleeping and awake rows mixed in one batch, out-of-range class ids, and the
+cached table not being written through by a render.
 """
 
 from __future__ import annotations
@@ -41,7 +33,7 @@ from stable_envs.envs.craftax.classic import (
 )
 
 #: 7 and 16 are the sizes craftax ships textures for; 32 and 64 exercise the nearest-resample path
-#: and the top of the atlas budget; 65 is the first size that must fall back to the blend path.
+#: and the top of the atlas budget.
 SIZES = (7, 16, 32, 64)
 
 
@@ -240,7 +232,7 @@ def test_out_buffer_receives_the_frame_and_is_the_returned_tensor(size):
 
 
 def test_leading_dimensions_are_preserved():
-    """``(...,127)`` in, ``(...,H,W,3)`` out — the reshape around the gather must not flatten them."""
+    """``(..., 149)`` in, ``(..., H, W, 3)`` out: leading dimensions survive the gather."""
     env = _env(16, num_envs=6)
     states = env.sample_states(6, np.random.default_rng(1)).reshape(2, 3, env.state_dim)
     img = env._render(states)

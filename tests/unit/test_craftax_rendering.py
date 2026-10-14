@@ -1,4 +1,4 @@
-"""The upstream JIT renderer must preserve the historical SWM frame contract."""
+"""Delegated Craftax pixel tasks render the same frames as the stable-worldmodel oracle."""
 
 from __future__ import annotations
 

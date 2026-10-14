@@ -1,9 +1,8 @@
-"""Historical Craftax JIT-wrapper measurements. Test/regression only.
+"""Measured gap between the jitted stable-worldmodel Craftax wrapper and the un-jitted renderer.
 
 Certified Craftax frames are compared against the un-jitted official renderer. A jitted
-wrapper of the same renderer can disagree by at most 1 uint8 because ``jax.jit`` fuses
-float32 arithmetic differently (up to 1.5e-05). These numbers were measured against a
-historical wrapper and are not a production stable-envs identity.
+wrapper of the same renderer can differ by at most 1 uint8 because ``jax.jit`` fuses
+float32 arithmetic differently (up to 1.5e-05). Test/regression data only.
 """
 
 from __future__ import annotations

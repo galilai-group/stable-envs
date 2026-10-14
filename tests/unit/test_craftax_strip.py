@@ -1,9 +1,7 @@
-"""The inventory strip and the sleeping player sprite.
+"""Craftax Classic's inventory strip, sleeping sprite and lighting bands.
 
-Both produce a plausible wrong picture rather than an obvious one (a strip cell drawn from the
-wrong count still looks like an inventory), so the assertions are structural: what the strip is a
-function of, and what it is not. No jax; parity against the official renderer lives in the
-certification harness.
+The assertions are structural (what the strip depends on and what it does not), since a wrong strip
+still looks like an inventory. No jax; parity against the official renderer is checked elsewhere.
 """
 
 from __future__ import annotations
@@ -91,12 +89,7 @@ def test_every_cell_count_pair_is_a_distinct_picture(t):
 
 @pytest.mark.parametrize("t", SIZES)
 def test_a_cells_writes_stay_inside_its_own_tile(t):
-    """The property that makes a per-cell table a valid factorisation of sequential .at[] writes.
-
-    The reference draws the strip as 32 in-place updates in sequence. That is order-independent —
-    and therefore a table — only if no two cells touch the same pixel. Checked here on the geometry
-    the renderer actually uses, at every size it will be asked for.
-    """
+    """No two strip cells write the same pixel, so the reference's 32 sequential writes form a table."""
     lo, hi, dlo, dhi = strip_geometry(t)
     assert 0 <= lo < hi <= t, (t, lo, hi)
     assert 0 <= dlo < dhi <= t, (t, dlo, dhi)
@@ -108,12 +101,10 @@ def test_a_cells_writes_stay_inside_its_own_tile(t):
 
 
 def test_the_strip_atlas_resamples_by_exact_replication():
-    """At 2S the strip must be the S strip with every pixel doubled, or the frozen
-    ``DOWNSAMPLE_EXACT_FRAC`` moves for a reason that is not the renderer.
+    """The 32 px strip is the 16 px strip with every pixel doubled.
 
-    Craftax's own strip geometry does NOT scale by two — ``int(0.8*bps)`` is 12 at 16 px and 25 at
-    32 px, ``int(0.6*bps)`` is 9 and 19 — which is exactly why the finished cell is resampled rather
-    than re-laid-out. This asserts the consequence.
+    Craftax's own strip geometry does not scale by two (``int(0.8*t)`` is 12 at 16 px and 25 at
+    32 px), so the finished cell is resampled rather than re-laid-out.
     """
     assert int(0.8 * 32) != 2 * int(0.8 * 16) and int(0.6 * 32) != 2 * int(0.6 * 16)
     small = _strip_cells(DEV, 16)
@@ -133,11 +124,7 @@ def test_the_frame_has_the_strip_below_the_world(env, states, t):
 
 @pytest.mark.parametrize("t", (7, 16))
 def test_each_count_reaches_its_own_cell_and_no_other(env, states, t):
-    """Changing one count must change exactly one cell of the strip and nothing else in the frame.
-
-    This is the assertion that catches a transposed layout, an off-by-one in the cell order, or a
-    count wired to the wrong field — all of which still draw a plausible inventory.
-    """
+    """Changing one count changes exactly its own strip cell and nothing else in the frame."""
     w = OBS_H * t
     lay = {i: STRIP_LAYOUT[i] for i in range(N_STRIP)}
     for i, name in enumerate(STRIP_NAMES):
@@ -180,7 +167,7 @@ def test_the_strip_is_not_lit_and_not_desaturated(env, states, t):
 
 @pytest.mark.parametrize("t", (7, 16))
 def test_sleeping_changes_the_centre_tile_sprite_and_desaturates_everything_else(env, states, t):
-    """Both halves. A renderer with only one of them draws a plausible frame and a wrong one."""
+    """Sleeping both swaps the centre sprite and desaturates the world rows."""
     w = OBS_H * t
     cr, cc = OBS_H // 2, OBS_W // 2
     awake = env._render(_set(states, is_sleeping=0.0), size=t).numpy()[:, :w]
@@ -196,8 +183,8 @@ def test_sleeping_changes_the_centre_tile_sprite_and_desaturates_everything_else
     assert np.array_equal(asleep[..., 0], asleep[..., 1]), "the sleep transform is not a luminance"
     assert (asleep[..., 2].astype(np.int16) >= asleep[..., 0].astype(np.int16)).all()
 
-    # (c) the SPRITE changed too, and not only the tint: composite the awake centre tile through the
-    #     same desaturation and it must still differ from the sleeping one
+    # (c) the sprite changed, not only the tint: the desaturated awake centre tile still differs
+    #     from the sleeping one
     a = awake[:, cr * t : (cr + 1) * t, cc * t : (cc + 1) * t].astype(np.float64)
     lum = 0.299 * a[..., 0] + 0.587 * a[..., 1] + 0.114 * a[..., 2]
     tinted = np.stack([lum * 0.5, lum * 0.5, lum * 0.5 + 8], -1)
@@ -225,7 +212,7 @@ def test_the_facing_slot_wraps_mod_four_not_mod_five(env, states):
 
 
 def test_player_visible_still_hides_a_sleeping_player(env, states):
-    """The ablation has to keep working on the new slot, or it is inert on a quarter of the pool."""
+    """``player_visible = 0`` also hides the sleeping sprite."""
     st = _set(states, is_sleeping=1.0)
     on = env._render(st, size=16, variation={"player_visible": 1})
     off = env._render(st, size=16, variation={"player_visible": 0})
@@ -248,7 +235,7 @@ def test_the_first_127_slots_kept_their_meaning(env, states):
 
 
 def test_a_zero_extended_world_row_renders_daylight_with_a_black_strip(env):
-    """A 127-slot row zero-extended to 144 is daylight, awake, empty-handed: black strip, lit world."""
+    """World slots only, zero counts and full daylight: a lit world over a black strip."""
     rng = np.random.default_rng(4)
     st = env.sample_states(8, rng)
     old = np.zeros_like(st)
@@ -262,7 +249,7 @@ def test_a_zero_extended_world_row_renders_daylight_with_a_black_strip(env):
 
 
 def test_the_sampler_covers_every_count_and_both_sleep_states(env):
-    """A pool that does not is indistinguishable from a wrong state contract; see the docstring."""
+    """Sampled states reach every count 0..9 and both sleep states."""
     st = env.sample_states(512, np.random.default_rng(9))
     base = OBS_H * OBS_W * 2 + 1
     for i, name in enumerate(STRIP_NAMES):
@@ -274,12 +261,9 @@ def test_the_sampler_covers_every_count_and_both_sleep_states(env):
 
 
 def test_every_new_state_dimension_reaches_a_pixel(env):
-    """``check_state_dims_matter`` in miniature, run here so a failure names the dimension.
+    """Every strip, sleep, light and key slot reaches a pixel under a +25 probe.
 
-    The pool is forced to contain night rows, because the four PRNG-key slots reach no pixel above
-    ``light_level = 0.5`` — 0 of 32 daylight states move when the key changes, 32 of 32 night ones
-    do. A daylight-only pool reports them as dead dimensions, which is what a wrong state contract
-    also looks like.
+    The states are forced to night, because the PRNG-key slots reach no pixel at ``light_level >= 0.5``.
     """
     rng = np.random.default_rng(11)
     st = _set(env.sample_states(6, rng), light=0.15)
@@ -309,11 +293,7 @@ def test_daylight_is_the_identity_and_keeps_the_uint8_fast_path(env, states):
 
 @pytest.mark.parametrize("light", (1.0, 0.75, 0.5))
 def test_no_noise_is_drawn_at_or_above_half_daylight(env, states, light):
-    """``intensity = max(2*(0.5 - light), 0)`` is exactly 0 there, so the key cannot reach a pixel.
-
-    Two states differing only in the PRNG key must render identically, which is both a correctness
-    statement and the reason the daylight path can skip the threefry evaluation entirely.
-    """
+    """``intensity = max(2*(0.5 - light), 0)`` is exactly 0 there, so the PRNG key reaches no pixel."""
     a = _set(states, light=light)
     b = np.array(a, copy=True)
     assert env.state_names[OBS_H * OBS_W * 2 + 3 + N_STRIP] == "rng_half0"
@@ -322,7 +302,7 @@ def test_no_noise_is_drawn_at_or_above_half_daylight(env, states, light):
 
 
 def test_the_key_reaches_the_world_layer_below_half_daylight(env, states):
-    """And it must, or the four key slots are dead dimensions and the state contract is wrong."""
+    """Below 0.5 the PRNG key changes the world rows and never the strip."""
     a = _set(states, light=0.1)
     b = np.array(a, copy=True)
     assert env.state_names[OBS_H * OBS_W * 2 + 3 + N_STRIP] == "rng_half0"
@@ -335,11 +315,7 @@ def test_the_key_reaches_the_world_layer_below_half_daylight(env, states):
 
 
 def test_the_lighting_bands_are_three_different_pictures(env, states):
-    """Dusk is not daylight and not night: the enhance/tint/blend still run with weight 1-daylight.
-
-    A renderer that treated ``light >= 0.5`` as "nothing to do" would pass every noise test and be
-    wrong on 55% of the day cycle.
-    """
+    """Day, dusk and night render differently: at dusk the enhance/tint/blend still run."""
     day = env._render(_set(states, light=1.0), size=16)
     dusk = env._render(_set(states, light=0.75), size=16)
     night = env._render(_set(states, light=0.1), size=16)
@@ -352,8 +328,7 @@ def test_the_lighting_bands_are_three_different_pictures(env, states):
 def test_light_level_decodes_by_a_tent_that_is_the_identity_in_range(env, states):
     """In-range values pass through bit-exact; out-of-range ones fold back and still move pixels.
 
-    A clamp would leave a daylight state insensitive to the conformance suite's +25 probe, and the
-    obvious wrap ``x - floor(x)`` would send 1.0 to 0.0 and turn every daylight state into midnight.
+    A clamp would leave daylight insensitive to the +25 probe, and ``x - floor(x)`` would send 1.0 to 0.0.
     """
     for v in (0.0, 0.25, 0.5, 0.75, 1.0):
         _, _, _, _, _, light, _ = env._decode(torch.as_tensor(_set(states, light=v)), len(states))
@@ -367,12 +342,7 @@ def test_light_level_decodes_by_a_tent_that_is_the_identity_in_range(env, states
 
 
 def test_a_batch_may_mix_day_dusk_night_and_sleep(env, states):
-    """Batch invariance under the one thing that takes a batch off the fast path.
-
-    ``render`` reads three host-side booleans to decide whether the batch can stay on the uint8
-    gather. If that decision ever changed a row's pixels rather than only the speed, it would show
-    up here and nowhere else.
-    """
+    """A row renders the same in a mixed batch as alone, whichever path the batch takes."""
     n = len(states)
     mixed = np.array(states, np.float32, copy=True)
     j = OBS_H * OBS_W * 2 + 1 + N_STRIP
@@ -384,7 +354,7 @@ def test_a_batch_may_mix_day_dusk_night_and_sleep(env, states):
 
 
 def test_the_night_chain_is_shape_parameterised_for_the_full_renderer():
-    """W2 consumes ``night_and_sleep`` verbatim at its own window size, so it must not be 7x9-bound."""
+    """``night_and_sleep`` accepts any window size and an optional ``light_map``."""
     from stable_envs.envs.craftax.classic import night_and_sleep, night_vignette
 
     for h, w in ((49, 63), (112, 144), (63, 77), (90, 110)):
@@ -398,8 +368,7 @@ def test_the_night_chain_is_shape_parameterised_for_the_full_renderer():
         assert out.shape == world.shape
         assert torch.equal(out[0], world[0]), "light=1.0 is not the identity"
         assert night_vignette(DEV, h, w).shape == (h, w, 1)
-    # the light_map argument full Craftax needs, and Classic does not, is accepted and is the
-    # identity at 1.0
+    # light_map of 1.0 is the identity
     world = torch.rand(2, 49, 63, 3) * 255
     keys = torch.tensor([[7, 8], [9, 10]], dtype=torch.int32)
     lit = torch.tensor([0.2, 0.2])
@@ -411,13 +380,7 @@ def test_the_night_chain_is_shape_parameterised_for_the_full_renderer():
 
 
 def test_the_strip_grid_cache_is_not_written_through(env, states):
-    """The layout tensors are shared across every render in the process; a write would be silent.
-
-    They are cached for speed — rebuilding them cost 39.7 us a render on the CPU and about 34 tiny
-    kernel launches on CUDA — and a cache that a render can write through corrupts every later frame
-    with nothing downstream to flag it. Same rule ``test_atlas_is_not_written_through_by_a_render``
-    applies to the tile table.
-    """
+    """The cached strip layout tensors are reused and never modified by a render."""
     dev = torch.device("cpu")
     cell_of, blank = env._strip_grid(dev)
     before = (cell_of.clone(), blank.clone())
@@ -431,12 +394,10 @@ def test_the_strip_grid_cache_is_not_written_through(env, states):
 
 
 def test_the_declared_resolution_applicability_matches_measurement(env, states):
-    """The declaration is a claim about numbers; this checks the numbers.
+    """The renderer meets the resolution bound at ``light_level >= 0.5`` and not below it.
 
-    ``check_resolution_consistency`` is declared applicable at ``light_level >= 0.5`` and not below,
-    because the OFFICIAL renderer is itself inconsistent below it . What can be asserted without jax is
-    our side of it: that we meet the frozen bound where the declaration says we do, and do not where
-    it says the check does not apply.
+    ``check_resolution_consistency`` is declared not applicable below 0.5 because the official
+    renderer is itself inconsistent there.
     """
     from stable_envs.testing.conformance import check_resolution_consistency
 
@@ -455,11 +416,10 @@ def test_the_declared_resolution_applicability_matches_measurement(env, states):
 
 
 def test_the_strip_is_resolution_consistent_in_every_band(env, states):
-    """The strip must not be what takes the daylight bound down; the official's would.
+    """The strip is exactly resolution-consistent in every lighting band.
 
-    craftax re-lays the strip out at each size (icon ``int(0.8*t)``, digit ``int(0.6*t)``), which
-    scores ~0.69 under the check in every band including daylight. Resampling the finished cell
-    instead keeps this side at 1.000, which is what makes the frozen bound meetable at all.
+    craftax re-lays the strip out at each size and scores about 0.69 under the check; resampling the
+    finished cell keeps this renderer at 1.0.
     """
     from stable_envs.testing.conformance import _box_downsample
 
@@ -482,11 +442,11 @@ def test_the_declared_certification_distribution_is_the_one_the_sampler_produces
         e = C(device="cpu", seed=seed)
         p = e.sample_states(64)
         light, sleep = p[:, OBS_H * OBS_W * 2 + 2 + N_STRIP], p[:, OBS_H * OBS_W * 2 + 1 + N_STRIP]
-        # daylight is EXACT because its band is pinned by row index; the others vary inside their
-        # band because the values come from craftax's own day cycle, so they get the declared range
+        # daylight is exact because its band is pinned by row index; the other bands draw from
+        # craftax's day cycle and get the declared range
         assert float((light == 1.0).mean()) == 0.25, seed
         assert 0.33 <= float(((light >= 0.5) & (light < 1.0)).mean()) <= 0.44, seed
         assert 0.31 <= float((light < 0.5).mean()) <= 0.43, seed
         assert 0.31 <= float((sleep > 0.5).mean()) <= 0.46, seed
-        # and the lit share -- the one that decides how the tier reads -- is always about 3/4
+        # rows below full daylight are about 3/4
         assert 0.70 <= float((light < 1.0).mean()) <= 0.80, seed

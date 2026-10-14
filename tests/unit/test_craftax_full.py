@@ -57,8 +57,7 @@ def test_the_frame_is_the_registered_observation():
 
 
 def test_counts_are_capped_at_99_not_at_9():
-    """Classic's strip counts stop at 9; ``clip_inventory_and_intrinsics`` stops these at 99, so a
-    cell renders a two-digit number and the decode must wrap at 100 rather than at 10."""
+    """Counts wrap at 100, since ``clip_inventory_and_intrinsics`` caps them at 99 (Classic stops at 9)."""
     assert CF.STRIP_MOD[CF._SLOT["wood"]] == 100
     assert CF.STRIP_MOD[CF._SLOT["xp"]] == 10  # an attribute digit is a 10-entry gather
     e, st = states(2)
@@ -68,12 +67,14 @@ def test_counts_are_capped_at_99_not_at_9():
     assert not np.array_equal(e._render(a).numpy(), e._render(b).numpy())
 
 
-# ------------------------------------------------------------------ the two traps
+# ------------------------------------------------------------------ parity details
 
 
 def test_the_vignette_is_a_reciprocal_multiply_and_not_a_divide():
-    """XLA lowers ``x / scalar`` in float32 as ``x * (1/scalar)``, and against a true divide that is
-    one ULP out on thousands of elements -- enough to move a uint8 pixel through the night mask."""
+    """The vignette matches craftax's, which XLA computes as ``x * (1/scalar)`` rather than ``x / scalar``.
+
+    A true float32 divide is one ULP off on thousands of elements, enough to move a uint8 pixel.
+    """
     for t in (10, 16):
         h, w = CF.OBS_H * t, CF.OBS_W * t
         v = CF.night_vignette(torch.device("cpu"), h, w)[..., 0].numpy()
@@ -102,8 +103,7 @@ def test_item_slot_zero_is_never_drawn():
 
 
 def test_every_overlay_alpha_is_binary():
-    """The whole design rests on it: a binary alpha makes a layer a select, which is what lets the
-    frame be four gathers instead of a 732,600-entry product bake."""
+    """Binary alphas make each layer a select, so a frame is four gathers instead of a product bake."""
     for src in CF.BAKED_TILE_PX:
         for name in ("item_a", "player_a", "mob_a", "proj_a"):
             u = set(np.unique(CF._unpack(name, src)).tolist())
@@ -117,8 +117,7 @@ def test_every_overlay_alpha_is_binary():
 
 
 def test_the_uint8_gather_and_the_float_chain_agree_bit_for_bit():
-    """A fully lit, awake, unit-gain batch takes the uint8 tables. It must be the same picture the
-    float path draws, or the fast path is a second renderer."""
+    """A fully lit, awake, unit-gain batch on the uint8 tables matches the float path."""
     e, st = states(8, seed=3)
     st[:, 4 * CF.N_TILE : 5 * CF.N_TILE] = 1.0  # light_map all 1
     st[:, 5 * CF.N_TILE + 1] = 0.0  # awake
@@ -131,8 +130,7 @@ def test_the_uint8_gather_and_the_float_chain_agree_bit_for_bit():
 
 
 def test_the_night_skip_changes_no_bits():
-    """``night_intensity`` is exactly 0 for ``daylight >= 0.5``, so a row above the threshold gets no
-    threefry evaluation. Asserted against a chain that always draws the field."""
+    """Skipping the noise draw at ``daylight >= 0.5`` matches a chain that always draws it."""
     n, h, w = 4, 30, 40
     g = torch.Generator().manual_seed(11)
     world = torch.rand(n, h, w, 3, generator=g) * 255
@@ -192,15 +190,12 @@ def test_the_level_digit_is_the_one_thing_the_strip_reads_from_the_world():
 
 
 def test_the_strip_is_not_lit():
-    """Measured rather than inferred from the concatenation order: the reference concatenates the
-    strip after the light map, the night chain and the sleep halving, so it is the same picture at
-    midnight underground as at noon on the surface."""
+    """The strip is the same picture under any light map, light level, sleep state or PRNG key."""
     e, st = states(6, seed=5)
     wh = CF.OBS_H * e.size
     base = e._render(st).numpy()[:, wh:]
     j = 5 * CF.N_TILE
-    # player_level is deliberately NOT varied here: it is the one lighting-adjacent field the strip
-    # DOES read, because the level digit is drawn in cell (6, 0).
+    # player_level is not varied: the strip reads it for the level digit in cell (6, 0).
     for lm, light, sleep in ((1.0, 1.0, 0), (0.2, 0.05, 1), (0.0, 0.5, 1), (0.7, 0.9, 0)):
         a = st.copy()
         a[:, 4 * CF.N_TILE : 5 * CF.N_TILE] = lm
@@ -237,9 +232,10 @@ def test_the_strip_cell_table_is_the_size_the_spec_says():
 
 
 def test_a_render_at_twice_the_size_resamples_from_the_size_that_divides_it():
-    """20 px comes from the 10 px art, not from the nearer 16 px art. This is what makes the world
-    rows exactly 2x-consistent where craftax -- which re-resamples every PNG at every size with
-    ``Image.NEAREST`` -- is not."""
+    """20 px comes from the 10 px art, not the nearer 16 px art, so 2S is an exact 2x replication of S.
+
+    craftax itself resamples every PNG at every size with ``Image.NEAREST`` and is not 2x-consistent.
+    """
     assert CF._source_size(20) == 10
     assert CF._source_size(32) == 16
     assert CF._source_size(10) == 10 and CF._source_size(16) == 16
@@ -282,10 +278,9 @@ def test_the_declared_certification_distribution_matches_the_sampler():
     light = CF._tent_np(st[:, j + 3])
     day = np.where(lvl == 0, light, 1.0)
     lit = (CF._tent_np(st[:, 4 * CF.N_TILE : 5 * CF.N_TILE]) == 1.0).all(1)
-    # a row stays on the uint8 gather only if it is fully lit AND awake: the lighting bands give 2/6
-    # and the independent i % 4 sleeping stratification takes a quarter of them away, so the answer
-    # is exactly 0.25 at a batch of 64. The tolerance is ONE ROW, not 0.1 -- a 0.1 slack is what let
-    # a declared 2/6 (an error of 0.083) survive until independent review caught it.
+    # A row stays on the uint8 gather only if it is fully lit and awake: the lighting bands give 2/6
+    # and the independent i % 4 sleeping stratification removes a quarter of them, so the share is
+    # 0.25 at a batch of 64. The tolerance is one row.
     fast = ((day == 1.0) & lit & (st[:, j + 1] <= 0.5)).mean()
     assert abs(fast - d["uint8_fast_path_share"]) <= 1 / 64, (fast, d["uint8_fast_path_share"])
     assert abs((st[:, j + 1] > 0.5).mean() - d["sleeping_share"]) < 1e-6
@@ -295,8 +290,7 @@ def test_the_declared_certification_distribution_matches_the_sampler():
 
 
 def test_the_sampler_respects_the_simulators_mob_budgets():
-    """A window with four zombies cannot be written into an ``EnvState`` at all, so a state carrying
-    one is not a state the parity bridge can score."""
+    """Sampled rows stay within the ``EnvState`` mob and projectile budgets and off the centre tile."""
     e = CraftaxFull(num_envs=32, device="cpu")
     st = CraftaxFull.sample_states(e, 32, np.random.default_rng(1))
     k = CF.N_TILE
@@ -317,8 +311,7 @@ def test_the_sampler_respects_the_simulators_mob_budgets():
 
 
 def test_out_of_range_ids_wrap_rather_than_clamp():
-    """A clamping decoder makes a slot that already holds the last class insensitive to the
-    conformance suite's +25 probe, which is then reported as a dead dimension."""
+    """Ids wrap rather than clamp, so a slot at its last class still responds to the +25 probe."""
     e, st = states(2)
     a = st.copy()
     a[:, 0] = 2.0
@@ -357,20 +350,19 @@ def test_reference_env_refuses_a_size_craftax_does_not_draw():
 
 
 def test_a_window_carrying_more_projectiles_than_the_simulator_can_hold_is_not_representable():
-    """The render window has room for a projectile on every one of its 99 tiles; an ``EnvState`` has
-    room for ``MAX_MOB_PROJ + MAX_PLAYER_PROJ`` of them. A row beyond that budget renders here and
-    cannot be scored against the reference, which is a documented limit of the window rather than a
-    renderer defect -- the same shape as Classic's "one mob per tile".
+    """The window holds a projectile per tile but an ``EnvState`` holds ``MAX_MOB_PROJ + MAX_PLAYER_PROJ``.
 
+    The sampler stays within that budget; a row beyond it renders here but cannot be scored against
+    the reference.
     """
     assert CF.MAX_MOB_PROJ + CF.MAX_PLAYER_PROJ == 6
     e = CraftaxFull(num_envs=32, device="cpu")
     st = CraftaxFull.sample_states(e, 32, np.random.default_rng(3))
     n_proj = (np.round(st[:, 3 * CF.N_TILE : 4 * CF.N_TILE]) != 0).sum(1)
     assert n_proj.max() <= CF.MAX_MOB_PROJ + CF.MAX_PLAYER_PROJ, n_proj.max()
-    # and the renderer itself DOES draw the seventh and eighth -- it is the BRIDGE that cannot carry
-    # them. Compared against the same row holding only the first six, so the difference is exactly
-    # the two projectiles the reference would drop, not an all-zero straw man.
+    # The renderer still draws the seventh and eighth; only the reference bridge cannot carry them.
+    # Compared against the same row holding only the first six, so the difference is exactly the two
+    # projectiles the reference would drop.
     six = st[:1].copy()
     six[0, 3 * CF.N_TILE : 3 * CF.N_TILE + 99] = 0
     six[0, 3 * CF.N_TILE : 3 * CF.N_TILE + 6] = 1 + np.arange(6) % 4
@@ -387,12 +379,11 @@ def test_a_window_carrying_more_projectiles_than_the_simulator_can_hold_is_not_r
 
 
 def test_the_arrow_guard_leaves_the_frozen_corpus_untouched():
-    """The fifth sampler guard forces at least one arrow onto band-0 rows, because the reference
-    draws ``arrow_enchantment_textures[bow_enchantment * (arrows > 0)]`` and a row with no arrows
-    makes ``inv_ench_bow`` unobservable.
+    """The band-0 arrow guard leaves the frozen corpus bit-identical.
 
-    It is a CLAMP, not a redraw, so it consumes no draw from ``rng`` and the pool is bit-identical.
-    Asserted against the sha256 recorded in the frozen corpus.
+    The sampler forces at least one arrow onto band-0 rows, because the reference draws
+    ``arrow_enchantment_textures[bow_enchantment * (arrows > 0)]`` and a row with no arrows makes
+    ``inv_ench_bow`` unobservable. The guard is a clamp, not a redraw, so it consumes no ``rng`` draw.
     """
     import hashlib
     import json as _json
@@ -411,6 +402,3 @@ def test_the_arrow_guard_leaves_the_frozen_corpus_untouched():
     band0 = np.arange(rec["pool"]) % 6 == 0
     j = 5 * CF.N_TILE + 4 + CF.N_KEY_HALVES
     assert pool[band0, j + CF._SLOT["arrows"]].min() >= 1
-
-
-# ------------------------------------------------------------------ the performance record

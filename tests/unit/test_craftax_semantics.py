@@ -1,4 +1,4 @@
-"""Independent source parity and atomic exhaustive-State tests for all four registrations."""
+"""Source parity and atomic State restore for the four delegated Craftax registrations."""
 
 from __future__ import annotations
 
@@ -45,7 +45,7 @@ def test_source_reset_all_actions_and_reset_replay(name, seed):
             assert float(actual["reward"][0]) == reward
             assert bool(actual["terminated"][0]) == done
             assert bool(actual["truncated"][0]) == truncated
-            # Learner output stays upstream; prove a symbolic projection of complete State is exact.
+            # The symbolic observation recomputed from State matches the source output.
             if "Symbolic" in name:
                 np.testing.assert_array_equal(symbolic_output(env, state=actual["state"]), output)
             if done:
@@ -170,8 +170,7 @@ def test_independent_instances_and_step_never_calls_set_state(name, monkeypatch)
 
 
 def test_full_symbolic_preserves_source_values_outside_declared_box():
-    # SWM declares [0,1], but upstream includes books/2 and enchantment enums.
-    # This is an output-contract finding, not permission to clamp observations.
+    # SWM declares [0, 1], but upstream emits books/2 and enchantment enums; outputs are not clamped.
     source = oracle("CraftaxSymbolic")
     with se.make("CraftaxSymbolic", device=DEVICE) as env:
         source.reset(seed=17)

@@ -1,15 +1,12 @@
 """Craftax (Classic + Full) and PyFlytRocketLanding onto the Env contract.
 
-What these pin is the part of the Env contract that a family agent OWES — the constructor, the
-public :data:`State`, the compact render row it projects to, the renderer-only refusal and the
-frame spec — plus the certified declarations named by hand. They deliberately do NOT
-re-assert what ``test_craftax_atlas.py``, ``test_craftax_strip.py``, ``test_craftax_full.py`` and
-``test_rocket_landing.py`` already assert about the renderers themselves: a migration that broke a
-sprite would fail those, and duplicating them here would only make two places to update.
+Covers the constructor, the public :data:`State`, the packed render row, the renderer-only
+refusals, the frame spec and the certified declarations. Renderer pixels are covered by
+``test_craftax_atlas.py``, ``test_craftax_strip.py``, ``test_craftax_full.py`` and
+``test_rocket_landing.py``.
 
-The three cells currently render stored states: Craftax/JAX and PyFlyt keep their own dynamics.
-``step``/``transition``/``unroll`` must raise the contract's precise ``NotImplementedError`` — not an
-``AttributeError``, and not a fabricated one-step integrator invented for the sake of the API.
+These envs render stored states; Craftax/JAX and PyFlyt keep their own dynamics, so
+``step``/``transition``/``unroll`` raise the contract's ``NotImplementedError``.
 
 ``PyFlytRocketLanding`` cannot be CONSTRUCTED on a machine without nvdiffrast, so its tests are about the
 class and the module: the constructor's signature, the CPU refusal's wording, and the declarations.
@@ -103,12 +100,9 @@ def test_state_keys_are_the_declared_ones_and_cover_the_packed_row(envs, name):
 
 @pytest.mark.parametrize("name", CRAFTAX)
 def test_the_packed_row_is_the_frozen_one_and_no_field_is_hidden(envs, name):
-    """Every packed column belongs to exactly one field, and NO field has offset ``None``.
+    """Every packed column belongs to exactly one field, and no field has offset ``None``.
 
-    Offset ``None`` means "real dynamical state the packed row does not carry" — PushT's agent
-    velocity. A renderer-only cell has none by definition: there is no simulator to hold it. If one
-    ever appeared here it would be a sign that a hidden buffer had been introduced, which is the thing
-    that makes ``transition`` impure.
+    Offset ``None`` marks state the packed row does not carry; a renderer-only env has none.
     """
     env = envs[name]
     lay = env._layout()
@@ -130,12 +124,9 @@ def test_state_names_of_agrees_with_the_frozen_column_names(envs, name):
 
 @pytest.mark.parametrize("name", CRAFTAX)
 def test_a_state_the_caller_keeps_is_not_a_view_of_the_env(envs, name):
-    """Foundation defect R8, pinned for these cells: ``unpack`` owns its output.
+    """``_unpack_render_state`` returns storage the env does not later overwrite.
 
-    ``.to(dtype)`` on a same-dtype tensor returns the SAME storage, so before the foundation's
-    ``copy=True`` a State handed to a caller changed under their feet at the next ``set_state`` —
-    silently, with nothing raised. Every field of these three cells is float32, so they are exactly
-    the shape that was exposed.
+    ``.to(dtype)`` on a same-dtype tensor returns the same storage, and every field here is float32.
     """
     env = envs[name]
     a = torch.as_tensor(env.sample_states(4), dtype=torch.float32)
@@ -184,13 +175,7 @@ def test_render_takes_a_state_a_packed_row_or_nothing(envs, name):
 
 @pytest.mark.parametrize("name,tiles", [("CraftaxClassic", (9, 9)), ("CraftaxFull", (13, 11))])
 def test_the_frame_spec_is_the_frame_and_not_the_tile(envs, name, tiles):
-    """``size`` is the TILE edge for Craftax, so the base class's square-``size`` assumption is wrong.
-
-    Left alone, ``frame_spec`` reported ``(16, 16, 3)`` for a 144x144 picture — a buffer 81x too
-    small — and ``(10, 10, 3)`` for full Craftax's 130x110 one, which is the wrong shape as well as
-    the wrong size. Fixed in the family (``frame_shape``), not in the base class, exactly as classic
-    control's 400x600 was.
-    """
+    """``size`` is the tile edge for Craftax, so ``frame_shape`` and ``frame_spec`` give the whole frame."""
     env = envs[name]
     rows = torch.as_tensor(env.sample_states(2), dtype=torch.float32)
     h, w = tiles[0] * env.size, tiles[1] * env.size
@@ -216,13 +201,7 @@ def test_the_state_spec_leaves_match_the_layout(envs, name):
 
 @pytest.mark.parametrize("name", CRAFTAX)
 def test_these_cells_have_no_dynamics_and_say_so_precisely(envs, name):
-    """The check the brief asked for, answered: stable-envs ships no batched Craftax simulator.
-
-    Craftax's own step is ``jax.jit``-ed inside ``craftax``/``stable_worldmodel``; this package renders
-    the states that step produces and never advances one. So the contract's refusal is the correct
-    ``step``, and inventing a one-step integrator to satisfy the API would be a different simulator
-    wearing the same name.
-    """
+    """The renderer-only Craftax envs refuse ``step``, ``reset``, ``get_state`` and ``action_spec``."""
     env = envs[name]
     assert not env.has_dynamics and not dynamics.has_dynamics(env)
     a = torch.zeros(env.num_envs, 1)
@@ -254,7 +233,7 @@ def test_the_rocket_is_registered_exactly_when_it_can_render():
     assert ("PyFlytRocketLanding" in snv.registry.REGISTRY) == (RL.missing_backend() is None)
 
 
-# ------------------------------------------------------------------ the module split
+# ------------------------------------------------------------------ module layout
 
 
 def test_craftax_full_registers_from_the_family_package():
@@ -333,7 +312,7 @@ def test_the_batch_invariant_float64_mvp_does_not_depend_on_the_batch():
 
 
 def test_frozen_craftax_classic_corpora_render():
-    """The 64x127 world-row corpus renders only once zero-extended; the 64x149 corpus renders directly."""
+    """The 64x127 world-row corpus is rejected until zero-extended to 149; the 64x149 corpus renders."""
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[2]

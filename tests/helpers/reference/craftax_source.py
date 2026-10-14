@@ -1,4 +1,4 @@
-"""Pinned SWM oracle and recorded research inputs, exclusively for Craftax tests."""
+"""stable-worldmodel Craftax oracle and recorded gameplay fixtures for the Craftax tests."""
 
 from __future__ import annotations
 
@@ -86,7 +86,7 @@ def assert_state_equal(a, b):
 
 
 def symbolic_output(env, lane=0, state=None):
-    """Test-side learner output selection; full symbolic retains the source cache."""
+    """Symbolic observation for ``lane``: the cached output for full Craftax, recomputed for Classic."""
     from stable_envs.envs.craftax.simulation import decode
 
     state = env.get_state() if state is None else state
