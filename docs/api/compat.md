@@ -1,4 +1,4 @@
-# Sibling projects
+# Compatibility
 
 `stable-envs` has no runtime interop layer for other stable-* packages.
 

@@ -1,4 +1,4 @@
-# Variation
+# Variations
 
 **Variation** is persistent environment configuration. It is separate from the instantaneous
 **State**. A leaf can change appearance, shape, dynamics, reset or task.
@@ -136,5 +136,5 @@ applicable, or swm-only. The maps are tests, not a shipped API.
 
 ## Next
 
-- [State, Variation, Frame](state.md)
+- [State, Action, Variation and Frame](state.md)
 - [API: spaces](../api/spaces.md)

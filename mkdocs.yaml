@@ -88,37 +88,42 @@ plugins:
             filters: ["!^_"]
 
 nav:
-  - User guide:
-      - Home: index.md
-      - Quickstart: quickstart.md
+  - Home: index.md
+  - Get started:
       - Install: install.md
       - System setup: system-setup.md
-      - Environments: environments.md
-      - State, Variation, Frame: concepts/state.md
-      - Stateful vs functional: concepts/dynamics.md
+      - Quickstart: quickstart.md
+  - Concepts:
+      - State, Action, Variation and Frame: concepts/state.md
+      - Stepping: concepts/dynamics.md
       - Variations: concepts/variation-spaces.md
       - Lifecycle: concepts/lifecycle.md
       - Limitations: concepts/limitations.md
       - Sibling projects: concepts/worldmodel.md
-      - Benchmarks: benchmarks.md
-      - Gallery: gallery.md
-  - Contributor:
-      - Adding a component: adding/index.md
-      - Environment backend: adding/environment.md
-      - Task or registration: adding/task.md
-      - Renderer: adding/renderer.md
-      - Testing: testing.md
-      - Fidelity methodology: concepts/fidelity-methodology.md
-      - Fidelity tiers: concepts/fidelity-tiers.md
-      - The Scene2D IR: concepts/scene-ir.md
-      - The fused rasterizer: concepts/rasterizer.md
-      - 2D raster backends: api/raster2d.md
-      - Analytic raycast and CPU3D: api/raycast3d.md
-      - Triangle rendering: api/nvdiff.md
-      - MJWarp rendering: api/mjwarp.md
-      - Writing a bit-exact Triton kernel: concepts/bit-exact-triton.md
-      - Why physics is separate: concepts/physics.md
+  - Environments: environments.md
+  - Reference:
       - Env: api/env.md
       - Registered environments: api/envs.md
-      - Sibling projects (API): api/compat.md
-      - testing: api/testing.md
+      - Command line: api/cli.md
+      - Testing helpers: api/testing.md
+      - 2D raster rendering: api/raster2d.md
+      - Analytic raycast and CPU3D: api/raycast3d.md
+      - Triangle rendering with nvdiffrast: api/nvdiff.md
+      - MJWarp rendering: api/mjwarp.md
+      - Compatibility: api/compat.md
+  - Gallery: gallery.md
+  - Benchmarks: benchmarks.md
+  - Contributing:
+      - Adding a component: adding/index.md
+      - Adding an environment backend: adding/environment.md
+      - Adding a task: adding/task.md
+      - Adding a renderer: adding/renderer.md
+      - Testing: testing.md
+      - Internals:
+          - Fidelity methodology: concepts/fidelity-methodology.md
+          - Fidelity tiers: concepts/fidelity-tiers.md
+          - Why physics is separate: concepts/physics.md
+          - The Scene2D IR: concepts/scene-ir.md
+          - The fused rasterizer: concepts/rasterizer.md
+          - Writing a bit-exact Triton kernel: concepts/bit-exact-triton.md
+  - Changelog: changelog.md

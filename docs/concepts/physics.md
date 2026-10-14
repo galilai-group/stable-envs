@@ -1,4 +1,4 @@
-# Physics and rendering have separate acceptance gates
+# Why physics is separate
 
 A class can have an accurate renderer and an incomplete simulator State. The two claims are tested
 separately:

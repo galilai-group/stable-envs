@@ -1,4 +1,4 @@
-# Testing and conformance
+# Testing
 
 Simulation, task and rendering claims are tested separately. A rendering check does not prove that
 State is complete, and a State check does not prove that pixels are right. A skipped required check is
@@ -230,4 +230,4 @@ C.check_backend_agreement(env)       # {'exact_frac': 1.0, 'max_abs': 0, ...}
 C.pixel_agreement(ours, official)    # all-pixel and interior-pixel agreement
 ```
 
-API details: [`stable_envs.testing`](api/testing.md).
+API details: [Testing helpers](api/testing.md).

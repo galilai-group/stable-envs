@@ -1,4 +1,4 @@
-# Backend and device limitations
+# Limitations
 
 Known limits of this release.
 

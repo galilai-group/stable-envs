@@ -1,4 +1,4 @@
-# Sibling projects and observation ownership
+# Sibling projects
 
 stable-envs owns the simulator and the task: full State, `reset`/`get_state`/`set_state`/`step`,
 actions, reward, success, termination, truncation, RNG, bounded Variation and rendering. It calls the

@@ -1,4 +1,4 @@
-# Adding a task or task registration
+# Adding a task
 
 Use this guide when the reward, goal, reset distribution, success rule, termination or task
 configuration changes on an existing simulator. New dynamics, controllers or action mechanisms need

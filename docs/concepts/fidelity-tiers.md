@@ -1,4 +1,4 @@
-# Fidelity tiers: parity and visual
+# Fidelity tiers
 
 Every class declares one of two tiers in `fidelity_tier`. The set is `stable_envs.env.FIDELITY_TIERS`:
 `("parity", "visual")`. The default is `parity`.
