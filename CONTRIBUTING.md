@@ -90,6 +90,15 @@ Every registered class is picked up automatically, in its family's CI profile:
 A test file must run in a profile that installs what it imports. Assign the file to a family in
 `ci/families.toml`, or mark a single test with `pytest.mark.family("<name>")`.
 
+The stable-worldmodel layer is built to be removed in one change. To remove it, delete:
+
+- `SWM_GATES` in `tests/helpers/reference/cases.py`;
+- the tests marked `swm` and the gate helpers only they use;
+- the `swm` capability and the `[swm]` block in `ci/families.toml`;
+- `_install_swm` in `noxfile.py`.
+
+`ORIGINAL_GATES` then stands alone.
+
 ## Exemptions
 
 If a check cannot apply (for example, a renderer-only class has no `step`), waive it in
