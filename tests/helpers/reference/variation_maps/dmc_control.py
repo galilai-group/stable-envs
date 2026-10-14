@@ -251,7 +251,7 @@ _FLOOR_MAPPED = (
     "a rename or a scale. swm honours the leaf by rewriting the MJCF and RECOMPILING; we substitute "
     "the compiled texture's texels on the plate rig's own model and re-upload the texture to its own "
     "GL context, which needs no recompile and no second render context. VERIFIED byte-for-byte, not "
-    "argued: over all twelve parity cells, three probe colours and eight states at 84 px, the "
+    "argued: over all eight plate-baking cells, three probe colours and eight states at 84 px, the "
     "substituted ``tex_data`` and the rendered frames are IDENTICAL to a full recompile of the suite "
     "at the same floor.color. "
     "The suite's markrgb equals its rgb2, so the 1,196 edge-mark texels are separated positionally "
