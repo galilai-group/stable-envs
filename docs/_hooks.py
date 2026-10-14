@@ -1,8 +1,7 @@
-"""Resolve archived repository/file-directory links without editing hashed evidence.
+"""MkDocs hooks that resolve links to repository source files and evidence directories.
 
-Only the built site is changed. Source files become downloadable assets and
-linked evidence directories receive generated file indexes. Strict link and
-anchor validation remains enabled.
+Only the built site changes: linked source files become downloadable assets and linked
+directories get generated file indexes. Strict link and anchor validation stays enabled.
 """
 
 import posixpath
