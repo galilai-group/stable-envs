@@ -15,7 +15,7 @@ from stable_envs.envs.ogbench.simulation.manipulation import OGBManipulationAdap
 def adapter(request):
     family, device = request.param
     if device == "cuda" and not torch.cuda.is_available():
-        pytest.skip("CUDA requires Oscar")
+        pytest.skip("requires CUDA")
     owner = OGBManipulationAdapter(family, 3, device=device, seed=17)
     yield owner
     owner.close()

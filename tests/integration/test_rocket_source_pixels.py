@@ -29,7 +29,7 @@ def test_source_rollout_pixels(
     pytest.importorskip("PyFlyt")
     pytest.importorskip("pybullet")
     if device == "cuda" and not torch.cuda.is_available():
-        pytest.skip("CUDA source-pixel tests run on Oscar")
+        pytest.skip("requires CUDA")
     with rocket_trace(scenario, dtype, horizon) as (config, trace):
         with se.make("PyFlytRocketLanding", num_envs=2, device=device, size=96, simulator_config=config) as env:
             errors = []

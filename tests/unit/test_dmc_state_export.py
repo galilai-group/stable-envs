@@ -39,7 +39,7 @@ def equal(left, right):
 @pytest.mark.parametrize("device", ["cpu", "cuda"])
 def test_owned_typed_state_across_steps_reset_and_rng_boundary(factory, args, device):
     if device == "cuda" and not torch.cuda.is_available():
-        pytest.skip("CUDA gate runs on Oscar")
+        pytest.skip("requires CUDA")
     adapter = factory(*args, 3, device=device, seed=17)
     try:
         initial = adapter.get_state()

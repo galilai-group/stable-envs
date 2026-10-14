@@ -34,7 +34,7 @@ def test_scratch_is_not_part_of_the_maintained_tree():
     assert not any(name.startswith("scratch/") for name in MAINTAINED_PATHS), "scratch/ is not a product artifact"
 
 
-_CITE = re.compile(r"(?<!oscar/)scratch/[A-Za-z0-9_./{}*,\\-]+")
+_CITE = re.compile(r"scratch/[A-Za-z0-9_./{}*,\\-]+")
 _MAINTAINED = (
     "stable_envs",
     "contrib",
@@ -82,8 +82,6 @@ def test_maintained_product_files_do_not_cite_scratch_paths():
             except OSError:
                 continue
             for i, line in enumerate(text.splitlines(), 1):
-                if "/oscar/scratch" in line:
-                    continue
                 for m in _CITE.finditer(line):
                     hits.append(f"{key}:{i}: {m.group(0)}")
     assert not hits, "maintained files still cite scratch/ paths:\n  " + "\n  ".join(hits[:40])

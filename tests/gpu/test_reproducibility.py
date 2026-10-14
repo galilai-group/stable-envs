@@ -446,7 +446,7 @@ DOWNSAMPLE_MARGIN = 0.005
 #:               plate at 2S -- mean 1.44/255 on cartpole against the mazes' 0.6-1.1. This is the
 #:               loosest family, and the two entries bracket it: point_mass (0.730) has no sky and a
 #:               floor the camera looks straight down on, cartpole (0.282) is 62% speckled skybox.
-#: TWO Step-7 cells are DELIBERATELY ABSENT from this table and neither absence is an oversight:
+#: TWO cells are DELIBERATELY ABSENT from this table and neither absence is an oversight:
 #:
 #:   ``CraftaxFull``               the class declares ``resolution_consistency_applicability`` with
 #:                                 "all bands: not_applicable" and the oracle behind it -- craftax's
@@ -456,15 +456,12 @@ DOWNSAMPLE_MARGIN = 0.005
 #:                                 full daylight, 0.0991 at night, max abs 191). This test skips it on
 #:                                 that declaration. A floor recorded here would be a number for a
 #:                                 relation the reference does not satisfy in any band. Measured for
-#:                                 the record, not asserted: 0.794537 at S=10 (closure2 gate_a).
+#:                                 the record, not asserted: 0.794537 at S=10.
 #:   ``DMCManipulatorBringBall``   carries ``PLATE_PATHS`` and is not a ``PLATE_REPRESENTATIVE``, so
 #:                                 this test skips it exactly as it skips every other PARITY-tier
 #:                                 plate cell in the DM Control family -- ``DMCCartpoleSwingup`` and
 #:                                 ``DMCPointMassEasy`` stand for the two camera geometries. Measured
-#:                                 for the record, not asserted: 0.850842 (cpu and cuda, closure2).
-#:
-#: Both numbers live with their provenance in
-#: ``pre-repository-cleanup:tests/fixtures/regression/join/step8/certification/downsample_provenance.json``.
+#:                                 for the record, not asserted: 0.850842 (cpu and cuda).
 DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     "AntmazeGiantNavigate": 0.708287,  # mean 1.1419/255
     "AntmazeGiantStitch": 0.708287,  # mean 1.1419/255
@@ -484,8 +481,6 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: either (world rows 0.1634 for both, the same number), so the class declares
     #: ``resolution_consistency_applicability`` and this test judges the applicable band. On the
     #: protocol's own 8-state draw that is 6 states and they measure exactly 1.000000.
-    #: Oracle: pre-repository-cleanup:tests/fixtures/regression/join/step7/craftax-classic-full/oracle/resolution_oracle_S16.json.
-    #: Ruling: Sami 2026-09-15 (pre-repository-cleanup:tests/fixtures/regression/join/step7/dashboard.yaml, decisions).
     "CraftaxClassic": 1.000000,  # mean 0.0000/255 on light >= 0.5; see applicability
     "DMCCartpoleSwingup": 0.282065,  # mean 1.4428/255  see DM Control note below
     "DMCPointMassEasy": 0.730424,  # mean 0.2418/255
@@ -520,7 +515,7 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     "HumanoidmazeMediumStitch": 0.723503,  # mean 0.6133/255
     #: MEASURED under this table's own protocol (`conformance.downsample_protocol_states`:
     #: 8 states at render_worker.STATE_SEED, default appearance, states sha256 055d4057...),
-    #: alloc 6443480 on gpu2264, RTX 3090, mujoco 3.12.0 / ogbench 1.2.1, MUJOCO_GL=egl. These
+    #: RTX 3090, mujoco 3.12.0 / ogbench 1.2.1, MUJOCO_GL=egl. These
     #: two are a baked MuJoCo plate composited with MJWarp movers, so the 2S picture rebakes
     #: the plate at 2S rather than doubling it -- the plate agrees with itself to the same
     #: point sampling everything else in this table does.
@@ -531,10 +526,9 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: the frame is a constant, and the disagreement is the hull silhouette and the pad's texture
     #: edges. MEASURED under this table's own protocol (8 states at render_worker.STATE_SEED, default
     #: appearance, states sha256 a5f128ad...), on the RTX 3090 at torch 2.14.0+cu126 / nvdiffrast
-    #: 0.4.0, MUJOCO_GL unused: exact 0.9561372, mean 0.9923/255, max 255 -- the same number in the
-    #: closure and closure2 sweeps. 0.956137 is 0.95614 to five decimals, which is the value the
-    #: frozen carry-over recorded. There is no cpu row: PyFlytRocketLanding raises on device="cpu" by
-    #: design. Artifact: pre-repository-cleanup:tests/fixtures/regression/join/step7/closure2/gate_a/cuda_rocket.json.
+    #: 0.4.0, MUJOCO_GL unused: exact 0.9561372, mean 0.9923/255, max 255 -- the same number in two
+    #: independent sweeps. There is no cpu row: PyFlytRocketLanding raises on device="cpu" by
+    #: design.
     "PFRocketLanding": 0.956137,  # mean 0.9923/255
     "PointmazeGiantNavigate": 0.708274,  # mean 1.1385/255
     "PointmazeGiantStitch": 0.708274,  # mean 1.1385/255
@@ -1331,7 +1325,7 @@ def test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility(name):
     element visible again, failed to find it in ``sc.movers``, and promoted it to a STATIC primitive
     at whatever ``geom_pos`` the last ``_fk`` had written.
 
-    Measured on CPU over the 64 frozen Step-4 states before the fix: 18 px / max 215 / 3 rows on
+    Measured on CPU over the 64 frozen corpus states before the fix: 18 px / max 215 / 3 rows on
     ``DMCReacherHard`` and 88 px / max 140 / 28 rows on ``DMCFingerTurnHard``.
 
     THE SUPERSAMPLE CHANGE IS THE TRIGGER and is why nothing else caught it: ``static_t`` is cached

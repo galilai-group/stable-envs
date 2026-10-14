@@ -303,7 +303,7 @@ def test_the_caller_s_own_dataloader_iterates_the_dataset_in_order():
     context and ship back over IPC data that never needed to leave the device — but that is the
     caller's decision to make and torch already defaults to it.
 
-    ``tests/unit/test_set_state_diagnostics.py`` covers the other two routes: the ``BatchSampler``
+    ``tests/unit/test_loader_idiom.py`` covers the other two routes: the ``BatchSampler``
     recipe, which needs no collate argument at all, and the recommended idiom, where the states never
     go through this module.
     """

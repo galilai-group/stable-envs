@@ -56,7 +56,7 @@ MEAN_ABS_MAX = 4.0
 #: on BOTH machines before being set.
 #:
 #: Set from the SPREAD over independent draws, clear of the worst, like every other floor here. Five
-#: draws (four of 16 sampled states plus the frozen 64-state Step-4 corpus) on each of the four cells
+#: draws (four of 16 sampled states plus the frozen 64-state corpus) on each of the four cells
 #: that declare a ``visibility.*`` leaf, at 84 px, on BOTH the machine this is authored on and the
 #: machine it is enforced on -- because the first draft of this bound was set from CPU numbers alone
 #: and the GPU then measured under it:
@@ -276,9 +276,9 @@ def test_color_knobs_apply_the_requested_color(env):
     The check is unchanged and still probes every leaf. What changed is what this assertion
     is entitled to conclude from the result: a leaf whose renderer applies a documented lighting law
     that cannot reach unit gain can never contain the literal triple, and the OFFICIAL renderer
-    cannot either, so asserting it here measures the reference's shading model. Sami's ruling of
-    2026-09-16; the declaration and its five required pieces of evidence live on the class and are
-    read by ``conformance.color_exactness_applicability``.
+    cannot either, so asserting it here measures the reference's shading model. The declaration and
+    its five required pieces of evidence live on the class and are read by
+    ``conformance.color_exactness_applicability``.
 
     A declared leaf is NOT silently dropped: its measured distance is asserted to still exist, so a
     knob that comes off its primitive still fails something rather than disappearing into the
@@ -338,8 +338,7 @@ def test_a_declared_task_object_is_drawn_iff_the_reference_draws_it(env):
     flat 3x3 neighbourhood in the reference, so an object that lands on a checker floor contributes
     no interior pixels and can appear or disappear without moving ``interior_exact_frac``. Measured,
     not supposed — two DM Control reacher renders that differ by an entire red disc report interior
-    exactness identical to sixteen digits and the same ``interior_px``
-    (``pre-repository-cleanup:tests/fixtures/regression/join/step5/reacher/parity_probe.json``), and the frame's ``interior_frac`` at 84 px
+    exactness identical to sixteen digits and the same ``interior_px``, and the frame's ``interior_frac`` at 84 px
     is 0.000000, so the assertion there does not even apply.
 
     Nothing about the interior metric is changed to fix that. This asserts a SEPARATE bound on the

@@ -39,7 +39,7 @@ def equal(left, right):
 @pytest.mark.parametrize("device", ["cpu", "cuda"])
 def test_exact_sharded_tasks_rng_lifecycle_and_owned_outputs(domain, device):
     if device == "cuda" and not torch.cuda.is_available():
-        pytest.skip("CUDA gate runs on Oscar")
+        pytest.skip("requires CUDA")
     local = make_local(domain, 5, device, 17)
     remote = DMCProcessAdapter(domain, 5, device, 17, processes=2)
     try:

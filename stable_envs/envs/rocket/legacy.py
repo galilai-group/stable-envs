@@ -444,9 +444,8 @@ def _reference_apply_style(p, c, rid, pad, style_row: np.ndarray) -> None:
 DOCUMENTED_LIMITATIONS = (
     "nvdiff's CPU transform is batch-size invariant to within one float32 ulp at every width, and "
     "bitwise at every width on arm64; on x86-64 the clip positions move by one ulp at widths 1-6 and "
-    "the normals at widths 4 and 8 (CLOSURE-1). Cuda, the certified device, is bitwise invariant at "
-    "every width. No frame this cell produces is affected: device='cpu' raises. Measurements: "
-    "pre-repository-cleanup:tests/fixtures/regression/join/step7/rocket-landing/closure1/."
+    "the normals at widths 4 and 8. Cuda, the certified device, is bitwise invariant at "
+    "every width. No frame this cell produces is affected: device='cpu' raises."
 )
 
 
@@ -570,9 +569,7 @@ class PyFlytRocketLanding(Env):
             "480 px, supersample 1, default appearance, worst of 4 independent 64-state draws of "
             "sample_states (default_rng(1000..1003)) over the rows the reference bridge reaches, "
             "against PyFlyt 0.29.0 / pybullet 3.2.7 TinyRenderer frames of the rocket-landing env "
-            "at the lagged pose; NVIDIA GeForce RTX 3090 gpu2106, SLURM job 6410105, tree 726241e, "
-            "torch 2.14.0+cu126, nvdiffrast 0.4.0 "
-            "(pre-repository-cleanup:tests/fixtures/regression/join/step7/rocket-landing/tier/job6410105/)"
+            "at the lagged pose; NVIDIA GeForce RTX 3090, torch 2.14.0+cu126, nvdiffrast 0.4.0"
         ),
         "reference_versions": {"PyFlyt": "0.29.0", "pybullet": "3.2.7"},
         "measured_with": {"nvdiffrast": "0.4.0", "torch": "2.14.0+cu126"},

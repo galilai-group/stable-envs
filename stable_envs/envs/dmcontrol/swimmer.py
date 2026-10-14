@@ -19,9 +19,7 @@ _SWIMMER_AT_MEASURED_WITH = {"mujoco_warp": "3.12.0"}
 # Disabling specular is specific to this cell; do not apply it to the whole family.
 SPECULAR_NOTE = (
     "This domain renders with enable_specular=False, which is measured to be BETTER "
-    "than the default on all four declared metrics as well as 1.30x faster (see "
-    "SPECULAR_NOTE in stable_envs/envs/dmcontrol.py for the per-domain table and for "
-    "why hopper does not get it)."
+    "than the default on all four declared metrics as well as 1.30x faster."
 )
 
 TRACKCOM_RENDER_FLAGS: dict[str, dict] = {

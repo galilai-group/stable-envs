@@ -91,7 +91,7 @@ def _constructible(name: str, cls, **kw):
 OWNED = sorted(_owned_classes())
 
 
-def test_this_workstream_owns_some_registered_classes():
+def test_the_family_owns_some_registered_classes():
     """A guard on the guard: if discovery silently stopped, every test below would vacuously pass."""
     assert OWNED, (
         "no registered class resolves to a MuJoCo-wrapper family; the tests below "
@@ -100,7 +100,7 @@ def test_this_workstream_owns_some_registered_classes():
 
 
 @pytest.mark.parametrize("name", OWNED)
-def test_every_owned_class_takes_the_step9_constructor(name):
+def test_every_owned_class_takes_the_num_envs_constructor(name):
     """``num_envs=`` reaches the class, from the SIGNATURE — no construction, so no optional dep."""
     params = inspect.signature(REGISTRY[name].__init__).parameters
     assert (
@@ -270,7 +270,7 @@ def test_snapshot_branch_sequence_matches_repeated_steps_and_repeated_step(name)
 
 @pytest.mark.skipif("MiniGridEmpty" not in OWNED, reason="minigrid is not installed")
 def test_minigrids_carried_object_is_hidden_state_the_packed_row_does_not_carry():
-    """The one field in this workstream with offset ``None``, and the hazard it closes.
+    """The one field in this family with offset ``None``, and the hazard it closes.
 
     ``unpack`` zeroes it, which is right for a state loaded from a corpus (``set_state`` empties the
     agent's hands, and so does the reference after ``reset``) and wrong for the env's own live state

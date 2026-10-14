@@ -2,10 +2,8 @@
 
 ``Scene.from_triangles``, ``gather_material``, ``shade_tiny``, ``offset_clip`` and ``prepare_texture_array``
 are pure torch/numpy and need neither mujoco nor nvdiffrast. The shading numbers here are not chosen:
-they are the pixel values Bullet's TinyRenderer produced on synthetic scenes
-(``pre-repository-cleanup:tests/fixtures/regression/join/step7/rocket-landing/phase0/tiny_law.json``, ``tiny_law2.json``,
-``phase0_light_sweep.json``), so a change to the law is caught by the renderer it emulates rather than
-by a number somebody typed.
+they are the pixel values Bullet's TinyRenderer produced on synthetic scenes, so a change to the law
+is caught by the renderer it emulates rather than by a number somebody typed.
 """
 
 from __future__ import annotations
@@ -132,9 +130,9 @@ def _px(col):
 @pytest.mark.parametrize(
     "law,normal,expected",
     [
-        # phase0_light_sweep.json / tiny_law.json: a horizontal white surface under the DEFAULT law reads 239
+        # a horizontal white surface under the DEFAULT law reads 239
         (ND.TinyShading(), (0, 0, 1), 239),
-        # tiny_law2.json tilt 0: diffuse only -> int(255 * 0.8639) = 220; specular only -> int(255 * 0.8639^2) = 190
+        # tilt 0: diffuse only -> int(255 * 0.8639) = 220; specular only -> int(255 * 0.8639^2) = 190
         (ND.TinyShading(ambient=0.0, diffuse=1.0, specular=0.0), (0, 0, 1), 220),
         (ND.TinyShading(ambient=0.0, diffuse=0.0, specular=1.0), (0, 0, 1), 190),
         # tilt 10 deg about y: r_z 0.664 -> 112 (specular only), n.l 0.7757 -> 197 (diffuse only)
@@ -142,7 +140,7 @@ def _px(col):
         (ND.TinyShading(ambient=0.0, diffuse=1.0, specular=0.0), "tilt10y", 197),
         # a face turned AWAY from the light is not ambient-only (153): TinyRenderer builds the reflection
         # from the UNCLAMPED n.l, so r_z is +0.8639 on the downward face and the specular term survives.
-        # Measured 162 and 158 (tiny_law4_backface.json), predicted 153 by the clamped law, 162 / 158 here.
+        # Measured 162 and 158, predicted 153 by the clamped law, 162 / 158 here.
         (ND.TinyShading(), (0, 0, -1), 162),
         (ND.TinyShading(), "away150x", 158),
     ],
@@ -159,7 +157,7 @@ def test_shade_tiny_reproduces_the_measured_tinyrenderer_pixels(law, normal, exp
 
 
 def test_shade_tiny_is_world_fixed_and_multiplies_the_specular_into_the_material():
-    """Two facts measured in tiny_law2.json: the light does not follow the camera (no camera enters the
+    """Two measured facts: the light does not follow the camera (no camera enters the
     law at all), and a black material stays black however specular the law is (TinyRenderer multiplies
     ``specular`` into ``color``, unlike MuJoCo's additive white highlight)."""
     law = ND.TinyShading(ambient=0.0, diffuse=0.0, specular=1.0)
@@ -231,8 +229,7 @@ def test_from_triangles_clip_row_is_independent_of_batch_size():
     **cpu: within ONE float32 ulp at every width**, which is the portable claim. Bitwise-ness on CPU is
     a property of the machine, not of this repo's arithmetic, so it is measured and recorded rather
     than asserted -- asserting it is exactly the mistake this test is correcting. Measured on x86-64
-    (login010, torch 2.14.0+cu126, 1/2/4 threads;
-    ``pre-repository-cleanup:tests/fixtures/regression/join/step7/rocket-landing/closure1/probe_clip_cpu_batch_x86_widthsweep.json``):
+    (torch 2.14.0+cu126, 1/2/4 threads):
 
     ==========  ===================================  ==================================
     quantity    bitwise on x86-64 CPU                otherwise
@@ -242,10 +239,9 @@ def test_from_triangles_clip_row_is_independent_of_batch_size():
     world pos   every width                          --
     ==========  ===================================  ==================================
 
-    Everything is bitwise at every width on arm64 (Apple M5) and on cuda. Two earlier width samples
-    missed part of this and are superseded by the sweep above: the closure sweep's (1, 2, 7, 8, 31, 32,
-    63) and this workstream's first probe's (1, 2, 3, 7, 8, 31, 32, 63) both skip 4-6, so both reported
-    the positions as recovering at width 3 and the normals as never moving.
+    Everything is bitwise at every width on arm64 (Apple M5) and on cuda. A width sample that skips
+    4-6 misses part of this: it reports the positions as recovering at width 3 and the normals as
+    never moving.
 
     The cause is measured and is NOT this repo's arithmetic: ``mvp_rows`` -- the float64 elementwise
     ``proj @ view @ M`` -- is bit-identical at every width on every machine measured. The residual is
@@ -257,8 +253,7 @@ def test_from_triangles_clip_row_is_independent_of_batch_size():
     on ``device="cpu"``. A fix for the POSITIONS is written and measured, and is not applied
     because on cuda it moves four of the six re-frozen locomotion cells by 2.7e-07 of mean_abs and
     1e-09 of SSIM, and a re-freeze needs a certification failure with a causal reason rather than an
-    implementation that merely differs. It is the nvdiff candidate
-    (``closure1/digest_vs_refreeze.json``). Note that it addresses the positions only; the normals
+    implementation that merely differs. Note that it addresses the positions only; the normals
     share the same sparse stage and would need the same treatment.
     """
     v, n, f = _box_soup((0.5, 0.25, 1.0))

@@ -12,24 +12,6 @@ compare before replacing a fixture.
 | `verify_saved.py` | Saved-corpus and evidence verification |
 | `inventory.py` | Required-gate coverage inventory |
 
-## Moved generators
-
-The semantic oracle generators previously lived in `scripts/recovery/`. Existing
-fixture manifests keep their original `generator` field, which records how each
-corpus was created. Corpora generated from now on record the new path.
-
-| Recorded `generator` | Current location |
-|---|---|
-| `scripts/recovery/freeze_dmc_aligned_oracle.py` | `scripts/testing/freeze_dmc_aligned_oracle.py` |
-| `scripts/recovery/freeze_dmc_continuation_oracle.py` | `scripts/testing/freeze_dmc_continuation_oracle.py` |
-| `scripts/recovery/freeze_dmc_first_family_oracle.py` | `scripts/testing/freeze_dmc_first_family_oracle.py` |
-| `scripts/recovery/freeze_dmc_humanoid_oracle.py` | `scripts/testing/freeze_dmc_humanoid_oracle.py` |
-| `scripts/recovery/freeze_native_classic_oracle.py` | `scripts/testing/freeze_native_classic_oracle.py` |
-| `scripts/recovery/freeze_native_classic_remaining_oracle.py` | `scripts/testing/freeze_native_classic_remaining_oracle.py` |
-| `scripts/recovery/freeze_native_navigation_oracle.py` | `scripts/testing/freeze_native_navigation_oracle.py` |
-| `scripts/recovery/freeze_ogbench_maze_oracle.py` | `scripts/testing/freeze_ogbench_maze_oracle.py` |
-| `scripts/recovery/freeze_reacher_oracle.py` | `scripts/testing/freeze_reacher_oracle.py` |
-
 Run a generator from the repository root, in the interpreter pinned for its
 family in `tests/helpers/reference/profiles.py`, for example
 `python -m scripts.testing.freeze_reacher_oracle`. Move the existing fixture

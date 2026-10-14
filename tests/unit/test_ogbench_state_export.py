@@ -23,7 +23,7 @@ def equal(a, b):
 @pytest.mark.parametrize("device", ["cpu", "cuda"])
 def test_complete_owned_export(family, device):
     if device == "cuda" and not torch.cuda.is_available():
-        pytest.skip("CUDA requires Oscar")
+        pytest.skip("requires CUDA")
     adapter = OGBMazeAdapter(3, device, 17) if family == "Maze" else OGBManipulationAdapter(family, 3, device, 17)
     reference = maze_state if family == "Maze" else manipulation_state
     try:

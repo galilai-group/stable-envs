@@ -46,7 +46,7 @@ def test_old_and_new_source_corpora_agree(case):
         "cpu",
         pytest.param(
             "cuda",
-            marks=[pytest.mark.gpu, pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA runs on Oscar")],
+            marks=[pytest.mark.gpu, pytest.mark.skipif(not torch.cuda.is_available(), reason="requires CUDA")],
         ),
     ],
 )

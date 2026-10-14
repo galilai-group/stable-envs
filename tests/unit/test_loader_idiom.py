@@ -97,7 +97,7 @@ def test_the_datasets_no_longer_ship_a_dataloader_factory():
     assert not hasattr(ds, "loader"), (
         "StateDataset.loader is back; the recommended idiom is the caller's own DataLoader, and the "
         "one argument it needs (collate_fn=collate_batched, and only when the dataset renders) is "
-        "documented in stable_envs/data.py"
+        "documented in stable_envs/testing/_data.py"
     )
     assert not hasattr(TrajectoryDataset(_env(1), np.stack([_states(4)]), device=DEV), "loader")
 

@@ -1,9 +1,9 @@
 """Freeze golden vectors for ``stable_envs/envs/craftax/prng.py`` out of a real jax.
 
-Run in the reference venv (`/Users/samib/se7-craftax-venv`, jax 0.11.1). Writes
+Run in a venv with craftax 1.6.1 and jax 0.11.1. Writes
 ``tests/fixtures/regression/fidelity/prng_threefry_golden.json``, which ``tests/unit/test_craftax_prng.py`` asserts against
-so the test needs no jax at all — the repo ships no jax and the Oscar interpreters have none, so a
-test that imported jax would simply skip everywhere and assert nothing.
+so the test needs no jax at all — the repo ships no jax, so a test that imported jax would simply
+skip everywhere and assert nothing.
 
 Small shapes are frozen in full; the render-sized ones as a sha256 over the uint32 bytes plus their
 first and last eight values, because a digest catches any bit change and a 112x144 array does not
@@ -91,7 +91,7 @@ def main():
         "jax": jax.__version__,
         "jax_threefry_partitionable": bool(jax.config.jax_threefry_partitionable),
         "jax_default_prng_impl": str(jax.config.jax_default_prng_impl),
-        "generated_by": "scratch/step7/craftax-classic-full/gen_prng_golden.py",
+        "generated_by": "scripts/regression/craftax/gen_prng_golden.py",
         "full": full,
         "digest": digest,
         "scaled": scaled,

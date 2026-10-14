@@ -1,4 +1,4 @@
-"""The Step-7 new cells' VariationMaps: every offered swm leaf is classified, and the classification
+"""The OGB / Rocket / maze VariationMaps: every offered swm leaf is classified, and the classification
 agrees with the map it is supposed to describe.
 
 The point of these tests is NOT that the reasons are well written. It is that no swm leaf can be

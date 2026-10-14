@@ -1,10 +1,9 @@
 """Freeze, from craftax itself, the small facts the unit tests pin without importing jax.
 
-The repo ships no jax and no Oscar interpreter outside ``$SCR/venvs/se7-craftax`` has one, so a test
-that imported jax would skip everywhere and assert nothing -- W1's reason for freezing the threefry
-golden vectors, and the same reason here.
+The repo ships no jax, so a test that imported jax would skip everywhere and assert nothing -- the
+same reason the threefry golden vectors are frozen. Run it in a venv with craftax 1.6.1 and jax:
 
-    JAX_PLATFORMS=cpu /Users/samib/se7-craftax-venv/bin/python scripts/regression/craftax/gen_golden.py
+    JAX_PLATFORMS=cpu python scripts/regression/craftax/gen_golden.py
 """
 
 import hashlib

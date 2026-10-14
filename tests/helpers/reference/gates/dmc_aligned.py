@@ -39,9 +39,9 @@ OMISSIONS = {
     ],
     "quadruped": [("warmstart",), ("activation",)],
 }
-# Ball-in-Cup prefix 5 has a zero omission witness on Oscar/MuJoCo 3.11.
+# Ball-in-Cup prefix 5 has a zero omission witness on x86/MuJoCo 3.11.
 # Prefix 6 is a contact snapshot with nonzero observable omission error on
-# both the local ARM/3.12 and Oscar x86/3.11 profiles; restore stays exact.
+# both the ARM/3.12 and x86/3.11 profiles; restore stays exact.
 PREFIXES = {"ball_in_cup": 6, "finger": 7, "manipulator": 1, "quadruped": 1}
 
 
