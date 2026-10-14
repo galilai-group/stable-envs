@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import threading
-from functools import lru_cache
-from importlib.metadata import version
 
 import numpy as np
 import torch
@@ -50,12 +48,6 @@ def _renderer(family, row, resolution):
         )
         _CACHE[key] = entry
     return _CACHE[key]
-
-
-@lru_cache(maxsize=1)
-def _check_versions():
-    if version("mujoco") != "3.12.0" or version("ogbench") != "1.2.1":
-        raise ImportError("Cube/Scene OpenGL rendering requires mujoco==3.12.0 and ogbench==1.2.1")
 
 
 def _configuration_groups(host):
@@ -115,7 +107,7 @@ def render(family, state, device, chunk_size=None):
     # rather than synchronizing CUDA once for every scalar validation predicate.
     host = state.detach().cpu()
     pixels.validate(family, host)
-    _check_versions()
+    pixels.check_versions("OpenGL")
     if chunk_size is not None and (type(chunk_size) is not int or chunk_size < 1):
         raise ValueError("chunk_size must be a positive integer")
     device = torch.device(device)

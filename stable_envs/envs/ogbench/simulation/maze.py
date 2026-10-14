@@ -6,6 +6,8 @@ from tensordict import TensorDict
 
 from ...._execution.protocol import SimulatorAdapter
 from ...._execution.state_columns import owned_columns, require_columns
+from .pcg import bytes_uint128, pcg_state
+from .pcg import uint128_bytes as _uint128_bytes
 
 #: body -> (qpos fields, qvel fields, action width). Legged qpos splits at the free joint.
 BODIES = {
@@ -50,14 +52,6 @@ OGB_MAZE_FIELDS = maze_fields("point")
 
 
 _NUMPY_DTYPES = {torch.float64: np.float64, torch.int64: np.int64, torch.bool: np.bool_, torch.uint8: np.uint8}
-
-
-def _uint128_bytes(value: int) -> np.ndarray:
-    return np.frombuffer(int(value).to_bytes(16, "little"), dtype=np.uint8).copy()
-
-
-def _bytes_uint128(value: torch.Tensor) -> int:
-    return int.from_bytes(value.numpy().tobytes(), "little")
 
 
 def _split(fields, values):
@@ -163,15 +157,12 @@ class OGBMazeAdapter(SimulatorAdapter):
             task_id = row["task", "id"].item()
             if not 0 <= task_id <= self.envs[0].num_tasks:
                 raise ValueError(f"Invalid OGBench task id {task_id}")
-            pcg = {
-                "bit_generator": "PCG64",
-                "state": {
-                    "state": _bytes_uint128(row["rng", "env_state"]),
-                    "inc": _bytes_uint128(row["rng", "env_inc"]),
-                },
-                "has_uint32": row["rng", "env_has_uint32"].item(),
-                "uinteger": row["rng", "env_uinteger"].item(),
-            }
+            pcg = pcg_state(
+                bytes_uint128(row["rng", "env_state"].numpy()),
+                bytes_uint128(row["rng", "env_inc"].numpy()),
+                row["rng", "env_has_uint32"].item(),
+                row["rng", "env_uinteger"].item(),
+            )
             np.random.PCG64().state = pcg
             legacy = (
                 "MT19937",

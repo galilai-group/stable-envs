@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import hashlib
+from functools import lru_cache
+from importlib.metadata import version
 
 import numpy as np
 import torch
@@ -14,6 +16,15 @@ TARGET_ALPHA = 0.2
 STATIC = ("cube.size", "camera.angle_delta", "light.intensity")
 # agent.color is these materials' RGB, written per world by the renderers.
 AGENT_MATERIALS = ("ur5e/robotiq/black", "ur5e/robotiq/pad_gray")
+
+
+@lru_cache
+def check_versions(renderer, *, warp=False):
+    """Raise ImportError unless the pinned MuJoCo and OGBench, and with ``warp`` MJWarp and Warp, are installed."""
+    if version("mujoco") != "3.12.0" or version("ogbench") != "1.2.1":
+        raise ImportError(f"Cube/Scene {renderer} rendering requires mujoco==3.12.0 and ogbench==1.2.1")
+    if warp and (version("mujoco-warp") != "3.12.0" or version("warp-lang") != "1.17.0"):
+        raise ImportError("Cube/Scene GPU rendering requires mujoco-warp==3.12.0 and warp-lang==1.17.0")
 
 
 class _RenderScene(CompatibleScene):
