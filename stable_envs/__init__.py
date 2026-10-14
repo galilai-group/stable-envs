@@ -1,3 +1,8 @@
+"""Batched environments with explicit State, Variation and state-driven rendering.
+
+Environment classes are attributes named by their registry key, for example ``stable_envs.PushT``.
+"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -15,11 +20,11 @@ _registry.discover()
 
 
 def make(name: str, **kwargs) -> Env:
-    """Construct a registered environment, for example make("PushT", num_envs=64)."""
+    """Construct an environment by class name, forwarding constructor keywords.
+
+    For example ``make("PushT", num_envs=64)``. Unknown names raise KeyError.
+    """
     return _make(name, **kwargs)
-
-
-make.__doc__ = (_make.__doc__ or "") + "\n\n    " + (make.__doc__ or "")
 
 
 def __getattr__(name: str) -> Any:
@@ -27,9 +32,9 @@ def __getattr__(name: str) -> Any:
     if name in _registry.REGISTRY:
         return _registry.REGISTRY[name]
     raise AttributeError(
-        f"module 'stable_envs' has no attribute {name!r}. Environments are looked up by their class "
-        f"name — snv.list_envs() shows the {len(_registry.REGISTRY)} registered; "
-        f"snv.import_errors() shows the families whose optional dependency is missing."
+        f"module 'stable_envs' has no attribute {name!r}. Environments are looked up by class "
+        f"name: snv.list_envs() shows the {len(_registry.REGISTRY)} registered and "
+        f"snv.import_errors() shows the families that did not import."
     )
 
 

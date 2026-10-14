@@ -1,3 +1,5 @@
+"""The environment registry: registration checks, lookup, metadata and family discovery."""
+
 from __future__ import annotations
 
 import importlib
@@ -40,40 +42,40 @@ def check_fidelity_declaration(cls: type[Env]) -> None:
     if tier == "parity":
         if vf:
             raise ValueError(
-                f"{cls.__name__} declares fidelity_tier='parity' and also carries visual_fidelity. The "
-                f"two tiers make different claims and an env makes exactly one of them; drop the dict "
-                f"or declare the visual tier."
+                f"{cls.__name__} declares fidelity_tier='parity' and also carries visual_fidelity; "
+                f"drop the dict or declare the visual tier."
             )
         return
     missing = [k for k in REQUIRED_VISUAL_FIDELITY if k not in vf]
     if missing:
         raise ValueError(
-            f"{cls.__name__} declares the VISUAL tier without {missing}. The tier exists to let an env "
-            f"state a measured, weaker claim; an unmeasured weaker claim is just a missing test."
+            f"{cls.__name__} declares the VISUAL tier without {missing}; a visual declaration "
+            f"carries its measured agreement and acceptance limits."
         )
     if not getattr(cls, "visual_note", ""):
         raise ValueError(
-            f"{cls.__name__} declares the VISUAL tier with no visual_note. The note is what tells a "
-            f"reader which residual they are accepting and what it disqualifies the frames from."
+            f"{cls.__name__} declares the VISUAL tier with no visual_note; the note states the "
+            f"residual difference and what the frames must not be used for."
         )
     if getattr(cls, "parity_interior_min", None) is not None:
         raise ValueError(
             f"{cls.__name__} declares the VISUAL tier but leaves parity_interior_min at "
-            f"{cls.parity_interior_min!r}. Set it to None: the parity gate does not apply to this env, "
-            f"and leaving a number there is how a visual env ends up being compared against the strong "
-            f"claim, or worse, how the strong claim ends up being loosened to accommodate it."
+            f"{cls.parity_interior_min!r}. Set it to None: the parity gate does not apply to this env."
         )
     doc = (cls.__doc__ or "").upper()
     if "VISUAL TIER" not in doc:
         raise ValueError(
             f"{cls.__name__} declares the VISUAL tier and does not say so in its class docstring. "
-            f"Put the words 'VISUAL TIER' in it, with what the residual is; help({cls.__name__}) is "
-            f"where a user looks first and it must not read like a parity env."
+            f"Put the words 'VISUAL TIER' in it, with what the residual is."
         )
 
 
 def register(cls: type[Env]) -> type[Env]:
-    """Register by canonical class name after metadata validation; reject name collisions."""
+    """Validate ``cls`` and register it under its class name; usable as a class decorator.
+
+    ``family`` must be set on the class. An unset ``domain`` defaults to ``DOMAIN`` or the family.
+    A different class with the same name raises ValueError.
+    """
     key = cls.__name__
     if key in REGISTRY and REGISTRY[key] is not cls:
         raise ValueError(
@@ -97,8 +99,10 @@ def register(cls: type[Env]) -> type[Env]:
 
 
 def registry_table() -> list[dict[str, Any]]:
-    """Return sorted environment metadata rows, including the fidelity tier."""
-    # Instance-dependent widths are unavailable here; report None instead of a misleading zero.
+    """Return one metadata row per registered class, sorted by name.
+
+    ``render_state_dim`` is None when the width is only known on an instance.
+    """
     return [
         {
             "class_name": n,
@@ -115,7 +119,7 @@ def registry_table() -> list[dict[str, Any]]:
 
 
 def format_registry(width: int = 34) -> str:
-    """Format the registry with visual-tier labels."""
+    """Return a text listing of registered classes with visual-tier classes marked."""
     rows = registry_table()
     n_visual = sum(r["tier"] == "visual" for r in rows)
     out = [f"{len(rows)} environments; {len(rows) - n_visual} parity, {n_visual} visual"]
@@ -131,12 +135,8 @@ def format_registry(width: int = 34) -> str:
     return "\n".join(out)
 
 
-def _lookup_class(name: str) -> type[Env] | None:
-    return REGISTRY.get(name)
-
-
 def _resolve(name: str) -> type[Env]:
-    cls = _lookup_class(name)
+    cls = REGISTRY.get(name)
     if cls is not None:
         return cls
     raise KeyError(f"unknown env {name!r}; known: {sorted(REGISTRY)}")
@@ -148,10 +148,10 @@ def make(name: str, **kwargs) -> Env:
 
 
 def info(name: str) -> dict[str, Any]:
-    """Return class metadata without constructing an environment.
+    """Return class metadata for ``name`` without constructing an environment.
 
-    Instance-dependent dimensions may be None. Full tensor specs are available
-    from the constructed environment.
+    Dimensions that depend on the instance are None; full specs come from a constructed
+    environment. Unknown names raise KeyError.
     """
     cls = _resolve(name)
     dim = getattr(cls, "state_dim", None)
@@ -195,7 +195,7 @@ _DISCOVERED = False
 
 
 def _import_env_module(mod_name: str, error_key: str) -> None:
-    """Import a family and record failure, distinguishing missing dependencies from other exceptions."""
+    """Import a family module, recording an ImportError or any other exception under ``error_key``."""
     try:
         importlib.import_module(f"stable_envs.envs.{mod_name}")
     except (ImportError, ModuleNotFoundError) as e:
@@ -211,10 +211,9 @@ def _import_env_module(mod_name: str, error_key: str) -> None:
 
 
 def discover(force: bool = False) -> dict[str, str]:
-    """Import environment modules to populate the registry and return recorded failures.
+    """Import every public module of ``stable_envs.envs`` and return the recorded import failures.
 
-    Skip private names; family packages import their own submodules. Failed
-    imports leave other families available. Force repeats discovery without
+    A failed family leaves the others available. ``force`` repeats discovery without
     clearing registered classes.
     """
     global _DISCOVERED
@@ -233,7 +232,7 @@ def discover(force: bool = False) -> dict[str, str]:
 
 
 def import_errors() -> dict[str, str]:
-    """Return a copy of module-name to import-error diagnostics."""
+    """Return ``{module name: error}`` for the environment modules that did not import."""
     return dict(_IMPORT_ERRORS)
 
 

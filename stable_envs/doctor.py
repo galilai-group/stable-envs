@@ -29,6 +29,8 @@ SUPPORTED_PYTHON = ((3, 10), (3, 12))
 
 @dataclass
 class Check:
+    """One check result: a status, what was found, and the fix for a warning or failure."""
+
     name: str
     status: str
     detail: str = ""
@@ -37,6 +39,8 @@ class Check:
 
 @dataclass(frozen=True)
 class Family:
+    """A family's install extra, distribution, modules and the capabilities its CPU and GPU paths need."""
+
     name: str
     extra: str | None
     dist: str | None
@@ -96,6 +100,8 @@ FAMILIES = (
 
 @dataclass
 class FamilyReport:
+    """Overall, CPU-path and GPU-path status of one family, with the fixes that apply."""
+
     name: str
     status: str
     cpu: str = SKIP
@@ -106,6 +112,8 @@ class FamilyReport:
 
 @dataclass
 class Report:
+    """System checks, GL checks and per-family results; ``ok`` is False when any family fails."""
+
     system: list[Check] = field(default_factory=list)
     gl: list[Check] = field(default_factory=list)
     families: list[FamilyReport] = field(default_factory=list)
@@ -142,6 +150,7 @@ def cuda_driver_version() -> tuple[int, int] | None:
 
 
 def nvidia_driver_release() -> str | None:
+    """Return the NVIDIA kernel module release on Linux, or None."""
     try:
         with open("/proc/driver/nvidia/version") as fh:
             m = re.search(r"Kernel Module(?: for \S+)?\s+([\d.]+)", fh.read())
@@ -300,6 +309,7 @@ def gl_env_checks(environ, platform_name: str = sys.platform) -> list[Check]:
 
 
 def gl_candidates(platform_name: str = sys.platform) -> tuple[str, ...]:
+    """Return the MUJOCO_GL backends to probe on ``platform_name``."""
     return ("cgl", "glfw") if platform_name == "darwin" else ("egl", "osmesa", "glfw")
 
 
@@ -412,6 +422,7 @@ def _worst(statuses) -> str:
 
 
 def family_report(fam: Family, errors: dict[str, str], caps: dict[str, Check], has_gpu: bool) -> FamilyReport:
+    """Combine a family's import errors with the capability checks its CPU and GPU paths need."""
     install = f'pip install "stable-envs[{fam.extra}]"' if fam.extra else ""
     if fam.dist is not None and _dist_version(fam.dist) is None:
         return FamilyReport(fam.name, SKIP, detail="not installed", fixes=[install])
@@ -487,6 +498,7 @@ def _label(status: str, colour: bool) -> str:
 
 
 def format_report(report: Report, colour: bool = False) -> str:
+    """Return the report as text, with ANSI status colours when ``colour``."""
     from .__about__ import __version__
 
     lines = [f"stable-envs {__version__} doctor", ""]
@@ -517,6 +529,7 @@ def format_report(report: Report, colour: bool = False) -> str:
 
 
 def main(json_output: bool = False) -> int:
+    """Print the report as text or JSON and return 0 when every installed family works, else 1."""
     report = run()
     if json_output:
         print(json.dumps(report.to_dict(), indent=2))

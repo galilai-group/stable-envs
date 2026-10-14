@@ -46,10 +46,10 @@ _MAX_LISTED = 8
 
 
 def require_contiguous_out(owner: str, out) -> None:
-    """Require a contiguous uint8 output buffer.
+    """Raise ValueError unless ``out`` is None or a contiguous uint8 buffer.
 
-    Render backends write through flat views. A strided destination may silently
-    write the wrong locations; callers must copy into such a view themselves.
+    Render backends write through a flat view of ``out``, so a strided destination
+    would receive frames at the wrong locations.
     """
     if out is None:
         return
@@ -58,25 +58,15 @@ def require_contiguous_out(owner: str, out) -> None:
     else:  # NumPy reshape may copy a strided destination.
         flags = getattr(out, "flags", None)
         ok = flags is None or bool(flags["C_CONTIGUOUS"])
-    # Check dtype before any backend can silently convert the destination.
     dtype = getattr(out, "dtype", None)
     if dtype is not None and dtype not in (torch.uint8, np.dtype(np.uint8)):
-        raise ValueError(
-            f"{owner}: `out` must be uint8 and this one is {dtype}. A frame is 3 bytes per pixel; a "
-            f"float destination accepts the write without complaining and hands back 0..255 floats "
-            f"where pixels were asked for."
-        )
+        raise ValueError(f"{owner}: `out` must be uint8, got {dtype}.")
     if ok:
         return
     raise ValueError(
-        f"{owner}: `out` must be contiguous, and this one is not. The renderer writes the frames "
-        f"linearly through a flat view of the destination, and a view of a strided tensor keeps its "
-        f"strides, so the frames would land across the neighbouring slices of your buffer instead of "
-        f"in it — silently, since nothing about the write is invalid. This is what a time or camera "
-        f"axis in front of the batch axis produces: `buf[:, t]` of a (B, T, H, W, 3) buffer is "
-        f"strided. Either assign (`buf[:, t] = env.render(states)`), which costs one copy, or give "
-        f"the buffer a layout whose frame axis is outermost (`buf[t]` of a (T, B, H, W, 3) buffer is "
-        f"contiguous and can be rendered into directly)."
+        f"{owner}: `out` must be contiguous; the renderer writes through a flat view of it. "
+        f"`buf[:, t]` of a (B, T, H, W, 3) buffer is strided: assign instead "
+        f"(`buf[:, t] = env.render(states)`), or render into `buf[t]` of a (T, B, H, W, 3) buffer."
     )
 
 
@@ -99,12 +89,11 @@ def _guard_render_out(fn):
 
 
 def _as_state_tensor(owner: str, states) -> torch.Tensor:
-    """Convert array-like input without casting away dtype information used by validation."""
+    """Convert array-like input to a tensor, keeping the dtype that validation inspects."""
     if isinstance(states, Mapping):
         raise TypeError(
             f"{owner}: got a {type(states).__name__}, not an array of states. A TrajectoryDataset "
-            f"batch is a dict — the states are under the 'states' key, so pass batch['states'] "
-            f"(and note it carries a time axis: (B, window, state_dim))."
+            f"batch is a dict: pass batch['states'], which is (B, window, state_dim)."
         )
     if torch.is_tensor(states):
         return states
@@ -114,15 +103,14 @@ def _as_state_tensor(owner: str, states) -> torch.Tensor:
         and all(torch.is_tensor(x) or isinstance(x, np.ndarray) for x in states)
     ):
         parts = [torch.as_tensor(x if torch.is_tensor(x) else np.asarray(x)) for x in states]
-        # TensorDataset loaders wrap a batch in a singleton sequence; stacking it would add an axis.
-        # Longer sequences represent separate samples and are stacked.
+        # TensorDataset loaders wrap a batch in a one-element list; only longer lists are stacked.
         return parts[0] if len(parts) == 1 else torch.stack(parts)
     try:
         return torch.as_tensor(states)
     except Exception as e:  # noqa: BLE001 — re-raised with the fix
         raise TypeError(
-            f"{owner}: could not read {type(states).__name__} as an array of states ({e}). It wants "
-            f"a (batch, state_dim) float array — a torch tensor, a numpy array, or anything "
+            f"{owner}: could not read {type(states).__name__} as an array of states ({e}). Pass a "
+            f"(batch, state_dim) float array: a torch tensor, a numpy array, or anything "
             f"torch.as_tensor accepts."
         ) from e
 
@@ -249,19 +237,15 @@ def check_states(
 
     if raw.numel() == 0:
         raise ValueError(
-            f"{owner}: no states to render — got 0 of them (input shape {shape}). An empty batch "
-            f"produces an empty frame buffer, which is almost never what a training step wants; "
-            f"check the sampler, or the slice that produced it."
+            f"{owner}: no states to render (input shape {shape}); check the sampler or the slice that produced them."
         )
 
     if scan:
         bad = _nonfinite_report(raw.reshape(-1, D), names)
         if bad:
             raise ValueError(
-                f"{owner}: {bad}. A non-finite state renders SILENTLY — the rasterizer clamps it and "
-                f"draws somewhere plausible, or draws nothing — so the frame looks like data and the "
-                f"model trains on it. Check the step that produced these states (a diverged rollout "
-                f"and a divide-by-zero in a normalisation both land here)."
+                f"{owner}: {bad}. Renderers draw non-finite states without error, so they are "
+                f"refused; check the step that produced these states."
             )
     raw = raw.detach() if torch.is_tensor(raw) else raw
     return raw.to(device=env.device, dtype=torch.float32) if move else raw.to(dtype=torch.float32)
@@ -339,7 +323,11 @@ def _lane_value(value, lane: int, batch: int, width: int) -> np.ndarray:
 
 
 class Env:
-    """Base class for batched simulation, restorable State, and rendering."""
+    """Base class for a batch of simulators with restorable State and state-driven rendering.
+
+    Concrete environments are registered by class name and built with ``stable_envs.make``
+    or their constructor. One instance owns ``num_envs`` lanes.
+    """
 
     name: str = ""
     family: str = ""
@@ -390,7 +378,17 @@ class Env:
         backend: str = "auto",
         seed: int = 0,
     ):
-        """Create ``num_envs`` lanes; ``device="auto"`` selects CUDA when available, otherwise CPU."""
+        """Create ``num_envs`` lanes.
+
+        Args:
+            num_envs: Number of lanes.
+            size: Frame height and width in pixels; None uses ``default_size``.
+            supersample: Samples per pixel along each axis.
+            device: Output device. None uses the global ``default_device``; ``"auto"`` selects
+                CUDA when available, otherwise CPU. Where physics runs depends on the family.
+            backend: Renderer backend; ``"auto"`` lets the family choose.
+            seed: Seed for the environment's sampler.
+        """
         device = self.resolve_device(device)
         if self.requires_cuda and not str(device).startswith("cuda"):
             raise ValueError(
@@ -417,6 +415,7 @@ class Env:
 
     @staticmethod
     def resolve_device(device: str | None) -> str:
+        """Resolve None to the global default device and ``"auto"`` to ``"cuda"`` or ``"cpu"``."""
         if device is None:
             device = _get_config()["default_device"] or "auto"
         device = str(device)
@@ -426,6 +425,7 @@ class Env:
 
     @property
     def class_name(self) -> str:
+        """Python class name, which is also the registry key."""
         return type(self).__name__
 
     @property
@@ -440,6 +440,7 @@ class Env:
 
     @property
     def render_state_names(self) -> tuple[str, ...]:
+        """Column labels of the private renderer projection."""
         return tuple(self.state_names)
 
     def __init_subclass__(cls, **kw):
@@ -528,12 +529,9 @@ class Env:
         if n > self.B:
             raise ValueError(
                 f"{type(self).__name__}.set_state: this env holds {self.B} environment(s) and got {n} "
-                f"states. A batch may be SHORTER than the env — the short final batch of a DataLoader "
-                f"with drop_last=False renders fine, and only those rows are drawn — but it cannot be "
-                f"longer, because there is nowhere to put the extra {n - self.B}. Either build the env "
-                f"at the batch you feed it, se.make({type(self).__name__!r}, "
-                f"num_envs={n}), or render without touching the env's buffer: env._render(states), which "
-                f"takes any batch."
+                f"states. A batch may be SHORTER than the env, but not longer. Build the env at this "
+                f"batch, make({type(self).__name__!r}, num_envs={n}), or call env._render(states), "
+                f"which takes any batch."
             )
         self._render_state[:n].copy_(s)
         self._live_rows = n
@@ -581,6 +579,7 @@ class Env:
 
     @property
     def variation_names(self) -> list[str]:
+        """Dotted leaf paths in compiled-row order; a vector leaf spans several columns."""
         return [p for p, _, _ in self.variation_space.flat_layout()]
 
     def default_variation(self) -> np.ndarray:
@@ -588,6 +587,7 @@ class Env:
         return self.variation_space.pack()
 
     def get_variation(self) -> torch.Tensor:
+        """Return the installed compiled Variation as a ``(rows, variation_dim)`` float32 tensor."""
         return self._style.values
 
     def set_variation(self, variation: VariationLike | None = None, **overrides) -> torch.Tensor:
@@ -708,10 +708,11 @@ class Env:
         return StyleTensor.from_space(self.variation_space, B, device=self.device, values=style, overrides=variation)
 
     def variation_values(self) -> dict:
+        """Return the current values of the variation space as a nested dict."""
         return self.variation_space.value
 
     def _reset_value_ok(self, path: str, value, lane: int) -> bool:
-        """Rejected draws are resampled."""
+        """Return whether a sampled reset value is acceptable for ``lane``; rejected draws are resampled."""
         del path, value, lane
         return True
 
@@ -891,6 +892,7 @@ class Env:
 
     @property
     def closed(self) -> bool:
+        """Whether :meth:`close` has been called."""
         return self._closed
 
     def _layout(self) -> tuple[tuple[tuple[str, ...], int, int | None], ...]:
@@ -925,9 +927,8 @@ class Env:
         if covered != int(self.state_dim):
             raise ValueError(
                 f"{type(self).__name__}.state_layout covers {covered} of the {self.state_dim} "
-                f"column(s) of the packed row. Every packed column belongs to exactly one field, "
-                f"because pack/unpack must round-trip the frozen corpus layout unchanged; a field "
-                f"that is dynamical state the row does not carry declares offset None instead."
+                f"column(s) of the packed row. Every packed column belongs to exactly one field so "
+                f"pack/unpack round-trip; a State field the row does not carry declares offset None."
             )
         return lay
 
@@ -1034,10 +1035,8 @@ class Env:
         if missing:
             raise NotImplementedError(
                 f"{type(self).__name__}.state: {missing} is declared in state_layout with offset "
-                f"None — real dynamical state that the packed row does not carry — and "
-                f"{type(self).__name__}._hidden_state() does not return it. Unfilled, it would be "
-                f"reported as ZEROS, which is a wrong answer rather than a failure: env.state would "
-                f"look fine while restoration would change subsequent step(action) results. "
+                f"None and {type(self).__name__}._hidden_state() does not return it. Reporting it as "
+                f"ZEROS would make restored States step differently. "
                 f"Return {{{missing[0]!r}: <the live tensor>}} from _hidden_state()."
             )
         return TensorDict(tree, batch_size=[n], device=self.device)
@@ -1138,7 +1137,6 @@ class Env:
     def reset(self, seed: int | None = None) -> TensorDict:
         """Reset the environment and return full State; an explicit seed restarts its sampler."""
         self._require_state("reset")
-        self._check_open("reset")
         if seed is not None:
             self.rng = np.random.default_rng(int(seed))
             self._seed = int(seed)
@@ -1167,6 +1165,7 @@ class Env:
 
     @property
     def has_dynamics(self) -> bool:
+        """Whether this environment implements ``step``; render-only environments do not."""
         return _dynamics.has_dynamics(self)
 
     def _check_open(self, what: str) -> None:

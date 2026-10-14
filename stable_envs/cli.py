@@ -6,6 +6,7 @@ import argparse
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run the ``stable-envs`` command with ``argv`` and return its exit code."""
     parser = argparse.ArgumentParser(prog="stable-envs")
     commands = parser.add_subparsers(dest="command", required=True)
     doctor = commands.add_parser(

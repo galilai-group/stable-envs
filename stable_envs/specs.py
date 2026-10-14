@@ -1,3 +1,5 @@
+"""Per-lane tensor specs for State, actions, frames and Variation."""
+
 from __future__ import annotations
 
 from collections.abc import Iterator
@@ -17,10 +19,9 @@ def _as_np(v, shape: tuple[int, ...]) -> np.ndarray | None:
 
 @dataclass(frozen=True)
 class Spec:
-    """Describe one lane's tensor shape, dtype, optional bounds, and column names.
+    """One lane's tensor shape, dtype, optional bounds and column names.
 
-    The batch axis is excluded from shape. Sampling uses a NumPy generator and
-    returns a tensor on the configured device.
+    ``shape`` excludes the batch axis. ``low`` and ``high`` broadcast to ``shape``.
     """
 
     shape: tuple[int, ...]
@@ -46,6 +47,7 @@ class Spec:
 
     @property
     def numel(self) -> int:
+        """Number of elements per lane."""
         n = 1
         for s in self.shape:
             n *= s
@@ -53,15 +55,18 @@ class Spec:
 
     @property
     def bounded(self) -> bool:
+        """Whether the spec is discrete or has both bounds."""
         return self.discrete_n is not None or (self.low is not None and self.high is not None)
 
     def batch_shape(self, num_envs: int) -> tuple[int, ...]:
+        """Return ``(num_envs, *shape)``."""
         return (int(num_envs), *self.shape)
 
     def to(self, device) -> Spec:
         return replace(self, device=torch.device(device))
 
     def zeros(self, num_envs: int, device=None) -> torch.Tensor:
+        """Return a zero tensor of shape ``(num_envs, *shape)``."""
         return torch.zeros(
             self.batch_shape(num_envs), dtype=self.dtype, device=device if device is not None else self.device
         )
@@ -82,9 +87,8 @@ class Spec:
             v = rng.uniform(lo, hi, size=(n, *self.shape))
         else:
             raise ValueError(
-                f"Spec(shape={self.shape}) declares no bounds, so it cannot be sampled from. Whatever "
-                f"this describes, the distribution lives with whoever knows the reachable set — for a "
-                f"state that is the environment's own reset distribution, env.sample_states(n)."
+                f"Spec(shape={self.shape}) declares no bounds, so it cannot be sampled from. For "
+                f"states, use the environment's own distribution: env.sample_states(n)."
             )
         return torch.as_tensor(np.asarray(v), dtype=self.dtype, device=dev)
 
@@ -120,6 +124,7 @@ class Spec:
         return t
 
     def contains(self, x) -> bool:
+        """Return whether :meth:`validate` accepts ``x``."""
         try:
             self.validate(x)
         except ValueError:
@@ -141,7 +146,10 @@ class Spec:
 
 @dataclass
 class CompositeSpec:
-    """Nested tensor specs addressed by entity paths, such as spec["agent", "position"]."""
+    """Nested specs addressed by key paths, such as ``spec["agent", "position"]``.
+
+    Nested dicts passed as values become nested CompositeSpecs.
+    """
 
     specs: dict[str, Spec | CompositeSpec] = field(default_factory=dict)
     device: torch.device | None = None
@@ -176,11 +184,13 @@ class CompositeSpec:
         return len(self.specs)
 
     def keys(self, nested: bool = False):
+        """Return top-level keys, or leaf key paths when ``nested``."""
         if not nested:
             return list(self.specs)
         return [k for k, _ in self.items(nested=True)]
 
     def items(self, nested: bool = False):
+        """Return top-level items, or ``(key path, Spec)`` leaf pairs when ``nested``."""
         if not nested:
             return list(self.specs.items())
         out: list[tuple[tuple[str, ...], Spec]] = []
@@ -232,6 +242,7 @@ class CompositeSpec:
         return x
 
     def contains(self, x) -> bool:
+        """Return whether :meth:`validate` accepts ``x``."""
         try:
             self.validate(x)
         except (TypeError, ValueError):
