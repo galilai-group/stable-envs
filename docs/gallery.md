@@ -8,8 +8,7 @@ State: a full replay State (234 numeric leaves: bodies, goal, action history and
 replays from). See [State](concepts/state.md#pusht-checkpoints). Reference: `gym_pusht/PushT-v0`.
 
 PushT draws its frames with the source's pygame code on CPU, so a frame is the source frame for the
-same State. `device="cuda"` places the output tensors on the GPU. `contrib/pusht_torch/` holds an
-unreleased batched torch renderer; see [Benchmarks](benchmarks.md#pusht).
+same State. `device="cuda"` places the output tensors on the GPU.
 
 ### Reset states
 

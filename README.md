@@ -94,9 +94,6 @@ manipulation do not register. Without PyFlyt the count is 75.
 Device support differs by family and backend. For example, Fetch on CPU needs `backend="opengl"`.
 See [Limitations](docs/concepts/limitations.md).
 
-Renderer-only ports of other families (MiniGrid, Highway, RoboCasa, …) live in
-[`contrib/`](contrib/README.md). They are not part of the released package.
-
 ## Documentation
 
 | page | content |

@@ -64,7 +64,6 @@ def test_optional_extras_are_installable_on_pypi() -> None:
     extras = _pyproject()["project"]["optional-dependencies"]
     assert "all" not in extras
     assert "dev" in extras and "docs" in extras and "mjwarp" in extras
-    assert "metaworld" not in extras and "humanoidbench" not in extras, "contrib-only extras are not released"
     blob = "\n".join(req for reqs in extras.values() for req in reqs)
     assert "nvdiffrast" not in blob
     assert " @ " not in blob
@@ -178,7 +177,6 @@ def test_ci_ok_is_the_one_aggregate_of_every_gating_job() -> None:
     assert "re-actors/alls-green" in str(ok["steps"])
     allowed = {name.strip() for name in ok["steps"][0]["with"]["allowed-skips"].split(",")}
     assert {"static", "docs", "plan"}.isdisjoint(allowed)
-    assert "continue-on-error" in jobs["contrib"] and "contrib" not in ok["needs"]
 
 
 def test_pull_requests_test_affected_families_and_main_tests_all() -> None:

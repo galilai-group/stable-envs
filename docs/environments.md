@@ -61,9 +61,6 @@ These 76 register with every extra installed. Without PyFlyt there are 75.
 `CraftaxClassic` and `CraftaxFull` are renderer-only: `reset` and `step` raise. Use
 `CraftaxClassicPixels` and `CraftaxPixels` for simulation. Every other environment simulates.
 
-Renderer-only ports of other families (MiniGrid, Highway, RoboCasa, …) are in the repository but not
-released. See [contrib/README.md](https://github.com/galilai-group/stable-envs/blob/main/contrib/README.md).
-
 ## Fidelity
 
 Every class declares one tier: `parity` or `visual`. `info(name)["fidelity_tier"]` reports it.

@@ -30,8 +30,7 @@ uv run pytest ...
 ```
 
 `pip install -e ".[dev]"` also works. Extra conflicts, the Fetch MuJoCo pin and the nvdiffrast build
-are on the [Install](docs/install.md) page. The ports in `contrib/` have their own requirements and
-tests; see [contrib/README.md](contrib/README.md).
+are on the [Install](docs/install.md) page.
 
 ## Lint and format
 

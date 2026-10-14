@@ -1,6 +1,5 @@
 """Small explicit source profiles; each is a regression subset, not promotion.
 
-Family-specific acceptance witnesses remain required in the recovery inventory.
 No production environment imports this module.
 """
 

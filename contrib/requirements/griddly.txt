@@ -1,3 +1,0 @@
-# griddly (formerly the `griddly` extra)
-griddly==1.6.7
-pyyaml

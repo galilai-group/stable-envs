@@ -1,4 +1,0 @@
-# overcooked (formerly the `overcooked` extra). Needs its own interpreter.
-jax
-jaxmarl
-matplotlib

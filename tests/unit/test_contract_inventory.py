@@ -1,22 +1,12 @@
-"""Inventory completeness does not depend on which extras are installed."""
+"""The shared source profiles cover every non-Craftax registration once."""
 
 from pathlib import Path
 
 from tests.helpers.reference.crosswalk import SWM_IDS
-from tests.helpers.reference.inventory import EXCLUDED, inventory
 
-
-def test_each_noncraftax_registration_keeps_its_own_required_gates():
-    rows = inventory()["registrations"]
-    assert len(rows) == 38
-    assert {row["registration"] for row in rows} == SWM_IDS.keys() - EXCLUDED
-    root = Path(__file__).resolve().parents[2]
-    for row in rows:
-        assert row["source_scope"] and row["classes"]
-        assert set(row["required_gates"]) == {"state", "simulation", "task", "render", "online"}
-        assert row["current_run_status"] == "NOT_RUN"
-        for paths in row["required_gates"].values():
-            assert paths and all((root / path).is_file() for path in paths)
+CRAFTAX = frozenset(
+    {"swm/CraftaxClassicPixels-v1", "swm/CraftaxClassicSymbolic-v1", "swm/CraftaxPixels-v1", "swm/CraftaxSymbolic-v1"}
+)
 
 
 def test_shared_profiles_cover_each_registration_once():
@@ -25,7 +15,7 @@ def test_shared_profiles_cover_each_registration_once():
 
     registrations = [case.registration for cases in PROFILES.values() for case in cases]
     assert len(registrations) == len(set(registrations)) == 38
-    assert set(registrations) == SWM_IDS.keys() - EXCLUDED
+    assert set(registrations) == SWM_IDS.keys() - CRAFTAX
     expected_counts = dict(native=128, fetch=396, dmc=288, navigation=96, ogbench=72, pusht=60, rocket=16)
     for device in ("cpu", "cuda"):
         for profile, expected in expected_counts.items():

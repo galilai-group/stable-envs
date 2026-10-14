@@ -1,3 +1,0 @@
-# minihack (formerly the `minihack` extra)
-minihack
-nle

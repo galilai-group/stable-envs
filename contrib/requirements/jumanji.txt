@@ -1,4 +1,0 @@
-# jumanji (formerly the `jumanji` extra)
-jax
-jumanji
-matplotlib

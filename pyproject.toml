@@ -255,16 +255,13 @@ ignore = ["E402", "E731", "E741"]
 [tool.ruff.lint.per-file-ignores]
 # Re-exports and registration side-effect imports.
 "**/__init__.py" = ["F401"]
-# Generated MJWarp kernels: unused typing imports and `int()` casts are load-bearing for Warp.
-"contrib/render/lightspec.py" = ["UP006", "UP018", "UP035"]
+# Generated MJWarp kernels: `int()` casts are load-bearing for Warp.
 "stable_envs/render/mjwarp/__init__.py" = ["UP018"]
 # Forward references kept unimported to avoid cycles; annotations are not evaluated.
 "stable_envs/env.py" = ["F821"]
 "stable_envs/envs/dmcontrol/suite.py" = ["F821"]
 # Public `Union[...]` alias; `|` would change the runtime type object.
 "stable_envs/render/scene.py" = ["UP007"]
-# Measured `"%04i" % reward` atlas keys / pygame font contract.
-"contrib/carracing.py" = ["UP031"]
 # Lambdas close over names `del`'d in the same function; ruff treats them as unbound.
 "examples/bench_gpu_vs_cpu.py" = ["F821"]
 "examples/domain_randomization.py" = ["F821"]

@@ -77,9 +77,6 @@ uv sync --python 3.12 --extra dmcontrol --group pin-dmc --group test
 Fetch (`robotics`) needs `mujoco<3.12`. DM Control and OGBench accept `mujoco<3.13`. Do not install
 `robotics` in the same environment as an extra that needs MuJoCo 3.12.
 
-The ports in `contrib/` are not released and have no extras. See
-[contrib/README.md](https://github.com/galilai-group/stable-envs/blob/main/contrib/README.md).
-
 ## nvdiffrast
 
 nvdiffrast is not a PyPI extra. It builds a CUDA extension at install time against a local toolkit.

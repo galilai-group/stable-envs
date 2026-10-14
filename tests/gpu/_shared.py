@@ -8,9 +8,7 @@ an env module that cannot import is recorded by ``stable_envs.envs.import_errors
 simply absent, so ``se.make(name)`` for a name the registry knows can still raise ``ModuleNotFoundError``
 somewhere else. ``test_fused_cast.py`` forgave that; ``test_mover_window.py`` and
 ``test_raster_culling.py`` did not, and a run in an interpreter without ``dm_control`` turned a fact
-about the interpreter into red marks against a kernel that is pure torch. Separately,
-``test_gfxdraw_fused.py`` went red for four tests because it imported ``envs/carracing.py`` directly,
-bypassing the guarded discovery, for a Box2D the code under test does not use. :func:`make_or_skip` and
+about the interpreter into red marks against a kernel that is pure torch. :func:`make_or_skip` and
 :func:`import_or_skip` are now the only two ways to reach either.
 
 **An EMPTY sweep is a FAILURE, not a pass.** The other side of the same coin, and the more expensive

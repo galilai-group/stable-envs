@@ -28,8 +28,7 @@ NATIVE_SWM_IDS = frozenset(
 )
 
 # These registrations have a delegated default. Sibling task variants and the
-# complete Variation surface are not certified by this architecture inventory;
-# exact accepted scopes and evidence live in semantic_recovery_matrix.json.
+# complete Variation surface are not certified by this inventory.
 DELEGATED_CPU_SWM_IDS = frozenset(
     {
         "swm/PFRocketLanding-v0",

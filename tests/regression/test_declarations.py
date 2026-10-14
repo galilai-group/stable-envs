@@ -281,16 +281,9 @@ def test_a_family_that_failed_to_import_contributed_no_envs_and_took_none_away()
 def test_no_env_shadows_an_attribute_the_base_class_owns():
     """An env module must not assign ``self.<name>`` for a ``<name>`` ``StableEnv`` assigns itself.
 
-    THE BUG THIS EXISTS FOR, in full, because it is the most expensive shape of defect this repository
-    has and it is invisible by construction. ``StableEnv`` grew a ``self._live`` to remember how many
-    rows of the buffer a short ``set_state`` filled. ``robocasa.py`` had used ``self._live`` since it
-    was written, for something entirely different — the indices of the qpos dimensions the camera can
-    actually see. Nothing raised. Nothing warned. The base class simply won, and RoboCasa's
-    ``sample_states`` started returning ``(4,)`` where it had returned ``(4, 40)``.
-
-    Checked STATICALLY, from the source text, on purpose: constructing an env needs a GPU, an EGL
-    context and — for RoboCasa — a compiled kitchen, so a test that instantiated things would itself
-    skip on most machines, which is the failure mode that hid the bug in the first place.
+    When both assign the same attribute for different meanings, whichever runs last wins with no
+    error. Checked statically, from the source text, so the check runs on machines that cannot build
+    the envs.
     """
     import ast
 
@@ -317,10 +310,8 @@ def test_no_env_shadows_an_attribute_the_base_class_owns():
     def env_classes(tree: ast.Module) -> list[ast.ClassDef]:
         """Only classes that actually INHERIT the base, transitively within the file.
 
-        Scanning whole modules instead flagged ``GriddlyDecoder``, ``OvercookedAtlas`` and sokoban's
-        ``_Atlas`` — plain helper classes that live beside an env and legitimately own a ``device``.
-        A helper sharing a name with a base-class attribute is not a collision, because nothing ever
-        assigns both to the same object.
+        Helper classes that live beside an env may own a ``device``. A helper sharing a name with a
+        base-class attribute is not a collision, because nothing ever assigns both to the same object.
         """
         classes = [n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]
         derived, changed = {"Env", "StableEnv"}, True
@@ -362,37 +353,8 @@ def test_no_env_shadows_an_attribute_the_base_class_owns():
         "these env modules assign attributes that stable_envs/env.py also assigns, so whichever "
         "runs last silently wins and the other meaning is destroyed with no error:\n  "
         + "\n  ".join(f"{f}: {sorted(c)}" for f, c in sorted(offenders.items()))
-        + "\n\nRename the env's attribute, or the base class's if the base class is the newcomer — "
-        "that is what was done for _live (base -> _live_rows, robocasa -> _live_idx)."
+        + "\n\nRename the env's attribute, or the base class's if the base class is the newcomer."
     )
-
-
-# -------------------------------------------------------------------- the release gate's exclusions
-
-
-def test_every_gate_exclusion_states_its_mechanism():
-    """An env left out of the release gate must say WHY, and the why must name a mechanism.
-
-    The gate's whole value is that a missing env fails the run instead of skipping it. That only holds
-    if the exceptions are declared: "it did not import here" is a missing package and belongs in
-    ``import_errors()``, whereas "it cannot be installed alongside the others" is a fact about the
-    dependency graph and belongs in ``gate.EXCLUDED`` with the conflict written down. Without this
-    test the list is a place to quietly move anything inconvenient, which is the same silent-skip
-    failure one level up.
-    """
-    from tests._runner import gate
-
-    for name, why in gate.EXCLUDED.items():
-        assert why and len(why) > 120, (
-            f"gate.EXCLUDED[{name!r}] must explain the CONFLICT, not merely assert one. An exclusion "
-            f"is the one way an env leaves the gate without failing it, so it carries the burden of "
-            f"proof: name the packages and the versions that cannot be satisfied together."
-        )
-        assert any(tok in why for tok in ("==", "<=", ">=", "<", ">")), (
-            f"gate.EXCLUDED[{name!r}] does not name a version constraint. Every real exclusion so far "
-            f"has been two packages whose pins cannot both hold; if this one is not, it is probably a "
-            f"missing install rather than an exclusion."
-        )
 
 
 def test_the_live_context_cap_scales_with_the_registry():

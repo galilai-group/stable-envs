@@ -31,10 +31,6 @@ both ways, on one thread, at 224 px:
 The first render of a batch builds one pymunk scene per lane. Later renders reuse it. The pygame
 drawing is the same on both sides. The difference is Python work per frame.
 
-`contrib/pusht_torch/` holds an unreleased batched torch renderer whose frames equal `env.render` on
-Linux x86-64. On an RTX A5000 it takes 0.32 ms/frame at batch 1,024, 5× faster than `env.render` on
-the same machine's CPU. It is not part of the package; see its README.
-
 ## Notes
 
 - Ray-cast and CPU3D families (OGBench mazes, DM Control, navigation) depend on the host CPU. Their

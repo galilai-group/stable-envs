@@ -1,3 +1,0 @@
-# carracing, lunarlander (formerly the `box2d` extra). Box2D builds from source: install swig first.
-gymnasium[box2d]>=1.0
-pygame

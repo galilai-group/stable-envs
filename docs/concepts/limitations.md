@@ -11,8 +11,6 @@ Known limits of this release.
 snv.import_errors()     # families this interpreter could not import
 ```
 
-The renderer-only ports in `contrib/` are not part of this release. See `contrib/README.md`.
-
 ## Devices
 
 | classes | CPU | GPU |

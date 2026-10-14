@@ -1,2 +1,0 @@
-# highway (formerly the `highway` extra)
-highway-env

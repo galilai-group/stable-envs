@@ -1,2 +1,0 @@
-# minigrid (formerly the `minigrid` extra)
-minigrid

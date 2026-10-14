@@ -54,7 +54,7 @@ paths = [
 
 # A change made only of these needs the docs build and nothing else.
 [docs]
-paths = ["docs/**", "*.md", "mkdocs.yaml", "LICENSES/**"]
+paths = ["docs/**", "*.md", "mkdocs.yaml"]
 
 [family.core]
 tests = []

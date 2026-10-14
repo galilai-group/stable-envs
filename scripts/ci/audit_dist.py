@@ -16,25 +16,8 @@ REQUIRED_EXTRAS = {
     "mjwarp",
     "rocket",
 }
-#: Extras that served only the contrib/ families; they must not reappear in released metadata.
-CONTRIB_EXTRAS = {
-    "box2d",
-    "crafter",
-    "griddly",
-    "highway",
-    "humanoidbench",
-    "jumanji",
-    "metaworld",
-    "minigrid",
-    "minihack",
-    "mujoco-locomotion",
-    "overcooked",
-    "pgx",
-    "procgen",
-    "sokoban",
-}
 EXPECTED_AUTHORS = ("Randall Balestriero", "Sami BuGhanem")
-REQUIRED_LICENSES = {"LICENSE", "THIRD_PARTY_NOTICES.md", "LICENSES/Apache-2.0.txt"}
+REQUIRED_LICENSES = {"LICENSE", "THIRD_PARTY_NOTICES.md"}
 
 
 def _package_sources(root: Path) -> set[str]:
@@ -50,7 +33,7 @@ def _audit_metadata(text: str) -> None:
     assert metadata["Name"] == "stable-envs"
     assert metadata["Version"]
     assert {part.strip() for part in metadata["Requires-Python"].split(",")} == {">=3.10", "<3.13"}
-    assert metadata["License-Expression"] == "MIT AND Apache-2.0"
+    assert metadata["License-Expression"] == "MIT"
     assert set(metadata.get_all("License-File", [])) == REQUIRED_LICENSES
 
     requirements = metadata.get_all("Requires-Dist", [])
@@ -66,7 +49,6 @@ def _audit_metadata(text: str) -> None:
 
     extras = set(metadata.get_all("Provides-Extra", []))
     assert REQUIRED_EXTRAS <= extras
-    assert not CONTRIB_EXTRAS & extras, sorted(CONTRIB_EXTRAS & extras)
     assert "all" not in extras, "the dependency stacks are not compatible in one environment"
 
     author_fields = [metadata.get("Author"), metadata.get("Author-email"), metadata.get("Author-Email")]
@@ -102,8 +84,6 @@ def audit_sdist(path: Path, expected_sources: set[str]) -> None:
         names = {name.removeprefix(f"{root}/") for name in raw_names if name != root}
         required = {"README.md", "pyproject.toml", *REQUIRED_LICENSES, *expected_sources}
         assert required <= names, sorted(required - names)
-        contrib = sorted(name for name in names if name == "contrib" or name.startswith("contrib/"))
-        assert contrib == [], contrib
         pkg_info = archive.extractfile(f"{root}/PKG-INFO")
         assert pkg_info is not None
         _audit_metadata(pkg_info.read().decode())

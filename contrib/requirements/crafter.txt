@@ -1,2 +1,0 @@
-# crafter (formerly the `crafter` extra)
-crafter

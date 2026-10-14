@@ -8,7 +8,6 @@ Generators and verifiers for the sealed fixtures under `tests/fixtures/`.
 | `freeze_*_oracle.py` | per-family semantic oracles (`tests/fixtures/semantics/<family>`) |
 | `capture_ogbench_golden.py` | OGBench Cube/Scene golden frames |
 | `verify_saved.py` | saved-corpus verification |
-| `inventory.py` | required-gate coverage inventory |
 
 Run a script from the repository root, in the interpreter pinned for its family in
 `tests/helpers/reference/profiles.py`:

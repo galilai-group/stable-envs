@@ -38,9 +38,8 @@ ROOT = Path(__file__).resolve().parents[2]
 MATRIX = ROOT / "tests" / "fixtures" / "swm" / "frozen_cells.json"
 BASELINE = ROOT / "tests" / "fixtures" / "regression" / "references" / "registry_baseline.json"
 SWM_IDS_IN_MATRIX = sorted({r["swm_id"] for r in json.loads(MATRIX.read_text())["rows"]})
-#: Env modules that live in ``contrib/``; their baseline rows are compared in
-#: ``contrib/tests/unit/test_contrib_registry.py``.
-CONTRIB_MODULES = frozenset(
+#: Families the baseline recorded that this package does not ship.
+UNSHIPPED_MODULES = frozenset(
     {
         "carracing",
         "crafter",
@@ -61,7 +60,7 @@ CONTRIB_MODULES = frozenset(
         "sokoban",
     }
 )
-CONTRIB_BASELINE_MODULES = frozenset(f"stable_envs.envs.{name}" for name in CONTRIB_MODULES)
+UNSHIPPED_BASELINE_MODULES = frozenset(f"stable_envs.envs.{name}" for name in UNSHIPPED_MODULES)
 
 
 def test_the_swm_crosswalk_is_the_frozen_mapping_row_for_row():
@@ -101,18 +100,18 @@ def test_every_canonical_class_name_resolves_to_the_same_class_as_at_the_baselin
     if not BASELINE.exists():
         pytest.skip(f"no baseline registry table recorded at {BASELINE}")
     base = json.loads(BASELINE.read_text())
-    base_errors = {k for k in base["import_errors"] if k not in CONTRIB_MODULES}
+    base_errors = {k for k in base["import_errors"] if k not in UNSHIPPED_MODULES}
     if base_errors != set(snv.import_errors()):
         pytest.skip(
             "this interpreter imports a different set of env families than the one the "
             f"baseline was recorded on: baseline {sorted(base_errors)} vs "
             f"{sorted(snv.import_errors())}"
         )
-    now = {r["class_name"]: r for r in R.registry_table() if not r["module"].startswith("contrib.")}
+    now = {r["class_name"]: r for r in R.registry_table()}
     then = {
         canonical_from_frozen(r["name"]): r
         for r in base["registry_table"]
-        if r["module"] not in CONTRIB_BASELINE_MODULES
+        if r["module"] not in UNSHIPPED_BASELINE_MODULES
     }
     assert sorted(set(now) - {"PushTDiscrete"}) == sorted(then), "unexpected registered class change"
     skip_keys = {
