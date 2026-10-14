@@ -9,6 +9,12 @@ from tests.helpers.reference.classic_state_export import classic_state
 from tests.helpers.reference.semantics import assert_same_state
 
 
+def _action(domain, n):
+    if domain in ("cartpole", "acrobot", "mountain_car"):
+        return np.ones((n, 1), np.int64)
+    return np.full((n, 1), 0.25, np.float32)
+
+
 @pytest.mark.parametrize("domain", CLASSIC_FIELDS)
 @pytest.mark.parametrize("device", ["cpu", "cuda"])
 def test_classic_export_continuation_and_ownership(domain, device):
@@ -27,11 +33,7 @@ def test_classic_export_continuation_and_ownership(domain, device):
             adapter.envs[2].unwrapped.steps_beyond_terminated = 7
             assert_same_state(adapter.get_state(), classic_state(adapter))
             adapter.set_state(initial)
-        action = (
-            np.ones((3, 1), np.int64)
-            if domain in ("cartpole", "acrobot", "mountain_car")
-            else np.full((3, 1), 0.25, np.float32)
-        )
+        action = _action(domain, 3)
         for _ in range(8):
             result = adapter.step(action)
             assert_same_state(result["state"], classic_state(adapter))
@@ -55,5 +57,18 @@ def test_classic_export_continuation_and_ownership(domain, device):
         adapter.close()
         with pytest.raises(RuntimeError, match="closed"):
             adapter.get_state()
+    finally:
+        adapter.close()
+
+
+@pytest.mark.parametrize("domain", CLASSIC_FIELDS)
+def test_an_inactive_lane_on_the_first_step_holds_its_state_and_reports_zeros(domain):
+    adapter = ClassicControlAdapter(domain, 2, "cpu", 17)
+    try:
+        initial = adapter.reset(17)
+        result = adapter.step(_action(domain, 2), active=torch.tensor([True, False]))
+        equal(result["state"][1:], initial[1:])
+        for key in ("reward", "terminated", "truncated", "observation", "info_state"):
+            assert not result[key][1].any(), key
     finally:
         adapter.close()

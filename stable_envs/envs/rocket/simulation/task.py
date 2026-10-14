@@ -200,8 +200,9 @@ class RocketLandingEnv(RocketBaseEnv):
             options: dict with optional keys:
                 - 'variation': list of variation names to sample (e.g., ['rocket.body_color', 'pad.color'])
                   Use ['all'] to sample all variations
-                - 'randomize_drop': whether to add random initial velocities
+                - 'randomize_drop': whether to randomize the drop position and orientation
                 - 'accelerate_drop': whether to add downward velocity
+                - 'randoimize_drop': PyFlyt's own spelling; adds random initial linear and angular velocity
 
         """
         options = options or {}

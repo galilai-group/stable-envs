@@ -181,7 +181,6 @@ class CraftaxAdapter(SimulatorAdapter):
         keys = self.keys if seed is None else [jax.random.PRNGKey(s) for s in self.seeds(seed)]
         results = [self.reset_fn(k) for k in keys]
         jax.block_until_ready(results)
-        self._last_outputs = results
         cached = np.stack([np.asarray(x[0]) for x in results]) if self.retains_symbolic_output else None
         self.symbolic_cache = cached
         self.states = [x[1] for x in results]
@@ -360,18 +359,20 @@ class CraftaxAdapter(SimulatorAdapter):
             or np.any(a >= self.upstream.num_actions)
         ):
             raise ValueError("Craftax actions must be one valid discrete integer ID per lane")
-        results = [
-            self.step_fn(key, state, int(action)) if active[i] else self._last_outputs[i]
-            for i, (key, state, action) in enumerate(zip(self.keys, self.states, a, strict=True))
-        ]
-        jax.block_until_ready(results)
-        self._last_outputs = results
-        cached = np.stack([np.asarray(r[0]) for r in results]) if self.retains_symbolic_output else None
+        # An inactive lane does not advance: its whole State, lifecycle fields included, stays as is.
+        results = {i: self.step_fn(self.keys[i], self.states[i], int(a[i])) for i in range(self.num_envs) if active[i]}
+        jax.block_until_ready(list(results.values()))
+        states, keys = list(self.states), list(self.keys)
+        reward, terminated = self.reward.copy(), self.terminated.copy()
+        cached = self.symbolic_cache.copy() if self.retains_symbolic_output else None
+        for i, r in results.items():
+            states[i], keys[i] = r[1], r[5]
+            reward[i], terminated[i] = float(r[2]), bool(r[3])
+            if cached is not None:
+                cached[i] = np.asarray(r[0])
         self.symbolic_cache = cached
-        self.states = [r[1] for r in results]
-        self.keys = [r[5] for r in results]
-        self.reward = np.asarray([float(r[2]) for r in results], np.float32)
-        self.terminated = np.asarray([bool(r[3]) for r in results], bool)
+        self.states, self.keys = states, keys
+        self.reward, self.terminated = reward, terminated
         return self.get_state()
 
     def close(self):

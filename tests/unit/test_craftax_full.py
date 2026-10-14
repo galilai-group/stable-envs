@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 
@@ -17,11 +18,16 @@ import torch
 from stable_envs.envs.craftax import full as CF
 from stable_envs.envs.craftax.full import CraftaxFull
 
-GOLDEN = json.loads(
-    (
-        Path(__file__).resolve().parents[1] / "fixtures" / "regression" / "fidelity" / "craftax_full_golden.json"
-    ).read_text()
-)
+ROOT = Path(__file__).resolve().parents[2]
+GOLDEN_PATH = ROOT / "tests" / "fixtures" / "regression" / "fidelity" / "craftax_full_golden.json"
+GOLDEN = json.loads(GOLDEN_PATH.read_text())
+
+
+def test_the_golden_script_writes_the_file_this_test_reads():
+    spec = importlib.util.spec_from_file_location("gen_golden", ROOT / "scripts/regression/craftax/gen_golden.py")
+    script = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(script)
+    assert Path(script.OUT).resolve() == GOLDEN_PATH
 
 
 @pytest.fixture(scope="module")
@@ -287,6 +293,11 @@ def test_the_declared_certification_distribution_matches_the_sampler():
     # the band shares are exact only when the batch is a multiple of six; 64 is not, so the tolerance
     # is the one row the remainder can move
     assert abs((day < CF.NIGHT_THRESHOLD).mean() - d["level0_night_share"]) <= 1 / 64
+
+
+def test_the_sampler_without_an_rng_draws_from_the_seeded_env_rng():
+    a, b = (CraftaxFull(num_envs=1, device="cpu", seed=3) for _ in range(2))
+    np.testing.assert_array_equal(a.sample_states(4), b.sample_states(4))
 
 
 def test_the_sampler_respects_the_simulators_mob_budgets():

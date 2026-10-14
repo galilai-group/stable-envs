@@ -97,7 +97,6 @@ N_LEVEL = 9  #: ``StaticEnvParams.num_levels``
 N_FACING = 4  #: left, right, up, down -- the values ``player_direction - 1`` takes
 PLAYER_ASLEEP = 4  #: ``player_texture_index = select(is_sleeping, 4, player_direction - 1)``
 NO_PLAYER = 5  #: the sixth player slot: "nothing is drawn here". Mask is all false.
-N_PLAYER_SLOT = 6
 #: Counts the strip can show. ``clip_inventory_and_intrinsics`` caps the inventory at 99 and the
 #: intrinsic ceilings are ``8 + strength`` / ``7 + 2*dexterity`` / ``6 + 3*intelligence`` with
 #: ``max_attribute = 5``, so a cell renders a two-digit number and the alphabet is 100.
@@ -128,13 +127,11 @@ N_PROJ_TYPE = 8
 #: as Classic's ``ARROW_DIR``).
 PROJ_DIR = ((-1, 0), (0, -1), (1, 0), (0, 1))
 
-#: ``BlockType`` ids the renderer or the state bridge needs by name.
-B_OUT_OF_BOUNDS, B_NECROMANCER, B_NECROMANCER_VULNERABLE = 1, 32, 36
 #: ``GRASS`` is the sampler's stand-in block; ``DARKNESS`` renders as an all-zero tile.
 B_GRASS, B_DARKNESS = 2, 18
 B_WOOD, B_STONE, B_COAL, B_IRON, B_DIAMOND, B_SAPPHIRE, B_RUBY = 6, 4, 8, 9, 10, 21, 22
 #: ``ItemType`` ids.
-I_NONE, I_TORCH, I_LADDER_DOWN, I_LADDER_DOWN_BLOCKED = 0, 1, 2, 4
+I_NONE, I_LADDER_DOWN = 0, 2
 
 #: Indices into the baked ``icons`` table.
 IC_HEALTH, IC_HUNGER, IC_THIRST, IC_ENERGY, IC_MANA = 0, 1, 2, 3, 4
@@ -1127,7 +1124,7 @@ class CraftaxFull(Env):
         Sub-1 ``light_map`` values on level 0 are what the renderer sees at the map border, where it
         pads the light map with 0.
         """
-        rng = np.random.default_rng() if rng is None else rng
+        rng = rng or self.rng
         b = int(batch)
         st = np.zeros((b, self.state_dim), np.float32)
         k = N_TILE
@@ -1294,7 +1291,7 @@ class CraftaxFull(Env):
             cnt = np.round(row[j + 4 + N_KEY_HALVES :]).astype(np.int64) % np.asarray(STRIP_MOD)
             cnt[_SLOT["health"]] = max(int(cnt[_SLOT["health"]]), 1)
 
-            def win(a, v, fill=None):
+            def win(a, v):
                 a = np.asarray(a).copy()
                 a[lvl, r0 : r0 + OBS_H, c0 : c0 + OBS_W] = v.reshape(OBS_H, OBS_W)
                 return a

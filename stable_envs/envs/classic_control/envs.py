@@ -6,8 +6,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ..._core import stepgraph as _stepgraph
-from ...env import Env
+from ...env import Env, _split_appearance
 from ...registry import register
 from ...render import _resources as _RES
 from ...render import gfxdraw as G
@@ -60,20 +59,13 @@ class _Classic(Env):
     sim_state_names: tuple[str, ...] = ()
     #: index of each render-state dim inside ``sim_state_names``
     render_from_sim: tuple[int, ...] = ()
-    #: size of the discrete action set. 0 means the action is continuous.
-    n_actions: int = 0
     # Half-open discrete bounds make floored uniform samples uniform over the action set.
     action_dim: int = 1
     action_low: float = 0.0
     action_high: float = 1.0
-    # Disable before first numerical step to avoid CUDA-graph capture.
-    use_step_graph: bool = True
     #: use the fused per-pixel kernel where it is available. False forces the per-primitive path,
     #: which a CPU render always takes.
     use_fused_render: bool = True
-    step_reference_checkable = True
-    # Held reference actions exercise more of the state range than independent per-step noise.
-    step_reference_hold = 4
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
@@ -82,9 +74,6 @@ class _Classic(Env):
         f = dict(device=self.device, dtype=torch.float64)
         self._sim = torch.zeros(self.B, max(1, len(self.sim_state_names)), **f)
         self._cols = torch.tensor(self.render_from_sim, dtype=torch.long, device=self.device)
-        self._act = torch.zeros(self.B, self.action_dim, device=self.device, dtype=torch.float32)
-        self._step_graph = None
-        self._step_graph_error = ""
         self._disc_tables = None
 
     def _set_render_state(self, states, variation=None, style=None) -> _Classic:
@@ -107,19 +96,6 @@ class _Classic(Env):
         )
         self._render_state.copy_(self._sim.index_select(1, self._cols).to(torch.float32))
         return self
-
-    def _discrete(self, a: torch.Tensor) -> torch.Tensor:
-        """Floor and clamp (B, 1) actions to integer indices in [0, n_actions)."""
-        return a[:, 0].floor().clamp(0, self.n_actions - 1).long()
-
-    def _dynamics(self, s: torch.Tensor, a: torch.Tensor) -> torch.Tensor:
-        """Compute the next (B, sim_dim) numerical state from (B, action_dim) actions."""
-        raise NotImplementedError
-
-    def _advance(self) -> None:
-        """Update simulation and render buffers in place at fixed CUDA-graph addresses."""
-        self._sim.copy_(self._dynamics(self._sim, self._act))
-        self._render_state.copy_(self._sim.index_select(1, self._cols).to(torch.float32))
 
     # Derive packed offsets from render_from_sim; simulation-only variables have offset None.
 
@@ -190,36 +166,6 @@ class _Classic(Env):
         return torch.cat(cols, dim=1)
 
     @torch.no_grad()
-    def _step(self, action, *, active=None) -> TensorDict:
-        """Advance retained numerical dynamics, updating buffers and returning State.
-
-        This helper does not implement the delegated task reward or lifecycle.
-        """
-        self._check_open("step")
-        self._act.copy_(
-            torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
-        )
-        replayed = False
-        if self.use_step_graph and self.device.type == "cuda":
-            if self._step_graph is None and not self._step_graph_error:
-                self._step_graph, self._step_graph_error = _stepgraph.capture(
-                    self._advance, (self._sim, self._render_state)
-                )
-                if self._step_graph is None:
-                    self.use_step_graph = False
-            if self._step_graph is not None:
-                self._step_graph.replay()
-                replayed = True
-        if not replayed:
-            self._advance()
-        # Build State directly from live simulation columns, avoiding a packed-row conversion.
-        return self._step_result(self._state_td(self._sim[: self._live_rows]))
-
-    def _close(self) -> None:
-        """Release the captured step graph."""
-        self._step_graph = None
-
-    @torch.no_grad()
     def _render(
         self,
         states=None,
@@ -248,6 +194,7 @@ class _Classic(Env):
         # arithmetic lands on the wrong integer whenever a vertex falls within ~1e-5 of one.
         s = s.reshape(-1, self.state_dim).to(torch.float64)
         n = s.shape[0]
+        variation, style = _split_appearance(variation, style)
         sty = self.resolve_style(style, variation, batch=n)
         geo = self._varied_geometry(sty, own=style is None and not variation)
         extra = () if geo is None else (geo,)
@@ -354,22 +301,6 @@ class _Classic(Env):
     def reference_set_state(cls, env, st) -> None:
         raise NotImplementedError
 
-    @classmethod
-    def reference_action(cls, a):
-        """Decode source actions using the same floor/clamp rule as the numerical path."""
-        if cls.n_actions:
-            return int(min(max(math.floor(float(a[0])), 0), cls.n_actions - 1))
-        return np.asarray(a, np.float32).reshape(-1)
-
-    @classmethod
-    def reference_step(cls, ref, a) -> None:
-        ref.step(cls.reference_action(a))
-
-    @classmethod
-    def reference_sim_state(cls, ref) -> np.ndarray:
-        """Read source numerical state as a float64 vector."""
-        raise NotImplementedError
-
 
 @register
 class CartPole(ClassicControlSemantics, _Classic):
@@ -393,46 +324,10 @@ class CartPole(ClassicControlSemantics, _Classic):
     AXLEOFF = 30.0 / 4.0
     AXLE_R = 5
 
-    # Preserve source arithmetic expressions: replacing products with decimal literals can change rounding.
     sim_state_names = ("x", "x_dot", "theta", "theta_dot")
     render_from_sim = (0, 2)
-    n_actions = 2
     action_low, action_high = 0.0, 2.0
-    GRAVITY = 9.8
-    MASSCART = 1.0
-    MASSPOLE = 0.1
-    TOTAL_MASS = MASSPOLE + MASSCART
     LENGTH = 0.5
-    POLEMASS_LENGTH = MASSPOLE * LENGTH
-    FORCE_MAG = 10.0
-    TAU = 0.02
-    #: theta is unwrapped in the reference, so it is compared with 'abs', not 'angle'; wrapping would
-    #: hide a full-turn disagreement.
-    step_reference_groups = (
-        ("x", (0,), "abs"),
-        ("x_dot", (1,), "abs"),
-        ("theta", (2,), "abs"),
-        ("theta_dot", (3,), "abs"),
-    )
-
-    def _dynamics(self, s, a):
-        """Apply explicit Euler CartPole dynamics in source float64 expression order.
-
-        Every update reads the old velocities; semi-implicit Euler is a different rule.
-        """
-        x, x_dot, th, th_dot = s[:, 0], s[:, 1], s[:, 2], s[:, 3]
-        force = torch.where(
-            self._discrete(a) == 1, torch.full_like(x, self.FORCE_MAG), torch.full_like(x, -self.FORCE_MAG)
-        )
-        costheta, sintheta = torch.cos(th), torch.sin(th)
-        temp = (force + self.POLEMASS_LENGTH * th_dot.square() * sintheta) / self.TOTAL_MASS
-        thetaacc = (self.GRAVITY * sintheta - costheta * temp) / (
-            self.LENGTH * (4.0 / 3.0 - self.MASSPOLE * costheta.square() / self.TOTAL_MASS)
-        )
-        xacc = temp - self.POLEMASS_LENGTH * thetaacc * costheta / self.TOTAL_MASS
-        return torch.stack(
-            [x + self.TAU * x_dot, x_dot + self.TAU * xacc, th + self.TAU * th_dot, th_dot + self.TAU * thetaacc], 1
-        )
 
     def make_variation_space(self) -> Dict:
         return self._with_physics_variation(
@@ -528,23 +423,9 @@ class CartPole(ClassicControlSemantics, _Classic):
         rng = rng or self.rng
         return np.stack([rng.uniform(-2.4, 2.4, batch), rng.uniform(-0.2095, 0.2095, batch)], 1).astype(np.float32)
 
-    def _step(self, action, *, active=None) -> TensorDict:
-        """Advance with integer actions: zero pushes left and one pushes right."""
-        return super()._step(action, active=active)
-
     @classmethod
     def reference_set_state(cls, env, st) -> None:
         env.state = np.array([st[0], 0.0, st[1], 0.0])
-
-    @classmethod
-    def reference_sim_state(cls, ref) -> np.ndarray:
-        return np.asarray(ref.state, np.float64)
-
-    @classmethod
-    def reference_step(cls, ref, a) -> None:
-        # Clear post-terminal reward bookkeeping so numerical reference rollouts can continue without warnings.
-        ref.steps_beyond_terminated = None
-        super().reference_step(ref, a)
 
 
 @register
@@ -570,28 +451,10 @@ class Pendulum(ClassicControlSemantics, _Classic):
     MAX_SPRITE = 113  # int(scale * max_torque / 2), max_torque = 2
     WIN = 113  # sprite window: every size fits rows/cols 194..306
 
-    # Pendulum uses gravity 10.0 and draws last_u; the render index map includes torque, not velocity.
+    # The render row draws last_u (torque), not velocity.
     sim_state_names = ("theta", "theta_dot", "torque")
     render_from_sim = (0, 2)
-    n_actions = 0  # continuous: one torque in [-2, 2]
     action_low, action_high = -2.0, 2.0
-    G, M, L, DT = 10.0, 1.0, 1.0, 0.05
-    MAX_SPEED, MAX_TORQUE = 8, 2.0
-    #: The reference accumulates theta without wrapping, so the error is measured unwrapped; wrapping
-    #: would hide a whole-turn disagreement.
-    step_reference_groups = (("theta", (0,), "abs"), ("theta_dot", (1,), "abs"), ("torque", (2,), "abs"))
-
-    def _dynamics(self, s, a):
-        """Compute Pendulum dynamics with a float32 torque product and float64 gravity.
-
-        Round the torque product before adding gravity, matching NumPy scalar promotion.
-        """
-        th, thdot = s[:, 0], s[:, 1]
-        u = a[:, 0].clamp(-self.MAX_TORQUE, self.MAX_TORQUE)
-        drive = (3.0 / (self.M * self.L**2) * u).to(torch.float64)
-        newthdot = thdot + (3 * self.G / (2 * self.L) * torch.sin(th) + drive) * self.DT
-        newthdot = newthdot.clamp(-self.MAX_SPEED, self.MAX_SPEED)
-        return torch.stack([th + newthdot * self.DT, newthdot, u.to(torch.float64)], 1)
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
@@ -690,21 +553,11 @@ class Pendulum(ClassicControlSemantics, _Classic):
         rng = rng or self.rng
         return np.stack([rng.uniform(-np.pi, np.pi, batch), rng.uniform(-2.0, 2.0, batch)], 1).astype(np.float32)
 
-    def _step(self, action, *, active=None) -> TensorDict:
-        """Advance with continuous torque clipped to [-2, 2], retaining it for rendering."""
-        return super()._step(action, active=active)
-
     @classmethod
     def reference_set_state(cls, env, st) -> None:
         env.state = np.array([st[0], 0.0])
         # Keep float32 last_u: its dtype affects truncated torque-sprite dimensions near integer boundaries.
         env.last_u = np.float32(st[1])
-
-    @classmethod
-    def reference_sim_state(cls, ref) -> np.ndarray:
-        """Read angle, angular velocity, and last torque; unset torque renders as zero."""
-        u = 0.0 if getattr(ref, "last_u", None) is None else float(ref.last_u)
-        return np.array([ref.state[0], ref.state[1], u], np.float64)
 
 
 @register
@@ -727,90 +580,15 @@ class Acrobot(ClassicControlSemantics, _Classic):
     OFF = 250.0
     JOINT_R = 11  # int(0.1 * scale)
 
-    # Use the source's book dynamics, which include a different term from the paper variant.
     sim_state_names = ("theta1", "theta2", "dtheta1", "dtheta2")
     render_from_sim = (0, 1)
-    n_actions = 3
     action_low, action_high = 0.0, 3.0
-    DT = 0.2
-    M1 = M2 = 1.0
     L1 = 1.0
-    LC1 = LC2 = 0.5
-    I1 = I2 = 1.0
-    G = 9.8
-    MAX_VEL_1 = 4 * math.pi
-    MAX_VEL_2 = 9 * math.pi
-    AVAIL_TORQUE = (-1.0, 0.0, 1.0)
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
-        # Upload constants at construction; host-to-device creation inside capture can yield an empty CUDA graph.
-        self._torque = torch.tensor(self.AVAIL_TORQUE, dtype=torch.float64, device=self.device)
         self._varied_discs = {}
         self._varied_host = None
-
-    # Reference angles wrap at ±pi, so compare them modulo a full turn.
-    step_reference_groups = (
-        ("theta1", (0,), "angle"),
-        ("theta2", (1,), "angle"),
-        ("dtheta1", (2,), "abs"),
-        ("dtheta2", (3,), "abs"),
-    )
-
-    def _dsdt(self, y):
-        """Differentiate (theta1, theta2, dtheta1, dtheta2, torque) in source expression order."""
-        m1, m2, l1, lc1, lc2, i1, i2, g = (self.M1, self.M2, self.L1, self.LC1, self.LC2, self.I1, self.I2, self.G)
-        theta1, theta2, dtheta1, dtheta2, a = (y[:, 0], y[:, 1], y[:, 2], y[:, 3], y[:, 4])
-        cos2, sin2 = torch.cos(theta2), torch.sin(theta2)
-        d1 = m1 * lc1**2 + m2 * (l1**2 + lc2**2 + 2 * l1 * lc2 * cos2) + i1 + i2
-        d2 = m2 * (lc2**2 + l1 * lc2 * cos2) + i2
-        phi2 = m2 * lc2 * g * torch.cos(theta1 + theta2 - math.pi / 2.0)
-        phi1 = (
-            -m2 * l1 * lc2 * dtheta2.square() * sin2
-            - 2 * m2 * l1 * lc2 * dtheta2 * dtheta1 * sin2
-            + (m1 * lc1 + m2 * l1) * g * torch.cos(theta1 - math.pi / 2)
-            + phi2
-        )
-        ddtheta2 = (a + d2 / d1 * phi1 - m2 * l1 * lc2 * dtheta1.square() * sin2 - phi2) / (
-            m2 * lc2**2 + i2 - d2**2 / d1
-        )
-        ddtheta1 = -(d2 * ddtheta2 + phi1) / d1
-        return torch.stack([dtheta1, dtheta2, ddtheta1, ddtheta2, torch.zeros_like(a)], 1)
-
-    @staticmethod
-    def _wrap(x, m: float, M: float, iters: int = 8):
-        """Wrap Acrobot angles with eight ordered masked-subtraction passes.
-
-        One pass suffices after a bounded control step; extra passes allow wider inputs.
-        """
-        diff = M - m
-        for _ in range(iters):
-            x = torch.where(x > M, x - diff, x)
-        for _ in range(iters):
-            x = torch.where(x < m, x + diff, x)
-        return x
-
-    def _dynamics(self, s, a):
-        """Take a dt=0.2 RK4 step, then wrap angles and bound velocities.
-
-        Torque remains in the augmented vector with zero derivative.
-        """
-        y0 = torch.cat([s, self._torque[self._discrete(a)].unsqueeze(1)], 1)
-        dt, dt2 = self.DT, self.DT / 2.0
-        k1 = self._dsdt(y0)
-        k2 = self._dsdt(y0 + dt2 * k1)
-        k3 = self._dsdt(y0 + dt2 * k2)
-        k4 = self._dsdt(y0 + dt * k3)
-        ns = y0 + dt / 6.0 * (k1 + 2 * k2 + 2 * k3 + k4)
-        return torch.stack(
-            [
-                self._wrap(ns[:, 0], -math.pi, math.pi),
-                self._wrap(ns[:, 1], -math.pi, math.pi),
-                ns[:, 2].clamp(-self.MAX_VEL_1, self.MAX_VEL_1),
-                ns[:, 3].clamp(-self.MAX_VEL_2, self.MAX_VEL_2),
-            ],
-            1,
-        )
 
     def make_variation_space(self) -> Dict:
         return self._with_physics_variation(
@@ -973,17 +751,9 @@ class Acrobot(ClassicControlSemantics, _Classic):
         rng = rng or self.rng
         return rng.uniform(-np.pi, np.pi, (batch, 2)).astype(np.float32)
 
-    def _step(self, action, *, active=None) -> TensorDict:
-        """Advance with elbow torque selected by integer action: -1, 0, or +1."""
-        return super()._step(action, active=active)
-
     @classmethod
     def reference_set_state(cls, env, st) -> None:
         env.state = np.array([st[0], st[1], 0.0, 0.0])
-
-    @classmethod
-    def reference_sim_state(cls, ref) -> np.ndarray:
-        return np.asarray(ref.state, np.float64)
 
 
 @register
@@ -1012,22 +782,7 @@ class MountainCar(ClassicControlSemantics, _Classic):
     # Velocity affects dynamics but is absent from the render row.
     sim_state_names = ("position", "velocity")
     render_from_sim = (0,)
-    n_actions = 3  # 0 push left, 1 do nothing, 2 push right
     action_low, action_high = 0.0, 3.0
-    FORCE = 0.001
-    GRAVITY = 0.0025
-    MAX_SPEED = 0.07
-    step_reference_groups = (("position", (0,), "abs"), ("velocity", (1,), "abs"))
-
-    def _dynamics(self, s, a):
-        """Apply float64 source dynamics, zeroing leftward velocity exactly at the clipped left wall."""
-        pos, vel = s[:, 0], s[:, 1]
-        act = self._discrete(a).to(torch.float64)
-        vel = vel + ((act - 1) * self.FORCE + torch.cos(3 * pos) * (-self.GRAVITY))
-        vel = vel.clamp(-self.MAX_SPEED, self.MAX_SPEED)
-        pos = (pos + vel).clamp(self.MINP, self.MAXP)
-        vel = torch.where((pos == self.MINP) & (vel < 0), torch.zeros_like(vel), vel)
-        return torch.stack([pos, vel], 1)
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
@@ -1168,55 +923,20 @@ class MountainCar(ClassicControlSemantics, _Classic):
         rng = rng or self.rng
         return rng.uniform(self.MINP, self.MAXP, (batch, 1)).astype(np.float32)
 
-    def _step(self, action, *, active=None) -> TensorDict:
-        """Advance with integer actions: push left, coast, or push right."""
-        return super()._step(action, active=active)
-
     @classmethod
     def reference_set_state(cls, env, st) -> None:
         env.state = np.array([st[0], 0.0])
 
-    @classmethod
-    def reference_sim_state(cls, ref) -> np.ndarray:
-        return np.asarray(ref.state, np.float64).reshape(2)
-
 
 @register
 class MountainCarContinuous(MountainCar):
-    """Continuous MountainCar geometry, with the flag at 0.45 instead of 0.5.
-
-    Its retained numerical dynamics use a continuous force and float32 state
-    updates, unlike the discrete variant.
-    """
+    """Continuous MountainCar geometry, with the flag at 0.45 instead of 0.5."""
 
     name = "mountain-car-continuous"
     reference_id = "MountainCarContinuous-v0"
     CLASSIC_DOMAIN = "mountain_car_continuous"
     GOALP = 0.45
-
-    # Continuous force is scaled by power; it is not the discrete three-way action.
-    n_actions = 0
     action_low, action_high = -1.0, 1.0
-    POWER = 0.0015
-
-    def _dynamics(self, s, a):
-        """Apply the float32 steady-state update used by continuous MountainCar.
-
-        Cosine is evaluated in double on the float32 argument and rounded back. The
-        first source step after reset can instead read float64 state.
-        """
-        force = a[:, 0].clamp(self.action_low, self.action_high)  # float32
-        pos, vel = s[:, 0].to(torch.float32), s[:, 1].to(torch.float32)
-        cos = torch.cos((3 * pos).to(torch.float64))  # float64 cos, f32 arg
-        vel = vel + (force * self.POWER - (self.GRAVITY * cos).to(torch.float32))
-        vel = vel.clamp(-self.MAX_SPEED, self.MAX_SPEED)
-        pos = (pos + vel).clamp(self.MINP, self.MAXP)
-        vel = torch.where((pos == np.float32(self.MINP)) & (vel < 0), torch.zeros_like(vel), vel)
-        return torch.stack([pos.to(torch.float64), vel.to(torch.float64)], 1)
-
-    def _step(self, action, *, active=None) -> TensorDict:
-        """Advance with continuous force clipped to [-1, 1]."""
-        return super()._step(action, active=active)
 
 
 def _mc_height(x):

@@ -146,4 +146,3 @@ class ClassicControlSemantics:
     def _close(self):
         if hasattr(self, "_simulator"):
             self._simulator.close()
-        super()._close()

@@ -63,10 +63,8 @@ def _check_dm_control_works() -> None:
 
         raise ImportError(
             f"dm_control is installed but cannot compile a model with mujoco "
-            f"{mujoco.__version__}: {e}. This is a version skew, not a missing package — no "
-            f"dm_control release works with mujoco 3.9. Consistent pairs: mujoco==3.11.0 with "
-            f"dm_control==1.0.44, mujoco==3.10.0 with dm_control==1.0.43, mujoco==3.8.1 with "
-            f"dm_control==1.0.41."
+            f"{mujoco.__version__}: {e}. This is a version skew, not a missing package. Supported "
+            f"pairs: mujoco==3.12.0 with dm_control==1.0.45, mujoco==3.11.0 with dm_control==1.0.44."
         ) from e
 
 

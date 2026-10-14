@@ -146,6 +146,19 @@ def test_batched_restore_is_atomic_and_owning(name):
 
 
 @pytest.mark.parametrize("name", NAMES)
+def test_an_inactive_lane_keeps_its_state_after_reset_and_after_restore(name):
+    with se.make(name, num_envs=2, device=DEVICE) as env:
+        state = env.reset(seed=17)
+        mask = torch.tensor([True, False])
+        stepped = env._simulator.step(torch.tensor([1, 1]), active=mask)
+        assert_state_equal(stepped[1:], state[1:])
+        env.step([2, 3], frames=None)
+        env.set_state(state)
+        stepped = env._simulator.step(torch.tensor([1, 1]), active=mask)
+        assert_state_equal(stepped[1:], state[1:])
+
+
+@pytest.mark.parametrize("name", NAMES)
 def test_independent_instances_and_step_never_calls_set_state(name, monkeypatch):
     with se.make(name, device=DEVICE) as a, se.make(name, device=DEVICE) as b:
         a.reset(seed=17)

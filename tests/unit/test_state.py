@@ -52,7 +52,10 @@ def test_pack_unpack_round_trips_a_corpus_row_for_row(env):
     assert torch.equal(rows, back), (
         "pack_render_state(unpack_render_state(rows)) must be the identity on the packed layout"
     )
-    assert torch.equal(env._pack_render_state(env._unpack_render_state(rows)), back)
+    st = env._unpack_render_state(rows)
+    assert torch.equal(st["agent", "position"], rows[:, 0:2])
+    assert torch.equal(st["block", "position"], rows[:, 2:4])
+    assert torch.equal(st["block", "angle"], rows[:, 4:5])
 
 
 def test_private_unpack_omits_hidden_fields(env):
@@ -156,21 +159,21 @@ def test_state_layout_entry_may_name_a_public_dtype():
 
 def test_unpack_and_state_never_alias_the_env_buffer():
     """A StepResult or ``env.state`` must not change under the caller's feet at the next step."""
-    env = LegacyPushT(num_envs=4, device="cpu")
-    env.reset(seed=0)
-    a = torch.zeros(4, 2)
-    out = env.step(a, frames=None)
-    snap = out["state"]["agent", "position"].clone()
-    st = env.state
-    snap2 = st["block", "position"].clone()
-    env.step(torch.full((4, 2), 300.0), frames=None)
-    assert torch.equal(out["state"]["agent", "position"], snap)
-    assert torch.equal(st["block", "position"], snap2)
-    td = env._unpack_render_state(env._get_render_state())
-    td["agent", "position"].add_(1.0)
-    assert not torch.equal(
-        td["agent", "position"], env._unpack_render_state(env._get_render_state())["agent", "position"]
-    )
+    with LegacyPushT(num_envs=4, device="cpu") as env:
+        env.reset(seed=0)
+        a = torch.zeros(4, 2)
+        out = env.step(a, frames=None)
+        snap = out["state"]["agent", "position"].clone()
+        st = env.state
+        snap2 = st["block", "position"].clone()
+        env.step(torch.full((4, 2), 300.0), frames=None)
+        assert torch.equal(out["state"]["agent", "position"], snap)
+        assert torch.equal(st["block", "position"], snap2)
+        td = env._unpack_render_state(env._get_render_state())
+        td["agent", "position"].add_(1.0)
+        assert not torch.equal(
+            td["agent", "position"], env._unpack_render_state(env._get_render_state())["agent", "position"]
+        )
 
 
 def test_live_state_hook_overrides_the_widened_row():

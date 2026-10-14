@@ -2,7 +2,7 @@
 
 Each test checks one way stored states can fail to regenerate the same frames: a fresh process, seeded
 sampling, batch size and chunking, resolution, input form, render purity, batch order, serialization,
-and CUDA-graph steps.
+and steps from a restored State.
 
 Batches are 8 except where batch size is the subject, and no test uses more than two distinct static
 style values, because plate-baking families re-render a MuJoCo plate per distinct appearance.
@@ -805,55 +805,24 @@ def test_variation_dict_and_style_tensor_agree(env, inputs):
     )
 
 
-# ------------------------------------------------------------------ 7. CUDA graphs
+# ------------------------------------------------------------------ 7. stepping from a restored State
 
 
-def test_cuda_graph_step_matches_eager(env):
-    """A CUDA-graph-captured step matches the eager step exactly, including after ``set_state``.
-
-    The graph reads its inputs at fixed addresses, so ``set_state`` must write through the buffer.
-    """
+def test_a_step_from_a_restored_state_matches_the_original(env):
+    """Stepping an env restored to State ``s`` gives the same States as stepping the env that reached ``s``."""
     cls = type(env)
-    if "_step" not in cls.__dict__ or not getattr(cls, "use_step_graph", False):
-        pytest.skip(f"{cls.__name__}: no CUDA-graph-captured step")
-    graphed = se.make(cls.__name__, num_envs=N, device="cuda")
-    eager = se.make(cls.__name__, num_envs=N, device="cuda")
-    eager.use_step_graph = False
-
-    st = env.sample_states(N, rng=np.random.default_rng(5))
-    graphed.set_state(st)
-    eager.set_state(st)
-    rng = np.random.default_rng(6)
-    adim = int(getattr(cls, "action_dim", 1))
-    lo, hi = float(getattr(cls, "action_low", -1.0)), float(getattr(cls, "action_high", 1.0))
-    worst = 0.0
-    for _ in range(8):
-        a = torch.as_tensor(rng.uniform(lo, hi, (N, adim)).astype(np.float32), device="cuda")
-        # ``step`` may return a StepResult TensorDict; ``get_state()`` is the packed row on every path.
-        graphed.step(a, frames=None)
-        eager.step(a, frames=None)
-        sg = graphed.get_state().detach().cpu().numpy().copy()
-        se_ = eager.get_state().detach().cpu().numpy().copy()
-        worst = max(worst, float(np.abs(sg - se_).max()))
-    if getattr(graphed, "_step_graph", None) is None:
-        pytest.skip(
-            f"{cls.__name__}: graph capture did not happen "
-            f"({getattr(graphed, '_step_graph_error', 'no reason recorded')})"
-        )
-    assert worst == 0.0, f"{cls.__name__}: the CUDA-graph step and the eager step disagree by {worst}"
-
-    # set_state must still reach a captured graph
-    st2 = env.sample_states(N, rng=np.random.default_rng(77))
-    graphed.set_state(st2)
-    got = graphed.get_state().detach().cpu().numpy()
-    assert np.abs(got - st2).max() == 0.0, f"{cls.__name__}: set_state after graph capture did not take effect"
-    eager.set_state(st2)
-    a = torch.as_tensor(rng.uniform(lo, hi, (N, adim)).astype(np.float32), device="cuda")
-    graphed.step(a, frames=None)
-    eager.step(a, frames=None)
-    assert (
-        np.abs(graphed.get_state().detach().cpu().numpy() - eager.get_state().detach().cpu().numpy()).max() == 0.0
-    ), f"{cls.__name__}: after set_state, the graphed step diverges from the eager one"
+    if not env.has_dynamics:
+        pytest.skip(f"{cls.__name__}: no dynamics")
+    with se.make(cls.__name__, num_envs=N, device="cuda") as a, se.make(cls.__name__, num_envs=N, device="cuda") as b:
+        rng = np.random.default_rng(6)
+        b.reset(seed=11)
+        b.set_state(a.reset(seed=5))
+        for t in range(4):
+            action = a.action_spec.sample(N, rng)
+            sa = a.step(action, frames=None)["state"]
+            sb = b.step(action, frames=None)["state"]
+            for key in sa.keys(True, True):
+                assert torch.equal(sa[key], sb[key]), f"{cls.__name__}: step {t} diverges at {key}"
 
 
 # ------------------------------------------------------------------ 8. the reference renderer

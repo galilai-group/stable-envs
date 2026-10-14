@@ -4,9 +4,8 @@ One Triton kernel turns any `Scene2D` into `(B,H,W,3)` uint8 frames.
 
 All numbers on this page were measured on one NVIDIA H200 with torch 2.11.0+cu130 and Triton 3.6.0.
 They use the internal Scene2D PushT scene (`stable_envs/envs/pusht/legacy.py`) at 96 px unless stated.
-The public PushT classes render with pygame. The GB/s table comes from `examples/bench_gpu_vs_cpu.py`.
-The other tables come from separate microbenchmarks, so compare ratios, not absolute values, across
-tables.
+The public PushT classes render with pygame. The tables come from separate microbenchmarks, so compare
+ratios, not absolute values, across tables.
 
 ## Design
 

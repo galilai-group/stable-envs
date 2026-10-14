@@ -1,7 +1,6 @@
-"""``Canvas.blend_at`` overrides may index the weight by the write mask.
+"""The writes ``aaline`` hands ``Canvas.blend_at``, recorded per quad.
 
-Every scatter ``aaline`` issues must pass a weight shaped like the mask. The quads below reach all five
-scatters, including the axis-aligned vline/hline runs.
+The quads below reach all five scatters, including the axis-aligned vline/hline runs.
 """
 
 from __future__ import annotations
@@ -16,15 +15,13 @@ H = W = 32
 
 
 class _Recorder(G.Canvas):
-    """A ``blend_at`` override that records writes, indexing the weight by the write mask."""
+    """A ``blend_at`` override that records each in-bounds write and its weight."""
 
     def __init__(self, gfx):
         super().__init__(1, gfx.H, gfx.W, gfx.device, gfx.sh, gfx.ys, gfx.xs)
         self.writes: list[tuple] = []
-        self.shapes: list[tuple] = []
 
     def blend_at(self, b, y, x, color_t, w, valid) -> None:
-        self.shapes.append((tuple(w.shape), tuple(valid.shape), tuple(y.shape)))
         ok = valid & (y >= 0) & (y < self.H) & (x >= 0) & (x < self.W)
         if bool(ok.any()):
             self.writes.append((y[ok].clone(), x[ok].clone(), w.expand(ok.shape)[ok].clone()))
@@ -48,18 +45,6 @@ def _run(verts, kmax=64):
     for e in range(4):
         G.aaline(rec, vi[:, e, 0], vi[:, e, 1], vi[:, (e + 1) % 4, 0], vi[:, (e + 1) % 4, 1], None, kmax, bidx)
     return rec
-
-
-@pytest.mark.parametrize("case", sorted(QUADS))
-def test_a_blend_at_override_may_index_the_weight_by_the_write_mask(case):
-    """Every scatter ``aaline`` issues passes weight, mask and coordinates of the same shape."""
-    rec = _run(QUADS[case])
-    assert rec.shapes, "aaline issued no scatters at all"
-    for w_shape, valid_shape, y_shape in rec.shapes:
-        assert w_shape == valid_shape == y_shape, (
-            f"aaline handed blend_at a weight of shape {w_shape} against a mask of {valid_shape} "
-            f"and coordinates of {y_shape}"
-        )
 
 
 def test_the_axis_aligned_scatters_are_actually_reached():

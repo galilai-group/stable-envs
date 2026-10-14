@@ -1,198 +1,80 @@
-"""Render B appearances in one call with ``env.sample_variation(B)``, timed against per-env loops.
+"""Render one State under many Variations in a single call.
 
-A ``(B, variation_dim)`` float32 Variation row passed to ``render`` gives each environment its own
-colours, scales and toggles in a single launch. The script checks that the frames really differ and
-times three ways of producing them from the same B states and variations:
-
-  ``batched``       one ``render`` call with a ``(B, variation_dim)`` row
-  ``per-render``    B calls on one env with batch 1, one variation each
-  ``per-env``       B calls, each on a freshly constructed env
-
-Requires CUDA.
+``env.sample_variation(B)`` draws ``(B, variation_dim)`` rows; ``env.render(state, variation=rows)``
+gives each lane its own appearance. The script counts distinct frames and times the batched call
+against a loop of one-lane renders. Envs whose Variation lives in the State (PushT, Rocket, OGBench
+Cube/Scene) take it through ``reset(options={"variation": [...]})`` instead.
 
     python examples/domain_randomization.py
-    python examples/domain_randomization.py --env PushT --batches 64,256,1024,4096
+    python examples/domain_randomization.py --env TwoRoom --num-envs 256 --device cuda
 """
 
 from __future__ import annotations
 
 import argparse
-import json
-import math
 import time
-from pathlib import Path
 
-import cv2
 import numpy as np
 import torch
 
-import stable_envs as se
+import stable_envs as snv
 
 
-def timeit(fn, budget_s: float = 1.0, min_reps: int = 3, max_reps: int = 50) -> float:
-    """Median seconds per call, synchronized on both sides, stopping once the budget is spent."""
+def distinct(frames: torch.Tensor) -> int:
+    return len({f.tobytes() for f in frames.cpu().numpy()})
+
+
+def seconds(fn, device: torch.device, reps: int) -> float:
     fn()
-    torch.cuda.synchronize()
-    ts = []
-    spent = 0.0
-    for i in range(max_reps):
-        torch.cuda.synchronize()
+    times = []
+    for _ in range(reps):
+        if device.type == "cuda":
+            torch.cuda.synchronize()
         t0 = time.perf_counter()
         fn()
-        torch.cuda.synchronize()
-        dt = time.perf_counter() - t0
-        ts.append(dt)
-        spent += dt
-        if i + 1 >= min_reps and spent > budget_s:
-            break
-    return float(np.median(ts))
+        if device.type == "cuda":
+            torch.cuda.synchronize()
+        times.append(time.perf_counter() - t0)
+    return float(np.median(times))
 
 
-def tile(frames: np.ndarray, cols: int, pad: int = 2, pad_value: int = 235) -> np.ndarray:
-    n, h, w, _ = frames.shape
-    rows = math.ceil(n / cols)
-    canvas = np.full((rows * (h + pad) + pad, cols * (w + pad) + pad, 3), pad_value, np.uint8)
-    for i, f in enumerate(frames):
-        r, c = divmod(i, cols)
-        canvas[pad + r * (h + pad) : pad + r * (h + pad) + h, pad + c * (w + pad) : pad + c * (w + pad) + w] = f
-    return canvas
+def main(argv: list[str] | None = None) -> int:
+    p = argparse.ArgumentParser(description="Per-lane Variation in one render call.")
+    p.add_argument("--env", default="CartPole")
+    p.add_argument("--num-envs", type=int, default=16)
+    p.add_argument("--device", default="auto", help="cpu, cuda, or auto")
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--reps", type=int, default=5)
+    args = p.parse_args(argv)
 
+    n = args.num_envs
+    with snv.make(args.env, num_envs=n, device=args.device) as env:
+        state = env.reset(seed=args.seed)
+        # One State for every lane, so differences between frames come from the Variation.
+        shared = state[torch.zeros(n, dtype=torch.long)]
+        appearance = [p for p in env.variation_names if p not in env.dynamics_variation_leaves]
+        rng = np.random.default_rng(args.seed)
+        rows = torch.as_tensor(env.sample_variation(n, paths=appearance, rng=rng), device=env.device)
 
-def distinct_frames(frames: torch.Tensor) -> int:
-    """Number of pairwise-distinct frames, by hashing each frame's bytes."""
-    b = frames.reshape(frames.shape[0], -1).cpu().numpy()
-    return len({row.tobytes() for row in b})
+        frames = env.render(shared, variation=rows)
+        print(f"{args.env}: {len(appearance)} appearance leaves, variation_dim {env.variation_dim}")
+        print(f"default Variation: {distinct(env.render(shared))}/{n} distinct frames")
+        print(f"sampled Variation: {distinct(frames)}/{n} distinct frames, shape {tuple(frames.shape)}")
 
+        background = [p for p in appearance if p.startswith("background")]
+        if background:
+            bg = torch.as_tensor(env.sample_variation(n, paths=background, rng=rng), device=env.device)
+            print(f"background only: {distinct(env.render(shared, variation=bg))}/{n} distinct frames")
 
-def main() -> None:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--env", default="PushT")
-    ap.add_argument("--size", type=int, default=96)
-    ap.add_argument("--batches", default="64,256,1024,4096")
-    ap.add_argument(
-        "--per-env-cap",
-        type=int,
-        default=64,
-        help="constructing an env per variation is O(seconds); measured up to this batch only",
-    )
-    ap.add_argument("--grid", type=int, default=64)
-    ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--out", type=Path, default=Path("results"))
-    args = ap.parse_args()
-
-    rng = np.random.default_rng(args.seed)
-    proto = se.make(args.env, num_envs=1, size=args.size, device="cuda")
-    print(f"{args.env}: render_state_dim {proto.render_state_dim}, variation_dim {proto.variation_dim}")
-    print(f"variation leaves: {proto.variation_names}")
-
-    # One shared state, so any difference between frames comes from the variation.
-    state = proto.sample_states(1, rng)
-    variation = proto.sample_variation(args.grid, rng=rng)
-    env = se.make(args.env, num_envs=args.grid, size=args.size, device="cuda")
-    frames = env.render(np.repeat(state, args.grid, 0), variation=variation)
-    n_distinct = distinct_frames(frames)
-    print(f"\ngrid: {args.grid} environments, one shared state, {args.grid} sampled variations, one launch")
-    print(f"  distinct frames: {n_distinct}/{args.grid}")
-    args.out.mkdir(parents=True, exist_ok=True)
-    grid_path = args.out / f"domain_randomization_{args.env}.png"
-    cv2.imwrite(str(grid_path), tile(frames.cpu().numpy(), cols=int(math.sqrt(args.grid)))[:, :, ::-1])
-    print(f"  wrote {grid_path} ({grid_path.stat().st_size / 1e3:.0f} kB)")
-
-    # Vary only the background leaves; every other leaf keeps its default.
-    bg_only = proto.sample_variation(
-        args.grid, paths=[p for p in proto.variation_names if p.startswith("background")], rng=rng
-    )
-    bg_frames = env.render(np.repeat(state, args.grid, 0), variation=bg_only)
-    bg_path = args.out / f"domain_randomization_{args.env}_background_only.png"
-    cv2.imwrite(str(bg_path), tile(bg_frames.cpu().numpy(), cols=int(math.sqrt(args.grid)))[:, :, ::-1])
-    print(f"  background-only sheet: {distinct_frames(bg_frames)}/{args.grid} distinct, wrote {bg_path}")
-    del env
-    torch.cuda.empty_cache()
-
-    rows = []
-    for B in [int(x) for x in args.batches.split(",") if x]:
-        states = proto.sample_states(B, rng)
-        sty = proto.sample_variation(B, rng=rng)
-        st = torch.as_tensor(states, device="cuda")
-        sty_t = torch.as_tensor(sty, device="cuda")
-
-        env = se.make(args.env, num_envs=B, size=args.size, device="cuda")
-        probe = env.render(st[:1])  # frame shape measured, not assumed square
-        out = torch.empty((B, *probe.shape[1:]), dtype=torch.uint8, device="cuda")
-        batched = timeit(lambda: env.render(st, variation=sty_t, out=out))
-
-        one = se.make(args.env, num_envs=1, size=args.size, device="cuda")
-        n_loop = min(B, 256)  # the loop is linear; time a prefix and scale, rather than wait
-        per_render = timeit(
-            lambda: [one.render(st[i : i + 1], variation=sty_t[i : i + 1]) for i in range(n_loop)],
-            budget_s=2.0,
-            max_reps=5,
-        ) * (B / n_loop)
-
-        per_env = None
-        if B <= args.per_env_cap:
-
-            def loop_construct():
-                for i in range(B):
-                    e = se.make(args.env, num_envs=1, size=args.size, device="cuda")
-                    e.render(st[i : i + 1], variation=sty_t[i : i + 1])
-
-            per_env = timeit(loop_construct, budget_s=2.0, max_reps=3)
-
-        distinct = distinct_frames(env.render(st, variation=sty_t)) if B <= 1024 else None
-        rows.append(
-            {
-                "batch": B,
-                "batched_ms": batched * 1e3,
-                "per_render_ms": per_render * 1e3,
-                "per_env_ms": None if per_env is None else per_env * 1e3,
-                "speedup_vs_per_render": per_render / batched,
-                "speedup_vs_per_env": None if per_env is None else per_env / batched,
-                "frames_per_s": B / batched,
-                "loop_frames_per_s": B / per_render,
-                "distinct_frames": distinct,
-            }
+        batched = seconds(lambda: env.render(shared, variation=rows), env.device, args.reps)
+        looped = seconds(
+            lambda: [env.render(shared[i : i + 1], variation=rows[i : i + 1]) for i in range(n)],
+            env.device,
+            args.reps,
         )
-        print(
-            f"\nbatch {B}: batched {batched * 1e3:.2f} ms ({B / batched:,.0f} frames/s) | "
-            f"loop of {B} renders {per_render * 1e3:.1f} ms ({B / per_render:,.0f} frames/s) | "
-            f"{per_render / batched:,.0f}x"
-            + ("" if per_env is None else f" | one env per style {per_env * 1e3:.0f} ms ({per_env / batched:,.0f}x)")
-            + ("" if distinct is None else f" | distinct frames {distinct}/{B}")
-        )
-        del env, one, out
-        torch.cuda.empty_cache()
-
-    print(
-        "\n| batch | batched (ms) | loop of B renders (ms) | one env per style (ms) | speedup vs loop |"
-        " frames/s batched | distinct |"
-    )
-    print("|---|---|---|---|---|---|---|")
-    for r in rows:
-        pe = "-" if r["per_env_ms"] is None else f"{r['per_env_ms']:.0f}"
-        di = "-" if r["distinct_frames"] is None else f"{r['distinct_frames']}/{r['batch']}"
-        print(
-            f"| {r['batch']} | {r['batched_ms']:.2f} | {r['per_render_ms']:.1f} | {pe} | "
-            f"{r['speedup_vs_per_render']:,.0f}x | {r['frames_per_s']:,.0f} | {di} |"
-        )
-
-    (args.out / "domain_randomization.json").write_text(
-        json.dumps(
-            {
-                "env": args.env,
-                "size": args.size,
-                "variation_dim": int(proto.variation_dim),
-                "variation_names": proto.variation_names,
-                "grid": {"n": args.grid, "distinct": n_distinct, "path": str(grid_path)},
-                "rows": rows,
-                "device": torch.cuda.get_device_name(0),
-            },
-            indent=2,
-            default=str,
-        )
-    )
-    print(f"\nwrote {args.out / 'domain_randomization.json'}")
+        print(f"one call: {batched * 1e3:.2f} ms; {n} one-lane calls: {looped * 1e3:.2f} ms")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

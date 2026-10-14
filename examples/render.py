@@ -38,6 +38,12 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{args.env!r} is not registered. import_errors={snv.import_errors()}", file=sys.stderr)
         return 1
 
+    if args.out:
+        try:
+            from PIL import Image
+        except ImportError as e:
+            raise SystemExit("--out writes a PNG with Pillow, which is not installed: pip install pillow") from e
+
     device = resolve_device(args.device)
     print(f"stable-envs {snv.__version__}  device={device}  env={args.env}")
 
@@ -48,8 +54,6 @@ def main(argv: list[str] | None = None) -> int:
         print(f"pixels {tuple(pixels.shape)} {pixels.dtype} {pixels.device}")
 
     if args.out:
-        from PIL import Image
-
         Image.fromarray(pixels[0].cpu().numpy()).save(args.out)
         print(f"wrote {args.out}")
     return 0

@@ -46,8 +46,8 @@ drawing is the same on both sides. The difference is Python work per frame.
 python -m benchmarks.render --help
 python -m benchmarks.pipeline --help
 python examples/bench_pusht_source.py --help
-python examples/bench_gpu_vs_cpu.py --out results --sizes native
+python examples/bench_gpu_vs_cpu.py --out results.json
 ```
 
-`bench_gpu_vs_cpu.py` walks `snv.list_envs()` and writes results after every env. Envs without a
-reference renderer get GPU columns only.
+`bench_gpu_vs_cpu.py` times `env.render(state)` for every env in `snv.list_envs()` on CPU and, when
+available, on CUDA, from the same States.
