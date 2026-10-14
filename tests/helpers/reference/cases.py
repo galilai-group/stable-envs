@@ -56,7 +56,7 @@ def coverage(required, results) -> dict:
 _CLASSIC = "tests/integration/test_native_classic_gate.py::test_frozen_reference_oracle"
 _CLASSIC_REST = "tests/integration/test_native_classic_remaining_gate.py::test_frozen_remaining_reference_oracle"
 _NAVIGATION = (
-    "tests/integration/test_native_navigation_oracle.py::test_frozen_native_navigation_oracles_replay_exactly"
+    "tests/integration/test_native_navigation_oracle.py::test_frozen_native_navigation_oracles_replay"
 )
 _DMC_SUITE = "tests/unit/test_dmc_sibling_tasks.py::test_cell_matches_the_source_task_and_restores_into_a_fresh_env"
 _DMC_HISTORICAL = "tests/unit/test_dmc_sibling_tasks.py::test_historical_cell_matches_the_source_task"
