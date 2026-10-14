@@ -1,28 +1,16 @@
-"""Media for every env in the registry: a state grid, a CPU/GPU side-by-side video, a variation sheet.
+"""Media for every registered env: a state grid, a CPU/GPU side-by-side video, and variation sheets.
 
-The artifacts answer different questions, and none substitutes for another:
+Per env, under ``--out/<env>/``:
 
-  ``grid.png``            what the env looks like over its own reset distribution, straight out of the
-                          GPU at native resolution. No upscaling, no interpolation — the pixels in the
-                          file are the pixels a training run would consume.
-  ``sidebyside.mp4``      the official CPU renderer and the GPU renderer fed the *same recorded states*,
-                          frame for frame. A throughput number says the GPU path is fast; this says it
-                          is drawing the same thing, over a trajectory rather than over the handful of
-                          poses a test samples.
-  ``variation_*.png``     the appearance knobs. The batched sheet holds only the leaves that were
-                          *measured* to differ per environment in a single launch — which is the claim
-                          that domain randomisation costs nothing here — and the sweep sheet covers the
-                          rest across separate calls.
+  ``grid.png``            frames over the env's reset distribution at native resolution, unscaled.
+  ``sidebyside.mp4``      the reference CPU renderer and the stable-envs renderer on the same recorded
+                          states, frame for frame (H.264, with a GIF copy).
+  ``variation_*.png``     the batched sheet holds the colour leaves measured to differ per environment
+                          in one launch; the sweep sheet covers each leaf across separate calls.
 
-Everything is driven from ``stable_envs.registry.REGISTRY``, so a new env produces its own media without editing
-this file, and every stage is wrapped: an env that cannot produce one artifact still produces the others,
-with the reason recorded in the manifest.
-
-Videos are H.264. ``cv2.VideoWriter`` with the ``mp4v`` fourcc writes MPEG-4 Part 2, which no browser
-plays in an HTML5 ``<video>`` element — the page renders as a blank box with controls, which looks like a
-broken build rather than a codec problem. The encode goes through ffmpeg with
-``-c:v libx264 -pix_fmt yuv420p -profile:v baseline``, and the resulting stream is probed and recorded in
-the manifest so the claim is checkable rather than asserted.
+Each stage is wrapped, so an env that fails one artifact still produces the others, with the reason in
+``manifest.json``. Videos are encoded with ffmpeg as ``libx264 / yuv420p / baseline`` so browsers play
+them, and the probed codec is recorded in the manifest.
 
     python examples/gallery.py --out docs/assets/media
 """
@@ -61,13 +49,7 @@ def _tile(frames: np.ndarray, cols: int, pad: int = 2, pad_value: int = 235) -> 
 
 
 def _label(img: np.ndarray, text: str) -> np.ndarray:
-    """Put the caption in a band ABOVE the frame, never on top of it, shrunk until it fits.
-
-    Text drawn over the render would be indistinguishable from something the renderer produced, and these
-    images are the evidence for a pixel-parity claim. The auto-fit matters for the same reason a
-    truncated caption does: a panel labelled ``scale=1`` that is actually ``scale=1.75`` misreports the
-    figure.
-    """
+    """Add the caption in a band above the frame, shrinking the font until it fits."""
     band = np.full((LABEL_H, img.shape[1], 3), 245, np.uint8)
     scale = 0.42
     while scale > 0.18:
@@ -80,7 +62,7 @@ def _label(img: np.ndarray, text: str) -> np.ndarray:
 
 
 def _upscale(frames: np.ndarray, k: int) -> np.ndarray:
-    """Nearest-neighbour only. Any smoothing would invent detail the renderer did not produce."""
+    """Nearest-neighbour upscale, so no pixel is invented."""
     return frames if k <= 1 else np.repeat(np.repeat(frames, k, axis=-3), k, axis=-2)
 
 
@@ -148,11 +130,7 @@ def write_h264(path: Path, frames: np.ndarray, fps: int = 15) -> dict:
 
 
 def probe_codec(path: Path) -> str:
-    """The stream line, from ffprobe if present, else parsed out of ffmpeg's own report.
-
-    Recorded rather than assumed: an mp4 whose stream says ``mpeg4`` instead of ``h264 (...) (avc1)``
-    plays in a desktop player and fails silently in a browser, so the file existing proves nothing.
-    """
+    """Return the video stream description, from ffprobe if present, else from ffmpeg's report."""
     import imageio_ffmpeg
 
     ffprobe = shutil.which("ffprobe")
@@ -198,17 +176,11 @@ def write_gif(path: Path, frames: np.ndarray, fps: int = 10, max_frames: int = 6
 
 
 def rollout_states(cls, env, n: int) -> tuple[np.ndarray, str]:
-    """A trajectory of states, preferring one the reference simulator actually visited.
+    """Return ``n`` states and a label for how they were produced.
 
-    A scripted path would render just as well and would prove less: the point of the video is that states
-    a *simulator* visited can be re-rendered, so the reference rollout is tried first and the substitutes
-    are labelled, never silent.
-
-    The reference rollout is only usable when the reference's own observation IS the compact state, which
-    is exactly the case this repo is about. Where it is not (a dict observation, an image observation) the
-    fallback depends on the state: continuous states interpolate into something that looks like motion,
-    integer-coded states do not, and pretending otherwise would put physically impossible frames in a
-    figure whose purpose is fidelity.
+    Prefers a reference rollout, which works when the reference observation is the compact state.
+    Otherwise continuous states are interpolated between samples and integer-coded states are sampled
+    independently, since interpolating them would produce impossible states.
     """
     try:
         ref = cls.reference_env(size=env.size)
@@ -260,12 +232,10 @@ def _leaf(space, path: str):
 
 
 def per_env_leaves(env, states: np.ndarray, batch: int) -> tuple[dict, list[str]]:
-    """Which variation leaves actually differ per environment, measured rather than assumed.
+    """Return the colour leaves that produce ``batch`` distinct frames from ``batch`` distinct values.
 
-    An env may read a knob once per call (a scalar the scene builder broadcasts from element 0) or bake
-    it into a batch-invariant cache. Both change the picture, so the conformance suite passes, and both
-    would make a "32 different colours in one launch" figure a lie. So each candidate leaf is given B
-    distinct values and kept only if it produces B distinct frames.
+    A leaf can change the picture yet be read once per call or cached across the batch; such leaves
+    are rejected.
     """
     rng = np.random.default_rng(0)
     one = np.repeat(states[:1], batch, axis=0)
@@ -331,9 +301,7 @@ def env_media(name: str, outdir: Path, video_frames: int, target_px: int) -> dic
     env = se.make(name, num_envs=1, device="cuda")
     size = env.size
     man["describe"] = env.describe()
-    # Sheet geometry is derived from a rendered frame, not from ``env.size``. They are not always the
-    # same number: a glyph-tile env reports its TILE size there, and taking it for the frame size scaled
-    # one video 18x, to 22752x6074 and 23 MB.
+    # Sheet geometry comes from a rendered frame: tile-based envs report their tile size as ``env.size``.
     probe = env.render(env.sample_states(1)).cpu().numpy()
     fh, fw = int(probe.shape[1]), int(probe.shape[2])
     man["frame_shape"] = [fh, fw]
@@ -452,8 +420,7 @@ def main() -> None:
 
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    # Merge rather than replace, so regenerating one env with --envs does not silently drop the
-    # recorded parity numbers and codecs of every other env from the manifest.
+    # Merge into the existing manifest so regenerating a subset with --envs keeps the other entries.
     manifest = {"envs": {}, "import_errors": se.import_errors()}
     if (out / "manifest.json").exists():
         try:

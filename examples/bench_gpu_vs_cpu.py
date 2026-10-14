@@ -1,50 +1,22 @@
-"""GPU renderer vs the official CPU renderer, per env in the registry.
+"""GPU renderer against the reference CPU renderer, per registered env.
 
-The repo's claim is that regenerating a frame from its state is cheaper than reading a stored frame,
-which is only worth asserting with the official renderer's own cost on the same states. So this script
-measures the same transformation twice — ``state -> uint8 frame`` — once through the GPU path and once
-through the reference env, and reports the ratio.
+Both sides perform the same ``state -> uint8 frame`` transformation. The CPU side reports two timings:
 
-Two CPU timings are reported because the comparison is ambiguous by one step:
+  ``set_state + render``   place the reference at a stored state, then draw it. This is what the GPU
+                           path does and is the number the speedup column uses.
+  ``render only``          the draw alone, where the reference exposes a per-state setter.
 
-  ``set_state + render``   what the GPU path actually does: place the world at a stored state, then draw
-                           it. This is the number that matters for re-rendering a dataset, and it is the
-                           one used for the speedup column.
-  ``render only``          the draw alone, with the reference env left wherever the previous call put it.
-                           Reported separately so nobody can claim the speedup is an artifact of a slow
-                           setter rather than a slow rasterizer.
+The GPU column is a whole-batch render divided by the batch size; batch 1 is included to show launch
+overhead.
 
-The GPU column is a whole-batch render divided by the batch size, which is the point rather than a
-concession: the kernel is bandwidth-bound on its own output, so per-frame cost only becomes meaningful
-once the launch is saturated, and a batch of 1 is reported as well to show exactly how far off launch
-overhead is.
+Both columns depend on the host. The CPU renderer is single-threaded Python and slows sharply under
+load, and some GPU families (the ray-cast ones) are host-bound inside their per-chunk Python loop. Each
+GPU row therefore records ``cpu_frac`` (process CPU seconds per wall second; near 0 means the device is
+the limit) and the load average is recorded around the sweep. Read speedups as orders of magnitude.
 
-NEITHER COLUMN IS UNCONDITIONALLY REPRODUCIBLE, so each row carries the evidence for its own case.
-
-The CPU column is a single-threaded Python renderer competing with whatever else the node is running,
-and the same measurement has produced 422 frames/s on an idle node and 3 frames/s with three other jobs
-resident — a factor of 140 that has nothing to do with either renderer. So the load average is captured
-around the sweep and written into the output, the speedup column is a ratio to read as an order of
-magnitude rather than to three digits, and a CPU baseline taken on a busy node should be discarded, not
-averaged.
-
-The GPU column used to be described here as repeating across nodes to 0.4% — "one kernel on a device
-this job owns". That is true of the fused rasterizer and FALSE of the ray-cast families, which was
-found by two of this repo's own benchmarks disagreeing 3.6x on DMCBallInCupCatch at 84 px, batch 4096.
-Measured: that render spends **196% of its wall time on CPU** — two cores saturated inside
-``DMControlSuite.render``'s per-chunk Python loop, with the device waiting — so it is host-bound, and
-the number it produces is a property of the node's processor and its load. The same env, same
-supersample, measured 3,664 frames/s on an idle node and 271-978 on contended ones: a 13x spread on a
-column that claimed 0.4%. Every GPU row therefore records ``cpu_frac`` and the load average alongside
-the throughput. Read a row with ``cpu_frac`` near 1 or above as a host measurement that does not
-travel; a row near 0 is the device and does.
-
-Nothing here is env-specific. Every env in ``stable_envs.registry.REGISTRY`` is benchmarked, and any env with a
-reference renderer gets the CPU comparison; the rest get the GPU columns only. Resolutions are per env:
-``native`` resolves to the env's ``default_size``, and an explicitly requested size an env cannot produce
-(MiniGrid needs a whole number of tiles) is recorded with the env's own message rather than silently
-dropped. Every measurement is wrapped, so an env that cannot run leaves a row saying why instead of
-ending the sweep.
+Every env in ``stable_envs.registry.REGISTRY`` is measured; envs with a reference renderer also get the
+CPU column. ``native`` resolves to each env's ``default_size``. Every measurement is wrapped, so a
+failing env records its error instead of ending the sweep.
 
     python examples/bench_gpu_vs_cpu.py --out results
 """
@@ -72,45 +44,21 @@ def _err(e: BaseException) -> dict:
 
 
 def make_env(name: str, batch: int, size: int, ss: int | None):
-    """Build the env, letting it choose its own supersample unless one is explicitly REQUESTED.
+    """Build the env; ``ss=None`` leaves the class's own ``default_supersample`` in place.
 
-    ``ss=None`` means "whatever this class declares", and that is not the same thing as 1. Forty-four
-    of the registered classes — every ``DMControlSuite`` domain, every OGBench and D4RL maze, four
-    MuJoCo locomotion envs — set ``default_supersample = 2``, because their reference is MSAA'd and a
-    hard silhouette is the wrong answer at a mover's edge. ``se.make(name)`` gives a user ss=2 for
-    those; passing ``supersample=1`` gives a DIFFERENT PICTURE, four times cheaper.
-
-    Measured in one process on an idle node, ``supersample=1`` against the class's own value: DMCBallInCupCatch at
-    84px batch 4096 is 4,272 against 3,683 frames/s (1.16x), AntmazeLargeNavigate at 224px 70,598
-    against 55,947 (1.26x), MujocoPusher at 240px 14,938 against 4,475 (3.3x). The ratio is not a
-    constant because these renders are host-bound (see ``_median_and_cpu``) and ss=2 quadruples the
-    per-chunk Python loop, so it grows with how contended the node is — on a busy one the same
-    ball_in_cup A/B measured 1,149 against 356.
+    ``ss=None`` must not become ``supersample=1``: classes that declare ``default_supersample = 2``
+    would then render a different, cheaper picture than ``se.make(name)`` gives.
     """
     kw = {} if ss is None else {"supersample": int(ss)}
     return se.make(name, num_envs=batch, size=size, device=DEVICE, **kw)
 
 
-#: The device every timed render in this file runs on. It is a variable so the same timing loop, warm-up,
-#: supersample resolution and output-budget arithmetic run on CPU or CUDA; a hardcoded ``"cuda"``
-#: would leave the stable-envs CPU path unmeasured (every committed ``cpu`` column is the official
-#: renderer). Duplicating the loop into a second script is how two files come to describe different
-#: pictures.
+#: The device every timed stable-envs render runs on.
 DEVICE = "cuda"
 
 
-def set_device(dev: str) -> None:
-    global DEVICE
-    DEVICE = str(dev)
-
-
 def _sync() -> None:
-    """Block until queued work has actually finished, on devices where that is a distinct step.
-
-    On CUDA the launch is asynchronous and timing without this measures how fast Python can enqueue,
-    which for this kernel is about two orders of magnitude off. On CPU the call would raise if CUDA is
-    absent, and there is nothing to wait for anyway -- ``render`` has already returned.
-    """
+    """Wait for queued device work; a no-op on CPU."""
     if DEVICE == "cuda":
         torch.cuda.synchronize()
     elif DEVICE == "mps":
@@ -122,39 +70,16 @@ def parse_ss(tok: str) -> int | None:
     return None if str(tok).strip().lower() in ("native", "default", "env", "none") else int(tok)
 
 
-#: Wall-clock budget for one timed cell. Repetitions exist to beat down noise, and noise is a fixed
-#: absolute quantity here (launch jitter, a few hundred microseconds), so a cell that already takes tens
-#: of milliseconds does not need 25 of them. Without this the sweep is dominated by its slowest env: at
-#: 5,000 frames/s a batch of 65,536 is 13 s per repetition, i.e. five minutes for one table cell.
+#: Wall-clock budget for one timed cell; repetitions stop once it is spent and ``MIN_REPS`` are taken.
 CELL_BUDGET_S = 1.0
 MIN_REPS = 3
 
-#: There is deliberately NO synthetic "is this node busy" gate here, and the reason is a measurement.
-#: A fixed single-threaded arithmetic loop was tried as one and does not detect the condition at all:
-#: it takes 0.076 s on a node at load 3 and 0.061 s on the same cluster at load 209 — *faster* on the
-#: busy host, because the loop is register-resident and what actually varies is clock. Meanwhile the
-#: official renderers on the busy host ran up to 11x slow (MiniGridKeyCorridor 37 frames/s against 425,
-#: Pendulum 38 against 341), because they are memory-heavy rather than arithmetic-heavy. So the sweep
-#: records the load average and says plainly that the CPU column does not travel, rather than shipping
-#: an instrument that reads plausibly and measures the wrong thing.
-
 
 def _median_and_cpu(fn, reps: int) -> tuple[float, float]:
-    """``(median wall seconds, CPU seconds per wall second)`` over up to ``reps`` synced timings.
+    """``(median wall seconds, CPU seconds per wall second)`` over up to ``reps`` synchronized timings.
 
-    Timed with an explicit synchronize on both sides: the launch is asynchronous, so timing without it
-    measures how fast Python can enqueue work, which for this kernel is roughly two orders of magnitude
-    off.
-
-    The CPU fraction says whether the number is portable. ``time.process_time`` counts only
-    seconds this process spent ON a CPU, so a render blocked on the device costs wall time and no CPU
-    time: a fraction near 0 means the device is the limit and the row travels between nodes, and a
-    fraction at or above 1 means the host is busy for the whole render and the row is a property of
-    the node's CPU and of what else is running on it.
-
-    Measured, DMCBallInCupCatch at 84 px batch 4096 reports **196%** — two cores saturated, the GPU
-    waiting — and the same configuration measured 3,664 f/s on an idle node and 271-978 f/s on
-    contended ones, a 13x spread on what the report was calling a GPU number.
+    A CPU fraction near 0 means the device is the limit; at or above 1 the host is busy for the whole
+    render and the number depends on the machine and its load.
     """
     for _ in range(2):
         fn()
@@ -184,10 +109,8 @@ def _median(fn, reps: int) -> float:
 def states_for(pool: np.ndarray, batch: int) -> np.ndarray:
     """``batch`` states, tiling the pool if it is smaller.
 
-    The pool is drawn once per env rather than per cell because ``sample_states`` is not free for every
-    env — the tile-based ones step the official simulator to build it — and drawing it seven times per
-    resolution would dominate the sweep. Repeating states cannot flatter the renderer: it evaluates every
-    primitive per environment regardless, and the output bytes are the same either way.
+    The pool is sampled once per env and size because ``sample_states`` steps the reference simulator
+    for some envs. Repeated states do not change render cost.
     """
     if len(pool) >= batch:
         return pool[:batch]
@@ -199,9 +122,7 @@ def gpu_throughput(
 ) -> dict:
     """One full-batch render, as frames/s, µs/frame and output GB/s.
 
-    ``hw`` is the frame shape measured from an actual render rather than assumed to be ``size x size``.
-    Several envs are not square — highway-env draws 150x600, Craftax 112x144 — and allocating a square
-    ``out=`` buffer for them fails with a reshape error that reads like a renderer bug.
+    ``hw`` is the frame shape measured from a render; several envs are not square.
     """
     fh, fw = hw
     out_gb = batch * fh * fw * 3 / 1e9
@@ -222,8 +143,7 @@ def gpu_throughput(
         if DEVICE == "cuda":
             torch.cuda.reset_peak_memory_stats()
         dt, cpu_frac = _median_and_cpu(lambda: env.render(st, out=out), reps)
-        # The RESOLVED supersample, read off the object rather than off the flag. A row that does not
-        # carry it cannot be compared with a row from another script.
+        # Record the resolved supersample, not the requested one.
         return {
             "batch": batch,
             "size": size,
@@ -249,12 +169,7 @@ def gpu_throughput(
 
 
 def _peak_gb() -> float:
-    """Peak bytes for the timed cell: device allocator on CUDA, process RSS on the CPU.
-
-    They are not the same quantity and the field does not pretend they are -- the row carries its own
-    ``device``, so a reader can tell which one this is. The CPU number is a high-water mark for the
-    whole process rather than for this cell, which is the limit of what ``resource`` can report.
-    """
+    """Peak GB: device allocator peak on CUDA, otherwise the whole process's peak RSS."""
     if DEVICE == "cuda":
         return torch.cuda.max_memory_allocated() / 1e9
     try:
@@ -272,13 +187,8 @@ def gpu_breakdown(
 ) -> dict:
     """Split ``render`` into building the ``Scene2D`` and rasterizing it.
 
-    The two halves have different cost models and the split is not a detail: the rasterizer is a single
-    GPU launch whose cost scales with output pixels, while ``scene()`` is a few dozen small torch ops
-    issued from Python, whose cost is dominated by launch overhead and is therefore almost independent of
-    the batch. Reporting only the total hides that the small-batch numbers are measuring Python.
-
-    Envs that do not build a ``Scene2D`` — the tile-atlas family renders by gathering instead — have no
-    such split, and say so rather than reporting zeros.
+    ``scene()`` cost is mostly Python launch overhead and nearly batch-independent; rasterizing scales
+    with output pixels. Envs that do not build a ``Scene2D`` report a skip.
     """
     from stable_envs.render.raster2d import render as render_scene
 
@@ -318,12 +228,9 @@ def gpu_breakdown(
 
 
 def cpu_throughput(cls, name: str, size: int, frames: int, pool: np.ndarray) -> dict | None:
-    """The official renderer's cost for the same ``state -> frame`` transformation.
+    """The reference renderer's cost for the same ``state -> frame`` transformation, one frame at a time.
 
-    Frames are rendered one at a time because that is the only thing the reference offers — there is no
-    batched entry point to give it a fairer shot at. Where the env exposes a per-state setter the two
-    halves are timed apart; where it only offers a batch-level ``reference_render`` the combined number
-    is all there is, and only that is reported.
+    Where the env exposes a per-state setter, the draw alone is also timed.
     """
     if not hasattr(cls, "reference_env") or getattr(cls, "reference_id", None) is None:
         return None
@@ -332,21 +239,13 @@ def cpu_throughput(cls, name: str, size: int, frames: int, pool: np.ndarray) -> 
         ref = cls.reference_env(size=size)
         states = states_for(pool, frames + 8)
 
-        # The combined number goes through the env's own reference bridge, which is the only entry point
-        # every env is guaranteed to have and is exactly the transformation the GPU path performs.
         cls.reference_render(ref, states[:8])  # warm up surfaces, caches, JITs
         t0 = time.perf_counter()
         cls.reference_render(ref, states[8:])
         dt_full = (time.perf_counter() - t0) / frames
 
-        # The draw-alone split is optional: it needs a per-state setter and a render hook, which is a
-        # gym_pusht-shaped interface, not a universal one. Where it is missing the combined number stands
-        # on its own rather than being approximated.
-        # ``getattr``, not ``ref.unwrapped``: a reference is not always a gymnasium env. dm_control
-        # hands back an ``Environment`` and Jumanji a tuple, neither of which has ``unwrapped``, and
-        # reaching for it threw out of this try -- discarding the combined number that had ALREADY been
-        # measured and reporting the whole row as an error. The draw-alone split is an optional extra;
-        # failing to take it must not cost the measurement it is an extra to.
+        # Optional draw-alone timing. Not every reference is a gymnasium env with ``unwrapped``, and
+        # failing here must not discard the timing above.
         dt_draw = None
         u = getattr(ref, "unwrapped", None)
         if u is not None and hasattr(cls, "reference_set_state") and hasattr(u, "_render"):
@@ -390,14 +289,9 @@ def cpu_throughput(cls, name: str, size: int, frames: int, pool: np.ndarray) -> 
 
 
 def _carryover_note(results: dict) -> str:
-    """Name the envs whose rows predate this run, or say there are none.
+    """Name the merged envs whose GPU rows carry no resolved supersample.
 
-    The file is a MERGE: a sweep can be split by ``--envs`` and a reference env can take the process
-    down mid-run, so rows accumulate across runs. That is deliberate. What is not acceptable is the
-    header then reporting one ``supersample`` as though it described every row -- a crashed sweep left
-    this file claiming ``native`` while nine envs still held rows forced to 1, and nothing said so.
-    A row measured by the current code records its resolved supersample; one that does not is older
-    than that change, and is named here rather than averaged in silently.
+    Results merge across runs, so the header's supersample setting may not describe every row.
     """
     stale = sorted(
         name
@@ -406,7 +300,7 @@ def _carryover_note(results: dict) -> str:
         and not any(r.get("supersample") is not None for r in rows)
     )
     if not stale:
-        return " Every row below was measured by the current code, which records the value it resolved."
+        return ""
     return (
         f" **{len(stale)} envs below carry rows from an earlier run that did not record a resolved "
         f"supersample, so the line above does not describe them: "
@@ -424,10 +318,8 @@ def markdown(results: dict) -> str:
         f"Measured on `{results['device']}` / `{results['cpu']}`, "
         f"torch {results['torch']}, {results['cpu_count']} cores visible.",
         f"Supersample: `{results['supersample']}` — with `native`, every env renders at its own "
-        f"`default_supersample`, which is the picture `se.make(name)` gives and the one every parity "
-        f"number in this repo is measured under. Each row below carries the RESOLVED value; forcing "
-        f"a number instead makes 44 of the classes report a cheaper picture than they ship."
-        + _carryover_note(results),
+        f"`default_supersample`, which is the picture `se.make(name)` gives. Each row below carries "
+        f"the resolved value." + _carryover_note(results),
         f"Median of {results['reps']} full-batch renders (GPU) and {results['cpu_frames']} sequential frames (CPU).",
         "",
         (
@@ -437,15 +329,10 @@ def markdown(results: dict) -> str:
             else ""
         )
         + "Each GPU row carries `cpu%`, the process CPU seconds per wall second of the timed loop. "
-        "Near 0 the device is the limit and the row travels between nodes; at or above 100% the host "
-        "is busy for the whole render and the row is a measurement of this node's processor under "
-        "this node's load — the ray-cast families sit there (DMCBallInCupCatch measures 196%, and "
-        "the same configuration has produced 3,664 frames/s idle and 271 contended). The CPU column "
-        "does not reproduce under contention at all: the same sweep on a busier host measured "
-        "MiniGridKeyCorridor's official renderer at 37 frames/s against 425, and elsewhere in this "
-        "repo one official renderer has gone from 422 frames/s idle to 3 with three other jobs "
-        "resident. Read every speedup as an order of magnitude, and discard a baseline taken on a "
-        "loaded node rather than averaging it in.",
+        "Near 0 the device is the limit; at or above 100% the host is busy for the whole render and "
+        "the row depends on this machine's processor and load. The CPU column slows sharply under "
+        "contention. Read every speedup as an order of magnitude, and discard a baseline taken on a "
+        "loaded machine.",
         "",
         f"Registry at run time ({len(results['envs'])} envs): {', '.join(sorted(results['envs']))}.",
         "",
@@ -575,17 +462,13 @@ def main() -> None:
         "supersample": a.ss,
         "reps": a.reps,
         "cpu_frames": a.cpu_frames,
-        # The CPU baseline is only meaningful on a node this job effectively owns, so the
-        # evidence for that is recorded rather than assumed. One entry at the start, one after
-        # every env, so a sweep that started idle and ended contended is visible in the file.
+        # Load average at the start, then after every env.
         "loadavg": [os.getloadavg()[0]],
         "registry_size": len(se.registry.REGISTRY),
         "import_errors": se.import_errors(),
         "envs": {},
     }
-    # Merge into any previous run, per env. The registry is large enough that sweeping it at several
-    # resolutions does not fit one allocation, so the sweep has to be resumable and splittable by
-    # --envs; replacing the file would make the last partial run delete every earlier measurement.
+    # Merge into any previous run, per env, so a sweep can be split with --envs and resumed.
     prev = outdir / "bench_gpu_vs_cpu.json"
     if prev.exists():
         try:
@@ -594,13 +477,7 @@ def main() -> None:
             print(f"previous results unreadable ({type(e).__name__}); starting fresh", flush=True)
 
     def flush() -> None:
-        """Write after every env.
-
-        A reference env can take the process down in a way Python cannot catch — highway-env's pygame
-        path aborts with SIGABRT — and a sweep that only writes at the end loses every measurement taken
-        before the crash. Writing incrementally means a crash costs one env and the rerun is a --skip
-        away.
-        """
+        """Write after every env, so a reference that aborts the process loses only that env."""
         results["loadavg"] = results["loadavg"][:1] + [os.getloadavg()[0]]
         (outdir / "bench_gpu_vs_cpu.json").write_text(json.dumps(results, indent=2))
         (outdir / "bench_gpu_vs_cpu.md").write_text(markdown(results))

@@ -1,7 +1,6 @@
-"""Single actions and known action chunks, with independent output slices.
+"""Single actions and known action chunks, with independent State and frame selection.
 
-Run with python examples/action_sequences.py from an installed checkout.
-The main guard also permits switching to an environment with process routing.
+python examples/action_sequences.py
 """
 
 import torch
@@ -24,7 +23,7 @@ def main():
         print("All States:", sequence["states"].batch_size)
         print("All frames:", tuple(sequence["frames"].shape))
         print("Valid transitions:", sequence["valid"].sum().item())
-        final_state = sequence["state"]  # No additional get_state() call needed.
+        final_state = sequence["state"]
 
         # Same actions from the same State, selecting the two histories separately.
         env.set_state(initial)

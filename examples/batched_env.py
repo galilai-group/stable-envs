@@ -1,4 +1,4 @@
-"""Batched construction, specs, a short last batch, and explicit close.
+"""Batched construction, specs, a short last batch, and the context-manager lifecycle.
 
 python examples/batched_env.py
 python examples/batched_env.py --num-envs 8 --short 3 --device cpu
@@ -9,10 +9,12 @@ from __future__ import annotations
 import argparse
 import sys
 
+import torch
+
+import stable_envs as snv
+
 
 def resolve_device(requested: str) -> str:
-    import torch
-
     if requested == "auto":
         return "cuda" if torch.cuda.is_available() else "cpu"
     if requested.startswith("cuda") and not torch.cuda.is_available():
@@ -29,12 +31,6 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--seed", type=int, default=0)
     args = p.parse_args(argv)
 
-    try:
-        import stable_envs as snv
-    except ImportError as e:
-        print(f"core dependency missing: {e}", file=sys.stderr)
-        return 1
-
     if args.env not in snv.list_envs():
         print(f"{args.env!r} is not registered. import_errors={snv.import_errors()}", file=sys.stderr)
         return 1
@@ -43,7 +39,6 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     device = resolve_device(args.device)
-    cls = getattr(snv, args.env)
     print(f"stable-envs {snv.__version__}  {args.env}  num_envs={args.num_envs}  device={device}")
     print(f"this interpreter: {len(snv.list_envs())} envs, families={snv.list_families()}")
     meta = snv.info(args.env)
@@ -52,13 +47,7 @@ def main(argv: list[str] | None = None) -> int:
         f"has_dynamics={meta['has_dynamics']} reference_id={meta['reference_id']}"
     )
 
-    try:
-        env = cls(num_envs=args.num_envs, device=device)
-    except Exception as e:
-        print(f"{args.env} refused to construct on {device}: {type(e).__name__}: {e}", file=sys.stderr)
-        return 1
-
-    with env:
+    with snv.make(args.env, num_envs=args.num_envs, device=device) as env:
         assert len(env) == args.num_envs
         state = env.reset(seed=args.seed)
         print(f"state_spec keys: {list(env.state_spec.keys())}")
