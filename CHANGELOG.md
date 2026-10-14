@@ -15,6 +15,7 @@
   with stable-worldmodel.
 - Source-comparison tests: each environment is checked against the library it ports and against
   stable-worldmodel, for State, simulation, tasks and pixels.
+- `stable-envs doctor` checks the driver, Warp and MuJoCo OpenGL setup per env family.
 - `stable_envs.testing` measurement helpers, the `benchmarks/` harness and MkDocs documentation.
 
 See [limitations](docs/concepts/limitations.md) for known gaps.
