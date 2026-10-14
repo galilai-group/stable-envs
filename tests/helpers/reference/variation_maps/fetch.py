@@ -1,59 +1,25 @@
-"""The twelve ``swm/Fetch*-v3`` ids, mapped once as a family.
+"""``VariationMap``s for the twelve ``swm/Fetch*-v3`` ids.
 
-``stable_worldmodel`` reaches four gymnasium-robotics scenes through twelve ids, and the ``Dense``
-and ``Dict`` suffixes change the reward and the observation container and not a pixel. Their
-variation spaces are identical per scene, so this module builds twelve maps from ONE vocabulary plus
-a per-scene difference table.
+The ids cover four gymnasium-robotics scenes; the ``Dense`` and ``Dict`` suffixes change the reward
+and the observation container but no pixel, and the variation spaces are identical per scene, so the
+twelve maps come from one vocabulary plus a per-scene difference.
 
-TWO LEAVES THAT REACH NOTHING UPSTREAM
---------------------------------------
+Dead upstream: ``camera.angle_delta`` rotates ``model.cam_pos`` for the model cameras, but
+``MujocoFetchEnv`` renders through the free camera (0/255 at +-10 deg on all four scenes).
+``object.color`` on Reach targets ``block_mat``/``puck_mat``, which ``reach.xml`` binds to no geom.
+Our reset still accepts ``camera.angle_delta``, because naming it unbinds the materials (below).
 
-``camera.angle_delta`` rotates ``model.cam_pos`` for every MODEL camera, and ``MujocoFetchEnv``
-renders through the FREE camera from ``DEFAULT_CAMERA_CONFIG``: measured 0/255 over 0% of the frame
-at +-10 deg on all four scenes. Mapping it onto our working camera would move our frame where the
-reference's does not. Our reset still accepts it, because naming it detaches the materials (below).
+``background.color`` drives two of our leaves, ``floor.color`` and ``sky.color``. Our ``sky.color``
+default draws the registered gradient, which has no swm spelling; any other value fills the sky flat,
+as swm does. ``light.intensity`` is absolute in swm and a multiplier on the model's 0.8 here, so
+``ours = theirs * 1.25``. The start-position, ``block.angle`` and ``block.mass`` leaves are reset
+options: the first four land in State, the mass is installed in the simulator.
 
-``object.color`` on Reach resolves the object through ``block_mat``/``puck_mat``, which ``reach.xml``
-compiles onto no geom: two maximally different colours give 0/255 over 0% of the frame.
-
-THE MAPPED LEAVES, AND THE UNIT SHIFTS IN THEM
-----------------------------------------------
-
-``table.color`` and ``object.color`` are ours by name and units.
-
-``background.color`` is two of our leaves at once: the ``floor_mat`` geoms (``floor.color``) and the
-skybox texture (``sky.color``), which swm overwrites with one flat colour truncated to uint8. Our
-``sky.color`` at its default draws the registered 16-colour gradient, so the default frame is the
-official one; any other value fills the sky flat exactly as swm does. That gradient has no swm
-spelling, which is the one place a style round trip through swm units is not the identity.
-
-``light.intensity`` -> ``light.diffuse`` is a scale. swm assigns the light's diffuse absolutely
-(``Box(0, 1)``); ours multiplies the model's own 0.8, so ``ours = theirs * 1.25`` and swm's whole
-range fits our ``Box(0, 2)``.
-
-``rendering.transparent_arm`` writes alpha 0.3 into every ``robot0:`` geom. Our MJWarp path renders
-the scene without the robot and blends every front face of every robot geom over it in MuJoCo's
-order (sorted by bounding-sphere distance, front to back and then back to front, into an 8-bit
-frame); the OpenGL path sets the same alpha and lets MuJoCo draw it.
-
-``agent.start_position``, ``goal.start_position``, ``block.start_position``, ``block.angle`` and
-``block.mass`` are reset options with swm's names: the first four land in our State (``qpos`` and
-``goal``), and the mass is our ``block.mass`` leaf, installed in the simulator on reset.
-
-WHERE OUR RESET DELIBERATELY DIFFERS FROM THE WRAPPER'S
--------------------------------------------------------
-
-Any of swm's six visual leaves unbinds the table, floor and object materials
-(``model.geom_matid[i] = -1``), dropping them to the compiler's 0.5 grey; our reset reproduces that
-for the episode. swm keeps the materials unbound, and keeps a moved ``initial_gripper_xpos``, for the
-life of the env; ours restores both on the next reset that does not name them, as every leaf not
-named in a reset returns to its default. A plain ``reset()`` on a swm id also samples
-``DEFAULT_VARIATIONS``; ours samples nothing unless ``options["variation"]`` names it.
-
-WHAT OUR SPACE HAS THAT SWM'S DOES NOT
---------------------------------------
-
-``goal.color``, ``arm.color`` and the three working camera knobs.
+Reset differences: any of swm's six visual leaves unbinds the table, floor and object materials
+(``geom_matid = -1``), which our reset reproduces for the episode. swm keeps them unbound, and keeps
+a moved ``initial_gripper_xpos``, for the life of the env; ours restores both on the next reset that
+does not name them. A plain swm ``reset()`` samples ``DEFAULT_VARIATIONS``; ours samples only the
+leaves named in ``options["variation"]``.
 """
 
 from __future__ import annotations
@@ -83,9 +49,9 @@ _DEAD_CAMERA = (
     "move our frame where the reference's does not, so it is classified rather than fabricated"
 )
 
-#: swm leaves that reach no pixel and no state IN SWM ITSELF, each carrying the measurement.
+#: swm leaves that reach no pixel and no state in swm itself, each carrying the measurement.
 _DEAD_UPSTREAM = {"camera.angle_delta": _DEAD_CAMERA}
-#: Reach's only extra: swm still OFFERS object.color there and it reaches nothing.
+#: On Reach swm offers object.color, and it reaches nothing.
 _REACH_OBJECT = {
     "object.color": "DEAD UPSTREAM on Reach (measured 0/255 over 0% of the frame between two "
     "maximally different colours): the wrapper resolves the object through the "
@@ -152,9 +118,7 @@ def _map_for(scene: str, suffix: str) -> VariationMap:
     )
 
 
-#: our class name -> how its appearance relates to the official swm env's. Twelve entries, one per
-#: registered Fetch id, built from one vocabulary so a change to the family cannot reach eleven of
-#: the twelve.
+#: our class name -> its map, one per registered Fetch id.
 MAPS: dict[str, VariationMap] = {
     f"Fetch{scene}{suffix}": _map_for(scene, suffix) for scene in SCENE_HAS_OBJECT for suffix in SUFFIXES
 }
@@ -163,15 +127,9 @@ MAPS: dict[str, VariationMap] = {
 def swm_variation_space(swm_id: str):
     """The live ``variation_space`` of a ``swm/Fetch*-v3`` id.
 
-    Constructs the id and hands the live env to ``interop.swm_variation_space``, which
-    walks the wrapper chain. It has to be walked rather than read off ``unwrapped``: ``FetchWrapper``
-    is a ``gym.Wrapper`` around the official ``MujocoFetchEnv``, so ``unwrapped`` is the official env
-    and has no ``variation_space`` at all (it raised ``AttributeError`` for all twelve ids until
-    ``check_mapping`` is fixed centrally). This is the id-taking convenience over that
-    function, and deliberately not a second implementation of it — the discovery rule lives in one
-    place so a future wrapper change cannot fix ``check_mapping`` and leave this module behind.
-
-    Closes the env on every path, including the failure path.
+    ``FetchWrapper`` wraps the official ``MujocoFetchEnv``, so ``unwrapped`` has no variation space;
+    this delegates to ``variation.swm_variation_space``, which walks the wrapper chain. Closes the env
+    on every path.
     """
     import gymnasium
     import stable_worldmodel  # noqa: F401

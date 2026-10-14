@@ -1,8 +1,6 @@
-"""SWM variation correspondence: evidence, not a shipped stable-envs API.
+"""SWM variation correspondence tables, imported only by tests and regression scripts.
 
-These tables record how stable-worldmodel variation leaves relate to
-stable-envs Variation leaves. They are imported only by tests and
-regression scripts.
+They record how stable-worldmodel variation leaves relate to stable-envs Variation leaves.
 """
 
 from __future__ import annotations
@@ -13,17 +11,13 @@ from typing import Any
 
 import numpy as np
 
-# ====================================================================== variation mapping
-
 
 @dataclass(frozen=True)
 class VariationMap:
-    """How one stable-envs env's appearance relates to its ``stable_worldmodel`` counterpart.
+    """How one stable-envs env's variation leaves relate to its ``stable_worldmodel`` counterpart.
 
-    Written down rather than inferred by name matching. Name matching gets the easy 80% right and
-    then silently mis-maps the interesting cases — PushT's absolute-vs-multiplier scales would map
-    cleanly by name and be wrong by a factor of 40 — and it cannot express "swm has this leaf and we
-    deliberately do not", which is the half of the mapping a user actually needs to read.
+    Written down rather than inferred by name: name matching mis-maps cases such as PushT's
+    absolute-vs-multiplier scales, and cannot express a swm leaf that is deliberately not carried.
     """
 
     #: the gymnasium id of the official swm env this env reproduces
@@ -34,50 +28,38 @@ class VariationMap:
     renamed: Mapping[str, str] = field(default_factory=dict)
     #: ``our_path -> (swm_path, factor)`` with ``ours = theirs * factor``
     scaled: Mapping[str, tuple[str, float]] = field(default_factory=dict)
-    #: ``our_path -> (swm_path, factor, offset)`` with ``ours = theirs * factor + offset``. The
-    #: general form of ``scaled``, kept separate rather than widening it because ``scaled``'s
-    #: two-tuple is what the four earlier maps are written in and a silent arity change is the one
-    #: edit a reader cannot see. It exists for the leaves whose two libraries agree on WHAT the knob
-    #: means and disagree on how it is spelled: an inverted binary switch is ``(-1.0, 1.0)``, a unit
-    #: shift is ``(1.0, k)``. The inverse is ``theirs = (ours - offset) / factor``, so a ``factor`` of
-    #: zero is not a mapping and is refused.
+    #: ``our_path -> (swm_path, factor, offset)`` with ``ours = theirs * factor + offset``, for knobs
+    #: spelled differently: an inverted binary switch is ``(-1.0, 1.0)``, a unit shift ``(1.0, k)``.
+    #: The inverse is ``theirs = (ours - offset) / factor``, so a zero ``factor`` is refused.
     affine: Mapping[str, tuple[str, float, float]] = field(default_factory=dict)
-    #: ``our_path -> swm_path`` for COLOURS we hold as 0-255 channels and swm holds in [0, 1].
-    #: Separate from ``scaled`` because a factor of 255 alone is the wrong conversion: ``to_u8``
-    #: truncates and swm's own ``_color_swaps`` writes ``uint8(v * 255 + 0.5)``, so 0.3 is 77 to swm
-    #: and 76 through a bare multiply. The rounding is part of the mapping, not of the caller.
+    #: ``our_path -> swm_path`` for colours held as 0-255 channels here and in [0, 1] by swm. Not a
+    #: ``scaled`` factor of 255: swm's ``_color_swaps`` writes ``uint8(v * 255 + 0.5)``, so 0.3 is 77
+    #: to swm and 76 through a bare multiply.
     rgb255: Mapping[str, str] = field(default_factory=dict)
-    #: ``our_path -> (swm_path, table)`` for DISCRETE leaves whose alternatives are indexed
+    #: ``our_path -> (swm_path, table)`` for discrete leaves whose alternatives are indexed
     #: differently. ``table[swm_index] = our_index``; an swm index with no entry is not reachable and
     #: must be named in ``unsupported``.
     enum: Mapping[str, tuple[str, tuple[int, ...]]] = field(default_factory=dict)
-    #: ``swm_path -> why we do not carry it``. Every swm leaf must appear in exactly one of the
-    #: mapping fields or in one of the four unmapped buckets, and ``check_mapping`` asserts that.
-    #: ``swm_only`` is the original undifferentiated bucket and is kept for the maps that predate the
-    #: four-way taxonomy; new maps should use one of the three below instead.
+    #: ``swm_path -> why we do not carry it``, for leaves not sorted into the three buckets below.
+    #: Every swm leaf belongs in exactly one mapping field or unmapped bucket; ``check_mapping``
+    #: reports the ones that are in neither.
     swm_only: Mapping[str, str] = field(default_factory=dict)
     #: ``swm_path -> reason``: the leaf has a real effect upstream (pixels, or dynamics on a cell that
-    #: simulates) and THIS cell cannot express it. The reason must name the mechanism.
+    #: simulates) and this cell cannot express it. The reason names the mechanism.
     unsupported: Mapping[str, str] = field(default_factory=dict)
-    #: ``swm_path -> measurement``: the leaf reaches no pixel and no state IN SWM ITSELF. The reason
-    #: must carry the measurement that proves it, not an opinion.
+    #: ``swm_path -> measurement``: the leaf reaches no pixel and no state in swm itself. The reason
+    #: carries the measurement.
     dead_upstream: Mapping[str, str] = field(default_factory=dict)
-    #: ``swm_path -> reason``: the leaf is not a question this cell answers at all — a pure dynamics
+    #: ``swm_path -> reason``: the leaf is not a question this cell answers, e.g. a pure dynamics
     #: parameter on a cell that ships a renderer and no simulator.
     not_applicable: Mapping[str, str] = field(default_factory=dict)
-    #: ``swm_path -> caveat`` for leaves that ARE mapped but not over their whole range or not with
-    #: identical semantics. A mapped leaf with a documented gap is still mapped; hiding the gap in
-    #: prose beside the map is how a range gap becomes a surprise.
+    #: ``swm_path -> caveat`` for mapped leaves that differ in range or semantics.
     notes: Mapping[str, str] = field(default_factory=dict)
     #: ``our_path -> why swm has no counterpart``
     ours_only: Mapping[str, str] = field(default_factory=dict)
-    #: ``swm_path -> what is NOT reproduced`` for a leaf that IS mapped (it must appear in one of the
-    #: mapping fields) but whose upstream effect this cell reproduces only in part -- Fetch's
-    #: ``background.color`` writes the floor material AND the skybox texture, and the map carries the
-    #: floor half. Unlike ``notes`` this is a classification, not a caveat: ``classification`` reports
-    #: such a leaf as ``partial`` so a generated completeness table cannot count it as full support,
-    #: and the reason must carry the measured residual. A feasible, required leaf is not declared
-    #: unsupported for want of a renderer capability.
+    #: ``swm_path -> what is not reproduced`` for a mapped leaf whose upstream effect this cell
+    #: reproduces only in part (e.g. a leaf that writes two materials, of which the map carries one).
+    #: ``classification`` reports it as ``partial``; the reason carries the measured residual.
     partial: Mapping[str, str] = field(default_factory=dict)
 
     def __post_init__(self):
@@ -97,8 +79,7 @@ class VariationMap:
     def pairs(self) -> dict[str, tuple[str, float]]:
         """``our_path -> (swm_path, factor)`` over every leaf mapped by a pure multiply.
 
-        ``affine`` is NOT folded in here: this returns two-tuples and a caller that unpacked three
-        would be a silent breakage of the four earlier maps. See ``affine_pairs``.
+        ``affine`` leaves are not included; see ``affine_pairs``.
         """
         out = {p: (p, 1.0) for p in self.identical}
         out.update({a: (b, 1.0) for a, b in self.renamed.items()})
@@ -106,10 +87,9 @@ class VariationMap:
         return out
 
     def affine_pairs(self) -> dict[str, tuple[str, float, float]]:
-        """``our_path -> (swm_path, factor, offset)`` over EVERY numerically mapped leaf.
+        """``our_path -> (swm_path, factor, offset)`` over every numerically mapped leaf.
 
-        The multiply-only leaves appear here with ``offset = 0``, so a caller that wants one uniform
-        rule has one; ``pairs`` stays the two-tuple view the older code is written against.
+        Multiply-only leaves appear with ``offset = 0``.
         """
         out = {o: (t, f, 0.0) for o, (t, f) in self.pairs().items()}
         out.update({o: (t, float(f), float(k)) for o, (t, f, k) in self.affine.items()})
@@ -132,10 +112,7 @@ class VariationMap:
         )
 
     def classification(self) -> dict[str, str]:
-        """``swm_path -> one of mapped / partial / unsupported / dead_upstream / not_applicable / swm_only``.
-
-        The four-way taxonomy, per leaf, from the map itself rather than from prose beside it.
-        """
+        """``swm_path -> one of mapped / partial / unsupported / dead_upstream / not_applicable / swm_only``."""
         out = {p: "mapped" for p in self.mapped_swm_paths()}
         out.update({p: "partial" for p in self.partial})
         for label, bucket in (
@@ -151,11 +128,8 @@ class VariationMap:
     def replacement_class(self) -> dict[str, str]:
         """``swm_path -> NATIVE | PARTIAL | DEAD_UPSTREAM | UNSUPPORTED_MEANINGFUL``.
 
-        Overlay on :meth:`classification` for environment-replacement readiness. The six stored
-        buckets stay as they are so existing tests keep passing: a mass/speed/reset leaf that was
-        ``not_applicable`` because it moved no pixel is still ``not_applicable`` there, and
-        ``UNSUPPORTED_MEANINGFUL`` here. Do not treat "changes no pixel" as a reason to drop a
-        real dynamics/reset/task capability.
+        Overlay on :meth:`classification` for environment-replacement readiness. An unmapped
+        dynamics, reset or task leaf is ``UNSUPPORTED_MEANINGFUL`` here even when it moves no pixel.
         """
         cls = self.classification()
         sibling_native = self._sibling_native_paths()
@@ -396,11 +370,10 @@ VARIATION_MAPS: dict[str, VariationMap] = {
 }
 
 
-#: Certified maps live one module per family under ``variation_maps`` and install themselves
-#: here; see that package's docstring for why they are not more entries in the literal above.
+# The per-family maps in ``variation_maps`` install into the same registry.
 from .variation_maps import install as _install_variation_maps
 
-_install_variation_maps(VARIATION_MAPS)  # noqa: E402,E501
+_install_variation_maps(VARIATION_MAPS)
 
 # swm's PushTDiscrete subclasses PushT and keeps its variation space; test_variation_pusht gates both classes.
 VARIATION_MAPS["PushTDiscrete"] = replace(VARIATION_MAPS["PushT"], swm_id="swm/PushT-Discrete-v1")
@@ -437,11 +410,8 @@ def variation_map(env) -> VariationMap | None:
 def style_from_variation(env, variation: Mapping[str, Any], base=None, strict: bool = False) -> np.ndarray:
     """A swm variation config -> one of our flat ``(style_dim,)`` style rows.
 
-    ``variation`` is whatever ``swm``'s ``variation_space.value`` gives (nested) or what goes into
-    ``options['variation_values']`` (dotted); both are accepted. Leaves swm has and we do not are
-    ignored, which is the whole reason ``VariationMap.swm_only`` exists — with ``strict=True`` an
-    unrecognised leaf raises instead, which is what a test wants and what a user pasting a config
-    does not.
+    ``variation`` may be nested (swm's ``variation_space.value``) or dotted (``options['variation_values']``).
+    Leaves the map does not carry are ignored; with ``strict=True`` a leaf the map does not name raises.
     """
     m = variation_map(env)
     if m is None:
@@ -466,9 +436,7 @@ def style_from_variation(env, variation: Mapping[str, Any], base=None, strict: b
         if theirs not in flat or ours not in layout:
             continue
         o, w = layout[ours]
-        # swm's own quantisation, transcribed from ``GymControlWrapper.render``:
-        # ``(clip(v, 0, 1) * 255 + 0.5).astype(uint8)``. Written here so a colour that round-trips
-        # through this mapping lands on the same uint8 swm would have written.
+        # swm's quantisation from ``GymControlWrapper.render``: ``(clip(v, 0, 1) * 255 + 0.5).astype(uint8)``.
         v = np.clip(np.asarray(flat[theirs], np.float64).reshape(-1)[:w], 0.0, 1.0)
         row[o : o + w] = np.floor(v * 255.0 + 0.5)
     for ours, (theirs, table) in m.enum.items():
@@ -525,9 +493,7 @@ def variation_from_style(env, style) -> dict[str, Any]:
             continue
         o, _ = layout[ours]
         mine = int(round(float(row[o])))
-        # FIRST swm index that selects our alternative. A table may send two swm indices to one of
-        # ours (it does not here); the inverse then names the lower, and the round trip is still the
-        # same appearance, which is what the inverse is for.
+        # If two swm indices select our alternative, the lower one is the same appearance.
         back = [k for k, v in enumerate(table) if int(v) == mine]
         if back:
             out[theirs] = int(back[0])
@@ -540,13 +506,10 @@ def style_from_swm_env(env, swm_env, base=None) -> np.ndarray:
 
 
 def swm_variation_space(swm_env):
-    """The variation space of a live swm env, wherever in its wrapper stack it lives.
+    """The variation space of a live swm env, found by walking its wrapper stack.
 
-    ``unwrapped.variation_space`` is right for the envs whose variation space is on the env itself
-    (swm_nav, PushT, the DM Control wrappers, which are ``gym.Env`` and return ``self`` from
-    ``unwrapped``) and WRONG for the five classic-control ids, where ``GymControlWrapper`` wraps a
-    stock ``gymnasium`` env and ``unwrapped`` reaches past the wrapper to a ``CartPoleEnv`` that has
-    no variation space at all. Walking the stack is right for both.
+    ``unwrapped`` does not work for the classic-control ids: ``GymControlWrapper`` wraps a stock
+    gymnasium env, and ``unwrapped`` reaches past it to an env with no variation space.
     """
     node = swm_env
     while node is not None:
@@ -558,11 +521,11 @@ def swm_variation_space(swm_env):
 
 
 def check_mapping(env) -> dict:
-    """Every leaf of both variation spaces, classified. Used by the example to print a table.
+    """Classify every leaf of both variation spaces.
 
-    Returns ``covered`` (swm leaves we render), ``declared_unmapped`` (swm leaves with a recorded
-    reason), ``undocumented`` (swm leaves in NEITHER — a gap, and the thing this function exists to
-    find), and ``ours_only``.
+    Returns ``covered`` (swm leaves we map), ``declared_unmapped`` (swm leaves with a recorded
+    reason), ``undocumented`` (swm leaves in neither), ``ours_only`` and the per-leaf
+    ``classification``.
     """
     import gymnasium
     import stable_worldmodel  # noqa: F401
@@ -586,7 +549,6 @@ def check_mapping(env) -> dict:
         "mapped_but_absent_from_swm": sorted(mapped - swm_leaves),
         "ours_only": sorted(ours - ours_mapped),
         "ours_only_documented": sorted(set(m.ours_only)),
-        # the four-way taxonomy, one label per swm leaf actually offered by this env
         "classification": {p: cls.get(p, "undocumented") for p in sorted(swm_leaves)},
         "reasons": {p: unmapped[p] for p in sorted(swm_leaves & set(unmapped))},
         "notes": {p: m.notes[p] for p in sorted(swm_leaves & set(m.notes))},
