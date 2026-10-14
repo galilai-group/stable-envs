@@ -1,39 +1,8 @@
 # State corpora
 
-Reached-state arrays that unit and GPU tests render or restore. Files are read
-only; regenerate into a new directory and compare before replacing one.
+Reached-state arrays that tests render or restore. Write regenerated corpora to a new directory and compare first.
 
-## `fidelity/`
-
-One `<Configuration>.npz` per renderer configuration, holding `states` (the
-rows tests render) and `meta` (JSON selection metadata: seed, pool size, kept
-count). They were frozen once by the Step-4 fidelity sampler
-(`docs/research/artifacts/fidelity_step4.py`, `corpus_for`) and first committed
-under `tests/fixtures/regression/join/step4/states/`; the sampler and its
-original location remain in Git history at tag `pre-repository-cleanup`.
-`SHA256SUMS` lists the file hashes, unchanged by the move.
-
-## `rocket_landing/`
-
-The PFRocketLanding reference corpus: `states.npz` (200 reached states over 24
-episodes), its `states.meta.json` sidecar, and `meta.json` describing the state
-and style layouts, recording policy and render validation. Read by
-`tests/unit/test_rocket_landing.py`. Previously
-`tests/fixtures/regression/join/step7/rocket-landing/reference/`; the recorded
-frames and validation records that were not test inputs remain in Git history at
-tag `pre-repository-cleanup`.
-
-## `ogb_manipulation/`
-
-OGBCube and OGBScene reached-state corpora (`<Cell>.npz`, with `states` and JSON
-`meta`) and the pools they were selected from (`<Cell>_pool.npz`). Read by
-`tests/unit/test_ogb_manip.py` to check that the recorded selection indexes the
-kept pool. Previously `tests/fixtures/regression/join/step7/ogb-manipulation/states/`.
-
-## `craftax_classic/` and `craftax_full/`
-
-Step-7 Craftax reached-state corpora: `states.npz`, its `states.meta.json`
-sidecar, and `corpus.json` with the seed, pool size, selected indices and
-hashes. `test_envs_craftax_rocket.py` renders the Classic array;
-`test_craftax_full.py` regenerates the Full pool from `corpus.json` and checks
-its hashes. Previously `tests/fixtures/regression/join/step7/<cell>/corpus/`.
+- `fidelity/<Configuration>.npz`: `states` and JSON `meta` per renderer configuration; `SHA256SUMS` lists the hashes. Read by `tests/unit/test_cpu3d.py`, `tests/gpu/test_fast_paths.py` and others.
+- `rocket_landing/`: `states.npz`, `states.meta.json` and `meta.json` (state/style layout, render validation). Read by `tests/unit/test_rocket_landing.py`.
+- `ogb_manipulation/`: OGBCube/OGBScene corpora and the pools they were selected from. Read by `tests/unit/test_ogb_manip.py`.
+- `craftax_classic/`, `craftax_full/`: `states.npz`, `states.meta.json` and `corpus.json` (seed, pool size, indices, hashes). Read by `tests/unit/test_envs_craftax_rocket.py` and `tests/unit/test_craftax_full.py`.

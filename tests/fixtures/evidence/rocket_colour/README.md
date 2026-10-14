@@ -1,7 +1,5 @@
 # Rocket colour-exactness evidence
 
-`PyFlytRocketLanding.color_exactness_applicability` excuses five lit colour
-leaves from literal RGB equality. It cites this record:
-
-- `colour_law_ceiling.json`: the measured ceiling of bullet3 TinyRenderer's
-  multiplicative lighting law (maximum shading factor below 1).
+`colour_law_ceiling.json` is the maximum shading factor of bullet3 TinyRenderer's lighting law (below 1).
+`PyFlytRocketLanding.color_exactness_applicability` cites it to exempt five lit colour leaves from exact
+RGB equality; `tests/unit/test_conformance_applicability.py` checks the citation.

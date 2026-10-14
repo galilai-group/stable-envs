@@ -36,18 +36,15 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
       "audit_report": "docs/research/native_classic_remaining.md",
-      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "recovery_status": "ACCEPTED_CPU_AND_CUDA",
       "cohort": "remaining-simple-and-source-aligned",
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
       "planned_gate": "scripts/recovery/native_classic_remaining_gate.py",
       "implementation_commit": "b3b6da79555020a3fe9ae046c3f6b4a2bef8a153",
-      "oscar_job": 6626587,
       "evidence": [
         "docs/research/native_classic_remaining.md",
         "docs/research/semantic_recovery_evidence/native_classic_remaining_cpu.json",
         "docs/research/semantic_recovery_evidence/native_classic_remaining_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6608718.out",
-        "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/acceptance.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/simple-6626587.out",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/native-classic-rerun-98c65cb-gate-cuda.json",
@@ -73,13 +70,9 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "ACCEPTED_CPU_AND_OSCAR"
+        "status": "ACCEPTED_CPU_AND_CUDA"
       },
-      "oscar_result": "PASS",
-      "prior_oscar_failure": {
-        "job_id": 6608718,
-        "failure": "Gate bug: continuous MountainCar omission diagnostic subtracts CUDA candidate and CPU reference tensors before completing semantic or renderer acceptance."
-      },
+      "cuda_result": "PASS",
       "acceptance_revision": "98c65cbe6690404bf04a463e72003ba924b6c989",
       "verified_classes": [
         "Acrobot"
@@ -117,7 +110,7 @@
       "test": "tests/integration/test_dmc_first_family_semantics.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "recovery_status": "ACCEPTED_CPU_AND_CUDA",
       "verified_classes": [
         "DMCAcrobotBalance"
       ],
@@ -184,7 +177,7 @@
       "execution_candidate": "DELEGATED",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
       "audit_report": "docs/research/dmc_aligned_recovery.md",
-      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "recovery_status": "ACCEPTED_CPU_AND_CUDA",
       "cohort": "remaining-simple-and-source-aligned",
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
       "planned_gate": "scripts/recovery/dmc_aligned_gate.py",
@@ -193,8 +186,6 @@
         "docs/research/dmc_aligned_recovery.md",
         "docs/research/semantic_recovery_evidence/dmc_aligned_cpu.json",
         "docs/research/semantic_recovery_evidence/dmc_aligned_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6610032.out",
-        "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/acceptance.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/simple-6626669.out",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/dmc-aligned-rerun-57c10c1-continuation-regression-cuda.json",
@@ -222,14 +213,9 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "ACCEPTED_CPU_AND_OSCAR"
+        "status": "ACCEPTED_CPU_AND_CUDA"
       },
-      "oscar_job": 6626669,
-      "oscar_result": "PASS",
-      "prior_oscar_failure": {
-        "job_id": 6610032,
-        "failure": "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved."
-      },
+      "cuda_result": "PASS",
       "acceptance_revision": "57c10c17f1bf74ce565ff80e5f44292e3fc827ad",
       "verified_classes": [
         "DMCBallInCupCatch"
@@ -266,7 +252,7 @@
       ],
       "test": "tests/integration/test_native_classic_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
-      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "recovery_status": "ACCEPTED_CPU_AND_CUDA",
       "verification_scope": {
         "classes": [
           "CartPole"
@@ -286,21 +272,15 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "ACCEPTED_CPU_AND_OSCAR"
+        "status": "ACCEPTED_CPU_AND_CUDA"
       },
       "implementation_commit": "446f8608bc800c2d61701f675a2536df0dcbaa3f",
-      "oscar_job": 6605941,
       "evidence": [
         "docs/research/native_verification.md",
         "docs/research/semantic_recovery_evidence/native_classic_cpu.json",
-        "docs/research/semantic_recovery_evidence/native_classic_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/acceptance.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/native-classic-446f860-gate-cuda.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/native-classic-446f860-renderer-baseline-cuda.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/native-classic-446f860-renderer-cuda.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/family-6605941.out"
+        "docs/research/semantic_recovery_evidence/native_classic_renderer_cpu.json"
       ],
-      "oscar_result": "PASS",
+      "cuda_result": "PASS",
       "verified_classes": [
         "CartPole"
       ]
@@ -339,7 +319,7 @@
       "test": "tests/integration/test_dmc_first_family_semantics.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "recovery_status": "ACCEPTED_CPU_AND_CUDA",
       "verified_classes": [
         "DMCCartpoleSwingup"
       ],
@@ -399,7 +379,7 @@
       "test": "tests/integration/test_dmc_continuation_semantics.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "recovery_status": "ACCEPTED_CPU_AND_CUDA",
       "verification_scope": {
         "classes": [
           "DMCCheetahRun"
@@ -419,7 +399,7 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "ACCEPTED_CPU_AND_OSCAR"
+        "status": "ACCEPTED_CPU_AND_CUDA"
       },
       "state_schema": "qpos, qvel, time, qacc_warmstart, lifecycle step_count/reset_next_step, task cumulative_reward, MT19937 keys/position/has_gauss/cached_gaussian",
       "warmstart_evidence": {
@@ -431,20 +411,12 @@
         "max_error_with_schema": 0.0
       },
       "implementation_commit": "6470521e84a47d5f95a5bd5f0c5a338ab293619f",
-      "oscar_job": 6605999,
       "evidence": [
         "docs/research/dmc_continuation_recovery.md",
         "docs/research/semantic_recovery_evidence/dmc_continuation_cpu.json",
-        "docs/research/semantic_recovery_evidence/dmc_continuation_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/acceptance.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-gate-cuda.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-renderer-baseline-cuda.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-renderer-cuda.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/family-6605999.out",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-reacher-regression-cuda.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-first-family-regression-cuda.json"
+        "docs/research/semantic_recovery_evidence/dmc_continuation_renderer_cpu.json"
       ],
-      "oscar_result": "PASS",
+      "cuda_result": "PASS",
       "verified_classes": [
         "DMCCheetahRun"
       ]
@@ -495,7 +467,6 @@
         "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/CraftaxClassicPixels-acceptance.json"
       ],
       "implementation_commit": "2953735e5eabae96b796843a376abd7150781de4",
-      "oscar_job": 6679082,
       "accepted_classes": [
         "CraftaxClassicPixels"
       ],
@@ -548,7 +519,6 @@
         "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/CraftaxClassicSymbolic-acceptance.json"
       ],
       "implementation_commit": "2953735e5eabae96b796843a376abd7150781de4",
-      "oscar_job": 6679082,
       "accepted_classes": [
         "CraftaxClassicSymbolic"
       ],
@@ -603,7 +573,6 @@
         "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/CraftaxPixels-acceptance.json"
       ],
       "implementation_commit": "2953735e5eabae96b796843a376abd7150781de4",
-      "oscar_job": 6679082,
       "accepted_classes": [
         "CraftaxPixels"
       ],
@@ -656,7 +625,6 @@
         "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/CraftaxSymbolic-acceptance.json"
       ],
       "implementation_commit": "2953735e5eabae96b796843a376abd7150781de4",
-      "oscar_job": 6679082,
       "accepted_classes": [
         "CraftaxSymbolic"
       ],
@@ -683,7 +651,7 @@
       "variation_parity": "PASS_BOUNDED: object mass8 changes dynamics; agent/block/goal start and block angle ordering; persistent versus reset mass; object.color physical invariance and GPU frame effect; seeded object.color",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
+      "renderer_regression": "PASS_CUDA_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
@@ -730,11 +698,10 @@
         "public_environment_integrated": false,
         "representative_cpu_gate_complete": false
       },
-      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_OSCAR_RENDERER",
+      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_CUDA_RENDERER",
       "implementation_commit": "bf9101cbcddbb88566879ae40ce4e1cda0e65550",
       "acceptance_revision": "bf9101cbcddbb88566879ae40ce4e1cda0e65550",
-      "oscar_job": 6646530,
-      "oscar_result": "PASS_RENDERER_ONLY",
+      "cuda_result": "PASS_RENDERER_ONLY",
       "verified_classes": [
         "FetchPickAndPlace"
       ],
@@ -824,11 +791,7 @@
         "observation_integration": "DEFERRED"
       },
       "observation_integration": "DEFERRED",
-      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
-      "family_oscar_jobs": [
-        6649686,
-        6652487
-      ]
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json"
     },
     {
       "historical_id": "swm/FetchPickAndPlaceDense-v3",
@@ -848,7 +811,7 @@
       "variation_parity": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
+      "renderer_regression": "PASS_CUDA_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
@@ -863,10 +826,9 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
       "observation_integration": "DEFERRED",
-      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_OSCAR_RENDERER",
+      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_CUDA_RENDERER",
       "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
-      "oscar_job": 6649686,
-      "oscar_result": "PASS_RENDERER_ONLY",
+      "cuda_result": "PASS_RENDERER_ONLY",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "state_schema": {
         "qpos": {
@@ -955,8 +917,6 @@
         "docs/research/semantic_recovery_evidence/fetch_family/canonical-Slide.json",
         "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
         "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
-        "docs/research/semantic_recovery_evidence/fetch_family/oscar-queue.json",
-        "docs/research/semantic_recovery_evidence/fetch_family/oscar-submit.json",
         "docs/research/semantic_recovery_evidence/fetch_family/provenance.json",
         "docs/research/semantic_recovery_evidence/fetch_family/provenance.out",
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
@@ -999,11 +959,7 @@
         "FetchPickAndPlaceDense"
       ],
       "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
-      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
-      "family_oscar_jobs": [
-        6649686,
-        6652487
-      ]
+      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92"
     },
     {
       "historical_id": "swm/FetchPickAndPlaceDict-v3",
@@ -1023,7 +979,7 @@
       "variation_parity": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
+      "renderer_regression": "PASS_CUDA_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
@@ -1038,10 +994,9 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
       "observation_integration": "DEFERRED",
-      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_OSCAR_RENDERER",
+      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_CUDA_RENDERER",
       "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
-      "oscar_job": 6649686,
-      "oscar_result": "PASS_RENDERER_ONLY",
+      "cuda_result": "PASS_RENDERER_ONLY",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "state_schema": {
         "qpos": {
@@ -1130,8 +1085,6 @@
         "docs/research/semantic_recovery_evidence/fetch_family/canonical-Slide.json",
         "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
         "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
-        "docs/research/semantic_recovery_evidence/fetch_family/oscar-queue.json",
-        "docs/research/semantic_recovery_evidence/fetch_family/oscar-submit.json",
         "docs/research/semantic_recovery_evidence/fetch_family/provenance.json",
         "docs/research/semantic_recovery_evidence/fetch_family/provenance.out",
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
@@ -1174,11 +1127,7 @@
         "FetchPickAndPlaceDict"
       ],
       "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
-      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
-      "family_oscar_jobs": [
-        6649686,
-        6652487
-      ]
+      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92"
     },
     {
       "historical_id": "swm/FetchPush-v3",
@@ -1198,7 +1147,7 @@
       "variation_parity": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
+      "renderer_regression": "PASS_CUDA_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
@@ -1213,10 +1162,9 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
       "observation_integration": "DEFERRED",
-      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_OSCAR_RENDERER",
+      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_CUDA_RENDERER",
       "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
-      "oscar_job": 6649686,
-      "oscar_result": "PASS_RENDERER_ONLY",
+      "cuda_result": "PASS_RENDERER_ONLY",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "state_schema": {
         "qpos": {
@@ -1305,8 +1253,6 @@
         "docs/research/semantic_recovery_evidence/fetch_family/canonical-Slide.json",
         "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
         "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
-        "docs/research/semantic_recovery_evidence/fetch_family/oscar-queue.json",
-        "docs/research/semantic_recovery_evidence/fetch_family/oscar-submit.json",
         "docs/research/semantic_recovery_evidence/fetch_family/provenance.json",
         "docs/research/semantic_recovery_evidence/fetch_family/provenance.out",
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
@@ -1349,11 +1295,7 @@
         "FetchPush"
       ],
       "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
-      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
-      "family_oscar_jobs": [
-        6649686,
-        6652487
-      ]
+      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92"
     },
     {
       "historical_id": "swm/FetchPushDense-v3",
@@ -1373,7 +1315,7 @@
       "variation_parity": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
+      "renderer_regression": "PASS_CUDA_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
@@ -1388,10 +1330,9 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
       "observation_integration": "DEFERRED",
-      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_OSCAR_RENDERER",
+      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_CUDA_RENDERER",
       "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
-      "oscar_job": 6649686,
-      "oscar_result": "PASS_RENDERER_ONLY",
+      "cuda_result": "PASS_RENDERER_ONLY",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "state_schema": {
         "qpos": {
@@ -1480,8 +1421,6 @@
         "docs/research/semantic_recovery_evidence/fetch_family/canonical-Slide.json",
         "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
         "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
-        "docs/research/semantic_recovery_evidence/fetch_family/oscar-queue.json",
-        "docs/research/semantic_recovery_evidence/fetch_family/oscar-submit.json",
         "docs/research/semantic_recovery_evidence/fetch_family/provenance.json",
         "docs/research/semantic_recovery_evidence/fetch_family/provenance.out",
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
@@ -1524,11 +1463,7 @@
         "FetchPushDense"
       ],
       "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
-      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
-      "family_oscar_jobs": [
-        6649686,
-        6652487
-      ]
+      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92"
     },
     {
       "historical_id": "swm/FetchPushDict-v3",
@@ -1548,7 +1483,7 @@
       "variation_parity": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
+      "renderer_regression": "PASS_CUDA_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
@@ -1563,10 +1498,9 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
       "observation_integration": "DEFERRED",
-      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_OSCAR_RENDERER",
+      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_CUDA_RENDERER",
       "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
-      "oscar_job": 6649686,
-      "oscar_result": "PASS_RENDERER_ONLY",
+      "cuda_result": "PASS_RENDERER_ONLY",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "state_schema": {
         "qpos": {
@@ -1655,8 +1589,6 @@
         "docs/research/semantic_recovery_evidence/fetch_family/canonical-Slide.json",
         "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
         "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
-        "docs/research/semantic_recovery_evidence/fetch_family/oscar-queue.json",
-        "docs/research/semantic_recovery_evidence/fetch_family/oscar-submit.json",
         "docs/research/semantic_recovery_evidence/fetch_family/provenance.json",
         "docs/research/semantic_recovery_evidence/fetch_family/provenance.out",
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
@@ -1699,11 +1631,7 @@
         "FetchPushDict"
       ],
       "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
-      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
-      "family_oscar_jobs": [
-        6649686,
-        6652487
-      ]
+      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92"
     },
     {
       "historical_id": "swm/FetchReach-v3",
@@ -1723,7 +1651,7 @@
       "variation_parity": "PASS_BOUNDED_CPU: agent.start_position, goal.start_position, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
+      "renderer_regression": "PASS_CUDA_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
@@ -1738,10 +1666,9 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
       "observation_integration": "DEFERRED",
-      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_OSCAR_RENDERER",
+      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_CUDA_RENDERER",
       "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
-      "oscar_job": 6649686,
-      "oscar_result": "PASS_RENDERER_ONLY",
+      "cuda_result": "PASS_RENDERER_ONLY",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "state_schema": {
         "qpos": {
@@ -1830,8 +1757,6 @@
         "docs/research/semantic_recovery_evidence/fetch_family/canonical-Slide.json",
         "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
         "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
-        "docs/research/semantic_recovery_evidence/fetch_family/oscar-queue.json",
-        "docs/research/semantic_recovery_evidence/fetch_family/oscar-submit.json",
         "docs/research/semantic_recovery_evidence/fetch_family/provenance.json",
         "docs/research/semantic_recovery_evidence/fetch_family/provenance.out",
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
@@ -1874,11 +1799,7 @@
         "FetchReach"
       ],
       "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
-      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
-      "family_oscar_jobs": [
-        6649686,
-        6652487
-      ]
+      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92"
     },
     {
       "historical_id": "swm/FetchReachDense-v3",
@@ -1898,7 +1819,7 @@
       "variation_parity": "PASS_BOUNDED_CPU: agent.start_position, goal.start_position, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
+      "renderer_regression": "PASS_CUDA_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
@@ -1913,10 +1834,9 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
       "observation_integration": "DEFERRED",
-      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_OSCAR_RENDERER",
+      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_CUDA_RENDERER",
       "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
-      "oscar_job": 6649686,
-      "oscar_result": "PASS_RENDERER_ONLY",
+      "cuda_result": "PASS_RENDERER_ONLY",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "state_schema": {
         "qpos": {
@@ -2005,8 +1925,6 @@
         "docs/research/semantic_recovery_evidence/fetch_family/canonical-Slide.json",
         "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
         "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
-        "docs/research/semantic_recovery_evidence/fetch_family/oscar-queue.json",
-        "docs/research/semantic_recovery_evidence/fetch_family/oscar-submit.json",
         "docs/research/semantic_recovery_evidence/fetch_family/provenance.json",
         "docs/research/semantic_recovery_evidence/fetch_family/provenance.out",
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
@@ -2049,11 +1967,7 @@
         "FetchReachDense"
       ],
       "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
-      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
-      "family_oscar_jobs": [
-        6649686,
-        6652487
-      ]
+      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92"
     },
     {
       "historical_id": "swm/FetchReachDict-v3",
@@ -2073,7 +1987,7 @@
       "variation_parity": "PASS_BOUNDED_CPU: agent.start_position, goal.start_position, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
+      "renderer_regression": "PASS_CUDA_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
@@ -2088,10 +2002,9 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
       "observation_integration": "DEFERRED",
-      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_OSCAR_RENDERER",
+      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_CUDA_RENDERER",
       "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
-      "oscar_job": 6649686,
-      "oscar_result": "PASS_RENDERER_ONLY",
+      "cuda_result": "PASS_RENDERER_ONLY",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "state_schema": {
         "qpos": {
@@ -2180,8 +2093,6 @@
         "docs/research/semantic_recovery_evidence/fetch_family/canonical-Slide.json",
         "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
         "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
-        "docs/research/semantic_recovery_evidence/fetch_family/oscar-queue.json",
-        "docs/research/semantic_recovery_evidence/fetch_family/oscar-submit.json",
         "docs/research/semantic_recovery_evidence/fetch_family/provenance.json",
         "docs/research/semantic_recovery_evidence/fetch_family/provenance.out",
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
@@ -2224,11 +2135,7 @@
         "FetchReachDict"
       ],
       "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
-      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
-      "family_oscar_jobs": [
-        6649686,
-        6652487
-      ]
+      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92"
     },
     {
       "historical_id": "swm/FetchSlide-v3",
@@ -2248,7 +2155,7 @@
       "variation_parity": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
+      "renderer_regression": "PASS_CUDA_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
@@ -2263,10 +2170,9 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
       "observation_integration": "DEFERRED",
-      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_OSCAR_RENDERER",
+      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_CUDA_RENDERER",
       "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
-      "oscar_job": 6649686,
-      "oscar_result": "PASS_RENDERER_ONLY",
+      "cuda_result": "PASS_RENDERER_ONLY",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "state_schema": {
         "qpos": {
@@ -2355,8 +2261,6 @@
         "docs/research/semantic_recovery_evidence/fetch_family/canonical-Slide.json",
         "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
         "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
-        "docs/research/semantic_recovery_evidence/fetch_family/oscar-queue.json",
-        "docs/research/semantic_recovery_evidence/fetch_family/oscar-submit.json",
         "docs/research/semantic_recovery_evidence/fetch_family/provenance.json",
         "docs/research/semantic_recovery_evidence/fetch_family/provenance.out",
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
@@ -2399,11 +2303,7 @@
         "FetchSlide"
       ],
       "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
-      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
-      "family_oscar_jobs": [
-        6649686,
-        6652487
-      ]
+      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92"
     },
     {
       "historical_id": "swm/FetchSlideDense-v3",
@@ -2423,7 +2323,7 @@
       "variation_parity": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
+      "renderer_regression": "PASS_CUDA_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
@@ -2438,10 +2338,9 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
       "observation_integration": "DEFERRED",
-      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_OSCAR_RENDERER",
+      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_CUDA_RENDERER",
       "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
-      "oscar_job": 6649686,
-      "oscar_result": "PASS_RENDERER_ONLY",
+      "cuda_result": "PASS_RENDERER_ONLY",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "state_schema": {
         "qpos": {
@@ -2530,8 +2429,6 @@
         "docs/research/semantic_recovery_evidence/fetch_family/canonical-Slide.json",
         "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
         "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
-        "docs/research/semantic_recovery_evidence/fetch_family/oscar-queue.json",
-        "docs/research/semantic_recovery_evidence/fetch_family/oscar-submit.json",
         "docs/research/semantic_recovery_evidence/fetch_family/provenance.json",
         "docs/research/semantic_recovery_evidence/fetch_family/provenance.out",
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
@@ -2574,11 +2471,7 @@
         "FetchSlideDense"
       ],
       "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
-      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
-      "family_oscar_jobs": [
-        6649686,
-        6652487
-      ]
+      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92"
     },
     {
       "historical_id": "swm/FetchSlideDict-v3",
@@ -2598,7 +2491,7 @@
       "variation_parity": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
+      "renderer_regression": "PASS_CUDA_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
@@ -2613,10 +2506,9 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
       "observation_integration": "DEFERRED",
-      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_OSCAR_RENDERER",
+      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_CUDA_RENDERER",
       "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
-      "oscar_job": 6649686,
-      "oscar_result": "PASS_RENDERER_ONLY",
+      "cuda_result": "PASS_RENDERER_ONLY",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "state_schema": {
         "qpos": {
@@ -2705,8 +2597,6 @@
         "docs/research/semantic_recovery_evidence/fetch_family/canonical-Slide.json",
         "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
         "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
-        "docs/research/semantic_recovery_evidence/fetch_family/oscar-queue.json",
-        "docs/research/semantic_recovery_evidence/fetch_family/oscar-submit.json",
         "docs/research/semantic_recovery_evidence/fetch_family/provenance.json",
         "docs/research/semantic_recovery_evidence/fetch_family/provenance.out",
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
@@ -2749,11 +2639,7 @@
         "FetchSlideDict"
       ],
       "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
-      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
-      "family_oscar_jobs": [
-        6649686,
-        6652487
-      ]
+      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92"
     },
     {
       "historical_id": "swm/FingerDMControl-v0",
@@ -2788,7 +2674,7 @@
       "execution_candidate": "DELEGATED",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
       "audit_report": "docs/research/dmc_aligned_recovery.md",
-      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "recovery_status": "ACCEPTED_CPU_AND_CUDA",
       "cohort": "remaining-simple-and-source-aligned",
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
       "planned_gate": "scripts/recovery/dmc_aligned_gate.py",
@@ -2797,8 +2683,6 @@
         "docs/research/dmc_aligned_recovery.md",
         "docs/research/semantic_recovery_evidence/dmc_aligned_cpu.json",
         "docs/research/semantic_recovery_evidence/dmc_aligned_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6610032.out",
-        "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/acceptance.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/simple-6626669.out",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/dmc-aligned-rerun-57c10c1-continuation-regression-cuda.json",
@@ -2826,14 +2710,9 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "ACCEPTED_CPU_AND_OSCAR"
+        "status": "ACCEPTED_CPU_AND_CUDA"
       },
-      "oscar_job": 6626669,
-      "oscar_result": "PASS",
-      "prior_oscar_failure": {
-        "job_id": 6610032,
-        "failure": "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved."
-      },
+      "cuda_result": "PASS",
       "acceptance_revision": "57c10c17f1bf74ce565ff80e5f44292e3fc827ad",
       "verified_classes": [
         "DMCFingerTurnHard"
@@ -2870,7 +2749,7 @@
       "test": "tests/integration/test_dmc_continuation_semantics.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "recovery_status": "ACCEPTED_CPU_AND_CUDA",
       "verification_scope": {
         "classes": [
           "DMCHopperHop"
@@ -2890,7 +2769,7 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "ACCEPTED_CPU_AND_OSCAR"
+        "status": "ACCEPTED_CPU_AND_CUDA"
       },
       "state_schema": "qpos, qvel, time, qacc_warmstart, lifecycle step_count/reset_next_step, task cumulative_reward, MT19937 keys/position/has_gauss/cached_gaussian",
       "warmstart_evidence": {
@@ -2902,20 +2781,12 @@
         "max_error_with_schema": 0.0
       },
       "implementation_commit": "6470521e84a47d5f95a5bd5f0c5a338ab293619f",
-      "oscar_job": 6605999,
       "evidence": [
         "docs/research/dmc_continuation_recovery.md",
         "docs/research/semantic_recovery_evidence/dmc_continuation_cpu.json",
-        "docs/research/semantic_recovery_evidence/dmc_continuation_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/acceptance.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-gate-cuda.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-renderer-baseline-cuda.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-renderer-cuda.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/family-6605999.out",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-reacher-regression-cuda.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-first-family-regression-cuda.json"
+        "docs/research/semantic_recovery_evidence/dmc_continuation_renderer_cpu.json"
       ],
-      "oscar_result": "PASS",
+      "cuda_result": "PASS",
       "verified_classes": [
         "DMCHopperHop"
       ]
@@ -2954,7 +2825,7 @@
       "execution_candidate": "DELEGATED",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
       "audit_report": "docs/research/dmc_humanoid_recovery.md",
-      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "recovery_status": "ACCEPTED_CPU_AND_CUDA",
       "blocker": {
         "status": "RESOLVED",
         "kind": "DEFAULT_TASK_IDENTITY_MISMATCH",
@@ -2962,10 +2833,10 @@
         "candidate": "DMCHumanoidWalk",
         "resolution_cohort": "remaining DMC",
         "permanent_skip": false,
-        "resolution": "Historical Walk task implemented and accepted on CPU and Oscar within the recorded default scope"
+        "resolution": "Historical Walk task implemented and accepted on CPU and CUDA within the recorded default scope"
       },
       "implementation_commit": "97436d6ae92835d34a01fd5bd758cbc30ff0cca7",
-      "oscar_result": "PASS",
+      "cuda_result": "PASS",
       "state_schema": "qpos[28], qvel[27], qacc_warmstart[27], time, lifecycle step_count/reset_next_step, cumulative_reward, MT19937 keys/position/has_gauss/cached_gaussian",
       "verification_scope": {
         "classes": [
@@ -2985,14 +2856,13 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "ACCEPTED_CPU_AND_OSCAR"
+        "status": "ACCEPTED_CPU_AND_CUDA"
       },
       "evidence": [
         "docs/research/dmc_humanoid_recovery.md",
         "docs/research/semantic_recovery_evidence/dmc_humanoid_cpu.json",
         "docs/research/semantic_recovery_evidence/dmc_humanoid_renderer_baseline_cpu.json",
         "docs/research/semantic_recovery_evidence/dmc_humanoid_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/acceptance.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/humanoid-6626742.out",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/dmc-humanoid-97436d6-renderer-baseline-cuda.json",
@@ -3006,15 +2876,6 @@
         "docs/research/semantic_recovery_evidence/blocker_cleanup/dmc-humanoid-rerun-07d7098-renderer-baseline-cuda.json",
         "docs/research/semantic_recovery_evidence/blocker_cleanup/dmc-humanoid-rerun-07d7098-renderer-cuda.json"
       ],
-      "oscar_job": 6628919,
-      "prior_oscar_failure": {
-        "job_id": 6626742,
-        "kind": "GATE_DIAGNOSTIC_DEVICE_MISMATCH",
-        "failure": "dmc_humanoid_gate._physical_error subtracts CUDA candidate and CPU nominal reward tensors. This is a gate diagnostic failure, not demonstrated production semantic mismatch.",
-        "semantic_json_complete": false,
-        "candidate_renderer_compared": false,
-        "replacement_job_queued": false
-      },
       "acceptance_revision": "07d709841ea2e57fae334e7ef541559a6617236a",
       "verified_classes": [
         "DMCHumanoidWalk"
@@ -3053,7 +2914,7 @@
       "execution_candidate": "DELEGATED",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
       "audit_report": "docs/research/dmc_aligned_recovery.md",
-      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "recovery_status": "ACCEPTED_CPU_AND_CUDA",
       "cohort": "remaining-simple-and-source-aligned",
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
       "planned_gate": "scripts/recovery/dmc_aligned_gate.py",
@@ -3062,8 +2923,6 @@
         "docs/research/dmc_aligned_recovery.md",
         "docs/research/semantic_recovery_evidence/dmc_aligned_cpu.json",
         "docs/research/semantic_recovery_evidence/dmc_aligned_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6610032.out",
-        "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/acceptance.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/simple-6626669.out",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/dmc-aligned-rerun-57c10c1-continuation-regression-cuda.json",
@@ -3091,14 +2950,9 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "ACCEPTED_CPU_AND_OSCAR"
+        "status": "ACCEPTED_CPU_AND_CUDA"
       },
-      "oscar_job": 6626669,
-      "oscar_result": "PASS",
-      "prior_oscar_failure": {
-        "job_id": 6610032,
-        "failure": "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved."
-      },
+      "cuda_result": "PASS",
       "acceptance_revision": "57c10c17f1bf74ce565ff80e5f44292e3fc827ad",
       "verified_classes": [
         "DMCManipulatorBringBall"
@@ -3137,18 +2991,15 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
       "audit_report": "docs/research/native_classic_remaining.md",
-      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "recovery_status": "ACCEPTED_CPU_AND_CUDA",
       "cohort": "remaining-simple-and-source-aligned",
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
       "planned_gate": "scripts/recovery/native_classic_remaining_gate.py",
       "implementation_commit": "b3b6da79555020a3fe9ae046c3f6b4a2bef8a153",
-      "oscar_job": 6626587,
       "evidence": [
         "docs/research/native_classic_remaining.md",
         "docs/research/semantic_recovery_evidence/native_classic_remaining_cpu.json",
         "docs/research/semantic_recovery_evidence/native_classic_remaining_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6608718.out",
-        "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/acceptance.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/simple-6626587.out",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/native-classic-rerun-98c65cb-gate-cuda.json",
@@ -3174,13 +3025,9 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "ACCEPTED_CPU_AND_OSCAR"
+        "status": "ACCEPTED_CPU_AND_CUDA"
       },
-      "oscar_result": "PASS",
-      "prior_oscar_failure": {
-        "job_id": 6608718,
-        "failure": "Gate bug: continuous MountainCar omission diagnostic subtracts CUDA candidate and CPU reference tensors before completing semantic or renderer acceptance."
-      },
+      "cuda_result": "PASS",
       "acceptance_revision": "98c65cbe6690404bf04a463e72003ba924b6c989",
       "verified_classes": [
         "MountainCarContinuous"
@@ -3219,18 +3066,15 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
       "audit_report": "docs/research/native_classic_remaining.md",
-      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "recovery_status": "ACCEPTED_CPU_AND_CUDA",
       "cohort": "remaining-simple-and-source-aligned",
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
       "planned_gate": "scripts/recovery/native_classic_remaining_gate.py",
       "implementation_commit": "b3b6da79555020a3fe9ae046c3f6b4a2bef8a153",
-      "oscar_job": 6626587,
       "evidence": [
         "docs/research/native_classic_remaining.md",
         "docs/research/semantic_recovery_evidence/native_classic_remaining_cpu.json",
         "docs/research/semantic_recovery_evidence/native_classic_remaining_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6608718.out",
-        "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/acceptance.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/simple-6626587.out",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/native-classic-rerun-98c65cb-gate-cuda.json",
@@ -3256,13 +3100,9 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "ACCEPTED_CPU_AND_OSCAR"
+        "status": "ACCEPTED_CPU_AND_CUDA"
       },
-      "oscar_result": "PASS",
-      "prior_oscar_failure": {
-        "job_id": 6608718,
-        "failure": "Gate bug: continuous MountainCar omission diagnostic subtracts CUDA candidate and CPU reference tensors before completing semantic or renderer acceptance."
-      },
+      "cuda_result": "PASS",
       "acceptance_revision": "98c65cbe6690404bf04a463e72003ba924b6c989",
       "verified_classes": [
         "MountainCar"
@@ -3371,8 +3211,7 @@
         "docs/research/semantic_recovery_evidence/ogb_renderer_retry/remote/evidence/Cube/cpu.log",
         "docs/research/semantic_recovery_evidence/ogb_renderer_retry/remote/evidence/Cube/gpu.log"
       ],
-      "oscar_job": 6669909,
-      "oscar_result": "PASS_UNIFIED_CPU_AND_GPU_RENDERER",
+      "cuda_result": "PASS_UNIFIED_CPU_AND_GPU_RENDERER",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "verified_classes": [
         "OGBCube"
@@ -3454,7 +3293,7 @@
       "test": "tests/integration/test_ogbench_semantics.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "recovery_status": "ACCEPTED_CPU_AND_CUDA",
       "verified_classes": [
         "PointMazeLargeNavigate"
       ],
@@ -3600,8 +3439,7 @@
         "docs/research/semantic_recovery_evidence/ogb_renderer_retry/remote/evidence/Scene/cpu.log",
         "docs/research/semantic_recovery_evidence/ogb_renderer_retry/remote/evidence/Scene/gpu.log"
       ],
-      "oscar_job": 6669909,
-      "oscar_result": "PASS_UNIFIED_CPU_AND_GPU_RENDERER",
+      "cuda_result": "PASS_UNIFIED_CPU_AND_GPU_RENDERER",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "verified_classes": [
         "OGBScene"
@@ -3677,7 +3515,6 @@
         "render-cpu.json": {
           "status": "PASS_RECOMPUTED_PUBLIC_RENDER_WITNESSES",
           "device": "cpu",
-          "job": "6996439",
           "checkpoints": 204,
           "mse_mean": 0.0,
           "mse_sd": 0.0,
@@ -3695,7 +3532,6 @@
         "render-cuda.json": {
           "status": "PASS_RECOMPUTED_PUBLIC_RENDER_WITNESSES",
           "device": "cuda",
-          "job": "6996439",
           "checkpoints": 204,
           "mse_mean": 4.622858302013332e-05,
           "mse_sd": 2.2342846585154604e-05,
@@ -3713,7 +3549,6 @@
         "online-cpu.json": {
           "status": "PASS_RECOMPUTED_BOUNDED_ONLINE_SOURCE",
           "device": "cpu",
-          "job": "6996439",
           "cases": 64,
           "frames": 224,
           "mse_mean": 0.0,
@@ -3728,7 +3563,6 @@
         "online-cuda.json": {
           "status": "PASS_RECOMPUTED_BOUNDED_ONLINE_SOURCE",
           "device": "cuda",
-          "job": "6996439",
           "cases": 64,
           "frames": 224,
           "mse_mean": 6.458992031135259e-05,
@@ -3762,7 +3596,6 @@
         "PyFlytRocketLanding"
       ],
       "implementation_commit": "2d1875e1",
-      "oscar_job": 6996439,
       "verification_scope": "Bounded independent public source State/task/restore and CPU/GPU pixel gates. See accepted limitations; not a full performance certification."
     },
     {
@@ -3796,7 +3629,7 @@
       ],
       "test": "tests/integration/test_native_classic_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
-      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "recovery_status": "ACCEPTED_CPU_AND_CUDA",
       "verification_scope": {
         "classes": [
           "Pendulum"
@@ -3816,21 +3649,15 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "ACCEPTED_CPU_AND_OSCAR"
+        "status": "ACCEPTED_CPU_AND_CUDA"
       },
       "implementation_commit": "446f8608bc800c2d61701f675a2536df0dcbaa3f",
-      "oscar_job": 6605941,
       "evidence": [
         "docs/research/native_verification.md",
         "docs/research/semantic_recovery_evidence/native_classic_cpu.json",
-        "docs/research/semantic_recovery_evidence/native_classic_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/acceptance.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/native-classic-446f860-gate-cuda.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/native-classic-446f860-renderer-baseline-cuda.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/native-classic-446f860-renderer-cuda.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/family-6605941.out"
+        "docs/research/semantic_recovery_evidence/native_classic_renderer_cpu.json"
       ],
-      "oscar_result": "PASS",
+      "cuda_result": "PASS",
       "verified_classes": [
         "Pendulum"
       ]
@@ -3867,7 +3694,7 @@
       "test": "tests/integration/test_dmc_first_family_semantics.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "recovery_status": "ACCEPTED_CPU_AND_CUDA",
       "verified_classes": [
         "DMCPendulumSwingup"
       ],
@@ -3930,7 +3757,7 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
       "audit_report": "docs/research/native_navigation_recovery.md",
-      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "recovery_status": "ACCEPTED_CPU_AND_CUDA",
       "cohort": "remaining-simple-and-source-aligned",
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
       "planned_gate": "scripts/recovery/native_navigation_gate.py",
@@ -3939,8 +3766,6 @@
         "docs/research/native_navigation_recovery.md",
         "docs/research/semantic_recovery_evidence/native_navigation_cpu.json",
         "docs/research/semantic_recovery_evidence/native_navigation_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6611139.out",
-        "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/acceptance.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/simple-6626600.out",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/navigation-rerun-bb517bd-renderer-baseline-cuda.json",
@@ -3973,24 +3798,10 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "ACCEPTED_CPU_AND_OSCAR"
+        "status": "ACCEPTED_CPU_AND_CUDA"
       },
-      "oscar_job": 6642897,
-      "oscar_result": "PASS",
-      "prior_oscar_failure": {
-        "job_id": 6611139,
-        "failure": "Native navigation exact CUDA output mismatch in info.distance_to_target: absolute difference 7.62939453125e-06. No tolerance relaxation; remaining navigation gate and candidate renderer comparison did not run."
-      },
+      "cuda_result": "PASS",
       "acceptance_revision": "6ee8d8cb54031ff61eb1de24eafd1dd5c066fc3e",
-      "latest_oscar_failure": {
-        "job_id": 6626600,
-        "kind": "EXACT_BOUNDARY_OUTPUT_MISMATCH",
-        "failure": "Boundary compare_state failed in info.distance_to_target: absolute difference 0.7803192138671875, relative difference 0.004922586150551877. Log does not label the failing domain/probe; root cause unproved.",
-        "semantic_json_complete": false,
-        "candidate_renderer_compared": false,
-        "replacement_job_queued": false
-      },
-      "diagnostic_job": 6628945,
       "diagnostic_revision": "1f717d12847cbcb998ad6c0bcc7ce7386249e560",
       "diagnostic_root_cause": "CUDA float64 scalar-denominator division at (112-14)/196 gives the representable value immediately below 0.5; scaling by2 then truncation selects column0 instead of source column1. Restored State and goals match.",
       "verified_classes": [
@@ -3998,7 +3809,7 @@
       ],
       "diagnostic_resolution": {
         "commit": "6ee8d8cb54031ff61eb1de24eafd1dd5c066fc3e",
-        "description": "Tensor-denominator float64 zone division matches historical boundary selection; full CPU/Oscar gates and expanded boundary continuations pass"
+        "description": "Tensor-denominator float64 zone division matches historical boundary selection; full CPU/CUDA gates and expanded boundary continuations pass"
       }
     },
     {
@@ -4049,8 +3860,7 @@
       "current_recovery_evidence": "docs/research/semantic_recovery_evidence/final_three_20261004/pusht/README.md",
       "recovery_status": "ACCEPTED_SCOPED_PUBLIC_CPU_AND_CUDA_STORAGE",
       "acceptance_manifest": "docs/research/semantic_recovery_evidence/final_three_20261004/pusht/acceptance.json",
-      "oscar_job": 6993756,
-      "oscar_result": "PASS_473_TESTS_AND_148_SOURCE_CASES",
+      "cuda_result": "PASS_473_TESTS_AND_148_SOURCE_CASES",
       "verification_scope": {
         "status": "ACCEPTED_SCOPED_PUBLIC_CPU_AND_CUDA_STORAGE",
         "source_cases_per_device": 74,
@@ -4153,8 +3963,7 @@
       "current_recovery_evidence": "docs/research/semantic_recovery_evidence/final_three_20261004/pusht/README.md",
       "recovery_status": "ACCEPTED_SCOPED_PUBLIC_CPU_AND_CUDA_STORAGE",
       "acceptance_manifest": "docs/research/semantic_recovery_evidence/final_three_20261004/pusht/acceptance.json",
-      "oscar_job": 6993756,
-      "oscar_result": "PASS_473_TESTS_AND_148_SOURCE_CASES",
+      "cuda_result": "PASS_473_TESTS_AND_148_SOURCE_CASES",
       "verification_scope": {
         "status": "ACCEPTED_SCOPED_PUBLIC_CPU_AND_CUDA_STORAGE",
         "source_cases_per_device": 74,
@@ -4237,7 +4046,7 @@
       "execution_candidate": "DELEGATED",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
       "audit_report": "docs/research/dmc_aligned_recovery.md",
-      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "recovery_status": "ACCEPTED_CPU_AND_CUDA",
       "cohort": "remaining-simple-and-source-aligned",
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
       "planned_gate": "scripts/recovery/dmc_aligned_gate.py",
@@ -4246,8 +4055,6 @@
         "docs/research/dmc_aligned_recovery.md",
         "docs/research/semantic_recovery_evidence/dmc_aligned_cpu.json",
         "docs/research/semantic_recovery_evidence/dmc_aligned_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6610032.out",
-        "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/acceptance.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/simple-6626669.out",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/dmc-aligned-rerun-57c10c1-continuation-regression-cuda.json",
@@ -4275,14 +4082,9 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "ACCEPTED_CPU_AND_OSCAR"
+        "status": "ACCEPTED_CPU_AND_CUDA"
       },
-      "oscar_job": 6626669,
-      "oscar_result": "PASS",
-      "prior_oscar_failure": {
-        "job_id": 6610032,
-        "failure": "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved."
-      },
+      "cuda_result": "PASS",
       "acceptance_revision": "57c10c17f1bf74ce565ff80e5f44292e3fc827ad",
       "verified_classes": [
         "DMCQuadrupedWalk"
@@ -4375,7 +4177,7 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
       "audit_report": "docs/research/native_navigation_recovery.md",
-      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "recovery_status": "ACCEPTED_CPU_AND_CUDA",
       "blocker": {
         "status": "RESOLVED",
         "kind": "DEFAULT_VISUAL_IDENTITY_MISMATCH",
@@ -4383,7 +4185,7 @@
         "candidate": "SimplePointMaze historical default show_goal=True; cached image and reward goal distinguished",
         "resolution_cohort": "native navigation",
         "permanent_skip": false,
-        "resolution": "Full CPU gate with Matplotlib3.10.9 and Oscar gate with Matplotlib3.11.1 pass exact comparisons within each profile"
+        "resolution": "Full CPU gate with Matplotlib3.10.9 and CUDA gate with Matplotlib3.11.1 pass exact comparisons within each profile"
       },
       "cohort": "remaining-simple-and-source-aligned",
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
@@ -4393,8 +4195,6 @@
         "docs/research/native_navigation_recovery.md",
         "docs/research/semantic_recovery_evidence/native_navigation_cpu.json",
         "docs/research/semantic_recovery_evidence/native_navigation_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6611139.out",
-        "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/acceptance.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/simple-6626600.out",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/navigation-rerun-bb517bd-renderer-baseline-cuda.json",
@@ -4427,24 +4227,10 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "ACCEPTED_CPU_AND_OSCAR"
+        "status": "ACCEPTED_CPU_AND_CUDA"
       },
-      "oscar_job": 6642897,
-      "oscar_result": "PASS",
-      "prior_oscar_failure": {
-        "job_id": 6611139,
-        "failure": "Native navigation exact CUDA output mismatch in info.distance_to_target: absolute difference 7.62939453125e-06. No tolerance relaxation; remaining navigation gate and candidate renderer comparison did not run."
-      },
+      "cuda_result": "PASS",
       "acceptance_revision": "6ee8d8cb54031ff61eb1de24eafd1dd5c066fc3e",
-      "latest_oscar_failure": {
-        "job_id": 6626600,
-        "kind": "EXACT_BOUNDARY_OUTPUT_MISMATCH",
-        "failure": "Boundary compare_state failed in info.distance_to_target: absolute difference 0.7803192138671875, relative difference 0.004922586150551877. Log does not label the failing domain/probe; root cause unproved.",
-        "semantic_json_complete": false,
-        "candidate_renderer_compared": false,
-        "replacement_job_queued": false
-      },
-      "diagnostic_job": 6628945,
       "diagnostic_revision": "1f717d12847cbcb998ad6c0bcc7ce7386249e560",
       "diagnostic_root_cause": "CUDA float64 scalar-denominator division at (112-14)/196 gives the representable value immediately below 0.5; scaling by2 then truncation selects column0 instead of source column1. Restored State and goals match.",
       "verified_classes": [
@@ -4452,7 +4238,7 @@
       ],
       "diagnostic_resolution": {
         "commit": "6ee8d8cb54031ff61eb1de24eafd1dd5c066fc3e",
-        "description": "Tensor-denominator float64 zone division matches historical boundary selection; full CPU/Oscar gates and expanded boundary continuations pass"
+        "description": "Tensor-denominator float64 zone division matches historical boundary selection; full CPU/CUDA gates and expanded boundary continuations pass"
       }
     },
     {
@@ -4489,7 +4275,7 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
       "audit_report": "docs/research/native_navigation_recovery.md",
-      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "recovery_status": "ACCEPTED_CPU_AND_CUDA",
       "cohort": "remaining-simple-and-source-aligned",
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
       "planned_gate": "scripts/recovery/native_navigation_gate.py",
@@ -4498,8 +4284,6 @@
         "docs/research/native_navigation_recovery.md",
         "docs/research/semantic_recovery_evidence/native_navigation_cpu.json",
         "docs/research/semantic_recovery_evidence/native_navigation_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6611139.out",
-        "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/acceptance.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/simple-6626600.out",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/navigation-rerun-bb517bd-renderer-baseline-cuda.json",
@@ -4532,24 +4316,10 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "ACCEPTED_CPU_AND_OSCAR"
+        "status": "ACCEPTED_CPU_AND_CUDA"
       },
-      "oscar_job": 6642897,
-      "oscar_result": "PASS",
-      "prior_oscar_failure": {
-        "job_id": 6611139,
-        "failure": "Native navigation exact CUDA output mismatch in info.distance_to_target: absolute difference 7.62939453125e-06. No tolerance relaxation; remaining navigation gate and candidate renderer comparison did not run."
-      },
+      "cuda_result": "PASS",
       "acceptance_revision": "6ee8d8cb54031ff61eb1de24eafd1dd5c066fc3e",
-      "latest_oscar_failure": {
-        "job_id": 6626600,
-        "kind": "EXACT_BOUNDARY_OUTPUT_MISMATCH",
-        "failure": "Boundary compare_state failed in info.distance_to_target: absolute difference 0.7803192138671875, relative difference 0.004922586150551877. Log does not label the failing domain/probe; root cause unproved.",
-        "semantic_json_complete": false,
-        "candidate_renderer_compared": false,
-        "replacement_job_queued": false
-      },
-      "diagnostic_job": 6628945,
       "diagnostic_revision": "1f717d12847cbcb998ad6c0bcc7ce7386249e560",
       "diagnostic_root_cause": "CUDA float64 scalar-denominator division at (112-14)/196 gives the representable value immediately below 0.5; scaling by2 then truncation selects column0 instead of source column1. Restored State and goals match.",
       "verified_classes": [
@@ -4557,7 +4327,7 @@
       ],
       "diagnostic_resolution": {
         "commit": "6ee8d8cb54031ff61eb1de24eafd1dd5c066fc3e",
-        "description": "Tensor-denominator float64 zone division matches historical boundary selection; full CPU/Oscar gates and expanded boundary continuations pass"
+        "description": "Tensor-denominator float64 zone division matches historical boundary selection; full CPU/CUDA gates and expanded boundary continuations pass"
       }
     },
     {
@@ -4591,7 +4361,7 @@
       "test": "tests/integration/test_dmc_continuation_semantics.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "recovery_status": "ACCEPTED_CPU_AND_CUDA",
       "verification_scope": {
         "classes": [
           "DMCWalkerWalk"
@@ -4611,7 +4381,7 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "ACCEPTED_CPU_AND_OSCAR"
+        "status": "ACCEPTED_CPU_AND_CUDA"
       },
       "state_schema": "qpos, qvel, time, qacc_warmstart, lifecycle step_count/reset_next_step, task cumulative_reward, MT19937 keys/position/has_gauss/cached_gaussian",
       "warmstart_evidence": {
@@ -4623,35 +4393,23 @@
         "max_error_with_schema": 0.0
       },
       "implementation_commit": "6470521e84a47d5f95a5bd5f0c5a338ab293619f",
-      "oscar_job": 6605999,
       "evidence": [
         "docs/research/dmc_continuation_recovery.md",
         "docs/research/semantic_recovery_evidence/dmc_continuation_cpu.json",
-        "docs/research/semantic_recovery_evidence/dmc_continuation_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/acceptance.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-gate-cuda.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-renderer-baseline-cuda.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-renderer-cuda.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/family-6605999.out",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-reacher-regression-cuda.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-first-family-regression-cuda.json"
+        "docs/research/semantic_recovery_evidence/dmc_continuation_renderer_cpu.json"
       ],
-      "oscar_result": "PASS",
+      "cuda_result": "PASS",
       "verified_classes": [
         "DMCWalkerWalk"
       ]
     }
   ],
-  "checkpoint": "42 VERIFIED / 0 INCOMPLETE historically; 38/38 non-Craftax registrations accepted for their recorded semantic scopes. Craftax remains excluded from this campaign and was not retested. Rendering and online performance claims remain separately scoped.",
+  "checkpoint": "42 VERIFIED / 0 INCOMPLETE; 38/38 non-Craftax registrations accepted for their recorded semantic scopes. Craftax is excluded. Rendering and online performance claims are scoped separately.",
   "fetch_family_acceptance": {
     "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
     "report": "docs/research/fetch_family_recovery.md",
     "cpu": "PASS",
     "gpu": "PASS",
-    "oscar_jobs": [
-      6649686,
-      6652487
-    ],
     "newly_verified": [
       "swm/FetchPickAndPlaceDense-v3",
       "swm/FetchPickAndPlaceDict-v3",
@@ -4671,7 +4429,6 @@
     }
   },
   "ogbench_manipulation_acceptance": {
-    "job": 6669909,
     "report": "docs/research/ogbench_renderer_acceptance.md",
     "source_commit": "294675f039e9b7f867c4bff15aac2b5f2e572bf6",
     "gpu_evidence_commit": "3af3c63446f6b6ef1f261a8fb0b85e584db4e749",
@@ -4686,7 +4443,6 @@
   },
   "craftax_acceptance": {
     "report": "docs/research/craftax_acceptance.md",
-    "job": 6679082,
     "gpu_evidence_commit": "59ba52300cc2e9c05da2eea0a58b64c57008036f",
     "counts": {
       "VERIFIED": 39,
@@ -4696,7 +4452,6 @@
   },
   "pusht_public_acceptance": {
     "manifest": "docs/research/semantic_recovery_evidence/final_three_20261004/pusht/acceptance.json",
-    "job": 6993756,
     "independent_registration_gates": true,
     "counts": {
       "VERIFIED": 41,
@@ -4705,7 +4460,6 @@
   },
   "rocket_public_acceptance": {
     "manifest": "docs/research/semantic_recovery_evidence/final_three_20261004/rocket/closure-v4/acceptance.json",
-    "job": 6996439,
     "newly_verified": [
       "swm/PFRocketLanding-v0"
     ],

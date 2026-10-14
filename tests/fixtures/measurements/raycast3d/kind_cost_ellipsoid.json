@@ -3,13 +3,6 @@
  "supersedes": "the per-run `predicate` fields, which use the superseded 1 + 3*worst_rsd margin",
  "rule": "bounded(kind) iff ns_intersect/ns_bound > 1 at every measured (B, N) in EVERY independent run: cost_bound < cost_intersect is the condition that holds for any scene, since the fraction of rays kept is >= 0",
  "shape": "nearest",
- "runs": [
-  "examples/results/step7/dmc-quadruped/phase1/cpu_oscar/kind_cost_ellipsoid_node1913_run1.json",
-  "examples/results/step7/dmc-quadruped/phase1/cpu_oscar/kind_cost_ellipsoid_node1913_run2.json",
-  "examples/results/step7/dmc-quadruped/phase1/cpu_oscar/kind_cost_ellipsoid_node1913_run3.json"
- ],
- "host": "node1913.oscar.ccv.brown.edu",
- "slurm_job": "6394722",
  "threads": 1,
  "cpu": "x86_64",
  "predicate": {
@@ -79,12 +72,8 @@
   "cheapest_bounded_at_its_worst": 1.1605961777765532,
   "gap_x": 2.6461231131929295
  },
- "load_note": "node1913, job 6394722: no in-band loadavg on these runs; the same job's paired sweep recorded load 34.5 at start (cpu_1thread_paired_node1913_6394722.json) and BOX's worst ratio fell to 0.95 in run 2 against the frozen table's 1.11-1.13, so the node was loaded; the quiet-window job 6396525 records loadavg before/after each run",
+ "load_note": "no in-band loadavg on these runs; the host recorded load 34.5 at the start of a paired sweep, and BOX's worst ratio fell to 0.95 in run 2 against 1.11-1.13 in r6_kind_cost.json, so the host was loaded",
  "provenance": {
-  "git_commit": "fa4ac534d5446613dac448e6ba4badedc5c8ef1a",
-  "merged_commit": "0a029bd",
-  "card": "NVIDIA GeForce RTX 3090, driver 575.57.08",
-  "host": "node1913",
-  "slurm_job": 6394722
+  "card": "NVIDIA GeForce RTX 3090, driver 575.57.08"
  }
 }

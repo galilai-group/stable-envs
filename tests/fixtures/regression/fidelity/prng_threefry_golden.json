@@ -3,7 +3,7 @@
  "jax": "0.11.1",
  "jax_threefry_partitionable": true,
  "jax_default_prng_impl": "threefry2x32",
- "generated_by": "scratch/step7/craftax-classic-full/gen_prng_golden.py",
+ "generated_by": "scripts/regression/craftax/gen_prng_golden.py",
  "full": [
   {
    "key": [

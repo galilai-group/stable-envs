@@ -1,6 +1,5 @@
 {
   "env": "CraftaxFull",
-  "step": 7,
   "pool": 512,
   "kept": 64,
   "seed": 20260915,

@@ -3,13 +3,6 @@
  "supersedes": "the per-run `predicate` fields, which use the superseded 1 + 3*worst_rsd margin",
  "rule": "bounded(kind) iff ns_intersect/ns_bound > 1 at every measured (B, N) in EVERY independent run: cost_bound < cost_intersect is the condition that holds for any scene, since the fraction of rays kept is >= 0",
  "shape": "nearest",
- "runs": [
-  "examples/results/step6/raycast3d/experiments/r6_kind_cost_nearest_run1.json",
-  "examples/results/step6/raycast3d/experiments/r6_kind_cost_nearest_run2.json",
-  "examples/results/step6/raycast3d/experiments/r6_kind_cost_nearest_run3.json"
- ],
- "host": "node1843.oscar.ccv.brown.edu",
- "slurm_job": "6356311",
  "threads": 1,
  "cpu": "x86_64",
  "predicate": {

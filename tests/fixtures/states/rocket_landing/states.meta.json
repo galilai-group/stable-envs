@@ -1,14 +1,11 @@
 {
- "added_at_head_sha": "43ac95238f7472137619f3e69e7636e11dd088b1",
- "added_by": "Step-8 Workstream E (certification + provenance)",
- "added_in_step": 8,
- "added_note": "Added by Step-8 Workstream E (certification + provenance) as the metadata examples/fidelity_step4.py:corpus_for reads. The .npz array is READ-ONLY and was not rewritten: its bytes are quoted by sha256 in committed Step-7 Gate-A records, so the metadata is written BESIDE it and corpus_for reads the sidecar when the array file carries no 'meta' key. Nothing here was drawn, selected or re-measured.",
  "env": "PFRocketLanding",
  "kept": 64,
  "n_states": 64,
+ "note": "selection metadata for states.npz in this directory, which carries no 'meta' key",
  "rows_taken": 64,
  "sha256": "f4707e54f3007b2e9afb1c236e932626373ee767eaa705161d53faa937d6eedf",
  "source_key": "state13",
- "source_npz": "examples/results/step7/rocket-landing/reference/states.npz",
+ "source_npz": "tests/fixtures/states/rocket_landing/states.npz",
  "state_dim": 13
 }
