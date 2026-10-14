@@ -22,16 +22,10 @@ from stable_envs.envs.ogbench import OGBCube, OGBScene
 from stable_envs.envs.ogbench.simulation.compatibility import CompatibleCube, CompatibleScene
 from stable_envs.envs.ogbench.simulation.manipulation import OGBManipulationAdapter
 from tests.helpers.reference.ogbench_manipulation_semantics import assert_oracle, load_oracle, numpy_equal
+from tests.helpers.reference.semantics import assert_same_state
 
 ROOT = Path(__file__).resolve().parents[2]
 CLASSES = {"Cube": OGBCube, "Scene": OGBScene}
-
-
-def equal(left, right):
-    assert set(left.keys(True, True)) == set(right.keys(True, True))
-    for key in left.keys(True, True):
-        assert left[key].dtype == right[key].dtype
-        assert torch.equal(left[key], right[key]), key
 
 
 @pytest.fixture(scope="module")
@@ -115,15 +109,15 @@ def test_state_roundtrip_reset_replay_and_atomic_validation(family):
         saved = a.get_state()
         immutable = saved.clone()
         b.set_state(saved)
-        equal(saved, b.get_state())
+        assert_same_state(saved, b.get_state())
         for i in range(6):
             action = torch.full((2, 5), 0.2 if i % 2 else -0.4, dtype=torch.float64 if i % 2 else torch.float32)
-            equal(a.step(action, frames=None), b.step(action, frames=None))
-        equal(saved, immutable)
+            assert_same_state(a.step(action, frames=None), b.step(action, frames=None))
+        assert_same_state(saved, immutable)
         a.set_state(saved)
         b.set_state(saved)
         for seed in (None, 0, 17, 42, None):
-            equal(a.reset(seed), b.reset(seed))
+            assert_same_state(a.reset(seed), b.reset(seed))
         anchor = a.get_state()
         # Every leaf's presence and dtype is checked, including the final lane, before mutation.
         for key in anchor.keys(True, True):
@@ -168,7 +162,7 @@ def test_state_roundtrip_reset_replay_and_atomic_validation(family):
         for bad in bads:
             with pytest.raises((ValueError, TypeError)):
                 a.set_state(bad)
-            equal(anchor, a.get_state())
+            assert_same_state(anchor, a.get_state())
         packed = a._pack_render_state(anchor)
         with pytest.raises(TypeError):
             a.set_state(packed)
@@ -189,13 +183,13 @@ def test_variation_anchors_model_restore_and_rejections(family):
         assert torch.equal(original[start], pending[start])
         assert (pending["variation", "current", "cube.size"] == 0.025).all()
         b.set_state(pending)
-        equal(a.reset(), b.reset())
+        assert_same_state(a.reset(), b.reset())
         saved = a.get_state()
         a.set_variation({"cube.size": np.array([0.015])})
         a.reset(42)
         a.set_state(saved)
-        equal(saved, a.get_state())
-        equal(a.reset(), b.reset())
+        assert_same_state(saved, a.get_state())
+        assert_same_state(a.reset(), b.reset())
         before = a.get_state()
         for options in (
             {"mode": "data_collection"},
@@ -207,7 +201,7 @@ def test_variation_anchors_model_restore_and_rejections(family):
         ):
             with pytest.raises(ValueError):
                 a.reset(options=options)
-            equal(before, a.get_state())
+            assert_same_state(before, a.get_state())
         with pytest.raises(TypeError):
             CLASSES[family](mode="data_collection")
         with pytest.raises(TypeError):
@@ -221,7 +215,7 @@ def test_variation_anchors_model_restore_and_rejections(family):
             payload["init"]["block_xyzs"] = payload["init"]["block_xyzs"].tolist()
         with pytest.raises(ValueError, match="NumPy arrays"):
             a.reset(options={"task_info": payload})
-        equal(before, a.get_state())
+        assert_same_state(before, a.get_state())
 
 
 @pytest.mark.parametrize("family", CLASSES)
@@ -233,7 +227,7 @@ def test_variation_values_take_one_row_per_lane(family):
         assert (state["variation", "current", "cube.goal_yaw"] == 0.5).all()
         with pytest.raises(ValueError):
             env.reset(3, {"variation_values": {"cube.size": np.array([[0.012], [0.02], [0.028]])}})
-        equal(state, env.get_state())
+        assert_same_state(state, env.get_state())
 
 
 @pytest.mark.parametrize("cls", [CompatibleCube, CompatibleScene])
@@ -282,9 +276,9 @@ def test_interleaved_threaded_isolation_and_global_numpy_nonmutation():
                 environments[actor].step(np.full((1, 5), i * 0.1))
                 for other, e in enumerate(environments):
                     if other != actor:
-                        equal(before[other], e.get_state())
+                        assert_same_state(before[other], e.get_state())
         for e, s, expected in zip(environments, initial, serial):
-            equal(e.get_state(), expected)
+            assert_same_state(e.get_state(), expected)
             e.set_state(s)
         barrier = Barrier(4)
 
@@ -298,7 +292,7 @@ def test_interleaved_threaded_isolation_and_global_numpy_nonmutation():
         with ThreadPoolExecutor(max_workers=4) as pool:
             threaded = list(pool.map(worker, environments))
         for expected, got in zip(serial, threaded):
-            equal(expected, got)
+            assert_same_state(expected, got)
         numpy_equal(outside, np.random.get_state())
     finally:
         for e in environments:
@@ -368,12 +362,12 @@ def test_contact_histories_oracle_and_independent_restore(interaction, oracle):
                     saved = a.get_state()
                     frozen = saved.clone()
                     b.set_state(saved)
-                    equal(saved, b.get_state())
+                    assert_same_state(saved, b.get_state())
                 out = a.step(action[None], frames=None)
                 raw.step(action)
                 assert_oracle(u, raw, oracle)
                 if i >= 20:
-                    equal(out, b.step(action[None], frames=None))
+                    assert_same_state(out, b.step(action[None], frames=None))
                 for contact in u.data.contact:
                     pair = tuple(
                         u.model.body(int(u.model.geom_bodyid[g])).name for g in (contact.geom1, contact.geom2)
@@ -393,7 +387,7 @@ def test_contact_histories_oracle_and_independent_restore(interaction, oracle):
                         )
                     )
                     buttons.append(u._cur_button_states.copy().tolist())
-            equal(saved, frozen)
+            assert_same_state(saved, frozen)
             assert contacts
             if interaction == "cube":
                 assert max(positions) > 0.12  # Actual grasp and lift, not free-space approach.
@@ -406,7 +400,7 @@ def test_contact_histories_oracle_and_independent_restore(interaction, oracle):
             b.set_state(saved)
             for i in range(8):
                 action = np.array([[0.2, -0.3, -0.1, 0.35, 0.4]], np.float32 if i % 2 else np.float64)
-                equal(a.step(action, frames=None), b.step(action, frames=None))
+                assert_same_state(a.step(action, frames=None), b.step(action, frames=None))
     finally:
         raw.close()
 
@@ -481,8 +475,8 @@ def test_seed_metadata_is_not_needed_after_arbitrary_width_seed(family):
     with CLASSES[family](seed=2**300 + 17) as a, CLASSES[family](seed=0) as b:
         state = a.get_state()
         b.set_state(state)
-        equal(a.reset(), b.reset())
-        equal(a.step(np.zeros((1, 5)), frames=None), b.step(np.zeros((1, 5)), frames=None))
+        assert_same_state(a.reset(), b.reset())
+        assert_same_state(a.step(np.zeros((1, 5)), frames=None), b.step(np.zeros((1, 5)), frames=None))
 
 
 @pytest.mark.swm
@@ -498,9 +492,9 @@ def test_size_dtype_model_reconstruction_and_oracle(family, size, oracle):
             raw.reset(seed=17, options=options)
             assert_oracle(a._simulator.envs[0], raw, oracle)
             b.set_state(a.get_state())
-            equal(a.get_state(), b.get_state())
-            equal(a.step(np.ones((1, 5)) * 0.1, frames=None), b.step(np.ones((1, 5)) * 0.1, frames=None))
-            equal(a.reset(), b.reset())
+            assert_same_state(a.get_state(), b.get_state())
+            assert_same_state(a.step(np.ones((1, 5)) * 0.1, frames=None), b.step(np.ones((1, 5)) * 0.1, frames=None))
+            assert_same_state(a.reset(), b.reset())
     finally:
         raw.close()
 
@@ -575,12 +569,12 @@ def test_restore_failure_cannot_partially_commit_a_batch(family):
             bad[field][1] = value
             with pytest.raises(ValueError):
                 a.set_state(bad)
-            equal(saved, a.get_state())
+            assert_same_state(saved, a.get_state())
         bad = saved.clone()
         bad["empty_extra"] = TensorDict({}, [2])
         with pytest.raises(ValueError):
             a.set_state(bad)
-        equal(saved, a.get_state())
+        assert_same_state(saved, a.get_state())
         old = list(a._simulator.envs)
         calls = []
         inherited = cls.compile_model_and_data
@@ -595,7 +589,7 @@ def test_restore_failure_cannot_partially_commit_a_batch(family):
             with pytest.raises(RuntimeError, match="test compilation failure"):
                 a.set_state(saved)
         assert a._simulator.envs == old
-        equal(saved, a.get_state())
+        assert_same_state(saved, a.get_state())
 
 
 def test_scene_drawer_window_and_button_success_boundaries():

@@ -14,15 +14,15 @@ import torch
 
 import stable_envs as se
 from tests.helpers.reference.dmc_semantics import ReacherReference
+from tests.helpers.reference.saved import SWM_PIN
 from tests.helpers.reference.semantics import (
+    assert_lossy_projection_rejected,
     check_reset_matches_reference,
     check_state_roundtrip,
     check_step_matches_reference,
     check_two_histories_same_state,
     compare_state,
 )
-
-SWM_PIN = "21446f1ede6d5284e981bd7b47f432b994e6d812"
 
 
 def run_gate(device="cpu"):
@@ -70,16 +70,7 @@ def run_gate(device="cpu"):
                     before = env.get_state()
                     env.render(snapshot)
                     compare_state(env.get_state(), before)
-                    for bad in (
-                        env._pack_render_state(snapshot),
-                        env._unpack_render_state(env._pack_render_state(snapshot)),
-                    ):
-                        try:
-                            env.set_state(bad)
-                        except (TypeError, ValueError):
-                            pass
-                        else:
-                            raise AssertionError("Lossy renderer projection was accepted")
+                    assert_lossy_projection_rejected(env, snapshot)
                     evidence["cases"].append(
                         dict(
                             batch=batch,

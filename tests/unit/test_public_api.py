@@ -30,7 +30,7 @@ def _clean_config():
 
 
 def test_dir_advertises_the_documented_namespace_and_the_environments_only():
-    """The top level exposes the happy path, not backend machinery."""
+    """The top level exposes the happy path, and backend machinery and internal names do not resolve there."""
     listed = set(dir(snv))
     assert {"Env", "State", "StepResult", "VariationLike", "make", "info", "PushT"} <= listed
     assert not listed & {
@@ -47,13 +47,10 @@ def test_dir_advertises_the_documented_namespace_and_the_environments_only():
         "SWM_IDS",
         "spec",
     }
-    for name in ("Scene2D", "StyleTensor", "SWM_IDS"):
-        with pytest.raises(AttributeError):
-            getattr(snv, name)
-
-
-def test_internal_names_do_not_resolve_at_top_level():
     for name in (
+        "Scene2D",
+        "StyleTensor",
+        "SWM_IDS",
         "StableEnv",
         "REGISTRY",
         "register",

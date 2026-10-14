@@ -38,6 +38,23 @@ def compare_state(actual: TensorDict, expected: TensorDict, *, atol=0.0) -> dict
     return errors
 
 
+def assert_same_state(actual, expected):
+    """Exact equality of a tensor or every TensorDict leaf: keys, batch size, device, dtype, shape and values.
+
+    NaN pairs compare equal.
+    """
+    if torch.is_tensor(actual):
+        torch.testing.assert_close(actual, expected, rtol=0, atol=0, equal_nan=True)
+        return
+    assert actual.batch_size == expected.batch_size and actual.device == expected.device
+    ak, ek = set(actual.keys(True, True)), set(expected.keys(True, True))
+    assert ak == ek, f"State keys differ: {ak ^ ek}"
+    for key in actual.keys(True, True):
+        torch.testing.assert_close(
+            actual[key], expected[key], rtol=0, atol=0, equal_nan=True, msg=lambda m, key=key: f"{key}: {m}"
+        )
+
+
 def check_reset_matches_reference(candidate, reference, *, seed, atol=0.0):
     return compare_state(candidate.reset(seed=seed), reference.reset(seed=seed), atol=atol)
 
@@ -75,3 +92,32 @@ def check_two_histories_same_state(first, second, state, actions, *, atol=0.0):
     second.set_state(state)
     compare_state(first.get_state(), second.get_state(), atol=atol)
     return [compare_state(_step_without_pixels(first, a), _step_without_pixels(second, a), atol=atol) for a in actions]
+
+
+def assert_lossy_projection_rejected(env, snapshot):
+    """``set_state`` refuses the packed render rows and their unpacked projection of a full State."""
+    packed = env._pack_render_state(snapshot)
+    for bad in (packed, env._unpack_render_state(packed)):
+        try:
+            env.set_state(bad)
+        except (TypeError, ValueError):
+            pass
+        else:
+            raise AssertionError("Lossy renderer projection was accepted")
+
+
+def max_state_error(actual, expected, *, exclude=()):
+    """Largest absolute leaf difference (any mismatch counts 1 for bools); keys, dtypes and shapes must agree."""
+    assert set(actual.keys(True, True)) == set(expected.keys(True, True))
+    error = 0.0
+    for key in actual.keys(True, True):
+        if key in exclude:
+            continue
+        left, right = actual[key].detach().cpu(), expected[key].detach().cpu()
+        assert left.dtype == right.dtype and left.shape == right.shape
+        if left.dtype == torch.bool:
+            delta = float((left != right).any())
+        else:
+            delta = float((left.to(torch.float64) - right.to(torch.float64)).abs().nan_to_num().max())
+        error = max(error, delta)
+    return error

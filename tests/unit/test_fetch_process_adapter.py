@@ -12,13 +12,7 @@ import stable_envs as snv
 import stable_envs.envs.fetch.semantics as semantics
 from stable_envs.envs.fetch.simulation.adapter import FetchAdapter
 from stable_envs.envs.fetch.simulation.process import FetchProcessAdapter
-
-
-def equal(a, b):
-    assert set(a.keys(True, True)) == set(b.keys(True, True))
-    for key in a.keys(True, True):
-        assert a[key].dtype == b[key].dtype, key
-        assert torch.equal(a[key].cpu(), b[key].cpu()), key
+from tests.helpers.reference.semantics import assert_same_state
 
 
 @pytest.mark.parametrize(
@@ -41,7 +35,7 @@ def test_process_owner_matches_local_owner_through_the_public_env(monkeypatch, t
         )
         candidate = snv.make(name, num_envs=5, seed=17, device="cpu", backend="opengl")
     try:
-        equal(reference.get_state(), candidate.get_state())
+        assert_same_state(reference.get_state(), candidate.get_state())
         actions = np.random.default_rng(31).uniform(-1, 1, (5, 6, 4)).astype(np.float64)
         initial = reference.get_state()
         for states in (slice(None), slice(None, None, -2), None):
@@ -49,20 +43,20 @@ def test_process_owner_matches_local_owner_through_the_public_env(monkeypatch, t
             candidate.set_state(initial)
             expected = reference.step(actions, states=states, frames=None)
             actual = candidate.step(actions, states=states, frames=None)
-            equal(expected, actual)
+            assert_same_state(expected, actual)
         frozen = actual.clone()
         candidate.reset(seed=42)
-        equal(actual, frozen)
+        assert_same_state(actual, frozen)
         # Checkpoint/RNG replay includes seed=None continuation, not just seeded resets.
         for env in (reference, candidate):
             env.set_state(initial)
-        equal(reference.reset(), candidate.reset())
+        assert_same_state(reference.reset(), candidate.reset())
         for env in (reference, candidate):
             env.set_state(initial)
             env._simulator._set_episode_limits(np.arange(1, 6))
         expected = reference.step(actions, frames=None)
         actual = candidate.step(actions, frames=None)
-        equal(expected, actual)
+        assert_same_state(expected, actual)
         assert actual["valid"].sum(1).tolist() == [1, 2, 3, 4, 5]
         for env in (reference, candidate):
             env._simulator._set_episode_limits(np.full(5, 50))
@@ -79,9 +73,9 @@ def test_process_owner_matches_local_owner_through_the_public_env(monkeypatch, t
         for seed, values in ((42, variation), (17, {})):
             expected = reference.reset(seed=seed, options={"variation_values": values})
             actual = candidate.reset(seed=seed, options={"variation_values": values})
-            equal(expected, actual)
+            assert_same_state(expected, actual)
             assert torch.equal(reference.get_style(), candidate.get_style())
-            equal(
+            assert_same_state(
                 reference.step(actions.astype(np.float32), frames=None),
                 candidate.step(actions.astype(np.float32), frames=None),
             )
@@ -100,16 +94,16 @@ def test_invalid_state_and_actions_do_not_mutate():
         invalid["qpos"][4, 0] = float("nan")  # Invalid in the last shard.
         with pytest.raises(ValueError):
             adapter.set_state(invalid)
-        equal(initial, adapter.get_state())
+        assert_same_state(initial, adapter.get_state())
         with pytest.raises(ValueError):
             adapter.step(np.zeros((4, 4)))
         with pytest.raises(ValueError):
             adapter.step(np.zeros((5, 4)), active=np.ones(4, dtype=bool))
-        equal(initial, adapter.get_state())
-        equal(initial, adapter.step(np.zeros((5, 4)), active=np.zeros(5, dtype=bool))["state"])
+        assert_same_state(initial, adapter.get_state())
+        assert_same_state(initial, adapter.step(np.zeros((5, 4)), active=np.zeros(5, dtype=bool))["state"])
         owned = adapter.get_state()
         owned["qpos"].fill_(99)
-        equal(initial, adapter.get_state())
+        assert_same_state(initial, adapter.get_state())
     finally:
         adapter.close()
 
@@ -130,7 +124,7 @@ def test_inactive_lanes_match_local_owner_before_first_step():
     local, remote = FetchAdapter(5, task="Push"), FetchProcessAdapter(5, task="Push", processes=2)
     try:
         actions = np.zeros((5, 4), dtype=np.float32)
-        equal(
+        assert_same_state(
             local.step(actions, active=np.array([1, 0, 0, 0, 1], dtype=bool)),
             remote.step(actions, active=np.array([1, 0, 0, 0, 1], dtype=bool)),
         )
@@ -154,11 +148,11 @@ def test_inflight_exclusion_ownership_and_close():
             with pytest.raises(RuntimeError, match="in flight"):
                 call()
         first = remote.receive_step()
-        equal(first, local.step(actions))
+        assert_same_state(first, local.step(actions))
         held = first.clone()
         remote.submit_step(actions)
-        equal(remote.receive_step(), local.step(actions))
-        equal(first, held)
+        assert_same_state(remote.receive_step(), local.step(actions))
+        assert_same_state(first, held)
         with pytest.raises(RuntimeError, match="No Fetch step"):
             remote.receive_step()
         remote.submit_step(actions)

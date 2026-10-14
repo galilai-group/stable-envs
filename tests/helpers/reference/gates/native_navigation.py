@@ -16,7 +16,9 @@ import torch
 
 import stable_envs as se
 from tests.helpers.reference.native_navigation_semantics import NativeNavigationReference
+from tests.helpers.reference.saved import SWM_PIN
 from tests.helpers.reference.semantics import (
+    assert_lossy_projection_rejected,
     check_reset_matches_reference,
     check_state_roundtrip,
     check_step_matches_reference,
@@ -24,7 +26,6 @@ from tests.helpers.reference.semantics import (
     compare_state,
 )
 
-SWM_PIN = "21446f1ede6d5284e981bd7b47f432b994e6d812"
 CASES = {
     "two_room": {"historical_id": "swm/TwoRoom-v1", "stable_env": "TwoRoom"},
     "piecewise": {"historical_id": "swm/Piecewise-v0", "stable_env": "Piecewise"},
@@ -144,17 +145,6 @@ def _assert_independent_snapshot(env, snapshot):
         if snapshot[key].is_floating_point():
             snapshot[key].add_(1)
     compare_state(env.get_state(), expected)
-
-
-def _assert_lossy_rejected(env, snapshot):
-    packed = env._pack_render_state(snapshot)
-    for bad in (packed, env._unpack_render_state(packed)):
-        try:
-            env.set_state(bad)
-        except (TypeError, ValueError):
-            pass
-        else:
-            raise AssertionError("Lossy renderer projection was accepted")
 
 
 def _render_contract(env):
@@ -665,7 +655,7 @@ def run_gate(device="cpu"):
                             history = check_two_histories_same_state(env, other, resume, actions[:8])
                             _probe("render")
                             render = _render_contract(env)
-                            _assert_lossy_rejected(env, resume)
+                            assert_lossy_projection_rejected(env, resume)
                             evidence["cases"].append(
                                 {
                                     "domain": domain,

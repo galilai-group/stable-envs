@@ -50,7 +50,7 @@ def test_new_rocket_coverage_rejects_duplicate_or_missing_groups_before_pixels(t
         verify_rocket_render(tmp_path, ROOT, revision=ROCKET_REVISION)
 
 
-def test_historical_report_does_not_certify_changed_code(recorded_tree, tmp_path):
+def test_a_report_does_not_certify_changed_code(recorded_tree, tmp_path):
     candidate = tmp_path / "candidate"
     shutil.copytree(recorded_tree, candidate)
     report = json.loads((ROCKET / "result.json").read_text())

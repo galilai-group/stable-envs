@@ -14,80 +14,9 @@ from __future__ import annotations
 
 import pytest
 
-from stable_envs.render.primitives import dot3
-
 torch = pytest.importorskip("torch")
 R3 = pytest.importorskip("stable_envs.render.raycast3d")
-
-KINDS = (R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX, R3.ELLIPSOID)
-
-
-def _rand_scene(rng, B, K, N, *, degenerate=False, nonunit_d=False, tangent=False, far=0.0, kinds=None, dd_at_tol=0):
-    g = torch.Generator().manual_seed(rng)
-    r = lambda *s: torch.rand(*s, generator=g, dtype=torch.float32)  # noqa: E731
-    # Pinned ``kinds`` cover scenes that mix bounded and unbounded kinds writing into the same
-    # ``best`` / ``blocked`` on every run, rather than whenever sampling reaches them.
-    kinds = [KINDS[int(v)] for v in torch.randint(0, len(KINDS), (K,), generator=g)] if kinds is None else list(kinds)
-    K = len(kinds)
-    sizes = r(B, K, 3) * 0.4 + 0.02
-    if degenerate:
-        sizes[:, ::2] = 0.0  # zero radius / half-length / extent
-        sizes[0, 0] = 0.0
-    pos = (r(B, K, 3) - 0.5) * 1.5
-    q = torch.randn(B, K, 4, generator=g)
-    q = q / q.norm(dim=-1, keepdim=True)
-    w, x, y, z = q.unbind(-1)
-    R = torch.stack(
-        [
-            1 - 2 * (y * y + z * z),
-            2 * (x * y - w * z),
-            2 * (x * z + w * y),
-            2 * (x * y + w * z),
-            1 - 2 * (x * x + z * z),
-            2 * (y * z - w * x),
-            2 * (x * z - w * y),
-            2 * (y * z + w * x),
-            1 - 2 * (x * x + y * y),
-        ],
-        -1,
-    ).view(B, K, 3, 3)
-    # ``far`` puts the camera far from small primitives (~100 m to a 5 cm capsule). There
-    # |oc|^2|d|^2 and (oc.d)^2 are each ~1e4 and differ by ~r^2 ~ 2.5e-3, float32's resolution at that
-    # magnitude, so a bound that subtracts them can cancel away a true hit.
-    o = ((r(B, N, 3) - 0.5) * 0.2 + torch.tensor([0.0, -2.0, 0.4])).contiguous()
-    if far:
-        sizes = sizes * 0.05  # centimetre-scale primitives...
-        pos = pos * 0.05
-        o = o + torch.tensor([0.0, -float(far), 0.35 * float(far)])  # ...seen from far away
-    if tangent:
-        # aim a third of the rays exactly at each primitive's bound radius: the grazing case, which is
-        # where a bound that is one ulp too small drops a pixel.
-        tgt = pos[:, torch.randint(0, K, (N,), generator=g)]
-        rad = (sizes[:, :, 0] + sizes[:, :, 1]).mean()
-        off = torch.nn.functional.normalize(torch.randn(B, N, 3, generator=g), dim=-1)
-        tgt = tgt + off * rad
-        d = torch.nn.functional.normalize(tgt - o, dim=-1)
-    else:
-        d = torch.nn.functional.normalize((r(B, N, 3) - 0.5) + torch.tensor([0.0, 1.0, 0.0]), dim=-1)
-    if nonunit_d:
-        d = d * (r(B, N, 1) * 3.0)  # includes exact zeros
-    if dd_at_tol:
-        # Put |d|^2 just inside the admission window, the worst bundle ``_unit_rays`` lets through.
-        # f backs off from 0.9 until the float32 |d|^2 the cast computes is inside.
-        for f in (0.9, 0.7, 0.5, 0.3):
-            m = torch.tensor((1.0 + dd_at_tol * f * R3._UNIT_D_TOL) ** 0.5, dtype=torch.float32)
-            cand = (d * m).contiguous()
-            dd = dot3(cand, cand)
-            if bool(torch.all((dd - 1.0).abs() <= R3._UNIT_D_TOL)):
-                break
-        else:
-            raise AssertionError("could not place |d|^2 inside the admission window")
-        d = cand
-        assert float((dd - 1.0).abs().max()) > R3._UNIT_D_TOL / 4, (
-            "this case must sit at the edge of the window but landed near |d| = 1 "
-            f"(max |dd-1| = {float((dd - 1.0).abs().max()):.3e})"
-        )
-    return kinds, sizes.contiguous(), pos.contiguous(), R.contiguous(), o, d.contiguous()
+from tests.helpers.raycast_reference import random_primitive_scene
 
 
 def _both(fn, *a, **kw):
@@ -189,7 +118,7 @@ def _case_id(c):
 
 @pytest.mark.parametrize("case", CASES, ids=_case_id)
 def test_cast_nearest_is_unchanged_by_the_bound(case):
-    kinds, sizes, pos, R, o, d = _rand_scene(**case)
+    kinds, sizes, pos, R, o, d = random_primitive_scene(**case)
     (bt, bn, bi), (st, sn, si) = _both(R3.cast_nearest_torch, kinds, sizes, pos, R, o, d)
     _same(bt, st, "t")
     _same(bn, sn, "normal")
@@ -198,7 +127,7 @@ def test_cast_nearest_is_unchanged_by_the_bound(case):
 
 @pytest.mark.parametrize("case", CASES, ids=_case_id)
 def test_any_blocking_is_unchanged_by_the_bound(case):
-    kinds, sizes, pos, R, o, d = _rand_scene(**case)
+    kinds, sizes, pos, R, o, d = random_primitive_scene(**case)
     B, N = o.shape[0], o.shape[1]
     for lim_kind in ("finite", "infinite"):
         lim = torch.full((B, N), R3.INF) if lim_kind == "infinite" else torch.rand(B, N) * 6.0
@@ -277,14 +206,14 @@ def test_an_unbounded_kind_never_reaches_the_gather():
         seen.append(1)
         return real(*a, **kw)
 
-    kinds, sizes, pos, R, o, d = _rand_scene(rng=31, B=2, K=3, N=257, kinds=(R3.SPHERE,) * 3)
+    kinds, sizes, pos, R, o, d = random_primitive_scene(rng=31, B=2, K=3, N=257, kinds=(R3.SPHERE,) * 3)
     torch.nonzero = spy
     try:
         R3.cast_nearest_torch(kinds, sizes, pos, R, o, d)
         assert not seen or R3.SPHERE in R3._BOUNDED_KINDS, (
             "an unbounded kind still went through the bound's nonzero/gather"
         )
-        kinds2, s2, p2, R2, o2, d2 = _rand_scene(rng=31, B=2, K=3, N=257, kinds=(R3.CAPSULE,) * 3)
+        kinds2, s2, p2, R2, o2, d2 = random_primitive_scene(rng=31, B=2, K=3, N=257, kinds=(R3.CAPSULE,) * 3)
         seen.clear()
         R3.cast_nearest_torch(kinds2, s2, p2, R2, o2, d2)
         assert seen or R3.CAPSULE not in R3._BOUNDED_KINDS, (
@@ -301,9 +230,9 @@ def test_a_row_is_unchanged_by_the_rows_it_is_batched_WITH(rng):
     A primitive's ray set is the union over the batch, so batching changes which rays reach the
     intersector; the answer must not change. This compares one row against itself at B=1 and B=8.
     """
-    kinds, s1, p1, R1, o1, d1 = _rand_scene(rng=rng, B=1, K=6, N=311)
+    kinds, s1, p1, R1, o1, d1 = random_primitive_scene(rng=rng, B=1, K=6, N=311)
     # Rows 1..7 are a different scene and different rays, so the union is wider.
-    _, s8, p8, R8, o8, d8 = _rand_scene(rng=rng + 100, B=8, K=6, N=311)
+    _, s8, p8, R8, o8, d8 = random_primitive_scene(rng=rng + 100, B=8, K=6, N=311)
 
     def cat(one, many):  # row 0 from the B=1 case, rows 1..7 from the other
         out = torch.cat([one, many[1:]], 0).contiguous()
@@ -336,7 +265,7 @@ def test_a_row_is_unchanged_by_the_rows_it_is_batched_WITH(rng):
     ],
 )
 def test_backend_errors_are_explicit(monkeypatch, blocking, backend, installed, reason):
-    args = _rand_scene(rng=1, B=2, K=3, N=17)
+    args = random_primitive_scene(rng=1, B=2, K=3, N=17)
     fn = R3.any_blocking if blocking else R3.cast_nearest
     if blocking:
         args += (torch.full((2, 17), 3.0),)
@@ -347,7 +276,7 @@ def test_backend_errors_are_explicit(monkeypatch, blocking, backend, installed, 
 
 @pytest.mark.parametrize("blocking", [False, True])
 def test_auto_stays_on_torch_for_cpu_even_with_triton_importable(monkeypatch, blocking):
-    args = _rand_scene(rng=2, B=2, K=3, N=17)
+    args = random_primitive_scene(rng=2, B=2, K=3, N=17)
     fn = R3.any_blocking if blocking else R3.cast_nearest
     if blocking:
         args += (torch.full((2, 17), 3.0),)

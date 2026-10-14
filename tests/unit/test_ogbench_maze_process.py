@@ -12,7 +12,7 @@ pytest.importorskip("ogbench")
 import stable_envs as se
 from stable_envs.envs.ogbench.simulation.maze import OGBMazeAdapter
 from stable_envs.envs.ogbench.simulation.maze_process import OGBMazeProcessAdapter
-from tests.unit.test_ogbench_state_export import equal
+from tests.helpers.reference.semantics import assert_same_state
 
 
 @pytest.mark.parametrize(
@@ -21,7 +21,7 @@ from tests.unit.test_ogbench_state_export import equal
 def test_complete_state_rng_outputs_and_inactive_lanes(dtype, body):
     local, remote = OGBMazeAdapter(5, seed=17, **body), OGBMazeProcessAdapter(5, seed=17, processes=2, **body)
     try:
-        equal(local.get_state(), remote.get_state())
+        assert_same_state(local.get_state(), remote.get_state())
         initial = local.get_state()
         initial["rng", "global_has_gauss"][4] = True
         initial["rng", "global_cached_gaussian"][4] = 0.125
@@ -33,17 +33,19 @@ def test_complete_state_rng_outputs_and_inactive_lanes(dtype, body):
         held = remote.get_state()
         for t in range(8):
             mask = None if t == 0 else torch.tensor([True, False, True, False, True])
-            equal(local.step(actions[:, t], active=mask), remote.step(actions[:, t], active=mask))
-        equal(local.step(actions[:, 0], capture_state=False), remote.step(actions[:, 0], capture_state=False))
-        equal(local.get_state(), remote.get_state())
-        equal(held, initial)
+            assert_same_state(local.step(actions[:, t], active=mask), remote.step(actions[:, t], active=mask))
+        assert_same_state(
+            local.step(actions[:, 0], capture_state=False), remote.step(actions[:, 0], capture_state=False)
+        )
+        assert_same_state(local.get_state(), remote.get_state())
+        assert_same_state(held, initial)
         for adapter in (local, remote):
             adapter.set_state(initial)
-        equal(local.reset(), remote.reset())
-        equal(local.reset(42), remote.reset(42))
+        assert_same_state(local.reset(), remote.reset())
+        assert_same_state(local.reset(42), remote.reset(42))
         edited = remote.get_state()
         edited["root", "position"].zero_()
-        equal(local.get_state(), remote.get_state())
+        assert_same_state(local.get_state(), remote.get_state())
     finally:
         local.close()
         remote.close()
@@ -60,7 +62,7 @@ def test_rejected_restore_keeps_every_shard_usable():
         with pytest.raises(ValueError, match="task id"):
             adapter.set_state(invalid)
         assert not adapter._closed and adapter._pending is None
-        equal(initial, adapter.get_state())
+        assert_same_state(initial, adapter.get_state())
         for call in (
             lambda: adapter.reset(-1),
             lambda: adapter.step(np.zeros((4, 2))),
@@ -68,10 +70,10 @@ def test_rejected_restore_keeps_every_shard_usable():
         ):
             with pytest.raises(ValueError):
                 call()
-            equal(initial, adapter.get_state())
+            assert_same_state(initial, adapter.get_state())
         adapter.step(np.zeros((5, 2)))
         adapter.set_state(initial)
-        equal(initial, adapter.get_state())
+        assert_same_state(initial, adapter.get_state())
     finally:
         adapter.close()
 
@@ -93,7 +95,7 @@ def test_pending_request_exclusion_owned_output_and_close():
         assert "state" not in result.keys()
         held = result.clone()
         adapter.step(np.ones((3, 2)))
-        equal(result, held)
+        assert_same_state(result, held)
         adapter.submit_step(np.zeros((3, 2)))
     finally:
         adapter.close()
@@ -133,7 +135,7 @@ def test_public_chunks_and_early_stop(monkeypatch):
                     env.set_state(initial)
                 expected = local.step(actions, states=states, frames=None)
                 actual = remote.step(actions, states=states, frames=None)
-                equal(actual, expected)
+                assert_same_state(actual, expected)
                 if horizon == 8:
                     assert actual["valid"][0].sum().item() == 1
                 assert remote._simulator._pending is None

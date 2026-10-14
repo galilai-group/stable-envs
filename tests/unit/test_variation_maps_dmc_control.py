@@ -77,28 +77,28 @@ def _swm_space(m):
 @pytest.mark.parametrize("cell", _gl(CELLS))
 def test_every_leaf_is_classified(cell):
     """No swm leaf is silently unmapped, and none of our leaves is undocumented either."""
-    env = _env(cell)
-    r = check_mapping(env)
-    assert r["undocumented"] == [], f"{cell}: unclassified swm leaves {r['undocumented']}"
-    assert r["mapped_but_absent_from_swm"] == [], (
-        f"{cell}: map names swm leaves that do not exist: {r['mapped_but_absent_from_swm']}"
-    )
-    assert set(r["ours_only"]) == set(r["ours_only_documented"]), (
-        f"{cell}: ours_only is out of step with its documentation"
-    )
-    assert all(v for v in r["reasons"].values()), f"{cell}: an unmapped leaf has an empty reason"
+    with _env(cell) as env:
+        r = check_mapping(env)
+        assert r["undocumented"] == [], f"{cell}: unclassified swm leaves {r['undocumented']}"
+        assert r["mapped_but_absent_from_swm"] == [], (
+            f"{cell}: map names swm leaves that do not exist: {r['mapped_but_absent_from_swm']}"
+        )
+        assert set(r["ours_only"]) == set(r["ours_only_documented"]), (
+            f"{cell}: ours_only is out of step with its documentation"
+        )
+        assert all(v for v in r["reasons"].values()), f"{cell}: an unmapped leaf has an empty reason"
 
 
 @needs_swm
 @pytest.mark.parametrize("cell", _gl(CELLS))
 def test_classification_counts_match_the_declaration(cell):
     """The four-way counts this module claims, re-derived from the live swm space."""
-    env = _env(cell)
-    r = check_mapping(env)
-    got = {"total": len(r["classification"])}
-    for label in ("mapped", "unsupported", "dead_upstream", "not_applicable"):
-        got[label] = sum(1 for v in r["classification"].values() if v == label)
-    assert got == EXPECTED_COUNTS[variation_map(env).swm_id], cell
+    with _env(cell) as env:
+        r = check_mapping(env)
+        got = {"total": len(r["classification"])}
+        for label in ("mapped", "unsupported", "dead_upstream", "not_applicable"):
+            got[label] = sum(1 for v in r["classification"].values() if v == label)
+        assert got == EXPECTED_COUNTS[variation_map(env).swm_id], cell
 
 
 # --------------------------------------------------------------------- the registered default
@@ -113,21 +113,21 @@ def test_registered_default_is_reproducible_through_the_mapping(cell):
     Byte-identical where the two appearances coincide; where they do not, the difference is confined
     to the leaves named in ``DEFAULT_REACHED_THROUGH`` and nothing else moves.
     """
-    env = _env(cell)
-    base = np.asarray(env.default_style(), np.float32).reshape(-1)
-    mapped = style_from_variation(env, swm_defaults(variation_map(env).swm_id))
-    moved = {p for p, (o, w) in _layout(env).items() if not np.array_equal(base[o : o + w], mapped[o : o + w])}
-    assert moved == DEFAULT_REACHED_THROUGH.get(cell, set()), cell
+    with _env(cell) as env:
+        base = np.asarray(env.default_style(), np.float32).reshape(-1)
+        mapped = style_from_variation(env, swm_defaults(variation_map(env).swm_id))
+        moved = {p for p, (o, w) in _layout(env).items() if not np.array_equal(base[o : o + w], mapped[o : o + w])}
+        assert moved == DEFAULT_REACHED_THROUGH.get(cell, set()), cell
 
-    states = torch.as_tensor(env.sample_states(8, rng=np.random.default_rng(3)))
-    a = env._render(states, style=torch.as_tensor(np.repeat(base[None], 8, 0))).cpu().numpy()
-    b = env._render(states, style=torch.as_tensor(np.repeat(mapped[None], 8, 0))).cpu().numpy()
-    if cell not in DEFAULT_REACHED_THROUGH:
-        assert np.array_equal(a, b), f"{cell}: the mapped swm default is not the cell's default frame"
-    else:
-        assert not np.array_equal(a, b), (
-            f"{cell}: the swm default is declared to differ from the compiled model's and does not"
-        )
+        states = torch.as_tensor(env.sample_states(8, rng=np.random.default_rng(3)))
+        a = env._render(states, style=torch.as_tensor(np.repeat(base[None], 8, 0))).cpu().numpy()
+        b = env._render(states, style=torch.as_tensor(np.repeat(mapped[None], 8, 0))).cpu().numpy()
+        if cell not in DEFAULT_REACHED_THROUGH:
+            assert np.array_equal(a, b), f"{cell}: the mapped swm default is not the cell's default frame"
+        else:
+            assert not np.array_equal(a, b), (
+                f"{cell}: the swm default is declared to differ from the compiled model's and does not"
+            )
 
 
 @needs_swm
@@ -136,24 +136,24 @@ def test_classic_default_matches_the_official_swm_render(cell):
     """At the registered default, swm's frame is the official gymnasium frame; ours must equal it."""
     gym = pytest.importorskip("gymnasium")
     pytest.importorskip("pygame")
-    env = _env(cell)
-    cls = type(env)
-    m = variation_map(env)
-    states = env.sample_states(8, rng=np.random.default_rng(7))
-    ref_wrapper = gym.make(m.swm_id, render_mode="rgb_array")
-    try:
-        holder = ref_wrapper
-        while getattr(holder, "variation_space", None) is None:
-            holder = holder.env
-        holder.reset(seed=0)
-        official = np.stack(
-            [(cls.reference_set_state(holder.env.unwrapped, s), holder.render().copy())[1] for s in states]
-        )
-    finally:
-        ref_wrapper.close()
-    mapped = style_from_variation(env, swm_defaults(m.swm_id))
-    ours = env._render(torch.as_tensor(states), style=torch.as_tensor(np.repeat(mapped[None], 8, 0))).cpu().numpy()
-    assert np.array_equal(ours, official), f"{cell}: {int((ours != official).sum())} bytes differ"
+    with _env(cell) as env:
+        cls = type(env)
+        m = variation_map(env)
+        states = env.sample_states(8, rng=np.random.default_rng(7))
+        ref_wrapper = gym.make(m.swm_id, render_mode="rgb_array")
+        try:
+            holder = ref_wrapper
+            while getattr(holder, "variation_space", None) is None:
+                holder = holder.env
+            holder.reset(seed=0)
+            official = np.stack(
+                [(cls.reference_set_state(holder.env.unwrapped, s), holder.render().copy())[1] for s in states]
+            )
+        finally:
+            ref_wrapper.close()
+        mapped = style_from_variation(env, swm_defaults(m.swm_id))
+        ours = env._render(torch.as_tensor(states), style=torch.as_tensor(np.repeat(mapped[None], 8, 0))).cpu().numpy()
+        assert np.array_equal(ours, official), f"{cell}: {int((ours != official).sum())} bytes differ"
 
 
 # --------------------------------------------------------------------- isolation
@@ -166,20 +166,20 @@ def test_mapped_leaves_are_isolated(cell):
 
     Asserted on the style row, where a wrong slot is distinguishable from two elements sharing a colour.
     """
-    env = _env(cell)
-    m = variation_map(env)
-    defaults = swm_defaults(m.swm_id)
-    base = style_from_variation(env, defaults)
-    layout = _layout(env)
-    space = _swm_space(m)
-    for ours_paths, swm_path in _mapped_pairs(m):
-        leaf = space
-        for part in swm_path.split("."):
-            leaf = leaf[part]
-        probe = _probe(leaf)
-        row = style_from_variation(env, {**defaults, swm_path: probe})
-        moved = {p for p, (o, w) in layout.items() if not np.array_equal(base[o : o + w], row[o : o + w])}
-        assert moved <= set(ours_paths), f"{cell}: swm {swm_path} moved {sorted(moved - set(ours_paths))} as well"
+    with _env(cell) as env:
+        m = variation_map(env)
+        defaults = swm_defaults(m.swm_id)
+        base = style_from_variation(env, defaults)
+        layout = _layout(env)
+        space = _swm_space(m)
+        for ours_paths, swm_path in _mapped_pairs(m):
+            leaf = space
+            for part in swm_path.split("."):
+                leaf = leaf[part]
+            probe = _probe(leaf)
+            row = style_from_variation(env, {**defaults, swm_path: probe})
+            moved = {p for p, (o, w) in layout.items() if not np.array_equal(base[o : o + w], row[o : o + w])}
+            assert moved <= set(ours_paths), f"{cell}: swm {swm_path} moved {sorted(moved - set(ours_paths))} as well"
 
 
 def _mapped_pairs(m):
@@ -214,64 +214,64 @@ def _probe(leaf):
 @pytest.mark.parametrize("cell", _gl(CELLS))
 def test_round_trip(cell):
     """swm value -> style row -> swm value, at the default and at a probe on every mapped leaf."""
-    env = _env(cell)
-    m = variation_map(env)
-    defaults = swm_defaults(m.swm_id)
-    space = _swm_space(m)
-    cfgs = [defaults]
-    for _, swm_path in _mapped_pairs(m):
-        leaf = space
-        for part in swm_path.split("."):
-            leaf = leaf[part]
-        cfgs.append({**defaults, swm_path: _probe(leaf)})
-    quantised = set(m.rgb255.values())
-    for cfg in cfgs:
-        back = variation_from_style(env, style_from_variation(env, cfg))
-        for path in m.mapped_swm_paths():
-            want = np.asarray(cfg[path], np.float64).reshape(-1)
-            got = np.asarray(back[path], np.float64).reshape(-1)
-            if path in quantised:
-                # 8-bit colours lose at most half a level (1/510) and must round-trip to the same uint8.
-                assert np.allclose(got, want, atol=1.0 / 510.0), f"{cell}: {path} {got} != {want}"
-                assert np.array_equal(
-                    (got * 255.0 + 0.5).astype(np.uint8), (np.clip(want, 0, 1) * 255.0 + 0.5).astype(np.uint8)
-                ), f"{cell}: {path} does not round-trip to the same uint8"
-            else:
-                # float32 is the style row's dtype.
-                assert np.allclose(got, want, rtol=6e-8, atol=3e-7), f"{cell}: {path} {got} != {want}"
+    with _env(cell) as env:
+        m = variation_map(env)
+        defaults = swm_defaults(m.swm_id)
+        space = _swm_space(m)
+        cfgs = [defaults]
+        for _, swm_path in _mapped_pairs(m):
+            leaf = space
+            for part in swm_path.split("."):
+                leaf = leaf[part]
+            cfgs.append({**defaults, swm_path: _probe(leaf)})
+        quantised = set(m.rgb255.values())
+        for cfg in cfgs:
+            back = variation_from_style(env, style_from_variation(env, cfg))
+            for path in m.mapped_swm_paths():
+                want = np.asarray(cfg[path], np.float64).reshape(-1)
+                got = np.asarray(back[path], np.float64).reshape(-1)
+                if path in quantised:
+                    # 8-bit colours lose at most half a level (1/510) and must round-trip to the same uint8.
+                    assert np.allclose(got, want, atol=1.0 / 510.0), f"{cell}: {path} {got} != {want}"
+                    assert np.array_equal(
+                        (got * 255.0 + 0.5).astype(np.uint8), (np.clip(want, 0, 1) * 255.0 + 0.5).astype(np.uint8)
+                    ), f"{cell}: {path} does not round-trip to the same uint8"
+                else:
+                    # float32 is the style row's dtype.
+                    assert np.allclose(got, want, rtol=6e-8, atol=3e-7), f"{cell}: {path} {got} != {want}"
 
 
 def test_rgb255_is_swm_quantisation():
     """``rgb255`` reproduces swm's ``uint8(v * 255 + 0.5)``; a bare factor of 255 truncates 0.3 to 76, not 77."""
-    env = make("Pendulum", num_envs=1, device="cpu")
-    layout = _layout(env)
-    o, w = layout["rod.color"]
-    for t in np.linspace(0.0, 1.0, 513):
-        row = style_from_variation(env, {"visuals.rod": np.full(3, t, np.float32)})
-        want = (np.float32(t) * 255.0 + 0.5).astype(np.uint8)
-        got = np.asarray(row[o : o + w]).astype(np.uint8)
-        assert (got == want).all(), f"t={t}: {got} != {want}"
+    with make("Pendulum", num_envs=1, device="cpu") as env:
+        layout = _layout(env)
+        o, w = layout["rod.color"]
+        for t in np.linspace(0.0, 1.0, 513):
+            row = style_from_variation(env, {"visuals.rod": np.full(3, t, np.float32)})
+            want = (np.float32(t) * 255.0 + 0.5).astype(np.uint8)
+            got = np.asarray(row[o : o + w]).astype(np.uint8)
+            assert (got == want).all(), f"t={t}: {got} != {want}"
 
 
 @needs_swm
 @pytest.mark.parametrize("cell", _gl(sorted(LIGHT_RANGE)))
 def test_light_intensity_lands_on_the_model(cell):
     """swm writes intensity absolutely, ours scales the model's own diffuse: they agree over the reachable range."""
-    env = _env(cell)
-    base, lo, hi, _ = LIGHT_RANGE[cell]
-    pristine = np.asarray(type(env)._pristine()["light_diffuse"], np.float64)
-    assert np.allclose(pristine, base), f"{cell}: declared light base {base} is not the model's"
-    o, w = _layout(env)["light.diffuse_scale"]
-    for intensity in np.linspace(lo, hi, 25):
-        row = style_from_variation(env, {"light.intensity": np.float32([intensity])})
-        got = np.clip(pristine * float(row[o]), 0.0, 1.0)
-        assert np.allclose(got, intensity, atol=3e-7), f"{cell}: {got} != {intensity}"
-    # the declared dark-end gap: intensities below `lo` need a scale under the space's own minimum
-    scale_low = float(env.variation_space["light"]["diffuse_scale"].low[0])
-    at_lo = style_from_variation(env, {"light.intensity": np.float32([lo])})
-    dark = style_from_variation(env, {"light.intensity": np.float32([lo / 2.0])})
-    assert float(at_lo[o]) == pytest.approx(scale_low, rel=1e-6), cell
-    assert float(dark[o]) < scale_low - 1e-6, f"{cell}: the declared dark-end gap does not exist"
+    with _env(cell) as env:
+        base, lo, hi, _ = LIGHT_RANGE[cell]
+        pristine = np.asarray(type(env)._pristine()["light_diffuse"], np.float64)
+        assert np.allclose(pristine, base), f"{cell}: declared light base {base} is not the model's"
+        o, w = _layout(env)["light.diffuse_scale"]
+        for intensity in np.linspace(lo, hi, 25):
+            row = style_from_variation(env, {"light.intensity": np.float32([intensity])})
+            got = np.clip(pristine * float(row[o]), 0.0, 1.0)
+            assert np.allclose(got, intensity, atol=3e-7), f"{cell}: {got} != {intensity}"
+        # the declared dark-end gap: intensities below `lo` need a scale under the space's own minimum
+        scale_low = float(env.variation_space["light"]["diffuse_scale"].low[0])
+        at_lo = style_from_variation(env, {"light.intensity": np.float32([lo])})
+        dark = style_from_variation(env, {"light.intensity": np.float32([lo / 2.0])})
+        assert float(at_lo[o]) == pytest.approx(scale_low, rel=1e-6), cell
+        assert float(dark[o]) < scale_low - 1e-6, f"{cell}: the declared dark-end gap does not exist"
 
 
 # --------------------------------------------------------------------- dead upstream
@@ -387,55 +387,55 @@ def test_dead_upstream_leaves_really_are_dead(tmp_path):
 @needs_dmc
 def test_enum_alternatives_round_trip():
     """The one ``enum`` leaf in this family: swm's Discrete(2) into our Discrete(3), both ways."""
-    env = make("DMCManipulatorBringBall", num_envs=1, device="cpu")
-    o, _ = _layout(env)["target_ball.shape"]
-    for swm_index in (0, 1):
-        row = style_from_variation(env, {"target.shape": swm_index})
-        assert int(row[o]) == swm_index
-        assert variation_from_style(env, row)["target.shape"] == swm_index
-    # the third alternative is the compiled model's own sphere and the default style's
-    assert int(np.asarray(env.default_style()).reshape(-1)[o]) == 2
+    with make("DMCManipulatorBringBall", num_envs=1, device="cpu") as env:
+        o, _ = _layout(env)["target_ball.shape"]
+        for swm_index in (0, 1):
+            row = style_from_variation(env, {"target.shape": swm_index})
+            assert int(row[o]) == swm_index
+            assert variation_from_style(env, row)["target.shape"] == swm_index
+        # the third alternative is the compiled model's own sphere and the default style's
+        assert int(np.asarray(env.default_style()).reshape(-1)[o]) == 2
 
 
 @needs_dmc
 def test_an_unreachable_enum_index_is_refused():
     """A swm index the table does not cover must raise rather than silently pick something."""
-    env = make("DMCManipulatorBringBall", num_envs=1, device="cpu")
-    with pytest.raises(KeyError, match="no entry in the map"):
-        style_from_variation(env, {"target.shape": 7})
+    with make("DMCManipulatorBringBall", num_envs=1, device="cpu") as env:
+        with pytest.raises(KeyError, match="no entry in the map"):
+            style_from_variation(env, {"target.shape": 7})
 
 
 def test_affine_is_invertible_and_additive():
     """``affine`` maps ``ours = theirs * factor + offset`` and inverts it; the inverted switch maps 0/1 to 1/0."""
     from dataclasses import replace
 
-    env = make("Pendulum", num_envs=1, device="cpu")
-    m = replace(
-        variation_map(env),
-        identical=(),
-        partial={},
-        rgb255={},
-        scaled={},
-        affine={"rendering.antialias": ("visuals.bg", -1.0, 1.0)},
-    )
-    VARIATION_MAPS["_AffineProbe"] = m
-    try:
+    with make("Pendulum", num_envs=1, device="cpu") as env:
+        m = replace(
+            variation_map(env),
+            identical=(),
+            partial={},
+            rgb255={},
+            scaled={},
+            affine={"rendering.antialias": ("visuals.bg", -1.0, 1.0)},
+        )
+        VARIATION_MAPS["_AffineProbe"] = m
+        try:
 
-        class Probe(type(env)):
-            pass
+            class Probe(type(env)):
+                pass
 
-        Probe.__name__ = "_AffineProbe"
-        probe = Probe.__new__(Probe)
-        probe.__dict__.update(env.__dict__)
-        o, _ = _layout(env)["rendering.antialias"]
-        for theirs, ours in ((0.0, 1.0), (1.0, 0.0), (0.25, 0.75)):
-            row = style_from_variation(probe, {"visuals.bg": np.full(3, theirs, np.float32)})
-            assert float(row[o]) == pytest.approx(ours)
-            assert variation_from_style(probe, row)["visuals.bg"] == pytest.approx(theirs)
-        assert m.mapped_swm_paths() == {"visuals.bg"}
-        assert m.affine_pairs()["rendering.antialias"] == ("visuals.bg", -1.0, 1.0)
-    finally:
-        VARIATION_MAPS.pop("_AffineProbe")
+            Probe.__name__ = "_AffineProbe"
+            probe = Probe.__new__(Probe)
+            probe.__dict__.update(env.__dict__)
+            o, _ = _layout(env)["rendering.antialias"]
+            for theirs, ours in ((0.0, 1.0), (1.0, 0.0), (0.25, 0.75)):
+                row = style_from_variation(probe, {"visuals.bg": np.full(3, theirs, np.float32)})
+                assert float(row[o]) == pytest.approx(ours)
+                assert variation_from_style(probe, row)["visuals.bg"] == pytest.approx(theirs)
+            assert m.mapped_swm_paths() == {"visuals.bg"}
+            assert m.affine_pairs()["rendering.antialias"] == ("visuals.bg", -1.0, 1.0)
+        finally:
+            VARIATION_MAPS.pop("_AffineProbe")
 
 
 def test_a_non_invertible_affine_is_refused():
@@ -473,15 +473,15 @@ def test_floor_color_is_a_leaf_and_the_default_is_the_identity(cell):
 
     if sys.platform == "darwin" and not issubclass(REGISTRY[cell], DMControlSuite):
         pytest.skip("the trackcom CPU scene caches its sky through dm_control physics.render, disabled on macOS")
-    env = make(cell, num_envs=2, size=84, device="cpu")
-    layout = _layout(env)
-    assert "floor.color" in layout and layout["floor.color"][1] == 6, layout
-    d = np.asarray(env.variation_space["floor"]["color"].value, np.float64).reshape(2, 3)
-    assert np.allclose(d, [[0.1, 0.2, 0.3], [0.2, 0.3, 0.4]]), d
-    st = env.sample_states(2, np.random.default_rng(0))
-    a = env._render(st)
-    b = env._render(st, variation={"floor.color": np.asarray([[0.9, 0.1, 0.1], [0.1, 0.1, 0.9]])})
-    assert int((a != b).any(-1).sum()) > 0, f"{cell}: floor.color moved no pixel"
-    c = env._render(st, variation={"floor.color": d})
-    assert torch.equal(a, c), f"{cell}: rendering AT the declared default is not the default frame"
-    assert torch.equal(a, env._render(st)), f"{cell}: a custom floor leaked into the next render"
+    with make(cell, num_envs=2, size=84, device="cpu") as env:
+        layout = _layout(env)
+        assert "floor.color" in layout and layout["floor.color"][1] == 6, layout
+        d = np.asarray(env.variation_space["floor"]["color"].value, np.float64).reshape(2, 3)
+        assert np.allclose(d, [[0.1, 0.2, 0.3], [0.2, 0.3, 0.4]]), d
+        st = env.sample_states(2, np.random.default_rng(0))
+        a = env._render(st)
+        b = env._render(st, variation={"floor.color": np.asarray([[0.9, 0.1, 0.1], [0.1, 0.1, 0.9]])})
+        assert int((a != b).any(-1).sum()) > 0, f"{cell}: floor.color moved no pixel"
+        c = env._render(st, variation={"floor.color": d})
+        assert torch.equal(a, c), f"{cell}: rendering AT the declared default is not the default frame"
+        assert torch.equal(a, env._render(st)), f"{cell}: a custom floor leaked into the next render"

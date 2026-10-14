@@ -232,3 +232,32 @@ class ReacherReference(DMCReference):
 class DMCHumanoidReference(DMCReference):
     def __init__(self, num_envs=1, options=None):
         super().__init__("humanoid", num_envs, options)
+
+
+def compare_models(candidate, reference, *, minimum):
+    """Every numeric MjModel array of the candidate's first lane equals the reference's, and so does its timing.
+
+    Returns how many arrays were compared, which must be at least ``minimum``.
+    """
+    actual = candidate._simulator.envs[0].physics.model
+    expected = reference.envs[0].env.physics.model
+    compared = 0
+    for name in dir(actual):
+        if name.startswith("_") or not hasattr(expected, name):
+            continue
+        try:
+            left, right = np.asarray(getattr(actual, name)), np.asarray(getattr(expected, name))
+        except Exception:
+            continue
+        if left.dtype.kind not in "biufc" or right.dtype.kind not in "biufc":
+            continue
+        assert left.shape == right.shape, (name, left.shape, right.shape)
+        assert left.dtype == right.dtype, (name, left.dtype, right.dtype)
+        assert np.array_equal(left, right, equal_nan=True), name
+        compared += 1
+    assert compared >= minimum
+    candidate_base, reference_base = candidate._simulator.envs[0]._env, reference.envs[0].env._env
+    assert candidate_base._n_sub_steps == reference_base._n_sub_steps
+    assert candidate_base._step_limit == reference_base._step_limit
+    assert candidate_base.control_timestep() == reference_base.control_timestep()
+    return compared

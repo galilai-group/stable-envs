@@ -14,14 +14,9 @@ pytest.importorskip("cv2")
 from stable_envs.envs.pusht.simulation.numeric import decode_seed, encode_seed, get_value, put_value
 from stable_envs.envs.pusht.simulation.replay import PushTReplay
 from stable_envs.envs.pusht.simulation.replay_batch import PushTReplayAdapter
+from tests.helpers.reference.semantics import assert_same_state
 
 pytestmark = pytest.mark.unit
-
-
-def assert_state(a, b):
-    assert set(a.keys(True, True)) == set(b.keys(True, True))
-    for key in a.keys(True, True):
-        assert torch.equal(a[key], b[key]), key
 
 
 @pytest.mark.parametrize(
@@ -108,9 +103,9 @@ def test_batch_padding_active_lanes_ownership_and_restore(discrete):
         assert owned["history", "actions"].shape == (16, 1, 2)
         expected = env.step(action)["state"]
         env.set_state(saved)
-        assert_state(env.step(action)["state"], expected)
+        assert_same_state(env.step(action)["state"], expected)
         saved["history", "actions"].zero_()
-        assert_state(env.get_state(), expected)
+        assert_same_state(env.get_state(), expected)
     finally:
         env.close()
 
@@ -138,7 +133,7 @@ def test_invalid_state_never_partially_installs_lanes(damage):
             bad["owned", "variation", "block", "shape", "current", "value"][1] = 100
         with pytest.raises(ValueError):
             env.set_state(bad)
-        assert_state(env.get_state(), before)
+        assert_same_state(env.get_state(), before)
     finally:
         env.close()
 
@@ -152,10 +147,10 @@ def test_invalid_last_action_and_failed_reset_are_atomic(discrete):
         action[-1, -1] = 16 if discrete else np.nan
         with pytest.raises(ValueError):
             env.step(action)
-        assert_state(env.get_state(), before)
+        assert_same_state(env.get_state(), before)
         with pytest.raises(ValueError):
             env.reset(17, {"goal_state": np.full(7, np.nan)})
-        assert_state(env.get_state(), before)
+        assert_same_state(env.get_state(), before)
     finally:
         env.close()
 
@@ -184,6 +179,6 @@ def test_continuous_bounds_reject_atomically(dtype, bad):
         actions[1, 1] = bad
         with pytest.raises(ValueError):
             env.step(actions)
-        assert_state(env.get_state(), before)
+        assert_same_state(env.get_state(), before)
     finally:
         env.close()

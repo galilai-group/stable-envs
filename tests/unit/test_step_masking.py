@@ -7,19 +7,13 @@ import pytest
 import torch
 
 from stable_envs._core.stepping import step
-from tests.unit.test_step_capture import Counter, PipelinedCounter
+from tests.helpers.counter_env import Counter, PipelinedCounter
+from tests.helpers.reference.semantics import assert_same_state
 
 _path = Path(__file__).parents[1] / "helpers/reference/step_capture.py"
 _spec = importlib.util.spec_from_file_location("stable_envs._reference_stepping", _path)
 _reference = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_reference)
-
-
-def equal(actual, expected):
-    assert actual.batch_size == expected.batch_size
-    assert set(actual.keys(True, True)) == set(expected.keys(True, True))
-    for key in actual.keys(True, True):
-        torch.testing.assert_close(actual[key], expected[key], rtol=0, atol=0, equal_nan=True)
 
 
 @pytest.mark.parametrize("device", ["cpu", "cuda"])
@@ -53,7 +47,7 @@ def test_owned_nested_outputs_and_terminal_routing(device, pipeline, limits, len
         actions = torch.ones(shape, dtype=torch.int64, device=device)
         expected = _reference.step(reference, actions, states=selection, frames=selection)
         actual = step(candidate, actions, states=selection, frames=selection)
-        equal(actual, expected)
+        assert_same_state(actual, expected)
         pixels = actual["info", "goal"][..., 0, 0, 0]
         wanted = torch.arange(1, length + 1, device=device).expand(3, length)
         wanted = torch.where(actual["valid"], wanted, 0).to(torch.uint8)
@@ -63,6 +57,6 @@ def test_owned_nested_outputs_and_terminal_routing(device, pipeline, limits, len
         candidate.image.zero_()
         candidate.position.fill_(19)
         step(candidate, torch.ones(3, 1, dtype=torch.int64, device=device), frames=None)
-        equal(actual, held)
+        assert_same_state(actual, held)
         if pipeline:
             assert candidate.pending is None

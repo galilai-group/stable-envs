@@ -14,7 +14,9 @@ import torch
 
 import stable_envs as se
 from tests.helpers.reference.dmc_semantics import DMCReference as DMCFirstFamilyReference
+from tests.helpers.reference.saved import SWM_PIN
 from tests.helpers.reference.semantics import (
+    assert_lossy_projection_rejected,
     check_reset_matches_reference,
     check_state_roundtrip,
     check_step_matches_reference,
@@ -22,7 +24,6 @@ from tests.helpers.reference.semantics import (
     compare_state,
 )
 
-SWM_PIN = "21446f1ede6d5284e981bd7b47f432b994e6d812"
 CASES = {
     "acrobot": "DMCAcrobotBalance",
     "pendulum": "DMCPendulumSwingup",
@@ -40,19 +41,6 @@ def _positive_reward_state(state):
     state["lifecycle", "reset_next_step"].zero_()
     state["task", "cumulative_reward"].zero_()
     return state
-
-
-def _assert_lossy_rows_rejected(env, snapshot):
-    for bad in (
-        env._pack_render_state(snapshot),
-        env._unpack_render_state(env._pack_render_state(snapshot)),
-    ):
-        try:
-            env.set_state(bad)
-        except (TypeError, ValueError):
-            pass
-        else:
-            raise AssertionError("Lossy renderer projection was accepted")
 
 
 def run_gate(device="cpu"):
@@ -106,7 +94,7 @@ def run_gate(device="cpu"):
                         before = env.get_state()
                         env.render(snapshot)
                         compare_state(env.get_state(), before)
-                        _assert_lossy_rows_rejected(env, snapshot)
+                        assert_lossy_projection_rejected(env, snapshot)
                         evidence["cases"].append(
                             {
                                 "domain": domain,

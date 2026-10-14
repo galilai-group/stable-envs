@@ -53,11 +53,10 @@ def coverage(required, results) -> dict:
     )
 
 
-_CLASSIC = "tests/integration/test_native_classic_gate.py::test_frozen_reference_oracle"
-_CLASSIC_REST = "tests/integration/test_native_classic_remaining_gate.py::test_frozen_remaining_reference_oracle"
+_CLASSIC = "tests/integration/test_native_classic_gate.py::test_frozen_source_state_and_tasks"
 _NAVIGATION = "tests/integration/test_native_navigation_oracle.py::test_frozen_native_navigation_oracles_replay"
 _DMC_SUITE = "tests/unit/test_dmc_sibling_tasks.py::test_cell_matches_the_source_task_and_restores_into_a_fresh_env"
-_DMC_HISTORICAL = "tests/unit/test_dmc_sibling_tasks.py::test_historical_cell_matches_the_source_task"
+_DMC_SWM_CELL = "tests/unit/test_dmc_sibling_tasks.py::test_swm_cell_matches_the_suite_task"
 _DMC_CORPUS = "tests/unit/test_dmc_oracle_replay.py::test_adapter_replays_every_recorded_step_from_restored_states"
 _MAZE = "tests/integration/test_ogbench_semantics.py::test_every_maze_cell_matches_the_official_env"
 _MAZES = tuple(
@@ -76,8 +75,7 @@ _CRAFTAX = "tests/unit/test_craftax_semantics.py::test_source_reset_all_actions_
 #: Registered env -> the CPU test comparing it with the library it ports, or with a corpus recorded from
 #: its source. None of these tests imports stable_worldmodel.
 ORIGINAL_GATES: dict[str, str] = {
-    **dict.fromkeys(("CartPole", "Pendulum"), _CLASSIC),
-    **dict.fromkeys(("Acrobot", "MountainCar", "MountainCarContinuous"), _CLASSIC_REST),
+    **dict.fromkeys(("CartPole", "Pendulum", "Acrobot", "MountainCar", "MountainCarContinuous"), _CLASSIC),
     **dict.fromkeys(("TwoRoom", "Piecewise", "SimplePointMaze"), _NAVIGATION),
     **dict.fromkeys(
         (
@@ -89,7 +87,7 @@ ORIGINAL_GATES: dict[str, str] = {
             "DMCHumanoidWalk",
             "DMCReacherHard",
         ),
-        _DMC_HISTORICAL,
+        _DMC_SWM_CELL,
     ),
     **dict.fromkeys(
         ("DMCBallInCupCatch", "DMCFingerTurnHard", "DMCManipulatorBringBall", "DMCQuadrupedWalk", "DMCWalkerWalk"),
@@ -114,9 +112,8 @@ ORIGINAL_GATES: dict[str, str] = {
     **dict.fromkeys(("CraftaxClassicPixels", "CraftaxClassicSymbolic", "CraftaxPixels", "CraftaxSymbolic"), _CRAFTAX),
 }
 
-_DMC_FIRST = "tests/integration/test_dmc_first_family_semantics.py::test_first_dmc_family_full_state_semantics"
+_DMC_SWM = "tests/integration/test_dmc_swm_semantics.py::test_dmc_full_state_semantics"
 _DMC_ALIGNED = "tests/integration/test_dmc_aligned_semantics.py::test_aligned_full_state_specs_and_gate"
-_DMC_CONTINUATION = "tests/integration/test_dmc_continuation_semantics.py::test_continuation_dmc_full_state_semantics"
 _PUSHT = "tests/integration/test_variation_pusht.py::test_leaf_matches_swm_per_lane"
 
 #: Registered env with a stable-worldmodel registration -> the CPU test comparing it with live SWM
@@ -132,13 +129,13 @@ SWM_GATES: dict[str, str] = {
     ),
     "PiecewiseZones": "tests/integration/test_variation_navigation.py::test_piecewise_target_and_bias_field_match_swm",
     **dict.fromkeys(("PushT", "PushTDiscrete"), _PUSHT),
-    **dict.fromkeys(("DMCAcrobotBalance", "DMCPendulumSwingup", "DMCCartpoleSwingup"), _DMC_FIRST),
+    **dict.fromkeys(("DMCAcrobotBalance", "DMCPendulumSwingup", "DMCCartpoleSwingup"), _DMC_SWM),
     "DMCCartpoleBalance": "tests/integration/test_dmc_physics_variation.py::test_physics_leaves_match_swm",
     **dict.fromkeys(
         ("DMCBallInCupCatch", "DMCFingerTurnHard", "DMCManipulatorBringBall", "DMCQuadrupedWalk"), _DMC_ALIGNED
     ),
-    **dict.fromkeys(("DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk"), _DMC_CONTINUATION),
-    "DMCHumanoidWalk": "tests/integration/test_dmc_humanoid_semantics.py::test_humanoid_walk_identity_specs_and_full_state_semantics",
+    **dict.fromkeys(("DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk"), _DMC_SWM),
+    "DMCHumanoidWalk": _DMC_SWM,
     "DMCReacherHard": "tests/integration/test_reacher_semantics.py::test_reacher_full_state_semantics",
     **{
         f"Fetch{task}": "tests/integration/test_fetch_variation.py::test_reset_leaves_match_swm"

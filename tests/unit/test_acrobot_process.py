@@ -11,7 +11,7 @@ import stable_envs as se
 import stable_envs.envs.classic_control.semantics as semantics
 from stable_envs.envs.classic_control.simulation.local import ClassicControlAdapter
 from stable_envs.envs.classic_control.simulation.process import AcrobotProcessAdapter
-from tests.unit.test_classic_state_export import equal
+from tests.helpers.reference.semantics import assert_same_state
 
 
 @pytest.mark.parametrize("dtype", [np.int32, np.int64])
@@ -19,7 +19,7 @@ def test_state_task_rng_variation_and_inactive_lanes(dtype):
     local = ClassicControlAdapter("acrobot", 5)
     remote = AcrobotProcessAdapter("acrobot", 5, seed=17, processes=2)
     try:
-        equal(local.reset(17), remote.get_state())
+        assert_same_state(local.reset(17), remote.get_state())
         initial = local.get_state()
         initial["rng", "has_uint32"][-1] = 1
         initial["rng", "uinteger"][-1] = 2**32 - 1
@@ -31,15 +31,15 @@ def test_state_task_rng_variation_and_inactive_lanes(dtype):
         actions = np.random.default_rng(31).integers(-3, 3, (5, 8, 1)).astype(dtype)
         for t in range(8):
             mask = None if t == 0 else torch.tensor([True, False, True, False, True])
-            equal(local.step(actions[:, t], active=mask), remote.step(actions[:, t], active=mask))
-        equal(local.step(actions[:, 0]).exclude("state"), remote.step(actions[:, 0], capture_state=False))
-        equal(local.get_state(), remote.get_state())
-        equal(held, initial)
-        equal(local.reset(), remote.reset())
-        equal(local.reset(42, {"low": -0.2, "high": 0.3}), remote.reset(42, {"low": -0.2, "high": 0.3}))
+            assert_same_state(local.step(actions[:, t], active=mask), remote.step(actions[:, t], active=mask))
+        assert_same_state(local.step(actions[:, 0]).exclude("state"), remote.step(actions[:, 0], capture_state=False))
+        assert_same_state(local.get_state(), remote.get_state())
+        assert_same_state(held, initial)
+        assert_same_state(local.reset(), remote.reset())
+        assert_same_state(local.reset(42, {"low": -0.2, "high": 0.3}), remote.reset(42, {"low": -0.2, "high": 0.3}))
         changed = remote.get_state()
         changed["theta1"].zero_()
-        equal(local.get_state(), remote.get_state())
+        assert_same_state(local.get_state(), remote.get_state())
     finally:
         local.close()
         remote.close()
@@ -55,12 +55,12 @@ def test_invalid_last_lane_does_not_mutate_other_owners():
         invalid["rng", "state"][-1].fill_(-1)
         with pytest.raises((ValueError, OverflowError)):
             remote.set_state(invalid)
-        equal(initial, remote.get_state())
+        assert_same_state(initial, remote.get_state())
         bad = initial.clone()
         bad["dtheta1"][-1] = float("nan")
         with pytest.raises(ValueError):
             remote.set_state(bad)
-        equal(initial, remote.get_state())
+        assert_same_state(initial, remote.get_state())
         for actions, error in [
             (np.ones((5, 1), np.float32), TypeError),
             (np.full((5, 1), 3), IndexError),
@@ -68,10 +68,10 @@ def test_invalid_last_lane_does_not_mutate_other_owners():
         ]:
             with pytest.raises(error):
                 remote.step(actions)
-            equal(initial, remote.get_state())
+            assert_same_state(initial, remote.get_state())
         remote.step(np.ones((5, 1), np.int64))
         remote.set_state(initial)
-        equal(initial, remote.get_state())
+        assert_same_state(initial, remote.get_state())
         assert not remote._closed
     finally:
         remote.close()
@@ -94,7 +94,7 @@ def test_one_request_owned_outputs_and_close():
         assert "state" not in result.keys()
         held = result.clone()
         remote.step(np.zeros((3, 1), np.int64))
-        equal(result, held)
+        assert_same_state(result, held)
         remote.submit_step(np.ones((3, 1), np.int64))
     finally:
         remote.close()
@@ -136,20 +136,20 @@ def test_public_chunks_slices_early_stop_and_current_render(pipeline, device):
                     env.set_state(initial)
                 actual = remote.step(a, states=states, frames=states)
                 expected = local.step(a, states=states, frames=states)
-                equal(actual, expected)
+                assert_same_state(actual, expected)
                 if horizon == 8:
                     assert actual["valid"][1:].sum(1).tolist() == [1, 1, 1]
                 torch.testing.assert_close(local.render(), remote.render(), rtol=0, atol=0)
                 held = actual.clone()
                 remote.reset(42)
-                equal(actual, held)
+                assert_same_state(actual, held)
         for env in (local, remote):
             env.set_state(initial)
-        equal(local.reset(), remote.reset())
+        assert_same_state(local.reset(), remote.reset())
         for env in (local, remote):
             env.set_variation({"physics.link_mass_1": [1.3]})
             env.reset(31)
-        equal(
+        assert_same_state(
             local.step(torch.as_tensor(actions, device=device)), remote.step(torch.as_tensor(actions, device=device))
         )
     finally:

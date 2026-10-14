@@ -249,13 +249,12 @@ def test_compression_works_on_a_dataset_whose_style_is_per_row():
 def test_the_caller_s_own_dataloader_iterates_the_dataset_in_order():
     """A plain ``DataLoader`` with ``collate_fn=collate_batched`` iterates the dataset in order.
 
-    ``StateDataset`` has no ``loader()`` factory. ``tests/unit/test_loader_idiom.py`` covers the
-    ``BatchSampler`` route and the states-only idiom.
+    ``tests/unit/test_loader_idiom.py`` covers the absent ``loader()`` factory, the ``BatchSampler``
+    route and the states-only idiom.
     """
     from torch.utils.data import DataLoader
 
     ds = StateDataset(RecordingEnv(), _states(8), device="cpu")
-    assert not hasattr(ds, "loader"), "StateDataset must not expose a loader() factory"
     batches = list(DataLoader(ds, batch_size=4, shuffle=False, collate_fn=collate_batched))
     assert len(batches) == 2
     assert _state_id(batches[0]).tolist() == [0, 1, 2, 3]

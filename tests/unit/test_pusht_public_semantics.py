@@ -6,6 +6,7 @@ import torch
 from tensordict import TensorDict
 
 import stable_envs as se
+from tests.helpers.reference.semantics import assert_same_state
 
 
 @pytest.fixture(params=["PushT", "PushTDiscrete"])
@@ -29,13 +30,6 @@ def actions(name, batch, length=1):
     )
 
 
-def same(a, b):
-    assert a.batch_size == b.batch_size
-    assert set(a.keys(True, True)) == set(b.keys(True, True))
-    for key, value in a.items(True, True):
-        assert torch.equal(value, b[key]), key
-
-
 def test_disk_checkpoint_cross_instance_continuation(name, device, tmp_path):
     with (
         se.make(name, num_envs=2, size=64, device=device) as original,
@@ -50,12 +44,12 @@ def test_disk_checkpoint_cross_instance_continuation(name, device, tmp_path):
                 {tuple(k.split("/")): torch.tensor(data[k], device=device) for k in data}, [2], device=device
             )
         restored.set_state(loaded)
-        same(state, restored.get_state())
+        assert_same_state(state, restored.get_state())
         assert restored.state_spec.contains(restored.get_state())
         assert torch.equal(original.render(state), restored.render())
         future = actions(name, 2, 8)
-        same(original.step(future, frames=slice(None)), restored.step(future, frames=slice(None)))
-        same(state, loaded)
+        assert_same_state(original.step(future, frames=slice(None)), restored.step(future, frames=slice(None)))
+        assert_same_state(state, loaded)
 
 
 @pytest.mark.parametrize(
@@ -68,7 +62,7 @@ def test_public_chunk_slices_restore_and_hold_owned_snapshots(name, device, sele
         expected = env.step(a, frames=None)["state"]
         env.set_state(start)
         out = env.step(a, states=selection, frames=selection)
-        same(expected, out["state"])
+        assert_same_state(expected, out["state"])
         saved = out.clone()
         if selection is not None:
             for index in range(out["states"].batch_size[1]):
@@ -76,7 +70,7 @@ def test_public_chunk_slices_restore_and_hold_owned_snapshots(name, device, sele
                 env.set_state(selected)
                 assert torch.equal(env.render(), out["frames"][:, index])
         env.step(a[:, 0], frames=None)
-        same(out, saved)
+        assert_same_state(out, saved)
 
 
 def test_failed_restore_and_bad_actions_do_not_partially_mutate_batch(name, device):
@@ -86,12 +80,12 @@ def test_failed_restore_and_bad_actions_do_not_partially_mutate_batch(name, devi
         bad["current", "body", "block", "position"][1, 0] += 1
         with pytest.raises(ValueError, match="replay disagrees"):
             env.set_state(bad)
-        same(before, env.get_state())
+        assert_same_state(before, env.get_state())
         a = actions(name, 2)[:, 0]
         a[1, 0] = 1000
         with pytest.raises(ValueError):
             env.step(a, frames=None)
-        same(before, env.get_state())
+        assert_same_state(before, env.get_state())
 
 
 def test_render_projection_has_no_history_and_does_not_step(name, monkeypatch):
@@ -110,7 +104,7 @@ def test_render_projection_has_no_history_and_does_not_step(name, monkeypatch):
         for cached in env._projection.scenes:
             monkeypatch.setattr(cached[1], "step", forbidden)
         assert torch.equal(first, env.render(projected))
-        same(state, env.get_state())
+        assert_same_state(state, env.get_state())
 
 
 def test_persistent_variation_and_reset_checkpoint(name):
@@ -119,11 +113,11 @@ def test_persistent_variation_and_reset_checkpoint(name):
         state = env.get_state()
         expected = env.reset(seed=53, options={"variation": []})
         env.set_state(state)
-        same(expected, env.reset(seed=53, options={"variation": []}))
+        assert_same_state(expected, env.reset(seed=53, options={"variation": []}))
         before = env.get_state()
         with pytest.raises(ValueError):
             env.set_variation({"agent.shape": 4, "block.shape": 999})
-        same(before, env.get_state())
+        assert_same_state(before, env.get_state())
 
 
 def test_set_variation_applies_appearance_now_and_bodies_at_reset(name):
@@ -159,4 +153,4 @@ def test_flat_sampled_variation_is_valid_and_restorable(name):
         state = env.reset(seed=27, options={"variation": []})
         env.step(actions(name, 2)[:, 0], frames=None)
         env.set_state(state)
-        same(state, env.get_state())
+        assert_same_state(state, env.get_state())

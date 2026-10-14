@@ -119,3 +119,40 @@ def check_online_pixels(
         )
         run.seal()
         raise
+
+
+#: The (states, frames) capture selections a source-pixel rollout is checked under.
+SELECTIONS = (
+    (None, None),
+    (slice(None), slice(20, 30)),
+    (None, slice(-1, None)),
+    (slice(None), slice(None)),
+    (slice(None, None, -2), slice(None, None, -2)),
+)
+
+
+def check_online_selections(
+    env: PixelEnv,
+    trace: PixelTrace,
+    failure_dir: Path,
+    record_property: Callable[[str, object], None],
+    *,
+    selections=SELECTIONS,
+    **kwargs,
+) -> None:
+    """``check_online_pixels`` under each selection at a 0.001 MSE bound, recording the worst MSE and frame count."""
+    errors = []
+    for i, (states, frames) in enumerate(selections):
+        errors.extend(
+            check_online_pixels(
+                env,
+                trace,
+                states=states,
+                frames=frames,
+                mse_max=0.001,
+                failure_dir=failure_dir / f"selection-{i}",
+                **kwargs,
+            ).reshape(-1)
+        )
+    record_property("mse_max", float(max(errors)))
+    record_property("frames", len(errors))

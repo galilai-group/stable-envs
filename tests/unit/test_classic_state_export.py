@@ -6,14 +6,7 @@ import torch
 
 from stable_envs.envs.classic_control.simulation.local import CLASSIC_FIELDS, ClassicControlAdapter
 from tests.helpers.reference.classic_state_export import classic_state
-
-
-def equal(a, b):
-    assert a.batch_size == b.batch_size and a.device == b.device
-    assert set(a.keys(True, True)) == set(b.keys(True, True))
-    for key in a.keys(True, True):
-        assert a[key].dtype == b[key].dtype and a[key].shape == b[key].shape
-        torch.testing.assert_close(a[key], b[key], rtol=0, atol=0, equal_nan=True)
+from tests.helpers.reference.semantics import assert_same_state
 
 
 @pytest.mark.parametrize("domain", CLASSIC_FIELDS)
@@ -29,10 +22,10 @@ def test_classic_export_continuation_and_ownership(domain, device):
         adapter.envs[1].unwrapped.np_random.bit_generator.state = cached
         initial = adapter.get_state()
         held = initial.clone()
-        equal(initial, classic_state(adapter))
+        assert_same_state(initial, classic_state(adapter))
         if domain == "cartpole":
             adapter.envs[2].unwrapped.steps_beyond_terminated = 7
-            equal(adapter.get_state(), classic_state(adapter))
+            assert_same_state(adapter.get_state(), classic_state(adapter))
             adapter.set_state(initial)
         action = (
             np.ones((3, 1), np.int64)
@@ -41,24 +34,24 @@ def test_classic_export_continuation_and_ownership(domain, device):
         )
         for _ in range(8):
             result = adapter.step(action)
-            equal(result["state"], classic_state(adapter))
+            assert_same_state(result["state"], classic_state(adapter))
         if domain == "mountain_car_continuous":
             assert result["state", "task", "state_is_float32"].all()
             assert not initial["task", "state_is_float32"].any()
-        equal(initial, held)
+        assert_same_state(initial, held)
         adapter.set_state(initial)
-        equal(adapter.get_state(), initial)
+        assert_same_state(adapter.get_state(), initial)
         first = adapter.step(action)
         adapter.set_state(initial)
-        equal(first, adapter.step(action))
+        assert_same_state(first, adapter.step(action))
         adapter.reset()
-        equal(adapter.get_state(), classic_state(adapter))
-        equal(initial, held)
+        assert_same_state(adapter.get_state(), classic_state(adapter))
+        assert_same_state(initial, held)
         changed = adapter.get_state()
         before = classic_state(adapter)
         for value in changed.values(True, True):
             value.zero_()
-        equal(adapter.get_state(), before)
+        assert_same_state(adapter.get_state(), before)
         adapter.close()
         with pytest.raises(RuntimeError, match="closed"):
             adapter.get_state()
