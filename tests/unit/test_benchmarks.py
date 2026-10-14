@@ -1,23 +1,7 @@
-"""The benchmark scripts' guards, tested. Every one of these is a number that got published wrong.
+"""Guards in ``examples/bench_gpu_vs_cpu.py``: supersample resolution and the optional draw-alone split.
 
-``examples/`` is not library code, which is exactly why it needs this file: a mistake in a benchmark
-does not raise, it produces a plausible number that goes into a table and is read as a measurement.
-The two guards asserted here each replaced such a number.
-
-  **supersample resolution** — ``--ss`` defaulted to 1 and was passed to every ``se.make``. Forty-four
-  registered classes declare ``default_supersample = 2``, so the sweep measured a picture their
-  defaults do not produce and did it up to four times cheaper: measured in one process on an idle
-  node, ``supersample=1`` against the class's own value is 1.16x on DMCBallInCupCatch, 1.26x on
-  AntmazeLargeNavigate and 3.3x on MujocoPusher. The guard is that ``ss=None`` must reach
-  ``se.make`` as *no keyword at all*.
-
-  **``ref.unwrapped`` outside its guard** — the draw-alone split is an optional extra on top of a
-  timing that has already been taken. Reaching for ``unwrapped`` on a reference that is not a
-  gymnasium env (dm_control hands back an ``Environment``, Jumanji a tuple, PGX a dict) threw out of
-  the enclosing ``try`` and discarded the measurement, reporting the whole row as an error.
-
-CPU-only and reference-free: the script is imported and its decision functions are driven with
-fakes, so this costs a second and runs anywhere rather than being a thing to remember on a GPU node.
+The script is imported and its decision functions are driven with fakes, so this runs on CPU without
+any reference simulator.
 """
 
 from __future__ import annotations
@@ -59,11 +43,10 @@ def bench():
 
 
 def test_native_supersample_is_not_passed_as_one(bench, monkeypatch):
-    """``ss=None`` must leave the env to its own ``default_supersample``.
+    """``ss=None`` leaves the env to its own ``default_supersample``.
 
-    Asserted as "the keyword is absent", not as "the keyword is None", because ``se.make(...,
-    supersample=None)`` reaches ``StableEnv.__init__``'s ``supersample: int = 1`` default for every
-    class that does not override ``__init__`` — which is the same substitution under another name.
+    Checked as an absent keyword: an explicit ``supersample=None`` would fall through to the
+    ``supersample: int = 1`` default of ``StableEnv.__init__``.
     """
     seen = {}
 
@@ -73,10 +56,7 @@ def test_native_supersample_is_not_passed_as_one(bench, monkeypatch):
 
     monkeypatch.setattr(bench.se, "make", fake_make)
     bench.make_env("Whatever", 8, 84, None)
-    assert "supersample" not in seen, (
-        f"ss=None must not reach se.make at all, got {seen} — passing supersample=1 measures a "
-        f"different picture than se.make(name) produces for the 44 classes declaring 2"
-    )
+    assert "supersample" not in seen, f"ss=None must not pass supersample to se.make, got {seen}"
     assert seen["num_envs"] == 8 and seen["size"] == 84 and seen["device"] == "cuda"
 
     seen.clear()
@@ -93,12 +73,9 @@ def test_parse_ss(bench, tok, want):
 
 
 def test_ss_flag_defaults_to_native(bench):
-    """The DEFAULT is the thing that got published, so pin it rather than the parser."""
+    """``--ss`` defaults to the env's own supersample."""
     src = (EXAMPLES / "bench_gpu_vs_cpu.py").read_text()
-    assert '"--ss"' in src and 'default="native"' in src, (
-        "bench_gpu_vs_cpu.py must default --ss to the env's own supersample; a numeric default silently "
-        "overrides default_supersample for 44 classes"
-    )
+    assert '"--ss"' in src and 'default="native"' in src, "bench_gpu_vs_cpu.py must default --ss to native"
 
 
 # --------------------------------------------------------------------- cpu_throughput
@@ -143,12 +120,10 @@ def _cls_for(ref_obj, calls):
 
 @pytest.mark.parametrize("ref,expect_draw", [(_Ref(), False), (_GymLikeRef(), True)])
 def test_cpu_throughput_keeps_the_timing_it_already_took(bench, ref, expect_draw):
-    """A reference with no ``unwrapped`` must still report ``set_state_render``.
+    """A reference with no ``unwrapped`` still reports ``set_state_render``.
 
-    This is the regression: the optional draw-alone split reached ``ref.unwrapped`` outside its own
-    guard, so any non-gymnasium reference raised past the measurement that had already completed and
-    the row came back as an error. dm_control, Jumanji and PGX are all in that position, which is 30+
-    envs whose official-renderer column silently went blank.
+    The draw-alone split is optional; a non-gymnasium reference (dm_control, Jumanji, PGX) must not
+    discard the timing already taken.
     """
     calls: list[int] = []
     pool = np.zeros((32, 3), np.float32)
@@ -156,7 +131,7 @@ def test_cpu_throughput_keeps_the_timing_it_already_took(bench, ref, expect_draw
     assert "error" not in res, res
     assert res["set_state_render"]["fps"] > 0
     assert ("render_only" in res) is expect_draw
-    assert calls, "the combined number must actually have been measured"
+    assert calls, "set_state_render was not measured"
 
 
 def test_cpu_throughput_returns_none_without_a_reference(bench):

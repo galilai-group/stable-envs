@@ -228,7 +228,7 @@ def test_a_body_slot_with_several_drawn_geoms_resolves_to_all_of_them():
 
 
 def test_a_body_carrying_both_drawn_geoms_and_drawn_sites_raises():
-    """One leaf cannot name two element kinds; hiding half a marker silently is worse than failing."""
+    """A body with both drawn geoms and drawn sites raises: one leaf cannot name two element kinds."""
     cls = _synth_cls(extra_site='<site name="marker_s" type="sphere" size=".02" group="0"/>')
     with pytest.raises(RuntimeError, match="drawn geoms .* and drawn sites"):
         cls._hideable()
@@ -270,7 +270,7 @@ def test_the_declared_dims_are_excluded_and_reported_never_silently_passed(cell)
 
 @pytest.mark.nightly
 def test_excluded_dims_leave_pixels_byte_unchanged_at_both_sizes(cell):
-    """The invariance claim is about pixels, so it is asserted on pixels."""
+    """Perturbing an excluded dimension leaves the frame byte-identical at 224 and 84 px."""
     for size in (224, 84):
         env = cell(num_envs=16, size=size, device="cpu", seed=0)
         names = list(env.state_names)
@@ -361,18 +361,18 @@ def test_a_missing_frozen_field_is_refused_and_named_not_skipped(cell):
     st = env.sample_states(8, np.random.default_rng(4))
     d = names.index("thumbtip")
 
-    # it is a real, visible dimension
+    # thumbtip is a visible dimension.
     base = env._render(torch.as_tensor(st)).cpu().numpy()
     pert = st.copy()
     pert[:, d] = pert[:, d] + 0.2
     moved = env._render(torch.as_tensor(pert)).cpu().numpy()
-    assert not np.array_equal(base, moved), "thumbtip draws nothing; this test has lost its subject"
+    assert not np.array_equal(base, moved), "perturbing thumbtip changed no pixel"
 
     blind = _Wrapped(env, lambda sig: {k: v for k, v in sig.items() if k != "geom_xpos"})
     ok, why = C._validate_render_invariant(blind, st, d)
     assert not ok, f"a signature missing geom_xpos granted thumbtip an exclusion: {why}"
     assert "geom_xpos" in why, why
-    # and the unwrapped env refuses it too, on the positional change itself
+    # The unwrapped env refuses it too, on the positional change itself.
     ok2, why2 = C._validate_render_invariant(env, st, d)
     assert not ok2 and "geom_xpos" in why2, why2
 

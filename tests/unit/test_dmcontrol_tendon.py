@@ -14,13 +14,9 @@ import pytest
 try:
     import stable_envs.envs.dmcontrol as D
 except ImportError as exc:  # dm_control / mujoco absent: legitimately skippable
-    pytest.skip(
-        f"stable_envs.envs.dmcontrol needs dm_control ({exc}); this file is about its tendon "
-        f"arithmetic and has nothing to assert without it",
-        allow_module_level=True,
-    )
+    pytest.skip(f"stable_envs.envs.dmcontrol needs dm_control ({exc})", allow_module_level=True)
 except RuntimeError as exc:
-    # Narrow on purpose: only a missing GL context skips; any other import failure must fail the file.
+    # Only a missing GL context skips; any other import failure must fail the file.
     if "GL" not in str(exc):
         raise
     pytest.skip(f"no usable offscreen GL context here ({exc})", allow_module_level=True)
@@ -65,13 +61,14 @@ def _chain_reference(polys, nseg):
     return (np.stack([o[0] for o in out]), np.stack([o[1] for o in out]), np.stack([o[2] for o in out]))
 
 
-#: A sweep that reaches all three branches of ``mjv_catenary``: slack (the catenary proper),
-#: near-vertical (``length > 100*h``, three points) and taut (``dist > length``, two points).
-#: ball_in_cup's own numbers -- a 0.3 m string, a cup a few centimetres across.
 GRAVITY = np.array([0.0, 0.0, -9.81])
 
 
 def _sweep():
+    """Cases reaching all three ``mjv_catenary`` branches: slack, near-vertical and taut.
+
+    Sized like ball_in_cup: a 0.3 m string and a cup a few centimetres across.
+    """
     rng = np.random.default_rng(20260913)
     cases = []
     for _ in range(64):
@@ -93,8 +90,7 @@ def test_catenary_interior_points_are_bit_identical():
         seen.add(len(got))
         assert got.shape == want.shape, f"branch changed: {got.shape} vs {want.shape}"
         assert np.array_equal(got.view(np.uint64), want.view(np.uint64)), (
-            f"catenary moved by {np.abs(got - want).max():.3e} on x0={x0} x1={x1}; a one-ulp change "
-            f"in a capsule pose flips silhouette pixels in the ray-caster"
+            f"catenary moved by {np.abs(got - want).max():.3e} on x0={x0} x1={x1}"
         )
     assert seen >= {2, 3, 29}, f"the sweep did not reach every branch, only lengths {sorted(seen)}"
 
@@ -138,7 +134,7 @@ def test_batched_fk_matches_per_env_fk_on_frozen_ball_in_cup_states():
         pytest.skip(f"DMCBallInCupCatch is not constructible here: {type(exc).__name__}: {exc}")
     states = torch.as_tensor(np.asarray(np.load(npz)["states"], np.float32))
     sc = env._scene(env.size)
-    assert sc.tendon is not None, "this test is about the tendon path and this scene has none"
+    assert sc.tendon is not None, "the DMCBallInCupCatch scene has no tendon"
 
     got = env._fk(states, sc)
 

@@ -18,8 +18,8 @@ CELLS = {
     "DMCReacherEasy": ("reacher", "easy"),
     "DMCSwimmerSwimmer6": ("swimmer", "swimmer6"),
 }
-#: Historical cells against the suite task each simulates. The aligned cells (SWM's MJCF round trip)
-#: and walker (SWM's task reward) replay corpora instead, in test_dmc_oracle_replay.py.
+#: SWM-registered cells against the suite task each simulates. The aligned cells (SWM's MJCF round
+#: trip) and walker (SWM's task reward) replay corpora instead, in test_dmc_oracle_replay.py.
 HISTORICAL = {
     "DMCAcrobotBalance": ("acrobot", "swingup_sparse"),
     "DMCPendulumSwingup": ("pendulum", "swingup"),

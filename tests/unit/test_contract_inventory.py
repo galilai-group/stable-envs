@@ -25,12 +25,12 @@ def test_shared_profiles_cover_each_registration_once():
 
 
 def test_source_helpers_do_not_depend_on_research_drivers():
-    """Oracles may read evidence, but active helpers must not execute archives."""
+    """Reference helpers do not import scripts or unit tests, and do not execute code dynamically."""
     import ast
 
     root = Path(__file__).resolve().parents[1] / "helpers" / "reference"
     for path in root.rglob("*.py"):
-        if path.name == "craftax_source.py":  # Explicitly outside the 38-profile cleanup.
+        if path.name == "craftax_source.py":  # Craftax is outside the 38 shared profiles.
             continue
         for node in ast.walk(ast.parse(path.read_text())):
             modules = (

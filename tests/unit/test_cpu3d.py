@@ -1,4 +1,4 @@
-"""CPU device honesty, batching and spatial-bound invariants for trackcom rendering.
+"""CPU backend selection, batching and spatial-bound invariants for trackcom rendering.
 
 Source-image acceptance lives in contracts/test_dmc_source_pixels.py.
 """
@@ -42,10 +42,10 @@ def _states(cell: str, n: int) -> np.ndarray:
 def test_cpu_device_builds_the_cpu_backend_and_no_mjwarp_context(se, cell):
     env = se.make(cell, num_envs=2, device="cpu")
     assert env.device.type == "cpu"
-    assert int(env.size) in env._cpu_scenes  # the CPU scene was built at init
+    assert int(env.size) in env._cpu_scenes
     from stable_envs.envs import dmcontrol as D
 
-    assert not any(k[0] == env.DOMAIN for k in D._TC_CACHE)  # and no MJWarp context was
+    assert not any(k[0] == env.DOMAIN for k in D._TC_CACHE)
     f = env._render(_states(cell, 2))
     assert f.shape == (2, env.size, env.size, 3) and f.dtype == torch.uint8 and f.device.type == "cpu"
 
@@ -76,10 +76,11 @@ def test_swimmer_builds_the_cpu_backend(se):
 
 
 def test_trackcom_material_knobs_are_geom_wearers_only(se):
-    """Neither trackcom backend draws a site, so a material worn only by sites is not a knob.
+    """Materials worn only by sites are not knobs, since neither trackcom backend draws sites.
 
-    On the certified cells (sites hidden) the list equals the base class's; on quadruped it drops
-    ``eye``, worn by the two pupil sites alone."""
+    On ``CELLS`` the list equals the base class's; on quadruped it drops ``eye``, worn only by the
+    two pupil sites.
+    """
     from stable_envs.envs import dmcontrol as D
 
     for name in CELLS:
@@ -118,8 +119,7 @@ def test_no_gpu_runtime_is_loaded_by_a_cpu_render(se):
 @pytest.mark.parametrize("cell", CELLS)
 @pytest.mark.parametrize("size", [42, 84, pytest.param(168, marks=pytest.mark.nightly)])
 def test_window_and_footprint_bounds_are_exact(se, cell, size):
-    """The mover window and the shadow footprint are conservative BOUNDS: casting every ray and
-    shadow-testing every lit hit must give the identical frame, byte for byte, at every size."""
+    """The mover window and shadow footprint are conservative bounds: full casting is byte-identical."""
     from stable_envs.render import cpu3d
 
     st = _states(cell, 6)
@@ -156,7 +156,7 @@ def test_batch_chunk_and_order_invariance(se, cell):
     perm = np.random.default_rng(0).permutation(n)
     c = env._render(st[perm]).numpy()
     assert np.array_equal(c, a[perm]), "frame depends on batch order"
-    # the same three properties with a DIFFERENT appearance per row (materials and light per env)
+    # The same three properties with a different style (materials and light) per row.
     sty = env.sample_style(n, rng=np.random.default_rng(1))
     d1 = env._render(st, style=sty).numpy()
     assert np.array_equal(d1, env._render(st, style=sty).numpy())

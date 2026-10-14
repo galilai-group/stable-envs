@@ -1,4 +1,4 @@
-"""Exact owned column export for each recovered classic-control registration."""
+"""Exact owned column export for each classic-control registration."""
 
 import numpy as np
 import pytest

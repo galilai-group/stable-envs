@@ -53,7 +53,7 @@ def test_no_colour_declaration_leaves_every_leaf_judged():
     "missing", ["leaves", "mechanism", "max_shading_factor", "official_renderer_fails_the_same_check", "evidence"]
 )
 def test_a_declaration_missing_its_evidence_is_refused(missing):
-    """Every required key is load-bearing: drop any one and the check stays judged."""
+    """Dropping any required key leaves the check judged."""
     full = {
         "leaves": ["a.color"],
         "mechanism": "a law",
@@ -68,7 +68,7 @@ def test_a_declaration_missing_its_evidence_is_refused(missing):
 
 
 def test_a_law_that_reaches_unit_gain_is_refused():
-    """The whole argument is that the ceiling is below 1. A ceiling of 1 has no case to make."""
+    """A declaration with ``max_shading_factor`` 1.0 is refused; the ceiling must be below 1."""
     Env = type(
         "Env",
         (),
@@ -106,7 +106,7 @@ def test_an_undeclared_leaf_is_not_covered_by_a_declared_one():
 
 
 def test_the_rocket_declares_exactly_the_five_lit_leaves():
-    """Read off the CLASS, with no env constructed and no PyFlyt installed."""
+    """The declaration is read off the class, with no env constructed and no PyFlyt installed."""
     from stable_envs.envs.rocket.legacy import PyFlytRocketLanding
 
     decl = PyFlytRocketLanding.color_exactness_applicability
@@ -123,7 +123,7 @@ def _probe(leaf, target="[17, 33, 200]"):
 
 
 def test_partition_without_a_declaration_asserts_everything():
-    """The previous behaviour, exactly: no declaration means every failure is asserted on."""
+    """Without a declaration every failing probe is asserted on."""
     part = partition_colour_exactness({"colors_not_applied": [_probe("a.color"), _probe("b.color")]})
     assert part["honoured"] is False
     assert part["asserted"] == [_probe("a.color"), _probe("b.color")]
@@ -142,7 +142,7 @@ def test_partition_asserts_the_undeclared_leaves_and_only_those():
 
 
 def test_partition_keeps_the_measurement_beside_the_excused_leaf():
-    """The declaration stops the assertion, never the measurement: the number has to come through."""
+    """An excused leaf keeps its measured ``best_abs_diff``."""
     result = {
         "colors_not_applied": [_probe("a.color")],
         "best_abs_diff": {_probe("a.color"): 7},
@@ -160,7 +160,7 @@ def test_partition_on_a_passing_env_is_empty_either_way():
 
 
 def test_the_rocket_declaration_drives_the_partition_end_to_end():
-    """The class declaration, the real probe names, and the helper the GPU suite calls."""
+    """The class declaration with real probe names partitions through the helper the GPU suite calls."""
     from stable_envs.envs.rocket.legacy import PyFlytRocketLanding
 
     probes = [_probe(leaf, t) for leaf in ROCKET_LEAVES for t in ("[17, 33, 200]", "[200, 17, 33]")]

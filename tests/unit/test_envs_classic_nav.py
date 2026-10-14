@@ -1,10 +1,8 @@
-"""Classic/navigation renderer contracts and scoped semantic-recovery boundaries.
+"""Classic-control and navigation State and renderer contracts.
 
-Classic-control implementations use authoritative Gymnasium CPU execution with full
-lifecycle/RNG State. Their exact SWM parity lives in the bounded test_native_classic_* gates.
-The three navigation defaults own native dynamics with explicit task continuation
-State. Sibling variants retain structural coverage only. Frozen renderer evidence
-and exact pinned-source semantic gates are independent checks.
+Classic-control cells step Gymnasium on CPU with full lifecycle/RNG State; exact SWM parity is checked
+in test_native_classic_semantics.py. TwoRoom, Piecewise and SimplePointMaze have native dynamics with
+task State; TwoRoomTarget and PiecewiseZones have structural coverage only.
 """
 
 from __future__ import annotations
@@ -27,12 +25,10 @@ pytestmark = pytest.mark.unit
 CLASSIC = ("CartPole", "Pendulum", "Acrobot", "MountainCar", "MountainCarContinuous")
 NAV = ("TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones", "SimplePointMaze")
 ALL = CLASSIC + NAV
-RECOVERED = CLASSIC
-NAV_RECOVERED = ("TwoRoom", "Piecewise", "SimplePointMaze")
+NAV_TASK = ("TwoRoom", "Piecewise", "SimplePointMaze")
 PURE = NAV
 
-#: What each cell's public State is keyed by. Written out rather than derived from the class, so a
-#: silent change of the public vocabulary is a failure and not a tautology.
+#: Each cell's public State keys, written out so a change of the public vocabulary fails.
 KEYS = {
     "CartPole": [("x",), ("x_dot",), ("theta",), ("theta_dot",)],
     "Pendulum": [("theta",), ("theta_dot",), ("torque",)],
@@ -93,7 +89,7 @@ for _name, _leaves in PHYSICS.items():
 
 
 def _initialize(env, name, seed):
-    if name in RECOVERED + NAV_RECOVERED:
+    if name in CLASSIC + NAV_TASK:
         env.reset(seed=seed)
     else:
         env._set_render_state(env.sample_states(env.B, np.random.default_rng(seed)))
@@ -106,7 +102,7 @@ def _env(name, n=4):
 def _actions(env, n, steps=None, seed=0):
     g = torch.Generator().manual_seed(seed)
     shape = (n, env.action_dim) if steps is None else (steps, n, env.action_dim)
-    if env.action_spec.discrete_n is not None and type(env).__name__ in RECOVERED:
+    if env.action_spec.discrete_n is not None and type(env).__name__ in CLASSIC:
         return torch.randint(0, env.action_spec.discrete_n, shape, generator=g, dtype=env.action_spec.dtype)
     lo, hi = float(env.action_low), float(env.action_high)
     return lo + (hi - lo) * torch.rand(*shape, generator=g)
@@ -165,7 +161,7 @@ def test_classic_physical_state_is_lossless_and_projects_to_float32(name):
 def test_snapshot_branch_is_bit_identical_to_the_stateful_step(name):
     env = _env(name)
     s0 = env.sample_states(4, np.random.default_rng(0))
-    if name in NAV_RECOVERED:
+    if name in NAV_TASK:
         env.reset(seed=17)
     else:
         env._set_render_state(s0)
@@ -183,7 +179,7 @@ def test_snapshot_branch_is_bit_identical_to_the_stateful_step(name):
 def test_snapshot_branch_does_not_touch_the_env_and_unroll_is_repeated_transition(name):
     env = _env(name)
     s0 = env.sample_states(4, np.random.default_rng(1))
-    if name in NAV_RECOVERED:
+    if name in NAV_TASK:
         env.reset(seed=17)
     else:
         env._set_render_state(s0)
@@ -200,7 +196,7 @@ def test_snapshot_branch_does_not_touch_the_env_and_unroll_is_repeated_transitio
         for k in FULL_KEYS[name]:
             assert torch.equal(traj[t][k], cur[k])
 
-    # ... and four steps of the stateful path land on exactly the same numbers.
+    # Four stateful steps land on the same numbers.
     for t in range(4):
         env.step(acts[t], frames=None)
     for k in FULL_KEYS[name]:
@@ -230,8 +226,7 @@ def test_unrecovered_step_reports_only_its_implemented_state(name):
     env._set_render_state(env.sample_states(2, np.random.default_rng(3)))
     out = env.step(_actions(env, 2), frames=None)
     assert set(out.keys()) == {"state", "states", "valid", "state_valid"}, (
-        "these cells have no reward and no termination semantics in stable-envs; an absent key is "
-        "the honest answer and a zero would read as a measured one"
+        "these cells have no reward or termination semantics, so those keys must be absent"
     )
     assert env.has_dynamics
 
@@ -347,14 +342,9 @@ def test_a_classic_cell_whose_layout_does_not_cover_its_packed_row_fails_at_impo
 
 @pytest.mark.parametrize("name", PURE)
 def test_snapshot_branch_still_equals_step_after_the_env_has_been_stepped(name):
-    """The bit-equality must hold MID-TRAJECTORY, not only from a corpus state.
+    """Branching equals stepping mid-trajectory, not only straight after ``set_state``.
 
-    A state loaded by ``set_state`` is float32 values with the velocities at rest, so a functional
-    path that had lost precision — by rounding the state, or by rebuilding it from the packed row
-    rather than from the buffer the dynamics write — still passes a check made straight after
-    ``set_state``. Measured on CartPole, ``Env.state``'s drawn ``x`` differs from the simulator's own
-    value by 9.6e-08 after five steps, which is exactly enough to break this. See
-    ``_Classic.state``'s docstring.
+    A freshly loaded float32 state hides precision loss from rebuilding the state off the packed row.
     """
     env = _env(name)
     env._set_render_state(env.sample_states(4, np.random.default_rng(5)))
@@ -372,12 +362,7 @@ def test_snapshot_branch_still_equals_step_after_the_env_has_been_stepped(name):
 
 @pytest.mark.parametrize("name", ALL)
 def test_a_step_result_is_not_a_view_of_the_env_that_produced_it(name):
-    """``step`` hands back a state, not a window onto the env's buffer.
-
-    The failure this pins is silent: a caller that keeps ``out["state"]`` and steps again would find
-    the value it is holding had changed, with nothing raised and nothing logged. See findings §10,
-    request R8 — the base class's ``unpack`` stopped cloning in foundation commit ``b1585fc``.
-    """
+    """A held ``out["state"]`` does not change when the env steps again."""
     env = _env(name)
     _initialize(env, name, 7)
     out = env.step(_actions(env, 4, seed=7), frames=None)
@@ -392,12 +377,10 @@ def test_a_step_result_is_not_a_view_of_the_env_that_produced_it(name):
 
 @pytest.mark.parametrize("name", ALL)
 def test_step_returns_exactly_env_state(name):
-    """Whatever ``step`` builds its result from, it must be what ``env.state`` reports.
+    """``step``'s state equals ``env.state`` after several steps.
 
-    Classic control's ``step`` builds the StepResult from the simulator buffer directly instead of
-    reading it back through the property, because the property round-trips the packed row to arrive
-    where the buffer already is. That is only sound while the two are the same numbers, which is what
-    this asserts — after several steps, when the row and the buffer have diverged.
+    Classic control builds the result from the simulator buffer, while ``env.state`` round-trips the
+    packed row; both must give the same numbers.
     """
     env = _env(name)
     _initialize(env, name, 9)
@@ -412,7 +395,7 @@ def test_step_returns_exactly_env_state(name):
     env.close()
 
 
-@pytest.mark.parametrize("name", RECOVERED)
+@pytest.mark.parametrize("name", CLASSIC)
 def test_recovered_classic_has_no_pure_transition_or_unroll(name):
     with _env(name, 2) as env:
         state = env.reset(seed=17)
@@ -421,7 +404,7 @@ def test_recovered_classic_has_no_pure_transition_or_unroll(name):
         assert (env.get_state() == state).all()
 
 
-@pytest.mark.parametrize("name", RECOVERED)
+@pytest.mark.parametrize("name", CLASSIC)
 def test_recovered_classic_reports_authoritative_outputs_and_typed_state(name):
     with _env(name, 2) as env:
         result = env.step(_actions(env, 2), frames=None)
