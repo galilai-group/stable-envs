@@ -53,6 +53,34 @@ def _integer(words):
     return sum(int(word) << (32 * i) for i, word in enumerate(words))
 
 
+def host_actions(actions, num_envs):
+    """Return ``actions`` as a host array, rejecting any shape other than ``(num_envs, 4)``."""
+    if torch.is_tensor(actions):
+        actions = actions.detach().cpu().numpy()
+    actions = np.asarray(actions)
+    if actions.shape != (num_envs, 4):
+        raise ValueError("Fetch action must have shape (num_envs,4)")
+    return actions
+
+
+def host_active(active, num_envs):
+    """Return ``active`` as a host bool mask or None, rejecting any shape other than ``(num_envs,)``."""
+    if torch.is_tensor(active):
+        active = active.detach().cpu().numpy()
+    active = None if active is None else np.asarray(active, dtype=bool)
+    if active is not None and active.shape != (num_envs,):
+        raise ValueError("Fetch active mask must have shape (num_envs,)")
+    return active
+
+
+def episode_limits(limits, num_envs):
+    """Return ``limits`` as an array, rejecting anything but one positive integer per lane."""
+    limits = np.asarray(limits)
+    if limits.shape != (num_envs,) or limits.dtype.kind not in "iu" or np.any(limits < 1):
+        raise ValueError("Expected positive integer episode limits, one per lane")
+    return limits
+
+
 def state_fields(nq, nv):
     fields = dict(FIELDS)
     fields.update(qpos=(nq, torch.float64), qvel=(nv, torch.float64), warmstart=(nv, torch.float64))
@@ -132,9 +160,7 @@ class FetchAdapter(SimulatorAdapter):
 
     def _set_episode_limits(self, limits):
         self._check_open()
-        limits = np.asarray(limits)
-        if limits.shape != (self.num_envs,) or limits.dtype.kind not in "iu" or np.any(limits < 1):
-            raise ValueError("Expected positive integer episode limits, one per lane")
+        limits = episode_limits(limits, self.num_envs)
         for env, limit in zip(self.envs, limits):
             env._max_episode_steps = int(limit)
 
@@ -309,16 +335,8 @@ class FetchAdapter(SimulatorAdapter):
     def advance(self, actions: torch.Tensor | np.ndarray, *, active=None) -> TensorDict:
         """Advance active lanes without capturing State; retain inactive lane outputs."""
         self._check_open()
-        if torch.is_tensor(active):
-            active = active.detach().cpu().numpy()
-        active = None if active is None else np.asarray(active, dtype=bool)
-        if active is not None and active.shape != (self.num_envs,):
-            raise ValueError("Fetch active mask must have shape (num_envs,)")
-        if torch.is_tensor(actions):
-            actions = actions.detach().cpu().numpy()
-        actions = np.asarray(actions)
-        if actions.shape != (self.num_envs, 4):
-            raise ValueError("Fetch action must have shape (num_envs,4)")
+        active = host_active(active, self.num_envs)
+        actions = host_actions(actions, self.num_envs)
         # Preserve public dtype: upstream multiplication before concatenation is observable.
         lanes = np.arange(self.num_envs) if active is None else np.flatnonzero(active)
         if self._executor is None:

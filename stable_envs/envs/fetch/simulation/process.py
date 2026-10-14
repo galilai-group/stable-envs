@@ -9,7 +9,7 @@ from tensordict import TensorDict
 
 from ...._execution.requests import ProcessRequests, lane_slices
 from ...._execution.workers import pin_worker, send_failure, send_ready
-from .adapter import FetchAdapter
+from .adapter import FetchAdapter, episode_limits, host_actions, host_active
 
 
 def _arrays(buffers, specs, batch):
@@ -204,9 +204,7 @@ class FetchProcessAdapter(ProcessRequests, FetchAdapter):
 
     def _set_episode_limits(self, limits):
         self._check_open()
-        limits = np.asarray(limits)
-        if limits.shape != (self.num_envs,) or limits.dtype.kind not in "iu" or np.any(limits < 1):
-            raise ValueError("Expected positive integer episode limits, one per lane")
+        limits = episode_limits(limits, self.num_envs)
         self._request("limits", [limits[rows] for rows in self._slices])
 
     def reset(self, seed: int | None = None, variations=None) -> TensorDict:
@@ -238,16 +236,8 @@ class FetchProcessAdapter(ProcessRequests, FetchAdapter):
 
     def _actions(self, actions, active):
         self._check_open()
-        if torch.is_tensor(actions):
-            actions = actions.detach().cpu().numpy()
-        actions = np.asarray(actions)
-        if actions.shape != (self.num_envs, 4):
-            raise ValueError("Fetch action must have shape (num_envs,4)")
-        if torch.is_tensor(active):
-            active = active.detach().cpu().numpy()
-        active = None if active is None else np.asarray(active, dtype=bool)
-        if active is not None and active.shape != (self.num_envs,):
-            raise ValueError("Fetch active mask must have shape (num_envs,)")
+        actions = host_actions(actions, self.num_envs)
+        active = host_active(active, self.num_envs)
         return [(actions[rows], None if active is None else active[rows]) for rows in self._slices]
 
     def advance(self, actions: torch.Tensor | np.ndarray, *, active=None) -> TensorDict:
