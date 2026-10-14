@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import ctypes
 import multiprocessing as mp
-import os
-import traceback
 
 import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ...._execution.requests import ProcessRequests
+from ...._execution.requests import ProcessRequests, lane_slices
+from ...._execution.workers import pin_worker, send_failure, send_ready
 from .adapter import FetchAdapter
 
 
@@ -22,9 +21,7 @@ def _arrays(buffers, specs, batch):
 def _worker(conn, start, count, batch, task, reward_type, seed, threads, cpus, buffers, specs):
     adapter: FetchAdapter | None = None
     try:
-        if cpus is not None and hasattr(os, "sched_setaffinity"):
-            os.sched_setaffinity(0, cpus)
-        torch.set_num_threads(1)
+        pin_worker(cpus)
         adapter = FetchAdapter(count, "cpu", None if seed is None else seed + start, task, reward_type)
         adapter._set_workers(min(threads, count))
         views = _arrays(buffers, specs, batch)
@@ -39,15 +36,7 @@ def _worker(conn, start, count, batch, task, reward_type, seed, threads, cpus, b
                 views[("task", key)][rows, 0] = result[key].numpy()
 
         write_state(adapter.get_state())
-        conn.send(
-            (
-                True,
-                dict(
-                    pid=os.getpid(),
-                    affinity=sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
-                ),
-            )
-        )
+        send_ready(conn)
         while True:
             command, payload = conn.recv()
             result = None
@@ -81,10 +70,7 @@ def _worker(conn, start, count, batch, task, reward_type, seed, threads, cpus, b
                 raise ValueError(f"Unknown Fetch worker command: {command}")
             conn.send((True, result))
     except BaseException:
-        try:
-            conn.send((False, traceback.format_exc()))
-        except (BrokenPipeError, EOFError, OSError):
-            pass
+        send_failure(conn)
     finally:
         if adapter is not None:
             adapter.close()
@@ -131,11 +117,7 @@ class FetchProcessAdapter(ProcessRequests, FetchAdapter):
             prototype.close()
         self._workers = processes * threads_per_process
         self._threads_per_process = threads_per_process
-        self._slices = []
-        start = 0
-        for lanes in np.array_split(np.arange(self.num_envs), processes):
-            self._slices.append(slice(start, start + len(lanes)))
-            start += len(lanes)
+        self._slices = lane_slices(self.num_envs, processes)
         self._specs = {
             ("state", key): (width, np.float64 if dtype == torch.float64 else np.int64)
             for key, (width, dtype) in self.fields.items()
@@ -160,33 +142,26 @@ class FetchProcessAdapter(ProcessRequests, FetchAdapter):
             for key, (width, dtype) in self._specs.items()
         }
         self._views = _arrays(self._buffers, self._specs, self.num_envs)
-        groups = [None] * processes if cpus is None else np.array_split(cpus, processes)
         if cpus is not None and (len(set(cpus)) != len(cpus) or len(cpus) < processes):
             raise ValueError("CPU allocation must provide at least one distinct core per process")
         try:
-            for rows, group in zip(self._slices, groups):
-                parent, child = context.Pipe()
-                process = context.Process(
-                    target=_worker,
-                    args=(
-                        child,
-                        rows.start,
-                        rows.stop - rows.start,
-                        self.num_envs,
-                        task,
-                        reward_type,
-                        seed,
-                        threads_per_process,
-                        None if group is None else group.tolist(),
-                        self._buffers,
-                        self._specs,
-                    ),
-                )
-                process.start()
-                child.close()
-                self._connections.append(parent)
-                self._processes.append(process)
-            self.worker_info = self._responses(timeout=300)
+            self._spawn_workers(
+                context,
+                _worker,
+                cpus,
+                lambda rows, group: (
+                    rows.start,
+                    rows.stop - rows.start,
+                    self.num_envs,
+                    task,
+                    reward_type,
+                    seed,
+                    threads_per_process,
+                    group,
+                    self._buffers,
+                    self._specs,
+                ),
+            )
         except BaseException:
             self._abort()
             raise

@@ -1,5 +1,14 @@
 import time
 
+import numpy as np
+
+from .shared_memory import owned_group
+
+
+def lane_slices(num_envs, processes):
+    """Split ``num_envs`` lanes into ``processes`` contiguous, nearly equal slices."""
+    return [slice(int(lanes[0]), int(lanes[-1]) + 1) for lanes in np.array_split(np.arange(num_envs), processes)]
+
 
 class ProcessRequests:
     """Manage one pending request across persistent simulator workers.
@@ -25,6 +34,28 @@ class ProcessRequests:
         if errors:
             raise RuntimeError(f"{self._worker_family} worker failed:\n" + "\n".join(errors))
         return results
+
+    def _spawn_workers(self, context, target, cpus, args):
+        """Start one ``target`` worker per lane slice and store each ready reply in ``worker_info``.
+
+        ``args(rows, cpus)`` returns the arguments after the worker's pipe end, with
+        ``cpus`` split evenly across workers. Callers abort on failure.
+        """
+        processes = len(self._slices)
+        groups = [None] * processes if cpus is None else [g.tolist() for g in np.array_split(cpus, processes)]
+        for rows, group in zip(self._slices, groups, strict=True):
+            parent, child = context.Pipe()
+            process = context.Process(target=target, args=(child, *args(rows, group)))
+            try:
+                process.start()
+            except BaseException:
+                parent.close()
+                raise
+            finally:
+                child.close()
+            self._connections.append(parent)
+            self._processes.append(process)
+        self.worker_info = self._responses(timeout=300)
 
     def _check_idle(self):
         self._check_open()
@@ -82,3 +113,34 @@ class ProcessRequests:
                         process.join(timeout=5)
             finally:
                 self._abort()
+
+
+class SharedOutputProcess(ProcessRequests):
+    """Process requests whose workers write State and task outputs to ``self._views``."""
+
+    _step_family = "Simulation"
+
+    def _check_open(self):
+        if self._closed:
+            raise RuntimeError(f"{type(self).__name__} is closed")
+
+    def _owned(self, group):
+        return owned_group(self._views, group, self.num_envs, self.device)
+
+    def get_state(self):
+        self._request("get_state")
+        return self._owned("state")
+
+    def receive_step(self):
+        self._check_open()
+        if self._pending not in ("step", "advance"):
+            raise RuntimeError(f"No {self._step_family} step in flight")
+        capture = self._pending == "step"
+        self._receive()
+        result = self._owned("task")
+        if capture:
+            result["state"] = self._owned("state")
+        return result
+
+    def abort_step(self):
+        self._abort()

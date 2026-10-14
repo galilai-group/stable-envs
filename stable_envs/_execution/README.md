@@ -10,7 +10,8 @@ capture slices and rendering.
 |---|---|
 | `protocol.py` | `SimulatorAdapter` and `StepPipeline` interfaces |
 | `policy.py` | Shared process-selection policy |
-| `requests.py` | Request lifecycle and worker-failure cleanup |
+| `requests.py` | Lane slices, worker start-up, request lifecycle and worker-failure cleanup |
+| `workers.py` | Worker CPU pinning and ready/failure replies |
 | `shared_memory.py`, `state_columns.py` | Typed shared outputs and owned State assembly |
 
 ## Interfaces and ownership
