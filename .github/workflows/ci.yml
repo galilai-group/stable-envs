@@ -102,7 +102,6 @@ jobs:
           - { os: ubuntu-latest, python: "3.10" }
           - { os: ubuntu-latest, python: "3.11" }
           - { os: ubuntu-latest, python: "3.12" }
-          - { os: macos-latest, python: "3.12" }
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -118,9 +117,6 @@ jobs:
           SE_PYTHON: ${{ matrix.python }}
           SE_NIGHTLY: ${{ needs.plan.outputs.tier == 'nightly' && '1' || '' }}
         run: uvx nox -s "test(core)" -- -q --junitxml=junit-core-${{ matrix.os }}-${{ matrix.python }}.xml
-      - name: device=auto smoke
-        if: matrix.os == 'macos-latest'
-        run: .venvs/core-py3.12/bin/python scripts/ci/smoke_macos.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:

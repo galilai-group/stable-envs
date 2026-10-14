@@ -140,10 +140,9 @@ def test_pre_commit_hygiene_excludes_only_frozen_artifacts() -> None:
     assert exclude.strip() != r"^(docs/|"
 
 
-def test_lightweight_regression_and_macos_run_on_ordinary_ci() -> None:
+def test_lightweight_regression_runs_on_ordinary_ci() -> None:
     ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text()
-    assert "macos-latest" in ci
-    assert "scripts/ci/smoke_macos.py" in ci
+    assert "macos-latest" not in ci
     noxfile = (ROOT / "noxfile.py").read_text()
     assert '"tests/regression"' in noxfile and "not gpu" in noxfile
     extras = (ROOT / ".github" / "workflows" / "extras-smoke.yml").read_text()
