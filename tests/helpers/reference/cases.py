@@ -53,8 +53,7 @@ def coverage(required, results) -> dict:
     )
 
 
-_CLASSIC = "tests/integration/test_native_classic_gate.py::test_frozen_reference_oracle"
-_CLASSIC_REST = "tests/integration/test_native_classic_remaining_gate.py::test_frozen_remaining_reference_oracle"
+_CLASSIC = "tests/integration/test_native_classic_gate.py::test_frozen_source_state_and_tasks"
 _NAVIGATION = "tests/integration/test_native_navigation_oracle.py::test_frozen_native_navigation_oracles_replay"
 _DMC_SUITE = "tests/unit/test_dmc_sibling_tasks.py::test_cell_matches_the_source_task_and_restores_into_a_fresh_env"
 _DMC_HISTORICAL = "tests/unit/test_dmc_sibling_tasks.py::test_historical_cell_matches_the_source_task"
@@ -76,8 +75,7 @@ _CRAFTAX = "tests/unit/test_craftax_semantics.py::test_source_reset_all_actions_
 #: Registered env -> the CPU test comparing it with the library it ports, or with a corpus recorded from
 #: its source. None of these tests imports stable_worldmodel.
 ORIGINAL_GATES: dict[str, str] = {
-    **dict.fromkeys(("CartPole", "Pendulum"), _CLASSIC),
-    **dict.fromkeys(("Acrobot", "MountainCar", "MountainCarContinuous"), _CLASSIC_REST),
+    **dict.fromkeys(("CartPole", "Pendulum", "Acrobot", "MountainCar", "MountainCarContinuous"), _CLASSIC),
     **dict.fromkeys(("TwoRoom", "Piecewise", "SimplePointMaze"), _NAVIGATION),
     **dict.fromkeys(
         (

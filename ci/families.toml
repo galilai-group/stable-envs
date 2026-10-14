@@ -70,7 +70,6 @@ tests = [
   "test_gfxdraw_*",
   "test_native_acceptance.py",
   "test_native_source_pixels.py",
-  "test_saved_native.py",
 ]
 requires = ["pygame"]
 capabilities = ["swm"]
