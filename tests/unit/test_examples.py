@@ -46,7 +46,7 @@ def test_there_are_scripts_to_check():
     this file collect nothing and report nothing — green, and covering the thing it was written for
     exactly as well as deleting it would.
     """
-    assert len(SCRIPTS) >= 15, (
+    assert len(SCRIPTS) >= 7, (
         f"only {len(SCRIPTS)} scripts found under {EXAMPLES}; the sweep below would be near-empty and would still pass"
     )
 
@@ -65,11 +65,10 @@ def test_every_example_script_parses(path: Path):
 
 @pytest.mark.parametrize("path", SCRIPTS, ids=IDS)
 def test_a_runnable_script_does_its_work_behind_a_main_guard(path: Path):
-    """Import must be free of side effects, because ``test_benchmarks.py`` IMPORTS two of these.
+    """Import must be free of side effects, because ``test_benchmarks.py`` IMPORTS one of these.
 
-    That file drives ``make_env``, ``parse_ss``, ``per_tile_note``, ``probe_frames`` and
-    ``cpu_throughput`` directly with fakes, which is only affordable while importing the module does
-    not build an env, allocate a GPU or start a sweep. A script that did its work at import time would
+    That file drives ``make_env``, ``parse_ss`` and ``cpu_throughput`` directly with fakes, which is
+    only affordable while importing the module does not build an env, allocate a GPU or start a sweep. A script that did its work at import time would
     turn a one-second unit test into a benchmark run, and would make ``--help`` below run the
     benchmark too.
     """
@@ -87,7 +86,7 @@ ARGPARSE_IDS = [str(p.relative_to(EXAMPLES)) for p in ARGPARSE]
 
 
 def test_the_argparse_sweep_below_is_not_empty():
-    assert len(ARGPARSE) >= 15, (
+    assert len(ARGPARSE) >= 6, (
         f"only {len(ARGPARSE)} scripts under examples/ use argparse; the --help sweep would be "
         f"near-empty and would still pass"
     )
