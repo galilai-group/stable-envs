@@ -2,9 +2,9 @@
 
 Nvdiffrast's quantized coverage can omit whole thin fin faces. This pass clips
 triangles against the camera near plane, rasterizes integer pixel samples, and
-returns the original face's perspective weights for the existing shading path.
-Float32 coverage is measured against the source's double-barycentric renderer;
-it is not a promise of bitwise source equivalence. No gradients are provided.
+returns the original face's perspective weights for the nvdiff shading path.
+Float32 coverage is measured against the source's double-barycentric renderer
+and is not bitwise-equal to it. No gradients are provided.
 The two depth/face passes make visibility independent of GPU execution order.
 """
 

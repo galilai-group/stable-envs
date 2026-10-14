@@ -1,6 +1,6 @@
 from ...registry import _import_env_module
 
-# Keep optional import failures isolated and report them under their existing keys.
+# Isolate optional import failures and report each under its registry key.
 _import_env_module("rocket.legacy", "rocket_landing")
 _import_env_module("rocket.render", "rocket_render")
 _import_env_module("rocket.semantics", "rocket_semantics")

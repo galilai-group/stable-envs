@@ -1,4 +1,4 @@
-"""SWM-local Rocket landing task, delegated to official PyFlyt/PyBullet.
+"""Rocket landing task from stable-worldmodel, delegated to official PyFlyt/PyBullet.
 
 Adapted from stable-worldmodel, MIT, by Lucas Maes, Quentin Le Lidec,
 Randall Balestriero and contributors, commit

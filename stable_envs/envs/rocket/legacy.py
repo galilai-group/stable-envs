@@ -422,13 +422,13 @@ def _reference_make(size: int):
     if hit is not None:
         return hit
     raise LookupError(
-        "PyFlytRocketLanding has no production gymnasium id; the certification overlay in "
-        "tests.helpers.reference.certification installs the historical reference factory"
+        "PyFlytRocketLanding has no registered gymnasium id; "
+        "tests.helpers.reference.certification installs the reference factory"
     )
 
 
 def _reference_apply_style(p, c, rid, pad, style_row: np.ndarray) -> None:
-    """``style_row`` in the ENV layout (``style_layout``)."""
+    """Apply a style row in environment layout (``style_layout``) to the reference bodies."""
     mat = material_table(style_row)[0]
     p.changeVisualShape(rid, -1, rgbaColor=[*mat[1], 1.0], physicsClientId=c)
     for link, g in ((1, 3), (2, 4), (3, 5), (4, 6), (5, 7), (6, 8), (7, 9), (8, 10)):
@@ -440,12 +440,11 @@ def _reference_apply_style(p, c, rid, pad, style_row: np.ndarray) -> None:
 
 
 # Sparse matrix multiplication on CPU can change rounding with batch width.
-# This CUDA-only base does not provide CPU pixel invariance.
 DOCUMENTED_LIMITATIONS = (
     "nvdiff's CPU transform is batch-size invariant to within one float32 ulp at every width, and "
     "bitwise at every width on arm64; on x86-64 the clip positions move by one ulp at widths 1-6 and "
-    "the normals at widths 4 and 8. Cuda, the certified device, is bitwise invariant at "
-    "every width. No frame this cell produces is affected: device='cpu' raises."
+    "the normals at widths 4 and 8. On CUDA it is bitwise invariant at every width. "
+    "No frame this cell produces is affected: device='cpu' raises."
 )
 
 
@@ -457,15 +456,9 @@ REFERENCE_UNREACHABLE_SHARE = 1.0 / 960.0
 
 
 def _lowest_link_z(p, c, rid) -> float:
-    """The lowest z of the rocket's link collision AABBs at its CURRENT pose in the client."""
+    """The lowest z of the rocket's link collision AABBs at its current pose in the client."""
     n = p.getNumJoints(rid, physicsClientId=c)
     return min(p.getAABB(rid, link, physicsClientId=c)[0][2] for link in range(-1, n))
-
-
-def _reference_frame(env, state: np.ndarray, style_row: np.ndarray) -> np.ndarray:
-    """Render the lagged reference image, raising if the pose cannot be reached."""
-    frame, unreachable = _reference_frame_flagged(env, state, style_row, contact_fallback=False)
-    return frame
 
 
 def _reference_frame_flagged(env, state: np.ndarray, style_row: np.ndarray, contact_fallback: bool = True):
@@ -495,7 +488,7 @@ def _reference_frame_flagged(env, state: np.ndarray, style_row: np.ndarray, cont
     pos_err = float(np.abs(got_pos - pos).max())
     rot_err = float(1.0 - abs(np.dot(got_q / np.linalg.norm(got_q), q)))
     if pos_err > 1e-6 or rot_err > 1e-9:
-        # the requested pose itself: is it in the contact band?
+        # Check whether the requested pose itself lies in the contact band.
         p.resetBasePositionAndOrientation(rid, list(pos), list(q), physicsClientId=c)
         p.resetBaseVelocity(rid, list(v), list(w), physicsClientId=c)
         in_band = _lowest_link_z(p, c, rid) <= PAD_TOP_Z + CONTACT_BAND_MARGIN
@@ -503,8 +496,7 @@ def _reference_frame_flagged(env, state: np.ndarray, style_row: np.ndarray, cont
             return np.asarray(u.render(), np.uint8)[..., :3].copy(), True
         raise AssertionError(
             f"PyFlytRocketLanding: the reference did not reach the requested pose (pos {pos_err:.3e} m, "
-            f"1-|q.q'| {rot_err:.3e}; {'in' if in_band else 'outside'} the contact band); every "
-            f"fidelity number computed from it would compare two different scenes"
+            f"1-|q.q'| {rot_err:.3e}; {'in' if in_band else 'outside'} the contact band)"
         )
     return np.asarray(u.render(), np.uint8)[..., :3].copy(), False
 
@@ -579,7 +571,7 @@ class PyFlytRocketLanding(Env):
     color_exactness_applicability = {
         "leaves": ("pad.color", "rocket.body_color", "rocket.booster_color", "rocket.fin_color", "rocket.leg_color"),
         "status": "not_applicable: literal RGB equality is unreachable under the reference's own law",
-        "mechanism": "bullet3 TinyRenderer's MULTIPLICATIVE one-light law "
+        "mechanism": "bullet3 TinyRenderer's multiplicative one-light law "
         "out_i = int(255*c_i*(A + D*max(0,n.l) + S*max(0,r_z)**spec)*L_i), truncated, "
         "A=0.6 D=0.35 S=0.05 spec=2, light (-50,30,100) normalised, no shadow, no gamma",
         "max_shading_factor": 0.993567,
@@ -587,13 +579,13 @@ class PyFlytRocketLanding(Env):
         "official_renderer_fails_the_same_check": True,
         "official_renderer_evidence": "the official PyFlyt 0.29.0 / pybullet 3.2.7 frame's brightest "
         "body pixel is 0.991*int(255*c); the requested triple is absent "
-        "from the OFFICIAL frames too",
+        "from the official frames too",
         "evidence": ("tests/fixtures/evidence/rocket_colour/colour_law_ceiling.json",),
         "measured_against": "PyFlyt 0.29.0, pybullet 3.2.7 (bullet3 TinyRenderer.cpp Shader::fragment)",
         "scope_note": "scoped to these five lit leaves only; any other RGB leaf on this env stays "
         "judged against literal equality",
-        "successor": "PROPOSAL only, not implemented and not mandatory: compare this renderer's "
-        "response to the knob against the OFFICIAL renderer's response to the same knob",
+        "successor": "not implemented: compare this renderer's response to the knob against the "
+        "official renderer's response to the same knob",
     }
     visual_note = (
         "A different rasterizer (nvdiffrast) drawing TinyRenderer's scene under TinyRenderer's law. "
@@ -628,9 +620,8 @@ class PyFlytRocketLanding(Env):
         device = Env.resolve_device(device)
         if str(device).startswith("cpu"):
             raise NotImplementedError(
-                "PyFlytRocketLanding has no CPU backend: it needs a CPU textured-triangle rasteriser, which this "
-                "repo does not have (cpu3d/raycast3d cast MuJoCo primitives). A CPU request is never served "
-                "by CUDA."
+                "PyFlytRocketLanding has no CPU backend: it needs a CPU textured-triangle rasteriser "
+                "(cpu3d/raycast3d cast MuJoCo primitives only). A CPU request is never served by CUDA."
             )
         super().__init__(
             num_envs=num_envs,
