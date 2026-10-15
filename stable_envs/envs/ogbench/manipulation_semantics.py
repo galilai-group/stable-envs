@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ... import tuning
 from ..._core.style import StyleTensor, rows_are_equal
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env, _split_appearance
@@ -203,6 +204,7 @@ class ManipulationSemantics:
                 state["renderer", "size"].fill_(size)
             if supersample is not None:
                 state["renderer", "supersample"].fill_(supersample)
+        tuning.on_render("ogb-manipulation", int(state["renderer", "size"][0, 0]), len(state), self)
         result = manipulation_renderer.render(
             self.CELL, state, self.device, self.backend if backend is None else backend, chunk_size
         )

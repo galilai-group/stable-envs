@@ -23,7 +23,7 @@ def make_classic_adapter(
     local_factory: Callable[..., _AdapterT],
 ) -> _AdapterT | AcrobotProcessAdapter:
     cpus = cpu_affinity()
-    count = process_count(num_envs, cpus, eligible=domain == "acrobot")
+    count = process_count(num_envs, cpus, eligible=domain == "acrobot", path="classic-sim")
     if count:
         from .process import AcrobotProcessAdapter
 

@@ -592,7 +592,8 @@ class _TorchNavBase(_GymReferencePort):
             img = torch.empty((n, IMG, IMG, 3), dtype=torch.uint8, device=self.device)
 
         # Chunks bound intermediate image memory independently of the batch size.
-        chunk = tuning.get("nav_render_chunk", device=self.device)
+        tuning.on_render("navigation", IMG, n, self)
+        chunk = tuning.get("nav_render_chunk", path="navigation", size=IMG, batch=n, device=self.device)
         for lo in range(0, n, chunk):
             img[lo : min(lo + chunk, n)] = self._render_chunk(s, sty, lo, min(lo + chunk, n))
         return img.view(*lead, IMG, IMG, 3) if lead else img

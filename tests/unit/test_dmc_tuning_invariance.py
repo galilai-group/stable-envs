@@ -29,8 +29,6 @@ def test_cpu3d_chunk_keeps_trackcom_frames():
         for chunk in (1, 2, 3, 16, 64):
             with tuning.override(cpu3d_chunk=chunk):
                 assert torch.equal(env.render(state), reference), chunk
-    with snv.make("DMCCheetahRun", num_envs=5, device="cpu", tuning={"cpu3d_chunk": 2}) as env:
-        assert torch.equal(env.render(state), reference)
 
 
 @pytest.mark.gl

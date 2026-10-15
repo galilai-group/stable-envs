@@ -612,6 +612,7 @@ class DMControlSuite(_DMCModel):
         size = int(size or self.size)
         ss = int(self.ss if supersample is None else supersample)
         sty = self.resolve_style(style, variation, batch=B)
+        tuning.on_render("dmc-suite", size, B, self)
 
         if out is None:
             out = torch.empty((B, size, size, 3), dtype=torch.uint8, device=self.device)
@@ -632,7 +633,7 @@ class DMControlSuite(_DMCModel):
             idx = torch.as_tensor(sub, device=self.device, dtype=torch.long)
             # Rays per chunk, counting supersamples; smaller CPU chunks stay cache-resident.
             knob = "dmc_cpu_ray_budget" if self.device.type == "cpu" else "dmc_ray_budget"
-            budget = tuning.get(knob, device=self.device)
+            budget = tuning.get(knob, path="dmc-suite", size=size, batch=B, device=self.device)
             step = max(1, int(budget // max(1, size * size * ss * ss)))
             for a in range(0, len(sub), step):
                 part = idx[a : a + step]

@@ -143,8 +143,9 @@ def _launch_worlds(size: int, batch: int) -> int:
 
     More worlds amortize per-launch uploads; the ray budget bounds memory at large image sizes.
     """
-    rays = tuning.get("dmc_launch_rays") // (int(size) * int(size))
-    capacity = max(tuning.get("dmc_min_worlds"), min(256, rays))
+    where = dict(path="dmc-trackcom", size=size, batch=batch)
+    rays = tuning.get("dmc_launch_rays", **where) // (int(size) * int(size))
+    capacity = max(tuning.get("dmc_min_worlds", **where), min(256, rays))
     return min(capacity, 1 << max(0, int(batch) - 1).bit_length())
 
 
@@ -229,10 +230,6 @@ class DMControlTrackCom(_DMCModel):
                 f"{type(self).__name__}: no 3-D backend for device {self.device}; use "
                 f"device='cuda' (MJWarp) or device='cpu' (stable_envs.render.cpu3d)"
             )
-
-    def _tuning_defaults(self, size: int) -> dict:
-        """Per-cell values that replace knob fallbacks when nothing sets the knob."""
-        return {"cpu3d_chunk": self._CPU_RENDER_CHUNKS.get((self.DOMAIN, size), self.CPU_RENDER_CHUNK)}
 
     def _context(self, size: int, nworld: int) -> _TCtx:
         return _tc_context(type(self), int(size), int(nworld))
@@ -448,7 +445,8 @@ class DMControlTrackCom(_DMCModel):
                 mat[:, i] = sty[f"material.{name}"][:B]
         base = torch.as_tensor(pr["light_diffuse"], dtype=torch.float32, device=self.device)
         ldif = torch.clamp(base.unsqueeze(0) * sty["light.diffuse_scale"][:B].reshape(B, 1, 1), 0, 1)
-        chunk = tuning.get("cpu3d_chunk", default=self._tuning_defaults(size)["cpu3d_chunk"])
+        default = self._CPU_RENDER_CHUNKS.get((self.DOMAIN, size), self.CPU_RENDER_CHUNK)
+        chunk = tuning.get("cpu3d_chunk", path="dmc-trackcom", size=size, batch=B, default=default)
         C3.render(
             sc,
             cam,
@@ -485,6 +483,7 @@ class DMControlTrackCom(_DMCModel):
         if ss != 1:
             raise ValueError(f"{type(self).__name__}: only supersample=1 is supported.")
         sty = self.resolve_style(style, variation, batch=B)
+        tuning.on_render("dmc-trackcom", size, B, self)
 
         if out is None:
             out = torch.empty((B, size, size, 3), dtype=torch.uint8, device=self.device)

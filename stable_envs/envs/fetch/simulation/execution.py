@@ -20,7 +20,7 @@ def make_fetch_adapter(
 ) -> FetchAdapter:
     # Daemonic workers cannot spawn children; keep their simulators local.
     cpus = cpu_affinity()
-    count = process_count(num_envs, cpus)
+    count = process_count(num_envs, cpus, path="fetch-sim")
     if count:
         return FetchProcessAdapter(
             num_envs, device, seed, task, reward_type, processes=count, threads_per_process=1, cpus=cpus

@@ -125,8 +125,9 @@ class FetchAdapter(SimulatorAdapter):
         self.reset(seed=seed)
         # Bound threads by scheduler affinity and keep small batches serial.
         available = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else (os.cpu_count() or 1)
-        if self.num_envs >= tuning.get("worker_min_lanes") and available > 1:
-            self._set_workers(min(tuning.get("fetch_threads"), available, self.num_envs))
+        where = dict(path="fetch-sim", size=0, batch=self.num_envs)
+        if self.num_envs >= tuning.get("worker_min_lanes", **where) and available > 1:
+            self._set_workers(min(tuning.get("fetch_threads", **where), available, self.num_envs))
 
     def _set_workers(self, workers):
         """Assign disjoint simulator lanes to each thread; wait for existing work first."""

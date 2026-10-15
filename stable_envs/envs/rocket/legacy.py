@@ -547,9 +547,10 @@ def nvd_renderer(size, ss, device, scene_type=ND.Scene, renderer_type=ND.BatchRe
     return renderer, NVD_BYTES_PER_PIXEL * (size * ss) ** 2 + NVD_BYTES_PER_VERTEX * scene.V
 
 
-def nvd_worlds(per_world: int, device) -> int:
+def nvd_worlds(per_world: int, device, size: int, batch: int) -> int:
     """Return the worlds one renderer chunk holds within the ``nvd_budget_bytes`` knob."""
-    return max(1, int(tuning.get("nvd_budget_bytes", device=device) // per_world))
+    budget = tuning.get("nvd_budget_bytes", path="rocket-nvdiff", size=size, batch=batch, device=device)
+    return max(1, int(budget // per_world))
 
 
 class _Nvd:
@@ -756,6 +757,7 @@ class PyFlytRocketLanding(Env):
         s = s.reshape(-1, self.state_dim)
         B = int(s.shape[0])
         size = int(size or self.size)
+        tuning.on_render("rocket-nvdiff", size, B, self)
         ss = int(self.ss if supersample is None else supersample)
         sty = self.resolve_style(style, variation, batch=B)
         c = self._nvd(size, ss)
@@ -772,7 +774,7 @@ class PyFlytRocketLanding(Env):
         eye, cmat = camera_pose(pos_prev, q_prev)
         xp_t = torch.as_tensor(xp, dtype=torch.float32, device=self.device)
         xm_t = torch.as_tensor(xm, dtype=torch.float32, device=self.device)
-        chunk = nvd_worlds(c.per_world, self.device)
+        chunk = nvd_worlds(c.per_world, self.device, size, B)
         step = -(-B // max(1, -(-B // chunk)))
         for lo in range(0, B, step):
             hi = min(lo + step, B)

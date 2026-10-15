@@ -13,15 +13,16 @@ def cpu_affinity() -> list[int] | None:
     return sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None
 
 
-def process_count(num_envs: int, cpus: Sequence[int] | None, *, eligible: bool = True) -> int:
+def process_count(num_envs: int, cpus: Sequence[int] | None, *, eligible: bool = True, path: str | None = None) -> int:
     """Return the number of worker processes to use, or 0 to step in this process.
 
     Workers are used only on Linux, outside daemon processes, for at least ``worker_min_lanes`` lanes
-    and 4 CPUs, up to the ``workers`` knob.
+    and 4 CPUs, up to the ``workers`` knob. ``path`` is the simulation path whose measured values apply.
     """
+    where = dict(path=path, size=0, batch=num_envs)
     available = len(cpus) if cpus is not None else 1
     if not eligible or sys.platform != "linux" or available < 4 or mp.current_process().daemon:
         return 0
-    if num_envs < tuning.get("worker_min_lanes"):
+    if num_envs < tuning.get("worker_min_lanes", **where):
         return 0
-    return min(tuning.get("workers"), available, num_envs)
+    return min(tuning.get("workers", **where), available, num_envs)

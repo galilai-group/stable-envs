@@ -11,7 +11,7 @@ def make_dmc_adapter(
     domain: str, num_envs: int, device: str | torch.device, seed: int
 ) -> DMCAdapter | DMCProcessAdapter:
     cpus = cpu_affinity()
-    count = process_count(num_envs, cpus, eligible=domain in PROCESS_DOMAINS)
+    count = process_count(num_envs, cpus, eligible=domain in PROCESS_DOMAINS, path="dmc-sim")
     if count:
         return DMCProcessAdapter(domain, num_envs, device, seed, processes=count, cpus=cpus)
     return make_local(domain, num_envs, device, seed)

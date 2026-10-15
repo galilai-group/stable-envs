@@ -26,7 +26,7 @@ def make_maze_adapter(
     maze: str = "large",
 ) -> _AdapterT | OGBMazeProcessAdapter:
     cpus = cpu_affinity()
-    count = process_count(num_envs, cpus)
+    count = process_count(num_envs, cpus, path="ogb-sim")
     if count:
         return OGBMazeProcessAdapter(num_envs, device, seed, processes=count, cpus=cpus, loco=loco, maze=maze)
     return local_factory(num_envs, device, seed, loco=loco, maze=maze)
@@ -41,7 +41,7 @@ def make_manipulation_adapter(
     local_factory: Callable[..., _AdapterT],
 ) -> _AdapterT | OGBManipulationProcessAdapter:
     cpus = cpu_affinity()
-    count = process_count(num_envs, cpus)
+    count = process_count(num_envs, cpus, path="ogb-sim")
     if count:
         from .manipulation_process import OGBManipulationProcessAdapter
 

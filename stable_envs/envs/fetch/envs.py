@@ -685,6 +685,7 @@ class FetchBase(Env):
         ss = int(self.ss if supersample is None else supersample)
         res = size * ss
         sty = self.resolve_style(style, variation, batch=B)
+        tuning.on_render("fetch-mjwarp", size, B, self)
 
         if out is None:
             out = torch.empty((B, size, size, 3), dtype=torch.uint8, device=self.device)
@@ -703,7 +704,7 @@ class FetchBase(Env):
         campos, camquat = self._camera_batch(sty, B)
         arm = self._translucent_lanes(sty, B)
         # More worlds per context reduce launches and increase framebuffer memory.
-        chunk = tuning.get("fetch_mjw_worlds", device=self.device)
+        chunk = tuning.get("fetch_mjw_worlds", path="fetch-mjwarp", size=size, batch=B, device=self.device)
         for lo in range(0, B, chunk):
             hi = min(lo + chunk, B)
             n = hi - lo

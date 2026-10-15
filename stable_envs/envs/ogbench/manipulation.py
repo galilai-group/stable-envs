@@ -44,7 +44,7 @@ def IDENTITY_QUAT(nmocap: int) -> np.ndarray:
 
 
 def mjw_worlds() -> int:
-    """MJWarp worlds per launch. A context is per (res, nworld), so an unbounded batch would build one per size."""
+    """MJWarp worlds per launch; a context is per (res, nworld), so chunks bound the number of contexts."""
     return tuning.get("ogb_mjw_worlds")
 
 

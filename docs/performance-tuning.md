@@ -1,27 +1,27 @@
 # Performance tuning
 
 Every environment runs well with no setup. Chunk sizes, Triton block sizes, worker counts and memory
-budgets have defaults, and some defaults are computed from the hardware when the process starts.
-You can change them to trade speed against memory. A tuning knob never changes frames or State: it
-only changes how the work is split.
+budgets have defaults, and some defaults are computed from the hardware. You can change them to trade
+speed against memory. A tuning knob never changes frames or State: it only changes how the work is
+split.
 
 Knobs belong to render paths, not to environments. For example, every fixed-camera DM Control cell
 uses the `dmc-suite` path, so a value measured with `DMCCartpoleSwingup` also applies to
-`DMCReacherEasy`.
+`DMCReacherEasy`. The Triton block and warp knobs and `ogb_mjw_worlds` are measured for the whole
+device instead of per path.
 
 ## Where a value comes from
 
 When the library reads a knob, it uses the first value it finds in this list:
 
-1. The environment's own knobs: `snv.make("DMCCheetahRun", tuning={"cpu3d_chunk": 8})`.
-   They apply only while that environment runs.
-2. `snv.tuning.override(...)` blocks, innermost first, then `snv.tuning.set(...)`.
-3. The environment variable `STABLE_ENVS_<KNOB>`, for example `STABLE_ENVS_CPU3D_CHUNK=8`.
-4. A value that `stable-envs tune` measured on this machine for the running environment's render path,
-   frame size and batch range.
-5. A value derived from the hardware, for knobs that have a rule.
-6. The fallback in the table below. TrackCom cells replace the `cpu3d_chunk` fallback with a
-   per-cell table measured on a Xeon Platinum 8268.
+1. `snv.tuning.override(...)` blocks, innermost first, then `snv.tuning.set(...)`.
+2. The environment variable `STABLE_ENVS_<KNOB>`, for example `STABLE_ENVS_CPU3D_CHUNK=8`.
+3. A value that `stable-envs tune` measured on this machine for the render path, frame size and batch
+   range of the call.
+4. A value derived from the hardware, for knobs that have a rule.
+5. The call site's default. TrackCom cells use a per-cell `cpu3d_chunk` table measured on a Xeon
+   Platinum 8268.
+6. The fallback in the table below.
 
 The library reads knobs each time it does the work, so a change applies to the next call. An unknown
 knob name raises `ValueError`, and so does an invalid value (not an int, too small, not a power of
@@ -30,13 +30,15 @@ two where one is required, or not an allowed warp count).
 ```python
 import stable_envs as snv
 
-snv.tuning.set(cpu3d_chunk=8)                 # whole process
+snv.tuning.set(cpu3d_chunk=8)                   # whole process
 with snv.tuning.override(nav_render_chunk=64):  # this block
     frames = env.render(state)
-env = snv.make("TwoRoom", num_envs=1024, tuning={"nav_render_chunk": 128})  # one environment
-snv.tuning.get("cpu3d_chunk")                 # current value
-snv.tuning.describe()                         # every knob, its value and its source
+snv.tuning.get("cpu3d_chunk")                   # current value
+snv.tuning.describe()                           # every knob: (value, source)
 ```
+
+To use different values for two environments, wrap each environment's calls in its own
+`snv.tuning.override` block.
 
 Environment variables take an integer with an optional `K`, `M`, `G` or `T` suffix (powers of 1024),
 for example `STABLE_ENVS_NVD_BUDGET_BYTES=4G`. The value `auto` skips the variable. See
@@ -104,12 +106,12 @@ It prints a table and where the values were saved. Example output (the numbers d
 
 ```text
   knob                        default        tuned  speedup
-  cpu3d_chunk                      64           32    1.12x
-saved for: dmc-trackcom, 64 px, batch 64-127 (also covers: DMCHopperHop, DMCHumanoidWalk, ...)
+  dmc_cpu_ray_budget          2097152       524288    1.12x
+saved for: dmc-suite, 84 px, batch 64-127 (also covers: DMCCartpoleSwingup, DMCReacherEasy, ...)
 ```
 
 Values are saved for the render path, the frame size and the batch range (powers of two: 64 to 127,
-128 to 255, and so on). They are saved in `~/.cache/stable-envs/tuning/<device name>.json`
+128 to 255, and so on), or for the whole device for the knobs above that are not per path. They are saved in `~/.cache/stable-envs/tuning/<device name>.json`
 (under `$XDG_CACHE_HOME` instead of `~/.cache` when it is set). A file applies only on the same device, driver,
 host CPU and stable-envs version; after an upgrade, tune again.
 
@@ -120,16 +122,15 @@ It restores the environment's State afterwards.
 
 The first time a render path with no measured values renders a batch of 256 or more lanes, the
 library logs one `INFO` line on the `stable_envs.tuning` logger, such as
-``"`stable-envs tune DMCCheetahRun --batch 512 --device cuda` may speed up the dmc-trackcom render path"``.
+``"`stable-envs tune DMCCheetahRun --batch 512 --size 64 --device cuda` may speed up the dmc-trackcom render path"``.
 It logs this at most once per path and device in a process. `STABLE_ENVS_TUNING_HINT=0` or the
 logging configuration silences it.
 
-With `STABLE_ENVS_AUTOTUNE=1`, the library runs the same bounded tune instead of logging, the first
-time such a path renders outside another call of the environment, then caches the values. That first
-render takes about a minute longer. A lock file beside the cache file lets one process tune: another
-process that finds the lock held uses the defaults without waiting. A failed tune logs an `INFO` line,
-and the render continues with the defaults. Autotune is off by default, and it skips environments built
-with their own `tuning=`.
+With `STABLE_ENVS_AUTOTUNE=1`, the library tunes instead of logging: the first time such a path renders,
+it builds a separate environment of the same class, batch, size and device, tunes it and caches the
+values. That first render takes about a minute longer. A lock file beside the cache file lets one
+process tune: another process that finds the lock held uses the defaults without waiting. A failed tune
+logs an `INFO` line, and the render continues with the defaults. Autotune is off by default.
 
 See [Command line](api/cli.md#stable-envs-tune) for every option.
 
@@ -137,5 +138,5 @@ See [Command line](api/cli.md#stable-envs-tune) for every option.
 
 ::: stable_envs.tuning
     options:
-      members: [get, set, reset, override, describe, cache_path, Knob]
+      members: [get, set, reset, override, describe, cache_path]
       show_root_heading: false

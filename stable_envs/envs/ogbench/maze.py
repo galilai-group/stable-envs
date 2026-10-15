@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ... import tuning
 from ..._core.mujoco_gl import configure_mujoco_gl, mujoco_renderer
 from ..._core.plate_texels import quantise
 from ..._execution.protocol import StepPipeline, step_pipeline
@@ -874,6 +875,7 @@ class OGBenchMaze(Env):
         s = s.reshape(-1, self.state_dim)
         B = s.shape[0]
         size = int(size or self.size)
+        tuning.on_render("ogb-maze", size, B, self)
         ss = int(self.ss if supersample is None else supersample)
         sty = self.resolve_style(style, variation, batch=B)
 

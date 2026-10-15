@@ -200,8 +200,10 @@ class _Classic(Env):
         extra = () if geo is None else (geo,)
         o = None if out is None else out.reshape(-1, H, W, 3)
         if self._use_fused():
+            from ... import tuning
             from ...render.gfxdraw import classic as F
 
+            tuning.on_render("gfxdraw", W, n, self)
             img = F.render_classic(self._ops(s, sty, *extra).finish(), out=o)
         else:
             cv = _StyleCanvas(self.gfx, n, sty["background.color"])

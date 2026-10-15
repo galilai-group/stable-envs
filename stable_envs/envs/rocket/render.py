@@ -12,6 +12,7 @@ import threading
 import numpy as np
 import torch
 
+from ... import tuning
 from . import legacy as geometry
 
 ND = geometry.ND
@@ -160,8 +161,9 @@ def render(env, state, size, ss, chunk_size=None):
             return torch.from_numpy(np.stack(images))
         if env.device.type != "cuda":
             raise ValueError("Rocket rendering supports CPU TinyRenderer or CUDA nvdiffrast")
+        tuning.on_render("rocket-nvdiff", size, len(state), env)
         renderer, per_world = _gpu_context(env, size, ss)
-        limit = geometry.nvd_worlds(per_world, env.device)
+        limit = geometry.nvd_worlds(per_world, env.device, size, len(state))
         limit = min(limit, chunk_size) if chunk_size is not None else limit
         positions = np.zeros((len(state), geometry.N_GEOMS, 3), np.float64)
         quaternions = np.zeros((len(state), geometry.N_GEOMS, 4), np.float64)
