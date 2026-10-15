@@ -1,7 +1,7 @@
 # Benchmarks
 
-This page covers speed: how long it takes to turn a State into a uint8 frame. Correctness is covered
-by the [test suite](testing.md).
+This page covers speed: how long it takes to turn a State into a uint8 frame. The
+[test suite](testing.md) covers correctness.
 
 ## Method
 
@@ -35,7 +35,7 @@ drawing is the same on both sides. The difference is Python work per frame.
 
 - Ray-cast and CPU3D families (OGBench mazes, DM Control, navigation) depend on the host CPU. Their
   numbers change with machine load.
-- Visual-tier 3-D families are for live training data, not a substitute for stored official pixels.
+- Visual-tier 3-D families are for live training data. They do not substitute for stored official pixels.
 - The official renderers run in one process. They have no batched entry point.
 - Use the class's native supersampling. Forcing `1` on a class that declares `2` measures a cheaper
   picture than `snv.make(name)` returns.

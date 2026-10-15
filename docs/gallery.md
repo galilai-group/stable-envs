@@ -1,6 +1,6 @@
 # Gallery
 
-Frames from the renderers at native resolution. No image is upscaled.
+This page shows frames from the renderers at native resolution, with no upscaling.
 
 ## PushT
 

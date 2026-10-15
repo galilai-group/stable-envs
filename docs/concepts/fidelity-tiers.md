@@ -9,7 +9,7 @@ Every class declares one of two tiers in `fidelity_tier`. The set is `stable_env
 | geometry, camera, materials, state | official | official |
 | declared with | `parity_interior_min` (default 1.0) | `visual_fidelity`, `visual_note` |
 | checked by | `test_render_parity_with_official_renderer` | `test_visual_tier_matches_its_declared_fidelity` |
-| use for | anything, including evaluation on official pixels | training data; not evaluation on official pixels |
+| use for | anything, including evaluation on official pixels | training data, but not evaluation on official pixels |
 
 ## Reading the tier
 
@@ -58,17 +58,17 @@ numbers against the class's own `visual_fidelity` thresholds:
 | `within8_frac >= within8_min` | one region going wrong while the mean stays small |
 | `ssim >= ssim_min` | lost structure, such as a surface losing its texture |
 
-Interior-pixel exactness is not asserted for the visual tier.
+The test does not assert interior-pixel exactness for the visual tier.
 
 ## Declaring the visual tier
 
 `register()` checks the declaration at import time. A visual-tier class must have:
 
-- `fidelity_tier = "visual"` and `parity_interior_min = None`;
+- `fidelity_tier = "visual"` and `parity_interior_min = None`
 - `visual_fidelity` with `mean_abs`, `within8_frac`, `ssim`, `mean_abs_max`, `within8_min`, `ssim_min`
-  and `measured_at`;
-- a non-empty `visual_note`;
-- the words `VISUAL TIER` in the class docstring.
+  and `measured_at`
+- a non-empty `visual_note`
+- the words `VISUAL TIER` in the class docstring
 
 A parity class must not carry `visual_fidelity`.
 
@@ -93,8 +93,9 @@ Measure several independent state draws. Set each threshold clear of the worst d
 
 The released visual-tier classes include the DM Control body-tracking cells, `OGBCube`, `OGBScene`
 and `PyFlytRocketLanding`. The DM Control cells use a camera that follows the body, so they render the
-full scene with MJWarp on CUDA or CPU3D on CPU. Their declared values, measured against
-`dm_control`'s `physics.render` on an RTX 3090 with MuJoCo 3.12.0, at 84 px (Quadruped at 224 px):
+full scene with MJWarp on CUDA or CPU3D on CPU. The table gives their declared values.
+The measurements compare against `dm_control`'s `physics.render` on an RTX 3090 with MuJoCo 3.12.0, at
+84 px (Quadruped at 224 px).
 
 | class | mean abs /255 | within 8/255 | SSIM |
 |---|---:|---:|---:|

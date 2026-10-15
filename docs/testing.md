@@ -1,6 +1,6 @@
 # Testing
 
-Simulation, task and rendering claims are tested separately. A rendering check does not prove that
+The test suite checks simulation, task and rendering claims separately. A rendering check does not prove that
 State is complete, and a State check does not prove that pixels are right. A skipped required check is
 not a pass.
 
@@ -12,22 +12,22 @@ not a pass.
 | `tests/integration/` | several components together, including CPU source comparisons | `integration` |
 | `tests/regression/` | frozen corpora, digests, declarations and provenance | `regression` |
 | `tests/contracts/` | shared source contracts, run per profile with `--contract-profile` | |
-| `tests/gpu/` | conformance against the official renderers; needs CUDA | `gpu` |
+| `tests/gpu/` | conformance against the official renderers (needs CUDA) | `gpu` |
 | `tests/packaging/` | package metadata, extras, docs config and workflow checks | |
 | `tests/helpers/` | shared helpers, including `reference/` source bridges and gate tables | |
 | `tests/fixtures/` | frozen data used by the tests | |
 | `tests/_runner/` | supervisor, resource guard, sharding, pytest plugins | |
 
-Directory markers are applied automatically, so a file without `pytestmark` is still selected by its
-directory. Other markers:
+Directory markers apply automatically. A file without `pytestmark` still gets the marker of its
+directory. The other markers are:
 
 | marker | meaning |
 |---|---|
 | `reference` | needs the official reference env |
 | `slow` | long-running throughput benchmark |
-| `nightly` | heavy source comparison; not run on ordinary pull requests |
+| `nightly` | heavy source comparison, not run on ordinary pull requests |
 | `smoke` | one env per family |
-| `selftest` | crashes the interpreter on purpose; runs only with `SE_SELFTEST_CRASH=1` |
+| `selftest` | crashes the interpreter on purpose and runs only with `SE_SELFTEST_CRASH=1` |
 | `gl`, `egl` | needs dm_control's OpenGL renderer, or an EGL library |
 | `swm` | imports stable-worldmodel without `importorskip` |
 | `family("<name>")` | needs another family's environments |
@@ -49,10 +49,10 @@ SE_PYTHON=3.10 uvx nox -s "test(core)"  # another interpreter
 Profiles with the `swm` capability also install stable-worldmodel at the commit in `[swm]` of
 `ci/families.toml`.
 
-A family that is not installed is skipped, with the cause. In CI, `SE_REQUIRE_FAMILIES` and
+The suite skips a family that is not installed and reports the cause. In CI, `SE_REQUIRE_FAMILIES` and
 `SE_REQUIRE_CAPABILITIES` turn such a skip into a failure.
 
-Without nox:
+To run without nox:
 
 ```bash
 pytest -m unit                          # CPU-only unit tests
@@ -81,7 +81,7 @@ a CUDA machine.
 
 ## Registry rules
 
-Every registered class is checked in its family's profile without being listed anywhere.
+The family's profile checks every registered class. You do not need to list the class anywhere.
 
 `tests/unit/test_registry_conformance.py`:
 
@@ -90,7 +90,7 @@ Every registered class is checked in its family's profile without being listed a
 | reset, step and render match `state_spec`, `action_spec`, `frame_spec` | specs that describe something other than the outputs |
 | the same seed gives the same rollout | hidden nondeterminism |
 | a lane does not see its neighbours' actions | cross-lane leaks in batched stepping |
-| `get_state`/`set_state` restores bit-exactly; the snapshot owns its memory | incomplete State, or a snapshot that changes later |
+| `get_state`/`set_state` restores bit-exactly, and the snapshot owns its memory | incomplete State, or a snapshot that changes later |
 | a variation installed in one env round-trips through another | Variation that does not survive storage |
 | a lane renders the same alone as in a batch | batch-dependent frames |
 
@@ -113,12 +113,12 @@ Source comparisons come in two layers:
 
 ## Exemptions
 
-`tests/exemptions.toml` is the only place a check is waived. Each entry names the env (a class name or
+`tests/exemptions.toml` is the only place that can waive a check. Each entry names the env (a class name or
 glob), the family, the checks and the reason. The check names are `specs`, `seeded`, `lanes`, `state`,
 `variation`, `batch_render`, `owner`, `original`, `swm` and `variation_map`.
 
-A waived check still runs and must keep failing. When it passes, the suite fails until the entry is
-removed. `.github/CODEOWNERS` assigns the file a code owner.
+A waived check still runs and must keep failing. When it passes, the suite fails until you remove the
+entry. `.github/CODEOWNERS` assigns the file a code owner.
 
 ## Adding a gate for a new environment
 
@@ -147,12 +147,12 @@ python -m pytest tests/contracts --contract-profile native \
 - `--contract-device cuda` runs the CUDA output path.
 - `--contract-output` must be a new directory. It receives the plan, hashes, per-case progress and a
   `SHA256SUMS` seal.
-- The required case set is computed before running. Missing, skipped, duplicated or deselected cases
+- The run computes the required case set before it starts. Missing, skipped, duplicated or deselected cases
   fail the profile. `-k` is for development only.
 - Run one profile per interpreter, without xdist. After a crash, rerun the whole profile into a new
   directory.
 
-The generators for frozen corpora are in `scripts/testing/`; see its README.
+The generators for frozen corpora are in `scripts/testing/`. See its README.
 
 ## GPU conformance
 
@@ -170,7 +170,7 @@ python -m tests._runner.supervisor -- tests/gpu -v   # crash-isolated
 | `test_visual_tier_matches_its_declared_fidelity` | a visual-tier class that no longer meets its declared thresholds |
 | `test_fidelity_tier_is_fully_declared` | a class that neither parity nor visual checks apply to |
 | `test_relaxed_parity_floors_are_all_explained` | a lowered threshold without a `parity_note` |
-| `test_render_state_roundtrip` | a render state that is clipped, normalized or reordered on the way back |
+| `test_render_state_roundtrip` | a render state that the round trip clips, normalizes or reorders |
 | `test_every_state_dim_reaches_the_render` | a render-state dimension that does not affect the frame |
 | `test_batch_invariance` | a frame that depends on its batch |
 | `test_per_env_variation_is_per_env` | a per-lane Variation that collapses to one value |
@@ -184,18 +184,18 @@ python -m tests._runner.supervisor -- tests/gpu -v   # crash-isolated
 | `test_gpu_step_tracks_the_reference_simulator` | a batched GPU simulator that drifts from the reference beyond its bound |
 | `test_state_is_sufficient` | a state that does not determine the official frame |
 
-Parity thresholds, defined at the top of the file:
+The top of the file defines the parity thresholds:
 
 | constant | value | meaning |
 |---|---|---|
 | `INTERIOR_EXACT_MIN` | 1.0 | interior pixels (flat 3×3 neighbourhood in the reference) must match exactly |
-| `ALL_EXACT_MIN` | 0.90 | fraction of all pixels that must match; edges may differ |
+| `ALL_EXACT_MIN` | 0.90 | fraction of all pixels that must match (edges may differ) |
 | `MEAN_ABS_MAX` | 4.0 / 255 | mean absolute difference |
 
 A class can lower `parity_interior_min` or `parity_all_exact_min` only with a `parity_note` that names
-the cause. Visual-tier classes are checked against their own `visual_fidelity`. See
+the cause. The suite checks visual-tier classes against their own `visual_fidelity`. See
 [Fidelity tiers](concepts/fidelity-tiers.md). If a new env cannot reach the interior floor, find the
-wrong constant; see [Identify authority](adding/renderer.md#identify-authority).
+wrong constant. See [Identify authority](adding/renderer.md#identify-authority).
 
 ## Running native renderers safely
 
@@ -230,4 +230,4 @@ C.check_backend_agreement(env)       # {'exact_frac': 1.0, 'max_abs': 0, ...}
 C.pixel_agreement(ours, official)    # all-pixel and interior-pixel agreement
 ```
 
-API details: [Testing helpers](api/testing.md).
+The [Testing helpers](api/testing.md) page gives the API details.

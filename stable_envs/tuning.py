@@ -1,10 +1,17 @@
 """Tuning knobs: chunk sizes, block sizes, worker counts and memory budgets.
 
-A knob changes speed and memory use. Frames and State are the same for every valid value. A lookup
-returns the first value set by :func:`override` (innermost first) or :func:`set`, the
-``STABLE_ENVS_<KNOB>`` variable, a value ``stable-envs tune`` measured for the call's render path,
-frame size and batch range on this device, a hardware rule, the call site's default, and the knob's
-fallback. The library reads a knob each time it does the work, so a change applies to the next call.
+A knob changes speed and memory use. Frames and State are the same for every valid value.
+The library reads a knob each time it does the work. A change applies to the next call.
+
+A lookup uses the first value it finds:
+
+1. :func:`override` (innermost first), then :func:`set`.
+2. The ``STABLE_ENVS_<KNOB>`` environment variable.
+3. A value that ``stable-envs tune`` measured on this device for the render path, frame size and
+   batch range.
+4. A value from a hardware rule.
+5. The call site's default.
+6. The knob's fallback.
 """
 
 from __future__ import annotations

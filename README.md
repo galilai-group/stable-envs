@@ -3,7 +3,7 @@
   <img src="docs/assets/brand/logo.png" alt="stable-envs" width="340">
 </picture>
 
-**A batched environment library for research: explicit state, dynamics, and variation, with fast state-driven rendering across CPU and GPU.**
+**A batched environment library for research: explicit state, dynamics, and variation, with state-driven rendering across CPU and GPU.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-black.svg)](LICENSE)
 [![Python 3.10–3.12](https://img.shields.io/badge/python-3.10--3.12-black.svg)](pyproject.toml)
@@ -23,9 +23,9 @@ stable-envs doctor                            # check what works on this machine
 
 A missing extra disables only that family. `snv.import_errors()` lists the modules that did not load.
 
-CUDA is required for the 3-D families and most MuJoCo families. PushT, classic control, navigation and
-several 2-D families run on CPU. Extras, version pins and the nvdiffrast build: [Install](docs/install.md).
-Editable install from a clone: [Contributing](CONTRIBUTING.md).
+The 3-D families and most MuJoCo families need CUDA. PushT, classic control, navigation and several
+2-D families run on CPU. [Install](docs/install.md) covers extras, version pins and the nvdiffrast build.
+[Contributing](CONTRIBUTING.md) covers an editable install from a clone.
 
 ## Quickstart
 
@@ -51,12 +51,14 @@ snv.set(verbose="INFO", default_device="auto")
 ```
 
 `step(actions, states=slice(None), frames=slice(-1, None))` advances the live environments. Actions are
-`[B,A]` for one step or `[B,T,A]` for a sequence. The two slices select which States and frames to
-return; `None` turns either off. The final State is always returned. See
-[Stepping](docs/concepts/dynamics.md). There is no `env.rollout(policy=...)`. Planning, datasets and
-training belong to the sibling [stable-*](https://github.com/galilai-group) projects.
+`[B,A]` for one step or `[B,T,A]` for a sequence. The two slices select which States and frames `step`
+returns. `None` turns either one off. `step` always returns the final State. See
+[Stepping](docs/concepts/dynamics.md).
 
-Full walkthrough: [Quickstart](docs/quickstart.md).
+There is no `env.rollout(policy=...)`. The sibling [stable-*](https://github.com/galilai-group) projects
+handle planning, datasets and training.
+
+The [Quickstart](docs/quickstart.md) has the full walkthrough.
 
 ## Public API
 
@@ -68,7 +70,7 @@ snv.set, snv.get_config, snv.__version__
 snv.CartPole / snv.Pendulum / …                  concrete env classes
 ```
 
-`stable_envs.testing` is a public measurement library. It is not exported at `snv.*`.
+`stable_envs.testing` is a public measurement library. `snv.*` does not export it.
 
 ## Environments
 
@@ -103,7 +105,7 @@ See [Limitations](docs/concepts/limitations.md).
 | [Stepping](docs/concepts/dynamics.md) | action sequences and output selection |
 | [Lifecycle](docs/concepts/lifecycle.md) | `close()` and the context manager |
 | [Limitations](docs/concepts/limitations.md) | devices and backends |
-| [Benchmarks](docs/benchmarks.md) | how throughput is measured |
+| [Benchmarks](docs/benchmarks.md) | how the harnesses measure throughput |
 | [Adding a component](docs/adding/index.md) | environment, task and renderer guides |
 | [Testing](docs/testing.md) | test layout and CI profiles |
 | [Command line](docs/api/cli.md) | `stable-envs doctor` |

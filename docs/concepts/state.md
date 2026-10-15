@@ -4,7 +4,7 @@
 |---|---|
 | **Env** | Batched simulator/task and rendering interface |
 | **State** | Independent TensorDict checkpoint of all future-relevant simulator, task, RNG and lifecycle fields under the declared persistent configuration |
-| **RenderState** | Private projection sufficient for rendering; may omit dynamics fields |
+| **RenderState** | Private projection sufficient for rendering. It may omit dynamics fields. |
 | **Action** | Intervention at a timestep, with source-defined dtype/bounds/scaling |
 | **Variation** | Bounded persistent or reset configuration: physics, geometry, task or appearance |
 | **Frame** | Rendered `(B,H,W,3)` uint8 pixels |
@@ -12,7 +12,7 @@
 
 `snv.State` and `snv.StepResult` are aliases for `tensordict.TensorDict`.
 State may contain privileged information. It is not necessarily the learner's
-observation and must not be exposed to learners by default.
+observation. By default, do not expose State to learners.
 
 ```python
 import numpy as np
@@ -28,9 +28,9 @@ with snv.CartPole(num_envs=2, device="cpu") as env:
 ```
 
 `get_state()` and its `state` alias return independent snapshots. `set_state()`
-restores a validated full State and returns `None`. State keys/dtypes are
-family-specific and described by `state_spec`; persistent configuration must be
-compatible between the saved and receiving instances.
+restores a validated full State and returns `None`. State keys and dtypes are
+family-specific. `state_spec` describes them. The persistent configuration of the
+saved instance and of the receiving instance must be compatible.
 
 ## PushT checkpoints
 
@@ -38,8 +38,8 @@ compatible between the saved and receiving instances.
 including the reset recipe, RNGs and action history. Restoring positions alone
 cannot reconstruct the physics engine's contact history. `set_state()` rebuilds
 that history, so its cost grows with the episode prefix. Ordinary `step()` does
-not restore or replay earlier steps. The history axis grows; `state_spec`
-describes the current checkpoint's shape rather than imposing an episode limit.
+not restore or replay earlier steps. The history axis grows. `state_spec`
+describes the shape of the current checkpoint. It does not impose an episode limit.
 
 ```python
 with snv.PushT(num_envs=2, device="cpu", size=96) as env:
@@ -57,7 +57,7 @@ A five-coordinate render row is not a simulator checkpoint.
 
 Rendering a saved State uses a separate scene and its numeric contact cache.
 It does not restore or advance live physics. The PushT renderer runs on CPU,
-even when tensors are stored on CUDA.
+even when the tensors are on CUDA.
 `render_action=True` requires a resolution of at least 96, matching the source
 renderer's supported marker thickness.
 
@@ -66,8 +66,8 @@ renderer's supported marker thickness.
 Renderer implementations use `_pack_render_state`, `_unpack_render_state`,
 `_get_render_state`, `_set_render_state` and `_render`. Compact rows are often
 float32 and retain frozen layouts. Decoding a lossy row does not invent omitted
-velocities, lifecycle or RNG fields. Such rows and partial dictionaries must be
-refused by `set_state()`.
+velocities, lifecycle or RNG fields. `set_state()` must refuse such rows and
+partial dictionaries.
 
 Applications render full snapshots with `env.render(state)`. Contributor
 examples for testing the private boundary are in the [renderer guide](../adding/renderer.md).
@@ -77,12 +77,12 @@ Pixel equality is not proof of exact future simulation.
 
 `state_spec` is a CompositeSpec mirroring State fields. `action_spec`, `frame_spec`
 and `variation_spec` describe per-environment values without the batch dimension.
-A Spec carries shape, dtype, device and applicable bounds/names. It is descriptive;
-the backend must still validate source-specific semantic constraints.
+A Spec carries shape, dtype, device and applicable bounds/names. A Spec is
+descriptive. The backend must still validate source-specific semantic constraints.
 
 `step(actions)` returns a StepResult containing `state` and the environment's
 defined reward, success and termination/truncation information. Some families
-add diagnostic fields; those are not a learner observation API. Renderer-only cells do not fabricate simulator results.
+add diagnostic fields. These fields are not a learner observation API. Renderer-only cells do not fabricate simulator results.
 
 Variation includes physics/task/reset leaves as well as appearance. See
 [Variation](variation-spaces.md), [dynamics](dynamics.md) and the

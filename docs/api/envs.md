@@ -1,14 +1,14 @@
 # Registered environments
 
-The registered environments. The package discovers these modules automatically, so adding a file is
+This page lists the registered environments. The package discovers these modules automatically, so adding a file is
 the registration step. `snv.import_errors()` lists modules that did not load. A missing optional
 package disables only that family.
 
 Use `snv.list_envs()` and `snv.info(name)` to see what this interpreter registered. The overview is
 [Environments](../environments.md).
 
-Each module docstring records its reference id, state layout and measured constants. They are shown
-below, one per family, without class members. PushT is shown in full.
+Each module docstring records its reference id, state layout and measured constants. This page shows
+them below, one per family, without class members. It shows PushT in full.
 
 ## PushT
 

@@ -11,13 +11,13 @@ controller. A simulating `Env` provides:
 
 | operation | contract |
 |---|---|
-| `reset(seed=None, options=...)` | return an independent full State; keep the source's reset and seeding semantics |
-| `get_state()` / `state` | independent TensorDict snapshot; field shapes and dtypes documented |
-| `set_state(state)` | validate the whole input before changing anything; restore every field; return `None` |
-| `step(actions)` | advance the upstream simulator; return State and reward, success, termination, truncation |
-| `state_spec`, `action_spec` | match the actual fields and actions; document constraints the spec cannot express |
+| `reset(seed=None, options=...)` | return an independent full State. Keep the source's reset and seeding semantics. |
+| `get_state()` / `state` | independent TensorDict snapshot with documented field shapes and dtypes |
+| `set_state(state)` | validate the whole input before changing anything. Restore every field. Return `None`. |
+| `step(actions)` | advance the upstream simulator. Return State and reward, success, termination, truncation. |
+| `state_spec`, `action_spec` | match the actual fields and actions. Document constraints the spec cannot express. |
 | `render(state=None, ...)`, `frame_spec` | render without changing the live simulation |
-| `close()` / context manager | idempotent cleanup of owned resources; later calls refuse |
+| `close()` / context manager | idempotent cleanup of owned resources. Later calls refuse. |
 
 The private protocol `stable_envs._execution.protocol.SimulatorAdapter` has `num_envs`, reset, get, set,
 step and close. It has no rendering method. Examples:
@@ -68,10 +68,10 @@ family's physics, controller and task.
 Read the registration defaults, wrappers, reset, step, controller helpers and the engine's state API.
 Find every field that affects the future:
 
-- integration state, control targets and actuator state;
-- applied forces and contact caches;
-- task bookkeeping and reset anchors;
-- RNG state.
+- integration state, control targets and actuator state
+- applied forces and contact caches
+- task bookkeeping and reset anchors
+- RNG state
 
 Record the restore order: which engine call recomputes derived arrays, which fields must be set after
 it, and which setters have side effects.
@@ -80,7 +80,7 @@ Validate before changing any lane: missing or extra keys, batch shape, dtype, fi
 semantic constraints. A bad field must not leave earlier lanes half-restored.
 
 A static model or configuration can stay outside State only if restoring requires the same
-configuration, and that requirement is documented.
+configuration and the documentation states that requirement.
 
 ## Local checks
 
@@ -111,7 +111,7 @@ candidate code.
 - Compare source and candidate reset, next State, reward and done for a fixed seed set. Compare every
   State field.
 - Cover contacts, controller history, random draws and episode boundaries.
-- Check seeded and unseeded reset wherever replay is promised. Store reset anchors and generator states
+- Check seeded and unseeded reset wherever the registration promises replay. Store reset anchors and generator states
   without loss.
 - Decide whether `TimeLimit` belongs to the registration or to a caller's wrapper. If the backend owns
   it, restore elapsed steps. Compare termination and truncation separately.
@@ -126,14 +126,20 @@ python -m pytest -m 'regression and not gpu'
 Run the family and GPU checks on a GPU where you claim GPU support. Record skips, missing dependencies
 and device limits. See [Definition of done](index.md#definition-of-done).
 
-Common mistakes: saving only `qpos`, dropping reset RNG or anchors, wrong restore order, a setter that
-changes hidden history, casting float64 source arithmetic to float32, silently clipping actions.
+Common mistakes:
+
+- saving only `qpos`
+- dropping reset RNG or anchors
+- wrong restore order
+- a setter that changes hidden history
+- casting float64 source arithmetic to float32
+- silently clipping actions
 
 ## Review checklist
 
-- [ ] The upstream simulator and controller are called; sequential `step` is untouched.
+- [ ] The backend calls the upstream simulator and controller. Sequential `step` is unchanged.
 - [ ] Schema, dtypes, validation and restore order come from the source.
 - [ ] Restoration tests include different histories with contacts and controller state.
-- [ ] Task, RNG, lifecycle and physics Variation are covered.
+- [ ] Tests cover Task, RNG, lifecycle and physics Variation.
 - [ ] Compact render rows cannot restore the simulator.
-- [ ] Results cover every claimed profile; required skips block acceptance.
+- [ ] Results cover every claimed profile. Required skips block acceptance.

@@ -10,8 +10,8 @@ CPU when a moving camera prevents reuse of a static background.
 
 Fixed-camera rendering bakes a static RGB/depth plate, casts moving primitives
 inside conservative screen bounds, and shades only covered samples. CPU3D adds
-sky and floor textures, directional shadows, and specular lighting; unsupported
-geometry and shadow-floor configurations are rejected by its scene constructor.
+sky and floor textures, directional shadows, and specular lighting. Its scene
+constructor rejects unsupported geometry and shadow-floor configurations.
 
 MuJoCo's mono camera averages its two stereo eyes. Its depth buffer measures
 perpendicular distance, whereas the composite compares radial ray parameters.
@@ -26,13 +26,13 @@ a nonzero MSE.
 
 Use `backend="auto"` for device-appropriate dispatch. Explicit `"triton"` requires
 Triton, CUDA float32 inputs on one device, and packed trailing axes. Unsupported
-explicit requests raise `ValueError`; `"auto"` falls back to Torch. The Torch cast
-accepts `bounds=False` for diagnostics. Regression overrides belong in scoped test
-fixtures, not process-wide production switches.
+explicit requests raise `ValueError`. `"auto"` uses Torch instead. The Torch cast
+accepts `bounds=False` for diagnostics. Put regression overrides in scoped test
+fixtures. Do not put them in process-wide production switches.
 
 ## Performance
 
-Batch-64 `DMCBallInCupCatch` renders from saved states. Both renderers used the same states, output
+The benchmark renders batch-64 `DMCBallInCupCatch` from saved states. Both renderers used the same states, output
 destination and device class. The source GPU renderer is NVIDIA OpenGL. Timing excludes rollout,
 state loading, restoration and render-state preparation.
 
@@ -41,7 +41,7 @@ state loading, restoration and render-state preparation.
 | One Xeon Platinum 8268 thread, CPU output | 15.64 | 14.90 | 1.05× | 0.00004790 ± 0.00001818 |
 | One RTX 3090, CPU output | 2,192.28 | 240.24 | 9.13× | 0.00005607 ± 0.00002248 |
 
-Sixteen states were repeated to fill each batch. Each timing used three warmed
+The benchmark repeated sixteen states to fill each batch. Each timing used three warmed
 samples. Other configurations will differ. See the
 [testing guide](../testing.md) for contributor checks.
 

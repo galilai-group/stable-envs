@@ -43,10 +43,10 @@ leaves ([API](../api/spaces.md)):
 - `Dict(spaces, sampling_order=[...])` draws the listed keys first, then the others in insertion order.
   `sample()`, `update()` and `ordered_names()` follow this order. An unknown key in `sampling_order`
   raises `ValueError`.
-- `Box(..., exact=True)` keeps values as given, so a Python float stays float64. Without it, values are
-  cast to the leaf's `dtype` and shape.
+- `Box(..., exact=True)` keeps values as given, so a Python float stays float64. Without it, the leaf casts
+  values to its `dtype` and shape.
 - `set_init_value(value, reset_value=True)` replaces a leaf's default. With `reset_value=False` the
-  current value is kept.
+  leaf keeps its current value.
 
 ## Defaults and samples
 
@@ -66,8 +66,8 @@ error.
 
 `reset(seed, options)` follows stable-worldmodel's rule:
 
-- Leaves named in `options["variation"]` are sampled per lane. Lane `i` uses seed `seed + i`.
-- Leaves in `options["variation_values"]` are set, with one value for the batch or one per lane.
+- Reset samples the leaves named in `options["variation"]` per lane. Lane `i` uses seed `seed + i`.
+- Reset sets the leaves in `options["variation_values"]`, with one value for the batch or one per lane.
 - Every other leaf returns to its default, including physics leaves.
 
 The defaults are the registered values until `set_variation` replaces them. A reset with no options
@@ -132,7 +132,7 @@ To resume simulation, restore the full State under a compatible configuration.
 Each class with a stable-worldmodel counterpart that has a variation space has a `VariationMap` in
 `tests/helpers/reference/variation_maps/`. It places every stable-worldmodel leaf in one group:
 mapped (identical, renamed, scaled, affine, colour or enum), unsupported, dead upstream, not
-applicable, or swm-only. The maps are tests, not a shipped API.
+applicable, or swm-only. The maps are tests. The package does not ship them as an API.
 
 ## Next
 

@@ -46,10 +46,10 @@ Renderer-only classes refuse simulator operations. See [Stepping](concepts/dynam
 - `snv.info("CartPole")` returns metadata without constructing the environment.
 
 Variation covers appearance, physics, reset and task configuration. Check what the family supports
-before using `set_variation` or reset options. See [Variations](concepts/variation-spaces.md).
+before you use `set_variation` or reset options. See [Variations](concepts/variation-spaces.md).
 
-State is a replay checkpoint and may contain privileged fields. Selecting learner observations is the
-job of stable-worldmodel. See [Sibling projects](concepts/worldmodel.md).
+State is a replay checkpoint and may contain privileged fields. stable-worldmodel selects learner
+observations. See [Sibling projects](concepts/worldmodel.md).
 
 Next: [Lifecycle](concepts/lifecycle.md), [Environments](environments.md), and
 [Adding a component](adding/index.md).

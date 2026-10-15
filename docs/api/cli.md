@@ -22,11 +22,11 @@ The exit code is 0 when every installed family works, and 1 when any installed f
 - System: the Python version, the NVIDIA driver and the CUDA version it supports, torch and its
   CUDA build, and Warp.
 - MuJoCo OpenGL: whether `MUJOCO_GL`, `PYOPENGL_PLATFORM`, `DISPLAY` and `MUJOCO_EGL_DEVICE_ID`
-  agree, then each OpenGL backend (`egl`, `osmesa` and `glfw` on Linux; `cgl` and `glfw` on macOS).
-  Each backend is tried in a separate process with a 60-second timeout, because creating a context
-  can hang or crash. The OpenGL checks are skipped when MuJoCo is not installed.
+  agree, then each OpenGL backend. The backends are `egl`, `osmesa` and `glfw` on Linux, and `cgl` and
+  `glfw` on macOS. `doctor` tries each backend in a separate process with a 60-second timeout, because
+  creating a context can hang or crash. `doctor` skips the OpenGL checks when MuJoCo is not installed.
 - Families: for each family, whether its extra is installed, whether its modules import, and
-  whether its CPU and GPU render paths work. A family that is not installed is skipped.
+  whether its CPU and GPU render paths work. `doctor` skips a family that is not installed.
 
 Each check has a status: `ok`, `warn`, `fail` or `skip`. A `warn` or `fail` line also prints the fix,
 such as the extra to install or the environment variable to set.
@@ -51,7 +51,7 @@ this machine. The other paths use the derived defaults.
 
 When torch has no GPU kernels for the GPU's compute capability, the `torch` line warns and lists the
 architectures the build has. CUDA calls then fail. A build for an older architecture runs on a newer
-GPU of the same major version, and PTX (`compute_XY`) runs on any equal or newer GPU.
+GPU of the same major version. PTX (`compute_XY`) runs on any equal or newer GPU.
 
 ## `stable-envs tune`
 
@@ -65,12 +65,12 @@ stable-envs tune --all --device cpu            # one environment per render path
 
 `tune` times the tuning knobs one environment reads and saves the fastest values for its render path,
 frame size and batch range on this device. Later runs of every environment on the same path use them.
-See [Performance tuning](../performance-tuning.md) for the knobs and how values are chosen.
+See [Performance tuning](../performance-tuning.md) for the knobs and how the command chooses values.
 
 | option | effect |
 |---|---|
 | `ENV` | Environment class name, such as `DMCCheetahRun`. |
-| `--batch N` | Number of environments to time (default 64). Values are saved for the power-of-two range that holds `N`. |
+| `--batch N` | Number of environments to time (default 64). The command saves values for the power-of-two range that holds `N`. |
 | `--size S` | Frame size in pixels (default: the environment's). |
 | `--device D` | `cpu`, `cuda` or `cuda:N` (default: the configured default device). |
 | `--knob NAME` | Sweep only this knob. Repeat for more. |
@@ -80,6 +80,6 @@ See [Performance tuning](../performance-tuning.md) for the knobs and how values 
 | `--all` | Tune one representative environment per render path. Prints the plan and an estimated time, then asks before starting. |
 | `--yes` | With `--all`, start without asking. |
 
-The command prints one row per knob (default, tuned value, speedup) and the paths the values were
-saved for. It exits with 1 when `--all` is not confirmed, and fails when a knob value changes frames
-or State, which is a bug to report.
+The command prints one row per knob (default, tuned value, speedup) and the paths that it saved the
+values for. It exits with 1 when you do not approve the `--all` plan. It fails when a knob value
+changes frames or State. Report this failure as a bug.

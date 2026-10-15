@@ -2,7 +2,7 @@
 
 # stable-envs
 
-**A batched environment library for research: explicit state, dynamics, and variation, with fast state-driven rendering across CPU and GPU.**
+**A batched environment library for research: explicit state, dynamics, and variation, with state-driven rendering across CPU and GPU.**
 
 Store the full State. Render frames from it when you need them.
 

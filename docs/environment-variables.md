@@ -1,19 +1,19 @@
 # Environment variables
 
-stable-envs reads the variables below. Each one has a default, so none is required. A value that does
+stable-envs reads the variables below. Each one has a default, so you do not need to set any of them. A value that does
 not parse raises `ValueError` with the variable's name when the library reads it. `stable-envs doctor`
 lists the variables that are set and flags names that stable-envs does not know, such as a typo.
 
 Integer values take an optional `K`, `M`, `G` or `T` suffix (powers of 1024). `auto` or an empty value
 uses the default. Flags take `1` or `0`.
 
-Variables from other libraries, such as `MUJOCO_GL`, `PYOPENGL_PLATFORM` and `CUDA_VISIBLE_DEVICES`,
-are described in [System setup](system-setup.md).
+[System setup](system-setup.md) describes variables from other libraries, such as `MUJOCO_GL`,
+`PYOPENGL_PLATFORM` and `CUDA_VISIBLE_DEVICES`.
 
 ## Tuning knobs
 
-Each tuning knob has a variable. It applies to the whole process, below `snv.tuning.set` and above the
-values measured by `stable-envs tune`. See [Performance tuning](performance-tuning.md) for what each
+Each tuning knob has a variable. The variable applies to the whole process. It has lower precedence
+than `snv.tuning.set` and higher precedence than the values that `stable-envs tune` measured. See [Performance tuning](performance-tuning.md) for what each
 knob does and its default.
 
 | variable | type |
@@ -49,4 +49,4 @@ knob does and its default.
 
 | variable | default | effect |
 |---|---|---|
-| `STABLE_ENVS_OGB_UNMEASURED` | 0 | `1` lets OGBench Cube and Scene cells without measured visual fidelity register with placeholder values, while measuring them. Do not set it for normal use. It is read once, at import. |
+| `STABLE_ENVS_OGB_UNMEASURED` | 0 | `1` lets OGBench Cube and Scene cells without measured visual fidelity register with placeholder values. Use it while you measure these cells. Do not set it for normal use. The library reads it once, at import. |

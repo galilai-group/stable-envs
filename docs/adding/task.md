@@ -44,13 +44,13 @@ with ExitStack() as stack:
     assert outputs[1]["reward"].item() <= 0.0
 ```
 
-The Dict class does not build a dict observation here. The goal-distance threshold and the exact
-reward formulas are tested in the family's own tests.
+The Dict class does not build a dict observation here. The family's own tests check the
+goal-distance threshold and the exact reward formulas.
 
 ## Read the source task
 
 Trace the upstream registration, constructor defaults, wrappers, goal and reset sampler, reward and
-success functions, and `TimeLimit`. Confirm that the task still calls the same engine. Record versions
+success functions, and `TimeLimit`. Check that the task still calls the same engine. Record versions
 and hashes of the source and any wrapper that changes semantics. Fetch uses gymnasium-robotics and
 MuJoCo.
 
@@ -63,14 +63,14 @@ MuJoCo.
 
 For each configuration, test:
 
-- reset distribution, fixed-seed parity and reset anchors;
-- reward and success formulas, task ids and defaults;
+- reset distribution, fixed-seed parity and reset anchors
+- reward and success formulas, task ids and defaults
 - thresholds at the boundary and at the nearest representable values on each side, in the source's
-  dtype;
-- termination versus truncation, who owns the horizon, and elapsed-step restoration;
-- seeded and unseeded RNG, and task Variation;
-- that dense, sparse and alias classes share physics and differ only in reward;
-- that the public class calls the real simulator on every step.
+  dtype
+- termination versus truncation, who owns the horizon, and elapsed-step restoration
+- seeded and unseeded RNG, and task Variation
+- that dense, sparse and alias classes share physics and differ only in reward
+- that the public class calls the real simulator on every step
 
 ```bash
 python -m pip install -e '.[dev,robotics]'
@@ -89,7 +89,7 @@ pinned profile.
 - Compare source and candidate reset and multi-step continuation for each registration and
   configuration: full State, reward, success and both done flags.
 - Restore into simulators with different contact and controller histories.
-- Replay reset anchors and RNG wherever promised.
+- Replay reset anchors and RNG wherever the registration promises replay.
 - Test task Variation and visual-only Variation separately.
 
 You may reuse results only when the code path and configuration are identical. Still run each public
@@ -104,9 +104,13 @@ python -m pytest -m 'regression and not gpu'
 GPU rendering results do not prove physics under another dependency profile. See
 [Definition of done](index.md#definition-of-done).
 
-Common mistakes: confusing the visual goal with the reward goal, changing `<` to `<=`, dropping
-velocity terms from a dense reward, using a trainer's horizon as the simulator's, accepting siblings by
-name.
+Common mistakes:
+
+- confusing the visual goal with the reward goal
+- changing `<` to `<=`
+- dropping velocity terms from a dense reward
+- using a trainer's horizon as the simulator's
+- accepting siblings by name
 
 ## Review checklist
 

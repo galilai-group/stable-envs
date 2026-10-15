@@ -1,10 +1,10 @@
 # Limitations
 
-Known limits of this release.
+This page lists the known limits of this release.
 
 ## Optional dependencies
 
-`pip install stable-envs` installs the core. Each family needs its extra; see the
+`pip install stable-envs` installs the core. Each family needs its extra. See the
 [installation page](../install.md).
 
 ```python
@@ -15,7 +15,7 @@ snv.import_errors()     # families this interpreter could not import
 
 | classes | CPU | GPU |
 |---|---|---|
-| PushT, PushTDiscrete | source physics and pygame rendering | output storage only; rendering stays on CPU |
+| PushT, PushTDiscrete | source physics and pygame rendering | output storage only (rendering stays on CPU) |
 | classic control, navigation, OGBench mazes | yes | yes |
 | Fetch (12 classes) | software OpenGL (`backend="opengl"`) | MJWarp or explicit NVIDIA OpenGL |
 | OGBCube, OGBScene | software OpenGL | MJWarp or explicit NVIDIA OpenGL |
@@ -27,13 +27,13 @@ snv.import_errors()     # families this interpreter could not import
 On CPU, Fetch with `backend="auto"` does not fall back to OpenGL. Pass `backend="opengl"`.
 
 For Cube and Scene, physics runs on CPU whatever the render backend. CPU rendering needs Mesa software
-OpenGL, configured before MuJoCo is imported. See [System setup](../system-setup.md).
+OpenGL, configured before the first MuJoCo import. See [System setup](../system-setup.md).
 
 ## Fidelity
 
 - **Parity tier**: interior pixels match the official renderer. The floor is 1.0 unless the class
   declares a `parity_note` that names the cause.
-- **Visual tier**: a different rasterizer of the same scene. Use it for training frames. It is not
+- **Visual tier**: a different rasterizer draws the same scene. Use it for training frames. It is not
   interchangeable with official pixels at evaluation. `info(name)["fidelity_tier"]` reports the tier.
 
 See [Fidelity tiers](fidelity-tiers.md).
@@ -41,7 +41,7 @@ See [Fidelity tiers](fidelity-tiers.md).
 ## Rendering details
 
 - Fetch `sky.color` at its default draws the registered gradient skybox. The official wrapper's
-  `background.color` cannot express it, because it fills the sky with one colour.
+  `background.color` cannot express it, because `background.color` fills the sky with one colour.
 - DM Control body-tracking cells draw `floor.color` from a per-texel palette texture.
   `DMCWalkerWalk` `floor.rotation_y` tilts the floor per row.
 - OGBench `light.intensity`, `camera.angle_delta`, `cube.size` and Scene `lock_color` are per-world

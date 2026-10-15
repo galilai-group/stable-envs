@@ -18,13 +18,13 @@ can affect physics, reset, task or appearance.
 ## OGBench Cube and Scene backends
 
 - On CPU, `backend="auto"` selects software OpenGL. Configure Mesa software OpenGL before importing
-  MuJoCo. A hardware GL context is rejected for CPU rendering.
+  MuJoCo. CPU rendering rejects a hardware GL context.
 - On CUDA, `backend="auto"` selects the two-pass MJWarp renderer with 2× sampling. Scene aligns its
   four samples with NVIDIA OpenGL, including its cached static background.
-- An explicit `supersample` argument, or the sampling setting stored in a supplied RenderState, is
-  kept. To render a 1× RenderState with the default sampling, pass `supersample=2`.
+- An explicit `supersample` argument keeps its value. The sampling setting stored in a supplied
+  RenderState also keeps its value. To render a 1× RenderState with the default sampling, pass `supersample=2`.
 - An explicit `backend="mjwarp"` requires CUDA.
-- Physics runs on CPU whatever the backend.
+- Physics runs on CPU with every backend.
 
 ## Internal interfaces
 

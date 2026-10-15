@@ -1,7 +1,7 @@
 # Why physics is separate
 
-A class can have an accurate renderer and an incomplete simulator State. The two claims are tested
-separately:
+A class can have an accurate renderer and an incomplete simulator State. The project tests the two
+claims separately:
 
 - The rendering claim is about pixels from a fixed input.
 - The simulation claim is about reset, actions, task behaviour, and exact continuation from a

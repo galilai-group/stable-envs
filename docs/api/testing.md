@@ -1,6 +1,6 @@
 # Testing helpers
 
-Conformance checks as plain functions that return numbers. Call them from pytest, a report or a
+This module provides conformance checks as plain functions that return numbers. Call them from pytest, a report or a
 benchmark.
 
 ::: stable_envs.testing.conformance
@@ -27,5 +27,5 @@ uvx nox -s "test(<profile>)"                         # one CI profile
 ::: tests._runner.render_worker
 
 `tests/_runner/safety_plugin.py` provides the pytest hooks for resource accounting, progress events,
-host checks and smoke selection. Host checks can be skipped. Read their details; `ok` alone does not
-prove the host is healthy.
+host checks and smoke selection. Host checks can be skipped. Read their details. `ok` alone does not
+prove that the host is healthy.

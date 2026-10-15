@@ -12,8 +12,8 @@ full State → private RenderState → Frame → downstream learner packaging
 
 `Env.render(state=None, ...)` is the public entry point. A family supplies:
 
-- `_pack_render_state` and the private decode helpers;
-- `_render`, or a `scene()` that an existing renderer consumes;
+- `_pack_render_state` and the private decode helpers
+- `_render`, or a `scene()` that an existing renderer consumes
 - `state_names` / `state_dim` (also `render_state_names` / `render_state_dim`), the renderer input
   layout. This is not the full State schema.
 
@@ -57,13 +57,13 @@ with se.CartPole(num_envs=2, device="cpu") as env:
             raise AssertionError("a compact projection restored the simulator")
 ```
 
-Keep this test for a new renderer. You also need a comparison with the reference: two equal frames can
-both be wrong.
+Keep this test for a new renderer. You also need a comparison with the reference, because two equal
+frames can both be wrong.
 
 ## Identify authority
 
 Pin the official rendering code, engine and assets, camera, resolution, colour conversion, draw order
-and backend dependencies. Read the source, then confirm your reading with runtime comparisons. Do not
+and backend dependencies. Read the source, then check your reading with runtime comparisons. Do not
 change frozen renderer definitions, corpus layouts or baselines. If you find a real defect, propose a
 reviewed fix with evidence.
 
@@ -73,7 +73,7 @@ reviewed fix with evidence.
 - Rendering is deterministic and changes neither the live State, the supplied snapshot, RNG, goals nor
   later transitions.
 - Shapes, dtype, device, short batches, chunking, `out=` and invalid inputs follow the contract.
-- Batch order and chunk size do not change frames, where promised.
+- Batch order and chunk size do not change frames, where the renderer promises this.
 - Visual-only Variation changes pixels and not physics. To detect hidden mutation, render, then step,
   and compare with an unrendered control.
 - Context and buffer creation is bounded. `close()` is idempotent. Do not destroy shared EGL contexts
@@ -104,11 +104,16 @@ python -m pytest -m 'regression and not gpu'
 python -m pytest -m 'regression and gpu'
 ```
 
-Run suites that initialize native renderers through the supervisor; see [Testing](../testing.md). See
-also [Definition of done](index.md#definition-of-done).
+Run suites that initialize native renderers through the supervisor. See [Testing](../testing.md) and
+[Definition of done](index.md#definition-of-done).
 
-Common mistakes: changing physics while rendering a snapshot, treating a compact pose as full State,
-releasing shared contexts, making frames depend on batch order, claiming physics from a pixel result.
+Common mistakes:
+
+- changing physics while rendering a snapshot
+- treating a compact pose as full State
+- releasing shared contexts
+- making frames depend on batch order
+- claiming physics from a pixel result
 
 ## Review checklist
 

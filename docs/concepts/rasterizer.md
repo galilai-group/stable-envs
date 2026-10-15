@@ -2,10 +2,10 @@
 
 One Triton kernel turns any `Scene2D` into `(B,H,W,3)` uint8 frames.
 
-All numbers on this page were measured on one NVIDIA H200 with torch 2.11.0+cu130 and Triton 3.6.0.
-They use the internal Scene2D PushT scene (`stable_envs/envs/pusht/legacy.py`) at 96 px unless stated.
+All numbers on this page come from one NVIDIA H200 with torch 2.11.0+cu130 and Triton 3.6.0.
+They use the internal Scene2D PushT scene (`stable_envs/envs/pusht/legacy.py`) at 96 px unless the text states otherwise.
 The public PushT classes render with pygame. The tables come from separate microbenchmarks, so compare
-ratios, not absolute values, across tables.
+ratios across tables. Do not compare absolute values across tables.
 
 ## Design
 
@@ -14,7 +14,7 @@ kernel evaluates the whole supersample block for an output pixel in registers an
 result. It allocates no canvas.
 
 The torch reference backend composites with tensor ops on a `(B,3,R,R)` float canvas, one pass per
-primitive. It is kept as a readable specification and as a CPU fallback. The conformance suite
+primitive. The project keeps it as a readable specification and as a CPU fallback. The conformance suite
 compares the two backends.
 
 | batch | torch compositing | fused Triton | ratio |
@@ -26,8 +26,8 @@ On a 16-frame batch the two backends agree on 100% of pixels, with maximum diffe
 
 ## Output bandwidth
 
-The kernel reads a small parameter block per primitive and writes the output. Whole `render()` calls,
-including scene construction:
+The kernel reads a small parameter block per primitive and writes the output. The table measures whole
+`render()` calls, including scene construction:
 
 | batch | 96 px, GB/s | 224 px, GB/s |
 |---|---|---|
@@ -43,7 +43,8 @@ The rasterizer alone reaches 155.0 GB/s at 96 px and 162.1 GB/s at 224 px.
 
 `supersample=ss` averages `ss × ss` subpixels per output pixel. The default is 1.
 
-PushT against the official `gym_pusht` renderer, 64 states from the reset distribution:
+The table compares PushT with the official `gym_pusht` renderer on 64 states from the reset
+distribution:
 
 | | interior pixels exact | all pixels exact | mean abs. diff |
 |---|---|---|---|
@@ -55,7 +56,7 @@ PushT against the official `gym_pusht` renderer, 64 states from the reset distri
 Supersampling changes edge pixels only. gym_pusht draws at 512 px and resizes with `cv2.resize`, so
 its edge pixels come from its own resampling filter.
 
-Cost through the full `render()` call at batch 4,096:
+The table gives the cost through the full `render()` call at batch 4,096:
 
 | supersample | frames/s | µs/frame | cost vs ss=1 |
 |---|---|---|---|

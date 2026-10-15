@@ -8,11 +8,11 @@ step(actions, states=slice(None), frames=slice(-1, None))
 
 - Actions are `[B,A]` for one action per lane or `[B,T,A]` for a sequence. `T` must be positive.
 - Discrete actions use `A=1`. An integer `[B]` tensor is also accepted for a single action.
-- The action dtype is preserved.
+- `step` keeps the action dtype.
 
 `states` and `frames` are Python slices over the post-action outputs. They are independent. `None`
-turns that history off. The default returns all States and renders only the final one. The initial
-State is not included.
+disables that history. The default returns all States and renders only the final one. The outputs
+do not include the initial State.
 
 ```python
 import torch
@@ -35,12 +35,12 @@ with snv.CartPole(num_envs=8, device="cpu") as env:
 | all States, no rendering | `slice(None)` | `None` |
 | final State only, no rendering | `None` | `None` |
 | all States and frames | `slice(None)` | `slice(None)` |
-| States at 0,4,8…; frames at 3,7,11… | `slice(None,None,4)` | `slice(3,None,4)` |
+| States at 0,4,8… and frames at 3,7,11… | `slice(None,None,4)` | `slice(3,None,4)` |
 
 ## Slice rules
 
 - Slices follow Python rules for clipping, negative indices and negative strides.
-- A reverse slice changes output order, not simulation order.
+- A reverse slice changes the output order. The simulation order stays the same.
 - Integer selectors are not supported.
 - Invalid selectors, zero strides and bad action shapes fail before the simulator moves.
 
@@ -49,7 +49,7 @@ with snv.CartPole(num_envs=8, device="cpu") as env:
 - A single action counts as a sequence of length one.
 - Selected States have batch `[B,K]`. Selected frames have shape `[B,K,H,W,3]`, also when `K=1`.
 - An empty slice returns `K=0` and renders nothing. `None` omits the history.
-- The final `state`, batch `[B]`, is always returned.
+- The result always contains the final `state`, with batch `[B]`.
 - There is no singular `frame` key. Use `frames[:,0]` for the default final frame.
 
 Task fields such as reward and termination keep their family names and dtypes. For a sequence they
@@ -58,7 +58,7 @@ of the selected States and frames, in output order.
 
 ## Termination inside a sequence
 
-Each lane stops after its first termination or truncation. Its remaining actions are not used. The
+Each lane stops after its first termination or truncation. The lane does not use its remaining actions. The
 terminal transition is valid. Later task outputs are zero. Selected States and frames repeat the final
 endpoint with validity false. The executor does not reset lanes. Single actions keep the upstream
 behaviour after termination.
@@ -66,7 +66,7 @@ behaviour after termination.
 ## Memory and ownership
 
 - Snapshots and frames own their storage. Later calls do not change them.
-- Only selected frames are rendered.
+- `step` renders only the selected frames.
 - Retained histories cost memory in proportion to the number of selected outputs.
 - Save the endpoint from `result["state"]`. Calling `get_state()` right after `step()` exports it again.
 
@@ -79,8 +79,9 @@ There is no `capture`, `transition`, `unroll` or `step_sequence` method. To bran
 ## Process workers
 
 On Linux with at least four CPU cores, some families run physics in worker processes for batches of at
-least 64: Fetch, most DM Control tasks, classic Acrobot and the OGBench registrations. Up to eight
-processes are used, one simulation thread each, within the allowed CPU affinity. Physics stays on CPU
+least 64. These families are Fetch, most DM Control tasks, classic Acrobot and the OGBench
+registrations. The pool uses up to eight processes, each with one simulation thread, within the
+allowed CPU affinity. Physics stays on CPU
 even when rendering uses CUDA.
 
 When a worker pool is active, the next known action runs while the parent renders the previous
@@ -94,5 +95,10 @@ Scripts that use this path must follow the usual rules for spawn-based process p
 - If rendering fails with a transition in flight, the workers stop. Construct a new environment.
 
 Contributors add a family to the shared scheduler with the private `_step_pipeline()` hook. Its
-executor submits one masked transition, returns owned task outputs and any requested State, and aborts
-pending work on failure. Rendering stays on the calling thread.
+executor:
+
+- submits one masked transition.
+- returns owned task outputs and any requested State.
+- aborts pending work on failure.
+
+Rendering stays on the calling thread.

@@ -18,8 +18,8 @@ stable-worldmodel    observation selection, models, data collection
 
 The stable-envs runtime does not import stable-worldmodel. There is no `snv.make("swm/...")` lookup.
 
-Policy rollouts, planning, datasets and training belong downstream. `step` takes actions, never a
-policy.
+Policy rollouts, planning, datasets and training belong downstream. `step` takes actions. It does
+not take a policy.
 
 - [stable-worldmodel](https://github.com/galilai-group/stable-worldmodel)
 - [stable-datasets](https://github.com/galilai-group/stable-datasets)

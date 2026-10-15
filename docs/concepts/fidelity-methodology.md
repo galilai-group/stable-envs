@@ -1,9 +1,9 @@
 # Fidelity methodology
 
 Set each constant from a measurement against the reference renderer. Read the source to form a
-hypothesis, then compare pixels to decide.
+hypothesis. Then compare pixels to decide.
 
-Constants that read plausibly from the source can still be wrong. Some examples from this repository:
+Constants that read plausibly from the source can still be wrong. The table shows some examples from this repository.
 
 | what the source suggested | what was true | how it showed |
 |---|---|---|
@@ -22,9 +22,9 @@ Constants that read plausibly from the source can still be wrong. Some examples 
 3. Test on states where the question arises. For example, draw order only matters where two bodies
    overlap.
 4. Split the metric. Interior pixels (a flat 3×3 neighbourhood in the reference) must match exactly.
-   All-pixel agreement is reported separately with a looser bar. A wrong corner shape can cost 2% of
+   Report all-pixel agreement separately with a looser bar. A wrong corner shape can cost 2% of
    interior pixels and nothing visible in an all-pixel mean.
 5. Record rejected environments with the check that rejected them.
 
-The two tiers of claim are described in [Fidelity tiers](fidelity-tiers.md). The contributor guides
-are in [Adding a component](../adding/index.md).
+[Fidelity tiers](fidelity-tiers.md) describes the two tiers of claim. [Adding a component](../adding/index.md)
+contains the contributor guides.

@@ -21,15 +21,15 @@ snv.list_families()     # family ids that registered
 
 Supported CPython versions are 3.10, 3.11 and 3.12.
 
-CUDA is required for the 3-D families and most MuJoCo families. PushT, classic control, navigation
-and several 2-D families run on CPU. Device support per family: [Limitations](concepts/limitations.md).
+The 3-D families and most MuJoCo families need CUDA. PushT, classic control, navigation and several
+2-D families run on CPU. [Limitations](concepts/limitations.md) lists device support per family.
 
 For an editable install from a clone, see
 [Contributing](https://github.com/galilai-group/stable-envs/blob/main/CONTRIBUTING.md).
 
 ## Extras
 
-Some extras are needed to construct and render a family. Others install only the official reference
+You need some extras to construct and render a family. Other extras install only the official reference
 package, which tests use for comparison.
 
 | extra | needed for | adds |
@@ -38,13 +38,13 @@ package, which tests use for comparison.
 | `pusht` | PushT, PushTDiscrete | Pymunk 7.2.0, pygame, OpenCV, Shapely |
 | `pusht-reference` | reference checks only | gym-pusht |
 | `ogbench` | OGBench mazes | `ogbench`, MuJoCo |
-| `ogbench-manipulation` / `-gpu` | OGBCube, OGBScene | MuJoCo 3.12.0, OGBench 1.2.1, dm_control; `-gpu` adds MuJoCo Warp 3.12.0 and Warp 1.17.0 |
+| `ogbench-manipulation` / `-gpu` | OGBCube, OGBScene | MuJoCo 3.12.0, OGBench 1.2.1, dm_control. `-gpu` adds MuJoCo Warp 3.12.0 and Warp 1.17.0 |
 | `dmcontrol` | DM Control | `dm_control`, MuJoCo |
 | `dmcontrol-gpu` | DM Control on CUDA with TrackCom floor reflections | MuJoCo and MuJoCo Warp 3.12 |
 | `robotics` | Fetch | gymnasium-robotics, MuJoCo < 3.12, OpenCV |
 | `mjwarp` | Fetch on CUDA | MuJoCo Warp |
 | `rocket` | PyFlytRocketLanding | PyFlyt 0.29.0, pybullet 3.2.7, Pillow, SciPy |
-| `craftax` / `craftax-gpu` | Craftax | Craftax, JAX; `-gpu` takes JAX's CUDA 12 build for `device="cuda"` |
+| `craftax` / `craftax-gpu` | Craftax | Craftax, JAX. `-gpu` takes JAX's CUDA 12 build for `device="cuda"` |
 | `docs` / `dev` / `examples` / `hf` | not needed to render | docs, tests, example helpers, HuggingFace |
 
 With `dmcontrol-gpu` on MuJoCo 3.11, TrackCom domains render without the floor reflection.
@@ -57,10 +57,16 @@ still runs on CPU.
 ## Reference profiles
 
 Extras declare compatible version ranges. Exact parity with an upstream renderer is checked only under
-that family's reference profile. These are the `pin-<profile>` dependency groups in `pyproject.toml`:
-`pin-classic`, `pin-navigation`, `pin-pusht`, `pin-dmc`, `pin-fetch`, `pin-ogbench`, `pin-rocket` and
-`pin-craftax`. They are for development, cannot be combined, need Python 3.12, and resolve in the single
-`uv.lock`:
+that family's reference profile. The reference profiles are the `pin-<profile>` dependency groups in
+`pyproject.toml`: `pin-classic`, `pin-navigation`, `pin-pusht`, `pin-dmc`, `pin-fetch`, `pin-ogbench`,
+`pin-rocket` and `pin-craftax`.
+
+- The profiles are for development.
+- You cannot combine two profiles.
+- Each profile needs Python 3.12.
+- All profiles resolve in the single `uv.lock`.
+
+For example, this command syncs the DM Control profile:
 
 ```bash
 uv sync --python 3.12 --extra dmcontrol --group pin-dmc --group test

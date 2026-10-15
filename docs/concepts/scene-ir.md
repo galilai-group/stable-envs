@@ -4,20 +4,20 @@
 `(state, variation)` into a `Scene2D`. One kernel turns it into pixels. No env handle, simulator or
 Python callback crosses this boundary.
 
-The IR has three primitive kinds: discs, convex polygons and thick segments. They are composited back
-to front with flat colours.
+The IR has three primitive kinds: discs, convex polygons and thick segments. The rasterizer composites
+them back to front with flat colours.
 
 ## Layout
 
-Primitives are packed into fixed-width tensors:
+The IR packs primitives into fixed-width tensors:
 
 | field | shape | meaning |
 |---|---|---|
 | `kind` | `(B,N)` int32 | `0` disabled, `1` disc, `2` convex polygon, `3` segment |
-| `geom` | `(B,N,2V)` f32 | disc `[cx, cy, r, inner_r, ...]`; polygon `[x0,y0, ... xV-1,yV-1]` CCW; segment `[x0,y0, x1,y1, half_w, ...]` |
+| `geom` | `(B,N,2V)` f32 | disc: `[cx, cy, r, inner_r, ...]`. Polygon: `[x0,y0, ... xV-1,yV-1]` CCW. Segment: `[x0,y0, x1,y1, half_w, ...]` |
 | `fill` | `(B,N,3)` f32 | interior colour, 0–255 |
 | `line` | `(B,N,3)` f32 | outline colour (also the disc's inner colour) |
-| `line_w` | `(B,N)` f32 | outline half-width in world units; `0` disables it |
+| `line_w` | `(B,N)` f32 | outline half-width in world units. `0` disables it. |
 | `background` | `(B,3)` f32 | per-environment background colour |
 | `world` | 4 floats | `(x0, y0, x1, y1)`, the extent of the primitives |
 | `flip_y` | bool | set when the env's `+y` points up |
@@ -33,30 +33,30 @@ have its own colours and sizes in one launch.
   and compile-time unrolling.
 - **Draw order is index order, back to front.** There is no depth buffer. The array order decides what
   is on top.
-- **Polygons are padded by repeating the last vertex.** This creates a zero-length edge. Both backends
+- **Padding repeats the last vertex of a polygon.** This creates a zero-length edge. Both backends
   drop edges with `L2 < 1e-12` from the signed distance, so the outline stays correct.
 
 ## Static prefix
 
-`SceneBuilder.mark_static()` requests that the primitives added so far be baked once into a cached
-base image. Later frames start from that image.
+`SceneBuilder.mark_static()` requests a bake. The rasterizer draws the primitives added so far once
+into a cached base image. Later frames start from that image.
 
-The bake is a request. The base image is shared by the whole batch, so the rasterizer bakes only if the
+The bake is a request. The whole batch shares the base image, so the rasterizer bakes only if the
 prefix is identical across lanes. It compares each row's static primitives with row 0 in one kernel.
 If they differ, it draws every primitive per frame. The output is the same either way.
 
 The cache key is the exact bytes of the static primitives. A Variation that recolours a static
 primitive invalidates the bake.
 
-Baking is skipped when the saved work is small. The threshold is `raster2d._BAKE_MIN_WORK = 8e6`
+The rasterizer skips the bake when the saved work is small. The threshold is `raster2d._BAKE_MIN_WORK = 8e6`
 evaluations, compared against `K/N × B × H × W` (K static primitives out of N, at the supersampled
 resolution). Below it, no comparison or transfer happens.
 
 An env that passes its `StyleTensor` to the builder (`SceneBuilder(B, ..., style=sty)`) also skips the
 comparison when the style differs per lane.
 
-Measured on one H200, supersample 1, from a pre-built scene (rasterization only). Speedup of baked over
-unbaked; a dash means the bake is below the threshold and not run:
+These measurements use one H200, supersample 1 and a pre-built scene (rasterization only). Each cell
+is the speedup of baked over unbaked. A dash means the bake is below the threshold and does not run.
 
 | batch | PushT 96 px | PushT 224 px | SimplePointMaze 500 px |
 |---|---|---|---|
@@ -95,4 +95,4 @@ Each env keeps its own units: PushT's 512-unit board, CartPole's metres, a grid 
 rasterizer maps `world` onto the output image. Envs do not convert to pixels themselves. Set `flip_y`
 instead of flipping coordinates in env code.
 
-API details: [`stable_envs.render.scene`](../api/scene.md).
+See [`stable_envs.render.scene`](../api/scene.md) for API details.

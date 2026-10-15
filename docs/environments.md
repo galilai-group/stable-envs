@@ -21,8 +21,8 @@ EGL context or a compiled scene.
 `info` returns `class_name`, `id`, `family`, `domain`, `reference_id`, `render_state_dim`,
 `render_state_names`, `default_size`, `fidelity_tier`, `action_dim`, `has_dynamics` and `requires_cuda`.
 
-`snv.info` returns metadata. It is not an `snv.Spec`, which describes tensors (`env.frame_spec`,
-`env.state_spec`, …).
+`snv.info` returns metadata. It does not return an `snv.Spec`. An `snv.Spec` describes tensors
+(`env.frame_spec`, `env.state_spec`, …).
 
 Registration uses the `@register` decorator in `stable_envs.registry`. Duplicate class names are an
 error. Each class declares `family=` explicitly. Discovery skips modules whose names start with `_`
@@ -56,7 +56,7 @@ env = snv.CartPole(num_envs=8)
 | `pusht` | 2 | `PushT`, `PushTDiscrete` |
 | `pyflyt` | 1 | `PyFlytRocketLanding` |
 
-These 74 register with every extra installed. Without PyFlyt there are 73.
+With every extra installed, these 74 classes register. Without PyFlyt, 73 classes register.
 
 ## Fidelity
 

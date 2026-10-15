@@ -1,5 +1,5 @@
 # `stable_envs.spaces`
 
-Persistent environment configuration spaces owned by stable-envs.
+This module defines the persistent environment configuration spaces that stable-envs owns.
 
 ::: stable_envs.spaces

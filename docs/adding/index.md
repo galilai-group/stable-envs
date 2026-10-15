@@ -45,7 +45,7 @@ observations. Do not add an Observation class or a State-filtering layer here.
 | value | meaning | restores dynamics? |
 |---|---|---|
 | `State` | TensorDict checkpoint of every simulator, task, RNG and lifecycle field needed for the future | yes |
-| `RenderState` | private renderer input, often a compact float32 row | no; `set_state` must refuse it |
+| `RenderState` | private renderer input, often a compact float32 row | no (`set_state` must refuse it) |
 | `Frame` | uint8 pixels, `(B,H,W,3)` | no |
 | learner observation | downstream selection of frames, proprioception, goals | not necessarily |
 
@@ -92,21 +92,21 @@ ruff format --check .
 git diff --check
 ```
 
-Install the family's pinned profile (see [Install](../install.md)) and run its tests. The registry-wide
-checks in CI are described in [Testing](../testing.md).
+Install the family's pinned profile (see [Install](../install.md)) and run its tests. [Testing](../testing.md)
+describes the registry-wide checks in CI.
 
 ## Definition of done
 
-A new registration is done when:
+A new registration is done when all of these conditions are true:
 
-- the claim is implemented and every required check passes;
-- unsupported paths refuse explicitly;
-- each claim traces to a test or a recorded comparison.
+- The claim is implemented and every required check passes.
+- Unsupported paths refuse explicitly.
+- Each claim traces to a test or a recorded comparison.
 
 A skipped required check is not a pass. Do not edit a frozen fixture or a threshold to make a check
 pass. A sibling's result does not cover another registration.
 
-Keep for review: the driver script, source versions and hashes, dependency and platform versions, raw
+Keep these records for review: the driver script, source versions and hashes, dependency and platform versions, raw
 logs and per-check results.
 
 ## Review checklist

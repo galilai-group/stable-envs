@@ -5,7 +5,7 @@
 ### Get access
 
 The repository is private. A maintainer adds you as a collaborator on GitHub. Accept the
-invitation, then clone the repository. Do not fork it.
+invitation, then clone the repository.
 
 ```bash
 git clone git@github.com:galilai-group/stable-envs.git
@@ -53,15 +53,15 @@ GPU tests need a CUDA machine. Run them with `pytest tests/gpu -v` if you change
 
 1. Push your branch and open a draft pull request into `v1-dev`.
 2. Fill in the pull request template.
-3. When the work is done and the tests pass locally, click "Ready for review".
+3. When you finish the work and the tests pass locally, click "Ready for review".
 
 CI runs only on pull requests that are ready for review. Draft pull requests do not run CI. CI
-minutes are limited, so keep the pull request in draft while you work on it.
+has a limited number of minutes, so keep the pull request in draft while you work on it.
 
 ### Review
 
 A code owner reviews every pull request. The reviewer may ask for changes. Push new commits to the
-same branch to answer them. Do not force-push once review has started. The pull request is merged
+same branch to answer them. Do not force-push after review starts. The pull request is merged
 when a reviewer approves it and the `ci-ok` check passes.
 
 Add a line to `CHANGELOG.md` under `Unreleased` for any change a user would notice.
@@ -72,8 +72,8 @@ Comment on your pull request, open an issue, or ask a maintainer directly.
 
 ## Test environments
 
-Test environments are built from the single `uv.lock`, one per profile, with
-[nox](https://nox.thea.codes) and [uv](https://docs.astral.sh/uv/):
+[nox](https://nox.thea.codes) and [uv](https://docs.astral.sh/uv/) build the test environments from the
+single `uv.lock`, one per profile:
 
 ```bash
 uvx nox -l                              # list sessions
@@ -99,8 +99,8 @@ uv sync --python 3.12 --extra dmcontrol --group pin-dmc --group test
 uv run pytest ...
 ```
 
-`pip install -e ".[dev]"` also works. Extra conflicts, the Fetch MuJoCo pin and the nvdiffrast build
-are on the [Install](docs/install.md) page.
+`pip install -e ".[dev]"` also works. The [Install](docs/install.md) page covers extra conflicts, the
+Fetch MuJoCo pin and the nvdiffrast build.
 
 ## Lint and format
 
@@ -121,7 +121,7 @@ python -m tests._runner.supervisor --smoke     # one env per family
 pytest tests/gpu -v                            # GPU conformance suite, on a CUDA machine
 ```
 
-A family that is not installed is skipped, with the cause, not failed. CI sets
+If a family is not installed, its tests skip and report the cause. CI sets
 `SE_REQUIRE_FAMILIES` and `SE_REQUIRE_CAPABILITIES`, which turn that skip into an error.
 
 Markers for tests that need something extra:
@@ -136,7 +136,7 @@ Markers for tests that need something extra:
 The GPU suite requires CUDA and skips without it. Run it through `tests._runner.supervisor` when it
 initializes native renderers. The supervisor isolates crashes and names the test that crashed.
 
-The full test layout and what each check rules out: [Testing](docs/testing.md).
+[Testing](docs/testing.md) describes the full test layout and what each check rules out.
 
 ## Pull request rules
 
@@ -144,7 +144,7 @@ The full test layout and what each check rules out: [Testing](docs/testing.md).
 - Do not release an EGL context or close a `mujoco.Renderer`. It corrupts rendering in other live
   contexts. `tests/_runner/resource_guard.py` fails the test that does it.
 - Do not create contexts, renderers or envs per state, per style value or per call.
-- Read the upstream source, then confirm your reading by comparing against the official renderer.
+- Read the upstream source, then check your reading by comparing against the official renderer.
   See [Fidelity methodology](docs/concepts/fidelity-methodology.md).
 - Do not commit local artifacts (scratch output, screenshots, one-off JSON). Fixtures that a committed
   script regenerates live under `tests/fixtures/`.
@@ -155,7 +155,7 @@ See the [environment, task and renderer guides](docs/adding/index.md).
 
 ## What a new environment needs to pass CI
 
-Every registered class is picked up automatically, in its family's CI profile:
+CI collects every registered class automatically, in its family's CI profile:
 
 - **Generic contract** (`tests/unit/test_registry_conformance.py`). Reset, step and render match the
   specs. The same seed gives the same rollout. A lane does not see its neighbours' actions.
@@ -190,8 +190,8 @@ The sections below cover CI internals and rules that most contributions do not n
 The label `ci:full` runs every profile on a pull request. The only required check is `ci-ok`.
 
 Tests marked `nightly` run on pushes to `main`, the weekly schedule, manual runs and `ci:full`.
-Each family profile is split into `shards` jobs (`ci/families.toml`) by `tests/_runner/shard.py`,
-using per-test times from `ci/durations.json`. Locally:
+`tests/_runner/shard.py` splits each family profile into `shards` jobs (`ci/families.toml`),
+using per-test times from `ci/durations.json`. Use these variables locally:
 
 ```bash
 SE_NIGHTLY=1 uvx nox -s "test(dmc)"   # include nightly tests
@@ -223,11 +223,11 @@ passes, the suite fails until you remove the entry. The file has a code owner.
 
 ### Removing the stable-worldmodel layer
 
-The stable-worldmodel layer is built to be removed in one change. To remove it, delete:
+You can remove the stable-worldmodel layer in one change. To do this, delete these items:
 
-- `SWM_GATES` in `tests/helpers/reference/cases.py`;
-- the tests marked `swm` and the gate helpers only they use;
-- the `swm` capability and the `[swm]` block in `ci/families.toml`;
-- `_install_swm` in `noxfile.py`.
+- `SWM_GATES` in `tests/helpers/reference/cases.py`
+- the tests marked `swm` and the gate helpers only they use
+- the `swm` capability and the `[swm]` block in `ci/families.toml`
+- `_install_swm` in `noxfile.py`
 
 `ORIGINAL_GATES` then stands alone.
