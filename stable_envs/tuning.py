@@ -732,7 +732,7 @@ def is_running(env) -> bool:
 #: Batch size from which an untuned render path logs the ``stable-envs tune`` hint or autotunes.
 HINT_LANES = 256
 logger = logging.getLogger("stable_envs.tuning")
-_noticed: set[tuple[str, str]] = set()
+_noticed: dict[tuple[str, str], None] = {}
 
 
 @functools.lru_cache(maxsize=256)
@@ -762,7 +762,7 @@ def on_render(env, size: int | None = None, *, may_tune: bool = True) -> None:
         autotuning = _environ.read("STABLE_ENVS_AUTOTUNE") and not env.__dict__.get("_tuning")
         if autotuning and not may_tune:
             return
-        _noticed.add((path, str(env.device)))
+        _noticed[path, str(env.device)] = None
         if autotuning:
             autotune(env, path)
         elif _environ.read("STABLE_ENVS_TUNING_HINT"):
