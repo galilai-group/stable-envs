@@ -284,7 +284,7 @@ RECORDED_SWM_LEAVES: dict[str, tuple[str, ...]] = {
     ),
 }
 
-#: The four buckets, and nothing else. A verdict outside this set is a typo, not a new category.
+#: The allowed verdicts.
 BUCKETS = ("mapped", "unsupported", "dead_upstream", "not_applicable")
 
 

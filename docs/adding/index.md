@@ -10,8 +10,8 @@ First identify which layer you are changing. A registration combines three respo
 Registration = Environment + Task + renderer/default configuration
 ```
 
-These are responsibilities, not base classes. The API has `Env` and a private simulator-adapter
-protocol. There is no `Task`, `Renderer` or `Observation` class to subclass.
+The API has `Env` and a private simulator-adapter protocol. There is no `Task`, `Renderer` or
+`Observation` class to subclass.
 
 | you are adding | guide |
 |---|---|

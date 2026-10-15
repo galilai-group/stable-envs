@@ -1,8 +1,7 @@
 # System setup
 
-The Python extras in [Install](install.md) are half of a working setup. The other half is the
-machine: an NVIDIA driver for the CUDA paths, and an OpenGL backend for the MuJoCo families.
-Check both with
+Besides the Python extras in [Install](install.md), the CUDA paths need an NVIDIA driver and the
+MuJoCo families need an OpenGL backend. Check both with:
 
 ```bash
 stable-envs doctor          # or: python -m stable_envs doctor
@@ -33,8 +32,8 @@ stable-envs uses the backend `PYOPENGL_PLATFORM` names (`egl` or `osmesa`) so th
 ## GPU machines: the driver
 
 torch and Warp wheels are built against a CUDA toolkit, and the driver must support at least that
-CUDA version. torch says so (`torch.cuda.is_available()` is False). **Warp does not**: a Warp
-build whose toolkit is newer than the driver falls back to CPU arrays with only a printed warning.
+CUDA version. If it does not, `torch.cuda.is_available()` is False, but Warp falls back to CPU
+arrays with only a printed warning.
 Warp 1.18 is built with CUDA 13 and needs driver 580 or newer; on an older driver install
 `warp-lang==1.17.0`, the version the GPU extras are certified with. The GPU render paths refuse to
 run on that fallback and say why; `stable-envs doctor` shows the driver's and Warp's CUDA versions

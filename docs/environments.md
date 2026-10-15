@@ -21,8 +21,8 @@ EGL context or a compiled scene.
 `info` returns `class_name`, `id`, `family`, `domain`, `reference_id`, `render_state_dim`,
 `render_state_names`, `default_size`, `fidelity_tier`, `action_dim`, `has_dynamics` and `requires_cuda`.
 
-`snv.Spec` is a tensor contract (`env.frame_spec`, `env.state_spec`, …). `snv.info` returns metadata.
-They are different things.
+`snv.info` returns metadata. It is not an `snv.Spec`, which describes tensors (`env.frame_spec`,
+`env.state_spec`, …).
 
 Registration uses the `@register` decorator in `stable_envs.registry`. Duplicate class names are an
 error. Each class declares `family=` explicitly. Discovery skips modules whose names start with `_`

@@ -95,8 +95,8 @@ git diff --check
 - Include representative tasks, contact poses, cameras and appearance settings.
 - Run each claimed CPU and GPU backend separately.
 
-GPU rendering results do not certify physics under the GPU profile. A backend that refuses CPU is a
-limit, not a CPU pass.
+GPU rendering results do not certify physics under the GPU profile. If a backend refuses CPU, record
+that as a limit. It does not count as a CPU pass.
 
 ```bash
 python -m pytest -m 'regression and not gpu'

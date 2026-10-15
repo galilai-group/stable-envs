@@ -1,7 +1,7 @@
 # Fidelity methodology
 
-The rule: **a constant is right when a measurement against the reference renderer says so.** Read the
-source to form a hypothesis. Compare pixels to decide.
+Set each constant from a measurement against the reference renderer. Read the source to form a
+hypothesis, then compare pixels to decide.
 
 Constants that read plausibly from the source can still be wrong. Some examples from this repository:
 
