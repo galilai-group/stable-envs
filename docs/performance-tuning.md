@@ -110,7 +110,7 @@ saved for: dmc-trackcom, 64 px, batch 64-127 (also covers: DMCHopperHop, DMCHuma
 
 Values are saved for the render path, the frame size and the batch range (powers of two: 64 to 127,
 128 to 255, and so on). They are saved in `~/.cache/stable-envs/tuning/<device name>.json`
-(`$XDG_CACHE_HOME` replaces `~/.cache` when set). A file applies only on the same device, driver,
+(under `$XDG_CACHE_HOME` instead of `~/.cache` when it is set). A file applies only on the same device, driver,
 host CPU and stable-envs version; after an upgrade, tune again.
 
 From Python, `snv.tune(env)` does the same with a constructed environment and returns the chosen values.

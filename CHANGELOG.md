@@ -16,18 +16,24 @@ All notable changes to this project are listed here. The format follows
   Knobs never change frames or State. See docs/performance-tuning.md.
 - `stable-envs tune <Env>` and `snv.tune(env)` measure the fastest knob values for one render path on
   this machine and cache them; `--show`, `--clear` and `--all` manage the cache.
+- A large render on an untuned path logs one `INFO` hint to run `stable-envs tune`
+  (`STABLE_ENVS_TUNING_HINT=0` silences it). `STABLE_ENVS_AUTOTUNE=1` tunes such a path on first use.
+- docs/environment-variables.md lists every `STABLE_ENVS_*` variable.
 
 ### Changed
 
-- `stable-envs doctor` reports how many render paths are tuned on this machine, and checks torch's
-  compiled GPU architectures with binary-compatibility rules.
+- `stable-envs doctor` reports how many render paths are tuned on this machine, lists the
+  `STABLE_ENVS_*` variables that are set and flags unknown names, and checks torch's compiled GPU
+  architectures with binary-compatibility rules.
+- A `STABLE_ENVS_*` variable with a value that does not parse raises `ValueError` naming the variable.
 - `cpu3d.render(chunk_size=None)` and `raster2d.render_triton(block=None)` read the tuning knobs.
-- `MJW_CHUNK` is no longer exported by the DMC and OGBench packages; use the `dmc_min_worlds` and
-  `ogb_mjw_worlds` knobs.
 
 ### Fixed
 
 ### Removed
+
+- `MJW_CHUNK` in the DMC and OGBench packages. The `dmc_min_worlds` and `ogb_mjw_worlds` tuning knobs
+  set the worlds per MJWarp launch.
 
 ## [0.1.0] - 2026-10-14
 
