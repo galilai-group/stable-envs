@@ -1,4 +1,4 @@
-"""The worker-process knobs change where Acrobot lanes step, never their State or frames."""
+"""Acrobot gives the same State and frames for every worker-process setting."""
 
 from __future__ import annotations
 

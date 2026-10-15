@@ -1,4 +1,4 @@
-"""The Fetch thread count changes which thread steps a lane, never the State."""
+"""Fetch cells give the same State for every simulator thread count."""
 
 from __future__ import annotations
 

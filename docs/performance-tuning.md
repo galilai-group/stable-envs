@@ -2,10 +2,9 @@
 
 Every environment runs well with no setup. Chunk sizes, Triton block sizes, worker counts and memory
 budgets have defaults, and some defaults are computed from the hardware. You can change them to trade
-speed against memory. A tuning knob never changes frames or State: it only changes how the work is
-split.
+speed against memory. Frames and State are the same for every valid value.
 
-Knobs belong to render paths, not to environments. For example, every fixed-camera DM Control cell
+Measured values are stored per render path. For example, every fixed-camera DM Control cell
 uses the `dmc-suite` path, so a value measured with `DMCCartpoleSwingup` also applies to
 `DMCReacherEasy`. The Triton block and warp knobs and `ogb_mjw_worlds` are measured for the whole
 device instead of per path.

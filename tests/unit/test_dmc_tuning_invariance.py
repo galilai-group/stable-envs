@@ -1,4 +1,4 @@
-"""DMC tuning knobs change only how work is split, never frames or State."""
+"""DMC cells give the same frames and State for every tuning knob value."""
 
 from __future__ import annotations
 

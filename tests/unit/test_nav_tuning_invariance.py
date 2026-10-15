@@ -1,4 +1,4 @@
-"""The navigation render chunk changes memory use, never the frames."""
+"""Navigation cells give the same frames for every render chunk size."""
 
 from __future__ import annotations
 
