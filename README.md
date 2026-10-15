@@ -32,14 +32,19 @@ The 3-D families and most MuJoCo families need CUDA. PushT, classic control, nav
 ```python
 import stable_envs as snv
 
-with snv.CartPole(num_envs=64) as env:          # device="auto": CUDA if available, else CPU
-    state = env.reset(seed=0)                # State
-    pixels = env.render(state)               # Frame: (64, H, W, 3) uint8
-    action = env.action_spec.sample(64, env.rng)
-    out = env.step(action)
-    state = out["state"]
-    env.set_state(state)                     # restores the full State; returns None
+env = snv.CartPole(num_envs=64)          # device="auto": CUDA if available, else CPU
+state = env.reset(seed=0)                # State
+pixels = env.render(state)               # Frame: (64, H, W, 3) uint8
+action = env.action_spec.sample(64, env.rng)
+out = env.step(action)
+state = out["state"]
+env.set_state(state)                     # restores the full State; returns None
+env.close()
 ```
+
+`env.close()` stops the simulator's worker processes and frees the environment's own
+buffers. Renderer contexts that other environments share stay cached. An environment is also a
+context manager: `with snv.CartPole(num_envs=64) as env:` closes it at the end of the block.
 
 Class names are the canonical API. `make` takes the same names as strings:
 

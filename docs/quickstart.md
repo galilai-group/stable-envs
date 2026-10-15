@@ -11,17 +11,23 @@ pip install stable-envs
 import numpy as np
 import stable_envs as snv
 
-with snv.CartPole(num_envs=2, device="cpu") as env:
-    state = env.reset(seed=17)
-    pixels = env.render(state)
-    action = np.array([[0], [1]], dtype=np.int64)
-    out = env.step(action)
-    assert env.set_state(state) is None
-    assert (env.step(action) == out).all()
+env = snv.CartPole(num_envs=2, device="cpu")
+state = env.reset(seed=17)
+pixels = env.render(state)
+action = np.array([[0], [1]], dtype=np.int64)
+out = env.step(action)
+assert env.set_state(state) is None
+assert (env.step(action) == out).all()
+env.close()
 ```
 
-`num_envs` is the simulator batch size. `close()` is idempotent, and the context manager calls it.
-A renderer may accept a smaller batch. That does not change the batch that `set_state` requires.
+`num_envs` is the simulator batch size. A renderer may accept a smaller batch. That does not change
+the batch that `set_state` requires.
+
+`env.close()` stops the simulator's worker processes and frees the environment's own buffers.
+Renderer contexts that other environments share stay cached. A second call has no effect. An
+environment is also a context manager: `with snv.CartPole(num_envs=2) as env:` closes it at the end
+of the block.
 
 ## State and frames
 
