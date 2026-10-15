@@ -23,6 +23,6 @@ def process_count(num_envs: int, cpus: Sequence[int] | None, *, eligible: bool =
     available = len(cpus) if cpus is not None else 1
     if not eligible or sys.platform != "linux" or available < 4 or mp.current_process().daemon:
         return 0
-    if num_envs < tuning.get("worker_min_lanes", **where):
+    if num_envs < int(tuning.get("worker_min_lanes", **where) or 0):
         return 0
-    return min(tuning.get("workers", **where), available, num_envs)
+    return min(int(tuning.get("workers", **where) or 0), available, num_envs)

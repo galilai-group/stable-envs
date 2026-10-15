@@ -343,7 +343,15 @@ def lookup(name, *, path=None, size=None, batch=None, device=None, default=_MISS
     return (knob.fallback, "fallback") if default is _MISSING else (default, "default")
 
 
-def get(name: str, *, path=None, size=None, batch=None, device=None, default: Any = _MISSING) -> int | None:
+def get(
+    name: str,
+    *,
+    path: str | None = None,
+    size: int | None = None,
+    batch: int | None = None,
+    device: Any = None,
+    default: Any = _MISSING,
+) -> int | None:
     """Return the current value of knob ``name``.
 
     Args:
