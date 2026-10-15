@@ -1,7 +1,4 @@
-"""PushT task: the Pymunk scene, its variation space, reward and frame drawing.
-
-Physics is Pymunk (Munk2D).
-"""
+"""PushT task on Pymunk: the scene, its variation space, reward and frame drawing."""
 
 from functools import partial
 

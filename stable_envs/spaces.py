@@ -1,10 +1,4 @@
-"""Variation spaces: Gymnasium spaces that also hold a default and a current value.
-
-Each leaf keeps an ``init_value`` and a ``value``. ``sample`` draws until ``constrain_fn`` accepts
-the draw, up to ``max_tries``, and stores the result. ``Dict`` nests leaves under dotted paths and
-samples them in ``sampling_order``. ``reset_variation_space`` seeds the space, restores the
-defaults, resamples the requested names and then applies explicit values.
-"""
+"""Variation spaces: Gymnasium spaces that also hold a default and a current value."""
 
 from __future__ import annotations
 

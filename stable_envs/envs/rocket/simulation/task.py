@@ -1,8 +1,4 @@
-"""Rocket landing task on PyFlyt.
-
-Physics, controls, contacts and rendering come from PyFlyt and PyBullet. This module adds
-replay anchors, the variation space and cleanup of the temporary files it writes.
-"""
+"""Rocket landing task on PyFlyt and PyBullet."""
 
 from __future__ import annotations
 
