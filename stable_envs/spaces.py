@@ -1,8 +1,9 @@
-"""Variation spaces with current values, dotted leaf paths and SWM-ordered sampling.
+"""Variation spaces: Gymnasium spaces that also hold a default and a current value.
 
-Sampling order, rejection sampling and reset semantics follow stable-worldmodel (MIT) spaces.py at
-commit 21446f1ede6d5284e981bd7b47f432b994e6d812, by Lucas Maes, Quentin Le Lidec, Randall Balestriero
-and contributors; see THIRD_PARTY_NOTICES.md.
+Each leaf keeps an ``init_value`` and a ``value``. ``sample`` draws until ``constrain_fn`` accepts
+the draw, up to ``max_tries``, and stores the result. ``Dict`` nests leaves under dotted paths and
+samples them in ``sampling_order``. ``reset_variation_space`` seeds the space, restores the
+defaults, resamples the requested names and then applies explicit values.
 """
 
 from __future__ import annotations
@@ -133,7 +134,7 @@ class Dict(gspaces.Dict):
     """Nested variation spaces with current values and dotted leaf paths.
 
     Passing ``sampling_order`` makes ``sample`` and ``update`` draw top-level keys in that order
-    (unlisted keys follow in insertion order), as SWM spaces with an explicit order do; without
+    (unlisted keys follow in insertion order); without
     it ``update`` resamples the requested names in the order given.
     """
 

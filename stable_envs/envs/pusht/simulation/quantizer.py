@@ -1,14 +1,4 @@
-"""Source-aligned PushT task support.
-
-Adapted from stable-worldmodel (MIT), by Lucas Maes, Quentin Le Lidec,
-Randall Balestriero and contributors, commit
-21446f1ede6d5284e981bd7b47f432b994e6d812.
-See THIRD_PARTY_NOTICES.md for attribution and the MIT license.
-Physics remains official Pymunk 7.2.0 / Munk2D. No stable-worldmodel runtime import.
-"""
-
-# Upstream: envs/quantizer.py
-# SHA256: 7167a833c4a1603e9912533d19a2fa1c8279eb12f235fd8e27cde9ff0a44bec7
+"""Polar quantization of continuous PushT actions for the discrete variant."""
 
 from typing import Protocol
 

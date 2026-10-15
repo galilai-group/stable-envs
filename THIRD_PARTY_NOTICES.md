@@ -17,40 +17,25 @@ packed-channel alpha-blending rules of SDL_gfx by Andreas Schiffler, which pygam
 is licensed under the zlib license; the copy bundled in pygame (`src_c/SDL_gfx/`) is
 marked LGPL. No SDL_gfx source is included.
 
-## Migrated environment tasks
+## stable-worldmodel
 
-The private Rocket task and Variation helpers in
-`stable_envs/envs/rocket/simulation/task.py` and `spaces.py` are adapted from
-stable-worldmodel, commit `21446f1ede6d5284e981bd7b47f432b994e6d812`:
+Some modules are adapted from
+[stable-worldmodel](https://github.com/galilai-group/stable-worldmodel/tree/21446f1ede6d5284e981bd7b47f432b994e6d812)
+at commit `21446f1ede6d5284e981bd7b47f432b994e6d812`. Its authors are Lucas Maes,
+Quentin Le Lidec, Randall Balestriero and contributors. It is MIT-licensed
+("Copyright (c) 2026 GalilAI-group").
 
-- `stable_worldmodel/envs/rocket_landing/pyflyt_rocketlanding.py`
-- the Rocket-used Box, RGBBox and Dict behaviors in `stable_worldmodel/spaces.py`
+| Module in stable-envs | Source in stable-worldmodel |
+|---|---|
+| `stable_envs/spaces.py` | `stable_worldmodel/spaces.py` |
+| `stable_envs/envs/pusht/simulation/task.py` | `stable_worldmodel/envs/pusht/env.py`, `env_discrete.py` |
+| `stable_envs/envs/pusht/simulation/quantizer.py` | `stable_worldmodel/envs/quantizer.py` |
+| `stable_envs/envs/pusht/draw.py` | `stable_worldmodel/envs/utils.py` (drawing subset) |
+| `stable_envs/envs/rocket/simulation/task.py` | `stable_worldmodel/envs/rocket_landing/pyflyt_rocketlanding.py` |
 
-The pinned project is MIT-licensed (its `LICENSE` reads "Copyright (c) 2026
-GalilAI-group"), and its `pyproject.toml` lists Lucas Maes, Quentin Le Lidec and
-Randall Balestriero as authors. The task source SHA256 is
-`5ede3640ce1e2add32b6b0a6c36e190bb1130e38bb258ab182af12a6fbedee23`.
-Source: https://github.com/galilai-group/stable-worldmodel/tree/21446f1ede6d5284e981bd7b47f432b994e6d812
-
-The adaptation removes an unused URDF helper and adds reset-anchor hooks,
-local source-compatible Variation helpers and temporary-file cleanup. It does
-not contain the PyFlyt physics engine or PyBullet native implementation. Those
-remain external dependencies under their own licenses (PyFlyt MIT; Bullet zlib).
-
-The private PushT task modules `task.py`, `spaces.py` and `quantizer.py`
-under `stable_envs/envs/pusht/simulation/`, and `stable_envs/envs/pusht/draw.py`, are
-adapted from the same pinned project and authors. Their sources are
-`stable_worldmodel/envs/pusht/env.py`, `env_discrete.py`,
-`stable_worldmodel/spaces.py`, `stable_worldmodel/envs/utils.py`, and
-`stable_worldmodel/envs/quantizer.py`. Source hashes are recorded in the module
-headers.
-The adaptation replaces package imports with private local imports, combines
-the continuous/discrete task definitions, omits the unused source
-MultiDiscrete Variation class, and reads the finished canvas with
-`pygame.image.tobytes`, which gives the same pixels without a strided copy.
-Pymunk/Munk2D remains an external dependency; no native physics implementation
-is copied here. This private task migration
-does not establish acceptance of the public PushT registrations.
+The adapted code has no runtime import of stable-worldmodel. Physics stays in the
+external dependencies under their own licenses: Pymunk/Munk2D (MIT) for PushT, and
+PyFlyt (MIT) with PyBullet (zlib) for Rocket. No native physics code is copied here.
 
 MIT permission notice for the adapted code follows:
 
