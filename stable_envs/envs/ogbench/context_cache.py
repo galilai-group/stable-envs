@@ -28,6 +28,7 @@ class ContextCache:
         self._sizes = {}
         self._known_sizes = {}
         self._budgets = {}
+        self._derived = {}
         self._used = Counter()
         self._leases = Counter()
         self._active = set()
@@ -38,10 +39,10 @@ class ContextCache:
         if configured is None:
             configured = tuning.get("ogb_context_cache_bytes", device=device)
         if configured is None:
-            if device not in self._budgets:
+            if device not in self._derived:
                 free, total = self.memory_info(device)
-                self._budgets[device] = min(total // 4, free // 2)
-            return self._budgets[device]
+                self._derived[device] = min(total // 4, free // 2)
+            configured = self._derived[device]
         configured = int(configured)
         if configured <= 0:
             raise ValueError("OGBench context cache budget must be positive bytes")
