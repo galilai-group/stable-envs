@@ -175,6 +175,16 @@ def test_tune_sweeps_from_the_default_and_later_envs_on_the_path_use_it(capsys):
     assert Probe(num_envs=600).chunk() == 64 and Probe(num_envs=4).chunk() == 256
 
 
+def test_tune_starts_from_the_env_call_site_default(capsys):
+    class Own(Probe):
+        def _tuning_default(self, name, size):
+            return 32 if name == "nav_render_chunk" else None
+
+    snv.tune(Own(num_envs=512), repeats=1, write=False)
+    row = next(line.split() for line in capsys.readouterr().out.splitlines() if "nav_render_chunk" in line)
+    assert row[1] == "32"
+
+
 def test_tune_without_write_leaves_no_cache():
     snv.tune(Probe(num_envs=512), repeats=1, write=False, verbose=False)
     assert not tuning.cache_path("cpu").exists()

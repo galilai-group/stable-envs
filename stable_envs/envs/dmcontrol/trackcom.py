@@ -209,6 +209,12 @@ class DMControlTrackCom(_DMCModel):
         ("humanoid", 84): 16,
     }
 
+    def _tuning_default(self, name: str, size: int) -> int | None:
+        """Return this cell's call-site default for knob ``name`` at ``size``, or None."""
+        if name != "cpu3d_chunk":
+            return None
+        return self._CPU_RENDER_CHUNKS.get((self.DOMAIN, size), self.CPU_RENDER_CHUNK)
+
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
 
@@ -445,7 +451,7 @@ class DMControlTrackCom(_DMCModel):
                 mat[:, i] = sty[f"material.{name}"][:B]
         base = torch.as_tensor(pr["light_diffuse"], dtype=torch.float32, device=self.device)
         ldif = torch.clamp(base.unsqueeze(0) * sty["light.diffuse_scale"][:B].reshape(B, 1, 1), 0, 1)
-        default = self._CPU_RENDER_CHUNKS.get((self.DOMAIN, size), self.CPU_RENDER_CHUNK)
+        default = self._tuning_default("cpu3d_chunk", size)
         chunk = tuning.get("cpu3d_chunk", path="dmc-trackcom", size=size, batch=B, default=default)
         C3.render(
             sc,

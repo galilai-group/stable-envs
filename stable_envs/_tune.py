@@ -120,7 +120,8 @@ def tune(env, *, knobs=(), repeats: int = 5, write: bool = True, echo=print) -> 
             path = next(p for p in paths if p in knob.paths)
             size = 0 if knob.step else env.size
             where = dict(path=path if knob.per_path else None, size=size, batch=env.num_envs, device=env.device)
-            start = tuning.lookup(knob.name, measured=False, **where)[0]
+            own = getattr(env, "_tuning_default", lambda *_: None)(knob.name, size)
+            start = tuning.lookup(knob.name, measured=False, **where, **({} if own is None else {"default": own}))[0]
             times, reference = {}, None
             for value in candidates(knob, start, env):
                 with tuning.override(**best, **{knob.name: value}):
