@@ -464,12 +464,13 @@ def _base_cls():
 
 def _upload(env, c, sty, B, nworld):
     """One render's worth of uploads, chunked exactly as `render` chunks them."""
-    from stable_envs.envs.ogbench.manipulation import MJW_CHUNK
+    from stable_envs.envs.ogbench.manipulation import mjw_worlds
 
+    chunk = mjw_worlds()
     cube = env._cube_colours(sty, B)
     assert cube is not None, "a cell with cube geoms must always be given a colour to write"
-    for lo in range(0, B, MJW_CHUNK):
-        hi = min(lo + MJW_CHUNK, B)
+    for lo in range(0, B, chunk):
+        hi = min(lo + chunk, B)
         env._upload_cube_colours(c, cube[lo:hi], hi - lo)
 
 

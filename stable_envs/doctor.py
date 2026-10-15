@@ -183,6 +183,25 @@ def check_driver(driver: tuple[int, int] | None) -> Check:
     return Check("nvidia driver", OK, f"{release + ' ' if release else ''}(supports CUDA {_version(driver)})")
 
 
+def runs_on(capability: tuple[int, int], arches) -> bool:
+    """Whether a torch build with kernels for ``arches`` (``sm_86``, ``compute_90``, ...) runs on ``capability``.
+
+    A cubin runs on the same major version at an equal or higher minor version; PTX compiles for any
+    equal or newer capability.
+    """
+    major, minor = capability
+    for arch in arches:
+        m = re.fullmatch(r"(sm|compute)_(\d+)(\d)[a-z]?", arch)
+        if m is None:
+            continue
+        a_major, a_minor = int(m.group(2)), int(m.group(3))
+        if m.group(1) == "sm" and a_major == major and a_minor <= minor:
+            return True
+        if m.group(1) == "compute" and (a_major, a_minor) <= (major, minor):
+            return True
+    return False
+
+
 def check_torch(driver: tuple[int, int] | None) -> Check:
     import torch
 
@@ -203,16 +222,21 @@ def check_torch(driver: tuple[int, int] | None) -> Check:
             fix = "check CUDA_VISIBLE_DEVICES and that nvidia-smi lists a GPU"
         return Check("torch", FAIL, detail + ", but torch.cuda.is_available() is False", fix)
     devices, missing = [], []
-    arches = set(torch.cuda.get_arch_list())
+    arches = sorted(torch.cuda.get_arch_list())
     for i in range(torch.cuda.device_count()):
-        major, minor = torch.cuda.get_device_capability(i)
-        sm = f"sm_{major}{minor}"
+        capability = torch.cuda.get_device_capability(i)
+        sm = f"sm_{capability[0]}{capability[1]}"
         devices.append(f"{torch.cuda.get_device_name(i)} ({sm})")
-        if arches and sm not in arches and not any(a.startswith("compute_") for a in arches):
+        if arches and not runs_on(capability, arches) and sm not in missing:
             missing.append(sm)
     detail += "; " + ", ".join(devices)
     if missing:
-        return Check("torch", WARN, detail, f"this torch build has no kernels for {', '.join(missing)}: {pick}")
+        return Check(
+            "torch",
+            WARN,
+            detail + f"; built for {', '.join(arches)}",
+            f"this torch build has no kernels for {', '.join(missing)}, so CUDA calls fail: {pick}",
+        )
     return Check("torch", OK, detail)
 
 
@@ -243,6 +267,49 @@ def check_warp(driver: tuple[int, int] | None) -> Check:
     if mjw is None:
         return Check("warp", FAIL, detail, 'pip install "stable-envs[mjwarp]"')
     return Check("warp", OK, detail + f"; sees {', '.join(str(d) for d in wp.get_cuda_devices())}")
+
+
+def check_variables(environ=None) -> Check:
+    """List the ``STABLE_ENVS_*`` variables that are set, and flag unknown names and invalid values."""
+    from ._core import environ as variables
+
+    found, unknown = variables.set_variables(environ)
+    if not found:
+        return Check("STABLE_ENVS_*", OK, "none set")
+    detail = ", ".join(f"{k}={v}" for k, v in found.items())
+    bad = []
+    for name in found:
+        if name in unknown:
+            continue
+        try:
+            variables.VARIABLES[name].parse(found[name])
+        except ValueError as e:
+            bad.append(f"{name}: {e}")
+    if unknown or bad:
+        problems = [f"unknown: {', '.join(unknown)}"] if unknown else []
+        return Check(
+            "STABLE_ENVS_*",
+            WARN,
+            detail + "; " + "; ".join(problems + bad),
+            "check the spelling and values against docs/environment-variables.md",
+        )
+    return Check("STABLE_ENVS_*", OK, detail)
+
+
+def check_tuning(torch_check: Check) -> Check:
+    """Report how many render paths have measured tuning values on the device ``stable-envs tune`` would use."""
+    from . import _tune
+
+    device = "cuda" if torch_check.status == OK and "CPU-only" not in torch_check.detail else "cpu"
+    try:
+        import torch
+
+        if device == "cuda" and not torch.cuda.is_available():
+            device = "cpu"
+        detail = _tune.status(device)
+    except Exception as e:  # noqa: BLE001 — reported
+        return Check("tuning", WARN, f"{type(e).__name__}: {e}", "run `stable-envs tune --clear`")
+    return Check("tuning", OK, detail)
 
 
 def _module_check(name: str, module: str, fix: str) -> Check:
@@ -470,7 +537,14 @@ def run(environ=None) -> Report:
     driver = cuda_driver_version()
     report = Report()
     torch_check, warp_check = check_torch(driver), check_warp(driver)
-    report.system = [check_python(), check_driver(driver), torch_check, warp_check]
+    report.system = [
+        check_python(),
+        check_driver(driver),
+        torch_check,
+        warp_check,
+        check_tuning(torch_check),
+        check_variables(),
+    ]
     report.gl, gl_cap = gl_checks(environ, driver)
     caps = {
         "gl": gl_cap,

@@ -114,7 +114,6 @@ def test_package_exports_the_names_callers_import():
         "_ENV_CACHE",
         "_TC_CACHE",
         "_SCENE_CACHE",
-        "MJW_CHUNK",
         "SPECULAR_SCALE",
     ):
         assert hasattr(dmc, name), f"stable_envs.envs.dmcontrol lacks {name}"

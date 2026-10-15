@@ -27,6 +27,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from . import tuning as _tuning
 from ._core import dynamics as _dynamics
 from ._core.config import get_config as _get_config
 from ._core.style import StyleTensor
@@ -89,6 +90,40 @@ def _guard_render_out(fn):
 
     render._se_out_guarded = True
     return render
+
+
+def _tuned(fn):
+    """Run ``fn`` with ``self`` as the running environment, so its own and its render path's knobs apply."""
+    renders = getattr(fn, "__name__", "") in ("render", "_render")
+
+    @functools.wraps(fn)
+    def tuned(self, *args, **kw):
+        size = kw.get("size")
+        size = int(size) if isinstance(size, int) else None
+        outer = not _tuning.is_running(self)
+        with _tuning.running(self, size):
+            if renders:
+                _tuning.on_render(self, size, may_tune=outer)
+            return fn(self, *args, **kw)
+
+    tuned._se_tuned = True
+    return tuned
+
+
+def _tuned_init(fn):
+    """Accept ``tuning=`` on a subclass constructor and build the instance under it."""
+
+    @functools.wraps(fn)
+    def __init__(self, *args, tuning: Mapping[str, int] | None = None, **kw):
+        if tuning is not None:
+            self._tuning = {k: v for k, v in _tuning.check(tuning).items() if v is not None}
+        return _tuned(fn)(self, *args, **kw)
+
+    __init__._se_tuned = True
+    return __init__
+
+
+_TUNED_METHODS = ("render", "_render", "reset", "step")
 
 
 def _as_state_tensor(owner: str, states) -> torch.Tensor:
@@ -380,6 +415,7 @@ class Env:
         device: str | None = None,
         backend: str = "auto",
         seed: int = 0,
+        tuning: Mapping[str, int] | None = None,
     ):
         """Create ``num_envs`` lanes.
 
@@ -391,7 +427,14 @@ class Env:
                 CUDA when available, otherwise CPU. Where physics runs depends on the family.
             backend: Renderer backend; ``"auto"`` lets the family choose.
             seed: Seed for the environment's sampler.
+            tuning: Speed and memory knobs for this instance only, such as ``{"cpu3d_chunk": 8}``;
+                see :mod:`stable_envs.tuning`. They take precedence over every other setting.
+
+        Raises:
+            ValueError: A ``tuning`` name is not a knob or its value is invalid.
         """
+        if tuning is not None:
+            self._tuning = {k: v for k, v in _tuning.check(tuning).items() if v is not None}
         device = self.resolve_device(device)
         if self.requires_cuda and not str(device).startswith("cuda"):
             raise ValueError(
@@ -447,11 +490,18 @@ class Env:
         return tuple(self.state_names)
 
     def __init_subclass__(cls, **kw):
-        """Wrap each new ``_render`` override with shared input and output-buffer validation."""
+        """Wrap each new ``_render`` override with shared validation, and entry points with instance tuning."""
         super().__init_subclass__(**kw)
         fn = cls.__dict__.get("_render")
         if fn is not None and not getattr(fn, "_se_out_guarded", False):
             cls._render = _guard_render_out(fn)
+        init = cls.__dict__.get("__init__")
+        if init is not None and not getattr(init, "_se_tuned", False):
+            cls.__init__ = _tuned_init(init)
+        for name in _TUNED_METHODS:
+            fn = cls.__dict__.get(name)
+            if callable(fn) and not getattr(fn, "_se_tuned", False):
+                setattr(cls, name, _tuned(fn))
 
     def make_variation_space(self) -> VariationDict:
         """Declare persistent configuration leaves; an empty space exposes no variation."""
@@ -1194,6 +1244,9 @@ class Env:
         self.close()
         return False
 
+
+for _name in _TUNED_METHODS:
+    setattr(Env, _name, _tuned(Env.__dict__[_name]))
 
 # Supply the base step method for override detection without introducing a reverse import.
 Env._se_dynamics_base = Env

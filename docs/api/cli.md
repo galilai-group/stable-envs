@@ -1,6 +1,6 @@
 # Command line
 
-The package installs one command, `stable-envs`. `python -m stable_envs` runs the same command.
+The package installs one command, `stable-envs`, with the subcommands `doctor` and `tune`. `python -m stable_envs` runs the same command.
 
 ## `stable-envs doctor`
 
@@ -45,3 +45,41 @@ such as the extra to install or the environment variable to set.
 Paste this output into bug reports.
 
 See [System setup](../system-setup.md) for what each family needs and how to fix a failing check.
+
+The report also has a `tuning` line: how many render paths have values from `stable-envs tune` on
+this machine. The other paths use the derived defaults.
+
+When torch has no GPU kernels for the GPU's compute capability, the `torch` line warns and lists the
+architectures the build has. CUDA calls then fail. A build for an older architecture runs on a newer
+GPU of the same major version, and PTX (`compute_XY`) runs on any equal or newer GPU.
+
+## `stable-envs tune`
+
+```bash
+stable-envs tune DMCCheetahRun                 # tune one environment's render path
+stable-envs tune TwoRoom --batch 1024 --device cuda
+stable-envs tune --show                        # list cached values
+stable-envs tune --clear                       # delete cached values
+stable-envs tune --all --device cpu            # one environment per render path
+```
+
+`tune` times the tuning knobs one environment reads and saves the fastest values for its render path,
+frame size and batch range on this device. Later runs of every environment on the same path use them.
+See [Performance tuning](../performance-tuning.md) for the knobs and how values are chosen.
+
+| option | effect |
+|---|---|
+| `ENV` | Environment class name, such as `DMCCheetahRun`. |
+| `--batch N` | Number of environments to time (default 64). Values are saved for the power-of-two range that holds `N`. |
+| `--size S` | Frame size in pixels (default: the environment's). |
+| `--device D` | `cpu`, `cuda` or `cuda:N` (default: the configured default device). |
+| `--knob NAME` | Sweep only this knob. Repeat for more. |
+| `--repeats R` | Timed calls per value after one warm-up call (default 5). The median counts. |
+| `--show` | List the cached values of this machine's CPU and GPU, and whether they are current. |
+| `--clear` | Delete the cached values of this machine's CPU and GPU. |
+| `--all` | Tune one representative environment per render path. Prints the plan and an estimated time, then asks before starting. |
+| `--yes` | With `--all`, start without asking. |
+
+The command prints one row per knob (default, tuned value, speedup) and the paths the values were
+saved for. It exits with 1 when `--all` is not confirmed, and fails when a knob value changes frames
+or State, which is a bug to report.

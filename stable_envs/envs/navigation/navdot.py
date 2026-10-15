@@ -4,6 +4,7 @@ import math
 
 import torch
 
+from ... import tuning
 from ...render.raster2d import tile_shape
 
 # Below this alpha, float32 subtraction and uint8 truncation leave every contrast unchanged.
@@ -146,13 +147,13 @@ if HAVE_TRITON:
         tl.store(out + 2, bl.to(tl.uint8), mask=m)
 
 
-# Rectangular tiles permit spatial culling that long flattened strips cannot.
-_BLOCK = 1024
-
-
 def _tile(H: int, W: int) -> tuple[int, int, int, int]:
-    """Choose a compact power-of-two tile and return height, width, tiles across, and total."""
-    bh, bw = tile_shape(H, W, lanes=_BLOCK, max_width=_BLOCK)
+    """Choose a compact power-of-two tile and return height, width, tiles across, and total.
+
+    Rectangular tiles permit spatial culling that long flattened strips cannot.
+    """
+    block = tuning.get("navdot_block")
+    bh, bw = tile_shape(H, W, lanes=block, max_width=block)
     ntx = -(-W // bw)
     return bh, bw, ntx, ntx * (-(-H // bh))
 
@@ -185,10 +186,11 @@ def blend_dots(
         out = torch.empty((B, H, W, 3), dtype=torch.uint8, device=dev)
     win = dot_window(pos, sigma.reshape(B, ND), H, W).reshape(B, ND, 4).contiguous()
     bh, bw, ntx, nt = _tile(H, W)
+    warps = tuning.get("navdot_warps", device=dev)
     with torch.cuda.device(dev):
         part = torch.empty((B, ND, nt), dtype=torch.float32, device=dev)
         _dot_max_kernel[(B, ND, nt)](
-            pos, den, win, part, H=H, W=W, ND=ND, NTX=ntx, NT=nt, BH=bh, BW=bw, num_warps=4, enable_fp_fusion=False
+            pos, den, win, part, H=H, W=W, ND=ND, NTX=ntx, NT=nt, BH=bh, BW=bw, num_warps=warps, enable_fp_fusion=False
         )
         mx = part.amax(dim=2).contiguous()  # exact: a maximum has no rounding order
         _blend_kernel[(B, nt)](
@@ -205,7 +207,7 @@ def blend_dots(
             NTX=ntx,
             BH=bh,
             BW=bw,
-            num_warps=4,
+            num_warps=warps,
             enable_fp_fusion=False,
         )
     return out

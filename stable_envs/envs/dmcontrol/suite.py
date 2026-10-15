@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 import torch
 
+from ... import tuning
 from ..._core.plate_texels import substitute as _substitute_texels
 from ..._core.plate_texels import texel_key as _texel_key
 from ..._core.plate_texels import texel_slots as _texel_slots
@@ -37,10 +38,6 @@ class DMControlSuite(_DMCModel):
 
     # One ray per pixel by default; higher supersampling changes silhouette coverage.
     default_supersample = 1
-    # Bound rays per chunk, including supersamples and intermediate shading buffers.
-    RAY_BUDGET = 1 << 24
-    # Smaller chunks stay cache-resident on CPU.
-    CPU_RAY_BUDGET = 1 << 21
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
@@ -633,7 +630,9 @@ class DMControlSuite(_DMCModel):
             over = {p: uniq[gi][a : a + w] for p, (a, w) in zip(self.PLATE_PATHS, offs)}
             sc = self._scene(size, over)
             idx = torch.as_tensor(sub, device=self.device, dtype=torch.long)
-            budget = self.CPU_RAY_BUDGET if self.device.type == "cpu" else self.RAY_BUDGET
+            # Rays per chunk, counting supersamples; smaller CPU chunks stay cache-resident.
+            knob = "dmc_cpu_ray_budget" if self.device.type == "cpu" else "dmc_ray_budget"
+            budget = tuning.get(knob, device=self.device)
             step = max(1, int(budget // max(1, size * size * ss * ss)))
             for a in range(0, len(sub), step):
                 part = idx[a : a + step]

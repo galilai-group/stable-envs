@@ -90,9 +90,10 @@ def draw(token, bundle, state, device, size, supersample, worlds):
         if bundle.nbuttons or geom in bundle.movers:
             opacity[geom + 1] = float(alpha[geom])
     images = []
-    for start in range(0, len(state), core.MJW_CHUNK):
-        rows = state[start : start + core.MJW_CHUNK]
-        chunk = worlds[start : start + core.MJW_CHUNK]
+    step = core.mjw_worlds()
+    for start in range(0, len(state), step):
+        rows = state[start : start + step]
+        chunk = worlds[start : start + step]
         nw = 1 << (len(rows) - 1).bit_length()
         keys = [
             (torch.cuda.current_device(), token + "/fidelity/opaque", res, nw),

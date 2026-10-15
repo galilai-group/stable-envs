@@ -93,6 +93,8 @@ nav:
       - Install: install.md
       - System setup: system-setup.md
       - Quickstart: quickstart.md
+      - Performance tuning: performance-tuning.md
+      - Environment variables: environment-variables.md
   - Concepts:
       - State, Action, Variation and Frame: concepts/state.md
       - Stepping: concepts/dynamics.md

@@ -6,6 +6,7 @@ import os
 import numpy as np
 import torch
 
+from ... import tuning
 from ...env import Env
 from ...registry import register
 from ...spaces import Dict, Discrete, RGBBox
@@ -101,7 +102,7 @@ UNIT_SPHERE_42 = np.array(
 HULL_MARGIN = 0.001  # ``cylZShape->setMargin(0.001)``
 CYL_STEPS = 32
 # Per-world memory estimates bound renderer chunk allocation.
-NVD_BYTES_PER_PIXEL, NVD_BYTES_PER_VERTEX, NVD_BUDGET_BYTES = 239, 69, 6 << 30
+NVD_BYTES_PER_PIXEL, NVD_BYTES_PER_VERTEX = 239, 69
 
 
 def quat_to_mat(q: np.ndarray) -> np.ndarray:
@@ -509,7 +510,7 @@ def _reference_frame_flagged(env, state: np.ndarray, style_row: np.ndarray, cont
 
 
 def nvd_renderer(size, ss, device, scene_type=ND.Scene, renderer_type=ND.BatchRenderer):
-    """Build the textured-triangle renderer for one size and supersample; return it with its world chunk limit."""
+    """Build the textured-triangle renderer for one size and supersample; return it with its bytes per world."""
     vert, norm, face, vg, uv = build_scene_arrays()
     rgba = np.ones((N_GEOMS, 4))
     rgba[GEOM_NAMES.index("flame")] = FLAME_RGBA
@@ -543,12 +544,16 @@ def nvd_renderer(size, ss, device, scene_type=ND.Scene, renderer_type=ND.BatchRe
     )
     renderer.owns_scene = True
     renderer.background = np.array([1.0, 1.0, 1.0])  # TinyRenderer's clear colour
-    per_world = NVD_BYTES_PER_PIXEL * (size * ss) ** 2 + NVD_BYTES_PER_VERTEX * scene.V
-    return renderer, max(1, int(NVD_BUDGET_BYTES // per_world))
+    return renderer, NVD_BYTES_PER_PIXEL * (size * ss) ** 2 + NVD_BYTES_PER_VERTEX * scene.V
+
+
+def nvd_worlds(per_world: int, device) -> int:
+    """Return the worlds one renderer chunk holds within the ``nvd_budget_bytes`` knob."""
+    return max(1, int(tuning.get("nvd_budget_bytes", device=device) // per_world))
 
 
 class _Nvd:
-    __slots__ = ("br", "size", "ss", "chunk")
+    __slots__ = ("br", "size", "ss", "per_world")
 
 
 _NVD_CACHE = _RES.BoundedCache(8, name="rocket.nvd", on_evict=ND.close_cached_renderer)
@@ -693,7 +698,7 @@ class PyFlytRocketLanding(Env):
             return hit
         c = _Nvd()
         c.size, c.ss = size, ss
-        c.br, c.chunk = nvd_renderer(size, ss, self.device)
+        c.br, c.per_world = nvd_renderer(size, ss, self.device)
         _NVD_CACHE.put(key, c)
         return c
 
@@ -767,7 +772,8 @@ class PyFlytRocketLanding(Env):
         eye, cmat = camera_pose(pos_prev, q_prev)
         xp_t = torch.as_tensor(xp, dtype=torch.float32, device=self.device)
         xm_t = torch.as_tensor(xm, dtype=torch.float32, device=self.device)
-        step = -(-B // max(1, -(-B // c.chunk)))
+        chunk = nvd_worlds(c.per_world, self.device)
+        step = -(-B // max(1, -(-B // chunk)))
         for lo in range(0, B, step):
             hi = min(lo + step, B)
             cam = ND.Camera(eye[lo:hi], cmat[lo:hi], CAM_FOV, CAM_NEAR, CAM_FAR)

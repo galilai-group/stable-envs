@@ -13,6 +13,7 @@ from dataclasses import dataclass
 import numpy as np
 import torch
 
+from .. import tuning
 from . import _resources as _RES
 from .primitives import (
     BOX,
@@ -914,8 +915,6 @@ if HAVE_TRITON:
             tl.store(b_out + flat, blocked.to(tl.uint8), mask=m)
 
 
-CAST_BLOCK = 256
-
 _KIND_CACHE = _Memo(64, name="raycast3d.kind")
 
 
@@ -983,7 +982,8 @@ def _launch(kinds, sizes, pos, R, o, d, lim, skip, mode):
     skip_t = skip if skip is not None else i_out if i_out is not None else dummy
     ls = lim.stride() if lim is not None else (0, 0)
     ks = skip.stride() if skip is not None else (0, 0)
-    grid = (B, triton.cdiv(N, CAST_BLOCK))
+    block = tuning.get("raycast_block", device=dev)
+    grid = (B, triton.cdiv(N, block))
     with torch.cuda.device(dev):
         _tri_cast[grid](
             kt,
@@ -1017,7 +1017,7 @@ def _launch(kinds, sizes, pos, R, o, d, lim, skip, mode):
             MODE=mode,
             HAS_SKIP=skip is not None,
             INF=INF,
-            BLOCK=CAST_BLOCK,
+            BLOCK=block,
             enable_fp_fusion=False,
         )
     return (t_out, n_out, i_out) if mode == 0 else b_out.view(torch.bool)

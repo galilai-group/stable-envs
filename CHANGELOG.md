@@ -10,8 +10,20 @@ All notable changes to this project are listed here. The format follows
 
 - Craftax: `CraftaxClassicPixels`, `CraftaxClassicSymbolic`, `CraftaxPixels` and `CraftaxSymbolic`
   run the upstream JAX simulator with all lanes in one jitted `vmap` (`craftax` / `craftax-gpu` extras).
+- `snv.tuning`: chunk sizes, Triton block sizes, worker counts and memory budgets are named knobs with
+  `snv.tuning.set`, `snv.tuning.override`, `STABLE_ENVS_<KNOB>` variables and a per-environment
+  `tuning={...}` argument. Some defaults are derived from the GPU's free memory or the CPU's L3 size.
+  Knobs never change frames or State. See docs/performance-tuning.md.
+- `stable-envs tune <Env>` and `snv.tune(env)` measure the fastest knob values for one render path on
+  this machine and cache them; `--show`, `--clear` and `--all` manage the cache.
 
 ### Changed
+
+- `stable-envs doctor` reports how many render paths are tuned on this machine, and checks torch's
+  compiled GPU architectures with binary-compatibility rules.
+- `cpu3d.render(chunk_size=None)` and `raster2d.render_triton(block=None)` read the tuning knobs.
+- `MJW_CHUNK` is no longer exported by the DMC and OGBench packages; use the `dmc_min_worlds` and
+  `ogb_mjw_worlds` knobs.
 
 ### Fixed
 

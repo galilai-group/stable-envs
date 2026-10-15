@@ -160,7 +160,8 @@ def render(env, state, size, ss, chunk_size=None):
             return torch.from_numpy(np.stack(images))
         if env.device.type != "cuda":
             raise ValueError("Rocket rendering supports CPU TinyRenderer or CUDA nvdiffrast")
-        renderer, limit = _gpu_context(env, size, ss)
+        renderer, per_world = _gpu_context(env, size, ss)
+        limit = geometry.nvd_worlds(per_world, env.device)
         limit = min(limit, chunk_size) if chunk_size is not None else limit
         positions = np.zeros((len(state), geometry.N_GEOMS, 3), np.float64)
         quaternions = np.zeros((len(state), geometry.N_GEOMS, 4), np.float64)

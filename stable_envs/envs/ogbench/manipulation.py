@@ -13,11 +13,12 @@ from __future__ import annotations
 
 import contextlib
 import copy
-import os
 
 import numpy as np
 import torch
 
+from ... import tuning
+from ..._core import environ as _environ
 from ..._core.mujoco_gl import mujoco_renderer
 from ..._core.plate_texels import quantise as _quantise
 from ..._core.plate_texels import substitute as _substitute
@@ -42,9 +43,11 @@ def IDENTITY_QUAT(nmocap: int) -> np.ndarray:
     return q
 
 
-#: MJWarp worlds per launch. A context is per (res, nworld), so an unbounded batch would build one
-#: per batch size.
-MJW_CHUNK = 256
+def mjw_worlds() -> int:
+    """MJWarp worlds per launch. A context is per (res, nworld), so an unbounded batch would build one per size."""
+    return tuning.get("ogb_mjw_worlds")
+
+
 #: Compiled arrays that vary across Cube/Scene configurations and that fixed-camera MJWarp passes read.
 WORLD_FIELDS = ("geom_size", "cam_quat", "light_diffuse")
 #: The subset that also changes the static background.
@@ -738,8 +741,9 @@ class OGBManipBase(Env):
         plate1 = (plate if ss == 1 else plates1[0]) if gidx is None else None
         cube = self._cube_colours(host, B)
         lut = self._mover_lut()
-        for lo in range(0, B, MJW_CHUNK):
-            hi = min(lo + MJW_CHUNK, B)
+        chunk = mjw_worlds()
+        for lo in range(0, B, chunk):
+            hi = min(lo + chunk, B)
             n = hi - lo
             rgb, seg = self._raster(
                 s[lo:hi],
@@ -776,8 +780,9 @@ class OGBManipBase(Env):
     def _raster(self, chunk, res, cube, mocap_quat, agent=None, worlds=None):
         """Draw one chunk; segmentation aliases the context until its next replay."""
         n = len(chunk)
-        if not 1 <= n <= MJW_CHUNK:
-            raise ValueError(f"Raster chunks must contain 1..{MJW_CHUNK} rows")
+        limit = mjw_worlds()
+        if not 1 <= n <= limit:
+            raise ValueError(f"Raster chunks must contain 1..{limit} rows")
         b = self._b
         nq, nmoc = b.nq, b.nmocap
         c = _context(self.CELL, res, 1 << (n - 1).bit_length())
@@ -1060,7 +1065,7 @@ _MEASURED: dict = {
         "within8_frac": 0.855483,
     },
 }
-_UNMEASURED = str(os.environ.get("STABLE_ENVS_OGB_UNMEASURED", "")) == "1"
+_UNMEASURED = _environ.read("STABLE_ENVS_OGB_UNMEASURED")
 
 # Pin the upstream renderer and scene package independently of our rendering backend.
 _REFERENCE_VERSIONS = {"mujoco": "3.12.0", "ogbench": "1.2.1"}

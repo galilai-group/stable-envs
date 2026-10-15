@@ -8,6 +8,7 @@ from dataclasses import dataclass
 import numpy as np
 import torch
 
+from .. import tuning
 from . import raycast3d as R3
 from .nvdiff import texture_array
 from .primitives import (
@@ -42,9 +43,6 @@ QUANT = "trunc"
 # Test switches that bypass spatial bounds without changing the expected pixels.
 FORCE_FULL_FRAME: bool = False
 SHADOW_TEST_ALL_HITS: bool = False
-
-# Limit intermediate ray buffers to a small working set.
-CPU_CHUNK = 16
 
 
 @dataclass
@@ -456,7 +454,7 @@ def render(
     light_diffuse: torch.Tensor,
     out: torch.Tensor | None = None,
     *,
-    chunk_size: int = CPU_CHUNK,
+    chunk_size: int | None = None,
     plane_mat: torch.Tensor | None = None,
     plane_palette: torch.Tensor | None = None,
 ) -> torch.Tensor:
@@ -467,7 +465,10 @@ def render(
     float32 on the scene's device, as MuJoCo's ``mj_camlight`` produces them.
     ``plane_mat (B,3,3)`` turns the floor per row about its compiled centre, and
     ``plane_palette (B,P,3)`` recolours the scene's floor palette masks per row.
+    ``chunk_size`` frames are cast at a time; None reads the ``cpu3d_chunk`` tuning knob.
     """
+    if chunk_size is None:
+        chunk_size = tuning.get("cpu3d_chunk")
     if isinstance(chunk_size, bool) or not isinstance(chunk_size, int) or chunk_size <= 0:
         raise ValueError("chunk_size must be a positive integer")
     B = int(cam_pos.shape[0])

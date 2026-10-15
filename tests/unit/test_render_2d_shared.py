@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 import torch
 
+from stable_envs import tuning
 from stable_envs.envs.navigation import navdot as NV
 from stable_envs.render import gfxdraw as G
 from stable_envs.render import raster2d as R2
@@ -25,7 +26,8 @@ def test_navdot_tile_is_raster2d_tile_shape_at_its_lane_budget():
     for H in SIZES:
         for W in SIZES:
             bh, bw, ntx, nt = NV._tile(H, W)
-            assert (bh, bw) == R2.tile_shape(H, W, lanes=NV._BLOCK, max_width=NV._BLOCK), (H, W)
+            block = tuning.get("navdot_block")
+            assert (bh, bw) == R2.tile_shape(H, W, lanes=block, max_width=block), (H, W)
             assert ntx == -(-W // bw) and nt == ntx * (-(-H // bh)), (H, W)
 
 

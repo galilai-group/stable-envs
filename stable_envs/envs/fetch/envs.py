@@ -5,6 +5,7 @@ import os
 import numpy as np
 import torch
 
+from ... import tuning
 from ..._core.mujoco_gl import configure_mujoco_gl, mujoco_renderer
 from ..._core.warp_cuda import require_warp_cuda
 
@@ -62,8 +63,6 @@ HIDDEN_GROUP = MW.HIDDEN_GROUP
 VISIBLE_GROUPS = MW.DEFAULT_GROUPS
 # Alpha stable-worldmodel writes into every robot0: geom for rendering.transparent_arm.
 ARM_ALPHA = 0.3
-# Worlds per render context; larger chunks reduce launches but increase framebuffer memory.
-MJW_CHUNK = 256
 
 
 class _Cache(dict):
@@ -703,10 +702,12 @@ class FetchBase(Env):
         # Camera grouping is batch-wide; repeating it per chunk adds host transfers and synchronization.
         campos, camquat = self._camera_batch(sty, B)
         arm = self._translucent_lanes(sty, B)
-        for lo in range(0, B, MJW_CHUNK):
-            hi = min(lo + MJW_CHUNK, B)
+        # More worlds per context reduce launches and increase framebuffer memory.
+        chunk = tuning.get("fetch_mjw_worlds", device=self.device)
+        for lo in range(0, B, chunk):
+            hi = min(lo + chunk, B)
             n = hi - lo
-            nw = 1 if n <= 1 else min(MJW_CHUNK, 1 << (n - 1).bit_length())
+            nw = 1 if n <= 1 else min(chunk, 1 << (n - 1).bit_length())
             g = grp[lo:hi]
             pl = plates_t[0] if len(uniq) == 1 else plates_t[g]
             flags = None if arm is None else arm[lo:hi]

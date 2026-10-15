@@ -142,15 +142,16 @@ def test_window_and_footprint_bounds_are_exact(se, cell, size):
 @pytest.mark.gl
 @pytest.mark.parametrize("cell", CELLS)
 def test_batch_chunk_and_order_invariance(se, cell):
-    from stable_envs.render import cpu3d
+    from stable_envs import tuning
 
-    n = cpu3d.CPU_CHUNK + 3  # straddles a chunk boundary
+    chunk = tuning.get("cpu3d_chunk")
+    n = chunk + 3  # straddles a chunk boundary
     st = _states(cell, n)
     env = se.make(cell, num_envs=n, device="cpu")
     a = env._render(st).numpy()
     b = env._render(st).numpy()
     assert np.array_equal(a, b), "not deterministic"
-    for i in (0, cpu3d.CPU_CHUNK - 1, cpu3d.CPU_CHUNK, n - 1):
+    for i in (0, chunk - 1, chunk, n - 1):
         one = env._render(st[i : i + 1]).numpy()[0]
         assert np.array_equal(one, a[i]), f"frame {i} depends on its batch"
     perm = np.random.default_rng(0).permutation(n)
@@ -160,7 +161,7 @@ def test_batch_chunk_and_order_invariance(se, cell):
     sty = env.sample_style(n, rng=np.random.default_rng(1))
     d1 = env._render(st, style=sty).numpy()
     assert np.array_equal(d1, env._render(st, style=sty).numpy())
-    for i in (0, cpu3d.CPU_CHUNK, n - 1):
+    for i in (0, chunk, n - 1):
         assert np.array_equal(env._render(st[i : i + 1], style=sty[i : i + 1]).numpy()[0], d1[i]), (
             f"frame {i} with a per-row style depends on its batch"
         )

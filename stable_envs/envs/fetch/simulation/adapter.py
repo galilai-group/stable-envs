@@ -7,6 +7,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .... import tuning
 from ...._execution.protocol import SimulatorAdapter
 
 FIELDS = {
@@ -124,8 +125,8 @@ class FetchAdapter(SimulatorAdapter):
         self.reset(seed=seed)
         # Bound threads by scheduler affinity and keep small batches serial.
         available = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else (os.cpu_count() or 1)
-        if self.num_envs >= 64 and available > 1:
-            self._set_workers(min(4, available))
+        if self.num_envs >= tuning.get("worker_min_lanes") and available > 1:
+            self._set_workers(min(tuning.get("fetch_threads"), available, self.num_envs))
 
     def _set_workers(self, workers):
         """Assign disjoint simulator lanes to each thread; wait for existing work first."""

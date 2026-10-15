@@ -116,6 +116,17 @@ def test_default_budget_leaves_headroom_and_explicit_budget_is_supported(monkeyp
     assert other.budget(0) == 1234
 
 
+def test_the_budget_knob_is_read_at_call_time(monkeypatch):
+    from stable_envs import tuning
+
+    monkeypatch.delenv("STABLE_ENVS_OGB_CONTEXT_CACHE_BYTES", raising=False)
+    c, _ = cache(None)
+    assert c.budget(0) == 2000
+    with tuning.override(ogb_context_cache_bytes=4321):
+        assert c.budget(0) == 4321
+    assert c.budget(0) == 2000
+
+
 def test_lease_and_working_set_are_restored_after_exceptions():
     c, released = cache(100)
     with pytest.raises(ValueError):

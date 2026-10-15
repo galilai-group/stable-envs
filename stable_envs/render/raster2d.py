@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import torch
 
+from .. import tuning
 from . import _resources as _RES
 from .scene import KIND_DISC, KIND_POLY, KIND_SEGMENT, Scene2D
 
@@ -636,8 +637,8 @@ def _destination(out, B: int, H: int, W: int) -> torch.Tensor | None:
 #: Primitive-count threshold for paying the culling prepass cost.
 _CULL_MIN_PRIMS = 24
 
-#: Wide tiles balance local culling with contiguous RGB writes; values are (height, width, warps).
-_CULL_TILE = (8, 128, 4)
+#: Wide tiles balance local culling with contiguous RGB writes; values are (height, width).
+_CULL_TILE = (8, 128)
 
 #: Maximum masked-lane fraction before selecting a narrower tile.
 TILE_WASTE_MAX = 0.125
@@ -660,7 +661,7 @@ def _tiles(H: int, W: int, block: int, cull: bool) -> tuple[int, int, int, int, 
     """Return tile dimensions, counts, and warps; unculled work uses linear pixel runs."""
     if not cull:
         return 1, block, triton.cdiv(H * W, block), 1, 4
-    warps = _CULL_TILE[2]
+    warps = tuning.get("raster2d_cull_warps")
     bh, bw = tile_shape(H, W, lanes=_CULL_TILE[0] * _CULL_TILE[1], max_width=_CULL_TILE[1])
     ntx = triton.cdiv(W, bw)
     return bh, bw, ntx * triton.cdiv(H, bh), ntx, warps
@@ -672,11 +673,12 @@ def render_triton(
     out_size: int | tuple[int, int],
     supersample: int = 1,
     out: torch.Tensor | None = None,
-    block: int = 128,
+    block: int | None = None,
     cull: bool | None = None,
 ) -> torch.Tensor:
     """Rasterize a CUDA Scene2D into (B, H, W, 3) uint8 frames.
 
+    ``block`` is the pixels per program without culling; None reads the ``raster2d_block`` tuning knob.
     ``cull`` forces bounding-box culling on or off; None selects by primitive count.
     ``out`` must be contiguous uint8 storage with exactly B*H*W*3 elements.
     """
@@ -690,6 +692,7 @@ def render_triton(
     if buf is None:
         buf = torch.empty((B, H, W, 3), dtype=torch.uint8, device=scene.kind.device)
     do_cull = (N >= _CULL_MIN_PRIMS) if cull is None else bool(cull)
+    block = tuning.get("raster2d_block") if block is None else int(block)
     # Triton takes its stream from the current CUDA device; select the scene's device explicitly.
     with torch.cuda.device(scene.kind.device):
         base = _static_base(scene, H * ss, W * ss, block)

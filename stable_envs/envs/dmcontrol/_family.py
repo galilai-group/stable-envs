@@ -41,7 +41,6 @@ from ._model import (  # noqa: F401
     EPISODE_ARRAYS,
     HIDDEN_GROUP,
     LIGHT_DIRECTIONAL,
-    MJW_CHUNK,
     N_DRAWS,
     SPECULAR_SCALE,
     VISIBLE_GROUPS,

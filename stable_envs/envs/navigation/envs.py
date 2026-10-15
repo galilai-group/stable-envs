@@ -7,6 +7,7 @@ import torch
 from gymnasium import spaces as gym_spaces
 from tensordict import TensorDict
 
+from ... import tuning
 from ...env import Env, ResetLeaf, StepResult, check_states
 from ...registry import register
 from ...render import _resources as _RES
@@ -47,8 +48,6 @@ ZONE_BIAS = ((2.0, 0.0), (0.0, 2.0), (-2.0, 0.0), (-0.0, -2.0))
 
 POS_LO = float(BORDER)
 POS_HI = float(IMG - BORDER - 1)
-# Bound intermediate image memory independently of the total batch size.
-RENDER_CHUNK = 256
 
 
 def _grids(device) -> tuple[torch.Tensor, torch.Tensor]:
@@ -592,8 +591,10 @@ class _TorchNavBase(_GymReferencePort):
         else:
             img = torch.empty((n, IMG, IMG, 3), dtype=torch.uint8, device=self.device)
 
-        for lo in range(0, n, RENDER_CHUNK):
-            img[lo : min(lo + RENDER_CHUNK, n)] = self._render_chunk(s, sty, lo, min(lo + RENDER_CHUNK, n))
+        # Chunks bound intermediate image memory independently of the batch size.
+        chunk = tuning.get("nav_render_chunk", device=self.device)
+        for lo in range(0, n, chunk):
+            img[lo : min(lo + chunk, n)] = self._render_chunk(s, sty, lo, min(lo + chunk, n))
         return img.view(*lead, IMG, IMG, 3) if lead else img
 
     def _render_chunk(self, s, sty, lo: int, hi: int) -> torch.Tensor:

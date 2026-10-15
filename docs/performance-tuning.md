@@ -1,0 +1,141 @@
+# Performance tuning
+
+Every environment runs well with no setup. Chunk sizes, Triton block sizes, worker counts and memory
+budgets have defaults, and some defaults are computed from the hardware when the process starts.
+You can change them to trade speed against memory. A tuning knob never changes frames or State: it
+only changes how the work is split.
+
+Knobs belong to render paths, not to environments. For example, every fixed-camera DM Control cell
+uses the `dmc-suite` path, so a value measured with `DMCCartpoleSwingup` also applies to
+`DMCReacherEasy`.
+
+## Where a value comes from
+
+When the library reads a knob, it uses the first value it finds in this list:
+
+1. The environment's own knobs: `snv.make("DMCCheetahRun", tuning={"cpu3d_chunk": 8})`.
+   They apply only while that environment runs.
+2. `snv.tuning.override(...)` blocks, innermost first, then `snv.tuning.set(...)`.
+3. The environment variable `STABLE_ENVS_<KNOB>`, for example `STABLE_ENVS_CPU3D_CHUNK=8`.
+4. A value that `stable-envs tune` measured on this machine for the running environment's render path,
+   frame size and batch range.
+5. A value derived from the hardware, for knobs that have a rule.
+6. The fallback in the table below. TrackCom cells replace the `cpu3d_chunk` fallback with a
+   per-cell table measured on a Xeon Platinum 8268.
+
+The library reads knobs each time it does the work, so a change applies to the next call. An unknown
+knob name raises `ValueError`, and so does an invalid value (not an int, too small, not a power of
+two where one is required, or not an allowed warp count).
+
+```python
+import stable_envs as snv
+
+snv.tuning.set(cpu3d_chunk=8)                 # whole process
+with snv.tuning.override(nav_render_chunk=64):  # this block
+    frames = env.render(state)
+env = snv.make("TwoRoom", num_envs=1024, tuning={"nav_render_chunk": 128})  # one environment
+snv.tuning.get("cpu3d_chunk")                 # current value
+snv.tuning.describe()                         # every knob, its value and its source
+```
+
+Environment variables take an integer with an optional `K`, `M`, `G` or `T` suffix (powers of 1024),
+for example `STABLE_ENVS_NVD_BUDGET_BYTES=4G`. The value `auto` skips the variable. See
+[Environment variables](environment-variables.md) for every variable.
+
+## Knobs
+
+Values are ints. "Machine" is the machine the fallback was measured on, where it was recorded.
+
+| knob | fallback | derived default | machine | what it controls |
+|---|---|---|---|---|
+| `workers` | 8 | min(value, CPUs in the process affinity, lanes) | not recorded | Most worker processes of a CPU simulator batch on Linux; 0 steps every lane in the main process. |
+| `worker_min_lanes` | 64 | none | not recorded | Smallest batch that uses worker processes, or Fetch simulator threads. |
+| `fetch_threads` | 4 | min(value, CPUs in the process affinity, lanes) | not recorded | Most simulator threads of an in-process Fetch batch. |
+| `cpu3d_chunk` | 16 | none (TrackCom cells use a per-cell table) | Xeon Platinum 8268 | Frames per chunk of the CPU ray caster (`cpu3d`). |
+| `dmc_cpu_ray_budget` | 2^21 | 2^21 × L3 size / 35.75 MiB, rounded to a power of two, in [2^18, 2^21] | not recorded | Rays per CPU render chunk of the fixed-camera DMC cells, counting supersamples. |
+| `dmc_ray_budget` | 2^24 | min(2^24, free GPU memory / 512), rounded down to a power of two | not recorded | Rays per CUDA render chunk of the fixed-camera DMC cells. |
+| `dmc_launch_rays` | 256 × 224 × 224 | none | not recorded | Rays per MJWarp launch of the DMC TrackCom cells; sets worlds per launch (at most 256). |
+| `dmc_min_worlds` | 64 | none | not recorded | Fewest worlds per MJWarp launch of the DMC TrackCom cells. |
+| `fetch_mjw_worlds` | 256 | none | not recorded | Most worlds per MJWarp launch of the Fetch cells. |
+| `ogb_mjw_worlds` | 256 | none | not recorded | Most worlds per MJWarp launch of the OGBench Cube and Scene cells. |
+| `ogb_context_cache_bytes` | none | min(total GPU memory / 4, free GPU memory / 2), per device | not recorded | GPU bytes the OGBench MJWarp context cache keeps. |
+| `nvd_budget_bytes` | 6 GiB | min(6 GiB, free GPU memory / 2) | not recorded | GPU bytes one nvdiffrast chunk of the Rocket cells may use. |
+| `nav_render_chunk` | 256 | none | not recorded | Frames per render chunk of the navigation cells. |
+| `navdot_block` | 1024 | none | not recorded | Pixels per Triton tile of the navigation dot compositor (power of two). |
+| `navdot_warps` | 4 | none | not recorded | Triton warps per tile of the navigation dot compositor. |
+| `raster2d_block` | 128 | none | not recorded | Pixels per Triton program of the 2-D rasterizer without culling (power of two). |
+| `raster2d_cull_warps` | 4 | none | not recorded | Triton warps per tile of the 2-D rasterizer with culling. |
+| `gfxdraw_warps` | 1 | none | not recorded | Triton warps per tile of the classic-control rasterizer. |
+| `raycast_block` | 256 | none | not recorded | Rays per Triton program of the analytic ray caster (power of two). |
+
+Hardware rules are computed once per process and device. GPU rules read `torch.cuda.mem_get_info`;
+the CPU rule reads the L3 size from `sysconf` or `/sys`. Where the hardware cannot be read, the
+fallback applies.
+
+### What to sweep
+
+- Out of GPU memory: lower `dmc_ray_budget`, `nvd_budget_bytes`, `dmc_launch_rays`,
+  `fetch_mjw_worlds`, `ogb_mjw_worlds` or `ogb_context_cache_bytes`.
+- Slow CPU rendering of DMC cells: try `cpu3d_chunk` (TrackCom cells) or `dmc_cpu_ray_budget`
+  (fixed-camera cells) in powers of two. Smaller chunks stay in the CPU cache.
+- Slow CPU stepping: try `workers` between 0 and the number of cores, and `worker_min_lanes`
+  for small batches. Worker processes are used only on Linux.
+- Triton kernels on a new GPU: try the `*_warps` knobs (1, 2, 4, 8) and the `*_block` knobs in powers of two.
+
+## `stable-envs tune`
+
+`stable-envs tune` measures the fastest values on this machine. Tuning is optional and covers one
+environment at a time.
+
+```bash
+stable-envs tune DMCCheetahRun --batch 64 --device cpu
+```
+
+For each knob the environment reads, the command starts at the default and times a few powers of two
+around it, one knob at a time, keeping the best value of each knob for the next. Each value gets one
+warm-up call and five timed calls, with CUDA synchronized, and the median counts. Values that give the
+same work split (for example a chunk larger than the batch) or that would use more than half the free
+GPU memory are skipped. A run takes about a minute.
+
+The command checks that every value gives the same frames or State as the first. A difference is a bug
+and stops the run.
+
+It prints a table and where the values were saved. Example output (the numbers depend on the machine):
+
+```text
+  knob                        default        tuned  speedup
+  cpu3d_chunk                      64           32    1.12x
+saved for: dmc-trackcom, 64 px, batch 64-127 (also covers: DMCHopperHop, DMCHumanoidWalk, ...)
+```
+
+Values are saved for the render path, the frame size and the batch range (powers of two: 64 to 127,
+128 to 255, and so on). They are saved in `~/.cache/stable-envs/tuning/<device name>.json`
+(`$XDG_CACHE_HOME` replaces `~/.cache` when set). A file applies only on the same device, driver,
+host CPU and stable-envs version; after an upgrade, tune again.
+
+From Python, `snv.tune(env)` does the same with a constructed environment and returns the chosen values.
+It restores the environment's State afterwards.
+
+## Hint and autotune
+
+The first time a render path with no measured values renders a batch of 256 or more lanes, the
+library logs one `INFO` line on the `stable_envs.tuning` logger, such as
+``"`stable-envs tune DMCCheetahRun --batch 512 --device cuda` may speed up the dmc-trackcom render path"``.
+It logs this at most once per path and device in a process. `STABLE_ENVS_TUNING_HINT=0` or the
+logging configuration silences it.
+
+With `STABLE_ENVS_AUTOTUNE=1`, the library runs the same bounded tune instead of logging, the first
+time such a path renders outside another call of the environment, then caches the values. That first
+render takes about a minute longer. A lock file beside the cache file lets one process tune: another
+process that finds the lock held uses the defaults without waiting. A failed tune logs an `INFO` line,
+and the render continues with the defaults. Autotune is off by default, and it skips environments built
+with their own `tuning=`.
+
+See [Command line](api/cli.md#stable-envs-tune) for every option.
+
+## Reference
+
+::: stable_envs.tuning
+    options:
+      members: [get, set, reset, override, describe, cache_path, Knob]
+      show_root_heading: false

@@ -5,6 +5,7 @@ import warnings
 import numpy as np
 import torch
 
+from ... import tuning
 from ..._core.plate_texels import quantise as _quantise
 from ..._core.plate_texels import texel_slots as _texel_slots
 from ..._core.warp_cuda import require_warp_cuda
@@ -17,7 +18,6 @@ from ._mass_rows import ARRAYS as _MASS_ARRAYS
 from ._mass_rows import MassRows
 from ._model import (
     _TC_CACHE,
-    MJW_CHUNK,
     VISIBLE_GROUPS,
     _grid_defaults,
     _grid_masks,
@@ -138,13 +138,13 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
     return c
 
 
-# Rays per captured launch: up to 256 worlds while a launch stays within 256 frames of 224 px, so
-# per-launch uploads amortize over more worlds and large images keep the memory bound.
-_RAYS_PER_LAUNCH = 256 * 224 * 224
-
-
 def _launch_worlds(size: int, batch: int) -> int:
-    capacity = max(MJW_CHUNK, min(256, _RAYS_PER_LAUNCH // (int(size) * int(size))))
+    """Worlds per captured launch: within the ray budget, at most 256 and at least the minimum knob.
+
+    More worlds amortize per-launch uploads; the ray budget bounds memory at large image sizes.
+    """
+    rays = tuning.get("dmc_launch_rays") // (int(size) * int(size))
+    capacity = max(tuning.get("dmc_min_worlds"), min(256, rays))
     return min(capacity, 1 << max(0, int(batch) - 1).bit_length())
 
 
@@ -197,7 +197,8 @@ class DMControlTrackCom(_DMCModel):
     # Render-context flags participate in the cache key; defaults may differ by domain.
     RENDER_FLAGS: dict = {}
 
-    CPU_RENDER_CHUNK = C3.CPU_CHUNK
+    # Frames per cpu3d chunk for this cell, or None for the ``cpu3d_chunk`` fallback.
+    CPU_RENDER_CHUNK: int | None = None
     # Measured CPU choices at source-tested resolutions; larger images retain the memory bound.
     _CPU_RENDER_CHUNKS = {
         ("hopper", 64): 64,
@@ -229,7 +230,11 @@ class DMControlTrackCom(_DMCModel):
                 f"device='cuda' (MJWarp) or device='cpu' (stable_envs.render.cpu3d)"
             )
 
-    def _context(self, size: int, nworld: int = MJW_CHUNK) -> _TCtx:
+    def _tuning_defaults(self, size: int) -> dict:
+        """Per-cell values that replace knob fallbacks when nothing sets the knob."""
+        return {"cpu3d_chunk": self._CPU_RENDER_CHUNKS.get((self.DOMAIN, size), self.CPU_RENDER_CHUNK)}
+
+    def _context(self, size: int, nworld: int) -> _TCtx:
         return _tc_context(type(self), int(size), int(nworld))
 
     @classmethod
@@ -443,9 +448,7 @@ class DMControlTrackCom(_DMCModel):
                 mat[:, i] = sty[f"material.{name}"][:B]
         base = torch.as_tensor(pr["light_diffuse"], dtype=torch.float32, device=self.device)
         ldif = torch.clamp(base.unsqueeze(0) * sty["light.diffuse_scale"][:B].reshape(B, 1, 1), 0, 1)
-        chunk = self._CPU_RENDER_CHUNKS.get((self.DOMAIN, size), self.CPU_RENDER_CHUNK)
-        # An instance-level CPU_RENDER_CHUNK overrides the measured table.
-        chunk = vars(self).get("CPU_RENDER_CHUNK", chunk)
+        chunk = tuning.get("cpu3d_chunk", default=self._tuning_defaults(size)["cpu3d_chunk"])
         C3.render(
             sc,
             cam,

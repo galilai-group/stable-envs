@@ -8,12 +8,12 @@ additional context before its exact size is known; the limit governs retained
 contexts, not all allocations in the process.
 """
 
-import os
 import threading
 from collections import Counter, OrderedDict
 from contextlib import contextmanager
 from dataclasses import fields, is_dataclass
 
+from ... import tuning
 from ...render import _resources
 
 
@@ -34,18 +34,19 @@ class ContextCache:
         self.hits = self.misses = self.evictions = self.active_evictions = 0
 
     def budget(self, device):
-        if device not in self._budgets:
-            configured = self.budget_bytes
-            if configured is None:
-                configured = os.environ.get("STABLE_ENVS_OGB_CONTEXT_CACHE_BYTES")
-            if configured is None:
+        configured = self.budget_bytes
+        if configured is None:
+            configured = tuning.get("ogb_context_cache_bytes", device=device)
+        if configured is None:
+            if device not in self._budgets:
                 free, total = self.memory_info(device)
-                configured = min(total // 4, free // 2)
-            configured = int(configured)
-            if configured <= 0:
-                raise ValueError("OGBench context cache budget must be positive bytes")
-            self._budgets[device] = configured
-        return self._budgets[device]
+                self._budgets[device] = min(total // 4, free // 2)
+            return self._budgets[device]
+        configured = int(configured)
+        if configured <= 0:
+            raise ValueError("OGBench context cache budget must be positive bytes")
+        self._budgets[device] = configured
+        return configured
 
     def get(self, key, default=None):
         with self._lock:
@@ -64,7 +65,8 @@ class ContextCache:
         if size + locked > budget:
             raise MemoryError(
                 f"OGBench leased contexts need {size + locked} bytes, above the {budget}-byte context cache budget. "
-                "Reduce chunk_size/resolution or increase STABLE_ENVS_OGB_CONTEXT_CACHE_BYTES."
+                "Reduce chunk_size/resolution or raise the ogb_context_cache_bytes tuning knob "
+                "(STABLE_ENVS_OGB_CONTEXT_CACHE_BYTES)."
             )
         while self._used[device] + size > budget:
             candidates = [k for k in self._d if k[0] == device and not self._leases[k]]

@@ -245,10 +245,11 @@ def render(family, state, device, backend="auto", chunk_size=None):
         limit = chunk_size or len(state)
         active = set()
         device_index = torch.cuda.current_device()
+        step = core.mjw_worlds()
         for start in range(0, len(state), limit):
             count = min(limit, len(state) - start)
-            for offset in range(0, count, core.MJW_CHUNK):
-                nw = 1 << (min(core.MJW_CHUNK, count - offset) - 1).bit_length()
+            for offset in range(0, count, step):
+                nw = 1 << (min(step, count - offset) - 1).bit_length()
                 if backend == "mjwarp_fidelity":
                     active.add((device_index, token + "/fidelity/glass", size, nw))
                     active.add((device_index, token + "/fidelity/opaque", size * ss, nw))

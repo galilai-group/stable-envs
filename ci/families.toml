@@ -33,6 +33,7 @@ paths = [
   "stable_envs/registry.py",
   "stable_envs/spaces.py",
   "stable_envs/specs.py",
+  "stable_envs/tuning.py",
   "stable_envs/envs/__init__.py",
   "stable_envs/_core/**",
   "stable_envs/_execution/**",

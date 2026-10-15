@@ -6,7 +6,6 @@ from ...registry import REGISTRY, register
 from . import manipulation, maze  # noqa: F401  (imported for their registrations)
 from .manipulation import (  # noqa: F401
     IDENTITY_QUAT,
-    MJW_CHUNK,
     SPEC,
     VISIBLE_GROUPS,
     OGBManipBase,

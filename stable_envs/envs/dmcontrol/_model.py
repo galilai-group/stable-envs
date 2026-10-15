@@ -48,8 +48,6 @@ _GRID_SLOTS: dict = {}
 _ENV_CACHE: dict = {}
 # Captured GPU contexts are bounded and released on eviction.
 _TC_CACHE = _RES.BoundedCache(3, name="dmcontrol.tc", on_evict=MW.release_cached_ctx)
-# Maximum worlds per captured context; smaller calls reuse padded contexts.
-MJW_CHUNK = 64
 
 
 def _check_dm_control_works() -> None:

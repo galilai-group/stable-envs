@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 import torch
 
+from ... import tuning
 from .. import gfxdraw as G
 from .fused import (
     HAVE_TRITON,
@@ -342,7 +343,6 @@ if HAVE_TRITON:
 
 
 TILE = (1, 128)
-WARPS = 1
 
 
 @torch.no_grad()
@@ -388,6 +388,6 @@ def render_classic(ops: Ops, out: torch.Tensor | None = None) -> torch.Tensor:
             NTX=ntx,
             BH=bh,
             BW=bw,
-            num_warps=WARPS,
+            num_warps=tuning.get("gfxdraw_warps"),
         )
     return out
