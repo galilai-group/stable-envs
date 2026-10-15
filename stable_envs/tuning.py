@@ -165,7 +165,7 @@ _environ.register(
     "STABLE_ENVS_AUTOTUNE", "flag", False, "1 tunes a large untuned render path on first use.", _environ.parse_flag
 )
 _environ.register(
-    "STABLE_ENVS_TUNING_HINT", "flag", True, "0 silences the `stable-envs tune` hint.", _environ.parse_flag
+    "STABLE_ENVS_TUNING_HINT", "flag", True, "Set to 0 to hide the `stable-envs tune` hint.", _environ.parse_flag
 )
 
 
@@ -418,7 +418,8 @@ def on_render(path: str, size: int, batch: int, env) -> None:
             autotune(type(env).__name__, size, batch, str(env.device))
         elif _environ.read("STABLE_ENVS_TUNING_HINT"):
             logger.info(
-                "`stable-envs tune %s --batch %d --size %d --device %s` may speed up the %s render path (about 1 min)",
+                "`stable-envs tune %s --batch %d --size %d --device %s` may speed up the %s render path (about 1 min). "
+                "To hide this message, set STABLE_ENVS_TUNING_HINT=0.",
                 type(env).__name__,
                 batch,
                 size,

@@ -16,7 +16,7 @@ All notable changes to this project are listed here. The format follows
 - `stable-envs tune <Env>` and `snv.tune(env)` measure the fastest knob values for one render path on
   this machine and cache them; `--show`, `--clear` and `--all` manage the cache.
 - A large render on an untuned path logs one `INFO` hint to run `stable-envs tune`
-  (`STABLE_ENVS_TUNING_HINT=0` silences it). `STABLE_ENVS_AUTOTUNE=1` tunes such a path on first use.
+  (to hide it, set `STABLE_ENVS_TUNING_HINT=0`). `STABLE_ENVS_AUTOTUNE=1` tunes such a path on first use.
 - docs/environment-variables.md lists every `STABLE_ENVS_*` variable.
 
 ### Changed

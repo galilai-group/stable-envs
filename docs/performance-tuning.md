@@ -122,9 +122,10 @@ It restores the environment's State afterwards.
 
 The first time a render path with no measured values renders a batch of 256 or more lanes, the
 library logs one `INFO` line on the `stable_envs.tuning` logger, such as
-``"`stable-envs tune DMCCheetahRun --batch 512 --size 64 --device cuda` may speed up the dmc-trackcom render path"``.
-It logs this at most once per path and device in a process. `STABLE_ENVS_TUNING_HINT=0` or the
-logging configuration silences it.
+``"`stable-envs tune DMCCheetahRun --batch 512 --size 64 --device cuda` may speed up the dmc-trackcom render path
+(about 1 min). To hide this message, set STABLE_ENVS_TUNING_HINT=0."``.
+It is logged at most once per path and device in a process. To hide it, set `STABLE_ENVS_TUNING_HINT=0`
+or raise the `stable_envs.tuning` log level.
 
 With `STABLE_ENVS_AUTOTUNE=1`, the library tunes instead of logging: the first time such a path renders,
 it builds a separate environment of the same class, batch, size and device, tunes it and caches the

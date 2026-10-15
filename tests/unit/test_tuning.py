@@ -241,7 +241,7 @@ def test_a_large_untuned_render_logs_one_hint_per_path(caplog):
     assert hint.levelname == "INFO"
 
 
-def test_the_hint_is_silenced_by_its_variable_and_by_a_cached_entry(caplog, monkeypatch):
+def test_the_hint_is_hidden_by_its_variable_and_by_a_cached_entry(caplog, monkeypatch):
     caplog.set_level("INFO", logger="stable_envs.tuning")
     monkeypatch.setenv("STABLE_ENVS_TUNING_HINT", "0")
     _draw(Probe(num_envs=tuning.HINT_LANES))

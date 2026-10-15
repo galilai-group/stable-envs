@@ -42,7 +42,7 @@ knob does and its default.
 
 | variable | default | effect |
 |---|---|---|
-| `STABLE_ENVS_TUNING_HINT` | 1 | `0` silences the one-time log line that suggests `stable-envs tune` for a large untuned render path. |
+| `STABLE_ENVS_TUNING_HINT` | 1 | Set to `0` to hide the one-time log line that suggests `stable-envs tune`. |
 | `STABLE_ENVS_AUTOTUNE` | 0 | `1` tunes an untuned render path the first time it renders a large batch, then caches the values. |
 
 ## Development
