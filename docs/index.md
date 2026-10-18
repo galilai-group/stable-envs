@@ -47,7 +47,7 @@ A frame is `f(state, variation)`. Where native dynamics exist, `next_state = g(s
 Families render in different ways:
 
 - 2-D families build a `Scene2D` and rasterize it. See [The Scene2D IR](concepts/scene-ir.md) and
-  [The fused rasterizer](concepts/rasterizer.md).
+  [2D raster rendering](api/raster2d.md).
 - Tile-atlas families gather tiles from a precomputed atlas.
 - OGBench mazes ray-cast analytic primitives.
 - MuJoCo families use MuJoCo's OpenGL renderer or MJWarp.

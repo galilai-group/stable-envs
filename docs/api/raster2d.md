@@ -18,10 +18,37 @@ may differ. Supersampling changes edge coverage and cost.
 Classic control uses the separate `gfxdraw` kernels to reproduce SDL blending
 and edge rules.
 
-## Performance
+## Design
 
-On one H200, at 96 px and batch 256, the fused Triton path rendered 1,121,346 FPS and Torch
-compositing rendered 15,346 FPS. This compares two implementations in this library. It does not
-compare against the upstream renderer. See [The fused rasterizer](../concepts/rasterizer.md).
+The Triton kernel computes each output pixel's colour in registers from a few numbers per primitive. It
+evaluates the whole supersample block and writes only the result, so it allocates no canvas. The Torch
+backend composites on a `(B,3,R,R)` float canvas, one pass per primitive. It is the readable
+specification and the CPU path.
+
+Outlines are unions of per-edge capsules, so corners are round, as in pygame's `draw_fat_segment`.
+
+## Supersampling
+
+`supersample=ss` averages `ss × ss` subpixels per output pixel. The default is 1. Supersampling changes
+edge pixels only. A larger `ss` costs more time per frame.
+
+## Entry points
+
+```python
+from stable_envs.render.raster2d import render, render_triton, render_torch
+
+img = render(scene, out_size=96, supersample=1, backend="auto")
+```
+
+`backend="auto"` uses Triton when it is available on a CUDA device, and Torch otherwise.
+`Env.render` accepts `out=`, a preallocated `(B,H,W,3)` uint8 buffer. It removes the allocation from a
+training loop.
+
+## Cost outside the kernel
+
+`Env.render` builds a `Scene2D` from the State, then rasterizes it. Scene construction issues a few
+dozen small Torch ops from Python, so its cost changes little with the batch. The kernel is one launch
+that scales with output pixels. Below about a thousand environments, scene construction takes most of
+the time.
 
 ::: stable_envs.render.raster2d

@@ -100,6 +100,7 @@ nav:
       - Stepping: concepts/dynamics.md
       - Variations: concepts/variation-spaces.md
       - Lifecycle: concepts/lifecycle.md
+      - Fidelity tiers: concepts/fidelity-tiers.md
       - Limitations: concepts/limitations.md
       - Sibling projects: concepts/worldmodel.md
   - Environments: environments.md
@@ -123,8 +124,6 @@ nav:
       - Testing: testing.md
       - Internals:
           - Fidelity methodology: concepts/fidelity-methodology.md
-          - Fidelity tiers: concepts/fidelity-tiers.md
           - Why physics is separate: concepts/physics.md
           - The Scene2D IR: concepts/scene-ir.md
-          - The fused rasterizer: concepts/rasterizer.md
   - Changelog: changelog.md
