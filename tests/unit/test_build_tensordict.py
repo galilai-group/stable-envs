@@ -24,7 +24,7 @@ def _layout(td):
 
 
 def _source():
-    nested = TensorDict({"x": torch.arange(6).reshape(3, 2)}, batch_size=[3, 1], device="cpu")
+    nested = TensorDict({"x": torch.arange(6).reshape(3, 1, 2)}, batch_size=[3, 1], device="cpu")
     return {
         "a": torch.zeros(3, 4),
         "tree": {"b": torch.ones(3, dtype=torch.int32), "deeper": {"c": torch.arange(3)}},
