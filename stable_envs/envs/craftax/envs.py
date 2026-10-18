@@ -117,6 +117,9 @@ class CraftaxEnv(Env):
             return self._k.render(self._live("render"))
         return self._k.render_state(self._checked(state, "render"), self.device)
 
+    def _render_live(self):
+        return self._k.render(self._live("render"))
+
     def _close(self):
         self._state = None
 

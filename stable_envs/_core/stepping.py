@@ -93,6 +93,8 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
         acts = acts.detach().cpu().numpy()
     history, saved_states, saved_frames, validity = [], {}, {}, []
     advance = getattr(env, "_advance_without_snapshot", env._step)
+    # Draws the live lanes without rebuilding them from the State snapshot.
+    render_live = getattr(env, "_render_live", None)
     active = torch.ones(env.num_envs, dtype=torch.bool, device=env.device)
     all_active = True
     result, live_state, live_frame = None, None, None
@@ -141,7 +143,9 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
                 saved_states[t] = live_state
             if t in frame_times:
                 if live_frame is None:
-                    live_frame = env.render(live_state)
+                    live_frame = (
+                        render_live() if render_live is not None and pipeline is None else env.render(live_state)
+                    )
                 saved_frames[t] = live_frame
             active = next_active
             all_active = next_all_active
