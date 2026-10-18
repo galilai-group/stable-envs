@@ -114,6 +114,12 @@ class Kernel:
             ]
         )
         fields = self.fields
+        self._slices = tuple((f.key, f.block, f.start, f.width) for f in fields)
+        #: The first field of each block and the block's width.
+        self._leads = tuple(
+            (next(f.key for f in fields if f.block == b), sum(f.width for f in fields if f.block == b))
+            for b in range(len(self.blocks))
+        )
 
         def pack(state, key):
             columns = [[] for _ in self.blocks]
@@ -186,8 +192,22 @@ class Kernel:
 
     def views(self, blocks) -> dict[tuple[str, ...], torch.Tensor]:
         """``(lanes, width)`` views of each leaf in freshly written blocks, which nothing else holds."""
-        tensors = [torch.from_dlpack(b) for b in blocks]
-        return {f.key: tensors[f.block][:, f.start : f.start + f.width] for f in self.fields}
+        return self.split([torch.from_dlpack(b) for b in blocks])
+
+    def split(self, blocks: list[torch.Tensor]) -> dict[tuple[str, ...], torch.Tensor]:
+        """``(..., width)`` views of each leaf in torch blocks of shape ``(..., columns)``."""
+        return {key: blocks[block].narrow(-1, start, width) for key, block, start, width in self._slices}
+
+    def bases(self, td) -> list[torch.Tensor] | None:
+        """The ``(lanes, columns)`` blocks behind a State that ``views`` made, or None for any other State."""
+        n = int(td.batch_size[0])
+        out = []
+        for (key, width), dtype in zip(self._leads, self.blocks, strict=True):
+            base = td.get(key)._base
+            if base is None or base.dtype != dtype or tuple(base.shape) != (n, width) or not base.is_contiguous():
+                return None
+            out.append(base)
+        return out
 
     def reset(self, keys):
         state, keys, blocks = self._reset(keys)
