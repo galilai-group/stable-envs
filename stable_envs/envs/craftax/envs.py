@@ -11,9 +11,12 @@ from __future__ import annotations
 
 import importlib.util
 
+import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ..._core.stepping import _stack_states
+from ..._core.tensordicts import build_tensordict
 from ...env import Env
 from ...registry import register
 from ...spaces import Dict
@@ -60,14 +63,22 @@ class CraftaxEnv(Env):
             raise RuntimeError(f"{type(self).__name__}.{what}: call reset() first")
         return self._state
 
-    def _snapshot(self, views) -> TensorDict:
+    def _snapshot(self, views, batch_size=None) -> TensorDict:
         tree: dict = {}
         for key, value in views.items():
             node = tree
             for part in key[:-1]:
                 node = node.setdefault(part, {})
             node[key[-1]] = value
-        return TensorDict(tree, batch_size=[self.B], device=self.device)
+        return build_tensordict(tree, [self.B] if batch_size is None else batch_size, self.device)
+
+    def _stack_states(self, values):
+        """Stack the packed blocks behind step snapshots instead of each leaf."""
+        rows = [self._k.bases(value) for value in values]
+        if any(row is None for row in rows):
+            return _stack_states(values)
+        blocks = [torch.stack(column, dim=1) for column in zip(*rows, strict=True)]
+        return self._snapshot(self._k.split(blocks), [self.B, len(values)])
 
     def _checked(self, state, what: str, batch: int | None = None):
         self._check_open(what)
@@ -95,12 +106,34 @@ class CraftaxEnv(Env):
         self._state, self._keys, views = self._k.reset(self._keys)
         return self._snapshot(views)
 
+    def _actions(self, actions):
+        """Device actions, and for device inputs a pending flag that is true when any is out of range."""
+        if torch.is_tensor(actions) and actions.device.type != "cpu" and self.device.type != "cpu":
+            a = actions.to(self.device).reshape(self.B)
+            if a.is_floating_point():
+                raise self._invalid_actions()
+            # Read after the step is queued, so the check does not stall the host before dispatch.
+            return a, ((a < 0) | (a > self.action_high)).any()
+        host = actions.cpu() if torch.is_tensor(actions) else torch.as_tensor(np.asarray(actions))
+        host = host.reshape(self.B)
+        if host.is_floating_point() or bool(((host < 0) | (host > self.action_high)).any()):
+            raise self._invalid_actions()
+        if self.device.type == "cpu":
+            return host, None
+        # Pageable host memory is staged before the call returns, so the copy need not wait for the stream.
+        return host.to(self.device, non_blocking=not host.is_pinned()), None
+
+    def _invalid_actions(self):
+        return ValueError(f"{type(self).__name__}: actions must be integers in [0, {self.action_high}]")
+
     def _step(self, actions, *, active=None):
         state = self._live("step")
-        a = torch.as_tensor(actions, device=self.device).reshape(self.B)
-        if a.is_floating_point() or bool(((a < 0) | (a > self.action_high)).any()):
-            raise ValueError(f"{type(self).__name__}: actions must be integers in [0, {self.action_high}]")
-        self._state, self._keys, reward, done, observation, views = self._k.step(self._keys, state, a, active)
+        a, invalid = self._actions(actions)
+        out = self._k.step(self._keys, state, a, active)
+        # A rejected step leaves the live lanes as they were: JAX arrays are immutable.
+        if invalid is not None and bool(invalid):
+            raise self._invalid_actions()
+        self._state, self._keys, reward, done, observation, views = out
         result = {
             "state": self._snapshot(views),
             "reward": reward,
@@ -109,7 +142,7 @@ class CraftaxEnv(Env):
         }
         if observation is not None:
             result["observation"] = observation
-        return TensorDict(result, batch_size=[self.B], device=self.device)
+        return build_tensordict(result, [self.B], self.device)
 
     def render(self, state=None):
         """Draw ``(N, H, W, 3)`` uint8 frames from a State of any batch, or from the live lanes."""

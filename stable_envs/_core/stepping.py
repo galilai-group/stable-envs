@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import numpy as np
 import torch
-from tensordict import TensorDict
+
+from .tensordicts import build_tensordict
 
 
 def _actions(env, actions):
@@ -172,4 +173,4 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
             else torch.empty((env.num_envs, 0, *env.frame_spec.shape), dtype=env.frame_spec.dtype, device=env.device)
         )
         out["frame_valid"] = _columns(valid, frame_indices)
-    return TensorDict(out, [env.num_envs], device=env.device)
+    return build_tensordict(out, [env.num_envs], env.device)
