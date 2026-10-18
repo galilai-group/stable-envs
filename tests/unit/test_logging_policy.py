@@ -35,10 +35,11 @@ def test_debug_is_hidden_at_warning_and_shown_at_debug(sink):
 
 
 def test_records_can_be_disabled_by_package(sink):
-    config.set(verbose="DEBUG")
+    config.set(verbose="INFO")
+    env_module._log_auto_cpu.cache_clear()
     logger.disable("stable_envs")
     try:
-        config.log("WARNING", "silenced")
+        env_module._log_auto_cpu()
     finally:
         logger.enable("stable_envs")
     assert sink == []

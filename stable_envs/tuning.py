@@ -455,7 +455,7 @@ def autotune(name: str, size: int, batch: int, device: str) -> None:
         try:
             fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError:
-            _log("INFO", f"Another process is tuning {name}. Using the derived defaults.")
+            _log("INFO", f"Using the derived defaults because another process is tuning {name}.")
             return
         try:
             from . import registry
@@ -465,7 +465,7 @@ def autotune(name: str, size: int, batch: int, device: str) -> None:
                 tune(env, echo=None)
             _log("INFO", f"Tuned {name} and cached the values in {cache_path(device)}.")
         except Exception as e:  # noqa: BLE001 - fall back to the defaults
-            _log("WARNING", f"Autotune of {name} failed ({type(e).__name__}: {e}). Using the derived defaults.")
+            _log("WARNING", f"The autotune of {name} failed ({type(e).__name__}: {e}). Using the derived defaults.")
         finally:
             fcntl.flock(handle, fcntl.LOCK_UN)
 
