@@ -6,6 +6,8 @@ from typing import Any
 
 from loguru import logger as _loguru_logger
 
+from . import environ as _environ
+
 # Records carry extra["package"] == "stable_envs" for application-side filtering.
 logger = _loguru_logger.bind(package="stable_envs")
 
@@ -21,7 +23,13 @@ _LEVELS = {
 }
 
 _DEFAULTS: dict[str, Any] = {"verbose": "WARNING", "default_device": "auto"}
-_CONFIG: dict[str, Any] = dict(_DEFAULTS)
+
+
+def _initial() -> dict[str, Any]:
+    return {**_DEFAULTS, "verbose": _environ.read("STABLE_ENVS_VERBOSE")}
+
+
+_CONFIG: dict[str, Any] = _initial()
 
 
 def set(**kwargs: Any) -> dict[str, Any]:  # noqa: A001 - the public spelling is ``snv.set``
@@ -53,9 +61,9 @@ def get_config() -> dict[str, Any]:
 
 
 def reset_config() -> dict[str, Any]:
-    """Restore and return the default global settings."""
+    """Restore and return the default global settings, with verbosity from ``STABLE_ENVS_VERBOSE``."""
     _CONFIG.clear()
-    _CONFIG.update(_DEFAULTS)
+    _CONFIG.update(_initial())
     return dict(_CONFIG)
 
 

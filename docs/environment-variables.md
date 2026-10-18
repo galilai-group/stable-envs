@@ -45,6 +45,12 @@ knob does and its default.
 | `STABLE_ENVS_TUNING_HINT` | 1 | Set to `0` to hide the one-time log line that suggests `stable-envs tune`. |
 | `STABLE_ENVS_AUTOTUNE` | 0 | `1` tunes an untuned render path the first time it renders a large batch, then caches the values. |
 
+## Logging
+
+| variable | default | effect |
+|---|---|---|
+| `STABLE_ENVS_VERBOSE` | `WARNING` | Default log level, with the same values as `snv.set(verbose=...)`. `snv.set` overrides it. |
+
 ## Development
 
 | variable | default | effect |

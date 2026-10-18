@@ -204,7 +204,7 @@ def _import_env_module(mod_name: str, error_key: str) -> None:
     except Exception as e:  # noqa: BLE001 — recorded, never fatal
         _IMPORT_ERRORS[error_key] = f"{type(e).__name__}: {e} (unexpected; this is not an optional-dependency miss)"
         _log(
-            "DEBUG",
+            "WARNING",
             f"stable_envs.envs.{mod_name} did not import (unexpected, not an "
             f"optional-dep miss): {type(e).__name__}: {e}",
         )

@@ -19,7 +19,6 @@ from __future__ import annotations
 import contextlib
 import contextvars
 import json
-import logging
 import math
 import os
 import platform
@@ -32,10 +31,10 @@ from pathlib import Path
 from typing import Any
 
 from ._core import environ as _environ
+from ._core.config import log as _log
 
 __all__ = ["Knob", "KNOBS", "RENDER_PATHS", "get", "set", "reset", "override", "describe", "cache_path"]
 
-logger = logging.getLogger("stable_envs.tuning")
 #: Batch size from which an untuned render path logs the ``stable-envs tune`` hint or autotunes.
 HINT_LANES = 256
 #: Cache entry of the knobs read without a render path (Triton kernel shapes).
@@ -291,6 +290,7 @@ def read_cache(device="cpu") -> tuple[dict, bool]:
             warnings.warn(f"ignoring tuning cache {path}: {e!r}", RuntimeWarning, stacklevel=2)
             data = {}
         hit = _files[path] = (mtime, data, bool(data) and data.get("stamp") == stamp(_dev(device)))
+        _log("DEBUG", f"Read the tuning cache {path} (current: {hit[2]}).")
     return hit[1], hit[2]
 
 
@@ -433,17 +433,14 @@ def on_render(path: str, size: int, batch: int, env) -> None:
         if _environ.read("STABLE_ENVS_AUTOTUNE"):
             autotune(type(env).__name__, size, batch, str(env.device))
         elif _environ.read("STABLE_ENVS_TUNING_HINT"):
-            logger.info(
-                "`stable-envs tune %s --batch %d --size %d --device %s` may speed up the %s render path (about 1 min). "
+            _log(
+                "INFO",
+                f"`stable-envs tune {type(env).__name__} --batch {batch} --size {size} --device {env.device}` "
+                f"may speed up the {path} render path (about 1 min). "
                 "To hide this message, set STABLE_ENVS_TUNING_HINT=0.",
-                type(env).__name__,
-                batch,
-                size,
-                env.device,
-                path,
             )
     except Exception as e:  # noqa: BLE001 - a hint must never break rendering
-        logger.info("tuning check skipped: %s: %s", type(e).__name__, e)
+        _log("DEBUG", f"tuning check skipped: {type(e).__name__}: {e}")
 
 
 def autotune(name: str, size: int, batch: int, device: str) -> None:
@@ -458,7 +455,7 @@ def autotune(name: str, size: int, batch: int, device: str) -> None:
         try:
             fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError:
-            logger.info("another process is tuning %s; using derived defaults", name)
+            _log("INFO", f"Another process is tuning {name}. Using the derived defaults.")
             return
         try:
             from . import registry
@@ -466,9 +463,9 @@ def autotune(name: str, size: int, batch: int, device: str) -> None:
 
             with registry.make(name, num_envs=batch, size=size, device=device) as env:
                 tune(env, echo=None)
-            logger.info("tuned %s and cached it in %s", name, cache_path(device))
+            _log("INFO", f"Tuned {name} and cached the values in {cache_path(device)}.")
         except Exception as e:  # noqa: BLE001 - fall back to the defaults
-            logger.info("autotune of %s failed (%s: %s); using derived defaults", name, type(e).__name__, e)
+            _log("WARNING", f"Autotune of {name} failed ({type(e).__name__}: {e}). Using the derived defaults.")
         finally:
             fcntl.flock(handle, fcntl.LOCK_UN)
 

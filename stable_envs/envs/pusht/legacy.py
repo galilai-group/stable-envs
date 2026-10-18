@@ -6,6 +6,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ..._core.config import log
 from ...env import Env
 from ...registry import register
 from ...render.scene import Scene2D, SceneBuilder
@@ -366,6 +367,7 @@ class PushT(Env):
             self._step_graph = None
             self._step_graph_error = f"{type(e).__name__}: {e}"
             self.use_step_graph = False
+            _warn_graph_fallback(self._step_graph_error)
 
     # Agent velocity has no packed column; retain it separately for full-State continuation.
     state_layout = (
@@ -508,3 +510,13 @@ class PushT(Env):
                 )
             out.append(u._render(visualize=False).copy())
         return np.stack(out)
+
+
+_warned_graph = False
+
+
+def _warn_graph_fallback(error: str) -> None:
+    global _warned_graph
+    if not _warned_graph:
+        _warned_graph = True
+        log("WARNING", f"CUDA graph capture of the PushT step failed ({error}). Stepping without the graph is slower.")

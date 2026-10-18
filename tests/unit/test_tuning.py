@@ -18,7 +18,7 @@ from stable_envs._execution import policy
 from stable_envs.env import Env
 from stable_envs.spaces import Dict
 
-pytestmark = pytest.mark.unit
+pytestmark = [pytest.mark.unit, pytest.mark.usefixtures("loguru_to_caplog")]
 
 
 @pytest.fixture(autouse=True)

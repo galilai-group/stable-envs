@@ -5,6 +5,7 @@ import threading
 import numpy as np
 import torch
 
+from ..._core.config import log
 from ..._core.warp_cuda import require_warp_cuda
 from . import manipulation as core
 from .manipulation_opengl import check_versions
@@ -222,9 +223,11 @@ def render(family, state, device, backend="auto", chunk_size=None):
     if backend == "opengl" or (backend == "auto" and torch.device(device).type == "cpu"):
         from . import manipulation_opengl
 
+        log("DEBUG", f"Renderer backend 'auto' chose opengl on {device}.")
         return manipulation_opengl.render(family, state, device, chunk_size)
     if backend == "auto":
         backend = "mjwarp_fidelity"
+        log("DEBUG", f"Renderer backend 'auto' chose {backend} on {device}.")
     host = state.detach().cpu()
     pixels.validate(family, host)
     if backend not in ("auto", "mjwarp", "mjwarp_fidelity"):

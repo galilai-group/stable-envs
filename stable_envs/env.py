@@ -29,6 +29,7 @@ from tensordict import TensorDict
 
 from ._core import dynamics as _dynamics
 from ._core.config import get_config as _get_config
+from ._core.config import log as _log
 from ._core.style import StyleTensor
 from .spaces import Dict as VariationDict
 from .specs import CompositeSpec, Spec
@@ -46,6 +47,11 @@ StepResult = TensorDict
 VariationLike = Mapping[str, Any] | torch.Tensor | np.ndarray
 
 _MAX_LISTED = 8
+
+
+@functools.cache
+def _log_auto_cpu() -> None:
+    _log("INFO", "No CUDA device is available, so device='auto' chose the CPU. Pass device='cuda' to require a GPU.")
 
 
 def require_contiguous_out(owner: str, out) -> None:
@@ -415,6 +421,11 @@ class Env:
         # Explicit close controls resource lifetime; no finalizer is required.
         self._closed = False
         self._seed = int(seed)
+        _log(
+            "DEBUG",
+            f"Built {type(self).__name__}: num_envs={self.B}, size={self.size}, device={self.device}, "
+            f"backend={self.backend!r}.",
+        )
 
     @staticmethod
     def resolve_device(device: str | None) -> str:
@@ -423,7 +434,11 @@ class Env:
             device = _get_config()["default_device"] or "auto"
         device = str(device)
         if device == "auto":
-            return "cuda" if torch.cuda.is_available() else "cpu"
+            resolved = "cuda" if torch.cuda.is_available() else "cpu"
+            _log("DEBUG", f"Resolved device 'auto' to {resolved!r}.")
+            if resolved == "cpu":
+                _log_auto_cpu()
+            return resolved
         return device
 
     @property
