@@ -192,7 +192,7 @@
   {
    "swm_id": "swm/PushT-Discrete-v1",
    "stable_envs_cells": [
-    "PushT"
+    "PushTDiscrete"
    ]
   },
   {
