@@ -15,6 +15,7 @@ _rewrites = {}
 
 
 def on_files(files, config):
+    """Publish linked package sources and generate indexes for linked evidence directories."""
     _rewrites.clear()
     docs = Path(config.docs_dir).resolve()
     root = docs.parent
@@ -46,6 +47,8 @@ def on_files(files, config):
 
 
 def on_page_markdown(markdown, page, **kwargs):
+    """Point the page's links at the files that on_files published or generated."""
+
     def replace(match):
         target = _rewrites.get((page.file.src_uri, match["target"]), match["target"])
         return match["open"] + target + match["close"]

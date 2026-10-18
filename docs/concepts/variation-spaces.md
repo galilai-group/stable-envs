@@ -64,17 +64,24 @@ error.
 
 ## Reset
 
-`reset(seed, options)` follows stable-worldmodel's rule:
+Every simulating family except Craftax has `reset(seed, options)`. Craftax takes only `seed`.
+Render-only classes have no `reset`. `reset(seed, options)` follows stable-worldmodel's rule:
 
-- Reset samples the leaves named in `options["variation"]` per lane. Lane `i` uses seed `seed + i`.
+- Reset samples the leaves named in `options["variation"]` per lane.
 - Reset sets the leaves in `options["variation_values"]`, with one value for the batch or one per lane.
 - Every other leaf returns to its default, including physics leaves.
+
+With a seed, the per-lane draws are reproducible:
+
+- A reset leaf (a start pose, for example) in lane `i` uses seed `seed + i`.
+- A sampled Variation leaf in lane `i` uses `np.random.default_rng((seed, i))`.
 
 The defaults are the registered values until `set_variation` replaces them. A reset with no options
 returns to the values `set_variation` last installed. Values chosen through reset options last for that
 episode only.
 
 ```python
+env = snv.DMCCartpoleSwingup(num_envs=4)
 env.set_variation({"gravity.z": [-5.0]})
 env.reset(seed=0, options={"variation": ["gravity.z"]})   # sampled for this episode
 env.reset(seed=1)                                         # gravity.z is -5.0 again
@@ -83,8 +90,9 @@ env.reset(seed=1)                                         # gravity.z is -5.0 ag
 PushT, Rocket and OGBench Cube/Scene wrap the stable-worldmodel source. `set_variation` changes the
 source's defaults, which apply at the next reset. Some leaves also apply to the running episode:
 
-- PushT: appearance leaves (`PushT.immediate_variation_leaves`: colours, goal pose,
-  `rendering.render_goal`). Shapes, scales and start poses wait for the next reset.
+- PushT: the leaves in `PushT.immediate_variation_leaves`. These are the colours, `goal.position`,
+  `goal.angle`, `goal.scale` and `rendering.render_goal`. Body shapes, `agent.scale`, `block.scale`
+  and start poses wait for the next reset.
 - Rocket: colour leaves. Start leaves (drop height, lateral offset, tilt) wait for the next reset.
 - OGBench Cube/Scene: cube size and colour, floor colour, camera angle, light intensity and lock
   colour. Placements wait for the next reset.

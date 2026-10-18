@@ -5,7 +5,7 @@ rendering interface:
 
 - `reset`, `get_state` and `state` return independent full State snapshots.
 - `set_state(full_state)` restores every required field and returns `None`.
-- `step(actions, states=slice(None), frames=slice(-1,None))` accepts `[B,A]` or `[B,T,A]` and returns
+- `step(actions, *, states=slice(None), frames=slice(-1, None))` accepts `[B,A]` or `[B,T,A]` and returns
   State and the task's reward, success and done values. See [Stepping](../concepts/dynamics.md).
 - `render(full_state)` returns a uint8 Frame.
 - `close` and the context manager release owned resources.

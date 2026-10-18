@@ -50,8 +50,8 @@ spills. Keep accumulators in int32 and widen only the expression that needs it.
 ## 5. Benchmark on the real workload
 
 A result on the smallest scene can point the wrong way on a large one. For example,
-`tl.static_range` helps with a few primitives. It is slower with about a hundred, and it does not
-compile above about 340 (see `render/raster2d.py`). Always state which scene a number came from.
+`tl.static_range` helps with a few primitives. It is slower with about a hundred. Always state which
+scene a number came from.
 
 ## 6. Equal metrics do not mean equal images
 
@@ -59,22 +59,10 @@ A mean over 64 frames cannot see a few badly wrong pixels. When the claim is "th
 change the output", compare bytes, at every resolution you rely on. Use metrics only for fidelity
 claims.
 
-## 7. `cpu%` does not show where time goes
+## 7. Record the host load
 
-PyTorch's default synchronization spins. A GPU-bound render and a Python-bound render both show 100%
-of a core. Measure device kernel time against wall time instead:
-
-```python
-with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA]) as pr:
-    ...
-evs = [e for e in pr.key_averages() if e.device_type == DeviceType.CUDA]
-kernel_seconds = sum(e.self_device_time_total for e in evs) / 1e6
-```
-
-Keep the `device_type` filter. `key_averages()` lists both the `aten::` op and its kernels, so without
-the filter the sum counts every kernel twice.
-
-Still record `cpu%` and host load average with a benchmark. Some families depend on the host CPU.
+Record `cpu%` and the host load average with every benchmark, because some families depend on the
+host CPU.
 
 ## Keep an independent implementation
 

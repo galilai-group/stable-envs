@@ -22,7 +22,8 @@ controller. A simulating `Env` provides:
 The private protocol `stable_envs._execution.protocol.SimulatorAdapter` has `num_envs`, reset, get, set,
 step and close. It has no rendering method. Examples:
 
-- `ClassicControlAdapter` and `ClassicControlSemantics` in `stable_envs/envs/classic_control/semantics.py`
+- `ClassicControlAdapter` in `stable_envs/envs/classic_control/simulation/local.py`, which
+  `ClassicControlSemantics` in `stable_envs/envs/classic_control/semantics.py` uses
 - the Fetch adapter in `stable_envs/envs/fetch/simulation/adapter.py`
 
 Family mixins combine these backends with renderers. Register public classes with `@register` from

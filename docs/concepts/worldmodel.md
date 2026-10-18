@@ -16,7 +16,10 @@ stable-worldmodel    observation selection, models, data collection
  upstream simulator dynamics, controllers, task behaviour
 ```
 
-The stable-envs runtime does not import stable-worldmodel. There is no `snv.make("swm/...")` lookup.
+The stable-envs runtime does not import stable-worldmodel, and it has no interop layer for other
+stable-* packages. Look up environments by class name, such as `snv.make("PushT")`. There is no
+`snv.make("swm/...")` lookup. Only the test suite maps stable-worldmodel ids to these classes, in
+`tests/helpers/reference/crosswalk.py`.
 
 Policy rollouts, planning, datasets and training belong downstream. `step` takes actions. It does
 not take a policy.

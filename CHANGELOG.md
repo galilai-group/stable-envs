@@ -10,6 +10,8 @@ All notable changes to this project are listed here. The format follows
 
 - Craftax: `CraftaxClassicPixels`, `CraftaxClassicSymbolic`, `CraftaxPixels` and `CraftaxSymbolic`
   run the upstream JAX simulator with all lanes in one jitted `vmap` (`craftax` / `craftax-gpu` extras).
+  With Craftax, the extras provide 74 classes. Fetch and `OGBCube`/`OGBScene` pin different MuJoCo versions,
+  so they need separate Python environments.
 - `snv.tuning`: chunk sizes, Triton block sizes, worker counts and memory budgets are named knobs with
   `snv.tuning.set`, `snv.tuning.override` and `STABLE_ENVS_<KNOB>` variables. Some defaults are derived from the GPU's free memory or the CPU's L3 size.
   Knobs never change frames or State. See docs/performance-tuning.md.

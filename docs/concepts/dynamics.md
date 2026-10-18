@@ -1,10 +1,10 @@
 # Stepping
 
 ```python
-step(actions, states=slice(None), frames=slice(-1, None))
+step(actions, *, states=slice(None), frames=slice(-1, None))
 ```
 
-`step` advances the live simulator.
+`step` advances the live simulator. `states` and `frames` are keyword-only arguments.
 
 - Actions are `[B,A]` for one action per lane or `[B,T,A]` for a sequence. `T` must be positive.
 - Discrete actions use `A=1`. An integer `[B]` tensor is also accepted for a single action.
@@ -78,11 +78,17 @@ There is no `capture`, `transition`, `unroll` or `step_sequence` method. To bran
 
 ## Process workers
 
-On Linux with at least four CPU cores, some families run physics in worker processes for batches of at
-least 64. These families are Fetch, most DM Control tasks, classic Acrobot and the OGBench
-registrations. The pool uses up to eight processes, each with one simulation thread, within the
-allowed CPU affinity. Physics stays on CPU
-even when rendering uses CUDA.
+On Linux with at least four CPU cores, some families run physics in worker processes. These families
+are Fetch, most DM Control tasks, classic Acrobot and the OGBench registrations. Each process has one
+simulation thread and stays within the allowed CPU affinity. Physics stays on CPU even when rendering
+uses CUDA.
+
+Two tuning knobs control the pool:
+
+- `worker_min_lanes` is the smallest batch that uses workers. The default is 64.
+- `workers` is the largest number of processes. The default is 8.
+
+See [Performance tuning](../performance-tuning.md).
 
 When a worker pool is active, the next known action runs while the parent renders the previous
 snapshot. At most one transition is in flight. Every submitted transition finishes before `step`

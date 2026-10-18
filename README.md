@@ -55,9 +55,9 @@ print(snv.info("CartPole"))
 snv.set(verbose="INFO", default_device="auto")
 ```
 
-`step(actions, states=slice(None), frames=slice(-1, None))` advances the live environments. Actions are
-`[B,A]` for one step or `[B,T,A]` for a sequence. The two slices select which States and frames `step`
-returns. `None` turns either one off. `step` always returns the final State. See
+`step(actions, *, states=slice(None), frames=slice(-1, None))` advances the live environments. Actions
+are `[B,A]` for one step or `[B,T,A]` for a sequence. The two keyword-only slices select which States
+and frames `step` returns. `None` turns either one off. `step` always returns the final State. See
 [Stepping](docs/concepts/dynamics.md).
 
 There is no `env.rollout(policy=...)`. The sibling [stable-*](https://github.com/galilai-group) projects
@@ -72,6 +72,7 @@ snv.Env, snv.State, snv.StepResult, snv.VariationLike
 snv.Spec, snv.CompositeSpec
 snv.make, snv.info, snv.list_envs, snv.list_families, snv.import_errors
 snv.set, snv.get_config, snv.__version__
+snv.tune, snv.tuning
 snv.CartPole / snv.Pendulum / …                  concrete env classes
 ```
 
@@ -79,7 +80,9 @@ snv.CartPole / snv.Pendulum / …                  concrete env classes
 
 ## Environments
 
-With every extra installed, `snv.list_envs()` returns 74 environments:
+The extras together provide 74 environment classes. One Python environment cannot hold every extra.
+The `robotics` extra for Fetch pins MuJoCo < 3.12, and the `ogbench-manipulation` extra for `OGBCube`
+and `OGBScene` pins MuJoCo 3.12.0. Install them in separate environments.
 
 | family | environments |
 |---|---:|
@@ -92,8 +95,11 @@ With every extra installed, `snv.list_envs()` returns 74 environments:
 | `pusht` | 2 |
 | `pyflyt` | 1 |
 
-A family registers only when its dependencies import. Without `mujoco`, DM Control, Fetch and OGBench
-manipulation do not register. Without PyFlyt the count is 73.
+A family registers only when its module imports. `snv.import_errors()` names each module that did not
+import. Craftax needs the `craftax` extra to register. `PyFlytRocketLanding` needs the `rocket` extra,
+and without it the count is 73. DM Control compiles a test model at import, so it registers only with
+`dm_control` and MuJoCo installed. The Fetch and OGBench modules import MuJoCo and their simulator
+packages inside functions. These classes register without them and raise an error when you use them.
 
 Device support differs by family and backend. For example, Fetch on CPU needs `backend="opengl"`.
 See [Limitations](docs/concepts/limitations.md).

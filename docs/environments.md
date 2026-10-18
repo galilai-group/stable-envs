@@ -18,8 +18,9 @@ snv.import_errors()                  # {module: exception} for families this mac
 `info(name)` does not construct the env. Construction needs a device, and some families need a GPU, an
 EGL context or a compiled scene.
 
-`info` returns `class_name`, `id`, `family`, `domain`, `reference_id`, `render_state_dim`,
-`render_state_names`, `default_size`, `fidelity_tier`, `action_dim`, `has_dynamics` and `requires_cuda`.
+`info` returns `class_name`, `id`, `class`, `module`, `family`, `domain`, `reference_id`,
+`render_state_dim`, `render_state_names`, `default_size`, `fidelity_tier`, `action_dim`, `has_dynamics`
+and `requires_cuda`. `class` is the class object and `module` is the name of its module.
 
 `snv.info` returns metadata. It does not return an `snv.Spec`. An `snv.Spec` describes tensors
 (`env.frame_spec`, `env.state_spec`, …).

@@ -22,13 +22,13 @@ print(format_registry())                  # every class, visual ones marked
 env.describe()                            # on a constructed env
 ```
 
-`env.describe()` returns `fidelity_tier` and `parity_interior_min`. For a visual-tier class it also
-returns:
+`env.describe()` returns `fidelity_tier` and `parity_interior_min`. For a class of either tier that
+declares them, it also returns `reference_versions`, the upstream versions the measurement used. For a
+visual-tier class it also returns:
 
 - `visual_fidelity`: the measured values and the thresholds the tests assert.
 - `visual_note`: what the residual is and where it comes from.
 - `not_for`: what the frames must not be used for.
-- `reference_versions`, if declared: the upstream versions the measurement used.
 
 `format_registry()` prints the current count of parity and visual classes.
 

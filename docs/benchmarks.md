@@ -1,16 +1,20 @@
 # Benchmarks
 
-This page covers speed: how long it takes to turn a State into a uint8 frame. The
+This page covers how long it takes to turn a State into a uint8 frame. The
 [test suite](testing.md) covers correctness.
 
 ## Method
 
 Each run takes States from the env's own reset distribution or saved episodes and renders `(H, W, 3)`
-uint8 frames. The GPU side calls `env.render(state)` at the class's native supersampling. The CPU side
-uses the env's official reference renderer, where one exists. Both sides do the same job on the same
-machine.
+uint8 frames at the class's native supersampling. The maintained harnesses measure different things:
 
-The maintained harnesses are `python -m benchmarks.render` and `python -m benchmarks.pipeline`. See
+- `python -m benchmarks.render` times `env.render` on a reset State over a range of batch sizes. It
+  measures throughput and batch scaling. It does not run a reference renderer.
+- `python -m benchmarks.pipeline` times the path from a host render State to a frame: the copy to
+  the device and the render call. With `--jpeg-dir`, it adds a single-process Pillow baseline that
+  decodes real JPEG files.
+
+Neither harness imports stable-worldmodel. See
 [benchmarks/README.md](https://github.com/galilai-group/stable-envs/blob/main/benchmarks/README.md)
 for their options and output schema.
 
@@ -35,7 +39,7 @@ drawing is the same on both sides. The difference is Python work per frame.
 
 - Ray-cast and CPU3D families (OGBench mazes, DM Control, navigation) depend on the host CPU. Their
   numbers change with machine load.
-- Visual-tier 3-D families are for live training data. They do not substitute for stored official pixels.
+- Visual-tier classes are for live training data. They do not substitute for stored official pixels.
 - The official renderers run in one process. They have no batched entry point.
 - Use the class's native supersampling. Forcing `1` on a class that declares `2` measures a cheaper
   picture than `snv.make(name)` returns.

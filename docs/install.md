@@ -35,6 +35,7 @@ package, which tests use for comparison.
 | extra | needed for | adds |
 |---|---|---|
 | *(none)* | classic control, navigation | nothing |
+| `navigation` | SimplePointMaze's exact `info.goal` image and Piecewise's `rendering.render_bias_field` | Matplotlib |
 | `pusht` | PushT, PushTDiscrete | Pymunk 7.2.0, pygame, OpenCV, Shapely |
 | `pusht-reference` | reference checks only | gym-pusht |
 | `ogbench` | OGBench mazes | `ogbench`, MuJoCo |
@@ -47,7 +48,8 @@ package, which tests use for comparison.
 | `craftax` / `craftax-gpu` | Craftax | Craftax, JAX. `-gpu` takes JAX's CUDA 12 build for `device="cuda"` |
 | `docs` / `dev` / `examples` / `hf` | not needed to render | docs, tests, example helpers, HuggingFace |
 
-With `dmcontrol-gpu` on MuJoCo 3.11, TrackCom domains render without the floor reflection.
+On CUDA, TrackCom domains draw the floor reflection only with MuJoCo Warp 3.12, which `dmcontrol-gpu`
+installs. With an older MuJoCo Warp, they render without the reflection and log a warning.
 
 The `rocket` extra resolves numpy < 2 because of PyFlyt's metadata.
 

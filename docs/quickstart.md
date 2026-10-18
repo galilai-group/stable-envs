@@ -21,8 +21,10 @@ assert (env.step(action) == out).all()
 env.close()
 ```
 
-`num_envs` is the simulator batch size. A renderer may accept a smaller batch. That does not change
-the batch that `set_state` requires.
+`num_envs` is the number of environments that run together. You can think of it as the batch size.
+`reset`, `step` and `set_state` use this batch. For most classes, `render(state)` also accepts a State
+with a different batch. `PyFlytRocketLanding`, `OGBCube` and `OGBScene` refuse a State whose batch is
+not `num_envs`.
 
 `env.close()` stops the simulator's worker processes and frees the environment's own buffers.
 Renderer contexts that other environments share stay cached. A second call has no effect. An
@@ -36,6 +38,23 @@ Fields include physical, task, lifecycle and RNG state, as the family needs. `st
 those fields. `action_spec` describes actions. `frame_spec` describes uint8 `(H,W,3)` output without
 the batch axis.
 
+For the CartPole example above, with `num_envs=2`:
+
+```python
+state.batch_size                      # torch.Size([2])
+list(state.keys())
+# ['x', 'x_dot', 'theta', 'theta_dot', 'lifecycle', 'task', 'rng', 'physics']
+state["x"].shape, state["x"].dtype    # (torch.Size([2, 1]), torch.float64)
+state["rng", "state"].shape           # torch.Size([2, 4])
+list(state["physics"].keys())         # ['gravity', 'masscart', 'masspole', 'length', 'force_mag', 'tau']
+
+env.action_spec                       # Spec(shape=(1,), dtype=int64, n=2)
+env.frame_spec                        # Spec(shape=(400, 600, 3), dtype=uint8, bounds=[0, 255])
+pixels.shape, pixels.dtype            # (torch.Size([2, 400, 600, 3]), torch.uint8)
+```
+
+CartPole renders only at the native 400x600 size of the Gymnasium renderer.
+
 `render(state)` converts the State to the renderer's private input internally. `set_state` refuses
 compact renderer rows, because they can omit fields that simulation needs. See
 [State](concepts/state.md).
@@ -43,6 +62,17 @@ compact renderer rows, because they can omit fields that simulation needs. See
 `step` accepts `[B,A]` actions or `[B,T,A]` action sequences. It returns the final State, the task
 outputs, the State history and the final frame by default. Use `frames=None` to skip rendering.
 Renderer-only classes refuse simulator operations. See [Stepping](concepts/dynamics.md).
+
+```python
+list(out.keys())
+# ['state', 'reward', 'terminated', 'truncated', 'observation', 'info_state',
+#  'valid', 'states', 'state_valid', 'frames', 'frame_valid']
+out["reward"].shape                   # torch.Size([2])
+out["states"].batch_size              # torch.Size([2, 1])
+out["frames"].shape                   # torch.Size([2, 1, 400, 600, 3])
+```
+
+The task outputs differ by family. `states` and `frames` keep a time axis, even for one action.
 
 ## Registration and Variation
 

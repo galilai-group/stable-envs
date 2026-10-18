@@ -112,7 +112,6 @@ nav:
       - Analytic raycast and CPU3D: api/raycast3d.md
       - Triangle rendering with nvdiffrast: api/nvdiff.md
       - MJWarp rendering: api/mjwarp.md
-      - Compatibility: api/compat.md
   - Gallery: gallery.md
   - Benchmarks: benchmarks.md
   - Contributing:
@@ -120,6 +119,7 @@ nav:
       - Adding an environment backend: adding/environment.md
       - Adding a task: adding/task.md
       - Adding a renderer: adding/renderer.md
+      - Writing a bit-exact Triton kernel: adding/bit-exact-triton.md
       - Testing: testing.md
       - Internals:
           - Fidelity methodology: concepts/fidelity-methodology.md
@@ -127,5 +127,4 @@ nav:
           - Why physics is separate: concepts/physics.md
           - The Scene2D IR: concepts/scene-ir.md
           - The fused rasterizer: concepts/rasterizer.md
-          - Writing a bit-exact Triton kernel: concepts/bit-exact-triton.md
   - Changelog: changelog.md

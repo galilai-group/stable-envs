@@ -45,8 +45,9 @@ The bake is a request. The whole batch shares the base image, so the rasterizer 
 prefix is identical across lanes. It compares each row's static primitives with row 0 in one kernel.
 If they differ, it draws every primitive per frame. The output is the same either way.
 
-The cache key is the exact bytes of the static primitives. A Variation that recolours a static
-primitive invalidates the bake.
+The cache key holds the exact bytes of the static primitives and the background colour. It also
+holds the supersampled resolution, `world`, `flip_y`, the vertex count, the static prefix length and
+the device. A Variation that recolours a static primitive or the background invalidates the bake.
 
 The rasterizer skips the bake when the saved work is small. The threshold is `raster2d._BAKE_MIN_WORK = 8e6`
 evaluations, compared against `K/N × B × H × W` (K static primitives out of N, at the supersampled
@@ -87,7 +88,8 @@ scene = sb.build(background=bg, world=(0, 0, 512, 512), flip_y=False)
 ```
 
 `add_rect` wraps `add_poly` for rectangles, with optional rotation. `build()` runs
-`Scene2D.validate()`, which checks shapes and dtypes once.
+`Scene2D.validate()` once. It checks the shape of each tensor, the `int32` dtype of `kind`, and that
+the `world` extent is not degenerate.
 
 ## World coordinates
 

@@ -76,7 +76,7 @@ names one.
 | `raycast_block` | 256 | none | not recorded | Rays per Triton program of the analytic ray caster (power of two). |
 
 The library computes each hardware rule once per process and device. GPU rules read
-`torch.cuda.mem_get_info`. The CPU rule reads the L3 size from `sysconf` or `/sys`. If the library
+`torch.cuda.mem_get_info`. The CPU rule reads the L3 size from `sysconf`. If the library
 cannot read the hardware, the fallback applies.
 
 ### What to sweep
@@ -97,6 +97,10 @@ environment at a time.
 ```bash
 stable-envs tune DMCCheetahRun --batch 64 --device cpu
 ```
+
+`stable-envs tune --all` tunes one registered environment for each render path that the device can
+use. It lists the environments and asks before it starts. Pass `--yes` to start without the question,
+for example in a batch job.
 
 The command tunes one knob at a time, for each knob that the environment reads. It times the
 default and a few powers of two around it. It keeps the best value of each knob while it tunes

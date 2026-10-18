@@ -42,9 +42,11 @@ uvx nox -s "test(core)"
 uvx nox -s "test(<profile>)"
 ```
 
-The profiles are `core`, `classic`, `navigation`, `pusht`, `dmc`, `fetch`, `ogbench` and `rocket`.
-[`ci/families.toml`](ci/families.toml) lists the files each profile owns. `uvx nox -s affected`
-prints the profiles your branch touches. If you changed the docs, also run `uvx nox -s docs`.
+The profiles are `core`, `classic`, `navigation`, `pusht`, `dmc`, `fetch`, `ogbench`, `rocket` and
+`craftax`. [`ci/families.toml`](ci/families.toml) lists the files each profile owns. `uvx nox -s affected`
+runs the test profiles that your branch touches. To only print them, run
+`python scripts/ci/plan.py --base origin/main --profiles-only`. If you changed the docs, also run
+`uvx nox -s docs`.
 
 GPU tests need a CUDA machine. Run them with `pytest tests/gpu -v` if you changed GPU code.
 `stable-envs doctor` checks a machine's setup.
