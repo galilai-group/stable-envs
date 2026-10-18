@@ -8,6 +8,8 @@ from typing import Any
 import numpy as np
 from gymnasium import spaces as gspaces
 
+from ._core.config import log
+
 
 class _Valued:
     """Default and current value of a leaf space, with an optional extra constraint."""
@@ -170,12 +172,12 @@ class Dict(gspaces.Dict):
             v.reset()
 
     def check(self, debug: bool = False) -> bool:
-        """Return whether every current value lies in its space; ``debug`` prints the failing leaves."""
+        """Return whether every current value lies in its space; ``debug`` logs the failing leaves at DEBUG level."""
         ok = True
         for k, v in self.spaces.items():
             r = v.check(debug) if isinstance(v, Dict) else v.check()
             if not r and debug:
-                print(f"[variation] {k} = {getattr(v, 'value', None)!r} is out of space")
+                log("DEBUG", f"Variation {k} = {getattr(v, 'value', None)!r} is out of space.")
             ok = ok and r
         return ok
 

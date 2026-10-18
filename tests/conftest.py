@@ -246,3 +246,27 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
 def pytest_sessionfinish(session, exitstatus):
     if _verdict(session, exitstatus):
         session.exitstatus = 1
+
+
+@pytest.fixture
+def loguru_to_caplog():
+    """Route package log records to the stdlib logging tree, at DEBUG verbosity, for ``caplog``."""
+    import logging
+
+    from loguru import logger
+
+    from stable_envs._core import config
+
+    saved = config.get_config()["verbose"]
+    config.set(verbose="DEBUG")
+
+    def sink(message):
+        r = message.record
+        rec = logging.LogRecord(r["name"], r["level"].no, r["file"].path, r["line"], r["message"], None, None)
+        rec.levelname = r["level"].name
+        logging.getLogger(r["name"]).handle(rec)
+
+    sink_id = logger.add(sink, filter=lambda r: r["extra"].get("package") == "stable_envs", level="DEBUG")
+    yield
+    logger.remove(sink_id)
+    config.set(verbose=saved)

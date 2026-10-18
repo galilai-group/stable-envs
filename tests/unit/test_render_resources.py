@@ -279,6 +279,7 @@ def test_retention_past_the_cap_raises_rather_than_growing_without_limit(monkeyp
 
 
 @pytest.mark.unit
+@pytest.mark.usefixtures("loguru_to_caplog")
 def test_a_foreign_keepalive_fallback_warns_and_retains_past_the_cap(monkeypatch, caplog):
     before = RES.counts()["retained"]
     monkeypatch.setattr(RES, "MAX_RETAINED", before)

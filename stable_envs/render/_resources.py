@@ -10,11 +10,12 @@ These helpers use only the standard library and can run without a GPU backend.
 
 from __future__ import annotations
 
-import logging
 import threading
 from collections import OrderedDict
 from collections.abc import Callable, Iterator
 from typing import Any
+
+from .._core.config import log as _log
 
 
 class UseAfterCloseError(RuntimeError):
@@ -28,7 +29,6 @@ _EVICTED: dict[str, int] = {}
 _RELEASE_FAILED: dict[str, int] = {}
 _RELEASE_FAILURES: list[dict[str, str]] = []
 _RETAINED: list[tuple[str, Any]] = []
-_LOG = logging.getLogger(__name__)
 
 #: Detect accidental per-frame retention of resources intended to be held per model or context.
 MAX_RETAINED = 256
@@ -80,7 +80,7 @@ def _record_release_failure(kind: str, exc: BaseException) -> None:
     with _LOCK:
         _RELEASE_FAILED[kind] = _RELEASE_FAILED.get(kind, 0) + 1
         _RELEASE_FAILURES.append(detail)
-    _LOG.warning("resource release failed for %s: %s: %s", kind, type(exc).__name__, exc)
+    _log("WARNING", f"Resource release failed for {kind}: {type(exc).__name__}: {exc}")
 
 
 def retain_process_lifetime(obj: Any, why: str, *, overflow: str = "raise") -> Any:
@@ -103,7 +103,7 @@ def retain_process_lifetime(obj: Any, why: str, *, overflow: str = "raise") -> A
             )
             if overflow == "raise":
                 raise RuntimeError(message)
-            _LOG.warning("%s Keeping it because this caller cannot transfer ownership.", message)
+            _log("WARNING", f"{message} Keeping it because this caller cannot transfer ownership.")
         _RETAINED.append((why, obj))
     return obj
 

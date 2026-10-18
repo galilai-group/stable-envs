@@ -89,6 +89,23 @@ def set_variables(environ=None) -> tuple[dict[str, str], list[str]]:
     return found, [k for k in found if k not in known]
 
 
+def parse_verbosity(text: str) -> str:
+    """Parse a log level name such as ``INFO`` or ``SILENT``; an empty value is ``WARNING``."""
+    from .config import _LEVELS
+
+    t = text.strip().upper() or "WARNING"
+    if t not in _LEVELS:
+        raise ValueError(f"expected one of {sorted(_LEVELS)}")
+    return t
+
+
+register(
+    "STABLE_ENVS_VERBOSE",
+    "level",
+    "WARNING",
+    "Default log level of the library, with the same values as snv.set(verbose=...). snv.set overrides it.",
+    parse_verbosity,
+)
 register(
     "STABLE_ENVS_OGB_UNMEASURED",
     "flag",
