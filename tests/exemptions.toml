@@ -22,12 +22,6 @@ checks = ["original", "swm"]
 reason = "the Fetch source gate drives only the base tasks; dict observations are never compared with gymnasium-robotics"
 
 [[exemption]]
-env = "Fetch*"
-family = "fetch"
-checks = ["specs", "batch_render"]
-reason = "backend='auto' on a CPU device does not fall back to the OpenGL renderer: frames raise CPU_BACKEND_MISSING unless backend='opengl' is passed"
-
-[[exemption]]
 env = "PyFlytRocketLanding"
 family = "rocket"
 checks = ["batch_render"]

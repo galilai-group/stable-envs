@@ -19,7 +19,7 @@ that fixes them.
 | classic control, navigation, PushT | nothing beyond the extra | a CUDA build of torch |
 | Craftax | nothing beyond the extra | CUDA builds of torch and JAX (`craftax-gpu`) |
 | DM Control, OGBench mazes | MuJoCo OpenGL | MuJoCo OpenGL and CUDA torch. TrackCom domains also need MuJoCo Warp (`dmcontrol-gpu`) |
-| Fetch | MuJoCo OpenGL (`backend="opengl"`) | MuJoCo OpenGL, CUDA torch and MuJoCo Warp (`robotics` + `mjwarp`) |
+| Fetch | MuJoCo OpenGL | MuJoCo OpenGL, CUDA torch and MuJoCo Warp (`robotics` + `mjwarp`) |
 | OGBench Cube / Scene | MuJoCo OpenGL | MuJoCo OpenGL, CUDA torch and MuJoCo Warp (`ogbench-manipulation-gpu`) |
 | Rocket | nothing beyond the extra | CUDA torch, Triton and [nvdiffrast](install.md#nvdiffrast) |
 
@@ -101,4 +101,4 @@ headless no-GPU section inside the image.
 ## macOS
 
 There is no CUDA on macOS, so every family runs its CPU path. MuJoCo uses its native `cgl`
-backend with no setup. Fetch's CPU path is `backend="opengl"`.
+backend with no setup.

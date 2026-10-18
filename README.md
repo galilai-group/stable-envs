@@ -101,8 +101,7 @@ and without it the count is 73. DM Control compiles a test model at import, so i
 `dm_control` and MuJoCo installed. The Fetch and OGBench modules import MuJoCo and their simulator
 packages inside functions. These classes register without them and raise an error when you use them.
 
-Device support differs by family and backend. For example, Fetch on CPU needs `backend="opengl"`.
-See [Limitations](docs/concepts/limitations.md).
+Device support differs by family and backend. See [Limitations](docs/concepts/limitations.md).
 
 ## Documentation
 

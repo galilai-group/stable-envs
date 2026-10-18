@@ -24,7 +24,7 @@ class FetchSemantics:
     action_dim = 4
     action_dtype = torch.float32
     action_low, action_high = -1.0, 1.0
-    cpu_render_support = "CPU_BACKEND_MISSING"
+    cpu_render_support = "SUPPORTED_SOFTWARE_OPENGL"
 
     @property
     def dynamics_variation_leaves(self):
@@ -235,7 +235,7 @@ class FetchSemantics:
 
     def _render(self, *args, **kwargs):
         backend = kwargs.pop("backend", self.backend)
-        if backend == "opengl":
+        if backend == "opengl" or (backend == "auto" and self.device.type != "cuda"):
             from . import opengl
 
             return opengl.render(self, *args, **kwargs)

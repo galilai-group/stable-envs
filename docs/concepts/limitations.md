@@ -17,14 +17,12 @@ snv.import_errors()     # families this interpreter could not import
 |---|---|---|
 | PushT, PushTDiscrete | source physics and pygame rendering | output storage only (rendering stays on CPU) |
 | classic control, navigation, OGBench mazes | yes | yes |
-| Fetch (12 classes) | software OpenGL (`backend="opengl"`) | MJWarp or explicit NVIDIA OpenGL |
+| Fetch (12 classes) | software OpenGL | MJWarp or explicit NVIDIA OpenGL |
 | OGBCube, OGBScene | software OpenGL | MJWarp or explicit NVIDIA OpenGL |
 | PyFlytRocketLanding | TinyRenderer | CUDA rendering |
 | DM Control body-tracking (visual tier) | CPU3D | MJWarp |
 
 `device=` is a constructor argument. A class that cannot run on a device refuses at construction.
-
-On CPU, Fetch with `backend="auto"` does not fall back to OpenGL. Pass `backend="opengl"`.
 
 For Cube and Scene, physics runs on CPU whatever the render backend. CPU rendering needs Mesa software
 OpenGL, configured before the first MuJoCo import. See [System setup](../system-setup.md).
