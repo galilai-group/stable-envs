@@ -24,7 +24,7 @@ def check_fidelity_declaration(cls: type[Env]) -> None:
 
     A ``visual_fidelity`` record must carry its measurements, ``measured_at`` and a ``visual_note``.
     Version fields must be dicts of package names to exact versions. This checks that the
-    declaration is complete, not that the measurement still holds.
+    declaration is complete. The source-comparison tests check the measurement itself.
     """
     vf = dict(getattr(cls, "visual_fidelity", {}) or {})
     # Version metadata is optional, but malformed declarations cannot identify a reference.

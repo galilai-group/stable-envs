@@ -29,12 +29,12 @@ OpenGL, configured before the first MuJoCo import. See [System setup](../system-
 
 ## Agreement with the source
 
-- Most classes port the source renderer. The tests compare their frames with the source frames pixel
-  by pixel. Where some pixels differ, the class's `parity_note` names the cause.
-- The DM Control body-tracking classes, and OGBCube, OGBScene and PyFlytRocketLanding on CUDA, use a
-  different rasterizer from the source. Their frames differ from the source frames.
-  `env.describe()["visual_fidelity"]` gives the measured mean absolute difference, the fraction of
-  pixels within 8/255 and the SSIM. `env.describe()["visual_note"]` tells where the frames differ.
+- For most classes, the tests compare the frames with the source frames pixel by pixel. Where some
+  pixels differ, the class's `parity_note` names the cause.
+- The DM Control body-tracking classes, and OGBCube, OGBScene and PyFlytRocketLanding on CUDA, draw
+  with a different rasterizer from the source. The tests compare their frames by the mean absolute
+  difference, the fraction of pixels within 8/255 and the SSIM. `env.describe()["visual_fidelity"]`
+  gives the measured values. `env.describe()["visual_note"]` tells where the frames differ.
 
 ## Rendering details
 
