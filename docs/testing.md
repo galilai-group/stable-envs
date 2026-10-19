@@ -159,6 +159,18 @@ The generators for frozen corpora are in `scripts/testing/`. See its README.
 `tests/gpu/test_conformance.py` runs on every registered env on a CUDA machine. It skips without
 CUDA.
 
+The reference checks build the source env of each class. The navigation classes and
+`PyFlytRocketLanding` get their source env from stable-worldmodel. Before you run `tests/gpu` for a
+family with the `swm` capability, do these steps in the test environment:
+
+1. Install a CUDA build of torch.
+2. Install stable-worldmodel at the commit in `[swm]` of `ci/families.toml`, with the `swm_with`
+   distributions of the family.
+
+If stable-worldmodel is not installed, these checks fail with `NamespaceNotFound: swm`.
+`test(<profile>)` does step 2 with `noxfile._install_swm`. On Linux, its environment has the CPU
+build of torch.
+
 ```bash
 pytest tests/gpu -v
 python -m tests._runner.supervisor -- tests/gpu -v   # crash-isolated
