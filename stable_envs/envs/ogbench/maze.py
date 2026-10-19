@@ -417,6 +417,28 @@ def _scene_env(loco: str, maze: str, size: int, ob_type: str = "pixels"):
     return _ENV_CACHE[key]
 
 
+def _upload_xml_checker(env, loco: str) -> None:
+    """Replace a pixel-scene source floor with the locomotion XML's checker texels and upload them."""
+    import importlib
+
+    import mujoco
+
+    module = importlib.import_module(f"ogbench.locomaze.{loco}")
+    xml = mujoco.MjModel.from_xml_path(getattr(module, f"{loco.capitalize()}Env").xml_file)
+    u = env.unwrapped
+    m = u.model
+    attr = "tex_rgb" if hasattr(m, "tex_rgb") else "tex_data"
+    src, dst = xml.tex("grid"), m.tex("grid")
+    shape = (int(dst.height[0]), int(dst.width[0]))
+    if (int(src.height[0]), int(src.width[0])) != shape:
+        raise RuntimeError(f"the {loco} XML checker and the source floor texture differ in size")
+    n = 3 * shape[0] * shape[1]
+    getattr(m, attr)[int(dst.adr[0]) : int(dst.adr[0]) + n] = getattr(xml, attr)[int(src.adr[0]) : int(src.adr[0]) + n]
+    r = u.custom_renderer
+    r._gl_context.make_current()
+    mujoco.mjr_uploadTexture(m, r._mjr_context, int(dst.id))
+
+
 def _checker_masks(loco: str):
     """Texel masks of the XML checker's two colours; pixel scenes overwrite it at construction."""
     import importlib
@@ -974,9 +996,14 @@ class OGBenchMaze(Env):
     def reference_env(cls, size: int = 224):
         """Construct an independent source environment for reference comparisons.
 
-        Keep its GL context alive while other renderers are in use.
+        A pixel scene shows the XML checker floor, which is the default ``floor.pixel_encoding=0``
+        and what swm's first reset draws. Keep its GL context alive while other renderers are in use.
         """
-        return _build_reference(cls.LOCO, cls.MAZE, size, getattr(cls, "RENDER_OB_TYPE", "pixels"))
+        ob_type = getattr(cls, "RENDER_OB_TYPE", "pixels")
+        env = _build_reference(cls.LOCO, cls.MAZE, size, ob_type)
+        if ob_type == "pixels":
+            _upload_xml_checker(env, cls.LOCO)
+        return env
 
     @classmethod
     def reference_render(cls, env, states) -> np.ndarray:
