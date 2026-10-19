@@ -7,9 +7,11 @@ physics on CPU. `device="cuda"` puts State and frames on the GPU. It does not mo
 The renderers come in two groups:
 
 - The fixed-camera tasks (Acrobot, Ball in cup, Cartpole, Finger, Manipulator, Pendulum, Point mass and
-  Reacher) use the analytic ray caster `raycast3d`. They are in the parity tier.
+  Reacher) use the analytic ray caster `raycast3d`. The tests compare their frames with MuJoCo's
+  frames pixel by pixel.
 - The body-tracking tasks (Cheetah, Hopper, Humanoid, Quadruped, Swimmer and Walker) use `cpu3d` on CPU
-  and MJWarp on CUDA. They are in the visual tier. See [Fidelity tiers](../concepts/fidelity-tiers.md).
+  and MJWarp on CUDA. Their frames differ from MuJoCo's frames. `env.describe()["visual_fidelity"]`
+  gives the measured agreement.
 
 Each action dimension drives one actuator of the model, in the order of the MuJoCo model. The bounds
 come from the actuator control range.

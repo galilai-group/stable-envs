@@ -4,7 +4,6 @@
  "family": "classic_control",
  "domain": "classic_control",
  "reference_id": "Acrobot-v1",
- "fidelity_tier": "parity",
  "requires_cuda": false,
  "has_dynamics": true,
  "default_size": 500,

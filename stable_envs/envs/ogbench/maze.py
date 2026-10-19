@@ -445,9 +445,6 @@ class OGBenchMaze(Env):
     default_supersample = 2
     # Moving-primitive cast window; oversized projections fall back to the full frame.
     TILE = 32
-    # The flat-interior metric excludes most small shaded agent pixels.
-    parity_interior_min = 1.0
-
     parity_note = (
         "Agent-pixel parity (supersample 2, against MuJoCo at its default offsamples=4, 25 cells x 64 "
         "states). Every disagreement is inside the agent's own silhouette: the baked plate is exact by "

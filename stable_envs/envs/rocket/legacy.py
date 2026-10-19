@@ -561,7 +561,7 @@ _NVD_CACHE = _RES.BoundedCache(8, name="rocket.nvd", on_evict=ND.close_cached_re
 
 
 class PyFlytRocketLanding(Env):
-    """Rocket geometry renderer over observation rows obs[:13], VISUAL TIER.
+    """Rocket geometry renderer over observation rows obs[:13].
 
     This base renders stored poses with CUDA. The registered semantic subclass
     adds simulation and CPU rendering. Silhouettes, checker filtering, and cylinder
@@ -593,10 +593,6 @@ class PyFlytRocketLanding(Env):
         "pos_y",
         "pos_z",
     )
-    fidelity_tier = "visual"
-    parity_interior_min = None
-    parity_note = ""
-    # Fixed visual-fidelity thresholds; do not derive tolerances from the run being tested.
     visual_fidelity = {
         "mean_abs": 7.71,
         "within8_frac": 0.961,
@@ -607,9 +603,6 @@ class PyFlytRocketLanding(Env):
         "under_variation": {"mean_abs": 7.646, "within8_frac": 0.958, "ssim": 0.896, "exact_frac": 0.903},
         "reference_unreachable_share": REFERENCE_UNREACHABLE_SHARE,
         "reference_unreachable_rows_in_draws": 0,
-        "mean_abs_max": 10.0,
-        "within8_min": 0.91,
-        "ssim_min": 0.80,
         "measured_at": (
             "480 px, supersample 1, default appearance, worst of 4 independent 64-state draws of "
             "sample_states (default_rng(1000..1003)) over the rows the reference bridge reaches, "
@@ -646,7 +639,6 @@ class PyFlytRocketLanding(Env):
         "(sub-pixel UV rounding under nearest sampling) and the far ground where tiles are "
         "sub-pixel, scipy's rather than Bullet's triangulation of the hull cylinders' planar caps "
         "(Gouraud interpolation across a cap differs by the diagonal chosen), and the 61-px flame. "
-        "NOT a substitute for a stored dataset when a policy will be evaluated on official pixels. "
         + DOCUMENTED_LIMITATIONS
     )
 
@@ -750,7 +742,7 @@ class PyFlytRocketLanding(Env):
     ) -> torch.Tensor:
         """Render (..., 13) pose rows and per-row appearance to uint8 RGB.
 
-        This visual-tier path can differ from the source renderer.
+        Frames can differ from the source renderer; see ``visual_note``.
         """
         s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])

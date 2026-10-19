@@ -4,15 +4,11 @@ from ...render import raycast3d as R3
 from ._aligned import DMCAlignedSemantics
 from ._cells import PARITY_NOTE, parity_cell
 
-# This cell lowers only the all-pixel floor; the interior agreement requirement is shared.
-ALL_EXACT_FLOOR = {"DMCFingerTurnEasy": 0.89}
-
 DMCFingerSpin = parity_cell("DMCFingerSpin", "finger", "spin", bases=(DMCAlignedSemantics,), SIMULATOR="finger-spin")
 DMCFingerTurnEasy = parity_cell(
     "DMCFingerTurnEasy",
     "finger",
     "turn_easy",
-    parity_all_exact_min=ALL_EXACT_FLOOR["DMCFingerTurnEasy"],
     parity_note=PARITY_NOTE,
     bases=(DMCAlignedSemantics,),
     SIMULATOR="finger-turn_easy",

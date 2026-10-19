@@ -26,5 +26,5 @@ Constants that read plausibly from the source can still be wrong. The table show
    interior pixels and nothing visible in an all-pixel mean.
 5. Record rejected environments with the check that rejected them.
 
-[Fidelity tiers](fidelity-tiers.md) describes the two tiers of claim. [Adding a component](../adding/index.md)
-contains the contributor guides.
+[Testing](../testing.md#gpu-conformance) lists the tests that compare frames with the source.
+[Adding a component](../adding/index.md) contains the contributor guides.

@@ -14,6 +14,7 @@ pytest.importorskip("tensordict")
 import torch
 
 import stable_envs as snv
+from tests.helpers import pixel_tolerances as PT
 
 pytestmark = pytest.mark.unit
 
@@ -92,7 +93,6 @@ def test_package_exports_the_names_callers_import():
         "SHAPE_KNOB_SPECS",
         "RENDER_INVARIANT_DIMS",
         "STATE_DIMS_NOTE",
-        "ALL_EXACT_FLOOR",
         "PARITY_NOTE",
         "VISUAL_NOTE",
         "SPECULAR_NOTE",
@@ -169,10 +169,11 @@ def test_declared_provenance_floors_notes_and_cameras():
         assert vf["reference_versions"] == {"mujoco": "3.12.0"}, n
         assert vf["measured_with"] == {"mujoco_warp": "3.12.0"}, n
         assert "3.12.0" in vf["measured_at"], n
-    assert dmc.ALL_EXACT_FLOOR == {"DMCFingerTurnEasy": 0.89}
-    assert snv.registry.REGISTRY["DMCFingerTurnEasy"].parity_all_exact_min == 0.89
-    interior = snv.registry.REGISTRY["DMCCartpoleBalance"].parity_interior_min
-    assert all(snv.registry.REGISTRY[n].parity_interior_min == interior for n in PARITY)
+    assert {n: PT.EXACT_OVERRIDES[n] for n in ALL if n in PT.EXACT_OVERRIDES} == {
+        "DMCFingerTurnEasy": {"all_exact_min": 0.89}
+    }
+    assert snv.registry.REGISTRY["DMCFingerTurnEasy"].parity_note == dmc.PARITY_NOTE
+    assert all(PT.exact_floors(n)["interior_exact_min"] == PT.EXACT["interior_exact_min"] for n in PARITY)
     assert dmc.RENDER_INVARIANT_DIMS == {
         "DMCManipulatorBringBall": ("ball_y", "target_ball_quat_qw", "target_ball_quat_qy")
     }

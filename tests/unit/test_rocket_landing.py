@@ -13,6 +13,7 @@ import pytest
 
 pytest.importorskip("scipy")
 from stable_envs.envs.rocket import legacy as RL  # noqa: E402
+from tests.helpers import pixel_tolerances as PT  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 REF = ROOT / "tests" / "fixtures" / "states" / "rocket_landing"
@@ -183,6 +184,7 @@ def test_visual_declaration_is_complete_with_margin():
     from stable_envs.registry import check_fidelity_declaration
 
     vf = RL.PyFlytRocketLanding.visual_fidelity
+    lim = PT.agreement_limits("PyFlytRocketLanding")
     assert all(k in vf for k in REQUIRED_VISUAL_FIDELITY)
     assert all(vf[k] is not None for k in REQUIRED_VISUAL_FIDELITY)
     assert not vf["measured_at"].startswith("UNMEASURED")
@@ -190,12 +192,12 @@ def test_visual_declaration_is_complete_with_margin():
         assert token in vf["measured_at"], f"measured_at does not say {token!r}"
     assert vf["reference_versions"] == {"PyFlyt": "0.29.0", "pybullet": "3.2.7"}
     assert set(vf["measured_with"]) == {"nvdiffrast", "torch"}
-    assert vf["mean_abs"] < vf["mean_abs_max"]
-    assert vf["within8_frac"] > vf["within8_min"]
-    assert vf["ssim"] > vf["ssim_min"]
-    assert vf["mean_abs_max"] >= 1.2 * vf["mean_abs"], "a ceiling sitting on the measurement is fragile"
-    assert vf["within8_min"] <= 0.97 * vf["within8_frac"]
-    assert vf["ssim_min"] <= 0.97 * vf["ssim"]
+    assert vf["mean_abs"] < lim["mean_abs_max"]
+    assert vf["within8_frac"] > lim["within8_min"]
+    assert vf["ssim"] > lim["ssim_min"]
+    assert lim["mean_abs_max"] >= 1.2 * vf["mean_abs"], "a ceiling sitting on the measurement is fragile"
+    assert lim["within8_min"] <= 0.97 * vf["within8_frac"]
+    assert lim["ssim_min"] <= 0.97 * vf["ssim"]
     lo, hi = vf["draw_spread"]["mean_abs"]
     assert lo <= hi and abs(vf["mean_abs"] - hi) < 0.01
     assert vf["reference_unreachable_share"] == RL.REFERENCE_UNREACHABLE_SHARE == 1.0 / 960.0

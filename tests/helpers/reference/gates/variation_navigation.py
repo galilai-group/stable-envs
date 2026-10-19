@@ -17,6 +17,7 @@ import numpy as np
 import torch
 
 import stable_envs as se
+from tests.helpers.pixel_tolerances import exact_floors
 from tests.helpers.reference.native_navigation_semantics import NativeNavigationReference
 from tests.helpers.reference.semantics import compare_state
 
@@ -67,15 +68,19 @@ def _start_frames(domain, starts, ours, theirs, floor) -> dict:
     return {
         "interior_exact_frac": agreement["interior_exact_frac"],
         "interior_bad_px": agreement["interior_bad_px"],
-        "parity_interior_min": floor,
+        "interior_exact_min": floor,
         "exact_frac": agreement["exact_frac"],
         "max_abs": agreement["max_abs"],
         "window": window,
     }
 
 
+def _interior_floor(env) -> float:
+    return exact_floors(type(env).__name__)["interior_exact_min"]
+
+
 def _frames_agree(frames: dict) -> bool:
-    return frames["interior_exact_frac"] is not None and frames["interior_exact_frac"] >= frames["parity_interior_min"]
+    return frames["interior_exact_frac"] is not None and frames["interior_exact_frac"] >= frames["interior_exact_min"]
 
 
 def _references(domain, leaf, explicit, options):
@@ -136,7 +141,7 @@ def _case(env, domain, leaf, seed, explicit):
             assert np.array_equal(drawn, values), drawn
         else:
             assert len({tuple(row) for row in drawn.tolist()}) == 3, drawn
-        frames = _start_frames(domain, drawn, env.render().cpu().numpy(), their_frames, env.parity_interior_min)
+        frames = _start_frames(domain, drawn, env.render().cpu().numpy(), their_frames, _interior_floor(env))
         assert _frames_agree(frames), frames
         steps = _rollout(env, refs, seed, STEPS)
     finally:
@@ -204,7 +209,7 @@ def appearance_gate(seed: int = 5, steps: int = 4) -> dict:
                 ours = env.render().cpu().numpy()
                 theirs = np.stack([np.asarray(ref.envs[0].render()) for ref in refs])
                 starts = env.get_state()["agent", "position"].cpu().numpy()
-                frames = _start_frames("piecewise", starts, ours, theirs, env.parity_interior_min)
+                frames = _start_frames("piecewise", starts, ours, theirs, _interior_floor(env))
                 assert _frames_agree(frames), frames
                 evidence["frames"].append(frames)
             plain = env.render(variation={flag: 0 for flag in FLAGS}).cpu().numpy()
@@ -243,7 +248,7 @@ def zones_bias_field_gate(seed: int = 5) -> dict:
                 start,
                 env.render().cpu().numpy(),
                 np.asarray(ref.envs[0].render())[None],
-                env.parity_interior_min,
+                _interior_floor(env),
             )
             assert _frames_agree(frames), frames
         finally:

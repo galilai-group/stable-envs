@@ -20,16 +20,11 @@ if not torch.cuda.is_available():
 
 import stable_envs as se
 from stable_envs.testing import conformance as C
+from tests.helpers import pixel_tolerances as PT
 from tests.helpers.reference import dmc_source_render
 from tests.helpers.reference.certification import has_reference_renderer
 
 ENV_NAMES = sorted(se.registry.REGISTRY)
-
-#: Parity thresholds. Interior pixels (no anti-aliasing ambiguity) must be exact; the all-pixel bar is
-#: looser because aliased reference rasterizers disagree with any other rasterizer at edges.
-INTERIOR_EXACT_MIN = 1.0
-ALL_EXACT_MIN = 0.90
-MEAN_ABS_MAX = 4.0
 
 #: Minimum ``1 - mean|d|(declared) / mean|d|(flipped)`` inside a task object's footprint, pooled over
 #: the state stack: the declared visibility must be at least twice as close to the official frame as
@@ -108,18 +103,13 @@ def test_required_envs_are_all_reachable():
 
 
 def test_relaxed_parity_floors_are_all_explained():
-    """Every registered class that lowers a parity floor gives a ``parity_note`` naming the mechanism.
+    """Every registered class with a lowered exact-pixel floor gives a ``parity_note`` naming the mechanism.
 
     Checked on the class, so it applies even where the reference package is not installed.
     """
     bad = []
     for name, cls in sorted(se.registry.REGISTRY.items()):
-        floors = {k: getattr(cls, k, None) for k in ("parity_interior_min", "parity_all_exact_min")}
-        lowered = {
-            k: v
-            for k, v in floors.items()
-            if v is not None and float(v) < (INTERIOR_EXACT_MIN if k == "parity_interior_min" else ALL_EXACT_MIN)
-        }
+        lowered = {k: v for k, v in PT.exact_floors(name).items() if v < PT.EXACT[k]}
         if lowered and len(str(getattr(cls, "parity_note", "") or "").strip()) < 40:
             bad.append(f"{name} lowers {lowered} with no usable parity_note")
     assert not bad, "parity floors lowered without a parity_note:\n  " + "\n  ".join(bad)
@@ -259,28 +249,27 @@ def test_a_declared_task_object_is_drawn_iff_the_reference_draws_it(env):
         )
 
 
-def test_fidelity_tier_is_fully_declared(env):
-    """The env's fidelity tier (parity or visual) is fully declared and reported by ``describe()``.
-
-    ``register`` already enforces this; the tier decides which parity test below applies.
-    """
+def test_fidelity_declaration_matches_the_tolerance_table(env):
+    """A class declares ``visual_fidelity`` if and only if the tolerance table compares it by agreement."""
     from stable_envs.registry import check_fidelity_declaration
 
-    check_fidelity_declaration(type(env))
-    assert env.describe()["fidelity_tier"] == env.fidelity_tier, "describe() must report the fidelity tier"
+    cls = type(env)
+    check_fidelity_declaration(cls)
+    assert bool(env.visual_fidelity) == (PT.agreement_limits(cls.__name__) is not None), (
+        f"{cls.__name__}: visual_fidelity and tests/helpers/pixel_tolerances.AGREEMENT disagree"
+    )
 
 
 @pytest.mark.reference
 def test_render_parity_with_official_renderer(env):
-    """Frames match the official renderer on sampled reachable states, to the parity-tier floors.
+    """Frames match the official renderer on sampled reachable states, to the exact-pixel floors.
 
-    Visual-tier envs are skipped here and checked by ``test_visual_tier_matches_its_declared_fidelity``.
+    Classes in ``pixel_tolerances.AGREEMENT`` are skipped here and checked by
+    ``test_render_agreement_with_official_renderer``.
     """
     cls = type(env)
-    if env.fidelity_tier == "visual":
-        pytest.skip(
-            f"{cls.__name__} declares the visual tier and is checked by test_visual_tier_matches_its_declared_fidelity"
-        )
+    if PT.agreement_limits(cls.__name__) is not None:
+        pytest.skip(f"{cls.__name__} is compared by agreement in test_render_agreement_with_official_renderer")
     if not has_reference_renderer(cls):
         pytest.skip(f"{cls.__name__}: no official reference renderer to compare against")
     try:
@@ -297,10 +286,11 @@ def test_render_parity_with_official_renderer(env):
 
     r = C.pixel_agreement(ours, official)
     print(f"\n{cls.__name__} vs {env.reference_id}: {r}")
-    floor = float(getattr(env, "parity_interior_min", INTERIOR_EXACT_MIN))
+    floors = PT.exact_floors(cls.__name__)
+    floor = floors["interior_exact_min"]
     if floor < 1.0:
         assert getattr(env, "parity_note", ""), (
-            f"{cls.__name__} relaxes parity_interior_min to {floor} but gives no parity_note"
+            f"{cls.__name__} relaxes interior_exact_min to {floor} but gives no parity_note"
         )
         print(f"  relaxed to {floor}: {env.parity_note}")
     if r["interior_exact_frac"] is not None:
@@ -310,40 +300,38 @@ def test_render_parity_with_official_renderer(env):
             f"a floor of {100 * floor:.5f}%, on states from default_rng({PARITY_STATE_SEED}). Interior "
             f"disagreement is normally a geometry or colour error. A few 1/255 pixels may be a "
             f"quantisation boundary in a smoothly shaded region (see conformance.interior_mask), which "
-            f"is declared with parity_interior_min and a parity_note: {r}"
+            f"is declared in tests/helpers/pixel_tolerances.py with a parity_note: {r}"
         )
-    # An env may declare its own all-pixel floor with a parity_note: all-pixel exactness also depends
-    # on how much of the frame moves, not only on the renderer.
-    all_floor = getattr(env, "parity_all_exact_min", None)
-    all_floor = ALL_EXACT_MIN if all_floor is None else float(all_floor)
-    if all_floor < ALL_EXACT_MIN:
+    # All-pixel exactness also depends on how much of the frame moves, so a class can lower it.
+    all_floor = floors["all_exact_min"]
+    if all_floor < PT.EXACT["all_exact_min"]:
         assert getattr(env, "parity_note", ""), (
-            f"{cls.__name__} relaxes parity_all_exact_min to {all_floor} but gives no parity_note"
+            f"{cls.__name__} relaxes all_exact_min to {all_floor} but gives no parity_note"
         )
         print(f"  all-pixel floor relaxed to {all_floor}")
     assert r["exact_frac"] >= all_floor, (
         f"only {100 * r['exact_frac']:.1f}% of pixels exact (floor {100 * all_floor:.1f}%): {r}"
     )
-    assert r["mean_abs"] <= MEAN_ABS_MAX, f"mean |diff| {r['mean_abs']:.3f}/255 too high: {r}"
+    assert r["mean_abs"] <= floors["mean_abs_max"], f"mean |diff| {r['mean_abs']:.3f}/255 too high: {r}"
 
 
 @pytest.mark.reference
-def test_visual_tier_matches_its_declared_fidelity(env):
-    """A visual-tier env meets its declared ``mean_abs``, ``within8_frac`` and ``ssim`` thresholds.
+def test_render_agreement_with_official_renderer(env):
+    """A class in ``pixel_tolerances.AGREEMENT`` meets its ``mean_abs``, ``within8_frac`` and ``ssim`` limits.
 
     ``mean_abs`` catches a global shift, ``within8_frac`` a wrong region, ``ssim`` lost structure.
-    Interior-pixel exactness is not asserted for this tier.
+    Interior-pixel exactness is not asserted for these classes.
     """
     cls = type(env)
-    if env.fidelity_tier != "visual":
-        pytest.skip(f"{cls.__name__} is a parity env; test_render_parity_with_official_renderer applies to it")
+    vf = PT.agreement_limits(cls.__name__)
+    if vf is None:
+        pytest.skip(f"{cls.__name__} is compared exactly in test_render_parity_with_official_renderer")
     try:
         r = C.check_visual_fidelity(env)
     except ImportError as e:
         pytest.skip(f"{cls.__name__}: reference env not installed ({e})")
-    vf = env.visual_fidelity
-    print(f"\n{cls.__name__} vs {env.reference_id} [VISUAL TIER]: {r}")
-    print(f"  declared: {vf}")
+    print(f"\n{cls.__name__} vs {env.reference_id}: {r}")
+    print(f"  limits: {vf}; declared measurement: {env.visual_fidelity}")
     assert r["mean_abs"] <= vf["mean_abs_max"], (
         f"mean |diff| {r['mean_abs']:.3f}/255 exceeds the declared ceiling {vf['mean_abs_max']}: {r}"
     )

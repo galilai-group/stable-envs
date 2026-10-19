@@ -303,14 +303,14 @@ from .manipulation import OGBScene as _SceneRenderer
 class OGBCube(ManipulationSemantics, _CubeRenderer):
     """Cube simulation with restorable State and CPU OpenGL or GPU MJWarp rendering.
 
-    GPU rendering is visual tier: lighting and transparency can differ from MuJoCo.
+    On the GPU, lighting and transparency can differ from MuJoCo.
     """
 
 
 class OGBScene(ManipulationSemantics, _SceneRenderer):
     """Scene simulation with restorable State and CPU OpenGL or GPU MJWarp rendering.
 
-    GPU rendering is visual tier: lighting, transparency, and button textures can differ from MuJoCo.
+    On the GPU, lighting, transparency, and button textures can differ from MuJoCo.
     """
 
 

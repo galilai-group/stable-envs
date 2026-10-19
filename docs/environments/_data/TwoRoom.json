@@ -4,7 +4,6 @@
  "family": "navigation",
  "domain": "navigation",
  "reference_id": null,
- "fidelity_tier": "parity",
  "requires_cuda": false,
  "has_dynamics": true,
  "default_size": 224,

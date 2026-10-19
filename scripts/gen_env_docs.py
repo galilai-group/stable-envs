@@ -162,7 +162,6 @@ def metadata(name: str, device: str = "cpu") -> dict:
             "family": info["family"],
             "domain": info["domain"],
             "reference_id": info["reference_id"],
-            "fidelity_tier": info["fidelity_tier"],
             "requires_cuda": info["requires_cuda"],
             "has_dynamics": info["has_dynamics"],
             "default_size": info["default_size"],

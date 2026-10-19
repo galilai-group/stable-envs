@@ -25,7 +25,7 @@ contracts where possible. Refuse unsupported backends explicitly.
 
 Reuse the upstream renderer or an existing rendering path. CartPole in
 `stable_envs/envs/classic_control/envs.py` uses `gfxdraw`. MuJoCo families use MuJoCo or MJWarp.
-`Scene2D` is optional. See [the Env API](../api/env.md) and [Fidelity tiers](../concepts/fidelity-tiers.md).
+`Scene2D` is optional. See [the Env API](../api/env.md) and [Fidelity methodology](../concepts/fidelity-methodology.md).
 
 ## Example: full/private equality and no mutation
 
@@ -91,7 +91,8 @@ git diff --check
 ## Final acceptance
 
 - Compare against the official reference and the frozen baseline.
-- Use exact pixels unless the class's fidelity tier allows another criterion. State the criterion.
+- Use exact pixels unless a different rasterizer draws the frames. Then measure the agreement, record
+  it in `visual_fidelity`, and add the limits to `tests/helpers/pixel_tolerances.py`. State the criterion.
 - Include representative tasks, contact poses, cameras and appearance settings.
 - Run each claimed CPU and GPU backend separately.
 

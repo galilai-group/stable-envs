@@ -186,8 +186,6 @@ class DMControlTrackCom(_DMCModel):
     This path supports one sample per pixel and refuses uncertified CPU cells.
     """
 
-    fidelity_tier = "visual"
-    parity_interior_min = None
     default_supersample = 1
     # Field of view cannot vary per world in this MJWarp model upload.
     CAMERA_KNOB = False

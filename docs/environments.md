@@ -19,8 +19,8 @@ snv.import_errors()                  # {module: exception} for families this mac
 EGL context or a compiled scene.
 
 `info` returns `class_name`, `id`, `class`, `module`, `family`, `domain`, `reference_id`,
-`render_state_dim`, `render_state_names`, `default_size`, `fidelity_tier`, `action_dim`, `has_dynamics`
-and `requires_cuda`. `class` is the class object and `module` is the name of its module.
+`render_state_dim`, `render_state_names`, `default_size`, `action_dim`, `has_dynamics` and
+`requires_cuda`. `class` is the class object and `module` is the name of its module.
 
 `snv.info` returns metadata. It does not return an `snv.Spec`. An `snv.Spec` describes tensors
 (`env.frame_spec`, `env.state_spec`, …).
@@ -61,11 +61,16 @@ State keys and the Variation leaves of each class.
 
 With every extra installed, these 74 classes register. Without PyFlyt, 73 classes register.
 
-## Fidelity
+## Comparison with the source
 
-Every class declares one tier: `parity` or `visual`. `info(name)["fidelity_tier"]` reports it.
-Visual-tier frames are a different render of the same scene. Use them for training data. Do not use
-them in place of official pixels at evaluation. See [Fidelity tiers](concepts/fidelity-tiers.md).
+`reference_id` names the source that the tests compare a class with. The "Renderer on CPU" and
+"Renderer on CUDA" rows of each class on its family page name the code that draws the frames. For
+example, PushT uses the source's own pygame drawing, and PyFlytRocketLanding uses TinyRenderer on CPU.
+
+For some classes, the tests compare the frames by the mean absolute difference, the fraction of
+pixels within 8/255 and the SSIM. For these classes, `env.describe()["visual_fidelity"]` gives the
+measured values and the measurement setup. `env.describe()["visual_note"]` tells where the frames differ. See
+[Limitations](concepts/limitations.md#agreement-with-the-source).
 
 ## API reference
 

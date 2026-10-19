@@ -4,7 +4,6 @@
  "family": "ogbench",
  "domain": "antmaze",
  "reference_id": "ogbench/antmaze-giant-v0",
- "fidelity_tier": "parity",
  "requires_cuda": false,
  "has_dynamics": true,
  "default_size": 224,

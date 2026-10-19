@@ -4,7 +4,6 @@
  "family": "craftax",
  "domain": "craftax",
  "reference_id": "Craftax-Classic-Symbolic-v1",
- "fidelity_tier": "parity",
  "requires_cuda": false,
  "has_dynamics": true,
  "default_size": 63,

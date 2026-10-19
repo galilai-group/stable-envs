@@ -4,7 +4,6 @@
  "family": "pyflyt",
  "domain": "rocket_landing",
  "reference_id": null,
- "fidelity_tier": "visual",
  "requires_cuda": false,
  "has_dynamics": true,
  "default_size": 480,

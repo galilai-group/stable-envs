@@ -4,7 +4,6 @@
  "family": "dmcontrol",
  "domain": "cartpole",
  "reference_id": "dm_control/cartpole-swingup",
- "fidelity_tier": "parity",
  "requires_cuda": false,
  "has_dynamics": true,
  "default_size": 84,

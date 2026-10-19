@@ -4,7 +4,6 @@
  "family": "dmcontrol",
  "domain": "reacher",
  "reference_id": "dm_control/reacher-easy",
- "fidelity_tier": "parity",
  "requires_cuda": false,
  "has_dynamics": true,
  "default_size": 84,

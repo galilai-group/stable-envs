@@ -15,7 +15,7 @@ from .simulation.adapter import RocketAdapter
 
 
 class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
-    """Rocket CPU dynamics with replay-backed State and CPU/CUDA rendering; VISUAL TIER.
+    """Rocket CPU dynamics with replay-backed State and CPU/CUDA rendering.
 
     PyFlyt 0.29.0/PyBullet 3.2.7 run physics on CPU. Explicit body and cached camera
     poses drive TinyRenderer on CPU or the nvdiffrast path on CUDA.

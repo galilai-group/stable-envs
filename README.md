@@ -110,7 +110,7 @@ Device support differs by family and backend. See [Limitations](docs/concepts/li
 | [Quickstart](docs/quickstart.md) | `reset`, `step`, `render`, specs |
 | [Install](docs/install.md) | extras, pins, nvdiffrast |
 | [System setup](docs/system-setup.md) | driver, OpenGL and `stable-envs doctor` |
-| [Environments](docs/environments.md) | listing, metadata, fidelity tier |
+| [Environments](docs/environments.md) | listing, metadata, comparison with the source |
 | [State, Action, Variation and Frame](docs/concepts/state.md) | what each value holds |
 | [Stepping](docs/concepts/dynamics.md) | action sequences and output selection |
 | [Lifecycle](docs/concepts/lifecycle.md) | `close()` and the context manager |

@@ -43,7 +43,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"this interpreter: {len(snv.list_envs())} envs, families={snv.list_families()}")
     meta = snv.info(args.env)
     print(
-        f"info family={meta['family']} domain={meta['domain']} tier={meta['fidelity_tier']} "
+        f"info family={meta['family']} domain={meta['domain']} "
         f"has_dynamics={meta['has_dynamics']} reference_id={meta['reference_id']}"
     )
 
