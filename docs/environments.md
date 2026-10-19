@@ -44,18 +44,20 @@ env = snv.CartPole(num_envs=8)
 
 ## Families
 
-`list_envs(family=…)` matches the class attribute `family`.
+`list_envs(family=…)` matches the class attribute `family`. Each family has a page. A page shows a
+clip of each class with random actions and a clip with sampled Variation. It also lists the action, the
+State keys and the Variation leaves of each class.
 
 | family | environments | examples |
 |---|---:|---|
-| `classic_control` | 5 | `CartPole`, `Pendulum` |
-| `craftax` | 4 | `CraftaxClassicPixels`, `CraftaxSymbolic` |
-| `dmcontrol` | 18 | `DMCReacherHard`, `DMCCheetahRun` (`domain="reacher"`, `"cheetah"`, …) |
-| `fetch` | 12 | `FetchReach`, `FetchPush`, … |
-| `navigation` | 5 | `TwoRoom`, `Piecewise`, `SimplePointMaze` |
-| `ogbench` | 27 | `PointMazeLargeNavigate`, `OGBCube` (`domain="pointmaze"`, `"cube"`, …) |
-| `pusht` | 2 | `PushT`, `PushTDiscrete` |
-| `pyflyt` | 1 | `PyFlytRocketLanding` |
+| [`classic_control`](environments/classic-control.md) | 5 | `CartPole`, `Pendulum` |
+| [`craftax`](environments/craftax.md) | 4 | `CraftaxClassicPixels`, `CraftaxSymbolic` |
+| [`dmcontrol`](environments/dmcontrol.md) | 18 | `DMCReacherHard`, `DMCCheetahRun` (`domain="reacher"`, `"cheetah"`, …) |
+| [`fetch`](environments/fetch.md) | 12 | `FetchReach`, `FetchPush`, … |
+| [`navigation`](environments/navigation.md) | 5 | `TwoRoom`, `Piecewise`, `SimplePointMaze` |
+| [`ogbench`](environments/ogbench.md) | 27 | `PointMazeLargeNavigate`, `OGBCube` (`domain="pointmaze"`, `"cube"`, …) |
+| [`pusht`](environments/pusht.md) | 2 | `PushT`, `PushTDiscrete` |
+| [`pyflyt`](environments/pyflyt.md) | 1 | `PyFlytRocketLanding` |
 
 With every extra installed, these 74 classes register. Without PyFlyt, 73 classes register.
 
@@ -69,3 +71,20 @@ them in place of official pixels at evaluation. See [Fidelity tiers](concepts/fi
 
 - [Env](api/env.md)
 - [Registered environments](api/envs.md)
+
+## Page data
+
+The family pages read their tables from `docs/environments/_data/<Class>.json`. The clips are in
+`docs/assets/media/envs/<Class>/`. `scripts/gen_env_docs.py` writes both. To refresh one class, run
+the script in an interpreter that registers the class:
+
+```bash
+python scripts/gen_env_docs.py PushT --meta --devices --media
+```
+
+- `--meta` writes the metadata from a one-lane env on CPU.
+- `--devices` builds the class on each available device and records the result.
+- `--media` renders the two clips with the default device of the class. It needs `imageio-ffmpeg` or
+  an `ffmpeg` executable.
+
+`tests/unit/test_env_docs_snapshot.py` checks each snapshot against the live class.

@@ -40,6 +40,13 @@ validation:
     unrecognized_links: warn
     absolute_links: warn
 
+# The hook reads the snapshots from disk; the site does not publish them.
+exclude_docs: |
+  environments/_data/
+
+extra_css:
+  - assets/stylesheets/envs.css
+
 # Built, but not listed individually.
 not_in_nav: |
   api/style.md
@@ -103,7 +110,16 @@ nav:
       - Fidelity tiers: concepts/fidelity-tiers.md
       - Limitations: concepts/limitations.md
       - Sibling projects: concepts/worldmodel.md
-  - Environments: environments.md
+  - Environments:
+      - Overview: environments.md
+      - Classic control: environments/classic-control.md
+      - Craftax: environments/craftax.md
+      - DM Control: environments/dmcontrol.md
+      - Fetch: environments/fetch.md
+      - Navigation: environments/navigation.md
+      - OGBench: environments/ogbench.md
+      - PushT: environments/pusht.md
+      - PyFlyt: environments/pyflyt.md
   - Reference:
       - Env: api/env.md
       - Registered environments: api/envs.md
@@ -113,7 +129,6 @@ nav:
       - Analytic raycast and CPU3D: api/raycast3d.md
       - Triangle rendering with nvdiffrast: api/nvdiff.md
       - MJWarp rendering: api/mjwarp.md
-  - Gallery: gallery.md
   - Benchmarks: benchmarks.md
   - Contributing:
       - Adding a component: adding/index.md
