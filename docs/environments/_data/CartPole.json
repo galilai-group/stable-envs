@@ -1,0 +1,204 @@
+{
+ "class_name": "CartPole",
+ "module": "stable_envs.envs.classic_control.envs",
+ "family": "classic_control",
+ "domain": "classic_control",
+ "reference_id": "CartPole-v1",
+ "fidelity_tier": "parity",
+ "requires_cuda": false,
+ "has_dynamics": true,
+ "default_size": 600,
+ "frame_shape": [400, 600, 3],
+ "physics": "source simulator on CPU",
+ "renderers": {
+  "cpu": "gfxdraw port (torch)",
+  "cuda": "gfxdraw port (fused Triton kernel)"
+ },
+ "action": {
+  "shape": [1],
+  "dtype": "int64",
+  "n": 2,
+  "low": 0,
+  "high": 1
+ },
+ "state": [
+  {
+   "key": "x",
+   "shape": [1],
+   "dtype": "float64"
+  },
+  {
+   "key": "x_dot",
+   "shape": [1],
+   "dtype": "float64"
+  },
+  {
+   "key": "theta",
+   "shape": [1],
+   "dtype": "float64"
+  },
+  {
+   "key": "theta_dot",
+   "shape": [1],
+   "dtype": "float64"
+  },
+  {
+   "key": "lifecycle",
+   "leaves": 1,
+   "numel": 1,
+   "dtypes": ["int64"]
+  },
+  {
+   "key": "task",
+   "leaves": 2,
+   "numel": 2,
+   "dtypes": ["bool", "int64"]
+  },
+  {
+   "key": "rng",
+   "leaves": 4,
+   "numel": 10,
+   "dtypes": ["int64"]
+  },
+  {
+   "key": "physics",
+   "leaves": 6,
+   "numel": 6,
+   "dtypes": ["float64"]
+  }
+ ],
+ "variation": [
+  {
+   "path": "axle.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": [129, 132, 203]
+  },
+  {
+   "path": "background.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 255
+  },
+  {
+   "path": "cart.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 0
+  },
+  {
+   "path": "physics.force_mag",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 5,
+   "high": 15,
+   "default": 10
+  },
+  {
+   "path": "physics.gravity",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 4.9,
+   "high": 14.7,
+   "default": 9.8
+  },
+  {
+   "path": "physics.length",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.25,
+   "high": 0.75,
+   "default": 0.5
+  },
+  {
+   "path": "physics.masscart",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.5,
+   "high": 1.5,
+   "default": 1
+  },
+  {
+   "path": "physics.masspole",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.05,
+   "high": 0.5,
+   "default": 0.1
+  },
+  {
+   "path": "physics.tau",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.01,
+   "high": 0.04,
+   "default": 0.02
+  },
+  {
+   "path": "pole.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": [202, 152, 101]
+  },
+  {
+   "path": "rendering.antialias",
+   "type": "Discrete",
+   "reset": false,
+   "n": 2,
+   "start": 0,
+   "default": 1
+  },
+  {
+   "path": "track.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 0
+  }
+ ],
+ "devices": {
+  "cpu": "ok",
+  "cuda": "ok"
+ },
+ "media": {
+  "device": "cuda",
+  "render_size": 600,
+  "rollout": {
+   "file": "rollout.mp4",
+   "width": 224,
+   "height": 150,
+   "frames": 61,
+   "fps": 15,
+   "bytes": 5600
+  },
+  "variation": {
+   "file": "variation.mp4",
+   "width": 224,
+   "height": 148,
+   "frames": 46,
+   "fps": 15,
+   "bytes": 7260
+  },
+  "variation_leaves": "all"
+ }
+}

@@ -1,0 +1,205 @@
+{
+ "class_name": "OGBCube",
+ "module": "stable_envs.envs.ogbench.manipulation_semantics",
+ "family": "ogbench",
+ "domain": "cube",
+ "reference_id": null,
+ "fidelity_tier": "visual",
+ "requires_cuda": false,
+ "has_dynamics": true,
+ "default_size": 224,
+ "frame_shape": [224, 224, 3],
+ "physics": "source simulator on CPU",
+ "renderers": {
+  "cpu": "opengl (MuJoCo)",
+  "cuda": "mjwarp"
+ },
+ "action": {
+  "shape": [5],
+  "dtype": "float32",
+  "low": -1,
+  "high": 1
+ },
+ "state": [
+  {
+   "key": "compatibility",
+   "leaves": 1,
+   "numel": 32,
+   "dtypes": ["uint8"]
+  },
+  {
+   "key": "physics",
+   "leaves": 10,
+   "numel": 255,
+   "dtypes": ["bool", "float64"]
+  },
+  {
+   "key": "controller",
+   "leaves": 2,
+   "numel": 12,
+   "dtypes": ["float64"]
+  },
+  {
+   "key": "output",
+   "leaves": 3,
+   "numel": 47,
+   "dtypes": ["float64"]
+  },
+  {
+   "key": "task",
+   "leaves": 6,
+   "numel": 37,
+   "dtypes": ["bool", "float64", "int64"]
+  },
+  {
+   "key": "lifecycle",
+   "leaves": 1,
+   "numel": 1,
+   "dtypes": ["bool"]
+  },
+  {
+   "key": "variation",
+   "leaves": 22,
+   "numel": 50,
+   "dtypes": ["float64"]
+  },
+  {
+   "key": "model",
+   "leaves": 10,
+   "numel": 26,
+   "dtypes": ["float64"]
+  },
+  {
+   "key": "rng",
+   "leaves": 84,
+   "numel": 1307,
+   "dtypes": ["float64", "int64", "uint8"]
+  }
+ ],
+ "variation": [
+  {
+   "path": "agent.color",
+   "type": "Box",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 1,
+   "default": [0.61, 0.28, 0.82]
+  },
+  {
+   "path": "agent.ee_start_position",
+   "type": "Box",
+   "reset": false,
+   "shape": [3],
+   "low": [0.25, -0.35, 0.2],
+   "high": [0.6, 0.35, 0.35],
+   "default": [0.425, 0, 0.275]
+  },
+  {
+   "path": "camera.angle_delta",
+   "type": "Box",
+   "reset": false,
+   "shape": [1, 2],
+   "low": -10,
+   "high": 10,
+   "default": 0
+  },
+  {
+   "path": "cube.color",
+   "type": "Box",
+   "reset": false,
+   "shape": [1, 3],
+   "low": 0,
+   "high": 1,
+   "default": [0.96, 0.26, 0.33]
+  },
+  {
+   "path": "cube.goal_position",
+   "type": "Box",
+   "reset": false,
+   "shape": [1, 2],
+   "low": [0.3, -0.3],
+   "high": [0.55, 0.3],
+   "default": [0.3, 0]
+  },
+  {
+   "path": "cube.goal_yaw",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0,
+   "high": 6.28319,
+   "default": 0
+  },
+  {
+   "path": "cube.size",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.01,
+   "high": 0.03,
+   "default": 0.02
+  },
+  {
+   "path": "cube.start_position",
+   "type": "Box",
+   "reset": false,
+   "shape": [1, 2],
+   "low": [0.3, -0.3],
+   "high": [0.55, 0.3],
+   "default": [0.3, 0]
+  },
+  {
+   "path": "cube.start_yaw",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0,
+   "high": 6.28319,
+   "default": 0
+  },
+  {
+   "path": "floor.color",
+   "type": "Box",
+   "reset": false,
+   "shape": [2, 3],
+   "low": 0,
+   "high": 1,
+   "default": [0.08, 0.11, 0.16, 0.15, 0.18, 0.25]
+  },
+  {
+   "path": "light.intensity",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0,
+   "high": 1,
+   "default": 0.7
+  }
+ ],
+ "devices": {
+  "cpu": "ok",
+  "cuda": "ok"
+ },
+ "media": {
+  "device": "cpu",
+  "render_size": 224,
+  "rollout": {
+   "file": "rollout.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 61,
+   "fps": 15,
+   "bytes": 35236
+  },
+  "variation": {
+   "file": "variation.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 46,
+   "fps": 15,
+   "bytes": 40511
+  },
+  "variation_leaves": "all"
+ }
+}
