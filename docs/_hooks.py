@@ -156,7 +156,6 @@ def _env_section(name, data, page_url):
             usable.append(f"{_DEVICE.get(device, device)} (needs {need})")
     rows = [
         ("Reference", f"`{data['reference_id']}`" if data["reference_id"] else "none"),
-        ("Fidelity tier", data["fidelity_tier"]),
         ("Physics", data.get("physics") or ""),
         ("Devices", ", ".join(usable)),
         ("Requires CUDA", "yes" if data["requires_cuda"] else "no"),

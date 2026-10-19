@@ -107,7 +107,6 @@ nav:
       - Stepping: concepts/dynamics.md
       - Variations: concepts/variation-spaces.md
       - Lifecycle: concepts/lifecycle.md
-      - Fidelity tiers: concepts/fidelity-tiers.md
       - Limitations: concepts/limitations.md
       - Sibling projects: concepts/worldmodel.md
   - Environments:

@@ -4,7 +4,6 @@
  "family": "dmcontrol",
  "domain": "swimmer",
  "reference_id": "dm_control/swimmer-swimmer6",
- "fidelity_tier": "visual",
  "requires_cuda": false,
  "has_dynamics": true,
  "default_size": 84,

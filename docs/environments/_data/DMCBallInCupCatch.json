@@ -4,7 +4,6 @@
  "family": "dmcontrol",
  "domain": "ball_in_cup",
  "reference_id": "dm_control/ball_in_cup-catch",
- "fidelity_tier": "parity",
  "requires_cuda": false,
  "has_dynamics": true,
  "default_size": 84,

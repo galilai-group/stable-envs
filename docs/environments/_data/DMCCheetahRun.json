@@ -4,7 +4,6 @@
  "family": "dmcontrol",
  "domain": "cheetah",
  "reference_id": "dm_control/cheetah-run",
- "fidelity_tier": "visual",
  "requires_cuda": false,
  "has_dynamics": true,
  "default_size": 84,

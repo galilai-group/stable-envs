@@ -4,7 +4,6 @@
  "family": "dmcontrol",
  "domain": "manipulator",
  "reference_id": "dm_control/manipulator-bring_ball",
- "fidelity_tier": "parity",
  "requires_cuda": false,
  "has_dynamics": true,
  "default_size": 224,

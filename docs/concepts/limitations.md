@@ -20,21 +20,21 @@ snv.import_errors()     # families this interpreter could not import
 | Fetch (12 classes) | software OpenGL | MJWarp or explicit NVIDIA OpenGL |
 | OGBCube, OGBScene | software OpenGL | MJWarp or explicit NVIDIA OpenGL |
 | PyFlytRocketLanding | TinyRenderer | CUDA rendering |
-| DM Control body-tracking (visual tier) | CPU3D | MJWarp |
+| DM Control body-tracking | CPU3D | MJWarp |
 
 `device=` is a constructor argument. A class that cannot run on a device refuses at construction.
 
 For Cube and Scene, physics runs on CPU whatever the render backend. CPU rendering needs Mesa software
 OpenGL, configured before the first MuJoCo import. See [System setup](../system-setup.md).
 
-## Fidelity
+## Agreement with the source
 
-- **Parity tier**: interior pixels match the official renderer. The floor is 1.0 unless the class
-  declares a `parity_note` that names the cause.
-- **Visual tier**: a different rasterizer draws the same scene. Use it for training frames. It is not
-  interchangeable with official pixels at evaluation. `info(name)["fidelity_tier"]` reports the tier.
-
-See [Fidelity tiers](fidelity-tiers.md).
+- Most classes port the source renderer. The tests compare their frames with the source frames pixel
+  by pixel. Where some pixels differ, the class's `parity_note` names the cause.
+- The DM Control body-tracking classes, and OGBCube, OGBScene and PyFlytRocketLanding on CUDA, use a
+  different rasterizer from the source. Their frames differ from the source frames.
+  `env.describe()["visual_fidelity"]` gives the measured mean absolute difference, the fraction of
+  pixels within 8/255 and the SSIM. `env.describe()["visual_note"]` tells where the frames differ.
 
 ## Rendering details
 

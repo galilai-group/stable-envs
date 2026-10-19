@@ -60,7 +60,7 @@ from .ball_in_cup import DMCBallInCupCatch  # noqa: F401
 from .base import _DMCModel  # noqa: F401
 from .cartpole import DMCCartpoleBalance, DMCCartpoleSwingup  # noqa: F401
 from .cheetah import DMCCheetahRun  # noqa: F401
-from .finger import ALL_EXACT_FLOOR, DMCFingerSpin, DMCFingerTurnEasy, DMCFingerTurnHard  # noqa: F401
+from .finger import DMCFingerSpin, DMCFingerTurnEasy, DMCFingerTurnHard  # noqa: F401
 from .hopper import DMCHopperHop  # noqa: F401
 from .humanoid import DMCHumanoidWalk  # noqa: F401
 from .manipulator import (  # noqa: F401

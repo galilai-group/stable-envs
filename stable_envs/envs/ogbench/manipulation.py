@@ -488,7 +488,6 @@ class OGBManipBase(Env):
 
     CELL: str = ""
     default_supersample = 1
-    fidelity_tier = "visual"
 
     def __init__(
         self,
@@ -1084,29 +1083,19 @@ def _fidelity(cell: str) -> dict:
             "mean_abs": -1.0,
             "within8_frac": -1.0,
             "ssim": -1.0,
-            "mean_abs_max": -1.0,
-            "within8_min": -1.0,
-            "ssim_min": -1.0,
             "measured_at": "UNMEASURED placeholder: STABLE_ENVS_OGB_UNMEASURED=1 is set, so these are "
             "not measurements and this build must not ship or be certified.",
         }
     d = _MEASURED[cell]
     spec = SPEC[cell]
-    lo_w, hi_w = d["draw_spread"]["within8_frac"]
-    lo_s, hi_s = d["draw_spread"]["ssim"]
     return {
         "mean_abs": float(d["mean_abs"]),
         "within8_frac": float(d["within8_frac"]),
         "ssim": float(d["ssim"]),
-        # Interior statistics are reported separately from the whole-frame acceptance thresholds.
         "interior_exact_frac": float(d["interior_exact_frac"]),
         "interior_frac": float(d["interior_frac"]),
         "all_exact_frac": float(d["all_exact_frac"]),
         "draw_spread": d["draw_spread"],
-        # Margins are 1.3 times mean error and at least 0.04 below the worst fractional score.
-        "mean_abs_max": round(float(d["mean_abs"]) * 1.3, 1),
-        "within8_min": float(np.floor((lo_w - 0.04) * 20) / 20),
-        "ssim_min": float(np.floor((lo_s - 0.04) * 20) / 20),
         "measured_at": (
             f"mujoco 3.12.0 / ogbench 1.2.1 reference; {spec['size']} px, "
             f"camera {spec['camera']}; worst of eight draws of 64 states, each from "
@@ -1123,7 +1112,7 @@ def _fidelity(cell: str) -> dict:
 _RESIDUAL_NOTE = (
     "The mjwarp path uses reference-rendered static backgrounds with MJWarp movers. "
     "Mover lighting and target transparency can differ from MuJoCo; visual_fidelity "
-    "records the measured error and acceptance margins."
+    "records the measured error."
 )
 _SCENE_BAKE_NOTE = (
     " Scene's UV-less button textures are replaced by mean colors because the pinned "
@@ -1147,9 +1136,8 @@ def _make_classes():
                     default_size=spec["size"],
                     visual_fidelity=_fidelity(cell),
                     visual_note=_RESIDUAL_NOTE + (_SCENE_BAKE_NOTE if cell == "Scene" else ""),
-                    parity_interior_min=None,
                     __doc__=(
-                        f"Visual tier GPU renderer for OGBench {cell}, using camera {spec['camera']!r}. "
+                        f"MJWarp GPU renderer for OGBench {cell}, using camera {spec['camera']!r}. "
                         f"Packed render rows have {spec['state_dim']} columns; optional mocap "
                         "orientations are supplied separately. Lighting and target transparency can "
                         "differ from the reference renderer."

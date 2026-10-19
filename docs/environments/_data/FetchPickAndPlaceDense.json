@@ -4,7 +4,6 @@
  "family": "fetch",
  "domain": "pickandplace",
  "reference_id": "FetchPickAndPlaceDense-v4",
- "fidelity_tier": "parity",
  "requires_cuda": false,
  "has_dynamics": true,
  "default_size": 480,

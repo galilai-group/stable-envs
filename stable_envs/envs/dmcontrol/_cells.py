@@ -20,9 +20,9 @@ VISUAL_NOTE = (
 )
 
 PARITY_NOTE = (
-    "parity_interior_min is not relaxed: interior-pixel agreement is 1.000000 (0 of 9,834,291 pixels "
-    "differ) over 201 draws of 64 states at default_supersample = 1. parity_all_exact_min is lowered "
-    "because all-pixel exactness scales with the moving area: finger-turn_easy's seven movers cover "
+    "Interior-pixel agreement is 1.000000 (0 of 9,834,291 pixels differ) over 201 draws of 64 states "
+    "at default_supersample = 1. All-pixel exactness is lower than on the other fixed-camera cells "
+    "because it scales with the moving area: finger-turn_easy's seven movers cover "
     "11.7% of an 84 px frame against cartpole's 2.5%. Over those draws all-pixel exactness is 0.9103 "
     "worst and 0.9119 median. Every disagreeing pixel is in the ray-cast mover pass, and the baked "
     "plate is exact on the pixels it owns. The residual is a one-level rim on curved silhouettes, "
@@ -97,7 +97,7 @@ def trackcom_cell(
                 __module__=_MODULE,
                 __doc__=(
                     f"DM Control {domain}-{task} at body-tracking camera {camera}.\n\n"
-                    "VISUAL TIER: uses MJWarp on CUDA or cpu3d on CPU; source OpenGL is an explicit backend. "
+                    "Uses MJWarp on CUDA or cpu3d on CPU; source OpenGL is an explicit backend. "
                     "Pixels approximate the source rasterizer. See visual_note for measurement scope."
                 ),
             ),

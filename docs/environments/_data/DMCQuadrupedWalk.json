@@ -4,7 +4,6 @@
  "family": "dmcontrol",
  "domain": "quadruped",
  "reference_id": "dm_control/quadruped-walk",
- "fidelity_tier": "visual",
  "requires_cuda": false,
  "has_dynamics": true,
  "default_size": 224,

@@ -474,7 +474,6 @@ class FetchBase(Env):
         "camera.azimuth_delta",
         "camera.elevation_delta",
     )
-    parity_interior_min = 0.99
     parity_note = (
         "Two declared residuals, both structural to the MJWarp backend. (1) The robot's 18 meshes are "
         "shaded per pixel while MuJoCo shades them per vertex (Gouraud), so they differ by a level or two "

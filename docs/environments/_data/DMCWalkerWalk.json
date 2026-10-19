@@ -4,7 +4,6 @@
  "family": "dmcontrol",
  "domain": "walker",
  "reference_id": "dm_control/walker-walk",
- "fidelity_tier": "visual",
  "requires_cuda": false,
  "has_dynamics": true,
  "default_size": 84,

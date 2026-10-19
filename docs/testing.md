@@ -166,9 +166,9 @@ python -m tests._runner.supervisor -- tests/gpu -v   # crash-isolated
 
 | test | rules out |
 |---|---|
-| `test_render_parity_with_official_renderer` | wrong colour, shape or position against the official renderer (parity tier) |
-| `test_visual_tier_matches_its_declared_fidelity` | a visual-tier class that no longer meets its declared thresholds |
-| `test_fidelity_tier_is_fully_declared` | a class that neither parity nor visual checks apply to |
+| `test_render_parity_with_official_renderer` | wrong colour, shape or position against the official renderer |
+| `test_render_agreement_with_official_renderer` | a class in `AGREEMENT` that no longer meets its limits |
+| `test_fidelity_declaration_matches_the_tolerance_table` | a class with `visual_fidelity` and no `AGREEMENT` entry, or the reverse |
 | `test_relaxed_parity_floors_are_all_explained` | a lowered threshold without a `parity_note` |
 | `test_render_state_roundtrip` | a render state that the round trip clips, normalizes or reorders |
 | `test_every_state_dim_reaches_the_render` | a render-state dimension that does not affect the frame |
@@ -184,17 +184,17 @@ python -m tests._runner.supervisor -- tests/gpu -v   # crash-isolated
 | `test_gpu_step_tracks_the_reference_simulator` | a batched GPU simulator that drifts from the reference beyond its bound |
 | `test_state_is_sufficient` | a state that does not determine the official frame |
 
-The top of the file defines the parity thresholds:
+`tests/helpers/pixel_tolerances.py` holds the per-class tolerances. `EXACT` is the default criterion:
 
-| constant | value | meaning |
+| key | value | meaning |
 |---|---|---|
-| `INTERIOR_EXACT_MIN` | 1.0 | interior pixels (flat 3×3 neighbourhood in the reference) must match exactly |
-| `ALL_EXACT_MIN` | 0.90 | fraction of all pixels that must match (edges may differ) |
-| `MEAN_ABS_MAX` | 4.0 / 255 | mean absolute difference |
+| `interior_exact_min` | 1.0 | interior pixels (flat 3×3 neighbourhood in the reference) must match exactly |
+| `all_exact_min` | 0.90 | fraction of all pixels that must match (edges may differ) |
+| `mean_abs_max` | 4.0 / 255 | mean absolute difference |
 
-A class can lower `parity_interior_min` or `parity_all_exact_min` only with a `parity_note` that names
-the cause. The suite checks visual-tier classes against their own `visual_fidelity`. See
-[Fidelity tiers](concepts/fidelity-tiers.md). If a new env cannot reach the interior floor, find the
+`EXACT_OVERRIDES` lowers a floor for a class. The class must have a `parity_note` that names the
+cause. `AGREEMENT` gives a `mean_abs` ceiling, a `within8_frac` floor and an `ssim` floor for each
+class that declares `visual_fidelity`. If a new env cannot reach the interior floor, find the
 wrong constant. See [Identify authority](adding/renderer.md#identify-authority).
 
 ## Running native renderers safely

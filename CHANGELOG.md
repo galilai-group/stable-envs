@@ -35,6 +35,7 @@ All notable changes to this project are listed here. The format follows
 
 - `MJW_CHUNK` in the DMC and OGBench packages. The `dmc_min_worlds` and `ogb_mjw_worlds` tuning knobs
   set the worlds per MJWarp launch.
+- `Env.fidelity_tier`, `stable_envs.env.FIDELITY_TIERS` and the `fidelity_tier` key of `snv.info()`.
 
 ## [0.1.0] - 2026-10-14
 

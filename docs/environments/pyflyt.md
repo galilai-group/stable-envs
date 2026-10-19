@@ -19,7 +19,8 @@ output reports it as `success`.
 
 The class needs the `rocket` extra, which pins `PyFlyt==0.29.0` and `pybullet==3.2.7`. On CPU,
 TinyRenderer draws the frames. On CUDA, nvdiffrast draws them. nvdiffrast is not on PyPI. See
-[Install](../install.md). The class is in the visual tier.
+[Install](../install.md). TinyRenderer is the source's renderer. The nvdiffrast frames differ from the
+TinyRenderer frames. `env.describe()["visual_fidelity"]` gives the measured agreement.
 
 ```python
 import stable_envs as snv

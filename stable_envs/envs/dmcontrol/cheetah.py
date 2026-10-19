@@ -14,9 +14,6 @@ VISUAL_FIDELITY: dict[str, dict] = {
         "skybox_share": 0.831,
         "floor_share": 0.127,
         "draw_spread": {"mean_abs": [1.283, 1.301], "within8_frac": [0.9640, 0.9649], "ssim": [0.9899, 0.9905]},
-        "mean_abs_max": 1.7,
-        "within8_min": 0.92,
-        "ssim_min": 0.95,
         "measured_at": (
             "84 px, 64 states x 4 independent draws from sample_states (the domain's own initialize_episode "
             "plus a 0-40 step random-action rollout), default appearance (material self rgba .7 .5 .3), "

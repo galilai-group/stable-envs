@@ -4,7 +4,6 @@
  "family": "ogbench",
  "domain": "pointmaze",
  "reference_id": "ogbench/pointmaze-medium-v0",
- "fidelity_tier": "parity",
  "requires_cuda": false,
  "has_dynamics": true,
  "default_size": 224,
