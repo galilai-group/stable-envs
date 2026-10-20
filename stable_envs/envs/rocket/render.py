@@ -176,6 +176,7 @@ def render(env, state, size, ss, chunk_size=None):
             positions[:, BODY_GEOM + j] = positions[:, BODY_GEOM] + np.einsum("bij,j->bi", rotation, local_pos[j])
             quaternions[:, BODY_GEOM + j] = geometry.quat_mul(quaternions[:, BODY_GEOM], local_quat[j : j + 1])
         rotations = geometry.quat_to_mat(quaternions)
+        geometry.cull_ground(positions, rotations, geometry.camera_pose(links[:, :3], links[:, 3:])[0])
         model = np.zeros((len(state), geometry.N_GEOMS, 4, 4), np.float32)
         model[..., :3, :3], model[..., :3, 3], model[..., 3, 3] = rotations, positions, 1
         views, projections = [], []
