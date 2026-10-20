@@ -34,6 +34,8 @@ All notable changes to this project are listed here. The format follows
 - `PyFlytRocketLanding` on CUDA draws the fins, legs and fuel tank at the current body pose, as PyFlyt
   does, and does not draw the ground when the camera is below it. Raw MSE against PyFlyt is about 4.6
   per 480 px frame.
+- `PyFlytRocketLanding.render(state)` on CUDA picks ground texels as TinyRenderer does, so frames that look
+  down at the far ground match PyFlyt when a ground corner is close to the camera plane.
 
 ### Removed
 
