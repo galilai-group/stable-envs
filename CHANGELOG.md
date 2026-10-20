@@ -8,6 +8,12 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- `MuJoCoOcclusionBall` (`object-permanence` extra): the source-authored G34 nominal
+  animation under `object_permanence`, with restorable MuJoCo State, native and
+  batched raycast CPU rendering, independent Blender trajectory/depth/mask fixtures
+  and unchanged geometry gates. Raycast caches static plates and preserves the
+  faceted sphere silhouette; its shading differs from native RGB.
+
 - Craftax: `CraftaxClassicPixels`, `CraftaxClassicSymbolic`, `CraftaxPixels` and `CraftaxSymbolic`
   run the upstream JAX simulator with all lanes in one jitted `vmap` (`craftax` / `craftax-gpu` extras).
   With Craftax, the extras provide 74 classes. Fetch and `OGBCube`/`OGBScene` pin different MuJoCo versions,

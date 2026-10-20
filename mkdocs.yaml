@@ -104,6 +104,7 @@ nav:
       - Limitations: concepts/limitations.md
       - Sibling projects: concepts/worldmodel.md
   - Environments: environments.md
+  - G34 alignment example: adding/occlusion-ball.md
   - Reference:
       - Env: api/env.md
       - Registered environments: api/envs.md

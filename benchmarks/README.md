@@ -60,3 +60,14 @@ configuration and the Git revision.
   shape, settings, timing distribution and optional CUDA peak memory.
 - `pipeline.py` writes one point per environment, with packed-state and frame byte sizes. The JPEG
   result and the throughput ratio are nested under that environment.
+
+## Object-permanence G34
+
+`python -m benchmarks.object_permanence --backend raycast --size 90` measures
+owned full-State batches spread across the nominal 120-frame trajectory. Use
+`--backend opengl` for the native baseline and the same batch sizes, thread
+settings and resolution. Both include public validation/projection and buffer
+copying; neither times initial construction, rollout or the static bake.
+The output retains sampled source phases, raw timing samples and thread settings.
+See [the alignment contract](../docs/adding/occlusion-ball.md) for geometry gates
+and reproducible OSMesa commands.

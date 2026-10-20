@@ -44,6 +44,11 @@ env = snv.CartPole(num_envs=8)
 
 ## Families
 
+`MuJoCoOcclusionBall` belongs to `object_permanence`. It reproduces the nominal G34
+authored animation with zero-only actions, native and batched raycast rendering in CPU
+tensors, and source depth/mask gates. Its install extra is `object-permanence` and CI profile is `object_permanence`.
+See [the alignment contract](adding/occlusion-ball.md).
+
 `list_envs(family=…)` matches the class attribute `family`.
 
 | family | environments | examples |
@@ -53,11 +58,13 @@ env = snv.CartPole(num_envs=8)
 | `dmcontrol` | 18 | `DMCReacherHard`, `DMCCheetahRun` (`domain="reacher"`, `"cheetah"`, …) |
 | `fetch` | 12 | `FetchReach`, `FetchPush`, … |
 | `navigation` | 5 | `TwoRoom`, `Piecewise`, `SimplePointMaze` |
+| `object_permanence` | 1 | `MuJoCoOcclusionBall` |
 | `ogbench` | 27 | `PointMazeLargeNavigate`, `OGBCube` (`domain="pointmaze"`, `"cube"`, …) |
 | `pusht` | 2 | `PushT`, `PushTDiscrete` |
 | `pyflyt` | 1 | `PyFlytRocketLanding` |
 
-With every extra installed, these 74 classes register. Without PyFlyt, 73 classes register.
+Across the supported extra combinations, these are 75 classes, or 74 without PyFlyt.
+Conflicting MuJoCo pins require separate interpreters; not every extra can be installed together.
 
 ## Fidelity
 

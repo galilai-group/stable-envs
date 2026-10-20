@@ -74,6 +74,7 @@ _MAZES = tuple(
 #: Registered env -> the CPU test comparing it with the library it ports, or with a corpus recorded from
 #: its source. None of these tests imports stable_worldmodel.
 ORIGINAL_GATES: dict[str, str] = {
+    "MuJoCoOcclusionBall": "tests/integration/test_occlusion_ball_source.py::test_nominal_rollout_matches_frozen_blender_trajectory",
     **dict.fromkeys(("CartPole", "Pendulum", "Acrobot", "MountainCar", "MountainCarContinuous"), _CLASSIC),
     **dict.fromkeys(("TwoRoom", "Piecewise", "SimplePointMaze"), _NAVIGATION),
     **dict.fromkeys(

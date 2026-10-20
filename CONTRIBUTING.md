@@ -42,7 +42,7 @@ uvx nox -s "test(core)"
 uvx nox -s "test(<profile>)"
 ```
 
-The profiles are `core`, `classic`, `navigation`, `pusht`, `dmc`, `fetch`, `ogbench`, `rocket` and
+The profiles are `core`, `classic`, `navigation`, `pusht`, `dmc`, `object_permanence`, `fetch`, `ogbench`, `rocket` and
 `craftax`. [`ci/families.toml`](ci/families.toml) lists the files each profile owns. `uvx nox -s affected`
 runs the test profiles that your branch touches. To only print them, run
 `python scripts/ci/plan.py --base origin/main --profiles-only`. If you changed the docs, also run
@@ -88,9 +88,9 @@ uvx nox -s typecheck                    # mypy on the adapter interface
 uvx nox -s docs                         # strict documentation build
 ```
 
-`test(<profile>)` runs `uv sync --frozen` with the family's extras and its `pin-<profile>` group into
+`test(<profile>)` runs `uv sync --frozen` with the family's extras and declared pin group into
 `.venvs/<profile>-py3.12`. It then runs the family's unit, integration and CPU regression tests.
-The profiles are `core`, `classic`, `navigation`, `pusht`, `dmc`, `fetch`, `ogbench`, `rocket` and
+The profiles are `core`, `classic`, `navigation`, `pusht`, `dmc`, `object_permanence`, `fetch`, `ogbench`, `rocket` and
 `craftax`. [`ci/families.toml`](ci/families.toml) lists the paths and tests each profile owns and what it
 installs.
 

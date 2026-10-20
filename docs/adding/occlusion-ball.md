@@ -1,0 +1,373 @@
+# G34 occlusion-ball alignment contract
+
+`MuJoCoOcclusionBall` ports one **authored nominal animation**, not a force-driven
+physics task or the full randomized object-permanence dataset. Its reference is
+[G34 at source commit 824baddcdad087810d35638bf8f273b884f74975](https://github.com/hokindeng/object-permanence/blob/824baddcdad087810d35638bf8f273b884f74975/object_permanence/generator/tasks/G34_occ_small_ball_behind_screen/pb_task_00000022_pb_occ_ball_behind_screen_0023_blender.py).
+
+## Source audit and scope
+
+The source calls `build_occ_small_ball_behind_screen()` and
+`animate_occ_small_ball_behind_screen()`. Every frame sets the ball's position and
+Euler rotation and inserts keyframes. It does not create a rigid-body simulation.
+Labels such as `pb_solid` are object metadata, not collision configuration.
+
+The selected trajectory is the script's unmodified nominal 120-frame sequence,
+without the dataset driver's camera, geometry, or surface diversity transforms.
+It needs no seed. It is independently executed in Blender 4.4.0 to generate the
+fixture; no candidate environment code is imported by the exporter.
+
+| Parameter | Source value |
+|---|---|
+| Frame rate / frame range | 24 FPS / 1 through 120 |
+| Ball position at frame f | `(-2.9 + 5.8*(f-1)/119, 0, 0.194)` |
+| Ball radius | 0.1 scene units |
+| Ball Euler rotation | `(0, -0.2*f, 0)` radians |
+| Track center / full size | `(0,0,0.055)` / `(7.5,0.30,0.07)` |
+| Screen center / full size | `(0,-0.06,0.64)` / `(1.38,0.16,1.20)` |
+| Camera position / look-at | `(0,-6.8,1.85)` / `(0,0,0.42)` |
+| Lens / sensor width | 33 mm / 36 mm |
+| Source render aspect | 1280:720, square pixels |
+
+The floor and backdrop are also reconstructed. Blender's coordinates are kept:
+right-handed world coordinates with Z up. There is no independently verified
+physical scale; depth is reported in **source scene units**, not assumed meters.
+The camera looks down local -Z with local +Y up in both renderers. The exported
+camera matrix and frustum make the pixel-center rays explicit. MuJoCo's fovy is
+34.11393115323413 degrees for 16:9, with stereo IPD disabled.
+
+The source geometry allows the moving sphere to overlap the screen volume.
+MuJoCo therefore uses a mocap body and disabled collisions. Adding a motor,
+gravity, friction, or a collision response would change the source's semantics.
+
+## Runtime and State
+
+```python
+import numpy as np
+import stable_envs as se
+
+with se.MuJoCoOcclusionBall(num_envs=2, size=90, backend="raycast") as env:
+    initial = env.reset(seed=17)  # seed accepted; nominal scene draws no RNG
+    out = env.step(np.zeros((2, 119, 1), np.float64), frames=None)
+    hidden = out["states"][:, 58]  # source frame 60
+    frame = env.render(hidden)
+    geometry = env.geometry(hidden)  # depth and visible semantic object_ids
+    env.set_state(hidden)
+```
+
+- Reset is source frame 1 at time zero. One zero action advances one source frame
+  using four MuJoCo substeps of 1/96 s followed by the authored mocap pose update.
+- Action shape is `[B,1]` or `[B,T,1]`. Only floating-point zero is accepted.
+  This API advances autonomous video; it does not give the learner steering.
+- Reward is defined as zero, termination is false, and the 119th transition
+  truncates at source frame 120. No autoreset occurs. Finished lanes are masked
+  within action sequences. Calling step on a finished lane requires reset.
+- `physics.integration`: float64 `[20]`, the complete `mjSTATE_INTEGRATION` vector
+  for the packaged model. Current layout: time `[1]`, applied body wrenches `[12]`,
+  mocap position `[3]`, mocap quaternion `[4]`. Width and pose offset are computed
+  through `mj_stateSize`, not hardcoded in the adapter.
+  There are no joints (`nq=nv=0`), so no qpos/qvel entries: the ball is an
+  externally posed mocap body, not a free joint driven by forces.
+- `lifecycle.elapsed_steps`: int64 `[1]`, from 0 to 119. Frame and engine time
+  must agree. Snapshots own memory; all validation precedes mutation.
+- The same immutable model/configuration is required on restore. No simulator
+  RNG exists for this prescribed sequence. Rendering-sample RNG never affects
+  reset, step, or future simulation.
+- Private RenderState is float32 `[7]`: ball xyz and wxyz. It cannot restore the
+  simulator, clock or lifecycle. Rendering uses independent MjData.
+- Tensor output is CPU only. `size` means height and must be a positive multiple of 9;
+  width is `size*16/9`. Default frames are uint8 `[B,90,160,3]`.
+- Variation is empty. Unsupported actions, reset options and backends are refused.
+
+The runtime never reads the frozen fixture. `scenes.g34.authored_pose()` implements
+the source's mathematical schedule. Reset installs frame 1 and clears the
+clock/counter. Each adapter step advances the engine clock by four substeps,
+increments the counter, installs the next source pose, and calls `mj_forward`
+to recompute derived geometry without advancing time again. `get_state()`
+copies engine integration inputs plus the counter into an owned TensorDict.
+The public step wrapper can collect these snapshots over a time axis; the caller
+owns any replay buffer or on-disk dataset.
+
+Rendering projects a full snapshot to xyz/wxyz in float32, then installs that
+pose into independent rendering MjData. The immutable XML supplies the camera,
+static objects, geometry and materials. Raw per-lane payloads are 168 bytes for
+full State (20 float64 plus one int64), 28 bytes for the private RenderState,
+and 43,200 bytes for one default RGB image. These sizes exclude shared assets,
+TensorDict metadata and image compression. The private render projection is
+not a simulator checkpoint or a second public restore API.
+
+`backend="opengl"` chooses the native renderer. `MUJOCO_GL` selects its context
+implementation: this Linux profile uses software OSMesa, while EGL depends on
+the installed driver. CPU tensor output does not itself force software OpenGL.
+
+## Three independent acceptance layers
+
+1. **Adapter / native MuJoCo**: the direct reference drives MuJoCo independently
+   with a separately transcribed source mathematical schedule, starting from a
+   candidate checkpoint. Every engine integration field and lifecycle counter
+   agrees exactly over all 119 transitions. This shares the declarative XML;
+   it checks adapter execution, not independent scene-authoring correctness.
+   The Blender checks below cover the independently evaluated source scene.
+2. **Original Blender trajectory**: all 120 evaluated source positions and
+   quaternions are frozen. Position error is at most 3e-7 scene units;
+   quaternion component error is at most 1e-6 after resolving q/-q. These bounds
+   cover Blender float32 transforms; native state restoration remains exact.
+3. **Original Blender geometry**: 21 frames include both silhouette boundaries,
+   five fully hidden cases, and visible endpoints. Reference depth and IDs come
+   from Blender's evaluated triangle `scene.ray_cast` at pixel centers, not
+   MuJoCo or candidate serialization. This certifies geometry, not EEVEE
+   antialiasing, lighting, material, or RGB equivalence.
+
+Depth is positive camera-axis distance, not radial ray length or a normalized
+OpenGL buffer. Zero denotes a reference miss. Comparison is at 320x180 with a
+fixed camera. Semantic IDs: floor=1, backdrop=2, track=3, screen=4, ball=5.
+Engine-specific IDs are mapped by object name. Masks describe **visible** surfaces,
+not amodal silhouettes behind an occluder.
+
+The gate uses the union of candidate/reference screen and ball masks, restricted
+to valid reference depths. Each object's IoU separately penalizes extra coverage.
+A missing candidate depth in the ROI fails. Floor/backdrop cover the measured
+target region. Initial direct-MuJoCo measurements at all 21 source poses on Mesa
+EGL gave IoU=1 and ROI depth MSE <=6e-12. Acceptance: IoU >=0.99 per visible
+object/frame and depth MSE <=1e-8 scene-units squared (1e-4 scene-units RMSE).
+At the smallest visible ball (11 pixels), losing one pixel fails this IoU budget.
+Both-empty masks are counted separately, never averaged as IoU=1. Negative
+controls shift the ball 0.1 units or depth 0.01 units and must fail.
+
+Source textual occlusion labels use only the ball-center x-coordinate and are
+not pixel truth: masks show full occlusion at frame 48 and reappearance at 74
+in the selected boundary samples.
+
+The legacy `fidelity_tier` on this development branch concerns native MuJoCo RGB
+only. `reference_id` names MuJoCo; `geometry_reference` names Blender. No Blender
+RGB parity is claimed. The explicit raycast backend is certified by the same
+geometry gates, not native RGB equality. No existing global tolerance is changed.
+
+## Reproduce the oracle and checks
+
+Blender is isolated from runtime dependencies:
+
+```bash
+uv venv --python 3.11 .venvs/occlusion-oracle-py3.11
+uv pip install --python .venvs/occlusion-oracle-py3.11/bin/python \
+  -r scripts/testing/requirements-occlusion-oracle.txt
+# Linux may also need host libSM and libICE libraries.
+git clone https://github.com/hokindeng/object-permanence /tmp/object-permanence
+git -C /tmp/object-permanence checkout 824baddcdad087810d35638bf8f273b884f74975
+.venvs/occlusion-oracle-py3.11/bin/python -m scripts.testing.freeze_occlusion_ball_oracle \
+  --source-root /tmp/object-permanence --output /tmp/new-g34-oracle
+```
+
+The exporter rejects another commit, tracked source edits and existing output. It records
+source script hash, engine version, camera, geometry, schema and archive hash.
+Blender-derived data retain the source's CC BY-NC 4.0 notice; see
+`THIRD_PARTY_NOTICES.md` and the fixture's `SOURCE_LICENSE.txt`.
+Ordinary tests read the committed oracle and need neither Blender nor network.
+
+```bash
+uvx nox -s "test(core)"
+uvx nox -s "test(object_permanence)"
+```
+
+Nox runs pytest directly with the repository's safety/resource plugins. For
+standalone native-renderer checks, use the crash-isolating supervisor:
+
+```bash
+.venvs/object_permanence-py3.12/bin/python -m tests._runner.supervisor -- \
+  tests/regression/test_occlusion_ball_geometry.py -q
+```
+
+Renderers are cached per resolution; per-environment close clears its simulator
+lanes but does not destroy process-lifetime shared GL contexts. Both backends
+return CPU tensors. The accelerated backend still needs native OpenGL for the
+initial static bake; it does not require a native draw per dynamic state.
+
+## Accelerated rendering
+
+`backend="auto"` and `backend="opengl"` select the native baseline.
+`backend="raycast"` selects the accelerated CPU renderer. Full State, state
+precision, lifecycle and the private seven-float projection are identical across
+backends. Only the rendering path changes. The ball uses faceted diffuse shading
+rather than MuJoCo's smooth native shading; RGB equivalence is not claimed.
+
+The implementation follows the fixed-background pattern of DM Control's
+`_bake()` / `_static_t()` / `_render_group()` without importing that family:
+
+1. `rendering/g34_native.py:bake_static` hides the moving ball and records native
+   background RGB, camera-axis depth, semantic IDs, camera and lighting. Shared
+   model visibility and renderer modes are restored even on failure.
+2. `rendering/g34_raycast.py` retains at most eight background plates. Existing
+   `Camera`, `cached_rays`, `screen_span`, `cast_nearest` and `shade` helpers from
+   `stable_envs/render/raycast3d.py` supply rays, conservative image windows,
+   analytic broad-phase intersections and lighting. Windows and chunks bound
+   scratch memory; only visible moving-object hits are shaded and written.
+3. An ideal analytic sphere failed the original gates: 1–2 extra silhouette pixels
+   at source frames 1, 45, 76 and 120. `stable_envs/render/uv_sphere.py` therefore
+   refines hits against the exact 48-by-24 latitude/longitude facet planes. The
+   normal case follows angular cells; unresolved or interior rays use complete
+   convex-plane clipping. Independent triangle-intersection tests cover both.
+4. Static depth is converted to radial distance for occlusion comparisons.
+   Diagnostic depth converts back with `z = t * dot(ray_direction, camera_forward)`.
+   RGB, depth and object IDs share the same refined visible hits.
+
+The frozen 21-frame Blender gates run unchanged for each backend, including
+negative controls. Mixed-batch tests render all 120 phases, check batch/single
+agreement, and forbid native draws after warmup. Returned images do not alias
+cached plates, and rendering does not modify State or live simulation.
+
+Native rasterization and exact pixel-center rays are not identical at every
+unsampled edge. Across the full 120-frame sweep, IDs differ at one pixel at
+160x90 and three at 320x180. Direct Blender ray checks at these four pixels
+identify the ball, agreeing with raycast. These diagnostic checks do not replace
+or modify the frozen oracle; acceptance remains the committed 21-frame contract.
+
+### Worked frame: source frame 45
+
+At source frame 45, elapsed_steps=44 and time is 44/24 s. The private float32
+row, shown rounded, is `[-0.75546217, 0, 0.19400001, -0.21079580, 0, 0.97753012, 0]`.
+The last four values are wxyz. Rotation matters even for an untextured sphere:
+the finite facets rotate, changing edge intersections slightly.
+
+At H=180, W=320, `_window()` selects x=122, y=93, width=12, height=13:
+156 pixel-center rays rather than 57,600. `cast_nearest` finds 55 ideal-sphere
+hits; `refine_uv_sphere` retains 53 faceted hits; static occlusion leaves
+42 visible ball pixels. These are intermediate ray counts, not extra fixtures.
+
+| Pixel (row, column) | Ideal-sphere t | Faceted t | Static t | Result |
+|---|---:|---:|---:|---|
+| (99,126) | 6.949198 | 6.949423 | 7.844627 | Ball, ID 5; camera-axis depth 6.900971 |
+| (99,130) | 6.953785 | 6.954033 | 6.890480 | Screen, ID 4; keep static depth 6.852341 |
+| (97,124) | 7.036568 | miss | 8.076204 | Keep floor, ID 1; ideal sphere alone would add a wrong pixel |
+
+Distances are in source scene units along unit rays. At (99,126), the ray is
+approximately `(-0.11340829, 0.96515421, -0.23583025)` and its forward cosine is
+0.993027823. Multiplying faceted t by that cosine gives the reported axis depth.
+The facet-plane iteration changes t from 6.949197700 to 6.949423227 and then
+converges on its next evaluation. `_colors()` shades the visible hit; depth and
+ID modes write its depth or label instead. The screen pixel is never overwritten.
+
+The first `_plate()` call bakes native RGB/depth/IDs and cached rays; subsequent
+calls at the same resolution reuse those static arrays. Each output owns a copy
+of the background. Full State and live simulation are not changed by this work.
+
+The default image is H=90, W=160; the sealed Blender geometry oracle uses
+H=180, W=320. Both preserve the same camera and 16:9 aspect. Native OpenGL
+rasterizes projected triangles, whereas raycast intersects pixel-center rays;
+these distinct coverage computations explain why edge pixels need explicit
+source comparison. Native and raycast use the same resolution in each benchmark.
+
+### Performance method
+
+`benchmarks.render` measures a repeated reset pose. The G34-specific
+`benchmarks.object_permanence` also measures batches spread across all 120 source
+phases using owned full State. Both time the public `env.render(state, out=...)`
+path, including validation/projection and output copying. Construction, rollout,
+the first static bake, output allocation and warmup are excluded. No full-frame
+trajectory lookup table is used. Raw timings and machine metadata go to the
+requested output path, not the repository's versioned files.
+
+```bash
+# Use the same host, resolution and thread settings for both runs.
+export MUJOCO_GL=osmesa PYOPENGL_PLATFORM=osmesa
+export LP_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
+python -m benchmarks.object_permanence --backend opengl --size 90 \
+  --batches 1,16,64,256 --threads 1 --warmup 3 --repeats 11 \
+  --output /tmp/g34-native.json --pretty
+python -m benchmarks.object_permanence --backend raycast --size 90 \
+  --batches 1,16,64,256 --threads 1 --warmup 3 --repeats 11 \
+  --output /tmp/g34-raycast.json --pretty
+```
+
+Use the profile interpreter shown below, and add the local library fallback if
+needed. Throughput is a local observation, not a CI assertion. Small batches can
+be slower on raycast because its tensor and geometry setup costs dominate.
+
+A local run on an Intel i7-12700H Linux host, MuJoCo 3.12.0, NumPy 2.5.3,
+CPU Torch 2.14.1, and OSMesa with the thread settings above measured these
+median steady-state throughputs (3 warmups, 11 repeats, mixed trajectory phases):
+
+| Image H x W | Batch | Native frames/s | Raycast frames/s | Ratio |
+|---|---:|---:|---:|---:|
+| 90 x 160 | 1 | 1,305 | 513 | 0.39x |
+| 90 x 160 | 16 | 1,879 | 5,543 | 2.95x |
+| 90 x 160 | 64 | 1,962 | 15,353 | 7.83x |
+| 90 x 160 | 256 | 2,063 | 18,306 | 8.87x |
+| 180 x 320 | 1 | 925 | 468 | 0.51x |
+| 180 x 320 | 16 | 1,225 | 5,087 | 4.15x |
+| 180 x 320 | 64 | 1,200 | 9,849 | 8.21x |
+| 180 x 320 | 256 | 1,197 | 7,618 | 6.36x |
+
+## Source-family directory layout
+
+The source family is `object_permanence`, not `occlusion`: the source includes
+containers, drawers, collisions and other mechanisms as well as occlusion.
+The install extra is `object-permanence`; the family and nox profile are
+`object_permanence`, with the exact-version group `pin-object-permanence`.
+These names cover the source family rather than one mechanism. The earlier
+local `occlusion` profile was unpublished and is not retained as an alias.
+
+```text
+stable_envs/envs/object_permanence/
+  __init__.py                   # explicit public exports; no scene construction
+  occlusion_ball.py             # MuJoCoOcclusionBall public Env contract
+  scenes/
+    g34.py                      # fixed scene parameters and authored schedule
+  simulation/
+    g34.py                      # G34 adapter and complete checkpoint schema
+  rendering/
+    g34_native.py               # native reference and static bake
+    g34_raycast.py              # G34 mover projection and composition
+  assets/
+    g34/scene.xml
+stable_envs/render/uv_sphere.py  # source-independent geometry helper
+```
+
+For another source task, add its own scene, adapter, public class and assets under
+this family. Renderer capabilities depend on the scene: fixed backgrounds can
+use cached plates; moving cameras or deforming geometry need another strategy.
+Do not route another task through G34's fixed-model bundle or assume seven render
+fields, one mover, 24 FPS, zero actions, or the same State width.
+Extract shared simulation/rendering helpers only after two audited scenes show
+that their rules actually match. A cache shared across scenes must include task,
+model/configuration, camera, variation, resolution, device and dtype as relevant.
+
+Keep original-source generators separate from runtime. Add each new task's
+frozen data under `tests/fixtures/semantics/object_permanence/<task>/<profile>/`,
+with source pin, camera/units, schema, hashes and license. The existing G34 fixture
+stays at `tests/fixtures/semantics/occlusion_ball/` unchanged. Add task-named unit,
+integration and regression files (`test_object_permanence_*`), and register every
+public class in `ORIGINAL_GATES`. Each task needs its own audited motion/control,
+restore and geometry contract; source task IDs do not imply shared physics.
+
+## Local environment layout
+
+Two Python environments serve G34 development and independent reference generation:
+
+| Local path | Purpose | Python / main dependencies |
+|---|---|---|
+| `.venvs/object_permanence-py3.12` | Nox's isolated runtime and CI-profile tests | 3.12, MuJoCo 3.12.0, NumPy 2.5.3, CPU Torch |
+| `.venvs/occlusion-oracle-py3.11` | Regenerate the independent source fixture only | 3.11, bpy 4.4.0, NumPy 1.26.4 |
+| `.cache/occlusion-native-libs` | Optional local shared-library fallback; **not a virtualenv** | libSM, libICE, OSMesa and its LLVM dependency |
+
+Blender 4.4's bpy wheel requires Python 3.11. Its separate interpreter also
+prevents reference-generation dependencies from changing the locked 3.12 test
+profile. Ordinary tests do not import bpy. `.venv` is the general development
+environment, while `.venvs/core-py3.12` is the isolated no-family-extra test
+environment created by nox. uv can share cached package files across environments;
+directory sizes do not necessarily add up to separately allocated disk space.
+
+On a machine with the host libraries installed, the commands above work without
+the local fallback. This checkout uses unpacked host libraries to avoid changing
+the OS installation. If that optional cache exists, add it to the loader path
+before running the OSMesa profile or importing bpy:
+
+```bash
+export LD_LIBRARY_PATH="$PWD/.cache/occlusion-native-libs/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+SE_WORKERS=0 uvx nox -s "test(object_permanence)" -- -q
+```
+
+The cache is Linux/x86-64 machine setup, not a portable project dependency and
+not an oracle input. It is ignored by Git and can be replaced by host packages.
+The `.venvs` environments are also ignored and reconstructible; retain the
+versioned XML, source fixture, manifest, generator, dependency declarations and
+tests. Generated documentation, build output and downloaded installer archives
+do not belong in the contribution.

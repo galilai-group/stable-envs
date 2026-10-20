@@ -20,7 +20,7 @@ pytestmark = pytest.mark.unit
 ROOT = Path(__file__).resolve().parents[2]
 PYPROJECT = tomllib.loads((ROOT / "pyproject.toml").read_text())
 GROUPS = PYPROJECT["dependency-groups"]
-GROUP_OF_PROFILE = {"native": "pin-classic"}
+GROUP_OF_PROFILE = {"native": "pin-classic", "object_permanence": "pin-object-permanence"}
 # Extras whose code checks exact versions at import or construction; every other extra states a range.
 EXACT_EXTRAS = {"pusht", "rocket", "ogbench-manipulation", "ogbench-manipulation-gpu"}
 
@@ -51,5 +51,10 @@ def test_every_pin_group_is_mutually_exclusive_with_the_others():
 
 def test_user_extras_state_ranges_not_reference_pins():
     extras = PYPROJECT["project"]["optional-dependencies"]
-    pinned = {name: [req for req in reqs if "==" in req] for name, reqs in extras.items() if name not in EXACT_EXTRAS}
+    # A platform marker such as sys_platform == 'linux' is not a version pin.
+    pinned = {
+        name: [req for req in reqs if any(spec.operator in ("==", "===") for spec in Requirement(req).specifier)]
+        for name, reqs in extras.items()
+        if name not in EXACT_EXTRAS
+    }
     assert {name: reqs for name, reqs in pinned.items() if reqs} == {}

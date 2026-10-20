@@ -1,0 +1,180 @@
+{
+  "schema": "stable-envs/occlusion-ball-oracle-v1",
+  "source_url": "https://github.com/hokindeng/object-permanence",
+  "source_commit": "824baddcdad087810d35638bf8f273b884f74975",
+  "source_script": "object_permanence/generator/tasks/G34_occ_small_ball_behind_screen/pb_task_00000022_pb_occ_ball_behind_screen_0023_blender.py",
+  "source_script_sha256": "9826b6e5b6a2be84e10d395176fdff3b777db9ffca37d3cb2dda6631ca758425",
+  "source_license": "CC-BY-NC-4.0",
+  "source_profile": "G34 authored nominal scene; no dataset diversity wrapper",
+  "generator": "scripts/testing/freeze_occlusion_ball_oracle.py",
+  "motion": "source-authored location/rotation keyframes; no rigid-body dynamics",
+  "fps": 24,
+  "width": 320,
+  "height": 180,
+  "camera": {
+    "position": [
+      0.0,
+      -6.800000190734863,
+      1.850000023841858
+    ],
+    "matrix_world": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.20579305291175842,
+        -0.9785955548286438,
+        -6.800000190734863
+      ],
+      [
+        0.0,
+        0.9785955548286438,
+        0.20579305291175842,
+        1.850000023841858
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "tan_half_fov_x": 0.5454545336321368,
+    "tan_half_fov_y": 0.30681817516807697,
+    "lens_mm": 33.0,
+    "sensor_width_mm": 36.0
+  },
+  "depth_convention": "positive camera-axis distance in source scene units; 0 is no hit",
+  "mask_convention": "visible triangle surface at pixel center; 0 is no hit",
+  "object_ids": {
+    "large_floor_base": 1,
+    "rear_backdrop_panel": 2,
+    "straight_gray_track": 3,
+    "wide_opaque_screen": 4,
+    "small_orange_ball": 5
+  },
+  "geometry": {
+    "large_floor_base": {
+      "position": [
+        0.0,
+        0.0,
+        -0.05000000074505806
+      ],
+      "dimensions": [
+        10.0,
+        5.0,
+        0.10000000149011612
+      ]
+    },
+    "rear_backdrop_panel": {
+      "position": [
+        0.0,
+        2.4800000190734863,
+        1.6200000047683716
+      ],
+      "dimensions": [
+        10.199999809265137,
+        0.07999999821186066,
+        3.240000009536743
+      ]
+    },
+    "straight_gray_track": {
+      "position": [
+        0.0,
+        0.0,
+        0.054999999701976776
+      ],
+      "dimensions": [
+        7.5,
+        0.30000001192092896,
+        0.07000000029802322
+      ]
+    },
+    "wide_opaque_screen": {
+      "position": [
+        0.0,
+        -0.05999999865889549,
+        0.6399999856948853
+      ],
+      "dimensions": [
+        1.3799999952316284,
+        0.1599999964237213,
+        1.2000000476837158
+      ]
+    },
+    "small_orange_ball": {
+      "position": [
+        -2.9000000953674316,
+        0.0,
+        0.1940000057220459
+      ],
+      "dimensions": [
+        0.20000015199184418,
+        0.2000000774860382,
+        0.20000000298023224
+      ]
+    }
+  },
+  "versions": {
+    "blender": "4.4.0",
+    "numpy": "1.26.4",
+    "python": "3.11.16"
+  },
+  "file": "blender_g34_nominal.npz",
+  "sha256": "10ab576688e2cc2e4b8a9d369f6a94ba57f60b46675bde011ce795ec84aa3dcd",
+  "arrays": {
+    "source_frames": {
+      "shape": [
+        120
+      ],
+      "dtype": "int64"
+    },
+    "positions": {
+      "shape": [
+        120,
+        3
+      ],
+      "dtype": "float64"
+    },
+    "quaternions": {
+      "shape": [
+        120,
+        4
+      ],
+      "dtype": "float64"
+    },
+    "geometry_frames": {
+      "shape": [
+        21
+      ],
+      "dtype": "int64"
+    },
+    "depth": {
+      "shape": [
+        21,
+        180,
+        320
+      ],
+      "dtype": "float32"
+    },
+    "object_ids": {
+      "shape": [
+        21,
+        180,
+        320
+      ],
+      "dtype": "int16"
+    },
+    "camera_matrix": {
+      "shape": [
+        4,
+        4
+      ],
+      "dtype": "float64"
+    }
+  }
+}

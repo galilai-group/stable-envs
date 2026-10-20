@@ -68,6 +68,8 @@ ogbench-manipulation-gpu = [
   "warp-lang==1.17.0",
 ]
 dmcontrol = ["dm-control>=1.0.44", "mujoco>=3.11,<3.13"]
+# Source-authored occlusion scenes need MuJoCo, but no DM Control or Blender at runtime.
+object-permanence = ["mujoco>=3.12,<3.13"]
 # GPU DM Control with the TrackCom floor reflection, which needs MuJoCo Warp 3.12. Fetch keeps MuJoCo 3.11;
 # without this extra TrackCom renders on 3.11 without the reflection.
 dmcontrol-gpu = ["dm-control>=1.0.45", "mujoco>=3.12,<3.13", "mujoco-warp>=3.12,<3.13", "warp-lang>=1.16"]
@@ -87,7 +89,8 @@ mjwarp = [
 rocket = ["pillow", "scipy", "PyFlyt==0.29.0", "pybullet==3.2.7"]
 # Craftax on CPU; craftax-gpu takes JAX's CUDA 12 build for device="cuda".
 craftax = ["craftax>=1.6.1", "jax>=0.4.30"]
-craftax-gpu = ["craftax>=1.6.1", "jax[cuda12]>=0.4.30"]
+# CUDA wheels exist only on Linux; universal lock resolution also covers macOS.
+craftax-gpu = ["craftax>=1.6.1", "jax[cuda12]>=0.4.30; sys_platform == 'linux'"]
 hf = ["datasets>=2.14"]
 examples = ["imageio", "imageio-ffmpeg", "opencv-python"]
 # No `all` extra: Fetch needs mujoco<3.12, and nvdiffrast cannot be expressed
@@ -158,6 +161,10 @@ pin-dmc = [
   "dm-control==1.0.45; python_version >= '3.12'",
   "mujoco==3.12.0; python_version >= '3.12'",
 ]
+pin-object-permanence = [
+  "numpy==2.5.3; python_version >= '3.12'",
+  "mujoco==3.12.0; python_version >= '3.12'",
+]
 pin-fetch = [
   "numpy==2.5.3; python_version >= '3.12'",
   "gymnasium==1.3.0; python_version >= '3.12'",
@@ -194,6 +201,7 @@ conflicts = [
     { group = "pin-navigation" },
     { group = "pin-pusht" },
     { group = "pin-dmc" },
+    { group = "pin-object-permanence" },
     { group = "pin-fetch" },
     { group = "pin-ogbench" },
     { group = "pin-rocket" },
@@ -201,9 +209,12 @@ conflicts = [
   ],
   # Fetch needs MuJoCo 3.11; these need 3.12.
   [{ extra = "robotics" }, { group = "pin-dmc" }],
+  [{ extra = "robotics" }, { group = "pin-object-permanence" }],
+  [{ extra = "object-permanence" }, { group = "pin-fetch" }],
   [{ extra = "robotics" }, { group = "pin-ogbench" }],
   [{ extra = "robotics" }, { group = "gpu-mjwarp" }],
   [{ extra = "robotics" }, { extra = "dmcontrol-gpu" }],
+  [{ extra = "robotics" }, { extra = "object-permanence" }],
   [{ extra = "robotics" }, { extra = "ogbench-manipulation" }],
   [{ extra = "robotics" }, { extra = "ogbench-manipulation-gpu" }],
   [{ extra = "dmcontrol-gpu" }, { group = "pin-fetch" }],
@@ -228,6 +239,9 @@ explicit = true
 
 [tool.setuptools.packages.find]
 include = ["stable_envs*"]
+
+[tool.setuptools.package-data]
+"stable_envs.envs.object_permanence" = ["assets/*/*.xml"]
 
 [tool.setuptools.dynamic]
 version = { attr = "stable_envs.__about__.__version__" }
