@@ -289,31 +289,6 @@ def link_local_frames():
     return pos, q
 
 
-def _poses(pos, q, link_pos, link_q):
-    B = len(pos)
-    lp, lq = link_local_frames()
-    xpos = np.zeros((B, N_GEOMS, 3))
-    xq = np.zeros((B, N_GEOMS, 4))
-    xq[:, :, 3] = 1.0
-    xpos[:, 1], xq[:, 1] = pos, q
-    R = quat_to_mat(link_q)
-    for i in range(1, len(ROCKET_LINKS)):
-        xpos[:, 1 + i] = link_pos + np.einsum("bij,j->bi", R, lp[i])
-        xq[:, 1 + i] = quat_mul(link_q, np.broadcast_to(lq[i], (B, 4)))
-    xpos[:, N_GEOMS - 1] = PAD_POS
-    return xpos, quat_to_mat(xq)
-
-
-def geom_poses(state: np.ndarray):
-    """``(B,13)`` -> Bullet's collider poses ``xpos (B,13,3)``, ``xmat (B,13,3,3)``.
-
-    The base is at *t* and the link colliders at *t - dt*, as ``getAABB`` and
-    ``getLinkState`` report them. TinyRenderer does not draw these link poses; see ``drawn_poses``.
-    """
-    pos, q, pos_prev, q_prev, _, _ = lagged_pose(state)
-    return _poses(pos, q, pos_prev, q_prev)
-
-
 def cull_ground(xpos: np.ndarray, xmat: np.ndarray, eye: np.ndarray) -> None:
     """Move the ground past the far plane in each world whose camera ``eye`` is behind it."""
     normal = xmat[:, 0, :, 2]
@@ -328,7 +303,18 @@ def drawn_poses(state: np.ndarray):
     so the base and every link share pose *t*. Only the camera uses the lagged link frame.
     """
     pos, q, _, _, _, _ = lagged_pose(state)
-    return _poses(pos, q, pos, q)
+    B = len(pos)
+    lp, lq = link_local_frames()
+    xpos = np.zeros((B, N_GEOMS, 3))
+    xq = np.zeros((B, N_GEOMS, 4))
+    xq[:, :, 3] = 1.0
+    xpos[:, 1], xq[:, 1] = pos, q
+    R = quat_to_mat(q)
+    for i in range(1, len(ROCKET_LINKS)):
+        xpos[:, 1 + i] = pos + np.einsum("bij,j->bi", R, lp[i])
+        xq[:, 1 + i] = quat_mul(q, np.broadcast_to(lq[i], (B, 4)))
+    xpos[:, N_GEOMS - 1] = PAD_POS
+    return xpos, quat_to_mat(xq)
 
 
 # Saved corpus colors use a fixed order; environment style rows use variation-space path order.

@@ -1,6 +1,6 @@
 """Rocket geometry is drawn where PyFlyt's TinyRenderer draws it.
 
-Bullet's cached link frames and link colliders lag the base by one physics substep, and the
+Bullet's cached link frames lag the base by one physics substep, and the
 camera follows the cached frame. ``getCameraImage`` places the link visuals by forward kinematics
 from the current base pose and culls back faces, so the one-sided ground is not drawn from below.
 These tests compare the link poses with pybullet and check raw MSE against the official frames.
@@ -55,11 +55,11 @@ def test_drawn_links_follow_the_current_base_and_the_camera_the_cached_frame(set
         cached = pybullet.getLinkStates(rid, links, physicsClientId=client)
         fk = pybullet.getLinkStates(rid, links, computeForwardKinematics=1, physicsClientId=client)
         drawn, _ = RL.drawn_poses(st[None].astype(np.float64))
-        collider, _ = RL.geom_poses(st[None].astype(np.float64))
         assert np.abs(np.array([s[4] for s in fk]) - drawn[0, 2:12]).max() < POSE_TOL
-        assert np.abs(np.array([s[4] for s in cached]) - collider[0, 2:12]).max() < POSE_TOL
-        _, _, pos_prev, _, _, _ = RL.lagged_pose(st[None])
-        assert np.abs(np.array(cached[0][4]) - pos_prev[0]).max() < POSE_TOL
+        _, _, pos_prev, q_prev, _, _ = RL.lagged_pose(st[None])
+        local, _ = RL.link_local_frames()
+        lagged = pos_prev[0] + local[1:] @ RL.quat_to_mat(q_prev)[0].T
+        assert np.abs(np.array([s[4] for s in cached]) - lagged).max() < POSE_TOL
 
 
 def test_raw_mse_against_pyflyt(setup):
