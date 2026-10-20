@@ -74,14 +74,59 @@ class _Scene(ND.Scene):
         return positions.reshape(self.V, batch, 4).permute(1, 0, 2).contiguous(), normals, world
 
 
+def tiny_texture(tex, clip, face, uv, textured, tid, resolution):
+    """Sample ``tex`` at TinyRenderer's texel for each textured pixel; other pixels get ones.
+
+    TinyRenderer takes double barycentrics of the unclipped triangle from float32
+    screen points at integer pixel positions, sums float32 UVs in reverse vertex
+    order, wraps them with modf and truncates them to a texel.
+    """
+    out = torch.ones(tid.shape + (3,), device=tex.device, dtype=tex.dtype)
+    hit = (tid > 0) & textured[(tid - 1).clamp_min(0)]
+    b, y, x = torch.nonzero(hit, as_tuple=True)
+    if not len(b):
+        return out
+    corners = face[tid[b, y, x] - 1]
+    c = clip[b[:, None], corners].to(torch.float32)
+    half = torch.tensor(resolution / 2, dtype=torch.float32, device=tex.device)
+    w = c[..., 3]
+    sx = (((half * w) + (half * c[..., 0])) / w).double()
+    sy = (((half * w) + (half * c[..., 1])) / w).double()
+    s0 = (sx[:, 2] - sx[:, 0], sx[:, 1] - sx[:, 0], sx[:, 0] - x.double())
+    s1 = (sy[:, 2] - sy[:, 0], sy[:, 1] - sy[:, 0], sy[:, 0] - y.double())
+    ux = s0[1] * s1[2] - s0[2] * s1[1]
+    uy = s0[2] * s1[0] - s0[0] * s1[2]
+    uz = s0[0] * s1[1] - s0[1] * s1[0]
+    wd = w.double()
+    p = ((1.0 - (ux + uy) / uz) / wd[:, 0], (uy / uz) / wd[:, 1], (ux / uz) / wd[:, 2])
+    total = (p[0] + p[1]) + p[2]
+    bar = [(q / total).to(torch.float32)[:, None] for q in p]
+    t = uv[corners].to(torch.float32)
+    coord = torch.frac(((t[:, 2] * bar[2]) + (t[:, 1] * bar[1])) + (t[:, 0] * bar[0]))
+    coord = torch.where(coord < 0, coord + 1, coord)
+    h, wid = tex.shape[0], tex.shape[1]
+    iu = (coord[:, 0] * wid).long().clamp(0, wid - 1)
+    iv = (coord[:, 1] * h).long().clamp(0, h - 1)
+    out[b, y, x] = tex[iv, iu]
+    return out
+
+
 class _Renderer(ND.BatchRenderer):
     def _rasterize(self, positions, resolution):
         from .raster import rasterize
 
+        self._clip = positions
         raster = rasterize(positions, self.scene.face, resolution)
         # Rocket uses nearest textures without mipmaps. Nvdiffrast's shared
         # interpolation API still requires the four-channel derivative buffer.
         return raster, torch.zeros_like(raster)
+
+    def _texture(self, S, rast, db, gid):
+        (spec,) = S.textures.values()
+        textured = (S.texid >= 0)[S.fgeom]
+        return tiny_texture(
+            spec["tex"], self._clip, S.face.long(), S.uv[:, :2], textured, rast[..., 3].long(), rast.shape[2]
+        )
 
 
 def _gpu_context(env, size, ss):
