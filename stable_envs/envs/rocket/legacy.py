@@ -43,6 +43,8 @@ N_GEOMS = len(GEOM_NAMES)
 PAD_POS = np.array([0.0, 0.0, 0.1])
 PAD_LEN, PAD_RADIUS = 0.1, 2.0
 GROUND_HALF = 100.0
+# TinyRenderer culls back faces, so the one-sided ground is not drawn from below.
+GROUND_CULL_DROP = 1.0e4
 # The ignition transition changes the flame color and leaves it changed.
 FLAME_RGBA = (1.0, 0.8, 0.0, 0.1)
 IGNITION_RGBA = (1.0, 0.3, 0.3, 0.8)
@@ -175,8 +177,8 @@ def euler_from_quat(q: np.ndarray) -> np.ndarray:
 def lagged_pose(state: np.ndarray):
     """Convert (B, 13) observation rows to current and previous poses and world velocities.
 
-    The camera and links lag the body by one physics substep. Return float64
-    (pos_t, q_t, pos_prev, q_prev, v_world, w_world).
+    Bullet's cached link frames, and so the camera, lag the base by one physics
+    substep. Return float64 (pos_t, q_t, pos_prev, q_prev, v_world, w_world).
     """
     s = np.asarray(state, np.float64).reshape(-1, 13)
     # Normalize in float64 to match Bullet before computing either current or lagged rotations.
@@ -287,19 +289,30 @@ def link_local_frames():
     return pos, q
 
 
-def geom_poses(state: np.ndarray):
-    """``(B,13)`` -> ``xpos (B,13,3)``, ``xmat (B,13,3,3)``: base at *t*, links at *t - dt*, ground and pad fixed."""
-    pos, q, pos_prev, q_prev, _, _ = lagged_pose(state)
+def cull_ground(xpos: np.ndarray, xmat: np.ndarray, eye: np.ndarray) -> None:
+    """Move the ground past the far plane in each world whose camera ``eye`` is behind it."""
+    normal = xmat[:, 0, :, 2]
+    behind = np.einsum("bi,bi->b", eye - xpos[:, 0], normal) < 0
+    xpos[behind, 0] -= GROUND_CULL_DROP * normal[behind]
+
+
+def drawn_poses(state: np.ndarray):
+    """``(B,13)`` -> ``xpos (B,13,3)``, ``xmat (B,13,3,3)`` as TinyRenderer draws them.
+
+    ``getCameraImage`` places link visuals by forward kinematics from the base at *t*,
+    so the base and every link share pose *t*. Only the camera uses the lagged link frame.
+    """
+    pos, q, _, _, _, _ = lagged_pose(state)
     B = len(pos)
     lp, lq = link_local_frames()
     xpos = np.zeros((B, N_GEOMS, 3))
     xq = np.zeros((B, N_GEOMS, 4))
     xq[:, :, 3] = 1.0
-    xpos[:, 1], xq[:, 1] = pos, q  # the body: pose t
-    Rp = quat_to_mat(q_prev)
-    for i in range(1, len(ROCKET_LINKS)):  # links: pose t - dt
-        xpos[:, 1 + i] = pos_prev + np.einsum("bij,j->bi", Rp, lp[i])
-        xq[:, 1 + i] = quat_mul(q_prev, np.broadcast_to(lq[i], (B, 4)))
+    xpos[:, 1], xq[:, 1] = pos, q
+    R = quat_to_mat(q)
+    for i in range(1, len(ROCKET_LINKS)):
+        xpos[:, 1 + i] = pos + np.einsum("bij,j->bi", R, lp[i])
+        xq[:, 1 + i] = quat_mul(q, np.broadcast_to(lq[i], (B, 4)))
     xpos[:, N_GEOMS - 1] = PAD_POS
     return xpos, quat_to_mat(xq)
 
@@ -564,8 +577,8 @@ class PyFlytRocketLanding(Env):
     """Rocket geometry renderer over observation rows obs[:13].
 
     This base renders stored poses with CUDA. The registered semantic subclass
-    adds simulation and CPU rendering. Silhouettes, checker filtering, and cylinder
-    cap triangulation can differ from official TinyRenderer pixels; see visual_fidelity.
+    adds simulation and CPU rendering. Silhouette pixels can differ from official
+    TinyRenderer pixels; see visual_fidelity.
     """
 
     family = "pyflyt"
@@ -594,20 +607,27 @@ class PyFlytRocketLanding(Env):
         "pos_z",
     )
     visual_fidelity = {
-        "mean_abs": 7.71,
-        "within8_frac": 0.961,
-        "ssim": 0.854,
-        "exact_frac": 0.959,
-        "interior_exact_frac": 0.967,
-        "draw_spread": {"mean_abs": [7.482, 7.709], "within8_frac": [0.961, 0.962], "ssim": [0.854, 0.868]},
-        "under_variation": {"mean_abs": 7.646, "within8_frac": 0.958, "ssim": 0.896, "exact_frac": 0.903},
+        "mean_abs": 0.038,
+        "within8_frac": 0.9998,
+        "ssim": 0.9994,
+        "exact_frac": 0.9996,
+        "interior_exact_frac": 0.9999999,
+        "raw_mse": 4.63,
+        "draw_spread": {
+            "mean_abs": [0.031, 0.038],
+            "within8_frac": [0.9998, 0.9998],
+            "ssim": [0.9994, 0.9995],
+            "raw_mse": [3.89, 4.63],
+        },
+        "under_variation": {"mean_abs": 0.035, "within8_frac": 0.9998, "ssim": 0.9994, "exact_frac": 0.994},
         "reference_unreachable_share": REFERENCE_UNREACHABLE_SHARE,
         "reference_unreachable_rows_in_draws": 0,
         "measured_at": (
             "480 px, supersample 1, default appearance, worst of 4 independent 64-state draws of "
             "sample_states (default_rng(1000..1003)) over the rows the reference bridge reaches, "
             "against PyFlyt 0.29.0 / pybullet 3.2.7 TinyRenderer frames of the rocket-landing env "
-            "at the lagged pose; NVIDIA GeForce RTX 3090, torch 2.14.0+cu126, nvdiffrast 0.4.0"
+            "with the camera at the lagged link pose; under_variation uses 64 rows with sampled appearance "
+            "(default_rng(2000)); NVIDIA GeForce RTX 3090, torch 2.14.0+cu126, nvdiffrast 0.4.0"
         ),
         "reference_versions": {"PyFlyt": "0.29.0", "pybullet": "3.2.7"},
         "measured_with": {"nvdiffrast": "0.4.0", "torch": "2.14.0+cu126"},
@@ -635,11 +655,8 @@ class PyFlytRocketLanding(Env):
     }
     visual_note = (
         "A different rasterizer (nvdiffrast) drawing TinyRenderer's scene under TinyRenderer's law. "
-        "Residual: silhouette pixels (different edge rules and float paths), checker-tile edges "
-        "(sub-pixel UV rounding under nearest sampling) and the far ground where tiles are "
-        "sub-pixel, scipy's rather than Bullet's triangulation of the hull cylinders' planar caps "
-        "(Gouraud interpolation across a cap differs by the diagonal chosen), and the 61-px flame. "
-        + DOCUMENTED_LIMITATIONS
+        "Residual: silhouette pixels (different edge rules and float paths); flat interiors match. "
+        "Under sampled appearance, some lit colours differ by one level of rounding. " + DOCUMENTED_LIMITATIONS
     )
 
     # The base packs observation geometry only; the semantic subclass owns complete simulator State.
@@ -761,9 +778,10 @@ class PyFlytRocketLanding(Env):
         mat = torch.as_tensor(
             material_table(sty.values.detach().cpu().numpy()), dtype=torch.float32, device=self.device
         )
-        xp, xm = geom_poses(st)
+        xp, xm = drawn_poses(st)
         _, _, pos_prev, q_prev, _, _ = lagged_pose(st)
         eye, cmat = camera_pose(pos_prev, q_prev)
+        cull_ground(xp, xm, eye)
         xp_t = torch.as_tensor(xp, dtype=torch.float32, device=self.device)
         xm_t = torch.as_tensor(xm, dtype=torch.float32, device=self.device)
         chunk = nvd_worlds(c.per_world, self.device, size, B)

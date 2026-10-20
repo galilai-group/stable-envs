@@ -92,8 +92,8 @@ def test_the_rocket_limits_and_reference_versions_survive():
     v = cls.visual_fidelity
     assert v["reference_versions"] == {"PyFlyt": "0.29.0", "pybullet": "3.2.7"}
     lim = PT.agreement_limits("PyFlytRocketLanding")
-    assert (lim["mean_abs_max"], lim["within8_min"], lim["ssim_min"]) == (10.0, 0.91, 0.80)
-    assert v["mean_abs"] == 7.71 and v["ssim"] == 0.854
+    assert (lim["mean_abs_max"], lim["within8_min"], lim["ssim_min"]) == (0.1, 0.95, 0.95)
+    assert v["mean_abs"] == 0.038 and v["ssim"] == 0.9994
     assert cls.default_size == 480 and cls.default_supersample == 1
 
 

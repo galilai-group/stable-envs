@@ -25,7 +25,8 @@ EXACT_OVERRIDES: dict[str, dict[str, float]] = {
 #: Agreement limits: a ``mean_abs`` ceiling, a ``within8_frac`` floor and an ``ssim`` floor. Each
 #: leaves a margin over the measurement in the class's ``visual_fidelity``. For OGBCube and OGBScene
 #: the ceiling is 1.3 times the measured mean error, rounded to 0.1, and each floor is at least 0.04
-#: below the worst of eight draws, rounded down to 0.05.
+#: below the worst of eight draws, rounded down to 0.05. PyFlytRocketLanding uses the same rule over
+#: four draws, with the ceiling rounded up to 0.1.
 AGREEMENT: dict[str, dict[str, float]] = {
     "DMCCheetahRun": {"mean_abs_max": 1.7, "within8_min": 0.92, "ssim_min": 0.95},
     "DMCHopperHop": {"mean_abs_max": 1.2, "within8_min": 0.93, "ssim_min": 0.95},
@@ -35,7 +36,7 @@ AGREEMENT: dict[str, dict[str, float]] = {
     "DMCWalkerWalk": {"mean_abs_max": 2.3, "within8_min": 0.91, "ssim_min": 0.95},
     "OGBCube": {"mean_abs_max": 4.3, "within8_min": 0.85, "ssim_min": 0.85},
     "OGBScene": {"mean_abs_max": 8.7, "within8_min": 0.80, "ssim_min": 0.85},
-    "PyFlytRocketLanding": {"mean_abs_max": 10.0, "within8_min": 0.91, "ssim_min": 0.80},
+    "PyFlytRocketLanding": {"mean_abs_max": 0.1, "within8_min": 0.95, "ssim_min": 0.95},
 }
 
 
