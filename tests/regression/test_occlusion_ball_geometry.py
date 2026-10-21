@@ -13,9 +13,9 @@ from tests.helpers.reference.semantics import assert_same_state
 
 
 @pytest.mark.parametrize("backend", ["opengl", "raycast"])
-def test_source_depth_masks_and_occlusion_boundaries(record_property, backend):
+def test_source_depth_masks_and_occlusion_boundaries(record_property, backend, device="cpu"):
     _, oracle = load_oracle()
-    with se.MuJoCoOcclusionBall(size=180, backend=backend) as env:
+    with se.MuJoCoOcclusionBall(size=180, backend=backend, device=device) as env:
         initial = env.reset()
         states = env.step(np.zeros((1, 119, 1)), frames=None)["states"]
         live = env.get_state()
@@ -28,10 +28,10 @@ def test_source_depth_masks_and_occlusion_boundaries(record_property, backend):
             geometry = env.geometry(state)
             assert_same_state(env.get_state(), live)
             assert_same_state(state, held)
-            ids = geometry["object_ids"][0].numpy()
+            ids = geometry["object_ids"][0].cpu().numpy()
             source_ids, source_depth = oracle["object_ids"][index], oracle["depth"][index]
             roi = ((source_ids >= 4) | (ids >= 4)) & (source_depth > 0)
-            mse = float(depth_mse(geometry["depth"][0].numpy(), source_depth, roi))
+            mse = float(depth_mse(geometry["depth"][0].cpu().numpy(), source_depth, roi))
             assert mse <= DEPTH_MSE_MAX, (int(frame), mse)
             worst_mse = max(worst_mse, mse)
             for object_id in (4, 5):
@@ -49,13 +49,13 @@ def test_source_depth_masks_and_occlusion_boundaries(record_property, backend):
 
 
 @pytest.mark.parametrize("backend", ["opengl", "raycast"])
-def test_geometry_gate_detects_shifted_motion_and_wrong_depth(backend):
+def test_geometry_gate_detects_shifted_motion_and_wrong_depth(backend, device="cpu"):
     _, oracle = load_oracle()
-    with se.MuJoCoOcclusionBall(size=180, backend=backend) as env:
+    with se.MuJoCoOcclusionBall(size=180, backend=backend, device=device) as env:
         state = env.reset()
         offset = env._simulator.pose_offset
         state["physics", "integration"][:, offset] += 0.1
-        shifted = env.geometry(state)["object_ids"][0].numpy()
+        shifted = env.geometry(state)["object_ids"][0].cpu().numpy()
         assert mask_iou(shifted == 5, oracle["object_ids"][0] == 5) < MASK_IOU_MIN
         depth = oracle["depth"][0].copy()
         roi = oracle["object_ids"][0] == 4

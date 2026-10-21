@@ -57,12 +57,17 @@ The `rocket` extra resolves numpy < 2 because of PyFlyt's metadata.
 PushT renders with pygame on CPU. `device="cuda"` places the output tensors on the GPU. The drawing
 still runs on CPU.
 
+G34 supports CPU and CUDA output. Use `backend="raycast", device="cuda"` for GPU
+rendering; MuJoCo simulation remains on CPU. Its native default still requires an
+OpenGL context, also used once to bake the raycast background. See the
+[G34 CUDA setup and geometry contract](adding/occlusion-ball.md#cuda-rendering).
+
 ## Reference profiles
 
 Extras declare compatible version ranges. Exact parity with an upstream renderer is checked only under
 that family's reference profile. The reference profiles are the `pin-<profile>` dependency groups in
 `pyproject.toml`: `pin-classic`, `pin-navigation`, `pin-pusht`, `pin-dmc`, `pin-fetch`, `pin-ogbench`,
-`pin-rocket` and `pin-craftax`.
+`pin-object-permanence`, `pin-rocket` and `pin-craftax`.
 
 - The profiles are for development.
 - You cannot combine two profiles.

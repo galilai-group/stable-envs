@@ -10,9 +10,11 @@ All notable changes to this project are listed here. The format follows
 
 - `MuJoCoOcclusionBall` (`object-permanence` extra): the source-authored G34 nominal
   animation under `object_permanence`, with restorable MuJoCo State, native and
-  batched raycast CPU rendering, independent Blender trajectory/depth/mask fixtures
+  batched raycast CPU/CUDA rendering, independent Blender trajectory/depth/mask fixtures
   and unchanged geometry gates. Raycast caches static plates and preserves the
-  faceted sphere silhouette; its shading differs from native RGB.
+  faceted sphere silhouette; its shading differs from native RGB. CUDA fuses
+  float64 intersection/refinement/composition, uploading only the seven-float
+  render projection from CPU State. MuJoCo simulation stays on CPU.
 
 - Craftax: `CraftaxClassicPixels`, `CraftaxClassicSymbolic`, `CraftaxPixels` and `CraftaxSymbolic`
   run the upstream JAX simulator with all lanes in one jitted `vmap` (`craftax` / `craftax-gpu` extras).

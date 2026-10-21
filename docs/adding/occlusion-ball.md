@@ -74,7 +74,10 @@ with se.MuJoCoOcclusionBall(num_envs=2, size=90, backend="raycast") as env:
   reset, step, or future simulation.
 - Private RenderState is float32 `[7]`: ball xyz and wxyz. It cannot restore the
   simulator, clock or lifecycle. Rendering uses independent MjData.
-- Tensor output is CPU only. `size` means height and must be a positive multiple of 9;
+- Tensor output supports CPU and CUDA. Simulation always runs on CPU; snapshots,
+  task outputs and frames use the requested output device without changing the
+  State fields/dtypes. Both devices accept an owned CPU State for rendering or
+  restoration. `size` means height and must be a positive multiple of 9;
   width is `size*16/9`. Default frames are uint8 `[B,90,160,3]`.
 - Variation is empty. Unsupported actions, reset options and backends are refused.
 
@@ -87,8 +90,9 @@ copies engine integration inputs plus the counter into an owned TensorDict.
 The public step wrapper can collect these snapshots over a time axis; the caller
 owns any replay buffer or on-disk dataset.
 
-Rendering projects a full snapshot to xyz/wxyz in float32, then installs that
-pose into independent rendering MjData. The immutable XML supplies the camera,
+Rendering projects a full snapshot to xyz/wxyz in float32. Native rendering installs
+that pose into independent rendering MjData; raycast uses it directly for
+intersection and composition. The immutable XML supplies the camera,
 static objects, geometry and materials. Raw per-lane payloads are 168 bytes for
 full State (20 float64 plus one int64), 28 bytes for the private RenderState,
 and 43,200 bytes for one default RGB image. These sizes exclude shared assets,
@@ -178,13 +182,13 @@ standalone native-renderer checks, use the crash-isolating supervisor:
 
 Renderers are cached per resolution; per-environment close clears its simulator
 lanes but does not destroy process-lifetime shared GL contexts. Both backends
-return CPU tensors. The accelerated backend still needs native OpenGL for the
+return tensors on the requested device. The accelerated backend still needs native OpenGL for the
 initial static bake; it does not require a native draw per dynamic state.
 
 ## Accelerated rendering
 
 `backend="auto"` and `backend="opengl"` select the native baseline.
-`backend="raycast"` selects the accelerated CPU renderer. Full State, state
+`backend="raycast"` selects the accelerated renderer on `device`. Full State, state
 precision, lifecycle and the private seven-float projection are identical across
 backends. Only the rendering path changes. The ball uses faceted diffuse shading
 rather than MuJoCo's smooth native shading; RGB equivalence is not claimed.
@@ -195,11 +199,13 @@ The implementation follows the fixed-background pattern of DM Control's
 1. `rendering/g34_native.py:bake_static` hides the moving ball and records native
    background RGB, camera-axis depth, semantic IDs, camera and lighting. Shared
    model visibility and renderer modes are restored even on failure.
-2. `rendering/g34_raycast.py` retains at most eight background plates. Existing
+2. `rendering/g34_raycast.py` retains at most eight background plates across
+   resolutions/devices. Existing
    `Camera`, `cached_rays`, `screen_span`, `cast_nearest` and `shade` helpers from
    `stable_envs/render/raycast3d.py` supply rays, conservative image windows,
    analytic broad-phase intersections and lighting. Windows and chunks bound
-   scratch memory; only visible moving-object hits are shaded and written.
+   scratch memory on the CPU/Torch path; only visible moving-object hits are
+   shaded and written over the background. CUDA's fused path is described below.
 3. An ideal analytic sphere failed the original gates: 1–2 extra silhouette pixels
    at source frames 1, 45, 76 and 120. `stable_envs/render/uv_sphere.py` therefore
    refines hits against the exact 48-by-24 latitude/longitude facet planes. The
@@ -296,6 +302,107 @@ median steady-state throughputs (3 warmups, 11 repeats, mixed trajectory phases)
 | 180 x 320 | 64 | 1,200 | 9,849 | 8.21x |
 | 180 x 320 | 256 | 1,197 | 7,618 | 6.36x |
 
+### CUDA rendering
+
+The existing `torch-cuda` dependency group selects CUDA PyTorch; no new extra or
+lockfile change is needed. Keep the CPU nox profile and Blender oracle interpreter:
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venvs/object_permanence-cuda-py3.12 uv sync \
+  --frozen --python 3.12 --no-default-groups --extra object-permanence \
+  --group test --group torch-cuda --group pin-object-permanence
+```
+
+Use `se.MuJoCoOcclusionBall(device="cuda", backend="raycast")`. The default
+`auto` backend remains native OpenGL, including when CUDA output is requested;
+that native path draws on OpenGL and then copies RGB to CUDA.
+
+`rendering/g34_cuda.py` composes the static plate and moving ball in one Triton
+kernel. Its grid is one pose by 128-pixel tiles over the full frame. Tiles whose
+analytic sphere test misses skip refinement/shading. This avoids dynamic window
+readbacks, compact-index synchronization and many small Torch kernel launches.
+It uses the same cached float64 camera rays, background depth and lighting.
+`stable_envs/render/uv_sphere.py` supplies a shared Triton facet routine, also
+exercised directly against independent triangle intersections. It retains the
+angular iteration and full convex-plane fallback, including interior rays.
+Geometry uses float64, CUDA libdevice math and disabled FMA contraction. The
+float32 seven-value render projection and float64 complete State are unchanged.
+If Triton is absent, the device-aware Torch raycast path remains available; its
+small-kernel/synchronization overhead can make it slower than CPU rendering.
+
+CPU replay follows `CPU full State -> validate -> CPU float32 xyz/wxyz -> CUDA
+upload -> fused render -> CUDA uint8 RGB`. Only 28 dynamic bytes per lane cross
+to CUDA. Static plates/rays/facet normals are uploaded once per cached
+resolution/device. Full State created by a CUDA-output env also lives on CUDA,
+but MuJoCo's MjData and authored motion remain CPU operations. Restoring or
+validating CUDA State may require CPU readback; GPU rendering does not imply GPU
+physics. Runtime does not read the oracle or cache the 120 trajectory images.
+
+The local CUDA check used an RTX 3070 Ti Laptop GPU (8 GiB), WSL2 driver
+610.47.03, PyTorch 2.14.1+cu130, Triton 3.8.0 and CUDA runtime 13.0. The driver's
+reported CUDA 13.3 is its supported driver interface, not the wheel's runtime
+version. No system nvcc is required for this path: the locked wheels provide
+the CUDA runtime and Triton compiler components. First use compiles kernels and
+bakes the static scene; steady-state benchmarks exclude those startup costs.
+
+```bash
+# Set MUJOCO_GL/PYOPENGL_PLATFORM and any host-library fallback as above.
+SE_REQUIRE_FAMILIES=object_permanence \
+  .venvs/object_permanence-cuda-py3.12/bin/python -m tests._runner.supervisor -- \
+  tests/gpu -q -k 'MuJoCoOcclusionBall or occlusion_ball_cuda'
+
+# The same interpreter and final CUDA output for all three pipelines.
+# Run sequentially; keep all other GPU work idle.
+python -m benchmarks.object_permanence --backend opengl --device cpu \
+  --delivery-device cuda --size 90 --batches 1,16,64,256,1024 \
+  --threads 1 --warmup 5 --repeats 21 --output /tmp/g34-native-upload.json
+python -m benchmarks.object_permanence --backend raycast --device cpu \
+  --delivery-device cuda --size 90 --batches 1,16,64,256,1024 \
+  --threads 1 --warmup 5 --repeats 21 --output /tmp/g34-cpu-upload.json
+python -m benchmarks.object_permanence --backend raycast --device cuda \
+  --delivery-device cuda --size 90 --batches 1,16,64,256,1024 \
+  --threads 1 --warmup 5 --repeats 21 --output /tmp/g34-cuda-upload.json
+```
+
+The benchmark stores its full-State bank in ordinary pageable CPU memory for
+every renderer. Timed CPU pipelines include RGB upload to a reused CUDA buffer;
+the CUDA pipeline includes compact-pose upload and GPU output copying. Each
+sample synchronizes CUDA before and after the complete operation. Validation,
+projection and internal temporary allocations are included. Static setup,
+trajectory collection and caller output allocation are excluded. JSON records
+the GPU, runtime, devices, dynamic upload bytes, frame indices and all latency
+samples. No image download or world-model forward/backward pass is timed.
+
+On the local GPU/WSL setup above, with the same one-thread CPU/OpenMP/Mesa budget,
+5 warmups and 21 repeats, median steady-state frames/s were:
+
+| Image H x W | Batch | Native OSMesa + RGB upload | CPU raycast + RGB upload | CUDA raycast + pose upload | CUDA / CPU raycast |
+|---|---:|---:|---:|---:|---:|
+| 90 x 160 | 1 | 1,067 | 571 | 2,760 | 4.84x |
+| 90 x 160 | 16 | 1,599 | 6,779 | 26,242 | 3.87x |
+| 90 x 160 | 64 | 2,062 | 15,384 | 41,966 | 2.73x |
+| 90 x 160 | 256 | 2,131 | 20,054 | 54,053 | 2.70x |
+| 90 x 160 | 1024 | 2,004 | 16,975 | 82,425 | 4.86x |
+| 180 x 320 | 1 | 564 | 506 | 1,444 | 2.85x |
+| 180 x 320 | 16 | 1,033 | 4,995 | 9,319 | 1.87x |
+| 180 x 320 | 64 | 1,128 | 7,669 | 14,585 | 1.90x |
+| 180 x 320 | 256 | 1,121 | 6,759 | 23,146 | 3.42x |
+| 180 x 320 | 1024 | 1,035 | 7,121 | 25,223 | 3.54x |
+
+These compare delivery to GPU training input, not complete training throughput
+or NVIDIA EGL rasterization. The native baseline here is software OSMesa.
+The earlier CPU-only table has no upload; use the table above for transfer-inclusive
+comparisons. Hardware, WSL scheduling, thermals and batch size affect the results.
+
+GPU checks reuse the unmodified 21-frame oracle and original thresholds. They
+also compare all 120 frames with CPU raycast, enforce batch/single agreement,
+test CPU-State upload/restore and unrelated live history, forbid native draws
+after warmup, test the pure Torch CUDA fallback, and exercise arbitrary valid
+poses including a camera inside the ball. The generic GPU suite uses family
+ownership rather than a `MuJoCo` name prefix for DM Control path tests, records
+G34's previously absent resolution-consistency measurement, and explicitly
+asserts its declared seed-independent nominal trajectory.
+
 ## Source-family directory layout
 
 The source family is `object_permanence`, not `occlusion`: the source includes
@@ -316,6 +423,7 @@ stable_envs/envs/object_permanence/
   rendering/
     g34_native.py               # native reference and static bake
     g34_raycast.py              # G34 mover projection and composition
+    g34_cuda.py                 # optional fused CUDA composition, same geometry
   assets/
     g34/scene.xml
 stable_envs/render/uv_sphere.py  # source-independent geometry helper
@@ -340,11 +448,12 @@ restore and geometry contract; source task IDs do not imply shared physics.
 
 ## Local environment layout
 
-Two Python environments serve G34 development and independent reference generation:
+Three Python environments serve CPU development, CUDA validation and independent reference generation:
 
 | Local path | Purpose | Python / main dependencies |
 |---|---|---|
 | `.venvs/object_permanence-py3.12` | Nox's isolated runtime and CI-profile tests | 3.12, MuJoCo 3.12.0, NumPy 2.5.3, CPU Torch |
+| `.venvs/object_permanence-cuda-py3.12` | GPU rendering, geometry checks and transfer-inclusive benchmarks | 3.12, same MuJoCo/NumPy pins, CUDA Torch 2.14.1, Triton 3.8.0 |
 | `.venvs/occlusion-oracle-py3.11` | Regenerate the independent source fixture only | 3.11, bpy 4.4.0, NumPy 1.26.4 |
 | `.cache/occlusion-native-libs` | Optional local shared-library fallback; **not a virtualenv** | libSM, libICE, OSMesa and its LLVM dependency |
 

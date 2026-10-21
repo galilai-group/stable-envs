@@ -87,6 +87,6 @@ def test_reset_seed_is_a_noop_and_unsupported_configuration_is_explicit():
         assert_same_state(env.reset(seed=3), env.reset(seed=99))
         with pytest.raises(ValueError):
             env.reset(options={"ignored": True})
-    for options in ({"size": 84}, {"backend": "triton"}, {"device": "cuda"}, {"num_envs": 0}):
+    for options in ({"size": 84}, {"backend": "triton"}, {"device": "mps"}, {"num_envs": 0}):
         with pytest.raises(ValueError):
             se.MuJoCoOcclusionBall(**options)

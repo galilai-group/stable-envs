@@ -295,6 +295,9 @@ DOWNSAMPLE_MARGIN = 0.005
 #:   0.282-0.730 DM Control: the same re-bake over a speckled skybox and a checker floor.
 #: Not listed: ``DMCManipulatorBringBall`` (a plate cell covered by ``PLATE_REPRESENTATIVES``).
 DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
+    # RTX 3070 Ti Laptop, torch 2.14.1+cu130, mujoco 3.12.0, OSMesa,
+    # default native backend, H=90 -> 180, same eight states/seed as above.
+    "MuJoCoOcclusionBall": 0.88011,  # mean 2.4137/255; point samples vs box averages
     "AntmazeGiantNavigate": 0.708287,  # mean 1.1419/255
     "AntmazeGiantStitch": 0.708287,  # mean 1.1419/255
     "AntmazeLargeExplore": 0.722699,  # mean 0.9589/255

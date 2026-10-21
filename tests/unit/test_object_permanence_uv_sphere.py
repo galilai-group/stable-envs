@@ -29,7 +29,7 @@ def _triangles(origin, direction, radius, slices, stacks):
 
 @pytest.mark.parametrize("iterations", [0, 8])
 @pytest.mark.parametrize("slices,stacks", [(48, 24), (12, 7)])
-def test_uv_sphere_matches_triangles_for_grazing_polar_and_inside_rays(iterations, slices, stacks):
+def test_uv_sphere_matches_triangles_for_grazing_polar_and_inside_rays(iterations, slices, stacks, device="cpu"):
     rng = np.random.default_rng(3)
     direction = rng.normal(size=(160, 3))
     direction /= np.linalg.norm(direction, axis=-1, keepdims=True)
@@ -38,8 +38,8 @@ def test_uv_sphere_matches_triangles_for_grazing_polar_and_inside_rays(iteration
     origin *= rng.uniform(0.02, 0.3, size=(160, 1))
     direction[:80] = -origin[:80] + rng.uniform(-0.06, 0.06, size=(80, 3))
     direction /= np.linalg.norm(direction, axis=-1, keepdims=True)
-    o, d = torch.from_numpy(origin), torch.from_numpy(direction)
-    analytic, _ = intersect(SPHERE, torch.tensor([0.1, 0, 0]), torch.zeros(3), torch.eye(3), o, d)
+    o, d = torch.from_numpy(origin).to(device), torch.from_numpy(direction).to(device)
+    analytic, _ = intersect(SPHERE, o.new_tensor([0.1, 0, 0]), o.new_zeros(3), torch.eye(3, device=device), o, d)
     selected = analytic < INF
     actual, normal = refine_uv_sphere(
         o[selected],
@@ -50,6 +50,7 @@ def test_uv_sphere_matches_triangles_for_grazing_polar_and_inside_rays(iteration
         stacks=stacks,
         max_iterations=iterations,
     )
+    selected = selected.cpu().numpy()
     expected = _triangles(origin[selected], direction[selected], 0.1, slices, stacks)
-    np.testing.assert_allclose(actual.numpy(), expected, atol=1e-10, rtol=0)
-    np.testing.assert_allclose(torch.linalg.vector_norm(normal, dim=-1), 1, atol=1e-12, rtol=0)
+    np.testing.assert_allclose(actual.cpu().numpy(), expected, atol=1e-10, rtol=0)
+    np.testing.assert_allclose(torch.linalg.vector_norm(normal, dim=-1).cpu(), 1, atol=1e-12, rtol=0)

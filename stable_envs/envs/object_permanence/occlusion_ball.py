@@ -30,7 +30,7 @@ class MuJoCoOcclusionBall(Env):
 
     RGB is native MuJoCo and deliberately differs from Blender. Source fidelity
     is certified by geometry depth/masks and poses under the alignment contract;
-    backend="raycast" uses exact faceted ray hits over a cached static plate;
+    backend="raycast" uses CPU or CUDA faceted ray hits over a cached static plate;
     its ball shading differs from native RGB. Default auto selects native OpenGL.
     """
 
@@ -47,16 +47,20 @@ class MuJoCoOcclusionBall(Env):
     action_dim, action_dtype = 1, torch.float64
     action_low = action_high = 0.0
     execution_mode = "DELEGATED_CPU"
+    seed_independent_trajectory = True  # the source nominal animation has no random reset or control
 
     def __init__(self, num_envs=1, size=None, device="cpu", backend="auto", seed=0, supersample=1):
-        if device not in ("cpu", "auto", None) or self.resolve_device(device) != "cpu":
-            raise ValueError("MuJoCoOcclusionBall currently supports CPU output only")
+        device = self.resolve_device(device)
+        if torch.device(device).type not in ("cpu", "cuda"):
+            raise ValueError("MuJoCoOcclusionBall supports CPU and CUDA output")
+        if torch.device(device).type == "cuda" and not torch.cuda.is_available():
+            raise ValueError("CUDA output requires a CUDA-enabled PyTorch and an available GPU")
         if backend not in ("auto", "opengl", "raycast") or supersample != 1:
             raise ValueError("Supported backends are opengl and raycast with supersample=1")
         height = self.default_size if size is None else size
         if not isinstance(height, int) or isinstance(height, bool) or height < 9 or height % 9:
             raise ValueError("size is image height and must be a positive multiple of 9")
-        super().__init__(num_envs=num_envs, size=height, device="cpu", backend=backend, seed=seed)
+        super().__init__(num_envs=num_envs, size=height, device=device, backend=backend, seed=seed)
         self.frame_shape = (height, height * 16 // 9)
         self._simulator = OcclusionBallAdapter(num_envs, self.device)
         self.reset(seed=seed)
@@ -93,7 +97,9 @@ class MuJoCoOcclusionBall(Env):
 
     def _pack_render_state(self, state):
         offset = self._simulator.pose_offset
-        return state[INTEGRATION][:, offset : offset + 7].to(device=self.device, dtype=torch.float32)
+        # Convert on the source device first: CPU replay uploads 28 bytes per
+        # lane, rather than a strided float64 integration vector or RGB image.
+        return state[INTEGRATION][:, offset : offset + 7].to(dtype=torch.float32).to(self.device)
 
     def _unpack_render_state(self, rows):
         rows = torch.as_tensor(rows, device=self.device).reshape(-1, 7)

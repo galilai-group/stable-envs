@@ -20,6 +20,7 @@ snv.import_errors()     # families this interpreter could not import
 | Fetch (12 classes) | software OpenGL | MJWarp or explicit NVIDIA OpenGL |
 | OGBCube, OGBScene | software OpenGL | MJWarp or explicit NVIDIA OpenGL |
 | PyFlytRocketLanding | TinyRenderer | CUDA rendering |
+| MuJoCoOcclusionBall | native OpenGL or explicit raycast | explicit raycast renders on CUDA; native OpenGL uploads output; simulation stays on CPU |
 | DM Control body-tracking (visual tier) | CPU3D | MJWarp |
 
 `device=` is a constructor argument. A class that cannot run on a device refuses at construction.

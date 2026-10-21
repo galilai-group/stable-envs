@@ -45,8 +45,10 @@ env = snv.CartPole(num_envs=8)
 ## Families
 
 `MuJoCoOcclusionBall` belongs to `object_permanence`. It reproduces the nominal G34
-authored animation with zero-only actions, native and batched raycast rendering in CPU
-tensors, and source depth/mask gates. Its install extra is `object-permanence` and CI profile is `object_permanence`.
+authored animation with zero-only actions, native and batched raycast rendering,
+CPU/CUDA tensors, and source depth/mask gates. Explicit raycast renders on the
+requested device; MuJoCo simulation stays on CPU. Its install extra is
+`object-permanence` and CI profile is `object_permanence`.
 See [the alignment contract](adding/occlusion-ball.md).
 
 `list_envs(family=…)` matches the class attribute `family`.

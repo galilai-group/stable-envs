@@ -97,7 +97,7 @@ def render_rows(rows, *, height, width, device, mode="rgb", out=None, backend="o
     if backend == "raycast":
         from .g34_raycast import render_raycast
 
-        return render_raycast(rows, height=height, width=width, mode=mode, out=out)
+        return render_raycast(rows, height=height, width=width, device=device, mode=mode, out=out)
     host = rows.detach().cpu().numpy().reshape(-1, 7)
     model, data, renderer, lock = _bundle(height, width)
     images = []
