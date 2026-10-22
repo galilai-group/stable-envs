@@ -79,9 +79,12 @@ There is no `capture`, `transition`, `unroll` or `step_sequence` method. To bran
 ## Process workers
 
 On Linux with at least four CPU cores, some families run physics in worker processes. These families
-are Fetch, most DM Control tasks, classic Acrobot and the OGBench registrations. Each process has one
-simulation thread and stays within the allowed CPU affinity. Physics stays on CPU even when rendering
+are Fetch, most DM Control tasks, classic Acrobot, the OGBench registrations and PushT. Each process has
+one simulation thread and stays within the allowed CPU affinity. Physics stays on CPU even when rendering
 uses CUDA.
+
+`set_state` checks the State in every worker before any worker restores it. If one lane is not valid,
+`set_state` raises the error and no lane changes.
 
 Two tuning knobs control the pool:
 
