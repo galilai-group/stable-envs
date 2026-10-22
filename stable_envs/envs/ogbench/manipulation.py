@@ -1033,36 +1033,10 @@ def _plate_rig(cell: str, res: int) -> _PlateRig:
     return rig
 
 
-# Recorded fidelity measurements; acceptance margins derive from them.
+# Per-frame MSE against the source over 64 render rows; tests/fixtures/source_mse.json holds the same values.
 _MEASURED: dict = {
-    "Cube": {
-        "all_exact_frac": 0.870012,
-        "draw_spread": {
-            "mean_abs": [3.265277, 3.309378],
-            "ssim": [0.919219, 0.926569],
-            "within8_frac": [0.91581, 0.917723],
-        },
-        "gate_draw_mean_abs": 3.295483,
-        "interior_exact_frac": 0.9578,
-        "interior_frac": 0.412552,
-        "mean_abs": 3.309378,
-        "ssim": 0.919219,
-        "within8_frac": 0.91581,
-    },
-    "Scene": {
-        "all_exact_frac": 0.773417,
-        "draw_spread": {
-            "mean_abs": [6.493273, 6.691589],
-            "ssim": [0.892792, 0.898809],
-            "within8_frac": [0.855483, 0.860345],
-        },
-        "gate_draw_mean_abs": 6.602667,
-        "interior_exact_frac": 0.912032,
-        "interior_frac": 0.278728,
-        "mean_abs": 6.691589,
-        "ssim": 0.892792,
-        "within8_frac": 0.855483,
-    },
+    "Cube": {"mse_mean": 25.1974, "mse_p95": 29.4667, "mse_max": 29.9812},
+    "Scene": {"mse_mean": 40.1919, "mse_p95": 58.8783, "mse_max": 60.6254},
 }
 _UNMEASURED = _environ.read("STABLE_ENVS_OGB_UNMEASURED")
 
@@ -1076,31 +1050,22 @@ def _fidelity(cell: str) -> dict:
     if cell not in _MEASURED:
         if not _UNMEASURED:
             raise RuntimeError(
-                f"ogb_manip: {cell} has no measured visual_fidelity; add its worst-of-eight to _MEASURED. "
+                f"ogb_manip: {cell} has no measured visual_fidelity; add its recorded MSE to _MEASURED. "
                 "Set STABLE_ENVS_OGB_UNMEASURED=1 only while measuring."
             )
         return {
-            "mean_abs": -1.0,
-            "within8_frac": -1.0,
-            "ssim": -1.0,
             "measured_at": "UNMEASURED placeholder: STABLE_ENVS_OGB_UNMEASURED=1 is set, so these are "
             "not measurements and this build must not ship or be certified.",
         }
     d = _MEASURED[cell]
     spec = SPEC[cell]
     return {
-        "mean_abs": float(d["mean_abs"]),
-        "within8_frac": float(d["within8_frac"]),
-        "ssim": float(d["ssim"]),
-        "interior_exact_frac": float(d["interior_exact_frac"]),
-        "interior_frac": float(d["interior_frac"]),
-        "all_exact_frac": float(d["all_exact_frac"]),
-        "draw_spread": d["draw_spread"],
+        **{k: float(d[k]) for k in ("mse_mean", "mse_p95", "mse_max")},
         "measured_at": (
-            f"mujoco 3.12.0 / ogbench 1.2.1 reference; {spec['size']} px, "
-            f"camera {spec['camera']}; worst of eight draws of 64 states, each from "
-            "a reset followed by 0–25 random actions. Measured by check_visual_fidelity; "
-            "draw_spread records the observed range."
+            f"mujoco 3.12.0 / ogbench 1.2.1 reference; {spec['size']} px, camera {spec['camera']}; per-frame "
+            "MSE over pixels and channels on the 0-255 scale, over the 64 render rows of "
+            "sample_render_rows(default_rng(20260811)); NVIDIA GeForce RTX 3090 / driver 575.57.08 / "
+            "MUJOCO_GL=egl, torch 2.14.1+cu126, mujoco-warp 3.12.0, warp-lang 1.17.0."
         ),
         # Reference side, compared by the certifier.
         "reference_versions": _REFERENCE_VERSIONS,

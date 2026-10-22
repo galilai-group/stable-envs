@@ -34,8 +34,12 @@ def ceiling(value: float) -> float:
     return RISE * value + SLACK
 
 
-def problems(name: str, got: dict, rec: dict) -> list[str]:
-    """Each statistic that rose above or dropped below its recorded band."""
+def problems(name: str, got: dict, rec: dict, rerecord: str | None = None) -> list[str]:
+    """Each statistic that rose above or dropped below its recorded band.
+
+    ``rerecord`` says how to record an intended improvement; by default, the record script for ``name``.
+    """
+    rerecord = rerecord or f"record it with {RECORD} --update {name}"
     out = []
     for k in KEYS:
         have, want = float(got[k]), float(rec[k])
@@ -44,7 +48,7 @@ def problems(name: str, got: dict, rec: dict) -> list[str]:
         elif have < DROP * want - SLACK:
             out.append(
                 f"{name} {k} = {have:.4f} is far below the record {want:.4f}; if the improvement is intended, "
-                f"record it with {RECORD} --update {name}"
+                f"{rerecord}"
             )
     return out
 

@@ -270,6 +270,9 @@ def test_source_mse_matches_the_record(env):
     bad = reference_version_mismatch(rec.get("reference_versions"), _installed(rec.get("reference_versions") or {}))
     if bad:
         pytest.skip(f"{cls.__name__}: the record was measured against another reference: {'; '.join(bad)}")
+    gpu = torch.cuda.get_device_name()
+    if rec.get("gpu") != gpu:
+        pytest.skip(f"{cls.__name__}: the record was measured on {rec.get('gpu')}, this host has {gpu}")
     try:
         got = C.check_source_mse(env, n=rec["n"], seed=rec["seed"])
     except ImportError as e:

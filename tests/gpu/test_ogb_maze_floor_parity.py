@@ -6,6 +6,8 @@ position-encoding gradient (encoding 1) is compared here against the unchanged o
 
 from __future__ import annotations
 
+import json
+
 import numpy as np
 import pytest
 
@@ -21,6 +23,8 @@ import stable_envs as se
 from stable_envs.envs.ogbench import maze as M
 from stable_envs.testing import conformance as C
 from tests.helpers import source_mse as SM
+
+GRADIENT_MSE = SM.PATH.parent / "ogb_maze_gradient_mse.json"
 
 CELLS = ("PointMazeMediumNavigate", "AntMazeMediumNavigate", "HumanoidMazeMediumNavigate")
 SEED = 20260811
@@ -61,8 +65,8 @@ def test_reference_floor_is_the_xml_checker(name):
 
 @pytest.mark.parametrize("name", CELLS)
 def test_both_floor_encodings_match_the_source(name):
-    """The checker floor stays under the class's recorded worst-frame MSE, and the gradient floor agrees
-    with its source to within the same band as the checker floor."""
+    """The checker floor stays under the class's recorded worst-frame MSE, and the gradient floor stays in
+    the band of its own record in ``ogb_maze_gradient_mse.json``."""
     rec = SM.record(name)
     if rec is None:
         pytest.skip(f"no MSE record for {name}; run {SM.RECORD}")
@@ -76,7 +80,14 @@ def test_both_floor_encodings_match_the_source(name):
 
     gradient = cls.reference_render(_gradient_reference(cls, env.size), states)
     ours = env._render(states, variation={"floor.pixel_encoding": [1]}).cpu().numpy()
-    on_gradient = _mse(ours, gradient)
-    over = {k: on_gradient[k] for k in SM.KEYS if on_gradient[k] > SM.ceiling(on_checker[k])}
-    assert not over, f"{name} gradient floor: {on_gradient} against the checker floor's {on_checker}"
+    gradient_rec = json.loads(GRADIENT_MSE.read_text())
+    if gradient_rec["gpu"] != torch.cuda.get_device_name():
+        pytest.skip(f"the gradient-floor record was measured on {gradient_rec['gpu']}")
+    bad = SM.problems(
+        f"{name} gradient floor",
+        _mse(ours, gradient),
+        gradient_rec["classes"][name],
+        rerecord=f"write the new values to {GRADIENT_MSE.name}",
+    )
+    assert not bad, "\n".join(bad)
     assert not np.array_equal(checker, gradient)

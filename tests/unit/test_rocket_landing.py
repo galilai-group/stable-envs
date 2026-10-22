@@ -171,14 +171,12 @@ def test_visual_declaration_is_complete():
     assert all(k in vf for k in REQUIRED_VISUAL_FIDELITY)
     assert all(vf[k] is not None for k in REQUIRED_VISUAL_FIDELITY)
     assert not vf["measured_at"].startswith("UNMEASURED")
-    for token in ("480 px", "supersample 1", "worst of 4", "PyFlyt 0.29.0", "pybullet 3.2.7", "RTX 3090"):
+    for token in ("480 px", "supersample 1", "default_rng(20260811)", "PyFlyt 0.29.0", "pybullet 3.2.7", "RTX 3090"):
         assert token in vf["measured_at"], f"measured_at does not say {token!r}"
     assert vf["reference_versions"] == {"PyFlyt": "0.29.0", "pybullet": "3.2.7"}
     assert set(vf["measured_with"]) == {"nvdiffrast", "torch"}
-    lo, hi = vf["draw_spread"]["mse_mean"]
-    assert lo <= hi and abs(vf["mse_mean"] - hi) < 0.01
+    assert vf["mse_mean"] <= vf["mse_p95"] <= vf["mse_max"]
     assert vf["reference_unreachable_share"] == RL.REFERENCE_UNREACHABLE_SHARE == 1.0 / 960.0
-    assert vf["reference_unreachable_rows_in_draws"] == 0
     check_fidelity_declaration(RL.PyFlytRocketLanding)
 
 

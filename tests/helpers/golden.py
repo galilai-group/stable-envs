@@ -109,9 +109,9 @@ def check_class(name: str, device: str) -> None:
     entry = recorded["files"].get(name)
     if entry is None:
         pytest.skip(f"no golden fixture for {name} on {device}; run {CAPTURE} --device {device}")
-    bad = profile_mismatch(device, recorded)
+    bad = profile_mismatch(device, entry["profile"])
     if bad:
-        pytest.skip(f"{device} golden frames were captured on another profile: " + "; ".join(bad))
+        pytest.skip(f"{name} {device} golden frames were captured on another profile: " + "; ".join(bad))
     path = directory(device) / entry["file"]
     assert sha256(path) == entry["sha256"], f"{path} does not match the sha256 in its manifest"
     states, expected, size = load(path)

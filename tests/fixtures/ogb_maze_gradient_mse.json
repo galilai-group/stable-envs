@@ -1,0 +1,9 @@
+{
+ "measured": "Per-frame MSE (pixels and channels, 0-255 scale) of each maze with floor.pixel_encoding=1 against the ogbench source's position-encoding floor, over the 32 rows of sample_render_rows(default_rng(20260811)); NVIDIA GeForce RTX 3090 / driver 575.57.08 / MUJOCO_GL=egl, torch 2.14.1+cu126, mujoco 3.12.0, ogbench 1.2.1.",
+ "gpu": "NVIDIA GeForce RTX 3090",
+ "classes": {
+  "AntMazeMediumNavigate": {"mse_mean": 9.8834, "mse_p95": 19.2527, "mse_max": 22.3408},
+  "HumanoidMazeMediumNavigate": {"mse_mean": 1.6637, "mse_p95": 3.6969, "mse_max": 4.464},
+  "PointMazeMediumNavigate": {"mse_mean": 4.7871, "mse_p95": 10.5282, "mse_max": 12.0721}
+ }
+}

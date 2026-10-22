@@ -54,11 +54,7 @@ def verify_recorded_code(files: Mapping[str, str], root: str | Path, *, revision
 UNKNOWN = (None, "", "present")
 
 # These checks depend on a versioned source renderer; self-consistency checks do not.
-REFERENCE_JUDGED_CHECKS = (
-    "render_parity_with_official_renderer",
-    "check_visual_fidelity",
-    "check_source_mse",
-)
+REFERENCE_JUDGED_CHECKS = ("check_source_mse",)
 
 
 def normalize_package(name: str) -> str:

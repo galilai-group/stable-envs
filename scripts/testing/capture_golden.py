@@ -20,7 +20,8 @@ def main():
     parser.add_argument("--envs", nargs="*", default=None, help="class names; default every registered class")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
-    manifest = dict(G.profile(args.device), source_commit=args.source_commit, seed=G.SEED, n=G.N, files={})
+    profile = G.profile(args.device)
+    manifest = dict(device=args.device, source_commit=args.source_commit, seed=G.SEED, n=G.N, files={})
     skipped, total = {}, 0
     for name in args.envs or sorted(se.registry.REGISTRY):
         cls = se.registry.REGISTRY[name]
@@ -41,13 +42,23 @@ def main():
             states = sample_render_rows(env, G.N, rng=np.random.default_rng(G.SEED))
             frames = env._render(states).cpu().numpy()
             size = int(env.size)
+        except Exception as e:
+            skipped[name] = f"{type(e).__name__}: {e}"
+            print(f"FAIL {name}: {skipped[name]}", flush=True)
+            continue
         finally:
             env.close()
         path = args.output / f"{name}.npz"
         G.save(path, np.asarray(states), frames, size)
         nbytes = path.stat().st_size
         total += nbytes
-        manifest["files"][name] = {"file": path.name, "sha256": G.sha256(path), "size": size, "bytes": nbytes}
+        manifest["files"][name] = {
+            "file": path.name,
+            "sha256": G.sha256(path),
+            "size": size,
+            "bytes": nbytes,
+            "profile": profile,
+        }
         print(f"CAPTURED {name} {frames.shape} {nbytes / 1e6:.2f} MB", flush=True)
     manifest["skipped"] = skipped
     (args.output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")

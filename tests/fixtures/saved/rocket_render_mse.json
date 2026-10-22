@@ -1,0 +1,21 @@
+{
+ "measured": "rocket_render_mse(ours, oracle) over the 204 frames of each archive's frames.npz: per-frame MSE over pixels and channels on the 0-255 scale, then the mean, the 95th percentile and the worst frame. Archives: the public CPU and CUDA render reports of job 6996439 (code hashes as in rocket_public_cpu_coverage/result.json, revision ebf82e6e).",
+ "devices": {
+  "cpu": {
+   "mse_mean": 0.0,
+   "mse_p95": 0.0,
+   "mse_max": 0.0,
+   "frames": 204,
+   "archive": "rocket-production-coverage-v4-20261004/results/6996439/public-cpu",
+   "frames_sha256": "1b04cbb361074035b83d36f908fc6f17ff321bb577242cae602b9cec1f3ec689"
+  },
+  "cuda": {
+   "mse_mean": 3.006,
+   "mse_p95": 6.3121,
+   "mse_max": 6.3121,
+   "frames": 204,
+   "archive": "rocket-production-coverage-v4-20261004/results/6996439/public-cuda",
+   "frames_sha256": "87d250937f13ab8ed276ef0920c5de014c22625801f3b118149231fd5e5e1393"
+  }
+ }
+}

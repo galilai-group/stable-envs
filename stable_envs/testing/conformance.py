@@ -12,6 +12,7 @@ and keeps classes sharing a source ID from sharing incompatible configuration.
 from __future__ import annotations
 
 import hashlib
+import inspect
 
 import numpy as np
 import torch
@@ -178,21 +179,6 @@ def reference_accepts_style(cls) -> bool:
         return False
 
 
-def check_visual_fidelity(env, n: int = 64) -> dict:
-    """Measure pixel error and SSIM against the source at default appearance."""
-    cls = type(env)
-    ref = reference_env(cls, env.size)
-    states = sample_render_rows(env, int(n))
-    official = cls.reference_render(ref, states)
-    ours = env._render(states).cpu().numpy()
-    if ours.shape != official.shape:
-        raise AssertionError(f"shape {ours.shape} vs official {official.shape}")
-    out = pixel_agreement(ours, official)
-    out["ssim"] = ssim(ours, official)
-    out["n_states"] = int(n)
-    return out
-
-
 def frame_mse(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     """Return the MSE of each frame over its pixels and channels, on the 0-255 scale."""
     if a.shape != b.shape:
@@ -208,16 +194,25 @@ def mse_summary(per_frame: np.ndarray) -> dict:
 
 
 def check_source_mse(env, n: int = 64, seed: int = 0) -> dict:
-    """Measure per-frame MSE against the source on ``n`` render rows drawn from ``default_rng(seed)``."""
+    """Measure per-frame MSE against the source on ``n`` render rows drawn from ``default_rng(seed)``.
+
+    Rows the reference cannot reach (``reference_render(..., return_flags=True)``) are left out and counted.
+    """
     cls = type(env)
     ref = reference_env(cls, env.size)
     states = sample_render_rows(env, int(n), rng=np.random.default_rng(int(seed)))
-    official = cls.reference_render(ref, states)
     ours = env._render(states).cpu().numpy()
-    per_frame = frame_mse(ours, official)
+    if "return_flags" in inspect.signature(cls.reference_render).parameters:
+        official, flags = cls.reference_render(ref, states, return_flags=True)
+        keep = ~np.asarray(flags, bool)
+    else:
+        official = cls.reference_render(ref, states)
+        keep = np.ones(len(official), bool)
+    per_frame = frame_mse(ours[keep], official[keep])
     return {
         **mse_summary(per_frame),
         "per_frame": per_frame.tolist(),
+        "excluded_unreachable": int((~keep).sum()),
         "n": int(n),
         "seed": int(seed),
         "size": int(env.size),

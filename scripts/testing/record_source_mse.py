@@ -11,6 +11,11 @@ from stable_envs.testing import conformance as C
 from tests.helpers import source_mse as SM
 from tests.helpers.reference.certification import has_reference_renderer, install_on_classes
 
+try:
+    import stable_worldmodel  # noqa: F401  registers the swm/ gym ids some references use
+except ImportError:
+    pass
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -45,6 +50,9 @@ def main():
             got = C.check_source_mse(env, n=SM.N, seed=SM.SEED)
         except ImportError as e:
             print(f"SKIP {name}: reference env not installed ({e})", flush=True)
+            continue
+        except Exception as e:
+            print(f"FAIL {name}: {type(e).__name__}: {e}", flush=True)
             continue
         finally:
             env.close()
