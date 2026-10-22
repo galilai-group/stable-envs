@@ -6,7 +6,6 @@ from functools import partial
 
 import numpy as np
 import torch
-from tensordict import TensorDict
 
 from ...._execution.process import ProcessAdapter, process_worker
 from .manipulation import OGBManipulationAdapter
@@ -24,39 +23,17 @@ class OGBManipulationProcessAdapter(ProcessAdapter):
     The parent keeps one metadata instance for validation and configuration.
     """
 
-    _worker_family = "OGBench manipulation"
-    _step_family = _state_family = "Cube/Scene"
-    _keep_metadata = True
+    name = "Cube/Scene"
     execution_mode = "DELEGATED_CPU"
 
     def __init__(self, family, num_envs=1, device="cpu", seed=0, reward_task_id=None, *, processes=8, cpus=None):
         if family not in ("Cube", "Scene") or type(num_envs) is not int or num_envs < 1:
             raise ValueError("Cube/Scene require a positive integer batch")
-        self.family = family
-        super().__init__(
-            partial(_lanes, family, reward_task_id), num_envs, device, seed, processes=processes, cpus=cpus
-        )
+        factory = partial(_lanes, family, reward_task_id)
+        super().__init__(factory, num_envs, device, seed, processes=processes, cpus=cpus)
 
     def _worker_target(self):
         return _worker
-
-    def _inspect(self, prototype):
-        self.fields, self.nq = prototype.fields, prototype.nq
-
-    def _task_template(self, prototype):
-        # Stepping would change the metadata instance; these are the task outputs of every step.
-        return TensorDict(
-            {
-                name: torch.zeros(1, dtype=dtype)
-                for name, dtype in (
-                    ("reward", torch.float64),
-                    ("success", torch.bool),
-                    ("terminated", torch.bool),
-                    ("truncated", torch.bool),
-                )
-            },
-            [1],
-        )
 
     def validate(self, state):
         self._check_open()
@@ -92,13 +69,3 @@ class OGBManipulationProcessAdapter(ProcessAdapter):
             axis=1,
         )
         return torch.from_numpy(values).to(self.device)
-
-    def _host_step(self, actions, active):
-        actions = actions.detach().cpu().numpy() if torch.is_tensor(actions) else np.asarray(actions)
-        if (
-            actions.shape != (self.num_envs, 5)
-            or actions.dtype not in (np.float32, np.float64)
-            or not np.isfinite(actions).all()
-        ):
-            raise ValueError("Actions must be finite float32/float64 [num_envs, 5]")
-        return actions, self._host_active(active)

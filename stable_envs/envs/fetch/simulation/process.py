@@ -9,7 +9,7 @@ import torch
 from tensordict import TensorDict
 
 from ...._execution.process import ProcessAdapter
-from .adapter import FetchAdapter, episode_limits, host_actions, host_active
+from .adapter import FetchAdapter, episode_limits
 
 
 def _lanes(task, reward_type, threads, count, seed):
@@ -29,7 +29,8 @@ class FetchProcessAdapter(ProcessAdapter, FetchAdapter):
     transfer stay in the parent.
     """
 
-    _worker_family = _step_family = _state_family = "Fetch"
+    name = "Fetch"
+    validate = FetchAdapter.validate
 
     def __init__(
         self,
@@ -46,30 +47,13 @@ class FetchProcessAdapter(ProcessAdapter, FetchAdapter):
         if type(threads_per_process) is not int or threads_per_process < 1:
             raise ValueError("threads_per_process must be positive")
         self._workers = processes * threads_per_process
-        self._threads_per_process = threads_per_process
-        super().__init__(
-            partial(_lanes, task, reward_type, threads_per_process),
-            num_envs,
-            device,
-            seed,
-            processes=processes,
-            cpus=cpus,
-        )
-
-    def _inspect(self, prototype):
-        self.fields, self.has_object = prototype.fields, prototype.has_object
-        self._model = prototype.reference_model()
-        self._mass = np.repeat(prototype.object_mass, self.num_envs)
-
-    def _probe_actions(self, prototype):
-        return np.zeros((1, 4))
-
-    def validate(self, state):
-        self._validate_state(state)
+        factory = partial(_lanes, task, reward_type, threads_per_process)
+        super().__init__(factory, num_envs, device, seed, processes=processes, cpus=cpus)
+        self._mass = np.repeat(self._metadata.object_mass, self.num_envs)
 
     def reference_model(self):
         self._check_open()
-        return self._model
+        return self._metadata.reference_model()
 
     @property
     def object_mass(self) -> np.ndarray:
@@ -99,9 +83,6 @@ class FetchProcessAdapter(ProcessAdapter, FetchAdapter):
         state = self._reset(seed, [(None if variations is None else variations[rows],) for rows in self._slices])
         self._mass = self.call("object_mass")
         return state
-
-    def _host_step(self, actions, active):
-        return host_actions(actions, self.num_envs), host_active(active, self.num_envs)
 
     def advance(self, actions: torch.Tensor | np.ndarray, *, active=None) -> TensorDict:
         return self.step(actions, active=active, capture_state=False)

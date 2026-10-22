@@ -103,6 +103,8 @@ class FetchAdapter(SimulatorAdapter):
         "_set_episode_limits": PER_LANE,
         "object_mass": BROADCAST,
     }
+    process_attributes = ("fields", "has_object")
+    action_dim = 4
 
     def __init__(self, num_envs, device="cpu", seed=0, task="PickAndPlace", reward_type="sparse"):
         import gymnasium as gym
@@ -341,6 +343,9 @@ class FetchAdapter(SimulatorAdapter):
                 "has_uint32": row["rng", "has_uint32"].item(),
                 "uinteger": row["rng", "uinteger"].item(),
             }
+
+    def check_step(self, actions, active):
+        return host_actions(actions, self.num_envs), host_active(active, self.num_envs)
 
     def step(self, actions: torch.Tensor | np.ndarray, *, active=None, capture_state=True) -> TensorDict:
         out = self.advance(actions, active=active)

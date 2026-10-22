@@ -17,18 +17,10 @@ def _lanes(loco, maze, count, seed):
 class OGBMazeProcessAdapter(ProcessAdapter):
     """Run OGBench Maze simulators and their isolated RNGs in worker processes."""
 
-    _worker_family = "OGBench Maze"
-    _step_family = "Maze"
-    _state_family = "OGBMaze"
+    name = "OGBMaze"
 
     def __init__(self, num_envs, device="cpu", seed=0, *, processes=8, cpus=None, loco="point", maze="large"):
         super().__init__(partial(_lanes, loco, maze), num_envs, device, int(seed), processes=processes, cpus=cpus)
-
-    def _inspect(self, prototype):
-        self.action_dim = prototype.action_dim
-        self.fields = {
-            key: (tuple(value.shape[1:]), value.dtype) for key, value in prototype.get_state().items(True, True)
-        }
 
     def reset(self, seed=None):
         self._check_idle()

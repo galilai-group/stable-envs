@@ -28,24 +28,31 @@ Selecting CUDA output does not move CPU physics to the GPU.
 ## Process adapters
 
 `ProcessAdapter` runs the lanes of one local adapter in worker processes. A
-family subclass supplies:
+family gives it a picklable factory. `factory(count, seed)` builds the local
+adapter of one worker. Lane `i` of the batch gets `seed + i`.
 
-- a picklable factory. `factory(count, seed)` builds the local adapter of one
-  worker. Lane `i` of the batch gets `seed + i`.
-- `_inspect(prototype)`, which reads family metadata from a one-lane prototype.
-- parent-side checks of actions (`_host_step`), State (`validate`) and family
-  options. A request that fails these checks reaches no worker.
+The local adapter declares what the parent needs:
 
-The local adapter must accept `step(actions, *, active=None, capture_state=True)`.
-With `capture_state=False`, it does not export State. The worker then copies
-only the task outputs.
+- `process_attributes` names attributes that the parent copies from a
+  one-lane prototype, for example `action_dim` or `physics_layout`. The
+  prototype stays open in the parent as `_metadata`.
+- `process_methods` names family methods that run on every worker, for
+  example `{"configure_physics": "per_lane"}`. `ProcessAdapter.call(name, *args)`
+  runs one. For `per_lane`, each worker receives the rows of the first argument
+  that it owns. For `broadcast`, every worker receives the same arguments. The
+  parent joins the return values in lane order. A listed method without a
+  parent wrapper is also available as an attribute of the process adapter.
+- `check_step(actions, active)` checks a step and returns the host arrays. The
+  parent calls it with the process adapter as `self`, so it can read only
+  `num_envs` and `process_attributes`. A step that fails it reaches no worker.
+- `probe_actions()` returns actions for one lane. The parent steps the
+  prototype once with them to size the shared task buffers.
+- `step(actions, *, active=None, capture_state=True)`. With
+  `capture_state=False`, the adapter does not export State, and the worker
+  copies only the task outputs.
 
-A local adapter lists its family methods in `process_methods`, for example
-`{"configure_physics": "per_lane"}`. `ProcessAdapter.call(name, *args)` runs a
-listed method on every worker. For `per_lane`, each worker receives the rows of
-the first argument that it owns. For `broadcast`, every worker receives the same
-arguments. The parent joins the return values in lane order. A listed method
-without a parent wrapper is available as an attribute of the process adapter.
+A family subclass adds parent-side checks that need the whole batch: State
+checks (`validate`), reset arguments and the arguments of family methods.
 
 ## Restore
 

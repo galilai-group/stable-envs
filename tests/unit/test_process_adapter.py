@@ -15,6 +15,8 @@ class Lanes(SimulatorAdapter):
     """Lanes that add a scaled action to a position and count their own steps."""
 
     process_methods = {"scale": PER_LANE, "total": BROADCAST, "offset": BROADCAST}
+    process_attributes = ("action_dim",)
+    action_dim = 1
 
     def __init__(self, count, seed=0):
         self.num_envs = count
@@ -43,6 +45,12 @@ class Lanes(SimulatorAdapter):
         self.steps[:] = 0
         return self.get_state()
 
+    def check_step(self, actions, active):
+        actions = np.asarray(actions)
+        if actions.shape != (self.num_envs, 1) or not np.isfinite(actions).all():
+            raise ValueError("Lanes action must have finite shape (num_envs, 1)")
+        return actions, None if active is None else np.asarray(active, bool)
+
     def step(self, actions, *, active=None, capture_state=True):
         lanes = np.ones(self.num_envs, bool) if active is None else np.asarray(active, bool)
         self.position[lanes] += self.gain[lanes] * np.asarray(actions)[lanes, 0]
@@ -66,10 +74,7 @@ class Lanes(SimulatorAdapter):
 
 
 class LanesProcess(ProcessAdapter):
-    _state_family = "Lanes"
-
-    def _inspect(self, prototype):
-        self.action_dim = 1
+    name = "Lanes"
 
 
 def _actions(count=8, batch=5):
@@ -144,7 +149,7 @@ def test_capture_state_skips_the_snapshot_and_requests_are_exclusive():
         held = result.clone()
         adapter.step(np.ones((4, 1)))
         assert_same_state(result, held)
-        with pytest.raises(RuntimeError, match="No Simulation step in flight"):
+        with pytest.raises(RuntimeError, match="No Lanes step in flight"):
             adapter.receive_step()
         with pytest.raises(ValueError, match="action must have finite shape"):
             adapter.step(np.ones((3, 1)))

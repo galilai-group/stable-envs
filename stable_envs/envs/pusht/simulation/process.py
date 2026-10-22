@@ -27,8 +27,7 @@ class PushTProcessAdapter(ProcessAdapter):
     only fixed-size State fields. Restore replays the history in the workers.
     """
 
-    _worker_family = _step_family = _state_family = "PushT"
-    _keep_metadata = True
+    name = "PushT"
     _pipe_leaves = frozenset({_ACTIONS, _CODES, _VALID})
 
     def __init__(self, batch, device="cpu", seed=0, *, discrete=False, config=None, processes=8, cpus=None):
@@ -41,20 +40,7 @@ class PushTProcessAdapter(ProcessAdapter):
         self._actions = np.zeros((batch, 0, 2), np.float64)
         self._codes = np.zeros((batch, 0), np.uint8)
         super().__init__(partial(_lanes, discrete, config), batch, device, seed, processes=processes, cpus=cpus)
-
-    def _inspect(self, prototype):
-        self._keys = [key_path(key) for key in prototype.get_state().keys(True, True)]
-
-    def _task_template(self, prototype):
-        return TensorDict(
-            {
-                "reward": torch.zeros(1, dtype=torch.float64),
-                "success": torch.zeros(1, dtype=torch.bool),
-                "terminated": torch.zeros(1, dtype=torch.bool),
-                "truncated": torch.zeros(1, dtype=torch.bool),
-            },
-            [1],
-        )
+        self._keys = [key_path(key) for key in self._metadata.get_state().keys(True, True)]
 
     @property
     def template(self):
@@ -106,25 +92,7 @@ class PushTProcessAdapter(ProcessAdapter):
         self._codes = np.zeros((self.num_envs, 0), np.uint8)
         return self._reset(seed, [(lanes[rows],) for rows in self._slices])
 
-    def _host_step(self, actions, active):
-        if torch.is_tensor(actions):
-            actions = actions.detach().cpu().numpy()
-        if not isinstance(actions, np.ndarray) or actions.shape != (self.num_envs, 2):
-            raise ValueError("PushT actions require shape [num_envs, 2]")
-        for action in actions:
-            self._metadata.template.validate_action(action)
-        if torch.is_tensor(active):
-            active = active.detach().cpu().numpy()
-        if active is not None and (
-            not isinstance(active, np.ndarray) or active.dtype != np.bool_ or active.shape != (self.num_envs,)
-        ):
-            raise ValueError("PushT active mask requires bool [num_envs]")
-        self._submitted = actions, active
-        return actions, active
-
-    def submit_step(self, actions, *, active=None, capture_state=True):
-        super().submit_step(actions, active=active, capture_state=capture_state)
-        actions, active = self._submitted
+    def _submitted(self, actions, active):
         lanes = np.arange(self.num_envs) if active is None else np.flatnonzero(active)
         if not len(lanes):
             return

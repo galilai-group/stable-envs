@@ -95,6 +95,7 @@ class PushTReplayAdapter(SimulatorAdapter):
     """
 
     process_methods = {"install_variation": PER_LANE, "variation_rows": BROADCAST}
+    action_dim = 2
 
     def __init__(self, batch, device="cpu", seed=0, *, discrete=False, config=None):
         if type(batch) is not int or batch < 1:
@@ -224,6 +225,24 @@ class PushTReplayAdapter(SimulatorAdapter):
             leaves = _leaves(replay.env.variation_space)
             rows.append(np.concatenate([np.asarray(getattr(leaves[k], attribute)).reshape(-1) for k in keys]))
         return np.stack(rows)
+
+    def check_step(self, actions, active):
+        if torch.is_tensor(actions):
+            actions = actions.detach().cpu().numpy()
+        if not isinstance(actions, np.ndarray) or actions.shape != (self.num_envs, 2):
+            raise ValueError("PushT actions require shape [num_envs, 2]")
+        for action in actions:
+            self.template.validate_action(action)
+        if torch.is_tensor(active):
+            active = active.detach().cpu().numpy()
+        if active is not None and (
+            not isinstance(active, np.ndarray) or active.dtype != np.bool_ or active.shape != (self.num_envs,)
+        ):
+            raise ValueError("PushT active mask requires bool [num_envs]")
+        return actions, active
+
+    def probe_actions(self):
+        return np.zeros((1, 2), np.int64 if self.template.discrete else np.float64)
 
     def step(self, actions, *, active=None, capture_state=True):
         if torch.is_tensor(actions):

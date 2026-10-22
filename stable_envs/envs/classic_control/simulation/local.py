@@ -187,6 +187,7 @@ class ClassicControlAdapter(SimulatorAdapter):
     """B independent pinned Gymnasium simulators, with no rendering responsibility."""
 
     process_methods = {"configure": PER_LANE}
+    process_attributes = ("domain", "fields")
 
     def __init__(self, domain: str, num_envs: int, device="cpu", seed: int = 0):
         if domain not in CLASSIC_FIELDS:
@@ -365,6 +366,24 @@ class ClassicControlAdapter(SimulatorAdapter):
             # ``item`` keeps the int/float distinction that Gymnasium's Discrete.contains checks.
             return [array[i, 0].item() for i in range(self.num_envs)]
         return [array[i] for i in range(self.num_envs)]
+
+    def check_step(self, actions, active):
+        actions = actions.detach().cpu().numpy() if torch.is_tensor(actions) else np.asarray(actions)
+        # Keep source scalar types and Python-list action indexing, including valid negative indices.
+        converted = ClassicControlAdapter._actions(self, actions)
+        if active is not None:
+            active = active.detach().cpu().numpy() if torch.is_tensor(active) else np.asarray(active)
+            if active.shape != (self.num_envs,) or active.dtype != np.bool_:
+                raise ValueError("active must be a bool vector with shape [num_envs]")
+        if self.domain == "acrobot":
+            # Index the torque table as Acrobot does, so an invalid action raises before any lane steps.
+            for i, action in enumerate(converted):
+                if active is None or active[i]:
+                    [-1.0, 0.0, 1.0][action]
+        return actions, active
+
+    def probe_actions(self):
+        return np.ones((1, 1), np.int64 if self.domain in {"cartpole", "acrobot", "mountain_car"} else np.float32)
 
     @staticmethod
     def _idle_output(env):

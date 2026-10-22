@@ -19,6 +19,7 @@ class DMCLanes(SimulatorAdapter):
     """
 
     process_methods = {"configure_physics": PER_LANE}
+    process_attributes = ("key", "action_dim", "fields", "physics_layout", "physics_dim")
 
     def __init__(self, key, num_envs, device, seed, make, fields):
         self.key = key
@@ -40,6 +41,10 @@ class DMCLanes(SimulatorAdapter):
     @property
     def physics_layout(self):
         return None if self.physics is None else self.physics.layout
+
+    @property
+    def physics_dim(self):
+        return 0 if self.physics is None else self.physics.spec.dim
 
     def configure_physics(self, values):
         self._check_open()
@@ -77,6 +82,20 @@ class DMCLanes(SimulatorAdapter):
             self.physics.configure(rows)
         for i, env in enumerate(self.envs):
             restore_lane(env, host[i], self._base_fields, self._cumulative, i)
+
+    def check_step(self, actions, active):
+        if torch.is_tensor(actions):
+            actions = actions.detach().cpu().numpy()
+        actions = np.asarray(actions, np.float64)
+        if actions.shape != (self.num_envs, self.action_dim) or not np.isfinite(actions).all():
+            raise ValueError(f"DMC actions must be finite with shape {(self.num_envs, self.action_dim)}")
+        if active is not None:
+            active = active.detach().cpu().numpy() if torch.is_tensor(active) else np.asarray(active)
+            if active.shape != (self.num_envs,) or not active.all():
+                raise ValueError(
+                    "Accepted DMC wrappers do not expose terminal lanes; partial active masks are unsupported"
+                )
+        return actions, None
 
     def _info(self, env, lane):
         """Return ``(success, info)`` for task outputs beyond reward, or None."""

@@ -128,19 +128,15 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
 
     ``factory(count, seed)`` builds the local adapter that one worker owns; it
     must be picklable. Lane ``i`` gets ``seed + i``, as in one local batch.
-    Subclasses validate inputs in the parent, so that a rejected request
-    reaches no worker. Restore prepares every worker before any worker
+    The local adapter declares ``process_methods``, which run on every worker
+    through ``call``, and ``process_attributes``, which the parent copies from
+    a one-lane prototype. The parent runs the local ``check_step`` before a
+    step reaches any worker. Restore prepares every worker before any worker
     commits. Received outputs are copies that the next request cannot change.
-    Methods named in the local adapter's ``process_methods`` run on every
-    worker through ``call``.
     """
 
-    _worker_family = "Simulation"
-    _step_family = "Simulation"
-    #: Name in the default State and action errors.
-    _state_family = "Simulation"
-    #: Keep the specification prototype as ``_metadata`` for parent-side queries.
-    _keep_metadata = False
+    #: Family name in error messages.
+    name = "Simulation"
     #: State leaves that have no fixed shape; restore sends them through the pipe.
     _pipe_leaves: frozenset[tuple[str, ...]] = frozenset()
 
@@ -166,17 +162,14 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         self._metadata = None
         self.process_methods: dict[str, str] = {}
         try:
-            prototype = factory(1, seed)
-            try:
-                self._inspect(prototype)
-                self.process_methods = dict(getattr(prototype, "process_methods", {}))
-                state = prototype.get_state()
-                task = self._task_template(prototype)
-                if self._keep_metadata:
-                    self._metadata = prototype
-            finally:
-                if self._metadata is not prototype:
-                    prototype.close()
+            # The one-lane prototype stays open for parent-side queries and checks.
+            self._metadata = prototype = factory(1, seed)
+            self._local = type(prototype)
+            self.process_methods = dict(prototype.process_methods)
+            for attribute in prototype.process_attributes:
+                setattr(self, attribute, getattr(prototype, attribute))
+            state = prototype.get_state()
+            task = prototype.step(prototype.probe_actions(), capture_state=False)
             self._specs = {
                 ("task", *key_path(key)): (tuple(value.shape[1:]), value.numpy().dtype)
                 for key, value in task.exclude("state").items(True, True)
@@ -216,18 +209,12 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
             self._abort()
             raise
 
+    @property
+    def _worker_family(self):
+        return self.name
+
     def _worker_target(self):
         return process_worker
-
-    def _inspect(self, prototype):
-        """Read family metadata from a one-lane prototype before workers start."""
-
-    def _task_template(self, prototype):
-        """Return one prototype step whose task outputs define the shared task buffers."""
-        return prototype.step(self._probe_actions(prototype), capture_state=False)
-
-    def _probe_actions(self, prototype):
-        return np.zeros((1, self.action_dim))
 
     def _abort(self):
         try:
@@ -284,7 +271,7 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
     def validate(self, state: TensorDict) -> object:
         """Reject State that does not fit the shared buffers; families add their own checks."""
         if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):
-            raise TypeError(f"{self._state_family} requires full TensorDict State with batch [num_envs]")
+            raise TypeError(f"{self.name} requires full TensorDict State with batch [num_envs]")
         require_columns(
             state, {key: ((self.num_envs, *shape), dtype) for key, (shape, dtype) in self.state_fields.items()}
         )
@@ -314,36 +301,25 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
             raise (error if isinstance(error, type) and issubclass(error, Exception) else RuntimeError)(message)
         self._request("commit_restore")
 
-    def _host_step(self, actions, active):
-        """Return host ``(actions, active)`` arrays or raise before any worker steps."""
-        actions = actions.detach().cpu().numpy() if torch.is_tensor(actions) else np.asarray(actions)
-        if actions.shape != (self.num_envs, self.action_dim) or not np.isfinite(actions).all():
-            raise ValueError(f"{self._state_family} action must have finite shape (num_envs, {self.action_dim})")
-        return actions, self._host_active(active)
-
-    def _host_active(self, active):
-        if active is None:
-            return None
-        active = active.detach().cpu().numpy() if torch.is_tensor(active) else np.asarray(active)
-        if active.shape != (self.num_envs,) or active.dtype != np.bool_:
-            raise ValueError("active must be a bool vector with shape [num_envs]")
-        return active
-
     def submit_step(self, actions, *, active=None, capture_state: bool = True) -> None:
         """Submit one transition; receive its result before submitting another."""
         self._check_idle()
-        actions, active = self._host_step(actions, active)
+        actions, active = self._local.check_step(self, actions, active)
         capture_state = bool(capture_state)
         self._submit(
             "step", [(actions[rows], None if active is None else active[rows], capture_state) for rows in self._slices]
         )
         self._capture = capture_state
+        self._submitted(actions, active)
+
+    def _submitted(self, actions, active):
+        """Record a dispatched step; ``actions`` and ``active`` are the checked host arrays."""
 
     def receive_step(self) -> TensorDict:
         """Wait for the transition and copy its outputs before workers can reuse the buffers."""
         self._check_open()
         if self._pending != "step":
-            raise RuntimeError(f"No {self._step_family} step in flight")
+            raise RuntimeError(f"No {self.name} step in flight")
         self._receive()
         result = self._owned("task")
         if self._capture:
