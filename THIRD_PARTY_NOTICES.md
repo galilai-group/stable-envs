@@ -1,5 +1,15 @@
 # Third-party notices
 
+## envX TwoRoom
+
+`stable_envs/envs/navigation/tworoom_jax.py` adapts the collision rules and state-step/observation
+logic in `envx/tworooms/geometry.py` and `envx/tworooms/environment.py` from
+[fracapuano/envX](https://github.com/fracapuano/envX) at commit
+`d26c817c1124229c819be574f137cd68bda4380a` (Copyright 2026 Francesco Capuano, Apache-2.0).
+Modifications support stable-envs' batched Variation, masked steps, reset/State/task contracts,
+boundary rounding and DLPack exchange with Torch. envX is not a runtime dependency.
+The Apache license is included in `licenses/envX-APACHE-2.0.txt` and distributed with the package.
+
 ## Craftax
 
 The `craftax` family (`stable_envs/envs/craftax/`) runs

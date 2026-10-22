@@ -600,7 +600,7 @@ def run_gate(device="cpu"):
         "swm_commit": commit,
         "swm_source": str(source),
         "device": device,
-        "execution_mode": "NATIVE_TORCH",
+        "execution_mode": {"TwoRoom": "NATIVE_JAX", "Piecewise": "NATIVE_TORCH", "SimplePointMaze": "NATIVE_TORCH"},
         "platform": platform.platform(),
         "versions": {
             name: importlib.metadata.version(name)
@@ -635,7 +635,8 @@ def run_gate(device="cpu"):
             ):
                 try:
                     with _diagnostic_case(env, ref, domain, "run_gate"):
-                        assert env.execution_mode == "NATIVE_TORCH"
+                        expected_mode = "NATIVE_JAX" if case["stable_env"] == "TwoRoom" else "NATIVE_TORCH"
+                        assert env.execution_mode == expected_mode
                         for seed in (0, 17, 42):
                             check_reset_matches_reference(env, ref, seed=seed)
                             snapshot = env.get_state()

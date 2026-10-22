@@ -34,9 +34,10 @@ package, which tests use for comparison.
 
 | extra | needed for | adds |
 |---|---|---|
-| *(none)* | classic control, navigation | nothing |
+| *(none)* | classic control, navigation | core dependencies include JAX for TwoRoom dynamics |
 | `classic` | The compiled CPU renderer of classic control | Numba |
 | `navigation` | SimplePointMaze's exact `info.goal` image and Piecewise's `rendering.render_bias_field`; the compiled CPU renderer | Matplotlib, Numba |
+| `navigation-gpu` | TwoRoom on CUDA | JAX CUDA 12 runtime |
 | `pusht` | PushT, PushTDiscrete | Pymunk 7.2.0, pygame, OpenCV, Shapely, Numba |
 | `pusht-reference` | reference checks only | gym-pusht |
 | `ogbench` | OGBench mazes | `ogbench`, MuJoCo |

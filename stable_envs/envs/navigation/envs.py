@@ -813,6 +813,7 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
     """
 
     name = "two-room"
+    execution_mode = "NATIVE_JAX"
     state_dim = 2
     state_names = ("agent_x", "agent_y")
     reference_kwargs = {"render_target": False}
@@ -830,11 +831,41 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
         }
     )
 
+    def __init__(self, *args, **kwargs):
+        from .tworoom_jax import Kernel
+
+        super().__init__(*args, **kwargs)
+        self._jax_kernel = Kernel(self.device, self._style.layout)
+
     def make_variation_space(self) -> Dict:
         return Dict({"agent": Dict(self._agent_space()), **self._structure_space()})
 
+    @torch.no_grad()
     def _step(self, action, *, active=None) -> TensorDict:
-        return super()._step(action, active=active)
+        self._check_open("step")
+        act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
+        agent, observation, distance, terminated = self._jax_kernel.step(
+            self._render_state, self._target_position, act, self._style.values, active
+        )
+        self._render_state.copy_(agent)
+        state = self._full_state(agent)
+        return StepResult(
+            {
+                "state": state,
+                "reward": torch.zeros(self.B, device=self.device, dtype=torch.float64),
+                "terminated": terminated,
+                "truncated": torch.zeros(self.B, device=self.device, dtype=torch.bool),
+                "observation": observation,
+                "info": {
+                    "proprio": agent.clone(),
+                    "state": agent.clone(),
+                    "goal_state": self._target_position.clone(),
+                    "distance_to_target": distance,
+                },
+            },
+            batch_size=[self.B],
+            device=self.device,
+        )
 
     def _reset_value_ok(self, path, value, lane):
         if path != "agent.position":

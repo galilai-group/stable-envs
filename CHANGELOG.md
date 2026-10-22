@@ -63,6 +63,8 @@ All notable changes to this project are listed here. The format follows
   on the 0-255 scale. Only `measured_at` is required.
 - The tests compare frames with a recorded source MSE for each class (`tests/fixtures/source_mse.json`)
   and with golden frames of our own renderers (`tests/fixtures/golden/`).
+- TwoRoom uses JAX dynamics on CPU or CUDA and exchanges Torch tensors through DLPack.
+  CUDA requires the `navigation-gpu` extra.
 - `stable-envs doctor` reports how many render paths are tuned on this machine, lists the
   `STABLE_ENVS_*` variables that are set and flags unknown names, and checks torch's compiled GPU
   architectures with binary-compatibility rules.
