@@ -23,6 +23,14 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- One process adapter (`stable_envs._execution.process.ProcessAdapter`) runs the worker processes of
+  DM Control, classic Acrobot, Fetch, OGBench Maze and OGBench Cube/Scene. It replaces five copies of
+  the worker loop. Outputs do not change.
+- With worker processes, `set_state` checks every lane in every worker before any worker restores.
+  A State that is not valid in one lane raises and changes no lane in DM Control, classic Acrobot and
+  Fetch too.
+- PushT runs in worker processes on Linux for batches of at least `worker_min_lanes` lanes (tuning
+  path `pusht-sim`).
 - `visual_fidelity` records the per-frame MSE against the source as `mse_mean`, `mse_p95` and `mse_max`
   on the 0-255 scale. Only `measured_at` is required.
 - The tests compare frames with a recorded source MSE for each class (`tests/fixtures/source_mse.json`)

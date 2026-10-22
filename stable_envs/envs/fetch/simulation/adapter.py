@@ -8,6 +8,7 @@ import torch
 from tensordict import TensorDict
 
 from .... import tuning
+from ...._execution.process import BROADCAST, PER_LANE
 from ...._execution.protocol import SimulatorAdapter
 
 FIELDS = {
@@ -96,6 +97,14 @@ class FetchAdapter(SimulatorAdapter):
     """
 
     execution_mode = "DELEGATED_CPU"
+    process_methods = {
+        "configure_object_mass": PER_LANE,
+        "reset_visual_colors": PER_LANE,
+        "_set_episode_limits": PER_LANE,
+        "object_mass": BROADCAST,
+    }
+    process_attributes = ("fields", "has_object")
+    action_dim = 4
 
     def __init__(self, num_envs, device="cpu", seed=0, task="PickAndPlace", reward_type="sparse"):
         import gymnasium as gym
@@ -303,6 +312,9 @@ class FetchAdapter(SimulatorAdapter):
         if (state["lifecycle", "elapsed_steps"] < 0).any():
             raise ValueError("Negative elapsed_steps")
 
+    def validate(self, state: TensorDict) -> None:
+        self._validate_state(state)
+
     def set_state(self, state: TensorDict) -> None:
         self._validate_state(state)
         host = state.cpu()
@@ -332,9 +344,13 @@ class FetchAdapter(SimulatorAdapter):
                 "uinteger": row["rng", "uinteger"].item(),
             }
 
-    def step(self, actions: torch.Tensor | np.ndarray, *, active=None) -> TensorDict:
+    def check_step(self, actions, active):
+        return host_actions(actions, self.num_envs), host_active(active, self.num_envs)
+
+    def step(self, actions: torch.Tensor | np.ndarray, *, active=None, capture_state=True) -> TensorDict:
         out = self.advance(actions, active=active)
-        out["state"] = self.get_state()
+        if capture_state:
+            out["state"] = self.get_state()
         return out
 
     def advance(self, actions: torch.Tensor | np.ndarray, *, active=None) -> TensorDict:

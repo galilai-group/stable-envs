@@ -31,6 +31,21 @@ def validate_seed(seed):
         raise ValueError("PushT seed must be None or a nonnegative integer below 2**128")
 
 
+def reset_options(seed, options):
+    """Check a reset seed and options; return an owned copy of the options."""
+    validate_seed(seed)
+    options = copy.deepcopy(options or {})
+    if set(options) - {"variation", "variation_values", "state", "goal_state"}:
+        raise ValueError("Unsupported PushT reset option")
+    for key in ("state", "goal_state"):
+        if key in options:
+            value = np.asarray(options[key])
+            if value.shape != (7,) or value.dtype not in ACTION_DTYPES[:2] or not np.isfinite(value).all():
+                raise ValueError("Explicit PushT reset state/goal requires seven finite float32/float64 values")
+            options[key] = value.copy()
+    return options
+
+
 class PushTReplay:
     """Restore one CPU PushT engine from a numeric reset anchor and action history.
 
@@ -73,16 +88,7 @@ class PushTReplay:
             raise ValueError("PushT continuous actions must be in [-1, 1]")
 
     def _reset(self, seed, options):
-        validate_seed(seed)
-        options = copy.deepcopy(options or {})
-        if set(options) - {"variation", "variation_values", "state", "goal_state"}:
-            raise ValueError("Unsupported PushT reset option")
-        for key in ("state", "goal_state"):
-            if key in options:
-                value = np.asarray(options[key])
-                if value.shape != (7,) or value.dtype not in ACTION_DTYPES[:2] or not np.isfinite(value).all():
-                    raise ValueError("Explicit PushT reset state/goal requires seven finite float32/float64 values")
-                options[key] = value.copy()
+        options = reset_options(seed, options)
         output = self.env.reset(seed=seed, options=options)
         values = self.env.variation_space.value
         start = options.get(

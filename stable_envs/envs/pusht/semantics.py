@@ -11,6 +11,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env
 from ...registry import REGISTRY, register
 from ...spaces import Box, Dict, Discrete
@@ -52,7 +53,7 @@ class PushT(Env):
         with_target=True,
     ):
         from .projection import PushTProjection
-        from .simulation.replay_batch import PushTReplayAdapter
+        from .simulation.execution import make_pusht_adapter
 
         if backend not in ("auto", "pygame"):
             raise ValueError("Source-aligned PushT supports backend='pygame' only")
@@ -62,7 +63,7 @@ class PushT(Env):
         resolution = self.default_size if size is None else size
         if render_action and resolution < 96:
             raise ValueError("Source PushT action markers require size >= 96")
-        self._simulator = PushTReplayAdapter(
+        self._simulator = make_pusht_adapter(
             num_envs,
             device,
             seed,
@@ -72,7 +73,7 @@ class PushT(Env):
         self._projection = PushTProjection()
         try:
             super().__init__(num_envs, resolution, 1, device, "pygame", 0 if seed is None else seed)
-            row = self._simulator.envs[0].get_state()
+            row = self._simulator.template.get_state()
             self._fixed_fields = {k: (v.shape, v.dtype) for k, v in row.items() if not k.startswith("history/")}
             self._render_fields = [
                 (tuple(k.split("/")), shape, torch.from_numpy(np.empty((), dtype)).dtype)
@@ -92,7 +93,7 @@ class PushT(Env):
                 return Discrete(int(node.n), start=int(node.start), init_value=copy.deepcopy(node.init_value))
             return Box(node.low, node.high, dtype=node.dtype, init_value=copy.deepcopy(node.init_value))
 
-        return convert(self._simulator.envs[0].env.variation_space)
+        return convert(self._simulator.template.env.variation_space)
 
     @property
     def state_spec(self):
@@ -134,6 +135,9 @@ class PushT(Env):
     def _advance_without_snapshot(self, actions, *, active=None):
         return self._simulator.step(actions, active=active, capture_state=False)
 
+    def _step_pipeline(self) -> StepPipeline | None:
+        return step_pipeline(self._simulator)
+
     @staticmethod
     def _stack_states(values):
         from .simulation.history import stack_states
@@ -141,24 +145,8 @@ class PushT(Env):
         return stack_states(values)
 
     def _variation_rows(self, attribute):
-        from ..._core.space_nodes import nodes
-
-        rows = []
-        for lane in self._simulator.envs:
-            leaves = {
-                p.strip("/").replace("/", "."): n
-                for p, n in nodes(lane.env.variation_space)
-                if not hasattr(n, "spaces")
-            }
-            rows.append(
-                np.concatenate(
-                    [
-                        np.asarray(getattr(leaves[k], attribute)).reshape(-1)
-                        for k, _, _ in self.variation_space.flat_layout()
-                    ]
-                )
-            )
-        return torch.as_tensor(np.stack(rows), device=self.device)
+        keys = [key for key, _, _ in self.variation_space.flat_layout()]
+        return torch.as_tensor(self._simulator.variation_rows(attribute, keys), device=self.device)
 
     def get_variation(self):
         self._check_open("get_variation")
@@ -210,7 +198,7 @@ class PushT(Env):
         Appearance leaves (``immediate_variation_leaves``) also apply to the running episode;
         the others take effect at the next reset.
         """
-        from ..._core.space_nodes import nodes
+        from .simulation.replay_batch import resolve_variation
 
         self._check_open("set_variation")
         if isinstance(variation, dict):
@@ -226,38 +214,8 @@ class PushT(Env):
             for key, off, width in self.variation_space.flat_layout():
                 overrides[key] = rows[:, off : off + width].reshape(self.B, *self.variation_space._walk(key).shape)
                 flat_keys.add(key)
-        staged = []
-        for lane, replay in enumerate(self._simulator.envs):
-            space = copy.deepcopy(replay.env.variation_space)
-            leaves = {p.strip("/").replace("/", "."): n for p, n in nodes(space) if not hasattr(n, "spaces")}
-            for key, raw in overrides.items():
-                if key not in leaves:
-                    raise ValueError(f"Unknown PushT Variation: {key}")
-                node = leaves[key]
-                value = np.asarray(raw.detach().cpu() if torch.is_tensor(raw) else raw)
-                if value.shape == (self.B, *node.shape):
-                    value = value[lane]
-                if value.shape != node.shape or not np.isfinite(value).all():
-                    raise ValueError(f"Invalid PushT Variation shape/value: {key}")
-                # Keep Python scalar versus NumPy scalar/array representation;
-                # source reset arithmetic and checkpoint equality depend on it.
-                converted = copy.deepcopy(raw) if type(raw) in (int, float, bool) else value.copy()
-                if key in flat_keys:
-                    dtype = np.dtype(node.dtype)
-                    converted = value.astype(dtype)
-                    if dtype.kind in "iub" and not np.array_equal(converted, value):
-                        raise ValueError(f"Nonintegral PushT Variation: {key}")
-                    if hasattr(node, "n"):
-                        converted = int(converted)
-                if not node.contains(converted):
-                    raise ValueError(f"Invalid PushT Variation range/dtype: {key}")
-                node.set_init_value(converted, reset_value=False)
-                if key in self.immediate_variation_leaves:
-                    node.set_value(copy.deepcopy(converted))
-            staged.append(space)
-        for replay, space in zip(self._simulator.envs, staged, strict=True):
-            replay.env.variation_space = space
-            replay.env.goal_pose = np.concatenate([space["goal"]["position"].value, [space["goal"]["angle"].value]])
+        lanes = resolve_variation(self._simulator.template.env.variation_space, overrides, self.B, flat_keys)
+        self._simulator.install_variation(lanes, self.immediate_variation_leaves)
         return self._variation_rows("init_value")
 
     def to_render_state(self, state=None):
@@ -289,7 +247,7 @@ class PushT(Env):
         size = self.size if size is None else size
         if type(size) is not int or size < 1:
             raise ValueError("PushT render size must be a positive integer")
-        if self._simulator.envs[0].config["render_action"] and size < 96:
+        if self._simulator.template.config["render_action"] and size < 96:
             raise ValueError("Source PushT action markers require size >= 96")
         fields = {k: v.cpu().numpy() for k, v in self._render_fields_of(state).items()}
         rows = [{k: v[i] for k, v in fields.items()} for i in range(len(fields["recipe/config"]))]

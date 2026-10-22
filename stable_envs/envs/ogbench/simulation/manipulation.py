@@ -8,6 +8,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._execution.process import PER_LANE
 from ...._execution.protocol import SimulatorAdapter
 from ...._execution.state_columns import owned_columns
 from .compatibility import MODEL_VALUES, CompatibleCube, CompatibleScene, LanePool, nodes, variation_tree
@@ -88,6 +89,9 @@ class OGBManipulationAdapter(SimulatorAdapter):
     """
 
     execution_mode = "DELEGATED_CPU"
+    process_methods = {"configure": PER_LANE}
+    process_attributes = ("family", "fields", "nq")
+    action_dim = 5
 
     def __init__(self, family, num_envs=1, device="cpu", seed=0, reward_task_id=None):
         if family not in ("Cube", "Scene") or type(num_envs) is not int or num_envs < 1:
@@ -404,6 +408,20 @@ class OGBManipulationAdapter(SimulatorAdapter):
             env.validate_options({"variation": [], "variation_values": value})
         for env, value in zip(self.envs, values):
             env.configure_variation(value)
+
+    def check_step(self, actions, active):
+        actions = actions.detach().cpu().numpy() if torch.is_tensor(actions) else np.asarray(actions)
+        if (
+            actions.shape != (self.num_envs, 5)
+            or actions.dtype not in (np.float32, np.float64)
+            or not np.isfinite(actions).all()
+        ):
+            raise ValueError("Actions must be finite float32/float64 [num_envs, 5]")
+        if active is not None:
+            active = active.detach().cpu().numpy() if torch.is_tensor(active) else np.asarray(active)
+            if active.shape != (self.num_envs,) or active.dtype != np.bool_:
+                raise ValueError("active must be a bool vector with shape [num_envs]")
+        return actions, active
 
     def step(self, actions, *, active=None, capture_state=True):
         active = None if active is None else np.asarray(active.detach().cpu(), dtype=bool)

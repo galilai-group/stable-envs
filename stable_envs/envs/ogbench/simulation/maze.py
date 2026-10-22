@@ -87,6 +87,8 @@ class OGBMazeAdapter(SimulatorAdapter):
     upstream draws from; calls must be serialized.
     """
 
+    process_attributes = ("action_dim", "fields")
+
     def __init__(self, num_envs, device="cpu", seed=0, *, loco="point", maze="large"):
         self.num_envs = int(num_envs)
         self.device = torch.device(device)
@@ -193,6 +195,16 @@ class OGBMazeAdapter(SimulatorAdapter):
             env.data.qacc_warmstart[:] = row["simulator", "warmstart"].numpy()
             env.np_random.bit_generator.state = pcg
             self._global_rng[i] = legacy
+
+    def check_step(self, actions, active):
+        actions = actions.detach().cpu().numpy() if torch.is_tensor(actions) else np.asarray(actions)
+        if actions.shape != (self.num_envs, self.action_dim) or not np.isfinite(actions).all():
+            raise ValueError(f"OGBMaze action must have finite shape (num_envs, {self.action_dim})")
+        if active is not None:
+            active = active.detach().cpu().numpy() if torch.is_tensor(active) else np.asarray(active)
+            if active.shape != (self.num_envs,) or active.dtype != np.bool_:
+                raise ValueError("active must be a bool vector with shape [num_envs]")
+        return actions, active
 
     def step(self, actions, *, active=None, capture_state=True):
         active = None if active is None else np.asarray(active.detach().cpu(), dtype=bool)
