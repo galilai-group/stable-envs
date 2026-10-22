@@ -59,7 +59,7 @@ class RocketAdapter(SimulatorAdapter):
         for key, value in columns.items():
             if not np.isfinite(value).all():
                 raise ValueError(f"Invalid Rocket State leaf: {tuple(key.split('/'))}")
-        rows = [{k: v[i].copy() for k, v in columns.items()} for i in range(self.num_envs)]
+        rows = [{k: v[i, ...].copy() for k, v in columns.items()} for i in range(self.num_envs)]
         for env, row in zip(self.envs, rows, strict=True):
             env.validate(row)
         return rows
