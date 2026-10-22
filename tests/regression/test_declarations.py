@@ -412,9 +412,7 @@ def _declared_reference_versions() -> list[tuple[str, dict, str]]:
     for name, cls in sorted(se.registry.REGISTRY.items()):
         rv = reference_versions_of(cls)
         if rv:
-            # Provenance is visual_fidelity["measured_at"] when declared, otherwise parity_note.
-            at = str((getattr(cls, "visual_fidelity", {}) or {}).get("measured_at", ""))
-            rows.append((name, rv, at or str(getattr(cls, "parity_note", "") or "")))
+            rows.append((name, rv, str((getattr(cls, "visual_fidelity", {}) or {}).get("measured_at", ""))))
     for name, vf in sorted(_dmc_declaration_table().items()):
         for key in (REFERENCE_VERSIONS_KEY, MEASURED_WITH_KEY):
             if key in vf:

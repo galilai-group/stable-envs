@@ -2,14 +2,13 @@ from __future__ import annotations
 
 from ...render import raycast3d as R3
 from ._aligned import DMCAlignedSemantics
-from ._cells import PARITY_NOTE, parity_cell
+from ._cells import parity_cell
 
 DMCFingerSpin = parity_cell("DMCFingerSpin", "finger", "spin", bases=(DMCAlignedSemantics,), SIMULATOR="finger-spin")
 DMCFingerTurnEasy = parity_cell(
     "DMCFingerTurnEasy",
     "finger",
     "turn_easy",
-    parity_note=PARITY_NOTE,
     bases=(DMCAlignedSemantics,),
     SIMULATOR="finger-turn_easy",
 )

@@ -28,7 +28,6 @@ from . import (  # noqa: F401
 )
 from ._cells import (  # noqa: F401
     DOMAINS,
-    PARITY_NOTE,
     TRACKCOM_DOMAINS,
     VISUAL_NOTE,
     parity_cell,

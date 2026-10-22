@@ -474,16 +474,6 @@ class FetchBase(Env):
         "camera.azimuth_delta",
         "camera.elevation_delta",
     )
-    parity_note = (
-        "Two declared residuals, both structural to the MJWarp backend. (1) The robot's 18 meshes are "
-        "shaded per pixel while MuJoCo shades them per vertex (Gouraud), so they differ by a level or two "
-        "where they differ at all: 0.8% of interior pixels, mean 0.009/255. The robot is 8.9% of the "
-        "frame. (2) The translucent mocap markers (a 1 cm cube at alpha 0.7, three 2 m crosshair bars at "
-        "alpha 0.1) are not drawn: mujoco_warp has no alpha path and would paint them opaque. They cover "
-        "1.2-1.5% of all pixels (mean 0.32/255) but 0.000002 of interior pixels, since a translucent bar "
-        "over a flat surface leaves no flat 3x3 neighbourhood. The static 91% of the frame (floor, table, "
-        "skybox) is baked through MuJoCo itself and is exact."
-    )
 
     def __init__(
         self,

@@ -344,8 +344,6 @@ class Env:
     dynamics_variation_leaves: frozenset[str] = frozenset()
     #: Variation leaves the source declares but never draws; appearance checks skip them too.
     undrawn_variation_leaves: frozenset[str] = frozenset()
-    #: Where and why exact-pixel comparison with the source finds differences.
-    parity_note: str = ""
     #: Measured agreement with the source renderer and its measurement setup; empty when not measured.
     visual_fidelity: dict[str, Any] = {}
     #: Where and why frames differ from the source renderer when ``visual_fidelity`` is declared.

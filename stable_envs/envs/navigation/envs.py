@@ -518,13 +518,6 @@ class _TorchNavBase(_GymReferencePort):
     default_size = IMG
     # Reference geometry and dot radii are defined at this pixel resolution.
     fixed_size = IMG
-    parity_note = (
-        "1 ulp of exp, not geometry. With the reference's own float32 exp on the CPU this renderer "
-        "reproduces the official frame bit for bit; the residual is that this exp is correctly rounded "
-        "while torch's CPU float32 exp is only faithful. That ulp changes a pixel only where the dot's "
-        "colour equals the background, because 255*(1-a)+255*a is the identity in exact arithmetic "
-        "but not in float32. Worst of 800 seeded draws: 2 pixels of 2.3 million, 1/255, one channel."
-    )
     action_dim = 2
     action_low = -1.0
     action_high = 1.0
