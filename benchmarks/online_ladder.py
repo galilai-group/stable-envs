@@ -144,7 +144,7 @@ def run_ours(args, name: str, render_device: str | None) -> dict:
     import stable_envs as snv
 
     data = np.load(Path(args.data) / f"{name}.npz")
-    seeds, actions = data["seeds"], data["actions"]
+    seeds, actions = data["seeds"][: args.episodes], data["actions"][: args.episodes]
     n, length = actions.shape[:2]
     lanes = min(args.lanes, n)
     dev = render_device or "cpu"
@@ -211,6 +211,7 @@ def main() -> None:
     r.add_argument("--procs", type=int, default=8)
     r.add_argument("--source-lanes", type=int, default=8)
     r.add_argument("--lanes", type=int, default=1024)
+    r.add_argument("--episodes", type=int, default=None, help="play only the first N stored episodes")
     r.add_argument("--chunk", type=int, default=4)
     r.add_argument("--threads", type=int, default=8)
     r.add_argument("--size", type=int, default=224)

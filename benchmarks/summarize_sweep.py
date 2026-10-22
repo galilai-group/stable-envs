@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import statistics
 import sys
 from pathlib import Path
 
@@ -33,64 +34,123 @@ def _load(d: Path) -> dict:
     return out
 
 
-def _fps(points, b):
+def _cell(points, b):
     for p in points or []:
         if p.get("batch") == b:
             return f"{p['fps']:.0f}" if p.get("status") == "ok" else p.get("status", "?")
     return "-"
 
 
-def main(root: str) -> None:
-    r = Path(root)
-    gpu, cpu = _load(r / "ours-cuda"), _load(r / "ours-cpu")
+def _best(entry):
+    pts = [p for p in (entry or {}).get("points", []) if p.get("status") == "ok"]
+    return max(pts, key=lambda p: p["fps"]) if pts else None
+
+
+def _num(x, fmt="{:.0f}"):
+    return fmt.format(x) if isinstance(x, (int, float)) else "-"
+
+
+def offline(r: Path) -> None:
+    gpu, cpu, cpu_sw = _load(r / "ours-cuda"), _load(r / "ours-cpu"), _load(r / "ours-cpu-swgl")
     s1, s8, codec = _load(r / "source-1p"), _load(r / "source-8p"), _load(r / "codec")
+    for n, v in cpu_sw.items():
+        v["software_gl"] = True
+        cpu[n] = v
     names = sorted(set(gpu) | set(cpu) | set(s1) | set(s8))
-    head = ["env", "frame"]
-    head += [f"GPU b{b}" for b in BATCHES] + [f"CPU b{b}" for b in BATCHES]
-    head += ["src 1p", "src 8p", "JPEG dec", "PNG dec", "B/state", "B/JPEG", "B/PNG", "GPU best / src 8p"]
-    print("| " + " | ".join(head) + " |")
-    print("|" + "---|" * len(head))
-    best = {}
+    print("## Offline rendering: frames/s over 10,000 stored states\n")
+    print("GPU and CPU columns are stable-envs at each batch size. `src` columns are the source renderer.")
+    print("CPU cells marked † ran under software OpenGL (xvfb + llvmpipe).\n")
+    head = ["env", "frame"] + [f"GPU {b}" for b in BATCHES] + [f"CPU {b}" for b in BATCHES]
+    head += ["src 1p", "src 8p", "GPU best/src 8p", "CPU best/src 8p"]
+    print("| " + " | ".join(head) + " |\n|" + "---|" * len(head))
+    ratios, slower = {}, []
     for n in names:
         g, c = gpu.get(n, {}), cpu.get(n, {})
-        pts = [p for p in g.get("points", []) if p.get("status") == "ok"]
-        shape = pts[0]["frame_shape"] if pts else None
-        gbest = max((p["fps"] for p in pts), default=None)
-        src8 = s8.get(n, {}).get("fps")
-        src1 = s1.get(n, {}).get("fps")
-        k = codec.get(n, {})
-        ratio = gbest / src8 if gbest and src8 else None
-        if ratio:
-            best.setdefault(family(n), []).append((ratio, n))
+        gb, cb = _best(g), _best(c)
+        src8, src1 = s8.get(n, {}).get("fps"), s1.get(n, {}).get("fps")
+        rg = gb["fps"] / src8 if gb and src8 else None
+        rc = cb["fps"] / src8 if cb and src8 else None
+        if rg:
+            ratios.setdefault(family(n), []).append((rg, rc, n))
+        if (rg and rg < 1) or (rc and rc < 1):
+            slower.append((n, gb, cb, src1, src8, rg, rc))
+        shape = (gb or cb or {}).get("frame_shape")
+        mark = "†" if c.get("software_gl") else ""
         row = [n, "x".join(map(str, shape[:2])) if shape else "-"]
-        row += [_fps(g.get("points"), b) for b in BATCHES] + [_fps(c.get("points"), b) for b in BATCHES]
+        row += [_cell(g.get("points"), b) for b in BATCHES]
+        cells = [_cell(c.get("points"), b) for b in BATCHES]
+        row += [x + (mark if x[:1].isdigit() else "") for x in cells]
         row += [
-            f"{src1:.0f}" if src1 else s1.get(n, {}).get("status", "-"),
-            f"{src8:.0f}" if src8 else s8.get(n, {}).get("status", "-"),
-            f"{k['jpeg_decode']['fps']:.0f}" if "jpeg_decode" in k else "-",
-            f"{k['png_decode']['fps']:.0f}" if "png_decode" in k else "-",
-            str(k.get("state_bytes", "-")),
-            f"{k['jpeg_bytes']:.0f}" if "jpeg_bytes" in k else "-",
-            f"{k['png_bytes']:.0f}" if "png_bytes" in k else "-",
-            f"{ratio:.1f}x" if ratio else "-",
+            _num(src1) if src1 else s1.get(n, {}).get("status", "-"),
+            _num(src8) if src8 else s8.get(n, {}).get("status", "-"),
+            _num(rg, "{:.1f}x"),
+            _num(rc, "{:.2f}x"),
         ]
         print("| " + " | ".join(row) + " |")
-    print("\n| family | classes | min GPU best / src 8p | median | max (class) |\n|---|---|---|---|---|")
-    for fam, vals in sorted(best.items()):
-        vals.sort()
-        print(
-            f"| {fam} | {len(vals)} | {vals[0][0]:.1f}x | {vals[len(vals) // 2][0]:.1f}x | {vals[-1][0]:.1f}x ({vals[-1][1]}) |"
+    print("\n## Family summary: best stable-envs batch / source with 8 processes\n")
+    print("| family | classes | GPU min | GPU median | GPU max (class) | CPU min | CPU median | CPU max |")
+    print("|---|---|---|---|---|---|---|---|")
+    for fam, vals in sorted(ratios.items()):
+        g = sorted(v[0] for v in vals)
+        c = sorted(v[1] for v in vals if v[1])
+        top = max(vals)[2]
+        cs = (
+            [_num(min(c), "{:.2f}x"), _num(statistics.median(c), "{:.2f}x"), _num(max(c), "{:.2f}x")]
+            if c
+            else ["-"] * 3
         )
-    online = r / "online"
-    if online.exists():
-        print("\n| env | rung | status | steps/s | median s | repeats | note |\n|---|---|---|---|---|---|---|")
-        for f in sorted(online.glob("*.json")):
+        gs = f"{g[0]:.1f}x | {statistics.median(g):.1f}x | {g[-1]:.1f}x ({top})"
+        print(f"| {fam} | {len(vals)} | {gs} | " + " | ".join(cs) + " |")
+    print("\n## Classes slower than the source (8 processes) on at least one device\n")
+    print("| env | GPU best fps (batch) | CPU best fps (batch) | src 1p | src 8p | GPU/src 8p | CPU/src 8p |")
+    print("|---|---|---|---|---|---|---|")
+    for n, gb, cb, src1, src8, rg, rc in slower:
+        gs = f"{gb['fps']:.0f} ({gb['batch']})" if gb else "-"
+        cs = f"{cb['fps']:.0f} ({cb['batch']})" if cb else "-"
+        print(f"| {n} | {gs} | {cs} | {_num(src1)} | {_num(src8)} | {_num(rg, '{:.2f}x')} | {_num(rc, '{:.2f}x')} |")
+    print("\n## Codec baseline\n")
+    print("Bytes per frame for the stored state, raw uint8, JPEG (quality 95) and PNG, from stable-envs frames.")
+    print("Decode throughput uses a torch DataLoader with 8 workers over the same 10,000 frames.\n")
+    print("| env | state B | raw B | JPEG B | PNG B | JPEG decode fps | PNG decode fps | GPU best fps |")
+    print("|---|---|---|---|---|---|---|---|")
+    for n in sorted(codec):
+        k = codec[n]
+        if k.get("status") != "ok":
+            continue
+        gb = _best(gpu.get(n))
+        print(
+            f"| {n} | {k.get('state_bytes', '-')} | {k.get('raw_bytes', '-')} | {_num(k.get('jpeg_bytes'))} | "
+            f"{_num(k.get('png_bytes'))} | {_num(k.get('jpeg_decode', {}).get('fps'))} | "
+            f"{_num(k.get('png_decode', {}).get('fps'))} | {_num(gb['fps'] if gb else None)} |"
+        )
+
+
+def online(r: Path) -> None:
+    rows = []
+    for sub in ("online", "online2"):
+        for f in sorted((r / sub).glob("*.json")) if (r / sub).exists() else []:
             for rung, v in json.loads(f.read_text())["rungs"].items():
-                sps = f"{v['steps_per_s']:.0f}" if v.get("status") == "ok" else "-"
-                med = f"{v['median_s']:.1f}" if v.get("status") == "ok" else "-"
-                note = v.get("error", "")[:120] if v.get("status") != "ok" else ""
-                env = f.stem.rsplit("_", 1)[0]
-                print(f"| {env} | {rung} | {v.get('status')} | {sps} | {med} | {v.get('repeats', '-')} | {note} |")
+                rows.append((f.stem.split("_")[0], rung, sub, v))
+    if not rows:
+        return
+    print("\n## Online ladder: 1,024 episodes x 196 steps\n")
+    print("| env | rung | run | lanes | status | steps/s | median s | repeats | note |")
+    print("|---|---|---|---|---|---|---|---|---|")
+    for env, rung, sub, v in sorted(rows, key=lambda x: (x[0], x[1], x[2])):
+        lanes = v.get("lanes") or (f"{v.get('procs')}x{v.get('lanes_per_proc')}" if v.get("procs") else "-")
+        ok = v.get("status") == "ok"
+        note = "" if ok else (v.get("error") or "")[:110].replace("|", "/")
+        sps = _num(v.get("steps_per_s")) if ok else "-"
+        med = _num(v.get("median_s"), "{:.1f}") if ok else "-"
+        print(
+            f"| {env} | {rung} | {sub} | {lanes} | {v.get('status')} | {sps} | {med} | {v.get('repeats', '-')} | {note} |"
+        )
+
+
+def main(root: str) -> None:
+    r = Path(root)
+    offline(r)
+    online(r)
 
 
 if __name__ == "__main__":
