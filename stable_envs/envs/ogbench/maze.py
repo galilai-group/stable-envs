@@ -467,21 +467,6 @@ class OGBenchMaze(Env):
     default_supersample = 2
     # Moving-primitive cast window; oversized projections fall back to the full frame.
     TILE = 32
-    parity_note = (
-        "Agent-pixel parity (supersample 2, against MuJoCo at its default offsamples=4, 25 cells x 64 "
-        "states). Every disagreement is inside the agent's own silhouette: the baked plate is exact by "
-        "construction, non-agent pixels are 99.88-99.99% bit-identical, and that residual is the "
-        "reference's multisampling bleeding agent colour into neighbouring wall/floor pixels. On "
-        "agent-interior pixels (eroded by one, so coverage is not in play) the shader reaches 48-84% "
-        "within 1/255 for pointmaze (mean 1.2-2.5/255), 0-51% for antmaze and 0-3% for humanoidmaze. "
-        "The legged numbers are not a shading result: at the official whole-maze camera the ant is "
-        "12-70 px and the humanoid 4-21 px of 50176, and eroding leaves as few as 1 interior pixel, so "
-        "their agreement is a statement about a silhouette under the reference's coverage rule. "
-        "Against a non-multisampled reference the same shader reaches 92.4% within 1/255 over 13,069 "
-        "pooled agent-interior pixels (mean 0.88/255), which localises most of the remaining gap in "
-        "MSAA sample positions -- GPU-specific, not recoverable by fitting -- rather than in shading."
-    )
-
     # Pose layout by body: point slides, or free-joint pose followed by hinges.
     # The simulator mixin supplies continuation fields separately.
     STATE_LAYOUT = {
@@ -1105,19 +1090,6 @@ class _StatesScene:
     """Render the state-observation scene: checker floor, white walls and the goal disc."""
 
     RENDER_OB_TYPE = "states"
-    parity_note = (
-        "Agent-pixel parity, state-observation scene (supersample 2, against MuJoCo 3.12.0 / ogbench 1.2.1 at "
-        "offsamples=4, 64 states, RTX A5000). This scene keeps the XML's white walls, global ambient light, the "
-        "goal disc and a torso spotlight that tracks the agent. The plate is baked without that spotlight; per "
-        "row its GL fixed-function contribution (cone, exponent, specular, and wall and agent shadows inside the "
-        "square shadow-map frustum) is added to static pixels, the agent's global-light shadow is removed from "
-        "them, and agent and goal are shaded as MuJoCo's separately byte-rounded light passes. Interior pixels "
-        "are 100% bit-identical; all pixels are 97.3% exact, mean 0.075/255. No interior pixel lies in the lit "
-        "floor disc, which is shaded per pixel and is off by 1/255 on part of it (83% of disagreeing pixels are "
-        "off by 1/255); Gouraud interpolation over MuJoCo's plane grid does not close that gap on the NVIDIA "
-        "driver. The rest is agent, goal-rim and one-pixel wall-face edges under the reference's multisampling "
-        "and sphere tessellation."
-    )
 
 
 #: ``__module__`` is pinned to the package so ``stable_envs.envs.ogbench.<Cell>`` resolves.

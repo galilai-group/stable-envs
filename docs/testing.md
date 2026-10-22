@@ -181,7 +181,6 @@ python -m tests._runner.supervisor -- tests/gpu -v   # crash-isolated
 | `test_render_parity_with_official_renderer` | wrong colour, shape or position against the official renderer |
 | `test_render_agreement_with_official_renderer` | a class in `AGREEMENT` that no longer meets its limits |
 | `test_fidelity_declaration_matches_the_tolerance_table` | a class with `visual_fidelity` and no `AGREEMENT` entry, or the reverse |
-| `test_relaxed_parity_floors_are_all_explained` | a lowered threshold without a `parity_note` |
 | `test_render_state_roundtrip` | a render state that the round trip clips, normalizes or reorders |
 | `test_every_state_dim_reaches_the_render` | a render-state dimension that does not affect the frame |
 | `test_batch_invariance` | a frame that depends on its batch |
@@ -204,10 +203,10 @@ python -m tests._runner.supervisor -- tests/gpu -v   # crash-isolated
 | `all_exact_min` | 0.90 | fraction of all pixels that must match (edges may differ) |
 | `mean_abs_max` | 4.0 / 255 | mean absolute difference |
 
-`EXACT_OVERRIDES` lowers a floor for a class. The class must have a `parity_note` that names the
-cause. `AGREEMENT` gives a `mean_abs` ceiling, a `within8_frac` floor and an `ssim` floor for each
-class that declares `visual_fidelity`. If a new env cannot reach the interior floor, find the
-wrong constant. See [Identify authority](adding/renderer.md#identify-authority).
+`EXACT_OVERRIDES` lowers a floor for a class. A comment next to each entry names the cause.
+`AGREEMENT` gives a `mean_abs` ceiling, a `within8_frac` floor and an `ssim` floor for each class
+that declares `visual_fidelity`. If a new env cannot reach the interior floor, find the wrong
+constant. See [Identify authority](adding/renderer.md#identify-authority).
 
 ## Running native renderers safely
 

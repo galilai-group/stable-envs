@@ -19,18 +19,6 @@ VISUAL_NOTE = (
     "measurement setup."
 )
 
-PARITY_NOTE = (
-    "Interior-pixel agreement is 1.000000 (0 of 9,834,291 pixels differ) over 201 draws of 64 states "
-    "at default_supersample = 1. All-pixel exactness is lower than on the other fixed-camera cells "
-    "because it scales with the moving area: finger-turn_easy's seven movers cover "
-    "11.7% of an 84 px frame against cartpole's 2.5%. Over those draws all-pixel exactness is 0.9103 "
-    "worst and 0.9119 median. Every disagreeing pixel is in the ray-cast mover pass, and the baked "
-    "plate is exact on the pixels it owns. The residual is a one-level rim on curved silhouettes, "
-    "where MuJoCo shades a tessellated capsule per vertex and the analytic per-pixel evaluation lands "
-    "within a few levels of it. At supersample 2 the finger cells score lower (turn_easy 0.9053, "
-    "spin 0.9249, turn_hard 0.9200 worst), because a blended edge rarely matches MuJoCo's MSAA exactly."
-)
-
 
 def parity_cell(cname: str, domain: str, task: str, camera: int = 0, *, bases: tuple[type, ...] = (), **extra) -> type:
     """Register a fixed-camera renderer class and add its domain tuple to DOMAINS.

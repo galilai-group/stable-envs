@@ -42,6 +42,8 @@ All notable changes to this project are listed here. The format follows
 - `MJW_CHUNK` in the DMC and OGBench packages. The `dmc_min_worlds` and `ogb_mjw_worlds` tuning knobs
   set the worlds per MJWarp launch.
 - `Env.fidelity_tier`, `stable_envs.env.FIDELITY_TIERS` and the `fidelity_tier` key of `snv.info()`.
+- `Env.parity_note` and `stable_envs.envs.dmcontrol.PARITY_NOTE`. `visual_fidelity` and `visual_note` describe
+  how frames differ from the source.
 
 ## [0.1.0] - 2026-10-14
 

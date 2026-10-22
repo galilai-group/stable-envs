@@ -15,10 +15,14 @@ EXACT = {"interior_exact_min": 1.0, "all_exact_min": 0.90, "mean_abs_max": 4.0}
 _FETCH = tuple(f"Fetch{s}{v}" for s in ("Reach", "Push", "Slide", "PickAndPlace") for v in ("", "Dense", "Dict"))
 _GAUSSIAN_DOT_NAVIGATION = ("TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones")
 
-#: Lowered exact-pixel floors. The class's ``parity_note`` names the cause of each.
+#: Lowered exact-pixel floors, each with its cause.
 EXACT_OVERRIDES: dict[str, dict[str, float]] = {
+    # MJWarp shades the robot meshes per pixel; MuJoCo shades them per vertex.
     **{n: {"interior_exact_min": 0.99} for n in _FETCH},
+    # torch's CPU float32 exp differs from the reference's by 1 ulp; that moves a pixel by 1/255
+    # where the dot colour equals the background.
     **{n: {"interior_exact_min": 0.999995} for n in _GAUSSIAN_DOT_NAVIGATION},
+    # Seven movers cover 11.7% of the frame, so curved-silhouette rims lower the all-pixel fraction.
     "DMCFingerTurnEasy": {"all_exact_min": 0.89},
 }
 

@@ -93,7 +93,6 @@ def test_package_exports_the_names_callers_import():
         "SHAPE_KNOB_SPECS",
         "RENDER_INVARIANT_DIMS",
         "STATE_DIMS_NOTE",
-        "PARITY_NOTE",
         "VISUAL_NOTE",
         "SPECULAR_NOTE",
         "QUADRUPED_NOTE",
@@ -172,7 +171,6 @@ def test_declared_provenance_floors_notes_and_cameras():
     assert {n: PT.EXACT_OVERRIDES[n] for n in ALL if n in PT.EXACT_OVERRIDES} == {
         "DMCFingerTurnEasy": {"all_exact_min": 0.89}
     }
-    assert snv.registry.REGISTRY["DMCFingerTurnEasy"].parity_note == dmc.PARITY_NOTE
     assert all(PT.exact_floors(n)["interior_exact_min"] == PT.EXACT["interior_exact_min"] for n in PARITY)
     assert dmc.RENDER_INVARIANT_DIMS == {
         "DMCManipulatorBringBall": ("ball_y", "target_ball_quat_qw", "target_ball_quat_qy")

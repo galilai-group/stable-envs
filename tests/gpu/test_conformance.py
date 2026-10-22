@@ -102,19 +102,6 @@ def test_required_envs_are_all_reachable():
     )
 
 
-def test_relaxed_parity_floors_are_all_explained():
-    """Every registered class with a lowered exact-pixel floor gives a ``parity_note`` naming the mechanism.
-
-    Checked on the class, so it applies even where the reference package is not installed.
-    """
-    bad = []
-    for name, cls in sorted(se.registry.REGISTRY.items()):
-        lowered = {k: v for k, v in PT.exact_floors(name).items() if v < PT.EXACT[k]}
-        if lowered and len(str(getattr(cls, "parity_note", "") or "").strip()) < 40:
-            bad.append(f"{name} lowers {lowered} with no usable parity_note")
-    assert not bad, "parity floors lowered without a parity_note:\n  " + "\n  ".join(bad)
-
-
 def test_describe_is_complete(env):
     d = env.describe()
     label = d.get("class_name") or d.get("id")
@@ -288,11 +275,6 @@ def test_render_parity_with_official_renderer(env):
     print(f"\n{cls.__name__} vs {env.reference_id}: {r}")
     floors = PT.exact_floors(cls.__name__)
     floor = floors["interior_exact_min"]
-    if floor < 1.0:
-        assert getattr(env, "parity_note", ""), (
-            f"{cls.__name__} relaxes interior_exact_min to {floor} but gives no parity_note"
-        )
-        print(f"  relaxed to {floor}: {env.parity_note}")
     if r["interior_exact_frac"] is not None:
         assert r["interior_exact_frac"] >= floor, (
             f"{r.get('interior_bad_px')} of {r.get('interior_px')} interior pixels disagree "
@@ -300,15 +282,10 @@ def test_render_parity_with_official_renderer(env):
             f"a floor of {100 * floor:.5f}%, on states from default_rng({PARITY_STATE_SEED}). Interior "
             f"disagreement is normally a geometry or colour error. A few 1/255 pixels may be a "
             f"quantisation boundary in a smoothly shaded region (see conformance.interior_mask), which "
-            f"is declared in tests/helpers/pixel_tolerances.py with a parity_note: {r}"
+            f"is declared in tests/helpers/pixel_tolerances.py with its cause: {r}"
         )
     # All-pixel exactness also depends on how much of the frame moves, so a class can lower it.
     all_floor = floors["all_exact_min"]
-    if all_floor < PT.EXACT["all_exact_min"]:
-        assert getattr(env, "parity_note", ""), (
-            f"{cls.__name__} relaxes all_exact_min to {all_floor} but gives no parity_note"
-        )
-        print(f"  all-pixel floor relaxed to {all_floor}")
     assert r["exact_frac"] >= all_floor, (
         f"only {100 * r['exact_frac']:.1f}% of pixels exact (floor {100 * all_floor:.1f}%): {r}"
     )
