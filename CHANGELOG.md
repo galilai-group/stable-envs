@@ -40,6 +40,9 @@ All notable changes to this project are listed here. The format follows
   is 4.2 on 480 px frames.
 - `PyFlytRocketLanding.render(state)` on CUDA picks ground texels as TinyRenderer does, so frames that look
   down at the far ground match PyFlyt when a ground corner is close to the camera plane.
+- `PyFlytRocketLanding` changes the flame colour at ignition, as the PyFlyt pixel env does. The State
+  `render/rgba` flame row and the CPU and CUDA frames show the red ignition flame. The source makes this
+  change only when it has a render mode. States saved after ignition with an earlier version do not restore.
 
 ### Removed
 
