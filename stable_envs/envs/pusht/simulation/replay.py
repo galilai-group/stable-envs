@@ -39,16 +39,27 @@ def validate_seed(seed):
         raise ValueError("PushT seed must be None or a nonnegative integer below 2**128")
 
 
-def copy_space(space, memo=None):
+def shallow_copy(obj):
+    """``copy.copy`` for plain instances, without the pickle protocol."""
+    clone = object.__new__(type(obj))
+    clone.__dict__.update(obj.__dict__)
+    return clone
+
+
+def copy_space(space, memo=None, generators=True):
     """Return a Variation space copy that owns its values and generators, like ``copy.deepcopy``.
 
     Bounds, shapes and constraint functions are not changed after construction, so the copy shares them.
+    With ``generators=False`` the copy shares the generators; the caller must replace them before a draw.
     """
     memo = {} if memo is None else memo
-    clone = copy.copy(space)
-    clone._np_random = copy.deepcopy(space._np_random, memo)
+    clone = shallow_copy(space)
+    if generators:
+        clone._np_random = copy.deepcopy(space._np_random, memo)
     if hasattr(space, "spaces"):
-        clone.spaces = type(space.spaces)((key, copy_space(child, memo)) for key, child in space.spaces.items())
+        clone.spaces = type(space.spaces)(
+            (key, copy_space(child, memo, generators)) for key, child in space.spaces.items()
+        )
     else:
         clone._init_value = copy.deepcopy(space._init_value, memo)
         clone._value = copy.deepcopy(space._value, memo)
@@ -151,10 +162,11 @@ class PushTReplay:
     def reset_candidate(self, seed=None, options=None):
         # Reset rebinds the engine's scene, generators and episode fields, so a shallow copy
         # shares only objects that it does not change in place.
-        engine = copy.copy(self.env)
+        engine = shallow_copy(self.env)
         engine._canvas = None
-        engine.variation_space = copy_space(self.env.variation_space)
-        engine.action_space = copy.copy(self.env.action_space)
+        # An integer seed replaces every Variation generator before the first draw.
+        engine.variation_space = copy_space(self.env.variation_space, generators=not isinstance(seed, int))
+        engine.action_space = shallow_copy(self.env.action_space)
         target = type(self)(discrete=self.discrete, config=self.config, initialize=False, engine=engine)
         try:
             install_rng(target.env, rng_of(self.env))
