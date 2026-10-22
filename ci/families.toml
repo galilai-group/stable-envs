@@ -179,3 +179,4 @@ tests = ["test_craftax*"]
 requires = ["craftax", "jax"]
 capabilities = ["swm"]
 shards = { pr = 1, nightly = 1 }
+env_affinity = true
