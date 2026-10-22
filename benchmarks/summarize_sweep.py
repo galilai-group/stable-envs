@@ -51,7 +51,8 @@ def _num(x, fmt="{:.0f}"):
 
 
 def offline(r: Path) -> None:
-    gpu, cpu, cpu_sw = _load(r / "ours-cuda"), _load(r / "ours-cpu"), _load(r / "ours-cpu-swgl")
+    gpu, cpu = _load(r / "ours-cuda"), _load(r / "ours-cpu")
+    cpu_sw = {**_load(r / "ours-cpu-swgl"), **_load(r / "ours-cpu-swgl-scene")}
     s1, s8, codec = _load(r / "source-1p"), _load(r / "source-8p"), _load(r / "codec")
     for n, v in cpu_sw.items():
         v["software_gl"] = True
