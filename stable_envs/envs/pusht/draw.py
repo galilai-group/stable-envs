@@ -1,6 +1,7 @@
 """Pygame drawing of a Pymunk space for PushT frames."""
 
 from collections.abc import Sequence
+from functools import lru_cache
 
 import numpy as np
 import pygame
@@ -112,6 +113,7 @@ def to_pygame(p: tuple[float, float], surface: pygame.Surface) -> tuple[int, int
         return round(p[0]), round(p[1])
 
 
+@lru_cache(maxsize=1024)
 def light_color(color: SpaceDebugColor):
     color = np.minimum(
         1.2 * np.float32([color.r, color.g, color.b, color.a]),

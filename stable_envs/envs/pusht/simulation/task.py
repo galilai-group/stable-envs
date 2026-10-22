@@ -36,7 +36,10 @@ def resized_rgb(canvas, size):
     pixels = np.frombuffer(canvas.get_buffer(), np.uint8).reshape(height, canvas.get_pitch())
     pixels = pixels[:, : width * 4].reshape(height, width, 4)
     channels = [shift // 8 for shift in canvas.get_shifts()[:3]]
-    return np.ascontiguousarray(cv2.resize(pixels, (size, size))[..., channels])
+    resized = cv2.resize(pixels, (size, size))
+    if channels == [2, 1, 0]:
+        return cv2.cvtColor(resized, cv2.COLOR_BGRA2RGB)
+    return np.ascontiguousarray(resized[..., channels])
 
 
 class PushT(gym.Env):
@@ -286,20 +289,7 @@ class PushT(gym.Env):
         return observation, info
 
     def step(self, action):
-        self.n_contact_points = 0
-        n_steps = int(1 / (self.dt * self.control_hz))
-
-        self.latest_action = action
-
-        if self.relative:
-            action = self.agent.position + action * self.action_scale
-
-        for _ in range(n_steps):
-            acceleration = self.k_p * (action - self.agent.position) + self.k_v * (Vec2d(0, 0) - self.agent.velocity)
-            self.agent.velocity += acceleration * self.dt
-
-            self.space.step(self.dt)
-
+        self._substeps(action)
         state = self._get_obs()
         proprio = np.concatenate((state[:2], state[-2:]))
         observation = {"proprio": proprio, "state": state}
@@ -311,6 +301,39 @@ class PushT(gym.Env):
 
         truncated = False
         return observation, reward, terminated, truncated, info
+
+    def advance(self, action):
+        """Run the control and physics substeps of ``step`` without building its outputs."""
+        self._substeps(action)
+
+    def _substeps(self, action):
+        self.n_contact_points = 0
+        n_steps = int(1 / (self.dt * self.control_hz))
+
+        self.latest_action = action
+
+        if self.relative:
+            # The Vec2d arithmetic below, written per component: the same operands, order and
+            # scalar types, so NumPy float32 actions round exactly as they do through Vec2d.
+            agent, space, k_p, k_v, dt = self.agent, self.space, self.k_p, self.k_v, self.dt
+            x, y = agent.position
+            offset = action * self.action_scale
+            target_x, target_y = x + offset[0], y + offset[1]
+            for _ in range(n_steps):
+                x, y = agent.position
+                vx, vy = agent.velocity
+                ax = (target_x - x) * k_p + (0 - vx) * k_v
+                ay = (target_y - y) * k_p + (0 - vy) * k_v
+                agent.velocity = (vx + ax * dt, vy + ay * dt)
+                space.step(dt)
+        else:
+            for _ in range(n_steps):
+                acceleration = self.k_p * (action - self.agent.position) + self.k_v * (
+                    Vec2d(0, 0) - self.agent.velocity
+                )
+                self.agent.velocity += acceleration * self.dt
+
+                self.space.step(self.dt)
 
     def eval_state(self, goal_state, cur_state):
         # success if position difference is < 20, and angle difference < np.pi/9
@@ -379,12 +402,14 @@ class PushT(gym.Env):
         if self.clock is None and mode == "human":
             self.clock = pygame.time.Clock()
 
-        canvas = pygame.Surface((self.window_size, self.window_size))
+        # The fill covers every pixel, so one canvas serves every frame.
+        if getattr(self, "_canvas", None) is None:
+            self._canvas = pygame.Surface((self.window_size, self.window_size))
+            self._draw_options = DrawOptions(self._canvas)
+        canvas, draw_options = self._canvas, self._draw_options
         canvas.fill(self.variation_space["background"]["color"].value)
 
         self.screen = canvas
-
-        draw_options = DrawOptions(canvas)
 
         render_goal = bool(self.variation_space["rendering"]["render_goal"].value) and self.with_target
         if render_goal:
@@ -862,3 +887,6 @@ class PushTDiscrete(PushT):
     def step(self, quantized_action):
         action = self.quantizer.dequantize(quantized_action)
         return super().step(action)
+
+    def advance(self, quantized_action):
+        self._substeps(self.quantizer.dequantize(quantized_action))

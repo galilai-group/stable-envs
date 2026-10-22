@@ -138,6 +138,9 @@ class PushT(Env):
     def _step_pipeline(self) -> StepPipeline | None:
         return step_pipeline(self._simulator)
 
+    def _render_live(self):
+        return torch.as_tensor(self._simulator.render_live(), device=self.device)
+
     @staticmethod
     def _stack_states(values):
         from .simulation.history import stack_states

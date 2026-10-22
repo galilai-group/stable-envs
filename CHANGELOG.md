@@ -42,6 +42,9 @@ All notable changes to this project are listed here. The format follows
 - `cpu3d.render(chunk_size=None)` and `raster2d.render_triton(block=None)` read the tuning knobs.
 - `PushT.step` and `PushTDiscrete.step` do not export a State when the caller requests no State. Physics-only
   stepping is approximately 2.9 times faster.
+- `PushT` and `PushTDiscrete` keep the State fields that change only at reset, restore or `set_variation` as
+  cached batch columns, record the action history in one growing array, and draw step frames from the running
+  scenes. Resets copy the engine without a second scene build. Frames, State and task outputs do not change.
 - `PyFlytRocketLanding` reads its live colours directly for the default render style and copies each State
   leaf to the host once during validation. Rendering of supplied pose rows is approximately 70 times faster.
   Frames and State do not change.

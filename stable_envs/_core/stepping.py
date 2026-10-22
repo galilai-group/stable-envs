@@ -100,6 +100,8 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
     all_active = True
     result, live_state, live_frame = None, None, None
     pipeline = getattr(env, "_step_pipeline", lambda: None)()
+    # Frames drawn from the live lanes need no State snapshot.
+    draws_live = render_live is not None and pipeline is None
     pending = False
 
     def submit(t, mask, all_active):
@@ -129,7 +131,7 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
                 # Skip finished lanes through the family hook, without stepping and restoring them.
                 result = advance(acts[:, t], active=active)
                 live_state, live_frame = result.get("state", None), None
-            needs_state = t in state_times or t in frame_times or t == length - 1
+            needs_state = t in state_times or t == length - 1 or (t in frame_times and not draws_live)
             if needs_state and live_state is None:
                 live_state = env.get_state()
             next_active = active & ~_done(result) if t + 1 < length else active
@@ -144,9 +146,7 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
                 saved_states[t] = live_state
             if t in frame_times:
                 if live_frame is None:
-                    live_frame = (
-                        render_live() if render_live is not None and pipeline is None else env.render(live_state)
-                    )
+                    live_frame = render_live() if draws_live else env.render(live_state)
                 saved_frames[t] = live_frame
             active = next_active
             all_active = next_all_active
