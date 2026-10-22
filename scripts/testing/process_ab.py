@@ -93,7 +93,7 @@ def finish_some_lanes(env, state):
         state["lifecycle", "elapsed_steps"][:, 0] = limit - 1 - (lanes % 7) * 3
     if ("root", "position") in keys and ("task", "goal_pos") in keys:
         even = lanes[lanes % 2 == 0]
-        state["root", "position"][even] = state["task", "goal_pos"][even, :2]
+        state["root", "position"][even, :2] = state["task", "goal_pos"][even, :2]
     return state
 
 
