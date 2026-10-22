@@ -257,16 +257,17 @@ class _LightPasses:
         inside = (depth > 0) & (dot3(rel, sp["s"]).abs() <= reach) & (dot3(rel, sp["u"]).abs() <= reach)
         o = X + _SHADOW_EPS * n
         lim = dist - _SHADOW_EPS
-        flat = o.reshape(1, -1, 3)
+        # One launch row per frame keeps the per-row block count within the CUDA grid limit.
+        rows = X.shape[0] if X.dim() == 3 and X.shape[1] > 1 else 1
         wk = len(self.wall_kinds)
         walls = R3.any_blocking(
             self.wall_kinds,
-            self.wall_size.expand(1, wk, 3),
-            self.wall_pos,
-            self.wall_rot,
-            flat,
-            L.reshape(1, -1, 3).contiguous(),
-            lim.reshape(1, -1),
+            self.wall_size.expand(rows, wk, 3),
+            self.wall_pos.expand(rows, wk, 3),
+            self.wall_rot.expand(rows, wk, 3, 3),
+            o.reshape(rows, -1, 3),
+            L.reshape(rows, -1, 3).contiguous(),
+            lim.reshape(rows, -1),
         ).view(X.shape[:-1])
         kinds, size, pos, rot = agent
         moving = R3.any_blocking(kinds, size, pos, rot, o, L.contiguous(), lim, skip)
