@@ -6,6 +6,11 @@ physics task or the full randomized object-permanence dataset. Its reference is
 
 ## Source audit and scope
 
+There is also an [engine-free nvdiff replay path](#engine-free-nvdiff-replay).
+It preserves this source scope and the frozen geometry oracle, while bypassing
+the MuJoCo adapter and native background bake entirely. The legacy Env and its
+full-State contract below are unchanged.
+
 The source calls `build_occ_small_ball_behind_screen()` and
 `animate_occ_small_ball_behind_screen()`. Every frame sets the ball's position and
 Euler rotation and inserts keyframes. It does not create a rigid-body simulation.
@@ -102,6 +107,137 @@ not a simulator checkpoint or a second public restore API.
 `backend="opengl"` chooses the native renderer. `MUJOCO_GL` selects its context
 implementation: this Linux profile uses software OSMesa, while EGL depends on
 the installed driver. CPU tensor output does not itself force software OpenGL.
+
+## Engine-free nvdiff replay
+
+`G34Replay` replays the same nominal source trajectory without importing MuJoCo
+or Blender. It is a trajectory utility, not an action-driven registered `Env`.
+
+```python
+import torch
+from stable_envs.envs.object_permanence import G34Replay
+
+with G34Replay(size=180) as replay:
+    saved = replay.advance(44)  # source frame 45, zero-based index 44
+    rgb = replay.render(saved)  # CUDA uint8 [1,180,320,3]
+    fields = replay.render_many(saved)  # one coverage pass per chunk
+    depth, ids = fields["depth"], fields["ids"]
+    replay.advance(50)
+    replay.set_state(saved)
+    batch = replay.render_many(replay.state_at(torch.tensor([0, 44, 59, 119])))
+```
+
+The owned trajectory is CPU float32 `(T,7)` xyz+wxyz. Its default is evaluated
+from `authored_pose()`, never from the oracle. Optional `poses=` must use the
+packaged nominal geometry/camera; randomized source scenes are not implemented.
+State contains CPU `replay.frame` int64 `[1]` and `replay.trajectory_hash` uint8
+`[32]`. Restoration validates both and requires the same packaged scene version.
+The raw State is 40 bytes; selected rendering poses are 28 bytes per frame,
+excluding shared assets, trajectory and TensorDict overhead. Returned States
+and pose selections own their memory. Rendering never changes the cursor.
+
+The XML was reconstructed from the pinned source script's geometry and camera.
+The standard-library reader is G34-specific, not a general MJCF compiler.
+Future Blender exporters or optional MuJoCo importers should produce normalized
+triangles/transforms/materials/cameras for `Scene.from_triangles()`. Replay users
+need neither source engine. Keep mesh tessellation and coordinate conventions
+with the versioned assets.
+
+### Shared outputs and coverage
+
+`render_many(modes=("rgb", "depth", "ids"), out=buffers)` is available on replay,
+its renderer and shared `nvdiff.BatchRenderer`. It shares transforms, coverage
+and interpolated attributes. Outputs are RGB uint8 `[B,H,W,3]`, positive
+camera-axis depth float32 `[B,H,W]`, and one-based geom IDs int16 `[B,H,W]`;
+misses have depth/ID zero. An output mapping must contain every requested mode
+with matching shape/dtype/device. Validation precedes writes. Existing
+`render(mode=..., out=...)` keeps its single-Tensor interface. Diagnostics
+require `supersample=1`; labels are never averaged.
+
+Default dynamic viewports are 12x12 at H=180 and 8x8 at H=90, in chunks of 128.
+`crop_spheres()` in `rendering/viewports.py` supports centers `(B,D,3)` and
+radii `(D,)`: multiple dynamic objects can share a conservative window. Exact
+perspective bounds include off-axis displacement and a half-pixel margin.
+Every object still shares the crop's depth buffer. Unsupported poses fail,
+rather than being silently clipped; a supplied trajectory can choose a larger
+fixed `window_size`, without changing State fields. Window size is fixed across
+batches to preserve batch/single equality.
+
+Coverage choices are explicit:
+
+| Setting | Behavior | G34 use |
+| --- | --- | --- |
+| `scaled` | Rasterize at 17x each dimension; select original centers before shading | Default dynamic windows |
+| `refined` | Float64 triangle-bound recheck at original pixel centers | Default static backgrounds; optional dynamic path |
+| `native` | Uncorrected nvdiffrast coverage | Experimental background comparison |
+
+The CUDA rasterizer's four subpixel bits can omit thin faces. `scaled` keeps
+original centers using `[8::17,8::17]`; it does not average pixels. `refined`
+uses `render/nvdiff_coverage.py` to enumerate every triangle's conservative
+screen bounds, including faces absent from a low-precision image. Float64
+barycentrics and two depth/ID reduction passes choose visibility deterministically;
+exact-depth ties choose the largest face ID. It consumes float32 transformed
+vertices, so it is not an exact-arithmetic or source-RGB guarantee. Near/far
+clipping or unavailable Triton falls back to `scaled`. No gradients or mipmap
+derivatives are provided by refined coverage. Rocket's own coverage hook is
+unchanged.
+
+Static RGB/depth/ID plates are generated only when requested; requesting all
+three together shares one bake. The default refined bake avoids a full-frame
+17x buffer. Simple TinyShading intentionally differs from Blender/native RGB.
+Caches require fixed camera/static geometry/appearance and no changing shadows
+or reflections. Other scenes must use full drawing or validated invalidation.
+CPU poses/bounds remain on CPU; view/index tensors persist on CUDA, and each
+batch's poses, crop matrices and offsets are uploaded once. GPU pose input
+currently incurs a host copy for bounds. Renderers/contexts are reused and
+explicitly closed; no native OpenGL context is created.
+
+### Validation and performance
+
+The unchanged 21-frame Blender gate passes with default coverage: visible
+mask IoU 1, five both-hidden ball samples, depth MSE below 4e-12. Native-only
+backgrounds also pass this nominal gate, but MSE rises to about 3.4e-9; they
+remain opt-in. Native dynamic coverage fails. Refined dynamic coverage passes
+but was slower on the measured GPU, so it is not the default. All 120 frames
+are checked for batch/single equality; tests also cover multi-output equality,
+coverage-call counts, output ownership, missed thin faces, depth ties, fallback,
+and a non-G34 multi-object scene. Frozen data and thresholds are unchanged.
+
+Actual `PyFlytRocketLanding` thin-fin/near-contact source tests pass under
+PyFlyt 0.29.0, PyBullet 3.2.7, NumPy 2.5.3 and Gymnasium 1.3.0. Captured states
+produce byte-identical RGB before/after the shared refactor at batch 1/2 and
+1x/2x supersampling (12 images). This is not a full Rocket/SWM or DMC matrix;
+TrackCom/Fetch use only unchanged utility functions from `nvdiff.py`.
+
+On an RTX 3070 Ti Laptop, Torch 2.14.1+cu130, one thread, five warmups and
+21 synchronized repeats at 180x320, three separate calls took 55.7 ms at batch
+256 and 199.6 ms at batch 1024; shared outputs took 19.3 / 74.2 ms (2.89x /
+2.69x). With an existing compiler cache, a shared static bake's incremental
+Torch peak fell from 508.9 MiB (`scaled`) to 7.4 MiB (`refined`). First-ever
+Triton compilation was about 1.5 s in this experiment and is not included in
+steady-state throughput. These are local measurements, not CI assertions.
+
+```bash
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 \
+  .venvs/object_permanence-cuda-py3.12/bin/python -m benchmarks.object_permanence_replay \
+  --size 180 --modes rgb,depth,ids --batches 1,64,256,1024 \
+  --warmup 5 --repeats 21 --output /tmp/g34-many.json
+```
+
+Add `--separate` for three single-mode calls, `--background-coverage native`
+for the low-precision experiment, `--coverage refined` for dynamic correction,
+or `--window-size` for fixed viewport comparisons. Default RGB runs can add
+`--backends nvdiff,raycast,opengl` for legacy comparisons. Native baselines use
+software OSMesa, not NVIDIA EGL or Blender. Optional `--gif /tmp/g34.gif` writes
+a 24 FPS preview with Pillow. Replay rendering requires CUDA Torch/nvdiffrast;
+Linux CUDA Torch supplies Triton for correction, with a scaled fallback otherwise.
+
+Timings include CPU State validation/projection, all uploads and reused GPU
+output writes. Trajectory creation, construction, first draw and caller-buffer
+allocation are excluded from steady state. First use can compile Triton kernels;
+startup results with an existing compiler cache are not fresh-install timings.
+Torch peak allocations exclude opaque rasterizer/context memory. Reports/GIFs
+are local artifacts, never source fixtures or model-training throughput claims.
 
 ## Three independent acceptance layers
 

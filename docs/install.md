@@ -62,6 +62,12 @@ rendering; MuJoCo simulation remains on CPU. Its native default still requires a
 OpenGL context, also used once to bake the raycast background. See the
 [G34 CUDA setup and geometry contract](adding/occlusion-ball.md#cuda-rendering).
 
+For source-trajectory replay without MuJoCo or Blender, import `G34Replay` from
+`stable_envs.envs.object_permanence`. Replay operations need only base dependencies;
+rendering needs CUDA PyTorch and nvdiffrast below. Install Pillow for optional GIF
+output. This utility is not a registered, action-driven `Env`; the existing
+`MuJoCoOcclusionBall` interface remains available separately.
+
 ## Reference profiles
 
 Extras declare compatible version ranges. Exact parity with an upstream renderer is checked only under

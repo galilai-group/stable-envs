@@ -1,4 +1,4 @@
-"""Batched nvdiffrast rendering of MuJoCo geometry with MuJoCo-style lighting, textures, and skybox."""
+"""Batched CUDA triangle rendering, with optional MuJoCo geometry import."""
 
 from __future__ import annotations
 
@@ -100,7 +100,7 @@ def _mm4(a, b):
 def mvp_rows(proj, view, M):
     """Compose projection, view, and model matrices with batch-invariant arithmetic.
 
-    Accept proj (4, 4), view (B, 4, 4) or (4, 4), and M (B, G, 4, 4).
+    Accept proj/view (B, 4, 4) or (4, 4), and M (B, G, 4, 4).
     Compute in float64 with fixed operation order, then cast once to M.dtype.
     """
     import torch
@@ -112,7 +112,7 @@ def mvp_rows(proj, view, M):
     return _mm4(vp, M.to(torch.float64)).to(M.dtype)
 
 
-def offset_clip(pos, R: int, offset) -> torch.Tensor:
+def offset_clip(pos, R: int | tuple[int, int], offset) -> torch.Tensor:
     """Translate (B, V, 4) clip vertices by a pixel offset at resolution R.
 
     Positive offsets move right and up. Scale the shift by clip w so the translation
@@ -121,9 +121,10 @@ def offset_clip(pos, R: int, offset) -> torch.Tensor:
     ox, oy = float(offset[0]), float(offset[1])
     if ox == 0.0 and oy == 0.0:
         return pos
+    h, w = (R, R) if isinstance(R, int) else R
     out = pos.clone()
-    out[..., 0] = out[..., 0] + ox * (2.0 / R) * out[..., 3]
-    out[..., 1] = out[..., 1] + oy * (2.0 / R) * out[..., 3]
+    out[..., 0] = out[..., 0] + ox * (2.0 / w) * out[..., 3]
+    out[..., 1] = out[..., 1] + oy * (2.0 / h) * out[..., 3]
     return out
 
 
@@ -828,7 +829,7 @@ class BatchRenderer(_resources.Closeable):
     def __init__(
         self,
         m=None,
-        res: int = 224,
+        res: int | tuple[int, int] = 224,
         groups=DEFAULT_GROUPS,
         device: str = "cuda",
         textures: bool = True,
@@ -849,6 +850,7 @@ class BatchRenderer(_resources.Closeable):
     ):
         """Use an MjModel or a prebuilt Scene to configure the renderer.
 
+        ``res`` is an integer for square output or (height, width).
         ``shading="tiny"`` uses TinyShading parameters and ignores scene lights.
         ``sample_offset`` shifts pixel coverage; ``tex_filter`` selects linear or
         nearest sampling. Texture mipmapping and anisotropy are configured separately.
@@ -863,7 +865,10 @@ class BatchRenderer(_resources.Closeable):
         if tex_filter not in ("linear", "nearest"):
             raise ValueError(f"tex_filter must be 'linear' or 'nearest', got {tex_filter!r}")
         self.m = m
-        self.res = int(res)
+        self.res = int(res) if isinstance(res, int) else tuple(res)
+        self.height, self.width = (self.res, self.res) if isinstance(self.res, int) else self.res
+        if self.height < 1 or self.width < 1:
+            raise ValueError("res must be positive: int or (height, width)")
         self.ss = int(supersample)
         self.device = torch.device(device)
         self.use_tex = bool(textures)
@@ -943,25 +948,65 @@ class BatchRenderer(_resources.Closeable):
             self.ctx,
             positions,
             self.scene.face,
-            resolution=[resolution, resolution],
+            resolution=[resolution, resolution] if isinstance(resolution, int) else list(resolution),
             grad_db=self.mipmap,
         )
 
-    def render(self, xpos, xmat, cam: Camera, out=None, mat_rgb=None):
-        """Render device-resident xpos (B, G, 3) and xmat (B, G, 3, 3).
+    def render(self, xpos, xmat, cam: Camera, out=None, mat_rgb=None, *, mode="rgb"):
+        """Render one mode; preserve the tensor/out contract of the original API."""
+        image = self.render_many(xpos, xmat, cam, modes=(mode,), mat_rgb=mat_rgb)[mode]
+        if out is not None:
+            if mode == "rgb":
+                out.view(image.shape).copy_(image)
+            else:
+                out.copy_(image)
+            return out
+        return image
 
-        G includes only drawn geoms: select full-model arrays with scene.mjgeom first.
-        Optional mat_rgb (B, G, 3) overrides material colors for this call. Return
-        uint8 RGB on the renderer's device, or write into the supplied output tensor.
+    def render_many(self, xpos, xmat, cam: Camera, *, modes=("rgb", "depth", "ids"), out=None, mat_rgb=None):
+        """Generate selected outputs from one transform/rasterization pass.
+
+        Return a dict of CUDA tensors: rgb uint8 (B,H,W,3), positive camera-axis
+        depth float32 (B,H,W), and one-based geom IDs int16 (B,H,W). Misses have
+        zero depth/ID. Modes must be unique and nonempty; diagnostics require
+        supersample=1. Optional out must contain matching buffers for all modes;
+        validate the entire mapping before writing any caller buffer.
+
+        Shares the rasterizer hook, textures, lighting and row convention with
+        render(), including family-specific coverage implementations.
         """
         import nvdiffrast.torch as dr
         import torch
 
         self._check_open("render")
+        modes = tuple(modes)
+        if (
+            not modes
+            or len(set(modes)) != len(modes)
+            or any(mode not in ("rgb", "depth", "ids") for mode in modes)
+            or (self.ss != 1 and any(mode != "rgb" for mode in modes))
+        ):
+            raise ValueError("modes must be unique rgb/depth/ids; diagnostics require supersample=1")
         S = self.scene
-        R = self.res * self.ss
+        H, W = self.height, self.width
+        R = H * self.ss if H == W else (H * self.ss, W * self.ss)
         B = int(xpos.shape[0])
-        view_np, proj_np = cam.matrices(aspect=1.0)
+        if out is not None:
+            if set(out) != set(modes):
+                raise ValueError("out must contain exactly the requested modes")
+            for mode in modes:
+                shape = (B, H, W, 3) if mode == "rgb" else (B, H, W)
+                dtype = {"rgb": torch.uint8, "depth": torch.float32, "ids": torch.int16}[mode]
+                value = out[mode]
+                if (
+                    not torch.is_tensor(value)
+                    or tuple(value.shape) != shape
+                    or value.dtype != dtype
+                    or value.device != self.scene.vert.device
+                    or not value.is_contiguous()
+                ):
+                    raise ValueError(f"out[{mode!r}] must match shape, dtype and CUDA device, and be contiguous")
+        view_np, proj_np = cam.matrices(aspect=W / H)
         view = torch.as_tensor(view_np, dtype=torch.float32, device=self.device)
         proj = torch.as_tensor(proj_np, dtype=torch.float32, device=self.device)
         campos = torch.as_tensor(
@@ -970,38 +1015,41 @@ class BatchRenderer(_resources.Closeable):
         camfwd = torch.as_tensor(
             -np.asarray(cam.mat, np.float64).reshape(-1, 3, 3)[:, :, 2], dtype=torch.float32, device=self.device
         )
-
         pos, nrm, wpos = S.clip(xpos, xmat, view, proj)
         rast, db = self._rasterize(pos, R)
-
-        attr = torch.cat([nrm, wpos], -1)  # (B,V,6)
-        interp, _ = dr.interpolate(attr, rast, S.face)
-        n = interp[..., :3]
-        p = interp[..., 3:6]
-        n = n / n.norm(dim=-1, keepdim=True).clamp_min(1e-9)
-
-        tid = rast[..., 3].long()  # 0 = miss, else triangle+1
+        tid = rast[..., 3].long()
         hit = tid > 0
         gid = torch.where(hit, S.fgeom[(tid - 1).clamp_min(0)], torch.zeros_like(tid))
-
-        base = gather_material(S.mat_rgb if mat_rgb is None else mat_rgb, gid)
-        if self.shading == "tiny":
-            col = shade_tiny(n, base, self.tiny)
-        else:
-            col = self._shade(n, p, base, S.spec[gid], S.shininess[gid], S.emission[gid], campos, camfwd)
-        if self.use_tex:
-            col = col * self._texture(S, rast, db, gid)
-        # Clamp after texture modulation; clamping primary lighting first changes bright textured surfaces.
-        col = col.clamp(0.0, 1.0)
-
-        img = torch.where(hit[..., None], col, self._background(cam, R, B, campos, camfwd))
-        if self.ss > 1:
-            img = img.view(B, self.res, self.ss, self.res, self.ss, 3).mean((2, 4))
-        img = QUANT(img, self.quant).flip(1)  # nvdiffrast row 0 is the bottom
+        images = {}
+        if "ids" in modes:
+            images["ids"] = torch.where(hit, gid + 1, 0).to(torch.int16).flip(1)
+        if "rgb" in modes:
+            attr = torch.cat([nrm, wpos], -1)
+            interp, _ = dr.interpolate(attr, rast, S.face)
+            n, p = interp[..., :3], interp[..., 3:6]
+            n = n / n.norm(dim=-1, keepdim=True).clamp_min(1e-9)
+            base = gather_material(S.mat_rgb if mat_rgb is None else mat_rgb, gid)
+            if self.shading == "tiny":
+                col = shade_tiny(n, base, self.tiny)
+            else:
+                col = self._shade(n, p, base, S.spec[gid], S.shininess[gid], S.emission[gid], campos, camfwd)
+            if self.use_tex:
+                col = col * self._texture(S, rast, db, gid)
+            col = col.clamp(0.0, 1.0)
+            img = torch.where(hit[..., None], col, self._background(cam, R, B, campos, camfwd))
+            if self.ss > 1:
+                img = img.view(B, H, self.ss, W, self.ss, 3).mean((2, 4))
+            images["rgb"] = QUANT(img, self.quant).flip(1)
+        elif "depth" in modes:
+            p, _ = dr.interpolate(wpos, rast, S.face)
+        if "depth" in modes:
+            z = ((p - campos[:, None, None]) * camfwd[:, None, None]).sum(-1)
+            images["depth"] = torch.where(hit, z, 0).flip(1)
         if out is not None:
-            out.view(B, self.res, self.res, 3).copy_(img)
+            for mode in modes:
+                out[mode].copy_(images[mode])
             return out
-        return img
+        return {mode: images[mode] for mode in modes}
 
     def _shade(self, n, p, base, spec, shin, emis, campos, camfwd):
         """Return unclamped material lighting with additive white specular.
@@ -1139,16 +1187,17 @@ class BatchRenderer(_resources.Closeable):
         import torch
 
         mat = np.asarray(cam.mat, np.float64).reshape(-1, 3, 3)
-        key = (int(R), mat.tobytes(), float(cam.fovy))
+        H, W = (R, R) if isinstance(R, int) else R
+        key = (H, W, mat.tobytes(), float(cam.fovy))
         t = self._ray_cache.get(key)
         if t is None:
             right, up, back = mat[:, :, 0], mat[:, :, 1], mat[:, :, 2]
             fwd = -back
             f = math.tan(math.radians(cam.fovy) / 2.0)
-            ys = (2.0 * (np.arange(R) + 0.5) / R - 1.0) * f  # row 0 at the bottom
-            xs = (2.0 * (np.arange(R) + 0.5) / R - 1.0) * f
+            ys = (2.0 * (np.arange(H) + 0.5) / H - 1.0) * f  # row 0 at the bottom
+            xs = (2.0 * (np.arange(W) + 0.5) / W - 1.0) * f * (W / H)
             X, Y = np.meshgrid(xs, ys)
             d = X[None, ..., None] * right[:, None, None] + Y[None, ..., None] * up[:, None, None] + fwd[:, None, None]
             d = d / np.linalg.norm(d, axis=-1, keepdims=True)
             t = self._ray_cache.put(key, torch.as_tensor(d, dtype=torch.float32, device=self.device))
-        return t.expand(B, R, R, 3) if t.shape[0] == 1 else t
+        return t.expand(B, H, W, 3) if t.shape[0] == 1 else t

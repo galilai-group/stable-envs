@@ -8,6 +8,17 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Engine-free `object_permanence.G34Replay`: restorable trajectory cursors and
+  nvdiffrast CUDA rendering, without MuJoCo or Blender runtime calls. Reuses
+  triangle rendering with rectangular RGB/depth/ID output, static plates and
+  precise cropped viewports; the existing G34 geometry oracle is unchanged.
+  Viewport helpers support multiple enclosing spheres, mesh-derived bounds and
+  reusable CUDA camera matrices; tighter G34 windows reduce coverage memory,
+  and static outputs are cached only when requested.
+  `nvdiff.BatchRenderer.render_many()` shares coverage and interpolation across
+  RGB/depth/IDs. Optional float64 coverage recovers missed thin triangles;
+  G34 uses it for low-memory static plates and retains scaled dynamic coverage.
+
 - `MuJoCoOcclusionBall` (`object-permanence` extra): the source-authored G34 nominal
   animation under `object_permanence`, with restorable MuJoCo State, native and
   batched raycast CPU/CUDA rendering, independent Blender trajectory/depth/mask fixtures

@@ -1,6 +1,6 @@
 # stable-envs benchmarks
 
-Two scripts measure rendering cost through the public `stable_envs` API:
+The general-purpose scripts measure rendering cost through the public `stable_envs` API:
 
 - `render.py` measures synchronized `env.render(state, out=buffer)` throughput at given batch sizes.
 - `pipeline.py` measures host-state transfer plus rendering. It can also time JPEG decoding of a
@@ -71,3 +71,16 @@ copying; neither times initial construction, rollout or the static bake.
 The output retains sampled source phases, raw timing samples and thread settings.
 See [the alignment contract](../docs/adding/occlusion-ball.md) for geometry gates
 and reproducible OSMesa commands.
+
+## Engine-free G34 replay
+
+`python -m benchmarks.object_permanence_replay --size 180 --backends nvdiff --output /tmp/g34.json`
+times CPU replay-State validation/projection, pose and derived-camera uploads,
+and CUDA RGB rendering into reused output. Add `--gif /tmp/g34.gif` (Pillow) for a
+24 FPS preview. Add `--backends nvdiff,raycast,opengl` for legacy comparisons;
+only those opt-in baselines require MuJoCo and an OpenGL implementation.
+Startup/static plates are recorded separately from steady-state timings.
+Use `--modes rgb,depth,ids` to measure shared outputs, then `--separate` to
+compare single-mode calls. `--coverage refined` selects floating-point coverage
+correction; `--background-coverage native` measures uncorrected static coverage.
+Each choice still needs its scene's geometry gate; native dynamic G34 fails it.

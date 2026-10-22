@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from importlib.resources import files
 
-import mujoco
 import numpy as np
 
 FPS = 24
@@ -27,6 +26,8 @@ OBJECT_NAMES = (
 
 def make_model():
     """Compile the packaged scene, independently for simulation and rendering."""
+    import mujoco
+
     return mujoco.MjModel.from_xml_string(
         files(__package__.rsplit(".", 1)[0]).joinpath("assets/g34/scene.xml").read_text()
     )
@@ -47,6 +48,8 @@ def authored_pose(elapsed_steps):
 
 def set_pose(model, data, position, quaternion):
     """Install a mocap pose and recompute derived geometry without advancing time."""
+    import mujoco
+
     data.mocap_pos[0] = position
     data.mocap_quat[0] = quaternion
     mujoco.mj_forward(model, data)
