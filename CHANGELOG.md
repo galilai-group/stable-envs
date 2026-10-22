@@ -32,6 +32,11 @@ All notable changes to this project are listed here. The format follows
   architectures with binary-compatibility rules.
 - A `STABLE_ENVS_*` variable with a value that does not parse raises `ValueError` naming the variable.
 - `cpu3d.render(chunk_size=None)` and `raster2d.render_triton(block=None)` read the tuning knobs.
+- `PushT.step` and `PushTDiscrete.step` do not export a State when the caller requests no State. Physics-only
+  stepping is approximately 2.9 times faster.
+- `PyFlytRocketLanding` reads its live colours directly for the default render style and copies each State
+  leaf to the host once during validation. Rendering of supplied pose rows is approximately 70 times faster.
+  Frames and State do not change.
 
 ### Fixed
 
@@ -44,6 +49,8 @@ All notable changes to this project are listed here. The format follows
   `render/rgba` flame row and the CPU and CUDA frames show the red ignition flame. The source makes this
   change only when it has a render mode. Supplied pose rows carry no ignition, so they render with the flame
   off. States saved after ignition with an earlier version do not restore.
+- `PointMazeLargeNavigate` renders batches of 2048 and more on CUDA. Its spotlight pass casts wall shadow
+  rays in one launch row per frame and lights a bounded number of rows at a time.
 
 ### Removed
 

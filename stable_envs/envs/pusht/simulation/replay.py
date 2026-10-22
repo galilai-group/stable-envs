@@ -16,6 +16,7 @@ from .numeric import (
     install_rng,
     put_value,
     rng_of,
+    rng_view,
 )
 from .task import PushT, PushTDiscrete
 
@@ -124,13 +125,13 @@ class PushTReplay:
     def _metadata(self):
         e = self.env
         result = {
-            "gym_rng": encode_rng(rng_of(e)),
+            "gym_rng": encode_rng(rng_view(e)),
             "rng": encode_rng(e.rng.bit_generator.state),
             "gym_seed": encode_seed(e._np_random_seed),
-            "action_rng": encode_rng(rng_of(e.action_space)),
+            "action_rng": encode_rng(rng_view(e.action_space)),
         }
         for path, node in nodes(e.variation_space):
-            result["variation" + path + "/rng"] = encode_rng(rng_of(node))
+            result["variation" + path + "/rng"] = encode_rng(rng_view(node))
             if not hasattr(node, "spaces"):
                 put_value(result, "variation" + path + "/initial", node.init_value)
                 put_value(result, "variation" + path + "/current", node.value)

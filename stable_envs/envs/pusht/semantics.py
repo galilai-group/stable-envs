@@ -131,6 +131,9 @@ class PushT(Env):
     def _step(self, actions, *, active=None):
         return self._simulator.step(actions, active=active)
 
+    def _advance_without_snapshot(self, actions, *, active=None):
+        return self._simulator.step(actions, active=active, capture_state=False)
+
     @staticmethod
     def _stack_states(values):
         from .simulation.history import stack_states

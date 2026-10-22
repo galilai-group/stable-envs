@@ -46,19 +46,23 @@ class RocketAdapter(SimulatorAdapter):
             device=self.device,
         )
 
+    def rgba(self):
+        return torch.as_tensor(np.stack([e.rgba() for e in self.envs]), device=self.device)
+
     def validate(self, state):
         if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):
             raise ValueError("Rocket full State requires batch [num_envs]")
         if set(state.keys(True, True)) != set(self.fields):
             raise ValueError("Rocket full State keys differ")
         for key, (shape, dtype) in self.fields.items():
-            if (
-                state[key].shape != (self.num_envs, *shape)
-                or state[key].dtype != dtype
-                or not torch.isfinite(state[key]).all()
-            ):
+            if state[key].shape != (self.num_envs, *shape) or state[key].dtype != dtype:
                 raise ValueError(f"Invalid Rocket State leaf: {key}")
-        rows = [{"/".join(k): v.detach().cpu().numpy().copy() for k, v in row.items(True, True)} for row in state]
+        # One transfer per leaf; per-row device reads cost one copy per row and leaf.
+        columns = {"/".join(k): v.detach().cpu().numpy() for k, v in state.items(True, True)}
+        for key, value in columns.items():
+            if not np.isfinite(value).all():
+                raise ValueError(f"Invalid Rocket State leaf: {tuple(key.split('/'))}")
+        rows = [{k: v[i, ...].copy() for k, v in columns.items()} for i in range(self.num_envs)]
         for env, row in zip(self.envs, rows, strict=True):
             env.validate(row)
         return rows

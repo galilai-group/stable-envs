@@ -1,5 +1,6 @@
 """PushT task on Pymunk: the scene, its variation space, reward and frame drawing."""
 
+import sys
 from functools import partial
 
 import cv2
@@ -24,6 +25,18 @@ DEFAULT_VARIATIONS = (
     "block.start_position",
     "block.angle",
 )
+
+
+def resized_rgb(canvas, size):
+    """Resize the canvas to ``size`` RGB; linear resampling is per channel, so the 32-bit pixels need no RGB copy."""
+    if canvas.get_bytesize() != 4 or sys.byteorder != "little":
+        img = np.frombuffer(pygame.image.tobytes(canvas, "RGB"), np.uint8)
+        return cv2.resize(img.reshape(canvas.get_height(), canvas.get_width(), 3), (size, size))
+    height, width = canvas.get_height(), canvas.get_width()
+    pixels = np.frombuffer(canvas.get_buffer(), np.uint8).reshape(height, canvas.get_pitch())
+    pixels = pixels[:, : width * 4].reshape(height, width, 4)
+    channels = [shift // 8 for shift in canvas.get_shifts()[:3]]
+    return np.ascontiguousarray(cv2.resize(pixels, (size, size))[..., channels])
 
 
 class PushT(gym.Env):
@@ -412,10 +425,7 @@ class PushT(gym.Env):
             pygame.event.pump()
             pygame.display.update()
 
-        img = np.frombuffer(pygame.image.tobytes(canvas, "RGB"), np.uint8).reshape(
-            self.window_size, self.window_size, 3
-        )
-        img = cv2.resize(img, (self.render_size, self.render_size))
+        img = resized_rgb(canvas, self.render_size)
         if self.render_action:
             if self.render_action and (self.latest_action is not None):
                 action = np.array(self.latest_action)
