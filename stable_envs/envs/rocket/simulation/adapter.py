@@ -52,13 +52,14 @@ class RocketAdapter(SimulatorAdapter):
         if set(state.keys(True, True)) != set(self.fields):
             raise ValueError("Rocket full State keys differ")
         for key, (shape, dtype) in self.fields.items():
-            if (
-                state[key].shape != (self.num_envs, *shape)
-                or state[key].dtype != dtype
-                or not torch.isfinite(state[key]).all()
-            ):
+            if state[key].shape != (self.num_envs, *shape) or state[key].dtype != dtype:
                 raise ValueError(f"Invalid Rocket State leaf: {key}")
-        rows = [{"/".join(k): v.detach().cpu().numpy().copy() for k, v in row.items(True, True)} for row in state]
+        # One transfer per leaf; per-row device reads cost one copy per row and leaf.
+        columns = {"/".join(k): v.detach().cpu().numpy() for k, v in state.items(True, True)}
+        for key, value in columns.items():
+            if not np.isfinite(value).all():
+                raise ValueError(f"Invalid Rocket State leaf: {tuple(key.split('/'))}")
+        rows = [{k: v[i].copy() for k, v in columns.items()} for i in range(self.num_envs)]
         for env, row in zip(self.envs, rows, strict=True):
             env.validate(row)
         return rows
