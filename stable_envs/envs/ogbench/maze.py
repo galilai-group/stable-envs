@@ -156,6 +156,9 @@ def _light_pass(n, v, terms, c, tex, ms, shin):
 _SHADOW_EPS = 1e-3  # shadow-ray origin offset along the surface normal
 
 
+_PASS_ROWS = 1024
+
+
 class _LightPasses:
     """MuJoCo's light passes for a scene with a spotlight that tracks the agent.
 
@@ -898,38 +901,42 @@ class OGBenchMaze(Env):
             idx = np.flatnonzero(inv == gi)
             over = {p: uniq[gi][o : o + w] for p, (o, w) in zip(self.PLATE_PATHS, _offsets(self.PLATE_PATHS, sty))}
             sc = self._scene(size, over)
-            sub = torch.as_tensor(idx, device=self.device, dtype=torch.long)
-            mat, scale = self._agent_appearance(sc, sty, sub)
-            xpos, xmat = self._fk(s[sub], sc)
-            plate, shader = sc.plate, None
-            if sc.passes is not None:
-                size_b = torch.as_tensor(np.asarray(sc.prims_base.size), device=self.device, dtype=torch.float32)
-                agent = (list(sc.prims_base.kind), size_b * scale.view(-1, 1, 1), xpos, xmat)
-                lpos = sc.passes.light_pos(s[sub][:, :2])
-                plate = sc.passes.plates(sc.plate, sc.cam, lpos, agent)
-                shader = sc.passes.shader(lpos, agent)
-            # Advanced indexing makes buf[sub] a copy. With multiple groups, render to a
-            # temporary and assign back explicitly; one group can write directly into buf.
-            dst = buf if len(uniq) == 1 else None
-            got = R3.composite(
-                plate,
-                sc.plate_t,
-                sc.cam,
-                sc.prims_base,
-                xpos,
-                xmat,
-                sc.lights,
-                size,
-                size,
-                supersample=ss,
-                out=dst,
-                tile=self.TILE,
-                mat_rgb=mat,
-                size_scale=scale,
-                shader=shader,
-            )
-            if dst is None:
-                buf[sub] = got
+            # Per-row lighting holds several float images per row; bound the rows in flight.
+            step = _PASS_ROWS if sc.passes is not None else len(idx)
+            for lo in range(0, len(idx), step):
+                part = idx[lo : lo + step]
+                sub = torch.as_tensor(part, device=self.device, dtype=torch.long)
+                mat, scale = self._agent_appearance(sc, sty, sub)
+                xpos, xmat = self._fk(s[sub], sc)
+                plate, shader = sc.plate, None
+                if sc.passes is not None:
+                    size_b = torch.as_tensor(np.asarray(sc.prims_base.size), device=self.device, dtype=torch.float32)
+                    agent = (list(sc.prims_base.kind), size_b * scale.view(-1, 1, 1), xpos, xmat)
+                    lpos = sc.passes.light_pos(s[sub][:, :2])
+                    plate = sc.passes.plates(sc.plate, sc.cam, lpos, agent)
+                    shader = sc.passes.shader(lpos, agent)
+                # Advanced indexing makes buf[sub] a copy. With multiple groups, render to a
+                # temporary and assign back explicitly; one group can write directly into buf.
+                dst = buf if len(uniq) == 1 and len(part) == B else None
+                got = R3.composite(
+                    plate,
+                    sc.plate_t,
+                    sc.cam,
+                    sc.prims_base,
+                    xpos,
+                    xmat,
+                    sc.lights,
+                    size,
+                    size,
+                    supersample=ss,
+                    out=dst,
+                    tile=self.TILE,
+                    mat_rgb=mat,
+                    size_scale=scale,
+                    shader=shader,
+                )
+                if dst is None:
+                    buf[sub] = got
         return buf.view(*lead, size, size, 3) if lead else buf
 
     def _agent_appearance(self, sc: _Scene, sty, sub):
