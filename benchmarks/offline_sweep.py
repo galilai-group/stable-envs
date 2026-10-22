@@ -98,7 +98,13 @@ def cmd_states(args) -> None:
         size = int(getattr(cls, "fixed_size", None) or args.size)
         t = time.time()
         try:
-            env = snv.make(name, num_envs=args.lanes, size=size, device=args.device)
+            try:
+                env = snv.make(name, num_envs=args.lanes, size=size, device=args.device)
+            except ValueError as e:
+                if "renders only at" not in str(e):
+                    raise
+                size = None
+                env = snv.make(name, num_envs=args.lanes, device=args.device)
             try:
                 if int(getattr(env, "state_dim", 0) or 0) > 0:
                     rows = C.sample_render_rows(env, args.n, rng=np.random.default_rng(args.seed))
@@ -199,7 +205,7 @@ def _worker_init(name: str, states: str, size: int) -> None:
     snv = _snv()
     cls = snv.registry.REGISTRY[name]
     _W["cls"] = cls
-    _W["ref"] = cls.reference_env(size=size)
+    _W["ref"] = cls.reference_env(size=size or cls.default_size)
     blob = _load_states(Path(states) / f"{name}.pt")
     _W["rows"] = blob["rows"].numpy() if blob["kind"] == "rows" else None
 
