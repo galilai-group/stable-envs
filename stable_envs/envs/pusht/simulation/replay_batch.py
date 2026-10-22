@@ -117,7 +117,7 @@ class PushTReplayAdapter(SimulatorAdapter):
         self._swap(staged)
         return self.get_state()
 
-    def step(self, actions, *, active=None):
+    def step(self, actions, *, active=None, capture_state=True):
         if torch.is_tensor(actions):
             actions = actions.detach().cpu().numpy()
         if not isinstance(actions, np.ndarray) or actions.shape != (self.num_envs, 2):
@@ -140,7 +140,7 @@ class PushTReplayAdapter(SimulatorAdapter):
                 outputs.append((-distance, success, False))
         return TensorDict(
             dict(
-                state=self.get_state(),
+                **(dict(state=self.get_state()) if capture_state else {}),
                 reward=torch.tensor([v[0] for v in outputs], dtype=torch.float64, device=self.device),
                 success=torch.tensor([v[1] for v in outputs], dtype=torch.bool, device=self.device),
                 terminated=torch.tensor([v[1] for v in outputs], dtype=torch.bool, device=self.device),
