@@ -29,11 +29,11 @@ OpenGL, configured before the first MuJoCo import. See [System setup](../system-
 
 ## Agreement with the source
 
-- For most classes, the tests compare the frames with the source frames pixel by pixel.
+- The tests measure the per-frame MSE between our frames and the source frames, and compare it with a
+  recorded value for each class. See [Frame regression checks](../testing.md#frame-regression-checks).
 - The DM Control body-tracking classes, and OGBCube, OGBScene and PyFlytRocketLanding on CUDA, draw
-  with a different rasterizer from the source. The tests compare their frames by the mean absolute
-  difference, the fraction of pixels within 8/255 and the SSIM. `env.describe()["visual_fidelity"]`
-  gives the measured values. `env.describe()["visual_note"]` tells where the frames differ.
+  with a different rasterizer from the source. `env.describe()["visual_fidelity"]` gives their
+  measured MSE. `env.describe()["visual_note"]` tells where the frames differ.
 
 ## Rendering details
 

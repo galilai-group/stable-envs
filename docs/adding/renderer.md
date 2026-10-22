@@ -91,8 +91,9 @@ git diff --check
 ## Final acceptance
 
 - Compare against the official reference and the frozen baseline.
-- Use exact pixels unless a different rasterizer draws the frames. Then measure the agreement, record
-  it in `visual_fidelity`, and add the limits to `tests/helpers/pixel_tolerances.py`. State the criterion.
+- Record the source MSE with `scripts/testing/record_source_mse.py` and capture golden frames with
+  `scripts/testing/capture_golden.py`. If a different rasterizer draws the frames, copy the recorded
+  MSE into `visual_fidelity` and state where the frames differ in `visual_note`.
 - Include representative tasks, contact poses, cameras and appearance settings.
 - Run each claimed CPU and GPU backend separately.
 

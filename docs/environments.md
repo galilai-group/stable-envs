@@ -67,9 +67,9 @@ With every extra installed, these 74 classes register. Without PyFlyt, 73 classe
 "Renderer on CUDA" rows of each class on its family page name the code that draws the frames. For
 example, PushT uses the source's own pygame drawing, and PyFlytRocketLanding uses TinyRenderer on CPU.
 
-For some classes, the tests compare the frames by the mean absolute difference, the fraction of
-pixels within 8/255 and the SSIM. For these classes, `env.describe()["visual_fidelity"]` gives the
-measured values and the measurement setup. `env.describe()["visual_note"]` tells where the frames differ. See
+For classes that draw with a different rasterizer from the source,
+`env.describe()["visual_fidelity"]` gives the per-frame MSE against the source (`mse_mean`,
+`mse_p95`, `mse_max`, on the 0-255 scale) and the measurement setup. `env.describe()["visual_note"]` tells where the frames differ. See
 [Limitations](concepts/limitations.md#agreement-with-the-source).
 
 ## API reference
