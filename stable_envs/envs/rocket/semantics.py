@@ -263,7 +263,10 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         return out
 
     def resolve_style(self, style=None, variation=None, batch=None):
-        """Renderer appearance: an explicit style, else one set for rendering, else the State's."""
+        """Renderer appearance: an explicit style, else one set for rendering, else the State's.
+
+        Supplied pose rows carry no ignition, so the State's appearance applies to them with the flame off.
+        """
         overrides, style = _split_appearance(variation, style)
         if isinstance(style, StyleTensor):
             rows = style.values
@@ -278,6 +281,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
             rows = self._render_style
         else:
             rows = self.to_render_state()["renderer", "style"]
+            rows[:, frozen.style_layout()["flame.ignited"][0]] = 0
         if overrides:
             rows = rows.clone()
             layout = frozen.style_layout()
