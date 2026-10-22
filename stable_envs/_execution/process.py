@@ -5,12 +5,14 @@ from __future__ import annotations
 import builtins
 import multiprocessing as mp
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 
 import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .._core.tensordicts import build_tensordict
 from .protocol import SimulatorAdapter
 from .requests import ProcessRequests, lane_slices
 from .shared_memory import allocate_buffers, buffer_views, key_path, owned_group
@@ -52,6 +54,21 @@ class _Views(dict):
         return self[flat]
 
 
+def leaf_tensordict(leaves, batch, device):
+    """Build a ``[batch]`` TensorDict from ``{key tuple: tensor}`` leaves on ``device``, in their order."""
+    tree = {}
+    for key, value in leaves.items():
+        branch = tree
+        for part in key[:-1]:
+            branch = branch.setdefault(part, {})
+        branch[key[-1]] = value
+    return build_tensordict(tree, [batch], device)
+
+
+def _clone_all(tensors):
+    return {key: value.clone() for key, value in tensors.items()}
+
+
 def _shared_state(views, rows, count, leaves):
     values = {path[1:]: torch.from_numpy(view[rows].copy()) for path, view in views.items() if path[0] == "state"}
     values.update((key, torch.from_numpy(value)) for key, value in leaves.items())
@@ -73,6 +90,9 @@ def process_worker(conn, factory, start, count, batch, seed, cpus, buffers, spec
             for path in groups[group]:
                 views[path][rows] = values[path[1:]].numpy()
 
+        # Leaves that only resets, restores and process methods change stay in the buffers between steps.
+        static = bool(getattr(adapter, "process_static_leaves", ()))
+
         write("state", adapter.get_state())
         send_ready(conn)
         while True:
@@ -82,13 +102,20 @@ def process_worker(conn, factory, start, count, batch, seed, cpus, buffers, spec
                 conn.send((True, None))
                 break
             if command == "step":
-                actions, active, capture = payload
+                actions, active, capture, frame = payload
                 result = adapter.step(
-                    actions, active=None if active is None else torch.from_numpy(active), capture_state=capture
+                    actions,
+                    active=None if active is None else torch.from_numpy(active),
+                    capture_state=capture and not static,
                 )
                 write("task", result)
-                if capture:
+                if capture and static:
+                    for key, value in adapter.process_step_state().items():
+                        views[("state", *key)][rows] = value
+                elif capture:
                     write("state", result["state"])
+                if frame:
+                    views[("frame",)][rows] = adapter.render_live()
             elif command == "get_state":
                 write("state", adapter.get_state())
             elif command == "reset":
@@ -157,15 +184,17 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         if cpus is not None and (len(set(cpus)) != len(cpus) or len(cpus) < processes):
             raise ValueError("CPU allocation must provide at least one distinct core per process")
         self.num_envs, self.device = num_envs, torch.device(device)
-        self._closed, self._pending, self._capture = False, None, False
+        self._closed, self._pending, self._capture, self._capture_frame = False, None, False, False
         self._connections, self._processes = [], []
         self._metadata = None
+        self._static, self._static_cache, self._spare, self._copier = frozenset(), None, None, None
         self.process_methods: dict[str, str] = {}
         try:
             # The one-lane prototype stays open for parent-side queries and checks.
             self._metadata = prototype = factory(1, seed)
             self._local = type(prototype)
             self.process_methods = dict(prototype.process_methods)
+            self._static = frozenset(key_path(key) for key in getattr(prototype, "process_static_leaves", ()))
             for attribute in prototype.process_attributes:
                 setattr(self, attribute, getattr(prototype, attribute))
             state = prototype.get_state()
@@ -181,6 +210,10 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
                     if key_path(key) not in self._pipe_leaves
                 }
             )
+            # Local adapters that draw their running lanes draw step frames in the workers.
+            frame_shape = getattr(prototype, "frame_shape", None) if hasattr(prototype, "render_live") else None
+            if frame_shape is not None:
+                self._specs[("frame",)] = (tuple(frame_shape), np.dtype(np.uint8))
             self.state_fields = {
                 key_path(key): (tuple(value.shape[1:]), value.dtype)
                 for key, value in state.items(True, True)
@@ -220,6 +253,9 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         try:
             super()._abort()
         finally:
+            if self._copier is not None:
+                self._copier.shutdown(wait=False)
+                self._copier, self._spare = None, None
             if self._metadata is not None:
                 self._metadata.close()
 
@@ -230,8 +266,38 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
     def _owned(self, group):
         return owned_group(self._views, group, self.num_envs, self.device)
 
+    def _state_leaves(self):
+        """Copy the shared State leaves to ``{key: tensor}``; leaves that only resets, restores and calls
+        change come from a cache."""
+        if not self._static:
+            return {
+                key[1:]: torch.from_numpy(view.copy()).to(self.device)
+                for key, view in self._views.items()
+                if key[0] == "state"
+            }
+        if self._static_cache is None:
+            self._static_cache = {
+                key[1:]: torch.from_numpy(view.copy()) for key, view in self._views.items() if key[1:] in self._static
+            }
+            self._spare = None
+        cache = self._static_cache
+        # A thread copies the cache for the next snapshot while the workers step.
+        spare = self._spare.result() if self._spare is not None else _clone_all(cache)
+        if self._copier is None:
+            self._copier = ThreadPoolExecutor(1)
+        self._spare = self._copier.submit(_clone_all, cache)
+        values = {}
+        for key, view in self._views.items():
+            if key[0] == "state":
+                value = spare[key[1:]] if key[1:] in spare else torch.from_numpy(view.copy())
+                values[key[1:]] = value.to(self.device)
+        return values
+
+    def _owned_state(self):
+        return leaf_tensordict(self._state_leaves(), self.num_envs, self.device)
+
     def _state(self):
-        return self._owned("state")
+        return self._owned_state()
 
     def __getattr__(self, name):
         if name in self.__dict__.get("process_methods", {}):
@@ -247,6 +313,7 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         kind = self.process_methods.get(name)
         if kind not in (PER_LANE, BROADCAST):
             raise ValueError(f"{name!r} is not a declared process method")
+        self._static_cache = None
         payloads = [
             (name, (lane_rows(args[0], rows), *args[1:]) if kind == PER_LANE else args) for rows in self._slices
         ]
@@ -262,6 +329,7 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
             (None if seed is None else int(seed) + rows.start, () if args is None else tuple(args[index]))
             for index, rows in enumerate(self._slices)
         ]
+        self._static_cache = None
         self._request("reset", payloads)
         return self._state()
 
@@ -280,6 +348,7 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         """Restore every lane, or no lane when any worker rejects its rows."""
         self._check_idle()
         self.validate(state)
+        self._static_cache = None
         host = state.cpu()
         leaves = {}
         for key in (key_path(key) for key in host.keys(True, True)):
@@ -301,15 +370,26 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
             raise (error if isinstance(error, type) and issubclass(error, Exception) else RuntimeError)(message)
         self._request("commit_restore")
 
-    def submit_step(self, actions, *, active=None, capture_state: bool = True) -> None:
+    @property
+    def live_frames(self) -> bool:
+        """Whether ``submit_step(capture_frame=True)`` draws the frame of the running lanes in the workers."""
+        return ("frame",) in self._specs
+
+    def submit_step(self, actions, *, active=None, capture_state: bool = True, capture_frame: bool = False) -> None:
         """Submit one transition; receive its result before submitting another."""
         self._check_idle()
+        if capture_frame and not self.live_frames:
+            raise ValueError(f"{self.name} workers do not draw frames")
         actions, active = self._local.check_step(self, actions, active)
-        capture_state = bool(capture_state)
+        capture_state, capture_frame = bool(capture_state), bool(capture_frame)
         self._submit(
-            "step", [(actions[rows], None if active is None else active[rows], capture_state) for rows in self._slices]
+            "step",
+            [
+                (actions[rows], None if active is None else active[rows], capture_state, capture_frame)
+                for rows in self._slices
+            ],
         )
-        self._capture = capture_state
+        self._capture, self._capture_frame = capture_state, capture_frame
         self._submitted(actions, active)
 
     def _submitted(self, actions, active):
@@ -324,6 +404,8 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         result = self._owned("task")
         if self._capture:
             result["state"] = self._state()
+        if self._capture_frame:
+            result["frame"] = torch.from_numpy(self._views[("frame",)]).clone().to(self.device)
         return result
 
     def step(self, actions, *, active=None, capture_state: bool = True) -> TensorDict:

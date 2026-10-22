@@ -121,8 +121,8 @@ class PushTReplayAdapter(SimulatorAdapter):
         if self.device.type not in ("cpu", "cuda"):
             raise ValueError("PushT supports CPU physics with CPU/CUDA State storage")
         self.envs = []
-        self._prepared = None
         self._columns, self._sources = {}, [None] * batch
+        self._prepared = None
         try:
             for lane in range(batch):
                 self.envs.append(
@@ -132,11 +132,6 @@ class PushTReplayAdapter(SimulatorAdapter):
         except BaseException:
             self.close()
             raise
-
-    @property
-    def template(self):
-        """A lane whose configuration, Variation space and State fields describe the batch."""
-        return self.envs[0]
 
     def _static_columns(self):
         """Return the batch columns of every lane's ``static_fields``, updating the lanes that changed."""
@@ -152,21 +147,20 @@ class PushTReplayAdapter(SimulatorAdapter):
         self._sources = sources
         return self._columns
 
-    def get_state(self):
+    @property
+    def template(self):
+        """A lane whose configuration, Variation space and State fields describe the batch."""
+        return self.envs[0]
+
+    def _current_columns(self):
+        """Return the ``current`` columns that a step changes."""
         envs, count = self.envs, self.num_envs
-        lengths = np.array([env.length for env in envs], np.int64)
-        width = int(lengths.max())
-        actions = np.zeros((count, width, 2), np.float64)
-        codes = np.zeros((count, width), np.uint8)
         bodies = np.empty((count, BODY_ROW), np.float64)
         segments = np.zeros((count, 90, 8), np.float64)
         segment_counts = np.empty(count, np.int64)
         contacts = np.empty(count, np.int64)
         latest = []
         for lane, env in enumerate(envs):
-            length = env.length
-            actions[lane, :length] = env._actions[:length]
-            codes[lane, :length] = env._codes[:length]
             bodies[lane] = body_row(env.env)
             found = contact_segments(env.env.space, env._contacts)
             segment_counts[lane] = len(found)
@@ -174,17 +168,40 @@ class PushTReplayAdapter(SimulatorAdapter):
                 segments[lane, : len(found)] = found
             contacts[lane] = env.env.n_contact_points
             latest.append(latest_fields(env.env))
+        values = {"current/" + k: v for k, v in body_fields(bodies).items()}
+        values["current/contacts"] = contacts
+        values["current/render_segments"] = segments
+        values["current/render_segment_count"] = segment_counts
+        values.update(("current/" + k, np.stack([row[k] for row in latest])) for k in latest[0])
+        return values
+
+    def process_step_state(self):
+        """Return ``{key tuple: host array}`` for the State leaves in the process buffers that a step changes."""
+        values = self._current_columns()
+        values["history/lengths"] = np.array([env.length for env in self.envs], np.int64)
+        return {tuple(key.split("/")): value for key, value in values.items()}
+
+    @property
+    def process_static_leaves(self):
+        return [tuple(key.split("/")) for key in self._static_columns()]
+
+    def get_state(self):
+        envs, count = self.envs, self.num_envs
+        lengths = np.array([env.length for env in envs], np.int64)
+        width = int(lengths.max())
+        actions = np.zeros((count, width, 2), np.float64)
+        codes = np.zeros((count, width), np.uint8)
+        for lane, env in enumerate(envs):
+            length = env.length
+            actions[lane, :length] = env._actions[:length]
+            codes[lane, :length] = env._codes[:length]
         values = {
             "history/actions": actions,
             "history/dtypes": codes,
             "history/lengths": lengths,
             "history/valid": np.arange(width) < lengths[:, None],
         }
-        values.update(("current/" + k, v) for k, v in body_fields(bodies).items())
-        values["current/contacts"] = contacts
-        values["current/render_segments"] = segments
-        values["current/render_segment_count"] = segment_counts
-        values.update(("current/" + k, np.stack([row[k] for row in latest])) for k in latest[0])
+        values.update(self._current_columns())
         # Host columns are copied so that the State owns them; a CUDA transfer already copies.
         cuda = self.device.type == "cuda"
         for key, value in self._static_columns().items():
@@ -334,6 +351,11 @@ class PushTReplayAdapter(SimulatorAdapter):
             [self.num_envs],
             device=self.device,
         )
+
+    @property
+    def frame_shape(self):
+        resolution = self.envs[0].config["resolution"]
+        return (resolution, resolution, 3)
 
     def render_live(self):
         """Draw every lane's running scene at the configured resolution, as ``render`` draws its State."""

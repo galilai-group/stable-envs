@@ -45,6 +45,9 @@ All notable changes to this project are listed here. The format follows
 - `PushT` and `PushTDiscrete` keep the State fields that change only at reset, restore or `set_variation` as
   cached batch columns, record the action history in one growing array, and draw step frames from the running
   scenes. Resets copy the engine without a second scene build. Frames, State and task outputs do not change.
+- PushT worker processes draw step frames and copy only the State leaves that a step changes. The parent
+  keeps the other leaves and copies them for the next State while the workers step. Process adapters
+  declare this with `process_static_leaves`, `process_step_state`, `render_live` and `frame_shape`.
 - `PushT.render` and `PushTDiscrete.render` draw a batch of at least `worker_min_lanes` States in up to `workers`
   spawned processes on Linux (render path `pusht-render`). The frames do not change.
 - `PyFlytRocketLanding` reads its live colours directly for the default render style and copies each State

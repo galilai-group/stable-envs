@@ -51,6 +51,17 @@ The local adapter declares what the parent needs:
   `capture_state=False`, the adapter does not export State, and the worker
   copies only the task outputs.
 
+- `process_static_leaves` (optional) names the State leaves that only reset,
+  restore and process methods change. After a step with State, the worker
+  writes only `process_step_state()`, a `{key tuple: array}` of the other
+  leaves in the shared buffers. The parent copies the static leaves from a
+  cache. A thread copies the cache for the next snapshot while the workers
+  step.
+- `render_live()` and `frame_shape` (optional) let the workers draw the frame
+  of their running lanes into a shared buffer. `live_frames` is then true, and
+  `submit_step(..., capture_frame=True)` returns the frame as `"frame"`. The
+  step then needs no State to draw the frame.
+
 A family subclass adds parent-side checks that need the whole batch: State
 checks (`validate`), reset arguments and the arguments of family methods.
 
