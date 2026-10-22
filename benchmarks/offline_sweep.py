@@ -101,7 +101,7 @@ def cmd_states(args) -> None:
             try:
                 env = snv.make(name, num_envs=args.lanes, size=size, device=args.device)
             except ValueError as e:
-                if "renders only at" not in str(e):
+                if "renders" not in str(e) or "only" not in str(e):
                     raise
                 size = None
                 env = snv.make(name, num_envs=args.lanes, device=args.device)
@@ -112,7 +112,7 @@ def cmd_states(args) -> None:
                     try:
                         env._render(blob["rows"][:1].to(env.device))
                     except ValueError as e:
-                        if "renders only at" not in str(e):
+                        if "renders" not in str(e) or "only" not in str(e):
                             raise
                         size = None
                 else:
