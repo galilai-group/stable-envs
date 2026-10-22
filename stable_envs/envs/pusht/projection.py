@@ -68,7 +68,8 @@ class PushTProjection:
             self.scenes[lane] = [key, scene, leaves, [None] * len(leaves)]
         return self.scenes[lane]
 
-    def render(self, rows, size):
+    def render(self, rows, size, out=None):
+        """Return ``[len(rows), size, size, 3]`` frames, or write them into ``out``."""
         frames = []
         for lane, row in enumerate(rows):
             cached = self._scene(lane, row)
@@ -107,10 +108,14 @@ class PushTProjection:
             scene.render_size = size
             scene.space.debug_draw = draw
             try:
-                frames.append(scene.render())
+                frame = scene.render()
             finally:
                 scene.space.debug_draw = original
-        return np.stack(frames)
+            if out is None:
+                frames.append(frame)
+            else:
+                out[lane] = frame
+        return out if out is not None else np.stack(frames)
 
     def close(self):
         for cached in self.scenes:

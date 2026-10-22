@@ -11,6 +11,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ... import tuning
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env
 from ...registry import REGISTRY, register
@@ -71,6 +72,7 @@ class PushT(Env):
             config=dict(resolution=resolution, render_action=render_action, with_target=with_target),
         )
         self._projection = PushTProjection()
+        self._render_pool = None
         try:
             super().__init__(num_envs, resolution, 1, device, "pygame", 0 if seed is None else seed)
             row = self._simulator.template.get_state()
@@ -253,8 +255,13 @@ class PushT(Env):
         if self._simulator.template.config["render_action"] and size < 96:
             raise ValueError("Source PushT action markers require size >= 96")
         fields = {k: v.cpu().numpy() for k, v in self._render_fields_of(state).items()}
-        rows = [{k: v[i] for k, v in fields.items()} for i in range(len(fields["recipe/config"]))]
-        frames = torch.as_tensor(self._projection.render(rows, size), device=self.device)
+        count = len(fields["recipe/config"])
+        pool = self._pool(count)
+        if pool is not None:
+            frames = pool.render(fields, size)
+        else:
+            frames = self._projection.render([{k: v[i] for k, v in fields.items()} for i in range(count)], size)
+        frames = torch.as_tensor(frames, device=self.device)
         if out is not None:
             if (
                 out.shape != frames.shape
@@ -267,7 +274,25 @@ class PushT(Env):
             return out
         return frames
 
+    def _pool(self, count):
+        """Return the render worker pool for ``count`` rows, or None to draw in this process."""
+        from ..._execution.policy import cpu_affinity, process_count
+
+        if self._render_pool is None:
+            cpus = cpu_affinity()
+            processes = process_count(count, cpus, path="pusht-render")
+            if processes < 2:
+                return None
+            from .render_pool import PushTRenderPool
+
+            self._render_pool = PushTRenderPool(processes, cpus)
+        elif count < int(tuning.get("worker_min_lanes", path="pusht-render", size=self.size, batch=count) or 0):
+            return None
+        return self._render_pool
+
     def _close(self):
+        if self._render_pool is not None:
+            self._render_pool.close()
         self._projection.close()
         self._simulator.close()
 

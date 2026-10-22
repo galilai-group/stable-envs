@@ -88,6 +88,18 @@ def state_columns(state, template, num_envs):
     return fields
 
 
+def validate_actions(actions, discrete):
+    """Apply ``PushTReplay.validate_action`` to every row of a ``[num_envs, 2]`` array at once."""
+    if actions.dtype not in (ACTION_DTYPES[2:] if discrete else ACTION_DTYPES[:2]):
+        raise ValueError("PushT action requires two float32/float64 values or two int32/int64 discrete indices")
+    if not np.isfinite(actions).all():
+        raise ValueError("PushT action must be finite")
+    if discrete and (np.any(actions < 0) or np.any(actions >= 16)):
+        raise ValueError("PushT discrete indices must be in [0, 16)")
+    if not discrete and (np.any(actions < -1) or np.any(actions > 1)):
+        raise ValueError("PushT continuous actions must be in [-1, 1]")
+
+
 class PushTReplayAdapter(SimulatorAdapter):
     """Batch CPU PushT owners with CPU/CUDA State storage.
 
@@ -276,8 +288,7 @@ class PushTReplayAdapter(SimulatorAdapter):
             actions = actions.detach().cpu().numpy()
         if not isinstance(actions, np.ndarray) or actions.shape != (self.num_envs, 2):
             raise ValueError("PushT actions require shape [num_envs, 2]")
-        for action in actions:
-            self.template.validate_action(action)
+        validate_actions(actions, self.template.discrete)
         if torch.is_tensor(active):
             active = active.detach().cpu().numpy()
         if active is not None and (
@@ -294,7 +305,7 @@ class PushTReplayAdapter(SimulatorAdapter):
             actions = actions.detach().cpu().numpy()
         if not isinstance(actions, np.ndarray) or actions.shape != (self.num_envs, 2):
             raise ValueError("PushT actions require shape [num_envs, 2]")
-        self._validate_actions(actions)
+        validate_actions(actions, self.envs[0].discrete)
         if active is None:
             active = np.ones(self.num_envs, np.bool_)
         elif torch.is_tensor(active):
@@ -320,18 +331,6 @@ class PushTReplayAdapter(SimulatorAdapter):
     def render_live(self):
         """Draw every lane's running scene at the configured resolution, as ``render`` draws its State."""
         return np.stack([env.env.render() for env in self.envs])
-
-    def _validate_actions(self, actions):
-        """Apply ``PushTReplay.validate_action`` to every row at once."""
-        discrete = self.envs[0].discrete
-        if actions.dtype not in (ACTION_DTYPES[2:] if discrete else ACTION_DTYPES[:2]):
-            raise ValueError("PushT action requires two float32/float64 values or two int32/int64 discrete indices")
-        if not np.isfinite(actions).all():
-            raise ValueError("PushT action must be finite")
-        if discrete and (np.any(actions < 0) or np.any(actions >= 16)):
-            raise ValueError("PushT discrete indices must be in [0, 16)")
-        if not discrete and (np.any(actions < -1) or np.any(actions > 1)):
-            raise ValueError("PushT continuous actions must be in [-1, 1]")
 
     def variation_changed(self):
         """Drop cached Variation fields after the lanes' Variation spaces change."""
