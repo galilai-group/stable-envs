@@ -9,6 +9,7 @@ from __future__ import annotations
 import copy
 
 import numpy as np
+from pymunk._chipmunk_cffi import lib
 
 DTYPES = tuple(np.dtype(v) for v in ("float32", "float64", "uint8", "int32", "int64", "bool"))
 
@@ -73,10 +74,19 @@ def encode_rng(state):
         return np.zeros(11, np.int64)
     if state["bit_generator"] != "PCG64":
         raise ValueError("PushT requires PCG64")
+    words, mask = state["state"], 0xFFFFFFFF
+    value, inc = words["state"], words["inc"]
     return np.array(
         [
             1,
-            *[(state["state"][k] >> (32 * i)) & 0xFFFFFFFF for k in ("state", "inc") for i in range(4)],
+            value & mask,
+            value >> 32 & mask,
+            value >> 64 & mask,
+            value >> 96 & mask,
+            inc & mask,
+            inc >> 32 & mask,
+            inc >> 64 & mask,
+            inc >> 96 & mask,
             state["has_uint32"],
             state["uinteger"],
         ],
@@ -169,17 +179,28 @@ CURRENT_KEYS = (
 
 def body_row(env):
     """Return both bodies' fields and the observation as one list of floats."""
+    # The Chipmunk calls that the pymunk Body properties make.
     row = []
-    for body in (env.agent, env.block):
-        row.extend(body.position)
-        row.extend(body.velocity)
-        row.append(body.angle)
-        row.append(body.angular_velocity)
-        row.extend(body.force)
-        row.append(body.torque)
-        row.extend(body.center_of_gravity)
-        row.append(body.mass)
-        row.append(body.moment)
+    for body in (env.agent._body, env.block._body):
+        position, velocity = lib.cpBodyGetPosition(body), lib.cpBodyGetVelocity(body)
+        force, center = lib.cpBodyGetForce(body), lib.cpBodyGetCenterOfGravity(body)
+        row.extend(
+            (
+                position.x,
+                position.y,
+                velocity.x,
+                velocity.y,
+                lib.cpBodyGetAngle(body),
+                lib.cpBodyGetAngularVelocity(body),
+                force.x,
+                force.y,
+                lib.cpBodyGetTorque(body),
+                center.x,
+                center.y,
+                lib.cpBodyGetMass(body),
+                lib.cpBodyGetMoment(body),
+            )
+        )
     # Same arithmetic as ``env._get_obs``.
     row.extend((row[0], row[1], row[13], row[14], row[17] % (2 * np.pi), row[2], row[3]))
     return row

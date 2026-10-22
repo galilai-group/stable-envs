@@ -190,8 +190,14 @@ class PushTReplay:
         for path, node in nodes(e.variation_space):
             result["variation" + path + "/rng"] = encode_rng(rng_view(node))
             if not hasattr(node, "spaces"):
-                put_value(result, "variation" + path + "/initial", node.init_value)
-                put_value(result, "variation" + path + "/current", node.value)
+                key = "variation" + path
+                put_value(result, key + "/initial", node.init_value)
+                if node.value is node.init_value:
+                    # Callers copy before they change a field, so both fields can share these arrays.
+                    result[key + "/current/value"] = result[key + "/initial/value"]
+                    result[key + "/current/type"] = result[key + "/initial/type"]
+                else:
+                    put_value(result, key + "/current", node.value)
         return result
 
     def changed(self):

@@ -10,6 +10,7 @@ import pygame
 import pymunk
 import pymunk.pygame_util
 from gymnasium import spaces
+from pymunk._chipmunk_cffi import lib
 from pymunk.vec2d import Vec2d
 
 from ....spaces import Box as VariationBox
@@ -315,16 +316,17 @@ class PushT(gym.Env):
         if self.relative:
             # The Vec2d arithmetic below, written per component: the same operands, order and
             # scalar types, so NumPy float32 actions round exactly as they do through Vec2d.
-            agent, space, k_p, k_v, dt = self.agent, self.space, self.k_p, self.k_v, self.dt
-            x, y = agent.position
+            # The body accessors are the Chipmunk calls that the pymunk properties make.
+            body, space, k_p, k_v, dt = self.agent._body, self.space, self.k_p, self.k_v, self.dt
+            position = lib.cpBodyGetPosition(body)
             offset = action * self.action_scale
-            target_x, target_y = x + offset[0], y + offset[1]
+            target_x, target_y = position.x + offset[0], position.y + offset[1]
             for _ in range(n_steps):
-                x, y = agent.position
-                vx, vy = agent.velocity
-                ax = (target_x - x) * k_p + (0 - vx) * k_v
-                ay = (target_y - y) * k_p + (0 - vy) * k_v
-                agent.velocity = (vx + ax * dt, vy + ay * dt)
+                position, velocity = lib.cpBodyGetPosition(body), lib.cpBodyGetVelocity(body)
+                vx, vy = velocity.x, velocity.y
+                ax = (target_x - position.x) * k_p + (0 - vx) * k_v
+                ay = (target_y - position.y) * k_p + (0 - vy) * k_v
+                lib.cpBodySetVelocity(body, (vx + ax * dt, vy + ay * dt))
                 space.step(dt)
         else:
             for _ in range(n_steps):

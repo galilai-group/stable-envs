@@ -9,6 +9,7 @@ import torch
 from tensordict import TensorDict
 
 from ...._core.space_nodes import nodes
+from ...._core.tensordicts import build_tensordict
 from ...._execution.process import BROADCAST, PER_LANE
 from ...._execution.protocol import SimulatorAdapter
 from .contacts import contact_segments
@@ -188,8 +189,14 @@ class PushTReplayAdapter(SimulatorAdapter):
         cuda = self.device.type == "cuda"
         for key, value in self._static_columns().items():
             values[key] = value if cuda else value.copy()
-        result = {tuple(key.split("/")): torch.as_tensor(values[key], device=self.device) for key in self._keys}
-        return TensorDict(result, [count], device=self.device)
+        tree = {}
+        for key in self._keys:
+            *parents, leaf = key.split("/")
+            branch = tree
+            for part in parents:
+                branch = branch.setdefault(part, {})
+            branch[leaf] = torch.as_tensor(values[key], device=self.device)
+        return build_tensordict(tree, [count], self.device)
 
     def validate(self, state):
         fields = state_columns(state, self.envs[0].get_state(), self.num_envs)
