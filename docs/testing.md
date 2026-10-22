@@ -225,10 +225,15 @@ python scripts/testing/record_source_mse.py --update PushT     # replace one rec
 ```
 
 **Golden frames.** `tests/fixtures/golden/<device>/<Class>.npz` holds 8 render rows and the frames our
-renderer draws for them, for `cuda` and `cpu`. `manifest.json` gives the package versions, the machine,
-the GPU and a sha256 for each file. `test_cuda_frames_match_the_golden_frames` and
+renderer draws for them, for `cuda` and `cpu`. `manifest.json` gives a sha256 for each file and, for each
+class, the package versions, the machine and the GPU. `test_cuda_frames_match_the_golden_frames` and
 `test_cpu_frames_match_the_golden_frames` require the same frames exactly. They skip on a machine or
-package version that differs from the manifest. To accept an intended render change, capture new
+package version that differs from the manifest.
+
+The `cpu` frames cover the classic-control and navigation classes only. The MuJoCo families (DM
+Control, Fetch and OGBench) draw part of the frame with MuJoCo's OpenGL renderer. On CPU that renderer
+is OSMesa, and the CPU frames of these families depend on the OSMesa build. PushT has no golden frames
+because `sample_render_rows` cannot pack its State. To accept an intended render change, capture new
 frames into a new directory, compare them, and move the directory into place:
 
 ```bash
