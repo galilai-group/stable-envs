@@ -193,6 +193,37 @@ def check_visual_fidelity(env, n: int = 64) -> dict:
     return out
 
 
+def frame_mse(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """Return the MSE of each frame over its pixels and channels, on the 0-255 scale."""
+    if a.shape != b.shape:
+        raise AssertionError(f"shape {a.shape} vs {b.shape}")
+    d = a.astype(np.float64) - b.astype(np.float64)
+    return (d * d).reshape(len(d), -1).mean(1)
+
+
+def mse_summary(per_frame: np.ndarray) -> dict:
+    """Return the mean, the 95th percentile and the worst of per-frame MSE values."""
+    v = np.asarray(per_frame, np.float64)
+    return {"mse_mean": float(v.mean()), "mse_p95": float(np.percentile(v, 95)), "mse_max": float(v.max())}
+
+
+def check_source_mse(env, n: int = 64, seed: int = 0) -> dict:
+    """Measure per-frame MSE against the source on ``n`` render rows drawn from ``default_rng(seed)``."""
+    cls = type(env)
+    ref = reference_env(cls, env.size)
+    states = sample_render_rows(env, int(n), rng=np.random.default_rng(int(seed)))
+    official = cls.reference_render(ref, states)
+    ours = env._render(states).cpu().numpy()
+    per_frame = frame_mse(ours, official)
+    return {
+        **mse_summary(per_frame),
+        "per_frame": per_frame.tolist(),
+        "n": int(n),
+        "seed": int(seed),
+        "size": int(env.size),
+    }
+
+
 def check_render_state_roundtrip(env, n: int = 64) -> dict:
     """Measure private render-row restoration using env.B rows; n is unused.
 

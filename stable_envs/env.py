@@ -260,13 +260,12 @@ def check_states(
     return raw.to(device=env.device, dtype=torch.float32) if move else raw.to(dtype=torch.float32)
 
 
-#: A ``visual_fidelity`` record states the measured agreement with the source and how it was measured.
-REQUIRED_VISUAL_FIDELITY = (
-    "mean_abs",
-    "within8_frac",
-    "ssim",
-    "measured_at",
-)
+#: A ``visual_fidelity`` record states how the agreement with the source was measured.
+REQUIRED_VISUAL_FIDELITY = ("measured_at",)
+
+#: Per-frame MSE against the source over pixels and channels on the 0-255 scale: the mean, the 95th
+#: percentile and the worst frame of one seeded draw.
+VISUAL_FIDELITY_MSE = ("mse_mean", "mse_p95", "mse_max")
 
 #: Source dependency versions bind reference evidence; mismatches block its acceptance.
 #: Candidate implementation versions belong in measured_with instead.

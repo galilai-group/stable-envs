@@ -607,27 +607,16 @@ class PyFlytRocketLanding(Env):
         "pos_z",
     )
     visual_fidelity = {
-        "mean_abs": 0.038,
-        "within8_frac": 0.9998,
-        "ssim": 0.9994,
-        "exact_frac": 0.9996,
-        "interior_exact_frac": 0.9999999,
-        "raw_mse": 4.63,
-        "draw_spread": {
-            "mean_abs": [0.031, 0.038],
-            "within8_frac": [0.9998, 0.9998],
-            "ssim": [0.9994, 0.9995],
-            "raw_mse": [3.89, 4.63],
-        },
-        "under_variation": {"mean_abs": 0.035, "within8_frac": 0.9998, "ssim": 0.9994, "exact_frac": 0.994},
+        "mse_mean": 4.63,
+        "draw_spread": {"mse_mean": [3.89, 4.63]},
         "reference_unreachable_share": REFERENCE_UNREACHABLE_SHARE,
         "reference_unreachable_rows_in_draws": 0,
         "measured_at": (
             "480 px, supersample 1, default appearance, worst of 4 independent 64-state draws of "
             "sample_states (default_rng(1000..1003)) over the rows the reference bridge reaches, "
             "against PyFlyt 0.29.0 / pybullet 3.2.7 TinyRenderer frames of the rocket-landing env "
-            "with the camera at the lagged link pose; under_variation uses 64 rows with sampled appearance "
-            "(default_rng(2000)); NVIDIA GeForce RTX 3090, torch 2.14.0+cu126, nvdiffrast 0.4.0"
+            "with the camera at the lagged link pose; mse_mean is the per-frame MSE over pixels and "
+            "channels on the 0-255 scale; NVIDIA GeForce RTX 3090, torch 2.14.0+cu126, nvdiffrast 0.4.0"
         ),
         "reference_versions": {"PyFlyt": "0.29.0", "pybullet": "3.2.7"},
         "measured_with": {"nvdiffrast": "0.4.0", "torch": "2.14.0+cu126"},

@@ -17,7 +17,7 @@ import numpy as np
 import torch
 
 import stable_envs as se
-from tests.helpers.pixel_tolerances import exact_floors
+from tests.helpers import source_mse as SM
 from tests.helpers.reference.native_navigation_semantics import NativeNavigationReference
 from tests.helpers.reference.semantics import compare_state
 
@@ -42,13 +42,9 @@ def _pixel(domain, position):
     return int(round(y)), int(round(x))
 
 
-def _start_frames(domain, starts, ours, theirs, floor) -> dict:
-    """First-frame agreement with SWM under the cell's declared parity floor, plus a window at each start.
-
-    The floor applies to ``interior_mask`` pixels, the parity contract of these cells: antialiased
-    shape edges are not interior, and a dot's edge is where the renderers' residual lives.
-    """
-    from stable_envs.testing.conformance import interior_mask, pixel_agreement
+def _start_frames(domain, starts, ours, theirs, ceiling) -> dict:
+    """First-frame agreement with SWM: the worst per-frame MSE against ``ceiling``, plus a window at each start."""
+    from stable_envs.testing.conformance import frame_mse, interior_mask, pixel_agreement
 
     agreement = pixel_agreement(ours, theirs)
     diff = np.abs(ours.astype(np.int16) - theirs.astype(np.int16)).max(-1)
@@ -68,19 +64,27 @@ def _start_frames(domain, starts, ours, theirs, floor) -> dict:
     return {
         "interior_exact_frac": agreement["interior_exact_frac"],
         "interior_bad_px": agreement["interior_bad_px"],
-        "interior_exact_min": floor,
+        "mse_max": float(frame_mse(ours, theirs).max()),
+        "mse_ceiling": ceiling,
         "exact_frac": agreement["exact_frac"],
         "max_abs": agreement["max_abs"],
         "window": window,
     }
 
 
-def _interior_floor(env) -> float:
-    return exact_floors(type(env).__name__)["interior_exact_min"]
+def _mse_ceiling(env) -> float:
+    """The class's recorded worst-frame MSE against the source, with the ratchet's margin."""
+    name = type(env).__name__
+    rec = SM.record(name)
+    if rec is None:
+        import pytest
+
+        pytest.skip(f"no MSE record for {name}; run {SM.RECORD}")
+    return SM.ceiling(rec["mse_max"])
 
 
 def _frames_agree(frames: dict) -> bool:
-    return frames["interior_exact_frac"] is not None and frames["interior_exact_frac"] >= frames["interior_exact_min"]
+    return frames["mse_max"] <= frames["mse_ceiling"]
 
 
 def _references(domain, leaf, explicit, options):
@@ -141,7 +145,7 @@ def _case(env, domain, leaf, seed, explicit):
             assert np.array_equal(drawn, values), drawn
         else:
             assert len({tuple(row) for row in drawn.tolist()}) == 3, drawn
-        frames = _start_frames(domain, drawn, env.render().cpu().numpy(), their_frames, _interior_floor(env))
+        frames = _start_frames(domain, drawn, env.render().cpu().numpy(), their_frames, _mse_ceiling(env))
         assert _frames_agree(frames), frames
         steps = _rollout(env, refs, seed, STEPS)
     finally:
@@ -209,7 +213,7 @@ def appearance_gate(seed: int = 5, steps: int = 4) -> dict:
                 ours = env.render().cpu().numpy()
                 theirs = np.stack([np.asarray(ref.envs[0].render()) for ref in refs])
                 starts = env.get_state()["agent", "position"].cpu().numpy()
-                frames = _start_frames("piecewise", starts, ours, theirs, _interior_floor(env))
+                frames = _start_frames("piecewise", starts, ours, theirs, _mse_ceiling(env))
                 assert _frames_agree(frames), frames
                 evidence["frames"].append(frames)
             plain = env.render(variation={flag: 0 for flag in FLAGS}).cpu().numpy()
@@ -248,7 +252,7 @@ def zones_bias_field_gate(seed: int = 5) -> dict:
                 start,
                 env.render().cpu().numpy(),
                 np.asarray(ref.envs[0].render())[None],
-                _interior_floor(env),
+                _mse_ceiling(env),
             )
             assert _frames_agree(frames), frames
         finally:

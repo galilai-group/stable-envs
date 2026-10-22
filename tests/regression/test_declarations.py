@@ -1,6 +1,6 @@
 """Fidelity declarations, registration refusals, and reference-version declarations.
 
-An env that declares ``visual_fidelity`` must carry its measurements, ``measured_at`` and a
+An env that declares ``visual_fidelity`` must carry ``measured_at``, well-formed MSE values and a
 ``visual_note``; ``register`` enforces this. Each refusal is checked against a synthetic class that
 breaks one rule, on CPU; the registry-wide tests check that the real classes satisfy the rules.
 """
@@ -25,13 +25,13 @@ from stable_envs.registry import (
     register,
     registry_table,
 )
-from tests.helpers import pixel_tolerances as PT
+from tests.helpers import source_mse as SM
 
 #: A complete measurement; tests below remove one field at a time.
 VF = {
-    "mean_abs": 2.45,
-    "within8_frac": 0.935,
-    "ssim": 0.97,
+    "mse_mean": 2.45,
+    "mse_p95": 4.1,
+    "mse_max": 6.3,
     "measured_at": "a test",
 }
 
@@ -90,6 +90,16 @@ def test_a_visual_env_missing_any_required_measurement_is_refused(missing):
     vf = {k: v for k, v in VF.items() if k != missing}
     with pytest.raises(ValueError, match="declares visual_fidelity without"):
         register(_visual("Bad", visual_fidelity=vf))
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [{"mse_mean": -1.0}, {"mse_p95": float("nan")}, {"mse_max": "6.3"}, {"mse_mean": 7.0}, {"mse_p95": 6.4}],
+)
+def test_a_visual_env_with_a_malformed_mse_is_refused(bad):
+    """An MSE that is negative, not finite, not a number, or above ``mse_max`` is refused."""
+    with pytest.raises(ValueError, match="MSE|exceed mse_max"):
+        register(_visual("Bad", visual_fidelity=dict(VF, **bad)))
 
 
 def test_a_visual_env_with_no_visual_note_is_refused():
@@ -151,7 +161,7 @@ def test_describe_reports_the_measured_agreement_only_when_declared():
     assert "visual_fidelity" not in plain and "visual_note" not in plain
 
     vis = _visual("V2")(num_envs=1, device="cpu").describe()
-    assert vis["visual_fidelity"]["ssim"] == 0.97
+    assert vis["visual_fidelity"]["mse_mean"] == 2.45
     assert vis["visual_note"] == "a different rasterizer draws the same scene"
 
 
@@ -172,18 +182,26 @@ def test_every_registered_class_still_satisfies_its_fidelity_declaration():
     assert not bad, "registered classes with an inadmissible declaration:\n  " + "\n  ".join(bad)
 
 
-def test_every_class_with_visual_fidelity_has_agreement_limits_and_no_other_does():
-    """A registered class declares ``visual_fidelity`` if and only if ``pixel_tolerances.AGREEMENT`` names it.
+def test_every_declared_visual_fidelity_mse_is_the_recorded_one():
+    """A class that declares ``visual_fidelity`` states the MSE values of ``tests/fixtures/source_mse.json``."""
+    records = SM.load()
+    if not records:
+        pytest.skip(f"no MSE record; run {SM.RECORD}")
+    bad = []
+    for name, cls in sorted(se.registry.REGISTRY.items()):
+        if cls.visual_fidelity and name in records:
+            bad += SM.declared_problems(name, cls.visual_fidelity, records[name])
+    assert not bad, "visual_fidelity and tests/fixtures/source_mse.json disagree:\n  " + "\n  ".join(bad)
 
-    The source-comparison tests pick the exact or the agreement criterion from that table.
-    """
-    bad = [
-        f"{name}: visual_fidelity={bool(cls.visual_fidelity)}, AGREEMENT entry={name in PT.AGREEMENT}"
-        for name, cls in sorted(se.registry.REGISTRY.items())
-        if bool(cls.visual_fidelity) != (name in PT.AGREEMENT)
-    ]
-    assert not bad, "visual_fidelity and tests/helpers/pixel_tolerances.AGREEMENT disagree:\n  " + "\n  ".join(bad)
-    assert not set(PT.AGREEMENT) & set(PT.EXACT_OVERRIDES), "a class has both an exact and an agreement entry"
+
+def test_every_mse_record_is_well_formed():
+    """Each record names its draw and has finite, ordered MSE values."""
+    records = SM.load()
+    if not records:
+        pytest.skip(f"no MSE record; run {SM.RECORD}")
+    for name, rec in records.items():
+        assert {"seed", "n", "size", "reference_versions", "gpu", *SM.KEYS} <= set(rec), name
+        assert 0 <= rec["mse_mean"] <= rec["mse_max"] and 0 <= rec["mse_p95"] <= rec["mse_max"], name
 
 
 def test_the_import_error_report_is_a_readable_mapping_and_costs_nothing():

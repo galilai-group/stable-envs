@@ -14,7 +14,6 @@ import pytest
 
 import stable_envs as snv
 from stable_envs.envs.rocket import legacy as RL
-from tests.helpers import pixel_tolerances as PT
 
 
 def test_the_rocket_constructor_takes_num_envs():
@@ -87,13 +86,11 @@ def test_the_rocket_colour_exactness_declaration_survives_verbatim():
     assert d["status"].startswith("not_applicable")
 
 
-def test_the_rocket_limits_and_reference_versions_survive():
+def test_the_rocket_mse_and_reference_versions_survive():
     cls = RL.PyFlytRocketLanding
     v = cls.visual_fidelity
     assert v["reference_versions"] == {"PyFlyt": "0.29.0", "pybullet": "3.2.7"}
-    lim = PT.agreement_limits("PyFlytRocketLanding")
-    assert (lim["mean_abs_max"], lim["within8_min"], lim["ssim_min"]) == (0.1, 0.95, 0.95)
-    assert v["mean_abs"] == 0.038 and v["ssim"] == 0.9994
+    assert v["mse_mean"] == 4.63
     assert cls.default_size == 480 and cls.default_supersample == 1
 
 
