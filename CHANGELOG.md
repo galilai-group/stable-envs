@@ -23,6 +23,10 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- `visual_fidelity` records the per-frame MSE against the source as `mse_mean`, `mse_p95` and `mse_max`
+  on the 0-255 scale. Only `measured_at` is required.
+- The tests compare frames with a recorded source MSE for each class (`tests/fixtures/source_mse.json`)
+  and with golden frames of our own renderers (`tests/fixtures/golden/`).
 - `stable-envs doctor` reports how many render paths are tuned on this machine, lists the
   `STABLE_ENVS_*` variables that are set and flags unknown names, and checks torch's compiled GPU
   architectures with binary-compatibility rules.
@@ -32,8 +36,8 @@ All notable changes to this project are listed here. The format follows
 ### Fixed
 
 - `PyFlytRocketLanding` on CUDA draws the fins, legs and fuel tank at the current body pose, as PyFlyt
-  does, and does not draw the ground when the camera is below it. Raw MSE against PyFlyt is about 4.6
-  per 480 px frame.
+  does, and does not draw the ground when the camera is below it. The mean per-frame MSE against PyFlyt
+  is 4.2 on 480 px frames.
 - `PyFlytRocketLanding.render(state)` on CUDA picks ground texels as TinyRenderer does, so frames that look
   down at the far ground match PyFlyt when a ground corner is close to the camera plane.
 

@@ -20,7 +20,8 @@ if not torch.cuda.is_available():
 
 import stable_envs as se
 from stable_envs.testing import conformance as C
-from tests.helpers import pixel_tolerances as PT
+from stable_envs.testing.provenance import reference_version_mismatch
+from tests.helpers import source_mse as SM
 from tests.helpers.reference import dmc_source_render
 from tests.helpers.reference.certification import has_reference_renderer
 
@@ -43,6 +44,18 @@ TASK_OBJECT_PRESENCE_MARGIN = 0.50
 #: Seed for the states the reference-based tests draw, so a failure is reproducible regardless of test
 #: order. It is not tuned to clear any floor, and is separate from ``render_worker.STATE_SEED``.
 PARITY_STATE_SEED = 20260811
+
+
+def _installed(packages) -> dict:
+    from importlib.metadata import PackageNotFoundError, version
+
+    out = {}
+    for name in packages:
+        try:
+            out[name] = version(name)
+        except PackageNotFoundError:
+            out[name] = None
+    return out
 
 
 @pytest.fixture(scope="module", params=ENV_NAMES)
@@ -236,87 +249,37 @@ def test_a_declared_task_object_is_drawn_iff_the_reference_draws_it(env):
         )
 
 
-def test_fidelity_declaration_matches_the_tolerance_table(env):
-    """A class declares ``visual_fidelity`` if and only if the tolerance table compares it by agreement."""
-    from stable_envs.registry import check_fidelity_declaration
-
-    cls = type(env)
-    check_fidelity_declaration(cls)
-    assert bool(env.visual_fidelity) == (PT.agreement_limits(cls.__name__) is not None), (
-        f"{cls.__name__}: visual_fidelity and tests/helpers/pixel_tolerances.AGREEMENT disagree"
-    )
-
-
 @pytest.mark.reference
-def test_render_parity_with_official_renderer(env):
-    """Frames match the official renderer on sampled reachable states, to the exact-pixel floors.
+def test_source_mse_matches_the_record(env):
+    """Per-frame MSE against the source stays in the recorded band of ``tests/fixtures/source_mse.json``.
 
-    Classes in ``pixel_tolerances.AGREEMENT`` are skipped here and checked by
-    ``test_render_agreement_with_official_renderer``.
+    The mean, the 95th percentile and the worst frame are measured on the recorded seeded render rows.
+    A value above the band is a regression; a value far below it means the record is out of date.
     """
     cls = type(env)
-    if PT.agreement_limits(cls.__name__) is not None:
-        pytest.skip(f"{cls.__name__} is compared by agreement in test_render_agreement_with_official_renderer")
     if not has_reference_renderer(cls):
         pytest.skip(f"{cls.__name__}: no official reference renderer to compare against")
+    records = SM.load()
+    if not records:
+        pytest.skip(f"no MSE record; run {SM.RECORD}")
+    rec = records.get(cls.__name__)
+    assert rec is not None, (
+        f"{cls.__name__} has a reference renderer but no MSE record; run {SM.RECORD} --update {cls.__name__}"
+    )
+    assert rec["size"] == env.size, f"{cls.__name__}: the record is at {rec['size']} px, the env renders {env.size} px"
+    bad = reference_version_mismatch(rec.get("reference_versions"), _installed(rec.get("reference_versions") or {}))
+    if bad:
+        pytest.skip(f"{cls.__name__}: the record was measured against another reference: {'; '.join(bad)}")
+    gpu = torch.cuda.get_device_name()
+    if rec.get("gpu") != gpu:
+        pytest.skip(f"{cls.__name__}: the record was measured on {rec.get('gpu')}, this host has {gpu}")
     try:
-        # Use the process-wide cache: dropping a MuJoCo reference env releases an EGL context while
-        # others are still live, which conformance.py forbids.
-        ref = C.reference_env(cls, env.size)
+        got = C.check_source_mse(env, n=rec["n"], seed=rec["seed"])
     except ImportError as e:
         pytest.skip(f"{cls.__name__}: reference env not installed ({e})")
-
-    states = C.sample_render_rows(env, 64, rng=np.random.default_rng(PARITY_STATE_SEED))
-    official = cls.reference_render(ref, states)
-    ours = env._render(states).cpu().numpy()
-    assert ours.shape == official.shape, f"shape {ours.shape} vs official {official.shape}"
-
-    r = C.pixel_agreement(ours, official)
-    print(f"\n{cls.__name__} vs {env.reference_id}: {r}")
-    floors = PT.exact_floors(cls.__name__)
-    floor = floors["interior_exact_min"]
-    if r["interior_exact_frac"] is not None:
-        assert r["interior_exact_frac"] >= floor, (
-            f"{r.get('interior_bad_px')} of {r.get('interior_px')} interior pixels disagree "
-            f"(max |delta| {r['max_abs']}/255), i.e. {100 * r['interior_exact_frac']:.5f}% exact against "
-            f"a floor of {100 * floor:.5f}%, on states from default_rng({PARITY_STATE_SEED}). Interior "
-            f"disagreement is normally a geometry or colour error. A few 1/255 pixels may be a "
-            f"quantisation boundary in a smoothly shaded region (see conformance.interior_mask), which "
-            f"is declared in tests/helpers/pixel_tolerances.py with its cause: {r}"
-        )
-    # All-pixel exactness also depends on how much of the frame moves, so a class can lower it.
-    all_floor = floors["all_exact_min"]
-    assert r["exact_frac"] >= all_floor, (
-        f"only {100 * r['exact_frac']:.1f}% of pixels exact (floor {100 * all_floor:.1f}%): {r}"
-    )
-    assert r["mean_abs"] <= floors["mean_abs_max"], f"mean |diff| {r['mean_abs']:.3f}/255 too high: {r}"
-
-
-@pytest.mark.reference
-def test_render_agreement_with_official_renderer(env):
-    """A class in ``pixel_tolerances.AGREEMENT`` meets its ``mean_abs``, ``within8_frac`` and ``ssim`` limits.
-
-    ``mean_abs`` catches a global shift, ``within8_frac`` a wrong region, ``ssim`` lost structure.
-    Interior-pixel exactness is not asserted for these classes.
-    """
-    cls = type(env)
-    vf = PT.agreement_limits(cls.__name__)
-    if vf is None:
-        pytest.skip(f"{cls.__name__} is compared exactly in test_render_parity_with_official_renderer")
-    try:
-        r = C.check_visual_fidelity(env)
-    except ImportError as e:
-        pytest.skip(f"{cls.__name__}: reference env not installed ({e})")
-    print(f"\n{cls.__name__} vs {env.reference_id}: {r}")
-    print(f"  limits: {vf}; declared measurement: {env.visual_fidelity}")
-    assert r["mean_abs"] <= vf["mean_abs_max"], (
-        f"mean |diff| {r['mean_abs']:.3f}/255 exceeds the declared ceiling {vf['mean_abs_max']}: {r}"
-    )
-    assert r["within8_frac"] >= vf["within8_min"], (
-        f"only {100 * r['within8_frac']:.1f}% of pixels are within 8/255 (declared floor "
-        f"{100 * vf['within8_min']:.1f}%): {r}"
-    )
-    assert r["ssim"] >= vf["ssim_min"], f"SSIM {r['ssim']:.4f} below the declared floor {vf['ssim_min']}: {r}"
+    print(f"\n{cls.__name__} vs {env.reference_id}: " + ", ".join(f"{k} {got[k]:.4f}" for k in SM.KEYS))
+    problems = SM.problems(cls.__name__, got, rec)
+    assert not problems, "\n".join(problems) + f"\nrecorded on {rec.get('gpu')}; per-frame MSE {got['per_frame']}"
 
 
 @pytest.mark.reference

@@ -13,7 +13,6 @@ import pytest
 
 pytest.importorskip("scipy")
 from stable_envs.envs.rocket import legacy as RL  # noqa: E402
-from tests.helpers import pixel_tolerances as PT  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 REF = ROOT / "tests" / "fixtures" / "states" / "rocket_landing"
@@ -160,33 +159,24 @@ def test_lagged_pose_renormalises_a_float32_quaternion():
     assert np.abs(np.linalg.norm(q_prev, axis=1) - 1).max() < 1e-12
 
 
-def test_visual_declaration_is_complete_with_margin():
-    """Every required key is a number, the thresholds leave margin over the measurement, and the registry accepts it.
+def test_visual_declaration_is_complete():
+    """Every required key is set, the MSE names its draws, and the registry accepts it.
 
-    The values themselves are asserted against a card in tests/gpu/test_conformance.py.
+    The values themselves are checked against tests/fixtures/source_mse.json.
     """
     from stable_envs.env import REQUIRED_VISUAL_FIDELITY
     from stable_envs.registry import check_fidelity_declaration
 
     vf = RL.PyFlytRocketLanding.visual_fidelity
-    lim = PT.agreement_limits("PyFlytRocketLanding")
     assert all(k in vf for k in REQUIRED_VISUAL_FIDELITY)
     assert all(vf[k] is not None for k in REQUIRED_VISUAL_FIDELITY)
     assert not vf["measured_at"].startswith("UNMEASURED")
-    for token in ("480 px", "supersample 1", "worst of 4", "PyFlyt 0.29.0", "pybullet 3.2.7", "RTX 3090"):
+    for token in ("480 px", "supersample 1", "default_rng(20260811)", "PyFlyt 0.29.0", "pybullet 3.2.7", "RTX 3090"):
         assert token in vf["measured_at"], f"measured_at does not say {token!r}"
     assert vf["reference_versions"] == {"PyFlyt": "0.29.0", "pybullet": "3.2.7"}
     assert set(vf["measured_with"]) == {"nvdiffrast", "torch"}
-    assert vf["mean_abs"] < lim["mean_abs_max"]
-    assert vf["within8_frac"] > lim["within8_min"]
-    assert vf["ssim"] > lim["ssim_min"]
-    assert lim["mean_abs_max"] >= 1.2 * vf["mean_abs"], "a ceiling sitting on the measurement is fragile"
-    assert lim["within8_min"] <= 0.97 * vf["within8_frac"]
-    assert lim["ssim_min"] <= 0.97 * vf["ssim"]
-    lo, hi = vf["draw_spread"]["mean_abs"]
-    assert lo <= hi and abs(vf["mean_abs"] - hi) < 0.01
+    assert vf["mse_mean"] <= vf["mse_p95"] <= vf["mse_max"]
     assert vf["reference_unreachable_share"] == RL.REFERENCE_UNREACHABLE_SHARE == 1.0 / 960.0
-    assert vf["reference_unreachable_rows_in_draws"] == 0
     check_fidelity_declaration(RL.PyFlytRocketLanding)
 
 

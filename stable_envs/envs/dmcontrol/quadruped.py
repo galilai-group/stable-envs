@@ -6,10 +6,11 @@ from ._aligned import DMCAlignedSemantics
 from ._cells import trackcom_cell
 
 _QUADRUPED_AT = (
-    "224 px, camera 2 ('y', trackcom), 64 states x 3 independent draws from sample_states "
-    "(certified model and default appearance: material self rgba .6 .3 .3, foot_back_left "
-    "density 1000), RTX 3090 / driver 575.57.08 / MUJOCO_GL=egl, mujoco 3.12.0 + "
-    "mujoco-warp 3.12.0, against dm_control's physics.render at camera 2"
+    "224 px, camera 2 ('y', trackcom), per-frame MSE over pixels and channels on the 0-255 scale, over "
+    "the 64 render rows of sample_render_rows(default_rng(20260811)), default appearance (material "
+    "self rgba .6 .3 .3, foot_back_left density 1000), NVIDIA GeForce RTX 3090 / driver 575.57.08 / "
+    "MUJOCO_GL=egl, torch 2.14.1+cu126, mujoco 3.12.0 + mujoco-warp 3.12.0 + warp-lang 1.17.0, against "
+    "dm_control's physics.render at camera 2 ('y', trackcom)"
 )
 _QUADRUPED_AT_MEASURED_WITH = {"mujoco_warp": "3.12.0"}
 
@@ -75,15 +76,9 @@ QUADRUPED_NOTE = (
 
 VISUAL_FIDELITY: dict[str, dict] = {
     "DMCQuadrupedWalk": {
-        "mean_abs": 1.16,
-        "within8_frac": 0.986,
-        "ssim": 0.994,
-        "interior_exact_frac": 0.959,
-        "interior_frac": 0.0282,
-        "all_exact_frac": 0.441,
-        "skybox_share": 0.148,
-        "floor_share": 0.806,
-        "draw_spread": {"mean_abs": [1.152, 1.165], "within8_frac": [0.9856, 0.9861], "ssim": [0.9939, 0.9941]},
+        "mse_mean": 8.3424,
+        "mse_p95": 14.7919,
+        "mse_max": 17.3164,
         "measured_at": _QUADRUPED_AT,
         "reference_versions": {"mujoco": "3.12.0"},
         "measured_with": _QUADRUPED_AT_MEASURED_WITH,

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import math
 import pkgutil
 from typing import Any
 
@@ -11,6 +12,7 @@ from .env import (
     MEASURED_WITH_KEY,
     REFERENCE_VERSIONS_KEY,
     REQUIRED_VISUAL_FIDELITY,
+    VISUAL_FIDELITY_MSE,
     Env,
     _check_reference_versions_shape,
 )
@@ -22,9 +24,9 @@ REGISTRY: dict[str, type[Env]] = {}
 def check_fidelity_declaration(cls: type[Env]) -> None:
     """Validate the declared comparison with the source.
 
-    A ``visual_fidelity`` record must carry its measurements, ``measured_at`` and a ``visual_note``.
-    Version fields must be dicts of package names to exact versions. This checks that the
-    declaration is complete. The source-comparison tests check the measurement itself.
+    A ``visual_fidelity`` record must carry ``measured_at`` and a ``visual_note``. Its MSE values must be
+    finite and non-negative, with the mean and the 95th percentile at most the worst frame. Version fields
+    must be dicts of package names to exact versions. The source-comparison tests check the measurement.
     """
     vf = dict(getattr(cls, "visual_fidelity", {}) or {})
     # Version metadata is optional, but malformed declarations cannot identify a reference.
@@ -44,11 +46,24 @@ def check_fidelity_declaration(cls: type[Env]) -> None:
             f"{cls.__name__} declares visual_fidelity without {missing}; the record carries the "
             f"measured agreement and how it was measured."
         )
+    _check_mse_values(cls, vf)
     if not getattr(cls, "visual_note", ""):
         raise ValueError(
             f"{cls.__name__} declares visual_fidelity with no visual_note; the note states where and "
             f"why the frames differ from the source renderer."
         )
+
+
+def _check_mse_values(cls: type[Env], vf: dict) -> None:
+    mse = {k: vf[k] for k in VISUAL_FIDELITY_MSE if k in vf}
+    for k, v in mse.items():
+        if isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) or v < 0:
+            raise ValueError(f"{cls.__name__}: visual_fidelity[{k!r}] = {v!r}; an MSE is a finite number >= 0.")
+    worst = mse.get("mse_max")
+    if worst is not None:
+        over = [k for k in ("mse_mean", "mse_p95") if k in mse and mse[k] > worst]
+        if over:
+            raise ValueError(f"{cls.__name__}: visual_fidelity {over} exceed mse_max = {worst}.")
 
 
 def register(cls: type[Env]) -> type[Env]:

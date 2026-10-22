@@ -178,9 +178,8 @@ python -m tests._runner.supervisor -- tests/gpu -v   # crash-isolated
 
 | test | rules out |
 |---|---|
-| `test_render_parity_with_official_renderer` | wrong colour, shape or position against the official renderer |
-| `test_render_agreement_with_official_renderer` | a class in `AGREEMENT` that no longer meets its limits |
-| `test_fidelity_declaration_matches_the_tolerance_table` | a class with `visual_fidelity` and no `AGREEMENT` entry, or the reverse |
+| `test_source_mse_matches_the_record` | a frame MSE against the official renderer above its record, or a record that is out of date |
+| `test_cuda_frames_match_the_golden_frames` | any change to the frames of a class on CUDA |
 | `test_render_state_roundtrip` | a render state that the round trip clips, normalizes or reorders |
 | `test_every_state_dim_reaches_the_render` | a render-state dimension that does not affect the frame |
 | `test_batch_invariance` | a frame that depends on its batch |
@@ -195,18 +194,54 @@ python -m tests._runner.supervisor -- tests/gpu -v   # crash-isolated
 | `test_gpu_step_tracks_the_reference_simulator` | a batched GPU simulator that drifts from the reference beyond its bound |
 | `test_state_is_sufficient` | a state that does not determine the official frame |
 
-`tests/helpers/pixel_tolerances.py` holds the per-class tolerances. `EXACT` is the default criterion:
+### Frame regression checks
 
-| key | value | meaning |
-|---|---|---|
-| `interior_exact_min` | 1.0 | interior pixels (flat 3×3 neighbourhood in the reference) must match exactly |
-| `all_exact_min` | 0.90 | fraction of all pixels that must match (edges may differ) |
-| `mean_abs_max` | 4.0 / 255 | mean absolute difference |
+Two fixtures record the frames. Each check compares a new measurement with its record, not with a
+fixed limit.
 
-`EXACT_OVERRIDES` lowers a floor for a class. A comment next to each entry names the cause.
-`AGREEMENT` gives a `mean_abs` ceiling, a `within8_frac` floor and an `ssim` floor for each class
-that declares `visual_fidelity`. If a new env cannot reach the interior floor, find the wrong
-constant. See [Identify authority](adding/renderer.md#identify-authority).
+**Source MSE.** `tests/fixtures/source_mse.json` holds one record for each class that has a reference
+renderer. The record gives the per-frame MSE against the source, over pixels and channels on the
+0-255 scale, for 64 render rows from a fixed seed:
+
+| key | meaning |
+|---|---|
+| `mse_mean` | mean of the per-frame MSE |
+| `mse_p95` | 95th percentile of the per-frame MSE |
+| `mse_max` | MSE of the worst frame |
+| `seed`, `n`, `size` | the draw and the frame size |
+| `reference_versions`, `gpu`, `torch` | the measurement setup |
+
+`test_source_mse_matches_the_record` measures the same rows again. A value fails above
+1.10 × record + 0.01, or below 0.5 × record − 0.01. A class that matches the source exactly records 0,
+so any difference fails. A value far below its record fails until you record it again. A class
+that declares `visual_fidelity` must give the same MSE values as its record
+(`tests/regression/test_declarations.py`).
+
+To record or update the values, on the GPU profile:
+
+```bash
+python scripts/testing/record_source_mse.py                    # new file
+python scripts/testing/record_source_mse.py --update PushT     # replace one record
+```
+
+**Golden frames.** `tests/fixtures/golden/<device>/<Class>.npz` holds 8 render rows and the frames our
+renderer draws for them, for `cuda` and `cpu`. `manifest.json` gives a sha256 for each file and, for each
+class, the package versions, the machine and the GPU. `test_cuda_frames_match_the_golden_frames` and
+`test_cpu_frames_match_the_golden_frames` require the same frames exactly. They skip on a machine or
+package version that differs from the manifest.
+
+The `cpu` frames cover the classic-control and navigation classes only. The MuJoCo families (DM
+Control, Fetch and OGBench) draw part of the frame with MuJoCo's OpenGL renderer. On CPU that renderer
+is OSMesa, and the CPU frames of these families depend on the OSMesa build. PushT has no golden frames
+because `sample_render_rows` cannot pack its State. To accept an intended render change, capture new
+frames into a new directory, compare them, and move the directory into place:
+
+```bash
+python scripts/testing/capture_golden.py /tmp/golden-cuda --device cuda --source-commit "$(git rev-parse HEAD)"
+```
+
+If a new env cannot match the source, find the wrong constant. See
+[Identify authority](adding/renderer.md#identify-authority).
 
 ## Running native renderers safely
 

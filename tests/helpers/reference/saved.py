@@ -11,15 +11,20 @@ from pathlib import Path
 import numpy as np
 import torch
 
+from stable_envs.testing.conformance import frame_mse, mse_summary
 from stable_envs.testing.evidence import sha256
 from stable_envs.testing.metrics import normalized_mse, summarize_errors
 from stable_envs.testing.provenance import verify_recorded_code
+from tests.helpers import source_mse as SM
 from tests.helpers.reference.cases import CaseKey, coverage
 
 SWM_PIN = "21446f1ede6d5284e981bd7b47f432b994e6d812"
 # Commit the frozen native corpora were recorded against; their envs are unchanged at SWM_PIN.
 CORPUS_PIN = "176d54532b3c0a251a4f509b74f2fdacc143a63d"
 ROCKET_SOURCE = "5ede3640ce1e2add32b6b0a6c36e190bb1130e38bb258ab182af12a6fbedee23"
+#: Per-frame MSE of each saved Rocket render archive, by device. The file names the archives it was
+#: measured on; ``rocket_render_mse`` gives the values to write when an archive changes.
+ROCKET_RENDER_MSE = Path(__file__).parents[2] / "fixtures" / "saved" / "rocket_render_mse.json"
 
 # Absolute roundoff budget for cross-machine frozen trajectories only: Linux x86_64
 # against the macOS arm64 recordings differs by up to 1.1e-11 (DM Control
@@ -102,8 +107,13 @@ def rocket_cases():
     return base + [("variation_" + label, seed, "float64") for label in variations for seed in (0, 17, 42)]
 
 
+def rocket_render_mse(ours, source) -> dict:
+    """Mean, 95th percentile and worst per-frame MSE of a saved archive, on the 0-255 scale."""
+    return mse_summary(frame_mse(ours, source))
+
+
 def verify_rocket_render(directory, candidate_root, *, revision=None):
-    """Verify the saved 204-case Rocket render report, including its per-group visual criteria."""
+    """Verify the saved 204-case Rocket render report and its per-frame MSE against the recorded band."""
     root = Path(directory)
     report = json.loads((root / "result.json").read_text())
     assert report["status"] in ("PUBLIC_CPU_RENDER_PASS", "PUBLIC_GPU_PASS")
@@ -130,21 +140,18 @@ def verify_rocket_render(directory, candidate_root, *, revision=None):
         )
         assert np.isclose(error, row["metrics"]["normalized_mse"], rtol=1e-12, atol=0)
         assert error <= 0.001
-    from stable_envs.testing.conformance import ssim
-
-    # Fixed limits for this report format, independent of the env's declared thresholds.
-    limits = dict(mean_abs_max=10.0, within8_min=0.91, ssim_min=0.80)
     for label, group in report["groups"].items():
         indices = [i for i, row in enumerate(report["records"]) if row["label"] == label]
         assert len(indices) == group["count"] and group["passed"] is True
-        a, b = ours[indices], source[indices]
-        delta = np.abs(a.astype(np.int16) - b.astype(np.int16)).max(-1)
-        mean_abs, within8 = float(delta.mean()), float((delta <= 8).mean())
-        score = 1.0 if not np.any(delta) else ssim(a, b)
-        assert mean_abs == group["metrics"]["mean_abs"] and within8 == group["metrics"]["within8_frac"]
-        assert abs(score - group["metrics"]["ssim"]) < 1e-12
-        assert mean_abs <= limits["mean_abs_max"] and within8 >= limits["within8_min"]
-        assert score >= limits["ssim_min"]
+    got = rocket_render_mse(ours, source)
+    rec = json.loads(ROCKET_RENDER_MSE.read_text())["devices"][report["device"]]
+    bad = SM.problems(
+        f"saved Rocket render ({report['device']})",
+        got,
+        rec,
+        rerecord=f"write rocket_render_mse() of the new archive to {ROCKET_RENDER_MSE.name}",
+    )
+    assert not bad, "\n".join(bad)
     return dict(
         status="PASS",
         scope="saved public render witness verification, not fresh acceptance",

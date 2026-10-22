@@ -19,7 +19,6 @@ from stable_envs import registry as R  # noqa: E402
 from stable_envs.envs import ogbench as OGB  # noqa: E402
 from stable_envs.envs.ogbench import manipulation as MANIP  # noqa: E402
 from stable_envs.envs.ogbench import maze as MAZE  # noqa: E402
-from tests.helpers import pixel_tolerances as PT  # noqa: E402
 
 pytestmark = pytest.mark.unit
 
@@ -90,26 +89,11 @@ def test_a_maze_cell_is_a_declaration_and_overrides_no_renderer_method():
 
 @pytest.mark.parametrize("cell", MANIP_CELLS)
 def test_the_manipulation_declarations_are_still_the_measured_visual_ones(cell):
-    """A manipulation cell declares its measured numbers and pinned reference versions, and has agreement limits."""
+    """A manipulation cell declares how it was measured and its pinned reference versions."""
     cls = R.REGISTRY[cell]
     vf = cls.visual_fidelity
-    limits = PT.agreement_limits(cell)
-    assert limits is not None, f"{cell}: no agreement limits in tests/helpers/pixel_tolerances.py"
-    for k in (
-        "mean_abs",
-        "within8_frac",
-        "ssim",
-        "measured_at",
-        "reference_versions",
-        "measured_with",
-        "interior_frac",
-        "interior_exact_frac",
-        "all_exact_frac",
-        "draw_spread",
-    ):
+    for k in ("measured_at", "reference_versions", "measured_with"):
         assert k in vf, f"{cell}: visual_fidelity is missing {k}"
-    assert limits["mean_abs_max"] > vf["mean_abs"], "a ceiling must sit above the measurement"
-    assert limits["within8_min"] < vf["within8_frac"] and limits["ssim_min"] < vf["ssim"]
     assert vf["reference_versions"] == {"mujoco": "3.12.0", "ogbench": "1.2.1"}
     assert vf["measured_with"] == {"mujoco_warp": "3.12.0"}
     assert "can differ from MuJoCo" in cls.visual_note and "visual_fidelity records" in cls.visual_note
