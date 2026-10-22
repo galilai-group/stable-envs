@@ -109,6 +109,12 @@ def cmd_states(args) -> None:
                 if int(getattr(env, "state_dim", 0) or 0) > 0:
                     rows = C.sample_render_rows(env, args.n, rng=np.random.default_rng(args.seed))
                     blob = {"kind": "rows", "rows": torch.as_tensor(rows)}
+                    try:
+                        env._render(blob["rows"][:1].to(env.device))
+                    except ValueError as e:
+                        if "renders only at" not in str(e):
+                            raise
+                        size = None
                 else:
                     blob = {"kind": "state", "state": _rollout_states(env, args.n, args.seed)}
             finally:
