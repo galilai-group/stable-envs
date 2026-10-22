@@ -10,6 +10,7 @@ import torch
 from tensordict import TensorDict
 
 from ...._core.physics import state_key
+from ...._execution.process import PER_LANE
 from ...._execution.protocol import SimulatorAdapter
 
 _NUMPY_DTYPES = {torch.float64: np.float64, torch.int64: np.int64, torch.bool: np.bool_}
@@ -185,6 +186,8 @@ def validate_classic_state(domain: str, state, *, batch: int | None = None) -> N
 class ClassicControlAdapter(SimulatorAdapter):
     """B independent pinned Gymnasium simulators, with no rendering responsibility."""
 
+    process_methods = {"configure": PER_LANE}
+
     def __init__(self, domain: str, num_envs: int, device="cpu", seed: int = 0):
         if domain not in CLASSIC_FIELDS:
             raise ValueError(f"Unsupported classic-control domain {domain!r}")
@@ -284,6 +287,22 @@ class ClassicControlAdapter(SimulatorAdapter):
             device=self.device,
         )
 
+    def validate(self, state: TensorDict) -> None:
+        """Check the schema and every lane's PCG64 state; change no simulator."""
+        self._check_open()
+        validate_classic_state(self.domain, state, batch=self.num_envs)
+        probe = np.random.PCG64(0)
+        for row in state.cpu():
+            probe.state = {
+                "bit_generator": "PCG64",
+                "state": {
+                    "state": _from_limbs(row["rng", "state"].numpy()),
+                    "inc": _from_limbs(row["rng", "increment"].numpy()),
+                },
+                "has_uint32": row["rng", "has_uint32"].item(),
+                "uinteger": row["rng", "uinteger"].item(),
+            }
+
     def set_state(self, state: TensorDict) -> None:
         self._check_open()
         validate_classic_state(self.domain, state, batch=self.num_envs)
@@ -352,7 +371,7 @@ class ClassicControlAdapter(SimulatorAdapter):
         space = env.observation_space
         return np.zeros(space.shape, space.dtype), 0.0, False, False, {}
 
-    def step(self, actions, *, active=None) -> TensorDict:
+    def step(self, actions, *, active=None, capture_state=True) -> TensorDict:
         active = None if active is None else np.asarray(active.detach().cpu(), dtype=bool)
         self._check_open()
         # An inactive lane does not advance and reports zero task outputs, as Env.step does.
@@ -363,7 +382,7 @@ class ClassicControlAdapter(SimulatorAdapter):
         observations = np.stack([out[0] for out in outputs])
         return TensorDict(
             {
-                "state": self.get_state(),
+                **({"state": self.get_state()} if capture_state else {}),
                 "reward": torch.tensor([out[1] for out in outputs], dtype=torch.float64, device=self.device),
                 "terminated": torch.tensor([out[2] for out in outputs], dtype=torch.bool, device=self.device),
                 "truncated": torch.tensor([out[3] for out in outputs], dtype=torch.bool, device=self.device),

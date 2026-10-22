@@ -8,6 +8,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._execution.process import PER_LANE
 from ...._execution.protocol import SimulatorAdapter
 from ...._execution.state_columns import owned_columns
 from .compatibility import MODEL_VALUES, CompatibleCube, CompatibleScene, LanePool, nodes, variation_tree
@@ -88,6 +89,7 @@ class OGBManipulationAdapter(SimulatorAdapter):
     """
 
     execution_mode = "DELEGATED_CPU"
+    process_methods = {"configure": PER_LANE}
 
     def __init__(self, family, num_envs=1, device="cpu", seed=0, reward_task_id=None):
         if family not in ("Cube", "Scene") or type(num_envs) is not int or num_envs < 1:

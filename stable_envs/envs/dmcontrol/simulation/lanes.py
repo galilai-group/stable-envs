@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._execution.process import PER_LANE
 from ...._execution.protocol import SimulatorAdapter
 from ...._execution.state_columns import require_columns
 from . import physics as _physics
@@ -16,6 +17,8 @@ class DMCLanes(SimulatorAdapter):
     ``device`` controls returned tensor placement. State holds physics, lifecycle,
     task RNG, episode-drawn model entries and the lane's physics Variation.
     """
+
+    process_methods = {"configure_physics": PER_LANE}
 
     def __init__(self, key, num_envs, device, seed, make, fields):
         self.key = key
@@ -58,13 +61,17 @@ class DMCLanes(SimulatorAdapter):
         extra = None if self.physics is None else self.physics.export()
         return export_state(self.envs, self._cumulative, self.fields, self.device, extra)
 
-    def set_state(self, state):
+    def validate(self, state):
+        """Check every lane of ``state`` and return its physics rows, or None without physics Variation."""
         self._check_open()
         if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):
             raise TypeError(f"{self.key} requires full TensorDict State with batch [num_envs]")
-        # Validate the entire batch before mutating any lane.
         rows = None if self.physics is None else self.physics.rows_from_state(state)
         require_columns(state, {key: ((self.num_envs, width), dtype) for key, (width, dtype) in self.fields.items()})
+        return rows
+
+    def set_state(self, state):
+        rows = self.validate(state)
         host = state.cpu()
         if rows is not None:
             self.physics.configure(rows)
@@ -75,8 +82,12 @@ class DMCLanes(SimulatorAdapter):
         """Return ``(success, info)`` for task outputs beyond reward, or None."""
         return None
 
-    def step(self, actions, *, capture_state=True):
+    def step(self, actions, *, active=None, capture_state=True):
         self._check_open()
+        if active is not None and not bool(torch.as_tensor(active).all()):
+            raise ValueError(
+                "Accepted DMC wrappers do not expose terminal lanes; partial active masks are unsupported"
+            )
         if torch.is_tensor(actions):
             actions = actions.detach().cpu().numpy()
         actions = np.asarray(actions, np.float64)

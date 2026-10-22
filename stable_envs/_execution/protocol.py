@@ -13,10 +13,12 @@ class SimulatorAdapter(Protocol):
 
     Concrete adapters inherit this interface. Env handles action sequences and
     rendering; adapters advance one transition per lane. Family-specific options
-    and asynchronous execution are additional capabilities.
+    and asynchronous execution are additional capabilities. Restore has two
+    phases so that a process batch restores every worker or none.
     """
 
     num_envs: int
+    _staged_restore: TensorDict | None = None
 
     @abstractmethod
     def reset(self, seed: int | None = None) -> TensorDict:
@@ -32,6 +34,27 @@ class SimulatorAdapter(Protocol):
     def set_state(self, state: TensorDict) -> None:
         """Restore a complete snapshot for all lanes."""
         ...
+
+    def validate(self, state: TensorDict) -> object:
+        """Raise if ``state`` cannot restore every lane; change no simulator."""
+        raise NotImplementedError(f"{type(self).__name__} has no State validation")
+
+    def prepare_restore(self, state: TensorDict) -> None:
+        """Validate ``state`` and hold it for ``commit_restore``; change no simulator."""
+        self.validate(state)
+        self._staged_restore = state
+
+    def commit_restore(self) -> None:
+        """Restore the State that ``prepare_restore`` accepted."""
+        state = self._staged_restore
+        if state is None:
+            raise RuntimeError("No restore is prepared")
+        self._staged_restore = None
+        self.set_state(state)
+
+    def discard_restore(self) -> None:
+        """Drop a prepared restore."""
+        self._staged_restore = None
 
     @abstractmethod
     def step(self, actions: Tensor | np.ndarray) -> TensorDict:
