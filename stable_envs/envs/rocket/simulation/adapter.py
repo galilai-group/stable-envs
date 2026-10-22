@@ -46,6 +46,9 @@ class RocketAdapter(SimulatorAdapter):
             device=self.device,
         )
 
+    def rgba(self):
+        return torch.as_tensor(np.stack([e.rgba() for e in self.envs]), device=self.device)
+
     def validate(self, state):
         if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):
             raise ValueError("Rocket full State requires batch [num_envs]")

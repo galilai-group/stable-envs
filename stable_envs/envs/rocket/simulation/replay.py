@@ -224,6 +224,21 @@ class RocketReplay:
             self.post += 1
         return result
 
+    def rgba(self):
+        """Drawn body, fin, leg, booster, pad and flame colours in ``render/rgba`` row order."""
+        e = self.env
+        visuals = {v[1]: np.array(v[7]) for v in e.env.getVisualShapeData(e.env.drones[0].Id)}
+        return np.stack(
+            [
+                visuals[-1],
+                visuals[2],
+                visuals[6],
+                visuals[1],
+                np.array(e.env.getVisualShapeData(e.landing_pad_id)[0][7]),
+                visuals[9],
+            ]
+        )
+
     def get_state(self):
         e = self.env
         state = {
@@ -262,17 +277,7 @@ class RocketReplay:
             "lifecycle/last_action_dtype": np.array(self.last_dtype, np.uint8),
             "rng/action_space": encode_rng(generator_state(e.action_space)),
         }
-        visuals = {v[1]: np.array(v[7]) for v in e.env.getVisualShapeData(e.env.drones[0].Id)}
-        state["render/rgba"] = np.stack(
-            [
-                visuals[-1],
-                visuals[2],
-                visuals[6],
-                visuals[1],
-                np.array(e.env.getVisualShapeData(e.landing_pad_id)[0][7]),
-                visuals[9],
-            ]
-        )
+        state["render/rgba"] = self.rgba()
         for key, value in capture(e).items():
             # These two source fields change bool/float types on the first step.
             if key in ["wrapper/previous_render_ignition_state", "wrapper/ignition_state"] or value.dtype.kind == "f":

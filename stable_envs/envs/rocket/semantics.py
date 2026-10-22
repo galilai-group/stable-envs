@@ -193,11 +193,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
                 values[i][key] = converted.copy()
         return values
 
-    def to_render_state(self, state=None, *, size=None, supersample=None):
-        self._check_open("to_render_state")
-        state = self.get_state() if state is None else state
-        self._simulator.validate(state)
-        rgba = state["render", "rgba"]
+    def _style_of(self, rgba):
         style = torch.zeros((self.B, 16), dtype=torch.float32, device=rgba.device)
         # Renderer style is alphabetical, not source/corpus order.
         layout = frozen.style_layout()
@@ -207,6 +203,13 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         style[:, layout["flame.ignited"][0]] = torch.isclose(
             rgba[:, 5], torch.tensor(frozen.IGNITION_RGBA, device=rgba.device, dtype=rgba.dtype)
         ).all(-1)
+        return style
+
+    def to_render_state(self, state=None, *, size=None, supersample=None):
+        self._check_open("to_render_state")
+        state = self.get_state() if state is None else state
+        self._simulator.validate(state)
+        style = self._style_of(state["render", "rgba"])
         result = TensorDict(
             {
                 ("renderer", "pose"): state["current", "wrapper", "state"][:, :13].to(torch.float32).clone(),
@@ -280,7 +283,8 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         elif self._render_style is not None:
             rows = self._render_style
         else:
-            rows = self.to_render_state()["renderer", "style"]
+            # The live colours alone; exporting and validating the whole State is not needed for them.
+            rows = self._style_of(self._simulator.rgba())
             rows[:, frozen.style_layout()["flame.ignited"][0]] = 0
         if overrides:
             rows = rows.clone()
