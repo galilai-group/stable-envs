@@ -94,6 +94,11 @@ def rng_of(node):
     return None if node._np_random is None else copy.deepcopy(node._np_random.bit_generator.state)
 
 
+def rng_view(node):
+    """Return the generator state for reading; ``bit_generator.state`` already builds a new dict."""
+    return None if node._np_random is None else node._np_random.bit_generator.state
+
+
 def install_rng(node, state):
     node._np_random = None if state is None else np.random.default_rng(0)
     if state is not None:
