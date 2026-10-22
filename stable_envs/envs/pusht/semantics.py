@@ -235,16 +235,29 @@ class PushT(Env):
         if not isinstance(state, TensorDict) or len(state.batch_size) != 1 or not state.batch_size[0]:
             raise ValueError("PushT render requires a nonempty State batch")
         flat = dict(state.items(include_nested=True, leaves_only=True))
-        fields = {}
+        selected, error = {}, None
         for key, shape, dtype in self._render_fields:
             value = flat.get(key)
             if value is None:
-                raise KeyError(key)
+                error = KeyError(key)
+                break
             if value.shape != (*state.batch_size, *shape) or value.dtype != dtype:
-                raise ValueError(f"Invalid PushT render field: {key}")
-            if value.is_floating_point() and not torch.isfinite(value).all():
+                error = ValueError(f"Invalid PushT render field: {key}")
+                break
+            selected[key] = value
+        # Start every device-to-host copy before waiting for any of them.
+        host = {key: value.to("cpu", non_blocking=True) for key, value in selected.items()}
+        if any(value.device.type == "cuda" for value in selected.values()):
+            torch.cuda.synchronize()
+        fields = {}
+        # Fields are checked in order, so an earlier nonfinite field is reported before a later layout error.
+        for key, value in host.items():
+            array = value.numpy()
+            if array.dtype.kind == "f" and not np.isfinite(array).all():
                 raise ValueError(f"Nonfinite PushT render field: {key}")
-            fields["/".join(key)] = value
+            fields["/".join(key)] = array
+        if error is not None:
+            raise error
         return fields
 
     def render(self, state=None, *, size=None, out=None):
@@ -254,7 +267,7 @@ class PushT(Env):
             raise ValueError("PushT render size must be a positive integer")
         if self._simulator.template.config["render_action"] and size < 96:
             raise ValueError("Source PushT action markers require size >= 96")
-        fields = {k: v.cpu().numpy() for k, v in self._render_fields_of(state).items()}
+        fields = self._render_fields_of(state)
         count = len(fields["recipe/config"])
         pool = self._pool(count)
         if pool is not None:
