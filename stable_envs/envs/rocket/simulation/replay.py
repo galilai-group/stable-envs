@@ -41,6 +41,17 @@ def paint(env, path):
         p.changeVisualShape(body, link, rgbaColor=rgba, physicsClientId=client)
 
 
+def recolor_flame(env):
+    """Apply the flame colour change that the source's ``step`` makes only when it has a render mode.
+
+    The pixel env renders, so its flame turns ``ignition_color`` at ignition. With a render mode the
+    source has already made the change and this does nothing.
+    """
+    if env.ignition_state != env.previous_render_ignition_state:
+        env.previous_render_ignition_state = env.ignition_state
+        env.env.changeVisualShape(env.env.drones[0].Id, 9, rgbaColor=env.ignition_color)
+
+
 def encode_rng(state):
     if state is None:
         return np.zeros(11, np.int64)
@@ -203,6 +214,7 @@ class RocketReplay:
         if self.env.step_count >= np.iinfo(np.int64).max - 1:
             raise OverflowError("Rocket lifecycle counter exhausted int64")
         result = self.env.step(action.copy())
+        recolor_flame(self.env)
         self.last_dtype = 1 if action.dtype == np.float32 else 2
         if physical:
             self.history[self.length] = action
