@@ -7,11 +7,12 @@ import torch
 from tensordict import TensorDict
 
 from ..._core.style import StyleTensor
+from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env, _split_appearance
 from ...registry import REGISTRY, register
 from ...specs import CompositeSpec, Spec
 from . import legacy as frozen
-from .simulation.adapter import RocketAdapter
+from .simulation.execution import make_rocket_adapter
 
 
 class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
@@ -40,7 +41,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         self, num_envs=1, size=None, supersample=None, device="cpu", backend="auto", seed=0, *, simulator_config=None
     ):
         device = Env.resolve_device(device)
-        self._simulator = RocketAdapter(num_envs, device, seed, simulator_config)
+        self._simulator = make_rocket_adapter(num_envs, device, seed, simulator_config)
         try:
             Env.__init__(
                 self,
@@ -56,7 +57,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
             raise
 
     def make_variation_space(self):
-        return copy.deepcopy(self._simulator.envs[0].env.variation_space)
+        return copy.deepcopy(self._simulator.template.env.variation_space)
 
     def _layout(self):
         return tuple((k, int(np.prod(shape)), None) for k, (shape, _) in self._simulator.fields.items())
@@ -101,17 +102,18 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         self._check_open("step")
         return self._simulator.step(actions, active=active)
 
+    def _advance_without_snapshot(self, actions, *, active=None):
+        self._check_open("step")
+        return self._simulator.step(actions, active=active, capture_state=False)
+
+    def _step_pipeline(self) -> StepPipeline | None:
+        return step_pipeline(self._simulator)
+
     def _variation_rows(self, attribute):
-        rows = [
-            np.concatenate(
-                [
-                    np.asarray(getattr(env.env.variation_space._walk(key), attribute)).reshape(-1)
-                    for key, _, _ in self.variation_space.flat_layout()
-                ]
-            )
-            for env in self._simulator.envs
-        ]
-        return torch.as_tensor(np.stack(rows), dtype=torch.float32, device=self.device)
+        keys = [key for key, _, _ in self.variation_space.flat_layout()]
+        return torch.as_tensor(
+            self._simulator.variation_rows(attribute, keys), dtype=torch.float32, device=self.device
+        )
 
     def get_variation(self):
         self._check_open("get_variation")
