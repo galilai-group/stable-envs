@@ -129,19 +129,24 @@ def _run(env, sources, actions, *, wrap):
     return result
 
 
-def test_lanes_match_the_source_called_directly():
-    """The FloWM preset: grid motion, textures, boxes and balls; every action id, pick up and drop included."""
-    with snv.MiniWorldMovingBlockWorld(num_envs=LANES, size=SIZE, device="cpu") as env:
+@pytest.mark.parametrize("wrap", [False, True], ids=["paper", "wrapped-heading"])
+def test_lanes_match_the_source_called_directly(wrap):
+    """The FloWM preset: grid motion, textures, boxes and balls; every action id, pick up and drop included.
+
+    ``wrap`` adds the [0, 2pi) heading wrap of the fork's later script (``wrap_heading=True``).
+    """
+    with snv.MiniWorldMovingBlockWorld(num_envs=LANES, size=SIZE, device="cpu", wrap_heading=wrap) as env:
         env.reset(seed=SEED)
         sources = [_flowm_source(lane) for lane in range(LANES)]
         for lane, src in enumerate(sources):
             src.reset(seed=SEED + lane)
             src.agent.dir = 0.0  # --heading-zero
-            _wrap(src)
+            if wrap:
+                _wrap(src)
         rng = np.random.default_rng(SEED)
         actions = rng.integers(0, 9, size=(24, LANES))
         actions[:4] = [2, 5]  # walk, and try to pick up a block
-        _run(env, sources, actions, wrap=True)
+        _run(env, sources, actions, wrap=wrap)
 
 
 def test_the_upstream_preset_matches_the_registered_env():

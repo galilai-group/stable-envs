@@ -13,9 +13,10 @@ frame scaling follow stable-worldmodel's `stable_worldmodel/envs/craftax/craftax
 
 The `miniworld` family (`stable_envs/envs/miniworld/`) runs `MovingBlockWorld` from
 [hlillemark/Miniworld](https://github.com/hlillemark/Miniworld), a fork of Farama's
-[Miniworld](https://github.com/Farama-Foundation/Miniworld) (Apache-2.0), as an external dependency. Its
+[Miniworld](https://github.com/Farama-Foundation/Miniworld) (Apache-2.0), as an external dependency, at
+the head of its `flowm_release` branch, the code frozen for the Flow Equivariant World Models paper. Its
 simulator, renderer and textures are not copied here. The `flowm` preset and the heading handling follow the
-fork's `scripts/generate_videos.py` at commit `b28988d5cd9d0d261a53b8cfa4f162e7fe14853e`.
+fork's `scripts/generate_videos.py` at commit `bc7972050155b67e242c07bfdccfe1eeddbf9882`.
 
 ## SDL_gfx drawing rules
 

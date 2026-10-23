@@ -59,7 +59,7 @@ which is not on PyPI. uv installs the fork for the `miniworld` extra from `[tool
 install the fork first:
 
 ```bash
-pip install "miniworld @ git+https://github.com/hlillemark/Miniworld@b28988d5cd9d0d261a53b8cfa4f162e7fe14853e"
+pip install "miniworld @ git+https://github.com/hlillemark/Miniworld@bc7972050155b67e242c07bfdccfe1eeddbf9882"
 pip install "stable-envs[miniworld]"
 ```
 

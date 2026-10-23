@@ -223,7 +223,7 @@ requires-dist = ["numba", "numpy", "scipy", "gymnasium", "pettingzoo", "pybullet
 
 [tool.uv.sources]
 torch = [{ index = "pytorch-cpu", group = "torch-cpu", marker = "sys_platform == 'linux'" }]
-miniworld = { git = "https://github.com/hlillemark/Miniworld", rev = "b28988d5cd9d0d261a53b8cfa4f162e7fe14853e" }
+miniworld = { git = "https://github.com/hlillemark/Miniworld", rev = "bc7972050155b67e242c07bfdccfe1eeddbf9882" }
 
 [[tool.uv.index]]
 name = "pytorch-cpu"

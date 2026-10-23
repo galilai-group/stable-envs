@@ -1,7 +1,8 @@
 """MovingBlockWorld lanes over the Miniworld fork's own simulator, with complete continuation State.
 
-Each lane is one ``miniworld.envs.MovingBlockWorld`` (hlillemark/Miniworld) configured as the FloWM
-dataset script ``scripts/generate_videos.py`` builds it, or with the upstream defaults. State holds the
+Each lane is one ``miniworld.envs.MovingBlockWorld`` (hlillemark/Miniworld at its ``flowm_release``
+branch, the code frozen for the FloWM paper) configured as the dataset script ``scripts/generate_videos.py``
+builds it, or with the upstream defaults. State holds the
 episode's world (room textures, each block's kind, colour, size and texture), every moving quantity (agent
 pose and carried block, block poses and velocities), the env's PCG64 generator and its step count.
 
@@ -25,8 +26,9 @@ from tensordict import TensorDict
 
 from ...._execution.protocol import SimulatorAdapter
 
-#: Fork commit the family runs and its reference gate compares against.
-FORK_COMMIT = "b28988d5cd9d0d261a53b8cfa4f162e7fe14853e"
+#: Fork commit the family runs and its reference gate compares against: the head of ``flowm_release``.
+#: The fork's master changes the base palette's "gray" to "grey", which changes the drawn block colours.
+FORK_COMMIT = "bc7972050155b67e242c07bfdccfe1eeddbf9882"
 FORK_URL = "https://github.com/hlillemark/Miniworld"
 
 #: Texture names of the Miniworld package; State stores an index into this tuple (-1: untextured box).
@@ -92,9 +94,9 @@ FLOWM = {
     "turn_step": 90.0,
     "forward_step": 1.0,
     "cam_fov_y": 60.0,
-    # --heading-zero, and the [0, 2pi) heading wrap the script applies after reset and every step
+    # --heading-zero; the paper's script does not wrap the heading (master's later script wraps it to [0, 2pi))
     "heading_zero": True,
-    "wrap_heading": True,
+    "wrap_heading": False,
     # --steps 500 (the script drops the frame after the last step, so a 500-step limit gives the same frames)
     "max_episode_steps": 500,
 }
