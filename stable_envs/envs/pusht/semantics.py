@@ -9,7 +9,7 @@ import copy
 
 import numpy as np
 import torch
-from tensordict import TensorDict
+from tensordict import TensorDict, TensorDictBase
 
 from ... import tuning
 from ..._execution.protocol import StepPipeline, step_pipeline
@@ -36,6 +36,16 @@ def _to_host(tensors):
             host[key] = flat[offset : offset + size].view(tensors[key].shape)
             offset += size
     return {key: host[key] for key in tensors}
+
+
+def _lookup(nodes, key):
+    """``state.get(key, None)`` through a cache ``nodes`` of the nested TensorDicts already reached."""
+    parent = key[:-1]
+    if parent not in nodes:
+        node = _lookup(nodes, parent)
+        nodes[parent] = node if isinstance(node, TensorDictBase) else None
+    node = nodes[parent]
+    return None if node is None else node.get(key[-1], None)
 
 
 def _to_device(fields, device):
@@ -277,9 +287,9 @@ class PushT(Env):
         state = self.get_state() if state is None else state
         if not isinstance(state, TensorDict) or len(state.batch_size) != 1 or not state.batch_size[0]:
             raise ValueError("PushT render requires a nonempty State batch")
-        selected, error = {}, None
+        selected, error, nodes = {}, None, {(): state}
         for key, shape, dtype in self._render_fields:
-            value = state.get(key, None)
+            value = _lookup(nodes, key)
             if not isinstance(value, torch.Tensor):
                 error = KeyError(key)
                 break
@@ -288,10 +298,10 @@ class PushT(Env):
                 break
             selected[key] = value
         if error is None and on_device and all(value.is_cuda for value in selected.values()):
-            floats = [key for key, value in selected.items() if value.is_floating_point()]
-            bad = torch.stack([~torch.isfinite(selected[key]).all() for key in floats]).cpu()
-            if bad.any():
-                raise ValueError(f"Nonfinite PushT render field: {floats[int(bad.to(torch.int8).argmax())]}")
+            floats = [value.reshape(-1) for value in selected.values() if value.is_floating_point()]
+            if floats and not bool(torch.isfinite(torch.cat(floats)).all()):
+                key = next(k for k, v in selected.items() if v.is_floating_point() and not bool(v.isfinite().all()))
+                raise ValueError(f"Nonfinite PushT render field: {key}")
             return {"/".join(key): value for key, value in selected.items()}
         host = _to_host(selected)
         fields = {}
