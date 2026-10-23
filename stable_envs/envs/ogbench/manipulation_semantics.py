@@ -40,7 +40,7 @@ class ManipulationSemantics:
 
         self.state_names = render_state_names(self._nq, 1, 2 if self.CELL == "Scene" else 0)
         if supersample is None:
-            supersample = 2 if torch.device(device).type == "cuda" and backend == "auto" else 1
+            supersample = 1
         # Env uses its seed only for metadata/render-state sampling; physical RNGs are adapter-owned.
         Env.__init__(
             self,
@@ -382,16 +382,17 @@ from .manipulation import OGBScene as _SceneRenderer
 
 
 class OGBCube(ManipulationSemantics, _CubeRenderer):
-    """Cube simulation with restorable State and CPU OpenGL or GPU MJWarp rendering.
+    """Cube simulation with restorable State and MuJoCo OpenGL rendering on CPU and GPU.
 
-    On the GPU, lighting and transparency can differ from MuJoCo.
+    With ``supersample`` 2 or more on the GPU, MJWarp draws; its lighting and transparency can differ from MuJoCo.
     """
 
 
 class OGBScene(ManipulationSemantics, _SceneRenderer):
-    """Scene simulation with restorable State and CPU OpenGL or GPU MJWarp rendering.
+    """Scene simulation with restorable State and MuJoCo OpenGL rendering on CPU and GPU.
 
-    On the GPU, lighting, transparency, and button textures can differ from MuJoCo.
+    With ``supersample`` 2 or more on the GPU, MJWarp draws; its lighting, transparency, and button textures
+    can differ from MuJoCo.
     """
 
 

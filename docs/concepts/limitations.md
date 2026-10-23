@@ -18,7 +18,7 @@ snv.import_errors()     # families this interpreter could not import
 | PushT, PushTDiscrete | source physics and pygame rendering | output storage only (rendering stays on CPU) |
 | classic control, navigation, OGBench mazes | yes | yes |
 | Fetch (12 classes) | software OpenGL | MJWarp or explicit NVIDIA OpenGL |
-| OGBCube, OGBScene | software OpenGL | MJWarp or explicit NVIDIA OpenGL |
+| OGBCube, OGBScene | software OpenGL | NVIDIA OpenGL, or MJWarp with `supersample` 2 or more |
 | PyFlytRocketLanding | TinyRenderer | CUDA rendering |
 | DM Control body-tracking | CPU3D | MJWarp |
 
@@ -31,9 +31,13 @@ OpenGL, configured before the first MuJoCo import. See [System setup](../system-
 
 - The tests measure the per-frame MSE between our frames and the source frames, and compare it with a
   recorded value for each class. See [Frame regression checks](../testing.md#frame-regression-checks).
-- The DM Control body-tracking classes, and OGBCube, OGBScene and PyFlytRocketLanding on CUDA, draw
-  with a different rasterizer from the source. `env.describe()["visual_fidelity"]` gives their
-  measured MSE. `env.describe()["visual_note"]` tells where the frames differ.
+- The DM Control body-tracking classes and PyFlytRocketLanding on CUDA draw with a different
+  rasterizer from the source. `env.describe()["visual_fidelity"]` gives their measured MSE.
+  `env.describe()["visual_note"]` tells where the frames differ.
+- OGBCube and OGBScene draw with the source's renderer, MuJoCo OpenGL. On CPU, the frames are
+  bit-exact and repeatable. On CUDA, the NVIDIA OpenGL driver can change a pixel by 1/255 between two
+  draws of the same state, on a few pixels of a few frames in each pass. The source shows the same
+  variation. See [OGBench](../environments/ogbench.md#manipulation).
 
 ## Rendering details
 

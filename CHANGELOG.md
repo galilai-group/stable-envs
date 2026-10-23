@@ -23,6 +23,10 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- `OGBCube` and `OGBScene` on CUDA: `backend="auto"` draws with NVIDIA OpenGL, the source's renderer,
+  and the default `supersample` is 1 on every device. CUDA frames now equal the source. Per-frame MSE
+  against the source (0-255 scale, 256 states) changes from 24.7 to 0 for `OGBCube` and from 43.5 to 0
+  for `OGBScene`. `supersample=2` or `backend="mjwarp_fidelity"` keeps the MJWarp renderer.
 - `OGBCube` and `OGBScene` draw OpenGL batches of 2 or more states in up to `ogb_gl_workers` worker
   processes on Linux, and read many frames back in one call. Frames do not change.
 

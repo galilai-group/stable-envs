@@ -233,9 +233,12 @@ def configured_renderer(key, device, size, supersample):
 
 
 def draws_on_host(backend, device, supersample):
-    """Whether ``backend`` draws through MuJoCo OpenGL from host inputs; ``supersample`` does not select it yet."""
-    del supersample
-    return backend == "opengl" or (backend == "auto" and torch.device(device).type == "cpu")
+    """Whether ``backend`` draws through MuJoCo OpenGL from host inputs.
+
+    ``auto`` does so on CPU, and on CUDA at the source's own 1x sampling; CUDA ``auto`` at 2x or more
+    keeps the MJWarp fidelity renderer.
+    """
+    return backend == "opengl" or (backend == "auto" and (torch.device(device).type == "cpu" or supersample == 1))
 
 
 def _supersample(state):
