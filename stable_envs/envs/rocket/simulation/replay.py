@@ -52,6 +52,19 @@ def recolor_flame(env):
         env.env.changeVisualShape(env.env.drones[0].Id, 9, rgbaColor=env.ignition_color)
 
 
+def restore_reset(env):
+    """Save and restore the engine as the source's ``reset`` does around its goal render with a render mode.
+
+    The restore recomputes the cached link poses at the reset pose. The camera and the first
+    physics substeps read these poses. With a render mode the source has already done this.
+    """
+    if env.render_mode is None:
+        client = env.env._client
+        state = p.saveState(physicsClientId=client)
+        p.restoreState(stateId=state, physicsClientId=client)
+        p.removeState(stateUniqueId=state, physicsClientId=client)
+
+
 def encode_rng(state):
     if state is None:
         return np.zeros(11, np.int64)
@@ -182,6 +195,7 @@ class RocketReplay:
                 if not hasattr(node, "spaces")
             }
             output = self.env.reset(seed=seed, options=copy.deepcopy(options))
+            restore_reset(self.env)
         finally:
             for path, value in defaults.items():
                 self.env.variation_space._walk(path)._init_value = value

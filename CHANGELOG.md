@@ -79,6 +79,10 @@ All notable changes to this project are listed here. The format follows
   `render/rgba` flame row and the CPU and CUDA frames show the red ignition flame. The source makes this
   change only when it has a render mode. Supplied pose rows carry no ignition, so they render with the flame
   off. States saved after ignition with an earlier version do not restore.
+- `PyFlytRocketLanding` reset saves and restores the engine as the PyFlyt pixel env does around its goal
+  render. The restore recomputes the cached link poses at the reset pose. The reset frame, the first
+  steps and the observations are then equal to the pixel env after a reset that moves the start pose.
+  States saved with an earlier version do not restore.
 - `PointMazeLargeNavigate` renders batches of 2048 and more on CUDA. Its spotlight pass casts wall shadow
   rays in one launch row per frame and lights a bounded number of rows at a time.
 
