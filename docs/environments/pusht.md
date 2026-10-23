@@ -28,6 +28,10 @@ frames = env.render()          # (8, 224, 224, 3) uint8
 PushT draws its frames with the source pygame code on CPU. A frame is the source frame for the same
 State. `device="cuda"` puts the output tensors on the GPU. Physics and rendering stay on CPU.
 
+On Linux, `render` draws a batch of at least `worker_min_lanes` States in up to `workers` processes.
+Step frames come from the running scenes, so a step does not export a State only to draw it. Worker
+processes do not change frames. See [Performance tuning](../performance-tuning.md).
+
 The State is a full replay checkpoint. It holds the bodies, the goal, the action history and the
 Variation that the replay starts from. See [State](../concepts/state.md#pusht-checkpoints).
 

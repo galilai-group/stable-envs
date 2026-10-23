@@ -110,4 +110,5 @@ executor:
 - returns owned task outputs and any requested State.
 - aborts pending work on failure.
 
-Rendering stays on the calling thread.
+Rendering stays on the calling thread, except for PushT step frames. PushT workers draw the frames of
+their running lanes.

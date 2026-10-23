@@ -6,9 +6,8 @@ from functools import partial
 
 import numpy as np
 import torch
-from tensordict import TensorDict
 
-from ...._execution.process import ProcessAdapter
+from ...._execution.process import ProcessAdapter, leaf_tensordict
 from ...._execution.shared_memory import key_path
 from .replay import ACTION_DTYPES, reset_options, validate_seed
 from .replay_batch import PushTReplayAdapter, lane_options, state_columns
@@ -49,20 +48,20 @@ class PushTProcessAdapter(ProcessAdapter):
         return self._metadata.template
 
     def _state(self):
-        fixed = self._owned("state")
+        fixed = self._state_leaves()
         width = int(self._lengths.max())
         history = {
             _ACTIONS: self._actions[:, :width].copy(),
             _CODES: self._codes[:, :width].copy(),
             _VALID: np.arange(width) < self._lengths[:, None],
         }
-        return TensorDict(
+        return leaf_tensordict(
             {
                 key: torch.as_tensor(history[key], device=self.device) if key in history else fixed[key]
                 for key in self._keys
             },
-            [self.num_envs],
-            device=self.device,
+            self.num_envs,
+            self.device,
         )
 
     def validate(self, state):

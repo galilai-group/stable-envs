@@ -1,17 +1,20 @@
 from __future__ import annotations
 
 import copy
+from functools import cache
 from importlib.metadata import version
 
 import numpy as np
 
 from ...._core.space_nodes import nodes
+from .contacts import ContactSegments
 from .numeric import (
     capture,
     decode_rng,
     decode_seed,
     encode_rng,
     encode_seed,
+    episode_fields,
     get_value,
     install_rng,
     put_value,
@@ -24,11 +27,43 @@ ACTION_DTYPES = (np.dtype("float32"), np.dtype("float64"), np.dtype("int32"), np
 HISTORY_KEYS = {"history/actions", "history/dtypes", "history/valid"}
 
 
+@cache
+def _pymunk_version():
+    return version("pymunk")
+
+
 def validate_seed(seed):
     if seed is not None and (
         isinstance(seed, (bool, np.bool_)) or not isinstance(seed, (int, np.integer)) or not 0 <= seed < 2**128
     ):
         raise ValueError("PushT seed must be None or a nonnegative integer below 2**128")
+
+
+def shallow_copy(obj):
+    """``copy.copy`` for plain instances, without the pickle protocol."""
+    clone = object.__new__(type(obj))
+    clone.__dict__.update(obj.__dict__)
+    return clone
+
+
+def copy_space(space, memo=None, generators=True):
+    """Return a Variation space copy that owns its values and generators, like ``copy.deepcopy``.
+
+    Bounds, shapes and constraint functions are not changed after construction, so the copy shares them.
+    With ``generators=False`` the copy shares the generators; the caller must replace them before a draw.
+    """
+    memo = {} if memo is None else memo
+    clone = shallow_copy(space)
+    if generators:
+        clone._np_random = copy.deepcopy(space._np_random, memo)
+    if hasattr(space, "spaces"):
+        clone.spaces = type(space.spaces)(
+            (key, copy_space(child, memo, generators)) for key, child in space.spaces.items()
+        )
+    else:
+        clone._init_value = copy.deepcopy(space._init_value, memo)
+        clone._value = copy.deepcopy(space._value, memo)
+    return clone
 
 
 def reset_options(seed, options):
@@ -51,11 +86,12 @@ class PushTReplay:
 
     Each step stores an owned action with its original dtype. Export copies the
     finite prefix without imposing a horizon; restoration replays it in O(T) and
-    checks all exported fields before returning the new engine.
+    checks all exported fields before returning the new engine. Fields that change
+    only at reset, restore or a Variation change are cached until ``changed``.
     """
 
-    def __init__(self, *, discrete=False, config=None, seed=0, options=None, initialize=True):
-        if version("pymunk") != "7.2.0":
+    def __init__(self, *, discrete=False, config=None, seed=0, options=None, initialize=True, engine=None):
+        if _pymunk_version() != "7.2.0":
             raise RuntimeError("PushT replay requires official pymunk==7.2.0")
         self.discrete = bool(discrete)
         self.config = dict(resolution=224, render_action=False, with_target=True)
@@ -67,8 +103,13 @@ class PushTReplay:
             raise ValueError("PushT resolution must be a positive integer")
         if any(type(self.config[k]) is not bool for k in ("render_action", "with_target")):
             raise ValueError("PushT render flags must be bool")
-        self.env = (PushTDiscrete if self.discrete else PushT)(**self.config)
-        self.history = []
+        self.env = (PushTDiscrete if self.discrete else PushT)(**self.config) if engine is None else engine
+        self.length = 0
+        self._actions = np.zeros((0, 2), np.float64)
+        self._codes = np.zeros(0, np.uint8)
+        self._contacts = ContactSegments()
+        self.version = 0
+        self._owned = self._episode = None
         if initialize:
             try:
                 self._reset(seed, options)
@@ -102,7 +143,8 @@ class PushTReplay:
                 ]
             ),
         )
-        self.anchor = self._metadata()
+        metadata = self._metadata()
+        self.anchor = dict(metadata)
         self.anchor["start"] = np.asarray(start, np.float64).copy()
         put_value(self.anchor, "goal", self.env.goal_state)
         self.anchor["latest_present"] = np.array(self.env.latest_action is not None, np.bool_)
@@ -111,13 +153,21 @@ class PushTReplay:
             "latest",
             np.zeros(2, np.float64) if self.env.latest_action is None else self.env.latest_action,
         )
-        self.history = []
+        self.length = 0
+        self.changed()
+        # Nothing has drawn from a generator or changed a Variation since the anchor was read.
+        self._owned = metadata
         return output
 
     def reset_candidate(self, seed=None, options=None):
-        target = type(self)(discrete=self.discrete, config=self.config, initialize=False)
+        # Reset rebinds the engine's scene, generators and episode fields, so a shallow copy
+        # shares only objects that it does not change in place.
+        engine = shallow_copy(self.env)
+        # An integer seed replaces every Variation generator before the first draw.
+        engine.variation_space = copy_space(self.env.variation_space, generators=not isinstance(seed, int))
+        engine.action_space = shallow_copy(self.env.action_space)
+        target = type(self)(discrete=self.discrete, config=self.config, initialize=False, engine=engine)
         try:
-            target.env.variation_space = copy.deepcopy(self.env.variation_space)
             install_rng(target.env, rng_of(self.env))
             target.env._np_random_seed = self.env._np_random_seed
             install_rng(target.env.action_space, rng_of(self.env.action_space))
@@ -139,11 +189,52 @@ class PushTReplay:
         for path, node in nodes(e.variation_space):
             result["variation" + path + "/rng"] = encode_rng(rng_view(node))
             if not hasattr(node, "spaces"):
-                put_value(result, "variation" + path + "/initial", node.init_value)
-                put_value(result, "variation" + path + "/current", node.value)
+                key = "variation" + path
+                put_value(result, key + "/initial", node.init_value)
+                if node.value is node.init_value:
+                    # Callers copy before they change a field, so both fields can share these arrays.
+                    result[key + "/current/value"] = result[key + "/initial/value"]
+                    result[key + "/current/type"] = result[key + "/initial/type"]
+                else:
+                    put_value(result, key + "/current", node.value)
+        return result
+
+    def changed(self):
+        """Drop the cached reset, restore and Variation fields after any of them changes."""
+        self._owned = self._episode = None
+        self.version += 1
+
+    def metadata(self):
+        """Return the cached ``owned`` fields; callers copy them."""
+        if self._owned is None:
+            self._owned = self._metadata()
+        return self._owned
+
+    def episode(self):
+        """Return the cached ``current`` fields that are fixed for the episode; callers copy them."""
+        if self._episode is None:
+            self._episode = episode_fields(self.env)
+        return self._episode
+
+    def recipe(self):
+        return {
+            "recipe/version": np.array(2, np.int64),
+            "recipe/config": np.array(
+                [self.discrete, self.config["resolution"], self.config["render_action"], self.config["with_target"]],
+                np.int64,
+            ),
+        }
+
+    def static_fields(self):
+        """Return every State field that only ``changed`` can change, uncopied."""
+        result = self.recipe()
+        result.update(("anchor/" + k, v) for k, v in self.anchor.items())
+        result.update(("current/" + k, v) for k, v in self.episode().items())
+        result.update(("owned/" + k, v) for k, v in self.metadata().items())
         return result
 
     def _install_metadata(self, data):
+        self.changed()
         e = self.env
         install_rng(e, decode_rng(data["gym_rng"]))
         e._np_random_seed = decode_seed(data["gym_seed"])
@@ -159,25 +250,53 @@ class PushTReplay:
 
     def step(self, action):
         self.validate_action(action)
-        owned = action.copy()
-        output = self.env.step(owned.copy())
-        self.history.append(owned)
+        return self.step_checked(action)
+
+    def step_checked(self, action):
+        """Step with an action that ``validate_action`` accepts."""
+        output = self.env.step(action.copy())
+        self._record(action)
         return output
 
+    def advance(self, action):
+        """Step with an accepted action; return only the reward and success of ``step``."""
+        self.env.advance(action.copy())
+        self._record(action)
+        return self.evaluate()
+
+    def evaluate(self):
+        """Return the reward and success that ``step`` reports for the current scene."""
+        success, distance = self.env.eval_state(self.env.goal_state, self.env._get_obs())
+        return -distance, success
+
+    def _record(self, action):
+        if self.length == len(self._codes):
+            capacity = max(16, 2 * self.length)
+            self._actions = np.concatenate([self._actions, np.zeros((capacity - self.length, 2), np.float64)])
+            self._codes = np.concatenate([self._codes, np.zeros(capacity - self.length, np.uint8)])
+        self._actions[self.length] = action
+        self._codes[self.length] = ACTION_DTYPES.index(action.dtype)
+        self.length += 1
+
+    def history(self):
+        """Return owned copies of the recorded actions and their dtype codes."""
+        return self._actions[: self.length].copy(), self._codes[: self.length].copy()
+
     def get_state(self):
-        result = {
-            "recipe/version": np.array(2, np.int64),
-            "recipe/config": np.array(
-                [self.discrete, self.config["resolution"], self.config["render_action"], self.config["with_target"]],
-                np.int64,
-            ),
-            "history/actions": np.asarray(self.history, np.float64).reshape(-1, 2).copy(),
-            "history/dtypes": np.array([ACTION_DTYPES.index(a.dtype) for a in self.history], np.uint8),
-            "history/lengths": np.array(len(self.history), np.int64),
-            "history/valid": np.ones(len(self.history), np.bool_),
-        }
-        for prefix, data in (("anchor/", self.anchor), ("current/", capture(self.env)), ("owned/", self._metadata())):
-            result.update({prefix + k: v.copy() for k, v in data.items()})
+        actions, codes = self.history()
+        result = self.recipe()
+        result.update(
+            {
+                "history/actions": actions,
+                "history/dtypes": codes,
+                "history/lengths": np.array(self.length, np.int64),
+                "history/valid": np.ones(self.length, np.bool_),
+            }
+        )
+        result.update(("anchor/" + k, v.copy()) for k, v in self.anchor.items())
+        current = capture(self.env, self._contacts, self.episode())
+        result.update(("current/" + k, v) for k, v in current.items())
+        result.update(("owned/" + k, v.copy()) for k, v in self.metadata().items())
         return result
 
     def validate(self, state):
@@ -260,8 +379,9 @@ class PushTReplay:
             target._install_metadata(anchor)
             target.anchor = anchor
             length = int(state["history/lengths"])
+            # ``validate`` has checked every typed action.
             for action, code in zip(state["history/actions"][:length], state["history/dtypes"][:length], strict=True):
-                target.step(action.astype(ACTION_DTYPES[int(code)]))
+                target.step_checked(action.astype(ACTION_DTYPES[int(code)]))
             target._install_metadata({k.removeprefix("owned/"): v for k, v in state.items() if k.startswith("owned/")})
             actual = target.get_state()
             for key, value in actual.items():

@@ -55,8 +55,8 @@ names one.
 
 | knob | fallback | derived default | machine | what it controls |
 |---|---|---|---|---|
-| `workers` | 8 | min(value, CPUs in the process affinity, lanes) | not recorded | Most worker processes of a CPU simulator batch on Linux. The value 0 steps every lane in the main process. |
-| `worker_min_lanes` | 64 | none | not recorded | Smallest batch that uses worker processes, or Fetch simulator threads. |
+| `workers` | 8 | min(value, CPUs in the process affinity, lanes) | not recorded | Most worker processes of a CPU simulator batch, or of a PushT render, on Linux. The value 0 steps every lane, and draws every PushT frame, in the main process. |
+| `worker_min_lanes` | 64 | none | not recorded | Smallest batch that uses worker processes, or Fetch simulator threads. For PushT, the smallest number of rendered States that uses render workers. |
 | `fetch_threads` | 4 | min(value, CPUs in the process affinity, lanes) | not recorded | Most simulator threads of an in-process Fetch batch. |
 | `cpu3d_chunk` | 16 | none (TrackCom cells use a per-cell table) | Xeon Platinum 8268 | Frames per chunk of the CPU ray caster (`cpu3d`). |
 | `dmc_cpu_ray_budget` | 2^21 | 2^21 × L3 size / 35.75 MiB, rounded to a power of two, in [2^18, 2^21] | not recorded | Rays per CPU render chunk of the fixed-camera DMC cells, counting supersamples. |

@@ -9,12 +9,24 @@ from __future__ import annotations
 import copy
 
 import numpy as np
+from pymunk._chipmunk_cffi import lib
 
 DTYPES = tuple(np.dtype(v) for v in ("float32", "float64", "uint8", "int32", "int64", "bool"))
 
 
+# Dtypes whose float64 payload is always exact; integers can exceed 2**53.
+_EXACT = frozenset(DTYPES) - {np.dtype("int64")}
+
+
 def put_value(result, key, value):
     array = np.asarray(value)
+    kind = type(value)
+    if kind is np.ndarray or kind is float or kind is bool or isinstance(value, np.generic):
+        if array.dtype in _EXACT and (array.dtype.kind != "f" or np.isfinite(array).all()):
+            representation = 4 if kind is np.ndarray else 0 if kind is float else 2 if kind is bool else 3
+            result[key + "/value"] = array.astype(np.float64)
+            result[key + "/type"] = np.array([representation, DTYPES.index(array.dtype)], np.uint8)
+            return
     if type(value) is float:
         representation = 0
     elif type(value) is int:
@@ -62,10 +74,19 @@ def encode_rng(state):
         return np.zeros(11, np.int64)
     if state["bit_generator"] != "PCG64":
         raise ValueError("PushT requires PCG64")
+    words, mask = state["state"], 0xFFFFFFFF
+    value, inc = words["state"], words["inc"]
     return np.array(
         [
             1,
-            *[(state["state"][k] >> (32 * i)) & 0xFFFFFFFF for k in ("state", "inc") for i in range(4)],
+            value & mask,
+            value >> 32 & mask,
+            value >> 64 & mask,
+            value >> 96 & mask,
+            inc & mask,
+            inc >> 32 & mask,
+            inc >> 64 & mask,
+            inc >> 96 & mask,
             state["has_uint32"],
             state["uinteger"],
         ],
@@ -122,35 +143,111 @@ def decode_seed(row):
     return (None if row[0] == 2 else -1) if row[0] else sum(int(row[i + 1]) << (32 * i) for i in range(4))
 
 
-def capture(env):
-    from .contacts import capture_contacts
+BODY_FIELDS = (
+    ("position", 2),
+    ("velocity", 2),
+    ("angle", 1),
+    ("angular_velocity", 1),
+    ("force", 2),
+    ("torque", 1),
+    ("center_of_gravity", 2),
+    ("mass", 1),
+    ("moment", 1),
+)
+#: Width of a ``body_row``: both bodies' fields, then the seven observation values.
+BODY_ROW = 2 * sum(width for _, width in BODY_FIELDS) + 7
+#: ``current`` State fields in export order.
+CURRENT_KEYS = (
+    *(
+        f"body/{name}/{key}"
+        for name in ("agent", "block")
+        for field, _ in BODY_FIELDS
+        for key in ((f"{field}_infinite", field) if field in ("mass", "moment") else (field,))
+    ),
+    "observation",
+    "contacts",
+    "render_segments",
+    "render_segment_count",
+    "goal_image",
+    "latest_present",
+    "latest/value",
+    "latest/type",
+    "goal/value",
+    "goal/type",
+)
 
+
+def body_row(env):
+    """Return both bodies' fields and the observation as one list of floats."""
+    # The Chipmunk calls that the pymunk Body properties make.
+    row = []
+    for body in (env.agent._body, env.block._body):
+        position, velocity = lib.cpBodyGetPosition(body), lib.cpBodyGetVelocity(body)
+        force, center = lib.cpBodyGetForce(body), lib.cpBodyGetCenterOfGravity(body)
+        row.extend(
+            (
+                position.x,
+                position.y,
+                velocity.x,
+                velocity.y,
+                lib.cpBodyGetAngle(body),
+                lib.cpBodyGetAngularVelocity(body),
+                force.x,
+                force.y,
+                lib.cpBodyGetTorque(body),
+                center.x,
+                center.y,
+                lib.cpBodyGetMass(body),
+                lib.cpBodyGetMoment(body),
+            )
+        )
+    # Same arithmetic as ``env._get_obs``.
+    row.extend((row[0], row[1], row[13], row[14], row[17] % (2 * np.pi), row[2], row[3]))
+    return row
+
+
+def body_fields(rows):
+    """Split ``[N, BODY_ROW]`` float64 rows into owned ``body/...`` and ``observation`` columns."""
     result = {}
+    offset = 0
     for name in ("agent", "block"):
-        body = getattr(env, name)
-        for key in (
-            "position",
-            "velocity",
-            "angle",
-            "angular_velocity",
-            "force",
-            "torque",
-            "center_of_gravity",
-            "mass",
-            "moment",
-        ):
-            value = np.asarray(getattr(body, key), np.float64)
-            if key in ("mass", "moment"):
+        for field, width in BODY_FIELDS:
+            value = rows[:, offset : offset + width].copy() if width > 1 else rows[:, offset].copy()
+            offset += width
+            if field in ("mass", "moment"):
                 # Encode infinite kinematic mass/inertia as a flag plus finite zero padding.
                 infinite = np.isposinf(value)
-                result[f"body/{name}/{key}_infinite"] = np.asarray(infinite, np.bool_)
+                result[f"body/{name}/{field}_infinite"] = infinite
                 value = np.where(infinite, 0.0, value)
-            result[f"body/{name}/{key}"] = value.copy()
-    result["observation"] = env._get_obs().copy()
-    result["contacts"] = np.array(env.n_contact_points, np.int64)
-    result["render_segments"], result["render_segment_count"] = capture_contacts(env.space)
-    result["goal_image"] = env._goal.copy()
-    result["latest_present"] = np.array(env.latest_action is not None, np.bool_)
-    put_value(result, "latest", np.zeros(2, np.float64) if env.latest_action is None else env.latest_action)
+            result[f"body/{name}/{field}"] = value
+    result["observation"] = rows[:, offset:].copy()
+    return result
+
+
+def episode_fields(env):
+    """Return the ``current`` fields that stay fixed from one reset to the next."""
+    result = {"goal_image": env._goal.copy()}
     put_value(result, "goal", env.goal_state)
     return result
+
+
+def latest_fields(env):
+    result = {"latest_present": np.array(env.latest_action is not None, np.bool_)}
+    put_value(result, "latest", np.zeros(2, np.float64) if env.latest_action is None else env.latest_action)
+    return result
+
+
+def capture(env, collector=None, episode=None):
+    """Return the ``current`` State fields of ``env`` in export order.
+
+    ``episode`` is a cached ``episode_fields(env)``; it is copied.
+    """
+    from .contacts import capture_contacts
+
+    result = {k: np.array(v[0]) for k, v in body_fields(np.array([body_row(env)], np.float64)).items()}
+    result["contacts"] = np.array(env.n_contact_points, np.int64)
+    result["render_segments"], result["render_segment_count"] = capture_contacts(env.space, collector)
+    result.update(latest_fields(env))
+    for key, value in (episode_fields(env) if episode is None else episode).items():
+        result[key] = value.copy()
+    return {key: result[key] for key in CURRENT_KEYS}

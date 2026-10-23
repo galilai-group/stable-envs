@@ -11,6 +11,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ... import tuning
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env
 from ...registry import REGISTRY, register
@@ -71,6 +72,7 @@ class PushT(Env):
             config=dict(resolution=resolution, render_action=render_action, with_target=with_target),
         )
         self._projection = PushTProjection()
+        self._render_pool = None
         try:
             super().__init__(num_envs, resolution, 1, device, "pygame", 0 if seed is None else seed)
             row = self._simulator.template.get_state()
@@ -137,6 +139,9 @@ class PushT(Env):
 
     def _step_pipeline(self) -> StepPipeline | None:
         return step_pipeline(self._simulator)
+
+    def _render_live(self):
+        return torch.as_tensor(self._simulator.render_live(), device=self.device)
 
     @staticmethod
     def _stack_states(values):
@@ -229,17 +234,29 @@ class PushT(Env):
         state = self.get_state() if state is None else state
         if not isinstance(state, TensorDict) or len(state.batch_size) != 1 or not state.batch_size[0]:
             raise ValueError("PushT render requires a nonempty State batch")
-        flat = dict(state.items(include_nested=True, leaves_only=True))
-        fields = {}
+        selected, error = {}, None
         for key, shape, dtype in self._render_fields:
-            value = flat.get(key)
-            if value is None:
-                raise KeyError(key)
+            value = state.get(key, None)
+            if not isinstance(value, torch.Tensor):
+                error = KeyError(key)
+                break
             if value.shape != (*state.batch_size, *shape) or value.dtype != dtype:
-                raise ValueError(f"Invalid PushT render field: {key}")
-            if value.is_floating_point() and not torch.isfinite(value).all():
+                error = ValueError(f"Invalid PushT render field: {key}")
+                break
+            selected[key] = value
+        # Start every device-to-host copy before waiting for any of them.
+        host = {key: value.to("cpu", non_blocking=True) for key, value in selected.items()}
+        if any(value.device.type == "cuda" for value in selected.values()):
+            torch.cuda.synchronize()
+        fields = {}
+        # Fields are checked in order, so an earlier nonfinite field is reported before a later layout error.
+        for key, value in host.items():
+            array = value.numpy()
+            if array.dtype.kind == "f" and not np.isfinite(array).all():
                 raise ValueError(f"Nonfinite PushT render field: {key}")
-            fields["/".join(key)] = value
+            fields["/".join(key)] = array
+        if error is not None:
+            raise error
         return fields
 
     def render(self, state=None, *, size=None, out=None):
@@ -249,9 +266,14 @@ class PushT(Env):
             raise ValueError("PushT render size must be a positive integer")
         if self._simulator.template.config["render_action"] and size < 96:
             raise ValueError("Source PushT action markers require size >= 96")
-        fields = {k: v.cpu().numpy() for k, v in self._render_fields_of(state).items()}
-        rows = [{k: v[i] for k, v in fields.items()} for i in range(len(fields["recipe/config"]))]
-        frames = torch.as_tensor(self._projection.render(rows, size), device=self.device)
+        fields = self._render_fields_of(state)
+        count = len(fields["recipe/config"])
+        pool = self._pool(count)
+        if pool is not None:
+            frames = pool.render(fields, size)
+        else:
+            frames = self._projection.render([{k: v[i] for k, v in fields.items()} for i in range(count)], size)
+        frames = torch.as_tensor(frames, device=self.device)
         if out is not None:
             if (
                 out.shape != frames.shape
@@ -264,7 +286,25 @@ class PushT(Env):
             return out
         return frames
 
+    def _pool(self, count):
+        """Return the render worker pool for ``count`` rows, or None to draw in this process."""
+        from ..._execution.policy import cpu_affinity, process_count
+
+        if self._render_pool is None:
+            cpus = cpu_affinity()
+            processes = process_count(count, cpus, path="pusht-render")
+            if processes < 2:
+                return None
+            from .render_pool import PushTRenderPool
+
+            self._render_pool = PushTRenderPool(processes, cpus)
+        elif count < int(tuning.get("worker_min_lanes", path="pusht-render", size=self.size, batch=count) or 0):
+            return None
+        return self._render_pool
+
     def _close(self):
+        if self._render_pool is not None:
+            self._render_pool.close()
         self._projection.close()
         self._simulator.close()
 
