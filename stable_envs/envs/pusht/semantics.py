@@ -234,11 +234,10 @@ class PushT(Env):
         state = self.get_state() if state is None else state
         if not isinstance(state, TensorDict) or len(state.batch_size) != 1 or not state.batch_size[0]:
             raise ValueError("PushT render requires a nonempty State batch")
-        flat = dict(state.items(include_nested=True, leaves_only=True))
         selected, error = {}, None
         for key, shape, dtype in self._render_fields:
-            value = flat.get(key)
-            if value is None:
+            value = state.get(key, None)
+            if not isinstance(value, torch.Tensor):
                 error = KeyError(key)
                 break
             if value.shape != (*state.batch_size, *shape) or value.dtype != dtype:

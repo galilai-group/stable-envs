@@ -1,6 +1,7 @@
 """PushT task on Pymunk: the scene, its variation space, reward and frame drawing."""
 
 import sys
+import threading
 from functools import partial
 
 import cv2
@@ -41,6 +42,18 @@ def resized_rgb(canvas, size):
     if channels == [2, 1, 0]:
         return cv2.cvtColor(resized, cv2.COLOR_BGRA2RGB)
     return np.ascontiguousarray(resized[..., channels])
+
+
+_CANVASES = threading.local()
+
+
+def _canvas(size):
+    """Return this thread's ``size`` canvas and its draw options; the fill covers every pixel of a frame."""
+    cached = getattr(_CANVASES, "value", None)
+    if cached is None or cached[0].get_width() != size:
+        canvas = pygame.Surface((size, size))
+        cached = _CANVASES.value = (canvas, DrawOptions(canvas))
+    return cached
 
 
 class PushT(gym.Env):
@@ -404,11 +417,7 @@ class PushT(gym.Env):
         if self.clock is None and mode == "human":
             self.clock = pygame.time.Clock()
 
-        # The fill covers every pixel, so one canvas serves every frame.
-        if getattr(self, "_canvas", None) is None:
-            self._canvas = pygame.Surface((self.window_size, self.window_size))
-            self._draw_options = DrawOptions(self._canvas)
-        canvas, draw_options = self._canvas, self._draw_options
+        canvas, draw_options = _canvas(self.window_size)
         canvas.fill(self.variation_space["background"]["color"].value)
 
         self.screen = canvas

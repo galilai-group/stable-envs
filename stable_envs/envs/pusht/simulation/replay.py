@@ -163,7 +163,6 @@ class PushTReplay:
         # Reset rebinds the engine's scene, generators and episode fields, so a shallow copy
         # shares only objects that it does not change in place.
         engine = shallow_copy(self.env)
-        engine._canvas = None
         # An integer seed replaces every Variation generator before the first draw.
         engine.variation_space = copy_space(self.env.variation_space, generators=not isinstance(seed, int))
         engine.action_space = shallow_copy(self.env.action_space)
