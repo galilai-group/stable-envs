@@ -26,9 +26,11 @@ pytestmark = pytest.mark.gpu
 if not torch.cuda.is_available():
     pytest.skip("stable-envs GPU tests require a CUDA device", allow_module_level=True)
 
+import _replay_state as RS
 from _shared import family_params, make_or_skip, resolve_family, sampled_states
 
 import stable_envs as se
+from stable_envs.testing import _sampling as S
 from stable_envs.testing import conformance as C
 from stable_envs.testing._data import StateDataset, TrajectoryDataset, collate_batched
 from tests._runner import render_worker as W
@@ -83,9 +85,12 @@ def env(request):
 
 @pytest.fixture(scope="module")
 def inputs(env):
-    """The (states, style) pair, drawn by ``render_worker.sample_inputs`` as the subprocess draws it."""
+    """The (states, style) pair, drawn by ``render_worker.sample_inputs`` as the subprocess draws it.
+
+    For an env without render rows the states are full States, which carry their Variation, so style is None.
+    """
     states, style = W.sample_inputs(env, N)
-    return states, (style if env.style_dim else None)
+    return states, (style if env.style_dim and S.has_render_rows(env) else None)
 
 
 @pytest.fixture(scope="session")
@@ -164,7 +169,13 @@ def _record(fresh_process, name: str) -> dict:
 
 
 def _digest(x) -> str:
-    return C.frames_digest(x)
+    return S.digest(x)
+
+
+def _rows_only(env, why: str) -> None:
+    """Skip an env without render rows, for a check of the render-row interface only."""
+    if not S.has_render_rows(env):
+        pytest.skip(f"{type(env).__name__} has no render rows: {why}")
 
 
 # ------------------------------------------------------------------ 1. cross-process
@@ -196,6 +207,25 @@ def test_frames_are_bit_identical_in_a_fresh_process(env, fresh_process):
     name = type(env).__name__
     rec = _record(fresh_process, name)
     _, arrays = fresh_process
+    if not S.has_render_rows(env):
+        states, styled = (
+            S.state_from_arrays(
+                {k.split("::", 2)[2]: arrays[k] for k in arrays.files if k.startswith(f"{name}::{part}::")}, env.device
+            )
+            for part in ("states", "styled")
+        )
+        frames = env.render(states)
+        assert list(frames.shape) == rec["shape"], (
+            f"{name}: frame shape {list(frames.shape)} here, {rec['shape']} in a fresh process"
+        )
+        assert _digest(frames) == rec["frames_sha"], (
+            f"{name}: rendering the same States in a fresh process gave different pixels; the frame "
+            f"depends on something this interpreter accumulated"
+        )
+        assert _digest(env.render(styled)) == rec["frames_styled_sha"], (
+            f"{name}: frames agree under the default Variation but not under a sampled one across processes"
+        )
+        return
     states = arrays[f"{name}::states"]
     style = arrays[f"{name}::style"]
     frames = env._render(states)
@@ -223,13 +253,18 @@ def test_rollout_seed_reproduces_in_a_fresh_process(env, fresh_process):
     rec = _record(fresh_process, name)
     if "rollout_states_sha" not in rec:
         pytest.skip(f"{name}: no batched GPU simulator, so there is no rollout to seed")
-    tr = sample(env, steps=W.ROLLOUT_STEPS, batch=N, seed=W.ROLLOUT_SEED)
-    assert _digest(tr["states"].detach().cpu().numpy()) == rec["rollout_states_sha"], (
+    if S.has_render_rows(env):
+        tr = sample(env, steps=W.ROLLOUT_STEPS, batch=N, seed=W.ROLLOUT_SEED)
+    else:
+        # A replay State keeps what earlier episodes left after a reset; the worker rolls out on a new env too.
+        with RS.fresh(env) as other:
+            tr = sample(other, steps=W.ROLLOUT_STEPS, batch=N, seed=W.ROLLOUT_SEED)
+    assert _digest(tr["states"]) == rec["rollout_states_sha"], (
         f"{name} sample(seed={W.ROLLOUT_SEED}) produced a different trajectory in a fresh process; "
         f"the rollout reads randomness the seed does not reach"
     )
     if tr.get("actions") is not None and "rollout_actions_sha" in rec:
-        assert _digest(tr["actions"].detach().cpu().numpy()) == rec["rollout_actions_sha"], (
+        assert _digest(tr["actions"]) == rec["rollout_actions_sha"], (
             f"{name}: the seeded policy chose different actions in a fresh process"
         )
 
@@ -239,7 +274,7 @@ def test_rollout_seed_reproduces_in_a_fresh_process(env, fresh_process):
 
 def _big_batch(env) -> int:
     """The largest batch from ``BIG_BATCHES`` whose frames fit ``BIG_FRAME_BUDGET``."""
-    probe = env._render(env.sample_states(1, rng=np.random.default_rng(0)))
+    probe = S.render_any(env, S.draw_states(env, 1, np.random.default_rng(0)))
     per = int(np.prod(probe.shape[1:]))
     for b in BIG_BATCHES:
         if b * per <= BIG_FRAME_BUDGET:
@@ -254,7 +289,7 @@ def test_frame_i_is_independent_of_batch_size(env):
     order per batch count.
     """
     big = _big_batch(env)
-    states = env.sample_states(big, rng=np.random.default_rng(11))
+    states = S.draw_states(env, big, np.random.default_rng(11))
     r = C.check_batch_size_invariance(env, states, sizes=BATCH_SIZES + (big,))
     assert r["max_abs_diff"] == 0, (
         f"{type(env).__name__}: the same state renders differently depending on how many other "
@@ -269,7 +304,10 @@ def test_chunked_render_states_is_chunk_independent(env, inputs):
     host-to-device copies at chunk boundaries.
     """
     states, style = inputs
-    r = C.check_chunked_render_matches(env, states, style=style, chunks=(N, 1, 7, 4096))
+    if S.has_render_rows(env):
+        r = C.check_chunked_render_matches(env, states, style=style, chunks=(N, 1, 7, 4096))
+    else:
+        r = RS.check_chunked_render_matches(env, states, chunks=(N, 1, 7, 4096))
     assert r["max_abs_diff"] == 0, (
         f"{type(env).__name__}: render_states gives different pixels at different chunk sizes "
         f"({r['worst_case']}, max {r['max_abs_diff']}/255): {r}"
@@ -290,7 +328,7 @@ MEASURED_ON = (
 #: shape by one pixel costs whole percent.
 DOWNSAMPLE_MARGIN = 0.005
 #: Why the floors differ by family:
-#:   0.897       PushT: point-sampled analytic shape edges.
+#:   0.966       PushT: pygame polygon and circle edges.
 #:   0.708-0.726 OGBench mazes: MuJoCo re-bakes the plate at 2S with its own multisampling.
 #:   0.282-0.730 DM Control: the same re-bake over a speckled skybox and a checker floor.
 #: Not listed: ``DMCManipulatorBringBall`` (a plate cell covered by ``PLATE_REPRESENTATIVES``).
@@ -339,7 +377,10 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     "PointmazeMediumStitch": 0.723306,  # mean 0.6111/255
     "PointmazeTeleportNavigate": 0.717602,  # mean 1.1505/255
     "PointmazeTeleportStitch": 0.717602,  # mean 1.1505/255
-    "PushT": 0.897163,  # mean 2.2749/255
+    #: Full States from render_worker.sample_inputs; the frames are the source pygame frames on any
+    #: device. Measured on an RTX A6000, pygame 2.6.1.
+    "PushT": 0.966525,  # mean 0.3170/255
+    "PushTDiscrete": 0.966416,  # mean 0.3168/255
 }
 #: Plate-baking envs the size-changing checks run on. Each new output size rebuilds the plate env and
 #: its MuJoCo renderer, so one maze per locomotion body and the two DM Control camera geometries
@@ -364,6 +405,8 @@ def _skip_if_size_is_not_resolution(env) -> None:
     """
     import inspect
 
+    if not S.has_render_rows(env):
+        return  # a full State renders through env.render(size=), which re-samples the same picture
     dev = env.device
     st = torch.as_tensor(env.sample_states(1, rng=np.random.default_rng(0)), device=dev)
     if "size" not in inspect.signature(env.scene).parameters:
@@ -484,7 +527,10 @@ def test_every_input_form_gives_the_same_frame(env, inputs):
     float64 inputs are widened float32 values, so any difference comes from the code path.
     """
     states, style = inputs
-    r = C.check_input_form_invariance(env, states, style=style)
+    if S.has_render_rows(env):
+        r = C.check_input_form_invariance(env, states, style=style)
+    else:
+        r = RS.check_input_form_invariance(env, states)
     assert not r["disagreements"], (
         f"{type(env).__name__}: these input forms did not give the frame that plain float32 numpy "
         f"gives: {r['disagreements']}"
@@ -492,8 +538,15 @@ def test_every_input_form_gives_the_same_frame(env, inputs):
 
 
 def test_leading_dimensions_are_preserved(env, inputs):
-    """``(n_traj, T, D)`` in gives ``(n_traj, T, H, W, 3)`` out, with each frame in its own cell."""
+    """``(n_traj, T, D)`` in gives ``(n_traj, T, H, W, 3)`` out, with each frame in its own cell.
+
+    A full State has one batch dimension, so ``render`` refuses a nested batch instead of reshaping it.
+    """
     states, style = inputs
+    if not S.has_render_rows(env):
+        with pytest.raises(ValueError):
+            env.render(states.reshape(2, N // 2))
+        return
     flat = env._render(states, style=style).detach().cpu().numpy()
     nested = env._render(states.reshape(2, N // 2, -1), style=style).detach().cpu().numpy()
     assert nested.shape == (2, N // 2, *flat.shape[1:]), (
@@ -507,9 +560,9 @@ def test_leading_dimensions_are_preserved(env, inputs):
 def test_out_buffer_receives_the_same_frames(env, inputs):
     """``render(..., out=buf)`` writes the frames into ``buf`` and returns them."""
     states, style = inputs
-    ref = env._render(states, style=style).detach().cpu().numpy()
+    ref = S.render_any(env, states, style=style).detach().cpu().numpy()
     buf = torch.zeros(ref.shape, dtype=torch.uint8, device=env.device)
-    got = env._render(states, style=style, out=buf)
+    got = S.render_any(env, states, style=style, out=buf)
     assert np.array_equal(buf.detach().cpu().numpy(), ref), (
         f"{type(env).__name__}: render(out=buf) did not put the frames in buf"
     )
@@ -526,14 +579,14 @@ def test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted(e
     every env through ``StableEnv.__init_subclass__``.
     """
     states, style = inputs
-    ref = env._render(states[:1], style=None if style is None else style[:1])
+    ref = S.render_any(env, states[:1], style=None if style is None else style[:1])
     H, W = int(ref.shape[-3]), int(ref.shape[-2])
     n = min(4, N)
     buf = torch.zeros((n, 3, H, W, 3), dtype=torch.uint8, device=env.device)
     view = buf[:, 1]
     assert not view.is_contiguous(), "the probe buffer must be strided for this to mean anything"
     with pytest.raises((RuntimeError, ValueError), match="(?i)contiguous"):
-        env._render(states[:n], style=None if style is None else style[:n], out=view)
+        S.render_any(env, states[:n], style=None if style is None else style[:n], out=view)
     assert int(buf.max()) == 0, (
         f"{type(env).__name__}: render(out=<non-contiguous>) reported an error but had already "
         f"written into the caller's buffer"
@@ -551,6 +604,12 @@ def test_rendering_a_sub_batch_refuses_environment_0_s_style(env, inputs):
     """
     if env.style_dim == 0:
         pytest.skip(f"{type(env).__name__} declares no style, so there is nothing to collapse")
+    if not S.has_render_rows(env):
+        # A full State carries each lane's Variation, so a sub-batch draws its own lanes' appearance.
+        st = S.styled_inputs(env, N, C.uniform_style(env, N, groups=2))
+        d = RS.max_diff(RS.frames(env, st[3:4])[0], RS.frames(env, st)[3])
+        assert d == 0, f"{type(env).__name__}: State 3 rendered alone is {d}/255 away from row 3 of the batch"
+        return
     states, _ = inputs
     sty = C.uniform_style(env, N, groups=2)  # two distinct rows; see uniform_style on the cost
     env._set_render_state(states, style=sty)
@@ -571,14 +630,20 @@ def test_a_shared_style_broadcasts_to_any_batch(env, inputs):
     """A shared style (the stored default, or one explicit row) broadcasts to any batch without raising."""
     states, _ = inputs
     env.set_style(None)
-    ref = env._render(states).detach().cpu().numpy()
+    ref = S.render_any(env, states).detach().cpu().numpy()
     for b in (1, 3, N):
-        got = env._render(states[:b]).detach().cpu().numpy()
+        got = S.render_any(env, states[:b]).detach().cpu().numpy()
         assert np.array_equal(got, ref[:b]), (
             f"{type(env).__name__}: under the default appearance, rendering {b} of {N} rows differs "
             f"from those rows of the full batch"
         )
-    if env.style_dim:
+    if env.style_dim and not S.has_render_rows(env):
+        one = env.sample_style(1, rng=np.random.default_rng(3))
+        st = S.styled_inputs(env, N, np.repeat(one, N, 0))
+        assert np.array_equal(RS.frames(env, st[:1])[0], RS.frames(env, st)[0]), (
+            f"{type(env).__name__}: a State under one shared Variation row draws differently at two batch sizes"
+        )
+    elif env.style_dim:
         one = env.sample_style(1, rng=np.random.default_rng(3))
         a = env._render(states, style=one).detach().cpu().numpy()
         b_ = env._render(states[:1], style=one).detach().cpu().numpy()[0]
@@ -598,6 +663,9 @@ def test_variation_overrides_do_not_drop_the_env_s_per_environment_style(env, in
     if chosen is None:
         pytest.skip(f"{type(env).__name__} declares no continuous variation leaf")
     path, off, w, v = chosen
+    if not S.has_render_rows(env):
+        _assert_an_override_keeps_the_per_lane_variation(env, path, off, w, v)
+        return
     states, _ = inputs
     sty = C.uniform_style(env, N, groups=2)  # two distinct rows; see uniform_style on the cost
     env._set_render_state(states, style=sty)
@@ -613,13 +681,42 @@ def test_variation_overrides_do_not_drop_the_env_s_per_environment_style(env, in
     )
 
 
+def _leaf_value(env, path, v):
+    """``v`` from ``_continuous_leaf`` in the leaf's own shape and dtype, as ``set_variation`` takes it."""
+    node = env.variation_space._walk(path)
+    return np.asarray(v).reshape(node.shape).astype(node.dtype)
+
+
+def _assert_an_override_keeps_the_per_lane_variation(env, path, off, w, v):
+    """``set_variation({path: v})`` over a per-lane Variation equals installing those rows with one column replaced."""
+    sty = C.uniform_style(env, N, groups=2)
+    want = np.array(sty, np.float32)
+    want[:, off : off + w] = v
+    with RS.fresh(env) as a, RS.fresh(env) as b:
+        a.set_variation(sty)
+        rows_a = a.set_variation({path: _leaf_value(env, path, v)}).detach().cpu().numpy()
+        rows_b = b.set_variation(want).detach().cpu().numpy()
+        assert np.array_equal(rows_a, rows_b), (
+            f"{type(env).__name__}: set_variation({{{path!r}: v}}) over a per-lane Variation installed other "
+            f"rows than the same rows with that one column replaced"
+        )
+        fa, fb = RS.frames_under(a), RS.frames_under(b)
+    assert np.array_equal(fa, fb), (
+        f"{type(env).__name__}: after set_variation({{{path!r}: v}}) over a per-lane Variation the frames differ "
+        f"from those of the same rows with that column replaced (max {RS.max_diff(fa, fb)}/255)"
+    )
+
+
 # ------------------------------------------------------------------ 5. purity, idempotence, ordering
 
 
 def test_render_is_pure_and_set_state_is_idempotent(env, inputs):
     """Rendering does not mutate the env, and ``set_state(get_state())`` twice equals once."""
     states, style = inputs
-    r = C.check_render_is_pure(env, states, style=style)
+    if S.has_render_rows(env):
+        r = C.check_render_is_pure(env, states, style=style)
+    else:
+        r = RS.check_render_is_pure(env, states)
     assert r["state_changed_by_render"] == 0.0, (
         f"{type(env).__name__}: render() mutated the env's state by {r['state_changed_by_render']}"
     )
@@ -638,8 +735,16 @@ def test_render_is_pure_and_set_state_is_idempotent(env, inputs):
 def test_set_state_copies_its_input(env):
     """``set_state`` copies its input and writes through the state buffer rather than rebinding it.
 
-    CUDA-graph-captured steps read the state buffer at a fixed address.
+    CUDA-graph-captured steps read the state buffer at a fixed address. An env without render rows has
+    no such buffer; its ``set_state`` must still copy the State it is given.
     """
+    if not S.has_render_rows(env):
+        r = RS.check_set_state_copies(env)
+        assert not r["aliased_leaves"], (
+            f"{type(env).__name__}: zeroing the State handed to set_state changed the env's own State at "
+            f"{r['aliased_leaves']}; the env aliases the caller's memory"
+        )
+        return
     r = C.check_set_state_copies(env)
     assert r["aliased_caller_buffer"] == 0.0, (
         f"{type(env).__name__}: zeroing the array that was handed to set_state changed the env's own "
@@ -657,7 +762,10 @@ def test_batch_order_does_not_change_the_frames(env, inputs):
     """
     states, _ = inputs
     style = C.uniform_style(env, N, groups=2)
-    r = C.check_order_independence(env, states, style=style)
+    if S.has_render_rows(env):
+        r = C.check_order_independence(env, states, style=style)
+    else:
+        r = RS.check_order_independence(env, S.styled_inputs(env, N, style) if env.style_dim else states)
     assert r["permutation_max_abs_diff"] == 0, (
         f"{type(env).__name__}: permuting the batch did not permute the frames (max "
         f"{r['permutation_max_abs_diff']}/255)"
@@ -674,14 +782,14 @@ def test_render_size_does_not_leak_into_later_calls(env, inputs):
     if hasattr(type(env), "PLATE_PATHS") and name not in PLATE_REPRESENTATIVES:
         pytest.skip(f"{name}: covered by {sorted(PLATE_REPRESENTATIVES)} — see PLATE_REPRESENTATIVES")
     states, style = inputs
-    before = env._render(states, style=style).shape
+    before = S.render_any(env, states, style=style).shape
     try:
-        env._render(states[:1], size=2 * int(env.size), style=None if style is None else style[:1])
+        S.render_any(env, states[:1], size=2 * int(env.size), style=None if style is None else style[:1])
     except ValueError as e:
         pytest.skip(f"{name} renders at one size only, so no size can leak: {e}")
-    after = env._render(states, style=style).shape
+    after = S.render_any(env, states, style=style).shape
     # Restore the size before asserting so a leak does not fail later tests on the shared env.
-    env._render(states[:1], size=int(env.size), style=None if style is None else style[:1])
+    S.render_any(env, states[:1], size=int(env.size), style=None if style is None else style[:1])
     assert tuple(after) == tuple(before), (
         f"{name}: after one render(size={2 * int(env.size)}), a plain render() returns {tuple(after)} "
         f"instead of {tuple(before)} while env.size is still {env.size}"
@@ -694,6 +802,16 @@ def test_render_size_does_not_leak_into_later_calls(env, inputs):
 def test_numpy_and_torch_serialization_round_trip(env, inputs, tmp_path):
     """States and style saved and loaded with numpy and torch re-render byte-identical frames."""
     states, style = inputs
+    if not S.has_render_rows(env):
+        ref = _digest(env.render(states))
+        np.savez(tmp_path / "s.npz", **S.state_arrays(states))
+        with np.load(tmp_path / "s.npz") as f:
+            back = S.state_from_arrays({k: f[k] for k in f.files}, env.device)
+        assert _digest(env.render(back)) == ref, f"{type(env).__name__}: frames differ after a numpy save/load"
+        torch.save({k: torch.as_tensor(v) for k, v in S.state_arrays(states).items()}, tmp_path / "t.pt")
+        back = S.state_from_arrays(torch.load(tmp_path / "t.pt", weights_only=True), env.device)
+        assert _digest(env.render(back)) == ref, f"{type(env).__name__}: frames differ after a torch save/load"
+        return
     ref = _digest(env._render(states, style=style))
 
     np.save(tmp_path / "s.npy", states)
@@ -720,6 +838,7 @@ def test_dataset_paths_regenerate_identical_frames(env, inputs):
 
     The per-trajectory style must be expanded with ``repeat_interleave``, not ``repeat``.
     """
+    _rows_only(env, "the datasets store render rows; full States are covered by the serialization test")
     states, style = inputs
     ref = env._render(states, style=style).detach().cpu().numpy()
 
@@ -756,6 +875,7 @@ def test_dataset_paths_regenerate_identical_frames(env, inputs):
 def test_huggingface_round_trip_regenerates_identical_frames(env, inputs, tmp_path):
     """A ``TrajectoryDataset`` round-tripped through HuggingFace (in memory and on disk) re-renders identically."""
     pytest.importorskip("datasets", reason="the HuggingFace round-trip needs `datasets`")
+    _rows_only(env, "TrajectoryDataset stores render rows; full States are covered by the serialization test")
     states, style = inputs
     ds = TrajectoryDataset(
         env,
@@ -790,6 +910,14 @@ def test_variation_dict_and_style_tensor_agree(env, inputs):
 
     sty = np.tile(env.default_style(), (N, 1))
     sty[:, off : off + w] = v
+    if not S.has_render_rows(env):
+        with RS.fresh(env) as a, RS.fresh(env) as b:
+            fa, fb = RS.frames_under(a, {path: _leaf_value(env, path, v)}), RS.frames_under(b, sty)
+        assert np.array_equal(fa, fb), (
+            f"{type(env).__name__}: set_variation({{{path!r}: v}}) and the equivalent flat Variation row "
+            f"draw different pictures (max {RS.max_diff(fa, fb)}/255)"
+        )
+        return
     a = env._render(states, variation={path: v}).detach().cpu().numpy()
     b = env._render(states, style=sty).detach().cpu().numpy()
     assert np.array_equal(a, b), (

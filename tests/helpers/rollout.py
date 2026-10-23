@@ -4,8 +4,10 @@ from typing import Any
 
 import numpy as np
 import torch
+from tensordict import TensorDict
 
 from stable_envs._core.dynamics import has_dynamics
+from stable_envs.testing._sampling import has_render_rows, render_any
 
 
 class BasePolicy:
@@ -102,7 +104,9 @@ def sample(
     Return states [B, T+1, D], actions [B, T, A] (None when T=0), and style.
     With render=True, also return uint8 frames [B, T+1, H, W, 3]. These stored
     projections cannot resume simulation. Delegated CPU environments require
-    full State for init_states, even when outputs live on CUDA.
+    full State for init_states, even when outputs live on CUDA. For an env
+    without render rows, states is a TensorDict with batch [B, T+1] that holds
+    the State fields whose shape is the same at every step.
     """
     if not has_dynamics(env):
         raise NotImplementedError(
@@ -129,7 +133,7 @@ def sample(
             env.set_state(init_states)
 
         def render_rows():
-            return env._pack_render_state(env.get_state())
+            return env._pack_render_state(env.get_state()) if has_render_rows(env) else env.get_state()
     else:
         env._set_render_state(init_states if init_states is not None else env.sample_states(B), style=style)
         render_rows = env._get_render_state
@@ -144,16 +148,25 @@ def sample(
         st.append(render_rows().clone())
 
     out = {
-        "states": torch.stack(st, dim=1),
+        "states": _stack_steps(st),
         "actions": torch.stack(acts, dim=1) if acts else None,
         "style": env.get_style().clone(),
     }
     if render:
         # frames[:, t] is strided; assign the result rather than passing it as out=.
-        first = env._render(out["states"][:, 0], style=out["style"])
+        draw = env._render if has_render_rows(env) else lambda states, style: render_any(env, states)
+        first = draw(out["states"][:, 0], style=out["style"])
         frames = torch.empty((B, int(steps) + 1, *first.shape[1:]), dtype=torch.uint8, device=env.device)
         frames[:, 0] = first
         for t in range(1, int(steps) + 1):
-            frames[:, t] = env._render(out["states"][:, t], style=out["style"])
+            frames[:, t] = draw(out["states"][:, t], style=out["style"])
         out["frames"] = frames
     return out
+
+
+def _stack_steps(states: list):
+    """Stack per-step rows, or the per-step State fields whose shape does not change over time."""
+    if not isinstance(states[0], TensorDict):
+        return torch.stack(states, dim=1)
+    keys = [k for k, v in states[0].items(True, True) if all(s[k].shape == v.shape for s in states[1:])]
+    return torch.stack([s.select(*keys) for s in states], dim=1)

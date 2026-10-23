@@ -18,6 +18,7 @@ if not torch.cuda.is_available():
 from _shared import family_params, make_or_skip, resolve_family
 
 import stable_envs as se
+from stable_envs.testing._sampling import has_render_rows, render_any
 from tests.helpers.rollout import RandomPolicy, ScriptedPolicy, sample
 
 N, STEPS, SEED = 4, 4, 20260812
@@ -29,6 +30,19 @@ STEPPING = tuple(n for n, c in sorted(se.registry.REGISTRY.items()) if "_step" i
 STEP_MODULES = ("classic_control", "pusht")
 
 
+def _equal(a, b) -> bool:
+    """Whether two rollouts' states (render rows or full States) are the same."""
+    return torch.equal(a, b) if torch.is_tensor(a) else bool((a == b).all())
+
+
+def _constant(a) -> bool:
+    """Whether every state in a rollout is the same, as in a degenerate env."""
+    if torch.is_tensor(a):
+        return float(a.std()) == 0.0
+    flat = a.reshape(-1)
+    return all(_equal(flat[i : i + 1], flat[:1]) for i in range(1, len(flat)))
+
+
 @pytest.mark.parametrize("name", family_params(STEPPING, family="stepping envs"))
 def test_a_rollout_has_the_documented_shape_and_its_actions_account_for_its_states(name):
     """A rollout has ``steps+1`` states, ``steps`` actions and one style row per env, all on device."""
@@ -36,7 +50,11 @@ def test_a_rollout_has_the_documented_shape_and_its_actions_account_for_its_stat
     env = make_or_skip(name, num_envs=N, device="cuda")
     tr = sample(env, steps=STEPS, batch=N, seed=SEED)
 
-    assert tr["states"].shape == (N, STEPS + 1, env.state_dim)
+    if has_render_rows(env):
+        assert tr["states"].shape == (N, STEPS + 1, env.state_dim)
+    else:
+        assert tuple(tr["states"].batch_size) == (N, STEPS + 1), f"{name}: State batch {tr['states'].batch_size}"
+        assert list(tr["states"].keys(True, True)), f"{name}: the rollout kept no State field"
     assert tr["states"].device.type == "cuda", "the trajectory came back on the host"
     assert tr["style"].shape == (N, env.style_dim)
     if tr["actions"] is not None:
@@ -55,14 +73,23 @@ def test_the_same_seed_gives_the_same_trajectory_and_a_different_one_does_not(na
     """
     resolve_family(name, family="stepping envs", modules=STEP_MODULES, subject="seeded rollouts")
     env = make_or_skip(name, num_envs=N, device="cuda")
-    a = sample(env, steps=STEPS, batch=N, seed=SEED)["states"].clone()
-    b = sample(env, steps=STEPS, batch=N, seed=SEED)["states"]
-    assert torch.equal(a, b), f"{name}: the same seed produced two different trajectories"
 
-    c = sample(env, steps=STEPS, batch=N, seed=SEED + 1)["states"]
-    if torch.equal(a, c):
+    def rollout(seed):
+        if has_render_rows(env):
+            return sample(env, steps=STEPS, batch=N, seed=seed)["states"].clone()
+        # A replay State also records what the previous episode left (PushT's latest action), which reset
+        # keeps as the source does, so each rollout starts from a new env.
+        with make_or_skip(name, num_envs=N, device="cuda") as other:
+            return sample(other, steps=STEPS, batch=N, seed=seed)["states"]
+
+    a = rollout(SEED)
+    b = rollout(SEED)
+    assert _equal(a, b), f"{name}: the same seed produced two different trajectories"
+
+    c = rollout(SEED + 1)
+    if _equal(a, c):
         # A degenerate env (single-point reset, actions that do not move it) legitimately agrees.
-        assert float(a.std()) == 0.0, (
+        assert _constant(a), (
             f"{name}: two different seeds gave the same non-degenerate trajectory, so the seed reaches "
             f"neither the initial states nor the policy"
         )
@@ -80,13 +107,16 @@ def test_rendered_frames_are_exactly_the_renders_of_the_states_beside_them(name)
     tr = sample(env, steps=STEPS, batch=N, seed=SEED, render=True)
     frames, states, style = tr["frames"], tr["states"], tr["style"]
 
-    probe = env._render(states[:, 0], style=style)
+    def draw(st):
+        return env._render(st, style=style) if has_render_rows(env) else render_any(env, st)
+
+    probe = draw(states[:, 0])
     assert frames.shape == (N, STEPS + 1, *probe.shape[1:]), (
         f"{name}: frame buffer {tuple(frames.shape)} does not match {(N, STEPS + 1, *probe.shape[1:])}"
     )
     assert frames.dtype == torch.uint8
     for t in range(STEPS + 1):
-        want = env._render(states[:, t], style=style)
+        want = draw(states[:, t])
         d = (frames[:, t].to(torch.int16) - want.to(torch.int16)).abs()
         assert int(d.max()) == 0, (
             f"{name}: frame {t} differs from render(states[:, {t}]) by max {int(d.max())}/255 on "

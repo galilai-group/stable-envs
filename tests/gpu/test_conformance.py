@@ -18,8 +18,11 @@ pytestmark = pytest.mark.gpu
 if not torch.cuda.is_available():
     pytest.skip("stable-envs GPU tests require a CUDA device", allow_module_level=True)
 
+import _replay_state as RS
+
 import stable_envs as se
 from stable_envs.testing import conformance as C
+from stable_envs.testing._sampling import has_render_rows
 from stable_envs.testing.provenance import reference_version_mismatch
 from tests.helpers import source_mse as SM
 from tests.helpers.reference import dmc_source_render
@@ -118,6 +121,17 @@ def test_required_envs_are_all_reachable():
 def test_describe_is_complete(env):
     d = env.describe()
     label = d.get("class_name") or d.get("id")
+    if not has_render_rows(env):
+        # A replay State has no flat render row, so describe() reports its State fields instead.
+        assert d["render_state_names"] == [], f"{label}: render_state_names without a render row"
+        live = {"/".join(k): v for k, v in env.get_state().items(True, True)}
+        assert set(d["state_fields"]) == set(live), (
+            f"{label}: describe() state_fields {sorted(set(d['state_fields']) ^ set(live))} disagree with get_state()"
+        )
+        for key, v in live.items():
+            want = {"shape": list(v.shape[1:]), "dtype": str(v.dtype).removeprefix("torch.")}
+            assert d["state_fields"][key] == want, f"{label}: {key} is {want} in get_state(), {d['state_fields'][key]}"
+        return
     assert d["render_state_dim"] > 0, f"{label}: render_state_dim must be positive"
     assert len(d["render_state_names"]) == d["render_state_dim"], (
         f"{label}: {len(d['render_state_names'])} render_state_names for {d['render_state_dim']} dims"
@@ -125,11 +139,22 @@ def test_describe_is_complete(env):
 
 
 def test_render_state_roundtrip(env):
+    if not has_render_rows(env):
+        r = RS.check_state_roundtrip(env)
+        assert not r["mismatched_leaves"], f"set_state(get_state()) is not the identity on {r['mismatched_leaves']}"
+        return
     r = C.check_render_state_roundtrip(env)
     assert r["max_abs_err"] == 0.0, f"set_state(get_state()) is not the identity: {r}"
 
 
 def test_every_state_dim_reaches_the_render(env):
+    if not has_render_rows(env):
+        r = RS.check_state_reaches_the_render(env)
+        assert r["duplicate_frames"] == 0 and r["steps_change_the_frame"], (
+            f"the State does not reach the frame: lanes reset from different seeds give "
+            f"{r['duplicate_frames']} duplicate frame(s), and steps change the frame: {r['steps_change_the_frame']}"
+        )
+        return
     r = C.check_state_dims_matter(env)
     assert not r["dead_dims"], (
         f"state dims {r['dead_dims']} change nothing in the frame: either the state is not minimal "
@@ -138,12 +163,12 @@ def test_every_state_dim_reaches_the_render(env):
 
 
 def test_batch_invariance(env):
-    r = C.check_batch_invariance(env)
+    r = (C if has_render_rows(env) else RS).check_batch_invariance(env)
     assert r["max_abs_diff"] == 0, f"frame differs when rendered in a batch vs alone (max {r['max_abs_diff']}/255)"
 
 
 def test_per_env_variation_is_per_env(env):
-    r = C.check_per_env_variation(env)
+    r = (C if has_render_rows(env) else RS).check_per_env_variation(env)
     if "skipped" in r:
         pytest.skip(r["skipped"])
     assert not r["collapsed_variations"], (
@@ -153,7 +178,7 @@ def test_per_env_variation_is_per_env(env):
 
 
 def test_style_is_state(env):
-    r = C.check_style_is_state(env)
+    r = (C if has_render_rows(env) else RS).check_style_is_state(env)
     if "skipped" in r:
         pytest.skip(r["skipped"])
     assert r["max_abs_diff"] == 0, (
@@ -163,7 +188,7 @@ def test_style_is_state(env):
 
 
 def test_default_style_is_the_official_appearance(env):
-    r = C.check_default_style_is_official(env)
+    r = (C if has_render_rows(env) else RS).check_default_style_is_official(env)
     if "skipped" in r:
         pytest.skip(r["skipped"])
     assert r["max_abs_diff"] == 0, f"render(style=default_style()) differs from render() by {r['max_abs_diff']}/255"
@@ -175,7 +200,7 @@ def test_color_knobs_apply_the_requested_color(env):
     A declared leaf's lighting cannot reach unit gain, in the official renderer too (see
     ``conformance.color_exactness_applicability``). Its measured distance must still be recorded.
     """
-    r = C.check_colors_apply_exactly(env)
+    r = (C if has_render_rows(env) else RS).check_colors_apply_exactly(env)
     part = C.partition_colour_exactness(r)
     assert not part["asserted"], (
         f"colour knobs that did not put the requested colour in the frame: {part['asserted']}"
@@ -196,10 +221,14 @@ def test_color_knobs_apply_the_requested_color(env):
 
 
 def test_determinism(env):
-    assert C.check_determinism(env)["identical"], "two renders of the same states differ"
+    assert (C if has_render_rows(env) else RS).check_determinism(env)["identical"], (
+        "two renders of the same states differ"
+    )
 
 
 def test_backend_agreement(env):
+    if not has_render_rows(env):
+        pytest.skip(f"{type(env).__name__} renders a full State without a Scene2D, so there is one backend")
     r = C.check_backend_agreement(env)
     if "skipped" in r:
         pytest.skip(r["skipped"])
@@ -210,7 +239,7 @@ def test_backend_agreement(env):
 
 
 def test_variations_all_do_something(env):
-    r = C.check_variations_do_something(env)
+    r = (C if has_render_rows(env) else RS).check_variations_do_something(env)
     assert not r["inert_variations"], f"declared variations that change nothing: {r['inert_variations']}"
 
 

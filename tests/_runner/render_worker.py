@@ -13,7 +13,16 @@ import sys
 import traceback
 
 from stable_envs._core.mujoco_gl import configure_mujoco_gl
-from stable_envs.testing._sampling import STATE_SEED, STYLE_SEED, sample_inputs  # noqa: F401
+from stable_envs.testing._sampling import (  # noqa: F401
+    STATE_SEED,
+    STYLE_SEED,
+    digest,
+    has_render_rows,
+    render_any,
+    sample_inputs,
+    state_arrays,
+    styled_inputs,
+)
 
 configure_mujoco_gl()
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
@@ -26,9 +35,7 @@ ROLLOUT_STEPS = 4
 
 
 def _digest(a) -> str:
-    from stable_envs.testing.conformance import frames_digest
-
-    return frames_digest(a)
+    return digest(a)
 
 
 def rollout_digests(env, n: int) -> dict:
@@ -39,10 +46,15 @@ def rollout_digests(env, n: int) -> dict:
         return {}
     from tests.helpers.rollout import sample
 
-    tr = sample(env, steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
-    out = {"rollout_states_sha": _digest(tr["states"].detach().cpu().numpy())}
+    if has_render_rows(env):
+        tr = sample(env, steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
+    else:
+        # A replay State keeps what earlier episodes left after a reset, so the rollout uses a new env.
+        with type(env)(num_envs=n, size=env.size, device=str(env.device)) as other:
+            tr = sample(other, steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
+    out = {"rollout_states_sha": _digest(tr["states"])}
     if tr.get("actions") is not None:
-        out["rollout_actions_sha"] = _digest(tr["actions"].detach().cpu().numpy())
+        out["rollout_actions_sha"] = _digest(tr["actions"])
     return out
 
 
@@ -54,9 +66,15 @@ def run(names, n: int, device: str = "cuda") -> tuple[dict, dict]:
         try:
             env = se.make(name, num_envs=n, device=device)
             states, style = sample_inputs(env, n)
-            sty = style if env.style_dim else None
-            frames = env._render(states)
-            frames_styled = env._render(states, style=sty)
+            if has_render_rows(env):
+                styled = None
+                frames = env._render(states)
+                frames_styled = env._render(states, style=style if env.style_dim else None)
+            else:
+                # A full State carries its Variation, so the styled frames come from States drawn under it.
+                styled = styled_inputs(env, n, style) if env.style_dim else states
+                frames = render_any(env, states)
+                frames_styled = render_any(env, styled)
             rec = {
                 "states_sha": _digest(states),
                 "style_sha": _digest(style),
@@ -69,7 +87,11 @@ def run(names, n: int, device: str = "cuda") -> tuple[dict, dict]:
             }
             rec.update(rollout_digests(env, n))
             report[name] = rec
-            arrays[f"{name}::states"] = states
+            if styled is None:
+                arrays[f"{name}::states"] = states
+            else:
+                arrays.update({f"{name}::states::{k}": v for k, v in state_arrays(states).items()})
+                arrays.update({f"{name}::styled::{k}": v for k, v in state_arrays(styled).items()})
             arrays[f"{name}::style"] = style
         except Exception:  # noqa: BLE001
             # Record the traceback and continue so one unavailable family does not hide other results.
