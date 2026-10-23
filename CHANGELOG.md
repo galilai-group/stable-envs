@@ -20,9 +20,12 @@ All notable changes to this project are listed here. The format follows
 - A large render on an untuned path logs one `INFO` hint to run `stable-envs tune`
   (to hide it, set `STABLE_ENVS_TUNING_HINT=0`). `STABLE_ENVS_AUTOTUNE=1` tunes such a path on first use.
 - docs/environment-variables.md lists every `STABLE_ENVS_*` variable.
+- `Env.describe()` reports `state_fields`: the shape and dtype of each State field.
 
 ### Changed
 
+- The PushT error for a bad `render(out=)` buffer tells that the buffer must be contiguous and match
+  the frames in shape, dtype and device.
 - `OGBCube` and `OGBScene` on CUDA: `backend="auto"` draws with NVIDIA OpenGL, the source's renderer,
   and the default `supersample` is 1 on every device. CUDA frames now equal the source. Per-frame MSE
   against the source (0-255 scale, 256 states) changes from 24.7 to 0 for `OGBCube` and from 43.5 to 0

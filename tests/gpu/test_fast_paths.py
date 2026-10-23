@@ -25,6 +25,7 @@ from _shared import assert_frames_identical, family_params, make_or_skip, resolv
 import stable_envs as se
 from stable_envs.render import raster2d as R2
 from stable_envs.render import raycast3d as R3
+from stable_envs.testing._sampling import has_render_rows
 from tests.helpers import raycast_reference as reference
 
 #: Env modules whose import failure explains an empty family (see ``resolve_family``).
@@ -62,6 +63,8 @@ def _unbounded(cls):
 
 def _scene(env, batch: int, seed: int):
     """The env's ``Scene2D`` for a batch of its own states, or ``None`` if it does not build one."""
+    if not has_render_rows(env):
+        return None  # a full State renders without a Scene2D
     states = sampled_states(env, batch, seed)
     try:
         return env.scene(torch.as_tensor(states, device=env.device, dtype=torch.float32))

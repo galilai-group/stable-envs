@@ -17,6 +17,8 @@ import inspect
 import numpy as np
 import torch
 
+from ._sampling import render_any
+
 _REFERENCE_ENVS: dict = {}
 
 
@@ -945,9 +947,9 @@ def uniform_style(env, n: int, groups: int = 2, seed: int = 0):
 
 
 def check_batch_size_invariance(env, states, style=None, sizes=(1, 7, 64), probes: int = 4) -> dict:
-    """Compare selected rows in the full batch and smaller contiguous batches."""
+    """Compare selected rows (or full States) in the full batch and smaller contiguous batches."""
     n = len(states)
-    full = env._render(states, style=style).detach().cpu().numpy()
+    full = render_any(env, states, style=style).detach().cpu().numpy()
     idx = np.linspace(0, n - 1, min(int(probes), n)).astype(int)
     worst, where = 0, ""
     for b in sizes:
@@ -956,7 +958,7 @@ def check_batch_size_invariance(env, states, style=None, sizes=(1, 7, 64), probe
             lo = max(0, min(int(i) - b // 2, n - b))
             sub = states[lo : lo + b]
             k = None if style is None else style[lo : lo + b]
-            got = env._render(sub, style=k).detach().cpu().numpy()[int(i) - lo]
+            got = render_any(env, sub, style=k).detach().cpu().numpy()[int(i) - lo]
             d = int(np.abs(got.astype(np.int16) - full[int(i)].astype(np.int16)).max())
             if d > worst:
                 worst, where = d, f"row {int(i)} in a batch of {b}"
@@ -1163,10 +1165,10 @@ def check_resolution_consistency(env, states, style=None, factor: int = 2) -> di
     separately. Skip when the renderer does not produce the requested size ratio.
     """
     S = int(env.size)
-    a = env._render(states, size=S, style=style).detach().cpu().numpy()
-    big = env._render(states, size=S * int(factor), style=style).detach().cpu().numpy()
+    a = render_any(env, states, size=S, style=style).detach().cpu().numpy()
+    big = render_any(env, states, size=S * int(factor), style=style).detach().cpu().numpy()
     # Leave size-dependent renderer caches at the original resolution.
-    env._render(states[:1], size=S, style=None if style is None else style[:1])
+    render_any(env, states[:1], size=S, style=None if style is None else style[:1])
     if big.shape[-3] != a.shape[-3] * factor or big.shape[-2] != a.shape[-2] * factor:
         return {"skipped": f"size={S * factor} is not a {factor}x frame ({big.shape} vs {a.shape})"}
     d = np.abs(_box_downsample(big, factor).astype(np.int16) - a.astype(np.int16))

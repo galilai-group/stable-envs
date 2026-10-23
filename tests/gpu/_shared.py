@@ -13,6 +13,7 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs.testing._sampling import draw_states
 
 #: The parameter a family sweep is given when the family is empty. Never a real env name.
 EMPTY = "__no_env__"
@@ -67,9 +68,9 @@ def sampled_states(env, n: int, seed: int):
     """``n`` states from an explicitly seeded generator, never the env's own ``rng``.
 
     The ``env`` fixtures here are module-scoped, so drawing from ``env.rng`` would make the states
-    depend on test order.
+    depend on test order. An env without render rows gives full States from seeded rollouts.
     """
-    return env.sample_states(n, rng=np.random.default_rng(seed))
+    return draw_states(env, n, np.random.default_rng(seed))
 
 
 def frame_diff(a, b) -> tuple[int, int]:

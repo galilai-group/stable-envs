@@ -85,6 +85,17 @@ class PushT(Env):
     action_dtype = torch.float32
     action_low, action_high = -1.0, 1.0
     discrete = False
+    #: As in the source: every reset draws the start poses, and the goal is drawn with the block's shape
+    #: and scale.
+    undrawn_variation_leaves = frozenset(
+        {
+            "agent.start_position",
+            "block.start_position",
+            "block.angle",
+            "goal.scale",
+            "agent.angle",  # undrawn only because the default agent is round; other agent shapes show it
+        }
+    )
 
     def __init__(
         self,
@@ -340,7 +351,9 @@ class PushT(Env):
                 or out.device != frames.device
                 or not out.is_contiguous()
             ):
-                raise ValueError("Invalid PushT render output buffer")
+                raise ValueError(
+                    "PushT render output buffer must be contiguous and match the frames in shape, dtype and device"
+                )
             out.copy_(frames)
             return out
         return frames
