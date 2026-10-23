@@ -357,6 +357,12 @@ class PushTReplayAdapter(SimulatorAdapter):
         resolution = self.envs[0].config["resolution"]
         return (resolution, resolution, 3)
 
+    def render_fields(self):
+        """Return host State columns of the running lanes for drawing; the fixed columns are not copied."""
+        fields = dict(self._static_columns())
+        fields.update(self._current_columns())
+        return fields
+
     def render_live(self):
         """Draw every lane's running scene at the configured resolution, as ``render`` draws its State."""
         return np.stack([env.env.render() for env in self.envs])

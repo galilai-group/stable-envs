@@ -19,6 +19,8 @@ from .shared_memory import allocate_buffers, buffer_views, key_path, owned_group
 from .state_columns import require_columns
 from .workers import pin_worker, send_failure, send_ready
 
+#: Step frame requests: workers draw the frame, or write the State leaves a step changes for the parent to draw.
+FRAME_DRAW, FRAME_FIELDS = 1, 2
 #: ``process_methods`` kinds: split the first argument by lane, or send every worker the same arguments.
 PER_LANE, BROADCAST = "per_lane", "broadcast"
 
@@ -109,12 +111,12 @@ def process_worker(conn, factory, start, count, batch, seed, cpus, buffers, spec
                     capture_state=capture and not static,
                 )
                 write("task", result)
-                if capture and static:
+                if static and (capture or frame == FRAME_FIELDS):
                     for key, value in adapter.process_step_state().items():
                         views[("state", *key)][rows] = value
                 elif capture:
                     write("state", result["state"])
-                if frame:
+                if frame == FRAME_DRAW:
                     views[("frame",)][rows] = adapter.render_live()
             elif command == "get_state":
                 write("state", adapter.get_state())
@@ -185,6 +187,7 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
             raise ValueError("CPU allocation must provide at least one distinct core per process")
         self.num_envs, self.device = num_envs, torch.device(device)
         self._closed, self._pending, self._capture, self._capture_frame = False, None, False, False
+        self._pending_frame = None
         self._connections, self._processes = [], []
         self._metadata = None
         self._static, self._static_cache, self._spare, self._copier = frozenset(), None, None, None
@@ -370,10 +373,29 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
             raise (error if isinstance(error, type) and issubclass(error, Exception) else RuntimeError)(message)
         self._request("commit_restore")
 
+    #: How ``capture_frame`` obtains a frame: ``FRAME_DRAW`` or ``FRAME_FIELDS`` (see ``_fields_frame``).
+    frame_mode = FRAME_DRAW
+
     @property
     def live_frames(self) -> bool:
-        """Whether ``submit_step(capture_frame=True)`` draws the frame of the running lanes in the workers."""
-        return ("frame",) in self._specs
+        """Whether ``submit_step(capture_frame=True)`` returns the frame of the running lanes."""
+        return ("frame",) in self._specs and (self.frame_mode == FRAME_DRAW or bool(self._static))
+
+    def _frame_fields(self) -> object:
+        """Copy the shared State leaves a ``FRAME_FIELDS`` frame needs; families with that mode define it."""
+        raise NotImplementedError
+
+    def _fields_frame(self, fields) -> torch.Tensor:
+        """Draw a step frame from ``_frame_fields`` output; families with ``FRAME_FIELDS`` define it."""
+        raise NotImplementedError
+
+    def take_frame(self) -> torch.Tensor | None:
+        """Draw the frame of the last received ``FRAME_FIELDS`` step, or return None.
+
+        The leaves were copied on receipt, so the frame can be drawn while the next step runs.
+        """
+        fields, self._pending_frame = self._pending_frame, None
+        return None if fields is None else self._fields_frame(fields)
 
     def submit_step(self, actions, *, active=None, capture_state: bool = True, capture_frame: bool = False) -> None:
         """Submit one transition; receive its result before submitting another."""
@@ -385,7 +407,12 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         self._submit(
             "step",
             [
-                (actions[rows], None if active is None else active[rows], capture_state, capture_frame)
+                (
+                    actions[rows],
+                    None if active is None else active[rows],
+                    capture_state,
+                    capture_frame and self.frame_mode,
+                )
                 for rows in self._slices
             ],
         )
@@ -404,7 +431,9 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         result = self._owned("task")
         if self._capture:
             result["state"] = self._state()
-        if self._capture_frame:
+        if self._capture_frame and self.frame_mode == FRAME_FIELDS:
+            self._pending_frame = self._frame_fields()
+        elif self._capture_frame:
             result["frame"] = torch.from_numpy(self._views[("frame",)]).clone().to(self.device)
         return result
 

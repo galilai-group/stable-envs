@@ -148,6 +148,9 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
             if t in state_times:
                 saved_states[t] = live_state
             if t in frame_times:
+                if live_frame is None and pipeline_frames:
+                    # Workers copied the leaves on receipt; the next step is already running.
+                    live_frame = pipeline.take_frame() if hasattr(pipeline, "take_frame") else None
                 if live_frame is None and draws_live and pipeline is None:
                     live_frame = render_live()
                 elif live_frame is None:

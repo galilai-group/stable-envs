@@ -312,21 +312,32 @@ class _Group:
     Builders take arrays of shape ``[N]`` or ``[N, E]`` and return records ``[..., RECORD]``.
     """
 
-    def __init__(self, count):
+    def __init__(self, count, capacity=256):
         self.count = count
-        self.slots = []
+        self.buffer = np.zeros((count, capacity, RECORD), np.int64)
+        self.used = 0
         self.static = False
 
-    def _record(self, kind, color, enabled, shape):
-        rec = np.zeros((*shape, RECORD), np.int64)
+    def _take(self, slots):
+        """Return the next ``slots`` record columns ``[N, slots, RECORD]``."""
+        if self.used + slots > self.buffer.shape[1]:
+            grown = np.zeros((self.count, 2 * (self.used + slots), RECORD), np.int64)
+            grown[:, : self.used] = self.buffer[:, : self.used]
+            self.buffer = grown
+        view = self.buffer[:, self.used : self.used + slots]
+        self.used += slots
+        return view
+
+    def _record(self, kind, color, enabled, shape, rec=None):
+        rec = np.zeros((*shape, RECORD), np.int64) if rec is None else rec
         rec[..., KIND] = kind if enabled is None else np.where(enabled, kind, 0)
         rec[..., COLOR] = color if np.ndim(color) == len(shape) else np.reshape(color, (-1,) + (1,) * (len(shape) - 1))
         rec[..., STATIC] = self.static
         return rec
 
-    def _poly(self, color, xs, ys, enabled=None):
+    def _poly(self, color, xs, ys, enabled=None, rec=None):
         """``draw_fillpoly`` with integer points ``[..., n]``."""
-        rec = self._record(POLY, color, enabled, xs.shape[:-1])
+        rec = self._record(POLY, color, enabled, xs.shape[:-1], rec)
         n = xs.shape[-1]
         rec[..., BX0], rec[..., BX1] = xs.min(-1), xs.max(-1)
         rec[..., BY0], rec[..., BY1] = ys.min(-1), ys.max(-1)
@@ -335,18 +346,18 @@ class _Group:
         rec[..., PY : PY + n] = ys
         return rec
 
-    def _circle(self, color, cx, cy, radius, enabled=None):
+    def _circle(self, color, cx, cy, radius, enabled=None, rec=None):
         # ``pygame.draw.circle`` draws nothing for a radius below one.
         on = radius >= 1 if enabled is None else enabled & (radius >= 1)
-        rec = self._record(CIRCLE, color, on, cx.shape)
+        rec = self._record(CIRCLE, color, on, cx.shape, rec)
         rec[..., BX0], rec[..., BX1] = cx - radius, cx + radius
         rec[..., BY0], rec[..., BY1] = cy - radius, cy + radius
         rec[..., CX], rec[..., CY], rec[..., CR] = cx, cy, radius
         return rec
 
-    def _line(self, color, x1, y1, x2, y2):
+    def _line(self, color, x1, y1, x2, y2, rec=None):
         """``draw_line_width`` with width 4, including pygame's restart of clipped lines."""
-        rec = self._record(LINE, color, None, x1.shape)
+        rec = self._record(LINE, color, None, x1.shape, rec)
         dx, dy = np.abs(x2 - x1), np.abs(y2 - y1)
         xinc = dx <= dy
         rec[..., LN] = np.maximum(dx, dy)
@@ -380,15 +391,17 @@ class _Group:
         return rec
 
     def poly(self, color, xs, ys, enabled=None):
-        self.slots.append(self._poly(color, xs, ys, enabled))
+        self._poly(color, xs, ys, enabled, self._take(1)[:, 0])
 
     def circle(self, color, cx, cy, radius, enabled=None):
-        self.slots.append(self._circle(color, cx, cy, radius, enabled))
+        self._circle(color, cx, cy, radius, enabled, self._take(1)[:, 0])
 
     def fat_segments(self, color, ax, ay, bx, by):
         """``DrawOptions.draw_fat_segment`` with radius 2 for float endpoints ``[N, E]``, edge after edge."""
         p1x, p1y, p2x, p2y = (np.rint(v).astype(np.int64) for v in (ax, ay, bx, by))
-        lines = self._line(color, p1x, p1y, p2x, p2y)
+        # Each edge takes four consecutive slots: line, quad, then the two end circles.
+        slots = self._take(4 * p1x.shape[1])
+        self._line(color, p1x, p1y, p2x, p2y, slots[:, 0::4])
         o0, o1 = np.abs(p2y - p1y), np.abs(p2x - p1x)
         drawn = (o0 != 0) | (o1 != 0)
         squares = o0 * o0 + o1 * o1
@@ -396,15 +409,13 @@ class _Group:
         q0, q1 = np.rint(o0 * scale).astype(np.int64), np.rint(o1 * scale).astype(np.int64)
         xs = np.stack([p1x - q0, p1x + q0, p2x + q0, p2x - q0], -1)
         ys = np.stack([p1y - q1, p1y + q1, p2y + q1, p2y - q1], -1)
-        quads = self._poly(color, xs, ys, drawn)
+        self._poly(color, xs, ys, drawn, slots[:, 1::4])
         two = np.full(p1x.shape, 2, np.int64)
-        first = self._circle(color, p1x, p1y, two, drawn)
-        second = self._circle(color, p2x, p2y, two, drawn)
-        for e in range(p1x.shape[1]):
-            self.slots.extend((lines[:, e], quads[:, e], first[:, e], second[:, e]))
+        self._circle(color, p1x, p1y, two, drawn, slots[:, 2::4])
+        self._circle(color, p2x, p2y, two, drawn, slots[:, 3::4])
 
     def records(self):
-        return np.stack(self.slots, 1) if self.slots else np.zeros((self.count, 0, RECORD), np.int64)
+        return self.buffer[:, : self.used]
 
 
 def _colors(fields, name, lanes):
