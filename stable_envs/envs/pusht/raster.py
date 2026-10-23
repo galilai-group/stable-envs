@@ -1516,7 +1516,8 @@ def launch_segments(
 ):
     """Draw device ``records`` with the State contact lines ``segments [N, S, 8]``, all on the device.
 
-    ``static`` is ``(index [N], frames [K, size, size, 3], dynamic boxes [N, 4])`` from ``static_frames``;
+    ``static`` is ``(index [N], frames [K, size, size, 3], dynamic boxes [N, 4])``: frames of the background,
+    goal and walls alone, with index −1 for frames that draw them;
     ``bins`` is ``(lists [N, tiles, K], counts [N, tiles])`` from ``tile_bins``.
     """
     device = records.device
@@ -1559,11 +1560,12 @@ def tile_extents(size, tile, device):
     return torch.as_tensor(np.stack([lo[tx], lo[ty], hi[tx], hi[ty]], 1), device=device)
 
 
-def tile_bins(records, counts, size, tile, segments=None, segment_counts=None):
+def tile_bins(records, counts, size, tile, segments=None, segment_counts=None, width=None):
     """Per frame and output tile, the indices of the primitives that reach it, in drawing order.
 
     On CUDA, with ``segments``, also returns per tile the number of agent, block and contact
-    primitives that reach it; tiles without any copy the goal-and-wall frame of ``static_frames``.
+    primitives that reach it; tiles without any copy the goal-and-wall frame. With ``width`` (at
+    least the most primitives that one tile can list), the lists come from one pass without a sync.
     """
     extents = tile_extents(size, tile, records.device)
     if HAVE_TRITON and records.is_cuda:
@@ -1583,9 +1585,11 @@ def tile_bins(records, counts, size, tile, segments=None, segment_counts=None):
         segment_counts = segment_counts.reshape(-1).to(torch.int32)
         meta = dict(TILES=tiles, BLOCK=block, RECORD_=RECORD, SEGMENTS=segments.shape[1])
         args = (touch, segments, segment_counts, slots)
-        _bin_kernel[(n,)](records, counts, extents, sizes, sizes, *args, 0, WRITE=False, **meta)
-        width = max(1, int(sizes.max().item()))
-        lists = torch.zeros((n, tiles, width), dtype=torch.int32, device=records.device)
+        if width is None:
+            _bin_kernel[(n,)](records, counts, extents, sizes, sizes, *args, 0, WRITE=False, **meta)
+            width = max(1, int(sizes.max().item()))
+        dtype = torch.uint8 if slots <= 256 else torch.int32
+        lists = torch.empty((n, tiles, width), dtype=dtype, device=records.device)
         _bin_kernel[(n,)](records, counts, extents, lists, sizes, *args, width, WRITE=True, **meta)
         return (lists, sizes, touch) if given else (lists, sizes)
     kind = records[..., KIND]
@@ -1606,49 +1610,6 @@ def tile_bins(records, counts, size, tile, segments=None, segment_counts=None):
     lists = torch.zeros((*hit.shape[:2], width), dtype=torch.int32, device=records.device)
     lists[frame, tile_index, position[frame, tile_index, prim]] = prim.to(torch.int32)
     return lists, sizes.to(torch.int32).contiguous()
-
-
-def static_frames(records, counts, background, size, tile, segments, segment_counts):
-    """Frames of the background, goal and walls alone, shared by frames with equal ones.
-
-    Returns ``(index [N], frames [K, size, size, 3], boxes [N, 4])`` or None when frames rarely share them.
-    """
-    n = len(records)
-    static = (records[..., STATIC] != 0) & (records[..., KIND] != 0)
-    fixed = torch.where(static.unsqueeze(-1), records, 0)
-    goal = torch.cumprod(static.to(torch.int32), 1).bool()[:, :3]
-    keys = torch.cat(
-        [background.view(-1, 1).to(torch.int32), torch.where(goal.unsqueeze(-1), records[:, :3], 0).flatten(1)], 1
-    )
-    unique, inverse = torch.unique(keys, dim=0, return_inverse=True)
-    if len(unique) * 4 > n:
-        return None
-    first = torch.zeros(len(unique), dtype=torch.int64, device=records.device).scatter_(
-        0, inverse, torch.arange(n, device=records.device)
-    )
-    empty = torch.zeros(len(unique), dtype=torch.int32, device=records.device)
-    frames = launch_segments(fixed[first], counts[first], background[first], segments[first][:, :1], empty, size, tile)
-    big = 1 << 30
-    dyn = (records[..., KIND] != 0) & ~static
-    boxes = torch.stack(
-        [
-            torch.where(dyn, records[..., BX0], big).amin(1),
-            torch.where(dyn, records[..., BY0], big).amin(1),
-            torch.where(dyn, records[..., BX1], -big).amax(1),
-            torch.where(dyn, records[..., BY1], -big).amax(1),
-        ],
-        1,
-    )
-    used = torch.arange(segments.shape[1], device=records.device).view(1, -1) < segment_counts.view(-1, 1)
-    ends = torch.round(segments[..., :4]).to(torch.int64)
-    xs = torch.cat([ends[..., 0], ends[..., 2]], 1)
-    ys = torch.cat([ends[..., 1], ends[..., 3]], 1)
-    use2 = torch.cat([used, used], 1)
-    boxes[:, 0] = torch.minimum(boxes[:, 0], torch.where(use2, xs - 2, big).amin(1))
-    boxes[:, 1] = torch.minimum(boxes[:, 1], torch.where(use2, ys - 2, big).amin(1))
-    boxes[:, 2] = torch.maximum(boxes[:, 2], torch.where(use2, xs + 2, -big).amax(1))
-    boxes[:, 3] = torch.maximum(boxes[:, 3], torch.where(use2, ys + 2, -big).amax(1))
-    return inverse.to(torch.int32), frames, boxes.to(torch.int32)
 
 
 @cache
