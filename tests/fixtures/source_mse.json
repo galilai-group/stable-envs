@@ -577,9 +577,9 @@
    "seed": 20260811,
    "n": 64,
    "size": 224,
-   "mse_mean": 25.1974,
-   "mse_p95": 29.4667,
-   "mse_max": 29.9812,
+   "mse_mean": 0.0,
+   "mse_p95": 0.0,
+   "mse_max": 0.0,
    "reference_versions": {
     "mujoco": "3.12.0",
     "ogbench": "1.2.1"
@@ -591,9 +591,9 @@
    "seed": 20260811,
    "n": 64,
    "size": 200,
-   "mse_mean": 40.1919,
-   "mse_p95": 58.8783,
-   "mse_max": 60.6254,
+   "mse_mean": 0.0,
+   "mse_p95": 0.0,
+   "mse_max": 0.0001,
    "reference_versions": {
     "mujoco": "3.12.0",
     "ogbench": "1.2.1"

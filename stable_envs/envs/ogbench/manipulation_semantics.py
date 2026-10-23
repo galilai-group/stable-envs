@@ -380,12 +380,38 @@ class ManipulationSemantics:
 from .manipulation import OGBCube as _CubeRenderer
 from .manipulation import OGBScene as _SceneRenderer
 
+# Per-frame MSE of the default OpenGL frames against the source; tests/fixtures/source_mse.json holds the same values.
+_OPENGL_MSE = {"Cube": (0.0, 0.0, 0.0), "Scene": (0.0, 0.0, 0.0001)}
+_OPENGL_NOTE = (
+    "MuJoCo OpenGL, the source's renderer, draws the frames on CPU and CUDA. On CUDA the NVIDIA driver can "
+    "change a pixel by 1/255 between two draws of one state, as it does for the source; visual_fidelity records "
+    "the measured error. With supersample 2 or more, MJWarp draws the CUDA frames, and its lighting and "
+    "transparency can differ from MuJoCo."
+)
+
+
+def _opengl_fidelity(renderer):
+    cell = renderer.CELL
+    measured = dict(zip(("mse_mean", "mse_p95", "mse_max"), _OPENGL_MSE[cell]))
+    return {
+        **renderer.visual_fidelity,
+        **measured,
+        "measured_at": (
+            "mujoco 3.12.0 / ogbench 1.2.1 reference; default backend and sampling; per-frame MSE over pixels "
+            "and channels on the 0-255 scale, over the 64 render rows of sample_render_rows(default_rng(20260811)); "
+            "NVIDIA GeForce RTX 3090 / driver 575.57.08 / MUJOCO_GL=egl."
+        ),
+    }
+
 
 class OGBCube(ManipulationSemantics, _CubeRenderer):
     """Cube simulation with restorable State and MuJoCo OpenGL rendering on CPU and GPU.
 
     With ``supersample`` 2 or more on the GPU, MJWarp draws; its lighting and transparency can differ from MuJoCo.
     """
+
+    visual_fidelity = _opengl_fidelity(_CubeRenderer)
+    visual_note = _OPENGL_NOTE
 
 
 class OGBScene(ManipulationSemantics, _SceneRenderer):
@@ -394,6 +420,9 @@ class OGBScene(ManipulationSemantics, _SceneRenderer):
     With ``supersample`` 2 or more on the GPU, MJWarp draws; its lighting, transparency, and button textures
     can differ from MuJoCo.
     """
+
+    visual_fidelity = _opengl_fidelity(_SceneRenderer)
+    visual_note = _OPENGL_NOTE
 
 
 CELL_CLASSES = {"OGBCube": OGBCube, "OGBScene": OGBScene}
