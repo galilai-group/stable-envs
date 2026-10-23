@@ -23,8 +23,8 @@ stable-envs doctor                            # check what works on this machine
 
 A missing extra disables only that family. `snv.import_errors()` lists the modules that did not load.
 
-The 3-D families and most MuJoCo families need CUDA. PushT, classic control, navigation and several
-2-D families run on CPU. [Install](docs/install.md) covers extras, version pins and the nvdiffrast build.
+The 3-D families and most MuJoCo families need CUDA. PushT, classic control, navigation, Roadster and
+several 2-D families run on CPU. [Install](docs/install.md) covers extras, version pins and the nvdiffrast build.
 [Contributing](CONTRIBUTING.md) covers an editable install from a clone.
 
 ## Quickstart
@@ -80,7 +80,7 @@ snv.CartPole / snv.Pendulum / …                  concrete env classes
 
 ## Environments
 
-The extras together provide 74 environment classes. One Python environment cannot hold every extra.
+The extras together provide 79 environment classes. One Python environment cannot hold every extra.
 The `robotics` extra for Fetch pins MuJoCo < 3.12, and the `ogbench-manipulation` extra for `OGBCube`
 and `OGBScene` pins MuJoCo 3.12.0. Install them in separate environments.
 
@@ -94,10 +94,11 @@ and `OGBScene` pins MuJoCo 3.12.0. Install them in separate environments.
 | `ogbench` | 27 |
 | `pusht` | 2 |
 | `pyflyt` | 1 |
+| `roadster` | 5 |
 
 A family registers only when its module imports. `snv.import_errors()` names each module that did not
 import. Craftax needs the `craftax` extra to register. `PyFlytRocketLanding` needs the `rocket` extra,
-and without it the count is 73. DM Control compiles a test model at import, so it registers only with
+and without it the count is 78. DM Control compiles a test model at import, so it registers only with
 `dm_control` and MuJoCo installed. The Fetch and OGBench modules import MuJoCo and their simulator
 packages inside functions. These classes register without them and raise an error when you use them.
 

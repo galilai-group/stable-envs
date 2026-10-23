@@ -9,6 +9,16 @@ here; frames are the pixel observations Craftax computes. The per-lane key handl
 frame scaling follow stable-worldmodel's `stable_worldmodel/envs/craftax/craftax.py` at commit
 `21446f1ede6d5284e981bd7b47f432b994e6d812` (MIT).
 
+## roadster-jets
+
+`stable_envs/envs/roadster/source/` is ported from roadster-jets, a jet-powered car in MuJoCo by
+Jalal Naghiyev, contributed with the Roadster family under this repository's MIT license
+("Copyright (c) 2026 Jalal Naghiyev"). It holds the world model (car, course and scenarios, with
+textures generated in memory), the autopilot, the planning tasks, wind and rain, and the exhaust smoke.
+Physics stays in MuJoCo (Apache-2.0), an external dependency. roadster-jets is not published yet, so
+the family's reference gate (`tests/unit/test_roadster_source.py`) compares the batched env with this
+port driven directly.
+
 ## SDL_gfx drawing rules
 
 `stable_envs/render/gfxdraw/` reimplements in Torch the integer rasterization and

@@ -56,8 +56,9 @@ env = snv.CartPole(num_envs=8)
 | `ogbench` | 27 | `PointMazeLargeNavigate`, `OGBCube` (`domain="pointmaze"`, `"cube"`, …) |
 | `pusht` | 2 | `PushT`, `PushTDiscrete` |
 | `pyflyt` | 1 | `PyFlytRocketLanding` |
+| `roadster` | 5 | `RoadsterTrafficJam`, `RoadsterCarHop` (`domain="traffic"`, `"carhop"`, …) |
 
-With every extra installed, these 74 classes register. Without PyFlyt, 73 classes register.
+With every extra installed, these 79 classes register. Without PyFlyt, 78 classes register.
 
 ## Fidelity
 

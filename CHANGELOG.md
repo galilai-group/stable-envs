@@ -8,6 +8,12 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Roadster: `RoadsterLoop`, `RoadsterMission`, `RoadsterTrafficJam`, `RoadsterRooftop` and `RoadsterCarHop`:
+  five planning tasks for a jet-powered car in MuJoCo, ported from roadster-jets into
+  `stable_envs/envs/roadster/source/`, with a complete State, the `weather.wind` / `weather.rain` physics
+  leaves and the world-model camera drawn by MuJoCo's OpenGL renderer on CPU (`roadster` extra: MuJoCo,
+  Pillow). `look="cinematic"` draws the same State on a dark-space scene with shadows and MSAA. The exhaust
+  smoke is drawn from the exhaust history in State (`fx`), so `render(state)` shows it.
 - Craftax: `CraftaxClassicPixels`, `CraftaxClassicSymbolic`, `CraftaxPixels` and `CraftaxSymbolic`
   run the upstream JAX simulator with all lanes in one jitted `vmap` (`craftax` / `craftax-gpu` extras).
   With Craftax, the extras provide 74 classes. Fetch and `OGBCube`/`OGBScene` pin different MuJoCo versions,
