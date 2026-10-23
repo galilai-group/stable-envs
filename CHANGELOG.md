@@ -48,6 +48,10 @@ All notable changes to this project are listed here. The format follows
 - PushT worker processes draw step frames and copy only the State leaves that a step changes. The parent
   keeps the other leaves and copies them for the next State while the workers step. Process adapters
   declare this with `process_static_leaves`, `process_step_state`, `render_live` and `frame_shape`.
+- With `device="cuda"` and Triton, `PushT` and `PushTDiscrete` draw `render` and step frames on the GPU.
+  A Triton kernel builds the shape records from the State tensors, and a second kernel draws them and
+  resizes the canvas. The frames are byte-identical to the pygame frames. Frames with action markers,
+  shapes that are not supported, or a coordinate within 1e-9 of a rounding midpoint use pygame.
 - `PushT.render` and `PushTDiscrete.render` draw a batch of at least `worker_min_lanes` States in up to `workers`
   spawned processes on Linux (render path `pusht-render`). The frames do not change.
 - `PyFlytRocketLanding` reads its live colours directly for the default render style and copies each State

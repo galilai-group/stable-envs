@@ -9,7 +9,7 @@ import copy
 
 import numpy as np
 import torch
-from tensordict import TensorDict
+from tensordict import TensorDict, TensorDictBase
 
 from ... import tuning
 from ..._execution.protocol import StepPipeline, step_pipeline
@@ -18,6 +18,51 @@ from ...registry import REGISTRY, register
 from ...spaces import Box, Dict, Discrete
 from ...specs import CompositeSpec, Spec
 from . import legacy
+
+
+def _to_host(tensors):
+    """Copy ``{key: tensor}`` to host tensors with one transfer per dtype."""
+    if not any(value.device.type != "cpu" for value in tensors.values()):
+        return dict(tensors)
+    groups = {}
+    for key, value in tensors.items():
+        groups.setdefault(value.dtype, []).append(key)
+    host = {}
+    for keys in groups.values():
+        flat = torch.cat([tensors[key].reshape(-1) for key in keys]).cpu()
+        offset = 0
+        for key in keys:
+            size = tensors[key].numel()
+            host[key] = flat[offset : offset + size].view(tensors[key].shape)
+            offset += size
+    return {key: host[key] for key in tensors}
+
+
+def _lookup(nodes, key):
+    """``state.get(key, None)`` through a cache ``nodes`` of the nested TensorDicts already reached."""
+    parent = key[:-1]
+    if parent not in nodes:
+        node = _lookup(nodes, parent)
+        nodes[parent] = node if isinstance(node, TensorDictBase) else None
+    node = nodes[parent]
+    return None if node is None else node.get(key[-1], None)
+
+
+def _to_device(fields, device):
+    """Copy host render ``fields`` to ``device`` with one transfer per dtype."""
+    groups = {}
+    for key, value in fields.items():
+        groups.setdefault(value.dtype, []).append(key)
+    out = {}
+    for keys in groups.values():
+        flat = torch.from_numpy(np.concatenate([np.ascontiguousarray(fields[key]).reshape(-1) for key in keys]))
+        flat = flat.to(device, non_blocking=True)
+        offset = 0
+        for key in keys:
+            size = fields[key].size
+            out[key] = flat[offset : offset + size].view(fields[key].shape)
+            offset += size
+    return {key: out[key] for key in fields}
 
 
 class PushT(Env):
@@ -73,6 +118,7 @@ class PushT(Env):
         )
         self._projection = PushTProjection()
         self._render_pool = None
+        self._device_renderer = None
         try:
             super().__init__(num_envs, resolution, 1, device, "pygame", 0 if seed is None else seed)
             row = self._simulator.template.get_state()
@@ -145,6 +191,8 @@ class PushT(Env):
             from . import raster
 
             fields = self._simulator.render_fields()
+            if raster.HAVE_TRITON:
+                return self._draw_device(_to_device(fields, self.device), self.size)
             return raster.render(fields, self.size, self.device, lambda rows: self._draw_pygame(rows, self.size))
         return torch.as_tensor(self._simulator.render_live(), device=self.device)
 
@@ -234,14 +282,14 @@ class PushT(Env):
         self._render_fields_of(state)
         return state.select(*(key for key, _, _ in self._render_fields)).clone()
 
-    def _render_fields_of(self, state):
+    def _render_fields_of(self, state, on_device=False):
         self._check_open("to_render_state")
         state = self.get_state() if state is None else state
         if not isinstance(state, TensorDict) or len(state.batch_size) != 1 or not state.batch_size[0]:
             raise ValueError("PushT render requires a nonempty State batch")
-        selected, error = {}, None
+        selected, error, nodes = {}, None, {(): state}
         for key, shape, dtype in self._render_fields:
-            value = state.get(key, None)
+            value = _lookup(nodes, key)
             if not isinstance(value, torch.Tensor):
                 error = KeyError(key)
                 break
@@ -249,10 +297,13 @@ class PushT(Env):
                 error = ValueError(f"Invalid PushT render field: {key}")
                 break
             selected[key] = value
-        # Start every device-to-host copy before waiting for any of them.
-        host = {key: value.to("cpu", non_blocking=True) for key, value in selected.items()}
-        if any(value.device.type == "cuda" for value in selected.values()):
-            torch.cuda.synchronize()
+        if error is None and on_device and all(value.is_cuda for value in selected.values()):
+            floats = [value.reshape(-1) for value in selected.values() if value.is_floating_point()]
+            if floats and not bool(torch.isfinite(torch.cat(floats)).all()):
+                key = next(k for k, v in selected.items() if v.is_floating_point() and not bool(v.isfinite().all()))
+                raise ValueError(f"Nonfinite PushT render field: {key}")
+            return {"/".join(key): value for key, value in selected.items()}
+        host = _to_host(selected)
         fields = {}
         # Fields are checked in order, so an earlier nonfinite field is reported before a later layout error.
         for key, value in host.items():
@@ -271,11 +322,14 @@ class PushT(Env):
             raise ValueError("PushT render size must be a positive integer")
         if self._simulator.template.config["render_action"] and size < 96:
             raise ValueError("Source PushT action markers require size >= 96")
-        fields = self._render_fields_of(state)
+        fields = self._render_fields_of(state, on_device=self._rasterizes(size))
         if self._rasterizes(size):
             from . import raster
 
-            frames = raster.render(fields, size, self.device, lambda rows: self._draw_pygame(rows, size))
+            if isinstance(next(iter(fields.values())), torch.Tensor):
+                frames = self._draw_device(fields, size)
+            else:
+                frames = raster.render(fields, size, self.device, lambda rows: self._draw_pygame(rows, size))
         else:
             frames = torch.as_tensor(self._draw_pygame(fields, size), device=self.device)
         if out is not None:
@@ -297,6 +351,14 @@ class PushT(Env):
         from . import raster
 
         return raster.HAVE_TRITON and raster.resize_supported(size)
+
+    def _draw_device(self, fields, size):
+        """Draw device render fields with primitives built on the GPU."""
+        from . import raster_device
+
+        if self._device_renderer is None:
+            self._device_renderer = raster_device.DeviceRenderer(self.device)
+        return self._device_renderer(fields, size, lambda rows: self._draw_pygame(rows, size))
 
     def _draw_pygame(self, fields, size):
         """Draw host render fields with the source pygame code, in render workers for large batches."""

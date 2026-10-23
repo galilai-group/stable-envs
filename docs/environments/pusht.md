@@ -26,7 +26,11 @@ frames = env.render()          # (8, 224, 224, 3) uint8
 ```
 
 PushT draws its frames with the source pygame code on CPU. A frame is the source frame for the same
-State. `device="cuda"` puts the output tensors on the GPU. Physics and rendering stay on CPU.
+State. `device="cuda"` puts the output tensors on the GPU. Physics stays on CPU.
+
+With `device="cuda"` and Triton, PushT draws the frames on the GPU. The GPU frames are byte-identical
+to the pygame frames. Frames with action markers, and the few frames that the GPU path cannot draw
+exactly, use pygame.
 
 On Linux, `render` draws a batch of at least `worker_min_lanes` States in up to `workers` processes.
 Step frames come from the running scenes, so a step does not export a State only to draw it. Worker
