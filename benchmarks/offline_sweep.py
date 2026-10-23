@@ -155,7 +155,13 @@ def cmd_ours(args) -> None:
         torch.set_num_threads(args.threads)
     dev = torch.device(args.device)
     sync = torch.cuda.synchronize if dev.type == "cuda" else None
-    results = {"arm": f"ours-{dev.type}", "host": _host(), "envs": {}}
+    results = {
+        "arm": f"ours-{dev.type}",
+        "host": _host(),
+        "envs": {},
+        "budget_s": args.budget,
+        "repeats_max": args.repeats,
+    }
     for name in args.envs:
         path = Path(args.states) / f"{name}.pt"
         if not path.exists():
@@ -228,7 +234,13 @@ def _worker_render(span) -> int:
 
 def cmd_source(args) -> None:
     """Sweep every stored state through the source renderer in ``procs`` processes."""
-    results = {"arm": f"source-{args.procs}p", "host": _host(), "envs": {}}
+    results = {
+        "arm": f"source-{args.procs}p",
+        "host": _host(),
+        "envs": {},
+        "budget_s": args.budget,
+        "repeats_max": args.repeats,
+    }
     for name in args.envs:
         path = Path(args.states) / f"{name}.pt"
         if not path.exists():

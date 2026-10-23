@@ -171,7 +171,7 @@ def run_ours(args, name: str, render_device: str | None) -> dict:
 
 
 def cmd_run(args) -> None:
-    res = {"host": _host(), "rungs": {}}
+    res = {"host": _host(), "rungs": {}, "budget_s": args.budget, "repeats_max": args.repeats}
     for rung in args.rungs:
         try:
             if rung == "L0":
