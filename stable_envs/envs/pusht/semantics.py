@@ -20,6 +20,24 @@ from ...specs import CompositeSpec, Spec
 from . import legacy
 
 
+def _to_host(tensors):
+    """Copy ``{key: tensor}`` to host tensors with one transfer per dtype."""
+    if not any(value.device.type != "cpu" for value in tensors.values()):
+        return dict(tensors)
+    groups = {}
+    for key, value in tensors.items():
+        groups.setdefault(value.dtype, []).append(key)
+    host = {}
+    for keys in groups.values():
+        flat = torch.cat([tensors[key].reshape(-1) for key in keys]).cpu()
+        offset = 0
+        for key in keys:
+            size = tensors[key].numel()
+            host[key] = flat[offset : offset + size].view(tensors[key].shape)
+            offset += size
+    return {key: host[key] for key in tensors}
+
+
 class PushT(Env):
     """Source-aligned continuous PushT with complete, replayable numeric State.
 
@@ -249,10 +267,7 @@ class PushT(Env):
                 error = ValueError(f"Invalid PushT render field: {key}")
                 break
             selected[key] = value
-        # Start every device-to-host copy before waiting for any of them.
-        host = {key: value.to("cpu", non_blocking=True) for key, value in selected.items()}
-        if any(value.device.type == "cuda" for value in selected.values()):
-            torch.cuda.synchronize()
+        host = _to_host(selected)
         fields = {}
         # Fields are checked in order, so an earlier nonfinite field is reported before a later layout error.
         for key, value in host.items():

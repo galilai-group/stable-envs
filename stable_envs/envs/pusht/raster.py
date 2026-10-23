@@ -19,6 +19,10 @@ from .simulation.numeric import get_value
 CANVAS = 512
 #: Primitive kinds.
 POLY, CIRCLE, LINE = 1, 2, 3
+#: A polygon or line given as per-row x intervals (see ``raster_device.rows``).
+ROWS = 4
+#: ROWS: offset of the first row of intervals (four ``lo, hi`` pairs per row).
+ROFF = 6
 #: Record layout: kind, packed colour, inclusive bounding box, then kind-specific integers.
 KIND, COLOR, BX0, BY0, BX1, BY1 = range(6)
 #: POLY: point count, then up to five x and five y values.
@@ -28,8 +32,8 @@ CX, CY, CR = 6, 7, 8
 #: LINE: start, direction signs, extents, initial error, step count, and 1 when spans are horizontal.
 LX, LY, LSX, LSY, LDX, LDY, LERR, LN, LXINC = range(6, 15)
 #: 1 for primitives that only the Variation and goal place (goal, walls).
-STATIC = 15
-RECORD = 17
+STATIC = 17
+RECORD = 18
 #: Most contact segments a State holds.
 SEGMENTS = 90
 WALL_COLOR = (211, 211, 211)
@@ -306,74 +310,52 @@ def _pow_half_array(values):
     return np.array([_pow_half(int(v)) for v in unique.tolist()], np.float64)[inverse.reshape(-1)]
 
 
-class _Group:
-    """Primitive records of frames that share a template; every frame uses the same slots.
+def _record(kind, color, enabled, static, rec):
+    rec[..., KIND] = kind if enabled is None else np.where(enabled, kind, 0)
+    rec[..., COLOR] = np.reshape(color, np.shape(color) + (1,) * (rec.ndim - 1 - np.ndim(color)))
+    rec[..., STATIC] = static
+    return rec
 
-    Builders take arrays of shape ``[N]`` or ``[N, E]`` and return records ``[..., RECORD]``.
-    """
 
-    def __init__(self, count, capacity=256):
-        self.count = count
-        self.buffer = np.zeros((count, capacity, RECORD), np.int64)
-        self.used = 0
-        self.static = False
+def _poly_rec(rec, color, xs, ys, enabled=None, static=False):
+    """``draw_fillpoly`` records ``[..., RECORD]`` for integer points ``[..., n]``."""
+    _record(POLY, color, enabled, static, rec)
+    n = xs.shape[-1]
+    rec[..., BX0], rec[..., BX1] = xs.min(-1), xs.max(-1)
+    rec[..., BY0], rec[..., BY1] = ys.min(-1), ys.max(-1)
+    rec[..., PN] = n
+    rec[..., PX : PX + n] = xs
+    rec[..., PY : PY + n] = ys
 
-    def _take(self, slots):
-        """Return the next ``slots`` record columns ``[N, slots, RECORD]``."""
-        if self.used + slots > self.buffer.shape[1]:
-            grown = np.zeros((self.count, 2 * (self.used + slots), RECORD), np.int64)
-            grown[:, : self.used] = self.buffer[:, : self.used]
-            self.buffer = grown
-        view = self.buffer[:, self.used : self.used + slots]
-        self.used += slots
-        return view
 
-    def _record(self, kind, color, enabled, shape, rec=None):
-        rec = np.zeros((*shape, RECORD), np.int64) if rec is None else rec
-        rec[..., KIND] = kind if enabled is None else np.where(enabled, kind, 0)
-        rec[..., COLOR] = color if np.ndim(color) == len(shape) else np.reshape(color, (-1,) + (1,) * (len(shape) - 1))
-        rec[..., STATIC] = self.static
-        return rec
+def _circle_rec(rec, color, cx, cy, radius, enabled=None, static=False):
+    # ``pygame.draw.circle`` draws nothing for a radius below one.
+    _record(CIRCLE, color, radius >= 1 if enabled is None else enabled & (radius >= 1), static, rec)
+    rec[..., BX0], rec[..., BX1] = cx - radius, cx + radius
+    rec[..., BY0], rec[..., BY1] = cy - radius, cy + radius
+    rec[..., CX], rec[..., CY], rec[..., CR] = cx, cy, radius
 
-    def _poly(self, color, xs, ys, enabled=None, rec=None):
-        """``draw_fillpoly`` with integer points ``[..., n]``."""
-        rec = self._record(POLY, color, enabled, xs.shape[:-1], rec)
-        n = xs.shape[-1]
-        rec[..., BX0], rec[..., BX1] = xs.min(-1), xs.max(-1)
-        rec[..., BY0], rec[..., BY1] = ys.min(-1), ys.max(-1)
-        rec[..., PN] = n
-        rec[..., PX : PX + n] = xs
-        rec[..., PY : PY + n] = ys
-        return rec
 
-    def _circle(self, color, cx, cy, radius, enabled=None, rec=None):
-        # ``pygame.draw.circle`` draws nothing for a radius below one.
-        on = radius >= 1 if enabled is None else enabled & (radius >= 1)
-        rec = self._record(CIRCLE, color, on, cx.shape, rec)
-        rec[..., BX0], rec[..., BX1] = cx - radius, cx + radius
-        rec[..., BY0], rec[..., BY1] = cy - radius, cy + radius
-        rec[..., CX], rec[..., CY], rec[..., CR] = cx, cy, radius
-        return rec
-
-    def _line(self, color, x1, y1, x2, y2, rec=None):
-        """``draw_line_width`` with width 4, including pygame's restart of clipped lines."""
-        rec = self._record(LINE, color, None, x1.shape, rec)
-        dx, dy = np.abs(x2 - x1), np.abs(y2 - y1)
-        xinc = dx <= dy
-        rec[..., LN] = np.maximum(dx, dy)
-        sx, sy = x1.copy(), y1.copy()
-        outside = (np.minimum(x1, x2) < 0) | (np.maximum(x1, x2) >= CANVAS)
-        outside |= (np.minimum(y1, y2) < 0) | (np.maximum(y1, y2) >= CANVAS)
-        for i in zip(*np.nonzero(outside)):
-            run = clipped_line(int(x1[i]), int(y1[i]), int(x2[i]), int(y2[i]))
-            if run is None:
-                rec[i + (KIND,)] = 0
-            else:
-                sx[i], sy[i], rec[i + (LN,)] = run
-        rec[..., BX0] = np.minimum(x1, x2) - np.where(xinc, 1, 0)
-        rec[..., BX1] = np.maximum(x1, x2) + np.where(xinc, 2, 0)
-        rec[..., BY0] = np.minimum(y1, y2) - np.where(xinc, 0, 1)
-        rec[..., BY1] = np.maximum(y1, y2) + np.where(xinc, 0, 2)
+def _line_rec(rec, color, x1, y1, x2, y2, static=False):
+    """``draw_line_width`` records with width 4, including pygame's restart of clipped lines."""
+    _record(LINE, color, None, static, rec)
+    dx, dy = np.abs(x2 - x1), np.abs(y2 - y1)
+    xinc = dx <= dy
+    rec[..., LN] = np.maximum(dx, dy)
+    sx, sy = x1.copy(), y1.copy()
+    outside = (np.minimum(x1, x2) < 0) | (np.maximum(x1, x2) >= CANVAS)
+    outside |= (np.minimum(y1, y2) < 0) | (np.maximum(y1, y2) >= CANVAS)
+    for i in zip(*np.nonzero(outside)):
+        run = clipped_line(int(x1[i]), int(y1[i]), int(x2[i]), int(y2[i]))
+        if run is None:
+            rec[i + (KIND,)] = 0
+        else:
+            sx[i], sy[i], rec[i + (LN,)] = run
+    rec[..., BX0] = np.minimum(x1, x2) - xinc
+    rec[..., BX1] = np.maximum(x1, x2) + 2 * xinc
+    rec[..., BY0] = np.minimum(y1, y2) - ~xinc
+    rec[..., BY1] = np.maximum(y1, y2) + 2 * ~xinc
+    if outside.any():
         # A clipped run restarts at the clipped point and may pass the clipped end; each step moves
         # the minor axis at most one pixel.
         steps = rec[..., LN]
@@ -381,45 +363,95 @@ class _Group:
         rec[..., BX1] = np.where(outside, sx + steps + 2, rec[..., BX1])
         rec[..., BY0] = np.where(outside, sy - steps - 1, rec[..., BY0])
         rec[..., BY1] = np.where(outside, sy + steps + 2, rec[..., BY1])
-        rec[..., LX], rec[..., LY] = sx, sy
-        rec[..., LSX] = np.where(x1 < x2, 1, -1)
-        rec[..., LSY] = np.where(y1 < y2, 1, -1)
-        rec[..., LDX], rec[..., LDY] = dx, dy
-        # ``(dx > dy ? dx : -dy) / 2`` with C truncation.
-        rec[..., LERR] = np.where(dx > dy, dx // 2, -(dy // 2))
-        rec[..., LXINC] = xinc
-        return rec
+    rec[..., LX], rec[..., LY] = sx, sy
+    rec[..., LSX] = np.where(x1 < x2, 1, -1)
+    rec[..., LSY] = np.where(y1 < y2, 1, -1)
+    rec[..., LDX], rec[..., LDY] = dx, dy
+    # ``(dx > dy ? dx : -dy) / 2`` with C truncation.
+    rec[..., LERR] = np.where(dx > dy, dx // 2, -(dy // 2))
+    rec[..., LXINC] = xinc
 
-    def poly(self, color, xs, ys, enabled=None):
-        self._poly(color, xs, ys, enabled, self._take(1)[:, 0])
 
-    def circle(self, color, cx, cy, radius, enabled=None):
-        self._circle(color, cx, cy, radius, enabled, self._take(1)[:, 0])
+def _fat_segments(buffer, slots, color, ax, ay, bx, by, static=False):
+    """``DrawOptions.draw_fat_segment`` with radius 2 for float endpoints ``[N, E]``.
 
-    def fat_segments(self, color, ax, ay, bx, by):
-        """``DrawOptions.draw_fat_segment`` with radius 2 for float endpoints ``[N, E]``, edge after edge."""
-        p1x, p1y, p2x, p2y = (np.rint(v).astype(np.int64) for v in (ax, ay, bx, by))
-        # Each edge takes four consecutive slots: line, quad, then the two end circles.
-        slots = self._take(4 * p1x.shape[1])
-        self._line(color, p1x, p1y, p2x, p2y, slots[:, 0::4])
-        o0, o1 = np.abs(p2y - p1y), np.abs(p2x - p1x)
-        drawn = (o0 != 0) | (o1 != 0)
-        squares = o0 * o0 + o1 * o1
-        scale = 2.0 / np.where(drawn, _pow_half_array(squares).reshape(squares.shape), 1.0)
-        q0, q1 = np.rint(o0 * scale).astype(np.int64), np.rint(o1 * scale).astype(np.int64)
-        xs = np.stack([p1x - q0, p1x + q0, p2x + q0, p2x - q0], -1)
-        ys = np.stack([p1y - q1, p1y + q1, p2y + q1, p2y - q1], -1)
-        self._poly(color, xs, ys, drawn, slots[:, 1::4])
-        two = np.full(p1x.shape, 2, np.int64)
-        self._circle(color, p1x, p1y, two, drawn, slots[:, 2::4])
-        self._circle(color, p2x, p2y, two, drawn, slots[:, 3::4])
+    ``slots [E, 4]`` hold each edge's line, quad and two end circles.
+    """
+    n, e = ax.shape
+    p1x, p1y, p2x, p2y = (np.rint(v).astype(np.int64) for v in (ax, ay, bx, by))
+    rec = np.zeros((4, n, e, RECORD), np.int64)
+    _line_rec(rec[0], color, p1x, p1y, p2x, p2y, static)
+    o0, o1 = np.abs(p2y - p1y), np.abs(p2x - p1x)
+    drawn = (o0 != 0) | (o1 != 0)
+    squares = o0 * o0 + o1 * o1
+    scale = 2.0 / np.where(drawn, _pow_half_array(squares).reshape(squares.shape), 1.0)
+    q0, q1 = np.rint(o0 * scale).astype(np.int64), np.rint(o1 * scale).astype(np.int64)
+    xs = np.stack([p1x - q0, p1x + q0, p2x + q0, p2x - q0], -1)
+    ys = np.stack([p1y - q1, p1y + q1, p2y + q1, p2y - q1], -1)
+    _poly_rec(rec[1], color, xs, ys, drawn, static)
+    two = np.full(p1x.shape, 2, np.int64)
+    _circle_rec(rec[2], color, p1x, p1y, two, drawn, static)
+    _circle_rec(rec[3], color, p2x, p2y, two, drawn, static)
+    for role in range(4):
+        buffer[:, slots[:, role]] = rec[role]
 
-    def records(self):
-        return self.buffer[:, : self.used]
+
+class _Layout:
+    """Slot layout of one template: where each primitive of a frame goes, in drawing order."""
+
+    def __init__(self, template):
+        if any(len(g) != 4 for g in template.goal):
+            raise NotImplementedError("The batched PushT renderer draws four-vertex goal polygons")
+        slot = len(template.goal)
+        self.goal = np.stack(template.goal) if template.goal else np.zeros((0, 4, 2))
+        self.polys = {"agent": [], "block": []}
+        self.fills = {"agent": [], "block": []}
+        self.edges = {"agent": [], "block": []}
+        self.circles = []
+        walls = []
+        for item in template.items:
+            if item[0] == "poly":
+                if len(item[2]) != 4:
+                    raise NotImplementedError("The batched PushT renderer draws four-vertex polygons")
+                self.polys[item[1]].append(item[2])
+                self.fills[item[1]].append(slot)
+                self.edges[item[1]].append(slot + 1 + np.arange(16).reshape(4, 4))
+                slot += 17
+            elif item[0] == "circle":
+                self.circles.append((item[1], item[2], item[3], slot))
+                slot += 2
+            else:
+                walls.append((item[1], item[2], slot))
+                slot += 4
+        self.slots = slot
+        for body in ("agent", "block"):
+            self.polys[body] = np.stack(self.polys[body]) if self.polys[body] else np.zeros((0, 4, 2))
+            self.fills[body] = np.asarray(self.fills[body], np.int64)
+            self.edges[body] = np.concatenate(self.edges[body]) if self.edges[body] else np.zeros((0, 4), np.int64)
+        # The walls do not depend on the frame: draw their records once.
+        self.wall_slots = np.array([base + np.arange(4) for _, _, base in walls], np.int64).reshape(-1, 4)
+        self.walls = np.zeros((1, self.slots, RECORD), np.int64)
+        if walls:
+            ends = np.array([[*a, *b] for a, b, _ in walls], np.float64)
+            _fat_segments(
+                self.walls, self.wall_slots, np.full(1, pack(WALL_COLOR)), *(ends[None, :, k] for k in range(4)), True
+            )
+        self.walls = self.walls[0, self.wall_slots.reshape(-1)]
+
+
+@cache
+def _layout(template):
+    return _Layout(template)
 
 
 def _colors(fields, name, lanes):
     return fields[f"owned/variation/{name}/color/current/value"][lanes].astype(np.int64)
+
+
+def _closed(xs, ys):
+    """Integer points of ``DrawOptions.draw_polygon`` and the goal: rounded, with the first point repeated."""
+    xs, ys = np.rint(xs).astype(np.int64), np.rint(ys).astype(np.int64)
+    return np.concatenate([xs, xs[..., :1]], -1), np.concatenate([ys, ys[..., :1]], -1)
 
 
 def primitives(fields):
@@ -445,71 +477,54 @@ def primitives(fields):
     )
     first, inverse = _unique_rows(raw)
     for index, lane0 in enumerate(first.tolist()):
-        key = template_key(fields, lane0)
         lanes = np.flatnonzero(inverse == index)
         try:
-            template = _template(key)
+            layout = _layout(_template(template_key(fields, lane0)))
         except NotImplementedError:
             fallback[lanes] = True
             continue
         n = len(lanes)
-        group = _Group(n)
+        buffer = np.zeros((n, layout.slots, RECORD), np.int64)
         goal_pos = fields["owned/variation/goal/position/current/value"][lanes].astype(np.float64)
         goal_angle = fields["owned/variation/goal/angle/current/value"][lanes].astype(np.float64).reshape(n)
         render_goal = fields["owned/variation/rendering/render_goal/current/value"][lanes].reshape(n) != 0
         render_goal &= config[lanes, 3] != 0
-        goal = _transform(goal_pos[:, 0], goal_pos[:, 1], goal_angle, np.zeros(n), np.zeros(n))
-        goal_color = pack(_colors(fields, "goal", lanes))
-        group.static = True
-        for local in template.goal:
-            wx, wy = _apply(goal, local[:, 0], local[:, 1])
-            xs, ys = np.rint(wx).astype(np.int64), np.rint(wy).astype(np.int64)
-            group.poly(goal_color, np.concatenate([xs, xs[:, :1]], 1), np.concatenate([ys, ys[:, :1]], 1), render_goal)
-        bodies = {}
+        goals = len(layout.goal)
+        if goals:
+            goal = _transform(goal_pos[:, 0], goal_pos[:, 1], goal_angle, np.zeros(n), np.zeros(n))
+            wx, wy = _apply(goal, layout.goal[..., 0].reshape(-1), layout.goal[..., 1].reshape(-1))
+            xs, ys = _closed(wx.reshape(n, goals, 4), wy.reshape(n, goals, 4))
+            on = np.broadcast_to(render_goal[:, None], (n, goals))
+            _poly_rec(buffer[:, :goals], pack(_colors(fields, "goal", lanes)), xs, ys, on, True)
         for body in ("agent", "block"):
             pos = fields[f"current/body/{body}/position"][lanes]
             cog = fields[f"current/body/{body}/center_of_gravity"][lanes]
             angle = fields[f"current/body/{body}/angle"][lanes].reshape(n)
             fill = _colors(fields, body, lanes)
-            bodies[body] = (
-                _transform(pos[:, 0], pos[:, 1], angle, cog[:, 0], cog[:, 1]),
-                pack(fill),
-                pack(_light(fill)),
-            )
-        wall = np.full(n, pack(WALL_COLOR))
-        walls = []
-
-        def flush(pending):
-            # Consecutive walls in one call; ``fat_segments`` keeps their drawing order.
-            if pending:
-                group.static = True
-                ends = np.array([[*item[1], *item[2]] for item in pending], np.float64)
-                group.fat_segments(wall, *(np.broadcast_to(ends[:, k], (n, len(pending))) for k in range(4)))
-                group.static = False
-                pending.clear()
-
-        for item in template.items:
-            if item[0] == "poly":
-                transform, fill, light = bodies[item[1]]
-                local = item[2]
-                wx, wy = _apply(transform, local[:, 0], local[:, 1])
-                xs, ys = np.rint(wx).astype(np.int64), np.rint(wy).astype(np.int64)
-                group.poly(light, np.concatenate([xs, xs[:, :1]], 1), np.concatenate([ys, ys[:, :1]], 1))
-                follow = np.roll(np.arange(len(local)), -1)
-                group.fat_segments(fill, wx, wy, wx[:, follow], wy[:, follow])
-            elif item[0] == "circle":
-                transform, fill, light = bodies[item[1]]
-                (ox, oy), radius = item[2], item[3]
-                wx, wy = _apply(transform, np.array([ox]), np.array([oy]))
-                cx, cy = np.rint(wx[:, 0]).astype(np.int64), np.rint(wy[:, 0]).astype(np.int64)
-                group.circle(fill, cx, cy, np.full(n, round(radius), np.int64))
-                group.circle(light, cx, cy, np.full(n, round(radius - 4), np.int64))
-            else:
-                walls.append(item)
-                continue
-            flush(walls)
-        flush(walls)
-        parts.append((lanes, group.records()))
+            fill, light = pack(fill), pack(_light(fill))
+            transform = _transform(pos[:, 0], pos[:, 1], angle, cog[:, 0], cog[:, 1])
+            local = layout.polys[body]
+            if len(local):
+                count_polys = len(local)
+                wx, wy = _apply(transform, local[..., 0].reshape(-1), local[..., 1].reshape(-1))
+                wx, wy = wx.reshape(n, count_polys, 4), wy.reshape(n, count_polys, 4)
+                xs, ys = _closed(wx, wy)
+                fills = np.zeros((n, count_polys, RECORD), np.int64)
+                _poly_rec(fills, light, xs, ys)
+                buffer[:, layout.fills[body]] = fills
+                follow = [1, 2, 3, 0]
+                _fat_segments(
+                    buffer, layout.edges[body], fill, wx.reshape(n, -1), wy.reshape(n, -1),
+                    wx[..., follow].reshape(n, -1), wy[..., follow].reshape(n, -1),
+                )  # fmt: skip
+            for owner, (ox, oy), radius, slot in layout.circles:
+                if owner == body:
+                    wx, wy = _apply(transform, np.array([ox]), np.array([oy]))
+                    cx, cy = np.rint(wx[:, 0]).astype(np.int64), np.rint(wy[:, 0]).astype(np.int64)
+                    _circle_rec(buffer[:, slot], fill, cx, cy, np.full(n, round(radius), np.int64))
+                    _circle_rec(buffer[:, slot + 1], light, cx, cy, np.full(n, round(radius - 4), np.int64))
+        buffer[:, layout.wall_slots.reshape(-1)] = layout.walls
+        parts.append((lanes, buffer))
     width = max([1] + [rec.shape[1] for _, rec in parts])
     records = np.zeros((count, width, RECORD), np.int32)
     counts = np.zeros(count, np.int64)
@@ -623,9 +638,12 @@ def contact_writes(fields):
     """Return ``(x, y, brightness, colour, count)`` blend writes per frame ``[N, W]`` in drawing order."""
     segments = fields["current/render_segments"]
     counts = fields["current/render_segment_count"].astype(np.int64).reshape(-1)
-    n = len(counts)
     frame, index = np.nonzero(np.arange(segments.shape[1])[None] < counts[:, None])
-    seg = segments[frame, index]
+    return compact_writes(frame, index, segments[frame, index], len(counts))
+
+
+def compact_writes(frame, index, seg, n):
+    """``contact_writes`` for the drawn segments ``seg [S, 8]`` of frames ``frame [S]`` (in index order)."""
     # ``to_pygame`` and ``SpaceDebugColor.as_int`` round half to even.
     ends = np.rint(seg[:, :4]).astype(np.int64)
     color = pack(np.rint(seg[:, 4:7]).astype(np.int64))
@@ -825,12 +843,13 @@ except ImportError:  # pragma: no cover - CPU-only installs
 
 if HAVE_TRITON:
     # Jitted code reads module constants only as ``constexpr``.
-    _POLY, _CIRCLE = tl.constexpr(POLY), tl.constexpr(CIRCLE)
+    _POLY, _CIRCLE, _ROWS, _ROFF = tl.constexpr(POLY), tl.constexpr(CIRCLE), tl.constexpr(ROWS), tl.constexpr(ROFF)
     _KIND, _COLOR, _BX0, _BY0, _BX1, _BY1 = (tl.constexpr(v) for v in (KIND, COLOR, BX0, BY0, BX1, BY1))
     _PN, _PX, _PY = tl.constexpr(PN), tl.constexpr(PX), tl.constexpr(PY)
     _CX, _CY, _CR = tl.constexpr(CX), tl.constexpr(CY), tl.constexpr(CR)
     _LX, _LY, _LSX, _LSY = tl.constexpr(LX), tl.constexpr(LY), tl.constexpr(LSX), tl.constexpr(LSY)
     _LDX, _LDY, _LERR, _LN, _LXINC = (tl.constexpr(v) for v in (LDX, LDY, LERR, LN, LXINC))
+    _STATIC_ = tl.constexpr(STATIC)
 
     @triton.jit
     def _pick(i, v0, v1, v2, v3, v4):
@@ -841,8 +860,8 @@ if HAVE_TRITON:
         return tl.minimum(a, b), tl.maximum(a, b)
 
     @triton.jit
-    def _edge(i, n, x0, x1, x2, x3, x4, y0, y1, y2, y3, y4, miny, maxy, yv, xv, BIG: tl.constexpr):
-        """One ``draw_fillpoly`` edge: its intersection per row, and its horizontal-edge span."""
+    def _edge(i, n, x0, x1, x2, x3, x4, y0, y1, y2, y3, y4, maxy, yv, BIG: tl.constexpr):
+        """One ``draw_fillpoly`` edge: its intersection per row (BIG where it misses)."""
         prev = tl.where(i == 0, n - 1, i - 1)
         xa, ya = _pick(prev, x0, x1, x2, x3, x4), _pick(prev, y0, y1, y2, y3, y4)
         xb, yb = _pick(i, x0, x1, x2, x3, x4), _pick(i, y0, y1, y2, y3, y4)
@@ -854,104 +873,145 @@ if HAVE_TRITON:
         den = tl.where(edge, hy - ly, 1)
         # Integer division truncates toward zero, as the C cast of the double quotient does.
         q = ((yv - ly) * (hx - lx) + lx * den) // den
-        level = (i < n) & (ya == yb) & (miny < yb) & (yb < maxy)
-        lo, hi = tl.minimum(xa, xb), tl.maximum(xa, xb)
-        span = level & (yv[:, None] == yb) & (xv[None, :] >= lo) & (xv[None, :] <= hi)
-        return tl.where(on, q, BIG), span
+        return tl.where(on, q, BIG)
 
     @triton.jit
-    def _poly_cover(yv, xv, base, BIG: tl.constexpr):
+    def _level(i, n, x0, x1, x2, x3, x4, y0, y1, y2, y3, y4, miny, maxy, yv, xa_v, xb_v, cover_a, cover_b):
+        """Add the span of edge ``i`` when it is horizontal and strictly between the top and bottom rows."""
+        prev = tl.where(i == 0, n - 1, i - 1)
+        xa, ya = _pick(prev, x0, x1, x2, x3, x4), _pick(prev, y0, y1, y2, y3, y4)
+        xb, yb = _pick(i, x0, x1, x2, x3, x4), _pick(i, y0, y1, y2, y3, y4)
+        if (i < n) & (ya == yb) & (miny < yb) & (yb < maxy):
+            lo, hi = tl.minimum(xa, xb), tl.maximum(xa, xb)
+            row = (yv == yb)[:, None]
+            cover_a = cover_a | (row & (xa_v[None, :] >= lo) & (xa_v[None, :] <= hi))
+            cover_b = cover_b | (row & (xb_v[None, :] >= lo) & (xb_v[None, :] <= hi))
+        return cover_a, cover_b
+
+    @triton.jit
+    def _poly_cover(yv, xa_v, xb_v, base, BIG: tl.constexpr):
+        """``draw_fillpoly`` coverage of rows ``yv`` at columns ``xa_v`` and ``xb_v``."""
         n = tl.load(base + _PN)
         x0, x1, x2 = tl.load(base + _PX), tl.load(base + _PX + 1), tl.load(base + _PX + 2)
         x3, x4 = tl.load(base + _PX + 3), tl.load(base + _PX + 4)
         y0, y1, y2 = tl.load(base + _PY), tl.load(base + _PY + 1), tl.load(base + _PY + 2)
         y3, y4 = tl.load(base + _PY + 3), tl.load(base + _PY + 4)
-        y1u, y2u, y3u, y4u = (
-            tl.where(n > 1, y1, y0),
-            tl.where(n > 2, y2, y0),
-            tl.where(n > 3, y3, y0),
-            tl.where(n > 4, y4, y0),
-        )
-        x1u, x2u, x3u, x4u = (
-            tl.where(n > 1, x1, x0),
-            tl.where(n > 2, x2, x0),
-            tl.where(n > 3, x3, x0),
-            tl.where(n > 4, x4, x0),
-        )
+        y1u, y2u = tl.where(n > 1, y1, y0), tl.where(n > 2, y2, y0)
+        y3u, y4u = tl.where(n > 3, y3, y0), tl.where(n > 4, y4, y0)
+        x1u, x2u = tl.where(n > 1, x1, x0), tl.where(n > 2, x2, x0)
+        x3u, x4u = tl.where(n > 3, x3, x0), tl.where(n > 4, x4, x0)
         miny = tl.minimum(tl.minimum(tl.minimum(y0, y1u), tl.minimum(y2u, y3u)), y4u)
         maxy = tl.maximum(tl.maximum(tl.maximum(y0, y1u), tl.maximum(y2u, y3u)), y4u)
-        minx = tl.minimum(tl.minimum(tl.minimum(x0, x1u), tl.minimum(x2u, x3u)), x4u)
-        maxx = tl.maximum(tl.maximum(tl.maximum(x0, x1u), tl.maximum(x2u, x3u)), x4u)
-        h0, s0 = _edge(0, n, x0, x1, x2, x3, x4, y0, y1, y2, y3, y4, miny, maxy, yv, xv, BIG)
-        h1, s1 = _edge(1, n, x0, x1, x2, x3, x4, y0, y1, y2, y3, y4, miny, maxy, yv, xv, BIG)
-        h2, s2 = _edge(2, n, x0, x1, x2, x3, x4, y0, y1, y2, y3, y4, miny, maxy, yv, xv, BIG)
-        h3, s3 = _edge(3, n, x0, x1, x2, x3, x4, y0, y1, y2, y3, y4, miny, maxy, yv, xv, BIG)
-        h4, s4 = _edge(4, n, x0, x1, x2, x3, x4, y0, y1, y2, y3, y4, miny, maxy, yv, xv, BIG)
-        h0, h1 = _sort2(h0, h1)
-        h3, h4 = _sort2(h3, h4)
-        h2, h4 = _sort2(h2, h4)
-        h2, h3 = _sort2(h2, h3)
-        h0, h3 = _sort2(h0, h3)
-        h0, h2 = _sort2(h0, h2)
-        h1, h4 = _sort2(h1, h4)
-        h1, h3 = _sort2(h1, h3)
-        h1, h2 = _sort2(h1, h2)
-        count = (h0 != BIG).to(tl.int32) + (h1 != BIG).to(tl.int32) + (h2 != BIG).to(tl.int32)
-        count += (h3 != BIG).to(tl.int32) + (h4 != BIG).to(tl.int32)
-        x = xv[None, :]
-        inside = ((count >= 2)[:, None] & (x >= h0[:, None]) & (x <= h1[:, None])) | (
-            (count >= 4)[:, None] & (x >= h2[:, None]) & (x <= h3[:, None])
-        )
-        rows = (yv >= miny) & (yv <= maxy)
-        inside = (inside & rows[:, None]) | s0 | s1 | s2 | s3 | s4
-        flat = (yv[:, None] == miny) & (x >= minx) & (x <= maxx)
-        return tl.where(miny == maxy, flat, inside)
+        if miny == maxy:
+            minx = tl.minimum(tl.minimum(tl.minimum(x0, x1u), tl.minimum(x2u, x3u)), x4u)
+            maxx = tl.maximum(tl.maximum(tl.maximum(x0, x1u), tl.maximum(x2u, x3u)), x4u)
+            row = (yv == miny)[:, None]
+            cover_a = row & (xa_v[None, :] >= minx) & (xa_v[None, :] <= maxx)
+            cover_b = row & (xb_v[None, :] >= minx) & (xb_v[None, :] <= maxx)
+        else:
+            h0 = _edge(0, n, x0, x1, x2, x3, x4, y0, y1, y2, y3, y4, maxy, yv, BIG)
+            h1 = _edge(1, n, x0, x1, x2, x3, x4, y0, y1, y2, y3, y4, maxy, yv, BIG)
+            h2 = _edge(2, n, x0, x1, x2, x3, x4, y0, y1, y2, y3, y4, maxy, yv, BIG)
+            h3 = _edge(3, n, x0, x1, x2, x3, x4, y0, y1, y2, y3, y4, maxy, yv, BIG)
+            h4 = _edge(4, n, x0, x1, x2, x3, x4, y0, y1, y2, y3, y4, maxy, yv, BIG)
+            h0, h1 = _sort2(h0, h1)
+            h3, h4 = _sort2(h3, h4)
+            h2, h4 = _sort2(h2, h4)
+            h2, h3 = _sort2(h2, h3)
+            h0, h3 = _sort2(h0, h3)
+            h0, h2 = _sort2(h0, h2)
+            h1, h4 = _sort2(h1, h4)
+            h1, h3 = _sort2(h1, h3)
+            h1, h2 = _sort2(h1, h2)
+            rows = (yv >= miny) & (yv <= maxy)
+            # Rows with fewer than two (four) intersections get empty first (second) spans.
+            two = rows & (h1 != BIG)
+            four = rows & (h3 != BIG)
+            lo1, hi1 = tl.where(two, h0, 1), tl.where(two, h1, 0)
+            lo2, hi2 = tl.where(four, h2, 1), tl.where(four, h3, 0)
+            xa, xb = xa_v[None, :], xb_v[None, :]
+            cover_a = ((xa >= lo1[:, None]) & (xa <= hi1[:, None])) | ((xa >= lo2[:, None]) & (xa <= hi2[:, None]))
+            cover_b = ((xb >= lo1[:, None]) & (xb <= hi1[:, None])) | ((xb >= lo2[:, None]) & (xb <= hi2[:, None]))
+            for i in tl.static_range(5):
+                cover_a, cover_b = _level(
+                    i, n, x0, x1, x2, x3, x4, y0, y1, y2, y3, y4, miny, maxy, yv, xa_v, xb_v, cover_a, cover_b
+                )
+        return cover_a, cover_b
 
     @triton.jit
-    def _circle_cover(yv, xv, base, table, max_radius):
+    def _circle_cover(yv, xa_v, xb_v, base, table, max_radius):
         cx, cy, r = tl.load(base + _CX), tl.load(base + _CY), tl.load(base + _CR)
         dy = yv - cy
         valid = (dy >= -max_radius - 1) & (dy <= max_radius)
         row = tl.minimum(tl.maximum(dy + max_radius + 1, 0), 2 * max_radius + 1)
         index = (tl.minimum(r, max_radius) * (2 * max_radius + 2) + row) * 2
-        lo, hi = tl.load(table + index), tl.load(table + index + 1)
-        dx = xv[None, :] - cx
-        return valid[:, None] & (dx >= lo[:, None]) & (dx <= hi[:, None])
+        lo = tl.where(valid, tl.load(table + index) + cx, 1)
+        hi = tl.where(valid, tl.load(table + index + 1) + cx, 0)
+        cover_a = (xa_v[None, :] >= lo[:, None]) & (xa_v[None, :] <= hi[:, None])
+        cover_b = (xb_v[None, :] >= lo[:, None]) & (xb_v[None, :] <= hi[:, None])
+        return cover_a, cover_b
 
     @triton.jit
-    def _line_cover(yv, xv, base):
+    def _line_cover(yv, xa_v, xb_v, base):
         lx, ly = tl.load(base + _LX), tl.load(base + _LY)
         sx, sy = tl.load(base + _LSX), tl.load(base + _LSY)
         dx, dy = tl.load(base + _LDX), tl.load(base + _LDY)
         err, steps, xinc = tl.load(base + _LERR), tl.load(base + _LN), tl.load(base + _LXINC)
-        # Spans of rows when the line is steep, spans of columns otherwise.
-        ky = (yv - ly) * sy
-        nk = tl.where(dy > 0, (tl.maximum(ky, 0) * dx + err + dy - 1) // tl.maximum(dy, 1), 0)
-        xk = lx + sx * nk
-        rows = (
-            ((ky >= 0) & (ky <= steps))[:, None]
-            & (xv[None, :] >= (xk - 1)[:, None])
-            & (xv[None, :] <= (xk + 2)[:, None])
-        )
-        kx = (xv - lx) * sx
-        mk = (tl.maximum(kx, 0) * dy - err + dx - 1) // tl.maximum(dx, 1)
-        yk = ly + sy * mk
-        cols = (
-            ((kx >= 0) & (kx <= steps))[None, :]
-            & (yv[:, None] >= (yk - 1)[None, :])
-            & (yv[:, None] <= (yk + 2)[None, :])
-        )
-        return tl.where(xinc != 0, rows, cols)
+        if xinc != 0:
+            # Steep: one four-pixel span per row.
+            ky = (yv - ly) * sy
+            nk = tl.where(dy > 0, (tl.maximum(ky, 0) * dx + err + dy - 1) // tl.maximum(dy, 1), 0)
+            xk = lx + sx * nk
+            valid = (ky >= 0) & (ky <= steps)
+            lo, hi = tl.where(valid, xk - 1, 1), tl.where(valid, xk + 2, 0)
+            cover_a = (xa_v[None, :] >= lo[:, None]) & (xa_v[None, :] <= hi[:, None])
+            cover_b = (xb_v[None, :] >= lo[:, None]) & (xb_v[None, :] <= hi[:, None])
+        else:
+            # Shallow: one four-pixel span per column.
+            ka = (xa_v - lx) * sx
+            ya = ly + sy * ((tl.maximum(ka, 0) * dy - err + dx - 1) // tl.maximum(dx, 1))
+            ya_lo, ya_hi = (
+                tl.where((ka >= 0) & (ka <= steps), ya - 1, 1),
+                tl.where((ka >= 0) & (ka <= steps), ya + 2, 0),
+            )
+            kb = (xb_v - lx) * sx
+            yb = ly + sy * ((tl.maximum(kb, 0) * dy - err + dx - 1) // tl.maximum(dx, 1))
+            yb_lo, yb_hi = (
+                tl.where((kb >= 0) & (kb <= steps), yb - 1, 1),
+                tl.where((kb >= 0) & (kb <= steps), yb + 2, 0),
+            )
+            y = yv[:, None]
+            cover_a = (y >= ya_lo[None, :]) & (y <= ya_hi[None, :])
+            cover_b = (y >= yb_lo[None, :]) & (y <= yb_hi[None, :])
+        return cover_a, cover_b
 
     @triton.jit
-    def _paint(yv, xv, c, base, color, kind, table, max_radius, BIG: tl.constexpr):
-        if kind == _POLY:
-            cover = _poly_cover(yv, xv, base, BIG)
+    def _rows_cover(yv, xa_v, xb_v, base, intervals):
+        offset, top, bottom = tl.load(base + _ROFF).to(tl.int64), tl.load(base + _BY0), tl.load(base + _BY1)
+        inside = (yv >= top) & (yv <= bottom)
+        row = (offset + tl.where(inside, yv - top, 0)) * 8
+        xa, xb = xa_v[None, :], xb_v[None, :]
+        cover_a = (yv[:, None] < 0) & (xa < 0)
+        cover_b = cover_a
+        for k in tl.static_range(4):
+            lo = tl.load(intervals + row + 2 * k, mask=inside, other=1)[:, None]
+            hi = tl.load(intervals + row + 2 * k + 1, mask=inside, other=0)[:, None]
+            cover_a = cover_a | ((xa >= lo) & (xa <= hi))
+            cover_b = cover_b | ((xb >= lo) & (xb <= hi))
+        return cover_a, cover_b
+
+    @triton.jit
+    def _paint(yv, xa_v, xb_v, ca, cb, base, color, kind, table, max_radius, BIG: tl.constexpr, intervals):
+        """Paint ``color`` where the primitive covers rows ``yv`` at columns ``xa_v`` (into ``ca``) and ``xb_v``."""
+        if kind == _ROWS:
+            cover_a, cover_b = _rows_cover(yv, xa_v, xb_v, base, intervals)
+        elif kind == _POLY:
+            cover_a, cover_b = _poly_cover(yv, xa_v, xb_v, base, BIG)
         elif kind == _CIRCLE:
-            cover = _circle_cover(yv, xv, base, table, max_radius)
+            cover_a, cover_b = _circle_cover(yv, xa_v, xb_v, base, table, max_radius)
         else:
-            cover = _line_cover(yv, xv, base)
-        return tl.where(cover, color, c)
+            cover_a, cover_b = _line_cover(yv, xa_v, xb_v, base)
+        return tl.where(cover_a, color, ca), tl.where(cover_b, color, cb)
 
     @triton.jit
     def _blend_at(c, yv, xv, wy, wx, b, color):
@@ -966,6 +1026,251 @@ if HAVE_TRITON:
             v = libdevice.add_rn(libdevice.mul_rn(bb, fg), libdevice.mul_rn(1.0 - bb, bg))
             out = out | (tl.minimum(tl.maximum(v.to(tl.int32), 0), 255) << s)
         return tl.where(hit, out, c)
+
+    @triton.jit
+    def _blend4(c00, c01, c10, c11, y0, y1, x0, x1, wy, wx, b, color):
+        return (
+            _blend_at(c00, y0, x0, wy, wx, b, color),
+            _blend_at(c01, y0, x1, wy, wx, b, color),
+            _blend_at(c10, y1, x0, wy, wx, b, color),
+            _blend_at(c11, y1, x1, wy, wx, b, color),
+        )
+
+    @triton.jit
+    def _put(c00, c01, c10, c11, y0, y1, x0, x1, ylo, yhi, xlo, xhi, steep, major, minor, b, color, valid):
+        """One ``draw_aaline`` blend at (major, minor), swapped back when the line is steep."""
+        px = tl.where(steep, minor, major)
+        py = tl.where(steep, major, minor)
+        inside = valid & (px >= 0) & (px < 512) & (py >= 0) & (py < 512)
+        if inside & (px >= xlo) & (px <= xhi) & (py >= ylo) & (py <= yhi):
+            c00, c01, c10, c11 = _blend4(c00, c01, c10, c11, y0, y1, x0, x1, py, px, b, color)
+        return c00, c01, c10, c11
+
+    @triton.jit
+    def _aaline(c00, c01, c10, c11, y0, y1, x0, x1, ylo, yhi, xlo, xhi, fx, fy, tx, ty, color):
+        """Port of pygame 2.6.1 ``draw_aaline`` (blend on) in float32 with explicit roundings."""
+        dx = libdevice.sub_rn(tx, fx)
+        dy = libdevice.sub_rn(ty, fy)
+        adx = tl.abs(dx.to(tl.float64))
+        ady = tl.abs(dy.to(tl.float64))
+        if (adx < 0.0001) & (ady < 0.0001):
+            px = tl.floor(fx.to(tl.float64) + 0.5).to(tl.int32)
+            py = tl.floor(fy.to(tl.float64) + 0.5).to(tl.int32)
+            one = fx * 0.0 + 1.0
+            c00, c01, c10, c11 = _put(
+                c00, c01, c10, c11, y0, y1, x0, x1, ylo, yhi, xlo, xhi, False, px, py, one, color, True
+            )
+        else:
+            steep = adx < ady
+            fx, fy = tl.where(steep, fy, fx), tl.where(steep, fx, fy)
+            tx, ty = tl.where(steep, ty, tx), tl.where(steep, tx, ty)
+            dx, dy = tl.where(steep, dy, dx), tl.where(steep, dx, dy)
+            back = dx < 0
+            fx, tx = tl.where(back, tx, fx), tl.where(back, fx, tx)
+            fy, ty = tl.where(back, ty, fy), tl.where(back, fy, ty)
+            dx, dy = tl.where(back, -dx, dx), tl.where(back, -dy, dy)
+            cl = fx * 0.0 - 1.0
+            cr = fx * 0.0 + 512.0
+            live = (tx > cl) & (fx < cr)
+            g = libdevice.div_rn(dy, dx)
+            left = fx < cl
+            fy = tl.where(left, libdevice.add_rn(fy, libdevice.mul_rn(g, libdevice.sub_rn(cl, fx))), fy)
+            fx = tl.where(left, cl, fx)
+            right = tx > cr
+            ty = tl.where(right, libdevice.add_rn(ty, libdevice.mul_rn(g, libdevice.sub_rn(cr, tx))), ty)
+            tx = tl.where(right, cr, tx)
+            down = g > 0
+            live = live & tl.where(down, (ty > cl) & (fy < cr), (fy > cl) & (ty < cr))
+            a = down & (fy < cl)
+            fx = tl.where(a, libdevice.add_rn(fx, libdevice.div_rn(libdevice.sub_rn(cl, fy), g)), fx)
+            fy = tl.where(a, cl, fy)
+            a = down & (ty > cr)
+            tx = tl.where(a, libdevice.add_rn(tx, libdevice.div_rn(libdevice.sub_rn(cr, ty), g)), tx)
+            ty = tl.where(a, cr, ty)
+            a = (g <= 0) & (ty < cl)
+            tx = tl.where(a, libdevice.add_rn(tx, libdevice.div_rn(libdevice.sub_rn(cl, ty), g)), tx)
+            ty = tl.where(a, cl, ty)
+            a = (g <= 0) & (fy > cr)
+            fx = tl.where(a, libdevice.add_rn(fx, libdevice.div_rn(libdevice.sub_rn(cr, fy), g)), fx)
+            fy = tl.where(a, cr, fy)
+            if live:
+                fy = libdevice.add_rn(fy, 1.0)
+                ty = libdevice.add_rn(ty, 1.0)
+                xs = fx.to(tl.int32)
+                ye = libdevice.add_rn(fy, libdevice.mul_rn(g, libdevice.sub_rn(xs.to(tl.float32), fx)))
+                iy = ye
+                first = tx > libdevice.add_rn(cl, 1.0)
+                gap = libdevice.sub_rn((1 + xs).to(tl.float32), fx)
+                yi = ye.to(tl.int32)
+                br = libdevice.sub_rn(ye, yi.to(tl.float32))
+                c00, c01, c10, c11 = _put(
+                    c00,
+                    c01,
+                    c10,
+                    c11,
+                    y0,
+                    y1,
+                    x0,
+                    x1,
+                    ylo,
+                    yhi,
+                    xlo,
+                    xhi,
+                    steep,
+                    xs,
+                    yi,
+                    libdevice.mul_rn(br, gap),
+                    color,
+                    first & (yi.to(tl.float32) < ye),
+                )
+                c00, c01, c10, c11 = _put(
+                    c00,
+                    c01,
+                    c10,
+                    c11,
+                    y0,
+                    y1,
+                    x0,
+                    x1,
+                    ylo,
+                    yhi,
+                    xlo,
+                    xhi,
+                    steep,
+                    xs,
+                    yi - 1,
+                    libdevice.mul_rn(libdevice.sub_rn(1.0, br), gap),
+                    color,
+                    first,
+                )
+                iy = tl.where(first, libdevice.add_rn(iy, g), iy)
+                xs = tl.where(first, xs + 1, xs)
+                xe = tl.ceil(tx.to(tl.float64)).to(tl.int32)
+                second = fx < libdevice.sub_rn(cr, 1.0)
+                ye2 = libdevice.add_rn(ty, libdevice.mul_rn(g, libdevice.sub_rn(xe.to(tl.float32), tx)))
+                gap2 = libdevice.add_rn((1 - xe).to(tl.float32), tx)
+                yi2 = ye2.to(tl.int32)
+                br2 = libdevice.sub_rn(ye2, yi2.to(tl.float32))
+                c00, c01, c10, c11 = _put(
+                    c00,
+                    c01,
+                    c10,
+                    c11,
+                    y0,
+                    y1,
+                    x0,
+                    x1,
+                    ylo,
+                    yhi,
+                    xlo,
+                    xhi,
+                    steep,
+                    xe,
+                    yi2,
+                    libdevice.mul_rn(br2, gap2),
+                    color,
+                    second & (yi2.to(tl.float32) < ye2),
+                )
+                c00, c01, c10, c11 = _put(
+                    c00,
+                    c01,
+                    c10,
+                    c11,
+                    y0,
+                    y1,
+                    x0,
+                    x1,
+                    ylo,
+                    yhi,
+                    xlo,
+                    xhi,
+                    steep,
+                    xe,
+                    yi2 - 1,
+                    libdevice.mul_rn(libdevice.sub_rn(1.0, br2), gap2),
+                    color,
+                    second,
+                )
+                for x in range(xs, xe):
+                    y = iy.to(tl.int32)
+                    br = libdevice.add_rn(libdevice.sub_rn(1.0, iy), y.to(tl.float32))
+                    c00, c01, c10, c11 = _put(
+                        c00, c01, c10, c11, y0, y1, x0, x1, ylo, yhi, xlo, xhi, steep, x, y - 1, br, color, True
+                    )
+                    c00, c01, c10, c11 = _put(
+                        c00,
+                        c01,
+                        c10,
+                        c11,
+                        y0,
+                        y1,
+                        x0,
+                        x1,
+                        ylo,
+                        yhi,
+                        xlo,
+                        xhi,
+                        steep,
+                        x,
+                        y,
+                        libdevice.sub_rn(1.0, br),
+                        color,
+                        y.to(tl.float32) < iy,
+                    )
+                    iy = libdevice.add_rn(iy, g)
+        return c00, c01, c10, c11
+
+    @triton.jit
+    def _bin_kernel(
+        records,
+        counts,
+        extents,
+        lists,
+        sizes,
+        touch,
+        segments,
+        segment_counts,
+        P,
+        width,
+        TILES: tl.constexpr,
+        BLOCK: tl.constexpr,
+        RECORD_: tl.constexpr,
+        WRITE: tl.constexpr,
+        SEGMENTS: tl.constexpr,
+    ):
+        """Count (and with ``WRITE`` list, in drawing order) the primitives of one frame per output tile."""
+        f = tl.program_id(0).to(tl.int64)
+        t = tl.arange(0, BLOCK)
+        on = t < TILES
+        ex0, ey0 = tl.load(extents + t * 4, mask=on, other=0), tl.load(extents + t * 4 + 1, mask=on, other=0)
+        ex1, ey1 = tl.load(extents + t * 4 + 2, mask=on, other=-1), tl.load(extents + t * 4 + 3, mask=on, other=-1)
+        filled = tl.zeros([BLOCK], tl.int32)
+        moving = tl.zeros([BLOCK], tl.int32)
+        count = tl.load(counts + f)
+        for p in range(0, count):
+            base = records + (f * P + p) * RECORD_
+            if tl.load(base + _KIND) != 0:
+                bx0, by0 = tl.load(base + _BX0), tl.load(base + _BY0)
+                bx1, by1 = tl.load(base + _BX1), tl.load(base + _BY1)
+                hit = on & (bx0 <= ex1) & (bx1 >= ex0) & (by0 <= ey1) & (by1 >= ey0)
+                if WRITE:
+                    tl.store(lists + (f * TILES + t) * width + filled, p, mask=hit)
+                    if tl.load(base + _STATIC_) == 0:
+                        moving += hit.to(tl.int32)
+                filled += hit.to(tl.int32)
+        tl.store(sizes + f * TILES + t, filled, mask=on)
+        if WRITE:
+            if SEGMENTS > 0:
+                for k in range(0, tl.load(segment_counts + f)):
+                    sb = segments + (f * SEGMENTS + k) * 8
+                    ax = libdevice.rint(tl.load(sb)).to(tl.int32)
+                    ay = libdevice.rint(tl.load(sb + 1)).to(tl.int32)
+                    bx = libdevice.rint(tl.load(sb + 2)).to(tl.int32)
+                    by = libdevice.rint(tl.load(sb + 3)).to(tl.int32)
+                    near = (tl.minimum(ax, bx) - 2 <= ex1) & (tl.maximum(ax, bx) + 2 >= ex0)
+                    near = near & (tl.minimum(ay, by) - 2 <= ey1) & (tl.maximum(ay, by) + 2 >= ey0)
+                    moving += (on & near).to(tl.int32)
+            tl.store(touch + f * TILES + t, moving, mask=on)
 
     @triton.jit
     def _frames_kernel(
@@ -985,6 +1290,14 @@ if HAVE_TRITON:
         static_index,
         static_out,
         dynamic,
+        segments,
+        segment_counts,
+        intervals,
+        bins,
+        bin_counts,
+        touch,
+        out_words,
+        static_words,
         P,
         W,
         size,
@@ -992,68 +1305,119 @@ if HAVE_TRITON:
         RECORD_: tl.constexpr,
         TILE: tl.constexpr,
         BIG: tl.constexpr,
+        SEGMENTS: tl.constexpr = 0,
+        BINS: tl.constexpr = 0,
+        TOUCH: tl.constexpr = 0,
+        WORDS: tl.constexpr = 0,
     ):
-        tile = tl.program_id(0)
-        f = tl.program_id(1).to(tl.int64)
+        # Frames on the first grid axis, which allows more than 65535 of them; one band of tile rows each.
+        f = tl.program_id(0).to(tl.int64)
+        band = tl.program_id(1)
         tiles = tl.cdiv(size, TILE)
         o = tl.arange(0, TILE)
-        oy = (tile // tiles) * TILE + o
-        ox = (tile % tiles) * TILE + o
-        my, mx = oy < size, ox < size
-        y0 = tl.load(taps + oy, mask=my, other=0)
-        x0 = tl.load(taps + ox, mask=mx, other=0)
-        y1, x1 = y0 + 1, x0 + 1
-        ylo, yhi = tl.min(tl.where(my, y0, BIG)), tl.max(tl.where(my, y1, -BIG))
-        xlo, xhi = tl.min(tl.where(mx, x0, BIG)), tl.max(tl.where(mx, x1, -BIG))
-        pixel = ((f * size + oy[:, None]) * size + ox[None, :]) * 3
-        mask = my[:, None] & mx[None, :]
+        oy = band * TILE + o
         si = tl.load(static_index + f)
-        dx0, dy0 = tl.load(dynamic + f * 4), tl.load(dynamic + f * 4 + 1)
-        dx1, dy1 = tl.load(dynamic + f * 4 + 2), tl.load(dynamic + f * 4 + 3)
-        touched = (dx0 <= xhi) & (dx1 >= xlo) & (dy0 <= yhi) & (dy1 >= ylo)
-        if (si >= 0) & (touched == 0):
-            # Only the background, goal and walls reach this tile: copy it from the frame they draw alone.
-            source = ((si.to(tl.int64) * size + oy[:, None]) * size + ox[None, :]) * 3
-            for k in tl.static_range(3):
-                tl.store(out + pixel + k, tl.load(static_out + source + k, mask=mask, other=0), mask=mask)
-        else:
-            bg = tl.load(background + f)
-            c00 = tl.zeros([TILE, TILE], tl.int32) + bg
-            c01 = c00
-            c10 = c00
-            c11 = c00
-            n = tl.load(counts + f)
-            for p in range(0, n):
-                base = records + (f * P + p) * RECORD_
-                kind = tl.load(base + _KIND)
-                bx0, by0 = tl.load(base + _BX0), tl.load(base + _BY0)
-                bx1, by1 = tl.load(base + _BX1), tl.load(base + _BY1)
-                if (kind != 0) & (bx0 <= xhi) & (bx1 >= xlo) & (by0 <= yhi) & (by1 >= ylo):
-                    color = tl.load(base + _COLOR)
-                    c00 = _paint(y0, x0, c00, base, color, kind, table, max_radius, BIG)
-                    c01 = _paint(y0, x1, c01, base, color, kind, table, max_radius, BIG)
-                    c10 = _paint(y1, x0, c10, base, color, kind, table, max_radius, BIG)
-                    c11 = _paint(y1, x1, c11, base, color, kind, table, max_radius, BIG)
-            nw = tl.load(wn_ptr + f)
-            for w in range(0, nw):
-                wx, wy = tl.load(wx_ptr + f * W + w), tl.load(wy_ptr + f * W + w)
-                if (wx >= xlo) & (wx <= xhi) & (wy >= ylo) & (wy <= yhi):
-                    b, color = tl.load(wb_ptr + f * W + w), tl.load(wc_ptr + f * W + w)
-                    c00 = _blend_at(c00, y0, x0, wy, wx, b, color)
-                    c01 = _blend_at(c01, y0, x1, wy, wx, b, color)
-                    c10 = _blend_at(c10, y1, x0, wy, wx, b, color)
-                    c11 = _blend_at(c11, y1, x1, wy, wx, b, color)
-            a0 = tl.load(w0_ptr + ox, mask=mx, other=0)[None, :]
-            a1 = tl.load(w1_ptr + ox, mask=mx, other=0)[None, :]
-            b0 = tl.load(w0_ptr + oy, mask=my, other=0)[:, None]
-            b1 = tl.load(w1_ptr + oy, mask=my, other=0)[:, None]
-            for k in tl.static_range(3):
-                s = 16 - 8 * k
-                h0 = ((c00 >> s) & 255) * a0 + ((c01 >> s) & 255) * a1
-                h1 = ((c10 >> s) & 255) * a0 + ((c11 >> s) & 255) * a1
-                v = (((h0 >> 4) * b0) >> 16) + (((h1 >> 4) * b1) >> 16)
-                v = tl.minimum(tl.maximum((v + 2) >> 2, 0), 255)
-                tl.store(out + pixel + k, v.to(tl.uint8), mask=mask)
+        if WORDS > 0:
+            if si >= 0:
+                # Tiles that only the background, goal and walls reach copy the frame they draw alone,
+                # as 32-bit words of whole rows (``size`` and ``TILE`` are multiples of 4).
+                j = tl.arange(0, WORDS)
+                line = size * 3 // 4
+                flag = tl.load(touch + (f * tiles + band) * tiles + (4 * j) // (3 * TILE), mask=j < line, other=1)
+                keep = (oy < size)[:, None] & (flag == 0)[None, :]
+                row = oy[:, None].to(tl.int64) * line + j[None, :]
+                plane = size * line
+                words = tl.load(static_words + si.to(tl.int64) * plane + row, mask=keep)
+                tl.store(out_words + f * plane + row, words, mask=keep)
+        my = oy < size
+        y0 = tl.load(taps + oy, mask=my, other=0)
+        y1 = y0 + 1
+        ylo, yhi = tl.min(tl.where(my, y0, BIG)), tl.max(tl.where(my, y1, -BIG))
+        for tx in range(0, tiles):
+            tile = band * tiles + tx
+            ox = tx * TILE + o
+            mx = ox < size
+            x0 = tl.load(taps + ox, mask=mx, other=0)
+            x1 = x0 + 1
+            xlo, xhi = tl.min(tl.where(mx, x0, BIG)), tl.max(tl.where(mx, x1, -BIG))
+            pixel = ((f * size + oy[:, None]) * size + ox[None, :]) * 3
+            mask = my[:, None] & mx[None, :]
+            dx0, dy0 = tl.load(dynamic + f * 4), tl.load(dynamic + f * 4 + 1)
+            dx1, dy1 = tl.load(dynamic + f * 4 + 2), tl.load(dynamic + f * 4 + 3)
+            if TOUCH:
+                touched = tl.load(touch + f * tiles * tiles + tile) > 0
+            else:
+                touched = (dx0 <= xhi) & (dx1 >= xlo) & (dy0 <= yhi) & (dy1 >= ylo)
+            if (si >= 0) & (touched == 0):
+                # Only the background, goal and walls reach this tile: copy it from the frame they draw alone.
+                if WORDS == 0:
+                    source = ((si.to(tl.int64) * size + oy[:, None]) * size + ox[None, :]) * 3
+                    for k in tl.static_range(3):
+                        tl.store(out + pixel + k, tl.load(static_out + source + k, mask=mask, other=0), mask=mask)
+            else:
+                bg = tl.load(background + f)
+                c00 = tl.zeros([TILE, TILE], tl.int32) + bg
+                c01 = c00
+                c10 = c00
+                c11 = c00
+                if BINS > 0:
+                    n = tl.load(bin_counts + f * tiles * tiles + tile)
+                else:
+                    n = tl.load(counts + f)
+                for q in range(0, n):
+                    if BINS > 0:
+                        p = tl.load(bins + (f * tiles * tiles + tile) * BINS + q)
+                    else:
+                        p = q
+                    base = records + (f * P + p) * RECORD_
+                    kind = tl.load(base + _KIND)
+                    bx0, by0 = tl.load(base + _BX0), tl.load(base + _BY0)
+                    bx1, by1 = tl.load(base + _BX1), tl.load(base + _BY1)
+                    if (kind != 0) & (bx0 <= xhi) & (bx1 >= xlo) & (by0 <= yhi) & (by1 >= ylo):
+                        color = tl.load(base + _COLOR)
+                        c00, c01 = _paint(y0, x0, x1, c00, c01, base, color, kind, table, max_radius, BIG, intervals)
+                        c10, c11 = _paint(y1, x0, x1, c10, c11, base, color, kind, table, max_radius, BIG, intervals)
+                if SEGMENTS > 0:
+                    # Contact lines from the State: (x0, y0, x1, y1, r, g, b, a) per segment, drawn in order.
+                    ns = tl.load(segment_counts + f)
+                    for k in range(0, ns):
+                        sb = segments + (f * SEGMENTS + k) * 8
+                        ax = libdevice.rint(tl.load(sb)).to(tl.int32)
+                        ay = libdevice.rint(tl.load(sb + 1)).to(tl.int32)
+                        bx = libdevice.rint(tl.load(sb + 2)).to(tl.int32)
+                        by = libdevice.rint(tl.load(sb + 3)).to(tl.int32)
+                        near = (tl.minimum(ax, bx) - 2 <= xhi) & (tl.maximum(ax, bx) + 2 >= xlo)
+                        near = near & (tl.minimum(ay, by) - 2 <= yhi) & (tl.maximum(ay, by) + 2 >= ylo)
+                        if near:
+                            r = libdevice.rint(tl.load(sb + 4)).to(tl.int32)
+                            g = libdevice.rint(tl.load(sb + 5)).to(tl.int32)
+                            b = libdevice.rint(tl.load(sb + 6)).to(tl.int32)
+                            color = (r << 16) | (g << 8) | b
+                            c00, c01, c10, c11 = _aaline(
+                                c00, c01, c10, c11, y0, y1, x0, x1, ylo, yhi, xlo, xhi,
+                                ax.to(tl.float32), ay.to(tl.float32), bx.to(tl.float32), by.to(tl.float32), color,
+                            )  # fmt: skip
+                else:
+                    nw = tl.load(wn_ptr + f)
+                    for w in range(0, nw):
+                        wx, wy = tl.load(wx_ptr + f * W + w), tl.load(wy_ptr + f * W + w)
+                        if (wx >= xlo) & (wx <= xhi) & (wy >= ylo) & (wy <= yhi):
+                            b, color = tl.load(wb_ptr + f * W + w), tl.load(wc_ptr + f * W + w)
+                            c00 = _blend_at(c00, y0, x0, wy, wx, b, color)
+                            c01 = _blend_at(c01, y0, x1, wy, wx, b, color)
+                            c10 = _blend_at(c10, y1, x0, wy, wx, b, color)
+                            c11 = _blend_at(c11, y1, x1, wy, wx, b, color)
+                a0 = tl.load(w0_ptr + ox, mask=mx, other=0)[None, :]
+                a1 = tl.load(w1_ptr + ox, mask=mx, other=0)[None, :]
+                b0 = tl.load(w0_ptr + oy, mask=my, other=0)[:, None]
+                b1 = tl.load(w1_ptr + oy, mask=my, other=0)[:, None]
+                for k in tl.static_range(3):
+                    s = 16 - 8 * k
+                    h0 = ((c00 >> s) & 255) * a0 + ((c01 >> s) & 255) * a1
+                    h1 = ((c10 >> s) & 255) * a0 + ((c11 >> s) & 255) * a1
+                    v = (((h0 >> 4) * b0) >> 16) + (((h1 >> 4) * b1) >> 16)
+                    v = tl.minimum(tl.maximum((v + 2) >> 2, 0), 255)
+                    tl.store(out + pixel + k, v.to(tl.uint8), mask=mask)
 
 
 _STAGING = {}
@@ -1084,23 +1448,216 @@ def _launch(records, counts, background, writes, size, device, static_index, sta
     s, a0, a1 = resize_coefficients(CANVAS, size)
     n = len(records)
     max_radius = max(2, int(records[..., CR].max(initial=0)) if n else 2)
-
-    def t(a, dtype=torch.int32):
-        return _upload(a, dtype, device)
-
     wx, wy, wb, wc, wn = writes
     out = torch.empty((n, size, size, 3), dtype=torch.uint8, device=device)
     if n == 0:
         return out
-    tiles = triton.cdiv(size, tile) ** 2
-    _frames_kernel[(tiles, n)](
-        t(records), t(counts), t(background), t(wx), t(wy), t(wb, torch.float32), t(wc), t(wn), t(s),
-        t(a0), t(a1), t(circle_table(max_radius)), out,
-        t(static_index), static_out, t(dynamic),
-        records.shape[1], wx.shape[1], size, max_radius,
+    # One upload: every argument is a 32-bit slice of one buffer; the brightness keeps its float bits.
+    parts = [
+        records, counts, background, wx, wy, np.asarray(wb, np.float32).view(np.int32), wc, wn, s, a0, a1,
+        circle_table(max_radius), static_index, dynamic,
+    ]  # fmt: skip
+    flat = [np.ascontiguousarray(part).astype(np.int32, copy=False).reshape(-1) for part in parts]
+    packed = _upload(np.concatenate(flat), torch.int32, device)
+    views, offset = [], 0
+    for part in flat:
+        views.append(packed[offset : offset + len(part)])
+        offset += len(part)
+    views[5] = views[5].view(torch.float32)
+    _frames_kernel[(n, triton.cdiv(size, tile))](
+        *views[:12], out, views[12], static_out, views[13], out, views[1], views[1], views[1], views[1],
+        views[1], out, out, records.shape[1], wx.shape[1], size, max_radius,
         RECORD_=RECORD, TILE=tile, BIG=2**30,
     )  # fmt: skip
     return out
+
+
+def launch_tensors(records, counts, background, writes, size, device, tile=32):
+    """``_launch`` for device ``records``, ``counts`` and ``background``, without the goal-and-wall tile cache."""
+    s, a0, a1 = resize_coefficients(CANVAS, size)
+    n = len(records)
+    out = torch.empty((n, size, size, 3), dtype=torch.uint8, device=device)
+    if n == 0:
+        return out
+    max_radius = max(2, int(records[..., CR].max().item()))
+    wx, wy, wb, wc, wn = writes
+    flat = [
+        np.ascontiguousarray(part).astype(np.int32, copy=False).reshape(-1)
+        for part in (wx, wy, np.asarray(wb, np.float32).view(np.int32), wc, wn, s, a0, a1, circle_table(max_radius))
+    ]
+    packed = _upload(np.concatenate(flat), torch.int32, device)
+    views, offset = [], 0
+    for part in flat:
+        views.append(packed[offset : offset + len(part)])
+        offset += len(part)
+    views[2] = views[2].view(torch.float32)
+    none = torch.full((n,), -1, dtype=torch.int32, device=device)
+    _frames_kernel[(n, triton.cdiv(size, tile))](
+        records.contiguous(), counts.to(torch.int32), background.to(torch.int32), *views, out,
+        none, out, torch.zeros((n, 4), dtype=torch.int32, device=device), out, none, none, none, none,
+        none, out, out, records.shape[1], wx.shape[1], size, max_radius,
+        RECORD_=RECORD, TILE=tile, BIG=2**30,
+    )  # fmt: skip
+    return out
+
+
+def launch_segments(
+    records,
+    counts,
+    background,
+    segments,
+    segment_counts,
+    size,
+    tile=32,
+    intervals=None,
+    static=None,
+    bins=None,
+    warps=4,
+):
+    """Draw device ``records`` with the State contact lines ``segments [N, S, 8]``, all on the device.
+
+    ``static`` is ``(index [N], frames [K, size, size, 3], dynamic boxes [N, 4])`` from ``static_frames``;
+    ``bins`` is ``(lists [N, tiles, K], counts [N, tiles])`` from ``tile_bins``.
+    """
+    device = records.device
+    n = len(records)
+    out = torch.empty((n, size, size, 3), dtype=torch.uint8, device=device)
+    if n == 0:
+        return out
+    tables = _device_tables(size, device)
+    max_radius = tables["max_radius"]
+    none = torch.full((n,), -1, dtype=torch.int32, device=device)
+    index, frames, boxes = (
+        static if static is not None else (none, out, torch.zeros((n, 4), dtype=torch.int32, device=device))
+    )
+    lists, sizes, touch = (*bins, None)[:3] if bins is not None else (none, none, None)
+    words = size % 4 == 0 and tile % 4 == 0 and static is not None and touch is not None
+    _frames_kernel[(n, triton.cdiv(size, tile))](
+        records.contiguous(), counts.to(torch.int32), background.to(torch.int32),
+        none, none, none.to(torch.float32), none, none,
+        tables["taps"], tables["w0"], tables["w1"], tables["table"], out,
+        index, frames, boxes,
+        segments.contiguous(), segment_counts.reshape(-1).to(torch.int32),
+        none if intervals is None else intervals.contiguous(), lists, sizes,
+        none if touch is None else touch,
+        out.view(-1).view(torch.int32) if words else out, frames.reshape(-1).view(torch.int32) if words else out,
+        records.shape[1], 1, size, max_radius,
+        RECORD_=RECORD, TILE=tile, BIG=2**30, SEGMENTS=segments.shape[1],
+        BINS=0 if bins is None else lists.shape[-1], TOUCH=int(touch is not None and static is not None),
+        WORDS=triton.next_power_of_2(size * 3 // 4) if words else 0, num_warps=warps,
+    )  # fmt: skip
+    return out
+
+
+def tile_extents(size, tile, device):
+    """Inclusive canvas extents ``[tiles, 4]`` (x0, y0, x1, y1) that each output tile reads."""
+    s, _, _ = resize_coefficients(CANVAS, size)
+    count = -(-size // tile)
+    lo = np.array([s[k * tile] for k in range(count)])
+    hi = np.array([s[min(size - 1, k * tile + tile - 1)] + 1 for k in range(count)])
+    ty, tx = np.divmod(np.arange(count * count), count)
+    return torch.as_tensor(np.stack([lo[tx], lo[ty], hi[tx], hi[ty]], 1), device=device)
+
+
+def tile_bins(records, counts, size, tile, segments=None, segment_counts=None):
+    """Per frame and output tile, the indices of the primitives that reach it, in drawing order.
+
+    On CUDA, with ``segments``, also returns per tile the number of agent, block and contact
+    primitives that reach it; tiles without any copy the goal-and-wall frame of ``static_frames``.
+    """
+    extents = tile_extents(size, tile, records.device)
+    if HAVE_TRITON and records.is_cuda:
+        n, slots = records.shape[:2]
+        tiles = len(extents)
+        records = records.to(torch.int32).contiguous()
+        counts = counts.to(torch.int32).contiguous()
+        extents = extents.to(torch.int32).contiguous()
+        sizes = torch.empty((n, tiles), dtype=torch.int32, device=records.device)
+        block = triton.next_power_of_2(tiles)
+        touch = torch.empty((n, tiles), dtype=torch.int32, device=records.device)
+        given = segments is not None
+        if not given:
+            segments = torch.zeros((n, 0, 8), dtype=torch.float64, device=records.device)
+            segment_counts = torch.zeros(n, dtype=torch.int32, device=records.device)
+        segments = segments.to(torch.float64).contiguous()
+        segment_counts = segment_counts.reshape(-1).to(torch.int32)
+        meta = dict(TILES=tiles, BLOCK=block, RECORD_=RECORD, SEGMENTS=segments.shape[1])
+        args = (touch, segments, segment_counts, slots)
+        _bin_kernel[(n,)](records, counts, extents, sizes, sizes, *args, 0, WRITE=False, **meta)
+        width = max(1, int(sizes.max().item()))
+        lists = torch.zeros((n, tiles, width), dtype=torch.int32, device=records.device)
+        _bin_kernel[(n,)](records, counts, extents, lists, sizes, *args, width, WRITE=True, **meta)
+        return (lists, sizes, touch) if given else (lists, sizes)
+    kind = records[..., KIND]
+    live = (kind != 0) & (torch.arange(records.shape[1], device=records.device).view(1, -1) < counts.view(-1, 1))
+    bx0, by0, bx1, by1 = (records[..., k].unsqueeze(-1) for k in (BX0, BY0, BX1, BY1))
+    hit = (
+        live.unsqueeze(-1)
+        & (bx0 <= extents[:, 2])
+        & (bx1 >= extents[:, 0])
+        & (by0 <= extents[:, 3])
+        & (by1 >= extents[:, 1])
+    )
+    hit = hit.transpose(1, 2)  # [N, tiles, P]
+    position = torch.cumsum(hit, -1, dtype=torch.int32) - 1
+    sizes = position[..., -1] + 1
+    width = max(1, int(sizes.max().item()))
+    frame, tile_index, prim = torch.nonzero(hit, as_tuple=True)
+    lists = torch.zeros((*hit.shape[:2], width), dtype=torch.int32, device=records.device)
+    lists[frame, tile_index, position[frame, tile_index, prim]] = prim.to(torch.int32)
+    return lists, sizes.to(torch.int32).contiguous()
+
+
+def static_frames(records, counts, background, size, tile, segments, segment_counts):
+    """Frames of the background, goal and walls alone, shared by frames with equal ones.
+
+    Returns ``(index [N], frames [K, size, size, 3], boxes [N, 4])`` or None when frames rarely share them.
+    """
+    n = len(records)
+    static = (records[..., STATIC] != 0) & (records[..., KIND] != 0)
+    fixed = torch.where(static.unsqueeze(-1), records, 0)
+    goal = torch.cumprod(static.to(torch.int32), 1).bool()[:, :3]
+    keys = torch.cat(
+        [background.view(-1, 1).to(torch.int32), torch.where(goal.unsqueeze(-1), records[:, :3], 0).flatten(1)], 1
+    )
+    unique, inverse = torch.unique(keys, dim=0, return_inverse=True)
+    if len(unique) * 4 > n:
+        return None
+    first = torch.zeros(len(unique), dtype=torch.int64, device=records.device).scatter_(
+        0, inverse, torch.arange(n, device=records.device)
+    )
+    empty = torch.zeros(len(unique), dtype=torch.int32, device=records.device)
+    frames = launch_segments(fixed[first], counts[first], background[first], segments[first][:, :1], empty, size, tile)
+    big = 1 << 30
+    dyn = (records[..., KIND] != 0) & ~static
+    boxes = torch.stack(
+        [
+            torch.where(dyn, records[..., BX0], big).amin(1),
+            torch.where(dyn, records[..., BY0], big).amin(1),
+            torch.where(dyn, records[..., BX1], -big).amax(1),
+            torch.where(dyn, records[..., BY1], -big).amax(1),
+        ],
+        1,
+    )
+    used = torch.arange(segments.shape[1], device=records.device).view(1, -1) < segment_counts.view(-1, 1)
+    ends = torch.round(segments[..., :4]).to(torch.int64)
+    xs = torch.cat([ends[..., 0], ends[..., 2]], 1)
+    ys = torch.cat([ends[..., 1], ends[..., 3]], 1)
+    use2 = torch.cat([used, used], 1)
+    boxes[:, 0] = torch.minimum(boxes[:, 0], torch.where(use2, xs - 2, big).amin(1))
+    boxes[:, 1] = torch.minimum(boxes[:, 1], torch.where(use2, ys - 2, big).amin(1))
+    boxes[:, 2] = torch.maximum(boxes[:, 2], torch.where(use2, xs + 2, -big).amax(1))
+    boxes[:, 3] = torch.maximum(boxes[:, 3], torch.where(use2, ys + 2, -big).amax(1))
+    return inverse.to(torch.int32), frames, boxes.to(torch.int32)
+
+
+@cache
+def _device_tables(size, device):
+    s, a0, a1 = resize_coefficients(CANVAS, size)
+    # Agent discs reach a radius of 0.375 * 60; the table covers every Variation scale.
+    max_radius = 32
+    t = lambda a: torch.as_tensor(np.ascontiguousarray(a), dtype=torch.int32, device=device)  # noqa: E731
+    return dict(taps=t(s), w0=t(a0), w1=t(a1), table=t(circle_table(max_radius)), max_radius=max_radius)
 
 
 def draw_cuda(records, counts, background, writes, size, device, tile=32):
