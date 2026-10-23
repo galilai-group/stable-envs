@@ -57,24 +57,39 @@ class Tables:
             self._build()
         return ids[inverse]
 
+    def lookup(self, fields, count):
+        """``(ids, unknown)`` per row on the device, without a sync; ``learn`` adds the unknown rows."""
+        raw = torch.cat([fields[name].reshape(count, -1).contiguous().view(torch.uint8) for name in ANCHORS], 1)
+        if self.known is None or self.known[0].shape[1] != raw.shape[1]:
+            return torch.zeros(count, dtype=torch.int64, device=self.device), torch.ones(
+                count, dtype=torch.bool, device=self.device
+            )
+        rows, hashes, order, ids, weights = self.known
+        hash_ = (raw.to(torch.int64) * weights).sum(1)
+        at = torch.searchsorted(hashes, hash_).clamp(max=len(hashes) - 1)
+        match = order[at]
+        known = (hashes[at] == hash_) & (raw == rows[match]).all(1)
+        return ids[match], ~known
+
+    def learn(self, fields, count):
+        """Add the templates of host rows ``fields`` to the tables."""
+        raw_width = sum(np.ascontiguousarray(fields[name][:1]).nbytes for name in ANCHORS)
+        self.ids(fields, count)
+        if self.known is None:
+            self._index(raw_width)
+
     def device_ids(self, fields, count):
         """Template id per row as a device tensor; only rows with unseen anchors go through the host."""
-        raw = torch.cat([fields[name].reshape(count, -1).contiguous().view(torch.uint8) for name in ANCHORS], 1)
-        if self.known is not None and self.known[0].shape[1] == raw.shape[1]:
-            rows, hashes, order, ids, weights = self.known
-            hash_ = (raw.to(torch.int64) * weights).sum(1)
-            at = torch.searchsorted(hashes, hash_).clamp(max=len(hashes) - 1)
-            match = order[at]
-            if bool(((hashes[at] == hash_) & (raw == rows[match]).all(1)).all()):
-                return ids[match]
-        host = {name: fields[name].cpu().numpy() for name in ANCHORS}
-        out = torch.as_tensor(self.ids(host, count), device=self.device)
-        if self.known is None:
-            self._index(raw.shape[1])
-        return out
+        ids, unknown = self.lookup(fields, count)
+        if not bool(unknown.any()):
+            return ids
+        self.learn({name: fields[name].cpu().numpy() for name in ANCHORS}, count)
+        return self.lookup(fields, count)[0]
 
     def _index(self, width):
-        rows = torch.as_tensor(np.frombuffer(b"".join(self.rows), np.uint8).reshape(-1, width), device=self.device)
+        rows = torch.as_tensor(
+            np.frombuffer(b"".join(self.rows), np.uint8).reshape(-1, width).copy(), device=self.device
+        )
         ids = torch.as_tensor(np.fromiter(self.rows.values(), np.int64), device=self.device)
         # Byte weights below 2**40 keep every row sum inside int64.
         weights = torch.as_tensor(np.random.default_rng(0).integers(1, 1 << 40, width), device=self.device)
@@ -379,36 +394,109 @@ def render_keys():
     return names + list(ANCHORS)
 
 
+class StaticFrames:
+    """Frames of the background, goal and walls alone, kept on the device across calls per output size."""
+
+    #: Most frames kept per size; the cache starts again when it is full.
+    LIMIT = 512
+
+    def __init__(self, device):
+        self.device = device
+        self.entries = {}
+
+    @staticmethod
+    def keys(records, background, ids):
+        """Per row: template id, background and goal records (int64), which fix the static frame."""
+        static = (records[..., R.STATIC] != 0) & (records[..., R.KIND] != 0)
+        goal = torch.cumprod(static.to(torch.int32), 1).bool()[:, :3]
+        parts = [
+            ids.view(-1, 1),
+            background.view(-1, 1),
+            torch.where(goal.unsqueeze(-1), records[:, :3], 0).flatten(1),
+        ]
+        return torch.cat([part.to(torch.int64) for part in parts], 1)
+
+    def lookup(self, keys, size):
+        """``(index, frames, missing)``: index −1 marks rows without a cached frame; no sync."""
+        entry = self.entries.get(size)
+        if entry is None:
+            missing = torch.ones(len(keys), dtype=torch.bool, device=self.device)
+            return torch.full((len(keys),), -1, dtype=torch.int32, device=self.device), None, missing
+        rows, hashes, order, frames, weights = entry
+        hash_ = (keys * weights).sum(1)
+        at = torch.searchsorted(hashes, hash_).clamp(max=len(hashes) - 1)
+        index = order[at]
+        found = (hashes[at] == hash_) & (keys == rows[index]).all(1)
+        return torch.where(found, index, -1).to(torch.int32), frames, ~found
+
+    def add(self, keys, missing, records, counts, background, segments, size, tile):
+        """Draw the frames of the missing keys; skip when they are too many to share."""
+        lanes = torch.nonzero(missing).view(-1)
+        new, inverse = torch.unique(keys[lanes], dim=0, return_inverse=True)
+        if len(new) * 4 > max(len(keys), 16):
+            return
+        first = lanes[
+            torch.zeros(len(new), dtype=torch.int64, device=self.device).scatter_(
+                0, inverse, torch.arange(len(lanes), device=self.device)
+            )
+        ]
+        static = (records[first, :, R.STATIC] != 0) & (records[first, :, R.KIND] != 0)
+        fixed = torch.where(static.unsqueeze(-1), records[first], 0)
+        empty = torch.zeros(len(first), dtype=torch.int32, device=self.device)
+        frames = R.launch_segments(fixed, counts[first], background[first], segments[first][:, :1], empty, size, tile)
+        entry = self.entries.get(size)
+        if entry is not None and len(entry[0]) + len(new) <= self.LIMIT:
+            new, frames = torch.cat([entry[0], new]), torch.cat([entry[3], frames])
+        weights = torch.as_tensor(np.random.default_rng(1).integers(1, 1 << 40, new.shape[1]), device=self.device)
+        hashes, order = torch.sort((new * weights).sum(1))
+        self.entries[size] = (new, hashes, order, frames, weights)
+
+
 class DeviceRenderer:
-    """Render PushT State tensors on CUDA with primitives built on the device."""
+    """Render PushT State tensors on CUDA with Triton, with primitives built on the device.
+
+    A call reads one small flag tensor back to the host; templates, clipped lines, static frames and
+    host fallbacks that it reports take extra work only when they occur.
+    """
 
     def __init__(self, device):
         self.device = torch.device(device)
         self.tables = Tables(self.device)
         self.roots = Roots(self.device)
+        self.static = StaticFrames(self.device)
 
     @torch.no_grad()
     def __call__(self, fields, size, fallback, tile=16, warps=2):
         """``fields``: ``{name: tensor}`` on the device (see ``render_keys``); ``fallback(rows)`` draws host rows."""
         n = len(fields["recipe/config"])
-        ids = self.tables.device_ids(fields, n)
+        if self.tables.tensors is None:
+            self.tables.learn({name: fields[name].cpu().numpy() for name in ANCHORS}, n)
+        ids, unknown = self.tables.lookup(fields, n)
         max_radius = R._device_tables(size, self.device)["max_radius"]
-        if R.HAVE_TRITON:
-            records, counts, unsupported = fused_primitives(fields, self.tables, self.roots, ids, max_radius)
-        else:
-            records, counts, unsupported = primitives(fields, self.tables, self.roots, ids)
-            circles = records[..., R.KIND] == R.CIRCLE
-            unsupported |= (circles & (records[..., R.CR] > max_radius)).any(1)
         background = _pack(fields["owned/variation/background/color/current/value"])
         segments = fields["current/render_segments"].to(torch.float64)
         segment_counts = fields["current/render_segment_count"]
-        static = R.static_frames(records, counts, background, size, tile, segments, segment_counts)
-        bins = R.tile_bins(records, counts, size, tile, segments, segment_counts)
+        records, counts, unsupported, clipped = fused_primitives(fields, self.tables, self.roots, ids, max_radius)
+        keys = self.static.keys(records, background, ids)
+        index, frames, missing = self.static.lookup(keys, size)
+        flags = torch.stack([unknown.any(), clipped.any(), unsupported.any(), missing.any()]).cpu().tolist()
+        if flags[0]:
+            self.tables.learn({name: fields[name].cpu().numpy() for name in ANCHORS}, n)
+            return self(fields, size, fallback, tile, warps)
+        if flags[1]:
+            _clip(records, clipped)
+        if flags[3]:
+            self.static.add(keys, missing, records, counts, background, segments, size, tile)
+            index, frames, _ = self.static.lookup(keys, size)
+        static = (
+            None if frames is None else (index, frames, torch.zeros((n, 4), dtype=torch.int32, device=self.device))
+        )
+        bins = R.tile_bins(records, counts, size, tile, segments, segment_counts, width=records.shape[1])
         out = R.launch_segments(
             records, counts, background, segments, segment_counts, size, tile, None, static, bins, warps
         )
-        lanes = torch.nonzero(unsupported).view(-1)
-        if len(lanes):
+        if flags[2]:
+            lanes = torch.nonzero(unsupported).view(-1)
             host = {k: v[lanes].cpu().numpy() for k, v in fields.items()}
             out[lanes] = torch.as_tensor(fallback(host), device=self.device)
         return out
@@ -812,7 +900,10 @@ if R.HAVE_TRITON:
 
 
 def fused_primitives(fields, tables, roots, ids, max_radius):
-    """``primitives`` in one Triton kernel; also flags rows whose agent disc exceeds ``max_radius``."""
+    """``primitives`` in one Triton kernel; also flags rows whose agent disc exceeds ``max_radius``.
+
+    Returns ``(records, counts, fallback, clipped)``; the lines marked in ``clipped`` still need ``_clip``.
+    """
     T = tables.tensors
     device = tables.device
     n = len(ids)
@@ -836,5 +927,4 @@ def fused_primitives(fields, tables, roots, ids, max_radius):
         T["goal"], T["goal_slots"], T["polys"], T["fills"], T["edges"], T["circle"], T["radii"],
         T["supported"].to(torch.int8), roots.table, len(roots.table) - 1, records.shape[1], max_radius,
     )  # fmt: skip
-    _clip(records, clipped.bool())
-    return records, T["totals"][ids], fallback.bool()
+    return records, T["totals"][ids], fallback.bool(), clipped.bool()
