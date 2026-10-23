@@ -29,6 +29,7 @@ knob does and its default.
 | `STABLE_ENVS_FETCH_MJW_WORLDS` | int, power of two |
 | `STABLE_ENVS_OGB_MJW_WORLDS` | int, power of two |
 | `STABLE_ENVS_OGB_CONTEXT_CACHE_BYTES` | bytes |
+| `STABLE_ENVS_OGB_GL_WORKERS` | int (0 or more) |
 | `STABLE_ENVS_NVD_BUDGET_BYTES` | bytes |
 | `STABLE_ENVS_NAV_RENDER_CHUNK` | int |
 | `STABLE_ENVS_NAVDOT_BLOCK` | int, power of two |
