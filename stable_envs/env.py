@@ -859,7 +859,10 @@ class Env:
         self._variation_is_default = False
 
     def describe(self) -> dict[str, Any]:
-        """Return environment specs and the declared comparison with the source."""
+        """Return environment specs and the declared comparison with the source.
+
+        ``state_fields`` maps each State leaf, as a ``/``-joined key path, to its per-lane shape and dtype.
+        """
         d = {
             "class_name": type(self).__name__,
             "id": self.id,
@@ -867,6 +870,10 @@ class Env:
             "domain": self.domain,
             "render_state_dim": int(self.render_state_dim),
             "render_state_names": list(self.render_state_names),
+            "state_fields": {
+                "/".join(key): {"shape": list(spec.shape), "dtype": str(spec.dtype).removeprefix("torch.")}
+                for key, spec in self.state_spec.items(nested=True)
+            },
             "size": self.size,
             "variation_dim": int(self.variation_dim),
             "variation_names": list(self.variation_names),
