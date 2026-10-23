@@ -27,6 +27,8 @@ def _host() -> dict:
         "affinity": sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
         "torch": torch.__version__,
         "python": sys.version.split()[0],
+        "main_sha": os.environ.get("SE_MAIN_SHA"),
+        "gl": os.environ.get("MUJOCO_GL"),
     }
     try:
         out["commit"] = subprocess.run(
