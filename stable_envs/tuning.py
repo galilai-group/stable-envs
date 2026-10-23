@@ -138,6 +138,7 @@ KNOBS: dict[str, Knob] = {
         Knob("dmc_min_worlds", 64, ("dmc-trackcom",), "cuda", "pow2", "rows", "Fewest worlds per MJWarp launch of DMC TrackCom cells."),
         Knob("fetch_mjw_worlds", 256, ("fetch-mjwarp",), "cuda", "pow2", "rows", "Most worlds per MJWarp launch of Fetch cells."),
         Knob("ogb_mjw_worlds", 256, ("ogb-manipulation",), "cuda", "pow2", "rows", "Most worlds per MJWarp launch of OGBench Cube and Scene.", per_path=False),
+        Knob("ogb_gl_workers", 8, ("ogb-manipulation",), "any", "n0", None, "Most OpenGL worker processes of an OGBench Cube and Scene batch on Linux; 0 draws in-process.", per_path=False),
         Knob("ogb_context_cache_bytes", None, ("ogb-manipulation",), "cuda", "n", None, "GPU bytes the OGBench context cache keeps per device."),
         Knob("nvd_budget_bytes", 6 << 30, ("rocket-nvdiff",), "cuda", "n", "bytes", "GPU bytes per nvdiffrast chunk of Rocket cells.", _nvd_bytes),
         Knob("nav_render_chunk", 256, ("navigation",), "any", "n", "rows", "Frames per render chunk of navigation cells."),

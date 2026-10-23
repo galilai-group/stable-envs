@@ -191,6 +191,26 @@ class OGBManipulationAdapter(SimulatorAdapter):
         self._check_open()
         return owned_columns((self._values(env) for env in self.envs), self.num_envs, self.device)
 
+    def render_columns(self):
+        """The State leaves a RenderState projects, as ``get_state`` holds them, as stacked NumPy columns."""
+        self._check_open()
+        rows = [self._render_values(env) for env in self.envs]
+        return {key: np.stack([row[key] for row in rows]) for key in rows[0]}
+
+    def _render_values(self, env):
+        # The same values mj_getState copies for these flags.
+        values = {
+            ("physics", name): getattr(env.data, name).ravel().copy() for name in ("qpos", "mocap_pos", "mocap_quat")
+        }
+        for key in MODEL_VALUES:
+            values["model", "compiled", key] = env._model_values[key].copy()
+        names = ("cube.color", "lock_color") if self.family == "Scene" else ("cube.color",)
+        for name in names:
+            values["variation", "current", name] = np.asarray(env.variation_space._walk(name).value, np.float64).copy()
+        if self.family == "Scene":
+            values["scene", "cur_button_states"] = np.asarray(env._cur_button_states, np.int64).copy()
+        return values
+
     def validate(self, state, *, _batch_size=None):
         batch = self.num_envs if _batch_size is None else _batch_size
         if not isinstance(state, TensorDict) or state.batch_size != torch.Size([batch]):

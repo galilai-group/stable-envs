@@ -1179,9 +1179,9 @@
     },
     "OGBCube": {
       "file": "OGBCube.npz",
-      "sha256": "471d388b87dc2eb03ed9fa3d298719bc5c79ad6ab4084b499406ee17b1a1a6ea",
+      "sha256": "6aa9440923028cd567b97da69abbfeabe0865fcde1b4a7be96977e5cad0616d9",
       "size": 224,
-      "bytes": 122092,
+      "bytes": 121533,
       "profile": {
         "device": "cuda",
         "versions": {
@@ -1202,9 +1202,9 @@
     },
     "OGBScene": {
       "file": "OGBScene.npz",
-      "sha256": "4638a7694fe16d1862fd6154637ea5f2c66eac720e4b8845c6b1c833a3ef5e93",
+      "sha256": "adb5cc399c441d49dd15827de099521f3db62416bf0eb1e667090a438f1c43af",
       "size": 200,
-      "bytes": 197775,
+      "bytes": 187087,
       "profile": {
         "device": "cuda",
         "versions": {

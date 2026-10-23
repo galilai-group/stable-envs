@@ -19,10 +19,13 @@ can affect physics, reset, task or appearance.
 
 - On CPU, `backend="auto"` selects software OpenGL. Configure Mesa software OpenGL before importing
   MuJoCo. CPU rendering rejects a hardware GL context.
-- On CUDA, `backend="auto"` selects the two-pass MJWarp renderer with 2× sampling. Scene aligns its
-  four samples with NVIDIA OpenGL, including its cached static background.
-- An explicit `supersample` argument keeps its value. The sampling setting stored in a supplied
-  RenderState also keeps its value. To render a 1× RenderState with the default sampling, pass `supersample=2`.
+- On CUDA, `backend="auto"` selects NVIDIA OpenGL, the source's renderer, at 1× sampling. The
+  frames are the source's frames. With `supersample=2` or more, `backend="auto"` selects the two-pass
+  MJWarp renderer, as `backend="mjwarp_fidelity"` does.
+- The default `supersample` is 1 on every device. An explicit `supersample` argument keeps its value.
+  The sampling setting stored in a supplied RenderState also keeps its value.
+- On Linux, a batch of 2 or more states draws in up to `ogb_gl_workers` OpenGL worker processes
+  (see [Performance tuning](../performance-tuning.md)). The frames do not change.
 - An explicit `backend="mjwarp"` requires CUDA.
 - Physics runs on CPU with every backend.
 

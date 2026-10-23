@@ -65,6 +65,7 @@ names one.
 | `dmc_min_worlds` | 64 | none | not recorded | Fewest worlds per MJWarp launch of the DMC TrackCom cells. |
 | `fetch_mjw_worlds` | 256 | none | not recorded | Most worlds per MJWarp launch of the Fetch cells. |
 | `ogb_mjw_worlds` | 256 | none | not recorded | Most worlds per MJWarp launch of the OGBench Cube and Scene cells. |
+| `ogb_gl_workers` | 8 | min(value, CPUs in the process affinity, rows) | not recorded | Most OpenGL worker processes of an OGBench Cube and Scene batch on Linux. A batch that uses fewer than 2 workers draws in the main process. The value 0 draws every batch in the main process. |
 | `ogb_context_cache_bytes` | none | min(total GPU memory / 4, free GPU memory / 2), per device | not recorded | GPU bytes the OGBench MJWarp context cache keeps. |
 | `nvd_budget_bytes` | 6 GiB | min(6 GiB, free GPU memory / 2) | not recorded | GPU bytes one nvdiffrast chunk of the Rocket cells may use. |
 | `nav_render_chunk` | 256 | none | not recorded | Frames per render chunk of the navigation cells. |

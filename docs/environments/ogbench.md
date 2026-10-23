@@ -142,9 +142,16 @@ ray caster `raycast3d`. It draws the maze, the body and the floor from the State
 
 ## Manipulation
 
-Cube and Scene need `mujoco==3.12.0` and the `ogbench-manipulation` extra. On CPU, MuJoCo OpenGL draws
-the frames. On CUDA, MJWarp draws them. MJWarp frames can differ from MuJoCo in lighting and
-transparency. Physics runs on CPU with both renderers.
+Cube and Scene need `mujoco==3.12.0` and the `ogbench-manipulation` extra. MuJoCo OpenGL draws
+the frames on CPU (software OpenGL) and on CUDA (NVIDIA OpenGL). Physics runs on CPU with both renderers.
+
+- CPU frames are bit-exact. A draw of the same state gives the same frame each time.
+- CUDA frames are the source's frames, up to a variation in the NVIDIA OpenGL driver. The driver can
+  change a pixel by 1/255 between two draws of the same state. The source shows the same variation.
+  In one pass over 256 Scene states, 0 to 5 frames change, with at most 32 changed pixels in each frame.
+  Cube frames change less often.
+- With `supersample` 2 or more, MJWarp draws the CUDA frames. MJWarp frames can differ from MuJoCo in
+  lighting and transparency.
 
 ### OGBCube
 
