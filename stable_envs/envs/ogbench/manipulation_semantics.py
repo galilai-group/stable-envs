@@ -11,6 +11,24 @@ from ...env import Env, _split_appearance
 from ...specs import CompositeSpec, Spec
 
 
+class _OwnStates:
+    """The simulator's step pipeline; each State it returns is recorded as the env's own."""
+
+    def __init__(self, env, pipeline):
+        self._env, self._pipeline = env, pipeline
+
+    def submit_step(self, actions, *, active=None, capture_state=True):
+        self._pipeline.submit_step(actions, active=active, capture_state=capture_state)
+
+    def receive_step(self):
+        result = self._pipeline.receive_step()
+        self._env._own_state = result.get("state", None)
+        return result
+
+    def abort_step(self):
+        self._pipeline.abort_step()
+
+
 class ManipulationSemantics:
     requires_cuda = False
     execution_mode = "DELEGATED_CPU"
@@ -23,6 +41,7 @@ class ManipulationSemantics:
     )
     _render_style = None
     _rows_installed = False
+    _own_state = None
 
     def __init__(
         self, num_envs=1, size=None, supersample=None, device="cpu", backend="auto", seed=0, *, reward_task_id=None
@@ -111,7 +130,8 @@ class ManipulationSemantics:
 
     def get_state(self):
         self._check_open("get_state")
-        return self._simulator.get_state()
+        state = self._own_state = self._simulator.get_state()
+        return state
 
     def set_state(self, state):
         self._check_open("set_state")
@@ -121,7 +141,9 @@ class ManipulationSemantics:
     def _step(self, actions, *, active=None):
         self._check_open("step")
         self._rows_installed = False
-        return self._simulator.step(actions, active=active)
+        result = self._simulator.step(actions, active=active)
+        self._own_state = result.get("state", None)
+        return result
 
     def _advance_without_snapshot(self, actions, *, active=None):
         self._check_open("step")
@@ -129,7 +151,8 @@ class ManipulationSemantics:
         return self._simulator.step(actions, active=active, capture_state=False)
 
     def _step_pipeline(self) -> StepPipeline | None:
-        return step_pipeline(self._simulator)
+        pipeline = step_pipeline(self._simulator)
+        return None if pipeline is None else _OwnStates(self, pipeline)
 
     def set_variation(self, variation=None, **overrides):
         self._check_open("set_variation")
@@ -191,7 +214,8 @@ class ManipulationSemantics:
         supersample = self.ss if supersample is None else supersample
         if trusted:
             state = self.get_state()
-        else:
+        elif state is not self.__dict__.get("_own_state"):
+            # A State this env's simulator returned needs only the RenderState checks below.
             self._simulator.validate(state)
         if host:
             state = state.select(*pixels.projected_keys(self.CELL)).cpu()
