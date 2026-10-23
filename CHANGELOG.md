@@ -48,6 +48,9 @@ All notable changes to this project are listed here. The format follows
 - PushT worker processes draw step frames and copy only the State leaves that a step changes. The parent
   keeps the other leaves and copies them for the next State while the workers step. Process adapters
   declare this with `process_static_leaves`, `process_step_state`, `render_live` and `frame_shape`.
+- `PushT.render` on CUDA is faster. On an RTX A6000 with 224 px frames, `render(state)` draws 463 frames/s
+  at batch 1, 29,500 at batch 64 and 473,000 at batch 4096. The pygame worker pool draws about 3,000
+  frames/s on 8 processes. Frames do not change.
 - With `device="cuda"` and Triton, `PushT` and `PushTDiscrete` draw `render` and step frames on the GPU.
   A Triton kernel builds the shape records from the State tensors, and a second kernel draws them and
   resizes the canvas. The frames are byte-identical to the pygame frames. Frames with action markers,
