@@ -85,10 +85,16 @@ class PushT(Env):
     action_dtype = torch.float32
     action_low, action_high = -1.0, 1.0
     discrete = False
-    #: As in the source: every reset draws the start poses, the goal is drawn with the block's shape and
-    #: scale, and the default round agent shows no angle.
+    #: As in the source: every reset draws the start poses, and the goal is drawn with the block's shape
+    #: and scale.
     undrawn_variation_leaves = frozenset(
-        {"agent.start_position", "block.start_position", "block.angle", "goal.scale", "agent.angle"}
+        {
+            "agent.start_position",
+            "block.start_position",
+            "block.angle",
+            "goal.scale",
+            "agent.angle",  # undrawn only because the default agent is round; other agent shapes show it
+        }
     )
 
     def __init__(
