@@ -39,13 +39,13 @@ def _to_host(tensors):
 
 
 def _lookup(nodes, key):
-    """``state.get(key, None)`` through a cache ``nodes`` of the nested TensorDicts already reached."""
+    """``state.get(key, None)`` through ``nodes``: the children of each nested TensorDict already reached."""
     parent = key[:-1]
     if parent not in nodes:
         node = _lookup(nodes, parent)
-        nodes[parent] = node if isinstance(node, TensorDictBase) else None
-    node = nodes[parent]
-    return None if node is None else node.get(key[-1], None)
+        nodes[parent] = dict(node.items()) if isinstance(node, TensorDictBase) else None
+    children = nodes[parent]
+    return None if children is None else children.get(key[-1])
 
 
 def _to_device(fields, device):
@@ -287,13 +287,14 @@ class PushT(Env):
         state = self.get_state() if state is None else state
         if not isinstance(state, TensorDict) or len(state.batch_size) != 1 or not state.batch_size[0]:
             raise ValueError("PushT render requires a nonempty State batch")
-        selected, error, nodes = {}, None, {(): state}
+        selected, error, nodes = {}, None, {(): dict(state.items())}
+        batch = tuple(state.batch_size)
         for key, shape, dtype in self._render_fields:
             value = _lookup(nodes, key)
             if not isinstance(value, torch.Tensor):
                 error = KeyError(key)
                 break
-            if value.shape != (*state.batch_size, *shape) or value.dtype != dtype:
+            if value.shape != (*batch, *shape) or value.dtype != dtype:
                 error = ValueError(f"Invalid PushT render field: {key}")
                 break
             selected[key] = value
