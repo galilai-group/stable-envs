@@ -27,6 +27,7 @@ _SCRATCH: dict = {}
 # The appearance last written into each private renderer model.
 _APPLIED: dict = {}
 _BUTTONS: dict = {}
+_KINEMATICS: dict = {}
 _PINNED_ROWS = 8
 
 
@@ -338,7 +339,13 @@ def draw(family, host, device_type, images):
                 )
             if device_type == "cuda" and (software or "nvidia" not in vendor.lower()):
                 raise RuntimeError(f"CUDA rendering requires NVIDIA OpenGL, found {vendor}: {gl_device}")
-            render_kinematics = family == "Scene" and _can_use_render_kinematics(env, renderer)
+            if family == "Scene":
+                # The private model and renderer options do not change, so the guard runs once per renderer.
+                render_kinematics = _KINEMATICS.get(id(env))
+                if render_kinematics is None:
+                    render_kinematics = _KINEMATICS[id(env)] = _can_use_render_kinematics(env, renderer)
+            else:
+                render_kinematics = False
             # One frame reads back faster through MuJoCo's own readback than through PyOpenGL calls.
             tiles = (
                 _Tiles(renderer, images, ss, len(indices))
