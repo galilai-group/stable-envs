@@ -37,7 +37,7 @@ def draw(token, bundle, state, device, size, supersample, worlds):
     """
     import mujoco
 
-    from .manipulation_renderer import _ConfiguredRenderer
+    from .manipulation_renderer import configured_renderer
 
     res = size * supersample
     alpha = core.MW.effective_alpha(bundle.model)
@@ -61,16 +61,13 @@ def draw(token, bundle, state, device, size, supersample, worlds):
         core.register_bundle(glass, single)
 
     def raster(key, rows, worlds, *, composite=False, res=res):
-        renderer = _ConfiguredRenderer(key, core.get_bundle(key), device, res, 1)
-        try:
-            if not composite:
-                return renderer.raster(rows, worlds)
-            image = renderer.draw(rows, worlds)
-            nw = 1 if len(rows) == 1 else 1 << (len(rows) - 1).bit_length()
-            context = core._context(key, res, nw)
-            return image, context.bgra[: len(rows)][..., [2, 1, 0]], context.seg[: len(rows)]
-        finally:
-            renderer.close()
+        renderer = configured_renderer(key, device, res, 1)
+        if not composite:
+            return renderer.raster(rows, worlds)
+        image = renderer.draw(rows, worlds)
+        nw = 1 if len(rows) == 1 else 1 << (len(rows) - 1).bit_length()
+        context = core._context(key, res, nw)
+        return image, context.bgra[: len(rows)][..., [2, 1, 0]], context.seg[: len(rows)]
 
     # The static pass hides every mover, so its image depends only on the camera and light.
     references = {}

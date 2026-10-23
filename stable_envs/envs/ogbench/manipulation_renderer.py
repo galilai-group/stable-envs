@@ -219,12 +219,38 @@ class _ConfiguredRenderer(core.OGBManipBase):
         )
 
 
-def render(family, state, device, backend="auto", chunk_size=None):
-    if backend == "opengl" or (backend == "auto" and torch.device(device).type == "cpu"):
+_RENDERERS = core._RES.BoundedCache(32, name="ogbench.renderer", on_evict=lambda renderer: renderer.close())
+
+
+def configured_renderer(key, device, size, supersample):
+    """Return the cached renderer of a registered bundle; callers hold ``_LOCK``."""
+    bundle = core.get_bundle(key)
+    cache_key = (key, str(device), int(size), int(supersample))
+    renderer = _RENDERERS.get(cache_key)
+    if renderer is None or renderer._b is not bundle:
+        renderer = _RENDERERS.put(cache_key, _ConfiguredRenderer(key, bundle, device, size, supersample))
+    return renderer
+
+
+def draws_on_host(backend, device, supersample):
+    """Whether ``backend`` draws through MuJoCo OpenGL from host inputs; ``supersample`` does not select it yet."""
+    del supersample
+    return backend == "opengl" or (backend == "auto" and torch.device(device).type == "cpu")
+
+
+def _supersample(state):
+    try:
+        return int(state["renderer", "supersample"].reshape(-1)[0])
+    except Exception:  # noqa: BLE001 - validation reports the malformed State
+        return None
+
+
+def render(family, state, device, backend="auto", chunk_size=None, validated=False):
+    if draws_on_host(backend, device, _supersample(state)):
         from . import manipulation_opengl
 
         log("DEBUG", f"Renderer backend 'auto' chose opengl on {device}.")
-        return manipulation_opengl.render(family, state, device, chunk_size)
+        return manipulation_opengl.render(family, state, device, chunk_size, validated)
     if backend == "auto":
         backend = "mjwarp_fidelity"
         log("DEBUG", f"Renderer backend 'auto' chose {backend} on {device}.")
@@ -268,11 +294,8 @@ def render(family, state, device, backend="auto", chunk_size=None):
                         token, bundle, state[selected], device, size, ss, worlds[selected]
                     )
                 return result
-            renderer = _ConfiguredRenderer(token, bundle, device, size, ss)
-            try:
-                for start in range(0, len(state), limit):
-                    selected = slice(start, start + limit)
-                    result[selected] = renderer.draw(state[selected], worlds[selected])
-            finally:
-                renderer.close()
+            renderer = configured_renderer(token, device, size, ss)
+            for start in range(0, len(state), limit):
+                selected = slice(start, start + limit)
+                result[selected] = renderer.draw(state[selected], worlds[selected])
     return result

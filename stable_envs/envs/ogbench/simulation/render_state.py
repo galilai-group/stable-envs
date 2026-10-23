@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import hashlib
 
 import numpy as np
@@ -89,7 +90,35 @@ def header(family, b, size, supersample, device):
     }
 
 
-def project(family, state, size, supersample):
+def projected_keys(family):
+    """The State leaves ``project`` reads."""
+    keys = [("physics", name) for name in ("qpos", "mocap_pos", "mocap_quat")]
+    keys += [("model", "compiled", name) for name in (*STATIC, "agent.color", "floor.color")]
+    keys.append(("variation", "current", "cube.color"))
+    if family == "Scene":
+        keys += [("variation", "current", "lock_color"), ("scene", "cur_button_states")]
+    return keys
+
+
+def state_columns(family, columns, size, supersample):
+    """NumPy RenderState columns from trusted stacked State leaves, as ``project`` would fill them."""
+    b = len(columns["physics", "qpos"])
+    values = {
+        ("renderer", "size"): np.full((b, 1), size, np.int64),
+        ("renderer", "supersample"): np.full((b, 1), supersample, np.int64),
+    }
+    for name in ("qpos", "mocap_pos", "mocap_quat"):
+        values["pose", name] = columns["physics", name]
+    for name in (*STATIC, "agent.color", "floor.color"):
+        values["appearance", name] = columns["model", "compiled", name]
+    values["appearance", "cube.color"] = columns["variation", "current", "cube.color"]
+    if family == "Scene":
+        values["appearance", "lock_color"] = columns["variation", "current", "lock_color"]
+        values["pose", "buttons"] = columns["scene", "cur_button_states"]
+    return values
+
+
+def project(family, state, size, supersample, check=True):
     b = len(state)
     device = state.device or state["physics", "qpos"].device
     values = header(family, b, size, supersample, device)
@@ -102,7 +131,8 @@ def project(family, state, size, supersample):
         values["appearance", "lock_color"] = state["variation", "current", "lock_color"].clone()
         values["pose", "buttons"] = state["scene", "cur_button_states"].clone()
     result = TensorDict(values, [b], device=device)
-    validate(family, result)
+    if check:
+        validate(family, result)
     return result
 
 
@@ -113,6 +143,8 @@ def validate(family, state):
     expected = set(schema) | {key[0] for key in schema}
     if set(state.keys(True, False)) != expected:
         raise ValueError("RenderState has missing or extra fields")
+    if state.device is not None and state.device.type == "cpu":
+        return _validate_host(family, state, schema)
     for key, (shape, dtype) in schema.items():
         value = state[key]
         if value.shape != (len(state), *shape) or value.dtype != dtype or not torch.isfinite(value).all():
@@ -154,6 +186,58 @@ def validate(family, state):
     if torch.any((sz < min(0.01, float(np.float32(0.01)))) | (sz > 0.03)):
         raise ValueError("RenderState cube-size range")
     if family == "Scene" and torch.any((state["pose", "buttons"] < 0) | (state["pose", "buttons"] > 1)):
+        raise ValueError("RenderState button bits")
+    return state
+
+
+@functools.lru_cache
+def _signature(family):
+    return signature(family)
+
+
+def _validate_host(family, state, schema):
+    """The checks of ``validate`` on NumPy views of a CPU RenderState."""
+    n = len(state)
+    leaves = dict(state.items(True, True))
+    values = {}
+    for key, (shape, dtype) in schema.items():
+        value = leaves[key]
+        if value.shape != (n, *shape) or value.dtype != dtype:
+            raise ValueError(f"Invalid RenderState dtype/shape/value: {key}")
+        array = values[key] = value.detach().numpy()
+        if array.dtype.kind == "f" and not np.isfinite(array).all():
+            raise ValueError(f"Invalid RenderState dtype/shape/value: {key}")
+    if not np.all(values["renderer", "signature"] == _signature(family)):
+        raise ValueError("Incompatible renderer family/asset/schema profile")
+    for name, maximum in [("size", 4096), ("supersample", 4)]:
+        value = values["renderer", name]
+        if np.any((value < 1) | (value > maximum)) or not np.all(value == value[0]):
+            raise ValueError("RenderState requires one valid square resolution/supersampling per batch")
+    if np.any(values["renderer", "camera"] != 0):
+        raise ValueError("Only registered front_pixels camera is supported")
+    if not np.all(values["appearance", "target_alpha"] == np.float32(TARGET_ALPHA)):
+        raise ValueError("Only registered visible target alpha 0.2 is supported")
+    qadr = OBJECT_QPOS_ADR
+    for q in (values["pose", "qpos"][:, qadr + 3 : qadr + 7], values["pose", "mocap_quat"]):
+        if not np.all(np.abs(np.sqrt(np.sum(q * q, axis=-1)) - 1.0) <= 1e-6):
+            raise ValueError("RenderState quaternion must be unit length")
+    for name in (
+        "cube.color",
+        "agent.color",
+        "floor.color",
+        "light.intensity",
+        *(("lock_color",) if family == "Scene" else ()),
+    ):
+        v = values["appearance", name]
+        if np.any((v < 0) | (v > 1)):
+            raise ValueError("RenderState color/intensity range")
+    angle = values["appearance", "camera.angle_delta"]
+    if np.any(np.abs(angle) > (10 if family == "Cube" else 5)):
+        raise ValueError("RenderState camera-angle range")
+    sz = values["appearance", "cube.size"]
+    if np.any((sz < min(0.01, float(np.float32(0.01)))) | (sz > 0.03)):
+        raise ValueError("RenderState cube-size range")
+    if family == "Scene" and np.any((values["pose", "buttons"] < 0) | (values["pose", "buttons"] > 1)):
         raise ValueError("RenderState button bits")
     return state
 

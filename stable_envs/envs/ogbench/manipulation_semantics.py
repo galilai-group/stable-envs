@@ -179,24 +179,45 @@ class ManipulationSemantics:
         return TensorDict(values, batch_size=[len(rows)], device=self.device)
 
     def to_render_state(self, state=None, *, size=None, supersample=None):
+        return self._project(state, size, supersample)
+
+    def _project(self, state, size, supersample, host=False):
         from .simulation import render_state as pixels
 
         self._check_open("to_render_state")
-        state = self.get_state() if state is None else state
-        self._simulator.validate(state)
-        return pixels.project(
-            self.CELL, state, self.size if size is None else size, self.ss if supersample is None else supersample
-        )
+        # The live State comes from this env's own simulator, so only a supplied State is checked.
+        trusted = state is None
+        size = self.size if size is None else size
+        supersample = self.ss if supersample is None else supersample
+        if trusted:
+            state = self.get_state()
+        else:
+            self._simulator.validate(state)
+        if host:
+            state = state.select(*pixels.projected_keys(self.CELL)).cpu()
+        return pixels.project(self.CELL, state, size, supersample, check=not trusted)
 
     def render(self, state=None, *, size=None, supersample=None, backend=None, chunk_size=None, out=None):
+        return self._render_frames(
+            state, False, size=size, supersample=supersample, backend=backend, chunk_size=chunk_size, out=out
+        )
+
+    def _render_frames(self, state, checked, *, size=None, supersample=None, backend=None, chunk_size=None, out=None):
         from . import manipulation_renderer
         from .simulation import render_state as pixels
 
         self._check_open("render")
         if any(value is not None and type(value) is not int for value in (size, supersample)):
             raise ValueError("Render size and supersample must be integers")
-        if state is None or isinstance(state, TensorDict) and "physics" in state.keys():
-            state = self.to_render_state(state, size=size, supersample=supersample)
+        # A projected State is validated once, by ``project``.
+        validated = checked or state is None or isinstance(state, TensorDict) and "physics" in state.keys()
+        if validated and not checked:
+            sampling = self.ss if supersample is None else supersample
+            host = manipulation_renderer.draws_on_host(backend or self.backend, self.device, sampling)
+            if state is None and host and hasattr(self._simulator, "render_columns"):
+                return self._draw_live(size, sampling, chunk_size, out)
+            # OpenGL reads host inputs, so only the projected leaves leave the device.
+            state = self._project(state, size, supersample, host)
         elif size is not None or supersample is not None:
             pixels.validate(self.CELL, state)
             state = state.clone()
@@ -206,19 +227,40 @@ class ManipulationSemantics:
                 state["renderer", "supersample"].fill_(supersample)
         tuning.on_render("ogb-manipulation", int(state["renderer", "size"][0, 0]), len(state), self)
         result = manipulation_renderer.render(
-            self.CELL, state, self.device, self.backend if backend is None else backend, chunk_size
+            self.CELL, state, self.device, self.backend if backend is None else backend, chunk_size, validated
         )
-        if out is not None:
-            if (
-                out.shape != result.shape
-                or out.dtype != result.dtype
-                or out.device != result.device
-                or not out.is_contiguous()
-            ):
-                raise ValueError("out must match the contiguous uint8 frame batch on the renderer device")
-            out.copy_(result)
-            return out
-        return result
+        return self._into(result, out)
+
+    def _render_live(self):
+        """The stepping hook: frames of the live lanes."""
+        return self.render()
+
+    def _draw_live(self, size, supersample, chunk_size, out):
+        """Draw the live lanes from simulator columns straight into OpenGL, without a RenderState TensorDict."""
+        from . import manipulation_opengl
+        from .simulation import render_state as pixels
+
+        if chunk_size is not None and (type(chunk_size) is not int or chunk_size < 1):
+            raise ValueError("chunk_size must be a positive integer")
+        size = self.size if size is None else size
+        if not (1 <= size <= 4096 and 1 <= supersample <= 4):
+            raise ValueError("RenderState requires one valid square resolution/supersampling per batch")
+        columns = pixels.state_columns(self.CELL, self._simulator.render_columns(), size, supersample)
+        tuning.on_render("ogb-manipulation", size, self.B, self)
+        return self._into(manipulation_opengl.frames(self.CELL, columns, self.device), out)
+
+    def _into(self, result, out):
+        if out is None:
+            return result
+        if (
+            out.shape != result.shape
+            or out.dtype != result.dtype
+            or out.device != result.device
+            or not out.is_contiguous()
+        ):
+            raise ValueError("out must match the contiguous uint8 frame batch on the renderer device")
+        out.copy_(result)
+        return out
 
     def _set_render_state(self, states, variation=None, style=None):
         Env._set_render_state(self, states)
@@ -228,26 +270,12 @@ class ManipulationSemantics:
         self._rows_installed = True
         return self
 
-    def _rows_to_render_state(self, rows, style, size, supersample):
+    def _appearance(self, style, b, size, supersample, device):
+        """Renderer header and appearance columns of a RenderState batch drawn with ``style``."""
         from .simulation import render_state as pixels
 
-        family = self.CELL
-        b, nq = len(rows), self._nq
-        rows = rows.to(torch.float64)
-        values = pixels.header(family, b, size, supersample, self.device)
-        qpos = rows[:, :nq].clone()
-        # MuJoCo normalises free-joint quaternions (identity below its minimum norm) before drawing.
-        quat = qpos[:, pixels.OBJECT_QPOS_ADR + 3 : pixels.OBJECT_QPOS_ADR + 7]
-        norm = torch.linalg.vector_norm(quat, dim=-1, keepdim=True)
-        identity = torch.tensor([1.0, 0.0, 0.0, 0.0], dtype=torch.float64, device=self.device)
-        quat.copy_(torch.where(norm < 1e-15, identity, quat / norm.clamp_min(1e-15)))
-        values["pose", "qpos"] = qpos
-        values["pose", "mocap_pos"] = rows[:, nq : nq + 3].clone()
-        values["pose", "mocap_quat"] = torch.tensor([1.0, 0.0, 0.0, 0.0], dtype=torch.float64, device=self.device)
-        values["pose", "mocap_quat"] = values["pose", "mocap_quat"].expand(b, 4).clone()
-        if family == "Scene":
-            values["pose", "buttons"] = rows[:, nq + 3 :].round().clamp(0, 1).to(torch.int64)
-        schema = pixels.fields(family)
+        values = pixels.header(self.CELL, b, size, supersample, device)
+        schema = pixels.fields(self.CELL)
         host = style.values.detach().cpu().numpy()
         for name, (off, width) in style.layout.items():
             key = ("appearance", name)
@@ -255,8 +283,43 @@ class ManipulationSemantics:
                 # Shortest float32 decimals recover the float64 values the State path compiles,
                 # so both paths share one compiled model.
                 exact = np.array([float(str(v)) for v in host[:, off : off + width].ravel()], np.float64)
-                values[key] = torch.as_tensor(exact, device=self.device).reshape(b, *schema[key][0])
-        return TensorDict(values, [b], device=self.device)
+                values[key] = torch.as_tensor(exact, device=device).reshape(b, *schema[key][0])
+        return values
+
+    def _rows_to_render_state(self, rows, style, size, supersample, device=None, appearance=None):
+        from .simulation import render_state as pixels
+
+        family = self.CELL
+        device = self.device if device is None else torch.device(device)
+        b, nq = len(rows), self._nq
+        rows = rows.to(torch.float64)
+        values = dict(self._appearance(style, b, size, supersample, device) if appearance is None else appearance)
+        qpos = rows[:, :nq].clone()
+        # MuJoCo normalises free-joint quaternions (identity below its minimum norm) before drawing.
+        quat = qpos[:, pixels.OBJECT_QPOS_ADR + 3 : pixels.OBJECT_QPOS_ADR + 7]
+        norm = torch.linalg.vector_norm(quat, dim=-1, keepdim=True)
+        identity = torch.tensor([1.0, 0.0, 0.0, 0.0], dtype=torch.float64, device=rows.device)
+        quat.copy_(torch.where(norm < 1e-15, identity, quat / norm.clamp_min(1e-15)))
+        # Rounding happens on the rows' device, so a host State holds the same bits.
+        rows = torch.cat([qpos, rows[:, nq:]], dim=1).to(device)
+        values["pose", "qpos"] = rows[:, :nq]
+        values["pose", "mocap_pos"] = rows[:, nq : nq + 3]
+        values["pose", "mocap_quat"] = torch.tensor([1.0, 0.0, 0.0, 0.0], dtype=torch.float64, device=device)
+        values["pose", "mocap_quat"] = values["pose", "mocap_quat"].expand(b, 4).clone()
+        if family == "Scene":
+            values["pose", "buttons"] = rows[:, nq + 3 :].round().clamp(0, 1).to(torch.int64)
+        return TensorDict(values, [b], device=device)
+
+    def _stored_appearance(self, b, size, supersample, device):
+        """Appearance columns of the stored style, cached until that style changes."""
+        base = self._style if self._render_style is None else self._render_style
+        key = (b, size, supersample, str(device))
+        hit = self.__dict__.get("_appearance_cache")
+        if hit is not None and hit[0] is base and hit[1] == base.values._version and hit[2] == key:
+            return hit[3]
+        appearance = self._appearance(self.resolve_style(batch=b), b, size, supersample, device)
+        self.__dict__["_appearance_cache"] = (base, base.values._version, key, appearance)
+        return appearance
 
     @torch.no_grad()
     def _render(self, states=None, size=None, supersample=None, variation=None, style=None, out=None, **kwargs):
@@ -272,10 +335,28 @@ class ManipulationSemantics:
             )
         lead = tuple(rows.shape[:-1])
         rows = rows.reshape(-1, self.state_dim)
-        sty = self.resolve_style(style, variation, batch=len(rows))
         size = int(self.size if size is None else size)
         supersample = int(self.ss if supersample is None else supersample)
-        frames = self.render(self._rows_to_render_state(rows, sty, size, supersample), out=out, **kwargs)
+        from .manipulation_renderer import draws_on_host
+
+        # OpenGL reads host inputs, so its RenderState is built on the host.
+        device = (
+            torch.device("cpu")
+            if draws_on_host(kwargs.get("backend") or self.backend, self.device, supersample)
+            else self.device
+        )
+        if style is None and not variation:
+            appearance = self._stored_appearance(len(rows), size, supersample, device)
+            state = self._rows_to_render_state(rows, None, size, supersample, device, appearance)
+            # The env's own appearance is valid, so finite rows and a valid frame size need no full check.
+            checked = self._render_style is None and 1 <= size <= 4096 and 1 <= supersample <= 4
+            checked = checked and bool(torch.isfinite(state["pose", "qpos"]).all())
+            checked = checked and bool(torch.isfinite(state["pose", "mocap_pos"]).all())
+        else:
+            sty = self.resolve_style(style, variation, batch=len(rows))
+            state = self._rows_to_render_state(rows, sty, size, supersample, device)
+            checked = False
+        frames = self._render_frames(state, checked, out=out, **kwargs)
         return frames.reshape(*lead, *frames.shape[1:])
 
     @classmethod
