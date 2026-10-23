@@ -7,7 +7,7 @@ from functools import partial
 import numpy as np
 import torch
 
-from ...._execution.process import ProcessAdapter, leaf_tensordict
+from ...._execution.process import FRAME_FIELDS, ProcessAdapter, leaf_tensordict
 from ...._execution.shared_memory import key_path
 from .replay import ACTION_DTYPES, reset_options, validate_seed
 from .replay_batch import PushTReplayAdapter, lane_options, state_columns
@@ -40,6 +40,13 @@ class PushTProcessAdapter(ProcessAdapter):
         self._codes = np.zeros((batch, 0), np.uint8)
         super().__init__(partial(_lanes, discrete, config), batch, device, seed, processes=processes, cpus=cpus)
         self._keys = [key_path(key) for key in self._metadata.get_state().keys(True, True)]
+        self._fallback = None
+        from .. import raster
+
+        resolution = self._metadata.template.config["resolution"]
+        if self.device.type == "cuda" and raster.HAVE_TRITON and raster.resize_supported(resolution):
+            # Workers write the State leaves a step changes; the parent rasterizes them on the GPU.
+            self.frame_mode = FRAME_FIELDS
 
     @property
     def template(self):
@@ -63,6 +70,38 @@ class PushTProcessAdapter(ProcessAdapter):
             self.num_envs,
             self.device,
         )
+
+    def _frame_fields(self):
+        if self._static_cache is None:
+            self._state_leaves()
+        fields = {}
+        for key, view in self._views.items():
+            if key[0] == "state":
+                cached = self._static_cache.get(key[1:])
+                fields["/".join(key[1:])] = view.copy() if cached is None else cached.numpy()
+        return fields
+
+    def _fields_frame(self, fields):
+        from .. import raster
+
+        size = self._metadata.template.config["resolution"]
+        return raster.render(fields, size, self.device, lambda rows: self._draw_pygame(rows, size))
+
+    def _draw_pygame(self, fields, size):
+        from ..projection import PushTProjection
+
+        if self._fallback is None:
+            self._fallback = PushTProjection()
+        count = len(fields["recipe/config"])
+        return self._fallback.render([{k: v[i] for k, v in fields.items()} for i in range(count)], size)
+
+    def _abort(self):
+        try:
+            super()._abort()
+        finally:
+            if getattr(self, "_fallback", None) is not None:
+                self._fallback.close()
+                self._fallback = None
 
     def validate(self, state):
         self._check_open()

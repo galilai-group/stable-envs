@@ -141,6 +141,11 @@ class PushT(Env):
         return step_pipeline(self._simulator)
 
     def _render_live(self):
+        if self._rasterizes(self.size):
+            from . import raster
+
+            fields = self._simulator.render_fields()
+            return raster.render(fields, self.size, self.device, lambda rows: self._draw_pygame(rows, self.size))
         return torch.as_tensor(self._simulator.render_live(), device=self.device)
 
     @staticmethod
@@ -267,13 +272,12 @@ class PushT(Env):
         if self._simulator.template.config["render_action"] and size < 96:
             raise ValueError("Source PushT action markers require size >= 96")
         fields = self._render_fields_of(state)
-        count = len(fields["recipe/config"])
-        pool = self._pool(count)
-        if pool is not None:
-            frames = pool.render(fields, size)
+        if self._rasterizes(size):
+            from . import raster
+
+            frames = raster.render(fields, size, self.device, lambda rows: self._draw_pygame(rows, size))
         else:
-            frames = self._projection.render([{k: v[i] for k, v in fields.items()} for i in range(count)], size)
-        frames = torch.as_tensor(frames, device=self.device)
+            frames = torch.as_tensor(self._draw_pygame(fields, size), device=self.device)
         if out is not None:
             if (
                 out.shape != frames.shape
@@ -285,6 +289,22 @@ class PushT(Env):
             out.copy_(frames)
             return out
         return frames
+
+    def _rasterizes(self, size):
+        """Whether CUDA output uses the batched rasterizer, which draws the same bytes as pygame."""
+        if self.device.type != "cuda":
+            return False
+        from . import raster
+
+        return raster.HAVE_TRITON and raster.resize_supported(size)
+
+    def _draw_pygame(self, fields, size):
+        """Draw host render fields with the source pygame code, in render workers for large batches."""
+        count = len(fields["recipe/config"])
+        pool = self._pool(count)
+        if pool is not None:
+            return pool.render(fields, size)
+        return self._projection.render([{k: v[i] for k, v in fields.items()} for i in range(count)], size)
 
     def _pool(self, count):
         """Return the render worker pool for ``count`` rows, or None to draw in this process."""
