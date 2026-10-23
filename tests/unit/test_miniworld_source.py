@@ -33,10 +33,11 @@ SIZE = 48
 _SOURCES: dict = {}
 
 
-def _flowm_source(lane: int):
-    """``generate_videos.build_env`` for the README's textured training command (8 blocks)."""
-    key = ("flowm", lane)
+def _flowm_source(lane: int, textured: bool):
+    """``generate_videos.build_env`` for the paper's dynamic ("SUNDAY V2") or textured ("TEX") split, 8 blocks."""
+    key = ("flowm", textured, lane)
     if key not in _SOURCES:
+        tex = dict.fromkeys(("box_tex_randomize", "wall_tex_randomize", "floor_tex_randomize", "box_and_ball"), True)
         params = DEFAULT_PARAMS.no_random()
         params.set("turn_step", 90.0, 90.0, 90.0)
         params.set("forward_step", 1.0, 1.0, 1.0)
@@ -49,10 +50,6 @@ def _flowm_source(lane: int):
             window_width=SIZE,
             window_height=SIZE,
             size=16,
-            box_tex_randomize=True,
-            wall_tex_randomize=True,
-            floor_tex_randomize=True,
-            box_and_ball=True,
             box_allow_overlap=True,
             agent_box_allow_overlap=True,
             grid_mode=True,
@@ -64,6 +61,7 @@ def _flowm_source(lane: int):
             block_size_xy=0.7,
             block_height=1.5,
             params=params,
+            **(tex if textured else {}),
         )
         _SOURCES[key] = env
     env = _SOURCES[key]
@@ -129,15 +127,21 @@ def _run(env, sources, actions, *, wrap):
     return result
 
 
-@pytest.mark.parametrize("wrap", [False, True], ids=["paper", "wrapped-heading"])
-def test_lanes_match_the_source_called_directly(wrap):
-    """The FloWM preset: grid motion, textures, boxes and balls; every action id, pick up and drop included.
+@pytest.mark.parametrize(
+    "preset,wrap",
+    [("flowm", False), ("flowm-textured", False), ("flowm", True)],
+    ids=["dynamic", "textured", "wrapped-heading"],
+)
+def test_lanes_match_the_source_called_directly(preset, wrap):
+    """The FloWM presets: grid motion, plain or textured with balls; every action id, pick up and drop included.
 
     ``wrap`` adds the [0, 2pi) heading wrap of the fork's later script (``wrap_heading=True``).
     """
-    with snv.MiniWorldMovingBlockWorld(num_envs=LANES, size=SIZE, device="cpu", wrap_heading=wrap) as env:
+    with snv.MiniWorldMovingBlockWorld(
+        num_envs=LANES, size=SIZE, device="cpu", preset=preset, wrap_heading=wrap
+    ) as env:
         env.reset(seed=SEED)
-        sources = [_flowm_source(lane) for lane in range(LANES)]
+        sources = [_flowm_source(lane, textured=preset == "flowm-textured") for lane in range(LANES)]
         for lane, src in enumerate(sources):
             src.reset(seed=SEED + lane)
             src.agent.dir = 0.0  # --heading-zero

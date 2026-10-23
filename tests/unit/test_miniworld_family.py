@@ -28,8 +28,9 @@ def _actions(seed, steps, lanes=2):
     return np.random.default_rng(seed).integers(0, 9, size=(steps, lanes, 1))
 
 
-def test_a_state_restores_into_an_env_with_another_world_and_history():
-    with _make() as source, _make() as restored:
+@pytest.mark.parametrize("preset", ["flowm", "flowm-textured"])
+def test_a_state_restores_into_an_env_with_another_world_and_history(preset):
+    with _make(preset=preset) as source, _make(preset=preset) as restored:
         source.reset(seed=SEED)
         for action in _actions(0, 5):
             source.step(action, frames=None)

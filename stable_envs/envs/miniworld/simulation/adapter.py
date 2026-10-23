@@ -72,8 +72,9 @@ BOX, BALL = 0, 1
 #: Highest action id of the fork's ``MiniWorldEnv.Actions`` (``done``).
 ACTION_HIGH = 8
 
-#: The FloWM textured dataset (``generate_videos.py`` flags of the README's training command); the
-#: script draws ``num_blocks`` in [6, 10] per video, this preset fixes it per instance.
+#: The FloWM dynamic dataset ("SUNDAY V2" in the fork's ``scripts/old_generation_commands.py``): plain
+#: coloured boxes in the env's white-walled, concrete-floored room. The script draws ``num_blocks`` in
+#: [6, 10] per video; this preset fixes it per instance.
 FLOWM = {
     "room_size": 16,
     "grid_mode": True,
@@ -86,10 +87,6 @@ FLOWM = {
     "agent_box_allow_overlap": True,
     "num_blocks": 8,
     "ensure_base_palette": True,
-    "box_tex_randomize": True,
-    "wall_tex_randomize": True,
-    "floor_tex_randomize": True,
-    "box_and_ball": True,
     # --turn-step-deg, --forward-step, --cam-fov-y: fixed (non-randomised) parameters
     "turn_step": 90.0,
     "forward_step": 1.0,
@@ -100,6 +97,15 @@ FLOWM = {
     # --steps 500 (the script drops the frame after the last step, so a 500-step limit gives the same frames)
     "max_episode_steps": 500,
 }
+#: The FloWM textured dataset ("TEX", the README's command): FLOWM with random wall, floor and block
+#: textures, and balls among the blocks.
+FLOWM_TEXTURED = {
+    **FLOWM,
+    "box_tex_randomize": True,
+    "wall_tex_randomize": True,
+    "floor_tex_randomize": True,
+    "box_and_ball": True,
+}
 #: ``MovingBlockWorld()`` as the fork registers it (12 x 12 room, continuous motion, PutNext's 250 steps).
 UPSTREAM = {
     "turn_step": None,
@@ -109,7 +115,7 @@ UPSTREAM = {
     "wrap_heading": False,
     "max_episode_steps": 250,
 }
-PRESETS = {"flowm": FLOWM, "upstream": UPSTREAM}
+PRESETS = {"flowm": FLOWM, "flowm-textured": FLOWM_TEXTURED, "upstream": UPSTREAM}
 #: Keys handled here rather than passed to ``MovingBlockWorld``.
 _HARNESS = ("turn_step", "forward_step", "cam_fov_y", "heading_zero", "wrap_heading", "max_episode_steps")
 #: ``MovingBlockWorld`` keyword arguments a configuration may set (``room_size`` is its ``size``).
@@ -157,7 +163,7 @@ def configure_pyglet() -> None:
 
 
 def resolve_config(preset: str, overrides: dict) -> dict:
-    """The full configuration: ``preset`` (``"flowm"`` or ``"upstream"``) updated with ``overrides``."""
+    """The full configuration: ``preset`` (a key of ``PRESETS``) updated with ``overrides``."""
     if preset not in PRESETS:
         raise ValueError(f"preset must be one of {sorted(PRESETS)}, got {preset!r}")
     unknown = set(overrides) - set(WORLD_KEYS) - set(_HARNESS)

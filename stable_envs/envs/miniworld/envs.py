@@ -1,10 +1,11 @@
 """Miniworld's MovingBlockWorld, the 3D Dynamic Blockworld of Flow Equivariant World Models.
 
 Each lane runs the hlillemark/Miniworld fork's ``MovingBlockWorld``: an agent in one room of coloured boxes
-and balls that each move by a fixed velocity every step, bouncing off walls and each other. The default
-``preset="flowm"`` is the FloWM textured dataset configuration (16 x 16 grid room, 90 degree turns, unit
-forward steps, randomised wall, floor and block textures, 500 steps); ``preset="upstream"`` is the env as
-the fork registers it. Keyword arguments override single options of either preset.
+and balls that each move by a fixed velocity every step and bounce off walls. The default ``preset="flowm"`` is the FloWM dynamic
+dataset: plain coloured boxes, each moving one cell per step in a cardinal direction through the agent and
+each other, in a 16 x 16 grid room with 90 degree turns, unit forward steps and 500 steps.
+``preset="flowm-textured"`` is the paper's textured split (random wall, floor and block textures, and balls);
+``preset="upstream"`` is the env as the fork registers it. Keyword arguments override single options of either preset.
 
 The action is one of the fork's nine ids: turn left 0, turn right 1, forward 2, back 3, do nothing 4,
 pick up 5, drop 6, toggle 7, done 8. Reward is always 0 and episodes end only by the step limit. Frames are
@@ -68,7 +69,7 @@ class MiniWorldMovingBlockWorld(Env):
     def __init__(
         self, num_envs=1, size=None, supersample=1, device=None, backend="auto", seed=0, preset="flowm", **options
     ):
-        """Build ``num_envs`` lanes of ``preset`` (``"flowm"`` or ``"upstream"``) updated with ``options``.
+        """Build ``num_envs`` lanes of ``preset`` (``"flowm"``, ``"flowm-textured"`` or ``"upstream"``) updated with ``options``.
 
         ``options`` take ``MovingBlockWorld`` keyword arguments (``room_size`` for its ``size``), and
         ``turn_step``, ``forward_step``, ``cam_fov_y``, ``heading_zero``, ``wrap_heading`` and
