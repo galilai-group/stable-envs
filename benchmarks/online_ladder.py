@@ -11,6 +11,7 @@ Rungs:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import multiprocessing as mp
 import os
@@ -56,6 +57,32 @@ def _make_source(name: str):
     return gym.make(gid, render_mode="rgb_array", **kw)
 
 
+#: Steps whose frames the L0 check compares with a one-env replay of the same episode.
+CHECK_STEPS = (0, 1, 20, 100, 195)
+
+
+def _digest(frame) -> str:
+    return hashlib.sha1(np.ascontiguousarray(frame).tobytes()).hexdigest()
+
+
+def _play(envs, episodes, seeds, actions, render, sink=None, checks=None):
+    """Play ``episodes`` in groups of ``len(envs)``, stepping and rendering the group round-robin each step."""
+    lanes = len(envs)
+    for start in range(0, len(episodes), lanes):
+        group = episodes[start : start + lanes]
+        for j, ep in enumerate(group):
+            envs[j].reset(seed=int(seeds[ep]))
+        for t in range(actions.shape[1]):
+            for j, ep in enumerate(group):
+                envs[j].step(actions[ep, t])
+                if render:
+                    f = envs[j].render()
+                    if sink is not None:
+                        sink(j, f)
+                    if checks is not None and t in CHECK_STEPS:
+                        checks[f"{ep}/{t}"] = _digest(f)
+
+
 def _source_worker(name, render, data_path, lane0, lanes, shm_name, frame_shape, conn):
     os.environ["OMP_NUM_THREADS"] = "1"
     torch.set_num_threads(1)
@@ -69,18 +96,17 @@ def _source_worker(name, render, data_path, lane0, lanes, shm_name, frame_shape,
         msg = conn.recv()
         if msg is None:
             break
-        episodes = msg
-        for start in range(0, len(episodes), lanes):
-            group = episodes[start : start + lanes]
-            for j, ep in enumerate(group):
-                envs[j].reset(seed=int(seeds[ep]))
-            for t in range(actions.shape[1]):
-                for j, ep in enumerate(group):
-                    envs[j].step(actions[ep, t])
-                    if render:
-                        f = envs[j].render()
-                        buf[(lane0 + j) % len(buf)][: f.shape[0], : f.shape[1]] = f[: frame_shape[0], : frame_shape[1]]
-        conn.send(len(episodes))
+
+        def sink(j, f):
+            buf[(lane0 + j) % len(buf)][: f.shape[0], : f.shape[1]] = f[: frame_shape[0], : frame_shape[1]]
+
+        if isinstance(msg, tuple) and msg[0] == "check":
+            checks: dict = {}
+            _play(envs, msg[1], seeds, actions, render, sink, checks)
+            conn.send(checks)
+            continue
+        _play(envs, msg, seeds, actions, render, sink)
+        conn.send(len(msg))
     for e in envs:
         e.close()
     if shm is not None:
@@ -118,9 +144,17 @@ def run_source(args, name: str, render: bool) -> dict:
         for a in pipes:
             a.recv()
 
+    check = None
     try:
         sweep(warm)
         t = _sweeps(sweep, warmup=0, repeats=args.repeats, budget_s=args.budget)
+        if render:
+            for a, part in zip(pipes, warm):
+                a.send(("check", part))
+            got = {}
+            for a in pipes:
+                got.update(a.recv())
+            check = _check_frames(name, data_path, got)
     finally:
         for a in pipes:
             a.send(None)
@@ -130,13 +164,41 @@ def run_source(args, name: str, render: bool) -> dict:
             shm.close()
             shm.unlink()
     steps = n * int(np.load(data_path)["actions"].shape[1])
-    return {
+    out = {
         "frame_shape": list(frame_shape),
         "lanes_per_proc": lanes,
         "procs": args.procs,
         "steps": steps,
         "steps_per_s": steps / t["median_s"],
         **t,
+    }
+    if check is not None:
+        out["frame_check"] = check
+        if check["mismatched"]:
+            out["status"] = "invalid"
+    return out
+
+
+def _check_frames(name: str, data_path: str, got: dict) -> dict:
+    """Compare worker frame digests with a one-env replay of each checked episode in this process."""
+    data = np.load(data_path)
+    episodes = sorted({int(k.split("/")[0]) for k in got})
+    env = _make_source(name)
+    want: dict = {}
+    try:
+        _play([env], episodes, data["seeds"], data["actions"], True, checks=want)
+    finally:
+        env.close()
+    bad = sorted(k for k in got if got[k] != want.get(k))
+    per_step = {}
+    for k, v in got.items():
+        per_step.setdefault(k.split("/")[1], set()).add(v)
+    return {
+        "episodes": len(episodes),
+        "frames": len(got),
+        "mismatched": len(bad),
+        "examples": bad[:5],
+        "distinct_frames_per_step": {t: len(v) for t, v in sorted(per_step.items())},
     }
 
 
@@ -184,7 +246,7 @@ def cmd_run(args) -> None:
                 r = run_ours(args, args.env, "cpu")
             else:
                 r = run_ours(args, args.env, "cuda")
-            r["status"] = "ok"
+            r.setdefault("status", "ok")
         except Exception as e:  # noqa: BLE001
             msg = f"{type(e).__name__}: {e}"
             r = {"status": "oom" if "out of memory" in msg.lower() else "error", "error": msg[:600]}
