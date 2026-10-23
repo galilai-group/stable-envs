@@ -20,6 +20,12 @@ import torch
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def _main_sha() -> str | None:
+    """The main commit under test: ``.bench_main_sha`` in the checkout, else ``SE_MAIN_SHA``."""
+    pinned = ROOT / ".bench_main_sha"
+    return pinned.read_text().strip() if pinned.exists() else os.environ.get("SE_MAIN_SHA")
+
+
 def _host() -> dict:
     out = {
         "host": platform.node(),
@@ -27,7 +33,7 @@ def _host() -> dict:
         "affinity": sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
         "torch": torch.__version__,
         "python": sys.version.split()[0],
-        "main_sha": os.environ.get("SE_MAIN_SHA"),
+        "main_sha": _main_sha(),
         "gl": os.environ.get("MUJOCO_GL"),
     }
     try:
