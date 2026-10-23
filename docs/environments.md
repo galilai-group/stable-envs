@@ -52,12 +52,13 @@ env = snv.CartPole(num_envs=8)
 | `craftax` | 4 | `CraftaxClassicPixels`, `CraftaxSymbolic` |
 | `dmcontrol` | 18 | `DMCReacherHard`, `DMCCheetahRun` (`domain="reacher"`, `"cheetah"`, …) |
 | `fetch` | 12 | `FetchReach`, `FetchPush`, … |
+| `miniworld` | 1 | `MiniWorldMovingBlockWorld` |
 | `navigation` | 5 | `TwoRoom`, `Piecewise`, `SimplePointMaze` |
 | `ogbench` | 27 | `PointMazeLargeNavigate`, `OGBCube` (`domain="pointmaze"`, `"cube"`, …) |
 | `pusht` | 2 | `PushT`, `PushTDiscrete` |
 | `pyflyt` | 1 | `PyFlytRocketLanding` |
 
-With every extra installed, these 74 classes register. Without PyFlyt, 73 classes register.
+With every extra installed, these 75 classes register. Without PyFlyt, 74 classes register.
 
 ## Fidelity
 

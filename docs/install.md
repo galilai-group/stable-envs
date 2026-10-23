@@ -46,12 +46,25 @@ package, which tests use for comparison.
 | `mjwarp` | Fetch on CUDA | MuJoCo Warp |
 | `rocket` | PyFlytRocketLanding | PyFlyt 0.29.0, pybullet 3.2.7, Pillow, SciPy |
 | `craftax` / `craftax-gpu` | Craftax | Craftax, JAX. `-gpu` takes JAX's CUDA 12 build for `device="cuda"` |
+| `miniworld` | MiniWorldMovingBlockWorld | the hlillemark/Miniworld fork, pyglet < 2 |
 | `docs` / `dev` / `examples` / `hf` | not needed to render | docs, tests, example helpers, HuggingFace |
 
 On CUDA, TrackCom domains draw the floor reflection only with MuJoCo Warp 3.12, which `dmcontrol-gpu`
 installs. With an older MuJoCo Warp, they render without the reflection and log a warning.
 
 The `rocket` extra resolves numpy < 2 because of PyFlyt's metadata.
+
+`MovingBlockWorld` is only in the [hlillemark/Miniworld](https://github.com/hlillemark/Miniworld) fork,
+which is not on PyPI. uv installs the fork for the `miniworld` extra from `[tool.uv.sources]`. With pip,
+install the fork first:
+
+```bash
+pip install "miniworld @ git+https://github.com/hlillemark/Miniworld@b28988d5cd9d0d261a53b8cfa4f162e7fe14853e"
+pip install "stable-envs[miniworld]"
+```
+
+Miniworld draws with pyglet's OpenGL. On Linux the family selects pyglet's headless EGL mode unless
+`PYGLET_HEADLESS` is set, so it needs an EGL driver (Mesa's llvmpipe works without a GPU).
 
 PushT renders with pygame on CPU. `device="cuda"` places the output tensors on the GPU. The drawing
 still runs on CPU.

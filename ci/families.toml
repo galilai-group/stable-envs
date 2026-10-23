@@ -179,3 +179,9 @@ tests = ["test_craftax*"]
 requires = ["craftax", "jax"]
 capabilities = ["swm"]
 shards = { pr = 1, nightly = 1 }
+
+[family.miniworld]
+extras = ["miniworld"]
+paths = ["stable_envs/envs/miniworld/**"]
+tests = ["test_miniworld_*"]
+requires = ["miniworld", "pyglet"]

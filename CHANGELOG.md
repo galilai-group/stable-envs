@@ -8,6 +8,11 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Miniworld: `MiniWorldMovingBlockWorld` runs the 3D Dynamic Blockworld of Flow Equivariant World Models
+  (`MovingBlockWorld` from the hlillemark/Miniworld fork) with a complete State: room and block textures,
+  block kinds, sizes, poses and velocities, the agent and its carried block, and the env's generator.
+  `preset="flowm"` (default) is the dataset's configuration, `preset="upstream"` the registered env.
+  Frames are Miniworld's own OpenGL agent view (`miniworld` extra).
 - Craftax: `CraftaxClassicPixels`, `CraftaxClassicSymbolic`, `CraftaxPixels` and `CraftaxSymbolic`
   run the upstream JAX simulator with all lanes in one jitted `vmap` (`craftax` / `craftax-gpu` extras).
   With Craftax, the extras provide 74 classes. Fetch and `OGBCube`/`OGBScene` pin different MuJoCo versions,
