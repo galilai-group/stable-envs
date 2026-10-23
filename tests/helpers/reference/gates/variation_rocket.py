@@ -21,12 +21,12 @@ def _swm_leaf(env, path):
 
 
 class _RocketLanes:
-    """One SWM Rocket per lane; ``defaults`` are installed with SWM's ``set_init_value``."""
+    """One rendering SWM Rocket per lane; ``defaults`` are installed with SWM's ``set_init_value``."""
 
     def __init__(self, defaults=None):
         from stable_worldmodel.envs.rocket_landing.pyflyt_rocketlanding import RocketLandingEnv
 
-        self.envs = [RocketLandingEnv() for _ in range(3)]
+        self.envs = [RocketLandingEnv(render_mode="rgb_array") for _ in range(3)]
         for lane, env in enumerate(self.envs):
             for path, values in (defaults or {}).items():
                 _swm_leaf(env, path).set_init_value(values[lane])
