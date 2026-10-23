@@ -41,6 +41,9 @@ All notable changes to this project are listed here. The format follows
   Fetch too.
 - PushT runs in worker processes on Linux for batches of at least `worker_min_lanes` lanes (tuning
   path `pusht-sim`).
+- `PyFlytRocketLanding` runs in worker processes on Linux for batches of at least `worker_min_lanes`
+  lanes (tuning path `rocket-sim`). A batch of more than 512 lanes uses one process per 512 lanes or
+  fewer on every platform, so batches of 1024 lanes or more work.
 - `visual_fidelity` records the per-frame MSE against the source as `mse_mean`, `mse_p95` and `mse_max`
   on the 0-255 scale. Only `measured_at` is required.
 - The tests compare frames with a recorded source MSE for each class (`tests/fixtures/source_mse.json`)

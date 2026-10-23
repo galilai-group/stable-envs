@@ -79,9 +79,13 @@ There is no `capture`, `transition`, `unroll` or `step_sequence` method. To bran
 ## Process workers
 
 On Linux with at least four CPU cores, some families run physics in worker processes. These families
-are Fetch, most DM Control tasks, classic Acrobot, the OGBench registrations and PushT. Each process has
-one simulation thread and stays within the allowed CPU affinity. Physics stays on CPU even when rendering
-uses CUDA.
+are Fetch, most DM Control tasks, classic Acrobot, the OGBench registrations, PushT and
+`PyFlytRocketLanding`. Each process has one simulation thread and stays within the allowed CPU affinity.
+Physics stays on CPU even when rendering uses CUDA.
+
+PyBullet allows 1024 clients in one process, and a Rocket restore holds two clients per lane. Thus one
+process holds at most 512 Rocket lanes. A larger Rocket batch uses enough processes to hold it, on every
+platform and for every value of the tuning knobs.
 
 `set_state` checks the State in every worker before any worker restores it. If one lane is not valid,
 `set_state` raises the error and no lane changes.

@@ -29,6 +29,7 @@ EXECUTION = {
     "fetch": "stable_envs.envs.fetch.simulation.execution",
     "ogbench": "stable_envs.envs.ogbench.simulation.execution",
     "pusht": "stable_envs.envs.pusht.simulation.execution",
+    "pyflyt": "stable_envs.envs.rocket.simulation.execution",
 }
 BATCHES = (1, 3, 8, 17)
 CLASSIC_LIMITS = dict(cartpole=500, acrobot=500, pendulum=200, mountain_car=200, mountain_car_continuous=999)
@@ -43,7 +44,7 @@ def force_processes(count):
         except ImportError:
             continue
 
-        def chosen(num_envs, cpus, *, eligible=True, path=None):
+        def chosen(num_envs, cpus, *, eligible=True, path=None, **_):
             return min(count, num_envs) if eligible else 0
 
         module.process_count = chosen
@@ -81,6 +82,13 @@ def random_actions(env, rng, length):
     if getattr(spec, "discrete_n", None):
         return rng.integers(0, int(spec.discrete_n), shape).astype(dtype)
     return rng.integers(int(np.min(spec.low)), int(np.max(spec.high)) + 1, shape).astype(dtype)
+
+
+def keep_engines_off(env, actions):
+    """Hold the ignition command at zero in odd lanes, so the batch mixes ignited and unignited lanes."""
+    if env.family == "pyflyt":
+        actions[1::2, :, 3] = 0
+    return actions
 
 
 def finish_some_lanes(env, state):
@@ -124,7 +132,7 @@ def scenario(name, num_envs, count, seed=17):
             env._simulator._set_episode_limits(np.arange(num_envs) % 7 + 2)
         else:
             env.set_state(finish_some_lanes(env, env.get_state()))
-        actions = [random_actions(env, rng, 10) for _ in range(5)]
+        actions = [keep_engines_off(env, random_actions(env, rng, 10)) for _ in range(5)]
         saved = [env.get_state()]
         frames = getattr(env, "produces_rgb", True)
         for chunk, block in enumerate(actions):

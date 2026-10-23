@@ -146,13 +146,13 @@ class RocketReplay:
                 self.close()
                 raise
 
-    def reset(self, seed=None, options=None, values=None):
-        """``values`` sets leaves for this episode only; the drawn colours among them are painted."""
+    def check_reset(self, seed=None, options=None, values=None):
+        """Raise for a reset ``reset`` would refuse; change nothing."""
         if seed is not None and (
             isinstance(seed, (bool, np.bool_)) or not isinstance(seed, (int, np.integer)) or not 0 <= seed < 2**63
         ):
             raise ValueError("Rocket seed must be None or a nonnegative int64")
-        options = copy.deepcopy(options or {})
+        options = options or {}
         # ``randoimize_drop`` is PyFlyt's spelling of its random entry velocity option, passed through as is.
         if set(options) - {"variation", "randomize_drop", "accelerate_drop", "randoimize_drop"}:
             raise ValueError("Unsupported Rocket reset option")
@@ -162,13 +162,18 @@ class RocketReplay:
         for key in ["randomize_drop", "accelerate_drop", "randoimize_drop"]:
             if key in options and type(options[key]) is not bool:
                 raise ValueError("Reset flags must be bool")
-        values = dict(values or {})
-        for path, value in values.items():
+        for path, value in (values or {}).items():
             node = self.env.variation_space._walk(path) if path in self.names else None
             if node is None or hasattr(node, "spaces") or not node.contains(value):
                 raise ValueError(f"Invalid Rocket Variation value: {path}")
             if any(k == "all" or path == k or path.startswith(k + ".") for k in selection):
                 raise ValueError(f"Rocket Variation {path} is both sampled and set")
+
+    def reset(self, seed=None, options=None, values=None):
+        """``values`` sets leaves for this episode only; the drawn colours among them are painted."""
+        self.check_reset(seed, options, values)
+        options = copy.deepcopy(options or {})
+        values = dict(values or {})
         # An explicit value is this episode's default, so the replay anchor reproduces it.
         defaults = {path: self.env.variation_space._walk(path).init_value for path in values}
         for path, value in values.items():
