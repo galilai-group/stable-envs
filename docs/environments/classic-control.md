@@ -4,7 +4,10 @@ These five classes port the classic control tasks of
 [Gymnasium](https://gymnasium.farama.org/environments/classic_control/)
 ([Towers et al., 2024](https://arxiv.org/abs/2407.17032)). The source simulator steps the physics on CPU.
 The renderer is a port of the Gymnasium pygame `gfxdraw` code. It draws the source frame for the same
-State. On CUDA, a fused Triton kernel draws the frames.
+State. On CUDA, a fused Triton kernel draws the frames. On CPU, a Numba kernel draws the same
+primitive records in parallel over frames and gives the same frames as the Triton kernel. The
+`classic` extra installs Numba. If Numba does not import, the CPU path draws with the Gymnasium
+renderer (default appearance, when pygame is installed) or with the Torch port.
 
 Each class renders only at the native size of its Gymnasium renderer. To get a smaller frame, resize
 the output.

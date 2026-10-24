@@ -48,13 +48,15 @@ Source = "https://github.com/galilai-group/stable-envs"
 # the versions parity is certified under live in the pin-* dependency groups below.
 # Backends remain separate so users do not install CUDA extensions merely to compare
 # against an official CPU renderer.
+# Classic control needs no package to render; numba adds the compiled CPU renderer (the 2D families share it).
+classic = ["numba>=0.60"]
 # PushT replay checks this exact Pymunk at construction.
-pusht = ["pygame>=2.5", "pymunk==7.2.0", "opencv-python-headless", "shapely"]
+pusht = ["pygame>=2.5", "pymunk==7.2.0", "opencv-python-headless", "shapely", "numba>=0.60"]
 # PushT reference checks run against gym-pusht.
 pusht-reference = ["gym-pusht"]
 # SimplePointMaze's exact cached info.goal image uses Matplotlib Agg.
 # Navigation dynamics and the public renderer remain native Torch.
-navigation = ["matplotlib>=3.10"]
+navigation = ["matplotlib>=3.10", "numba>=0.60"]
 ogbench = ["mujoco>=3.11,<3.13", "ogbench>=1.2.1,<1.3"]
 # Cube/Scene semantics and renderer. Their renderers check these exact MuJoCo, OGBench and
 # MuJoCo Warp versions when they render, and the CPU semantics check the OGBench version at
@@ -140,17 +142,20 @@ pin-classic = [
   "numpy==2.5.3; python_version >= '3.12'",
   "gymnasium==1.3.0; python_version >= '3.12'",
   "pygame==2.6.1; python_version >= '3.12'",
+  "numba==0.68.0; python_version >= '3.12'",
 ]
 pin-navigation = [
   "numpy==2.5.3; python_version >= '3.12'",
   "gymnasium==1.3.0; python_version >= '3.12'",
   "matplotlib==3.10.9; python_version >= '3.12'",
+  "numba==0.68.0; python_version >= '3.12'",
 ]
 pin-pusht = [
   "numpy==2.2.6; python_version >= '3.12'",
   "gymnasium==1.2.3; python_version >= '3.12'",
   "pymunk==7.2.0; python_version >= '3.12'",
   "pygame==2.6.1; python_version >= '3.12'",
+  "numba==0.68.0; python_version >= '3.12'",
 ]
 pin-dmc = [
   "numpy==2.5.3; python_version >= '3.12'",
