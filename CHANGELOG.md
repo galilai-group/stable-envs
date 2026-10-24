@@ -8,6 +8,11 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Audited nominal G82/G84/G86 rigid recordings with independent 120-frame
+  pixel-ray oracles. Static visibility seeds preserve the versioned depth and
+  semantic-ID rules, with full drawing retained for comparison, input invalidation
+  and explicit resource release. Adds upload-inclusive cache measurements.
+
 - Opt-in opaque pixel-ray visibility contract with stable semantic-ID ties,
   independent versioned source oracles and CUDA replay for G63/G66/G80/G81.
   Adds audited G65/G83 nominal clips and all-frame depth/mask gates. Legacy

@@ -7,6 +7,7 @@ import triton.language as tl
 from ....render.nvdiff_coverage import _vertex
 from .viewports import PixelCenterRenderer
 from .visibility import local_planes
+from .visibility_cache import StaticRayCoverage
 
 
 @tr.jit
@@ -55,6 +56,8 @@ def _hits(
     Labels,
     Depth,
     Winner,
+    Active,
+    INDEXED: tl.constexpr,
     V: tl.constexpr,
     F: tl.constexpr,
     H: tl.constexpr,
@@ -66,6 +69,8 @@ def _hits(
     BLOCK: tl.constexpr,
 ):
     face, world = tl.program_id(0), tl.program_id(1)
+    if INDEXED:
+        face = tl.load(Active + face)
     x0, y0, z0, w0 = _vertex(Clip, Faces, world, face, 0, V, H, W)
     x1, y1, z1, w1 = _vertex(Clip, Faces, world, face, 1, V, H, W)
     x2, y2, z2, w2 = _vertex(Clip, Faces, world, face, 2, V, H, W)
@@ -123,11 +128,66 @@ def _output(
     tl.store(Out + base + 3, tl.where(hit, face + 1, 0), pixel < H * W)
 
 
+def _visibility(
+    positions,
+    vertices,
+    planes,
+    faces,
+    rays,
+    origin,
+    labels,
+    depth,
+    winner,
+    resolution,
+    near,
+    far,
+    active=None,
+    background=None,
+):
+    """Evaluate an original face subset, preserving exact depth/semantic keys."""
+    count = len(faces) if active is None else len(active)
+    if not count:
+        return
+    h, w = resolution
+    b, v, _ = positions.shape
+    stripes = 8 if b < 4 else 1
+    with torch.cuda.device(positions.device):
+        for ids in (False, True):
+            if ids and background is not None:
+                # Only a strictly nearer mover invalidates the static winner.
+                # Exact ties retain it and take the minimum semantic/face key.
+                winner.masked_fill_(depth != background, torch.iinfo(torch.int64).max)
+            _hits[(count, b, stripes)](
+                positions,
+                vertices,
+                faces,
+                planes,
+                rays,
+                origin,
+                labels,
+                depth,
+                winner,
+                faces if active is None else active,
+                active is not None,
+                v,
+                len(faces),
+                h,
+                w,
+                near,
+                far,
+                ids,
+                stripes,
+                32,
+                num_warps=1,
+                enable_fp_fusion=False,
+            )
+
+
 class ContractRenderer(PixelCenterRenderer):
     """Use canonical rays/semantic IDs while reusing nvdiff interpolation/shading.
 
-    Full coverage is intentional for the first correctness implementation. Static
-    transforms/assets still stay resident. This path never falls back to a
+    Static visibility seeds retain exact depth and semantic/face keys. Movers
+    still compete against the seed. This path never falls back to a
     different visibility convention and rejects depth-plane crossing explicitly.
     """
 
@@ -162,6 +222,9 @@ class ContractRenderer(PixelCenterRenderer):
         )
         self.rays = (local @ world[:3, :3].T).contiguous()
         self.origin = world[:3, 3].contiguous()
+        self._ray_coverage = (
+            StaticRayCoverage(scene.face, self._static_geoms[scene.fgeom]) if self._static_geoms is not None else None
+        )
 
     def _clip(self, xpos, xmat, view, proj):
         result = super()._clip(xpos.float(), xmat.float(), view, proj)
@@ -185,35 +248,57 @@ class ContractRenderer(PixelCenterRenderer):
 
     def _rasterize(self, positions, resolution):
         h, w = resolution
+        if self.rays.shape != (h, w, 3):
+            raise ValueError("visibility contract requires the fixed ray-grid resolution")
         b, v, _ = positions.shape
         if not (
             torch.isfinite(positions).all(-1) & (positions[..., 3] > 0) & (positions[..., 2].abs() < positions[..., 3])
         ).all():
             raise ValueError("visibility contract does not support depth-plane crossing")
         count = len(self.scene.face)
-        depth = torch.full((b, h, w), torch.iinfo(torch.int64).max, device=self.device, dtype=torch.int64)
-        winner = torch.full_like(depth, torch.iinfo(torch.int64).max)
-        stripes = 8 if b < 4 else 1
-        args = (
-            positions,
-            self.vertices,
-            self.scene.face,
-            self.world_planes,
-            self.rays,
-            self.origin,
-            self.labels,
-            depth,
-            winner,
-            v,
-            count,
-            h,
-            w,
-            self.metadata["near"],
-            self.metadata["far"],
+
+        def draw(clip, vertices, planes, depth, winner, active=None, background=None):
+            _visibility(
+                clip,
+                vertices,
+                planes,
+                self.scene.face,
+                self.rays,
+                self.origin,
+                self.labels,
+                depth,
+                winner,
+                resolution,
+                self.metadata["near"],
+                self.metadata["far"],
+                active,
+                background,
+            )
+
+        seed = (
+            None
+            if self._ray_coverage is None
+            else self._ray_coverage.seed(
+                self.scene.face,
+                positions,
+                self.vertices,
+                self.world_planes,
+                self.rays,
+                self.origin,
+                self.labels,
+                resolution,
+                self.metadata["near"],
+                self.metadata["far"],
+                draw,
+            )
         )
-        with torch.cuda.device(self.device):
-            for ids in (False, True):
-                _hits[(count, b, stripes)](*args, ids, stripes, 32, num_warps=1, enable_fp_fusion=False)
+        if seed is None:
+            depth = torch.full((b, h, w), torch.iinfo(torch.int64).max, device=self.device, dtype=torch.int64)
+            winner = torch.full_like(depth, torch.iinfo(torch.int64).max)
+            active = background = None
+        else:
+            depth, winner, active, background = seed
+        draw(positions, self.vertices, self.world_planes, depth, winner, active, background)
         with torch.cuda.device(self.device):
             out = torch.empty((b, h, w, 4), device=self.device, dtype=torch.float32)
             _output[(tr.cdiv(h * w, 128), b)](
@@ -241,6 +326,9 @@ class ContractRenderer(PixelCenterRenderer):
         return images
 
     def _release(self):
+        if self._ray_coverage is not None:
+            self._ray_coverage.clear()
+            self._ray_coverage = None
         for name in ("planes", "labels", "rays", "origin", "vertices", "world_planes", "coverage_depth"):
             if hasattr(self, name):
                 setattr(self, name, None)

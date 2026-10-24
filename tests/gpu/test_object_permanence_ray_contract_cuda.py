@@ -11,6 +11,7 @@ pytest.importorskip("nvdiffrast.torch")
 
 from stable_envs.envs.object_permanence.rendering.visibility_cuda import ContractRenderer
 from stable_envs.render.nvdiff import Camera, Scene
+from tests.helpers.reference.object_permanence_recordings import RAY_TASKS, RECORDINGS
 from tests.unit.test_object_permanence_ray_contract import camera, quad
 
 
@@ -61,7 +62,7 @@ def test_semantic_ties_winding_retriangulation_nearer_surfaces_and_partial_cuda_
                 r.render_many(bad, rot, cam)
 
 
-@pytest.mark.parametrize("task", ["g63", "g65", "g66", "g80", "g81", "g83"])
+@pytest.mark.parametrize("task", RAY_TASKS)
 @pytest.mark.parametrize("cache_static", [True, False])
 def test_versioned_all_frame_source_depth_and_all_object_masks(task, cache_static):
     from scripts.testing.check_object_permanence_rendering import check
@@ -72,6 +73,30 @@ def test_versioned_all_frame_source_depth_and_all_object_masks(task, cache_stati
     result = check(RECORDINGS, oracle, task, visibility_contract=CONTRACT, cache_static=cache_static)
     assert result["frames"] == 120 and result["certification_eligible"]
     assert result["passed"], result["failures"]
+
+
+@pytest.mark.parametrize("task", RAY_TASKS)
+def test_ray_static_cache_is_bit_identical_for_all_fields_and_shuffled_frames(task):
+    from stable_envs.envs.object_permanence import RigidTrajectory
+    from stable_envs.envs.object_permanence.rendering.rigid_nvdiff import RigidSceneRenderer
+    from stable_envs.envs.object_permanence.rendering.visibility import CONTRACT
+
+    frames = np.arange(120)[::-1].copy()
+    with RigidTrajectory(RECORDINGS, f"{task}-nominal") as clip:
+        with (
+            RigidSceneRenderer(clip, size=90, visibility_contract=CONTRACT) as cached,
+            RigidSceneRenderer(clip, size=90, visibility_contract=CONTRACT, cache_static=False) as full,
+        ):
+            expected = full.render_many(frames)
+            actual = cached.render_many(frames)
+            assert all(torch.equal(actual[m], expected[m]) for m in actual)
+            assert cached.renderer._ray_coverage.builds == 1
+            indices = np.array([44, 0, 119, 44, 67])
+            selected = cached.render_many(indices)
+            assert all(torch.equal(selected[m], expected[m][119 - indices]) for m in selected)
+            assert cached.renderer._ray_coverage.builds == 1
+            selected["ids"].zero_()
+            assert torch.equal(cached.render(indices, mode="ids"), expected["ids"][119 - indices])
 
 
 def test_versioned_contract_cannot_be_mixed_with_legacy_or_camera_diagnostics():

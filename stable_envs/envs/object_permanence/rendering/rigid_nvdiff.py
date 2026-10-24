@@ -22,7 +22,8 @@ class RigidSceneRenderer(Closeable):
     Optional geometry_precision="float64" preserves projection arithmetic, not
     extra precision absent from recorded meshes, poses or shading attributes.
     Opt-in visibility_contract="stable-envs/opaque-pixel-rays-v1" uses float64
-    quaternion/visibility arithmetic and semantic-ID ties, with full coverage.
+    quaternion/visibility arithmetic and semantic-ID ties, with optional static
+    visibility seeds. cache_static=False keeps complete drawing for comparison.
     """
 
     resource_kind = "object_permanence.RigidSceneRenderer"

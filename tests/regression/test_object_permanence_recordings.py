@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from stable_envs.envs.object_permanence import RigidTrajectory
-from tests.helpers.reference.object_permanence_recordings import RECORDED_TASKS, RECORDINGS, load_geometry
+from tests.helpers.reference.object_permanence_recordings import RAY_TASKS, RECORDED_TASKS, RECORDINGS, load_geometry
 
 
 @pytest.mark.parametrize("task", RECORDED_TASKS)
@@ -120,7 +120,7 @@ def test_support_removal_precedes_the_recorded_ball_drop():
         assert support[-1] < support[0] and ball[-1] < ball[0]
 
 
-@pytest.mark.parametrize("task", ["g63", "g65", "g66", "g80", "g81", "g83"])
+@pytest.mark.parametrize("task", RAY_TASKS)
 def test_versioned_source_poses_hidden_motion_and_reference_identity(task):
     from tests.helpers.reference.object_permanence_recordings import load_ray_geometry
 

@@ -39,11 +39,14 @@ AUDITED_TASKS = {
     "G81": ("build_scene_by_kind", "animate_scene"),
     "G65": ("build_scene_by_kind", "animate_scene"),
     "G83": ("build_scene_by_kind", "animate_scene"),
+    "G82": ("build_scene_by_kind", "animate_scene"),
+    "G84": ("build_scene_by_kind", "animate_scene"),
+    "G86": ("build_scene_by_kind", "animate_scene"),
 }
 # These preparation recipes are certified only with the versioned ray contract.
 # The legacy BVH deferrals above/below remain meaningful and are never erased.
-RAY_CONTRACT_TASKS = {"G63", "G65", "G66", "G80", "G81", "G83"}
-CONTRACT_ONLY_TASKS = {"G65", "G83"}
+RAY_CONTRACT_TASKS = {"G63", "G65", "G66", "G80", "G81", "G82", "G83", "G84", "G86"}
+CONTRACT_ONLY_TASKS = {"G65", "G82", "G83", "G84", "G86"}
 # Preparation/rigid serialization passed, but source pixel fidelity did not.
 # Explicit export remains useful for diagnosis; default batch execution is blocked.
 DEFERRED_TASKS = {

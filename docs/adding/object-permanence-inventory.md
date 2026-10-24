@@ -24,9 +24,9 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | geometry-or-scale-review | 2 |
 | orthographic-camera-review | 80 |
 | physics-bake-review | 1 |
-| rigid-candidate-needs-entry-audit | 68 |
+| rigid-candidate-needs-entry-audit | 65 |
 | source-fidelity-review | 4 |
-| versioned-visibility-runtime-gate | 2 |
+| versioned-visibility-runtime-gate | 5 |
 
 ## Source tasks
 
@@ -113,11 +113,11 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | G79 venetian_blinds | 1 | location, rotation_euler | orthographic-camera-review | not evaluated |
 | G80 sliding_double_doors | 1 | location | source-fidelity-review | source fidelity deferred |
 | G81 rolling_shutter | 1 | location | source-fidelity-review | source fidelity deferred |
-| G82 accordion_fold_screen | 1 | location, rotation_euler | rigid-candidate-needs-entry-audit | not evaluated |
+| G82 accordion_fold_screen | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only |
 | G83 four_cup_three_swaps | 1 | location | versioned-visibility-runtime-gate | versioned ray contract only |
-| G84 two_balls_three_cups | 1 | location | rigid-candidate-needs-entry-audit | not evaluated |
+| G84 two_balls_three_cups | 1 | location | versioned-visibility-runtime-gate | versioned ray contract only |
 | G85 nested_cup_transfer | 1 | location | rigid-candidate-needs-entry-audit | not evaluated |
-| G86 conveyor_covered_boxes | 1 | location | rigid-candidate-needs-entry-audit | not evaluated |
+| G86 conveyor_covered_boxes | 1 | location | versioned-visibility-runtime-gate | versioned ray contract only |
 | G87 four_cup_carousel | 1 | location, rotation_euler | rigid-candidate-needs-entry-audit | not evaluated |
 | G88 shell_game_fakeout_reveal | 1 | location | rigid-candidate-needs-entry-audit | not evaluated |
 | G89 limbo_height_bar | 1 | location, rotation_euler | appearance-or-visibility-review | not evaluated |
