@@ -124,7 +124,7 @@ class Knob:
 
 
 _KINDS = {"n": "an int >= 1", "n0": "an int >= 0", "pow2": "a power of two", "warps": f"one of {list(_WARPS)}"}
-_SIM = ("classic-sim", "dmc-sim", "fetch-sim", "miniworld-sim", "ogb-sim", "pusht-sim", "pusht-render", "rocket-sim")
+_SIM = ("classic-sim", "fetch-sim", "miniworld-sim", "ogb-sim", "pusht-sim", "pusht-render", "rocket-sim")
 _RENDER = ("classic-render", "miniworld-render")
 
 KNOBS: dict[str, Knob] = {
@@ -157,9 +157,8 @@ KNOBS: dict[str, Knob] = {
 
 #: Render and simulation paths per environment class or family; the most derived class wins.
 RENDER_PATHS: dict[str, tuple[str, ...]] = {
-    "DMControlSuite": ("dmc-suite", "dmc-render", "dmc-sim"),
-    "DMControlTrackCom": ("dmc-trackcom", "dmc-render", "dmc-sim"),
-    "dmcontrol": ("dmc-sim",),
+    "DMControlSuite": ("dmc-suite", "dmc-render"),
+    "DMControlTrackCom": ("dmc-trackcom", "dmc-render"),
     "OGBManipBase": ("ogb-manipulation", "ogb-sim"),
     "ogbench": ("ogb-maze", "ogb-sim"),
     "fetch": ("fetch-mjwarp", "fetch-sim"),

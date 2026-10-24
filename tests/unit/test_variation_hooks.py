@@ -240,7 +240,7 @@ def test_process_shards_carry_and_restore_per_lane_physics():
 
 def _gravity(env):
     state = env.get_state()
-    sim = np.stack([e.physics.model.opt.gravity for e in env._simulator.envs])
+    sim = np.stack([e.physics.model.opt.gravity for e in env._simulator.lanes.envs])
     style = np.concatenate([env._style[f"gravity.{axis}"].reshape(-1, 1).cpu().numpy() for axis in "xyz"], axis=1)
     rows = torch.cat([state["physics", "gravity", axis] for axis in "xyz"], dim=1).numpy()
     np.testing.assert_array_equal(rows, sim)

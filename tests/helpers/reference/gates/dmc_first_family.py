@@ -168,7 +168,7 @@ def run_gate(device="cpu"):
             try:
                 env.set_variation({"light.diffuse_scale": [1.1]})
                 assert np.array_equal(
-                    env._simulator.envs[0].physics.model.opt.gravity,
+                    env._simulator.lanes.envs[0].physics.model.opt.gravity,
                     np.array([0.0, 0.0, -9.81], np.float64),
                 )
                 check_reset_matches_reference(env, ref, seed=23)

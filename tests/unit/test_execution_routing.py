@@ -22,14 +22,6 @@ def _classic(monkeypatch, target, batch, device):
     return execution.make_classic_adapter(target, batch, device, 17, _local), (target, batch, device, 17), {}, {}
 
 
-def _dmc(monkeypatch, target, batch, device):
-    from stable_envs.envs.dmcontrol.simulation import execution
-
-    monkeypatch.setattr(execution, "DMCProcessAdapter", _process)
-    monkeypatch.setattr(execution, "make_local", _local)
-    return execution.make_dmc_adapter(target, batch, device, 17), (target, batch, device, 17), {}, {}
-
-
 def _fetch(monkeypatch, target, batch, device):
     from stable_envs.envs.fetch.simulation import execution
 
@@ -58,9 +50,6 @@ TARGETS = [
     ("classic", _classic, "acrobot", ("cpu", "cuda"), True),
     ("classic", _classic, "cartpole", ("cpu", "cuda"), False),
     ("classic", _classic, "mountain_car_continuous", ("cpu", "cuda"), False),
-    ("dmc", _dmc, "cheetah", ("cpu",), True),
-    ("dmc", _dmc, "reacher", ("cpu",), True),
-    ("dmc", _dmc, "quadruped", ("cpu",), False),
     ("fetch", _fetch, "Push", ("cpu",), True),
     ("ogbench", _ogbench, "Maze", ("cpu", "cuda"), True),
     ("ogbench", _ogbench, "Cube", ("cpu", "cuda"), True),
@@ -125,8 +114,7 @@ def test_reacher_routes_without_changing_the_output_device(monkeypatch, batch, d
 
     from stable_envs.envs.dmcontrol.simulation import execution
 
-    monkeypatch.setattr(execution, "make_local", _local)
-    monkeypatch.setattr(execution, "process_count", lambda *args, **kwargs: 0)
+    monkeypatch.setattr(execution, "make_batch", _local)
     monkeypatch.setitem(
         sys.modules,
         "stable_envs.envs.dmcontrol.simulation.reacher_mjx",
