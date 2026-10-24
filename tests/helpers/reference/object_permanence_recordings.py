@@ -11,7 +11,7 @@ FIXTURES = Path(__file__).resolve().parents[2] / "fixtures"
 RECORDINGS = FIXTURES / "saved/object_permanence_rigid"
 DEPTH_MSE_MAX = 1e-8
 MASK_IOU_MIN = 0.99
-RECORDED_TASKS = ("g34", "g37", "g38", "g62", "g64")
+RECORDED_TASKS = ("g27", "g34", "g37", "g38", "g55", "g62", "g64")
 
 
 @lru_cache(maxsize=len(RECORDED_TASKS))
@@ -21,6 +21,12 @@ def load_geometry(task):
     directory = FIXTURES / (
         "semantics/occlusion_ball" if task == "g34" else f"semantics/object_permanence/{task}/nominal"
     )
+    return load_geometry_directory(directory)
+
+
+def load_geometry_directory(directory):
+    """Read a source oracle, including uncertified diagnostic captures."""
+    directory = Path(directory)
     manifest = json.loads((directory / "manifest.json").read_text())
     path = directory / manifest["file"]
     assert hashlib.sha256(path.read_bytes()).hexdigest() == manifest["sha256"]

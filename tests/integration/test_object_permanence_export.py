@@ -18,9 +18,11 @@ def exported(tmp_path_factory):
     if not source or not python:
         pytest.skip("live export needs SE_OBJECT_PERMANENCE_SOURCE and SE_OBJECT_PERMANENCE_BLENDER_PYTHON")
     output = tmp_path_factory.mktemp("rigid-export")
-    from scripts.export.object_permanence import AUDITED_TASKS
+    from scripts.export.object_permanence import AUDITED_TASKS, DEFERRED_TASKS
 
     for task in AUDITED_TASKS:
+        if task in DEFERRED_TASKS:
+            continue
         subprocess.run(
             [
                 python,
@@ -191,8 +193,8 @@ for kind in ("scale", "camera", "color", "visibility", "collection", "deformatio
     subprocess.run([python, "-c", code], check=True, timeout=60)
 
 
-@pytest.mark.parametrize("task", ["g37", "g38", "g64"])
-def test_first_batch_live_export_matches_independent_frozen_world_poses(exported, task):
+@pytest.mark.parametrize("task", ["g27", "g37", "g38", "g55", "g64"])
+def test_expansion_live_export_matches_independent_frozen_world_poses(exported, task):
     from tests.helpers.reference.object_permanence_recordings import load_geometry
 
     reference, oracle = load_geometry(task)

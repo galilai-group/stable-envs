@@ -8,6 +8,11 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Second object-permanence batch: nominal G27 support removal and G55 rising
+  screen pass independent full-frame depth/mask gates with the unchanged renderer.
+  Adds bounded lossless reference chunks and a reusable rendering validator;
+  G63/G66/G80/G81 remain explicitly deferred after source-fidelity failures.
+
 - First object-permanence recording expansion: nominal G37 curved track, G38
   pendulum and G64 windowed flip board, using the unchanged shared renderer.
   Adds conservative source capability queues, independent all-frame Blender

@@ -11,19 +11,21 @@ Diversity variants, sampled scene semantics and downstream accuracy are not cert
 
 ## Capability triage
 
-Groups cover every member and are conservative AST hints, not evaluated support.
-Unused helpers may trigger a flag. Priority is audited nominal, visibility/appearance,
+Groups cover every member. Static groups are conservative AST hints, not proof of support.
+Known source-fidelity failures form a separate measured deferral queue.
+Unused helpers may trigger a flag. Remaining priority is audited nominal, visibility/appearance,
 orthographic, geometry/scale, physics bake, then rigid candidate requiring entry audit.
 An applied, time-invariant modifier is allowed; an animated/deforming mesh is not.
 
 | Review group | Members |
 |---|---:|
 | appearance-or-visibility-review | 33 |
-| audited-nominal-runtime-gate | 5 |
+| audited-nominal-runtime-gate | 7 |
 | geometry-or-scale-review | 2 |
 | orthographic-camera-review | 80 |
 | physics-bake-review | 1 |
-| rigid-candidate-needs-entry-audit | 76 |
+| rigid-candidate-needs-entry-audit | 70 |
+| source-fidelity-review | 4 |
 
 ## Source tasks
 
@@ -55,7 +57,7 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | G24 pivoting_occluder | 3 | location, rotation_euler | orthographic-camera-review | not evaluated |
 | G25 no_top_side_post_panel | 2 | location | orthographic-camera-review | not evaluated |
 | G26 bottom_rail_screen | 2 | location | orthographic-camera-review | not evaluated |
-| G27 support_removed_then_fall | 1 | location, rotation_euler | rigid-candidate-needs-entry-audit | not evaluated |
+| G27 support_removed_then_fall | 1 | location, rotation_euler | audited-nominal-runtime-gate | nominal export available |
 | G28 open_ended_tunnel | 1 | location, rotation_euler | rigid-candidate-needs-entry-audit | not evaluated |
 | G29 container_entry_left_u | 1 | location, rotation_euler | rigid-candidate-needs-entry-audit | not evaluated |
 | G30 hidden_object_moves_with_cart | 1 | location, rotation_euler | rigid-candidate-needs-entry-audit | not evaluated |
@@ -83,7 +85,7 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | G52 ramp_open_right_gated_box | 1 | location, rotation_euler | orthographic-camera-review | not evaluated |
 | G53 no_gap_top_rail_curtain | 1 | location | orthographic-camera-review | not evaluated |
 | G54 serpentine_ramp_tunnel | 1 | location, rotation_euler | appearance-or-visibility-review | not evaluated |
-| G55 rising_floor_screen | 1 | location | rigid-candidate-needs-entry-audit | not evaluated |
+| G55 rising_floor_screen | 1 | location | audited-nominal-runtime-gate | nominal export available |
 | G56 three_cup_shell_game | 1 | location | rigid-candidate-needs-entry-audit | not evaluated |
 | G57 ramp_ball_deflected_angled_wall | 1 | location, rotation_euler | orthographic-camera-review | not evaluated |
 | G58 two_ball_trapdoor_size_filter | 1 | location, modifiers, rotation_euler | appearance-or-visibility-review | not evaluated |
@@ -91,10 +93,10 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | G60 newtons_cradle | 1 | location, rotation_euler | rigid-candidate-needs-entry-audit | not evaluated |
 | G61 spiral_ramp_behind_column | 1 | location, rotation_euler | appearance-or-visibility-review | not evaluated |
 | G62 two_balls_cross_tunnel | 1 | location, rotation_euler | audited-nominal-runtime-gate | nominal export available |
-| G63 comb_occluder_sweep | 1 | location | rigid-candidate-needs-entry-audit | not evaluated |
+| G63 comb_occluder_sweep | 1 | location | source-fidelity-review | source fidelity deferred |
 | G64 flipboard_occluder | 1 | location, modifiers, rotation_euler | audited-nominal-runtime-gate | nominal export available |
 | G65 box_two_balls_relocate | 1 | location | rigid-candidate-needs-entry-audit | not evaluated |
-| G66 rotating_carousel_cups | 1 | location, rotation_euler | rigid-candidate-needs-entry-audit | not evaluated |
+| G66 rotating_carousel_cups | 1 | location, rotation_euler | source-fidelity-review | source fidelity deferred |
 | G67 double_deflector_zigzag | 1 | location, rotation_euler | orthographic-camera-review | not evaluated |
 | G68 width_slot_wall_two_balls | 1 | location, rotation_euler | appearance-or-visibility-review | not evaluated |
 | G69 two_tier_trapdoor_cascade | 1 | location, modifiers, rotation_euler | rigid-candidate-needs-entry-audit | not evaluated |
@@ -108,8 +110,8 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | G77 three_balls_one_wide_tunnel | 1 | location, rotation_euler | orthographic-camera-review | not evaluated |
 | G78 rolling_disc_tunnel | 1 | location, rotation_euler | orthographic-camera-review | not evaluated |
 | G79 venetian_blinds | 1 | location, rotation_euler | orthographic-camera-review | not evaluated |
-| G80 sliding_double_doors | 1 | location | rigid-candidate-needs-entry-audit | not evaluated |
-| G81 rolling_shutter | 1 | location | rigid-candidate-needs-entry-audit | not evaluated |
+| G80 sliding_double_doors | 1 | location | source-fidelity-review | source fidelity deferred |
+| G81 rolling_shutter | 1 | location | source-fidelity-review | source fidelity deferred |
 | G82 accordion_fold_screen | 1 | location, rotation_euler | rigid-candidate-needs-entry-audit | not evaluated |
 | G83 four_cup_three_swaps | 1 | location | rigid-candidate-needs-entry-audit | not evaluated |
 | G84 two_balls_three_cups | 1 | location | rigid-candidate-needs-entry-audit | not evaluated |

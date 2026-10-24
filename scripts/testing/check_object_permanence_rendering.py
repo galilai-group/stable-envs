@@ -1,0 +1,90 @@
+"""Check every recorded frame against an independent Blender geometry oracle.
+
+Run in the CUDA interpreter, separately from source export/freeze. Reports include
+all failures; a source-fidelity-deferred scene never becomes a successful import
+merely because its rigid poses serialized correctly. No reference is modified.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+
+import numpy as np
+
+from stable_envs.envs.object_permanence import RigidTrajectory
+from stable_envs.envs.object_permanence.rendering.rigid_nvdiff import RigidSceneRenderer
+from stable_envs.testing.geometry import depth_mse, mask_iou
+from tests.helpers.reference.object_permanence_recordings import (
+    DEPTH_MSE_MAX,
+    MASK_IOU_MIN,
+    load_geometry_directory,
+)
+
+
+def check(recordings, oracle, task, *, cache_static=True):
+    manifest, reference = load_geometry_directory(oracle)
+    failures, minimum, worst = [], 1.0, 0.0
+    with RigidTrajectory(recordings, f"{task.lower()}-nominal") as clip:
+        metadata = clip.manifest
+        if (
+            metadata["source"]["commit"] != manifest["source_commit"]
+            or metadata["source"]["script_sha256"] != manifest["source_script_sha256"]
+        ):
+            raise ValueError("source and recording definitions differ")
+        if manifest["object_ids"] != {o["name"]: o["id"] for o in metadata["objects"]}:
+            raise ValueError("source and recording object identities differ")
+        indices = np.searchsorted(clip.frames, reference["source_frames"])
+        if (indices >= len(clip)).any() or not np.array_equal(clip.frames[indices], reference["source_frames"]):
+            raise ValueError("source and recording frame numbers differ")
+        with RigidSceneRenderer(clip, size=manifest["height"], cache_static=cache_static) as renderer:
+            output = renderer.render_many(indices, modes=("depth", "ids"))
+            depth, ids = output["depth"].cpu().numpy(), output["ids"].cpu().numpy()
+    if depth.shape != reference["depth"].shape or ids.shape != reference["object_ids"].shape:
+        raise ValueError("source and rendering dimensions differ")
+    for row, frame in enumerate(reference["source_frames"]):
+        expected = reference["object_ids"][row]
+        roi = (expected > 0) | (ids[row] > 0)
+        mse = float(depth_mse(depth[row], reference["depth"][row], roi))
+        worst = max(worst, mse)
+        masks = {}
+        for name, label in manifest["object_ids"].items():
+            iou = float(mask_iou(ids[row] == label, expected == label))
+            if not np.isnan(iou):
+                minimum = min(minimum, iou)
+                if iou < MASK_IOU_MIN:
+                    masks[name] = iou
+        if mse > DEPTH_MSE_MAX or masks or not np.isfinite(mse):
+            failures.append({"frame": int(frame), "depth_mse": mse, "failed_masks": masks})
+    return {
+        "task": task.upper(),
+        "source_commit": manifest["source_commit"],
+        "cache_static": cache_static,
+        "frames": len(reference["source_frames"]),
+        "depth_mse_max": worst,
+        "mask_iou_min": minimum,
+        "thresholds": {"depth_mse_max": DEPTH_MSE_MAX, "mask_iou_min": MASK_IOU_MIN},
+        "passed": not failures,
+        "failures": failures,
+    }
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--recordings", type=Path, required=True)
+    parser.add_argument("--oracle", type=Path, required=True)
+    parser.add_argument("--task", required=True)
+    parser.add_argument("--report", type=Path, required=True)
+    parser.add_argument("--uncached", action="store_true")
+    args = parser.parse_args()
+    result = check(args.recordings, args.oracle, args.task, cache_static=not args.uncached)
+    args.report.parent.mkdir(parents=True, exist_ok=True)
+    args.report.write_text(json.dumps(result, indent=2) + "\n")
+    print(json.dumps(result, indent=2))
+    if not result["passed"]:
+        raise SystemExit(1)
+
+
+if __name__ == "__main__":
+    main()

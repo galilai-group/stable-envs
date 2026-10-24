@@ -205,7 +205,7 @@ MSE/mask IoU. They do not certify source RGB or downstream learning accuracy.
 ```
 
 Unit tests cover sharing, mapping, ownership, corruption and invalid contracts.
-Live integration tests run all five exports and the independent checker when
+Live integration tests run all seven certified exports and the independent checker when
 `SE_OBJECT_PERMANENCE_SOURCE` and `SE_OBJECT_PERMANENCE_BLENDER_PYTHON` are set.
 Normal family CI requires no Blender. The G34 source oracle has been extended to 120 frames without changing any
 original sample values or renderer interfaces; no production code reads the oracle.
@@ -225,6 +225,8 @@ pose comparisons additionally validate motion hidden from the camera.
 | G37 curved track | All 120 | 5.93e-13 | 1.0 |
 | G38 pendulum | All 120 | 5.30e-13 | 1.0 |
 | G64 windowed board | All 120 | 9.42e-13 | 1.0 |
+| G27 support removal | All 120 | 7.47e-13 | 1.0 |
+| G55 rising screen | All 120 | 1.31e-12 | .99654 |
 
 Small candidate recordings under `tests/fixtures/saved/object_permanence_rigid`
 let offline CPU/GPU CI exercise the full path without Blender or the user's cache.
@@ -310,12 +312,15 @@ not optimizations to defer. The v1 exporter explicitly rejects unsupported cases
 python -m scripts.export.batch_object_permanence --source-root <source> \
   --output <recordings> --report <plan.json> --tasks all --plan-only
 python -m scripts.export.batch_object_permanence --source-root <source> \
-  --output <new-recordings> --report <report.json> --tasks G37,G38,G64 \
+  --output <new-recordings> --report <report.json> --tasks G27,G55 \
   --blender-python <isolated-blender-python>
 ```
 
-The current plan lists all 197 members across 150 groups: five audited nominal
-preparations and 192 unaudited members. Unaudited does not mean non-rigid. Execution
+The current plan lists all 197 members across 150 groups: seven certified nominal
+preparations, four audited entries deferred by source fidelity, and 186 unaudited
+members. Unaudited does not mean non-rigid. The four deferred entries also report
+`unsupported`, with their measured reason, in both planning and batch execution.
+Explicit single-scene export/freeze remains available for reproducing diagnostics. Execution
 runs one isolated process per supported member, performs independent source
 triangle checks, and reports failures without reusing contaminated Blender state.
 Each job includes a conservative source-only capability review group. The
@@ -390,3 +395,74 @@ all mesh objects on both cached and uncached paths. Exact hidden counts come fro
 the independent source masks; G64 explicitly tests partial visibility instead.
 Native preview GIFs show original source lighting beside simplified shared RGB;
 they are visual aids, while depth MSE and per-object mask IoU are the geometry gates.
+
+
+## Second expansion batch: G27 and G55
+
+This batch audited six source entries. Only G27/G55 passed the unchanged pixel
+gates, so only those two enter certified recordings and the normal GPU suite.
+Existing five recordings/references and runtime renderer code stay unchanged.
+
+| Accepted scene | Mesh objects | Recorded nodes | Maximum depth MSE | Minimum per-object mask IoU |
+|---|---:|---:|---:|---:|
+| G27 support removed, ball falls | 6 | 2 | 7.47e-13 | 1.0 |
+| G55 rising floor screen | 12 | 3 | 1.31e-12 | .99654 |
+
+Both cover all 120 frames at 320x180 with cached and complete drawing paths.
+G27's ball remains visible; the source event is support withdrawal followed by a
+fall, not an occlusion interval. Its source returns an object dictionary but
+expects `(scene, support_plate, ball)` for animation, so the offline preparation
+recipe explicitly binds those source arguments. No movement formula is rewritten.
+A regression verifies the recorded support moves before the ball drops.
+G55's two stationary targets are source-tagged dynamic; their constant pose rows
+are conservatively retained. Both targets are completely hidden for 54 frames.
+
+New references use the same independent Blender ray/pose capture and lossless
+XOR depth format. Parts hold at most 30 frames and recursively split when their
+compressed file would exceed 1000 KiB. G55 needs five parts. Storage splitting
+preserves every source depth bit and frame; earlier fixtures keep their layouts.
+
+### Explicit source-fidelity deferrals
+
+| Scene | Maximum depth MSE | Minimum mask IoU | Why certification is deferred |
+|---|---:|---:|---|
+| G63 parent-driven comb | 2.86e-4 | .99574 | Four frames have a one-pixel boundary depth disagreement |
+| G66 carousel cups | 1.47e-6 | .99986 | Frame 34 has a boundary depth disagreement |
+| G80 sliding doors | 1.29e-12 | .97768 | Coplanar overlapping door faces have different object-ID winners |
+| G81 rolling shutter | 1.55e-12 | .72340 | Coplanar housing/rail faces have ambiguous object-ID attribution |
+
+G63 differs at frames 16/54/66/104. G66 fails the depth gate at 34; frame 41 has
+another near-contact ID difference within current budgets. For selected boundary
+pixels, direct float64 intersections of evaluated source triangles also disagree
+with Blender's BVH result; other discrepancies involve projection rounding.
+These observations do not establish a universal correction rule. G80's actual
+source doors overlap by .06 scene units; G81's housing and rails overlap with
+coplanar front faces. Their source mesh-ID masks are not uniquely defined by
+nearest geometry in those regions. Their depth agreement alone is insufficient
+for the existing all-object mask contract.
+
+`DEFERRED_TASKS` blocks these entries in default batch planning/execution, with
+regression coverage. They are not certified, silently skipped, or converted to
+expected-passing tests. Independent captures, raw recordings, source/shared GIFs
+and complete diagnostic reports remain local artifacts; no failing case is
+represented as a successful import. Their source preparation recipes remain
+explicitly callable for investigation. Existing frozen samples and thresholds
+are not changed to accommodate these differences.
+
+The reusable checker reports **all** frames and returns a nonzero status on any
+failed depth or object mask. Source definitions and IDs must match before drawing:
+
+```bash
+# First export/freeze an audited scene into new directories with the Blender interpreter.
+# Then run this check with the CUDA interpreter. G63 intentionally exits nonzero.
+python -m scripts.testing.check_object_permanence_rendering \
+  --recordings <recordings> --oracle <source-oracle>/g63/nominal --task G63 \
+  --report <evaluation>/g63-check.json
+# Add --uncached to compare complete drawing; no reference is modified.
+```
+
+For G27/G55, use the earlier export, freeze and preview commands with their task
+IDs, then `comparison_gif` for all 120 aligned frames. Further ports must pass the
+same gates. Boundary conventions and coplanar mesh attribution need a separately
+specified, reusable fidelity solution before the four deferred scenes can be
+certified; no scene-specific rendering workaround is introduced here.

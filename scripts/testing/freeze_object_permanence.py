@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import io
 import json
 import platform
 import runpy
@@ -21,14 +22,57 @@ SOURCE_COMMIT = "824baddcdad087810d35638bf8f273b884f74975"
 # Deliberately independent of the candidate exporter's entry registry/extraction.
 # These calls and targets were checked against each source main()/selected builder.
 REFERENCE_CASES = {
+    "G27": ("build_scene", "animate_scene", ("target_orange_ball",)),
     "G37": ("build_scene_by_kind", "animate_scene", ("orange_ball",)),
     "G38": ("build_scene_by_kind", "animate_scene", ("red_pendulum_bob",)),
     "G64": ("build_scene_by_kind", "animate_scene_by_kind", ("static_object_a_ball", "static_object_b_cylinder")),
+    "G55": ("build_scene_by_kind", "animate_scene", ("red_block", "green_block")),
+    "G63": ("build_scene_by_kind", "animate_scene", ("red_block", "green_block", "blue_block")),
+    "G66": ("build_scene_by_kind", "animate_scene", ("hidden_ball",)),
+    "G80": ("build_scene_by_kind", "animate_scene", ("red_cube_target", "blue_sphere_target")),
+    "G81": ("build_scene_by_kind", "animate_scene", ("red_box", "blue_cylinder")),
 }
 
 
 def sha256(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def write_depth_parts(output, bits):
+    """Store all lossless depth bits in <=30-frame, <=1000-KiB NPZ parts.
+
+    Bound reference file sizes without reducing frame count or precision. A part
+    with high temporal change splits in half; this is independent of task ID.
+    """
+    parts: list[dict] = []
+
+    def publish(start, stop):
+        stream = io.BytesIO()
+        np.savez_compressed(stream, depth_xor=bits[start:stop])
+        content = stream.getvalue()
+        if len(content) > 1000 * 1024:
+            if stop - start == 1:
+                raise ValueError("a single reference depth frame exceeds repository file limit")
+            middle = (start + stop) // 2
+            publish(start, middle)
+            publish(middle, stop)
+            return
+        path = output / f"depth_{start:04d}_{stop:04d}.npz"
+        path.write_bytes(content)
+        parts.append(
+            {
+                "file": path.name,
+                "sha256": sha256(path),
+                "start": start,
+                "stop": stop,
+                "shape": list(bits[start:stop].shape),
+                "dtype": str(bits.dtype),
+            }
+        )
+
+    for start in range(0, len(bits), 30):
+        publish(start, min(start + 30, len(bits)))
+    return parts
 
 
 def freeze(root, output, task, width=320, height=180):
@@ -59,7 +103,10 @@ def freeze(root, output, task, width=320, height=180):
     namespace = runpy.run_path(str(script), run_name="rigid_independent_reference")
     namespace["clear_scene"]()
     built = namespace[build]()
-    namespace[animate](*(built if isinstance(built, tuple) else (built,)))
+    if task == "G27":
+        namespace[animate](bpy.context.scene, built["support_plate"], built["ball"])
+    else:
+        namespace[animate](*(built if isinstance(built, tuple) else (built,)))
     scene = bpy.context.scene
     scene.render.resolution_x, scene.render.resolution_y = width, height
     scene.render.resolution_percentage = 100
@@ -121,21 +168,7 @@ def freeze(root, output, task, width=320, height=180):
     # The moving board changes many pixels; one monolithic NPZ exceeds repo limits.
     depth_bits = arrays.pop("depth_xor")
     np.savez_compressed(archive, **arrays)
-    depth_parts = []
-    for start in range(0, len(frames), 30):
-        stop = min(start + 30, len(frames))
-        part = output / f"depth_{start:04d}_{stop:04d}.npz"
-        np.savez_compressed(part, depth_xor=depth_bits[start:stop])
-        depth_parts.append(
-            {
-                "file": part.name,
-                "sha256": sha256(part),
-                "start": start,
-                "stop": stop,
-                "shape": list(depth_bits[start:stop].shape),
-                "dtype": str(depth_bits.dtype),
-            }
-        )
+    depth_parts = write_depth_parts(output, depth_bits)
     manifest = {
         "schema": "stable-envs/object-permanence-rigid-oracle-v1",
         "task": task,
@@ -158,7 +191,7 @@ def freeze(root, output, task, width=320, height=180):
         "object_order": names,
         "targets": list(targets),
         "target_visible_pixels": {name: (ids == labels[name]).sum(axis=(1, 2)).tolist() for name in targets},
-        "depth_encoding": "float32 bitwise XOR against depth_base; lossless 30-frame chunks",
+        "depth_encoding": "float32 bitwise XOR against depth_base; lossless chunks of at most 30 frames",
         "depth_parts": depth_parts,
         "depth_convention": "positive camera-axis distance in source scene units; zero for no hit",
         "mask_convention": "visible source mesh at the pixel center; zero for no hit",

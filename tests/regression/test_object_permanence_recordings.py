@@ -81,6 +81,38 @@ def test_first_batch_lossless_depth_parts_and_actual_source_visibility(task):
 
 
 def test_every_audited_nominal_entry_has_a_declared_independent_source_gate():
-    from scripts.export.object_permanence import AUDITED_TASKS
+    from scripts.export.object_permanence import AUDITED_TASKS, DEFERRED_TASKS
 
-    assert {task.lower() for task in AUDITED_TASKS} == set(RECORDED_TASKS)
+    assert {task.lower() for task in AUDITED_TASKS if task not in DEFERRED_TASKS} == set(RECORDED_TASKS)
+
+
+@pytest.mark.parametrize("task", ["g27", "g55"])
+def test_second_batch_reference_visibility_and_lossless_depth_chunks(task):
+    from scripts.testing.freeze_object_permanence import REFERENCE_CASES
+
+    manifest, oracle = load_geometry(task)
+    assert oracle["depth"].shape == oracle["object_ids"].shape == (120, 180, 320)
+    assert oracle["depth"].dtype == np.float32
+    assert np.isfinite(oracle["depth"]).all() and (oracle["depth"] >= 0).all()
+    assert all(0 < p["stop"] - p["start"] <= 30 for p in manifest["depth_parts"])
+    np.testing.assert_array_equal(oracle["depth"][0].view(np.uint32), oracle["depth_base"].view(np.uint32))
+    assert manifest["targets"] == list(REFERENCE_CASES[task.upper()][2])
+    for name in manifest["targets"]:
+        counts = (oracle["object_ids"] == manifest["object_ids"][name]).sum(axis=(1, 2))
+        np.testing.assert_array_equal(counts, manifest["target_visible_pixels"][name])
+        assert counts[0] > 0 and counts[-1] > 0
+        assert counts.min() < counts.max()
+
+
+def test_support_removal_precedes_the_recorded_ball_drop():
+    with RigidTrajectory(RECORDINGS, "g27-nominal") as clip:
+        objects = clip.manifest["objects"]
+        poses = clip.object_poses(np.arange(len(clip)))
+        by_name = {obj["name"]: i for i, obj in enumerate(objects)}
+        support = poses[:, by_name["support_plate"], 0]
+        ball = poses[:, by_name["target_orange_ball"], 2]
+        moving_support = np.flatnonzero(support != support[0])
+        falling_ball = np.flatnonzero(ball < ball[0])
+        assert len(moving_support) and len(falling_ball)
+        assert moving_support[0] < falling_ball[0]
+        assert support[-1] < support[0] and ball[-1] < ball[0]

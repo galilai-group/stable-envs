@@ -26,11 +26,25 @@ SOURCE_COMMIT = "824baddcdad087810d35638bf8f273b884f74975"
 SCHEMA = "stable-envs/object-permanence-rigid-v1"
 CONVENTIONS = {"world": "right-handed-z-up", "quaternion": "wxyz", "units": "source-scene-units"}
 AUDITED_TASKS = {
+    "G27": ("build_scene", "animate_scene"),
     "G34": ("build_scene_by_kind", "animate_scene_by_kind"),
     "G62": ("build_scene_by_kind", "animate_scene_by_kind"),
     "G37": ("build_scene_by_kind", "animate_scene"),
     "G38": ("build_scene_by_kind", "animate_scene"),
     "G64": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G55": ("build_scene_by_kind", "animate_scene"),
+    "G63": ("build_scene_by_kind", "animate_scene"),
+    "G66": ("build_scene_by_kind", "animate_scene"),
+    "G80": ("build_scene_by_kind", "animate_scene"),
+    "G81": ("build_scene_by_kind", "animate_scene"),
+}
+# Preparation/rigid serialization passed, but source pixel fidelity did not.
+# Explicit export remains useful for diagnosis; default batch execution is blocked.
+DEFERRED_TASKS = {
+    "G63": "source fidelity deferred: boundary depth MSE exceeds 1e-8 at frames 16/54/66/104",
+    "G66": "source fidelity deferred: boundary depth MSE exceeds 1e-8 at frame 34",
+    "G80": "source fidelity deferred: coplanar door mask IoU below .99 at frame 54",
+    "G81": "source fidelity deferred: coplanar housing/rail mask IoU below .99 at frame 1",
 }
 G34_ORDER = (
     "large_floor_base",
@@ -129,6 +143,8 @@ def inventory(root, output):
             members += 1
             tree = ast.parse((path.parent / name).read_text())
             group = capability_group(tree, audited=task["id"] in AUDITED_TASKS and name == task["member_scripts"][0])
+            if task["id"] in DEFERRED_TASKS and name == task["member_scripts"][0]:
+                group = "source-fidelity-review"
             groups[group] = groups.get(group, 0) + 1
             review_groups.append(group)
             for node in ast.walk(tree):
@@ -149,7 +165,13 @@ def inventory(root, output):
                         signals.add("shape_keys")
                 if isinstance(node, ast.Attribute) and node.attr in ("hide_render", "hide_viewport"):
                     signals.add(node.attr)
-        pilot = "nominal export available" if task["id"] in AUDITED_TASKS else "not evaluated"
+        pilot = (
+            "source fidelity deferred"
+            if task["id"] in DEFERRED_TASKS
+            else "nominal export available"
+            if task["id"] in AUDITED_TASKS
+            else "not evaluated"
+        )
         rows.append(
             f"| {task['id']} {task['name']} | {len(task['member_scripts'])} | {', '.join(sorted(signals)) or 'none found'} | {review_groups[0]} | {pilot} |"
         )
@@ -163,8 +185,9 @@ def inventory(root, output):
         "run export to check their evaluated geometry, transforms, materials and camera at every frame.\n"
         "Diversity variants, sampled scene semantics and downstream accuracy are not certified here.\n\n"
         "## Capability triage\n\n"
-        "Groups cover every member and are conservative AST hints, not evaluated support.\n"
-        "Unused helpers may trigger a flag. Priority is audited nominal, visibility/appearance,\n"
+        "Groups cover every member. Static groups are conservative AST hints, not proof of support.\n"
+        "Known source-fidelity failures form a separate measured deferral queue.\n"
+        "Unused helpers may trigger a flag. Remaining priority is audited nominal, visibility/appearance,\n"
         "orthographic, geometry/scale, physics bake, then rigid candidate requiring entry audit.\n"
         "An applied, time-invariant modifier is allowed; an animated/deforming mesh is not.\n\n"
         "| Review group | Members |\n|---|---:|\n"
@@ -195,7 +218,10 @@ def prepare(root, task):
     namespace["clear_scene"]()
     build, animate = AUDITED_TASKS[task]
     result = namespace[build]()
-    namespace[animate](*(result if isinstance(result, tuple) else (result,)))
+    if task == "G27":
+        namespace[animate](bpy.context.scene, result["support_plate"], result["ball"])
+    else:
+        namespace[animate](*(result if isinstance(result, tuple) else (result,)))
     return bpy.context.scene, source, metadata
 
 
