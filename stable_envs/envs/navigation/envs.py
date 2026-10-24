@@ -477,11 +477,12 @@ class _HiddenTargetSemantics:
         agent = state["agent", "position"]
         target = state["target", "position"]
         observation = self._observation(agent, target)
-        # Reduce each lane on CPU to match the source torch.norm rounding before moving outputs.
-        host_delta = (agent - target).detach().cpu()
-        distance = torch.tensor(
-            [float(torch.norm(row)) for row in host_delta], dtype=torch.float64, device=self.device
-        )
+        # Match the two-element CPU torch.norm: round x*x, accumulate y*y with
+        # one float32 rounding, then round sqrt. Reassociation can flip success at 16 px.
+        delta = (agent - target).detach().double()
+        first = delta[:, 0].square().float()
+        squared = torch.addcmul(first.double(), delta[:, 1], delta[:, 1]).float()
+        distance = squared.double().sqrt().float().double()
         n = int(state.batch_size[0])
         return StepResult(
             {
@@ -840,32 +841,8 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
     def make_variation_space(self) -> Dict:
         return Dict({"agent": Dict(self._agent_space()), **self._structure_space()})
 
-    @torch.no_grad()
-    def _step(self, action, *, active=None) -> TensorDict:
-        self._check_open("step")
-        act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
-        agent, observation, distance, terminated = self._jax_kernel.step(
-            self._render_state, self._target_position, act, self._style.values, active
-        )
-        self._render_state.copy_(agent)
-        state = self._full_state(agent)
-        return StepResult(
-            {
-                "state": state,
-                "reward": torch.zeros(self.B, device=self.device, dtype=torch.float64),
-                "terminated": terminated,
-                "truncated": torch.zeros(self.B, device=self.device, dtype=torch.bool),
-                "observation": observation,
-                "info": {
-                    "proprio": agent.clone(),
-                    "state": agent.clone(),
-                    "goal_state": self._target_position.clone(),
-                    "distance_to_target": distance,
-                },
-            },
-            batch_size=[self.B],
-            device=self.device,
-        )
+    def _advance_rows(self, rows, action, sty):
+        return self._jax_kernel.advance(rows, action, sty.values)
 
     def _reset_value_ok(self, path, value, lane):
         if path != "agent.position":
@@ -879,19 +856,14 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
 
     def _observation(self, agent, target):
         n = int(agent.shape[0])
-        axis = self._style["wall.axis"][:n] > 0.5
-        count = self._style["door.number"][:n].trunc()
+        axis = (self._style["wall.axis"][:n] > 0.5).reshape(n, 1)
+        count = self._style["door.number"][:n].trunc().reshape(n, 1)
         positions = self._style["door.position"][:n]
-        doors = []
-        center = torch.full((n,), float(WALL_CENTER), device=self.device, dtype=torch.float32)
-        zeros = torch.zeros_like(center)
-        for i in range(MAX_DOOR):
-            live = count > i
-            p = positions[:, i]
-            x = torch.where(live, torch.where(axis, center, p), zeros)
-            y = torch.where(live, torch.where(axis, p, center), zeros)
-            doors.extend([x, y])
-        return torch.cat([agent, target, torch.stack(doors, dim=1)], dim=1)
+        center = torch.full_like(positions, float(WALL_CENTER))
+        doors = torch.stack((torch.where(axis, center, positions), torch.where(axis, positions, center)), dim=-1)
+        live = torch.arange(MAX_DOOR, device=self.device) < count
+        doors = torch.where(live[..., None], doors, 0.0)
+        return torch.cat((agent, target, doors.flatten(1)), dim=1)
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """Sample agent positions in [14, 209]^2, rejecting positions inside the central wall."""

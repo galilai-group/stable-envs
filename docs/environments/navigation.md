@@ -2,8 +2,7 @@
 
 These five classes port 2D navigation tasks of
 [stable-worldmodel](https://github.com/galilai-group/stable-worldmodel). A point agent moves in a flat
-arena. TwoRoom dynamics use JAX on CPU or CUDA, exchanging Torch tensors through DLPack.
-The other navigation dynamics and all navigation renderers use Torch.
+arena, with walls, doors or motion-bias zones depending on the task.
 
 ```python
 import stable_envs as snv
@@ -25,8 +24,9 @@ State keeps the task.
 
 ### Dynamics
 
-TwoRoom uses JAX on the requested device. JAX is a core dependency.
-For CUDA, install `stable-envs[navigation-gpu]`:
+TwoRoom runs on CPU or CUDA and accepts and returns Torch tensors. Its JAX physics backend
+uses the requested device; JAX is included in the base installation. For CUDA, install
+`stable-envs[navigation-gpu]`:
 
 ```python
 import torch
@@ -38,13 +38,9 @@ with snv.TwoRoom(num_envs=1024, device="cuda") as env:
     result = env.step(actions, states=None, frames=None)
 ```
 
-This package contains the JAX kernel, adapted from
-[envX TwoRoom](https://github.com/fracapuano/envX/tree/d26c817c1124229c819be574f137cd68bda4380a/src/envx/tworooms),
-with no envX runtime dependency. The first step compiles the kernel.
-
-The public API returns Torch tensors. Inputs and outputs cross the Torch/JAX boundary through DLPack,
-without CPU/NumPy staging during stepping. Strided or unaligned inputs may require a device-local copy;
-public State snapshots retain independent storage. A missing JAX CUDA runtime raises an error.
+The first step compiles the physics kernel, so allow a warm-up step before measuring throughput.
+Torch and JAX exchange tensors through DLPack on the selected device, without copying them to CPU
+during stepping. A missing JAX CUDA runtime raises an error explaining which extra to install.
 
 <!-- env: TwoRoom -->
 

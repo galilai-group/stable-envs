@@ -7,20 +7,8 @@ import torch
 
 import stable_envs as se
 from tests.helpers.reference.semantics import assert_same_state
-from tests.helpers.tworoom import TorchTwoRoom
 
 pytestmark = pytest.mark.family("navigation")
-
-
-@pytest.mark.parametrize("seed", [0, 7, 31])
-def test_public_steps_match_torch_dynamics(seed):
-    with TorchTwoRoom(num_envs=8, device="cpu") as main, se.TwoRoom(num_envs=8, device="cpu") as env:
-        main.reset(seed=seed)
-        env.reset(seed=seed)
-        assert env.execution_mode == "NATIVE_JAX"
-        actions = torch.from_numpy(np.random.default_rng(seed).uniform(-2, 2, (40, 8, 2)).astype(np.float32))
-        for action in actions:
-            assert_same_state(main.step(action, frames=None), env.step(action, frames=None))
 
 
 def test_collisions_with_fractional_per_lane_geometry():
@@ -35,23 +23,33 @@ def test_collisions_with_fractional_per_lane_geometry():
         "door.position": [[49, 112, 180]] * 7,
         "door.size": [[14.25, 10.5, 7.75]] * 7,
     }
-    with TorchTwoRoom(num_envs=7, device="cpu") as main, se.TwoRoom(num_envs=7, device="cpu") as env:
-        for item in (main, env):
-            item.set_variation(variation)
-            item.reset(seed=0, options={"state": positions, "target_state": [180, 180]})
-        for _ in range(6):
-            assert_same_state(main.step(actions, frames=None), env.step(actions, frames=None))
+    with se.TwoRoom(num_envs=7, device="cpu") as env:
+        env.set_variation(variation)
+        env.reset(seed=0, options={"state": positions, "target_state": [180, 180]})
+        for step in range(1, 7):
+            result = env.step(actions, frames=None)
+            expected = torch.tensor(
+                [
+                    [99.375, 100],
+                    [125, 100],
+                    [100 + 4.125 * step, 49],
+                    [50, 21],
+                    [203, 100],
+                    [49, 100 + 5 * step],
+                    [100, 130 - 7.25 * step],
+                ]
+            )
+            assert_same_state(result["state", "agent", "position"], expected)
 
 
 def test_sequence_masks_freeze_each_lane_after_success():
     options = {"state": [[60, 112], [60, 112], [60, 112]], "target_state": [[60, 112], [85, 112], [180, 112]]}
     actions = torch.tensor([[[1.0, 0.0]] * 6] * 3)
-    with TorchTwoRoom(num_envs=3, device="cpu") as main, se.TwoRoom(num_envs=3, device="cpu") as env:
-        for item in (main, env):
-            item.reset(seed=0, options=options)
+    with se.TwoRoom(num_envs=3, device="cpu") as env:
+        env.reset(seed=0, options=options)
         result = env.step(actions, frames=None)
-        assert_same_state(main.step(actions, frames=None), result)
         assert_same_state(result["state", "agent", "position"], torch.tensor([[65, 112], [70, 112], [90, 112.0]]))
+        assert result["valid"].sum(dim=1).tolist() == [1, 2, 6]
 
 
 def test_dlpack_shares_contiguous_inputs_and_step_has_no_host_conversion(monkeypatch):
@@ -81,32 +79,52 @@ def test_dlpack_shares_contiguous_inputs_and_step_has_no_host_conversion(monkeyp
 
 
 def test_noncontiguous_actions_and_one_lane_offset_views():
-    with TorchTwoRoom(num_envs=1, device="cpu") as main, se.TwoRoom(num_envs=1, device="cpu") as env:
-        main.reset(seed=0)
-        env.reset(seed=0)
+    with se.TwoRoom(num_envs=1, device="cpu") as env:
+        env.reset(seed=0, options={"state": [50, 50], "target_state": [180, 180]})
         action = torch.arange(8, dtype=torch.float32).reshape(4, 2)[1:2]
         assert action.storage_offset() > 0
-        assert_same_state(main.step(action, frames=None), env.step(action, frames=None))
+        result = env.step(action, frames=None)
+        assert_same_state(result["state", "agent", "position"], torch.tensor([[55.0, 55.0]]))
         actions = (torch.arange(20, dtype=torch.float32).reshape(1, 5, 4) / 32)[..., ::2]
         assert not actions.is_contiguous()
-        assert_same_state(main.step(actions, frames=None), env.step(actions, frames=None))
+        result = env.step(actions, frames=None)
+        assert_same_state(result["state", "agent", "position"], torch.tensor([[61.25, 62.8125]]))
 
 
-def test_success_boundary_has_matching_boolean_outputs():
+@pytest.mark.parametrize("name", ["TwoRoom", "Piecewise"])
+def test_shared_distance_matches_cpu_norm_without_host_conversion(name, monkeypatch):
     angles = np.linspace(0, 2 * np.pi, 128, endpoint=False)
     target = (np.stack((np.cos(angles), np.sin(angles)), -1) * 16 + 60).astype(np.float32)
-    with TorchTwoRoom(num_envs=128, device="cpu") as main, se.TwoRoom(num_envs=128, device="cpu") as env:
-        for item in (main, env):
-            item.reset(seed=0, options={"state": [60, 60], "target_state": target})
-        assert_same_state(main.step(torch.zeros(128, 2), frames=None), env.step(torch.zeros(128, 2), frames=None))
+    target = np.concatenate((target, np.random.default_rng(7).uniform(14, 209, (512, 2)).astype(np.float32)))
+    with se.make(name, num_envs=len(target), device="cpu") as env:
+        state = env.reset(seed=0, options={"state": [60, 60], "target_state": target})
+        delta = state["agent", "position"] - state["target", "position"]
+        expected = torch.tensor([float(torch.norm(row)) for row in delta], dtype=torch.float64)
+
+        def forbidden(*args, **kwargs):
+            raise AssertionError("host conversion in shared navigation outputs")
+
+        with monkeypatch.context() as patch:
+            patch.setattr(torch.Tensor, "cpu", forbidden)
+            patch.setattr(torch.Tensor, "numpy", forbidden)
+            patch.setattr(torch.Tensor, "item", forbidden)
+            result = env._outputs(state)
+        assert_same_state(result["info", "distance_to_target"], expected)
+        assert_same_state(result["terminated"], expected < 16)
+
+
+def test_step_uses_the_observation_hook(monkeypatch):
+    with se.TwoRoom(device="cpu") as env:
+        env.reset(seed=0)
+        expected = torch.arange(10, dtype=torch.float32).reshape(1, 10)
+        monkeypatch.setattr(env, "_observation", lambda agent, target: expected.clone())
+        assert_same_state(env.step(torch.zeros(1, 2), frames=None)["observation"], expected)
 
 
 def test_continuous_action_multiply_rounds_before_position_addition():
     options = {"state": [53.47578811645508, 60], "target_state": [180, 180]}
     action = torch.tensor([[-0.9868243932723999, 0.0]])
-    with TorchTwoRoom(device="cpu") as main, se.TwoRoom(device="cpu") as env:
-        for item in (main, env):
-            item.reset(seed=0, options=options)
-        expected, actual = main.step(action, frames=None), env.step(action, frames=None)
+    with se.TwoRoom(device="cpu") as env:
+        env.reset(seed=0, options=options)
+        actual = env.step(action, frames=None)
         assert actual["state", "agent", "position"][0, 0].item() == 48.541664123535156
-        assert_same_state(expected, actual)

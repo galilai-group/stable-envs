@@ -1,10 +1,13 @@
-"""JAX TwoRoom dynamics adapted from fracapuano/envX at d26c817c1124229c819be574f137cd68bda4380a.
+"""Batched TwoRoom physics with Torch/JAX buffer exchange.
 
 Copyright 2026 Francesco Capuano. SPDX-License-Identifier: Apache-2.0
 See licenses/envX-APACHE-2.0.txt and THIRD_PARTY_NOTICES.md.
 
 Torch owns the live State. Steps exchange device buffers through DLPack and return
-new arrays. Borrowed inputs are not retained between steps.
+new position arrays. Borrowed inputs are not retained between steps or donated to
+JAX, so public State snapshots keep independent storage. Strided or unaligned
+inputs require a device-local copy. The first call compiles the physics kernel;
+masking, observations and task outputs remain in the shared navigation code.
 """
 
 from __future__ import annotations
@@ -27,7 +30,7 @@ except ImportError:  # Older JAX kept the context manager under experimental.
 
 
 def apply_collisions(position, proposed, *, radius, axis, thickness, doors, sizes, number):
-    """Resolve walls and doorways with stable-envs boundary rounding."""
+    """Resolve border, wall and doorway collisions."""
     lower = (14.0 + radius.astype(jnp.float64)).astype(jnp.float32)
     upper = (210.0 - radius.astype(jnp.float64)).astype(jnp.float32)
     bounded = jnp.clip(proposed, lower, upper)
@@ -69,29 +72,7 @@ def _compiled(layout):
             number=leaf("door.number")[0],
         )
 
-    def step(position, target, action, style, active):
-        agent = jax.vmap(advance)(position, action, style)
-        if active is not None:
-            agent = jnp.where(active[:, None], agent, position)
-        leaf = lambda path: style[:, fields[path]]
-        vertical = leaf("wall.axis") > 0.5
-        coordinates = leaf("door.position")
-        centers = jnp.full_like(coordinates, 112.0)
-        doors = jnp.stack((jnp.where(vertical, centers, coordinates), jnp.where(vertical, coordinates, centers)), -1)
-        doors = jnp.where((jnp.arange(3) < jnp.trunc(leaf("door.number")))[:, :, None], doors, 0.0)
-        observation = jnp.concatenate((agent, target, doors.reshape(-1, 6)), axis=1)
-        # Main's two-element CPU torch.norm accumulates x*x, then fma(y, y, sum),
-        # and rounds sqrt to float32. A reassociated reduction can flip success
-        # at exactly 16 pixels. Float64 intermediates reproduce that order on GPU.
-        delta = (agent - target).astype(jnp.float64)
-        first = jax.lax.optimization_barrier((delta[:, 0] * delta[:, 0]).astype(jnp.float32))
-        squared = jax.lax.optimization_barrier(
-            (delta[:, 1] * delta[:, 1] + first.astype(jnp.float64)).astype(jnp.float32)
-        )
-        distance = jax.lax.optimization_barrier(jnp.sqrt(squared.astype(jnp.float64)).astype(jnp.float32))
-        return agent, observation, distance.astype(jnp.float64), distance < 16.0
-
-    return jax.jit(step)
+    return jax.jit(jax.vmap(advance))
 
 
 def from_torch(value):
@@ -119,12 +100,11 @@ class Kernel:
             ]
         except (RuntimeError, IndexError) as exc:
             raise RuntimeError("TwoRoom JAX device unavailable; CUDA needs stable-envs[navigation-gpu]") from exc
-        self._step = _compiled(tuple((path, offset, width) for path, (offset, width) in layout.items()))
+        self._advance = _compiled(tuple((path, offset, width) for path, (offset, width) in layout.items()))
 
-    def step(self, position, target, action, style, active):
+    def advance(self, position, action, style):
         # Scope x64 to this kernel instead of changing the caller's global JAX configuration.
         # No donation: Torch still owns every input buffer, and public snapshots must survive.
         with enable_x64(), jax.default_device(self.device):
-            inputs = tuple(from_torch(value) for value in (position, target, action, style))
-            result = self._step(*inputs, None if active is None else from_torch(active))
-            return tuple(torch.from_dlpack(value) for value in result)
+            inputs = tuple(from_torch(value) for value in (position, action, style))
+            return torch.from_dlpack(self._advance(*inputs))
