@@ -34,8 +34,8 @@ OBJECTS = (
     "wide_opaque_screen",
     "small_orange_ball",
 )
-# Dense coverage at both visibility boundaries, plus visible/hidden endpoints.
-GEOMETRY_FRAMES = (1, 30, 42, 43, 44, 45, 46, 47, 48, 55, 60, 65, 73, 74, 75, 76, 77, 78, 79, 90, 120)
+# Full nominal sequence; the v2 fixture extends the original 21 boundary samples.
+GEOMETRY_FRAMES = tuple(range(1, 121))
 
 
 def sha256(path):
@@ -111,18 +111,20 @@ def freeze(source_root: Path, output: Path, width=320, height=180):
         geometry[name] = dict(position=list(obj.matrix_world.translation), dimensions=list(obj.dimensions))
     output.mkdir(parents=True)
     archive = output / "blender_g34_nominal.npz"
+    depths = np.asarray(depths, np.float32)
     arrays = dict(
         source_frames=source_frames,
         positions=np.asarray(positions, np.float64),
         quaternions=np.asarray(quaternions, np.float64),
         geometry_frames=np.asarray(GEOMETRY_FRAMES, np.int64),
-        depth=np.asarray(depths, np.float32),
+        depth_base=depths[0].copy(),
+        depth_xor=depths.view(np.uint32) ^ depths[0].view(np.uint32),
         object_ids=np.asarray(ids, np.int16),
         camera_matrix=np.asarray(matrix, np.float64),
     )
     np.savez_compressed(archive, **arrays)
     manifest = dict(
-        schema="stable-envs/occlusion-ball-oracle-v1",
+        schema="stable-envs/occlusion-ball-oracle-v2",
         source_url="https://github.com/hokindeng/object-permanence",
         source_commit=commit,
         source_script=SOURCE_SCRIPT,
@@ -143,6 +145,7 @@ def freeze(source_root: Path, output: Path, width=320, height=180):
             sensor_width_mm=camera.data.sensor_width,
         ),
         depth_convention="positive camera-axis distance in source scene units; 0 is no hit",
+        depth_encoding="float32 bitwise XOR against depth_base; lossless",
         mask_convention="visible triangle surface at pixel center; 0 is no hit",
         object_ids=labels,
         geometry=geometry,

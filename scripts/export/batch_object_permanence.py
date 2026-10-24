@@ -1,0 +1,119 @@
+"""Plan or export audited source members with one isolated Blender process/job.
+
+    python -m scripts.export.batch_object_permanence --source-root <checkout> \
+        --output <dataset> --report <report.json> --tasks all --plan-only
+
+An unregistered member is reported as unsupported, never inferred to be rigid.
+Execution exits unsuccessfully if any requested job is unsupported or fails.
+Existing clips are not overwritten. Reports are not renderer asset indexes.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+from .object_permanence import PILOTS, SOURCE_COMMIT, check_source, task_manifests
+
+
+def run(root, output, report, *, tasks="all", plan_only=False, blender_python=sys.executable):
+    check_source(root)
+    selected = None if tasks == "all" else set(tasks.split(","))
+    paths = task_manifests(root)
+    known = {json.loads(path.read_text())["id"] for path in paths}
+    if selected is not None and selected - known:
+        raise ValueError(f"unknown source tasks: {sorted(selected - known)}")
+    jobs = []
+    for path in paths:
+        task = json.loads(path.read_text())
+        known.add(task["id"])
+        if selected is not None and task["id"] not in selected:
+            continue
+        for member, name in enumerate(task["member_scripts"]):
+            job = {"task": task["id"], "member": member, "script": str((path.parent / name).relative_to(root))}
+            if member != 0 or task["id"] not in PILOTS:
+                job.update(status="unsupported", reason="preparation entry point not yet audited")
+            elif plan_only:
+                job["status"] = "ready-for-runtime-check"
+            else:
+                command = [
+                    str(blender_python),
+                    "-m",
+                    "scripts.export.object_permanence",
+                    "export",
+                    "--source-root",
+                    str(root),
+                    "--output",
+                    str(output),
+                    "--task",
+                    task["id"],
+                ]
+                try:
+                    completed = subprocess.run(command, capture_output=True, text=True, timeout=600)
+                    if completed.returncode == 0:
+                        # Validate independently reconstructed source triangles,
+                        # not merely successful file writing. Pixel certification
+                        # remains the per-task frozen-oracle test suite.
+                        completed = subprocess.run(
+                            [
+                                str(blender_python),
+                                "-m",
+                                "scripts.testing.check_object_permanence_export",
+                                "--source-root",
+                                str(root),
+                                "--dataset",
+                                str(output),
+                                "--task",
+                                task["id"],
+                            ],
+                            capture_output=True,
+                            text=True,
+                            timeout=600,
+                        )
+                        job["geometry_check"] = "passed" if completed.returncode == 0 else "failed"
+                    job["status"] = "exported" if completed.returncode == 0 else "failed"
+                    job["detail"] = (completed.stdout if completed.returncode == 0 else completed.stderr)[-4000:]
+                except (OSError, subprocess.TimeoutExpired) as error:
+                    job.update(status="failed", detail=str(error))
+            jobs.append(job)
+    result = {
+        "schema": "stable-envs/object-permanence-batch-v1",
+        "source_commit": SOURCE_COMMIT,
+        "plan_only": plan_only,
+        "jobs": jobs,
+        "counts": {
+            status: sum(job["status"] == status for job in jobs) for status in sorted({job["status"] for job in jobs})
+        },
+    }
+    report.parent.mkdir(parents=True, exist_ok=True)
+    report.write_text(json.dumps(result, indent=2) + "\n")
+    return result
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--source-root", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--report", type=Path, required=True)
+    parser.add_argument("--tasks", default="all")
+    parser.add_argument("--plan-only", action="store_true")
+    parser.add_argument("--blender-python", default=sys.executable)
+    args = parser.parse_args()
+    result = run(
+        args.source_root.resolve(),
+        args.output.resolve(),
+        args.report.resolve(),
+        tasks=args.tasks,
+        plan_only=args.plan_only,
+        blender_python=args.blender_python,
+    )
+    print(json.dumps(result["counts"], sort_keys=True))
+    if not args.plan_only and any(job["status"] != "exported" for job in result["jobs"]):
+        raise SystemExit(1)
+
+
+if __name__ == "__main__":
+    main()

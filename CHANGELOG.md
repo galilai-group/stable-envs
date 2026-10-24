@@ -8,6 +8,19 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Object-permanence source/shared GIF and upload-inclusive benchmark tools, isolated
+  batch planning/export with source geometry checks, and a 120-frame G34 v2 oracle
+  preserving all original samples. Shared/refined/raycast gates cover all frames;
+  historical native/scaled raster gaps remain explicit expected failures.
+
+- Rigid object-permanence recordings: shared content-addressed mesh assets,
+  memory-mapped per-frame poses and an offline Blender exporter for nominal
+  G34/G62 scenes, with an all-source inventory and live serialization checks.
+  Semantic asset directories and shared licenses replace the derived index.
+  A shared full-frame CUDA renderer handles sampled multi-object motion, verified
+  against the original G34 oracle and a new independent all-frame G62 oracle.
+  Existing G34 replay, MuJoCo interfaces and frozen geometry fixtures are unchanged.
+
 - Engine-free `object_permanence.G34Replay`: restorable trajectory cursors and
   nvdiffrast CUDA rendering, without MuJoCo or Blender runtime calls. Reuses
   triangle rendering with rectangular RGB/depth/ID output, static plates and

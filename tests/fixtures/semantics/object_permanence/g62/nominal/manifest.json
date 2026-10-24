@@ -1,0 +1,108 @@
+{
+  "arrays": {
+    "camera_matrix": {
+      "dtype": "float64",
+      "shape": [
+        4,
+        4
+      ]
+    },
+    "depth_base": {
+      "dtype": "float32",
+      "shape": [
+        180,
+        320
+      ]
+    },
+    "depth_xor": {
+      "dtype": "uint32",
+      "shape": [
+        120,
+        180,
+        320
+      ]
+    },
+    "object_ids": {
+      "dtype": "int16",
+      "shape": [
+        120,
+        180,
+        320
+      ]
+    },
+    "poses": {
+      "dtype": "float64",
+      "shape": [
+        120,
+        15,
+        7
+      ]
+    },
+    "source_frames": {
+      "dtype": "int64",
+      "shape": [
+        120
+      ]
+    }
+  },
+  "depth_convention": "positive camera-axis distance in source scene units; zero for no hit",
+  "depth_encoding": "float32 bitwise XOR against depth_base; lossless",
+  "file": "blender_g62_nominal.npz",
+  "fps": 24.0,
+  "generator": "scripts/testing/freeze_object_permanence_g62.py",
+  "generator_sha256": "d8b393f3d3c97f434d8d677e7e0a83e642e163bfa3fd4782b7246b765988f51c",
+  "height": 180,
+  "mask_convention": "visible source mesh at the pixel center; zero for no hit",
+  "object_ids": {
+    "cross_ball_blue": 1,
+    "cross_ball_red": 2,
+    "cross_track_slab": 3,
+    "large_floor_base": 4,
+    "rail_far_in": 5,
+    "rail_far_out": 6,
+    "rail_near_in": 7,
+    "rail_near_out": 8,
+    "rear_backdrop_panel": 9,
+    "track_leg_-38": 10,
+    "track_leg_0": 11,
+    "track_leg_38": 12,
+    "tunnel_back_wall": 13,
+    "tunnel_front_wall": 14,
+    "tunnel_roof": 15
+  },
+  "object_order": [
+    "cross_ball_blue",
+    "cross_ball_red",
+    "cross_track_slab",
+    "large_floor_base",
+    "rail_far_in",
+    "rail_far_out",
+    "rail_near_in",
+    "rail_near_out",
+    "rear_backdrop_panel",
+    "track_leg_-38",
+    "track_leg_0",
+    "track_leg_38",
+    "tunnel_back_wall",
+    "tunnel_front_wall",
+    "tunnel_roof"
+  ],
+  "schema": "stable-envs/object-permanence-g62-oracle-v1",
+  "sha256": "b44bcc303867cc47fe2cf746bef649df1d6c67d101bd5d8577f6d70b2128cc2b",
+  "source_commit": "824baddcdad087810d35638bf8f273b884f74975",
+  "source_license": "CC-BY-NC-4.0",
+  "source_profile": "nominal first member; no diversity wrapper",
+  "source_script": "object_permanence/generator/tasks/G62_two_balls_cross_tunnel/pb_task_00000108_pb_two_balls_cross_tunnel_0109_blender.py",
+  "source_script_sha256": "e161ba0fcd2f1558edf03527f2470e8b7c3b3ba2145fb872e2c518ce93935b1c",
+  "source_url": "https://github.com/hokindeng/object-permanence",
+  "targets": [
+    "cross_ball_red",
+    "cross_ball_blue"
+  ],
+  "versions": {
+    "blender": "4.4.0",
+    "numpy": "1.26.4",
+    "python": "3.11.16"
+  },
+  "width": 320
+}

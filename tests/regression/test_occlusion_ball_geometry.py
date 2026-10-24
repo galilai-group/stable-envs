@@ -8,13 +8,21 @@ pytest.importorskip("mujoco")
 
 import stable_envs as se
 from stable_envs.testing.geometry import depth_mse, mask_iou
-from tests.helpers.reference.occlusion_ball import DEPTH_MSE_MAX, MASK_IOU_MIN, load_oracle
+from tests.helpers.reference.occlusion_ball import (
+    DEPTH_MSE_MAX,
+    MASK_IOU_MIN,
+    LegacyBoundaryDifference,
+    assert_legacy_boundary_gap,
+    load_oracle,
+)
 from tests.helpers.reference.semantics import assert_same_state
 
 
 @pytest.mark.parametrize("backend", ["opengl", "raycast"])
 def test_source_depth_masks_and_occlusion_boundaries(record_property, backend, device="cpu"):
-    _, oracle = load_oracle()
+    # Preserve the original native/analytic certification scope; expanded source
+    # coverage belongs to the shared recording renderer, not this legacy model.
+    _, oracle = load_oracle(legacy=backend == "opengl")
     with se.MuJoCoOcclusionBall(size=180, backend=backend, device=device) as env:
         initial = env.reset()
         states = env.step(np.zeros((1, 119, 1)), frames=None)["states"]
@@ -42,7 +50,7 @@ def test_source_depth_masks_and_occlusion_boundaries(record_property, backend, d
                 else:
                     assert iou >= MASK_IOU_MIN, (int(frame), object_id, iou)
                     minimum_iou = min(minimum_iou, iou)
-        assert hidden == 5
+        assert hidden == (5 if backend == "opengl" else 26)
         record_property("depth_mse_max", worst_mse)
         record_property("visible_mask_iou_min", minimum_iou)
         record_property("both_hidden_frames", hidden)
@@ -61,6 +69,16 @@ def test_geometry_gate_detects_shifted_motion_and_wrong_depth(backend, device="c
         roi = oracle["object_ids"][0] == 4
         depth[roi] += 0.01
         assert depth_mse(depth, oracle["depth"][0], roi) > DEPTH_MSE_MAX
+
+
+@pytest.mark.xfail(raises=LegacyBoundaryDifference, strict=True, reason="native raster historical source-edge gaps")
+def test_native_full_sequence_records_only_known_source_edge_gaps():
+    _, oracle = load_oracle()
+    with se.MuJoCoOcclusionBall(size=180) as env:
+        initial = env.reset()
+        states = env.step(np.zeros((1, 119, 1)), frames=None)["states"]
+        fields = env.geometry(torch.cat([initial, states.squeeze(0)], 0))
+    assert_legacy_boundary_gap(fields["depth"].numpy(), fields["object_ids"].numpy(), oracle, (23, 98, 99))
 
 
 @pytest.mark.parametrize("backend", ["opengl", "raycast"])

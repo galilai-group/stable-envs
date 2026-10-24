@@ -15,7 +15,13 @@ pytest.importorskip("nvdiffrast.torch")
 from stable_envs.envs.object_permanence.rendering.g34_nvdiff import G34Renderer
 from stable_envs.envs.object_permanence.replay import G34Replay
 from stable_envs.testing.geometry import depth_mse, mask_iou
-from tests.helpers.reference.occlusion_ball import DEPTH_MSE_MAX, MASK_IOU_MIN, load_oracle
+from tests.helpers.reference.occlusion_ball import (
+    DEPTH_MSE_MAX,
+    MASK_IOU_MIN,
+    LegacyBoundaryDifference,
+    assert_legacy_boundary_gap,
+    load_oracle,
+)
 
 
 def test_replay_poses_match_all_120_independently_evaluated_source_frames():
@@ -30,7 +36,9 @@ def test_replay_poses_match_all_120_independently_evaluated_source_frames():
 
 @pytest.mark.parametrize("coverage,background", [("scaled", "refined"), ("scaled", "native"), ("refined", "refined")])
 def test_nvdiff_frozen_blender_depth_and_masks(record_property, coverage, background):
-    _, oracle = load_oracle()
+    # Historical optimized path keeps its original certification samples. The
+    # shared recorded-mesh path has a separate all-120-frame strict source gate.
+    _, oracle = load_oracle(legacy=coverage != "refined")
     with G34Replay(size=180, coverage_mode=coverage, background_coverage=background) as replay:
         state = replay.state_at(torch.as_tensor(oracle["geometry_frames"].astype(np.int64) - 1))
         live = replay.get_state()
@@ -51,7 +59,7 @@ def test_nvdiff_frozen_blender_depth_and_masks(record_property, coverage, backgr
                 else:
                     assert iou >= MASK_IOU_MIN, (frame, obj, iou)
                     minimum = min(minimum, iou)
-        assert hidden == 5
+        assert hidden == (26 if coverage == "refined" else 5)
         assert (live == replay.get_state()).all()
         record_property("depth_mse_max", worst)
         record_property("visible_mask_iou_min", minimum)
@@ -112,6 +120,14 @@ def test_nvdiff_geometry_negative_control():
     roi = oracle["object_ids"][0] == 4
     depth[roi] += 0.01
     assert depth_mse(depth, oracle["depth"][0], roi) > DEPTH_MSE_MAX
+
+
+@pytest.mark.xfail(raises=LegacyBoundaryDifference, strict=True, reason="scaled coverage historical source-edge gaps")
+def test_scaled_full_sequence_records_only_known_source_edge_gaps():
+    _, oracle = load_oracle()
+    with G34Replay(size=180) as replay:
+        fields = replay.render_many(replay.state_at(torch.arange(120)), modes=("depth", "ids"))
+    assert_legacy_boundary_gap(fields["depth"].cpu().numpy(), fields["ids"].cpu().numpy(), oracle, (2, 99))
 
 
 @pytest.mark.parametrize("missing_triton", [False, True])

@@ -6,9 +6,14 @@ camera geometry, conservative world-space bounds, and coverage precision.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 from ....render import nvdiff as ND
+
+if TYPE_CHECKING:
+    import torch
 
 
 class PixelCenterRenderer(ND.BatchRenderer):
@@ -70,6 +75,9 @@ class CropCamera(ND.Camera):
     Position/orientation remain ordinary Camera metadata. Supplying CUDA matrices
     lets BatchRenderer reuse them without a new host upload for every chunk.
     """
+
+    view: np.ndarray | torch.Tensor | None
+    projection: np.ndarray | torch.Tensor
 
     def matrices(self, aspect=1.0):
         view = getattr(self, "view", None)

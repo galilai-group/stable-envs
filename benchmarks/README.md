@@ -84,3 +84,9 @@ Use `--modes rgb,depth,ids` to measure shared outputs, then `--separate` to
 compare single-mode calls. `--coverage refined` selects floating-point coverage
 correction; `--background-coverage native` measures uncorrected static coverage.
 Each choice still needs its scene's geometry gate; native dynamic G34 fails it.
+
+The shared object-permanence recording baseline is measured with
+`python -m benchmarks.object_permanence_recordings --recordings <dataset> --output <json>`.
+It includes CPU pose lookup/upload and can build native-source/shared GIFs.
+See [the recording guide](../docs/adding/object-permanence-recordings.md) for fidelity
+scopes, native preview generation, profiling and reproducible commands.

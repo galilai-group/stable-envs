@@ -53,7 +53,7 @@ def test_profiles_install_declared_extras_and_groups():
 
 def test_every_source_path_glob_matches_a_file():
     files = [path.name for path in ROOT.iterdir() if path.is_file()]
-    for top in ("stable_envs", "tests", "ci", "scripts", ".github"):
+    for top in ("stable_envs", "tests", "ci", "scripts", "benchmarks", ".github"):
         files += [path.relative_to(ROOT).as_posix() for path in (ROOT / top).rglob("*") if path.is_file()]
     globs = [*CONFIG["shared"]["paths"], *(p for spec in FAMILIES.values() for p in spec.get("paths", ()))]
     assert [glob for glob in globs if not fnmatch.filter(files, glob)] == []

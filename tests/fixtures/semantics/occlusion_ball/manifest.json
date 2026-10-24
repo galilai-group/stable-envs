@@ -1,5 +1,5 @@
 {
-  "schema": "stable-envs/occlusion-ball-oracle-v1",
+  "schema": "stable-envs/occlusion-ball-oracle-v2",
   "source_url": "https://github.com/hokindeng/object-permanence",
   "source_commit": "824baddcdad087810d35638bf8f273b884f74975",
   "source_script": "object_permanence/generator/tasks/G34_occ_small_ball_behind_screen/pb_task_00000022_pb_occ_ball_behind_screen_0023_blender.py",
@@ -49,6 +49,7 @@
     "sensor_width_mm": 36.0
   },
   "depth_convention": "positive camera-axis distance in source scene units; 0 is no hit",
+  "depth_encoding": "float32 bitwise XOR against depth_base; lossless",
   "mask_convention": "visible triangle surface at pixel center; 0 is no hit",
   "object_ids": {
     "large_floor_base": 1,
@@ -125,7 +126,7 @@
     "python": "3.11.16"
   },
   "file": "blender_g34_nominal.npz",
-  "sha256": "10ab576688e2cc2e4b8a9d369f6a94ba57f60b46675bde011ce795ec84aa3dcd",
+  "sha256": "63ee0af11df0c487d94ff714e3a8703cfa7cabef305d9ede2d4dd8ea2477f5a6",
   "arrays": {
     "source_frames": {
       "shape": [
@@ -149,21 +150,28 @@
     },
     "geometry_frames": {
       "shape": [
-        21
+        120
       ],
       "dtype": "int64"
     },
-    "depth": {
+    "depth_base": {
       "shape": [
-        21,
         180,
         320
       ],
       "dtype": "float32"
     },
+    "depth_xor": {
+      "shape": [
+        120,
+        180,
+        320
+      ],
+      "dtype": "uint32"
+    },
     "object_ids": {
       "shape": [
-        21,
+        120,
         180,
         320
       ],

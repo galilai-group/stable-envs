@@ -68,7 +68,7 @@ ogbench-manipulation-gpu = [
   "warp-lang==1.17.0",
 ]
 dmcontrol = ["dm-control>=1.0.44", "mujoco>=3.11,<3.13"]
-# Source-authored occlusion scenes need MuJoCo, but no DM Control or Blender at runtime.
+# Legacy MuJoCo interface; engine-free recordings use core plus the selected GPU renderer.
 object-permanence = ["mujoco>=3.12,<3.13"]
 # GPU DM Control with the TrackCom floor reflection, which needs MuJoCo Warp 3.12. Fetch keeps MuJoCo 3.11;
 # without this extra TrackCom renders on 3.11 without the reflection.

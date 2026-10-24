@@ -3,10 +3,13 @@
 Source: Hokin Deng, object-permanence, commit
 `824baddcdad087810d35638bf8f273b884f74975`, G34 authored nominal scene.
 
-The archive contains 120 evaluated ball poses and 21 independent Blender
+The archive contains 120 evaluated ball poses and 120 independent Blender
 triangle-raycast depth/visible-ID maps at 320x180. It is not a MuJoCo checkpoint,
 an EEVEE RGB recording, or a randomized dataset sample. Camera, geometry, version,
 units, identity mapping, array schema and hashes are in `manifest.json`.
+
+Version 2 extends the original 21 frames without changing any of their depth/mask
+values. Depth uses lossless float32 bitwise XOR encoding against frame one.
 
 Generated only by `scripts/testing/freeze_occlusion_ball_oracle.py`, which
 imports the unmodified pinned source in Blender 4.4 and never imports the

@@ -139,7 +139,15 @@ shards = { pr = 3, nightly = 4 }
 aliases = ["occlusion", "object_permanence"]
 extras = ["object-permanence"]
 groups = ["pin-object-permanence"]
-paths = ["stable_envs/envs/object_permanence/**", "stable_envs/render/uv_sphere.py"]
+paths = [
+  "stable_envs/envs/object_permanence/**",
+  "stable_envs/render/uv_sphere.py",
+  "scripts/export/*object_permanence*.py",
+  "benchmarks/object_permanence*.py",
+  "scripts/testing/freeze_occlusion_ball_oracle.py",
+  "scripts/testing/check_object_permanence_export.py",
+  "scripts/testing/freeze_object_permanence_g62.py",
+]
 tests = ["test_occlusion_*", "test_object_permanence_*"]
 requires = ["mujoco"]
 linux_env = { MUJOCO_GL = "osmesa", PYOPENGL_PLATFORM = "osmesa" }
