@@ -75,6 +75,7 @@ class _Classic(Env):
         self._sim = torch.zeros(self.B, max(1, len(self.sim_state_names)), **f)
         self._cols = torch.tensor(self.render_from_sim, dtype=torch.long, device=self.device)
         self._disc_tables = None
+        self._reference = self._reference_style = self._has_pygame = None
 
     def _set_render_state(self, states, variation=None, style=None) -> _Classic:
         """Install compact render rows and zero simulation variables absent from those rows."""
@@ -192,13 +193,37 @@ class _Classic(Env):
         lead = tuple(s.shape[:-1])
         # float64 from here on: the frame depends on trunc() of the vertex coordinates, so float32
         # arithmetic lands on the wrong integer whenever a vertex falls within ~1e-5 of one.
-        s = s.reshape(-1, self.state_dim).to(torch.float64)
+        rows = s.reshape(-1, self.state_dim)
+        s = rows.to(torch.float64)
         n = s.shape[0]
         variation, style = _split_appearance(variation, style)
         sty = self.resolve_style(style, variation, batch=n)
+        o = None if out is None else out.reshape(-1, H, W, 3)
+        if self.device.type == "cpu" and not self._use_fused():
+            from ..._execution import render_pool
+
+            host = rows.cpu().numpy()
+            # The reference draws only the default appearance; it is the fastest exact CPU path for it.
+            reference = self._reference_draws(sty)
+            img = render_pool.render_rows(
+                self,
+                (type(self).__name__, "reference" if reference else "classic"),
+                host,
+                sty.values.numpy(),
+                (H, W, 3),
+                "classic-render",
+                o,
+                factory=render_pool.ReferenceRows(type(self).__name__) if reference else None,
+            )
+            if img is None and reference:
+                if self._reference is None:
+                    self._reference = type(self).reference_env()
+                frames = torch.from_numpy(type(self).reference_render(self._reference, host))
+                img = frames if o is None else o.copy_(frames)
+            if img is not None:
+                return img.view(*lead, H, W, 3) if lead else img
         geo = self._varied_geometry(sty, own=style is None and not variation)
         extra = () if geo is None else (geo,)
-        o = None if out is None else out.reshape(-1, H, W, 3)
         if self._use_fused():
             from ... import tuning
             from ...render.gfxdraw import classic as F
@@ -237,6 +262,18 @@ class _Classic(Env):
             self._geometry_host = None if (host == const).all() else host.astype(np.float64)
             self._geometry_of = src
         return self._geometry_host
+
+    def _reference_draws(self, sty) -> bool:
+        """Return whether the Gymnasium reference can draw ``sty``: the default appearance, with pygame installed."""
+        if self._has_pygame is None:
+            import importlib.util
+
+            self._has_pygame = importlib.util.find_spec("pygame") is not None
+        if not self._has_pygame:
+            return False
+        if self._reference_style is None:
+            self._reference_style = self.resolve_style(None, None, batch=1).values
+        return bool((sty.values == self._reference_style).all())
 
     def _use_fused(self) -> bool:
         """Select the fused renderer only when enabled and CUDA/Triton are available."""

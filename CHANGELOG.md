@@ -24,6 +24,10 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- On CPU, classic control draws frames with the default appearance with the Gymnasium renderer when
+  pygame is installed. On Linux, batches of at least `render_worker_min_rows` rows draw in up to
+  `render_workers` worker processes (new knobs). Frames do not change. CPU rendering is approximately
+  2 to 7 times faster and reaches the speed of the source in 8 processes.
 - The PushT error for a bad `render(out=)` buffer tells that the buffer must be contiguous and match
   the frames in shape, dtype and device.
 - `OGBCube` and `OGBScene` on CUDA: `backend="auto"` draws with NVIDIA OpenGL, the source's renderer,

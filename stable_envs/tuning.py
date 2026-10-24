@@ -124,12 +124,15 @@ class Knob:
 
 _KINDS = {"n": "an int >= 1", "n0": "an int >= 0", "pow2": "a power of two", "warps": f"one of {list(_WARPS)}"}
 _SIM = ("classic-sim", "dmc-sim", "fetch-sim", "ogb-sim", "pusht-sim", "pusht-render", "rocket-sim")
+_RENDER = ("classic-render",)
 
 KNOBS: dict[str, Knob] = {
     k.name: k
     for k in (
         Knob("workers", 8, _SIM, "cpu", "n0", "cpus", "Most worker processes of a CPU simulator batch or PushT render on Linux; 0 runs in-process.", step=True),
         Knob("worker_min_lanes", 64, _SIM, "cpu", "n", None, "Smallest batch that uses worker processes or Fetch threads."),
+        Knob("render_workers", 8, _RENDER, "cpu", "n0", "cpus", "Most worker processes of a CPU render batch on Linux; 0 or 1 draws in-process."),
+        Knob("render_worker_min_rows", 16, _RENDER, "cpu", "n", None, "Smallest CPU render batch that uses render worker processes."),
         Knob("fetch_threads", 4, ("fetch-sim",), "cpu", "n", "cpus", "Most simulator threads of an in-process Fetch batch.", step=True),
         Knob("cpu3d_chunk", 16, ("dmc-trackcom",), "cpu", "n", "rows", "Frames per cpu3d ray-casting chunk."),
         Knob("dmc_cpu_ray_budget", 1 << 21, ("dmc-suite",), "cpu", "pow2", "rays", "Rays per CPU render chunk of fixed-camera DMC cells.", _cpu_rays),
@@ -153,8 +156,8 @@ KNOBS: dict[str, Knob] = {
 
 #: Render and simulation paths per environment class or family; the most derived class wins.
 RENDER_PATHS: dict[str, tuple[str, ...]] = {
-    "DMControlSuite": ("dmc-suite", "dmc-sim"),
-    "DMControlTrackCom": ("dmc-trackcom", "dmc-sim"),
+    "DMControlSuite": ("dmc-suite", "dmc-render", "dmc-sim"),
+    "DMControlTrackCom": ("dmc-trackcom", "dmc-render", "dmc-sim"),
     "dmcontrol": ("dmc-sim",),
     "OGBManipBase": ("ogb-manipulation", "ogb-sim"),
     "ogbench": ("ogb-maze", "ogb-sim"),
@@ -162,7 +165,7 @@ RENDER_PATHS: dict[str, tuple[str, ...]] = {
     "PyFlytRocketLanding": ("rocket-nvdiff", "rocket-sim"),
     "navigation": ("navigation", "raster2d"),
     "pusht": ("raster2d", "pusht-sim", "pusht-render"),
-    "classic_control": ("gfxdraw", "classic-sim"),
+    "classic_control": ("gfxdraw", "classic-render", "classic-sim"),
 }
 
 for _k in KNOBS.values():
