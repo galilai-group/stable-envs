@@ -11,6 +11,7 @@ Populate Gfx caches before CUDA graph capture to avoid host-to-device copies.
 
 from __future__ import annotations
 
+import numpy as np
 import torch
 
 #: Mask for the unsigned 32-bit arithmetic of SDL_gfx blending.
@@ -843,12 +844,12 @@ def _round16(v: torch.Tensor) -> torch.Tensor:
     return (v >> 16) + ((v & 32768) >> 15)
 
 
-def fill_polygon_mask(vx: torch.Tensor, vy: torch.Tensor, ys: torch.Tensor, xs: torch.Tensor, W: int) -> torch.Tensor:
-    """Return a (B, H, W) scanline mask for convex integer polygons.
+def polygon_spans(vx: torch.Tensor, vy: torch.Tensor, ys: torch.Tensor, W: int) -> tuple[torch.Tensor, torch.Tensor]:
+    """Return the (B, len(ys)) inclusive scanline spans ``xa``, ``xb`` of convex integer polygons.
 
-    ``vx`` and ``vy`` are already-truncated (B, n) int64 vertices. ``ys`` and ``xs``
-    select rows and columns. Convexity permits min/max crossings instead of sorting;
-    keep unclamped vertex extrema when deciding the final scanline.
+    ``vx`` and ``vy`` are already-truncated (B, n) int64 vertices and ``ys`` selects rows. A row
+    without a span has ``xa > xb``. Convexity permits min/max crossings instead of sorting; keep
+    unclamped vertex extrema when deciding the final scanline.
     """
     ay, by = vy.roll(1, 1), vy
     ax, bx = vx.roll(1, 1), vx
@@ -869,6 +870,15 @@ def fill_polygon_mask(vx: torch.Tensor, vy: torch.Tensor, ys: torch.Tensor, xs: 
     xb = _round16(torch.where(act, X, -BIG).amax(1) - 1).clamp_max(W - 1)
     # Fewer than two crossings means an empty span; test per row rather than per pixel.
     xa = torch.where(act.sum(1) >= 2, xa, torch.full_like(xa, W))
+    return xa, xb
+
+
+def fill_polygon_mask(vx: torch.Tensor, vy: torch.Tensor, ys: torch.Tensor, xs: torch.Tensor, W: int) -> torch.Tensor:
+    """Return a (B, H, W) scanline mask for convex integer polygons; see :func:`polygon_spans`.
+
+    ``xs`` selects columns.
+    """
+    xa, xb = polygon_spans(vx, vy, ys, W)
     x = xs.view(1, 1, -1)
     return (x >= xa.unsqueeze(-1)) & (x <= xb.unsqueeze(-1))
 
@@ -994,8 +1004,9 @@ class Canvas:
         self.device = device
         self.flat = torch.empty((3, B * H * W + 1), dtype=torch.uint8, device=device)
         self.buf = self.flat[:, :-1].view(3, B, H, W)
-        for c in range(3):
-            self.buf[c].fill_(int(bg[c]))
+        if bg is not None:
+            for c in range(3):
+                self.buf[c].fill_(int(bg[c]))
         self.ys, self.xs, self.sh = ys, xs, sh
         self.trash = B * H * W
         self.gfx = gfx
@@ -1082,6 +1093,14 @@ class Canvas:
         Convert one plane at a time to limit temporary memory. Write into ``out`` when
         provided, otherwise allocate the output.
         """
+        if self.device.type == "cpu":
+            # Interleaving first and flipping in a row copy is faster on CPU than flipping each plane.
+            planes = self.buf.numpy()
+            frames = np.stack((planes[0], planes[1], planes[2]), -1)[:, ::-1]
+            if out is None:
+                return torch.from_numpy(np.ascontiguousarray(frames))
+            np.copyto(out.numpy(), frames)
+            return out
         if out is None:
             out = torch.empty((self.B, self.H, self.W, 3), dtype=torch.uint8, device=self.device)
         for c in range(3):
@@ -1103,7 +1122,7 @@ class StyleCanvas(Canvas):
     """
 
     def __init__(self, gfx: Gfx, B: int, bg):
-        super().__init__(B, gfx.H, gfx.W, gfx.device, gfx.sh, gfx.ys, gfx.xs, (0, 0, 0), gfx=gfx)
+        super().__init__(B, gfx.H, gfx.W, gfx.device, gfx.sh, gfx.ys, gfx.xs, None, gfx=gfx)
         self.buf.copy_(to_u8(bg).t().view(3, B, 1, 1))
         self.col = None
         self.aa = None
@@ -1125,6 +1144,28 @@ class StyleCanvas(Canvas):
             mask = mask & self.gate.view(-1, 1, 1)
         c = to_u8(self.col if color is None else color).t().reshape(3, self.B, 1, 1)
         select_(self.window(window), mask.contiguous().unsqueeze(0), c)
+
+    def paint_spans(self, xa, xb, window=None, color=None) -> None:
+        """Fill the inclusive (B, rows) column spans of the window's rows with per-environment colors.
+
+        Only the span pixels are written, so a thin polygon costs its area rather than its window.
+        """
+        y0, y1, x0, x1 = (0, self.H, 0, self.W) if window is None else window
+        lo, hi = xa.clamp_min(x0), xb.clamp_max(x1 - 1)
+        n = (hi - lo + 1).clamp_min(0)
+        if self.gate is not None:
+            n = n * self.gate.view(-1, 1)
+        n = n.reshape(-1)
+        b = torch.arange(self.B, device=self.device).view(-1, 1).expand(-1, y1 - y0).reshape(-1)
+        y = torch.arange(y0, y1, device=self.device).view(1, -1).expand(self.B, -1).reshape(-1)
+        start = (b * self.H + y) * self.W + lo.reshape(-1)
+        count = int(n.sum())
+        if not count:
+            return
+        first = torch.repeat_interleave(torch.cumsum(n, 0) - n, n)
+        idx = torch.repeat_interleave(start, n) + torch.arange(count, device=self.device) - first
+        c = to_u8(self.col if color is None else color)
+        self.flat[:, idx] = c.t()[:, torch.repeat_interleave(b, n)]
 
     def paint_disc(self, cy, cx, off, color=None, lanes=None) -> None:
         B, S = cy.shape[0], off.shape[0]
@@ -1265,7 +1306,10 @@ def polygon(
     if aa and not fill_first:
         _aa()
     ys, xs = cv.rows(window)
-    cv.paint(fill_polygon_mask(vx, vy, ys, xs, cv.W), color, window)
+    if isinstance(cv, StyleCanvas) and cv.device.type == "cpu":
+        cv.paint_spans(*polygon_spans(vx, vy, ys, cv.W), window, color)
+    else:
+        cv.paint(fill_polygon_mask(vx, vy, ys, xs, cv.W), color, window)
     if aa and fill_first:
         _aa()
 

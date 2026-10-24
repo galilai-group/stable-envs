@@ -66,6 +66,8 @@ names one.
 | `fetch_mjw_worlds` | 256 | none | not recorded | Most worlds per MJWarp launch of the Fetch cells. |
 | `ogb_mjw_worlds` | 256 | none | not recorded | Most worlds per MJWarp launch of the OGBench Cube and Scene cells. |
 | `ogb_gl_workers` | 8 | min(value, CPUs in the process affinity, rows) | not recorded | Most OpenGL worker processes of an OGBench Cube and Scene batch on Linux. A batch that uses fewer than 2 workers draws in the main process. The value 0 draws every batch in the main process. |
+| `render_workers` | 8 | min(value, CPUs in the process affinity) | not recorded | Most worker processes of a classic control CPU render batch on Linux. The values 0 and 1 draw every frame in the main process. |
+| `render_worker_min_rows` | 16 | none | not recorded | Smallest classic control CPU render batch that uses render worker processes. |
 | `ogb_context_cache_bytes` | none | min(total GPU memory / 4, free GPU memory / 2), per device | not recorded | GPU bytes the OGBench MJWarp context cache keeps. |
 | `nvd_budget_bytes` | 6 GiB | min(6 GiB, free GPU memory / 2) | not recorded | GPU bytes one nvdiffrast chunk of the Rocket cells may use. |
 | `nav_render_chunk` | 256 | none | not recorded | Frames per render chunk of the navigation cells. |
@@ -88,6 +90,8 @@ cannot read the hardware, the fallback applies.
   (fixed-camera cells) in powers of two. Smaller chunks stay in the CPU cache.
 - Slow CPU stepping: try `workers` between 0 and the number of cores, and `worker_min_lanes`
   for small batches. The library uses worker processes only on Linux.
+- Slow classic control CPU rendering: try `render_workers` between 0 and the number of cores, and
+  `render_worker_min_rows` for small batches.
 - Triton kernels on a new GPU: try the `*_warps` knobs (1, 2, 4, 8) and the `*_block` knobs in powers of two.
 
 ## `stable-envs tune`

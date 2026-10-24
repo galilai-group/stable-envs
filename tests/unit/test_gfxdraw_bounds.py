@@ -34,7 +34,7 @@ def _states(name, n, seed):
 
 
 def _render(env, states):
-    return env._render(states).clone()
+    return env._render(states, backend="port").clone()
 
 
 @pytest.fixture
