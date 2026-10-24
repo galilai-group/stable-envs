@@ -10,6 +10,13 @@ Modifications support stable-envs' batched Variation, masked steps, reset/State/
 boundary rounding and DLPack exchange with Torch. envX is not a runtime dependency.
 The Apache license is included in `licenses/envX-APACHE-2.0.txt` and distributed with the package.
 
+## envX Reacher
+
+`stable_envs/envs/dmcontrol/simulation/reacher_mjx.py` adapts the mocap target and MJX
+transition/observation logic in `src/envx/reacher/env.py` from the same envX commit above.
+Modifications preserve stable-envs' two-substep actions, native reset sampling, full State
+and physics Variation. The same Apache-2.0 notice and license apply. envX is not a runtime dependency.
+
 ## Craftax
 
 The `craftax` family (`stable_envs/envs/craftax/`) runs

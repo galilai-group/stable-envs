@@ -2,7 +2,8 @@
 
 These 18 classes port tasks of the [DeepMind Control Suite](https://github.com/google-deepmind/dm_control)
 ([Tassa et al., 2018](https://arxiv.org/abs/1801.00690)). [MuJoCo](https://mujoco.org/) steps the
-physics on CPU. `device="cuda"` puts State and frames on the GPU. It does not move the physics.
+physics on CPU, except Reacher, which uses batched JAX/MJX physics when `device="cuda"`.
+For the other tasks, `device="cuda"` selects State and frame placement.
 
 The renderers come in two groups:
 
@@ -136,6 +137,19 @@ A body with four legs walks forward.
 <!-- env: DMCQuadrupedWalk -->
 
 ## Reacher
+
+Both Reacher tasks select MJX on CUDA automatically. Install `stable-envs[dmcontrol-gpu]`.
+CPU execution uses native dm_control and retains exact source parity. CUDA physics uses float32.
+Positions, velocities and warm-start values keep their float64 State dtypes but contain float32
+physics values after stepping.
+CPU and CUDA trajectories therefore have numerical differences, including possible sparse reward
+differences at the success boundary. Restoring a CUDA checkpoint reproduces its next transition.
+
+Each public action still advances two 0.02-second physics steps and sums their rewards. The tasks
+retain dm_control's implicit reset after 1000 physics steps and their existing target visibility,
+observation and Variation contracts. Native CPU lanes sample resets with the original NumPy RNG.
+Reset and checkpoint restoration can transfer data through the host; steady stepping exchanges Torch
+and JAX device buffers through DLPack. There is no dependency on envX.
 
 ### DMCReacherEasy
 

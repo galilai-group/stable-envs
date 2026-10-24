@@ -43,7 +43,7 @@ package, which tests use for comparison.
 | `ogbench` | OGBench mazes | `ogbench`, MuJoCo |
 | `ogbench-manipulation` / `-gpu` | OGBCube, OGBScene | MuJoCo 3.12.0, OGBench 1.2.1, dm_control. `-gpu` adds MuJoCo Warp 3.12.0 and Warp 1.17.0 |
 | `dmcontrol` | DM Control | `dm_control`, MuJoCo |
-| `dmcontrol-gpu` | DM Control on CUDA with TrackCom floor reflections | MuJoCo and MuJoCo Warp 3.12 |
+| `dmcontrol-gpu` | CUDA Reacher physics and TrackCom floor reflections | MuJoCo, MJX and MuJoCo Warp 3.12, JAX CUDA 12 runtime |
 | `robotics` | Fetch | gymnasium-robotics, MuJoCo < 3.12, OpenCV |
 | `mjwarp` | Fetch on CUDA | MuJoCo Warp |
 | `rocket` | PyFlytRocketLanding | PyFlyt 0.29.0, pybullet 3.2.7, Pillow, SciPy |

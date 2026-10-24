@@ -9,10 +9,14 @@ from ._delegated import DelegatedSemantics
 
 
 class _ReacherSemantics(DelegatedSemantics):
-    """Reacher on CPU dm_control lanes.
+    """Reacher with CPU dm_control or batched CUDA MJX physics.
 
     The four-column renderer projection cannot resume physics or implicit resets.
     """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.execution_mode = "JAX_MJX" if self.device.type == "cuda" else "DELEGATED_CPU"
 
     def make_variation_space(self):
         space = super().make_variation_space()
@@ -48,9 +52,9 @@ DMCReacherHard = parity_cell(
     SHAPE_KNOBS={"target": ((R3.BOX, (_HARD_TARGET,) * 3), (R3.SPHERE, (_HARD_TARGET, 0.0, 0.0)))},
 )
 
-DMCReacherHard.__doc__ = """DM Control Reacher hard with authoritative CPU simulation and batched rendering.
+DMCReacherHard.__doc__ = """DM Control Reacher hard with batched rendering and CUDA MJX physics.
 
 Public State includes positions, velocities, integration warm-start values, clock,
 RNG, lifecycle counters, cumulative reward and the target that changes on implicit
-resets. Device selects State/render placement; physics runs on CPU.
+resets. CUDA uses float32 MJX dynamics; CPU uses the native float64 reference.
 """

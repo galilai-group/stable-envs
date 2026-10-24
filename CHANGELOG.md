@@ -30,6 +30,8 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- `DMCReacherEasy` and `DMCReacherHard` use batched JAX/MJX physics on CUDA with
+  the `dmcontrol-gpu` extra. CPU execution retains native dm_control physics.
 - PushT on CPU: a Numba rasterizer draws `render` batches of 8 or more States from the same primitive
   records as the GPU path. Frames are byte-identical to pygame. `backend` takes `"auto"`, `"source"`
   (pygame, also `"pygame"`) or `"port"`. CPU `render` of 1024 States is approximately 1.5 times faster

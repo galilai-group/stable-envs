@@ -1,6 +1,6 @@
-"""DM Control classes combining renderers with optional CPU simulation adapters.
+"""DM Control classes combining renderers with simulation adapters.
 
-CUDA selects State and frame placement, not GPU physics. Public simulator
+CUDA selects MJX physics for Reacher and State/frame placement for other tasks. Public simulator
 State includes continuation fields; qpos and episode-model render projections
 cannot restore it. Domain imports register classes and supply fidelity metadata.
 """

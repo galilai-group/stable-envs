@@ -74,7 +74,10 @@ ogbench-manipulation-gpu = [
 dmcontrol = ["dm-control>=1.0.44", "mujoco>=3.11,<3.13"]
 # GPU DM Control with the TrackCom floor reflection, which needs MuJoCo Warp 3.12. Fetch keeps MuJoCo 3.11;
 # without this extra TrackCom renders on 3.11 without the reflection.
-dmcontrol-gpu = ["dm-control>=1.0.45", "mujoco>=3.12,<3.13", "mujoco-warp>=3.12,<3.13", "warp-lang>=1.16"]
+dmcontrol-gpu = [
+  "dm-control>=1.0.45", "mujoco>=3.12,<3.13", "mujoco-warp>=3.12,<3.13", "warp-lang>=1.16",
+  "mujoco-mjx>=3.12,<3.13", "jax[cuda12]>=0.4.35",
+]
 # gymnasium-robotics 1.4.2's Fetch setters fail with MuJoCo 3.12.
 robotics = ["gymnasium-robotics>=1.4.2,<1.5", "mujoco>=3.11,<3.12", "opencv-python-headless"]
 # Optional render/data surfaces. nvdiffrast is intentionally not metadata:
@@ -164,6 +167,7 @@ pin-dmc = [
   "gymnasium==1.3.0; python_version >= '3.12'",
   "dm-control==1.0.45; python_version >= '3.12'",
   "mujoco==3.12.0; python_version >= '3.12'",
+  "mujoco-mjx==3.12.0; python_version >= '3.12'",
 ]
 pin-fetch = [
   "numpy==2.5.3; python_version >= '3.12'",
