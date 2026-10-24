@@ -34,6 +34,7 @@ def _states(name, n, seed):
 
 
 def _render(env, states):
+    env.use_fused_render = False
     return env._render(states, backend="port").clone()
 
 
