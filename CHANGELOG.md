@@ -8,6 +8,10 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Classic control on CPU: a Numba kernel draws the same primitive records as the Triton kernel, in
+  parallel over frames. `backend="auto"` and `backend="port"` use it when Numba imports; otherwise the
+  CPU paths below apply. Frames are byte-identical to the Torch port. The `classic` extra installs
+  Numba, and so do the `navigation` and `pusht` extras. `backend="auto"` draws batches of fewer than 8 rows of the default appearance with the source.
 - Craftax: `CraftaxClassicPixels`, `CraftaxClassicSymbolic`, `CraftaxPixels` and `CraftaxSymbolic`
   run the upstream JAX simulator with all lanes in one jitted `vmap` (`craftax` / `craftax-gpu` extras).
   With Craftax, the extras provide 74 classes. Fetch and `OGBCube`/`OGBScene` pin different MuJoCo versions,
