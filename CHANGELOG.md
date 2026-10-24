@@ -12,9 +12,7 @@ All notable changes to this project are listed here. The format follows
   parallel over frames. `backend="auto"` and `backend="port"` use it when Numba imports; otherwise the
   CPU paths below apply. Frames are byte-identical to the Torch port. The `classic` extra installs
   Numba, and so do the `navigation` and `pusht` extras. `backend="auto"` draws batches of fewer than 8 rows of the default appearance with the source.
-  The Torch port, and so the Numba kernel, differ from the source at some exact angles (the CartPole
-  pole, the Acrobot links and the Pendulum rod at multiples of pi/2): up to about 200 pixels in a frame.
-  Frames of sampled states are equal to the source. The `pin-classic`, `pin-navigation` and `pin-pusht`
+  The `pin-classic`, `pin-navigation` and `pin-pusht`
   groups pin Numba.
 - Craftax: `CraftaxClassicPixels`, `CraftaxClassicSymbolic`, `CraftaxPixels` and `CraftaxSymbolic`
   run the upstream JAX simulator with all lanes in one jitted `vmap` (`craftax` / `craftax-gpu` extras).
@@ -93,6 +91,9 @@ All notable changes to this project are listed here. The format follows
 
 ### Fixed
 
+- Classic control frames of the gfxdraw port and the Numba kernel are equal to the Gymnasium frames at
+  angles within 1e-6 rad of a multiple of pi/2. The port rotates as pygame's `Vector2.rotate_rad` does: it
+  wraps the angle into [0, 2 pi), rotates such angles exactly, and computes cos and sin with the C library on CPU.
 - `PyFlytRocketLanding` on CUDA draws the fins, legs and fuel tank at the current body pose, as PyFlyt
   does, and does not draw the ground when the camera is below it. The mean per-frame MSE against PyFlyt
   is 4.2 on 480 px frames.

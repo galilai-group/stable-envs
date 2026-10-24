@@ -106,11 +106,7 @@ def test_the_numba_frames_equal_the_torch_port(name, varied):
 
 @pytest.mark.parametrize("name", CLASSIC)
 def test_the_numba_frames_equal_the_source_in_the_default_appearance(name):
-    """Wherever the Torch port draws the source's frame, so does the Numba port.
-
-    Float32 trigonometry at exact angle multiples moves a few port frames by a pixel; those rows stay in the
-    Torch-port comparison above and drop out here. Every sampled row must remain.
-    """
+    """The Numba port draws the source's frame on every row, including exact multiples of pi / 2."""
     pytest.importorskip("pygame")
     pytest.importorskip("gymnasium")
     env = _make(name, 1)
@@ -119,10 +115,8 @@ def test_the_numba_frames_equal_the_source_in_the_default_appearance(name):
     fast = env._render(states, backend="port").clone()
     # Chunks under the render-worker threshold draw in this process.
     source = torch.cat([env._render(states[i : i + 8], backend="source").clone() for i in range(0, len(states), 8)])
-    exact = ~_differs(_torch_port(name, states, None), source)
-    assert int(exact[:64].sum()) == 64, f"{name}: the Torch port misses the source on a sampled row"
-    bad = int(_differs(fast, source)[exact].sum())
-    assert bad == 0, f"{name}: {bad} of {int(exact.sum())} frames differ from the source"
+    bad = _differs(fast, source)
+    assert not bool(bad.any()), f"{name}: rows {bad.nonzero().flatten().tolist()} differ from the source"
 
 
 def test_the_output_buffer_is_filled_and_returned():
