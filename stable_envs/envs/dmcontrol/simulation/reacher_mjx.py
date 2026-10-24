@@ -80,15 +80,23 @@ class ReacherMJXAdapter(ReacherAdapter):
         self._target = self._native_model.geom("target").id
         self._radius = self._native_model.geom_size[[self._finger, self._target], 0].sum()
         with jax.default_device(self._jax_device):
-            self._model = mjx.put_model(self._native_model, impl="jax")
+            model = mjx.put_model(self._native_model, impl="jax")
             data = mjx.make_data(self._native_model, impl="jax")
             self._data = jax.vmap(lambda _: data)(jnp.arange(self.num_envs))
             # Reset/restore must not reuse solver buffers from a previous transition.
             self._template = self._data
-            axes = jax.tree.map(lambda _: None, self._model)
-            axes = axes.replace(**dict.fromkeys(_MODEL_FIELDS, 0), stat=axes.stat.replace(meaninertia=0))
-            self._forward = jax.jit(jax.vmap(mjx.forward, in_axes=(axes, 0)))
-            self._advance = jax.jit(jax.vmap(self._step_one, in_axes=(axes, 0, 0)))
+
+            def model_for(values):
+                # Capture static metadata once; passing Model to jit rehashes its NumPy arrays.
+                return model.replace(
+                    **{name: values[name] for name in _MODEL_FIELDS},
+                    stat=model.stat.replace(meaninertia=values["meaninertia"]),
+                )
+
+            self._forward = jax.jit(jax.vmap(lambda values, data: mjx.forward(model_for(values), data)))
+            self._advance = jax.jit(
+                jax.vmap(lambda values, data, action: self._step_one(model_for(values), data, action))
+            )
             self._select = jax.jit(jax.vmap(lambda old, new, mask: old.where(mask, new)))
         self._upload_model()
         self._load_state(super().get_state())
@@ -115,12 +123,8 @@ class ReacherMJXAdapter(ReacherAdapter):
                 source = np.stack([getattr(model, name) for model in models])
                 values[:, : source.shape[1]] = source
                 fields[name] = jnp.asarray(values, dtype=jnp.float32)
-            self._model = self._model.replace(
-                **fields,
-                stat=self._model.stat.replace(
-                    meaninertia=jnp.asarray([m.stat.meaninertia for m in models], dtype=jnp.float32)
-                ),
-            )
+            fields["meaninertia"] = jnp.asarray([m.stat.meaninertia for m in models], dtype=jnp.float32)
+            self._model_values = fields
 
     def _load_state(self, state):
         self._state = state.to(self.device).clone()
@@ -132,7 +136,7 @@ class ReacherMJXAdapter(ReacherAdapter):
         value = lambda key: _from_torch(self._state[key].to(torch.float32))
         warmstart = value("warmstart")
         self._data = self._forward(
-            self._model,
+            self._model_values,
             self._template.replace(
                 qpos=value("qpos"),
                 qvel=value("qvel"),
@@ -187,7 +191,7 @@ class ReacherMJXAdapter(ReacherAdapter):
                 reset_mask = _from_torch(mask)
                 self._data = self._select(previous, self._data, reset_mask)
             before = self._data
-            self._data, observation, success = self._advance(self._model, self._data, action)
+            self._data, observation, success = self._advance(self._model_values, self._data, action)
             if resetting.any():
                 mask = reset_mask
                 self._data = self._select(self._data, before, mask)

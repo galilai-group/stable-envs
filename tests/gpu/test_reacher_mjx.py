@@ -1,5 +1,7 @@
 """Public CUDA Reacher uses MJX and exchanges device buffers through DLPack."""
 
+import hashlib
+
 import jax
 import numpy as np
 import pytest
@@ -20,6 +22,12 @@ def test_cuda_reacher_uses_mjx_without_host_staging(name, batch, monkeypatch):
     def forbidden(*args, **kwargs):
         raise AssertionError("Host staging in a steady-state CUDA Reacher step")
 
+    sha256 = hashlib.sha256
+
+    def hash_empty_metadata(value=b"", **kwargs):
+        assert not value, "Static model hashing in a warmed CUDA Reacher step"
+        return sha256(value, **kwargs)
+
     stream = torch.cuda.Stream()
     with torch.cuda.stream(stream), se.make(name, num_envs=batch, device="cuda") as env:
         assert env.execution_mode == "JAX_MJX"
@@ -32,6 +40,7 @@ def test_cuda_reacher_uses_mjx_without_host_staging(name, batch, monkeypatch):
         with monkeypatch.context() as patch, jax.transfer_guard("disallow"):
             patch.setattr(torch.Tensor, "cpu", forbidden)
             patch.setattr(torch.Tensor, "numpy", forbidden)
+            patch.setattr("hashlib.sha256", hash_empty_metadata)
             actual = env.step(action, frames=None)
             held = actual.clone()
             action.fill_(0.25)

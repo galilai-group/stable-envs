@@ -1,5 +1,7 @@
 """MJX must preserve the registered Reacher task around float32 physics."""
 
+import hashlib
+
 import numpy as np
 import pytest
 import torch
@@ -70,3 +72,39 @@ def test_checkpoint_restores_reward_and_rejects_invalid_state_atomically(pair):
     assert_same_state(env.get_state(), held)
     checkpoint["qpos"].fill_(100)
     assert_same_state(env.get_state(), held)
+
+
+def test_warm_step_does_not_hash_static_model(pair, monkeypatch):
+    _, env = pair
+    action = torch.zeros(3, 2)
+    env.step(action)
+
+    sha256 = hashlib.sha256
+
+    def hash_empty_metadata(value=b"", **kwargs):
+        # MJX Data has empty contact metadata; the model has nonempty arrays.
+        assert not value, "Static model hashing in a warmed Reacher step"
+        return sha256(value, **kwargs)
+
+    monkeypatch.setattr("hashlib.sha256", hash_empty_metadata)
+    env.step(action)
+
+
+def test_density_changes_after_compilation_and_checkpoint_restore(pair):
+    reference, env = pair
+    if env.key != "reacher":
+        pytest.skip("Only Reacher hard declares density Variation")
+    action = torch.tensor([[0.2, -0.4], [1.0, -1.0], [-0.3, 0.6]])
+    checkpoint = reference.get_state()
+    env.step(action)
+    for item in pair:
+        item.configure_physics(np.array([[1500, 500], [500, 1500], [1150, 850]]))
+        item.reset(7)
+    for state in (None, checkpoint):
+        if state is not None:
+            for item in pair:
+                item.set_state(state)
+        for _ in range(4):
+            expected, actual = reference.step(action), env.step(action)
+            for key in ("qpos", "qvel"):
+                torch.testing.assert_close(actual["state", key], expected["state", key], rtol=0, atol=3e-6)
