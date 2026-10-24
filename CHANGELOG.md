@@ -8,6 +8,12 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Early object-permanence audit G01–G10: nominal G02/G03 ramp balls and G05–G07
+  rigid vehicles, with independent 120-frame ray oracles and full-frame cache
+  parity. Adds audited legacy construction-prefix and named-argument source
+  preparation. Transparency, curves, orthographic cameras and G08's undefined
+  source global remain uncertified, with labeled deferred GIF diagnostics.
+
 - Three reusable rigid batches: nominal G93–G97/G99/G100 support/fall, opening-container
   and scripted-collision scenes, with independent 120-frame versioned oracles
   and all-frame depth/mask/cache gates. Skips G90 transparency and G91/G92

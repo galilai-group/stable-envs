@@ -19,26 +19,26 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 
 | Review group | Members |
 |---|---:|
-| appearance-or-visibility-review | 32 |
+| appearance-or-visibility-review | 31 |
 | audited-nominal-runtime-gate | 7 |
 | geometry-or-scale-review | 2 |
 | orthographic-camera-review | 78 |
 | physics-bake-review | 1 |
-| rigid-candidate-needs-entry-audit | 57 |
+| rigid-candidate-needs-entry-audit | 53 |
 | source-fidelity-review | 4 |
-| versioned-visibility-runtime-gate | 16 |
+| versioned-visibility-runtime-gate | 21 |
 
 ## Source tasks
 
 | Task | Members | Script-wide signals | First-member review group | Nominal preparation coverage |
 |---|---:|---|---|---|
 | G01 hole_box_drop | 2 | location, rotation_euler | appearance-or-visibility-review | not evaluated |
-| G02 ramp_tunnel | 3 | location, modifiers, rotation_euler | rigid-candidate-needs-entry-audit | not evaluated |
-| G03 ramp_ball_blocked_by_wall | 2 | location, rotation_euler | rigid-candidate-needs-entry-audit | not evaluated |
+| G02 ramp_tunnel | 3 | location, modifiers, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only |
+| G03 ramp_ball_blocked_by_wall | 2 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only |
 | G04 high_low_cover | 2 | location, rotation_euler | rigid-candidate-needs-entry-audit | not evaluated |
-| G05 car_vs_barrier | 7 | hide_render, hide_viewport, location, rotation_euler, scale | rigid-candidate-needs-entry-audit | not evaluated |
-| G06 car_on_bridge | 3 | location, rotation_euler | rigid-candidate-needs-entry-audit | not evaluated |
-| G07 guillotine_gate_stops | 2 | location, rotation_euler | appearance-or-visibility-review | not evaluated |
+| G05 car_vs_barrier | 7 | hide_render, hide_viewport, location, rotation_euler, scale | versioned-visibility-runtime-gate | versioned ray contract only |
+| G06 car_on_bridge | 3 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only |
+| G07 guillotine_gate_stops | 2 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only |
 | G08 drawer_moves_hidden_object | 2 | location, rotation_euler | orthographic-camera-review | not evaluated |
 | G09 low_beam_car_height | 3 | location, rotation_euler | orthographic-camera-review | not evaluated |
 | G10 size_gate | 2 | location, modifiers, rotation_euler | orthographic-camera-review | not evaluated |

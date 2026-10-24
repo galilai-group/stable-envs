@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import ast
 import hashlib
+import inspect
 import io
 import json
 import platform
@@ -26,6 +27,11 @@ SOURCE_COMMIT = "824baddcdad087810d35638bf8f273b884f74975"
 SCHEMA = "stable-envs/object-permanence-rigid-v1"
 CONVENTIONS = {"world": "right-handed-z-up", "quaternion": "wxyz", "units": "source-scene-units"}
 AUDITED_TASKS = {
+    "G02": ("$prefix:render_png", ""),
+    "G03": ("$prefix:render_png", ""),
+    "G05": ("build_scene", "animate_scene"),
+    "G06": ("build_scene", "animate_scene"),
+    "G07": ("build_scene_by_kind", "animate_scene_by_kind"),
     "G27": ("build_scene", "animate_scene"),
     "G34": ("build_scene_by_kind", "animate_scene_by_kind"),
     "G62": ("build_scene_by_kind", "animate_scene_by_kind"),
@@ -57,6 +63,11 @@ AUDITED_TASKS = {
 # These preparation recipes are certified only with the versioned ray contract.
 # The legacy BVH deferrals above/below remain meaningful and are never erased.
 RAY_CONTRACT_TASKS = {
+    "G02",
+    "G03",
+    "G05",
+    "G06",
+    "G07",
     "G63",
     "G65",
     "G66",
@@ -79,6 +90,11 @@ RAY_CONTRACT_TASKS = {
     "G100",
 }
 CONTRACT_ONLY_TASKS = {
+    "G02",
+    "G03",
+    "G05",
+    "G06",
+    "G07",
     "G65",
     "G82",
     "G83",
@@ -261,6 +277,31 @@ def inventory(root, output):
     output.write_text(text)
 
 
+def source_prefix(script, boundary):
+    """Execute an audited legacy construction prefix, excluding output setup.
+
+    These pinned scripts finish construction/animation before render_png. Do not
+    import the complete module: its remaining top-level statements render, delete
+    output directories and save .blend/JSON files. No scene statement is removed.
+    """
+    statements = []
+    for statement in ast.parse(script.read_text()).body:
+        if isinstance(statement, ast.FunctionDef) and statement.name == boundary:
+            break
+        if isinstance(statement, ast.Expr) and isinstance(statement.value, ast.Call):
+            call = statement.value
+            if ast.unparse(call.func) == "os.makedirs":
+                if ast.unparse(call) != "os.makedirs(OUT_DIR, exist_ok=True)":
+                    raise ValueError("unaudited source output setup")
+                continue
+        statements.append(statement)
+    else:
+        raise ValueError("audited construction boundary missing")
+    namespace = {"__file__": str(script), "__name__": "audited_source_construction"}
+    exec(compile(ast.Module(body=statements, type_ignores=[]), str(script), "exec"), namespace)
+    return namespace
+
+
 def prepare(root, task):
     """Execute an audited source build/animate pair, without source I/O hooks."""
     import bpy
@@ -276,12 +317,18 @@ def prepare(root, task):
     path = paths[0]
     metadata = json.loads(path.read_text())
     source = path.parent / metadata["member_scripts"][0]
+    build, animate = AUDITED_TASKS[task]
+    if build.startswith("$prefix:"):
+        source_prefix(source, build.removeprefix("$prefix:"))
+        return bpy.context.scene, source, metadata
     namespace = runpy.run_path(str(source), run_name="stable_envs_rigid_export")
     namespace["clear_scene"]()
-    build, animate = AUDITED_TASKS[task]
     result = namespace[build]()
     if task == "G27":
         namespace[animate](bpy.context.scene, result["support_plate"], result["ball"])
+    elif isinstance(result, dict) and len(inspect.signature(namespace[animate]).parameters) > 1:
+        parameters = inspect.signature(namespace[animate]).parameters
+        namespace[animate](**{name: result[name] for name in parameters})
     else:
         namespace[animate](*(result if isinstance(result, tuple) else (result,)))
     return bpy.context.scene, source, metadata

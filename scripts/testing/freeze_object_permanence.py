@@ -8,7 +8,9 @@ Existing output directories are never overwritten, including the G34 fixture.
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
+import inspect
 import io
 import json
 import platform
@@ -22,6 +24,11 @@ SOURCE_COMMIT = "824baddcdad087810d35638bf8f273b884f74975"
 # Deliberately independent of the candidate exporter's entry registry/extraction.
 # These calls and targets were checked against each source main()/selected builder.
 REFERENCE_CASES = {
+    "G05": ("build_scene", "animate_scene", ("red_wheeled_car_body",)),
+    "G06": ("build_scene", "animate_scene", ("hole_bridge_red_car_body",)),
+    "G07": ("build_scene_by_kind", "animate_scene_by_kind", ("red_car_body",)),
+    "G02": ("$prefix:render_png", "", ("target_red_ball",)),
+    "G03": ("$prefix:render_png", "", ("target_red_ball_blocked_by_solid_wall",)),
     "G27": ("build_scene", "animate_scene", ("target_orange_ball",)),
     "G37": ("build_scene_by_kind", "animate_scene", ("orange_ball",)),
     "G38": ("build_scene_by_kind", "animate_scene", ("red_pendulum_bob",)),
@@ -52,6 +59,35 @@ REFERENCE_CASES = {
         ("short_orange_puck_passes_under", "tall_red_cylinder_blocked_by_bar"),
     ),
 }
+
+
+def prepare_reference(script, task):
+    """Independently audited source calls; no candidate preparation imports."""
+    import bpy
+
+    build, animate, _ = REFERENCE_CASES[task]
+    if build.startswith("$prefix:"):
+        # Independent text boundary plus AST removal of the sole directory setup.
+        # All scene creation and animation statements execute verbatim.
+        boundary = "\ndef " + build.split(":", 1)[1] + "("
+        text = script.read_text()
+        if text.count(boundary) != 1:
+            raise ValueError("independent source construction boundary differs")
+        tree = ast.parse(text.split(boundary)[0])
+        tree.body = [n for n in tree.body if ast.unparse(n) != "os.makedirs(OUT_DIR, exist_ok=True)"]
+        prefix_namespace = {"__file__": str(script), "__name__": "independent_source_construction"}
+        exec(compile(tree, str(script), "exec"), prefix_namespace)
+        return
+    source = runpy.run_path(str(script), run_name="independent_source_preparation")
+    source["clear_scene"]()
+    objects = source[build]()
+    if task == "G27":
+        source[animate](bpy.context.scene, objects["support_plate"], objects["ball"])
+    elif isinstance(objects, dict) and len(inspect.signature(source[animate]).parameters) > 1:
+        names = inspect.signature(source[animate]).parameters
+        source[animate](**{name: objects[name] for name in names})
+    else:
+        source[animate](*(objects if isinstance(objects, tuple) else (objects,)))
 
 
 def sha256(path):
@@ -120,13 +156,7 @@ def freeze(root, output, task, width=320, height=180):
     script = task_manifest.parent / metadata["member_scripts"][0]
     source_script = str(script.relative_to(root))
     build, animate, targets = REFERENCE_CASES[task]
-    namespace = runpy.run_path(str(script), run_name="rigid_independent_reference")
-    namespace["clear_scene"]()
-    built = namespace[build]()
-    if task == "G27":
-        namespace[animate](bpy.context.scene, built["support_plate"], built["ball"])
-    else:
-        namespace[animate](*(built if isinstance(built, tuple) else (built,)))
+    prepare_reference(script, task)
     scene = bpy.context.scene
     scene.render.resolution_x, scene.render.resolution_y = width, height
     scene.render.resolution_percentage = 100

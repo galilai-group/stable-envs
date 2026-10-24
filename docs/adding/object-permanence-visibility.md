@@ -5,7 +5,7 @@ rays and equal-depth semantic IDs. It is explicitly selected; existing renderers
 State interfaces, raw Blender BVH references and acceptance thresholds are unchanged.
 The seven legacy-certified scenes remain certified under their original contract.
 G63/G66/G80/G81 retain their legacy BVH deferrals and additionally pass this new
-contract. G65/G82–G89/G93–G97/G99/G100 are certified only under the new contract.
+contract. G02/G03/G05–G07/G65/G82–G89/G93–G97/G99/G100 are certified only under the new contract.
 
 ## Geometric contract
 
@@ -305,7 +305,7 @@ G99/G100 source animation accumulates rolling orientation across frames: run its
 animation once offline, then sample evaluated poses, including hidden motion.
 Replay neither reimplements collision formulae nor claims action-driven physics.
 
-The certified scope is now seven legacy scenes plus 20 versioned scenes, 27
+This batch brought the scope to seven legacy scenes plus 20 versioned scenes, 27
 audited first members out of 197 scripts. G90/G91/G92/G98 remain outside the registry;
 later tasks and diversity members still need separate audits. No runtime code,
 schema, contract, old fixture or acceptance budget changes in this batch.
@@ -336,5 +336,72 @@ SHA256 `e43ced40aafb0bb7fc52d0f31c4adc6fb9adaee0b61fcdce5f25ec56a4fa4fc4`.
 The diagnostic calls are `build_scene_by_kind()` then `animate_scene_by_kind()`;
 the independent world-triangle/normal checker provides the unchanged gate.
 G98 has no accepted recording, oracle or preparation registry entry. Its local
-GIF is explicitly named `g98-deferred-source-vs-pixel-rays-v1.gif`. Normal budgets,
+GIF is stored in `evaluation/deferred-previews/g98-deferred-source-vs-pixel-rays-v1.gif`. Normal budgets,
 runtime implementation and reference generation algorithms are unchanged.
+
+## Early nominal entries: G01–G10
+
+The next audit starts at G01 and covers the **first nominal member** of each
+task through G10. Two batches reuse the same recording format and simplified
+renderer. Other members, including G02's two-ball variant and G05's six other
+scripts, remain unregistered; batch reports correctly mark them unsupported.
+
+| Batch | Task and source behavior | Meshes / dynamic nodes | Maximum depth MSE | Minimum mask IoU |
+|---|---|---:|---:|---:|
+| Ramp balls | G02 rolling ball behind an opaque tunnel | 5 / 1 | 4.18e-14 | 1.0 |
+| Ramp balls | G03 rolling ball blocked by a solid wall | 8 / 1 | 4.36e-14 | 1.0 |
+| Rigid vehicles | G05 car reaches wall and stops | 11 / 5 | 3.53e-17 | 1.0 |
+| Rigid vehicles | G06 car falls through a bridge opening | 34 / 5 | 4.56e-17 | 1.0 |
+| Rigid vehicles | G07 car stops at a closed guillotine gate | 17 / 10 | 2.95e-17 | 1.0 |
+
+All five have independent 120-frame oracles. Cached and full drawing pass every
+depth/object-mask gate. Generic tests check RGB/depth/IDs bitwise at 160x90 and
+320x180 with reverse/shuffled/repeated requests, output isolation and a single
+static seed build. Independent source triangles/normals check all frames, not
+just visible objects. The car body, wheels and spokes retain separate sampled
+poses; no vehicle-specific runtime code is needed.
+
+### Offline entry preparation
+
+G02/G03 are older scripts with scene creation and animation at module top level,
+followed by native rendering, directory deletion and file saving. Importing the
+complete file would execute those operations. An explicit audited
+`$prefix:render_png` recipe executes the unchanged construction/animation prefix,
+ending before the `render_png` definition. It omits only the top-level
+`os.makedirs(OUT_DIR, exist_ok=True)` output setup. The pinned source remains
+clean. Unit tests require all 120 animation statements to survive and require
+missing boundaries/unreviewed output setup to fail.
+
+G05's source animation takes several named parameters, rather than one object
+dictionary. Offline preparation binds those parameter names to the dictionary
+returned by its builder, exactly as its original `main()` does. Existing
+single-dictionary, tuple and G27 entry recipes keep their behavior. The oracle
+has independent source-entry preparation and never imports the candidate
+exporter or renderer. Geometry extraction, ray rules, thresholds and runtime
+rendering are unchanged; no shader, shadow or antialiasing work is added here.
+
+### Skipped source entries and previews
+
+| Task | Actual source limitation | Retained preview |
+|---|---|---|
+| G01 | Active acrylic materials have alpha .28/.42; the opaque material gate rejects them | 120-frame source-only GIF |
+| G04 | Curved tracks are renderable `CURVE` objects, outside mesh-only export | 120-frame source-only GIF |
+| G08 | `animate_scene` raises `NameError: name 'DIVERSITY' is not defined`; its camera is also orthographic | One-frame initial-scene diagnostic GIF |
+| G09/G10 | Actual selected cameras are orthographic | 120-frame source-only GIFs |
+
+Live tests reproduce these exact source failures without repairing globals,
+converting curves, changing camera projection or substituting opaque materials.
+These five tasks have no accepted recordings/oracles or preparation entries.
+The source pin and first-member paths are given by the inventory; G08's failure
+occurs at the `drawer_travel_scale` access in its original animation function.
+
+Accepted source/replay GIFs stay in `evaluation/`. Skipped diagnostics go in
+`evaluation/deferred-previews/`, with visible **source only / NOT CERTIFIED**
+labels. Unsupported scenes cannot honestly provide a certified replay
+comparison; G08's initial scene is not presented as an animated trajectory.
+Each successful GIF is decoded to verify its expected frame count before its
+temporary PNG directory is deleted. Only GIFs remain in the artifact cache.
+
+The scope is now **32 audited first members: seven legacy and 25 versioned
+scenes**, out of 197 scripts. Old fixtures, interfaces and acceptance budgets
+remain unchanged. Subsequent audits resume at G11.

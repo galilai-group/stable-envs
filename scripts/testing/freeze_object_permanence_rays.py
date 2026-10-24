@@ -3,13 +3,12 @@
 import argparse
 import json
 import platform
-import runpy
 import subprocess
 from pathlib import Path
 
 import numpy as np
 
-from .freeze_object_permanence import REFERENCE_CASES, SOURCE_COMMIT, sha256, write_depth_parts
+from .freeze_object_permanence import REFERENCE_CASES, SOURCE_COMMIT, prepare_reference, sha256, write_depth_parts
 from .object_permanence_ray_reference import CONTRACT, draw
 
 
@@ -35,13 +34,7 @@ def freeze(root, output, task, width=320, height=180):
     metadata = json.loads(task_path.read_text())
     script = task_path.parent / metadata["member_scripts"][0]
     build, animate, targets = REFERENCE_CASES[task]
-    source = runpy.run_path(str(script), run_name="independent_pixel_ray_reference")
-    source["clear_scene"]()
-    objects = source[build]()
-    if task == "G27":
-        source[animate](bpy.context.scene, objects["support_plate"], objects["ball"])
-    else:
-        source[animate](*(objects if isinstance(objects, tuple) else (objects,)))
+    prepare_reference(script, task)
     scene = bpy.context.scene
     scene.render.resolution_x, scene.render.resolution_y = width, height
     scene.render.resolution_percentage = 100
