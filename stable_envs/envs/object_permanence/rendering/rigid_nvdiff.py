@@ -14,13 +14,15 @@ from .viewports import CropCamera, PixelCenterRenderer
 class RigidSceneRenderer(Closeable):
     """Borrow a RigidTrajectory and render arbitrary sampled frames on CUDA.
 
-    All objects share one depth buffer. Fixed-camera recordings reuse static
-    visibility, while all movers compete using original face IDs. No crop or
+    All objects share one depth buffer. Legacy fixed-camera coverage reuses static
+    visibility, while movers compete using original face IDs. No crop or
     single-mover assumption. Geometry IDs map to manifest semantic IDs. The
     trajectory remains caller-owned and must stay open while rendering.
     Existing G34Renderer/G34Replay interfaces and their optimized path are separate.
     Optional geometry_precision="float64" preserves projection arithmetic, not
     extra precision absent from recorded meshes, poses or shading attributes.
+    Opt-in visibility_contract="stable-envs/opaque-pixel-rays-v1" uses float64
+    quaternion/visibility arithmetic and semantic-ID ties, with full coverage.
     """
 
     resource_kind = "object_permanence.RigidSceneRenderer"
@@ -35,6 +37,7 @@ class RigidSceneRenderer(Closeable):
         coverage_mode="refined",
         cache_static=True,
         geometry_precision="float32",
+        visibility_contract=None,
     ):
         self.device = torch.device(device)
         if self.device.type != "cuda" or not torch.cuda.is_available():
@@ -43,7 +46,23 @@ class RigidSceneRenderer(Closeable):
             raise ValueError("size and chunk_size must be positive integers")
         if geometry_precision not in ("float32", "float64"):
             raise ValueError("geometry_precision must be float32 or float64")
+        renderer_class: type = PixelCenterRenderer
+        renderer_options: dict = {}
+        if visibility_contract is not None:
+            from .visibility import CONTRACT, validate_camera
+            from .visibility_cuda import ContractRenderer
+
+            if visibility_contract != CONTRACT or coverage_mode != "refined":
+                raise ValueError("unsupported visibility contract or coverage mode")
+            validate_camera(trajectory.manifest["camera"])
+            geometry_precision = "float64"
+            renderer_class = ContractRenderer
+            renderer_options = {
+                "camera_metadata": trajectory.manifest["camera"],
+                "semantic_ids": torch.tensor([o["id"] for o in trajectory.manifest["objects"]], device=self.device),
+            }
         camera_dtype = torch.float64 if geometry_precision == "float64" else torch.float32
+        self.visibility_contract = visibility_contract
         manifest = trajectory.manifest
         camera = manifest["camera"]
         if size * camera["width"] % camera["height"]:
@@ -59,7 +78,7 @@ class RigidSceneRenderer(Closeable):
         self._nodes = torch.as_tensor(nodes[nodes >= 0], device=self.device)
         base = torch.tensor([obj["pose"] for obj in objects], dtype=torch.float32, device=self.device)
         self._positions = base[None, :, :3].contiguous()
-        self._rotations = rotations(base[:, 3:])[None]
+        self._rotations = rotations(base[:, 3:].double() if visibility_contract is not None else base[:, 3:])[None]
         self._node_count = len(manifest["dynamic_nodes"])
         world = np.asarray(camera["world"], np.float64)
         projection = np.asarray(camera["projection"], np.float64)
@@ -75,7 +94,7 @@ class RigidSceneRenderer(Closeable):
         self._ids = torch.tensor([0, *[o["id"] for o in manifest["objects"]]], dtype=torch.int16, device=self.device)
         scene = ND.Scene.from_triangles(**trajectory.triangles(), device=self.device)
         try:
-            self.renderer = PixelCenterRenderer(
+            self.renderer = renderer_class(
                 scene=scene,
                 res=(self.height, self.width),
                 device=self.device,
@@ -86,6 +105,7 @@ class RigidSceneRenderer(Closeable):
                 coverage_mode=coverage_mode,
                 geometry_precision=geometry_precision,
                 static_geoms=torch.as_tensor(nodes < 0, device=self.device) if cache_static else None,
+                **renderer_options,
             )
         except BaseException:
             scene.close()
@@ -132,12 +152,18 @@ class RigidSceneRenderer(Closeable):
                 positions_gpu = self._positions.expand(len(part), -1, -1).clone()
                 rotations_gpu = self._rotations.expand(len(part), -1, -1, -1).clone()
                 if self._node_count:
-                    node_rotations = rotations(part[..., 3:].reshape(-1, 4)).reshape(len(part), self._node_count, 3, 3)
+                    quaternions = part[..., 3:].reshape(-1, 4)
+                    node_rotations = rotations(
+                        quaternions.double() if self.visibility_contract else quaternions
+                    ).reshape(len(part), self._node_count, 3, 3)
                     positions_gpu[:, self._moving] = part[:, self._nodes, :3]
                     rotations_gpu[:, self._moving] = node_rotations[:, self._nodes]
             else:
                 positions_gpu = part[..., :3].contiguous()
-                rotations_gpu = rotations(part[..., 3:].reshape(-1, 4)).reshape(len(part), part.shape[1], 3, 3)
+                quaternions = part[..., 3:].reshape(-1, 4)
+                rotations_gpu = rotations(quaternions.double() if self.visibility_contract else quaternions).reshape(
+                    len(part), part.shape[1], 3, 3
+                )
             buffers = {m: result[m][start:stop] for m in modes}
             self.renderer.render_many(positions_gpu, rotations_gpu, self.camera, modes=modes, out=buffers)
             if "ids" in modes:

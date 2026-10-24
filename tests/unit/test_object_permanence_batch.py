@@ -116,3 +116,24 @@ def test_known_source_fidelity_failure_is_not_reported_ready_or_executed(source,
         assert result["counts"] == {"unsupported": 1}
         assert result["jobs"][0]["capability_group"] == "source-fidelity-review"
         assert "source fidelity deferred" in result["jobs"][0]["reason"]
+
+
+def test_versioned_batch_requires_explicit_contract_and_preserves_default_deferral(source, tmp_path):
+    for task in ("G63", "G65"):
+        directory = source / f"object_permanence/generator/tasks/{task}"
+        directory.mkdir()
+        (directory / "task.json").write_text(json.dumps({"id": task, "member_scripts": ["scene.py"]}))
+        (directory / "scene.py").write_text("def main(): pass\n")
+    default = batch.run(source, tmp_path / "data", tmp_path / "legacy.json", tasks="G63,G65", plan_only=True)
+    assert default["counts"] == {"unsupported": 2}
+    result = batch.run(
+        source,
+        tmp_path / "data",
+        tmp_path / "new.json",
+        tasks="G63,G65",
+        plan_only=True,
+        visibility_contract="stable-envs/opaque-pixel-rays-v1",
+    )
+    assert result["counts"] == {"ready-for-runtime-check": 2}
+    with pytest.raises(ValueError, match="unknown visibility"):
+        batch.run(source, tmp_path / "data", tmp_path / "bad.json", visibility_contract="unversioned")

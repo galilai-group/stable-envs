@@ -23,11 +23,34 @@ from tests.helpers.reference.object_permanence_recordings import (
 )
 
 
-def check(recordings, oracle, task, *, cache_static=True, geometry_precision="float32", camera_probe=None):
+def check(
+    recordings,
+    oracle,
+    task,
+    *,
+    cache_static=True,
+    geometry_precision="float32",
+    camera_probe=None,
+    visibility_contract=None,
+):
     manifest, reference = load_geometry_directory(oracle)
+    if manifest.get("visibility_contract") != visibility_contract:
+        raise ValueError("oracle and renderer visibility contracts differ; select the version explicitly")
+    if visibility_contract is not None and manifest["schema"] != "stable-envs/object-permanence-rigid-oracle-v2":
+        raise ValueError("versioned visibility requires a v2 geometric oracle")
+    if visibility_contract is not None and camera_probe is not None:
+        raise ValueError("versioned visibility cannot use diagnostic camera overrides")
+    if visibility_contract is not None:
+        geometry_precision = "float64"
     failures, minimum, worst = [], 1.0, 0.0
     with RigidTrajectory(recordings, f"{task.lower()}-nominal") as clip:
         metadata = clip.manifest
+        if visibility_contract is not None and (
+            not np.array_equal(manifest["camera"]["world"], metadata["camera"]["world"])
+            or not np.array_equal(manifest["camera"]["projection"], metadata["camera"]["projection"])
+            or any(manifest["camera"][k] != metadata["camera"][k] for k in ("near", "far"))
+        ):
+            raise ValueError("oracle and recording cameras differ")
         if (
             metadata["source"]["commit"] != manifest["source_commit"]
             or metadata["source"]["script_sha256"] != manifest["source_script_sha256"]
@@ -39,7 +62,11 @@ def check(recordings, oracle, task, *, cache_static=True, geometry_precision="fl
         if (indices >= len(clip)).any() or not np.array_equal(clip.frames[indices], reference["source_frames"]):
             raise ValueError("source and recording frame numbers differ")
         with RigidSceneRenderer(
-            clip, size=manifest["height"], cache_static=cache_static, geometry_precision=geometry_precision
+            clip,
+            size=manifest["height"],
+            cache_static=cache_static,
+            geometry_precision=geometry_precision,
+            visibility_contract=visibility_contract,
         ) as renderer:
             if camera_probe is not None:
                 import torch
@@ -87,6 +114,7 @@ def check(recordings, oracle, task, *, cache_static=True, geometry_precision="fl
             failures.append({"frame": int(frame), "depth_mse": mse, "failed_masks": masks})
     return {
         "task": task.upper(),
+        "visibility_contract": visibility_contract,
         "source_commit": manifest["source_commit"],
         "cache_static": cache_static,
         "geometry_precision": geometry_precision,
@@ -111,6 +139,7 @@ def main():
     parser.add_argument("--uncached", action="store_true")
     parser.add_argument("--geometry-precision", choices=("float32", "float64"), default="float32")
     parser.add_argument("--camera-probe", type=Path, help="diagnostic-only source camera calibration report")
+    parser.add_argument("--visibility-contract", help="explicit version shared by renderer and new oracle")
     args = parser.parse_args()
     result = check(
         args.recordings,
@@ -119,6 +148,7 @@ def main():
         cache_static=not args.uncached,
         geometry_precision=args.geometry_precision,
         camera_probe=None if args.camera_probe is None else json.loads(args.camera_probe.read_text()),
+        visibility_contract=args.visibility_contract,
     )
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(result, indent=2) + "\n")

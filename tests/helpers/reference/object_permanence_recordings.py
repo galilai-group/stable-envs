@@ -12,6 +12,19 @@ RECORDINGS = FIXTURES / "saved/object_permanence_rigid"
 DEPTH_MSE_MAX = 1e-8
 MASK_IOU_MIN = 0.99
 RECORDED_TASKS = ("g27", "g34", "g37", "g38", "g55", "g62", "g64")
+RAY_TASKS = ("g63", "g65", "g66", "g80", "g81", "g83")
+
+
+@lru_cache(maxsize=len(RAY_TASKS))
+def load_ray_geometry(task):
+    if task not in RAY_TASKS:
+        raise ValueError("unknown versioned ray scene")
+    manifest, arrays = load_geometry_directory(
+        FIXTURES / f"semantics/object_permanence/{task}/opaque_pixel_rays_v1/nominal"
+    )
+    assert manifest["schema"] == "stable-envs/object-permanence-rigid-oracle-v2"
+    assert manifest["visibility_contract"] == "stable-envs/opaque-pixel-rays-v1"
+    return manifest, arrays
 
 
 @lru_cache(maxsize=len(RECORDED_TASKS))

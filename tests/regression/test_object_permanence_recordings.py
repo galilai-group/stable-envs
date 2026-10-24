@@ -81,9 +81,11 @@ def test_first_batch_lossless_depth_parts_and_actual_source_visibility(task):
 
 
 def test_every_audited_nominal_entry_has_a_declared_independent_source_gate():
-    from scripts.export.object_permanence import AUDITED_TASKS, DEFERRED_TASKS
+    from scripts.export.object_permanence import AUDITED_TASKS, CONTRACT_ONLY_TASKS, DEFERRED_TASKS
 
-    assert {task.lower() for task in AUDITED_TASKS if task not in DEFERRED_TASKS} == set(RECORDED_TASKS)
+    assert {task.lower() for task in AUDITED_TASKS if task not in set(DEFERRED_TASKS) | CONTRACT_ONLY_TASKS} == set(
+        RECORDED_TASKS
+    )
 
 
 @pytest.mark.parametrize("task", ["g27", "g55"])
@@ -116,3 +118,35 @@ def test_support_removal_precedes_the_recorded_ball_drop():
         assert len(moving_support) and len(falling_ball)
         assert moving_support[0] < falling_ball[0]
         assert support[-1] < support[0] and ball[-1] < ball[0]
+
+
+@pytest.mark.parametrize("task", ["g63", "g65", "g66", "g80", "g81", "g83"])
+def test_versioned_source_poses_hidden_motion_and_reference_identity(task):
+    from tests.helpers.reference.object_permanence_recordings import load_ray_geometry
+
+    manifest, reference = load_ray_geometry(task)
+    assert reference["depth"].shape == reference["object_ids"].shape == (120, 180, 320)
+    assert reference["depth"].dtype == np.float32 and np.isfinite(reference["depth"]).all()
+    np.testing.assert_array_equal(reference["depth"][0], reference["depth_base"])
+    with RigidTrajectory(RECORDINGS, f"{task}-nominal") as clip:
+        np.testing.assert_array_equal(clip.frames, reference["source_frames"])
+        assert manifest["source_script_sha256"] == clip.manifest["source"]["script_sha256"]
+        assert manifest["object_ids"] == {o["name"]: o["id"] for o in clip.manifest["objects"]}
+        actual = clip.object_poses(np.arange(120))
+        expected = reference["poses"]
+        np.testing.assert_allclose(actual[..., :3], expected[..., :3], atol=3e-7, rtol=0)
+        signs = np.where((actual[..., 3:] * expected[..., 3:]).sum(-1, keepdims=True) < 0, -1, 1)
+        np.testing.assert_allclose(actual[..., 3:], expected[..., 3:] * signs, atol=1e-6, rtol=0)
+    for name in manifest["targets"]:
+        visible = (reference["object_ids"] == manifest["object_ids"][name]).sum((1, 2))
+        np.testing.assert_array_equal(visible, manifest["target_visible_pixels"][name])
+        assert visible.max() > 0
+
+
+def test_versioned_contract_registry_never_erases_legacy_bvh_deferrals():
+    from scripts.export.object_permanence import AUDITED_TASKS, DEFERRED_TASKS, RAY_CONTRACT_TASKS
+    from tests.helpers.reference.object_permanence_recordings import RAY_TASKS
+
+    assert set(DEFERRED_TASKS) == {"G63", "G66", "G80", "G81"}
+    assert set(t.upper() for t in RAY_TASKS) == RAY_CONTRACT_TASKS
+    assert RAY_CONTRACT_TASKS <= set(AUDITED_TASKS)

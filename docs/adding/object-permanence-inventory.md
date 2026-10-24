@@ -24,8 +24,9 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | geometry-or-scale-review | 2 |
 | orthographic-camera-review | 80 |
 | physics-bake-review | 1 |
-| rigid-candidate-needs-entry-audit | 70 |
+| rigid-candidate-needs-entry-audit | 68 |
 | source-fidelity-review | 4 |
+| versioned-visibility-runtime-gate | 2 |
 
 ## Source tasks
 
@@ -95,7 +96,7 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | G62 two_balls_cross_tunnel | 1 | location, rotation_euler | audited-nominal-runtime-gate | nominal export available |
 | G63 comb_occluder_sweep | 1 | location | source-fidelity-review | source fidelity deferred |
 | G64 flipboard_occluder | 1 | location, modifiers, rotation_euler | audited-nominal-runtime-gate | nominal export available |
-| G65 box_two_balls_relocate | 1 | location | rigid-candidate-needs-entry-audit | not evaluated |
+| G65 box_two_balls_relocate | 1 | location | versioned-visibility-runtime-gate | versioned ray contract only |
 | G66 rotating_carousel_cups | 1 | location, rotation_euler | source-fidelity-review | source fidelity deferred |
 | G67 double_deflector_zigzag | 1 | location, rotation_euler | orthographic-camera-review | not evaluated |
 | G68 width_slot_wall_two_balls | 1 | location, rotation_euler | appearance-or-visibility-review | not evaluated |
@@ -113,7 +114,7 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | G80 sliding_double_doors | 1 | location | source-fidelity-review | source fidelity deferred |
 | G81 rolling_shutter | 1 | location | source-fidelity-review | source fidelity deferred |
 | G82 accordion_fold_screen | 1 | location, rotation_euler | rigid-candidate-needs-entry-audit | not evaluated |
-| G83 four_cup_three_swaps | 1 | location | rigid-candidate-needs-entry-audit | not evaluated |
+| G83 four_cup_three_swaps | 1 | location | versioned-visibility-runtime-gate | versioned ray contract only |
 | G84 two_balls_three_cups | 1 | location | rigid-candidate-needs-entry-audit | not evaluated |
 | G85 nested_cup_transfer | 1 | location | rigid-candidate-needs-entry-audit | not evaluated |
 | G86 conveyor_covered_boxes | 1 | location | rigid-candidate-needs-entry-audit | not evaluated |

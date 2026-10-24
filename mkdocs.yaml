@@ -122,6 +122,7 @@ nav:
       - Adding a task: adding/task.md
       - Adding a renderer: adding/renderer.md
       - Object-permanence recordings: adding/object-permanence-recordings.md
+      - Object-permanence visibility contract: adding/object-permanence-visibility.md
       - Object-permanence source inventory: adding/object-permanence-inventory.md
       - Writing a bit-exact Triton kernel: adding/bit-exact-triton.md
       - Testing: testing.md

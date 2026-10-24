@@ -8,6 +8,11 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Opt-in opaque pixel-ray visibility contract with stable semantic-ID ties,
+  independent versioned source oracles and CUDA replay for G63/G66/G80/G81.
+  Adds audited G65/G83 nominal clips and all-frame depth/mask gates. Legacy
+  references, thresholds, defaults and BVH deferrals remain unchanged.
+
 - Source visibility diagnostics distinguish exact coplanar ties, BVH boundary
   deviations and camera ray conventions. Optional float64 projection retains
   vertex precision through refined coverage; legacy defaults and frozen gates

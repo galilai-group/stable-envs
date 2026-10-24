@@ -563,4 +563,7 @@ not permission to ignore disputed pixels. G80's two observed BVH labels prove
 that one global ID-priority rule cannot reproduce that legacy oracle. Reproducing
 Blender's traversal/numerical behavior is a separate compatibility backend, not a
 geometrically canonical tie rule. No mask erosion, edge exclusion, oracle copying,
-scene-name branch or threshold relaxation is used here. All four deferrals remain.
+scene-name branch or threshold relaxation is used here. All four raw-BVH deferrals
+remain. The [versioned pixel-ray implementation](object-permanence-visibility.md)
+now adds independent geometric references alongside them; legacy certification
+is never inferred from the new contract.

@@ -31,6 +31,8 @@ REFERENCE_CASES = {
     "G66": ("build_scene_by_kind", "animate_scene", ("hidden_ball",)),
     "G80": ("build_scene_by_kind", "animate_scene", ("red_cube_target", "blue_sphere_target")),
     "G81": ("build_scene_by_kind", "animate_scene", ("red_box", "blue_cylinder")),
+    "G65": ("build_scene_by_kind", "animate_scene", ("ball_red", "ball_green")),
+    "G83": ("build_scene_by_kind", "animate_scene", ("hidden_ball",)),
 }
 
 

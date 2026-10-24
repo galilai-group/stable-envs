@@ -1,0 +1,818 @@
+{
+  "arrays": {
+    "frames": {
+      "dtype": "int64",
+      "sha256": "3ce1a862b6cf0bb21bc1354b758cafa47ca5ec03b5c004d6210f5abd8c55df44",
+      "shape": [
+        120
+      ]
+    },
+    "poses": {
+      "dtype": "float32",
+      "sha256": "3c2e39070b9cc5b720b2b29287b03088101bf9465e6047d9f7d9da18ec6144b0",
+      "shape": [
+        120,
+        15,
+        7
+      ]
+    }
+  },
+  "assets": {
+    "080ba0c42e77f244973d7bd065eaec3b9b100add87ab44adb4844c15a95f1168": {
+      "file": "assets/cube/080ba0c42e77f244973d7bd065eaec3b9b100add87ab44adb4844c15a95f1168.npz",
+      "sha256": "0d005d84a52a117fabd3ccd5dc63274c1255f5163d9faea5addc9279d35f3a3f"
+    },
+    "10948ad382afe4e3d5a4212c7aebf97823249c2182cc0f8ed77194341d03d990": {
+      "file": "assets/cube/10948ad382afe4e3d5a4212c7aebf97823249c2182cc0f8ed77194341d03d990.npz",
+      "sha256": "53b8edcbb20522142a12a0f9c25c01ede8919fc073ca16a089c7028d09a04c57"
+    },
+    "396b4b1bffd9a3c0ac732091225215308d81db6c819a1e7e5e30f54cc73de31b": {
+      "file": "assets/cube/396b4b1bffd9a3c0ac732091225215308d81db6c819a1e7e5e30f54cc73de31b.npz",
+      "sha256": "c0a73491700217ee7727e47e16d83abf46427c4f3c5d8c6c125ae8fd2d4cf7bb"
+    },
+    "4388d9139c1c048f444363e756a4cf233cdd065be0a3b3fc68fd7cb8b1353c81": {
+      "file": "assets/cube/4388d9139c1c048f444363e756a4cf233cdd065be0a3b3fc68fd7cb8b1353c81.npz",
+      "sha256": "4439c190a50437295367184d2f0721738f3dce4ce4f11f173ce9dd1608900380"
+    },
+    "741b52ce8ae26f04c8affea0a64123b86b8d8ca892d3102719bbfaaf1809e1fd": {
+      "file": "assets/cube/741b52ce8ae26f04c8affea0a64123b86b8d8ca892d3102719bbfaaf1809e1fd.npz",
+      "sha256": "26dfbc027d2c1ee40fa0c362e93cb9d28c3890f360ab2fcadf35bd6f9e6864ec"
+    },
+    "805b3a7e70473f36db17a17430e0d5793ea68b189366e05707532f1abc11c527": {
+      "file": "assets/cylinder/805b3a7e70473f36db17a17430e0d5793ea68b189366e05707532f1abc11c527.npz",
+      "sha256": "867ba563151d807897d2593ca357629edc92acc7ecab879f01c067f14662daf5"
+    },
+    "8744637608822b976c73fd704c1b049c82f863cdb574f6d76131f4483ff9042e": {
+      "file": "assets/cube/8744637608822b976c73fd704c1b049c82f863cdb574f6d76131f4483ff9042e.npz",
+      "sha256": "e08b5070491a9fed6280fc5d155650a0c5b83a41a46a65a946ebef22e999e9f5"
+    },
+    "a098c3b9f2d207a523709b9d9f25e6df5777b3c238fde1957dfd9123df65b8cd": {
+      "file": "assets/cube/a098c3b9f2d207a523709b9d9f25e6df5777b3c238fde1957dfd9123df65b8cd.npz",
+      "sha256": "8d5f95de96f740eb62305d015830974708aae50d31d42d2bb1647b132f9d0b59"
+    },
+    "c20d22368f19062a82e23b2d462916b663ecd4420e620000b966fda9b1bdd3c3": {
+      "file": "assets/cube/c20d22368f19062a82e23b2d462916b663ecd4420e620000b966fda9b1bdd3c3.npz",
+      "sha256": "4170ca0ce426aa286591a7025d2803f03e607c8c708c4bf97934250dee589a24"
+    },
+    "cac43eb9d33c223818cdb9e5d734acd2674a11b818cdc067bb4c6c4bec83620c": {
+      "file": "assets/cube/cac43eb9d33c223818cdb9e5d734acd2674a11b818cdc067bb4c6c4bec83620c.npz",
+      "sha256": "3915d57bf4ddc3757449b1a2d748d30f24f50555b9703d9d729dd29ee4cc06f8"
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "height": 720,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        2.5555551052093506,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        4.543209552764893,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "width": 1280,
+    "world": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.08662958443164825,
+        -0.9962406158447266,
+        -9.199999809265137
+      ],
+      [
+        0.0,
+        0.9962406158447266,
+        0.08662958443164825,
+        2.3499999046325684
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "clip": "g81-nominal",
+  "conventions": {
+    "quaternion": "wxyz",
+    "units": "source-scene-units",
+    "world": "right-handed-z-up"
+  },
+  "dynamic_nodes": [
+    "shutter_gap_01",
+    "shutter_gap_02",
+    "shutter_gap_03",
+    "shutter_gap_04",
+    "shutter_gap_05",
+    "shutter_gap_06",
+    "shutter_gap_07",
+    "shutter_slat_00",
+    "shutter_slat_01",
+    "shutter_slat_02",
+    "shutter_slat_03",
+    "shutter_slat_04",
+    "shutter_slat_05",
+    "shutter_slat_06",
+    "shutter_slat_07"
+  ],
+  "fps": 24.0,
+  "license_ref": {
+    "sha256": "0163481eb7a0fe3ed86d2dccf542a849b36b3c119f8ca6d3d5b36c074f2e1a1c"
+  },
+  "objects": [
+    {
+      "asset": "805b3a7e70473f36db17a17430e0d5793ea68b189366e05707532f1abc11c527",
+      "id": 1,
+      "name": "blue_cylinder",
+      "node": -1,
+      "pose": [
+        0.8999999761581421,
+        0.2800000011920929,
+        1.2300000190734863,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.1599999964237213,
+        0.36000001430511475,
+        0.949999988079071,
+        1.0
+      ],
+      "role": "target_object",
+      "shape": "cylinder",
+      "source_id": "blue_cylinder"
+    },
+    {
+      "asset": "4388d9139c1c048f444363e756a4cf233cdd065be0a3b3fc68fd7cb8b1353c81",
+      "id": 2,
+      "name": "large_floor_base",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        -0.05000000074505806,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8199999928474426,
+        0.800000011920929,
+        0.75,
+        1.0
+      ],
+      "role": "ground",
+      "shape": "cube",
+      "source_id": "large_floor_base"
+    },
+    {
+      "asset": "080ba0c42e77f244973d7bd065eaec3b9b100add87ab44adb4844c15a95f1168",
+      "id": 3,
+      "name": "leg_bl",
+      "node": -1,
+      "pose": [
+        -2.9000000953674316,
+        2.299999952316284,
+        0.3100000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7400000095367432,
+        0.6200000047683716,
+        0.4399999976158142,
+        1.0
+      ],
+      "role": "table",
+      "shape": "cube",
+      "source_id": "leg_bl"
+    },
+    {
+      "asset": "080ba0c42e77f244973d7bd065eaec3b9b100add87ab44adb4844c15a95f1168",
+      "id": 4,
+      "name": "leg_br",
+      "node": -1,
+      "pose": [
+        2.9000000953674316,
+        2.299999952316284,
+        0.3100000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7400000095367432,
+        0.6200000047683716,
+        0.4399999976158142,
+        1.0
+      ],
+      "role": "table",
+      "shape": "cube",
+      "source_id": "leg_br"
+    },
+    {
+      "asset": "080ba0c42e77f244973d7bd065eaec3b9b100add87ab44adb4844c15a95f1168",
+      "id": 5,
+      "name": "leg_fl",
+      "node": -1,
+      "pose": [
+        -2.9000000953674316,
+        -2.0999999046325684,
+        0.3100000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7400000095367432,
+        0.6200000047683716,
+        0.4399999976158142,
+        1.0
+      ],
+      "role": "table",
+      "shape": "cube",
+      "source_id": "leg_fl"
+    },
+    {
+      "asset": "080ba0c42e77f244973d7bd065eaec3b9b100add87ab44adb4844c15a95f1168",
+      "id": 6,
+      "name": "leg_fr",
+      "node": -1,
+      "pose": [
+        2.9000000953674316,
+        -2.0999999046325684,
+        0.3100000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7400000095367432,
+        0.6200000047683716,
+        0.4399999976158142,
+        1.0
+      ],
+      "role": "table",
+      "shape": "cube",
+      "source_id": "leg_fr"
+    },
+    {
+      "asset": "10948ad382afe4e3d5a4212c7aebf97823249c2182cc0f8ed77194341d03d990",
+      "id": 7,
+      "name": "rear_backdrop_panel",
+      "node": -1,
+      "pose": [
+        0.0,
+        3.549999952316284,
+        2.549999952316284,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9599999785423279,
+        0.9700000286102295,
+        0.9800000190734863,
+        1.0
+      ],
+      "role": "background",
+      "shape": "cube",
+      "source_id": "rear_backdrop_panel"
+    },
+    {
+      "asset": "a098c3b9f2d207a523709b9d9f25e6df5777b3c238fde1957dfd9123df65b8cd",
+      "id": 8,
+      "name": "red_box",
+      "node": -1,
+      "pose": [
+        -0.8999999761581421,
+        0.2800000011920929,
+        1.1299999952316284,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9200000166893005,
+        0.18000000715255737,
+        0.18000000715255737,
+        1.0
+      ],
+      "role": "target_object",
+      "shape": "cube",
+      "source_id": "red_box"
+    },
+    {
+      "asset": "741b52ce8ae26f04c8affea0a64123b86b8d8ca892d3102719bbfaaf1809e1fd",
+      "id": 9,
+      "name": "shutter_gap_01",
+      "node": 0,
+      "pose": [
+        0.0,
+        -1.1050000190734863,
+        2.716249942779541,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.14000000059604645,
+        0.15000000596046448,
+        0.18000000715255737,
+        1.0
+      ],
+      "role": "shutter_slat_gap",
+      "shape": "cube",
+      "source_id": "shutter_gap_01"
+    },
+    {
+      "asset": "741b52ce8ae26f04c8affea0a64123b86b8d8ca892d3102719bbfaaf1809e1fd",
+      "id": 10,
+      "name": "shutter_gap_02",
+      "node": 1,
+      "pose": [
+        0.0,
+        -1.1050000190734863,
+        2.9375,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.14000000059604645,
+        0.15000000596046448,
+        0.18000000715255737,
+        1.0
+      ],
+      "role": "shutter_slat_gap",
+      "shape": "cube",
+      "source_id": "shutter_gap_02"
+    },
+    {
+      "asset": "741b52ce8ae26f04c8affea0a64123b86b8d8ca892d3102719bbfaaf1809e1fd",
+      "id": 11,
+      "name": "shutter_gap_03",
+      "node": 2,
+      "pose": [
+        0.0,
+        -1.1050000190734863,
+        3.158750057220459,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.14000000059604645,
+        0.15000000596046448,
+        0.18000000715255737,
+        1.0
+      ],
+      "role": "shutter_slat_gap",
+      "shape": "cube",
+      "source_id": "shutter_gap_03"
+    },
+    {
+      "asset": "741b52ce8ae26f04c8affea0a64123b86b8d8ca892d3102719bbfaaf1809e1fd",
+      "id": 12,
+      "name": "shutter_gap_04",
+      "node": 3,
+      "pose": [
+        0.0,
+        -1.1050000190734863,
+        3.380000114440918,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.14000000059604645,
+        0.15000000596046448,
+        0.18000000715255737,
+        1.0
+      ],
+      "role": "shutter_slat_gap",
+      "shape": "cube",
+      "source_id": "shutter_gap_04"
+    },
+    {
+      "asset": "741b52ce8ae26f04c8affea0a64123b86b8d8ca892d3102719bbfaaf1809e1fd",
+      "id": 13,
+      "name": "shutter_gap_05",
+      "node": 4,
+      "pose": [
+        0.0,
+        -1.1050000190734863,
+        3.601249933242798,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.14000000059604645,
+        0.15000000596046448,
+        0.18000000715255737,
+        1.0
+      ],
+      "role": "shutter_slat_gap",
+      "shape": "cube",
+      "source_id": "shutter_gap_05"
+    },
+    {
+      "asset": "741b52ce8ae26f04c8affea0a64123b86b8d8ca892d3102719bbfaaf1809e1fd",
+      "id": 14,
+      "name": "shutter_gap_06",
+      "node": 5,
+      "pose": [
+        0.0,
+        -1.1050000190734863,
+        3.822499990463257,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.14000000059604645,
+        0.15000000596046448,
+        0.18000000715255737,
+        1.0
+      ],
+      "role": "shutter_slat_gap",
+      "shape": "cube",
+      "source_id": "shutter_gap_06"
+    },
+    {
+      "asset": "741b52ce8ae26f04c8affea0a64123b86b8d8ca892d3102719bbfaaf1809e1fd",
+      "id": 15,
+      "name": "shutter_gap_07",
+      "node": 6,
+      "pose": [
+        0.0,
+        -1.1050000190734863,
+        4.043749809265137,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.14000000059604645,
+        0.15000000596046448,
+        0.18000000715255737,
+        1.0
+      ],
+      "role": "shutter_slat_gap",
+      "shape": "cube",
+      "source_id": "shutter_gap_07"
+    },
+    {
+      "asset": "c20d22368f19062a82e23b2d462916b663ecd4420e620000b966fda9b1bdd3c3",
+      "id": 16,
+      "name": "shutter_housing",
+      "node": -1,
+      "pose": [
+        0.0,
+        -0.550000011920929,
+        2.809999942779541,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.20000000298023224,
+        0.2199999988079071,
+        0.25999999046325684,
+        1.0
+      ],
+      "role": "shutter_housing",
+      "shape": "cube",
+      "source_id": "shutter_housing"
+    },
+    {
+      "asset": "8744637608822b976c73fd704c1b049c82f863cdb574f6d76131f4483ff9042e",
+      "id": 17,
+      "name": "shutter_rail_l",
+      "node": -1,
+      "pose": [
+        -2.6600000858306885,
+        -0.550000011920929,
+        1.815000057220459,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.20000000298023224,
+        0.2199999988079071,
+        0.25999999046325684,
+        1.0
+      ],
+      "role": "shutter_frame",
+      "shape": "cube",
+      "source_id": "shutter_rail_l"
+    },
+    {
+      "asset": "8744637608822b976c73fd704c1b049c82f863cdb574f6d76131f4483ff9042e",
+      "id": 18,
+      "name": "shutter_rail_r",
+      "node": -1,
+      "pose": [
+        2.6600000858306885,
+        -0.550000011920929,
+        1.815000057220459,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.20000000298023224,
+        0.2199999988079071,
+        0.25999999046325684,
+        1.0
+      ],
+      "role": "shutter_frame",
+      "shape": "cube",
+      "source_id": "shutter_rail_r"
+    },
+    {
+      "asset": "396b4b1bffd9a3c0ac732091225215308d81db6c819a1e7e5e30f54cc73de31b",
+      "id": 19,
+      "name": "shutter_slat_00",
+      "node": 7,
+      "pose": [
+        0.0,
+        -1.100000023841858,
+        2.6056249141693115,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.47999998927116394,
+        0.5299999713897705,
+        1.0
+      ],
+      "role": "shutter_slat",
+      "shape": "cube",
+      "source_id": "shutter_slat_00"
+    },
+    {
+      "asset": "396b4b1bffd9a3c0ac732091225215308d81db6c819a1e7e5e30f54cc73de31b",
+      "id": 20,
+      "name": "shutter_slat_01",
+      "node": 8,
+      "pose": [
+        0.0,
+        -1.100000023841858,
+        2.8268749713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.47999998927116394,
+        0.5299999713897705,
+        1.0
+      ],
+      "role": "shutter_slat",
+      "shape": "cube",
+      "source_id": "shutter_slat_01"
+    },
+    {
+      "asset": "396b4b1bffd9a3c0ac732091225215308d81db6c819a1e7e5e30f54cc73de31b",
+      "id": 21,
+      "name": "shutter_slat_02",
+      "node": 9,
+      "pose": [
+        0.0,
+        -1.100000023841858,
+        3.0481250286102295,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.47999998927116394,
+        0.5299999713897705,
+        1.0
+      ],
+      "role": "shutter_slat",
+      "shape": "cube",
+      "source_id": "shutter_slat_02"
+    },
+    {
+      "asset": "396b4b1bffd9a3c0ac732091225215308d81db6c819a1e7e5e30f54cc73de31b",
+      "id": 22,
+      "name": "shutter_slat_03",
+      "node": 10,
+      "pose": [
+        0.0,
+        -1.100000023841858,
+        3.2693748474121094,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.47999998927116394,
+        0.5299999713897705,
+        1.0
+      ],
+      "role": "shutter_slat",
+      "shape": "cube",
+      "source_id": "shutter_slat_03"
+    },
+    {
+      "asset": "396b4b1bffd9a3c0ac732091225215308d81db6c819a1e7e5e30f54cc73de31b",
+      "id": 23,
+      "name": "shutter_slat_04",
+      "node": 11,
+      "pose": [
+        0.0,
+        -1.100000023841858,
+        3.4906249046325684,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.47999998927116394,
+        0.5299999713897705,
+        1.0
+      ],
+      "role": "shutter_slat",
+      "shape": "cube",
+      "source_id": "shutter_slat_04"
+    },
+    {
+      "asset": "396b4b1bffd9a3c0ac732091225215308d81db6c819a1e7e5e30f54cc73de31b",
+      "id": 24,
+      "name": "shutter_slat_05",
+      "node": 12,
+      "pose": [
+        0.0,
+        -1.100000023841858,
+        3.7118749618530273,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.47999998927116394,
+        0.5299999713897705,
+        1.0
+      ],
+      "role": "shutter_slat",
+      "shape": "cube",
+      "source_id": "shutter_slat_05"
+    },
+    {
+      "asset": "396b4b1bffd9a3c0ac732091225215308d81db6c819a1e7e5e30f54cc73de31b",
+      "id": 25,
+      "name": "shutter_slat_06",
+      "node": 13,
+      "pose": [
+        0.0,
+        -1.100000023841858,
+        3.9331250190734863,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.47999998927116394,
+        0.5299999713897705,
+        1.0
+      ],
+      "role": "shutter_slat",
+      "shape": "cube",
+      "source_id": "shutter_slat_06"
+    },
+    {
+      "asset": "396b4b1bffd9a3c0ac732091225215308d81db6c819a1e7e5e30f54cc73de31b",
+      "id": 26,
+      "name": "shutter_slat_07",
+      "node": 14,
+      "pose": [
+        0.0,
+        -1.100000023841858,
+        4.154375076293945,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.47999998927116394,
+        0.5299999713897705,
+        1.0
+      ],
+      "role": "shutter_slat",
+      "shape": "cube",
+      "source_id": "shutter_slat_07"
+    },
+    {
+      "asset": "cac43eb9d33c223818cdb9e5d734acd2674a11b818cdc067bb4c6c4bec83620c",
+      "id": 27,
+      "name": "table_top",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.10000000149011612,
+        0.7099999785423279,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7400000095367432,
+        0.6200000047683716,
+        0.4399999976158142,
+        1.0
+      ],
+      "role": "table",
+      "shape": "cube",
+      "source_id": "table_top"
+    }
+  ],
+  "schema": "stable-envs/object-permanence-rigid-v1",
+  "source": {
+    "commit": "824baddcdad087810d35638bf8f273b884f74975",
+    "exporter": "scripts/export/object_permanence.py",
+    "exporter_sha256": "c9c96e8ff74d087e08ebad732511767aacd49951b6cb60bb447074e1331bfcec",
+    "license": "CC-BY-NC-4.0",
+    "parameters": {},
+    "profile": "nominal-first-member-no-diversity",
+    "script": "object_permanence/generator/tasks/G81_rolling_shutter/pb_task_00000127_pb_rolling_shutter_0128_blender.py",
+    "script_sha256": "978ad129a71beca20f1ed8d8c1ae2cc4b223c31a82765f769d48b023c04a5317",
+    "seed": null,
+    "task": "G81",
+    "task_manifest_sha256": "85528d25ee09fa9671f755c3aff45ae81be1169177ea09abe6b6db467f05025b",
+    "url": "https://github.com/hokindeng/object-permanence",
+    "versions": {
+      "blender": "4.4.0",
+      "numpy": "1.26.4",
+      "python": "3.11.16"
+    },
+    "video_split": null
+  }
+}

@@ -37,7 +37,13 @@ AUDITED_TASKS = {
     "G66": ("build_scene_by_kind", "animate_scene"),
     "G80": ("build_scene_by_kind", "animate_scene"),
     "G81": ("build_scene_by_kind", "animate_scene"),
+    "G65": ("build_scene_by_kind", "animate_scene"),
+    "G83": ("build_scene_by_kind", "animate_scene"),
 }
+# These preparation recipes are certified only with the versioned ray contract.
+# The legacy BVH deferrals above/below remain meaningful and are never erased.
+RAY_CONTRACT_TASKS = {"G63", "G65", "G66", "G80", "G81", "G83"}
+CONTRACT_ONLY_TASKS = {"G65", "G83"}
 # Preparation/rigid serialization passed, but source pixel fidelity did not.
 # Explicit export remains useful for diagnosis; default batch execution is blocked.
 DEFERRED_TASKS = {
@@ -145,6 +151,8 @@ def inventory(root, output):
             group = capability_group(tree, audited=task["id"] in AUDITED_TASKS and name == task["member_scripts"][0])
             if task["id"] in DEFERRED_TASKS and name == task["member_scripts"][0]:
                 group = "source-fidelity-review"
+            elif task["id"] in CONTRACT_ONLY_TASKS and name == task["member_scripts"][0]:
+                group = "versioned-visibility-runtime-gate"
             groups[group] = groups.get(group, 0) + 1
             review_groups.append(group)
             for node in ast.walk(tree):
@@ -166,7 +174,9 @@ def inventory(root, output):
                 if isinstance(node, ast.Attribute) and node.attr in ("hide_render", "hide_viewport"):
                     signals.add(node.attr)
         pilot = (
-            "source fidelity deferred"
+            "versioned ray contract only"
+            if task["id"] in CONTRACT_ONLY_TASKS
+            else "source fidelity deferred"
             if task["id"] in DEFERRED_TASKS
             else "nominal export available"
             if task["id"] in AUDITED_TASKS

@@ -21,7 +21,7 @@ from stable_envs.envs.object_permanence.rendering.rigid_nvdiff import RigidScene
 from ._common import configure_threads, measure, positive_ints
 
 
-def comparison_gif(clip, source, output, *, size):
+def comparison_gif(clip, source, output, *, size, visibility_contract=None):
     """Align native Blender PNGs and shared RGB at the same original frame IDs."""
     from PIL import Image, ImageDraw
 
@@ -31,7 +31,7 @@ def comparison_gif(clip, source, output, *, size):
         raise ValueError("source preview task or pinned source differs")
     if metadata["frames"] != list(clip.frames) or metadata["size"] != [size, size * 16 // 9]:
         raise ValueError("source preview frame numbers or dimensions differ")
-    with RigidSceneRenderer(clip, size=size) as renderer:
+    with RigidSceneRenderer(clip, size=size, visibility_contract=visibility_contract) as renderer:
         rgb = renderer.render(np.arange(len(clip))).cpu().numpy()
     frames = []
     for frame, pixels in zip(clip.frames, rgb, strict=True):
@@ -42,7 +42,8 @@ def comparison_gif(clip, source, output, *, size):
         canvas.paste(right, (left.width, 24))
         draw = ImageDraw.Draw(canvas)
         draw.text((6, 6), f"Source Blender / frame {frame}", fill="black")
-        draw.text((left.width + 6, 6), "Shared nvdiff / same frame", fill="black")
+        label = "Shared / pixel-rays v1" if visibility_contract else "Shared nvdiff / same frame"
+        draw.text((left.width + 6, 6), label, fill="black")
         frames.append(canvas)
     palette = frames[0].quantize(colors=256)
     frames = [frame.quantize(palette=palette, dither=Image.Dither.NONE) for frame in frames]

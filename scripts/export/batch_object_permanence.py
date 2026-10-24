@@ -19,7 +19,9 @@ from pathlib import Path
 
 from .object_permanence import (
     AUDITED_TASKS,
+    CONTRACT_ONLY_TASKS,
     DEFERRED_TASKS,
+    RAY_CONTRACT_TASKS,
     SOURCE_COMMIT,
     capability_group,
     check_source,
@@ -27,7 +29,11 @@ from .object_permanence import (
 )
 
 
-def run(root, output, report, *, tasks="all", plan_only=False, blender_python=sys.executable):
+def run(
+    root, output, report, *, tasks="all", plan_only=False, blender_python=sys.executable, visibility_contract=None
+):
+    if visibility_contract not in (None, "stable-envs/opaque-pixel-rays-v1"):
+        raise ValueError("unknown visibility contract")
     check_source(root)
     selected = None if tasks == "all" else set(tasks.split(","))
     paths = task_manifests(root)
@@ -45,7 +51,10 @@ def run(root, output, report, *, tasks="all", plan_only=False, blender_python=sy
             job["capability_group"] = capability_group(
                 ast.parse((path.parent / name).read_text()), audited=member == 0 and task["id"] in AUDITED_TASKS
             )
-            if member == 0 and task["id"] in DEFERRED_TASKS:
+            versioned = visibility_contract is not None and task["id"] in RAY_CONTRACT_TASKS
+            if member == 0 and task["id"] in CONTRACT_ONLY_TASKS and not versioned:
+                job.update(status="unsupported", reason="requires explicit versioned ray contract")
+            elif member == 0 and task["id"] in DEFERRED_TASKS and not versioned:
                 job.update(
                     status="unsupported", reason=DEFERRED_TASKS[task["id"]], capability_group="source-fidelity-review"
                 )
@@ -97,6 +106,7 @@ def run(root, output, report, *, tasks="all", plan_only=False, blender_python=sy
     result = {
         "schema": "stable-envs/object-permanence-batch-v1",
         "source_commit": SOURCE_COMMIT,
+        "visibility_contract": visibility_contract,
         "plan_only": plan_only,
         "jobs": jobs,
         "counts": {
@@ -116,6 +126,7 @@ def main():
     parser.add_argument("--tasks", default="all")
     parser.add_argument("--plan-only", action="store_true")
     parser.add_argument("--blender-python", default=sys.executable)
+    parser.add_argument("--visibility-contract")
     args = parser.parse_args()
     result = run(
         args.source_root.resolve(),
@@ -124,6 +135,7 @@ def main():
         tasks=args.tasks,
         plan_only=args.plan_only,
         blender_python=args.blender_python,
+        visibility_contract=args.visibility_contract,
     )
     print(json.dumps(result["counts"], sort_keys=True))
     if not args.plan_only and any(job["status"] != "exported" for job in result["jobs"]):
