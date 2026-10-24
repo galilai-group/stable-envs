@@ -142,19 +142,27 @@ def benchmark(args):
             "included": "warm CPU frame lookup/pose expansion, CPU-to-GPU upload, transforms, rendering into reused CUDA outputs",
             "excluded": "download, constructor, first draw/JIT/static bake, output allocation, GIF/CPU image download",
             "sampling": "same evenly spaced nominal frame indices, synchronized wall-clock median",
-            "precision": "shared refined full-frame; G34 cropped scaled coverage/refined static; legacy fused exact-facet raycast",
-            "notes": "different simple shaders; timings are rendering throughput, not training speedups; shared chunk size is the unchanged baseline default 4",
+            "precision": "shared refined cached coverage; shared-full uncached full-frame; G34 cropped scaled coverage/refined static; legacy fused exact-facet raycast",
+            "notes": "different simple shaders; timings are rendering throughput, not training speedups; shared and shared-full use chunk size 4",
         },
         "points": [],
         "profiles": {},
     }
-    cases = [("g34", "shared"), ("g62", "shared"), ("g34", "cropped"), ("g34", "cropped-refined"), ("g34", "raycast")]
+    cases = [
+        ("g34", "shared"),
+        ("g62", "shared"),
+        ("g34", "shared-full"),
+        ("g62", "shared-full"),
+        ("g34", "cropped"),
+        ("g34", "cropped-refined"),
+        ("g34", "raycast"),
+    ]
     cases = [(task, backend) for task, backend in cases if backend in args.backends.split(",")]
     for task, backend in cases:
         with RigidTrajectory(args.recordings, f"{task}-nominal") as clip:
             owned = None
-            if backend == "shared":
-                owned = RigidSceneRenderer(clip, size=args.size)
+            if backend in ("shared", "shared-full"):
+                owned = RigidSceneRenderer(clip, size=args.size, cache_static=backend == "shared")
 
                 def render(indices, out=None):
                     return owned.render_many(indices, modes=modes, out=out)
@@ -209,7 +217,11 @@ def benchmark(args):
                         "frames_per_second": batch * 1000 / timing["median_ms"],
                         "pose_upload_bytes": batch
                         * 28
-                        * (len(clip.manifest["objects"]) if backend == "shared" else 1)
+                        * (
+                            len(clip.manifest["objects"])
+                            if backend == "shared-full"
+                            else len(clip.manifest["dynamic_nodes"])
+                        )
                         * (len(modes) if backend == "raycast" else 1),
                     }
                     result["points"].append(point)
@@ -220,8 +232,8 @@ def benchmark(args):
                         f"{timing['median_ms']:.3f} ms / {point['frames_per_second']:.0f} fps",
                         flush=True,
                     )
-                    if args.profile and backend == "shared" and batch == 256:
-                        result["profiles"][task] = profile_draw(draw)
+                    if args.profile and backend in ("shared", "shared-full") and batch == 256:
+                        result["profiles"][f"{task}-{backend}"] = profile_draw(draw)
             finally:
                 if owned is not None:
                     owned.close()
@@ -248,7 +260,7 @@ def main():
     parser.add_argument("--warmup", type=int, default=3)
     parser.add_argument("--repeats", type=int, default=11)
     parser.add_argument("--profile", action="store_true")
-    parser.add_argument("--backends", default="shared,cropped,cropped-refined,raycast")
+    parser.add_argument("--backends", default="shared,shared-full,cropped,cropped-refined,raycast")
     parser.add_argument("--source-previews", type=Path)
     parser.add_argument("--oracle", type=Path, help="instead run a full legacy diagnostic against this G34 oracle")
     args = parser.parse_args()
@@ -257,7 +269,9 @@ def main():
     modes = args.modes.split(",")
     if not modes or len(set(modes)) != len(modes) or any(m not in ("rgb", "depth", "ids") for m in modes):
         parser.error("modes must be unique rgb/depth/ids")
-    if any(b not in ("shared", "cropped", "cropped-refined", "raycast") for b in args.backends.split(",")):
+    if any(
+        b not in ("shared", "shared-full", "cropped", "cropped-refined", "raycast") for b in args.backends.split(",")
+    ):
         parser.error("unknown backend")
     if args.oracle:
         diagnose(args)

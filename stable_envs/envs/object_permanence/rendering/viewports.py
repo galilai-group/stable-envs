@@ -24,10 +24,12 @@ class PixelCenterRenderer(ND.BatchRenderer):
     and shading use the selected centers. Refined mode instead uses a float64
     triangle recheck at source resolution, falling back to scaled coverage for
     depth clipping or missing Triton. Native mode is an explicit experiment.
+    Optional CUDA bool static_geoms[G] enables refined visibility caching with
+    automatic clip-position/resolution invalidation. Topology stays immutable.
     Derivative buffers/mipmapping are unsupported by these sampling paths.
     """
 
-    def __init__(self, *args, coverage_scale=17, coverage_mode="scaled", **kwargs):
+    def __init__(self, *args, coverage_scale=17, coverage_mode="scaled", static_geoms=None, **kwargs):
         if (
             not isinstance(coverage_scale, int)
             or isinstance(coverage_scale, bool)
@@ -44,6 +46,8 @@ class PixelCenterRenderer(ND.BatchRenderer):
         self.coverage_scale = coverage_scale
         self.coverage_mode = coverage_mode
         self.last_fallback = False
+        self._static_geoms = static_geoms
+        self._static_coverage = None
         super().__init__(*args, **kwargs)
 
     def _rasterize(self, positions, resolution):
@@ -52,13 +56,15 @@ class PixelCenterRenderer(ND.BatchRenderer):
             return super()._rasterize(positions, resolution)
         if self.coverage_mode == "refined":
             try:
-                from ....render.nvdiff_coverage import rasterize
+                from ....render.nvdiff_coverage import StaticCoverage, rasterize
             except ModuleNotFoundError as error:
                 if error.name is None or error.name.split(".")[0] != "triton":
                     raise
                 raster = None
             else:
-                raster = rasterize(positions, self.scene.face, resolution)
+                if self._static_geoms is not None and self._static_coverage is None:
+                    self._static_coverage = StaticCoverage(self.scene.face, self._static_geoms[self.scene.fgeom])
+                raster = rasterize(positions, self.scene.face, resolution, cache=self._static_coverage)
             if raster is not None:
                 return raster, None
             self.last_fallback = True
@@ -67,6 +73,10 @@ class PixelCenterRenderer(ND.BatchRenderer):
         raster, _ = super()._rasterize(positions, (h * scale, w * scale))
         center = scale // 2
         return raster[:, center::scale, center::scale].contiguous(), None
+
+    def _release(self):
+        self._static_coverage = self._static_geoms = None
+        super()._release()
 
 
 class CropCamera(ND.Camera):

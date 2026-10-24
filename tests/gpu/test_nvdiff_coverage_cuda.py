@@ -55,3 +55,65 @@ def test_far_offscreen_triangles_do_not_overflow_pixel_bounds():
     positions = torch.tensor([[[1e20, 0, 0, 1], [2e20, 1, 0, 1], [2e20, -1, 0, 1]]], device="cuda")
     faces = torch.tensor([[0, 1, 2]], dtype=torch.int32, device="cuda")
     assert not rasterize(positions, faces, (16, 24)).any()
+
+
+@pytest.mark.parametrize("partition", [[True, False, True, False], [False] * 4, [True] * 4])
+def test_static_visibility_preserves_closer_movers_depth_ties_and_multiple_movers(partition):
+    from stable_envs.render.nvdiff_coverage import StaticCoverage
+
+    triangle = [[-0.8, -0.8, 0, 1], [0.8, -0.8, 0, 1], [0, 0.8, 0, 1]]
+    positions = torch.tensor([triangle * 4] * 4, dtype=torch.float32, device="cuda")
+    faces = torch.arange(12, device="cuda", dtype=torch.int32).reshape(4, 3)
+    mask = torch.tensor(partition, device="cuda")
+    # Include front/behind, interpenetration and exact-depth ties. Static faces
+    # interleave movers in original order; a nearer lower ID must replace them.
+    for face in range(4):
+        if not partition[face]:
+            positions[:, face * 3 : face * 3 + 3, 2] = torch.tensor([-0.3, 0.3, 0, -0.1], device="cuda")[:, None]
+    cache = StaticCoverage(faces, mask)
+    for pos in (positions, positions.flip(0).contiguous(), positions[:1]):
+        expected = rasterize(pos, faces, (16, 24))
+        actual = rasterize(pos, faces, (16, 24), cache=cache)
+        assert torch.equal(actual, expected)
+        # The raster is caller-owned; changing it must not poison the seed.
+        actual.zero_()
+        assert torch.equal(rasterize(pos, faces, (16, 24), cache=cache), expected)
+    assert cache.builds == int(any(partition))
+
+
+def test_static_cache_rebuilds_on_camera_geometry_resolution_changes_and_falls_back_safely():
+    from stable_envs.render.nvdiff_coverage import StaticCoverage
+
+    pos = torch.tensor(
+        [
+            [
+                [-0.8, -0.8, 0, 1],
+                [0.8, -0.8, 0, 1],
+                [0, 0.8, 0, 1],
+                [-0.5, -0.5, -0.1, 1],
+                [0.5, -0.5, -0.1, 1],
+                [0, 0.5, -0.1, 1],
+            ]
+        ],
+        device="cuda",
+    )
+    faces = torch.arange(6, device="cuda", dtype=torch.int32).reshape(2, 3)
+    cache = StaticCoverage(faces, torch.tensor([True, False], device="cuda"))
+    for size, offset in (((16, 24), 0), ((16, 24), 0.2), ((32, 48), 0.2)):
+        changed = pos.clone()
+        changed[..., 0] += offset
+        assert torch.equal(rasterize(changed, faces, size, cache=cache), rasterize(changed, faces, size))
+    assert cache.builds == 3
+    moving_background = pos.expand(2, -1, -1).clone()
+    moving_background[1, :3, 0] += 0.3
+    assert torch.equal(
+        rasterize(moving_background, faces, (16, 24), cache=cache),
+        rasterize(moving_background, faces, (16, 24)),
+    )
+    assert cache.builds == 3
+    clipped = pos.clone()
+    clipped[0, 0, 2] = -2
+    assert rasterize(clipped, faces, (16, 24), cache=cache) is None
+    assert torch.equal(rasterize(pos, faces, (16, 24), cache=cache), rasterize(pos, faces, (16, 24)))
+    with pytest.raises(ValueError, match="different face"):
+        rasterize(pos, faces.clone(), (16, 24), cache=cache)

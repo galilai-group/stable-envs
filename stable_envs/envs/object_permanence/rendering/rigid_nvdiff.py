@@ -14,15 +14,18 @@ from .viewports import CropCamera, PixelCenterRenderer
 class RigidSceneRenderer(Closeable):
     """Borrow a RigidTrajectory and render arbitrary sampled frames on CUDA.
 
-    All objects share one depth buffer. This baseline has no fixed background,
-    single-mover assumption or crop. Geometry IDs are mapped to manifest semantic
-    IDs. The trajectory remains caller-owned and must stay open while rendering.
+    All objects share one depth buffer. Fixed-camera recordings reuse static
+    visibility, while all movers compete using original face IDs. No crop or
+    single-mover assumption. Geometry IDs map to manifest semantic IDs. The
+    trajectory remains caller-owned and must stay open while rendering.
     Existing G34Renderer/G34Replay interfaces and their optimized path are separate.
     """
 
     resource_kind = "object_permanence.RigidSceneRenderer"
 
-    def __init__(self, trajectory, *, size=180, device="cuda", chunk_size=4, coverage_mode="refined"):
+    def __init__(
+        self, trajectory, *, size=180, device="cuda", chunk_size=4, coverage_mode="refined", cache_static=True
+    ):
         self.device = torch.device(device)
         if self.device.type != "cuda" or not torch.cuda.is_available():
             raise ValueError("rigid scene rendering requires CUDA")
@@ -33,7 +36,18 @@ class RigidSceneRenderer(Closeable):
         if size * camera["width"] % camera["height"]:
             raise ValueError("size must preserve the recorded camera aspect ratio")
         self.height, self.width = size, size * camera["width"] // camera["height"]
+        if type(cache_static) is not bool:
+            raise ValueError("cache_static must be boolean")
         self.trajectory, self.chunk_size = trajectory, chunk_size
+        self.cache_static = cache_static
+        objects = manifest["objects"]
+        nodes = np.asarray([obj["node"] for obj in objects])
+        self._moving = torch.as_tensor(np.flatnonzero(nodes >= 0), device=self.device)
+        self._nodes = torch.as_tensor(nodes[nodes >= 0], device=self.device)
+        base = torch.tensor([obj["pose"] for obj in objects], dtype=torch.float32, device=self.device)
+        self._positions = base[None, :, :3].contiguous()
+        self._rotations = rotations(base[:, 3:])[None]
+        self._node_count = len(manifest["dynamic_nodes"])
         world = np.asarray(camera["world"], np.float64)
         projection = np.asarray(camera["projection"], np.float64)
         self.camera = CropCamera(
@@ -57,6 +71,7 @@ class RigidSceneRenderer(Closeable):
                 skybox=False,
                 shading="tiny",
                 coverage_mode=coverage_mode,
+                static_geoms=torch.as_tensor(nodes < 0, device=self.device) if cache_static else None,
             )
         except BaseException:
             scene.close()
@@ -76,7 +91,7 @@ class RigidSceneRenderer(Closeable):
         modes = tuple(modes)
         if not modes or len(set(modes)) != len(modes) or any(m not in ("rgb", "depth", "ids") for m in modes):
             raise ValueError("modes must be unique rgb/depth/ids")
-        poses = self.trajectory.object_poses(frames)
+        poses = self.trajectory.poses(frames) if self.cache_static else self.trajectory.object_poses(frames)
         shapes = {m: (len(poses), self.height, self.width) + ((3,) if m == "rgb" else ()) for m in modes}
         dtypes = {"rgb": torch.uint8, "depth": torch.float32, "ids": torch.int16}
         if out is not None:
@@ -99,13 +114,22 @@ class RigidSceneRenderer(Closeable):
         for start in range(0, len(rows), self.chunk_size):
             stop = min(start + self.chunk_size, len(rows))
             part = rows[start:stop]
-            rotations_gpu = rotations(part[..., 3:].reshape(-1, 4)).reshape(len(part), part.shape[1], 3, 3)
+            if self.cache_static:
+                positions_gpu = self._positions.expand(len(part), -1, -1).clone()
+                rotations_gpu = self._rotations.expand(len(part), -1, -1, -1).clone()
+                if self._node_count:
+                    node_rotations = rotations(part[..., 3:].reshape(-1, 4)).reshape(len(part), self._node_count, 3, 3)
+                    positions_gpu[:, self._moving] = part[:, self._nodes, :3]
+                    rotations_gpu[:, self._moving] = node_rotations[:, self._nodes]
+            else:
+                positions_gpu = part[..., :3].contiguous()
+                rotations_gpu = rotations(part[..., 3:].reshape(-1, 4)).reshape(len(part), part.shape[1], 3, 3)
             buffers = {m: result[m][start:stop] for m in modes}
-            self.renderer.render_many(part[..., :3].contiguous(), rotations_gpu, self.camera, modes=modes, out=buffers)
+            self.renderer.render_many(positions_gpu, rotations_gpu, self.camera, modes=modes, out=buffers)
             if "ids" in modes:
                 buffers["ids"].copy_(self._ids[buffers["ids"].long()])
         return result
 
     def _release(self):
         self.renderer.close()
-        del self._ids, self.camera, self.trajectory
+        del self._ids, self._positions, self._rotations, self._moving, self._nodes, self.camera, self.trajectory

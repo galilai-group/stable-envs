@@ -164,15 +164,28 @@ with RigidTrajectory("/tmp/recordings", "g62-nominal") as clip:
         # ids int16 [4,180,320]; all share coverage and object occlusion.
 ```
 
-Frame indices select recording rows, not simulator State. CPU poses are expanded
-through node/object mappings, uploaded, and converted to rotation matrices on GPU.
-All objects share the depth buffer; geometry IDs are remapped to manifest mask IDs.
-Recorded camera matrices are reused. Chunking bounds memory without changing
-sampling. The default refined pixel-center coverage reuses existing nvdiff helpers.
-This is a fidelity baseline with full-frame drawing, not the cropped/cached G34
-optimization. It introduces no G62 physics Env or dummy actions. G34's public
-renderer/replay interfaces, optimized path and frozen fixture remain intact;
-its unchanged quaternion helper is now shared by both renderers.
+Frame indices select recording rows, not simulator State. Static transforms stay
+on GPU; only CPU float32 `[B,D,7]` dynamic-node poses are uploaded, then mapped to
+object transforms and rotation matrices on GPU. Multiple mesh objects can share
+one node. All objects share depth visibility; geometry IDs map to manifest IDs.
+
+With default refined coverage, static triangles' pixel visibility is cached once
+per renderer: int64 ordered float64 depth keys and int32 original face IDs.
+Dynamic triangles update copies of that seed using the full pass's depth and
+face-ID tie rules. This avoids float32 layer-composition errors at contact and
+coplanar surfaces. RGB, depth and IDs are generated from the final shared raster.
+Static vertex transforms, interpolation and shading still run; this is a coverage
+cache, not a cached RGB plate. At 320x180 the depth/ID seed takes 675 KiB, plus
+cached static clip vertices and partition indices.
+
+The cache is geometry-based, with no task-name special cases or mover-count
+limit. Static clip-vertex or resolution changes rebuild it; static vertices that
+vary within a batch use the complete pass. Depth clipping or unavailable Triton
+retains the existing scaled fallback. Scaled/native modes do not use this cache.
+Immutable topology is required for the renderer's lifetime. `cache_static=False`
+retains full drawing and CPU object-pose expansion/upload as a comparison baseline.
+Chunking bounds memory without changing sampling. G34's separate public replay,
+optimized renderer and frozen fixture remain unchanged.
 
 ## Validation and next ports
 
@@ -210,14 +223,15 @@ pose comparisons additionally validate motion hidden from the camera.
 Small candidate recordings under `tests/fixtures/saved/object_permanence_rigid`
 let offline CPU/GPU CI exercise the full path without Blender or the user's cache.
 They are separate from the independent geometry oracles. Their README describes
-regeneration. Next, measure the baseline and enable background/window caching only
-for scenes meeting its requirements; further source tasks still need audited entry
-points and their own independent comparisons.
+regeneration. Cached and uncached paths pass the same all-frame source gates;
+additional tests compare all outputs and exercise equal-depth ties, multiple
+movers, cache invalidation, and all-static/all-dynamic partitions. Further source
+tasks still need audited entry points and their own independent comparisons.
 
 ## Preview and upload-inclusive baseline
 
-`benchmarks.object_permanence_recordings` compares the shared full-frame baseline
-with G34's existing specialized paths. `scripts.export.render_object_permanence_preview`
+`benchmarks.object_permanence_recordings` compares cached `shared`, uncached
+`shared-full`, and G34's existing specialized paths. `scripts.export.render_object_permanence_preview`
 renders the source nominal scene to PNGs in Blender Cycles CPU at 320x180, 16
 samples and denoising. This is a native preview with original scene/camera,
 not the dataset MP4 render-quality preset. Side-by-side GIFs preserve all 120
@@ -233,9 +247,9 @@ python -m benchmarks.object_permanence_recordings --recordings <recordings> \
 
 Run previews with Blender's interpreter and GPU measurements with the CUDA profile.
 On the RTX 3070 Ti Laptop GPU, Torch 2.14.1+cu130, one CPU thread, 3 warmups and
-11 synchronized repeats, RGB median frames/s at 180x320 were:
+11 synchronized repeats, historical **uncached** RGB median frames/s at 180x320 were:
 
-| Batch | G34 shared | G62 shared | G34 cropped/refined | G34 fused raycast |
+| Batch | G34 uncached | G62 uncached | G34 cropped/refined | G34 fused raycast |
 |---:|---:|---:|---:|---:|
 | 1 | 191 | 127 | 281 | 3,964 |
 | 64 | 532 | 226 | 3,582 | 22,850 |
@@ -250,22 +264,34 @@ state does not. Shaders differ. Default scaled G34 crop reached 13,495 fps at
 batch 256, but its two known full-sequence edge gaps prevent treating that setting
 as strict 120-frame parity. Refined crop and raycast match that stronger gate.
 
-The shared renderer uploads 140 bytes/frame for G34 and 420 for G62 (including
-expanded static object poses). The specialized paths upload 28. At batch 256,
-profiling attributed about 79%/93% of G34/G62 self CUDA time to the `_triangles`
-precision kernel. Shared chunk size 4 produces 64 coverage calls and 128 triangle
-passes; its clipping guard also synchronizes. These measurements support fixing
-repeated full-frame/static coverage and launch overhead before optimizing the
-small pose transfer. This baseline is deliberately slower than scene-specific
-paths and is retained to certify future optimizations.
+A same-run comparison with 3 warmups, 7 repeats and batch 256, including pose
+upload, measured:
 
-Candidate future optimizations are shared static depth/RGB/ID plates where camera
-and appearance are fixed; GPU-resident static transforms with only D dynamic
-poses uploaded; larger memory-bounded chunks; and conservative native coverage
-with sparse precision correction. Multiple movers must share depth visibility,
-including overlapping windows. Keep the full-frame fallback and test every
-precision/cache change against the same source oracle. No new performance path
-is enabled by these measurements.
+| Scene | Uncached RGB fps | Cached RGB fps | Speedup | Upload bytes/frame, before → after |
+|---|---:|---:|---:|---:|
+| G34 | 480 | 821 | 1.71× | 140 → 28 |
+| G62 | 223 | 591 | 2.65× | 420 → 56 |
+
+```bash
+python -m benchmarks.object_permanence_recordings --recordings <recordings> \
+  --output <evaluation>/throughput-static-cache.json --backends shared,shared-full \
+  --batches 1,64,256 --repeats 7 --profile
+# Repeat with --modes rgb,depth,ids for combined outputs.
+```
+
+At batch 256, profiling reduced triangle-kernel totals from 221 to 49 ms for G34
+and 853 to 98 ms for G62. Overall wall-clock gains are smaller: chunk size 4 still
+makes 64 coverage calls and 128 dynamic triangle passes; transforms, full-frame
+resolve/interpolation/shading, launches and cache-validation synchronizations
+remain. First draw/JIT/cache construction are excluded from steady-state timing
+and recorded separately. Results are machine-specific rendering measurements,
+not end-to-end training speedups.
+
+Larger memory-bounded chunks, static transformed-vertex reuse, and selectively
+shading dynamic pixels are possible later improvements. RGB plates need explicit
+appearance/lighting invalidation; moving shadows or transparency need a different
+contract. Preserve shared multi-object depth testing and the full-frame comparison
+path when adding any further precision or cache optimization.
 
 ## Scaling imports before optimization
 

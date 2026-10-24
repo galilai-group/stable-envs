@@ -21,10 +21,14 @@ from tests.helpers.reference.object_permanence_recordings import (
 
 
 @pytest.mark.parametrize("task", ["g34", "g62"])
-def test_recorded_scene_passes_source_depth_and_all_object_masks(task, record_property):
+@pytest.mark.parametrize("cache_static", [True, False])
+def test_recorded_scene_passes_source_depth_and_all_object_masks(task, cache_static, record_property):
     manifest, oracle = load_geometry(task)
     frames = oracle["geometry_frames"] - 1
-    with RigidTrajectory(RECORDINGS, f"{task}-nominal") as clip, RigidSceneRenderer(clip) as renderer:
+    with (
+        RigidTrajectory(RECORDINGS, f"{task}-nominal") as clip,
+        RigidSceneRenderer(clip, cache_static=cache_static) as renderer,
+    ):
         output = renderer.render_many(frames, modes=("depth", "ids"))
         depths, ids = output["depth"].cpu().numpy(), output["ids"].cpu().numpy()
     worst, minimum = 0.0, 1.0
@@ -105,3 +109,53 @@ def test_source_gate_rejects_shifted_camera(tmp_path):
         depth, ids = output["depth"][0].cpu().numpy(), output["ids"][0].cpu().numpy()
     assert depth_mse(depth, oracle["depth"][0], oracle["object_ids"][0] > 0) > DEPTH_MSE_MAX
     assert mask_iou(ids == 1, oracle["object_ids"][0] == 1) < MASK_IOU_MIN
+
+
+@pytest.mark.parametrize("task", ["g34", "g62"])
+def test_cached_and_full_scene_outputs_are_bit_identical_for_all_frames(task):
+    frames = np.arange(120)[::-1].copy()
+    with RigidTrajectory(RECORDINGS, f"{task}-nominal") as clip:
+        with (
+            RigidSceneRenderer(clip, size=90) as cached,
+            RigidSceneRenderer(clip, size=90, cache_static=False) as full,
+        ):
+            expected = full.render_many(frames)
+            actual = cached.render_many(frames)
+            assert all(torch.equal(actual[m], expected[m]) for m in actual)
+            assert cached.renderer._static_coverage.builds == 1
+            # Repeated/shuffled sampling must retain the seed and output contract.
+            selected = np.array([44, 0, 119, 44, 62])
+            again = cached.render_many(selected)
+            assert all(torch.equal(again[m], expected[m][119 - selected]) for m in again)
+            assert cached.renderer._static_coverage.builds == 1
+
+
+@pytest.mark.parametrize("all_static", [True, False])
+def test_static_only_and_dynamic_only_recordings_and_shared_dynamic_nodes(tmp_path, all_static):
+    import hashlib
+    import json
+    import shutil
+
+    root = tmp_path / "partition"
+    shutil.copytree(RECORDINGS, root)
+    folder = root / "clips/g62-nominal"
+    path = folder / "manifest.json"
+    manifest = json.loads(path.read_text())
+    if all_static:
+        manifest["dynamic_nodes"] = []
+        poses = np.empty((120, 0, 7), np.float32)
+        np.save(folder / "poses.npy", poses)
+        manifest["arrays"]["poses"].update(
+            shape=list(poses.shape), sha256=hashlib.sha256((folder / "poses.npy").read_bytes()).hexdigest()
+        )
+    for i, obj in enumerate(manifest["objects"]):
+        obj["node"] = -1 if all_static else i % 2
+    path.write_text(json.dumps(manifest))
+    with RigidTrajectory(root, "g62-nominal") as clip:
+        with (
+            RigidSceneRenderer(clip, size=90) as cached,
+            RigidSceneRenderer(clip, size=90, cache_static=False) as full,
+        ):
+            expected, actual = full.render_many([0, 44, 119]), cached.render_many([0, 44, 119])
+            assert all(torch.equal(actual[m], expected[m]) for m in actual)
+            assert cached.renderer._static_coverage.builds == int(all_static)

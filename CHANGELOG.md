@@ -19,6 +19,8 @@ All notable changes to this project are listed here. The format follows
   Semantic asset directories and shared licenses replace the derived index.
   A shared full-frame CUDA renderer handles sampled multi-object motion, verified
   against the original G34 oracle and a new independent all-frame G62 oracle.
+  Refined coverage caches static visibility with exact depth/face-ID ties and
+  uploads only dynamic-node poses; uncached drawing remains a comparison option.
   Existing G34 replay, MuJoCo interfaces and frozen geometry fixtures are unchanged.
 
 - Engine-free `object_permanence.G34Replay`: restorable trajectory cursors and

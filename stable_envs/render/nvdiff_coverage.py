@@ -42,6 +42,8 @@ def _triangles(
     Faces,
     Depth,
     Ids,
+    Active,
+    INDEXED: tl.constexpr,
     V: tl.constexpr,
     H: tl.constexpr,
     W: tl.constexpr,
@@ -50,6 +52,8 @@ def _triangles(
     BLOCK: tl.constexpr,
 ):
     face, world = tl.program_id(0), tl.program_id(1)
+    if INDEXED:
+        face = tl.load(Active + face)
     x0, y0, z0, w0 = _vertex(Pos, Faces, world, face, 0, V, H, W)
     x1, y1, z1, w1 = _vertex(Pos, Faces, world, face, 1, V, H, W)
     x2, y2, z2, w2 = _vertex(Pos, Faces, world, face, 2, V, H, W)
@@ -124,11 +128,97 @@ def _resolve(Pos, Faces, Ids, Out, V: tl.constexpr, H: tl.constexpr, W: tl.const
     tl.store(Out + base + 3, hit, mask=pixel < H * W)
 
 
-def rasterize(pos, faces, resolution):
+def _visibility(pos, faces, depth, ids, resolution, active=None, background=None):
+    """Update visibility in place, retaining original face IDs for depth ties."""
+    h, w = resolution
+    b, v, _ = pos.shape
+    count = len(faces) if active is None else len(active)
+    if not count:
+        return
+    stripes = 8 if b < 4 and h * w > 4096 else 1
+    with torch.cuda.device(pos.device):
+        for index in (False, True):
+            if index and background is not None:
+                # A closer mover invalidates the previous static face winner.
+                ids.masked_fill_(depth != background, 0)
+            _triangles[(count, b, stripes)](
+                pos,
+                faces,
+                depth,
+                ids,
+                faces if active is None else active,
+                active is not None,
+                v,
+                h,
+                w,
+                index,
+                stripes,
+                32,
+                num_warps=1,
+                enable_fp_fusion=False,
+            )
+
+
+class StaticCoverage:
+    """Cache fixed triangles' pixel visibility, independent of scene semantics.
+
+    Bind to one immutable face tensor and an explicit boolean face partition.
+    Seeds store float64 ordered depth keys and original face IDs, so dynamic
+    triangles retain exactly the full pass's visibility and equal-depth rule.
+    Geometry/camera/resolution changes rebuild the seed. If a supposed static
+    vertex differs within the batch, use the full pass instead. This cache does
+    not assume that independently shaded RGB layers can simply be overlaid.
+    """
+
+    def __init__(self, faces, static_faces):
+        if (
+            static_faces.dtype != torch.bool
+            or static_faces.device != faces.device
+            or static_faces.shape != (len(faces),)
+        ):
+            raise ValueError("static_faces must be a boolean mask matching CUDA faces")
+        self.faces = faces
+        self.static = static_faces.nonzero().flatten().to(torch.int32).contiguous()
+        self.dynamic = (~static_faces).nonzero().flatten().to(torch.int32).contiguous()
+        self.vertices = faces[self.static.long()].flatten().unique().long()
+        self.builds = 0
+        self._positions = self._depth = self._ids = self._resolution = None
+
+    def seed(self, pos, faces, resolution):
+        """Return owned batch seeds, or None when the partition cannot be reused."""
+        if faces is not self.faces:
+            raise ValueError("static coverage belongs to a different face tensor")
+        if not len(self.static):
+            return None
+        positions = pos[:, self.vertices]
+        if not torch.equal(positions, positions[:1].expand_as(positions)):
+            return None
+        if (
+            self._resolution != resolution
+            or self._positions is None
+            or not torch.equal(positions[:1], self._positions)
+        ):
+            h, w = resolution
+            self._depth = torch.full((1, h, w), torch.iinfo(torch.int64).max, dtype=torch.int64, device=pos.device)
+            self._ids = torch.zeros((1, h, w), dtype=torch.int32, device=pos.device)
+            _visibility(pos[:1], faces, self._depth, self._ids, resolution, self.static)
+            self._positions = positions[:1].clone()
+            self._resolution = resolution
+            self.builds += 1
+        return (
+            self._depth.expand(len(pos), -1, -1).clone(),
+            self._ids.expand(len(pos), -1, -1).clone(),
+            self.dynamic,
+            self._depth,
+        )
+
+
+def rasterize(pos, faces, resolution, *, cache=None):
     """Return float32 (B,H,W,4), or None when depth clipping needs fallback.
 
     Input is contiguous CUDA float32 clip vertices and int32 triangle indices.
     The fallback decision synchronizes once; this is not a CUDA-graph API.
+    Optional StaticCoverage reuses fixed visibility, without quantizing depth.
     """
     if torch.is_grad_enabled() and pos.requires_grad:
         raise ValueError("precise coverage does not provide gradients")
@@ -156,14 +246,15 @@ def rasterize(pos, faces, resolution):
     if not ((clip_w > 0) & (clip_z > -clip_w) & (clip_z < clip_w) & torch.isfinite(pos).all(-1)).all():
         return None
     b, v, _ = pos.shape
-    depth = torch.full((b, h, w), torch.iinfo(torch.int64).max, dtype=torch.int64, device=pos.device)
-    ids = torch.zeros((b, h, w), dtype=torch.int32, device=pos.device)
+    seed = None if cache is None else cache.seed(pos, faces, (h, w))
+    if seed is None:
+        depth = torch.full((b, h, w), torch.iinfo(torch.int64).max, dtype=torch.int64, device=pos.device)
+        ids = torch.zeros((b, h, w), dtype=torch.int32, device=pos.device)
+        active = background = None
+    else:
+        depth, ids, active, background = seed
+    _visibility(pos, faces, depth, ids, (h, w), active, background)
     out = torch.empty((b, h, w, 4), dtype=torch.float32, device=pos.device)
-    stripes = 8 if b < 4 and h * w > 4096 else 1
     with torch.cuda.device(pos.device):
-        for index in (False, True):
-            _triangles[(len(faces), b, stripes)](
-                pos, faces, depth, ids, v, h, w, index, stripes, 32, num_warps=1, enable_fp_fusion=False
-            )
         _resolve[(tr.cdiv(h * w, 128), b)](pos, faces, ids, out, v, h, w, 128, enable_fp_fusion=False)
     return out
