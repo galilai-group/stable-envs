@@ -11,12 +11,13 @@ Existing clips are not overwritten. Reports are not renderer asset indexes.
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import subprocess
 import sys
 from pathlib import Path
 
-from .object_permanence import PILOTS, SOURCE_COMMIT, check_source, task_manifests
+from .object_permanence import AUDITED_TASKS, SOURCE_COMMIT, capability_group, check_source, task_manifests
 
 
 def run(root, output, report, *, tasks="all", plan_only=False, blender_python=sys.executable):
@@ -34,7 +35,10 @@ def run(root, output, report, *, tasks="all", plan_only=False, blender_python=sy
             continue
         for member, name in enumerate(task["member_scripts"]):
             job = {"task": task["id"], "member": member, "script": str((path.parent / name).relative_to(root))}
-            if member != 0 or task["id"] not in PILOTS:
+            job["capability_group"] = capability_group(
+                ast.parse((path.parent / name).read_text()), audited=member == 0 and task["id"] in AUDITED_TASKS
+            )
+            if member != 0 or task["id"] not in AUDITED_TASKS:
                 job.update(status="unsupported", reason="preparation entry point not yet audited")
             elif plan_only:
                 job["status"] = "ready-for-runtime-check"

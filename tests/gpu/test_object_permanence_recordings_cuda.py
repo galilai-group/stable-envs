@@ -1,4 +1,4 @@
-"""One shared multi-object renderer must match two independent Blender oracles."""
+"""One shared multi-object renderer must match independent Blender oracles."""
 
 import numpy as np
 import pytest
@@ -15,12 +15,13 @@ from stable_envs.testing.geometry import depth_mse, mask_iou
 from tests.helpers.reference.object_permanence_recordings import (
     DEPTH_MSE_MAX,
     MASK_IOU_MIN,
+    RECORDED_TASKS,
     RECORDINGS,
     load_geometry,
 )
 
 
-@pytest.mark.parametrize("task", ["g34", "g62"])
+@pytest.mark.parametrize("task", RECORDED_TASKS)
 @pytest.mark.parametrize("cache_static", [True, False])
 def test_recorded_scene_passes_source_depth_and_all_object_masks(task, cache_static, record_property):
     manifest, oracle = load_geometry(task)
@@ -49,7 +50,16 @@ def test_recorded_scene_passes_source_depth_and_all_object_masks(task, cache_sta
             else:
                 assert iou >= MASK_IOU_MIN, (task, int(frame), name, iou)
                 minimum = min(minimum, iou)
-    assert all(count > 0 for count in hidden.values())
+    expected_hidden = {
+        name: int(np.all(oracle["object_ids"] != manifest["object_ids"][name], axis=(1, 2)).sum()) for name in hidden
+    }
+    assert hidden == expected_hidden
+    if task != "g64":
+        assert all(count > 0 for count in hidden.values())
+    else:
+        # Source G64 has a real window: partial visibility, despite prose tags
+        # claiming complete hiding. Preserve the actual source mesh semantics.
+        assert all(count == 0 for count in hidden.values())
     record_property("depth_mse_max", worst)
     record_property("mask_iou_min", minimum)
     record_property("hidden_target_frames", hidden)
@@ -111,7 +121,7 @@ def test_source_gate_rejects_shifted_camera(tmp_path):
     assert mask_iou(ids == 1, oracle["object_ids"][0] == 1) < MASK_IOU_MIN
 
 
-@pytest.mark.parametrize("task", ["g34", "g62"])
+@pytest.mark.parametrize("task", RECORDED_TASKS)
 def test_cached_and_full_scene_outputs_are_bit_identical_for_all_frames(task):
     frames = np.arange(120)[::-1].copy()
     with RigidTrajectory(RECORDINGS, f"{task}-nominal") as clip:

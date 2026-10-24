@@ -6,10 +6,10 @@ import numpy as np
 import pytest
 
 from stable_envs.envs.object_permanence import RigidTrajectory
-from tests.helpers.reference.object_permanence_recordings import RECORDINGS, load_geometry
+from tests.helpers.reference.object_permanence_recordings import RECORDED_TASKS, RECORDINGS, load_geometry
 
 
-@pytest.mark.parametrize("task", ["g34", "g62"])
+@pytest.mark.parametrize("task", RECORDED_TASKS)
 def test_all_sampled_source_poses_including_occluded_frames(task):
     manifest, oracle = load_geometry(task)
     assert manifest["source_commit"] == "824baddcdad087810d35638bf8f273b884f74975"
@@ -17,6 +17,8 @@ def test_all_sampled_source_poses_including_occluded_frames(task):
         np.testing.assert_array_equal(clip.frames, oracle["source_frames"])
         metadata = clip.manifest
         assert metadata["source"]["commit"] == manifest["source_commit"]
+        assert metadata["source"]["script"] == manifest["source_script"]
+        assert metadata["source"]["script_sha256"] == manifest["source_script_sha256"]
         assert metadata["fps"] == manifest["fps"]
         ids = {obj["name"]: obj["id"] for obj in metadata["objects"]}
         assert ids == manifest["object_ids"]
@@ -54,3 +56,31 @@ def test_g34_expansion_preserves_original_21_samples_bit_for_bit():
     selected = np.searchsorted(oracle["geometry_frames"], LEGACY_GEOMETRY_FRAMES)
     digest = hashlib.sha256(oracle["depth"][selected].tobytes() + oracle["object_ids"][selected].tobytes()).hexdigest()
     assert digest == "ca579ee8d589a4d817804d34a56d8e9056df5b1cace8452cef246f8c0cdb3456"
+
+
+@pytest.mark.parametrize("task", ["g37", "g38", "g64"])
+def test_first_batch_lossless_depth_parts_and_actual_source_visibility(task):
+    from scripts.testing.freeze_object_permanence import REFERENCE_CASES
+
+    manifest, oracle = load_geometry(task)
+    assert oracle["depth"].shape == oracle["object_ids"].shape == (120, 180, 320)
+    assert oracle["depth"].dtype == np.float32
+    assert np.isfinite(oracle["depth"]).all() and (oracle["depth"] >= 0).all()
+    assert len(manifest["depth_parts"]) == 4
+    np.testing.assert_array_equal(oracle["depth"][0].view(np.uint32), oracle["depth_base"].view(np.uint32))
+    assert manifest["targets"] == list(REFERENCE_CASES[task.upper()][2])
+    for name in manifest["targets"]:
+        counts = (oracle["object_ids"] == manifest["object_ids"][name]).sum(axis=(1, 2))
+        np.testing.assert_array_equal(counts, manifest["target_visible_pixels"][name])
+        assert counts[0] > 0 and counts[-1] > 0
+        assert counts.min() < counts.max()
+        if task == "g64":
+            assert counts.min() > 0  # Board window preserves partial visibility.
+        else:
+            assert (counts == 0).any()  # Actual complete occlusion occurs.
+
+
+def test_every_audited_nominal_entry_has_a_declared_independent_source_gate():
+    from scripts.export.object_permanence import AUDITED_TASKS
+
+    assert {task.lower() for task in AUDITED_TASKS} == set(RECORDED_TASKS)

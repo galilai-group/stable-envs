@@ -7,14 +7,16 @@ The [source inventory](object-permanence-inventory.md) covers all 150 task group
 and 197 member scripts. Its flags are **static, script-wide signals**, including
 unused builders; they are not a claim that every nominal/diversity variant works.
 
-## Pilots and supported capabilities
+## Audited scenes and supported capabilities
 
 G34 is the existing single ball behind a screen. The second pilot is
 [G62 two balls cross tunnel](https://github.com/hokindeng/object-permanence/blob/824baddcdad087810d35638bf8f273b884f74975/object_permanence/generator/tasks/G62_two_balls_cross_tunnel/pb_task_00000108_pb_two_balls_cross_tunnel_0109_blender.py):
 two balls travel in opposite directions on parallel lanes through an opaque
 tunnel. Both have stored poses while hidden; their IDs and colors remain distinct.
 Its 120-frame, 24 FPS nominal scene has 15 mesh objects and two dynamic nodes.
-Both pilots use the unmodified first member's build/animate functions, bypassing
+The first expansion batch adds G37 (curved U-track ball), G38 (pendulum bob and
+rod), and G64 (hinged windowed board in front of two stationary objects).
+All audited scenes use the unmodified first member's build/animate functions, bypassing
 the source main function's video, screenshot and scene-saving operations.
 The source animation produces poses; the exporter does not transcribe its motion.
 
@@ -26,6 +28,7 @@ The source animation produces poses; the exporter does not transcribe its motion
 | Constant evaluated modifiers | Supported if exported geometry stays identical across all frames |
 | Static opaque base colors and one material per mesh | Supported; simplified rendering does not preserve source shaders |
 | Fixed perspective camera | World and projection matrices exported |
+| Orthographic camera | Not supported in v1; e.g. G43/G77 require an extension |
 | Animated scale/shear, deformation, topology changes | Rejected |
 | Moving camera, changing base colors, visibility changes | Rejected |
 | Generated instances, textures, transparency, depth of field | Rejected |
@@ -89,7 +92,7 @@ The JSON manifest records:
 - `schema` and `conventions`: how to interpret arrays, axes, units and quaternion order.
 - `source.commit`, `script`, script/task-manifest hashes: identify the exact source definition.
 - `source.profile`, `parameters`, `seed`: distinguish nominal export from randomized samples;
-  these pilots use no diversity parameters or random seed.
+  these audited nominal recordings use no diversity parameters or random seed.
 - `source.versions` and exporter hash: track the evaluation and extraction implementation.
 - `fps`, source frames and source `video_split`: preserve timing and the task's clip boundary.
 - `objects`: names, stable positive mask IDs, mesh references, node mapping, static poses and colors.
@@ -152,7 +155,7 @@ trajectory. Selected poses are copied from a read-only memory map. Meshes are
 loaded once per reader; `triangles()` assembles geometry instances for the existing
 nvdiff API, which still duplicates per-instance geometry in its GPU scene.
 The reader and recording do not require CUDA. `RigidSceneRenderer` borrows an
-open recording and supplies a shared full-frame CUDA path for both pilots:
+open recording and supplies one shared full-frame CUDA path for all audited scenes:
 
 ```python
 from stable_envs.envs.object_permanence.rendering.rigid_nvdiff import RigidSceneRenderer
@@ -202,7 +205,7 @@ MSE/mask IoU. They do not certify source RGB or downstream learning accuracy.
 ```
 
 Unit tests cover sharing, mapping, ownership, corruption and invalid contracts.
-Live integration tests run both exports and the independent checker when
+Live integration tests run all five exports and the independent checker when
 `SE_OBJECT_PERMANENCE_SOURCE` and `SE_OBJECT_PERMANENCE_BLENDER_PYTHON` are set.
 Normal family CI requires no Blender. The G34 source oracle has been extended to 120 frames without changing any
 original sample values or renderer interfaces; no production code reads the oracle.
@@ -219,6 +222,9 @@ pose comparisons additionally validate motion hidden from the camera.
 |---|---:|---:|---:|
 | G34 recorded triangles | All 120 | <1e-12 | 1.0 |
 | G62 recorded triangles | All 120 | 9.26e-13 | 1.0 |
+| G37 curved track | All 120 | 5.93e-13 | 1.0 |
+| G38 pendulum | All 120 | 5.30e-13 | 1.0 |
+| G64 windowed board | All 120 | 9.42e-13 | 1.0 |
 
 Small candidate recordings under `tests/fixtures/saved/object_permanence_rigid`
 let offline CPU/GPU CI exercise the full path without Blender or the user's cache.
@@ -304,14 +310,18 @@ not optimizations to defer. The v1 exporter explicitly rejects unsupported cases
 python -m scripts.export.batch_object_permanence --source-root <source> \
   --output <recordings> --report <plan.json> --tasks all --plan-only
 python -m scripts.export.batch_object_permanence --source-root <source> \
-  --output <new-recordings> --report <report.json> --tasks G34,G62 \
+  --output <new-recordings> --report <report.json> --tasks G37,G38,G64 \
   --blender-python <isolated-blender-python>
 ```
 
-The current plan lists all 197 members across 150 groups: two audited pilot
-preparations and 195 unaudited members, not 195 proven non-rigid scenes. Execution
+The current plan lists all 197 members across 150 groups: five audited nominal
+preparations and 192 unaudited members. Unaudited does not mean non-rigid. Execution
 runs one isolated process per supported member, performs independent source
 triangle checks, and reports failures without reusing contaminated Blender state.
+Each job includes a conservative source-only capability review group. The
+regenerable inventory separates appearance/visibility, orthographic, geometry/scale,
+physics-bake and rigid-entry review queues; unused helpers can overflag a member.
+Only explicit preparation audits and all-frame runtime checks establish support.
 It never executes unaudited main functions, overwrites clips or silently counts
 unsupported jobs as success. Pixel certification remains the per-task oracle suite.
 
@@ -322,3 +332,61 @@ materials when required; preserve explicit rejection until they are validated.
 Mesh-local geometry is reusable across scenes; sampled poses handle irregular
 motion without new motion formulas. Keep units, frame conventions, semantic IDs,
 source pins and immutable manifests stable when publishing downloadable datasets.
+
+
+## First expansion batch: G37, G38 and G64
+
+All three add recording data and source references, without changing the runtime
+reader, renderer, precision thresholds or the existing G34/G62 frozen files.
+
+| Scene | Mesh objects | Recorded nodes | Source-visible targets |
+|---|---:|---:|---|
+| G37 | 5 | 1 | `orange_ball`: completely hidden for 18 frames |
+| G38 | 6 | 3 | `red_pendulum_bob`: completely hidden for 20 frames |
+| G64 | 5 | 1 | Both stationary targets remain partially visible through a board window |
+
+G38 records rod and bob motion, and conservatively retains the stationary pivot
+because the source marks it dynamic. No movement formula is reconstructed.
+G64's actual Boolean-cut window disagrees with source prose/custom tags claiming
+complete hiding. Preserve the evaluated mesh and its actual partial occlusion;
+do not close the window or require a hidden interval that the source lacks.
+G43/G77 are deferred because their selected cameras are orthographic. An applied
+Boolean modifier such as G64's is already supported when its evaluated mesh stays
+constant; the presence of a modifier alone is not evidence of deformation.
+
+`scripts/testing/freeze_object_permanence.py` has an independent audited entry
+list and queries Blender rays/world poses directly, importing no candidate
+exporter or renderer. References live under
+`tests/fixtures/semantics/object_permanence/<task>/nominal/`; candidate input clips
+and reusable meshes live separately under `tests/fixtures/saved/object_permanence_rigid/`.
+The main reference NPZ stores poses, source frames, camera, masks and depth base.
+Four 30-frame `depth_*.npz` files hold lossless uint32 XOR depth bits, each hashed
+in the manifest. This keeps files below the repository size limit without changing
+any depth bit, frame or acceptance threshold. The old G34/G62 encodings stay readable.
+
+```bash
+# Use the Blender reference interpreter; repeat for G38 and G64.
+python -m scripts.testing.freeze_object_permanence --source-root <source> \
+  --output <new-oracle>/g37/nominal --task G37
+python -m scripts.export.render_object_permanence_preview --source-root <source> \
+  --output <evaluation>/source-g37 --task G37
+```
+
+Use the CUDA interpreter for the existing comparison helper (no timing run needed):
+
+```python
+from pathlib import Path
+from benchmarks.object_permanence_recordings import comparison_gif
+from stable_envs.envs.object_permanence import RigidTrajectory
+
+for task in ("g37", "g38", "g64"):
+    with RigidTrajectory("<recordings>", f"{task}-nominal") as clip:
+        comparison_gif(clip, Path(f"<evaluation>/source-{task}"),
+                       Path(f"<evaluation>/{task}-source-vs-shared.gif"), size=180)
+```
+
+Tests check every frame's world pose, including hidden motion, and depth/masks for
+all mesh objects on both cached and uncached paths. Exact hidden counts come from
+the independent source masks; G64 explicitly tests partial visibility instead.
+Native preview GIFs show original source lighting beside simplified shared RGB;
+they are visual aids, while depth MSE and per-object mask IoU are the geometry gates.

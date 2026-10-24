@@ -3,7 +3,7 @@
 Run the inventory with ordinary Python, or export with the existing isolated
 Python 3.11 + bpy 4.4 reference interpreter. Only explicitly audited preparation
 entry points run; source main(), render(), save() and diversity wrappers do not.
-The nominal G34 and G62 pilots share the same extraction and recording code.
+Audited nominal members share the same extraction and recording code.
 """
 
 from __future__ import annotations
@@ -25,9 +25,12 @@ import numpy as np
 SOURCE_COMMIT = "824baddcdad087810d35638bf8f273b884f74975"
 SCHEMA = "stable-envs/object-permanence-rigid-v1"
 CONVENTIONS = {"world": "right-handed-z-up", "quaternion": "wxyz", "units": "source-scene-units"}
-PILOTS = {
+AUDITED_TASKS = {
     "G34": ("build_scene_by_kind", "animate_scene_by_kind"),
     "G62": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G37": ("build_scene_by_kind", "animate_scene"),
+    "G38": ("build_scene_by_kind", "animate_scene"),
+    "G64": ("build_scene_by_kind", "animate_scene_by_kind"),
 }
 G34_ORDER = (
     "large_floor_base",
@@ -69,6 +72,46 @@ def task_manifests(root):
     return sorted(tasks.glob("*/task.json"), key=lambda p: int(json.loads(p.read_text())["id"][1:]))
 
 
+def capability_group(tree, *, audited=False):
+    """Conservative source-only review queue; never permission to execute a script.
+
+    Whole-file hints include unused builders. Only an audited entry plus all-frame
+    runtime checks can certify the selected scene. No source code is executed here.
+    """
+    if audited:
+        return "audited-nominal-runtime-gate"
+    constants = {n.value for n in ast.walk(tree) if isinstance(n, ast.Constant) and isinstance(n.value, str)}
+    attributes = {n.attr for n in ast.walk(tree) if isinstance(n, ast.Attribute)}
+    calls = [n for n in ast.walk(tree) if isinstance(n, ast.Call)]
+    transparent = any(
+        (
+            k.arg == "alpha"
+            and isinstance(k.value, ast.Constant)
+            and isinstance(k.value.value, (int, float))
+            and k.value.value < 1
+        )
+        or (k.arg == "transparent" and isinstance(k.value, ast.Constant) and k.value.value is True)
+        for call in calls
+        for k in call.keywords
+    )
+    if transparent or attributes & {"hide_render", "hide_viewport"}:
+        return "appearance-or-visibility-review"
+    if "ORTHO" in constants:
+        return "orthographic-camera-review"
+    animated = {
+        k.value.value
+        for call in calls
+        if isinstance(call.func, ast.Attribute) and call.func.attr == "keyframe_insert"
+        for k in call.keywords
+        if k.arg == "data_path" and isinstance(k.value, ast.Constant)
+    }
+    if animated & {"scale", "dimensions", "value"} or "shape_key_add" in attributes:
+        return "geometry-or-scale-review"
+    if "rigidbody" in attributes or any(str(value).startswith("rigid_body") for value in animated):
+        return "physics-bake-review"
+    return "rigid-candidate-needs-entry-audit"
+
+
 def inventory(root, output):
     """List all source members and script-wide signals, not runtime certification.
 
@@ -78,12 +121,16 @@ def inventory(root, output):
     """
     check_source(root)
     rows, members = [], 0
+    groups: dict[str, int] = {}
     for path in task_manifests(root):
         task = json.loads(path.read_text())
-        signals = set()
+        signals, review_groups = set(), []
         for name in task["member_scripts"]:
             members += 1
             tree = ast.parse((path.parent / name).read_text())
+            group = capability_group(tree, audited=task["id"] in AUDITED_TASKS and name == task["member_scripts"][0])
+            groups[group] = groups.get(group, 0) + 1
+            review_groups.append(group)
             for node in ast.walk(tree):
                 if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
                     if node.func.attr == "keyframe_insert":
@@ -102,9 +149,9 @@ def inventory(root, output):
                         signals.add("shape_keys")
                 if isinstance(node, ast.Attribute) and node.attr in ("hide_render", "hide_viewport"):
                     signals.add(node.attr)
-        pilot = "nominal export available" if task["id"] in PILOTS else "not evaluated"
+        pilot = "nominal export available" if task["id"] in AUDITED_TASKS else "not evaluated"
         rows.append(
-            f"| {task['id']} {task['name']} | {len(task['member_scripts'])} | {', '.join(sorted(signals)) or 'none found'} | {pilot} |"
+            f"| {task['id']} {task['name']} | {len(task['member_scripts'])} | {', '.join(sorted(signals)) or 'none found'} | {review_groups[0]} | {pilot} |"
         )
     text = (
         "# Object-permanence source inventory\n\n"
@@ -112,11 +159,19 @@ def inventory(root, output):
         "Regenerate with `python -m scripts.export.object_permanence inventory --source-root <checkout> --output <file>`.\n"
         "This is a static, script-wide inventory. Unused builders can contribute signals;\n"
         "absence of a signal does not prove support. Counts include all members.\n"
-        "Only the first nominal members of G34/G62 have audited preparation entry points;\n"
+        "Only explicitly listed first nominal members have audited preparation entry points;\n"
         "run export to check their evaluated geometry, transforms, materials and camera at every frame.\n"
         "Diversity variants, sampled scene semantics and downstream accuracy are not certified here.\n\n"
-        "| Task | Members | Script-wide signals | Pilot export coverage |\n"
-        "|---|---:|---|---|\n" + "\n".join(rows) + "\n"
+        "## Capability triage\n\n"
+        "Groups cover every member and are conservative AST hints, not evaluated support.\n"
+        "Unused helpers may trigger a flag. Priority is audited nominal, visibility/appearance,\n"
+        "orthographic, geometry/scale, physics bake, then rigid candidate requiring entry audit.\n"
+        "An applied, time-invariant modifier is allowed; an animated/deforming mesh is not.\n\n"
+        "| Review group | Members |\n|---|---:|\n"
+        + "".join(f"| {group} | {count} |\n" for group, count in sorted(groups.items()))
+        + "\n## Source tasks\n\n"
+        "| Task | Members | Script-wide signals | First-member review group | Nominal preparation coverage |\n"
+        "|---|---:|---|---|---|\n" + "\n".join(rows) + "\n"
     )
     output.write_text(text)
 
@@ -127,7 +182,7 @@ def prepare(root, task):
 
     if bpy.app.version[:2] != (4, 4):
         raise ValueError("export requires Blender 4.4.x")
-    if task not in PILOTS:
+    if task not in AUDITED_TASKS:
         raise ValueError(f"unaudited preparation entry point: {task}")
     check_source(root)
     paths = [p for p in task_manifests(root) if json.loads(p.read_text())["id"] == task]
@@ -138,7 +193,7 @@ def prepare(root, task):
     source = path.parent / metadata["member_scripts"][0]
     namespace = runpy.run_path(str(source), run_name="stable_envs_rigid_export")
     namespace["clear_scene"]()
-    build, animate = PILOTS[task]
+    build, animate = AUDITED_TASKS[task]
     result = namespace[build]()
     namespace[animate](*(result if isinstance(result, tuple) else (result,)))
     return bpy.context.scene, source, metadata
@@ -514,7 +569,7 @@ def main():
         item.add_argument("--source-root", type=Path, required=True)
         item.add_argument("--output", type=Path, required=True)
         if command == "export":
-            item.add_argument("--task", choices=tuple(PILOTS), required=True)
+            item.add_argument("--task", choices=tuple(AUDITED_TASKS), required=True)
     item = sub.add_parser("organize", help="organize semantic asset folders and deduplicate licenses")
     item.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()

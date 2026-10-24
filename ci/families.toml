@@ -146,7 +146,7 @@ paths = [
   "benchmarks/object_permanence*.py",
   "scripts/testing/freeze_occlusion_ball_oracle.py",
   "scripts/testing/check_object_permanence_export.py",
-  "scripts/testing/freeze_object_permanence_g62.py",
+  "scripts/testing/freeze_object_permanence*.py",
 ]
 tests = ["test_occlusion_*", "test_object_permanence_*"]
 requires = ["mujoco"]

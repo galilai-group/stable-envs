@@ -1,0 +1,257 @@
+{
+  "arrays": {
+    "camera_matrix": {
+      "dtype": "float64",
+      "shape": [
+        4,
+        4
+      ]
+    },
+    "depth_base": {
+      "dtype": "float32",
+      "shape": [
+        180,
+        320
+      ]
+    },
+    "object_ids": {
+      "dtype": "int16",
+      "shape": [
+        120,
+        180,
+        320
+      ]
+    },
+    "poses": {
+      "dtype": "float64",
+      "shape": [
+        120,
+        6,
+        7
+      ]
+    },
+    "source_frames": {
+      "dtype": "int64",
+      "shape": [
+        120
+      ]
+    }
+  },
+  "depth_convention": "positive camera-axis distance in source scene units; zero for no hit",
+  "depth_encoding": "float32 bitwise XOR against depth_base; lossless 30-frame chunks",
+  "depth_parts": [
+    {
+      "dtype": "uint32",
+      "file": "depth_0000_0030.npz",
+      "sha256": "4f90e96b07625f194363507cd656019b6c75506c8d09c1e6ae9ed2e040dc8ba2",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 0,
+      "stop": 30
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0030_0060.npz",
+      "sha256": "7ec5c43033a7b664130920296db22bc4782de9b10d95ead6a635242a9a4dae9b",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 30,
+      "stop": 60
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0060_0090.npz",
+      "sha256": "c3153c7444b672690b99c1721db34905ba001d3a338dcd86b225be0b0344a1f3",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 60,
+      "stop": 90
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0090_0120.npz",
+      "sha256": "3991556c7ce75f0b27bac090058fb185091b1808bc4d0e878fc074784a8567ff",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 90,
+      "stop": 120
+    }
+  ],
+  "file": "blender_g38_nominal.npz",
+  "fps": 24.0,
+  "generator": "scripts/testing/freeze_object_permanence.py",
+  "generator_sha256": "044816e4a6482cb7d5e55304db8e4d8f4e3d32bd8f3df3a609079b47d4d4e862",
+  "height": 180,
+  "mask_convention": "visible source mesh at the pixel center; zero for no hit",
+  "object_ids": {
+    "dark_pendulum_rope": 1,
+    "fixed_pendulum_pivot": 2,
+    "large_floor_base": 3,
+    "opaque_vertical_occluding_screen": 4,
+    "rear_backdrop_panel": 5,
+    "red_pendulum_bob": 6
+  },
+  "object_order": [
+    "dark_pendulum_rope",
+    "fixed_pendulum_pivot",
+    "large_floor_base",
+    "opaque_vertical_occluding_screen",
+    "rear_backdrop_panel",
+    "red_pendulum_bob"
+  ],
+  "schema": "stable-envs/object-permanence-rigid-oracle-v1",
+  "sha256": "b0267593750427321abfc1ddc694d911118d891cbacb574573484c3b9117279c",
+  "source_commit": "824baddcdad087810d35638bf8f273b884f74975",
+  "source_license": "CC-BY-NC-4.0",
+  "source_profile": "nominal first member; no diversity wrapper",
+  "source_script": "object_permanence/generator/tasks/G38_pendulum_occluded_by_screen/pb_task_00000030_pb_pendulum_occluded_by_screen_0031_blender.py",
+  "source_script_sha256": "ae6d003ba43f305cfe3f988a6fe31ebf54bec97a156bdcf0ecf6602df5721194",
+  "source_task_manifest_sha256": "e601d9d66282d11b6adbc8ad26e4927ebe76e43e11fcd6c8a200986e1dab53d3",
+  "source_url": "https://github.com/hokindeng/object-permanence",
+  "target_visible_pixels": {
+    "red_pendulum_bob": [
+      117,
+      118,
+      115,
+      117,
+      117,
+      117,
+      115,
+      117,
+      117,
+      116,
+      115,
+      115,
+      115,
+      116,
+      116,
+      116,
+      116,
+      114,
+      113,
+      103,
+      87,
+      70,
+      48,
+      30,
+      12,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      4,
+      19,
+      37,
+      60,
+      80,
+      94,
+      107,
+      115,
+      115,
+      114,
+      116,
+      118,
+      115,
+      115,
+      117,
+      116,
+      117,
+      116,
+      114,
+      117,
+      117,
+      116,
+      116,
+      117,
+      117,
+      117,
+      117,
+      116,
+      116,
+      117,
+      117,
+      114,
+      116,
+      117,
+      116,
+      117,
+      115,
+      115,
+      118,
+      116,
+      114,
+      115,
+      115,
+      107,
+      94,
+      80,
+      60,
+      37,
+      19,
+      4,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      12,
+      30,
+      48,
+      70,
+      87,
+      103,
+      113,
+      114,
+      116,
+      116,
+      116,
+      116,
+      115,
+      115,
+      115,
+      116,
+      117,
+      117,
+      115,
+      117,
+      117,
+      117,
+      115,
+      118,
+      117
+    ]
+  },
+  "targets": [
+    "red_pendulum_bob"
+  ],
+  "task": "G38",
+  "versions": {
+    "blender": "4.4.0",
+    "numpy": "1.26.4",
+    "python": "3.11.16"
+  },
+  "width": 320
+}

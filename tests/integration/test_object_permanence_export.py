@@ -18,7 +18,9 @@ def exported(tmp_path_factory):
     if not source or not python:
         pytest.skip("live export needs SE_OBJECT_PERMANENCE_SOURCE and SE_OBJECT_PERMANENCE_BLENDER_PYTHON")
     output = tmp_path_factory.mktemp("rigid-export")
-    for task in ("G34", "G62"):
+    from scripts.export.object_permanence import AUDITED_TASKS
+
+    for task in AUDITED_TASKS:
         subprocess.run(
             [
                 python,
@@ -187,3 +189,18 @@ for kind in ("scale", "camera", "color", "visibility", "collection", "deformatio
         cube.users_collection[0].hide_render = False
 """
     subprocess.run([python, "-c", code], check=True, timeout=60)
+
+
+@pytest.mark.parametrize("task", ["g37", "g38", "g64"])
+def test_first_batch_live_export_matches_independent_frozen_world_poses(exported, task):
+    from tests.helpers.reference.object_permanence_recordings import load_geometry
+
+    reference, oracle = load_geometry(task)
+    with RigidTrajectory(exported, f"{task}-nominal") as clip:
+        np.testing.assert_array_equal(clip.frames, oracle["source_frames"])
+        actual = clip.object_poses(np.arange(len(clip)))
+        assert [o["name"] for o in clip.manifest["objects"]] == reference["object_order"]
+        np.testing.assert_allclose(actual[..., :3], oracle["poses"][..., :3], atol=3e-7, rtol=0)
+        q = oracle["poses"][..., 3:]
+        signs = np.where((actual[..., 3:] * q).sum(-1, keepdims=True) < 0, -1, 1)
+        np.testing.assert_allclose(actual[..., 3:], q * signs, atol=1e-6, rtol=0)

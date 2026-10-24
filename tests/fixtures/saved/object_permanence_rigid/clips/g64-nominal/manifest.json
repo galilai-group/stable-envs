@@ -1,0 +1,256 @@
+{
+  "arrays": {
+    "frames": {
+      "dtype": "int64",
+      "sha256": "3ce1a862b6cf0bb21bc1354b758cafa47ca5ec03b5c004d6210f5abd8c55df44",
+      "shape": [
+        120
+      ]
+    },
+    "poses": {
+      "dtype": "float32",
+      "sha256": "87a2c4a41b9853ec4a68bd06e6303986f005a638fbb29ece03e95e5980015a51",
+      "shape": [
+        120,
+        1,
+        7
+      ]
+    }
+  },
+  "assets": {
+    "375f50fa5f209f620c3209bc085b146b2aa420ffdf5e60339ab30661c517a0bf": {
+      "file": "assets/cube/375f50fa5f209f620c3209bc085b146b2aa420ffdf5e60339ab30661c517a0bf.npz",
+      "sha256": "5ad9e1f5f4925cfad5f0f02a1a9db549b2e2479916c30c7ff908922db3b3147a"
+    },
+    "4dc410d1312d5c25fa7033eb91ef57cccf1530493db4aaa1a3e0b6b8a08fa69c": {
+      "file": "assets/sphere/4dc410d1312d5c25fa7033eb91ef57cccf1530493db4aaa1a3e0b6b8a08fa69c.npz",
+      "sha256": "8db38b8f4b508c7ec91deb730064a59b5db97d8ac091279136524b6c6476a887"
+    },
+    "8aab2514f45cbbdd51b662f671f0aa81009f9cefa0ff0ae2d3201224866ba196": {
+      "file": "assets/cube/8aab2514f45cbbdd51b662f671f0aa81009f9cefa0ff0ae2d3201224866ba196.npz",
+      "sha256": "c2d559f8e476d697d5572aef975186503ef2d74f3995a62fae9c88fe67a3abe9"
+    },
+    "c14dfb6567e3e5b49167a07f23705c4bcd2796c336201a0b08ec786852d60a99": {
+      "file": "assets/cube/c14dfb6567e3e5b49167a07f23705c4bcd2796c336201a0b08ec786852d60a99.npz",
+      "sha256": "54533c8c21b4bc204c5947f6dbfb5926ba7848e3cb73d3fd9ad2d2e4e2c5d14d"
+    },
+    "f5f0cea437e1f6b636b6a537a348a72e465dbcb5680da792983da32efde79175": {
+      "file": "assets/cylinder/f5f0cea437e1f6b636b6a537a348a72e465dbcb5680da792983da32efde79175.npz",
+      "sha256": "17ce116b8e3c40308d6f980d04e59d31e2081da82a4b9d2a93a50b35484c7d2e"
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "height": 720,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        2.3333330154418945,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        4.1481475830078125,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "width": 1280,
+    "world": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.17134134471416473,
+        -0.9852117300033569,
+        -4.050000190734863
+      ],
+      [
+        0.0,
+        0.9852117300033569,
+        0.17134134471416473,
+        1.350000023841858
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "clip": "g64-nominal",
+  "conventions": {
+    "quaternion": "wxyz",
+    "units": "source-scene-units",
+    "world": "right-handed-z-up"
+  },
+  "dynamic_nodes": [
+    "flip_board_occluder"
+  ],
+  "fps": 24.0,
+  "license_ref": {
+    "sha256": "0163481eb7a0fe3ed86d2dccf542a849b36b3c119f8ca6d3d5b36c074f2e1a1c"
+  },
+  "objects": [
+    {
+      "asset": "c14dfb6567e3e5b49167a07f23705c4bcd2796c336201a0b08ec786852d60a99",
+      "id": 1,
+      "name": "flip_board_occluder",
+      "node": 0,
+      "pose": [
+        0.0,
+        0.11999999731779099,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.4000000059604645,
+        0.4099999964237213,
+        0.4300000071525574,
+        1.0
+      ],
+      "role": "flip_occluder",
+      "shape": "cube",
+      "source_id": "flip_board_occluder"
+    },
+    {
+      "asset": "8aab2514f45cbbdd51b662f671f0aa81009f9cefa0ff0ae2d3201224866ba196",
+      "id": 2,
+      "name": "large_floor_base",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        -0.05000000074505806,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8199999928474426,
+        0.800000011920929,
+        0.75,
+        1.0
+      ],
+      "role": "ground",
+      "shape": "cube",
+      "source_id": "large_floor_base"
+    },
+    {
+      "asset": "375f50fa5f209f620c3209bc085b146b2aa420ffdf5e60339ab30661c517a0bf",
+      "id": 3,
+      "name": "rear_backdrop_panel",
+      "node": -1,
+      "pose": [
+        0.0,
+        2.4800000190734863,
+        1.6200000047683716,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9599999785423279,
+        0.9700000286102295,
+        0.9800000190734863,
+        1.0
+      ],
+      "role": "background",
+      "shape": "cube",
+      "source_id": "rear_backdrop_panel"
+    },
+    {
+      "asset": "4dc410d1312d5c25fa7033eb91ef57cccf1530493db4aaa1a3e0b6b8a08fa69c",
+      "id": 4,
+      "name": "static_object_a_ball",
+      "node": -1,
+      "pose": [
+        -0.41999998688697815,
+        0.7200000286102295,
+        0.30000001192092896,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        1.0,
+        0.3799999952316284,
+        0.05999999865889549,
+        1.0
+      ],
+      "role": "static_object_a",
+      "shape": "sphere",
+      "source_id": "static_object_a_ball"
+    },
+    {
+      "asset": "f5f0cea437e1f6b636b6a537a348a72e465dbcb5680da792983da32efde79175",
+      "id": 5,
+      "name": "static_object_b_cylinder",
+      "node": -1,
+      "pose": [
+        0.4399999976158142,
+        0.7200000286102295,
+        0.3100000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.11999999731779099,
+        0.3400000035762787,
+        0.8600000143051147,
+        1.0
+      ],
+      "role": "static_object_b",
+      "shape": "cylinder",
+      "source_id": "static_object_b_cylinder"
+    }
+  ],
+  "schema": "stable-envs/object-permanence-rigid-v1",
+  "source": {
+    "commit": "824baddcdad087810d35638bf8f273b884f74975",
+    "exporter": "scripts/export/object_permanence.py",
+    "exporter_sha256": "2329561c15273d8566f095c073ae7e643de3278730551911b4dd062c80318be6",
+    "license": "CC-BY-NC-4.0",
+    "parameters": {},
+    "profile": "nominal-first-member-no-diversity",
+    "script": "object_permanence/generator/tasks/G64_flipboard_occluder/pb_task_00000110_pb_flipboard_occluder_0111_blender.py",
+    "script_sha256": "d78d9b64b9184f17005bc5cd19e40e25e37de2b9f693d0c1f3e78ee069f6ba02",
+    "seed": null,
+    "task": "G64",
+    "task_manifest_sha256": "6ece954cf372e7ea3c54f0a94642a82c1f199942f013c828da42537b253437c4",
+    "url": "https://github.com/hokindeng/object-permanence",
+    "versions": {
+      "blender": "4.4.0",
+      "numpy": "1.26.4",
+      "python": "3.11.16"
+    },
+    "video_split": null
+  }
+}

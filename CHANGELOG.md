@@ -8,6 +8,12 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- First object-permanence recording expansion: nominal G37 curved track, G38
+  pendulum and G64 windowed flip board, using the unchanged shared renderer.
+  Adds conservative source capability queues, independent all-frame Blender
+  references with lossless depth chunks, and cached/uncached depth/mask gates.
+  Existing G34/G62 frozen files and runtime interfaces are unchanged.
+
 - Object-permanence source/shared GIF and upload-inclusive benchmark tools, isolated
   batch planning/export with source geometry checks, and a 120-frame G34 v2 oracle
   preserving all original samples. Shared/refined/raycast gates cover all frames;

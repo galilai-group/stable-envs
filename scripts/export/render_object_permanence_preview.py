@@ -10,7 +10,7 @@ import argparse
 import json
 from pathlib import Path
 
-from .object_permanence import SOURCE_COMMIT, prepare, sha256
+from .object_permanence import AUDITED_TASKS, SOURCE_COMMIT, prepare, sha256
 
 
 def render(root, output, task, *, samples=16, frame_stop=None):
@@ -60,7 +60,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--task", choices=("G34", "G62"), required=True)
+    parser.add_argument("--task", choices=tuple(AUDITED_TASKS), required=True)
     parser.add_argument("--samples", type=int, default=16)
     parser.add_argument("--frame-stop", type=int)
     args = parser.parse_args()

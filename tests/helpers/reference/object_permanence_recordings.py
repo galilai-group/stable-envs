@@ -11,11 +11,16 @@ FIXTURES = Path(__file__).resolve().parents[2] / "fixtures"
 RECORDINGS = FIXTURES / "saved/object_permanence_rigid"
 DEPTH_MSE_MAX = 1e-8
 MASK_IOU_MIN = 0.99
+RECORDED_TASKS = ("g34", "g37", "g38", "g62", "g64")
 
 
-@lru_cache(maxsize=2)
+@lru_cache(maxsize=len(RECORDED_TASKS))
 def load_geometry(task):
-    directory = FIXTURES / ("semantics/occlusion_ball" if task == "g34" else "semantics/object_permanence/g62/nominal")
+    if task not in RECORDED_TASKS:
+        raise ValueError("unknown frozen rigid scene")
+    directory = FIXTURES / (
+        "semantics/occlusion_ball" if task == "g34" else f"semantics/object_permanence/{task}/nominal"
+    )
     manifest = json.loads((directory / "manifest.json").read_text())
     path = directory / manifest["file"]
     assert hashlib.sha256(path.read_bytes()).hexdigest() == manifest["sha256"]
@@ -25,6 +30,21 @@ def load_geometry(task):
     for name, array in arrays.items():
         assert list(array.shape) == manifest["arrays"][name]["shape"]
         assert str(array.dtype) == manifest["arrays"][name]["dtype"]
+    if "depth_parts" in manifest:
+        parts, end = [], 0
+        for part in manifest["depth_parts"]:
+            assert part["start"] == end and part["stop"] > end
+            path = directory / part["file"]
+            assert hashlib.sha256(path.read_bytes()).hexdigest() == part["sha256"]
+            with np.load(path, allow_pickle=False) as archive:
+                assert archive.files == ["depth_xor"]
+                bits = archive["depth_xor"]
+            assert list(bits.shape) == part["shape"] and str(bits.dtype) == part["dtype"] == "uint32"
+            assert bits.shape == (part["stop"] - end, manifest["height"], manifest["width"])
+            end = part["stop"]
+            parts.append(bits)
+        assert end == len(arrays["source_frames"])
+        arrays["depth_xor"] = np.concatenate(parts)
     if "depth_xor" in arrays:
         arrays["depth"] = (arrays["depth_xor"] ^ arrays["depth_base"].view(np.uint32)).view(np.float32)
         arrays["geometry_frames"] = arrays["source_frames"]

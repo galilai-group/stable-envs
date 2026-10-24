@@ -13,7 +13,7 @@ from pathlib import Path
 
 import numpy as np
 
-from scripts.export.object_permanence import prepare
+from scripts.export.object_permanence import AUDITED_TASKS, prepare
 
 
 def _canonical(faces, normals):
@@ -110,7 +110,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source-root", type=Path, required=True)
     parser.add_argument("--dataset", type=Path, required=True)
-    parser.add_argument("--task", choices=("G34", "G62"), required=True)
+    parser.add_argument("--task", choices=tuple(AUDITED_TASKS), required=True)
     args = parser.parse_args()
     print(json.dumps(check(args.source_root.resolve(), args.dataset.resolve(), args.task), indent=2))
 
