@@ -5,12 +5,14 @@ from functools import partial
 
 import torch
 
-from .aligned import ALIGNED_FIELDS, MODEL_KEYS, DMCAlignedAdapter
+from ...._execution.policy import cpu_affinity
+from .aligned import ALIGNED_BATCH, ALIGNED_FIELDS, MODEL_KEYS, DMCAlignedAdapter
 from .aligned import CONFIG as ALIGNED
+from .batch import DMCBatchAdapter
 from .continuation import CONFIG as CONTINUATION
-from .continuation import CONTINUATION_FIELDS, DMCContinuationAdapter
-from .first_family import FIRST_FAMILY_FIELDS, REACHER_FIELDS, FirstFamilyAdapter, ReacherAdapter
-from .humanoid import HUMANOID_CONFIG, HUMANOID_FIELDS, DMCHumanoidAdapter
+from .continuation import CONTINUATION_BATCH, CONTINUATION_FIELDS, DMCContinuationAdapter
+from .first_family import FIRST_FAMILY_BATCH, FIRST_FAMILY_FIELDS, REACHER_FIELDS, FirstFamilyAdapter, ReacherAdapter
+from .humanoid import HUMANOID_CONFIG, HUMANOID_FIELDS, DMCHumanoidAdapter, HumanoidBatch
 
 DMCAdapter = FirstFamilyAdapter | ReacherAdapter | DMCAlignedAdapter | DMCContinuationAdapter | DMCHumanoidAdapter
 FACTORIES: dict[str, Callable[..., DMCAdapter]] = {
@@ -35,6 +37,8 @@ ACTION_DIMS = {
     **{key: cfg["nu"] for key, cfg in CONTINUATION.items()},
     "humanoid": HUMANOID_CONFIG["nu"],
 }
+#: Batch task per simulator key: rewards, observations and info for all lanes at once.
+BATCH_TASKS = {**FIRST_FAMILY_BATCH, **ALIGNED_BATCH, **CONTINUATION_BATCH, "humanoid": HumanoidBatch}
 #: State fields that follow qpos in the compact render row, in order.
 RENDER_KEYS = MODEL_KEYS
 # Quadruped always runs in-process.
@@ -47,3 +51,11 @@ def make_local(domain: str, num_envs: int, device: str | torch.device = "cpu", s
     except KeyError:
         raise ValueError(f"Unsupported DMC domain {domain!r}") from None
     return factory(num_envs, device, seed)
+
+
+def make_batch(
+    domain: str, num_envs: int, device: str | torch.device = "cpu", seed: int = 0, threads: int | None = None
+) -> DMCBatchAdapter:
+    """``make_local`` lanes stepped in one mujoco.batch on ``threads`` threads, by default one per CPU."""
+    lanes = make_local(domain, num_envs, device, seed)
+    return DMCBatchAdapter(lanes, BATCH_TASKS[domain], len(cpu_affinity() or ()) if threads is None else threads)
