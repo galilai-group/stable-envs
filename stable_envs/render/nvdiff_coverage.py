@@ -196,6 +196,7 @@ class StaticCoverage:
         if (
             self._resolution != resolution
             or self._positions is None
+            or self._positions.dtype != positions.dtype
             or not torch.equal(positions[:1], self._positions)
         ):
             h, w = resolution
@@ -216,7 +217,7 @@ class StaticCoverage:
 def rasterize(pos, faces, resolution, *, cache=None):
     """Return float32 (B,H,W,4), or None when depth clipping needs fallback.
 
-    Input is contiguous CUDA float32 clip vertices and int32 triangle indices.
+    Input is contiguous CUDA float32/float64 clip vertices and int32 triangle indices.
     The fallback decision synchronizes once; this is not a CUDA-graph API.
     Optional StaticCoverage reuses fixed visibility, without quantizing depth.
     """
@@ -224,14 +225,14 @@ def rasterize(pos, faces, resolution, *, cache=None):
         raise ValueError("precise coverage does not provide gradients")
     if (
         not pos.is_cuda
-        or pos.dtype != torch.float32
+        or pos.dtype not in (torch.float32, torch.float64)
         or not pos.is_contiguous()
         or pos.ndim != 3
         or pos.shape[-1] != 4
         or not pos.shape[0]
         or not pos.shape[1]
     ):
-        raise ValueError("coverage requires contiguous CUDA float32 positions")
+        raise ValueError("coverage requires contiguous CUDA float32/float64 positions")
     if (
         faces.dtype != torch.int32
         or faces.device != pos.device

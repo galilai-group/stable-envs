@@ -117,3 +117,56 @@ def test_static_cache_rebuilds_on_camera_geometry_resolution_changes_and_falls_b
     assert torch.equal(rasterize(pos, faces, (16, 24), cache=cache), rasterize(pos, faces, (16, 24)))
     with pytest.raises(ValueError, match="different face"):
         rasterize(pos, faces.clone(), (16, 24), cache=cache)
+
+
+def test_double_clip_input_recovers_information_already_lost_in_float32():
+    from stable_envs.render.nvdiff_coverage import StaticCoverage
+
+    pos = torch.tensor(
+        [[[0.0625 - 1e-10, 0.0615, 0, 1], [0.0625 + 1e-10, 0.0615, 0, 1], [0.0625, 0.0635, 0, 1]]],
+        dtype=torch.float64,
+        device="cuda",
+    )
+    faces = torch.tensor([[0, 1, 2]], dtype=torch.int32, device="cuda")
+    assert rasterize(pos.float(), faces, (16, 16))[0, 8, 8, 3] == 0
+    exact = rasterize(pos, faces, (16, 16))
+    assert exact.dtype == torch.float32 and exact[0, 8, 8, 3] == 1
+    cache = StaticCoverage(faces, torch.tensor([True], device="cuda"))
+    assert torch.equal(rasterize(pos, faces, (16, 16), cache=cache), exact)
+    # torch.equal ignores dtype: equal represented coordinates still need a seed
+    # rebuild when switching projection precision, then reuse within that mode.
+    rounded = pos.float()
+    rasterize(rounded, faces, (16, 16), cache=cache)
+    assert cache.builds == 2
+    rasterize(rounded.double(), faces, (16, 16), cache=cache)
+    assert cache.builds == 3
+    rasterize(rounded.double(), faces, (16, 16), cache=cache)
+    assert cache.builds == 3
+
+
+def test_double_projection_avoids_transform_cancellation_and_releases_cached_storage():
+    import weakref
+
+    from stable_envs.render.nvdiff import Scene
+
+    vertices = np.array([[65536, 65536, -3], [65538, 65536, -3], [65536, 65538, -3]], np.float32)
+    scene = Scene.from_triangles(vertices, [[0, 0, 1]] * 3, [[0, 1, 2]], [0, 0, 0], [[1, 0, 0, 1]])
+    pos = torch.tensor([[[-65536, -65536, 0]]], device="cuda", dtype=torch.float32)
+    rot = torch.eye(3, device="cuda")[None, None]
+    view = torch.eye(4, dtype=torch.float64, device="cuda")[None]
+    view[0, :2, 3] = torch.tensor([0.123456789, 0.234567891], device="cuda", dtype=torch.float64)
+    proj = torch.diag(torch.tensor([1.123456789, 1.234567891, 1, 1], dtype=torch.float64, device="cuda"))
+    old, normals, world = scene.clip(pos, rot, view.float(), proj.float())
+    precise, normals64, world64 = scene.clip(pos, rot, view, proj, coverage_dtype=torch.float64)
+    points = np.column_stack((vertices.astype(np.float64) + [-65536, -65536, 0], np.ones(3)))
+    expected = points @ view[0].cpu().numpy().T @ proj.cpu().numpy().T
+    np.testing.assert_allclose(precise[0].cpu().numpy(), expected, atol=1e-8, rtol=0)
+    assert np.max(abs(old[0].cpu().numpy() - expected)) > 1e-3
+    assert torch.equal(normals64, normals) and torch.equal(world64, world)
+    resource = weakref.ref(scene.S4_64)
+    repeated, _, _ = scene.clip(
+        pos.expand(2, -1, -1), rot.expand(2, -1, -1, -1), view, proj, coverage_dtype=torch.float64
+    )
+    assert torch.equal(repeated, precise.expand_as(repeated))
+    scene.close()
+    assert resource() is None and scene.S4_64 is None

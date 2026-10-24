@@ -432,10 +432,9 @@ preserves every source depth bit and frame; earlier fixtures keep their layouts.
 | G81 rolling shutter | 1.55e-12 | .72340 | Coplanar housing/rail faces have ambiguous object-ID attribution |
 
 G63 differs at frames 16/54/66/104. G66 fails the depth gate at 34; frame 41 has
-another near-contact ID difference within current budgets. For selected boundary
-pixels, direct float64 intersections of evaluated source triangles also disagree
-with Blender's BVH result; other discrepancies involve projection rounding.
-These observations do not establish a universal correction rule. G80's actual
+another near-contact ID difference within current budgets. The exact source
+probes below separate BVH deviations from the camera ray convention gap; neither
+is a reason to fit a scene-specific correction. G80's actual
 source doors overlap by .06 scene units; G81's housing and rails overlap with
 coplanar front faces. Their source mesh-ID masks are not uniquely defined by
 nearest geometry in those regions. Their depth agreement alone is insufficient
@@ -466,3 +465,102 @@ IDs, then `comparison_gif` for all 120 aligned frames. Further ports must pass t
 same gates. Boundary conventions and coplanar mesh attribution need a separately
 specified, reusable fidelity solution before the four deferred scenes can be
 certified; no scene-specific rendering workaround is introduced here.
+
+## Visibility investigation: source, camera and renderer precision
+
+No existing recording, reference file or threshold changes in this investigation.
+The default renderer remains float32 projection and uses the same frozen gates.
+The source probe `scripts/testing/check_object_permanence_visibility.py` reads
+Blender's evaluated triangles, independently of exported mesh/pose extraction.
+It compares source BVH queries with exact rational intersections for represented
+world coordinates. Object-level AABB rejection and triangle intersections use
+`Fraction`, without a silhouette/depth epsilon. Exactly tied nearest objects are
+all retained; one-ULP-separated surfaces remain distinct. Exactness refers to
+represented coordinates/rays, not unknown real values before source rounding.
+
+| Query (source frame, x, y) | Exact finding |
+|---|---|
+| G63 (16,5,97), (104,314,97) | Source BVH returns backdrop; exact source-ray intersection hits a comb bar |
+| G63 (54,270,101), (66,49,101) | Oracle `view_frame` rays hit a bar; rays from the stored projection matrix hit the table |
+| G66 (34,208,64) | BVH returns disc; all three exact ray constructions hit the table |
+| G80 (54,159,70), (54,159,91) | Both doors are exactly nearest; BVH chooses different doors at the two pixels |
+| G81 (1,26,32), (1,288,32) | Housing and respective rail are exactly tied |
+
+The G63 frame 54/66 discrepancy is a **camera ray convention/serialization gap**,
+not evidence that the triangle coverage kernel chose the wrong surface for its
+stored camera. The oracle constructs rays from `view_frame` float32 corners, while
+the recording stores Blender's separately rounded `calc_matrix_camera` result.
+Those representations need not define identical boundary samples. G66 frame 41
+has another small, in-budget near-contact ID difference; this investigation does
+not certify a unique cause for every in-budget numerical difference.
+
+### Reusable implementation and controlled comparisons
+
+`RigidSceneRenderer(..., geometry_precision="float64")` optionally retains camera
+matrices, model composition, sparse vertex projection and refined coverage input
+in float64. The old path previously cast projected vertices back to float32 before
+float64 coverage, irreversibly losing some edge information. Synthetic regressions
+show a thin triangle lost by that cast and a transform-cancellation case recovered
+by the new option. The option is not a claim that these deferred source masks
+become correct. Compact mesh/pose inputs, quaternion-to-matrix reconstruction,
+shading attributes, raster interpolation and public output dtypes remain unchanged.
+The default stays float32; other nvdiff users keep their previous transform path.
+
+The optional mode requires refined coverage. Clipping or missing Triton still uses
+the documented scaled float32 fallback (`last_fallback=True`), not an undisclosed
+high-precision guarantee. A scene caches and releases its float64 sparse transform;
+clip-position buffers double in size, but CPU pose upload remains float32. No
+throughput improvement is claimed for this correctness/diagnostic option.
+
+The probe also emits one source-derived projection for the existing oracle's
+symmetric `view_frame` ray grid. Applying that matrix to every frame with float64
+projection reduces G63's failing depth frames from 16/54/66/104 to 16/104. Remaining
+maximum MSE is still about 2.86e-4. G66 still fails at 34; G80/G81 still fail ID IoU.
+Double projection alone leaves all four scenes deferred. These experiments use a
+single source camera calibration, never a per-pixel fit to candidate errors.
+
+```bash
+# Blender reference interpreter; repeat with other task/pixel coordinates above.
+python -m scripts.testing.check_object_permanence_visibility \
+  --source-root <source> --task G63 --pixels '16:5:97;54:270:101;66:49:101;104:314:97' \
+  --report <evaluation>/g63-exact-probe.json
+# CUDA interpreter, original frozen oracle and original camera convention:
+python -m scripts.testing.check_object_permanence_rendering \
+  --recordings <recordings> --oracle <oracle>/g63/nominal --task G63 \
+  --geometry-precision float64 --report <evaluation>/g63-double.json
+# Diagnostic source camera convention, with the same frozen values/thresholds:
+python -m scripts.testing.check_object_permanence_rendering \
+  --recordings <recordings> --oracle <oracle>/g63/nominal --task G63 \
+  --geometry-precision float64 --camera-probe <evaluation>/g63-exact-probe.json \
+  --report <evaluation>/g63-calibrated.json
+```
+
+Camera probes must match source identity, dimensions, recorded world/projection
+matrices and a fixed source camera. `within_thresholds` reports measured budgets;
+`certification_eligible=False` and `passed=False` prevent the diagnostic camera
+convention from silently becoming legacy certification. Ordinary invocation keeps
+the original behavior. The source probe explicitly targets the existing unshifted
+perspective oracle convention; it rejects unsupported camera conventions.
+
+### Versioned solution for future imports
+
+A reusable contract needs three declarations in addition to geometry/poses:
+
+1. Pixel-center ray construction and explicit high-precision calibration bounds,
+   including image dimensions, camera shifts, and clipping conventions.
+2. The geometric nearest-hit rule and exact tie policy. The diagnostic helper
+   `canonical_object` demonstrates `lowest-semantic-id-v1` over the exact nearest
+   set, invariant to triangle enumeration. It is not installed as a new runtime
+   tie policy: a reliable GPU implementation and independent source references
+   would both need to adopt that declared contract.
+3. The oracle version. Keep current raw-BVH fixtures as legacy comparisons; any
+   future canonical geometric reference must be generated independently from
+   evaluated source geometry and stored alongside them, with the same numeric
+   MSE/IoU budgets explicitly tied to that new contract.
+
+A set-valued nearest-ID reference is another representation of geometric ambiguity,
+not permission to ignore disputed pixels. G80's two observed BVH labels prove
+that one global ID-priority rule cannot reproduce that legacy oracle. Reproducing
+Blender's traversal/numerical behavior is a separate compatibility backend, not a
+geometrically canonical tie rule. No mask erosion, edge exclusion, oracle copying,
+scene-name branch or threshold relaxation is used here. All four deferrals remain.

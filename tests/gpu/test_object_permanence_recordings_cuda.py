@@ -165,3 +165,60 @@ def test_static_only_and_dynamic_only_recordings_and_shared_dynamic_nodes(tmp_pa
             expected, actual = full.render_many([0, 44, 119]), cached.render_many([0, 44, 119])
             assert all(torch.equal(actual[m], expected[m]) for m in actual)
             assert cached.renderer._static_coverage.builds == int(all_static)
+
+
+def test_optional_double_geometry_preserves_modes_buffers_batching_and_scaled_fallback(monkeypatch):
+    from stable_envs.render import nvdiff_coverage
+
+    frames = np.array([0, 44, 119])
+    with RigidTrajectory(RECORDINGS, "g62-nominal") as clip:
+        with RigidSceneRenderer(clip, size=90, geometry_precision="float64") as renderer:
+            result = renderer.render_many(frames)
+            for mode, field in result.items():
+                assert torch.equal(field, renderer.render(frames, mode=mode))
+                assert torch.equal(field[:1], renderer.render(frames[:1], mode=mode))
+            out = {m: torch.empty_like(v) for m, v in result.items()}
+            assert renderer.render_many(frames, out=out) is out
+            assert all(torch.equal(out[m], result[m]) for m in result)
+            assert renderer.renderer._static_coverage.builds == 1
+            monkeypatch.setattr(nvdiff_coverage, "rasterize", lambda *args, **kwargs: None)
+            fallback = renderer.render_many(frames[:1])
+            assert renderer.renderer.last_fallback
+            assert all(v.shape == result[m][:1].shape and v.dtype == result[m].dtype for m, v in fallback.items())
+        with pytest.raises(ValueError, match="refined"):
+            RigidSceneRenderer(clip, size=90, coverage_mode="scaled", geometry_precision="float64")
+
+
+def test_source_camera_probe_never_certifies_legacy_fidelity_even_when_budgets_pass():
+    from copy import deepcopy
+
+    from scripts.testing.check_object_permanence_rendering import check
+
+    with RigidTrajectory(RECORDINGS, "g62-nominal") as clip:
+        metadata = clip.manifest
+        probe = {
+            "source_commit": metadata["source"]["commit"],
+            "source_script": metadata["source"]["script"],
+            "source_script_sha256": metadata["source"]["script_sha256"],
+            "task": "G62",
+            "size": [180, 320],
+            "queries": [
+                {
+                    "camera_world": metadata["camera"]["world"],
+                    "recorded_projection": metadata["camera"]["projection"],
+                    "oracle_ray_projection": metadata["camera"]["projection"],
+                }
+            ],
+        }
+    oracle = RECORDINGS.parents[1] / "semantics/object_permanence/g62/nominal"
+    result = check(RECORDINGS, oracle, "G62", geometry_precision="float64", camera_probe=probe)
+    assert result["within_thresholds"]
+    assert not result["certification_eligible"] and not result["passed"]
+    bad = deepcopy(probe)
+    bad["source_script_sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="source definition"):
+        check(RECORDINGS, oracle, "G62", geometry_precision="float64", camera_probe=bad)
+    bad = deepcopy(probe)
+    bad["queries"][0]["camera_world"][0][3] += 0.1
+    with pytest.raises(ValueError, match="fixed recorded camera"):
+        check(RECORDINGS, oracle, "G62", geometry_precision="float64", camera_probe=bad)

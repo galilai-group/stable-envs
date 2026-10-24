@@ -517,6 +517,7 @@ class Scene(_resources.Closeable):
             "mjgeom",
             "S3",
             "S4",
+            "S4_64",
             "S3p",
             "mat_rgb",
             "alpha",
@@ -726,8 +727,13 @@ class Scene(_resources.Closeable):
         for t in sorted({int(x) for x in texid if x >= 0}):
             self.textures[t] = prepare_texture(m, t, dev, self.tex_policy)
 
-    def clip(self, xpos, xmat, view, proj):
-        """Return clip vertices (B, V, 4), world normals (B, V, 3), and world positions."""
+    def clip(self, xpos, xmat, view, proj, *, coverage_dtype=None):
+        """Return clip vertices, world normals and positions.
+
+        Optional float64 coverage keeps camera/model composition and sparse vertex
+        projection in double precision. Normal/position shading attributes retain
+        the original input precision. Default arithmetic is unchanged.
+        """
         import torch
 
         self._check_open("clip")
@@ -736,8 +742,16 @@ class Scene(_resources.Closeable):
         M[:, :, :3, :3] = xmat
         M[:, :, :3, 3] = xpos
         M[:, :, 3, 3] = 1.0
-        mvp = mvp_rows(proj, view, M)
-        pos = torch.sparse.mm(self.S4, mvp.permute(1, 3, 0, 2).reshape(4 * G, 4 * B))
+        if coverage_dtype not in (None, torch.float64):
+            raise ValueError("coverage_dtype must be None or torch.float64")
+        matrix = M if coverage_dtype is None else M.to(coverage_dtype)
+        sparse = self.S4
+        if coverage_dtype is not None:
+            if getattr(self, "S4_64", None) is None:
+                self.S4_64 = self.S4.to(torch.float64)
+            sparse = self.S4_64
+        mvp = mvp_rows(proj, view, matrix)
+        pos = torch.sparse.mm(sparse, mvp.permute(1, 3, 0, 2).reshape(4 * G, 4 * B))
         pos = pos.reshape(self.V, B, 4).permute(1, 0, 2).contiguous()
         nrm = torch.sparse.mm(self.S3, xmat.permute(1, 3, 0, 2).reshape(3 * G, 3 * B))
         nrm = nrm.reshape(self.V, B, 3).permute(1, 0, 2).contiguous()
@@ -952,6 +966,14 @@ class BatchRenderer(_resources.Closeable):
             grad_db=self.mipmap,
         )
 
+    def _clip(self, xpos, xmat, view, proj):
+        """Transform geometry; subclasses may retain higher camera precision."""
+        import torch
+
+        view = torch.as_tensor(view, dtype=torch.float32, device=self.device)
+        proj = torch.as_tensor(proj, dtype=torch.float32, device=self.device)
+        return self.scene.clip(xpos, xmat, view, proj)
+
     def render(self, xpos, xmat, cam: Camera, out=None, mat_rgb=None, *, mode="rgb"):
         """Render one mode; preserve the tensor/out contract of the original API."""
         image = self.render_many(xpos, xmat, cam, modes=(mode,), mat_rgb=mat_rgb)[mode]
@@ -1007,15 +1029,13 @@ class BatchRenderer(_resources.Closeable):
                 ):
                     raise ValueError(f"out[{mode!r}] must match shape, dtype and CUDA device, and be contiguous")
         view_np, proj_np = cam.matrices(aspect=W / H)
-        view = torch.as_tensor(view_np, dtype=torch.float32, device=self.device)
-        proj = torch.as_tensor(proj_np, dtype=torch.float32, device=self.device)
         campos = torch.as_tensor(
             np.atleast_2d(np.asarray(cam.pos, np.float64)), dtype=torch.float32, device=self.device
         )
         camfwd = torch.as_tensor(
             -np.asarray(cam.mat, np.float64).reshape(-1, 3, 3)[:, :, 2], dtype=torch.float32, device=self.device
         )
-        pos, nrm, wpos = S.clip(xpos, xmat, view, proj)
+        pos, nrm, wpos = self._clip(xpos, xmat, view_np, proj_np)
         rast, db = self._rasterize(pos, R)
         tid = rast[..., 3].long()
         hit = tid > 0

@@ -8,6 +8,11 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Source visibility diagnostics distinguish exact coplanar ties, BVH boundary
+  deviations and camera ray conventions. Optional float64 projection retains
+  vertex precision through refined coverage; legacy defaults and frozen gates
+  stay unchanged. Source-camera calibration is explicitly non-certifying.
+
 - Second object-permanence batch: nominal G27 support removal and G55 rising
   screen pass independent full-frame depth/mask gates with the unchanged renderer.
   Adds bounded lossless reference chunks and a reusable rendering validator;

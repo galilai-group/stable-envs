@@ -26,10 +26,20 @@ class PixelCenterRenderer(ND.BatchRenderer):
     depth clipping or missing Triton. Native mode is an explicit experiment.
     Optional CUDA bool static_geoms[G] enables refined visibility caching with
     automatic clip-position/resolution invalidation. Topology stays immutable.
+    Optional float64 geometry retains matrix/vertex projection precision before
+    refined coverage. Scaled fallback casts to float32 and sets last_fallback.
     Derivative buffers/mipmapping are unsupported by these sampling paths.
     """
 
-    def __init__(self, *args, coverage_scale=17, coverage_mode="scaled", static_geoms=None, **kwargs):
+    def __init__(
+        self,
+        *args,
+        coverage_scale=17,
+        coverage_mode="scaled",
+        static_geoms=None,
+        geometry_precision="float32",
+        **kwargs,
+    ):
         if (
             not isinstance(coverage_scale, int)
             or isinstance(coverage_scale, bool)
@@ -43,12 +53,26 @@ class PixelCenterRenderer(ND.BatchRenderer):
             raise ValueError("coverage_mode must be scaled, refined or native")
         if tuple(kwargs.get("sample_offset", (0, 0))) != (0, 0):
             raise ValueError("pixel-center coverage requires zero sample_offset")
+        if geometry_precision not in ("float32", "float64"):
+            raise ValueError("geometry_precision must be float32 or float64")
+        if geometry_precision == "float64" and coverage_mode != "refined":
+            raise ValueError("float64 geometry requires refined coverage")
+        self.geometry_precision = geometry_precision
         self.coverage_scale = coverage_scale
         self.coverage_mode = coverage_mode
         self.last_fallback = False
         self._static_geoms = static_geoms
         self._static_coverage = None
         super().__init__(*args, **kwargs)
+
+    def _clip(self, xpos, xmat, view, proj):
+        if self.geometry_precision == "float32":
+            return super()._clip(xpos, xmat, view, proj)
+        import torch
+
+        view = torch.as_tensor(view, dtype=torch.float64, device=self.device)
+        proj = torch.as_tensor(proj, dtype=torch.float64, device=self.device)
+        return self.scene.clip(xpos, xmat, view, proj, coverage_dtype=torch.float64)
 
     def _rasterize(self, positions, resolution):
         self.last_fallback = False
@@ -70,7 +94,7 @@ class PixelCenterRenderer(ND.BatchRenderer):
             self.last_fallback = True
         h, w = (resolution, resolution) if isinstance(resolution, int) else resolution
         scale = self.coverage_scale
-        raster, _ = super()._rasterize(positions, (h * scale, w * scale))
+        raster, _ = super()._rasterize(positions.float(), (h * scale, w * scale))
         center = scale // 2
         return raster[:, center::scale, center::scale].contiguous(), None
 

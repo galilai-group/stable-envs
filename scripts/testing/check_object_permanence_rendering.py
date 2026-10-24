@@ -23,7 +23,7 @@ from tests.helpers.reference.object_permanence_recordings import (
 )
 
 
-def check(recordings, oracle, task, *, cache_static=True):
+def check(recordings, oracle, task, *, cache_static=True, geometry_precision="float32", camera_probe=None):
     manifest, reference = load_geometry_directory(oracle)
     failures, minimum, worst = [], 1.0, 0.0
     with RigidTrajectory(recordings, f"{task.lower()}-nominal") as clip:
@@ -38,7 +38,35 @@ def check(recordings, oracle, task, *, cache_static=True):
         indices = np.searchsorted(clip.frames, reference["source_frames"])
         if (indices >= len(clip)).any() or not np.array_equal(clip.frames[indices], reference["source_frames"]):
             raise ValueError("source and recording frame numbers differ")
-        with RigidSceneRenderer(clip, size=manifest["height"], cache_static=cache_static) as renderer:
+        with RigidSceneRenderer(
+            clip, size=manifest["height"], cache_static=cache_static, geometry_precision=geometry_precision
+        ) as renderer:
+            if camera_probe is not None:
+                import torch
+
+                if geometry_precision != "float64":
+                    raise ValueError("source camera calibration requires float64 geometry")
+                if (
+                    camera_probe["source_commit"] != metadata["source"]["commit"]
+                    or camera_probe["source_script"] != metadata["source"]["script"]
+                    or camera_probe["source_script_sha256"] != metadata["source"]["script_sha256"]
+                    or camera_probe["task"].lower() != task.lower()
+                    or camera_probe["size"] != [manifest["height"], manifest["width"]]
+                    or not camera_probe["queries"]
+                ):
+                    raise ValueError("camera probe does not match source definition/image")
+                calibration = camera_probe["queries"][0]
+                for query in camera_probe["queries"]:
+                    if (
+                        not np.array_equal(query["camera_world"], metadata["camera"]["world"])
+                        or not np.array_equal(query["recorded_projection"], metadata["camera"]["projection"])
+                        or not np.array_equal(query["oracle_ray_projection"], calibration["oracle_ray_projection"])
+                    ):
+                        raise ValueError("camera probe requires a matching fixed recorded camera")
+                projection = np.asarray(calibration["oracle_ray_projection"], np.float64)
+                if projection.shape != (4, 4) or not np.isfinite(projection).all():
+                    raise ValueError("camera calibration requires a finite [4,4] matrix")
+                renderer.camera.projection = torch.tensor(projection, dtype=torch.float64, device=renderer.device)
             output = renderer.render_many(indices, modes=("depth", "ids"))
             depth, ids = output["depth"].cpu().numpy(), output["ids"].cpu().numpy()
     if depth.shape != reference["depth"].shape or ids.shape != reference["object_ids"].shape:
@@ -61,11 +89,15 @@ def check(recordings, oracle, task, *, cache_static=True):
         "task": task.upper(),
         "source_commit": manifest["source_commit"],
         "cache_static": cache_static,
+        "geometry_precision": geometry_precision,
+        "camera_convention": "recorded_projection" if camera_probe is None else "source_probe_view_frame",
+        "certification_eligible": camera_probe is None,
         "frames": len(reference["source_frames"]),
         "depth_mse_max": worst,
         "mask_iou_min": minimum,
         "thresholds": {"depth_mse_max": DEPTH_MSE_MAX, "mask_iou_min": MASK_IOU_MIN},
-        "passed": not failures,
+        "within_thresholds": not failures,
+        "passed": not failures and camera_probe is None,
         "failures": failures,
     }
 
@@ -77,8 +109,17 @@ def main():
     parser.add_argument("--task", required=True)
     parser.add_argument("--report", type=Path, required=True)
     parser.add_argument("--uncached", action="store_true")
+    parser.add_argument("--geometry-precision", choices=("float32", "float64"), default="float32")
+    parser.add_argument("--camera-probe", type=Path, help="diagnostic-only source camera calibration report")
     args = parser.parse_args()
-    result = check(args.recordings, args.oracle, args.task, cache_static=not args.uncached)
+    result = check(
+        args.recordings,
+        args.oracle,
+        args.task,
+        cache_static=not args.uncached,
+        geometry_precision=args.geometry_precision,
+        camera_probe=None if args.camera_probe is None else json.loads(args.camera_probe.read_text()),
+    )
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(result, indent=2) + "\n")
     print(json.dumps(result, indent=2))

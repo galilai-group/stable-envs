@@ -19,18 +19,31 @@ class RigidSceneRenderer(Closeable):
     single-mover assumption. Geometry IDs map to manifest semantic IDs. The
     trajectory remains caller-owned and must stay open while rendering.
     Existing G34Renderer/G34Replay interfaces and their optimized path are separate.
+    Optional geometry_precision="float64" preserves projection arithmetic, not
+    extra precision absent from recorded meshes, poses or shading attributes.
     """
 
     resource_kind = "object_permanence.RigidSceneRenderer"
 
     def __init__(
-        self, trajectory, *, size=180, device="cuda", chunk_size=4, coverage_mode="refined", cache_static=True
+        self,
+        trajectory,
+        *,
+        size=180,
+        device="cuda",
+        chunk_size=4,
+        coverage_mode="refined",
+        cache_static=True,
+        geometry_precision="float32",
     ):
         self.device = torch.device(device)
         if self.device.type != "cuda" or not torch.cuda.is_available():
             raise ValueError("rigid scene rendering requires CUDA")
         if type(size) is not int or size <= 0 or type(chunk_size) is not int or chunk_size <= 0:
             raise ValueError("size and chunk_size must be positive integers")
+        if geometry_precision not in ("float32", "float64"):
+            raise ValueError("geometry_precision must be float32 or float64")
+        camera_dtype = torch.float64 if geometry_precision == "float64" else torch.float32
         manifest = trajectory.manifest
         camera = manifest["camera"]
         if size * camera["width"] % camera["height"]:
@@ -57,8 +70,8 @@ class RigidSceneRenderer(Closeable):
             camera["near"],
             camera["far"],
         )
-        self.camera.view = torch.as_tensor(np.linalg.inv(world)[None], dtype=torch.float32, device=self.device)
-        self.camera.projection = torch.as_tensor(projection, dtype=torch.float32, device=self.device)
+        self.camera.view = torch.as_tensor(np.linalg.inv(world)[None], dtype=camera_dtype, device=self.device)
+        self.camera.projection = torch.as_tensor(projection, dtype=camera_dtype, device=self.device)
         self._ids = torch.tensor([0, *[o["id"] for o in manifest["objects"]]], dtype=torch.int16, device=self.device)
         scene = ND.Scene.from_triangles(**trajectory.triangles(), device=self.device)
         try:
@@ -71,6 +84,7 @@ class RigidSceneRenderer(Closeable):
                 skybox=False,
                 shading="tiny",
                 coverage_mode=coverage_mode,
+                geometry_precision=geometry_precision,
                 static_geoms=torch.as_tensor(nodes < 0, device=self.device) if cache_static else None,
             )
         except BaseException:
