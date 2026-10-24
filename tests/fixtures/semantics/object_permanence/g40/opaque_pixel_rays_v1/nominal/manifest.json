@@ -1,0 +1,346 @@
+{
+  "arrays": {
+    "camera_matrix": {
+      "dtype": "float64",
+      "shape": [
+        4,
+        4
+      ]
+    },
+    "depth_base": {
+      "dtype": "float32",
+      "shape": [
+        180,
+        320
+      ]
+    },
+    "object_ids": {
+      "dtype": "int16",
+      "shape": [
+        120,
+        180,
+        320
+      ]
+    },
+    "poses": {
+      "dtype": "float64",
+      "shape": [
+        120,
+        23,
+        7
+      ]
+    },
+    "source_frames": {
+      "dtype": "int64",
+      "shape": [
+        120
+      ]
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        1.7777777910232544,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        3.1604936122894287,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "world": [
+      [
+        0.9463223218917847,
+        -0.04600381851196289,
+        0.3199338912963867,
+        2.75
+      ],
+      [
+        0.3232244551181793,
+        0.13468801975250244,
+        -0.9366883635520935,
+        -7.699999809265137
+      ],
+      [
+        -1.8699831016988355e-08,
+        0.9898195862770081,
+        0.14232784509658813,
+        2.25
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "depth_parts": [
+    {
+      "dtype": "uint32",
+      "file": "depth_0000_0030.npz",
+      "sha256": "70752924823c1ea2d3f0d0b3746ab1f53fcf6ab8acdae3adc04ca3c85b87549c",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 0,
+      "stop": 30
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0030_0060.npz",
+      "sha256": "96c07690580ef4e9ec2981d66e67f34720d3de64f5935f3faf0b0f4c6857f561",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 30,
+      "stop": 60
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0060_0090.npz",
+      "sha256": "5bd627aac7d98040f600bfa9387908f4ee1a6b527e7cb0d1def14245a6050552",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 60,
+      "stop": 90
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0090_0120.npz",
+      "sha256": "6df936b50c97ff706158b72a4fda730565503e37aa42e6b92c1e76baa3a63d4c",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 90,
+      "stop": 120
+    }
+  ],
+  "file": "geometric_g40_nominal.npz",
+  "fps": 24.0,
+  "generator": "scripts/testing/freeze_object_permanence_rays.py",
+  "generator_sha256": "8f71797931e02a420d5c15ebcc6628a219c065a37a710d186709022b6e7e16ac",
+  "height": 180,
+  "object_ids": {
+    "fixed_bottom_crossbeam_between_rails": 1,
+    "fixed_left_front_guide_rail": 2,
+    "fixed_left_vertical_guide_rail": 3,
+    "fixed_right_front_guide_rail": 4,
+    "fixed_right_vertical_guide_rail": 5,
+    "fixed_top_crossbeam_between_rails": 6,
+    "guided_elevator_back_wall": 7,
+    "guided_elevator_box_floor": 8,
+    "guided_elevator_front_sliding_door": 9,
+    "guided_elevator_left_wall": 10,
+    "guided_elevator_right_wall": 11,
+    "guided_elevator_roof": 12,
+    "large_floor_base": 13,
+    "moving_left_lower_box_to_rail_bracket": 14,
+    "moving_left_lower_guide_shoe_touching_rail": 15,
+    "moving_left_upper_box_to_rail_bracket": 16,
+    "moving_left_upper_guide_shoe_touching_rail": 17,
+    "moving_right_lower_box_to_rail_bracket": 18,
+    "moving_right_lower_guide_shoe_touching_rail": 19,
+    "moving_right_upper_box_to_rail_bracket": 20,
+    "moving_right_upper_guide_shoe_touching_rail": 21,
+    "orange_ball_inside_guided_elevator": 22,
+    "rear_backdrop_panel": 23
+  },
+  "object_order": [
+    "fixed_bottom_crossbeam_between_rails",
+    "fixed_left_front_guide_rail",
+    "fixed_left_vertical_guide_rail",
+    "fixed_right_front_guide_rail",
+    "fixed_right_vertical_guide_rail",
+    "fixed_top_crossbeam_between_rails",
+    "guided_elevator_back_wall",
+    "guided_elevator_box_floor",
+    "guided_elevator_front_sliding_door",
+    "guided_elevator_left_wall",
+    "guided_elevator_right_wall",
+    "guided_elevator_roof",
+    "large_floor_base",
+    "moving_left_lower_box_to_rail_bracket",
+    "moving_left_lower_guide_shoe_touching_rail",
+    "moving_left_upper_box_to_rail_bracket",
+    "moving_left_upper_guide_shoe_touching_rail",
+    "moving_right_lower_box_to_rail_bracket",
+    "moving_right_lower_guide_shoe_touching_rail",
+    "moving_right_upper_box_to_rail_bracket",
+    "moving_right_upper_guide_shoe_touching_rail",
+    "orange_ball_inside_guided_elevator",
+    "rear_backdrop_panel"
+  ],
+  "reference_algorithm_sha256": "360b948df49e5b5d40eac35d958ca4ec6f74c50e9663075c781d1db65a285d84",
+  "schema": "stable-envs/object-permanence-rigid-oracle-v2",
+  "sha256": "54d3cadbba1f4095ac1a82a7c45396b6d461043cc51bda06a7ca8db0a7b334f8",
+  "source_commit": "824baddcdad087810d35638bf8f273b884f74975",
+  "source_license": "CC-BY-NC-4.0",
+  "source_profile": "nominal first member; no diversity wrapper",
+  "source_script": "object_permanence/generator/tasks/G40_guided_elevator_hidden_ball/pb_task_00000032_pb_elevator_guided_box_hidden_ball_moves_up_0033_blender.py",
+  "source_script_sha256": "709cf047e721464119ae47247c6e7d302b1ad639dc1ce571c7eaba4d9b53cb72",
+  "source_task_manifest_sha256": "00763e4eeddba575930a5d423fcfe0129704743520f85e2f65869db730e6186b",
+  "source_url": "https://github.com/hokindeng/object-permanence",
+  "target_visible_pixels": {
+    "orange_ball_inside_guided_elevator": [
+      82,
+      82,
+      82,
+      82,
+      82,
+      82,
+      82,
+      82,
+      82,
+      82,
+      80,
+      74,
+      66,
+      56,
+      46,
+      36,
+      16,
+      8,
+      2,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      3,
+      9,
+      17,
+      27,
+      37,
+      47,
+      57,
+      67,
+      75,
+      82,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85
+    ]
+  },
+  "targets": [
+    "orange_ball_inside_guided_elevator"
+  ],
+  "task": "G40",
+  "versions": {
+    "blender": "4.4.0",
+    "numpy": "1.26.4",
+    "python": "3.11.16"
+  },
+  "visibility_contract": "stable-envs/opaque-pixel-rays-v1",
+  "width": 320
+}

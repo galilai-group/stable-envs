@@ -1,0 +1,350 @@
+{
+  "arrays": {
+    "frames": {
+      "dtype": "int64",
+      "sha256": "3ce1a862b6cf0bb21bc1354b758cafa47ca5ec03b5c004d6210f5abd8c55df44",
+      "shape": [
+        120
+      ]
+    },
+    "poses": {
+      "dtype": "float32",
+      "sha256": "4e55407c5ac30b2cd39aeae31df5966b8cb8eb97b6a1e27d015ee615dcea2b7a",
+      "shape": [
+        120,
+        7,
+        7
+      ]
+    }
+  },
+  "assets": {
+    "22a33b348621cded091bc58f59d569ac7d79f1b9a5905f9ee9e0179d771c8dbe": {
+      "file": "assets/cube/22a33b348621cded091bc58f59d569ac7d79f1b9a5905f9ee9e0179d771c8dbe.npz",
+      "sha256": "dc0ff2b0c08de558dfa2d5b0bfda4f0eddc7816d499399cbfdb1cf2dc14008a5"
+    },
+    "4dc410d1312d5c25fa7033eb91ef57cccf1530493db4aaa1a3e0b6b8a08fa69c": {
+      "file": "assets/sphere/4dc410d1312d5c25fa7033eb91ef57cccf1530493db4aaa1a3e0b6b8a08fa69c.npz",
+      "sha256": "8db38b8f4b508c7ec91deb730064a59b5db97d8ac091279136524b6c6476a887"
+    },
+    "fe154c74f5e4e27d1e401378d931e494eeb97e202e5626da81ea0a467b56accf": {
+      "file": "assets/cube/fe154c74f5e4e27d1e401378d931e494eeb97e202e5626da81ea0a467b56accf.npz",
+      "sha256": "5a5b6825ce98d03cd11c8a98a32583431cafa0edaff9f99d15172c565b37aba0"
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "height": 720,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        2.1111111640930176,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        3.753086566925049,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "width": 1280,
+    "world": [
+      [
+        0.9598791003227234,
+        0.1039300486445427,
+        -0.26044315099716187,
+        -1.100000023841858
+      ],
+      [
+        -0.2804141342639923,
+        0.3557605445384979,
+        -0.8915168642997742,
+        -8.800000190734863
+      ],
+      [
+        6.807926666851927e-09,
+        0.9287803769111633,
+        0.3706305921077728,
+        4.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "clip": "g137-nominal",
+  "conventions": {
+    "quaternion": "wxyz",
+    "units": "source-scene-units",
+    "world": "right-handed-z-up"
+  },
+  "dynamic_nodes": [
+    "cue_ball",
+    "rack_ball_0",
+    "rack_ball_1",
+    "rack_ball_2",
+    "rack_ball_3",
+    "rack_ball_4",
+    "rack_ball_5"
+  ],
+  "fps": 24.0,
+  "license_ref": {
+    "sha256": "0163481eb7a0fe3ed86d2dccf542a849b36b3c119f8ca6d3d5b36c074f2e1a1c"
+  },
+  "objects": [
+    {
+      "asset": "4dc410d1312d5c25fa7033eb91ef57cccf1530493db4aaa1a3e0b6b8a08fa69c",
+      "id": 1,
+      "name": "cue_ball",
+      "node": 0,
+      "pose": [
+        -3.5999999046325684,
+        0.0,
+        0.30000001192092896,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.949999988079071,
+        0.9399999976158142,
+        0.8999999761581421,
+        1.0
+      ],
+      "role": "cue_ball",
+      "shape": "sphere",
+      "source_id": "cue_ball"
+    },
+    {
+      "asset": "fe154c74f5e4e27d1e401378d931e494eeb97e202e5626da81ea0a467b56accf",
+      "id": 2,
+      "name": "large_floor_base",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.6000000238418579,
+        -0.05000000074505806,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8199999928474426,
+        0.800000011920929,
+        0.75,
+        1.0
+      ],
+      "role": "ground",
+      "shape": "cube",
+      "source_id": "large_floor_base"
+    },
+    {
+      "asset": "4dc410d1312d5c25fa7033eb91ef57cccf1530493db4aaa1a3e0b6b8a08fa69c",
+      "id": 3,
+      "name": "rack_ball_0",
+      "node": 1,
+      "pose": [
+        0.6000000238418579,
+        0.0,
+        0.30000001192092896,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7799999713897705,
+        0.11999999731779099,
+        0.11999999731779099,
+        1.0
+      ],
+      "role": "rack_ball",
+      "shape": "sphere",
+      "source_id": "rack_ball_0"
+    },
+    {
+      "asset": "4dc410d1312d5c25fa7033eb91ef57cccf1530493db4aaa1a3e0b6b8a08fa69c",
+      "id": 4,
+      "name": "rack_ball_1",
+      "node": 2,
+      "pose": [
+        1.2235382795333862,
+        -0.36000001430511475,
+        0.30000001192092896,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8799999952316284,
+        0.7200000286102295,
+        0.10000000149011612,
+        1.0
+      ],
+      "role": "rack_ball",
+      "shape": "sphere",
+      "source_id": "rack_ball_1"
+    },
+    {
+      "asset": "4dc410d1312d5c25fa7033eb91ef57cccf1530493db4aaa1a3e0b6b8a08fa69c",
+      "id": 5,
+      "name": "rack_ball_2",
+      "node": 3,
+      "pose": [
+        1.2235382795333862,
+        0.36000001430511475,
+        0.30000001192092896,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.11999999731779099,
+        0.2800000011920929,
+        0.7200000286102295,
+        1.0
+      ],
+      "role": "rack_ball",
+      "shape": "sphere",
+      "source_id": "rack_ball_2"
+    },
+    {
+      "asset": "4dc410d1312d5c25fa7033eb91ef57cccf1530493db4aaa1a3e0b6b8a08fa69c",
+      "id": 6,
+      "name": "rack_ball_3",
+      "node": 4,
+      "pose": [
+        1.8470765352249146,
+        -0.7200000286102295,
+        0.30000001192092896,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.10000000149011612,
+        0.5199999809265137,
+        0.23999999463558197,
+        1.0
+      ],
+      "role": "rack_ball",
+      "shape": "sphere",
+      "source_id": "rack_ball_3"
+    },
+    {
+      "asset": "4dc410d1312d5c25fa7033eb91ef57cccf1530493db4aaa1a3e0b6b8a08fa69c",
+      "id": 7,
+      "name": "rack_ball_4",
+      "node": 5,
+      "pose": [
+        1.8470765352249146,
+        0.0,
+        0.30000001192092896,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8600000143051147,
+        0.41999998688697815,
+        0.07999999821186066,
+        1.0
+      ],
+      "role": "rack_ball",
+      "shape": "sphere",
+      "source_id": "rack_ball_4"
+    },
+    {
+      "asset": "4dc410d1312d5c25fa7033eb91ef57cccf1530493db4aaa1a3e0b6b8a08fa69c",
+      "id": 8,
+      "name": "rack_ball_5",
+      "node": 6,
+      "pose": [
+        1.8470765352249146,
+        0.7200000286102295,
+        0.30000001192092896,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.41999998688697815,
+        0.14000000059604645,
+        0.5600000023841858,
+        1.0
+      ],
+      "role": "rack_ball",
+      "shape": "sphere",
+      "source_id": "rack_ball_5"
+    },
+    {
+      "asset": "22a33b348621cded091bc58f59d569ac7d79f1b9a5905f9ee9e0179d771c8dbe",
+      "id": 9,
+      "name": "rear_backdrop_panel",
+      "node": -1,
+      "pose": [
+        0.0,
+        3.5999999046325684,
+        1.600000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9599999785423279,
+        0.9700000286102295,
+        0.9800000190734863,
+        1.0
+      ],
+      "role": "background",
+      "shape": "cube",
+      "source_id": "rear_backdrop_panel"
+    }
+  ],
+  "schema": "stable-envs/object-permanence-rigid-v1",
+  "source": {
+    "commit": "824baddcdad087810d35638bf8f273b884f74975",
+    "exporter": "scripts/export/object_permanence.py",
+    "exporter_sha256": "547e91ee071792a3b38c2f8b191f11ff17d412f95060dc28806a7e24f77c869c",
+    "license": "CC-BY-NC-4.0",
+    "parameters": {},
+    "profile": "nominal-first-member-no-diversity",
+    "script": "object_permanence/generator/tasks/G137_pool_rack_break/pb_task_00000183_pb_pool_rack_break_0184_blender.py",
+    "script_sha256": "18fa707f9d002452e3faa2e51a1391334f1559210c09cadd0814d7a8f625dcb8",
+    "seed": null,
+    "task": "G137",
+    "task_manifest_sha256": "3e24a8ebdeede2f585af985d222dfe011ddfb9472e77173c02045be243d2d57a",
+    "url": "https://github.com/hokindeng/object-permanence",
+    "versions": {
+      "blender": "4.4.0",
+      "numpy": "1.26.4",
+      "python": "3.11.16"
+    },
+    "video_split": null
+  }
+}

@@ -8,6 +8,13 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Complete first-nominal object-permanence audit: 93 certified scenes and 57
+  explicit deferrals across all 150 task groups; 47 additional member scripts
+  remain unregistered. Adds 61 reusable rigid recordings with independent
+  120-frame depth/mask oracles, fresh-process geometry checks and two-resolution
+  cache parity. Publishes measured source hashes/reasons alongside static hints;
+  G103 cache-seed rebuilds and G132 source-normal variation remain deferred.
+
 - Early object-permanence audit G01–G10: nominal G02/G03 ramp balls and G05–G07
   rigid vehicles, with independent 120-frame ray oracles and full-frame cache
   parity. Adds audited legacy construction-prefix and named-argument source

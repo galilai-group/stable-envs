@@ -1,0 +1,1013 @@
+{
+  "arrays": {
+    "frames": {
+      "dtype": "int64",
+      "sha256": "3ce1a862b6cf0bb21bc1354b758cafa47ca5ec03b5c004d6210f5abd8c55df44",
+      "shape": [
+        120
+      ]
+    },
+    "poses": {
+      "dtype": "float32",
+      "sha256": "db547b952629e4ef2a3ad3ede12332246498e323567e565374d200f31a1fa7c1",
+      "shape": [
+        120,
+        10,
+        7
+      ]
+    }
+  },
+  "assets": {
+    "2468464935475c8180c2cb259e303cf7347005d362a656cb3d6549ada5bf8c8c": {
+      "file": "assets/cube/2468464935475c8180c2cb259e303cf7347005d362a656cb3d6549ada5bf8c8c.npz",
+      "sha256": "f0d8454eb9bc7620515133d84810cfb5253704042a1cfa04d94abced0cdbcdb7"
+    },
+    "375f50fa5f209f620c3209bc085b146b2aa420ffdf5e60339ab30661c517a0bf": {
+      "file": "assets/cube/375f50fa5f209f620c3209bc085b146b2aa420ffdf5e60339ab30661c517a0bf.npz",
+      "sha256": "5ad9e1f5f4925cfad5f0f02a1a9db549b2e2479916c30c7ff908922db3b3147a"
+    },
+    "37e3858c26349eaa1379ecd9171a08cbcc0115499dd1451d4f9e69cd15d6c113": {
+      "file": "assets/car_body/37e3858c26349eaa1379ecd9171a08cbcc0115499dd1451d4f9e69cd15d6c113.npz",
+      "sha256": "d23a6a92542fd3cd1ce01947296c3ec17d4698b9fd99c4b258e05d35e9ccc169"
+    },
+    "407c6296bd5893bb7209e03a202c2e38389e1d8de420e933c46217bcce00ec1f": {
+      "file": "assets/cube/407c6296bd5893bb7209e03a202c2e38389e1d8de420e933c46217bcce00ec1f.npz",
+      "sha256": "7799b21ba478bd902b3067d6f37975af7f64a5cb7635bc78c2e353beae5ed107"
+    },
+    "44a2c2a7da98561c8fa6ecfc1f827ff120e63c1430fa1d9fb2258811115a9ec3": {
+      "file": "assets/car_body/44a2c2a7da98561c8fa6ecfc1f827ff120e63c1430fa1d9fb2258811115a9ec3.npz",
+      "sha256": "b6f770b345fde7047f4684885f4cc5faf109aae2cdddc0deaa59cda91675b39e"
+    },
+    "54af635b0cfe271f805099c3c25d737734faa63e04f32136389d4e1691d9372d": {
+      "file": "assets/cube/54af635b0cfe271f805099c3c25d737734faa63e04f32136389d4e1691d9372d.npz",
+      "sha256": "10ac85e6962c3aa52e67de4a5b4b3c06441fb3ae1ca44a486d69fda0739be0db"
+    },
+    "59e37b445057763ef64b137056f03058630a499daf43c152cafde44dd79020ae": {
+      "file": "assets/cube/59e37b445057763ef64b137056f03058630a499daf43c152cafde44dd79020ae.npz",
+      "sha256": "228ada984a5f3ec89f9194fb86ab3bf8502d832c4d51d127270f348fa61870cc"
+    },
+    "67a4f8a911d3200691c667e7d1bd026934c09cb03d45eafcb979cf52f47ac3d2": {
+      "file": "assets/cube/67a4f8a911d3200691c667e7d1bd026934c09cb03d45eafcb979cf52f47ac3d2.npz",
+      "sha256": "d9053692f90b5ddba380181f3bed26d3a4ca02e62dc78044772e9731296c75f1"
+    },
+    "7bd745d82a20fdc8ef52ab87d3e13e1a558d315d920ac6a1cffc2384d1fc2ad4": {
+      "file": "assets/cube/7bd745d82a20fdc8ef52ab87d3e13e1a558d315d920ac6a1cffc2384d1fc2ad4.npz",
+      "sha256": "9aba8f517a8f70c99ac1bb8ee79448b7e0b6af5cf46c15aafa7bf87c24dbd0c5"
+    },
+    "86a8dbd133a1ef1a64c3bc855c78d55feddda580d8fb3eb7708edd812c847ece": {
+      "file": "assets/cube/86a8dbd133a1ef1a64c3bc855c78d55feddda580d8fb3eb7708edd812c847ece.npz",
+      "sha256": "031768e057a0c98031d3ffe0581367eb05b9ad76cf7cce627f3dc0365a92a4c6"
+    },
+    "903ed985194a3d86f1cdba12ea4b4daa4d7ba2ee2d589469396aa7f55eb52bd9": {
+      "file": "assets/cube/903ed985194a3d86f1cdba12ea4b4daa4d7ba2ee2d589469396aa7f55eb52bd9.npz",
+      "sha256": "c45360ab15b1fcefa9ac18719ab247aebf0c53731ce8bf55b8c435b93b392265"
+    },
+    "c271d158739e24039fe691939295f5d8579606e6ea0d84038e105c90c992f6cf": {
+      "file": "assets/cylinder/c271d158739e24039fe691939295f5d8579606e6ea0d84038e105c90c992f6cf.npz",
+      "sha256": "f415d2246ef1780dcf6af2c86507a487f7f6c9dfc345831a74ec92f83cf00980"
+    },
+    "c763ce68f739d4f1fe53dde62a185b181acc4f88067bab52a1a7a61759095df8": {
+      "file": "assets/cube/c763ce68f739d4f1fe53dde62a185b181acc4f88067bab52a1a7a61759095df8.npz",
+      "sha256": "242ebef1d0925f18b077a0d46ef5c2b2f9fd7a7007bd25b062669fd9927f777e"
+    },
+    "ce5aa434041575f038b49a509488fd3e2cf5761bd01f1ad1fda0cd0719e9950c": {
+      "file": "assets/cube/ce5aa434041575f038b49a509488fd3e2cf5761bd01f1ad1fda0cd0719e9950c.npz",
+      "sha256": "a558d14906139a799fed94497faed82327ea1099f378a53dd343491c3fb6eea7"
+    },
+    "d2d2a703e865a94c20d87a7bf0a9f157cc58cae12d1fa40b79542478e9741aad": {
+      "file": "assets/cube/d2d2a703e865a94c20d87a7bf0a9f157cc58cae12d1fa40b79542478e9741aad.npz",
+      "sha256": "2036fab196f614560486e067ce228b87f2c5c505fb7a57d59d404b7e60789908"
+    },
+    "d86ff0dd059625ec38ffac765a3144b6a6f1c35f0efc51a8f75403a37d789db4": {
+      "file": "assets/cube/d86ff0dd059625ec38ffac765a3144b6a6f1c35f0efc51a8f75403a37d789db4.npz",
+      "sha256": "1b3da0d230be97f486de36cf33369e5a5f94a1be40ba2807a2f6b3a0be5236cc"
+    },
+    "ee551815f88d8ad208f12d3a87c17cba1e7a56ab2d3392b0ce955a6b2f010ab3": {
+      "file": "assets/cube/ee551815f88d8ad208f12d3a87c17cba1e7a56ab2d3392b0ce955a6b2f010ab3.npz",
+      "sha256": "22f2fa9c1ad00e26a6985dced09f20a2b436d1f9ee995b25c38af45bbfbd5ba4"
+    },
+    "f8d69009ef9c7eaa0170f73a7d49617e7416484cdc1c16e4cb798a83dbd2d79b": {
+      "file": "assets/cube/f8d69009ef9c7eaa0170f73a7d49617e7416484cdc1c16e4cb798a83dbd2d79b.npz",
+      "sha256": "4788b1668dd52d80f6e7a898d74eb4b04e9c9351a6dcfddf5d931653cb191f54"
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "height": 720,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        1.7222222089767456,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        3.0617284774780273,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "width": 1280,
+    "world": [
+      [
+        0.9757450222969055,
+        -0.035408493131399155,
+        0.21602749824523926,
+        2.3499999046325684
+      ],
+      [
+        0.2189101129770279,
+        0.15782584249973297,
+        -0.9628963470458984,
+        -8.850000381469727
+      ],
+      [
+        -1.2139576455183487e-08,
+        0.9868319034576416,
+        0.16174905002117157,
+        2.450000047683716
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "clip": "g33-nominal",
+  "conventions": {
+    "quaternion": "wxyz",
+    "units": "source-scene-units",
+    "world": "right-handed-z-up"
+  },
+  "dynamic_nodes": [
+    "far_blue_tall_car_body",
+    "far_blue_tall_car_wheel_front_far",
+    "far_blue_tall_car_wheel_front_near",
+    "far_blue_tall_car_wheel_rear_far",
+    "far_blue_tall_car_wheel_rear_near",
+    "near_red_low_car_body",
+    "near_red_low_car_wheel_front_far",
+    "near_red_low_car_wheel_front_near",
+    "near_red_low_car_wheel_rear_far",
+    "near_red_low_car_wheel_rear_near"
+  ],
+  "fps": 24.0,
+  "license_ref": {
+    "sha256": "0163481eb7a0fe3ed86d2dccf542a849b36b3c119f8ca6d3d5b36c074f2e1a1c"
+  },
+  "objects": [
+    {
+      "asset": "c763ce68f739d4f1fe53dde62a185b181acc4f88067bab52a1a7a61759095df8",
+      "id": 1,
+      "name": "container_entry_bottom_frame",
+      "node": -1,
+      "pose": [
+        -0.8999999761581421,
+        0.0,
+        0.10000000149011612,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6200000047683716,
+        0.6299999952316284,
+        0.6399999856948853,
+        1.0
+      ],
+      "role": "container_entry_frame",
+      "shape": "cube",
+      "source_id": "container_entry_bottom_frame"
+    },
+    {
+      "asset": "407c6296bd5893bb7209e03a202c2e38389e1d8de420e933c46217bcce00ec1f",
+      "id": 2,
+      "name": "container_entry_far_vertical_frame",
+      "node": -1,
+      "pose": [
+        -0.8999999761581421,
+        1.034999966621399,
+        0.8100000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6200000047683716,
+        0.6299999952316284,
+        0.6399999856948853,
+        1.0
+      ],
+      "role": "container_entry_frame",
+      "shape": "cube",
+      "source_id": "container_entry_far_vertical_frame"
+    },
+    {
+      "asset": "407c6296bd5893bb7209e03a202c2e38389e1d8de420e933c46217bcce00ec1f",
+      "id": 3,
+      "name": "container_entry_near_vertical_frame",
+      "node": -1,
+      "pose": [
+        -0.8999999761581421,
+        -1.034999966621399,
+        0.8100000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6200000047683716,
+        0.6299999952316284,
+        0.6399999856948853,
+        1.0
+      ],
+      "role": "container_entry_frame",
+      "shape": "cube",
+      "source_id": "container_entry_near_vertical_frame"
+    },
+    {
+      "asset": "d86ff0dd059625ec38ffac765a3144b6a6f1c35f0efc51a8f75403a37d789db4",
+      "id": 4,
+      "name": "container_entry_top_frame",
+      "node": -1,
+      "pose": [
+        -0.8999999761581421,
+        0.0,
+        1.6150000095367432,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6200000047683716,
+        0.6299999952316284,
+        0.6399999856948853,
+        1.0
+      ],
+      "role": "container_entry_frame",
+      "shape": "cube",
+      "source_id": "container_entry_top_frame"
+    },
+    {
+      "asset": "2468464935475c8180c2cb259e303cf7347005d362a656cb3d6549ada5bf8c8c",
+      "id": 5,
+      "name": "container_interior_shadow",
+      "node": -1,
+      "pose": [
+        0.07500000298023224,
+        0.0,
+        0.07000000029802322,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.30000001192092896,
+        0.3100000023841858,
+        0.33000001311302185,
+        1.0
+      ],
+      "role": "container_interior_shadow",
+      "shape": "cube",
+      "source_id": "container_interior_shadow"
+    },
+    {
+      "asset": "c763ce68f739d4f1fe53dde62a185b181acc4f88067bab52a1a7a61759095df8",
+      "id": 6,
+      "name": "container_tail_exit_bottom_frame",
+      "node": -1,
+      "pose": [
+        1.0499999523162842,
+        0.0,
+        0.10000000149011612,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6200000047683716,
+        0.6299999952316284,
+        0.6399999856948853,
+        1.0
+      ],
+      "role": "container_tail_exit_frame",
+      "shape": "cube",
+      "source_id": "container_tail_exit_bottom_frame"
+    },
+    {
+      "asset": "407c6296bd5893bb7209e03a202c2e38389e1d8de420e933c46217bcce00ec1f",
+      "id": 7,
+      "name": "container_tail_exit_far_vertical_frame",
+      "node": -1,
+      "pose": [
+        1.0499999523162842,
+        1.034999966621399,
+        0.8100000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6200000047683716,
+        0.6299999952316284,
+        0.6399999856948853,
+        1.0
+      ],
+      "role": "container_tail_exit_frame",
+      "shape": "cube",
+      "source_id": "container_tail_exit_far_vertical_frame"
+    },
+    {
+      "asset": "407c6296bd5893bb7209e03a202c2e38389e1d8de420e933c46217bcce00ec1f",
+      "id": 8,
+      "name": "container_tail_exit_near_vertical_frame",
+      "node": -1,
+      "pose": [
+        1.0499999523162842,
+        -1.034999966621399,
+        0.8100000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6200000047683716,
+        0.6299999952316284,
+        0.6399999856948853,
+        1.0
+      ],
+      "role": "container_tail_exit_frame",
+      "shape": "cube",
+      "source_id": "container_tail_exit_near_vertical_frame"
+    },
+    {
+      "asset": "d86ff0dd059625ec38ffac765a3144b6a6f1c35f0efc51a8f75403a37d789db4",
+      "id": 9,
+      "name": "container_tail_exit_top_frame",
+      "node": -1,
+      "pose": [
+        1.0499999523162842,
+        0.0,
+        1.6150000095367432,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6200000047683716,
+        0.6299999952316284,
+        0.6399999856948853,
+        1.0
+      ],
+      "role": "container_tail_exit_frame",
+      "shape": "cube",
+      "source_id": "container_tail_exit_top_frame"
+    },
+    {
+      "asset": "37e3858c26349eaa1379ecd9171a08cbcc0115499dd1451d4f9e69cd15d6c113",
+      "id": 10,
+      "name": "far_blue_tall_car_body",
+      "node": 0,
+      "pose": [
+        -3.200000047683716,
+        0.5600000023841858,
+        0.675000011920929,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.05000000074505806,
+        0.20000000298023224,
+        0.949999988079071,
+        1.0
+      ],
+      "role": "target",
+      "shape": "car_body",
+      "source_id": "far_blue_tall_car_body"
+    },
+    {
+      "asset": "c271d158739e24039fe691939295f5d8579606e6ea0d84038e105c90c992f6cf",
+      "id": 11,
+      "name": "far_blue_tall_car_wheel_front_far",
+      "node": 1,
+      "pose": [
+        -3.378200054168701,
+        0.734000027179718,
+        0.13500000536441803,
+        0.7071068286895752,
+        0.7071068286895752,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.019999999552965164,
+        0.019999999552965164,
+        0.02500000037252903,
+        1.0
+      ],
+      "role": "vehicle_wheel",
+      "shape": "cylinder",
+      "source_id": "far_blue_tall_car_wheel_front_far"
+    },
+    {
+      "asset": "c271d158739e24039fe691939295f5d8579606e6ea0d84038e105c90c992f6cf",
+      "id": 12,
+      "name": "far_blue_tall_car_wheel_front_near",
+      "node": 2,
+      "pose": [
+        -3.378200054168701,
+        0.38600000739097595,
+        0.13500000536441803,
+        0.7071068286895752,
+        0.7071068286895752,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.019999999552965164,
+        0.019999999552965164,
+        0.02500000037252903,
+        1.0
+      ],
+      "role": "vehicle_wheel",
+      "shape": "cylinder",
+      "source_id": "far_blue_tall_car_wheel_front_near"
+    },
+    {
+      "asset": "c271d158739e24039fe691939295f5d8579606e6ea0d84038e105c90c992f6cf",
+      "id": 13,
+      "name": "far_blue_tall_car_wheel_rear_far",
+      "node": 3,
+      "pose": [
+        -3.0218000411987305,
+        0.734000027179718,
+        0.13500000536441803,
+        0.7071068286895752,
+        0.7071068286895752,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.019999999552965164,
+        0.019999999552965164,
+        0.02500000037252903,
+        1.0
+      ],
+      "role": "vehicle_wheel",
+      "shape": "cylinder",
+      "source_id": "far_blue_tall_car_wheel_rear_far"
+    },
+    {
+      "asset": "c271d158739e24039fe691939295f5d8579606e6ea0d84038e105c90c992f6cf",
+      "id": 14,
+      "name": "far_blue_tall_car_wheel_rear_near",
+      "node": 4,
+      "pose": [
+        -3.0218000411987305,
+        0.38600000739097595,
+        0.13500000536441803,
+        0.7071068286895752,
+        0.7071068286895752,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.019999999552965164,
+        0.019999999552965164,
+        0.02500000037252903,
+        1.0
+      ],
+      "role": "vehicle_wheel",
+      "shape": "cylinder",
+      "source_id": "far_blue_tall_car_wheel_rear_near"
+    },
+    {
+      "asset": "59e37b445057763ef64b137056f03058630a499daf43c152cafde44dd79020ae",
+      "id": 15,
+      "name": "far_blue_track_flat_solid",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.5600000023841858,
+        0.03500000014901161,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.4699999988079071,
+        0.4699999988079071,
+        0.4699999988079071,
+        1.0
+      ],
+      "role": "far_track",
+      "shape": "cube",
+      "source_id": "far_blue_track_flat_solid"
+    },
+    {
+      "asset": "903ed985194a3d86f1cdba12ea4b4daa4d7ba2ee2d589469396aa7f55eb52bd9",
+      "id": 16,
+      "name": "far_track_dark_side",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.5600000023841858,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.30000001192092896,
+        0.30000001192092896,
+        0.30000001192092896,
+        1.0
+      ],
+      "role": "track_side_shadow",
+      "shape": "cube",
+      "source_id": "far_track_dark_side"
+    },
+    {
+      "asset": "d2d2a703e865a94c20d87a7bf0a9f157cc58cae12d1fa40b79542478e9741aad",
+      "id": 17,
+      "name": "gray_window_container_far_wall",
+      "node": -1,
+      "pose": [
+        0.07500000298023224,
+        0.949999988079071,
+        0.8100000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.30000001192092896,
+        0.3100000023841858,
+        0.33000001311302185,
+        1.0
+      ],
+      "role": "container_far_wall",
+      "shape": "cube",
+      "source_id": "gray_window_container_far_wall"
+    },
+    {
+      "asset": "86a8dbd133a1ef1a64c3bc855c78d55feddda580d8fb3eb7708edd812c847ece",
+      "id": 18,
+      "name": "gray_window_container_floor",
+      "node": -1,
+      "pose": [
+        0.07500000298023224,
+        0.0,
+        0.09000000357627869,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.30000001192092896,
+        0.3100000023841858,
+        0.33000001311302185,
+        1.0
+      ],
+      "role": "container_floor",
+      "shape": "cube",
+      "source_id": "gray_window_container_floor"
+    },
+    {
+      "asset": "ee551815f88d8ad208f12d3a87c17cba1e7a56ab2d3392b0ce955a6b2f010ab3",
+      "id": 19,
+      "name": "gray_window_container_left_jamb",
+      "node": -1,
+      "pose": [
+        -0.5099999904632568,
+        -0.949999988079071,
+        0.9950000047683716,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.30000001192092896,
+        0.3100000023841858,
+        0.33000001311302185,
+        1.0
+      ],
+      "role": "container_window_left_jamb",
+      "shape": "cube",
+      "source_id": "gray_window_container_left_jamb"
+    },
+    {
+      "asset": "67a4f8a911d3200691c667e7d1bd026934c09cb03d45eafcb979cf52f47ac3d2",
+      "id": 20,
+      "name": "gray_window_container_near_wall_lower_high_sill",
+      "node": -1,
+      "pose": [
+        0.07500000298023224,
+        -0.949999988079071,
+        0.35249999165534973,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.30000001192092896,
+        0.3100000023841858,
+        0.33000001311302185,
+        1.0
+      ],
+      "role": "container_near_wall_lower_high_sill",
+      "shape": "cube",
+      "source_id": "gray_window_container_near_wall_lower_high_sill"
+    },
+    {
+      "asset": "f8d69009ef9c7eaa0170f73a7d49617e7416484cdc1c16e4cb798a83dbd2d79b",
+      "id": 21,
+      "name": "gray_window_container_near_wall_upper",
+      "node": -1,
+      "pose": [
+        0.07500000298023224,
+        -0.949999988079071,
+        1.4524999856948853,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.30000001192092896,
+        0.3100000023841858,
+        0.33000001311302185,
+        1.0
+      ],
+      "role": "container_near_wall_upper",
+      "shape": "cube",
+      "source_id": "gray_window_container_near_wall_upper"
+    },
+    {
+      "asset": "7bd745d82a20fdc8ef52ab87d3e13e1a558d315d920ac6a1cffc2384d1fc2ad4",
+      "id": 22,
+      "name": "gray_window_container_right_jamb",
+      "node": -1,
+      "pose": [
+        0.8349999785423279,
+        -0.949999988079071,
+        0.9950000047683716,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.30000001192092896,
+        0.3100000023841858,
+        0.33000001311302185,
+        1.0
+      ],
+      "role": "container_window_right_jamb",
+      "shape": "cube",
+      "source_id": "gray_window_container_right_jamb"
+    },
+    {
+      "asset": "86a8dbd133a1ef1a64c3bc855c78d55feddda580d8fb3eb7708edd812c847ece",
+      "id": 23,
+      "name": "gray_window_container_roof",
+      "node": -1,
+      "pose": [
+        0.07500000298023224,
+        0.0,
+        1.5299999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.30000001192092896,
+        0.3100000023841858,
+        0.33000001311302185,
+        1.0
+      ],
+      "role": "container_roof",
+      "shape": "cube",
+      "source_id": "gray_window_container_roof"
+    },
+    {
+      "asset": "ce5aa434041575f038b49a509488fd3e2cf5761bd01f1ad1fda0cd0719e9950c",
+      "id": 24,
+      "name": "large_floor_base",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        -0.03999999910593033,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8199999928474426,
+        0.800000011920929,
+        0.75,
+        1.0
+      ],
+      "role": "ground",
+      "shape": "cube",
+      "source_id": "large_floor_base"
+    },
+    {
+      "asset": "44a2c2a7da98561c8fa6ecfc1f827ff120e63c1430fa1d9fb2258811115a9ec3",
+      "id": 25,
+      "name": "near_red_low_car_body",
+      "node": 5,
+      "pose": [
+        -3.200000047683716,
+        -0.5600000023841858,
+        0.3149999976158142,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.949999988079071,
+        0.029999999329447746,
+        0.019999999552965164,
+        1.0
+      ],
+      "role": "target",
+      "shape": "car_body",
+      "source_id": "near_red_low_car_body"
+    },
+    {
+      "asset": "c271d158739e24039fe691939295f5d8579606e6ea0d84038e105c90c992f6cf",
+      "id": 26,
+      "name": "near_red_low_car_wheel_front_far",
+      "node": 6,
+      "pose": [
+        -3.378200054168701,
+        -0.38600000739097595,
+        0.13500000536441803,
+        0.7071068286895752,
+        0.7071068286895752,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.019999999552965164,
+        0.019999999552965164,
+        0.02500000037252903,
+        1.0
+      ],
+      "role": "vehicle_wheel",
+      "shape": "cylinder",
+      "source_id": "near_red_low_car_wheel_front_far"
+    },
+    {
+      "asset": "c271d158739e24039fe691939295f5d8579606e6ea0d84038e105c90c992f6cf",
+      "id": 27,
+      "name": "near_red_low_car_wheel_front_near",
+      "node": 7,
+      "pose": [
+        -3.378200054168701,
+        -0.734000027179718,
+        0.13500000536441803,
+        0.7071068286895752,
+        0.7071068286895752,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.019999999552965164,
+        0.019999999552965164,
+        0.02500000037252903,
+        1.0
+      ],
+      "role": "vehicle_wheel",
+      "shape": "cylinder",
+      "source_id": "near_red_low_car_wheel_front_near"
+    },
+    {
+      "asset": "c271d158739e24039fe691939295f5d8579606e6ea0d84038e105c90c992f6cf",
+      "id": 28,
+      "name": "near_red_low_car_wheel_rear_far",
+      "node": 8,
+      "pose": [
+        -3.0218000411987305,
+        -0.38600000739097595,
+        0.13500000536441803,
+        0.7071068286895752,
+        0.7071068286895752,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.019999999552965164,
+        0.019999999552965164,
+        0.02500000037252903,
+        1.0
+      ],
+      "role": "vehicle_wheel",
+      "shape": "cylinder",
+      "source_id": "near_red_low_car_wheel_rear_far"
+    },
+    {
+      "asset": "c271d158739e24039fe691939295f5d8579606e6ea0d84038e105c90c992f6cf",
+      "id": 29,
+      "name": "near_red_low_car_wheel_rear_near",
+      "node": 9,
+      "pose": [
+        -3.0218000411987305,
+        -0.734000027179718,
+        0.13500000536441803,
+        0.7071068286895752,
+        0.7071068286895752,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.019999999552965164,
+        0.019999999552965164,
+        0.02500000037252903,
+        1.0
+      ],
+      "role": "vehicle_wheel",
+      "shape": "cylinder",
+      "source_id": "near_red_low_car_wheel_rear_near"
+    },
+    {
+      "asset": "59e37b445057763ef64b137056f03058630a499daf43c152cafde44dd79020ae",
+      "id": 30,
+      "name": "near_red_track_flat_solid",
+      "node": -1,
+      "pose": [
+        0.0,
+        -0.5600000023841858,
+        0.03500000014901161,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.4699999988079071,
+        0.4699999988079071,
+        0.4699999988079071,
+        1.0
+      ],
+      "role": "near_track",
+      "shape": "cube",
+      "source_id": "near_red_track_flat_solid"
+    },
+    {
+      "asset": "903ed985194a3d86f1cdba12ea4b4daa4d7ba2ee2d589469396aa7f55eb52bd9",
+      "id": 31,
+      "name": "near_track_dark_side",
+      "node": -1,
+      "pose": [
+        0.0,
+        -0.5600000023841858,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.30000001192092896,
+        0.30000001192092896,
+        0.30000001192092896,
+        1.0
+      ],
+      "role": "track_side_shadow",
+      "shape": "cube",
+      "source_id": "near_track_dark_side"
+    },
+    {
+      "asset": "54af635b0cfe271f805099c3c25d737734faa63e04f32136389d4e1691d9372d",
+      "id": 32,
+      "name": "raised_window_sill_frame_above_red_car",
+      "node": -1,
+      "pose": [
+        0.25,
+        -1.024999976158142,
+        0.6449999809265137,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6200000047683716,
+        0.6299999952316284,
+        0.6399999856948853,
+        1.0
+      ],
+      "role": "window_sill_frame",
+      "shape": "cube",
+      "source_id": "raised_window_sill_frame_above_red_car"
+    },
+    {
+      "asset": "375f50fa5f209f620c3209bc085b146b2aa420ffdf5e60339ab30661c517a0bf",
+      "id": 33,
+      "name": "rear_backdrop_panel",
+      "node": -1,
+      "pose": [
+        0.0,
+        2.3399999141693115,
+        1.6200000047683716,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9599999785423279,
+        0.9700000286102295,
+        0.9800000190734863,
+        1.0
+      ],
+      "role": "background",
+      "shape": "cube",
+      "source_id": "rear_backdrop_panel"
+    },
+    {
+      "asset": "54af635b0cfe271f805099c3c25d737734faa63e04f32136389d4e1691d9372d",
+      "id": 34,
+      "name": "window_top_frame_above_blue_car",
+      "node": -1,
+      "pose": [
+        0.25,
+        -1.024999976158142,
+        1.3450000286102295,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6200000047683716,
+        0.6299999952316284,
+        0.6399999856948853,
+        1.0
+      ],
+      "role": "window_top_frame",
+      "shape": "cube",
+      "source_id": "window_top_frame_above_blue_car"
+    }
+  ],
+  "schema": "stable-envs/object-permanence-rigid-v1",
+  "source": {
+    "commit": "824baddcdad087810d35638bf8f273b884f74975",
+    "exporter": "scripts/export/object_permanence.py",
+    "exporter_sha256": "547e91ee071792a3b38c2f8b191f11ff17d412f95060dc28806a7e24f77c869c",
+    "license": "CC-BY-NC-4.0",
+    "parameters": {},
+    "profile": "nominal-first-member-no-diversity",
+    "script": "object_permanence/generator/tasks/G33_partial_window_parallel_cars/pb_task_00000015_pb_partial_window_parallel_cars_0016_blender.py",
+    "script_sha256": "ecc7455f279f6d4f692e193299c88494ec7d53d47693450cbf44d01fc788db8c",
+    "seed": null,
+    "task": "G33",
+    "task_manifest_sha256": "1601ccf6d4e88b5189dbdeea15ac24a5ff0dc135e5de74f114f3244a0c24d750",
+    "url": "https://github.com/hokindeng/object-permanence",
+    "versions": {
+      "blender": "4.4.0",
+      "numpy": "1.26.4",
+      "python": "3.11.16"
+    },
+    "video_split": null
+  }
+}

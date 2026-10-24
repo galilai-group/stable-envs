@@ -1,0 +1,358 @@
+{
+  "arrays": {
+    "camera_matrix": {
+      "dtype": "float64",
+      "shape": [
+        4,
+        4
+      ]
+    },
+    "depth_base": {
+      "dtype": "float32",
+      "shape": [
+        180,
+        320
+      ]
+    },
+    "object_ids": {
+      "dtype": "int16",
+      "shape": [
+        120,
+        180,
+        320
+      ]
+    },
+    "poses": {
+      "dtype": "float64",
+      "shape": [
+        120,
+        29,
+        7
+      ]
+    },
+    "source_frames": {
+      "dtype": "int64",
+      "shape": [
+        120
+      ]
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        1.8333332538604736,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        3.259258985519409,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "world": [
+      [
+        0.9898253679275513,
+        0.024285277351737022,
+        -0.14019963145256042,
+        -1.0
+      ],
+      [
+        -0.14228743314743042,
+        0.16894103586673737,
+        -0.9753016233444214,
+        -8.0
+      ],
+      [
+        1.8045653860099264e-10,
+        0.9853269457817078,
+        0.17067760229110718,
+        2.3499999046325684
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "depth_parts": [
+    {
+      "dtype": "uint32",
+      "file": "depth_0000_0030.npz",
+      "sha256": "4a90c6ea025bd8493cb8724c02a06d0ba5490a07f48c40269bdbbd837fd35cf3",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 0,
+      "stop": 30
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0030_0060.npz",
+      "sha256": "3e4df5f7ce4849fb0d18ac1a154d109eebeb4c93fcac26e006f6fe9546e22080",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 30,
+      "stop": 60
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0060_0090.npz",
+      "sha256": "de81fc2a5c731841454975cf259f042e9e1aec55e313498ad93cb5da7b6d0086",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 60,
+      "stop": 90
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0090_0120.npz",
+      "sha256": "de81fc2a5c731841454975cf259f042e9e1aec55e313498ad93cb5da7b6d0086",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 90,
+      "stop": 120
+    }
+  ],
+  "file": "geometric_g113_nominal.npz",
+  "fps": 24.0,
+  "generator": "scripts/testing/freeze_object_permanence_rays.py",
+  "generator_sha256": "8f71797931e02a420d5c15ebcc6628a219c065a37a710d186709022b6e7e16ac",
+  "height": 180,
+  "object_ids": {
+    "cup_inner_floor": 1,
+    "cup_wall_seg_0": 2,
+    "cup_wall_seg_1": 3,
+    "cup_wall_seg_10": 4,
+    "cup_wall_seg_11": 5,
+    "cup_wall_seg_12": 6,
+    "cup_wall_seg_13": 7,
+    "cup_wall_seg_14": 8,
+    "cup_wall_seg_15": 9,
+    "cup_wall_seg_16": 10,
+    "cup_wall_seg_17": 11,
+    "cup_wall_seg_18": 12,
+    "cup_wall_seg_19": 13,
+    "cup_wall_seg_2": 14,
+    "cup_wall_seg_20": 15,
+    "cup_wall_seg_21": 16,
+    "cup_wall_seg_22": 17,
+    "cup_wall_seg_23": 18,
+    "cup_wall_seg_3": 19,
+    "cup_wall_seg_4": 20,
+    "cup_wall_seg_5": 21,
+    "cup_wall_seg_6": 22,
+    "cup_wall_seg_7": 23,
+    "cup_wall_seg_8": 24,
+    "cup_wall_seg_9": 25,
+    "large_floor_base": 26,
+    "orange_ball_on_card": 27,
+    "rear_backdrop_panel": 28,
+    "support_card_on_cup_mouth": 29
+  },
+  "object_order": [
+    "cup_inner_floor",
+    "cup_wall_seg_0",
+    "cup_wall_seg_1",
+    "cup_wall_seg_10",
+    "cup_wall_seg_11",
+    "cup_wall_seg_12",
+    "cup_wall_seg_13",
+    "cup_wall_seg_14",
+    "cup_wall_seg_15",
+    "cup_wall_seg_16",
+    "cup_wall_seg_17",
+    "cup_wall_seg_18",
+    "cup_wall_seg_19",
+    "cup_wall_seg_2",
+    "cup_wall_seg_20",
+    "cup_wall_seg_21",
+    "cup_wall_seg_22",
+    "cup_wall_seg_23",
+    "cup_wall_seg_3",
+    "cup_wall_seg_4",
+    "cup_wall_seg_5",
+    "cup_wall_seg_6",
+    "cup_wall_seg_7",
+    "cup_wall_seg_8",
+    "cup_wall_seg_9",
+    "large_floor_base",
+    "orange_ball_on_card",
+    "rear_backdrop_panel",
+    "support_card_on_cup_mouth"
+  ],
+  "reference_algorithm_sha256": "360b948df49e5b5d40eac35d958ca4ec6f74c50e9663075c781d1db65a285d84",
+  "schema": "stable-envs/object-permanence-rigid-oracle-v2",
+  "sha256": "4b51d2bf576918215964a02df1c5b093fb4fdc1d20f0ba2bb55abec12c1fb1e9",
+  "source_commit": "824baddcdad087810d35638bf8f273b884f74975",
+  "source_license": "CC-BY-NC-4.0",
+  "source_profile": "nominal first member; no diversity wrapper",
+  "source_script": "object_permanence/generator/tasks/G113_whipped_away_card/pb_task_00000159_pb_whipped_away_card_0160_blender.py",
+  "source_script_sha256": "15c91a6d5e9e414dd8a44f2a057989a3cbcd3db6373fcdeee5f8f8bb6cd241c6",
+  "source_task_manifest_sha256": "b5623147c8208c8a05086551f408b0a8ae73b8ab7857313ab044a9d601130bdf",
+  "source_url": "https://github.com/hokindeng/object-permanence",
+  "target_visible_pixels": {
+    "orange_ball_on_card": [
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      235,
+      234,
+      236,
+      235,
+      234,
+      234,
+      234,
+      226,
+      202,
+      172,
+      137,
+      98,
+      56,
+      20,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "targets": [
+    "orange_ball_on_card"
+  ],
+  "task": "G113",
+  "versions": {
+    "blender": "4.4.0",
+    "numpy": "1.26.4",
+    "python": "3.11.16"
+  },
+  "visibility_contract": "stable-envs/opaque-pixel-rays-v1",
+  "width": 320
+}

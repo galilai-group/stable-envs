@@ -1,0 +1,344 @@
+{
+  "arrays": {
+    "camera_matrix": {
+      "dtype": "float64",
+      "shape": [
+        4,
+        4
+      ]
+    },
+    "depth_base": {
+      "dtype": "float32",
+      "shape": [
+        180,
+        320
+      ]
+    },
+    "object_ids": {
+      "dtype": "int16",
+      "shape": [
+        120,
+        180,
+        320
+      ]
+    },
+    "poses": {
+      "dtype": "float64",
+      "shape": [
+        120,
+        10,
+        7
+      ]
+    },
+    "source_frames": {
+      "dtype": "int64",
+      "shape": [
+        120
+      ]
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        2.222222089767456,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        3.9506170749664307,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "world": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.3630300462245941,
+        -0.9317774176597595,
+        -3.75
+      ],
+      [
+        0.0,
+        0.9317774176597595,
+        0.3630300462245941,
+        2.049999952316284
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "depth_parts": [
+    {
+      "dtype": "uint32",
+      "file": "depth_0000_0030.npz",
+      "sha256": "6c6b691fb0ac06c5f292332ff729907cbcde2d0d57db83bc4afc073f0b45a1c8",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 0,
+      "stop": 30
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0030_0045.npz",
+      "sha256": "4d1e158882c181d9cfc99c9be2a8dea331abd448f91a66ed4a8ffc523d3d0c81",
+      "shape": [
+        15,
+        180,
+        320
+      ],
+      "start": 30,
+      "stop": 45
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0045_0060.npz",
+      "sha256": "0c2af90f359bf2ba38c9e541fab42173b2f68a9589f3566176216a30ed5cb41e",
+      "shape": [
+        15,
+        180,
+        320
+      ],
+      "start": 45,
+      "stop": 60
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0060_0075.npz",
+      "sha256": "9f642767af62da2abf085387ebf5702fa11022a7127535d7aed7df6c2297bd93",
+      "shape": [
+        15,
+        180,
+        320
+      ],
+      "start": 60,
+      "stop": 75
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0075_0090.npz",
+      "sha256": "a5c4c9d550e6b72f5ccee789b9d8ed9c5bdc8dc1cde654abddd56a0d7c467edc",
+      "shape": [
+        15,
+        180,
+        320
+      ],
+      "start": 75,
+      "stop": 90
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0090_0120.npz",
+      "sha256": "27c3f10ff912390374beb60ff4ecb7378cf52cecf3e41e7299963e178bca4339",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 90,
+      "stop": 120
+    }
+  ],
+  "file": "geometric_g71_nominal.npz",
+  "fps": 24.0,
+  "generator": "scripts/testing/freeze_object_permanence_rays.py",
+  "generator_sha256": "8f71797931e02a420d5c15ebcc6628a219c065a37a710d186709022b6e7e16ac",
+  "height": 180,
+  "object_ids": {
+    "box_back_wall": 1,
+    "box_inner_floor": 2,
+    "box_left_wall": 3,
+    "box_right_wall": 4,
+    "box_top": 5,
+    "colored_ball_inside_box": 6,
+    "large_floor_base": 7,
+    "left_front_door": 8,
+    "rear_backdrop_panel": 9,
+    "right_front_door": 10
+  },
+  "object_order": [
+    "box_back_wall",
+    "box_inner_floor",
+    "box_left_wall",
+    "box_right_wall",
+    "box_top",
+    "colored_ball_inside_box",
+    "large_floor_base",
+    "left_front_door",
+    "rear_backdrop_panel",
+    "right_front_door"
+  ],
+  "reference_algorithm_sha256": "360b948df49e5b5d40eac35d958ca4ec6f74c50e9663075c781d1db65a285d84",
+  "schema": "stable-envs/object-permanence-rigid-oracle-v2",
+  "sha256": "6814893ebba5aea8973c6170e96121ed448b5fc108a18977af24a8edf5122c43",
+  "source_commit": "824baddcdad087810d35638bf8f273b884f74975",
+  "source_license": "CC-BY-NC-4.0",
+  "source_profile": "nominal first member; no diversity wrapper",
+  "source_script": "object_permanence/generator/tasks/G71_double_doors_swing_open/pb_task_00000117_pb_double_doors_swing_open_0118_blender.py",
+  "source_script_sha256": "3d12d0cce14070c2aaa9602f2fce1309a4a311020ed1503659e51219e3bb4814",
+  "source_task_manifest_sha256": "b2eec78f68555f30ed0c19b60973882f4202bad5aa32025f043da324100a2ae6",
+  "source_url": "https://github.com/hokindeng/object-permanence",
+  "target_visible_pixels": {
+    "colored_ball_inside_box": [
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2550,
+      2236,
+      1852,
+      1486,
+      1162,
+      832,
+      580,
+      412,
+      252,
+      102,
+      56,
+      36,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      36,
+      56,
+      102,
+      252,
+      412,
+      580,
+      832,
+      1162,
+      1486,
+      1852,
+      2236,
+      2550,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646,
+      2646
+    ]
+  },
+  "targets": [
+    "colored_ball_inside_box"
+  ],
+  "task": "G71",
+  "versions": {
+    "blender": "4.4.0",
+    "numpy": "1.26.4",
+    "python": "3.11.16"
+  },
+  "visibility_contract": "stable-envs/opaque-pixel-rays-v1",
+  "width": 320
+}

@@ -1,0 +1,416 @@
+{
+  "arrays": {
+    "frames": {
+      "dtype": "int64",
+      "sha256": "3ce1a862b6cf0bb21bc1354b758cafa47ca5ec03b5c004d6210f5abd8c55df44",
+      "shape": [
+        120
+      ]
+    },
+    "poses": {
+      "dtype": "float32",
+      "sha256": "72b7d7300704104eef04cb5912a47d3659c38fb9be81677278deb12e10540b23",
+      "shape": [
+        120,
+        5,
+        7
+      ]
+    }
+  },
+  "assets": {
+    "0fff6c178fe839eaa970ff61ba1ea22b08c298d0605d50a13508480a492032a5": {
+      "file": "assets/cube/0fff6c178fe839eaa970ff61ba1ea22b08c298d0605d50a13508480a492032a5.npz",
+      "sha256": "e7d762cdaa21701871562d808ac00a64a7d9b9eb542f97aeb60f57f7e29b5bfa"
+    },
+    "375f50fa5f209f620c3209bc085b146b2aa420ffdf5e60339ab30661c517a0bf": {
+      "file": "assets/cube/375f50fa5f209f620c3209bc085b146b2aa420ffdf5e60339ab30661c517a0bf.npz",
+      "sha256": "5ad9e1f5f4925cfad5f0f02a1a9db549b2e2479916c30c7ff908922db3b3147a"
+    },
+    "7854f4676537a4960f400f9fc0b359f64beffac69b920e6cff8962d49ec08576": {
+      "file": "assets/cube/7854f4676537a4960f400f9fc0b359f64beffac69b920e6cff8962d49ec08576.npz",
+      "sha256": "60e0c7111e7bbb6aaa94ed5b322cfe5ec9945b19c492a9396745b6976c286045"
+    },
+    "8aab2514f45cbbdd51b662f671f0aa81009f9cefa0ff0ae2d3201224866ba196": {
+      "file": "assets/cube/8aab2514f45cbbdd51b662f671f0aa81009f9cefa0ff0ae2d3201224866ba196.npz",
+      "sha256": "c2d559f8e476d697d5572aef975186503ef2d74f3995a62fae9c88fe67a3abe9"
+    },
+    "8af9df2d434e766ff4081829742968044e95100c8786ae23a2ae5d7e285427e0": {
+      "file": "assets/cube/8af9df2d434e766ff4081829742968044e95100c8786ae23a2ae5d7e285427e0.npz",
+      "sha256": "c1a0d4f2e90bc3061618f6d412826dcacfddf8203a65cb9766960be68aba61be"
+    },
+    "8c2a559d4ff30d7baed0f68860ece190890126d98b151eec187e60b7b79252a1": {
+      "file": "assets/cube/8c2a559d4ff30d7baed0f68860ece190890126d98b151eec187e60b7b79252a1.npz",
+      "sha256": "344dadd70e12167779c64c37a0cf156bdd49a91018e12607472428293652cff6"
+    },
+    "acbcb303e349f010d036a2ea0a029c79049cbdc9800f99d6b06ac5d14cc1cdfd": {
+      "file": "assets/sphere/acbcb303e349f010d036a2ea0a029c79049cbdc9800f99d6b06ac5d14cc1cdfd.npz",
+      "sha256": "2ef533bac491db354a8f015d9a1a45e72f36fdf1c0317667e9a22d3c49fc6c2b"
+    },
+    "f9567e42b4962b4e6cce346971991eb3e5459058a7fb1cdd567e3b4237a304a9": {
+      "file": "assets/cube/f9567e42b4962b4e6cce346971991eb3e5459058a7fb1cdd567e3b4237a304a9.npz",
+      "sha256": "a45f16c9b860e370eeef3d9d27d4461bc30fb1959f375ec95974f7879e688f88"
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "height": 720,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        2.222222089767456,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        3.9506170749664307,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "width": 1280,
+    "world": [
+      [
+        0.9978983402252197,
+        -0.026512665674090385,
+        0.05912645161151886,
+        0.6000000238418579
+      ],
+      [
+        0.06479860097169876,
+        0.40829500555992126,
+        -0.9105472564697266,
+        -3.8499999046325684
+      ],
+      [
+        3.418163530000129e-10,
+        0.9124649167060852,
+        0.40915489196777344,
+        2.049999952316284
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "clip": "g118-nominal",
+  "conventions": {
+    "quaternion": "wxyz",
+    "units": "source-scene-units",
+    "world": "right-handed-z-up"
+  },
+  "dynamic_nodes": [
+    "colored_ball_in_tray",
+    "tray_drawer_face",
+    "tray_floor",
+    "tray_side_back",
+    "tray_side_front"
+  ],
+  "fps": 24.0,
+  "license_ref": {
+    "sha256": "0163481eb7a0fe3ed86d2dccf542a849b36b3c119f8ca6d3d5b36c074f2e1a1c"
+  },
+  "objects": [
+    {
+      "asset": "acbcb303e349f010d036a2ea0a029c79049cbdc9800f99d6b06ac5d14cc1cdfd",
+      "id": 1,
+      "name": "colored_ball_in_tray",
+      "node": 0,
+      "pose": [
+        1.100000023841858,
+        0.0,
+        0.3100000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        1.0,
+        0.3799999952316284,
+        0.05999999865889549,
+        1.0
+      ],
+      "role": "target",
+      "shape": "sphere",
+      "source_id": "colored_ball_in_tray"
+    },
+    {
+      "asset": "8aab2514f45cbbdd51b662f671f0aa81009f9cefa0ff0ae2d3201224866ba196",
+      "id": 2,
+      "name": "large_floor_base",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        -0.05000000074505806,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8199999928474426,
+        0.800000011920929,
+        0.75,
+        1.0
+      ],
+      "role": "ground",
+      "shape": "cube",
+      "source_id": "large_floor_base"
+    },
+    {
+      "asset": "375f50fa5f209f620c3209bc085b146b2aa420ffdf5e60339ab30661c517a0bf",
+      "id": 3,
+      "name": "rear_backdrop_panel",
+      "node": -1,
+      "pose": [
+        0.0,
+        2.4800000190734863,
+        1.6200000047683716,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9599999785423279,
+        0.9700000286102295,
+        0.9800000190734863,
+        1.0
+      ],
+      "role": "background",
+      "shape": "cube",
+      "source_id": "rear_backdrop_panel"
+    },
+    {
+      "asset": "f9567e42b4962b4e6cce346971991eb3e5459058a7fb1cdd567e3b4237a304a9",
+      "id": 4,
+      "name": "sleeve_back_wall",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.49000000953674316,
+        0.3700000047683716,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.4000000059604645,
+        0.4099999964237213,
+        0.4300000071525574,
+        1.0
+      ],
+      "role": "sleeve",
+      "shape": "cube",
+      "source_id": "sleeve_back_wall"
+    },
+    {
+      "asset": "0fff6c178fe839eaa970ff61ba1ea22b08c298d0605d50a13508480a492032a5",
+      "id": 5,
+      "name": "sleeve_bottom_plate",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        0.03999999910593033,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.4000000059604645,
+        0.4099999964237213,
+        0.4300000071525574,
+        1.0
+      ],
+      "role": "sleeve",
+      "shape": "cube",
+      "source_id": "sleeve_bottom_plate"
+    },
+    {
+      "asset": "f9567e42b4962b4e6cce346971991eb3e5459058a7fb1cdd567e3b4237a304a9",
+      "id": 6,
+      "name": "sleeve_front_wall",
+      "node": -1,
+      "pose": [
+        0.0,
+        -0.49000000953674316,
+        0.3700000047683716,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.4000000059604645,
+        0.4099999964237213,
+        0.4300000071525574,
+        1.0
+      ],
+      "role": "sleeve",
+      "shape": "cube",
+      "source_id": "sleeve_front_wall"
+    },
+    {
+      "asset": "0fff6c178fe839eaa970ff61ba1ea22b08c298d0605d50a13508480a492032a5",
+      "id": 7,
+      "name": "sleeve_top_plate",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        0.699999988079071,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.4000000059604645,
+        0.4099999964237213,
+        0.4300000071525574,
+        1.0
+      ],
+      "role": "sleeve",
+      "shape": "cube",
+      "source_id": "sleeve_top_plate"
+    },
+    {
+      "asset": "7854f4676537a4960f400f9fc0b359f64beffac69b920e6cff8962d49ec08576",
+      "id": 8,
+      "name": "tray_drawer_face",
+      "node": 1,
+      "pose": [
+        1.9700000286102295,
+        0.0,
+        0.27000001072883606,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6600000262260437,
+        0.550000011920929,
+        0.3799999952316284,
+        1.0
+      ],
+      "role": "tray",
+      "shape": "cube",
+      "source_id": "tray_drawer_face"
+    },
+    {
+      "asset": "8c2a559d4ff30d7baed0f68860ece190890126d98b151eec187e60b7b79252a1",
+      "id": 9,
+      "name": "tray_floor",
+      "node": 2,
+      "pose": [
+        1.25,
+        0.0,
+        0.11999999731779099,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6600000262260437,
+        0.550000011920929,
+        0.3799999952316284,
+        1.0
+      ],
+      "role": "tray",
+      "shape": "cube",
+      "source_id": "tray_floor"
+    },
+    {
+      "asset": "8af9df2d434e766ff4081829742968044e95100c8786ae23a2ae5d7e285427e0",
+      "id": 10,
+      "name": "tray_side_back",
+      "node": 3,
+      "pose": [
+        1.25,
+        0.39500001072883606,
+        0.23000000417232513,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6600000262260437,
+        0.550000011920929,
+        0.3799999952316284,
+        1.0
+      ],
+      "role": "tray",
+      "shape": "cube",
+      "source_id": "tray_side_back"
+    },
+    {
+      "asset": "8af9df2d434e766ff4081829742968044e95100c8786ae23a2ae5d7e285427e0",
+      "id": 11,
+      "name": "tray_side_front",
+      "node": 4,
+      "pose": [
+        1.25,
+        -0.39500001072883606,
+        0.23000000417232513,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6600000262260437,
+        0.550000011920929,
+        0.3799999952316284,
+        1.0
+      ],
+      "role": "tray",
+      "shape": "cube",
+      "source_id": "tray_side_front"
+    }
+  ],
+  "schema": "stable-envs/object-permanence-rigid-v1",
+  "source": {
+    "commit": "824baddcdad087810d35638bf8f273b884f74975",
+    "exporter": "scripts/export/object_permanence.py",
+    "exporter_sha256": "547e91ee071792a3b38c2f8b191f11ff17d412f95060dc28806a7e24f77c869c",
+    "license": "CC-BY-NC-4.0",
+    "parameters": {},
+    "profile": "nominal-first-member-no-diversity",
+    "script": "object_permanence/generator/tasks/G118_matchbox_drawer/pb_task_00000164_pb_matchbox_drawer_0165_blender.py",
+    "script_sha256": "07e31c391491a925ffec3432081cc65c829d7c77459953156c3b6dd7c1fab27b",
+    "seed": null,
+    "task": "G118",
+    "task_manifest_sha256": "5f2d2d6294e1633eb85c14cd337c1d713c921f0a638622026fce4ba61990ca8e",
+    "url": "https://github.com/hokindeng/object-permanence",
+    "versions": {
+      "blender": "4.4.0",
+      "numpy": "1.26.4",
+      "python": "3.11.16"
+    },
+    "video_split": null
+  }
+}

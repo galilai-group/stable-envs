@@ -1,0 +1,338 @@
+{
+  "arrays": {
+    "camera_matrix": {
+      "dtype": "float64",
+      "shape": [
+        4,
+        4
+      ]
+    },
+    "depth_base": {
+      "dtype": "float32",
+      "shape": [
+        180,
+        320
+      ]
+    },
+    "object_ids": {
+      "dtype": "int16",
+      "shape": [
+        120,
+        180,
+        320
+      ]
+    },
+    "poses": {
+      "dtype": "float64",
+      "shape": [
+        120,
+        19,
+        7
+      ]
+    },
+    "source_frames": {
+      "dtype": "int64",
+      "shape": [
+        120
+      ]
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        2.3333330154418945,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        4.1481475830078125,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "world": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.3508342206478119,
+        -0.9364376068115234,
+        -3.9000000953674316
+      ],
+      [
+        0.0,
+        0.9364376068115234,
+        0.3508342206478119,
+        1.75
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "depth_parts": [
+    {
+      "dtype": "uint32",
+      "file": "depth_0000_0030.npz",
+      "sha256": "930eb33708655580f6604178bc89c12d488872527b69968457b1438bea965245",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 0,
+      "stop": 30
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0030_0060.npz",
+      "sha256": "3ad842fca3ecd0332060980621d93c003bc53d8160180ce504fc1b1683c1f905",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 30,
+      "stop": 60
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0060_0090.npz",
+      "sha256": "a78ddd022774c8f28100285f3b3a34e0a3ad7d4cf6c24d888d570c1d7ce64557",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 60,
+      "stop": 90
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0090_0120.npz",
+      "sha256": "69452a91150428dba85ddd715164f9df6949ca0484459111b35edb190856164e",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 90,
+      "stop": 120
+    }
+  ],
+  "file": "geometric_g131_nominal.npz",
+  "fps": 24.0,
+  "generator": "scripts/testing/freeze_object_permanence_rays.py",
+  "generator_sha256": "8f71797931e02a420d5c15ebcc6628a219c065a37a710d186709022b6e7e16ac",
+  "height": 180,
+  "object_ids": {
+    "ball_in_lower_drawer": 1,
+    "chest_back_wall": 2,
+    "chest_bottom_plate": 3,
+    "chest_divider_panel": 4,
+    "chest_side_wall_nx": 5,
+    "chest_side_wall_px": 6,
+    "chest_top_plate": 7,
+    "large_floor_base": 8,
+    "lower_drawer_back": 9,
+    "lower_drawer_face": 10,
+    "lower_drawer_floor": 11,
+    "lower_drawer_side_nx": 12,
+    "lower_drawer_side_px": 13,
+    "rear_backdrop_panel": 14,
+    "upper_drawer_back": 15,
+    "upper_drawer_face": 16,
+    "upper_drawer_floor": 17,
+    "upper_drawer_side_nx": 18,
+    "upper_drawer_side_px": 19
+  },
+  "object_order": [
+    "ball_in_lower_drawer",
+    "chest_back_wall",
+    "chest_bottom_plate",
+    "chest_divider_panel",
+    "chest_side_wall_nx",
+    "chest_side_wall_px",
+    "chest_top_plate",
+    "large_floor_base",
+    "lower_drawer_back",
+    "lower_drawer_face",
+    "lower_drawer_floor",
+    "lower_drawer_side_nx",
+    "lower_drawer_side_px",
+    "rear_backdrop_panel",
+    "upper_drawer_back",
+    "upper_drawer_face",
+    "upper_drawer_floor",
+    "upper_drawer_side_nx",
+    "upper_drawer_side_px"
+  ],
+  "reference_algorithm_sha256": "360b948df49e5b5d40eac35d958ca4ec6f74c50e9663075c781d1db65a285d84",
+  "schema": "stable-envs/object-permanence-rigid-oracle-v2",
+  "sha256": "45501a8ad32b6b87625a754a1cd7cd3e76c04ea8614da8124fea0246403f88c3",
+  "source_commit": "824baddcdad087810d35638bf8f273b884f74975",
+  "source_license": "CC-BY-NC-4.0",
+  "source_profile": "nominal first member; no diversity wrapper",
+  "source_script": "object_permanence/generator/tasks/G131_stacked_drawers_reveal/pb_task_00000177_pb_stacked_drawers_reveal_0178_blender.py",
+  "source_script_sha256": "48a86cca86114a4bb399b424bfcb67c6588333621a35b906805a32e0d3413f6b",
+  "source_task_manifest_sha256": "a2eed3007e0b9d19b3d5a827dbf7193a72f7a6d282e5c7c77fe9ad3590002c72",
+  "source_url": "https://github.com/hokindeng/object-permanence",
+  "target_visible_pixels": {
+    "ball_in_lower_drawer": [
+      54,
+      54,
+      54,
+      54,
+      54,
+      54,
+      54,
+      54,
+      54,
+      54,
+      54,
+      54,
+      54,
+      82,
+      80,
+      108,
+      108,
+      134,
+      160,
+      184,
+      206,
+      256,
+      272,
+      318,
+      316,
+      336,
+      364,
+      386,
+      406,
+      394,
+      414,
+      438,
+      460,
+      478,
+      512,
+      540,
+      532,
+      568,
+      570,
+      578,
+      588,
+      608,
+      598,
+      596,
+      596,
+      596,
+      596,
+      596,
+      596,
+      596,
+      596,
+      596,
+      596,
+      596,
+      596,
+      596,
+      596,
+      596,
+      596,
+      596,
+      596,
+      596,
+      596,
+      596,
+      596,
+      596,
+      600,
+      580,
+      570,
+      568,
+      540,
+      552,
+      528,
+      478,
+      464,
+      450,
+      408,
+      398,
+      386,
+      336,
+      328,
+      308,
+      272,
+      258,
+      210,
+      186,
+      132,
+      108,
+      80,
+      82,
+      54,
+      54,
+      54,
+      54,
+      54,
+      54,
+      54,
+      54,
+      54,
+      54,
+      54,
+      80,
+      108,
+      132,
+      184,
+      230,
+      298,
+      328,
+      356,
+      386,
+      410,
+      438,
+      468,
+      502,
+      540,
+      548,
+      566,
+      596,
+      602,
+      596
+    ]
+  },
+  "targets": [
+    "ball_in_lower_drawer"
+  ],
+  "task": "G131",
+  "versions": {
+    "blender": "4.4.0",
+    "numpy": "1.26.4",
+    "python": "3.11.16"
+  },
+  "visibility_contract": "stable-envs/opaque-pixel-rays-v1",
+  "width": 320
+}

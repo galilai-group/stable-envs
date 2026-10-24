@@ -1,0 +1,491 @@
+{
+  "arrays": {
+    "frames": {
+      "dtype": "int64",
+      "sha256": "3ce1a862b6cf0bb21bc1354b758cafa47ca5ec03b5c004d6210f5abd8c55df44",
+      "shape": [
+        120
+      ]
+    },
+    "poses": {
+      "dtype": "float32",
+      "sha256": "6b063a5189a168f89bb41408cf77640ba79863e79e2ed7dc9cfa255509b3c98a",
+      "shape": [
+        120,
+        4,
+        7
+      ]
+    }
+  },
+  "assets": {
+    "080ba0c42e77f244973d7bd065eaec3b9b100add87ab44adb4844c15a95f1168": {
+      "file": "assets/cube/080ba0c42e77f244973d7bd065eaec3b9b100add87ab44adb4844c15a95f1168.npz",
+      "sha256": "0d005d84a52a117fabd3ccd5dc63274c1255f5163d9faea5addc9279d35f3a3f"
+    },
+    "4388d9139c1c048f444363e756a4cf233cdd065be0a3b3fc68fd7cb8b1353c81": {
+      "file": "assets/cube/4388d9139c1c048f444363e756a4cf233cdd065be0a3b3fc68fd7cb8b1353c81.npz",
+      "sha256": "4439c190a50437295367184d2f0721738f3dce4ce4f11f173ce9dd1608900380"
+    },
+    "4c990b014a7d4e81ca1471b24daae96d8d01ba91b97147cdbe6a512bf2a4bb46": {
+      "file": "assets/sphere/4c990b014a7d4e81ca1471b24daae96d8d01ba91b97147cdbe6a512bf2a4bb46.npz",
+      "sha256": "ab735289df62715ed380a8ffe19098ee7edd56fdc1399066a9c518a781435fc5"
+    },
+    "759cd006f68f5bc55de7dced3c30be8cbfd3f6eb1166f713df25c7e5a60b5d57": {
+      "file": "assets/cube/759cd006f68f5bc55de7dced3c30be8cbfd3f6eb1166f713df25c7e5a60b5d57.npz",
+      "sha256": "c32ac50473b2e863f6ffd73e9f98be308667c7c96ce7d2368f0165ac89556762"
+    },
+    "8b5829fd9b9e71a1cd855ad94e4a6570d46d4b2f6899e85033cf4a25f04dc8b3": {
+      "file": "assets/cube/8b5829fd9b9e71a1cd855ad94e4a6570d46d4b2f6899e85033cf4a25f04dc8b3.npz",
+      "sha256": "b73e0aa59b5b981317d672493137f4b79aa5f3bb8e59b76616a5f46808004522"
+    },
+    "9041274c5453b549cf5fb47897f3be1b5dd46f0ff32777fb42404514361ff02b": {
+      "file": "assets/cube/9041274c5453b549cf5fb47897f3be1b5dd46f0ff32777fb42404514361ff02b.npz",
+      "sha256": "a3573b2861c9065a0990d375ad0f6589e295944b5d8aa67ab55f49254467c426"
+    },
+    "a098c3b9f2d207a523709b9d9f25e6df5777b3c238fde1957dfd9123df65b8cd": {
+      "file": "assets/cube/a098c3b9f2d207a523709b9d9f25e6df5777b3c238fde1957dfd9123df65b8cd.npz",
+      "sha256": "8d5f95de96f740eb62305d015830974708aae50d31d42d2bb1647b132f9d0b59"
+    },
+    "c0b3e818ecbe70d3787d0d312bd7986996cb18c4b6126f5d34ff0b417dd21c2e": {
+      "file": "assets/cube/c0b3e818ecbe70d3787d0d312bd7986996cb18c4b6126f5d34ff0b417dd21c2e.npz",
+      "sha256": "7a3886b04cdeb92b25b35983d43935b175351e3052e1b6aa8ff88f5994101d1c"
+    },
+    "f7bf72242e60cb8c96d5a62f0564c9146e70d5b788aa75a63a7333f6d850eae0": {
+      "file": "assets/cube/f7bf72242e60cb8c96d5a62f0564c9146e70d5b788aa75a63a7333f6d850eae0.npz",
+      "sha256": "ff9f1083449d46be21eb832c42295a70944c98038070379532d4a1057b20f126"
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "height": 720,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        2.3333330154418945,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        4.1481475830078125,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "width": 1280,
+    "world": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.06099722534418106,
+        -0.9981379508972168,
+        -9.0
+      ],
+      [
+        0.0,
+        0.9981379508972168,
+        0.06099722534418106,
+        1.899999976158142
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "clip": "g104-nominal",
+  "conventions": {
+    "quaternion": "wxyz",
+    "units": "source-scene-units",
+    "world": "right-handed-z-up"
+  },
+  "dynamic_nodes": [
+    "bifold_left_inner",
+    "bifold_left_outer",
+    "bifold_right_inner",
+    "bifold_right_outer"
+  ],
+  "fps": 24.0,
+  "license_ref": {
+    "sha256": "0163481eb7a0fe3ed86d2dccf542a849b36b3c119f8ca6d3d5b36c074f2e1a1c"
+  },
+  "objects": [
+    {
+      "asset": "c0b3e818ecbe70d3787d0d312bd7986996cb18c4b6126f5d34ff0b417dd21c2e",
+      "id": 1,
+      "name": "bifold_left_inner",
+      "node": 0,
+      "pose": [
+        -1.8742682933807373,
+        -1.0618418455123901,
+        1.4500000476837158,
+        0.887010931968689,
+        0.0,
+        0.0,
+        0.4617486298084259
+      ],
+      "rgba": [
+        0.3799999952316284,
+        0.41999998688697815,
+        0.5,
+        1.0
+      ],
+      "role": "bifold_panel",
+      "shape": "cube",
+      "source_id": "bifold_left_inner"
+    },
+    {
+      "asset": "8b5829fd9b9e71a1cd855ad94e4a6570d46d4b2f6899e85033cf4a25f04dc8b3",
+      "id": 2,
+      "name": "bifold_left_outer",
+      "node": 1,
+      "pose": [
+        -2.019056797027588,
+        -0.9943258762359619,
+        1.4500000476837158,
+        0.6087614297866821,
+        -0.0,
+        -0.0,
+        -0.7933533787727356
+      ],
+      "rgba": [
+        0.30000001192092896,
+        0.3400000035762787,
+        0.41999998688697815,
+        1.0
+      ],
+      "role": "bifold_panel",
+      "shape": "cube",
+      "source_id": "bifold_left_outer"
+    },
+    {
+      "asset": "c0b3e818ecbe70d3787d0d312bd7986996cb18c4b6126f5d34ff0b417dd21c2e",
+      "id": 3,
+      "name": "bifold_right_inner",
+      "node": 2,
+      "pose": [
+        1.8742682933807373,
+        -1.0618417263031006,
+        1.4500000476837158,
+        0.4617486298084259,
+        0.0,
+        0.0,
+        0.887010931968689
+      ],
+      "rgba": [
+        0.3799999952316284,
+        0.41999998688697815,
+        0.5,
+        1.0
+      ],
+      "role": "bifold_panel",
+      "shape": "cube",
+      "source_id": "bifold_right_inner"
+    },
+    {
+      "asset": "8b5829fd9b9e71a1cd855ad94e4a6570d46d4b2f6899e85033cf4a25f04dc8b3",
+      "id": 4,
+      "name": "bifold_right_outer",
+      "node": 3,
+      "pose": [
+        2.019056797027588,
+        -0.9943258762359619,
+        1.4500000476837158,
+        0.7933533787727356,
+        0.0,
+        0.0,
+        -0.6087614297866821
+      ],
+      "rgba": [
+        0.30000001192092896,
+        0.3400000035762787,
+        0.41999998688697815,
+        1.0
+      ],
+      "role": "bifold_panel",
+      "shape": "cube",
+      "source_id": "bifold_right_outer"
+    },
+    {
+      "asset": "4c990b014a7d4e81ca1471b24daae96d8d01ba91b97147cdbe6a512bf2a4bb46",
+      "id": 5,
+      "name": "blue_sphere_target",
+      "node": -1,
+      "pose": [
+        0.8500000238418579,
+        0.550000011920929,
+        1.159999966621399,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.1599999964237213,
+        0.36000001430511475,
+        0.949999988079071,
+        1.0
+      ],
+      "role": "target_object",
+      "shape": "sphere",
+      "source_id": "blue_sphere_target"
+    },
+    {
+      "asset": "9041274c5453b549cf5fb47897f3be1b5dd46f0ff32777fb42404514361ff02b",
+      "id": 6,
+      "name": "flat_backboard",
+      "node": -1,
+      "pose": [
+        0.0,
+        1.2000000476837158,
+        2.3499999046325684,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8799999952316284,
+        0.8999999761581421,
+        0.9300000071525574,
+        1.0
+      ],
+      "role": "backboard",
+      "shape": "cube",
+      "source_id": "flat_backboard"
+    },
+    {
+      "asset": "4388d9139c1c048f444363e756a4cf233cdd065be0a3b3fc68fd7cb8b1353c81",
+      "id": 7,
+      "name": "large_floor_base",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        -0.05000000074505806,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8199999928474426,
+        0.800000011920929,
+        0.75,
+        1.0
+      ],
+      "role": "ground",
+      "shape": "cube",
+      "source_id": "large_floor_base"
+    },
+    {
+      "asset": "080ba0c42e77f244973d7bd065eaec3b9b100add87ab44adb4844c15a95f1168",
+      "id": 8,
+      "name": "leg_bl",
+      "node": -1,
+      "pose": [
+        -2.9000000953674316,
+        2.0999999046325684,
+        0.3100000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7400000095367432,
+        0.6200000047683716,
+        0.4399999976158142,
+        1.0
+      ],
+      "role": "table",
+      "shape": "cube",
+      "source_id": "leg_bl"
+    },
+    {
+      "asset": "080ba0c42e77f244973d7bd065eaec3b9b100add87ab44adb4844c15a95f1168",
+      "id": 9,
+      "name": "leg_br",
+      "node": -1,
+      "pose": [
+        2.9000000953674316,
+        2.0999999046325684,
+        0.3100000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7400000095367432,
+        0.6200000047683716,
+        0.4399999976158142,
+        1.0
+      ],
+      "role": "table",
+      "shape": "cube",
+      "source_id": "leg_br"
+    },
+    {
+      "asset": "080ba0c42e77f244973d7bd065eaec3b9b100add87ab44adb4844c15a95f1168",
+      "id": 10,
+      "name": "leg_fl",
+      "node": -1,
+      "pose": [
+        -2.9000000953674316,
+        -1.399999976158142,
+        0.3100000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7400000095367432,
+        0.6200000047683716,
+        0.4399999976158142,
+        1.0
+      ],
+      "role": "table",
+      "shape": "cube",
+      "source_id": "leg_fl"
+    },
+    {
+      "asset": "080ba0c42e77f244973d7bd065eaec3b9b100add87ab44adb4844c15a95f1168",
+      "id": 11,
+      "name": "leg_fr",
+      "node": -1,
+      "pose": [
+        2.9000000953674316,
+        -1.399999976158142,
+        0.3100000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7400000095367432,
+        0.6200000047683716,
+        0.4399999976158142,
+        1.0
+      ],
+      "role": "table",
+      "shape": "cube",
+      "source_id": "leg_fr"
+    },
+    {
+      "asset": "f7bf72242e60cb8c96d5a62f0564c9146e70d5b788aa75a63a7333f6d850eae0",
+      "id": 12,
+      "name": "rear_backdrop_panel",
+      "node": -1,
+      "pose": [
+        0.0,
+        3.549999952316284,
+        1.9500000476837158,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9599999785423279,
+        0.9700000286102295,
+        0.9800000190734863,
+        1.0
+      ],
+      "role": "background",
+      "shape": "cube",
+      "source_id": "rear_backdrop_panel"
+    },
+    {
+      "asset": "a098c3b9f2d207a523709b9d9f25e6df5777b3c238fde1957dfd9123df65b8cd",
+      "id": 13,
+      "name": "red_cube_target",
+      "node": -1,
+      "pose": [
+        -0.800000011920929,
+        0.550000011920929,
+        1.1299999952316284,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9200000166893005,
+        0.18000000715255737,
+        0.18000000715255737,
+        1.0
+      ],
+      "role": "target_object",
+      "shape": "cube",
+      "source_id": "red_cube_target"
+    },
+    {
+      "asset": "759cd006f68f5bc55de7dced3c30be8cbfd3f6eb1166f713df25c7e5a60b5d57",
+      "id": 14,
+      "name": "table_top",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.3499999940395355,
+        0.7099999785423279,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7400000095367432,
+        0.6200000047683716,
+        0.4399999976158142,
+        1.0
+      ],
+      "role": "table",
+      "shape": "cube",
+      "source_id": "table_top"
+    }
+  ],
+  "schema": "stable-envs/object-permanence-rigid-v1",
+  "source": {
+    "commit": "824baddcdad087810d35638bf8f273b884f74975",
+    "exporter": "scripts/export/object_permanence.py",
+    "exporter_sha256": "547e91ee071792a3b38c2f8b191f11ff17d412f95060dc28806a7e24f77c869c",
+    "license": "CC-BY-NC-4.0",
+    "parameters": {},
+    "profile": "nominal-first-member-no-diversity",
+    "script": "object_permanence/generator/tasks/G104_bifold_concertina_doors/pb_task_00000150_pb_bifold_concertina_doors_0151_blender.py",
+    "script_sha256": "5e2f614b500bf58b26a1bd27e246a5f82f73d905bee2dad1bd9d174bfa92ad57",
+    "seed": null,
+    "task": "G104",
+    "task_manifest_sha256": "a427dbe7728af943dd7ec7371d3580449169e5a0981409eb32c07c782a9ead47",
+    "url": "https://github.com/hokindeng/object-permanence",
+    "versions": {
+      "blender": "4.4.0",
+      "numpy": "1.26.4",
+      "python": "3.11.16"
+    },
+    "video_split": null
+  }
+}

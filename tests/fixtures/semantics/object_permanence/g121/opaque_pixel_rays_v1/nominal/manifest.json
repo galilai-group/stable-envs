@@ -1,0 +1,428 @@
+{
+  "arrays": {
+    "camera_matrix": {
+      "dtype": "float64",
+      "shape": [
+        4,
+        4
+      ]
+    },
+    "depth_base": {
+      "dtype": "float32",
+      "shape": [
+        180,
+        320
+      ]
+    },
+    "object_ids": {
+      "dtype": "int16",
+      "shape": [
+        120,
+        180,
+        320
+      ]
+    },
+    "poses": {
+      "dtype": "float64",
+      "shape": [
+        120,
+        4,
+        7
+      ]
+    },
+    "source_frames": {
+      "dtype": "int64",
+      "shape": [
+        120
+      ]
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        2.3333330154418945,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        4.1481475830078125,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "world": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.17134134471416473,
+        -0.9852117300033569,
+        -4.050000190734863
+      ],
+      [
+        0.0,
+        0.9852117300033569,
+        0.17134134471416473,
+        1.350000023841858
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "depth_parts": [
+    {
+      "dtype": "uint32",
+      "file": "depth_0000_0015.npz",
+      "sha256": "5925ed11d1502601fb721d02df3e14e73ef53298b2e0ea28dbc8db42e2d17f54",
+      "shape": [
+        15,
+        180,
+        320
+      ],
+      "start": 0,
+      "stop": 15
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0015_0022.npz",
+      "sha256": "234ea8b3c9e79e996ac4f6d2927ca90dc4a5cf9cd5a31d9f603c5dda7e7135a9",
+      "shape": [
+        7,
+        180,
+        320
+      ],
+      "start": 15,
+      "stop": 22
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0022_0030.npz",
+      "sha256": "d45ddaeb3f85d22775d079e851f274ae0e27b65b4f6e58b820baaf2fef17a9a8",
+      "shape": [
+        8,
+        180,
+        320
+      ],
+      "start": 22,
+      "stop": 30
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0030_0037.npz",
+      "sha256": "c2b21f488af32dda6c11f23aecb9c4e137352d4c7c2043a691dab0fd5c717c40",
+      "shape": [
+        7,
+        180,
+        320
+      ],
+      "start": 30,
+      "stop": 37
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0037_0045.npz",
+      "sha256": "6834aed239f64552613f6f98b948cd22e282cd19dd8aecad9dfafeda54f14ebe",
+      "shape": [
+        8,
+        180,
+        320
+      ],
+      "start": 37,
+      "stop": 45
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0045_0052.npz",
+      "sha256": "60fd68e40cc046205006156b2b76a2a2e19abf3f51a5e0fd50c5411776a8846d",
+      "shape": [
+        7,
+        180,
+        320
+      ],
+      "start": 45,
+      "stop": 52
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0052_0060.npz",
+      "sha256": "f562dd57d4d128393fb3200d6b4ca6aa252f233685ba693b200e736a2b2d0a42",
+      "shape": [
+        8,
+        180,
+        320
+      ],
+      "start": 52,
+      "stop": 60
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0060_0067.npz",
+      "sha256": "71cd57c970fff6521746b7f5b022b47586aed9228f165cd4398af106d7046f48",
+      "shape": [
+        7,
+        180,
+        320
+      ],
+      "start": 60,
+      "stop": 67
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0067_0075.npz",
+      "sha256": "5ba0c5c40ccdcee99c64584456e9697cac5442e9b3035bb8aca60623e27d3275",
+      "shape": [
+        8,
+        180,
+        320
+      ],
+      "start": 67,
+      "stop": 75
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0075_0082.npz",
+      "sha256": "6671a467168c8b165ccd4bdc04be485cf9b09e4cd10bd1e41a82f403b1cf1e3f",
+      "shape": [
+        7,
+        180,
+        320
+      ],
+      "start": 75,
+      "stop": 82
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0082_0090.npz",
+      "sha256": "5335feda4f274634bb39ec338c9ad786925e1bb0889395887c3bd1e2145d3df5",
+      "shape": [
+        8,
+        180,
+        320
+      ],
+      "start": 82,
+      "stop": 90
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0090_0097.npz",
+      "sha256": "9b44d8171def6ebe8784c293c2ec211f2d354dfe61345450984b8c71887ae475",
+      "shape": [
+        7,
+        180,
+        320
+      ],
+      "start": 90,
+      "stop": 97
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0097_0105.npz",
+      "sha256": "28b44060dd7039396e21034da825038ead71e430fcfabfb0223421410d9ccebf",
+      "shape": [
+        8,
+        180,
+        320
+      ],
+      "start": 97,
+      "stop": 105
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0105_0120.npz",
+      "sha256": "12823446a7b165b3bb90f4afeba1c95d21d340d9a787dfa819458b9718ccf5ba",
+      "shape": [
+        15,
+        180,
+        320
+      ],
+      "start": 105,
+      "stop": 120
+    }
+  ],
+  "file": "geometric_g121_nominal.npz",
+  "fps": 24.0,
+  "generator": "scripts/testing/freeze_object_permanence_rays.py",
+  "generator_sha256": "8f71797931e02a420d5c15ebcc6628a219c065a37a710d186709022b6e7e16ac",
+  "height": 180,
+  "object_ids": {
+    "large_floor_base": 1,
+    "rear_backdrop_panel": 2,
+    "shown_object_ball": 3,
+    "wiper_screen": 4
+  },
+  "object_order": [
+    "large_floor_base",
+    "rear_backdrop_panel",
+    "shown_object_ball",
+    "wiper_screen"
+  ],
+  "reference_algorithm_sha256": "360b948df49e5b5d40eac35d958ca4ec6f74c50e9663075c781d1db65a285d84",
+  "schema": "stable-envs/object-permanence-rigid-oracle-v2",
+  "sha256": "c208fe0e63a06247517f518189e8935db74f5240fb8b9c6757808982f0cab1b4",
+  "source_commit": "824baddcdad087810d35638bf8f273b884f74975",
+  "source_license": "CC-BY-NC-4.0",
+  "source_profile": "nominal first member; no diversity wrapper",
+  "source_script": "object_permanence/generator/tasks/G121_wiper_screen_occlusion/pb_task_00000167_pb_wiper_screen_occlusion_0168_blender.py",
+  "source_script_sha256": "cae133b5af0217c81aafc7ce20f5c27a7e9705708c55e3b7916585ab1439b1ef",
+  "source_task_manifest_sha256": "cb466cfea3968e6c305080a7d7e744287bf84cee7079dfd4d6d9d2814f29a646",
+  "source_url": "https://github.com/hokindeng/object-permanence",
+  "target_visible_pixels": {
+    "shown_object_ball": [
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2523,
+      2475,
+      2382,
+      2265,
+      2130,
+      1970,
+      1774,
+      1609,
+      1440,
+      1212,
+      1041,
+      874,
+      711,
+      525,
+      372,
+      244,
+      144,
+      61,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      90,
+      337,
+      711,
+      1155,
+      1719,
+      2265,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538,
+      2538
+    ]
+  },
+  "targets": [
+    "shown_object_ball"
+  ],
+  "task": "G121",
+  "versions": {
+    "blender": "4.4.0",
+    "numpy": "1.26.4",
+    "python": "3.11.16"
+  },
+  "visibility_contract": "stable-envs/opaque-pixel-rays-v1",
+  "width": 320
+}

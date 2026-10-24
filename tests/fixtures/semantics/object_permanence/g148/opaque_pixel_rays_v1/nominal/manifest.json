@@ -1,0 +1,316 @@
+{
+  "arrays": {
+    "camera_matrix": {
+      "dtype": "float64",
+      "shape": [
+        4,
+        4
+      ]
+    },
+    "depth_base": {
+      "dtype": "float32",
+      "shape": [
+        180,
+        320
+      ]
+    },
+    "object_ids": {
+      "dtype": "int16",
+      "shape": [
+        120,
+        180,
+        320
+      ]
+    },
+    "poses": {
+      "dtype": "float64",
+      "shape": [
+        120,
+        8,
+        7
+      ]
+    },
+    "source_frames": {
+      "dtype": "int64",
+      "shape": [
+        120
+      ]
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        1.888888955116272,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        3.358024835586548,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "world": [
+      [
+        0.839570164680481,
+        0.14660684764385223,
+        -0.5230950117111206,
+        -4.199999809265137
+      ],
+      [
+        -0.5432512760162354,
+        0.22657425701618195,
+        -0.8084195256233215,
+        -6.800000190734863
+      ],
+      [
+        2.3803837123637095e-08,
+        0.9628969430923462,
+        0.269869327545166,
+        3.049999952316284
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "depth_parts": [
+    {
+      "dtype": "uint32",
+      "file": "depth_0000_0030.npz",
+      "sha256": "3cd465ecadffb4e0dfa0e5bd2ca92f12ee55648b637cc1898df38428f5ff2442",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 0,
+      "stop": 30
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0030_0060.npz",
+      "sha256": "ff85950b1665809ae2722399177679190490d19cfc88c6783bb13c54c1a012bc",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 30,
+      "stop": 60
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0060_0090.npz",
+      "sha256": "c3a32fc359b713169b571e1b20fb235023014f7b65ddbf4fd22d6c9e34ce3d67",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 60,
+      "stop": 90
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0090_0120.npz",
+      "sha256": "b3b93b0b3a0f6a9229f79d6b9d76b4587c7fdf9f629dcdc8d98d7fcefaaf7be0",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 90,
+      "stop": 120
+    }
+  ],
+  "file": "geometric_g148_nominal.npz",
+  "fps": 24.0,
+  "generator": "scripts/testing/freeze_object_permanence_rays.py",
+  "generator_sha256": "8f71797931e02a420d5c15ebcc6628a219c065a37a710d186709022b6e7e16ac",
+  "height": 180,
+  "object_ids": {
+    "falling_ball": 1,
+    "flap_bracket_foot_support": 2,
+    "flap_bracket_support": 3,
+    "flap_hinge_bar_support": 4,
+    "large_floor_base": 5,
+    "latch_pin_rod": 6,
+    "rear_backdrop_panel": 7,
+    "release_flap_panel": 8
+  },
+  "object_order": [
+    "falling_ball",
+    "flap_bracket_foot_support",
+    "flap_bracket_support",
+    "flap_hinge_bar_support",
+    "large_floor_base",
+    "latch_pin_rod",
+    "rear_backdrop_panel",
+    "release_flap_panel"
+  ],
+  "reference_algorithm_sha256": "360b948df49e5b5d40eac35d958ca4ec6f74c50e9663075c781d1db65a285d84",
+  "schema": "stable-envs/object-permanence-rigid-oracle-v2",
+  "sha256": "e33022bcc0481727c981be9dbb6d5fcb9296630c29438a580857a365d0989ba3",
+  "source_commit": "824baddcdad087810d35638bf8f273b884f74975",
+  "source_license": "CC-BY-NC-4.0",
+  "source_profile": "nominal first member; no diversity wrapper",
+  "source_script": "object_permanence/generator/tasks/G148_latch_release_flap_drop/pb_task_00000194_pb_latch_release_flap_drop_0195_blender.py",
+  "source_script_sha256": "af28cb9ed1d3d9c2bd4a509c15ba277d4c33c4b39cad1f84943f891bff011f3f",
+  "source_task_manifest_sha256": "7ff08f3fda84d65cf218840aaf03a3ecd0fad7671c66b6c390cf1c645e54ea5e",
+  "source_url": "https://github.com/hokindeng/object-permanence",
+  "target_visible_pixels": {
+    "falling_ball": [
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      291,
+      290,
+      290,
+      288,
+      286,
+      284,
+      272,
+      252,
+      241,
+      232,
+      230,
+      226,
+      240,
+      251,
+      265,
+      265,
+      267,
+      270,
+      270,
+      271,
+      270,
+      271,
+      271,
+      269,
+      267,
+      262,
+      266,
+      262,
+      262,
+      261,
+      265,
+      265,
+      266,
+      262,
+      264,
+      265,
+      263,
+      265,
+      264,
+      263,
+      265,
+      263,
+      263,
+      265,
+      263,
+      265,
+      265,
+      264,
+      265,
+      263,
+      264,
+      265,
+      264,
+      264,
+      264,
+      264,
+      265,
+      264,
+      264,
+      265,
+      264,
+      265,
+      265,
+      265,
+      266,
+      265,
+      266,
+      265,
+      266,
+      266,
+      265,
+      266,
+      266,
+      266,
+      265,
+      265,
+      264,
+      264,
+      266,
+      264,
+      265,
+      266,
+      264,
+      265,
+      266,
+      263
+    ]
+  },
+  "targets": [
+    "falling_ball"
+  ],
+  "task": "G148",
+  "versions": {
+    "blender": "4.4.0",
+    "numpy": "1.26.4",
+    "python": "3.11.16"
+  },
+  "visibility_contract": "stable-envs/opaque-pixel-rays-v1",
+  "width": 320
+}

@@ -5,7 +5,8 @@ rays and equal-depth semantic IDs. It is explicitly selected; existing renderers
 State interfaces, raw Blender BVH references and acceptance thresholds are unchanged.
 The seven legacy-certified scenes remain certified under their original contract.
 G63/G66/G80/G81 retain their legacy BVH deferrals and additionally pass this new
-contract. G02/G03/G05–G07/G65/G82–G89/G93–G97/G99/G100 are certified only under the new contract.
+contract. In total, 86 scenes are certified under this explicitly selected
+contract; the source audit catalog lists their IDs.
 
 ## Geometric contract
 
@@ -402,6 +403,86 @@ comparison; G08's initial scene is not presented as an animated trajectory.
 Each successful GIF is decoded to verify its expected frame count before its
 temporary PNG directory is deleted. Only GIFs remain in the artifact cache.
 
-The scope is now **32 audited first members: seven legacy and 25 versioned
-scenes**, out of 197 scripts. Old fixtures, interfaces and acceptance budgets
-remain unchanged. Subsequent audits resume at G11.
+This early batch brought the scope to **32 audited first members: seven legacy
+and 25 versioned scenes**, out of 197 scripts. Old fixtures, interfaces and
+acceptance budgets remained unchanged.
+
+## Complete nominal audit: G11–G150
+
+All 150 task groups now have a measured disposition in the
+[source audit catalog](object-permanence-audit.json). The first nominal member is
+the supported import unit: **93 are certified, 57 are deferred**. The other 47
+member scripts are explicitly listed as unregistered entries, not certified by
+similarity to the first member. There are no unclassified nominal tasks.
+
+Four further reusable batches add 61 recordings without changing the renderer,
+recording schema, State interfaces, ray contract or thresholds:
+
+| Source range | Newly certified | Representative behavior | Maximum depth MSE | Minimum mask IoU |
+|---|---:|---|---:|---:|
+| G28–G42 | 9 | Tunnels, carrying carts, vehicle identities, hidden lifts, trapdoor and ring track | 9.39e-16 | 1.0 |
+| G56–G79 | 12 | Cup swaps, hinged lids, pendulums, slot/height gates, scattered balls and blinds | 3.31e-13 | 1.0 |
+| G104–G127 | 20 | Folding doors, lids, transport trays, flaps, support withdrawal and gates | 1.06e-13 | 1.0 |
+| G129–G150 | 20 | Rotating/lifting mechanisms, traps, supports and separating rollers | 2.01e-14 | 1.0 |
+
+Every newly certified recording passed all-frame source extraction, an additional fresh
+Blender-process world-triangle/normal comparison, and both cached and full
+120-frame depth/all-object-mask gates. RGB/depth/IDs also agree bitwise at 160x90
+and 320x180 for reverse, shuffled and repeated requests. Output mutation isolation
+and the existing single static-seed construction assertion remain enforced.
+The catalog records per-scene metrics, source hashes, entry recipes and independent
+world-check errors; the inventory separates these measured results from AST hints.
+
+Visibility probes are the task objects designated by source roles (targets,
+balls, shown objects or stationary task objects), not every moving mesh. For
+example, rear wheels, hidden carriage panels and strings remain in the complete
+poses and all-object ID/mask comparisons even when never visible. They are not
+used as visibility probes requiring at least one visible frame. The catalog
+records the probe names and their raw source roles independently of motion tags.
+
+### Deferred capabilities and stability
+
+| Primary reason | Nominal tasks | Policy |
+|---|---:|---|
+| Orthographic projection | 40 | Keep the source camera; no perspective substitution |
+| Renderable Curve objects | 5 | No unvalidated conversion or dropped rails |
+| Source execution failure | 5 | Preserve undefined-global failures; do not invent driver defaults |
+| Transparency | 3 | No opaque replacement of glass/acrylic |
+| Independent source-normal variation | 2 | G98/G132 exceed the existing 3e-6 normal budget |
+| Animated geometry/scale | 1 | G146 changes geometry/scale at source frame 31 |
+| Static cache reuse assertion | 1 | G103 outputs pass, but seed rebuilds violate the existing regression |
+
+These are primary reasons: for example, G08 also uses an orthographic camera.
+G132's fresh-process corner-normal difference is `3.16480663e-6`; its provisional
+data is excluded, rather than raising the normal tolerance.
+
+G103 needs a distinct interpretation. Its cached and full paths pass all 120
+source depth/mask frames (maximum MSE `8.19e-16`, minimum IoU 1.0), and all three
+outputs agree bitwise. However, at both resolutions, seed counts progress from
+1 after the reverse sequence to 2 after a five-frame request, then 4 when that
+request repeats. No full-coverage fallback is counted. This is a cache retention
+issue, not an observed occlusion error. The unchanged single-build assertion is
+not waived or replaced with a scene exception; G103 remains deferred for later
+general cache investigation.
+
+### Preview artifacts and cleanup
+
+Certified comparisons contain every source frame. Current-contract comparisons
+for G63/G66/G80/G81 coexist with their historical legacy diagnostics. Deferred
+previews use 24 evenly sampled source frames and visible **NOT CERTIFIED** labels;
+source execution failures retain only an initial scene, or a diagnostic card if
+no camera could be built. The earlier G01–G10 previews retain their original
+frame counts. G98's existing full comparison and G103's explicitly deferred
+comparison are retained as diagnostics, not accepted samples.
+
+Native previews initially used Cycles CPU, 16 samples and denoising. Most of this
+bulk pass uses the same original source scene with Cycles CUDA, 64 samples and
+denoising disabled; this reduces preview-generation cost and can leave visible
+sampling noise. These settings affect only illustrative RGB, never the independent
+CPU geometry oracle or shared simplified renderer. RGB equality with finished
+dataset MP4s is not asserted.
+
+Accepted GIFs live in `evaluation/`; deferred/historical diagnostic GIFs live in
+`evaluation/deferred-previews/`. Each output's frame count is decoded before
+temporary PNGs are removed. Frozen numeric fixtures and source provenance stay
+in the repository; the artifact cache retains GIFs only.

@@ -1,0 +1,283 @@
+{
+  "arrays": {
+    "frames": {
+      "dtype": "int64",
+      "sha256": "3ce1a862b6cf0bb21bc1354b758cafa47ca5ec03b5c004d6210f5abd8c55df44",
+      "shape": [
+        120
+      ]
+    },
+    "poses": {
+      "dtype": "float32",
+      "sha256": "e36eeb919d79547a241134e59eb8974d5ef52fb246431ad0e90dc785d3c417c1",
+      "shape": [
+        120,
+        4,
+        7
+      ]
+    }
+  },
+  "assets": {
+    "1d6f5e44de05480210aaed91759c03683869ab6c342e2125f1954a68958ea8c8": {
+      "file": "assets/cube/1d6f5e44de05480210aaed91759c03683869ab6c342e2125f1954a68958ea8c8.npz",
+      "sha256": "b31653d44546e048ec69fd345e3e4c53638519424daaa6018928ccc01656c744"
+    },
+    "4310783fc575ca6e09ef2c99fde515a1e6ec057a7010058dbafe4a9aef211f98": {
+      "file": "assets/cube/4310783fc575ca6e09ef2c99fde515a1e6ec057a7010058dbafe4a9aef211f98.npz",
+      "sha256": "c2120ae453c508322d007ef88f57b8e769300263f5d1cef77f039a38c01d8a0e"
+    },
+    "5b53920f023331c4490bfa1d3ae4b8ed7867b59a63e7612e00ef97c5b1c32cb5": {
+      "file": "assets/sphere/5b53920f023331c4490bfa1d3ae4b8ed7867b59a63e7612e00ef97c5b1c32cb5.npz",
+      "sha256": "f53489d878da9589389e860efb9b8edc5e20b960475941e70164402fa83ab338"
+    },
+    "91f078a0cc6f3b0d9c81ed9c1bb57e7bf71ae3d0c8a63110a31c8f6973b00823": {
+      "file": "assets/cube/91f078a0cc6f3b0d9c81ed9c1bb57e7bf71ae3d0c8a63110a31c8f6973b00823.npz",
+      "sha256": "8627055c1c634441ba67e81ff0e5a2dc5db7328297c7e5c746e21bc2a8fb5c2b"
+    },
+    "ecce53d98dbaa4e0e8c4aea6b2a724c13941b4db0cf70069e0b8909491d33685": {
+      "file": "assets/cube/ecce53d98dbaa4e0e8c4aea6b2a724c13941b4db0cf70069e0b8909491d33685.npz",
+      "sha256": "e865929c6c50a64fecad365f07cc90d6666f8bb2ff1d7b6fa21b26225442968a"
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "height": 720,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        1.888888955116272,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        3.358024835586548,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "width": 1280,
+    "world": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.12119297683238983,
+        -0.9926289916038513,
+        -8.600000381469727
+      ],
+      [
+        0.0,
+        0.9926289916038513,
+        0.12119297683238983,
+        2.049999952316284
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "clip": "g70-nominal",
+  "conventions": {
+    "quaternion": "wxyz",
+    "units": "source-scene-units",
+    "world": "right-handed-z-up"
+  },
+  "dynamic_nodes": [
+    "flat_slab",
+    "left_support_column",
+    "red_ball_on_slab",
+    "right_support_column"
+  ],
+  "fps": 24.0,
+  "license_ref": {
+    "sha256": "0163481eb7a0fe3ed86d2dccf542a849b36b3c119f8ca6d3d5b36c074f2e1a1c"
+  },
+  "objects": [
+    {
+      "asset": "91f078a0cc6f3b0d9c81ed9c1bb57e7bf71ae3d0c8a63110a31c8f6973b00823",
+      "id": 1,
+      "name": "flat_slab",
+      "node": 0,
+      "pose": [
+        0.0,
+        0.0,
+        1.7000000476837158,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5799999833106995,
+        0.6000000238418579,
+        0.6399999856948853,
+        1.0
+      ],
+      "role": "slab_resting_on_columns",
+      "shape": "cube",
+      "source_id": "flat_slab"
+    },
+    {
+      "asset": "1d6f5e44de05480210aaed91759c03683869ab6c342e2125f1954a68958ea8c8",
+      "id": 2,
+      "name": "large_floor_base",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        -0.05000000074505806,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8199999928474426,
+        0.800000011920929,
+        0.75,
+        1.0
+      ],
+      "role": "ground",
+      "shape": "cube",
+      "source_id": "large_floor_base"
+    },
+    {
+      "asset": "4310783fc575ca6e09ef2c99fde515a1e6ec057a7010058dbafe4a9aef211f98",
+      "id": 3,
+      "name": "left_support_column",
+      "node": 1,
+      "pose": [
+        -1.5499999523162842,
+        0.0,
+        0.800000011920929,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.23999999463558197,
+        0.41999998688697815,
+        0.7200000286102295,
+        1.0
+      ],
+      "role": "support_column_left",
+      "shape": "cube",
+      "source_id": "left_support_column"
+    },
+    {
+      "asset": "ecce53d98dbaa4e0e8c4aea6b2a724c13941b4db0cf70069e0b8909491d33685",
+      "id": 4,
+      "name": "rear_backdrop_panel",
+      "node": -1,
+      "pose": [
+        0.0,
+        2.4200000762939453,
+        1.600000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9599999785423279,
+        0.9700000286102295,
+        0.9800000190734863,
+        1.0
+      ],
+      "role": "background",
+      "shape": "cube",
+      "source_id": "rear_backdrop_panel"
+    },
+    {
+      "asset": "5b53920f023331c4490bfa1d3ae4b8ed7867b59a63e7612e00ef97c5b1c32cb5",
+      "id": 5,
+      "name": "red_ball_on_slab",
+      "node": 2,
+      "pose": [
+        0.0,
+        0.0,
+        2.2200000286102295,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8500000238418579,
+        0.11999999731779099,
+        0.10000000149011612,
+        1.0
+      ],
+      "role": "ball_on_slab",
+      "shape": "sphere",
+      "source_id": "red_ball_on_slab"
+    },
+    {
+      "asset": "4310783fc575ca6e09ef2c99fde515a1e6ec057a7010058dbafe4a9aef211f98",
+      "id": 6,
+      "name": "right_support_column",
+      "node": 3,
+      "pose": [
+        1.5499999523162842,
+        0.0,
+        0.800000011920929,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.23999999463558197,
+        0.41999998688697815,
+        0.7200000286102295,
+        1.0
+      ],
+      "role": "support_column_right",
+      "shape": "cube",
+      "source_id": "right_support_column"
+    }
+  ],
+  "schema": "stable-envs/object-permanence-rigid-v1",
+  "source": {
+    "commit": "824baddcdad087810d35638bf8f273b884f74975",
+    "exporter": "scripts/export/object_permanence.py",
+    "exporter_sha256": "547e91ee071792a3b38c2f8b191f11ff17d412f95060dc28806a7e24f77c869c",
+    "license": "CC-BY-NC-4.0",
+    "parameters": {},
+    "profile": "nominal-first-member-no-diversity",
+    "script": "object_permanence/generator/tasks/G70_popaway_support_columns/pb_task_00000116_pb_popaway_support_columns_0117_blender.py",
+    "script_sha256": "0477aba264860ee2615323f8172581e3e4049de1ed302a5d8b0a6e3c1e18a778",
+    "seed": null,
+    "task": "G70",
+    "task_manifest_sha256": "7fb82e5a1d3aa679ffae3241bfaa942be8278148f499219ef1750d3211043bc2",
+    "url": "https://github.com/hokindeng/object-permanence",
+    "versions": {
+      "blender": "4.4.0",
+      "numpy": "1.26.4",
+      "python": "3.11.16"
+    },
+    "video_split": null
+  }
+}

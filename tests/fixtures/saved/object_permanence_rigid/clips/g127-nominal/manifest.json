@@ -1,0 +1,285 @@
+{
+  "arrays": {
+    "frames": {
+      "dtype": "int64",
+      "sha256": "3ce1a862b6cf0bb21bc1354b758cafa47ca5ec03b5c004d6210f5abd8c55df44",
+      "shape": [
+        120
+      ]
+    },
+    "poses": {
+      "dtype": "float32",
+      "sha256": "4999814adbd5f824e537b9f5aafb95290561c60e4ac93aacd336f2c115a6e147",
+      "shape": [
+        120,
+        2,
+        7
+      ]
+    }
+  },
+  "assets": {
+    "00cf7ab29c7d7491a56e15885ffc5bf9bcfa9a5f28fa392865cc0907ff929bd6": {
+      "file": "assets/cube/00cf7ab29c7d7491a56e15885ffc5bf9bcfa9a5f28fa392865cc0907ff929bd6.npz",
+      "sha256": "282e660c071f825d6e54e1c019baf9bdb70917336de532614f069e8c79de2d97"
+    },
+    "1aea8c1528979519873f4a13bc13557742a49a29dac53164f864f0815c3c6dfb": {
+      "file": "assets/sphere/1aea8c1528979519873f4a13bc13557742a49a29dac53164f864f0815c3c6dfb.npz",
+      "sha256": "e93bbaad6cfadac275f3dc38d80656105ad9c614429f16eda97a417fdd1ee9ca"
+    },
+    "245835659332bc8a7fda4c9b86b6a470eaa983386e8e9facc8adcddfbbb79cda": {
+      "file": "assets/cube/245835659332bc8a7fda4c9b86b6a470eaa983386e8e9facc8adcddfbbb79cda.npz",
+      "sha256": "598108f45f538f80ac71f6b66851052dfa5820f9a50699bdae7e3e3dc3ecba0e"
+    },
+    "375f50fa5f209f620c3209bc085b146b2aa420ffdf5e60339ab30661c517a0bf": {
+      "file": "assets/cube/375f50fa5f209f620c3209bc085b146b2aa420ffdf5e60339ab30661c517a0bf.npz",
+      "sha256": "5ad9e1f5f4925cfad5f0f02a1a9db549b2e2479916c30c7ff908922db3b3147a"
+    },
+    "8aab2514f45cbbdd51b662f671f0aa81009f9cefa0ff0ae2d3201224866ba196": {
+      "file": "assets/cube/8aab2514f45cbbdd51b662f671f0aa81009f9cefa0ff0ae2d3201224866ba196.npz",
+      "sha256": "c2d559f8e476d697d5572aef975186503ef2d74f3995a62fae9c88fe67a3abe9"
+    },
+    "e924d029b9a617e6485db234009c890efb45db2cbfc94dc3eb5f3acef667d20c": {
+      "file": "assets/cylinder/e924d029b9a617e6485db234009c890efb45db2cbfc94dc3eb5f3acef667d20c.npz",
+      "sha256": "95285725732a491007d755fb43db98e582b8cd88c8ab106e27d05448e0e06ae3"
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "height": 720,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        1.7777777910232544,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        3.1604936122894287,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "width": 1280,
+    "world": [
+      [
+        0.9065067768096924,
+        0.08544382452964783,
+        -0.41345474123954773,
+        -2.549999952316284
+      ],
+      [
+        -0.4221912622451782,
+        0.18346033990383148,
+        -0.8877481818199158,
+        -7.150000095367432
+      ],
+      [
+        -5.359028421025869e-08,
+        0.979306697845459,
+        0.2023816704750061,
+        2.049999952316284
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "clip": "g127-nominal",
+  "conventions": {
+    "quaternion": "wxyz",
+    "units": "source-scene-units",
+    "world": "right-handed-z-up"
+  },
+  "dynamic_nodes": [
+    "rising_bollard_post",
+    "rolling_ball"
+  ],
+  "fps": 24.0,
+  "license_ref": {
+    "sha256": "0163481eb7a0fe3ed86d2dccf542a849b36b3c119f8ca6d3d5b36c074f2e1a1c"
+  },
+  "objects": [
+    {
+      "asset": "00cf7ab29c7d7491a56e15885ffc5bf9bcfa9a5f28fa392865cc0907ff929bd6",
+      "id": 1,
+      "name": "bollard_floor_slot",
+      "node": -1,
+      "pose": [
+        1.0,
+        0.0,
+        0.012000000104308128,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.10000000149011612,
+        0.10000000149011612,
+        0.11999999731779099,
+        1.0
+      ],
+      "role": "bollard_guide_slot",
+      "shape": "cube",
+      "source_id": "bollard_floor_slot"
+    },
+    {
+      "asset": "8aab2514f45cbbdd51b662f671f0aa81009f9cefa0ff0ae2d3201224866ba196",
+      "id": 2,
+      "name": "large_floor_base",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        -0.05000000074505806,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8199999928474426,
+        0.800000011920929,
+        0.75,
+        1.0
+      ],
+      "role": "ground",
+      "shape": "cube",
+      "source_id": "large_floor_base"
+    },
+    {
+      "asset": "375f50fa5f209f620c3209bc085b146b2aa420ffdf5e60339ab30661c517a0bf",
+      "id": 3,
+      "name": "rear_backdrop_panel",
+      "node": -1,
+      "pose": [
+        0.0,
+        2.4800000190734863,
+        1.6200000047683716,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9599999785423279,
+        0.9700000286102295,
+        0.9800000190734863,
+        1.0
+      ],
+      "role": "background",
+      "shape": "cube",
+      "source_id": "rear_backdrop_panel"
+    },
+    {
+      "asset": "e924d029b9a617e6485db234009c890efb45db2cbfc94dc3eb5f3acef667d20c",
+      "id": 4,
+      "name": "rising_bollard_post",
+      "node": 0,
+      "pose": [
+        1.0,
+        0.0,
+        -0.5699999928474426,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6000000238418579,
+        0.6100000143051147,
+        0.6399999856948853,
+        1.0
+      ],
+      "role": "rising_bollard_post",
+      "shape": "cylinder",
+      "source_id": "rising_bollard_post"
+    },
+    {
+      "asset": "1aea8c1528979519873f4a13bc13557742a49a29dac53164f864f0815c3c6dfb",
+      "id": 5,
+      "name": "rolling_ball",
+      "node": 1,
+      "pose": [
+        -3.0,
+        0.0,
+        0.2199999988079071,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        1.0,
+        0.3799999952316284,
+        0.05999999865889549,
+        1.0
+      ],
+      "role": "moving_ball",
+      "shape": "sphere",
+      "source_id": "rolling_ball"
+    },
+    {
+      "asset": "245835659332bc8a7fda4c9b86b6a470eaa983386e8e9facc8adcddfbbb79cda",
+      "id": 6,
+      "name": "straight_roll_track",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        0.004999999888241291,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "roll_track",
+      "shape": "cube",
+      "source_id": "straight_roll_track"
+    }
+  ],
+  "schema": "stable-envs/object-permanence-rigid-v1",
+  "source": {
+    "commit": "824baddcdad087810d35638bf8f273b884f74975",
+    "exporter": "scripts/export/object_permanence.py",
+    "exporter_sha256": "547e91ee071792a3b38c2f8b191f11ff17d412f95060dc28806a7e24f77c869c",
+    "license": "CC-BY-NC-4.0",
+    "parameters": {},
+    "profile": "nominal-first-member-no-diversity",
+    "script": "object_permanence/generator/tasks/G127_rising_bollard_stop/pb_task_00000173_pb_rising_bollard_stop_0174_blender.py",
+    "script_sha256": "bd59193770fe52ada186b0dbfc0da4867f374b4a8a26a1d23141938663f0f409",
+    "seed": null,
+    "task": "G127",
+    "task_manifest_sha256": "29e4ca0ef2be65ea8e2cee6e6c367e90cfe33f69b4f96328a35fa0ecd16e96b8",
+    "url": "https://github.com/hokindeng/object-permanence",
+    "versions": {
+      "blender": "4.4.0",
+      "numpy": "1.26.4",
+      "python": "3.11.16"
+    },
+    "video_split": null
+  }
+}

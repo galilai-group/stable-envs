@@ -1,0 +1,665 @@
+{
+  "arrays": {
+    "frames": {
+      "dtype": "int64",
+      "sha256": "3ce1a862b6cf0bb21bc1354b758cafa47ca5ec03b5c004d6210f5abd8c55df44",
+      "shape": [
+        120
+      ]
+    },
+    "poses": {
+      "dtype": "float32",
+      "sha256": "603b9682a721e9a5469a09e548573b963bf6aa1f55601c20efd98e1a976631ee",
+      "shape": [
+        120,
+        2,
+        7
+      ]
+    }
+  },
+  "assets": {
+    "1117a35694575a8088f5c48ce40063c81d9d4febedeb84827b91d826c4d86193": {
+      "file": "assets/cube/1117a35694575a8088f5c48ce40063c81d9d4febedeb84827b91d826c4d86193.npz",
+      "sha256": "e43e6b42e6647a1795214e1e4cc984b1c9330d24262bcf916a62ac48c1256273"
+    },
+    "1aea8c1528979519873f4a13bc13557742a49a29dac53164f864f0815c3c6dfb": {
+      "file": "assets/sphere/1aea8c1528979519873f4a13bc13557742a49a29dac53164f864f0815c3c6dfb.npz",
+      "sha256": "e93bbaad6cfadac275f3dc38d80656105ad9c614429f16eda97a417fdd1ee9ca"
+    },
+    "4c52c324deee455260085d9150b80d47bf1ccc13d4b6d502435d12c3af1ed3da": {
+      "file": "assets/cube/4c52c324deee455260085d9150b80d47bf1ccc13d4b6d502435d12c3af1ed3da.npz",
+      "sha256": "d81aff74f4cf3b4c1ced9e07d39eeef2aabcbd4cd2a6e28e263bf9ce61189b9e"
+    },
+    "525fc06150e80522d3cdd142113f8b5e5b1721965834d8e9c3457e3d6226f5f0": {
+      "file": "assets/cube/525fc06150e80522d3cdd142113f8b5e5b1721965834d8e9c3457e3d6226f5f0.npz",
+      "sha256": "2913ec82ee81958569c441dfb8ccf59ec49292a4a8916a991b36431f0a74267d"
+    },
+    "55518a597f4806d420e5ae5f663b0a76ddfc9c9300f5a07ba0562b9be6d1b552": {
+      "file": "assets/cube/55518a597f4806d420e5ae5f663b0a76ddfc9c9300f5a07ba0562b9be6d1b552.npz",
+      "sha256": "ed9c64fecb21a51db7d75dbcb3ea61efe70776d4b49c5cd7b9beb4084b6bf21e"
+    },
+    "567b52323e274e4871ad331d832485179b64e4d245e800e3530731505954ea4b": {
+      "file": "assets/cube/567b52323e274e4871ad331d832485179b64e4d245e800e3530731505954ea4b.npz",
+      "sha256": "ecc92db5fcb8e0fe6fe833070b521dad580697ad816fa727b76e6f6139c79c12"
+    },
+    "6f59f966ffcb68e8ee6a0dd38fd37b52f3e2b728b8638fede52071cd255f63cc": {
+      "file": "assets/cube/6f59f966ffcb68e8ee6a0dd38fd37b52f3e2b728b8638fede52071cd255f63cc.npz",
+      "sha256": "a16250c45692152d7bae147336794df065035eebce513aaccf5d251af75af2d1"
+    },
+    "7ddfdf2a43fe8a553debbc69aa97e74eb5b55eee313a594fdbfb9ce2b1936aec": {
+      "file": "assets/cube/7ddfdf2a43fe8a553debbc69aa97e74eb5b55eee313a594fdbfb9ce2b1936aec.npz",
+      "sha256": "97c90dbf02cbc3f5921cf043a8f261278c67e71457708a11b8d8cc21b4570ea4"
+    },
+    "8549df39efa151f2671e210d95afc1259db0d34093b8a64fb7d3e85edef2b1a2": {
+      "file": "assets/cube/8549df39efa151f2671e210d95afc1259db0d34093b8a64fb7d3e85edef2b1a2.npz",
+      "sha256": "76c1ae84370ed1d1dbb2e6f1e89267ef1912b31ef28c6f659d73bd4c85854f1b"
+    },
+    "bfd867def5e21607115d2e8f3464164836ba1f1724fcf9ad1934ee620b63c42d": {
+      "file": "assets/cube/bfd867def5e21607115d2e8f3464164836ba1f1724fcf9ad1934ee620b63c42d.npz",
+      "sha256": "6665384f82cb2774f4ead1894da28af37faf6066ec5741c027c17f8732827391"
+    },
+    "ca54a69724e21cbac55d882f6fadd4294566bf39bc0f4bd1a196f5f37b035d30": {
+      "file": "assets/cube/ca54a69724e21cbac55d882f6fadd4294566bf39bc0f4bd1a196f5f37b035d30.npz",
+      "sha256": "ac4d3a7e718e6c4209165e21c6594f36c7af4fc029c0e8ca924155b8e4a39edf"
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "height": 720,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        2.1111111640930176,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        3.753086566925049,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "width": 1280,
+    "world": [
+      [
+        0.8029101490974426,
+        -0.14952369034290314,
+        0.5770424604415894,
+        4.900000095367432
+      ],
+      [
+        0.5961000919342041,
+        0.2013992965221405,
+        -0.7772406339645386,
+        -6.599999904632568
+      ],
+      [
+        -5.199189345717059e-08,
+        0.9680294394493103,
+        0.2508366107940674,
+        3.25
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "clip": "g28-nominal",
+  "conventions": {
+    "quaternion": "wxyz",
+    "units": "source-scene-units",
+    "world": "right-handed-z-up"
+  },
+  "dynamic_nodes": [
+    "identity_A_red_ball",
+    "identity_B_blue_ball"
+  ],
+  "fps": 24.0,
+  "license_ref": {
+    "sha256": "0163481eb7a0fe3ed86d2dccf542a849b36b3c119f8ca6d3d5b36c074f2e1a1c"
+  },
+  "objects": [
+    {
+      "asset": "bfd867def5e21607115d2e8f3464164836ba1f1724fcf9ad1934ee620b63c42d",
+      "id": 1,
+      "name": "dark_visible_tunnel_interior_shadow",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        0.7580000162124634,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.054999999701976776,
+        0.057999998331069946,
+        0.06499999761581421,
+        1.0
+      ],
+      "role": "tunnel_interior",
+      "shape": "cube",
+      "source_id": "dark_visible_tunnel_interior_shadow"
+    },
+    {
+      "asset": "8549df39efa151f2671e210d95afc1259db0d34093b8a64fb7d3e85edef2b1a2",
+      "id": 2,
+      "name": "gray_tunnel_back_wall",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.6899999976158142,
+        1.4149999618530273,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.30000001192092896,
+        0.3100000023841858,
+        0.33000001311302185,
+        1.0
+      ],
+      "role": "tunnel_occluder",
+      "shape": "cube",
+      "source_id": "gray_tunnel_back_wall"
+    },
+    {
+      "asset": "8549df39efa151f2671e210d95afc1259db0d34093b8a64fb7d3e85edef2b1a2",
+      "id": 3,
+      "name": "gray_tunnel_front_wall_camera_side",
+      "node": -1,
+      "pose": [
+        0.0,
+        -0.6899999976158142,
+        1.4149999618530273,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.30000001192092896,
+        0.3100000023841858,
+        0.33000001311302185,
+        1.0
+      ],
+      "role": "tunnel_occluder",
+      "shape": "cube",
+      "source_id": "gray_tunnel_front_wall_camera_side"
+    },
+    {
+      "asset": "567b52323e274e4871ad331d832485179b64e4d245e800e3530731505954ea4b",
+      "id": 4,
+      "name": "gray_tunnel_roof",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        2.0299999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.30000001192092896,
+        0.3100000023841858,
+        0.33000001311302185,
+        1.0
+      ],
+      "role": "tunnel_occluder",
+      "shape": "cube",
+      "source_id": "gray_tunnel_roof"
+    },
+    {
+      "asset": "1aea8c1528979519873f4a13bc13557742a49a29dac53164f864f0815c3c6dfb",
+      "id": 5,
+      "name": "identity_A_red_ball",
+      "node": 0,
+      "pose": [
+        -3.3499999046325684,
+        -0.2800000011920929,
+        0.9779999852180481,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.949999988079071,
+        0.029999999329447746,
+        0.019999999552965164,
+        1.0
+      ],
+      "role": "target",
+      "shape": "sphere",
+      "source_id": "identity_A_red_ball"
+    },
+    {
+      "asset": "1aea8c1528979519873f4a13bc13557742a49a29dac53164f864f0815c3c6dfb",
+      "id": 6,
+      "name": "identity_B_blue_ball",
+      "node": 1,
+      "pose": [
+        3.3499999046325684,
+        0.2800000011920929,
+        0.9779999852180481,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.05000000074505806,
+        0.20000000298023224,
+        0.949999988079071,
+        1.0
+      ],
+      "role": "target",
+      "shape": "sphere",
+      "source_id": "identity_B_blue_ball"
+    },
+    {
+      "asset": "1117a35694575a8088f5c48ce40063c81d9d4febedeb84827b91d826c4d86193",
+      "id": 7,
+      "name": "large_floor_base",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8199999928474426,
+        0.800000011920929,
+        0.75,
+        1.0
+      ],
+      "role": "ground",
+      "shape": "cube",
+      "source_id": "large_floor_base"
+    },
+    {
+      "asset": "55518a597f4806d420e5ae5f663b0a76ddfc9c9300f5a07ba0562b9be6d1b552",
+      "id": 8,
+      "name": "left_tunnel_back_vertical_rim",
+      "node": -1,
+      "pose": [
+        -1.024999976158142,
+        0.6899999976158142,
+        1.4149999618530273,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5,
+        0.5099999904632568,
+        0.5299999713897705,
+        1.0
+      ],
+      "role": "tunnel_opening_rim",
+      "shape": "cube",
+      "source_id": "left_tunnel_back_vertical_rim"
+    },
+    {
+      "asset": "55518a597f4806d420e5ae5f663b0a76ddfc9c9300f5a07ba0562b9be6d1b552",
+      "id": 9,
+      "name": "left_tunnel_front_vertical_rim",
+      "node": -1,
+      "pose": [
+        -1.024999976158142,
+        -0.6899999976158142,
+        1.4149999618530273,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5,
+        0.5099999904632568,
+        0.5299999713897705,
+        1.0
+      ],
+      "role": "tunnel_opening_rim",
+      "shape": "cube",
+      "source_id": "left_tunnel_front_vertical_rim"
+    },
+    {
+      "asset": "ca54a69724e21cbac55d882f6fadd4294566bf39bc0f4bd1a196f5f37b035d30",
+      "id": 10,
+      "name": "left_tunnel_opening_top_rim",
+      "node": -1,
+      "pose": [
+        -1.024999976158142,
+        0.0,
+        2.0959999561309814,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5,
+        0.5099999904632568,
+        0.5299999713897705,
+        1.0
+      ],
+      "role": "tunnel_opening_rim",
+      "shape": "cube",
+      "source_id": "left_tunnel_opening_top_rim"
+    },
+    {
+      "asset": "525fc06150e80522d3cdd142113f8b5e5b1721965834d8e9c3457e3d6226f5f0",
+      "id": 11,
+      "name": "neutral_gray_lane_marker_back",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.2800000011920929,
+        0.7540000081062317,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.4000000059604645,
+        0.4000000059604645,
+        0.4000000059604645,
+        1.0
+      ],
+      "role": "lane_marker",
+      "shape": "cube",
+      "source_id": "neutral_gray_lane_marker_back"
+    },
+    {
+      "asset": "525fc06150e80522d3cdd142113f8b5e5b1721965834d8e9c3457e3d6226f5f0",
+      "id": 12,
+      "name": "neutral_gray_lane_marker_front",
+      "node": -1,
+      "pose": [
+        0.0,
+        -0.2800000011920929,
+        0.7540000081062317,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.4000000059604645,
+        0.4000000059604645,
+        0.4000000059604645,
+        1.0
+      ],
+      "role": "lane_marker",
+      "shape": "cube",
+      "source_id": "neutral_gray_lane_marker_front"
+    },
+    {
+      "asset": "7ddfdf2a43fe8a553debbc69aa97e74eb5b55eee313a594fdbfb9ce2b1936aec",
+      "id": 13,
+      "name": "neutral_left_back_endpoint_pad",
+      "node": -1,
+      "pose": [
+        -3.3499999046325684,
+        0.2800000011920929,
+        0.7680000066757202,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.3400000035762787,
+        0.3400000035762787,
+        0.3400000035762787,
+        1.0
+      ],
+      "role": "neutral_endpoint_marker",
+      "shape": "cube",
+      "source_id": "neutral_left_back_endpoint_pad"
+    },
+    {
+      "asset": "7ddfdf2a43fe8a553debbc69aa97e74eb5b55eee313a594fdbfb9ce2b1936aec",
+      "id": 14,
+      "name": "neutral_left_front_endpoint_pad",
+      "node": -1,
+      "pose": [
+        -3.3499999046325684,
+        -0.2800000011920929,
+        0.7680000066757202,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.3400000035762787,
+        0.3400000035762787,
+        0.3400000035762787,
+        1.0
+      ],
+      "role": "neutral_endpoint_marker",
+      "shape": "cube",
+      "source_id": "neutral_left_front_endpoint_pad"
+    },
+    {
+      "asset": "7ddfdf2a43fe8a553debbc69aa97e74eb5b55eee313a594fdbfb9ce2b1936aec",
+      "id": 15,
+      "name": "neutral_right_back_endpoint_pad",
+      "node": -1,
+      "pose": [
+        3.3499999046325684,
+        0.2800000011920929,
+        0.7680000066757202,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.3400000035762787,
+        0.3400000035762787,
+        0.3400000035762787,
+        1.0
+      ],
+      "role": "neutral_endpoint_marker",
+      "shape": "cube",
+      "source_id": "neutral_right_back_endpoint_pad"
+    },
+    {
+      "asset": "7ddfdf2a43fe8a553debbc69aa97e74eb5b55eee313a594fdbfb9ce2b1936aec",
+      "id": 16,
+      "name": "neutral_right_front_endpoint_pad",
+      "node": -1,
+      "pose": [
+        3.3499999046325684,
+        -0.2800000011920929,
+        0.7680000066757202,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.3400000035762787,
+        0.3400000035762787,
+        0.3400000035762787,
+        1.0
+      ],
+      "role": "neutral_endpoint_marker",
+      "shape": "cube",
+      "source_id": "neutral_right_front_endpoint_pad"
+    },
+    {
+      "asset": "6f59f966ffcb68e8ee6a0dd38fd37b52f3e2b728b8638fede52071cd255f63cc",
+      "id": 17,
+      "name": "rear_backdrop_panel",
+      "node": -1,
+      "pose": [
+        0.0,
+        1.9500000476837158,
+        1.649999976158142,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9599999785423279,
+        0.9700000286102295,
+        0.9800000190734863,
+        1.0
+      ],
+      "role": "background",
+      "shape": "cube",
+      "source_id": "rear_backdrop_panel"
+    },
+    {
+      "asset": "55518a597f4806d420e5ae5f663b0a76ddfc9c9300f5a07ba0562b9be6d1b552",
+      "id": 18,
+      "name": "right_tunnel_back_vertical_rim",
+      "node": -1,
+      "pose": [
+        1.024999976158142,
+        0.6899999976158142,
+        1.4149999618530273,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5,
+        0.5099999904632568,
+        0.5299999713897705,
+        1.0
+      ],
+      "role": "tunnel_opening_rim",
+      "shape": "cube",
+      "source_id": "right_tunnel_back_vertical_rim"
+    },
+    {
+      "asset": "55518a597f4806d420e5ae5f663b0a76ddfc9c9300f5a07ba0562b9be6d1b552",
+      "id": 19,
+      "name": "right_tunnel_front_vertical_rim",
+      "node": -1,
+      "pose": [
+        1.024999976158142,
+        -0.6899999976158142,
+        1.4149999618530273,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5,
+        0.5099999904632568,
+        0.5299999713897705,
+        1.0
+      ],
+      "role": "tunnel_opening_rim",
+      "shape": "cube",
+      "source_id": "right_tunnel_front_vertical_rim"
+    },
+    {
+      "asset": "ca54a69724e21cbac55d882f6fadd4294566bf39bc0f4bd1a196f5f37b035d30",
+      "id": 20,
+      "name": "right_tunnel_opening_top_rim",
+      "node": -1,
+      "pose": [
+        1.024999976158142,
+        0.0,
+        2.0959999561309814,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5,
+        0.5099999904632568,
+        0.5299999713897705,
+        1.0
+      ],
+      "role": "tunnel_opening_rim",
+      "shape": "cube",
+      "source_id": "right_tunnel_opening_top_rim"
+    },
+    {
+      "asset": "4c52c324deee455260085d9150b80d47bf1ccc13d4b6d502435d12c3af1ed3da",
+      "id": 21,
+      "name": "shared_neutral_gray_two_lane_track",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        0.6949999928474426,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5799999833106995,
+        0.5799999833106995,
+        0.5799999833106995,
+        1.0
+      ],
+      "role": "support_surface",
+      "shape": "cube",
+      "source_id": "shared_neutral_gray_two_lane_track"
+    }
+  ],
+  "schema": "stable-envs/object-permanence-rigid-v1",
+  "source": {
+    "commit": "824baddcdad087810d35638bf8f273b884f74975",
+    "exporter": "scripts/export/object_permanence.py",
+    "exporter_sha256": "547e91ee071792a3b38c2f8b191f11ff17d412f95060dc28806a7e24f77c869c",
+    "license": "CC-BY-NC-4.0",
+    "parameters": {},
+    "profile": "nominal-first-member-no-diversity",
+    "script": "object_permanence/generator/tasks/G28_open_ended_tunnel/pb_task_00000008_pb_multi_object_identity_occlusion_0009_blender.py",
+    "script_sha256": "4fe12c1de12125b2abc2b40a5a2eeb17db5b606b0f7c76585a703375ca83d615",
+    "seed": null,
+    "task": "G28",
+    "task_manifest_sha256": "2a526400983f0938aa09257563b131d7ebebde9c2e277dc29cfa332b228cbd2b",
+    "url": "https://github.com/hokindeng/object-permanence",
+    "versions": {
+      "blender": "4.4.0",
+      "numpy": "1.26.4",
+      "python": "3.11.16"
+    },
+    "video_split": null
+  }
+}

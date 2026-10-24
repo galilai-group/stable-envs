@@ -1,0 +1,312 @@
+{
+  "arrays": {
+    "camera_matrix": {
+      "dtype": "float64",
+      "shape": [
+        4,
+        4
+      ]
+    },
+    "depth_base": {
+      "dtype": "float32",
+      "shape": [
+        180,
+        320
+      ]
+    },
+    "object_ids": {
+      "dtype": "int16",
+      "shape": [
+        120,
+        180,
+        320
+      ]
+    },
+    "poses": {
+      "dtype": "float64",
+      "shape": [
+        120,
+        6,
+        7
+      ]
+    },
+    "source_frames": {
+      "dtype": "int64",
+      "shape": [
+        120
+      ]
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        1.888888955116272,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        3.358024835586548,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "world": [
+      [
+        0.9128182530403137,
+        0.11092856526374817,
+        -0.39301109313964844,
+        -3.4000000953674316
+      ],
+      [
+        -0.4083660840988159,
+        0.24795785546302795,
+        -0.8784953355789185,
+        -7.599999904632568
+      ],
+      [
+        -3.80914038089486e-08,
+        0.9623989462852478,
+        0.2716399133205414,
+        3.049999952316284
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "depth_parts": [
+    {
+      "dtype": "uint32",
+      "file": "depth_0000_0030.npz",
+      "sha256": "c8cce2c31eb559cd21bac6e6d2a8c9001e13a83ad3bfddddbd244c96822e12be",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 0,
+      "stop": 30
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0030_0060.npz",
+      "sha256": "6719f5eb57cbc365d0852302320756cb34338e70d6586beb63c5274f0ae4e537",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 30,
+      "stop": 60
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0060_0090.npz",
+      "sha256": "6677aab7327f842e7c7738427e6ed3816181e30b85f3b133123871592f621b62",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 60,
+      "stop": 90
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0090_0120.npz",
+      "sha256": "4cb27549a350f89917bcce553063a1b0226e69e8bb20b462283ec407d8bb7895",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 90,
+      "stop": 120
+    }
+  ],
+  "file": "geometric_g107_nominal.npz",
+  "fps": 24.0,
+  "generator": "scripts/testing/freeze_object_permanence_rays.py",
+  "generator_sha256": "8f71797931e02a420d5c15ebcc6628a219c065a37a710d186709022b6e7e16ac",
+  "height": 180,
+  "object_ids": {
+    "cup_cap": 1,
+    "cup_wall": 2,
+    "hidden_ball": 3,
+    "large_floor_base": 4,
+    "rear_backdrop_panel": 5,
+    "slide_table": 6
+  },
+  "object_order": [
+    "cup_cap",
+    "cup_wall",
+    "hidden_ball",
+    "large_floor_base",
+    "rear_backdrop_panel",
+    "slide_table"
+  ],
+  "reference_algorithm_sha256": "360b948df49e5b5d40eac35d958ca4ec6f74c50e9663075c781d1db65a285d84",
+  "schema": "stable-envs/object-permanence-rigid-oracle-v2",
+  "sha256": "f1a7d8399c840fb5e4c0402d468a389f6803934d485147d777525749042b9466",
+  "source_commit": "824baddcdad087810d35638bf8f273b884f74975",
+  "source_license": "CC-BY-NC-4.0",
+  "source_profile": "nominal first member; no diversity wrapper",
+  "source_script": "object_permanence/generator/tasks/G107_sliding_cup_relocate/pb_task_00000153_pb_sliding_cup_relocate_0154_blender.py",
+  "source_script_sha256": "d4388b500e9889c61d321e656580a7cbd1a2191961e76d285bf3e0b5f63ad3e7",
+  "source_task_manifest_sha256": "610df18c06d6e76b536100e0e99a488345002022dc7098fc9efa5316bd44e0dc",
+  "source_url": "https://github.com/hokindeng/object-permanence",
+  "target_visible_pixels": {
+    "hidden_ball": [
+      116,
+      116,
+      116,
+      116,
+      116,
+      116,
+      116,
+      116,
+      116,
+      65,
+      12,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      4,
+      23,
+      50,
+      78,
+      84,
+      84,
+      84,
+      84,
+      84,
+      84,
+      84,
+      84,
+      84,
+      84,
+      84,
+      84,
+      84,
+      84,
+      84,
+      84,
+      84
+    ]
+  },
+  "targets": [
+    "hidden_ball"
+  ],
+  "task": "G107",
+  "versions": {
+    "blender": "4.4.0",
+    "numpy": "1.26.4",
+    "python": "3.11.16"
+  },
+  "visibility_contract": "stable-envs/opaque-pixel-rays-v1",
+  "width": 320
+}

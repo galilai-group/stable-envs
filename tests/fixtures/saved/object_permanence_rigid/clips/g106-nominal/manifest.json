@@ -1,0 +1,284 @@
+{
+  "arrays": {
+    "frames": {
+      "dtype": "int64",
+      "sha256": "3ce1a862b6cf0bb21bc1354b758cafa47ca5ec03b5c004d6210f5abd8c55df44",
+      "shape": [
+        120
+      ]
+    },
+    "poses": {
+      "dtype": "float32",
+      "sha256": "f4c70b289a78efa4c0173d2f81a404ed8290e92ee13da27b1fa4934a4973e9da",
+      "shape": [
+        120,
+        1,
+        7
+      ]
+    }
+  },
+  "assets": {
+    "3513b2b49d98d530cd71abfbbb7281728934e3908099dd8fd9c97fb13a8c2fc8": {
+      "file": "assets/cube/3513b2b49d98d530cd71abfbbb7281728934e3908099dd8fd9c97fb13a8c2fc8.npz",
+      "sha256": "511bb7e97884f84f1a17e1c23b7c219a4726dbe6bbc2c538584016439b29a609"
+    },
+    "3de59d0410edb75bdbfc73cc78a876a0739c267b6f5ba79a18ab774b9e168fe8": {
+      "file": "assets/cylinder/3de59d0410edb75bdbfc73cc78a876a0739c267b6f5ba79a18ab774b9e168fe8.npz",
+      "sha256": "564d1e8802c88956cc8c11e28226157f5f1fcd7c9c7b4be9b9342647a8a1ac04"
+    },
+    "4388d9139c1c048f444363e756a4cf233cdd065be0a3b3fc68fd7cb8b1353c81": {
+      "file": "assets/cube/4388d9139c1c048f444363e756a4cf233cdd065be0a3b3fc68fd7cb8b1353c81.npz",
+      "sha256": "4439c190a50437295367184d2f0721738f3dce4ce4f11f173ce9dd1608900380"
+    },
+    "e41b84c02c968c79347a3aa9e39a4f4e4b8b37a7ecbbcab48a4bad8e746a0363": {
+      "file": "assets/drum_shell/e41b84c02c968c79347a3aa9e39a4f4e4b8b37a7ecbbcab48a4bad8e746a0363.npz",
+      "sha256": "046be96cf83d2748fffffee10027f48516944ef172c0d5ac10270dff390b234a"
+    },
+    "f092303ee96a50d50b56b74cf15fbf1f9508de84a239e4b2bac0f3e532dd9b21": {
+      "file": "assets/sphere/f092303ee96a50d50b56b74cf15fbf1f9508de84a239e4b2bac0f3e532dd9b21.npz",
+      "sha256": "bb34811f43ac0e452eeba394e23f8d97e6b2277bc6594ea8fb040ebef694589f"
+    },
+    "f7bf72242e60cb8c96d5a62f0564c9146e70d5b788aa75a63a7333f6d850eae0": {
+      "file": "assets/cube/f7bf72242e60cb8c96d5a62f0564c9146e70d5b788aa75a63a7333f6d850eae0.npz",
+      "sha256": "ff9f1083449d46be21eb832c42295a70944c98038070379532d4a1057b20f126"
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "height": 720,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        2.3333330154418945,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        4.1481475830078125,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "width": 1280,
+    "world": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.2344542145729065,
+        -0.9721271395683289,
+        -8.5
+      ],
+      [
+        0.0,
+        0.9721271395683289,
+        0.2344542145729065,
+        2.799999952316284
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "clip": "g106-nominal",
+  "conventions": {
+    "quaternion": "wxyz",
+    "units": "source-scene-units",
+    "world": "right-handed-z-up"
+  },
+  "dynamic_nodes": [
+    "rotating_drum_occluder"
+  ],
+  "fps": 24.0,
+  "license_ref": {
+    "sha256": "0163481eb7a0fe3ed86d2dccf542a849b36b3c119f8ca6d3d5b36c074f2e1a1c"
+  },
+  "objects": [
+    {
+      "asset": "f092303ee96a50d50b56b74cf15fbf1f9508de84a239e4b2bac0f3e532dd9b21",
+      "id": 1,
+      "name": "blue_sphere_target",
+      "node": -1,
+      "pose": [
+        0.550000011920929,
+        0.0,
+        0.5400000214576721,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.1599999964237213,
+        0.36000001430511475,
+        0.949999988079071,
+        1.0
+      ],
+      "role": "target_object",
+      "shape": "sphere",
+      "source_id": "blue_sphere_target"
+    },
+    {
+      "asset": "4388d9139c1c048f444363e756a4cf233cdd065be0a3b3fc68fd7cb8b1353c81",
+      "id": 2,
+      "name": "large_floor_base",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        -0.05000000074505806,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8199999928474426,
+        0.800000011920929,
+        0.75,
+        1.0
+      ],
+      "role": "ground",
+      "shape": "cube",
+      "source_id": "large_floor_base"
+    },
+    {
+      "asset": "f7bf72242e60cb8c96d5a62f0564c9146e70d5b788aa75a63a7333f6d850eae0",
+      "id": 3,
+      "name": "rear_backdrop_panel",
+      "node": -1,
+      "pose": [
+        0.0,
+        3.549999952316284,
+        1.9500000476837158,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9599999785423279,
+        0.9700000286102295,
+        0.9800000190734863,
+        1.0
+      ],
+      "role": "background",
+      "shape": "cube",
+      "source_id": "rear_backdrop_panel"
+    },
+    {
+      "asset": "3513b2b49d98d530cd71abfbbb7281728934e3908099dd8fd9c97fb13a8c2fc8",
+      "id": 4,
+      "name": "red_cube_target",
+      "node": -1,
+      "pose": [
+        -0.550000011920929,
+        0.0,
+        0.5099999904632568,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9200000166893005,
+        0.18000000715255737,
+        0.18000000715255737,
+        1.0
+      ],
+      "role": "target_object",
+      "shape": "cube",
+      "source_id": "red_cube_target"
+    },
+    {
+      "asset": "e41b84c02c968c79347a3aa9e39a4f4e4b8b37a7ecbbcab48a4bad8e746a0363",
+      "id": 5,
+      "name": "rotating_drum_occluder",
+      "node": 0,
+      "pose": [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.550000011920929,
+        0.550000011920929,
+        0.6000000238418579,
+        1.0
+      ],
+      "role": "occluder",
+      "shape": "drum_shell",
+      "source_id": "rotating_drum_occluder"
+    },
+    {
+      "asset": "3de59d0410edb75bdbfc73cc78a876a0739c267b6f5ba79a18ab774b9e168fe8",
+      "id": 6,
+      "name": "round_base",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        0.10000000149011612,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.699999988079071,
+        0.5799999833106995,
+        0.4000000059604645,
+        1.0
+      ],
+      "role": "base",
+      "shape": "cylinder",
+      "source_id": "round_base"
+    }
+  ],
+  "schema": "stable-envs/object-permanence-rigid-v1",
+  "source": {
+    "commit": "824baddcdad087810d35638bf8f273b884f74975",
+    "exporter": "scripts/export/object_permanence.py",
+    "exporter_sha256": "547e91ee071792a3b38c2f8b191f11ff17d412f95060dc28806a7e24f77c869c",
+    "license": "CC-BY-NC-4.0",
+    "parameters": {},
+    "profile": "nominal-first-member-no-diversity",
+    "script": "object_permanence/generator/tasks/G106_rotating_drum_occluder/pb_task_00000152_pb_rotating_drum_occluder_0153_blender.py",
+    "script_sha256": "83d258cad94afe92c31089daa71f32decffb74a69a240432f541e8ecf9396a38",
+    "seed": null,
+    "task": "G106",
+    "task_manifest_sha256": "cde52bb765466060ca659dacdb74d6f1204bc6ba2844edb5be7a8f488b7d8204",
+    "url": "https://github.com/hokindeng/object-permanence",
+    "versions": {
+      "blender": "4.4.0",
+      "numpy": "1.26.4",
+      "python": "3.11.16"
+    },
+    "video_split": null
+  }
+}

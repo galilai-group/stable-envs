@@ -59,6 +59,67 @@ AUDITED_TASKS = {
     "G97": ("build_scene_by_kind", "animate_scene_by_kind"),
     "G99": ("build_scene_by_kind", "animate_scene"),
     "G100": ("build_scene_by_kind", "animate_scene"),
+    "G28": ("build_scene", "animate_scene"),
+    "G30": ("build_scene", "animate_scene"),
+    "G32": ("build_scene", "animate_scene"),
+    "G33": ("build_scene", "animate_scene"),
+    "G35": ("build_scene", "animate_scene"),
+    "G39": ("build_scene_by_kind", "animate_scene"),
+    "G40": ("build_scene_by_kind", "animate_scene"),
+    "G41": ("build_scene_by_kind", "animate_scene"),
+    "G42": ("build_scene_by_kind", "animate_scene"),
+    "G56": ("build_scene_by_kind", "animate_scene"),
+    "G58": ("build_scene_by_kind", "animate_scene"),
+    "G59": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G60": ("build_scene_by_kind", "animate_scene"),
+    "G68": ("build_scene_by_kind", "animate_scene"),
+    "G69": ("build_scene_by_kind", "animate_scene"),
+    "G70": ("build_scene_by_kind", "animate_scene"),
+    "G71": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G72": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G73": ("build_scene_by_kind", "animate_scene"),
+    "G74": ("build_scene_by_kind", "animate_scene"),
+    "G79": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G104": ("build_scene_by_kind", "animate_scene"),
+    "G105": ("build_scene_by_kind", "animate_scene"),
+    "G106": ("build_scene_by_kind", "animate_scene"),
+    "G107": ("build_scene_by_kind", "animate_scene"),
+    "G108": ("build_scene_by_kind", "animate_scene"),
+    "G111": ("build_scene", "animate_scene"),
+    "G113": ("build_scene_by_kind", "animate_scene"),
+    "G114": ("build_scene_by_kind", "animate_scene"),
+    "G115": ("build_scene_by_kind", "animate_scene"),
+    "G116": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G117": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G118": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G119": ("build_scene_by_kind", "animate_scene"),
+    "G120": ("build_scene_by_kind", "animate_scene"),
+    "G121": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G123": ("build_scene_by_kind", "animate_scene"),
+    "G124": ("build_scene_by_kind", "animate_scene"),
+    "G125": ("build_scene_by_kind", "animate_scene"),
+    "G126": ("build_scene_by_kind", "animate_scene"),
+    "G127": ("build_scene", "animate_scene"),
+    "G129": ("build_scene_by_kind", "animate_scene"),
+    "G130": ("build_scene_by_kind", "animate_scene"),
+    "G131": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G133": ("build_scene_by_kind", "animate_scene"),
+    "G134": ("build_scene_by_kind", "animate_scene"),
+    "G135": ("build_scene_by_kind", "animate_scene"),
+    "G136": ("build_scene_by_kind", "animate_scene"),
+    "G137": ("build_scene_by_kind", "animate_scene"),
+    "G138": ("build_scene_by_kind", "animate_scene"),
+    "G139": ("build_scene_by_kind", "animate_scene"),
+    "G140": ("build_scene_by_kind", "animate_scene"),
+    "G141": ("build_scene_by_kind", "animate_scene"),
+    "G142": ("build_scene_by_kind", "animate_scene"),
+    "G143": ("build_scene_by_kind", "animate_scene"),
+    "G144": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G145": ("build_scene_by_kind", "animate_scene"),
+    "G147": ("build_scene_by_kind", "animate_scene"),
+    "G148": ("build_scene_by_kind", "animate_scene"),
+    "G149": ("build_scene_by_kind", "animate_scene"),
+    "G150": ("build_scene_by_kind", "animate_scene"),
 }
 # These preparation recipes are certified only with the versioned ray contract.
 # The legacy BVH deferrals above/below remain meaningful and are never erased.
@@ -68,9 +129,30 @@ RAY_CONTRACT_TASKS = {
     "G05",
     "G06",
     "G07",
+    "G28",
+    "G30",
+    "G32",
+    "G33",
+    "G35",
+    "G39",
+    "G40",
+    "G41",
+    "G42",
+    "G56",
+    "G58",
+    "G59",
+    "G60",
     "G63",
     "G65",
     "G66",
+    "G68",
+    "G69",
+    "G70",
+    "G71",
+    "G72",
+    "G73",
+    "G74",
+    "G79",
     "G80",
     "G81",
     "G82",
@@ -88,6 +170,46 @@ RAY_CONTRACT_TASKS = {
     "G97",
     "G99",
     "G100",
+    "G104",
+    "G105",
+    "G106",
+    "G107",
+    "G108",
+    "G111",
+    "G113",
+    "G114",
+    "G115",
+    "G116",
+    "G117",
+    "G118",
+    "G119",
+    "G120",
+    "G121",
+    "G123",
+    "G124",
+    "G125",
+    "G126",
+    "G127",
+    "G129",
+    "G130",
+    "G131",
+    "G133",
+    "G134",
+    "G135",
+    "G136",
+    "G137",
+    "G138",
+    "G139",
+    "G140",
+    "G141",
+    "G142",
+    "G143",
+    "G144",
+    "G145",
+    "G147",
+    "G148",
+    "G149",
+    "G150",
 }
 CONTRACT_ONLY_TASKS = {
     "G02",
@@ -95,7 +217,28 @@ CONTRACT_ONLY_TASKS = {
     "G05",
     "G06",
     "G07",
+    "G28",
+    "G30",
+    "G32",
+    "G33",
+    "G35",
+    "G39",
+    "G40",
+    "G41",
+    "G42",
+    "G56",
+    "G58",
+    "G59",
+    "G60",
     "G65",
+    "G68",
+    "G69",
+    "G70",
+    "G71",
+    "G72",
+    "G73",
+    "G74",
+    "G79",
     "G82",
     "G83",
     "G84",
@@ -111,6 +254,46 @@ CONTRACT_ONLY_TASKS = {
     "G97",
     "G99",
     "G100",
+    "G104",
+    "G105",
+    "G106",
+    "G107",
+    "G108",
+    "G111",
+    "G113",
+    "G114",
+    "G115",
+    "G116",
+    "G117",
+    "G118",
+    "G119",
+    "G120",
+    "G121",
+    "G123",
+    "G124",
+    "G125",
+    "G126",
+    "G127",
+    "G129",
+    "G130",
+    "G131",
+    "G133",
+    "G134",
+    "G135",
+    "G136",
+    "G137",
+    "G138",
+    "G139",
+    "G140",
+    "G141",
+    "G142",
+    "G143",
+    "G144",
+    "G145",
+    "G147",
+    "G148",
+    "G149",
+    "G150",
 }
 # Preparation/rigid serialization passed, but source pixel fidelity did not.
 # Explicit export remains useful for diagnosis; default batch execution is blocked.
@@ -209,6 +392,13 @@ def inventory(root, output):
     """
     check_source(root)
     rows, members = [], 0
+    audit_path = Path(__file__).resolve().parents[2] / "docs/adding/object-permanence-audit.json"
+    measured = {}
+    if audit_path.exists():
+        audit = json.loads(audit_path.read_text())
+        if audit["source_commit"] != SOURCE_COMMIT:
+            raise ValueError("measured source audit has a different source pin")
+        measured = {entry["task"]: entry for entry in audit["entries"]}
     groups: dict[str, int] = {}
     for path in task_manifests(root):
         task = json.loads(path.read_text())
@@ -250,8 +440,12 @@ def inventory(root, output):
             if task["id"] in AUDITED_TASKS
             else "not evaluated"
         )
+        result = measured.get(task["id"])
+        outcome = "not recorded" if result is None else result["status"]
+        if result is not None and result["status"] == "deferred":
+            outcome += ": " + result["category"]
         rows.append(
-            f"| {task['id']} {task['name']} | {len(task['member_scripts'])} | {', '.join(sorted(signals)) or 'none found'} | {review_groups[0]} | {pilot} |"
+            f"| {task['id']} {task['name']} | {len(task['member_scripts'])} | {', '.join(sorted(signals)) or 'none found'} | {review_groups[0]} | {pilot} | {outcome} |"
         )
     text = (
         "# Object-permanence source inventory\n\n"
@@ -262,6 +456,9 @@ def inventory(root, output):
         "Only explicitly listed first nominal members have audited preparation entry points;\n"
         "run export to check their evaluated geometry, transforms, materials and camera at every frame.\n"
         "Diversity variants, sampled scene semantics and downstream accuracy are not certified here.\n\n"
+        "The measured nominal column comes from the separately recorded "
+        "[source audit](object-permanence-audit.json), not from static hints. "
+        "It covers first nominal members; other member scripts remain unregistered.\n\n"
         "## Capability triage\n\n"
         "Groups cover every member. Static groups are conservative AST hints, not proof of support.\n"
         "Known source-fidelity failures form a separate measured deferral queue.\n"
@@ -271,8 +468,8 @@ def inventory(root, output):
         "| Review group | Members |\n|---|---:|\n"
         + "".join(f"| {group} | {count} |\n" for group, count in sorted(groups.items()))
         + "\n## Source tasks\n\n"
-        "| Task | Members | Script-wide signals | First-member review group | Nominal preparation coverage |\n"
-        "|---|---:|---|---|---|\n" + "\n".join(rows) + "\n"
+        "| Task | Members | Script-wide signals | First-member review group | Nominal preparation coverage | Measured nominal audit |\n"
+        "|---|---:|---|---|---|---|\n" + "\n".join(rows) + "\n"
     )
     output.write_text(text)
 

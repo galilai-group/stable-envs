@@ -1,0 +1,310 @@
+{
+  "arrays": {
+    "camera_matrix": {
+      "dtype": "float64",
+      "shape": [
+        4,
+        4
+      ]
+    },
+    "depth_base": {
+      "dtype": "float32",
+      "shape": [
+        180,
+        320
+      ]
+    },
+    "object_ids": {
+      "dtype": "int16",
+      "shape": [
+        120,
+        180,
+        320
+      ]
+    },
+    "poses": {
+      "dtype": "float64",
+      "shape": [
+        120,
+        5,
+        7
+      ]
+    },
+    "source_frames": {
+      "dtype": "int64",
+      "shape": [
+        120
+      ]
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        1.611111044883728,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        2.864197254180908,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "world": [
+      [
+        0.9934992790222168,
+        0.023625390604138374,
+        -0.11135996133089066,
+        -0.6000000238418579
+      ],
+      [
+        -0.11383847892284393,
+        0.20618517696857452,
+        -0.9718685746192932,
+        -9.600000381469727
+      ],
+      [
+        -2.1894307200565066e-10,
+        0.9782277345657349,
+        0.2075343132019043,
+        3.0999999046325684
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "depth_parts": [
+    {
+      "dtype": "uint32",
+      "file": "depth_0000_0030.npz",
+      "sha256": "19a819142c9a38e322a5cd3573c9fb721b568a28601c2ca5a2e08218ea8b1a46",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 0,
+      "stop": 30
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0030_0060.npz",
+      "sha256": "6345671296b8bb97de1d22389acf38d26df804c7ccdd24e1d4ae8c24486effa4",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 30,
+      "stop": 60
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0060_0090.npz",
+      "sha256": "312c07b834e89791c4252edbd416034e77504634940af1b246a34424fb7e9d85",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 60,
+      "stop": 90
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0090_0120.npz",
+      "sha256": "86fb0cbba13c306c52736d231b60dc493f699d2c3b7e17912e50fedba546aa5e",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 90,
+      "stop": 120
+    }
+  ],
+  "file": "geometric_g115_nominal.npz",
+  "fps": 24.0,
+  "generator": "scripts/testing/freeze_object_permanence_rays.py",
+  "generator_sha256": "8f71797931e02a420d5c15ebcc6628a219c065a37a710d186709022b6e7e16ac",
+  "height": 180,
+  "object_ids": {
+    "large_floor_base": 1,
+    "orange_ball_sliding_down_slope": 2,
+    "ramp_track_strip": 3,
+    "rear_backdrop_panel": 4,
+    "steep_ramp_wedge": 5
+  },
+  "object_order": [
+    "large_floor_base",
+    "orange_ball_sliding_down_slope",
+    "ramp_track_strip",
+    "rear_backdrop_panel",
+    "steep_ramp_wedge"
+  ],
+  "reference_algorithm_sha256": "360b948df49e5b5d40eac35d958ca4ec6f74c50e9663075c781d1db65a285d84",
+  "schema": "stable-envs/object-permanence-rigid-oracle-v2",
+  "sha256": "109907e7ea01bdd30f5ff3e1475dfc04f3154fab3a0c8aa46a51145a3a57ed24",
+  "source_commit": "824baddcdad087810d35638bf8f273b884f74975",
+  "source_license": "CC-BY-NC-4.0",
+  "source_profile": "nominal first member; no diversity wrapper",
+  "source_script": "object_permanence/generator/tasks/G115_steep_slope_slide/pb_task_00000161_pb_steep_slope_slide_0162_blender.py",
+  "source_script_sha256": "75b60f9686f66013af37491e497b42f935a5ac7669169fb5af3003ebb25eb6d5",
+  "source_task_manifest_sha256": "65b3d6fbb71a34f546ef7220015d8093c863fdf6763117aaa5e0a0220b363b67",
+  "source_url": "https://github.com/hokindeng/object-permanence",
+  "target_visible_pixels": {
+    "orange_ball_sliding_down_slope": [
+      143,
+      143,
+      143,
+      143,
+      143,
+      143,
+      145,
+      146,
+      142,
+      142,
+      141,
+      140,
+      143,
+      141,
+      139,
+      139,
+      137,
+      140,
+      140,
+      138,
+      138,
+      138,
+      137,
+      136,
+      136,
+      136,
+      136,
+      137,
+      133,
+      133,
+      133,
+      131,
+      130,
+      131,
+      123,
+      127,
+      128,
+      123,
+      127,
+      127,
+      127,
+      127,
+      121,
+      124,
+      125,
+      121,
+      122,
+      121,
+      123,
+      120,
+      119,
+      119,
+      118,
+      117,
+      118,
+      117,
+      118,
+      117,
+      116,
+      118,
+      117,
+      116,
+      117,
+      117,
+      117,
+      116,
+      116,
+      116,
+      116,
+      116,
+      114,
+      117,
+      118,
+      114,
+      115,
+      115,
+      114,
+      115,
+      116,
+      116,
+      117,
+      115,
+      114,
+      116,
+      117,
+      115,
+      117,
+      116,
+      116,
+      116,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117,
+      117
+    ]
+  },
+  "targets": [
+    "orange_ball_sliding_down_slope"
+  ],
+  "task": "G115",
+  "versions": {
+    "blender": "4.4.0",
+    "numpy": "1.26.4",
+    "python": "3.11.16"
+  },
+  "visibility_contract": "stable-envs/opaque-pixel-rays-v1",
+  "width": 320
+}

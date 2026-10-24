@@ -1,0 +1,544 @@
+{
+  "arrays": {
+    "frames": {
+      "dtype": "int64",
+      "sha256": "3ce1a862b6cf0bb21bc1354b758cafa47ca5ec03b5c004d6210f5abd8c55df44",
+      "shape": [
+        120
+      ]
+    },
+    "poses": {
+      "dtype": "float32",
+      "sha256": "52365ff9c6dfffa4b1d1460c4571f9c7da418cf02da667e239af12360d9f5852",
+      "shape": [
+        120,
+        13,
+        7
+      ]
+    }
+  },
+  "assets": {
+    "0b1a261020597a62179868547d3aa5764afa133140199cc8921de9c59d5b5f96": {
+      "file": "assets/cube/0b1a261020597a62179868547d3aa5764afa133140199cc8921de9c59d5b5f96.npz",
+      "sha256": "146ff3c2801bbe1d428a3a5a8a72dd5aaef43a29adebcbf7d8c2c7b0d8eea930"
+    },
+    "2aeada63608d739af1be44a3dc4c7d03dfafeffda2b8d9177affa3a04065e825": {
+      "file": "assets/cylinder/2aeada63608d739af1be44a3dc4c7d03dfafeffda2b8d9177affa3a04065e825.npz",
+      "sha256": "05bde72aa8b829de1f82728444029c7caf610b48f0a352bcc51e77bb9d931df1"
+    },
+    "411a20e167eebf06f8ac2b58f10ac18efab64a70ad8e83831f99b6240ab5d152": {
+      "file": "assets/cube/411a20e167eebf06f8ac2b58f10ac18efab64a70ad8e83831f99b6240ab5d152.npz",
+      "sha256": "38aaf115bc028682f227f895c62b50e91c41aac4394371bfb1c231d2474fbd47"
+    },
+    "47f20f0d40b3aec7744c568b79e7c7dd4a5f099d5e8790ffe7f0846842dc72ea": {
+      "file": "assets/sphere/47f20f0d40b3aec7744c568b79e7c7dd4a5f099d5e8790ffe7f0846842dc72ea.npz",
+      "sha256": "f9fc2e3f1cc75bb882226f207f297f5a889215117d61f4d2b1f5d521ecfbd5c0"
+    },
+    "c1ebcafa2b987d6d5b09867e759b707456e867dc5d46c35bd34182a47d62697a": {
+      "file": "assets/cube/c1ebcafa2b987d6d5b09867e759b707456e867dc5d46c35bd34182a47d62697a.npz",
+      "sha256": "e1b2fed43e44b9ac30742facbd88a6135a8ecf70c59c3184b55d3f0974a6c371"
+    },
+    "dd195fc08649d2a64ee01cee2e078e8abda28fa1103531a9737ac822cf700e95": {
+      "file": "assets/cube/dd195fc08649d2a64ee01cee2e078e8abda28fa1103531a9737ac822cf700e95.npz",
+      "sha256": "1e4ef0fed4713001161e8297bcc3bbb634d2413d2b8d5279ad8270005c7c6c9e"
+    },
+    "fa19dcf6949af1653d5e3fe0678e39ed73f3dd86cb597489a64269219774b8c1": {
+      "file": "assets/cube/fa19dcf6949af1653d5e3fe0678e39ed73f3dd86cb597489a64269219774b8c1.npz",
+      "sha256": "0df2d80c889a23c8b0a5b3608632ce08dd7c38c98ff767df053663f8792986c4"
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "height": 720,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        1.8333332538604736,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        3.259258985519409,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "width": 1280,
+    "world": [
+      [
+        0.9391228556632996,
+        0.08573544770479202,
+        -0.33271265029907227,
+        -3.0
+      ],
+      [
+        -0.34358152747154236,
+        0.2343435138463974,
+        -0.9094145894050598,
+        -8.199999809265137
+      ],
+      [
+        -1.0966317631755373e-08,
+        0.9683659076690674,
+        0.249534472823143,
+        3.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "clip": "g108-nominal",
+  "conventions": {
+    "quaternion": "wxyz",
+    "units": "source-scene-units",
+    "world": "right-handed-z-up"
+  },
+  "dynamic_nodes": [
+    "cart_L_bed",
+    "cart_L_cover",
+    "cart_L_wbl",
+    "cart_L_wbr",
+    "cart_L_wfl",
+    "cart_L_wfr",
+    "cart_R_bed",
+    "cart_R_cover",
+    "cart_R_wbl",
+    "cart_R_wbr",
+    "cart_R_wfl",
+    "cart_R_wfr",
+    "hidden_ball"
+  ],
+  "fps": 24.0,
+  "license_ref": {
+    "sha256": "0163481eb7a0fe3ed86d2dccf542a849b36b3c119f8ca6d3d5b36c074f2e1a1c"
+  },
+  "objects": [
+    {
+      "asset": "dd195fc08649d2a64ee01cee2e078e8abda28fa1103531a9737ac822cf700e95",
+      "id": 1,
+      "name": "cart_L_bed",
+      "node": 0,
+      "pose": [
+        -2.3499999046325684,
+        -0.41999998688697815,
+        0.75,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.41999998688697815,
+        0.30000001192092896,
+        0.20000000298023224,
+        1.0
+      ],
+      "role": "cart_bed",
+      "shape": "cube",
+      "source_id": "cart_L_bed"
+    },
+    {
+      "asset": "fa19dcf6949af1653d5e3fe0678e39ed73f3dd86cb597489a64269219774b8c1",
+      "id": 2,
+      "name": "cart_L_cover",
+      "node": 1,
+      "pose": [
+        -2.3499999046325684,
+        -0.41999998688697815,
+        2.309999942779541,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.30000001192092896,
+        0.5799999833106995,
+        0.36000001430511475,
+        1.0
+      ],
+      "role": "cart_cover",
+      "shape": "cube",
+      "source_id": "cart_L_cover"
+    },
+    {
+      "asset": "2aeada63608d739af1be44a3dc4c7d03dfafeffda2b8d9177affa3a04065e825",
+      "id": 3,
+      "name": "cart_L_wbl",
+      "node": 2,
+      "pose": [
+        -2.7100000381469727,
+        -0.05000000074505806,
+        0.5600000023841858,
+        0.7071068286895752,
+        0.7071068286895752,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.11999999731779099,
+        0.11999999731779099,
+        0.14000000059604645,
+        1.0
+      ],
+      "role": "cart_wheel",
+      "shape": "cylinder",
+      "source_id": "cart_L_wbl"
+    },
+    {
+      "asset": "2aeada63608d739af1be44a3dc4c7d03dfafeffda2b8d9177affa3a04065e825",
+      "id": 4,
+      "name": "cart_L_wbr",
+      "node": 3,
+      "pose": [
+        -1.9900000095367432,
+        -0.05000000074505806,
+        0.5600000023841858,
+        0.7071068286895752,
+        0.7071068286895752,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.11999999731779099,
+        0.11999999731779099,
+        0.14000000059604645,
+        1.0
+      ],
+      "role": "cart_wheel",
+      "shape": "cylinder",
+      "source_id": "cart_L_wbr"
+    },
+    {
+      "asset": "2aeada63608d739af1be44a3dc4c7d03dfafeffda2b8d9177affa3a04065e825",
+      "id": 5,
+      "name": "cart_L_wfl",
+      "node": 4,
+      "pose": [
+        -2.7100000381469727,
+        -0.7900000214576721,
+        0.5600000023841858,
+        0.7071068286895752,
+        0.7071068286895752,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.11999999731779099,
+        0.11999999731779099,
+        0.14000000059604645,
+        1.0
+      ],
+      "role": "cart_wheel",
+      "shape": "cylinder",
+      "source_id": "cart_L_wfl"
+    },
+    {
+      "asset": "2aeada63608d739af1be44a3dc4c7d03dfafeffda2b8d9177affa3a04065e825",
+      "id": 6,
+      "name": "cart_L_wfr",
+      "node": 5,
+      "pose": [
+        -1.9900000095367432,
+        -0.7900000214576721,
+        0.5600000023841858,
+        0.7071068286895752,
+        0.7071068286895752,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.11999999731779099,
+        0.11999999731779099,
+        0.14000000059604645,
+        1.0
+      ],
+      "role": "cart_wheel",
+      "shape": "cylinder",
+      "source_id": "cart_L_wfr"
+    },
+    {
+      "asset": "dd195fc08649d2a64ee01cee2e078e8abda28fa1103531a9737ac822cf700e95",
+      "id": 7,
+      "name": "cart_R_bed",
+      "node": 6,
+      "pose": [
+        2.3499999046325684,
+        0.41999998688697815,
+        0.75,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.41999998688697815,
+        0.30000001192092896,
+        0.20000000298023224,
+        1.0
+      ],
+      "role": "cart_bed",
+      "shape": "cube",
+      "source_id": "cart_R_bed"
+    },
+    {
+      "asset": "fa19dcf6949af1653d5e3fe0678e39ed73f3dd86cb597489a64269219774b8c1",
+      "id": 8,
+      "name": "cart_R_cover",
+      "node": 7,
+      "pose": [
+        2.3499999046325684,
+        0.41999998688697815,
+        1.1399999856948853,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.30000001192092896,
+        0.5799999833106995,
+        0.36000001430511475,
+        1.0
+      ],
+      "role": "cart_cover",
+      "shape": "cube",
+      "source_id": "cart_R_cover"
+    },
+    {
+      "asset": "2aeada63608d739af1be44a3dc4c7d03dfafeffda2b8d9177affa3a04065e825",
+      "id": 9,
+      "name": "cart_R_wbl",
+      "node": 8,
+      "pose": [
+        1.9900000095367432,
+        0.7900000214576721,
+        0.5600000023841858,
+        0.7071068286895752,
+        0.7071068286895752,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.11999999731779099,
+        0.11999999731779099,
+        0.14000000059604645,
+        1.0
+      ],
+      "role": "cart_wheel",
+      "shape": "cylinder",
+      "source_id": "cart_R_wbl"
+    },
+    {
+      "asset": "2aeada63608d739af1be44a3dc4c7d03dfafeffda2b8d9177affa3a04065e825",
+      "id": 10,
+      "name": "cart_R_wbr",
+      "node": 9,
+      "pose": [
+        2.7100000381469727,
+        0.7900000214576721,
+        0.5600000023841858,
+        0.7071068286895752,
+        0.7071068286895752,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.11999999731779099,
+        0.11999999731779099,
+        0.14000000059604645,
+        1.0
+      ],
+      "role": "cart_wheel",
+      "shape": "cylinder",
+      "source_id": "cart_R_wbr"
+    },
+    {
+      "asset": "2aeada63608d739af1be44a3dc4c7d03dfafeffda2b8d9177affa3a04065e825",
+      "id": 11,
+      "name": "cart_R_wfl",
+      "node": 10,
+      "pose": [
+        1.9900000095367432,
+        0.05000000074505806,
+        0.5600000023841858,
+        0.7071068286895752,
+        0.7071068286895752,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.11999999731779099,
+        0.11999999731779099,
+        0.14000000059604645,
+        1.0
+      ],
+      "role": "cart_wheel",
+      "shape": "cylinder",
+      "source_id": "cart_R_wfl"
+    },
+    {
+      "asset": "2aeada63608d739af1be44a3dc4c7d03dfafeffda2b8d9177affa3a04065e825",
+      "id": 12,
+      "name": "cart_R_wfr",
+      "node": 11,
+      "pose": [
+        2.7100000381469727,
+        0.05000000074505806,
+        0.5600000023841858,
+        0.7071068286895752,
+        0.7071068286895752,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.11999999731779099,
+        0.11999999731779099,
+        0.14000000059604645,
+        1.0
+      ],
+      "role": "cart_wheel",
+      "shape": "cylinder",
+      "source_id": "cart_R_wfr"
+    },
+    {
+      "asset": "411a20e167eebf06f8ac2b58f10ac18efab64a70ad8e83831f99b6240ab5d152",
+      "id": 13,
+      "name": "cart_table",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        0.36000001430511475,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.550000011920929,
+        0.4000000059604645,
+        0.25999999046325684,
+        1.0
+      ],
+      "role": "table_surface",
+      "shape": "cube",
+      "source_id": "cart_table"
+    },
+    {
+      "asset": "47f20f0d40b3aec7744c568b79e7c7dd4a5f099d5e8790ffe7f0846842dc72ea",
+      "id": 14,
+      "name": "hidden_ball",
+      "node": 12,
+      "pose": [
+        -2.3499999046325684,
+        -0.41999998688697815,
+        1.0700000524520874,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9700000286102295,
+        0.8500000238418579,
+        0.10000000149011612,
+        1.0
+      ],
+      "role": "target",
+      "shape": "sphere",
+      "source_id": "hidden_ball"
+    },
+    {
+      "asset": "0b1a261020597a62179868547d3aa5764afa133140199cc8921de9c59d5b5f96",
+      "id": 15,
+      "name": "large_floor_base",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        -0.05000000074505806,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8199999928474426,
+        0.800000011920929,
+        0.75,
+        1.0
+      ],
+      "role": "ground",
+      "shape": "cube",
+      "source_id": "large_floor_base"
+    },
+    {
+      "asset": "c1ebcafa2b987d6d5b09867e759b707456e867dc5d46c35bd34182a47d62697a",
+      "id": 16,
+      "name": "rear_backdrop_panel",
+      "node": -1,
+      "pose": [
+        0.0,
+        2.9000000953674316,
+        1.899999976158142,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9599999785423279,
+        0.9700000286102295,
+        0.9800000190734863,
+        1.0
+      ],
+      "role": "background",
+      "shape": "cube",
+      "source_id": "rear_backdrop_panel"
+    }
+  ],
+  "schema": "stable-envs/object-permanence-rigid-v1",
+  "source": {
+    "commit": "824baddcdad087810d35638bf8f273b884f74975",
+    "exporter": "scripts/export/object_permanence.py",
+    "exporter_sha256": "547e91ee071792a3b38c2f8b191f11ff17d412f95060dc28806a7e24f77c869c",
+    "license": "CC-BY-NC-4.0",
+    "parameters": {},
+    "profile": "nominal-first-member-no-diversity",
+    "script": "object_permanence/generator/tasks/G108_two_carts_cross_swap/pb_task_00000154_pb_two_carts_cross_swap_0155_blender.py",
+    "script_sha256": "96bb210c6587b308eb8ca5bf687b622e1d05c3bce3454c80b2cd89ac49ac78b6",
+    "seed": null,
+    "task": "G108",
+    "task_manifest_sha256": "72976fbb05507d9a41c293ae2e59ec0d76b905c9a11d6b71e9e020623e1de18c",
+    "url": "https://github.com/hokindeng/object-permanence",
+    "versions": {
+      "blender": "4.4.0",
+      "numpy": "1.26.4",
+      "python": "3.11.16"
+    },
+    "video_split": {
+      "event": "covers closed, carts crossing; reveal at 103 stays in target",
+      "first_target_frame": 61,
+      "method": "before_event"
+    }
+  }
+}
