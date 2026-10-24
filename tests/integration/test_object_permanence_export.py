@@ -206,3 +206,48 @@ def test_expansion_live_export_matches_independent_frozen_world_poses(exported, 
         q = oracle["poses"][..., 3:]
         signs = np.where((actual[..., 3:] * q).sum(-1, keepdims=True) < 0, -1, 1)
         np.testing.assert_allclose(actual[..., 3:], q * signs, atol=1e-6, rtol=0)
+
+
+def test_next_source_task_with_active_glass_is_rejected_by_unchanged_opaque_contract():
+    """G90 is an audited stopping boundary, not a silently accepted opaque port."""
+    source = os.environ.get("SE_OBJECT_PERMANENCE_SOURCE")
+    python = os.environ.get("SE_OBJECT_PERMANENCE_BLENDER_PYTHON")
+    if not source or not python:
+        pytest.skip("live capability audit needs pinned source and Blender interpreter")
+    code = r"""
+import json, runpy, sys
+from pathlib import Path
+import bpy
+from scripts.export.object_permanence import AUDITED_TASKS, RAY_CONTRACT_TASKS, check_source, sample_scene
+root = Path(sys.argv[1])
+check_source(root)
+assert 'G90' not in AUDITED_TASKS and 'G90' not in RAY_CONTRACT_TASKS
+matches = list((root/'object_permanence/generator/tasks').glob('G90_*/task.json'))
+assert len(matches) == 1
+metadata = json.loads(matches[0].read_text())
+script = matches[0].parent / metadata['member_scripts'][0]
+source = runpy.run_path(str(script), run_name='independent_g90_capability_audit')
+source['clear_scene']()
+objects = source['build_scene_by_kind']()
+source['animate_scene'](objects)
+scene = bpy.context.scene
+scene.frame_set(scene.frame_start)
+bpy.context.view_layer.update()
+transparent = {}
+for obj in scene.objects:
+    if obj.type != 'MESH':
+        continue
+    bsdf = obj.active_material.node_tree.nodes.get('Principled BSDF')
+    alpha = float(bsdf.inputs['Alpha'].default_value)
+    if alpha != 1:
+        transparent[obj.name] = alpha
+assert set(transparent) == {'small_funnel_endcap_F','small_funnel_endcap_B','large_funnel_endcap_F','large_funnel_endcap_B'}
+assert all(0 < alpha < 1 for alpha in transparent.values())
+try:
+    sample_scene(scene)
+except ValueError as error:
+    assert 'unsupported transparency/material links' in str(error), str(error)
+else:
+    raise AssertionError('active glass was accepted by the opaque-only contract')
+"""
+    subprocess.run([python, "-c", code, source], check=True, timeout=180)

@@ -5,7 +5,7 @@ rays and equal-depth semantic IDs. It is explicitly selected; existing renderers
 State interfaces, raw Blender BVH references and acceptance thresholds are unchanged.
 The seven legacy-certified scenes remain certified under their original contract.
 G63/G66/G80/G81 retain their legacy BVH deferrals and additionally pass this new
-contract. G65/G82/G83/G84/G86 are certified only under the new contract.
+contract. G65/G82/G83/G84/G85/G86/G87/G88/G89 are certified only under the new contract.
 
 ## Geometric contract
 
@@ -212,3 +212,63 @@ seed clones, validation synchronization and small-chunk dispatch still remain.
 Single-frame gains are smaller and sensitive to fixed costs/GPU clock behavior;
 the earlier exploratory run included a small single-frame regression. These are
 local steady-state measurements, not a promise of speedup on every device/batch.
+
+
+## Further reusable batches and the stopping boundary
+
+Two further batches use the existing pipeline without changing runtime code,
+recording schema, ray contract, independent hit algorithm or acceptance budgets:
+
+| Batch | Task | Audited source behavior | Meshes / dynamic nodes | Maximum depth MSE | Minimum mask IoU |
+|---|---|---|---:|---:|---:|
+| Nested/orbiting/shuffling cups | G85 | Nested cups translate together, then reveal the ball in two stages | 8 / 5 | 0 | 1.0 |
+| Nested/orbiting/shuffling cups | G87 | Four cups and a disc rotate; the ball follows its carrying cup | 13 / 10 | 3.94e-15 | 1.0 |
+| Nested/orbiting/shuffling cups | G88 | Flat front/back-lane swaps, empty-cup fakeout, then actual ball reveal | 10 / 7 | 0 | 1.0 |
+| Height constraints | G89 | A short rolling puck passes under a bar; a tall cylinder stops before it | 7 / 2 | 2.74e-15 | 1.0 |
+
+All four source `main()` functions call `build_scene_by_kind` followed by
+`animate_scene`; their selected builders return dictionaries. The audited source
+sets only location/rotation keyframes. All-frame export and independent source
+world-triangle/normal checks verify the actual opaque rigid meshes, fixed
+perspective camera and sampled motion, including hidden objects. G88's old
+comments mention arcing cups, but its active `_swap_positions` uses opposite y
+lanes on the table: the exported data preserves the code, not the prose.
+
+Each new oracle/GIF covers all 120 source frames at 320x180. Both cached and
+complete drawing pass all-object depth/mask gates. A separate native-resolution
+comparison checks bit-identical replay RGB/depth/IDs, reverse/shuffled/repeated
+sampling and one static-seed build. Automated cache equivalence now also covers
+both 160x90 and 320x180 for **every** versioned scene, not just these four.
+RGB equality here means replay paths; source Cycles RGB is still a visual preview,
+not a pixel-value oracle. GIFs and diagnostic reports stay local artifacts.
+
+Source masks show the G85/G87/G88 ball fully hidden for 91/95/99 frames. G89's two
+objects remain visible: a complete hiding interval is not invented for a height
+constraint task. G89 defines a glass material in its helper library, but no active
+mesh uses it; the existing exporter correctly accepts its actual scene.
+
+### Stop at G90: active transparent funnel endcaps
+
+G90's selected `build_funnel_size_sorter_scene` calls `create_v_funnel` twice.
+Unlike G89's unused material, this constructs four **active** glass meshes:
+`small_funnel_endcap_F/B` and `large_funnel_endcap_F/B`. All use `mat_glass_clear`
+with alpha `0.20000000298023224`; the source intends the balls to remain visible
+through the caps. The source is still the pinned commit above, script
+`object_permanence/generator/tasks/G90_funnel_size_sorter/pb_task_00000136_pb_funnel_size_sorter_0137_blender.py`
+(SHA256 `a16375a2d967c0999962fbfe8a0576937b6e6b52917e220e1da09bd31c1a917a`).
+
+Evaluating that source and calling the **unmodified** `sample_scene` at frame 1
+raises `unsupported transparency/material links: large_funnel_endcap_B`.
+`test_next_source_task_with_active_glass_is_rejected_by_unchanged_opaque_contract`
+reproduces this with the optional pinned Blender/source environment. G90 has no
+accepted clip, oracle or audited preparation entry, and later tasks are not
+claimed imported. The original four legacy BVH deferrals remain unchanged.
+
+This is a material/visibility-contract boundary, not a silhouette error that can
+be accommodated by a larger tolerance. Dropping the caps or making them opaque
+would change the source's visible-object semantics. Continuing needs an explicit
+transparent-surface policy: what RGB transmission/compositing to retain, whether
+depth denotes the first surface or an opaque surface, and how object masks account
+for a target visible through glass. Such a version needs matching material export,
+rendering and independently generated oracles alongside v1. None is implemented
+or silently substituted here; expansion stops at this boundary as requested.

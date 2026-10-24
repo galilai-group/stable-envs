@@ -12,7 +12,7 @@ RECORDINGS = FIXTURES / "saved/object_permanence_rigid"
 DEPTH_MSE_MAX = 1e-8
 MASK_IOU_MIN = 0.99
 RECORDED_TASKS = ("g27", "g34", "g37", "g38", "g55", "g62", "g64")
-RAY_TASKS = ("g63", "g65", "g66", "g80", "g81", "g82", "g83", "g84", "g86")
+RAY_TASKS = ("g63", "g65", "g66", "g80", "g81", "g82", "g83", "g84", "g85", "g86", "g87", "g88", "g89")
 
 
 @lru_cache(maxsize=len(RAY_TASKS))

@@ -36,6 +36,14 @@ REFERENCE_CASES = {
     "G82": ("build_scene_by_kind", "animate_scene", ("target_red_cube", "target_blue_cylinder")),
     "G84": ("build_scene_by_kind", "animate_scene", ("red_hidden_ball", "green_hidden_ball")),
     "G86": ("build_scene_by_kind", "animate_scene", ("hidden_ball",)),
+    "G85": ("build_scene_by_kind", "animate_scene", ("hidden_ball",)),
+    "G87": ("build_scene_by_kind", "animate_scene", ("hidden_ball",)),
+    "G88": ("build_scene_by_kind", "animate_scene", ("hidden_ball",)),
+    "G89": (
+        "build_scene_by_kind",
+        "animate_scene",
+        ("short_orange_puck_passes_under", "tall_red_cylinder_blocked_by_bar"),
+    ),
 }
 
 

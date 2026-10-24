@@ -19,14 +19,14 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 
 | Review group | Members |
 |---|---:|
-| appearance-or-visibility-review | 33 |
+| appearance-or-visibility-review | 32 |
 | audited-nominal-runtime-gate | 7 |
 | geometry-or-scale-review | 2 |
 | orthographic-camera-review | 80 |
 | physics-bake-review | 1 |
-| rigid-candidate-needs-entry-audit | 65 |
+| rigid-candidate-needs-entry-audit | 62 |
 | source-fidelity-review | 4 |
-| versioned-visibility-runtime-gate | 5 |
+| versioned-visibility-runtime-gate | 9 |
 
 ## Source tasks
 
@@ -116,11 +116,11 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | G82 accordion_fold_screen | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only |
 | G83 four_cup_three_swaps | 1 | location | versioned-visibility-runtime-gate | versioned ray contract only |
 | G84 two_balls_three_cups | 1 | location | versioned-visibility-runtime-gate | versioned ray contract only |
-| G85 nested_cup_transfer | 1 | location | rigid-candidate-needs-entry-audit | not evaluated |
+| G85 nested_cup_transfer | 1 | location | versioned-visibility-runtime-gate | versioned ray contract only |
 | G86 conveyor_covered_boxes | 1 | location | versioned-visibility-runtime-gate | versioned ray contract only |
-| G87 four_cup_carousel | 1 | location, rotation_euler | rigid-candidate-needs-entry-audit | not evaluated |
-| G88 shell_game_fakeout_reveal | 1 | location | rigid-candidate-needs-entry-audit | not evaluated |
-| G89 limbo_height_bar | 1 | location, rotation_euler | appearance-or-visibility-review | not evaluated |
+| G87 four_cup_carousel | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only |
+| G88 shell_game_fakeout_reveal | 1 | location | versioned-visibility-runtime-gate | versioned ray contract only |
+| G89 limbo_height_bar | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only |
 | G90 funnel_size_sorter | 1 | location, rotation_euler | appearance-or-visibility-review | not evaluated |
 | G91 turnstile_timed_gate | 1 | location, rotation_euler | orthographic-camera-review | not evaluated |
 | G92 bumper_carom | 1 | location, rotation_axis_angle | orthographic-camera-review | not evaluated |

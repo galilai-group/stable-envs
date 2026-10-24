@@ -76,7 +76,8 @@ def test_versioned_all_frame_source_depth_and_all_object_masks(task, cache_stati
 
 
 @pytest.mark.parametrize("task", RAY_TASKS)
-def test_ray_static_cache_is_bit_identical_for_all_fields_and_shuffled_frames(task):
+@pytest.mark.parametrize("size", [90, 180])
+def test_ray_static_cache_is_bit_identical_for_all_fields_and_shuffled_frames(task, size):
     from stable_envs.envs.object_permanence import RigidTrajectory
     from stable_envs.envs.object_permanence.rendering.rigid_nvdiff import RigidSceneRenderer
     from stable_envs.envs.object_permanence.rendering.visibility import CONTRACT
@@ -84,8 +85,8 @@ def test_ray_static_cache_is_bit_identical_for_all_fields_and_shuffled_frames(ta
     frames = np.arange(120)[::-1].copy()
     with RigidTrajectory(RECORDINGS, f"{task}-nominal") as clip:
         with (
-            RigidSceneRenderer(clip, size=90, visibility_contract=CONTRACT) as cached,
-            RigidSceneRenderer(clip, size=90, visibility_contract=CONTRACT, cache_static=False) as full,
+            RigidSceneRenderer(clip, size=size, visibility_contract=CONTRACT) as cached,
+            RigidSceneRenderer(clip, size=size, visibility_contract=CONTRACT, cache_static=False) as full,
         ):
             expected = full.render_many(frames)
             actual = cached.render_many(frames)

@@ -8,6 +8,11 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Two further rigid import batches: nominal G85/G87/G88 cup scenes and G89 height
+  gate, with independent 120-frame ray oracles/GIF workflow and full-resolution
+  cache parity checks. Records the G90 active-glass stopping boundary with a live
+  rejection test; runtime code, opaque contract and earlier references stay unchanged.
+
 - Audited nominal G82/G84/G86 rigid recordings with independent 120-frame
   pixel-ray oracles. Static visibility seeds preserve the versioned depth and
   semantic-ID rules, with full drawing retained for comparison, input invalidation
