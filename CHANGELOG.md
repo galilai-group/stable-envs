@@ -67,6 +67,8 @@ All notable changes to this project are listed here. The format follows
 - `OGBCube` and `OGBScene` draw OpenGL batches of 2 or more states in up to `ogb_gl_workers` worker
   processes on Linux, and read many frames back in one call. Frames do not change.
 
+- The `dmcontrol` and `dmcontrol-gpu` extras need MuJoCo 3.17 and dm_control 1.0.50, and `dmcontrol-gpu`
+  installs MuJoCo Warp and MJX 3.17. The `ogbench` and `mjwarp` extras accept MuJoCo 3.17.
 - One process adapter (`stable_envs._execution.process.ProcessAdapter`) runs the worker processes of
   DM Control, classic Acrobot, Fetch, OGBench Maze and OGBench Cube/Scene. It replaces five copies of
   the worker loop. Outputs do not change.
