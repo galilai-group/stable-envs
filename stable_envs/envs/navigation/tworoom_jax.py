@@ -37,7 +37,7 @@ def apply_collisions(position, proposed, *, radius, axis, thickness, doors, size
     across = jnp.where(axis > 0.5, 0, 1)
     along = 1 - across
     started_low = position[across] < 112.0
-    # Truncate door count, as main does; all three slots retain static shape.
+    # Truncate door count, all three slots retain static shape.
     active = jnp.arange(3) < jnp.trunc(number)
     inside = (bounded[along] >= doors - sizes - 1.75) & (bounded[along] <= doors + sizes + 1.75)
     doorway = jnp.any(active & inside)
