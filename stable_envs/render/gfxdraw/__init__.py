@@ -11,6 +11,8 @@ Populate Gfx caches before CUDA graph capture to avoid host-to-device copies.
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import torch
 
@@ -1347,9 +1349,29 @@ def circle(
         cv.paint(fill_circle_mask(cx, cy, r, ys, xs, hw_t), color, window)
 
 
+#: pygame's default ``Vector2.epsilon``.
+_VECTOR_EPSILON = 1e-6
+
+
 def rotate(v: torch.Tensor, a: torch.Tensor) -> torch.Tensor:
-    """Apply Vector2.rotate_rad arithmetic before the canvas's final vertical flip."""
-    c, s = torch.cos(a), torch.sin(a)
+    """Apply Vector2.rotate_rad arithmetic before the canvas's final vertical flip.
+
+    pygame wraps the angle into [0, 2 pi) and rotates angles within its epsilon of a multiple of
+    pi / 2 exactly, so float32 multiples of pi / 2 give axis-aligned vertices.
+    """
+    a = torch.fmod(a, 2 * math.pi)
+    a = torch.where(a < 0, a + 2 * math.pi, a)
+    quarter = torch.fmod(a + _VECTOR_EPSILON, math.pi / 2) < 2 * _VECTOR_EPSILON
+    k = torch.div(a + _VECTOR_EPSILON, math.pi / 2, rounding_mode="trunc").to(torch.int64) % 4
+    if a.device.type == "cpu":
+        # Vectorized torch trig can differ from C libm by one ulp; there is one angle per lane, so use libm.
+        flat = a.detach().reshape(-1).tolist()
+        c = torch.tensor([math.cos(x) for x in flat], dtype=a.dtype).reshape(a.shape)
+        s = torch.tensor([math.sin(x) for x in flat], dtype=a.dtype).reshape(a.shape)
+    else:
+        c, s = torch.cos(a), torch.sin(a)
+    c = torch.where(quarter, torch.tensor([1.0, 0.0, -1.0, 0.0], dtype=c.dtype, device=c.device)[k], c)
+    s = torch.where(quarter, torch.tensor([0.0, 1.0, 0.0, -1.0], dtype=s.dtype, device=s.device)[k], s)
     return torch.stack([v[..., 0] * c - v[..., 1] * s, v[..., 0] * s + v[..., 1] * c], -1)
 
 
