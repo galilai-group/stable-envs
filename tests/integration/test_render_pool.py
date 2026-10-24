@@ -46,7 +46,7 @@ def test_workers_draw_the_in_process_frames():
 
 @pytest.mark.skipif(not sys.platform.startswith("linux"), reason="render workers run on Linux only")
 @pytest.mark.parametrize("name", ["Acrobot", "CartPole", "MountainCar", "MountainCarContinuous", "Pendulum"])
-def test_reference_workers_draw_the_gfxdraw_frames(name):
+def test_source_workers_draw_the_port_frames(name):
     pytest.importorskip("pygame")
     env = snv.make(name, num_envs=1, device="cpu")
     rows = torch.as_tensor(env.sample_states(41, np.random.default_rng(5)))
@@ -55,8 +55,7 @@ def test_reference_workers_draw_the_gfxdraw_frames(name):
             pooled = env._render(rows).numpy()
         with tuning.override(render_workers=0):
             single = env._render(rows[:1]).numpy()
-            env._has_pygame = False
-            expected = env._render(rows).numpy()
+            expected = env._render(rows, backend="port").numpy()
     finally:
         env.close()
     assert np.array_equal(pooled, expected)

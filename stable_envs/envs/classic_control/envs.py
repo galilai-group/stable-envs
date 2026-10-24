@@ -175,8 +175,16 @@ class _Classic(Env):
         variation: dict | None = None,
         style=None,
         out=None,
+        backend: str = "auto",
     ) -> torch.Tensor:
-        """Render (..., state_dim) rows to native (..., H, W, 3) uint8 frames."""
+        """Render (..., state_dim) rows to native (..., H, W, 3) uint8 frames.
+
+        ``backend`` is ``"auto"``, ``"source"`` (the Gymnasium renderer; CPU and the default appearance only)
+        or ``"port"`` (the gfxdraw port). On CPU, ``"auto"`` uses the source for the default appearance when
+        pygame is installed and the port otherwise. Both give the same frames.
+        """
+        if backend not in ("auto", "source", "port"):
+            raise ValueError(f"backend must be 'auto', 'source' or 'port', got {backend!r}")
         H, W = self.native
         want = int(self.size if size is None else size)
         if want != W:
@@ -199,12 +207,16 @@ class _Classic(Env):
         variation, style = _split_appearance(variation, style)
         sty = self.resolve_style(style, variation, batch=n)
         o = None if out is None else out.reshape(-1, H, W, 3)
+        if backend == "source" and self.device.type != "cpu":
+            raise ValueError(f"{type(self).__name__}: backend='source' renders on CPU only")
         if self.device.type == "cpu" and not self._use_fused():
             from ..._execution import render_pool
 
             host = rows.cpu().numpy()
-            # The reference draws only the default appearance; it is the fastest exact CPU path for it.
-            reference = self._reference_draws(sty)
+            # The source draws only the default appearance; it is the fastest exact CPU path for it.
+            reference = backend != "port" and self._reference_draws(sty)
+            if backend == "source" and not reference:
+                raise ValueError(f"{type(self).__name__}: backend='source' needs pygame and the default appearance")
             img = render_pool.render_rows(
                 self,
                 (type(self).__name__, "reference" if reference else "classic"),
