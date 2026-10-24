@@ -24,7 +24,7 @@ from mujoco import mjx  # noqa: E402
 
 from .first_family import ReacherAdapter  # noqa: E402
 
-# Density Variation changes these fields, including constants recomputed by mj_setConst.
+# Density-dependent fields, including constants from mj_setConst.
 _MODEL_FIELDS = (
     "body_mass",
     "body_inertia",
@@ -54,18 +54,14 @@ def _model(task):
     target.set("pos", "0 0 0")
     target.set("size", str(reacher._BIG_TARGET if task == "easy" else reacher._SMALL_TARGET))
     world.remove(target)
-    # The contact-disabled target moves per world without duplicating the arm model.
+    # Mocap positions vary per environment without duplicating the model.
     body = ET.SubElement(world, "body", name="target_mocap", mocap="true", pos=position)
     body.append(target)
     return mujoco.MjModel.from_xml_string(ET.tostring(root, encoding="unicode"), dict(assets))
 
 
 class ReacherMJXAdapter(ReacherAdapter):
-    """Batched physics; native lanes own only reset sampling and checkpoint validation.
-
-    Public CUDA tasks use JAX. The CPU path lets the same adapter's numerical
-    and lifecycle contracts run in the CPU test suite without a backend option on Env.
-    """
+    """Batched MJX Reacher dynamics."""
 
     def __init__(self, num_envs, device="cuda", seed=0, task="hard"):
         super().__init__(num_envs, device, seed, task)
@@ -83,11 +79,11 @@ class ReacherMJXAdapter(ReacherAdapter):
             model = mjx.put_model(self._native_model, impl="jax")
             data = mjx.make_data(self._native_model, impl="jax")
             self._data = jax.vmap(lambda _: data)(jnp.arange(self.num_envs))
-            # Reset/restore must not reuse solver buffers from a previous transition.
+            # Reset and restore must clear solver buffers.
             self._template = self._data
 
             def model_for(values):
-                # Capture static metadata once; passing Model to jit rehashes its NumPy arrays.
+                # Passing Model to jit rehashes its static arrays.
                 return model.replace(
                     **{name: values[name] for name in _MODEL_FIELDS},
                     stat=model.stat.replace(meaninertia=values["meaninertia"]),
@@ -107,7 +103,7 @@ class ReacherMJXAdapter(ReacherAdapter):
 
     def _step_one(self, model, data, action):
         data = mjx.step(model, data.replace(ctrl=action))
-        # mj_step leaves positions at the pre-integration configuration; DMC observes the new one.
+        # mjx.step leaves geom_xpos at the pre-integration pose.
         data = mjx.kinematics(model, data)
         observation, success = self._observe(data)
         return data, observation, success

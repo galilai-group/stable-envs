@@ -1,5 +1,3 @@
-"""MJX must preserve the registered Reacher task around float32 physics."""
-
 import hashlib
 
 import numpy as np
@@ -37,7 +35,6 @@ def test_matches_native_dynamics_and_independent_implicit_resets(pair):
     actions = np.random.default_rng(43).uniform(-1, 1, (32, 3, 2))
     for action in actions:
         expected, actual = reference.step(action), env.step(action)
-        # Float32 integration accumulates rounding over these 64 physics steps.
         torch.testing.assert_close(actual["state", "qpos"], expected["state", "qpos"], rtol=0, atol=1e-5)
         torch.testing.assert_close(actual["state", "qvel"], expected["state", "qvel"], rtol=0, atol=3e-5)
         torch.testing.assert_close(actual["observation"], expected["observation"], rtol=0, atol=3e-5)
@@ -82,7 +79,6 @@ def test_warm_step_does_not_hash_static_model(pair, monkeypatch):
     sha256 = hashlib.sha256
 
     def hash_empty_metadata(value=b"", **kwargs):
-        # MJX Data has empty contact metadata; the model has nonempty arrays.
         assert not value, "Static model hashing in a warmed Reacher step"
         return sha256(value, **kwargs)
 

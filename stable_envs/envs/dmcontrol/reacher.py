@@ -9,10 +9,7 @@ from ._delegated import DelegatedSemantics
 
 
 class _ReacherSemantics(DelegatedSemantics):
-    """Reacher with CPU dm_control or batched CUDA MJX physics.
-
-    The four-column renderer projection cannot resume physics or implicit resets.
-    """
+    """Reacher with native CPU or CUDA MJX physics."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -52,9 +49,4 @@ DMCReacherHard = parity_cell(
     SHAPE_KNOBS={"target": ((R3.BOX, (_HARD_TARGET,) * 3), (R3.SPHERE, (_HARD_TARGET, 0.0, 0.0)))},
 )
 
-DMCReacherHard.__doc__ = """DM Control Reacher hard with batched rendering and CUDA MJX physics.
-
-Public State includes positions, velocities, integration warm-start values, clock,
-RNG, lifecycle counters, cumulative reward and the target that changes on implicit
-resets. CUDA uses float32 MJX dynamics; CPU uses the native float64 reference.
-"""
+DMCReacherHard.__doc__ = """Reacher hard with native float64 CPU or float32 MJX CUDA physics."""

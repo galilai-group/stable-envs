@@ -1,5 +1,3 @@
-"""Public CUDA Reacher uses MJX and exchanges device buffers through DLPack."""
-
 import hashlib
 
 import jax
