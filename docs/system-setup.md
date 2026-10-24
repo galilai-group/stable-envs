@@ -17,6 +17,7 @@ that fixes them.
 | family | CPU render | CUDA render |
 |---|---|---|
 | classic control, navigation, PushT | nothing beyond the extra | a CUDA build of torch |
+| MNIST World | nothing | a CUDA build of torch |
 | Craftax | nothing beyond the extra | CUDA builds of torch and JAX (`craftax-gpu`) |
 | DM Control, OGBench mazes | MuJoCo OpenGL | MuJoCo OpenGL and CUDA torch. TrackCom domains also need MuJoCo Warp (`dmcontrol-gpu`) |
 | Fetch | MuJoCo OpenGL | MuJoCo OpenGL, CUDA torch and MuJoCo Warp (`robotics` + `mjwarp`) |

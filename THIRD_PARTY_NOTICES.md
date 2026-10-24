@@ -9,6 +9,18 @@ here; frames are the pixel observations Craftax computes. The per-lane key handl
 frame scaling follow stable-worldmodel's `stable_worldmodel/envs/craftax/craftax.py` at commit
 `21446f1ede6d5284e981bd7b47f432b994e6d812` (MIT).
 
+## MNIST World
+
+The `mnist_world` family (`stable_envs/envs/mnist_world/`) implements the 2-D MNIST World of
+[Flow Equivariant World Models](https://github.com/hlillemark/flowm) (MIT, "Copyright (c) 2025 Benhao Huang and
+Hansen Lillemark"). That repository does not include the generator, so no code is copied; the rules are
+measured on the dataset the authors published as
+[flowm123/mnist-world](https://huggingface.co/datasets/flowm123/mnist-world), which states no license.
+`tests/fixtures/semantics/mnist_world/` holds the trajectories and a few decoded frames of eight of its
+validation episodes. The digits are the [MNIST](http://yann.lecun.com/exdb/mnist/) training images
+(Yann LeCun, Corinna Cortes and Christopher J.C. Burges; CC BY-SA 3.0), downloaded at run time and not
+included here.
+
 ## SDL_gfx drawing rules
 
 `stable_envs/render/gfxdraw/` reimplements in Torch the integer rasterization and

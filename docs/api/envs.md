@@ -48,6 +48,10 @@ them below, one per family, without class members. It shows PushT in full.
     options:
       members: false
 
+::: stable_envs.envs.mnist_world.envs
+    options:
+      members: false
+
 ::: stable_envs.envs.rocket
     options:
       members: false

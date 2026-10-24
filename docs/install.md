@@ -34,7 +34,7 @@ package, which tests use for comparison.
 
 | extra | needed for | adds |
 |---|---|---|
-| *(none)* | classic control, navigation | nothing |
+| *(none)* | classic control, navigation, MNIST World | nothing |
 | `navigation` | SimplePointMaze's exact `info.goal` image and Piecewise's `rendering.render_bias_field` | Matplotlib |
 | `pusht` | PushT, PushTDiscrete | Pymunk 7.2.0, pygame, OpenCV, Shapely |
 | `pusht-reference` | reference checks only | gym-pusht |
@@ -52,6 +52,11 @@ On CUDA, TrackCom domains draw the floor reflection only with MuJoCo Warp 3.12, 
 installs. With an older MuJoCo Warp, they render without the reflection and log a warning.
 
 The `rocket` extra resolves numpy < 2 because of PyFlyt's metadata.
+
+MNIST World downloads the MNIST training images (`train-images-idx3-ubyte.gz`, 9.9 MB, and
+`train-labels-idx1-ubyte.gz`) from torchvision's mirror the first time an env is built, checks their MD5
+sums, and caches them in `$XDG_CACHE_HOME/stable-envs/mnist` (`~/.cache/stable-envs/mnist` by default).
+Without network access, copy the two files there, or into a directory you pass as `mnist_dir=`.
 
 PushT renders with pygame on CPU. `device="cuda"` places the output tensors on the GPU. The drawing
 still runs on CPU.

@@ -95,6 +95,7 @@ FAMILIES = (
         gpu=("cuda", "triton", "nvdiffrast"),
     ),
     Family("craftax", "craftax", "craftax", ("craftax",)),
+    Family("mnist_world", None, None, ("mnist_world",)),
 )
 
 

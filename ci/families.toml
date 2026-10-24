@@ -179,3 +179,7 @@ tests = ["test_craftax*"]
 requires = ["craftax", "jax"]
 capabilities = ["swm"]
 shards = { pr = 1, nightly = 1 }
+
+[family.mnist_world]
+paths = ["stable_envs/envs/mnist_world/**"]
+tests = ["test_mnist_world_*"]

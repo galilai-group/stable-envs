@@ -8,6 +8,12 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- MNIST World: `MNISTWorld` is the 2-D environment of Flow Equivariant World Models (Lillemark et al.,
+  ICML 2026), batched in torch on CPU or CUDA. Digits from MNIST drift on a toroidal canvas and the agent
+  moves a 32 x 32 view. Presets are the paper's `dynamic_po` (default), `static_po`, `dynamic_fo` and
+  `dynamic_fo_no_sm`. The paper's generator is not published, so the rules are measured on its published
+  dataset and checked against episodes from it. The MNIST training images download once on first use; the
+  family needs no extra.
 - Craftax: `CraftaxClassicPixels`, `CraftaxClassicSymbolic`, `CraftaxPixels` and `CraftaxSymbolic`
   run the upstream JAX simulator with all lanes in one jitted `vmap` (`craftax` / `craftax-gpu` extras).
   With Craftax, the extras provide 74 classes. Fetch and `OGBCube`/`OGBScene` pin different MuJoCo versions,

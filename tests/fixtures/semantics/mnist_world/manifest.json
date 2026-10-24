@@ -1,0 +1,159 @@
+{
+  "generator": "scripts/testing/freeze_mnist_world_corpus.py",
+  "dataset": "https://huggingface.co/datasets/flowm123/mnist-world",
+  "revision": "436521f8930d63658553e593d70d8fdf61b26104",
+  "frame_steps": [
+    0,
+    1,
+    2,
+    49,
+    50,
+    51,
+    120,
+    199
+  ],
+  "splits": {
+    "dynamic_po": {
+      "shard": "dynamic_po/dynamic_validation_200/0.tar",
+      "shard_sha256": "63203d1e97a78fddb42fe2f3c95c7bc5225070dd8ef823e811b4da78eca7fc9c",
+      "world_size": 50,
+      "num_digits": 5,
+      "max_self_motion": 10,
+      "max_speed": 1,
+      "episodes": [
+        {
+          "episode": "dynamic_validation_200/0/0000",
+          "match_mean_abs": [
+            0.547,
+            0.675,
+            0.707,
+            0.544,
+            0.548
+          ],
+          "frames_mean_abs": 0.4658,
+          "frames_max_abs": 65
+        },
+        {
+          "episode": "dynamic_validation_200/0/0001",
+          "match_mean_abs": [
+            0.662,
+            0.627,
+            0.749,
+            0.742,
+            0.521
+          ],
+          "frames_mean_abs": 0.492,
+          "frames_max_abs": 65
+        }
+      ],
+      "sha256": "3e89a21b4756b046d3a144ba0c87f8e65c42c6840e65906dd2fd144b94dca407"
+    },
+    "static_po": {
+      "shard": "static_po/static_validation_200/0.tar",
+      "shard_sha256": "39422d3f5d1cf54a7ee199c64b414e09497710e0230e3e141e2b58fa1487f449",
+      "world_size": 50,
+      "num_digits": 5,
+      "max_self_motion": 10,
+      "max_speed": 0,
+      "episodes": [
+        {
+          "episode": "static_validation_200/0/0000",
+          "match_mean_abs": [
+            0.631,
+            0.827,
+            0.644,
+            0.543,
+            0.636
+          ],
+          "frames_mean_abs": 0.4398,
+          "frames_max_abs": 59
+        },
+        {
+          "episode": "static_validation_200/0/0001",
+          "match_mean_abs": [
+            0.559,
+            0.334,
+            0.477,
+            0.48,
+            0.71
+          ],
+          "frames_mean_abs": 0.4326,
+          "frames_max_abs": 59
+        }
+      ],
+      "sha256": "0af33144f3f62e321c1d4a628345cd86619e37eff677f1264d5049483b1f6a4d"
+    },
+    "dynamic_fo_no_sm": {
+      "shard": "dynamic_fo_no_sm/dynamic_validation_smallworld_no_em_200/0.tar",
+      "shard_sha256": "5e4f128a237babd3024df0f2f88b7d7b3b0f596224f17d9991ca084746b7826c",
+      "world_size": 32,
+      "num_digits": 3,
+      "max_self_motion": 0,
+      "max_speed": 1,
+      "episodes": [
+        {
+          "episode": "dynamic_validation_smallworld_no_em_200/0/0000",
+          "match_mean_abs": [
+            0.478,
+            0.528,
+            0.506
+          ],
+          "frames_mean_abs": 0.4748,
+          "frames_max_abs": 54
+        },
+        {
+          "episode": "dynamic_validation_smallworld_no_em_200/0/0001",
+          "match_mean_abs": [
+            0.513,
+            0.472,
+            0.521
+          ],
+          "frames_mean_abs": 0.4293,
+          "frames_max_abs": 12
+        }
+      ],
+      "sha256": "895a56352f9148d7a4d33f5904dad026ccd353ce85646bc4333feb333ab9bee5"
+    },
+    "dynamic_fo_ws80": {
+      "shard": "dynamic_fo/dynamic_validation_ws80_200/0.tar",
+      "shard_sha256": "26d5dce3e100d50e3bc403ab6054d26214960aa1e88988ea7987221642cb8061",
+      "world_size": 80,
+      "num_digits": 8,
+      "max_self_motion": 10,
+      "max_speed": 1,
+      "episodes": [
+        {
+          "episode": "dynamic_validation_ws80_200/0/0000",
+          "match_mean_abs": [
+            0.429,
+            0.539,
+            0.541,
+            0.459,
+            0.338,
+            0.487,
+            0.415,
+            0.448
+          ],
+          "frames_mean_abs": 0.2227,
+          "frames_max_abs": 62
+        },
+        {
+          "episode": "dynamic_validation_ws80_200/0/0001",
+          "match_mean_abs": [
+            0.481,
+            0.4,
+            0.562,
+            0.413,
+            0.509,
+            0.625,
+            0.453,
+            0.486
+          ],
+          "frames_mean_abs": 0.2883,
+          "frames_max_abs": 53
+        }
+      ],
+      "sha256": "8b8000dc95417cbcfa95e2c04c607e5f0c5ddb0131d25f403071107f186844ff"
+    }
+  }
+}

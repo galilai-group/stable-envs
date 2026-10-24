@@ -8,6 +8,7 @@ Generators and verifiers for the sealed fixtures under `tests/fixtures/`.
 | `freeze_*_oracle.py` | per-family semantic oracles (`tests/fixtures/semantics/<family>`) |
 | `_oracle.py` | pin check, rollout and manifest helpers the oracle generators share |
 | `capture_ogbench_golden.py` | OGBench Cube/Scene golden frames |
+| `freeze_mnist_world_corpus.py` | MNIST World episodes from the published dataset (`tests/fixtures/semantics/mnist_world`) |
 | `verify_saved.py` | saved-corpus verification |
 
 Run a script from the repository root, in the interpreter pinned for its family in

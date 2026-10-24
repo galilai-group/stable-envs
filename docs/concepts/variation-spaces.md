@@ -64,7 +64,8 @@ error.
 
 ## Reset
 
-Every simulating family except Craftax has `reset(seed, options)`. Craftax takes only `seed`.
+Every simulating family except Craftax and MNIST World has `reset(seed, options)`. Craftax and MNIST World
+take only `seed`.
 Render-only classes have no `reset`. `reset(seed, options)` follows stable-worldmodel's rule:
 
 - Reset samples the leaves named in `options["variation"]` per lane.
