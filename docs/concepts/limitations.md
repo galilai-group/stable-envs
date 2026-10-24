@@ -52,7 +52,7 @@ OpenGL, configured before the first MuJoCo import. See [System setup](../system-
 
 ## Versions and reproducibility
 
-- The DM Control reference profile (`pin-dmc`) is `mujoco==3.12.0` and `dm-control==1.0.45`. The
+- The DM Control reference profile (`pin-dmc`) is `mujoco==3.17.0` and `dm-control==1.0.50`. The
   `VISUAL_FIDELITY` declarations of the body-tracking cells record the versions they were measured with.
 - nvdiffrast on x86 CPU has a one-ULP batch dependence in a sparse stage. No registered class uses that
   path on CPU.

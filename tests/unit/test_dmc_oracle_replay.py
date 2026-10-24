@@ -1,7 +1,6 @@
 """Each DM Control adapter replays its frozen SWM corpus, from any reached State."""
 
 import hashlib
-import importlib.metadata
 import json
 from pathlib import Path
 
@@ -66,7 +65,6 @@ def test_corpora_are_recorded_against_the_pinned_swm_commit(directory):
     assert manifest["reference_commit"] == REFERENCE_COMMIT
 
 
-@pytest.mark.skipif(importlib.metadata.version("mujoco") != "3.12.0", reason="Oracle is pinned to MuJoCo 3.12.0")
 @pytest.mark.parametrize(
     "directory,domain,factory,compare",
     CORPORA,

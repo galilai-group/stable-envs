@@ -42,7 +42,7 @@ class Reflection:
         cast = upstream._make_cast_ray(context.geom_ray_types)
         shadow_cast = upstream._make_cast_ray(context.geom_ray_types, first_hit=True)
         lighting = upstream._make_compute_lighting(shadow_cast)
-        sample_texture = upstream.sample_texture
+        sample_texture = upstream._make_sample_texture(context.geom_ray_types)
         plane = reflective[0]
         reflectance = float(source_model.mat_reflectance[materials[plane]])
         nlight = int(model.nlight)
@@ -128,6 +128,7 @@ class Reflection:
             mesh_faceadr: wp.array[int]
             mat_texid: wp.array3d[int]
             mat_texrepeat: wp.array2d[wp.vec2]
+            mat_texuniform: wp.array2d[bool]
             mat_rgba: wp.array2d[wp.vec4]
             mat_specular: wp.array2d[float]
             mat_shininess: wp.array2d[float]
@@ -156,6 +157,7 @@ class Reflection:
             flex_geom_flexid: wp.array[int]
             flex_geom_edgeid: wp.array[int]
             flex_bvh_id: wp.array[wp.uint64]
+            flex_rgba: wp.array[wp.vec4]
             flex_group_root: wp.array2d[int]
             mesh_facetexcoord: wp.array[wp.vec3i]
             mesh_texcoord: wp.array[wp.vec2]
@@ -221,10 +223,13 @@ class Reflection:
             blocker, distance, hit_normal, u, v, face, mesh = shadow_cast(
                 s.geom_type,
                 s.geom_dataid,
+                s.geom_matid,
                 s.geom_size,
+                s.geom_rgba,
                 s.flex_vertadr,
                 s.flex_edge,
                 s.flex_radius,
+                s.mat_rgba,
                 s.geom_xpos,
                 s.geom_xmat,
                 s.flexvert_xpos,
@@ -236,6 +241,7 @@ class Reflection:
                 s.enabled_geom_ids,
                 s.mesh_bvh_id,
                 s.hfield_bvh_id,
+                s.flex_rgba,
                 s.flex_geom_flexid,
                 s.flex_geom_edgeid,
                 s.flex_bvh_id,
@@ -282,10 +288,13 @@ class Reflection:
             return lighting(
                 s.geom_type,
                 s.geom_dataid,
+                s.geom_matid,
                 s.geom_size,
+                s.geom_rgba,
                 s.flex_vertadr,
                 s.flex_edge,
                 s.flex_radius,
+                s.mat_rgba,
                 s.geom_xpos,
                 s.geom_xmat,
                 s.flexvert_xpos,
@@ -298,6 +307,7 @@ class Reflection:
                 world,
                 s.mesh_bvh_id,
                 s.hfield_bvh_id,
+                s.flex_rgba,
                 s.flex_geom_flexid,
                 s.flex_geom_edgeid,
                 s.flex_bvh_id,
@@ -318,6 +328,7 @@ class Reflection:
                 spec,
                 shin,
                 wp.static(flags["enable_backface_culling"]),
+                wp.static(flags["shadow_light_fraction"]),
                 wp.static(flags["enable_specular"]),
                 False,
                 True,
@@ -362,7 +373,9 @@ class Reflection:
                             s.geom_type,
                             s.mesh_faceadr,
                             geom,
+                            s.geom_size[world % s.geom_size.shape[0], geom],
                             s.mat_texrepeat[world % s.mat_texrepeat.shape[0], material],
+                            s.mat_texuniform[world % s.mat_texuniform.shape[0], material],
                             s.textures[texture],
                             s.geom_xpos[world, geom],
                             s.geom_xmat[world, geom],
@@ -370,6 +383,7 @@ class Reflection:
                             s.mesh_texcoord,
                             s.mesh_texcoord_offsets,
                             point,
+                            normal,
                             u,
                             v,
                             face,
@@ -619,10 +633,13 @@ class Reflection:
             geom, distance, normal, u, v, face, mesh = cast(
                 s.geom_type,
                 s.geom_dataid,
+                s.geom_matid,
                 s.geom_size,
+                s.geom_rgba,
                 s.flex_vertadr,
                 s.flex_edge,
                 s.flex_radius,
+                s.mat_rgba,
                 s.geom_xpos,
                 s.geom_xmat,
                 s.flexvert_xpos,
@@ -634,6 +651,7 @@ class Reflection:
                 s.enabled_geom_ids,
                 s.mesh_bvh_id,
                 s.hfield_bvh_id,
+                s.flex_rgba,
                 s.flex_geom_flexid,
                 s.flex_geom_edgeid,
                 s.flex_bvh_id,

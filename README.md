@@ -81,8 +81,9 @@ snv.CartPole / snv.Pendulum / …                  concrete env classes
 ## Environments
 
 The extras together provide 75 environment classes. One Python environment cannot hold every extra.
-The `robotics` extra for Fetch pins MuJoCo < 3.12, and the `ogbench-manipulation` extra for `OGBCube`
-and `OGBScene` pins MuJoCo 3.12.0. Install them in separate environments.
+The `robotics` extra for Fetch pins MuJoCo < 3.12, the `ogbench-manipulation` extra for `OGBCube`
+and `OGBScene` pins MuJoCo 3.12.0, and the `dmcontrol` extra needs MuJoCo 3.17. Install them in separate
+environments.
 
 | family | environments |
 |---|---:|

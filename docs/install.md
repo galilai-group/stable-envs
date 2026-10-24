@@ -42,16 +42,16 @@ package, which tests use for comparison.
 | `pusht-reference` | reference checks only | gym-pusht |
 | `ogbench` | OGBench mazes | `ogbench`, MuJoCo |
 | `ogbench-manipulation` / `-gpu` | OGBCube, OGBScene | MuJoCo 3.12.0, OGBench 1.2.1, dm_control. `-gpu` adds MuJoCo Warp 3.12.0 and Warp 1.17.0 |
-| `dmcontrol` | DM Control | `dm_control`, MuJoCo |
-| `dmcontrol-gpu` | DM Control on CUDA with TrackCom floor reflections | MuJoCo and MuJoCo Warp 3.12 |
+| `dmcontrol` | DM Control | `dm_control` 1.0.50, MuJoCo 3.17 |
+| `dmcontrol-gpu` | DM Control on CUDA with TrackCom floor reflections | `dm_control` 1.0.50, MuJoCo, MuJoCo Warp and MJX 3.17 |
 | `robotics` | Fetch | gymnasium-robotics, MuJoCo < 3.12, OpenCV |
 | `mjwarp` | Fetch on CUDA | MuJoCo Warp |
 | `rocket` | PyFlytRocketLanding | PyFlyt 0.29.0, pybullet 3.2.7, Pillow, SciPy |
 | `craftax` / `craftax-gpu` | Craftax | Craftax, JAX. `-gpu` takes JAX's CUDA 12 build for `device="cuda"` |
 | `docs` / `dev` / `examples` / `hf` | not needed to render | docs, tests, example helpers, HuggingFace |
 
-On CUDA, TrackCom domains draw the floor reflection only with MuJoCo Warp 3.12, which `dmcontrol-gpu`
-installs. With an older MuJoCo Warp, they render without the reflection and log a warning.
+On CUDA, TrackCom domains draw the floor reflection only with MuJoCo Warp 3.17, which `dmcontrol-gpu`
+installs. With another MuJoCo Warp, they render without the reflection and log a warning.
 
 The `rocket` extra resolves numpy < 2 because of PyFlyt's metadata.
 
@@ -80,8 +80,9 @@ uv sync --python 3.12 --extra dmcontrol --group pin-dmc --group test
 
 ## Extra conflicts
 
-Fetch (`robotics`) needs `mujoco<3.12`. DM Control and OGBench accept `mujoco<3.13`. Do not install
-`robotics` in the same environment as an extra that needs MuJoCo 3.12.
+Fetch (`robotics`) needs `mujoco<3.12`, `OGBCube` and `OGBScene` (`ogbench-manipulation`) need
+`mujoco==3.12.0`, and DM Control (`dmcontrol`) needs `mujoco>=3.17,<3.18`. The `ogbench` extra accepts
+each of them. Install these three extras in separate environments.
 
 ## nvdiffrast
 
