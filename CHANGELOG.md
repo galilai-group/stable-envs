@@ -8,6 +8,13 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Three reusable rigid batches: nominal G93–G97/G99/G100 support/fall, opening-container
+  and scripted-collision scenes, with independent 120-frame versioned oracles
+  and all-frame depth/mask/cache gates. Skips G90 transparency and G91/G92
+  orthographic cameras, and defers G98 after independent source-normal failures,
+  without extending the contract; adds live camera rejection
+  tests. Source comparison previews retain GIFs only after temporary PNG cleanup.
+
 - Two further rigid import batches: nominal G85/G87/G88 cup scenes and G89 height
   gate, with independent 120-frame ray oracles/GIF workflow and full-resolution
   cache parity checks. Records the G90 active-glass stopping boundary with a live

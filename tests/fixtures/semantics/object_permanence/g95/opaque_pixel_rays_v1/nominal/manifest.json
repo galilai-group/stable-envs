@@ -1,0 +1,340 @@
+{
+  "arrays": {
+    "camera_matrix": {
+      "dtype": "float64",
+      "shape": [
+        4,
+        4
+      ]
+    },
+    "depth_base": {
+      "dtype": "float32",
+      "shape": [
+        180,
+        320
+      ]
+    },
+    "object_ids": {
+      "dtype": "int16",
+      "shape": [
+        120,
+        180,
+        320
+      ]
+    },
+    "poses": {
+      "dtype": "float64",
+      "shape": [
+        120,
+        20,
+        7
+      ]
+    },
+    "source_frames": {
+      "dtype": "int64",
+      "shape": [
+        120
+      ]
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        1.7777777910232544,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        3.1604936122894287,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "world": [
+      [
+        0.9741905927658081,
+        0.044686995446681976,
+        -0.22125954926013947,
+        -1.0
+      ],
+      [
+        -0.22572708129882812,
+        0.19285963475704193,
+        -0.9549096822738647,
+        -8.199999809265137
+      ],
+      [
+        -7.486464781436553e-09,
+        0.9802082777023315,
+        0.19796910881996155,
+        2.5999999046325684
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "depth_parts": [
+    {
+      "dtype": "uint32",
+      "file": "depth_0000_0030.npz",
+      "sha256": "3039a8fdcb280cc5f9ba97d237f6a4a29fa935ff45676164f2f72c625fb7b168",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 0,
+      "stop": 30
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0030_0060.npz",
+      "sha256": "91841d53350668014a366a1633afdb6092651dbf1fd22184f20da9e32b30dfac",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 30,
+      "stop": 60
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0060_0090.npz",
+      "sha256": "9e02c1c09e3db72e29d9c9e2e978ac4396543a3dc6dd57b855375f99e4888ad7",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 60,
+      "stop": 90
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0090_0120.npz",
+      "sha256": "9d2fafc354e131823fa63f8514c367768123e51191d83385093d0c65aaf318cc",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 90,
+      "stop": 120
+    }
+  ],
+  "file": "geometric_g95_nominal.npz",
+  "fps": 24.0,
+  "generator": "scripts/testing/freeze_object_permanence_rays.py",
+  "generator_sha256": "e0a1855b6bb89e8f3c29bd94ccc651253da015cb63d3471f90a7592fe8015bcc",
+  "height": 180,
+  "object_ids": {
+    "bin_wall_back": 1,
+    "bin_wall_far": 2,
+    "bin_wall_front": 3,
+    "conveyor_belt_slab": 4,
+    "conveyor_leg_e_n": 5,
+    "conveyor_leg_e_s": 6,
+    "conveyor_leg_w_n": 7,
+    "conveyor_leg_w_s": 8,
+    "conveyor_rail_n": 9,
+    "conveyor_rail_s": 10,
+    "conveyor_roller_end": 11,
+    "conveyor_roller_start": 12,
+    "conveyor_stripe_0": 13,
+    "conveyor_stripe_1": 14,
+    "conveyor_stripe_2": 15,
+    "conveyor_stripe_3": 16,
+    "large_floor_base": 17,
+    "lower_catch_floor_bin_bottom": 18,
+    "orange_ball_on_conveyor": 19,
+    "rear_backdrop_panel": 20
+  },
+  "object_order": [
+    "bin_wall_back",
+    "bin_wall_far",
+    "bin_wall_front",
+    "conveyor_belt_slab",
+    "conveyor_leg_e_n",
+    "conveyor_leg_e_s",
+    "conveyor_leg_w_n",
+    "conveyor_leg_w_s",
+    "conveyor_rail_n",
+    "conveyor_rail_s",
+    "conveyor_roller_end",
+    "conveyor_roller_start",
+    "conveyor_stripe_0",
+    "conveyor_stripe_1",
+    "conveyor_stripe_2",
+    "conveyor_stripe_3",
+    "large_floor_base",
+    "lower_catch_floor_bin_bottom",
+    "orange_ball_on_conveyor",
+    "rear_backdrop_panel"
+  ],
+  "reference_algorithm_sha256": "360b948df49e5b5d40eac35d958ca4ec6f74c50e9663075c781d1db65a285d84",
+  "schema": "stable-envs/object-permanence-rigid-oracle-v2",
+  "sha256": "c04a3562ceff3ce184ec7ab959f6d87b41420c00adae0f71e436d48d12de927e",
+  "source_commit": "824baddcdad087810d35638bf8f273b884f74975",
+  "source_license": "CC-BY-NC-4.0",
+  "source_profile": "nominal first member; no diversity wrapper",
+  "source_script": "object_permanence/generator/tasks/G95_conveyor_edge_fall/pb_task_00000141_pb_conveyor_edge_fall_0142_blender.py",
+  "source_script_sha256": "235703a0d2a029c2933de9f5ea845a0ab56f71d2efd41fce627a28692ac8c00f",
+  "source_task_manifest_sha256": "6d8d0a2a9300a4f6597378057aaac4c5aaf750e3d38df168b5c47480c5985d14",
+  "source_url": "https://github.com/hokindeng/object-permanence",
+  "target_visible_pixels": {
+    "orange_ball_on_conveyor": [
+      554,
+      550,
+      545,
+      541,
+      538,
+      536,
+      531,
+      526,
+      529,
+      522,
+      521,
+      515,
+      511,
+      510,
+      503,
+      503,
+      497,
+      493,
+      494,
+      488,
+      488,
+      486,
+      483,
+      479,
+      478,
+      472,
+      473,
+      474,
+      467,
+      466,
+      466,
+      462,
+      456,
+      455,
+      455,
+      453,
+      452,
+      448,
+      450,
+      447,
+      443,
+      441,
+      441,
+      440,
+      436,
+      436,
+      433,
+      432,
+      431,
+      425,
+      424,
+      427,
+      423,
+      421,
+      415,
+      416,
+      420,
+      417,
+      417,
+      419,
+      413,
+      414,
+      411,
+      406,
+      405,
+      404,
+      406,
+      398,
+      395,
+      391,
+      374,
+      360,
+      353,
+      349,
+      359,
+      377,
+      380,
+      376,
+      374,
+      353,
+      353,
+      353,
+      354,
+      353,
+      354,
+      353,
+      353,
+      354,
+      353,
+      354,
+      353,
+      353,
+      354,
+      353,
+      353,
+      353,
+      353,
+      353,
+      353,
+      354,
+      353,
+      353,
+      353,
+      353,
+      353,
+      353,
+      353,
+      354,
+      353,
+      353,
+      353,
+      353,
+      354,
+      353,
+      354,
+      353,
+      353,
+      355,
+      354,
+      353
+    ]
+  },
+  "targets": [
+    "orange_ball_on_conveyor"
+  ],
+  "task": "G95",
+  "versions": {
+    "blender": "4.4.0",
+    "numpy": "1.26.4",
+    "python": "3.11.16"
+  },
+  "visibility_contract": "stable-envs/opaque-pixel-rays-v1",
+  "width": 320
+}

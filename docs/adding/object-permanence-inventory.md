@@ -22,11 +22,11 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | appearance-or-visibility-review | 32 |
 | audited-nominal-runtime-gate | 7 |
 | geometry-or-scale-review | 2 |
-| orthographic-camera-review | 80 |
+| orthographic-camera-review | 78 |
 | physics-bake-review | 1 |
-| rigid-candidate-needs-entry-audit | 62 |
+| rigid-candidate-needs-entry-audit | 57 |
 | source-fidelity-review | 4 |
-| versioned-visibility-runtime-gate | 9 |
+| versioned-visibility-runtime-gate | 16 |
 
 ## Source tasks
 
@@ -124,14 +124,14 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | G90 funnel_size_sorter | 1 | location, rotation_euler | appearance-or-visibility-review | not evaluated |
 | G91 turnstile_timed_gate | 1 | location, rotation_euler | orthographic-camera-review | not evaluated |
 | G92 bumper_carom | 1 | location, rotation_axis_angle | orthographic-camera-review | not evaluated |
-| G93 tipping_shelf_drop | 1 | location, rotation_euler | rigid-candidate-needs-entry-audit | not evaluated |
-| G94 trapdoor_drop | 1 | location, rotation_euler | rigid-candidate-needs-entry-audit | not evaluated |
-| G95 conveyor_edge_fall | 1 | location, rotation_euler | rigid-candidate-needs-entry-audit | not evaluated |
-| G96 clamshell_box | 1 | location, rotation_euler | orthographic-camera-review | not evaluated |
-| G97 rolltop_tambour | 1 | location, rotation_euler | orthographic-camera-review | not evaluated |
+| G93 tipping_shelf_drop | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only |
+| G94 trapdoor_drop | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only |
+| G95 conveyor_edge_fall | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only |
+| G96 clamshell_box | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only |
+| G97 rolltop_tambour | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only |
 | G98 liftoff_dome_lid | 1 | location, modifiers, rotation_euler | orthographic-camera-review | not evaluated |
-| G99 headon_velocity_exchange | 1 | location, rotation_euler | rigid-candidate-needs-entry-audit | not evaluated |
-| G100 heavy_light_collision | 1 | location, rotation_euler | rigid-candidate-needs-entry-audit | not evaluated |
+| G99 headon_velocity_exchange | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only |
+| G100 heavy_light_collision | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only |
 | G101 picket_fence_flicker | 1 | location, rotation_euler | orthographic-camera-review | not evaluated |
 | G102 drop_screen_occluder | 1 | location, rotation_euler | orthographic-camera-review | not evaluated |
 | G103 corner_turn_occlusion | 1 | location, rotation_euler | rigid-candidate-needs-entry-audit | not evaluated |

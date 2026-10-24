@@ -251,3 +251,40 @@ else:
     raise AssertionError('active glass was accepted by the opaque-only contract')
 """
     subprocess.run([python, "-c", code, source], check=True, timeout=180)
+
+
+@pytest.mark.parametrize("task", ["G91", "G92"])
+def test_audited_orthographic_source_is_rejected_by_unchanged_perspective_contract(task):
+    """Skip unsupported cameras without changing projection or certifying a port."""
+    source = os.environ.get("SE_OBJECT_PERMANENCE_SOURCE")
+    python = os.environ.get("SE_OBJECT_PERMANENCE_BLENDER_PYTHON")
+    if not source or not python:
+        pytest.skip("live capability audit needs pinned source and Blender interpreter")
+    code = r"""
+import json, runpy, sys
+from pathlib import Path
+import bpy
+from scripts.export.object_permanence import AUDITED_TASKS, RAY_CONTRACT_TASKS, check_source, sample_scene
+root, task = Path(sys.argv[1]), sys.argv[2]
+check_source(root)
+assert task not in AUDITED_TASKS and task not in RAY_CONTRACT_TASKS
+matches = list((root/'object_permanence/generator/tasks').glob(task+'_*/task.json'))
+assert len(matches) == 1
+metadata = json.loads(matches[0].read_text())
+script = matches[0].parent / metadata['member_scripts'][0]
+source = runpy.run_path(str(script), run_name='independent_orthographic_capability_audit')
+source['clear_scene']()
+objects = source['build_scene_by_kind']()
+source['animate_scene_by_kind'](*(objects if isinstance(objects,tuple) else (objects,)))
+scene = bpy.context.scene
+scene.frame_set(scene.frame_start)
+bpy.context.view_layer.update()
+assert scene.camera.data.type == 'ORTHO'
+try:
+    sample_scene(scene)
+except ValueError as error:
+    assert 'requires a perspective camera without depth of field' in str(error), str(error)
+else:
+    raise AssertionError('orthographic camera was accepted by the perspective-only contract')
+"""
+    subprocess.run([python, "-c", code, source, task], check=True, timeout=180)

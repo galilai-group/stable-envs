@@ -5,7 +5,7 @@ rays and equal-depth semantic IDs. It is explicitly selected; existing renderers
 State interfaces, raw Blender BVH references and acceptance thresholds are unchanged.
 The seven legacy-certified scenes remain certified under their original contract.
 G63/G66/G80/G81 retain their legacy BVH deferrals and additionally pass this new
-contract. G65/G82/G83/G84/G85/G86/G87/G88/G89 are certified only under the new contract.
+contract. G65/G82–G89/G93–G97/G99/G100 are certified only under the new contract.
 
 ## Geometric contract
 
@@ -214,7 +214,7 @@ the earlier exploratory run included a small single-frame regression. These are
 local steady-state measurements, not a promise of speedup on every device/batch.
 
 
-## Further reusable batches and the stopping boundary
+## Further reusable batches and unsupported capabilities
 
 Two further batches use the existing pipeline without changing runtime code,
 recording schema, ray contract, independent hit algorithm or acceptance budgets:
@@ -247,7 +247,7 @@ objects remain visible: a complete hiding interval is not invented for a height
 constraint task. G89 defines a glass material in its helper library, but no active
 mesh uses it; the existing exporter correctly accepts its actual scene.
 
-### Stop at G90: active transparent funnel endcaps
+### Skip G90: active transparent funnel endcaps
 
 G90's selected `build_funnel_size_sorter_scene` calls `create_v_funnel` twice.
 Unlike G89's unused material, this constructs four **active** glass meshes:
@@ -261,8 +261,8 @@ Evaluating that source and calling the **unmodified** `sample_scene` at frame 1
 raises `unsupported transparency/material links: large_funnel_endcap_B`.
 `test_next_source_task_with_active_glass_is_rejected_by_unchanged_opaque_contract`
 reproduces this with the optional pinned Blender/source environment. G90 has no
-accepted clip, oracle or audited preparation entry, and later tasks are not
-claimed imported. The original four legacy BVH deferrals remain unchanged.
+accepted clip, oracle or audited preparation entry. The original four legacy BVH
+deferrals remain unchanged.
 
 This is a material/visibility-contract boundary, not a silhouette error that can
 be accommodated by a larger tolerance. Dropping the caps or making them opaque
@@ -271,4 +271,70 @@ transparent-surface policy: what RGB transmission/compositing to retain, whether
 depth denotes the first surface or an opaque surface, and how object masks account
 for a target visible through glass. Such a version needs matching material export,
 rendering and independently generated oracles alongside v1. None is implemented
-or silently substituted here; expansion stops at this boundary as requested.
+or silently substituted here. Later opaque perspective scenes can be audited
+independently without extending this contract.
+
+### Three more batches: G93–G97/G99/G100
+
+G91/G92 are also skipped: executing their selected build/animate functions
+produces orthographic cameras. Optional live source tests require the unchanged
+exporter to reject them. G96–G98 have an unused orthographic helper option, but
+their actual selected cameras are perspective; a script-wide flag alone cannot
+decide support.
+
+| Batch | Task and evaluated source motion | Meshes / dynamic nodes | Maximum depth MSE | Minimum mask IoU |
+|---|---|---:|---:|---:|
+| Support and falling | G93 shelf tips after prop removal | 6 / 3 | 1.14e-14 | 1.0 |
+| Support and falling | G94 hinged trapdoor and falling ball | 9 / 2 | 8.65e-16 | 1.0 |
+| Support and falling | G95 belt stripes and ball falling from edge | 20 / 5 | 2.98e-16 | 1.0 |
+| Opening containers | G96 hinged clamshell panels | 9 / 3 | 1.60e-14 | 1.0 |
+| Opening containers | G97 nine rigid tambour slats | 17 / 10 | 1.30e-16 | 1.0 |
+| Scripted collisions | G99 equal-mass ball velocity exchange | 4 / 2 | 6.04e-16 | 1.0 |
+| Scripted collisions | G100 heavy/light ball collision and drop | 5 / 2 | 8.61e-15 | 1.0 |
+
+Each is the first nominal member, with an independent 120-frame v2 oracle at
+320x180. Both cached and complete drawing pass the unchanged MSE/IoU gates.
+Generic tests compare RGB/depth/IDs bitwise at 160x90 and 320x180, including reverse,
+shuffled and repeated frames, output mutation isolation and one seed build.
+Source world-triangle/normal checks also cover all 120 frames.
+
+These are preparation bindings, not scene-specific runtime implementations.
+G94's parented hinge motion is sampled in world space. G96's hinge origins are
+constant mesh construction, not deformation.
+G99/G100 source animation accumulates rolling orientation across frames: run its
+animation once offline, then sample evaluated poses, including hidden motion.
+Replay neither reimplements collision formulae nor claims action-driven physics.
+
+The certified scope is now seven legacy scenes plus 20 versioned scenes, 27
+audited first members out of 197 scripts. G90/G91/G92/G98 remain outside the registry;
+later tasks and diversity members still need separate audits. No runtime code,
+schema, contract, old fixture or acceptance budget changes in this batch.
+
+Native Blender preview PNGs are temporary GIF inputs. Generate them in an owned
+temporary directory, build the aligned source/replay GIF with `comparison_gif`,
+verify all 120 frames decode, then remove that directory. Keep only comparison
+GIFs under `.cache/object_permanence/evaluation/`; frozen numeric oracles and
+recordings stay under `tests/fixtures/` and must not be treated as scratch files.
+
+### Defer G98: independent source-normal reproducibility
+
+G98's selected scene is perspective and opaque. Its dome has a solidify modifier
+applied during construction and only translates later, so a first export passed
+all-frame triangle/normal checks. Its initial candidate also passed all 120 depth
+and mask frames (MSE 0, IoU 1.0) and cached/full bit parity.
+
+A fresh live-profile export failed the **existing** independent normal gate:
+maximum difference `7.70698694e-6`, above `atol=3e-6`, `rtol=0`. Additional isolated
+source builds compared against the original and fresh exports failed at frame 1,
+`liftoff_dome_lid`, with differences `5.03981316e-6` and `3.05238322e-6`.
+Position checks passed before these failures. Thus pixel fidelity alone is not
+sufficient to certify repeatable asset extraction. The cause of the corner-normal
+variation needs investigation; no rendering or sampling defect is established.
+
+Source: `G98_liftoff_dome_lid/pb_task_00000144_pb_liftoff_dome_lid_0145_blender.py`,
+SHA256 `e43ced40aafb0bb7fc52d0f31c4adc6fb9adaee0b61fcdce5f25ec56a4fa4fc4`.
+The diagnostic calls are `build_scene_by_kind()` then `animate_scene_by_kind()`;
+the independent world-triangle/normal checker provides the unchanged gate.
+G98 has no accepted recording, oracle or preparation registry entry. Its local
+GIF is explicitly named `g98-deferred-source-vs-pixel-rays-v1.gif`. Normal budgets,
+runtime implementation and reference generation algorithms are unchanged.

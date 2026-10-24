@@ -39,6 +39,13 @@ REFERENCE_CASES = {
     "G85": ("build_scene_by_kind", "animate_scene", ("hidden_ball",)),
     "G87": ("build_scene_by_kind", "animate_scene", ("hidden_ball",)),
     "G88": ("build_scene_by_kind", "animate_scene", ("hidden_ball",)),
+    "G93": ("build_scene_by_kind", "animate_scene", ("red_ball_on_shelf",)),
+    "G94": ("build_scene_by_kind", "animate_scene", ("trapdoor_ball",)),
+    "G95": ("build_scene_by_kind", "animate_scene", ("orange_ball_on_conveyor",)),
+    "G96": ("build_scene_by_kind", "animate_scene_by_kind", ("colored_ball_inside_clamshell",)),
+    "G97": ("build_scene_by_kind", "animate_scene_by_kind", ("colored_ball_inside_box",)),
+    "G99": ("build_scene_by_kind", "animate_scene", ("incoming_ball", "target_ball")),
+    "G100": ("build_scene_by_kind", "animate_scene", ("heavy_ball", "light_ball")),
     "G89": (
         "build_scene_by_kind",
         "animate_scene",

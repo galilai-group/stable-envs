@@ -1,0 +1,366 @@
+{
+  "arrays": {
+    "frames": {
+      "dtype": "int64",
+      "sha256": "3ce1a862b6cf0bb21bc1354b758cafa47ca5ec03b5c004d6210f5abd8c55df44",
+      "shape": [
+        120
+      ]
+    },
+    "poses": {
+      "dtype": "float32",
+      "sha256": "1aae33681ce568b7a1381ec74e8729bc554b770c016253c036a89c5fc2d29392",
+      "shape": [
+        120,
+        3,
+        7
+      ]
+    }
+  },
+  "assets": {
+    "0ae8721e3fa59ebd34ee4479f86f80bba96a8acaffea993b83b2231bfa789934": {
+      "file": "assets/cube/0ae8721e3fa59ebd34ee4479f86f80bba96a8acaffea993b83b2231bfa789934.npz",
+      "sha256": "ee1072c8a2e2c05e39a486f34584b98e2239da78567e9bc437803c2df64de744"
+    },
+    "0e05d8583abadb4b1a3769f25c929e72f76bcdaaf73fb684cccd0671ea46f083": {
+      "file": "assets/cube/0e05d8583abadb4b1a3769f25c929e72f76bcdaaf73fb684cccd0671ea46f083.npz",
+      "sha256": "51f1087cdd4c38c3da634b9a3040eb0ba3a4fb8d9cffd1bc77dc4100c2e991df"
+    },
+    "375f50fa5f209f620c3209bc085b146b2aa420ffdf5e60339ab30661c517a0bf": {
+      "file": "assets/cube/375f50fa5f209f620c3209bc085b146b2aa420ffdf5e60339ab30661c517a0bf.npz",
+      "sha256": "5ad9e1f5f4925cfad5f0f02a1a9db549b2e2479916c30c7ff908922db3b3147a"
+    },
+    "4dc410d1312d5c25fa7033eb91ef57cccf1530493db4aaa1a3e0b6b8a08fa69c": {
+      "file": "assets/sphere/4dc410d1312d5c25fa7033eb91ef57cccf1530493db4aaa1a3e0b6b8a08fa69c.npz",
+      "sha256": "8db38b8f4b508c7ec91deb730064a59b5db97d8ac091279136524b6c6476a887"
+    },
+    "8aab2514f45cbbdd51b662f671f0aa81009f9cefa0ff0ae2d3201224866ba196": {
+      "file": "assets/cube/8aab2514f45cbbdd51b662f671f0aa81009f9cefa0ff0ae2d3201224866ba196.npz",
+      "sha256": "c2d559f8e476d697d5572aef975186503ef2d74f3995a62fae9c88fe67a3abe9"
+    },
+    "8d069c2d17fe1de28b34f0cde7b3c4c721b59c80c1bf56e4509e5bc365cff705": {
+      "file": "assets/cube/8d069c2d17fe1de28b34f0cde7b3c4c721b59c80c1bf56e4509e5bc365cff705.npz",
+      "sha256": "0a4b35604582f27422b6fc9fa974e963cf57af62fb93e29bb82ba3d864d2fc3f"
+    },
+    "a3355fdcd7a7b33cae194bb7c50f71bfeac5038ce39f27a30472adc69f547be3": {
+      "file": "assets/cube/a3355fdcd7a7b33cae194bb7c50f71bfeac5038ce39f27a30472adc69f547be3.npz",
+      "sha256": "e40e40dc6745a72199274a0e0f4c0fcea330be0fdf8408deef553ce5aaba1e05"
+    },
+    "df943f76a8f46dadb357387777c0ea7f0caa5a8dd4ae2f9dc51cdf1180124193": {
+      "file": "assets/cube/df943f76a8f46dadb357387777c0ea7f0caa5a8dd4ae2f9dc51cdf1180124193.npz",
+      "sha256": "b7108a21e4907d4a0f5c65d6175072edc0d00237d09e9b984f70cc0a0d1411b5"
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "height": 720,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        2.222222089767456,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        3.9506170749664307,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "width": 1280,
+    "world": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.4228854179382324,
+        -0.9061831831932068,
+        -3.75
+      ],
+      [
+        0.0,
+        0.9061831831932068,
+        0.4228854179382324,
+        2.299999952316284
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "clip": "g96-nominal",
+  "conventions": {
+    "quaternion": "wxyz",
+    "units": "source-scene-units",
+    "world": "right-handed-z-up"
+  },
+  "dynamic_nodes": [
+    "clamshell_lower_front_shell",
+    "clamshell_upper_shell",
+    "colored_ball_inside_clamshell"
+  ],
+  "fps": 24.0,
+  "license_ref": {
+    "sha256": "0163481eb7a0fe3ed86d2dccf542a849b36b3c119f8ca6d3d5b36c074f2e1a1c"
+  },
+  "objects": [
+    {
+      "asset": "df943f76a8f46dadb357387777c0ea7f0caa5a8dd4ae2f9dc51cdf1180124193",
+      "id": 1,
+      "name": "clamshell_base_back_wall",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.6499999761581421,
+        0.6100000143051147,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.4000000059604645,
+        0.41999998688697815,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "container_base",
+      "shape": "cube",
+      "source_id": "clamshell_base_back_wall"
+    },
+    {
+      "asset": "a3355fdcd7a7b33cae194bb7c50f71bfeac5038ce39f27a30472adc69f547be3",
+      "id": 2,
+      "name": "clamshell_base_floor",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        0.15000000596046448,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.4000000059604645,
+        0.41999998688697815,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "container_base",
+      "shape": "cube",
+      "source_id": "clamshell_base_floor"
+    },
+    {
+      "asset": "8d069c2d17fe1de28b34f0cde7b3c4c721b59c80c1bf56e4509e5bc365cff705",
+      "id": 3,
+      "name": "clamshell_base_left_wall",
+      "node": -1,
+      "pose": [
+        -0.6499999761581421,
+        0.0,
+        0.6100000143051147,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.4000000059604645,
+        0.41999998688697815,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "container_base",
+      "shape": "cube",
+      "source_id": "clamshell_base_left_wall"
+    },
+    {
+      "asset": "8d069c2d17fe1de28b34f0cde7b3c4c721b59c80c1bf56e4509e5bc365cff705",
+      "id": 4,
+      "name": "clamshell_base_right_wall",
+      "node": -1,
+      "pose": [
+        0.6499999761581421,
+        0.0,
+        0.6100000143051147,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.4000000059604645,
+        0.41999998688697815,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "container_base",
+      "shape": "cube",
+      "source_id": "clamshell_base_right_wall"
+    },
+    {
+      "asset": "0ae8721e3fa59ebd34ee4479f86f80bba96a8acaffea993b83b2231bfa789934",
+      "id": 5,
+      "name": "clamshell_lower_front_shell",
+      "node": 0,
+      "pose": [
+        0.0,
+        -0.699999988079071,
+        0.20000000298023224,
+        0.6755901575088501,
+        0.7372773885726929,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.3199999928474426,
+        0.550000011920929,
+        0.7799999713897705,
+        1.0
+      ],
+      "role": "clamshell_lower",
+      "shape": "cube",
+      "source_id": "clamshell_lower_front_shell"
+    },
+    {
+      "asset": "0e05d8583abadb4b1a3769f25c929e72f76bcdaaf73fb684cccd0671ea46f083",
+      "id": 6,
+      "name": "clamshell_upper_shell",
+      "node": 1,
+      "pose": [
+        0.0,
+        0.699999988079071,
+        1.065000057220459,
+        0.5591928958892822,
+        -0.829037606716156,
+        -0.0,
+        -0.0
+      ],
+      "rgba": [
+        0.3199999928474426,
+        0.550000011920929,
+        0.7799999713897705,
+        1.0
+      ],
+      "role": "clamshell_upper",
+      "shape": "cube",
+      "source_id": "clamshell_upper_shell"
+    },
+    {
+      "asset": "4dc410d1312d5c25fa7033eb91ef57cccf1530493db4aaa1a3e0b6b8a08fa69c",
+      "id": 7,
+      "name": "colored_ball_inside_clamshell",
+      "node": 2,
+      "pose": [
+        0.0,
+        0.0,
+        0.5,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        1.0,
+        0.3799999952316284,
+        0.05999999865889549,
+        1.0
+      ],
+      "role": "target",
+      "shape": "sphere",
+      "source_id": "colored_ball_inside_clamshell"
+    },
+    {
+      "asset": "8aab2514f45cbbdd51b662f671f0aa81009f9cefa0ff0ae2d3201224866ba196",
+      "id": 8,
+      "name": "large_floor_base",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        -0.05000000074505806,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8199999928474426,
+        0.800000011920929,
+        0.75,
+        1.0
+      ],
+      "role": "ground",
+      "shape": "cube",
+      "source_id": "large_floor_base"
+    },
+    {
+      "asset": "375f50fa5f209f620c3209bc085b146b2aa420ffdf5e60339ab30661c517a0bf",
+      "id": 9,
+      "name": "rear_backdrop_panel",
+      "node": -1,
+      "pose": [
+        0.0,
+        2.4800000190734863,
+        1.6200000047683716,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9599999785423279,
+        0.9700000286102295,
+        0.9800000190734863,
+        1.0
+      ],
+      "role": "background",
+      "shape": "cube",
+      "source_id": "rear_backdrop_panel"
+    }
+  ],
+  "schema": "stable-envs/object-permanence-rigid-v1",
+  "source": {
+    "commit": "824baddcdad087810d35638bf8f273b884f74975",
+    "exporter": "scripts/export/object_permanence.py",
+    "exporter_sha256": "d94ff998aeda8c5a948d22e755ab855cb850ef89953ba26be022e9f4c0805387",
+    "license": "CC-BY-NC-4.0",
+    "parameters": {},
+    "profile": "nominal-first-member-no-diversity",
+    "script": "object_permanence/generator/tasks/G96_clamshell_box/pb_task_00000142_pb_clamshell_box_0143_blender.py",
+    "script_sha256": "584c8fd79f108d60a1158b3e01cfbfda2fc0092c37312973fd08db4706d7d922",
+    "seed": null,
+    "task": "G96",
+    "task_manifest_sha256": "66a07ff4417be4b17f94932977c2072ca84fac6d077d969da0b150168588f967",
+    "url": "https://github.com/hokindeng/object-permanence",
+    "versions": {
+      "blender": "4.4.0",
+      "numpy": "1.26.4",
+      "python": "3.11.16"
+    },
+    "video_split": null
+  }
+}
