@@ -32,6 +32,10 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- PushT on CPU: a Numba rasterizer draws `render` batches of 8 or more States from the same primitive
+  records as the GPU path. Frames are byte-identical to pygame. `backend` takes `"auto"`, `"source"`
+  (pygame, also `"pygame"`) or `"port"`. CPU `render` of 1024 States is approximately 1.5 times faster
+  than the pygame worker pool.
 - On CPU, classic control draws frames with the default appearance with the Gymnasium renderer when
   pygame is installed. The `backend` argument of `_render` selects `"source"` or `"port"` (the gfxdraw
   port); the default `"auto"` selects one of them. On Linux, batches of at least `render_worker_min_rows` rows draw in up to

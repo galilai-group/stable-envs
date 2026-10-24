@@ -1664,6 +1664,27 @@ def draw_cuda(records, counts, background, writes, size, device, tile=32):
     return _launch(records, counts, background, writes, size, device, index, static_out, box, tile)
 
 
+def render_cpu(fields, size, fallback, chunk=1024):
+    """Return ``[N, size, size, 3]`` uint8 CPU frames for host render ``fields`` with the Numba twin of ``draw``.
+
+    ``fallback(rows)`` draws the rows this renderer does not cover (action markers) with pygame.
+    """
+    from ...render.cpu_raster import pusht as cpu
+
+    count = len(fields["recipe/config"])
+    out = np.empty((count, size, size, 3), np.uint8)
+    for start in range(0, count, chunk):
+        rows = {key: value[start : start + chunk] for key, value in fields.items()}
+        records, _, unsupported = primitives(rows)
+        background = pack(rows["owned/variation/background/color/current/value"].astype(np.int64))
+        frames = cpu.draw(records, background, contact_writes(rows), size)
+        if unsupported.any():
+            lanes = np.flatnonzero(unsupported)
+            frames[lanes] = np.asarray(fallback({key: value[lanes] for key, value in rows.items()}))
+        out[start : start + len(frames)] = frames
+    return torch.from_numpy(out)
+
+
 def render(fields, size, device, fallback, chunk=1024):
     """Return ``[N, size, size, 3]`` uint8 frames on CUDA ``device`` for host render ``fields``.
 
