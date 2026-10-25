@@ -8,6 +8,11 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- G98/G132 rigid replay with hash-pinned unmodified native source realizations,
+  independent full-frame references and fresh-process geometry/normal checks.
+  This completes the 150 first nominal members within their declared scope;
+  45 other scripts remain unaudited. Old samples and thresholds are unchanged.
+
 - Explicit sampled dielectric replay for both G01 members and the G03 transparent-wall
   member, with exact source transforms, Snell/Fresnel paths, independent full-frame
   geometry oracles and a shared static transport cache. Existing formats, samples
@@ -152,6 +157,10 @@ All notable changes to this project are listed here. The format follows
 - docs/environment-variables.md lists every `STABLE_ENVS_*` variable.
 
 ### Changed
+
+- Shared opaque/alpha visibility preparation uses fused float64 geometry kernels,
+  preserving original sparse shading while omitting unused projection work and
+  per-vertex/per-face matrix gathers. The original path remains diagnostic.
 
 - Optical replay retains one camera origin and one direction per pixel, sharing
   them with the first static segment. Static normals are reconstructed only for

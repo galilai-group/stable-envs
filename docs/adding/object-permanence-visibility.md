@@ -1,5 +1,10 @@
 # Versioned opaque pixel-ray visibility
 
+Current coverage: all 150 first nominal members plus two additional optical members.
+G98/G132 now use [native source realizations](object-permanence-native-scenes.md).
+The deferral/batch sections below preserve historical diagnostics; 45 additional
+member scripts remain unaudited.
+
 `stable-envs/opaque-pixel-rays-v1` makes source geometry and replay agree on pixel
 rays and equal-depth semantic IDs. It is explicitly selected; existing renderers,
 State interfaces, raw Blender BVH references and acceptance thresholds are unchanged.
@@ -324,7 +329,11 @@ verify all 120 frames decode, then remove that directory. Keep only comparison
 GIFs under `.cache/object_permanence/evaluation/`; frozen numeric oracles and
 recordings stay under `tests/fixtures/` and must not be treated as scratch files.
 
-### Defer G98: independent source-normal reproducibility
+### Historical G98 deferral: independent source-normal reproducibility
+
+This deferral is resolved for a hash-pinned native realization; see the
+[native scene guide](object-permanence-native-scenes.md). The original failure
+measurements below remain historical evidence.
 
 G98's selected scene is perspective and opaque. Its dome has a solidify modifier
 applied during construction and only translates later, so a first export passed
@@ -446,7 +455,7 @@ poses and all-object ID/mask comparisons even when never visible. They are not
 used as visibility probes requiring at least one visible frame. The catalog
 records the probe names and their raw source roles independently of motion tags.
 
-### Deferred capabilities and stability
+### Historical deferred capabilities and stability
 
 | Primary reason | Nominal tasks | Policy |
 |---|---:|---|

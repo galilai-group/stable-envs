@@ -24,10 +24,10 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | appearance-or-visibility-review | 7 |
 | audited-nominal-runtime-gate | 7 |
 | geometry-or-scale-review | 1 |
-| orthographic-camera-review | 32 |
+| orthographic-camera-review | 30 |
 | rigid-candidate-needs-entry-audit | 7 |
 | source-fidelity-review | 4 |
-| versioned-visibility-runtime-gate | 139 |
+| versioned-visibility-runtime-gate | 141 |
 
 ## Source tasks
 
@@ -130,7 +130,7 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | G95 conveyor_edge_fall | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G96 clamshell_box | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G97 rolltop_tambour | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
-| G98 liftoff_dome_lid | 1 | location, modifiers, rotation_euler | orthographic-camera-review | not evaluated | deferred: source-normal-instability |
+| G98 liftoff_dome_lid | 1 | location, modifiers, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G99 headon_velocity_exchange | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G100 heavy_light_collision | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G101 picket_fence_flicker | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
@@ -164,7 +164,7 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | G129 sliding_hatch_drop | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G130 bomb_bay_doors_drop | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G131 stacked_drawers_reveal | 1 | location | versioned-visibility-runtime-gate | versioned ray contract only | certified |
-| G132 twist_open_capsule | 1 | location, modifiers, rotation_euler | orthographic-camera-review | not evaluated | deferred: source-normal-instability |
+| G132 twist_open_capsule | 1 | location, modifiers, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G133 ball_topples_block | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G134 knock_ball_off_tee | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G135 lever_launch_transfer | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |

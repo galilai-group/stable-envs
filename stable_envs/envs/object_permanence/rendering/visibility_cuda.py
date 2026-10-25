@@ -287,6 +287,7 @@ class ContractRenderer(PixelCenterRenderer):
         self._ray_coverage = (
             StaticRayCoverage(scene.face, self._static_geoms[scene.fgeom]) if self._static_geoms is not None else None
         )
+        self.fuse_geometry = True
 
     def _perspective_rays(self, world, p, x, y):
         h, w = x.shape
@@ -302,6 +303,23 @@ class ContractRenderer(PixelCenterRenderer):
         self.origin = world[:3, 3].contiguous()
 
     def _clip(self, xpos, xmat, view, proj):
+        if not self.fuse_geometry:
+            return self._clip_reference(xpos, xmat, view, proj)
+        from .visibility_transform_cuda import shading_attributes, transform
+
+        rotation, position = xmat.double(), xpos.double()
+        inverse = torch.linalg.inv(rotation)
+        self.vertices, self.world_planes, clip = transform(
+            self.scene, position, rotation, inverse, self.planes, view, proj
+        )
+        normals, world = shading_attributes(self.scene, xpos, xmat)
+        if self.affine_transforms:
+            normals = row_matrix3(self.scene.norm.double(), inverse[:, self.scene.vgeom])
+            normals = (normals / torch.linalg.vector_norm(normals, dim=-1, keepdim=True)).float()
+        return clip, normals.contiguous(), world
+
+    def _clip_reference(self, xpos, xmat, view, proj):
+        """Retain the original Torch transform path for exact differential checks."""
         result = super()._clip(xpos.float(), xmat.float(), view, proj)
         rotation, position = xmat.double(), xpos.double()
         vg = self.scene.vgeom

@@ -68,6 +68,8 @@ def check(
             raise ValueError("source and recording definitions differ")
         if metadata["source"].get("execution_context") != manifest.get("source_execution_context"):
             raise ValueError("source and recording execution contexts differ")
+        if metadata["source"].get("realization") != manifest.get("source_realization"):
+            raise ValueError("source and recording native realizations differ")
         if (
             visibility_contract == "stable-envs/opaque-pixel-rays-v2"
             or metadata.get("geometry_conversion")

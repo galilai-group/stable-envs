@@ -42,6 +42,8 @@ ANIMATED_SCALE_TASKS = {"G146"}
 CONVENTIONS = {"world": "right-handed-z-up", "quaternion": "wxyz", "units": "source-scene-units"}
 # Context audit supplies nominal globals independently of camera/type certification.
 SOURCE_CONTEXT_TASKS = frozenset({"G08", "G44", "G45", "G46", "G48"})
+NATIVE_SCENE_TASKS = frozenset({"G98", "G132"})
+NATIVE_SCENES = Path(__file__).resolve().parents[2] / "tests/fixtures/source/object_permanence"
 CONVERTED_GEOMETRY_TASKS = {
     "G04",
     "G13",
@@ -98,6 +100,8 @@ ORTHOGRAPHIC_TASKS = {
     "G46",
 }
 AUDITED_TASKS = {
+    "G98": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G132": ("build_scene_by_kind", "animate_scene_by_kind"),
     "G02": ("$prefix:render_png", ""),
     "G03": ("$prefix:render_png", ""),
     "G05": ("build_scene", "animate_scene"),
@@ -247,6 +251,8 @@ AUDITED_TASKS = {
 # These preparation recipes are certified only with the versioned ray contract.
 # The legacy BVH deferrals above/below remain meaningful and are never erased.
 RAY_CONTRACT_TASKS = {
+    "G98",
+    "G132",
     "G02",
     "G03",
     "G05",
@@ -435,7 +441,12 @@ AUDITED_TASKS.update(
 )
 RAY_CONTRACT_TASKS |= ANIMATED_SCALE_TASKS
 CONTRACT_ONLY_TASKS |= (
-    ORTHOGRAPHIC_TASKS | CONVERTED_GEOMETRY_TASKS | ANIMATED_SCALE_TASKS | ALPHA_TASKS | OPTICAL_TASKS
+    ORTHOGRAPHIC_TASKS
+    | CONVERTED_GEOMETRY_TASKS
+    | ANIMATED_SCALE_TASKS
+    | ALPHA_TASKS
+    | OPTICAL_TASKS
+    | NATIVE_SCENE_TASKS
 )
 # Preparation/rigid serialization passed, but source pixel fidelity did not.
 # Explicit export remains useful for diagnosis; default batch execution is blocked.
@@ -679,6 +690,35 @@ def source_execution_context(root, task, script):
     }
 
 
+def source_realization(root, task):
+    """Validate a native source artifact without importing candidate geometry."""
+    if task not in NATIVE_SCENE_TASKS:
+        return None
+    directory = NATIVE_SCENES / task.lower() / "nominal"
+    manifest = directory / "manifest.json"
+    m = json.loads(manifest.read_text())
+    script = root / m["source_script"]
+    taskfile = script.parent / "task.json"
+    if (
+        m["schema"] != "stable-envs/native-source-realization-v1"
+        or m["task"] != task
+        or m["member"] != 0
+        or m["source_commit"] != SOURCE_COMMIT
+        or m["file"] != "source.blend"
+        or m["source_preparation_recipe"] != dict(zip(("build", "animate"), AUDITED_TASKS[task], strict=True))
+        or m["source_script_sha256"] != sha256(script)
+        or m["source_task_manifest_sha256"] != sha256(taskfile)
+        or m["sha256"] != sha256(directory / m["file"])
+    ):
+        raise ValueError("native source realization identity/checksum mismatch")
+    return {
+        "schema": m["schema"],
+        "file": f"tests/fixtures/source/object_permanence/{task.lower()}/nominal/source.blend",
+        "sha256": m["sha256"],
+        "manifest_sha256": sha256(manifest),
+    }
+
+
 def prepare(root, task):
     """Execute an audited source build/animate pair, without source I/O hooks."""
     import bpy
@@ -694,6 +734,17 @@ def prepare(root, task):
     path = paths[0]
     metadata = json.loads(path.read_text())
     source = path.parent / metadata["member_scripts"][0]
+    realization = source_realization(root, task)
+    if realization is not None:
+        native = NATIVE_SCENES / task.lower() / "nominal"
+        captured = json.loads((native / "manifest.json").read_text())
+        if (
+            captured["source_script"] != str(source.relative_to(root))
+            or captured["versions"]["blender"] != bpy.app.version_string
+        ):
+            raise ValueError("native source realization source/Blender version mismatch")
+        bpy.ops.wm.open_mainfile(filepath=str(native / "source.blend"), load_ui=False, use_scripts=False)
+        return bpy.context.scene, source, metadata
     build, animate = AUDITED_TASKS[task]
     if build.startswith("$prefix:"):
         source_prefix(source, build.removeprefix("$prefix:"))
@@ -1248,6 +1299,11 @@ def export(root, output, task):
     if context is not None:
         source["profile"] = "nominal-first-member-surface-diversity-context"
         source["execution_context"] = context
+    realization = source_realization(root, task)
+    if realization is not None:
+        source["realization"] = realization
+        source["profile"] = "nominal-first-member-native-realization"
+        source["preparation_recipe"] = dict(zip(("build", "animate"), AUDITED_TASKS[task], strict=True))
     if task in ORTHOGRAPHIC_TASKS | CONVERTED_GEOMETRY_TASKS | ANIMATED_SCALE_TASKS | ALPHA_TASKS:
         source["preparation_recipe"] = {"build": AUDITED_TASKS[task][0], "animate": AUDITED_TASKS[task][1]}
     if task in CONVERTED_GEOMETRY_TASKS:

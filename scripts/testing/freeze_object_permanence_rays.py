@@ -20,6 +20,7 @@ from .freeze_object_permanence import (
     reference_geometry,
     reference_geometry_description,
     reference_render_meshes,
+    reference_source_realization,
     sha256,
     write_depth_parts,
 )
@@ -170,6 +171,11 @@ def freeze(root, output, task, width=320, height=180, *, visibility_contract=CON
         "arrays": {k: {"shape": list(v.shape), "dtype": str(v.dtype)} for k, v in arrays.items()},
     }
     context = reference_execution_context(script, task)
+    realization = reference_source_realization(script, task)
+    if realization is not None:
+        manifest["source_realization"] = realization
+        manifest["source_preparation_recipe"] = {"build": build, "animate": animate}
+        manifest["source_profile"] = "one pinned native realization; unmodified source build; no diversity"
     if task in REFERENCE_SCALE_TASKS:
         manifest["scale_convention"] = "stable-envs/asset-relative-positive-diagonal-v1"
         manifest["source_scale_space"] = "absolute-world-matrix-decomposition"

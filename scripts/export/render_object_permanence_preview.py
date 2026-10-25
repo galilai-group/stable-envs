@@ -18,17 +18,28 @@ from .object_permanence import (
     prepare,
     sha256,
     source_execution_context,
+    source_realization,
 )
 
 
-def render(root, output, task, *, samples=16, frame_stop=None):
+def render(root, output, task, *, samples=16, frame_stop=None, device="CPU"):
     import bpy
 
     if output.exists():
         raise FileExistsError(f"refusing to overwrite preview: {output}")
     scene, script, _ = prepare(root, task)
     scene.render.engine = "CYCLES"
-    scene.cycles.device = "CPU"
+    if device not in ("CPU", "GPU"):
+        raise ValueError("preview device must be CPU or GPU")
+    if device == "GPU":
+        preferences = bpy.context.preferences.addons["cycles"].preferences
+        preferences.compute_device_type = "CUDA"
+        preferences.refresh_devices()
+        for item in preferences.devices:
+            item.use = item.type == "CUDA"
+        if not any(item.use for item in preferences.devices):
+            raise RuntimeError("requested native CUDA preview device is unavailable")
+    scene.cycles.device = device
     scene.cycles.samples = samples
     scene.cycles.use_denoising = True
     scene.render.resolution_x, scene.render.resolution_y = 320, 180
@@ -53,7 +64,7 @@ def render(root, output, task, *, samples=16, frame_stop=None):
         "task": task,
         "profile": "nominal-no-diversity",
         "blender": bpy.app.version_string,
-        "engine": "Cycles CPU",
+        "engine": f"Cycles {device}",
         "samples": samples,
         "denoising": True,
         "size": [180, 320],
@@ -62,6 +73,9 @@ def render(root, output, task, *, samples=16, frame_stop=None):
         "note": "native source scene, preview rendering quality; not original MP4 pixels",
     }
     context = source_execution_context(root, task, script)
+    realization = source_realization(root, task)
+    if realization is not None:
+        metadata["source_realization"] = realization
     if context is not None:
         metadata["source_execution_context"] = context
     if task in ORTHOGRAPHIC_TASKS | CONVERTED_GEOMETRY_TASKS:
@@ -77,11 +91,17 @@ def main():
     parser.add_argument("--task", choices=tuple(AUDITED_TASKS), required=True)
     parser.add_argument("--samples", type=int, default=16)
     parser.add_argument("--frame-stop", type=int)
+    parser.add_argument("--device", choices=("CPU", "GPU"), default="CPU")
     args = parser.parse_args()
     if args.samples < 1 or (args.frame_stop is not None and args.frame_stop < 1):
         parser.error("samples and frame-stop must be positive")
     render(
-        args.source_root.resolve(), args.output.resolve(), args.task, samples=args.samples, frame_stop=args.frame_stop
+        args.source_root.resolve(),
+        args.output.resolve(),
+        args.task,
+        samples=args.samples,
+        frame_stop=args.frame_stop,
+        device=args.device,
     )
 
 

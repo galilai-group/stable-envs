@@ -20,11 +20,11 @@ missing label pixel would violate the existing IoU budget. Labels participate in
 source-world triangle/normal checks as well as image checks; they are never
 replaced by rectangles, annotations or a screen-space text overlay.
 
-The current audit certifies **148/150** first nominal members: 7 legacy,
-92 opaque-v1, 44 opaque-v2 and 4 [alpha-surface scenes](object-permanence-transparency.md),
+The current audit certifies **150/150** first nominal members: 7 legacy,
+94 opaque-v1, 44 opaque-v2 and 4 [alpha-surface scenes](object-permanence-transparency.md),
 and 1 [sampled optical case](object-permanence-optics.md), including the separate
 [scale extension](object-permanence-scale.md).
-Remaining deferrals are two source-normal reproducibility failures.
+The two source-normal deferrals are resolved through [native realizations](object-permanence-native-scenes.md).
 Two additional optical members are supported; 45 remain unregistered.
 
 ## Conversion and lifetime

@@ -13,6 +13,8 @@ DEPTH_MSE_MAX = 1e-8
 MASK_IOU_MIN = 0.99
 RECORDED_TASKS = ("g27", "g34", "g37", "g38", "g55", "g62", "g64")
 RAY_TASKS = (
+    "g98",
+    "g132",
     "g02",
     "g03",
     "g05",

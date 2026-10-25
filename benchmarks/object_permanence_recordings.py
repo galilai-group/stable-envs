@@ -31,6 +31,8 @@ def comparison_gif(clip, source, output, *, size, visibility_contract=None):
         raise ValueError("source preview task or pinned source differs")
     if metadata.get("source_execution_context") != recorded_source.get("execution_context"):
         raise ValueError("source preview and recording execution contexts differ")
+    if metadata.get("source_realization") != recorded_source.get("realization"):
+        raise ValueError("source preview and recording native realizations differ")
     if (visibility_contract == "stable-envs/opaque-pixel-rays-v2" or clip.manifest.get("geometry_conversion")) and (
         metadata.get("source_preparation_recipe") != recorded_source.get("preparation_recipe")
         or metadata["source_script_sha256"] != recorded_source["script_sha256"]
@@ -56,7 +58,12 @@ def comparison_gif(clip, source, output, *, size, visibility_contract=None):
         )
         draw.text((left.width + 6, 6), label, fill="black")
         frames.append(canvas)
-    palette = frames[0].quantize(colors=256)
+    # Initially occluded objects can introduce colors absent from frame one.
+    # Include the complete clip so GIF quantization does not erase their identity.
+    palette_source = Image.new("RGB", (frames[0].width, frames[0].height * len(frames)))
+    for index, frame in enumerate(frames):
+        palette_source.paste(frame, (0, index * frame.height))
+    palette = palette_source.quantize(colors=256)
     frames = [frame.quantize(palette=palette, dither=Image.Dither.NONE) for frame in frames]
     output.parent.mkdir(parents=True, exist_ok=True)
     frames[0].save(

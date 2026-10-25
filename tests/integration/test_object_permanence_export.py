@@ -472,3 +472,55 @@ def test_live_optical_export_and_independent_world_geometry(tmp_path, task, memb
         assert recording.transforms([0, 44, 119]).shape == (3, 1, 4, 4)
         assert recording.poses([0, 44, 119]).shape == (3, 1, 7)
         assert recording.manifest["schema"] == "stable-envs/object-permanence-rigid-v5"
+
+
+@pytest.mark.parametrize("task", ["G98", "G132"])
+def test_native_realization_reexports_identical_arrays_in_fresh_processes(tmp_path, task):
+    from tests.helpers.reference.object_permanence_recordings import RECORDINGS
+
+    source = os.environ.get("SE_OBJECT_PERMANENCE_SOURCE")
+    python = os.environ.get("SE_OBJECT_PERMANENCE_BLENDER_PYTHON")
+    if not source or not python:
+        pytest.skip("native realization export needs pinned source and Blender interpreter")
+    with RigidTrajectory(RECORDINGS, f"{task.lower()}-nominal") as frozen:
+        for repeat in range(2):
+            output = tmp_path / str(repeat)
+            subprocess.run(
+                [
+                    python,
+                    "-B",
+                    "-m",
+                    "scripts.export.object_permanence",
+                    "export",
+                    "--source-root",
+                    source,
+                    "--output",
+                    str(output),
+                    "--task",
+                    task,
+                ],
+                check=True,
+                timeout=180,
+            )
+            subprocess.run(
+                [
+                    python,
+                    "-B",
+                    "-m",
+                    "scripts.testing.check_object_permanence_export",
+                    "--source-root",
+                    source,
+                    "--dataset",
+                    str(output),
+                    "--task",
+                    task,
+                ],
+                check=True,
+                timeout=180,
+            )
+            with RigidTrajectory(output, f"{task.lower()}-nominal") as fresh:
+                np.testing.assert_array_equal(fresh.poses(np.arange(120)), frozen.poses(np.arange(120)))
+                assert fresh.manifest["camera"] == frozen.manifest["camera"]
+                assert fresh.manifest["source"]["realization"] == frozen.manifest["source"]["realization"]
+                for key, value in fresh.triangles().items():
+                    np.testing.assert_array_equal(value, frozen.triangles()[key])

@@ -5507,28 +5507,84 @@
       "task": "G97"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          5
+        ],
+        "fallbacks": 0
+      },
       "camera": "PERSP",
-      "category": "source-normal-instability",
+      "category": "opaque-native-realization",
+      "certification_scope": "one hash-pinned unmodified native build; raw script rebuilds may differ",
+      "contract": "stable-envs/opaque-pixel-rays-v1",
+      "depth_mse_max": 0.0,
+      "dynamic_nodes": [
+        "colored_ball_on_base",
+        "liftoff_dome_lid"
+      ],
+      "frames": 120,
+      "fresh_process_world_checks": 3,
+      "historical_deferral": {
+        "category": "source-normal-instability",
+        "preview": ".cache/object_permanence/evaluation/deferred-previews/g98-deferred-source-vs-pixel-rays-v1.gif",
+        "preview_kind": "deferred-comparison",
+        "reason": "Independent source corner normals exceed atol=3e-6: max absolute difference 1.02663848e-05",
+        "stage": "source-world-check",
+        "status": "deferred"
+      },
+      "independent_world_check": {
+        "assets": 5,
+        "dynamic_nodes": [
+          "colored_ball_on_base",
+          "liftoff_dome_lid"
+        ],
+        "frames": 120,
+        "objects": 5,
+        "task": "G98",
+        "world_normal_max_abs_error": 3.7735732427712776e-08,
+        "world_triangle_max_abs_error": 0.0
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 5,
       "name": "liftoff_dome_lid",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g98-deferred-source-vs-pixel-rays-v1.gif",
+      "oracle": "tests/fixtures/semantics/object_permanence/g98/opaque_pixel_rays_v1/nominal",
+      "preview": ".cache/object_permanence/evaluation/g98-source-vs-pixel-rays-v1.gif",
       "preview_frames": 120,
-      "preview_kind": "deferred-comparison",
-      "reason": "Independent source corner normals exceed atol=3e-6: max absolute difference 1.02663848e-05",
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v1",
+      "reference_target_roles": {
+        "colored_ball_on_base": "target"
+      },
+      "reference_targets": [
+        "colored_ball_on_base"
       ],
       "script": "object_permanence/generator/tasks/G98_liftoff_dome_lid/pb_task_00000144_pb_liftoff_dome_lid_0145_blender.py",
       "source_frames": [
         1,
         120
       ],
+      "source_realization": {
+        "file": "tests/fixtures/source/object_permanence/g98/nominal/source.blend",
+        "manifest_sha256": "6b415ad39420f31d9eebc0e78ab33eea0903690b29e806abf7b78aa9fc1a29f6",
+        "schema": "stable-envs/native-source-realization-v1",
+        "sha256": "8a662936174f1ad85e2c88067e6bf5b2343840a5044e308e1ab4f5e30545d69f"
+      },
       "source_script_sha256": "e43ced40aafb0bb7fc52d0f31c4adc6fb9adaee0b61fcdce5f25ec56a4fa4fc4",
       "source_task_manifest_sha256": "3756d37c1c6a1d85070ac301ff407e8fe2ee646531f4800c740ba9f17fb1f6fa",
-      "stage": "source-world-check",
-      "status": "deferred",
+      "status": "certified",
       "task": "G98"
     },
     {
@@ -7455,28 +7511,84 @@
       "task": "G131"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          5
+        ],
+        "fallbacks": 0
+      },
       "camera": "PERSP",
-      "category": "source-normal-instability",
+      "category": "opaque-native-realization",
+      "certification_scope": "one hash-pinned unmodified native build; raw script rebuilds may differ",
+      "contract": "stable-envs/opaque-pixel-rays-v1",
+      "depth_mse_max": 7.687677654959973e-16,
+      "dynamic_nodes": [
+        "capsule_lid_top",
+        "hidden_ball_in_capsule"
+      ],
+      "frames": 120,
+      "fresh_process_world_checks": 3,
+      "historical_deferral": {
+        "category": "source-normal-instability",
+        "preview": ".cache/object_permanence/evaluation/deferred-previews/g132-source-only-deferred.gif",
+        "preview_kind": "source-only",
+        "reason": "Independent source corner normals exceed atol=3e-6: max absolute difference 3.16480663e-06",
+        "stage": "independent-source-repeat",
+        "status": "deferred"
+      },
+      "independent_world_check": {
+        "assets": 7,
+        "dynamic_nodes": [
+          "capsule_lid_top",
+          "hidden_ball_in_capsule"
+        ],
+        "frames": 120,
+        "objects": 7,
+        "task": "G132",
+        "world_normal_max_abs_error": 3.271469499049884e-07,
+        "world_triangle_max_abs_error": 2.0866365435523448e-07
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 7,
       "name": "twist_open_capsule",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g132-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "Independent source corner normals exceed atol=3e-6: max absolute difference 3.16480663e-06",
+      "oracle": "tests/fixtures/semantics/object_permanence/g132/opaque_pixel_rays_v1/nominal",
+      "preview": ".cache/object_permanence/evaluation/g132-source-vs-pixel-rays-v1.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v1",
+      "reference_target_roles": {
+        "hidden_ball_in_capsule": "hidden_ball"
+      },
+      "reference_targets": [
+        "hidden_ball_in_capsule"
       ],
       "script": "object_permanence/generator/tasks/G132_twist_open_capsule/pb_task_00000178_pb_twist_open_capsule_0179_blender.py",
       "source_frames": [
         1,
         120
       ],
+      "source_realization": {
+        "file": "tests/fixtures/source/object_permanence/g132/nominal/source.blend",
+        "manifest_sha256": "862373eb269d97b2110aa5a3181a61155fddced0e4369273bb4de6c5934836fe",
+        "schema": "stable-envs/native-source-realization-v1",
+        "sha256": "97022c3c4845097d603f67056f73cfa1c284d1891136241f80295a6ca64fa6d0"
+      },
       "source_script_sha256": "1aa6eb4b3640d907a658703f9d1f12b8272e967778680cc277b2b80557b4e8da",
       "source_task_manifest_sha256": "d2c3439c1516bbb5cd94a23e1851dff9201cca65513642030f3db5367962c521",
-      "stage": "independent-source-repeat",
-      "status": "deferred",
+      "status": "certified",
       "task": "G132"
     },
     {
@@ -8424,6 +8536,15 @@
       "task": "G150"
     }
   ],
+  "native_realization_policy": {
+    "raw_rebuild_equivalence_claimed": false,
+    "schema": "stable-envs/native-source-realization-v1",
+    "scope": "native mesh+animation input shared by independent extraction paths; no normals or thresholds replaced",
+    "tasks": [
+      "G98",
+      "G132"
+    ]
+  },
   "profile": "first-nominal-member",
   "reference_probe_policy": "Source task-object roles select probes; V2 separately records source_semantic_targets and the source-observable subset targets. Every mesh remains in all world poses, IDs and all-object depth/mask checks.",
   "schema": "stable-envs/object-permanence-source-audit-v1",

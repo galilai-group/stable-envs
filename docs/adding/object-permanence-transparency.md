@@ -10,9 +10,8 @@ The new recording schema is `stable-envs/object-permanence-rigid-v4`, with mater
 policy `stable-envs/constant-alpha-surfaces-v1` and visibility contract
 `stable-envs/transparent-pixel-rays-v1`. These versions describe different things.
 Old data, opaque visibility defaults, G34 State and acceptance budgets remain
-unchanged. The current audit certifies 148/150 first nominal members: 7 legacy,
-92 opaque-v1, 44 opaque-v2, 4 alpha cases and 1 sampled optical case. G98/G132
-source-normal failures remain deferred. Two additional optical members are
+unchanged. The current audit certifies 150/150 first nominal members: 7 legacy,
+94 opaque-v1, 44 opaque-v2, 4 alpha cases and 1 sampled optical case. G98/G132 now use [hash-pinned native realizations](object-permanence-native-scenes.md). Two additional optical members are
 supported; 45 remain unregistered.
 
 ## Material and event contract

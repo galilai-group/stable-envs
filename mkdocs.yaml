@@ -128,6 +128,7 @@ nav:
       - Object-permanence scale animation: adding/object-permanence-scale.md
       - Object-permanence alpha surfaces: adding/object-permanence-transparency.md
       - Object-permanence dielectric replay: adding/object-permanence-optics.md
+      - Object-permanence native realizations: adding/object-permanence-native-scenes.md
       - Object-permanence source inventory: adding/object-permanence-inventory.md
       - Writing a bit-exact Triton kernel: adding/bit-exact-triton.md
       - Testing: testing.md

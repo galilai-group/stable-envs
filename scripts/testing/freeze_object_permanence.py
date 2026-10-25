@@ -35,6 +35,8 @@ REFERENCE_CONVERTED_TASKS = {
 # Deliberately independent of the candidate exporter's entry registry/extraction.
 # These calls and targets were checked against each source main()/selected builder.
 REFERENCE_CASES = {
+    "G98": ("build_scene_by_kind", "animate_scene_by_kind", ("colored_ball_on_base",)),
+    "G132": ("build_scene_by_kind", "animate_scene_by_kind", ("hidden_ball_in_capsule",)),
     "G05": ("build_scene", "animate_scene", ("red_wheeled_car_body",)),
     "G06": ("build_scene", "animate_scene", ("hole_bridge_red_car_body",)),
     "G07": ("build_scene_by_kind", "animate_scene_by_kind", ("red_car_body",)),
@@ -265,10 +267,45 @@ def reference_execution_context(script, task):
     }
 
 
+def reference_source_realization(script, task):
+    """Independently validate the native scene used as source input, not candidate arrays."""
+    if task not in {"G98", "G132"}:
+        return None
+    directory = Path(__file__).resolve().parents[2] / f"tests/fixtures/source/object_permanence/{task.lower()}/nominal"
+    manifest = directory / "manifest.json"
+    m = json.loads(manifest.read_text())
+    if (
+        m["schema"] != "stable-envs/native-source-realization-v1"
+        or m["task"] != task
+        or m["member"] != 0
+        or m["source_commit"] != SOURCE_COMMIT
+        or m["file"] != "source.blend"
+        or m["source_preparation_recipe"] != dict(zip(("build", "animate"), REFERENCE_CASES[task][:2], strict=True))
+        or m["source_script_sha256"] != sha256(script)
+        or m["source_task_manifest_sha256"] != sha256(script.parent / "task.json")
+        or m["sha256"] != sha256(directory / "source.blend")
+    ):
+        raise ValueError("independent native source realization mismatch")
+    return {
+        "schema": m["schema"],
+        "file": f"tests/fixtures/source/object_permanence/{task.lower()}/nominal/source.blend",
+        "sha256": m["sha256"],
+        "manifest_sha256": sha256(manifest),
+    }
+
+
 def prepare_reference(script, task):
     """Independently audited source calls; no candidate preparation imports."""
     import bpy
 
+    realization = reference_source_realization(script, task)
+    if realization is not None:
+        path = Path(__file__).resolve().parents[2] / realization["file"]
+        m = json.loads(path.with_name("manifest.json").read_text())
+        if m["versions"]["blender"] != bpy.app.version_string:
+            raise ValueError("native reference Blender version mismatch")
+        bpy.ops.wm.open_mainfile(filepath=str(path), load_ui=False, use_scripts=False)
+        return
     build, animate, _ = REFERENCE_CASES[task]
     if build.startswith("$prefix:"):
         # Independent text boundary plus AST removal of the sole directory setup.

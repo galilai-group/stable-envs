@@ -19,7 +19,9 @@ The same source pin and attribution apply to the independently generated G62
 oracle in `tests/fixtures/semantics/object_permanence/g62/nominal/` and candidate
 recordings in `tests/fixtures/saved/object_permanence_rigid/`. These data carry
 the source CC-BY-NC-4.0 terms, with license text in their fixture directories;
-they are not relicensed under the library MIT license.
+they are not relicensed under the library MIT license. Native G98/G132 source scenes under
+`tests/fixtures/source/object_permanence/` are also source-derived CC-BY-NC-4.0
+fixtures; their manifests bind the original scripts and native-file checksums.
 
 ## Craftax
 

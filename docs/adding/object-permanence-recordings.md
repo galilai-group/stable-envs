@@ -9,6 +9,11 @@ unused builders; they are not a claim that every nominal/diversity variant works
 
 ## Audited scenes and supported capabilities
 
+Current scope: all 150 first nominal members plus two additional optical members.
+G98/G132 use [hash-pinned native source realizations](object-permanence-native-scenes.md);
+45 additional scripts and driver diversity remain unaudited. The sections below
+retain the chronological import history.
+
 G34 is the existing single ball behind a screen. The second pilot is
 [G62 two balls cross tunnel](https://github.com/hokindeng/object-permanence/blob/824baddcdad087810d35638bf8f273b884f74975/object_permanence/generator/tasks/G62_two_balls_cross_tunnel/pb_task_00000108_pb_two_balls_cross_tunnel_0109_blender.py):
 two balls travel in opposite directions on parallel lanes through an opaque
