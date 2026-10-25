@@ -21,6 +21,7 @@ SCHEMA = "stable-envs/object-permanence-rigid-v1"
 SCHEMA_V2 = "stable-envs/object-permanence-rigid-v2"
 SCHEMA_V3 = "stable-envs/object-permanence-rigid-v3"
 SCHEMA_V4 = "stable-envs/object-permanence-rigid-v4"
+SCHEMA_V5 = "stable-envs/object-permanence-rigid-v5"
 SCALE_CONVENTION = "stable-envs/asset-relative-positive-diagonal-v1"
 CONVENTIONS = {"world": "right-handed-z-up", "quaternion": "wxyz", "units": "source-scene-units"}
 
@@ -72,7 +73,10 @@ class RigidTrajectory(Closeable):
         directory = self.root / "clips" / clip
         self._manifest = json.loads((directory / "manifest.json").read_text())
         m = self._manifest
-        if m.get("schema") not in (SCHEMA, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4) or m.get("conventions") != CONVENTIONS:
+        if (
+            m.get("schema") not in (SCHEMA, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5)
+            or m.get("conventions") != CONVENTIONS
+        ):
             raise ValueError("unsupported rigid-scene schema or conventions")
         if m.get("clip") != clip:
             raise ValueError("clip identity differs")
@@ -86,12 +90,15 @@ class RigidTrajectory(Closeable):
         if not isinstance(m.get("fps"), (int, float)) or not np.isfinite(m["fps"]) or m["fps"] <= 0:
             raise ValueError("fps must be finite and positive")
         self._arrays = {}
+        optical = m["schema"] == SCHEMA_V5
+        if optical != ("transforms" in m["arrays"]):
+            raise ValueError("exact source transforms require rigid-scene v5")
         scaled = "scales" in m["arrays"]
-        if scaled and m["schema"] not in (SCHEMA_V3, SCHEMA_V4):
+        if scaled and m["schema"] not in (SCHEMA_V3, SCHEMA_V4, SCHEMA_V5):
             raise ValueError("scale arrays require rigid-scene v3")
         if (m["schema"] == SCHEMA_V3 or scaled) and m.get("scale_convention") != SCALE_CONVENTION:
             raise ValueError("v3 requires the asset-relative positive scale convention")
-        for name in ("poses", "frames", *(["scales"] if scaled else [])):
+        for name in ("poses", "frames", *(["scales"] if scaled else []), *(["transforms"] if optical else [])):
             description = m["arrays"][name]
             path = directory / f"{name}.npy"
             if _sha256(path) != description["sha256"]:
@@ -115,6 +122,17 @@ class RigidTrajectory(Closeable):
         for start in range(0, len(self.frames), 4096):
             rows = self._poses[start : start + 4096]
             _poses(rows, (len(rows), len(nodes), 7))
+        if optical:
+            transforms = self._arrays["transforms"]
+            if transforms.dtype != np.float64 or transforms.shape != (len(self.frames), len(nodes), 4, 4):
+                raise ValueError("exact transforms must be float64 [T,D,4,4]")
+            if (
+                not np.isfinite(transforms).all()
+                or not np.all(transforms[..., 3, :] == [0, 0, 0, 1])
+                or np.any(np.linalg.det(transforms[..., :3, :3]) <= 0)
+                or not np.array_equal(transforms[..., :3, 3].astype(np.float32), self._poses[..., :3])
+            ):
+                raise ValueError("invalid exact source transforms")
         if scaled:
             value = self._scales
             assert value is not None
@@ -127,21 +145,50 @@ class RigidTrajectory(Closeable):
             if not np.array_equal(value[0], np.ones_like(value[0])):
                 raise ValueError("asset-relative scales must start at one")
         objects = m["objects"]
-        transparent = m["schema"] == SCHEMA_V4
+        optical = m["schema"] == SCHEMA_V5
+        transparent = m["schema"] in (SCHEMA_V4, SCHEMA_V5)
         if not transparent and "material_convention" in m:
             raise ValueError("alpha material policies require rigid-scene v4")
-        if transparent and (
-            m.get("material_convention") != "stable-envs/constant-alpha-surfaces-v1"
-            or m.get("visibility_contract") != "stable-envs/transparent-pixel-rays-v1"
-            or m["camera"].get("projection_type") not in ("perspective", "orthographic")
+        if (
+            transparent
+            and not optical
+            and (
+                m.get("material_convention") != "stable-envs/constant-alpha-surfaces-v1"
+                or m.get("visibility_contract") != "stable-envs/transparent-pixel-rays-v1"
+                or m["camera"].get("projection_type") not in ("perspective", "orthographic")
+            )
         ):
             raise ValueError("v4 requires explicit alpha material, visibility and camera conventions")
+        if optical:
+            from .rendering.optics import CONTRACT, MATERIAL, POLICY
+
+            if (
+                m.get("material_convention") != MATERIAL
+                or m.get("visibility_contract") != CONTRACT
+                or m.get("optical_policy") != POLICY
+                or m["camera"].get("projection_type") != "perspective"
+            ):
+                raise ValueError("v5 requires explicit sampled optical conventions")
         if not objects or len({o["name"] for o in objects}) != len(objects):
             raise ValueError("objects must have unique names")
         if len({o["id"] for o in objects}) != len(objects):
             raise ValueError("object IDs must be unique")
         used = set()
         for obj in objects:
+            if optical:
+                from .rendering.optics import validate_material
+
+                validate_material(obj.get("optics", {}))
+                transform = np.asarray(obj.get("transform"))
+                if (
+                    transform.shape != (4, 4)
+                    or not np.isfinite(transform).all()
+                    or not np.array_equal(transform[3], [0, 0, 0, 1])
+                    or np.linalg.det(transform[:3, :3]) <= 0
+                ):
+                    raise ValueError("invalid optical object transform")
+            elif "optics" in obj:
+                raise ValueError("optical parameters require rigid-scene v5")
             node = obj["node"]
             if type(node) is not int or node < -1 or node >= len(nodes):
                 raise ValueError("object references an invalid dynamic node")
@@ -239,6 +286,17 @@ class RigidTrajectory(Closeable):
         indices = self._indices(indices)
         # Integer-array indexing already creates independent storage.
         return np.asarray(self._poses[indices])
+
+    def transforms(self, indices):
+        """Return owned CPU float64 [B,D,4,4] exact source transforms for v5.
+
+        Source matrix coefficients avoid pose decomposition/baked-scale rounding
+        at coincident dielectric boundaries. Legacy pose arrays are unchanged.
+        """
+        self._check_open("transforms")
+        if "transforms" not in self._arrays:
+            raise ValueError("exact transforms require an optical v5 recording")
+        return np.asarray(self._arrays["transforms"][self._indices(indices)])
 
     @property
     def has_scales(self):

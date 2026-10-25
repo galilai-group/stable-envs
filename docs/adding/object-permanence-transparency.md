@@ -2,16 +2,18 @@
 
 This extension supports fixed-camera rigid recordings with constant, straight-ray
 alpha surfaces. G90/G36 use perspective cameras; G54/G61 use orthographic cameras.
-G01 remains deferred: its acrylic also enables transmission weight 0.25 and IOR
-1.45. That refracting material is not silently replaced with an alpha-only model.
+G01 acrylic additionally enables transmission weight 0.25 and IOR 1.45. It uses
+the separate [sampled dielectric policy](object-permanence-optics.md), preserving
+this straight-ray alpha policy rather than silently changing its meaning.
 
 The new recording schema is `stable-envs/object-permanence-rigid-v4`, with material
 policy `stable-envs/constant-alpha-surfaces-v1` and visibility contract
 `stable-envs/transparent-pixel-rays-v1`. These versions describe different things.
 Old data, opaque visibility defaults, G34 State and acceptance budgets remain
-unchanged. The current audit certifies 147/150 first nominal members: 7 legacy,
-92 opaque-v1, 44 opaque-v2 and 4 alpha cases. G01 and the G98/G132 source-normal
-failures remain deferred; 47 additional member scripts remain unregistered.
+unchanged. The current audit certifies 148/150 first nominal members: 7 legacy,
+92 opaque-v1, 44 opaque-v2, 4 alpha cases and 1 sampled optical case. G98/G132
+source-normal failures remain deferred. Two additional optical members are
+supported; 45 remain unregistered.
 
 ## Material and event contract
 

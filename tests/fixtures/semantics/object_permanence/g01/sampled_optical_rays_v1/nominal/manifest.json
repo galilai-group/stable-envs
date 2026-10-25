@@ -1,0 +1,488 @@
+{
+  "arrays": {
+    "depth_base": {
+      "dtype": "float32",
+      "shape": [
+        180,
+        320
+      ]
+    },
+    "ids_base": {
+      "dtype": "int16",
+      "shape": [
+        180,
+        320
+      ]
+    },
+    "masks_packed_base": {
+      "dtype": "uint8",
+      "shape": [
+        16,
+        180,
+        40
+      ]
+    },
+    "path_depth_base": {
+      "dtype": "float32",
+      "shape": [
+        16,
+        180,
+        320
+      ]
+    },
+    "poses": {
+      "dtype": "float64",
+      "shape": [
+        120,
+        16,
+        7
+      ]
+    },
+    "source_frames": {
+      "dtype": "int64",
+      "shape": [
+        120
+      ]
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        2.499999761581421,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        4.444444179534912,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "projection_type": "perspective",
+    "world": [
+      [
+        0.7948427200317383,
+        -0.16748932003974915,
+        0.5832429528236389,
+        3.549999952316284
+      ],
+      [
+        0.6068154573440552,
+        0.21938738226890564,
+        -0.7639660835266113,
+        -4.650000095367432
+      ],
+      [
+        1.2252723280425926e-08,
+        0.9611537456512451,
+        0.27601358294487,
+        2.9000000953674316
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "clip": "g01-nominal",
+  "file": "geometry.npz",
+  "frames": 120,
+  "generator": "scripts/testing/freeze_object_permanence_optical.py",
+  "generator_sha256": "b357b238d73b675ecb76ffe46c636fb407833c67fddc2910e4c63420823aab66",
+  "height": 180,
+  "material_convention": "stable-envs/constant-dielectric-surfaces-v1",
+  "materials": {
+    "cap_handle_ring": {
+      "alpha": 1.0,
+      "ior": 1.5,
+      "roughness": 0.41999998688697815,
+      "transmission": 0.0
+    },
+    "inside_pad": {
+      "alpha": 1.0,
+      "ior": 1.5,
+      "roughness": 0.8600000143051147,
+      "transmission": 0.0
+    },
+    "large_table_floor": {
+      "alpha": 1.0,
+      "ior": 1.5,
+      "roughness": 0.7799999713897705,
+      "transmission": 0.0
+    },
+    "opaque_cap_covering_hole": {
+      "alpha": 1.0,
+      "ior": 1.5,
+      "roughness": 0.41999998688697815,
+      "transmission": 0.0
+    },
+    "target_orange_ball": {
+      "alpha": 1.0,
+      "ior": 1.5,
+      "roughness": 0.2800000011920929,
+      "transmission": 0.0
+    },
+    "thin_dark_rim_around_hole": {
+      "alpha": 1.0,
+      "ior": 1.5,
+      "roughness": 0.47999998927116394,
+      "transmission": 0.0
+    },
+    "transparent_box_back_wall": {
+      "alpha": 0.2800000011920929,
+      "ior": 1.4500000476837158,
+      "roughness": 0.18000000715255737,
+      "transmission": 0.25
+    },
+    "transparent_box_bottom_panel": {
+      "alpha": 0.2800000011920929,
+      "ior": 1.4500000476837158,
+      "roughness": 0.18000000715255737,
+      "transmission": 0.25
+    },
+    "transparent_box_corner_edge_01": {
+      "alpha": 0.41999998688697815,
+      "ior": 1.4500000476837158,
+      "roughness": 0.25,
+      "transmission": 0.25
+    },
+    "transparent_box_corner_edge_02": {
+      "alpha": 0.41999998688697815,
+      "ior": 1.4500000476837158,
+      "roughness": 0.25,
+      "transmission": 0.25
+    },
+    "transparent_box_corner_edge_03": {
+      "alpha": 0.41999998688697815,
+      "ior": 1.4500000476837158,
+      "roughness": 0.25,
+      "transmission": 0.25
+    },
+    "transparent_box_corner_edge_04": {
+      "alpha": 0.41999998688697815,
+      "ior": 1.4500000476837158,
+      "roughness": 0.25,
+      "transmission": 0.25
+    },
+    "transparent_box_front_wall": {
+      "alpha": 0.2800000011920929,
+      "ior": 1.4500000476837158,
+      "roughness": 0.18000000715255737,
+      "transmission": 0.25
+    },
+    "transparent_box_left_wall": {
+      "alpha": 0.2800000011920929,
+      "ior": 1.4500000476837158,
+      "roughness": 0.18000000715255737,
+      "transmission": 0.25
+    },
+    "transparent_box_right_wall": {
+      "alpha": 0.2800000011920929,
+      "ior": 1.4500000476837158,
+      "roughness": 0.18000000715255737,
+      "transmission": 0.25
+    },
+    "transparent_top_lid_with_real_circular_hole": {
+      "alpha": 0.2800000011920929,
+      "ior": 1.4500000476837158,
+      "roughness": 0.18000000715255737,
+      "transmission": 0.25
+    }
+  },
+  "member": 0,
+  "object_ids": {
+    "cap_handle_ring": 1,
+    "inside_pad": 2,
+    "large_table_floor": 3,
+    "opaque_cap_covering_hole": 4,
+    "target_orange_ball": 5,
+    "thin_dark_rim_around_hole": 6,
+    "transparent_box_back_wall": 7,
+    "transparent_box_bottom_panel": 8,
+    "transparent_box_corner_edge_01": 9,
+    "transparent_box_corner_edge_02": 10,
+    "transparent_box_corner_edge_03": 11,
+    "transparent_box_corner_edge_04": 12,
+    "transparent_box_front_wall": 13,
+    "transparent_box_left_wall": 14,
+    "transparent_box_right_wall": 15,
+    "transparent_top_lid_with_real_circular_hole": 16
+  },
+  "object_order": [
+    "cap_handle_ring",
+    "inside_pad",
+    "large_table_floor",
+    "opaque_cap_covering_hole",
+    "target_orange_ball",
+    "thin_dark_rim_around_hole",
+    "transparent_box_back_wall",
+    "transparent_box_bottom_panel",
+    "transparent_box_corner_edge_01",
+    "transparent_box_corner_edge_02",
+    "transparent_box_corner_edge_03",
+    "transparent_box_corner_edge_04",
+    "transparent_box_front_wall",
+    "transparent_box_left_wall",
+    "transparent_box_right_wall",
+    "transparent_top_lid_with_real_circular_hole"
+  ],
+  "optical_policy": {
+    "max_events": 64,
+    "ray_start": 1e-09,
+    "samples": 8,
+    "seed": 0
+  },
+  "parts": {
+    "depth": [
+      {
+        "dtype": "uint32",
+        "file": "depth/depth_0000_0030.npz",
+        "sha256": "62e4b3b749f69d70fe49ef4b609a71d03ececed86ce69ba7a910bbc5a0ba681c",
+        "shape": [
+          30,
+          180,
+          320
+        ],
+        "start": 0,
+        "stop": 30
+      },
+      {
+        "dtype": "uint32",
+        "file": "depth/depth_0030_0060.npz",
+        "sha256": "6e6c2da239b1f828a47aa5710d19f51bf0ba41970fa994bc9a24019179e813ed",
+        "shape": [
+          30,
+          180,
+          320
+        ],
+        "start": 30,
+        "stop": 60
+      },
+      {
+        "dtype": "uint32",
+        "file": "depth/depth_0060_0090.npz",
+        "sha256": "84312860e584154fd8b9ec08d9176bfae02858208ff37bf05c10a898c7ebb7e9",
+        "shape": [
+          30,
+          180,
+          320
+        ],
+        "start": 60,
+        "stop": 90
+      },
+      {
+        "dtype": "uint32",
+        "file": "depth/depth_0090_0120.npz",
+        "sha256": "9ab839b441d206e9e8d7babc9dc3d9bc2fb5442bccb8b8549d73bce15a9b737b",
+        "shape": [
+          30,
+          180,
+          320
+        ],
+        "start": 90,
+        "stop": 120
+      }
+    ],
+    "ids": [
+      {
+        "dtype": "uint32",
+        "file": "ids/depth_0000_0030.npz",
+        "sha256": "62e4b3b749f69d70fe49ef4b609a71d03ececed86ce69ba7a910bbc5a0ba681c",
+        "shape": [
+          30,
+          180,
+          320
+        ],
+        "start": 0,
+        "stop": 30
+      },
+      {
+        "dtype": "uint32",
+        "file": "ids/depth_0030_0060.npz",
+        "sha256": "1374b01b960656502ecb1726d8a25293455177b5fbf48618d1820c8e4e70bf3e",
+        "shape": [
+          30,
+          180,
+          320
+        ],
+        "start": 30,
+        "stop": 60
+      },
+      {
+        "dtype": "uint32",
+        "file": "ids/depth_0060_0090.npz",
+        "sha256": "a370632f349b4ae73b5e8dc865d9317c00dbb507abb9b05f51a690b3f45ad425",
+        "shape": [
+          30,
+          180,
+          320
+        ],
+        "start": 60,
+        "stop": 90
+      },
+      {
+        "dtype": "uint32",
+        "file": "ids/depth_0090_0120.npz",
+        "sha256": "f178e710757aaec27ebf5e525508a3beeee62a94a039c0e49ea73305cc8e5077",
+        "shape": [
+          30,
+          180,
+          320
+        ],
+        "start": 90,
+        "stop": 120
+      }
+    ],
+    "masks_packed": [
+      {
+        "dtype": "uint32",
+        "file": "masks_packed/depth_0000_0030.npz",
+        "sha256": "a64de105d4d9f177173bbdd5d945e79d9f4d04a0551115b6bc0a4720d002fec3",
+        "shape": [
+          30,
+          16,
+          180,
+          40
+        ],
+        "start": 0,
+        "stop": 30
+      },
+      {
+        "dtype": "uint32",
+        "file": "masks_packed/depth_0030_0060.npz",
+        "sha256": "02b8d63bbad11595e1f0790292500297fac98451db76371d69bad8ce7b08c73f",
+        "shape": [
+          30,
+          16,
+          180,
+          40
+        ],
+        "start": 30,
+        "stop": 60
+      },
+      {
+        "dtype": "uint32",
+        "file": "masks_packed/depth_0060_0090.npz",
+        "sha256": "5c7ace82cd5950ff0073ca881625679eefde0ae28dd01015ff78aa6e7400a6de",
+        "shape": [
+          30,
+          16,
+          180,
+          40
+        ],
+        "start": 60,
+        "stop": 90
+      },
+      {
+        "dtype": "uint32",
+        "file": "masks_packed/depth_0090_0120.npz",
+        "sha256": "75eafaf2d482da77c33816264a1b79f3b7237f9b4d1f4b861def1a6f1a6ab14a",
+        "shape": [
+          30,
+          16,
+          180,
+          40
+        ],
+        "start": 90,
+        "stop": 120
+      }
+    ],
+    "path_depth": [
+      {
+        "dtype": "uint32",
+        "file": "path_depth/depth_0000_0030.npz",
+        "sha256": "6e674938c94b4983ff9be4d2fcb21db8718ac4ef82d2182313452d7602e01acb",
+        "shape": [
+          30,
+          16,
+          180,
+          320
+        ],
+        "start": 0,
+        "stop": 30
+      },
+      {
+        "dtype": "uint32",
+        "file": "path_depth/depth_0030_0060.npz",
+        "sha256": "2e27c601f32938c4dcd9df1666789dc7c3c4c5e02308f78d676799623f8fd46d",
+        "shape": [
+          30,
+          16,
+          180,
+          320
+        ],
+        "start": 30,
+        "stop": 60
+      },
+      {
+        "dtype": "uint32",
+        "file": "path_depth/depth_0060_0090.npz",
+        "sha256": "a8e0ef923eff8af05da9834d2e0dc6d56e64249d7273d4e9b4243767ba41e6eb",
+        "shape": [
+          30,
+          16,
+          180,
+          320
+        ],
+        "start": 60,
+        "stop": 90
+      },
+      {
+        "dtype": "uint32",
+        "file": "path_depth/depth_0090_0120.npz",
+        "sha256": "2e3443513a1ffa8cb277ca16cea03bcff2a05a6c73ac89937996919f31d8c9b4",
+        "shape": [
+          30,
+          16,
+          180,
+          320
+        ],
+        "start": 90,
+        "stop": 120
+      }
+    ]
+  },
+  "reference_sha256": "4e92299ef951ca92197ee62bd49cb6e2e9329ce55a84c776297121c9ad51becd",
+  "schema": "stable-envs/object-permanence-optical-oracle-v1",
+  "sha256": "7748fc39653a78c45c2437e35507c66876d5f65c4cfa676e91946f8cea645929",
+  "source_commit": "824baddcdad087810d35638bf8f273b884f74975",
+  "source_license": "CC-BY-NC-4.0",
+  "source_preparation_recipe": {
+    "animate": "",
+    "build": "$prefix:render_png"
+  },
+  "source_render_engine": "BLENDER_EEVEE_NEXT",
+  "source_script": "object_permanence/generator/tasks/G01_hole_box_drop/pb_task_00000000_pb_drop_covered_hole_box_0003_blender.py",
+  "source_script_sha256": "d8e985537c1d8e782212ce09bb604d03cc1048c9608c95f038e6c2797977b16d",
+  "source_task_manifest_sha256": "bd6b5f639c0a4702da2450ba8d3ca4821a5e968f803c957c3bf3f86eaf6a5a10",
+  "source_use_raytracing": false,
+  "targets": [
+    "target_orange_ball"
+  ],
+  "task": "G01",
+  "versions": {
+    "blender": "4.4.0",
+    "numpy": "1.26.4",
+    "python": "3.11.16"
+  },
+  "visibility_contract": "stable-envs/sampled-optical-rays-v1",
+  "width": 320
+}

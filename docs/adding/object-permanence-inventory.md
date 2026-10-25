@@ -5,11 +5,11 @@ Pinned source: `824baddcdad087810d35638bf8f273b884f74975`; 150 task groups, 197 
 Regenerate with `python -m scripts.export.object_permanence inventory --source-root <checkout> --output <file>`.
 This is a static, script-wide inventory. Unused builders can contribute signals;
 absence of a signal does not prove support. Counts include all members.
-Only explicitly listed first nominal members have audited preparation entry points;
+Only explicitly listed nominal and additional members have audited preparation entry points;
 run export to check their evaluated geometry, transforms, materials and camera at every frame.
 Diversity variants, sampled scene semantics and downstream accuracy are not certified here.
 
-The measured nominal column comes from the separately recorded [source audit](object-permanence-audit.json), not from static hints. It covers first nominal members; other member scripts remain unregistered.
+The measured nominal column comes from the separately recorded [source audit](object-permanence-audit.json), not from static hints. It covers first nominal members; additionally certified members are listed separately in that audit.
 
 ## Capability triage
 
@@ -21,19 +21,19 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 
 | Review group | Members |
 |---|---:|
-| appearance-or-visibility-review | 10 |
+| appearance-or-visibility-review | 7 |
 | audited-nominal-runtime-gate | 7 |
 | geometry-or-scale-review | 1 |
 | orthographic-camera-review | 32 |
 | rigid-candidate-needs-entry-audit | 7 |
 | source-fidelity-review | 4 |
-| versioned-visibility-runtime-gate | 136 |
+| versioned-visibility-runtime-gate | 139 |
 
 ## Source tasks
 
 | Task | Members | Script-wide signals | First-member review group | Nominal preparation coverage | Measured nominal audit |
 |---|---:|---|---|---|---|
-| G01 hole_box_drop | 2 | location, rotation_euler | appearance-or-visibility-review | not evaluated | deferred: optical-transmission |
+| G01 hole_box_drop | 2 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G02 ramp_tunnel | 3 | location, modifiers, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G03 ramp_ball_blocked_by_wall | 2 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G04 high_low_cover | 2 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |

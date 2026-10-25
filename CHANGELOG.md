@@ -8,11 +8,16 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Explicit sampled dielectric replay for both G01 members and the G03 transparent-wall
+  member, with exact source transforms, Snell/Fresnel paths, independent full-frame
+  geometry oracles and a shared static transport cache. Existing formats, samples
+  and thresholds stay unchanged; ideal optics does not claim complete source BSDF parity.
+
 - Explicit constant-alpha object-permanence recording and visibility contracts
   for G36/G54/G61/G90, including ordered depth/ID layers, overlapping masks and
   contribution weights. Adds independent source oracles, exact static-layer
   caching/merging and a reproducible upload-inclusive benchmark. G01's optical
-  transmission remains deferred; old opaque data, APIs and thresholds are unchanged.
+  transmission now uses its separate optical policy; old opaque data, APIs and thresholds are unchanged.
 
 - Optional versioned positive scale arrays for sampled object-permanence replay,
   retaining object origins and classifying scale-only motion as dynamic. Adds
@@ -46,9 +51,9 @@ All notable changes to this project are listed here. The format follows
   context provenance/mismatch checks protect source comparisons. G08/G45/G48
   also pass the orthographic V2 contract; G46 additionally retains converted FONT labels.
 
-- Complete first-nominal object-permanence audit: 147 certified scenes and 3
-  explicit deferrals across all 150 task groups; 47 additional member scripts
-  remain unregistered. Adds 61 reusable rigid recordings with independent
+- Complete first-nominal object-permanence audit: 148 certified scenes and 2
+  explicit source-normal deferrals across all 150 task groups; 2 additional optical
+  members are supported and 45 remain unregistered. Adds 61 reusable rigid recordings with independent
   120-frame depth/mask oracles, fresh-process geometry checks and two-resolution
   cache parity. Publishes measured source hashes/reasons alongside static hints;
   G132 source-normal variation remains deferred; G103 cache reuse and fixed

@@ -148,6 +148,7 @@ paths = [
   "scripts/testing/check_object_permanence*.py",
   "scripts/testing/object_permanence_ray_reference.py",
   "scripts/testing/object_permanence_alpha_reference.py",
+  "scripts/testing/object_permanence_optical_*.py",
   "scripts/testing/freeze_object_permanence*.py",
 ]
 tests = ["test_occlusion_*", "test_object_permanence_*"]
