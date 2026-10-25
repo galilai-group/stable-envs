@@ -4,7 +4,7 @@ import json
 import re
 from pathlib import Path
 
-from scripts.export.object_permanence import AUDITED_TASKS, RAY_CONTRACT_TASKS, SOURCE_COMMIT
+from scripts.export.object_permanence import AUDITED_TASKS, ORTHOGRAPHIC_TASKS, RAY_CONTRACT_TASKS, SOURCE_COMMIT
 from tests.helpers.reference.object_permanence_recordings import DEPTH_MSE_MAX, MASK_IOU_MIN, RECORDINGS
 
 CATALOG = Path(__file__).resolve().parents[2] / "docs/adding/object-permanence-audit.json"
@@ -40,14 +40,19 @@ def test_certified_catalog_matches_registered_recordings_and_unchanged_budgets()
         assert recording["source"]["script_sha256"] == row["source_script_sha256"]
         assert recording["source"]["task_manifest_sha256"] == row["source_task_manifest_sha256"]
         assert row["frames"] == 120
-        assert (row["contract"] is not None) == (task in RAY_CONTRACT_TASKS)
+        assert (row["contract"] is not None) == (task in RAY_CONTRACT_TASKS | ORTHOGRAPHIC_TASKS)
+        if task in ORTHOGRAPHIC_TASKS:
+            assert row["contract"] == "stable-envs/opaque-pixel-rays-v2"
+            assert recording["schema"] == "stable-envs/object-permanence-rigid-v2"
+            assert recording["camera"]["projection_type"] == "orthographic"
         if "depth_mse_max" in row:
             assert row["depth_mse_max"] <= DEPTH_MSE_MAX
             assert row["mask_iou_min"] >= MASK_IOU_MIN
             assert row["cache_bit_identical_resolutions"] == [90, 180]
+            version = "v2" if task in ORTHOGRAPHIC_TASKS else "v1"
             oracle = (
                 RECORDINGS.parents[1]
-                / f"semantics/object_permanence/{task.lower()}/opaque_pixel_rays_v1/nominal/manifest.json"
+                / f"semantics/object_permanence/{task.lower()}/opaque_pixel_rays_{version}/nominal/manifest.json"
             )
             assert json.loads(oracle.read_text())["targets"] == row["reference_targets"]
             roles = {o["name"]: o["role"] for o in recording["objects"]}
@@ -64,6 +69,7 @@ def test_deferred_catalog_never_exposes_an_accepted_recording_or_oracle():
         assert row["category"] and row["reason"]
         assert not (RECORDINGS / "clips" / f"{key}-nominal").exists()
         assert not (fixtures / key / "opaque_pixel_rays_v1/nominal").exists()
+        assert not (fixtures / key / "opaque_pixel_rays_v2/nominal").exists()
         assert row["preview"].startswith(".cache/object_permanence/evaluation/deferred-previews/")
 
 
@@ -84,13 +90,13 @@ def test_surface_context_audit_records_defaults_and_remaining_blockers_without_w
         assert context["globals"] == {"DIVERSITY": {}} and context["source_bindings"] == {}
         assert row["diversity_defaults"] == {parameter: 1.0}
         assert row["source_capability_audit"]["frames"] == row["preview_frames"] == 120
-        if task == "G44":
-            recording = json.loads((RECORDINGS / "clips/g44-nominal/manifest.json").read_text())
-            assert row["status"] == "certified" and row["camera"] == "PERSP"
+        if task != "G46":
+            recording = json.loads((RECORDINGS / f"clips/{task.lower()}-nominal/manifest.json").read_text())
+            assert row["status"] == "certified" and row["camera"] == ("PERSP" if task == "G44" else "ORTHO")
             assert recording["source"]["execution_context"] == context
         else:
             assert row["status"] == "deferred" and row["camera"] == "ORTHO"
-            assert "camera-projection" in row["blockers"]
+            assert "camera-projection" not in row["blockers"]
     assert entries["G46"]["source_capability_audit"]["unsupported_objects"] == {
         "box_A_label": "FONT",
         "box_B_label": "FONT",

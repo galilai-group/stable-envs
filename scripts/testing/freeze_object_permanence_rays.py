@@ -1,6 +1,8 @@
 """Freeze versioned geometric ray references alongside untouched raw BVH fixtures."""
 
 import argparse
+import hashlib
+import inspect
 import json
 import platform
 import subprocess
@@ -16,14 +18,16 @@ from .freeze_object_permanence import (
     sha256,
     write_depth_parts,
 )
-from .object_permanence_ray_reference import CONTRACT, draw
+from .object_permanence_ray_reference import CONTRACT, CONTRACT_V2, draw
 
 
-def freeze(root, output, task, width=320, height=180):
+def freeze(root, output, task, width=320, height=180, *, visibility_contract=CONTRACT):
     import bpy
 
     if output.exists():
         raise FileExistsError(f"refusing to overwrite oracle: {output}")
+    if visibility_contract not in (CONTRACT, CONTRACT_V2):
+        raise ValueError("unknown source visibility contract")
     if bpy.app.version[:2] != (4, 4):
         raise ValueError("source reference requires Blender 4.4.x")
     if subprocess.check_output(
@@ -57,7 +61,10 @@ def freeze(root, output, task, width=320, height=180):
         bpy.context.view_layer.update()
         graph = bpy.context.evaluated_depsgraph_get()
         cam = scene.camera.evaluated_get(graph)
-        if cam.data.type != "PERSP" or cam.data.dof.use_dof:
+        if (
+            cam.data.type not in (("PERSP", "ORTHO") if visibility_contract == CONTRACT_V2 else ("PERSP",))
+            or cam.data.dof.use_dof
+        ):
             raise ValueError("source contract requires fixed perspective camera without DOF")
         camera = {
             "world": np.array(cam.matrix_world).tolist(),
@@ -69,6 +76,8 @@ def freeze(root, output, task, width=320, height=180):
             "near": float(cam.data.clip_start),
             "far": float(cam.data.clip_end),
         }
+        if cam.data.type == "ORTHO":
+            camera["projection_type"] = "orthographic"
         if first_camera is not None and camera != first_camera:
             raise ValueError("source camera changed")
         first_camera = camera
@@ -86,7 +95,7 @@ def freeze(root, output, task, width=320, height=180):
                 meshes[name] = vertices[np.array([t.vertices[:] for t in mesh.loop_triangles])]
             finally:
                 evaluated.to_mesh_clear()
-        depth, labels_image = draw(meshes, camera, height, width)
+        depth, labels_image = draw(meshes, camera, height, width, visibility_contract=visibility_contract)
         depth_rows.append(depth)
         id_rows.append(labels_image)
         poses.append(frame_poses)
@@ -107,7 +116,7 @@ def freeze(root, output, task, width=320, height=180):
     parts = write_depth_parts(output, depths.view(np.uint32) ^ depths[0].view(np.uint32))
     manifest = {
         "schema": "stable-envs/object-permanence-rigid-oracle-v2",
-        "visibility_contract": CONTRACT,
+        "visibility_contract": visibility_contract,
         "camera": first_camera,
         "task": task,
         "source_commit": SOURCE_COMMIT,
@@ -137,11 +146,23 @@ def freeze(root, output, task, width=320, height=180):
     if context is not None:
         manifest["source_profile"] = "nominal first member; surface diversity globals; no driver hooks"
         manifest["source_execution_context"] = context
-        manifest["source_preparation_sha256"] = sha256(Path(__file__).with_name("freeze_object_permanence.py"))
+        if visibility_contract == CONTRACT:
+            manifest["source_preparation_sha256"] = sha256(Path(__file__).with_name("freeze_object_permanence.py"))
+    if visibility_contract == CONTRACT_V2:
+        manifest["source_preparation_recipe"] = {"build": build, "animate": animate}
+        preparation_code = inspect.getsource(prepare_reference) + inspect.getsource(reference_execution_context)
+        manifest["source_preparation_algorithm_sha256"] = hashlib.sha256(preparation_code.encode()).hexdigest()
+        manifest["source_semantic_targets"] = list(targets)
+        # Probe observability comes only from independent source IDs. Hidden
+        # objects remain in poses and every-object pixel comparisons regardless.
+        manifest["targets"] = [name for name in targets if (ids == labels[name]).any()]
+        manifest["target_visible_pixels"] = {
+            name: manifest["target_visible_pixels"][name] for name in manifest["targets"]
+        }
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     (output / "SOURCE_LICENSE.txt").write_text((root / "LICENSE").read_text())
     (output / "README.md").write_text(
-        f"# {task} independent geometric oracle v2\n\nContract: `{CONTRACT}`. All source frames, 320x180.\nGenerated from evaluated Blender source geometry without candidate imports or BVH queries.\nDepth and IDs share pixel-center rays; exactly equal depths choose lowest semantic ID.\nReproduce in a new directory with `python -m scripts.testing.freeze_object_permanence_rays --source-root <source> --output <new> --task {task}`.\nLegacy BVH references are retained separately; no thresholds are changed.\nCC-BY-NC-4.0 source-derived data; see SOURCE_LICENSE.txt.\n"
+        f"# {task} independent geometric oracle v2\n\nContract: `{visibility_contract}`. All source frames, 320x180.\nGenerated from evaluated Blender source geometry without candidate imports or BVH queries.\nDepth and IDs share pixel-center rays; exactly equal depths choose lowest semantic ID.\nReproduce in a new directory with `python -m scripts.testing.freeze_object_permanence_rays --source-root <source> --output <new> --task {task} --visibility-contract {visibility_contract}`.\nLegacy BVH references are retained separately; no thresholds are changed.\nCC-BY-NC-4.0 source-derived data; see SOURCE_LICENSE.txt.\n"
     )
     return manifest
 
@@ -151,8 +172,9 @@ def main():
     parser.add_argument("--source-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--task", choices=tuple(REFERENCE_CASES), required=True)
+    parser.add_argument("--visibility-contract", choices=(CONTRACT, CONTRACT_V2), default=CONTRACT)
     args = parser.parse_args()
-    freeze(args.source_root.resolve(), args.output.resolve(), args.task)
+    freeze(args.source_root.resolve(), args.output.resolve(), args.task, visibility_contract=args.visibility_contract)
 
 
 if __name__ == "__main__":

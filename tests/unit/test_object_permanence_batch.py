@@ -137,3 +137,22 @@ def test_versioned_batch_requires_explicit_contract_and_preserves_default_deferr
     assert result["counts"] == {"ready-for-runtime-check": 2}
     with pytest.raises(ValueError, match="unknown visibility"):
         batch.run(source, tmp_path / "data", tmp_path / "bad.json", visibility_contract="unversioned")
+
+
+def test_orthographic_batch_requires_v2_without_changing_v1_or_default(source, tmp_path):
+    directory = source / "object_permanence/generator/tasks/G09"
+    directory.mkdir()
+    (directory / "task.json").write_text(json.dumps({"id": "G09", "member_scripts": ["scene.py"]}))
+    (directory / "scene.py").write_text("def main(): pass\n")
+    for version in (None, "stable-envs/opaque-pixel-rays-v1", "stable-envs/opaque-pixel-rays-v2"):
+        result = batch.run(
+            source,
+            tmp_path / "data",
+            tmp_path / "plan.json",
+            tasks="G09",
+            plan_only=True,
+            visibility_contract=version,
+        )
+        expected = "ready-for-runtime-check" if version == "stable-envs/opaque-pixel-rays-v2" else "unsupported"
+        assert result["counts"] == {expected: 1}
+        assert not (tmp_path / "data").exists()

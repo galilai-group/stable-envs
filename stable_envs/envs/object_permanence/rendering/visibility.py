@@ -5,6 +5,8 @@ from fractions import Fraction
 import numpy as np
 
 CONTRACT = "stable-envs/opaque-pixel-rays-v1"
+CONTRACT_V2 = "stable-envs/opaque-pixel-rays-v2"
+CONTRACTS = (CONTRACT, CONTRACT_V2)
 SPEC = {
     "id": CONTRACT,
     "camera": "fixed perspective; recorded OpenGL projection and world matrix in binary64",
@@ -16,6 +18,13 @@ SPEC = {
     "ties": "exactly equal binary64 plane-ray depth: lowest positive semantic object ID",
     "within_object": "lowest original triangle index; no depth or silhouette epsilon",
     "scope": "opaque rigid triangle meshes; fixed perspective camera; no depth-plane crossing",
+}
+SPEC_V2 = {
+    **SPEC,
+    "id": CONTRACT_V2,
+    "camera": "fixed perspective or orthographic; explicit orthographic projection_type; binary64 matrices",
+    "orthographic_ray": "origin=world@((ndc_x-P03)/P00,(ndc_y-P13)/P11,0,1); direction=world@(0,0,-1,0)",
+    "scope": "opaque rigid meshes; orthographic interval clipping; perspective retains no depth-plane crossing",
 }
 
 
@@ -36,18 +45,33 @@ def local_planes(vertices, faces):
     return np.asarray(result, np.float64)
 
 
-def validate_camera(camera):
+def validate_camera(camera, *, contract=CONTRACT):
     """Reject projection conventions not represented by this contract version."""
     p = np.asarray(camera["projection"], np.float64)
     world = np.asarray(camera["world"], np.float64)
     if p.shape != (4, 4) or world.shape != (4, 4) or not np.isfinite([p, world]).all():
         raise ValueError("contract requires finite camera matrices")
+    if contract not in CONTRACTS:
+        raise ValueError("unsupported visibility contract")
+    kind = camera.get("projection_type", "perspective")
     permitted = np.zeros((4, 4), bool)
-    permitted[0, [0, 2]], permitted[1, [1, 2]] = True, True
-    permitted[2, [2, 3]], permitted[3, 2] = True, True
-    if np.any(p[~permitted] != 0) or p[3, 2] != -1 or p[0, 0] <= 0 or p[1, 1] <= 0:
-        raise ValueError("contract requires a standard perspective projection")
-    if camera["near"] <= 0 or camera["far"] <= camera["near"]:
+    if kind == "orthographic" and contract == CONTRACT_V2:
+        permitted[0, [0, 3]], permitted[1, [1, 3]] = True, True
+        permitted[2, [2, 3]], permitted[3, 3] = True, True
+        valid = p[3, 3] == 1 and p[2, 2] < 0
+    elif kind == "perspective":
+        permitted[0, [0, 2]], permitted[1, [1, 2]] = True, True
+        permitted[2, [2, 3]], permitted[3, 2] = True, True
+        valid = p[3, 2] == -1
+    else:
+        raise ValueError("contract does not support this camera projection type")
+    if not valid or np.any(p[~permitted] != 0) or p[0, 0] <= 0 or p[1, 1] <= 0:
+        raise ValueError("contract requires a standard camera projection")
+    if (
+        not np.isfinite([camera["near"], camera["far"]]).all()
+        or camera["near"] <= 0
+        or camera["far"] <= camera["near"]
+    ):
         raise ValueError("contract requires 0 < near < far")
     if not np.array_equal(world[3], [0, 0, 0, 1]) or abs(np.linalg.det(world[:3, :3])) < 1e-12:
         raise ValueError("contract requires an invertible affine camera")

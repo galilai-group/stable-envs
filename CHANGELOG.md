@@ -8,6 +8,13 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Fixed orthographic cameras under explicit `opaque-pixel-rays-v2`, with shared
+  pixel-origin/direction layouts, camera-axis depth and per-hit interval clipping.
+  Adds 41 rigid recordings and independent 120-frame oracles, all-object
+  depth/mask checks, two-resolution cache parity and cross-chunk reuse. V1 data,
+  interfaces and thresholds stay unchanged. G54/G61 remain deferred for active
+  glass; G46 retains FONT labels outside mesh export.
+
 - G103 corner-turn rigid recording and independent 120-frame oracle, with
   all-frame source depth/mask checks and exact cross-batch/chunk cache reuse.
   Fixes batch-dependent visibility vertex/plane contraction rounding using
@@ -17,22 +24,23 @@ All notable changes to this project are listed here. The format follows
 - Audited official `DIVERSITY` execution context for G08/G44/G45/G46/G48,
   retaining source factor defaults without driver rendering/appearance hooks.
   Adds G44's rigid recording, independent 120-frame oracle and cache parity gates;
-  context provenance/mismatch checks protect source comparisons. The other four
-  remain deferred for orthographic cameras and G46's FONT labels.
+  context provenance/mismatch checks protect source comparisons. G08/G45/G48
+  also pass the orthographic V2 contract; G46's FONT labels remain deferred.
 
-- Complete first-nominal object-permanence audit: 95 certified scenes and 55
+- Complete first-nominal object-permanence audit: 136 certified scenes and 14
   explicit deferrals across all 150 task groups; 47 additional member scripts
   remain unregistered. Adds 61 reusable rigid recordings with independent
   120-frame depth/mask oracles, fresh-process geometry checks and two-resolution
   cache parity. Publishes measured source hashes/reasons alongside static hints;
-  G132 source-normal variation remains deferred; G103 cache reuse is now resolved.
+  G132 source-normal variation remains deferred; G103 cache reuse and fixed
+  orthographic projection are now resolved.
 
 - Early object-permanence audit G01–G10: nominal G02/G03 ramp balls and G05–G07
   rigid vehicles, with independent 120-frame ray oracles and full-frame cache
   parity. Adds audited legacy construction-prefix and named-argument source
-  preparation. Transparency, curves and orthographic cameras remain uncertified,
-  with labeled deferred GIF diagnostics; the later context audit resolves G08's
-  missing driver global while retaining its orthographic rejection.
+  preparation. Transparency and curves retain labeled deferred GIF diagnostics;
+  fixed orthographic cameras use the separate V2 contract. The context audit
+  resolves G08's missing driver global without changing V1's camera rejection.
 
 - Three reusable rigid batches: nominal G93–G97/G99/G100 support/fall, opening-container
   and scripted-collision scenes, with independent 120-frame versioned oracles

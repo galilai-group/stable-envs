@@ -121,11 +121,27 @@
       "task": "G07"
     },
     {
-      "blockers": [
-        "camera-projection"
+      "cache_bit_identical_resolutions": [
+        90,
+        180
       ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 0.0,
       "diversity_defaults": {
         "drawer_travel_scale": 1.0
       },
@@ -145,15 +161,51 @@
         "scope": "source construction only; no driver appearance/render hooks",
         "source_bindings": {}
       },
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 12,
+        "dynamic_nodes": [
+          "drawer_back_wall",
+          "drawer_floor",
+          "drawer_left_wall",
+          "drawer_low_front_lip",
+          "drawer_outer_case_back_wall",
+          "drawer_outer_case_bottom",
+          "drawer_outer_case_front_left_frame",
+          "drawer_outer_case_front_right_frame",
+          "drawer_outer_case_front_top_frame",
+          "drawer_outer_case_left_wall",
+          "drawer_outer_case_right_wall",
+          "drawer_outer_case_top_cover",
+          "drawer_right_wall",
+          "orange_ball_inside_drawer"
+        ],
+        "frames": 120,
+        "objects": 16,
+        "task": "G08",
+        "world_normal_max_abs_error": 2.9770296006148556e-08,
+        "world_triangle_max_abs_error": 0.0
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
+      "mesh_count": 16,
       "name": "drawer_moves_hidden_object",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g08-source-surface-context-deferred.gif",
+      "oracle": "tests/fixtures/semantics/object_permanence/g08/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g08-source-vs-pixel-rays-v2.gif",
       "preview_frames": 120,
-      "preview_kind": "source-only",
-      "reason": "Surface DIVERSITY context runs all 120 frames; selected camera remains orthographic",
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "orange_ball_inside_drawer"
+      ],
+      "reference_target_roles": {
+        "orange_ball_inside_drawer": "target"
+      },
+      "reference_targets": [
+        "orange_ball_inside_drawer"
       ],
       "script": "object_permanence/generator/tasks/G08_drawer_moves_hidden_object/pb_task_00000036_pb_drawer_closes_moves_hidden_ball_0037_blender.py",
       "source_capability_audit": {
@@ -167,53 +219,207 @@
       ],
       "source_script_sha256": "e3f13b669d5f9c66bbadfa418d9058c235bb40fdf94f021479880af2aeab117e",
       "source_task_manifest_sha256": "7153de296480a796a841c05102ac2828f0cef2985ba32da14e1d1c205917d18a",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G08"
     },
     {
-      "category": "camera-projection",
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
+      "camera": "ORTHO",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 5.6971604971995e-17,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 8,
+        "dynamic_nodes": [
+          "red_tall_body",
+          "red_tall_roof",
+          "red_tall_wheel_1",
+          "red_tall_wheel_2",
+          "red_tall_wheel_3",
+          "red_tall_wheel_4"
+        ],
+        "frames": 120,
+        "objects": 12,
+        "task": "G09",
+        "world_normal_max_abs_error": 2.9129242107295283e-07,
+        "world_triangle_max_abs_error": 3.2018265372357746e-08
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
+      "mesh_count": 12,
       "name": "low_beam_car_height",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g09-source-only-deferred.gif",
+      "oracle": "tests/fixtures/semantics/object_permanence/g09/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g09-source-vs-pixel-rays-v2.gif",
       "preview_frames": 120,
-      "preview_kind": "source-only",
-      "reason": "Selected camera is orthographic",
+      "preview_kind": "source-vs-replay",
+      "recipe": [
+        "build_scene_by_kind",
+        "animate_scene_by_kind"
+      ],
+      "reference_semantic_targets": [
+        "red_tall_body",
+        "red_tall_roof"
+      ],
+      "reference_target_roles": {
+        "red_tall_body": "red_tall_car",
+        "red_tall_roof": "red_tall_car"
+      },
+      "reference_targets": [
+        "red_tall_body",
+        "red_tall_roof"
+      ],
       "script": "object_permanence/generator/tasks/G09_low_beam_car_height/pb_task_00000042_pb_red_tall_car_blocked_by_low_beam_0043_blender.py",
+      "source_frames": [
+        1,
+        120
+      ],
       "source_script_sha256": "601199cbaa36cb4aebf609cddb9baeb8aafc199f634b334e21a50940a62d1839",
       "source_task_manifest_sha256": "f069adc00d807b0cb93833c2ef2cb3647ac92c2e15650fcecdd5121a8c537c19",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G09"
     },
     {
-      "category": "camera-projection",
-      "member": 0,
-      "name": "size_gate",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g10-source-only-deferred.gif",
-      "preview_frames": 120,
-      "preview_kind": "source-only",
-      "reason": "Selected camera is orthographic",
-      "script": "object_permanence/generator/tasks/G10_size_gate/pb_task_00000045_pb_u_track_small_hole_then_large_hole_0046_blender.py",
-      "source_script_sha256": "0cc81d5277de9d90a07281912f918d519474828710627e738ac9a9d018b841c7",
-      "source_task_manifest_sha256": "b3d34cd605ab769a396f0326e5bee12152b5210f314369d65786c1148be2c337",
-      "stage": "source-capability",
-      "status": "deferred",
-      "task": "G10"
-    },
-    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 1.3143529692411944e-16,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 39,
+        "dynamic_nodes": [
+          "target_orange_ball"
+        ],
+        "frames": 120,
+        "objects": 137,
+        "task": "G10",
+        "world_normal_max_abs_error": 4.41346225787953e-07,
+        "world_triangle_max_abs_error": 1.2516990821609397e-07
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
-      "mesh_count": 9,
-      "name": "box_holds_N_objects",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g11-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "mesh_count": 137,
+      "name": "size_gate",
+      "oracle": "tests/fixtures/semantics/object_permanence/g10/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g10-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "target_orange_ball"
+      ],
+      "reference_target_roles": {
+        "target_orange_ball": "target"
+      },
+      "reference_targets": [
+        "target_orange_ball"
+      ],
+      "script": "object_permanence/generator/tasks/G10_size_gate/pb_task_00000045_pb_u_track_small_hole_then_large_hole_0046_blender.py",
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_script_sha256": "0cc81d5277de9d90a07281912f918d519474828710627e738ac9a9d018b841c7",
+      "source_task_manifest_sha256": "b3d34cd605ab769a396f0326e5bee12152b5210f314369d65786c1148be2c337",
+      "status": "certified",
+      "task": "G10"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
+      "camera": "ORTHO",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 2.7730903992859465e-14,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 7,
+        "dynamic_nodes": [
+          "box_back_wall",
+          "box_base",
+          "box_front_wall",
+          "box_left_wall",
+          "box_right_wall",
+          "box_top_lid",
+          "inner_orange_ball"
+        ],
+        "frames": 120,
+        "objects": 9,
+        "task": "G11",
+        "world_normal_max_abs_error": 2.993038135112869e-07,
+        "world_triangle_max_abs_error": 3.707408886555186e-07
+      },
+      "mask_iou_min": 1.0,
+      "member": 0,
+      "mesh_count": 9,
+      "name": "box_holds_N_objects",
+      "oracle": "tests/fixtures/semantics/object_permanence/g11/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g11-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "inner_orange_ball"
+      ],
+      "reference_target_roles": {
+        "inner_orange_ball": "contained_object"
+      },
+      "reference_targets": [
+        "inner_orange_ball"
       ],
       "script": "object_permanence/generator/tasks/G11_box_holds_N_objects/pb_task_00000047_pb_rotating_box_hidden_ball_0048_blender.py",
       "source_frames": [
@@ -222,23 +428,78 @@
       ],
       "source_script_sha256": "ad0d2e6488ed9cf8984166adb01e92940570cf4172455960bec5d857f49a2c11",
       "source_task_manifest_sha256": "60a874dd9ecf1705e14dcacbf901bc667cc1ec886649da980802b0d671cc0fd6",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G11"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 4.0235745599501465e-12,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 10,
+        "dynamic_nodes": [
+          "box_back_wall",
+          "box_base",
+          "box_front_wall",
+          "box_left_wall",
+          "box_right_wall",
+          "box_top_lid",
+          "inner_blue_cube",
+          "inner_orange_ball",
+          "inner_partition_wall",
+          "inner_yellow_pyramid"
+        ],
+        "frames": 120,
+        "objects": 12,
+        "task": "G12",
+        "world_normal_max_abs_error": 2.993038135112869e-07,
+        "world_triangle_max_abs_error": 4.0307641313575004e-07
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 12,
       "name": "partition_box",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g12-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g12/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g12-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "inner_orange_ball",
+        "inner_blue_cube",
+        "inner_yellow_pyramid"
+      ],
+      "reference_target_roles": {
+        "inner_blue_cube": "contained_object",
+        "inner_orange_ball": "contained_object",
+        "inner_yellow_pyramid": "contained_object"
+      },
+      "reference_targets": [
+        "inner_orange_ball",
+        "inner_blue_cube",
+        "inner_yellow_pyramid"
       ],
       "script": "object_permanence/generator/tasks/G12_partition_box/pb_task_00000050_pb_partition_box_ball_cube__pyramid_0051_blender.py",
       "source_frames": [
@@ -247,8 +508,7 @@
       ],
       "source_script_sha256": "03140c8e4f6cef486dee161733e2320becb3d828c63c0c759c41a5727e8c92bf",
       "source_task_manifest_sha256": "dd9cc8a41a44cc9425e3d3a013fc9a56db45cb3e9f6358525ab00419bd0d089a",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G12"
     },
     {
@@ -302,18 +562,71 @@
       "task": "G14"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 0.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 7,
+        "dynamic_nodes": [
+          "blue_ball",
+          "red_ball",
+          "screen_left_wheel",
+          "screen_right_wheel",
+          "screen_top_slider",
+          "supported_foreground_screen_panel",
+          "yellow_ball"
+        ],
+        "frames": 120,
+        "objects": 10,
+        "task": "G15",
+        "world_normal_max_abs_error": 2.976789004183189e-08,
+        "world_triangle_max_abs_error": 0.0
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 10,
       "name": "ramp_panel_occludes_objects",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g15-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g15/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g15-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "reference_semantic_targets": [
+        "red_ball",
+        "blue_ball",
+        "yellow_ball"
+      ],
+      "reference_target_roles": {
+        "blue_ball": "target",
+        "red_ball": "target",
+        "yellow_ball": "target"
+      },
+      "reference_targets": [
+        "red_ball",
+        "blue_ball",
+        "yellow_ball"
       ],
       "script": "object_permanence/generator/tasks/G15_ramp_panel_occludes_objects/pb_task_00000067_pb_supported_screen_occludes_three_balls_0068_blender.py",
       "source_frames": [
@@ -322,23 +635,76 @@
       ],
       "source_script_sha256": "3e3d003fd7dfb483b91e265d44509dd9f63124f8fc2e588acb1f479dc49971c6",
       "source_task_manifest_sha256": "91122a8e8c05eef95f6ef85d9a76163e6d6ff9d8fa98a1dcbec973fd2e931dd5",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G15"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 1.798842369012912e-17,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 9,
+        "dynamic_nodes": [
+          "blue_cube",
+          "orange_ball",
+          "slit_mask_left_panel",
+          "slit_mask_left_wheel",
+          "slit_mask_right_panel",
+          "slit_mask_right_wheel",
+          "slit_mask_top_slider",
+          "yellow_pyramid"
+        ],
+        "frames": 120,
+        "objects": 11,
+        "task": "G16",
+        "world_normal_max_abs_error": 4.292428645857882e-08,
+        "world_triangle_max_abs_error": 0.0
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 11,
       "name": "window_slit_mask_reveals",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g16-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g16/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g16-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "reference_semantic_targets": [
+        "orange_ball",
+        "blue_cube",
+        "yellow_pyramid"
+      ],
+      "reference_target_roles": {
+        "blue_cube": "target_cube",
+        "orange_ball": "target",
+        "yellow_pyramid": "target"
+      },
+      "reference_targets": [
+        "orange_ball",
+        "blue_cube",
+        "yellow_pyramid"
       ],
       "script": "object_permanence/generator/tasks/G16_window_slit_mask_reveals/pb_task_00000068_pb_supported_window_mask_reveals_three_objects_0069_blender.py",
       "source_frames": [
@@ -347,23 +713,72 @@
       ],
       "source_script_sha256": "a6193f6d1042fe0dda42fa48c8bb0b09e2565727e7145ce10eab1239f17f0d18",
       "source_task_manifest_sha256": "4f3a1804553071b11f2c19f03183b714209cdb8b4f69c3628105efc7e725c433",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G16"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 2.775894349668923e-15,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 11,
+        "dynamic_nodes": [
+          "moving_tray_back_wall",
+          "moving_tray_floor",
+          "moving_tray_front_lip",
+          "moving_tray_left_wall",
+          "moving_tray_right_wall",
+          "tray_blue_cube",
+          "tray_orange_ball"
+        ],
+        "frames": 120,
+        "objects": 13,
+        "task": "G17",
+        "world_normal_max_abs_error": 6.128838467744564e-08,
+        "world_triangle_max_abs_error": 1.4424757935338484e-07
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 13,
       "name": "moving_tray",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g17-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g17/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g17-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "tray_orange_ball",
+        "tray_blue_cube"
+      ],
+      "reference_target_roles": {
+        "tray_blue_cube": "target_cube",
+        "tray_orange_ball": "target"
+      },
+      "reference_targets": [
+        "tray_orange_ball",
+        "tray_blue_cube"
       ],
       "script": "object_permanence/generator/tasks/G17_moving_tray/pb_task_00000074_pb_moving_tray_behind_screen_preserves_objects_0075_blender.py",
       "source_frames": [
@@ -372,23 +787,64 @@
       ],
       "source_script_sha256": "6d576b774f0d91ec5e8f635e143b7768ac7ef4f74d7cb4833db66cabd1c8ffd2",
       "source_task_manifest_sha256": "2c8311a5b418f127fbcce902d310d2d773e2333d2c2adef09f03c256473cc9b3",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G17"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 3.727769427207939e-16,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 6,
+        "dynamic_nodes": [
+          "blue_cube_on_turntable",
+          "supported_turntable_disk"
+        ],
+        "frames": 120,
+        "objects": 6,
+        "task": "G18",
+        "world_normal_max_abs_error": 3.692459109583268e-07,
+        "world_triangle_max_abs_error": 3.8050364281616567e-07
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 6,
       "name": "turntable_behind_screen",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g18-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g18/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g18-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "blue_cube_on_turntable"
+      ],
+      "reference_target_roles": {
+        "blue_cube_on_turntable": "target_cube"
+      },
+      "reference_targets": [
+        "blue_cube_on_turntable"
       ],
       "script": "object_permanence/generator/tasks/G18_turntable_behind_screen/pb_task_00000076_pb_turntable_single_cube_behind_screen_0077_blender.py",
       "source_frames": [
@@ -397,23 +853,75 @@
       ],
       "source_script_sha256": "470187ffaf4a929328d6b071940ab4a557b3e15023270a1bacf54b1568e1aff5",
       "source_task_manifest_sha256": "d3665d035e92478bad44a84f50b3cec012221a5447185af250c7defc495cc500",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G18"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 1.7875288949939626e-17,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 9,
+        "dynamic_nodes": [
+          "blue_cube",
+          "moving_screen_panel",
+          "moving_screen_top_slider",
+          "moving_screen_wheel_a",
+          "moving_screen_wheel_b",
+          "orange_ball",
+          "yellow_pyramid"
+        ],
+        "frames": 120,
+        "objects": 10,
+        "task": "G19",
+        "world_normal_max_abs_error": 2.979747248943454e-08,
+        "world_triangle_max_abs_error": 0.0
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 10,
       "name": "row_screen_hides_objects",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g19-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g19/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g19-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "orange_ball",
+        "blue_cube",
+        "yellow_pyramid"
+      ],
+      "reference_target_roles": {
+        "blue_cube": "target_cube",
+        "orange_ball": "target",
+        "yellow_pyramid": "target"
+      },
+      "reference_targets": [
+        "orange_ball",
+        "blue_cube",
+        "yellow_pyramid"
       ],
       "script": "object_permanence/generator/tasks/G19_row_screen_hides_objects/pb_task_00000080_pb_foreground_screen_hides_three_shapes_row_0081_blender.py",
       "source_frames": [
@@ -422,23 +930,70 @@
       ],
       "source_script_sha256": "01803fc906948d79f33411274db298a37ca14b748929e6bb26d7bb8d27ee27c4",
       "source_task_manifest_sha256": "3d3bc78c11c7c42cac7000086905fb4d5327e4ae783bb004d358223ead77b196",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G19"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 0.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 8,
+        "dynamic_nodes": [
+          "left_orange_ball",
+          "left_slider_block",
+          "right_blue_cube",
+          "right_slider_block",
+          "sliding_panel"
+        ],
+        "frames": 120,
+        "objects": 11,
+        "task": "G20",
+        "world_normal_max_abs_error": 2.971663259909718e-08,
+        "world_triangle_max_abs_error": 0.0
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 11,
       "name": "connected_vertical_panel",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g20-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g20/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g20-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "left_orange_ball",
+        "right_blue_cube"
+      ],
+      "reference_target_roles": {
+        "left_orange_ball": "target",
+        "right_blue_cube": "target_cube"
+      },
+      "reference_targets": [
+        "left_orange_ball",
+        "right_blue_cube"
       ],
       "script": "object_permanence/generator/tasks/G20_connected_vertical_panel/pb_task_00000083_pb_connected_vertical_guide_panel_hides_ball_cube_0084_blender.py",
       "source_frames": [
@@ -447,23 +1002,75 @@
       ],
       "source_script_sha256": "aa1569f886d7b43a034ff914754dbede7eb12f92cdf837d837638bfa994d33a3",
       "source_task_manifest_sha256": "9ba326ef7507855f85d2a459015ecb74584bbd12af37d0f41784059753ce9397",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G20"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 0.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 10,
+        "dynamic_nodes": [
+          "center_orange_ball",
+          "left_door_panel",
+          "left_hanger_a",
+          "left_hanger_b",
+          "left_slider_wheel_a",
+          "left_slider_wheel_b",
+          "left_top_carrier",
+          "right_door_panel",
+          "right_hanger_a",
+          "right_hanger_b",
+          "right_slider_wheel_a",
+          "right_slider_wheel_b",
+          "right_top_carrier"
+        ],
+        "frames": 120,
+        "objects": 19,
+        "task": "G21",
+        "world_normal_max_abs_error": 2.979747248943454e-08,
+        "world_triangle_max_abs_error": 0.0
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 19,
       "name": "connected_sliding_doors",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g21-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g21/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g21-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "center_orange_ball"
+      ],
+      "reference_target_roles": {
+        "center_orange_ball": "target"
+      },
+      "reference_targets": [
+        "center_orange_ball"
       ],
       "script": "object_permanence/generator/tasks/G21_connected_sliding_doors/pb_task_00000085_pb_connected_sliding_doors_hide_center_ball_0086_blender.py",
       "source_frames": [
@@ -472,23 +1079,77 @@
       ],
       "source_script_sha256": "2360bc3f0c97b19b497426603436e47913767431b88a48ceabb142e3cac06f49",
       "source_task_manifest_sha256": "ec83dc0634517c019071e9c3432f3bb27d436f4cde6a4960cf4d82a7a5468e13",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G21"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 1.6917684184764292e-17,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 12,
+        "dynamic_nodes": [
+          "blue_cube",
+          "left_hanger",
+          "left_trolley_block",
+          "orange_ball",
+          "right_hanger",
+          "right_trolley_block",
+          "screen_top_carrier",
+          "single_large_screen_panel",
+          "yellow_pyramid"
+        ],
+        "frames": 120,
+        "objects": 15,
+        "task": "G22",
+        "world_normal_max_abs_error": 2.971663259909718e-08,
+        "world_triangle_max_abs_error": 0.0
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 15,
       "name": "top_rail_screen",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g22-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g22/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g22-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "orange_ball",
+        "blue_cube",
+        "yellow_pyramid"
+      ],
+      "reference_target_roles": {
+        "blue_cube": "target_cube",
+        "orange_ball": "target",
+        "yellow_pyramid": "target"
+      },
+      "reference_targets": [
+        "orange_ball",
+        "blue_cube",
+        "yellow_pyramid"
       ],
       "script": "object_permanence/generator/tasks/G22_top_rail_screen/pb_task_00000087_pb_safe_top_rail_single_screen_hides_three_objects_0088_blender.py",
       "source_frames": [
@@ -497,23 +1158,70 @@
       ],
       "source_script_sha256": "54344e9e9864378213dd12bb560b3ef0c105fae6c9161d4458883c60bee15f55",
       "source_task_manifest_sha256": "681b993c0b05a82c241a39edd34517d571d0faafe54852cb22d3840a36ed1dca",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G22"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 0.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 11,
+        "dynamic_nodes": [
+          "blue_cube_inside_cabinet",
+          "front_cover_bottom_slider",
+          "front_cover_top_slider",
+          "orange_ball_inside_cabinet",
+          "single_front_cover_panel"
+        ],
+        "frames": 120,
+        "objects": 16,
+        "task": "G23",
+        "world_normal_max_abs_error": 2.976789004183189e-08,
+        "world_triangle_max_abs_error": 0.0
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 16,
       "name": "cabinet",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g23-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g23/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g23-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "orange_ball_inside_cabinet",
+        "blue_cube_inside_cabinet"
+      ],
+      "reference_target_roles": {
+        "blue_cube_inside_cabinet": "target_cube",
+        "orange_ball_inside_cabinet": "target"
+      },
+      "reference_targets": [
+        "orange_ball_inside_cabinet",
+        "blue_cube_inside_cabinet"
       ],
       "script": "object_permanence/generator/tasks/G23_cabinet/pb_task_00000089_pb_safe_display_cabinet_single_front_cover_ball_cube_0090_blender.py",
       "source_frames": [
@@ -522,23 +1230,74 @@
       ],
       "source_script_sha256": "7f26736ac6bc320c04eca1784d83f354194bcd0dcaf7852f23763f681883583c",
       "source_task_manifest_sha256": "32b65b31e482be131b21466af57ac1dc842406153eb377271c003203d960e313",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G23"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 1.1757003639379332e-14,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 9,
+        "dynamic_nodes": [
+          "blue_cube",
+          "large_opaque_book_page",
+          "orange_ball",
+          "page_bottom_hinge_brace",
+          "page_top_hinge_brace",
+          "yellow_pyramid"
+        ],
+        "frames": 120,
+        "objects": 11,
+        "task": "G24",
+        "world_normal_max_abs_error": 8.58192927832846e-08,
+        "world_triangle_max_abs_error": 1.519918484405025e-07
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 11,
       "name": "pivoting_occluder",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g24-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g24/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g24-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "orange_ball",
+        "blue_cube",
+        "yellow_pyramid"
+      ],
+      "reference_target_roles": {
+        "blue_cube": "target_cube",
+        "orange_ball": "target",
+        "yellow_pyramid": "target"
+      },
+      "reference_targets": [
+        "orange_ball",
+        "blue_cube",
+        "yellow_pyramid"
       ],
       "script": "object_permanence/generator/tasks/G24_pivoting_occluder/pb_task_00000091_pb_hinged_book_page_occludes_three_objects_0092_blender.py",
       "source_frames": [
@@ -547,23 +1306,72 @@
       ],
       "source_script_sha256": "773450a5b0d6ec658cba9f634876b1304875345ec978a845eb5c5d1f5e100f8a",
       "source_task_manifest_sha256": "5e4cd81ff4541e5b04633cf223aec21e4d74e559afce14af5fd68c13ee8a05d8",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G24"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 0.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 10,
+        "dynamic_nodes": [
+          "blue_cube",
+          "large_vertical_panel",
+          "left_panel_connector",
+          "left_panel_slider",
+          "orange_ball",
+          "right_panel_connector",
+          "right_panel_slider"
+        ],
+        "frames": 120,
+        "objects": 15,
+        "task": "G25",
+        "world_normal_max_abs_error": 2.971663259909718e-08,
+        "world_triangle_max_abs_error": 0.0
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 15,
       "name": "no_top_side_post_panel",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g25-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g25/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g25-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "orange_ball",
+        "blue_cube"
+      ],
+      "reference_target_roles": {
+        "blue_cube": "target_cube",
+        "orange_ball": "target"
+      },
+      "reference_targets": [
+        "orange_ball",
+        "blue_cube"
       ],
       "script": "object_permanence/generator/tasks/G25_no_top_side_post_panel/pb_task_00000094_pb_no_top_frame_side_post_panel_hides_ball_cube_0095_blender.py",
       "source_frames": [
@@ -572,23 +1380,71 @@
       ],
       "source_script_sha256": "70f807e93d89586b177be7e8ff6a59c289b1f49586aeb305ded53e7655b18180",
       "source_task_manifest_sha256": "42e25c89803c0d047a20658fb728a18e1c1f1a8cc35c4e67aa57e160ef157718",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G25"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 0.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 9,
+        "dynamic_nodes": [
+          "blue_cube",
+          "left_wheel_block",
+          "orange_ball",
+          "right_wheel_block",
+          "screen_bottom_carriage",
+          "single_bottom_rail_screen"
+        ],
+        "frames": 120,
+        "objects": 12,
+        "task": "G26",
+        "world_normal_max_abs_error": 2.971663259909718e-08,
+        "world_triangle_max_abs_error": 0.0
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 12,
       "name": "bottom_rail_screen",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g26-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g26/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g26-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "orange_ball",
+        "blue_cube"
+      ],
+      "reference_target_roles": {
+        "blue_cube": "target_cube",
+        "orange_ball": "target"
+      },
+      "reference_targets": [
+        "orange_ball",
+        "blue_cube"
       ],
       "script": "object_permanence/generator/tasks/G26_bottom_rail_screen/pb_task_00000098_pb_replacement_bottom_rail_single_screen_hides_ball_cube_0099_blender.py",
       "source_frames": [
@@ -597,8 +1453,7 @@
       ],
       "source_script_sha256": "fd8dd20d10dd73f526ae0298d54a9288e44d9f3d8395bbc1af1a26a008e3818c",
       "source_task_manifest_sha256": "66d8c716cd87d444524888704630be045171100cc267f5dd68fc0e277d7f591a",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G26"
     },
     {
@@ -1262,18 +2117,67 @@
       "task": "G42"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 8.881784197001253e-17,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 8,
+        "dynamic_nodes": [
+          "lower_lane_yellow_ball",
+          "middle_lane_blue_ball",
+          "upper_lane_red_ball"
+        ],
+        "frames": 120,
+        "objects": 29,
+        "task": "G43",
+        "world_normal_max_abs_error": 2.5447783524867873e-07,
+        "world_triangle_max_abs_error": 3.123532454907263e-08
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 29,
       "name": "three_balls_parallel_tunnels",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g43-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g43/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g43-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "upper_lane_red_ball",
+        "middle_lane_blue_ball",
+        "lower_lane_yellow_ball"
+      ],
+      "reference_target_roles": {
+        "lower_lane_yellow_ball": "target",
+        "middle_lane_blue_ball": "target",
+        "upper_lane_red_ball": "target"
+      },
+      "reference_targets": [
+        "upper_lane_red_ball",
+        "middle_lane_blue_ball",
+        "lower_lane_yellow_ball"
       ],
       "script": "object_permanence/generator/tasks/G43_three_balls_parallel_tunnels/pb_task_00000038_pb_three_balls_parallel_tunnels_identity_0039_blender.py",
       "source_frames": [
@@ -1282,8 +2186,7 @@
       ],
       "source_script_sha256": "e50cf8143467d55af68d1df6d73ed82066684c53051e1dfa61fd3ad3b5688d98",
       "source_task_manifest_sha256": "b3abb759498890f9709d42163c54715007347a2d671575b9f6f711fa299d758e",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G43"
     },
     {
@@ -1362,11 +2265,27 @@
       "task": "G44"
     },
     {
-      "blockers": [
-        "camera-projection"
+      "cache_bit_identical_resolutions": [
+        90,
+        180
       ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 3.304023721284466e-15,
       "diversity_defaults": {
         "ball_radius_scale": 1.0
       },
@@ -1386,15 +2305,40 @@
         "scope": "source construction only; no driver appearance/render hooks",
         "source_bindings": {}
       },
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 8,
+        "dynamic_nodes": [
+          "front_panel_hinged_flap",
+          "opaque_sliding_lid",
+          "orange_ball_inside_box"
+        ],
+        "frames": 120,
+        "objects": 9,
+        "task": "G45",
+        "world_normal_max_abs_error": 2.165288470190596e-07,
+        "world_triangle_max_abs_error": 7.987022687672152e-08
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
+      "mesh_count": 9,
       "name": "opaque_lid_front_panel_drops",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g45-source-surface-context-deferred.gif",
+      "oracle": "tests/fixtures/semantics/object_permanence/g45/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g45-source-vs-pixel-rays-v2.gif",
       "preview_frames": 120,
-      "preview_kind": "source-only",
-      "reason": "Surface DIVERSITY context runs all 120 frames; selected camera remains orthographic",
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "reference_semantic_targets": [
+        "orange_ball_inside_box"
+      ],
+      "reference_target_roles": {
+        "orange_ball_inside_box": "target"
+      },
+      "reference_targets": [
+        "orange_ball_inside_box"
       ],
       "script": "object_permanence/generator/tasks/G45_opaque_lid_front_panel_drops/pb_task_00000041_pb_opaque_lid_front_panel_drops_0042_blender.py",
       "source_capability_audit": {
@@ -1408,14 +2352,12 @@
       ],
       "source_script_sha256": "7353bda18d36c9a196b2329d358f595bcb0b6dfb15ff39dacde5b2c40d2cbf47",
       "source_task_manifest_sha256": "bdae48f78c5da28bfe4c23d3d236adde8c53f6a70ef5bf2c0f787b211b54198e",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G45"
     },
     {
       "blockers": [
-        "renderable-type",
-        "camera-projection"
+        "renderable-type"
       ],
       "camera": "ORTHO",
       "category": "renderable-type",
@@ -1443,7 +2385,7 @@
       "preview": ".cache/object_permanence/evaluation/deferred-previews/g46-source-surface-context-deferred.gif",
       "preview_frames": 120,
       "preview_kind": "source-only",
-      "reason": "Surface DIVERSITY context runs all 120 frames; FONT labels box_A_label/box_B_label are outside mesh-only export; camera is also orthographic",
+      "reason": "Surface DIVERSITY context runs all 120 frames; FONT identity labels box_A_label/box_B_label remain outside mesh-only export; orthographic projection is now supported by V2",
       "recipe": [
         "build_scene",
         "animate_scene"
@@ -1468,18 +2410,69 @@
       "task": "G46"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 5.998088029143702e-17,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 7,
+        "dynamic_nodes": [
+          "opaque_red_stage_curtain_left",
+          "opaque_red_stage_curtain_right",
+          "stage_left_orange_ball",
+          "stage_middle_blue_cube",
+          "stage_right_yellow_pyramid"
+        ],
+        "frames": 120,
+        "objects": 8,
+        "task": "G47",
+        "world_normal_max_abs_error": 3.755639071956196e-08,
+        "world_triangle_max_abs_error": 1.655075965167896e-08
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 8,
       "name": "theater_curtain",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g47-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g47/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g47-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "stage_left_orange_ball",
+        "stage_middle_blue_cube",
+        "stage_right_yellow_pyramid"
+      ],
+      "reference_target_roles": {
+        "stage_left_orange_ball": "contained_object",
+        "stage_middle_blue_cube": "contained_object",
+        "stage_right_yellow_pyramid": "contained_object"
+      },
+      "reference_targets": [
+        "stage_left_orange_ball",
+        "stage_middle_blue_cube",
+        "stage_right_yellow_pyramid"
       ],
       "script": "object_permanence/generator/tasks/G47_theater_curtain/pb_task_00000054_pb_theater_curtain_hides_stage_objects_0055_blender.py",
       "source_frames": [
@@ -1488,16 +2481,31 @@
       ],
       "source_script_sha256": "82987d8801e74f15d4828b6af65eb4e25b65f30496417a5cf88ea8aae5107f64",
       "source_task_manifest_sha256": "431a2000abfa3ab9b49ab2fba6698948fc0386c11cefc8efbcf37e853cc73a7f",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G47"
     },
     {
-      "blockers": [
-        "camera-projection"
+      "cache_bit_identical_resolutions": [
+        90,
+        180
       ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 1.578983857244667e-17,
       "diversity_defaults": {
         "object_spacing_scale": 1.0
       },
@@ -1517,15 +2525,50 @@
         "scope": "source construction only; no driver appearance/render hooks",
         "source_bindings": {}
       },
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 8,
+        "dynamic_nodes": [
+          "mask_bottom_bar",
+          "mask_left_bar",
+          "mask_right_bar",
+          "mask_top_bar",
+          "row_01_orange_ball",
+          "row_02_blue_cube",
+          "row_03_yellow_pyramid"
+        ],
+        "frames": 120,
+        "objects": 10,
+        "task": "G48",
+        "world_normal_max_abs_error": 3.755639071956196e-08,
+        "world_triangle_max_abs_error": 1.655075965167896e-08
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
+      "mesh_count": 10,
       "name": "sliding_window_row",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g48-source-surface-context-deferred.gif",
+      "oracle": "tests/fixtures/semantics/object_permanence/g48/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g48-source-vs-pixel-rays-v2.gif",
       "preview_frames": 120,
-      "preview_kind": "source-only",
-      "reason": "Surface DIVERSITY context runs all 120 frames; selected camera remains orthographic",
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "row_01_orange_ball",
+        "row_02_blue_cube",
+        "row_03_yellow_pyramid"
+      ],
+      "reference_target_roles": {
+        "row_01_orange_ball": "contained_object",
+        "row_02_blue_cube": "contained_object",
+        "row_03_yellow_pyramid": "contained_object"
+      },
+      "reference_targets": [
+        "row_01_orange_ball",
+        "row_02_blue_cube",
+        "row_03_yellow_pyramid"
       ],
       "script": "object_permanence/generator/tasks/G48_sliding_window_row/pb_task_00000055_pb_sliding_window_reveals_object_row_0056_blender.py",
       "source_capability_audit": {
@@ -1539,23 +2582,75 @@
       ],
       "source_script_sha256": "b25a2491fe7a6366ce50f901e59e4fbb2e8a33a38ce0c28d06297a8d3732b167",
       "source_task_manifest_sha256": "bfc51bc5d0bf2a0076541b1d4b53c5c797bfe4ae6f8a7713a4f5d6aa29bff492",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G48"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 0.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 9,
+        "dynamic_nodes": [
+          "left_orange_ball",
+          "left_screen_top_slider",
+          "left_screen_wheel_a",
+          "left_screen_wheel_b",
+          "left_supported_screen_panel",
+          "right_blue_cube",
+          "right_screen_top_slider",
+          "right_screen_wheel_a",
+          "right_screen_wheel_b",
+          "right_supported_screen_panel"
+        ],
+        "frames": 120,
+        "objects": 15,
+        "task": "G49",
+        "world_normal_max_abs_error": 2.979747248943454e-08,
+        "world_triangle_max_abs_error": 0.0
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 15,
       "name": "two_supported_screens_close",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g49-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g49/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g49-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "reference_semantic_targets": [
+        "left_orange_ball",
+        "right_blue_cube"
+      ],
+      "reference_target_roles": {
+        "left_orange_ball": "target",
+        "right_blue_cube": "target_cube"
+      },
+      "reference_targets": [
+        "left_orange_ball",
+        "right_blue_cube"
       ],
       "script": "object_permanence/generator/tasks/G49_two_supported_screens_close/pb_task_00000069_pb_two_supported_screens_close_reopen_objects_0070_blender.py",
       "source_frames": [
@@ -1564,23 +2659,63 @@
       ],
       "source_script_sha256": "fdfc72f89151b7d03d4c7bae080eb81002eebc9cde2bd46b9c112673bd9ee204",
       "source_task_manifest_sha256": "4c9135fbfc5dcb1a6dd9289d5c930e975df35392a31281ef07e97174efc00b2f",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G49"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 2.4593862588316246e-15,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 10,
+        "dynamic_nodes": [
+          "ramp_orange_ball"
+        ],
+        "frames": 120,
+        "objects": 24,
+        "task": "G50",
+        "world_normal_max_abs_error": 3.3721595471547516e-07,
+        "world_triangle_max_abs_error": 1.1499213281584986e-07
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 24,
       "name": "ramp_ball_slotted_screen",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g50-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g50/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g50-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "reference_semantic_targets": [
+        "ramp_orange_ball"
+      ],
+      "reference_target_roles": {
+        "ramp_orange_ball": "target"
+      },
+      "reference_targets": [
+        "ramp_orange_ball"
       ],
       "script": "object_permanence/generator/tasks/G50_ramp_ball_slotted_screen/pb_task_00000070_pb_ramp_ball_passes_slotted_screen_0071_blender.py",
       "source_frames": [
@@ -1589,23 +2724,68 @@
       ],
       "source_script_sha256": "90b533a258521cd1eb73c80be54c1934d018f3af1e95a10295ad1f5979f0e082",
       "source_task_manifest_sha256": "92bbaba8768fd7be04df3a5d546631c88500006f920b0697393f8aa3ebcb7e9a",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G50"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 0.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 8,
+        "dynamic_nodes": [
+          "blue_cube",
+          "orange_ball",
+          "vertical_sliding_panel"
+        ],
+        "frames": 120,
+        "objects": 10,
+        "task": "G51",
+        "world_normal_max_abs_error": 2.979747248943454e-08,
+        "world_triangle_max_abs_error": 0.0
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 10,
       "name": "vertical_panel_two_objects",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g51-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g51/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g51-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "orange_ball",
+        "blue_cube"
+      ],
+      "reference_target_roles": {
+        "blue_cube": "target_cube",
+        "orange_ball": "target"
+      },
+      "reference_targets": [
+        "orange_ball",
+        "blue_cube"
       ],
       "script": "object_permanence/generator/tasks/G51_vertical_panel_two_objects/pb_task_00000072_pb_vertical_rail_panel_hides_two_objects_0073_blender.py",
       "source_frames": [
@@ -1614,23 +2794,65 @@
       ],
       "source_script_sha256": "23836bbd5d6835799c03ab6a8428dcb1b90e4e9c4e8727070a6f76768a698c67",
       "source_task_manifest_sha256": "f0ff4132b6c67e7258cd87bde09e1ad6128a8f9ce9e9cf1e72b5542281803e8a",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G51"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 1.215688158829761e-15,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 15,
+        "dynamic_nodes": [
+          "left_outward_opening_door_leaf",
+          "orange_ball_inside_open_right_gated_box_on_ramp",
+          "right_outward_opening_door_leaf"
+        ],
+        "frames": 120,
+        "objects": 17,
+        "task": "G52",
+        "world_normal_max_abs_error": 3.874373931678221e-07,
+        "world_triangle_max_abs_error": 5.015226345328472e-08
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 17,
       "name": "ramp_open_right_gated_box",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g52-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g52/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g52-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         ""
+      ],
+      "reference_semantic_targets": [
+        "orange_ball_inside_open_right_gated_box_on_ramp"
+      ],
+      "reference_target_roles": {
+        "orange_ball_inside_open_right_gated_box_on_ramp": "target_ball"
+      },
+      "reference_targets": [
+        "orange_ball_inside_open_right_gated_box_on_ramp"
       ],
       "script": "object_permanence/generator/tasks/G52_ramp_open_right_gated_box/pb_task_00000088_pb_ramp_open_right_gated_box_ball_rolls_to_catch_box_0089_blender.py",
       "source_frames": [
@@ -1639,23 +2861,81 @@
       ],
       "source_script_sha256": "0e9eca870bae6189de008a160b6405336764fd7bb0ac1ebce613df8811307392",
       "source_task_manifest_sha256": "1072eea636ffa9db58dbe8f77c0cda32277a2484c74622747565b36151444c2f",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G52"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 0.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 9,
+        "dynamic_nodes": [
+          "blue_ball",
+          "curtain_hanger_1",
+          "curtain_hanger_2",
+          "curtain_hanger_3",
+          "curtain_hanger_4",
+          "curtain_rail_block_1",
+          "curtain_rail_block_2",
+          "curtain_rail_block_3",
+          "curtain_rail_block_4",
+          "curtain_top_clamp_bar",
+          "red_ball",
+          "single_curtain_panel",
+          "yellow_ball"
+        ],
+        "frames": 120,
+        "objects": 18,
+        "task": "G53",
+        "world_normal_max_abs_error": 2.971663259909718e-08,
+        "world_triangle_max_abs_error": 0.0
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 18,
       "name": "no_gap_top_rail_curtain",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g53-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g53/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g53-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "red_ball",
+        "blue_ball",
+        "yellow_ball"
+      ],
+      "reference_target_roles": {
+        "blue_ball": "target",
+        "red_ball": "target",
+        "yellow_ball": "target"
+      },
+      "reference_targets": [
+        "red_ball",
+        "blue_ball",
+        "yellow_ball"
       ],
       "script": "object_permanence/generator/tasks/G53_no_gap_top_rail_curtain/pb_task_00000097_pb_no_gap_top_rail_single_curtain_hides_three_balls_0098_blender.py",
       "source_frames": [
@@ -1664,20 +2944,23 @@
       ],
       "source_script_sha256": "2ef0642de61bfaeca04e2aa07b877cf6948ebc4015e16469b456c653e942b1e5",
       "source_task_manifest_sha256": "87b489539c46c314422ea60a364c4cc7cb9e06ccefcc463cb596814f29c91d9c",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G53"
     },
     {
+      "blockers": [
+        "transparent-material"
+      ],
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "capability_contract_audited": "stable-envs/opaque-pixel-rays-v2",
+      "category": "transparent-material",
       "member": 0,
       "mesh_count": 90,
       "name": "serpentine_ramp_tunnel",
       "preview": ".cache/object_permanence/evaluation/deferred-previews/g54-source-only-deferred.gif",
       "preview_frames": 24,
       "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "reason": "Orthographic camera is supported by V2; active glass mesh guardwall_a_back uses mat_glass alpha 0.24, outside the opaque contract",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
@@ -1766,18 +3049,59 @@
       "task": "G56"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 2.045222474147737e-15,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 12,
+        "dynamic_nodes": [
+          "ramp_orange_ball"
+        ],
+        "frames": 120,
+        "objects": 28,
+        "task": "G57",
+        "world_normal_max_abs_error": 3.5013471055833634e-07,
+        "world_triangle_max_abs_error": 1.896163429465636e-07
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 28,
       "name": "ramp_ball_deflected_angled_wall",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g57-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g57/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g57-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "reference_semantic_targets": [
+        "ramp_orange_ball"
+      ],
+      "reference_target_roles": {
+        "ramp_orange_ball": "target"
+      },
+      "reference_targets": [
+        "ramp_orange_ball"
       ],
       "script": "object_permanence/generator/tasks/G57_ramp_ball_deflected_angled_wall/pb_task_00000103_pb_ramp_ball_deflected_angled_wall_0104_blender.py",
       "source_frames": [
@@ -1786,8 +3110,7 @@
       ],
       "source_script_sha256": "7a441191991243236d1af7e4eb8b187ad66d23917ce7cb38a73d221d4054a699",
       "source_task_manifest_sha256": "2d16eefc94176efcc1ec2589231870f2823a800cfb5f9d656c7ab8f3f9f87158",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G57"
     },
     {
@@ -1961,15 +3284,19 @@
       "task": "G60"
     },
     {
+      "blockers": [
+        "transparent-material"
+      ],
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "capability_contract_audited": "stable-envs/opaque-pixel-rays-v2",
+      "category": "transparent-material",
       "member": 0,
       "mesh_count": 125,
       "name": "spiral_ramp_behind_column",
       "preview": ".cache/object_permanence/evaluation/deferred-previews/g61-source-only-deferred.gif",
       "preview_frames": 24,
       "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "reason": "Orthographic camera is supported by V2; active glass mesh spiral_guard_00 uses mat_glass alpha 0.24, outside the opaque contract",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
@@ -2078,18 +3405,59 @@
       "task": "G66"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 6.323620384306819e-17,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 9,
+        "dynamic_nodes": [
+          "orange_ball"
+        ],
+        "frames": 120,
+        "objects": 9,
+        "task": "G67",
+        "world_normal_max_abs_error": 3.716362303451959e-07,
+        "world_triangle_max_abs_error": 6.265903895741332e-08
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 9,
       "name": "double_deflector_zigzag",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g67-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g67/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g67-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "reference_semantic_targets": [
+        "orange_ball"
+      ],
+      "reference_target_roles": {
+        "orange_ball": "target"
+      },
+      "reference_targets": [
+        "orange_ball"
       ],
       "script": "object_permanence/generator/tasks/G67_double_deflector_zigzag/pb_task_00000113_pb_double_deflector_zigzag_0114_blender.py",
       "source_frames": [
@@ -2098,8 +3466,7 @@
       ],
       "source_script_sha256": "7d44abd7c126c9631507acb9c90e18973493d16d2fc37bfd555d1bb594e9f3f1",
       "source_task_manifest_sha256": "fa4b49b5935fb7c79cc29929e95d23ecbea3c01aa42fafabe1290718356fcb93",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G67"
     },
     {
@@ -2469,18 +3836,60 @@
       "task": "G74"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 2.099539180504038e-15,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 6,
+        "dynamic_nodes": [
+          "billboard_ball",
+          "billboard_panel"
+        ],
+        "frames": 120,
+        "objects": 6,
+        "task": "G75",
+        "world_normal_max_abs_error": 3.8012671432774425e-07,
+        "world_triangle_max_abs_error": 1.8104911303495896e-07
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 6,
       "name": "ball_behind_rotating_billboard",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g75-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g75/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g75-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "reference_semantic_targets": [
+        "billboard_ball"
+      ],
+      "reference_target_roles": {
+        "billboard_ball": "target"
+      },
+      "reference_targets": [
+        "billboard_ball"
       ],
       "script": "object_permanence/generator/tasks/G75_ball_behind_rotating_billboard/pb_task_00000121_pb_ball_behind_rotating_billboard_0122_blender.py",
       "source_frames": [
@@ -2489,23 +3898,64 @@
       ],
       "source_script_sha256": "3e8c84c9cb23b1005c24f7d444f35cae10833b9764df0c7d73f9f68f7939df82",
       "source_task_manifest_sha256": "9327419a9a01c89d8744a3a9e2c1be75365c867594f48f327375ad1a9a394a18",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G75"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 4.894849957458468e-16,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 9,
+        "dynamic_nodes": [
+          "pendulum_bob",
+          "pendulum_rod"
+        ],
+        "frames": 120,
+        "objects": 10,
+        "task": "G76",
+        "world_normal_max_abs_error": 3.143089162271906e-07,
+        "world_triangle_max_abs_error": 3.1083821561139757e-07
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 10,
       "name": "pendulum_behind_post",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g76-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g76/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g76-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "reference_semantic_targets": [
+        "pendulum_bob"
+      ],
+      "reference_target_roles": {
+        "pendulum_bob": "target"
+      },
+      "reference_targets": [
+        "pendulum_bob"
       ],
       "script": "object_permanence/generator/tasks/G76_pendulum_behind_post/pb_task_00000122_pb_pendulum_behind_post_0123_blender.py",
       "source_frames": [
@@ -2514,23 +3964,71 @@
       ],
       "source_script_sha256": "fc1ef01a1b8ca37812fe5e15400269de1cf147f7d283c6da0344683704f915dd",
       "source_task_manifest_sha256": "04ca912ab7f2f9693aedeedd52bae69558d4011445f94cd95ea045f05d5cd54f",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G76"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 2.0245601238096005e-15,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 8,
+        "dynamic_nodes": [
+          "chain_ball_blue",
+          "chain_ball_green",
+          "chain_ball_red"
+        ],
+        "frames": 120,
+        "objects": 13,
+        "task": "G77",
+        "world_normal_max_abs_error": 2.7516771206048674e-07,
+        "world_triangle_max_abs_error": 2.8412402396094105e-07
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 13,
       "name": "three_balls_one_wide_tunnel",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g77-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g77/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g77-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "reference_semantic_targets": [
+        "chain_ball_red",
+        "chain_ball_green",
+        "chain_ball_blue"
+      ],
+      "reference_target_roles": {
+        "chain_ball_blue": "target",
+        "chain_ball_green": "target",
+        "chain_ball_red": "target"
+      },
+      "reference_targets": [
+        "chain_ball_red",
+        "chain_ball_green",
+        "chain_ball_blue"
       ],
       "script": "object_permanence/generator/tasks/G77_three_balls_one_wide_tunnel/pb_task_00000123_pb_three_balls_one_wide_tunnel_0124_blender.py",
       "source_frames": [
@@ -2539,23 +4037,63 @@
       ],
       "source_script_sha256": "2f2d8d8d89bf687bc883308cc209f07a080af1306b58295118abc108cf832151",
       "source_task_manifest_sha256": "95be3eb3c29733c0956c721cbe1ed8923a25574771de91061bb9c37892ff8f45",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G77"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 2.093653600287754e-15,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 8,
+        "dynamic_nodes": [
+          "rolling_disc"
+        ],
+        "frames": 120,
+        "objects": 11,
+        "task": "G78",
+        "world_normal_max_abs_error": 3.4859670727804826e-07,
+        "world_triangle_max_abs_error": 1.8140226565321882e-07
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 11,
       "name": "rolling_disc_tunnel",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g78-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g78/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g78-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "reference_semantic_targets": [
+        "rolling_disc"
+      ],
+      "reference_target_roles": {
+        "rolling_disc": "target"
+      },
+      "reference_targets": [
+        "rolling_disc"
       ],
       "script": "object_permanence/generator/tasks/G78_rolling_disc_tunnel/pb_task_00000124_pb_rolling_disc_tunnel_0125_blender.py",
       "source_frames": [
@@ -2564,8 +4102,7 @@
       ],
       "source_script_sha256": "28b055895e4077a0b932339add6c166f4942332f6fceed83e6d41ca70c10522b",
       "source_task_manifest_sha256": "9003624891156e4dba946cf2890b1765826a0d780201c523b15734c9fcda5fa1",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G78"
     },
     {
@@ -2832,18 +4369,65 @@
       "task": "G90"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 5.27783237075944e-15,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 7,
+        "dynamic_nodes": [
+          "blocked_blue_ball",
+          "gateA_panel",
+          "gateB_panel",
+          "pass_orange_ball"
+        ],
+        "frames": 120,
+        "objects": 36,
+        "task": "G91",
+        "world_normal_max_abs_error": 3.238449931552978e-07,
+        "world_triangle_max_abs_error": 1.5736099379104473e-07
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 36,
       "name": "turnstile_timed_gate",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g91-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g91/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g91-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "reference_semantic_targets": [
+        "pass_orange_ball",
+        "blocked_blue_ball"
+      ],
+      "reference_target_roles": {
+        "blocked_blue_ball": "target",
+        "pass_orange_ball": "target"
+      },
+      "reference_targets": [
+        "pass_orange_ball",
+        "blocked_blue_ball"
       ],
       "script": "object_permanence/generator/tasks/G91_turnstile_timed_gate/pb_task_00000137_pb_turnstile_timed_gate_0138_blender.py",
       "source_frames": [
@@ -2852,23 +4436,63 @@
       ],
       "source_script_sha256": "84b26f3c176b05791e6d9e2129d5ff603b39893edf5e2c02236405fa0854ba85",
       "source_task_manifest_sha256": "4bf3b8401909417b16f037e64f79a502eeb403280adfadc5dbee59bc572ee09a",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G91"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 1.0281423262185488e-16,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 4,
+        "dynamic_nodes": [
+          "carom_orange_ball"
+        ],
+        "frames": 120,
+        "objects": 4,
+        "task": "G92",
+        "world_normal_max_abs_error": 4.1118394200623243e-07,
+        "world_triangle_max_abs_error": 7.525919532014314e-08
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 4,
       "name": "bumper_carom",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g92-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g92/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g92-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "reference_semantic_targets": [
+        "carom_orange_ball"
+      ],
+      "reference_target_roles": {
+        "carom_orange_ball": "target"
+      },
+      "reference_targets": [
+        "carom_orange_ball"
       ],
       "script": "object_permanence/generator/tasks/G92_bumper_carom/pb_task_00000138_pb_bumper_carom_0139_blender.py",
       "source_frames": [
@@ -2877,8 +4501,7 @@
       ],
       "source_script_sha256": "100a9c686776cd469f8c2b3f54891f4061925c76d98c162f0d8cfee4b90c0708",
       "source_task_manifest_sha256": "4ab2b72b934b62674795a51dda49ee4cd5ebbbecdc8c7de7de54664e28e8eb05",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G92"
     },
     {
@@ -3033,18 +4656,59 @@
       "task": "G100"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 3.1355563307090872e-15,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 8,
+        "dynamic_nodes": [
+          "rolling_ball"
+        ],
+        "frames": 120,
+        "objects": 15,
+        "task": "G101",
+        "world_normal_max_abs_error": 3.5581579521659634e-07,
+        "world_triangle_max_abs_error": 1.8140226565321882e-07
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 15,
       "name": "picket_fence_flicker",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g101-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g101/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g101-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "reference_semantic_targets": [
+        "rolling_ball"
+      ],
+      "reference_target_roles": {
+        "rolling_ball": "target"
+      },
+      "reference_targets": [
+        "rolling_ball"
       ],
       "script": "object_permanence/generator/tasks/G101_picket_fence_flicker/pb_task_00000147_pb_picket_fence_flicker_0148_blender.py",
       "source_frames": [
@@ -3053,23 +4717,64 @@
       ],
       "source_script_sha256": "efd54f59dbc75f34c4d25f13950b7fd9b964424c68e3c92fdfd238fb135ea6ed",
       "source_task_manifest_sha256": "dc4578f2c5aa4afba6e7081936d38b949f78a7002b6ab36c58b7402214b35c60",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G101"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 3.789561257387201e-15,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 9,
+        "dynamic_nodes": [
+          "drop_screen",
+          "rolling_ball"
+        ],
+        "frames": 120,
+        "objects": 13,
+        "task": "G102",
+        "world_normal_max_abs_error": 3.335893493661146e-07,
+        "world_triangle_max_abs_error": 2.1418580686827227e-07
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 13,
       "name": "drop_screen_occluder",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g102-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g102/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g102-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "reference_semantic_targets": [
+        "rolling_ball"
+      ],
+      "reference_target_roles": {
+        "rolling_ball": "target"
+      },
+      "reference_targets": [
+        "rolling_ball"
       ],
       "script": "object_permanence/generator/tasks/G102_drop_screen_occluder/pb_task_00000148_pb_drop_screen_occluder_0149_blender.py",
       "source_frames": [
@@ -3078,8 +4783,7 @@
       ],
       "source_script_sha256": "eb033c97f2d3cb9dfb3dd1432696fea32446da1c5ba6c99ded2ed0c83defbe2e",
       "source_task_manifest_sha256": "8d7df326f6eaf7718bfca96c8b5f99650d0e5b82622f9d747d082c87d79df49e",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G102"
     },
     {
@@ -3563,18 +5267,65 @@
       "task": "G108"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 7.735310649310124e-14,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 9,
+        "dynamic_nodes": [
+          "relocating_orange_ball",
+          "tray_end_wall_far",
+          "tray_end_wall_near",
+          "tray_floor",
+          "tray_opaque_lid",
+          "tray_side_wall_far",
+          "tray_side_wall_near"
+        ],
+        "frames": 120,
+        "objects": 11,
+        "task": "G109",
+        "world_normal_max_abs_error": 3.0152631402824426e-07,
+        "world_triangle_max_abs_error": 2.0086764784821298e-07
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 11,
       "name": "tilting_tray_relocate",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g109-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g109/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g109-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "relocating_orange_ball"
+      ],
+      "reference_target_roles": {
+        "relocating_orange_ball": "target"
+      },
+      "reference_targets": [
+        "relocating_orange_ball"
       ],
       "script": "object_permanence/generator/tasks/G109_tilting_tray_relocate/pb_task_00000155_pb_tilting_tray_relocate_0156_blender.py",
       "source_frames": [
@@ -3583,23 +5334,69 @@
       ],
       "source_script_sha256": "838d65def548562d562c4ced3cfdae508273bd50d21270e26980d6499fc30d24",
       "source_task_manifest_sha256": "f763d8975e6f4859af4861a6f7f1ae54946bd2d94c0e575012d0178fdb5dbc85",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G109"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 8.64229774532438e-15,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 8,
+        "dynamic_nodes": [
+          "blocked_teal_ball",
+          "one_way_flap_block_panel",
+          "one_way_flap_pass_panel",
+          "pass_pink_ball"
+        ],
+        "frames": 120,
+        "objects": 18,
+        "task": "G110",
+        "world_normal_max_abs_error": 3.613769257171384e-07,
+        "world_triangle_max_abs_error": 1.7047441858153434e-07
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 18,
       "name": "one_way_flap_gate",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g110-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g110/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g110-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "reference_semantic_targets": [
+        "pass_pink_ball",
+        "blocked_teal_ball"
+      ],
+      "reference_target_roles": {
+        "blocked_teal_ball": "target",
+        "pass_pink_ball": "target"
+      },
+      "reference_targets": [
+        "pass_pink_ball",
+        "blocked_teal_ball"
       ],
       "script": "object_permanence/generator/tasks/G110_one_way_flap_gate/pb_task_00000156_pb_one_way_flap_gate_0157_blender.py",
       "source_frames": [
@@ -3608,8 +5405,7 @@
       ],
       "source_script_sha256": "aecbaef7eec1ba1ac7023fc831b4e98f391cfc71635afc266ca944c2aa321e76",
       "source_task_manifest_sha256": "6038c4b0c9b2810d7870860cd93741cce849d3a4b2d2c6009e99fbbc39882a47",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G110"
     },
     {
@@ -3672,18 +5468,59 @@
       "task": "G111"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 5.025110236880094e-17,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 4,
+        "dynamic_nodes": [
+          "redirect_orange_ball"
+        ],
+        "frames": 120,
+        "objects": 4,
+        "task": "G112",
+        "world_normal_max_abs_error": 3.74312017048517e-07,
+        "world_triangle_max_abs_error": 8.27851502904764e-08
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 4,
       "name": "banked_quarter_pipe_redirect",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g112-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g112/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g112-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "reference_semantic_targets": [
+        "redirect_orange_ball"
+      ],
+      "reference_target_roles": {
+        "redirect_orange_ball": "target"
+      },
+      "reference_targets": [
+        "redirect_orange_ball"
       ],
       "script": "object_permanence/generator/tasks/G112_banked_quarter_pipe_redirect/pb_task_00000158_pb_banked_quarter_pipe_redirect_0159_blender.py",
       "source_frames": [
@@ -3692,8 +5529,7 @@
       ],
       "source_script_sha256": "4ecb3d9ba97b37841afadb4c0e11538df53df0281a486df440453c8912e7c875",
       "source_task_manifest_sha256": "abe762b259911257f618ff5300e59aad1cfcffecc2fb613d936de3ba9be765a0",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G112"
     },
     {
@@ -4154,18 +5990,59 @@
       "task": "G121"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 3.3788230770796997e-16,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 5,
+        "dynamic_nodes": [
+          "rolling_ball"
+        ],
+        "frames": 120,
+        "objects": 5,
+        "task": "G122",
+        "world_normal_max_abs_error": 3.364061558208675e-07,
+        "world_triangle_max_abs_error": 9.164083314416871e-08
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 5,
       "name": "ball_behind_box_stack",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g122-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g122/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g122-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "reference_semantic_targets": [
+        "rolling_ball"
+      ],
+      "reference_target_roles": {
+        "rolling_ball": "rolling_ball"
+      },
+      "reference_targets": [
+        "rolling_ball"
       ],
       "script": "object_permanence/generator/tasks/G122_ball_behind_box_stack/pb_task_00000168_pb_ball_behind_box_stack_0169_blender.py",
       "source_frames": [
@@ -4174,8 +6051,7 @@
       ],
       "source_script_sha256": "d0b0d9b8c1dff45f1879ebec25317713ac4c287ade70f41c41beae622c28226f",
       "source_task_manifest_sha256": "971f138bff66d6683f74e1d70c9384d30d1bace7412068c3768ea6008b21b317",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G122"
     },
     {
@@ -4445,18 +6321,59 @@
       "task": "G127"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "camera-projection",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 1.1814030530183335e-16,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 7,
+        "dynamic_nodes": [
+          "rolling_ball"
+        ],
+        "frames": 120,
+        "objects": 7,
+        "task": "G128",
+        "world_normal_max_abs_error": 2.10908800951648e-07,
+        "world_triangle_max_abs_error": 4.515551710326804e-08
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 7,
       "name": "swing_arm_barrier_stop",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g128-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: v1 requires a perspective camera without depth of field",
+      "oracle": "tests/fixtures/semantics/object_permanence/g128/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g128-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "reference_semantic_targets": [
+        "rolling_ball"
+      ],
+      "reference_target_roles": {
+        "rolling_ball": "moving_ball"
+      },
+      "reference_targets": [
+        "rolling_ball"
       ],
       "script": "object_permanence/generator/tasks/G128_swing_arm_barrier_stop/pb_task_00000174_pb_swing_arm_barrier_stop_0175_blender.py",
       "source_frames": [
@@ -4465,8 +6382,7 @@
       ],
       "source_script_sha256": "eadf3d8712691e1160eb57aeed43a8029987c19fb9e104309284db761f108d41",
       "source_task_manifest_sha256": "36693cd27aa9cb270bed91c7ebf45f940b89acf91cc1a4b392accd94264d6c5b",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G128"
     },
     {
@@ -5548,7 +7464,7 @@
     }
   ],
   "profile": "first-nominal-member",
-  "reference_probe_policy": "Source task-object roles select visibility probes; every mesh remains in world poses, IDs and all-object depth/mask checks.",
+  "reference_probe_policy": "Source task-object roles select probes; V2 separately records source_semantic_targets and the source-observable subset targets. Every mesh remains in all world poses, IDs and all-object depth/mask checks.",
   "schema": "stable-envs/object-permanence-source-audit-v1",
   "scope": {
     "member_scripts": 197,
@@ -5893,5 +7809,8 @@
       "task": "G26"
     }
   ],
-  "visibility_contract": "stable-envs/opaque-pixel-rays-v1"
+  "visibility_contracts": [
+    "stable-envs/opaque-pixel-rays-v1",
+    "stable-envs/opaque-pixel-rays-v2"
+  ]
 }

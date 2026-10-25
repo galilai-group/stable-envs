@@ -1,0 +1,596 @@
+{
+  "arrays": {
+    "frames": {
+      "dtype": "int64",
+      "sha256": "3ce1a862b6cf0bb21bc1354b758cafa47ca5ec03b5c004d6210f5abd8c55df44",
+      "shape": [
+        120
+      ]
+    },
+    "poses": {
+      "dtype": "float32",
+      "sha256": "3cddc9740c372645808c051635a3ad128efd1eb3baf962883b1efd37a8dc1ace",
+      "shape": [
+        120,
+        3,
+        7
+      ]
+    }
+  },
+  "assets": {
+    "0c0f508cd9079b8501dd757ac87d6fe5f65c29ccb36ce3da5618dd5e4c4e8b2a": {
+      "file": "assets/cube/0c0f508cd9079b8501dd757ac87d6fe5f65c29ccb36ce3da5618dd5e4c4e8b2a.npz",
+      "sha256": "4bb0e3fafd49541f27f67dd30f7ddc9a2521d55dd09338279b436810b2b06fc2"
+    },
+    "1487a9fe49a21603bc3024bbb69415b67be5ea6b4b825a14ee4873c7d89afd8a": {
+      "file": "assets/cube/1487a9fe49a21603bc3024bbb69415b67be5ea6b4b825a14ee4873c7d89afd8a.npz",
+      "sha256": "fa7fc51bfeb83a2b471a8a0ca59bc3bfef73f5282237ae7c9ae3edb9362f2b62"
+    },
+    "1c5dbd65d653bf328d293569514278a2b3740526819f36682a1f194ca8b10acb": {
+      "file": "assets/cylinder/1c5dbd65d653bf328d293569514278a2b3740526819f36682a1f194ca8b10acb.npz",
+      "sha256": "32da75b6b9984b9156d397932ef37c834273e3c01012c6fd49ba901fa59e467e"
+    },
+    "1ef1fbeb751a2ad9ec8bd5b9bc5405f589420fc2eea62884b15c3118d001765c": {
+      "file": "assets/cube/1ef1fbeb751a2ad9ec8bd5b9bc5405f589420fc2eea62884b15c3118d001765c.npz",
+      "sha256": "80a57715ffc704dd5cf2589b1a9f6d7f1ee05e7c926b4fcd3647e34d4894b193"
+    },
+    "305dc0c2789efed26b51b31a92f982cd81d3af1fc57013dd3112e79b607edf59": {
+      "file": "assets/cube/305dc0c2789efed26b51b31a92f982cd81d3af1fc57013dd3112e79b607edf59.npz",
+      "sha256": "7730c776c1cdd0c2d38789d72ee4727a3a50458e7f63f53b4392e974f021f5cc"
+    },
+    "36607791129df12a61e4b149e1d8f63ef74d523a0b49771446ae46d210256659": {
+      "file": "assets/cube/36607791129df12a61e4b149e1d8f63ef74d523a0b49771446ae46d210256659.npz",
+      "sha256": "ddd7e63d913037d6c6f6b4af446e9db90357f38c51403097506a5f4e4d1cb6cc"
+    },
+    "5e7dfd4672d19c8262b184d045ed5ca6d2b55b92045e5a236885f468b9bb5627": {
+      "file": "assets/cube/5e7dfd4672d19c8262b184d045ed5ca6d2b55b92045e5a236885f468b9bb5627.npz",
+      "sha256": "94334f4fd0e43bad67d999f266c29a946e2c644f391d8b5ec25aa3898c734496"
+    },
+    "70beb905b23a0c0bbcd3c51b3ccef9528ba8b394b0c2cf1ef665885113c2304a": {
+      "file": "assets/cube/70beb905b23a0c0bbcd3c51b3ccef9528ba8b394b0c2cf1ef665885113c2304a.npz",
+      "sha256": "39e10c24e53ae529fbbdad6b4846c0daf70f93a8168fa0eee69879105e57c772"
+    },
+    "b051a56b9608fe4c8440d25c8590a58f3a69b12b269ffd4021b607c0531862a9": {
+      "file": "assets/cube/b051a56b9608fe4c8440d25c8590a58f3a69b12b269ffd4021b607c0531862a9.npz",
+      "sha256": "1481bcd1c86cfb26208c309fa0d1821f7561b5a30fb4b2c54baa698ffda8eaca"
+    },
+    "c269d99ef51400d1677cf5d9a6197c94d229e308fa1b51e75d08453fe75182b6": {
+      "file": "assets/wedge_ramp/c269d99ef51400d1677cf5d9a6197c94d229e308fa1b51e75d08453fe75182b6.npz",
+      "sha256": "323add70a9900c33a50520e68454ddd666c53506fb8e514caa1eaa0a9f0dea7a"
+    },
+    "c732cff753208ec91ca343b88e21e5c2b717e4be740eb720a06dd77ac23c32a5": {
+      "file": "assets/cube/c732cff753208ec91ca343b88e21e5c2b717e4be740eb720a06dd77ac23c32a5.npz",
+      "sha256": "743c9989d053dc8911b6d3307814e4ae04fd0b0b4bf73c080ab17fd56d0fd96c"
+    },
+    "eddc020b3dc9906897959969024cda1454b0b3119c0714550bd887279734e82b": {
+      "file": "assets/cube/eddc020b3dc9906897959969024cda1454b0b3119c0714550bd887279734e82b.npz",
+      "sha256": "52f84ffbf2f6531c0b9bc7990503d3586ce5111650647b3493d3153b4ad6425b"
+    },
+    "f59ddb56e49f6fa0428c121a993ab5cebbaf25df820af232bcd44c71fbb3f60a": {
+      "file": "assets/cube/f59ddb56e49f6fa0428c121a993ab5cebbaf25df820af232bcd44c71fbb3f60a.npz",
+      "sha256": "6bab9cc3cb1dc1fa018e3a329291296f5d423cfbeeb9b6c2ff7cecf777f312ef"
+    },
+    "f71596a2cd2408e2bd7d18c24bd1673fd5446139ee9059bc0b01216f89f5eea0": {
+      "file": "assets/cube/f71596a2cd2408e2bd7d18c24bd1673fd5446139ee9059bc0b01216f89f5eea0.npz",
+      "sha256": "d705fe11adef4191ba588565cd3b2faf82d1679bc32acf97e6aa3b8c8e6240e8"
+    },
+    "ff02daef22b4502b8b16bcf998b83485f66b546347c73eac044c5906277f90ad": {
+      "file": "assets/sphere/ff02daef22b4502b8b16bcf998b83485f66b546347c73eac044c5906277f90ad.npz",
+      "sha256": "8a2e84be8e2602541ad3bbfdaefca6ff8a682983bc1d86309da7c6e9c20dff9b"
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "height": 720,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        0.3361344635486603,
+        0.0,
+        0.0,
+        -0.0
+      ],
+      [
+        0.0,
+        0.597572386264801,
+        0.0,
+        -0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -0.0020001998636871576,
+        -1.0001999139785767
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "projection_type": "orthographic",
+    "width": 1280,
+    "world": [
+      [
+        0.9942233562469482,
+        -0.033105459064245224,
+        0.1020977795124054,
+        1.149999976158142
+      ],
+      [
+        0.10733092576265335,
+        0.3066610097885132,
+        -0.9457479119300842,
+        -8.800000190734863
+      ],
+      [
+        1.156316731254492e-08,
+        0.9512429237365723,
+        0.30844277143478394,
+        3.549999952316284
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "clip": "g52-nominal",
+  "conventions": {
+    "quaternion": "wxyz",
+    "units": "source-scene-units",
+    "world": "right-handed-z-up"
+  },
+  "dynamic_nodes": [
+    "left_outward_opening_door_leaf",
+    "orange_ball_inside_open_right_gated_box_on_ramp",
+    "right_outward_opening_door_leaf"
+  ],
+  "fps": 24.0,
+  "license_ref": {
+    "sha256": "0163481eb7a0fe3ed86d2dccf542a849b36b3c119f8ca6d3d5b36c074f2e1a1c"
+  },
+  "objects": [
+    {
+      "asset": "b051a56b9608fe4c8440d25c8590a58f3a69b12b269ffd4021b607c0531862a9",
+      "id": 1,
+      "name": "catch_box_left_open_entry_marker_not_a_wall",
+      "node": -1,
+      "pose": [
+        1.600000023841858,
+        0.5,
+        0.20000000298023224,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.15000000596046448,
+        0.17000000178813934,
+        0.20000000298023224,
+        1.0
+      ],
+      "role": "open_entry_marker",
+      "shape": "cube",
+      "source_id": "catch_box_left_open_entry_marker_not_a_wall"
+    },
+    {
+      "asset": "36607791129df12a61e4b149e1d8f63ef74d523a0b49771446ae46d210256659",
+      "id": 2,
+      "name": "gated_box_back_wall",
+      "node": -1,
+      "pose": [
+        -1.7000000476837158,
+        0.5799999833106995,
+        1.2799999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.699999988079071,
+        0.7099999785423279,
+        0.7400000095367432,
+        1.0
+      ],
+      "role": "gated_box_back_wall",
+      "shape": "cube",
+      "source_id": "gated_box_back_wall"
+    },
+    {
+      "asset": "305dc0c2789efed26b51b31a92f982cd81d3af1fc57013dd3112e79b607edf59",
+      "id": 3,
+      "name": "gated_box_front_lintel",
+      "node": -1,
+      "pose": [
+        -1.7000000476837158,
+        -0.6200000047683716,
+        1.7799999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.15000000596046448,
+        0.17000000178813934,
+        0.20000000298023224,
+        1.0
+      ],
+      "role": "front_door_lintel",
+      "shape": "cube",
+      "source_id": "gated_box_front_lintel"
+    },
+    {
+      "asset": "eddc020b3dc9906897959969024cda1454b0b3119c0714550bd887279734e82b",
+      "id": 4,
+      "name": "gated_box_left_side_wall",
+      "node": -1,
+      "pose": [
+        -2.4600000381469727,
+        0.0,
+        1.2799999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.699999988079071,
+        0.7099999785423279,
+        0.7400000095367432,
+        1.0
+      ],
+      "role": "gated_box_left_side_wall",
+      "shape": "cube",
+      "source_id": "gated_box_left_side_wall"
+    },
+    {
+      "asset": "0c0f508cd9079b8501dd757ac87d6fe5f65c29ccb36ce3da5618dd5e4c4e8b2a",
+      "id": 5,
+      "name": "large_floor_base",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        -0.05000000074505806,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8199999928474426,
+        0.800000011920929,
+        0.75,
+        1.0
+      ],
+      "role": "ground",
+      "shape": "cube",
+      "source_id": "large_floor_base"
+    },
+    {
+      "asset": "1c5dbd65d653bf328d293569514278a2b3740526819f36682a1f194ca8b10acb",
+      "id": 6,
+      "name": "left_door_vertical_hinge",
+      "node": -1,
+      "pose": [
+        -2.4200000762939453,
+        -0.6200000047683716,
+        1.215000033378601,
+        7.549790126404332e-08,
+        -0.0,
+        -0.0,
+        -1.0
+      ],
+      "rgba": [
+        0.15000000596046448,
+        0.17000000178813934,
+        0.20000000298023224,
+        1.0
+      ],
+      "role": "left_door_hinge",
+      "shape": "cylinder",
+      "source_id": "left_door_vertical_hinge"
+    },
+    {
+      "asset": "f71596a2cd2408e2bd7d18c24bd1673fd5446139ee9059bc0b01216f89f5eea0",
+      "id": 7,
+      "name": "left_outward_opening_door_leaf",
+      "node": 0,
+      "pose": [
+        -2.5431272983551025,
+        -0.958289384841919,
+        1.2200000286102295,
+        0.5735764503479004,
+        -0.0,
+        -0.0,
+        -0.8191520571708679
+      ],
+      "rgba": [
+        0.44999998807907104,
+        0.47999998927116394,
+        0.5400000214576721,
+        1.0
+      ],
+      "role": "left_outward_opening_door_leaf",
+      "shape": "cube",
+      "source_id": "left_outward_opening_door_leaf"
+    },
+    {
+      "asset": "f59ddb56e49f6fa0428c121a993ab5cebbaf25df820af232bcd44c71fbb3f60a",
+      "id": 8,
+      "name": "open_catch_box_back_wall",
+      "node": -1,
+      "pose": [
+        2.25,
+        0.5099999904632568,
+        0.38999998569488525,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.699999988079071,
+        0.7099999785423279,
+        0.7400000095367432,
+        1.0
+      ],
+      "role": "catch_box_back_wall",
+      "shape": "cube",
+      "source_id": "open_catch_box_back_wall"
+    },
+    {
+      "asset": "1487a9fe49a21603bc3024bbb69415b67be5ea6b4b825a14ee4873c7d89afd8a",
+      "id": 9,
+      "name": "open_catch_box_floor",
+      "node": -1,
+      "pose": [
+        2.25,
+        0.0,
+        0.07999999821186066,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.699999988079071,
+        0.7099999785423279,
+        0.7400000095367432,
+        1.0
+      ],
+      "role": "catch_box_floor",
+      "shape": "cube",
+      "source_id": "open_catch_box_floor"
+    },
+    {
+      "asset": "5e7dfd4672d19c8262b184d045ed5ca6d2b55b92045e5a236885f468b9bb5627",
+      "id": 10,
+      "name": "open_catch_box_front_low_wall",
+      "node": -1,
+      "pose": [
+        2.25,
+        -0.5099999904632568,
+        0.3100000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.699999988079071,
+        0.7099999785423279,
+        0.7400000095367432,
+        1.0
+      ],
+      "role": "catch_box_front_low_wall",
+      "shape": "cube",
+      "source_id": "open_catch_box_front_low_wall"
+    },
+    {
+      "asset": "c732cff753208ec91ca343b88e21e5c2b717e4be740eb720a06dd77ac23c32a5",
+      "id": 11,
+      "name": "open_catch_box_right_wall",
+      "node": -1,
+      "pose": [
+        2.859999895095825,
+        0.0,
+        0.38999998569488525,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.699999988079071,
+        0.7099999785423279,
+        0.7400000095367432,
+        1.0
+      ],
+      "role": "catch_box_right_wall",
+      "shape": "cube",
+      "source_id": "open_catch_box_right_wall"
+    },
+    {
+      "asset": "1ef1fbeb751a2ad9ec8bd5b9bc5405f589420fc2eea62884b15c3118d001765c",
+      "id": 12,
+      "name": "open_right_exit_marker_not_a_wall",
+      "node": -1,
+      "pose": [
+        -0.949999988079071,
+        0.550000011920929,
+        1.7799999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.15000000596046448,
+        0.17000000178813934,
+        0.20000000298023224,
+        1.0
+      ],
+      "role": "open_right_exit_marker",
+      "shape": "cube",
+      "source_id": "open_right_exit_marker_not_a_wall"
+    },
+    {
+      "asset": "ff02daef22b4502b8b16bcf998b83485f66b546347c73eac044c5906277f90ad",
+      "id": 13,
+      "name": "orange_ball_inside_open_right_gated_box_on_ramp",
+      "node": 1,
+      "pose": [
+        -2.119999885559082,
+        0.0,
+        1.3005919456481934,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9700000286102295,
+        0.44999998807907104,
+        0.10000000149011612,
+        1.0
+      ],
+      "role": "target_ball",
+      "shape": "sphere",
+      "source_id": "orange_ball_inside_open_right_gated_box_on_ramp"
+    },
+    {
+      "asset": "70beb905b23a0c0bbcd3c51b3ccef9528ba8b394b0c2cf1ef665885113c2304a",
+      "id": 14,
+      "name": "rear_backdrop_panel",
+      "node": -1,
+      "pose": [
+        0.0,
+        2.1500000953674316,
+        1.5499999523162842,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9599999785423279,
+        0.9700000286102295,
+        0.9800000190734863,
+        1.0
+      ],
+      "role": "background",
+      "shape": "cube",
+      "source_id": "rear_backdrop_panel"
+    },
+    {
+      "asset": "1c5dbd65d653bf328d293569514278a2b3740526819f36682a1f194ca8b10acb",
+      "id": 15,
+      "name": "right_door_vertical_hinge",
+      "node": -1,
+      "pose": [
+        -0.9800000190734863,
+        -0.6200000047683716,
+        1.215000033378601,
+        7.549790126404332e-08,
+        -0.0,
+        -0.0,
+        -1.0
+      ],
+      "rgba": [
+        0.15000000596046448,
+        0.17000000178813934,
+        0.20000000298023224,
+        1.0
+      ],
+      "role": "right_door_hinge",
+      "shape": "cylinder",
+      "source_id": "right_door_vertical_hinge"
+    },
+    {
+      "asset": "f71596a2cd2408e2bd7d18c24bd1673fd5446139ee9059bc0b01216f89f5eea0",
+      "id": 16,
+      "name": "right_outward_opening_door_leaf",
+      "node": 2,
+      "pose": [
+        -0.8568727970123291,
+        -0.958289384841919,
+        1.2200000286102295,
+        0.5735764503479004,
+        0.0,
+        0.0,
+        0.8191520571708679
+      ],
+      "rgba": [
+        0.44999998807907104,
+        0.47999998927116394,
+        0.5400000214576721,
+        1.0
+      ],
+      "role": "right_outward_opening_door_leaf",
+      "shape": "cube",
+      "source_id": "right_outward_opening_door_leaf"
+    },
+    {
+      "asset": "c269d99ef51400d1677cf5d9a6197c94d229e308fa1b51e75d08453fe75182b6",
+      "id": 17,
+      "name": "single_continuous_sloped_ramp",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6200000047683716,
+        0.6399999856948853,
+        0.6800000071525574,
+        1.0
+      ],
+      "role": "sloped_ramp",
+      "shape": "wedge_ramp",
+      "source_id": "single_continuous_sloped_ramp"
+    }
+  ],
+  "schema": "stable-envs/object-permanence-rigid-v2",
+  "source": {
+    "commit": "824baddcdad087810d35638bf8f273b884f74975",
+    "exporter": "scripts/export/object_permanence.py",
+    "exporter_sha256": "86319b22f9da034b90c23b9ed5957155882c63e6518aaece1136e55e61659a4e",
+    "license": "CC-BY-NC-4.0",
+    "parameters": {},
+    "preparation_recipe": {
+      "animate": "",
+      "build": "build_scene"
+    },
+    "profile": "nominal-first-member-no-diversity",
+    "script": "object_permanence/generator/tasks/G52_ramp_open_right_gated_box/pb_task_00000088_pb_ramp_open_right_gated_box_ball_rolls_to_catch_box_0089_blender.py",
+    "script_sha256": "0e9eca870bae6189de008a160b6405336764fd7bb0ac1ebce613df8811307392",
+    "seed": null,
+    "task": "G52",
+    "task_manifest_sha256": "1072eea636ffa9db58dbe8f77c0cda32277a2484c74622747565b36151444c2f",
+    "url": "https://github.com/hokindeng/object-permanence",
+    "versions": {
+      "blender": "4.4.0",
+      "numpy": "1.26.4",
+      "python": "3.11.16"
+    },
+    "video_split": {
+      "event": "doors closed, ball inside; reveal reopen at 109 stays in target",
+      "first_target_frame": 61,
+      "method": "before_event"
+    }
+  },
+  "visibility_contract": "stable-envs/opaque-pixel-rays-v2"
+}

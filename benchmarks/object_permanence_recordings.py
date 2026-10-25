@@ -31,6 +31,11 @@ def comparison_gif(clip, source, output, *, size, visibility_contract=None):
         raise ValueError("source preview task or pinned source differs")
     if metadata.get("source_execution_context") != recorded_source.get("execution_context"):
         raise ValueError("source preview and recording execution contexts differ")
+    if visibility_contract == "stable-envs/opaque-pixel-rays-v2" and (
+        metadata.get("source_preparation_recipe") != recorded_source.get("preparation_recipe")
+        or metadata["source_script_sha256"] != recorded_source["script_sha256"]
+    ):
+        raise ValueError("source preview and recording preparation definitions differ")
     if metadata["frames"] != list(clip.frames) or metadata["size"] != [size, size * 16 // 9]:
         raise ValueError("source preview frame numbers or dimensions differ")
     with RigidSceneRenderer(clip, size=size, visibility_contract=visibility_contract) as renderer:
@@ -44,7 +49,11 @@ def comparison_gif(clip, source, output, *, size, visibility_contract=None):
         canvas.paste(right, (left.width, 24))
         draw = ImageDraw.Draw(canvas)
         draw.text((6, 6), f"Source Blender / frame {frame}", fill="black")
-        label = "Shared / pixel-rays v1" if visibility_contract else "Shared nvdiff / same frame"
+        label = (
+            "Shared / " + visibility_contract.removeprefix("stable-envs/opaque-").replace("-v", " v")
+            if visibility_contract
+            else "Shared nvdiff / same frame"
+        )
         draw.text((left.width + 6, 6), label, fill="black")
         frames.append(canvas)
     palette = frames[0].quantize(colors=256)

@@ -28,7 +28,7 @@ The source animation produces poses; the exporter does not transcribe its motion
 | Constant evaluated modifiers | Supported if exported geometry stays identical across all frames |
 | Static opaque base colors and one material per mesh | Supported; simplified rendering does not preserve source shaders |
 | Fixed perspective camera | World and projection matrices exported |
-| Orthographic camera | Not supported in v1; e.g. G43/G77/G91/G92 require an extension |
+| Orthographic camera | Explicit [v2 recording/visibility contract](object-permanence-orthographic.md); v1 remains perspective-only |
 | Animated scale/shear, deformation, topology changes | Rejected |
 | Moving camera, changing base colors, visibility changes | Rejected |
 | Generated instances, textures, transparency, depth of field | Rejected |

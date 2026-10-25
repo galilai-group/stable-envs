@@ -1,0 +1,343 @@
+{
+  "arrays": {
+    "camera_matrix": {
+      "dtype": "float64",
+      "shape": [
+        4,
+        4
+      ]
+    },
+    "depth_base": {
+      "dtype": "float32",
+      "shape": [
+        180,
+        320
+      ]
+    },
+    "object_ids": {
+      "dtype": "int16",
+      "shape": [
+        120,
+        180,
+        320
+      ]
+    },
+    "poses": {
+      "dtype": "float64",
+      "shape": [
+        120,
+        17,
+        7
+      ]
+    },
+    "source_frames": {
+      "dtype": "int64",
+      "shape": [
+        120
+      ]
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        0.3361344635486603,
+        0.0,
+        0.0,
+        -0.0
+      ],
+      [
+        0.0,
+        0.597572386264801,
+        0.0,
+        -0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -0.0020001998636871576,
+        -1.0001999139785767
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "projection_type": "orthographic",
+    "world": [
+      [
+        0.9942233562469482,
+        -0.033105459064245224,
+        0.1020977795124054,
+        1.149999976158142
+      ],
+      [
+        0.10733092576265335,
+        0.3066610097885132,
+        -0.9457479119300842,
+        -8.800000190734863
+      ],
+      [
+        1.156316731254492e-08,
+        0.9512429237365723,
+        0.30844277143478394,
+        3.549999952316284
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "depth_parts": [
+    {
+      "dtype": "uint32",
+      "file": "depth_0000_0030.npz",
+      "sha256": "6db9e4e121c99119f2299ed638936cf006afd57ed3aeffa0a9d03a254aae61e2",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 0,
+      "stop": 30
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0030_0060.npz",
+      "sha256": "f598ee54fdecea26272e7efb87deccc140794acef91675ffa5d48b2a56f47605",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 30,
+      "stop": 60
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0060_0090.npz",
+      "sha256": "742edb38cc58effa305b0a8595ec27a94c2254e1a1b1179e2bc9f1ba8b209658",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 60,
+      "stop": 90
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0090_0120.npz",
+      "sha256": "b6421481f28fd95821c1a02cbdb4d005f2ce9b5fd56d0a56405a75ba9f8592fd",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 90,
+      "stop": 120
+    }
+  ],
+  "file": "geometric_g52_nominal.npz",
+  "fps": 24.0,
+  "generator": "scripts/testing/freeze_object_permanence_rays.py",
+  "generator_sha256": "e43ea4f902a2bbd2db14b4b5b7a4470c80171f5850d4f7881f2175c554c745cd",
+  "height": 180,
+  "object_ids": {
+    "catch_box_left_open_entry_marker_not_a_wall": 1,
+    "gated_box_back_wall": 2,
+    "gated_box_front_lintel": 3,
+    "gated_box_left_side_wall": 4,
+    "large_floor_base": 5,
+    "left_door_vertical_hinge": 6,
+    "left_outward_opening_door_leaf": 7,
+    "open_catch_box_back_wall": 8,
+    "open_catch_box_floor": 9,
+    "open_catch_box_front_low_wall": 10,
+    "open_catch_box_right_wall": 11,
+    "open_right_exit_marker_not_a_wall": 12,
+    "orange_ball_inside_open_right_gated_box_on_ramp": 13,
+    "rear_backdrop_panel": 14,
+    "right_door_vertical_hinge": 15,
+    "right_outward_opening_door_leaf": 16,
+    "single_continuous_sloped_ramp": 17
+  },
+  "object_order": [
+    "catch_box_left_open_entry_marker_not_a_wall",
+    "gated_box_back_wall",
+    "gated_box_front_lintel",
+    "gated_box_left_side_wall",
+    "large_floor_base",
+    "left_door_vertical_hinge",
+    "left_outward_opening_door_leaf",
+    "open_catch_box_back_wall",
+    "open_catch_box_floor",
+    "open_catch_box_front_low_wall",
+    "open_catch_box_right_wall",
+    "open_right_exit_marker_not_a_wall",
+    "orange_ball_inside_open_right_gated_box_on_ramp",
+    "rear_backdrop_panel",
+    "right_door_vertical_hinge",
+    "right_outward_opening_door_leaf",
+    "single_continuous_sloped_ramp"
+  ],
+  "reference_algorithm_sha256": "71cafb8db969ecc0cd9c7947c9723570ac4e4878b1960148fe56a65dcc3bbd88",
+  "schema": "stable-envs/object-permanence-rigid-oracle-v2",
+  "sha256": "bf2458499a2bc399ed63dec9ad0af30504b7144549ddb0476e08d38821270975",
+  "source_commit": "824baddcdad087810d35638bf8f273b884f74975",
+  "source_license": "CC-BY-NC-4.0",
+  "source_preparation_algorithm_sha256": "29fe24d038d706d033bfefe2afe0fd2ed766be92693aa5c293298edcbbcada1b",
+  "source_preparation_recipe": {
+    "animate": "",
+    "build": "build_scene"
+  },
+  "source_profile": "nominal first member; no diversity wrapper",
+  "source_script": "object_permanence/generator/tasks/G52_ramp_open_right_gated_box/pb_task_00000088_pb_ramp_open_right_gated_box_ball_rolls_to_catch_box_0089_blender.py",
+  "source_script_sha256": "0e9eca870bae6189de008a160b6405336764fd7bb0ac1ebce613df8811307392",
+  "source_semantic_targets": [
+    "orange_ball_inside_open_right_gated_box_on_ramp"
+  ],
+  "source_task_manifest_sha256": "1072eea636ffa9db58dbe8f77c0cda32277a2484c74622747565b36151444c2f",
+  "source_url": "https://github.com/hokindeng/object-permanence",
+  "target_visible_pixels": {
+    "orange_ball_inside_open_right_gated_box_on_ramp": [
+      128,
+      128,
+      128,
+      129,
+      131,
+      131,
+      130,
+      131,
+      110,
+      81,
+      39,
+      8,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      2,
+      25,
+      51,
+      82,
+      114,
+      131,
+      132,
+      124,
+      131,
+      130,
+      135,
+      132,
+      132,
+      132,
+      130,
+      128,
+      131,
+      128,
+      130,
+      131,
+      127,
+      132,
+      128,
+      129,
+      124,
+      130,
+      132,
+      131,
+      130,
+      131,
+      132,
+      130,
+      129,
+      131,
+      129,
+      131,
+      131,
+      132,
+      128,
+      131,
+      127,
+      113,
+      74,
+      49,
+      48,
+      48,
+      46,
+      45,
+      46,
+      45,
+      48,
+      49,
+      48,
+      49,
+      50,
+      52,
+      49,
+      51,
+      52,
+      52,
+      52,
+      52,
+      52,
+      52,
+      52,
+      52,
+      52,
+      52,
+      52,
+      52,
+      52,
+      52,
+      52,
+      52,
+      52
+    ]
+  },
+  "targets": [
+    "orange_ball_inside_open_right_gated_box_on_ramp"
+  ],
+  "task": "G52",
+  "versions": {
+    "blender": "4.4.0",
+    "numpy": "1.26.4",
+    "python": "3.11.16"
+  },
+  "visibility_contract": "stable-envs/opaque-pixel-rays-v2",
+  "width": 320
+}

@@ -49,6 +49,8 @@ def check(
             not np.array_equal(manifest["camera"]["world"], metadata["camera"]["world"])
             or not np.array_equal(manifest["camera"]["projection"], metadata["camera"]["projection"])
             or any(manifest["camera"][k] != metadata["camera"][k] for k in ("near", "far"))
+            or manifest["camera"].get("projection_type", "perspective")
+            != metadata["camera"].get("projection_type", "perspective")
         ):
             raise ValueError("oracle and recording cameras differ")
         if (
@@ -58,6 +60,11 @@ def check(
             raise ValueError("source and recording definitions differ")
         if metadata["source"].get("execution_context") != manifest.get("source_execution_context"):
             raise ValueError("source and recording execution contexts differ")
+        if visibility_contract == "stable-envs/opaque-pixel-rays-v2" and (
+            not manifest.get("source_preparation_recipe")
+            or metadata["source"].get("preparation_recipe") != manifest["source_preparation_recipe"]
+        ):
+            raise ValueError("source and recording preparation recipes differ")
         if manifest["object_ids"] != {o["name"]: o["id"] for o in metadata["objects"]}:
             raise ValueError("source and recording object identities differ")
         indices = np.searchsorted(clip.frames, reference["source_frames"])

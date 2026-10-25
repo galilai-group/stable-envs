@@ -8,6 +8,10 @@ G63/G66/G80/G81 retain their legacy BVH deferrals and additionally pass this new
 contract. In total, 88 scenes are certified under this explicitly selected
 contract; the source audit catalog lists their IDs.
 
+Fixed orthographic cameras use the separate [V2 contract](object-permanence-orthographic.md).
+The import history below records earlier V1 deferrals; the
+[source audit](object-permanence-audit.json) is the current acceptance record.
+
 ## Geometric contract
 
 For a top-left image pixel `(x,y)` of width `W`, height `H`, use the recorded

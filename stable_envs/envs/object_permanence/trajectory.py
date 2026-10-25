@@ -18,6 +18,7 @@ import numpy as np
 from ...render._resources import Closeable
 
 SCHEMA = "stable-envs/object-permanence-rigid-v1"
+SCHEMA_V2 = "stable-envs/object-permanence-rigid-v2"
 CONVENTIONS = {"world": "right-handed-z-up", "quaternion": "wxyz", "units": "source-scene-units"}
 
 
@@ -67,7 +68,7 @@ class RigidTrajectory(Closeable):
         directory = self.root / "clips" / clip
         self._manifest = json.loads((directory / "manifest.json").read_text())
         m = self._manifest
-        if m.get("schema") != SCHEMA or m.get("conventions") != CONVENTIONS:
+        if m.get("schema") not in (SCHEMA, SCHEMA_V2) or m.get("conventions") != CONVENTIONS:
             raise ValueError("unsupported rigid-scene schema or conventions")
         if m.get("clip") != clip:
             raise ValueError("clip identity differs")
@@ -162,6 +163,11 @@ class RigidTrajectory(Closeable):
         if {o["asset"] for o in objects} != set(self._meshes):
             raise ValueError("objects/assets differ")
         camera = m["camera"]
+        if m["schema"] == SCHEMA_V2 and (
+            camera.get("projection_type") not in ("perspective", "orthographic")
+            or m.get("visibility_contract") != "stable-envs/opaque-pixel-rays-v2"
+        ):
+            raise ValueError("v2 recordings require an explicit projection type and visibility contract")
         for key in ("world", "projection"):
             value = np.asarray(camera[key])
             if value.shape != (4, 4) or not np.isfinite(value).all():

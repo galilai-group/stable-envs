@@ -145,6 +145,56 @@ REFERENCE_CASES = {
     "G148": ("build_scene_by_kind", "animate_scene", ("falling_ball",)),
     "G149": ("build_scene_by_kind", "animate_scene", ("falling_ball",)),
     "G150": ("build_scene_by_kind", "animate_scene", ("falling_ball",)),
+    # Fixed orthographic nominal entries, certified under opaque-pixel-rays-v2.
+    "G08": ("build_scene", "animate_scene", ("orange_ball_inside_drawer",)),
+    "G09": ("build_scene_by_kind", "animate_scene_by_kind", ("red_tall_body", "red_tall_roof")),
+    "G10": ("build_scene", "animate_scene", ("target_orange_ball",)),
+    "G101": ("build_scene_by_kind", "animate_scene_by_kind", ("rolling_ball",)),
+    "G102": ("build_scene_by_kind", "animate_scene_by_kind", ("rolling_ball",)),
+    "G109": ("build_scene", "animate_scene", ("relocating_orange_ball",)),
+    "G11": ("build_scene", "animate_scene", ("inner_orange_ball",)),
+    "G110": ("build_scene_by_kind", "animate_scene_by_kind", ("pass_pink_ball", "blocked_teal_ball")),
+    "G112": ("build_scene_by_kind", "animate_scene_by_kind", ("redirect_orange_ball",)),
+    "G12": ("build_scene", "animate_scene", ("inner_orange_ball", "inner_blue_cube", "inner_yellow_pyramid")),
+    "G122": ("build_scene_by_kind", "animate_scene_by_kind", ("rolling_ball",)),
+    "G128": ("build_scene_by_kind", "animate_scene_by_kind", ("rolling_ball",)),
+    "G15": ("build_scene_by_kind", "animate_scene_by_kind", ("red_ball", "blue_ball", "yellow_ball")),
+    "G16": ("build_scene_by_kind", "animate_scene_by_kind", ("orange_ball", "blue_cube", "yellow_pyramid")),
+    "G17": ("build_scene", "animate_scene", ("tray_orange_ball", "tray_blue_cube")),
+    "G18": ("build_scene", "animate_scene", ("blue_cube_on_turntable",)),
+    "G19": ("build_scene", "animate_scene", ("orange_ball", "blue_cube", "yellow_pyramid")),
+    "G20": ("build_scene", "animate_scene", ("left_orange_ball", "right_blue_cube")),
+    "G21": ("build_scene", "animate_scene", ("center_orange_ball",)),
+    "G22": ("build_scene", "animate_scene", ("orange_ball", "blue_cube", "yellow_pyramid")),
+    "G23": ("build_scene", "animate_scene", ("orange_ball_inside_cabinet", "blue_cube_inside_cabinet")),
+    "G24": ("build_scene", "animate_scene", ("orange_ball", "blue_cube", "yellow_pyramid")),
+    "G25": ("build_scene", "animate_scene", ("orange_ball", "blue_cube")),
+    "G26": ("build_scene", "animate_scene", ("orange_ball", "blue_cube")),
+    "G43": (
+        "build_scene",
+        "animate_scene",
+        ("upper_lane_red_ball", "middle_lane_blue_ball", "lower_lane_yellow_ball"),
+    ),
+    "G45": ("build_scene_by_kind", "animate_scene_by_kind", ("orange_ball_inside_box",)),
+    "G47": (
+        "build_scene",
+        "animate_scene",
+        ("stage_left_orange_ball", "stage_middle_blue_cube", "stage_right_yellow_pyramid"),
+    ),
+    "G48": ("build_scene", "animate_scene", ("row_01_orange_ball", "row_02_blue_cube", "row_03_yellow_pyramid")),
+    "G49": ("build_scene_by_kind", "animate_scene_by_kind", ("left_orange_ball", "right_blue_cube")),
+    "G50": ("build_scene_by_kind", "animate_scene_by_kind", ("ramp_orange_ball",)),
+    "G51": ("build_scene", "animate_scene", ("orange_ball", "blue_cube")),
+    "G52": ("build_scene", "", ("orange_ball_inside_open_right_gated_box_on_ramp",)),
+    "G53": ("build_scene", "animate_scene", ("red_ball", "blue_ball", "yellow_ball")),
+    "G57": ("build_scene_by_kind", "animate_scene_by_kind", ("ramp_orange_ball",)),
+    "G67": ("build_scene_by_kind", "animate_scene_by_kind", ("orange_ball",)),
+    "G75": ("build_scene_by_kind", "animate_scene_by_kind", ("billboard_ball",)),
+    "G76": ("build_scene_by_kind", "animate_scene_by_kind", ("pendulum_bob",)),
+    "G77": ("build_scene_by_kind", "animate_scene_by_kind", ("chain_ball_red", "chain_ball_green", "chain_ball_blue")),
+    "G78": ("build_scene_by_kind", "animate_scene_by_kind", ("rolling_disc",)),
+    "G91": ("build_scene_by_kind", "animate_scene_by_kind", ("pass_orange_ball", "blocked_blue_ball")),
+    "G92": ("build_scene_by_kind", "animate_scene_by_kind", ("carom_orange_ball",)),
 }
 
 
@@ -206,6 +256,8 @@ def prepare_reference(script, task):
     )
     source["clear_scene"]()
     objects = source[build]()
+    if not animate:
+        return
     if task == "G27":
         source[animate](bpy.context.scene, objects["support_plate"], objects["ball"])
     elif isinstance(objects, dict) and len(inspect.signature(source[animate]).parameters) > 1:
