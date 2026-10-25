@@ -21,19 +21,19 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 
 | Review group | Members |
 |---|---:|
-| appearance-or-visibility-review | 14 |
+| appearance-or-visibility-review | 10 |
 | audited-nominal-runtime-gate | 7 |
 | geometry-or-scale-review | 1 |
 | orthographic-camera-review | 32 |
 | rigid-candidate-needs-entry-audit | 7 |
 | source-fidelity-review | 4 |
-| versioned-visibility-runtime-gate | 132 |
+| versioned-visibility-runtime-gate | 136 |
 
 ## Source tasks
 
 | Task | Members | Script-wide signals | First-member review group | Nominal preparation coverage | Measured nominal audit |
 |---|---:|---|---|---|---|
-| G01 hole_box_drop | 2 | location, rotation_euler | appearance-or-visibility-review | not evaluated | deferred: transparent-material |
+| G01 hole_box_drop | 2 | location, rotation_euler | appearance-or-visibility-review | not evaluated | deferred: optical-transmission |
 | G02 ramp_tunnel | 3 | location, modifiers, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G03 ramp_ball_blocked_by_wall | 2 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G04 high_low_cover | 2 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
@@ -68,7 +68,7 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | G33 partial_window_parallel_cars | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G34 occ_small_ball_behind_screen | 1 | location, rotation_euler | audited-nominal-runtime-gate | nominal export available | certified |
 | G35 single_low_window | 1 | hide_render, hide_viewport, location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
-| G36 rollercoaster_u_track_glassbox | 1 | location, rotation_euler | appearance-or-visibility-review | not evaluated | deferred: transparent-material |
+| G36 rollercoaster_u_track_glassbox | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G37 u_track_occluded_ball | 1 | location, rotation_euler | audited-nominal-runtime-gate | nominal export available | certified |
 | G38 pendulum_occluded_by_screen | 1 | location, rotation_euler | audited-nominal-runtime-gate | nominal export available | certified |
 | G39 lidded_box_ball_enters | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
@@ -86,14 +86,14 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | G51 vertical_panel_two_objects | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G52 ramp_open_right_gated_box | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G53 no_gap_top_rail_curtain | 1 | location | versioned-visibility-runtime-gate | versioned ray contract only | certified |
-| G54 serpentine_ramp_tunnel | 1 | location, rotation_euler | appearance-or-visibility-review | not evaluated | deferred: transparent-material |
+| G54 serpentine_ramp_tunnel | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G55 rising_floor_screen | 1 | location | audited-nominal-runtime-gate | nominal export available | certified |
 | G56 three_cup_shell_game | 1 | location | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G57 ramp_ball_deflected_angled_wall | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G58 two_ball_trapdoor_size_filter | 1 | location, modifiers, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G59 hinged_lid_box_opens | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G60 newtons_cradle | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
-| G61 spiral_ramp_behind_column | 1 | location, rotation_euler | appearance-or-visibility-review | not evaluated | deferred: transparent-material |
+| G61 spiral_ramp_behind_column | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G62 two_balls_cross_tunnel | 1 | location, rotation_euler | audited-nominal-runtime-gate | nominal export available | certified |
 | G63 comb_occluder_sweep | 1 | location | source-fidelity-review | source fidelity deferred | certified |
 | G64 flipboard_occluder | 1 | location, modifiers, rotation_euler | audited-nominal-runtime-gate | nominal export available | certified |
@@ -122,7 +122,7 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | G87 four_cup_carousel | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G88 shell_game_fakeout_reveal | 1 | location | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G89 limbo_height_bar | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
-| G90 funnel_size_sorter | 1 | location, rotation_euler | appearance-or-visibility-review | not evaluated | deferred: transparent-material |
+| G90 funnel_size_sorter | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G91 turnstile_timed_gate | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G92 bumper_carom | 1 | location, rotation_axis_angle | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G93 tipping_shelf_drop | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |

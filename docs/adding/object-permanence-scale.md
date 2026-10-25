@@ -91,6 +91,7 @@ python -m scripts.testing.check_object_permanence_rendering --recordings <record
 ```
 
 No other deferred first nominal member is blocked solely by positive scale.
-The audit now certifies **143/150**: 7 legacy, 92 v1 and 44 v2 visibility cases.
-Five transparency and two independent source-normal failures remain deferred;
+The audit now certifies **147/150**: 7 legacy, 92 opaque-v1, 44 opaque-v2 and
+4 [alpha-surface cases](object-permanence-transparency.md). One optical-transmission
+and two independent source-normal failures remain deferred;
 47 other member scripts remain unregistered.

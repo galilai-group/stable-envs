@@ -16,11 +16,11 @@ def test_orthographic_source_glass_remains_rejected_by_the_opaque_contract(task,
 import json, sys
 from pathlib import Path
 import bpy
-from scripts.export.object_permanence import AUDITED_TASKS, check_source, sample_scene
+from scripts.export.object_permanence import ALPHA_TASKS, check_source, sample_scene
 from scripts.testing.freeze_object_permanence import REFERENCE_CASES, prepare_reference
 root, task, mesh = Path(sys.argv[1]), sys.argv[2], sys.argv[3]
 check_source(root)
-assert task not in AUDITED_TASKS
+assert task in ALPHA_TASKS
 path, = (root / 'object_permanence/generator/tasks').glob(task+'_*/task.json')
 script = path.parent / json.loads(path.read_text())['member_scripts'][0]
 REFERENCE_CASES[task] = ('build_scene_by_kind', 'animate_scene_by_kind', ())

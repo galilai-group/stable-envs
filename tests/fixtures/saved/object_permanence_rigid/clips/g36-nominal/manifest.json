@@ -1,0 +1,3267 @@
+{
+  "arrays": {
+    "frames": {
+      "dtype": "int64",
+      "sha256": "3ce1a862b6cf0bb21bc1354b758cafa47ca5ec03b5c004d6210f5abd8c55df44",
+      "shape": [
+        120
+      ]
+    },
+    "poses": {
+      "dtype": "float32",
+      "sha256": "37d4cac71d71ac3a3d7db87ddf245a8fc7be58dbb5ecd79dd07bc0550d8a1422",
+      "shape": [
+        120,
+        1,
+        7
+      ]
+    }
+  },
+  "assets": {
+    "00cf92494818a8efb88c6aacb5ea871d9de0c82f98bbfba6d5d796e1f35ceb16": {
+      "file": "assets/cylinder/00cf92494818a8efb88c6aacb5ea871d9de0c82f98bbfba6d5d796e1f35ceb16.npz",
+      "sha256": "b027cf236c50bc0484dd5b3502190729040dad2d31a5e6ded9a92ccbd4e6fc7b"
+    },
+    "0b0daefcb404570bc85aa95194072f3227afc004dfa1cd45633ab8843d3641f0": {
+      "file": "assets/cylinder/0b0daefcb404570bc85aa95194072f3227afc004dfa1cd45633ab8843d3641f0.npz",
+      "sha256": "c4fb483b8f3a179e1feff65b2e27301c8404c6b6276dac68e4a610510df1b2b9"
+    },
+    "0c53e4533b8acabd82f78bac8fe58ed3114ae8961c543617220a85d9dcdde19a": {
+      "file": "assets/sphere/0c53e4533b8acabd82f78bac8fe58ed3114ae8961c543617220a85d9dcdde19a.npz",
+      "sha256": "0a099855d03ab4e933ee35a8b6850ff6760c1baba70ae0c70558445aa9e99f7c"
+    },
+    "128f6f0388e4b5112aa144274f4fd0f2373e170c5a30281f5d355f16e36b3514": {
+      "file": "assets/cylinder/128f6f0388e4b5112aa144274f4fd0f2373e170c5a30281f5d355f16e36b3514.npz",
+      "sha256": "e2456e4d79837c41f4e8d5e1c942a15daca5d6cb380fb9b0e5305e9892f0c979"
+    },
+    "1ae8529180b627e127922c6b251bf8b04125d9186ef54993a83bbca31afb73ed": {
+      "file": "assets/cylinder/1ae8529180b627e127922c6b251bf8b04125d9186ef54993a83bbca31afb73ed.npz",
+      "sha256": "35ef2134cc346f948d628ad2a2d1cc7ef5ee2d81e019b1a69a9e010b789e06ac"
+    },
+    "2904e42c733366e5d7a421d8ab191bb99a02e4082db94f5f4c887e7cb3f12fb9": {
+      "file": "assets/cylinder/2904e42c733366e5d7a421d8ab191bb99a02e4082db94f5f4c887e7cb3f12fb9.npz",
+      "sha256": "fa5f26fd33c3a8697d16a824ad14ea66eaac5896c20e4558aea2d5016b75a019"
+    },
+    "3655699208558b9f1d73705f38c6b164ae3ea088a894b22f4d9d40b2fac8559d": {
+      "file": "assets/cylinder/3655699208558b9f1d73705f38c6b164ae3ea088a894b22f4d9d40b2fac8559d.npz",
+      "sha256": "c0fb5b594a4de661236d237c2ed8fab0b4d7db87b29ec04a4724f270c62d2733"
+    },
+    "3739ea9ea7c6a7817bb4169e3cbea85562fddf1b0c2c4c84cf7651f1c56fd51d": {
+      "file": "assets/cylinder/3739ea9ea7c6a7817bb4169e3cbea85562fddf1b0c2c4c84cf7651f1c56fd51d.npz",
+      "sha256": "909a187d77e1583a1ec5aca7c43b91ce59e9898bc5a73c6f33cf576b45ad6abb"
+    },
+    "375f50fa5f209f620c3209bc085b146b2aa420ffdf5e60339ab30661c517a0bf": {
+      "file": "assets/cube/375f50fa5f209f620c3209bc085b146b2aa420ffdf5e60339ab30661c517a0bf.npz",
+      "sha256": "5ad9e1f5f4925cfad5f0f02a1a9db549b2e2479916c30c7ff908922db3b3147a"
+    },
+    "376a63425d5680a48687751759406cc4ea2a20e0044463579fe708b3134b2f9a": {
+      "file": "assets/cylinder/376a63425d5680a48687751759406cc4ea2a20e0044463579fe708b3134b2f9a.npz",
+      "sha256": "233d13df16093f13691502ee77ac9c8daf3c27bb16c6467b447aeedbe8bd69b5"
+    },
+    "3b067e242be9c36af2fab075cbd63a740e6551c7e4be40a9865ffcd143679f04": {
+      "file": "assets/cylinder/3b067e242be9c36af2fab075cbd63a740e6551c7e4be40a9865ffcd143679f04.npz",
+      "sha256": "7417ea1f2c9923a30c1fb98198d9ab0d829762da837bf110cf96c85af13ce688"
+    },
+    "3d4704f51696aa2abb31ddbdcf83d175c714e1353b8dfdbf0f4923ded9390852": {
+      "file": "assets/cylinder/3d4704f51696aa2abb31ddbdcf83d175c714e1353b8dfdbf0f4923ded9390852.npz",
+      "sha256": "6b3c30e7d04a228631572b6620035ff6468a991fc6a9993936040382f05d2ccc"
+    },
+    "4d60e4b440d2f41f7580dc5d134b66aea5e024f6e1d2224878582b1099d234ac": {
+      "file": "assets/cylinder/4d60e4b440d2f41f7580dc5d134b66aea5e024f6e1d2224878582b1099d234ac.npz",
+      "sha256": "8ef36385dcd5d293722842aeba16d82f4fcbddea7125b956b7964a7b761e34df"
+    },
+    "52b2dfd57224eca6abfecb08dbe666b850e322485901ee1e9a5aabfa5c40dd56": {
+      "file": "assets/cylinder/52b2dfd57224eca6abfecb08dbe666b850e322485901ee1e9a5aabfa5c40dd56.npz",
+      "sha256": "73d54de92e65399b6b97b94f8475e1c6245e4edbf34979287b1874bce3540bb7"
+    },
+    "53e456bfbb63403d347ef6b68250a0a0fbb6e83d1cf603b1133d8125e461163e": {
+      "file": "assets/cylinder/53e456bfbb63403d347ef6b68250a0a0fbb6e83d1cf603b1133d8125e461163e.npz",
+      "sha256": "0596634bf87ab1ee7bedef51b433106d1c92546e2ddd2ff0da0435cd99d212cc"
+    },
+    "5a58c472a1a85c080582d0bd0e6a4a01b6e1e0c89afc96c334b7c61c14f66059": {
+      "file": "assets/cylinder/5a58c472a1a85c080582d0bd0e6a4a01b6e1e0c89afc96c334b7c61c14f66059.npz",
+      "sha256": "f2871003e887eb95838fbb3bbf507f66a1c11867f2ba1f8d5e17542917f6ca99"
+    },
+    "5bd42927b5570176156add8dd938efa06ae635516d4f9cbea77eb124ac543836": {
+      "file": "assets/cube/5bd42927b5570176156add8dd938efa06ae635516d4f9cbea77eb124ac543836.npz",
+      "sha256": "16c0df3bb4b74b4e70766fb4b756be9d48e7f30ebe567cc41896d3a805b9db35"
+    },
+    "66934316e27bedc0a0aaf0e123615138536252b810ebb4a9751ebbdc8711a83d": {
+      "file": "assets/cylinder/66934316e27bedc0a0aaf0e123615138536252b810ebb4a9751ebbdc8711a83d.npz",
+      "sha256": "ea67963ff325bb4b2d145bc70f5da22d3729fe3b772190f77f5ab8d3965cfa5c"
+    },
+    "7477c65c551a032dd8675b211444f466832e5f0eeae47046d2d0bbca75078207": {
+      "file": "assets/cube/7477c65c551a032dd8675b211444f466832e5f0eeae47046d2d0bbca75078207.npz",
+      "sha256": "d2f9662b8f0f468269707e7618ed6c6a1337944adfec5f4b97e4ef9b1eb56fb5"
+    },
+    "756b91b30c6c967348680b6f77405580c676fc87c07777dec2e1d486794ed79b": {
+      "file": "assets/cylinder/756b91b30c6c967348680b6f77405580c676fc87c07777dec2e1d486794ed79b.npz",
+      "sha256": "88dd7abf65bdfc83c97dd0591dd49286fa62de3a5259add5e8ff8aa5e86011d4"
+    },
+    "75fd28a6f3b4350f0132df2d521b9f6a099280f9075f10fc974a71164ddfd4b6": {
+      "file": "assets/cylinder/75fd28a6f3b4350f0132df2d521b9f6a099280f9075f10fc974a71164ddfd4b6.npz",
+      "sha256": "52d73579f9e96310f19c024fa72c89cd4e4046765cc1f60477625104e3b8197e"
+    },
+    "7bbd369f4868108d7988a4be760e51244742862559373ca4685617831f787b55": {
+      "file": "assets/cylinder/7bbd369f4868108d7988a4be760e51244742862559373ca4685617831f787b55.npz",
+      "sha256": "f56680a7a386d1e5522e53e7467d5125058cfb28ebeee661b4219f4a1d9225c1"
+    },
+    "7f5ed2bcbcdfa8678b6e1687b27e2d4387652a672688d3c1c958e4ac0f8c070c": {
+      "file": "assets/cylinder/7f5ed2bcbcdfa8678b6e1687b27e2d4387652a672688d3c1c958e4ac0f8c070c.npz",
+      "sha256": "7b34d6b5e6d969e685549a04d90c475fd28868de540a3b9f21f84e8cb81ee643"
+    },
+    "857f0093b8c4ca0cd5b99d4049dd3280dbf7305cd9086aa96a87620a4e6a0fc7": {
+      "file": "assets/cylinder/857f0093b8c4ca0cd5b99d4049dd3280dbf7305cd9086aa96a87620a4e6a0fc7.npz",
+      "sha256": "e251acd4a49d39f4baf4b231adad1a1b9e17d5ddda04e366cf6f0964b655a59a"
+    },
+    "88bba9b0fb07790b6a49ffab5aeab0d2b42a906f288b84418b183690a0ec08be": {
+      "file": "assets/cylinder/88bba9b0fb07790b6a49ffab5aeab0d2b42a906f288b84418b183690a0ec08be.npz",
+      "sha256": "2cb219cd5f79b78ed7969de3cadef1f90fa768c16708746172d02913e32c46dd"
+    },
+    "897038dc4b2e09e6eca8214a045b16c5e6cbcb6dd1302c37cdd2443a2b69d9e3": {
+      "file": "assets/cylinder/897038dc4b2e09e6eca8214a045b16c5e6cbcb6dd1302c37cdd2443a2b69d9e3.npz",
+      "sha256": "c3e20f0df628386581e0e6d5aa6bf5dca10a5f9ce63f10123c30112fc6ac7845"
+    },
+    "899d957dd6fcb131e8253d9557df84635a0f43d8756c6dae06ce6af5a4f313ce": {
+      "file": "assets/cylinder/899d957dd6fcb131e8253d9557df84635a0f43d8756c6dae06ce6af5a4f313ce.npz",
+      "sha256": "3c1fe790dced44778fe22dd582ca76d0ba3d5787357ccd827d421a7d4a437224"
+    },
+    "8aab2514f45cbbdd51b662f671f0aa81009f9cefa0ff0ae2d3201224866ba196": {
+      "file": "assets/cube/8aab2514f45cbbdd51b662f671f0aa81009f9cefa0ff0ae2d3201224866ba196.npz",
+      "sha256": "c2d559f8e476d697d5572aef975186503ef2d74f3995a62fae9c88fe67a3abe9"
+    },
+    "8b7b3a8158d2e9085316b151852650e6835679971e612996b019617617fa146c": {
+      "file": "assets/cylinder/8b7b3a8158d2e9085316b151852650e6835679971e612996b019617617fa146c.npz",
+      "sha256": "adc0e1c3bdff393e76fa8dc390b8fde0813cd3602ae739a4c5b32be1c3136ef1"
+    },
+    "9216db6958044c35bf361a831b55feba1c4f825c380d6a2fe0609460be847b1e": {
+      "file": "assets/cylinder/9216db6958044c35bf361a831b55feba1c4f825c380d6a2fe0609460be847b1e.npz",
+      "sha256": "c755ebdac2de75dfcbc63acbd483b579f7ac56f08240dd557a989b2a8b82c7cd"
+    },
+    "922c8b3fb8c9f4834455795283fff5427057b39bd6102dc461a243f411930c22": {
+      "file": "assets/cylinder/922c8b3fb8c9f4834455795283fff5427057b39bd6102dc461a243f411930c22.npz",
+      "sha256": "d901de33115e58e67340bf6b441a2341dfb4dad954e6eece514dafa0db80abab"
+    },
+    "946b9afbf6e17d817181fcd80e60e0538c6f53a3b13289a392f9c531d8ef263c": {
+      "file": "assets/cylinder/946b9afbf6e17d817181fcd80e60e0538c6f53a3b13289a392f9c531d8ef263c.npz",
+      "sha256": "a18839402189bbb7219a588e13ccb49f8f0e42da4933629f0dcbbe1151bc58e1"
+    },
+    "94f131bdf86799c37dc2a78bb60360d1cf04c9c15e2a2dd980ede641c070f2be": {
+      "file": "assets/cube/94f131bdf86799c37dc2a78bb60360d1cf04c9c15e2a2dd980ede641c070f2be.npz",
+      "sha256": "b27645ddb6347d78f1296ee2dc212584e275a857bae4aaf492c3a08cc86f84a7"
+    },
+    "9636fe6c087bfb5f9772482f6d0e52464343670394cf98177ff90bac8eca7dd8": {
+      "file": "assets/cylinder/9636fe6c087bfb5f9772482f6d0e52464343670394cf98177ff90bac8eca7dd8.npz",
+      "sha256": "c3168fadfeb4ea53339622e098b75b99351d9417be3b8311058246fa00f2531e"
+    },
+    "97f8b22ecfab99f4c9f0a3da4c2a099af986c5584bfe6e10eb06583a09a0ca4a": {
+      "file": "assets/cube/97f8b22ecfab99f4c9f0a3da4c2a099af986c5584bfe6e10eb06583a09a0ca4a.npz",
+      "sha256": "9161fe35cfbf5840c1b8f5f3c5499ccf5dcfeb1821f9a874cff487410be5f34e"
+    },
+    "9db29507c40ad1c1c751036cd73cf72f7a1e0644c0817a9bf9d78c6285c76189": {
+      "file": "assets/cylinder/9db29507c40ad1c1c751036cd73cf72f7a1e0644c0817a9bf9d78c6285c76189.npz",
+      "sha256": "2c55f785c1fd4dd4c293c9a39208579fcaa0ed3c6796ff3c8033a16f305b7978"
+    },
+    "a0d9292849e61fc91a4c001e32484d0caaecdd07df6271dab390b768e3dcb010": {
+      "file": "assets/cylinder/a0d9292849e61fc91a4c001e32484d0caaecdd07df6271dab390b768e3dcb010.npz",
+      "sha256": "b79f7a53a10d6d209d379a633f452fdb69d73250b0fcd37eba44887cfd5c16bd"
+    },
+    "a37ac65695d3c1fdb9614709ca1a4649d91a78fc6f1f29a076151006fe5253c9": {
+      "file": "assets/cylinder/a37ac65695d3c1fdb9614709ca1a4649d91a78fc6f1f29a076151006fe5253c9.npz",
+      "sha256": "72c1800be3a5f69f3ae7a258e243ab4cbe379d4aa79f908002b35a35fd73d39a"
+    },
+    "ad8726697194af16ace3c094aa49e7e32a007c0d607f9fc8a28e285f3c4889f4": {
+      "file": "assets/cylinder/ad8726697194af16ace3c094aa49e7e32a007c0d607f9fc8a28e285f3c4889f4.npz",
+      "sha256": "552e3c6d20190dc844202f2598d8fbf29d71d35f5b8c10fda6a4bf5e16300439"
+    },
+    "aed7673109efd254fc6d441926710682e02bfd11cd4a87a1704583252e502cf8": {
+      "file": "assets/cylinder/aed7673109efd254fc6d441926710682e02bfd11cd4a87a1704583252e502cf8.npz",
+      "sha256": "a0fd604c01484783885fb938c839989eec2ba0f584f99eec7186de7b85f2569d"
+    },
+    "b1f8def869172cdfdcabfdc96e05d8e56bce72d7a13ea01524cde06bc446a3f6": {
+      "file": "assets/cylinder/b1f8def869172cdfdcabfdc96e05d8e56bce72d7a13ea01524cde06bc446a3f6.npz",
+      "sha256": "0d613c35524c903c137125ae302256434c05d87ec7936f1e3613847d285cf894"
+    },
+    "ba00b9d7b6093297384663a5abb5c6a84b3d1c807ad86da5f25fe1c5163c0fe7": {
+      "file": "assets/cylinder/ba00b9d7b6093297384663a5abb5c6a84b3d1c807ad86da5f25fe1c5163c0fe7.npz",
+      "sha256": "76f834a805da0499e6cdfa878d9477485460f4ba9deca4b9e1d02b983d18bef6"
+    },
+    "ca5e9679bde95849d359d628130ce5ab25f995997f58bfce4e1882dbd9eeb7c0": {
+      "file": "assets/cylinder/ca5e9679bde95849d359d628130ce5ab25f995997f58bfce4e1882dbd9eeb7c0.npz",
+      "sha256": "b21545d4d34dce4f8dea564751560657afd4af62d72cc270b20c07ec43ca9fd9"
+    },
+    "ca6886d73e94a300d3abe166cfb16cba927f68eae04dbe79be6e08e8cd4c092b": {
+      "file": "assets/cylinder/ca6886d73e94a300d3abe166cfb16cba927f68eae04dbe79be6e08e8cd4c092b.npz",
+      "sha256": "cc8c1f88d2eecce83ab7450c898a74d0e378d3a7c041ab6e7033bd572e933d75"
+    },
+    "caf03f8e76dc3e1f702c977010a338c5f60404e92621b01448416269cae6f826": {
+      "file": "assets/cylinder/caf03f8e76dc3e1f702c977010a338c5f60404e92621b01448416269cae6f826.npz",
+      "sha256": "dfc1da0bf04c270d27919817a348abecbe9938cf2c8020e49512e09807823cdc"
+    },
+    "cc3ecbb206616a977000da06ce4afcc9e035f9d84360b56c3746b90921383232": {
+      "file": "assets/cylinder/cc3ecbb206616a977000da06ce4afcc9e035f9d84360b56c3746b90921383232.npz",
+      "sha256": "73bd844e1d9589e7e642849abd8278ec2cc1c44fa9ab8dff2677706d7f11761a"
+    },
+    "cfcedcaad8f39fce62e312fa8bb5de5249fc2a0ff0b6e064ec4074535ef72998": {
+      "file": "assets/cylinder/cfcedcaad8f39fce62e312fa8bb5de5249fc2a0ff0b6e064ec4074535ef72998.npz",
+      "sha256": "22c8e006633b836178dfa7f20d8d611e5fa05461c928044fad336f2be7e9deac"
+    },
+    "d007773a74ab327be8d7b04c563f224c803893c34d66489b098fd2327ee0bcc2": {
+      "file": "assets/cylinder/d007773a74ab327be8d7b04c563f224c803893c34d66489b098fd2327ee0bcc2.npz",
+      "sha256": "54a46ab9f2104920196ba95df387282f4700b2cd702baaa5b349b68b7c5b3a43"
+    },
+    "dcb71adee82dadf6d88cb329be6c705db086a06b6161321fb5b0969b511ef4e5": {
+      "file": "assets/cylinder/dcb71adee82dadf6d88cb329be6c705db086a06b6161321fb5b0969b511ef4e5.npz",
+      "sha256": "80a3a599f11154098e91d19c364c4db7a3c1a6f1686a92f5e198fabad9b56842"
+    },
+    "dcea8433d3c8d4bd4a1c3d44ccd939ddcfc1d0a04e206dfe94a3d8691cd468a0": {
+      "file": "assets/cube/dcea8433d3c8d4bd4a1c3d44ccd939ddcfc1d0a04e206dfe94a3d8691cd468a0.npz",
+      "sha256": "3c570a3e44da35f157ad82f16c2d802afc9c1d0c11c8d0e402692ffb518777fb"
+    },
+    "debd840be91cb7630e704ba8cd5232d9d5f256c847e6ac9bd15bbd17b9a12956": {
+      "file": "assets/cylinder/debd840be91cb7630e704ba8cd5232d9d5f256c847e6ac9bd15bbd17b9a12956.npz",
+      "sha256": "487c23a52a156f78f4489a82228356dfc69fbc63e8b8077eeb3d7a30a44d6ea4"
+    },
+    "e28bebe709a030f1949d0ed45d8836b02217fd48adf08ef59074b816e0ea8934": {
+      "file": "assets/cube/e28bebe709a030f1949d0ed45d8836b02217fd48adf08ef59074b816e0ea8934.npz",
+      "sha256": "68318235b3a925c21df38decb5ed246bde63b2b9dcf4924d1b95cc0d439722e5"
+    },
+    "e30505df4d9846c7de30ba969c91232009039fe6d9dad22542442b7ebfe2f7c2": {
+      "file": "assets/cylinder/e30505df4d9846c7de30ba969c91232009039fe6d9dad22542442b7ebfe2f7c2.npz",
+      "sha256": "1d7423da4cb26eb8e6af44717b27da357a2f952298a19c54e12e70f5e2dd9748"
+    },
+    "e573fc964d5154308f887414203202dbfea77cbb2defd6cb00450259afe71746": {
+      "file": "assets/cylinder/e573fc964d5154308f887414203202dbfea77cbb2defd6cb00450259afe71746.npz",
+      "sha256": "e3e1ccdd9c7be233c1e540b4c6a2be8d25020378c04f910dabb135db43f80530"
+    },
+    "ea6441a4e63c36010fa74a41d2f657bb448dee3077144ccd8c8986da1ed59c14": {
+      "file": "assets/cube/ea6441a4e63c36010fa74a41d2f657bb448dee3077144ccd8c8986da1ed59c14.npz",
+      "sha256": "bb121f46d73ed5b899fc130e70b271449df469037e43a3fd83a363053e245d9e"
+    },
+    "efd05ff8c17fa3f7b7b77474dbfb531decd402dee0e0f4b4a041776126254d23": {
+      "file": "assets/cylinder/efd05ff8c17fa3f7b7b77474dbfb531decd402dee0e0f4b4a041776126254d23.npz",
+      "sha256": "e57f56edfcb38f63e59efb7d67943594381d3f70af9ccfc924f78acbdfb4626e"
+    },
+    "f18ea967ed78c00d63882caa30ab2e4341dff886ebddf164559442ef5a93aa9c": {
+      "file": "assets/cylinder/f18ea967ed78c00d63882caa30ab2e4341dff886ebddf164559442ef5a93aa9c.npz",
+      "sha256": "45d002d46fa0fc044e9d89ea876b50208ca65fcc281286b33d4108cd13b57544"
+    },
+    "fab6cff8a219e086407313f2a4c2904a162e70b5b0ad9d9271f5dd258a590b77": {
+      "file": "assets/cylinder/fab6cff8a219e086407313f2a4c2904a162e70b5b0ad9d9271f5dd258a590b77.npz",
+      "sha256": "9b63f402ded370ea3c8d8a842e9fa4498b51bfc92e6fd577b38e5a5c57a8c579"
+    },
+    "fb5d3e382dc1f8a9f9e9a79a6cfefb143f4cafb477c01aac2e945f6d77deb8eb": {
+      "file": "assets/cylinder/fb5d3e382dc1f8a9f9e9a79a6cfefb143f4cafb477c01aac2e945f6d77deb8eb.npz",
+      "sha256": "1ebe4197fb986483de7cbc957c66bf4d278fe8a71c2490b633a073959fd3ef2a"
+    },
+    "ffa55d8c1ef805d3fdbab1e7248592206d945263907d1d36df4d1bf4d3dca025": {
+      "file": "assets/cylinder/ffa55d8c1ef805d3fdbab1e7248592206d945263907d1d36df4d1bf4d3dca025.npz",
+      "sha256": "bf0578d6badc2de7fb5931b6986a9172a1f92737e84db7fb35da76c80a0592ec"
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "height": 720,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        1.8333332538604736,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        3.259258985519409,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "projection_type": "perspective",
+    "width": 1280,
+    "world": [
+      [
+        0.9921764731407166,
+        -0.037409014999866486,
+        0.11910684406757355,
+        0.6000000238418579
+      ],
+      [
+        0.12484339624643326,
+        0.2973034083843231,
+        -0.9465858936309814,
+        -7.550000190734863
+      ],
+      [
+        -2.8210028091280037e-08,
+        0.9540499448776245,
+        0.299647718667984,
+        2.950000047683716
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "clip": "g36-nominal",
+  "conventions": {
+    "quaternion": "wxyz",
+    "units": "source-scene-units",
+    "world": "right-handed-z-up"
+  },
+  "dynamic_nodes": [
+    "orange_ball_from_u_track_inside_glass_box"
+  ],
+  "fps": 24.0,
+  "license_ref": {
+    "sha256": "0163481eb7a0fe3ed86d2dccf542a849b36b3c119f8ca6d3d5b36c074f2e1a1c"
+  },
+  "material_convention": "stable-envs/constant-alpha-surfaces-v1",
+  "objects": [
+    {
+      "asset": "e28bebe709a030f1949d0ed45d8836b02217fd48adf08ef59074b816e0ea8934",
+      "id": 1,
+      "name": "glass_box_back_wall",
+      "node": -1,
+      "pose": [
+        0.7200000286102295,
+        0.6200000047683716,
+        0.5049999952316284,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5799999833106995,
+        0.8600000143051147,
+        1.0,
+        0.2800000011920929
+      ],
+      "role": "transparent_box_wall",
+      "shape": "cube",
+      "source_id": "glass_box_back_wall"
+    },
+    {
+      "asset": "94f131bdf86799c37dc2a78bb60360d1cf04c9c15e2a2dd980ede641c070f2be",
+      "id": 2,
+      "name": "glass_box_floor",
+      "node": -1,
+      "pose": [
+        0.7200000286102295,
+        0.0,
+        0.05000000074505806,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5799999833106995,
+        0.8600000143051147,
+        1.0,
+        0.2800000011920929
+      ],
+      "role": "transparent_box_floor",
+      "shape": "cube",
+      "source_id": "glass_box_floor"
+    },
+    {
+      "asset": "5bd42927b5570176156add8dd938efa06ae635516d4f9cbea77eb124ac543836",
+      "id": 3,
+      "name": "glass_box_front_wall_left_transparent",
+      "node": -1,
+      "pose": [
+        -0.10000000149011612,
+        -0.6200000047683716,
+        0.5049999952316284,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5799999833106995,
+        0.8600000143051147,
+        1.0,
+        0.2800000011920929
+      ],
+      "role": "transparent_box_wall",
+      "shape": "cube",
+      "source_id": "glass_box_front_wall_left_transparent"
+    },
+    {
+      "asset": "5bd42927b5570176156add8dd938efa06ae635516d4f9cbea77eb124ac543836",
+      "id": 4,
+      "name": "glass_box_front_wall_right_transparent",
+      "node": -1,
+      "pose": [
+        1.8200000524520874,
+        -0.6200000047683716,
+        0.5049999952316284,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5799999833106995,
+        0.8600000143051147,
+        1.0,
+        0.2800000011920929
+      ],
+      "role": "transparent_box_wall",
+      "shape": "cube",
+      "source_id": "glass_box_front_wall_right_transparent"
+    },
+    {
+      "asset": "dcea8433d3c8d4bd4a1c3d44ccd939ddcfc1d0a04e206dfe94a3d8691cd468a0",
+      "id": 5,
+      "name": "glass_box_right_wall",
+      "node": -1,
+      "pose": [
+        2.6500000953674316,
+        0.0,
+        0.5049999952316284,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5799999833106995,
+        0.8600000143051147,
+        1.0,
+        0.2800000011920929
+      ],
+      "role": "transparent_box_right_wall",
+      "shape": "cube",
+      "source_id": "glass_box_right_wall"
+    },
+    {
+      "asset": "8aab2514f45cbbdd51b662f671f0aa81009f9cefa0ff0ae2d3201224866ba196",
+      "id": 6,
+      "name": "large_floor_base",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        -0.05000000074505806,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8199999928474426,
+        0.800000011920929,
+        0.75,
+        1.0
+      ],
+      "role": "ground",
+      "shape": "cube",
+      "source_id": "large_floor_base"
+    },
+    {
+      "asset": "d007773a74ab327be8d7b04c563f224c803893c34d66489b098fd2327ee0bcc2",
+      "id": 7,
+      "name": "left_metal_rail_000",
+      "node": -1,
+      "pose": [
+        -3.293562889099121,
+        -0.1069813072681427,
+        1.147865653038025,
+        0.17073416709899902,
+        0.6861850023269653,
+        0.6861850023269653,
+        0.17073418200016022
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_000"
+    },
+    {
+      "asset": "756b91b30c6c967348680b6f77405580c676fc87c07777dec2e1d486794ed79b",
+      "id": 8,
+      "name": "left_metal_rail_003",
+      "node": -1,
+      "pose": [
+        -3.27980899810791,
+        -0.1069813072681427,
+        1.1233079433441162,
+        0.1859709918498993,
+        0.6822132468223572,
+        0.6822131276130676,
+        0.18597082793712616
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_003"
+    },
+    {
+      "asset": "1ae8529180b627e127922c6b251bf8b04125d9186ef54993a83bbca31afb73ed",
+      "id": 9,
+      "name": "left_metal_rail_006",
+      "node": -1,
+      "pose": [
+        -3.264312744140625,
+        -0.1069813072681427,
+        1.0981940031051636,
+        0.19966307282447815,
+        0.6783322691917419,
+        0.6783322691917419,
+        0.19966311752796173
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_006"
+    },
+    {
+      "asset": "899d957dd6fcb131e8253d9557df84635a0f43d8756c6dae06ce6af5a4f313ce",
+      "id": 10,
+      "name": "left_metal_rail_009",
+      "node": -1,
+      "pose": [
+        -3.2471089363098145,
+        -0.1069813072681427,
+        1.0725678205490112,
+        0.2120487540960312,
+        0.6745631098747253,
+        0.6745629906654358,
+        0.2120487093925476
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_009"
+    },
+    {
+      "asset": "a37ac65695d3c1fdb9614709ca1a4649d91a78fc6f1f29a076151006fe5253c9",
+      "id": 11,
+      "name": "left_metal_rail_012",
+      "node": -1,
+      "pose": [
+        -3.2282323837280273,
+        -0.1069813072681427,
+        1.0464733839035034,
+        0.22332853078842163,
+        0.6709129810333252,
+        0.6709131598472595,
+        0.22332853078842163
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_012"
+    },
+    {
+      "asset": "897038dc4b2e09e6eca8214a045b16c5e6cbcb6dd1302c37cdd2443a2b69d9e3",
+      "id": 12,
+      "name": "left_metal_rail_015",
+      "node": -1,
+      "pose": [
+        -3.2077183723449707,
+        -0.1069813072681427,
+        1.0199545621871948,
+        0.2336619347333908,
+        0.6673845052719116,
+        0.6673845648765564,
+        0.23366187512874603
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_015"
+    },
+    {
+      "asset": "857f0093b8c4ca0cd5b99d4049dd3280dbf7305cd9086aa96a87620a4e6a0fc7",
+      "id": 13,
+      "name": "left_metal_rail_018",
+      "node": -1,
+      "pose": [
+        -3.185601234436035,
+        -0.1069813072681427,
+        0.9930553436279297,
+        0.2431964874267578,
+        0.6639694571495056,
+        0.6639695763587952,
+        0.24319644272327423
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_018"
+    },
+    {
+      "asset": "00cf92494818a8efb88c6aacb5ea871d9de0c82f98bbfba6d5d796e1f35ceb16",
+      "id": 14,
+      "name": "left_metal_rail_021",
+      "node": -1,
+      "pose": [
+        -3.1619162559509277,
+        -0.1069813072681427,
+        0.9658198356628418,
+        0.25203949213027954,
+        0.6606634259223938,
+        0.660663366317749,
+        0.25203943252563477
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_021"
+    },
+    {
+      "asset": "efd05ff8c17fa3f7b7b77474dbfb531decd402dee0e0f4b4a041776126254d23",
+      "id": 15,
+      "name": "left_metal_rail_024",
+      "node": -1,
+      "pose": [
+        -3.1366982460021973,
+        -0.1069813072681427,
+        0.9382917881011963,
+        0.2602939307689667,
+        0.6574550271034241,
+        0.6574550271034241,
+        0.2602938413619995
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_024"
+    },
+    {
+      "asset": "75fd28a6f3b4350f0132df2d521b9f6a099280f9075f10fc974a71164ddfd4b6",
+      "id": 16,
+      "name": "left_metal_rail_027",
+      "node": -1,
+      "pose": [
+        -3.1099820137023926,
+        -0.1069813072681427,
+        0.9105153679847717,
+        0.26803937554359436,
+        0.6543354392051697,
+        0.6543354988098145,
+        0.268039345741272
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_027"
+    },
+    {
+      "asset": "aed7673109efd254fc6d441926710682e02bfd11cd4a87a1704583252e502cf8",
+      "id": 17,
+      "name": "left_metal_rail_030",
+      "node": -1,
+      "pose": [
+        -3.0818023681640625,
+        -0.1069813072681427,
+        0.882534384727478,
+        0.275350958108902,
+        0.6512925624847412,
+        0.6512924432754517,
+        0.2753508985042572
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_030"
+    },
+    {
+      "asset": "a0d9292849e61fc91a4c001e32484d0caaecdd07df6271dab390b768e3dcb010",
+      "id": 18,
+      "name": "left_metal_rail_033",
+      "node": -1,
+      "pose": [
+        -3.052194118499756,
+        -0.1069813072681427,
+        0.854392945766449,
+        0.28228598833084106,
+        0.6483167409896851,
+        0.6483168601989746,
+        0.28228604793548584
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_033"
+    },
+    {
+      "asset": "dcb71adee82dadf6d88cb329be6c705db086a06b6161321fb5b0969b511ef4e5",
+      "id": 19,
+      "name": "left_metal_rail_036",
+      "node": -1,
+      "pose": [
+        -3.0211925506591797,
+        -0.1069813072681427,
+        0.8261349201202393,
+        0.288894385099411,
+        0.6453991532325745,
+        0.6453992128372192,
+        0.2888943552970886
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_036"
+    },
+    {
+      "asset": "9db29507c40ad1c1c751036cd73cf72f7a1e0644c0817a9bf9d78c6285c76189",
+      "id": 20,
+      "name": "left_metal_rail_039",
+      "node": -1,
+      "pose": [
+        -2.988832473754883,
+        -0.1069813072681427,
+        0.7978042364120483,
+        0.29522383213043213,
+        0.6425285339355469,
+        0.6425285339355469,
+        0.29522377252578735
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_039"
+    },
+    {
+      "asset": "0b0daefcb404570bc85aa95194072f3227afc004dfa1cd45633ab8843d3641f0",
+      "id": 21,
+      "name": "left_metal_rail_042",
+      "node": -1,
+      "pose": [
+        -2.955148458480835,
+        -0.1069813072681427,
+        0.7694450616836548,
+        0.3013121783733368,
+        0.6396960616111755,
+        0.6396960020065308,
+        0.30131208896636963
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_042"
+    },
+    {
+      "asset": "376a63425d5680a48687751759406cc4ea2a20e0044463579fe708b3134b2f9a",
+      "id": 22,
+      "name": "left_metal_rail_045",
+      "node": -1,
+      "pose": [
+        -2.920175552368164,
+        -0.1069813072681427,
+        0.741101086139679,
+        0.30719467997550964,
+        0.6368919610977173,
+        0.6368920803070068,
+        0.30719470977783203
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_045"
+    },
+    {
+      "asset": "53e456bfbb63403d347ef6b68250a0a0fbb6e83d1cf603b1133d8125e461163e",
+      "id": 23,
+      "name": "left_metal_rail_048",
+      "node": -1,
+      "pose": [
+        -2.883948802947998,
+        -0.1069813072681427,
+        0.7128164768218994,
+        0.31289803981781006,
+        0.6341094970703125,
+        0.6341094970703125,
+        0.31289801001548767
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_048"
+    },
+    {
+      "asset": "3b067e242be9c36af2fab075cbd63a740e6551c7e4be40a9865ffcd143679f04",
+      "id": 24,
+      "name": "left_metal_rail_051",
+      "node": -1,
+      "pose": [
+        -2.8465027809143066,
+        -0.1069813072681427,
+        0.6846351027488708,
+        0.3184524178504944,
+        0.6313382983207703,
+        0.6313384175300598,
+        0.3184524476528168
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_051"
+    },
+    {
+      "asset": "f18ea967ed78c00d63882caa30ab2e4341dff886ebddf164559442ef5a93aa9c",
+      "id": 25,
+      "name": "left_metal_rail_054",
+      "node": -1,
+      "pose": [
+        -2.8078725337982178,
+        -0.1069813072681427,
+        0.6566009521484375,
+        0.3238790035247803,
+        0.6285717487335205,
+        0.6285716891288757,
+        0.3238789439201355
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_054"
+    },
+    {
+      "asset": "3655699208558b9f1d73705f38c6b164ae3ea088a894b22f4d9d40b2fac8559d",
+      "id": 26,
+      "name": "left_metal_rail_057",
+      "node": -1,
+      "pose": [
+        -2.7680931091308594,
+        -0.1069813072681427,
+        0.6287580728530884,
+        0.3291989266872406,
+        0.6258019208908081,
+        0.6258019804954529,
+        0.32919880747795105
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_057"
+    },
+    {
+      "asset": "fab6cff8a219e086407313f2a4c2904a162e70b5b0ad9d9271f5dd258a590b77",
+      "id": 27,
+      "name": "left_metal_rail_060",
+      "node": -1,
+      "pose": [
+        -2.727199077606201,
+        -0.1069813072681427,
+        0.6011503338813782,
+        0.3344321548938751,
+        0.6230210065841675,
+        0.6230210661888123,
+        0.33443212509155273
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_060"
+    },
+    {
+      "asset": "7f5ed2bcbcdfa8678b6e1687b27e2d4387652a672688d3c1c958e4ac0f8c070c",
+      "id": 28,
+      "name": "left_metal_rail_063",
+      "node": -1,
+      "pose": [
+        -2.685225486755371,
+        -0.1069813072681427,
+        0.5738217234611511,
+        0.3395938277244568,
+        0.6202225685119629,
+        0.6202225685119629,
+        0.33959394693374634
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_063"
+    },
+    {
+      "asset": "52b2dfd57224eca6abfecb08dbe666b850e322485901ee1e9a5aabfa5c40dd56",
+      "id": 29,
+      "name": "left_metal_rail_066",
+      "node": -1,
+      "pose": [
+        -2.642207145690918,
+        -0.1069813072681427,
+        0.5468162298202515,
+        0.3447019159793854,
+        0.6173982620239258,
+        0.6173982620239258,
+        0.3447018563747406
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_066"
+    },
+    {
+      "asset": "5a58c472a1a85c080582d0bd0e6a4a01b6e1e0c89afc96c334b7c61c14f66059",
+      "id": 30,
+      "name": "left_metal_rail_069",
+      "node": -1,
+      "pose": [
+        -2.5981791019439697,
+        -0.1069813072681427,
+        0.5201778411865234,
+        0.3497684597969055,
+        0.6145421266555786,
+        0.6145421266555786,
+        0.3497684895992279
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_069"
+    },
+    {
+      "asset": "922c8b3fb8c9f4834455795283fff5427057b39bd6102dc461a243f411930c22",
+      "id": 31,
+      "name": "left_metal_rail_072",
+      "node": -1,
+      "pose": [
+        -2.553176164627075,
+        -0.1069813072681427,
+        0.49395039677619934,
+        0.3548073470592499,
+        0.6116467118263245,
+        0.6116467714309692,
+        0.35480737686157227
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_072"
+    },
+    {
+      "asset": "ad8726697194af16ace3c094aa49e7e32a007c0d607f9fc8a28e285f3c4889f4",
+      "id": 32,
+      "name": "left_metal_rail_075",
+      "node": -1,
+      "pose": [
+        -2.507233142852783,
+        -0.1069813072681427,
+        0.4681779742240906,
+        0.3598306477069855,
+        0.6087051033973694,
+        0.6087051033973694,
+        0.35983067750930786
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_075"
+    },
+    {
+      "asset": "3739ea9ea7c6a7817bb4169e3cbea85562fddf1b0c2c4c84cf7651f1c56fd51d",
+      "id": 33,
+      "name": "left_metal_rail_078",
+      "node": -1,
+      "pose": [
+        -2.460385322570801,
+        -0.1069813072681427,
+        0.442904531955719,
+        0.3648499548435211,
+        0.6057098507881165,
+        0.605709969997406,
+        0.3648500144481659
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_078"
+    },
+    {
+      "asset": "3d4704f51696aa2abb31ddbdcf83d175c714e1353b8dfdbf0f4923ded9390852",
+      "id": 34,
+      "name": "left_metal_rail_081",
+      "node": -1,
+      "pose": [
+        -2.4126667976379395,
+        -0.1069813072681427,
+        0.41817402839660645,
+        0.36987435817718506,
+        0.6026550531387329,
+        0.6026549339294434,
+        0.36987432837486267
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_081"
+    },
+    {
+      "asset": "8b7b3a8158d2e9085316b151852650e6835679971e612996b019617617fa146c",
+      "id": 35,
+      "name": "left_metal_rail_084",
+      "node": -1,
+      "pose": [
+        -2.3641133308410645,
+        -0.1069813072681427,
+        0.3940304219722748,
+        0.37491530179977417,
+        0.599531888961792,
+        0.5995319485664368,
+        0.3749152719974518
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_084"
+    },
+    {
+      "asset": "128f6f0388e4b5112aa144274f4fd0f2373e170c5a30281f5d355f16e36b3514",
+      "id": 36,
+      "name": "left_metal_rail_087",
+      "node": -1,
+      "pose": [
+        -2.3147590160369873,
+        -0.1069813072681427,
+        0.37051767110824585,
+        0.3799794018268585,
+        0.5963351130485535,
+        0.5963352918624878,
+        0.37997952103614807
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_087"
+    },
+    {
+      "asset": "9216db6958044c35bf361a831b55feba1c4f825c380d6a2fe0609460be847b1e",
+      "id": 37,
+      "name": "left_metal_rail_090",
+      "node": -1,
+      "pose": [
+        -2.264639377593994,
+        -0.1069813072681427,
+        0.3476797640323639,
+        0.3850775957107544,
+        0.5930559039115906,
+        0.5930558443069458,
+        0.38507750630378723
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_090"
+    },
+    {
+      "asset": "66934316e27bedc0a0aaf0e123615138536252b810ebb4a9751ebbdc8711a83d",
+      "id": 38,
+      "name": "left_metal_rail_093",
+      "node": -1,
+      "pose": [
+        -2.2137889862060547,
+        -0.1069813072681427,
+        0.32556065917015076,
+        0.3902168571949005,
+        0.5896871089935303,
+        0.5896871089935303,
+        0.3902169167995453
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_093"
+    },
+    {
+      "asset": "946b9afbf6e17d817181fcd80e60e0538c6f53a3b13289a392f9c531d8ef263c",
+      "id": 39,
+      "name": "left_metal_rail_096",
+      "node": -1,
+      "pose": [
+        -2.1622426509857178,
+        -0.1069813072681427,
+        0.3042042851448059,
+        0.39540496468544006,
+        0.5862208604812622,
+        0.586220920085907,
+        0.3954049348831177
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_096"
+    },
+    {
+      "asset": "ca5e9679bde95849d359d628130ce5ab25f995997f58bfce4e1882dbd9eeb7c0",
+      "id": 40,
+      "name": "left_metal_rail_099",
+      "node": -1,
+      "pose": [
+        -2.1100354194641113,
+        -0.1069813072681427,
+        0.28365468978881836,
+        0.400648295879364,
+        0.5826497673988342,
+        0.5826500058174133,
+        0.4006483554840088
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_099"
+    },
+    {
+      "asset": "ffa55d8c1ef805d3fdbab1e7248592206d945263907d1d36df4d1bf4d3dca025",
+      "id": 41,
+      "name": "left_metal_rail_102",
+      "node": -1,
+      "pose": [
+        -2.0572023391723633,
+        -0.1069813072681427,
+        0.2639557719230652,
+        0.4059548079967499,
+        0.5789652466773987,
+        0.5789651870727539,
+        0.4059547781944275
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_102"
+    },
+    {
+      "asset": "7bbd369f4868108d7988a4be760e51244742862559373ca4685617831f787b55",
+      "id": 42,
+      "name": "left_metal_rail_105",
+      "node": -1,
+      "pose": [
+        -2.0037779808044434,
+        -0.1069813072681427,
+        0.24515148997306824,
+        0.4113297760486603,
+        0.5751590728759766,
+        0.5751590132713318,
+        0.4113297760486603
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_105"
+    },
+    {
+      "asset": "debd840be91cb7630e704ba8cd5232d9d5f256c847e6ac9bd15bbd17b9a12956",
+      "id": 43,
+      "name": "left_metal_rail_108",
+      "node": -1,
+      "pose": [
+        -1.94979727268219,
+        -0.1069813072681427,
+        0.22728584706783295,
+        0.4167795777320862,
+        0.5712221264839172,
+        0.5712222456932068,
+        0.4167795777320862
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_108"
+    },
+    {
+      "asset": "e573fc964d5154308f887414203202dbfea77cbb2defd6cb00450259afe71746",
+      "id": 44,
+      "name": "left_metal_rail_111",
+      "node": -1,
+      "pose": [
+        -1.895295262336731,
+        -0.1069813072681427,
+        0.21040281653404236,
+        0.4223096966743469,
+        0.5671459436416626,
+        0.5671460628509521,
+        0.4223097860813141
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_111"
+    },
+    {
+      "asset": "88bba9b0fb07790b6a49ffab5aeab0d2b42a906f288b84418b183690a0ec08be",
+      "id": 45,
+      "name": "left_metal_rail_114",
+      "node": -1,
+      "pose": [
+        -1.8403067588806152,
+        -0.1069813072681427,
+        0.19454634189605713,
+        0.42792463302612305,
+        0.5629213452339172,
+        0.562921404838562,
+        0.4279247522354126
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_114"
+    },
+    {
+      "asset": "b1f8def869172cdfdcabfdc96e05d8e56bce72d7a13ea01524cde06bc446a3f6",
+      "id": 46,
+      "name": "left_metal_rail_117",
+      "node": -1,
+      "pose": [
+        -1.7848665714263916,
+        -0.1069813072681427,
+        0.1797603815793991,
+        0.43362918496131897,
+        0.5585389733314514,
+        0.5585389137268066,
+        0.43362918496131897
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_117"
+    },
+    {
+      "asset": "cc3ecbb206616a977000da06ce4afcc9e035f9d84360b56c3746b90921383232",
+      "id": 47,
+      "name": "left_metal_rail_120",
+      "node": -1,
+      "pose": [
+        -1.729009747505188,
+        -0.1069813072681427,
+        0.16608892381191254,
+        0.43942737579345703,
+        0.5539888739585876,
+        0.5539888143539429,
+        0.43942734599113464
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_120"
+    },
+    {
+      "asset": "fb5d3e382dc1f8a9f9e9a79a6cfefb143f4cafb477c01aac2e945f6d77deb8eb",
+      "id": 48,
+      "name": "left_metal_rail_123",
+      "node": -1,
+      "pose": [
+        -1.6727709770202637,
+        -0.1069813072681427,
+        0.15357592701911926,
+        0.44532230496406555,
+        0.5492614507675171,
+        0.5492614507675171,
+        0.4453222453594208
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_123"
+    },
+    {
+      "asset": "cfcedcaad8f39fce62e312fa8bb5de5249fc2a0ff0b6e064ec4074535ef72998",
+      "id": 49,
+      "name": "left_metal_rail_126",
+      "node": -1,
+      "pose": [
+        -1.6161854267120361,
+        -0.1069813072681427,
+        0.14226534962654114,
+        0.4513166546821594,
+        0.5443466305732727,
+        0.5443466901779175,
+        0.4513166844844818
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_126"
+    },
+    {
+      "asset": "2904e42c733366e5d7a421d8ab191bb99a02e4082db94f5f4c887e7cb3f12fb9",
+      "id": 50,
+      "name": "left_metal_rail_129",
+      "node": -1,
+      "pose": [
+        -1.559287667274475,
+        -0.1069813072681427,
+        0.1322011798620224,
+        0.4574127197265625,
+        0.5392342805862427,
+        0.5392343401908875,
+        0.4574127197265625
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_129"
+    },
+    {
+      "asset": "4d60e4b440d2f41f7580dc5d134b66aea5e024f6e1d2224878582b1099d234ac",
+      "id": 51,
+      "name": "left_metal_rail_132",
+      "node": -1,
+      "pose": [
+        -1.502112865447998,
+        -0.1069813072681427,
+        0.1234273612499237,
+        0.46361154317855835,
+        0.5339141488075256,
+        0.5339141488075256,
+        0.4636116027832031
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_132"
+    },
+    {
+      "asset": "9636fe6c087bfb5f9772482f6d0e52464343670394cf98177ff90bac8eca7dd8",
+      "id": 52,
+      "name": "left_metal_rail_135",
+      "node": -1,
+      "pose": [
+        -1.4446955919265747,
+        -0.1069813072681427,
+        0.1159878671169281,
+        0.46991369128227234,
+        0.5283759236335754,
+        0.5283759236335754,
+        0.4699137508869171
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_135"
+    },
+    {
+      "asset": "caf03f8e76dc3e1f702c977010a338c5f60404e92621b01448416269cae6f826",
+      "id": 53,
+      "name": "left_metal_rail_138",
+      "node": -1,
+      "pose": [
+        -1.3870710134506226,
+        -0.1069813072681427,
+        0.10992666333913803,
+        0.4763182997703552,
+        0.5226096510887146,
+        0.5226097106933594,
+        0.4763184189796448
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_138"
+    },
+    {
+      "asset": "e30505df4d9846c7de30ba969c91232009039fe6d9dad22542442b7ebfe2f7c2",
+      "id": 54,
+      "name": "left_metal_rail_141",
+      "node": -1,
+      "pose": [
+        -1.3292739391326904,
+        -0.1069813072681427,
+        0.10528771579265594,
+        0.4828242063522339,
+        0.516605019569397,
+        0.5166050791740417,
+        0.4828242361545563
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_141"
+    },
+    {
+      "asset": "ba00b9d7b6093297384663a5abb5c6a84b3d1c807ad86da5f25fe1c5163c0fe7",
+      "id": 55,
+      "name": "left_metal_rail_144",
+      "node": -1,
+      "pose": [
+        -1.2713391780853271,
+        -0.1069813072681427,
+        0.10211499780416489,
+        0.48942819237709045,
+        0.5103527903556824,
+        0.5103529095649719,
+        0.48942825198173523
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_144"
+    },
+    {
+      "asset": "ca6886d73e94a300d3abe166cfb16cba927f68eae04dbe79be6e08e8cd4c092b",
+      "id": 56,
+      "name": "left_metal_rail_147",
+      "node": -1,
+      "pose": [
+        -1.213301658630371,
+        -0.1069813072681427,
+        0.1004524677991867,
+        0.49612680077552795,
+        0.5038434267044067,
+        0.5038434267044067,
+        0.49612683057785034
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "left_metal_rail_147"
+    },
+    {
+      "asset": "97f8b22ecfab99f4c9f0a3da4c2a099af986c5584bfe6e10eb06583a09a0ca4a",
+      "id": 57,
+      "name": "opaque_side_segment_on_glass_box",
+      "node": -1,
+      "pose": [
+        0.8600000143051147,
+        -0.6399999856948853,
+        0.5049999952316284,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6800000071525574,
+        0.6899999976158142,
+        0.7099999785423279,
+        1.0
+      ],
+      "role": "opaque_side_segment",
+      "shape": "cube",
+      "source_id": "opaque_side_segment_on_glass_box"
+    },
+    {
+      "asset": "7477c65c551a032dd8675b211444f466832e5f0eeae47046d2d0bbca75078207",
+      "id": 58,
+      "name": "open_left_box_floor_connection",
+      "node": -1,
+      "pose": [
+        -1.2324999570846558,
+        0.0,
+        0.05000000074505806,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "box_floor_connection_marker",
+      "shape": "cube",
+      "source_id": "open_left_box_floor_connection"
+    },
+    {
+      "asset": "0c53e4533b8acabd82f78bac8fe58ed3114ae8961c543617220a85d9dcdde19a",
+      "id": 59,
+      "name": "orange_ball_from_u_track_inside_glass_box",
+      "node": 0,
+      "pose": [
+        -3.169952154159546,
+        0.0,
+        1.226359248161316,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        1.0,
+        0.3799999952316284,
+        0.05999999865889549,
+        1.0
+      ],
+      "role": "target",
+      "shape": "sphere",
+      "source_id": "orange_ball_from_u_track_inside_glass_box"
+    },
+    {
+      "asset": "ea6441a4e63c36010fa74a41d2f657bb448dee3077144ccd8c8986da1ed59c14",
+      "id": 60,
+      "name": "rail_cross_tie_00",
+      "node": -1,
+      "pose": [
+        -3.299999952316284,
+        0.0,
+        1.0950000286102295,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.18000000715255737,
+        0.1899999976158142,
+        0.20999999344348907,
+        1.0
+      ],
+      "role": "rail_cross_tie",
+      "shape": "cube",
+      "source_id": "rail_cross_tie_00"
+    },
+    {
+      "asset": "ea6441a4e63c36010fa74a41d2f657bb448dee3077144ccd8c8986da1ed59c14",
+      "id": 61,
+      "name": "rail_cross_tie_01",
+      "node": -1,
+      "pose": [
+        -3.225130319595337,
+        0.0,
+        0.9771339297294617,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.18000000715255737,
+        0.1899999976158142,
+        0.20999999344348907,
+        1.0
+      ],
+      "role": "rail_cross_tie",
+      "shape": "cube",
+      "source_id": "rail_cross_tie_01"
+    },
+    {
+      "asset": "ea6441a4e63c36010fa74a41d2f657bb448dee3077144ccd8c8986da1ed59c14",
+      "id": 62,
+      "name": "rail_cross_tie_02",
+      "node": -1,
+      "pose": [
+        -3.1147208213806152,
+        0.0,
+        0.8501866459846497,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.18000000715255737,
+        0.1899999976158142,
+        0.20999999344348907,
+        1.0
+      ],
+      "role": "rail_cross_tie",
+      "shape": "cube",
+      "source_id": "rail_cross_tie_02"
+    },
+    {
+      "asset": "ea6441a4e63c36010fa74a41d2f657bb448dee3077144ccd8c8986da1ed59c14",
+      "id": 63,
+      "name": "rail_cross_tie_03",
+      "node": -1,
+      "pose": [
+        -2.9723169803619385,
+        0.0,
+        0.7186263203620911,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.18000000715255737,
+        0.1899999976158142,
+        0.20999999344348907,
+        1.0
+      ],
+      "role": "rail_cross_tie",
+      "shape": "cube",
+      "source_id": "rail_cross_tie_03"
+    },
+    {
+      "asset": "ea6441a4e63c36010fa74a41d2f657bb448dee3077144ccd8c8986da1ed59c14",
+      "id": 64,
+      "name": "rail_cross_tie_04",
+      "node": -1,
+      "pose": [
+        -2.801464319229126,
+        0.0,
+        0.586921215057373,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.18000000715255737,
+        0.1899999976158142,
+        0.20999999344348907,
+        1.0
+      ],
+      "role": "rail_cross_tie",
+      "shape": "cube",
+      "source_id": "rail_cross_tie_04"
+    },
+    {
+      "asset": "ea6441a4e63c36010fa74a41d2f657bb448dee3077144ccd8c8986da1ed59c14",
+      "id": 65,
+      "name": "rail_cross_tie_05",
+      "node": -1,
+      "pose": [
+        -2.605708360671997,
+        0.0,
+        0.4595397114753723,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.18000000715255737,
+        0.1899999976158142,
+        0.20999999344348907,
+        1.0
+      ],
+      "role": "rail_cross_tie",
+      "shape": "cube",
+      "source_id": "rail_cross_tie_05"
+    },
+    {
+      "asset": "ea6441a4e63c36010fa74a41d2f657bb448dee3077144ccd8c8986da1ed59c14",
+      "id": 66,
+      "name": "rail_cross_tie_06",
+      "node": -1,
+      "pose": [
+        -2.388594627380371,
+        0.0,
+        0.34095001220703125,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.18000000715255737,
+        0.1899999976158142,
+        0.20999999344348907,
+        1.0
+      ],
+      "role": "rail_cross_tie",
+      "shape": "cube",
+      "source_id": "rail_cross_tie_06"
+    },
+    {
+      "asset": "ea6441a4e63c36010fa74a41d2f657bb448dee3077144ccd8c8986da1ed59c14",
+      "id": 67,
+      "name": "rail_cross_tie_07",
+      "node": -1,
+      "pose": [
+        -2.1536684036254883,
+        0.0,
+        0.2356203943490982,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.18000000715255737,
+        0.1899999976158142,
+        0.20999999344348907,
+        1.0
+      ],
+      "role": "rail_cross_tie",
+      "shape": "cube",
+      "source_id": "rail_cross_tie_07"
+    },
+    {
+      "asset": "ea6441a4e63c36010fa74a41d2f657bb448dee3077144ccd8c8986da1ed59c14",
+      "id": 68,
+      "name": "rail_cross_tie_08",
+      "node": -1,
+      "pose": [
+        -1.904475212097168,
+        0.0,
+        0.14801913499832153,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.18000000715255737,
+        0.1899999976158142,
+        0.20999999344348907,
+        1.0
+      ],
+      "role": "rail_cross_tie",
+      "shape": "cube",
+      "source_id": "rail_cross_tie_08"
+    },
+    {
+      "asset": "ea6441a4e63c36010fa74a41d2f657bb448dee3077144ccd8c8986da1ed59c14",
+      "id": 69,
+      "name": "rail_cross_tie_09",
+      "node": -1,
+      "pose": [
+        -1.6445605754852295,
+        0.0,
+        0.08261454105377197,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.18000000715255737,
+        0.1899999976158142,
+        0.20999999344348907,
+        1.0
+      ],
+      "role": "rail_cross_tie",
+      "shape": "cube",
+      "source_id": "rail_cross_tie_09"
+    },
+    {
+      "asset": "ea6441a4e63c36010fa74a41d2f657bb448dee3077144ccd8c8986da1ed59c14",
+      "id": 70,
+      "name": "rail_cross_tie_10",
+      "node": -1,
+      "pose": [
+        -1.3774700164794922,
+        0.0,
+        0.04387485235929489,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.18000000715255737,
+        0.1899999976158142,
+        0.20999999344348907,
+        1.0
+      ],
+      "role": "rail_cross_tie",
+      "shape": "cube",
+      "source_id": "rail_cross_tie_10"
+    },
+    {
+      "asset": "375f50fa5f209f620c3209bc085b146b2aa420ffdf5e60339ab30661c517a0bf",
+      "id": 71,
+      "name": "rear_backdrop_panel",
+      "node": -1,
+      "pose": [
+        0.0,
+        2.4800000190734863,
+        1.6200000047683716,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9599999785423279,
+        0.9700000286102295,
+        0.9800000190734863,
+        1.0
+      ],
+      "role": "background",
+      "shape": "cube",
+      "source_id": "rear_backdrop_panel"
+    },
+    {
+      "asset": "d007773a74ab327be8d7b04c563f224c803893c34d66489b098fd2327ee0bcc2",
+      "id": 72,
+      "name": "right_metal_rail_000",
+      "node": -1,
+      "pose": [
+        -3.293562889099121,
+        0.1069813072681427,
+        1.147865653038025,
+        0.17073416709899902,
+        0.6861850023269653,
+        0.6861850023269653,
+        0.17073418200016022
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_000"
+    },
+    {
+      "asset": "756b91b30c6c967348680b6f77405580c676fc87c07777dec2e1d486794ed79b",
+      "id": 73,
+      "name": "right_metal_rail_003",
+      "node": -1,
+      "pose": [
+        -3.27980899810791,
+        0.1069813072681427,
+        1.1233079433441162,
+        0.1859709918498993,
+        0.6822132468223572,
+        0.6822131276130676,
+        0.18597082793712616
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_003"
+    },
+    {
+      "asset": "1ae8529180b627e127922c6b251bf8b04125d9186ef54993a83bbca31afb73ed",
+      "id": 74,
+      "name": "right_metal_rail_006",
+      "node": -1,
+      "pose": [
+        -3.264312744140625,
+        0.1069813072681427,
+        1.0981940031051636,
+        0.19966307282447815,
+        0.6783322691917419,
+        0.6783322691917419,
+        0.19966311752796173
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_006"
+    },
+    {
+      "asset": "899d957dd6fcb131e8253d9557df84635a0f43d8756c6dae06ce6af5a4f313ce",
+      "id": 75,
+      "name": "right_metal_rail_009",
+      "node": -1,
+      "pose": [
+        -3.2471089363098145,
+        0.1069813072681427,
+        1.0725678205490112,
+        0.2120487540960312,
+        0.6745631098747253,
+        0.6745629906654358,
+        0.2120487093925476
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_009"
+    },
+    {
+      "asset": "a37ac65695d3c1fdb9614709ca1a4649d91a78fc6f1f29a076151006fe5253c9",
+      "id": 76,
+      "name": "right_metal_rail_012",
+      "node": -1,
+      "pose": [
+        -3.2282323837280273,
+        0.1069813072681427,
+        1.0464733839035034,
+        0.22332853078842163,
+        0.6709129810333252,
+        0.6709131598472595,
+        0.22332853078842163
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_012"
+    },
+    {
+      "asset": "897038dc4b2e09e6eca8214a045b16c5e6cbcb6dd1302c37cdd2443a2b69d9e3",
+      "id": 77,
+      "name": "right_metal_rail_015",
+      "node": -1,
+      "pose": [
+        -3.2077183723449707,
+        0.1069813072681427,
+        1.0199545621871948,
+        0.2336619347333908,
+        0.6673845052719116,
+        0.6673845648765564,
+        0.23366187512874603
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_015"
+    },
+    {
+      "asset": "857f0093b8c4ca0cd5b99d4049dd3280dbf7305cd9086aa96a87620a4e6a0fc7",
+      "id": 78,
+      "name": "right_metal_rail_018",
+      "node": -1,
+      "pose": [
+        -3.185601234436035,
+        0.1069813072681427,
+        0.9930553436279297,
+        0.2431964874267578,
+        0.6639694571495056,
+        0.6639695763587952,
+        0.24319644272327423
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_018"
+    },
+    {
+      "asset": "00cf92494818a8efb88c6aacb5ea871d9de0c82f98bbfba6d5d796e1f35ceb16",
+      "id": 79,
+      "name": "right_metal_rail_021",
+      "node": -1,
+      "pose": [
+        -3.1619162559509277,
+        0.1069813072681427,
+        0.9658198356628418,
+        0.25203949213027954,
+        0.6606634259223938,
+        0.660663366317749,
+        0.25203943252563477
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_021"
+    },
+    {
+      "asset": "efd05ff8c17fa3f7b7b77474dbfb531decd402dee0e0f4b4a041776126254d23",
+      "id": 80,
+      "name": "right_metal_rail_024",
+      "node": -1,
+      "pose": [
+        -3.1366982460021973,
+        0.1069813072681427,
+        0.9382917881011963,
+        0.2602939307689667,
+        0.6574550271034241,
+        0.6574550271034241,
+        0.2602938413619995
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_024"
+    },
+    {
+      "asset": "75fd28a6f3b4350f0132df2d521b9f6a099280f9075f10fc974a71164ddfd4b6",
+      "id": 81,
+      "name": "right_metal_rail_027",
+      "node": -1,
+      "pose": [
+        -3.1099820137023926,
+        0.1069813072681427,
+        0.9105153679847717,
+        0.26803937554359436,
+        0.6543354392051697,
+        0.6543354988098145,
+        0.268039345741272
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_027"
+    },
+    {
+      "asset": "aed7673109efd254fc6d441926710682e02bfd11cd4a87a1704583252e502cf8",
+      "id": 82,
+      "name": "right_metal_rail_030",
+      "node": -1,
+      "pose": [
+        -3.0818023681640625,
+        0.1069813072681427,
+        0.882534384727478,
+        0.275350958108902,
+        0.6512925624847412,
+        0.6512924432754517,
+        0.2753508985042572
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_030"
+    },
+    {
+      "asset": "a0d9292849e61fc91a4c001e32484d0caaecdd07df6271dab390b768e3dcb010",
+      "id": 83,
+      "name": "right_metal_rail_033",
+      "node": -1,
+      "pose": [
+        -3.052194118499756,
+        0.1069813072681427,
+        0.854392945766449,
+        0.28228598833084106,
+        0.6483167409896851,
+        0.6483168601989746,
+        0.28228604793548584
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_033"
+    },
+    {
+      "asset": "dcb71adee82dadf6d88cb329be6c705db086a06b6161321fb5b0969b511ef4e5",
+      "id": 84,
+      "name": "right_metal_rail_036",
+      "node": -1,
+      "pose": [
+        -3.0211925506591797,
+        0.1069813072681427,
+        0.8261349201202393,
+        0.288894385099411,
+        0.6453991532325745,
+        0.6453992128372192,
+        0.2888943552970886
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_036"
+    },
+    {
+      "asset": "9db29507c40ad1c1c751036cd73cf72f7a1e0644c0817a9bf9d78c6285c76189",
+      "id": 85,
+      "name": "right_metal_rail_039",
+      "node": -1,
+      "pose": [
+        -2.988832473754883,
+        0.1069813072681427,
+        0.7978042364120483,
+        0.29522383213043213,
+        0.6425285339355469,
+        0.6425285339355469,
+        0.29522377252578735
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_039"
+    },
+    {
+      "asset": "0b0daefcb404570bc85aa95194072f3227afc004dfa1cd45633ab8843d3641f0",
+      "id": 86,
+      "name": "right_metal_rail_042",
+      "node": -1,
+      "pose": [
+        -2.955148458480835,
+        0.1069813072681427,
+        0.7694450616836548,
+        0.3013121783733368,
+        0.6396960616111755,
+        0.6396960020065308,
+        0.30131208896636963
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_042"
+    },
+    {
+      "asset": "376a63425d5680a48687751759406cc4ea2a20e0044463579fe708b3134b2f9a",
+      "id": 87,
+      "name": "right_metal_rail_045",
+      "node": -1,
+      "pose": [
+        -2.920175552368164,
+        0.1069813072681427,
+        0.741101086139679,
+        0.30719467997550964,
+        0.6368919610977173,
+        0.6368920803070068,
+        0.30719470977783203
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_045"
+    },
+    {
+      "asset": "53e456bfbb63403d347ef6b68250a0a0fbb6e83d1cf603b1133d8125e461163e",
+      "id": 88,
+      "name": "right_metal_rail_048",
+      "node": -1,
+      "pose": [
+        -2.883948802947998,
+        0.1069813072681427,
+        0.7128164768218994,
+        0.31289803981781006,
+        0.6341094970703125,
+        0.6341094970703125,
+        0.31289801001548767
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_048"
+    },
+    {
+      "asset": "3b067e242be9c36af2fab075cbd63a740e6551c7e4be40a9865ffcd143679f04",
+      "id": 89,
+      "name": "right_metal_rail_051",
+      "node": -1,
+      "pose": [
+        -2.8465027809143066,
+        0.1069813072681427,
+        0.6846351027488708,
+        0.3184524178504944,
+        0.6313382983207703,
+        0.6313384175300598,
+        0.3184524476528168
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_051"
+    },
+    {
+      "asset": "f18ea967ed78c00d63882caa30ab2e4341dff886ebddf164559442ef5a93aa9c",
+      "id": 90,
+      "name": "right_metal_rail_054",
+      "node": -1,
+      "pose": [
+        -2.8078725337982178,
+        0.1069813072681427,
+        0.6566009521484375,
+        0.3238790035247803,
+        0.6285717487335205,
+        0.6285716891288757,
+        0.3238789439201355
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_054"
+    },
+    {
+      "asset": "3655699208558b9f1d73705f38c6b164ae3ea088a894b22f4d9d40b2fac8559d",
+      "id": 91,
+      "name": "right_metal_rail_057",
+      "node": -1,
+      "pose": [
+        -2.7680931091308594,
+        0.1069813072681427,
+        0.6287580728530884,
+        0.3291989266872406,
+        0.6258019208908081,
+        0.6258019804954529,
+        0.32919880747795105
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_057"
+    },
+    {
+      "asset": "fab6cff8a219e086407313f2a4c2904a162e70b5b0ad9d9271f5dd258a590b77",
+      "id": 92,
+      "name": "right_metal_rail_060",
+      "node": -1,
+      "pose": [
+        -2.727199077606201,
+        0.1069813072681427,
+        0.6011503338813782,
+        0.3344321548938751,
+        0.6230210065841675,
+        0.6230210661888123,
+        0.33443212509155273
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_060"
+    },
+    {
+      "asset": "7f5ed2bcbcdfa8678b6e1687b27e2d4387652a672688d3c1c958e4ac0f8c070c",
+      "id": 93,
+      "name": "right_metal_rail_063",
+      "node": -1,
+      "pose": [
+        -2.685225486755371,
+        0.1069813072681427,
+        0.5738217234611511,
+        0.3395938277244568,
+        0.6202225685119629,
+        0.6202225685119629,
+        0.33959394693374634
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_063"
+    },
+    {
+      "asset": "52b2dfd57224eca6abfecb08dbe666b850e322485901ee1e9a5aabfa5c40dd56",
+      "id": 94,
+      "name": "right_metal_rail_066",
+      "node": -1,
+      "pose": [
+        -2.642207145690918,
+        0.1069813072681427,
+        0.5468162298202515,
+        0.3447019159793854,
+        0.6173982620239258,
+        0.6173982620239258,
+        0.3447018563747406
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_066"
+    },
+    {
+      "asset": "5a58c472a1a85c080582d0bd0e6a4a01b6e1e0c89afc96c334b7c61c14f66059",
+      "id": 95,
+      "name": "right_metal_rail_069",
+      "node": -1,
+      "pose": [
+        -2.5981791019439697,
+        0.1069813072681427,
+        0.5201778411865234,
+        0.3497684597969055,
+        0.6145421266555786,
+        0.6145421266555786,
+        0.3497684895992279
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_069"
+    },
+    {
+      "asset": "922c8b3fb8c9f4834455795283fff5427057b39bd6102dc461a243f411930c22",
+      "id": 96,
+      "name": "right_metal_rail_072",
+      "node": -1,
+      "pose": [
+        -2.553176164627075,
+        0.1069813072681427,
+        0.49395039677619934,
+        0.3548073470592499,
+        0.6116467118263245,
+        0.6116467714309692,
+        0.35480737686157227
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_072"
+    },
+    {
+      "asset": "ad8726697194af16ace3c094aa49e7e32a007c0d607f9fc8a28e285f3c4889f4",
+      "id": 97,
+      "name": "right_metal_rail_075",
+      "node": -1,
+      "pose": [
+        -2.507233142852783,
+        0.1069813072681427,
+        0.4681779742240906,
+        0.3598306477069855,
+        0.6087051033973694,
+        0.6087051033973694,
+        0.35983067750930786
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_075"
+    },
+    {
+      "asset": "3739ea9ea7c6a7817bb4169e3cbea85562fddf1b0c2c4c84cf7651f1c56fd51d",
+      "id": 98,
+      "name": "right_metal_rail_078",
+      "node": -1,
+      "pose": [
+        -2.460385322570801,
+        0.1069813072681427,
+        0.442904531955719,
+        0.3648499548435211,
+        0.6057098507881165,
+        0.605709969997406,
+        0.3648500144481659
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_078"
+    },
+    {
+      "asset": "3d4704f51696aa2abb31ddbdcf83d175c714e1353b8dfdbf0f4923ded9390852",
+      "id": 99,
+      "name": "right_metal_rail_081",
+      "node": -1,
+      "pose": [
+        -2.4126667976379395,
+        0.1069813072681427,
+        0.41817402839660645,
+        0.36987435817718506,
+        0.6026550531387329,
+        0.6026549339294434,
+        0.36987432837486267
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_081"
+    },
+    {
+      "asset": "8b7b3a8158d2e9085316b151852650e6835679971e612996b019617617fa146c",
+      "id": 100,
+      "name": "right_metal_rail_084",
+      "node": -1,
+      "pose": [
+        -2.3641133308410645,
+        0.1069813072681427,
+        0.3940304219722748,
+        0.37491530179977417,
+        0.599531888961792,
+        0.5995319485664368,
+        0.3749152719974518
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_084"
+    },
+    {
+      "asset": "128f6f0388e4b5112aa144274f4fd0f2373e170c5a30281f5d355f16e36b3514",
+      "id": 101,
+      "name": "right_metal_rail_087",
+      "node": -1,
+      "pose": [
+        -2.3147590160369873,
+        0.1069813072681427,
+        0.37051767110824585,
+        0.3799794018268585,
+        0.5963351130485535,
+        0.5963352918624878,
+        0.37997952103614807
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_087"
+    },
+    {
+      "asset": "9216db6958044c35bf361a831b55feba1c4f825c380d6a2fe0609460be847b1e",
+      "id": 102,
+      "name": "right_metal_rail_090",
+      "node": -1,
+      "pose": [
+        -2.264639377593994,
+        0.1069813072681427,
+        0.3476797640323639,
+        0.3850775957107544,
+        0.5930559039115906,
+        0.5930558443069458,
+        0.38507750630378723
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_090"
+    },
+    {
+      "asset": "66934316e27bedc0a0aaf0e123615138536252b810ebb4a9751ebbdc8711a83d",
+      "id": 103,
+      "name": "right_metal_rail_093",
+      "node": -1,
+      "pose": [
+        -2.2137889862060547,
+        0.1069813072681427,
+        0.32556065917015076,
+        0.3902168571949005,
+        0.5896871089935303,
+        0.5896871089935303,
+        0.3902169167995453
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_093"
+    },
+    {
+      "asset": "946b9afbf6e17d817181fcd80e60e0538c6f53a3b13289a392f9c531d8ef263c",
+      "id": 104,
+      "name": "right_metal_rail_096",
+      "node": -1,
+      "pose": [
+        -2.1622426509857178,
+        0.1069813072681427,
+        0.3042042851448059,
+        0.39540496468544006,
+        0.5862208604812622,
+        0.586220920085907,
+        0.3954049348831177
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_096"
+    },
+    {
+      "asset": "ca5e9679bde95849d359d628130ce5ab25f995997f58bfce4e1882dbd9eeb7c0",
+      "id": 105,
+      "name": "right_metal_rail_099",
+      "node": -1,
+      "pose": [
+        -2.1100354194641113,
+        0.1069813072681427,
+        0.28365468978881836,
+        0.400648295879364,
+        0.5826497673988342,
+        0.5826500058174133,
+        0.4006483554840088
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_099"
+    },
+    {
+      "asset": "ffa55d8c1ef805d3fdbab1e7248592206d945263907d1d36df4d1bf4d3dca025",
+      "id": 106,
+      "name": "right_metal_rail_102",
+      "node": -1,
+      "pose": [
+        -2.0572023391723633,
+        0.1069813072681427,
+        0.2639557719230652,
+        0.4059548079967499,
+        0.5789652466773987,
+        0.5789651870727539,
+        0.4059547781944275
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_102"
+    },
+    {
+      "asset": "7bbd369f4868108d7988a4be760e51244742862559373ca4685617831f787b55",
+      "id": 107,
+      "name": "right_metal_rail_105",
+      "node": -1,
+      "pose": [
+        -2.0037779808044434,
+        0.1069813072681427,
+        0.24515148997306824,
+        0.4113297760486603,
+        0.5751590728759766,
+        0.5751590132713318,
+        0.4113297760486603
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_105"
+    },
+    {
+      "asset": "debd840be91cb7630e704ba8cd5232d9d5f256c847e6ac9bd15bbd17b9a12956",
+      "id": 108,
+      "name": "right_metal_rail_108",
+      "node": -1,
+      "pose": [
+        -1.94979727268219,
+        0.1069813072681427,
+        0.22728584706783295,
+        0.4167795777320862,
+        0.5712221264839172,
+        0.5712222456932068,
+        0.4167795777320862
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_108"
+    },
+    {
+      "asset": "e573fc964d5154308f887414203202dbfea77cbb2defd6cb00450259afe71746",
+      "id": 109,
+      "name": "right_metal_rail_111",
+      "node": -1,
+      "pose": [
+        -1.895295262336731,
+        0.1069813072681427,
+        0.21040281653404236,
+        0.4223096966743469,
+        0.5671459436416626,
+        0.5671460628509521,
+        0.4223097860813141
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_111"
+    },
+    {
+      "asset": "88bba9b0fb07790b6a49ffab5aeab0d2b42a906f288b84418b183690a0ec08be",
+      "id": 110,
+      "name": "right_metal_rail_114",
+      "node": -1,
+      "pose": [
+        -1.8403067588806152,
+        0.1069813072681427,
+        0.19454634189605713,
+        0.42792463302612305,
+        0.5629213452339172,
+        0.562921404838562,
+        0.4279247522354126
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_114"
+    },
+    {
+      "asset": "b1f8def869172cdfdcabfdc96e05d8e56bce72d7a13ea01524cde06bc446a3f6",
+      "id": 111,
+      "name": "right_metal_rail_117",
+      "node": -1,
+      "pose": [
+        -1.7848665714263916,
+        0.1069813072681427,
+        0.1797603815793991,
+        0.43362918496131897,
+        0.5585389733314514,
+        0.5585389137268066,
+        0.43362918496131897
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_117"
+    },
+    {
+      "asset": "cc3ecbb206616a977000da06ce4afcc9e035f9d84360b56c3746b90921383232",
+      "id": 112,
+      "name": "right_metal_rail_120",
+      "node": -1,
+      "pose": [
+        -1.729009747505188,
+        0.1069813072681427,
+        0.16608892381191254,
+        0.43942737579345703,
+        0.5539888739585876,
+        0.5539888143539429,
+        0.43942734599113464
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_120"
+    },
+    {
+      "asset": "fb5d3e382dc1f8a9f9e9a79a6cfefb143f4cafb477c01aac2e945f6d77deb8eb",
+      "id": 113,
+      "name": "right_metal_rail_123",
+      "node": -1,
+      "pose": [
+        -1.6727709770202637,
+        0.1069813072681427,
+        0.15357592701911926,
+        0.44532230496406555,
+        0.5492614507675171,
+        0.5492614507675171,
+        0.4453222453594208
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_123"
+    },
+    {
+      "asset": "cfcedcaad8f39fce62e312fa8bb5de5249fc2a0ff0b6e064ec4074535ef72998",
+      "id": 114,
+      "name": "right_metal_rail_126",
+      "node": -1,
+      "pose": [
+        -1.6161854267120361,
+        0.1069813072681427,
+        0.14226534962654114,
+        0.4513166546821594,
+        0.5443466305732727,
+        0.5443466901779175,
+        0.4513166844844818
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_126"
+    },
+    {
+      "asset": "2904e42c733366e5d7a421d8ab191bb99a02e4082db94f5f4c887e7cb3f12fb9",
+      "id": 115,
+      "name": "right_metal_rail_129",
+      "node": -1,
+      "pose": [
+        -1.559287667274475,
+        0.1069813072681427,
+        0.1322011798620224,
+        0.4574127197265625,
+        0.5392342805862427,
+        0.5392343401908875,
+        0.4574127197265625
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_129"
+    },
+    {
+      "asset": "4d60e4b440d2f41f7580dc5d134b66aea5e024f6e1d2224878582b1099d234ac",
+      "id": 116,
+      "name": "right_metal_rail_132",
+      "node": -1,
+      "pose": [
+        -1.502112865447998,
+        0.1069813072681427,
+        0.1234273612499237,
+        0.46361154317855835,
+        0.5339141488075256,
+        0.5339141488075256,
+        0.4636116027832031
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_132"
+    },
+    {
+      "asset": "9636fe6c087bfb5f9772482f6d0e52464343670394cf98177ff90bac8eca7dd8",
+      "id": 117,
+      "name": "right_metal_rail_135",
+      "node": -1,
+      "pose": [
+        -1.4446955919265747,
+        0.1069813072681427,
+        0.1159878671169281,
+        0.46991369128227234,
+        0.5283759236335754,
+        0.5283759236335754,
+        0.4699137508869171
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_135"
+    },
+    {
+      "asset": "caf03f8e76dc3e1f702c977010a338c5f60404e92621b01448416269cae6f826",
+      "id": 118,
+      "name": "right_metal_rail_138",
+      "node": -1,
+      "pose": [
+        -1.3870710134506226,
+        0.1069813072681427,
+        0.10992666333913803,
+        0.4763182997703552,
+        0.5226096510887146,
+        0.5226097106933594,
+        0.4763184189796448
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_138"
+    },
+    {
+      "asset": "e30505df4d9846c7de30ba969c91232009039fe6d9dad22542442b7ebfe2f7c2",
+      "id": 119,
+      "name": "right_metal_rail_141",
+      "node": -1,
+      "pose": [
+        -1.3292739391326904,
+        0.1069813072681427,
+        0.10528771579265594,
+        0.4828242063522339,
+        0.516605019569397,
+        0.5166050791740417,
+        0.4828242361545563
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_141"
+    },
+    {
+      "asset": "ba00b9d7b6093297384663a5abb5c6a84b3d1c807ad86da5f25fe1c5163c0fe7",
+      "id": 120,
+      "name": "right_metal_rail_144",
+      "node": -1,
+      "pose": [
+        -1.2713391780853271,
+        0.1069813072681427,
+        0.10211499780416489,
+        0.48942819237709045,
+        0.5103527903556824,
+        0.5103529095649719,
+        0.48942825198173523
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_144"
+    },
+    {
+      "asset": "ca6886d73e94a300d3abe166cfb16cba927f68eae04dbe79be6e08e8cd4c092b",
+      "id": 121,
+      "name": "right_metal_rail_147",
+      "node": -1,
+      "pose": [
+        -1.213301658630371,
+        0.1069813072681427,
+        0.1004524677991867,
+        0.49612680077552795,
+        0.5038434267044067,
+        0.5038434267044067,
+        0.49612683057785034
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "rollercoaster_rail",
+      "shape": "cylinder",
+      "source_id": "right_metal_rail_147"
+    }
+  ],
+  "schema": "stable-envs/object-permanence-rigid-v4",
+  "source": {
+    "commit": "824baddcdad087810d35638bf8f273b884f74975",
+    "exporter": "scripts/export/object_permanence.py",
+    "exporter_sha256": "2592cabb7a8c4ae5b98dc267ba72c91ee1ecc02d01100ead8d653c67b360adbf",
+    "license": "CC-BY-NC-4.0",
+    "parameters": {},
+    "preparation_recipe": {
+      "animate": "animate_scene_by_kind",
+      "build": "build_scene_by_kind"
+    },
+    "profile": "nominal-first-member-no-diversity",
+    "script": "object_permanence/generator/tasks/G36_rollercoaster_u_track_glassbox/pb_task_00000025_pb_transparent_box_wall_blocks_ball_0026_blender.py",
+    "script_sha256": "6b3b691d18f11f6f0b044a8dbf90fb3185670ccf90e0244fea9c5c4666f77860",
+    "seed": null,
+    "task": "G36",
+    "task_manifest_sha256": "8cbe200b57c7b73a92e2f79bac3bc37dfe78e4449109af2b91f8bcc2bd54a707",
+    "url": "https://github.com/hokindeng/object-permanence",
+    "versions": {
+      "blender": "4.4.0",
+      "numpy": "1.26.4",
+      "python": "3.11.16"
+    },
+    "video_split": null
+  },
+  "visibility_contract": "stable-envs/transparent-pixel-rays-v1"
+}

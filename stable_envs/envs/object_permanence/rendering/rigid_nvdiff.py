@@ -43,6 +43,7 @@ class RigidSceneRenderer(Closeable):
         cache_static=True,
         geometry_precision="float32",
         visibility_contract=None,
+        max_layers=16,
     ):
         self.device = torch.device(device)
         if self.device.type != "cuda" or not torch.cuda.is_available():
@@ -52,10 +53,21 @@ class RigidSceneRenderer(Closeable):
         if geometry_precision not in ("float32", "float64"):
             raise ValueError("geometry_precision must be float32 or float64")
         camera_type = trajectory.manifest["camera"].get("projection_type", "perspective")
+        from .transparency import CONTRACT as ALPHA_CONTRACT
+
+        self._transparent = trajectory.manifest.get("material_convention") is not None
+        self.max_layers = max_layers
+        if self._transparent and visibility_contract != ALPHA_CONTRACT:
+            raise ValueError("transparent recordings require their explicit visibility contract")
+        if visibility_contract == ALPHA_CONTRACT and not self._transparent:
+            raise ValueError("transparent visibility requires a versioned material recording")
         self._scaled = trajectory.has_scales
         if self._scaled and visibility_contract != trajectory.manifest.get("visibility_contract"):
             raise ValueError("scaled recordings require their explicit visibility contract")
-        if camera_type == "orthographic" and visibility_contract != "stable-envs/opaque-pixel-rays-v2":
+        if camera_type == "orthographic" and visibility_contract not in (
+            "stable-envs/opaque-pixel-rays-v2",
+            ALPHA_CONTRACT,
+        ):
             raise ValueError("orthographic recordings require explicit opaque-pixel-rays-v2")
         renderer_class: type = PixelCenterRenderer
         renderer_options: dict = {}
@@ -63,17 +75,29 @@ class RigidSceneRenderer(Closeable):
             from .visibility import CONTRACTS, validate_camera
             from .visibility_cuda import ContractRenderer
 
-            if visibility_contract not in CONTRACTS or coverage_mode != "refined":
+            if visibility_contract not in (*CONTRACTS, ALPHA_CONTRACT) or coverage_mode != "refined":
                 raise ValueError("unsupported visibility contract or coverage mode")
-            validate_camera(trajectory.manifest["camera"], contract=visibility_contract)
+            validate_camera(
+                trajectory.manifest["camera"],
+                contract="stable-envs/opaque-pixel-rays-v2" if self._transparent else visibility_contract,
+            )
             geometry_precision = "float64"
             renderer_class = ContractRenderer
-            renderer_options = {
-                "camera_metadata": trajectory.manifest["camera"],
-                "semantic_ids": torch.tensor([o["id"] for o in trajectory.manifest["objects"]], device=self.device),
-                "visibility_contract": visibility_contract,
-                "affine_transforms": self._scaled,
-            }
+            if self._transparent:
+                from .transparency_cuda import AlphaRenderer
+
+                renderer_class = AlphaRenderer
+                renderer_options["max_layers"] = max_layers
+            renderer_options.update(
+                {
+                    "camera_metadata": trajectory.manifest["camera"],
+                    "semantic_ids": torch.tensor(
+                        [o["id"] for o in trajectory.manifest["objects"]], device=self.device
+                    ),
+                    "visibility_contract": visibility_contract,
+                    "affine_transforms": self._scaled,
+                }
+            )
         camera_dtype = torch.float64 if geometry_precision == "float64" else torch.float32
         self.visibility_contract = visibility_contract
         manifest = trajectory.manifest
@@ -136,7 +160,10 @@ class RigidSceneRenderer(Closeable):
         """Upload selected CPU poses once; share coverage across requested fields."""
         self._check_open("render")
         modes = tuple(modes)
-        if not modes or len(set(modes)) != len(modes) or any(m not in ("rgb", "depth", "ids") for m in modes):
+        allowed = {"rgb", "depth", "ids"}
+        if self._transparent:
+            allowed |= {"masks", "weights", "layer_depth", "layer_ids"}
+        if not modes or len(set(modes)) != len(modes) or set(modes) - allowed:
             raise ValueError("modes must be unique rgb/depth/ids")
         poses = self.trajectory.poses(frames) if self.cache_static else self.trajectory.object_poses(frames)
         scales = None
@@ -145,6 +172,13 @@ class RigidSceneRenderer(Closeable):
             scales = torch.as_tensor(selected, device=self.device)
         shapes = {m: (len(poses), self.height, self.width) + ((3,) if m == "rgb" else ()) for m in modes}
         dtypes = {"rgb": torch.uint8, "depth": torch.float32, "ids": torch.int16}
+        for mode in ("masks", "weights"):
+            if mode in modes:
+                shapes[mode] = (len(poses), len(self.trajectory.manifest["objects"]), self.height, self.width)
+        for mode in ("layer_depth", "layer_ids"):
+            if mode in modes:
+                shapes[mode] = (len(poses), self.height, self.width, self.max_layers)
+        dtypes.update(masks=torch.bool, weights=torch.float32, layer_depth=torch.float32, layer_ids=torch.int16)
         if out is not None:
             if set(out) != set(modes):
                 raise ValueError("out must contain exactly the requested modes")
@@ -189,6 +223,8 @@ class RigidSceneRenderer(Closeable):
             self.renderer.render_many(positions_gpu, rotations_gpu, self.camera, modes=modes, out=buffers)
             if "ids" in modes:
                 buffers["ids"].copy_(self._ids[buffers["ids"].long()])
+            if "layer_ids" in modes:
+                buffers["layer_ids"].copy_(self._ids[buffers["layer_ids"].long()])
         return result
 
     def _release(self):

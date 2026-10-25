@@ -1,0 +1,632 @@
+{
+  "arrays": {
+    "frames": {
+      "dtype": "int64",
+      "sha256": "3ce1a862b6cf0bb21bc1354b758cafa47ca5ec03b5c004d6210f5abd8c55df44",
+      "shape": [
+        120
+      ]
+    },
+    "poses": {
+      "dtype": "float32",
+      "sha256": "91f4f6e9c8c413b76559f2400da8f57c8ce554d6562665e250bfaee6d012da4b",
+      "shape": [
+        120,
+        2,
+        7
+      ]
+    }
+  },
+  "assets": {
+    "0c7216d4844344952d638e0988dcbddd0d8bca03d91064731cac5075f61c4c7a": {
+      "file": "assets/cube/0c7216d4844344952d638e0988dcbddd0d8bca03d91064731cac5075f61c4c7a.npz",
+      "sha256": "40f5883796bd9affea66da081896f71f3415863e50186f649f0b1ee5a46cf769"
+    },
+    "3b23f64a66991d9d7399271577e1df3131f0c458d85a62716dc752fd8e511bd4": {
+      "file": "assets/cube/3b23f64a66991d9d7399271577e1df3131f0c458d85a62716dc752fd8e511bd4.npz",
+      "sha256": "a42156045adcc848a97da0493ccb6fb74224b167968948ea6223fe847fd1b175"
+    },
+    "47f20f0d40b3aec7744c568b79e7c7dd4a5f099d5e8790ffe7f0846842dc72ea": {
+      "file": "assets/sphere/47f20f0d40b3aec7744c568b79e7c7dd4a5f099d5e8790ffe7f0846842dc72ea.npz",
+      "sha256": "f9fc2e3f1cc75bb882226f207f297f5a889215117d61f4d2b1f5d521ecfbd5c0"
+    },
+    "8b05fb69f8d22bcbf7b6cc75f4016dae45e3b70c8d808e909939c599902e0d18": {
+      "file": "assets/cube/8b05fb69f8d22bcbf7b6cc75f4016dae45e3b70c8d808e909939c599902e0d18.npz",
+      "sha256": "7abc05558409d0c450786066390a831b0fd0c0e1cfac40c49ebc055a0eb9931a"
+    },
+    "b13a6b6b40a7730af0966fd3073309f32712988a932008af934a9fd1293d4864": {
+      "file": "assets/cube/b13a6b6b40a7730af0966fd3073309f32712988a932008af934a9fd1293d4864.npz",
+      "sha256": "6e254864b8bdda7bf167b18e0aca8a4d78bd1d07479ba809d5755e3dc5a43bea"
+    },
+    "d08f46c2c58a8268dddf37f889654860667c6ca30c51781f2a5efdbfdc1b5877": {
+      "file": "assets/cube/d08f46c2c58a8268dddf37f889654860667c6ca30c51781f2a5efdbfdc1b5877.npz",
+      "sha256": "d3dda86f282c7142ba172aea7b0e66d998a0d4a11d8f195a580bd6561498ffab"
+    },
+    "e9251393319461a2ba1b4acbb4149539620d5055321045ff87faaa20198a8f0a": {
+      "file": "assets/sphere/e9251393319461a2ba1b4acbb4149539620d5055321045ff87faaa20198a8f0a.npz",
+      "sha256": "92f8b7e7b11d2853eca2317530bbda6486c2f6db146a27164a78110d9bba6a7a"
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "height": 720,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        2.1111111640930176,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        3.753086566925049,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "projection_type": "perspective",
+    "width": 1280,
+    "world": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.2257271111011505,
+        -0.9741905927658081,
+        -8.199999809265137
+      ],
+      [
+        0.0,
+        0.9741905927658081,
+        0.2257271111011505,
+        3.5999999046325684
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "clip": "g90-nominal",
+  "conventions": {
+    "quaternion": "wxyz",
+    "units": "source-scene-units",
+    "world": "right-handed-z-up"
+  },
+  "dynamic_nodes": [
+    "large_red_ball_wider_than_gap",
+    "small_orange_ball_narrower_than_gap"
+  ],
+  "fps": 24.0,
+  "license_ref": {
+    "sha256": "0163481eb7a0fe3ed86d2dccf542a849b36b3c119f8ca6d3d5b36c074f2e1a1c"
+  },
+  "material_convention": "stable-envs/constant-alpha-surfaces-v1",
+  "objects": [
+    {
+      "asset": "0c7216d4844344952d638e0988dcbddd0d8bca03d91064731cac5075f61c4c7a",
+      "id": 1,
+      "name": "large_floor_base",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        -0.05000000074505806,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8199999928474426,
+        0.800000011920929,
+        0.75,
+        1.0
+      ],
+      "role": "ground",
+      "shape": "cube",
+      "source_id": "large_floor_base"
+    },
+    {
+      "asset": "d08f46c2c58a8268dddf37f889654860667c6ca30c51781f2a5efdbfdc1b5877",
+      "id": 2,
+      "name": "large_funnel_endcap_B",
+      "node": -1,
+      "pose": [
+        2.0,
+        0.6100000143051147,
+        2.299999952316284,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.800000011920929,
+        0.8799999952316284,
+        0.9399999976158142,
+        0.20000000298023224
+      ],
+      "role": "funnel_endcap",
+      "shape": "cube",
+      "source_id": "large_funnel_endcap_B"
+    },
+    {
+      "asset": "d08f46c2c58a8268dddf37f889654860667c6ca30c51781f2a5efdbfdc1b5877",
+      "id": 3,
+      "name": "large_funnel_endcap_F",
+      "node": -1,
+      "pose": [
+        2.0,
+        -0.6100000143051147,
+        2.299999952316284,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.800000011920929,
+        0.8799999952316284,
+        0.9399999976158142,
+        0.20000000298023224
+      ],
+      "role": "funnel_endcap",
+      "shape": "cube",
+      "source_id": "large_funnel_endcap_F"
+    },
+    {
+      "asset": "8b05fb69f8d22bcbf7b6cc75f4016dae45e3b70c8d808e909939c599902e0d18",
+      "id": 4,
+      "name": "large_funnel_leg_eb",
+      "node": -1,
+      "pose": [
+        2.950000047683716,
+        0.5099999904632568,
+        0.7450000047683716,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6200000047683716,
+        0.6299999952316284,
+        0.6399999856948853,
+        1.0
+      ],
+      "role": "funnel_leg",
+      "shape": "cube",
+      "source_id": "large_funnel_leg_eb"
+    },
+    {
+      "asset": "8b05fb69f8d22bcbf7b6cc75f4016dae45e3b70c8d808e909939c599902e0d18",
+      "id": 5,
+      "name": "large_funnel_leg_ef",
+      "node": -1,
+      "pose": [
+        2.950000047683716,
+        -0.5099999904632568,
+        0.7450000047683716,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6200000047683716,
+        0.6299999952316284,
+        0.6399999856948853,
+        1.0
+      ],
+      "role": "funnel_leg",
+      "shape": "cube",
+      "source_id": "large_funnel_leg_ef"
+    },
+    {
+      "asset": "8b05fb69f8d22bcbf7b6cc75f4016dae45e3b70c8d808e909939c599902e0d18",
+      "id": 6,
+      "name": "large_funnel_leg_wb",
+      "node": -1,
+      "pose": [
+        1.0499999523162842,
+        0.5099999904632568,
+        0.7450000047683716,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6200000047683716,
+        0.6299999952316284,
+        0.6399999856948853,
+        1.0
+      ],
+      "role": "funnel_leg",
+      "shape": "cube",
+      "source_id": "large_funnel_leg_wb"
+    },
+    {
+      "asset": "8b05fb69f8d22bcbf7b6cc75f4016dae45e3b70c8d808e909939c599902e0d18",
+      "id": 7,
+      "name": "large_funnel_leg_wf",
+      "node": -1,
+      "pose": [
+        1.0499999523162842,
+        -0.5099999904632568,
+        0.7450000047683716,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6200000047683716,
+        0.6299999952316284,
+        0.6399999856948853,
+        1.0
+      ],
+      "role": "funnel_leg",
+      "shape": "cube",
+      "source_id": "large_funnel_leg_wf"
+    },
+    {
+      "asset": "3b23f64a66991d9d7399271577e1df3131f0c458d85a62716dc752fd8e511bd4",
+      "id": 8,
+      "name": "large_funnel_wall_L",
+      "node": -1,
+      "pose": [
+        1.2136859893798828,
+        0.0,
+        2.2750000953674316,
+        0.965925931930542,
+        0.0,
+        -0.2588190734386444,
+        0.0
+      ],
+      "rgba": [
+        0.550000011920929,
+        0.5699999928474426,
+        0.6200000047683716,
+        1.0
+      ],
+      "role": "funnel_wall",
+      "shape": "cube",
+      "source_id": "large_funnel_wall_L"
+    },
+    {
+      "asset": "3b23f64a66991d9d7399271577e1df3131f0c458d85a62716dc752fd8e511bd4",
+      "id": 9,
+      "name": "large_funnel_wall_R",
+      "node": -1,
+      "pose": [
+        2.786314010620117,
+        0.0,
+        2.2750000953674316,
+        0.965925931930542,
+        0.0,
+        0.2588190734386444,
+        0.0
+      ],
+      "rgba": [
+        0.550000011920929,
+        0.5699999928474426,
+        0.6200000047683716,
+        1.0
+      ],
+      "role": "funnel_wall",
+      "shape": "cube",
+      "source_id": "large_funnel_wall_R"
+    },
+    {
+      "asset": "e9251393319461a2ba1b4acbb4149539620d5055321045ff87faaa20198a8f0a",
+      "id": 10,
+      "name": "large_red_ball_wider_than_gap",
+      "node": 0,
+      "pose": [
+        1.366683840751648,
+        0.0,
+        3.559999942779541,
+        0.9975510239601135,
+        0.0,
+        -0.06994284689426422,
+        0.0
+      ],
+      "rgba": [
+        0.8500000238418579,
+        0.11999999731779099,
+        0.10000000149011612,
+        1.0
+      ],
+      "role": "large_ball_wedges_in_funnel",
+      "shape": "sphere",
+      "source_id": "large_red_ball_wider_than_gap"
+    },
+    {
+      "asset": "b13a6b6b40a7730af0966fd3073309f32712988a932008af934a9fd1293d4864",
+      "id": 11,
+      "name": "rear_backdrop_panel",
+      "node": -1,
+      "pose": [
+        0.0,
+        2.619999885559082,
+        1.899999976158142,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9599999785423279,
+        0.9700000286102295,
+        0.9800000190734863,
+        1.0
+      ],
+      "role": "background",
+      "shape": "cube",
+      "source_id": "rear_backdrop_panel"
+    },
+    {
+      "asset": "d08f46c2c58a8268dddf37f889654860667c6ca30c51781f2a5efdbfdc1b5877",
+      "id": 12,
+      "name": "small_funnel_endcap_B",
+      "node": -1,
+      "pose": [
+        -2.0,
+        0.6100000143051147,
+        2.299999952316284,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.800000011920929,
+        0.8799999952316284,
+        0.9399999976158142,
+        0.20000000298023224
+      ],
+      "role": "funnel_endcap",
+      "shape": "cube",
+      "source_id": "small_funnel_endcap_B"
+    },
+    {
+      "asset": "d08f46c2c58a8268dddf37f889654860667c6ca30c51781f2a5efdbfdc1b5877",
+      "id": 13,
+      "name": "small_funnel_endcap_F",
+      "node": -1,
+      "pose": [
+        -2.0,
+        -0.6100000143051147,
+        2.299999952316284,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.800000011920929,
+        0.8799999952316284,
+        0.9399999976158142,
+        0.20000000298023224
+      ],
+      "role": "funnel_endcap",
+      "shape": "cube",
+      "source_id": "small_funnel_endcap_F"
+    },
+    {
+      "asset": "8b05fb69f8d22bcbf7b6cc75f4016dae45e3b70c8d808e909939c599902e0d18",
+      "id": 14,
+      "name": "small_funnel_leg_eb",
+      "node": -1,
+      "pose": [
+        -1.0499999523162842,
+        0.5099999904632568,
+        0.7450000047683716,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6200000047683716,
+        0.6299999952316284,
+        0.6399999856948853,
+        1.0
+      ],
+      "role": "funnel_leg",
+      "shape": "cube",
+      "source_id": "small_funnel_leg_eb"
+    },
+    {
+      "asset": "8b05fb69f8d22bcbf7b6cc75f4016dae45e3b70c8d808e909939c599902e0d18",
+      "id": 15,
+      "name": "small_funnel_leg_ef",
+      "node": -1,
+      "pose": [
+        -1.0499999523162842,
+        -0.5099999904632568,
+        0.7450000047683716,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6200000047683716,
+        0.6299999952316284,
+        0.6399999856948853,
+        1.0
+      ],
+      "role": "funnel_leg",
+      "shape": "cube",
+      "source_id": "small_funnel_leg_ef"
+    },
+    {
+      "asset": "8b05fb69f8d22bcbf7b6cc75f4016dae45e3b70c8d808e909939c599902e0d18",
+      "id": 16,
+      "name": "small_funnel_leg_wb",
+      "node": -1,
+      "pose": [
+        -2.950000047683716,
+        0.5099999904632568,
+        0.7450000047683716,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6200000047683716,
+        0.6299999952316284,
+        0.6399999856948853,
+        1.0
+      ],
+      "role": "funnel_leg",
+      "shape": "cube",
+      "source_id": "small_funnel_leg_wb"
+    },
+    {
+      "asset": "8b05fb69f8d22bcbf7b6cc75f4016dae45e3b70c8d808e909939c599902e0d18",
+      "id": 17,
+      "name": "small_funnel_leg_wf",
+      "node": -1,
+      "pose": [
+        -2.950000047683716,
+        -0.5099999904632568,
+        0.7450000047683716,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6200000047683716,
+        0.6299999952316284,
+        0.6399999856948853,
+        1.0
+      ],
+      "role": "funnel_leg",
+      "shape": "cube",
+      "source_id": "small_funnel_leg_wf"
+    },
+    {
+      "asset": "3b23f64a66991d9d7399271577e1df3131f0c458d85a62716dc752fd8e511bd4",
+      "id": 18,
+      "name": "small_funnel_wall_L",
+      "node": -1,
+      "pose": [
+        -2.786314010620117,
+        0.0,
+        2.2750000953674316,
+        0.965925931930542,
+        0.0,
+        -0.2588190734386444,
+        0.0
+      ],
+      "rgba": [
+        0.550000011920929,
+        0.5699999928474426,
+        0.6200000047683716,
+        1.0
+      ],
+      "role": "funnel_wall",
+      "shape": "cube",
+      "source_id": "small_funnel_wall_L"
+    },
+    {
+      "asset": "3b23f64a66991d9d7399271577e1df3131f0c458d85a62716dc752fd8e511bd4",
+      "id": 19,
+      "name": "small_funnel_wall_R",
+      "node": -1,
+      "pose": [
+        -1.2136859893798828,
+        0.0,
+        2.2750000953674316,
+        0.965925931930542,
+        0.0,
+        0.2588190734386444,
+        0.0
+      ],
+      "rgba": [
+        0.550000011920929,
+        0.5699999928474426,
+        0.6200000047683716,
+        1.0
+      ],
+      "role": "funnel_wall",
+      "shape": "cube",
+      "source_id": "small_funnel_wall_R"
+    },
+    {
+      "asset": "47f20f0d40b3aec7744c568b79e7c7dd4a5f099d5e8790ffe7f0846842dc72ea",
+      "id": 20,
+      "name": "small_orange_ball_narrower_than_gap",
+      "node": 1,
+      "pose": [
+        -2.7949743270874023,
+        0.0,
+        3.3399999141693115,
+        0.9959527850151062,
+        0.0,
+        -0.08987854421138763,
+        0.0
+      ],
+      "rgba": [
+        1.0,
+        0.3799999952316284,
+        0.05999999865889549,
+        1.0
+      ],
+      "role": "small_ball_passes_gap",
+      "shape": "sphere",
+      "source_id": "small_orange_ball_narrower_than_gap"
+    }
+  ],
+  "schema": "stable-envs/object-permanence-rigid-v4",
+  "source": {
+    "commit": "824baddcdad087810d35638bf8f273b884f74975",
+    "exporter": "scripts/export/object_permanence.py",
+    "exporter_sha256": "2592cabb7a8c4ae5b98dc267ba72c91ee1ecc02d01100ead8d653c67b360adbf",
+    "license": "CC-BY-NC-4.0",
+    "parameters": {},
+    "preparation_recipe": {
+      "animate": "animate_scene",
+      "build": "build_scene_by_kind"
+    },
+    "profile": "nominal-first-member-no-diversity",
+    "script": "object_permanence/generator/tasks/G90_funnel_size_sorter/pb_task_00000136_pb_funnel_size_sorter_0137_blender.py",
+    "script_sha256": "a16375a2d967c0999962fbfe8a0576937b6e6b52917e220e1da09bd31c1a917a",
+    "seed": null,
+    "task": "G90",
+    "task_manifest_sha256": "0fdf6d6d82ad2b60531885f7fe04a6afdac02bd321b218693be5e47c3a8b5b67",
+    "url": "https://github.com/hokindeng/object-permanence",
+    "versions": {
+      "blender": "4.4.0",
+      "numpy": "1.26.4",
+      "python": "3.11.16"
+    },
+    "video_split": null
+  },
+  "visibility_contract": "stable-envs/transparent-pixel-rays-v1"
+}

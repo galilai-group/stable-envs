@@ -118,6 +118,30 @@ def test_v2_recording_marks_projection_and_keeps_the_existing_pose_layout(tmp_pa
         RigidTrajectory(tmp_path, "example")
 
 
+def test_v4_material_policy_is_explicit_and_preserves_optional_scale_layout(tmp_path, recording):
+    recording["material_convention"] = "stable-envs/constant-alpha-surfaces-v1"
+    recording["objects"][0]["rgba"][3] = 0.25
+    recording["scales"] = np.ones((4, 2, 3), np.float32)
+    path = write(tmp_path, recording)
+    with RigidTrajectory(tmp_path, "example") as clip:
+        assert clip.manifest["schema"] == "stable-envs/object-permanence-rigid-v4"
+        assert clip.manifest["visibility_contract"] == "stable-envs/transparent-pixel-rays-v1"
+        assert clip.has_scales
+        np.testing.assert_array_equal(clip.triangles()["rgba"][:, 3], [0.25, 1, 1, 1])
+    edit_manifest(path, lambda m: m.pop("material_convention"))
+    with pytest.raises(ValueError, match="v4 requires"):
+        RigidTrajectory(tmp_path, "example")
+
+
+@pytest.mark.parametrize("alpha", [-0.1, 1.1, np.nan])
+def test_v4_alpha_values_are_validated(tmp_path, recording, alpha):
+    recording["material_convention"] = "stable-envs/constant-alpha-surfaces-v1"
+    recording["objects"][0]["rgba"][3] = alpha
+    write(tmp_path, recording)
+    with pytest.raises(ValueError):
+        RigidTrajectory(tmp_path, "example")
+
+
 @pytest.mark.parametrize("orthographic", [False, True])
 def test_optional_relative_scales_preserve_poses_nodes_and_caller_ownership(tmp_path, recording, orthographic):
     if orthographic:

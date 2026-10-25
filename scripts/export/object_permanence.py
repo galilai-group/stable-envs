@@ -31,6 +31,11 @@ SOURCE_COMMIT = "824baddcdad087810d35638bf8f273b884f74975"
 SCHEMA = "stable-envs/object-permanence-rigid-v1"
 SCHEMA_V2 = "stable-envs/object-permanence-rigid-v2"
 SCHEMA_V3 = "stable-envs/object-permanence-rigid-v3"
+SCHEMA_V4 = "stable-envs/object-permanence-rigid-v4"
+ALPHA_MATERIAL = "stable-envs/constant-alpha-surfaces-v1"
+ALPHA_CONTRACT = "stable-envs/transparent-pixel-rays-v1"
+ALPHA_TASKS = {"G36", "G54", "G61", "G90"}
+ALPHA_ORTHOGRAPHIC_TASKS = {"G54", "G61"}
 SCALE_CONVENTION = "stable-envs/asset-relative-positive-diagonal-v1"
 ANIMATED_SCALE_TASKS = {"G146"}
 CONVENTIONS = {"world": "right-handed-z-up", "quaternion": "wxyz", "units": "source-scene-units"}
@@ -419,8 +424,16 @@ CONTRACT_ONLY_TASKS = {
     "G149",
     "G150",
 }
+AUDITED_TASKS.update(
+    {
+        "G36": ("build_scene_by_kind", "animate_scene_by_kind"),
+        "G54": ("build_scene_by_kind", "animate_scene_by_kind"),
+        "G61": ("build_scene_by_kind", "animate_scene_by_kind"),
+        "G90": ("build_scene_by_kind", "animate_scene"),
+    }
+)
 RAY_CONTRACT_TASKS |= ANIMATED_SCALE_TASKS
-CONTRACT_ONLY_TASKS |= ORTHOGRAPHIC_TASKS | CONVERTED_GEOMETRY_TASKS | ANIMATED_SCALE_TASKS
+CONTRACT_ONLY_TASKS |= ORTHOGRAPHIC_TASKS | CONVERTED_GEOMETRY_TASKS | ANIMATED_SCALE_TASKS | ALPHA_TASKS
 # Preparation/rigid serialization passed, but source pixel fidelity did not.
 # Explicit export remains useful for diagnosis; default batch execution is blocked.
 DEFERRED_TASKS = {
@@ -744,7 +757,7 @@ def _pose(obj, depsgraph):
     return np.asarray([*position, *rotation], np.float32), scale
 
 
-def _rgba(obj):
+def _rgba(obj, *, allow_transparent=False):
     if len(obj.material_slots) != 1 or obj.active_material is None:
         raise ValueError(f"v1 requires one opaque material: {obj.name}")
     material = obj.active_material
@@ -753,11 +766,27 @@ def _rgba(obj):
         bsdf = material.node_tree.nodes.get("Principled BSDF")
         if bsdf is None or any(n.type == "TEX_IMAGE" for n in material.node_tree.nodes):
             raise ValueError(f"unsupported material nodes: {obj.name}")
+        if allow_transparent:
+            outputs = [n for n in material.node_tree.nodes if n.type == "OUTPUT_MATERIAL"]
+            if (
+                len(material.node_tree.nodes) != 2
+                or len(outputs) != 1
+                or any(outputs[0].inputs[k].is_linked for k in ("Volume", "Displacement"))
+                or len(outputs[0].inputs["Surface"].links) != 1
+                or outputs[0].inputs["Surface"].links[0].from_node != bsdf
+            ):
+                raise ValueError(f"unsupported alpha shader graph: {obj.name}")
         sockets = [bsdf.inputs[k] for k in ("Base Color", "Alpha", "Transmission Weight")]
-        if any(s.is_linked for s in sockets) or sockets[1].default_value != 1 or sockets[2].default_value != 0:
+        if (
+            any(s.is_linked for s in sockets)
+            or (not allow_transparent and sockets[1].default_value != 1)
+            or sockets[2].default_value != 0
+        ):
             raise ValueError(f"unsupported transparency/material links: {obj.name}")
         color = np.asarray(sockets[0].default_value, np.float32)
-    if not np.isfinite(color).all() or color[3] != 1:
+        if allow_transparent:
+            color[3] = sockets[1].default_value
+    if not np.isfinite(color).all() or (color[3] != 1 if not allow_transparent else not 0 <= color[3] <= 1):
         raise ValueError(f"unsupported transparency: {obj.name}")
     return color
 
@@ -797,7 +826,13 @@ def _camera(scene, depsgraph, *, allow_orthographic=False):
 
 
 def sample_scene(
-    scene, *, object_order=None, allow_orthographic=False, allow_evaluated_geometry=False, allow_animated_scale=False
+    scene,
+    *,
+    object_order=None,
+    allow_orthographic=False,
+    allow_evaluated_geometry=False,
+    allow_animated_scale=False,
+    allow_transparent=False,
 ):
     """Check every frame and return a rigid recording, or fail explicitly.
 
@@ -854,7 +889,7 @@ def sample_scene(
                 # constant scale by a few ULPs. Bake the first scale consistently
                 # and check subsequent scales against the explicit error budget.
                 meshes.append(_mesh(obj, depsgraph, scale if initial is None else initial[1][index]))
-                colors.append(_rgba(obj))
+                colors.append(_rgba(obj, allow_transparent=allow_transparent))
             keys = [array_digest(m) for m in meshes]
             if scale_history is not None:
                 scale_history[row] = scales
@@ -921,6 +956,8 @@ def sample_scene(
             relative = np.ones_like(scale_history)
             relative[:, scaled] = scale_history[:, scaled] / initial[1][scaled]
             result["scales"] = np.ascontiguousarray(relative[:, moving], dtype=np.float32)
+        if allow_transparent:
+            result["material_convention"] = ALPHA_MATERIAL
         return result
     finally:
         scene.frame_set(original)
@@ -1067,6 +1104,12 @@ def write_recording(root, clip, recording, source):
         )
     if "geometry_conversion" in recording:
         manifest["geometry_conversion"] = recording["geometry_conversion"]
+    if "material_convention" in recording:
+        if recording["material_convention"] != ALPHA_MATERIAL:
+            raise ValueError("unsupported material convention")
+        manifest.update(schema=SCHEMA_V4, material_convention=ALPHA_MATERIAL, visibility_contract=ALPHA_CONTRACT)
+        manifest["camera"] = dict(recording["camera"])
+        manifest["camera"].setdefault("projection_type", "perspective")
     with tempfile.TemporaryDirectory(dir=clips, prefix=".export-") as temporary:
         directory = Path(temporary)
         for name in ("poses", "frames", *(["scales"] if "scales" in recording else [])):
@@ -1089,11 +1132,15 @@ def export(root, output, task):
     recording = sample_scene(
         scene,
         object_order=G34_ORDER if task == "G34" else None,
-        allow_orthographic=task in ORTHOGRAPHIC_TASKS,
+        allow_orthographic=task in ORTHOGRAPHIC_TASKS | ALPHA_ORTHOGRAPHIC_TASKS,
         allow_evaluated_geometry=task in CONVERTED_GEOMETRY_TASKS,
         allow_animated_scale=task in ANIMATED_SCALE_TASKS,
+        allow_transparent=task in ALPHA_TASKS,
     )
-    if task in ORTHOGRAPHIC_TASKS and recording["camera"].get("projection_type") != "orthographic":
+    if (
+        task in ORTHOGRAPHIC_TASKS | ALPHA_ORTHOGRAPHIC_TASKS
+        and recording["camera"].get("projection_type") != "orthographic"
+    ):
         raise ValueError("audited orthographic entry changed projection type")
     source = {
         "url": "https://github.com/hokindeng/object-permanence",
@@ -1116,7 +1163,7 @@ def export(root, output, task):
     if context is not None:
         source["profile"] = "nominal-first-member-surface-diversity-context"
         source["execution_context"] = context
-    if task in ORTHOGRAPHIC_TASKS | CONVERTED_GEOMETRY_TASKS | ANIMATED_SCALE_TASKS:
+    if task in ORTHOGRAPHIC_TASKS | CONVERTED_GEOMETRY_TASKS | ANIMATED_SCALE_TASKS | ALPHA_TASKS:
         source["preparation_recipe"] = {"build": AUDITED_TASKS[task][0], "animate": AUDITED_TASKS[task][1]}
     if task in CONVERTED_GEOMETRY_TASKS:
         source["geometry_converter_sha256"] = sha256(Path(__file__).with_name("object_permanence_geometry.py"))

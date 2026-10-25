@@ -18,6 +18,8 @@ import sys
 from pathlib import Path
 
 from .object_permanence import (
+    ALPHA_CONTRACT,
+    ALPHA_TASKS,
     AUDITED_TASKS,
     CONTRACT_ONLY_TASKS,
     DEFERRED_TASKS,
@@ -33,7 +35,12 @@ from .object_permanence import (
 def run(
     root, output, report, *, tasks="all", plan_only=False, blender_python=sys.executable, visibility_contract=None
 ):
-    if visibility_contract not in (None, "stable-envs/opaque-pixel-rays-v1", "stable-envs/opaque-pixel-rays-v2"):
+    if visibility_contract not in (
+        None,
+        "stable-envs/opaque-pixel-rays-v1",
+        "stable-envs/opaque-pixel-rays-v2",
+        ALPHA_CONTRACT,
+    ):
         raise ValueError("unknown visibility contract")
     check_source(root)
     selected = None if tasks == "all" else set(tasks.split(","))
@@ -53,9 +60,13 @@ def run(
                 ast.parse((path.parent / name).read_text()), audited=member == 0 and task["id"] in AUDITED_TASKS
             )
             versioned = (
-                visibility_contract == "stable-envs/opaque-pixel-rays-v1" and task["id"] in RAY_CONTRACT_TASKS
-            ) or (visibility_contract == "stable-envs/opaque-pixel-rays-v2" and task["id"] in ORTHOGRAPHIC_TASKS)
-            if member == 0 and task["id"] in CONTRACT_ONLY_TASKS and not versioned:
+                (visibility_contract == "stable-envs/opaque-pixel-rays-v1" and task["id"] in RAY_CONTRACT_TASKS)
+                or (visibility_contract == "stable-envs/opaque-pixel-rays-v2" and task["id"] in ORTHOGRAPHIC_TASKS)
+                or (visibility_contract == ALPHA_CONTRACT and task["id"] in ALPHA_TASKS)
+            )
+            if member == 0 and visibility_contract == ALPHA_CONTRACT and task["id"] not in ALPHA_TASKS:
+                job.update(status="unsupported", reason="entry is not audited for the alpha material contract")
+            elif member == 0 and task["id"] in CONTRACT_ONLY_TASKS and not versioned:
                 job.update(status="unsupported", reason="requires explicit versioned ray contract")
             elif member == 0 and task["id"] in DEFERRED_TASKS and not versioned:
                 job.update(

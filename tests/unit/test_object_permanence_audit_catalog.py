@@ -4,7 +4,13 @@ import json
 import re
 from pathlib import Path
 
-from scripts.export.object_permanence import AUDITED_TASKS, ORTHOGRAPHIC_TASKS, RAY_CONTRACT_TASKS, SOURCE_COMMIT
+from scripts.export.object_permanence import (
+    ALPHA_TASKS,
+    AUDITED_TASKS,
+    ORTHOGRAPHIC_TASKS,
+    RAY_CONTRACT_TASKS,
+    SOURCE_COMMIT,
+)
 from tests.helpers.reference.object_permanence_recordings import DEPTH_MSE_MAX, MASK_IOU_MIN, RECORDINGS
 
 CATALOG = Path(__file__).resolve().parents[2] / "docs/adding/object-permanence-audit.json"
@@ -40,7 +46,10 @@ def test_certified_catalog_matches_registered_recordings_and_unchanged_budgets()
         assert recording["source"]["script_sha256"] == row["source_script_sha256"]
         assert recording["source"]["task_manifest_sha256"] == row["source_task_manifest_sha256"]
         assert row["frames"] == 120
-        assert (row["contract"] is not None) == (task in RAY_CONTRACT_TASKS | ORTHOGRAPHIC_TASKS)
+        assert (row["contract"] is not None) == (task in RAY_CONTRACT_TASKS | ORTHOGRAPHIC_TASKS | ALPHA_TASKS)
+        if task in ALPHA_TASKS:
+            assert recording["schema"] == "stable-envs/object-permanence-rigid-v4"
+            assert row["contract"] == recording["visibility_contract"] == "stable-envs/transparent-pixel-rays-v1"
         if task in ORTHOGRAPHIC_TASKS:
             assert row["contract"] == "stable-envs/opaque-pixel-rays-v2"
             assert recording["schema"] == "stable-envs/object-permanence-rigid-v2"
@@ -50,9 +59,10 @@ def test_certified_catalog_matches_registered_recordings_and_unchanged_budgets()
             assert row["mask_iou_min"] >= MASK_IOU_MIN
             assert row["cache_bit_identical_resolutions"] == [90, 180]
             version = "v2" if task in ORTHOGRAPHIC_TASKS else "v1"
-            oracle = (
-                RECORDINGS.parents[1]
-                / f"semantics/object_permanence/{task.lower()}/opaque_pixel_rays_{version}/nominal/manifest.json"
+            oracle = RECORDINGS.parents[1] / (
+                f"semantics/object_permanence/{task.lower()}/transparent_pixel_rays_v1/nominal/manifest.json"
+                if task in ALPHA_TASKS
+                else f"semantics/object_permanence/{task.lower()}/opaque_pixel_rays_{version}/nominal/manifest.json"
             )
             assert json.loads(oracle.read_text())["targets"] == row["reference_targets"]
             roles = {o["name"]: o["role"] for o in recording["objects"]}
