@@ -8,7 +8,7 @@
  "has_dynamics": true,
  "default_size": 224,
  "frame_shape": [224, 224, 3],
- "physics": "native torch on the env device",
+ "physics": "native JAX on the env device",
  "renderers": {
   "cpu": "raster2d (torch)",
   "cuda": "raster2d (torch) with the Triton dot compositor"

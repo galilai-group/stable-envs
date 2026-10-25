@@ -23,7 +23,7 @@ from tests.helpers.reference.variation_maps.dmc_control import swm_defaults
 DOMAINS = {
     "DMCBallInCupCatch": "ball_in_cup",
     "DMCFingerTurnHard": "finger",
-    "DMCReacherHard": "reacher",
+    "DMCReacher": "reacher",
     "DMCCheetahRun": "cheetah",
     "DMCHopperHop": "hopper",
     "DMCWalkerWalk": "walker",
@@ -54,7 +54,7 @@ CASES = {
         {**_SHOWN, "target.shape": 0},
         {**_SHOWN, "target.shape": 1},
     ],
-    "DMCReacherHard": [{**_SHOWN, "target.shape": 0}, {**_SHOWN, "target.shape": 1}],
+    "DMCReacher": [{**_SHOWN, "target.shape": 0}, {**_SHOWN, "target.shape": 1}],
     **{
         cell: [{f"agent.{part}_density": value} for part in ("torso", foot) for value in (550.0, 1450.0)]
         for cell, foot in (

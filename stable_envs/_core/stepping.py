@@ -39,9 +39,13 @@ def _done(result):
     return done
 
 
-def _task_outputs(result, active, *, all_active):
+def _task_outputs(result, active, *, all_active, owned=False):
     """Own the task outputs and zero them where a lane had already finished."""
-    out = result.exclude("state", "frame").clone()
+    out = result.exclude("state", "frame")
+    # Families may guarantee fresh output storage. Padding still needs a copy:
+    # once every lane finishes, result can be reused for later sequence entries.
+    if not owned or not all_active:
+        out = out.clone()
     if not all_active:
         inactive = (~active).nonzero(as_tuple=True)[0]
         for value in out.values(True, True):
@@ -94,6 +98,7 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
         acts = acts.detach().cpu().numpy()
     history, saved_states, saved_frames, validity = [], {}, {}, []
     advance = getattr(env, "_advance_without_snapshot", env._step)
+    outputs_owned = getattr(env, "_step_outputs_owned", False)
     # Draws the live lanes without rebuilding them from the State snapshot.
     render_live = getattr(env, "_render_live", None)
     active = torch.ones(env.num_envs, dtype=torch.bool, device=env.device)
@@ -144,7 +149,7 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
                 # Received outputs own their storage, so workers can reuse buffers while the parent renders.
                 submit(t + 1, next_active, next_all_active)
                 pending = True
-            history.append(_task_outputs(result, active, all_active=all_active))
+            history.append(_task_outputs(result, active, all_active=all_active, owned=outputs_owned))
             if t in state_times:
                 saved_states[t] = live_state
             if t in frame_times:

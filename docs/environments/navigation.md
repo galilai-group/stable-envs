@@ -2,7 +2,7 @@
 
 These five classes port 2D navigation tasks of
 [stable-worldmodel](https://github.com/galilai-group/stable-worldmodel). A point agent moves in a flat
-arena. The physics and the renderer are native torch code. Both run on the env device, CPU or CUDA.
+arena, with walls, doors or motion-bias zones depending on the task.
 
 ```python
 import stable_envs as snv
@@ -21,6 +21,27 @@ other room. The target is invisible in the frame. The State keeps the target pos
 State keeps the task.
 
 **Success:** the episode terminates when the agent is less than 16 px from the target.
+
+### Dynamics
+
+TwoRoom runs on CPU or CUDA and accepts and returns Torch tensors. Its JAX physics backend
+uses the requested device; JAX is included in the base installation. For CUDA, install
+`stable-envs[navigation-gpu]`:
+
+```python
+import torch
+import stable_envs as snv
+
+with snv.TwoRoom(num_envs=1024, device="cuda") as env:
+    env.reset(seed=0)
+    actions = torch.zeros(1024, 2, device="cuda")
+    result = env.step(actions, states=None, frames=None)
+```
+
+The first step compiles the physics kernel and, on supported CUDA installations, the shared Torch
+task outputs. Allow warm-up steps before measuring throughput; a new batch shape can compile again.
+Torch and JAX exchange tensors through DLPack on the selected device, without copying them to CPU
+during stepping. A missing JAX CUDA runtime raises an error explaining which extra to install.
 
 <!-- env: TwoRoom -->
 

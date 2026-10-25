@@ -30,10 +30,7 @@ FIRST_FAMILY_FIELDS = {key: _with_physics(key, fields) for key, fields in _FIRST
 
 # These fields restore simulation; compact renderer columns cannot.
 _REACHER_CORE = {**core_fields(2, 2), ("task", "target_pos"): (3, torch.float64)}
-REACHER_FIELDS = {
-    "reacher": _with_physics("reacher", _REACHER_CORE),
-    "reacher-easy": _with_physics("reacher-easy", _REACHER_CORE),
-}
+REACHER_FIELDS = {"reacher": _with_physics("reacher", _REACHER_CORE)}
 
 
 def _make_first_family(domain, seed):
@@ -82,7 +79,7 @@ class FirstFamilyAdapter(DMCLanes):
 
 
 def _make_reacher(seed):
-    """Construct Reacher’s hard task with the registered model and action scaling."""
+    """Construct Reacher with the registered model and action scaling."""
     from dm_control.rl import control
     from dm_control.suite import reacher
 
@@ -106,7 +103,5 @@ def _make_reacher(seed):
 class ReacherAdapter(DMCLanes):
     """Reacher lanes; State includes the target, which an implicit reset redraws."""
 
-    def __init__(self, num_envs, device="cpu", seed=0, task="hard"):
-        key = "reacher" if task == "hard" else f"reacher-{task}"
-        make = _make_reacher if task == "hard" else (lambda s: suite_env("reacher", task, s))
-        super().__init__(key, num_envs, device, seed, make, _REACHER_CORE)
+    def __init__(self, num_envs, device="cpu", seed=0):
+        super().__init__("reacher", num_envs, device, seed, _make_reacher, _REACHER_CORE)

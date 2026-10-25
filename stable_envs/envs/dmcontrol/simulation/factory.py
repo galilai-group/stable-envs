@@ -12,18 +12,12 @@ from .continuation import CONTINUATION_FIELDS, DMCContinuationAdapter
 from .first_family import FIRST_FAMILY_FIELDS, REACHER_FIELDS, FirstFamilyAdapter, ReacherAdapter
 from .humanoid import HUMANOID_CONFIG, HUMANOID_FIELDS, DMCHumanoidAdapter
 
-
-def _reacher(task, num_envs, device="cpu", seed=0):
-    return ReacherAdapter(num_envs, device, seed, task=task)
-
-
 DMCAdapter = FirstFamilyAdapter | ReacherAdapter | DMCAlignedAdapter | DMCContinuationAdapter | DMCHumanoidAdapter
 FACTORIES: dict[str, Callable[..., DMCAdapter]] = {
     **{domain: partial(FirstFamilyAdapter, domain) for domain in FIRST_FAMILY_FIELDS},
     **{domain: partial(DMCAlignedAdapter, domain) for domain in ALIGNED},
     **{domain: partial(DMCContinuationAdapter, domain) for domain in CONTINUATION},
     "reacher": ReacherAdapter,
-    "reacher-easy": partial(_reacher, "easy"),
     "humanoid": DMCHumanoidAdapter,
 }
 #: Full State fields per simulator key.

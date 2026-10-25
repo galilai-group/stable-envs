@@ -76,7 +76,7 @@ from .quadruped import (  # noqa: F401
     _transcribed_quadruped_env,
     _TranscribedQuadrupedModel,
 )
-from .reacher import DMCReacherEasy, DMCReacherHard  # noqa: F401
+from .reacher import DMCReacher  # noqa: F401
 from .suite import DMControlSuite  # noqa: F401
 from .swimmer import SPECULAR_NOTE, TRACKCOM_RENDER_FLAGS, DMCSwimmerSwimmer6  # noqa: F401
 from .trackcom import DMControlTrackCom, _tc_context, _TCtx  # noqa: F401

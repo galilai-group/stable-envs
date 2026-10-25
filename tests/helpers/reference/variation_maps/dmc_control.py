@@ -209,7 +209,7 @@ _LIGHT_BASE = {
     "DMCManipulatorBringBall": 0.6,
     "DMCPendulumSwingup": 0.7,
     "DMCQuadrupedWalk": 0.7,
-    "DMCReacherHard": 0.7,
+    "DMCReacher": 0.7,
     "DMCWalkerWalk": 0.7,
 }
 
@@ -239,7 +239,7 @@ _PARITY_FLOOR = frozenset(
         "DMCFingerTurnHard",
         "DMCManipulatorBringBall",
         "DMCPendulumSwingup",
-        "DMCReacherHard",
+        "DMCReacher",
     }
 )
 
@@ -584,8 +584,8 @@ _DMC_MAPS = {
         floor_note=_INERT["quadruped"],
         ours_only={**_GRID_OURS, **_EFFECTOR_OURS},
     ),
-    "DMCReacherHard": _dmc(
-        "DMCReacherHard",
+    "DMCReacher": _dmc(
+        "DMCReacher",
         "swm/ReacherDMControl-v0",
         mapped_target="material.target",
         visibility="visibility.target",

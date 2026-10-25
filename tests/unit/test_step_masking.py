@@ -18,14 +18,17 @@ _spec.loader.exec_module(_reference)
 
 @pytest.mark.parametrize("device", ["cpu", "cuda"])
 @pytest.mark.parametrize("pipeline", [False, True])
+@pytest.mark.parametrize("owned", [False, True])
 @pytest.mark.parametrize("limits", [[20, 20, 20], [1, 3, 20], [1, 1, 1]])
 @pytest.mark.parametrize("length,sequence", [(1, False), (1, True), (8, True)])
 @pytest.mark.parametrize("selection", [None, slice(None), slice(None, None, -1), slice(5, 5)])
-def test_owned_nested_outputs_and_terminal_routing(device, pipeline, limits, length, sequence, selection):
+def test_owned_nested_outputs_and_terminal_routing(device, pipeline, owned, limits, length, sequence, selection):
     if device == "cuda" and not torch.cuda.is_available():
         pytest.skip("requires CUDA")
 
     class PayloadCounter(PipelinedCounter if pipeline else Counter):
+        _step_outputs_owned = owned
+
         def __init__(self):
             super().__init__(device)
             self.image = torch.zeros(3, 16, 16, 3, dtype=torch.uint8, device=device)
@@ -35,7 +38,7 @@ def test_owned_nested_outputs_and_terminal_routing(device, pipeline, limits, len
             self.image.copy_(self.position.reshape(3, 1, 1, 1))
             # Serial task buffers may be borrowed. Pipeline receive owns its
             # output before it allows the next worker transition to start.
-            result["info", "goal"] = self.image.clone() if pipeline else self.image
+            result["info", "goal"] = self.image.clone() if pipeline or owned else self.image
             result["info", "flag"] = self.position[:, 0] > 1
             result["observation"] = self.position.float()
             return result

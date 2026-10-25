@@ -51,6 +51,7 @@ RENDERERS = {
 PHYSICS = {
     "DELEGATED_CPU": "source simulator on CPU",
     "NATIVE_TORCH": "native torch on the env device",
+    "NATIVE_JAX": "native JAX on the env device",
 }
 
 

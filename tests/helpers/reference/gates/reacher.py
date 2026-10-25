@@ -46,8 +46,8 @@ def run_gate(device="cpu"):
     for batch in (1, 3):
         ref = ReacherReference(batch)
         with (
-            se.make("DMCReacherHard", num_envs=batch, device=device) as env,
-            se.make("DMCReacherHard", num_envs=batch, device=device) as other,
+            se.make("DMCReacher", num_envs=batch, device=device) as env,
+            se.make("DMCReacher", num_envs=batch, device=device) as other,
         ):
             try:
                 for seed in (0, 17, 42):

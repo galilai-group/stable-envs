@@ -9,15 +9,16 @@ import tarfile
 import zipfile
 from pathlib import Path
 
-CORE_REQUIREMENTS = {"gymnasium", "loguru", "numpy", "tensordict", "torch"}
+CORE_REQUIREMENTS = {"gymnasium", "jax", "loguru", "numpy", "tensordict", "torch"}
 REQUIRED_EXTRAS = {
     "dev",
     "docs",
     "mjwarp",
     "rocket",
+    "navigation-gpu",
 }
 EXPECTED_AUTHORS = ("Randall Balestriero", "Sami BuGhanem")
-REQUIRED_LICENSES = {"LICENSE", "THIRD_PARTY_NOTICES.md"}
+REQUIRED_LICENSES = {"LICENSE", "THIRD_PARTY_NOTICES.md", "licenses/envX-APACHE-2.0.txt"}
 
 
 def _package_sources(root: Path) -> set[str]:

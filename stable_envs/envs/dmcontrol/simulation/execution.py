@@ -10,6 +10,10 @@ from .process import DMCProcessAdapter
 def make_dmc_adapter(
     domain: str, num_envs: int, device: str | torch.device, seed: int
 ) -> DMCAdapter | DMCProcessAdapter:
+    if domain == "reacher" and torch.device(device).type == "cuda":
+        from .reacher_mjx import ReacherMJXAdapter
+
+        return ReacherMJXAdapter(num_envs, device, seed)
     cpus = cpu_affinity()
     count = process_count(num_envs, cpus, eligible=domain in PROCESS_DOMAINS, path="dmc-sim")
     if count:

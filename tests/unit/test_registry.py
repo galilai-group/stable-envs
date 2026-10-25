@@ -154,7 +154,7 @@ def test_list_envs_and_info_answer_without_constructing_anything():
 
 def test_renamed_class_names_do_not_resolve():
     """Renamed classes and frozen SWM ids are not public aliases."""
-    samples = ("DMCAcrobotSwingup", "PointmazeLargeNavigate", "MujocoAnt", "PFRocketLanding")
+    samples = ("DMCAcrobotSwingup", "DMCReacherHard", "PointmazeLargeNavigate", "MujocoAnt", "PFRocketLanding")
     for old in samples:
         live = canonical_from_frozen(old)
         if live == old or live not in R.REGISTRY:
