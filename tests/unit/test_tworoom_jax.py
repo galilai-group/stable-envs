@@ -71,11 +71,34 @@ def test_dlpack_shares_contiguous_inputs_and_step_has_no_host_conversion(monkeyp
         with monkeypatch.context() as patch, jax.transfer_guard("disallow"):
             patch.setattr(torch.Tensor, "cpu", forbidden)
             patch.setattr(torch.Tensor, "numpy", forbidden)
+            patch.setattr(torch.Tensor, "item", forbidden)
+            patch.setattr(torch.Tensor, "__bool__", forbidden)
             result = env.step(action, states=None, frames=None)
             held = result.clone()
             env.step(-action, states=None, frames=None)
         assert_same_state(result, held)
         assert jax.config.x64_enabled == x64
+
+
+@pytest.mark.parametrize("name", ["TwoRoom", "Piecewise"])
+@pytest.mark.parametrize("device", ["cpu", pytest.param("cuda", marks=pytest.mark.gpu)])
+def test_task_snapshots_and_output_leaves_have_independent_storage(name, device):
+    if device == "cuda" and not torch.cuda.is_available():
+        pytest.skip("CUDA required")
+    with se.make(name, num_envs=3, device=device) as env:
+        env.reset(seed=0)
+        action = torch.zeros(3, 2, device=device)
+        result = env.step(action, states=None, frames=None)
+        held = result.clone()
+        result["info", "proprio"].zero_()
+        assert_same_state(result.exclude("info"), held.exclude("info"))
+        assert_same_state(result["info", "state"], held["info", "state"])
+        result["state", "target", "position"].zero_()
+        assert_same_state(result["info", "goal_state"], held["info", "goal_state"])
+        assert_same_state(env.get_state(), held["state"])
+        modified = result.clone()
+        env.step(action, states=None, frames=None)
+        assert_same_state(result, modified)
 
 
 def test_noncontiguous_actions_and_one_lane_offset_views():

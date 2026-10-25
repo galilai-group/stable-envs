@@ -5,8 +5,9 @@ See licenses/envX-APACHE-2.0.txt and THIRD_PARTY_NOTICES.md.
 
 Torch owns the live State. Steps exchange device buffers through DLPack and return
 new position arrays. Borrowed inputs are not retained between steps or donated to
-JAX, so public State snapshots keep independent storage. Strided or unaligned
-inputs require a device-local copy. The first call compiles the physics kernel;
+JAX, so public State snapshots keep independent storage. Packing position, action
+and style into one device buffer amortizes the DLPack stream handoff and handles
+strided or unaligned inputs. The first call compiles the physics kernel;
 masking, observations and task outputs remain in the shared navigation code.
 """
 
@@ -72,7 +73,10 @@ def _compiled(layout):
             number=leaf("door.number")[0],
         )
 
-    return jax.jit(jax.vmap(advance))
+    def advance_packed(row):
+        return advance(row[:2], row[2:4], row[4:])
+
+    return jax.jit(jax.vmap(advance_packed))
 
 
 def from_torch(value):
@@ -106,5 +110,6 @@ class Kernel:
         # Scope x64 to this kernel instead of changing the caller's global JAX configuration.
         # No donation: Torch still owns every input buffer, and public snapshots must survive.
         with enable_x64(), jax.default_device(self.device):
-            inputs = tuple(from_torch(value) for value in (position, action, style))
-            return torch.from_dlpack(self._advance(*inputs))
+            # One stream handoff costs less than importing three small buffers.
+            inputs = torch.cat((position, action, style), dim=1)
+            return torch.from_dlpack(self._advance(from_torch(inputs)))

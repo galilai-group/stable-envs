@@ -38,7 +38,8 @@ with snv.TwoRoom(num_envs=1024, device="cuda") as env:
     result = env.step(actions, states=None, frames=None)
 ```
 
-The first step compiles the physics kernel, so allow a warm-up step before measuring throughput.
+The first step compiles the physics kernel and, on supported CUDA installations, the shared Torch
+task outputs. Allow warm-up steps before measuring throughput; a new batch shape can compile again.
 Torch and JAX exchange tensors through DLPack on the selected device, without copying them to CPU
 during stepping. A missing JAX CUDA runtime raises an error explaining which extra to install.
 

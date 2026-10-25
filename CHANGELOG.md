@@ -67,6 +67,9 @@ All notable changes to this project are listed here. The format follows
   CUDA requires the `navigation-gpu` extra.
 - TwoRoom and Piecewise calculate target distances on the selected device, preserving the source's
   success boundary without copying positions to CPU during stepping.
+- Navigation steps avoid redundant State validation and copies of owned task outputs. On CUDA,
+  supported Torch compilers fuse the shared TwoRoom/Piecewise task outputs, and TwoRoom packs
+  physics inputs into one DLPack handoff.
 - `stable-envs doctor` reports how many render paths are tuned on this machine, lists the
   `STABLE_ENVS_*` variables that are set and flags unknown names, and checks torch's compiled GPU
   architectures with binary-compatibility rules.

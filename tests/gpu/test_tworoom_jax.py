@@ -60,6 +60,8 @@ def test_cuda_dlpack_step_on_nondefault_stream_has_no_host_conversion(monkeypatc
         with monkeypatch.context() as patch, jax.transfer_guard("disallow"):
             patch.setattr(torch.Tensor, "cpu", forbidden)
             patch.setattr(torch.Tensor, "numpy", forbidden)
+            patch.setattr(torch.Tensor, "item", forbidden)
+            patch.setattr(torch.Tensor, "__bool__", forbidden)
             action.fill_(0.125)
             result = env.step(action, states=None, frames=None)
             held = result.clone()
@@ -106,6 +108,7 @@ def test_cuda_shared_distance_matches_cpu_norm_without_host_conversion(name, mon
         state = env.reset(seed=0, options={"state": [60, 60], "target_state": targets})
         delta = (state["agent", "position"] - state["target", "position"]).cpu()
         expected = torch.tensor([float(torch.norm(row)) for row in delta], dtype=torch.float64)
+        env._outputs(state)  # Compile before guarding the runtime path.
 
         def forbidden(*args, **kwargs):
             raise AssertionError("host conversion in CUDA shared navigation outputs")

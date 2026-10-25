@@ -8,6 +8,7 @@ from gymnasium import spaces as gym_spaces
 from tensordict import TensorDict
 
 from ... import tuning
+from ..._core.tensordicts import build_tensordict
 from ...env import Env, ResetLeaf, StepResult, check_states
 from ...registry import register
 from ...render import _resources as _RES
@@ -410,6 +411,7 @@ class _HiddenTargetSemantics:
     """
 
     execution_mode = "NATIVE_TORCH"
+    _step_outputs_owned = True
     state_layout = ((("agent", "position"), 2, 0), (("target", "position"), 2, None))
     state_bounds = {
         ("agent", "position"): (POS_LO, POS_HI),
@@ -425,6 +427,17 @@ class _HiddenTargetSemantics:
         self._target_position = torch.full((self.B, 2), 0.0, device=self.device, dtype=torch.float32)
         self._target_position[:, 0] = 164.0
         self._target_position[:, 1] = 112.0
+        if self.device.type == "cuda":
+            from torch._inductor import list_options
+
+            # Older compilers can eliminate the float32 rounding points below.
+            # Keep their eager path; supported compilers fuse the same task code.
+            if "emulate_precision_casts" in list_options():
+                self._task_tensors = torch.compile(
+                    self._task_tensors,
+                    fullgraph=True,
+                    options={"emulate_precision_casts": True, "aggressive_fusion": True, "triton.cudagraphs": False},
+                )
 
     def _hidden_state(self):
         return {("target", "position"): self._target_position[: self._live_rows]}
@@ -461,7 +474,7 @@ class _HiddenTargetSemantics:
 
     def _full_state(self, agent):
         n = int(agent.shape[0])
-        return TensorDict(
+        return build_tensordict(
             {
                 "agent": {"position": agent.clone()},
                 "target": {"position": self._target_position[:n].clone()},
@@ -473,9 +486,7 @@ class _HiddenTargetSemantics:
     def _observation(self, agent, target):
         return torch.cat([agent, target], dim=1)
 
-    def _outputs(self, state):
-        agent = state["agent", "position"]
-        target = state["target", "position"]
+    def _task_tensors(self, agent, target):
         observation = self._observation(agent, target)
         # Match the two-element CPU torch.norm: round x*x, accumulate y*y with
         # one float32 rounding, then round sqrt. Reassociation can flip success at 16 px.
@@ -483,24 +494,23 @@ class _HiddenTargetSemantics:
         first = delta[:, 0].square().float()
         squared = torch.addcmul(first.double(), delta[:, 1], delta[:, 1]).float()
         distance = squared.double().sqrt().float().double()
-        n = int(state.batch_size[0])
-        return StepResult(
-            {
-                "state": state,
-                "reward": torch.zeros(n, device=self.device, dtype=torch.float64),
-                "terminated": distance < 16.0,
-                "truncated": torch.zeros(n, device=self.device, dtype=torch.bool),
-                "observation": observation,
-                "info": {
-                    "proprio": agent.clone(),
-                    "state": agent.clone(),
-                    "goal_state": target.clone(),
-                    "distance_to_target": distance,
-                },
+        n = int(agent.shape[0])
+        return {
+            "reward": torch.zeros(n, device=self.device, dtype=torch.float64),
+            "terminated": distance < 16.0,
+            "truncated": torch.zeros(n, device=self.device, dtype=torch.bool),
+            "observation": observation,
+            "info": {
+                "proprio": agent.clone(),
+                "state": agent.clone(),
+                "goal_state": target.clone(),
+                "distance_to_target": distance,
             },
-            batch_size=[n],
-            device=self.device,
-        )
+        }
+
+    def _outputs(self, state):
+        values = self._task_tensors(state["agent", "position"], state["target", "position"])
+        return build_tensordict({"state": state, **values}, state.batch_size, self.device)
 
     @torch.no_grad()
     def _step(self, action, *, active=None):
@@ -510,7 +520,9 @@ class _HiddenTargetSemantics:
         if active is not None:
             next_rows = torch.where(active[:, None], next_rows, self._render_state)
         self._render_state.copy_(next_rows)
-        return self._outputs(self.get_state())
+        # Physics already produces valid packed rows. Own the snapshot directly;
+        # the public get_state() validation would synchronize CUDA every step.
+        return self._outputs(self._full_state(self._render_state))
 
 
 class _TorchNavBase(_GymReferencePort):
