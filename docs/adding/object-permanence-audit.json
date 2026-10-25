@@ -7763,18 +7763,68 @@
       "task": "G145"
     },
     {
+      "animated_scale_objects": [
+        "string_rod"
+      ],
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
       "camera": "PERSP",
-      "category": "animated-geometry",
+      "contract": "stable-envs/opaque-pixel-rays-v1",
+      "depth_mse_max": 1.0561029073746815e-16,
+      "dynamic_nodes": [
+        "hanging_ball",
+        "release_hook_support",
+        "string_rod"
+      ],
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 8,
+        "dynamic_nodes": [
+          "hanging_ball",
+          "release_hook_support",
+          "string_rod"
+        ],
+        "frames": 120,
+        "objects": 8,
+        "task": "G146",
+        "world_normal_max_abs_error": 2.3255728345827897e-07,
+        "world_triangle_max_abs_error": 8.344887891809094e-08
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 8,
       "name": "hanging_ball_release_drop",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g146-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: geometry/scale changes at source frame 31",
+      "oracle": "tests/fixtures/semantics/object_permanence/g146/opaque_pixel_rays_v1/nominal",
+      "preview": ".cache/object_permanence/evaluation/g146-source-vs-pixel-rays-v1.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v3",
+      "reference_target_roles": {
+        "hanging_ball": "hanging_ball"
+      },
+      "reference_targets": [
+        "hanging_ball"
+      ],
+      "scale_array_bytes": 4448,
+      "scale_convention": "stable-envs/asset-relative-positive-diagonal-v1",
+      "scale_only_nodes": [
+        "string_rod"
       ],
       "script": "object_permanence/generator/tasks/G146_hanging_ball_release_drop/pb_task_00000192_pb_hanging_ball_release_drop_0193_blender.py",
       "source_frames": [
@@ -7783,8 +7833,7 @@
       ],
       "source_script_sha256": "0cb2711d4ec22065e5ab3f07f5338c2d90a068cf0cd63cefbbbc66a25117f517",
       "source_task_manifest_sha256": "216e2efb6bb793a58fb584223af4401fd37da8cbebb25935b08c43d7dbdc81ac",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G146"
     },
     {

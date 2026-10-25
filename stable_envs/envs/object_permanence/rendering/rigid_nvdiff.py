@@ -26,6 +26,8 @@ class RigidSceneRenderer(Closeable):
     visibility seeds. cache_static=False keeps complete drawing for comparison.
     Explicit opaque-pixel-rays-v2 additionally accepts fixed orthographic
     cameras, with per-pixel ray origins and camera-axis interval clipping.
+    V3 optional relative scales affect vertices and inverse-transposed normals;
+    scale-only nodes remain dynamic and reuse the same static visibility seed.
     """
 
     resource_kind = "object_permanence.RigidSceneRenderer"
@@ -50,6 +52,9 @@ class RigidSceneRenderer(Closeable):
         if geometry_precision not in ("float32", "float64"):
             raise ValueError("geometry_precision must be float32 or float64")
         camera_type = trajectory.manifest["camera"].get("projection_type", "perspective")
+        self._scaled = trajectory.has_scales
+        if self._scaled and visibility_contract != trajectory.manifest.get("visibility_contract"):
+            raise ValueError("scaled recordings require their explicit visibility contract")
         if camera_type == "orthographic" and visibility_contract != "stable-envs/opaque-pixel-rays-v2":
             raise ValueError("orthographic recordings require explicit opaque-pixel-rays-v2")
         renderer_class: type = PixelCenterRenderer
@@ -67,6 +72,7 @@ class RigidSceneRenderer(Closeable):
                 "camera_metadata": trajectory.manifest["camera"],
                 "semantic_ids": torch.tensor([o["id"] for o in trajectory.manifest["objects"]], device=self.device),
                 "visibility_contract": visibility_contract,
+                "affine_transforms": self._scaled,
             }
         camera_dtype = torch.float64 if geometry_precision == "float64" else torch.float32
         self.visibility_contract = visibility_contract
@@ -133,6 +139,10 @@ class RigidSceneRenderer(Closeable):
         if not modes or len(set(modes)) != len(modes) or any(m not in ("rgb", "depth", "ids") for m in modes):
             raise ValueError("modes must be unique rgb/depth/ids")
         poses = self.trajectory.poses(frames) if self.cache_static else self.trajectory.object_poses(frames)
+        scales = None
+        if self._scaled:
+            selected = self.trajectory.scales(frames) if self.cache_static else self.trajectory.object_scales(frames)
+            scales = torch.as_tensor(selected, device=self.device)
         shapes = {m: (len(poses), self.height, self.width) + ((3,) if m == "rgb" else ()) for m in modes}
         dtypes = {"rgb": torch.uint8, "depth": torch.float32, "ids": torch.int16}
         if out is not None:
@@ -163,6 +173,8 @@ class RigidSceneRenderer(Closeable):
                     node_rotations = rotations(
                         quaternions.double() if self.visibility_contract else quaternions
                     ).reshape(len(part), self._node_count, 3, 3)
+                    if scales is not None:
+                        node_rotations = node_rotations * scales[start:stop, :, None, :]
                     positions_gpu[:, self._moving] = part[:, self._nodes, :3]
                     rotations_gpu[:, self._moving] = node_rotations[:, self._nodes]
             else:
@@ -171,6 +183,8 @@ class RigidSceneRenderer(Closeable):
                 rotations_gpu = rotations(quaternions.double() if self.visibility_contract else quaternions).reshape(
                     len(part), part.shape[1], 3, 3
                 )
+                if scales is not None:
+                    rotations_gpu = rotations_gpu * scales[start:stop, :, None, :]
             buffers = {m: result[m][start:stop] for m in modes}
             self.renderer.render_many(positions_gpu, rotations_gpu, self.camera, modes=modes, out=buffers)
             if "ids" in modes:

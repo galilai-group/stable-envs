@@ -125,6 +125,7 @@ nav:
       - Object-permanence visibility contract: adding/object-permanence-visibility.md
       - Object-permanence orthographic contract: adding/object-permanence-orthographic.md
       - Object-permanence Curve/FONT conversion: adding/object-permanence-converted-geometry.md
+      - Object-permanence scale animation: adding/object-permanence-scale.md
       - Object-permanence source inventory: adding/object-permanence-inventory.md
       - Writing a bit-exact Triton kernel: adding/bit-exact-triton.md
       - Testing: testing.md

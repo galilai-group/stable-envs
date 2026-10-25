@@ -8,6 +8,12 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Optional versioned positive scale arrays for sampled object-permanence replay,
+  retaining object origins and classifying scale-only motion as dynamic. Adds
+  G146 with independent 120-frame depth/mask/scale references, correct affine
+  normals, exact static-cache reuse and generic perspective/orthographic tests.
+  Old layouts, fixtures, visibility contracts and thresholds remain unchanged.
+
 - Reusable evaluated Curve/FONT conversion for G04/G13/G14/G29/G31/G46,
   preserving source rails, caps, glyphs, parent motion and semantic IDs. Audits
   Blender's unique internal mesh proxies while still rejecting real instancing,
@@ -34,7 +40,7 @@ All notable changes to this project are listed here. The format follows
   context provenance/mismatch checks protect source comparisons. G08/G45/G48
   also pass the orthographic V2 contract; G46 additionally retains converted FONT labels.
 
-- Complete first-nominal object-permanence audit: 142 certified scenes and 8
+- Complete first-nominal object-permanence audit: 143 certified scenes and 7
   explicit deferrals across all 150 task groups; 47 additional member scripts
   remain unregistered. Adds 61 reusable rigid recordings with independent
   120-frame depth/mask oracles, fresh-process geometry checks and two-resolution

@@ -21,6 +21,8 @@ from pathlib import Path
 import numpy as np
 
 SOURCE_COMMIT = "824baddcdad087810d35638bf8f273b884f74975"
+# Independently audited positive diagonal scale animation, sampled in world space.
+REFERENCE_SCALE_TASKS = {"G146"}
 # Separate from candidate extraction/registration; only audited converted cases.
 REFERENCE_CONVERTED_TASKS = {
     "G04",
@@ -150,6 +152,7 @@ REFERENCE_CASES = {
     "G143": ("build_scene_by_kind", "animate_scene", ("moving_ball",)),
     "G144": ("build_scene_by_kind", "animate_scene_by_kind", ("colored_ball_inside_box",)),
     "G145": ("build_scene_by_kind", "animate_scene", ("rolling_ball",)),
+    "G146": ("build_scene_by_kind", "animate_scene", ("hanging_ball",)),
     "G147": ("build_scene_by_kind", "animate_scene", ("falling_ball",)),
     "G148": ("build_scene_by_kind", "animate_scene", ("falling_ball",)),
     "G149": ("build_scene_by_kind", "animate_scene", ("falling_ball",)),

@@ -45,6 +45,8 @@ def check(
     failures, minimum, worst = [], 1.0, 0.0
     with RigidTrajectory(recordings, f"{task.lower()}-nominal") as clip:
         metadata = clip.manifest
+        if metadata.get("scale_convention") != manifest.get("scale_convention"):
+            raise ValueError("source and recording scale conventions differ")
         if metadata.get("geometry_conversion") != manifest.get("geometry_conversion"):
             raise ValueError("source and recording geometry conversion policies differ")
         if metadata.get("geometry_conversion") is not None:
@@ -66,7 +68,11 @@ def check(
             raise ValueError("source and recording definitions differ")
         if metadata["source"].get("execution_context") != manifest.get("source_execution_context"):
             raise ValueError("source and recording execution contexts differ")
-        if (visibility_contract == "stable-envs/opaque-pixel-rays-v2" or metadata.get("geometry_conversion")) and (
+        if (
+            visibility_contract == "stable-envs/opaque-pixel-rays-v2"
+            or metadata.get("geometry_conversion")
+            or clip.has_scales
+        ) and (
             not manifest.get("source_preparation_recipe")
             or metadata["source"].get("preparation_recipe") != manifest["source_preparation_recipe"]
         ):
@@ -76,6 +82,15 @@ def check(
         indices = np.searchsorted(clip.frames, reference["source_frames"])
         if (indices >= len(clip)).any() or not np.array_equal(clip.frames[indices], reference["source_frames"]):
             raise ValueError("source and recording frame numbers differ")
+        if clip.has_scales:
+            if manifest.get("source_scale_space") != "absolute-world-matrix-decomposition":
+                raise ValueError("source scales require independently sampled world decomposition")
+            absolute = reference.get("source_scales")
+            if absolute is None or absolute.shape != (len(indices), len(metadata["objects"]), 3):
+                raise ValueError("source scales do not match frames and objects")
+            if not np.isfinite(absolute).all() or (absolute <= 0).any():
+                raise ValueError("source scales must be finite and positive")
+            np.testing.assert_allclose(clip.object_scales(indices), absolute / absolute[:1], atol=2e-6, rtol=0)
         with RigidSceneRenderer(
             clip,
             size=manifest["height"],
