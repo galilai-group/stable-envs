@@ -21,6 +21,15 @@ from pathlib import Path
 import numpy as np
 
 SOURCE_COMMIT = "824baddcdad087810d35638bf8f273b884f74975"
+# Separate from candidate extraction/registration; only audited converted cases.
+REFERENCE_CONVERTED_TASKS = {
+    "G04",
+    "G13",
+    "G14",
+    "G29",
+    "G31",
+    "G46",
+}
 # Deliberately independent of the candidate exporter's entry registry/extraction.
 # These calls and targets were checked against each source main()/selected builder.
 REFERENCE_CASES = {
@@ -195,6 +204,28 @@ REFERENCE_CASES = {
     "G78": ("build_scene_by_kind", "animate_scene_by_kind", ("rolling_disc",)),
     "G91": ("build_scene_by_kind", "animate_scene_by_kind", ("pass_orange_ball", "blocked_blue_ball")),
     "G92": ("build_scene_by_kind", "animate_scene_by_kind", ("carom_orange_ball",)),
+    # Evaluated Curve/FONT entries; source objects retain their semantic identity.
+    "G04": (
+        "build_scene",
+        "animate_scene",
+        ("identity_A_red_ball_on_high_track", "identity_B_blue_ball_on_low_track"),
+    ),
+    "G13": (
+        "build_scene",
+        "animate_scene",
+        (
+            "drawer_1_front_label",
+            "drawer_1_orange_ball",
+            "drawer_2_blue_cube",
+            "drawer_2_front_label",
+            "drawer_3_front_label",
+            "drawer_3_yellow_pyramid",
+        ),
+    ),
+    "G14": ("build_scene", "animate_scene", ("far_yellow_ball", "middle_blue_ball", "near_red_ball")),
+    "G29": ("build_scene", "animate_scene", ("target_orange_ball_on_occupied_left_u_then_straight_track",)),
+    "G31": ("build_scene", "animate_scene", ("identity_A_red_ball_front_track", "identity_B_blue_ball_back_track")),
+    "G46": ("build_scene", "animate_scene", ("box_A_label", "box_A_orange_ball", "box_B_blue_cube", "box_B_label")),
 }
 
 
@@ -269,6 +300,71 @@ def prepare_reference(script, task):
 
 def sha256(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def reference_geometry(scene, task):
+    """Include source Curve/FONT identities only for explicitly audited entries."""
+    types = ("MESH", "CURVE", "FONT") if task in REFERENCE_CONVERTED_TASKS else ("MESH",)
+    if task in REFERENCE_CONVERTED_TASKS and any(
+        obj.type not in (*types, "EMPTY", "CAMERA", "LIGHT") for obj in scene.objects
+    ):
+        raise ValueError("unsupported source renderable type")
+    return {obj.name: obj for obj in scene.objects if obj.type in types}
+
+
+def reference_geometry_description(objects, graph):
+    """Capture converted source identity without candidate conversion helpers."""
+    descriptions = {}
+    for name, obj in objects.items():
+        if obj.type not in ("CURVE", "FONT"):
+            continue
+        data = obj.evaluated_get(graph).data
+        descriptions[name] = {"type": obj.type}
+        if obj.type == "FONT":
+            descriptions[name].update(text=data.body, font=data.font.name)
+    return descriptions
+
+
+def reference_render_meshes(objects, graph):
+    """Yield actual draw meshes/world transforms, including Curve/FONT proxies.
+
+    This reads the source dependency graph's MESH entries, not candidate
+    Curve.to_mesh() results. Each yielded mesh is an independent owned copy.
+    Iterator instance records are consumed before advancing the graph iterator.
+    """
+    import bpy
+
+    seen = set()
+    for item in graph.object_instances:
+        if item.object.type != "MESH":
+            continue
+        source = item.object.original
+        if item.is_instance:
+            parent = item.parent
+            if (
+                parent is None
+                or parent.original.type not in ("CURVE", "FONT")
+                or source != parent.original
+                or parent.original.instance_type != "NONE"
+                or item.instance_object is None
+                or item.instance_object.original != source
+                or tuple(map(tuple, item.matrix_world)) != tuple(map(tuple, parent.matrix_world))
+            ):
+                raise ValueError("source has unsupported generated geometry instances")
+        elif source.type != "MESH":
+            raise ValueError("source converted geometry is not an evaluated mesh proxy")
+        name = source.name
+        if name not in objects or source != objects[name] or name in seen or not item.show_self:
+            raise ValueError("source draw objects do not map one-to-one to semantic identities")
+        seen.add(name)
+        matrix = np.asarray(item.matrix_world, np.float64)
+        mesh = bpy.data.meshes.new_from_object(item.object, preserve_all_data_layers=True, depsgraph=graph)
+        try:
+            yield name, mesh, matrix
+        finally:
+            bpy.data.meshes.remove(mesh)
+    if seen != set(objects):
+        raise ValueError("source draw geometry missing")
 
 
 def write_depth_parts(output, bits):

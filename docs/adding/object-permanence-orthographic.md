@@ -14,12 +14,14 @@ moving ball/panel. The same implementation then accepts 41 first nominal members
 | G43–G78 | 15 | 3.305e-15 | 1.0 |
 | G91–G128 | 9 | 7.736e-14 | 1.0 |
 
-Together with 7 legacy and 88 V1 scenes, 136 of 150 first nominal members are
-certified. The 14 remaining deferrals are 6 Curve/FONT scenes, 5 transparent
+Three further orthographic Curve/FONT scenes use the same V2 renderer with
+[evaluated mesh conversion](object-permanence-converted-geometry.md): G13/G14/G46.
+Together with 7 legacy and 91 V1 scenes, 142 of 150 first nominal members are
+certified (44 V2 scenes). The 8 remaining deferrals are 5 transparent
 scenes, 2 independent source-normal failures and 1 animated-geometry scene.
 G54's `guardwall_a_back` and G61's `spiral_guard_00` use active glass with alpha
 0.24; supporting their camera does not make their transmission opaque. G46's
-camera is supported but its FONT identity labels remain outside mesh export.
+FONT identity labels now retain their source triangles and semantic IDs.
 The 47 additional member scripts remain unaudited and unregistered.
 
 ## Projection and depth

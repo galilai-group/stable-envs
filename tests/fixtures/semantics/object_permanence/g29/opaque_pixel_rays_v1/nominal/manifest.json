@@ -1,0 +1,508 @@
+{
+  "arrays": {
+    "camera_matrix": {
+      "dtype": "float64",
+      "shape": [
+        4,
+        4
+      ]
+    },
+    "depth_base": {
+      "dtype": "float32",
+      "shape": [
+        180,
+        320
+      ]
+    },
+    "object_ids": {
+      "dtype": "int16",
+      "shape": [
+        120,
+        180,
+        320
+      ]
+    },
+    "poses": {
+      "dtype": "float64",
+      "shape": [
+        120,
+        81,
+        7
+      ]
+    },
+    "source_frames": {
+      "dtype": "int64",
+      "shape": [
+        120
+      ]
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        1.6666666269302368,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        2.9629628658294678,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "world": [
+      [
+        0.7738161683082581,
+        -0.161635622382164,
+        0.612439751625061,
+        5.650000095367432
+      ],
+      [
+        0.6334102153778076,
+        0.19746491312980652,
+        -0.7481972575187683,
+        -7.349999904632568
+      ],
+      [
+        -2.770713081190479e-08,
+        0.9668927192687988,
+        0.2551831901073456,
+        3.75
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "depth_parts": [
+    {
+      "dtype": "uint32",
+      "file": "depth_0000_0030.npz",
+      "sha256": "75a0e9498a2965b53979ea4e466def7153a61a581b4dab500c8fe6335deb7633",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 0,
+      "stop": 30
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0030_0060.npz",
+      "sha256": "f6551233ee19fde3015b3c69756e4d3d316512767c725babfb97ef0f992241ed",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 30,
+      "stop": 60
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0060_0090.npz",
+      "sha256": "b38830740e821703962d73051366ffdc52f98786e999df3ab8d71fb8f707ea97",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 60,
+      "stop": 90
+    },
+    {
+      "dtype": "uint32",
+      "file": "depth_0090_0120.npz",
+      "sha256": "b38830740e821703962d73051366ffdc52f98786e999df3ab8d71fb8f707ea97",
+      "shape": [
+        30,
+        180,
+        320
+      ],
+      "start": 90,
+      "stop": 120
+    }
+  ],
+  "file": "geometric_g29_nominal.npz",
+  "fps": 24.0,
+  "generator": "scripts/testing/freeze_object_permanence_rays.py",
+  "generator_sha256": "c20940b5e1c7c2375c6d59ad4deb785312112a861ff79d7daef791a564aa2365",
+  "geometry_conversion": {
+    "depsgraph_mode": "VIEWPORT",
+    "id": "stable-envs/evaluated-rigid-mesh-v1",
+    "instances": "single-source-identity-mesh-proxy",
+    "tessellation": "source-settings",
+    "types": [
+      "MESH",
+      "CURVE",
+      "FONT"
+    ]
+  },
+  "height": 180,
+  "object_ids": {
+    "dark_visible_container_interior_shadow": 1,
+    "empty_left_entry_opening_back_rim": 2,
+    "empty_left_entry_opening_bottom_rim": 3,
+    "empty_left_entry_opening_front_rim": 4,
+    "empty_left_entry_opening_top_rim": 5,
+    "empty_left_u_then_straight_track_with_right_exit_back_tube_rail": 6,
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_00": 7,
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_01": 8,
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_02": 9,
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_03": 10,
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_04": 11,
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_05": 12,
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_06": 13,
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_07": 14,
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_08": 15,
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_09": 16,
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_10": 17,
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_11": 18,
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_12": 19,
+    "empty_left_u_then_straight_track_with_right_exit_front_tube_rai": 20,
+    "empty_rail_right_exit_straight_back_tube": 21,
+    "empty_rail_right_exit_straight_cross_tie_00": 22,
+    "empty_rail_right_exit_straight_cross_tie_01": 23,
+    "empty_rail_right_exit_straight_cross_tie_02": 24,
+    "empty_rail_right_exit_straight_cross_tie_03": 25,
+    "empty_rail_right_exit_straight_front_tube": 26,
+    "empty_right_exit_opening_only_back_rim": 27,
+    "empty_right_exit_opening_only_bottom_rim": 28,
+    "empty_right_exit_opening_only_front_rim": 29,
+    "empty_right_exit_opening_only_top_rim": 30,
+    "gray_container_back_wall": 31,
+    "gray_container_bottom_floor": 32,
+    "gray_container_front_wall_camera_side": 33,
+    "gray_container_roof": 34,
+    "large_floor_base": 35,
+    "left_container_wall_two_entry_holes_sealed_block_00": 36,
+    "left_container_wall_two_entry_holes_sealed_block_01": 37,
+    "left_container_wall_two_entry_holes_sealed_block_02": 38,
+    "left_container_wall_two_entry_holes_sealed_block_03": 39,
+    "left_container_wall_two_entry_holes_sealed_block_04": 40,
+    "left_container_wall_two_entry_holes_sealed_block_05": 41,
+    "left_container_wall_two_entry_holes_sealed_block_06": 42,
+    "left_container_wall_two_entry_holes_sealed_block_07": 43,
+    "left_container_wall_two_entry_holes_sealed_block_08": 44,
+    "left_container_wall_two_entry_holes_sealed_block_09": 45,
+    "left_container_wall_two_entry_holes_sealed_block_10": 46,
+    "left_container_wall_two_entry_holes_sealed_block_11": 47,
+    "left_container_wall_two_entry_holes_sealed_block_12": 48,
+    "occupied_left_entry_opening_back_rim": 49,
+    "occupied_left_entry_opening_bottom_rim": 50,
+    "occupied_left_entry_opening_front_rim": 51,
+    "occupied_left_entry_opening_top_rim": 52,
+    "occupied_left_u_then_straight_track_blocked_right_back_tube_rai": 53,
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_00": 54,
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_01": 55,
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_02": 56,
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_03": 57,
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_04": 58,
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_05": 59,
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_06": 60,
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_07": 61,
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_08": 62,
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_09": 63,
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_10": 64,
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_11": 65,
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_12": 66,
+    "occupied_left_u_then_straight_track_blocked_right_front_tube_ra": 67,
+    "occupied_rail_sealed_right_wall_stop_block": 68,
+    "occupied_rail_stub_cross_tie_against_sealed_wall": 69,
+    "occupied_rail_stub_on_sealed_right_wall_back_tube": 70,
+    "occupied_rail_stub_on_sealed_right_wall_front_tube": 71,
+    "rear_backdrop_panel": 72,
+    "right_wall_only_empty_exit_sealed_block_00": 73,
+    "right_wall_only_empty_exit_sealed_block_01": 74,
+    "right_wall_only_empty_exit_sealed_block_02": 75,
+    "right_wall_only_empty_exit_sealed_block_03": 76,
+    "right_wall_only_empty_exit_sealed_block_04": 77,
+    "right_wall_only_empty_exit_sealed_block_05": 78,
+    "right_wall_only_empty_exit_sealed_block_06": 79,
+    "right_wall_only_empty_exit_sealed_block_07": 80,
+    "target_orange_ball_on_occupied_left_u_then_straight_track": 81
+  },
+  "object_order": [
+    "dark_visible_container_interior_shadow",
+    "empty_left_entry_opening_back_rim",
+    "empty_left_entry_opening_bottom_rim",
+    "empty_left_entry_opening_front_rim",
+    "empty_left_entry_opening_top_rim",
+    "empty_left_u_then_straight_track_with_right_exit_back_tube_rail",
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_00",
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_01",
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_02",
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_03",
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_04",
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_05",
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_06",
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_07",
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_08",
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_09",
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_10",
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_11",
+    "empty_left_u_then_straight_track_with_right_exit_cross_tie_12",
+    "empty_left_u_then_straight_track_with_right_exit_front_tube_rai",
+    "empty_rail_right_exit_straight_back_tube",
+    "empty_rail_right_exit_straight_cross_tie_00",
+    "empty_rail_right_exit_straight_cross_tie_01",
+    "empty_rail_right_exit_straight_cross_tie_02",
+    "empty_rail_right_exit_straight_cross_tie_03",
+    "empty_rail_right_exit_straight_front_tube",
+    "empty_right_exit_opening_only_back_rim",
+    "empty_right_exit_opening_only_bottom_rim",
+    "empty_right_exit_opening_only_front_rim",
+    "empty_right_exit_opening_only_top_rim",
+    "gray_container_back_wall",
+    "gray_container_bottom_floor",
+    "gray_container_front_wall_camera_side",
+    "gray_container_roof",
+    "large_floor_base",
+    "left_container_wall_two_entry_holes_sealed_block_00",
+    "left_container_wall_two_entry_holes_sealed_block_01",
+    "left_container_wall_two_entry_holes_sealed_block_02",
+    "left_container_wall_two_entry_holes_sealed_block_03",
+    "left_container_wall_two_entry_holes_sealed_block_04",
+    "left_container_wall_two_entry_holes_sealed_block_05",
+    "left_container_wall_two_entry_holes_sealed_block_06",
+    "left_container_wall_two_entry_holes_sealed_block_07",
+    "left_container_wall_two_entry_holes_sealed_block_08",
+    "left_container_wall_two_entry_holes_sealed_block_09",
+    "left_container_wall_two_entry_holes_sealed_block_10",
+    "left_container_wall_two_entry_holes_sealed_block_11",
+    "left_container_wall_two_entry_holes_sealed_block_12",
+    "occupied_left_entry_opening_back_rim",
+    "occupied_left_entry_opening_bottom_rim",
+    "occupied_left_entry_opening_front_rim",
+    "occupied_left_entry_opening_top_rim",
+    "occupied_left_u_then_straight_track_blocked_right_back_tube_rai",
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_00",
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_01",
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_02",
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_03",
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_04",
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_05",
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_06",
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_07",
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_08",
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_09",
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_10",
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_11",
+    "occupied_left_u_then_straight_track_blocked_right_cross_tie_12",
+    "occupied_left_u_then_straight_track_blocked_right_front_tube_ra",
+    "occupied_rail_sealed_right_wall_stop_block",
+    "occupied_rail_stub_cross_tie_against_sealed_wall",
+    "occupied_rail_stub_on_sealed_right_wall_back_tube",
+    "occupied_rail_stub_on_sealed_right_wall_front_tube",
+    "rear_backdrop_panel",
+    "right_wall_only_empty_exit_sealed_block_00",
+    "right_wall_only_empty_exit_sealed_block_01",
+    "right_wall_only_empty_exit_sealed_block_02",
+    "right_wall_only_empty_exit_sealed_block_03",
+    "right_wall_only_empty_exit_sealed_block_04",
+    "right_wall_only_empty_exit_sealed_block_05",
+    "right_wall_only_empty_exit_sealed_block_06",
+    "right_wall_only_empty_exit_sealed_block_07",
+    "target_orange_ball_on_occupied_left_u_then_straight_track"
+  ],
+  "reference_algorithm_sha256": "71cafb8db969ecc0cd9c7947c9723570ac4e4878b1960148fe56a65dcc3bbd88",
+  "schema": "stable-envs/object-permanence-rigid-oracle-v2",
+  "sha256": "2416047c58a93dd3371f33189c8e0fee930ad25b8f47f43dcf1253d087f6c8de",
+  "source_commit": "824baddcdad087810d35638bf8f273b884f74975",
+  "source_geometry": {
+    "empty_left_u_then_straight_track_with_right_exit_back_tube_rail": {
+      "type": "CURVE"
+    },
+    "empty_left_u_then_straight_track_with_right_exit_front_tube_rai": {
+      "type": "CURVE"
+    },
+    "empty_rail_right_exit_straight_back_tube": {
+      "type": "CURVE"
+    },
+    "empty_rail_right_exit_straight_front_tube": {
+      "type": "CURVE"
+    },
+    "occupied_left_u_then_straight_track_blocked_right_back_tube_rai": {
+      "type": "CURVE"
+    },
+    "occupied_left_u_then_straight_track_blocked_right_front_tube_ra": {
+      "type": "CURVE"
+    },
+    "occupied_rail_stub_on_sealed_right_wall_back_tube": {
+      "type": "CURVE"
+    },
+    "occupied_rail_stub_on_sealed_right_wall_front_tube": {
+      "type": "CURVE"
+    }
+  },
+  "source_geometry_algorithm_sha256": "6cb5a440d1e829ab1b1ac451e539b72be2a3329938bab1d8e0c1612dd760cef8",
+  "source_license": "CC-BY-NC-4.0",
+  "source_preparation_algorithm_sha256": "29fe24d038d706d033bfefe2afe0fd2ed766be92693aa5c293298edcbbcada1b",
+  "source_preparation_recipe": {
+    "animate": "animate_scene",
+    "build": "build_scene"
+  },
+  "source_profile": "nominal first member; no diversity wrapper",
+  "source_script": "object_permanence/generator/tasks/G29_container_entry_left_u/pb_task_00000009_pb_container_entry_continuity_0010_blender.py",
+  "source_script_sha256": "bf371c56fbb562820fdb687193c2e4255b0b53e6949fde3a5322c641ad3afff7",
+  "source_semantic_targets": [
+    "target_orange_ball_on_occupied_left_u_then_straight_track"
+  ],
+  "source_task_manifest_sha256": "c56122c8857c087291c57cc9445fafdfd820aab91b59d3b566a47615890abe78",
+  "source_url": "https://github.com/hokindeng/object-permanence",
+  "target_visible_pixels": {
+    "target_orange_ball_on_occupied_left_u_then_straight_track": [
+      87,
+      86,
+      86,
+      85,
+      86,
+      88,
+      86,
+      90,
+      87,
+      90,
+      86,
+      87,
+      88,
+      89,
+      91,
+      90,
+      88,
+      91,
+      92,
+      89,
+      92,
+      89,
+      88,
+      91,
+      93,
+      94,
+      94,
+      93,
+      91,
+      95,
+      97,
+      91,
+      80,
+      71,
+      58,
+      47,
+      35,
+      23,
+      14,
+      5,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "targets": [
+    "target_orange_ball_on_occupied_left_u_then_straight_track"
+  ],
+  "task": "G29",
+  "versions": {
+    "blender": "4.4.0",
+    "numpy": "1.26.4",
+    "python": "3.11.16"
+  },
+  "visibility_contract": "stable-envs/opaque-pixel-rays-v1",
+  "width": 320
+}

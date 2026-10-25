@@ -31,7 +31,7 @@ def comparison_gif(clip, source, output, *, size, visibility_contract=None):
         raise ValueError("source preview task or pinned source differs")
     if metadata.get("source_execution_context") != recorded_source.get("execution_context"):
         raise ValueError("source preview and recording execution contexts differ")
-    if visibility_contract == "stable-envs/opaque-pixel-rays-v2" and (
+    if (visibility_contract == "stable-envs/opaque-pixel-rays-v2" or clip.manifest.get("geometry_conversion")) and (
         metadata.get("source_preparation_recipe") != recorded_source.get("preparation_recipe")
         or metadata["source_script_sha256"] != recorded_source["script_sha256"]
     ):

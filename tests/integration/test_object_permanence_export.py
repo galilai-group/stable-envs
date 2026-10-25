@@ -8,21 +8,26 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from scripts.export.object_permanence import AUDITED_TASKS, DEFERRED_TASKS
 from stable_envs.envs.object_permanence import G34Replay, RigidTrajectory
+from tests.helpers.reference.object_permanence_recordings import RECORDED_TASKS
 
 
 @pytest.fixture(scope="module")
-def exported(tmp_path_factory):
+def export_case(tmp_path_factory):
+    """Share a dataset, but charge source work to each scene's test timeout."""
     source = os.environ.get("SE_OBJECT_PERMANENCE_SOURCE")
     python = os.environ.get("SE_OBJECT_PERMANENCE_BLENDER_PYTHON")
     if not source or not python:
         pytest.skip("live export needs SE_OBJECT_PERMANENCE_SOURCE and SE_OBJECT_PERMANENCE_BLENDER_PYTHON")
     output = tmp_path_factory.mktemp("rigid-export")
-    from scripts.export.object_permanence import AUDITED_TASKS, DEFERRED_TASKS
+    checked = set()
 
-    for task in AUDITED_TASKS:
-        if task in DEFERRED_TASKS:
-            continue
+    def ensure(task):
+        if task in checked:
+            return output
+        if task not in AUDITED_TASKS or task in DEFERRED_TASKS:
+            raise ValueError("source case is not eligible for the live geometry gate")
         subprocess.run(
             [
                 python,
@@ -54,7 +59,25 @@ def exported(tmp_path_factory):
             check=True,
             timeout=180,
         )
+        checked.add(task)
+        return output
+
+    return ensure
+
+
+@pytest.fixture(scope="module")
+def exported(export_case):
+    """Legacy pose/ownership gates need only their declared recorded scenes."""
+    for task in RECORDED_TASKS:
+        output = export_case(task.upper())
     return output
+
+
+@pytest.mark.parametrize("task", sorted(set(AUDITED_TASKS) - set(DEFERRED_TASKS)))
+def test_audited_source_export_and_independent_world_geometry_per_scene(export_case, task):
+    output = export_case(task)
+    with RigidTrajectory(output, task.lower() + "-nominal") as clip:
+        assert len(clip) == 120
 
 
 def test_g34_export_matches_unchanged_independent_source_fixture_and_legacy_replay(exported):
@@ -303,7 +326,7 @@ assert len(recording['frames']) == 120
 
 
 @pytest.mark.parametrize("task", ["G01", "G04"])
-def test_early_source_capability_or_animation_failure_is_not_certified(task):
+def test_default_export_keeps_transparency_and_evaluated_geometry_opt_in(task):
     source = os.environ.get("SE_OBJECT_PERMANENCE_SOURCE")
     python = os.environ.get("SE_OBJECT_PERMANENCE_BLENDER_PYTHON")
     if not source or not python:
@@ -312,10 +335,10 @@ def test_early_source_capability_or_animation_failure_is_not_certified(task):
 import inspect, json, runpy, sys
 from pathlib import Path
 import bpy
-from scripts.export.object_permanence import AUDITED_TASKS, check_source, sample_scene, source_prefix
+from scripts.export.object_permanence import AUDITED_TASKS, CONVERTED_GEOMETRY_TASKS, check_source, sample_scene, source_prefix
 root, task = Path(sys.argv[1]), sys.argv[2]
 check_source(root)
-assert task not in AUDITED_TASKS
+assert (task not in AUDITED_TASKS) if task == 'G01' else (task in CONVERTED_GEOMETRY_TASKS)
 path, = (root/'object_permanence/generator/tasks').glob(task+'_*/task.json')
 script = path.parent/json.loads(path.read_text())['member_scripts'][0]
 if task == 'G01':
@@ -388,7 +411,7 @@ if task == 'G44':
     assert set(recording['dynamic_nodes']) == {'blue_ball_right', 'red_ball_left'}
 else:
     if task == 'G46':
-        assert task not in AUDITED_TASKS
+        assert task in AUDITED_TASKS
         assert any(obj.type == 'FONT' for obj in scene.objects)
     else:
         assert task in AUDITED_TASKS

@@ -52,18 +52,101 @@
       "task": "G03"
     },
     {
-      "category": "renderable-type",
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
+      "camera": "PERSP",
+      "contract": "stable-envs/opaque-pixel-rays-v1",
+      "converted_objects": {
+        "blue_low_track_back_left_to_front_right_back_tube_rail": {
+          "type": "CURVE"
+        },
+        "blue_low_track_back_left_to_front_right_front_tube_rail": {
+          "type": "CURVE"
+        },
+        "red_high_track_front_left_to_back_right_back_tube_rail": {
+          "type": "CURVE"
+        },
+        "red_high_track_front_left_to_back_right_front_tube_rail": {
+          "type": "CURVE"
+        }
+      },
+      "depth_mse_max": 1.6935009808638456e-16,
+      "frames": 120,
+      "geometry_conversion": {
+        "depsgraph_mode": "VIEWPORT",
+        "id": "stable-envs/evaluated-rigid-mesh-v1",
+        "instances": "single-source-identity-mesh-proxy",
+        "tessellation": "source-settings",
+        "types": [
+          "MESH",
+          "CURVE",
+          "FONT"
+        ]
+      },
+      "independent_world_check": {
+        "assets": 14,
+        "dynamic_nodes": [
+          "identity_A_red_ball_on_high_track",
+          "identity_B_blue_ball_on_low_track"
+        ],
+        "frames": 120,
+        "objects": 45,
+        "task": "G04",
+        "world_normal_max_abs_error": 4.289070125729211e-07,
+        "world_triangle_max_abs_error": 9.271755674333804e-08
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
+      "mesh_count": 45,
       "name": "high_low_cover",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g04-source-only-deferred.gif",
+      "oracle": "tests/fixtures/semantics/object_permanence/g04/opaque_pixel_rays_v1/nominal",
+      "preview": ".cache/object_permanence/evaluation/g04-source-vs-pixel-rays-v1.gif",
       "preview_frames": 120,
-      "preview_kind": "source-only",
-      "reason": "Renderable CURVE rails are outside mesh-only export",
+      "preview_kind": "source-vs-replay",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "identity_A_red_ball_on_high_track",
+        "identity_B_blue_ball_on_low_track"
+      ],
+      "reference_target_roles": {
+        "identity_A_red_ball_on_high_track": "target",
+        "identity_B_blue_ball_on_low_track": "target"
+      },
+      "reference_targets": [
+        "identity_A_red_ball_on_high_track",
+        "identity_B_blue_ball_on_low_track"
+      ],
       "script": "object_permanence/generator/tasks/G04_high_low_cover/pb_task_00000013_pb_multi_object_identity_crossing_cover_0014_blender.py",
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_object_types": {
+        "CURVE": 4,
+        "MESH": 41
+      },
       "source_script_sha256": "315ed56d8ac6b1a40ad0814f271860005041617627b548f2abf472dca7eb00e0",
       "source_task_manifest_sha256": "ee29e32ed546602d241c4b8251d430c2f981c36f8c2962fad1194de5a90d9df2",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G04"
     },
     {
@@ -512,53 +595,253 @@
       "task": "G12"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "renderable-type",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "converted_objects": {
+        "drawer_1_front_label": {
+          "font": "Bfont Regular",
+          "text": "1",
+          "type": "FONT"
+        },
+        "drawer_2_front_label": {
+          "font": "Bfont Regular",
+          "text": "2",
+          "type": "FONT"
+        },
+        "drawer_3_front_label": {
+          "font": "Bfont Regular",
+          "text": "3",
+          "type": "FONT"
+        }
+      },
+      "depth_mse_max": 9.473903143468003e-17,
+      "frames": 120,
+      "geometry_conversion": {
+        "depsgraph_mode": "VIEWPORT",
+        "id": "stable-envs/evaluated-rigid-mesh-v1",
+        "instances": "single-source-identity-mesh-proxy",
+        "tessellation": "source-settings",
+        "types": [
+          "MESH",
+          "CURVE",
+          "FONT"
+        ]
+      },
+      "independent_world_check": {
+        "assets": 20,
+        "dynamic_nodes": [
+          "cabinet_back_wall",
+          "cabinet_bottom_board",
+          "cabinet_divider_12",
+          "cabinet_divider_23",
+          "cabinet_left_wall",
+          "cabinet_right_wall",
+          "cabinet_top_board",
+          "drawer_1_back_wall",
+          "drawer_1_floor",
+          "drawer_1_front_label",
+          "drawer_1_front_lip",
+          "drawer_1_front_panel",
+          "drawer_1_handle",
+          "drawer_1_left_rail",
+          "drawer_1_left_side",
+          "drawer_1_orange_ball",
+          "drawer_1_right_rail",
+          "drawer_1_right_side",
+          "drawer_2_back_wall",
+          "drawer_2_blue_cube",
+          "drawer_2_floor",
+          "drawer_2_front_label",
+          "drawer_2_front_lip",
+          "drawer_2_front_panel",
+          "drawer_2_handle",
+          "drawer_2_left_rail",
+          "drawer_2_left_side",
+          "drawer_2_right_rail",
+          "drawer_2_right_side",
+          "drawer_3_back_wall",
+          "drawer_3_floor",
+          "drawer_3_front_label",
+          "drawer_3_front_lip",
+          "drawer_3_front_panel",
+          "drawer_3_handle",
+          "drawer_3_left_rail",
+          "drawer_3_left_side",
+          "drawer_3_right_rail",
+          "drawer_3_right_side",
+          "drawer_3_yellow_pyramid"
+        ],
+        "frames": 120,
+        "objects": 42,
+        "task": "G13",
+        "world_normal_max_abs_error": 3.755639071956196e-08,
+        "world_triangle_max_abs_error": 1.655075965167896e-08
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
-      "mesh_count": 39,
+      "mesh_count": 42,
       "name": "three_drawers",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g13-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: unsupported renderable object type",
+      "oracle": "tests/fixtures/semantics/object_permanence/g13/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g13-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "drawer_1_front_label",
+        "drawer_1_orange_ball",
+        "drawer_2_blue_cube",
+        "drawer_2_front_label",
+        "drawer_3_front_label",
+        "drawer_3_yellow_pyramid"
+      ],
+      "reference_target_roles": {
+        "drawer_1_front_label": "label",
+        "drawer_1_orange_ball": "contained_object",
+        "drawer_2_blue_cube": "contained_object",
+        "drawer_2_front_label": "label",
+        "drawer_3_front_label": "label",
+        "drawer_3_yellow_pyramid": "contained_object"
+      },
+      "reference_targets": [
+        "drawer_1_front_label",
+        "drawer_1_orange_ball",
+        "drawer_2_blue_cube",
+        "drawer_2_front_label",
+        "drawer_3_front_label",
+        "drawer_3_yellow_pyramid"
       ],
       "script": "object_permanence/generator/tasks/G13_three_drawers/pb_task_00000056_pb_three_drawers_objects_order_ball_cube_pyramid_0057_blender.py",
       "source_frames": [
         1,
         120
       ],
+      "source_object_types": {
+        "FONT": 3,
+        "MESH": 39
+      },
       "source_script_sha256": "d15d73b1b29326cc5d79b593cf590524fc988d320fedce2714d68646080d986e",
       "source_task_manifest_sha256": "1101f3cc561baa8fd87e2b542078ee36eaf5d0a53bcda50221e90735eb8b35c9",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G13"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "renderable-type",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "converted_objects": {
+        "far_single_opaque_left_u_tube": {
+          "type": "CURVE"
+        },
+        "middle_single_opaque_left_u_tube": {
+          "type": "CURVE"
+        },
+        "near_single_opaque_left_u_tube": {
+          "type": "CURVE"
+        }
+      },
+      "depth_mse_max": 8.371643876998487e-15,
+      "frames": 120,
+      "geometry_conversion": {
+        "depsgraph_mode": "VIEWPORT",
+        "id": "stable-envs/evaluated-rigid-mesh-v1",
+        "instances": "single-source-identity-mesh-proxy",
+        "tessellation": "source-settings",
+        "types": [
+          "MESH",
+          "CURVE",
+          "FONT"
+        ]
+      },
+      "independent_world_check": {
+        "assets": 9,
+        "dynamic_nodes": [
+          "far_yellow_ball",
+          "middle_blue_ball",
+          "near_red_ball"
+        ],
+        "frames": 120,
+        "objects": 44,
+        "task": "G14",
+        "world_normal_max_abs_error": 3.3754109374228847e-07,
+        "world_triangle_max_abs_error": 9.878773721272438e-08
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
-      "mesh_count": 41,
+      "mesh_count": 44,
       "name": "u_tube_three_lanes",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g14-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: unsupported renderable object type",
+      "oracle": "tests/fixtures/semantics/object_permanence/g14/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g14-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "far_yellow_ball",
+        "middle_blue_ball",
+        "near_red_ball"
+      ],
+      "reference_target_roles": {
+        "far_yellow_ball": "target_ball",
+        "middle_blue_ball": "target_ball",
+        "near_red_ball": "target_ball"
+      },
+      "reference_targets": [
+        "far_yellow_ball",
+        "middle_blue_ball",
+        "near_red_ball"
       ],
       "script": "object_permanence/generator/tasks/G14_u_tube_three_lanes/pb_task_00000061_pb_three_balls_parallel_left_u_tracks_rby_0062_blender.py",
       "source_frames": [
         1,
         120
       ],
+      "source_object_types": {
+        "CURVE": 3,
+        "MESH": 41
+      },
       "source_script_sha256": "c1f2e54f4021a079314a79e56facb2a0769b1c467565876b7186520ae7c172c5",
       "source_task_manifest_sha256": "9aee76192a2a4a8d55434559dcb218e614c29d94cc1e96fd90890ed6a090cad8",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G14"
     },
     {
@@ -1526,28 +1809,109 @@
       "task": "G28"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "PERSP",
-      "category": "renderable-type",
+      "contract": "stable-envs/opaque-pixel-rays-v1",
+      "converted_objects": {
+        "empty_left_u_then_straight_track_with_right_exit_back_tube_rail": {
+          "type": "CURVE"
+        },
+        "empty_left_u_then_straight_track_with_right_exit_front_tube_rai": {
+          "type": "CURVE"
+        },
+        "empty_rail_right_exit_straight_back_tube": {
+          "type": "CURVE"
+        },
+        "empty_rail_right_exit_straight_front_tube": {
+          "type": "CURVE"
+        },
+        "occupied_left_u_then_straight_track_blocked_right_back_tube_rai": {
+          "type": "CURVE"
+        },
+        "occupied_left_u_then_straight_track_blocked_right_front_tube_ra": {
+          "type": "CURVE"
+        },
+        "occupied_rail_stub_on_sealed_right_wall_back_tube": {
+          "type": "CURVE"
+        },
+        "occupied_rail_stub_on_sealed_right_wall_front_tube": {
+          "type": "CURVE"
+        }
+      },
+      "depth_mse_max": 8.86331894919044e-17,
+      "frames": 120,
+      "geometry_conversion": {
+        "depsgraph_mode": "VIEWPORT",
+        "id": "stable-envs/evaluated-rigid-mesh-v1",
+        "instances": "single-source-identity-mesh-proxy",
+        "tessellation": "source-settings",
+        "types": [
+          "MESH",
+          "CURVE",
+          "FONT"
+        ]
+      },
+      "independent_world_check": {
+        "assets": 29,
+        "dynamic_nodes": [
+          "target_orange_ball_on_occupied_left_u_then_straight_track"
+        ],
+        "frames": 120,
+        "objects": 81,
+        "task": "G29",
+        "world_normal_max_abs_error": 4.34387602776809e-07,
+        "world_triangle_max_abs_error": 9.304381709540621e-08
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
-      "mesh_count": 73,
+      "mesh_count": 81,
       "name": "container_entry_left_u",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g29-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: unsupported renderable object type",
+      "oracle": "tests/fixtures/semantics/object_permanence/g29/opaque_pixel_rays_v1/nominal",
+      "preview": ".cache/object_permanence/evaluation/g29-source-vs-pixel-rays-v1.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "target_orange_ball_on_occupied_left_u_then_straight_track"
+      ],
+      "reference_target_roles": {
+        "target_orange_ball_on_occupied_left_u_then_straight_track": "target"
+      },
+      "reference_targets": [
+        "target_orange_ball_on_occupied_left_u_then_straight_track"
       ],
       "script": "object_permanence/generator/tasks/G29_container_entry_left_u/pb_task_00000009_pb_container_entry_continuity_0010_blender.py",
       "source_frames": [
         1,
         120
       ],
+      "source_object_types": {
+        "CURVE": 8,
+        "MESH": 73
+      },
       "source_script_sha256": "bf371c56fbb562820fdb687193c2e4255b0b53e6949fde3a5322c641ad3afff7",
       "source_task_manifest_sha256": "c56122c8857c087291c57cc9445fafdfd820aab91b59d3b566a47615890abe78",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G29"
     },
     {
@@ -1613,28 +1977,101 @@
       "task": "G30"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "PERSP",
-      "category": "renderable-type",
+      "contract": "stable-envs/opaque-pixel-rays-v1",
+      "converted_objects": {
+        "back_neutral_gray_track_back_tube": {
+          "type": "CURVE"
+        },
+        "back_neutral_gray_track_front_tube": {
+          "type": "CURVE"
+        },
+        "front_neutral_gray_track_back_tube": {
+          "type": "CURVE"
+        },
+        "front_neutral_gray_track_front_tube": {
+          "type": "CURVE"
+        }
+      },
+      "depth_mse_max": 1.1236344602400004e-16,
+      "frames": 120,
+      "geometry_conversion": {
+        "depsgraph_mode": "VIEWPORT",
+        "id": "stable-envs/evaluated-rigid-mesh-v1",
+        "instances": "single-source-identity-mesh-proxy",
+        "tessellation": "source-settings",
+        "types": [
+          "MESH",
+          "CURVE",
+          "FONT"
+        ]
+      },
+      "independent_world_check": {
+        "assets": 14,
+        "dynamic_nodes": [
+          "identity_A_red_ball_front_track",
+          "identity_B_blue_ball_back_track"
+        ],
+        "frames": 120,
+        "objects": 43,
+        "task": "G31",
+        "world_normal_max_abs_error": 3.481646400627092e-07,
+        "world_triangle_max_abs_error": 7.077253449949694e-08
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
-      "mesh_count": 39,
+      "mesh_count": 43,
       "name": "two_lane_tunnel",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g31-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: unsupported renderable object type",
+      "oracle": "tests/fixtures/semantics/object_permanence/g31/opaque_pixel_rays_v1/nominal",
+      "preview": ".cache/object_permanence/evaluation/g31-source-vs-pixel-rays-v1.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
+      ],
+      "reference_semantic_targets": [
+        "identity_A_red_ball_front_track",
+        "identity_B_blue_ball_back_track"
+      ],
+      "reference_target_roles": {
+        "identity_A_red_ball_front_track": "target",
+        "identity_B_blue_ball_back_track": "target"
+      },
+      "reference_targets": [
+        "identity_A_red_ball_front_track",
+        "identity_B_blue_ball_back_track"
       ],
       "script": "object_permanence/generator/tasks/G31_two_lane_tunnel/pb_task_00000011_pb_multi_object_identity_tunnel_0012_blender.py",
       "source_frames": [
         1,
         120
       ],
+      "source_object_types": {
+        "CURVE": 4,
+        "MESH": 39
+      },
       "source_script_sha256": "be766bcda058cbad49d48a1956bddfaea230a286459d7222753c9d4d6ae3693d",
       "source_task_manifest_sha256": "cd8a22c7e0cc6c3bd8109b926e3134cfcb6e5c23d50d42144570cb0eb98ff443",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G31"
     },
     {
@@ -2356,11 +2793,39 @@
       "task": "G45"
     },
     {
-      "blockers": [
-        "renderable-type"
+      "cache_bit_identical_resolutions": [
+        90,
+        180
       ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "fallbacks": 0,
+        "request_lengths": [
+          5,
+          120
+        ]
+      },
       "camera": "ORTHO",
-      "category": "renderable-type",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "converted_objects": {
+        "box_A_label": {
+          "font": "Bfont Regular",
+          "text": "A",
+          "type": "FONT"
+        },
+        "box_B_label": {
+          "font": "Bfont Regular",
+          "text": "B",
+          "type": "FONT"
+        }
+      },
+      "depth_mse_max": 5.131697536045168e-17,
       "diversity_defaults": {
         "cover_footprint_scale": 1.0
       },
@@ -2380,33 +2845,95 @@
         "scope": "source construction only; no driver appearance/render hooks",
         "source_bindings": {}
       },
+      "frames": 120,
+      "geometry_conversion": {
+        "depsgraph_mode": "VIEWPORT",
+        "id": "stable-envs/evaluated-rigid-mesh-v1",
+        "instances": "single-source-identity-mesh-proxy",
+        "tessellation": "source-settings",
+        "types": [
+          "MESH",
+          "CURVE",
+          "FONT"
+        ]
+      },
+      "independent_world_check": {
+        "assets": 10,
+        "dynamic_nodes": [
+          "box_A_base",
+          "box_A_cover_back",
+          "box_A_cover_front",
+          "box_A_cover_left",
+          "box_A_cover_right",
+          "box_A_cover_top",
+          "box_A_label",
+          "box_A_orange_ball",
+          "box_B_base",
+          "box_B_blue_cube",
+          "box_B_cover_back",
+          "box_B_cover_front",
+          "box_B_cover_left",
+          "box_B_cover_right",
+          "box_B_cover_top",
+          "box_B_label"
+        ],
+        "frames": 120,
+        "objects": 18,
+        "task": "G46",
+        "world_normal_max_abs_error": 3.755639071956196e-08,
+        "world_triangle_max_abs_error": 1.2516975456122736e-08
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
+      "mesh_count": 18,
       "name": "marked_boxes_swap",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g46-source-surface-context-deferred.gif",
+      "oracle": "tests/fixtures/semantics/object_permanence/g46/opaque_pixel_rays_v2/nominal",
+      "preview": ".cache/object_permanence/evaluation/g46-source-vs-pixel-rays-v2.gif",
       "preview_frames": 120,
-      "preview_kind": "source-only",
-      "reason": "Surface DIVERSITY context runs all 120 frames; FONT identity labels box_A_label/box_B_label remain outside mesh-only export; orthographic projection is now supported by V2",
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene",
         "animate_scene"
       ],
+      "reference_semantic_targets": [
+        "box_A_label",
+        "box_A_orange_ball",
+        "box_B_blue_cube",
+        "box_B_label"
+      ],
+      "reference_target_roles": {
+        "box_A_label": "label",
+        "box_A_orange_ball": "contained_object",
+        "box_B_blue_cube": "contained_object",
+        "box_B_label": "label"
+      },
+      "reference_targets": [
+        "box_A_label",
+        "box_A_orange_ball",
+        "box_B_blue_cube",
+        "box_B_label"
+      ],
       "script": "object_permanence/generator/tasks/G46_marked_boxes_swap/pb_task_00000053_pb_marked_boxes_swap_hidden_objects_0054_blender.py",
       "source_capability_audit": {
         "camera": "ORTHO",
-        "frames": 120,
-        "unsupported_objects": {
+        "converted_objects": {
           "box_A_label": "FONT",
           "box_B_label": "FONT"
-        }
+        },
+        "frames": 120,
+        "unsupported_objects": {}
       },
       "source_frames": [
         1,
         120
       ],
+      "source_object_types": {
+        "FONT": 2,
+        "MESH": 16
+      },
       "source_script_sha256": "a7f8e8ea69881d426431092cbb28378ee777abe7a36bbb99d6617a782e219345",
       "source_task_manifest_sha256": "a274a2635cb8a96c64c5840b7a36f96928685fc6ca9e1fe41c4fc6774932080b",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G46"
     },
     {

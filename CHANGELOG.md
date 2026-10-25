@@ -8,12 +8,19 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Reusable evaluated Curve/FONT conversion for G04/G13/G14/G29/G31/G46,
+  preserving source rails, caps, glyphs, parent motion and semantic IDs. Audits
+  Blender's unique internal mesh proxies while still rejecting real instancing,
+  render-only tessellation and animated shapes/text. Adds independent 120-frame
+  draw-mesh oracles and all-frame depth/mask/cache gates; old data, contracts,
+  interfaces and thresholds stay unchanged.
+
 - Fixed orthographic cameras under explicit `opaque-pixel-rays-v2`, with shared
   pixel-origin/direction layouts, camera-axis depth and per-hit interval clipping.
   Adds 41 rigid recordings and independent 120-frame oracles, all-object
   depth/mask checks, two-resolution cache parity and cross-chunk reuse. V1 data,
   interfaces and thresholds stay unchanged. G54/G61 remain deferred for active
-  glass; G46 retains FONT labels outside mesh export.
+  glass; G46's FONT labels now use evaluated mesh conversion.
 
 - G103 corner-turn rigid recording and independent 120-frame oracle, with
   all-frame source depth/mask checks and exact cross-batch/chunk cache reuse.
@@ -25,9 +32,9 @@ All notable changes to this project are listed here. The format follows
   retaining source factor defaults without driver rendering/appearance hooks.
   Adds G44's rigid recording, independent 120-frame oracle and cache parity gates;
   context provenance/mismatch checks protect source comparisons. G08/G45/G48
-  also pass the orthographic V2 contract; G46's FONT labels remain deferred.
+  also pass the orthographic V2 contract; G46 additionally retains converted FONT labels.
 
-- Complete first-nominal object-permanence audit: 136 certified scenes and 14
+- Complete first-nominal object-permanence audit: 142 certified scenes and 8
   explicit deferrals across all 150 task groups; 47 additional member scripts
   remain unregistered. Adds 61 reusable rigid recordings with independent
   120-frame depth/mask oracles, fresh-process geometry checks and two-resolution
@@ -38,8 +45,8 @@ All notable changes to this project are listed here. The format follows
 - Early object-permanence audit G01–G10: nominal G02/G03 ramp balls and G05–G07
   rigid vehicles, with independent 120-frame ray oracles and full-frame cache
   parity. Adds audited legacy construction-prefix and named-argument source
-  preparation. Transparency and curves retain labeled deferred GIF diagnostics;
-  fixed orthographic cameras use the separate V2 contract. The context audit
+  preparation. Transparency retains labeled deferred GIF diagnostics; curves use
+  evaluated conversion and fixed orthographic cameras use V2. The context audit
   resolves G08's missing driver global without changing V1's camera rejection.
 
 - Three reusable rigid batches: nominal G93–G97/G99/G100 support/fall, opening-container

@@ -46,7 +46,9 @@ def check(root, dataset, task):
         scene.frame_set(int(frame))
         bpy.context.view_layer.update()
         depsgraph = bpy.context.evaluated_depsgraph_get()
-        source_objects = {o.name: o for o in scene.objects if o.type == "MESH"}
+        converted = manifest.get("geometry_conversion") is not None
+        types = ("MESH", "CURVE", "FONT") if converted else ("MESH",)
+        source_objects = {o.name: o for o in scene.objects if o.type in types}
         assert set(source_objects) == {o["name"] for o in manifest["objects"]}
         camera = scene.camera.evaluated_get(depsgraph)
         if manifest["camera"].get("projection_type") == "orthographic":
@@ -62,7 +64,16 @@ def check(root, dataset, task):
         np.testing.assert_array_equal(manifest["camera"]["projection"], np.asarray(projection))
         for record in manifest["objects"]:
             evaluated = source_objects[record["name"]].evaluated_get(depsgraph)
-            mesh = evaluated.to_mesh()
+            if converted and evaluated.original.type in ("CURVE", "FONT"):
+                description = {"type": evaluated.original.type}
+                if evaluated.original.type == "FONT":
+                    description.update(text=evaluated.data.body, font=evaluated.data.font.name)
+                assert record.get("source_geometry") == description
+            mesh = (
+                bpy.data.meshes.new_from_object(evaluated, preserve_all_data_layers=True, depsgraph=depsgraph)
+                if converted
+                else evaluated.to_mesh()
+            )
             try:
                 mesh.calc_loop_triangles()
                 local = np.asarray([v.co[:] for v in mesh.vertices])
@@ -96,7 +107,10 @@ def check(root, dataset, task):
                 np.testing.assert_allclose(actual_n, expected_n, atol=3e-6, rtol=0)
                 worst_normal = max(worst_normal, float(np.max(np.abs(actual_n - expected_n))))
             finally:
-                evaluated.to_mesh_clear()
+                if converted:
+                    bpy.data.meshes.remove(mesh)
+                else:
+                    evaluated.to_mesh_clear()
     return {
         "task": task,
         "frames": len(frames),
