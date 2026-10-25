@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 from numba import njit, prange
 
-from ...envs.pusht.raster import (
+from .raster import (
     BX0,
     BX1,
     BY0,

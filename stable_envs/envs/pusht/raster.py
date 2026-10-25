@@ -1669,7 +1669,7 @@ def render_cpu(fields, size, fallback, chunk=1024):
 
     ``fallback(rows)`` draws the rows this renderer does not cover (action markers) with pygame.
     """
-    from ...render.cpu_raster import pusht as cpu
+    from . import raster_cpu as cpu
 
     count = len(fields["recipe/config"])
     out = np.empty((count, size, size, 3), np.uint8)
