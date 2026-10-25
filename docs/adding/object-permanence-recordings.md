@@ -28,12 +28,13 @@ The source animation produces poses; the exporter does not transcribe its motion
 | Constant evaluated modifiers | Supported if exported geometry stays identical across all frames |
 | Rigid Curve/FONT objects | Explicit [evaluated mesh conversion](object-permanence-converted-geometry.md), retaining labels and source tessellation |
 | Static opaque base colors and one material per mesh | Supported; simplified rendering does not preserve source shaders |
+| Constant alpha surfaces, one material per mesh | Explicit [v4 alpha recording/visibility contract](object-permanence-transparency.md), including overlapping masks |
 | Fixed perspective camera | World and projection matrices exported |
 | Orthographic camera | Explicit [v2 recording/visibility contract](object-permanence-orthographic.md); v1 remains perspective-only |
 | Animated positive diagonal scale | Opt-in [v3 optional scale array](object-permanence-scale.md), preserving object origins |
 | Shear/reflection, zero scale, deformation, topology changes | Rejected |
 | Moving camera, changing base colors, visibility changes | Rejected |
-| Generated instances, textures, transparency, depth of field | Rejected |
+| Generated instances, textures, optical transmission/refraction, depth of field | Rejected |
 | Dataset-driver diversity variants | Not implemented |
 
 Every exported frame is checked. Source metadata `pb_is_dynamic` is retained

@@ -266,8 +266,10 @@ through the caps. The source is still the pinned commit above, script
 Evaluating that source and calling the **unmodified** `sample_scene` at frame 1
 raises `unsupported transparency/material links: large_funnel_endcap_B`.
 `test_next_source_task_with_active_glass_is_rejected_by_unchanged_opaque_contract`
-reproduces this with the optional pinned Blender/source environment. G90 has no
-accepted clip, oracle or audited preparation entry. The original four legacy BVH
+reproduces this with the optional pinned Blender/source environment. The separate
+[alpha extension](object-permanence-transparency.md) now provides G90's explicit
+v4 recording, independent layered oracle and preparation entry. It remains
+outside this opaque contract. The original four legacy BVH
 deferrals remain unchanged.
 
 This is a material/visibility-contract boundary, not a silhouette error that can
@@ -276,8 +278,8 @@ would change the source's visible-object semantics. Continuing needs an explicit
 transparent-surface policy: what RGB transmission/compositing to retain, whether
 depth denotes the first surface or an opaque surface, and how object masks account
 for a target visible through glass. Such a version needs matching material export,
-rendering and independently generated oracles alongside v1. None is implemented
-or silently substituted here. Later opaque perspective scenes can be audited
+rendering and independently generated oracles alongside v1. The alpha extension
+implements this separately, without silently substituting it here. Later opaque perspective scenes can be audited
 independently without extending this contract.
 
 ### Three more batches: G93–G97/G99/G100
@@ -448,7 +450,7 @@ records the probe names and their raw source roles independently of motion tags.
 
 | Primary reason | Nominal tasks | Policy |
 |---|---:|---|
-| Transparency | 5 | No opaque replacement of glass/acrylic |
+| Optical transmission/refraction | 1 | G01 requires a different optical policy; no opaque or alpha-only replacement |
 | Independent source-normal variation | 2 | G98/G132 exceed the existing 3e-6 normal budget |
 
 Orthographic projection and constant Curve/FONT geometry are now supported by

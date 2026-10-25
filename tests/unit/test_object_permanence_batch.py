@@ -156,3 +156,31 @@ def test_orthographic_batch_requires_v2_without_changing_v1_or_default(source, t
         expected = "ready-for-runtime-check" if version == "stable-envs/opaque-pixel-rays-v2" else "unsupported"
         assert result["counts"] == {expected: 1}
         assert not (tmp_path / "data").exists()
+
+
+def test_alpha_batch_requires_its_own_contract(source, tmp_path):
+    directory = source / "object_permanence/generator/tasks/G90"
+    directory.mkdir()
+    (directory / "task.json").write_text(json.dumps({"id": "G90", "member_scripts": ["scene.py"]}))
+    (directory / "scene.py").write_text("def main(): pass\n")
+    for version in (
+        None,
+        "stable-envs/opaque-pixel-rays-v1",
+        "stable-envs/opaque-pixel-rays-v2",
+        "stable-envs/transparent-pixel-rays-v1",
+    ):
+        result = batch.run(
+            source, tmp_path / "data", tmp_path / "plan.json", tasks="G90", plan_only=True, visibility_contract=version
+        )
+        assert result["jobs"][0]["status"] == (
+            "ready-for-runtime-check" if version == "stable-envs/transparent-pixel-rays-v1" else "unsupported"
+        )
+    result = batch.run(
+        source,
+        tmp_path / "data",
+        tmp_path / "plan.json",
+        tasks="G34",
+        plan_only=True,
+        visibility_contract="stable-envs/transparent-pixel-rays-v1",
+    )
+    assert result["counts"] == {"unsupported": 1}

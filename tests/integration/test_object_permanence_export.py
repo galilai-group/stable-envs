@@ -241,10 +241,10 @@ def test_next_source_task_with_active_glass_is_rejected_by_unchanged_opaque_cont
 import json, runpy, sys
 from pathlib import Path
 import bpy
-from scripts.export.object_permanence import AUDITED_TASKS, RAY_CONTRACT_TASKS, check_source, sample_scene
+from scripts.export.object_permanence import ALPHA_TASKS, RAY_CONTRACT_TASKS, check_source, sample_scene
 root = Path(sys.argv[1])
 check_source(root)
-assert 'G90' not in AUDITED_TASKS and 'G90' not in RAY_CONTRACT_TASKS
+assert 'G90' in ALPHA_TASKS and 'G90' not in RAY_CONTRACT_TASKS
 matches = list((root/'object_permanence/generator/tasks').glob('G90_*/task.json'))
 assert len(matches) == 1
 metadata = json.loads(matches[0].read_text())

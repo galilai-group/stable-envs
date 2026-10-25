@@ -20,6 +20,7 @@ from ...render._resources import Closeable
 SCHEMA = "stable-envs/object-permanence-rigid-v1"
 SCHEMA_V2 = "stable-envs/object-permanence-rigid-v2"
 SCHEMA_V3 = "stable-envs/object-permanence-rigid-v3"
+SCHEMA_V4 = "stable-envs/object-permanence-rigid-v4"
 SCALE_CONVENTION = "stable-envs/asset-relative-positive-diagonal-v1"
 CONVENTIONS = {"world": "right-handed-z-up", "quaternion": "wxyz", "units": "source-scene-units"}
 
@@ -71,7 +72,7 @@ class RigidTrajectory(Closeable):
         directory = self.root / "clips" / clip
         self._manifest = json.loads((directory / "manifest.json").read_text())
         m = self._manifest
-        if m.get("schema") not in (SCHEMA, SCHEMA_V2, SCHEMA_V3) or m.get("conventions") != CONVENTIONS:
+        if m.get("schema") not in (SCHEMA, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4) or m.get("conventions") != CONVENTIONS:
             raise ValueError("unsupported rigid-scene schema or conventions")
         if m.get("clip") != clip:
             raise ValueError("clip identity differs")
@@ -86,9 +87,9 @@ class RigidTrajectory(Closeable):
             raise ValueError("fps must be finite and positive")
         self._arrays = {}
         scaled = "scales" in m["arrays"]
-        if scaled and m["schema"] != SCHEMA_V3:
+        if scaled and m["schema"] not in (SCHEMA_V3, SCHEMA_V4):
             raise ValueError("scale arrays require rigid-scene v3")
-        if m["schema"] == SCHEMA_V3 and m.get("scale_convention") != SCALE_CONVENTION:
+        if (m["schema"] == SCHEMA_V3 or scaled) and m.get("scale_convention") != SCALE_CONVENTION:
             raise ValueError("v3 requires the asset-relative positive scale convention")
         for name in ("poses", "frames", *(["scales"] if scaled else [])):
             description = m["arrays"][name]
@@ -126,6 +127,15 @@ class RigidTrajectory(Closeable):
             if not np.array_equal(value[0], np.ones_like(value[0])):
                 raise ValueError("asset-relative scales must start at one")
         objects = m["objects"]
+        transparent = m["schema"] == SCHEMA_V4
+        if not transparent and "material_convention" in m:
+            raise ValueError("alpha material policies require rigid-scene v4")
+        if transparent and (
+            m.get("material_convention") != "stable-envs/constant-alpha-surfaces-v1"
+            or m.get("visibility_contract") != "stable-envs/transparent-pixel-rays-v1"
+            or m["camera"].get("projection_type") not in ("perspective", "orthographic")
+        ):
+            raise ValueError("v4 requires explicit alpha material, visibility and camera conventions")
         if not objects or len({o["name"] for o in objects}) != len(objects):
             raise ValueError("objects must have unique names")
         if len({o["id"] for o in objects}) != len(objects):
@@ -139,7 +149,11 @@ class RigidTrajectory(Closeable):
                 raise ValueError("object ID must be a positive int16")
             _poses(np.asarray(obj["pose"], np.float32), (7,))
             rgba = np.asarray(obj["rgba"])
-            if rgba.shape != (4,) or not np.isfinite(rgba).all() or rgba[3] != 1:
+            if (
+                rgba.shape != (4,)
+                or not np.isfinite(rgba).all()
+                or (not 0 <= rgba[3] <= 1 if transparent else rgba[3] != 1)
+            ):
                 raise ValueError("v1 requires finite opaque RGBA")
             if node >= 0:
                 used.add(node)

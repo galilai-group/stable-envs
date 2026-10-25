@@ -1,13 +1,21 @@
 {
   "entries": [
     {
-      "category": "transparent-material",
+      "category": "optical-transmission",
       "member": 0,
       "name": "hole_box_drop",
+      "optical_audit": {
+        "alpha_values": [
+          0.28,
+          0.42
+        ],
+        "ior": 1.45,
+        "transmission_weight": 0.25
+      },
       "preview": ".cache/object_permanence/evaluation/deferred-previews/g01-source-only-deferred.gif",
       "preview_frames": 120,
       "preview_kind": "source-only",
-      "reason": "Active acrylic materials alpha .28/.42 violate opacity",
+      "reason": "Alpha surfaces additionally enable Transmission Weight 0.25 and IOR 1.45; the straight-ray alpha contract rejects nonzero transmission.",
       "script": "object_permanence/generator/tasks/G01_hole_box_drop/pb_task_00000000_pb_drop_covered_hole_box_0003_blender.py",
       "source_script_sha256": "d8e985537c1d8e782212ce09bb604d03cc1048c9608c95f038e6c2797977b16d",
       "source_task_manifest_sha256": "bd6b5f639c0a4702da2450ba8d3ca4821a5e968f803c957c3bf3f86eaf6a5a10",
@@ -2283,18 +2291,61 @@
       "task": "G35"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7,
+          16,
+          32
+        ],
+        "fallbacks": 0
+      },
       "camera": "PERSP",
-      "category": "transparent-material",
+      "contract": "stable-envs/transparent-pixel-rays-v1",
+      "depth_mse_max": 1.4853743292061542e-16,
+      "dynamic_nodes": [
+        "orange_ball_from_u_track_inside_glass_box"
+      ],
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 60,
+        "dynamic_nodes": [
+          "orange_ball_from_u_track_inside_glass_box"
+        ],
+        "frames": 120,
+        "objects": 121,
+        "task": "G36",
+        "world_normal_max_abs_error": 2.6742377935012884e-07,
+        "world_triangle_max_abs_error": 4.4934013399000605e-08
+      },
+      "layer_capacity": 16,
+      "mask_iou_min": 1.0,
+      "material_convention": "stable-envs/constant-alpha-surfaces-v1",
       "member": 0,
       "mesh_count": 121,
       "name": "rollercoaster_u_track_glassbox",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g36-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: unsupported transparency/material links: glass_box_back_wall",
+      "observed_layers_max": 7,
+      "oracle": "tests/fixtures/semantics/object_permanence/g36/transparent_pixel_rays_v1/nominal",
+      "preview": ".cache/object_permanence/evaluation/g36-source-vs-transparent-pixel-rays-v1.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v4",
+      "reference_target_roles": {
+        "orange_ball_from_u_track_inside_glass_box": "target"
+      },
+      "reference_targets": [
+        "orange_ball_from_u_track_inside_glass_box"
       ],
       "script": "object_permanence/generator/tasks/G36_rollercoaster_u_track_glassbox/pb_task_00000025_pb_transparent_box_wall_blocks_ball_0026_blender.py",
       "source_frames": [
@@ -2303,8 +2354,7 @@
       ],
       "source_script_sha256": "6b3b691d18f11f6f0b044a8dbf90fb3185670ccf90e0244fea9c5c4666f77860",
       "source_task_manifest_sha256": "8cbe200b57c7b73a92e2f79bac3bc37dfe78e4449109af2b91f8bcc2bd54a707",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G36"
     },
     {
@@ -3475,22 +3525,63 @@
       "task": "G53"
     },
     {
-      "blockers": [
-        "transparent-material"
+      "cache_bit_identical_resolutions": [
+        90,
+        180
       ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7,
+          16,
+          32
+        ],
+        "fallbacks": 0
+      },
       "camera": "ORTHO",
-      "capability_contract_audited": "stable-envs/opaque-pixel-rays-v2",
-      "category": "transparent-material",
+      "camera_capability_contract": "stable-envs/opaque-pixel-rays-v2",
+      "capability_contract_audited": "stable-envs/transparent-pixel-rays-v1",
+      "contract": "stable-envs/transparent-pixel-rays-v1",
+      "depth_mse_max": 7.061424803487011e-15,
+      "dynamic_nodes": [
+        "serpentine_ball"
+      ],
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 32,
+        "dynamic_nodes": [
+          "serpentine_ball"
+        ],
+        "frames": 120,
+        "objects": 90,
+        "task": "G54",
+        "world_normal_max_abs_error": 1.8803747967033324e-07,
+        "world_triangle_max_abs_error": 6.906091534197856e-07
+      },
+      "layer_capacity": 16,
+      "mask_iou_min": 1.0,
+      "material_convention": "stable-envs/constant-alpha-surfaces-v1",
       "member": 0,
       "mesh_count": 90,
       "name": "serpentine_ramp_tunnel",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g54-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "Orthographic camera is supported by V2; active glass mesh guardwall_a_back uses mat_glass alpha 0.24, outside the opaque contract",
+      "observed_layers_max": 9,
+      "oracle": "tests/fixtures/semantics/object_permanence/g54/transparent_pixel_rays_v1/nominal",
+      "preview": ".cache/object_permanence/evaluation/g54-source-vs-transparent-pixel-rays-v1.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v4",
+      "reference_target_roles": {
+        "serpentine_ball": "target"
+      },
+      "reference_targets": [
+        "serpentine_ball"
       ],
       "script": "object_permanence/generator/tasks/G54_serpentine_ramp_tunnel/pb_task_00000100_pb_serpentine_ramp_tunnel_0101_blender.py",
       "source_frames": [
@@ -3499,8 +3590,7 @@
       ],
       "source_script_sha256": "f23cb81b62e0247a163c2fcd100d3af33b641e28d7aae5aff074698da67a4538",
       "source_task_manifest_sha256": "bf68726f17f427eeb7f21b24a0baaa405b1899698345c79cb9fa084aa3b6413d",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G54"
     },
     {
@@ -3811,22 +3901,63 @@
       "task": "G60"
     },
     {
-      "blockers": [
-        "transparent-material"
+      "cache_bit_identical_resolutions": [
+        90,
+        180
       ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7,
+          16,
+          32
+        ],
+        "fallbacks": 0
+      },
       "camera": "ORTHO",
-      "capability_contract_audited": "stable-envs/opaque-pixel-rays-v2",
-      "category": "transparent-material",
+      "camera_capability_contract": "stable-envs/opaque-pixel-rays-v2",
+      "capability_contract_audited": "stable-envs/transparent-pixel-rays-v1",
+      "contract": "stable-envs/transparent-pixel-rays-v1",
+      "depth_mse_max": 1.5363086178596762e-14,
+      "dynamic_nodes": [
+        "spiral_ball"
+      ],
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 16,
+        "dynamic_nodes": [
+          "spiral_ball"
+        ],
+        "frames": 120,
+        "objects": 125,
+        "task": "G61",
+        "world_normal_max_abs_error": 3.816662360019499e-07,
+        "world_triangle_max_abs_error": 9.254579103057381e-08
+      },
+      "layer_capacity": 16,
+      "mask_iou_min": 1.0,
+      "material_convention": "stable-envs/constant-alpha-surfaces-v1",
       "member": 0,
       "mesh_count": 125,
       "name": "spiral_ramp_behind_column",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g61-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "Orthographic camera is supported by V2; active glass mesh spiral_guard_00 uses mat_glass alpha 0.24, outside the opaque contract",
+      "observed_layers_max": 9,
+      "oracle": "tests/fixtures/semantics/object_permanence/g61/transparent_pixel_rays_v1/nominal",
+      "preview": ".cache/object_permanence/evaluation/g61-source-vs-transparent-pixel-rays-v1.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v4",
+      "reference_target_roles": {
+        "spiral_ball": "target"
+      },
+      "reference_targets": [
+        "spiral_ball"
       ],
       "script": "object_permanence/generator/tasks/G61_spiral_ramp_behind_column/pb_task_00000107_pb_spiral_ramp_behind_column_0108_blender.py",
       "source_frames": [
@@ -3835,8 +3966,7 @@
       ],
       "source_script_sha256": "bff1075b896447de18d5bd4fa8682b86c130f3aca1e32dd1ddfbe4ee514b0941",
       "source_task_manifest_sha256": "ec06bd50910b9c11f982d391af22239784ffdfdd73a708361d5de7c7ec51ccd2",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G61"
     },
     {
@@ -4871,18 +5001,65 @@
       "task": "G89"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          3,
+          4,
+          7,
+          16,
+          32
+        ],
+        "fallbacks": 0
+      },
       "camera": "PERSP",
-      "category": "transparent-material",
+      "contract": "stable-envs/transparent-pixel-rays-v1",
+      "depth_mse_max": 3.790143460683773e-15,
+      "dynamic_nodes": [
+        "large_red_ball_wider_than_gap",
+        "small_orange_ball_narrower_than_gap"
+      ],
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 7,
+        "dynamic_nodes": [
+          "large_red_ball_wider_than_gap",
+          "small_orange_ball_narrower_than_gap"
+        ],
+        "frames": 120,
+        "objects": 20,
+        "task": "G90",
+        "world_normal_max_abs_error": 3.416708088122e-07,
+        "world_triangle_max_abs_error": 1.6668036018074872e-07
+      },
+      "layer_capacity": 16,
+      "mask_iou_min": 1.0,
+      "material_convention": "stable-envs/constant-alpha-surfaces-v1",
       "member": 0,
       "mesh_count": 20,
       "name": "funnel_size_sorter",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g90-source-only-deferred.gif",
-      "preview_frames": 24,
-      "preview_kind": "source-only",
-      "reason": "ValueError: unsupported transparency/material links: large_funnel_endcap_B",
+      "observed_layers_max": 5,
+      "oracle": "tests/fixtures/semantics/object_permanence/g90/transparent_pixel_rays_v1/nominal",
+      "preview": ".cache/object_permanence/evaluation/g90-source-vs-transparent-pixel-rays-v1.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v4",
+      "reference_target_roles": {
+        "large_red_ball_wider_than_gap": "large_ball_wedges_in_funnel",
+        "small_orange_ball_narrower_than_gap": "small_ball_passes_gap"
+      },
+      "reference_targets": [
+        "large_red_ball_wider_than_gap",
+        "small_orange_ball_narrower_than_gap"
       ],
       "script": "object_permanence/generator/tasks/G90_funnel_size_sorter/pb_task_00000136_pb_funnel_size_sorter_0137_blender.py",
       "source_frames": [
@@ -4891,8 +5068,7 @@
       ],
       "source_script_sha256": "a16375a2d967c0999962fbfe8a0576937b6e6b52917e220e1da09bd31c1a917a",
       "source_task_manifest_sha256": "0fdf6d6d82ad2b60531885f7fe04a6afdac02bd321b218693be5e47c3a8b5b67",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G90"
     },
     {
@@ -8387,6 +8563,7 @@
   ],
   "visibility_contracts": [
     "stable-envs/opaque-pixel-rays-v1",
-    "stable-envs/opaque-pixel-rays-v2"
+    "stable-envs/opaque-pixel-rays-v2",
+    "stable-envs/transparent-pixel-rays-v1"
   ]
 }
