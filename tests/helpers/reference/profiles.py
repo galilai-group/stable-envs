@@ -39,7 +39,7 @@ PROFILES = {
             ("Acrobot", "DMCAcrobotBalance", "acrobot", 1),
             ("Pendulum", "DMCPendulumSwingup", "pendulum", 1),
             ("Cartpole", "DMCCartpoleSwingup", "cartpole", 1),
-            ("Reacher", "DMCReacherHard", "reacher", 2),
+            ("Reacher", "DMCReacher", "reacher", 2),
             ("Cheetah", "DMCCheetahRun", "cheetah", 6),
             ("Hopper", "DMCHopperHop", "hopper", 4),
             ("Walker", "DMCWalkerWalk", "walker", 6),

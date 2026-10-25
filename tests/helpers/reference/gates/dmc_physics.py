@@ -33,7 +33,7 @@ CELLS = {
     "DMCBallInCupCatch": "ball_in_cup",
     "DMCFingerTurnHard": "finger",
     "DMCManipulatorBringBall": "manipulator",
-    "DMCReacherHard": "reacher",
+    "DMCReacher": "reacher",
     "DMCCheetahRun": "cheetah",
     "DMCHopperHop": "hopper",
     "DMCWalkerWalk": "walker",

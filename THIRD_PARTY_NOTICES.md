@@ -11,6 +11,11 @@ Shared navigation code handles masked steps, observations and reset/State/task c
 envX is not a runtime dependency.
 The Apache license is included in `licenses/envX-APACHE-2.0.txt` and distributed with the package.
 
+## envX Reacher
+
+`stable_envs/envs/dmcontrol/simulation/reacher_mjx.py` adapts `src/envx/reacher/env.py`
+from the envX commit above under Apache-2.0.
+
 ## Craftax
 
 The `craftax` family (`stable_envs/envs/craftax/`) runs

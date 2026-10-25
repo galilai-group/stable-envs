@@ -3,7 +3,6 @@
 import importlib
 import inspect
 import pkgutil
-from functools import partial
 
 import numpy as np
 import pytest
@@ -20,7 +19,6 @@ from tests.helpers.reference.semantics import assert_same_state
 
 CASES = [(FirstFamilyAdapter, (domain,)) for domain in ("acrobot", "pendulum", "cartpole", "cartpole-balance")] + [
     (ReacherAdapter, ()),
-    (partial(ReacherAdapter, task="easy"), ()),
     *[(DMCAlignedAdapter, (domain,)) for domain in ALIGNED],
     *[(DMCContinuationAdapter, (domain,)) for domain in CONTINUATION],
     (DMCHumanoidAdapter, ()),

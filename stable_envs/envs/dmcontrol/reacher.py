@@ -9,15 +9,15 @@ from ._delegated import DelegatedSemantics
 
 
 class _ReacherSemantics(DelegatedSemantics):
-    """Reacher on CPU dm_control lanes.
+    """Reacher with native CPU or CUDA MJX physics."""
 
-    The four-column renderer projection cannot resume physics or implicit resets.
-    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.execution_mode = "JAX_MJX" if self.device.type == "cuda" else "DELEGATED_CPU"
 
     def make_variation_space(self):
         space = super().make_variation_space()
-        if self._simulator_key() == "reacher":
-            space["visibility"]["target"].set_init_value(0)
+        space["visibility"]["target"].set_init_value(0)
         return space
 
     def _layout(self):
@@ -36,21 +36,16 @@ class _ReacherSemantics(DelegatedSemantics):
         )
 
 
-DMCReacherEasy = parity_cell("DMCReacherEasy", "reacher", "easy", bases=(_ReacherSemantics,), SIMULATOR="reacher-easy")
 # The registered wrapper's target alternatives at the task's size; the sphere is the compiled model's own.
-_HARD_TARGET = 0.015
+_TARGET_RADIUS = 0.015
 
-DMCReacherHard = parity_cell(
-    "DMCReacherHard",
+DMCReacher = parity_cell(
+    "DMCReacher",
     "reacher",
     "hard",
     bases=(_ReacherSemantics,),
-    SHAPE_KNOBS={"target": ((R3.BOX, (_HARD_TARGET,) * 3), (R3.SPHERE, (_HARD_TARGET, 0.0, 0.0)))},
+    SHAPE_KNOBS={"target": ((R3.BOX, (_TARGET_RADIUS,) * 3), (R3.SPHERE, (_TARGET_RADIUS, 0.0, 0.0)))},
 )
 
-DMCReacherHard.__doc__ = """DM Control Reacher hard with authoritative CPU simulation and batched rendering.
-
-Public State includes positions, velocities, integration warm-start values, clock,
-RNG, lifecycle counters, cumulative reward and the target that changes on implicit
-resets. Device selects State/render placement; physics runs on CPU.
-"""
+DMCReacher.name = "dmc-reacher"
+DMCReacher.__doc__ = """Reacher with native float64 CPU or float32 MJX CUDA physics."""

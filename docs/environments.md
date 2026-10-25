@@ -34,7 +34,7 @@ unless another module imports them.
 ```python
 env = snv.PushT(num_envs=8)
 env = snv.CartPole(num_envs=8)
-# snv.DMCReacherHard, snv.OGBCube, snv.CraftaxClassicPixels, snv.PointMazeLargeNavigate, …
+# snv.DMCReacher, snv.OGBCube, snv.CraftaxClassicPixels, snv.PointMazeLargeNavigate, …
 ```
 
 `dir(snv)` lists the documented namespace and the registered class names.
@@ -52,7 +52,7 @@ State keys and the Variation leaves of each class.
 |---|---:|---|
 | [`classic_control`](environments/classic-control.md) | 5 | `CartPole`, `Pendulum` |
 | [`craftax`](environments/craftax.md) | 4 | `CraftaxClassicPixels`, `CraftaxSymbolic` |
-| [`dmcontrol`](environments/dmcontrol.md) | 18 | `DMCReacherHard`, `DMCCheetahRun` (`domain="reacher"`, `"cheetah"`, …) |
+| [`dmcontrol`](environments/dmcontrol.md) | 17 | `DMCReacher`, `DMCCheetahRun` (`domain="reacher"`, `"cheetah"`, …) |
 | [`fetch`](environments/fetch.md) | 12 | `FetchReach`, `FetchPush`, … |
 | [`navigation`](environments/navigation.md) | 5 | `TwoRoom`, `Piecewise`, `SimplePointMaze` |
 | [`ogbench`](environments/ogbench.md) | 27 | `PointMazeLargeNavigate`, `OGBCube` (`domain="pointmaze"`, `"cube"`, …) |

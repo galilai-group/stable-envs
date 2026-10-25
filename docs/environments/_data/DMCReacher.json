@@ -1,14 +1,14 @@
 {
- "class_name": "DMCReacherEasy",
+ "class_name": "DMCReacher",
  "module": "stable_envs.envs.dmcontrol",
  "family": "dmcontrol",
  "domain": "reacher",
- "reference_id": "dm_control/reacher-easy",
+ "reference_id": "dm_control/reacher-hard",
  "requires_cuda": false,
  "has_dynamics": true,
  "default_size": 84,
  "frame_shape": [84, 84, 3],
- "physics": "source simulator on CPU",
+ "physics": "native MuJoCo on CPU; JAX/MJX on CUDA",
  "renderers": {
   "cpu": "raycast3d (torch)",
   "cuda": "raycast3d (torch)"
@@ -57,9 +57,33 @@
    "leaves": 4,
    "numel": 627,
    "dtypes": ["bool", "float64", "int64"]
+  },
+  {
+   "key": "physics",
+   "leaves": 2,
+   "numel": 2,
+   "dtypes": ["float64"]
   }
  ],
  "variation": [
+  {
+   "path": "agent.arm_density",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 500,
+   "high": 1500,
+   "default": 1000
+  },
+  {
+   "path": "agent.finger_density",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 500,
+   "high": 1500,
+   "default": 1000
+  },
   {
    "path": "camera.fovy_scale",
    "type": "Box",
@@ -133,12 +157,20 @@
    "default": [0.6, 0.3, 0.3]
   },
   {
-   "path": "visibility.target",
+   "path": "target.shape",
    "type": "Discrete",
    "reset": false,
    "n": 2,
    "start": 0,
    "default": 1
+  },
+  {
+   "path": "visibility.target",
+   "type": "Discrete",
+   "reset": false,
+   "n": 2,
+   "start": 0,
+   "default": 0
   }
  ],
  "devices": {
@@ -154,7 +186,7 @@
    "height": 160,
    "frames": 61,
    "fps": 15,
-   "bytes": 10754
+   "bytes": 10356
   },
   "variation": {
    "file": "variation.mp4",
@@ -162,7 +194,7 @@
    "height": 224,
    "frames": 46,
    "fps": 15,
-   "bytes": 17236
+   "bytes": 18261
   },
   "variation_leaves": "all"
  }
