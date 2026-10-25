@@ -45,6 +45,12 @@ def check(
     failures, minimum, worst = [], 1.0, 0.0
     with RigidTrajectory(recordings, f"{task.lower()}-nominal") as clip:
         metadata = clip.manifest
+        if metadata.get("geometry_conversion") != manifest.get("geometry_conversion"):
+            raise ValueError("source and recording geometry conversion policies differ")
+        if metadata.get("geometry_conversion") is not None:
+            descriptions = {o["name"]: o["source_geometry"] for o in metadata["objects"] if "source_geometry" in o}
+            if descriptions != manifest.get("source_geometry"):
+                raise ValueError("source and recording converted geometry identities differ")
         if visibility_contract is not None and (
             not np.array_equal(manifest["camera"]["world"], metadata["camera"]["world"])
             or not np.array_equal(manifest["camera"]["projection"], metadata["camera"]["projection"])
@@ -60,7 +66,7 @@ def check(
             raise ValueError("source and recording definitions differ")
         if metadata["source"].get("execution_context") != manifest.get("source_execution_context"):
             raise ValueError("source and recording execution contexts differ")
-        if visibility_contract == "stable-envs/opaque-pixel-rays-v2" and (
+        if (visibility_contract == "stable-envs/opaque-pixel-rays-v2" or metadata.get("geometry_conversion")) and (
             not manifest.get("source_preparation_recipe")
             or metadata["source"].get("preparation_recipe") != manifest["source_preparation_recipe"]
         ):

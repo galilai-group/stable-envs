@@ -25,12 +25,22 @@ from pathlib import Path
 
 import numpy as np
 
+from .object_permanence_geometry import GEOMETRY_CONVERSION, evaluated_mesh, source_geometry, validate_instances
+
 SOURCE_COMMIT = "824baddcdad087810d35638bf8f273b884f74975"
 SCHEMA = "stable-envs/object-permanence-rigid-v1"
 SCHEMA_V2 = "stable-envs/object-permanence-rigid-v2"
 CONVENTIONS = {"world": "right-handed-z-up", "quaternion": "wxyz", "units": "source-scene-units"}
 # Context audit supplies nominal globals independently of camera/type certification.
 SOURCE_CONTEXT_TASKS = frozenset({"G08", "G44", "G45", "G46", "G48"})
+CONVERTED_GEOMETRY_TASKS = {
+    "G04",
+    "G13",
+    "G14",
+    "G29",
+    "G31",
+    "G46",
+}
 # Certified orthographic entries are bound to the separate v2 visibility gate.
 ORTHOGRAPHIC_TASKS = {
     "G08",
@@ -74,6 +84,9 @@ ORTHOGRAPHIC_TASKS = {
     "G78",
     "G91",
     "G92",
+    "G13",
+    "G14",
+    "G46",
 }
 AUDITED_TASKS = {
     "G02": ("$prefix:render_png", ""),
@@ -213,6 +226,13 @@ AUDITED_TASKS = {
     "G78": ("build_scene_by_kind", "animate_scene_by_kind"),
     "G91": ("build_scene_by_kind", "animate_scene_by_kind"),
     "G92": ("build_scene_by_kind", "animate_scene_by_kind"),
+    # Evaluated Curve/FONT entries; source objects retain their semantic identity.
+    "G04": ("build_scene", "animate_scene"),
+    "G13": ("build_scene", "animate_scene"),
+    "G14": ("build_scene", "animate_scene"),
+    "G29": ("build_scene", "animate_scene"),
+    "G31": ("build_scene", "animate_scene"),
+    "G46": ("build_scene", "animate_scene"),
 }
 # These preparation recipes are certified only with the versioned ray contract.
 # The legacy BVH deferrals above/below remain meaningful and are never erased.
@@ -305,6 +325,9 @@ RAY_CONTRACT_TASKS = {
     "G148",
     "G149",
     "G150",
+    "G04",
+    "G29",
+    "G31",
 }
 CONTRACT_ONLY_TASKS = {
     "G02",
@@ -392,7 +415,7 @@ CONTRACT_ONLY_TASKS = {
     "G149",
     "G150",
 }
-CONTRACT_ONLY_TASKS |= ORTHOGRAPHIC_TASKS
+CONTRACT_ONLY_TASKS |= ORTHOGRAPHIC_TASKS | CONVERTED_GEOMETRY_TASKS
 # Preparation/rigid serialization passed, but source pixel fidelity did not.
 # Explicit export remains useful for diagnosis; default batch execution is blocked.
 DEFERRED_TASKS = {
@@ -672,9 +695,7 @@ def prepare(root, task):
 
 def _mesh(obj, depsgraph, scale):
     """Copy evaluated local triangles/corner normals, baking constant scale once."""
-    evaluated = obj.evaluated_get(depsgraph)
-    mesh = evaluated.to_mesh()
-    try:
+    with evaluated_mesh(obj, depsgraph) as mesh:
         mesh.calc_loop_triangles()
         vertices = np.asarray([v.co[:] for v in mesh.vertices], np.float64)
         triangles = np.asarray([t.vertices[:] for t in mesh.loop_triangles], np.int32)
@@ -702,8 +723,6 @@ def _mesh(obj, depsgraph, scale):
             "normals": np.ascontiguousarray(unique[:, 3:]),
             "triangles": np.ascontiguousarray(faces),
         }
-    finally:
-        evaluated.to_mesh_clear()
 
 
 def _pose(obj, depsgraph):
@@ -772,7 +791,7 @@ def _camera(scene, depsgraph, *, allow_orthographic=False):
     return result
 
 
-def sample_scene(scene, *, object_order=None, allow_orthographic=False):
+def sample_scene(scene, *, object_order=None, allow_orthographic=False, allow_evaluated_geometry=False):
     """Check every frame and return a rigid recording, or fail explicitly.
 
     Motion comes exclusively from evaluated source data. Constant positive scale
@@ -787,13 +806,14 @@ def sample_scene(scene, *, object_order=None, allow_orthographic=False):
     fps = float(scene.render.fps / scene.render.fps_base)
     if not np.isfinite(fps) or fps <= 0:
         raise ValueError("scene fps must be finite and positive")
-    objects = sorted((o for o in scene.objects if o.type == "MESH"), key=lambda o: o.name)
+    types = ("MESH", "CURVE", "FONT") if allow_evaluated_geometry else ("MESH",)
+    objects = sorted((o for o in scene.objects if o.type in types), key=lambda o: o.name)
     if object_order is not None:
         by_name = {o.name: o for o in objects}
         if set(by_name) != set(object_order):
             raise ValueError("audited object set differs")
         objects = [by_name[n] for n in object_order]
-    if not objects or any(o.type not in ("MESH", "EMPTY", "CAMERA", "LIGHT") for o in scene.objects):
+    if not objects or any(o.type not in (*types, "EMPTY", "CAMERA", "LIGHT") for o in scene.objects):
         raise ValueError("unsupported renderable object type")
     frames = np.arange(scene.frame_start, scene.frame_end + 1, dtype=np.int64)
     if not len(frames):
@@ -805,14 +825,14 @@ def sample_scene(scene, *, object_order=None, allow_orthographic=False):
     original = scene.frame_current
     poses = np.empty((len(frames), len(objects), 7), np.float32)
     initial = None
+    initial_source_geometry = None
     try:
         for row, frame in enumerate(frames):
             scene.frame_set(int(frame))
             bpy.context.view_layer.update()
             depsgraph = bpy.context.evaluated_depsgraph_get()
-            if any(i.is_instance for i in depsgraph.object_instances):
-                raise ValueError("v1 does not support generated instances")
-            if {o.name for o in scene.objects if o.type == "MESH"} != {o.name for o in objects}:
+            validate_instances(depsgraph, objects, allow_evaluated_geometry=allow_evaluated_geometry)
+            if {o.name for o in scene.objects if o.type in types} != {o.name for o in objects}:
                 raise ValueError("object set changes")
             if hidden_collection(scene.collection) or any(o.hide_render or not o.visible_get() for o in objects):
                 raise ValueError("v1 does not support hidden objects/visibility changes")
@@ -827,9 +847,13 @@ def sample_scene(scene, *, object_order=None, allow_orthographic=False):
                 meshes.append(_mesh(obj, depsgraph, scale if initial is None else initial[1][index]))
                 colors.append(_rgba(obj))
             keys = [array_digest(m) for m in meshes]
+            descriptions = [source_geometry(obj, depsgraph) for obj in objects]
             if initial is None:
                 initial = (meshes, np.asarray(scales), np.asarray(colors), camera, keys)
+                initial_source_geometry = descriptions
             else:
+                if descriptions != initial_source_geometry:
+                    raise ValueError(f"source geometry identity changes at source frame {frame}")
                 if not np.allclose(scales, initial[1], atol=2e-6, rtol=0) or keys != initial[4]:
                     raise ValueError(f"geometry/scale changes at source frame {frame}")
                 if not np.array_equal(colors, initial[2]):
@@ -860,7 +884,11 @@ def sample_scene(scene, *, object_order=None, allow_orthographic=False):
             }
             for index, o in enumerate(objects)
         ]
-        return {
+        assert initial_source_geometry is not None
+        for record, description in zip(records, initial_source_geometry, strict=True):
+            if description is not None:
+                record["source_geometry"] = description
+        result = {
             "poses": np.ascontiguousarray(poses[:, moving]),
             "frames": frames,
             "objects": records,
@@ -869,6 +897,9 @@ def sample_scene(scene, *, object_order=None, allow_orthographic=False):
             "meshes": dict(zip(initial[4], initial[0], strict=True)),
             "fps": fps,
         }
+        if any(description is not None for description in initial_source_geometry):
+            result["geometry_conversion"] = dict(GEOMETRY_CONVERSION)
+        return result
     finally:
         scene.frame_set(original)
 
@@ -1002,6 +1033,8 @@ def write_recording(root, clip, recording, source):
     }
     if manifest["schema"] == SCHEMA_V2:
         manifest["visibility_contract"] = "stable-envs/opaque-pixel-rays-v2"
+    if "geometry_conversion" in recording:
+        manifest["geometry_conversion"] = recording["geometry_conversion"]
     with tempfile.TemporaryDirectory(dir=clips, prefix=".export-") as temporary:
         directory = Path(temporary)
         for name in ("poses", "frames"):
@@ -1022,7 +1055,10 @@ def export(root, output, task):
         raise FileExistsError("refusing to overwrite an existing nominal clip")
     scene, script, task_metadata = prepare(root, task)
     recording = sample_scene(
-        scene, object_order=G34_ORDER if task == "G34" else None, allow_orthographic=task in ORTHOGRAPHIC_TASKS
+        scene,
+        object_order=G34_ORDER if task == "G34" else None,
+        allow_orthographic=task in ORTHOGRAPHIC_TASKS,
+        allow_evaluated_geometry=task in CONVERTED_GEOMETRY_TASKS,
     )
     if task in ORTHOGRAPHIC_TASKS and recording["camera"].get("projection_type") != "orthographic":
         raise ValueError("audited orthographic entry changed projection type")
@@ -1047,8 +1083,10 @@ def export(root, output, task):
     if context is not None:
         source["profile"] = "nominal-first-member-surface-diversity-context"
         source["execution_context"] = context
-    if task in ORTHOGRAPHIC_TASKS:
+    if task in ORTHOGRAPHIC_TASKS | CONVERTED_GEOMETRY_TASKS:
         source["preparation_recipe"] = {"build": AUDITED_TASKS[task][0], "animate": AUDITED_TASKS[task][1]}
+    if task in CONVERTED_GEOMETRY_TASKS:
+        source["geometry_converter_sha256"] = sha256(Path(__file__).with_name("object_permanence_geometry.py"))
     return write_recording(output, f"{task.lower()}-nominal", recording, source)
 
 

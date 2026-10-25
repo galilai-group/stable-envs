@@ -90,15 +90,12 @@ def test_surface_context_audit_records_defaults_and_remaining_blockers_without_w
         assert context["globals"] == {"DIVERSITY": {}} and context["source_bindings"] == {}
         assert row["diversity_defaults"] == {parameter: 1.0}
         assert row["source_capability_audit"]["frames"] == row["preview_frames"] == 120
-        if task != "G46":
-            recording = json.loads((RECORDINGS / f"clips/{task.lower()}-nominal/manifest.json").read_text())
-            assert row["status"] == "certified" and row["camera"] == ("PERSP" if task == "G44" else "ORTHO")
-            assert recording["source"]["execution_context"] == context
-        else:
-            assert row["status"] == "deferred" and row["camera"] == "ORTHO"
-            assert "camera-projection" not in row["blockers"]
-    assert entries["G46"]["source_capability_audit"]["unsupported_objects"] == {
+        recording = json.loads((RECORDINGS / f"clips/{task.lower()}-nominal/manifest.json").read_text())
+        assert row["status"] == "certified" and row["camera"] == ("PERSP" if task == "G44" else "ORTHO")
+        assert recording["source"]["execution_context"] == context
+    assert entries["G46"]["source_capability_audit"]["unsupported_objects"] == {}
+    assert entries["G46"]["source_capability_audit"]["converted_objects"] == {
         "box_A_label": "FONT",
         "box_B_label": "FONT",
     }
-    assert "renderable-type" in entries["G46"]["blockers"]
+    assert "blockers" not in entries["G46"]

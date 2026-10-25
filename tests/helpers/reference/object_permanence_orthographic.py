@@ -46,6 +46,9 @@ ORTHOGRAPHIC_TASKS = (
     "g78",
     "g91",
     "g92",
+    "g13",
+    "g14",
+    "g46",
 )
 
 

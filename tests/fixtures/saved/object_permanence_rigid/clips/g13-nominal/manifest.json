@@ -1,0 +1,1280 @@
+{
+  "arrays": {
+    "frames": {
+      "dtype": "int64",
+      "sha256": "3ce1a862b6cf0bb21bc1354b758cafa47ca5ec03b5c004d6210f5abd8c55df44",
+      "shape": [
+        120
+      ]
+    },
+    "poses": {
+      "dtype": "float32",
+      "sha256": "6015f7f833e43e7ba20955582c8d7253347bb0a40ba3db121ad6a2164ddd0079",
+      "shape": [
+        120,
+        40,
+        7
+      ]
+    }
+  },
+  "assets": {
+    "0113b7d03760a6deabe25515ff1584b1aa560b82618e81d1c10000760797c01c": {
+      "file": "assets/text/0113b7d03760a6deabe25515ff1584b1aa560b82618e81d1c10000760797c01c.npz",
+      "sha256": "2023a51adfb9263c52b3511c74eb850374b48ea3687e7c7f22029f333ee0067b"
+    },
+    "04603c91ef38f6d3e959081b286ab580fd922d5e3555743362fa85c1e0cd0b4a": {
+      "file": "assets/cube/04603c91ef38f6d3e959081b286ab580fd922d5e3555743362fa85c1e0cd0b4a.npz",
+      "sha256": "57e60fcf3ed42a56878abb5ed9ee3896833d89a26ab7a342e2baff78472e691b"
+    },
+    "072303ce05dcf68e6365545fe2e75467744ba90a2a2a90af99f25a65449e82e0": {
+      "file": "assets/text/072303ce05dcf68e6365545fe2e75467744ba90a2a2a90af99f25a65449e82e0.npz",
+      "sha256": "c3ce8a175af6c906a581e47f2483fb4185a8434aaf9d4b355cb0f5cb548f4858"
+    },
+    "22f9e5c930acefc5bbbe9f0f7d2ac37072b69607dc44b1e83c55c0677d941b82": {
+      "file": "assets/cube/22f9e5c930acefc5bbbe9f0f7d2ac37072b69607dc44b1e83c55c0677d941b82.npz",
+      "sha256": "5e7fcf02a6736ba817500a77fd53d95d57e607d9703867a068f293207aebc5c6"
+    },
+    "3372aac41e145a69941fe288cc1276dd004090a0888ce310bfe336c7480ae091": {
+      "file": "assets/cube/3372aac41e145a69941fe288cc1276dd004090a0888ce310bfe336c7480ae091.npz",
+      "sha256": "6e227e707125cba5d0cf4b58766a295964ee4f1fb4e770c27cf8caab815718ac"
+    },
+    "42ce73329d97fa427e850a3ae6d35b5c4e495df7826502e5d4c548142c307ff9": {
+      "file": "assets/cube/42ce73329d97fa427e850a3ae6d35b5c4e495df7826502e5d4c548142c307ff9.npz",
+      "sha256": "0a691ef0f230e8d508e0bf8b4fdf51d9871c809e2a973f90c21ee635e00f4d70"
+    },
+    "537b768c104936157da1d07e301b294124d752efdabeb010aa4e326e1752c5d8": {
+      "file": "assets/cube/537b768c104936157da1d07e301b294124d752efdabeb010aa4e326e1752c5d8.npz",
+      "sha256": "5dbed5e6a78840c3866b308ad304ded539e615a16b733e8c08742f9bb2d6b766"
+    },
+    "5d353bfef5eb3e47a4e1732e2160ac218d5bd40d29ccfe9313d1f1b4a3f79ba1": {
+      "file": "assets/cube/5d353bfef5eb3e47a4e1732e2160ac218d5bd40d29ccfe9313d1f1b4a3f79ba1.npz",
+      "sha256": "c73b0bc2721a08c6d324c22e735027efc873f9f78e581ac341a025f731958ec4"
+    },
+    "6927f746648ab023b7bdacef3a4b341a8bd04634bd798c00624c7ad0c01d6a03": {
+      "file": "assets/text/6927f746648ab023b7bdacef3a4b341a8bd04634bd798c00624c7ad0c01d6a03.npz",
+      "sha256": "442879292265389b2519149626eb2d31587e6135f9749a9d07152dded4927c1b"
+    },
+    "7b71057ca211e955d72aff832f9f170d3a84e0b0233b03af809b5cb5d77fbeab": {
+      "file": "assets/cube/7b71057ca211e955d72aff832f9f170d3a84e0b0233b03af809b5cb5d77fbeab.npz",
+      "sha256": "f812c3a07ad19e25d22d9c29e28f6a4b14d17ce7d9522fc0ebe2859522710894"
+    },
+    "8c4f89ace45dc505f19f0795baad7aec06d69d310e54a4838a0f9f684016fe97": {
+      "file": "assets/cube/8c4f89ace45dc505f19f0795baad7aec06d69d310e54a4838a0f9f684016fe97.npz",
+      "sha256": "d6c166ee3616bda7f4336a04b9cc082330d5fb1701e069dfa5510fbdd9ea0648"
+    },
+    "9d1b2f3c983b5a95e62c1d7ed28fd4899ad91e4c4dd4fec1a7ee6e943e2f8e76": {
+      "file": "assets/cube/9d1b2f3c983b5a95e62c1d7ed28fd4899ad91e4c4dd4fec1a7ee6e943e2f8e76.npz",
+      "sha256": "9f93ba58d016d2fdddf55425fd01d7cc869388738848bc50e359d33621d6698c"
+    },
+    "a6bebcb1d6c7a9ae596ca42b253f401d5adfa4d779d386e4c59d4ca4cc8dbfff": {
+      "file": "assets/cube/a6bebcb1d6c7a9ae596ca42b253f401d5adfa4d779d386e4c59d4ca4cc8dbfff.npz",
+      "sha256": "90c2a83c0aa12db7655f971a9e4eac39cd9c2b6660a8e38479b277950d34deae"
+    },
+    "acbcb303e349f010d036a2ea0a029c79049cbdc9800f99d6b06ac5d14cc1cdfd": {
+      "file": "assets/sphere/acbcb303e349f010d036a2ea0a029c79049cbdc9800f99d6b06ac5d14cc1cdfd.npz",
+      "sha256": "2ef533bac491db354a8f015d9a1a45e72f36fdf1c0317667e9a22d3c49fc6c2b"
+    },
+    "be3bcdb4720d3d4f1f05e5920928a9382e06c6b4ccb075e3a6b37ae4ae219dfd": {
+      "file": "assets/triangular_pyramid/be3bcdb4720d3d4f1f05e5920928a9382e06c6b4ccb075e3a6b37ae4ae219dfd.npz",
+      "sha256": "9974d65d037bf47a30bee3ce0bb0f17f37baff60bf4e15bef1fe0febcd3712d9"
+    },
+    "ca22349d01303833bd8dfeb630caa306aec995b0acbfa00783c4c4fe9d521272": {
+      "file": "assets/cube/ca22349d01303833bd8dfeb630caa306aec995b0acbfa00783c4c4fe9d521272.npz",
+      "sha256": "96c7d8590b86f37355ca9c2da60722dea183a175954a2efe5e8b0c6e25bd1559"
+    },
+    "cfe75fa884b0bd2ee20b3ba538bf4e4ec58ca7ef68dc30a1dc244c207249a2bd": {
+      "file": "assets/cube/cfe75fa884b0bd2ee20b3ba538bf4e4ec58ca7ef68dc30a1dc244c207249a2bd.npz",
+      "sha256": "d78d1738e8aee6c898b59ba8f7f24f5bf8f73cb191c8e017c0a6867a6adc0028"
+    },
+    "d082fd9bd12f716b4240cda2894cc69dd6ce6f45387ec158c80d1297f0218206": {
+      "file": "assets/cube/d082fd9bd12f716b4240cda2894cc69dd6ce6f45387ec158c80d1297f0218206.npz",
+      "sha256": "878b69fb54278496bd5c98428cdb1c2618cb73cd444f88482d8d05035a40965a"
+    },
+    "df7941086f0b392ca3fb2f77556c3cc17e5284e249bcfb6a4f822c72152a4bc3": {
+      "file": "assets/cube/df7941086f0b392ca3fb2f77556c3cc17e5284e249bcfb6a4f822c72152a4bc3.npz",
+      "sha256": "ae60387ddb60e342837f0a5d2ff0ec76f0e2b8ffa0f9325de837dee723f26241"
+    },
+    "ed62ccc5b5f10d64d11c48e7657e53137e24db11c2c0c25bf338ad6f7c996701": {
+      "file": "assets/cube/ed62ccc5b5f10d64d11c48e7657e53137e24db11c2c0c25bf338ad6f7c996701.npz",
+      "sha256": "d0dbce3f8a2c8d61b5b45a3d9572cd54604130e5dec6bce9017cd502833c9fcc"
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "height": 720,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        0.3100775182247162,
+        0.0,
+        0.0,
+        -0.0
+      ],
+      [
+        0.0,
+        0.5512489080429077,
+        0.0,
+        -0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -0.0020001998636871576,
+        -1.0001999139785767
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "projection_type": "orthographic",
+    "width": 1280,
+    "world": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.9262760281562805,
+        -0.37684574723243713,
+        -3.5999999046325684
+      ],
+      [
+        0.0,
+        0.37684574723243713,
+        0.9262760281562805,
+        9.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "clip": "g13-nominal",
+  "conventions": {
+    "quaternion": "wxyz",
+    "units": "source-scene-units",
+    "world": "right-handed-z-up"
+  },
+  "dynamic_nodes": [
+    "cabinet_back_wall",
+    "cabinet_bottom_board",
+    "cabinet_divider_12",
+    "cabinet_divider_23",
+    "cabinet_left_wall",
+    "cabinet_right_wall",
+    "cabinet_top_board",
+    "drawer_1_back_wall",
+    "drawer_1_floor",
+    "drawer_1_front_label",
+    "drawer_1_front_lip",
+    "drawer_1_front_panel",
+    "drawer_1_handle",
+    "drawer_1_left_rail",
+    "drawer_1_left_side",
+    "drawer_1_orange_ball",
+    "drawer_1_right_rail",
+    "drawer_1_right_side",
+    "drawer_2_back_wall",
+    "drawer_2_blue_cube",
+    "drawer_2_floor",
+    "drawer_2_front_label",
+    "drawer_2_front_lip",
+    "drawer_2_front_panel",
+    "drawer_2_handle",
+    "drawer_2_left_rail",
+    "drawer_2_left_side",
+    "drawer_2_right_rail",
+    "drawer_2_right_side",
+    "drawer_3_back_wall",
+    "drawer_3_floor",
+    "drawer_3_front_label",
+    "drawer_3_front_lip",
+    "drawer_3_front_panel",
+    "drawer_3_handle",
+    "drawer_3_left_rail",
+    "drawer_3_left_side",
+    "drawer_3_right_rail",
+    "drawer_3_right_side",
+    "drawer_3_yellow_pyramid"
+  ],
+  "fps": 24.0,
+  "geometry_conversion": {
+    "depsgraph_mode": "VIEWPORT",
+    "id": "stable-envs/evaluated-rigid-mesh-v1",
+    "instances": "single-source-identity-mesh-proxy",
+    "tessellation": "source-settings",
+    "types": [
+      "MESH",
+      "CURVE",
+      "FONT"
+    ]
+  },
+  "license_ref": {
+    "sha256": "0163481eb7a0fe3ed86d2dccf542a849b36b3c119f8ca6d3d5b36c074f2e1a1c"
+  },
+  "objects": [
+    {
+      "asset": "df7941086f0b392ca3fb2f77556c3cc17e5284e249bcfb6a4f822c72152a4bc3",
+      "id": 1,
+      "name": "cabinet_back_wall",
+      "node": 0,
+      "pose": [
+        0.0,
+        0.7799999713897705,
+        0.550000011920929,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5600000023841858,
+        0.5699999928474426,
+        0.6100000143051147,
+        1.0
+      ],
+      "role": "cabinet_back",
+      "shape": "cube",
+      "source_id": "cabinet_back_wall"
+    },
+    {
+      "asset": "cfe75fa884b0bd2ee20b3ba538bf4e4ec58ca7ef68dc30a1dc244c207249a2bd",
+      "id": 2,
+      "name": "cabinet_bottom_board",
+      "node": 1,
+      "pose": [
+        0.0,
+        0.10000000149011612,
+        0.07999999821186066,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5600000023841858,
+        0.5699999928474426,
+        0.6100000143051147,
+        1.0
+      ],
+      "role": "cabinet_bottom",
+      "shape": "cube",
+      "source_id": "cabinet_bottom_board"
+    },
+    {
+      "asset": "5d353bfef5eb3e47a4e1732e2160ac218d5bd40d29ccfe9313d1f1b4a3f79ba1",
+      "id": 3,
+      "name": "cabinet_divider_12",
+      "node": 2,
+      "pose": [
+        -0.6200000047683716,
+        0.10000000149011612,
+        0.550000011920929,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5600000023841858,
+        0.5699999928474426,
+        0.6100000143051147,
+        1.0
+      ],
+      "role": "cabinet_divider",
+      "shape": "cube",
+      "source_id": "cabinet_divider_12"
+    },
+    {
+      "asset": "5d353bfef5eb3e47a4e1732e2160ac218d5bd40d29ccfe9313d1f1b4a3f79ba1",
+      "id": 4,
+      "name": "cabinet_divider_23",
+      "node": 3,
+      "pose": [
+        0.6200000047683716,
+        0.10000000149011612,
+        0.550000011920929,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5600000023841858,
+        0.5699999928474426,
+        0.6100000143051147,
+        1.0
+      ],
+      "role": "cabinet_divider",
+      "shape": "cube",
+      "source_id": "cabinet_divider_23"
+    },
+    {
+      "asset": "9d1b2f3c983b5a95e62c1d7ed28fd4899ad91e4c4dd4fec1a7ee6e943e2f8e76",
+      "id": 5,
+      "name": "cabinet_left_wall",
+      "node": 4,
+      "pose": [
+        -1.8600000143051147,
+        0.10000000149011612,
+        0.550000011920929,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5600000023841858,
+        0.5699999928474426,
+        0.6100000143051147,
+        1.0
+      ],
+      "role": "cabinet_side",
+      "shape": "cube",
+      "source_id": "cabinet_left_wall"
+    },
+    {
+      "asset": "9d1b2f3c983b5a95e62c1d7ed28fd4899ad91e4c4dd4fec1a7ee6e943e2f8e76",
+      "id": 6,
+      "name": "cabinet_right_wall",
+      "node": 5,
+      "pose": [
+        1.8600000143051147,
+        0.10000000149011612,
+        0.550000011920929,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5600000023841858,
+        0.5699999928474426,
+        0.6100000143051147,
+        1.0
+      ],
+      "role": "cabinet_side",
+      "shape": "cube",
+      "source_id": "cabinet_right_wall"
+    },
+    {
+      "asset": "22f9e5c930acefc5bbbe9f0f7d2ac37072b69607dc44b1e83c55c0677d941b82",
+      "id": 7,
+      "name": "cabinet_top_board",
+      "node": 6,
+      "pose": [
+        0.0,
+        0.10000000149011612,
+        1.0299999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5600000023841858,
+        0.5699999928474426,
+        0.6100000143051147,
+        1.0
+      ],
+      "role": "cabinet_top",
+      "shape": "cube",
+      "source_id": "cabinet_top_board"
+    },
+    {
+      "asset": "42ce73329d97fa427e850a3ae6d35b5c4e495df7826502e5d4c548142c307ff9",
+      "id": 8,
+      "name": "drawer_1_back_wall",
+      "node": 7,
+      "pose": [
+        -1.2000000476837158,
+        -0.5824999809265137,
+        0.3725000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7599999904632568,
+        0.7699999809265137,
+        0.800000011920929,
+        1.0
+      ],
+      "role": "drawer_back",
+      "shape": "cube",
+      "source_id": "drawer_1_back_wall"
+    },
+    {
+      "asset": "537b768c104936157da1d07e301b294124d752efdabeb010aa4e326e1752c5d8",
+      "id": 9,
+      "name": "drawer_1_floor",
+      "node": 8,
+      "pose": [
+        -1.2000000476837158,
+        -0.9800000190734863,
+        0.25999999046325684,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7599999904632568,
+        0.7699999809265137,
+        0.800000011920929,
+        1.0
+      ],
+      "role": "drawer_floor",
+      "shape": "cube",
+      "source_id": "drawer_1_floor"
+    },
+    {
+      "asset": "072303ce05dcf68e6365545fe2e75467744ba90a2a2a90af99f25a65449e82e0",
+      "id": 10,
+      "name": "drawer_1_front_label",
+      "node": 9,
+      "pose": [
+        -1.2000000476837158,
+        -1.5699999332427979,
+        0.3824999928474426,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.029999999329447746,
+        0.029999999329447746,
+        0.03500000014901161,
+        1.0
+      ],
+      "role": "label",
+      "shape": "text",
+      "source_geometry": {
+        "font": "Bfont Regular",
+        "text": "1",
+        "type": "FONT"
+      },
+      "source_id": "drawer_1_front_label"
+    },
+    {
+      "asset": "8c4f89ace45dc505f19f0795baad7aec06d69d310e54a4838a0f9f684016fe97",
+      "id": 11,
+      "name": "drawer_1_front_lip",
+      "node": 10,
+      "pose": [
+        -1.2000000476837158,
+        -1.377500057220459,
+        0.3199999928474426,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7599999904632568,
+        0.7699999809265137,
+        0.800000011920929,
+        1.0
+      ],
+      "role": "drawer_front_lip",
+      "shape": "cube",
+      "source_id": "drawer_1_front_lip"
+    },
+    {
+      "asset": "d082fd9bd12f716b4240cda2894cc69dd6ce6f45387ec158c80d1297f0218206",
+      "id": 12,
+      "name": "drawer_1_front_panel",
+      "node": 11,
+      "pose": [
+        -1.2000000476837158,
+        -1.4600000381469727,
+        0.35249999165534973,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5600000023841858,
+        0.5699999928474426,
+        0.6100000143051147,
+        1.0
+      ],
+      "role": "drawer_front_panel",
+      "shape": "cube",
+      "source_id": "drawer_1_front_panel"
+    },
+    {
+      "asset": "3372aac41e145a69941fe288cc1276dd004090a0888ce310bfe336c7480ae091",
+      "id": 13,
+      "name": "drawer_1_handle",
+      "node": 12,
+      "pose": [
+        -1.2000000476837158,
+        -1.5150001049041748,
+        0.3474999964237213,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.10000000149011612,
+        0.10000000149011612,
+        0.10999999940395355,
+        1.0
+      ],
+      "role": "drawer_handle",
+      "shape": "cube",
+      "source_id": "drawer_1_handle"
+    },
+    {
+      "asset": "ed62ccc5b5f10d64d11c48e7657e53137e24db11c2c0c25bf338ad6f7c996701",
+      "id": 14,
+      "name": "drawer_1_left_rail",
+      "node": 13,
+      "pose": [
+        -1.6100000143051147,
+        0.10000000149011612,
+        0.25,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.1599999964237213,
+        0.18000000715255737,
+        0.20999999344348907,
+        1.0
+      ],
+      "role": "drawer_rail",
+      "shape": "cube",
+      "source_id": "drawer_1_left_rail"
+    },
+    {
+      "asset": "7b71057ca211e955d72aff832f9f170d3a84e0b0233b03af809b5cb5d77fbeab",
+      "id": 15,
+      "name": "drawer_1_left_side",
+      "node": 14,
+      "pose": [
+        -1.5875000953674316,
+        -0.9800000190734863,
+        0.3725000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7599999904632568,
+        0.7699999809265137,
+        0.800000011920929,
+        1.0
+      ],
+      "role": "drawer_side",
+      "shape": "cube",
+      "source_id": "drawer_1_left_side"
+    },
+    {
+      "asset": "acbcb303e349f010d036a2ea0a029c79049cbdc9800f99d6b06ac5d14cc1cdfd",
+      "id": 16,
+      "name": "drawer_1_orange_ball",
+      "node": 15,
+      "pose": [
+        -1.2000000476837158,
+        -1.0299999713897705,
+        0.4424999952316284,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        1.0,
+        0.44999998807907104,
+        0.07999999821186066,
+        1.0
+      ],
+      "role": "contained_object",
+      "shape": "sphere",
+      "source_id": "drawer_1_orange_ball"
+    },
+    {
+      "asset": "ed62ccc5b5f10d64d11c48e7657e53137e24db11c2c0c25bf338ad6f7c996701",
+      "id": 17,
+      "name": "drawer_1_right_rail",
+      "node": 16,
+      "pose": [
+        -0.7900000214576721,
+        0.10000000149011612,
+        0.25,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.1599999964237213,
+        0.18000000715255737,
+        0.20999999344348907,
+        1.0
+      ],
+      "role": "drawer_rail",
+      "shape": "cube",
+      "source_id": "drawer_1_right_rail"
+    },
+    {
+      "asset": "7b71057ca211e955d72aff832f9f170d3a84e0b0233b03af809b5cb5d77fbeab",
+      "id": 18,
+      "name": "drawer_1_right_side",
+      "node": 17,
+      "pose": [
+        -0.8125000596046448,
+        -0.9800000190734863,
+        0.3725000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7599999904632568,
+        0.7699999809265137,
+        0.800000011920929,
+        1.0
+      ],
+      "role": "drawer_side",
+      "shape": "cube",
+      "source_id": "drawer_1_right_side"
+    },
+    {
+      "asset": "42ce73329d97fa427e850a3ae6d35b5c4e495df7826502e5d4c548142c307ff9",
+      "id": 19,
+      "name": "drawer_2_back_wall",
+      "node": 18,
+      "pose": [
+        0.0,
+        -0.5824999809265137,
+        0.3725000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7599999904632568,
+        0.7699999809265137,
+        0.800000011920929,
+        1.0
+      ],
+      "role": "drawer_back",
+      "shape": "cube",
+      "source_id": "drawer_2_back_wall"
+    },
+    {
+      "asset": "a6bebcb1d6c7a9ae596ca42b253f401d5adfa4d779d386e4c59d4ca4cc8dbfff",
+      "id": 20,
+      "name": "drawer_2_blue_cube",
+      "node": 19,
+      "pose": [
+        0.0,
+        -1.0299999713897705,
+        0.4325000047683716,
+        0.987688422203064,
+        0.0,
+        0.0,
+        0.15643447637557983
+      ],
+      "rgba": [
+        0.18000000715255737,
+        0.41999998688697815,
+        0.949999988079071,
+        1.0
+      ],
+      "role": "contained_object",
+      "shape": "cube",
+      "source_id": "drawer_2_blue_cube"
+    },
+    {
+      "asset": "537b768c104936157da1d07e301b294124d752efdabeb010aa4e326e1752c5d8",
+      "id": 21,
+      "name": "drawer_2_floor",
+      "node": 20,
+      "pose": [
+        0.0,
+        -0.9800000190734863,
+        0.25999999046325684,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7599999904632568,
+        0.7699999809265137,
+        0.800000011920929,
+        1.0
+      ],
+      "role": "drawer_floor",
+      "shape": "cube",
+      "source_id": "drawer_2_floor"
+    },
+    {
+      "asset": "0113b7d03760a6deabe25515ff1584b1aa560b82618e81d1c10000760797c01c",
+      "id": 22,
+      "name": "drawer_2_front_label",
+      "node": 21,
+      "pose": [
+        0.0,
+        -1.5699999332427979,
+        0.3824999928474426,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.029999999329447746,
+        0.029999999329447746,
+        0.03500000014901161,
+        1.0
+      ],
+      "role": "label",
+      "shape": "text",
+      "source_geometry": {
+        "font": "Bfont Regular",
+        "text": "2",
+        "type": "FONT"
+      },
+      "source_id": "drawer_2_front_label"
+    },
+    {
+      "asset": "8c4f89ace45dc505f19f0795baad7aec06d69d310e54a4838a0f9f684016fe97",
+      "id": 23,
+      "name": "drawer_2_front_lip",
+      "node": 22,
+      "pose": [
+        0.0,
+        -1.377500057220459,
+        0.3199999928474426,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7599999904632568,
+        0.7699999809265137,
+        0.800000011920929,
+        1.0
+      ],
+      "role": "drawer_front_lip",
+      "shape": "cube",
+      "source_id": "drawer_2_front_lip"
+    },
+    {
+      "asset": "d082fd9bd12f716b4240cda2894cc69dd6ce6f45387ec158c80d1297f0218206",
+      "id": 24,
+      "name": "drawer_2_front_panel",
+      "node": 23,
+      "pose": [
+        0.0,
+        -1.4600000381469727,
+        0.35249999165534973,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5600000023841858,
+        0.5699999928474426,
+        0.6100000143051147,
+        1.0
+      ],
+      "role": "drawer_front_panel",
+      "shape": "cube",
+      "source_id": "drawer_2_front_panel"
+    },
+    {
+      "asset": "3372aac41e145a69941fe288cc1276dd004090a0888ce310bfe336c7480ae091",
+      "id": 25,
+      "name": "drawer_2_handle",
+      "node": 24,
+      "pose": [
+        0.0,
+        -1.5150001049041748,
+        0.3474999964237213,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.10000000149011612,
+        0.10000000149011612,
+        0.10999999940395355,
+        1.0
+      ],
+      "role": "drawer_handle",
+      "shape": "cube",
+      "source_id": "drawer_2_handle"
+    },
+    {
+      "asset": "ed62ccc5b5f10d64d11c48e7657e53137e24db11c2c0c25bf338ad6f7c996701",
+      "id": 26,
+      "name": "drawer_2_left_rail",
+      "node": 25,
+      "pose": [
+        -0.4099999964237213,
+        0.10000000149011612,
+        0.25,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.1599999964237213,
+        0.18000000715255737,
+        0.20999999344348907,
+        1.0
+      ],
+      "role": "drawer_rail",
+      "shape": "cube",
+      "source_id": "drawer_2_left_rail"
+    },
+    {
+      "asset": "7b71057ca211e955d72aff832f9f170d3a84e0b0233b03af809b5cb5d77fbeab",
+      "id": 27,
+      "name": "drawer_2_left_side",
+      "node": 26,
+      "pose": [
+        -0.38749998807907104,
+        -0.9800000190734863,
+        0.3725000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7599999904632568,
+        0.7699999809265137,
+        0.800000011920929,
+        1.0
+      ],
+      "role": "drawer_side",
+      "shape": "cube",
+      "source_id": "drawer_2_left_side"
+    },
+    {
+      "asset": "ed62ccc5b5f10d64d11c48e7657e53137e24db11c2c0c25bf338ad6f7c996701",
+      "id": 28,
+      "name": "drawer_2_right_rail",
+      "node": 27,
+      "pose": [
+        0.4099999964237213,
+        0.10000000149011612,
+        0.25,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.1599999964237213,
+        0.18000000715255737,
+        0.20999999344348907,
+        1.0
+      ],
+      "role": "drawer_rail",
+      "shape": "cube",
+      "source_id": "drawer_2_right_rail"
+    },
+    {
+      "asset": "7b71057ca211e955d72aff832f9f170d3a84e0b0233b03af809b5cb5d77fbeab",
+      "id": 29,
+      "name": "drawer_2_right_side",
+      "node": 28,
+      "pose": [
+        0.38749998807907104,
+        -0.9800000190734863,
+        0.3725000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7599999904632568,
+        0.7699999809265137,
+        0.800000011920929,
+        1.0
+      ],
+      "role": "drawer_side",
+      "shape": "cube",
+      "source_id": "drawer_2_right_side"
+    },
+    {
+      "asset": "42ce73329d97fa427e850a3ae6d35b5c4e495df7826502e5d4c548142c307ff9",
+      "id": 30,
+      "name": "drawer_3_back_wall",
+      "node": 29,
+      "pose": [
+        1.2000000476837158,
+        -0.5824999809265137,
+        0.3725000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7599999904632568,
+        0.7699999809265137,
+        0.800000011920929,
+        1.0
+      ],
+      "role": "drawer_back",
+      "shape": "cube",
+      "source_id": "drawer_3_back_wall"
+    },
+    {
+      "asset": "537b768c104936157da1d07e301b294124d752efdabeb010aa4e326e1752c5d8",
+      "id": 31,
+      "name": "drawer_3_floor",
+      "node": 30,
+      "pose": [
+        1.2000000476837158,
+        -0.9800000190734863,
+        0.25999999046325684,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7599999904632568,
+        0.7699999809265137,
+        0.800000011920929,
+        1.0
+      ],
+      "role": "drawer_floor",
+      "shape": "cube",
+      "source_id": "drawer_3_floor"
+    },
+    {
+      "asset": "6927f746648ab023b7bdacef3a4b341a8bd04634bd798c00624c7ad0c01d6a03",
+      "id": 32,
+      "name": "drawer_3_front_label",
+      "node": 31,
+      "pose": [
+        1.2000000476837158,
+        -1.5699999332427979,
+        0.3824999928474426,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.029999999329447746,
+        0.029999999329447746,
+        0.03500000014901161,
+        1.0
+      ],
+      "role": "label",
+      "shape": "text",
+      "source_geometry": {
+        "font": "Bfont Regular",
+        "text": "3",
+        "type": "FONT"
+      },
+      "source_id": "drawer_3_front_label"
+    },
+    {
+      "asset": "8c4f89ace45dc505f19f0795baad7aec06d69d310e54a4838a0f9f684016fe97",
+      "id": 33,
+      "name": "drawer_3_front_lip",
+      "node": 32,
+      "pose": [
+        1.2000000476837158,
+        -1.377500057220459,
+        0.3199999928474426,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7599999904632568,
+        0.7699999809265137,
+        0.800000011920929,
+        1.0
+      ],
+      "role": "drawer_front_lip",
+      "shape": "cube",
+      "source_id": "drawer_3_front_lip"
+    },
+    {
+      "asset": "d082fd9bd12f716b4240cda2894cc69dd6ce6f45387ec158c80d1297f0218206",
+      "id": 34,
+      "name": "drawer_3_front_panel",
+      "node": 33,
+      "pose": [
+        1.2000000476837158,
+        -1.4600000381469727,
+        0.35249999165534973,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5600000023841858,
+        0.5699999928474426,
+        0.6100000143051147,
+        1.0
+      ],
+      "role": "drawer_front_panel",
+      "shape": "cube",
+      "source_id": "drawer_3_front_panel"
+    },
+    {
+      "asset": "3372aac41e145a69941fe288cc1276dd004090a0888ce310bfe336c7480ae091",
+      "id": 35,
+      "name": "drawer_3_handle",
+      "node": 34,
+      "pose": [
+        1.2000000476837158,
+        -1.5150001049041748,
+        0.3474999964237213,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.10000000149011612,
+        0.10000000149011612,
+        0.10999999940395355,
+        1.0
+      ],
+      "role": "drawer_handle",
+      "shape": "cube",
+      "source_id": "drawer_3_handle"
+    },
+    {
+      "asset": "ed62ccc5b5f10d64d11c48e7657e53137e24db11c2c0c25bf338ad6f7c996701",
+      "id": 36,
+      "name": "drawer_3_left_rail",
+      "node": 35,
+      "pose": [
+        0.7900000214576721,
+        0.10000000149011612,
+        0.25,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.1599999964237213,
+        0.18000000715255737,
+        0.20999999344348907,
+        1.0
+      ],
+      "role": "drawer_rail",
+      "shape": "cube",
+      "source_id": "drawer_3_left_rail"
+    },
+    {
+      "asset": "7b71057ca211e955d72aff832f9f170d3a84e0b0233b03af809b5cb5d77fbeab",
+      "id": 37,
+      "name": "drawer_3_left_side",
+      "node": 36,
+      "pose": [
+        0.8125000596046448,
+        -0.9800000190734863,
+        0.3725000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7599999904632568,
+        0.7699999809265137,
+        0.800000011920929,
+        1.0
+      ],
+      "role": "drawer_side",
+      "shape": "cube",
+      "source_id": "drawer_3_left_side"
+    },
+    {
+      "asset": "ed62ccc5b5f10d64d11c48e7657e53137e24db11c2c0c25bf338ad6f7c996701",
+      "id": 38,
+      "name": "drawer_3_right_rail",
+      "node": 37,
+      "pose": [
+        1.6100000143051147,
+        0.10000000149011612,
+        0.25,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.1599999964237213,
+        0.18000000715255737,
+        0.20999999344348907,
+        1.0
+      ],
+      "role": "drawer_rail",
+      "shape": "cube",
+      "source_id": "drawer_3_right_rail"
+    },
+    {
+      "asset": "7b71057ca211e955d72aff832f9f170d3a84e0b0233b03af809b5cb5d77fbeab",
+      "id": 39,
+      "name": "drawer_3_right_side",
+      "node": 38,
+      "pose": [
+        1.5875000953674316,
+        -0.9800000190734863,
+        0.3725000023841858,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.7599999904632568,
+        0.7699999809265137,
+        0.800000011920929,
+        1.0
+      ],
+      "role": "drawer_side",
+      "shape": "cube",
+      "source_id": "drawer_3_right_side"
+    },
+    {
+      "asset": "be3bcdb4720d3d4f1f05e5920928a9382e06c6b4ccb075e3a6b37ae4ae219dfd",
+      "id": 40,
+      "name": "drawer_3_yellow_pyramid",
+      "node": 39,
+      "pose": [
+        1.2000000476837158,
+        -1.0299999713897705,
+        0.45249998569488525,
+        0.9848077893257141,
+        0.0,
+        0.0,
+        -0.1736481636762619
+      ],
+      "rgba": [
+        1.0,
+        0.7799999713897705,
+        0.11999999731779099,
+        1.0
+      ],
+      "role": "contained_object",
+      "shape": "triangular_pyramid",
+      "source_id": "drawer_3_yellow_pyramid"
+    },
+    {
+      "asset": "ca22349d01303833bd8dfeb630caa306aec995b0acbfa00783c4c4fe9d521272",
+      "id": 41,
+      "name": "large_floor_base",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        -0.05000000074505806,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8199999928474426,
+        0.800000011920929,
+        0.75,
+        1.0
+      ],
+      "role": "ground",
+      "shape": "cube",
+      "source_id": "large_floor_base"
+    },
+    {
+      "asset": "04603c91ef38f6d3e959081b286ab580fd922d5e3555743362fa85c1e0cd0b4a",
+      "id": 42,
+      "name": "rear_backdrop_panel",
+      "node": -1,
+      "pose": [
+        0.0,
+        3.25,
+        1.899999976158142,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9599999785423279,
+        0.9700000286102295,
+        0.9800000190734863,
+        1.0
+      ],
+      "role": "background",
+      "shape": "cube",
+      "source_id": "rear_backdrop_panel"
+    }
+  ],
+  "schema": "stable-envs/object-permanence-rigid-v2",
+  "source": {
+    "commit": "824baddcdad087810d35638bf8f273b884f74975",
+    "exporter": "scripts/export/object_permanence.py",
+    "exporter_sha256": "2235364f4deb9d2033ea47a52001bdba900fa32216748cdca88125d690187a3a",
+    "geometry_converter_sha256": "3846e514193c4c51e187f52346c0f5039e32b19f8978fae3b058fa7ef2ed4022",
+    "license": "CC-BY-NC-4.0",
+    "parameters": {},
+    "preparation_recipe": {
+      "animate": "animate_scene",
+      "build": "build_scene"
+    },
+    "profile": "nominal-first-member-no-diversity",
+    "script": "object_permanence/generator/tasks/G13_three_drawers/pb_task_00000056_pb_three_drawers_objects_order_ball_cube_pyramid_0057_blender.py",
+    "script_sha256": "d15d73b1b29326cc5d79b593cf590524fc988d320fedce2714d68646080d986e",
+    "seed": null,
+    "task": "G13",
+    "task_manifest_sha256": "1101f3cc561baa8fd87e2b542078ee36eaf5d0a53bcda50221e90735eb8b35c9",
+    "url": "https://github.com/hokindeng/object-permanence",
+    "versions": {
+      "blender": "4.4.0",
+      "numpy": "1.26.4",
+      "python": "3.11.16"
+    },
+    "video_split": {
+      "event": "drawers closed after loading; reopen at 94 stays in target",
+      "first_target_frame": 61,
+      "method": "before_event"
+    }
+  },
+  "visibility_contract": "stable-envs/opaque-pixel-rays-v2"
+}

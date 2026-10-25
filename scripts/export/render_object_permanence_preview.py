@@ -12,6 +12,7 @@ from pathlib import Path
 
 from .object_permanence import (
     AUDITED_TASKS,
+    CONVERTED_GEOMETRY_TASKS,
     ORTHOGRAPHIC_TASKS,
     SOURCE_COMMIT,
     prepare,
@@ -63,7 +64,7 @@ def render(root, output, task, *, samples=16, frame_stop=None):
     context = source_execution_context(root, task, script)
     if context is not None:
         metadata["source_execution_context"] = context
-    if task in ORTHOGRAPHIC_TASKS:
+    if task in ORTHOGRAPHIC_TASKS | CONVERTED_GEOMETRY_TASKS:
         build, animate = AUDITED_TASKS[task]
         metadata["source_preparation_recipe"] = {"build": build, "animate": animate}
     (output / "manifest.json").write_text(json.dumps(metadata, indent=2) + "\n")

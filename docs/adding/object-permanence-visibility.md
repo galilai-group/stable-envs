@@ -5,10 +5,11 @@ rays and equal-depth semantic IDs. It is explicitly selected; existing renderers
 State interfaces, raw Blender BVH references and acceptance thresholds are unchanged.
 The seven legacy-certified scenes remain certified under their original contract.
 G63/G66/G80/G81 retain their legacy BVH deferrals and additionally pass this new
-contract. In total, 88 scenes are certified under this explicitly selected
+contract. In total, 91 scenes are certified under this explicitly selected
 contract; the source audit catalog lists their IDs.
 
 Fixed orthographic cameras use the separate [V2 contract](object-permanence-orthographic.md).
+Rigid Curve/FONT objects use [offline evaluated mesh conversion](object-permanence-converted-geometry.md).
 The import history below records earlier V1 deferrals; the
 [source audit](object-permanence-audit.json) is the current acceptance record.
 
@@ -390,11 +391,11 @@ rendering are unchanged; no shader, shadow or antialiasing work is added here.
 | Task | Actual source limitation | Retained preview |
 |---|---|---|
 | G01 | Active acrylic materials have alpha .28/.42; the opaque material gate rejects them | 120-frame source-only GIF |
-| G04 | Curved tracks are renderable `CURVE` objects, outside mesh-only export | 120-frame source-only GIF |
+| G04 | Default mesh-only extraction rejects `CURVE`; explicit evaluated conversion now certifies the scene | 120-frame source/replay GIF |
 | G08 | The later source-context audit resolves missing `DIVERSITY`; the camera remains orthographic | 120-frame source-only GIF with audited context |
 | G09/G10 | Actual selected cameras are orthographic | 120-frame source-only GIFs |
 
-Live tests retain transparency, Curve and orthographic rejections. These five
+Live tests retain transparency and default-path Curve/orthographic rejections. These five
 tasks have no accepted recordings/oracles or preparation entries. G08's original
 direct-call failure was a missing driver context at `drawer_travel_scale`, not
 proof of a broken source generator; the context audit below runs its animation.
@@ -447,13 +448,12 @@ records the probe names and their raw source roles independently of motion tags.
 
 | Primary reason | Nominal tasks | Policy |
 |---|---:|---|
-| Orthographic projection | 43 | Keep the source camera; no perspective substitution |
-| Renderable Curve/FONT objects | 6 | No unvalidated conversion, dropped rails or removed labels |
-| Transparency | 3 | No opaque replacement of glass/acrylic |
+| Transparency | 5 | No opaque replacement of glass/acrylic |
 | Independent source-normal variation | 2 | G98/G132 exceed the existing 3e-6 normal budget |
 | Animated geometry/scale | 1 | G146 changes geometry/scale at source frame 31 |
 
-These are primary reasons: G46 has FONT labels and an orthographic camera.
+Orthographic projection and constant Curve/FONT geometry are now supported by
+the linked extension guides, retaining cameras, rails and identity labels.
 G132's fresh-process corner-normal difference is `3.16480663e-6`; its provisional
 data is excluded, rather than raising the normal tolerance.
 
@@ -504,11 +504,11 @@ the CLI's default randomized configuration with an empty dictionary.
 
 | Task | Source-defined default | Full-animation audit result |
 |---|---|---|
-| G08 | `drawer_travel_scale=1.0` | Orthographic camera; remains deferred |
+| G08 | `drawer_travel_scale=1.0` | Orthographic camera; certified under v2 |
 | G44 | `ball_radius_scale=1.0` | Opaque perspective scene; certified |
-| G45 | `ball_radius_scale=1.0` | Orthographic camera; remains deferred |
-| G46 | `cover_footprint_scale=1.0` | FONT objects `box_A_label`/`box_B_label` and orthographic camera; remains deferred |
-| G48 | `object_spacing_scale=1.0` | Orthographic camera; remains deferred |
+| G45 | `ball_radius_scale=1.0` | Orthographic camera; certified under v2 |
+| G46 | `cover_footprint_scale=1.0` | Converted FONT objects `box_A_label`/`box_B_label` and orthographic camera; certified under v2 |
+| G48 | `object_spacing_scale=1.0` | Orthographic camera; certified under v2 |
 
 G44 contains five mesh objects and two recorded moving balls. All 120 frames pass
 fresh-process source-world checks (position error `6.68e-8`, normal error `4.41e-7`),
@@ -526,10 +526,9 @@ execution-context mismatch, including preview comparisons. Both absent contexts
 continue to match for older recordings/oracles. The source pin, recording schema,
 opaque visibility contract, State interfaces and acceptance budgets are unchanged.
 
-The measured catalog replaces missing-global reasons with these observed
-capability blockers. G44 has a 120-frame source/replay GIF; the other four have
-120-frame source-only GIFs labeled NOT CERTIFIED under `deferred-previews/`.
-Obsolete one-frame diagnostics and temporary PNGs are removed after full decoding.
+The measured catalog records the resolved source context and camera/geometry
+capabilities. All five now have 120-frame source/replay GIFs. Their earlier
+NOT CERTIFIED previews and temporary PNGs are removed after full decoding.
 
 ## Batch-independent visibility transforms and G103
 

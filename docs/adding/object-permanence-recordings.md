@@ -26,6 +26,7 @@ The source animation produces poses; the exporter does not transcribe its motion
 | Several independently moving objects | Supported |
 | Constant positive scale | Baked into local mesh; later scale checked within 2e-6 source decomposition noise |
 | Constant evaluated modifiers | Supported if exported geometry stays identical across all frames |
+| Rigid Curve/FONT objects | Explicit [evaluated mesh conversion](object-permanence-converted-geometry.md), retaining labels and source tessellation |
 | Static opaque base colors and one material per mesh | Supported; simplified rendering does not preserve source shaders |
 | Fixed perspective camera | World and projection matrices exported |
 | Orthographic camera | Explicit [v2 recording/visibility contract](object-permanence-orthographic.md); v1 remains perspective-only |

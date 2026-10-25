@@ -12,9 +12,13 @@ import numpy as np
 
 from .freeze_object_permanence import (
     REFERENCE_CASES,
+    REFERENCE_CONVERTED_TASKS,
     SOURCE_COMMIT,
     prepare_reference,
     reference_execution_context,
+    reference_geometry,
+    reference_geometry_description,
+    reference_render_meshes,
     sha256,
     write_depth_parts,
 )
@@ -49,17 +53,25 @@ def freeze(root, output, task, width=320, height=180, *, visibility_contract=CON
     scene = bpy.context.scene
     scene.render.resolution_x, scene.render.resolution_y = width, height
     scene.render.resolution_percentage = 100
-    names = sorted(o.name for o in scene.objects if o.type == "MESH")
+    names = sorted(reference_geometry(scene, task))
     labels = {name: i + 1 for i, name in enumerate(names)}
     if not set(targets) <= set(names):
         raise ValueError("source target missing")
     frames = np.arange(scene.frame_start, scene.frame_end + 1, dtype=np.int64)
     depth_rows, id_rows, poses = [], [], []
     first_camera = None
+    source_descriptions = None
     for frame in frames:
         scene.frame_set(int(frame))
         bpy.context.view_layer.update()
         graph = bpy.context.evaluated_depsgraph_get()
+        objects = reference_geometry(scene, task)
+        if sorted(objects) != names:
+            raise ValueError("source renderable identities changed")
+        descriptions = reference_geometry_description(objects, graph)
+        if source_descriptions is not None and descriptions != source_descriptions:
+            raise ValueError("source converted geometry identity changed")
+        source_descriptions = descriptions
         cam = scene.camera.evaluated_get(graph)
         if (
             cam.data.type not in (("PERSP", "ORTHO") if visibility_contract == CONTRACT_V2 else ("PERSP",))
@@ -84,17 +96,26 @@ def freeze(root, output, task, width=320, height=180, *, visibility_contract=CON
         meshes = {}
         frame_poses = []
         for name in names:
-            evaluated = scene.objects[name].evaluated_get(graph)
-            matrix = np.asarray(evaluated.matrix_world, np.float64)
+            evaluated = objects[name].evaluated_get(graph)
             frame_poses.append([*evaluated.matrix_world.translation, *evaluated.matrix_world.to_quaternion()])
-            mesh = evaluated.to_mesh()
-            try:
+        if task in REFERENCE_CONVERTED_TASKS:
+            for name, mesh, matrix in reference_render_meshes(objects, graph):
                 mesh.calc_loop_triangles()
                 vertices = np.array([v.co[:] for v in mesh.vertices], np.float64)
                 vertices = vertices @ matrix[:3, :3].T + matrix[:3, 3]
                 meshes[name] = vertices[np.array([t.vertices[:] for t in mesh.loop_triangles])]
-            finally:
-                evaluated.to_mesh_clear()
+        else:
+            for name in names:
+                evaluated = objects[name].evaluated_get(graph)
+                matrix = np.asarray(evaluated.matrix_world, np.float64)
+                mesh = evaluated.to_mesh()
+                try:
+                    mesh.calc_loop_triangles()
+                    vertices = np.array([v.co[:] for v in mesh.vertices], np.float64)
+                    vertices = vertices @ matrix[:3, :3].T + matrix[:3, 3]
+                    meshes[name] = vertices[np.array([t.vertices[:] for t in mesh.loop_triangles])]
+                finally:
+                    evaluated.to_mesh_clear()
         depth, labels_image = draw(meshes, camera, height, width, visibility_contract=visibility_contract)
         depth_rows.append(depth)
         id_rows.append(labels_image)
@@ -148,7 +169,23 @@ def freeze(root, output, task, width=320, height=180, *, visibility_contract=CON
         manifest["source_execution_context"] = context
         if visibility_contract == CONTRACT:
             manifest["source_preparation_sha256"] = sha256(Path(__file__).with_name("freeze_object_permanence.py"))
-    if visibility_contract == CONTRACT_V2:
+    if task in REFERENCE_CONVERTED_TASKS:
+        manifest["geometry_conversion"] = {
+            "id": "stable-envs/evaluated-rigid-mesh-v1",
+            "types": ["MESH", "CURVE", "FONT"],
+            "depsgraph_mode": "VIEWPORT",
+            "tessellation": "source-settings",
+            "instances": "single-source-identity-mesh-proxy",
+        }
+        manifest["source_geometry"] = source_descriptions
+        manifest["source_geometry_algorithm_sha256"] = hashlib.sha256(
+            (
+                inspect.getsource(reference_geometry)
+                + inspect.getsource(reference_geometry_description)
+                + inspect.getsource(reference_render_meshes)
+            ).encode()
+        ).hexdigest()
+    if visibility_contract == CONTRACT_V2 or task in REFERENCE_CONVERTED_TASKS:
         manifest["source_preparation_recipe"] = {"build": build, "animate": animate}
         preparation_code = inspect.getsource(prepare_reference) + inspect.getsource(reference_execution_context)
         manifest["source_preparation_algorithm_sha256"] = hashlib.sha256(preparation_code.encode()).hexdigest()
