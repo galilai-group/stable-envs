@@ -5,7 +5,7 @@ rays and equal-depth semantic IDs. It is explicitly selected; existing renderers
 State interfaces, raw Blender BVH references and acceptance thresholds are unchanged.
 The seven legacy-certified scenes remain certified under their original contract.
 G63/G66/G80/G81 retain their legacy BVH deferrals and additionally pass this new
-contract. In total, 87 scenes are certified under this explicitly selected
+contract. In total, 88 scenes are certified under this explicitly selected
 contract; the source audit catalog lists their IDs.
 
 ## Geometric contract
@@ -410,7 +410,7 @@ acceptance budgets remained unchanged.
 
 All 150 task groups now have a measured disposition in the
 [source audit catalog](object-permanence-audit.json). The first nominal member is
-the supported import unit: **94 are certified, 56 are deferred**. The other 47
+the supported import unit: **95 are certified, 55 are deferred**. The other 47
 member scripts are explicitly listed as unregistered entries, not certified by
 similarity to the first member. There are no unclassified nominal tasks.
 
@@ -448,20 +448,14 @@ records the probe names and their raw source roles independently of motion tags.
 | Transparency | 3 | No opaque replacement of glass/acrylic |
 | Independent source-normal variation | 2 | G98/G132 exceed the existing 3e-6 normal budget |
 | Animated geometry/scale | 1 | G146 changes geometry/scale at source frame 31 |
-| Static cache reuse assertion | 1 | G103 outputs pass, but seed rebuilds violate the existing regression |
 
 These are primary reasons: G46 has FONT labels and an orthographic camera.
 G132's fresh-process corner-normal difference is `3.16480663e-6`; its provisional
 data is excluded, rather than raising the normal tolerance.
 
-G103 needs a distinct interpretation. Its cached and full paths pass all 120
-source depth/mask frames (maximum MSE `8.19e-16`, minimum IoU 1.0), and all three
-outputs agree bitwise. However, at both resolutions, seed counts progress from
-1 after the reverse sequence to 2 after a five-frame request, then 4 when that
-request repeats. No full-coverage fallback is counted. This is a cache retention
-issue, not an observed occlusion error. The unchanged single-build assertion is
-not waived or replaced with a scene exception; G103 remains deferred for later
-general cache investigation.
+G103's former cache-retention deferral is resolved by the batch-independent
+visibility transforms described below. Its original source geometry and numeric
+reference were retained; the single-build assertion and exact cache keys remain.
 
 ### Preview artifacts and cleanup
 
@@ -470,8 +464,8 @@ for G63/G66/G80/G81 coexist with their historical legacy diagnostics. Deferred
 previews use 24 evenly sampled source frames and visible **NOT CERTIFIED** labels;
 the five source-context scenes now have complete 120-frame source previews.
 The other earlier previews retain their original frame counts.
-G98's existing full comparison and G103's explicitly deferred
-comparison are retained as diagnostics, not accepted samples.
+G98's existing full comparison remains a deferred diagnostic. G103 now has a
+certified comparison in `evaluation/`, replacing its obsolete deferred preview.
 
 Native previews initially used Cycles CPU, 16 samples and denoising. Most of this
 bulk pass uses the same original source scene with Cycles CUDA, 64 samples and
@@ -532,3 +526,43 @@ The measured catalog replaces missing-global reasons with these observed
 capability blockers. G44 has a 120-frame source/replay GIF; the other four have
 120-frame source-only GIFs labeled NOT CERTIFIED under `deferred-previews/`.
 Obsolete one-frame diagnostics and temporary PNGs are removed after full decoding.
+
+## Batch-independent visibility transforms and G103
+
+G103's unchanged static poses produced one seed for a 120-frame request, then
+two/four cumulative builds after a five-frame request and its repetition. The
+final chunk has one row instead of four. Input poses, matrix inverses, world and
+clip vertices were bit-identical; the plane-normal `einsum` contraction changed
+392 normal components by up to `1.11e-16`, affecting 524 normalized plane
+coefficients by up to `4.44e-16`. Exact invalidation correctly detected these
+different inputs. This was shape-dependent GEMM rounding, not source motion or
+an incorrect depth/mask result.
+
+`transforms.row_matrix3` evaluates vertex and plane-normal transformations with
+three explicit products/additions in a fixed order. Camera projection reuses
+`nvdiff._mm4`, the existing fixed four-term product. Independent random seven-object
+scenes also exposed the corresponding vertex-transform issue, so the fix applies
+to the complete visibility transform path rather than one scene or coefficient.
+Matrix inversion, precision, plane normalization, hit tests, semantic ties and
+`StaticRayCoverage` are unchanged. No epsilon, rounded key or ignored input is added.
+
+Generic CUDA regressions use 7/41 arbitrarily rotated meshes, a nontrivial camera,
+all-static and mixed partitions, and changing batch shapes. They failed before
+the fix and now retain one seed while preserving all RGB/depth/ID outputs.
+Real static changes still rebuild, within-batch static variation still uses full
+drawing, and even a one-ULP plane change invalidates the exact seed.
+
+G103 is now imported with 99 meshes and one sampled dynamic node. Fresh source
+world checks cover all 120 frames (position error `3.08e-7`, normal error `3.78e-7`);
+the target is fully occluded in 15 source frames, with its hidden poses retained.
+Both cached/full source gates pass maximum depth MSE `8.19e-16` and minimum mask
+IoU 1.0. All outputs are bit-identical to the pre-fix G103 rendering at both
+160x90 and 320x180. Requests of 1/2/3/4/5/7/9/16/31/64/120 frames across chunk
+sizes 1/3/4/7/16 retain one seed, no fallback, and identical selected outputs.
+Frozen regressions additionally exercise reverse/shuffled/repeated requests,
+chunk changes and output mutation isolation without changing their budgets.
+
+The recording schema, source entry functions, opaque visibility contract and old
+fixtures are unchanged. G103's independent source oracle was regenerated in a
+second process with byte-identical numeric archives. Its 120-frame source/replay
+GIF uses the existing simplified renderer; temporary PNGs are removed after decoding.

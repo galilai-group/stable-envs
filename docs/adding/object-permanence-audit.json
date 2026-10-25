@@ -3083,69 +3083,211 @@
       "task": "G102"
     },
     {
-      "cache_observation": [
-        {
-          "size": 90,
-          "stages": [
-            {
-              "builds": 1,
-              "fallbacks": 0,
-              "stage": "all-reverse",
-              "static_triangles": 6616
-            },
-            {
-              "builds": 2,
-              "fallbacks": 0,
-              "stage": "shuffled-repeat",
-              "static_triangles": 6616
-            },
-            {
-              "builds": 4,
-              "fallbacks": 0,
-              "stage": "same-again",
-              "static_triangles": 6616
-            }
-          ]
-        },
-        {
-          "size": 180,
-          "stages": [
-            {
-              "builds": 1,
-              "fallbacks": 0,
-              "stage": "all-reverse",
-              "static_triangles": 6616
-            },
-            {
-              "builds": 2,
-              "fallbacks": 0,
-              "stage": "shuffled-repeat",
-              "static_triangles": 6616
-            },
-            {
-              "builds": 4,
-              "fallbacks": 0,
-              "stage": "same-again",
-              "static_triangles": 6616
-            }
-          ]
-        }
+      "cache_bit_identical_resolutions": [
+        90,
+        180
       ],
+      "cache_reuse_regression": {
+        "after_fix": {
+          "180": {
+            "bit_identical": true,
+            "cross_batch_sizes": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              7,
+              9,
+              16,
+              31,
+              64,
+              120
+            ],
+            "output_mutation_isolation": true,
+            "stages": [
+              {
+                "builds": 1,
+                "chunk_size": 4,
+                "fallbacks": 0
+              },
+              {
+                "builds": 1,
+                "chunk_size": 1,
+                "fallbacks": 0
+              },
+              {
+                "builds": 1,
+                "chunk_size": 3,
+                "fallbacks": 0
+              },
+              {
+                "builds": 1,
+                "chunk_size": 7,
+                "fallbacks": 0
+              },
+              {
+                "builds": 1,
+                "chunk_size": 16,
+                "fallbacks": 0
+              },
+              {
+                "builds": 1,
+                "chunk_size": 4,
+                "fallbacks": 0
+              }
+            ],
+            "unchanged_from_before_fix": {
+              "depth": true,
+              "ids": true,
+              "rgb": true
+            }
+          },
+          "90": {
+            "bit_identical": true,
+            "cross_batch_sizes": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              7,
+              9,
+              16,
+              31,
+              64,
+              120
+            ],
+            "output_mutation_isolation": true,
+            "stages": [
+              {
+                "builds": 1,
+                "chunk_size": 4,
+                "fallbacks": 0
+              },
+              {
+                "builds": 1,
+                "chunk_size": 1,
+                "fallbacks": 0
+              },
+              {
+                "builds": 1,
+                "chunk_size": 3,
+                "fallbacks": 0
+              },
+              {
+                "builds": 1,
+                "chunk_size": 7,
+                "fallbacks": 0
+              },
+              {
+                "builds": 1,
+                "chunk_size": 16,
+                "fallbacks": 0
+              },
+              {
+                "builds": 1,
+                "chunk_size": 4,
+                "fallbacks": 0
+              }
+            ],
+            "unchanged_from_before_fix": {
+              "depth": true,
+              "ids": true,
+              "rgb": true
+            }
+          }
+        },
+        "before_fix": [
+          {
+            "size": 90,
+            "stages": [
+              {
+                "builds": 1,
+                "fallbacks": 0,
+                "stage": "all-reverse",
+                "static_triangles": 6616
+              },
+              {
+                "builds": 2,
+                "fallbacks": 0,
+                "stage": "shuffled-repeat",
+                "static_triangles": 6616
+              },
+              {
+                "builds": 4,
+                "fallbacks": 0,
+                "stage": "same-again",
+                "static_triangles": 6616
+              }
+            ]
+          },
+          {
+            "size": 180,
+            "stages": [
+              {
+                "builds": 1,
+                "fallbacks": 0,
+                "stage": "all-reverse",
+                "static_triangles": 6616
+              },
+              {
+                "builds": 2,
+                "fallbacks": 0,
+                "stage": "shuffled-repeat",
+                "static_triangles": 6616
+              },
+              {
+                "builds": 4,
+                "fallbacks": 0,
+                "stage": "same-again",
+                "static_triangles": 6616
+              }
+            ]
+          }
+        ],
+        "diagnosis": {
+          "additional_generic_reproducer": "small rotated meshes also exposed batch-dependent world-vertex contraction",
+          "cause": "batch-size-dependent GEMM contraction rounding",
+          "g103_normal_contraction_max_abs_difference": 1.1102230246251565e-16,
+          "g103_plane_max_abs_difference": 4.440892098500626e-16,
+          "g103_pose_inverse_world_and_clip_vertices_bit_identical": true,
+          "g103_static_plane_changed_coefficients": 524
+        },
+        "fix": "fixed three-term vertex/normal contractions and existing fixed four-term camera products; exact cache keys unchanged"
+      },
       "camera": "PERSP",
-      "category": "static-cache-reuse",
+      "contract": "stable-envs/opaque-pixel-rays-v1",
       "depth_mse_max": 8.187689945506679e-16,
-      "failed_frames": [],
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 46,
+        "dynamic_nodes": [
+          "corner_turn_red_ball"
+        ],
+        "frames": 120,
+        "objects": 99,
+        "task": "G103",
+        "world_normal_max_abs_error": 3.781018663717717e-07,
+        "world_triangle_max_abs_error": 3.0846462939493335e-07
+      },
       "mask_iou_min": 1.0,
       "member": 0,
       "mesh_count": 99,
       "name": "corner_turn_occlusion",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g103-deferred-source-vs-pixel-rays-v1.gif",
+      "oracle": "tests/fixtures/semantics/object_permanence/g103/opaque_pixel_rays_v1/nominal",
+      "preview": ".cache/object_permanence/evaluation/g103-source-vs-pixel-rays-v1.gif",
       "preview_frames": 120,
-      "preview_kind": "deferred-comparison",
-      "reason": "Depth, masks and cached/full outputs pass, but the unchanged single static-seed build assertion fails on repeated batch sizes",
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
+      ],
+      "reference_target_roles": {
+        "corner_turn_red_ball": "target"
+      },
+      "reference_targets": [
+        "corner_turn_red_ball"
       ],
       "script": "object_permanence/generator/tasks/G103_corner_turn_occlusion/pb_task_00000149_pb_corner_turn_occlusion_0150_blender.py",
       "source_frames": [
@@ -3154,8 +3296,7 @@
       ],
       "source_script_sha256": "8fd204ada58134fc22eca5b88c0368a137c1e4d44eaf7861c58981233b6a8e95",
       "source_task_manifest_sha256": "4f224223e4100bd668391eb8b0fc318920a2fe5597265e844c313b9d369e3835",
-      "stage": "cache-retention",
-      "status": "deferred",
+      "status": "certified",
       "task": "G103"
     },
     {

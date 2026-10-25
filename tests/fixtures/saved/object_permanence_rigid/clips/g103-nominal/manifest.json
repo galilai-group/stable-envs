@@ -1,0 +1,2676 @@
+{
+  "arrays": {
+    "frames": {
+      "dtype": "int64",
+      "sha256": "3ce1a862b6cf0bb21bc1354b758cafa47ca5ec03b5c004d6210f5abd8c55df44",
+      "shape": [
+        120
+      ]
+    },
+    "poses": {
+      "dtype": "float32",
+      "sha256": "eb5dac4009a4bdac66ee8017f3a9af5b39e25cccbece7d9a912f6b5320fabd3f",
+      "shape": [
+        120,
+        1,
+        7
+      ]
+    }
+  },
+  "assets": {
+    "04fa8a0332009c500274d0c92284d1e910b8e38f3e5ebc557f93d9ec1d0d2612": {
+      "file": "assets/cylinder/04fa8a0332009c500274d0c92284d1e910b8e38f3e5ebc557f93d9ec1d0d2612.npz",
+      "sha256": "343a04ce482def07c1aa2fc5faa41861384a1a420f346cf6484b45fed76a586a"
+    },
+    "0a9ea603b8f01562436a82c50cb69ed4e772b2dc384f8d56d802890f92ce7911": {
+      "file": "assets/cylinder/0a9ea603b8f01562436a82c50cb69ed4e772b2dc384f8d56d802890f92ce7911.npz",
+      "sha256": "d0a24213ab1b35378a6e3187fb86dac4c6ab5853bbd07a857cff42fa0a47c4ba"
+    },
+    "1509a85d27cfec994a85c1713e910f35510ec31decbeb41d95bf32419508ccd6": {
+      "file": "assets/cylinder/1509a85d27cfec994a85c1713e910f35510ec31decbeb41d95bf32419508ccd6.npz",
+      "sha256": "daf6bad29794c8cd77ee17960f5049c8740fdbf9847a422e62461721d5114e6b"
+    },
+    "15d223468c3247e9513c886dcf760d5b618e9e96c121e9deeb92bc2bc1aba606": {
+      "file": "assets/cube/15d223468c3247e9513c886dcf760d5b618e9e96c121e9deeb92bc2bc1aba606.npz",
+      "sha256": "61f7e7a78815f407bf85aee7098d61c8ecea70faac46bed199d1d25ba467b3e0"
+    },
+    "1787920b846871a3cba501900ef5d5d82fabb586015c445f04e4993ce43e9d00": {
+      "file": "assets/cylinder/1787920b846871a3cba501900ef5d5d82fabb586015c445f04e4993ce43e9d00.npz",
+      "sha256": "b0495939a5fb7d606bae55fb9c122be5461fdee9c75ff576af23ca94704ea31d"
+    },
+    "185b8a996dfb416ae30deb911d303c05a7af834e27a1d0d513226725442ad23c": {
+      "file": "assets/cylinder/185b8a996dfb416ae30deb911d303c05a7af834e27a1d0d513226725442ad23c.npz",
+      "sha256": "dd7ae46d7608ec4b47ba78731b45fe1058b8f78e9fca1cf596fd7bfa0291ed92"
+    },
+    "1c4e0af9baccc9a72dc0b9f9c8e348ff273869efdd55442f90d53dc4a2fea7d3": {
+      "file": "assets/cube/1c4e0af9baccc9a72dc0b9f9c8e348ff273869efdd55442f90d53dc4a2fea7d3.npz",
+      "sha256": "957d09791edd3603d2aa336d9899811d9a35ab2170cdc43fc59d7899f2d02bc8"
+    },
+    "3032ed935c0ea712b060a8bb7999cb110cb8c63a2a2e0bb5d25debbe14244cb2": {
+      "file": "assets/cylinder/3032ed935c0ea712b060a8bb7999cb110cb8c63a2a2e0bb5d25debbe14244cb2.npz",
+      "sha256": "8361622ae5c4592fa92afeee174ec2f5b60c6a0433826ae56a15175bdb7bb690"
+    },
+    "440a0c1bf8be7bf9314e68c75ea9b5a4a8bb56bd7ed262d58b859f10b7079925": {
+      "file": "assets/cylinder/440a0c1bf8be7bf9314e68c75ea9b5a4a8bb56bd7ed262d58b859f10b7079925.npz",
+      "sha256": "cb52237b454b56c1900c99a6dcc2b8e1198dc643d1fa6f6d392ebe8d9b53fbec"
+    },
+    "47f20f0d40b3aec7744c568b79e7c7dd4a5f099d5e8790ffe7f0846842dc72ea": {
+      "file": "assets/sphere/47f20f0d40b3aec7744c568b79e7c7dd4a5f099d5e8790ffe7f0846842dc72ea.npz",
+      "sha256": "f9fc2e3f1cc75bb882226f207f297f5a889215117d61f4d2b1f5d521ecfbd5c0"
+    },
+    "4a42f4dea2754091083ea83853968e230c67a8e34e510b6177d32a7074fcaf4b": {
+      "file": "assets/cylinder/4a42f4dea2754091083ea83853968e230c67a8e34e510b6177d32a7074fcaf4b.npz",
+      "sha256": "9b27df54ced4e282002a42c9ffa45be4bfef54b1c9698765bca387669b0d466d"
+    },
+    "4df486a4ec06193f21f1e2b4a1b5b6936623fd5ebe8ac60813b9b6cbee8110d6": {
+      "file": "assets/cube/4df486a4ec06193f21f1e2b4a1b5b6936623fd5ebe8ac60813b9b6cbee8110d6.npz",
+      "sha256": "a51e92c7a5346ecf153f97b92394a23c361198b6ebeb3f56155995d45b5ad0f7"
+    },
+    "4e0e90eda4b8e7ed1d3595598719be4ff8a5b4ec5a24a77ce252262cd5ee702d": {
+      "file": "assets/cylinder/4e0e90eda4b8e7ed1d3595598719be4ff8a5b4ec5a24a77ce252262cd5ee702d.npz",
+      "sha256": "2f419aa1bcc055a3d53347ab4434635ec7fc0e0930f9b37ce90095f9cc46bcbe"
+    },
+    "552eb86e902c69fdf5ff28b44b0199b93ba47353ed15cd7cd46db833288cebd7": {
+      "file": "assets/cylinder/552eb86e902c69fdf5ff28b44b0199b93ba47353ed15cd7cd46db833288cebd7.npz",
+      "sha256": "df9833ac287efabebe0edbdb7f6d714f82946491818d9df10b071fed17ad56c1"
+    },
+    "58c74addb3311bc611f15b11fcbc4678b0bc1b69cfa5800b73d9e78acac23d1d": {
+      "file": "assets/cylinder/58c74addb3311bc611f15b11fcbc4678b0bc1b69cfa5800b73d9e78acac23d1d.npz",
+      "sha256": "86f2a4471b1611ffd2e7a8f87d0ef05de0a54e499ac3473c3aff58080639b1cb"
+    },
+    "5bacfb5c7984716dd0f696d932f99ccdcfea71ad0b5cb8b232242487f10d10a0": {
+      "file": "assets/cylinder/5bacfb5c7984716dd0f696d932f99ccdcfea71ad0b5cb8b232242487f10d10a0.npz",
+      "sha256": "c20ad6c497bd637e80ff01b3fe8e947f679d0892004b032fbb029048401737f0"
+    },
+    "68fe0594382690a4a1cc450a8ee11d300a925a244f93d8d2f2b981e4f44a4f9f": {
+      "file": "assets/cylinder/68fe0594382690a4a1cc450a8ee11d300a925a244f93d8d2f2b981e4f44a4f9f.npz",
+      "sha256": "929ac6015a96e39658bb9e14dbcf2d14bbb2a301b2b3c8939479d5b3850bdfb5"
+    },
+    "6cbf6d47747af068f4325b06678592131ea1e064c7872d4f48b0034e70bd9a06": {
+      "file": "assets/cylinder/6cbf6d47747af068f4325b06678592131ea1e064c7872d4f48b0034e70bd9a06.npz",
+      "sha256": "d85f6b5baad920571c217e944d18f544fe4d0f8fcfc4c9a6236aa551d9fad1dc"
+    },
+    "70604397b5dbd780f5fb1778a496fe948240c5952ca5da67d3412d977769c9d5": {
+      "file": "assets/cylinder/70604397b5dbd780f5fb1778a496fe948240c5952ca5da67d3412d977769c9d5.npz",
+      "sha256": "f5914715623005f7b8ba15069b8c3916055fdddf7e9b3f51f6cf774b409514a1"
+    },
+    "71100c2f0a68749d21bccf35368725748cbd4445cc957271809ca57e5b0bd175": {
+      "file": "assets/cylinder/71100c2f0a68749d21bccf35368725748cbd4445cc957271809ca57e5b0bd175.npz",
+      "sha256": "8a7647984c1d6b6c264d41a50b6e82d04f8fdd33f11c109d9715118c6400a9e0"
+    },
+    "746a598731495ae5c2c826c9d23cc53511f87d287aae3f9c580b223af76dafde": {
+      "file": "assets/cylinder/746a598731495ae5c2c826c9d23cc53511f87d287aae3f9c580b223af76dafde.npz",
+      "sha256": "8867e7b5a40161b76b45769879bc168b0e0cc22cbb382da47c843cbf1dcff361"
+    },
+    "7ec6e8179abf07fd6f5e33a00f920997c6a91bc9462cb913c2ddbc2390f3e93a": {
+      "file": "assets/cylinder/7ec6e8179abf07fd6f5e33a00f920997c6a91bc9462cb913c2ddbc2390f3e93a.npz",
+      "sha256": "ec1af917bd32594b227813d41f497140d83b5f5d49e73d5cdff4c8edd8b07d0b"
+    },
+    "804f6eddc1658c0ba3a6cb6003ee93cb33c87da8bc74934952801fb0ea0e2f0f": {
+      "file": "assets/cylinder/804f6eddc1658c0ba3a6cb6003ee93cb33c87da8bc74934952801fb0ea0e2f0f.npz",
+      "sha256": "d47f5c705d5aad64e720382f1b08f163ab32e9883111ad0f448ba7a6567c2d3f"
+    },
+    "879a2a4791089f4e39900374120c8ce82e9b30fe14381f473b727ba3c15f4ef1": {
+      "file": "assets/cylinder/879a2a4791089f4e39900374120c8ce82e9b30fe14381f473b727ba3c15f4ef1.npz",
+      "sha256": "fc52484b5f8a824b50cd8a96f53849a75584b7c853b5b2afb327a379071eb4ad"
+    },
+    "8c6f525ae9d6b3c881c3d6527f796649d5a483d7b774f1f7e780a6626fc9b7b9": {
+      "file": "assets/cylinder/8c6f525ae9d6b3c881c3d6527f796649d5a483d7b774f1f7e780a6626fc9b7b9.npz",
+      "sha256": "695fde7595e85e5de42607c81f6b45231a451be74c397d5e62ed3362c111f6a4"
+    },
+    "8ec501aac1f7b57a5ad37674f1f95a13483002e4bb4c084f4dec456ee5b29a2f": {
+      "file": "assets/cylinder/8ec501aac1f7b57a5ad37674f1f95a13483002e4bb4c084f4dec456ee5b29a2f.npz",
+      "sha256": "e31f133b1ea4eea2ece722596825168360294e44cefe5686090f44779c83a838"
+    },
+    "9045b297651a95be49029ae63465badbc4e6268b94d1befb443e0ccacb03975a": {
+      "file": "assets/cylinder/9045b297651a95be49029ae63465badbc4e6268b94d1befb443e0ccacb03975a.npz",
+      "sha256": "5b7ed15ffd221e2458dfc74fe92a202fd744594abc943c53b6f6bf161e54666a"
+    },
+    "a11d539e027501a10de4edd34c481b2ea6ac1483e9fc21b063b39536506b4c19": {
+      "file": "assets/cube/a11d539e027501a10de4edd34c481b2ea6ac1483e9fc21b063b39536506b4c19.npz",
+      "sha256": "33d07b0c03d52c6e63f09303fce737d1370006df85f004ded57a6020f99fb1fc"
+    },
+    "a7dd8ded9be3e02c24399ba57532e51593ac2c1caf8da2b5700d49f71726ca78": {
+      "file": "assets/cylinder/a7dd8ded9be3e02c24399ba57532e51593ac2c1caf8da2b5700d49f71726ca78.npz",
+      "sha256": "d82cea026fa1a8d9e7a0e2d691e8e472d5fd6f78d59b056f32ff7e9bcc6a4c97"
+    },
+    "a9d4932f24b599994d669492b28d38f8f6edafed8c063c69e53e8b52f87845d3": {
+      "file": "assets/cylinder/a9d4932f24b599994d669492b28d38f8f6edafed8c063c69e53e8b52f87845d3.npz",
+      "sha256": "6fc7153656af9125b98088b1115daa88b963a7f508e80c72a06811d874b4a611"
+    },
+    "b106222d3f248de1eb2b16136ab439323b56d9326809d44262bd3b1f7834b723": {
+      "file": "assets/cube/b106222d3f248de1eb2b16136ab439323b56d9326809d44262bd3b1f7834b723.npz",
+      "sha256": "1647b1a38583f19333b778fd96260aef9cab184f4f31b24fde85ebc85b541f98"
+    },
+    "bb02d7aefe0e059a55375a7b54997426db4ec90ed0bcd3812d48ebeb3d3f71fc": {
+      "file": "assets/cylinder/bb02d7aefe0e059a55375a7b54997426db4ec90ed0bcd3812d48ebeb3d3f71fc.npz",
+      "sha256": "3bd548c5b04f4dfbdcc14620d1402b814ad33ed72e5fb718fa2d78525b26cc53"
+    },
+    "c03ac2f0e7e125a35ca6ec2c0056160b81aa714c77e8af9cbda570b1a7c6273b": {
+      "file": "assets/cylinder/c03ac2f0e7e125a35ca6ec2c0056160b81aa714c77e8af9cbda570b1a7c6273b.npz",
+      "sha256": "97875836706ef39e8c83f9cf7c4de9a8231920c987fba1761e6e2dfa3c9d6c00"
+    },
+    "c244a755bc44d925be7fa5a985092287ae031ea96fbc6b72842b620394ab935d": {
+      "file": "assets/cylinder/c244a755bc44d925be7fa5a985092287ae031ea96fbc6b72842b620394ab935d.npz",
+      "sha256": "5ee71fd90dbfe188736605111b33e0dac758c7f8cedc193edca02768c1a1e759"
+    },
+    "c514fb9555b66c0f30795bd9609f7924e4c46368f78be68a22f2f789da1ecb93": {
+      "file": "assets/cylinder/c514fb9555b66c0f30795bd9609f7924e4c46368f78be68a22f2f789da1ecb93.npz",
+      "sha256": "fab156014064993512308f932147be89af5b55b66050001aab1b78129db7d337"
+    },
+    "c5d1e4c5d247426fafcfaf48fef822b20d111f434a7cfb618c3094da9bf1b2a1": {
+      "file": "assets/cylinder/c5d1e4c5d247426fafcfaf48fef822b20d111f434a7cfb618c3094da9bf1b2a1.npz",
+      "sha256": "3a6a40b52c50db7abacd70c1938a26a38a843d74ba3396b5e0b1a2bbe539cd7e"
+    },
+    "c7eb5cfffa267f14e7924aa8514941a678b76a35ef2e3233525f183fefbe0d9c": {
+      "file": "assets/cylinder/c7eb5cfffa267f14e7924aa8514941a678b76a35ef2e3233525f183fefbe0d9c.npz",
+      "sha256": "e1d11ed5cc20ba1dee8046e3c80ebdba5875d08f875cba5195b8b7aeb4607f46"
+    },
+    "cb271ac0e2ad8e5a78c6e48a3b9af1a51892de66c578a806069c2049ee378d2b": {
+      "file": "assets/cylinder/cb271ac0e2ad8e5a78c6e48a3b9af1a51892de66c578a806069c2049ee378d2b.npz",
+      "sha256": "4d9c86c96bac60659f1f9e18376334eff4f0debc6e50b6b685c403dfb9fcdfb3"
+    },
+    "cb6ee633f15073d105876113005f1d3f0c1e131b2e986b4755bc94730303422e": {
+      "file": "assets/cylinder/cb6ee633f15073d105876113005f1d3f0c1e131b2e986b4755bc94730303422e.npz",
+      "sha256": "a3ca74b55aa7b7b0d629f771cf9046a7c6c8f951354a7eb1f6fa45d996d695bd"
+    },
+    "cdee1748c58e3f778b4c2a71013bffc6431469acc307c361aaf17caf6a184029": {
+      "file": "assets/cube/cdee1748c58e3f778b4c2a71013bffc6431469acc307c361aaf17caf6a184029.npz",
+      "sha256": "2c0e1f742b6d7eb31bd574bc66103a00bb53aaf3fae785705affcdfb06a4a145"
+    },
+    "d539cf7ff497cf1e180d730e094327dd4a52000b6d66887bafa17498e380be11": {
+      "file": "assets/cylinder/d539cf7ff497cf1e180d730e094327dd4a52000b6d66887bafa17498e380be11.npz",
+      "sha256": "e04c98bd2ca6cfa7f164dc0dad29a0ea547b8b1a66acb7e48b92f5c84b7298f6"
+    },
+    "d987e61a053cda893afc33d201c47cf72773756d95f7e532ebe6300449b605ef": {
+      "file": "assets/cylinder/d987e61a053cda893afc33d201c47cf72773756d95f7e532ebe6300449b605ef.npz",
+      "sha256": "bca4aa1a3a3f0930daca8a815a422a6a9b2bfe63bb54ef93d75cb58c57373dcd"
+    },
+    "f74b248780e00a7c16208d7f693baa957e60e4cc25133bba73d4bf7142f3f97f": {
+      "file": "assets/cylinder/f74b248780e00a7c16208d7f693baa957e60e4cc25133bba73d4bf7142f3f97f.npz",
+      "sha256": "fbd08b5194808fdd780234adb057ed9d1bf2878682f250e98662d9ef2d91b7d7"
+    },
+    "f77e992010a1019e601fdf314736f539c8319fe72386409cf44c2e63e45ff6d0": {
+      "file": "assets/cylinder/f77e992010a1019e601fdf314736f539c8319fe72386409cf44c2e63e45ff6d0.npz",
+      "sha256": "eca6744c2537473c2b272548e5627549ad307faf812bb29c26bc184ca43c098f"
+    },
+    "f95d5184aae35637d9cbffaa3032bafcb9e0ff57cb44eaacc77e68c9c351c7a4": {
+      "file": "assets/cylinder/f95d5184aae35637d9cbffaa3032bafcb9e0ff57cb44eaacc77e68c9c351c7a4.npz",
+      "sha256": "7bb6ffaaf6af31edfb6e625f7bbb29c8bbb19e252077d7e56cb192e04795c9aa"
+    },
+    "fe623bfd65fafdee0507edef4aa9a358049c944d12d05fc7cd8f59bc33e4ba6c": {
+      "file": "assets/cylinder/fe623bfd65fafdee0507edef4aa9a358049c944d12d05fc7cd8f59bc33e4ba6c.npz",
+      "sha256": "fa47544d36702bfbf00285f3b5ad386518f48ef43e1e295055a2c6b0a5a3a4c4"
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "height": 720,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        1.7777777910232544,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        3.1604936122894287,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "width": 1280,
+    "world": [
+      [
+        0.92929607629776,
+        0.08964276313781738,
+        -0.35829177498817444,
+        -3.0
+      ],
+      [
+        -0.3693356513977051,
+        0.2255527675151825,
+        -0.9015082716941833,
+        -7.400000095367432
+      ],
+      [
+        1.3158096834331445e-08,
+        0.9700980186462402,
+        0.2427135705947876,
+        3.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "clip": "g103-nominal",
+  "conventions": {
+    "quaternion": "wxyz",
+    "units": "source-scene-units",
+    "world": "right-handed-z-up"
+  },
+  "dynamic_nodes": [
+    "corner_turn_red_ball"
+  ],
+  "fps": 24.0,
+  "license_ref": {
+    "sha256": "0163481eb7a0fe3ed86d2dccf542a849b36b3c119f8ca6d3d5b36c074f2e1a1c"
+  },
+  "objects": [
+    {
+      "asset": "1787920b846871a3cba501900ef5d5d82fabb586015c445f04e4993ce43e9d00",
+      "id": 1,
+      "name": "bend_track_left_tube_00",
+      "node": -1,
+      "pose": [
+        0.26889103651046753,
+        -1.0695362091064453,
+        0.699999988079071,
+        0.49382609128952026,
+        0.49382615089416504,
+        0.5060985684394836,
+        0.5060986280441284
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_00"
+    },
+    {
+      "asset": "f95d5184aae35637d9cbffaa3032bafcb9e0ff57cb44eaacc77e68c9c351c7a4",
+      "id": 2,
+      "name": "bend_track_left_tube_01",
+      "node": -1,
+      "pose": [
+        0.30662763118743896,
+        -1.0676823854446411,
+        0.699999988079071,
+        0.4812581241130829,
+        0.4812580645084381,
+        0.5180643796920776,
+        0.5180644392967224
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_01"
+    },
+    {
+      "asset": "6cbf6d47747af068f4325b06678592131ea1e064c7872d4f48b0034e70bd9a06",
+      "id": 3,
+      "name": "bend_track_left_tube_02",
+      "node": -1,
+      "pose": [
+        0.3442278206348419,
+        -1.063979148864746,
+        0.699999988079071,
+        0.46839815378189087,
+        0.4683982729911804,
+        0.529719889163971,
+        0.529719889163971
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_02"
+    },
+    {
+      "asset": "fe623bfd65fafdee0507edef4aa9a358049c944d12d05fc7cd8f59bc33e4ba6c",
+      "id": 4,
+      "name": "bend_track_left_tube_03",
+      "node": -1,
+      "pose": [
+        0.3816010057926178,
+        -1.0584352016448975,
+        0.699999988079071,
+        0.4552575349807739,
+        0.4552575945854187,
+        0.5410551428794861,
+        0.5410550832748413
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_03"
+    },
+    {
+      "asset": "c7eb5cfffa267f14e7924aa8514941a678b76a35ef2e3233525f183fefbe0d9c",
+      "id": 5,
+      "name": "bend_track_left_tube_04",
+      "node": -1,
+      "pose": [
+        0.4186571538448334,
+        -1.051064372062683,
+        0.699999988079071,
+        0.4418429434299469,
+        0.4418430030345917,
+        0.5520641207695007,
+        0.5520641803741455
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_04"
+    },
+    {
+      "asset": "f77e992010a1019e601fdf314736f539c8319fe72386409cf44c2e63e45ff6d0",
+      "id": 6,
+      "name": "bend_track_left_tube_05",
+      "node": -1,
+      "pose": [
+        0.4553069770336151,
+        -1.0418840646743774,
+        0.699999988079071,
+        0.42816025018692017,
+        0.4281603693962097,
+        0.562742292881012,
+        0.5627421140670776
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_05"
+    },
+    {
+      "asset": "6cbf6d47747af068f4325b06678592131ea1e064c7872d4f48b0034e70bd9a06",
+      "id": 7,
+      "name": "bend_track_left_tube_06",
+      "node": -1,
+      "pose": [
+        0.49146220088005066,
+        -1.030916452407837,
+        0.699999988079071,
+        0.4142216742038727,
+        0.41422170400619507,
+        0.5730797648429871,
+        0.5730797648429871
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_06"
+    },
+    {
+      "asset": "c5d1e4c5d247426fafcfaf48fef822b20d111f434a7cfb618c3094da9bf1b2a1",
+      "id": 8,
+      "name": "bend_track_left_tube_07",
+      "node": -1,
+      "pose": [
+        0.5270357131958008,
+        -1.0181879997253418,
+        0.699999988079071,
+        0.40003281831741333,
+        0.4000329375267029,
+        0.5830726623535156,
+        0.5830726623535156
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_07"
+    },
+    {
+      "asset": "8c6f525ae9d6b3c881c3d6527f796649d5a483d7b774f1f7e780a6626fc9b7b9",
+      "id": 9,
+      "name": "bend_track_left_tube_08",
+      "node": -1,
+      "pose": [
+        0.5619418621063232,
+        -1.0037294626235962,
+        0.699999988079071,
+        0.38560327887535095,
+        0.3856031894683838,
+        0.592714250087738,
+        0.5927143096923828
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_08"
+    },
+    {
+      "asset": "cb6ee633f15073d105876113005f1d3f0c1e131b2e986b4755bc94730303422e",
+      "id": 10,
+      "name": "bend_track_left_tube_09",
+      "node": -1,
+      "pose": [
+        0.5960964560508728,
+        -0.9875755310058594,
+        0.699999988079071,
+        0.37094077467918396,
+        0.3709407448768616,
+        0.6019991636276245,
+        0.6019991040229797
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_09"
+    },
+    {
+      "asset": "f74b248780e00a7c16208d7f693baa957e60e4cc25133bba73d4bf7142f3f97f",
+      "id": 11,
+      "name": "bend_track_left_tube_10",
+      "node": -1,
+      "pose": [
+        0.6294173002243042,
+        -0.9697651863098145,
+        0.699999988079071,
+        0.3560553789138794,
+        0.3560553193092346,
+        0.6109210848808289,
+        0.6109212040901184
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_10"
+    },
+    {
+      "asset": "c7eb5cfffa267f14e7924aa8514941a678b76a35ef2e3233525f183fefbe0d9c",
+      "id": 12,
+      "name": "bend_track_left_tube_11",
+      "node": -1,
+      "pose": [
+        0.661824107170105,
+        -0.9503413438796997,
+        0.699999988079071,
+        0.3409557640552521,
+        0.34095579385757446,
+        0.6194749474525452,
+        0.6194749474525452
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_11"
+    },
+    {
+      "asset": "04fa8a0332009c500274d0c92284d1e910b8e38f3e5ebc557f93d9ec1d0d2612",
+      "id": 13,
+      "name": "bend_track_left_tube_12",
+      "node": -1,
+      "pose": [
+        0.6932387351989746,
+        -0.929350733757019,
+        0.699999988079071,
+        0.3256496489048004,
+        0.32564955949783325,
+        0.6276562213897705,
+        0.6276563405990601
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_12"
+    },
+    {
+      "asset": "a7dd8ded9be3e02c24399ba57532e51593ac2c1caf8da2b5700d49f71726ca78",
+      "id": 14,
+      "name": "bend_track_left_tube_13",
+      "node": -1,
+      "pose": [
+        0.7235856056213379,
+        -0.906843900680542,
+        0.699999988079071,
+        0.3101489245891571,
+        0.3101488947868347,
+        0.6354586482048035,
+        0.6354587078094482
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_13"
+    },
+    {
+      "asset": "9045b297651a95be49029ae63465badbc4e6268b94d1befb443e0ccacb03975a",
+      "id": 15,
+      "name": "bend_track_left_tube_14",
+      "node": -1,
+      "pose": [
+        0.7527916431427002,
+        -0.8828752040863037,
+        0.699999988079071,
+        0.29446011781692505,
+        0.29446011781692505,
+        0.6428788900375366,
+        0.6428788900375366
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_14"
+    },
+    {
+      "asset": "d539cf7ff497cf1e180d730e094327dd4a52000b6d66887bafa17498e380be11",
+      "id": 16,
+      "name": "bend_track_left_tube_15",
+      "node": -1,
+      "pose": [
+        0.7807862758636475,
+        -0.8575023412704468,
+        0.699999988079071,
+        0.27859431505203247,
+        0.27859431505203247,
+        0.6499117016792297,
+        0.6499117016792297
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_15"
+    },
+    {
+      "asset": "d539cf7ff497cf1e180d730e094327dd4a52000b6d66887bafa17498e380be11",
+      "id": 17,
+      "name": "bend_track_left_tube_16",
+      "node": -1,
+      "pose": [
+        0.807502269744873,
+        -0.8307863473892212,
+        0.699999988079071,
+        0.26256102323532104,
+        0.2625611126422882,
+        0.6565528512001038,
+        0.6565529108047485
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_16"
+    },
+    {
+      "asset": "1787920b846871a3cba501900ef5d5d82fabb586015c445f04e4993ce43e9d00",
+      "id": 18,
+      "name": "bend_track_left_tube_17",
+      "node": -1,
+      "pose": [
+        0.8328752517700195,
+        -0.8027915954589844,
+        0.699999988079071,
+        0.24636918306350708,
+        0.24636922776699066,
+        0.6627987623214722,
+        0.6627987623214722
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_17"
+    },
+    {
+      "asset": "879a2a4791089f4e39900374120c8ce82e9b30fe14381f473b727ba3c15f4ef1",
+      "id": 19,
+      "name": "bend_track_left_tube_18",
+      "node": -1,
+      "pose": [
+        0.8568439483642578,
+        -0.7735856771469116,
+        0.699999988079071,
+        0.2300286740064621,
+        0.2300286740064621,
+        0.6686455011367798,
+        0.6686455011367798
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_18"
+    },
+    {
+      "asset": "04fa8a0332009c500274d0c92284d1e910b8e38f3e5ebc557f93d9ec1d0d2612",
+      "id": 20,
+      "name": "bend_track_left_tube_19",
+      "node": -1,
+      "pose": [
+        0.8793506622314453,
+        -0.7432388067245483,
+        0.699999988079071,
+        0.21355080604553223,
+        0.21355091035366058,
+        0.6740890145301819,
+        0.6740890741348267
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_19"
+    },
+    {
+      "asset": "58c74addb3311bc611f15b11fcbc4678b0bc1b69cfa5800b73d9e78acac23d1d",
+      "id": 21,
+      "name": "bend_track_left_tube_20",
+      "node": -1,
+      "pose": [
+        0.9003413319587708,
+        -0.7118241190910339,
+        0.699999988079071,
+        0.1969432681798935,
+        0.1969432681798935,
+        0.6791269183158875,
+        0.6791269183158875
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_20"
+    },
+    {
+      "asset": "1787920b846871a3cba501900ef5d5d82fabb586015c445f04e4993ce43e9d00",
+      "id": 22,
+      "name": "bend_track_left_tube_21",
+      "node": -1,
+      "pose": [
+        0.9197652339935303,
+        -0.6794173121452332,
+        0.699999988079071,
+        0.1802167147397995,
+        0.1802167445421219,
+        0.6837557554244995,
+        0.6837557554244995
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_21"
+    },
+    {
+      "asset": "cb6ee633f15073d105876113005f1d3f0c1e131b2e986b4755bc94730303422e",
+      "id": 23,
+      "name": "bend_track_left_tube_22",
+      "node": -1,
+      "pose": [
+        0.9375755786895752,
+        -0.6460964679718018,
+        0.699999988079071,
+        0.16338297724723816,
+        0.163382887840271,
+        0.6879724264144897,
+        0.687972366809845
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_22"
+    },
+    {
+      "asset": "552eb86e902c69fdf5ff28b44b0199b93ba47353ed15cd7cd46db833288cebd7",
+      "id": 24,
+      "name": "bend_track_left_tube_23",
+      "node": -1,
+      "pose": [
+        0.953729510307312,
+        -0.6119418144226074,
+        0.699999988079071,
+        0.14644967019557953,
+        0.14644969999790192,
+        0.6917749047279358,
+        0.6917749047279358
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_23"
+    },
+    {
+      "asset": "f95d5184aae35637d9cbffaa3032bafcb9e0ff57cb44eaacc77e68c9c351c7a4",
+      "id": 25,
+      "name": "bend_track_left_tube_24",
+      "node": -1,
+      "pose": [
+        0.9681880474090576,
+        -0.5770357251167297,
+        0.699999988079071,
+        0.12942908704280853,
+        0.12942905724048615,
+        0.6951605081558228,
+        0.6951605081558228
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_24"
+    },
+    {
+      "asset": "a9d4932f24b599994d669492b28d38f8f6edafed8c063c69e53e8b52f87845d3",
+      "id": 26,
+      "name": "bend_track_left_tube_25",
+      "node": -1,
+      "pose": [
+        0.9809165000915527,
+        -0.5414621829986572,
+        0.699999988079071,
+        0.11232961714267731,
+        0.1123296394944191,
+        0.6981275677680969,
+        0.6981275677680969
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_25"
+    },
+    {
+      "asset": "8c6f525ae9d6b3c881c3d6527f796649d5a483d7b774f1f7e780a6626fc9b7b9",
+      "id": 27,
+      "name": "bend_track_left_tube_26",
+      "node": -1,
+      "pose": [
+        0.9918840527534485,
+        -0.5053069591522217,
+        0.699999988079071,
+        0.09516269713640213,
+        0.09516263008117676,
+        0.7006741166114807,
+        0.7006739377975464
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_26"
+    },
+    {
+      "asset": "c244a755bc44d925be7fa5a985092287ae031ea96fbc6b72842b620394ab935d",
+      "id": 28,
+      "name": "bend_track_left_tube_27",
+      "node": -1,
+      "pose": [
+        1.0010643005371094,
+        -0.46865713596343994,
+        0.699999988079071,
+        0.07793920487165451,
+        0.07793924957513809,
+        0.7027983069419861,
+        0.7027983665466309
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_27"
+    },
+    {
+      "asset": "879a2a4791089f4e39900374120c8ce82e9b30fe14381f473b727ba3c15f4ef1",
+      "id": 29,
+      "name": "bend_track_left_tube_28",
+      "node": -1,
+      "pose": [
+        1.0084352493286133,
+        -0.43160098791122437,
+        0.699999988079071,
+        0.060667987912893295,
+        0.06066801771521568,
+        0.704499363899231,
+        0.7044994235038757
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_28"
+    },
+    {
+      "asset": "cb271ac0e2ad8e5a78c6e48a3b9af1a51892de66c578a806069c2049ee378d2b",
+      "id": 30,
+      "name": "bend_track_left_tube_29",
+      "node": -1,
+      "pose": [
+        1.0139790773391724,
+        -0.3942278325557709,
+        0.699999988079071,
+        0.043359797447919846,
+        0.04335983470082283,
+        0.7057761549949646,
+        0.7057760953903198
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_29"
+    },
+    {
+      "asset": "a9d4932f24b599994d669492b28d38f8f6edafed8c063c69e53e8b52f87845d3",
+      "id": 31,
+      "name": "bend_track_left_tube_30",
+      "node": -1,
+      "pose": [
+        1.0176823139190674,
+        -0.3566276431083679,
+        0.699999988079071,
+        0.02602720633149147,
+        0.026027169078588486,
+        0.7066276669502258,
+        0.706627607345581
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_30"
+    },
+    {
+      "asset": "f95d5184aae35637d9cbffaa3032bafcb9e0ff57cb44eaacc77e68c9c351c7a4",
+      "id": 32,
+      "name": "bend_track_left_tube_31",
+      "node": -1,
+      "pose": [
+        1.0195362567901611,
+        -0.3188910484313965,
+        0.699999988079071,
+        0.008676901459693909,
+        0.008676817640662193,
+        0.707053542137146,
+        0.707053542137146
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_left_tube_31"
+    },
+    {
+      "asset": "8ec501aac1f7b57a5ad37674f1f95a13483002e4bb4c084f4dec456ee5b29a2f",
+      "id": 33,
+      "name": "bend_track_right_tube_00",
+      "node": -1,
+      "pose": [
+        0.27526986598968506,
+        -1.329379677772522,
+        0.699999988079071,
+        0.49382632970809937,
+        0.49382641911506653,
+        0.5060983896255493,
+        0.5060983300209045
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_00"
+    },
+    {
+      "asset": "d987e61a053cda893afc33d201c47cf72773756d95f7e532ebe6300449b605ef",
+      "id": 34,
+      "name": "bend_track_right_tube_01",
+      "node": -1,
+      "pose": [
+        0.3257486820220947,
+        -1.326899766921997,
+        0.699999988079071,
+        0.4812574088573456,
+        0.4812574088573456,
+        0.5180650353431702,
+        0.5180649757385254
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_01"
+    },
+    {
+      "asset": "1509a85d27cfec994a85c1713e910f35510ec31decbeb41d95bf32419508ccd6",
+      "id": 35,
+      "name": "bend_track_right_tube_02",
+      "node": -1,
+      "pose": [
+        0.37604501843452454,
+        -1.3219460248947144,
+        0.699999988079071,
+        0.4683990776538849,
+        0.46839916706085205,
+        0.5297191143035889,
+        0.5297191143035889
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_02"
+    },
+    {
+      "asset": "804f6eddc1658c0ba3a6cb6003ee93cb33c87da8bc74934952801fb0ea0e2f0f",
+      "id": 36,
+      "name": "bend_track_right_tube_03",
+      "node": -1,
+      "pose": [
+        0.4260376989841461,
+        -1.314530372619629,
+        0.699999988079071,
+        0.45525726675987244,
+        0.4552573263645172,
+        0.5410552620887756,
+        0.5410553216934204
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_03"
+    },
+    {
+      "asset": "8ec501aac1f7b57a5ad37674f1f95a13483002e4bb4c084f4dec456ee5b29a2f",
+      "id": 37,
+      "name": "bend_track_right_tube_04",
+      "node": -1,
+      "pose": [
+        0.4756063222885132,
+        -1.3046705722808838,
+        0.699999988079071,
+        0.4418428838253021,
+        0.4418428838253021,
+        0.5520642995834351,
+        0.5520642399787903
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_04"
+    },
+    {
+      "asset": "3032ed935c0ea712b060a8bb7999cb110cb8c63a2a2e0bb5d25debbe14244cb2",
+      "id": 38,
+      "name": "bend_track_right_tube_05",
+      "node": -1,
+      "pose": [
+        0.5246313810348511,
+        -1.2923903465270996,
+        0.699999988079071,
+        0.4281608760356903,
+        0.42816096544265747,
+        0.562741756439209,
+        0.5627416372299194
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_05"
+    },
+    {
+      "asset": "bb02d7aefe0e059a55375a7b54997426db4ec90ed0bcd3812d48ebeb3d3f71fc",
+      "id": 39,
+      "name": "bend_track_right_tube_06",
+      "node": -1,
+      "pose": [
+        0.5729948878288269,
+        -1.277719497680664,
+        0.699999988079071,
+        0.41422155499458313,
+        0.41422152519226074,
+        0.5730798840522766,
+        0.5730798244476318
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_06"
+    },
+    {
+      "asset": "c514fb9555b66c0f30795bd9609f7924e4c46368f78be68a22f2f789da1ecb93",
+      "id": 40,
+      "name": "bend_track_right_tube_07",
+      "node": -1,
+      "pose": [
+        0.6205801963806152,
+        -1.2606931924819946,
+        0.699999988079071,
+        0.40003296732902527,
+        0.4000328779220581,
+        0.5830726623535156,
+        0.5830726027488708
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_07"
+    },
+    {
+      "asset": "71100c2f0a68749d21bccf35368725748cbd4445cc957271809ca57e5b0bd175",
+      "id": 41,
+      "name": "bend_track_right_tube_08",
+      "node": -1,
+      "pose": [
+        0.6672728061676025,
+        -1.2413525581359863,
+        0.699999988079071,
+        0.38560307025909424,
+        0.3856031000614166,
+        0.5927143692970276,
+        0.5927143096923828
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_08"
+    },
+    {
+      "asset": "5bacfb5c7984716dd0f696d932f99ccdcfea71ad0b5cb8b232242487f10d10a0",
+      "id": 42,
+      "name": "bend_track_right_tube_09",
+      "node": -1,
+      "pose": [
+        0.7129602432250977,
+        -1.2197439670562744,
+        0.699999988079071,
+        0.3709406554698944,
+        0.3709407150745392,
+        0.6019992232322693,
+        0.6019991636276245
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_09"
+    },
+    {
+      "asset": "0a9ea603b8f01562436a82c50cb69ed4e772b2dc384f8d56d802890f92ce7911",
+      "id": 43,
+      "name": "bend_track_right_tube_10",
+      "node": -1,
+      "pose": [
+        0.7575322389602661,
+        -1.1959197521209717,
+        0.699999988079071,
+        0.35605528950691223,
+        0.35605525970458984,
+        0.6109211444854736,
+        0.6109211444854736
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_10"
+    },
+    {
+      "asset": "8ec501aac1f7b57a5ad37674f1f95a13483002e4bb4c084f4dec456ee5b29a2f",
+      "id": 44,
+      "name": "bend_track_right_tube_11",
+      "node": -1,
+      "pose": [
+        0.800881564617157,
+        -1.1699371337890625,
+        0.699999988079071,
+        0.3409552574157715,
+        0.3409552276134491,
+        0.619475245475769,
+        0.6194751858711243
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_11"
+    },
+    {
+      "asset": "7ec6e8179abf07fd6f5e33a00f920997c6a91bc9462cb913c2ddbc2390f3e93a",
+      "id": 45,
+      "name": "bend_track_right_tube_12",
+      "node": -1,
+      "pose": [
+        0.8429037928581238,
+        -1.141858696937561,
+        0.699999988079071,
+        0.3256499469280243,
+        0.32565003633499146,
+        0.6276560425758362,
+        0.6276560425758362
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_12"
+    },
+    {
+      "asset": "c514fb9555b66c0f30795bd9609f7924e4c46368f78be68a22f2f789da1ecb93",
+      "id": 46,
+      "name": "bend_track_right_tube_13",
+      "node": -1,
+      "pose": [
+        0.8834977149963379,
+        -1.1117522716522217,
+        0.699999988079071,
+        0.31014910340309143,
+        0.31014910340309143,
+        0.6354585289955139,
+        0.6354585289955139
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_13"
+    },
+    {
+      "asset": "c03ac2f0e7e125a35ca6ec2c0056160b81aa714c77e8af9cbda570b1a7c6273b",
+      "id": 47,
+      "name": "bend_track_right_tube_14",
+      "node": -1,
+      "pose": [
+        0.9225654006004333,
+        -1.0796902179718018,
+        0.699999988079071,
+        0.29445958137512207,
+        0.2944594919681549,
+        0.6428791284561157,
+        0.6428792476654053
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_14"
+    },
+    {
+      "asset": "804f6eddc1658c0ba3a6cb6003ee93cb33c87da8bc74934952801fb0ea0e2f0f",
+      "id": 48,
+      "name": "bend_track_right_tube_15",
+      "node": -1,
+      "pose": [
+        0.9600128531455994,
+        -1.0457497835159302,
+        0.699999988079071,
+        0.27859464287757874,
+        0.2785946726799011,
+        0.6499115824699402,
+        0.6499115824699402
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_15"
+    },
+    {
+      "asset": "0a9ea603b8f01562436a82c50cb69ed4e772b2dc384f8d56d802890f92ce7911",
+      "id": 49,
+      "name": "bend_track_right_tube_16",
+      "node": -1,
+      "pose": [
+        0.995749831199646,
+        -1.0100128650665283,
+        0.699999988079071,
+        0.2625609338283539,
+        0.26256099343299866,
+        0.6565529108047485,
+        0.6565529108047485
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_16"
+    },
+    {
+      "asset": "c514fb9555b66c0f30795bd9609f7924e4c46368f78be68a22f2f789da1ecb93",
+      "id": 50,
+      "name": "bend_track_right_tube_17",
+      "node": -1,
+      "pose": [
+        1.0296902656555176,
+        -0.9725654125213623,
+        0.699999988079071,
+        0.24636927247047424,
+        0.24636930227279663,
+        0.6627987623214722,
+        0.6627987027168274
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_17"
+    },
+    {
+      "asset": "4a42f4dea2754091083ea83853968e230c67a8e34e510b6177d32a7074fcaf4b",
+      "id": 51,
+      "name": "bend_track_right_tube_18",
+      "node": -1,
+      "pose": [
+        1.0617523193359375,
+        -0.9334976673126221,
+        0.699999988079071,
+        0.23002919554710388,
+        0.2300291508436203,
+        0.6686453223228455,
+        0.6686453223228455
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_18"
+    },
+    {
+      "asset": "7ec6e8179abf07fd6f5e33a00f920997c6a91bc9462cb913c2ddbc2390f3e93a",
+      "id": 52,
+      "name": "bend_track_right_tube_19",
+      "node": -1,
+      "pose": [
+        1.0918587446212769,
+        -0.8929038047790527,
+        0.699999988079071,
+        0.21355043351650238,
+        0.21355046331882477,
+        0.6740891337394714,
+        0.6740891933441162
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_19"
+    },
+    {
+      "asset": "8ec501aac1f7b57a5ad37674f1f95a13483002e4bb4c084f4dec456ee5b29a2f",
+      "id": 53,
+      "name": "bend_track_right_tube_20",
+      "node": -1,
+      "pose": [
+        1.1199371814727783,
+        -0.8508815765380859,
+        0.699999988079071,
+        0.1969435065984726,
+        0.19694338738918304,
+        0.6791268587112427,
+        0.6791268587112427
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_20"
+    },
+    {
+      "asset": "5bacfb5c7984716dd0f696d932f99ccdcfea71ad0b5cb8b232242487f10d10a0",
+      "id": 54,
+      "name": "bend_track_right_tube_21",
+      "node": -1,
+      "pose": [
+        1.1459197998046875,
+        -0.8075321912765503,
+        0.699999988079071,
+        0.18021711707115173,
+        0.18021716177463531,
+        0.6837556958198547,
+        0.68375563621521
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_21"
+    },
+    {
+      "asset": "440a0c1bf8be7bf9314e68c75ea9b5a4a8bb56bd7ed262d58b859f10b7079925",
+      "id": 55,
+      "name": "bend_track_right_tube_22",
+      "node": -1,
+      "pose": [
+        1.1697440147399902,
+        -0.7629601955413818,
+        0.699999988079071,
+        0.16338229179382324,
+        0.16338226199150085,
+        0.6879725456237793,
+        0.6879726052284241
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_22"
+    },
+    {
+      "asset": "bb02d7aefe0e059a55375a7b54997426db4ec90ed0bcd3812d48ebeb3d3f71fc",
+      "id": 56,
+      "name": "bend_track_right_tube_23",
+      "node": -1,
+      "pose": [
+        1.191352367401123,
+        -0.7172728180885315,
+        0.699999988079071,
+        0.14644986391067505,
+        0.14644992351531982,
+        0.691774845123291,
+        0.691774845123291
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_23"
+    },
+    {
+      "asset": "c514fb9555b66c0f30795bd9609f7924e4c46368f78be68a22f2f789da1ecb93",
+      "id": 57,
+      "name": "bend_track_right_tube_24",
+      "node": -1,
+      "pose": [
+        1.210693120956421,
+        -0.670580267906189,
+        0.699999988079071,
+        0.12942855060100555,
+        0.12942862510681152,
+        0.6951605677604675,
+        0.6951606273651123
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_24"
+    },
+    {
+      "asset": "bb02d7aefe0e059a55375a7b54997426db4ec90ed0bcd3812d48ebeb3d3f71fc",
+      "id": 58,
+      "name": "bend_track_right_tube_25",
+      "node": -1,
+      "pose": [
+        1.2277194261550903,
+        -0.6229948997497559,
+        0.699999988079071,
+        0.11232977360486984,
+        0.11232980340719223,
+        0.6981275081634521,
+        0.6981275081634521
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_25"
+    },
+    {
+      "asset": "3032ed935c0ea712b060a8bb7999cb110cb8c63a2a2e0bb5d25debbe14244cb2",
+      "id": 59,
+      "name": "bend_track_right_tube_26",
+      "node": -1,
+      "pose": [
+        1.2423903942108154,
+        -0.5746314525604248,
+        0.699999988079071,
+        0.09516291320323944,
+        0.09516292810440063,
+        0.7006739377975464,
+        0.7006739974021912
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_26"
+    },
+    {
+      "asset": "4e0e90eda4b8e7ed1d3595598719be4ff8a5b4ec5a24a77ce252262cd5ee702d",
+      "id": 60,
+      "name": "bend_track_right_tube_27",
+      "node": -1,
+      "pose": [
+        1.25467050075531,
+        -0.5256062746047974,
+        0.699999988079071,
+        0.07793906331062317,
+        0.07793908566236496,
+        0.7027983665466309,
+        0.7027983665466309
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_27"
+    },
+    {
+      "asset": "440a0c1bf8be7bf9314e68c75ea9b5a4a8bb56bd7ed262d58b859f10b7079925",
+      "id": 61,
+      "name": "bend_track_right_tube_28",
+      "node": -1,
+      "pose": [
+        1.2645303010940552,
+        -0.4760376811027527,
+        0.699999988079071,
+        0.060667481273412704,
+        0.060667507350444794,
+        0.7044994235038757,
+        0.7044994831085205
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_28"
+    },
+    {
+      "asset": "804f6eddc1658c0ba3a6cb6003ee93cb33c87da8bc74934952801fb0ea0e2f0f",
+      "id": 62,
+      "name": "bend_track_right_tube_29",
+      "node": -1,
+      "pose": [
+        1.2719459533691406,
+        -0.4260450005531311,
+        0.699999988079071,
+        0.043360672891139984,
+        0.0433606319129467,
+        0.705776035785675,
+        0.7057760953903198
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_29"
+    },
+    {
+      "asset": "185b8a996dfb416ae30deb911d303c05a7af834e27a1d0d513226725442ad23c",
+      "id": 63,
+      "name": "bend_track_right_tube_30",
+      "node": -1,
+      "pose": [
+        1.276899814605713,
+        -0.3757486939430237,
+        0.699999988079071,
+        0.02602694369852543,
+        0.026026930660009384,
+        0.706627607345581,
+        0.7066276669502258
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_30"
+    },
+    {
+      "asset": "68fe0594382690a4a1cc450a8ee11d300a925a244f93d8d2f2b981e4f44a4f9f",
+      "id": 64,
+      "name": "bend_track_right_tube_31",
+      "node": -1,
+      "pose": [
+        1.2793796062469482,
+        -0.325269877910614,
+        0.699999988079071,
+        0.008676745928823948,
+        0.008676804602146149,
+        0.707053542137146,
+        0.707053542137146
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "bend_track_right_tube_31"
+    },
+    {
+      "asset": "a11d539e027501a10de4edd34c481b2ea6ac1483e9fc21b063b39536506b4c19",
+      "id": 65,
+      "name": "bend_track_tie_00",
+      "node": -1,
+      "pose": [
+        0.3284401595592499,
+        -1.1965752840042114,
+        0.6549999713897705,
+        0.9990482330322266,
+        0.0,
+        0.0,
+        0.04361938685178757
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "bend_track_tie_00"
+    },
+    {
+      "asset": "1c4e0af9baccc9a72dc0b9f9c8e348ff273869efdd55442f90d53dc4a2fea7d3",
+      "id": 66,
+      "name": "bend_track_tie_01",
+      "node": -1,
+      "pose": [
+        0.48293712735176086,
+        -1.1693332195281982,
+        0.6549999713897705,
+        0.9914448857307434,
+        0.0,
+        0.0,
+        0.13052619993686676
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "bend_track_tie_01"
+    },
+    {
+      "asset": "1c4e0af9baccc9a72dc0b9f9c8e348ff273869efdd55442f90d53dc4a2fea7d3",
+      "id": 67,
+      "name": "bend_track_tie_02",
+      "node": -1,
+      "pose": [
+        0.6303564310073853,
+        -1.115676999092102,
+        0.6549999713897705,
+        0.976296067237854,
+        0.0,
+        0.0,
+        0.2164396345615387
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "bend_track_tie_02"
+    },
+    {
+      "asset": "a11d539e027501a10de4edd34c481b2ea6ac1483e9fc21b063b39536506b4c19",
+      "id": 68,
+      "name": "bend_track_tie_03",
+      "node": -1,
+      "pose": [
+        0.7662187814712524,
+        -1.0372368097305298,
+        0.6549999713897705,
+        0.9537169933319092,
+        0.0,
+        0.0,
+        0.30070579051971436
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "bend_track_tie_03"
+    },
+    {
+      "asset": "1c4e0af9baccc9a72dc0b9f9c8e348ff273869efdd55442f90d53dc4a2fea7d3",
+      "id": 69,
+      "name": "bend_track_tie_04",
+      "node": -1,
+      "pose": [
+        0.8863961100578308,
+        -0.9363961219787598,
+        0.6549999713897705,
+        0.9238795638084412,
+        0.0,
+        0.0,
+        0.3826834559440613
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "bend_track_tie_04"
+    },
+    {
+      "asset": "a11d539e027501a10de4edd34c481b2ea6ac1483e9fc21b063b39536506b4c19",
+      "id": 70,
+      "name": "bend_track_tie_05",
+      "node": -1,
+      "pose": [
+        0.9872368574142456,
+        -0.8162187933921814,
+        0.6549999713897705,
+        0.887010931968689,
+        0.0,
+        0.0,
+        0.4617486596107483
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "bend_track_tie_05"
+    },
+    {
+      "asset": "a11d539e027501a10de4edd34c481b2ea6ac1483e9fc21b063b39536506b4c19",
+      "id": 71,
+      "name": "bend_track_tie_06",
+      "node": -1,
+      "pose": [
+        1.0656770467758179,
+        -0.6803564429283142,
+        0.6549999713897705,
+        0.8433914184570312,
+        0.0,
+        0.0,
+        0.537299633026123
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "bend_track_tie_06"
+    },
+    {
+      "asset": "a11d539e027501a10de4edd34c481b2ea6ac1483e9fc21b063b39536506b4c19",
+      "id": 72,
+      "name": "bend_track_tie_07",
+      "node": -1,
+      "pose": [
+        1.119333267211914,
+        -0.5329371690750122,
+        0.6549999713897705,
+        0.7933533787727356,
+        0.0,
+        0.0,
+        0.6087613701820374
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "bend_track_tie_07"
+    },
+    {
+      "asset": "a11d539e027501a10de4edd34c481b2ea6ac1483e9fc21b063b39536506b4c19",
+      "id": 73,
+      "name": "bend_track_tie_08",
+      "node": -1,
+      "pose": [
+        1.1465752124786377,
+        -0.37844017148017883,
+        0.6549999713897705,
+        0.7372773885726929,
+        0.0,
+        0.0,
+        0.6755901575088501
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "bend_track_tie_08"
+    },
+    {
+      "asset": "47f20f0d40b3aec7744c568b79e7c7dd4a5f099d5e8790ffe7f0846842dc72ea",
+      "id": 74,
+      "name": "corner_turn_red_ball",
+      "node": 0,
+      "pose": [
+        -3.4000000953674316,
+        -1.2000000476837158,
+        0.94233238697052,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.949999988079071,
+        0.15000000596046448,
+        0.10000000149011612,
+        1.0
+      ],
+      "role": "target",
+      "shape": "sphere",
+      "source_id": "corner_turn_red_ball"
+    },
+    {
+      "asset": "cdee1748c58e3f778b4c2a71013bffc6431469acc307c361aaf17caf6a184029",
+      "id": 75,
+      "name": "large_floor_base",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.4000000059604645,
+        -0.03999999910593033,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8199999928474426,
+        0.800000011920929,
+        0.75,
+        1.0
+      ],
+      "role": "ground",
+      "shape": "cube",
+      "source_id": "large_floor_base"
+    },
+    {
+      "asset": "746a598731495ae5c2c826c9d23cc53511f87d287aae3f9c580b223af76dafde",
+      "id": 76,
+      "name": "leg_a_track_back_tube",
+      "node": -1,
+      "pose": [
+        -1.6749999523162842,
+        -1.0700000524520874,
+        0.699999988079071,
+        0.5,
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "leg_a_track_back_tube"
+    },
+    {
+      "asset": "746a598731495ae5c2c826c9d23cc53511f87d287aae3f9c580b223af76dafde",
+      "id": 77,
+      "name": "leg_a_track_front_tube",
+      "node": -1,
+      "pose": [
+        -1.6749999523162842,
+        -1.3300000429153442,
+        0.699999988079071,
+        0.5,
+        0.5,
+        0.5,
+        0.5
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "leg_a_track_front_tube"
+    },
+    {
+      "asset": "a11d539e027501a10de4edd34c481b2ea6ac1483e9fc21b063b39536506b4c19",
+      "id": 78,
+      "name": "leg_a_track_tie_00",
+      "node": -1,
+      "pose": [
+        -3.38611102104187,
+        -1.2000000476837158,
+        0.6549999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "leg_a_track_tie_00"
+    },
+    {
+      "asset": "a11d539e027501a10de4edd34c481b2ea6ac1483e9fc21b063b39536506b4c19",
+      "id": 79,
+      "name": "leg_a_track_tie_01",
+      "node": -1,
+      "pose": [
+        -2.9583332538604736,
+        -1.2000000476837158,
+        0.6549999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "leg_a_track_tie_01"
+    },
+    {
+      "asset": "a11d539e027501a10de4edd34c481b2ea6ac1483e9fc21b063b39536506b4c19",
+      "id": 80,
+      "name": "leg_a_track_tie_02",
+      "node": -1,
+      "pose": [
+        -2.530555486679077,
+        -1.2000000476837158,
+        0.6549999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "leg_a_track_tie_02"
+    },
+    {
+      "asset": "a11d539e027501a10de4edd34c481b2ea6ac1483e9fc21b063b39536506b4c19",
+      "id": 81,
+      "name": "leg_a_track_tie_03",
+      "node": -1,
+      "pose": [
+        -2.1027777194976807,
+        -1.2000000476837158,
+        0.6549999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "leg_a_track_tie_03"
+    },
+    {
+      "asset": "a11d539e027501a10de4edd34c481b2ea6ac1483e9fc21b063b39536506b4c19",
+      "id": 82,
+      "name": "leg_a_track_tie_04",
+      "node": -1,
+      "pose": [
+        -1.6749999523162842,
+        -1.2000000476837158,
+        0.6549999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "leg_a_track_tie_04"
+    },
+    {
+      "asset": "a11d539e027501a10de4edd34c481b2ea6ac1483e9fc21b063b39536506b4c19",
+      "id": 83,
+      "name": "leg_a_track_tie_05",
+      "node": -1,
+      "pose": [
+        -1.2472221851348877,
+        -1.2000000476837158,
+        0.6549999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "leg_a_track_tie_05"
+    },
+    {
+      "asset": "a11d539e027501a10de4edd34c481b2ea6ac1483e9fc21b063b39536506b4c19",
+      "id": 84,
+      "name": "leg_a_track_tie_06",
+      "node": -1,
+      "pose": [
+        -0.8194444179534912,
+        -1.2000000476837158,
+        0.6549999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "leg_a_track_tie_06"
+    },
+    {
+      "asset": "a11d539e027501a10de4edd34c481b2ea6ac1483e9fc21b063b39536506b4c19",
+      "id": 85,
+      "name": "leg_a_track_tie_07",
+      "node": -1,
+      "pose": [
+        -0.3916666805744171,
+        -1.2000000476837158,
+        0.6549999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "leg_a_track_tie_07"
+    },
+    {
+      "asset": "a11d539e027501a10de4edd34c481b2ea6ac1483e9fc21b063b39536506b4c19",
+      "id": 86,
+      "name": "leg_a_track_tie_08",
+      "node": -1,
+      "pose": [
+        0.03611111268401146,
+        -1.2000000476837158,
+        0.6549999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "leg_a_track_tie_08"
+    },
+    {
+      "asset": "70604397b5dbd780f5fb1778a496fe948240c5952ca5da67d3412d977769c9d5",
+      "id": 87,
+      "name": "leg_b_track_back_tube",
+      "node": -1,
+      "pose": [
+        1.2799999713897705,
+        1.149999976158142,
+        0.699999988079071,
+        5.0242962053173926e-15,
+        -6.18172535382655e-08,
+        -0.7071068286895752,
+        -0.7071068286895752
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "leg_b_track_back_tube"
+    },
+    {
+      "asset": "70604397b5dbd780f5fb1778a496fe948240c5952ca5da67d3412d977769c9d5",
+      "id": 88,
+      "name": "leg_b_track_front_tube",
+      "node": -1,
+      "pose": [
+        1.0199999809265137,
+        1.149999976158142,
+        0.699999988079071,
+        5.0242962053173926e-15,
+        -6.18172535382655e-08,
+        -0.7071068286895752,
+        -0.7071068286895752
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "track_tube",
+      "shape": "cylinder",
+      "source_id": "leg_b_track_front_tube"
+    },
+    {
+      "asset": "15d223468c3247e9513c886dcf760d5b618e9e96c121e9deeb92bc2bc1aba606",
+      "id": 89,
+      "name": "leg_b_track_tie_00",
+      "node": -1,
+      "pose": [
+        1.149999976158142,
+        -0.1388888955116272,
+        0.6549999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "leg_b_track_tie_00"
+    },
+    {
+      "asset": "15d223468c3247e9513c886dcf760d5b618e9e96c121e9deeb92bc2bc1aba606",
+      "id": 90,
+      "name": "leg_b_track_tie_01",
+      "node": -1,
+      "pose": [
+        1.149999976158142,
+        0.18333333730697632,
+        0.6549999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "leg_b_track_tie_01"
+    },
+    {
+      "asset": "15d223468c3247e9513c886dcf760d5b618e9e96c121e9deeb92bc2bc1aba606",
+      "id": 91,
+      "name": "leg_b_track_tie_02",
+      "node": -1,
+      "pose": [
+        1.149999976158142,
+        0.5055555701255798,
+        0.6549999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "leg_b_track_tie_02"
+    },
+    {
+      "asset": "15d223468c3247e9513c886dcf760d5b618e9e96c121e9deeb92bc2bc1aba606",
+      "id": 92,
+      "name": "leg_b_track_tie_03",
+      "node": -1,
+      "pose": [
+        1.149999976158142,
+        0.8277778029441833,
+        0.6549999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "leg_b_track_tie_03"
+    },
+    {
+      "asset": "15d223468c3247e9513c886dcf760d5b618e9e96c121e9deeb92bc2bc1aba606",
+      "id": 93,
+      "name": "leg_b_track_tie_04",
+      "node": -1,
+      "pose": [
+        1.149999976158142,
+        1.149999976158142,
+        0.6549999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "leg_b_track_tie_04"
+    },
+    {
+      "asset": "15d223468c3247e9513c886dcf760d5b618e9e96c121e9deeb92bc2bc1aba606",
+      "id": 94,
+      "name": "leg_b_track_tie_05",
+      "node": -1,
+      "pose": [
+        1.149999976158142,
+        1.4722222089767456,
+        0.6549999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "leg_b_track_tie_05"
+    },
+    {
+      "asset": "15d223468c3247e9513c886dcf760d5b618e9e96c121e9deeb92bc2bc1aba606",
+      "id": 95,
+      "name": "leg_b_track_tie_06",
+      "node": -1,
+      "pose": [
+        1.149999976158142,
+        1.7944444417953491,
+        0.6549999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "leg_b_track_tie_06"
+    },
+    {
+      "asset": "15d223468c3247e9513c886dcf760d5b618e9e96c121e9deeb92bc2bc1aba606",
+      "id": 96,
+      "name": "leg_b_track_tie_07",
+      "node": -1,
+      "pose": [
+        1.149999976158142,
+        2.116666555404663,
+        0.6549999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "leg_b_track_tie_07"
+    },
+    {
+      "asset": "15d223468c3247e9513c886dcf760d5b618e9e96c121e9deeb92bc2bc1aba606",
+      "id": 97,
+      "name": "leg_b_track_tie_08",
+      "node": -1,
+      "pose": [
+        1.149999976158142,
+        2.4388887882232666,
+        0.6549999713897705,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.2800000011920929,
+        1.0
+      ],
+      "role": "track_tie",
+      "shape": "cube",
+      "source_id": "leg_b_track_tie_08"
+    },
+    {
+      "asset": "b106222d3f248de1eb2b16136ab439323b56d9326809d44262bd3b1f7834b723",
+      "id": 98,
+      "name": "opaque_corner_pillar",
+      "node": -1,
+      "pose": [
+        0.699999988079071,
+        -2.0,
+        1.6299999952316284,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.30000001192092896,
+        0.3100000023841858,
+        0.33000001311302185,
+        1.0
+      ],
+      "role": "corner_occluder",
+      "shape": "cube",
+      "source_id": "opaque_corner_pillar"
+    },
+    {
+      "asset": "4df486a4ec06193f21f1e2b4a1b5b6936623fd5ebe8ac60813b9b6cbee8110d6",
+      "id": 99,
+      "name": "rear_backdrop_panel",
+      "node": -1,
+      "pose": [
+        0.0,
+        4.199999809265137,
+        1.5499999523162842,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9599999785423279,
+        0.9700000286102295,
+        0.9800000190734863,
+        1.0
+      ],
+      "role": "background",
+      "shape": "cube",
+      "source_id": "rear_backdrop_panel"
+    }
+  ],
+  "schema": "stable-envs/object-permanence-rigid-v1",
+  "source": {
+    "commit": "824baddcdad087810d35638bf8f273b884f74975",
+    "exporter": "scripts/export/object_permanence.py",
+    "exporter_sha256": "33dae213c5f51fc7270260e88fc3f5e63f4f90e3b10cf75fc9155a8de795b473",
+    "license": "CC-BY-NC-4.0",
+    "parameters": {},
+    "profile": "nominal-first-member-no-diversity",
+    "script": "object_permanence/generator/tasks/G103_corner_turn_occlusion/pb_task_00000149_pb_corner_turn_occlusion_0150_blender.py",
+    "script_sha256": "8fd204ada58134fc22eca5b88c0368a137c1e4d44eaf7861c58981233b6a8e95",
+    "seed": null,
+    "task": "G103",
+    "task_manifest_sha256": "4f224223e4100bd668391eb8b0fc318920a2fe5597265e844c313b9d369e3835",
+    "url": "https://github.com/hokindeng/object-permanence",
+    "versions": {
+      "blender": "4.4.0",
+      "numpy": "1.26.4",
+      "python": "3.11.16"
+    },
+    "video_split": null
+  }
+}

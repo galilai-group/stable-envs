@@ -100,6 +100,35 @@ def test_ray_static_cache_is_bit_identical_for_all_fields_and_shuffled_frames(ta
             assert torch.equal(cached.render(indices, mode="ids"), expected["ids"][119 - indices])
 
 
+@pytest.mark.parametrize("chunk_size", [1, 3, 7])
+@pytest.mark.parametrize("size", [90, 180])
+def test_g103_exact_cache_reuse_across_request_sizes_and_chunk_changes(chunk_size, size):
+    from stable_envs.envs.object_permanence import RigidTrajectory
+    from stable_envs.envs.object_permanence.rendering.rigid_nvdiff import RigidSceneRenderer
+    from stable_envs.envs.object_permanence.rendering.visibility import CONTRACT
+
+    with RigidTrajectory(RECORDINGS, "g103-nominal") as clip:
+        with (
+            RigidSceneRenderer(clip, size=size, visibility_contract=CONTRACT, cache_static=False) as full,
+            RigidSceneRenderer(clip, size=size, visibility_contract=CONTRACT, chunk_size=chunk_size) as cached,
+        ):
+            frames = np.arange(120)
+            expected = full.render_many(frames)
+            requests = (
+                frames[::-1].copy(),
+                np.array([44]),
+                np.array([44, 0, 119, 44, 67]),
+                np.array([119, 0, 44, 44, 67, 3, 89]),
+            )
+            for chunk in (chunk_size, 4, chunk_size):
+                cached.chunk_size = chunk
+                for indices in requests:
+                    actual = cached.render_many(indices)
+                    assert all(torch.equal(actual[key], expected[key][indices]) for key in actual)
+                    assert cached.renderer._ray_coverage.builds == 1
+                    assert cached.renderer._ray_coverage.fallbacks == 0
+
+
 def test_versioned_contract_cannot_be_mixed_with_legacy_or_camera_diagnostics():
     from scripts.testing.check_object_permanence_rendering import check
     from stable_envs.envs.object_permanence.rendering.visibility import CONTRACT

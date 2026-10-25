@@ -199,6 +199,12 @@ retains full drawing and CPU object-pose expansion/upload as a comparison baseli
 Chunking bounds memory without changing sampling. G34's separate public replay,
 optimized renderer and frozen fixture remain unchanged.
 
+Versioned visibility uses fixed-order three-term vertex/normal transforms and
+the shared four-term camera product. This prevents batch shape from changing
+static validation bits; cache comparison remains exact, including one-ULP changes.
+The [G103 cache regression](object-permanence-visibility.md#batch-independent-visibility-transforms-and-g103)
+documents the generic reproducer and cross-batch/chunk checks.
+
 ## Validation and next ports
 
 `scripts/testing/check_object_permanence_export.py` rebuilds the pinned source and

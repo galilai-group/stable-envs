@@ -3,6 +3,20 @@
 import torch
 
 
+def row_matrix3(vectors, matrices):
+    """Multiply (..., 3) rows by (..., 3, 3) matrices in a fixed order.
+
+    Leading dimensions broadcast. Three explicit products/additions avoid
+    batch-size-dependent GEMM rounding when transforming visibility planes;
+    exact static-cache validation must see the same bits for the same inputs.
+    """
+    return (
+        vectors[..., 0:1] * matrices[..., 0, :]
+        + vectors[..., 1:2] * matrices[..., 1, :]
+        + vectors[..., 2:3] * matrices[..., 2, :]
+    )
+
+
 def rotations(quaternions):
     """Convert wxyz quaternions to matrices on their device, without an engine."""
     q = quaternions / torch.linalg.vector_norm(quaternions, dim=-1, keepdim=True)

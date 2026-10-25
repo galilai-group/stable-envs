@@ -25,9 +25,9 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | audited-nominal-runtime-gate | 7 |
 | geometry-or-scale-review | 2 |
 | orthographic-camera-review | 68 |
-| rigid-candidate-needs-entry-audit | 11 |
+| rigid-candidate-needs-entry-audit | 10 |
 | source-fidelity-review | 4 |
-| versioned-visibility-runtime-gate | 83 |
+| versioned-visibility-runtime-gate | 84 |
 
 ## Source tasks
 
@@ -135,7 +135,7 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | G100 heavy_light_collision | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G101 picket_fence_flicker | 1 | location, rotation_euler | orthographic-camera-review | not evaluated | deferred: camera-projection |
 | G102 drop_screen_occluder | 1 | location, rotation_euler | orthographic-camera-review | not evaluated | deferred: camera-projection |
-| G103 corner_turn_occlusion | 1 | location, rotation_euler | rigid-candidate-needs-entry-audit | not evaluated | deferred: static-cache-reuse |
+| G103 corner_turn_occlusion | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G104 bifold_concertina_doors | 1 | rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G105 descending_dome_cover | 1 | location | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G106 rotating_drum_occluder | 1 | rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |

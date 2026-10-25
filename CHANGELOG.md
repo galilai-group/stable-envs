@@ -8,18 +8,24 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- G103 corner-turn rigid recording and independent 120-frame oracle, with
+  all-frame source depth/mask checks and exact cross-batch/chunk cache reuse.
+  Fixes batch-dependent visibility vertex/plane contraction rounding using
+  reusable fixed-order products; precise cache invalidation and old data remain
+  unchanged. Includes generic rotated-geometry and one-ULP invalidation regressions.
+
 - Audited official `DIVERSITY` execution context for G08/G44/G45/G46/G48,
   retaining source factor defaults without driver rendering/appearance hooks.
   Adds G44's rigid recording, independent 120-frame oracle and cache parity gates;
   context provenance/mismatch checks protect source comparisons. The other four
   remain deferred for orthographic cameras and G46's FONT labels.
 
-- Complete first-nominal object-permanence audit: 94 certified scenes and 56
+- Complete first-nominal object-permanence audit: 95 certified scenes and 55
   explicit deferrals across all 150 task groups; 47 additional member scripts
   remain unregistered. Adds 61 reusable rigid recordings with independent
   120-frame depth/mask oracles, fresh-process geometry checks and two-resolution
   cache parity. Publishes measured source hashes/reasons alongside static hints;
-  G103 cache-seed rebuilds and G132 source-normal variation remain deferred.
+  G132 source-normal variation remains deferred; G103 cache reuse is now resolved.
 
 - Early object-permanence audit G01–G10: nominal G02/G03 ramp balls and G05–G07
   rigid vehicles, with independent 120-frame ray oracles and full-frame cache

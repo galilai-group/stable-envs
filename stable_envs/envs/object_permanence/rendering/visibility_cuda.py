@@ -4,7 +4,9 @@ import torch
 import triton as tr
 import triton.language as tl
 
+from ....render.nvdiff import _mm4
 from ....render.nvdiff_coverage import _vertex
+from .transforms import row_matrix3
 from .viewports import PixelCenterRenderer
 from .visibility import local_planes
 from .visibility_cache import StaticRayCoverage
@@ -231,18 +233,19 @@ class ContractRenderer(PixelCenterRenderer):
         rotation, position = xmat.double(), xpos.double()
         vg = self.scene.vgeom
         self.vertices = (
-            torch.einsum("bvij,vj->bvi", rotation[:, vg], self.scene.vert.double()) + position[:, vg]
+            row_matrix3(self.scene.vert.double(), rotation[:, vg].transpose(-1, -2)) + position[:, vg]
         ).contiguous()
-        normals = torch.einsum("fi,bfij->bfj", self.planes[:, :3], torch.linalg.inv(rotation)[:, self.scene.fgeom])
+        normals = row_matrix3(self.planes[:, :3], torch.linalg.inv(rotation)[:, self.scene.fgeom])
         offset = self.planes[None, :, 3] - (normals * position[:, self.scene.fgeom]).sum(-1)
         planes = torch.cat((normals, offset[..., None]), -1)
         scale = normals.gather(-1, normals.abs().argmax(-1, keepdim=True))
         self.world_planes = torch.where(scale != 0, planes / scale, 0).contiguous()
         homogeneous = torch.cat((self.vertices, torch.ones_like(self.vertices[..., :1])), -1)
-        clip = (
-            homogeneous
-            @ torch.as_tensor(view, dtype=torch.float64, device=self.device).transpose(-1, -2)
-            @ torch.as_tensor(proj, dtype=torch.float64, device=self.device).T
+        # Use the shared fixed four-term product for camera transforms as well;
+        # the seed snapshots contain both world and projected static vertices.
+        clip = _mm4(
+            _mm4(homogeneous, torch.as_tensor(view, dtype=torch.float64, device=self.device).transpose(-1, -2)),
+            torch.as_tensor(proj, dtype=torch.float64, device=self.device).T,
         )
         return clip.contiguous(), result[1], result[2]
 
