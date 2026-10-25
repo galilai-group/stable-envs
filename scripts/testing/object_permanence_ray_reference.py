@@ -10,6 +10,7 @@ from fractions import Fraction
 import numpy as np
 
 CONTRACT = "stable-envs/opaque-pixel-rays-v1"
+CONTRACT_V2 = "stable-envs/opaque-pixel-rays-v2"
 
 
 def plane(triangle):
@@ -25,30 +26,49 @@ def plane(triangle):
     return np.array([float(c / n[axis]) for c in [*n, d]], np.float64)
 
 
-def draw(meshes, camera, height, width):
+def draw(meshes, camera, height, width, *, visibility_contract=CONTRACT):
     """Render independent source world triangles, mapping names to semantic IDs."""
     p, world = np.asarray(camera["projection"]), np.asarray(camera["world"])
     view = np.linalg.inv(world)
     yy, xx = np.mgrid[:height, :width]
-    rays = (
-        np.stack(
+    if visibility_contract not in (CONTRACT, CONTRACT_V2):
+        raise ValueError("unknown source visibility contract")
+    orthographic = camera.get("projection_type") == "orthographic"
+    if orthographic and visibility_contract != CONTRACT_V2:
+        raise ValueError("orthographic source requires v2 visibility")
+    if orthographic:
+        local = np.stack(
             (
-                (2 * (xx + 0.5) / width - 1 + p[0, 2]) / p[0, 0],
-                (1 - 2 * (yy + 0.5) / height + p[1, 2]) / p[1, 1],
-                -np.ones_like(xx),
+                (2 * (xx + 0.5) / width - 1 - p[0, 3]) / p[0, 0],
+                (1 - 2 * (yy + 0.5) / height - p[1, 3]) / p[1, 1],
+                np.zeros_like(xx),
             ),
             -1,
         )
-        @ world[:3, :3].T
-    )
-    origin = world[:3, 3]
+        origin = local @ world[:3, :3].T + world[:3, 3]
+        rays = np.broadcast_to(-world[:3, 2], (height, width, 3))
+    else:
+        rays = (
+            np.stack(
+                (
+                    (2 * (xx + 0.5) / width - 1 + p[0, 2]) / p[0, 0],
+                    (1 - 2 * (yy + 0.5) / height + p[1, 2]) / p[1, 1],
+                    -np.ones_like(xx),
+                ),
+                -1,
+            )
+            @ world[:3, :3].T
+        )
+        origin = world[:3, 3]
     depth = np.full((height, width), np.inf)
     ids = np.zeros((height, width), np.int16)
     labels = {name: i + 1 for i, name in enumerate(sorted(meshes))}
     for name, triangles in meshes.items():
         for tri in triangles:
             homogeneous = np.column_stack((tri, np.ones(3))) @ view.T @ p.T
-            if np.any(homogeneous[:, 3] <= 0) or np.any(abs(homogeneous[:, 2]) >= homogeneous[:, 3]):
+            if np.any(homogeneous[:, 3] <= 0) or (
+                not orthographic and np.any(abs(homogeneous[:, 2]) >= homogeneous[:, 3])
+            ):
                 raise ValueError("source contract does not support depth-plane crossing")
             xy = homogeneous[:, :2] / homogeneous[:, 3, None]
             xy = (xy + 1) * [width / 2, height / 2]
@@ -69,7 +89,11 @@ def draw(meshes, camera, height, width):
             n, offset = coefficients[:3], coefficients[3]
             d = rays[region]
             denominator = n[0] * d[..., 0] + n[1] * d[..., 1] + n[2] * d[..., 2]
-            numerator = -(n[0] * origin[0] + n[1] * origin[1] + n[2] * origin[2] + offset)
+            if orthographic:
+                o = origin[region]
+                numerator = -(n[0] * o[..., 0] + n[1] * o[..., 1] + n[2] * o[..., 2] + offset)
+            else:
+                numerator = -(n[0] * origin[0] + n[1] * origin[1] + n[2] * origin[2] + offset)
             with np.errstate(divide="ignore", invalid="ignore"):
                 distance = numerator / denominator
             hit = (u >= 0) & (v >= 0) & (u + v <= 1) & (distance >= camera["near"]) & (distance <= camera["far"])

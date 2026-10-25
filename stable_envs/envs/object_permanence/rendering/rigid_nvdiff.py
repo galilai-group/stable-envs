@@ -24,6 +24,8 @@ class RigidSceneRenderer(Closeable):
     Opt-in visibility_contract="stable-envs/opaque-pixel-rays-v1" uses float64
     quaternion/visibility arithmetic and semantic-ID ties, with optional static
     visibility seeds. cache_static=False keeps complete drawing for comparison.
+    Explicit opaque-pixel-rays-v2 additionally accepts fixed orthographic
+    cameras, with per-pixel ray origins and camera-axis interval clipping.
     """
 
     resource_kind = "object_permanence.RigidSceneRenderer"
@@ -47,20 +49,24 @@ class RigidSceneRenderer(Closeable):
             raise ValueError("size and chunk_size must be positive integers")
         if geometry_precision not in ("float32", "float64"):
             raise ValueError("geometry_precision must be float32 or float64")
+        camera_type = trajectory.manifest["camera"].get("projection_type", "perspective")
+        if camera_type == "orthographic" and visibility_contract != "stable-envs/opaque-pixel-rays-v2":
+            raise ValueError("orthographic recordings require explicit opaque-pixel-rays-v2")
         renderer_class: type = PixelCenterRenderer
         renderer_options: dict = {}
         if visibility_contract is not None:
-            from .visibility import CONTRACT, validate_camera
+            from .visibility import CONTRACTS, validate_camera
             from .visibility_cuda import ContractRenderer
 
-            if visibility_contract != CONTRACT or coverage_mode != "refined":
+            if visibility_contract not in CONTRACTS or coverage_mode != "refined":
                 raise ValueError("unsupported visibility contract or coverage mode")
-            validate_camera(trajectory.manifest["camera"])
+            validate_camera(trajectory.manifest["camera"], contract=visibility_contract)
             geometry_precision = "float64"
             renderer_class = ContractRenderer
             renderer_options = {
                 "camera_metadata": trajectory.manifest["camera"],
                 "semantic_ids": torch.tensor([o["id"] for o in trajectory.manifest["objects"]], device=self.device),
+                "visibility_contract": visibility_contract,
             }
         camera_dtype = torch.float64 if geometry_precision == "float64" else torch.float32
         self.visibility_contract = visibility_contract
@@ -86,7 +92,7 @@ class RigidSceneRenderer(Closeable):
         self.camera = CropCamera(
             world[:3, 3],
             world[:3, :3],
-            float(np.rad2deg(2 * np.arctan(1 / projection[1, 1]))),
+            90.0 if camera_type == "orthographic" else float(np.rad2deg(2 * np.arctan(1 / projection[1, 1]))),
             camera["near"],
             camera["far"],
         )

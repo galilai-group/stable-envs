@@ -1,4 +1,4 @@
-"""CUDA implementation of opaque-pixel-rays-v1; no oracle or Blender imports."""
+"""Versioned opaque pixel-ray coverage; no oracle or Blender imports."""
 
 import torch
 import triton as tr
@@ -8,13 +8,26 @@ from ....render.nvdiff import _mm4
 from ....render.nvdiff_coverage import _vertex
 from .transforms import row_matrix3
 from .viewports import PixelCenterRenderer
-from .visibility import local_planes
+from .visibility import CONTRACT, local_planes, validate_camera
 from .visibility_cache import StaticRayCoverage
 
 
 @tr.jit
 def _intersection(
-    Vertices, Faces, Planes, Rays, Origin, face, world, x, y, V: tl.constexpr, F: tl.constexpr, W: tl.constexpr
+    Vertices,
+    Faces,
+    Planes,
+    Rays,
+    Origin,
+    face,
+    world,
+    x,
+    y,
+    V: tl.constexpr,
+    F: tl.constexpr,
+    W: tl.constexpr,
+    RAY_GRID: tl.constexpr,
+    ORIGIN_GRID: tl.constexpr,
 ):
     i0, i1, i2 = tl.load(Faces + face * 3), tl.load(Faces + face * 3 + 1), tl.load(Faces + face * 3 + 2)
     ax = tl.load(Vertices + (world * V + i0) * 3)
@@ -26,12 +39,17 @@ def _intersection(
     fx = tl.load(Vertices + (world * V + i2) * 3) - ax
     fy = tl.load(Vertices + (world * V + i2) * 3 + 1) - ay
     fz = tl.load(Vertices + (world * V + i2) * 3 + 2) - az
-    dx = tl.load(Rays + (y * W + x) * 3)
-    dy = tl.load(Rays + (y * W + x) * 3 + 1)
-    dz = tl.load(Rays + (y * W + x) * 3 + 2)
+    ray_index = (y * W + x) * 3 if RAY_GRID else 0
+    origin_index = (y * W + x) * 3 if ORIGIN_GRID else 0
+    dx = tl.load(Rays + ray_index)
+    dy = tl.load(Rays + ray_index + 1)
+    dz = tl.load(Rays + ray_index + 2)
     px, py, pz = dy * fz - dz * fy, dz * fx - dx * fz, dx * fy - dy * fx
     det = ex * px + ey * py + ez * pz
-    ox, oy, oz = tl.load(Origin) - ax, tl.load(Origin + 1) - ay, tl.load(Origin + 2) - az
+    origin_x = tl.load(Origin + origin_index)
+    origin_y = tl.load(Origin + origin_index + 1)
+    origin_z = tl.load(Origin + origin_index + 2)
+    ox, oy, oz = origin_x - ax, origin_y - ay, origin_z - az
     u = (ox * px + oy * py + oz * pz) / det
     qx, qy, qz = oy * ez - oz * ey, oz * ex - ox * ez, ox * ey - oy * ex
     v = (dx * qx + dy * qy + dz * qz) / det
@@ -43,7 +61,7 @@ def _intersection(
         tl.load(Planes + base + 3),
     )
     denominator = nx * dx + ny * dy + nz * dz
-    t = -(nx * tl.load(Origin) + ny * tl.load(Origin + 1) + nz * tl.load(Origin + 2) + offset) / denominator
+    t = -(nx * origin_x + ny * origin_y + nz * origin_z + offset) / denominator
     return 1 - u - v, u, t, (det != 0) & (denominator != 0) & (u >= 0) & (v >= 0) & (u + v <= 1)
 
 
@@ -55,6 +73,8 @@ def _hits(
     Planes,
     Rays,
     Origin,
+    RAY_GRID: tl.constexpr,
+    ORIGIN_GRID: tl.constexpr,
     Labels,
     Depth,
     Winner,
@@ -86,7 +106,20 @@ def _hits(
         i = start + tl.arange(0, BLOCK)
         x, y = lx + i % width, ly + i // width
         p, q, t, hit = _intersection(
-            Vertices, Faces, Planes, Rays, Origin, face, world, tl.minimum(x, W - 1), tl.minimum(y, H - 1), V, F, W
+            Vertices,
+            Faces,
+            Planes,
+            Rays,
+            Origin,
+            face,
+            world,
+            tl.minimum(x, W - 1),
+            tl.minimum(y, H - 1),
+            V,
+            F,
+            W,
+            RAY_GRID,
+            ORIGIN_GRID,
         )
         valid = (i < count) & hit & (t >= NEAR) & (t <= FAR)
         index = (world * H + y) * W + x
@@ -106,6 +139,8 @@ def _output(
     Planes,
     Rays,
     Origin,
+    RAY_GRID: tl.constexpr,
+    ORIGIN_GRID: tl.constexpr,
     Winner,
     Out,
     V: tl.constexpr,
@@ -121,7 +156,20 @@ def _output(
     face = tl.where(hit, selected % (F + 1), 0).to(tl.int32)
     # Different faces per pixel require scalar corner gathers here.
     a, b, t, _ = _intersection(
-        Vertices, Faces, Planes, Rays, Origin, face, world, pixel % W, tl.minimum(pixel // W, H - 1), V, F, W
+        Vertices,
+        Faces,
+        Planes,
+        Rays,
+        Origin,
+        face,
+        world,
+        pixel % W,
+        tl.minimum(pixel // W, H - 1),
+        V,
+        F,
+        W,
+        RAY_GRID,
+        ORIGIN_GRID,
     )
     base = (world * H * W + pixel) * 4
     tl.store(Out + base, tl.where(hit, a, 0), pixel < H * W)
@@ -166,6 +214,8 @@ def _visibility(
                 planes,
                 rays,
                 origin,
+                rays.ndim == 3,
+                origin.ndim == 3,
                 labels,
                 depth,
                 winner,
@@ -190,13 +240,17 @@ class ContractRenderer(PixelCenterRenderer):
 
     Static visibility seeds retain exact depth and semantic/face keys. Movers
     still compete against the seed. This path never falls back to a
-    different visibility convention and rejects depth-plane crossing explicitly.
+    different visibility convention. V1 rejects depth-plane crossing; V2 clips
+    orthographic hits by their camera-axis depth without moving ray origins.
     """
 
-    def __init__(self, *args, camera_metadata, semantic_ids, **kwargs):
+    def __init__(self, *args, camera_metadata, semantic_ids, visibility_contract=CONTRACT, **kwargs):
         if kwargs.get("supersample", 1) != 1:
             raise ValueError("visibility contract requires one pixel-center sample")
         self.metadata = camera_metadata
+        validate_camera(camera_metadata, contract=visibility_contract)
+        self.visibility_contract = visibility_contract
+        self.orthographic = camera_metadata.get("projection_type") == "orthographic"
         super().__init__(*args, **kwargs)
         scene = self.scene
         self.planes = torch.tensor(
@@ -214,6 +268,25 @@ class ContractRenderer(PixelCenterRenderer):
             torch.arange(w, device=self.device, dtype=torch.float64),
             indexing="ij",
         )
+        if self.orthographic:
+            local_origin = torch.stack(
+                (
+                    (2 * (x + 0.5) / w - 1 - p[0, 3]) / p[0, 0],
+                    (2 * (y + 0.5) / h - 1 - p[1, 3]) / p[1, 1],
+                    torch.zeros_like(x),
+                ),
+                -1,
+            )
+            self.origin = (row_matrix3(local_origin, world[:3, :3].T) + world[:3, 3]).contiguous()
+            self.rays = -world[:3, 2].contiguous()
+        else:
+            self._perspective_rays(world, p, x, y)
+        self._ray_coverage = (
+            StaticRayCoverage(scene.face, self._static_geoms[scene.fgeom]) if self._static_geoms is not None else None
+        )
+
+    def _perspective_rays(self, world, p, x, y):
+        h, w = x.shape
         local = torch.stack(
             (
                 (2 * (x + 0.5) / w - 1 + p[0, 2]) / p[0, 0],
@@ -224,9 +297,6 @@ class ContractRenderer(PixelCenterRenderer):
         )
         self.rays = (local @ world[:3, :3].T).contiguous()
         self.origin = world[:3, 3].contiguous()
-        self._ray_coverage = (
-            StaticRayCoverage(scene.face, self._static_geoms[scene.fgeom]) if self._static_geoms is not None else None
-        )
 
     def _clip(self, xpos, xmat, view, proj):
         result = super()._clip(xpos.float(), xmat.float(), view, proj)
@@ -251,12 +321,14 @@ class ContractRenderer(PixelCenterRenderer):
 
     def _rasterize(self, positions, resolution):
         h, w = resolution
-        if self.rays.shape != (h, w, 3):
+        ray_shape, origin_shape = ((3,), (h, w, 3)) if self.orthographic else ((h, w, 3), (3,))
+        if self.rays.shape != ray_shape or self.origin.shape != origin_shape:
             raise ValueError("visibility contract requires the fixed ray-grid resolution")
         b, v, _ = positions.shape
-        if not (
-            torch.isfinite(positions).all(-1) & (positions[..., 3] > 0) & (positions[..., 2].abs() < positions[..., 3])
-        ).all():
+        valid = torch.isfinite(positions).all(-1) & (positions[..., 3] > 0)
+        if not self.orthographic:
+            valid &= positions[..., 2].abs() < positions[..., 3]
+        if not valid.all():
             raise ValueError("visibility contract does not support depth-plane crossing")
         count = len(self.scene.face)
 
@@ -310,6 +382,8 @@ class ContractRenderer(PixelCenterRenderer):
                 self.world_planes,
                 self.rays,
                 self.origin,
+                self.rays.ndim == 3,
+                self.origin.ndim == 3,
                 winner,
                 out,
                 v,

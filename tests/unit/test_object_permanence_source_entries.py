@@ -69,3 +69,33 @@ def test_source_reference_context_mismatch_is_rejected_before_constructing_a_ren
     monkeypatch.setattr(checker, "load_geometry_directory", lambda _: (mismatched, arrays))
     with pytest.raises(ValueError, match="execution contexts differ"):
         checker.check(RECORDINGS, "unused", "g44", visibility_contract=CONTRACT)
+
+
+def test_builder_only_recipe_keeps_internal_animation_and_avoids_source_output(tmp_path, monkeypatch):
+    import json
+    import sys
+    from types import SimpleNamespace
+
+    from scripts.export import object_permanence as exporter
+    from scripts.testing import freeze_object_permanence as reference
+
+    scene = SimpleNamespace(calls=0)
+    monkeypatch.setitem(
+        sys.modules,
+        "bpy",
+        SimpleNamespace(app=SimpleNamespace(version=(4, 4, 0)), context=SimpleNamespace(scene=scene)),
+    )
+    directory = tmp_path / "object_permanence/generator/tasks/G52_example"
+    directory.mkdir(parents=True)
+    script = directory / "source.py"
+    script.write_text(
+        "import bpy\ndef clear_scene(): bpy.context.scene.calls=0\ndef animate_scene(): bpy.context.scene.calls+=1\ndef build_scene():\n    animate_scene()\n    return bpy.context.scene\ndef main(): raise AssertionError('source output ran')\nif __name__ == '__main__': main()\n"
+    )
+    (directory / "task.json").write_text(json.dumps({"id": "G52", "member_scripts": ["source.py"]}))
+    monkeypatch.setattr(exporter, "check_source", lambda root: None)
+    monkeypatch.setitem(exporter.AUDITED_TASKS, "G52", ("build_scene", ""))
+    actual, _, _ = exporter.prepare(tmp_path, "G52")
+    assert actual is scene and scene.calls == 1
+    monkeypatch.setitem(reference.REFERENCE_CASES, "G52", ("build_scene", "", ()))
+    reference.prepare_reference(script, "G52")
+    assert scene.calls == 1

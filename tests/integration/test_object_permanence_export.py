@@ -263,7 +263,7 @@ else:
     ],
 )
 def test_audited_orthographic_source_is_rejected_by_unchanged_perspective_contract(task, build, animate):
-    """Skip unsupported cameras without changing projection or certifying a port."""
+    """V1 keeps rejecting ORTHO; explicit V2 extraction preserves its projection."""
     source = os.environ.get("SE_OBJECT_PERMANENCE_SOURCE")
     python = os.environ.get("SE_OBJECT_PERMANENCE_BLENDER_PYTHON")
     if not source or not python:
@@ -272,10 +272,10 @@ def test_audited_orthographic_source_is_rejected_by_unchanged_perspective_contra
 import json, runpy, sys
 from pathlib import Path
 import bpy
-from scripts.export.object_permanence import AUDITED_TASKS, RAY_CONTRACT_TASKS, check_source, sample_scene
+from scripts.export.object_permanence import ORTHOGRAPHIC_TASKS, RAY_CONTRACT_TASKS, check_source, sample_scene
 root, task, build, animate = Path(sys.argv[1]), *sys.argv[2:]
 check_source(root)
-assert task not in AUDITED_TASKS and task not in RAY_CONTRACT_TASKS
+assert task in ORTHOGRAPHIC_TASKS and task not in RAY_CONTRACT_TASKS
 matches = list((root/'object_permanence/generator/tasks').glob(task+'_*/task.json'))
 assert len(matches) == 1
 metadata = json.loads(matches[0].read_text())
@@ -294,6 +294,10 @@ except ValueError as error:
     assert 'requires a perspective camera without depth of field' in str(error), str(error)
 else:
     raise AssertionError('orthographic camera was accepted by the perspective-only contract')
+recording = sample_scene(scene, allow_orthographic=True)
+assert recording['camera']['projection_type'] == 'orthographic'
+assert recording['camera']['projection'][3] == [0,0,0,1]
+assert len(recording['frames']) == 120
 """
     subprocess.run([python, "-c", code, source, task, build, animate], check=True, timeout=180)
 
@@ -383,9 +387,11 @@ if task == 'G44':
     assert recording['poses'].shape == (120, 2, 7)
     assert set(recording['dynamic_nodes']) == {'blue_ball_right', 'red_ball_left'}
 else:
-    assert task not in AUDITED_TASKS
     if task == 'G46':
+        assert task not in AUDITED_TASKS
         assert any(obj.type == 'FONT' for obj in scene.objects)
+    else:
+        assert task in AUDITED_TASKS
     try:
         sample_scene(scene)
     except ValueError as error:

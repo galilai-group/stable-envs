@@ -102,6 +102,22 @@ def test_multi_objects_share_assets_and_nodes_without_sharing_returned_memory(tm
     assert path.exists()
 
 
+def test_v2_recording_marks_projection_and_keeps_the_existing_pose_layout(tmp_path, recording):
+    from tests.unit.test_object_permanence_orthographic_contract import orthographic_camera
+
+    recording["camera"].update(orthographic_camera())
+    path = write(tmp_path, recording)
+    metadata = json.loads(path.read_text())
+    assert metadata["schema"] == "stable-envs/object-permanence-rigid-v2"
+    assert metadata["visibility_contract"] == "stable-envs/opaque-pixel-rays-v2"
+    with RigidTrajectory(tmp_path, "example") as clip:
+        np.testing.assert_array_equal(clip.poses([0, 3]), recording["poses"][[0, 3]])
+    del metadata["camera"]["projection_type"]
+    path.write_text(json.dumps(metadata))
+    with pytest.raises(ValueError, match="explicit projection type"):
+        RigidTrajectory(tmp_path, "example")
+
+
 @pytest.mark.parametrize("indices", [[-1], [4], [], [[0]], [0.0], [True]])
 def test_bad_frame_selection_is_rejected(tmp_path, recording, indices):
     write(tmp_path, recording)

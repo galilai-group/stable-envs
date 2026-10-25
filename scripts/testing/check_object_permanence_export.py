@@ -49,6 +49,8 @@ def check(root, dataset, task):
         source_objects = {o.name: o for o in scene.objects if o.type == "MESH"}
         assert set(source_objects) == {o["name"] for o in manifest["objects"]}
         camera = scene.camera.evaluated_get(depsgraph)
+        if manifest["camera"].get("projection_type") == "orthographic":
+            assert camera.data.type == "ORTHO"
         np.testing.assert_array_equal(manifest["camera"]["world"], np.asarray(camera.matrix_world))
         projection = camera.calc_matrix_camera(
             depsgraph,

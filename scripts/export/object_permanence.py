@@ -27,9 +27,54 @@ import numpy as np
 
 SOURCE_COMMIT = "824baddcdad087810d35638bf8f273b884f74975"
 SCHEMA = "stable-envs/object-permanence-rigid-v1"
+SCHEMA_V2 = "stable-envs/object-permanence-rigid-v2"
 CONVENTIONS = {"world": "right-handed-z-up", "quaternion": "wxyz", "units": "source-scene-units"}
-# Context audit is distinct from certification: G08 still has an unsupported camera.
+# Context audit supplies nominal globals independently of camera/type certification.
 SOURCE_CONTEXT_TASKS = frozenset({"G08", "G44", "G45", "G46", "G48"})
+# Certified orthographic entries are bound to the separate v2 visibility gate.
+ORTHOGRAPHIC_TASKS = {
+    "G08",
+    "G09",
+    "G10",
+    "G101",
+    "G102",
+    "G109",
+    "G11",
+    "G110",
+    "G112",
+    "G12",
+    "G122",
+    "G128",
+    "G15",
+    "G16",
+    "G17",
+    "G18",
+    "G19",
+    "G20",
+    "G21",
+    "G22",
+    "G23",
+    "G24",
+    "G25",
+    "G26",
+    "G43",
+    "G45",
+    "G47",
+    "G48",
+    "G49",
+    "G50",
+    "G51",
+    "G52",
+    "G53",
+    "G57",
+    "G67",
+    "G75",
+    "G76",
+    "G77",
+    "G78",
+    "G91",
+    "G92",
+}
 AUDITED_TASKS = {
     "G02": ("$prefix:render_png", ""),
     "G03": ("$prefix:render_png", ""),
@@ -126,6 +171,48 @@ AUDITED_TASKS = {
     "G148": ("build_scene_by_kind", "animate_scene"),
     "G149": ("build_scene_by_kind", "animate_scene"),
     "G150": ("build_scene_by_kind", "animate_scene"),
+    # Fixed orthographic nominal entries, certified under opaque-pixel-rays-v2.
+    "G08": ("build_scene", "animate_scene"),
+    "G09": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G10": ("build_scene", "animate_scene"),
+    "G101": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G102": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G109": ("build_scene", "animate_scene"),
+    "G11": ("build_scene", "animate_scene"),
+    "G110": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G112": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G12": ("build_scene", "animate_scene"),
+    "G122": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G128": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G15": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G16": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G17": ("build_scene", "animate_scene"),
+    "G18": ("build_scene", "animate_scene"),
+    "G19": ("build_scene", "animate_scene"),
+    "G20": ("build_scene", "animate_scene"),
+    "G21": ("build_scene", "animate_scene"),
+    "G22": ("build_scene", "animate_scene"),
+    "G23": ("build_scene", "animate_scene"),
+    "G24": ("build_scene", "animate_scene"),
+    "G25": ("build_scene", "animate_scene"),
+    "G26": ("build_scene", "animate_scene"),
+    "G43": ("build_scene", "animate_scene"),
+    "G45": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G47": ("build_scene", "animate_scene"),
+    "G48": ("build_scene", "animate_scene"),
+    "G49": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G50": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G51": ("build_scene", "animate_scene"),
+    "G52": ("build_scene", ""),
+    "G53": ("build_scene", "animate_scene"),
+    "G57": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G67": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G75": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G76": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G77": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G78": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G91": ("build_scene_by_kind", "animate_scene_by_kind"),
+    "G92": ("build_scene_by_kind", "animate_scene_by_kind"),
 }
 # These preparation recipes are certified only with the versioned ray contract.
 # The legacy BVH deferrals above/below remain meaningful and are never erased.
@@ -305,6 +392,7 @@ CONTRACT_ONLY_TASKS = {
     "G149",
     "G150",
 }
+CONTRACT_ONLY_TASKS |= ORTHOGRAPHIC_TASKS
 # Preparation/rigid serialization passed, but source pixel fidelity did not.
 # Explicit export remains useful for diagnosis; default batch execution is blocked.
 DEFERRED_TASKS = {
@@ -568,6 +656,10 @@ def prepare(root, task):
     )
     namespace["clear_scene"]()
     result = namespace[build]()
+    if not animate:
+        # An audited builder may already create the complete animation, as in
+        # source main() calling only build_scene(). Do not run it a second time.
+        return bpy.context.scene, source, metadata
     if task == "G27":
         namespace[animate](bpy.context.scene, result["support_plate"], result["ball"])
     elif isinstance(result, dict) and len(inspect.signature(namespace[animate]).parameters) > 1:
@@ -646,10 +738,15 @@ def _rgba(obj):
     return color
 
 
-def _camera(scene, depsgraph):
+def _camera(scene, depsgraph, *, allow_orthographic=False):
     camera = scene.camera.evaluated_get(depsgraph)
-    if camera.data.type != "PERSP" or camera.data.dof.use_dof:
-        raise ValueError("v1 requires a perspective camera without depth of field")
+    if camera.data.type not in (("PERSP", "ORTHO") if allow_orthographic else ("PERSP",)) or camera.data.dof.use_dof:
+        message = (
+            "v2 requires a standard perspective or orthographic camera without depth of field"
+            if allow_orthographic
+            else "v1 requires a perspective camera without depth of field"
+        )
+        raise ValueError(message)
     basis = np.asarray(camera.matrix_world, np.float64)[:3, :3]
     if not np.allclose(basis.T @ basis, np.eye(3), atol=2e-6, rtol=0) or np.linalg.det(basis) <= 0:
         raise ValueError("v1 requires a rigid camera transform")
@@ -662,7 +759,7 @@ def _camera(scene, depsgraph):
         scale_x=scene.render.pixel_aspect_x,
         scale_y=scene.render.pixel_aspect_y,
     )
-    return {
+    result = {
         "world": np.asarray(camera.matrix_world, np.float64).tolist(),
         "projection": np.asarray(projection, np.float64).tolist(),
         "width": width,
@@ -670,9 +767,12 @@ def _camera(scene, depsgraph):
         "near": float(camera.data.clip_start),
         "far": float(camera.data.clip_end),
     }
+    if camera.data.type == "ORTHO":
+        result["projection_type"] = "orthographic"
+    return result
 
 
-def sample_scene(scene, *, object_order=None):
+def sample_scene(scene, *, object_order=None, allow_orthographic=False):
     """Check every frame and return a rigid recording, or fail explicitly.
 
     Motion comes exclusively from evaluated source data. Constant positive scale
@@ -716,7 +816,7 @@ def sample_scene(scene, *, object_order=None):
                 raise ValueError("object set changes")
             if hidden_collection(scene.collection) or any(o.hide_render or not o.visible_get() for o in objects):
                 raise ValueError("v1 does not support hidden objects/visibility changes")
-            camera = _camera(scene, depsgraph)
+            camera = _camera(scene, depsgraph, allow_orthographic=allow_orthographic)
             meshes, scales, colors = [], [], []
             for index, obj in enumerate(objects):
                 poses[row, index], scale = _pose(obj, depsgraph)
@@ -888,7 +988,7 @@ def write_recording(root, clip, recording, source):
                 raise ValueError("existing asset content hash differs")
         descriptions[key] = {"sha256": sha256(path), "file": str(path.relative_to(root))}
     manifest = {
-        "schema": SCHEMA,
+        "schema": SCHEMA_V2 if recording["camera"].get("projection_type") == "orthographic" else SCHEMA,
         "clip": clip,
         "conventions": CONVENTIONS,
         "source": {key: value for key, value in source.items() if key != "license_text"},
@@ -900,6 +1000,8 @@ def write_recording(root, clip, recording, source):
         "arrays": {},
         "license_ref": _license(root, source["license_text"]),
     }
+    if manifest["schema"] == SCHEMA_V2:
+        manifest["visibility_contract"] = "stable-envs/opaque-pixel-rays-v2"
     with tempfile.TemporaryDirectory(dir=clips, prefix=".export-") as temporary:
         directory = Path(temporary)
         for name in ("poses", "frames"):
@@ -919,7 +1021,11 @@ def export(root, output, task):
     if (output / "clips" / f"{task.lower()}-nominal").exists():
         raise FileExistsError("refusing to overwrite an existing nominal clip")
     scene, script, task_metadata = prepare(root, task)
-    recording = sample_scene(scene, object_order=G34_ORDER if task == "G34" else None)
+    recording = sample_scene(
+        scene, object_order=G34_ORDER if task == "G34" else None, allow_orthographic=task in ORTHOGRAPHIC_TASKS
+    )
+    if task in ORTHOGRAPHIC_TASKS and recording["camera"].get("projection_type") != "orthographic":
+        raise ValueError("audited orthographic entry changed projection type")
     source = {
         "url": "https://github.com/hokindeng/object-permanence",
         "commit": SOURCE_COMMIT,
@@ -941,6 +1047,8 @@ def export(root, output, task):
     if context is not None:
         source["profile"] = "nominal-first-member-surface-diversity-context"
         source["execution_context"] = context
+    if task in ORTHOGRAPHIC_TASKS:
+        source["preparation_recipe"] = {"build": AUDITED_TASKS[task][0], "animate": AUDITED_TASKS[task][1]}
     return write_recording(output, f"{task.lower()}-nominal", recording, source)
 
 

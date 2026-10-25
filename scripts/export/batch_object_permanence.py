@@ -21,6 +21,7 @@ from .object_permanence import (
     AUDITED_TASKS,
     CONTRACT_ONLY_TASKS,
     DEFERRED_TASKS,
+    ORTHOGRAPHIC_TASKS,
     RAY_CONTRACT_TASKS,
     SOURCE_COMMIT,
     capability_group,
@@ -32,7 +33,7 @@ from .object_permanence import (
 def run(
     root, output, report, *, tasks="all", plan_only=False, blender_python=sys.executable, visibility_contract=None
 ):
-    if visibility_contract not in (None, "stable-envs/opaque-pixel-rays-v1"):
+    if visibility_contract not in (None, "stable-envs/opaque-pixel-rays-v1", "stable-envs/opaque-pixel-rays-v2"):
         raise ValueError("unknown visibility contract")
     check_source(root)
     selected = None if tasks == "all" else set(tasks.split(","))
@@ -51,7 +52,9 @@ def run(
             job["capability_group"] = capability_group(
                 ast.parse((path.parent / name).read_text()), audited=member == 0 and task["id"] in AUDITED_TASKS
             )
-            versioned = visibility_contract is not None and task["id"] in RAY_CONTRACT_TASKS
+            versioned = (
+                visibility_contract == "stable-envs/opaque-pixel-rays-v1" and task["id"] in RAY_CONTRACT_TASKS
+            ) or (visibility_contract == "stable-envs/opaque-pixel-rays-v2" and task["id"] in ORTHOGRAPHIC_TASKS)
             if member == 0 and task["id"] in CONTRACT_ONLY_TASKS and not versioned:
                 job.update(status="unsupported", reason="requires explicit versioned ray contract")
             elif member == 0 and task["id"] in DEFERRED_TASKS and not versioned:
