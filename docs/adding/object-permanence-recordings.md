@@ -137,6 +137,15 @@ If this machine uses the optional shared-library fallback, set `LD_LIBRARY_PATH`
 as described in the [G34 environment setup](occlusion-ball.md#local-environment-layout).
 The exported dataset is source-derived CC-BY-NC-4.0 data, not MIT library code.
 
+Some scripts expect globals supplied by the official source driver. The audited
+G08/G44/G45/G46/G48 context uses its `surface` diversity configuration: empty
+`DIVERSITY`, no source bindings or sampled viewpoint. Construction therefore
+retains script-defined factor defaults; driver rendering/appearance hooks are not
+run. New manifests record the context and upstream implementation hashes, and
+source/replay comparisons reject mismatched contexts. Only G44 currently passes
+the existing capability and fidelity gates; the other four remain unregistered.
+See the [context audit](object-permanence-visibility.md#audited-source-execution-context-g08g44g45g46g48).
+
 ```python
 from stable_envs.envs.object_permanence import G34Replay, RigidTrajectory
 
@@ -205,7 +214,8 @@ MSE/mask IoU. They do not certify source RGB or downstream learning accuracy.
 ```
 
 Unit tests cover sharing, mapping, ownership, corruption and invalid contracts.
-Live integration tests run all seven certified exports and the independent checker when
+Live integration tests run registered exports (excluding preserved legacy fidelity
+deferrals) and the independent checker when
 `SE_OBJECT_PERMANENCE_SOURCE` and `SE_OBJECT_PERMANENCE_BLENDER_PYTHON` are set.
 Normal family CI requires no Blender. The G34 source oracle has been extended to 120 frames without changing any
 original sample values or renderer interfaces; no production code reads the oracle.

@@ -131,6 +131,7 @@ def test_versioned_source_poses_hidden_motion_and_reference_identity(task):
     with RigidTrajectory(RECORDINGS, f"{task}-nominal") as clip:
         np.testing.assert_array_equal(clip.frames, reference["source_frames"])
         assert manifest["source_script_sha256"] == clip.manifest["source"]["script_sha256"]
+        assert manifest.get("source_execution_context") == clip.manifest["source"].get("execution_context")
         assert manifest["object_ids"] == {o["name"]: o["id"] for o in clip.manifest["objects"]}
         actual = clip.object_poses(np.arange(120))
         expected = reference["poses"]

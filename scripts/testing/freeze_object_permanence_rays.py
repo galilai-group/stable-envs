@@ -8,7 +8,14 @@ from pathlib import Path
 
 import numpy as np
 
-from .freeze_object_permanence import REFERENCE_CASES, SOURCE_COMMIT, prepare_reference, sha256, write_depth_parts
+from .freeze_object_permanence import (
+    REFERENCE_CASES,
+    SOURCE_COMMIT,
+    prepare_reference,
+    reference_execution_context,
+    sha256,
+    write_depth_parts,
+)
 from .object_permanence_ray_reference import CONTRACT, draw
 
 
@@ -126,6 +133,11 @@ def freeze(root, output, task, width=320, height=180):
         "depth_parts": parts,
         "arrays": {k: {"shape": list(v.shape), "dtype": str(v.dtype)} for k, v in arrays.items()},
     }
+    context = reference_execution_context(script, task)
+    if context is not None:
+        manifest["source_profile"] = "nominal first member; surface diversity globals; no driver hooks"
+        manifest["source_execution_context"] = context
+        manifest["source_preparation_sha256"] = sha256(Path(__file__).with_name("freeze_object_permanence.py"))
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     (output / "SOURCE_LICENSE.txt").write_text((root / "LICENSE").read_text())
     (output / "README.md").write_text(

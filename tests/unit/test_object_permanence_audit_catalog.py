@@ -65,3 +65,34 @@ def test_deferred_catalog_never_exposes_an_accepted_recording_or_oracle():
         assert not (RECORDINGS / "clips" / f"{key}-nominal").exists()
         assert not (fixtures / key / "opaque_pixel_rays_v1/nominal").exists()
         assert row["preview"].startswith(".cache/object_permanence/evaluation/deferred-previews/")
+
+
+def test_surface_context_audit_records_defaults_and_remaining_blockers_without_waivers():
+    audit = json.loads(CATALOG.read_text())
+    entries = {row["task"]: row for row in audit["entries"]}
+    defaults = {
+        "G08": "drawer_travel_scale",
+        "G44": "ball_radius_scale",
+        "G45": "ball_radius_scale",
+        "G46": "cover_footprint_scale",
+        "G48": "object_spacing_scale",
+    }
+    for task, parameter in defaults.items():
+        row = entries[task]
+        context = row["execution_context"]
+        assert context["profile"] == "surface"
+        assert context["globals"] == {"DIVERSITY": {}} and context["source_bindings"] == {}
+        assert row["diversity_defaults"] == {parameter: 1.0}
+        assert row["source_capability_audit"]["frames"] == row["preview_frames"] == 120
+        if task == "G44":
+            recording = json.loads((RECORDINGS / "clips/g44-nominal/manifest.json").read_text())
+            assert row["status"] == "certified" and row["camera"] == "PERSP"
+            assert recording["source"]["execution_context"] == context
+        else:
+            assert row["status"] == "deferred" and row["camera"] == "ORTHO"
+            assert "camera-projection" in row["blockers"]
+    assert entries["G46"]["source_capability_audit"]["unsupported_objects"] == {
+        "box_A_label": "FONT",
+        "box_B_label": "FONT",
+    }
+    assert "renderable-type" in entries["G46"]["blockers"]

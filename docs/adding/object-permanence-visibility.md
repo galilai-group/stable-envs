@@ -5,7 +5,7 @@ rays and equal-depth semantic IDs. It is explicitly selected; existing renderers
 State interfaces, raw Blender BVH references and acceptance thresholds are unchanged.
 The seven legacy-certified scenes remain certified under their original contract.
 G63/G66/G80/G81 retain their legacy BVH deferrals and additionally pass this new
-contract. In total, 86 scenes are certified under this explicitly selected
+contract. In total, 87 scenes are certified under this explicitly selected
 contract; the source audit catalog lists their IDs.
 
 ## Geometric contract
@@ -387,19 +387,18 @@ rendering are unchanged; no shader, shadow or antialiasing work is added here.
 |---|---|---|
 | G01 | Active acrylic materials have alpha .28/.42; the opaque material gate rejects them | 120-frame source-only GIF |
 | G04 | Curved tracks are renderable `CURVE` objects, outside mesh-only export | 120-frame source-only GIF |
-| G08 | `animate_scene` raises `NameError: name 'DIVERSITY' is not defined`; its camera is also orthographic | One-frame initial-scene diagnostic GIF |
+| G08 | The later source-context audit resolves missing `DIVERSITY`; the camera remains orthographic | 120-frame source-only GIF with audited context |
 | G09/G10 | Actual selected cameras are orthographic | 120-frame source-only GIFs |
 
-Live tests reproduce these exact source failures without repairing globals,
-converting curves, changing camera projection or substituting opaque materials.
-These five tasks have no accepted recordings/oracles or preparation entries.
-The source pin and first-member paths are given by the inventory; G08's failure
-occurs at the `drawer_travel_scale` access in its original animation function.
+Live tests retain transparency, Curve and orthographic rejections. These five
+tasks have no accepted recordings/oracles or preparation entries. G08's original
+direct-call failure was a missing driver context at `drawer_travel_scale`, not
+proof of a broken source generator; the context audit below runs its animation.
 
 Accepted source/replay GIFs stay in `evaluation/`. Skipped diagnostics go in
 `evaluation/deferred-previews/`, with visible **source only / NOT CERTIFIED**
 labels. Unsupported scenes cannot honestly provide a certified replay
-comparison; G08's initial scene is not presented as an animated trajectory.
+comparison. G08's old initial-scene diagnostic is superseded by its full source GIF.
 Each successful GIF is decoded to verify its expected frame count before its
 temporary PNG directory is deleted. Only GIFs remain in the artifact cache.
 
@@ -411,7 +410,7 @@ acceptance budgets remained unchanged.
 
 All 150 task groups now have a measured disposition in the
 [source audit catalog](object-permanence-audit.json). The first nominal member is
-the supported import unit: **93 are certified, 57 are deferred**. The other 47
+the supported import unit: **94 are certified, 56 are deferred**. The other 47
 member scripts are explicitly listed as unregistered entries, not certified by
 similarity to the first member. There are no unclassified nominal tasks.
 
@@ -444,15 +443,14 @@ records the probe names and their raw source roles independently of motion tags.
 
 | Primary reason | Nominal tasks | Policy |
 |---|---:|---|
-| Orthographic projection | 40 | Keep the source camera; no perspective substitution |
-| Renderable Curve objects | 5 | No unvalidated conversion or dropped rails |
-| Source execution failure | 5 | Preserve undefined-global failures; do not invent driver defaults |
+| Orthographic projection | 43 | Keep the source camera; no perspective substitution |
+| Renderable Curve/FONT objects | 6 | No unvalidated conversion, dropped rails or removed labels |
 | Transparency | 3 | No opaque replacement of glass/acrylic |
 | Independent source-normal variation | 2 | G98/G132 exceed the existing 3e-6 normal budget |
 | Animated geometry/scale | 1 | G146 changes geometry/scale at source frame 31 |
 | Static cache reuse assertion | 1 | G103 outputs pass, but seed rebuilds violate the existing regression |
 
-These are primary reasons: for example, G08 also uses an orthographic camera.
+These are primary reasons: G46 has FONT labels and an orthographic camera.
 G132's fresh-process corner-normal difference is `3.16480663e-6`; its provisional
 data is excluded, rather than raising the normal tolerance.
 
@@ -470,9 +468,9 @@ general cache investigation.
 Certified comparisons contain every source frame. Current-contract comparisons
 for G63/G66/G80/G81 coexist with their historical legacy diagnostics. Deferred
 previews use 24 evenly sampled source frames and visible **NOT CERTIFIED** labels;
-source execution failures retain only an initial scene, or a diagnostic card if
-no camera could be built. The earlier G01–G10 previews retain their original
-frame counts. G98's existing full comparison and G103's explicitly deferred
+the five source-context scenes now have complete 120-frame source previews.
+The other earlier previews retain their original frame counts.
+G98's existing full comparison and G103's explicitly deferred
 comparison are retained as diagnostics, not accepted samples.
 
 Native previews initially used Cycles CPU, 16 samples and denoising. Most of this
@@ -486,3 +484,51 @@ Accepted GIFs live in `evaluation/`; deferred/historical diagnostic GIFs live in
 `evaluation/deferred-previews/`. Each output's frame count is decoded before
 temporary PNGs are removed. Frozen numeric fixtures and source provenance stay
 in the repository; the artifact cache retains GIFs only.
+
+## Audited source execution context: G08/G44/G45/G46/G48
+
+The source driver's `core/render.py` injects `DIVERSITY` before script execution.
+Its `load_script_diversity(..., profile="surface")` returns empty values/bindings,
+no factorial sample and no viewpoint change. Both the exporter and independently
+implemented reference preparation now obtain that official configuration and
+verify that `apply_source_bindings` leaves the source text unchanged. Only the
+five explicitly audited entries receive these globals; older namespaces and
+fixtures are unchanged. Source `main()`, file output and driver appearance/render
+hooks do not execute. This is source construction with the surface-profile
+globals, not a claim to reproduce the complete surface-profile RGB pipeline.
+
+The CLI defaults to a different `task` diversity profile. At sample index 0,
+first member, that profile gives G08 a drawer-travel factor of .82 and the other
+four scenes their respective scale/spacing factors of .84; it also requests
+viewpoint changes. Those are additional dataset variants, not these nominal
+recordings. The profile selection is explicit rather than silently replacing
+the CLI's default randomized configuration with an empty dictionary.
+
+| Task | Source-defined default | Full-animation audit result |
+|---|---|---|
+| G08 | `drawer_travel_scale=1.0` | Orthographic camera; remains deferred |
+| G44 | `ball_radius_scale=1.0` | Opaque perspective scene; certified |
+| G45 | `ball_radius_scale=1.0` | Orthographic camera; remains deferred |
+| G46 | `cover_footprint_scale=1.0` | FONT objects `box_A_label`/`box_B_label` and orthographic camera; remains deferred |
+| G48 | `object_spacing_scale=1.0` | Orthographic camera; remains deferred |
+
+G44 contains five mesh objects and two recorded moving balls. All 120 frames pass
+fresh-process source-world checks (position error `6.68e-8`, normal error `4.41e-7`),
+cached/full depth MSE `1.16e-16`, and minimum object mask IoU 1.0. Cache/full
+RGB/depth/IDs are bit-identical at 160x90 and 320x180, including shuffled/repeated
+requests and output mutation isolation; each cache builds one static seed. Its
+independent oracle was regenerated in another process with byte-identical numeric
+archives. Motion is sampled from the original animation; no collision formula is
+implemented in the runtime.
+
+New recording/oracle manifests retain the execution profile, actual globals,
+absence of bindings, and hashes of the upstream driver/diversity module. The ray
+oracle additionally records its preparation-module hash. Comparisons reject an
+execution-context mismatch, including preview comparisons. Both absent contexts
+continue to match for older recordings/oracles. The source pin, recording schema,
+opaque visibility contract, State interfaces and acceptance budgets are unchanged.
+
+The measured catalog replaces missing-global reasons with these observed
+capability blockers. G44 has a 120-frame source/replay GIF; the other four have
+120-frame source-only GIFs labeled NOT CERTIFIED under `deferred-previews/`.
+Obsolete one-frame diagnostics and temporary PNGs are removed after full decoding.

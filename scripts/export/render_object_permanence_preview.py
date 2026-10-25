@@ -10,7 +10,7 @@ import argparse
 import json
 from pathlib import Path
 
-from .object_permanence import AUDITED_TASKS, SOURCE_COMMIT, prepare, sha256
+from .object_permanence import AUDITED_TASKS, SOURCE_COMMIT, prepare, sha256, source_execution_context
 
 
 def render(root, output, task, *, samples=16, frame_stop=None):
@@ -53,6 +53,9 @@ def render(root, output, task, *, samples=16, frame_stop=None):
         "frames": frames,
         "note": "native source scene, preview rendering quality; not original MP4 pixels",
     }
+    context = source_execution_context(root, task, script)
+    if context is not None:
+        metadata["source_execution_context"] = context
     (output / "manifest.json").write_text(json.dumps(metadata, indent=2) + "\n")
 
 

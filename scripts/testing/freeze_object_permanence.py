@@ -71,6 +71,7 @@ REFERENCE_CASES = {
     "G40": ("build_scene_by_kind", "animate_scene", ("orange_ball_inside_guided_elevator",)),
     "G41": ("build_scene_by_kind", "animate_scene", ("orange_ball_on_trapdoor",)),
     "G42": ("build_scene_by_kind", "animate_scene", ("orange_ball_on_ring_track",)),
+    "G44": ("build_scene_by_kind", "animate_scene", ("blue_ball_right", "red_ball_left")),
     "G56": ("build_scene_by_kind", "animate_scene", ("hidden_ball",)),
     "G58": (
         "build_scene_by_kind",
@@ -146,6 +147,39 @@ REFERENCE_CASES = {
 }
 
 
+def reference_execution_context(script, task):
+    """Independently read the pinned driver's empty surface-profile globals.
+
+    This does not import the candidate context builder or apply driver hooks.
+    It records only the execution context supplied before source construction.
+    """
+    if task not in {"G08", "G44", "G45", "G46", "G48"}:
+        return None
+    root = script.parents[4]
+    driver = root / "object_permanence/generator/core/render.py"
+    module = root / "object_permanence/generator/core/diversity.py"
+    functions = runpy.run_path(str(module))
+    settings = functions["load_script_diversity"](str(script), seed=0, profile="surface")
+    text, applied = functions["apply_source_bindings"](script.read_text(), settings)
+    if (
+        settings["values"] != {}
+        or settings["source_bindings"] != {}
+        or settings["factorial"] is not None
+        or settings["universal_viewpoint"]
+        or applied != {}
+        or text != script.read_text()
+    ):
+        raise ValueError("source reference requires unmodified surface-profile construction")
+    return {
+        "profile": "surface",
+        "globals": {"DIVERSITY": dict(settings["values"])},
+        "source_bindings": applied,
+        "scope": "source construction only; no driver appearance/render hooks",
+        "driver": {"file": str(driver.relative_to(root)), "sha256": sha256(driver)},
+        "diversity_module": {"file": str(module.relative_to(root)), "sha256": sha256(module)},
+    }
+
+
 def prepare_reference(script, task):
     """Independently audited source calls; no candidate preparation imports."""
     import bpy
@@ -163,7 +197,12 @@ def prepare_reference(script, task):
         prefix_namespace = {"__file__": str(script), "__name__": "independent_source_construction"}
         exec(compile(tree, str(script), "exec"), prefix_namespace)
         return
-    source = runpy.run_path(str(script), run_name="independent_source_preparation")
+    context = reference_execution_context(script, task)
+    source = runpy.run_path(
+        str(script),
+        init_globals=None if context is None else context["globals"],
+        run_name="independent_source_preparation",
+    )
     source["clear_scene"]()
     objects = source[build]()
     if task == "G27":
@@ -332,6 +371,10 @@ def freeze(root, output, task, width=320, height=180):
         "mask_convention": "visible source mesh at the pixel center; zero for no hit",
         "arrays": {k: {"shape": list(v.shape), "dtype": str(v.dtype)} for k, v in arrays.items()},
     }
+    context = reference_execution_context(script, task)
+    if context is not None:
+        manifest["source_profile"] = "nominal first member; surface diversity globals; no driver hooks"
+        manifest["source_execution_context"] = context
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     (output / "SOURCE_LICENSE.txt").write_text((root / "LICENSE").read_text())
     (output / "README.md").write_text(

@@ -21,13 +21,13 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 
 | Review group | Members |
 |---|---:|
-| appearance-or-visibility-review | 23 |
+| appearance-or-visibility-review | 22 |
 | audited-nominal-runtime-gate | 7 |
 | geometry-or-scale-review | 2 |
 | orthographic-camera-review | 68 |
 | rigid-candidate-needs-entry-audit | 11 |
 | source-fidelity-review | 4 |
-| versioned-visibility-runtime-gate | 82 |
+| versioned-visibility-runtime-gate | 83 |
 
 ## Source tasks
 
@@ -40,7 +40,7 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | G05 car_vs_barrier | 7 | hide_render, hide_viewport, location, rotation_euler, scale | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G06 car_on_bridge | 3 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G07 guillotine_gate_stops | 2 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
-| G08 drawer_moves_hidden_object | 2 | location, rotation_euler | orthographic-camera-review | not evaluated | deferred: source-execution |
+| G08 drawer_moves_hidden_object | 2 | location, rotation_euler | orthographic-camera-review | not evaluated | deferred: camera-projection |
 | G09 low_beam_car_height | 3 | location, rotation_euler | orthographic-camera-review | not evaluated | deferred: camera-projection |
 | G10 size_gate | 2 | location, modifiers, rotation_euler | orthographic-camera-review | not evaluated | deferred: camera-projection |
 | G11 box_holds_N_objects | 3 | location, rotation_euler | orthographic-camera-review | not evaluated | deferred: camera-projection |
@@ -76,11 +76,11 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | G41 trapdoor_opens_ball_falls | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G42 ring_track_behind_center_block | 1 | dimensions, location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G43 three_balls_parallel_tunnels | 1 | location, rotation_euler | orthographic-camera-review | not evaluated | deferred: camera-projection |
-| G44 two_balls_collide_and_bounce | 1 | dimensions, location, rotation_euler | appearance-or-visibility-review | not evaluated | deferred: source-execution |
-| G45 opaque_lid_front_panel_drops | 1 | location, rotation_euler | appearance-or-visibility-review | not evaluated | deferred: source-execution |
-| G46 marked_boxes_swap | 1 | location, rotation_euler | appearance-or-visibility-review | not evaluated | deferred: source-execution |
+| G44 two_balls_collide_and_bounce | 1 | dimensions, location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
+| G45 opaque_lid_front_panel_drops | 1 | location, rotation_euler | appearance-or-visibility-review | not evaluated | deferred: camera-projection |
+| G46 marked_boxes_swap | 1 | location, rotation_euler | appearance-or-visibility-review | not evaluated | deferred: renderable-type |
 | G47 theater_curtain | 1 | location, rotation_euler | appearance-or-visibility-review | not evaluated | deferred: camera-projection |
-| G48 sliding_window_row | 1 | location, rotation_euler | appearance-or-visibility-review | not evaluated | deferred: source-execution |
+| G48 sliding_window_row | 1 | location, rotation_euler | appearance-or-visibility-review | not evaluated | deferred: camera-projection |
 | G49 two_supported_screens_close | 1 | location, rotation_euler | orthographic-camera-review | not evaluated | deferred: camera-projection |
 | G50 ramp_ball_slotted_screen | 1 | location, rotation_euler | orthographic-camera-review | not evaluated | deferred: camera-projection |
 | G51 vertical_panel_two_objects | 1 | location, rotation_euler | appearance-or-visibility-review | not evaluated | deferred: camera-projection |

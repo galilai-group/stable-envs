@@ -8,7 +8,13 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
-- Complete first-nominal object-permanence audit: 93 certified scenes and 57
+- Audited official `DIVERSITY` execution context for G08/G44/G45/G46/G48,
+  retaining source factor defaults without driver rendering/appearance hooks.
+  Adds G44's rigid recording, independent 120-frame oracle and cache parity gates;
+  context provenance/mismatch checks protect source comparisons. The other four
+  remain deferred for orthographic cameras and G46's FONT labels.
+
+- Complete first-nominal object-permanence audit: 94 certified scenes and 56
   explicit deferrals across all 150 task groups; 47 additional member scripts
   remain unregistered. Adds 61 reusable rigid recordings with independent
   120-frame depth/mask oracles, fresh-process geometry checks and two-resolution
@@ -18,8 +24,9 @@ All notable changes to this project are listed here. The format follows
 - Early object-permanence audit G01–G10: nominal G02/G03 ramp balls and G05–G07
   rigid vehicles, with independent 120-frame ray oracles and full-frame cache
   parity. Adds audited legacy construction-prefix and named-argument source
-  preparation. Transparency, curves, orthographic cameras and G08's undefined
-  source global remain uncertified, with labeled deferred GIF diagnostics.
+  preparation. Transparency, curves and orthographic cameras remain uncertified,
+  with labeled deferred GIF diagnostics; the later context audit resolves G08's
+  missing driver global while retaining its orthographic rejection.
 
 - Three reusable rigid batches: nominal G93–G97/G99/G100 support/fall, opening-container
   and scripted-collision scenes, with independent 120-frame versioned oracles

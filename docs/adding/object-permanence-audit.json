@@ -121,14 +121,50 @@
       "task": "G07"
     },
     {
-      "category": "source-execution",
+      "blockers": [
+        "camera-projection"
+      ],
+      "camera": "ORTHO",
+      "category": "camera-projection",
+      "diversity_defaults": {
+        "drawer_travel_scale": 1.0
+      },
+      "execution_context": {
+        "diversity_module": {
+          "file": "object_permanence/generator/core/diversity.py",
+          "sha256": "90be09709b550b26150fc7f9b66352bd74bf25ef84ee09567ab7a70b78d44117"
+        },
+        "driver": {
+          "file": "object_permanence/generator/core/render.py",
+          "sha256": "2a455d847e0c9ea66d17a5af5edf2b37105e643e9bdb22b96837943b2071fab6"
+        },
+        "globals": {
+          "DIVERSITY": {}
+        },
+        "profile": "surface",
+        "scope": "source construction only; no driver appearance/render hooks",
+        "source_bindings": {}
+      },
       "member": 0,
       "name": "drawer_moves_hidden_object",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g08-source-only-deferred.gif",
-      "preview_frames": 1,
+      "preview": ".cache/object_permanence/evaluation/deferred-previews/g08-source-surface-context-deferred.gif",
+      "preview_frames": 120,
       "preview_kind": "source-only",
-      "reason": "NameError: name 'DIVERSITY' is not defined; camera is also orthographic",
+      "reason": "Surface DIVERSITY context runs all 120 frames; selected camera remains orthographic",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
       "script": "object_permanence/generator/tasks/G08_drawer_moves_hidden_object/pb_task_00000036_pb_drawer_closes_moves_hidden_ball_0037_blender.py",
+      "source_capability_audit": {
+        "camera": "ORTHO",
+        "frames": 120,
+        "unsupported_objects": {}
+      },
+      "source_frames": [
+        1,
+        120
+      ],
       "source_script_sha256": "e3f13b669d5f9c66bbadfa418d9058c235bb40fdf94f021479880af2aeab117e",
       "source_task_manifest_sha256": "7153de296480a796a841c05102ac2828f0cef2985ba32da14e1d1c205917d18a",
       "stage": "source-capability",
@@ -1251,45 +1287,121 @@
       "task": "G43"
     },
     {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
       "camera": "PERSP",
-      "category": "source-execution",
+      "contract": "stable-envs/opaque-pixel-rays-v1",
+      "depth_mse_max": 1.1570590577743222e-16,
+      "diversity_defaults": {
+        "ball_radius_scale": 1.0
+      },
+      "execution_context": {
+        "diversity_module": {
+          "file": "object_permanence/generator/core/diversity.py",
+          "sha256": "90be09709b550b26150fc7f9b66352bd74bf25ef84ee09567ab7a70b78d44117"
+        },
+        "driver": {
+          "file": "object_permanence/generator/core/render.py",
+          "sha256": "2a455d847e0c9ea66d17a5af5edf2b37105e643e9bdb22b96837943b2071fab6"
+        },
+        "globals": {
+          "DIVERSITY": {}
+        },
+        "profile": "surface",
+        "scope": "source construction only; no driver appearance/render hooks",
+        "source_bindings": {}
+      },
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 4,
+        "dynamic_nodes": [
+          "blue_ball_right",
+          "red_ball_left"
+        ],
+        "frames": 120,
+        "objects": 5,
+        "task": "G44",
+        "world_normal_max_abs_error": 4.409915113079421e-07,
+        "world_triangle_max_abs_error": 6.675728148053395e-08
+      },
+      "mask_iou_min": 1.0,
       "member": 0,
-      "mesh_count": 2,
+      "mesh_count": 5,
       "name": "two_balls_collide_and_bounce",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g44-source-only-deferred.gif",
-      "preview_frames": 1,
-      "preview_kind": "source-only",
-      "reason": "NameError: name 'DIVERSITY' is not defined",
+      "oracle": "tests/fixtures/semantics/object_permanence/g44/opaque_pixel_rays_v1/nominal",
+      "preview": ".cache/object_permanence/evaluation/g44-source-vs-pixel-rays-v1.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene"
       ],
+      "reference_target_roles": {
+        "blue_ball_right": "target",
+        "red_ball_left": "target"
+      },
+      "reference_targets": [
+        "blue_ball_right",
+        "red_ball_left"
+      ],
       "script": "object_permanence/generator/tasks/G44_two_balls_collide_and_bounce/pb_task_00000039_pb_two_balls_collide_and_bounce_0040_blender.py",
+      "source_capability_audit": {
+        "camera": "PERSP",
+        "frames": 120,
+        "unsupported_objects": {}
+      },
       "source_frames": [
         1,
         120
       ],
       "source_script_sha256": "d1c03532c15758bc53efe7e4c594f6c891d77c7557730421ce396654d1f5f5fd",
       "source_task_manifest_sha256": "ff511b2898c8d0294353fbdc48b13c89524479b6970163d2abfd77962cdf3f68",
-      "stage": "source-capability",
-      "status": "deferred",
+      "status": "certified",
       "task": "G44"
     },
     {
+      "blockers": [
+        "camera-projection"
+      ],
       "camera": "ORTHO",
-      "category": "source-execution",
+      "category": "camera-projection",
+      "diversity_defaults": {
+        "ball_radius_scale": 1.0
+      },
+      "execution_context": {
+        "diversity_module": {
+          "file": "object_permanence/generator/core/diversity.py",
+          "sha256": "90be09709b550b26150fc7f9b66352bd74bf25ef84ee09567ab7a70b78d44117"
+        },
+        "driver": {
+          "file": "object_permanence/generator/core/render.py",
+          "sha256": "2a455d847e0c9ea66d17a5af5edf2b37105e643e9bdb22b96837943b2071fab6"
+        },
+        "globals": {
+          "DIVERSITY": {}
+        },
+        "profile": "surface",
+        "scope": "source construction only; no driver appearance/render hooks",
+        "source_bindings": {}
+      },
       "member": 0,
-      "mesh_count": 2,
       "name": "opaque_lid_front_panel_drops",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g45-source-only-deferred.gif",
-      "preview_frames": 1,
+      "preview": ".cache/object_permanence/evaluation/deferred-previews/g45-source-surface-context-deferred.gif",
+      "preview_frames": 120,
       "preview_kind": "source-only",
-      "reason": "NameError: name 'DIVERSITY' is not defined",
+      "reason": "Surface DIVERSITY context runs all 120 frames; selected camera remains orthographic",
       "recipe": [
         "build_scene_by_kind",
         "animate_scene_by_kind"
       ],
       "script": "object_permanence/generator/tasks/G45_opaque_lid_front_panel_drops/pb_task_00000041_pb_opaque_lid_front_panel_drops_0042_blender.py",
+      "source_capability_audit": {
+        "camera": "ORTHO",
+        "frames": 120,
+        "unsupported_objects": {}
+      },
       "source_frames": [
         1,
         120
@@ -1301,20 +1413,50 @@
       "task": "G45"
     },
     {
+      "blockers": [
+        "renderable-type",
+        "camera-projection"
+      ],
       "camera": "ORTHO",
-      "category": "source-execution",
+      "category": "renderable-type",
+      "diversity_defaults": {
+        "cover_footprint_scale": 1.0
+      },
+      "execution_context": {
+        "diversity_module": {
+          "file": "object_permanence/generator/core/diversity.py",
+          "sha256": "90be09709b550b26150fc7f9b66352bd74bf25ef84ee09567ab7a70b78d44117"
+        },
+        "driver": {
+          "file": "object_permanence/generator/core/render.py",
+          "sha256": "2a455d847e0c9ea66d17a5af5edf2b37105e643e9bdb22b96837943b2071fab6"
+        },
+        "globals": {
+          "DIVERSITY": {}
+        },
+        "profile": "surface",
+        "scope": "source construction only; no driver appearance/render hooks",
+        "source_bindings": {}
+      },
       "member": 0,
-      "mesh_count": 3,
       "name": "marked_boxes_swap",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g46-source-only-deferred.gif",
-      "preview_frames": 1,
+      "preview": ".cache/object_permanence/evaluation/deferred-previews/g46-source-surface-context-deferred.gif",
+      "preview_frames": 120,
       "preview_kind": "source-only",
-      "reason": "NameError: name 'DIVERSITY' is not defined",
+      "reason": "Surface DIVERSITY context runs all 120 frames; FONT labels box_A_label/box_B_label are outside mesh-only export; camera is also orthographic",
       "recipe": [
         "build_scene",
         "animate_scene"
       ],
       "script": "object_permanence/generator/tasks/G46_marked_boxes_swap/pb_task_00000053_pb_marked_boxes_swap_hidden_objects_0054_blender.py",
+      "source_capability_audit": {
+        "camera": "ORTHO",
+        "frames": 120,
+        "unsupported_objects": {
+          "box_A_label": "FONT",
+          "box_B_label": "FONT"
+        }
+      },
       "source_frames": [
         1,
         120
@@ -1351,20 +1493,46 @@
       "task": "G47"
     },
     {
+      "blockers": [
+        "camera-projection"
+      ],
       "camera": "ORTHO",
-      "category": "source-execution",
+      "category": "camera-projection",
+      "diversity_defaults": {
+        "object_spacing_scale": 1.0
+      },
+      "execution_context": {
+        "diversity_module": {
+          "file": "object_permanence/generator/core/diversity.py",
+          "sha256": "90be09709b550b26150fc7f9b66352bd74bf25ef84ee09567ab7a70b78d44117"
+        },
+        "driver": {
+          "file": "object_permanence/generator/core/render.py",
+          "sha256": "2a455d847e0c9ea66d17a5af5edf2b37105e643e9bdb22b96837943b2071fab6"
+        },
+        "globals": {
+          "DIVERSITY": {}
+        },
+        "profile": "surface",
+        "scope": "source construction only; no driver appearance/render hooks",
+        "source_bindings": {}
+      },
       "member": 0,
-      "mesh_count": 2,
       "name": "sliding_window_row",
-      "preview": ".cache/object_permanence/evaluation/deferred-previews/g48-source-only-deferred.gif",
-      "preview_frames": 1,
+      "preview": ".cache/object_permanence/evaluation/deferred-previews/g48-source-surface-context-deferred.gif",
+      "preview_frames": 120,
       "preview_kind": "source-only",
-      "reason": "NameError: name 'DIVERSITY' is not defined",
+      "reason": "Surface DIVERSITY context runs all 120 frames; selected camera remains orthographic",
       "recipe": [
         "build_scene",
         "animate_scene"
       ],
       "script": "object_permanence/generator/tasks/G48_sliding_window_row/pb_task_00000055_pb_sliding_window_reveals_object_row_0056_blender.py",
+      "source_capability_audit": {
+        "camera": "ORTHO",
+        "frames": 120,
+        "unsupported_objects": {}
+      },
       "source_frames": [
         1,
         120

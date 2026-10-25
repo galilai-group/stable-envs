@@ -56,6 +56,8 @@ def check(
             or metadata["source"]["script_sha256"] != manifest["source_script_sha256"]
         ):
             raise ValueError("source and recording definitions differ")
+        if metadata["source"].get("execution_context") != manifest.get("source_execution_context"):
+            raise ValueError("source and recording execution contexts differ")
         if manifest["object_ids"] != {o["name"]: o["id"] for o in metadata["objects"]}:
             raise ValueError("source and recording object identities differ")
         indices = np.searchsorted(clip.frames, reference["source_frames"])

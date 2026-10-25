@@ -29,6 +29,8 @@ def comparison_gif(clip, source, output, *, size, visibility_contract=None):
     recorded_source = clip.manifest["source"]
     if metadata["task"] != recorded_source["task"] or metadata["source_commit"] != recorded_source["commit"]:
         raise ValueError("source preview task or pinned source differs")
+    if metadata.get("source_execution_context") != recorded_source.get("execution_context"):
+        raise ValueError("source preview and recording execution contexts differ")
     if metadata["frames"] != list(clip.frames) or metadata["size"] != [size, size * 16 // 9]:
         raise ValueError("source preview frame numbers or dimensions differ")
     with RigidSceneRenderer(clip, size=size, visibility_contract=visibility_contract) as renderer:

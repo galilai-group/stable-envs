@@ -298,7 +298,7 @@ else:
     subprocess.run([python, "-c", code, source, task, build, animate], check=True, timeout=180)
 
 
-@pytest.mark.parametrize("task", ["G01", "G04", "G08"])
+@pytest.mark.parametrize("task", ["G01", "G04"])
 def test_early_source_capability_or_animation_failure_is_not_certified(task):
     source = os.environ.get("SE_OBJECT_PERMANENCE_SOURCE")
     python = os.environ.get("SE_OBJECT_PERMANENCE_BLENDER_PYTHON")
@@ -320,16 +320,6 @@ else:
     source = runpy.run_path(str(script), run_name='independent_early_capability_audit')
     source['clear_scene']()
     objects = source['build_scene']()
-    if task == 'G08':
-        try:
-            source['animate_scene'](objects)
-        except NameError as error:
-            assert "name 'DIVERSITY' is not defined" == str(error), str(error)
-        else:
-            raise AssertionError('source animation failure disappeared; re-audit this scene')
-        assert bpy.context.scene.camera.data.type == 'ORTHO'
-        check_source(root)
-        raise SystemExit(0)
     assert any(o.type == 'CURVE' for o in bpy.context.scene.objects)
     source['animate_scene'](**{n: objects[n] for n in inspect.signature(source['animate_scene']).parameters})
 try:
@@ -339,6 +329,70 @@ except ValueError as error:
     assert expected in str(error), str(error)
 else:
     raise AssertionError('unsupported source was accepted')
+check_source(root)
+"""
+    subprocess.run([python, "-c", code, source, task], check=True, timeout=180)
+
+
+@pytest.mark.parametrize("task", ["G08", "G44", "G45", "G46", "G48"])
+def test_official_surface_diversity_context_runs_all_frames_and_retains_capability_rejections(task):
+    source = os.environ.get("SE_OBJECT_PERMANENCE_SOURCE")
+    python = os.environ.get("SE_OBJECT_PERMANENCE_BLENDER_PYTHON")
+    if not source or not python:
+        pytest.skip("source context audit needs pinned source and Blender interpreter")
+    code = r"""
+import json, runpy, sys
+from pathlib import Path
+import bpy
+import numpy as np
+from scripts.export.object_permanence import AUDITED_TASKS, check_source, sample_scene, source_execution_context
+from scripts.testing.freeze_object_permanence import reference_execution_context
+root, task = Path(sys.argv[1]), sys.argv[2]
+check_source(root)
+path, = (root/'object_permanence/generator/tasks').glob(task+'_*/task.json')
+script = path.parent/json.loads(path.read_text())['member_scripts'][0]
+context = source_execution_context(root, task, script)
+assert context == reference_execution_context(script, task)
+assert context['globals'] == {'DIVERSITY': {}} and context['source_bindings'] == {}
+official = runpy.run_path(str(root/'object_permanence/generator/core/diversity.py'))
+settings = official['load_script_diversity'](str(script), 0, 'surface')
+assert context['globals']['DIVERSITY'] == settings['values']
+assert official['apply_source_bindings'](script.read_text(), settings) == (script.read_text(), {})
+recipes = {
+    'G08': ('build_scene', 'animate_scene'),
+    'G44': ('build_scene_by_kind', 'animate_scene'),
+    'G45': ('build_scene_by_kind', 'animate_scene_by_kind'),
+    'G46': ('build_scene', 'animate_scene'),
+    'G48': ('build_scene', 'animate_scene'),
+}
+source = runpy.run_path(str(script), run_name='source_context_integration', init_globals=context['globals'])
+source['clear_scene']()
+build, animate = recipes[task]
+objects = source[build]()
+source[animate](objects)
+scene = bpy.context.scene
+assert (scene.frame_start, scene.frame_end) == (1, 120)
+for frame in range(1, 121):
+    scene.frame_set(frame)
+    bpy.context.view_layer.update()
+    assert all(np.isfinite(np.asarray(obj.matrix_world)).all() for obj in scene.objects)
+    assert scene.camera.data.type == ('PERSP' if task == 'G44' else 'ORTHO')
+if task == 'G44':
+    assert task in AUDITED_TASKS
+    recording = sample_scene(scene)
+    assert recording['poses'].shape == (120, 2, 7)
+    assert set(recording['dynamic_nodes']) == {'blue_ball_right', 'red_ball_left'}
+else:
+    assert task not in AUDITED_TASKS
+    if task == 'G46':
+        assert any(obj.type == 'FONT' for obj in scene.objects)
+    try:
+        sample_scene(scene)
+    except ValueError as error:
+        expected = 'unsupported renderable object type' if task == 'G46' else 'requires a perspective camera'
+        assert expected in str(error), str(error)
+    else:
+        raise AssertionError('source context must not waive unsupported scene capabilities')
 check_source(root)
 """
     subprocess.run([python, "-c", code, source, task], check=True, timeout=180)

@@ -3,7 +3,9 @@
 Run the inventory with ordinary Python, or export with the existing isolated
 Python 3.11 + bpy 4.4 reference interpreter. Only explicitly audited preparation
 entry points run; source main(), render(), save() and diversity wrappers do not.
-Audited nominal members share the same extraction and recording code.
+Audited nominal members share the same extraction and recording code. Explicitly
+registered source contexts supply the official surface profile's DIVERSITY
+globals without executing the driver's rendering or appearance hooks.
 """
 
 from __future__ import annotations
@@ -26,6 +28,8 @@ import numpy as np
 SOURCE_COMMIT = "824baddcdad087810d35638bf8f273b884f74975"
 SCHEMA = "stable-envs/object-permanence-rigid-v1"
 CONVENTIONS = {"world": "right-handed-z-up", "quaternion": "wxyz", "units": "source-scene-units"}
+# Context audit is distinct from certification: G08 still has an unsupported camera.
+SOURCE_CONTEXT_TASKS = frozenset({"G08", "G44", "G45", "G46", "G48"})
 AUDITED_TASKS = {
     "G02": ("$prefix:render_png", ""),
     "G03": ("$prefix:render_png", ""),
@@ -68,6 +72,7 @@ AUDITED_TASKS = {
     "G40": ("build_scene_by_kind", "animate_scene"),
     "G41": ("build_scene_by_kind", "animate_scene"),
     "G42": ("build_scene_by_kind", "animate_scene"),
+    "G44": ("build_scene_by_kind", "animate_scene"),
     "G56": ("build_scene_by_kind", "animate_scene"),
     "G58": ("build_scene_by_kind", "animate_scene"),
     "G59": ("build_scene_by_kind", "animate_scene_by_kind"),
@@ -138,6 +143,7 @@ RAY_CONTRACT_TASKS = {
     "G40",
     "G41",
     "G42",
+    "G44",
     "G56",
     "G58",
     "G59",
@@ -226,6 +232,7 @@ CONTRACT_ONLY_TASKS = {
     "G40",
     "G41",
     "G42",
+    "G44",
     "G56",
     "G58",
     "G59",
@@ -499,6 +506,40 @@ def source_prefix(script, boundary):
     return namespace
 
 
+def source_execution_context(root, task, script):
+    """Describe audited driver globals, with no source rewriting or postprocessing.
+
+    The pinned driver's surface profile supplies an empty DIVERSITY mapping;
+    task factors therefore take their script-defined defaults. This is only its
+    source-execution context, not a claim to reproduce its RGB surface hooks.
+    Older entries keep their original namespace and provenance unchanged.
+    """
+    if task not in SOURCE_CONTEXT_TASKS:
+        return None
+    module = root / "object_permanence/generator/core/diversity.py"
+    driver = root / "object_permanence/generator/core/render.py"
+    api = runpy.run_path(str(module))
+    config = api["load_script_diversity"](str(script), 0, "surface")
+    transformed, bindings = api["apply_source_bindings"](script.read_text(), config)
+    if (
+        config["values"]
+        or config["source_bindings"]
+        or config["factorial"] is not None
+        or config["universal_viewpoint"]
+        or bindings
+        or transformed != script.read_text()
+    ):
+        raise ValueError("audited surface execution context must not vary or rewrite the source")
+    return {
+        "profile": "surface",
+        "globals": {"DIVERSITY": dict(config["values"])},
+        "source_bindings": bindings,
+        "scope": "source construction only; no driver appearance/render hooks",
+        "driver": {"file": str(driver.relative_to(root)), "sha256": sha256(driver)},
+        "diversity_module": {"file": str(module.relative_to(root)), "sha256": sha256(module)},
+    }
+
+
 def prepare(root, task):
     """Execute an audited source build/animate pair, without source I/O hooks."""
     import bpy
@@ -518,7 +559,10 @@ def prepare(root, task):
     if build.startswith("$prefix:"):
         source_prefix(source, build.removeprefix("$prefix:"))
         return bpy.context.scene, source, metadata
-    namespace = runpy.run_path(str(source), run_name="stable_envs_rigid_export")
+    context = source_execution_context(root, task, source)
+    namespace = runpy.run_path(
+        str(source), init_globals=None if context is None else context["globals"], run_name="stable_envs_rigid_export"
+    )
     namespace["clear_scene"]()
     result = namespace[build]()
     if task == "G27":
@@ -890,6 +934,10 @@ def export(root, output, task):
         "exporter": "scripts/export/object_permanence.py",
         "exporter_sha256": sha256(Path(__file__)),
     }
+    context = source_execution_context(root, task, script)
+    if context is not None:
+        source["profile"] = "nominal-first-member-surface-diversity-context"
+        source["execution_context"] = context
     return write_recording(output, f"{task.lower()}-nominal", recording, source)
 
 
