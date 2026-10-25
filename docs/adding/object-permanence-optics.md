@@ -129,6 +129,16 @@ frame tracing. Batch-size scaling remains a future optimization.
 
 Use the existing isolated Blender 4.4.0 / Python 3.11 / NumPy 1.26.4 environment
 for offline work. The ordinary CUDA replay environment remains unchanged.
+Use the [recording guide's native-library fallback](object-permanence-recordings.md)
+when this machine needs `LD_LIBRARY_PATH` before importing `bpy`.
+
+Known packaging detail: the official Linux `bpy 4.4.0` wheel is named `cp311`
+([PyPI release files](https://pypi.org/project/bpy/4.4.0/#files)), but its internal
+`WHEEL` tag says `cp39`. The installed metadata matches the official artifact
+byte-for-byte; `uv pip check` consequently reports a platform mismatch. Do not
+retag the package or switch to Python 3.9 to silence that report. Functional
+source checks use the required Python 3.11 and pass; the project lock check is
+separate. No source dependency pin or installed wheel metadata was changed.
 
 ```bash
 # --task defaults to G01; member 0 is its nominal member, member 1 its open hole.
