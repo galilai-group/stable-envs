@@ -3,7 +3,7 @@
     "python",
     "benchmarks/render.py",
     "--envs",
-    "PushT,CartPole,DMCReacherHard,DMCWalkerWalk",
+    "PushT,CartPole,DMCReacher,DMCWalkerWalk",
     "--device",
     "cpu",
     "--batches",
@@ -30,7 +30,7 @@
     "envs": [
       "PushT",
       "CartPole",
-      "DMCReacherHard",
+      "DMCReacher",
       "DMCWalkerWalk"
     ],
     "max_output_mib": 2048,
@@ -147,7 +147,7 @@
         }
       ]
     },
-    "DMCReacherHard": {
+    "DMCReacher": {
       "points": [
         {
           "batch": 1,

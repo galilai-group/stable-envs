@@ -11,9 +11,8 @@ from tests.helpers.reference.semantics import assert_same_state
 pytestmark = pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA required")
 
 
-@pytest.mark.parametrize("name", ["DMCReacherEasy", "DMCReacherHard"])
 @pytest.mark.parametrize("batch", [1, 64])
-def test_cuda_reacher_uses_mjx_without_host_staging(name, batch, monkeypatch):
+def test_cuda_reacher_uses_mjx_without_host_staging(batch, monkeypatch):
     pytest.importorskip("mujoco.mjx")
     from stable_envs.envs.dmcontrol.simulation.reacher_mjx import _from_torch
 
@@ -27,7 +26,7 @@ def test_cuda_reacher_uses_mjx_without_host_staging(name, batch, monkeypatch):
         return sha256(value, **kwargs)
 
     stream = torch.cuda.Stream()
-    with torch.cuda.stream(stream), se.make(name, num_envs=batch, device="cuda") as env:
+    with torch.cuda.stream(stream), se.make("DMCReacher", num_envs=batch, device="cuda") as env:
         assert env.execution_mode == "JAX_MJX"
         env.reset(seed=7)
         action = torch.zeros(batch, 4, device="cuda")[:, ::2]
@@ -53,18 +52,16 @@ def test_cuda_reacher_uses_mjx_without_host_staging(name, batch, monkeypatch):
         assert frame.dtype == torch.uint8
 
 
-@pytest.mark.parametrize("task", ["easy", "hard"])
-def test_cuda_reacher_tracks_native_physics_variation_and_resets(task):
+def test_cuda_reacher_tracks_native_physics_variation_and_resets():
     pytest.importorskip("mujoco.mjx")
     from stable_envs.envs.dmcontrol.simulation.first_family import ReacherAdapter
 
-    reference = ReacherAdapter(3, "cpu", 7, task)
+    reference = ReacherAdapter(3, "cpu", 7)
     try:
-        with se.make(f"DMCReacher{task.title()}", num_envs=3, device="cuda") as env:
-            if task == "hard":
-                values = np.array([[500, 1500], [1500, 500], [850, 1150]])
-                reference.configure_physics(values)
-                reference.reset(7)
+        with se.make("DMCReacher", num_envs=3, device="cuda") as env:
+            values = np.array([[500, 1500], [1500, 500], [850, 1150]])
+            reference.configure_physics(values)
+            reference.reset(7)
             state = reference.get_state()
             state["lifecycle", "step_count"][:, 0] = torch.tensor([997, 998, 999])
             reference.set_state(state)

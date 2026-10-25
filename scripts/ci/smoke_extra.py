@@ -22,7 +22,7 @@ PROFILES: dict[str, dict] = {
         "render": ("PushT", "CartPole"),
     },
     "mujoco": {
-        "expect": ("DMCReacherEasy", "PointMazeMediumNavigate"),
+        "expect": ("DMCReacher", "PointMazeMediumNavigate"),
         "render": ("PointMazeMediumNavigate",),
     },
     "robotics": {

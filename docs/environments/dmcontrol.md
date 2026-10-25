@@ -1,6 +1,6 @@
 # DM Control
 
-These 18 classes port tasks of the [DeepMind Control Suite](https://github.com/google-deepmind/dm_control)
+These 17 classes port tasks of the [DeepMind Control Suite](https://github.com/google-deepmind/dm_control)
 ([Tassa et al., 2018](https://arxiv.org/abs/1801.00690)).
 
 The renderers come in two groups:
@@ -18,7 +18,7 @@ come from the actuator control range.
 ```python
 import stable_envs as snv
 
-env = snv.DMCReacherHard(num_envs=8)
+env = snv.DMCReacher(num_envs=8)
 state = env.reset(seed=0)
 out = env.step(env.action_spec.sample(8))
 ```
@@ -136,17 +136,11 @@ A body with four legs walks forward.
 
 ## Reacher
 
-### DMCReacherEasy
+### DMCReacher
 
-A planar arm with two links moves its fingertip to a random target. The target is large.
+A planar arm with two links moves its fingertip to a random target.
 
-<!-- env: DMCReacherEasy -->
-
-### DMCReacherHard
-
-This task is the same as DMCReacherEasy with a smaller target.
-
-<!-- env: DMCReacherHard -->
+<!-- env: DMCReacher -->
 
 ## Swimmer
 

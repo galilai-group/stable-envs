@@ -33,8 +33,7 @@ PARITY = (
     "DMCManipulatorBringBall",
     "DMCPendulumSwingup",
     "DMCPointMassEasy",
-    "DMCReacherEasy",
-    "DMCReacherHard",
+    "DMCReacher",
 )
 TRACKCOM = (
     "DMCCheetahRun",
@@ -58,8 +57,7 @@ WRITTEN_IN = {
     "DMCManipulatorBringBall": "manipulator",
     "DMCPendulumSwingup": "pendulum",
     "DMCPointMassEasy": "point_mass",
-    "DMCReacherEasy": "reacher",
-    "DMCReacherHard": "reacher",
+    "DMCReacher": "reacher",
     "DMCCheetahRun": "cheetah",
     "DMCHopperHop": "hopper",
     "DMCHumanoidWalk": "humanoid",
@@ -241,3 +239,12 @@ def test_render_of_state_packed_row_and_live_state_agree_to_the_bit(name):
         assert torch.equal(a, b) and torch.equal(a, c)
         assert tuple(a.shape) == (2, env.size, env.size, 3) and a.dtype == torch.uint8
         assert tuple(env.frame_spec.shape) == (env.size, env.size, 3)
+
+
+def test_reacher_has_one_public_registration():
+    assert snv.list_envs(family="dmcontrol", domain="reacher") == ["DMCReacher"]
+    assert snv.info("DMCReacher")["id"] == "dmc-reacher"
+    for name in ("DMCReacherEasy", "DMCReacherHard"):
+        with pytest.raises(KeyError, match="unknown env"):
+            snv.make(name)
+        assert not hasattr(snv, name)

@@ -28,6 +28,7 @@ SWM_IDS: dict[str, tuple[str, ...]] = _swm_ids_from_matrix()
 
 #: Cell spelling in the frozen matrix -> registered class name.
 HISTORICAL_CLASS_NAMES: dict[str, str] = {
+    "DMCReacherHard": "DMCReacher",
     "DMCAcrobotSwingup": "DMCAcrobotBalance",
     "DMCHumanoidStand": "DMCHumanoidWalk",
     "AntmazeGiantNavigate": "AntMazeGiantNavigate",

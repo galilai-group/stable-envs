@@ -21,7 +21,6 @@ DOMAINS = [
     "quadruped",
     "humanoid",
     "cartpole-balance",
-    "reacher-easy",
     "finger-spin",
     "finger-turn_easy",
     "point_mass-easy",

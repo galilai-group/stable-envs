@@ -3,7 +3,7 @@
     "python",
     "benchmarks/pipeline.py",
     "--envs",
-    "PushT,DMCReacherHard",
+    "PushT,DMCReacher",
     "--device",
     "cpu",
     "--batch",
@@ -25,7 +25,7 @@
     "device": "cpu",
     "envs": [
       "PushT",
-      "DMCReacherHard"
+      "DMCReacher"
     ],
     "jpeg_dir": null,
     "max_output_mib": 2048,
@@ -41,7 +41,7 @@
   "cpu_count_affinity": 18,
   "created_at_utc": "2026-09-18T14:15:22.735258+00:00",
   "environments": {
-    "DMCReacherHard": {
+    "DMCReacher": {
       "batch": 64,
       "frame_bytes_per_frame": 21168,
       "frame_shape": [

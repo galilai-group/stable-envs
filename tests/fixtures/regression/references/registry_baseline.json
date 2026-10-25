@@ -192,12 +192,6 @@
   },
   {
    "module": "stable_envs.envs.dmcontrol",
-   "name": "DMCReacherEasy",
-   "reference_id": "dm_control/reacher-easy",
-   "state_dim": null
-  },
-  {
-   "module": "stable_envs.envs.dmcontrol",
    "name": "DMCReacherHard",
    "reference_id": "dm_control/reacher-hard",
    "state_dim": null

@@ -10,17 +10,16 @@ from stable_envs.envs.dmcontrol.simulation.first_family import ReacherAdapter  #
 from tests.helpers.reference.semantics import assert_same_state  # noqa: E402
 
 
-@pytest.fixture(params=["easy", "hard"])
-def pair(request):
+@pytest.fixture
+def pair():
     pytest.importorskip("mujoco.mjx")
     from stable_envs.envs.dmcontrol.simulation.reacher_mjx import ReacherMJXAdapter
 
-    reference = ReacherAdapter(3, "cpu", 7, request.param)
-    env = ReacherMJXAdapter(3, "cpu", 7, request.param)
-    if request.param == "hard":
-        for item in (reference, env):
-            item.configure_physics(np.array([[500, 1500], [1500, 500], [850, 1150]]))
-            item.reset(7)
+    reference = ReacherAdapter(3, "cpu", 7)
+    env = ReacherMJXAdapter(3, "cpu", 7)
+    for item in (reference, env):
+        item.configure_physics(np.array([[500, 1500], [1500, 500], [850, 1150]]))
+        item.reset(7)
     yield reference, env
     env.close()
     reference.close()
@@ -50,11 +49,14 @@ def test_checkpoint_restores_reward_and_rejects_invalid_state_atomically(pair):
     state = reference.get_state()
     state["qpos"].zero_()
     state["qvel"].zero_()
-    state["task", "target_pos"][:] = torch.tensor([0.24, 0, 0.01], dtype=torch.float64)
-    for item in pair:
-        item.set_state(state)
     action = torch.zeros(3, 2)
-    assert torch.equal(env.step(action)["reward"], reference.step(action)["reward"])
+    for target_x, reward in ((0.27, 0.0), (0.26, 2.0)):
+        state["task", "target_pos"][:] = torch.tensor([target_x, 0, 0.01], dtype=torch.float64)
+        for item in pair:
+            item.set_state(state)
+        expected = reference.step(action)["reward"]
+        assert torch.equal(expected, torch.full((3,), reward, dtype=torch.float64))
+        assert torch.equal(env.step(action)["reward"], expected)
     assert torch.equal(env.step(action)["reward"], torch.full((3,), 2.0, dtype=torch.float64))
     checkpoint = env.get_state()
     action = torch.tensor([[0.2, -0.4], [1.0, -1.0], [-0.3, 0.6]])
@@ -88,8 +90,6 @@ def test_warm_step_does_not_hash_static_model(pair, monkeypatch):
 
 def test_density_changes_after_compilation_and_checkpoint_restore(pair):
     reference, env = pair
-    if env.key != "reacher":
-        pytest.skip("Only Reacher hard declares density Variation")
     action = torch.tensor([[0.2, -0.4], [1.0, -1.0], [-0.3, 0.6]])
     checkpoint = reference.get_state()
     env.step(action)

@@ -6,7 +6,7 @@ trade speed against memory. Frames and State are the same for every valid value.
 
 The library stores measured values per render path. For example, every fixed-camera DM Control cell
 uses the `dmc-suite` path, so a value measured with `DMCCartpoleSwingup` also applies to
-`DMCReacherEasy`. The Triton block and warp knobs and `ogb_mjw_worlds` have one measured value for the
+`DMCReacher`. The Triton block and warp knobs and `ogb_mjw_worlds` have one measured value for the
 whole device instead of one per path.
 
 ## Where a value comes from
@@ -126,7 +126,7 @@ The command prints a table and the location where it saved the values. Example o
 ```text
   knob                        default        tuned  speedup
   dmc_cpu_ray_budget          2097152       524288    1.12x
-saved for: dmc-suite, 84 px, batch 64-127 (also covers: DMCCartpoleSwingup, DMCReacherEasy, ...)
+saved for: dmc-suite, 84 px, batch 64-127 (also covers: DMCCartpoleSwingup, DMCReacher, ...)
 ```
 
 The command saves values for the render path, the frame size and the batch range. Batch ranges are

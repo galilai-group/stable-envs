@@ -45,14 +45,14 @@ def _from_torch(value):
     return jax.dlpack.from_dlpack(value, copy=False)
 
 
-def _model(task):
+def _model():
     xml, assets = reacher.get_model_and_assets()
     root = ET.fromstring(xml)
     world = root.find("worldbody")
     target = world.find("geom[@name='target']")
     position = target.attrib.pop("pos")
     target.set("pos", "0 0 0")
-    target.set("size", str(reacher._BIG_TARGET if task == "easy" else reacher._SMALL_TARGET))
+    target.set("size", str(reacher._SMALL_TARGET))
     world.remove(target)
     # Mocap positions vary per environment without duplicating the model.
     body = ET.SubElement(world, "body", name="target_mocap", mocap="true", pos=position)
@@ -63,15 +63,15 @@ def _model(task):
 class ReacherMJXAdapter(ReacherAdapter):
     """Batched MJX Reacher dynamics."""
 
-    def __init__(self, num_envs, device="cuda", seed=0, task="hard"):
-        super().__init__(num_envs, device, seed, task)
+    def __init__(self, num_envs, device="cuda", seed=0):
+        super().__init__(num_envs, device, seed)
         backend = "gpu" if self.device.type == "cuda" else "cpu"
         devices = jax.devices(backend)
         index = self.device.index
         if index is None:
             index = torch.cuda.current_device() if backend == "gpu" else 0
         self._jax_device = devices[index]
-        self._native_model = _model(task)
+        self._native_model = _model()
         self._finger = self._native_model.geom("finger").id
         self._target = self._native_model.geom("target").id
         self._radius = self._native_model.geom_size[[self._finger, self._target], 0].sum()

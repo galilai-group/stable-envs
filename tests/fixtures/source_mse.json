@@ -305,18 +305,7 @@
    "gpu": "NVIDIA GeForce RTX 3090",
    "torch": "2.14.1+cu126"
   },
-  "DMCReacherEasy": {
-   "seed": 20260811,
-   "n": 64,
-   "size": 84,
-   "mse_mean": 11.4306,
-   "mse_p95": 14.0145,
-   "mse_max": 14.6058,
-   "reference_versions": {},
-   "gpu": "NVIDIA GeForce RTX 3090",
-   "torch": "2.14.1+cu126"
-  },
-  "DMCReacherHard": {
+  "DMCReacher": {
    "seed": 20260811,
    "n": 64,
    "size": 84,

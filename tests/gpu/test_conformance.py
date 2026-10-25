@@ -35,8 +35,7 @@ ENV_NAMES = sorted(se.registry.REGISTRY)
 #: the flipped one. Measured margins over five draws per cell at 84 px:
 #:
 #:     cell                margin (CPU)      margin (RTX 3090)   declared mean|d|   flipped mean|d|
-#:     DMCReacherEasy      0.9646 - 0.9676   0.9548 - 0.9575      5.2 -  7.2        156 - 161
-#:     DMCReacherHard      0.8730 - 0.8806   0.8513 - 0.8604     17.0 - 20.3        132 - 144
+#:     DMCReacher      0.8730 - 0.8806   0.8513 - 0.8604     17.0 - 20.3        132 - 144
 #:     DMCFingerTurnEasy   0.8263 - 0.8506   0.9445 - 0.9503      5.1 - 16.9         97 - 104
 #:     DMCFingerTurnHard   0.8199 - 0.8713   0.9090 - 0.9147      9.0 - 18.4         99 - 108
 #:

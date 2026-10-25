@@ -15,7 +15,6 @@ CELLS = {
     "DMCFingerSpin": ("finger", "spin"),
     "DMCFingerTurnEasy": ("finger", "turn_easy"),
     "DMCPointMassEasy": ("point_mass", "easy"),
-    "DMCReacherEasy": ("reacher", "easy"),
     "DMCSwimmerSwimmer6": ("swimmer", "swimmer6"),
 }
 #: SWM-registered cells against the suite task each simulates. The aligned cells (SWM's MJCF round
@@ -27,7 +26,7 @@ SWM_CELLS = {
     "DMCCheetahRun": ("cheetah", "run"),
     "DMCHopperHop": ("hopper", "hop"),
     "DMCHumanoidWalk": ("humanoid", "walk"),
-    "DMCReacherHard": ("reacher", "hard"),
+    "DMCReacher": ("reacher", "hard"),
 }
 TRACKCOM = {"DMCSwimmerSwimmer6", "DMCCheetahRun", "DMCHopperHop", "DMCHumanoidWalk"}
 
