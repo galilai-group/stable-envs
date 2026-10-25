@@ -153,6 +153,11 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- Optical replay retains one camera origin and one direction per pixel, sharing
+  them with the first static segment. Static normals are reconstructed only for
+  diagnostic Torch replay; fused rendering no longer retains them. Sampling,
+  precision, public outputs and frozen fidelity budgets remain unchanged.
+
 - `stable-envs doctor` reports how many render paths are tuned on this machine, lists the
   `STABLE_ENVS_*` variables that are set and flags unknown names, and checks torch's compiled GPU
   architectures with binary-compatibility rules.

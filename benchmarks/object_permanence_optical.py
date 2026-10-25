@@ -12,10 +12,32 @@ import torch
 from stable_envs.envs.object_permanence import RigidTrajectory
 from stable_envs.envs.object_permanence.rendering.rigid_nvdiff import RigidSceneRenderer
 
+VARIANTS = ("full", "static-torch", "static-fused-unbounded", "static-fused")
 
-def benchmark(root, clip, *, size=180, batches=(1, 4, 16), repeats=3):
+
+def storage_bytes(renderer):
+    """Count retained CUDA storage once, including views shared by cache entries."""
+    seen = set()
+
+    def count(value):
+        if torch.is_tensor(value) and value.is_cuda:
+            storage = value.untyped_storage()
+            key = (value.device, storage.data_ptr())
+            if key not in seen:
+                seen.add(key)
+                return storage.nbytes()
+        elif isinstance(value, (tuple, list)):
+            return sum(count(v) for v in value)
+        return 0
+
+    result = {name: count(value) for name, value in vars(renderer).items()}
+    result["query"] = sum(count(value) for value in vars(renderer.query).values())
+    return {name: size for name, size in result.items() if size}
+
+
+def benchmark(root, clip, *, size=180, batches=(1, 4, 16), repeats=3, variants=VARIANTS):
     rows = []
-    for variant in ("full", "static-torch", "static-fused-unbounded", "static-fused"):
+    for variant in variants:
         with RigidTrajectory(root, clip) as trajectory:
             start = time.perf_counter()
             with RigidSceneRenderer(
@@ -64,6 +86,7 @@ def benchmark(root, clip, *, size=180, batches=(1, 4, 16), repeats=3):
                             "resident_mib": resident / 2**20,
                             "peak_allocated_mib": torch.cuda.max_memory_allocated() / 2**20,
                             "cache_builds": renderer.renderer.builds,
+                            "retained_storage_bytes": storage_bytes(renderer.renderer),
                         }
                     )
                     print(clip, variant, batch, round(batch / median, 2), "frames/s", flush=True)
@@ -102,12 +125,15 @@ def main():
     p.add_argument("--batches", type=int, nargs="+", default=[1, 4, 16])
     p.add_argument("--repeats", type=int, default=3)
     p.add_argument("--height", type=int, default=180)
+    p.add_argument("--variants", nargs="+", choices=VARIANTS, default=VARIANTS)
     p.add_argument("--report", type=Path, required=True)
     p.add_argument("--profile", type=Path, default=None)
     a = p.parse_args()
     rows = []
     for clip in a.clips:
-        rows.extend(benchmark(a.recordings, clip, size=a.height, batches=a.batches, repeats=a.repeats))
+        rows.extend(
+            benchmark(a.recordings, clip, size=a.height, batches=a.batches, repeats=a.repeats, variants=a.variants)
+        )
     result = {
         "gpu": torch.cuda.get_device_name(),
         "torch": torch.__version__,

@@ -44,13 +44,21 @@ def _query(
     Normal,
     Count,
     G: tl.constexpr,
+    O_ROW: tl.constexpr,
+    O_COL: tl.constexpr,
+    D_ROW: tl.constexpr,
+    D_COL: tl.constexpr,
     HAS_LIMIT: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
     q = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
     valid = q < Count
-    ox, oy, oz = _vector(O, q, 3, valid)
-    dx, dy, dz = _vector(D, q, 3, valid)
+    ox = tl.load(O + q * O_ROW, valid, 0).to(tl.float64)
+    oy = tl.load(O + q * O_ROW + O_COL, valid, 0).to(tl.float64)
+    oz = tl.load(O + q * O_ROW + 2 * O_COL, valid, 0).to(tl.float64)
+    dx = tl.load(D + q * D_ROW, valid, 0).to(tl.float64)
+    dy = tl.load(D + q * D_ROW + D_COL, valid, 0).to(tl.float64)
+    dz = tl.load(D + q * D_ROW + 2 * D_COL, valid, 0).to(tl.float64)
     best = (
         tl.load(Limit + q, valid, float("inf")).to(tl.float64)
         if HAS_LIMIT
@@ -142,6 +150,33 @@ def _query(
     tl.store(Normal + 3 * q + 2, wz / length, valid)
 
 
+@tr.jit(do_not_specialize=["Count"])
+def _normals(Triangles, Labels, Inverse, Face, Normal, Count, BLOCK: tl.constexpr):
+    q = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
+    valid = q < Count
+    face = tl.load(Face + q, valid, -1)
+    hit = valid & (face >= 0)
+    g = tl.load(Labels + face, hit, 0)
+    ax, ay, az = _vector(Triangles, face, 9, hit)
+    bx, by, bz = _vector(Triangles + 3, face, 9, hit)
+    cx, cy, cz = _vector(Triangles + 6, face, 9, hit)
+    ux, uy, uz = bx - ax, by - ay, bz - az
+    ex, ey, ez = cx - ax, cy - ay, cz - az
+    fnx, fny, fnz = uy * ez - uz * ey, uz * ex - ux * ez, ux * ey - uy * ex
+    a, b, c = _vector(Inverse, g, 9, hit)
+    e, f, h = _vector(Inverse + 3, g, 9, hit)
+    j, k, l = _vector(Inverse + 6, g, 9, hit)
+    # Match _query's exact inverse-transpose and normalization order, including
+    # NaN normals for misses. No new intersection or persistent normal buffer.
+    wx = a * fnx + e * fny + j * fnz
+    wy = b * fnx + f * fny + k * fnz
+    wz = c * fnx + h * fny + l * fnz
+    length = tl.sqrt(wx * wx + wy * wy + wz * wz)
+    tl.store(Normal + 3 * q, wx / length, valid)
+    tl.store(Normal + 3 * q + 1, wy / length, valid)
+    tl.store(Normal + 3 * q + 2, wz / length, valid)
+
+
 class TriangleQuery:
     """One local BVH per object, supporting rigid and positive-scale transforms."""
 
@@ -183,7 +218,7 @@ class TriangleQuery:
         self.semantics = semantic_ids[self.labels].contiguous()
 
     def __call__(self, origins, directions, positions, inverse, selected, planes, *, limit=None):
-        """Return world-ray distance, original face and world geometric normal."""
+        """Return distance, face and normal; ray rows may be broadcast/strided."""
         n = len(origins)
         if limit is not None and (
             limit.shape != (n,)
@@ -194,7 +229,7 @@ class TriangleQuery:
             raise ValueError("ray limits must be contiguous CUDA float64 [N]")
         distance = torch.empty(n, dtype=torch.float64, device=self.device)
         face = torch.empty(n, dtype=torch.int64, device=self.device)
-        normal = torch.empty_like(origins)
+        normal = origins.new_empty((n, 3))
         if n:
             _query[(tr.cdiv(n, 64),)](
                 origins,
@@ -216,8 +251,26 @@ class TriangleQuery:
                 normal,
                 n,
                 self.count,
+                *origins.stride(),
+                *directions.stride(),
                 limit is not None,
                 64,
                 enable_fp_fusion=False,
             )
         return distance, face, normal
+
+    def normals(self, faces, inverse):
+        """Reconstruct queried geometric normals for the diagnostic cache path."""
+        normal = torch.empty((len(faces), 3), dtype=torch.float64, device=self.device)
+        if len(faces):
+            _normals[(tr.cdiv(len(faces), 128),)](
+                self.triangles,
+                self.labels,
+                inverse,
+                faces,
+                normal,
+                len(faces),
+                128,
+                enable_fp_fusion=False,
+            )
+        return normal

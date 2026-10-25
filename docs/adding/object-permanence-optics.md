@@ -115,7 +115,18 @@ movers share the same query/ordering rules. Moving glass safely uses full tracin
 Recreate the renderer for a different immutable scene/material/camera.
 
 Primary samples share a ray, so the cached dynamic query traces it once per
-pixel. Variable active-ray counts are runtime kernel arguments, avoiding a new
+pixel. The retained camera origin is float64 `[1,3]` and directions `[H*W,3]`;
+zero-stride origin views are read directly by the query kernel. The first static
+segment shares these buffers, rather than retaining eight copies per pixel.
+Subsequent bent segments retain independent per-sample origins/directions.
+`StaticSegment` stores sample IDs, origins/directions, next-hit distances/faces
+and cumulative distances; it does not retain surface normals. The fused resolve
+uses only newly queried dynamic normals. Diagnostic `fuse_cache=False` reconstructs
+static normals transiently from local triangles and inverse transforms, using
+the query kernel's exact arithmetic order; it does not rebuild or enlarge the cache.
+The eight samples, event counter, float64 hits and semantic ties are unchanged.
+
+Variable active-ray counts are runtime kernel arguments, avoiding a new
 Triton compilation for every different frame. Diagnostic `fuse_cache=False` on
 the owned optical renderer retains the Torch cache comparison. `cache_static=False`
 retains full tracing. Diagnostic `use_ray_limits=False` preserves unbounded
@@ -124,6 +135,15 @@ buffers are supported, and unrequested dense object masks are not retained.
 The current optical implementation processes frames sequentially within a public
 batch; `chunk_size` compatibility is retained, but does not imply simultaneous
 frame tracing. Batch-size scaling remains a future optimization.
+
+Static transport is a compute/memory tradeoff, not an image-size reduction:
+records cover multiple surface events per sample, and the terminal seed retains
+sample RGB/depth/IDs before averaging. Downloads still contain compact CPU states
+and shared assets. A caller may instead render a fixed clip in small frame batches,
+retain its GPU uint8 RGB, then close the renderer; this does not require uploading
+the whole trajectory at once. Cached pixels must be regenerated if camera,
+resolution, material or rendering policy changes. Cross-scene GPU sharing and a
+byte-budgeted renderer/pixel cache are not currently automatic.
 
 ## Reproduction and acceptance
 
@@ -153,6 +173,9 @@ python -m scripts.testing.check_object_permanence_optical --recordings <recordin
   --oracle <oracle> --report <report.json>
 python -m benchmarks.object_permanence_optical --recordings <recordings> \
   --report <benchmark.json> --profile <profile.txt>
+# Measure only the production cache, with alias-aware retained storage counts.
+python -m benchmarks.object_permanence_optical --recordings <recordings> \
+  --variants static-fused --batches 1 16 --repeats 7 --report <cache-benchmark.json>
 ```
 
 The independent source oracle never imports runtime extraction, recording arrays
@@ -192,8 +215,9 @@ includes CPU frame selection, exact-matrix upload and CUDA synchronization;
 initialization/first-call cost and resident/peak allocation are reported
 separately. These measurements do not compare MP4 decoding or training speed.
 
-Measured on RTX 3070 Ti Laptop, Torch 2.14.1+cu130, 320x180 RGB, batch 16,
-median of three synchronized samples after warmup (same frame indices per variant):
+The earlier, pre-compaction implementation measured on RTX 3070 Ti Laptop,
+Torch 2.14.1+cu130, 320x180 RGB, batch 16, median of three synchronized samples
+after warmup (same frame indices per variant):
 
 | Clip | Full FPS | Torch cache FPS | Fused unbounded FPS | Fused bounded FPS | Full→bounded |
 |---|---:|---:|---:|---:|---:|
@@ -201,7 +225,7 @@ median of three synchronized samples after warmup (same frame indices per varian
 | G01 open hole | 1.92 | 8.01 | 26.33 | 40.87 | 21.31x |
 | G03 transparent wall | 8.12 | 16.85 | 144.83 | 154.15 | 18.99x |
 
-Full/bounded peak PyTorch allocation is 125.94/155.46, 127.09/159.10 and
+Those full/bounded peak PyTorch allocations were 125.94/155.46, 127.09/159.10 and
 88.32/95.96 MiB respectively. These include persistent tensors, not total driver
 memory. Static transport raises resident allocation from about 30–31 MiB to
 70–125 MiB. Fusion lowers peak allocation relative to the Torch cache, but the
@@ -210,7 +234,26 @@ states save dataset storage; a faster online renderer does not automatically
 mean a smaller GPU cache. Different frame sets explain some batch FPS variation;
 this backend currently traces frames sequentially.
 
-For open-hole G01, profiling 16 frames attributes 97.63% of CUDA time to BVH
+Compacting primary rays and dropping retained static normals changes the production
+cache as follows. The same machine, frame indices and upload-inclusive calls use
+seven synchronized samples after warmup, with the original and new implementations
+loaded in separate processes. MiB is 1,048,576 bytes; storage counts shared tensor
+allocations once, whereas resident/peak include PyTorch workspace and block rounding.
+
+| Clip | Retained storage MiB before→after | Resident MiB before→after | Batch-16 peak MiB before→after | Batch-16 FPS before→after |
+|---|---:|---:|---:|---:|
+| G01 covered hole | 108.78→67.78 | 123.92→83.39 | 156.17→116.95 | 57.43→57.67 |
+| G01 open hole | 111.84→70.08 | 124.70→83.83 | 159.10→118.76 | 41.64→41.30 |
+| G03 transparent wall | 62.10→31.64 | 70.24→39.78 | 95.96→61.84 | 162.13→155.03 |
+
+Primary ray storage drops from 21.53 to 1.76 MiB in all three clips. G01's static
+normal buffers previously used another 21.23/21.99 MiB. Terminal RGB/depth/ID samples
+still use 14.94 MiB; bent path records remain necessary. This is a memory reduction,
+not a throughput speedup claim: traversal work is unchanged, G01 FPS is nearly
+flat, and the G03 sample is 4.4% slower (the original pre-change run was 155.75 FPS).
+All 120 frames preserve exact full/cache outputs and source depth MSE 0 / mask IoU 1.
+
+For open-hole G01, earlier profiling of 16 frames attributes 97.63% of CUDA time to BVH
 queries and 0.81% to fused resolve. Bounds reduce query time from 556.6 to
 346.9 ms in the sampled profile without changing its 240 query calls. Remaining
 work should target conservative BVH/ray-packet traversal and frame batching;

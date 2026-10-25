@@ -139,7 +139,7 @@ def test_optical_all_frame_independent_oracle(task, member, cached):
 
     directory = (
         FIXTURES
-        / "semantics/object_permanence/g01/sampled_optical_rays_v1"
+        / f"semantics/object_permanence/{task.lower()}/sampled_optical_rays_v1"
         / ("nominal" if member == 0 else "member1")
     )
     result = check(RECORDINGS, directory, cache_static=cached)
@@ -347,3 +347,94 @@ def test_query_distance_limit_keeps_exact_boundary_hits_and_miss_convention():
     )
     np.testing.assert_array_equal(face.cpu(), [-1, 0, 0])
     np.testing.assert_array_equal(t.cpu(), [np.inf, 2.0, 2.0])
+
+
+@pytest.mark.parametrize("layout", ["broadcast", "strided", "transposed"])
+@pytest.mark.parametrize("dtype", [torch.float32, torch.float64])
+def test_query_ray_views_match_contiguous_inputs(layout, dtype):
+    mesh = np.array([[[-1, -1, -2], [1, -1, -2], [0, 1, -2]]], np.float64)
+    query = TriangleQuery([mesh])
+    n = 5
+    origin = torch.zeros(n, 3, device="cuda", dtype=dtype)
+    direction = torch.tensor([[0.0, 0.0, -1.0]] * n, device="cuda", dtype=dtype)
+    if layout == "broadcast":
+        origin = origin[:1].expand(n, 3)
+        direction = direction[:1].expand(n, 3)
+    elif layout == "strided":
+        origin = origin.repeat_interleave(2, 0)[::2]
+        direction = direction.repeat_interleave(2, 0)[::2]
+    else:
+        origin = origin.T.contiguous().T
+        direction = direction.T.contiguous().T
+    args = (
+        torch.zeros(1, 3, device="cuda", dtype=torch.float64),
+        torch.eye(3, device="cuda", dtype=torch.float64)[None],
+        torch.ones(1, device="cuda", dtype=torch.bool),
+        torch.tensor(local_planes(mesh.reshape(-1, 3), np.arange(3).reshape(-1, 3)), device="cuda"),
+    )
+    actual = query(origin, direction, *args)
+    expected = query(origin.contiguous(), direction.contiguous(), *args)
+    assert all(torch.equal(a, b) for a, b in zip(actual, expected, strict=True))
+    assert actual[2].shape == (n, 3) and actual[2].is_contiguous()
+    assert actual[2].dtype == dtype
+
+
+def test_reconstructed_normals_match_query_for_affine_transforms_and_misses():
+    mesh = np.array([[[-1, -1, -2], [1, -1, -2], [0, 1, -1]]], np.float64)
+    query = TriangleQuery([mesh])
+    matrix = np.array([[1.3, -0.2, 0.1], [0.4, 0.8, 0.2], [-0.1, 0.3, 1.1]], np.float64)
+    world = mesh @ matrix.T
+    centre = world.mean(1)
+    normal = np.cross(world[:, 1] - world[:, 0], world[:, 2] - world[:, 0])
+    normal /= np.linalg.norm(normal, axis=-1, keepdims=True)
+    origin = np.concatenate((centre + 2 * normal, centre - 2 * normal, centre + 100))
+    direction = np.concatenate((-normal, normal, normal))
+    inverse = torch.tensor(np.linalg.inv(matrix)[None], device="cuda")
+    _, face, expected = query(
+        torch.tensor(origin, device="cuda"),
+        torch.tensor(direction, device="cuda"),
+        torch.zeros(1, 3, device="cuda", dtype=torch.float64),
+        inverse,
+        torch.ones(1, device="cuda", dtype=torch.bool),
+        torch.tensor(local_planes(world.reshape(-1, 3), np.arange(3).reshape(-1, 3)), device="cuda"),
+    )
+    assert face.tolist() == [0, 0, -1]
+    actual = query.normals(face, inverse)
+    torch.testing.assert_close(actual, expected, rtol=0, atol=0, equal_nan=True)
+    assert query.normals(face[:0], inverse).shape == (0, 3)
+
+
+@pytest.mark.parametrize("clip_name", ["g01-nominal", "g01-member1"])
+@pytest.mark.parametrize("size", [90, 180])
+def test_retained_optical_storage_stays_compact_across_diagnostic_and_fused_calls(clip_name, size):
+    from benchmarks.object_permanence_optical import storage_bytes
+    from stable_envs.envs.object_permanence import RigidTrajectory
+    from stable_envs.envs.object_permanence.rendering.optics import CONTRACT
+    from stable_envs.envs.object_permanence.rendering.rigid_nvdiff import RigidSceneRenderer
+    from tests.helpers.reference.object_permanence_recordings import RECORDINGS
+
+    with RigidTrajectory(RECORDINGS, clip_name) as clip:
+        with RigidSceneRenderer(clip, size=size, visibility_contract=CONTRACT) as renderer:
+            modes = ("rgb", "depth", "ids", "masks", "path_depth")
+            reference = renderer.render_many([44, 119], modes=modes)
+            baseline = storage_bytes(renderer.renderer)
+            # Previous duplicate primary rays and retained static normals use
+            # over 28 MiB here. Leave headroom for scene metadata, not duplication.
+            assert sum(baseline.values()) < 20 * (size / 90) ** 2 * 2**20
+            renderer.renderer.fuse_cache = False
+            diagnostic = renderer.render_many([44, 119], modes=modes)
+            assert all(torch.equal(reference[k], diagnostic[k]) for k in modes)
+            assert storage_bytes(renderer.renderer) == baseline
+            renderer.renderer.fuse_cache = True
+            repeated = renderer.render_many([119, 44], modes=modes)
+            assert all(torch.equal(reference[k].flip(0), repeated[k]) for k in modes)
+            assert storage_bytes(renderer.renderer) == baseline
+            for start in range(0, len(clip), 16):
+                frames = np.arange(start, min(start + 16, len(clip)))
+                fused = renderer.render_many(frames, modes=modes)
+                renderer.renderer.fuse_cache = False
+                diagnostic = renderer.render_many(frames, modes=modes)
+                assert all(torch.equal(fused[k], diagnostic[k]) for k in modes), (clip_name, size, start)
+                renderer.renderer.fuse_cache = True
+                assert storage_bytes(renderer.renderer) == baseline
+            assert renderer.renderer.builds == 1

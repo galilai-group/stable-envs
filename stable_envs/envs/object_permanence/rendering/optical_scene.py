@@ -8,6 +8,8 @@ opaque movers can intercept any reflected/refracted segment without rebuilding i
 
 from __future__ import annotations
 
+from typing import NamedTuple
+
 import numpy as np
 import torch
 
@@ -42,6 +44,22 @@ def dielectric(d, n, n1, n2, choice):
     refracted = eta[:, None] * d + (eta * c - ct)[:, None] * n
     direction = torch.where(reflect[:, None], reflected, refracted)
     return direction / direction.norm(dim=-1, keepdim=True), reflect
+
+
+class StaticSegment(NamedTuple):
+    """Immutable transport prefix; primary rays share compact camera buffers.
+
+    ``ray`` indexes event samples. Primary ``origin`` is [1,3] and ``direction``
+    is [pixels,3]; later segments store one origin/direction per surviving sample.
+    Normals are reconstructed only by the diagnostic Torch path, never retained.
+    """
+
+    ray: torch.Tensor
+    origin: torch.Tensor
+    direction: torch.Tensor
+    distance: torch.Tensor
+    face: torch.Tensor
+    travelled: torch.Tensor
 
 
 class OpticalSceneRenderer(Closeable):
@@ -130,8 +148,8 @@ class OpticalSceneRenderer(Closeable):
         rays = row_matrix3(local, world[:3, :3].T)
         self.axis_factor = 1 / rays.norm(dim=-1)
         rays = rays / rays.norm(dim=-1, keepdim=True)
-        self.origins = world[:3, 3].expand(len(rays) * self.samples, 3).contiguous()
-        self.directions = rays.repeat_interleave(self.samples, 0).contiguous()
+        self.origins = world[:3, 3].reshape(1, 3).contiguous()
+        self.directions = rays.contiguous()
         self.view_forward = -world[:3, 2]
         self.camera = camera
         self._segments = None
@@ -164,10 +182,13 @@ class OpticalSceneRenderer(Closeable):
         return self.colors[label] * (0.35 + 0.65 * (normal * light).sum(-1).abs().clamp(0, 1))[:, None]
 
     def _walk(self, positions, inverse, selected, *, save=False, segments=None, collect=True):
-        total = len(self.origins)
         pixels = self.height * self.width
+        total = pixels * self.samples
         ray = torch.arange(total, device=self.device)
-        origin, direction = self.origins, self.directions
+        origin = self.origins.expand(total, 3)
+        # Full tracing needs independent sampled continuations. The static cache
+        # retains the compact camera buffers instead of this temporary expansion.
+        direction = self.directions.repeat_interleave(self.samples, 0)
         membership = torch.zeros(total, device=self.device, dtype=torch.int64)
         travelled = torch.zeros(total, device=self.device, dtype=torch.float64)
         rgb = torch.zeros(total, 3, device=self.device, dtype=torch.float64)
@@ -186,8 +207,9 @@ class OpticalSceneRenderer(Closeable):
                 entry = segments[event]
                 # Static paths carry global sample IDs, so dynamic termination is
                 # just a lookup/gate; no cached history is advanced in place.
-                index = torch.searchsorted(entry[0], ray)
-                st, sf, sn = (entry[k][index] for k in (3, 4, 5))
+                index = torch.searchsorted(entry.ray, ray)
+                st, sf = entry.distance[index], entry.face[index]
+                sn = self.query.normals(sf, inverse)
                 t, face, normal = self.query(
                     origin, direction, positions, inverse, (~self.static) & (self.material[:, 0] > 0), self._planes
                 )
@@ -201,7 +223,16 @@ class OpticalSceneRenderer(Closeable):
                     torch.where(closer[:, None], normal, sn),
                 )
             if save:
-                saved.append((ray.clone(), origin, direction, t, face, normal, travelled))
+                saved.append(
+                    StaticSegment(
+                        ray.clone(),
+                        self.origins if event == 0 else origin,
+                        self.directions if event == 0 else direction,
+                        t,
+                        face,
+                        travelled,
+                    )
+                )
             hit = face >= 0
             rgb[ray[~hit]] = self.background
             ray, origin, direction, membership, travelled, t, face, normal = (
@@ -274,9 +305,9 @@ class OpticalSceneRenderer(Closeable):
         )
         selected = (~self.static) & (self.material[:, 0] > 0)
         for event, entry in enumerate(self._segments):
-            ray, origin, direction, st, sf, _, travelled = entry
+            ray, origin, direction, st, sf, travelled = entry
             if event == 0:
-                origin, direction = origin[:: self.samples].contiguous(), direction[:: self.samples].contiguous()
+                origin = origin.expand(pixels, 3)
             limit = (st[:: self.samples].contiguous() if event == 0 else st) if self.use_ray_limits else None
             t, face, normal = self.query(origin, direction, positions, inverse, selected, self._planes, limit=limit)
             composite[(triton.cdiv(len(ray), 128),)](
