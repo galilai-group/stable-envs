@@ -1,0 +1,898 @@
+{
+  "arrays": {
+    "frames": {
+      "dtype": "int64",
+      "sha256": "3ce1a862b6cf0bb21bc1354b758cafa47ca5ec03b5c004d6210f5abd8c55df44",
+      "shape": [
+        120
+      ]
+    },
+    "poses": {
+      "dtype": "float32",
+      "sha256": "4e96d8db22b18a3a04f665919d2f9973c7f002515d6af84dad48a374203cca40",
+      "shape": [
+        120,
+        1,
+        7
+      ]
+    },
+    "transforms": {
+      "dtype": "float64",
+      "sha256": "6cbde7eb9f51e6607b1ca6be970905e326e175dffa3dc09a894e4858bb090c81",
+      "shape": [
+        120,
+        1,
+        4,
+        4
+      ]
+    }
+  },
+  "assets": {
+    "01081941884cbd41d01654b69e0675a72a26da0eb16870eb871e7ea1bb410f7b": {
+      "file": "assets/cube/01081941884cbd41d01654b69e0675a72a26da0eb16870eb871e7ea1bb410f7b.npz",
+      "sha256": "5b1faec54bfe91629f512e93abf66655f4406cecc5f9924833aec9cddb092df3"
+    },
+    "0b0837fb91726b5e8d5d718ed902f3d0d59198271d3a76a4e55b35d339efe407": {
+      "file": "assets/cube/0b0837fb91726b5e8d5d718ed902f3d0d59198271d3a76a4e55b35d339efe407.npz",
+      "sha256": "8431f7d0c3f62f724f41bee42edaf1a9a4f452cce59bc17923b306e9c52ba63f"
+    },
+    "1ca32a802ab0c7c76d9dfac96f323ce06f8995cbfae6d70d3caeb3d6b282b554": {
+      "file": "assets/cube/1ca32a802ab0c7c76d9dfac96f323ce06f8995cbfae6d70d3caeb3d6b282b554.npz",
+      "sha256": "0fa9e8d34ea9d0597d6d57e902ab7005e2c7477f13a0821cc25ec10c5b9184d8"
+    },
+    "48bb590479c9c9d8fb1adfb6d0b0d468dd94791da4c6888a14dee83ca40dd894": {
+      "file": "assets/cube/48bb590479c9c9d8fb1adfb6d0b0d468dd94791da4c6888a14dee83ca40dd894.npz",
+      "sha256": "b81d761fa7db0897b09cdbecee34ab827022bd34b50a9c7ae2a5b6b7d6982c48"
+    },
+    "5a0a400c2ef94597d493bcaad3b47c045f89ad9999842a85dd5997d5df30df06": {
+      "file": "assets/cube/5a0a400c2ef94597d493bcaad3b47c045f89ad9999842a85dd5997d5df30df06.npz",
+      "sha256": "871b6abd302b928286e04dbad0e319473c1242636536e9df240c0aeab550cc5a"
+    },
+    "6e0c5d75b4f6c13f06295d313b787bafba128d9769b2e7fec6e0785e3fb8f2c4": {
+      "file": "assets/cube/6e0c5d75b4f6c13f06295d313b787bafba128d9769b2e7fec6e0785e3fb8f2c4.npz",
+      "sha256": "a5603d80cd71fa411fa5e87eeb22dca40507ef28782178295f0a5a694cb127bc"
+    },
+    "af8bd67144918e0db021618df75b0359bc4688fb274988e83c2548a0ef5e1433": {
+      "file": "assets/cube/af8bd67144918e0db021618df75b0359bc4688fb274988e83c2548a0ef5e1433.npz",
+      "sha256": "d363e825f696677507c3f874d652faf7529d24f6de9cbaeb9c3f63928dd25f84"
+    },
+    "bb0faeebe82bae9f89ec09751a56d308a1b511268c4b154740505219226891a1": {
+      "file": "assets/cube/bb0faeebe82bae9f89ec09751a56d308a1b511268c4b154740505219226891a1.npz",
+      "sha256": "69e939747f333674acfb7f5bf815743cfd8608ba1011476c89bf392d3bd4b8dc"
+    },
+    "c021b8ba445e4385aa9e5041cecb833ac9a8ab21db584a07535f51c62dc076f4": {
+      "file": "assets/cube/c021b8ba445e4385aa9e5041cecb833ac9a8ab21db584a07535f51c62dc076f4.npz",
+      "sha256": "5c728e0c49199b6671a6a6e05fe061ae3b63a99c2f9b189995f4066030e8503e"
+    },
+    "fa3524c495761dc167d261e22772459274bb3dbf0a7e9ba558409eb715faff34": {
+      "file": "assets/sphere/fa3524c495761dc167d261e22772459274bb3dbf0a7e9ba558409eb715faff34.npz",
+      "sha256": "a3f81c348b0d077b93316d3bb5c63275e3bf522c86823e39691be17d846043c5"
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "height": 720,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        1.6666666269302368,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        2.9629628658294678,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "projection_type": "perspective",
+    "width": 1280,
+    "world": [
+      [
+        0.9399377703666687,
+        0.10825943201780319,
+        -0.3237234950065613,
+        -4.199999809265137
+      ],
+      [
+        -0.341345876455307,
+        0.29810577630996704,
+        -0.8914123177528381,
+        -9.5
+      ],
+      [
+        4.8276913133804555e-08,
+        0.9483737945556641,
+        0.31715479493141174,
+        4.699999809265137
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "clip": "g03-member1",
+  "conventions": {
+    "quaternion": "wxyz",
+    "units": "source-scene-units",
+    "world": "right-handed-z-up"
+  },
+  "dynamic_nodes": [
+    "target_red_ball_blocked_by_transparent_wall"
+  ],
+  "fps": 24.0,
+  "license_ref": {
+    "sha256": "0163481eb7a0fe3ed86d2dccf542a849b36b3c119f8ca6d3d5b36c074f2e1a1c"
+  },
+  "material_convention": "stable-envs/constant-dielectric-surfaces-v1",
+  "objects": [
+    {
+      "asset": "0b0837fb91726b5e8d5d718ed902f3d0d59198271d3a76a4e55b35d339efe407",
+      "id": 1,
+      "name": "ramp_body",
+      "node": -1,
+      "optics": {
+        "ior": 1.5,
+        "roughness": 0.6800000071525574,
+        "transmission": 0.0
+      },
+      "pose": [
+        0.0,
+        0.0,
+        1.4500000476837158,
+        0.994521975517273,
+        0.0,
+        0.10452848672866821,
+        0.0
+      ],
+      "rgba": [
+        0.7599999904632568,
+        0.5699999928474426,
+        0.36000001430511475,
+        1.0
+      ],
+      "role": "support_surface",
+      "shape": "cube",
+      "source_id": "ramp_body",
+      "transform": [
+        [
+          0.9781476259231567,
+          0.0,
+          0.20791170001029968,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          -0.20791170001029968,
+          0.0,
+          0.9781476259231567,
+          1.4500000476837158
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "asset": "01081941884cbd41d01654b69e0675a72a26da0eb16870eb871e7ea1bb410f7b",
+      "id": 2,
+      "name": "small_contact_marker_on_track_before_transparent_wall",
+      "node": -1,
+      "optics": {
+        "ior": 1.5,
+        "roughness": 0.46000000834465027,
+        "transmission": 0.0
+      },
+      "pose": [
+        0.2525033950805664,
+        0.0,
+        1.5220767259597778,
+        0.994521975517273,
+        0.0,
+        0.10452848672866821,
+        0.0
+      ],
+      "rgba": [
+        1.0,
+        0.8399999737739563,
+        0.10000000149011612,
+        1.0
+      ],
+      "role": "contact_marker",
+      "shape": "cube",
+      "source_id": "small_contact_marker_on_track_before_transparent_wall",
+      "transform": [
+        [
+          0.9781476259231567,
+          0.0,
+          0.20791170001029968,
+          0.2525033950805664
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          -0.20791170001029968,
+          0.0,
+          0.9781476259231567,
+          1.5220767259597778
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "asset": "48bb590479c9c9d8fb1adfb6d0b0d468dd94791da4c6888a14dee83ca40dd894",
+      "id": 3,
+      "name": "table_floor",
+      "node": -1,
+      "optics": {
+        "ior": 1.5,
+        "roughness": 0.75,
+        "transmission": 0.0
+      },
+      "pose": [
+        0.6000000238418579,
+        0.0,
+        0.3499999940395355,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8299999833106995,
+        0.8100000023841858,
+        0.7599999904632568,
+        1.0
+      ],
+      "role": "ground",
+      "shape": "cube",
+      "source_id": "table_floor",
+      "transform": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.6000000238418579
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.3499999940395355
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "asset": "fa3524c495761dc167d261e22772459274bb3dbf0a7e9ba558409eb715faff34",
+      "id": 4,
+      "name": "target_red_ball_blocked_by_transparent_wall",
+      "node": 0,
+      "optics": {
+        "ior": 1.5,
+        "roughness": 0.3499999940395355,
+        "transmission": 0.0
+      },
+      "pose": [
+        -3.2050650119781494,
+        0.0,
+        2.4839651584625244,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.949999988079071,
+        0.029999999329447746,
+        0.019999999552965164,
+        1.0
+      ],
+      "role": "target",
+      "shape": "sphere",
+      "source_id": "target_red_ball_blocked_by_transparent_wall",
+      "transform": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          -3.2050650119781494
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          2.4839651584625244
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "asset": "c021b8ba445e4385aa9e5041cecb833ac9a8ab21db584a07535f51c62dc076f4",
+      "id": 5,
+      "name": "track_strip_on_ramp",
+      "node": -1,
+      "optics": {
+        "ior": 1.5,
+        "roughness": 0.7200000286102295,
+        "transmission": 0.0
+      },
+      "pose": [
+        0.022454462945461273,
+        0.0,
+        1.5556399822235107,
+        0.994521975517273,
+        0.0,
+        0.10452848672866821,
+        0.0
+      ],
+      "rgba": [
+        0.8600000143051147,
+        0.7300000190734863,
+        0.550000011920929,
+        1.0
+      ],
+      "role": "track",
+      "shape": "cube",
+      "source_id": "track_strip_on_ramp",
+      "transform": [
+        [
+          0.9781476259231567,
+          0.0,
+          0.20791170001029968,
+          0.022454462945461273
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          -0.20791170001029968,
+          0.0,
+          0.9781476259231567,
+          1.5556399822235107
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "asset": "bb0faeebe82bae9f89ec09751a56d308a1b511268c4b154740505219226891a1",
+      "id": 6,
+      "name": "transparent_glass_wall_across_track",
+      "node": -1,
+      "optics": {
+        "ior": 1.4500000476837158,
+        "roughness": 0.10000000149011612,
+        "transmission": 0.18000000715255737
+      },
+      "pose": [
+        0.6897567510604858,
+        0.0,
+        2.049696445465088,
+        0.994521975517273,
+        0.0,
+        0.10452848672866821,
+        0.0
+      ],
+      "rgba": [
+        0.30000001192092896,
+        0.8799999952316284,
+        1.0,
+        0.3799999952316284
+      ],
+      "role": "transparent_barrier",
+      "shape": "cube",
+      "source_id": "transparent_glass_wall_across_track",
+      "transform": [
+        [
+          0.9781476259231567,
+          0.0,
+          0.20791170001029968,
+          0.6897567510604858
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          -0.20791170001029968,
+          0.0,
+          0.9781476259231567,
+          2.049696445465088
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "asset": "af8bd67144918e0db021618df75b0359bc4688fb274988e83c2548a0ef5e1433",
+      "id": 7,
+      "name": "transparent_wall_bottom_edge",
+      "node": -1,
+      "optics": {
+        "ior": 1.5,
+        "roughness": 0.4399999976158142,
+        "transmission": 0.0
+      },
+      "pose": [
+        0.562410831451416,
+        0.0,
+        1.4505809545516968,
+        0.994521975517273,
+        0.0,
+        0.10452848672866821,
+        0.0
+      ],
+      "rgba": [
+        0.019999999552965164,
+        0.2199999988079071,
+        0.30000001192092896,
+        1.0
+      ],
+      "role": "transparent_wall_edge_frame",
+      "shape": "cube",
+      "source_id": "transparent_wall_bottom_edge",
+      "transform": [
+        [
+          0.9781476259231567,
+          0.0,
+          0.20791170001029968,
+          0.562410831451416
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          -0.20791170001029968,
+          0.0,
+          0.9781476259231567,
+          1.4505809545516968
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "asset": "6e0c5d75b4f6c13f06295d313b787bafba128d9769b2e7fec6e0785e3fb8f2c4",
+      "id": 8,
+      "name": "transparent_wall_contact_face_panel",
+      "node": -1,
+      "optics": {
+        "ior": 1.4500000476837158,
+        "roughness": 0.14000000059604645,
+        "transmission": 0.18000000715255737
+      },
+      "pose": [
+        0.6144393682479858,
+        0.0,
+        2.0657057762145996,
+        0.994521975517273,
+        0.0,
+        0.10452848672866821,
+        0.0
+      ],
+      "rgba": [
+        0.07999999821186066,
+        0.5799999833106995,
+        0.800000011920929,
+        0.2800000011920929
+      ],
+      "role": "contact_face",
+      "shape": "cube",
+      "source_id": "transparent_wall_contact_face_panel",
+      "transform": [
+        [
+          0.9781476259231567,
+          0.0,
+          0.20791170001029968,
+          0.6144393682479858
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          -0.20791170001029968,
+          0.0,
+          0.9781476259231567,
+          2.0657057762145996
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "asset": "5a0a400c2ef94597d493bcaad3b47c045f89ad9999842a85dd5997d5df30df06",
+      "id": 9,
+      "name": "transparent_wall_left_vertical_edge",
+      "node": -1,
+      "optics": {
+        "ior": 1.5,
+        "roughness": 0.4399999976158142,
+        "transmission": 0.0
+      },
+      "pose": [
+        0.6897567510604858,
+        -0.6200000047683716,
+        2.049696445465088,
+        0.994521975517273,
+        0.0,
+        0.10452848672866821,
+        0.0
+      ],
+      "rgba": [
+        0.019999999552965164,
+        0.2199999988079071,
+        0.30000001192092896,
+        1.0
+      ],
+      "role": "transparent_wall_edge_frame",
+      "shape": "cube",
+      "source_id": "transparent_wall_left_vertical_edge",
+      "transform": [
+        [
+          0.9781476259231567,
+          0.0,
+          0.20791170001029968,
+          0.6897567510604858
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          -0.6200000047683716
+        ],
+        [
+          -0.20791170001029968,
+          0.0,
+          0.9781476259231567,
+          2.049696445465088
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "asset": "5a0a400c2ef94597d493bcaad3b47c045f89ad9999842a85dd5997d5df30df06",
+      "id": 10,
+      "name": "transparent_wall_right_vertical_edge",
+      "node": -1,
+      "optics": {
+        "ior": 1.5,
+        "roughness": 0.4399999976158142,
+        "transmission": 0.0
+      },
+      "pose": [
+        0.6897567510604858,
+        0.6200000047683716,
+        2.049696445465088,
+        0.994521975517273,
+        0.0,
+        0.10452848672866821,
+        0.0
+      ],
+      "rgba": [
+        0.019999999552965164,
+        0.2199999988079071,
+        0.30000001192092896,
+        1.0
+      ],
+      "role": "transparent_wall_edge_frame",
+      "shape": "cube",
+      "source_id": "transparent_wall_right_vertical_edge",
+      "transform": [
+        [
+          0.9781476259231567,
+          0.0,
+          0.20791170001029968,
+          0.6897567510604858
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.6200000047683716
+        ],
+        [
+          -0.20791170001029968,
+          0.0,
+          0.9781476259231567,
+          2.049696445465088
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "asset": "af8bd67144918e0db021618df75b0359bc4688fb274988e83c2548a0ef5e1433",
+      "id": 11,
+      "name": "transparent_wall_top_edge",
+      "node": -1,
+      "optics": {
+        "ior": 1.5,
+        "roughness": 0.4399999976158142,
+        "transmission": 0.0
+      },
+      "pose": [
+        0.8171026706695557,
+        0.0,
+        2.6488118171691895,
+        0.994521975517273,
+        0.0,
+        0.10452848672866821,
+        0.0
+      ],
+      "rgba": [
+        0.019999999552965164,
+        0.2199999988079071,
+        0.30000001192092896,
+        1.0
+      ],
+      "role": "transparent_wall_edge_frame",
+      "shape": "cube",
+      "source_id": "transparent_wall_top_edge",
+      "transform": [
+        [
+          0.9781476259231567,
+          0.0,
+          0.20791170001029968,
+          0.8171026706695557
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          -0.20791170001029968,
+          0.0,
+          0.9781476259231567,
+          2.6488118171691895
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "asset": "1ca32a802ab0c7c76d9dfac96f323ce06f8995cbfae6d70d3caeb3d6b282b554",
+      "id": 12,
+      "name": "transparent_wall_white_highlight_strip_01",
+      "node": -1,
+      "optics": {
+        "ior": 1.5,
+        "roughness": 0.18000000715255737,
+        "transmission": 0.0
+      },
+      "pose": [
+        0.5737007856369019,
+        0.0,
+        1.9173332452774048,
+        0.994521975517273,
+        0.0,
+        0.10452848672866821,
+        0.0
+      ],
+      "rgba": [
+        1.0,
+        1.0,
+        1.0,
+        0.550000011920929
+      ],
+      "role": "glass_visual_highlight",
+      "shape": "cube",
+      "source_id": "transparent_wall_white_highlight_strip_01",
+      "transform": [
+        [
+          0.9781476259231567,
+          0.0,
+          0.20791170001029968,
+          0.5737007856369019
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          -0.20791170001029968,
+          0.0,
+          0.9781476259231567,
+          1.9173332452774048
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "asset": "1ca32a802ab0c7c76d9dfac96f323ce06f8995cbfae6d70d3caeb3d6b282b554",
+      "id": 13,
+      "name": "transparent_wall_white_highlight_strip_02",
+      "node": -1,
+      "optics": {
+        "ior": 1.5,
+        "roughness": 0.18000000715255737,
+        "transmission": 0.0
+      },
+      "pose": [
+        0.6375712752342224,
+        0.0,
+        2.217820167541504,
+        0.994521975517273,
+        0.0,
+        0.10452848672866821,
+        0.0
+      ],
+      "rgba": [
+        1.0,
+        1.0,
+        1.0,
+        0.550000011920929
+      ],
+      "role": "glass_visual_highlight",
+      "shape": "cube",
+      "source_id": "transparent_wall_white_highlight_strip_02",
+      "transform": [
+        [
+          0.9781476259231567,
+          0.0,
+          0.20791170001029968,
+          0.6375712752342224
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          -0.20791170001029968,
+          0.0,
+          0.9781476259231567,
+          2.217820167541504
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    }
+  ],
+  "optical_policy": {
+    "max_events": 64,
+    "ray_start": 1e-09,
+    "samples": 8,
+    "seed": 0
+  },
+  "schema": "stable-envs/object-permanence-rigid-v5",
+  "source": {
+    "commit": "824baddcdad087810d35638bf8f273b884f74975",
+    "exporter": "scripts/export/object_permanence_optical.py",
+    "exporter_sha256": "f78266f0a85ff7407663e2345c79239a7456bd38d7715e9342f4a9ece52699cb",
+    "geometry_exporter_sha256": "ccaaa5b2ae8f79135ac2d1852237e2a7a75e4b63650d3cbd7717026038f92004",
+    "license": "CC-BY-NC-4.0",
+    "member": 1,
+    "optical_policy_sha256": "fcb1630483de043ee64bdbfc22cb555df09183ef92570387ed581a4f5584828d",
+    "parameters": {},
+    "preparation_recipe": {
+      "animate": "animate_scene",
+      "build": "build_scene"
+    },
+    "profile": "audited-optical-member-no-diversity",
+    "render_engine": "BLENDER_EEVEE_NEXT",
+    "script": "object_permanence/generator/tasks/G03_ramp_ball_blocked_by_wall/pb_task_00000007_pb_transparent_wall_ramp_0008_blender.py",
+    "script_sha256": "3fa1010391fbede51745e21820396fa6db82758d61f5fdb20f255820fa560069",
+    "seed": null,
+    "task": "G03",
+    "task_manifest_sha256": "e35d2475fc272d561fb1b8207fad890fcc3d2bc945ece0ec59bf80745796cb8e",
+    "url": "https://github.com/hokindeng/object-permanence",
+    "use_raytracing": false,
+    "versions": {
+      "blender": "4.4.0",
+      "numpy": "1.26.4",
+      "python": "3.11.16"
+    }
+  },
+  "visibility_contract": "stable-envs/sampled-optical-rays-v1"
+}

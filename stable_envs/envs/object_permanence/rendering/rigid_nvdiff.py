@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 import torch
 
@@ -45,13 +47,35 @@ class RigidSceneRenderer(Closeable):
         visibility_contract=None,
         max_layers=16,
     ):
+        self.renderer: Any
+        self._optical = None
+        if geometry_precision not in ("float32", "float64"):
+            raise ValueError("geometry_precision must be float32 or float64")
+        if trajectory.manifest.get("schema") == "stable-envs/object-permanence-rigid-v5":
+            if coverage_mode != "refined":
+                raise ValueError("optical rays do not support raster coverage overrides")
+            from .optical_scene import OpticalSceneRenderer
+
+            self._optical = OpticalSceneRenderer(
+                trajectory,
+                size=size,
+                device=device,
+                chunk_size=chunk_size,
+                cache_static=cache_static,
+                visibility_contract=visibility_contract,
+            )
+            self.renderer = self._optical
+            self.device = self._optical.device
+            self.height, self.width = self._optical.height, self._optical.width
+            self.visibility_contract = visibility_contract
+            self.chunk_size = chunk_size
+            self._opened()
+            return
         self.device = torch.device(device)
         if self.device.type != "cuda" or not torch.cuda.is_available():
             raise ValueError("rigid scene rendering requires CUDA")
         if type(size) is not int or size <= 0 or type(chunk_size) is not int or chunk_size <= 0:
             raise ValueError("size and chunk_size must be positive integers")
-        if geometry_precision not in ("float32", "float64"):
-            raise ValueError("geometry_precision must be float32 or float64")
         camera_type = trajectory.manifest["camera"].get("projection_type", "perspective")
         from .transparency import CONTRACT as ALPHA_CONTRACT
 
@@ -159,6 +183,9 @@ class RigidSceneRenderer(Closeable):
     def render_many(self, frames, *, modes=("rgb", "depth", "ids"), out=None):
         """Upload selected CPU poses once; share coverage across requested fields."""
         self._check_open("render")
+        if self._optical is not None:
+            self._optical.chunk_size = self.chunk_size
+            return self._optical.render_many(frames, modes=modes, out=out)
         modes = tuple(modes)
         allowed = {"rgb", "depth", "ids"}
         if self._transparent:
@@ -228,5 +255,8 @@ class RigidSceneRenderer(Closeable):
         return result
 
     def _release(self):
+        if self._optical is not None:
+            self._optical.close()
+            return
         self.renderer.close()
         del self._ids, self._positions, self._rotations, self._moving, self._nodes, self.camera, self.trajectory

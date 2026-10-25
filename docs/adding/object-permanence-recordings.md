@@ -24,7 +24,7 @@ The source animation produces poses; the exporter does not transcribe its motion
 |---|---|
 | Arbitrary sampled rigid translations/rotations, including inherited parent motion | Supported, world-space xyz + wxyz |
 | Several independently moving objects | Supported |
-| Constant positive scale | Baked into local mesh; later scale checked within 2e-6 source decomposition noise |
+| Constant positive scale | v1–v4 bake into local meshes; v5 retains exact source matrices; later scale is checked |
 | Constant evaluated modifiers | Supported if exported geometry stays identical across all frames |
 | Rigid Curve/FONT objects | Explicit [evaluated mesh conversion](object-permanence-converted-geometry.md), retaining labels and source tessellation |
 | Static opaque base colors and one material per mesh | Supported; simplified rendering does not preserve source shaders |
@@ -34,7 +34,8 @@ The source animation produces poses; the exporter does not transcribe its motion
 | Animated positive diagonal scale | Opt-in [v3 optional scale array](object-permanence-scale.md), preserving object origins |
 | Shear/reflection, zero scale, deformation, topology changes | Rejected |
 | Moving camera, changing base colors, visibility changes | Rejected |
-| Generated instances, textures, optical transmission/refraction, depth of field | Rejected |
+| Constant optical transmission/refraction | Explicit [v5 sampled dielectric contract](object-permanence-optics.md); ideal optics, not complete Blender BSDF parity |
+| Generated instances, textures, depth of field | Rejected |
 | Dataset-driver diversity variants | Not implemented |
 
 Every exported frame is checked. Source metadata `pb_is_dynamic` is retained
@@ -57,6 +58,7 @@ recordings/                         # user dataset/cache, outside source control
     poses.npy
     frames.npy
     # scales.npy is optional in v3 clips such as g146-nominal
+    # transforms.npy is additional exact source data in v5 optical clips
   clips/g62-nominal/
     ...
 ```

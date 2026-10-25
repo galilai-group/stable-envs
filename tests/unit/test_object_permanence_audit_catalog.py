@@ -7,6 +7,7 @@ from pathlib import Path
 from scripts.export.object_permanence import (
     ALPHA_TASKS,
     AUDITED_TASKS,
+    OPTICAL_TASKS,
     ORTHOGRAPHIC_TASKS,
     RAY_CONTRACT_TASKS,
     SOURCE_COMMIT,
@@ -26,10 +27,13 @@ def test_complete_nominal_audit_accounts_for_all_source_members_without_pending_
     assert {r["task"] for r in entries} == {f"G{i:02}" for i in range(1, 151)}
     assert all(r["member"] == 0 and r["status"] in ("certified", "deferred") for r in entries)
     extras = audit["unregistered_members"]
-    assert len(extras) == 47 and len({(r["task"], r["member"]) for r in extras}) == 47
+    assert len(extras) == 45 and len({(r["task"], r["member"]) for r in extras}) == 45
+    additional = audit["additional_certified_members"]
+    assert {(r["task"], r["member"]) for r in additional} == {("G01", 1), ("G03", 1)}
+    assert all(r["status"] == "certified" for r in additional)
     assert all(r["member"] > 0 and r["status"] == "unregistered-member-entry" for r in extras)
-    assert len(entries) + len(extras) == audit["scope"]["member_scripts"] == 197
-    for row in entries + extras:
+    assert len(entries) + len(extras) + len(additional) == audit["scope"]["member_scripts"] == 197
+    for row in entries + extras + additional:
         assert re.fullmatch(r"[0-9a-f]{64}", row["source_script_sha256"])
         assert row["script"].startswith("object_permanence/generator/tasks/")
 
@@ -38,7 +42,7 @@ def test_certified_catalog_matches_registered_recordings_and_unchanged_budgets()
     audit = json.loads(CATALOG.read_text())
     assert audit["thresholds"] == {"depth_mse_max": DEPTH_MSE_MAX, "mask_iou_min": MASK_IOU_MIN}
     certified = {r["task"]: r for r in audit["entries"] if r["status"] == "certified"}
-    assert set(certified) == set(AUDITED_TASKS)
+    assert set(certified) == set(AUDITED_TASKS) | OPTICAL_TASKS
     for task, row in certified.items():
         path = RECORDINGS / "clips" / f"{task.lower()}-nominal/manifest.json"
         recording = json.loads(path.read_text())
@@ -46,7 +50,13 @@ def test_certified_catalog_matches_registered_recordings_and_unchanged_budgets()
         assert recording["source"]["script_sha256"] == row["source_script_sha256"]
         assert recording["source"]["task_manifest_sha256"] == row["source_task_manifest_sha256"]
         assert row["frames"] == 120
-        assert (row["contract"] is not None) == (task in RAY_CONTRACT_TASKS | ORTHOGRAPHIC_TASKS | ALPHA_TASKS)
+        assert (row["contract"] is not None) == (
+            task in RAY_CONTRACT_TASKS | ORTHOGRAPHIC_TASKS | ALPHA_TASKS | OPTICAL_TASKS
+        )
+        if task in OPTICAL_TASKS:
+            assert recording["schema"] == "stable-envs/object-permanence-rigid-v5"
+            assert row["contract"] == recording["visibility_contract"] == "stable-envs/sampled-optical-rays-v1"
+            assert row["native_bsdf_pixel_equivalence_claimed"] is False
         if task in ALPHA_TASKS:
             assert recording["schema"] == "stable-envs/object-permanence-rigid-v4"
             assert row["contract"] == recording["visibility_contract"] == "stable-envs/transparent-pixel-rays-v1"
@@ -60,7 +70,9 @@ def test_certified_catalog_matches_registered_recordings_and_unchanged_budgets()
             assert row["cache_bit_identical_resolutions"] == [90, 180]
             version = "v2" if task in ORTHOGRAPHIC_TASKS else "v1"
             oracle = RECORDINGS.parents[1] / (
-                f"semantics/object_permanence/{task.lower()}/transparent_pixel_rays_v1/nominal/manifest.json"
+                f"semantics/object_permanence/{task.lower()}/sampled_optical_rays_v1/nominal/manifest.json"
+                if task in OPTICAL_TASKS
+                else f"semantics/object_permanence/{task.lower()}/transparent_pixel_rays_v1/nominal/manifest.json"
                 if task in ALPHA_TASKS
                 else f"semantics/object_permanence/{task.lower()}/opaque_pixel_rays_{version}/nominal/manifest.json"
             )
@@ -109,3 +121,23 @@ def test_surface_context_audit_records_defaults_and_remaining_blockers_without_w
         "box_B_label": "FONT",
     }
     assert "blockers" not in entries["G46"]
+
+
+def test_additional_certified_members_keep_their_source_identity_and_optical_oracle():
+    audit = json.loads(CATALOG.read_text())
+    fixtures = Path(__file__).parents[1] / "fixtures"
+    for row in audit["additional_certified_members"]:
+        clip = row["task"].lower() + f"-member{row['member']}"
+        m = json.loads((RECORDINGS / "clips" / clip / "manifest.json").read_text())
+        assert m["source"]["script_sha256"] == row["source_script_sha256"]
+        assert m["source"]["task_manifest_sha256"] == row["source_task_manifest_sha256"]
+        assert m["source"]["member"] == row["member"]
+        assert m["visibility_contract"] == row["contract"] == "stable-envs/sampled-optical-rays-v1"
+        assert row["depth_mse_max"] <= DEPTH_MSE_MAX and row["mask_iou_min"] >= MASK_IOU_MIN
+        oracle = (
+            fixtures
+            / f"semantics/object_permanence/{row['task'].lower()}/sampled_optical_rays_v1/member{row['member']}"
+        )
+        source = json.loads((oracle / "manifest.json").read_text())
+        assert source["source_script_sha256"] == row["source_script_sha256"]
+        assert source["frames"] == row["frames"] == 120

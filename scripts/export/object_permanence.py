@@ -36,6 +36,7 @@ ALPHA_MATERIAL = "stable-envs/constant-alpha-surfaces-v1"
 ALPHA_CONTRACT = "stable-envs/transparent-pixel-rays-v1"
 ALPHA_TASKS = {"G36", "G54", "G61", "G90"}
 ALPHA_ORTHOGRAPHIC_TASKS = {"G54", "G61"}
+OPTICAL_TASKS = {"G01"}
 SCALE_CONVENTION = "stable-envs/asset-relative-positive-diagonal-v1"
 ANIMATED_SCALE_TASKS = {"G146"}
 CONVENTIONS = {"world": "right-handed-z-up", "quaternion": "wxyz", "units": "source-scene-units"}
@@ -433,7 +434,9 @@ AUDITED_TASKS.update(
     }
 )
 RAY_CONTRACT_TASKS |= ANIMATED_SCALE_TASKS
-CONTRACT_ONLY_TASKS |= ORTHOGRAPHIC_TASKS | CONVERTED_GEOMETRY_TASKS | ANIMATED_SCALE_TASKS | ALPHA_TASKS
+CONTRACT_ONLY_TASKS |= (
+    ORTHOGRAPHIC_TASKS | CONVERTED_GEOMETRY_TASKS | ANIMATED_SCALE_TASKS | ALPHA_TASKS | OPTICAL_TASKS
+)
 # Preparation/rigid serialization passed, but source pixel fidelity did not.
 # Explicit export remains useful for diagnosis; default batch execution is blocked.
 DEFERRED_TASKS = {
@@ -533,22 +536,26 @@ def inventory(root, output):
     rows, members = [], 0
     audit_path = Path(__file__).resolve().parents[2] / "docs/adding/object-permanence-audit.json"
     measured = {}
+    additional = set()
     if audit_path.exists():
         audit = json.loads(audit_path.read_text())
         if audit["source_commit"] != SOURCE_COMMIT:
             raise ValueError("measured source audit has a different source pin")
         measured = {entry["task"]: entry for entry in audit["entries"]}
+        additional = {(e["task"], e["member"]) for e in audit.get("additional_certified_members", [])}
     groups: dict[str, int] = {}
     for path in task_manifests(root):
         task = json.loads(path.read_text())
         signals, review_groups = set(), []
-        for name in task["member_scripts"]:
+        for member, name in enumerate(task["member_scripts"]):
             members += 1
             tree = ast.parse((path.parent / name).read_text())
-            group = capability_group(tree, audited=task["id"] in AUDITED_TASKS and name == task["member_scripts"][0])
+            group = capability_group(tree, audited=task["id"] in (set(AUDITED_TASKS) | OPTICAL_TASKS) and member == 0)
             if task["id"] in DEFERRED_TASKS and name == task["member_scripts"][0]:
                 group = "source-fidelity-review"
             elif task["id"] in CONTRACT_ONLY_TASKS and name == task["member_scripts"][0]:
+                group = "versioned-visibility-runtime-gate"
+            if (task["id"], member) in additional:
                 group = "versioned-visibility-runtime-gate"
             groups[group] = groups.get(group, 0) + 1
             review_groups.append(group)
@@ -592,12 +599,12 @@ def inventory(root, output):
         "Regenerate with `python -m scripts.export.object_permanence inventory --source-root <checkout> --output <file>`.\n"
         "This is a static, script-wide inventory. Unused builders can contribute signals;\n"
         "absence of a signal does not prove support. Counts include all members.\n"
-        "Only explicitly listed first nominal members have audited preparation entry points;\n"
+        "Only explicitly listed nominal and additional members have audited preparation entry points;\n"
         "run export to check their evaluated geometry, transforms, materials and camera at every frame.\n"
         "Diversity variants, sampled scene semantics and downstream accuracy are not certified here.\n\n"
         "The measured nominal column comes from the separately recorded "
         "[source audit](object-permanence-audit.json), not from static hints. "
-        "It covers first nominal members; other member scripts remain unregistered.\n\n"
+        "It covers first nominal members; additionally certified members are listed separately in that audit.\n\n"
         "## Capability triage\n\n"
         "Groups cover every member. Static groups are conservative AST hints, not proof of support.\n"
         "Known source-fidelity failures form a separate measured deferral queue.\n"
@@ -757,7 +764,7 @@ def _pose(obj, depsgraph):
     return np.asarray([*position, *rotation], np.float32), scale
 
 
-def _rgba(obj, *, allow_transparent=False):
+def _rgba(obj, *, allow_transparent=False, allow_optical=False):
     if len(obj.material_slots) != 1 or obj.active_material is None:
         raise ValueError(f"v1 requires one opaque material: {obj.name}")
     material = obj.active_material
@@ -780,7 +787,7 @@ def _rgba(obj, *, allow_transparent=False):
         if (
             any(s.is_linked for s in sockets)
             or (not allow_transparent and sockets[1].default_value != 1)
-            or sockets[2].default_value != 0
+            or (sockets[2].default_value != 0 and not allow_optical)
         ):
             raise ValueError(f"unsupported transparency/material links: {obj.name}")
         color = np.asarray(sockets[0].default_value, np.float32)
@@ -789,6 +796,27 @@ def _rgba(obj, *, allow_transparent=False):
     if not np.isfinite(color).all() or (color[3] != 1 if not allow_transparent else not 0 <= color[3] <= 1):
         raise ValueError(f"unsupported transparency: {obj.name}")
     return color
+
+
+def _optics(obj):
+    """Export constant optical metadata, never silently discard transmission."""
+    material = obj.active_material
+    if not material.use_nodes:
+        raise ValueError("dielectric policy requires a Principled surface")
+    shader = next(n for n in material.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
+    if any(
+        shader.inputs[k].is_linked or shader.inputs[k].default_value != 0
+        for k in ("Metallic", "Coat Weight", "Sheen Weight")
+    ):
+        raise ValueError("optical v5 requires an uncoated, nonmetallic dielectric")
+    sockets = {"transmission": "Transmission Weight", "ior": "IOR", "roughness": "Roughness"}
+    if any(shader.inputs[name].is_linked for name in sockets.values()):
+        raise ValueError("linked optical parameters are unsupported")
+    value = {key: float(shader.inputs[name].default_value) for key, name in sockets.items()}
+    t, n, r = (value[k] for k in ("transmission", "ior", "roughness"))
+    if not np.isfinite([t, n, r]).all() or not 0 <= t <= 1 or not 1 <= n <= 3 or not 0 <= r <= 1:
+        raise ValueError("invalid constant dielectric material")
+    return value
 
 
 def _camera(scene, depsgraph, *, allow_orthographic=False):
@@ -833,6 +861,7 @@ def sample_scene(
     allow_evaluated_geometry=False,
     allow_animated_scale=False,
     allow_transparent=False,
+    allow_optical=False,
 ):
     """Check every frame and return a rigid recording, or fail explicitly.
 
@@ -866,7 +895,11 @@ def sample_scene(
         return collection.hide_render or any(hidden_collection(child) for child in collection.children)
 
     original = scene.frame_current
+    if allow_optical and not allow_transparent:
+        raise ValueError("optical sampling requires explicit transparent material support")
+    first_optics = None
     poses = np.empty((len(frames), len(objects), 7), np.float32)
+    transforms = np.empty((len(frames), len(objects), 4, 4), np.float64) if allow_optical else None
     scale_history = np.empty((len(frames), len(objects), 3), np.float64) if allow_animated_scale else None
     initial = None
     initial_source_geometry = None
@@ -884,12 +917,25 @@ def sample_scene(
             meshes, scales, colors = [], [], []
             for index, obj in enumerate(objects):
                 poses[row, index], scale = _pose(obj, depsgraph)
+                if transforms is not None:
+                    transforms[row, index] = np.asarray(obj.evaluated_get(depsgraph).matrix_world, np.float64)
                 scales.append(scale)
                 # Decomposition of float32 source rotations can perturb a
                 # constant scale by a few ULPs. Bake the first scale consistently
                 # and check subsequent scales against the explicit error budget.
-                meshes.append(_mesh(obj, depsgraph, scale if initial is None else initial[1][index]))
-                colors.append(_rgba(obj, allow_transparent=allow_transparent))
+                meshes.append(
+                    _mesh(
+                        obj,
+                        depsgraph,
+                        np.ones(3) if allow_optical else scale if initial is None else initial[1][index],
+                    )
+                )
+                colors.append(_rgba(obj, allow_transparent=allow_transparent, allow_optical=allow_optical))
+            if allow_optical:
+                optical = [_optics(obj) for obj in objects]
+                if first_optics is not None and optical != first_optics:
+                    raise ValueError(f"optical materials change at source frame {frame}")
+                first_optics = optical
             keys = [array_digest(m) for m in meshes]
             if scale_history is not None:
                 scale_history[row] = scales
@@ -915,6 +961,8 @@ def sample_scene(
             flip = (poses[row, :, 3:] * poses[row - 1, :, 3:]).sum(-1) < 0
             poses[row, flip, 3:] *= -1
         moving = np.any(poses != poses[:1], axis=(0, 2))
+        if transforms is not None:
+            moving |= np.any(transforms != transforms[:1], axis=(0, 2, 3))
         moving |= np.asarray([bool(o.get("pb_is_dynamic", False)) for o in objects], dtype=bool)
         scaled = np.zeros(len(objects), dtype=bool)
         if scale_history is not None:
@@ -958,6 +1006,26 @@ def sample_scene(
             result["scales"] = np.ascontiguousarray(relative[:, moving], dtype=np.float32)
         if allow_transparent:
             result["material_convention"] = ALPHA_MATERIAL
+        if allow_optical:
+            import runpy
+
+            policy = runpy.run_path(
+                str(Path(__file__).parents[2] / "stable_envs/envs/object_permanence/rendering/optics.py")
+            )
+
+            assert first_optics is not None
+            assert transforms is not None
+            indices = {m["ior"] for m in first_optics if m["transmission"] > 0}
+            if len(indices) != 1 or len(records) > 62:
+                raise ValueError("optical v5 requires one common dielectric IOR and at most 62 objects")
+            for index, (record, material, mesh) in enumerate(zip(records, first_optics, initial[0], strict=True)):
+                record["optics"] = material
+                record["transform"] = transforms[0, index].tolist()
+                if material["transmission"]:
+                    policy["closed_volume"](mesh["vertices"][mesh["triangles"]])
+            result["material_convention"] = policy["MATERIAL"]
+            result["optical_policy"] = dict(policy["POLICY"])
+            result["transforms"] = np.ascontiguousarray(transforms[:, moving])
         return result
     finally:
         scene.frame_set(original)
@@ -1105,14 +1173,27 @@ def write_recording(root, clip, recording, source):
     if "geometry_conversion" in recording:
         manifest["geometry_conversion"] = recording["geometry_conversion"]
     if "material_convention" in recording:
-        if recording["material_convention"] != ALPHA_MATERIAL:
+        optical = recording["material_convention"] == "stable-envs/constant-dielectric-surfaces-v1"
+        if recording["material_convention"] != ALPHA_MATERIAL and not optical:
             raise ValueError("unsupported material convention")
         manifest.update(schema=SCHEMA_V4, material_convention=ALPHA_MATERIAL, visibility_contract=ALPHA_CONTRACT)
+        if optical:
+            manifest.update(
+                schema="stable-envs/object-permanence-rigid-v5",
+                material_convention=recording["material_convention"],
+                visibility_contract="stable-envs/sampled-optical-rays-v1",
+                optical_policy=recording["optical_policy"],
+            )
         manifest["camera"] = dict(recording["camera"])
         manifest["camera"].setdefault("projection_type", "perspective")
     with tempfile.TemporaryDirectory(dir=clips, prefix=".export-") as temporary:
         directory = Path(temporary)
-        for name in ("poses", "frames", *(["scales"] if "scales" in recording else [])):
+        for name in (
+            "poses",
+            "frames",
+            *(["scales"] if "scales" in recording else []),
+            *(["transforms"] if "transforms" in recording else []),
+        ):
             path = directory / f"{name}.npy"
             array = recording[name]
             np.save(path, array, allow_pickle=False)
@@ -1126,6 +1207,10 @@ def write_recording(root, clip, recording, source):
 def export(root, output, task):
     import bpy
 
+    if task in OPTICAL_TASKS:
+        from .object_permanence_optical import export as export_optical
+
+        return export_optical(root, output)
     if (output / "clips" / f"{task.lower()}-nominal").exists():
         raise FileExistsError("refusing to overwrite an existing nominal clip")
     scene, script, task_metadata = prepare(root, task)
@@ -1178,7 +1263,7 @@ def main():
         item.add_argument("--source-root", type=Path, required=True)
         item.add_argument("--output", type=Path, required=True)
         if command == "export":
-            item.add_argument("--task", choices=tuple(AUDITED_TASKS), required=True)
+            item.add_argument("--task", choices=(*AUDITED_TASKS, *OPTICAL_TASKS), required=True)
     item = sub.add_parser("organize", help="organize semantic asset folders and deduplicate licenses")
     item.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
