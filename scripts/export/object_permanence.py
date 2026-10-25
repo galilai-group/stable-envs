@@ -30,6 +30,9 @@ from .object_permanence_geometry import GEOMETRY_CONVERSION, evaluated_mesh, sou
 SOURCE_COMMIT = "824baddcdad087810d35638bf8f273b884f74975"
 SCHEMA = "stable-envs/object-permanence-rigid-v1"
 SCHEMA_V2 = "stable-envs/object-permanence-rigid-v2"
+SCHEMA_V3 = "stable-envs/object-permanence-rigid-v3"
+SCALE_CONVENTION = "stable-envs/asset-relative-positive-diagonal-v1"
+ANIMATED_SCALE_TASKS = {"G146"}
 CONVENTIONS = {"world": "right-handed-z-up", "quaternion": "wxyz", "units": "source-scene-units"}
 # Context audit supplies nominal globals independently of camera/type certification.
 SOURCE_CONTEXT_TASKS = frozenset({"G08", "G44", "G45", "G46", "G48"})
@@ -180,6 +183,7 @@ AUDITED_TASKS = {
     "G143": ("build_scene_by_kind", "animate_scene"),
     "G144": ("build_scene_by_kind", "animate_scene_by_kind"),
     "G145": ("build_scene_by_kind", "animate_scene"),
+    "G146": ("build_scene_by_kind", "animate_scene"),
     "G147": ("build_scene_by_kind", "animate_scene"),
     "G148": ("build_scene_by_kind", "animate_scene"),
     "G149": ("build_scene_by_kind", "animate_scene"),
@@ -415,7 +419,8 @@ CONTRACT_ONLY_TASKS = {
     "G149",
     "G150",
 }
-CONTRACT_ONLY_TASKS |= ORTHOGRAPHIC_TASKS | CONVERTED_GEOMETRY_TASKS
+RAY_CONTRACT_TASKS |= ANIMATED_SCALE_TASKS
+CONTRACT_ONLY_TASKS |= ORTHOGRAPHIC_TASKS | CONVERTED_GEOMETRY_TASKS | ANIMATED_SCALE_TASKS
 # Preparation/rigid serialization passed, but source pixel fidelity did not.
 # Explicit export remains useful for diagnosis; default batch execution is blocked.
 DEFERRED_TASKS = {
@@ -791,12 +796,15 @@ def _camera(scene, depsgraph, *, allow_orthographic=False):
     return result
 
 
-def sample_scene(scene, *, object_order=None, allow_orthographic=False, allow_evaluated_geometry=False):
+def sample_scene(
+    scene, *, object_order=None, allow_orthographic=False, allow_evaluated_geometry=False, allow_animated_scale=False
+):
     """Check every frame and return a rigid recording, or fail explicitly.
 
-    Motion comes exclusively from evaluated source data. Constant positive scale
-    is baked into local geometry; deformation, moving camera, visibility changes,
-    instances and changing base colors require a future schema/implementation.
+    Motion comes exclusively from evaluated source data. Initial positive scale
+    is baked into local geometry. Opt-in positive diagonal scale animation adds
+    asset-relative scales; shear, local deformation, moving camera, visibility
+    changes, instances and changing base colors remain unsupported.
     Metadata pb_is_dynamic does not substitute for observing all frames.
     """
     import bpy
@@ -824,6 +832,7 @@ def sample_scene(scene, *, object_order=None, allow_orthographic=False, allow_ev
 
     original = scene.frame_current
     poses = np.empty((len(frames), len(objects), 7), np.float32)
+    scale_history = np.empty((len(frames), len(objects), 3), np.float64) if allow_animated_scale else None
     initial = None
     initial_source_geometry = None
     try:
@@ -847,6 +856,8 @@ def sample_scene(scene, *, object_order=None, allow_orthographic=False, allow_ev
                 meshes.append(_mesh(obj, depsgraph, scale if initial is None else initial[1][index]))
                 colors.append(_rgba(obj))
             keys = [array_digest(m) for m in meshes]
+            if scale_history is not None:
+                scale_history[row] = scales
             descriptions = [source_geometry(obj, depsgraph) for obj in objects]
             if initial is None:
                 initial = (meshes, np.asarray(scales), np.asarray(colors), camera, keys)
@@ -854,7 +865,9 @@ def sample_scene(scene, *, object_order=None, allow_orthographic=False, allow_ev
             else:
                 if descriptions != initial_source_geometry:
                     raise ValueError(f"source geometry identity changes at source frame {frame}")
-                if not np.allclose(scales, initial[1], atol=2e-6, rtol=0) or keys != initial[4]:
+                if (
+                    not allow_animated_scale and not np.allclose(scales, initial[1], atol=2e-6, rtol=0)
+                ) or keys != initial[4]:
                     raise ValueError(f"geometry/scale changes at source frame {frame}")
                 if not np.array_equal(colors, initial[2]):
                     raise ValueError(f"base colors change at source frame {frame}")
@@ -868,6 +881,10 @@ def sample_scene(scene, *, object_order=None, allow_orthographic=False, allow_ev
             poses[row, flip, 3:] *= -1
         moving = np.any(poses != poses[:1], axis=(0, 2))
         moving |= np.asarray([bool(o.get("pb_is_dynamic", False)) for o in objects], dtype=bool)
+        scaled = np.zeros(len(objects), dtype=bool)
+        if scale_history is not None:
+            scaled = np.any(np.abs(scale_history - initial[1]) > 2e-6, axis=(0, 2))
+            moving |= scaled
         nodes = [o.name for o, dynamic in zip(objects, moving, strict=True) if dynamic]
         node_indices = np.cumsum(moving) - 1
         records = [
@@ -899,6 +916,11 @@ def sample_scene(scene, *, object_order=None, allow_orthographic=False, allow_ev
         }
         if any(description is not None for description in initial_source_geometry):
             result["geometry_conversion"] = dict(GEOMETRY_CONVERSION)
+        if scaled.any():
+            assert scale_history is not None
+            relative = np.ones_like(scale_history)
+            relative[:, scaled] = scale_history[:, scaled] / initial[1][scaled]
+            result["scales"] = np.ascontiguousarray(relative[:, moving], dtype=np.float32)
         return result
     finally:
         scene.frame_set(original)
@@ -1033,11 +1055,21 @@ def write_recording(root, clip, recording, source):
     }
     if manifest["schema"] == SCHEMA_V2:
         manifest["visibility_contract"] = "stable-envs/opaque-pixel-rays-v2"
+    if "scales" in recording:
+        manifest["schema"] = SCHEMA_V3
+        manifest["scale_convention"] = SCALE_CONVENTION
+        manifest["camera"] = dict(recording["camera"])
+        manifest["camera"].setdefault("projection_type", "perspective")
+        manifest["visibility_contract"] = (
+            "stable-envs/opaque-pixel-rays-v2"
+            if manifest["camera"]["projection_type"] == "orthographic"
+            else "stable-envs/opaque-pixel-rays-v1"
+        )
     if "geometry_conversion" in recording:
         manifest["geometry_conversion"] = recording["geometry_conversion"]
     with tempfile.TemporaryDirectory(dir=clips, prefix=".export-") as temporary:
         directory = Path(temporary)
-        for name in ("poses", "frames"):
+        for name in ("poses", "frames", *(["scales"] if "scales" in recording else [])):
             path = directory / f"{name}.npy"
             array = recording[name]
             np.save(path, array, allow_pickle=False)
@@ -1059,6 +1091,7 @@ def export(root, output, task):
         object_order=G34_ORDER if task == "G34" else None,
         allow_orthographic=task in ORTHOGRAPHIC_TASKS,
         allow_evaluated_geometry=task in CONVERTED_GEOMETRY_TASKS,
+        allow_animated_scale=task in ANIMATED_SCALE_TASKS,
     )
     if task in ORTHOGRAPHIC_TASKS and recording["camera"].get("projection_type") != "orthographic":
         raise ValueError("audited orthographic entry changed projection type")
@@ -1083,7 +1116,7 @@ def export(root, output, task):
     if context is not None:
         source["profile"] = "nominal-first-member-surface-diversity-context"
         source["execution_context"] = context
-    if task in ORTHOGRAPHIC_TASKS | CONVERTED_GEOMETRY_TASKS:
+    if task in ORTHOGRAPHIC_TASKS | CONVERTED_GEOMETRY_TASKS | ANIMATED_SCALE_TASKS:
         source["preparation_recipe"] = {"build": AUDITED_TASKS[task][0], "animate": AUDITED_TASKS[task][1]}
     if task in CONVERTED_GEOMETRY_TASKS:
         source["geometry_converter_sha256"] = sha256(Path(__file__).with_name("object_permanence_geometry.py"))

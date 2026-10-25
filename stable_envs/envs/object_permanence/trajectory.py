@@ -19,6 +19,8 @@ from ...render._resources import Closeable
 
 SCHEMA = "stable-envs/object-permanence-rigid-v1"
 SCHEMA_V2 = "stable-envs/object-permanence-rigid-v2"
+SCHEMA_V3 = "stable-envs/object-permanence-rigid-v3"
+SCALE_CONVENTION = "stable-envs/asset-relative-positive-diagonal-v1"
 CONVENTIONS = {"world": "right-handed-z-up", "quaternion": "wxyz", "units": "source-scene-units"}
 
 
@@ -50,7 +52,8 @@ def _poses(value, shape):
 class RigidTrajectory(Closeable):
     """Read one immutable clip under ``root/clips/<clip>/manifest.json``.
 
-    A dynamic node is one sampled rigid world transform. Objects reference its
+    A dynamic node is one sampled world pose, optionally with positive diagonal
+    asset-relative scale in v3. Objects reference its
     index, or -1 for their constant pose. Several mesh objects may reference the
     same node. Node indices and semantic IDs are different namespaces.
 
@@ -68,7 +71,7 @@ class RigidTrajectory(Closeable):
         directory = self.root / "clips" / clip
         self._manifest = json.loads((directory / "manifest.json").read_text())
         m = self._manifest
-        if m.get("schema") not in (SCHEMA, SCHEMA_V2) or m.get("conventions") != CONVENTIONS:
+        if m.get("schema") not in (SCHEMA, SCHEMA_V2, SCHEMA_V3) or m.get("conventions") != CONVENTIONS:
             raise ValueError("unsupported rigid-scene schema or conventions")
         if m.get("clip") != clip:
             raise ValueError("clip identity differs")
@@ -82,7 +85,12 @@ class RigidTrajectory(Closeable):
         if not isinstance(m.get("fps"), (int, float)) or not np.isfinite(m["fps"]) or m["fps"] <= 0:
             raise ValueError("fps must be finite and positive")
         self._arrays = {}
-        for name in ("poses", "frames"):
+        scaled = "scales" in m["arrays"]
+        if scaled and m["schema"] != SCHEMA_V3:
+            raise ValueError("scale arrays require rigid-scene v3")
+        if m["schema"] == SCHEMA_V3 and m.get("scale_convention") != SCALE_CONVENTION:
+            raise ValueError("v3 requires the asset-relative positive scale convention")
+        for name in ("poses", "frames", *(["scales"] if scaled else [])):
             description = m["arrays"][name]
             path = directory / f"{name}.npy"
             if _sha256(path) != description["sha256"]:
@@ -92,6 +100,7 @@ class RigidTrajectory(Closeable):
                 raise ValueError(f"{name} shape/dtype differs")
             self._arrays[name] = value
         self.frames, self._poses = self._arrays["frames"], self._arrays["poses"]
+        self._scales = self._arrays.get("scales")
         if self.frames.ndim != 1 or not len(self.frames) or self.frames.dtype != np.int64:
             raise ValueError("frames must be nonempty int64 [T]")
         if np.any(np.diff(self.frames) != 1):
@@ -105,6 +114,17 @@ class RigidTrajectory(Closeable):
         for start in range(0, len(self.frames), 4096):
             rows = self._poses[start : start + 4096]
             _poses(rows, (len(rows), len(nodes), 7))
+        if scaled:
+            value = self._scales
+            assert value is not None
+            if value.dtype != np.float32 or value.shape != (len(self.frames), len(nodes), 3):
+                raise ValueError("scales must be float32 [T,D,3]")
+            for start in range(0, len(self.frames), 4096):
+                rows = value[start : start + 4096]
+                if not np.isfinite(rows).all() or np.any(rows <= 0):
+                    raise ValueError("scales must be finite and strictly positive")
+            if not np.array_equal(value[0], np.ones_like(value[0])):
+                raise ValueError("asset-relative scales must start at one")
         objects = m["objects"]
         if not objects or len({o["name"] for o in objects}) != len(objects):
             raise ValueError("objects must have unique names")
@@ -163,11 +183,16 @@ class RigidTrajectory(Closeable):
         if {o["asset"] for o in objects} != set(self._meshes):
             raise ValueError("objects/assets differ")
         camera = m["camera"]
-        if m["schema"] == SCHEMA_V2 and (
+        if m["schema"] in (SCHEMA_V2, SCHEMA_V3) and (
             camera.get("projection_type") not in ("perspective", "orthographic")
-            or m.get("visibility_contract") != "stable-envs/opaque-pixel-rays-v2"
+            or m.get("visibility_contract")
+            not in (
+                ("stable-envs/opaque-pixel-rays-v2",)
+                if m["schema"] == SCHEMA_V2 or camera.get("projection_type") == "orthographic"
+                else ("stable-envs/opaque-pixel-rays-v1", "stable-envs/opaque-pixel-rays-v2")
+            )
         ):
-            raise ValueError("v2 recordings require an explicit projection type and visibility contract")
+            raise ValueError("v2/v3 recordings require an explicit projection type and visibility contract")
         for key in ("world", "projection"):
             value = np.asarray(camera[key])
             if value.shape != (4, 4) or not np.isfinite(value).all():
@@ -186,16 +211,44 @@ class RigidTrajectory(Closeable):
         self._check_open("len")
         return len(self.frames)
 
-    def poses(self, indices):
-        """Return owned CPU float32 [B,D,7] using zero-based clip indices."""
-        self._check_open("poses")
+    def _indices(self, indices):
         indices = np.asarray(indices)
         if indices.dtype.kind not in "iu" or indices.ndim != 1 or not len(indices):
             raise ValueError("indices must be a nonempty integer vector")
         if (indices < 0).any() or (indices >= len(self)).any():
             raise ValueError("index outside trajectory")
+        return indices
+
+    def poses(self, indices):
+        """Return owned CPU float32 [B,D,7] using zero-based clip indices."""
+        self._check_open("poses")
+        indices = self._indices(indices)
         # Integer-array indexing already creates independent storage.
         return np.asarray(self._poses[indices])
+
+    @property
+    def has_scales(self):
+        """Whether this clip stores optional per-node relative diagonal scales."""
+        self._check_open("has_scales")
+        return self._scales is not None
+
+    def scales(self, indices):
+        """Return owned CPU float32 [B,D,3]; old clips return unit scales."""
+        self._check_open("scales")
+        indices = self._indices(indices)
+        if self._scales is None:
+            return np.ones((len(indices), len(self._manifest["dynamic_nodes"]), 3), np.float32)
+        return np.asarray(self._scales[indices])
+
+    def object_scales(self, indices):
+        """Expand relative node scales to owned CPU float32 [B,G,3]."""
+        rows = self.scales(indices)
+        objects = self._manifest["objects"]
+        out = np.ones((len(rows), len(objects), 3), np.float32)
+        for index, obj in enumerate(objects):
+            if obj["node"] >= 0:
+                out[:, index] = rows[:, obj["node"]]
+        return out
 
     def object_poses(self, indices):
         """Expand dynamic-node poses to owned CPU float32 [B,G,7] world poses."""
@@ -243,5 +296,5 @@ class RigidTrajectory(Closeable):
 
     def _release(self):
         self._arrays.clear()
-        self.frames = self._poses = None
+        self.frames = self._poses = self._scales = None
         self._meshes.clear()

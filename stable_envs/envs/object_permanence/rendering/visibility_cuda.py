@@ -244,12 +244,15 @@ class ContractRenderer(PixelCenterRenderer):
     orthographic hits by their camera-axis depth without moving ray origins.
     """
 
-    def __init__(self, *args, camera_metadata, semantic_ids, visibility_contract=CONTRACT, **kwargs):
+    def __init__(
+        self, *args, camera_metadata, semantic_ids, visibility_contract=CONTRACT, affine_transforms=False, **kwargs
+    ):
         if kwargs.get("supersample", 1) != 1:
             raise ValueError("visibility contract requires one pixel-center sample")
         self.metadata = camera_metadata
         validate_camera(camera_metadata, contract=visibility_contract)
         self.visibility_contract = visibility_contract
+        self.affine_transforms = affine_transforms
         self.orthographic = camera_metadata.get("projection_type") == "orthographic"
         super().__init__(*args, **kwargs)
         scene = self.scene
@@ -305,7 +308,8 @@ class ContractRenderer(PixelCenterRenderer):
         self.vertices = (
             row_matrix3(self.scene.vert.double(), rotation[:, vg].transpose(-1, -2)) + position[:, vg]
         ).contiguous()
-        normals = row_matrix3(self.planes[:, :3], torch.linalg.inv(rotation)[:, self.scene.fgeom])
+        inverse = torch.linalg.inv(rotation)
+        normals = row_matrix3(self.planes[:, :3], inverse[:, self.scene.fgeom])
         offset = self.planes[None, :, 3] - (normals * position[:, self.scene.fgeom]).sum(-1)
         planes = torch.cat((normals, offset[..., None]), -1)
         scale = normals.gather(-1, normals.abs().argmax(-1, keepdim=True))
@@ -317,7 +321,15 @@ class ContractRenderer(PixelCenterRenderer):
             _mm4(homogeneous, torch.as_tensor(view, dtype=torch.float64, device=self.device).transpose(-1, -2)),
             torch.as_tensor(proj, dtype=torch.float64, device=self.device).T,
         )
-        return clip.contiguous(), result[1], result[2]
+        shading_normals = result[1]
+        if self.affine_transforms:
+            # Vertices use A = R diag(s); row-vector normals use A^-1.
+            # Normalize at vertices before interpolation, matching source normals.
+            shading_normals = row_matrix3(self.scene.norm.double(), inverse[:, vg])
+            shading_normals = (
+                shading_normals / torch.linalg.vector_norm(shading_normals, dim=-1, keepdim=True)
+            ).float()
+        return clip.contiguous(), shading_normals.contiguous(), result[2]
 
     def _rasterize(self, positions, resolution):
         h, w = resolution

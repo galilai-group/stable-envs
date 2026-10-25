@@ -20,7 +20,7 @@ All audited scenes use the unmodified first member's build/animate functions, by
 the source main function's video, screenshot and scene-saving operations.
 The source animation produces poses; the exporter does not transcribe its motion.
 
-| Capability | First recording version |
+| Capability | Recording support |
 |---|---|
 | Arbitrary sampled rigid translations/rotations, including inherited parent motion | Supported, world-space xyz + wxyz |
 | Several independently moving objects | Supported |
@@ -30,7 +30,8 @@ The source animation produces poses; the exporter does not transcribe its motion
 | Static opaque base colors and one material per mesh | Supported; simplified rendering does not preserve source shaders |
 | Fixed perspective camera | World and projection matrices exported |
 | Orthographic camera | Explicit [v2 recording/visibility contract](object-permanence-orthographic.md); v1 remains perspective-only |
-| Animated scale/shear, deformation, topology changes | Rejected |
+| Animated positive diagonal scale | Opt-in [v3 optional scale array](object-permanence-scale.md), preserving object origins |
+| Shear/reflection, zero scale, deformation, topology changes | Rejected |
 | Moving camera, changing base colors, visibility changes | Rejected |
 | Generated instances, textures, transparency, depth of field | Rejected |
 | Dataset-driver diversity variants | Not implemented |
@@ -39,8 +40,9 @@ Every exported frame is checked. Source metadata `pb_is_dynamic` is retained
 through dynamic-node selection, but actual world motion is also detected, so an
 incorrect static tag cannot discard motion inherited from a parent. Occlusion is
 not a visibility flag: hidden-behind-geometry objects retain their pose rows.
-Static inventory signals identify further audits: G05/G146 include scale paths,
-G42/G44 include dimensions paths, and G73 includes rigid-body configuration.
+Static inventory signals identify required audits: G05/G146 include scale paths
+(G146 now uses explicit sampled scales), G42/G44 include dimensions paths, and
+G73 includes rigid-body configuration.
 Unused branches can explain a signal; inspect the selected builder before grouping.
 
 ## Files and identities
@@ -53,6 +55,7 @@ recordings/                         # user dataset/cache, outside source control
     manifest.json
     poses.npy
     frames.npy
+    # scales.npy is optional in v3 clips such as g146-nominal
   clips/g62-nominal/
     ...
 ```
@@ -83,7 +86,8 @@ would still duplicate assets, even if their hashes were known.
 reader indices are zero-based. Poses are evaluated source samples, not a physics
 continuation state. Quaternion signs are made continuous without changing rotation.
 A **dynamic node** is one independently recorded rigid world transform, indexed
-in the D axis. Objects reference a node index, or `-1` and their constant pose.
+in the D axis, with optional positive diagonal scale in v3. Scale-only changes
+also select a dynamic node. Objects reference a node index, or `-1` and their constant pose.
 Several parts can share a node if their mesh coordinates use that node's frame;
 the current exporter emits one node per moving source mesh object rather than
 guessing which parts are mechanically connected.
@@ -178,7 +182,8 @@ with RigidTrajectory("/tmp/recordings", "g62-nominal") as clip:
 ```
 
 Frame indices select recording rows, not simulator State. Static transforms stay
-on GPU; only CPU float32 `[B,D,7]` dynamic-node poses are uploaded, then mapped to
+on GPU; CPU float32 `[B,D,7]` dynamic-node poses and optional v3 `[B,D,3]`
+relative scales are uploaded, then mapped to
 object transforms and rotation matrices on GPU. Multiple mesh objects can share
 one node. All objects share depth visibility; geometry IDs map to manifest IDs.
 

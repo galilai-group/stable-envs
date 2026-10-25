@@ -13,6 +13,7 @@ import numpy as np
 from .freeze_object_permanence import (
     REFERENCE_CASES,
     REFERENCE_CONVERTED_TASKS,
+    REFERENCE_SCALE_TASKS,
     SOURCE_COMMIT,
     prepare_reference,
     reference_execution_context,
@@ -59,6 +60,7 @@ def freeze(root, output, task, width=320, height=180, *, visibility_contract=CON
         raise ValueError("source target missing")
     frames = np.arange(scene.frame_start, scene.frame_end + 1, dtype=np.int64)
     depth_rows, id_rows, poses = [], [], []
+    source_scales = []
     first_camera = None
     source_descriptions = None
     for frame in frames:
@@ -120,6 +122,8 @@ def freeze(root, output, task, width=320, height=180, *, visibility_contract=CON
         depth_rows.append(depth)
         id_rows.append(labels_image)
         poses.append(frame_poses)
+        if task in REFERENCE_SCALE_TASKS:
+            source_scales.append([list(objects[name].evaluated_get(graph).matrix_world.to_scale()) for name in names])
         if int(frame) % 10 == 0:
             print(f"{task} canonical source frame {frame}", flush=True)
     depths, ids = np.array(depth_rows), np.array(id_rows)
@@ -131,6 +135,8 @@ def freeze(root, output, task, width=320, height=180, *, visibility_contract=CON
         "object_ids": ids,
         "camera_matrix": np.array(first_camera["world"], np.float64),
     }
+    if task in REFERENCE_SCALE_TASKS:
+        arrays["source_scales"] = np.array(source_scales, np.float64)
     output.mkdir(parents=True)
     archive = output / f"geometric_{task.lower()}_nominal.npz"
     np.savez_compressed(archive, **arrays)
@@ -164,6 +170,9 @@ def freeze(root, output, task, width=320, height=180, *, visibility_contract=CON
         "arrays": {k: {"shape": list(v.shape), "dtype": str(v.dtype)} for k, v in arrays.items()},
     }
     context = reference_execution_context(script, task)
+    if task in REFERENCE_SCALE_TASKS:
+        manifest["scale_convention"] = "stable-envs/asset-relative-positive-diagonal-v1"
+        manifest["source_scale_space"] = "absolute-world-matrix-decomposition"
     if context is not None:
         manifest["source_profile"] = "nominal first member; surface diversity globals; no driver hooks"
         manifest["source_execution_context"] = context
@@ -185,7 +194,7 @@ def freeze(root, output, task, width=320, height=180, *, visibility_contract=CON
                 + inspect.getsource(reference_render_meshes)
             ).encode()
         ).hexdigest()
-    if visibility_contract == CONTRACT_V2 or task in REFERENCE_CONVERTED_TASKS:
+    if visibility_contract == CONTRACT_V2 or task in REFERENCE_CONVERTED_TASKS | REFERENCE_SCALE_TASKS:
         manifest["source_preparation_recipe"] = {"build": build, "animate": animate}
         preparation_code = inspect.getsource(prepare_reference) + inspect.getsource(reference_execution_context)
         manifest["source_preparation_algorithm_sha256"] = hashlib.sha256(preparation_code.encode()).hexdigest()

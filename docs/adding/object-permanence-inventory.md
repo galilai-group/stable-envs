@@ -23,11 +23,11 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 |---|---:|
 | appearance-or-visibility-review | 14 |
 | audited-nominal-runtime-gate | 7 |
-| geometry-or-scale-review | 2 |
+| geometry-or-scale-review | 1 |
 | orthographic-camera-review | 32 |
 | rigid-candidate-needs-entry-audit | 7 |
 | source-fidelity-review | 4 |
-| versioned-visibility-runtime-gate | 131 |
+| versioned-visibility-runtime-gate | 132 |
 
 ## Source tasks
 
@@ -178,7 +178,7 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | G143 topple_two_blocks_apart | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G144 double_flap_top_box | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G145 tilt_platform_rolloff | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
-| G146 hanging_ball_release_drop | 1 | location, rotation_euler, scale | geometry-or-scale-review | not evaluated | deferred: animated-geometry |
+| G146 hanging_ball_release_drop | 1 | location, rotation_euler, scale | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G147 drop_leaf_shelf | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G148 latch_release_flap_drop | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |
 | G149 snap_pillar_topple | 1 | location, rotation_euler | versioned-visibility-runtime-gate | versioned ray contract only | certified |

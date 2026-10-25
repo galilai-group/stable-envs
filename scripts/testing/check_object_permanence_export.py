@@ -35,6 +35,7 @@ def check(root, dataset, task):
     manifest = json.loads((directory / "manifest.json").read_text())
     poses = np.load(directory / "poses.npy", allow_pickle=False)
     frames = np.load(directory / "frames.npy", allow_pickle=False)
+    scales = np.load(directory / "scales.npy", allow_pickle=False) if "scales" in manifest["arrays"] else None
     assets = {}
     for key in manifest["assets"]:
         with np.load(
@@ -87,8 +88,9 @@ def check(root, dataset, task):
                 tree.balance()
                 p = record["pose"] if record["node"] == -1 else poses[row, record["node"]]
                 rotation = np.asarray(Quaternion(p[3:]).normalized().to_matrix(), np.float64)
+                scale = np.ones(3) if scales is None or record["node"] == -1 else scales[row, record["node"]]
                 asset = assets[record["asset"]]
-                actual = asset["vertices"] @ rotation.T + p[:3]
+                actual = (asset["vertices"] * scale) @ rotation.T + p[:3]
                 matches = np.asarray([tree.find(vertex)[1] for vertex in actual])
                 expected = unique[matches]
                 np.testing.assert_allclose(
@@ -100,7 +102,9 @@ def check(root, dataset, task):
                 normal_matrix = np.linalg.inv(matrix[:3, :3]).T
                 expected_n = normals[loops] @ normal_matrix.T
                 expected_n /= np.linalg.norm(expected_n, axis=-1, keepdims=True)
-                actual_n = (asset["normals"] @ rotation.T)[asset["triangles"]]
+                actual_n = (asset["normals"] / scale) @ rotation.T
+                actual_n /= np.linalg.norm(actual_n, axis=-1, keepdims=True)
+                actual_n = actual_n[asset["triangles"]]
                 source_faces, expected_n = _canonical(inverse[faces], expected_n)
                 recorded_faces, actual_n = _canonical(matches[asset["triangles"]], actual_n)
                 np.testing.assert_array_equal(source_faces, recorded_faces)

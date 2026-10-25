@@ -1,0 +1,358 @@
+{
+  "arrays": {
+    "frames": {
+      "dtype": "int64",
+      "sha256": "3ce1a862b6cf0bb21bc1354b758cafa47ca5ec03b5c004d6210f5abd8c55df44",
+      "shape": [
+        120
+      ]
+    },
+    "poses": {
+      "dtype": "float32",
+      "sha256": "929a52edc99dd1001180f472fea7817cfdb16ffe434c1585c3051a8ba4267809",
+      "shape": [
+        120,
+        3,
+        7
+      ]
+    },
+    "scales": {
+      "dtype": "float32",
+      "sha256": "a62237b6b9f6ed4fcb59fce723a0996bf72131162a7ee6003dddca2c817b4274",
+      "shape": [
+        120,
+        3,
+        3
+      ]
+    }
+  },
+  "assets": {
+    "1d6f5e44de05480210aaed91759c03683869ab6c342e2125f1954a68958ea8c8": {
+      "file": "assets/cube/1d6f5e44de05480210aaed91759c03683869ab6c342e2125f1954a68958ea8c8.npz",
+      "sha256": "b31653d44546e048ec69fd345e3e4c53638519424daaa6018928ccc01656c744"
+    },
+    "28090cb4069b4df5d97c55a9e646e68160a2ea3e852e7e10e514e0fea07302d3": {
+      "file": "assets/cube/28090cb4069b4df5d97c55a9e646e68160a2ea3e852e7e10e514e0fea07302d3.npz",
+      "sha256": "95f4778b178ad8e6327f81430c229a02762e8091a40caee530c1243dad87d635"
+    },
+    "6bbb6661bb9a7c11662d2e77caa05401b4dfd29d4012013347273c71ad76ead8": {
+      "file": "assets/sphere/6bbb6661bb9a7c11662d2e77caa05401b4dfd29d4012013347273c71ad76ead8.npz",
+      "sha256": "56fecc672e065bc71dbeaefe1e697d614dc782d64148f9e3e2b8ff05f8825a3f"
+    },
+    "a5a64230179ab1a77e275b4e43e0cbf8046960b85170bc7f8761de18867faa86": {
+      "file": "assets/cube/a5a64230179ab1a77e275b4e43e0cbf8046960b85170bc7f8761de18867faa86.npz",
+      "sha256": "103d8a948fe91711fce4f0a0a2aef2ed2d0b616f7110c3eb1e844333583edb80"
+    },
+    "bd4a74d608d76fbb520d5eea4c3ad09843a337f152f255287a4ad6b87f7663cc": {
+      "file": "assets/cube/bd4a74d608d76fbb520d5eea4c3ad09843a337f152f255287a4ad6b87f7663cc.npz",
+      "sha256": "e6231f746a21e271291c2992b3ea86857a74bbf759319567a57a3b9de5785ade"
+    },
+    "c609698eedc09a766348bf6df10e6ede7694e0ccaf58e12464c37a7fcb06862b": {
+      "file": "assets/cylinder/c609698eedc09a766348bf6df10e6ede7694e0ccaf58e12464c37a7fcb06862b.npz",
+      "sha256": "a89d8c5de2a1ef971cf2639b1587d32196551e4c918039ea28415e11492e1685"
+    },
+    "d8ed354687edf47d1bd0513db3a3f9a521315d1d2b6b137dd35de70f5940c49a": {
+      "file": "assets/cylinder/d8ed354687edf47d1bd0513db3a3f9a521315d1d2b6b137dd35de70f5940c49a.npz",
+      "sha256": "dad69c0c1a57be3e976c28a64572659f34101f954d6ad6c608f0c357e742ad9e"
+    },
+    "de7b962316a44b0f064a46d58b455686f102959ca01a84268bf3fe577768328d": {
+      "file": "assets/cube/de7b962316a44b0f064a46d58b455686f102959ca01a84268bf3fe577768328d.npz",
+      "sha256": "31def00547b67b60859f214cf31c730a7cc9c6e48e7d8cd57dc1a4fa78dd71ab"
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "height": 720,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        1.8333332538604736,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        3.259258985519409,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "projection_type": "perspective",
+    "width": 1280,
+    "world": [
+      [
+        0.8373791575431824,
+        0.10602269321680069,
+        -0.536241888999939,
+        -4.599999904632568
+      ],
+      [
+        -0.5466225147247314,
+        0.16241773962974548,
+        -0.8214768767356873,
+        -7.199999809265137
+      ],
+      [
+        6.264642138376075e-09,
+        0.9810094833374023,
+        0.19395962357521057,
+        3.1500000953674316
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "clip": "g146-nominal",
+  "conventions": {
+    "quaternion": "wxyz",
+    "units": "source-scene-units",
+    "world": "right-handed-z-up"
+  },
+  "dynamic_nodes": [
+    "hanging_ball",
+    "release_hook_support",
+    "string_rod"
+  ],
+  "fps": 24.0,
+  "license_ref": {
+    "sha256": "0163481eb7a0fe3ed86d2dccf542a849b36b3c119f8ca6d3d5b36c074f2e1a1c"
+  },
+  "objects": [
+    {
+      "asset": "bd4a74d608d76fbb520d5eea4c3ad09843a337f152f255287a4ad6b87f7663cc",
+      "id": 1,
+      "name": "hanger_post",
+      "node": -1,
+      "pose": [
+        -1.649999976158142,
+        0.0,
+        1.565000057220459,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.3799999952316284,
+        0.38999998569488525,
+        0.4000000059604645,
+        1.0
+      ],
+      "role": "hanger_post",
+      "shape": "cube",
+      "source_id": "hanger_post"
+    },
+    {
+      "asset": "6bbb6661bb9a7c11662d2e77caa05401b4dfd29d4012013347273c71ad76ead8",
+      "id": 2,
+      "name": "hanging_ball",
+      "node": 0,
+      "pose": [
+        0.0,
+        0.0,
+        1.899999976158142,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        1.0,
+        0.3799999952316284,
+        0.05999999865889549,
+        1.0
+      ],
+      "role": "hanging_ball",
+      "shape": "sphere",
+      "source_id": "hanging_ball"
+    },
+    {
+      "asset": "1d6f5e44de05480210aaed91759c03683869ab6c342e2125f1954a68958ea8c8",
+      "id": 3,
+      "name": "large_floor_base",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        -0.05000000074505806,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8199999928474426,
+        0.800000011920929,
+        0.75,
+        1.0
+      ],
+      "role": "ground",
+      "shape": "cube",
+      "source_id": "large_floor_base"
+    },
+    {
+      "asset": "de7b962316a44b0f064a46d58b455686f102959ca01a84268bf3fe577768328d",
+      "id": 4,
+      "name": "post_base_support",
+      "node": -1,
+      "pose": [
+        -1.649999976158142,
+        0.0,
+        0.05000000074505806,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.3799999952316284,
+        0.38999998569488525,
+        0.4000000059604645,
+        1.0
+      ],
+      "role": "post_base_support",
+      "shape": "cube",
+      "source_id": "post_base_support"
+    },
+    {
+      "asset": "28090cb4069b4df5d97c55a9e646e68160a2ea3e852e7e10e514e0fea07302d3",
+      "id": 5,
+      "name": "rear_backdrop_panel",
+      "node": -1,
+      "pose": [
+        0.0,
+        2.4200000762939453,
+        2.299999952316284,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9599999785423279,
+        0.9700000286102295,
+        0.9800000190734863,
+        1.0
+      ],
+      "role": "background",
+      "shape": "cube",
+      "source_id": "rear_backdrop_panel"
+    },
+    {
+      "asset": "d8ed354687edf47d1bd0513db3a3f9a521315d1d2b6b137dd35de70f5940c49a",
+      "id": 6,
+      "name": "release_hook_support",
+      "node": 1,
+      "pose": [
+        0.0,
+        0.0,
+        2.190000057220459,
+        0.7071068286895752,
+        0.7071068286895752,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.20000000298023224,
+        0.20000000298023224,
+        0.2199999988079071,
+        1.0
+      ],
+      "role": "release_hook_support",
+      "shape": "cylinder",
+      "source_id": "release_hook_support"
+    },
+    {
+      "asset": "c609698eedc09a766348bf6df10e6ede7694e0ccaf58e12464c37a7fcb06862b",
+      "id": 7,
+      "name": "string_rod",
+      "node": 2,
+      "pose": [
+        0.0,
+        0.0,
+        2.9700000286102295,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.30000001192092896,
+        0.30000001192092896,
+        0.3199999928474426,
+        1.0
+      ],
+      "role": "string_rod",
+      "shape": "cylinder",
+      "source_id": "string_rod"
+    },
+    {
+      "asset": "a5a64230179ab1a77e275b4e43e0cbf8046960b85170bc7f8761de18867faa86",
+      "id": 8,
+      "name": "support_beam",
+      "node": -1,
+      "pose": [
+        -0.699999988079071,
+        0.0,
+        3.049999952316284,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.5,
+        0.5099999904632568,
+        0.5400000214576721,
+        1.0
+      ],
+      "role": "support_beam",
+      "shape": "cube",
+      "source_id": "support_beam"
+    }
+  ],
+  "scale_convention": "stable-envs/asset-relative-positive-diagonal-v1",
+  "schema": "stable-envs/object-permanence-rigid-v3",
+  "source": {
+    "commit": "824baddcdad087810d35638bf8f273b884f74975",
+    "exporter": "scripts/export/object_permanence.py",
+    "exporter_sha256": "0410d8a9f030fb1131a38bf4b63e2585caf65a5c0f57e4f87546c4ecfbabbb11",
+    "license": "CC-BY-NC-4.0",
+    "parameters": {},
+    "preparation_recipe": {
+      "animate": "animate_scene",
+      "build": "build_scene_by_kind"
+    },
+    "profile": "nominal-first-member-no-diversity",
+    "script": "object_permanence/generator/tasks/G146_hanging_ball_release_drop/pb_task_00000192_pb_hanging_ball_release_drop_0193_blender.py",
+    "script_sha256": "0cb2711d4ec22065e5ab3f07f5338c2d90a068cf0cd63cefbbbc66a25117f517",
+    "seed": null,
+    "task": "G146",
+    "task_manifest_sha256": "216e2efb6bb793a58fb584223af4401fd37da8cbebb25935b08c43d7dbdc81ac",
+    "url": "https://github.com/hokindeng/object-permanence",
+    "versions": {
+      "blender": "4.4.0",
+      "numpy": "1.26.4",
+      "python": "3.11.16"
+    },
+    "video_split": null
+  },
+  "visibility_contract": "stable-envs/opaque-pixel-rays-v1"
+}

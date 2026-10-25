@@ -450,10 +450,11 @@ records the probe names and their raw source roles independently of motion tags.
 |---|---:|---|
 | Transparency | 5 | No opaque replacement of glass/acrylic |
 | Independent source-normal variation | 2 | G98/G132 exceed the existing 3e-6 normal budget |
-| Animated geometry/scale | 1 | G146 changes geometry/scale at source frame 31 |
 
 Orthographic projection and constant Curve/FONT geometry are now supported by
 the linked extension guides, retaining cameras, rails and identity labels.
+[Positive diagonal scale animation](object-permanence-scale.md) also certifies
+G146 without changing pixel rays or thresholds; general deformation remains unsupported.
 G132's fresh-process corner-normal difference is `3.16480663e-6`; its provisional
 data is excluded, rather than raising the normal tolerance.
 

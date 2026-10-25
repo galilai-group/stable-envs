@@ -118,6 +118,104 @@ def test_v2_recording_marks_projection_and_keeps_the_existing_pose_layout(tmp_pa
         RigidTrajectory(tmp_path, "example")
 
 
+@pytest.mark.parametrize("orthographic", [False, True])
+def test_optional_relative_scales_preserve_poses_nodes_and_caller_ownership(tmp_path, recording, orthographic):
+    if orthographic:
+        from tests.unit.test_object_permanence_orthographic_contract import orthographic_camera
+
+        recording["camera"].update(orthographic_camera())
+    recording["scales"] = np.ones((4, 2, 3), np.float32)
+    recording["scales"][1:, 0] = [2, 0.5, 1e-4]
+    path = write(tmp_path, recording)
+    assert json.loads(path.read_text())["schema"] == "stable-envs/object-permanence-rigid-v3"
+    with RigidTrajectory(tmp_path, "example") as clip:
+        assert clip.has_scales and isinstance(clip._scales, np.memmap)
+        assert not clip._scales.flags.writeable
+        indices = [3, 0, 3]
+        selected = clip.scales(indices)
+        assert selected.dtype == np.float32 and selected.shape == (3, 2, 3)
+        np.testing.assert_array_equal(selected, recording["scales"][indices])
+        expanded = clip.object_scales(indices)
+        np.testing.assert_array_equal(expanded[:, 0], expanded[:, 1])
+        np.testing.assert_array_equal(expanded[:, 2], selected[:, 1])
+        np.testing.assert_array_equal(expanded[:, 3], 1)
+        np.testing.assert_array_equal(clip.poses(indices), recording["poses"][indices])
+        selected.fill(9)
+        expanded.fill(9)
+        assert clip.scales([3])[0, 0, 0] == 2
+    edit_manifest(path, lambda m: m.pop("scale_convention"))
+    with pytest.raises(ValueError, match="scale convention"):
+        RigidTrajectory(tmp_path, "example")
+    with pytest.raises(RuntimeError):
+        clip.scales([0])
+
+
+@pytest.mark.parametrize("schema", ["v1", "v2", "v3"])
+def test_missing_optional_scales_default_to_one(tmp_path, recording, schema):
+    if schema == "v2":
+        from tests.unit.test_object_permanence_orthographic_contract import orthographic_camera
+
+        recording["camera"].update(orthographic_camera())
+    path = write(tmp_path, recording)
+    if schema == "v3":
+
+        def upgrade(m):
+            m.update(
+                schema="stable-envs/object-permanence-rigid-v3",
+                scale_convention="stable-envs/asset-relative-positive-diagonal-v1",
+                visibility_contract="stable-envs/opaque-pixel-rays-v1",
+            )
+            m["camera"]["projection_type"] = "perspective"
+
+        edit_manifest(path, upgrade)
+    with RigidTrajectory(tmp_path, "example") as clip:
+        assert not clip.has_scales
+        np.testing.assert_array_equal(clip.scales([3, 0]), np.ones((2, 2, 3), np.float32))
+        np.testing.assert_array_equal(clip.object_scales([3, 0]), np.ones((2, 4, 3), np.float32))
+        with pytest.raises(ValueError):
+            clip.scales([-1])
+
+
+@pytest.mark.parametrize("bad", [0, -1, np.nan, np.inf])
+def test_even_hash_valid_scale_arrays_must_be_positive_and_finite(tmp_path, recording, bad):
+    recording["scales"] = np.ones((4, 2, 3), np.float32)
+    recording["scales"][2, 0, 1] = bad
+    write(tmp_path, recording)
+    with pytest.raises(ValueError, match="finite and strictly positive"):
+        RigidTrajectory(tmp_path, "example")
+
+
+@pytest.mark.parametrize(
+    "bad", [np.ones((4, 2, 3), np.float64), np.ones((4, 1, 3), np.float32), np.full((4, 2, 3), 2, np.float32)]
+)
+def test_scale_dtype_shape_and_asset_reference_are_versioned(tmp_path, recording, bad):
+    recording["scales"] = bad
+    path = write(tmp_path, recording)
+    with pytest.raises(ValueError, match="scales"):
+        RigidTrajectory(tmp_path, "example")
+    edit_manifest(path, lambda m: m.update(schema="stable-envs/object-permanence-rigid-v1"))
+    with pytest.raises(ValueError, match="require rigid-scene v3"):
+        RigidTrajectory(tmp_path, "example")
+
+
+def test_scale_file_hash_and_identity_bind_animation(tmp_path, recording):
+    recording["scales"] = np.ones((4, 2, 3), np.float32)
+    path = write(tmp_path, recording)
+    with RigidTrajectory(tmp_path, "example") as clip:
+        identity = clip.identity
+    filename = path.parent / "scales.npy"
+    changed = recording["scales"].copy()
+    changed[2, 1] = [2, 3, 4]
+    np.save(filename, changed, allow_pickle=False)
+    with pytest.raises(ValueError, match="hash"):
+        RigidTrajectory(tmp_path, "example")
+    edit_manifest(
+        path, lambda m: m["arrays"]["scales"].update(sha256=hashlib.sha256(filename.read_bytes()).hexdigest())
+    )
+    with RigidTrajectory(tmp_path, "example") as clip:
+        assert clip.identity != identity
+
+
 @pytest.mark.parametrize("indices", [[-1], [4], [], [[0]], [0.0], [True]])
 def test_bad_frame_selection_is_rejected(tmp_path, recording, indices):
     write(tmp_path, recording)

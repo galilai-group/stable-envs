@@ -20,9 +20,9 @@ missing label pixel would violate the existing IoU budget. Labels participate in
 source-world triangle/normal checks as well as image checks; they are never
 replaced by rectangles, annotations or a screen-space text overlay.
 
-The current audit therefore certifies **142/150** first nominal members: 7 legacy,
-91 v1 and 44 v2 scenes. Remaining deferrals are five transparent scenes, two
-source-normal reproducibility failures and one animated-geometry/scale scene.
+The current audit certifies **143/150** first nominal members: 7 legacy,
+92 v1 and 44 v2 scenes, including the separate [scale extension](object-permanence-scale.md).
+Remaining deferrals are five transparent scenes and two source-normal reproducibility failures.
 The 47 additional member scripts remain unregistered.
 
 ## Conversion and lifetime
