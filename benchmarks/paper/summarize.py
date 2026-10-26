@@ -93,6 +93,11 @@ def _arm(d, prefix):
     return best
 
 
+def _invalid(d, prefix):
+    """Whether an arm with this prefix failed its frame check."""
+    return any(k.startswith(prefix) and v.get("status") == "invalid" for k, v in (d or {}).get("arms", {}).items())
+
+
 def online(root: Path, names):
     rows = []
     for n in names:
@@ -128,6 +133,8 @@ def online(root: Path, names):
                 "snv_step_gpu": v(snv_step_gpu),
                 "snv_step_gpu_mode": snv_step_gpu and snv_step_gpu[2].get("execution_mode"),
                 "src_render_gpu": v(src_rg) if gpu_source else None,
+                "src_render_gpu_invalid": _invalid(sg, "src-pipelined-render"),
+                "src_render_cpu_invalid": _invalid(sc, "src-pipelined-render"),
                 "snv_render_gpu": v(snv_rg),
                 "snv_render_gpu_t": t(snv_rg),
                 "src_render_cpu": v(src_rc),
@@ -207,6 +214,9 @@ def markdown(roots: list[Path]) -> str:
         "Source: its envs in ProcessAdapter workers (one process per core), one action per call, the next step",
         "submitted before the current one is taken. SNV: best over T actions per call (T shown).",
         "Step: physics only. Render: physics plus a frame every step. GPU render for the source is MuJoCo on EGL.",
+        "'invalid': the source's worker frames differ from a one-env replay of the same episode (no speed is reported).",
+        "Rollout MSE compares SNV and source frames of the same seeded episode up to its first end; it includes any",
+        "physics divergence, not only rendering.",
         "",
         "| Env | Src step | SNV step CPU (T) | SNV step GPU (mode) | Step speedup "
         "| Src render GPU | SNV render GPU (T) | GPU speedup | Src render CPU | SNV render CPU (T) | CPU speedup "
@@ -219,9 +229,9 @@ def markdown(roots: list[Path]) -> str:
         lines.append(
             f"| {r['env']} | {_fmt(r['src_step'])} | {_fmt(r['snv_step'])} ({r['snv_step_t'] or '–'}) "
             f"| {_fmt(r['snv_step_gpu'])} ({r['snv_step_gpu_mode'] or '–'}) | {_ratio(best_step, r['src_step'])} "
-            f"| {_fmt(r['src_render_gpu'])} | {_fmt(r['snv_render_gpu'])} ({r['snv_render_gpu_t'] or '–'}) "
+            f"| {'invalid' if r['src_render_gpu_invalid'] else _fmt(r['src_render_gpu'])} | {_fmt(r['snv_render_gpu'])} ({r['snv_render_gpu_t'] or '–'}) "
             f"| {_ratio(r['snv_render_gpu'], r['src_render_gpu']) if r['gpu_source'] else 'no src GPU'} "
-            f"| {_fmt(r['src_render_cpu'])} | {_fmt(r['snv_render_cpu'])} ({r['snv_render_cpu_t'] or '–'}) "
+            f"| {'invalid' if r['src_render_cpu_invalid'] else _fmt(r['src_render_cpu'])} | {_fmt(r['snv_render_cpu'])} ({r['snv_render_cpu_t'] or '–'}) "
             f"| {_ratio(r['snv_render_cpu'], r['src_render_cpu'])} | {_fmt(r['rollout_mse_gpu'], 2)} | {_fmt(r['rollout_mse_cpu'], 2)} "
             f"| {'ok' if bad and not any(bad) else ('MISMATCH' if any(bad) else '–')} |"
         )
