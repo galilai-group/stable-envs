@@ -1,7 +1,7 @@
 #!/bin/bash
 # Offline and online speed of stable-envs against the source, every arm pinned to the same CPU cores.
-# usage (from the repository root): sbatch -p qed -n 1 -c 16 --mem=128G --gres=gpu:1 -t 48:00:00 benchmarks/paper/run.sh OUT FAMILY=ENV,ENV ...
-#   SMOKE=1 uses small state, batch and episode counts. CORES (default: the first 8 cores the job may use) is the
+# usage (from the repository root): sbatch -p qed -n 1 -c 8 --hint=nomultithread --mem=128G --gres=gpu:1 -t 48:00:00 benchmarks/paper/run.sh OUT FAMILY=ENV,ENV ...
+#   SMOKE=1 uses small state, batch and episode counts. CORES (default: the first NPIN, default 8, cores the job may use) is the
 #   core set of every arm. STEP_LIMIT (default 6h) stops one arm that does not exit.
 set -uo pipefail
 OUT=$(realpath -m "$1"); shift
@@ -9,7 +9,7 @@ OUT=$(realpath -m "$1"); shift
 REPO=${SNV_REPO:-${SLURM_SUBMIT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}}
 [ -f "$REPO/pyproject.toml" ] || { echo "no repository at $REPO" >&2; exit 2; }
 SWM=${SWM:-$HOME/lewm-hyd/swm}
-CORES=${CORES:-$(python3 -c "import os; print(','.join(map(str, sorted(os.sched_getaffinity(0))[:8])))")}
+CORES=${CORES:-$(python3 -c "import os; print(','.join(map(str, sorted(os.sched_getaffinity(0))[:${NPIN:-8}])))")}
 NCORES=$(taskset -c "$CORES" nproc)
 PIN="timeout -k 60 ${STEP_LIMIT:-6h} taskset -c $CORES"
 UV=${UV:-$HOME/.local/bin/uv}
