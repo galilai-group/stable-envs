@@ -30,6 +30,10 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- `PiecewiseZones` and `TwoRoomTarget` draw seeded resets from the same distribution tree as `Piecewise`
+  and `TwoRoom`, so `reset(seed=k)` starts the agent (and `TwoRoomTarget`'s target) where stable-worldmodel
+  does for the same seed. Before, they drew from `sample_states` and matched for no seed.
+
 - PushT on CPU: a Numba rasterizer draws `render` batches of 8 or more States from the same primitive
   records as the GPU path. Frames are byte-identical to pygame. `backend` takes `"auto"`, `"source"`
   (pygame, also `"pygame"`) or `"port"`. CPU `render` of 1024 States is approximately 1.5 times faster
