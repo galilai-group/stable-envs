@@ -6,10 +6,10 @@ than rendered videos. Online replay does not need Blender or MuJoCo.
 
 The source is pinned to
 [`hokindeng/object-permanence@824badd`](https://github.com/hokindeng/object-permanence/tree/824baddcdad087810d35638bf8f273b884f74975).
-The importer has been exercised on 179 of its 197 scripts: 150 first nominal
-members and 29 additional members. This describes the audited source defaults,
+The importer has been exercised on 180 of its 197 scripts: 150 first nominal
+members and 30 additional members. This describes the audited source defaults,
 not arbitrary driver diversity or downstream model accuracy. The remaining queue
-starts at G15; G05/1 needs a renderable-set policy and G05/3 needs an audited
+starts at G16; G05/1 needs a renderable-set policy and G05/3 needs an audited
 multi-stage/animated-scale recipe.
 
 ## Read and render
