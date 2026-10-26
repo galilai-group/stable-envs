@@ -60,12 +60,6 @@ def test_the_same_seed_gives_the_same_trajectory_and_a_different_one_does_not(na
     assert torch.equal(a, b), f"{name}: the same seed produced two different trajectories"
 
     c = sample(env, steps=STEPS, batch=N, seed=SEED + 1)["states"]
-    if getattr(env, "seed_independent_trajectory", False):
-        # Authored nominal video moves over time but consumes no randomness.
-        # Assert the declared property instead of requiring artificial diversity.
-        assert env.action_low == env.action_high
-        assert torch.equal(a, c), f"{name}: a declared seed-independent trajectory changed with the seed"
-        return
     if torch.equal(a, c):
         # A degenerate env (single-point reset, actions that do not move it) legitimately agrees.
         assert float(a.std()) == 0.0, (

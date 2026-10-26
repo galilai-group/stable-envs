@@ -44,12 +44,10 @@ env = snv.CartPole(num_envs=8)
 
 ## Families
 
-`MuJoCoOcclusionBall` belongs to `object_permanence`. It reproduces the nominal G34
-authored animation with zero-only actions, native and batched raycast rendering,
-CPU/CUDA tensors, and source depth/mask gates. Explicit raycast renders on the
-requested device; MuJoCo simulation stays on CPU. Its install extra is
-`object-permanence` and CI profile is `object_permanence`.
-See [the alignment contract](adding/object-permanence-recordings.md).
+Object-permanence supplies recorded-trajectory utilities (`RigidTrajectory`,
+`G34Replay`) and a shared GPU renderer. It does not register action-driven `Env`
+classes; its CI profile is `object_permanence`. See
+[the recording workflow](adding/object-permanence-recordings.md).
 
 `list_envs(family=…)` matches the class attribute `family`.
 
@@ -60,12 +58,11 @@ See [the alignment contract](adding/object-permanence-recordings.md).
 | `dmcontrol` | 18 | `DMCReacherHard`, `DMCCheetahRun` (`domain="reacher"`, `"cheetah"`, …) |
 | `fetch` | 12 | `FetchReach`, `FetchPush`, … |
 | `navigation` | 5 | `TwoRoom`, `Piecewise`, `SimplePointMaze` |
-| `object_permanence` | 1 | `MuJoCoOcclusionBall` |
 | `ogbench` | 27 | `PointMazeLargeNavigate`, `OGBCube` (`domain="pointmaze"`, `"cube"`, …) |
 | `pusht` | 2 | `PushT`, `PushTDiscrete` |
 | `pyflyt` | 1 | `PyFlytRocketLanding` |
 
-Across the supported extra combinations, these are 75 classes, or 74 without PyFlyt.
+Across the supported extra combinations, these are 74 classes, or 73 without PyFlyt.
 Conflicting MuJoCo pins require separate interpreters; not every extra can be installed together.
 
 ## Fidelity

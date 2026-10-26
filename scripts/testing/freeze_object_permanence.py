@@ -2,7 +2,7 @@
 
 The depth encoding XORs IEEE float32 bits against frame one, losslessly removing
 repeated background data. It does not change depth precision or acceptance gates.
-Existing output directories are never overwritten, including the G34 fixture.
+Existing output directories are never overwritten, including previously frozen fixtures.
 """
 
 from __future__ import annotations

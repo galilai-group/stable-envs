@@ -7,7 +7,6 @@ from stable_envs.envs.dmcontrol.simulation.factory import DMCAdapter
 from stable_envs.envs.dmcontrol.simulation.process import DMCProcessAdapter
 from stable_envs.envs.fetch.simulation.adapter import FetchAdapter
 from stable_envs.envs.fetch.simulation.process import FetchProcessAdapter
-from stable_envs.envs.object_permanence.simulation.g34 import OcclusionBallAdapter
 from stable_envs.envs.ogbench.simulation.manipulation import OGBManipulationAdapter
 from stable_envs.envs.ogbench.simulation.manipulation_process import OGBManipulationProcessAdapter
 from stable_envs.envs.ogbench.simulation.maze import OGBMazeAdapter
@@ -24,9 +23,8 @@ def local_adapters(
     manipulation: OGBManipulationAdapter,
     pusht: PushTReplayAdapter,
     rocket: RocketAdapter,
-    occlusion: OcclusionBallAdapter,
 ) -> tuple[SimulatorAdapter, ...]:
-    return classic, fetch, dmc, maze, manipulation, pusht, rocket, occlusion
+    return classic, fetch, dmc, maze, manipulation, pusht, rocket
 
 
 def process_adapters(

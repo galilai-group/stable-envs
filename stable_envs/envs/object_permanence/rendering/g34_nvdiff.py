@@ -1,14 +1,14 @@
 """Engine-free G34 triangles and batched CUDA rasterization.
 
-Read the packaged declarative scene with the standard library, not MuJoCo.
+Read packaged visual JSON with the standard library.
 All five objects share the depth buffer. An nvdiff-only static bake and cropped
 dynamic viewports avoid engine calls and bound high-precision coverage work.
 """
 
 from __future__ import annotations
 
+import json
 from importlib.resources import files
-from xml.etree import ElementTree
 
 import numpy as np
 import torch
@@ -23,39 +23,39 @@ from .viewports import CropCamera, PixelCenterRenderer, crop_spheres
 def scene_arrays():
     """Return local triangles, fixed transforms, colors and the source camera.
 
-    The XML is only an asset description here. G34 uses axis-aligned boxes and
+    The JSON contains visual data only. G34 uses axis-aligned boxes and
     one 48-by-24 UV sphere; unsupported geometry must fail rather than disappear.
     Geom order is the frozen oracle's semantic ID order, minus one.
     """
-    root = ElementTree.fromstring(files(__package__.rsplit(".", 1)[0]).joinpath("assets/g34/scene.xml").read_text())
-    geoms = {g.attrib["name"]: g for g in root.findall(".//geom") if "name" in g.attrib}
+    description = json.loads(files(__package__.rsplit(".", 1)[0]).joinpath("assets/g34/scene.json").read_text())
+    geoms = {g["name"]: g for g in description["objects"]}
     vertices, normals, faces, owners, colors, positions = [], [], [], [], [], []
     offset = 0
     for index, name in enumerate(OBJECT_NAMES):
         geom = geoms[name]
-        size = np.fromstring(geom.attrib["size"], sep=" ")
-        if geom.attrib["type"] == "box":
+        size = np.asarray(geom["size"], dtype=np.float64)
+        if geom["type"] == "box":
             v, n, f = ND._box(size)
-        elif geom.attrib["type"] == "sphere":
+        elif geom["type"] == "sphere":
             v, n, f = ND._sphere(np.repeat(size[0], 3), nslice=48, nstack=24)
         else:
-            raise ValueError(f"Unsupported G34 geometry: {geom.attrib['type']}")
+            raise ValueError(f"Unsupported G34 geometry: {geom['type']}")
         vertices.append(v)
         normals.append(n)
         faces.append(f + offset)
         owners.append(np.full(len(v), index, np.int64))
-        colors.append(np.fromstring(geom.attrib["rgba"], sep=" "))
-        positions.append(np.fromstring(geom.attrib.get("pos", "0 0 0"), sep=" "))
+        colors.append(np.asarray(geom["rgba"], dtype=np.float64))
+        positions.append(np.asarray(geom["position"], dtype=np.float64))
         offset += len(v)
-    camera = root.find(".//camera")
-    axes = np.fromstring(camera.attrib["xyaxes"], sep=" ").reshape(2, 3)
+    camera = description["camera"]
+    axes = np.asarray(camera["xyaxes"], dtype=np.float64).reshape(2, 3)
     right = axes[0] / np.linalg.norm(axes[0])
     up = axes[1] - np.dot(axes[1], right) * right
     up /= np.linalg.norm(up)
     cam = ND.Camera(
-        np.fromstring(camera.attrib["pos"], sep=" "),
+        np.asarray(camera["position"], dtype=np.float64),
         np.stack([right, up, np.cross(right, up)], -1),
-        float(camera.attrib["fovy"]),
+        float(camera["fovy"]),
         0.01,
         100.0,
     )

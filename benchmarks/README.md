@@ -61,32 +61,15 @@ configuration and the Git revision.
 - `pipeline.py` writes one point per environment, with packed-state and frame byte sizes. The JPEG
   result and the throughput ratio are nested under that environment.
 
-## Object-permanence G34
+## Object-permanence replay
 
-`python -m benchmarks.object_permanence --backend raycast --size 90` measures
-owned full-State batches spread across the nominal 120-frame trajectory. Use
-`--backend opengl` for the native baseline and the same batch sizes, thread
-settings and resolution. Both include public validation/projection and buffer
-copying; neither times initial construction, rollout or the static bake.
-The output retains sampled source phases, raw timing samples and thread settings.
-See [the alignment contract](../docs/adding/object-permanence-recordings.md) for geometry gates
-and reproducible OSMesa commands.
+`python -m benchmarks.object_permanence_recordings --recordings <dataset> --output <json>`
+measures the shared GPU renderer with and without static caching. Timings include
+CPU frame selection and pose upload, with startup/JIT/cache construction reported
+separately. `--modes rgb,depth,ids` measures combined outputs. Optional G34
+`--backends cropped,cropped-refined` comparisons use the engine-free nvdiff utility.
+Native MuJoCo and raycast backends are not part of this family.
 
-## Engine-free G34 replay
-
-`python -m benchmarks.object_permanence_replay --size 180 --backends nvdiff --output /tmp/g34.json`
-times CPU replay-State validation/projection, pose and derived-camera uploads,
-and CUDA RGB rendering into reused output. Add `--gif /tmp/g34.gif` (Pillow) for a
-24 FPS preview. Add `--backends nvdiff,raycast,opengl` for legacy comparisons;
-only those opt-in baselines require MuJoCo and an OpenGL implementation.
-Startup/static plates are recorded separately from steady-state timings.
-Use `--modes rgb,depth,ids` to measure shared outputs, then `--separate` to
-compare single-mode calls. `--coverage refined` selects floating-point coverage
-correction; `--background-coverage native` measures uncorrected static coverage.
-Each choice still needs its scene's geometry gate; native dynamic G34 fails it.
-
-The shared object-permanence recording baseline is measured with
-`python -m benchmarks.object_permanence_recordings --recordings <dataset> --output <json>`.
-It includes CPU pose lookup/upload and can build native-source/shared GIFs.
-See [the recording guide](../docs/adding/object-permanence-recordings.md) for fidelity
-scopes, native preview generation, profiling and reproducible commands.
+The same command can build native-source/shared GIFs from source previews.
+See [the recording guide](../docs/adding/object-permanence-recordings.md) for the
+import, independent oracle, validation and preview workflow.

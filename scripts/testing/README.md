@@ -10,7 +10,6 @@ write that corpus and its reports outside Git, for example under
 |---|---|
 | `freeze_native.py` | shared native trajectory corpus (`tests/fixtures/semantics/shared_native`) |
 | `freeze_*_oracle.py` | per-family semantic oracles (`tests/fixtures/semantics/<family>`) |
-| `freeze_occlusion_ball_oracle.py` | Blender G34 poses/depth/masks; isolated Python 3.11 + bpy 4.4 |
 | `freeze_object_permanence_g62.py` | independent Blender G62 poses/depth/masks at all 120 source frames |
 | `check_object_permanence_export.py` | live all-frame source world-triangle/normal checks of exported recordings |
 | `_oracle.py` | pin check, rollout and manifest helpers the oracle generators share |

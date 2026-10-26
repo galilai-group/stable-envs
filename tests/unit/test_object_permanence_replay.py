@@ -61,3 +61,15 @@ assert sys.modules['mujoco'] is None
 assert sys.modules['nvdiffrast'] is None
 """
     subprocess.run([sys.executable, "-c", code], check=True, timeout=60)
+
+
+def test_default_replay_matches_recorded_source_poses():
+    from stable_envs.envs.object_permanence import RigidTrajectory
+    from tests.helpers.reference.object_permanence_recordings import RECORDINGS
+
+    with RigidTrajectory(RECORDINGS, "g34-nominal") as clip, G34Replay() as replay:
+        actual = replay.poses(replay.state_at(torch.arange(120)))
+        expected = torch.from_numpy(clip.poses(list(range(120)))[:, 0])
+        assert torch.allclose(actual[:, :3], expected[:, :3], atol=3e-7, rtol=0)
+        sign = torch.where((actual[:, 3:] * expected[:, 3:]).sum(-1, keepdim=True) < 0, -1, 1)
+        assert torch.allclose(actual[:, 3:] * sign, expected[:, 3:], atol=1e-6, rtol=0)

@@ -30,12 +30,6 @@ from tests.helpers import raycast_reference as reference
 #: Env modules whose import failure explains an empty family (see ``resolve_family``).
 RAYCAST_MODULES = ("dmcontrol", "ogbench")
 MOVER_MODULES = ("dmcontrol",)
-RAYCAST_ENVS = tuple(
-    name
-    for name, cls in sorted(se.registry.REGISTRY.items())
-    if cls.family in ("dmcontrol", "ogbench")
-    and name.startswith(("DMC", "MuJoCo", "AntMaze", "PointMaze", "HumanoidMaze", "Maze2d"))
-)
 
 
 @contextlib.contextmanager
@@ -279,7 +273,11 @@ CASES: tuple[FastPath, ...] = (
             "``enable_fp_fusion=False``, ``div_rn`` and ``sqrt_rn`` are still in raycast3d._tri_isect "
             "and _launch."
         ),
-        names=RAYCAST_ENVS,
+        names=tuple(
+            n
+            for n in sorted(se.registry.REGISTRY)
+            if n.startswith(("DMC", "MuJoCo", "AntMaze", "PointMaze", "HumanoidMaze", "Maze2d"))
+        ),
         modules=RAYCAST_MODULES,
         num_envs=8,
         seed=0,
@@ -297,7 +295,7 @@ CASES: tuple[FastPath, ...] = (
             "the movers' mirror images (``_mirror_idx``) and the shadow-from-static test "
             "(``_shadow_candidates``)."
         ),
-        names=tuple(n for n in RAYCAST_ENVS if se.registry.REGISTRY[n].family == "dmcontrol"),
+        names=tuple(n for n in sorted(se.registry.REGISTRY) if n.startswith(("DMC", "MuJoCo"))),
         modules=MOVER_MODULES,
         num_envs=16,
         seed=0,
@@ -312,7 +310,11 @@ CASES: tuple[FastPath, ...] = (
             "A primitive bounding sphere in the torch cast is too small: a ray outside the inflated "
             "bound (16 ulp budget) still hits the primitive, so skipping it drops silhouette pixels."
         ),
-        names=RAYCAST_ENVS,
+        names=tuple(
+            n
+            for n in sorted(se.registry.REGISTRY)
+            if n.startswith(("DMC", "MuJoCo", "AntMaze", "PointMaze", "HumanoidMaze"))
+        ),
         modules=RAYCAST_MODULES,
         num_envs=8,
         seed=0,

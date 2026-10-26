@@ -79,7 +79,7 @@ The contracts are defined in `rendering/visibility.py`, `transparency.py` and
 ## Import and independently validate
 
 Use a clean checkout at the source pin and an isolated Blender interpreter with
-`scripts/testing/requirements-occlusion-oracle.txt` (Blender 4.4). Use a separate
+`scripts/testing/requirements-object-permanence-oracle.txt` (Blender 4.4). Use a separate
 CUDA interpreter with Torch, Triton and nvdiffrast for rendering.
 `member` is a zero-based position in the source task's `member_scripts` list;
 `nominal` selects that script's audited defaults.
@@ -151,10 +151,9 @@ Measurements include CPU frame lookup and pose upload. Startup/static bake,
 output download and training are separate costs; rendering throughput is not an
 end-to-end training speedup.
 
-## Compatibility
+## G34 convenience replay
 
-`G34Replay` retains its restorable trajectory cursor. The optional
-`MuJoCoOcclusionBall` adapter and its complete simulator State remain available
-with the `object-permanence` extra. Their scene-specific backends are retained
-for compatibility; new tasks should use recorded trajectories and the shared
-renderer. See [installation](../install.md) for optional GPU/engine dependencies.
+`G34Replay` retains its restorable trajectory cursor and engine-free nvdiff
+renderer. Its packaged visual scene is plain JSON; no physics model is compiled.
+The former MuJoCo adapter, native renderer, raycaster and dedicated sphere kernel
+have been removed. New tasks use sampled recordings and the shared renderer.

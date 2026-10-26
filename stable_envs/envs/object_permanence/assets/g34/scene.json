@@ -1,0 +1,119 @@
+{
+  "schema": "stable-envs/g34-visual-scene-v1",
+  "objects": [
+    {
+      "name": "large_floor_base",
+      "type": "box",
+      "size": [
+        5.0,
+        2.5,
+        0.05
+      ],
+      "position": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "rgba": [
+        0.82,
+        0.8,
+        0.75,
+        1.0
+      ]
+    },
+    {
+      "name": "rear_backdrop_panel",
+      "type": "box",
+      "size": [
+        5.1,
+        0.04,
+        1.62
+      ],
+      "position": [
+        0.0,
+        2.48,
+        1.62
+      ],
+      "rgba": [
+        0.96,
+        0.97,
+        0.98,
+        1.0
+      ]
+    },
+    {
+      "name": "straight_gray_track",
+      "type": "box",
+      "size": [
+        3.75,
+        0.15,
+        0.035
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.055
+      ],
+      "rgba": [
+        0.46,
+        0.46,
+        0.46,
+        1.0
+      ]
+    },
+    {
+      "name": "wide_opaque_screen",
+      "type": "box",
+      "size": [
+        0.69,
+        0.08,
+        0.6
+      ],
+      "position": [
+        0.0,
+        -0.06,
+        0.64
+      ],
+      "rgba": [
+        0.68,
+        0.69,
+        0.71,
+        1.0
+      ]
+    },
+    {
+      "name": "small_orange_ball",
+      "type": "sphere",
+      "size": [
+        0.1
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        1.0,
+        0.38,
+        0.06,
+        1.0
+      ]
+    }
+  ],
+  "camera": {
+    "position": [
+      0.0,
+      -6.8,
+      1.85
+    ],
+    "xyaxes": [
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.20579289151580216,
+      0.9785955680471711
+    ],
+    "fovy": 34.11393115323413
+  }
+}

@@ -41,7 +41,6 @@ package, which tests use for comparison.
 | `ogbench` | OGBench mazes | `ogbench`, MuJoCo |
 | `ogbench-manipulation` / `-gpu` | OGBCube, OGBScene | MuJoCo 3.12.0, OGBench 1.2.1, dm_control. `-gpu` adds MuJoCo Warp 3.12.0 and Warp 1.17.0 |
 | `dmcontrol` | DM Control | `dm_control`, MuJoCo |
-| `object-permanence` | MuJoCoOcclusionBall, authored G34 nominal animation | MuJoCo >=3.12,<3.13; Blender is needed only to regenerate source fixtures |
 | `dmcontrol-gpu` | DM Control on CUDA with TrackCom floor reflections | MuJoCo and MuJoCo Warp 3.12 |
 | `robotics` | Fetch | gymnasium-robotics, MuJoCo < 3.12, OpenCV |
 | `mjwarp` | Fetch on CUDA | MuJoCo Warp |
@@ -57,16 +56,11 @@ The `rocket` extra resolves numpy < 2 because of PyFlyt's metadata.
 PushT renders with pygame on CPU. `device="cuda"` places the output tensors on the GPU. The drawing
 still runs on CPU.
 
-G34 supports CPU and CUDA output. Use `backend="raycast", device="cuda"` for GPU
-rendering; MuJoCo simulation remains on CPU. Its native default still requires an
-OpenGL context, also used once to bake the raycast background. See the
-[Object-permanence renderer and data workflow](adding/object-permanence-recordings.md#read-and-render).
-
-For source-trajectory replay without MuJoCo or Blender, import `G34Replay` from
-`stable_envs.envs.object_permanence`. Replay operations need only base dependencies;
-rendering needs CUDA PyTorch and nvdiffrast below. Install Pillow for optional GIF
-output. This utility is not a registered, action-driven `Env`; the existing
-`MuJoCoOcclusionBall` interface remains available separately.
+Object-permanence trajectory reading and replay use the base dependencies.
+GPU rendering uses CUDA PyTorch, Triton and nvdiffrast below; neither MuJoCo nor
+Blender is a runtime dependency. Install Pillow for optional GIF output. Blender
+is used only by the offline source exporter and independent oracle tools.
+See [the recording workflow](adding/object-permanence-recordings.md).
 
 ## Reference profiles
 
