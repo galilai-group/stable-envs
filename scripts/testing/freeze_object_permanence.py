@@ -24,6 +24,16 @@ SOURCE_COMMIT = "824baddcdad087810d35638bf8f273b884f74975"
 # Independently audited positive diagonal scale animation, sampled in world space.
 REFERENCE_SCALE_TASKS = {"G146"}
 REFERENCE_SCALE_MEMBERS = {("G05", 3)}
+# Independently retained semantic labels from the original G34 reference.
+REFERENCE_OBJECT_ORDERS = {
+    "G34": (
+        "large_floor_base",
+        "rear_backdrop_panel",
+        "straight_gray_track",
+        "wide_opaque_screen",
+        "small_orange_ball",
+    ),
+}
 # Separate from candidate extraction/registration; only audited converted cases.
 REFERENCE_CONVERTED_TASKS = {
     "G04",
@@ -179,6 +189,8 @@ REFERENCE_ORTHOGRAPHIC_MEMBERS = frozenset(
 )
 
 REFERENCE_CASES = {
+    "G34": ("build_scene_by_kind", "animate_scene_by_kind", ("small_orange_ball",)),
+    "G62": ("build_scene_by_kind", "animate_scene_by_kind", ("cross_ball_red", "cross_ball_blue")),
     "G98": ("build_scene_by_kind", "animate_scene_by_kind", ("colored_ball_on_base",)),
     "G132": ("build_scene_by_kind", "animate_scene_by_kind", ("hidden_ball_in_capsule",)),
     "G05": ("build_scene", "animate_scene", ("red_wheeled_car_body",)),

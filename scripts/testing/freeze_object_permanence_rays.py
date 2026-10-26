@@ -16,6 +16,7 @@ from .freeze_object_permanence import (
     REFERENCE_CASES,
     REFERENCE_CONVERTED_TASKS,
     REFERENCE_MEMBERS,
+    REFERENCE_OBJECT_ORDERS,
     REFERENCE_SCALE_MEMBERS,
     REFERENCE_SCALE_TASKS,
     SOURCE_COMMIT,
@@ -60,7 +61,9 @@ def freeze(root, output, task, width=320, height=180, *, visibility_contract=CON
     scene = bpy.context.scene
     scene.render.resolution_x, scene.render.resolution_y = width, height
     scene.render.resolution_percentage = 100
-    names = sorted(reference_geometry(scene, task))
+    names = list(REFERENCE_OBJECT_ORDERS.get(task, sorted(reference_geometry(scene, task))))
+    if set(names) != set(reference_geometry(scene, task)):
+        raise ValueError("audited source object order differs")
     labels = {name: i + 1 for i, name in enumerate(names)}
     if not set(targets) <= set(names):
         raise ValueError("source target missing")
@@ -75,7 +78,7 @@ def freeze(root, output, task, width=320, height=180, *, visibility_contract=CON
         bpy.context.view_layer.update()
         graph = bpy.context.evaluated_depsgraph_get()
         objects = reference_geometry(scene, task)
-        if sorted(objects) != names:
+        if set(objects) != set(names):
             raise ValueError("source renderable identities changed")
         descriptions = reference_geometry_description(objects, graph)
         if source_descriptions is not None and descriptions != source_descriptions:
@@ -125,7 +128,9 @@ def freeze(root, output, task, width=320, height=180, *, visibility_contract=CON
                     meshes[name] = vertices[np.array([t.vertices[:] for t in mesh.loop_triangles])]
                 finally:
                     evaluated.to_mesh_clear()
-        depth, labels_image = draw(meshes, camera, height, width, visibility_contract=visibility_contract)
+        depth, labels_image = draw(
+            meshes, camera, height, width, visibility_contract=visibility_contract, object_ids=labels
+        )
         depth_rows.append(depth)
         id_rows.append(labels_image)
         poses.append(frame_poses)

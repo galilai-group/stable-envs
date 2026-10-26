@@ -48,6 +48,16 @@ def test_source_semantic_ties_ignore_object_enumeration_and_keep_distinct_nearer
     assert ids[15, 23] == 2 and depth[15, 23] == 3
 
 
+def test_explicit_source_labels_control_coplanar_ties_and_validate_the_namespace():
+    triangles = quad()[np.array([[0, 1, 2], [0, 2, 3]])]
+    meshes = {"a": triangles, "b": triangles[:, ::-1]}
+    depth, ids = draw(meshes, camera(), 31, 47, object_ids={"a": 9, "b": 4})
+    assert ids[15, 23] == 4 and depth[15, 23] == 3
+    for labels in ({"a": 9}, {"a": 4, "b": 4}, {"a": 0, "b": 4}):
+        with pytest.raises(ValueError, match="semantic IDs"):
+            draw(meshes, camera(), 31, 47, object_ids=labels)
+
+
 def test_camera_and_unsupported_conventions_fail_explicitly():
     metadata = camera()
     validate_camera(metadata)

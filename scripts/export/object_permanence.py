@@ -538,8 +538,8 @@ CONTRACT_ONLY_TASKS |= (
     | OPTICAL_TASKS
     | NATIVE_SCENE_TASKS
 )
-# Preparation/rigid serialization passed, but source pixel fidelity did not.
-# Explicit export remains useful for diagnosis; default batch execution is blocked.
+# Legacy unversioned BVH gates failed; explicit pixel-ray contracts passed.
+# Block only the old route so frozen references are not silently reinterpreted.
 DEFERRED_TASKS = {
     "G63": "source fidelity deferred: boundary depth MSE exceeds 1e-8 at frames 16/54/66/104",
     "G66": "source fidelity deferred: boundary depth MSE exceeds 1e-8 at frame 34",

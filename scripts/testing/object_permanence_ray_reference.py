@@ -26,7 +26,7 @@ def plane(triangle):
     return np.array([float(c / n[axis]) for c in [*n, d]], np.float64)
 
 
-def draw(meshes, camera, height, width, *, visibility_contract=CONTRACT):
+def draw(meshes, camera, height, width, *, visibility_contract=CONTRACT, object_ids=None):
     """Render independent source world triangles, mapping names to semantic IDs."""
     p, world = np.asarray(camera["projection"]), np.asarray(camera["world"])
     view = np.linalg.inv(world)
@@ -62,7 +62,13 @@ def draw(meshes, camera, height, width, *, visibility_contract=CONTRACT):
         origin = world[:3, 3]
     depth = np.full((height, width), np.inf)
     ids = np.zeros((height, width), np.int16)
-    labels = {name: i + 1 for i, name in enumerate(sorted(meshes))}
+    labels = {name: i + 1 for i, name in enumerate(sorted(meshes))} if object_ids is None else object_ids
+    if (
+        set(labels) != set(meshes)
+        or len(set(labels.values())) != len(labels)
+        or any(type(v) is not int or not 0 < v < 32768 for v in labels.values())
+    ):
+        raise ValueError("semantic IDs must be unique positive int16 labels for every object")
     for name, triangles in meshes.items():
         for tri in triangles:
             homogeneous = np.column_stack((tri, np.ones(3))) @ view.T @ p.T

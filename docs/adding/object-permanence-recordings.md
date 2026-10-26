@@ -114,6 +114,8 @@ sampling where needed.
 The exporter checks every source frame for constant geometry, valid transforms,
 materials and camera. The independent oracle separately evaluates original source
 triangles; it does not consume exported poses or candidate intersection code.
+Versioned oracles coexist with legacy captures. Their explicit semantic IDs
+preserve recorded labels and determine coplanar ties.
 Validation compares every frame and every object, then checks cached/full outputs
 across repeated and shuffled frames, chunk sizes and caller mutation.
 
