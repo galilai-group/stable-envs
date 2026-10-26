@@ -52,7 +52,7 @@ venv() {  # venv FAMILY -> python path of a fresh family venv in $WORK
     pusht) extras="pusht"; groups="pin-pusht";;
     dmc) extras="dmcontrol dmcontrol-gpu"; groups="pin-dmc gpu-mjwarp";;
     ogbench) extras="ogbench ogbench-manipulation ogbench-manipulation-gpu"; groups="pin-ogbench gpu-mjwarp";;
-    fetch) extras="robotics"; groups="pin-fetch";;
+    fetch) extras="robotics mjwarp"; groups="pin-fetch";;
     rocket) extras="rocket"; groups="pin-rocket";;
     craftax) extras="craftax craftax-gpu"; groups="pin-craftax";;
     *) echo "unknown family $fam" >&2; return 1;;
