@@ -59,7 +59,8 @@ venv() {  # venv FAMILY -> python path of a fresh family venv in $WORK
   $UV pip install --python $v/bin/python "${cu[@]}" --reinstall-package torch "torch==$tv+cu126" \
       >> "$OUT/logs/venv-$fam.log" 2>&1 || { echo "torch $fam failed" >&2; return 1; }
   $UV pip freeze --python $v/bin/python | grep "==" > $WORK/constraints-$fam.txt
-  $UV pip install --python $v/bin/python "${cu[@]}" -c $WORK/constraints-$fam.txt -e "$SWM" \
+  # Importing stable_worldmodel registers every swm env, and its PushT module needs pymunk.
+  $UV pip install --python $v/bin/python "${cu[@]}" -c $WORK/constraints-$fam.txt -e "$SWM" "pymunk==7.2.0" \
       >> "$OUT/logs/venv-$fam.log" 2>&1 || { echo "swm $fam failed" >&2; return 1; }
   $v/bin/python -c "import torch, stable_envs, stable_worldmodel" >> "$OUT/logs/venv-$fam.log" 2>&1 \
       || { echo "imports $fam failed" >&2; return 1; }
