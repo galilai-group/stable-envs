@@ -6,11 +6,12 @@ than rendered videos. Online replay does not need Blender or MuJoCo.
 
 The source is pinned to
 [`hokindeng/object-permanence@824badd`](https://github.com/hokindeng/object-permanence/tree/824baddcdad087810d35638bf8f273b884f74975).
-The importer has been exercised on 181 of its 197 scripts: 150 first nominal
-members and 31 additional members. This describes the audited source defaults,
-not arbitrary driver diversity or downstream model accuracy. The remaining queue
-starts at G17; G05/1 needs a renderable-set policy and G05/3 needs an audited
-multi-stage/animated-scale recipe.
+The importer has been exercised on 195 of its 197 scripts: 150 first nominal
+members and 45 additional members. This describes the audited source defaults,
+not arbitrary driver diversity or downstream model accuracy. All remaining
+G17–G150 members have been audited and certified under existing contracts. The
+two deferred members are G05/1 (renderable-set policy) and G05/3 (audited
+multi-stage/animated-scale recipe).
 
 ## Read and render
 
@@ -123,8 +124,8 @@ change normals. These small source inputs are needed to reproduce that declared
 realization; online users do not need them.
 
 The complete corpus, audit reports and GIF-generation intermediates are developer
-data, kept outside Git. Only a small frozen CI sample is checked in: G34, G62,
-G13 and G146 with their referenced meshes and independent geometry oracles.
+data, kept outside Git. CI keeps recordings for G34, G62, G13 and G146, their
+referenced meshes, and representative independent geometry oracles.
 Default CI tests core behavior; complete scene/member certification uses the CLI
 above. Runtime downloads need manifests, referenced assets/licenses and motion
 arrays, not developer oracles, source snapshots or GIFs. No automatic downloader

@@ -117,6 +117,24 @@ REFERENCE_MEMBERS = {
     ("G14", 5): ("build_scene", "animate_scene", ("far_red_ball", "middle_blue_ball", "near_yellow_ball")),
     ("G15", 1): ("build_scene", "animate_scene", ("orange_ball", "blue_cube", "yellow_pyramid")),
     ("G16", 1): ("build_scene", "animate_scene", ("red_ball", "blue_ball", "yellow_ball")),
+    ("G17", 1): ("build_scene", "animate_scene", ("upper_red_ball", "lower_blue_cube")),
+    ("G18", 1): ("build_scene", "animate_scene", ("orange_ball_on_turntable",)),
+    ("G18", 2): ("build_scene", "animate_scene", ("yellow_pyramid_on_turntable",)),
+    ("G18", 3): ("build_scene", "animate_scene", ("left_orange_ball",)),
+    ("G19", 1): ("build_scene", "animate_scene", ("red_ball", "blue_ball", "yellow_ball", "orange_ball")),
+    ("G19", 2): ("build_scene", "animate_scene", ("red_cube", "blue_cube", "yellow_cube")),
+    ("G20", 1): ("build_scene", "animate_scene", ("orange_ball", "blue_cube", "yellow_pyramid")),
+    ("G21", 1): ("build_scene", "animate_scene", ("left_orange_ball", "right_blue_cube")),
+    ("G22", 1): ("build_scene", "animate_scene", ("orange_ball", "blue_cube", "yellow_pyramid")),
+    ("G23", 1): (
+        "build_scene",
+        "animate_scene",
+        ("red_ball_inside_cabinet", "blue_ball_inside_cabinet", "yellow_ball_inside_cabinet"),
+    ),
+    ("G24", 1): ("build_scene", "animate_scene", ("center_orange_ball",)),
+    ("G24", 2): ("build_scene", "animate_scene", ("orange_ball", "blue_cube", "yellow_pyramid")),
+    ("G25", 1): ("build_scene", "animate_scene", ("orange_ball", "blue_cube")),
+    ("G26", 1): ("build_scene", "animate_scene", ("orange_ball", "blue_cube", "yellow_pyramid")),
 }
 # Independently inspected source camera types; do not import candidate flags.
 REFERENCE_ORTHOGRAPHIC_MEMBERS = frozenset(
@@ -140,6 +158,20 @@ REFERENCE_ORTHOGRAPHIC_MEMBERS = frozenset(
         ("G14", 5),
         ("G15", 1),
         ("G16", 1),
+        ("G17", 1),
+        ("G18", 1),
+        ("G18", 2),
+        ("G18", 3),
+        ("G19", 1),
+        ("G19", 2),
+        ("G20", 1),
+        ("G21", 1),
+        ("G22", 1),
+        ("G23", 1),
+        ("G24", 1),
+        ("G24", 2),
+        ("G25", 1),
+        ("G26", 1),
     }
 )
 
