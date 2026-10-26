@@ -226,6 +226,9 @@ def _worker_init(name: str, states: str, size: int) -> None:
     cls = snv.registry.REGISTRY[name]
     _W["cls"] = cls
     _W["ref"] = cls.reference_env(size=size or cls.default_size)
+    # Cube and Scene's reference is their exact-OpenGL path, built for CUDA; under software GL it draws on CPU.
+    if name in ("OGBCube", "OGBScene") and os.environ.get("MUJOCO_GL") != "egl":
+        _W["ref"] = cls(num_envs=1, size=size or cls.default_size, device="cpu", backend="opengl")
     blob = _load_states(Path(states) / f"{name}.pt")
     _W["rows"] = blob["rows"].numpy() if blob["kind"] == "rows" else None
 
@@ -311,6 +314,8 @@ def cmd_mse(args) -> None:
             rows = blob["rows"][: args.n]
             # The source draws before any stable-envs env exists in this process (see online_ladder).
             ref = cls.reference_env(size=blob["size"] or cls.default_size)
+            if name in ("OGBCube", "OGBScene") and args.device == "cpu":
+                ref = cls(num_envs=1, size=blob["size"] or cls.default_size, device="cpu", backend="opengl")
             if "return_flags" in inspect.signature(cls.reference_render).parameters:
                 theirs, flags = cls.reference_render(ref, rows.numpy(), return_flags=True)
                 keep = ~np.asarray(flags, bool)
