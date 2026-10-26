@@ -43,6 +43,10 @@ task outputs. Allow warm-up steps before measuring throughput; a new batch shape
 Torch and JAX exchange tensors through DLPack on the selected device, without copying them to CPU
 during stepping. A missing JAX CUDA runtime raises an error explaining which extra to install.
 
+`simulation_backend="auto"` keeps JAX at every batch size, including one environment.
+Set `simulation_backend="torch"` to use the original Torch physics or `"jax"` to choose JAX
+explicitly. Both use the requested device. `env.simulation_backend` reports the selected implementation.
+
 <!-- env: TwoRoom -->
 
 ## TwoRoomTarget

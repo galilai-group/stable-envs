@@ -4,6 +4,12 @@ Every environment runs well with no setup. Chunk sizes, Triton block sizes, work
 budgets have defaults, and the library computes some defaults from the hardware. You can change them to
 trade speed against memory. Frames and State are the same for every valid value.
 
+The `simulation_backend` constructor argument selects physics for [Reacher](environments/dmcontrol.md#reacher)
+and [TwoRoom](environments/navigation.md#tworoom). Reacher chooses native CPU physics below a provisional
+cutoff of 32 environments and MJX for larger CUDA batches. TwoRoom defaults to JAX at every batch size.
+Reacher's backends use different precision and can produce different trajectories, so this argument
+is separate from the tuning knobs below.
+
 The library stores measured values per render path. For example, every fixed-camera DM Control cell
 uses the `dmc-suite` path, so a value measured with `DMCCartpoleSwingup` also applies to
 `DMCReacher`. The Triton block and warp knobs and `ogb_mjw_worlds` have one measured value for the

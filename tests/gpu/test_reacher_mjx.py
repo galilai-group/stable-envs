@@ -26,7 +26,10 @@ def test_cuda_reacher_uses_mjx_without_host_staging(batch, monkeypatch):
         return sha256(value, **kwargs)
 
     stream = torch.cuda.Stream()
-    with torch.cuda.stream(stream), se.make("DMCReacher", num_envs=batch, device="cuda") as env:
+    with (
+        torch.cuda.stream(stream),
+        se.make("DMCReacher", num_envs=batch, device="cuda", simulation_backend="mjx") as env,
+    ):
         assert env.execution_mode == "JAX_MJX"
         env.reset(seed=7)
         action = torch.zeros(batch, 4, device="cuda")[:, ::2]
@@ -58,7 +61,7 @@ def test_cuda_reacher_tracks_native_physics_variation_and_resets():
 
     reference = ReacherAdapter(3, "cpu", 7)
     try:
-        with se.make("DMCReacher", num_envs=3, device="cuda") as env:
+        with se.make("DMCReacher", num_envs=3, device="cuda", simulation_backend="mjx") as env:
             values = np.array([[500, 1500], [1500, 500], [850, 1150]])
             reference.configure_physics(values)
             reference.reset(7)
@@ -78,3 +81,16 @@ def test_cuda_reacher_tracks_native_physics_variation_and_resets():
                     assert_same_state(actual["state"][key], expected["state"][key])
     finally:
         reference.close()
+
+
+@pytest.mark.parametrize("batch,backend", [(1, "native"), (31, "native"), (32, "mjx")])
+def test_auto_reacher_selects_physics_and_preserves_cuda_outputs(batch, backend):
+    with se.DMCReacher(num_envs=batch, device="cuda") as env:
+        assert env.simulation_backend == backend
+        assert env.execution_mode == ("JAX_MJX" if backend == "mjx" else "DELEGATED_CPU")
+        checkpoint = env.reset(seed=7)
+        action = torch.zeros(batch, 2, device="cuda")
+        actual = env.step(action, frames=None)
+        assert all(leaf.device.type == "cuda" for leaf in actual.values(True, True))
+        env.set_state(checkpoint)
+        assert_same_state(env.step(action, frames=None), actual)
