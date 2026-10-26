@@ -1910,6 +1910,834 @@
       "source_task_manifest_sha256": "dd9cc8a41a44cc9425e3d3a013fc9a56db45cb3e9f6358525ab00419bd0d089a",
       "status": "certified",
       "task": "G12"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "ORTHO",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 9.473903143468003e-17,
+      "dynamic_nodes": [
+        "cabinet_back_wall",
+        "cabinet_bottom_board",
+        "cabinet_divider_12",
+        "cabinet_divider_23",
+        "cabinet_left_wall",
+        "cabinet_right_wall",
+        "cabinet_top_board",
+        "drawer_1_back_wall",
+        "drawer_1_floor",
+        "drawer_1_front_label",
+        "drawer_1_front_lip",
+        "drawer_1_front_panel",
+        "drawer_1_handle",
+        "drawer_1_left_rail",
+        "drawer_1_left_side",
+        "drawer_1_orange_ball",
+        "drawer_1_right_rail",
+        "drawer_1_right_side",
+        "drawer_2_back_wall",
+        "drawer_2_floor",
+        "drawer_2_front_label",
+        "drawer_2_front_lip",
+        "drawer_2_front_panel",
+        "drawer_2_handle",
+        "drawer_2_left_rail",
+        "drawer_2_left_side",
+        "drawer_2_right_rail",
+        "drawer_2_right_side",
+        "drawer_2_yellow_pyramid",
+        "drawer_3_back_wall",
+        "drawer_3_blue_cube",
+        "drawer_3_floor",
+        "drawer_3_front_label",
+        "drawer_3_front_lip",
+        "drawer_3_front_panel",
+        "drawer_3_handle",
+        "drawer_3_left_rail",
+        "drawer_3_left_side",
+        "drawer_3_right_rail",
+        "drawer_3_right_side"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 20,
+        "dynamic_nodes": [
+          "cabinet_back_wall",
+          "cabinet_bottom_board",
+          "cabinet_divider_12",
+          "cabinet_divider_23",
+          "cabinet_left_wall",
+          "cabinet_right_wall",
+          "cabinet_top_board",
+          "drawer_1_back_wall",
+          "drawer_1_floor",
+          "drawer_1_front_label",
+          "drawer_1_front_lip",
+          "drawer_1_front_panel",
+          "drawer_1_handle",
+          "drawer_1_left_rail",
+          "drawer_1_left_side",
+          "drawer_1_orange_ball",
+          "drawer_1_right_rail",
+          "drawer_1_right_side",
+          "drawer_2_back_wall",
+          "drawer_2_floor",
+          "drawer_2_front_label",
+          "drawer_2_front_lip",
+          "drawer_2_front_panel",
+          "drawer_2_handle",
+          "drawer_2_left_rail",
+          "drawer_2_left_side",
+          "drawer_2_right_rail",
+          "drawer_2_right_side",
+          "drawer_2_yellow_pyramid",
+          "drawer_3_back_wall",
+          "drawer_3_blue_cube",
+          "drawer_3_floor",
+          "drawer_3_front_label",
+          "drawer_3_front_lip",
+          "drawer_3_front_panel",
+          "drawer_3_handle",
+          "drawer_3_left_rail",
+          "drawer_3_left_side",
+          "drawer_3_right_rail",
+          "drawer_3_right_side"
+        ],
+        "frames": 120,
+        "objects": 42,
+        "task": "G13",
+        "world_normal_max_abs_error": 4.44738201266226e-08,
+        "world_triangle_max_abs_error": 1.655075965167896e-08
+      },
+      "mask_iou_min": 1.0,
+      "member": 1,
+      "mesh_count": 42,
+      "oracle": "tests/fixtures/semantics/object_permanence/g13/opaque_pixel_rays_v2/member1",
+      "preview": ".cache/object_permanence/evaluation/g13-member1-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v2",
+      "reference_target_roles": {
+        "drawer_1_front_label": "label",
+        "drawer_1_orange_ball": "contained_object",
+        "drawer_2_front_label": "label",
+        "drawer_2_yellow_pyramid": "contained_object",
+        "drawer_3_blue_cube": "contained_object",
+        "drawer_3_front_label": "label"
+      },
+      "reference_targets": [
+        "drawer_1_front_label",
+        "drawer_1_orange_ball",
+        "drawer_2_front_label",
+        "drawer_2_yellow_pyramid",
+        "drawer_3_blue_cube",
+        "drawer_3_front_label"
+      ],
+      "script": "object_permanence/generator/tasks/G13_three_drawers/pb_task_00000057_pb_three_drawers_objects_order_ball_pyramid_cube_0058_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed ORTHO; no depth of field",
+        "drawer_order": [
+          "ball",
+          "pyramid",
+          "cube"
+        ],
+        "driver_diversity": "not sampled; selected source script defaults",
+        "dynamic_node_count": 40,
+        "frames": 120,
+        "geometry_conversion": {
+          "depsgraph_mode": "VIEWPORT",
+          "id": "stable-envs/evaluated-rigid-mesh-v1",
+          "instances": "single-source-identity-mesh-proxy",
+          "tessellation": "source-settings",
+          "types": [
+            "MESH",
+            "CURVE",
+            "FONT"
+          ]
+        },
+        "label_motion": "Source pb_is_dynamic=False; observed inherited drawer/cabinet motion retains all three labels as dynamic nodes. Glyph identity and label/content offsets checked over all 120 frames.",
+        "labels": [
+          {
+            "font": "Bfont Regular",
+            "name": "drawer_1_front_label",
+            "parent": "drawer_1_drawer_root",
+            "text": "1"
+          },
+          {
+            "font": "Bfont Regular",
+            "name": "drawer_2_front_label",
+            "parent": "drawer_2_drawer_root",
+            "text": "2"
+          },
+          {
+            "font": "Bfont Regular",
+            "name": "drawer_3_front_label",
+            "parent": "drawer_3_drawer_root",
+            "text": "3"
+          }
+        ],
+        "local_geometry": "source-evaluated MESH/FONT triangles constant over every source frame",
+        "materials": "constant referenced opaque source materials",
+        "physics_objects": [],
+        "source_motion": "evaluated source world poses, including inherited cabinet/drawer translations; no physics reconstruction",
+        "types": {
+          "CAMERA": 1,
+          "EMPTY": 4,
+          "FONT": 3,
+          "LIGHT": 2,
+          "MESH": 39
+        },
+        "visibility": "no hide flags or object-set changes; geometric occlusion"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "3b301e20af15dfc7d9aa9cac96c7593c8b54f58183d0f7f1681a730434972dce",
+      "source_task_manifest_sha256": "1101f3cc561baa8fd87e2b542078ee36eaf5d0a53bcda50221e90735eb8b35c9",
+      "status": "certified",
+      "task": "G13"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "ORTHO",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 1.1052887000712669e-16,
+      "dynamic_nodes": [
+        "cabinet_back_wall",
+        "cabinet_bottom_board",
+        "cabinet_divider_12",
+        "cabinet_divider_23",
+        "cabinet_left_wall",
+        "cabinet_right_wall",
+        "cabinet_top_board",
+        "drawer_1_back_wall",
+        "drawer_1_blue_cube",
+        "drawer_1_floor",
+        "drawer_1_front_label",
+        "drawer_1_front_lip",
+        "drawer_1_front_panel",
+        "drawer_1_handle",
+        "drawer_1_left_rail",
+        "drawer_1_left_side",
+        "drawer_1_right_rail",
+        "drawer_1_right_side",
+        "drawer_2_back_wall",
+        "drawer_2_floor",
+        "drawer_2_front_label",
+        "drawer_2_front_lip",
+        "drawer_2_front_panel",
+        "drawer_2_handle",
+        "drawer_2_left_rail",
+        "drawer_2_left_side",
+        "drawer_2_orange_ball",
+        "drawer_2_right_rail",
+        "drawer_2_right_side",
+        "drawer_3_back_wall",
+        "drawer_3_floor",
+        "drawer_3_front_label",
+        "drawer_3_front_lip",
+        "drawer_3_front_panel",
+        "drawer_3_handle",
+        "drawer_3_left_rail",
+        "drawer_3_left_side",
+        "drawer_3_right_rail",
+        "drawer_3_right_side",
+        "drawer_3_yellow_pyramid"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 20,
+        "dynamic_nodes": [
+          "cabinet_back_wall",
+          "cabinet_bottom_board",
+          "cabinet_divider_12",
+          "cabinet_divider_23",
+          "cabinet_left_wall",
+          "cabinet_right_wall",
+          "cabinet_top_board",
+          "drawer_1_back_wall",
+          "drawer_1_blue_cube",
+          "drawer_1_floor",
+          "drawer_1_front_label",
+          "drawer_1_front_lip",
+          "drawer_1_front_panel",
+          "drawer_1_handle",
+          "drawer_1_left_rail",
+          "drawer_1_left_side",
+          "drawer_1_right_rail",
+          "drawer_1_right_side",
+          "drawer_2_back_wall",
+          "drawer_2_floor",
+          "drawer_2_front_label",
+          "drawer_2_front_lip",
+          "drawer_2_front_panel",
+          "drawer_2_handle",
+          "drawer_2_left_rail",
+          "drawer_2_left_side",
+          "drawer_2_orange_ball",
+          "drawer_2_right_rail",
+          "drawer_2_right_side",
+          "drawer_3_back_wall",
+          "drawer_3_floor",
+          "drawer_3_front_label",
+          "drawer_3_front_lip",
+          "drawer_3_front_panel",
+          "drawer_3_handle",
+          "drawer_3_left_rail",
+          "drawer_3_left_side",
+          "drawer_3_right_rail",
+          "drawer_3_right_side",
+          "drawer_3_yellow_pyramid"
+        ],
+        "frames": 120,
+        "objects": 42,
+        "task": "G13",
+        "world_normal_max_abs_error": 4.44738201266226e-08,
+        "world_triangle_max_abs_error": 1.655075965167896e-08
+      },
+      "mask_iou_min": 1.0,
+      "member": 2,
+      "mesh_count": 42,
+      "oracle": "tests/fixtures/semantics/object_permanence/g13/opaque_pixel_rays_v2/member2",
+      "preview": ".cache/object_permanence/evaluation/g13-member2-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v2",
+      "reference_target_roles": {
+        "drawer_1_blue_cube": "contained_object",
+        "drawer_1_front_label": "label",
+        "drawer_2_front_label": "label",
+        "drawer_2_orange_ball": "contained_object",
+        "drawer_3_front_label": "label",
+        "drawer_3_yellow_pyramid": "contained_object"
+      },
+      "reference_targets": [
+        "drawer_1_blue_cube",
+        "drawer_1_front_label",
+        "drawer_2_front_label",
+        "drawer_2_orange_ball",
+        "drawer_3_front_label",
+        "drawer_3_yellow_pyramid"
+      ],
+      "script": "object_permanence/generator/tasks/G13_three_drawers/pb_task_00000058_pb_three_drawers_objects_order_cube_ball_pyramid_0059_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed ORTHO; no depth of field",
+        "drawer_order": [
+          "cube",
+          "ball",
+          "pyramid"
+        ],
+        "driver_diversity": "not sampled; selected source script defaults",
+        "dynamic_node_count": 40,
+        "frames": 120,
+        "geometry_conversion": {
+          "depsgraph_mode": "VIEWPORT",
+          "id": "stable-envs/evaluated-rigid-mesh-v1",
+          "instances": "single-source-identity-mesh-proxy",
+          "tessellation": "source-settings",
+          "types": [
+            "MESH",
+            "CURVE",
+            "FONT"
+          ]
+        },
+        "label_motion": "Source pb_is_dynamic=False; observed inherited drawer/cabinet motion retains all three labels as dynamic nodes. Glyph identity and label/content offsets checked over all 120 frames.",
+        "labels": [
+          {
+            "font": "Bfont Regular",
+            "name": "drawer_1_front_label",
+            "parent": "drawer_1_drawer_root",
+            "text": "1"
+          },
+          {
+            "font": "Bfont Regular",
+            "name": "drawer_2_front_label",
+            "parent": "drawer_2_drawer_root",
+            "text": "2"
+          },
+          {
+            "font": "Bfont Regular",
+            "name": "drawer_3_front_label",
+            "parent": "drawer_3_drawer_root",
+            "text": "3"
+          }
+        ],
+        "local_geometry": "source-evaluated MESH/FONT triangles constant over every source frame",
+        "materials": "constant referenced opaque source materials",
+        "physics_objects": [],
+        "source_motion": "evaluated source world poses, including inherited cabinet/drawer translations; no physics reconstruction",
+        "types": {
+          "CAMERA": 1,
+          "EMPTY": 4,
+          "FONT": 3,
+          "LIGHT": 2,
+          "MESH": 39
+        },
+        "visibility": "no hide flags or object-set changes; geometric occlusion"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "c9b50a6c943084034ab85f86fdd542a8aaf476dd8fa153478fe58e2877d8f926",
+      "source_task_manifest_sha256": "1101f3cc561baa8fd87e2b542078ee36eaf5d0a53bcda50221e90735eb8b35c9",
+      "status": "certified",
+      "task": "G13"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "ORTHO",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 1.1052887000712669e-16,
+      "dynamic_nodes": [
+        "cabinet_back_wall",
+        "cabinet_bottom_board",
+        "cabinet_divider_12",
+        "cabinet_divider_23",
+        "cabinet_left_wall",
+        "cabinet_right_wall",
+        "cabinet_top_board",
+        "drawer_1_back_wall",
+        "drawer_1_blue_cube",
+        "drawer_1_floor",
+        "drawer_1_front_label",
+        "drawer_1_front_lip",
+        "drawer_1_front_panel",
+        "drawer_1_handle",
+        "drawer_1_left_rail",
+        "drawer_1_left_side",
+        "drawer_1_right_rail",
+        "drawer_1_right_side",
+        "drawer_2_back_wall",
+        "drawer_2_floor",
+        "drawer_2_front_label",
+        "drawer_2_front_lip",
+        "drawer_2_front_panel",
+        "drawer_2_handle",
+        "drawer_2_left_rail",
+        "drawer_2_left_side",
+        "drawer_2_right_rail",
+        "drawer_2_right_side",
+        "drawer_2_yellow_pyramid",
+        "drawer_3_back_wall",
+        "drawer_3_floor",
+        "drawer_3_front_label",
+        "drawer_3_front_lip",
+        "drawer_3_front_panel",
+        "drawer_3_handle",
+        "drawer_3_left_rail",
+        "drawer_3_left_side",
+        "drawer_3_orange_ball",
+        "drawer_3_right_rail",
+        "drawer_3_right_side"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 20,
+        "dynamic_nodes": [
+          "cabinet_back_wall",
+          "cabinet_bottom_board",
+          "cabinet_divider_12",
+          "cabinet_divider_23",
+          "cabinet_left_wall",
+          "cabinet_right_wall",
+          "cabinet_top_board",
+          "drawer_1_back_wall",
+          "drawer_1_blue_cube",
+          "drawer_1_floor",
+          "drawer_1_front_label",
+          "drawer_1_front_lip",
+          "drawer_1_front_panel",
+          "drawer_1_handle",
+          "drawer_1_left_rail",
+          "drawer_1_left_side",
+          "drawer_1_right_rail",
+          "drawer_1_right_side",
+          "drawer_2_back_wall",
+          "drawer_2_floor",
+          "drawer_2_front_label",
+          "drawer_2_front_lip",
+          "drawer_2_front_panel",
+          "drawer_2_handle",
+          "drawer_2_left_rail",
+          "drawer_2_left_side",
+          "drawer_2_right_rail",
+          "drawer_2_right_side",
+          "drawer_2_yellow_pyramid",
+          "drawer_3_back_wall",
+          "drawer_3_floor",
+          "drawer_3_front_label",
+          "drawer_3_front_lip",
+          "drawer_3_front_panel",
+          "drawer_3_handle",
+          "drawer_3_left_rail",
+          "drawer_3_left_side",
+          "drawer_3_orange_ball",
+          "drawer_3_right_rail",
+          "drawer_3_right_side"
+        ],
+        "frames": 120,
+        "objects": 42,
+        "task": "G13",
+        "world_normal_max_abs_error": 4.44738201266226e-08,
+        "world_triangle_max_abs_error": 1.655075965167896e-08
+      },
+      "mask_iou_min": 1.0,
+      "member": 3,
+      "mesh_count": 42,
+      "oracle": "tests/fixtures/semantics/object_permanence/g13/opaque_pixel_rays_v2/member3",
+      "preview": ".cache/object_permanence/evaluation/g13-member3-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v2",
+      "reference_target_roles": {
+        "drawer_1_blue_cube": "contained_object",
+        "drawer_1_front_label": "label",
+        "drawer_2_front_label": "label",
+        "drawer_2_yellow_pyramid": "contained_object",
+        "drawer_3_front_label": "label",
+        "drawer_3_orange_ball": "contained_object"
+      },
+      "reference_targets": [
+        "drawer_1_blue_cube",
+        "drawer_1_front_label",
+        "drawer_2_front_label",
+        "drawer_2_yellow_pyramid",
+        "drawer_3_front_label",
+        "drawer_3_orange_ball"
+      ],
+      "script": "object_permanence/generator/tasks/G13_three_drawers/pb_task_00000059_pb_three_drawers_objects_order_cube_pyramid_ball_0060_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed ORTHO; no depth of field",
+        "drawer_order": [
+          "cube",
+          "pyramid",
+          "ball"
+        ],
+        "driver_diversity": "not sampled; selected source script defaults",
+        "dynamic_node_count": 40,
+        "frames": 120,
+        "geometry_conversion": {
+          "depsgraph_mode": "VIEWPORT",
+          "id": "stable-envs/evaluated-rigid-mesh-v1",
+          "instances": "single-source-identity-mesh-proxy",
+          "tessellation": "source-settings",
+          "types": [
+            "MESH",
+            "CURVE",
+            "FONT"
+          ]
+        },
+        "label_motion": "Source pb_is_dynamic=False; observed inherited drawer/cabinet motion retains all three labels as dynamic nodes. Glyph identity and label/content offsets checked over all 120 frames.",
+        "labels": [
+          {
+            "font": "Bfont Regular",
+            "name": "drawer_1_front_label",
+            "parent": "drawer_1_drawer_root",
+            "text": "1"
+          },
+          {
+            "font": "Bfont Regular",
+            "name": "drawer_2_front_label",
+            "parent": "drawer_2_drawer_root",
+            "text": "2"
+          },
+          {
+            "font": "Bfont Regular",
+            "name": "drawer_3_front_label",
+            "parent": "drawer_3_drawer_root",
+            "text": "3"
+          }
+        ],
+        "local_geometry": "source-evaluated MESH/FONT triangles constant over every source frame",
+        "materials": "constant referenced opaque source materials",
+        "physics_objects": [],
+        "source_motion": "evaluated source world poses, including inherited cabinet/drawer translations; no physics reconstruction",
+        "types": {
+          "CAMERA": 1,
+          "EMPTY": 4,
+          "FONT": 3,
+          "LIGHT": 2,
+          "MESH": 39
+        },
+        "visibility": "no hide flags or object-set changes; geometric occlusion"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "e6dc9443ed46cfa5916c81a4ba04302fa1a3c8559b0b53a976f51b915e0de5aa",
+      "source_task_manifest_sha256": "1101f3cc561baa8fd87e2b542078ee36eaf5d0a53bcda50221e90735eb8b35c9",
+      "status": "certified",
+      "task": "G13"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "ORTHO",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 9.473903143468003e-17,
+      "dynamic_nodes": [
+        "cabinet_back_wall",
+        "cabinet_bottom_board",
+        "cabinet_divider_12",
+        "cabinet_divider_23",
+        "cabinet_left_wall",
+        "cabinet_right_wall",
+        "cabinet_top_board",
+        "drawer_1_back_wall",
+        "drawer_1_floor",
+        "drawer_1_front_label",
+        "drawer_1_front_lip",
+        "drawer_1_front_panel",
+        "drawer_1_handle",
+        "drawer_1_left_rail",
+        "drawer_1_left_side",
+        "drawer_1_right_rail",
+        "drawer_1_right_side",
+        "drawer_1_yellow_pyramid",
+        "drawer_2_back_wall",
+        "drawer_2_floor",
+        "drawer_2_front_label",
+        "drawer_2_front_lip",
+        "drawer_2_front_panel",
+        "drawer_2_handle",
+        "drawer_2_left_rail",
+        "drawer_2_left_side",
+        "drawer_2_orange_ball",
+        "drawer_2_right_rail",
+        "drawer_2_right_side",
+        "drawer_3_back_wall",
+        "drawer_3_blue_cube",
+        "drawer_3_floor",
+        "drawer_3_front_label",
+        "drawer_3_front_lip",
+        "drawer_3_front_panel",
+        "drawer_3_handle",
+        "drawer_3_left_rail",
+        "drawer_3_left_side",
+        "drawer_3_right_rail",
+        "drawer_3_right_side"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 20,
+        "dynamic_nodes": [
+          "cabinet_back_wall",
+          "cabinet_bottom_board",
+          "cabinet_divider_12",
+          "cabinet_divider_23",
+          "cabinet_left_wall",
+          "cabinet_right_wall",
+          "cabinet_top_board",
+          "drawer_1_back_wall",
+          "drawer_1_floor",
+          "drawer_1_front_label",
+          "drawer_1_front_lip",
+          "drawer_1_front_panel",
+          "drawer_1_handle",
+          "drawer_1_left_rail",
+          "drawer_1_left_side",
+          "drawer_1_right_rail",
+          "drawer_1_right_side",
+          "drawer_1_yellow_pyramid",
+          "drawer_2_back_wall",
+          "drawer_2_floor",
+          "drawer_2_front_label",
+          "drawer_2_front_lip",
+          "drawer_2_front_panel",
+          "drawer_2_handle",
+          "drawer_2_left_rail",
+          "drawer_2_left_side",
+          "drawer_2_orange_ball",
+          "drawer_2_right_rail",
+          "drawer_2_right_side",
+          "drawer_3_back_wall",
+          "drawer_3_blue_cube",
+          "drawer_3_floor",
+          "drawer_3_front_label",
+          "drawer_3_front_lip",
+          "drawer_3_front_panel",
+          "drawer_3_handle",
+          "drawer_3_left_rail",
+          "drawer_3_left_side",
+          "drawer_3_right_rail",
+          "drawer_3_right_side"
+        ],
+        "frames": 120,
+        "objects": 42,
+        "task": "G13",
+        "world_normal_max_abs_error": 4.44738201266226e-08,
+        "world_triangle_max_abs_error": 1.655075965167896e-08
+      },
+      "mask_iou_min": 1.0,
+      "member": 4,
+      "mesh_count": 42,
+      "oracle": "tests/fixtures/semantics/object_permanence/g13/opaque_pixel_rays_v2/member4",
+      "preview": ".cache/object_permanence/evaluation/g13-member4-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v2",
+      "reference_target_roles": {
+        "drawer_1_front_label": "label",
+        "drawer_1_yellow_pyramid": "contained_object",
+        "drawer_2_front_label": "label",
+        "drawer_2_orange_ball": "contained_object",
+        "drawer_3_blue_cube": "contained_object",
+        "drawer_3_front_label": "label"
+      },
+      "reference_targets": [
+        "drawer_1_front_label",
+        "drawer_1_yellow_pyramid",
+        "drawer_2_front_label",
+        "drawer_2_orange_ball",
+        "drawer_3_blue_cube",
+        "drawer_3_front_label"
+      ],
+      "script": "object_permanence/generator/tasks/G13_three_drawers/pb_task_00000060_pb_three_drawers_objects_order_pyramid_ball_cube_0061_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed ORTHO; no depth of field",
+        "drawer_order": [
+          "pyramid",
+          "ball",
+          "cube"
+        ],
+        "driver_diversity": "not sampled; selected source script defaults",
+        "dynamic_node_count": 40,
+        "frames": 120,
+        "geometry_conversion": {
+          "depsgraph_mode": "VIEWPORT",
+          "id": "stable-envs/evaluated-rigid-mesh-v1",
+          "instances": "single-source-identity-mesh-proxy",
+          "tessellation": "source-settings",
+          "types": [
+            "MESH",
+            "CURVE",
+            "FONT"
+          ]
+        },
+        "label_motion": "Source pb_is_dynamic=False; observed inherited drawer/cabinet motion retains all three labels as dynamic nodes. Glyph identity and label/content offsets checked over all 120 frames.",
+        "labels": [
+          {
+            "font": "Bfont Regular",
+            "name": "drawer_1_front_label",
+            "parent": "drawer_1_drawer_root",
+            "text": "1"
+          },
+          {
+            "font": "Bfont Regular",
+            "name": "drawer_2_front_label",
+            "parent": "drawer_2_drawer_root",
+            "text": "2"
+          },
+          {
+            "font": "Bfont Regular",
+            "name": "drawer_3_front_label",
+            "parent": "drawer_3_drawer_root",
+            "text": "3"
+          }
+        ],
+        "local_geometry": "source-evaluated MESH/FONT triangles constant over every source frame",
+        "materials": "constant referenced opaque source materials",
+        "physics_objects": [],
+        "source_motion": "evaluated source world poses, including inherited cabinet/drawer translations; no physics reconstruction",
+        "types": {
+          "CAMERA": 1,
+          "EMPTY": 4,
+          "FONT": 3,
+          "LIGHT": 2,
+          "MESH": 39
+        },
+        "visibility": "no hide flags or object-set changes; geometric occlusion"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "49f016622035c0fff9ca676ea56ed9ad6a71dd34473886838fc656e120d3db04",
+      "source_task_manifest_sha256": "1101f3cc561baa8fd87e2b542078ee36eaf5d0a53bcda50221e90735eb8b35c9",
+      "status": "certified",
+      "task": "G13"
     }
   ],
   "entries": [
@@ -10312,11 +11140,11 @@
   "reference_probe_policy": "Source task-object roles select probes; V2 separately records source_semantic_targets and the source-observable subset targets. Every mesh remains in all world poses, IDs and all-object depth/mask checks.",
   "schema": "stable-envs/object-permanence-source-audit-v1",
   "scope": {
-    "additional_certified_members": 20,
+    "additional_certified_members": 24,
     "member_scripts": 197,
     "nominal_members": 150,
     "task_groups": 150,
-    "unregistered_other_members": 27
+    "unregistered_other_members": 23
   },
   "source_commit": "824baddcdad087810d35638bf8f273b884f74975",
   "source_url": "https://github.com/hokindeng/object-permanence",
@@ -10386,34 +11214,6 @@
       "source_script_sha256": "a031bab744d099f78ab24b7da32075b548284d1446944e1a4ca08e17a5a77a99",
       "status": "unregistered-member-entry",
       "task": "G05"
-    },
-    {
-      "member": 1,
-      "script": "object_permanence/generator/tasks/G13_three_drawers/pb_task_00000057_pb_three_drawers_objects_order_ball_pyramid_cube_0058_blender.py",
-      "source_script_sha256": "3b301e20af15dfc7d9aa9cac96c7593c8b54f58183d0f7f1681a730434972dce",
-      "status": "unregistered-member-entry",
-      "task": "G13"
-    },
-    {
-      "member": 2,
-      "script": "object_permanence/generator/tasks/G13_three_drawers/pb_task_00000058_pb_three_drawers_objects_order_cube_ball_pyramid_0059_blender.py",
-      "source_script_sha256": "c9b50a6c943084034ab85f86fdd542a8aaf476dd8fa153478fe58e2877d8f926",
-      "status": "unregistered-member-entry",
-      "task": "G13"
-    },
-    {
-      "member": 3,
-      "script": "object_permanence/generator/tasks/G13_three_drawers/pb_task_00000059_pb_three_drawers_objects_order_cube_pyramid_ball_0060_blender.py",
-      "source_script_sha256": "e6dc9443ed46cfa5916c81a4ba04302fa1a3c8559b0b53a976f51b915e0de5aa",
-      "status": "unregistered-member-entry",
-      "task": "G13"
-    },
-    {
-      "member": 4,
-      "script": "object_permanence/generator/tasks/G13_three_drawers/pb_task_00000060_pb_three_drawers_objects_order_pyramid_ball_cube_0061_blender.py",
-      "source_script_sha256": "49f016622035c0fff9ca676ea56ed9ad6a71dd34473886838fc656e120d3db04",
-      "status": "unregistered-member-entry",
-      "task": "G13"
     },
     {
       "member": 1,

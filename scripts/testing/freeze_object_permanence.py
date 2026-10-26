@@ -62,6 +62,54 @@ REFERENCE_MEMBERS = {
     ("G11", 2): ("build_scene", "animate_scene", ("inner_orange_ball", "inner_blue_cube", "inner_yellow_pyramid")),
     ("G12", 1): ("build_scene", "animate_scene", ("inner_orange_ball", "inner_blue_cube", "inner_yellow_pyramid")),
     ("G12", 2): ("build_scene", "animate_scene", ("inner_orange_ball", "inner_blue_cube", "inner_yellow_pyramid")),
+    ("G13", 1): (
+        "build_scene",
+        "animate_scene",
+        (
+            "drawer_1_front_label",
+            "drawer_1_orange_ball",
+            "drawer_2_front_label",
+            "drawer_2_yellow_pyramid",
+            "drawer_3_blue_cube",
+            "drawer_3_front_label",
+        ),
+    ),
+    ("G13", 2): (
+        "build_scene",
+        "animate_scene",
+        (
+            "drawer_1_blue_cube",
+            "drawer_1_front_label",
+            "drawer_2_front_label",
+            "drawer_2_orange_ball",
+            "drawer_3_front_label",
+            "drawer_3_yellow_pyramid",
+        ),
+    ),
+    ("G13", 3): (
+        "build_scene",
+        "animate_scene",
+        (
+            "drawer_1_blue_cube",
+            "drawer_1_front_label",
+            "drawer_2_front_label",
+            "drawer_2_yellow_pyramid",
+            "drawer_3_front_label",
+            "drawer_3_orange_ball",
+        ),
+    ),
+    ("G13", 4): (
+        "build_scene",
+        "animate_scene",
+        (
+            "drawer_1_front_label",
+            "drawer_1_yellow_pyramid",
+            "drawer_2_front_label",
+            "drawer_2_orange_ball",
+            "drawer_3_blue_cube",
+            "drawer_3_front_label",
+        ),
+    ),
 }
 # Independently inspected source camera types; do not import candidate flags.
 REFERENCE_ORTHOGRAPHIC_MEMBERS = frozenset(
@@ -74,6 +122,10 @@ REFERENCE_ORTHOGRAPHIC_MEMBERS = frozenset(
         ("G11", 2),
         ("G12", 1),
         ("G12", 2),
+        ("G13", 1),
+        ("G13", 2),
+        ("G13", 3),
+        ("G13", 4),
     }
 )
 

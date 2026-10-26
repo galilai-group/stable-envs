@@ -9,11 +9,11 @@ unused builders; they are not a claim that every nominal/diversity variant works
 
 ## Audited scenes and supported capabilities
 
-Current scope: all 150 first nominal members plus twenty additional members
-(G01/G03 optical variants and rigid variants through G12).
+Current scope: all 150 first nominal members plus twenty-four additional members
+(G01/G03 optical variants and rigid variants through G13).
 G98/G132 use [hash-pinned native source realizations](object-permanence-native-scenes.md);
-27 additional scripts remain unimported: two G05 entries have capability deferrals
-and 25 await runtime audit. Driver diversity remains outside certification. The sections below
+23 additional scripts remain unimported: two G05 entries have capability deferrals
+and 21 await runtime audit. Driver diversity remains outside certification. The sections below
 retain the chronological import history.
 
 G34 is the existing single ball behind a screen. The second pilot is
@@ -565,8 +565,58 @@ python -m scripts.export.batch_object_permanence --source-root <source> \
 Use `--stage validate` to recheck existing immutable inputs. Each member has its
 own fresh 120-frame oracle and source/replay GIF. Temporary PNGs are deleted
 after GIF verification. There are no newly deferred entries; the G05 deferral
-evidence/diagnostic GIFs stay intact. Twenty-five scripts still need runtime
+evidence/diagnostic GIFs stay intact. At the end of that batch, twenty-five scripts still needed runtime
 audit, starting at G13, alongside those two earlier G05 blockers.
+
+### Next member batch: G13 drawer permutations
+
+All four remaining G13 scripts use the same audited `build_scene` then
+`animate_scene` sequence. Each contains 39 MESH objects plus three FONT labels,
+42 draw objects in total. The fixed orthographic camera uses existing V2
+visibility; the labels reuse evaluated-rigid-mesh-v1 conversion with the source
+font, extrusion and tessellation. Each member records `float32[120,40,7]` world
+poses and reuses existing content-addressed meshes. No renderer or format changes
+are needed.
+
+| Member | Contents from left to right |
+|---|---|
+| G13/1 | Ball, pyramid, cube |
+| G13/2 | Cube, ball, pyramid |
+| G13/3 | Cube, pyramid, ball |
+| G13/4 | Pyramid, ball, cube |
+
+The source closes all drawers during frames 1–32, shifts the cabinet during
+frames 33–82, then reopens the drawers during frames 83–120. Sampling evaluated
+world transforms preserves inherited motion in the cabinet boards, rails,
+drawers, contents and labels. Labels retain source `pb_is_dynamic=False`, but
+their observed motion correctly makes them dynamic nodes. Live reexports also
+check glyph identities `1/2/3` and constant label/content offsets throughout the
+trajectory, preventing a drawer permutation from silently swapping identities.
+
+All 480 new source frames pass the independently generated per-member oracle:
+maximum depth MSE **1.105e-16**, minimum every-object mask IoU **1.0**, in
+both full and cached rendering. Source world-vertex/normal errors are at most
+**1.655e-08 / 4.447e-08**. RGB/depth/IDs are bit-identical at 90p/180p across
+reversed/repeated frames, chunks 1/4/7 and caller mutation. Each resolution builds
+one static seed with zero fallback. Existing 1e-8/.99 pixel budgets and all
+previous fixtures are unchanged. Four complete GIFs are retained; 480 temporary
+source PNGs are removed.
+
+Reproduce into **new** recording/oracle roots:
+
+```bash
+python -m scripts.export.batch_object_permanence --source-root <source> \
+  --output <new-recordings> --oracle-root <new-oracles> --report <g13-report.json> \
+  --tasks G13 --members 1,2,3,4 --stage all \
+  --visibility-contract stable-envs/opaque-pixel-rays-v2 \
+  --blender-python <blender-python> --render-python <cuda-python>
+```
+
+Use `--stage validate` for existing immutable inputs. Independent source processes
+produce each member's oracle and complete 120-frame source/replay GIF. No new
+member is deferred; the earlier G05 reasons and diagnostic GIFs remain intact.
+The remaining unaudited queue has 21 scripts, beginning with G14's five extra
+members; adding the two G05 deferrals gives 23 unimported scripts.
 
 Native previews accept `--member`/`--profile` via
 `scripts.export.render_object_permanence_preview`. Use temporary PNGs with

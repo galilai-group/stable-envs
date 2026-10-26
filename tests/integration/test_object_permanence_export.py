@@ -101,6 +101,10 @@ def test_audited_source_export_and_independent_world_geometry_per_scene(export_c
         ("G11", 2, 9, "v2"),
         ("G12", 1, 10, "v2"),
         ("G12", 2, 10, "v2"),
+        ("G13", 1, 40, "v2"),
+        ("G13", 2, 40, "v2"),
+        ("G13", 3, 40, "v2"),
+        ("G13", 4, 40, "v2"),
     ],
 )
 def test_additional_member_unified_export_and_world_check(tmp_path, task, member, dynamic_count, version):
@@ -156,6 +160,28 @@ def test_additional_member_unified_export_and_world_check(tmp_path, task, member
                 assert node >= 0
                 rows = fresh.poses([0, 85])[:, node]
                 assert not np.array_equal(rows[0], rows[1]), name
+
+        if task == "G13":
+            # Labels are tagged static upstream but inherit drawer motion.
+            # Check glyph identity and the drawer/content binding, not just shape.
+            objects = {o["name"]: o for o in fresh.manifest["objects"]}
+            orders = {
+                1: ("orange_ball", "yellow_pyramid", "blue_cube"),
+                2: ("blue_cube", "orange_ball", "yellow_pyramid"),
+                3: ("blue_cube", "yellow_pyramid", "orange_ball"),
+                4: ("yellow_pyramid", "orange_ball", "blue_cube"),
+            }
+            poses = fresh.poses(np.arange(120))
+            for drawer, shape in enumerate(orders[member], 1):
+                label = objects[f"drawer_{drawer}_front_label"]
+                content = objects[f"drawer_{drawer}_{shape}"]
+                assert label["source_geometry"] == {"type": "FONT", "text": str(drawer), "font": "Bfont Regular"}
+                assert label["node"] >= 0 and content["node"] >= 0
+                label_xyz = poses[:, label["node"], :3]
+                content_xyz = poses[:, content["node"], :3]
+                assert not np.array_equal(label_xyz[0], label_xyz[60])
+                offset = label_xyz - content_xyz
+                np.testing.assert_allclose(offset, np.broadcast_to(offset[0], offset.shape), atol=2e-7, rtol=0)
 
 
 @pytest.mark.parametrize("member", [1, 3])
