@@ -16,11 +16,12 @@ WORK=${TMPDIR:-/tmp}/snv-bench-$$
 mkdir -p "$OUT"/{offline,online,logs} "$WORK"
 trap 'rm -rf "$WORK"' EXIT
 if [ "${SMOKE:-0}" = 1 ]; then
-  N=256; BATCHES="1 64 256"; EPISODES=64; LENGTH=32; LANES=64; SLANES=8
+  N=256; BATCHES="1 64 256"; EPISODES=64; LENGTH=32; LANES=64; SLANES=8; SWEPISODES=64
 else
-  N=10000; BATCHES="1 256 1024 4096"; EPISODES=1024; LENGTH=196; LANES=1024; SLANES=8
+  N=2048; BATCHES="1 256 1024 2048"; EPISODES=256; LENGTH=64; LANES=256; SLANES=8; SWEPISODES=64
 fi
-REPEATS=${REPEATS:-10}
+# Arms that draw with software OpenGL play the first SWEPISODES episodes only; steps/s does not depend on the count.
+REPEATS=${REPEATS:-3}
 export PYTHONPATH=$REPO SDL_VIDEODRIVER=dummy PYTHONWARNINGS=ignore PYTHONDONTWRITEBYTECODE=1
 # The uv cache stays in home: node-local disk holds one family venv at a time.
 export UV_HTTP_TIMEOUT=600 UV_LINK_MODE=copy UV_CACHE_DIR=${UV_CACHE_DIR:-$HOME/.cache/uv} XDG_CACHE_HOME=$WORK/cache
@@ -34,7 +35,7 @@ sw() { env LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe PYOPENGL_PLATFORM=glx
   echo " \"dirty\": $(git -C "$REPO" diff --quiet && echo false || echo true), \"swm\": \"$(git -C "$SWM" rev-parse HEAD)\","
   echo " \"host\": \"$(hostname)\", \"job\": \"${SLURM_JOB_ID:-}\", \"start\": \"$(date -Is)\", \"cores\": \"$CORES\", \"ncores\": $NCORES,"
   echo " \"cuda_visible_devices\": \"$CUDA_VISIBLE_DEVICES\", \"gpu\": \"$(nvidia-smi -i $CUDA_VISIBLE_DEVICES --query-gpu=name,driver_version --format=csv,noheader)\", \"smoke\": ${SMOKE:-0},"
-  echo " \"n_states\": $N, \"batches\": \"$BATCHES\", \"episodes\": $EPISODES, \"length\": $LENGTH, \"lanes\": $LANES, \"repeats\": $REPEATS}"
+  echo " \"n_states\": $N, \"batches\": \"$BATCHES\", \"episodes\": $EPISODES, \"software_gl_episodes\": $SWEPISODES, \"length\": $LENGTH, \"lanes\": $LANES, \"repeats\": $REPEATS}"
 } > "$OUT/run.json"
 cat "$OUT/run.json"
 
@@ -92,9 +93,9 @@ for spec in "$@"; do
     n=$OUT/online/$E; mkdir -p $n
     COMMON="--env $E --data $D --procs $NCORES --source-lanes $SLANES --lanes $LANES --threads $NCORES --repeats $REPEATS"
     egl $ON run $COMMON --arms src-pipelined-render --src-label gpu --ours-device cuda --output $n/src-render-gpu.json
-    sw $ON run $COMMON --arms src-pipelined-render --src-label cpu --ours-device cpu --output $n/src-render-cpu.json
+    sw $ON run $COMMON --episodes $SWEPISODES --arms src-pipelined-render --src-label cpu --ours-device cpu --output $n/src-render-cpu.json
     sw $ON run $COMMON --arms src-pipelined-step snv-step --output $n/step.json
-    sw $ON run $COMMON --arms snv-render-cpu --output $n/snv-render-cpu.json
+    sw $ON run $COMMON --episodes $SWEPISODES --arms snv-render-cpu --output $n/snv-render-cpu.json
     egl $ON run $COMMON --arms snv-step-gpu snv-render-gpu --output $n/snv-gpu.json
   done
   rm -rf $WORK/venv-$fam $S $D
