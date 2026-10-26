@@ -55,6 +55,17 @@ PHYSICS = {
 }
 
 
+#: Physics placement of classes whose CUDA instances run another execution mode, by (CPU mode, CUDA mode).
+SPLIT_PHYSICS = {("DELEGATED_CPU", "JAX_MJX"): "native MuJoCo on CPU; JAX/MJX on CUDA"}
+
+
+def physics(cls) -> str | None:
+    """Physics placement of ``cls`` on each device, from its execution modes."""
+    mode = getattr(cls, "execution_mode", "")
+    cuda = getattr(cls, "CUDA_EXECUTION_MODE", None)
+    return SPLIT_PHYSICS.get((mode, cuda)) if cuda else PHYSICS.get(mode, None)
+
+
 def renderer_cell(cls) -> str:
     """Key of :data:`RENDERERS` for ``cls``."""
     family = cls.family
@@ -167,7 +178,7 @@ def metadata(name: str, device: str = "cpu") -> dict:
             "has_dynamics": info["has_dynamics"],
             "default_size": info["default_size"],
             "frame_shape": list(env.frame_spec.shape),
-            "physics": PHYSICS.get(getattr(cls, "execution_mode", ""), None),
+            "physics": physics(cls),
             "renderers": RENDERERS[renderer_cell(cls)],
             "action": action,
             "state": _state(env),

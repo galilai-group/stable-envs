@@ -11,9 +11,12 @@ from ._delegated import DelegatedSemantics
 class _ReacherSemantics(DelegatedSemantics):
     """Reacher with native CPU or CUDA MJX physics."""
 
+    #: Execution mode of an instance on CUDA; on CPU it is the class's ``execution_mode``.
+    CUDA_EXECUTION_MODE = "JAX_MJX"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.execution_mode = "JAX_MJX" if self.device.type == "cuda" else "DELEGATED_CPU"
+        self.execution_mode = self.CUDA_EXECUTION_MODE if self.device.type == "cuda" else "DELEGATED_CPU"
 
     def make_variation_space(self):
         space = super().make_variation_space()
