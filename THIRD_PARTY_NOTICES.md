@@ -16,6 +16,12 @@ The Apache license is included in `licenses/envX-APACHE-2.0.txt` and distributed
 `stable_envs/envs/dmcontrol/simulation/reacher_mjx.py` adapts `src/envx/reacher/env.py`
 from the envX commit above under Apache-2.0.
 
+## envX PushT
+
+The JAX implementation in `stable_envs/envs/pusht/` adapts
+`src/envx/pusht/{environment,geometry,physics,rendering}.py`
+from the envX commit above under Apache-2.0.
+
 ## Craftax
 
 The `craftax` family (`stable_envs/envs/craftax/`) runs
