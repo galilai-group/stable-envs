@@ -22,7 +22,8 @@ else
 fi
 REPEATS=${REPEATS:-10}
 export PYTHONPATH=$REPO SDL_VIDEODRIVER=dummy PYTHONWARNINGS=ignore PYTHONDONTWRITEBYTECODE=1
-export UV_HTTP_TIMEOUT=600 UV_LINK_MODE=copy XDG_CACHE_HOME=$WORK/cache
+# The uv cache stays in home: node-local disk holds one family venv at a time.
+export UV_HTTP_TIMEOUT=600 UV_LINK_MODE=copy UV_CACHE_DIR=${UV_CACHE_DIR:-$HOME/.cache/uv} XDG_CACHE_HOME=$WORK/cache
 export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0} MUJOCO_EGL_DEVICE_ID=0
 egl() { env MUJOCO_GL=egl PYOPENGL_PLATFORM=egl "$@"; }
 sw() { env LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe PYOPENGL_PLATFORM=glx MUJOCO_GL=glfw xvfb-run -a "$@"; }
@@ -53,10 +54,14 @@ venv() {  # venv FAMILY -> python path of a fresh family venv in $WORK
       $(for e in $extras; do echo --extra $e; done) $(for g in $groups torch-cuda test; do echo --group $g; done) ) \
       > "$OUT/logs/venv-$fam.log" 2>&1 || { echo "venv $fam failed" >&2; return 1; }
   local tv; tv=$($v/bin/python -c "import torch; print(torch.__version__.split('+')[0])")
-  $UV pip install --python $v/bin/python --extra-index-url https://download.pytorch.org/whl/cu126 \
-      --index-strategy unsafe-best-match --reinstall-package torch "torch==$tv+cu126" >> "$OUT/logs/venv-$fam.log" 2>&1
+  local cu=(--extra-index-url https://download.pytorch.org/whl/cu126 --index-strategy unsafe-best-match)
+  $UV pip install --python $v/bin/python "${cu[@]}" --reinstall-package torch "torch==$tv+cu126" \
+      >> "$OUT/logs/venv-$fam.log" 2>&1 || { echo "torch $fam failed" >&2; return 1; }
   $UV pip freeze --python $v/bin/python | grep "==" > $WORK/constraints-$fam.txt
-  $UV pip install --python $v/bin/python -c $WORK/constraints-$fam.txt -e "$SWM" >> "$OUT/logs/venv-$fam.log" 2>&1
+  $UV pip install --python $v/bin/python "${cu[@]}" -c $WORK/constraints-$fam.txt -e "$SWM" \
+      >> "$OUT/logs/venv-$fam.log" 2>&1 || { echo "swm $fam failed" >&2; return 1; }
+  $v/bin/python -c "import torch, stable_envs, stable_worldmodel" >> "$OUT/logs/venv-$fam.log" 2>&1 \
+      || { echo "imports $fam failed" >&2; return 1; }
   $UV pip freeze --python $v/bin/python > "$OUT/logs/freeze-$fam.txt"
   echo $v/bin/python
 }
@@ -64,7 +69,8 @@ venv() {  # venv FAMILY -> python path of a fresh family venv in $WORK
 for spec in "$@"; do
   fam=${spec%%=*}; envs=(${spec#*=}); envs=(${envs[@]//,/ })
   echo "=== family $fam: ${envs[*]} $(date -Is)"
-  P=$(venv $fam) || continue
+  df -h "$WORK" | tail -1
+  P=$(venv $fam) || { rm -rf $WORK/venv-$fam; continue; }
   $P -c "import torch; print('torch', torch.__version__, torch.cuda.get_device_name(0))"
   OFF="$PIN $P -m benchmarks.offline_sweep"; ON="$PIN $P -m benchmarks.online_ladder"
   S=$WORK/states-$fam; D=$WORK/episodes-$fam; mkdir -p $S $D
