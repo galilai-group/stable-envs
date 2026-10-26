@@ -1,16 +1,17 @@
 #!/bin/bash
 # Offline and online speed of stable-envs against the source, every arm pinned to the same CPU cores.
-# usage (from the repository root): sbatch -p qed -n 1 --exclusive --gres=gpu:1 -t 48:00:00 benchmarks/paper/run.sh OUT FAMILY=ENV,ENV ...
-#   SMOKE=1 uses small state, batch and episode counts. CORES (default 0-7) is the core set of every arm.
+# usage (from the repository root): sbatch -p qed -n 1 -c 16 --mem=128G --gres=gpu:1 -t 48:00:00 benchmarks/paper/run.sh OUT FAMILY=ENV,ENV ...
+#   SMOKE=1 uses small state, batch and episode counts. CORES (default: the first 8 cores the job may use) is the
+#   core set of every arm. STEP_LIMIT (default 6h) stops one arm that does not exit.
 set -uo pipefail
 OUT=$(realpath -m "$1"); shift
 # Slurm runs a copy of this script, so the repository is the submit directory.
 REPO=${SNV_REPO:-${SLURM_SUBMIT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}}
 [ -f "$REPO/pyproject.toml" ] || { echo "no repository at $REPO" >&2; exit 2; }
 SWM=${SWM:-$HOME/lewm-hyd/swm}
-CORES=${CORES:-0-7}
+CORES=${CORES:-$(python3 -c "import os; print(','.join(map(str, sorted(os.sched_getaffinity(0))[:8])))")}
 NCORES=$(taskset -c "$CORES" nproc)
-PIN="taskset -c $CORES"
+PIN="timeout -k 60 ${STEP_LIMIT:-6h} taskset -c $CORES"
 UV=${UV:-$HOME/.local/bin/uv}
 WORK=${TMPDIR:-/tmp}/snv-bench-$$
 mkdir -p "$OUT"/{offline,online,logs} "$WORK"
@@ -30,7 +31,8 @@ export PYTHONPATH=$REPO SDL_VIDEODRIVER=dummy PYTHONWARNINGS=ignore PYTHONDONTWR
 # The uv cache stays in home: node-local disk holds one family venv at a time.
 export UV_HTTP_TIMEOUT=600 UV_LINK_MODE=copy UV_CACHE_DIR=${UV_CACHE_DIR:-$HOME/.cache/uv} XDG_CACHE_HOME=$WORK/cache
 # One GPU only: --exclusive exposes all of them, and torch and JAX may number several differently.
-export CUDA_VISIBLE_DEVICES=$(echo "${SLURM_JOB_GPUS:-${CUDA_VISIBLE_DEVICES:-0}}" | cut -d, -f1) MUJOCO_EGL_DEVICE_ID=0
+export CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=$(echo "${SLURM_JOB_GPUS:-${CUDA_VISIBLE_DEVICES:-0}}" | cut -d, -f1)
+export MUJOCO_EGL_DEVICE_ID=$CUDA_VISIBLE_DEVICES
 egl() { env MUJOCO_GL=egl PYOPENGL_PLATFORM=egl "$@"; }
 sw() { env LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe PYOPENGL_PLATFORM=glx MUJOCO_GL=glfw xvfb-run -a "$@"; }
 
@@ -40,6 +42,7 @@ sw() { env LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe PYOPENGL_PLATFORM=glx
   echo " \"host\": \"$(hostname)\", \"job\": \"${SLURM_JOB_ID:-}\", \"start\": \"$(date -Is)\", \"cores\": \"$CORES\", \"ncores\": $NCORES,"
   echo " \"cuda_visible_devices\": \"$CUDA_VISIBLE_DEVICES\", \"gpu\": \"$(nvidia-smi -i $CUDA_VISIBLE_DEVICES --query-gpu=name,driver_version --format=csv,noheader)\", \"smoke\": ${SMOKE:-0},"
   echo " \"src_lanes\": ${SRC_LANES:-null}, \"only_source\": ${ONLY_SOURCE:-0},"
+  echo " \"node_jobs_at_start\": \"$(squeue -h -w "$(hostname -s)" -o '%i %u %b %C' 2>/dev/null | tr '\n' ';')\","
   echo " \"n_states\": $N, \"batches\": \"$BATCHES\", \"episodes\": $EPISODES, \"software_gl_episodes\": $SWEPISODES, \"length\": $LENGTH, \"lanes\": $LANES, \"repeats\": $REPEATS}"
 } > "$OUT/run.json"
 cat "$OUT/run.json"
