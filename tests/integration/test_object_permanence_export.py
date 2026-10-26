@@ -105,6 +105,11 @@ def test_audited_source_export_and_independent_world_geometry_per_scene(export_c
         ("G13", 2, 40, "v2"),
         ("G13", 3, 40, "v2"),
         ("G13", 4, 40, "v2"),
+        ("G14", 1, 3, "v2"),
+        ("G14", 2, 3, "v2"),
+        ("G14", 3, 3, "v2"),
+        ("G14", 4, 3, "v2"),
+        ("G14", 5, 3, "v2"),
     ],
 )
 def test_additional_member_unified_export_and_world_check(tmp_path, task, member, dynamic_count, version):
@@ -182,6 +187,33 @@ def test_additional_member_unified_export_and_world_check(tmp_path, task, member
                 assert not np.array_equal(label_xyz[0], label_xyz[60])
                 offset = label_xyz - content_xyz
                 np.testing.assert_allclose(offset, np.broadcast_to(offset[0], offset.shape), atol=2e-7, rtol=0)
+
+        if task == "G14":
+            # A color permutation must preserve lane identity even while hidden.
+            orders = {
+                1: ("red", "yellow", "blue"),
+                2: ("blue", "red", "yellow"),
+                3: ("blue", "yellow", "red"),
+                4: ("yellow", "red", "blue"),
+                5: ("yellow", "blue", "red"),
+            }
+            colors = {"red": (0.92, 0.18, 0.18, 1), "blue": (0.16, 0.36, 0.95, 1), "yellow": (0.98, 0.78, 0.15, 1)}
+            objects = {o["name"]: o for o in fresh.manifest["objects"]}
+            poses = fresh.poses(np.arange(120))
+            ball_assets = set()
+            for lane, y, color in zip(("near", "middle", "far"), (-1.10, 0.0, 1.10), orders[member], strict=True):
+                ball = objects[f"{lane}_{color}_ball"]
+                assert ball["role"] == "target_ball" and ball["node"] >= 0
+                np.testing.assert_array_equal(
+                    np.asarray(ball["rgba"], np.float32), np.asarray(colors[color], np.float32)
+                )
+                xyz = poses[:, ball["node"], :3]
+                np.testing.assert_array_equal(xyz[:, 1], np.full(120, y, np.float32))
+                assert not np.array_equal(xyz[0], xyz[-1])
+                tube = objects[f"{lane}_single_opaque_left_u_tube"]
+                assert tube["source_geometry"]["type"] == "CURVE" and tube["node"] == -1
+                ball_assets.add(ball["asset"])
+            assert len(ball_assets) == 1  # Instance colors do not duplicate meshes.
 
 
 @pytest.mark.parametrize("member", [1, 3])

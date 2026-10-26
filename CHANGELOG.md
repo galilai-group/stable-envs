@@ -8,43 +8,49 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Five additional G14 lane/color members under the existing orthographic V2
+  and evaluated Curve contracts. Reuses open-ended source tubes, sampled world
+  poses, shared sphere/track assets and static caching. Adds independent full-frame
+  oracles, lane/color identity checks and depth/mask/cache regression gates.
+  Coverage is 179/197 scripts; old samples, APIs, formats and thresholds stay unchanged.
+
 - Four additional G13 drawer-permutation members under the existing V2
   orthographic and evaluated FONT contracts. Reuses sampled world poses and mesh
   assets, preserving numbered labels and inherited drawer/cabinet motion. Adds
   independent full-frame oracles and source/depth/mask/cache regression gates.
-  Coverage is 174/197 scripts; old samples, APIs, formats and thresholds stay unchanged.
+  Coverage is 179/197 scripts; old samples, APIs, formats and thresholds stay unchanged.
 
 - Five additional orthographic object-permanence members through G12: large-then-
   small size gate, rotating boxes with two/three objects, and two partition-box
   groupings. Reuses evaluated world poses, Boolean meshes, existing V2 visibility
   and static caching. Independent full-frame references and inherited-motion
   gates preserve the rotating partition despite its static source tag. Coverage
-  is 174/197 scripts; old samples, APIs, formats and thresholds are unchanged.
+  is 179/197 scripts; old samples, APIs, formats and thresholds are unchanged.
 
 - Six additional object-permanence members through G09: solid/gapped bridges,
   sequential balls at a sliding gate, a moving drawer with two contained objects,
   and short/tall cars at a low beam. Adds member-scoped V1/V2 camera routing,
   independently selected oracle contracts and correct preparation/context
   provenance. Reuses unchanged renderers/formats and full-frame depth/mask/cache
-  gates; certified coverage is 174/197 scripts with 23 unimported.
+  gates; certified coverage is 179/197 scripts with 18 unimported.
 
 - Five additional object-permanence members: G04 straight high/low tracks and
   G05 small-hole stop, open/closed gates and two-car contact. Reuses existing
   evaluated Curve capture, rigid poses and opaque V1 rendering with independent
   full-frame oracles and cache parity gates. G05's hidden opening marker and
   multi-stage animated-scale entry remain explicitly deferred. Coverage is
-  174/197 scripts; existing data, interfaces, thresholds and renderers are unchanged.
+  179/197 scripts; existing data, interfaces, thresholds and renderers are unchanged.
 
 - Member-scoped object-permanence import/oracle/batch validation, with explicit
   script-index/profile identity, isolated source/CUDA stages and complete-frame
   cache parity checks. Adds the G02 side-window and two-ball members under the
   existing opaque V1 contract; old samples, interfaces and budgets are unchanged.
-  Certified coverage is 174/197 scripts, with 23 additional scripts unimported.
+  Certified coverage is 179/197 scripts, with 18 additional scripts unimported.
 
 - G98/G132 rigid replay with hash-pinned unmodified native source realizations,
   independent full-frame references and fresh-process geometry/normal checks.
   This completes the 150 first nominal members within their declared scope;
-  23 other scripts remain unimported. Old samples and thresholds are unchanged.
+  18 other scripts remain unimported. Old samples and thresholds are unchanged.
 
 - Explicit sampled dielectric replay for both G01 members and the G03 transparent-wall
   member, with exact source transforms, Snell/Fresnel paths, independent full-frame

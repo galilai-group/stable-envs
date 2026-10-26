@@ -53,6 +53,11 @@ AUDITED_MEMBERS = {
     ("G13", 2): ("build_scene", "animate_scene"),
     ("G13", 3): ("build_scene", "animate_scene"),
     ("G13", 4): ("build_scene", "animate_scene"),
+    ("G14", 1): ("build_scene", "animate_scene"),
+    ("G14", 2): ("build_scene", "animate_scene"),
+    ("G14", 3): ("build_scene", "animate_scene"),
+    ("G14", 4): ("build_scene", "animate_scene"),
+    ("G14", 5): ("build_scene", "animate_scene"),
 }
 # Extra members are audited independently of their task's first camera.
 ORTHOGRAPHIC_MEMBERS = frozenset(
@@ -69,6 +74,11 @@ ORTHOGRAPHIC_MEMBERS = frozenset(
         ("G13", 2),
         ("G13", 3),
         ("G13", 4),
+        ("G14", 1),
+        ("G14", 2),
+        ("G14", 3),
+        ("G14", 4),
+        ("G14", 5),
     }
 )
 

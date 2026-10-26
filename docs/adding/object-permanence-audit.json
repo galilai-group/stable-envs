@@ -2738,6 +2738,761 @@
       "source_task_manifest_sha256": "1101f3cc561baa8fd87e2b542078ee36eaf5d0a53bcda50221e90735eb8b35c9",
       "status": "certified",
       "task": "G13"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "ORTHO",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 8.371643876998487e-15,
+      "dynamic_nodes": [
+        "far_blue_ball",
+        "middle_yellow_ball",
+        "near_red_ball"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 9,
+        "dynamic_nodes": [
+          "far_blue_ball",
+          "middle_yellow_ball",
+          "near_red_ball"
+        ],
+        "frames": 120,
+        "objects": 44,
+        "task": "G14",
+        "world_normal_max_abs_error": 2.468988032910957e-07,
+        "world_triangle_max_abs_error": 9.878773721272438e-08
+      },
+      "mask_iou_min": 1.0,
+      "member": 1,
+      "mesh_count": 44,
+      "oracle": "tests/fixtures/semantics/object_permanence/g14/opaque_pixel_rays_v2/member1",
+      "preview": ".cache/object_permanence/evaluation/g14-member1-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v2",
+      "reference_target_roles": {
+        "far_blue_ball": "target_ball",
+        "middle_yellow_ball": "target_ball",
+        "near_red_ball": "target_ball"
+      },
+      "reference_targets": [
+        "far_blue_ball",
+        "middle_yellow_ball",
+        "near_red_ball"
+      ],
+      "script": "object_permanence/generator/tasks/G14_u_tube_three_lanes/pb_task_00000062_pb_three_balls_parallel_left_u_tracks_ryb_0063_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed ORTHO; no depth of field",
+        "curves": [
+          {
+            "bevel_depth": 0.3100000023841858,
+            "bevel_resolution": 8,
+            "name": "near_single_opaque_left_u_tube",
+            "points": 57,
+            "render_resolution_u": 0,
+            "resolution_u": 24,
+            "shape": "open_curve_tube",
+            "spline": "POLY",
+            "use_fill_caps": false
+          },
+          {
+            "bevel_depth": 0.3100000023841858,
+            "bevel_resolution": 8,
+            "name": "middle_single_opaque_left_u_tube",
+            "points": 57,
+            "render_resolution_u": 0,
+            "resolution_u": 24,
+            "shape": "open_curve_tube",
+            "spline": "POLY",
+            "use_fill_caps": false
+          },
+          {
+            "bevel_depth": 0.3100000023841858,
+            "bevel_resolution": 8,
+            "name": "far_single_opaque_left_u_tube",
+            "points": 57,
+            "render_resolution_u": 0,
+            "resolution_u": 24,
+            "shape": "open_curve_tube",
+            "spline": "POLY",
+            "use_fill_caps": false
+          }
+        ],
+        "driver_diversity": "not sampled; selected source script defaults",
+        "dynamic_node_count": 3,
+        "frames": 120,
+        "geometry_conversion": {
+          "depsgraph_mode": "VIEWPORT",
+          "id": "stable-envs/evaluated-rigid-mesh-v1",
+          "instances": "single-source-identity-mesh-proxy",
+          "tessellation": "source-settings",
+          "types": [
+            "MESH",
+            "CURVE",
+            "FONT"
+          ]
+        },
+        "lane_identity": "Live reexports check constant lane Y, source color/name binding and shared ball mesh while hidden poses remain present at all frames.",
+        "lane_names": [
+          "near",
+          "middle",
+          "far"
+        ],
+        "lane_ys": [
+          -1.1,
+          0.0,
+          1.1
+        ],
+        "local_geometry": "source-evaluated MESH/CURVE triangles constant over every source frame",
+        "materials": "constant referenced opaque source materials",
+        "physics_objects": [],
+        "source_motion": "evaluated source world poses from unmodified source animation; no motion formula rewritten",
+        "track_color_order": [
+          "red",
+          "yellow",
+          "blue"
+        ],
+        "types": {
+          "CAMERA": 1,
+          "CURVE": 3,
+          "LIGHT": 2,
+          "MESH": 41
+        },
+        "visibility": "no hide flags or object-set changes; geometric occlusion inside open-ended opaque tubes"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "f15aaaafc188f1298e2bfb900468180f25da610263b1288d1de8fbf174ef9d76",
+      "source_task_manifest_sha256": "9aee76192a2a4a8d55434559dcb218e614c29d94cc1e96fd90890ed6a090cad8",
+      "status": "certified",
+      "task": "G14"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "ORTHO",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 8.371643876998487e-15,
+      "dynamic_nodes": [
+        "far_yellow_ball",
+        "middle_red_ball",
+        "near_blue_ball"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 9,
+        "dynamic_nodes": [
+          "far_yellow_ball",
+          "middle_red_ball",
+          "near_blue_ball"
+        ],
+        "frames": 120,
+        "objects": 44,
+        "task": "G14",
+        "world_normal_max_abs_error": 2.468988032910957e-07,
+        "world_triangle_max_abs_error": 9.878773721272438e-08
+      },
+      "mask_iou_min": 1.0,
+      "member": 2,
+      "mesh_count": 44,
+      "oracle": "tests/fixtures/semantics/object_permanence/g14/opaque_pixel_rays_v2/member2",
+      "preview": ".cache/object_permanence/evaluation/g14-member2-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v2",
+      "reference_target_roles": {
+        "far_yellow_ball": "target_ball",
+        "middle_red_ball": "target_ball",
+        "near_blue_ball": "target_ball"
+      },
+      "reference_targets": [
+        "far_yellow_ball",
+        "middle_red_ball",
+        "near_blue_ball"
+      ],
+      "script": "object_permanence/generator/tasks/G14_u_tube_three_lanes/pb_task_00000063_pb_three_balls_parallel_left_u_tracks_bry_0064_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed ORTHO; no depth of field",
+        "curves": [
+          {
+            "bevel_depth": 0.3100000023841858,
+            "bevel_resolution": 8,
+            "name": "near_single_opaque_left_u_tube",
+            "points": 57,
+            "render_resolution_u": 0,
+            "resolution_u": 24,
+            "shape": "open_curve_tube",
+            "spline": "POLY",
+            "use_fill_caps": false
+          },
+          {
+            "bevel_depth": 0.3100000023841858,
+            "bevel_resolution": 8,
+            "name": "middle_single_opaque_left_u_tube",
+            "points": 57,
+            "render_resolution_u": 0,
+            "resolution_u": 24,
+            "shape": "open_curve_tube",
+            "spline": "POLY",
+            "use_fill_caps": false
+          },
+          {
+            "bevel_depth": 0.3100000023841858,
+            "bevel_resolution": 8,
+            "name": "far_single_opaque_left_u_tube",
+            "points": 57,
+            "render_resolution_u": 0,
+            "resolution_u": 24,
+            "shape": "open_curve_tube",
+            "spline": "POLY",
+            "use_fill_caps": false
+          }
+        ],
+        "driver_diversity": "not sampled; selected source script defaults",
+        "dynamic_node_count": 3,
+        "frames": 120,
+        "geometry_conversion": {
+          "depsgraph_mode": "VIEWPORT",
+          "id": "stable-envs/evaluated-rigid-mesh-v1",
+          "instances": "single-source-identity-mesh-proxy",
+          "tessellation": "source-settings",
+          "types": [
+            "MESH",
+            "CURVE",
+            "FONT"
+          ]
+        },
+        "lane_identity": "Live reexports check constant lane Y, source color/name binding and shared ball mesh while hidden poses remain present at all frames.",
+        "lane_names": [
+          "near",
+          "middle",
+          "far"
+        ],
+        "lane_ys": [
+          -1.1,
+          0.0,
+          1.1
+        ],
+        "local_geometry": "source-evaluated MESH/CURVE triangles constant over every source frame",
+        "materials": "constant referenced opaque source materials",
+        "physics_objects": [],
+        "source_motion": "evaluated source world poses from unmodified source animation; no motion formula rewritten",
+        "track_color_order": [
+          "blue",
+          "red",
+          "yellow"
+        ],
+        "types": {
+          "CAMERA": 1,
+          "CURVE": 3,
+          "LIGHT": 2,
+          "MESH": 41
+        },
+        "visibility": "no hide flags or object-set changes; geometric occlusion inside open-ended opaque tubes"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "d9485f817a4d99a1dcec53990a3af274d80a63bc1ac5d0355aea20cf09021e84",
+      "source_task_manifest_sha256": "9aee76192a2a4a8d55434559dcb218e614c29d94cc1e96fd90890ed6a090cad8",
+      "status": "certified",
+      "task": "G14"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "ORTHO",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 8.371643876998487e-15,
+      "dynamic_nodes": [
+        "far_red_ball",
+        "middle_yellow_ball",
+        "near_blue_ball"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 9,
+        "dynamic_nodes": [
+          "far_red_ball",
+          "middle_yellow_ball",
+          "near_blue_ball"
+        ],
+        "frames": 120,
+        "objects": 44,
+        "task": "G14",
+        "world_normal_max_abs_error": 2.468988032910957e-07,
+        "world_triangle_max_abs_error": 9.878773721272438e-08
+      },
+      "mask_iou_min": 1.0,
+      "member": 3,
+      "mesh_count": 44,
+      "oracle": "tests/fixtures/semantics/object_permanence/g14/opaque_pixel_rays_v2/member3",
+      "preview": ".cache/object_permanence/evaluation/g14-member3-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v2",
+      "reference_target_roles": {
+        "far_red_ball": "target_ball",
+        "middle_yellow_ball": "target_ball",
+        "near_blue_ball": "target_ball"
+      },
+      "reference_targets": [
+        "far_red_ball",
+        "middle_yellow_ball",
+        "near_blue_ball"
+      ],
+      "script": "object_permanence/generator/tasks/G14_u_tube_three_lanes/pb_task_00000064_pb_three_balls_parallel_left_u_tracks_byr_0065_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed ORTHO; no depth of field",
+        "curves": [
+          {
+            "bevel_depth": 0.3100000023841858,
+            "bevel_resolution": 8,
+            "name": "near_single_opaque_left_u_tube",
+            "points": 57,
+            "render_resolution_u": 0,
+            "resolution_u": 24,
+            "shape": "open_curve_tube",
+            "spline": "POLY",
+            "use_fill_caps": false
+          },
+          {
+            "bevel_depth": 0.3100000023841858,
+            "bevel_resolution": 8,
+            "name": "middle_single_opaque_left_u_tube",
+            "points": 57,
+            "render_resolution_u": 0,
+            "resolution_u": 24,
+            "shape": "open_curve_tube",
+            "spline": "POLY",
+            "use_fill_caps": false
+          },
+          {
+            "bevel_depth": 0.3100000023841858,
+            "bevel_resolution": 8,
+            "name": "far_single_opaque_left_u_tube",
+            "points": 57,
+            "render_resolution_u": 0,
+            "resolution_u": 24,
+            "shape": "open_curve_tube",
+            "spline": "POLY",
+            "use_fill_caps": false
+          }
+        ],
+        "driver_diversity": "not sampled; selected source script defaults",
+        "dynamic_node_count": 3,
+        "frames": 120,
+        "geometry_conversion": {
+          "depsgraph_mode": "VIEWPORT",
+          "id": "stable-envs/evaluated-rigid-mesh-v1",
+          "instances": "single-source-identity-mesh-proxy",
+          "tessellation": "source-settings",
+          "types": [
+            "MESH",
+            "CURVE",
+            "FONT"
+          ]
+        },
+        "lane_identity": "Live reexports check constant lane Y, source color/name binding and shared ball mesh while hidden poses remain present at all frames.",
+        "lane_names": [
+          "near",
+          "middle",
+          "far"
+        ],
+        "lane_ys": [
+          -1.1,
+          0.0,
+          1.1
+        ],
+        "local_geometry": "source-evaluated MESH/CURVE triangles constant over every source frame",
+        "materials": "constant referenced opaque source materials",
+        "physics_objects": [],
+        "source_motion": "evaluated source world poses from unmodified source animation; no motion formula rewritten",
+        "track_color_order": [
+          "blue",
+          "yellow",
+          "red"
+        ],
+        "types": {
+          "CAMERA": 1,
+          "CURVE": 3,
+          "LIGHT": 2,
+          "MESH": 41
+        },
+        "visibility": "no hide flags or object-set changes; geometric occlusion inside open-ended opaque tubes"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "4262651c7d0ed4b62fa2e6467d2589124c59d2024f61467b69ba66297cb9204d",
+      "source_task_manifest_sha256": "9aee76192a2a4a8d55434559dcb218e614c29d94cc1e96fd90890ed6a090cad8",
+      "status": "certified",
+      "task": "G14"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "ORTHO",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 8.371643876998487e-15,
+      "dynamic_nodes": [
+        "far_blue_ball",
+        "middle_red_ball",
+        "near_yellow_ball"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 9,
+        "dynamic_nodes": [
+          "far_blue_ball",
+          "middle_red_ball",
+          "near_yellow_ball"
+        ],
+        "frames": 120,
+        "objects": 44,
+        "task": "G14",
+        "world_normal_max_abs_error": 2.468988032910957e-07,
+        "world_triangle_max_abs_error": 9.878773721272438e-08
+      },
+      "mask_iou_min": 1.0,
+      "member": 4,
+      "mesh_count": 44,
+      "oracle": "tests/fixtures/semantics/object_permanence/g14/opaque_pixel_rays_v2/member4",
+      "preview": ".cache/object_permanence/evaluation/g14-member4-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v2",
+      "reference_target_roles": {
+        "far_blue_ball": "target_ball",
+        "middle_red_ball": "target_ball",
+        "near_yellow_ball": "target_ball"
+      },
+      "reference_targets": [
+        "far_blue_ball",
+        "middle_red_ball",
+        "near_yellow_ball"
+      ],
+      "script": "object_permanence/generator/tasks/G14_u_tube_three_lanes/pb_task_00000065_pb_three_balls_parallel_left_u_tracks_yrb_0066_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed ORTHO; no depth of field",
+        "curves": [
+          {
+            "bevel_depth": 0.3100000023841858,
+            "bevel_resolution": 8,
+            "name": "near_single_opaque_left_u_tube",
+            "points": 57,
+            "render_resolution_u": 0,
+            "resolution_u": 24,
+            "shape": "open_curve_tube",
+            "spline": "POLY",
+            "use_fill_caps": false
+          },
+          {
+            "bevel_depth": 0.3100000023841858,
+            "bevel_resolution": 8,
+            "name": "middle_single_opaque_left_u_tube",
+            "points": 57,
+            "render_resolution_u": 0,
+            "resolution_u": 24,
+            "shape": "open_curve_tube",
+            "spline": "POLY",
+            "use_fill_caps": false
+          },
+          {
+            "bevel_depth": 0.3100000023841858,
+            "bevel_resolution": 8,
+            "name": "far_single_opaque_left_u_tube",
+            "points": 57,
+            "render_resolution_u": 0,
+            "resolution_u": 24,
+            "shape": "open_curve_tube",
+            "spline": "POLY",
+            "use_fill_caps": false
+          }
+        ],
+        "driver_diversity": "not sampled; selected source script defaults",
+        "dynamic_node_count": 3,
+        "frames": 120,
+        "geometry_conversion": {
+          "depsgraph_mode": "VIEWPORT",
+          "id": "stable-envs/evaluated-rigid-mesh-v1",
+          "instances": "single-source-identity-mesh-proxy",
+          "tessellation": "source-settings",
+          "types": [
+            "MESH",
+            "CURVE",
+            "FONT"
+          ]
+        },
+        "lane_identity": "Live reexports check constant lane Y, source color/name binding and shared ball mesh while hidden poses remain present at all frames.",
+        "lane_names": [
+          "near",
+          "middle",
+          "far"
+        ],
+        "lane_ys": [
+          -1.1,
+          0.0,
+          1.1
+        ],
+        "local_geometry": "source-evaluated MESH/CURVE triangles constant over every source frame",
+        "materials": "constant referenced opaque source materials",
+        "physics_objects": [],
+        "source_motion": "evaluated source world poses from unmodified source animation; no motion formula rewritten",
+        "track_color_order": [
+          "yellow",
+          "red",
+          "blue"
+        ],
+        "types": {
+          "CAMERA": 1,
+          "CURVE": 3,
+          "LIGHT": 2,
+          "MESH": 41
+        },
+        "visibility": "no hide flags or object-set changes; geometric occlusion inside open-ended opaque tubes"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "c48cb3eea2f675b720d4be0279e8cd1ca71b5599af66cacaaf4185c6edd8367b",
+      "source_task_manifest_sha256": "9aee76192a2a4a8d55434559dcb218e614c29d94cc1e96fd90890ed6a090cad8",
+      "status": "certified",
+      "task": "G14"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "ORTHO",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 8.371643876998487e-15,
+      "dynamic_nodes": [
+        "far_red_ball",
+        "middle_blue_ball",
+        "near_yellow_ball"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 9,
+        "dynamic_nodes": [
+          "far_red_ball",
+          "middle_blue_ball",
+          "near_yellow_ball"
+        ],
+        "frames": 120,
+        "objects": 44,
+        "task": "G14",
+        "world_normal_max_abs_error": 2.468988032910957e-07,
+        "world_triangle_max_abs_error": 9.878773721272438e-08
+      },
+      "mask_iou_min": 1.0,
+      "member": 5,
+      "mesh_count": 44,
+      "oracle": "tests/fixtures/semantics/object_permanence/g14/opaque_pixel_rays_v2/member5",
+      "preview": ".cache/object_permanence/evaluation/g14-member5-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v2",
+      "reference_target_roles": {
+        "far_red_ball": "target_ball",
+        "middle_blue_ball": "target_ball",
+        "near_yellow_ball": "target_ball"
+      },
+      "reference_targets": [
+        "far_red_ball",
+        "middle_blue_ball",
+        "near_yellow_ball"
+      ],
+      "script": "object_permanence/generator/tasks/G14_u_tube_three_lanes/pb_task_00000066_pb_three_balls_parallel_left_u_tracks_ybr_0067_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed ORTHO; no depth of field",
+        "curves": [
+          {
+            "bevel_depth": 0.3100000023841858,
+            "bevel_resolution": 8,
+            "name": "near_single_opaque_left_u_tube",
+            "points": 57,
+            "render_resolution_u": 0,
+            "resolution_u": 24,
+            "shape": "open_curve_tube",
+            "spline": "POLY",
+            "use_fill_caps": false
+          },
+          {
+            "bevel_depth": 0.3100000023841858,
+            "bevel_resolution": 8,
+            "name": "middle_single_opaque_left_u_tube",
+            "points": 57,
+            "render_resolution_u": 0,
+            "resolution_u": 24,
+            "shape": "open_curve_tube",
+            "spline": "POLY",
+            "use_fill_caps": false
+          },
+          {
+            "bevel_depth": 0.3100000023841858,
+            "bevel_resolution": 8,
+            "name": "far_single_opaque_left_u_tube",
+            "points": 57,
+            "render_resolution_u": 0,
+            "resolution_u": 24,
+            "shape": "open_curve_tube",
+            "spline": "POLY",
+            "use_fill_caps": false
+          }
+        ],
+        "driver_diversity": "not sampled; selected source script defaults",
+        "dynamic_node_count": 3,
+        "frames": 120,
+        "geometry_conversion": {
+          "depsgraph_mode": "VIEWPORT",
+          "id": "stable-envs/evaluated-rigid-mesh-v1",
+          "instances": "single-source-identity-mesh-proxy",
+          "tessellation": "source-settings",
+          "types": [
+            "MESH",
+            "CURVE",
+            "FONT"
+          ]
+        },
+        "lane_identity": "Live reexports check constant lane Y, source color/name binding and shared ball mesh while hidden poses remain present at all frames.",
+        "lane_names": [
+          "near",
+          "middle",
+          "far"
+        ],
+        "lane_ys": [
+          -1.1,
+          0.0,
+          1.1
+        ],
+        "local_geometry": "source-evaluated MESH/CURVE triangles constant over every source frame",
+        "materials": "constant referenced opaque source materials",
+        "physics_objects": [],
+        "source_motion": "evaluated source world poses from unmodified source animation; no motion formula rewritten",
+        "track_color_order": [
+          "yellow",
+          "blue",
+          "red"
+        ],
+        "types": {
+          "CAMERA": 1,
+          "CURVE": 3,
+          "LIGHT": 2,
+          "MESH": 41
+        },
+        "visibility": "no hide flags or object-set changes; geometric occlusion inside open-ended opaque tubes"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "c398f32df6e8ee90bfec44c6e5e09c1390abd7f59adeb34658404bee71650f0b",
+      "source_task_manifest_sha256": "9aee76192a2a4a8d55434559dcb218e614c29d94cc1e96fd90890ed6a090cad8",
+      "status": "certified",
+      "task": "G14"
     }
   ],
   "entries": [
@@ -11140,11 +11895,11 @@
   "reference_probe_policy": "Source task-object roles select probes; V2 separately records source_semantic_targets and the source-observable subset targets. Every mesh remains in all world poses, IDs and all-object depth/mask checks.",
   "schema": "stable-envs/object-permanence-source-audit-v1",
   "scope": {
-    "additional_certified_members": 24,
+    "additional_certified_members": 29,
     "member_scripts": 197,
     "nominal_members": 150,
     "task_groups": 150,
-    "unregistered_other_members": 23
+    "unregistered_other_members": 18
   },
   "source_commit": "824baddcdad087810d35638bf8f273b884f74975",
   "source_url": "https://github.com/hokindeng/object-permanence",
@@ -11214,41 +11969,6 @@
       "source_script_sha256": "a031bab744d099f78ab24b7da32075b548284d1446944e1a4ca08e17a5a77a99",
       "status": "unregistered-member-entry",
       "task": "G05"
-    },
-    {
-      "member": 1,
-      "script": "object_permanence/generator/tasks/G14_u_tube_three_lanes/pb_task_00000062_pb_three_balls_parallel_left_u_tracks_ryb_0063_blender.py",
-      "source_script_sha256": "f15aaaafc188f1298e2bfb900468180f25da610263b1288d1de8fbf174ef9d76",
-      "status": "unregistered-member-entry",
-      "task": "G14"
-    },
-    {
-      "member": 2,
-      "script": "object_permanence/generator/tasks/G14_u_tube_three_lanes/pb_task_00000063_pb_three_balls_parallel_left_u_tracks_bry_0064_blender.py",
-      "source_script_sha256": "d9485f817a4d99a1dcec53990a3af274d80a63bc1ac5d0355aea20cf09021e84",
-      "status": "unregistered-member-entry",
-      "task": "G14"
-    },
-    {
-      "member": 3,
-      "script": "object_permanence/generator/tasks/G14_u_tube_three_lanes/pb_task_00000064_pb_three_balls_parallel_left_u_tracks_byr_0065_blender.py",
-      "source_script_sha256": "4262651c7d0ed4b62fa2e6467d2589124c59d2024f61467b69ba66297cb9204d",
-      "status": "unregistered-member-entry",
-      "task": "G14"
-    },
-    {
-      "member": 4,
-      "script": "object_permanence/generator/tasks/G14_u_tube_three_lanes/pb_task_00000065_pb_three_balls_parallel_left_u_tracks_yrb_0066_blender.py",
-      "source_script_sha256": "c48cb3eea2f675b720d4be0279e8cd1ca71b5599af66cacaaf4185c6edd8367b",
-      "status": "unregistered-member-entry",
-      "task": "G14"
-    },
-    {
-      "member": 5,
-      "script": "object_permanence/generator/tasks/G14_u_tube_three_lanes/pb_task_00000066_pb_three_balls_parallel_left_u_tracks_ybr_0067_blender.py",
-      "source_script_sha256": "c398f32df6e8ee90bfec44c6e5e09c1390abd7f59adeb34658404bee71650f0b",
-      "status": "unregistered-member-entry",
-      "task": "G14"
     },
     {
       "member": 1,

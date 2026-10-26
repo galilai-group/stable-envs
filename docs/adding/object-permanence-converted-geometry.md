@@ -25,7 +25,7 @@ The current audit certifies **150/150** first nominal members: 7 legacy,
 and 1 [sampled optical case](object-permanence-optics.md), including the separate
 [scale extension](object-permanence-scale.md).
 The two source-normal deferrals are resolved through [native realizations](object-permanence-native-scenes.md).
-Twenty-four additional members (two optical and twenty-two opaque variants) are supported; 23 remain unimported, including two explicit G05 capability deferrals.
+Twenty-nine additional members (two optical and twenty-seven opaque variants) are supported; 18 remain unimported, including two explicit G05 capability deferrals.
 
 ## Conversion and lifetime
 

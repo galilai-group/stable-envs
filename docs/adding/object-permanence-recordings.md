@@ -9,11 +9,11 @@ unused builders; they are not a claim that every nominal/diversity variant works
 
 ## Audited scenes and supported capabilities
 
-Current scope: all 150 first nominal members plus twenty-four additional members
-(G01/G03 optical variants and rigid variants through G13).
+Current scope: all 150 first nominal members plus twenty-nine additional members
+(G01/G03 optical variants and rigid variants through G14).
 G98/G132 use [hash-pinned native source realizations](object-permanence-native-scenes.md);
-23 additional scripts remain unimported: two G05 entries have capability deferrals
-and 21 await runtime audit. Driver diversity remains outside certification. The sections below
+18 additional scripts remain unimported: two G05 entries have capability deferrals
+and 16 await runtime audit. Driver diversity remains outside certification. The sections below
 retain the chronological import history.
 
 G34 is the existing single ball behind a screen. The second pilot is
@@ -615,8 +615,59 @@ python -m scripts.export.batch_object_permanence --source-root <source> \
 Use `--stage validate` for existing immutable inputs. Independent source processes
 produce each member's oracle and complete 120-frame source/replay GIF. No new
 member is deferred; the earlier G05 reasons and diagnostic GIFs remain intact.
-The remaining unaudited queue has 21 scripts, beginning with G14's five extra
-members; adding the two G05 deferrals gives 23 unimported scripts.
+At the end of that batch, the unaudited queue had 21 scripts, beginning with
+G14's five extra members; adding the two G05 deferrals gave 23 unimported scripts.
+
+### Next member batch: G14 lane-color permutations
+
+Five further members complete the six source G14 lane/color arrangements. Each
+uses the independently audited `build_scene` then `animate_scene` calls, a fixed
+orthographic camera and existing evaluated Curve conversion. The 44 draw objects
+comprise 41 MESH objects and three CURVE tubes. Only three balls are dynamic;
+41 static objects reuse the shared static cache. Each member stores
+`float32[120,3,7]` world poses and reuses existing mesh assets. No renderer,
+recording format, visibility contract or threshold changes are needed.
+
+| Member | Near / middle / far ball colors |
+|---|---|
+| G14/1 | Red / yellow / blue |
+| G14/2 | Blue / red / yellow |
+| G14/3 | Blue / yellow / red |
+| G14/4 | Yellow / red / blue |
+| G14/5 | Yellow / blue / red |
+
+The source animates all balls from the tube mouths through opaque U tubes onto
+open double rails. Its speed integration and rolling rotations are sampled from
+Blender's evaluated world transforms, without reimplementing motion formulas.
+Each tube retains its 57-point POLY spline, source bevel/tessellation and open
+ends (`use_fill_caps=False`). Balls keep poses while occluded, the correct lane
+and distinct instance colors while sharing one sphere mesh. Live reexports
+explicitly verify lane Y, color/name binding, dynamic motion and static Curve
+identity over the complete trajectory.
+
+All 600 new source frames pass independently generated per-member oracles in
+full and cached rendering: maximum depth MSE **8.372e-15**, minimum every-object
+mask IoU **1.0**. Source world-vertex/normal errors are at most
+**9.879e-08 / 2.469e-07**. RGB/depth/IDs are bit-identical at 90p/180p across
+reversed/repeated frames, chunks 1/4/7 and caller mutation. Each resolution builds
+one static seed with zero fallback. Five complete 120-frame source/replay GIFs
+are retained; 600 temporary source PNGs are removed.
+
+Reproduce into **new** recording/oracle roots:
+
+```bash
+python -m scripts.export.batch_object_permanence --source-root <source> \
+  --output <new-recordings> --oracle-root <new-oracles> --report <g14-report.json> \
+  --tasks G14 --members 1,2,3,4,5 --stage all \
+  --visibility-contract stable-envs/opaque-pixel-rays-v2 \
+  --blender-python <blender-python> --render-python <cuda-python>
+```
+
+Use `--stage validate` for existing immutable inputs. Independent oracle stages
+can also select one member per process into distinct member directories; they
+never consume candidate trajectories. This batch adds no capability deferrals;
+earlier G05 reasons and diagnostic GIFs remain intact. Certified coverage is
+179/197 scripts, with 16 unaudited scripts starting at G15 plus the two G05 blockers.
 
 Native previews accept `--member`/`--profile` via
 `scripts.export.render_object_permanence_preview`. Use temporary PNGs with

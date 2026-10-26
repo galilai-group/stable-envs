@@ -110,6 +110,11 @@ REFERENCE_MEMBERS = {
             "drawer_3_front_label",
         ),
     ),
+    ("G14", 1): ("build_scene", "animate_scene", ("far_blue_ball", "middle_yellow_ball", "near_red_ball")),
+    ("G14", 2): ("build_scene", "animate_scene", ("far_yellow_ball", "middle_red_ball", "near_blue_ball")),
+    ("G14", 3): ("build_scene", "animate_scene", ("far_red_ball", "middle_yellow_ball", "near_blue_ball")),
+    ("G14", 4): ("build_scene", "animate_scene", ("far_blue_ball", "middle_red_ball", "near_yellow_ball")),
+    ("G14", 5): ("build_scene", "animate_scene", ("far_red_ball", "middle_blue_ball", "near_yellow_ball")),
 }
 # Independently inspected source camera types; do not import candidate flags.
 REFERENCE_ORTHOGRAPHIC_MEMBERS = frozenset(
@@ -126,6 +131,11 @@ REFERENCE_ORTHOGRAPHIC_MEMBERS = frozenset(
         ("G13", 2),
         ("G13", 3),
         ("G13", 4),
+        ("G14", 1),
+        ("G14", 2),
+        ("G14", 3),
+        ("G14", 4),
+        ("G14", 5),
     }
 )
 
