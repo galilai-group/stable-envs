@@ -49,6 +49,7 @@ venv() {  # venv FAMILY -> python path of a fresh family venv in $WORK
     ogbench) extras="ogbench ogbench-manipulation ogbench-manipulation-gpu"; groups="pin-ogbench gpu-mjwarp";;
     fetch) extras="robotics"; groups="pin-fetch";;
     rocket) extras="rocket"; groups="pin-rocket";;
+    craftax) extras="craftax craftax-gpu"; groups="pin-craftax";;
     *) echo "unknown family $fam" >&2; return 1;;
   esac
   local v=$WORK/venv-$fam
@@ -82,6 +83,15 @@ for spec in "$@"; do
   df -h "$WORK" | tail -1
   P=$(venv $fam) || { rm -rf $WORK/venv-$fam; continue; }
   $P -c "import torch; print('torch', torch.__version__, torch.cuda.get_device_name(0))"
+  if [ $fam = craftax ]; then
+    # Craftax has no source renderer to restore States into; its comparison is the upstream jitted step.
+    mkdir -p $OUT/craftax
+    $PIN $P -m benchmarks.craftax_bench --envs "${envs[@]}" --device cuda --repeats $REPEATS --output $OUT/craftax/gpu.json
+    JAX_PLATFORMS=cpu $PIN $P -m benchmarks.craftax_bench --envs "${envs[@]}" --device cpu --batches 64 256 \
+      --repeats $REPEATS --calls 10 --output $OUT/craftax/cpu.json
+    rm -rf $WORK/venv-$fam
+    continue
+  fi
   OFF="$PIN $P -m benchmarks.offline_sweep"; ON="$PIN $P -m benchmarks.online_ladder"
   S=$WORK/states-$fam; D=$WORK/episodes-$fam; mkdir -p $S $D
   egl $OFF states --envs "${envs[@]}" --out $S --n $N --device cuda --lanes 1024
