@@ -5,7 +5,8 @@ Arms:
                         steps its envs one action at a time and then draws their frames; the parent submits step t+1
                         before taking step t. The GL backend (EGL or software) selects the device; ``--src-label`` names it.
   src-pipelined-step    as above with rendering off.
-  snv-step                     stable-envs physics only, ``T`` actions per call.
+  snv-step              stable-envs physics only on CPU, ``T`` actions per call.
+  snv-step-gpu          as snv-step with device="cuda"; physics moves to the GPU only where the class is GPU-native.
   snv-render-cpu               stable-envs physics and frames on CPU, ``T`` actions per call; stepping and rendering overlap.
   snv-render-gpu               as snv-render-cpu with frames on CUDA.
 """
@@ -322,17 +323,17 @@ def _make_ours(name: str, lanes: int, size: int, device: str):
         return snv.make(name, num_envs=lanes, device=device)
 
 
-def run_ours(args, name: str, render_device: str | None, chunk: int) -> dict:
+def run_ours(args, name: str, dev: str, render: bool, chunk: int) -> dict:
     data = np.load(Path(args.data) / f"{name}.npz")
     seeds, actions = data["seeds"][: args.episodes], data["actions"][: args.episodes]
     n, length = actions.shape[:2]
     lanes = min(args.lanes, n)
-    dev = render_device or "cpu"
     torch.set_num_threads(args.threads)
     env = _make_ours(name, lanes, args.size, dev)
+    execution_mode = getattr(env, "execution_mode", None)
     sync = torch.cuda.synchronize if dev.startswith("cuda") else None
     acts = torch.as_tensor(actions, device=dev)
-    frames = None if render_device is None else slice(None)
+    frames = slice(None) if render else None
 
     def play(groups):
         for s in groups:
@@ -344,7 +345,7 @@ def run_ours(args, name: str, render_device: str | None, chunk: int) -> dict:
     try:
         play(groups[:1])
         shape = None
-        if render_device is not None:
+        if render:
             env.reset(seed=int(seeds[0]))
             shape = list(env.step(acts[:lanes, :1], states=None, frames=slice(None))["frames"].shape[2:])
         t = _sweeps(lambda: play(groups), warmup=0, repeats=args.repeats, budget_s=args.budget, sync=sync)
@@ -353,6 +354,8 @@ def run_ours(args, name: str, render_device: str | None, chunk: int) -> dict:
     steps = len(groups) * lanes * length
     return {
         "lanes": lanes,
+        "device": dev,
+        "execution_mode": execution_mode,
         "actions_per_call": chunk,
         "threads": args.threads,
         "frame_shape": shape,
@@ -362,7 +365,14 @@ def run_ours(args, name: str, render_device: str | None, chunk: int) -> dict:
     }
 
 
-ARMS = ("src-pipelined-render", "src-pipelined-step", "snv-step", "snv-render-cpu", "snv-render-gpu")
+ARMS = ("src-pipelined-render", "src-pipelined-step", "snv-step", "snv-step-gpu", "snv-render-cpu", "snv-render-gpu")
+#: Stable-envs arms: (device, frames). snv-step-gpu steps on CUDA, which only moves physics for GPU-native classes.
+OURS = {
+    "snv-step": ("cpu", False),
+    "snv-step-gpu": ("cuda", False),
+    "snv-render-cpu": ("cpu", True),
+    "snv-render-gpu": ("cuda", True),
+}
 
 
 def cmd_run(args) -> None:
@@ -378,8 +388,7 @@ def cmd_run(args) -> None:
                 elif arm == "src-pipelined-step":
                     r = run_source(args, args.env, False)
                 else:
-                    device = {"snv-step": None, "snv-render-cpu": "cpu", "snv-render-gpu": "cuda"}[arm]
-                    r = run_ours(args, args.env, device, chunk)
+                    r = run_ours(args, args.env, *OURS[arm], chunk)
                 r.setdefault("status", "ok")
             except Exception as e:  # noqa: BLE001
                 msg = f"{type(e).__name__}: {e}"

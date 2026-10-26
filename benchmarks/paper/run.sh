@@ -93,7 +93,7 @@ for spec in "$@"; do
     sw $ON run $COMMON --arms src-pipelined-render --src-label cpu --ours-device cpu --output $n/src-render-cpu.json
     sw $ON run $COMMON --arms src-pipelined-step snv-step --output $n/step.json
     sw $ON run $COMMON --arms snv-render-cpu --output $n/snv-render-cpu.json
-    egl $ON run $COMMON --arms snv-render-gpu --output $n/snv-render-gpu.json
+    egl $ON run $COMMON --arms snv-step-gpu snv-render-gpu --output $n/snv-gpu.json
   done
   rm -rf $WORK/venv-$fam $S $D
 done
