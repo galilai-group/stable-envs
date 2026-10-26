@@ -22,6 +22,10 @@ else
 fi
 # Arms that draw with software OpenGL play the first SWEPISODES episodes only; steps/s does not depend on the count.
 REPEATS=${REPEATS:-3}
+# SRC_LANES envs per source worker (one avoids the multi-env corruption some sources show);
+# ONLY_SOURCE=1 runs only the source arms (for example a second core budget).
+SLANES=${SRC_LANES:-$SLANES}
+ONLY_SOURCE=${ONLY_SOURCE:-0}
 export PYTHONPATH=$REPO SDL_VIDEODRIVER=dummy PYTHONWARNINGS=ignore PYTHONDONTWRITEBYTECODE=1
 # The uv cache stays in home: node-local disk holds one family venv at a time.
 export UV_HTTP_TIMEOUT=600 UV_LINK_MODE=copy UV_CACHE_DIR=${UV_CACHE_DIR:-$HOME/.cache/uv} XDG_CACHE_HOME=$WORK/cache
@@ -35,6 +39,7 @@ sw() { env LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe PYOPENGL_PLATFORM=glx
   echo " \"dirty\": $(git -C "$REPO" diff --quiet && echo false || echo true), \"swm\": \"$(git -C "$SWM" rev-parse HEAD)\","
   echo " \"host\": \"$(hostname)\", \"job\": \"${SLURM_JOB_ID:-}\", \"start\": \"$(date -Is)\", \"cores\": \"$CORES\", \"ncores\": $NCORES,"
   echo " \"cuda_visible_devices\": \"$CUDA_VISIBLE_DEVICES\", \"gpu\": \"$(nvidia-smi -i $CUDA_VISIBLE_DEVICES --query-gpu=name,driver_version --format=csv,noheader)\", \"smoke\": ${SMOKE:-0},"
+  echo " \"src_lanes\": ${SRC_LANES:-null}, \"only_source\": ${ONLY_SOURCE:-0},"
   echo " \"n_states\": $N, \"batches\": \"$BATCHES\", \"episodes\": $EPISODES, \"software_gl_episodes\": $SWEPISODES, \"length\": $LENGTH, \"lanes\": $LANES, \"repeats\": $REPEATS}"
 } > "$OUT/run.json"
 cat "$OUT/run.json"
@@ -99,10 +104,18 @@ for spec in "$@"; do
   for E in "${envs[@]}"; do
     echo "--- $E $(date -Is) load $(cut -d' ' -f1-3 /proc/loadavg)"
     o=$OUT/offline/$E; mkdir -p $o
-    egl $OFF ours --envs $E --states $S --device cuda --batches $BATCHES --repeats $REPEATS --output $o/snv-gpu.json
-    sw $OFF ours --envs $E --states $S --device cpu --threads $NCORES --batches $BATCHES --repeats $REPEATS --output $o/snv-cpu.json
-    egl $OFF mse --envs $E --states $S --device cuda --output $o/mse-gpu.json
-    sw $OFF mse --envs $E --states $S --device cpu --output $o/mse-cpu.json
+    if [ $ONLY_SOURCE != 1 ]; then
+      egl $OFF ours --envs $E --states $S --device cuda --batches $BATCHES --repeats $REPEATS --output $o/snv-gpu.json
+      sw $OFF ours --envs $E --states $S --device cpu --threads $NCORES --batches $BATCHES --repeats $REPEATS --output $o/snv-cpu.json
+      egl $OFF mse --envs $E --states $S --device cuda --output $o/mse-gpu.json
+      sw $OFF mse --envs $E --states $S --device cpu --output $o/mse-cpu.json
+    fi
+    case $E in OGBCube|OGBScene)
+      egl $OFF source-upstream --envs $E --states $S --procs 1 --keep $o/upstream-gpu-frames.npy --repeats $REPEATS --output $o/src-upstream-gpu-1p.json
+      egl $OFF source-upstream --envs $E --states $S --procs $NCORES --repeats $REPEATS --output $o/src-upstream-gpu-${NCORES}p.json
+      sw $OFF source-upstream --envs $E --states $S --procs 1 --repeats $REPEATS --output $o/src-upstream-cpu-1p.json
+      sw $OFF source-upstream --envs $E --states $S --procs $NCORES --repeats $REPEATS --output $o/src-upstream-cpu-${NCORES}p.json;;
+    esac
     for p in 1 $NCORES; do
       egl $OFF source --envs $E --states $S --procs $p --repeats $REPEATS --output $o/src-gpu-${p}p.json
       sw $OFF source --envs $E --states $S --procs $p --repeats $REPEATS --output $o/src-cpu-${p}p.json
@@ -111,9 +124,16 @@ for spec in "$@"; do
     COMMON="--env $E --data $D --procs $NCORES --source-lanes $SLANES --lanes $LANES --threads $NCORES --repeats $REPEATS"
     egl $ON run $COMMON --arms src-pipelined-render --src-label gpu --ours-device cuda --output $n/src-render-gpu.json
     sw $ON run $COMMON --episodes $SWEPISODES --arms src-pipelined-render --src-label cpu --ours-device cpu --output $n/src-render-cpu.json
-    sw $ON run $COMMON --arms src-pipelined-step snv-step --output $n/step.json
-    sw $ON run $COMMON --episodes $SWEPISODES --arms snv-render-cpu --output $n/snv-render-cpu.json
-    egl $ON run $COMMON --arms snv-step-gpu snv-render-gpu --output $n/snv-gpu.json
+    if [ "$E" = PyFlytRocketLanding ]; then
+      SRC_PYBULLET_EGL=1 egl $ON run $COMMON --arms src-pipelined-render --src-label gpu-pybullet-egl --ours-device cuda --output $n/src-render-gpu-pybullet-egl.json
+    fi
+    if [ $ONLY_SOURCE = 1 ]; then
+      sw $ON run $COMMON --arms src-pipelined-step --output $n/step.json
+    else
+      sw $ON run $COMMON --arms src-pipelined-step snv-step --output $n/step.json
+      sw $ON run $COMMON --episodes $SWEPISODES --arms snv-render-cpu --output $n/snv-render-cpu.json
+      egl $ON run $COMMON --arms snv-step-gpu snv-render-gpu --output $n/snv-gpu.json
+    fi
   done
   rm -rf $WORK/venv-$fam $S $D
 done

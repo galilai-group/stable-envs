@@ -336,6 +336,88 @@ def cmd_mse(args) -> None:
     Path(args.output).write_text(json.dumps(results, indent=1))
 
 
+#: Upstream gym ids and constructor arguments for the classes whose offline reference is not the upstream env.
+UPSTREAM = {
+    "OGBCube": ("swm/OGBCube-v0", {"env_type": "single"}),
+    "OGBScene": ("swm/OGBScene-v0", {}),
+}
+
+
+def _upstream_init(name: str, states: str, size: int, keep: str | None) -> None:
+    os.environ.setdefault("OMP_NUM_THREADS", "1")
+    torch.set_num_threads(1)
+    import gymnasium as gym
+    import stable_worldmodel  # noqa: F401
+
+    gid, kw = UPSTREAM[name]
+    env = gym.make(gid, render_mode="rgb_array", width=size, height=size, **kw)
+    env.reset(seed=0)
+    _W["env"], _W["u"] = env, env.unwrapped
+    _W["rows"] = _load_states(Path(states) / f"{name}.pt")["rows"].numpy().astype(np.float64)
+    _W["keep"] = keep
+
+
+def _upstream_render(span) -> int:
+    """Write each row's qpos, goal and buttons into the upstream env and draw it with the env's own render()."""
+    import mujoco
+
+    u, rows = _W["u"], _W["rows"]
+    nq, nmocap = int(u.model.nq), int(u.model.nmocap)
+    goals = 3 if nmocap == 1 else 3 * nmocap
+    kept = []
+    for i in range(*span):
+        r = rows[i]
+        u.data.qpos[:] = r[:nq]
+        u.data.qvel[:] = 0
+        u.data.mocap_pos[:] = r[nq : nq + goals].reshape(-1, 3)[: u.data.mocap_pos.shape[0]]
+        buttons = r[nq + goals :]
+        if len(buttons) and hasattr(u, "_cur_button_states"):
+            u._cur_button_states = buttons.round().astype(np.int64)
+            u._apply_button_states()
+        mujoco.mj_forward(u.model, u.data)
+        frame = _W["env"].render()
+        if _W["keep"] and i < 16:
+            kept.append(np.asarray(frame))
+    if kept:
+        np.save(_W["keep"], np.stack(kept))
+    return span[1] - span[0]
+
+
+def cmd_source_upstream(args) -> None:
+    """Sweep the stored states through the upstream env's own renderer in ``procs`` processes (Cube, Scene)."""
+    results = {"arm": f"source-upstream-{args.procs}p", "host": _host(), "envs": {}}
+    for name in args.envs:
+        if name not in UPSTREAM:
+            results["envs"][name] = {"status": "skipped", "reason": "no upstream renderer is wired for this class"}
+            continue
+        blob = _load_states(Path(args.states) / f"{name}.pt")
+        n, size = len(blob["rows"]), int(blob["size"] or 224)
+        try:
+            if args.procs == 1:
+                _upstream_init(name, args.states, size, args.keep)
+                t = _sweeps(lambda: _upstream_render((0, n)), warmup=1, repeats=args.repeats, budget_s=args.budget)
+            else:
+                ctx = mp.get_context("spawn")
+                spans = [(n * k // args.procs, n * (k + 1) // args.procs) for k in range(args.procs)]
+                with ctx.Pool(
+                    args.procs, initializer=_upstream_init, initargs=(name, args.states, size, None)
+                ) as pool:
+                    pool.map(_upstream_render, [(0, 1)] * args.procs)
+                    t = _sweeps(
+                        lambda: pool.map(_upstream_render, spans, chunksize=1),
+                        warmup=1,
+                        repeats=args.repeats,
+                        budget_s=args.budget,
+                    )
+            row = {"status": "ok", "frames": n, "fps": n / t["median_s"], "upstream": UPSTREAM[name][0], **t}
+        except Exception as e:  # noqa: BLE001
+            row = {"status": "error", "error": f"{type(e).__name__}: {e}"[:500]}
+        print(f"{name} source-upstream {args.procs}p {row['status']} {row.get('fps', 0):.0f} fps", flush=True)
+        results["envs"][name] = row
+        _W.clear()
+    Path(args.output).write_text(json.dumps(results, indent=1))
+
+
 class _Files(torch.utils.data.Dataset):
     def __init__(self, files):
         self.files = files
@@ -450,6 +532,10 @@ def main() -> None:
     c.add_argument("--sample", type=int, default=256)
     c.add_argument("--device", default="cuda")
     c.add_argument("--output", required=True)
+    u = sub.add_parser("source-upstream", parents=[common])
+    u.add_argument("--procs", type=int, default=1)
+    u.add_argument("--keep", default=None, help="save the first 16 frames to this .npy (1 process only)")
+    u.add_argument("--output", required=True)
     m = sub.add_parser("mse", parents=[common])
     m.add_argument("--device", default="cuda")
     m.add_argument("--n", type=int, default=256)
@@ -462,6 +548,7 @@ def main() -> None:
         "ours": cmd_ours,
         "source": cmd_source,
         "codec": cmd_codec,
+        "source-upstream": cmd_source_upstream,
         "mse": cmd_mse,
         "list": cmd_list,
     }[args.cmd](args)

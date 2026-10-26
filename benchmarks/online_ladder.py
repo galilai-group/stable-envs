@@ -70,6 +70,14 @@ class _DMCSource:
         self.env.close()
 
 
+def _pybullet_egl(env):
+    """Load PyBullet's EGL hardware renderer into the env's client; PyFlyt makes a new client on each reset."""
+    import pkgutil
+
+    client = env.unwrapped.env
+    client.loadPlugin(pkgutil.get_loader("eglRenderer").get_filename(), "_eglRendererPlugin")
+
+
 class _GymSource:
     """A gym env whose actions are converted to its own action space."""
 
@@ -81,6 +89,8 @@ class _GymSource:
 
     def reset(self, seed=None):
         self.env.reset(seed=seed)
+        if os.environ.get("SRC_PYBULLET_EGL") == "1":
+            _pybullet_egl(self.env)
 
     def step(self, action):
         a = np.asarray(action)
