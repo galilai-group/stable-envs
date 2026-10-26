@@ -116,6 +116,7 @@ REFERENCE_MEMBERS = {
     ("G14", 4): ("build_scene", "animate_scene", ("far_blue_ball", "middle_red_ball", "near_yellow_ball")),
     ("G14", 5): ("build_scene", "animate_scene", ("far_red_ball", "middle_blue_ball", "near_yellow_ball")),
     ("G15", 1): ("build_scene", "animate_scene", ("orange_ball", "blue_cube", "yellow_pyramid")),
+    ("G16", 1): ("build_scene", "animate_scene", ("red_ball", "blue_ball", "yellow_ball")),
 }
 # Independently inspected source camera types; do not import candidate flags.
 REFERENCE_ORTHOGRAPHIC_MEMBERS = frozenset(
@@ -138,6 +139,7 @@ REFERENCE_ORTHOGRAPHIC_MEMBERS = frozenset(
         ("G14", 4),
         ("G14", 5),
         ("G15", 1),
+        ("G16", 1),
     }
 )
 
