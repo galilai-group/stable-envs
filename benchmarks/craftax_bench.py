@@ -98,7 +98,9 @@ def main():
                     r = {"arm": arm, "batch": b, "status": "ok", **fn()}
                 except Exception as e:  # noqa: BLE001
                     r = {"arm": arm, "batch": b, "status": "error", "error": f"{type(e).__name__}: {e}"[:500]}
-                print(f"{name} {args.device} b={b} {arm} {r['status']} {r.get('steps_per_s', 0):.0f} steps/s", flush=True)
+                print(
+                    f"{name} {args.device} b={b} {arm} {r['status']} {r.get('steps_per_s', 0):.0f} steps/s", flush=True
+                )
                 rows.append(r)
         res["envs"][name] = rows
     Path(args.output).write_text(json.dumps(res, indent=1))

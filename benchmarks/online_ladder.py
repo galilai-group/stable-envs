@@ -60,7 +60,8 @@ class _DMCSource:
         self.env.reset()
 
     def step(self, action):
-        self.env.step(np.asarray(action, np.float64))
+        """Return whether the episode ended."""
+        return bool(self.env.step(np.asarray(action, np.float64)).last())
 
     def render(self):
         return self.env.physics.render(self.size, self.size, camera_id=self.camera)
@@ -84,7 +85,8 @@ class _GymSource:
     def step(self, action):
         a = np.asarray(action)
         a = int(a.reshape(-1)[0]) if self.discrete else a.reshape(self.shape).astype(self.dtype)
-        self.env.step(a)
+        out = self.env.step(a)
+        return bool(out[2] or out[3])
 
     def render(self):
         return self.env.render()
@@ -142,27 +144,32 @@ def _digest(frame) -> str:
     return hashlib.sha1(np.ascontiguousarray(frame).tobytes()).hexdigest()
 
 
-def _replay_frames(name, size, seed, actions) -> np.ndarray:
-    """Every frame of one episode played by a single source env in this process."""
+def _replay_frames(name, size, seed, actions):
+    """Every frame of one episode played by a single source env in this process, and the first step that ends it."""
     env = _make_source(name, size)
     try:
         env.reset(seed=seed)
-        frames = []
-        for a in actions:
-            env.step(a)
+        frames, end = [], None
+        for t, a in enumerate(actions):
+            done = env.step(a)
             frames.append(np.asarray(env.render()).copy())
-        return np.stack(frames)
+            if done and end is None:
+                end = t
+        return np.stack(frames), end
     finally:
         env.close()
 
 
-def _ours_frames(name, size, device, seed, actions) -> np.ndarray:
-    """Every frame of the same episode played by one stable-envs lane on ``device``."""
+def _ours_frames(name, size, device, seed, actions):
+    """Every frame of the same episode played by one stable-envs lane on ``device``, and the first step that ends it."""
     env = _make_ours(name, 1, size, device)
     try:
         env.reset(seed=seed)
         a = torch.as_tensor(actions[None], device=device)
-        return env.step(a, states=None, frames=slice(None))["frames"][0].cpu().numpy()
+        out = env.step(a, states=None, frames=slice(None))
+        ended = (out["terminated"] | out["truncated"])[0].reshape(-1).cpu().numpy()
+        hits = np.flatnonzero(ended)
+        return out["frames"][0].cpu().numpy(), (int(hits[0]) if len(hits) else None)
     finally:
         env.close()
 
@@ -278,14 +285,24 @@ def run_source(args, name: str, render: bool) -> dict:
         # its GL contexts alive, and a second context in one process corrupts the source's frames.
         theirs = {lane: _replay_frames(name, args.size, int(seeds[lane]), actions[lane]) for lane in check_lanes}
         for lane in check_lanes:
-            bad += [f"{lane}/{step}" for step in check_steps if got[lane, step] != _digest(theirs[lane][step])]
+            bad += [f"{lane}/{step}" for step in check_steps if got[lane, step] != _digest(theirs[lane][0][step])]
+        compared = []
         for lane in check_lanes:
-            ours = _ours_frames(name, args.size, args.ours_device, int(seeds[lane]), actions[lane])
-            shapes.add((tuple(ours.shape[1:]), tuple(theirs[lane].shape[1:])))
-            if ours.shape == theirs[lane].shape:
-                per_frame.append(C.frame_mse(ours, theirs[lane]))
+            ours, our_end = _ours_frames(name, args.size, args.ours_device, int(seeds[lane]), actions[lane])
+            source, source_end = theirs[lane]
+            shapes.add((tuple(ours.shape[1:]), tuple(source.shape[1:])))
+            # Stable-envs resets a lane when its episode ends and the source keeps stepping it: compare up to the end.
+            stop = min(x for x in (our_end, source_end, len(source) - 1) if x is not None) + 1
+            compared.append(stop)
+            if ours.shape == source.shape:
+                per_frame.append(C.frame_mse(ours[:stop], source[:stop]))
         # The rollout includes any physics divergence, not only rendering differences.
-        rollout = {"episodes": len(check_lanes), "ours_device": args.ours_device, "shapes": sorted(map(str, shapes))}
+        rollout = {
+            "episodes": len(check_lanes),
+            "steps_compared": compared,
+            "ours_device": args.ours_device,
+            "shapes": sorted(map(str, shapes)),
+        }
         if per_frame:
             rollout.update(C.mse_summary(np.concatenate(per_frame)))
         check = {

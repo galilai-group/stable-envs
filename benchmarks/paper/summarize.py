@@ -156,24 +156,37 @@ def craftax(root: Path):
     return out
 
 
-def markdown(root: Path) -> str:
-    run = _load(root / "run.json") or {}
-    names = sorted({p.name for p in (root / "offline").glob("*")} | {p.name for p in (root / "online").glob("*")})
-    off, on, cx = offline(root, names), online(root, names), craftax(root)
-    head = (
-        f"Commit `{str(run.get('commit'))[:8]}` (main `{str(run.get('main'))[:8]}`), SWM `{str(run.get('swm'))[:8]}`, "
-        f"{run.get('host')} job {run.get('job')}, {run.get('gpu')}, CPU arms on cores {run.get('cores')} "
-        f"({run.get('ncores')} cores), {run.get('start')}. States {run.get('n_states')}, batches {run.get('batches')}; "
-        f"episodes {run.get('episodes')} x {run.get('length')} steps ({run.get('software_gl_episodes', '–')} on software GL), "
-        f"repeats {run.get('repeats')}. Speeds are medians. MSE is per frame on the 0-255 scale."
-    )
-    lines = ["# stable-envs vs source: speed and frame agreement", "", head, ""]
+def markdown(roots: list[Path]) -> str:
+    off, on, cx, prov = [], [], [], []
+    for root in roots:
+        run = _load(root / "run.json") or {}
+        names = sorted({p.name for p in (root / "offline").glob("*")} | {p.name for p in (root / "online").glob("*")})
+        off += offline(root, names)
+        on += online(root, names)
+        cx += craftax(root)
+        prov.append(
+            f"| {root.name} | `{str(run.get('commit'))[:8]}` | `{str(run.get('main'))[:8]}` | {run.get('host')} | "
+            f"{run.get('job')} | {run.get('gpu')} | {run.get('cores')} | {run.get('start')} | "
+            f"{run.get('n_states')} | {run.get('batches')} | {run.get('episodes')} x {run.get('length')} "
+            f"({run.get('software_gl_episodes', '–')} sw GL) | {run.get('repeats')} |"
+        )
+    lines = ["# stable-envs vs source: speed and frame agreement", ""]
+    lines += [
+        "Speeds are medians over repeats. Every arm of a job runs pinned to the same CPU cores, one GPU visible,",
+        "on an exclusive node. MSE is per frame on the 0-255 scale.",
+        "",
+        "| Job | Harness | Main | Host | Slurm job | GPU, driver | Cores | Start | States | Batches | Episodes x steps | Repeats |",
+        "|---|" + "---|" * 11,
+        *prov,
+        "",
+    ]
     lines += [
         "## Offline rendering (frames/s, the same stored States)",
         "",
-        "GPU: SNV on CUDA vs the source's MuJoCo OpenGL on the GPU (EGL); '–' where the source has no GPU renderer.",
+        "GPU: SNV on CUDA vs the source's MuJoCo OpenGL on the GPU (EGL); 'no src GPU' where the source has no GPU renderer.",
         "CPU: SNV on CPU vs the source on software OpenGL (llvmpipe) or its own CPU renderer, on the same cores.",
         "The source renders one State per call; 1p is one process, Np is one process per core.",
+        "OGBCube/OGBScene offline source is the exact-OpenGL reference path on the upstream model, not the upstream env.",
         "",
         "| Env | SNV GPU B=1 | SNV GPU best (B) | Src GPU 1p | Src GPU Np | GPU speedup (best vs Np) "
         "| SNV CPU B=1 | SNV CPU best (B) | Src CPU 1p | Src CPU Np | CPU speedup (best vs Np) | MSE GPU (worst) | MSE CPU (worst) |",
@@ -229,7 +242,7 @@ def markdown(root: Path) -> str:
 
 
 if __name__ == "__main__":
-    root = Path(sys.argv[1])
-    md = markdown(root)
-    (root / "summary.md").write_text(md)
+    roots = [Path(a) for a in sys.argv[1:]]
+    md = markdown(roots)
+    (roots[0].parent / "summary.md").write_text(md)
     print(md)
