@@ -1,0 +1,402 @@
+{
+  "arrays": {
+    "frames": {
+      "dtype": "int64",
+      "sha256": "3ce1a862b6cf0bb21bc1354b758cafa47ca5ec03b5c004d6210f5abd8c55df44",
+      "shape": [
+        120
+      ]
+    },
+    "poses": {
+      "dtype": "float32",
+      "sha256": "3b19e41994acd2312e30fed72654c447016ccdf7dbf82ae9b37f31d1f2e3d7af",
+      "shape": [
+        120,
+        1,
+        7
+      ]
+    }
+  },
+  "assets": {
+    "0b0837fb91726b5e8d5d718ed902f3d0d59198271d3a76a4e55b35d339efe407": {
+      "file": "assets/mesh/0b0837fb91726b5e8d5d718ed902f3d0d59198271d3a76a4e55b35d339efe407.npz",
+      "sha256": "8431f7d0c3f62f724f41bee42edaf1a9a4f452cce59bc17923b306e9c52ba63f"
+    },
+    "19c2aa289bec42252a383970074f7d484f082e30ced60e85a941f84d0a2cafca": {
+      "file": "assets/mesh/19c2aa289bec42252a383970074f7d484f082e30ced60e85a941f84d0a2cafca.npz",
+      "sha256": "ac1784e6632138c89556cd0b65f87eb4ac2d946445f7f844023e300853112a3d"
+    },
+    "2f84e17d4d59d7d8db1261fb1bc49130e3a422a0c724e95ba5a65af71096ce66": {
+      "file": "assets/mesh/2f84e17d4d59d7d8db1261fb1bc49130e3a422a0c724e95ba5a65af71096ce66.npz",
+      "sha256": "f8d29042f8436c1ddcf7df9026d0f9285bd1e9c2016f5bd8017b7cbbf79c1e66"
+    },
+    "3f8f7f4b848541fc1af3b79477d9685f61c7c5749c4662923838b3ea63fdac8d": {
+      "file": "assets/mesh/3f8f7f4b848541fc1af3b79477d9685f61c7c5749c4662923838b3ea63fdac8d.npz",
+      "sha256": "37ca1573b0793b65c7342aeb04fedbfae0819402892ff0fe33c05a0595448a35"
+    },
+    "48bb590479c9c9d8fb1adfb6d0b0d468dd94791da4c6888a14dee83ca40dd894": {
+      "file": "assets/mesh/48bb590479c9c9d8fb1adfb6d0b0d468dd94791da4c6888a14dee83ca40dd894.npz",
+      "sha256": "b81d761fa7db0897b09cdbecee34ab827022bd34b50a9c7ae2a5b6b7d6982c48"
+    },
+    "94fb423504f42a60886c2b992e9f46eed800d85923f22592259dc08e99e4b515": {
+      "file": "assets/mesh/94fb423504f42a60886c2b992e9f46eed800d85923f22592259dc08e99e4b515.npz",
+      "sha256": "f0a8d0e89681661962575493efea7e0b81066abfa0915a7b51628c81a1ee5482"
+    },
+    "a525cdf6edfc353d7925e108d0a6c2e6714c7621e3a74af8a2a2d9082388f901": {
+      "file": "assets/mesh/a525cdf6edfc353d7925e108d0a6c2e6714c7621e3a74af8a2a2d9082388f901.npz",
+      "sha256": "0d4172db20262defcdc8957fd267d568c435269a27ced314e61456d179d22e6d"
+    },
+    "c021b8ba445e4385aa9e5041cecb833ac9a8ab21db584a07535f51c62dc076f4": {
+      "file": "assets/mesh/c021b8ba445e4385aa9e5041cecb833ac9a8ab21db584a07535f51c62dc076f4.npz",
+      "sha256": "5c728e0c49199b6671a6a6e05fe061ae3b63a99c2f9b189995f4066030e8503e"
+    },
+    "dd7bd67597e1f19fd1c27c4e4a7e8feed49ceb33330d25f0c754d052afec030b": {
+      "file": "assets/mesh/dd7bd67597e1f19fd1c27c4e4a7e8feed49ceb33330d25f0c754d052afec030b.npz",
+      "sha256": "09da014979cdd595d3a09994e3d74890c8a993b9dde3788bd32e27e5472dfbf1"
+    },
+    "fa3524c495761dc167d261e22772459274bb3dbf0a7e9ba558409eb715faff34": {
+      "file": "assets/mesh/fa3524c495761dc167d261e22772459274bb3dbf0a7e9ba558409eb715faff34.npz",
+      "sha256": "a3f81c348b0d077b93316d3bb5c63275e3bf522c86823e39691be17d846043c5"
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "height": 720,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        1.9444444179534912,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        3.456789970397949,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "width": 1280,
+    "world": [
+      [
+        0.8137333989143372,
+        -0.13793359696865082,
+        0.5646346211433411,
+        7.400000095367432
+      ],
+      [
+        0.5812382698059082,
+        0.1931070238351822,
+        -0.7904883027076721,
+        -9.699999809265137
+      ],
+      [
+        -1.0058620603103918e-08,
+        0.9714339971542358,
+        0.23730991780757904,
+        3.8499999046325684
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "clip": "g02-member1",
+  "conventions": {
+    "quaternion": "wxyz",
+    "units": "source-scene-units",
+    "world": "right-handed-z-up"
+  },
+  "dynamic_nodes": [
+    "target_red_ball"
+  ],
+  "fps": 24.0,
+  "license_ref": {
+    "sha256": "0163481eb7a0fe3ed86d2dccf542a849b36b3c119f8ca6d3d5b36c074f2e1a1c"
+  },
+  "objects": [
+    {
+      "asset": "3f8f7f4b848541fc1af3b79477d9685f61c7c5749c4662923838b3ea63fdac8d",
+      "id": 1,
+      "name": "blue_tunnel_with_camera_facing_side_window",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.05000000074505806,
+        0.23000000417232513,
+        0.6200000047683716,
+        1.0
+      ],
+      "role": "",
+      "shape": "",
+      "source_id": "blue_tunnel_with_camera_facing_side_window"
+    },
+    {
+      "asset": "0b0837fb91726b5e8d5d718ed902f3d0d59198271d3a76a4e55b35d339efe407",
+      "id": 2,
+      "name": "ramp_body",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        1.4500000476837158,
+        0.994521975517273,
+        0.0,
+        0.10452848672866821,
+        0.0
+      ],
+      "rgba": [
+        0.7599999904632568,
+        0.5699999928474426,
+        0.36000001430511475,
+        1.0
+      ],
+      "role": "",
+      "shape": "",
+      "source_id": "ramp_body"
+    },
+    {
+      "asset": "2f84e17d4d59d7d8db1261fb1bc49130e3a422a0c724e95ba5a65af71096ce66",
+      "id": 3,
+      "name": "side_window_left_dark_rim_strip",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.014999999664723873,
+        0.017999999225139618,
+        0.02500000037252903,
+        1.0
+      ],
+      "role": "",
+      "shape": "",
+      "source_id": "side_window_left_dark_rim_strip"
+    },
+    {
+      "asset": "94fb423504f42a60886c2b992e9f46eed800d85923f22592259dc08e99e4b515",
+      "id": 4,
+      "name": "side_window_lower_dark_rim_strip",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.014999999664723873,
+        0.017999999225139618,
+        0.02500000037252903,
+        1.0
+      ],
+      "role": "",
+      "shape": "",
+      "source_id": "side_window_lower_dark_rim_strip"
+    },
+    {
+      "asset": "dd7bd67597e1f19fd1c27c4e4a7e8feed49ceb33330d25f0c754d052afec030b",
+      "id": 5,
+      "name": "side_window_right_dark_rim_strip",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.014999999664723873,
+        0.017999999225139618,
+        0.02500000037252903,
+        1.0
+      ],
+      "role": "",
+      "shape": "",
+      "source_id": "side_window_right_dark_rim_strip"
+    },
+    {
+      "asset": "19c2aa289bec42252a383970074f7d484f082e30ced60e85a941f84d0a2cafca",
+      "id": 6,
+      "name": "side_window_upper_dark_rim_strip",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.014999999664723873,
+        0.017999999225139618,
+        0.02500000037252903,
+        1.0
+      ],
+      "role": "",
+      "shape": "",
+      "source_id": "side_window_upper_dark_rim_strip"
+    },
+    {
+      "asset": "48bb590479c9c9d8fb1adfb6d0b0d468dd94791da4c6888a14dee83ca40dd894",
+      "id": 7,
+      "name": "table_floor",
+      "node": -1,
+      "pose": [
+        0.6000000238418579,
+        0.0,
+        0.3499999940395355,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8299999833106995,
+        0.8100000023841858,
+        0.7599999904632568,
+        1.0
+      ],
+      "role": "",
+      "shape": "",
+      "source_id": "table_floor"
+    },
+    {
+      "asset": "fa3524c495761dc167d261e22772459274bb3dbf0a7e9ba558409eb715faff34",
+      "id": 8,
+      "name": "target_red_ball",
+      "node": 0,
+      "pose": [
+        -3.3713502883911133,
+        0.0,
+        2.519310235977173,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.949999988079071,
+        0.029999999329447746,
+        0.019999999552965164,
+        1.0
+      ],
+      "role": "",
+      "shape": "",
+      "source_id": "target_red_ball"
+    },
+    {
+      "asset": "c021b8ba445e4385aa9e5041cecb833ac9a8ab21db584a07535f51c62dc076f4",
+      "id": 9,
+      "name": "track_strip_on_ramp",
+      "node": -1,
+      "pose": [
+        0.022454462945461273,
+        0.0,
+        1.5556399822235107,
+        0.994521975517273,
+        0.0,
+        0.10452848672866821,
+        0.0
+      ],
+      "rgba": [
+        0.8600000143051147,
+        0.7300000190734863,
+        0.550000011920929,
+        1.0
+      ],
+      "role": "",
+      "shape": "",
+      "source_id": "track_strip_on_ramp"
+    },
+    {
+      "asset": "a525cdf6edfc353d7925e108d0a6c2e6714c7621e3a74af8a2a2d9082388f901",
+      "id": 10,
+      "name": "visible_dark_inside_tunnel_floor_strip",
+      "node": -1,
+      "pose": [
+        0.22307386994361877,
+        -0.019999999552965164,
+        1.537533164024353,
+        0.994521975517273,
+        0.0,
+        0.10452848672866821,
+        0.0
+      ],
+      "rgba": [
+        0.054999999701976776,
+        0.05999999865889549,
+        0.07000000029802322,
+        1.0
+      ],
+      "role": "",
+      "shape": "",
+      "source_id": "visible_dark_inside_tunnel_floor_strip"
+    }
+  ],
+  "schema": "stable-envs/object-permanence-rigid-v1",
+  "source": {
+    "commit": "824baddcdad087810d35638bf8f273b884f74975",
+    "entry_profile": "nominal",
+    "exporter": "scripts/export/object_permanence.py",
+    "exporter_sha256": "9fa5b5de94782161e9326442f0d145c78cf9cf86081e1618740c7c9a1f81fd95",
+    "license": "CC-BY-NC-4.0",
+    "member": 1,
+    "parameters": {},
+    "preparation_recipe": {
+      "animate": "",
+      "build": "$prefix:render_png"
+    },
+    "profile": "audited-member-no-diversity",
+    "script": "object_permanence/generator/tasks/G02_ramp_tunnel/pb_task_00000003_pb_occ_ramp_tunnel_side_window_0004_blender.py",
+    "script_sha256": "c05f1b57edbe5cfbf359594d5b149f1aa5202080e1f8cffea39f28dcaf44ed81",
+    "seed": null,
+    "task": "G02",
+    "task_manifest_sha256": "adf43aa3e283b5e565e6ad660559d15f99881ab5eefcc6279bd117f2dea78c21",
+    "url": "https://github.com/hokindeng/object-permanence",
+    "versions": {
+      "blender": "4.4.0",
+      "numpy": "1.26.4",
+      "python": "3.11.16"
+    },
+    "video_split": null
+  }
+}

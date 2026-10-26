@@ -10,9 +10,13 @@ import argparse
 import json
 from pathlib import Path
 
+from scripts.object_permanence_member import Member
+
 from .object_permanence import (
+    AUDITED_MEMBERS,
     AUDITED_TASKS,
     CONVERTED_GEOMETRY_TASKS,
+    OPTICAL_TASKS,
     ORTHOGRAPHIC_TASKS,
     SOURCE_COMMIT,
     prepare,
@@ -22,12 +26,13 @@ from .object_permanence import (
 )
 
 
-def render(root, output, task, *, samples=16, frame_stop=None, device="CPU"):
+def render(root, output, task, *, member=0, profile="nominal", samples=16, frame_stop=None, device="CPU"):
     import bpy
 
+    Member(task, member, profile)
     if output.exists():
         raise FileExistsError(f"refusing to overwrite preview: {output}")
-    scene, script, _ = prepare(root, task)
+    scene, script, _ = prepare(root, task, member=member, profile=profile)
     scene.render.engine = "CYCLES"
     if device not in ("CPU", "GPU"):
         raise ValueError("preview device must be CPU or GPU")
@@ -72,6 +77,12 @@ def render(root, output, task, *, samples=16, frame_stop=None, device="CPU"):
         "frames": frames,
         "note": "native source scene, preview rendering quality; not original MP4 pixels",
     }
+    if member:
+        metadata.update(member=member, entry_profile=profile)
+        from .object_permanence_optical import MEMBERS
+
+        recipe = AUDITED_MEMBERS.get((task, member), MEMBERS.get((task, member)))
+        metadata["source_preparation_recipe"] = dict(zip(("build", "animate"), recipe, strict=True))
     context = source_execution_context(root, task, script)
     realization = source_realization(root, task)
     if realization is not None:
@@ -88,7 +99,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--task", choices=tuple(AUDITED_TASKS), required=True)
+    parser.add_argument("--task", choices=(*AUDITED_TASKS, *OPTICAL_TASKS), required=True)
+    parser.add_argument("--member", type=int, default=0)
+    parser.add_argument("--profile", default="nominal")
     parser.add_argument("--samples", type=int, default=16)
     parser.add_argument("--frame-stop", type=int)
     parser.add_argument("--device", choices=("CPU", "GPU"), default="CPU")
@@ -99,6 +112,8 @@ def main():
         args.source_root.resolve(),
         args.output.resolve(),
         args.task,
+        member=args.member,
+        profile=args.profile,
         samples=args.samples,
         frame_stop=args.frame_stop,
         device=args.device,

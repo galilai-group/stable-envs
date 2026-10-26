@@ -9,9 +9,10 @@ unused builders; they are not a claim that every nominal/diversity variant works
 
 ## Audited scenes and supported capabilities
 
-Current scope: all 150 first nominal members plus two additional optical members.
+Current scope: all 150 first nominal members plus four additional members
+(G01/G03 optical variants and G02 side-window/two-ball variants).
 G98/G132 use [hash-pinned native source realizations](object-permanence-native-scenes.md);
-45 additional scripts and driver diversity remain unaudited. The sections below
+43 additional scripts and driver diversity remain unaudited. The sections below
 retain the chronological import history.
 
 G34 is the existing single ball behind a screen. The second pilot is
@@ -21,7 +22,7 @@ tunnel. Both have stored poses while hidden; their IDs and colors remain distinc
 Its 120-frame, 24 FPS nominal scene has 15 mesh objects and two dynamic nodes.
 The first expansion batch adds G37 (curved U-track ball), G38 (pendulum bob and
 rod), and G64 (hinged windowed board in front of two stationary objects).
-All audited scenes use the unmodified first member's build/animate functions, bypassing
+Audited scenes use their selected member's unmodified construction/animation, bypassing
 the source main function's video, screenshot and scene-saving operations.
 The source animation produces poses; the exporter does not transcribe its motion.
 
@@ -346,28 +347,83 @@ python -m scripts.export.batch_object_permanence --source-root <source> \
   --blender-python <isolated-blender-python>
 ```
 
-The current plan lists all 197 members across 150 groups: seven certified nominal
-preparations, four audited entries deferred by source fidelity, and 186 unaudited
-members. Unaudited does not mean non-rigid. The four deferred entries also report
-`unsupported`, with their measured reason, in both planning and batch execution.
-Explicit single-scene export/freeze remains available for reproducing diagnostics. Execution
-runs one isolated process per supported member, performs independent source
-triangle checks, and reports failures without reusing contaminated Blender state.
-Each job includes a conservative source-only capability review group. The
-regenerable inventory separates appearance/visibility, orthographic, geometry/scale,
-physics-bake and rigid-entry review queues; unused helpers can overflag a member.
-Only explicit preparation audits and all-frame runtime checks establish support.
-It never executes unaudited main functions, overwrites clips or silently counts
-unsupported jobs as success. Pixel certification remains the per-task oracle suite.
+The plan enumerates all 197 scripts, but enables only explicitly audited members
+under the requested contract. Unsupported jobs retain their reasons and make an
+executed batch fail. AST hints never establish support. The default `export`
+stage retains serialization-only behavior; pixel certification is separate.
 
-Next, audit source preparation recipes in small groups, key future variants by
-(task, member, profile), and add their source comparisons before enabling them.
+### Member-level import, oracle and validation
+
+All three stages use `(task, member, profile)`. `member` is the zero-based index
+in `task.json.member_scripts`, **not** its global `members` number. For G02 the
+three scripts have global numbers 2/3/4 but selectors 0/1/2. `profile=nominal`
+selects the chosen script's defaults; it does not mean member zero. Driver
+geometry/appearance diversity is not enabled. Historical verbose `source.profile`
+strings describe execution provenance; `source.entry_profile` is the selector,
+with missing historical values interpreted as nominal.
+
+| G02 member | Clip | Source motion | Dynamic nodes | Frames |
+|---|---|---|---:|---:|
+| 0 | `g02-nominal` (unchanged) | Ball through solid tunnel | 1 | 120 |
+| 1 | `g02-member1` | Ball through a tunnel with a real side-window opening | 1 | 120 |
+| 2 | `g02-member2` | Yellow then blue ball through tunnel | 2 | 120 |
+
+Both new scripts have a fixed perspective camera, opaque constant materials,
+unchanging local meshes and keyframed translation/rotation. Window rim geometry
+and hidden-ball poses are retained. They reuse opaque pixel-ray V1 without
+renderer changes, new formats or new thresholds.
+
+Both 120-frame imports pass independent full/cached depth and every-object masks:
+maximum MSE is `4.946e-14` (side window) / `4.324e-14` (two balls), minimum IoU
+`1.0` for both. Maximum source world-vertex/corner-normal errors are
+`2.438e-7` / `3.196e-7`. Both resolutions retain one static seed and zero
+fallbacks through the batch/chunk/caller-mutation checks.
+
+```bash
+python -m scripts.export.batch_object_permanence --source-root <source> \
+  --output <new-recordings> --oracle-root <new-oracle-root> --report <report.json> \
+  --tasks G02 --members 1,2 --profile nominal --stage all \
+  --visibility-contract stable-envs/opaque-pixel-rays-v1 \
+  --blender-python <blender-python> --render-python <cuda-python>
+```
+
+Use `--plan-only` to inspect routing without executing source code. Stages may
+also run separately: `export` exports and independently checks source world
+triangles/normals; `oracle` independently freezes Blender world geometry and CPU
+pixel rays; `validate` checks existing immutable inputs. `all` runs these in that
+order. Existing export/freeze/check APIs and optical/alpha wrappers remain callable.
+Export/oracle refuse existing destinations; rerun `validate`, not `all`, against
+published inputs. The oracle root layout is
+`<root>/<task>/<contract_name>/<nominal-or-memberN>/`. Different members cannot
+share or overwrite an oracle. Source/recording member, profile, script, recipe,
+frame and camera mismatches are rejected.
+
+`exported` certifies serialization, `frozen` certifies reference production, and
+`verified` requires every source frame's depth MSE <= `1e-8`, every object mask
+IoU >= `.99`, plus cached/uncached bitwise parity. Cache checks include all RGB,
+depth and ID outputs at 90p/180p, reversed frames, duplicate indices, chunks
+1/4/7 and caller mutation. Alpha/optical entries dispatch to their existing
+independent layer/path checkers and also compare masks/path outputs. There is no
+silent fallback from an unknown member or contract. The seven old raw-BVH pilot
+oracles retain their historical entry points; an unavailable versioned producer
+is reported unsupported instead of fabricating a new reference.
+
+Native previews accept `--member`/`--profile` via
+`scripts.export.render_object_permanence_preview`. Use temporary PNGs with
+`benchmarks.object_permanence_recordings.comparison_gif`, which checks source
+member/script/frame identity. Keep only the two 120-frame comparison GIFs under
+`.cache/object_permanence/evaluation/`; reports belong under
+`.cache/benchmarks/object_permanence/`. Temporary source frames are deleted after
+GIF verification. Neither previews nor developer oracles are runtime downloads.
+
+Next, audit remaining members in small capability groups and register candidate
+and independent reference preparation separately. A shared standard-library
+`Member` object supplies identity/path conventions only, not geometry algorithms.
 Extend shared capture/render capabilities for moving cameras, visibility or
-materials when required; preserve explicit rejection until they are validated.
+materials when required; preserve explicit rejection until validated.
 Mesh-local geometry is reusable across scenes; sampled poses handle irregular
 motion without new motion formulas. Keep units, frame conventions, semantic IDs,
 source pins and immutable manifests stable when publishing downloadable datasets.
-
 
 ## First expansion batch: G37, G38 and G64
 
@@ -385,7 +441,8 @@ because the source marks it dynamic. No movement formula is reconstructed.
 G64's actual Boolean-cut window disagrees with source prose/custom tags claiming
 complete hiding. Preserve the evaluated mesh and its actual partial occlusion;
 do not close the window or require a hidden interval that the source lacks.
-G43/G77 are deferred because their selected cameras are orthographic. An applied
+G43/G77 were initially deferred for orthographic cameras and are now covered by
+the [V2 camera contract](object-permanence-orthographic.md). An applied
 Boolean modifier such as G64's is already supported when its evaluated mesh stays
 constant; the presence of a modifier alone is not evidence of deformation.
 

@@ -34,6 +34,12 @@ REFERENCE_CONVERTED_TASKS = {
 }
 # Deliberately independent of the candidate exporter's entry registry/extraction.
 # These calls and targets were checked against each source main()/selected builder.
+# Independently audited entries/targets; never imported from the exporter.
+REFERENCE_MEMBERS = {
+    ("G02", 1): ("$prefix:render_png", "", ("target_red_ball",)),
+    ("G02", 2): ("$prefix:render_png", "", ("front_yellow_ball", "back_blue_ball")),
+}
+
 REFERENCE_CASES = {
     "G98": ("build_scene_by_kind", "animate_scene_by_kind", ("colored_ball_on_base",)),
     "G132": ("build_scene_by_kind", "animate_scene_by_kind", ("hidden_ball_in_capsule",)),
@@ -294,7 +300,7 @@ def reference_source_realization(script, task):
     }
 
 
-def prepare_reference(script, task):
+def prepare_reference(script, task, *, member=0):
     """Independently audited source calls; no candidate preparation imports."""
     import bpy
 
@@ -306,7 +312,7 @@ def prepare_reference(script, task):
             raise ValueError("native reference Blender version mismatch")
         bpy.ops.wm.open_mainfile(filepath=str(path), load_ui=False, use_scripts=False)
         return
-    build, animate, _ = REFERENCE_CASES[task]
+    build, animate, _ = REFERENCE_CASES[task] if member == 0 else REFERENCE_MEMBERS[task, member]
     if build.startswith("$prefix:"):
         # Independent text boundary plus AST removal of the sole directory setup.
         # All scene creation and animation statements execute verbatim.

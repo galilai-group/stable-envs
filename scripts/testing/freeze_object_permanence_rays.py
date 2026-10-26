@@ -10,9 +10,12 @@ from pathlib import Path
 
 import numpy as np
 
+from scripts.object_permanence_member import Member
+
 from .freeze_object_permanence import (
     REFERENCE_CASES,
     REFERENCE_CONVERTED_TASKS,
+    REFERENCE_MEMBERS,
     REFERENCE_SCALE_TASKS,
     SOURCE_COMMIT,
     prepare_reference,
@@ -27,9 +30,10 @@ from .freeze_object_permanence import (
 from .object_permanence_ray_reference import CONTRACT, CONTRACT_V2, draw
 
 
-def freeze(root, output, task, width=320, height=180, *, visibility_contract=CONTRACT):
+def freeze(root, output, task, width=320, height=180, *, visibility_contract=CONTRACT, member=0, profile="nominal"):
     import bpy
 
+    entry = Member(task, member, profile)
     if output.exists():
         raise FileExistsError(f"refusing to overwrite oracle: {output}")
     if visibility_contract not in (CONTRACT, CONTRACT_V2):
@@ -42,16 +46,16 @@ def freeze(root, output, task, width=320, height=180, *, visibility_contract=CON
         ["git", "-C", str(root), "status", "--porcelain", "--untracked-files=all"], text=True
     ):
         raise ValueError("source reference requires the clean pinned checkout")
-    if task not in REFERENCE_CASES:
+    if (member == 0 and task not in REFERENCE_CASES) or (member != 0 and (task, member) not in REFERENCE_MEMBERS):
         raise ValueError("unaudited independent source entry")
     matches = list((root / "object_permanence/generator/tasks").glob(task + "_*/task.json"))
     if len(matches) != 1:
         raise ValueError("source task must be unique")
     task_path = matches[0]
     metadata = json.loads(task_path.read_text())
-    script = task_path.parent / metadata["member_scripts"][0]
-    build, animate, targets = REFERENCE_CASES[task]
-    prepare_reference(script, task)
+    script = task_path.parent / metadata["member_scripts"][member]
+    build, animate, targets = REFERENCE_CASES[task] if member == 0 else REFERENCE_MEMBERS[task, member]
+    prepare_reference(script, task, member=member)
     scene = bpy.context.scene
     scene.render.resolution_x, scene.render.resolution_y = width, height
     scene.render.resolution_percentage = 100
@@ -139,7 +143,7 @@ def freeze(root, output, task, width=320, height=180, *, visibility_contract=CON
     if task in REFERENCE_SCALE_TASKS:
         arrays["source_scales"] = np.array(source_scales, np.float64)
     output.mkdir(parents=True)
-    archive = output / f"geometric_{task.lower()}_nominal.npz"
+    archive = output / f"geometric_{task.lower()}_{entry.leaf}.npz"
     np.savez_compressed(archive, **arrays)
     parts = write_depth_parts(output, depths.view(np.uint32) ^ depths[0].view(np.uint32))
     manifest = {
@@ -170,6 +174,10 @@ def freeze(root, output, task, width=320, height=180, *, visibility_contract=CON
         "depth_parts": parts,
         "arrays": {k: {"shape": list(v.shape), "dtype": str(v.dtype)} for k, v in arrays.items()},
     }
+    if member:
+        manifest.update(member=member, entry_profile=profile, clip=entry.clip)
+        manifest["source_profile"] = "audited member defaults; no diversity wrapper"
+        manifest["source_preparation_recipe"] = {"build": build, "animate": animate}
     context = reference_execution_context(script, task)
     realization = reference_source_realization(script, task)
     if realization is not None:
@@ -214,7 +222,7 @@ def freeze(root, output, task, width=320, height=180, *, visibility_contract=CON
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     (output / "SOURCE_LICENSE.txt").write_text((root / "LICENSE").read_text())
     (output / "README.md").write_text(
-        f"# {task} independent geometric oracle v2\n\nContract: `{visibility_contract}`. All source frames, 320x180.\nGenerated from evaluated Blender source geometry without candidate imports or BVH queries.\nDepth and IDs share pixel-center rays; exactly equal depths choose lowest semantic ID.\nReproduce in a new directory with `python -m scripts.testing.freeze_object_permanence_rays --source-root <source> --output <new> --task {task} --visibility-contract {visibility_contract}`.\nLegacy BVH references are retained separately; no thresholds are changed.\nCC-BY-NC-4.0 source-derived data; see SOURCE_LICENSE.txt.\n"
+        f"# {task} independent geometric oracle v2\n\nContract: `{visibility_contract}`. All source frames, 320x180.\nGenerated from evaluated Blender source geometry without candidate imports or BVH queries.\nDepth and IDs share pixel-center rays; exactly equal depths choose lowest semantic ID.\nReproduce in a new directory with `python -m scripts.testing.freeze_object_permanence_rays --source-root <source> --output <new> --task {task} --member {member} --profile {profile} --visibility-contract {visibility_contract}`.\nLegacy BVH references are retained separately; no thresholds are changed.\nCC-BY-NC-4.0 source-derived data; see SOURCE_LICENSE.txt.\n"
     )
     return manifest
 
@@ -224,9 +232,18 @@ def main():
     parser.add_argument("--source-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--task", choices=tuple(REFERENCE_CASES), required=True)
+    parser.add_argument("--member", type=int, default=0)
+    parser.add_argument("--profile", default="nominal")
     parser.add_argument("--visibility-contract", choices=(CONTRACT, CONTRACT_V2), default=CONTRACT)
     args = parser.parse_args()
-    freeze(args.source_root.resolve(), args.output.resolve(), args.task, visibility_contract=args.visibility_contract)
+    freeze(
+        args.source_root.resolve(),
+        args.output.resolve(),
+        args.task,
+        visibility_contract=args.visibility_contract,
+        member=args.member,
+        profile=args.profile,
+    )
 
 
 if __name__ == "__main__":

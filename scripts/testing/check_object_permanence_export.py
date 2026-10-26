@@ -8,12 +8,14 @@ reconstruction below do not call its sample_scene(), _pose() or _mesh().
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
 import numpy as np
 
 from scripts.export.object_permanence import AUDITED_TASKS, prepare
+from scripts.object_permanence_member import Member
 
 
 def _canonical(faces, normals):
@@ -25,21 +27,18 @@ def _canonical(faces, normals):
     return faces[rows], normals[rows]
 
 
-def check(root, dataset, task, *, member=0):
+def check(root, dataset, task, *, member=0, profile="nominal"):
     import bpy
     from mathutils import Quaternion
     from mathutils.kdtree import KDTree
 
-    if task == "G01" or (task == "G03" and member == 1):
-        from scripts.export.object_permanence_optical import prepare as prepare_optical
-
-        scene, _, _ = prepare_optical(root, task, member)
-    else:
-        if member != 0:
-            raise ValueError("unaudited source member")
-        scene, _, _ = prepare(root, task)
-    directory = dataset / "clips" / (f"{task.lower()}-nominal" if member == 0 else f"{task.lower()}-member{member}")
+    entry = Member(task, member, profile)
+    scene, script, _ = prepare(root, task, member=member, profile=profile)
+    directory = dataset / "clips" / entry.clip
     manifest = json.loads((directory / "manifest.json").read_text())
+    entry.check_source(manifest["source"])
+    if manifest["source"]["script_sha256"] != hashlib.sha256(script.read_bytes()).hexdigest():
+        raise ValueError("source script differs from recording")
     poses = np.load(directory / "poses.npy", allow_pickle=False)
     frames = np.load(directory / "frames.npy", allow_pickle=False)
     scales = np.load(directory / "scales.npy", allow_pickle=False) if "scales" in manifest["arrays"] else None
@@ -145,9 +144,15 @@ def main():
     parser.add_argument("--dataset", type=Path, required=True)
     parser.add_argument("--task", choices=(*AUDITED_TASKS, "G01"), required=True)
     parser.add_argument("--member", type=int, default=0)
+    parser.add_argument("--profile", default="nominal")
     args = parser.parse_args()
     print(
-        json.dumps(check(args.source_root.resolve(), args.dataset.resolve(), args.task, member=args.member), indent=2)
+        json.dumps(
+            check(
+                args.source_root.resolve(), args.dataset.resolve(), args.task, member=args.member, profile=args.profile
+            ),
+            indent=2,
+        )
     )
 
 

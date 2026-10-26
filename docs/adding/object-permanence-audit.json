@@ -83,6 +83,160 @@
         "builds_per_resolution": 1,
         "chunk_sizes": [
           1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "PERSP",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v1",
+      "depth_mse_max": 4.9459454381579305e-14,
+      "dynamic_nodes": [
+        "target_red_ball"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 10,
+        "dynamic_nodes": [
+          "target_red_ball"
+        ],
+        "frames": 120,
+        "objects": 10,
+        "task": "G02",
+        "world_normal_max_abs_error": 3.1959223556476957e-07,
+        "world_triangle_max_abs_error": 2.437829973445105e-07
+      },
+      "mask_iou_min": 1.0,
+      "member": 1,
+      "mesh_count": 10,
+      "oracle": "tests/fixtures/semantics/object_permanence/g02/opaque_pixel_rays_v1/member1",
+      "preview": ".cache/object_permanence/evaluation/g02-member1-source-vs-pixel-rays-v1.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "$prefix:render_png",
+        ""
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v1",
+      "reference_target_roles": {
+        "target_red_ball": ""
+      },
+      "reference_targets": [
+        "target_red_ball"
+      ],
+      "script": "object_permanence/generator/tasks/G02_ramp_tunnel/pb_task_00000003_pb_occ_ramp_tunnel_side_window_0004_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed PERSP; no depth of field",
+        "driver_diversity": "not applied; selected script defaults only",
+        "frames": 120,
+        "local_geometry": "constant across every sampled frame",
+        "materials": "constant opaque Principled base color; no transmission",
+        "physics": "no rigid-body solver; native scripted animation",
+        "source_motion": "keyframed location and rotation_euler sampled from evaluated Blender world transforms",
+        "visibility": "no animated hide flags; geometric occlusion",
+        "window": "source tunnel faces omitted to create an actual aperture; opaque rim retained"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "c05f1b57edbe5cfbf359594d5b149f1aa5202080e1f8cffea39f28dcaf44ed81",
+      "source_task_manifest_sha256": "adf43aa3e283b5e565e6ad660559d15f99881ab5eefcc6279bd117f2dea78c21",
+      "status": "certified",
+      "task": "G02"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "PERSP",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v1",
+      "depth_mse_max": 4.323730927841392e-14,
+      "dynamic_nodes": [
+        "back_blue_ball",
+        "front_yellow_ball"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 5,
+        "dynamic_nodes": [
+          "back_blue_ball",
+          "front_yellow_ball"
+        ],
+        "frames": 120,
+        "objects": 6,
+        "task": "G02",
+        "world_normal_max_abs_error": 3.1959223556476957e-07,
+        "world_triangle_max_abs_error": 2.437829973445105e-07
+      },
+      "mask_iou_min": 1.0,
+      "member": 2,
+      "mesh_count": 6,
+      "oracle": "tests/fixtures/semantics/object_permanence/g02/opaque_pixel_rays_v1/member2",
+      "preview": ".cache/object_permanence/evaluation/g02-member2-source-vs-pixel-rays-v1.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "$prefix:render_png",
+        ""
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v1",
+      "reference_target_roles": {
+        "back_blue_ball": "",
+        "front_yellow_ball": ""
+      },
+      "reference_targets": [
+        "front_yellow_ball",
+        "back_blue_ball"
+      ],
+      "script": "object_permanence/generator/tasks/G02_ramp_tunnel/pb_task_00000004_pb_occ_ramp_tunnel_two_balls_0005_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed PERSP; no depth of field",
+        "driver_diversity": "not applied; selected script defaults only",
+        "frames": 120,
+        "local_geometry": "constant across every sampled frame",
+        "materials": "constant opaque Principled base color; no transmission",
+        "physics": "no rigid-body solver; native scripted animation",
+        "source_motion": "keyframed location and rotation_euler sampled from evaluated Blender world transforms",
+        "visibility": "no animated hide flags; geometric occlusion",
+        "window": "opaque tunnel; distinct yellow/blue object IDs and sampled poses"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "c23f74be0cf0dc8cbadfe6e514f8a51793f8a0e53e46f28cdfd0b0f5355c3eca",
+      "source_task_manifest_sha256": "adf43aa3e283b5e565e6ad660559d15f99881ab5eefcc6279bd117f2dea78c21",
+      "status": "certified",
+      "task": "G02"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
           3,
           4,
           5
@@ -8549,11 +8703,11 @@
   "reference_probe_policy": "Source task-object roles select probes; V2 separately records source_semantic_targets and the source-observable subset targets. Every mesh remains in all world poses, IDs and all-object depth/mask checks.",
   "schema": "stable-envs/object-permanence-source-audit-v1",
   "scope": {
-    "additional_certified_members": 2,
+    "additional_certified_members": 4,
     "member_scripts": 197,
     "nominal_members": 150,
     "task_groups": 150,
-    "unregistered_other_members": 45
+    "unregistered_other_members": 43
   },
   "source_commit": "824baddcdad087810d35638bf8f273b884f74975",
   "source_url": "https://github.com/hokindeng/object-permanence",
@@ -8562,20 +8716,6 @@
     "mask_iou_min": 0.99
   },
   "unregistered_members": [
-    {
-      "member": 1,
-      "script": "object_permanence/generator/tasks/G02_ramp_tunnel/pb_task_00000003_pb_occ_ramp_tunnel_side_window_0004_blender.py",
-      "source_script_sha256": "c05f1b57edbe5cfbf359594d5b149f1aa5202080e1f8cffea39f28dcaf44ed81",
-      "status": "unregistered-member-entry",
-      "task": "G02"
-    },
-    {
-      "member": 2,
-      "script": "object_permanence/generator/tasks/G02_ramp_tunnel/pb_task_00000004_pb_occ_ramp_tunnel_two_balls_0005_blender.py",
-      "source_script_sha256": "c23f74be0cf0dc8cbadfe6e514f8a51793f8a0e53e46f28cdfd0b0f5355c3eca",
-      "status": "unregistered-member-entry",
-      "task": "G02"
-    },
     {
       "member": 1,
       "script": "object_permanence/generator/tasks/G04_high_low_cover/pb_task_00000014_pb_multi_object_identity_straight_high_low_cover_0015_blender.py",

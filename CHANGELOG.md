@@ -8,10 +8,16 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Member-scoped object-permanence import/oracle/batch validation, with explicit
+  script-index/profile identity, isolated source/CUDA stages and complete-frame
+  cache parity checks. Adds the G02 side-window and two-ball members under the
+  existing opaque V1 contract; old samples, interfaces and budgets are unchanged.
+  Certified coverage is 154/197 scripts, with 43 additional scripts unaudited.
+
 - G98/G132 rigid replay with hash-pinned unmodified native source realizations,
   independent full-frame references and fresh-process geometry/normal checks.
   This completes the 150 first nominal members within their declared scope;
-  45 other scripts remain unaudited. Old samples and thresholds are unchanged.
+  43 other scripts remain unaudited. Old samples and thresholds are unchanged.
 
 - Explicit sampled dielectric replay for both G01 members and the G03 transparent-wall
   member, with exact source transforms, Snell/Fresnel paths, independent full-frame

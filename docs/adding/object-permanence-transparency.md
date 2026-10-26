@@ -11,8 +11,8 @@ policy `stable-envs/constant-alpha-surfaces-v1` and visibility contract
 `stable-envs/transparent-pixel-rays-v1`. These versions describe different things.
 Old data, opaque visibility defaults, G34 State and acceptance budgets remain
 unchanged. The current audit certifies 150/150 first nominal members: 7 legacy,
-94 opaque-v1, 44 opaque-v2, 4 alpha cases and 1 sampled optical case. G98/G132 now use [hash-pinned native realizations](object-permanence-native-scenes.md). Two additional optical members are
-supported; 45 remain unregistered.
+94 opaque-v1, 44 opaque-v2, 4 alpha cases and 1 sampled optical case. G98/G132 now use [hash-pinned native realizations](object-permanence-native-scenes.md). Four additional members (two optical and two G02 opaque variants) are
+supported; 43 remain unregistered.
 
 ## Material and event contract
 

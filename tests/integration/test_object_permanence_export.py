@@ -80,6 +80,47 @@ def test_audited_source_export_and_independent_world_geometry_per_scene(export_c
         assert len(clip) == 120
 
 
+@pytest.mark.parametrize("member,dynamic_count", [(1, 1), (2, 2)])
+def test_g02_additional_member_unified_export_and_world_check(tmp_path, member, dynamic_count):
+    """Fresh source processes must reproduce each additional member's frozen poses."""
+    source = os.environ.get("SE_OBJECT_PERMANENCE_SOURCE")
+    python = os.environ.get("SE_OBJECT_PERMANENCE_BLENDER_PYTHON")
+    if not source or not python:
+        pytest.skip("live member export needs the pinned source and Blender interpreter")
+    from scripts.object_permanence_member import Member
+    from tests.helpers.reference.object_permanence_recordings import RECORDINGS
+
+    subprocess.run(
+        [
+            python,
+            "-m",
+            "scripts.export.batch_object_permanence",
+            "--source-root",
+            source,
+            "--output",
+            str(tmp_path / "recordings"),
+            "--report",
+            str(tmp_path / "report.json"),
+            "--tasks",
+            "G02",
+            "--members",
+            str(member),
+            "--visibility-contract",
+            "stable-envs/opaque-pixel-rays-v1",
+        ],
+        check=True,
+        timeout=180,
+    )
+    entry = Member("G02", member)
+    with (
+        RigidTrajectory(tmp_path / "recordings", entry.clip) as fresh,
+        RigidTrajectory(RECORDINGS, entry.clip) as frozen,
+    ):
+        assert len(fresh) == 120 and len(fresh.manifest["dynamic_nodes"]) == dynamic_count
+        assert fresh.manifest["source"]["member"] == member
+        np.testing.assert_array_equal(fresh.poses(np.arange(120)), frozen.poses(np.arange(120)))
+
+
 def test_g34_export_matches_unchanged_independent_source_fixture_and_legacy_replay(exported):
     with RigidTrajectory(exported, "g34-nominal") as trajectory:
         rows = trajectory.poses(np.arange(120))[:, 0]

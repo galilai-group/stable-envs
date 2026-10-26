@@ -25,9 +25,9 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 | audited-nominal-runtime-gate | 7 |
 | geometry-or-scale-review | 1 |
 | orthographic-camera-review | 30 |
-| rigid-candidate-needs-entry-audit | 7 |
+| rigid-candidate-needs-entry-audit | 5 |
 | source-fidelity-review | 4 |
-| versioned-visibility-runtime-gate | 141 |
+| versioned-visibility-runtime-gate | 143 |
 
 ## Source tasks
 

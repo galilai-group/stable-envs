@@ -25,7 +25,15 @@ from pathlib import Path
 
 import numpy as np
 
+from scripts.object_permanence_member import Member
+
 from .object_permanence_geometry import GEOMETRY_CONVERSION, evaluated_mesh, source_geometry, validate_instances
+
+# Additional scripts are audited separately from the first-member registry.
+AUDITED_MEMBERS = {
+    ("G02", 1): ("$prefix:render_png", ""),
+    ("G02", 2): ("$prefix:render_png", ""),
+}
 
 SOURCE_COMMIT = "824baddcdad087810d35638bf8f273b884f74975"
 SCHEMA = "stable-envs/object-permanence-rigid-v1"
@@ -719,21 +727,27 @@ def source_realization(root, task):
     }
 
 
-def prepare(root, task):
+def prepare(root, task, *, member=0, profile="nominal"):
     """Execute an audited source build/animate pair, without source I/O hooks."""
     import bpy
 
     if bpy.app.version[:2] != (4, 4):
         raise ValueError("export requires Blender 4.4.x")
-    if task not in AUDITED_TASKS:
-        raise ValueError(f"unaudited preparation entry point: {task}")
+    entry = Member(task, member, profile)
+    from .object_permanence_optical import MEMBERS
+    from .object_permanence_optical import prepare as prepare_optical
+
+    if (task, member) in MEMBERS:
+        return prepare_optical(root, task, member)
+    if (member == 0 and task not in AUDITED_TASKS) or (member != 0 and (task, member) not in AUDITED_MEMBERS):
+        raise ValueError(f"unaudited preparation entry point: {entry}")
     check_source(root)
     paths = [p for p in task_manifests(root) if json.loads(p.read_text())["id"] == task]
     if len(paths) != 1:
         raise ValueError(f"source task not found: {task}")
     path = paths[0]
     metadata = json.loads(path.read_text())
-    source = path.parent / metadata["member_scripts"][0]
+    source = path.parent / metadata["member_scripts"][member]
     realization = source_realization(root, task)
     if realization is not None:
         native = NATIVE_SCENES / task.lower() / "nominal"
@@ -745,7 +759,7 @@ def prepare(root, task):
             raise ValueError("native source realization source/Blender version mismatch")
         bpy.ops.wm.open_mainfile(filepath=str(native / "source.blend"), load_ui=False, use_scripts=False)
         return bpy.context.scene, source, metadata
-    build, animate = AUDITED_TASKS[task]
+    build, animate = AUDITED_TASKS[task] if member == 0 else AUDITED_MEMBERS[task, member]
     if build.startswith("$prefix:"):
         source_prefix(source, build.removeprefix("$prefix:"))
         return bpy.context.scene, source, metadata
@@ -1255,16 +1269,18 @@ def write_recording(root, clip, recording, source):
     return destination / "manifest.json"
 
 
-def export(root, output, task):
+def export(root, output, task, *, member=0, profile="nominal"):
     import bpy
 
-    if task in OPTICAL_TASKS:
-        from .object_permanence_optical import export as export_optical
+    entry = Member(task, member, profile)
+    from .object_permanence_optical import MEMBERS
+    from .object_permanence_optical import export as export_optical
 
-        return export_optical(root, output)
-    if (output / "clips" / f"{task.lower()}-nominal").exists():
-        raise FileExistsError("refusing to overwrite an existing nominal clip")
-    scene, script, task_metadata = prepare(root, task)
+    if (task, member) in MEMBERS:
+        return export_optical(root, output, task=task, member=member)
+    if (output / "clips" / entry.clip).exists():
+        raise FileExistsError("refusing to overwrite an existing clip")
+    scene, script, task_metadata = prepare(root, task, member=member, profile=profile)
     recording = sample_scene(
         scene,
         object_order=G34_ORDER if task == "G34" else None,
@@ -1295,6 +1311,9 @@ def export(root, output, task):
         "exporter": "scripts/export/object_permanence.py",
         "exporter_sha256": sha256(Path(__file__)),
     }
+    if member:
+        source.update(member=member, entry_profile=profile, profile="audited-member-no-diversity")
+        source["preparation_recipe"] = dict(zip(("build", "animate"), AUDITED_MEMBERS[task, member], strict=True))
     context = source_execution_context(root, task, script)
     if context is not None:
         source["profile"] = "nominal-first-member-surface-diversity-context"
@@ -1308,7 +1327,7 @@ def export(root, output, task):
         source["preparation_recipe"] = {"build": AUDITED_TASKS[task][0], "animate": AUDITED_TASKS[task][1]}
     if task in CONVERTED_GEOMETRY_TASKS:
         source["geometry_converter_sha256"] = sha256(Path(__file__).with_name("object_permanence_geometry.py"))
-    return write_recording(output, f"{task.lower()}-nominal", recording, source)
+    return write_recording(output, entry.clip, recording, source)
 
 
 def main():
@@ -1320,13 +1339,15 @@ def main():
         item.add_argument("--output", type=Path, required=True)
         if command == "export":
             item.add_argument("--task", choices=(*AUDITED_TASKS, *OPTICAL_TASKS), required=True)
+            item.add_argument("--member", type=int, default=0)
+            item.add_argument("--profile", default="nominal")
     item = sub.add_parser("organize", help="organize semantic asset folders and deduplicate licenses")
     item.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.command == "inventory":
         inventory(args.source_root.resolve(), args.output)
     elif args.command == "export":
-        print(export(args.source_root.resolve(), args.output, args.task))
+        print(export(args.source_root.resolve(), args.output, args.task, member=args.member, profile=args.profile))
     else:
         print(organize(args.output.resolve()))
 

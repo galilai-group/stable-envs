@@ -27,9 +27,9 @@ def test_complete_nominal_audit_accounts_for_all_source_members_without_pending_
     assert {r["task"] for r in entries} == {f"G{i:02}" for i in range(1, 151)}
     assert all(r["member"] == 0 and r["status"] in ("certified", "deferred") for r in entries)
     extras = audit["unregistered_members"]
-    assert len(extras) == 45 and len({(r["task"], r["member"]) for r in extras}) == 45
+    assert len(extras) == 43 and len({(r["task"], r["member"]) for r in extras}) == 43
     additional = audit["additional_certified_members"]
-    assert {(r["task"], r["member"]) for r in additional} == {("G01", 1), ("G03", 1)}
+    assert {(r["task"], r["member"]) for r in additional} == {("G01", 1), ("G02", 1), ("G02", 2), ("G03", 1)}
     assert all(r["status"] == "certified" for r in additional)
     assert all(r["member"] > 0 and r["status"] == "unregistered-member-entry" for r in extras)
     assert len(entries) + len(extras) + len(additional) == audit["scope"]["member_scripts"] == 197
@@ -123,7 +123,7 @@ def test_surface_context_audit_records_defaults_and_remaining_blockers_without_w
     assert "blockers" not in entries["G46"]
 
 
-def test_additional_certified_members_keep_their_source_identity_and_optical_oracle():
+def test_additional_certified_members_keep_their_source_identity_and_versioned_oracle():
     audit = json.loads(CATALOG.read_text())
     fixtures = Path(__file__).parents[1] / "fixtures"
     for row in audit["additional_certified_members"]:
@@ -132,12 +132,10 @@ def test_additional_certified_members_keep_their_source_identity_and_optical_ora
         assert m["source"]["script_sha256"] == row["source_script_sha256"]
         assert m["source"]["task_manifest_sha256"] == row["source_task_manifest_sha256"]
         assert m["source"]["member"] == row["member"]
-        assert m["visibility_contract"] == row["contract"] == "stable-envs/sampled-optical-rays-v1"
+        assert m.get("visibility_contract", "stable-envs/opaque-pixel-rays-v1") == row["contract"]
         assert row["depth_mse_max"] <= DEPTH_MSE_MAX and row["mask_iou_min"] >= MASK_IOU_MIN
-        oracle = (
-            fixtures
-            / f"semantics/object_permanence/{row['task'].lower()}/sampled_optical_rays_v1/member{row['member']}"
-        )
+        version = row["contract"].split("/")[1].replace("-", "_")
+        oracle = fixtures / f"semantics/object_permanence/{row['task'].lower()}/{version}/member{row['member']}"
         source = json.loads((oracle / "manifest.json").read_text())
         assert source["source_script_sha256"] == row["source_script_sha256"]
-        assert source["frames"] == row["frames"] == 120
+        assert source.get("frames", source["arrays"]["source_frames"]["shape"][0]) == row["frames"] == 120

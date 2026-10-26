@@ -29,6 +29,12 @@ def comparison_gif(clip, source, output, *, size, visibility_contract=None):
     recorded_source = clip.manifest["source"]
     if metadata["task"] != recorded_source["task"] or metadata["source_commit"] != recorded_source["commit"]:
         raise ValueError("source preview task or pinned source differs")
+    if (
+        metadata.get("member", 0) != recorded_source.get("member", 0)
+        or metadata.get("entry_profile", "nominal") != recorded_source.get("entry_profile", "nominal")
+        or metadata["source_script_sha256"] != recorded_source["script_sha256"]
+    ):
+        raise ValueError("source preview member/profile/script differs")
     if metadata.get("source_execution_context") != recorded_source.get("execution_context"):
         raise ValueError("source preview and recording execution contexts differ")
     if metadata.get("source_realization") != recorded_source.get("realization"):

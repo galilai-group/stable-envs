@@ -13,6 +13,7 @@ from pathlib import Path
 
 import numpy as np
 
+from scripts.object_permanence_member import Member
 from stable_envs.envs.object_permanence import RigidTrajectory
 from stable_envs.envs.object_permanence.rendering.rigid_nvdiff import RigidSceneRenderer
 from stable_envs.testing.geometry import depth_mse, mask_iou
@@ -28,12 +29,23 @@ def check(
     oracle,
     task,
     *,
+    member=0,
+    profile="nominal",
+    require_all_frames=False,
     cache_static=True,
     geometry_precision="float32",
     camera_probe=None,
     visibility_contract=None,
 ):
+    entry = Member(task.upper(), member, profile)
     manifest, reference = load_geometry_directory(oracle)
+    entry.check_source(
+        {
+            "task": manifest["task"],
+            "member": manifest.get("member", 0),
+            "entry_profile": manifest.get("entry_profile", "nominal"),
+        }
+    )
     if manifest.get("visibility_contract") != visibility_contract:
         raise ValueError("oracle and renderer visibility contracts differ; select the version explicitly")
     if visibility_contract is not None and manifest["schema"] != "stable-envs/object-permanence-rigid-oracle-v2":
@@ -43,8 +55,9 @@ def check(
     if visibility_contract is not None:
         geometry_precision = "float64"
     failures, minimum, worst = [], 1.0, 0.0
-    with RigidTrajectory(recordings, f"{task.lower()}-nominal") as clip:
+    with RigidTrajectory(recordings, entry.clip) as clip:
         metadata = clip.manifest
+        entry.check_source(metadata["source"])
         if metadata.get("scale_convention") != manifest.get("scale_convention"):
             raise ValueError("source and recording scale conventions differ")
         if metadata.get("geometry_conversion") != manifest.get("geometry_conversion"):
@@ -70,10 +83,13 @@ def check(
             raise ValueError("source and recording execution contexts differ")
         if metadata["source"].get("realization") != manifest.get("source_realization"):
             raise ValueError("source and recording native realizations differ")
+        if member and metadata["source"]["task_manifest_sha256"] != manifest["source_task_manifest_sha256"]:
+            raise ValueError("source and recording member task manifests differ")
         if (
             visibility_contract == "stable-envs/opaque-pixel-rays-v2"
             or metadata.get("geometry_conversion")
             or clip.has_scales
+            or member != 0
         ) and (
             not manifest.get("source_preparation_recipe")
             or metadata["source"].get("preparation_recipe") != manifest["source_preparation_recipe"]
@@ -84,6 +100,8 @@ def check(
         indices = np.searchsorted(clip.frames, reference["source_frames"])
         if (indices >= len(clip)).any() or not np.array_equal(clip.frames[indices], reference["source_frames"]):
             raise ValueError("source and recording frame numbers differ")
+        if require_all_frames and not np.array_equal(clip.frames, reference["source_frames"]):
+            raise ValueError("member certification requires an oracle for every recorded frame")
         if clip.has_scales:
             if manifest.get("source_scale_space") != "absolute-world-matrix-decomposition":
                 raise ValueError("source scales require independently sampled world decomposition")
@@ -145,7 +163,7 @@ def check(
         if mse > DEPTH_MSE_MAX or masks or not np.isfinite(mse):
             failures.append({"frame": int(frame), "depth_mse": mse, "failed_masks": masks})
     return {
-        "task": task.upper(),
+        **entry.as_dict(),
         "visibility_contract": visibility_contract,
         "source_commit": manifest["source_commit"],
         "cache_static": cache_static,
@@ -168,6 +186,8 @@ def main():
     parser.add_argument("--oracle", type=Path, required=True)
     parser.add_argument("--task", required=True)
     parser.add_argument("--report", type=Path, required=True)
+    parser.add_argument("--member", type=int, default=0)
+    parser.add_argument("--profile", default="nominal")
     parser.add_argument("--uncached", action="store_true")
     parser.add_argument("--geometry-precision", choices=("float32", "float64"), default="float32")
     parser.add_argument("--camera-probe", type=Path, help="diagnostic-only source camera calibration report")
@@ -177,6 +197,8 @@ def main():
         args.recordings,
         args.oracle,
         args.task,
+        member=args.member,
+        profile=args.profile,
         cache_static=not args.uncached,
         geometry_precision=args.geometry_precision,
         camera_probe=None if args.camera_probe is None else json.loads(args.camera_probe.read_text()),
