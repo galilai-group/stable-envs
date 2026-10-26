@@ -60,7 +60,7 @@ still runs on CPU.
 G34 supports CPU and CUDA output. Use `backend="raycast", device="cuda"` for GPU
 rendering; MuJoCo simulation remains on CPU. Its native default still requires an
 OpenGL context, also used once to bake the raycast background. See the
-[G34 CUDA setup and geometry contract](adding/occlusion-ball.md#cuda-rendering).
+[Object-permanence renderer and data workflow](adding/object-permanence-recordings.md#read-and-render).
 
 For source-trajectory replay without MuJoCo or Blender, import `G34Replay` from
 `stable_envs.envs.object_permanence`. Replay operations need only base dependencies;

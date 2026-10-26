@@ -2,7 +2,6 @@
 
 import hashlib
 import json
-from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
@@ -11,125 +10,6 @@ FIXTURES = Path(__file__).resolve().parents[2] / "fixtures"
 RECORDINGS = FIXTURES / "saved/object_permanence_rigid"
 DEPTH_MSE_MAX = 1e-8
 MASK_IOU_MIN = 0.99
-RECORDED_TASKS = ("g27", "g34", "g37", "g38", "g55", "g62", "g64")
-RAY_TASKS = (
-    "g98",
-    "g132",
-    "g02",
-    "g03",
-    "g05",
-    "g06",
-    "g07",
-    "g28",
-    "g30",
-    "g32",
-    "g33",
-    "g35",
-    "g39",
-    "g40",
-    "g41",
-    "g42",
-    "g44",
-    "g56",
-    "g58",
-    "g59",
-    "g60",
-    "g63",
-    "g65",
-    "g66",
-    "g68",
-    "g69",
-    "g70",
-    "g71",
-    "g72",
-    "g73",
-    "g74",
-    "g79",
-    "g80",
-    "g81",
-    "g82",
-    "g83",
-    "g84",
-    "g85",
-    "g86",
-    "g87",
-    "g88",
-    "g89",
-    "g93",
-    "g94",
-    "g95",
-    "g96",
-    "g97",
-    "g99",
-    "g100",
-    "g103",
-    "g104",
-    "g105",
-    "g106",
-    "g107",
-    "g108",
-    "g111",
-    "g113",
-    "g114",
-    "g115",
-    "g116",
-    "g117",
-    "g118",
-    "g119",
-    "g120",
-    "g121",
-    "g123",
-    "g124",
-    "g125",
-    "g126",
-    "g127",
-    "g129",
-    "g130",
-    "g131",
-    "g133",
-    "g134",
-    "g135",
-    "g136",
-    "g137",
-    "g138",
-    "g139",
-    "g140",
-    "g141",
-    "g142",
-    "g143",
-    "g144",
-    "g145",
-    "g146",
-    "g147",
-    "g148",
-    "g149",
-    "g150",
-    "g04",
-    "g29",
-    "g31",
-)
-
-
-@lru_cache(maxsize=len(RAY_TASKS))
-def load_ray_geometry(task):
-    if task not in RAY_TASKS:
-        raise ValueError("unknown versioned ray scene")
-    manifest, arrays = load_geometry_directory(
-        FIXTURES / f"semantics/object_permanence/{task}/opaque_pixel_rays_v1/nominal"
-    )
-    assert manifest["schema"] == "stable-envs/object-permanence-rigid-oracle-v2"
-    assert manifest["visibility_contract"] == "stable-envs/opaque-pixel-rays-v1"
-    return manifest, arrays
-
-
-@lru_cache(maxsize=len(RECORDED_TASKS))
-def load_geometry(task):
-    if task not in RECORDED_TASKS:
-        raise ValueError("unknown frozen rigid scene")
-    directory = FIXTURES / (
-        "semantics/occlusion_ball" if task == "g34" else f"semantics/object_permanence/{task}/nominal"
-    )
-    return load_geometry_directory(directory)
 
 
 def load_geometry_directory(directory):

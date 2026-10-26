@@ -1,7 +1,7 @@
 # Adding a component
 
 For an end-to-end source audit, geometry contract and adapter example, see
-[G34 occlusion-ball alignment](occlusion-ball.md).
+[Object-permanence import and rendering](object-permanence-recordings.md).
 
 New contributors start with
 [CONTRIBUTING.md](https://github.com/galilai-group/stable-envs/blob/main/CONTRIBUTING.md). It covers

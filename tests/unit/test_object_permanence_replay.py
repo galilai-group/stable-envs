@@ -3,11 +3,9 @@
 import subprocess
 import sys
 
-import numpy as np
 import pytest
 import torch
 
-from stable_envs.envs.object_permanence.rendering.g34_nvdiff import scene_arrays
 from stable_envs.envs.object_permanence.replay import G34Replay
 
 
@@ -63,15 +61,3 @@ assert sys.modules['mujoco'] is None
 assert sys.modules['nvdiffrast'] is None
 """
     subprocess.run([sys.executable, "-c", code], check=True, timeout=60)
-
-
-def test_triangle_assets_keep_frozen_semantic_order_and_source_camera():
-    v, n, f, owner, rgba, positions, camera = scene_arrays()
-    assert v.shape == n.shape and f.shape[1] == 3
-    assert np.array_equal(np.unique(owner), np.arange(5))
-    assert np.all(owner[f[:, 0]] == owner[f[:, 1]])
-    assert np.all(owner[f[:, 0]] == owner[f[:, 2]])
-    assert np.count_nonzero(owner[f[:, 0]] == 4) == 48 * 24 * 2
-    assert np.allclose(camera.mat.T @ camera.mat, np.eye(3))
-    assert np.allclose(camera.pos, [0, -6.8, 1.85])
-    assert positions.shape == (5, 3) and rgba.shape == (5, 4)

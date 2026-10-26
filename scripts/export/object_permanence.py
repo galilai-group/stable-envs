@@ -669,7 +669,7 @@ def inventory(root, output):
         "run export to check their evaluated geometry, transforms, materials and camera at every frame.\n"
         "Diversity variants, sampled scene semantics and downstream accuracy are not certified here.\n\n"
         "The measured nominal column comes from the separately recorded "
-        "[source audit](object-permanence-audit.json), not from static hints. "
+        "optional local source audit, not from static hints. "
         "It covers first nominal members; additionally certified members are listed separately in that audit.\n\n"
         "## Capability triage\n\n"
         "Groups cover every member. Static groups are conservative AST hints, not proof of support.\n"

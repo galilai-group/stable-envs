@@ -69,7 +69,7 @@ owned full-State batches spread across the nominal 120-frame trajectory. Use
 settings and resolution. Both include public validation/projection and buffer
 copying; neither times initial construction, rollout or the static bake.
 The output retains sampled source phases, raw timing samples and thread settings.
-See [the alignment contract](../docs/adding/occlusion-ball.md) for geometry gates
+See [the alignment contract](../docs/adding/object-permanence-recordings.md) for geometry gates
 and reproducible OSMesa commands.
 
 ## Engine-free G34 replay

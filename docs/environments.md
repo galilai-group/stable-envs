@@ -49,7 +49,7 @@ authored animation with zero-only actions, native and batched raycast rendering,
 CPU/CUDA tensors, and source depth/mask gates. Explicit raycast renders on the
 requested device; MuJoCo simulation stays on CPU. Its install extra is
 `object-permanence` and CI profile is `object_permanence`.
-See [the alignment contract](adding/occlusion-ball.md).
+See [the alignment contract](adding/object-permanence-recordings.md).
 
 `list_envs(family=…)` matches the class attribute `family`.
 

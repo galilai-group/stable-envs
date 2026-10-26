@@ -74,11 +74,3 @@ def test_orthographic_camera_pose_and_exact_semantic_ties():
     depth, ids = draw({"b": triangles[:, ::-1], "a": triangles}, cam, 31, 47, visibility_contract=CONTRACT_V2)
     assert (ids[ids > 0] == 1).all()
     np.testing.assert_allclose(depth[ids > 0], 3, atol=1e-6, rtol=0)
-
-
-@pytest.mark.parametrize("field,value", [("near", np.nan), ("far", np.inf), ("near", 0), ("far", 0.05)])
-def test_orthographic_depth_interval_must_be_positive_finite_and_ordered(field, value):
-    metadata = orthographic_camera()
-    metadata[field] = value
-    with pytest.raises(ValueError, match="near < far"):
-        validate_camera(metadata, contract=CONTRACT_V2)

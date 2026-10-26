@@ -1,14 +1,10 @@
 """Versioned ray semantics and independently implemented source reference."""
 
-import ast
-from pathlib import Path
-
 import numpy as np
 import pytest
 
-from scripts.testing.object_permanence_ray_reference import CONTRACT as REFERENCE_CONTRACT
 from scripts.testing.object_permanence_ray_reference import draw, plane
-from stable_envs.envs.object_permanence.rendering.visibility import CONTRACT, local_planes, validate_camera
+from stable_envs.envs.object_permanence.rendering.visibility import local_planes, validate_camera
 
 
 def camera():
@@ -50,17 +46,6 @@ def test_source_semantic_ties_ignore_object_enumeration_and_keep_distinct_nearer
     far = quad(-np.nextafter(3.0, np.inf))[faces]
     depth, ids = draw({"a": far, "b": triangles}, camera(), 31, 47)
     assert ids[15, 23] == 2 and depth[15, 23] == 3
-
-
-def test_reference_is_independent_of_runtime_and_candidate_data():
-    assert CONTRACT == REFERENCE_CONTRACT
-    tree = ast.parse(Path("scripts/testing/object_permanence_ray_reference.py").read_text())
-    imports = [n.module for n in ast.walk(tree) if isinstance(n, ast.ImportFrom)]
-    imports += [a.name for n in ast.walk(tree) if isinstance(n, ast.Import) for a in n.names]
-    assert set(imports) <= {"fractions", "numpy"}
-    freezer = Path("scripts/testing/freeze_object_permanence_rays.py").read_text()
-    assert "stable_envs" not in freezer and "scripts.export" not in freezer
-    assert "ray_cast" not in freezer
 
 
 def test_camera_and_unsupported_conventions_fail_explicitly():

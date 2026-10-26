@@ -1,917 +1,160 @@
-# Rigid object-permanence recordings
+# Object-permanence recordings
 
-The next porting unit is an exported scene and its sampled motion, not a new
-physics adapter per task. The source is pinned to
-[`824baddcdad087810d35638bf8f273b884f74975`](https://github.com/hokindeng/object-permanence/tree/824baddcdad087810d35638bf8f273b884f74975).
-The [source inventory](object-permanence-inventory.md) covers all 150 task groups
-and 197 member scripts. Its flags are **static, script-wide signals**, including
-unused builders; they are not a claim that every nominal/diversity variant works.
+This family records evaluated source animation once, then renders selected frames
+on the GPU during training. Users store numeric poses and shared meshes rather
+than rendered videos. Online replay does not need Blender or MuJoCo.
 
-## Audited scenes and supported capabilities
+The source is pinned to
+[`hokindeng/object-permanence@824badd`](https://github.com/hokindeng/object-permanence/tree/824baddcdad087810d35638bf8f273b884f74975).
+The importer has been exercised on 179 of its 197 scripts: 150 first nominal
+members and 29 additional members. This describes the audited source defaults,
+not arbitrary driver diversity or downstream model accuracy. The remaining queue
+starts at G15; G05/1 needs a renderable-set policy and G05/3 needs an audited
+multi-stage/animated-scale recipe.
 
-Current scope: all 150 first nominal members plus twenty-nine additional members
-(G01/G03 optical variants and rigid variants through G14).
-G98/G132 use [hash-pinned native source realizations](object-permanence-native-scenes.md);
-18 additional scripts remain unimported: two G05 entries have capability deferrals
-and 16 await runtime audit. Driver diversity remains outside certification. The sections below
-retain the chronological import history.
-
-G34 is the existing single ball behind a screen. The second pilot is
-[G62 two balls cross tunnel](https://github.com/hokindeng/object-permanence/blob/824baddcdad087810d35638bf8f273b884f74975/object_permanence/generator/tasks/G62_two_balls_cross_tunnel/pb_task_00000108_pb_two_balls_cross_tunnel_0109_blender.py):
-two balls travel in opposite directions on parallel lanes through an opaque
-tunnel. Both have stored poses while hidden; their IDs and colors remain distinct.
-Its 120-frame, 24 FPS nominal scene has 15 mesh objects and two dynamic nodes.
-The first expansion batch adds G37 (curved U-track ball), G38 (pendulum bob and
-rod), and G64 (hinged windowed board in front of two stationary objects).
-Audited scenes use their selected member's unmodified construction/animation, bypassing
-the source main function's video, screenshot and scene-saving operations.
-The source animation produces poses; the exporter does not transcribe its motion.
-
-| Capability | Recording support |
-|---|---|
-| Arbitrary sampled rigid translations/rotations, including inherited parent motion | Supported, world-space xyz + wxyz |
-| Several independently moving objects | Supported |
-| Constant positive scale | v1–v4 bake into local meshes; v5 retains exact source matrices; later scale is checked |
-| Constant evaluated modifiers | Supported if exported geometry stays identical across all frames |
-| Rigid Curve/FONT objects | Explicit [evaluated mesh conversion](object-permanence-converted-geometry.md), retaining labels and source tessellation |
-| Static opaque base colors and one material per mesh | Supported; simplified rendering does not preserve source shaders |
-| Constant alpha surfaces, one material per mesh | Explicit [v4 alpha recording/visibility contract](object-permanence-transparency.md), including overlapping masks |
-| Fixed perspective camera | World and projection matrices exported |
-| Orthographic camera | Explicit [v2 recording/visibility contract](object-permanence-orthographic.md); v1 remains perspective-only |
-| Animated positive diagonal scale | Opt-in [v3 optional scale array](object-permanence-scale.md), preserving object origins |
-| Shear/reflection, zero scale, deformation, topology changes | Rejected |
-| Moving camera, changing base colors, visibility changes | Rejected |
-| Constant optical transmission/refraction | Explicit [v5 sampled dielectric contract](object-permanence-optics.md); ideal optics, not complete Blender BSDF parity |
-| Generated instances, textures, depth of field | Rejected |
-| Dataset-driver diversity variants | Not implemented |
-
-Every exported frame is checked. Source metadata `pb_is_dynamic` is retained
-through dynamic-node selection, but actual world motion is also detected, so an
-incorrect static tag cannot discard motion inherited from a parent. Occlusion is
-not a visibility flag: hidden-behind-geometry objects retain their pose rows.
-Static inventory signals identify required audits: G05/G146 include scale paths
-(G146 now uses explicit sampled scales), G42/G44 include dimensions paths, and
-G73 includes rigid-body configuration.
-Unused branches can explain a signal; inspect the selected builder before grouping.
-
-## Files and identities
-
-```text
-recordings/                         # user dataset/cache, outside source control
-  licenses/<license-text-sha256>.txt # one copy per distinct license text
-  assets/<shape-or-role>/<mesh-content-sha256>.npz
-  clips/g34-nominal/
-    manifest.json
-    poses.npy
-    frames.npy
-    # scales.npy is optional in v3 clips such as g146-nominal
-    # transforms.npy is additional exact source data in v5 optical clips
-  clips/g62-nominal/
-    ...
-```
-
-An **asset** is reusable local geometry, independent of placement, motion and
-color. One asset can be used by two differently colored balls in one scene, or
-by objects in different recordings. A **scene/clip** binds assets to named
-objects, constant transforms, colors, camera and one sampled trajectory.
-Different geometry or camera diversity can therefore produce a different scene
-even when the source task ID is unchanged.
-
-Each mesh NPZ contains only numeric arrays: `vertices float32[V,3]`,
-`normals float32[V,3]`, `triangles int32[F,3]`. Corner normals are preserved by
-splitting vertices at normal discontinuities. Constant scale is applied once.
-Vertex/normal pairs and oriented triangles are ordered canonically: Blender can
-enumerate the same mesh faces differently across builds. Canonical ordering
-changes no coordinates or triangle winding and permits actual content reuse.
-
-The asset key hashes array names, NPY headers (dtype/shape) and numeric bytes in
-sorted-name order. Its compressed file has a separate SHA256 integrity checksum.
-Before writing an existing key, the exporter verifies and reuses its content.
-Hashing does not itself prevent downloads: a downloader must use these references
-and its local cache. Bundling all mesh files into each independent clip archive
-would still duplicate assets, even if their hashes were known.
-
-`poses.npy` is little-endian float32 `[T,D,7]`, each row `(x,y,z,qw,qx,qy,qz)`.
-`frames.npy` is int64 `[T]` with consecutive original Blender frame numbers;
-reader indices are zero-based. Poses are evaluated source samples, not a physics
-continuation state. Quaternion signs are made continuous without changing rotation.
-A **dynamic node** is one independently recorded rigid world transform, indexed
-in the D axis, with optional positive diagonal scale in v3. Scale-only changes
-also select a dynamic node. Objects reference a node index, or `-1` and their constant pose.
-Several parts can share a node if their mesh coordinates use that node's frame;
-the current exporter emits one node per moving source mesh object rather than
-guessing which parts are mechanically connected.
-
-The JSON manifest records:
-
-- `schema` and `conventions`: how to interpret arrays, axes, units and quaternion order.
-- `source.commit`, `script`, script/task-manifest hashes: identify the exact source definition.
-- `source.profile`, `parameters`, `seed`: distinguish nominal export from randomized samples;
-  these audited nominal recordings use no diversity parameters or random seed.
-- `source.versions` and exporter hash: track the evaluation and extraction implementation.
-- `fps`, source frames and source `video_split`: preserve timing and the task's clip boundary.
-- `objects`: names, stable positive mask IDs, mesh references, node mapping, static poses and colors.
-- `camera`: fixed world/projection matrices, original image dimensions and clipping planes.
-- `assets` and `arrays`: checksums plus trajectory shape/dtype; detect corruption or mismatched data.
-- Source URL and license: preserve attribution; `license_ref` binds the shared license text checksum.
-
-Assets live in source-shape folders such as `sphere`, `cube` and `cylinder`.
-If an old recording has no shape label, its source role is used instead; no
-shape is guessed from the object name. Object names, source IDs and semantic
-roles remain in the manifest. Its `assets` entries directly bind `file` paths
-and byte checksums; no global index is needed to load or render a clip.
-
-After a batch of exports, run `python -m scripts.export.object_permanence organize
---output /tmp/recordings` (one command). It moves legacy flat assets into semantic
-folders, consolidates per-clip licenses and removes the former derived index.
-Run without concurrent organizers. Mesh/pose bytes are unchanged, but manifest
-identities change; recreate cursors referencing old identities. Flat-layout and
-per-clip-license recordings remain readable. New exports write semantic paths
-and shared licenses directly.
-
-`RigidTrajectory.identity` hashes the canonical manifest, thereby binding poses,
-assets, camera and metadata. This is stronger than hashing pose bytes alone. A
-future replay cursor can reference this identity plus a frame index. The existing
-G34Replay State/hash contract is not changed.
-
-## Export and read
-
-Use the existing isolated Python 3.11 environment pinned by
-`scripts/testing/requirements-occlusion-oracle.txt` (`bpy==4.4.0`, NumPy 1.26.4).
-The production exporter imports no Torch, MuJoCo or candidate renderer. Its source
-checkout must match the pin and be clean. It refuses to overwrite a clip.
-
-```bash
-.venvs/occlusion-oracle-py3.11/bin/python -m scripts.export.object_permanence export \
-  --source-root /tmp/object-permanence-source --output /tmp/recordings --task G34
-.venvs/occlusion-oracle-py3.11/bin/python -m scripts.export.object_permanence export \
-  --source-root /tmp/object-permanence-source --output /tmp/recordings --task G62
-```
-
-If this machine uses the optional shared-library fallback, set `LD_LIBRARY_PATH`
-as described in the [G34 environment setup](occlusion-ball.md#local-environment-layout).
-The exported dataset is source-derived CC-BY-NC-4.0 data, not MIT library code.
-
-Some scripts expect globals supplied by the official source driver. The audited
-G08/G44/G45/G46/G48 context uses its `surface` diversity configuration: empty
-`DIVERSITY`, no source bindings or sampled viewpoint. Construction therefore
-retains script-defined factor defaults; driver rendering/appearance hooks are not
-run. New manifests record the context and upstream implementation hashes, and
-source/replay comparisons reject mismatched contexts. Only G44 currently passes
-the existing capability and fidelity gates; the other four remain unregistered.
-See the [context audit](object-permanence-visibility.md#audited-source-execution-context-g08g44g45g46g48).
+## Read and render
 
 ```python
-from stable_envs.envs.object_permanence import G34Replay, RigidTrajectory
-
-with RigidTrajectory("/tmp/recordings", "g34-nominal") as clip:
-    rows = clip.poses([44])              # owned CPU NumPy float32 [1,1,7]
-    geometry = clip.triangles()          # NumPy inputs to nvdiff.Scene.from_triangles
-    objects = clip.object_poses([44])    # CPU float32 [1,G,7], including static objects
-
-    # Existing G34Replay remains usable with this nominal scene's full trajectory.
-    with G34Replay(clip.poses(list(range(len(clip))))[:, 0]) as replay:
-        images = replay.render(replay.advance(44))
-```
-
-Opening validates file hashes and scans pose chunks without cloning the whole
-trajectory. Selected poses are copied from a read-only memory map. Meshes are
-loaded once per reader; `triangles()` assembles geometry instances for the existing
-nvdiff API, which still duplicates per-instance geometry in its GPU scene.
-The reader and recording do not require CUDA. `RigidSceneRenderer` borrows an
-open recording and supplies one shared full-frame CUDA path for all audited scenes:
-
-```python
+from stable_envs.envs.object_permanence import RigidTrajectory
 from stable_envs.envs.object_permanence.rendering.rigid_nvdiff import RigidSceneRenderer
 
-with RigidTrajectory("/tmp/recordings", "g62-nominal") as clip:
+with RigidTrajectory("recordings", "g62-nominal") as clip:
     with RigidSceneRenderer(clip, size=180) as renderer:
-        fields = renderer.render_many([0, 44, 59, 119])
-        # CUDA rgb uint8 [4,180,320,3], depth float32 [4,180,320],
-        # ids int16 [4,180,320]; all share coverage and object occlusion.
+        fields = renderer.render_many([0, 44, 119])
+        # CUDA: rgb uint8 [3,180,320,3], depth float32 [3,180,320],
+        # ids int16 [3,180,320]. All outputs share object visibility.
 ```
 
-Frame indices select recording rows, not simulator State. Static transforms stay
-on GPU; CPU float32 `[B,D,7]` dynamic-node poses and optional v3 `[B,D,3]`
-relative scales are uploaded, then mapped to
-object transforms and rotation matrices on GPU. Multiple mesh objects can share
-one node. All objects share depth visibility; geometry IDs map to manifest IDs.
+Frame indices select recorded rows. These are source-animation poses, not
+checkpoints for action-driven physical simulation. A ball retains its pose while
+occluded; the renderer determines whether it is visible. `render(..., mode="rgb")`
+and the existing single-output buffer interface remain available.
 
-With default refined coverage, static triangles' pixel visibility is cached once
-per renderer: int64 ordered float64 depth keys and int32 original face IDs.
-Dynamic triangles update copies of that seed using the full pass's depth and
-face-ID tie rules. This avoids float32 layer-composition errors at contact and
-coplanar surfaces. RGB, depth and IDs are generated from the final shared raster.
-Static vertex transforms, interpolation and shading still run; this is a coverage
-cache, not a cached RGB plate. At 320x180 the depth/ID seed takes 675 KiB, plus
-cached static clip vertices and partition indices.
+The reader uses read-only memory maps and returns owned NumPy selections.
+Meshes and static transforms are reused on GPU; each call uploads the selected
+dynamic poses and optional scales. Fixed-camera static visibility is cached,
+then combined with moving objects using shared depth and semantic-ID rules.
+Changing the camera or relevant geometry invalidates the cache.
 
-The cache is geometry-based, with no task-name special cases or mover-count
-limit. Static clip-vertex or resolution changes rebuild it; static vertices that
-vary within a batch use the complete pass. Depth clipping or unavailable Triton
-retains the existing scaled fallback. Scaled/native modes do not use this cache.
-Immutable topology is required for the renderer's lifetime. `cache_static=False`
-retains full drawing and CPU object-pose expansion/upload as a comparison baseline.
-Chunking bounds memory without changing sampling. G34's separate public replay,
-optimized renderer and frozen fixture remain unchanged.
+## Dataset layout
 
-Versioned visibility uses fixed-order three-term vertex/normal transforms and
-the shared four-term camera product. This prevents batch shape from changing
-static validation bits; cache comparison remains exact, including one-ULP changes.
-The [G103 cache regression](object-permanence-visibility.md#batch-independent-visibility-transforms-and-g103)
-documents the generic reproducer and cross-batch/chunk checks.
-
-## Validation and next ports
-
-`scripts/testing/check_object_permanence_export.py` rebuilds the pinned source and
-compares every object's reconstructed world triangles and normals, and the camera,
-at all 120 frames. It matches geometry independently of face enumeration and does
-not call candidate pose/mesh extraction. Its position budget is 2e-6 source units;
-normal budget is 3e-6. These serialization checks complement, not replace, depth
-MSE/mask IoU. They do not certify source RGB or downstream learning accuracy.
-
-```bash
-.venvs/occlusion-oracle-py3.11/bin/python -m scripts.testing.check_object_permanence_export \
-  --source-root /tmp/object-permanence-source --dataset /tmp/recordings --task G62
+```text
+recordings/
+  assets/<shape>/<content-hash>.npz
+  licenses/<license-hash>.txt
+  clips/g62-nominal/
+    manifest.json
+    frames.npy
+    poses.npy
 ```
 
-Unit tests cover sharing, mapping, ownership, corruption and invalid contracts.
-Live integration tests run registered exports (excluding preserved legacy fidelity
-deferrals) and the independent checker when
-`SE_OBJECT_PERMANENCE_SOURCE` and `SE_OBJECT_PERMANENCE_BLENDER_PYTHON` are set.
-Normal family CI requires no Blender. The G34 source oracle has been extended to 120 frames without changing any
-original sample values or renderer interfaces; no production code reads the oracle.
+The manifest binds source/script hashes, camera, object IDs, mesh references,
+materials, static poses, numeric-array hashes and coordinate conventions.
+Assets contain local `float32[V,3]` vertices/normals and `int32[F,3]` triangles.
+Object names and roles describe semantics; hashes identify exact reusable geometry.
+Colors belong to instances, so differently colored balls can share one mesh.
 
-The independent `freeze_object_permanence_g62.py` generates all 120 source depth
-and mask frames at 320x180 without importing candidate code. It never overwrites
-an existing directory. Float32 depth bits are XORed against frame one before ZIP
-compression and reconstructed exactly; this only removes repeated background bytes.
-G34 now has a 120-frame v2 oracle; original 21 samples are bit-identical. The shared renderer uses unchanged
-MSE <= 1e-8 and per-object mask IoU >= .99, including static objects. All-frame
-pose comparisons additionally validate motion hidden from the camera.
+`poses.npy` is `float32[T,D,7]`, storing world-space xyz + quaternion wxyz for D
+dynamic nodes. `frames.npy` is `int64[T]` with original source frame numbers.
+Objects reference a dynamic node or use their constant manifest transform.
+Parent motion, constraints and animation are evaluated in Blender before export;
+no source motion formula is reimplemented at runtime.
 
-| Shared renderer | Source frames | Maximum depth MSE | Minimum visible object IoU |
-|---|---:|---:|---:|
-| G34 recorded triangles | All 120 | <1e-12 | 1.0 |
-| G62 recorded triangles | All 120 | 9.26e-13 | 1.0 |
-| G37 curved track | All 120 | 5.93e-13 | 1.0 |
-| G38 pendulum | All 120 | 5.30e-13 | 1.0 |
-| G64 windowed board | All 120 | 9.42e-13 | 1.0 |
-| G27 support removal | All 120 | 7.47e-13 | 1.0 |
-| G55 rising screen | All 120 | 1.31e-12 | .99654 |
+| Recording | Additional capability | Rendering policy |
+|---|---|---|
+| v1 | Fixed perspective camera, rigid opaque objects | Opaque pixel rays v1 |
+| v2 | Fixed orthographic camera | Opaque pixel rays v2 |
+| v3 | Optional positive `float32[T,D,3]` scales | Explicit opaque policy |
+| v4 | Constant alpha materials | Ordered transparent surface layers |
+| v5 | Exact `float64[T,D,4,4]` transforms | Deterministic sampled dielectric paths |
 
-Small candidate recordings under `tests/fixtures/saved/object_permanence_rigid`
-let offline CPU/GPU CI exercise the full path without Blender or the user's cache.
-They are separate from the independent geometry oracles. Their README describes
-regeneration. Cached and uncached paths pass the same all-frame source gates;
-additional tests compare all outputs and exercise equal-depth ties, multiple
-movers, cache invalidation, and all-static/all-dynamic partitions. Further source
-tasks still need audited entry points and their own independent comparisons.
+Curve/FONT objects are converted to evaluated triangle meshes offline, retaining
+source tessellation, open ends and text identity. Deformation, actual instancing,
+changing object membership/materials and moving cameras are rejected.
+Optical v5 uses ideal Snell/Fresnel events, a fixed sample stream and one common
+IOR; it does not reproduce Blender's complete BSDF, roughness, shadows or caustics.
+The contracts are defined in `rendering/visibility.py`, `transparency.py` and
+`optics.py`; the reader rejects incompatible policy/data combinations.
 
-## Preview and upload-inclusive baseline
+## Import and independently validate
 
-`benchmarks.object_permanence_recordings` compares cached `shared`, uncached
-`shared-full`, and G34's existing specialized paths. `scripts.export.render_object_permanence_preview`
-renders the source nominal scene to PNGs in Blender Cycles CPU at 320x180, 16
-samples and denoising. This is a native preview with original scene/camera,
-not the dataset MP4 render-quality preset. Side-by-side GIFs preserve all 120
-frames and their alignment; shader/shadow/color differences are expected.
+Use a clean checkout at the source pin and an isolated Blender interpreter with
+`scripts/testing/requirements-occlusion-oracle.txt` (Blender 4.4). Use a separate
+CUDA interpreter with Torch, Triton and nvdiffrast for rendering.
+`member` is a zero-based position in the source task's `member_scripts` list;
+`nominal` selects that script's audited defaults.
 
 ```bash
-# Repeat with --task G62 and a source-g62 output directory.
-python -m scripts.export.render_object_permanence_preview --source-root <source> \
-  --output <evaluation>/source-g34 --task G34
-python -m benchmarks.object_permanence_recordings --recordings <recordings> \
-  --output <evaluation>/throughput-rgb.json --source-previews <evaluation> --profile
-```
-
-Run previews with Blender's interpreter and GPU measurements with the CUDA profile.
-On the RTX 3070 Ti Laptop GPU, Torch 2.14.1+cu130, one CPU thread, 3 warmups and
-11 synchronized repeats, historical **uncached** RGB median frames/s at 180x320 were:
-
-| Batch | G34 uncached | G62 uncached | G34 cropped/refined | G34 fused raycast |
-|---:|---:|---:|---:|---:|
-| 1 | 191 | 127 | 281 | 3,964 |
-| 64 | 532 | 226 | 3,582 | 22,850 |
-| 256 | 580 | 224 | 4,150 | 23,800 |
-| 1024 | 550 | 226 | 4,152 | 25,514 |
-
-Every call includes CPU frame lookup/expansion, pose upload and rendering into
-reused CUDA outputs. First draw/JIT/static bake, output allocation, download,
-GIF encoding and model training are excluded. Internal temporary allocations
-are included. The raycast's one-time plate bake uses native MuJoCo; its steady
-state does not. Shaders differ. Default scaled G34 crop reached 13,495 fps at
-batch 256, but its two known full-sequence edge gaps prevent treating that setting
-as strict 120-frame parity. Refined crop and raycast match that stronger gate.
-
-A same-run comparison with 3 warmups, 7 repeats and batch 256, including pose
-upload, measured:
-
-| Scene | Uncached RGB fps | Cached RGB fps | Speedup | Upload bytes/frame, before → after |
-|---|---:|---:|---:|---:|
-| G34 | 480 | 821 | 1.71× | 140 → 28 |
-| G62 | 223 | 591 | 2.65× | 420 → 56 |
-
-```bash
-python -m benchmarks.object_permanence_recordings --recordings <recordings> \
-  --output <evaluation>/throughput-static-cache.json --backends shared,shared-full \
-  --batches 1,64,256 --repeats 7 --profile
-# Repeat with --modes rgb,depth,ids for combined outputs.
-```
-
-At batch 256, profiling reduced triangle-kernel totals from 221 to 49 ms for G34
-and 853 to 98 ms for G62. Overall wall-clock gains are smaller: chunk size 4 still
-makes 64 coverage calls and 128 dynamic triangle passes; transforms, full-frame
-resolve/interpolation/shading, launches and cache-validation synchronizations
-remain. First draw/JIT/cache construction are excluded from steady-state timing
-and recorded separately. Results are machine-specific rendering measurements,
-not end-to-end training speedups.
-
-Larger memory-bounded chunks, static transformed-vertex reuse, and selectively
-shading dynamic pixels are possible later improvements. RGB plates need explicit
-appearance/lighting invalidation; moving shadows or transparency need a different
-contract. Preserve shared multi-object depth testing and the full-frame comparison
-path when adding any further precision or cache optimization.
-
-## Scaling imports before optimization
-
-The sequence is source audit, faithful recording, independent pose/mesh/pixel
-checks, then performance work. A rigid object does not imply a fixed camera,
-constant opacity/material or fixed object set. Those are correctness capabilities,
-not optimizations to defer. The v1 exporter explicitly rejects unsupported cases.
-
-```bash
-python -m scripts.export.batch_object_permanence --source-root <source> \
-  --output <recordings> --report <plan.json> --tasks all --plan-only
-python -m scripts.export.batch_object_permanence --source-root <source> \
-  --output <new-recordings> --report <report.json> --tasks G27,G55 \
-  --blender-python <isolated-blender-python>
-```
-
-The plan enumerates all 197 scripts, but enables only explicitly audited members
-under the requested contract. Unsupported jobs retain their reasons and make an
-executed batch fail. AST hints never establish support. The default `export`
-stage retains serialization-only behavior; pixel certification is separate.
-
-### Member-level import, oracle and validation
-
-All three stages use `(task, member, profile)`. `member` is the zero-based index
-in `task.json.member_scripts`, **not** its global `members` number. For G02 the
-three scripts have global numbers 2/3/4 but selectors 0/1/2. `profile=nominal`
-selects the chosen script's defaults; it does not mean member zero. Driver
-geometry/appearance diversity is not enabled. Historical verbose `source.profile`
-strings describe execution provenance; `source.entry_profile` is the selector,
-with missing historical values interpreted as nominal.
-
-| G02 member | Clip | Source motion | Dynamic nodes | Frames |
-|---|---|---|---:|---:|
-| 0 | `g02-nominal` (unchanged) | Ball through solid tunnel | 1 | 120 |
-| 1 | `g02-member1` | Ball through a tunnel with a real side-window opening | 1 | 120 |
-| 2 | `g02-member2` | Yellow then blue ball through tunnel | 2 | 120 |
-
-Both new scripts have a fixed perspective camera, opaque constant materials,
-unchanging local meshes and keyframed translation/rotation. Window rim geometry
-and hidden-ball poses are retained. They reuse opaque pixel-ray V1 without
-renderer changes, new formats or new thresholds.
-
-Both 120-frame imports pass independent full/cached depth and every-object masks:
-maximum MSE is `4.946e-14` (side window) / `4.324e-14` (two balls), minimum IoU
-`1.0` for both. Maximum source world-vertex/corner-normal errors are
-`2.438e-7` / `3.196e-7`. Both resolutions retain one static seed and zero
-fallbacks through the batch/chunk/caller-mutation checks.
-
-```bash
-python -m scripts.export.batch_object_permanence --source-root <source> \
-  --output <new-recordings> --oracle-root <new-oracle-root> --report <report.json> \
-  --tasks G02 --members 1,2 --profile nominal --stage all \
-  --visibility-contract stable-envs/opaque-pixel-rays-v1 \
-  --blender-python <blender-python> --render-python <cuda-python>
-```
-
-Use `--plan-only` to inspect routing without executing source code. Stages may
-also run separately: `export` exports and independently checks source world
-triangles/normals; `oracle` independently freezes Blender world geometry and CPU
-pixel rays; `validate` checks existing immutable inputs. `all` runs these in that
-order. Existing export/freeze/check APIs and optical/alpha wrappers remain callable.
-Export/oracle refuse existing destinations; rerun `validate`, not `all`, against
-published inputs. The oracle root layout is
-`<root>/<task>/<contract_name>/<nominal-or-memberN>/`. Different members cannot
-share or overwrite an oracle. Source/recording member, profile, script, recipe,
-frame and camera mismatches are rejected.
-
-`exported` certifies serialization, `frozen` certifies reference production, and
-`verified` requires every source frame's depth MSE <= `1e-8`, every object mask
-IoU >= `.99`, plus cached/uncached bitwise parity. Cache checks include all RGB,
-depth and ID outputs at 90p/180p, reversed frames, duplicate indices, chunks
-1/4/7 and caller mutation. Alpha/optical entries dispatch to their existing
-independent layer/path checkers and also compare masks/path outputs. There is no
-silent fallback from an unknown member or contract. The seven old raw-BVH pilot
-oracles retain their historical entry points; an unavailable versioned producer
-is reported unsupported instead of fabricating a new reference.
-
-### Next member batch: G04/G05
-
-Continue in source G order: audit G04 member1 and G05 members1–6 in **separate
-Blender processes**. A source `clear_scene()` based on selectable objects can
-leave hidden meshes behind, so reusing its process can falsely contaminate the
-next member's audit. Both import and live capability gates isolate these jobs.
-
-| Accepted member | Source behavior | Mesh/draw objects | Sampled dynamic nodes | Maximum depth MSE | Minimum mask IoU |
-|---|---|---:|---:|---:|---:|
-| G04/1 | Two balls on straight upper/lower tracks behind opaque cover | 43 | 2 | 2.456e-16 | 1.0 |
-| G05/2 | Car stops at opening too small to pass | 17 | 5 | 3.447e-17 | 1.0 |
-| G05/4 | Car passes an already open gate | 12 | 5 | 6.831e-17 | 1.0 |
-| G05/5 | Car stops at a closed gate | 11 | 5 | 3.416e-17 | 1.0 |
-| G05/6 | Front/rear cars contact, recoil and stop | 16 | 10 | 3.266e-17 | 1.0 |
-
-These all reuse opaque pixel-ray V1, the unchanged pose format, source
-`build_scene`/`animate_scene`, independent reference extraction and shared
-renderer. G04 reuses evaluated Curve conversion. G05 records each car body and
-four independently rotating wheels; source collisions are scripted motion, not
-reconstructed physics. Some scripts create an unused glass material/helper;
-only referenced source-object materials determine opaque eligibility.
-
-Every member has a fresh independent 120-frame oracle, full/cached depth and
-all-object mask checks, exact RGB/depth/ID cache parity at 90p/180p and chunks
-1/4/7, repeated/reversed requests and caller mutation. Each resolution builds
-one static seed without fallback. Largest source world-vertex/normal errors
-are 7.062e-8 / 3.376e-7, below unchanged 2e-6 / 3e-6 budgets.
-
-Run the unified stages separately or with `--stage all` into **new** roots:
-
-```bash
-python -m scripts.export.batch_object_permanence --source-root <source> \
-  --output <new-recordings> --oracle-root <new-oracles> --report <g04-report.json> \
-  --tasks G04 --members 1 --stage all \
-  --visibility-contract stable-envs/opaque-pixel-rays-v1 \
-  --blender-python <blender-python> --render-python <cuda-python>
-python -m scripts.export.batch_object_permanence --source-root <source> \
-  --output <new-recordings> --oracle-root <new-oracles> --report <g05-report.json> \
-  --tasks G05 --members 2,4,5,6 --stage all \
-  --visibility-contract stable-envs/opaque-pixel-rays-v1 \
-  --blender-python <blender-python> --render-python <cuda-python>
-```
-
-G05/1 remains unregistered: its non-solid opening-volume mesh is permanently
-hidden in the native source. The current capture contract rejects hidden
-objects; deleting it or silently treating it as an opaque object changes the
-source selection policy. A future explicit renderable-set policy must retain
-semantic bookkeeping and independently verify visibility at every frame.
-
-G05/3 also remains unregistered: source `main()` separately assembles track, car,
-doors and camera, and its seam marker changes positive scale beginning at frame
-21. The existing optional scale sampler handles all 120 frames in a live probe;
-it still needs an audited multi-stage build recipe, per-member scale opt-in and
-complete pixel/cache certification. This does not require inventing a new scale
-renderer. Neither deferred entry gets a recording or frozen geometric oracle.
-Their native-only diagnostic GIFs are under `evaluation/deferred-previews/` and
-are explicitly not candidate/source comparisons. Live tests reproduce both
-rejection reasons without removing source objects or dropping scale animation.
-
-### Next member batch: G06–G09
-
-Six members reuse the existing rigid and visibility contracts. Their source
-preparation, every-object motion/material/mesh/camera checks and fresh reexports
-run in isolated Blender processes. Source functions remain unmodified.
-
-| Member | Source behavior | Camera/contract | Draw objects / dynamic nodes | Max depth MSE | Min mask IoU |
-|---|---|---|---:|---:|---:|
-| G06/1 | Car crosses the solid one of two raised bridges | Perspective/V1 | 34 / 5 | 4.056e-17 | 1.0 |
-| G06/2 | One car crosses; the other falls through the bridge gap | Perspective/V1 | 39 / 10 | 4.563e-17 | 1.0 |
-| G07/1 | First ball passes, blade closes and stops the second ball | Perspective/V1 | 11 / 3 | 3.476e-17 | 1.0 |
-| G08/1 | Closed drawer/cabinet moves with its hidden ball and cube | Orthographic/V2 | 15 / 13 | 0 | 1.0 |
-| G09/1 | Short blue car passes under the beam | Orthographic/V2 | 12 / 6 | 5.698e-17 | 1.0 |
-| G09/2 | Tall red car stops; short blue car passes | Orthographic/V2 | 21 / 12 | 8.419e-17 | 1.0 |
-
-Each has a fresh independent 120-frame oracle and source/replay GIF. All 720
-frames pass both full/cached depth and every-object masks, plus bitwise
-RGB/depth/ID parity at 90p/180p, reversed/repeated requests, chunks 1/4/7 and
-caller mutation. Each resolution builds one static seed with zero fallback.
-Maximum source world-vertex/normal errors are 5.842e-8 / 2.797e-7; original
-budgets, old samples, runtime APIs and rendering implementations are unchanged.
-
-Additional members now explicitly declare their orthographic camera capability
-in `ORTHOGRAPHIC_MEMBERS`; the independent producer keeps a separately audited
-`REFERENCE_ORTHOGRAPHIC_MEMBERS` set. The batch entry rejects V1 for these
-members and V2 for the perspective extras. It does not infer the camera from the
-first task member, silently promote a visibility version or alter either ray
-algorithm. Existing nominal routing remains unchanged. Member metadata retains
-its own preparation recipe instead of replacing it with the first member's.
-
-G08/1 also uses the audited official surface execution globals `DIVERSITY={}`;
-`drawer_travel_scale` therefore stays 1.0. Candidate and reference independently
-validate the unchanged source context. This is script execution context, not
-sampled diversity or driver appearance hooks; provenance labels correctly
-identify the extra member. The previous first-member labels remain intact.
-
-Use the same batch entry with `--stage all` into **new** recording/oracle roots,
-or `--stage validate` for existing immutable inputs. Select task/member/contract
-groups explicitly: G06 members `1,2` and G07 member `1` use
-`stable-envs/opaque-pixel-rays-v1`; G08 member `1` and G09 members `1,2` use
-`stable-envs/opaque-pixel-rays-v2`. The separate producer/reference and CUDA
-interpreters are unchanged. Omitting a required contract or choosing the wrong
-version reports an unsupported member before source execution.
-
-There are no newly deferred entries in this batch. The two G05 blockers and
-source-only diagnostic GIFs remain unchanged. That batch left thirty other scripts without
-runtime audit and advanced the queue to G10. Temporary source PNGs are removed
-after all six comparison GIFs have been checked.
-
-### Next member batch: G10–G12
-
-Five further members use the unchanged orthographic V2 contract. Both candidate
-and independent reference register only their source build/animate entry points
-and the existing camera capability; no new renderer, motion formula, data format
-or threshold is introduced.
-
-| Member | Source behavior | Draw objects / dynamic nodes | Max depth MSE | Min mask IoU |
-|---|---|---:|---:|---:|
-| G10/1 | Ball passes the large hole, then recoils/stops at the small hole | 137 / 1 | 1.315e-16 | 1.0 |
-| G11/1 | Closed box rotates with ball and cube, then reopens | 10 / 8 | 2.774e-14 | 1.0 |
-| G11/2 | Same operation with ball, cube and pyramid | 11 / 9 | 2.774e-14 | 1.0 |
-| G12/1 | Rotating partition box: ball/pyramid together, cube separate | 12 / 10 | 4.024e-12 | 1.0 |
-| G12/2 | Rotating partition box: cube/pyramid together, ball separate | 12 / 10 | 4.024e-12 | 1.0 |
-
-The U-track consists of ordinary cylinder/box meshes, not Curve objects. Its
-136 static draw objects reuse the shared static cache; the trajectory only stores
-the ball's changing pose. Applied Boolean barriers retain their evaluated holes.
-For G11/G12, Blender evaluates the box-root and lid-hinge hierarchy before world
-poses are sampled. Runtime replay needs no parent graph or Blender dependency.
-The G12 partition carries `pb_is_dynamic=False` in the source, but observed world
-rotation correctly makes it a dynamic node. Live reexports explicitly check the
-lid, contained objects and partition motion rather than trusting that tag.
-
-All 600 source frames pass independent full/cached depth and every-object mask
-checks. RGB/depth/IDs are bit-identical at 90p/180p across reversed/repeated
-frames, chunks 1/4/7 and caller mutation, with one static seed and zero fallback.
-Largest source world-vertex/normal errors are 4.031e-7 / 3.153e-7. The maximum
-pixel depth MSE remains below the original 1e-8 budget; no tolerances are relaxed.
-
-Use the existing batch entry into **new** recording/oracle roots:
-
-```bash
-python -m scripts.export.batch_object_permanence --source-root <source> \
-  --output <new-recordings> --oracle-root <new-oracles> --report <g10-report.json> \
-  --tasks G10 --members 1 --stage all \
-  --visibility-contract stable-envs/opaque-pixel-rays-v2 \
-  --blender-python <blender-python> --render-python <cuda-python>
-python -m scripts.export.batch_object_permanence --source-root <source> \
-  --output <new-recordings> --oracle-root <new-oracles> --report <boxes-report.json> \
-  --tasks G11,G12 --members 1,2 --stage all \
+python -m scripts.export.batch_object_permanence \
+  --source-root <pinned-source> --tasks G13 --members 0 \
+  --output .cache/object_permanence/corpus/recordings \
+  --oracle-root .cache/object_permanence/corpus/oracles \
+  --report .cache/object_permanence/g13-report.json --stage all \
   --visibility-contract stable-envs/opaque-pixel-rays-v2 \
   --blender-python <blender-python> --render-python <cuda-python>
 ```
 
-Use `--stage validate` to recheck existing immutable inputs. Each member has its
-own fresh 120-frame oracle and source/replay GIF. Temporary PNGs are deleted
-after GIF verification. There are no newly deferred entries; the G05 deferral
-evidence/diagnostic GIFs stay intact. At the end of that batch, twenty-five scripts still needed runtime
-audit, starting at G13, alongside those two earlier G05 blockers.
+The stages are `export`, `oracle`, `validate` and `all`. Export and oracle refuse
+existing destinations; use `validate` to recheck immutable inputs. A plan with
+`--plan-only` executes nothing. Additional members require an explicitly audited
+entry and matching contract, never an assumption based on another member.
 
-### Next member batch: G13 drawer permutations
+The exporter checks every source frame for constant geometry, valid transforms,
+materials and camera. The independent oracle separately evaluates original source
+triangles; it does not consume exported poses or candidate intersection code.
+Validation compares every frame and every object, then checks cached/full outputs
+across repeated and shuffled frames, chunk sizes and caller mutation.
 
-All four remaining G13 scripts use the same audited `build_scene` then
-`animate_scene` sequence. Each contains 39 MESH objects plus three FONT labels,
-42 draw objects in total. The fixed orthographic camera uses existing V2
-visibility; the labels reuse evaluated-rigid-mesh-v1 conversion with the source
-font, extrusion and tessellation. Each member records `float32[120,40,7]` world
-poses and reuses existing content-addressed meshes. No renderer or format changes
-are needed.
+| Check | Acceptance budget |
+|---|---:|
+| Depth MSE | <= 1e-8 |
+| Visible-object mask IoU | >= 0.99 |
+| Source world-vertex / normal error | <= 2e-6 / 3e-6 |
+| Cached/full RGB, depth and IDs | Bit-identical |
 
-| Member | Contents from left to right |
-|---|---|
-| G13/1 | Ball, pyramid, cube |
-| G13/2 | Cube, ball, pyramid |
-| G13/3 | Cube, pyramid, ball |
-| G13/4 | Pyramid, ball, cube |
+RGB shader differences are expected. Geometric agreement tests task-relevant
+occlusion, not equivalence of original video pixels or downstream learning.
+G98/G132 additionally use hash-pinned native `.blend` inputs under
+`tests/fixtures/source/object_permanence`: repeated procedural shell builds can
+change normals. These small source inputs are needed to reproduce that declared
+realization; online users do not need them.
 
-The source closes all drawers during frames 1–32, shifts the cabinet during
-frames 33–82, then reopens the drawers during frames 83–120. Sampling evaluated
-world transforms preserves inherited motion in the cabinet boards, rails,
-drawers, contents and labels. Labels retain source `pb_is_dynamic=False`, but
-their observed motion correctly makes them dynamic nodes. Live reexports also
-check glyph identities `1/2/3` and constant label/content offsets throughout the
-trajectory, preventing a drawer permutation from silently swapping identities.
+The complete corpus, audit reports and GIF-generation intermediates are developer
+data, kept outside Git. Only a small frozen CI sample is checked in: G34, G62,
+G13 and G146 with their referenced meshes and independent geometry oracles.
+Default CI tests core behavior; complete scene/member certification uses the CLI
+above. Runtime downloads need manifests, referenced assets/licenses and motion
+arrays, not developer oracles, source snapshots or GIFs. No automatic downloader
+or hosted full-corpus URL is currently provided; export from the pinned source
+or use a separately distributed recording bundle.
 
-All 480 new source frames pass the independently generated per-member oracle:
-maximum depth MSE **1.105e-16**, minimum every-object mask IoU **1.0**, in
-both full and cached rendering. Source world-vertex/normal errors are at most
-**1.655e-08 / 4.447e-08**. RGB/depth/IDs are bit-identical at 90p/180p across
-reversed/repeated frames, chunks 1/4/7 and caller mutation. Each resolution builds
-one static seed with zero fallback. Existing 1e-8/.99 pixel budgets and all
-previous fixtures are unchanged. Four complete GIFs are retained; 480 temporary
-source PNGs are removed.
+## Visual checks and timing
 
-Reproduce into **new** recording/oracle roots:
+Generate native source previews into a temporary directory with
+`scripts.export.render_object_permanence_preview`. Combine them with shared
+rendering through `benchmarks.object_permanence_recordings.comparison_gif`,
+then delete temporary PNGs after verifying the GIF. Previews use Cycles at reduced
+quality; they are not decoded original MP4 frames.
 
-```bash
-python -m scripts.export.batch_object_permanence --source-root <source> \
-  --output <new-recordings> --oracle-root <new-oracles> --report <g13-report.json> \
-  --tasks G13 --members 1,2,3,4 --stage all \
-  --visibility-contract stable-envs/opaque-pixel-rays-v2 \
-  --blender-python <blender-python> --render-python <cuda-python>
-```
-
-Use `--stage validate` for existing immutable inputs. Independent source processes
-produce each member's oracle and complete 120-frame source/replay GIF. No new
-member is deferred; the earlier G05 reasons and diagnostic GIFs remain intact.
-At the end of that batch, the unaudited queue had 21 scripts, beginning with
-G14's five extra members; adding the two G05 deferrals gave 23 unimported scripts.
-
-### Next member batch: G14 lane-color permutations
-
-Five further members complete the six source G14 lane/color arrangements. Each
-uses the independently audited `build_scene` then `animate_scene` calls, a fixed
-orthographic camera and existing evaluated Curve conversion. The 44 draw objects
-comprise 41 MESH objects and three CURVE tubes. Only three balls are dynamic;
-41 static objects reuse the shared static cache. Each member stores
-`float32[120,3,7]` world poses and reuses existing mesh assets. No renderer,
-recording format, visibility contract or threshold changes are needed.
-
-| Member | Near / middle / far ball colors |
-|---|---|
-| G14/1 | Red / yellow / blue |
-| G14/2 | Blue / red / yellow |
-| G14/3 | Blue / yellow / red |
-| G14/4 | Yellow / red / blue |
-| G14/5 | Yellow / blue / red |
-
-The source animates all balls from the tube mouths through opaque U tubes onto
-open double rails. Its speed integration and rolling rotations are sampled from
-Blender's evaluated world transforms, without reimplementing motion formulas.
-Each tube retains its 57-point POLY spline, source bevel/tessellation and open
-ends (`use_fill_caps=False`). Balls keep poses while occluded, the correct lane
-and distinct instance colors while sharing one sphere mesh. Live reexports
-explicitly verify lane Y, color/name binding, dynamic motion and static Curve
-identity over the complete trajectory.
-
-All 600 new source frames pass independently generated per-member oracles in
-full and cached rendering: maximum depth MSE **8.372e-15**, minimum every-object
-mask IoU **1.0**. Source world-vertex/normal errors are at most
-**9.879e-08 / 2.469e-07**. RGB/depth/IDs are bit-identical at 90p/180p across
-reversed/repeated frames, chunks 1/4/7 and caller mutation. Each resolution builds
-one static seed with zero fallback. Five complete 120-frame source/replay GIFs
-are retained; 600 temporary source PNGs are removed.
-
-Reproduce into **new** recording/oracle roots:
+The PR examples show the source on the left and replay on the right:
+[G34](../assets/media/object-permanence/g34.gif),
+[G62](../assets/media/object-permanence/g62.gif),
+[G14](../assets/media/object-permanence/g14.gif).
 
 ```bash
-python -m scripts.export.batch_object_permanence --source-root <source> \
-  --output <new-recordings> --oracle-root <new-oracles> --report <g14-report.json> \
-  --tasks G14 --members 1,2,3,4,5 --stage all \
-  --visibility-contract stable-envs/opaque-pixel-rays-v2 \
-  --blender-python <blender-python> --render-python <cuda-python>
+python -m benchmarks.object_permanence_recordings --recordings <dataset> \
+  --output .cache/object_permanence/throughput.json \
+  --backends shared,shared-full --batches 1,64,256 --modes rgb,depth,ids --profile
 ```
 
-Use `--stage validate` for existing immutable inputs. Independent oracle stages
-can also select one member per process into distinct member directories; they
-never consume candidate trajectories. This batch adds no capability deferrals;
-earlier G05 reasons and diagnostic GIFs remain intact. Certified coverage is
-179/197 scripts, with 16 unaudited scripts starting at G15 plus the two G05 blockers.
+Measurements include CPU frame lookup and pose upload. Startup/static bake,
+output download and training are separate costs; rendering throughput is not an
+end-to-end training speedup.
 
-Native previews accept `--member`/`--profile` via
-`scripts.export.render_object_permanence_preview`. Use temporary PNGs with
-`benchmarks.object_permanence_recordings.comparison_gif`, which checks source
-member/script/frame identity. Keep complete comparison GIFs under
-`.cache/object_permanence/evaluation/`; reports belong under
-`.cache/benchmarks/object_permanence/`. Temporary source frames are deleted after
-GIF verification. Neither previews nor developer oracles are runtime downloads.
+## Compatibility
 
-Next, audit remaining members in small capability groups and register candidate
-and independent reference preparation separately. A shared standard-library
-`Member` object supplies identity/path conventions only, not geometry algorithms.
-Extend shared capture/render capabilities for moving cameras, visibility or
-materials when required; preserve explicit rejection until validated.
-Mesh-local geometry is reusable across scenes; sampled poses handle irregular
-motion without new motion formulas. Keep units, frame conventions, semantic IDs,
-source pins and immutable manifests stable when publishing downloadable datasets.
-
-## First expansion batch: G37, G38 and G64
-
-All three add recording data and source references, without changing the runtime
-reader, renderer, precision thresholds or the existing G34/G62 frozen files.
-
-| Scene | Mesh objects | Recorded nodes | Source-visible targets |
-|---|---:|---:|---|
-| G37 | 5 | 1 | `orange_ball`: completely hidden for 18 frames |
-| G38 | 6 | 3 | `red_pendulum_bob`: completely hidden for 20 frames |
-| G64 | 5 | 1 | Both stationary targets remain partially visible through a board window |
-
-G38 records rod and bob motion, and conservatively retains the stationary pivot
-because the source marks it dynamic. No movement formula is reconstructed.
-G64's actual Boolean-cut window disagrees with source prose/custom tags claiming
-complete hiding. Preserve the evaluated mesh and its actual partial occlusion;
-do not close the window or require a hidden interval that the source lacks.
-G43/G77 were initially deferred for orthographic cameras and are now covered by
-the [V2 camera contract](object-permanence-orthographic.md). An applied
-Boolean modifier such as G64's is already supported when its evaluated mesh stays
-constant; the presence of a modifier alone is not evidence of deformation.
-
-`scripts/testing/freeze_object_permanence.py` has an independent audited entry
-list and queries Blender rays/world poses directly, importing no candidate
-exporter or renderer. References live under
-`tests/fixtures/semantics/object_permanence/<task>/nominal/`; candidate input clips
-and reusable meshes live separately under `tests/fixtures/saved/object_permanence_rigid/`.
-The main reference NPZ stores poses, source frames, camera, masks and depth base.
-Four 30-frame `depth_*.npz` files hold lossless uint32 XOR depth bits, each hashed
-in the manifest. This keeps files below the repository size limit without changing
-any depth bit, frame or acceptance threshold. The old G34/G62 encodings stay readable.
-
-```bash
-# Use the Blender reference interpreter; repeat for G38 and G64.
-python -m scripts.testing.freeze_object_permanence --source-root <source> \
-  --output <new-oracle>/g37/nominal --task G37
-python -m scripts.export.render_object_permanence_preview --source-root <source> \
-  --output <evaluation>/source-g37 --task G37
-```
-
-Use the CUDA interpreter for the existing comparison helper (no timing run needed):
-
-```python
-from pathlib import Path
-from benchmarks.object_permanence_recordings import comparison_gif
-from stable_envs.envs.object_permanence import RigidTrajectory
-
-for task in ("g37", "g38", "g64"):
-    with RigidTrajectory("<recordings>", f"{task}-nominal") as clip:
-        comparison_gif(clip, Path(f"<evaluation>/source-{task}"),
-                       Path(f"<evaluation>/{task}-source-vs-shared.gif"), size=180)
-```
-
-Tests check every frame's world pose, including hidden motion, and depth/masks for
-all mesh objects on both cached and uncached paths. Exact hidden counts come from
-the independent source masks; G64 explicitly tests partial visibility instead.
-Native preview GIFs show original source lighting beside simplified shared RGB;
-they are visual aids, while depth MSE and per-object mask IoU are the geometry gates.
-
-
-## Second expansion batch: G27 and G55
-
-This batch audited six source entries. Only G27/G55 passed the unchanged pixel
-gates, so only those two enter certified recordings and the normal GPU suite.
-Existing five recordings/references and runtime renderer code stay unchanged.
-
-| Accepted scene | Mesh objects | Recorded nodes | Maximum depth MSE | Minimum per-object mask IoU |
-|---|---:|---:|---:|---:|
-| G27 support removed, ball falls | 6 | 2 | 7.47e-13 | 1.0 |
-| G55 rising floor screen | 12 | 3 | 1.31e-12 | .99654 |
-
-Both cover all 120 frames at 320x180 with cached and complete drawing paths.
-G27's ball remains visible; the source event is support withdrawal followed by a
-fall, not an occlusion interval. Its source returns an object dictionary but
-expects `(scene, support_plate, ball)` for animation, so the offline preparation
-recipe explicitly binds those source arguments. No movement formula is rewritten.
-A regression verifies the recorded support moves before the ball drops.
-G55's two stationary targets are source-tagged dynamic; their constant pose rows
-are conservatively retained. Both targets are completely hidden for 54 frames.
-
-New references use the same independent Blender ray/pose capture and lossless
-XOR depth format. Parts hold at most 30 frames and recursively split when their
-compressed file would exceed 1000 KiB. G55 needs five parts. Storage splitting
-preserves every source depth bit and frame; earlier fixtures keep their layouts.
-
-### Explicit source-fidelity deferrals
-
-| Scene | Maximum depth MSE | Minimum mask IoU | Why certification is deferred |
-|---|---:|---:|---|
-| G63 parent-driven comb | 2.86e-4 | .99574 | Four frames have a one-pixel boundary depth disagreement |
-| G66 carousel cups | 1.47e-6 | .99986 | Frame 34 has a boundary depth disagreement |
-| G80 sliding doors | 1.29e-12 | .97768 | Coplanar overlapping door faces have different object-ID winners |
-| G81 rolling shutter | 1.55e-12 | .72340 | Coplanar housing/rail faces have ambiguous object-ID attribution |
-
-G63 differs at frames 16/54/66/104. G66 fails the depth gate at 34; frame 41 has
-another near-contact ID difference within current budgets. The exact source
-probes below separate BVH deviations from the camera ray convention gap; neither
-is a reason to fit a scene-specific correction. G80's actual
-source doors overlap by .06 scene units; G81's housing and rails overlap with
-coplanar front faces. Their source mesh-ID masks are not uniquely defined by
-nearest geometry in those regions. Their depth agreement alone is insufficient
-for the existing all-object mask contract.
-
-`DEFERRED_TASKS` blocks these entries in default batch planning/execution, with
-regression coverage. They are not certified, silently skipped, or converted to
-expected-passing tests. Independent captures, raw recordings, source/shared GIFs
-and complete diagnostic reports remain local artifacts; no failing case is
-represented as a successful import. Their source preparation recipes remain
-explicitly callable for investigation. Existing frozen samples and thresholds
-are not changed to accommodate these differences.
-
-The reusable checker reports **all** frames and returns a nonzero status on any
-failed depth or object mask. Source definitions and IDs must match before drawing:
-
-```bash
-# First export/freeze an audited scene into new directories with the Blender interpreter.
-# Then run this check with the CUDA interpreter. G63 intentionally exits nonzero.
-python -m scripts.testing.check_object_permanence_rendering \
-  --recordings <recordings> --oracle <source-oracle>/g63/nominal --task G63 \
-  --report <evaluation>/g63-check.json
-# Add --uncached to compare complete drawing; no reference is modified.
-```
-
-For G27/G55, use the earlier export, freeze and preview commands with their task
-IDs, then `comparison_gif` for all 120 aligned frames. Further ports must pass the
-same gates. Boundary conventions and coplanar mesh attribution need a separately
-specified, reusable fidelity solution before the four deferred scenes can be
-certified; no scene-specific rendering workaround is introduced here.
-
-## Visibility investigation: source, camera and renderer precision
-
-No existing recording, reference file or threshold changes in this investigation.
-The default renderer remains float32 projection and uses the same frozen gates.
-The source probe `scripts/testing/check_object_permanence_visibility.py` reads
-Blender's evaluated triangles, independently of exported mesh/pose extraction.
-It compares source BVH queries with exact rational intersections for represented
-world coordinates. Object-level AABB rejection and triangle intersections use
-`Fraction`, without a silhouette/depth epsilon. Exactly tied nearest objects are
-all retained; one-ULP-separated surfaces remain distinct. Exactness refers to
-represented coordinates/rays, not unknown real values before source rounding.
-
-| Query (source frame, x, y) | Exact finding |
-|---|---|
-| G63 (16,5,97), (104,314,97) | Source BVH returns backdrop; exact source-ray intersection hits a comb bar |
-| G63 (54,270,101), (66,49,101) | Oracle `view_frame` rays hit a bar; rays from the stored projection matrix hit the table |
-| G66 (34,208,64) | BVH returns disc; all three exact ray constructions hit the table |
-| G80 (54,159,70), (54,159,91) | Both doors are exactly nearest; BVH chooses different doors at the two pixels |
-| G81 (1,26,32), (1,288,32) | Housing and respective rail are exactly tied |
-
-The G63 frame 54/66 discrepancy is a **camera ray convention/serialization gap**,
-not evidence that the triangle coverage kernel chose the wrong surface for its
-stored camera. The oracle constructs rays from `view_frame` float32 corners, while
-the recording stores Blender's separately rounded `calc_matrix_camera` result.
-Those representations need not define identical boundary samples. G66 frame 41
-has another small, in-budget near-contact ID difference; this investigation does
-not certify a unique cause for every in-budget numerical difference.
-
-### Reusable implementation and controlled comparisons
-
-`RigidSceneRenderer(..., geometry_precision="float64")` optionally retains camera
-matrices, model composition, sparse vertex projection and refined coverage input
-in float64. The old path previously cast projected vertices back to float32 before
-float64 coverage, irreversibly losing some edge information. Synthetic regressions
-show a thin triangle lost by that cast and a transform-cancellation case recovered
-by the new option. The option is not a claim that these deferred source masks
-become correct. Compact mesh/pose inputs, quaternion-to-matrix reconstruction,
-shading attributes, raster interpolation and public output dtypes remain unchanged.
-The default stays float32; other nvdiff users keep their previous transform path.
-
-The optional mode requires refined coverage. Clipping or missing Triton still uses
-the documented scaled float32 fallback (`last_fallback=True`), not an undisclosed
-high-precision guarantee. A scene caches and releases its float64 sparse transform;
-clip-position buffers double in size, but CPU pose upload remains float32. No
-throughput improvement is claimed for this correctness/diagnostic option.
-
-The probe also emits one source-derived projection for the existing oracle's
-symmetric `view_frame` ray grid. Applying that matrix to every frame with float64
-projection reduces G63's failing depth frames from 16/54/66/104 to 16/104. Remaining
-maximum MSE is still about 2.86e-4. G66 still fails at 34; G80/G81 still fail ID IoU.
-Double projection alone leaves all four scenes deferred. These experiments use a
-single source camera calibration, never a per-pixel fit to candidate errors.
-
-```bash
-# Blender reference interpreter; repeat with other task/pixel coordinates above.
-python -m scripts.testing.check_object_permanence_visibility \
-  --source-root <source> --task G63 --pixels '16:5:97;54:270:101;66:49:101;104:314:97' \
-  --report <evaluation>/g63-exact-probe.json
-# CUDA interpreter, original frozen oracle and original camera convention:
-python -m scripts.testing.check_object_permanence_rendering \
-  --recordings <recordings> --oracle <oracle>/g63/nominal --task G63 \
-  --geometry-precision float64 --report <evaluation>/g63-double.json
-# Diagnostic source camera convention, with the same frozen values/thresholds:
-python -m scripts.testing.check_object_permanence_rendering \
-  --recordings <recordings> --oracle <oracle>/g63/nominal --task G63 \
-  --geometry-precision float64 --camera-probe <evaluation>/g63-exact-probe.json \
-  --report <evaluation>/g63-calibrated.json
-```
-
-Camera probes must match source identity, dimensions, recorded world/projection
-matrices and a fixed source camera. `within_thresholds` reports measured budgets;
-`certification_eligible=False` and `passed=False` prevent the diagnostic camera
-convention from silently becoming legacy certification. Ordinary invocation keeps
-the original behavior. The source probe explicitly targets the existing unshifted
-perspective oracle convention; it rejects unsupported camera conventions.
-
-### Versioned solution for future imports
-
-A reusable contract needs three declarations in addition to geometry/poses:
-
-1. Pixel-center ray construction and explicit high-precision calibration bounds,
-   including image dimensions, camera shifts, and clipping conventions.
-2. The geometric nearest-hit rule and exact tie policy. The diagnostic helper
-   `canonical_object` demonstrates `lowest-semantic-id-v1` over the exact nearest
-   set, invariant to triangle enumeration. It is not installed as a new runtime
-   tie policy: a reliable GPU implementation and independent source references
-   would both need to adopt that declared contract.
-3. The oracle version. Keep current raw-BVH fixtures as legacy comparisons; any
-   future canonical geometric reference must be generated independently from
-   evaluated source geometry and stored alongside them, with the same numeric
-   MSE/IoU budgets explicitly tied to that new contract.
-
-A set-valued nearest-ID reference is another representation of geometric ambiguity,
-not permission to ignore disputed pixels. G80's two observed BVH labels prove
-that one global ID-priority rule cannot reproduce that legacy oracle. Reproducing
-Blender's traversal/numerical behavior is a separate compatibility backend, not a
-geometrically canonical tie rule. No mask erosion, edge exclusion, oracle copying,
-scene-name branch or threshold relaxation is used here. All four raw-BVH deferrals
-remain. The [versioned pixel-ray implementation](object-permanence-visibility.md)
-now adds independent geometric references alongside them; legacy certification
-is never inferred from the new contract.
+`G34Replay` retains its restorable trajectory cursor. The optional
+`MuJoCoOcclusionBall` adapter and its complete simulator State remain available
+with the `object-permanence` extra. Their scene-specific backends are retained
+for compatibility; new tasks should use recorded trajectories and the shared
+renderer. See [installation](../install.md) for optional GPU/engine dependencies.

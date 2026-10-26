@@ -1,6 +1,10 @@
 # Testing scripts
 
-Generators and verifiers for the sealed fixtures under `tests/fixtures/`.
+Generators and verifiers for the small sealed samples under `tests/fixtures/`.
+Full object-permanence scene/member certification is an explicit CLI workflow;
+write that corpus and its reports outside Git, for example under
+`.cache/object_permanence/corpus/`. See the
+[recording guide](../../docs/adding/object-permanence-recordings.md).
 
 | script | produces or checks |
 |---|---|
@@ -8,7 +12,7 @@ Generators and verifiers for the sealed fixtures under `tests/fixtures/`.
 | `freeze_*_oracle.py` | per-family semantic oracles (`tests/fixtures/semantics/<family>`) |
 | `freeze_occlusion_ball_oracle.py` | Blender G34 poses/depth/masks; isolated Python 3.11 + bpy 4.4 |
 | `freeze_object_permanence_g62.py` | independent Blender G62 poses/depth/masks at all 120 source frames |
-| `check_object_permanence_export.py` | live all-frame world-triangle/normal checks of production G34/G62 recordings |
+| `check_object_permanence_export.py` | live all-frame source world-triangle/normal checks of exported recordings |
 | `_oracle.py` | pin check, rollout and manifest helpers the oracle generators share |
 | `capture_ogbench_golden.py` | OGBench Cube/Scene golden frames |
 | `verify_saved.py` | saved-corpus verification |

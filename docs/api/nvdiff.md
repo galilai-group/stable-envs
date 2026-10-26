@@ -21,7 +21,7 @@ match every requested key, shape, dtype and device; validation precedes writes.
 Diagnostics require `supersample=1`, including in a multi-output request.
 
 The G34 path uses the same pipeline with higher-precision coverage and cached
-static plates; see [engine-free replay](../adding/occlusion-ball.md#engine-free-nvdiff-replay).
+static plates; see [engine-free replay](../adding/object-permanence-recordings.md#read-and-render).
 
 ## Rendering contract
 

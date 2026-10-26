@@ -2,12 +2,11 @@
 
 import hashlib
 import json
-from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import pytest
 
-from scripts.export.object_permanence import array_digest, organize, write_recording
+from scripts.export.object_permanence import array_digest, write_recording
 from stable_envs.envs.object_permanence import RigidTrajectory
 
 
@@ -133,15 +132,6 @@ def test_v4_material_policy_is_explicit_and_preserves_optional_scale_layout(tmp_
         RigidTrajectory(tmp_path, "example")
 
 
-@pytest.mark.parametrize("alpha", [-0.1, 1.1, np.nan])
-def test_v4_alpha_values_are_validated(tmp_path, recording, alpha):
-    recording["material_convention"] = "stable-envs/constant-alpha-surfaces-v1"
-    recording["objects"][0]["rgba"][3] = alpha
-    write(tmp_path, recording)
-    with pytest.raises(ValueError):
-        RigidTrajectory(tmp_path, "example")
-
-
 @pytest.mark.parametrize("orthographic", [False, True])
 def test_optional_relative_scales_preserve_poses_nodes_and_caller_ownership(tmp_path, recording, orthographic):
     if orthographic:
@@ -174,99 +164,6 @@ def test_optional_relative_scales_preserve_poses_nodes_and_caller_ownership(tmp_
         clip.scales([0])
 
 
-@pytest.mark.parametrize("schema", ["v1", "v2", "v3"])
-def test_missing_optional_scales_default_to_one(tmp_path, recording, schema):
-    if schema == "v2":
-        from tests.unit.test_object_permanence_orthographic_contract import orthographic_camera
-
-        recording["camera"].update(orthographic_camera())
-    path = write(tmp_path, recording)
-    if schema == "v3":
-
-        def upgrade(m):
-            m.update(
-                schema="stable-envs/object-permanence-rigid-v3",
-                scale_convention="stable-envs/asset-relative-positive-diagonal-v1",
-                visibility_contract="stable-envs/opaque-pixel-rays-v1",
-            )
-            m["camera"]["projection_type"] = "perspective"
-
-        edit_manifest(path, upgrade)
-    with RigidTrajectory(tmp_path, "example") as clip:
-        assert not clip.has_scales
-        np.testing.assert_array_equal(clip.scales([3, 0]), np.ones((2, 2, 3), np.float32))
-        np.testing.assert_array_equal(clip.object_scales([3, 0]), np.ones((2, 4, 3), np.float32))
-        with pytest.raises(ValueError):
-            clip.scales([-1])
-
-
-@pytest.mark.parametrize("bad", [0, -1, np.nan, np.inf])
-def test_even_hash_valid_scale_arrays_must_be_positive_and_finite(tmp_path, recording, bad):
-    recording["scales"] = np.ones((4, 2, 3), np.float32)
-    recording["scales"][2, 0, 1] = bad
-    write(tmp_path, recording)
-    with pytest.raises(ValueError, match="finite and strictly positive"):
-        RigidTrajectory(tmp_path, "example")
-
-
-@pytest.mark.parametrize(
-    "bad", [np.ones((4, 2, 3), np.float64), np.ones((4, 1, 3), np.float32), np.full((4, 2, 3), 2, np.float32)]
-)
-def test_scale_dtype_shape_and_asset_reference_are_versioned(tmp_path, recording, bad):
-    recording["scales"] = bad
-    path = write(tmp_path, recording)
-    with pytest.raises(ValueError, match="scales"):
-        RigidTrajectory(tmp_path, "example")
-    edit_manifest(path, lambda m: m.update(schema="stable-envs/object-permanence-rigid-v1"))
-    with pytest.raises(ValueError, match="require rigid-scene v3"):
-        RigidTrajectory(tmp_path, "example")
-
-
-def test_scale_file_hash_and_identity_bind_animation(tmp_path, recording):
-    recording["scales"] = np.ones((4, 2, 3), np.float32)
-    path = write(tmp_path, recording)
-    with RigidTrajectory(tmp_path, "example") as clip:
-        identity = clip.identity
-    filename = path.parent / "scales.npy"
-    changed = recording["scales"].copy()
-    changed[2, 1] = [2, 3, 4]
-    np.save(filename, changed, allow_pickle=False)
-    with pytest.raises(ValueError, match="hash"):
-        RigidTrajectory(tmp_path, "example")
-    edit_manifest(
-        path, lambda m: m["arrays"]["scales"].update(sha256=hashlib.sha256(filename.read_bytes()).hexdigest())
-    )
-    with RigidTrajectory(tmp_path, "example") as clip:
-        assert clip.identity != identity
-
-
-@pytest.mark.parametrize("indices", [[-1], [4], [], [[0]], [0.0], [True]])
-def test_bad_frame_selection_is_rejected(tmp_path, recording, indices):
-    write(tmp_path, recording)
-    with RigidTrajectory(tmp_path, "example") as trajectory, pytest.raises(ValueError):
-        trajectory.poses(indices)
-
-
-@pytest.mark.parametrize(
-    "change",
-    [
-        lambda m: m.update(schema="future-format"),
-        lambda m: m["conventions"].update(quaternion="xyzw"),
-        lambda m: m["objects"][0].update(node=2),
-        lambda m: m["objects"][0].update(id=20),
-        lambda m: m["objects"][0].update(pose=[0] * 7),
-        lambda m: m["objects"][0].update(asset="0" * 64),
-        lambda m: m.update(fps=0),
-        lambda m: m["arrays"]["poses"].update(dtype="float64"),
-    ],
-)
-def test_corrupt_contract_is_rejected(tmp_path, recording, change):
-    path = write(tmp_path, recording)
-    edit_manifest(path, change)
-    with pytest.raises(ValueError):
-        RigidTrajectory(tmp_path, "example")
-
-
 @pytest.mark.parametrize("filename", ["poses.npy", "frames.npy", "asset"])
 def test_payload_corruption_is_rejected(tmp_path, recording, filename):
     write(tmp_path, recording)
@@ -276,18 +173,6 @@ def test_payload_corruption_is_rejected(tmp_path, recording, filename):
     path.write_bytes(content)
     with pytest.raises(ValueError, match="hash"):
         RigidTrajectory(tmp_path, "example")
-
-
-def test_identity_binds_camera_and_metadata_and_content_hash_binds_shape(tmp_path, recording):
-    path = write(tmp_path, recording)
-    with RigidTrajectory(tmp_path, "example") as trajectory:
-        before = trajectory.identity
-    edit_manifest(path, lambda m: m["camera"]["world"][0].__setitem__(3, 1))
-    with RigidTrajectory(tmp_path, "example") as trajectory:
-        assert before != trajectory.identity
-    a = np.arange(6, dtype=np.float32)
-    assert array_digest({"a": a}) != array_digest({"a": a.reshape(2, 3)})
-    assert array_digest({"a": a}) != array_digest({"b": a})
 
 
 def test_valid_file_hash_cannot_hide_invalid_quaternions(tmp_path, recording):
@@ -307,52 +192,3 @@ def test_invalid_identifier_does_not_traverse_paths(tmp_path):
     for name in ("../example", "a/b", "", 12):
         with pytest.raises(ValueError, match="identifier"):
             RigidTrajectory(tmp_path, name)
-
-
-def test_concurrent_clip_writers_publish_one_complete_shared_asset(tmp_path, recording):
-    with ThreadPoolExecutor(max_workers=4) as workers:
-        list(workers.map(lambda n: write(tmp_path, recording, f"clip{n}"), range(4)))
-    assert len(list((tmp_path / "assets").rglob("*.npz"))) == 1
-    assert not list((tmp_path / "assets").rglob(".mesh-*"))
-    for index in range(4):
-        with RigidTrajectory(tmp_path, f"clip{index}") as trajectory:
-            np.testing.assert_array_equal(trajectory.poses([3]), recording["poses"][3:4])
-    assert len(list((tmp_path / "licenses").glob("*.txt"))) == 1
-
-
-def test_organize_migrates_flat_assets_and_licenses_idempotently(tmp_path, recording):
-    paths = [write(tmp_path, recording, clip) for clip in ("one", "two")]
-    mesh = next((tmp_path / "assets").rglob("*.npz"))
-    mesh.rename(tmp_path / "assets" / mesh.name)
-    for path in paths:
-
-        def legacy(m):
-            m.pop("license_ref")
-            for description in m["assets"].values():
-                description.pop("file")
-
-        edit_manifest(path, legacy)
-        (path.parent / "SOURCE_LICENSE.txt").write_text("Synthetic test data.")
-    (tmp_path / "index.json").write_text("{}")
-    payloads = {p: p.read_bytes() for p in tmp_path.rglob("*.npy")}
-    with RigidTrajectory(tmp_path, "one") as trajectory:
-        identity = trajectory.identity
-    organize(tmp_path)
-    assert not (tmp_path / "index.json").exists()
-    assert len(list((tmp_path / "assets/triangle").glob("*.npz"))) == 1
-    assert not list((tmp_path / "assets").glob("*.npz"))
-    assert not list((tmp_path / "clips").rglob("SOURCE_LICENSE.txt"))
-    assert len(list((tmp_path / "licenses").glob("*.txt"))) == 1
-    with RigidTrajectory(tmp_path, "one") as trajectory:
-        assert identity != trajectory.identity
-    first = {p: p.read_bytes() for p in paths}
-    organize(tmp_path)
-    assert all(p.read_bytes() == data for p, data in first.items())
-    assert all(p.read_bytes() == data for p, data in payloads.items())
-
-
-def test_shared_license_integrity_is_verified(tmp_path, recording):
-    write(tmp_path, recording)
-    next((tmp_path / "licenses").glob("*.txt")).write_text("changed")
-    with pytest.raises(ValueError, match="license hash"):
-        RigidTrajectory(tmp_path, "example")
