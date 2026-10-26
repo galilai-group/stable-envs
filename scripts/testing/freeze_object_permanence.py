@@ -23,6 +23,7 @@ import numpy as np
 SOURCE_COMMIT = "824baddcdad087810d35638bf8f273b884f74975"
 # Independently audited positive diagonal scale animation, sampled in world space.
 REFERENCE_SCALE_TASKS = {"G146"}
+REFERENCE_SCALE_MEMBERS = {("G05", 3)}
 # Separate from candidate extraction/registration; only audited converted cases.
 REFERENCE_CONVERTED_TASKS = {
     "G04",
@@ -43,7 +44,9 @@ REFERENCE_MEMBERS = {
         "animate_scene",
         ("identity_A_red_ball_on_upper_straight_track", "identity_B_blue_ball_on_lower_straight_track"),
     ),
+    ("G05", 1): ("build_scene", "animate_scene", ("red_wheeled_car_body",)),
     ("G05", 2): ("build_scene", "animate_scene", ("red_wheeled_car_body",)),
+    ("G05", 3): ("$main:render_png", "", ("red_wheeled_car_body",)),
     ("G05", 4): ("build_scene", "animate_scene", ("red_wheeled_car_body",)),
     ("G05", 5): ("build_scene", "animate_scene", ("red_wheeled_car_body",)),
     ("G05", 6): ("build_scene", "animate_scene", ("front_red_car_body", "rear_blue_car_body")),
@@ -466,6 +469,24 @@ def prepare_reference(script, task, *, member=0):
         init_globals=None if context is None else context["globals"],
         run_name="independent_source_preparation",
     )
+    if build.startswith("$main:"):
+        # Independently select original main statements; no candidate helper.
+        main = next(
+            n for n in ast.parse(script.read_text()).body if isinstance(n, ast.FunctionDef) and n.name == "main"
+        )
+        statements = []
+        for statement in main.body:
+            if isinstance(statement, ast.Expr) and isinstance(statement.value, ast.Call):
+                name = ast.unparse(statement.value.func)
+                if name == build.split(":", 1)[1]:
+                    break
+                if name == "ensure_dirs":
+                    continue
+            statements.append(statement)
+        else:
+            raise ValueError("independent main construction boundary missing")
+        exec(compile(ast.Module(body=statements, type_ignores=[]), str(script), "exec"), source)
+        return
     source["clear_scene"]()
     objects = source[build]()
     if not animate:
@@ -490,7 +511,7 @@ def reference_geometry(scene, task):
         obj.type not in (*types, "EMPTY", "CAMERA", "LIGHT") for obj in scene.objects
     ):
         raise ValueError("unsupported source renderable type")
-    return {obj.name: obj for obj in scene.objects if obj.type in types}
+    return {obj.name: obj for obj in scene.objects if obj.type in types and not obj.hide_render}
 
 
 def reference_geometry_description(objects, graph):

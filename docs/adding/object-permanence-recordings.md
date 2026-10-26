@@ -6,12 +6,11 @@ than rendered videos. Online replay does not need Blender or MuJoCo.
 
 The source is pinned to
 [`hokindeng/object-permanence@824badd`](https://github.com/hokindeng/object-permanence/tree/824baddcdad087810d35638bf8f273b884f74975).
-The importer has been exercised on 195 of its 197 scripts: 150 first nominal
-members and 45 additional members. This describes the audited source defaults,
-not arbitrary driver diversity or downstream model accuracy. All remaining
-G17–G150 members have been audited and certified under existing contracts. The
-two deferred members are G05/1 (renderable-set policy) and G05/3 (audited
-multi-stage/animated-scale recipe).
+The importer has been exercised on all 197 source scripts: 150 first nominal
+members and 47 additional members. This describes the audited source defaults,
+not arbitrary driver diversity or downstream model accuracy. G05’s remaining
+members reuse the existing opaque and positive-scale contracts; no nominal
+source members remain deferred.
 
 ## Read and render
 
@@ -74,7 +73,11 @@ no source motion formula is reimplemented at runtime.
 
 Curve/FONT objects are converted to evaluated triangle meshes offline, retaining
 source tessellation, open ends and text identity. Deformation, actual instancing,
-changing object membership/materials and moving cameras are rejected.
+changing object membership/materials and moving cameras are rejected. Permanently
+render-hidden nonsolid annotations are omitted; a marker becoming visible still
+changes the rendered object set and is rejected. An object hidden behind another
+surface remains recorded. Scale clips require the renderer’s explicit
+`visibility_contract=clip.manifest["visibility_contract"]`.
 Optical v5 uses ideal Snell/Fresnel events, a fixed sample stream and one common
 IOR; it does not reproduce Blender's complete BSDF, roughness, shadows or caustics.
 The contracts are defined in `rendering/visibility.py`, `transparency.py` and
@@ -102,6 +105,11 @@ The stages are `export`, `oracle`, `validate` and `all`. Export and oracle refus
 existing destinations; use `validate` to recheck immutable inputs. A plan with
 `--plan-only` executes nothing. Additional members require an explicitly audited
 entry and matching contract, never an assumption based on another member.
+
+Audited multi-stage sources execute their original `main()` construction prefix
+before the first render call, skipping directory setup and output operations.
+Source scripts are unchanged; additional members explicitly opt into scale
+sampling where needed.
 
 The exporter checks every source frame for constant geometry, valid transforms,
 materials and camera. The independent oracle separately evaluates original source

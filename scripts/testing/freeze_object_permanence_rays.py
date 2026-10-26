@@ -16,6 +16,7 @@ from .freeze_object_permanence import (
     REFERENCE_CASES,
     REFERENCE_CONVERTED_TASKS,
     REFERENCE_MEMBERS,
+    REFERENCE_SCALE_MEMBERS,
     REFERENCE_SCALE_TASKS,
     SOURCE_COMMIT,
     prepare_reference,
@@ -66,6 +67,7 @@ def freeze(root, output, task, width=320, height=180, *, visibility_contract=CON
     frames = np.arange(scene.frame_start, scene.frame_end + 1, dtype=np.int64)
     depth_rows, id_rows, poses = [], [], []
     source_scales = []
+    scaled = task in REFERENCE_SCALE_TASKS or (task, member) in REFERENCE_SCALE_MEMBERS
     first_camera = None
     source_descriptions = None
     for frame in frames:
@@ -127,7 +129,7 @@ def freeze(root, output, task, width=320, height=180, *, visibility_contract=CON
         depth_rows.append(depth)
         id_rows.append(labels_image)
         poses.append(frame_poses)
-        if task in REFERENCE_SCALE_TASKS:
+        if scaled:
             source_scales.append([list(objects[name].evaluated_get(graph).matrix_world.to_scale()) for name in names])
         if int(frame) % 10 == 0:
             print(f"{task} canonical source frame {frame}", flush=True)
@@ -140,7 +142,7 @@ def freeze(root, output, task, width=320, height=180, *, visibility_contract=CON
         "object_ids": ids,
         "camera_matrix": np.array(first_camera["world"], np.float64),
     }
-    if task in REFERENCE_SCALE_TASKS:
+    if scaled:
         arrays["source_scales"] = np.array(source_scales, np.float64)
     output.mkdir(parents=True)
     archive = output / f"geometric_{task.lower()}_{entry.leaf}.npz"
@@ -184,7 +186,7 @@ def freeze(root, output, task, width=320, height=180, *, visibility_contract=CON
         manifest["source_realization"] = realization
         manifest["source_preparation_recipe"] = {"build": build, "animate": animate}
         manifest["source_profile"] = "one pinned native realization; unmodified source build; no diversity"
-    if task in REFERENCE_SCALE_TASKS:
+    if scaled:
         manifest["scale_convention"] = "stable-envs/asset-relative-positive-diagonal-v1"
         manifest["source_scale_space"] = "absolute-world-matrix-decomposition"
     if context is not None:
@@ -212,7 +214,7 @@ def freeze(root, output, task, width=320, height=180, *, visibility_contract=CON
                 + inspect.getsource(reference_render_meshes)
             ).encode()
         ).hexdigest()
-    if visibility_contract == CONTRACT_V2 or task in REFERENCE_CONVERTED_TASKS | REFERENCE_SCALE_TASKS:
+    if visibility_contract == CONTRACT_V2 or task in REFERENCE_CONVERTED_TASKS or scaled:
         manifest["source_preparation_recipe"] = {"build": build, "animate": animate}
         preparation_code = inspect.getsource(prepare_reference) + inspect.getsource(reference_execution_context)
         manifest["source_preparation_algorithm_sha256"] = hashlib.sha256(preparation_code.encode()).hexdigest()

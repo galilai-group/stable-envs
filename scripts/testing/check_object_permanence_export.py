@@ -56,7 +56,7 @@ def check(root, dataset, task, *, member=0, profile="nominal"):
         depsgraph = bpy.context.evaluated_depsgraph_get()
         converted = manifest.get("geometry_conversion") is not None
         types = ("MESH", "CURVE", "FONT") if converted else ("MESH",)
-        source_objects = {o.name: o for o in scene.objects if o.type in types}
+        source_objects = {o.name: o for o in scene.objects if o.type in types and not o.hide_render}
         assert set(source_objects) == {o["name"] for o in manifest["objects"]}
         camera = scene.camera.evaluated_get(depsgraph)
         if manifest["camera"].get("projection_type") == "orthographic":

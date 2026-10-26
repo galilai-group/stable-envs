@@ -34,7 +34,9 @@ AUDITED_MEMBERS = {
     ("G02", 1): ("$prefix:render_png", ""),
     ("G02", 2): ("$prefix:render_png", ""),
     ("G04", 1): ("build_scene", "animate_scene"),
+    ("G05", 1): ("build_scene", "animate_scene"),
     ("G05", 2): ("build_scene", "animate_scene"),
+    ("G05", 3): ("$main:render_png", ""),
     ("G05", 4): ("build_scene", "animate_scene"),
     ("G05", 5): ("build_scene", "animate_scene"),
     ("G05", 6): ("build_scene", "animate_scene"),
@@ -126,6 +128,7 @@ ALPHA_ORTHOGRAPHIC_TASKS = {"G54", "G61"}
 OPTICAL_TASKS = {"G01"}
 SCALE_CONVENTION = "stable-envs/asset-relative-positive-diagonal-v1"
 ANIMATED_SCALE_TASKS = {"G146"}
+ANIMATED_SCALE_MEMBERS = {("G05", 3)}
 CONVENTIONS = {"world": "right-handed-z-up", "quaternion": "wxyz", "units": "source-scene-units"}
 # Context audit supplies nominal globals independently of camera/type certification.
 SOURCE_CONTEXT_TASKS = frozenset({"G08", "G44", "G45", "G46", "G48"})
@@ -743,6 +746,20 @@ def source_prefix(script, boundary):
     return namespace
 
 
+def source_main_prefix(namespace, boundary):
+    """Run audited main() construction statements before its first render call."""
+    body = ast.parse(inspect.getsource(namespace["main"])).body[0].body
+    for end, statement in enumerate(body):
+        if isinstance(statement, ast.Expr) and isinstance(statement.value, ast.Call):
+            if isinstance(statement.value.func, ast.Name) and statement.value.func.id == boundary:
+                break
+    else:
+        raise ValueError("audited main construction boundary missing")
+    if not end or ast.unparse(body[0]) != "ensure_dirs()":
+        raise ValueError("unaudited main output setup")
+    exec(compile(ast.Module(body=body[1:end], type_ignores=[]), namespace["__file__"], "exec"), namespace)
+
+
 def source_execution_context(root, task, script):
     """Describe audited driver globals, with no source rewriting or postprocessing.
 
@@ -846,6 +863,9 @@ def prepare(root, task, *, member=0, profile="nominal"):
     namespace = runpy.run_path(
         str(source), init_globals=None if context is None else context["globals"], run_name="stable_envs_rigid_export"
     )
+    if build.startswith("$main:"):
+        source_main_prefix(namespace, build.split(":", 1)[1])
+        return bpy.context.scene, source, metadata
     namespace["clear_scene"]()
     result = namespace[build]()
     if not animate:
@@ -997,6 +1017,11 @@ def _camera(scene, depsgraph, *, allow_orthographic=False):
     return result
 
 
+def _renderables(scene, types):
+    """Omit render-hidden nonsolid annotations, never visible scene geometry."""
+    return [o for o in scene.objects if o.type in types and not (o.hide_render and o.get("pb_solid") is False)]
+
+
 def sample_scene(
     scene,
     *,
@@ -1012,7 +1037,8 @@ def sample_scene(
     Motion comes exclusively from evaluated source data. Initial positive scale
     is baked into local geometry. Opt-in positive diagonal scale animation adds
     asset-relative scales; shear, local deformation, moving camera, visibility
-    changes, instances and changing base colors remain unsupported.
+    changes, instances and changing base colors remain unsupported. Permanently
+    render-hidden nonsolid annotations do not belong to the rendered object set.
     Metadata pb_is_dynamic does not substitute for observing all frames.
     """
     import bpy
@@ -1023,7 +1049,7 @@ def sample_scene(
     if not np.isfinite(fps) or fps <= 0:
         raise ValueError("scene fps must be finite and positive")
     types = ("MESH", "CURVE", "FONT") if allow_evaluated_geometry else ("MESH",)
-    objects = sorted((o for o in scene.objects if o.type in types), key=lambda o: o.name)
+    objects = sorted(_renderables(scene, types), key=lambda o: o.name)
     if object_order is not None:
         by_name = {o.name: o for o in objects}
         if set(by_name) != set(object_order):
@@ -1053,7 +1079,7 @@ def sample_scene(
             bpy.context.view_layer.update()
             depsgraph = bpy.context.evaluated_depsgraph_get()
             validate_instances(depsgraph, objects, allow_evaluated_geometry=allow_evaluated_geometry)
-            if {o.name for o in scene.objects if o.type in types} != {o.name for o in objects}:
+            if {o.name for o in _renderables(scene, types)} != {o.name for o in objects}:
                 raise ValueError("object set changes")
             if hidden_collection(scene.collection) or any(o.hide_render or not o.visible_get() for o in objects):
                 raise ValueError("v1 does not support hidden objects/visibility changes")
@@ -1370,7 +1396,7 @@ def export(root, output, task, *, member=0, profile="nominal"):
         object_order=G34_ORDER if task == "G34" else None,
         allow_orthographic=orthographic,
         allow_evaluated_geometry=task in CONVERTED_GEOMETRY_TASKS,
-        allow_animated_scale=task in ANIMATED_SCALE_TASKS,
+        allow_animated_scale=task in ANIMATED_SCALE_TASKS or (task, member) in ANIMATED_SCALE_MEMBERS,
         allow_transparent=task in ALPHA_TASKS,
     )
     if orthographic and recording["camera"].get("projection_type") != "orthographic":
