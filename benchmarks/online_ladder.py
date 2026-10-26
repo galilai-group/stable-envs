@@ -243,7 +243,7 @@ def _make_ours(name: str, lanes: int, size: int, device: str):
     try:
         return snv.make(name, num_envs=lanes, size=size, device=device)
     except ValueError as e:
-        if "size" not in str(e).lower():
+        if "renders" not in str(e) or "only" not in str(e):
             raise
         return snv.make(name, num_envs=lanes, device=device)
 
