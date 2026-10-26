@@ -24,7 +24,7 @@ is supported separately by the v3 recording schema.
 G54's `guardwall_a_back` and G61's `spiral_guard_00` use active glass with alpha
 0.24; their separate alpha contract now retains those surfaces without making them opaque. G46's
 FONT identity labels now retain their source triangles and semantic IDs.
-Nine additional members (two optical and seven opaque variants) are supported; 38 remain unimported, including two explicit G05 capability deferrals.
+Fifteen additional members (two optical and thirteen opaque variants) are supported; 32 remain unimported, including two explicit G05 capability deferrals.
 
 ## Projection and depth
 

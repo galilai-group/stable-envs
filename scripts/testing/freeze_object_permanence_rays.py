@@ -188,7 +188,11 @@ def freeze(root, output, task, width=320, height=180, *, visibility_contract=CON
         manifest["scale_convention"] = "stable-envs/asset-relative-positive-diagonal-v1"
         manifest["source_scale_space"] = "absolute-world-matrix-decomposition"
     if context is not None:
-        manifest["source_profile"] = "nominal first member; surface diversity globals; no driver hooks"
+        manifest["source_profile"] = (
+            "nominal first member; surface diversity globals; no driver hooks"
+            if member == 0
+            else "audited member defaults; surface diversity globals; no driver hooks"
+        )
         manifest["source_execution_context"] = context
         if visibility_contract == CONTRACT:
             manifest["source_preparation_sha256"] = sha256(Path(__file__).with_name("freeze_object_permanence.py"))

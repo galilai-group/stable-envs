@@ -9,11 +9,11 @@ unused builders; they are not a claim that every nominal/diversity variant works
 
 ## Audited scenes and supported capabilities
 
-Current scope: all 150 first nominal members plus nine additional members
-(G01/G03 optical variants, G02 variants, G04 member1 and four G05 variants).
+Current scope: all 150 first nominal members plus fifteen additional members
+(G01/G03 optical variants and rigid variants through G09).
 G98/G132 use [hash-pinned native source realizations](object-permanence-native-scenes.md);
-38 additional scripts remain unimported: two G05 entries have capability deferrals
-and 36 await runtime audit. Driver diversity remains outside certification. The sections below
+32 additional scripts remain unimported: two G05 entries have capability deferrals
+and 30 await runtime audit. Driver diversity remains outside certification. The sections below
 retain the chronological import history.
 
 G34 is the existing single ball behind a screen. The second pilot is
@@ -467,6 +467,55 @@ renderer. Neither deferred entry gets a recording or frozen geometric oracle.
 Their native-only diagnostic GIFs are under `evaluation/deferred-previews/` and
 are explicitly not candidate/source comparisons. Live tests reproduce both
 rejection reasons without removing source objects or dropping scale animation.
+
+### Next member batch: G06–G09
+
+Six members reuse the existing rigid and visibility contracts. Their source
+preparation, every-object motion/material/mesh/camera checks and fresh reexports
+run in isolated Blender processes. Source functions remain unmodified.
+
+| Member | Source behavior | Camera/contract | Draw objects / dynamic nodes | Max depth MSE | Min mask IoU |
+|---|---|---|---:|---:|---:|
+| G06/1 | Car crosses the solid one of two raised bridges | Perspective/V1 | 34 / 5 | 4.056e-17 | 1.0 |
+| G06/2 | One car crosses; the other falls through the bridge gap | Perspective/V1 | 39 / 10 | 4.563e-17 | 1.0 |
+| G07/1 | First ball passes, blade closes and stops the second ball | Perspective/V1 | 11 / 3 | 3.476e-17 | 1.0 |
+| G08/1 | Closed drawer/cabinet moves with its hidden ball and cube | Orthographic/V2 | 15 / 13 | 0 | 1.0 |
+| G09/1 | Short blue car passes under the beam | Orthographic/V2 | 12 / 6 | 5.698e-17 | 1.0 |
+| G09/2 | Tall red car stops; short blue car passes | Orthographic/V2 | 21 / 12 | 8.419e-17 | 1.0 |
+
+Each has a fresh independent 120-frame oracle and source/replay GIF. All 720
+frames pass both full/cached depth and every-object masks, plus bitwise
+RGB/depth/ID parity at 90p/180p, reversed/repeated requests, chunks 1/4/7 and
+caller mutation. Each resolution builds one static seed with zero fallback.
+Maximum source world-vertex/normal errors are 5.842e-8 / 2.797e-7; original
+budgets, old samples, runtime APIs and rendering implementations are unchanged.
+
+Additional members now explicitly declare their orthographic camera capability
+in `ORTHOGRAPHIC_MEMBERS`; the independent producer keeps a separately audited
+`REFERENCE_ORTHOGRAPHIC_MEMBERS` set. The batch entry rejects V1 for these
+members and V2 for the perspective extras. It does not infer the camera from the
+first task member, silently promote a visibility version or alter either ray
+algorithm. Existing nominal routing remains unchanged. Member metadata retains
+its own preparation recipe instead of replacing it with the first member's.
+
+G08/1 also uses the audited official surface execution globals `DIVERSITY={}`;
+`drawer_travel_scale` therefore stays 1.0. Candidate and reference independently
+validate the unchanged source context. This is script execution context, not
+sampled diversity or driver appearance hooks; provenance labels correctly
+identify the extra member. The previous first-member labels remain intact.
+
+Use the same batch entry with `--stage all` into **new** recording/oracle roots,
+or `--stage validate` for existing immutable inputs. Select task/member/contract
+groups explicitly: G06 members `1,2` and G07 member `1` use
+`stable-envs/opaque-pixel-rays-v1`; G08 member `1` and G09 members `1,2` use
+`stable-envs/opaque-pixel-rays-v2`. The separate producer/reference and CUDA
+interpreters are unchanged. Omitting a required contract or choosing the wrong
+version reports an unsupported member before source execution.
+
+There are no newly deferred entries in this batch. The two G05 blockers and
+source-only diagnostic GIFs remain unchanged. Thirty other scripts still need
+runtime audit; the next task in G order is G10. Temporary source PNGs are removed
+after all six comparison GIFs have been checked.
 
 Native previews accept `--member`/`--profile` via
 `scripts.export.render_object_permanence_preview`. Use temporary PNGs with

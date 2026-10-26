@@ -81,18 +81,24 @@ def test_audited_source_export_and_independent_world_geometry_per_scene(export_c
 
 
 @pytest.mark.parametrize(
-    "task,member,dynamic_count",
+    "task,member,dynamic_count,version",
     [
-        ("G02", 1, 1),
-        ("G02", 2, 2),
-        ("G04", 1, 2),
-        ("G05", 2, 5),
-        ("G05", 4, 5),
-        ("G05", 5, 5),
-        ("G05", 6, 10),
+        ("G02", 1, 1, "v1"),
+        ("G02", 2, 2, "v1"),
+        ("G04", 1, 2, "v1"),
+        ("G05", 2, 5, "v1"),
+        ("G05", 4, 5, "v1"),
+        ("G05", 5, 5, "v1"),
+        ("G05", 6, 10, "v1"),
+        ("G06", 1, 5, "v1"),
+        ("G06", 2, 10, "v1"),
+        ("G07", 1, 3, "v1"),
+        ("G08", 1, 13, "v2"),
+        ("G09", 1, 6, "v2"),
+        ("G09", 2, 12, "v2"),
     ],
 )
-def test_additional_member_unified_export_and_world_check(tmp_path, task, member, dynamic_count):
+def test_additional_member_unified_export_and_world_check(tmp_path, task, member, dynamic_count, version):
     """Fresh source processes must reproduce each additional member's frozen poses."""
     source = os.environ.get("SE_OBJECT_PERMANENCE_SOURCE")
     python = os.environ.get("SE_OBJECT_PERMANENCE_BLENDER_PYTHON")
@@ -117,7 +123,7 @@ def test_additional_member_unified_export_and_world_check(tmp_path, task, member
             "--members",
             str(member),
             "--visibility-contract",
-            "stable-envs/opaque-pixel-rays-v1",
+            f"stable-envs/opaque-pixel-rays-{version}",
         ],
         check=True,
         timeout=180,
@@ -129,6 +135,9 @@ def test_additional_member_unified_export_and_world_check(tmp_path, task, member
     ):
         assert len(fresh) == 120 and len(fresh.manifest["dynamic_nodes"]) == dynamic_count
         assert fresh.manifest["source"]["member"] == member
+        assert fresh.manifest["source"]["preparation_recipe"] == frozen.manifest["source"]["preparation_recipe"]
+        assert fresh.manifest["source"].get("execution_context") == frozen.manifest["source"].get("execution_context")
+        assert fresh.manifest["camera"] == frozen.manifest["camera"]
         np.testing.assert_array_equal(fresh.poses(np.arange(120)), frozen.poses(np.arange(120)))
 
 

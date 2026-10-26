@@ -82,6 +82,8 @@ def render(root, output, task, *, member=0, profile="nominal", samples=16, frame
         from .object_permanence_optical import MEMBERS
 
         recipe = AUDITED_MEMBERS.get((task, member), MEMBERS.get((task, member)))
+        if recipe is None:
+            raise ValueError("preview member has no audited preparation recipe")
         metadata["source_preparation_recipe"] = dict(zip(("build", "animate"), recipe, strict=True))
     context = source_execution_context(root, task, script)
     realization = source_realization(root, task)
@@ -89,7 +91,7 @@ def render(root, output, task, *, member=0, profile="nominal", samples=16, frame
         metadata["source_realization"] = realization
     if context is not None:
         metadata["source_execution_context"] = context
-    if task in ORTHOGRAPHIC_TASKS | CONVERTED_GEOMETRY_TASKS:
+    if member == 0 and task in ORTHOGRAPHIC_TASKS | CONVERTED_GEOMETRY_TASKS:
         build, animate = AUDITED_TASKS[task]
         metadata["source_preparation_recipe"] = {"build": build, "animate": animate}
     (output / "manifest.json").write_text(json.dumps(metadata, indent=2) + "\n")

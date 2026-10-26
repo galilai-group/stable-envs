@@ -30,6 +30,7 @@ from .object_permanence import (
     AUDITED_TASKS,
     CONTRACT_ONLY_TASKS,
     DEFERRED_TASKS,
+    ORTHOGRAPHIC_MEMBERS,
     ORTHOGRAPHIC_TASKS,
     RAY_CONTRACT_TASKS,
     SOURCE_COMMIT,
@@ -95,6 +96,7 @@ def run(
                 continue
             entry = Member(task["id"], member, profile)
             extra = (task["id"], member) in AUDITED_MEMBERS
+            extra_version = "v2" if (task["id"], member) in ORTHOGRAPHIC_MEMBERS else "v1"
             optical = (task["id"], member) in OPTICAL_MEMBERS
             audited = (member == 0 and task["id"] in AUDITED_TASKS) or extra or optical
             job = {"task": task["id"], "member": member, "script": str((path.parent / name).relative_to(root))}
@@ -108,8 +110,11 @@ def run(
             )
             if optical and visibility_contract != "stable-envs/sampled-optical-rays-v1":
                 job.update(status="unsupported", reason="optical member requires explicit sampled optical contract")
-            elif extra and visibility_contract != "stable-envs/opaque-pixel-rays-v1":
-                job.update(status="unsupported", reason="additional opaque member requires explicit v1 ray contract")
+            elif extra and visibility_contract != f"stable-envs/opaque-pixel-rays-{extra_version}":
+                job.update(
+                    status="unsupported",
+                    reason=f"additional opaque member requires explicit {extra_version} ray contract",
+                )
             elif not optical and visibility_contract == "stable-envs/sampled-optical-rays-v1":
                 job.update(status="unsupported", reason="member is not audited for the optical contract")
             elif member == 0 and visibility_contract == ALPHA_CONTRACT and task["id"] not in ALPHA_TASKS:

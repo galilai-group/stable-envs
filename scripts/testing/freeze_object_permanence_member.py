@@ -31,10 +31,16 @@ def supports(entry, contract):
         from .freeze_object_permanence_alpha import CASES
 
         return entry.member == 0 and entry.task in CASES
-    from .freeze_object_permanence import REFERENCE_CASES, REFERENCE_MEMBERS
+    from .freeze_object_permanence import REFERENCE_CASES, REFERENCE_MEMBERS, REFERENCE_ORTHOGRAPHIC_MEMBERS
 
+    if entry.member:
+        version = "v2" if (entry.task, entry.member) in REFERENCE_ORTHOGRAPHIC_MEMBERS else "v1"
+        return (
+            entry.task,
+            entry.member,
+        ) in REFERENCE_MEMBERS and contract == f"stable-envs/opaque-pixel-rays-{version}"
     return contract in {"stable-envs/opaque-pixel-rays-v1", "stable-envs/opaque-pixel-rays-v2"} and (
-        (entry.member == 0 and entry.task in REFERENCE_CASES) or (entry.task, entry.member) in REFERENCE_MEMBERS
+        entry.task in REFERENCE_CASES
     )
 
 

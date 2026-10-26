@@ -184,3 +184,50 @@ def test_next_member_batch_keeps_hidden_marker_and_multistage_scale_entries_unre
     assert {j["member"] for j in result["jobs"] if j["status"] == "ready-for-runtime-check"} == accepted
     assert {j["member"] for j in result["jobs"] if j["status"] == "unsupported"} == set(range(1, total)) - accepted
     assert not (tmp_path / "data").exists()
+
+
+@pytest.mark.parametrize(
+    "task,member,version,total",
+    [
+        ("G06", 1, "v1", 3),
+        ("G06", 2, "v1", 3),
+        ("G07", 1, "v1", 2),
+        ("G08", 1, "v2", 2),
+        ("G09", 1, "v2", 3),
+        ("G09", 2, "v2", 3),
+    ],
+)
+def test_perspective_and_orthographic_members_require_their_audited_contract(
+    tmp_path, monkeypatch, task, member, version, total
+):
+    from scripts.testing.freeze_object_permanence_member import supports
+
+    path = tmp_path / f"source/object_permanence/generator/tasks/{task}_test"
+    path.mkdir(parents=True)
+    names = [f"scene{i}.py" for i in range(total)]
+    for name in names:
+        (path / name).write_text("def main(): pass\n")
+    (path / "task.json").write_text(json.dumps({"id": task, "member_scripts": names}))
+    monkeypatch.setattr(batch, "check_source", lambda root: None)
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("planning must not execute source or render")
+
+    monkeypatch.setattr(batch.subprocess, "run", forbidden)
+    for selected in ("v1", "v2"):
+        contract = f"stable-envs/opaque-pixel-rays-{selected}"
+        result = batch.run(
+            tmp_path / "source",
+            tmp_path / "data",
+            tmp_path / "report.json",
+            tasks=task,
+            members=str(member),
+            stage="all",
+            oracle_root=tmp_path / "oracles",
+            plan_only=True,
+            visibility_contract=contract,
+        )
+        expected = "ready-for-runtime-check" if selected == version else "unsupported"
+        assert result["counts"] == {expected: 1}
+        assert supports(Member(task, member), contract) == (selected == version)
+    assert not (tmp_path / "data").exists()

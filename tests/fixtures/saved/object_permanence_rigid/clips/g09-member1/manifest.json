@@ -1,0 +1,449 @@
+{
+  "arrays": {
+    "frames": {
+      "dtype": "int64",
+      "sha256": "3ce1a862b6cf0bb21bc1354b758cafa47ca5ec03b5c004d6210f5abd8c55df44",
+      "shape": [
+        120
+      ]
+    },
+    "poses": {
+      "dtype": "float32",
+      "sha256": "40e401510e70518f1f457c6f6ab39157a1aa7e72b7131ec0b6e517de15100bd7",
+      "shape": [
+        120,
+        6,
+        7
+      ]
+    }
+  },
+  "assets": {
+    "0e8364c8b8e056ae70beee114273714070ed8bf6861c95bab203292433ef4ea3": {
+      "file": "assets/cylinder/0e8364c8b8e056ae70beee114273714070ed8bf6861c95bab203292433ef4ea3.npz",
+      "sha256": "454756f39b8684a5264e979eafb3f33d3672eb70d608f3e3bf303d15781bb6e0"
+    },
+    "1ad23c69efe60bc65ee8f4287add883ac5ce1c153186b19a3a5dbe99829a2c89": {
+      "file": "assets/cube/1ad23c69efe60bc65ee8f4287add883ac5ce1c153186b19a3a5dbe99829a2c89.npz",
+      "sha256": "17a12d7a9493780326deef2f680e842f8dbfd47ef2f6c7cd50b878c77c10d657"
+    },
+    "39e52efdbfd97dd3b81e3c1cd425c55f6dd294b2424a4198709d2c2a8249c65f": {
+      "file": "assets/cube/39e52efdbfd97dd3b81e3c1cd425c55f6dd294b2424a4198709d2c2a8249c65f.npz",
+      "sha256": "a511c381a542ec4b0ca9ede9ef343323b2e1285cda9061c8a620780bc6450e22"
+    },
+    "485f1263f42aff01392fe770a5483b167e68efe06d69f7562bd5fcd07807f4f4": {
+      "file": "assets/cube/485f1263f42aff01392fe770a5483b167e68efe06d69f7562bd5fcd07807f4f4.npz",
+      "sha256": "dd34a9886403d760e5c1aff8e888899396140acbbfa4cf5b7128c788a87dbaac"
+    },
+    "597b6fb22605121a3678842ecca1c9f77a9702cb2f56a62da9056414a3fdf43a": {
+      "file": "assets/cube/597b6fb22605121a3678842ecca1c9f77a9702cb2f56a62da9056414a3fdf43a.npz",
+      "sha256": "ae91acbde69c83a7e5e45fc5cf811e5fa0da80a9160795ff5701496883a7c205"
+    },
+    "84a8c6987eed429f08361a6caf8661411bacad37a8fb70dee1b240dbb3f16c51": {
+      "file": "assets/cube/84a8c6987eed429f08361a6caf8661411bacad37a8fb70dee1b240dbb3f16c51.npz",
+      "sha256": "1412202d12596c6c54090fe5bcb9a1a58ac04a1bc32926b4d986939631ac5fdb"
+    },
+    "b34e8177a3c15bd7a29ca2aed0d53c950cf53d9da95d097a5d06fdb2f55aa0b7": {
+      "file": "assets/cube/b34e8177a3c15bd7a29ca2aed0d53c950cf53d9da95d097a5d06fdb2f55aa0b7.npz",
+      "sha256": "567016aa3971fc3db5be114dbd933d67b6a36530695b8f4278caed353bbcfe85"
+    },
+    "f6e8183b55e07ab3f87f323f09f7a726cde53823647cb35a5161930fe30cf730": {
+      "file": "assets/cube/f6e8183b55e07ab3f87f323f09f7a726cde53823647cb35a5161930fe30cf730.npz",
+      "sha256": "7d71e55c6bdb438e5b44aeceb0869326a6e1088959a96fa12f66abecee4460ec"
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "height": 720,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        0.26490065455436707,
+        0.0,
+        0.0,
+        -0.0
+      ],
+      [
+        0.0,
+        0.47093454003334045,
+        0.0,
+        -0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -0.0020001998636871576,
+        -1.0001999139785767
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "projection_type": "orthographic",
+    "width": 1280,
+    "world": [
+      [
+        0.9661352634429932,
+        0.05361812189221382,
+        -0.25240394473075867,
+        -2.1500000953674316
+      ],
+      [
+        -0.25803613662719727,
+        0.20075608789920807,
+        -0.9450472593307495,
+        -8.050000190734863
+      ],
+      [
+        -3.523516056702647e-08,
+        0.9781728386878967,
+        0.2077929526567459,
+        2.450000047683716
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "clip": "g09-member1",
+  "conventions": {
+    "quaternion": "wxyz",
+    "units": "source-scene-units",
+    "world": "right-handed-z-up"
+  },
+  "dynamic_nodes": [
+    "blue_short_body",
+    "blue_short_roof",
+    "blue_short_wheel_1",
+    "blue_short_wheel_2",
+    "blue_short_wheel_3",
+    "blue_short_wheel_4"
+  ],
+  "fps": 24.0,
+  "license_ref": {
+    "sha256": "0163481eb7a0fe3ed86d2dccf542a849b36b3c119f8ca6d3d5b36c074f2e1a1c"
+  },
+  "objects": [
+    {
+      "asset": "84a8c6987eed429f08361a6caf8661411bacad37a8fb70dee1b240dbb3f16c51",
+      "id": 1,
+      "name": "blue_short_body",
+      "node": 0,
+      "pose": [
+        -3.200000047683716,
+        0.0,
+        0.23999999463558197,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.18000000715255737,
+        0.41999998688697815,
+        0.949999988079071,
+        1.0
+      ],
+      "role": "blue_short_car",
+      "shape": "cube",
+      "source_id": "blue_short_body"
+    },
+    {
+      "asset": "39e52efdbfd97dd3b81e3c1cd425c55f6dd294b2424a4198709d2c2a8249c65f",
+      "id": 2,
+      "name": "blue_short_roof",
+      "node": 1,
+      "pose": [
+        -3.0799999237060547,
+        0.0,
+        0.4000000059604645,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.18000000715255737,
+        0.41999998688697815,
+        0.949999988079071,
+        1.0
+      ],
+      "role": "blue_short_car",
+      "shape": "cube",
+      "source_id": "blue_short_roof"
+    },
+    {
+      "asset": "0e8364c8b8e056ae70beee114273714070ed8bf6861c95bab203292433ef4ea3",
+      "id": 3,
+      "name": "blue_short_wheel_1",
+      "node": 2,
+      "pose": [
+        -3.4800000190734863,
+        -0.23999999463558197,
+        0.11999999731779099,
+        0.7071068286895752,
+        0.7071068286895752,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.11999999731779099,
+        0.11999999731779099,
+        0.12999999523162842,
+        1.0
+      ],
+      "role": "wheel",
+      "shape": "cylinder",
+      "source_id": "blue_short_wheel_1"
+    },
+    {
+      "asset": "0e8364c8b8e056ae70beee114273714070ed8bf6861c95bab203292433ef4ea3",
+      "id": 4,
+      "name": "blue_short_wheel_2",
+      "node": 3,
+      "pose": [
+        -2.9200000762939453,
+        -0.23999999463558197,
+        0.11999999731779099,
+        0.7071068286895752,
+        0.7071068286895752,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.11999999731779099,
+        0.11999999731779099,
+        0.12999999523162842,
+        1.0
+      ],
+      "role": "wheel",
+      "shape": "cylinder",
+      "source_id": "blue_short_wheel_2"
+    },
+    {
+      "asset": "0e8364c8b8e056ae70beee114273714070ed8bf6861c95bab203292433ef4ea3",
+      "id": 5,
+      "name": "blue_short_wheel_3",
+      "node": 4,
+      "pose": [
+        -3.4800000190734863,
+        0.23999999463558197,
+        0.11999999731779099,
+        0.7071068286895752,
+        0.7071068286895752,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.11999999731779099,
+        0.11999999731779099,
+        0.12999999523162842,
+        1.0
+      ],
+      "role": "wheel",
+      "shape": "cylinder",
+      "source_id": "blue_short_wheel_3"
+    },
+    {
+      "asset": "0e8364c8b8e056ae70beee114273714070ed8bf6861c95bab203292433ef4ea3",
+      "id": 6,
+      "name": "blue_short_wheel_4",
+      "node": 5,
+      "pose": [
+        -2.9200000762939453,
+        0.23999999463558197,
+        0.11999999731779099,
+        0.7071068286895752,
+        0.7071068286895752,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.11999999731779099,
+        0.11999999731779099,
+        0.12999999523162842,
+        1.0
+      ],
+      "role": "wheel",
+      "shape": "cylinder",
+      "source_id": "blue_short_wheel_4"
+    },
+    {
+      "asset": "597b6fb22605121a3678842ecca1c9f77a9702cb2f56a62da9056414a3fdf43a",
+      "id": 7,
+      "name": "gate_left_post",
+      "node": -1,
+      "pose": [
+        0.0,
+        -0.550000011920929,
+        0.28999999165534973,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6000000238418579,
+        0.6200000047683716,
+        0.6399999856948853,
+        1.0
+      ],
+      "role": "gate_post",
+      "shape": "cube",
+      "source_id": "gate_left_post"
+    },
+    {
+      "asset": "597b6fb22605121a3678842ecca1c9f77a9702cb2f56a62da9056414a3fdf43a",
+      "id": 8,
+      "name": "gate_right_post",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.550000011920929,
+        0.28999999165534973,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6000000238418579,
+        0.6200000047683716,
+        0.6399999856948853,
+        1.0
+      ],
+      "role": "gate_post",
+      "shape": "cube",
+      "source_id": "gate_right_post"
+    },
+    {
+      "asset": "f6e8183b55e07ab3f87f323f09f7a726cde53823647cb35a5161930fe30cf730",
+      "id": 9,
+      "name": "large_floor_base",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        -0.05000000074505806,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8199999928474426,
+        0.800000011920929,
+        0.75,
+        1.0
+      ],
+      "role": "ground",
+      "shape": "cube",
+      "source_id": "large_floor_base"
+    },
+    {
+      "asset": "b34e8177a3c15bd7a29ca2aed0d53c950cf53d9da95d097a5d06fdb2f55aa0b7",
+      "id": 10,
+      "name": "low_beam_crossbar",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        0.6399999856948853,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6000000238418579,
+        0.6200000047683716,
+        0.6399999856948853,
+        1.0
+      ],
+      "role": "low_beam",
+      "shape": "cube",
+      "source_id": "low_beam_crossbar"
+    },
+    {
+      "asset": "1ad23c69efe60bc65ee8f4287add883ac5ce1c153186b19a3a5dbe99829a2c89",
+      "id": 11,
+      "name": "rear_backdrop_panel",
+      "node": -1,
+      "pose": [
+        0.0,
+        2.75,
+        1.649999976158142,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9599999785423279,
+        0.9700000286102295,
+        0.9800000190734863,
+        1.0
+      ],
+      "role": "background",
+      "shape": "cube",
+      "source_id": "rear_backdrop_panel"
+    },
+    {
+      "asset": "485f1263f42aff01392fe770a5483b167e68efe06d69f7562bd5fcd07807f4f4",
+      "id": 12,
+      "name": "road_surface",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        0.019999999552965164,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.4399999976158142,
+        0.4399999976158142,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "road",
+      "shape": "cube",
+      "source_id": "road_surface"
+    }
+  ],
+  "schema": "stable-envs/object-permanence-rigid-v2",
+  "source": {
+    "commit": "824baddcdad087810d35638bf8f273b884f74975",
+    "entry_profile": "nominal",
+    "exporter": "scripts/export/object_permanence.py",
+    "exporter_sha256": "5b50283dbde7d78b6bcbe975dc05b1dea90919c64f4f4189cda3d5c29fba919d",
+    "license": "CC-BY-NC-4.0",
+    "member": 1,
+    "parameters": {},
+    "preparation_recipe": {
+      "animate": "animate_scene_by_kind",
+      "build": "build_scene_by_kind"
+    },
+    "profile": "audited-member-no-diversity",
+    "script": "object_permanence/generator/tasks/G09_low_beam_car_height/pb_task_00000043_pb_blue_short_car_passes_low_beam_0044_blender.py",
+    "script_sha256": "2d349fb53616bf9128557c58293183a6c23ba8758ea6096baf764eee263e8bae",
+    "seed": null,
+    "task": "G09",
+    "task_manifest_sha256": "f069adc00d807b0cb93833c2ef2cb3647ac92c2e15650fcecdd5121a8c537c19",
+    "url": "https://github.com/hokindeng/object-permanence",
+    "versions": {
+      "blender": "4.4.0",
+      "numpy": "1.26.4",
+      "python": "3.11.16"
+    },
+    "video_split": null
+  },
+  "visibility_contract": "stable-envs/opaque-pixel-rays-v2"
+}

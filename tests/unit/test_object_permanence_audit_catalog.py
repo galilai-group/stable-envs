@@ -9,6 +9,7 @@ from scripts.export.object_permanence import (
     AUDITED_MEMBERS,
     AUDITED_TASKS,
     OPTICAL_TASKS,
+    ORTHOGRAPHIC_MEMBERS,
     ORTHOGRAPHIC_TASKS,
     RAY_CONTRACT_TASKS,
     SOURCE_COMMIT,
@@ -139,9 +140,14 @@ def test_additional_certified_members_keep_their_source_identity_and_versioned_o
         assert m["source"]["task_manifest_sha256"] == row["source_task_manifest_sha256"]
         assert m["source"]["member"] == row["member"]
         assert m.get("visibility_contract", "stable-envs/opaque-pixel-rays-v1") == row["contract"]
+        if (row["task"], row["member"]) in ORTHOGRAPHIC_MEMBERS:
+            assert m["schema"] == "stable-envs/object-permanence-rigid-v2"
+            assert m["camera"]["projection_type"] == "orthographic"
+            assert row["camera"] == "ORTHO" and row["contract"] == "stable-envs/opaque-pixel-rays-v2"
         assert row["depth_mse_max"] <= DEPTH_MSE_MAX and row["mask_iou_min"] >= MASK_IOU_MIN
         version = row["contract"].split("/")[1].replace("-", "_")
         oracle = fixtures / f"semantics/object_permanence/{row['task'].lower()}/{version}/member{row['member']}"
         source = json.loads((oracle / "manifest.json").read_text())
         assert source["source_script_sha256"] == row["source_script_sha256"]
+        assert m["source"].get("execution_context") == source.get("source_execution_context")
         assert source.get("frames", source["arrays"]["source_frames"]["shape"][0]) == row["frames"] == 120

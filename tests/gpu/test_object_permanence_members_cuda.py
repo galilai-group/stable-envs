@@ -14,11 +14,29 @@ from tests.helpers.reference.object_permanence_recordings import FIXTURES, RECOR
 
 
 @pytest.mark.parametrize(
-    "task,member", [("G02", 1), ("G02", 2), ("G04", 1), ("G05", 2), ("G05", 4), ("G05", 5), ("G05", 6)]
+    "task,member,version",
+    [
+        ("G02", 1, "v1"),
+        ("G02", 2, "v1"),
+        ("G04", 1, "v1"),
+        ("G05", 2, "v1"),
+        ("G05", 4, "v1"),
+        ("G05", 5, "v1"),
+        ("G05", 6, "v1"),
+        ("G06", 1, "v1"),
+        ("G06", 2, "v1"),
+        ("G07", 1, "v1"),
+        ("G08", 1, "v2"),
+        ("G09", 1, "v2"),
+        ("G09", 2, "v2"),
+    ],
 )
-def test_all_member_frames_source_masks_depth_and_cross_batch_cache(task, member):
+def test_all_member_frames_source_masks_depth_and_cross_batch_cache(task, member, version):
     result = check(
-        RECORDINGS, FIXTURES / "semantics/object_permanence", Member(task, member), "stable-envs/opaque-pixel-rays-v1"
+        RECORDINGS,
+        FIXTURES / "semantics/object_permanence",
+        Member(task, member),
+        f"stable-envs/opaque-pixel-rays-{version}",
     )
     assert result["passed"], result
     assert all(r["frames"] == 120 for r in result["fidelity"] + result["cache"])

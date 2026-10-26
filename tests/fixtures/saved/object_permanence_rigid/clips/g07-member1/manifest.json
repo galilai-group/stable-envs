@@ -1,0 +1,420 @@
+{
+  "arrays": {
+    "frames": {
+      "dtype": "int64",
+      "sha256": "3ce1a862b6cf0bb21bc1354b758cafa47ca5ec03b5c004d6210f5abd8c55df44",
+      "shape": [
+        120
+      ]
+    },
+    "poses": {
+      "dtype": "float32",
+      "sha256": "e3f0b6deabe3e3fe98af8016b55185f62b9275fbee591883438129192a7b2e69",
+      "shape": [
+        120,
+        3,
+        7
+      ]
+    }
+  },
+  "assets": {
+    "0472dec919e6c6c4e9deeb0dbe1924a7adf7cfff268b416d3df71af21b72631b": {
+      "file": "assets/cube/0472dec919e6c6c4e9deeb0dbe1924a7adf7cfff268b416d3df71af21b72631b.npz",
+      "sha256": "ad351d2d12387e1899805c2849f5b548c7da4e1fed41d531b0d6114a1c0173e2"
+    },
+    "0c53e4533b8acabd82f78bac8fe58ed3114ae8961c543617220a85d9dcdde19a": {
+      "file": "assets/sphere/0c53e4533b8acabd82f78bac8fe58ed3114ae8961c543617220a85d9dcdde19a.npz",
+      "sha256": "0a099855d03ab4e933ee35a8b6850ff6760c1baba70ae0c70558445aa9e99f7c"
+    },
+    "2b61bc6a67ff191f7f74a5e892749109fab5b51cc5b2f2d4f61fdbdcf7b7ffc4": {
+      "file": "assets/cube/2b61bc6a67ff191f7f74a5e892749109fab5b51cc5b2f2d4f61fdbdcf7b7ffc4.npz",
+      "sha256": "34fbba1e713e65f894e2b9a0c1c0bfb9632342a1afdea17c2a75c215253b739f"
+    },
+    "375f50fa5f209f620c3209bc085b146b2aa420ffdf5e60339ab30661c517a0bf": {
+      "file": "assets/cube/375f50fa5f209f620c3209bc085b146b2aa420ffdf5e60339ab30661c517a0bf.npz",
+      "sha256": "5ad9e1f5f4925cfad5f0f02a1a9db549b2e2479916c30c7ff908922db3b3147a"
+    },
+    "66d241fc06fd2b47507f8f8b808ae45f2a496b599220ff6abcf340ced873c505": {
+      "file": "assets/cube/66d241fc06fd2b47507f8f8b808ae45f2a496b599220ff6abcf340ced873c505.npz",
+      "sha256": "ff83ee3caabe5e734fb779c92dc1fc6495d21b88690f31e5ccbca19cdd2f4155"
+    },
+    "8aab2514f45cbbdd51b662f671f0aa81009f9cefa0ff0ae2d3201224866ba196": {
+      "file": "assets/cube/8aab2514f45cbbdd51b662f671f0aa81009f9cefa0ff0ae2d3201224866ba196.npz",
+      "sha256": "c2d559f8e476d697d5572aef975186503ef2d74f3995a62fae9c88fe67a3abe9"
+    },
+    "bc219b67012a68ae4f5c19c950a8aa0ae6a423e0005768ca2fa03069a45c7e85": {
+      "file": "assets/cube/bc219b67012a68ae4f5c19c950a8aa0ae6a423e0005768ca2fa03069a45c7e85.npz",
+      "sha256": "5e9027ca09e64a4cab3c207d0c275549a39945406bb9512865f40167813d22f0"
+    },
+    "f473bf7de34f1f857477dc4a8d9a9657cab7148cd5a06b1114e35d6b8586362f": {
+      "file": "assets/cube/f473bf7de34f1f857477dc4a8d9a9657cab7148cd5a06b1114e35d6b8586362f.npz",
+      "sha256": "f4be498dd8ff77e8d700dfaeb07cda681ad5302b469375da8aec17cfef5c1e14"
+    }
+  },
+  "camera": {
+    "far": 1000.0,
+    "height": 720,
+    "near": 0.10000000149011612,
+    "projection": [
+      [
+        1.7777777910232544,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        3.1604936122894287,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0001999139785767,
+        -0.20002000033855438
+      ],
+      [
+        0.0,
+        0.0,
+        -1.0,
+        0.0
+      ]
+    ],
+    "width": 1280,
+    "world": [
+      [
+        0.9065067768096924,
+        0.07531602680683136,
+        -0.41541898250579834,
+        -2.549999952316284
+      ],
+      [
+        -0.42219123244285583,
+        0.16171462833881378,
+        -0.8919657468795776,
+        -7.150000095367432
+      ],
+      [
+        9.678027268478218e-09,
+        0.9839592576026917,
+        0.1783931851387024,
+        2.049999952316284
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "clip": "g07-member1",
+  "conventions": {
+    "quaternion": "wxyz",
+    "units": "source-scene-units",
+    "world": "right-handed-z-up"
+  },
+  "dynamic_nodes": [
+    "first_orange_ball",
+    "guillotine_sliding_gate_blade",
+    "second_orange_ball"
+  ],
+  "fps": 24.0,
+  "license_ref": {
+    "sha256": "0163481eb7a0fe3ed86d2dccf542a849b36b3c119f8ca6d3d5b36c074f2e1a1c"
+  },
+  "objects": [
+    {
+      "asset": "0c53e4533b8acabd82f78bac8fe58ed3114ae8961c543617220a85d9dcdde19a",
+      "id": 1,
+      "name": "first_orange_ball",
+      "node": 0,
+      "pose": [
+        -1.7999999523162842,
+        0.0,
+        0.2199999988079071,
+        0.998200535774231,
+        0.0,
+        -0.059964004904031754,
+        0.0
+      ],
+      "rgba": [
+        1.0,
+        0.3799999952316284,
+        0.05999999865889549,
+        1.0
+      ],
+      "role": "target",
+      "shape": "sphere",
+      "source_id": "first_orange_ball"
+    },
+    {
+      "asset": "2b61bc6a67ff191f7f74a5e892749109fab5b51cc5b2f2d4f61fdbdcf7b7ffc4",
+      "id": 2,
+      "name": "guillotine_far_inner_guide_slot",
+      "node": -1,
+      "pose": [
+        0.9079999923706055,
+        0.38999998569488525,
+        0.9599999785423279,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.10000000149011612,
+        0.10000000149011612,
+        0.11999999731779099,
+        1.0
+      ],
+      "role": "guillotine_guide_slot",
+      "shape": "cube",
+      "source_id": "guillotine_far_inner_guide_slot"
+    },
+    {
+      "asset": "0472dec919e6c6c4e9deeb0dbe1924a7adf7cfff268b416d3df71af21b72631b",
+      "id": 3,
+      "name": "guillotine_far_side_post",
+      "node": -1,
+      "pose": [
+        0.9200000166893005,
+        0.5,
+        1.0499999523162842,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6600000262260437,
+        0.6700000166893005,
+        0.6899999976158142,
+        1.0
+      ],
+      "role": "guillotine_side_post",
+      "shape": "cube",
+      "source_id": "guillotine_far_side_post"
+    },
+    {
+      "asset": "2b61bc6a67ff191f7f74a5e892749109fab5b51cc5b2f2d4f61fdbdcf7b7ffc4",
+      "id": 4,
+      "name": "guillotine_near_inner_guide_slot",
+      "node": -1,
+      "pose": [
+        0.9079999923706055,
+        -0.38999998569488525,
+        0.9599999785423279,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.10000000149011612,
+        0.10000000149011612,
+        0.11999999731779099,
+        1.0
+      ],
+      "role": "guillotine_guide_slot",
+      "shape": "cube",
+      "source_id": "guillotine_near_inner_guide_slot"
+    },
+    {
+      "asset": "0472dec919e6c6c4e9deeb0dbe1924a7adf7cfff268b416d3df71af21b72631b",
+      "id": 5,
+      "name": "guillotine_near_side_post",
+      "node": -1,
+      "pose": [
+        0.9200000166893005,
+        -0.5,
+        1.0499999523162842,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6600000262260437,
+        0.6700000166893005,
+        0.6899999976158142,
+        1.0
+      ],
+      "role": "guillotine_side_post",
+      "shape": "cube",
+      "source_id": "guillotine_near_side_post"
+    },
+    {
+      "asset": "66d241fc06fd2b47507f8f8b808ae45f2a496b599220ff6abcf340ced873c505",
+      "id": 6,
+      "name": "guillotine_sliding_gate_blade",
+      "node": 1,
+      "pose": [
+        0.9200000166893005,
+        0.0,
+        1.5800000429153442,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.20000000298023224,
+        0.20000000298023224,
+        0.2199999988079071,
+        1.0
+      ],
+      "role": "guillotine_sliding_gate_blade",
+      "shape": "cube",
+      "source_id": "guillotine_sliding_gate_blade"
+    },
+    {
+      "asset": "f473bf7de34f1f857477dc4a8d9a9657cab7148cd5a06b1114e35d6b8586362f",
+      "id": 7,
+      "name": "guillotine_top_crossbeam",
+      "node": -1,
+      "pose": [
+        0.9200000166893005,
+        0.0,
+        2.119999885559082,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.6600000262260437,
+        0.6700000166893005,
+        0.6899999976158142,
+        1.0
+      ],
+      "role": "guillotine_top_crossbeam",
+      "shape": "cube",
+      "source_id": "guillotine_top_crossbeam"
+    },
+    {
+      "asset": "8aab2514f45cbbdd51b662f671f0aa81009f9cefa0ff0ae2d3201224866ba196",
+      "id": 8,
+      "name": "large_floor_base",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        -0.05000000074505806,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8199999928474426,
+        0.800000011920929,
+        0.75,
+        1.0
+      ],
+      "role": "ground",
+      "shape": "cube",
+      "source_id": "large_floor_base"
+    },
+    {
+      "asset": "375f50fa5f209f620c3209bc085b146b2aa420ffdf5e60339ab30661c517a0bf",
+      "id": 9,
+      "name": "rear_backdrop_panel",
+      "node": -1,
+      "pose": [
+        0.0,
+        2.4800000190734863,
+        1.6200000047683716,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.9599999785423279,
+        0.9700000286102295,
+        0.9800000190734863,
+        1.0
+      ],
+      "role": "background",
+      "shape": "cube",
+      "source_id": "rear_backdrop_panel"
+    },
+    {
+      "asset": "0c53e4533b8acabd82f78bac8fe58ed3114ae8961c543617220a85d9dcdde19a",
+      "id": 10,
+      "name": "second_orange_ball",
+      "node": 2,
+      "pose": [
+        -4.199999809265137,
+        0.0,
+        0.2199999988079071,
+        0.9987502694129944,
+        0.0,
+        -0.04997917264699936,
+        0.0
+      ],
+      "rgba": [
+        1.0,
+        0.3799999952316284,
+        0.05999999865889549,
+        1.0
+      ],
+      "role": "target",
+      "shape": "sphere",
+      "source_id": "second_orange_ball"
+    },
+    {
+      "asset": "bc219b67012a68ae4f5c19c950a8aa0ae6a423e0005768ca2fa03069a45c7e85",
+      "id": 11,
+      "name": "straight_gate_track",
+      "node": -1,
+      "pose": [
+        0.0,
+        0.0,
+        0.05999999865889549,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.46000000834465027,
+        0.46000000834465027,
+        0.46000000834465027,
+        1.0
+      ],
+      "role": "gate_track",
+      "shape": "cube",
+      "source_id": "straight_gate_track"
+    }
+  ],
+  "schema": "stable-envs/object-permanence-rigid-v1",
+  "source": {
+    "commit": "824baddcdad087810d35638bf8f273b884f74975",
+    "entry_profile": "nominal",
+    "exporter": "scripts/export/object_permanence.py",
+    "exporter_sha256": "5b50283dbde7d78b6bcbe975dc05b1dea90919c64f4f4189cda3d5c29fba919d",
+    "license": "CC-BY-NC-4.0",
+    "member": 1,
+    "parameters": {},
+    "preparation_recipe": {
+      "animate": "animate_scene",
+      "build": "build_scene"
+    },
+    "profile": "audited-member-no-diversity",
+    "script": "object_permanence/generator/tasks/G07_guillotine_gate_stops/pb_task_00000040_pb_first_ball_passes_second_blocked_by_gate_0041_blender.py",
+    "script_sha256": "b626051de4a6c871c735f6754277b92ac50d388e6164ccda62698ba837a55762",
+    "seed": null,
+    "task": "G07",
+    "task_manifest_sha256": "97dd55f83022722b16ad79a60b8b9259af5c558e8425815d9dbf4ca76b11ae39",
+    "url": "https://github.com/hokindeng/object-permanence",
+    "versions": {
+      "blender": "4.4.0",
+      "numpy": "1.26.4",
+      "python": "3.11.16"
+    },
+    "video_split": null
+  }
+}

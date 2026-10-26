@@ -765,6 +765,602 @@
       "source_task_manifest_sha256": "0b7b4cff93fd164778589ce006756d2f070d229a7febc6f627f0d2e5561927ed",
       "status": "certified",
       "task": "G05"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "PERSP",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v1",
+      "depth_mse_max": 4.0557177336585426e-17,
+      "dynamic_nodes": [
+        "solid_bridge_red_car_body",
+        "solid_bridge_red_car_wheel_front_far",
+        "solid_bridge_red_car_wheel_front_near",
+        "solid_bridge_red_car_wheel_rear_far",
+        "solid_bridge_red_car_wheel_rear_near"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 10,
+        "dynamic_nodes": [
+          "solid_bridge_red_car_body",
+          "solid_bridge_red_car_wheel_front_far",
+          "solid_bridge_red_car_wheel_front_near",
+          "solid_bridge_red_car_wheel_rear_far",
+          "solid_bridge_red_car_wheel_rear_near"
+        ],
+        "frames": 120,
+        "objects": 34,
+        "task": "G06",
+        "world_normal_max_abs_error": 2.7962690797281784e-07,
+        "world_triangle_max_abs_error": 2.972205170870268e-08
+      },
+      "mask_iou_min": 1.0,
+      "member": 1,
+      "mesh_count": 34,
+      "oracle": "tests/fixtures/semantics/object_permanence/g06/opaque_pixel_rays_v1/member1",
+      "preview": ".cache/object_permanence/evaluation/g06-member1-source-vs-pixel-rays-v1.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v1",
+      "reference_target_roles": {
+        "solid_bridge_red_car_body": "target"
+      },
+      "reference_targets": [
+        "solid_bridge_red_car_body"
+      ],
+      "script": "object_permanence/generator/tasks/G06_car_on_bridge/pb_task_00000020_pb_parallel_bridges_solid_car_passes_0021_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed PERSP; no depth of field",
+        "driver_diversity": "no sampled driver variation or appearance hooks",
+        "dynamic_node_count": 5,
+        "frames": 120,
+        "local_geometry": "constant over every source frame",
+        "materials": "constant referenced opaque source materials",
+        "physics_objects": [],
+        "source_motion": "evaluated source location/rotation keyframes; no physics reconstruction",
+        "types": {
+          "CAMERA": 1,
+          "LIGHT": 2,
+          "MESH": 34
+        },
+        "visibility": "no hide flags or object-set changes; geometric occlusion"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "60f0a7638d6eb5ea8ae0ff5a3447c63af891e0c85fca2f700d4590d5163132b4",
+      "source_task_manifest_sha256": "70149469512b277004dfa45ba31c8ab4c12410fc70329e32258d4378cd38ef97",
+      "status": "certified",
+      "task": "G06"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "PERSP",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v1",
+      "depth_mse_max": 4.5623772746284274e-17,
+      "dynamic_nodes": [
+        "hole_bridge_blue_car_body",
+        "hole_bridge_blue_car_wheel_front_far",
+        "hole_bridge_blue_car_wheel_front_near",
+        "hole_bridge_blue_car_wheel_rear_far",
+        "hole_bridge_blue_car_wheel_rear_near",
+        "solid_bridge_red_car_body",
+        "solid_bridge_red_car_wheel_front_far",
+        "solid_bridge_red_car_wheel_front_near",
+        "solid_bridge_red_car_wheel_rear_far",
+        "solid_bridge_red_car_wheel_rear_near"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 10,
+        "dynamic_nodes": [
+          "hole_bridge_blue_car_body",
+          "hole_bridge_blue_car_wheel_front_far",
+          "hole_bridge_blue_car_wheel_front_near",
+          "hole_bridge_blue_car_wheel_rear_far",
+          "hole_bridge_blue_car_wheel_rear_near",
+          "solid_bridge_red_car_body",
+          "solid_bridge_red_car_wheel_front_far",
+          "solid_bridge_red_car_wheel_front_near",
+          "solid_bridge_red_car_wheel_rear_far",
+          "solid_bridge_red_car_wheel_rear_near"
+        ],
+        "frames": 120,
+        "objects": 39,
+        "task": "G06",
+        "world_normal_max_abs_error": 2.7962690797281784e-07,
+        "world_triangle_max_abs_error": 2.972205170870268e-08
+      },
+      "mask_iou_min": 1.0,
+      "member": 2,
+      "mesh_count": 39,
+      "oracle": "tests/fixtures/semantics/object_permanence/g06/opaque_pixel_rays_v1/member2",
+      "preview": ".cache/object_permanence/evaluation/g06-member2-source-vs-pixel-rays-v1.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v1",
+      "reference_target_roles": {
+        "hole_bridge_blue_car_body": "target",
+        "solid_bridge_red_car_body": "target"
+      },
+      "reference_targets": [
+        "solid_bridge_red_car_body",
+        "hole_bridge_blue_car_body"
+      ],
+      "script": "object_permanence/generator/tasks/G06_car_on_bridge/pb_task_00000021_pb_parallel_bridges_two_cars_pass_and_fall_0022_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed PERSP; no depth of field",
+        "driver_diversity": "no sampled driver variation or appearance hooks",
+        "dynamic_node_count": 10,
+        "frames": 120,
+        "local_geometry": "constant over every source frame",
+        "materials": "constant referenced opaque source materials",
+        "physics_objects": [],
+        "source_motion": "evaluated source location/rotation keyframes; no physics reconstruction",
+        "types": {
+          "CAMERA": 1,
+          "LIGHT": 2,
+          "MESH": 39
+        },
+        "visibility": "no hide flags or object-set changes; geometric occlusion"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "150b3188b5d2c9038ade2bd30a8a4f1eca4b4bb1ebdfea008bf7989a1c3f11ea",
+      "source_task_manifest_sha256": "70149469512b277004dfa45ba31c8ab4c12410fc70329e32258d4378cd38ef97",
+      "status": "certified",
+      "task": "G06"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "PERSP",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v1",
+      "depth_mse_max": 3.475598829765088e-17,
+      "dynamic_nodes": [
+        "first_orange_ball",
+        "guillotine_sliding_gate_blade",
+        "second_orange_ball"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 8,
+        "dynamic_nodes": [
+          "first_orange_ball",
+          "guillotine_sliding_gate_blade",
+          "second_orange_ball"
+        ],
+        "frames": 120,
+        "objects": 11,
+        "task": "G07",
+        "world_normal_max_abs_error": 2.5218610244515105e-07,
+        "world_triangle_max_abs_error": 5.841258321481746e-08
+      },
+      "mask_iou_min": 1.0,
+      "member": 1,
+      "mesh_count": 11,
+      "oracle": "tests/fixtures/semantics/object_permanence/g07/opaque_pixel_rays_v1/member1",
+      "preview": ".cache/object_permanence/evaluation/g07-member1-source-vs-pixel-rays-v1.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v1",
+      "reference_target_roles": {
+        "first_orange_ball": "target",
+        "second_orange_ball": "target"
+      },
+      "reference_targets": [
+        "first_orange_ball",
+        "second_orange_ball"
+      ],
+      "script": "object_permanence/generator/tasks/G07_guillotine_gate_stops/pb_task_00000040_pb_first_ball_passes_second_blocked_by_gate_0041_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed PERSP; no depth of field",
+        "driver_diversity": "no sampled driver variation or appearance hooks",
+        "dynamic_node_count": 3,
+        "frames": 120,
+        "local_geometry": "constant over every source frame",
+        "materials": "constant referenced opaque source materials",
+        "physics_objects": [],
+        "source_motion": "evaluated source location/rotation keyframes; no physics reconstruction",
+        "types": {
+          "CAMERA": 1,
+          "LIGHT": 2,
+          "MESH": 11
+        },
+        "visibility": "no hide flags or object-set changes; geometric occlusion"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "b626051de4a6c871c735f6754277b92ac50d388e6164ccda62698ba837a55762",
+      "source_task_manifest_sha256": "97dd55f83022722b16ad79a60b8b9259af5c558e8425815d9dbf4ca76b11ae39",
+      "status": "certified",
+      "task": "G07"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "ORTHO",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 0.0,
+      "dynamic_nodes": [
+        "blue_cube_inside_drawer",
+        "cabinet_back_wall",
+        "cabinet_floor",
+        "cabinet_left_wall",
+        "cabinet_right_wall",
+        "cabinet_top_cover",
+        "drawer_back_wall",
+        "drawer_floor",
+        "drawer_front_wall",
+        "drawer_handle",
+        "drawer_left_wall",
+        "drawer_right_wall",
+        "orange_ball_inside_drawer"
+      ],
+      "execution_context": {
+        "diversity_module": {
+          "file": "object_permanence/generator/core/diversity.py",
+          "sha256": "90be09709b550b26150fc7f9b66352bd74bf25ef84ee09567ab7a70b78d44117"
+        },
+        "driver": {
+          "file": "object_permanence/generator/core/render.py",
+          "sha256": "2a455d847e0c9ea66d17a5af5edf2b37105e643e9bdb22b96837943b2071fab6"
+        },
+        "globals": {
+          "DIVERSITY": {}
+        },
+        "profile": "surface",
+        "scope": "source construction only; no driver appearance/render hooks",
+        "source_bindings": {}
+      },
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 12,
+        "dynamic_nodes": [
+          "blue_cube_inside_drawer",
+          "cabinet_back_wall",
+          "cabinet_floor",
+          "cabinet_left_wall",
+          "cabinet_right_wall",
+          "cabinet_top_cover",
+          "drawer_back_wall",
+          "drawer_floor",
+          "drawer_front_wall",
+          "drawer_handle",
+          "drawer_left_wall",
+          "drawer_right_wall",
+          "orange_ball_inside_drawer"
+        ],
+        "frames": 120,
+        "objects": 15,
+        "task": "G08",
+        "world_normal_max_abs_error": 3.628094891183764e-08,
+        "world_triangle_max_abs_error": 0.0
+      },
+      "mask_iou_min": 1.0,
+      "member": 1,
+      "mesh_count": 15,
+      "oracle": "tests/fixtures/semantics/object_permanence/g08/opaque_pixel_rays_v2/member1",
+      "preview": ".cache/object_permanence/evaluation/g08-member1-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v2",
+      "reference_target_roles": {
+        "blue_cube_inside_drawer": "contained_cube",
+        "orange_ball_inside_drawer": "target"
+      },
+      "reference_targets": [
+        "orange_ball_inside_drawer",
+        "blue_cube_inside_drawer"
+      ],
+      "script": "object_permanence/generator/tasks/G08_drawer_moves_hidden_object/pb_task_00000037_pb_drawer_closes_moves_hidden_cube_and_ball_0038_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed ORTHO; no depth of field",
+        "driver_diversity": "no sampled driver variation or appearance hooks",
+        "dynamic_node_count": 13,
+        "frames": 120,
+        "local_geometry": "constant over every source frame",
+        "materials": "constant referenced opaque source materials",
+        "physics_objects": [],
+        "source_motion": "evaluated source location/rotation keyframes; no physics reconstruction",
+        "types": {
+          "CAMERA": 1,
+          "LIGHT": 2,
+          "MESH": 15
+        },
+        "visibility": "no hide flags or object-set changes; geometric occlusion"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "e50307b15e9e8a28ca9a84162fe7e2d1bef5259c2238ccd81952c3e2eb181fca",
+      "source_task_manifest_sha256": "7153de296480a796a841c05102ac2828f0cef2985ba32da14e1d1c205917d18a",
+      "status": "certified",
+      "task": "G08"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "ORTHO",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 5.6971604971995e-17,
+      "dynamic_nodes": [
+        "blue_short_body",
+        "blue_short_roof",
+        "blue_short_wheel_1",
+        "blue_short_wheel_2",
+        "blue_short_wheel_3",
+        "blue_short_wheel_4"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 8,
+        "dynamic_nodes": [
+          "blue_short_body",
+          "blue_short_roof",
+          "blue_short_wheel_1",
+          "blue_short_wheel_2",
+          "blue_short_wheel_3",
+          "blue_short_wheel_4"
+        ],
+        "frames": 120,
+        "objects": 12,
+        "task": "G09",
+        "world_normal_max_abs_error": 2.3478415668602715e-07,
+        "world_triangle_max_abs_error": 3.2018265372357746e-08
+      },
+      "mask_iou_min": 1.0,
+      "member": 1,
+      "mesh_count": 12,
+      "oracle": "tests/fixtures/semantics/object_permanence/g09/opaque_pixel_rays_v2/member1",
+      "preview": ".cache/object_permanence/evaluation/g09-member1-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene_by_kind",
+        "animate_scene_by_kind"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v2",
+      "reference_target_roles": {
+        "blue_short_body": "blue_short_car",
+        "blue_short_roof": "blue_short_car"
+      },
+      "reference_targets": [
+        "blue_short_body",
+        "blue_short_roof"
+      ],
+      "script": "object_permanence/generator/tasks/G09_low_beam_car_height/pb_task_00000043_pb_blue_short_car_passes_low_beam_0044_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed ORTHO; no depth of field",
+        "driver_diversity": "no sampled driver variation or appearance hooks",
+        "dynamic_node_count": 6,
+        "frames": 120,
+        "local_geometry": "constant over every source frame",
+        "materials": "constant referenced opaque source materials",
+        "physics_objects": [],
+        "source_motion": "evaluated source location/rotation keyframes; no physics reconstruction",
+        "types": {
+          "CAMERA": 1,
+          "LIGHT": 2,
+          "MESH": 12
+        },
+        "visibility": "no hide flags or object-set changes; geometric occlusion"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "2d349fb53616bf9128557c58293183a6c23ba8758ea6096baf764eee263e8bae",
+      "source_task_manifest_sha256": "f069adc00d807b0cb93833c2ef2cb3647ac92c2e15650fcecdd5121a8c537c19",
+      "status": "certified",
+      "task": "G09"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "ORTHO",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 8.418129412929732e-17,
+      "dynamic_nodes": [
+        "blue_short_parallel_body",
+        "blue_short_parallel_roof",
+        "blue_short_parallel_wheel_1",
+        "blue_short_parallel_wheel_2",
+        "blue_short_parallel_wheel_3",
+        "blue_short_parallel_wheel_4",
+        "red_tall_parallel_body",
+        "red_tall_parallel_roof",
+        "red_tall_parallel_wheel_1",
+        "red_tall_parallel_wheel_2",
+        "red_tall_parallel_wheel_3",
+        "red_tall_parallel_wheel_4"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 10,
+        "dynamic_nodes": [
+          "blue_short_parallel_body",
+          "blue_short_parallel_roof",
+          "blue_short_parallel_wheel_1",
+          "blue_short_parallel_wheel_2",
+          "blue_short_parallel_wheel_3",
+          "blue_short_parallel_wheel_4",
+          "red_tall_parallel_body",
+          "red_tall_parallel_roof",
+          "red_tall_parallel_wheel_1",
+          "red_tall_parallel_wheel_2",
+          "red_tall_parallel_wheel_3",
+          "red_tall_parallel_wheel_4"
+        ],
+        "frames": 120,
+        "objects": 21,
+        "task": "G09",
+        "world_normal_max_abs_error": 2.3478415668602715e-07,
+        "world_triangle_max_abs_error": 3.2018265372357746e-08
+      },
+      "mask_iou_min": 1.0,
+      "member": 2,
+      "mesh_count": 21,
+      "oracle": "tests/fixtures/semantics/object_permanence/g09/opaque_pixel_rays_v2/member2",
+      "preview": ".cache/object_permanence/evaluation/g09-member2-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene_by_kind",
+        "animate_scene_by_kind"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v2",
+      "reference_target_roles": {
+        "blue_short_parallel_body": "blue_short_parallel_car",
+        "blue_short_parallel_roof": "blue_short_parallel_car",
+        "red_tall_parallel_body": "red_tall_parallel_car",
+        "red_tall_parallel_roof": "red_tall_parallel_car"
+      },
+      "reference_targets": [
+        "red_tall_parallel_body",
+        "red_tall_parallel_roof",
+        "blue_short_parallel_body",
+        "blue_short_parallel_roof"
+      ],
+      "script": "object_permanence/generator/tasks/G09_low_beam_car_height/pb_task_00000044_pb_red_blue_parallel_cars_low_beam_0045_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed ORTHO; no depth of field",
+        "driver_diversity": "no sampled driver variation or appearance hooks",
+        "dynamic_node_count": 12,
+        "frames": 120,
+        "local_geometry": "constant over every source frame",
+        "materials": "constant referenced opaque source materials",
+        "physics_objects": [],
+        "source_motion": "evaluated source location/rotation keyframes; no physics reconstruction",
+        "types": {
+          "CAMERA": 1,
+          "LIGHT": 2,
+          "MESH": 21
+        },
+        "visibility": "no hide flags or object-set changes; geometric occlusion"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "adf53bfa8173d38a361f72b3238dfa05ab810ccfd5c45fab311c70476215ff59",
+      "source_task_manifest_sha256": "f069adc00d807b0cb93833c2ef2cb3647ac92c2e15650fcecdd5121a8c537c19",
+      "status": "certified",
+      "task": "G09"
     }
   ],
   "entries": [
@@ -9167,11 +9763,11 @@
   "reference_probe_policy": "Source task-object roles select probes; V2 separately records source_semantic_targets and the source-observable subset targets. Every mesh remains in all world poses, IDs and all-object depth/mask checks.",
   "schema": "stable-envs/object-permanence-source-audit-v1",
   "scope": {
-    "additional_certified_members": 9,
+    "additional_certified_members": 15,
     "member_scripts": 197,
     "nominal_members": 150,
     "task_groups": 150,
-    "unregistered_other_members": 38
+    "unregistered_other_members": 32
   },
   "source_commit": "824baddcdad087810d35638bf8f273b884f74975",
   "source_url": "https://github.com/hokindeng/object-permanence",
@@ -9241,48 +9837,6 @@
       "source_script_sha256": "a031bab744d099f78ab24b7da32075b548284d1446944e1a4ca08e17a5a77a99",
       "status": "unregistered-member-entry",
       "task": "G05"
-    },
-    {
-      "member": 1,
-      "script": "object_permanence/generator/tasks/G06_car_on_bridge/pb_task_00000020_pb_parallel_bridges_solid_car_passes_0021_blender.py",
-      "source_script_sha256": "60f0a7638d6eb5ea8ae0ff5a3447c63af891e0c85fca2f700d4590d5163132b4",
-      "status": "unregistered-member-entry",
-      "task": "G06"
-    },
-    {
-      "member": 2,
-      "script": "object_permanence/generator/tasks/G06_car_on_bridge/pb_task_00000021_pb_parallel_bridges_two_cars_pass_and_fall_0022_blender.py",
-      "source_script_sha256": "150b3188b5d2c9038ade2bd30a8a4f1eca4b4bb1ebdfea008bf7989a1c3f11ea",
-      "status": "unregistered-member-entry",
-      "task": "G06"
-    },
-    {
-      "member": 1,
-      "script": "object_permanence/generator/tasks/G07_guillotine_gate_stops/pb_task_00000040_pb_first_ball_passes_second_blocked_by_gate_0041_blender.py",
-      "source_script_sha256": "b626051de4a6c871c735f6754277b92ac50d388e6164ccda62698ba837a55762",
-      "status": "unregistered-member-entry",
-      "task": "G07"
-    },
-    {
-      "member": 1,
-      "script": "object_permanence/generator/tasks/G08_drawer_moves_hidden_object/pb_task_00000037_pb_drawer_closes_moves_hidden_cube_and_ball_0038_blender.py",
-      "source_script_sha256": "e50307b15e9e8a28ca9a84162fe7e2d1bef5259c2238ccd81952c3e2eb181fca",
-      "status": "unregistered-member-entry",
-      "task": "G08"
-    },
-    {
-      "member": 1,
-      "script": "object_permanence/generator/tasks/G09_low_beam_car_height/pb_task_00000043_pb_blue_short_car_passes_low_beam_0044_blender.py",
-      "source_script_sha256": "2d349fb53616bf9128557c58293183a6c23ba8758ea6096baf764eee263e8bae",
-      "status": "unregistered-member-entry",
-      "task": "G09"
-    },
-    {
-      "member": 2,
-      "script": "object_permanence/generator/tasks/G09_low_beam_car_height/pb_task_00000044_pb_red_blue_parallel_cars_low_beam_0045_blender.py",
-      "source_script_sha256": "adf53bfa8173d38a361f72b3238dfa05ab810ccfd5c45fab311c70476215ff59",
-      "status": "unregistered-member-entry",
-      "task": "G09"
     },
     {
       "member": 1,

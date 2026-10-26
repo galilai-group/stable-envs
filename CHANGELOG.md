@@ -8,23 +8,30 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Six additional object-permanence members through G09: solid/gapped bridges,
+  sequential balls at a sliding gate, a moving drawer with two contained objects,
+  and short/tall cars at a low beam. Adds member-scoped V1/V2 camera routing,
+  independently selected oracle contracts and correct preparation/context
+  provenance. Reuses unchanged renderers/formats and full-frame depth/mask/cache
+  gates; certified coverage is 165/197 scripts with 32 unimported.
+
 - Five additional object-permanence members: G04 straight high/low tracks and
   G05 small-hole stop, open/closed gates and two-car contact. Reuses existing
   evaluated Curve capture, rigid poses and opaque V1 rendering with independent
   full-frame oracles and cache parity gates. G05's hidden opening marker and
   multi-stage animated-scale entry remain explicitly deferred. Coverage is
-  159/197 scripts; existing data, interfaces, thresholds and renderers are unchanged.
+  165/197 scripts; existing data, interfaces, thresholds and renderers are unchanged.
 
 - Member-scoped object-permanence import/oracle/batch validation, with explicit
   script-index/profile identity, isolated source/CUDA stages and complete-frame
   cache parity checks. Adds the G02 side-window and two-ball members under the
   existing opaque V1 contract; old samples, interfaces and budgets are unchanged.
-  Certified coverage is 159/197 scripts, with 38 additional scripts unimported.
+  Certified coverage is 165/197 scripts, with 32 additional scripts unimported.
 
 - G98/G132 rigid replay with hash-pinned unmodified native source realizations,
   independent full-frame references and fresh-process geometry/normal checks.
   This completes the 150 first nominal members within their declared scope;
-  38 other scripts remain unimported. Old samples and thresholds are unchanged.
+  32 other scripts remain unimported. Old samples and thresholds are unchanged.
 
 - Explicit sampled dielectric replay for both G01 members and the G03 transparent-wall
   member, with exact source transforms, Snell/Fresnel paths, independent full-frame

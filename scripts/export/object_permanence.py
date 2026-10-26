@@ -38,7 +38,15 @@ AUDITED_MEMBERS = {
     ("G05", 4): ("build_scene", "animate_scene"),
     ("G05", 5): ("build_scene", "animate_scene"),
     ("G05", 6): ("build_scene", "animate_scene"),
+    ("G06", 1): ("build_scene", "animate_scene"),
+    ("G06", 2): ("build_scene", "animate_scene"),
+    ("G07", 1): ("build_scene", "animate_scene"),
+    ("G08", 1): ("build_scene", "animate_scene"),
+    ("G09", 1): ("build_scene_by_kind", "animate_scene_by_kind"),
+    ("G09", 2): ("build_scene_by_kind", "animate_scene_by_kind"),
 }
+# Extra members are audited independently of their task's first camera.
+ORTHOGRAPHIC_MEMBERS = frozenset({("G08", 1), ("G09", 1), ("G09", 2)})
 
 SOURCE_COMMIT = "824baddcdad087810d35638bf8f273b884f74975"
 SCHEMA = "stable-envs/object-permanence-rigid-v1"
@@ -1286,18 +1294,20 @@ def export(root, output, task, *, member=0, profile="nominal"):
     if (output / "clips" / entry.clip).exists():
         raise FileExistsError("refusing to overwrite an existing clip")
     scene, script, task_metadata = prepare(root, task, member=member, profile=profile)
+    orthographic = (
+        task in ORTHOGRAPHIC_TASKS | ALPHA_ORTHOGRAPHIC_TASKS
+        if member == 0
+        else (task, member) in ORTHOGRAPHIC_MEMBERS
+    )
     recording = sample_scene(
         scene,
         object_order=G34_ORDER if task == "G34" else None,
-        allow_orthographic=task in ORTHOGRAPHIC_TASKS | ALPHA_ORTHOGRAPHIC_TASKS,
+        allow_orthographic=orthographic,
         allow_evaluated_geometry=task in CONVERTED_GEOMETRY_TASKS,
         allow_animated_scale=task in ANIMATED_SCALE_TASKS,
         allow_transparent=task in ALPHA_TASKS,
     )
-    if (
-        task in ORTHOGRAPHIC_TASKS | ALPHA_ORTHOGRAPHIC_TASKS
-        and recording["camera"].get("projection_type") != "orthographic"
-    ):
+    if orthographic and recording["camera"].get("projection_type") != "orthographic":
         raise ValueError("audited orthographic entry changed projection type")
     source = {
         "url": "https://github.com/hokindeng/object-permanence",
@@ -1321,14 +1331,18 @@ def export(root, output, task, *, member=0, profile="nominal"):
         source["preparation_recipe"] = dict(zip(("build", "animate"), AUDITED_MEMBERS[task, member], strict=True))
     context = source_execution_context(root, task, script)
     if context is not None:
-        source["profile"] = "nominal-first-member-surface-diversity-context"
+        source["profile"] = (
+            "nominal-first-member-surface-diversity-context"
+            if member == 0
+            else "audited-member-surface-diversity-context"
+        )
         source["execution_context"] = context
     realization = source_realization(root, task)
     if realization is not None:
         source["realization"] = realization
         source["profile"] = "nominal-first-member-native-realization"
         source["preparation_recipe"] = dict(zip(("build", "animate"), AUDITED_TASKS[task], strict=True))
-    if task in ORTHOGRAPHIC_TASKS | CONVERTED_GEOMETRY_TASKS | ANIMATED_SCALE_TASKS | ALPHA_TASKS:
+    if member == 0 and task in ORTHOGRAPHIC_TASKS | CONVERTED_GEOMETRY_TASKS | ANIMATED_SCALE_TASKS | ALPHA_TASKS:
         source["preparation_recipe"] = {"build": AUDITED_TASKS[task][0], "animate": AUDITED_TASKS[task][1]}
     if task in CONVERTED_GEOMETRY_TASKS:
         source["geometry_converter_sha256"] = sha256(Path(__file__).with_name("object_permanence_geometry.py"))

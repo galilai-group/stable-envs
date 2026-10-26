@@ -47,7 +47,19 @@ REFERENCE_MEMBERS = {
     ("G05", 4): ("build_scene", "animate_scene", ("red_wheeled_car_body",)),
     ("G05", 5): ("build_scene", "animate_scene", ("red_wheeled_car_body",)),
     ("G05", 6): ("build_scene", "animate_scene", ("front_red_car_body", "rear_blue_car_body")),
+    ("G06", 1): ("build_scene", "animate_scene", ("solid_bridge_red_car_body",)),
+    ("G06", 2): ("build_scene", "animate_scene", ("solid_bridge_red_car_body", "hole_bridge_blue_car_body")),
+    ("G07", 1): ("build_scene", "animate_scene", ("first_orange_ball", "second_orange_ball")),
+    ("G08", 1): ("build_scene", "animate_scene", ("orange_ball_inside_drawer", "blue_cube_inside_drawer")),
+    ("G09", 1): ("build_scene_by_kind", "animate_scene_by_kind", ("blue_short_body", "blue_short_roof")),
+    ("G09", 2): (
+        "build_scene_by_kind",
+        "animate_scene_by_kind",
+        ("red_tall_parallel_body", "red_tall_parallel_roof", "blue_short_parallel_body", "blue_short_parallel_roof"),
+    ),
 }
+# Independently inspected source camera types; do not import candidate flags.
+REFERENCE_ORTHOGRAPHIC_MEMBERS = frozenset({("G08", 1), ("G09", 1), ("G09", 2)})
 
 REFERENCE_CASES = {
     "G98": ("build_scene_by_kind", "animate_scene_by_kind", ("colored_ball_on_base",)),
