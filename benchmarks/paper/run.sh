@@ -24,7 +24,8 @@ REPEATS=${REPEATS:-10}
 export PYTHONPATH=$REPO SDL_VIDEODRIVER=dummy PYTHONWARNINGS=ignore PYTHONDONTWRITEBYTECODE=1
 # The uv cache stays in home: node-local disk holds one family venv at a time.
 export UV_HTTP_TIMEOUT=600 UV_LINK_MODE=copy UV_CACHE_DIR=${UV_CACHE_DIR:-$HOME/.cache/uv} XDG_CACHE_HOME=$WORK/cache
-export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0} MUJOCO_EGL_DEVICE_ID=0
+# One GPU only: --exclusive exposes all of them, and torch and JAX may number several differently.
+export CUDA_VISIBLE_DEVICES=$(echo "${SLURM_JOB_GPUS:-${CUDA_VISIBLE_DEVICES:-0}}" | cut -d, -f1) MUJOCO_EGL_DEVICE_ID=0
 egl() { env MUJOCO_GL=egl PYOPENGL_PLATFORM=egl "$@"; }
 sw() { env LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe PYOPENGL_PLATFORM=glx MUJOCO_GL=glfw xvfb-run -a "$@"; }
 
@@ -32,7 +33,7 @@ sw() { env LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe PYOPENGL_PLATFORM=glx
   echo "{\"commit\": \"$(git -C "$REPO" rev-parse HEAD)\", \"main\": \"$(git -C "$REPO" merge-base HEAD origin/main 2>/dev/null)\","
   echo " \"dirty\": $(git -C "$REPO" diff --quiet && echo false || echo true), \"swm\": \"$(git -C "$SWM" rev-parse HEAD)\","
   echo " \"host\": \"$(hostname)\", \"job\": \"${SLURM_JOB_ID:-}\", \"start\": \"$(date -Is)\", \"cores\": \"$CORES\", \"ncores\": $NCORES,"
-  echo " \"gpu\": \"$(nvidia-smi -i 0 --query-gpu=name,driver_version --format=csv,noheader)\", \"smoke\": ${SMOKE:-0},"
+  echo " \"cuda_visible_devices\": \"$CUDA_VISIBLE_DEVICES\", \"gpu\": \"$(nvidia-smi -i $CUDA_VISIBLE_DEVICES --query-gpu=name,driver_version --format=csv,noheader)\", \"smoke\": ${SMOKE:-0},"
   echo " \"n_states\": $N, \"batches\": \"$BATCHES\", \"episodes\": $EPISODES, \"length\": $LENGTH, \"lanes\": $LANES, \"repeats\": $REPEATS}"
 } > "$OUT/run.json"
 cat "$OUT/run.json"

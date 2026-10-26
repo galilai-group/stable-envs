@@ -312,15 +312,19 @@ def run_source(args, name: str, render: bool) -> dict:
 
 
 def _make_ours(name: str, lanes: int, size: int, device: str):
-    """The class at ``size``, or at its one native size when it refuses another."""
+    """The class at ``size``, or at its one native size when it refuses to draw another."""
     import stable_envs as snv
 
+    env = snv.make(name, num_envs=lanes, size=size, device=device)
     try:
-        return snv.make(name, num_envs=lanes, size=size, device=device)
+        env.reset(seed=0)
+        env.render(env.get_state())
+        return env
     except ValueError as e:
+        env.close()
         if "renders" not in str(e) or "only" not in str(e):
             raise
-        return snv.make(name, num_envs=lanes, device=device)
+    return snv.make(name, num_envs=lanes, device=device)
 
 
 def run_ours(args, name: str, dev: str, render: bool, chunk: int) -> dict:
