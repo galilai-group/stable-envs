@@ -1,10 +1,12 @@
 #!/bin/bash
 # Offline and online speed of stable-envs against the source, every arm pinned to the same CPU cores.
-# usage: sbatch -p qed -n 1 --exclusive --gres=gpu:1 -t 48:00:00 benchmarks/paper/run.sh OUT FAMILY=ENV,ENV ...
+# usage (from the repository root): sbatch -p qed -n 1 --exclusive --gres=gpu:1 -t 48:00:00 benchmarks/paper/run.sh OUT FAMILY=ENV,ENV ...
 #   SMOKE=1 uses small state, batch and episode counts. CORES (default 0-7) is the core set of every arm.
 set -uo pipefail
 OUT=$(realpath -m "$1"); shift
-REPO=$(cd "$(dirname "$0")/../.." && pwd)
+# Slurm runs a copy of this script, so the repository is the submit directory.
+REPO=${SNV_REPO:-${SLURM_SUBMIT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}}
+[ -f "$REPO/pyproject.toml" ] || { echo "no repository at $REPO" >&2; exit 2; }
 SWM=${SWM:-$HOME/lewm-hyd/swm}
 CORES=${CORES:-0-7}
 NCORES=$(taskset -c "$CORES" nproc)
