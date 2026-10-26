@@ -252,7 +252,7 @@ def markdown(roots: list[Path]) -> str:
 
 
 if __name__ == "__main__":
-    roots = [Path(a) for a in sys.argv[1:]]
+    roots = [Path(a) for a in sys.argv[1:] if Path(a).is_dir()]
     md = markdown(roots)
     (roots[0].parent / "summary.md").write_text(md)
     print(md)
