@@ -293,6 +293,43 @@ def cmd_source(args) -> None:
     Path(args.output).write_text(json.dumps(results, indent=1))
 
 
+def cmd_mse(args) -> None:
+    """Per-frame MSE of stable-envs frames against the source's for the first ``n`` stored states, on the 0-255 scale."""
+    import inspect
+
+    snv = _snv()
+    from stable_envs.testing import conformance as C
+
+    results = {"arm": f"mse-{args.device}", "host": _host(), "envs": {}}
+    for name in args.envs:
+        blob = _load_states(Path(args.states) / f"{name}.pt")
+        if blob["kind"] != "rows":
+            results["envs"][name] = {"status": "skipped", "reason": "source reference renders compact rows only"}
+            continue
+        try:
+            cls = snv.registry.REGISTRY[name]
+            rows = blob["rows"][: args.n]
+            env = snv.make(name, num_envs=len(rows), size=blob["size"], device=args.device)
+            try:
+                ours = env._render(rows.to(env.device)).cpu().numpy()
+            finally:
+                env.close()
+            ref = cls.reference_env(size=blob["size"] or cls.default_size)
+            if "return_flags" in inspect.signature(cls.reference_render).parameters:
+                theirs, flags = cls.reference_render(ref, rows.numpy(), return_flags=True)
+                keep = ~np.asarray(flags, bool)
+            else:
+                theirs, keep = cls.reference_render(ref, rows.numpy()), np.ones(len(rows), bool)
+            per_frame = C.frame_mse(ours[keep], np.asarray(theirs)[keep])
+            row = {"status": "ok", "frames": int(keep.sum()), "excluded_unreachable": int((~keep).sum())}
+            row.update(C.mse_summary(per_frame))
+        except Exception as e:  # noqa: BLE001
+            row = {"status": "error", "error": f"{type(e).__name__}: {e}"[:500]}
+        print(f"{name} mse {args.device} {row}", flush=True)
+        results["envs"][name] = row
+    Path(args.output).write_text(json.dumps(results, indent=1))
+
+
 class _Files(torch.utils.data.Dataset):
     def __init__(self, files):
         self.files = files
@@ -407,12 +444,21 @@ def main() -> None:
     c.add_argument("--sample", type=int, default=256)
     c.add_argument("--device", default="cuda")
     c.add_argument("--output", required=True)
+    m = sub.add_parser("mse", parents=[common])
+    m.add_argument("--device", default="cuda")
+    m.add_argument("--n", type=int, default=256)
+    m.add_argument("--output", required=True)
     ls = sub.add_parser("list")
     ls.add_argument("--family", nargs="*", default=[])
     args = p.parse_args()
-    {"states": cmd_states, "ours": cmd_ours, "source": cmd_source, "codec": cmd_codec, "list": cmd_list}[args.cmd](
-        args
-    )
+    {
+        "states": cmd_states,
+        "ours": cmd_ours,
+        "source": cmd_source,
+        "codec": cmd_codec,
+        "mse": cmd_mse,
+        "list": cmd_list,
+    }[args.cmd](args)
 
 
 if __name__ == "__main__":

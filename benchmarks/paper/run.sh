@@ -81,14 +81,16 @@ for spec in "$@"; do
     o=$OUT/offline/$E; mkdir -p $o
     egl $OFF ours --envs $E --states $S --device cuda --batches $BATCHES --repeats $REPEATS --output $o/snv-gpu.json
     sw $OFF ours --envs $E --states $S --device cpu --threads $NCORES --batches $BATCHES --repeats $REPEATS --output $o/snv-cpu.json
+    egl $OFF mse --envs $E --states $S --device cuda --output $o/mse-gpu.json
+    sw $OFF mse --envs $E --states $S --device cpu --output $o/mse-cpu.json
     for p in 1 $NCORES; do
       egl $OFF source --envs $E --states $S --procs $p --repeats $REPEATS --output $o/src-gpu-${p}p.json
       sw $OFF source --envs $E --states $S --procs $p --repeats $REPEATS --output $o/src-cpu-${p}p.json
     done
     n=$OUT/online/$E; mkdir -p $n
     COMMON="--env $E --data $D --procs $NCORES --source-lanes $SLANES --lanes $LANES --threads $NCORES --repeats $REPEATS"
-    egl $ON run $COMMON --arms src-pipelined-render --src-label gpu --output $n/src-render-gpu.json
-    sw $ON run $COMMON --arms src-pipelined-render --src-label cpu --output $n/src-render-cpu.json
+    egl $ON run $COMMON --arms src-pipelined-render --src-label gpu --ours-device cuda --output $n/src-render-gpu.json
+    sw $ON run $COMMON --arms src-pipelined-render --src-label cpu --ours-device cpu --output $n/src-render-cpu.json
     sw $ON run $COMMON --arms src-pipelined-step snv-step --output $n/step.json
     sw $ON run $COMMON --arms snv-render-cpu --output $n/snv-render-cpu.json
     egl $ON run $COMMON --arms snv-render-gpu --output $n/snv-render-gpu.json

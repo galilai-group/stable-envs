@@ -141,17 +141,27 @@ def _digest(frame) -> str:
     return hashlib.sha1(np.ascontiguousarray(frame).tobytes()).hexdigest()
 
 
-def _replay_digests(name, size, seed, actions, steps) -> dict:
-    """Frame digests of one episode played by a single source env in this process."""
+def _replay_frames(name, size, seed, actions) -> np.ndarray:
+    """Every frame of one episode played by a single source env in this process."""
     env = _make_source(name, size)
     try:
         env.reset(seed=seed)
-        out = {}
-        for t in range(max(steps) + 1):
-            env.step(actions[t])
-            if t in steps:
-                out[t] = _digest(env.render())
-        return out
+        frames = []
+        for a in actions:
+            env.step(a)
+            frames.append(np.asarray(env.render()).copy())
+        return np.stack(frames)
+    finally:
+        env.close()
+
+
+def _ours_frames(name, size, device, seed, actions) -> np.ndarray:
+    """Every frame of the same episode played by one stable-envs lane on ``device``."""
+    env = _make_ours(name, 1, size, device)
+    try:
+        env.reset(seed=seed)
+        a = torch.as_tensor(actions[None], device=device)
+        return env.step(a, states=None, frames=slice(None))["frames"][0].cpu().numpy()
     finally:
         env.close()
 
@@ -258,12 +268,25 @@ def run_source(args, name: str, render: bool) -> dict:
                         got[lane, step] = _digest(frame[lane])
     finally:
         adapter.close()
-    check = None
+    check = rollout = None
     if render:
-        bad = []
+        from stable_envs.testing import conformance as C
+
+        bad, per_frame, shapes = [], [], set()
+        # Every source replay runs before any stable-envs env exists in this process: OGBench keeps
+        # its GL contexts alive, and a second context in one process corrupts the source's frames.
+        theirs = {lane: _replay_frames(name, args.size, int(seeds[lane]), actions[lane]) for lane in check_lanes}
         for lane in check_lanes:
-            want = _replay_digests(name, args.size, int(seeds[lane]), actions[lane], check_steps)
-            bad += [f"{lane}/{step}" for step in check_steps if got[lane, step] != want[step]]
+            bad += [f"{lane}/{step}" for step in check_steps if got[lane, step] != _digest(theirs[lane][step])]
+        for lane in check_lanes:
+            ours = _ours_frames(name, args.size, args.ours_device, int(seeds[lane]), actions[lane])
+            shapes.add((tuple(ours.shape[1:]), tuple(theirs[lane].shape[1:])))
+            if ours.shape == theirs[lane].shape:
+                per_frame.append(C.frame_mse(ours, theirs[lane]))
+        # The rollout includes any physics divergence, not only rendering differences.
+        rollout = {"episodes": len(check_lanes), "ours_device": args.ours_device, "shapes": sorted(map(str, shapes))}
+        if per_frame:
+            rollout.update(C.mse_summary(np.concatenate(per_frame)))
         check = {
             "lanes": check_lanes,
             "steps": list(check_steps),
@@ -282,6 +305,7 @@ def run_source(args, name: str, render: bool) -> dict:
         "steps": steps,
         "steps_per_s": steps / t["median_s"],
         **t,
+        "rollout_mse": rollout,
         **({"frame_check": check, "status": "invalid"} if check and check["mismatched"] else {"frame_check": check}),
     }
 
@@ -381,6 +405,9 @@ def main() -> None:
         "--src-label", default=os.environ.get("MUJOCO_GL", "gl"), help="device label of the source render arm"
     )
     r.add_argument("--chunks", type=int, nargs="+", default=[1, 4, 16], help="actions per stable-envs step call (T)")
+    r.add_argument(
+        "--ours-device", default="cpu", help="device of the stable-envs lane the source rollout is compared with"
+    )
     r.add_argument("--data", required=True)
     r.add_argument("--output", required=True)
     r.add_argument("--procs", type=int, default=8)
