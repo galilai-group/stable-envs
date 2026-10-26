@@ -43,9 +43,19 @@ task outputs. Allow warm-up steps before measuring throughput; a new batch shape
 Torch and JAX exchange tensors through DLPack on the selected device, without copying them to CPU
 during stepping. A missing JAX CUDA runtime raises an error explaining which extra to install.
 
-`simulation_backend="auto"` keeps JAX at every batch size, including one environment.
-Set `simulation_backend="torch"` to use the original Torch physics or `"jax"` to choose JAX
-explicitly. Both use the requested device. `env.simulation_backend` reports the selected implementation.
+`simulation_backend="auto"` uses the original Torch physics below `jax_min_envs` environments
+and JAX at or above that cutoff. The default cutoff is 1 because the measurements so far favor
+JAX even for a single environment. If Torch is faster for small batches on your machine, set a
+higher cutoff:
+
+```python
+with snv.TwoRoom(num_envs=4, device="cpu", jax_min_envs=8) as env:
+    print(env.simulation_backend)  # "torch"
+```
+
+The choice is fixed at construction. The library does not benchmark your machine automatically.
+Set `simulation_backend="torch"` or `"jax"` to choose explicitly at any batch size. Both use the
+requested device. `env.simulation_backend` reports the selected implementation.
 
 <!-- env: TwoRoom -->
 

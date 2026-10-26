@@ -45,6 +45,42 @@ def test_invalid_simulation_backend():
         se.TwoRoom(simulation_backend="unknown")
 
 
+@pytest.mark.parametrize(
+    "batch,threshold,backend,expected",
+    [
+        (1, 1, "auto", "jax"),
+        (7, 8, "auto", "torch"),
+        (8, 8, "auto", "jax"),
+        (1, 8, "jax", "jax"),
+        (8, 8, "torch", "torch"),
+    ],
+)
+def test_batch_selection_matches_explicit_backend_and_restores(batch, threshold, backend, expected):
+    with (
+        se.TwoRoom(
+            num_envs=batch,
+            device="cpu",
+            simulation_backend=backend,
+            jax_min_envs=threshold,
+        ) as env,
+        se.TwoRoom(num_envs=batch, device="cpu", simulation_backend=expected) as reference,
+    ):
+        assert env.simulation_backend == expected
+        checkpoint = env.reset(seed=17)
+        reference.reset(seed=17)
+        action = torch.linspace(-1, 1, batch * 2).reshape(batch, 2)
+        actual = env.step(action, frames=None)
+        assert_same_state(actual, reference.step(action, frames=None))
+        env.set_state(checkpoint)
+        assert_same_state(env.step(action, frames=None), actual)
+
+
+@pytest.mark.parametrize("threshold", [0, -1, True, 1.5, "8"])
+def test_invalid_jax_cutoff(threshold):
+    with pytest.raises(ValueError, match="jax_min_envs"):
+        se.TwoRoom(jax_min_envs=threshold)
+
+
 @pytest.mark.parametrize("backend", ["torch", "jax"])
 def test_collisions_with_fractional_per_lane_geometry(backend):
     positions = [[95, 100], [130, 100], [100, 49], [50, 21], [202, 100], [49, 100], [100, 130]]

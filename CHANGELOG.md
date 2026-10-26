@@ -32,7 +32,8 @@ All notable changes to this project are listed here. The format follows
 
 - Reacher with CUDA output now uses native CPU physics below 32 environments. Larger CUDA batches
   keep JAX/MJX physics. `simulation_backend` selects either implementation and `mjx_min_envs` changes
-  the provisional cutoff. TwoRoom still defaults to JAX and adds `simulation_backend="torch"`.
+  the provisional cutoff. TwoRoom uses Torch below `jax_min_envs` and JAX at or above it. Its cutoff
+  defaults to 1, which keeps JAX at every batch size. Both environments allow explicit backend selection.
 - `PiecewiseZones` and `TwoRoomTarget` draw seeded resets from the same distribution tree as `Piecewise`
   and `TwoRoom`, so `reset(seed=k)` starts the agent (and `TwoRoomTarget`'s target) where stable-worldmodel
   does for the same seed. Before, they drew from `sample_states` and matched for no seed.
