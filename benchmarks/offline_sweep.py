@@ -309,17 +309,18 @@ def cmd_mse(args) -> None:
         try:
             cls = snv.registry.REGISTRY[name]
             rows = blob["rows"][: args.n]
-            env = snv.make(name, num_envs=len(rows), size=blob["size"], device=args.device)
-            try:
-                ours = env._render(rows.to(env.device)).cpu().numpy()
-            finally:
-                env.close()
+            # The source draws before any stable-envs env exists in this process (see online_ladder).
             ref = cls.reference_env(size=blob["size"] or cls.default_size)
             if "return_flags" in inspect.signature(cls.reference_render).parameters:
                 theirs, flags = cls.reference_render(ref, rows.numpy(), return_flags=True)
                 keep = ~np.asarray(flags, bool)
             else:
                 theirs, keep = cls.reference_render(ref, rows.numpy()), np.ones(len(rows), bool)
+            env = snv.make(name, num_envs=len(rows), size=blob["size"], device=args.device)
+            try:
+                ours = env._render(rows.to(env.device)).cpu().numpy()
+            finally:
+                env.close()
             per_frame = C.frame_mse(ours[keep], np.asarray(theirs)[keep])
             row = {"status": "ok", "frames": int(keep.sum()), "excluded_unreachable": int((~keep).sum())}
             row.update(C.mse_summary(per_frame))
