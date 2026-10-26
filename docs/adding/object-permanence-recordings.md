@@ -9,10 +9,11 @@ unused builders; they are not a claim that every nominal/diversity variant works
 
 ## Audited scenes and supported capabilities
 
-Current scope: all 150 first nominal members plus four additional members
-(G01/G03 optical variants and G02 side-window/two-ball variants).
+Current scope: all 150 first nominal members plus nine additional members
+(G01/G03 optical variants, G02 variants, G04 member1 and four G05 variants).
 G98/G132 use [hash-pinned native source realizations](object-permanence-native-scenes.md);
-43 additional scripts and driver diversity remain unaudited. The sections below
+38 additional scripts remain unimported: two G05 entries have capability deferrals
+and 36 await runtime audit. Driver diversity remains outside certification. The sections below
 retain the chronological import history.
 
 G34 is the existing single ball behind a screen. The second pilot is
@@ -408,10 +409,69 @@ silent fallback from an unknown member or contract. The seven old raw-BVH pilot
 oracles retain their historical entry points; an unavailable versioned producer
 is reported unsupported instead of fabricating a new reference.
 
+### Next member batch: G04/G05
+
+Continue in source G order: audit G04 member1 and G05 members1–6 in **separate
+Blender processes**. A source `clear_scene()` based on selectable objects can
+leave hidden meshes behind, so reusing its process can falsely contaminate the
+next member's audit. Both import and live capability gates isolate these jobs.
+
+| Accepted member | Source behavior | Mesh/draw objects | Sampled dynamic nodes | Maximum depth MSE | Minimum mask IoU |
+|---|---|---:|---:|---:|---:|
+| G04/1 | Two balls on straight upper/lower tracks behind opaque cover | 43 | 2 | 2.456e-16 | 1.0 |
+| G05/2 | Car stops at opening too small to pass | 17 | 5 | 3.447e-17 | 1.0 |
+| G05/4 | Car passes an already open gate | 12 | 5 | 6.831e-17 | 1.0 |
+| G05/5 | Car stops at a closed gate | 11 | 5 | 3.416e-17 | 1.0 |
+| G05/6 | Front/rear cars contact, recoil and stop | 16 | 10 | 3.266e-17 | 1.0 |
+
+These all reuse opaque pixel-ray V1, the unchanged pose format, source
+`build_scene`/`animate_scene`, independent reference extraction and shared
+renderer. G04 reuses evaluated Curve conversion. G05 records each car body and
+four independently rotating wheels; source collisions are scripted motion, not
+reconstructed physics. Some scripts create an unused glass material/helper;
+only referenced source-object materials determine opaque eligibility.
+
+Every member has a fresh independent 120-frame oracle, full/cached depth and
+all-object mask checks, exact RGB/depth/ID cache parity at 90p/180p and chunks
+1/4/7, repeated/reversed requests and caller mutation. Each resolution builds
+one static seed without fallback. Largest source world-vertex/normal errors
+are 7.062e-8 / 3.376e-7, below unchanged 2e-6 / 3e-6 budgets.
+
+Run the unified stages separately or with `--stage all` into **new** roots:
+
+```bash
+python -m scripts.export.batch_object_permanence --source-root <source> \
+  --output <new-recordings> --oracle-root <new-oracles> --report <g04-report.json> \
+  --tasks G04 --members 1 --stage all \
+  --visibility-contract stable-envs/opaque-pixel-rays-v1 \
+  --blender-python <blender-python> --render-python <cuda-python>
+python -m scripts.export.batch_object_permanence --source-root <source> \
+  --output <new-recordings> --oracle-root <new-oracles> --report <g05-report.json> \
+  --tasks G05 --members 2,4,5,6 --stage all \
+  --visibility-contract stable-envs/opaque-pixel-rays-v1 \
+  --blender-python <blender-python> --render-python <cuda-python>
+```
+
+G05/1 remains unregistered: its non-solid opening-volume mesh is permanently
+hidden in the native source. The current capture contract rejects hidden
+objects; deleting it or silently treating it as an opaque object changes the
+source selection policy. A future explicit renderable-set policy must retain
+semantic bookkeeping and independently verify visibility at every frame.
+
+G05/3 also remains unregistered: source `main()` separately assembles track, car,
+doors and camera, and its seam marker changes positive scale beginning at frame
+21. The existing optional scale sampler handles all 120 frames in a live probe;
+it still needs an audited multi-stage build recipe, per-member scale opt-in and
+complete pixel/cache certification. This does not require inventing a new scale
+renderer. Neither deferred entry gets a recording or frozen geometric oracle.
+Their native-only diagnostic GIFs are under `evaluation/deferred-previews/` and
+are explicitly not candidate/source comparisons. Live tests reproduce both
+rejection reasons without removing source objects or dropping scale animation.
+
 Native previews accept `--member`/`--profile` via
 `scripts.export.render_object_permanence_preview`. Use temporary PNGs with
 `benchmarks.object_permanence_recordings.comparison_gif`, which checks source
-member/script/frame identity. Keep only the two 120-frame comparison GIFs under
+member/script/frame identity. Keep complete comparison GIFs under
 `.cache/object_permanence/evaluation/`; reports belong under
 `.cache/benchmarks/object_permanence/`. Temporary source frames are deleted after
 GIF verification. Neither previews nor developer oracles are runtime downloads.

@@ -38,6 +38,15 @@ REFERENCE_CONVERTED_TASKS = {
 REFERENCE_MEMBERS = {
     ("G02", 1): ("$prefix:render_png", "", ("target_red_ball",)),
     ("G02", 2): ("$prefix:render_png", "", ("front_yellow_ball", "back_blue_ball")),
+    ("G04", 1): (
+        "build_scene",
+        "animate_scene",
+        ("identity_A_red_ball_on_upper_straight_track", "identity_B_blue_ball_on_lower_straight_track"),
+    ),
+    ("G05", 2): ("build_scene", "animate_scene", ("red_wheeled_car_body",)),
+    ("G05", 4): ("build_scene", "animate_scene", ("red_wheeled_car_body",)),
+    ("G05", 5): ("build_scene", "animate_scene", ("red_wheeled_car_body",)),
+    ("G05", 6): ("build_scene", "animate_scene", ("front_red_car_body", "rear_blue_car_body")),
 }
 
 REFERENCE_CASES = {

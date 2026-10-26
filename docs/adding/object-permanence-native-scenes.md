@@ -2,7 +2,8 @@
 
 G98 and G132 use one hash-pinned native Blender realization as their source input.
 All 150 first nominal members are now certified within their declared scope;
-the 43 additional unaudited member scripts remain outside the certified set.
+38 additional member scripts remain outside the certified set (including two
+explicit G05 capability deferrals).
 No existing recording, oracle, visibility contract or threshold is replaced.
 
 ## Why the source input is pinned

@@ -301,6 +301,470 @@
       "stage": "full-frame-optical-pixel-validation",
       "status": "certified",
       "task": "G03"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "PERSP",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v1",
+      "depth_mse_max": 2.455549750545637e-16,
+      "dynamic_nodes": [
+        "identity_A_red_ball_on_upper_straight_track",
+        "identity_B_blue_ball_on_lower_straight_track"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 14,
+        "dynamic_nodes": [
+          "identity_A_red_ball_on_upper_straight_track",
+          "identity_B_blue_ball_on_lower_straight_track"
+        ],
+        "frames": 120,
+        "objects": 43,
+        "task": "G04",
+        "world_normal_max_abs_error": 2.673506019346128e-07,
+        "world_triangle_max_abs_error": 7.06105698355941e-08
+      },
+      "mask_iou_min": 1.0,
+      "member": 1,
+      "mesh_count": 43,
+      "oracle": "tests/fixtures/semantics/object_permanence/g04/opaque_pixel_rays_v1/member1",
+      "preview": ".cache/object_permanence/evaluation/g04-member1-source-vs-pixel-rays-v1.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v1",
+      "reference_target_roles": {
+        "identity_A_red_ball_on_upper_straight_track": "target",
+        "identity_B_blue_ball_on_lower_straight_track": "target"
+      },
+      "reference_targets": [
+        "identity_A_red_ball_on_upper_straight_track",
+        "identity_B_blue_ball_on_lower_straight_track"
+      ],
+      "script": "object_permanence/generator/tasks/G04_high_low_cover/pb_task_00000014_pb_multi_object_identity_straight_high_low_cover_0015_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed PERSP; no depth of field",
+        "converted_geometry": {
+          "depsgraph_mode": "VIEWPORT",
+          "id": "stable-envs/evaluated-rigid-mesh-v1",
+          "instances": "single-source-identity-mesh-proxy",
+          "tessellation": "source-settings",
+          "types": [
+            "MESH",
+            "CURVE",
+            "FONT"
+          ]
+        },
+        "driver_diversity": "not applied; selected member script defaults only",
+        "dynamic_node_count": 2,
+        "frames": 120,
+        "local_geometry": "constant at all 120 source frames",
+        "materials": "all referenced source object materials are constant opaque; unused material helpers are not rendered",
+        "physics_objects": [],
+        "source_motion": "source location/rotation keyframes; every vehicle wheel sampled independently; no physics reconstruction",
+        "types": {
+          "CAMERA": 1,
+          "CURVE": 4,
+          "LIGHT": 2,
+          "MESH": 39
+        },
+        "visibility": "no hidden objects or animated hide flags; geometric occlusion"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "002daf79b6f5713a6ac2642c1041bb3014f3b790fa11ae4d80234058e82a8148",
+      "source_task_manifest_sha256": "ee29e32ed546602d241c4b8251d430c2f981c36f8c2962fad1194de5a90d9df2",
+      "status": "certified",
+      "task": "G04"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "PERSP",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v1",
+      "depth_mse_max": 3.447275525046159e-17,
+      "dynamic_nodes": [
+        "red_wheeled_car_body",
+        "red_wheeled_car_wheel_front_far",
+        "red_wheeled_car_wheel_front_near",
+        "red_wheeled_car_wheel_rear_far",
+        "red_wheeled_car_wheel_rear_near"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 11,
+        "dynamic_nodes": [
+          "red_wheeled_car_body",
+          "red_wheeled_car_wheel_front_far",
+          "red_wheeled_car_wheel_front_near",
+          "red_wheeled_car_wheel_rear_far",
+          "red_wheeled_car_wheel_rear_near"
+        ],
+        "frames": 120,
+        "objects": 17,
+        "task": "G05",
+        "world_normal_max_abs_error": 3.31187080745976e-07,
+        "world_triangle_max_abs_error": 2.9804716028536404e-08
+      },
+      "mask_iou_min": 1.0,
+      "member": 2,
+      "mesh_count": 17,
+      "oracle": "tests/fixtures/semantics/object_permanence/g05/opaque_pixel_rays_v1/member2",
+      "preview": ".cache/object_permanence/evaluation/g05-member2-source-vs-pixel-rays-v1.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v1",
+      "reference_target_roles": {
+        "red_wheeled_car_body": "target"
+      },
+      "reference_targets": [
+        "red_wheeled_car_body"
+      ],
+      "script": "object_permanence/generator/tasks/G05_car_vs_barrier/pb_task_00000018_pb_car_blocked_by_small_wall_hole_0019_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed PERSP; no depth of field",
+        "converted_geometry": null,
+        "driver_diversity": "not applied; selected member script defaults only",
+        "dynamic_node_count": 5,
+        "frames": 120,
+        "local_geometry": "constant at all 120 source frames",
+        "materials": "all referenced source object materials are constant opaque; unused material helpers are not rendered",
+        "physics_objects": [],
+        "source_motion": "source location/rotation keyframes; every vehicle wheel sampled independently; no physics reconstruction",
+        "types": {
+          "CAMERA": 1,
+          "LIGHT": 2,
+          "MESH": 17
+        },
+        "visibility": "no hidden objects or animated hide flags; geometric occlusion"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "39a6d5dea68e008348b1c318ed56c106b8521628c205f758fee19a14eb160a08",
+      "source_task_manifest_sha256": "0b7b4cff93fd164778589ce006756d2f070d229a7febc6f627f0d2e5561927ed",
+      "status": "certified",
+      "task": "G05"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "PERSP",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v1",
+      "depth_mse_max": 6.830858851424599e-17,
+      "dynamic_nodes": [
+        "red_wheeled_car_body",
+        "red_wheeled_car_wheel_front_far",
+        "red_wheeled_car_wheel_front_near",
+        "red_wheeled_car_wheel_rear_far",
+        "red_wheeled_car_wheel_rear_near"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 8,
+        "dynamic_nodes": [
+          "red_wheeled_car_body",
+          "red_wheeled_car_wheel_front_far",
+          "red_wheeled_car_wheel_front_near",
+          "red_wheeled_car_wheel_rear_far",
+          "red_wheeled_car_wheel_rear_near"
+        ],
+        "frames": 120,
+        "objects": 12,
+        "task": "G05",
+        "world_normal_max_abs_error": 3.3757162316676304e-07,
+        "world_triangle_max_abs_error": 3.371819978781332e-08
+      },
+      "mask_iou_min": 1.0,
+      "member": 4,
+      "mesh_count": 12,
+      "oracle": "tests/fixtures/semantics/object_permanence/g05/opaque_pixel_rays_v1/member4",
+      "preview": ".cache/object_permanence/evaluation/g05-member4-source-vs-pixel-rays-v1.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v1",
+      "reference_target_roles": {
+        "red_wheeled_car_body": "target"
+      },
+      "reference_targets": [
+        "red_wheeled_car_body"
+      ],
+      "script": "object_permanence/generator/tasks/G05_car_vs_barrier/pb_task_00000026_pb_car_passes_open_gate_0027_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed PERSP; no depth of field",
+        "converted_geometry": null,
+        "driver_diversity": "not applied; selected member script defaults only",
+        "dynamic_node_count": 5,
+        "frames": 120,
+        "local_geometry": "constant at all 120 source frames",
+        "materials": "all referenced source object materials are constant opaque; unused material helpers are not rendered",
+        "physics_objects": [],
+        "source_motion": "source location/rotation keyframes; every vehicle wheel sampled independently; no physics reconstruction",
+        "types": {
+          "CAMERA": 1,
+          "LIGHT": 2,
+          "MESH": 12
+        },
+        "visibility": "no hidden objects or animated hide flags; geometric occlusion"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "87f2982838f09d5d27c0b4872857f811a9bea8bf962d5ce38f7b863022070179",
+      "source_task_manifest_sha256": "0b7b4cff93fd164778589ce006756d2f070d229a7febc6f627f0d2e5561927ed",
+      "status": "certified",
+      "task": "G05"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "PERSP",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v1",
+      "depth_mse_max": 3.4161991577693284e-17,
+      "dynamic_nodes": [
+        "red_wheeled_car_body",
+        "red_wheeled_car_wheel_front_far",
+        "red_wheeled_car_wheel_front_near",
+        "red_wheeled_car_wheel_rear_far",
+        "red_wheeled_car_wheel_rear_near"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 8,
+        "dynamic_nodes": [
+          "red_wheeled_car_body",
+          "red_wheeled_car_wheel_front_far",
+          "red_wheeled_car_wheel_front_near",
+          "red_wheeled_car_wheel_rear_far",
+          "red_wheeled_car_wheel_rear_near"
+        ],
+        "frames": 120,
+        "objects": 11,
+        "task": "G05",
+        "world_normal_max_abs_error": 2.868484383772296e-07,
+        "world_triangle_max_abs_error": 2.6932369223686692e-08
+      },
+      "mask_iou_min": 1.0,
+      "member": 5,
+      "mesh_count": 11,
+      "oracle": "tests/fixtures/semantics/object_permanence/g05/opaque_pixel_rays_v1/member5",
+      "preview": ".cache/object_permanence/evaluation/g05-member5-source-vs-pixel-rays-v1.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v1",
+      "reference_target_roles": {
+        "red_wheeled_car_body": "target"
+      },
+      "reference_targets": [
+        "red_wheeled_car_body"
+      ],
+      "script": "object_permanence/generator/tasks/G05_car_vs_barrier/pb_task_00000027_pb_car_blocked_closed_gate_0028_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed PERSP; no depth of field",
+        "converted_geometry": null,
+        "driver_diversity": "not applied; selected member script defaults only",
+        "dynamic_node_count": 5,
+        "frames": 120,
+        "local_geometry": "constant at all 120 source frames",
+        "materials": "all referenced source object materials are constant opaque; unused material helpers are not rendered",
+        "physics_objects": [],
+        "source_motion": "source location/rotation keyframes; every vehicle wheel sampled independently; no physics reconstruction",
+        "types": {
+          "CAMERA": 1,
+          "LIGHT": 2,
+          "MESH": 11
+        },
+        "visibility": "no hidden objects or animated hide flags; geometric occlusion"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "647e5e7ab31fa356386637127c8e203b3d6191dfff39ebfe3da311ff6da955ed",
+      "source_task_manifest_sha256": "0b7b4cff93fd164778589ce006756d2f070d229a7febc6f627f0d2e5561927ed",
+      "status": "certified",
+      "task": "G05"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "PERSP",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v1",
+      "depth_mse_max": 3.2663938434597334e-17,
+      "dynamic_nodes": [
+        "front_red_car_body",
+        "front_red_car_wheel_front_far",
+        "front_red_car_wheel_front_near",
+        "front_red_car_wheel_rear_far",
+        "front_red_car_wheel_rear_near",
+        "rear_blue_car_body",
+        "rear_blue_car_wheel_front_far",
+        "rear_blue_car_wheel_front_near",
+        "rear_blue_car_wheel_rear_far",
+        "rear_blue_car_wheel_rear_near"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 8,
+        "dynamic_nodes": [
+          "front_red_car_body",
+          "front_red_car_wheel_front_far",
+          "front_red_car_wheel_front_near",
+          "front_red_car_wheel_rear_far",
+          "front_red_car_wheel_rear_near",
+          "rear_blue_car_body",
+          "rear_blue_car_wheel_front_far",
+          "rear_blue_car_wheel_front_near",
+          "rear_blue_car_wheel_rear_far",
+          "rear_blue_car_wheel_rear_near"
+        ],
+        "frames": 120,
+        "objects": 16,
+        "task": "G05",
+        "world_normal_max_abs_error": 2.699840775666207e-07,
+        "world_triangle_max_abs_error": 2.565908774343484e-08
+      },
+      "mask_iou_min": 1.0,
+      "member": 6,
+      "mesh_count": 16,
+      "oracle": "tests/fixtures/semantics/object_permanence/g05/opaque_pixel_rays_v1/member6",
+      "preview": ".cache/object_permanence/evaluation/g05-member6-source-vs-pixel-rays-v1.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v1",
+      "reference_target_roles": {
+        "front_red_car_body": "target",
+        "rear_blue_car_body": "target"
+      },
+      "reference_targets": [
+        "front_red_car_body",
+        "rear_blue_car_body"
+      ],
+      "script": "object_permanence/generator/tasks/G05_car_vs_barrier/pb_task_00000028_pb_rear_car_stops_behind_front_car_0029_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed PERSP; no depth of field",
+        "converted_geometry": null,
+        "driver_diversity": "not applied; selected member script defaults only",
+        "dynamic_node_count": 10,
+        "frames": 120,
+        "local_geometry": "constant at all 120 source frames",
+        "materials": "all referenced source object materials are constant opaque; unused material helpers are not rendered",
+        "physics_objects": [],
+        "source_motion": "source location/rotation keyframes; every vehicle wheel sampled independently; no physics reconstruction",
+        "types": {
+          "CAMERA": 1,
+          "LIGHT": 2,
+          "MESH": 16
+        },
+        "visibility": "no hidden objects or animated hide flags; geometric occlusion"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "20f165d778ffaef92d42110ff9337554969d5440bda5fb352e86d5e4fc9c1854",
+      "source_task_manifest_sha256": "0b7b4cff93fd164778589ce006756d2f070d229a7febc6f627f0d2e5561927ed",
+      "status": "certified",
+      "task": "G05"
     }
   ],
   "entries": [
@@ -8703,11 +9167,11 @@
   "reference_probe_policy": "Source task-object roles select probes; V2 separately records source_semantic_targets and the source-observable subset targets. Every mesh remains in all world poses, IDs and all-object depth/mask checks.",
   "schema": "stable-envs/object-permanence-source-audit-v1",
   "scope": {
-    "additional_certified_members": 4,
+    "additional_certified_members": 9,
     "member_scripts": 197,
     "nominal_members": 150,
     "task_groups": 150,
-    "unregistered_other_members": 43
+    "unregistered_other_members": 38
   },
   "source_commit": "824baddcdad087810d35638bf8f273b884f74975",
   "source_url": "https://github.com/hokindeng/object-permanence",
@@ -8717,51 +9181,64 @@
   },
   "unregistered_members": [
     {
+      "audit_status": "deferred",
+      "category": "constant-hidden-semantic-marker",
       "member": 1,
-      "script": "object_permanence/generator/tasks/G04_high_low_cover/pb_task_00000014_pb_multi_object_identity_straight_high_low_cover_0015_blender.py",
-      "source_script_sha256": "002daf79b6f5713a6ac2642c1041bb3014f3b790fa11ae4d80234058e82a8148",
-      "status": "unregistered-member-entry",
-      "task": "G04"
-    },
-    {
-      "member": 1,
+      "needed_support": [
+        "Explicit constant-visibility/renderable-set policy with independently audited source selection and semantic bookkeeping.",
+        "Verify the selected object set and visibility over every source frame before freezing a new recording/oracle."
+      ],
+      "preview": ".cache/object_permanence/evaluation/deferred-previews/g05-member1-source-deferred.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-only-deferred",
+      "profile": "nominal",
+      "reason": "The source creates an always-hidden non-solid opening-volume mesh. The unchanged rigid capture contract rejects hidden objects; deleting it is not an audited import.",
       "script": "object_permanence/generator/tasks/G05_car_vs_barrier/pb_task_00000017_pb_car_passes_wall_hole_0018_blender.py",
+      "source_capability_audit": {
+        "camera_dof": false,
+        "camera_type": "PERSP",
+        "hidden_objects": [
+          "non_solid_car_passage_hole_volume_marker"
+        ],
+        "physics_objects": [],
+        "types": {
+          "CAMERA": 1,
+          "LIGHT": 2,
+          "MESH": 18
+        }
+      },
       "source_script_sha256": "4335ca0e39217552405fe2d57599cb8da7681bd8b7bbf0786d3d3df15d87edf4",
       "status": "unregistered-member-entry",
       "task": "G05"
     },
     {
-      "member": 2,
-      "script": "object_permanence/generator/tasks/G05_car_vs_barrier/pb_task_00000018_pb_car_blocked_by_small_wall_hole_0019_blender.py",
-      "source_script_sha256": "39a6d5dea68e008348b1c318ed56c106b8521628c205f758fee19a14eb160a08",
-      "status": "unregistered-member-entry",
-      "task": "G05"
-    },
-    {
+      "audit_status": "deferred",
+      "category": "multistage-positive-scale-preparation",
+      "first_failure_frame": 21,
       "member": 3,
+      "needed_support": [
+        "Reusable audited multi-stage source build recipe for export and independently prepared oracle.",
+        "Member-level opt-in to the existing positive-scale format, followed by full depth/mask/cache certification; no new scale renderer is implied."
+      ],
+      "positive_scale_capture_frames": 120,
+      "preview": ".cache/object_permanence/evaluation/deferred-previews/g05-member3-source-deferred.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-only-deferred",
+      "profile": "nominal",
+      "reason": "Source main assembles track, car, doors and camera separately. The seam marker changes positive scale from frame 21; the default rigid sampler rejects it. Existing optional scale sampling passes all 120 frames, but preparation and per-member opt-in are not registered.",
       "script": "object_permanence/generator/tasks/G05_car_vs_barrier/pb_task_00000024_pb_double_door_opens_car_passes_0025_blender.py",
+      "source_capability_audit": {
+        "camera_dof": false,
+        "camera_type": "PERSP",
+        "hidden_objects": [],
+        "physics_objects": [],
+        "types": {
+          "CAMERA": 1,
+          "LIGHT": 2,
+          "MESH": 15
+        }
+      },
       "source_script_sha256": "a031bab744d099f78ab24b7da32075b548284d1446944e1a4ca08e17a5a77a99",
-      "status": "unregistered-member-entry",
-      "task": "G05"
-    },
-    {
-      "member": 4,
-      "script": "object_permanence/generator/tasks/G05_car_vs_barrier/pb_task_00000026_pb_car_passes_open_gate_0027_blender.py",
-      "source_script_sha256": "87f2982838f09d5d27c0b4872857f811a9bea8bf962d5ce38f7b863022070179",
-      "status": "unregistered-member-entry",
-      "task": "G05"
-    },
-    {
-      "member": 5,
-      "script": "object_permanence/generator/tasks/G05_car_vs_barrier/pb_task_00000027_pb_car_blocked_closed_gate_0028_blender.py",
-      "source_script_sha256": "647e5e7ab31fa356386637127c8e203b3d6191dfff39ebfe3da311ff6da955ed",
-      "status": "unregistered-member-entry",
-      "task": "G05"
-    },
-    {
-      "member": 6,
-      "script": "object_permanence/generator/tasks/G05_car_vs_barrier/pb_task_00000028_pb_rear_car_stops_behind_front_car_0029_blender.py",
-      "source_script_sha256": "20f165d778ffaef92d42110ff9337554969d5440bda5fb352e86d5e4fc9c1854",
       "status": "unregistered-member-entry",
       "task": "G05"
     },

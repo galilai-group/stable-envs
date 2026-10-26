@@ -21,13 +21,13 @@ An applied, time-invariant modifier is allowed; an animated/deforming mesh is no
 
 | Review group | Members |
 |---|---:|
-| appearance-or-visibility-review | 7 |
+| appearance-or-visibility-review | 4 |
 | audited-nominal-runtime-gate | 7 |
 | geometry-or-scale-review | 1 |
 | orthographic-camera-review | 30 |
-| rigid-candidate-needs-entry-audit | 5 |
+| rigid-candidate-needs-entry-audit | 3 |
 | source-fidelity-review | 4 |
-| versioned-visibility-runtime-gate | 143 |
+| versioned-visibility-runtime-gate | 148 |
 
 ## Source tasks
 

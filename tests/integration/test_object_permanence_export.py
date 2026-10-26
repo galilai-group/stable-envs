@@ -80,8 +80,19 @@ def test_audited_source_export_and_independent_world_geometry_per_scene(export_c
         assert len(clip) == 120
 
 
-@pytest.mark.parametrize("member,dynamic_count", [(1, 1), (2, 2)])
-def test_g02_additional_member_unified_export_and_world_check(tmp_path, member, dynamic_count):
+@pytest.mark.parametrize(
+    "task,member,dynamic_count",
+    [
+        ("G02", 1, 1),
+        ("G02", 2, 2),
+        ("G04", 1, 2),
+        ("G05", 2, 5),
+        ("G05", 4, 5),
+        ("G05", 5, 5),
+        ("G05", 6, 10),
+    ],
+)
+def test_additional_member_unified_export_and_world_check(tmp_path, task, member, dynamic_count):
     """Fresh source processes must reproduce each additional member's frozen poses."""
     source = os.environ.get("SE_OBJECT_PERMANENCE_SOURCE")
     python = os.environ.get("SE_OBJECT_PERMANENCE_BLENDER_PYTHON")
@@ -102,7 +113,7 @@ def test_g02_additional_member_unified_export_and_world_check(tmp_path, member, 
             "--report",
             str(tmp_path / "report.json"),
             "--tasks",
-            "G02",
+            task,
             "--members",
             str(member),
             "--visibility-contract",
@@ -111,7 +122,7 @@ def test_g02_additional_member_unified_export_and_world_check(tmp_path, member, 
         check=True,
         timeout=180,
     )
-    entry = Member("G02", member)
+    entry = Member(task, member)
     with (
         RigidTrajectory(tmp_path / "recordings", entry.clip) as fresh,
         RigidTrajectory(RECORDINGS, entry.clip) as frozen,
@@ -119,6 +130,57 @@ def test_g02_additional_member_unified_export_and_world_check(tmp_path, member, 
         assert len(fresh) == 120 and len(fresh.manifest["dynamic_nodes"]) == dynamic_count
         assert fresh.manifest["source"]["member"] == member
         np.testing.assert_array_equal(fresh.poses(np.arange(120)), frozen.poses(np.arange(120)))
+
+
+@pytest.mark.parametrize("member", [1, 3])
+def test_g05_member_deferrals_preserve_hidden_marker_and_scale_evidence(member):
+    """Audit the exact source; never delete hidden markers or drop animated scale."""
+    source = os.environ.get("SE_OBJECT_PERMANENCE_SOURCE")
+    python = os.environ.get("SE_OBJECT_PERMANENCE_BLENDER_PYTHON")
+    if not source or not python:
+        pytest.skip("live member capability audit needs pinned source and Blender interpreter")
+    code = r"""
+import json, runpy, sys
+from pathlib import Path
+import bpy
+from scripts.export.object_permanence import AUDITED_MEMBERS, check_source, sample_scene
+root, member = Path(sys.argv[1]), int(sys.argv[2])
+check_source(root)
+assert ('G05', member) not in AUDITED_MEMBERS
+task, = (root/'object_permanence/generator/tasks').glob('G05_*/task.json')
+script = task.parent/json.loads(task.read_text())['member_scripts'][member]
+source = runpy.run_path(str(script), run_name='independent_g05_member_capability_audit')
+source['clear_scene']()
+if member == 1:
+    objs = source['build_scene']()
+    source['animate_scene'](**{k: objs[k] for k in ('scene','track','wall_parts','car_body','car_parts')})
+    marker = bpy.context.scene.objects['non_solid_car_passage_hole_volume_marker']
+    assert marker.hide_render and marker.hide_viewport and not marker['pb_solid']
+    reason = 'hidden objects/visibility changes'
+else:
+    # Audited sequence from this member's main(), stopping before all source I/O.
+    scene = source['build_base_scene']()
+    static = source['build_track']()
+    body, parts = source['build_car']()
+    near, far, seam, doors = source['build_double_door']()
+    static.extend(doors)
+    source['setup_camera'](scene)
+    source['animate_scene'](scene, body, parts, near, far, seam, static)
+    reason = 'geometry/scale changes at source frame 21'
+try:
+    sample_scene(bpy.context.scene)
+except ValueError as error:
+    assert reason in str(error), str(error)
+else:
+    raise AssertionError('deferred member bypassed the existing rigid capture contract')
+if member == 3:
+    # The existing positive-scale format is sufficient; the unaudited multi-step
+    # preparation and per-member opt-in still need a separate import batch.
+    recording = sample_scene(bpy.context.scene, allow_animated_scale=True)
+    assert len(recording['frames']) == 120 and 'scales' in recording
+    assert recording['scales'].min() > 0 and recording['scales'].min() < 0.1
+"""
+    subprocess.run([python, "-c", code, source, str(member)], check=True, timeout=180)
 
 
 def test_g34_export_matches_unchanged_independent_source_fixture_and_legacy_replay(exported):

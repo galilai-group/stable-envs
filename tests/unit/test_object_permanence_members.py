@@ -152,3 +152,35 @@ def test_existing_optical_nominal_plan_accepts_its_explicit_contract(source, tmp
         visibility_contract="stable-envs/sampled-optical-rays-v1",
     )
     assert result["counts"] == {"ready-for-runtime-check": 1}
+
+
+@pytest.mark.parametrize("task,total,accepted", [("G04", 2, {1}), ("G05", 7, {2, 4, 5, 6})])
+def test_next_member_batch_keeps_hidden_marker_and_multistage_scale_entries_unregistered(
+    tmp_path, monkeypatch, task, total, accepted
+):
+    path = tmp_path / f"source/object_permanence/generator/tasks/{task}_test"
+    path.mkdir(parents=True)
+    names = [f"scene{i}.py" for i in range(total)]
+    for name in names:
+        (path / name).write_text("def main(): pass\n")
+    (path / "task.json").write_text(json.dumps({"id": task, "member_scripts": names}))
+    monkeypatch.setattr(batch, "check_source", lambda root: None)
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("member plan executed source")
+
+    monkeypatch.setattr(batch.subprocess, "run", forbidden)
+    result = batch.run(
+        tmp_path / "source",
+        tmp_path / "data",
+        tmp_path / "report.json",
+        tasks=task,
+        members=",".join(str(i) for i in range(1, total)),
+        stage="all",
+        oracle_root=tmp_path / "oracles",
+        plan_only=True,
+        visibility_contract="stable-envs/opaque-pixel-rays-v1",
+    )
+    assert {j["member"] for j in result["jobs"] if j["status"] == "ready-for-runtime-check"} == accepted
+    assert {j["member"] for j in result["jobs"] if j["status"] == "unsupported"} == set(range(1, total)) - accepted
+    assert not (tmp_path / "data").exists()

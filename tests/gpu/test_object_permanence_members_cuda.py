@@ -1,4 +1,4 @@
-"""Additional G02 members use the same all-frame certification as member zero."""
+"""Audited additional members share complete-frame source and cache certification."""
 
 import pytest
 import torch
@@ -13,10 +13,12 @@ from scripts.testing.check_object_permanence_member import check
 from tests.helpers.reference.object_permanence_recordings import FIXTURES, RECORDINGS
 
 
-@pytest.mark.parametrize("member", [1, 2])
-def test_all_member_frames_source_masks_depth_and_cross_batch_cache(member):
+@pytest.mark.parametrize(
+    "task,member", [("G02", 1), ("G02", 2), ("G04", 1), ("G05", 2), ("G05", 4), ("G05", 5), ("G05", 6)]
+)
+def test_all_member_frames_source_masks_depth_and_cross_batch_cache(task, member):
     result = check(
-        RECORDINGS, FIXTURES / "semantics/object_permanence", Member("G02", member), "stable-envs/opaque-pixel-rays-v1"
+        RECORDINGS, FIXTURES / "semantics/object_permanence", Member(task, member), "stable-envs/opaque-pixel-rays-v1"
     )
     assert result["passed"], result
     assert all(r["frames"] == 120 for r in result["fidelity"] + result["cache"])

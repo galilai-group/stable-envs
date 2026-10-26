@@ -6,12 +6,14 @@ from pathlib import Path
 
 from scripts.export.object_permanence import (
     ALPHA_TASKS,
+    AUDITED_MEMBERS,
     AUDITED_TASKS,
     OPTICAL_TASKS,
     ORTHOGRAPHIC_TASKS,
     RAY_CONTRACT_TASKS,
     SOURCE_COMMIT,
 )
+from scripts.export.object_permanence_optical import MEMBERS as OPTICAL_MEMBERS
 from tests.helpers.reference.object_permanence_recordings import DEPTH_MSE_MAX, MASK_IOU_MIN, RECORDINGS
 
 CATALOG = Path(__file__).resolve().parents[2] / "docs/adding/object-permanence-audit.json"
@@ -27,9 +29,13 @@ def test_complete_nominal_audit_accounts_for_all_source_members_without_pending_
     assert {r["task"] for r in entries} == {f"G{i:02}" for i in range(1, 151)}
     assert all(r["member"] == 0 and r["status"] in ("certified", "deferred") for r in entries)
     extras = audit["unregistered_members"]
-    assert len(extras) == 43 and len({(r["task"], r["member"]) for r in extras}) == 43
+    assert len(extras) == audit["scope"]["unregistered_other_members"]
+    assert len({(r["task"], r["member"]) for r in extras}) == len(extras)
     additional = audit["additional_certified_members"]
-    assert {(r["task"], r["member"]) for r in additional} == {("G01", 1), ("G02", 1), ("G02", 2), ("G03", 1)}
+    assert len(additional) == audit["scope"]["additional_certified_members"]
+    assert {(r["task"], r["member"]) for r in additional} == set(AUDITED_MEMBERS) | {
+        (task, member) for task, member in OPTICAL_MEMBERS if member > 0
+    }
     assert all(r["status"] == "certified" for r in additional)
     assert all(r["member"] > 0 and r["status"] == "unregistered-member-entry" for r in extras)
     assert len(entries) + len(extras) + len(additional) == audit["scope"]["member_scripts"] == 197

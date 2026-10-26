@@ -33,6 +33,11 @@ from .object_permanence_geometry import GEOMETRY_CONVERSION, evaluated_mesh, sou
 AUDITED_MEMBERS = {
     ("G02", 1): ("$prefix:render_png", ""),
     ("G02", 2): ("$prefix:render_png", ""),
+    ("G04", 1): ("build_scene", "animate_scene"),
+    ("G05", 2): ("build_scene", "animate_scene"),
+    ("G05", 4): ("build_scene", "animate_scene"),
+    ("G05", 5): ("build_scene", "animate_scene"),
+    ("G05", 6): ("build_scene", "animate_scene"),
 }
 
 SOURCE_COMMIT = "824baddcdad087810d35638bf8f273b884f74975"
