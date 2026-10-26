@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import functools
+import hashlib
 import json
 import os
 import re
@@ -132,6 +133,29 @@ def cmd_dataset(args) -> None:
         print(f"saved {name} actions {actions.shape} source {source_id(name)}", flush=True)
 
 
+#: Steps whose frames the source render check compares with a one-env replay of the same episode.
+CHECK_STEPS = (0, 1, 20, 100, 195)
+
+
+def _digest(frame) -> str:
+    return hashlib.sha1(np.ascontiguousarray(frame).tobytes()).hexdigest()
+
+
+def _replay_digests(name, size, seed, actions, steps) -> dict:
+    """Frame digests of one episode played by a single source env in this process."""
+    env = _make_source(name, size)
+    try:
+        env.reset(seed=seed)
+        out = {}
+        for t in range(max(steps) + 1):
+            env.step(actions[t])
+            if t in steps:
+                out[t] = _digest(env.render())
+        return out
+    finally:
+        env.close()
+
+
 class SourceLanes:
     """Source envs as a local simulator adapter, so ``ProcessAdapter`` runs them like stable-envs lanes.
 
@@ -217,11 +241,36 @@ def run_source(args, name: str, render: bool) -> dict:
                     out["frame"].numpy()
 
     groups = list(range(0, n - lanes + 1, lanes))
+    check_lanes = sorted({0, lanes // 2, lanes - 1})
+    check_steps = tuple(t for t in CHECK_STEPS if t < length)
+    got: dict = {}
     try:
         play(groups[:1])
         t = _sweeps(lambda: play(groups), warmup=0, repeats=args.repeats, budget_s=args.budget)
+        if render:
+            # The workers' frames for a few lanes, spread across workers, at the check steps.
+            adapter.reset(int(seeds[0]))
+            for step in range(max(check_steps) + 1):
+                adapter.submit_step(actions[:lanes, step], capture_state=False, capture_frame=True)
+                frame = adapter.receive_step()["frame"].numpy()
+                if step in check_steps:
+                    for lane in check_lanes:
+                        got[lane, step] = _digest(frame[lane])
     finally:
         adapter.close()
+    check = None
+    if render:
+        bad = []
+        for lane in check_lanes:
+            want = _replay_digests(name, args.size, int(seeds[lane]), actions[lane], check_steps)
+            bad += [f"{lane}/{step}" for step in check_steps if got[lane, step] != want[step]]
+        check = {
+            "lanes": check_lanes,
+            "steps": list(check_steps),
+            "frames": len(got),
+            "mismatched": len(bad),
+            "examples": bad[:5],
+        }
     steps = len(groups) * lanes * length
     return {
         "source": source_id(name),
@@ -233,6 +282,7 @@ def run_source(args, name: str, render: bool) -> dict:
         "steps": steps,
         "steps_per_s": steps / t["median_s"],
         **t,
+        **({"frame_check": check, "status": "invalid"} if check and check["mismatched"] else {"frame_check": check}),
     }
 
 
