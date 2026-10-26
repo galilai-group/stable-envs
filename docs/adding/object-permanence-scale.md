@@ -93,5 +93,5 @@ python -m scripts.testing.check_object_permanence_rendering --recordings <record
 No other deferred first nominal member is blocked solely by positive scale.
 The audit now certifies **150/150**: 7 legacy, 94 opaque-v1, 44 opaque-v2 and
 4 [alpha-surface cases](object-permanence-transparency.md) and 1
-[sampled optical case](object-permanence-optics.md). G98/G132 use [native source realizations](object-permanence-native-scenes.md). Fifteen additional members (two optical and thirteen opaque variants) are supported;
-32 other member scripts remain unimported, including two explicit G05 capability deferrals.
+[sampled optical case](object-permanence-optics.md). G98/G132 use [native source realizations](object-permanence-native-scenes.md). Twenty additional members (two optical and eighteen opaque variants) are supported;
+27 other member scripts remain unimported, including two explicit G05 capability deferrals.

@@ -1361,6 +1361,555 @@
       "source_task_manifest_sha256": "f069adc00d807b0cb93833c2ef2cb3647ac92c2e15650fcecdd5121a8c537c19",
       "status": "certified",
       "task": "G09"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "ORTHO",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 1.3143529692411944e-16,
+      "dynamic_nodes": [
+        "target_orange_ball"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 39,
+        "dynamic_nodes": [
+          "target_orange_ball"
+        ],
+        "frames": 120,
+        "objects": 137,
+        "task": "G10",
+        "world_normal_max_abs_error": 3.1520645285554316e-07,
+        "world_triangle_max_abs_error": 1.2516990821609397e-07
+      },
+      "mask_iou_min": 1.0,
+      "member": 1,
+      "mesh_count": 137,
+      "oracle": "tests/fixtures/semantics/object_permanence/g10/opaque_pixel_rays_v2/member1",
+      "preview": ".cache/object_permanence/evaluation/g10-member1-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v2",
+      "reference_target_roles": {
+        "target_orange_ball": "target"
+      },
+      "reference_targets": [
+        "target_orange_ball"
+      ],
+      "script": "object_permanence/generator/tasks/G10_size_gate/pb_task_00000046_pb_u_track_large_hole_then_small_hole_0047_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed ORTHO; no depth of field",
+        "driver_diversity": "not sampled; selected source script defaults",
+        "dynamic_node_count": 1,
+        "frames": 120,
+        "local_geometry": "constant over every source frame",
+        "materials": "constant referenced opaque source materials",
+        "parent_nodes": [],
+        "parented_draw_objects": [],
+        "physics_objects": [],
+        "source_motion": "evaluated source world poses, including inherited root/hinge motion; no physics reconstruction",
+        "types": {
+          "CAMERA": 1,
+          "LIGHT": 2,
+          "MESH": 137
+        },
+        "visibility": "no hide flags or object-set changes; geometric occlusion"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "962998d64ea922d82dac17493eab374a120d072fa85dbefa4cdfacd357a54880",
+      "source_task_manifest_sha256": "b3d34cd605ab769a396f0326e5bee12152b5210f314369d65786c1148be2c337",
+      "status": "certified",
+      "task": "G10"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "ORTHO",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 2.7730903992859465e-14,
+      "dynamic_nodes": [
+        "box_back_wall",
+        "box_base",
+        "box_front_wall",
+        "box_left_wall",
+        "box_right_wall",
+        "box_top_lid",
+        "inner_blue_cube",
+        "inner_orange_ball"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 8,
+        "dynamic_nodes": [
+          "box_back_wall",
+          "box_base",
+          "box_front_wall",
+          "box_left_wall",
+          "box_right_wall",
+          "box_top_lid",
+          "inner_blue_cube",
+          "inner_orange_ball"
+        ],
+        "frames": 120,
+        "objects": 10,
+        "task": "G11",
+        "world_normal_max_abs_error": 3.080252773679515e-07,
+        "world_triangle_max_abs_error": 3.707408886555186e-07
+      },
+      "mask_iou_min": 1.0,
+      "member": 1,
+      "mesh_count": 10,
+      "oracle": "tests/fixtures/semantics/object_permanence/g11/opaque_pixel_rays_v2/member1",
+      "preview": ".cache/object_permanence/evaluation/g11-member1-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v2",
+      "reference_target_roles": {
+        "inner_blue_cube": "contained_object",
+        "inner_orange_ball": "contained_object"
+      },
+      "reference_targets": [
+        "inner_orange_ball",
+        "inner_blue_cube"
+      ],
+      "script": "object_permanence/generator/tasks/G11_box_holds_N_objects/pb_task_00000048_pb_rotating_box_hidden_ball_cube_0049_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed ORTHO; no depth of field",
+        "driver_diversity": "not sampled; selected source script defaults",
+        "dynamic_node_count": 8,
+        "frames": 120,
+        "local_geometry": "constant over every source frame",
+        "materials": "constant referenced opaque source materials",
+        "parent_nodes": [
+          "box_root",
+          "box_lid_hinge"
+        ],
+        "parented_draw_objects": [
+          "box_base",
+          "box_left_wall",
+          "box_right_wall",
+          "box_front_wall",
+          "box_back_wall",
+          "box_top_lid",
+          "inner_orange_ball",
+          "inner_blue_cube"
+        ],
+        "physics_objects": [],
+        "source_motion": "evaluated source world poses, including inherited root/hinge motion; no physics reconstruction",
+        "types": {
+          "CAMERA": 1,
+          "EMPTY": 2,
+          "LIGHT": 2,
+          "MESH": 10
+        },
+        "visibility": "no hide flags or object-set changes; geometric occlusion"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "54c9fddb0b766de23f1be2c5b3190b14ea39871be764ffd733756b62aada573f",
+      "source_task_manifest_sha256": "60a874dd9ecf1705e14dcacbf901bc667cc1ec886649da980802b0d671cc0fd6",
+      "status": "certified",
+      "task": "G11"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "ORTHO",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 2.7730903992859465e-14,
+      "dynamic_nodes": [
+        "box_back_wall",
+        "box_base",
+        "box_front_wall",
+        "box_left_wall",
+        "box_right_wall",
+        "box_top_lid",
+        "inner_blue_cube",
+        "inner_orange_ball",
+        "inner_yellow_pyramid"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 9,
+        "dynamic_nodes": [
+          "box_back_wall",
+          "box_base",
+          "box_front_wall",
+          "box_left_wall",
+          "box_right_wall",
+          "box_top_lid",
+          "inner_blue_cube",
+          "inner_orange_ball",
+          "inner_yellow_pyramid"
+        ],
+        "frames": 120,
+        "objects": 11,
+        "task": "G11",
+        "world_normal_max_abs_error": 3.080252773679515e-07,
+        "world_triangle_max_abs_error": 3.707408886555186e-07
+      },
+      "mask_iou_min": 1.0,
+      "member": 2,
+      "mesh_count": 11,
+      "oracle": "tests/fixtures/semantics/object_permanence/g11/opaque_pixel_rays_v2/member2",
+      "preview": ".cache/object_permanence/evaluation/g11-member2-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v2",
+      "reference_target_roles": {
+        "inner_blue_cube": "contained_object",
+        "inner_orange_ball": "contained_object",
+        "inner_yellow_pyramid": "contained_object"
+      },
+      "reference_targets": [
+        "inner_orange_ball",
+        "inner_blue_cube",
+        "inner_yellow_pyramid"
+      ],
+      "script": "object_permanence/generator/tasks/G11_box_holds_N_objects/pb_task_00000049_pb_rotating_box_hidden_ball_cube_pyramid_0050_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed ORTHO; no depth of field",
+        "driver_diversity": "not sampled; selected source script defaults",
+        "dynamic_node_count": 9,
+        "frames": 120,
+        "local_geometry": "constant over every source frame",
+        "materials": "constant referenced opaque source materials",
+        "parent_nodes": [
+          "box_root",
+          "box_lid_hinge"
+        ],
+        "parented_draw_objects": [
+          "box_base",
+          "box_left_wall",
+          "box_right_wall",
+          "box_front_wall",
+          "box_back_wall",
+          "box_top_lid",
+          "inner_orange_ball",
+          "inner_blue_cube",
+          "inner_yellow_pyramid"
+        ],
+        "physics_objects": [],
+        "source_motion": "evaluated source world poses, including inherited root/hinge motion; no physics reconstruction",
+        "types": {
+          "CAMERA": 1,
+          "EMPTY": 2,
+          "LIGHT": 2,
+          "MESH": 11
+        },
+        "visibility": "no hide flags or object-set changes; geometric occlusion"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "d1c9466461462e30196b1aefb2b2e1ae1a72ddfe4be112a83ca5205b23ca000f",
+      "source_task_manifest_sha256": "60a874dd9ecf1705e14dcacbf901bc667cc1ec886649da980802b0d671cc0fd6",
+      "status": "certified",
+      "task": "G11"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "ORTHO",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 4.0235745599501465e-12,
+      "dynamic_nodes": [
+        "box_back_wall",
+        "box_base",
+        "box_front_wall",
+        "box_left_wall",
+        "box_right_wall",
+        "box_top_lid",
+        "inner_blue_cube",
+        "inner_orange_ball",
+        "inner_partition_wall",
+        "inner_yellow_pyramid"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 10,
+        "dynamic_nodes": [
+          "box_back_wall",
+          "box_base",
+          "box_front_wall",
+          "box_left_wall",
+          "box_right_wall",
+          "box_top_lid",
+          "inner_blue_cube",
+          "inner_orange_ball",
+          "inner_partition_wall",
+          "inner_yellow_pyramid"
+        ],
+        "frames": 120,
+        "objects": 12,
+        "task": "G12",
+        "world_normal_max_abs_error": 3.080252773679515e-07,
+        "world_triangle_max_abs_error": 4.0307641313575004e-07
+      },
+      "mask_iou_min": 1.0,
+      "member": 1,
+      "mesh_count": 12,
+      "oracle": "tests/fixtures/semantics/object_permanence/g12/opaque_pixel_rays_v2/member1",
+      "preview": ".cache/object_permanence/evaluation/g12-member1-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v2",
+      "reference_target_roles": {
+        "inner_blue_cube": "contained_object",
+        "inner_orange_ball": "contained_object",
+        "inner_yellow_pyramid": "contained_object"
+      },
+      "reference_targets": [
+        "inner_orange_ball",
+        "inner_blue_cube",
+        "inner_yellow_pyramid"
+      ],
+      "script": "object_permanence/generator/tasks/G12_partition_box/pb_task_00000051_pb_partition_box_ball_pyramid__cube_0052_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed ORTHO; no depth of field",
+        "driver_diversity": "not sampled; selected source script defaults",
+        "dynamic_node_count": 10,
+        "frames": 120,
+        "local_geometry": "constant over every source frame",
+        "materials": "constant referenced opaque source materials",
+        "parent_nodes": [
+          "box_root",
+          "box_lid_hinge"
+        ],
+        "parented_draw_objects": [
+          "box_base",
+          "box_left_wall",
+          "box_right_wall",
+          "box_front_wall",
+          "box_back_wall",
+          "inner_partition_wall",
+          "box_top_lid",
+          "inner_orange_ball",
+          "inner_yellow_pyramid",
+          "inner_blue_cube"
+        ],
+        "partition_motion": "Source pb_is_dynamic=False; observed inherited world rotation correctly retains a dynamic node.",
+        "physics_objects": [],
+        "source_motion": "evaluated source world poses, including inherited root/hinge motion; no physics reconstruction",
+        "types": {
+          "CAMERA": 1,
+          "EMPTY": 2,
+          "LIGHT": 2,
+          "MESH": 12
+        },
+        "visibility": "no hide flags or object-set changes; geometric occlusion"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "50ce3bdd50d3e83f5ae4395b681ce4a7855fe0ccaefead39f8c42fe3db6033be",
+      "source_task_manifest_sha256": "dd9cc8a41a44cc9425e3d3a013fc9a56db45cb3e9f6358525ab00419bd0d089a",
+      "status": "certified",
+      "task": "G12"
+    },
+    {
+      "cache_bit_identical_resolutions": [
+        90,
+        180
+      ],
+      "cache_cross_batch": {
+        "builds_per_resolution": 1,
+        "chunk_sizes": [
+          1,
+          4,
+          7
+        ],
+        "fallbacks": 0
+      },
+      "camera": "ORTHO",
+      "category": "opaque-rigid-member",
+      "contract": "stable-envs/opaque-pixel-rays-v2",
+      "depth_mse_max": 4.0235745599501465e-12,
+      "dynamic_nodes": [
+        "box_back_wall",
+        "box_base",
+        "box_front_wall",
+        "box_left_wall",
+        "box_right_wall",
+        "box_top_lid",
+        "inner_blue_cube",
+        "inner_orange_ball",
+        "inner_partition_wall",
+        "inner_yellow_pyramid"
+      ],
+      "fps": 24.0,
+      "frames": 120,
+      "independent_world_check": {
+        "assets": 10,
+        "dynamic_nodes": [
+          "box_back_wall",
+          "box_base",
+          "box_front_wall",
+          "box_left_wall",
+          "box_right_wall",
+          "box_top_lid",
+          "inner_blue_cube",
+          "inner_orange_ball",
+          "inner_partition_wall",
+          "inner_yellow_pyramid"
+        ],
+        "frames": 120,
+        "objects": 12,
+        "task": "G12",
+        "world_normal_max_abs_error": 3.080252773679515e-07,
+        "world_triangle_max_abs_error": 4.0307641313575004e-07
+      },
+      "mask_iou_min": 1.0,
+      "member": 2,
+      "mesh_count": 12,
+      "oracle": "tests/fixtures/semantics/object_permanence/g12/opaque_pixel_rays_v2/member2",
+      "preview": ".cache/object_permanence/evaluation/g12-member2-source-vs-pixel-rays-v2.gif",
+      "preview_frames": 120,
+      "preview_kind": "source-vs-replay",
+      "profile": "nominal",
+      "recipe": [
+        "build_scene",
+        "animate_scene"
+      ],
+      "recording_schema": "stable-envs/object-permanence-rigid-v2",
+      "reference_target_roles": {
+        "inner_blue_cube": "contained_object",
+        "inner_orange_ball": "contained_object",
+        "inner_yellow_pyramid": "contained_object"
+      },
+      "reference_targets": [
+        "inner_orange_ball",
+        "inner_blue_cube",
+        "inner_yellow_pyramid"
+      ],
+      "script": "object_permanence/generator/tasks/G12_partition_box/pb_task_00000052_pb_partition_box_cube_pyramid__ball_0053_blender.py",
+      "source_capability_audit": {
+        "camera": "fixed ORTHO; no depth of field",
+        "driver_diversity": "not sampled; selected source script defaults",
+        "dynamic_node_count": 10,
+        "frames": 120,
+        "local_geometry": "constant over every source frame",
+        "materials": "constant referenced opaque source materials",
+        "parent_nodes": [
+          "box_root",
+          "box_lid_hinge"
+        ],
+        "parented_draw_objects": [
+          "box_base",
+          "box_left_wall",
+          "box_right_wall",
+          "box_front_wall",
+          "box_back_wall",
+          "inner_partition_wall",
+          "box_top_lid",
+          "inner_blue_cube",
+          "inner_yellow_pyramid",
+          "inner_orange_ball"
+        ],
+        "partition_motion": "Source pb_is_dynamic=False; observed inherited world rotation correctly retains a dynamic node.",
+        "physics_objects": [],
+        "source_motion": "evaluated source world poses, including inherited root/hinge motion; no physics reconstruction",
+        "types": {
+          "CAMERA": 1,
+          "EMPTY": 2,
+          "LIGHT": 2,
+          "MESH": 12
+        },
+        "visibility": "no hide flags or object-set changes; geometric occlusion"
+      },
+      "source_frames": [
+        1,
+        120
+      ],
+      "source_preview_render_samples": 16,
+      "source_script_sha256": "b66d1c250c8105a356862abbe1deb45073f9f5b0bde2a34b1bbdc4c40deb2570",
+      "source_task_manifest_sha256": "dd9cc8a41a44cc9425e3d3a013fc9a56db45cb3e9f6358525ab00419bd0d089a",
+      "status": "certified",
+      "task": "G12"
     }
   ],
   "entries": [
@@ -9763,11 +10312,11 @@
   "reference_probe_policy": "Source task-object roles select probes; V2 separately records source_semantic_targets and the source-observable subset targets. Every mesh remains in all world poses, IDs and all-object depth/mask checks.",
   "schema": "stable-envs/object-permanence-source-audit-v1",
   "scope": {
-    "additional_certified_members": 15,
+    "additional_certified_members": 20,
     "member_scripts": 197,
     "nominal_members": 150,
     "task_groups": 150,
-    "unregistered_other_members": 32
+    "unregistered_other_members": 27
   },
   "source_commit": "824baddcdad087810d35638bf8f273b884f74975",
   "source_url": "https://github.com/hokindeng/object-permanence",
@@ -9837,41 +10386,6 @@
       "source_script_sha256": "a031bab744d099f78ab24b7da32075b548284d1446944e1a4ca08e17a5a77a99",
       "status": "unregistered-member-entry",
       "task": "G05"
-    },
-    {
-      "member": 1,
-      "script": "object_permanence/generator/tasks/G10_size_gate/pb_task_00000046_pb_u_track_large_hole_then_small_hole_0047_blender.py",
-      "source_script_sha256": "962998d64ea922d82dac17493eab374a120d072fa85dbefa4cdfacd357a54880",
-      "status": "unregistered-member-entry",
-      "task": "G10"
-    },
-    {
-      "member": 1,
-      "script": "object_permanence/generator/tasks/G11_box_holds_N_objects/pb_task_00000048_pb_rotating_box_hidden_ball_cube_0049_blender.py",
-      "source_script_sha256": "54c9fddb0b766de23f1be2c5b3190b14ea39871be764ffd733756b62aada573f",
-      "status": "unregistered-member-entry",
-      "task": "G11"
-    },
-    {
-      "member": 2,
-      "script": "object_permanence/generator/tasks/G11_box_holds_N_objects/pb_task_00000049_pb_rotating_box_hidden_ball_cube_pyramid_0050_blender.py",
-      "source_script_sha256": "d1c9466461462e30196b1aefb2b2e1ae1a72ddfe4be112a83ca5205b23ca000f",
-      "status": "unregistered-member-entry",
-      "task": "G11"
-    },
-    {
-      "member": 1,
-      "script": "object_permanence/generator/tasks/G12_partition_box/pb_task_00000051_pb_partition_box_ball_pyramid__cube_0052_blender.py",
-      "source_script_sha256": "50ce3bdd50d3e83f5ae4395b681ce4a7855fe0ccaefead39f8c42fe3db6033be",
-      "status": "unregistered-member-entry",
-      "task": "G12"
-    },
-    {
-      "member": 2,
-      "script": "object_permanence/generator/tasks/G12_partition_box/pb_task_00000052_pb_partition_box_cube_pyramid__ball_0053_blender.py",
-      "source_script_sha256": "b66d1c250c8105a356862abbe1deb45073f9f5b0bde2a34b1bbdc4c40deb2570",
-      "status": "unregistered-member-entry",
-      "task": "G12"
     },
     {
       "member": 1,

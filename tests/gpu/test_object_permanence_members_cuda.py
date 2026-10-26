@@ -29,6 +29,11 @@ from tests.helpers.reference.object_permanence_recordings import FIXTURES, RECOR
         ("G08", 1, "v2"),
         ("G09", 1, "v2"),
         ("G09", 2, "v2"),
+        ("G10", 1, "v2"),
+        ("G11", 1, "v2"),
+        ("G11", 2, "v2"),
+        ("G12", 1, "v2"),
+        ("G12", 2, "v2"),
     ],
 )
 def test_all_member_frames_source_masks_depth_and_cross_batch_cache(task, member, version):

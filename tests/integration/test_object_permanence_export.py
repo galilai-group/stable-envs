@@ -96,6 +96,11 @@ def test_audited_source_export_and_independent_world_geometry_per_scene(export_c
         ("G08", 1, 13, "v2"),
         ("G09", 1, 6, "v2"),
         ("G09", 2, 12, "v2"),
+        ("G10", 1, 1, "v2"),
+        ("G11", 1, 8, "v2"),
+        ("G11", 2, 9, "v2"),
+        ("G12", 1, 10, "v2"),
+        ("G12", 2, 10, "v2"),
     ],
 )
 def test_additional_member_unified_export_and_world_check(tmp_path, task, member, dynamic_count, version):
@@ -139,6 +144,18 @@ def test_additional_member_unified_export_and_world_check(tmp_path, task, member
         assert fresh.manifest["source"].get("execution_context") == frozen.manifest["source"].get("execution_context")
         assert fresh.manifest["camera"] == frozen.manifest["camera"]
         np.testing.assert_array_equal(fresh.poses(np.arange(120)), frozen.poses(np.arange(120)))
+        if task in ("G11", "G12"):
+            objects = {o["name"]: o for o in fresh.manifest["objects"]}
+            names = ["box_top_lid", "inner_orange_ball", "inner_blue_cube"]
+            if task == "G12":
+                # The source labels the partition static, but its parent's
+                # rotation still changes its world pose. Do not cache it static.
+                names.append("inner_partition_wall")
+            for name in names:
+                node = objects[name]["node"]
+                assert node >= 0
+                rows = fresh.poses([0, 85])[:, node]
+                assert not np.array_equal(rows[0], rows[1]), name
 
 
 @pytest.mark.parametrize("member", [1, 3])

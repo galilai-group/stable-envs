@@ -44,9 +44,25 @@ AUDITED_MEMBERS = {
     ("G08", 1): ("build_scene", "animate_scene"),
     ("G09", 1): ("build_scene_by_kind", "animate_scene_by_kind"),
     ("G09", 2): ("build_scene_by_kind", "animate_scene_by_kind"),
+    ("G10", 1): ("build_scene", "animate_scene"),
+    ("G11", 1): ("build_scene", "animate_scene"),
+    ("G11", 2): ("build_scene", "animate_scene"),
+    ("G12", 1): ("build_scene", "animate_scene"),
+    ("G12", 2): ("build_scene", "animate_scene"),
 }
 # Extra members are audited independently of their task's first camera.
-ORTHOGRAPHIC_MEMBERS = frozenset({("G08", 1), ("G09", 1), ("G09", 2)})
+ORTHOGRAPHIC_MEMBERS = frozenset(
+    {
+        ("G08", 1),
+        ("G09", 1),
+        ("G09", 2),
+        ("G10", 1),
+        ("G11", 1),
+        ("G11", 2),
+        ("G12", 1),
+        ("G12", 2),
+    }
+)
 
 SOURCE_COMMIT = "824baddcdad087810d35638bf8f273b884f74975"
 SCHEMA = "stable-envs/object-permanence-rigid-v1"

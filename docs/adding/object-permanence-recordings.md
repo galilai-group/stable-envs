@@ -9,11 +9,11 @@ unused builders; they are not a claim that every nominal/diversity variant works
 
 ## Audited scenes and supported capabilities
 
-Current scope: all 150 first nominal members plus fifteen additional members
-(G01/G03 optical variants and rigid variants through G09).
+Current scope: all 150 first nominal members plus twenty additional members
+(G01/G03 optical variants and rigid variants through G12).
 G98/G132 use [hash-pinned native source realizations](object-permanence-native-scenes.md);
-32 additional scripts remain unimported: two G05 entries have capability deferrals
-and 30 await runtime audit. Driver diversity remains outside certification. The sections below
+27 additional scripts remain unimported: two G05 entries have capability deferrals
+and 25 await runtime audit. Driver diversity remains outside certification. The sections below
 retain the chronological import history.
 
 G34 is the existing single ball behind a screen. The second pilot is
@@ -513,9 +513,60 @@ interpreters are unchanged. Omitting a required contract or choosing the wrong
 version reports an unsupported member before source execution.
 
 There are no newly deferred entries in this batch. The two G05 blockers and
-source-only diagnostic GIFs remain unchanged. Thirty other scripts still need
-runtime audit; the next task in G order is G10. Temporary source PNGs are removed
+source-only diagnostic GIFs remain unchanged. That batch left thirty other scripts without
+runtime audit and advanced the queue to G10. Temporary source PNGs are removed
 after all six comparison GIFs have been checked.
+
+### Next member batch: G10–G12
+
+Five further members use the unchanged orthographic V2 contract. Both candidate
+and independent reference register only their source build/animate entry points
+and the existing camera capability; no new renderer, motion formula, data format
+or threshold is introduced.
+
+| Member | Source behavior | Draw objects / dynamic nodes | Max depth MSE | Min mask IoU |
+|---|---|---:|---:|---:|
+| G10/1 | Ball passes the large hole, then recoils/stops at the small hole | 137 / 1 | 1.315e-16 | 1.0 |
+| G11/1 | Closed box rotates with ball and cube, then reopens | 10 / 8 | 2.774e-14 | 1.0 |
+| G11/2 | Same operation with ball, cube and pyramid | 11 / 9 | 2.774e-14 | 1.0 |
+| G12/1 | Rotating partition box: ball/pyramid together, cube separate | 12 / 10 | 4.024e-12 | 1.0 |
+| G12/2 | Rotating partition box: cube/pyramid together, ball separate | 12 / 10 | 4.024e-12 | 1.0 |
+
+The U-track consists of ordinary cylinder/box meshes, not Curve objects. Its
+136 static draw objects reuse the shared static cache; the trajectory only stores
+the ball's changing pose. Applied Boolean barriers retain their evaluated holes.
+For G11/G12, Blender evaluates the box-root and lid-hinge hierarchy before world
+poses are sampled. Runtime replay needs no parent graph or Blender dependency.
+The G12 partition carries `pb_is_dynamic=False` in the source, but observed world
+rotation correctly makes it a dynamic node. Live reexports explicitly check the
+lid, contained objects and partition motion rather than trusting that tag.
+
+All 600 source frames pass independent full/cached depth and every-object mask
+checks. RGB/depth/IDs are bit-identical at 90p/180p across reversed/repeated
+frames, chunks 1/4/7 and caller mutation, with one static seed and zero fallback.
+Largest source world-vertex/normal errors are 4.031e-7 / 3.153e-7. The maximum
+pixel depth MSE remains below the original 1e-8 budget; no tolerances are relaxed.
+
+Use the existing batch entry into **new** recording/oracle roots:
+
+```bash
+python -m scripts.export.batch_object_permanence --source-root <source> \
+  --output <new-recordings> --oracle-root <new-oracles> --report <g10-report.json> \
+  --tasks G10 --members 1 --stage all \
+  --visibility-contract stable-envs/opaque-pixel-rays-v2 \
+  --blender-python <blender-python> --render-python <cuda-python>
+python -m scripts.export.batch_object_permanence --source-root <source> \
+  --output <new-recordings> --oracle-root <new-oracles> --report <boxes-report.json> \
+  --tasks G11,G12 --members 1,2 --stage all \
+  --visibility-contract stable-envs/opaque-pixel-rays-v2 \
+  --blender-python <blender-python> --render-python <cuda-python>
+```
+
+Use `--stage validate` to recheck existing immutable inputs. Each member has its
+own fresh 120-frame oracle and source/replay GIF. Temporary PNGs are deleted
+after GIF verification. There are no newly deferred entries; the G05 deferral
+evidence/diagnostic GIFs stay intact. Twenty-five scripts still need runtime
+audit, starting at G13, alongside those two earlier G05 blockers.
 
 Native previews accept `--member`/`--profile` via
 `scripts.export.render_object_permanence_preview`. Use temporary PNGs with

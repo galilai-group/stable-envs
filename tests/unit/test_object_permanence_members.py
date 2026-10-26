@@ -195,6 +195,11 @@ def test_next_member_batch_keeps_hidden_marker_and_multistage_scale_entries_unre
         ("G08", 1, "v2", 2),
         ("G09", 1, "v2", 3),
         ("G09", 2, "v2", 3),
+        ("G10", 1, "v2", 2),
+        ("G11", 1, "v2", 3),
+        ("G11", 2, "v2", 3),
+        ("G12", 1, "v2", 3),
+        ("G12", 2, "v2", 3),
     ],
 )
 def test_perspective_and_orthographic_members_require_their_audited_contract(
