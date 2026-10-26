@@ -20,6 +20,13 @@ class _ReacherSemantics(DelegatedSemantics):
         space["visibility"]["target"].set_init_value(0)
         return space
 
+    @classmethod
+    def reference_env(cls, size: int | None = None):
+        env = super().reference_env(size)
+        # The source frame is SWM's default, which makes the target material transparent.
+        env.physics.named.model.mat_rgba["target", 3] = 0.0
+        return env
+
     def _layout(self):
         return tuple((key, width, 0 if key == ("qpos",) else None) for key, (width, _) in self._fields().items())
 
