@@ -25,7 +25,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from benchmarks.offline_sweep import _host, _sweeps
+from benchmarks.offline_sweep import _cycle, _host, _timed
 
 #: Constructor keyword arguments of source gym ids that need them.
 SOURCE_KWARGS = {"swm/PushT-v1": {"resolution": 224}, "swm/PushT-Discrete-v1": {"resolution": 224}}
@@ -267,14 +267,21 @@ def run_source(args, name: str, render: bool) -> dict:
                     adapter.submit_step(actions[s : s + lanes, t + 1], capture_state=False, capture_frame=render)
                 if render:
                     out["frame"].numpy()
+                try:
+                    yield lanes
+                except GeneratorExit:
+                    if t + 1 < length:
+                        adapter.receive_step()
+                    raise
 
     groups = list(range(0, n - lanes + 1, lanes))
     check_lanes = sorted({0, lanes // 2, lanes - 1})
     check_steps = tuple(t for t in CHECK_STEPS if t < length)
     got: dict = {}
     try:
-        play(groups[:1])
-        t = _sweeps(lambda: play(groups), warmup=0, repeats=args.repeats, budget_s=args.budget)
+        units = _cycle(lambda: play(groups))
+        t = _timed(units, seconds=args.seconds, repeats=args.repeats)
+        units.close()
         if render:
             # The workers' frames for a few lanes, spread across workers, at the check steps.
             adapter.reset(int(seeds[0]))
@@ -322,7 +329,6 @@ def run_source(args, name: str, render: bool) -> dict:
             "mismatched": len(bad),
             "examples": bad[:5],
         }
-    steps = len(groups) * lanes * length
     return {
         "source": source_id(name),
         "frame_shape": list(frame_shape) if frame_shape else None,
@@ -330,8 +336,7 @@ def run_source(args, name: str, render: bool) -> dict:
         "lanes": lanes,
         "cpus": cpus,
         "actions_per_call": 1,
-        "steps": steps,
-        "steps_per_s": steps / t["median_s"],
+        "steps_per_s": t["rate"],
         **t,
         "rollout_mse": rollout,
         **({"frame_check": check, "status": "invalid"} if check and check["mismatched"] else {"frame_check": check}),
@@ -371,18 +376,17 @@ def run_ours(args, name: str, dev: str, render: bool, chunk: int) -> dict:
             env.reset(seed=int(seeds[s]))
             for t0 in range(0, length, chunk):
                 env.step(acts[s : s + lanes, t0 : t0 + chunk], states=None, frames=frames)
+                yield lanes * min(chunk, length - t0)
 
     groups = list(range(0, n - lanes + 1, lanes))
     try:
-        play(groups[:1])
         shape = None
         if render:
             env.reset(seed=int(seeds[0]))
             shape = list(env.step(acts[:lanes, :1], states=None, frames=slice(None))["frames"].shape[2:])
-        t = _sweeps(lambda: play(groups), warmup=0, repeats=args.repeats, budget_s=args.budget, sync=sync)
+        t = _timed(_cycle(lambda: play(groups)), seconds=args.seconds, repeats=args.repeats, sync=sync)
     finally:
         env.close()
-    steps = len(groups) * lanes * length
     return {
         "lanes": lanes,
         "device": dev,
@@ -390,8 +394,7 @@ def run_ours(args, name: str, dev: str, render: bool, chunk: int) -> dict:
         "actions_per_call": chunk,
         "threads": args.threads,
         "frame_shape": shape,
-        "steps": steps,
-        "steps_per_s": steps / t["median_s"],
+        "steps_per_s": t["rate"],
         **t,
     }
 
@@ -458,6 +461,7 @@ def main() -> None:
     r.add_argument("--size", type=int, default=224)
     r.add_argument("--repeats", type=int, default=10)
     r.add_argument("--budget", type=float, default=300.0)
+    r.add_argument("--seconds", type=float, default=10.0, help="length of one timed window")
     args = p.parse_args()
     {"dataset": cmd_dataset, "run": cmd_run}[args.cmd](args)
 

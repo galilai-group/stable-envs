@@ -179,8 +179,10 @@ def markdown(roots: list[Path]) -> str:
         )
     lines = ["# stable-envs vs source: speed and frame agreement", ""]
     lines += [
-        "Speeds are medians over repeats. Every arm of a job runs pinned to the same CPU cores, one GPU visible,",
-        "on an exclusive node. MSE is per frame on the 0-255 scale.",
+        "Speeds are medians over repeats: a fixed workload per repeat in jobs with the harness at 7fdf8e9b or",
+        "earlier, a 10 s window per repeat after it. Every arm of a job runs pinned to the same CPU cores, one",
+        "GPU visible. Core jobs ran on an exclusive node; later jobs share the node.",
+        "MSE is per frame on the 0-255 scale.",
         "",
         "| Job | Harness | Main | Host | Slurm job | GPU, driver | Cores | Start | States | Batches | Episodes x steps | Repeats |",
         "|---|" + "---|" * 11,

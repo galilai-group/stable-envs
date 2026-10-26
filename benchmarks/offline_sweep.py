@@ -69,6 +69,56 @@ def _sweeps(fn, *, warmup: int, repeats: int, budget_s: float, sync=None) -> dic
     return {"median_s": statistics.median(times), "samples_s": times, "repeats": len(times), "warmup": warmup}
 
 
+def _timed(units, *, seconds: float, repeats: int, sync=None, warmup_s: float = 2.0) -> dict:
+    """Items per second over ``repeats`` windows of about ``seconds``; each ``next(units)`` does work and returns its items."""
+    end = time.perf_counter() + warmup_s
+    while time.perf_counter() < end:
+        next(units)
+    rates, windows, items = [], [], []
+    for _ in range(repeats):
+        if sync:
+            sync()
+        t = time.perf_counter()
+        done = 0
+        while time.perf_counter() - t < seconds:
+            done += next(units)
+        if sync:
+            sync()
+        dt = time.perf_counter() - t
+        rates.append(done / dt)
+        windows.append(dt)
+        items.append(done)
+    return {"rate": statistics.median(rates), "rates": rates, "window_s": windows, "items": items, "repeats": repeats}
+
+
+def _cycle(make):
+    """Endless passes over the iterable that ``make`` returns."""
+    while True:
+        yield from make()
+
+
+def _worker_for(job) -> tuple[int, float]:
+    """Draw this worker's rows 8 at a time, wrapping around, for ``seconds``; return the frames and the elapsed time."""
+    (s, e), seconds, render = job
+    t = time.perf_counter()
+    done, i = 0, s
+    while time.perf_counter() - t < seconds:
+        j = min(i + 8, e)
+        done += render((i, j))
+        i = s if j >= e else j
+    return done, time.perf_counter() - t
+
+
+def _pool_timed(pool, render, spans, *, seconds: float, repeats: int) -> dict:
+    """Frames per second of all workers together: one worker per span, every worker timed over the same window."""
+    pool.map(_worker_for, [(sp, 2.0, render) for sp in spans], chunksize=1)
+    rates = []
+    for _ in range(repeats):
+        out = pool.map(_worker_for, [(sp, seconds, render) for sp in spans], chunksize=1)
+        rates.append(sum(d / dt for d, dt in out))
+    return {"rate": statistics.median(rates), "rates": rates, "repeats": repeats}
+
+
 def _load_states(path: Path):
     blob = torch.load(path, weights_only=False)
     return blob
@@ -194,9 +244,10 @@ def cmd_ours(args) -> None:
                 def sweep():
                     for s, e in spans:
                         render(s, e)
+                        yield e - s
 
-                t = _sweeps(sweep, warmup=1, repeats=args.repeats, budget_s=args.budget, sync=sync)
-                row = {"batch": b, "status": "ok", "frames": n, "frame_shape": shape, "fps": n / t["median_s"], **t}
+                t = _timed(_cycle(sweep), seconds=args.seconds, repeats=args.repeats, sync=sync)
+                row = {"batch": b, "status": "ok", "frames": n, "frame_shape": shape, "fps": t["rate"], **t}
                 if dev.type == "cuda":
                     row["peak_mib"] = torch.cuda.max_memory_allocated() / 2**20
             except torch.cuda.OutOfMemoryError as e:
@@ -272,22 +323,17 @@ def cmd_source(args) -> None:
                 _worker_init(name, args.states, blob["size"])
                 frame = _W["cls"].reference_render(_W["ref"], _W["rows"][:1])
                 shape = list(np.asarray(frame).shape[1:])
-                t = _sweeps(lambda: _worker_render((0, n)), warmup=1, repeats=args.repeats, budget_s=args.budget)
+                rows8 = lambda: (_worker_render((i, min(i + 8, n))) for i in range(0, n, 8))  # noqa: E731
+                t = _timed(_cycle(rows8), seconds=args.seconds, repeats=args.repeats)
             else:
                 ctx = mp.get_context("spawn")
                 spans = [(n * k // args.procs, n * (k + 1) // args.procs) for k in range(args.procs)]
                 with ctx.Pool(
                     args.procs, initializer=_worker_init, initargs=(name, args.states, blob["size"])
                 ) as pool:
-                    pool.map(_worker_render, [(0, 1)] * args.procs)
                     shape = None
-                    t = _sweeps(
-                        lambda: pool.map(_worker_render, spans, chunksize=1),
-                        warmup=1,
-                        repeats=args.repeats,
-                        budget_s=args.budget,
-                    )
-            row = {"status": "ok", "frames": n, "fps": n / t["median_s"], "frame_shape": shape, **t}
+                    t = _pool_timed(pool, _worker_render, spans, seconds=args.seconds, repeats=args.repeats)
+            row = {"status": "ok", "frames": n, "fps": t["rate"], "frame_shape": shape, **t}
         except Exception as e:  # noqa: BLE001
             row = {"status": "error", "error": f"{type(e).__name__}: {e}"[:500]}
         print(f"{name} source {args.procs}p {row['status']} {row.get('fps', 0):.0f} fps", flush=True)
@@ -395,21 +441,18 @@ def cmd_source_upstream(args) -> None:
         try:
             if args.procs == 1:
                 _upstream_init(name, args.states, size, args.keep)
-                t = _sweeps(lambda: _upstream_render((0, n)), warmup=1, repeats=args.repeats, budget_s=args.budget)
+                _upstream_render((0, min(16, n)))
+                _W["keep"] = None
+                rows8 = lambda: (_upstream_render((i, min(i + 8, n))) for i in range(0, n, 8))  # noqa: E731
+                t = _timed(_cycle(rows8), seconds=args.seconds, repeats=args.repeats)
             else:
                 ctx = mp.get_context("spawn")
                 spans = [(n * k // args.procs, n * (k + 1) // args.procs) for k in range(args.procs)]
                 with ctx.Pool(
                     args.procs, initializer=_upstream_init, initargs=(name, args.states, size, None)
                 ) as pool:
-                    pool.map(_upstream_render, [(0, 1)] * args.procs)
-                    t = _sweeps(
-                        lambda: pool.map(_upstream_render, spans, chunksize=1),
-                        warmup=1,
-                        repeats=args.repeats,
-                        budget_s=args.budget,
-                    )
-            row = {"status": "ok", "frames": n, "fps": n / t["median_s"], "upstream": UPSTREAM[name][0], **t}
+                    t = _pool_timed(pool, _upstream_render, spans, seconds=args.seconds, repeats=args.repeats)
+            row = {"status": "ok", "frames": n, "fps": t["rate"], "upstream": UPSTREAM[name][0], **t}
         except Exception as e:  # noqa: BLE001
             row = {"status": "error", "error": f"{type(e).__name__}: {e}"[:500]}
         print(f"{name} source-upstream {args.procs}p {row['status']} {row.get('fps', 0):.0f} fps", flush=True)
@@ -511,6 +554,7 @@ def main() -> None:
     common.add_argument("--states", default="states")
     common.add_argument("--repeats", type=int, default=10)
     common.add_argument("--budget", type=float, default=300.0, help="seconds per sweep above which 3 repeats are kept")
+    common.add_argument("--seconds", type=float, default=10.0, help="length of one timed window")
     s = sub.add_parser("states", parents=[common])
     s.add_argument("--out", required=True)
     s.add_argument("--n", type=int, default=10_000)
