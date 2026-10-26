@@ -66,9 +66,8 @@ configuration and the Git revision.
 `python -m benchmarks.object_permanence_recordings --recordings <dataset> --output <json>`
 measures the shared GPU renderer with and without static caching. Timings include
 CPU frame selection and pose upload, with startup/JIT/cache construction reported
-separately. `--modes rgb,depth,ids` measures combined outputs. Optional G34
-`--backends cropped,cropped-refined` comparisons use the engine-free nvdiff utility.
-Native MuJoCo and raycast backends are not part of this family.
+separately. `--modes rgb,depth,ids` measures combined outputs. Both G34 and G62
+use the same recorded-trajectory and shared-renderer path.
 
 The same command can build native-source/shared GIFs from source previews.
 See [the recording guide](../docs/adding/object-permanence-recordings.md) for the

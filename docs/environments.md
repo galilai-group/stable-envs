@@ -44,8 +44,8 @@ env = snv.CartPole(num_envs=8)
 
 ## Families
 
-Object-permanence supplies recorded-trajectory utilities (`RigidTrajectory`,
-`G34Replay`) and a shared GPU renderer. It does not register action-driven `Env`
+Object-permanence supplies a recorded-trajectory reader (`RigidTrajectory`)
+and a shared GPU renderer (`RigidSceneRenderer`). It does not register action-driven `Env`
 classes; its CI profile is `object_permanence`. See
 [the recording workflow](adding/object-permanence-recordings.md).
 

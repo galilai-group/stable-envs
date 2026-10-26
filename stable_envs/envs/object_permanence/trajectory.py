@@ -61,7 +61,7 @@ class RigidTrajectory(Closeable):
 
     ``identity`` binds metadata, assets, camera and pose/frame file hashes. It can
     identify a future replay checkpoint together with a frame index; it is not
-    an engine checkpoint. Existing G34Replay State and rendering are unchanged.
+    an engine checkpoint.
     """
 
     resource_kind = "object_permanence.RigidTrajectory"

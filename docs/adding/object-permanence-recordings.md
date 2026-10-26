@@ -18,12 +18,15 @@ multi-stage/animated-scale recipe.
 from stable_envs.envs.object_permanence import RigidTrajectory
 from stable_envs.envs.object_permanence.rendering.rigid_nvdiff import RigidSceneRenderer
 
-with RigidTrajectory("recordings", "g62-nominal") as clip:
+with RigidTrajectory("recordings", "g34-nominal") as clip:
     with RigidSceneRenderer(clip, size=180) as renderer:
         fields = renderer.render_many([0, 44, 119])
         # CUDA: rgb uint8 [3,180,320,3], depth float32 [3,180,320],
         # ids int16 [3,180,320]. All outputs share object visibility.
 ```
+
+G34 uses this same path as every other recorded scene; change the clip identifier
+(e.g. `g62-nominal`) to select another task.
 
 Frame indices select recorded rows. These are source-animation poses, not
 checkpoints for action-driven physical simulation. A ball retains its pose while
@@ -150,10 +153,3 @@ python -m benchmarks.object_permanence_recordings --recordings <dataset> \
 Measurements include CPU frame lookup and pose upload. Startup/static bake,
 output download and training are separate costs; rendering throughput is not an
 end-to-end training speedup.
-
-## G34 convenience replay
-
-`G34Replay` retains its restorable trajectory cursor and engine-free nvdiff
-renderer. Its packaged visual scene is plain JSON; no physics model is compiled.
-The former MuJoCo adapter, native renderer, raycaster and dedicated sphere kernel
-have been removed. New tasks use sampled recordings and the shared renderer.

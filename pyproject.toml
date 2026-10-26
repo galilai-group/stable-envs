@@ -234,9 +234,6 @@ explicit = true
 [tool.setuptools.packages.find]
 include = ["stable_envs*"]
 
-[tool.setuptools.package-data]
-"stable_envs.envs.object_permanence" = ["assets/*/*.json"]
-
 [tool.setuptools.dynamic]
 version = { attr = "stable_envs.__about__.__version__" }
 

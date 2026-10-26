@@ -2,6 +2,8 @@
 
 import hashlib
 import json
+import subprocess
+import sys
 
 import numpy as np
 import pytest
@@ -192,3 +194,21 @@ def test_invalid_identifier_does_not_traverse_paths(tmp_path):
     for name in ("../example", "a/b", "", 12):
         with pytest.raises(ValueError, match="identifier"):
             RigidTrajectory(tmp_path, name)
+
+
+def test_recorded_frames_load_without_physics_or_rendering_engines():
+    from tests.helpers.reference.object_permanence_recordings import RECORDINGS
+
+    code = """
+import sys
+sys.modules['mujoco'] = None
+sys.modules['bpy'] = None
+sys.modules['nvdiffrast'] = None
+from stable_envs.envs.object_permanence import RigidTrajectory
+with RigidTrajectory(sys.argv[1], 'g34-nominal') as clip:
+    assert len(clip) == 120
+    assert clip.poses([0, 44, 119]).shape == (3, 1, 7)
+    assert clip.frames[44] == 45
+assert all(sys.modules[name] is None for name in ('mujoco', 'bpy', 'nvdiffrast'))
+"""
+    subprocess.run([sys.executable, "-c", code, str(RECORDINGS)], check=True, timeout=60)

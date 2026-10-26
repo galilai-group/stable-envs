@@ -114,7 +114,7 @@ def benchmark(args):
             "included": "warm CPU frame lookup/pose expansion, CPU-to-GPU upload, transforms, rendering into reused CUDA outputs",
             "excluded": "download, constructor, first draw/JIT/static bake, output allocation, GIF/CPU image download",
             "sampling": "same evenly spaced nominal frame indices, synchronized wall-clock median",
-            "precision": "shared refined cached coverage; shared-full uncached full-frame; G34 cropped scaled coverage/refined static",
+            "precision": "shared refined cached coverage; shared-full uncached full-frame",
             "notes": "different simple shaders; timings are rendering throughput, not training speedups; shared and shared-full use chunk size 4",
         },
         "points": [],
@@ -125,28 +125,14 @@ def benchmark(args):
         ("g62", "shared"),
         ("g34", "shared-full"),
         ("g62", "shared-full"),
-        ("g34", "cropped"),
-        ("g34", "cropped-refined"),
     ]
     cases = [(task, backend) for task, backend in cases if backend in args.backends.split(",")]
     for task, backend in cases:
         with RigidTrajectory(args.recordings, f"{task}-nominal") as clip:
-            owned = None
-            if backend in ("shared", "shared-full"):
-                owned = RigidSceneRenderer(clip, size=args.size, cache_static=backend == "shared")
+            owned = RigidSceneRenderer(clip, size=args.size, cache_static=backend == "shared")
 
-                def render(indices, out=None):
-                    return owned.render_many(indices, modes=modes, out=out)
-            elif backend in ("cropped", "cropped-refined"):
-                from stable_envs.envs.object_permanence.rendering.g34_nvdiff import G34Renderer
-
-                owned = G34Renderer(
-                    size=args.size, coverage_mode="refined" if backend == "cropped-refined" else "scaled"
-                )
-
-                def render(indices, out=None):
-                    rows = torch.from_numpy(clip.poses(indices)[:, 0])
-                    return owned.render_many(rows, modes=modes, out=out)
+            def render(indices, out=None):
+                return owned.render_many(indices, modes=modes, out=out)
 
             try:
                 torch.cuda.synchronize()
@@ -189,8 +175,7 @@ def benchmark(args):
                     if args.profile and backend in ("shared", "shared-full") and batch == 256:
                         result["profiles"][f"{task}-{backend}"] = profile_draw(draw)
             finally:
-                if owned is not None:
-                    owned.close()
+                owned.close()
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2) + "\n")
     if args.source_previews:
@@ -222,7 +207,7 @@ def main():
     modes = args.modes.split(",")
     if not modes or len(set(modes)) != len(modes) or any(m not in ("rgb", "depth", "ids") for m in modes):
         parser.error("modes must be unique rgb/depth/ids")
-    if any(b not in ("shared", "shared-full", "cropped", "cropped-refined") for b in args.backends.split(",")):
+    if any(b not in ("shared", "shared-full") for b in args.backends.split(",")):
         parser.error("unknown backend")
     benchmark(args)
 

@@ -13,8 +13,7 @@ realizations; they are offline source inputs, not runtime physics models.
 
 The three comparisons in `docs/assets/media/object-permanence/` are also derived
 from that source and retain its attribution and license. They are reduced-quality
-native previews, not original dataset videos. The G34 convenience scene uses
-plain visual JSON and source-authored motion, without a physics engine.
+native previews, not original dataset videos.
 See `docs/adding/object-permanence-recordings.md` for the workflow and scope.
 
 ## Craftax

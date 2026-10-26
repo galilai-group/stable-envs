@@ -20,7 +20,6 @@ class RigidSceneRenderer(Closeable):
     visibility, while movers compete using original face IDs. No crop or
     single-mover assumption. Geometry IDs map to manifest semantic IDs. The
     trajectory remains caller-owned and must stay open while rendering.
-    Existing G34Renderer/G34Replay interfaces and their optimized path are separate.
     Optional geometry_precision="float64" preserves projection arithmetic, not
     extra precision absent from recorded meshes, poses or shading attributes.
     Opt-in visibility_contract="stable-envs/opaque-pixel-rays-v1" uses float64

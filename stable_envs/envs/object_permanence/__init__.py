@@ -1,6 +1,5 @@
-"""Source-authored trajectory replay and engine-free rendering."""
+"""Recorded source trajectories and shared engine-free rendering."""
 
-from .replay import G34Replay
 from .trajectory import RigidTrajectory
 
-__all__ = ["G34Replay", "RigidTrajectory"]
+__all__ = ["RigidTrajectory"]

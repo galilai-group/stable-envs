@@ -1,1 +1,1 @@
-"""Source-specific native baselines and accelerated rendering backends."""
+"""Shared recorded-scene rendering and visibility contracts."""

@@ -55,8 +55,9 @@ def test_source_fidelity_and_cross_batch_cache(task, oracle, contract):
     assert all(r["passed"] and r["bit_identical"] for r in results), results
 
 
-def test_multi_outputs_preserve_single_mode_buffers_and_borrowed_data():
-    with RigidTrajectory(RECORDINGS, "g62-nominal") as clip:
+@pytest.mark.parametrize("task", ["g34", "g62"])
+def test_multi_outputs_preserve_single_mode_buffers_and_borrowed_data(task):
+    with RigidTrajectory(RECORDINGS, f"{task}-nominal") as clip:
         with RigidSceneRenderer(clip, size=90) as renderer:
             frames = np.array([119, 0, 59, 44, 0])
             fields = renderer.render_many(frames)
