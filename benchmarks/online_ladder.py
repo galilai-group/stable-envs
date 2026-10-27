@@ -177,7 +177,10 @@ def _ours_frames(name, size, device, seed, actions):
         env.reset(seed=seed)
         a = torch.as_tensor(actions[None], device=device)
         out = env.step(a, states=None, frames=slice(None))
-        ended = (out["terminated"] | out["truncated"])[0].reshape(-1).cpu().numpy()
+        keys = [k for k in ("terminated", "truncated", "done") if k in out.keys()]
+        ended = np.zeros(actions.shape[0], bool)
+        for k in keys:
+            ended |= out[k][0].reshape(actions.shape[0], -1).any(-1).cpu().numpy().astype(bool)
         hits = np.flatnonzero(ended)
         return out["frames"][0].cpu().numpy(), (int(hits[0]) if len(hits) else None)
     finally:
