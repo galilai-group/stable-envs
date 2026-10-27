@@ -455,12 +455,6 @@
    "state_dim": 5
   },
   {
-   "module": "stable_envs.envs.pusht.jax",
-   "name": "PushTJax",
-   "reference_id": "envX/pusht",
-   "state_dim": 10
-  },
-  {
    "module": "stable_envs.envs.highway",
    "name": "Racetrack",
    "reference_id": "racetrack-v0",

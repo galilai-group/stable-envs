@@ -13,8 +13,3 @@ _semantics = sys.modules.get(f"{__name__}.semantics")
 if _semantics is not None:
     PushT = _semantics.PushT
     PushTDiscrete = _semantics.PushTDiscrete
-
-_import_env_module("pusht.jax", "pusht_jax")
-_jax = sys.modules.get(f"{__name__}.jax")
-if _jax is not None:
-    PushTJax = _jax.PushTJax

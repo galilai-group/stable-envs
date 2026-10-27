@@ -40,13 +40,7 @@ checks = ["original"]
 reason = "stable-worldmodel is its original and no corpus has been recorded from it; only the swm layer compares it"
 
 [[exemption]]
-env = "PushT"
-family = "pusht"
-checks = ["original"]
-reason = "stable-worldmodel is its original and no corpus has been recorded from it; only the swm layer compares it"
-
-[[exemption]]
-env = "PushTDiscrete"
+env = "PushT*"
 family = "pusht"
 checks = ["original"]
 reason = "stable-worldmodel is its original and no corpus has been recorded from it; only the swm layer compares it"

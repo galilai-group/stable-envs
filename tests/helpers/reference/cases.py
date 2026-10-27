@@ -74,7 +74,6 @@ _MAZES = tuple(
 #: Registered env -> the CPU test comparing it with the library it ports, or with a corpus recorded from
 #: its source. None of these tests imports stable_worldmodel.
 ORIGINAL_GATES: dict[str, str] = {
-    "PushTJax": "tests/unit/test_pusht_jax.py::test_physics_tracks_gym_pusht_reference",
     **dict.fromkeys(("CartPole", "Pendulum", "Acrobot", "MountainCar", "MountainCarContinuous"), _CLASSIC),
     **dict.fromkeys(("TwoRoom", "Piecewise", "SimplePointMaze"), _NAVIGATION),
     **dict.fromkeys(

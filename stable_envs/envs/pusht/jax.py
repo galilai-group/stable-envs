@@ -14,7 +14,6 @@ import torch
 from tensordict import TensorDict
 
 from ...env import Env
-from ...registry import register
 from ...spaces import Dict
 
 os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
@@ -104,9 +103,8 @@ def _render(rows, *, size, with_target, render_action):
     return jax.vmap(lambda row: render(row, size=size, with_target=with_target, render_action=render_action))(rows)
 
 
-@register
-class PushTJax(Env):
-    """Canonical envX circle/T task with absolute target actions and coverage reward."""
+class _PushT(Env):
+    """Private canonical PushT prototype; not the public source-aligned task."""
 
     family = domain = "pusht"
     name = "push-t-jax"
@@ -146,14 +144,14 @@ class PushTJax(Env):
         self, num_envs=1, size=None, supersample=1, device=None, seed=0, *, with_target=True, render_action=False
     ):
         if type(num_envs) is not int or num_envs < 1:
-            raise ValueError("PushTJax num_envs must be a positive integer")
+            raise ValueError("PushT prototype num_envs must be a positive integer")
         if size is not None and (type(size) is not int or size < 1):
-            raise ValueError("PushTJax size must be a positive integer")
+            raise ValueError("PushT prototype size must be a positive integer")
         if supersample != 1:
-            raise ValueError("PushTJax renders with supersample=1")
+            raise ValueError("PushT prototype renders with supersample=1")
         super().__init__(num_envs, size, 1, device, "jax", seed)
         if self.device.type not in ("cpu", "cuda"):
-            raise ValueError("PushTJax requires a CPU or CUDA device")
+            raise ValueError("PushT prototype requires a CPU or CUDA device")
         index = self.device.index
         if index is None:
             index = torch.cuda.current_device() if self.device.type == "cuda" else 0
@@ -178,21 +176,21 @@ class PushTJax(Env):
         self._check_open("reset")
         options = {} if options is None else options
         if not isinstance(options, dict) or set(options) - {"state"}:
-            raise ValueError("PushTJax reset options support only a dataset state")
+            raise ValueError("PushT prototype reset options support only a dataset state")
         if seed is not None and (
             isinstance(seed, bool) or not isinstance(seed, (int, np.integer)) or not 0 <= seed < 2**32
         ):
-            raise ValueError("PushTJax seed must be an integer in [0, 2**32)")
+            raise ValueError("PushT prototype seed must be an integer in [0, 2**32)")
         pose = options.get("state")
         if pose is not None:
             pose = torch.as_tensor(pose, dtype=torch.float32, device=self.device)
             if pose.shape == (5,):
                 pose = pose.expand(self.B, 5)
             if pose.shape != (self.B, 5) or not bool(torch.isfinite(pose).all()):
-                raise ValueError("PushTJax dataset state must be finite with shape [5] or [num_envs, 5]")
+                raise ValueError("PushT prototype dataset state must be finite with shape [5] or [num_envs, 5]")
         with jax.default_device(self._jax_device):
             if seed is None and hasattr(self, "_state"):
-                keys = jnp.asarray(self._state["rng"].cpu().numpy(), dtype=jnp.uint32)
+                keys = _from_torch(self._state["rng"].to(torch.uint32))
             else:
                 value = int(self.rng.integers(2**32)) if seed is None else int(seed)
                 keys = jax.vmap(jax.random.PRNGKey)(jnp.arange(self.B, dtype=jnp.uint32) + value)
@@ -217,27 +215,27 @@ class PushTJax(Env):
     def set_state(self, state):
         self._check_open("set_state")
         self._validate_state(state, batch=self.B)
-        self.state_spec.validate(state, owner="PushTJax State")
+        self.state_spec.validate(state, owner="PushT prototype State")
         if bool(
             (state["time"] < 0).any()
             | (state["contacts"] < 0).any()
             | (state["rng"] < 0).any()
             | (state["rng"] >= 2**32).any()
         ):
-            raise ValueError("Invalid PushTJax counters or RNG key")
+            raise ValueError("Invalid PushT prototype counters or RNG key")
         self._state = state.to(self.device).clone()
 
     def _step(self, actions, *, active=None, capture_state=True):
         self._check_open("step")
         actions = torch.as_tensor(actions, device=self.device, dtype=torch.float32)
         if actions.shape != (self.B, 2) or not bool(torch.isfinite(actions).all()):
-            raise ValueError("PushTJax actions must be finite with shape [num_envs, 2]")
+            raise ValueError("PushT prototype actions must be finite with shape [num_envs, 2]")
         if active is None:
             active = torch.ones(self.B, dtype=torch.bool, device=self.device)
         else:
             active = torch.as_tensor(active, device=self.device)
             if active.shape != (self.B,) or active.dtype != torch.bool:
-                raise ValueError("PushTJax active mask must be bool [num_envs]")
+                raise ValueError("PushT prototype active mask must be bool [num_envs]")
         rows = self._rows(self._state)
         with jax.default_device(self._jax_device):
             updated, contacts, overlap = _advance(_from_torch(torch.cat((rows, actions), dim=-1)))
@@ -278,7 +276,7 @@ class PushTJax(Env):
         self._check_open("render")
         size = self.size if size is None else size
         if type(size) is not int or size < 1:
-            raise ValueError("PushTJax render size must be a positive integer")
+            raise ValueError("PushT prototype render size must be a positive integer")
         rows = self._pack_render_state(self._state) if states is None else states
         with jax.default_device(self._jax_device):
             frames = _render(
@@ -287,7 +285,7 @@ class PushTJax(Env):
         frames = torch.from_dlpack(frames)
         if out is not None:
             if out.shape != frames.shape or out.device != frames.device or out.dtype != torch.uint8:
-                raise ValueError("PushTJax output buffer must match the rendered frames")
+                raise ValueError("PushT prototype output buffer must match the rendered frames")
             out.copy_(frames)
             return out
         return frames

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import torch
 
-import stable_envs as se
+from stable_envs.envs.pusht.jax import _PushT as PushTPrototype
 from stable_envs.envs.pusht.simulation.jax_geometry import coverage
 from tests.helpers.reference.semantics import assert_same_state
 
@@ -39,7 +39,7 @@ def test_coverage_matches_shapely_reference(position, angle, expected):
     ],
 )
 def test_physics_tracks_gym_pusht_reference(pose, action, steps, expected, tolerance, device):
-    with se.PushTJax(device=device, size=32) as env:
+    with PushTPrototype(device=device, size=32) as env:
         env.reset(seed=0, options={"state": pose})
         for _ in range(steps):
             result = env.step(torch.tensor([action]), states=None, frames=None)
@@ -57,8 +57,8 @@ def device(request):
 
 def test_checkpoint_continuation_rng_ownership_and_atomic_rejection(device):
     with (
-        se.PushTJax(num_envs=3, size=32, device=device) as env,
-        se.PushTJax(num_envs=3, size=32, device=device, seed=99) as restored,
+        PushTPrototype(num_envs=3, size=32, device=device) as env,
+        PushTPrototype(num_envs=3, size=32, device=device, seed=99) as restored,
     ):
         state = env.reset(seed=7)
         actions = torch.tensor([[256, 300], [400, 200], [100, 350]], device=device)
@@ -84,7 +84,7 @@ def test_checkpoint_continuation_rng_ownership_and_atomic_rejection(device):
 
 
 def test_goal_reward_clock_and_inactive_lanes(device):
-    with se.PushTJax(num_envs=2, size=32, device=device) as env:
+    with PushTPrototype(num_envs=2, size=32, device=device) as env:
         state = env.reset(seed=0, options={"state": [0, 0, 256, 256, np.pi / 4]})
         state["time"][1] = 299
         env.set_state(state)

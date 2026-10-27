@@ -140,7 +140,7 @@ def test_no_fidelity_tier_is_published():
 def test_list_envs_and_info_answer_without_constructing_anything():
     names = R.list_envs()
     assert names == sorted(R.REGISTRY) and "PushT" in names
-    assert R.list_envs(family="pusht") == ["PushT", "PushTDiscrete", "PushTJax"]
+    assert R.list_envs(family="pusht") == ["PushT", "PushTDiscrete"]
     s = R.info("PushT")
     assert s["render_state_dim"] in (0, None) and s["family"] == "pusht"
     assert s["reference_id"] == "swm/PushT-v1"
