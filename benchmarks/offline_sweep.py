@@ -375,6 +375,16 @@ def cmd_mse(args) -> None:
             per_frame = C.frame_mse(ours[keep], np.asarray(theirs)[keep])
             row = {"status": "ok", "frames": int(keep.sum()), "excluded_unreachable": int((~keep).sum())}
             row.update(C.mse_summary(per_frame))
+            if args.keep:
+                order = np.argsort(per_frame)
+                pick = [int(order[-1]), int(order[len(order) // 2]), 0]
+                np.savez_compressed(
+                    Path(args.keep) / f"{name}-{args.device}.npz",
+                    ours=ours[keep][pick],
+                    theirs=np.asarray(theirs)[keep][pick],
+                    mse=per_frame[pick],
+                    labels=np.array(["worst", "median", "first"]),
+                )
         except Exception as e:  # noqa: BLE001
             row = {"status": "error", "error": f"{type(e).__name__}: {e}"[:500]}
         print(f"{name} mse {args.device} {row}", flush=True)
@@ -583,6 +593,7 @@ def main() -> None:
     m = sub.add_parser("mse", parents=[common])
     m.add_argument("--device", default="cuda")
     m.add_argument("--n", type=int, default=256)
+    m.add_argument("--keep", default=None, help="save the worst, median and first frame pairs to this directory")
     m.add_argument("--output", required=True)
     ls = sub.add_parser("list")
     ls.add_argument("--family", nargs="*", default=[])
