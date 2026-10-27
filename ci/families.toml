@@ -105,7 +105,7 @@ extras = ["pusht"]
 groups = ["pin-pusht"]
 paths = ["stable_envs/envs/pusht/**", "stable_envs/render/scene.py"]
 tests = ["test_pusht_*", "test_variation_pusht.py", "test_benchmark_surface.py"]
-requires = ["jax", "pymunk==7.2.0", "pygame", "shapely"]
+requires = ["pymunk==7.2.0", "pygame", "shapely"]
 capabilities = ["swm"]
 linux_env = { SDL_VIDEODRIVER = "dummy" }
 

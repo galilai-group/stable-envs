@@ -1,179 +1,224 @@
-"""PushT kernels adapted from fracapuano/envX at d26c817c1124229c819be574f137cd68bda4380a.
+"""PushT contact solver adapted from fracapuano/envX at d26c817.
 
 Copyright 2026 Francesco Capuano. SPDX-License-Identifier: Apache-2.0
 See licenses/envX-APACHE-2.0.txt and THIRD_PARTY_NOTICES.md.
 """
 
-from __future__ import annotations
-
-from typing import Any, NamedTuple
+from functools import partial
 
 import jax
 import jax.numpy as jnp
 
-from .jax_geometry import (
-    _TEE_VERTICES,
-    inverse_transform_points,
-    origin_from_center_of_mass,
-    point_in_tee,
-    rotation_matrix,
-    tee_center_of_mass,
-    tee_vertices,
-    transform_points,
-)
 
-Array = jax.Array
+def cross(a, b):
+    return a[..., 0] * b[..., 1] - a[..., 1] * b[..., 0]
 
 
-class PushTState(NamedTuple):
-    agent_pos: Array
-    agent_vel: Array
-    block_pos: Array
-    block_angle: Array
-    block_vel: Array
-    block_angular_vel: Array
-    n_contacts: Array
+def perpendicular(v):
+    return jnp.stack((-v[..., 1], v[..., 0]), axis=-1)
 
 
-class PushTParams(NamedTuple):
-    dt: float = 0.01
-    n_substeps: int = 10
-    k_p: float = 100.0
-    k_v: float = 20.0
-    agent_radius: float = 15.0
-    block_inertia: float = 3000.0
-    damping: float = 0.0
-    position_correction: float = 0.05
-    collision_slop: float = 0.10
-    wall_min: float = 7.0
-    wall_max: float = 504.0
+def rotate(v, angle):
+    c, s = jnp.cos(angle), jnp.sin(angle)
+    return jnp.stack((c * v[..., 0] - s * v[..., 1], s * v[..., 0] + c * v[..., 1]), -1)
 
 
-def cross_2d(first: Array, second: Array) -> Array:
-    return first[..., 0] * second[..., 1] - first[..., 1] * second[..., 0]
+def circle_polygon(center, radius, vertices):
+    edges = jnp.roll(vertices, -1, axis=0) - vertices
+    normals = -perpendicular(edges) / jnp.linalg.norm(edges, axis=-1, keepdims=True)
+    separation = jnp.sum((center - vertices) * normals, axis=-1)
+    face = jnp.argmax(separation)
+    start, edge = vertices[face], edges[face]
+    t = jnp.clip(jnp.dot(center - start, edge) / jnp.dot(edge, edge), 0, 1)
+    point = start + t * edge
+    delta = center - point
+    distance = jnp.maximum(jnp.linalg.norm(delta), 1e-12)
+    inside = separation[face] <= 0
+    normal = jnp.where(inside, normals[face], delta / distance)
+    depth = radius - jnp.where(inside, separation[face], distance)
+    return point, -normal, depth, face * 3 + jnp.where(t == 0, 1, jnp.where(t == 1, 2, 0))
 
 
-def perpendicular(vector: Array) -> Array:
-    return jnp.stack((-vector[..., 1], vector[..., 0]), axis=-1)
+def polygon_polygon(a, b):
+    # Clip the incident edge against the reference face's two side planes.
+    def faces(vertices, other):
+        edges = jnp.roll(vertices, -1, axis=0) - vertices
+        normals = -perpendicular(edges) / jnp.linalg.norm(edges, axis=-1, keepdims=True)
+        depths = jnp.min(other @ normals.T, axis=0) - jnp.sum(vertices * normals, axis=-1)
+        face = jnp.argmax(depths)
+        return normals, face, depths[face]
 
-
-def _apply_contact(
-    state: Any, point: Array, normal: Array, penetration: Array, other_velocity: Array, params: Any
-) -> Any:
-    center = tee_center_of_mass(state.block_pos, state.block_angle)
-    lever = point - center
-    lever_cross_normal = cross_2d(lever, normal)
-    effective_mass_inverse = 1.0 + lever_cross_normal**2 / params.block_inertia
-    correction_impulse = (
-        params.position_correction * jnp.maximum(penetration - params.collision_slop, 0.0) / effective_mass_inverse
+    an, ai, ad = faces(a, b)
+    bn, bi, bd = faces(b, a)
+    flip = bd > ad
+    ref, inc = jnp.where(flip, b, a), jnp.where(flip, a, b)
+    normals, face = jnp.where(flip, bn, an), jnp.where(flip, bi, ai)
+    normal = normals[face]
+    edge = jnp.argmin(jnp.where(flip, an, bn) @ normal)
+    first, second = inc[edge], inc[(edge + 1) % 4]
+    tangent = perpendicular(normal)
+    lo, hi = jnp.sort(jnp.array((ref[face] @ tangent, ref[(face + 1) % 4] @ tangent)))
+    denom = (second - first) @ tangent
+    safe = jnp.where(jnp.abs(denom) > 1e-12, denom, 1)
+    ends = jnp.sort(jnp.array(((lo - first @ tangent) / safe, (hi - first @ tangent) / safe)))
+    t = jnp.clip(ends, 0, 1)
+    points = first + t[:, None] * (second - first)
+    depth = (ref[face] - points) @ normal
+    overlap = (jnp.maximum(ad, bd) <= 0) & (
+        (jnp.abs(denom) > 1e-12) | ((first @ tangent >= lo) & (first @ tangent <= hi))
     )
-    corrected_center = center - correction_impulse * normal
-    corrected_angle = state.block_angle - correction_impulse * lever_cross_normal / params.block_inertia
-    corrected_origin = origin_from_center_of_mass(corrected_center, corrected_angle)
-    contact_velocity = state.block_vel + state.block_angular_vel * perpendicular(lever)
-    relative_velocity = other_velocity - contact_velocity
-    normal_velocity = jnp.dot(relative_velocity, normal)
-    velocity_impulse = jnp.maximum(-normal_velocity / effective_mass_inverse, 0.0)
-    impulse = velocity_impulse * normal
-    return state._replace(
-        block_pos=corrected_origin,
-        block_angle=corrected_angle,
-        block_vel=state.block_vel - impulse,
-        block_angular_vel=state.block_angular_vel - cross_2d(lever, impulse) / params.block_inertia,
-        n_contacts=state.n_contacts + jnp.asarray(1, dtype=jnp.int32),
+    depth = jnp.where(overlap, depth, -1)
+    depth = depth.at[1].set(jnp.where(jnp.linalg.norm(points[1] - points[0]) > 1e-9, depth[1], -1))
+    return (
+        points,
+        jnp.broadcast_to(jnp.where(flip, -normal, normal), (2, 2)),
+        depth,
+        face * 8 + edge * 2 + jnp.arange(2),
     )
 
 
-def _resolve_agent_contact(state: Any, params: Any) -> Any:
-    local_agent = inverse_transform_points(state.agent_pos, state.block_pos, state.block_angle)
-    vertices = jnp.asarray(_TEE_VERTICES, dtype=jnp.float32)
-    edge_ends = jnp.roll(vertices, -1, axis=0)
-    edges = edge_ends - vertices
-    edge_length_squared = jnp.sum(edges**2, axis=1)
-    edge_parameter = jnp.sum((local_agent - vertices) * edges, axis=1) / edge_length_squared
-    edge_parameter = jnp.clip(edge_parameter, 0.0, 1.0)
-    closest_points = vertices + edge_parameter[:, None] * edges
-    deltas = local_agent - closest_points
-    squared_distances = jnp.sum(deltas**2, axis=1)
-    edge_index = jnp.argmin(squared_distances)
-    closest = closest_points[edge_index]
-    delta = deltas[edge_index]
-    distance = jnp.sqrt(jnp.maximum(squared_distances[edge_index], 1e-12))
-    selected_edge = edges[edge_index]
-    outward = jnp.array((selected_edge[1], -selected_edge[0]))
-    outward = outward / jnp.linalg.norm(outward)
-    inside = point_in_tee(local_agent)
-    outside_normal = jnp.where(distance > 1e-06, delta / distance, outward)
-    local_normal = jnp.where(inside, outward, outside_normal)
-    penetration = jnp.where(inside, params.agent_radius + distance, params.agent_radius - distance)
-    world_normal = local_normal @ rotation_matrix(state.block_angle).T
-    world_point = transform_points(closest, state.block_pos, state.block_angle)
-    colliding = penetration > 0.0
-    return jax.lax.cond(
-        colliding,
-        lambda current: _apply_contact(current, world_point, world_normal, penetration, current.agent_vel, params),
-        lambda current: current,
-        state,
-    )
+def contacts(body, geometry, *, circle_agent):
+    vertices, cog, inverse, radius, enabled = geometry
+    position, angle = body[:, :2], body[:, 4]
+    world = position[:, None, None, :] + rotate(vertices, angle[:, None, None])
+    points, normals, depths, ids, pairs = [], [], [], [], []
+    for a in range(1 if circle_agent else vertices.shape[1]):
+        for b in range(vertices.shape[1]):
+            if circle_agent:
+                point, normal, depth, identifier = circle_polygon(position[0], radius, world[1, b])
+                point, normal, depth, identifier = point[None], normal[None], depth[None], identifier[None]
+            else:
+                polygon = polygon_polygon(world[0, a], world[1, b])
+                point, normal, depth, identifier = circle_polygon(position[0], radius, world[1, b])
+                circle = (
+                    jnp.broadcast_to(point, (2, 2)),
+                    jnp.broadcast_to(normal, (2, 2)),
+                    jnp.array((depth, -1.0)),
+                    jnp.array((identifier, -1)),
+                )
+                point, normal, depth, identifier = tuple(
+                    jnp.where((radius > 0) & (a == 0), c, p) for c, p in zip(circle, polygon, strict=True)
+                )
+                depth = jnp.where((radius > 0) & (a > 0), -1, depth)
+            points.append(point)
+            normals.append(normal)
+            depths.append(jnp.where(enabled[0, a] & enabled[1, b], depth, -1))
+            ids.append(identifier)
+            pairs.extend([(0, 1)] * len(depth))
+    wall_normals = jnp.array(((1.0, 0.0), (-1.0, 0.0), (0.0, 1.0), (0.0, -1.0)))
+    planes = jnp.array((7.0, -504.0, 7.0, -504.0))
+    for index in (1,) if circle_agent else (0, 1):
+        for shape in range(vertices.shape[1]):
+            verts = world[index, shape]
+            penetration = planes[:, None] - wall_normals @ verts.T
+            depth, selected = jax.lax.top_k(penetration, 2)
+            points.append(verts[selected].reshape(-1, 2))
+            normals.append(jnp.repeat(wall_normals, 2, axis=0))
+            depths.append(jnp.where(enabled[index, shape] & (inverse[index, 0] > 0), depth.reshape(-1), -1))
+            ids.append(selected.reshape(-1))
+            pairs.extend([(2, index)] * 8)
+    return tuple(jnp.concatenate(v) for v in (points, normals, depths, ids)) + (tuple(pairs),)
 
 
-def _wall_contact_data(vertices: Array, wall_index: Array, params: Any) -> tuple[Array, ...]:
-    minimum_x_index = jnp.argmin(vertices[:, 0])
-    maximum_x_index = jnp.argmax(vertices[:, 0])
-    minimum_y_index = jnp.argmin(vertices[:, 1])
-    maximum_y_index = jnp.argmax(vertices[:, 1])
-    points = jnp.stack(
-        (vertices[minimum_x_index], vertices[maximum_x_index], vertices[minimum_y_index], vertices[maximum_y_index])
-    )
-    normals = jnp.asarray(((-1.0, 0.0), (1.0, 0.0), (0.0, -1.0), (0.0, 1.0)), dtype=jnp.float32)
-    penetrations = jnp.stack(
-        (
-            params.wall_min - vertices[minimum_x_index, 0],
-            vertices[maximum_x_index, 0] - params.wall_max,
-            params.wall_min - vertices[minimum_y_index, 1],
-            vertices[maximum_y_index, 1] - params.wall_max,
+@partial(jax.jit, static_argnames=("circle_agent",))
+@partial(jax.vmap, in_axes=(0, 0, 0, 0, 0, 0, None))
+def advance(body, bias, cached, identifiers, geometry, target, circle_agent):
+    vertices, cog, inverse, radius, enabled = geometry
+    count = cached.shape[0]
+
+    def substep(_, carry):
+        body, bias, cached, identifiers, total = carry
+        velocity = body[:, 2:4]
+        velocity = jnp.stack((velocity[0] + (100 * (target - body[0, :2]) - 20 * velocity[0]) * 0.01, velocity[1]))
+        center = body[:, :2] + rotate(cog, body[:, 4]) + (velocity + bias[:, :2]) * 0.01
+        angle = body[:, 4] + (body[:, 5] + bias[:, 2]) * 0.01
+        position = center - rotate(cog, angle)
+        body = jnp.concatenate((position, body[:, 2:4], angle[:, None], body[:, 5:6]), 1)
+        # Pymunk applies Space.damping to dynamic bodies after integrating positions.
+        dynamic = inverse[:, 0] > 0
+        velocity = jnp.where(dynamic[:, None], 0.0, velocity)
+        omega = jnp.where(dynamic, 0.0, body[:, 5])
+        point, normal, depth, current_ids, pairs = contacts(body, geometry, circle_agent=circle_agent)
+        centers = jnp.concatenate((center, jnp.zeros((1, 2))))
+        inv = jnp.concatenate((inverse, jnp.zeros((1, 2))))
+        first = jnp.array([pair[0] for pair in pairs])
+        second = jnp.array([pair[1] for pair in pairs])
+        ra, rb = point - centers[first], point - centers[second]
+        ca, cb = cross(ra, normal), cross(rb, normal)
+        mass = inv[first, 0] + inv[second, 0] + ca**2 * inv[first, 1] + cb**2 * inv[second, 1]
+        mass = jnp.maximum(mass, 1e-12)
+        active = depth >= 0
+        bias_target = (1 - 0.9**0.6) * jnp.maximum(depth - 0.1, 0) / 0.01
+        cached = jnp.where(active & (current_ids == identifiers), cached, 0.0)
+        zero = jnp.zeros_like(angle[0])
+        velocities = (
+            (velocity[0, 0], velocity[0, 1], omega[0]),
+            (velocity[1, 0], velocity[1, 1], omega[1]),
+            (zero, zero, zero),
         )
+        bias = ((zero, zero, zero),) * 3
+
+        def apply(values, impulse, i):
+            a, b = pairs[i]
+            x, y = impulse * normal[i, 0], impulse * normal[i, 1]
+            result = list(values)
+            result[a] = (
+                values[a][0] - x * inv[a, 0],
+                values[a][1] - y * inv[a, 0],
+                values[a][2] - impulse * ca[i] * inv[a, 1],
+            )
+            result[b] = (
+                values[b][0] + x * inv[b, 0],
+                values[b][1] + y * inv[b, 0],
+                values[b][2] + impulse * cb[i] * inv[b, 1],
+            )
+            return tuple(result)
+
+        for i in range(count):
+            velocities = apply(velocities, cached[i], i)
+
+        def normal_speed(values, i):
+            a, b = pairs[i]
+            x = values[b][0] - rb[i, 1] * values[b][2] - values[a][0] + ra[i, 1] * values[a][2]
+            y = values[b][1] + rb[i, 0] * values[b][2] - values[a][1] - ra[i, 0] * values[a][2]
+            return x * normal[i, 0] + y * normal[i, 1]
+
+        def iteration(_, carry):
+            velocities, bias, impulses, bias_impulses = carry
+            impulses, bias_impulses = list(impulses), list(bias_impulses)
+            for i in range(count):
+                impulse = jnp.where(active[i], jnp.maximum(impulses[i] - normal_speed(velocities, i) / mass[i], 0), 0)
+                correction = jnp.where(
+                    active[i], jnp.maximum(bias_impulses[i] + (bias_target[i] - normal_speed(bias, i)) / mass[i], 0), 0
+                )
+                velocities = apply(velocities, impulse - impulses[i], i)
+                bias = apply(bias, correction - bias_impulses[i], i)
+                impulses[i], bias_impulses[i] = impulse, correction
+            return velocities, bias, tuple(impulses), tuple(bias_impulses)
+
+        impulses = tuple(cached[i] for i in range(count))
+        velocities, bias, impulses, _ = jax.lax.fori_loop(
+            0, 10, iteration, (velocities, bias, impulses, (zero,) * count)
+        )
+        velocities = jnp.array(velocities)
+        bias, cached = jnp.array(bias), jnp.stack(impulses)
+        body = jnp.concatenate((body[:, :2], velocities[:2, :2], body[:, 4:5], velocities[:2, 2:3]), 1)
+        return body, bias[:2], cached, current_ids, total + active.sum(dtype=jnp.int32)
+
+    body, bias, cached, identifiers, total = jax.lax.fori_loop(
+        0, 10, substep, (body, bias, cached, identifiers, jnp.int32(0))
     )
-    return (points[wall_index], normals[wall_index], penetrations[wall_index])
-
-
-def _resolve_wall_contact(wall_index: Array, state: Any, params: Any) -> Any:
-    vertices = tee_vertices(state.block_pos, state.block_angle)
-    (point, normal, penetration) = _wall_contact_data(vertices, wall_index, params)
-    return jax.lax.cond(
-        penetration > 0.0,
-        lambda current: _apply_contact(current, point, normal, penetration, jnp.zeros(2, dtype=jnp.float32), params),
-        lambda current: current,
-        state,
+    point, normal, depth, _, _ = contacts(body, geometry, circle_agent=circle_agent)
+    active = depth >= 0
+    order = jnp.argsort(~active, stable=True)
+    lines = jnp.concatenate(
+        (
+            point - normal * (depth[:, None] + 2),
+            point + normal * 2,
+            jnp.broadcast_to(jnp.array((231.0, 76.0, 60.0, 255.0)), (count, 4)),
+        ),
+        1,
     )
-
-
-def substep(state: Any, action: Array, params: Any) -> Any:
-    dt = params.dt
-    acceleration = params.k_p * (action - state.agent_pos) - params.k_v * state.agent_vel
-    agent_velocity = state.agent_vel + acceleration * dt
-    agent_position = state.agent_pos + agent_velocity * dt
-    center = tee_center_of_mass(state.block_pos, state.block_angle)
-    center = center + state.block_vel * dt
-    block_angle = state.block_angle + state.block_angular_vel * dt
-    block_origin = origin_from_center_of_mass(center, block_angle)
-    damping = jnp.where(params.damping <= 0.0, 0.0, jnp.power(params.damping, dt))
-    state = state._replace(
-        agent_pos=agent_position,
-        agent_vel=agent_velocity,
-        block_pos=block_origin,
-        block_angle=block_angle,
-        block_vel=state.block_vel * damping,
-        block_angular_vel=state.block_angular_vel * damping,
-    )
-    state = _resolve_agent_contact(state, params)
-    return jax.lax.fori_loop(
-        0, 4, lambda wall_index, current: _resolve_wall_contact(wall_index, current, params), state
-    )
-
-
-def simulate_control_step(state: Any, action: Array, params: Any) -> Any:
-    state = state._replace(n_contacts=jnp.asarray(0, dtype=jnp.int32))
-    state = jax.lax.fori_loop(0, params.n_substeps, lambda _index, current: substep(current, action, params), state)
-    contacts_per_substep = jnp.ceil(state.n_contacts / params.n_substeps).astype(jnp.int32)
-    return state._replace(n_contacts=contacts_per_substep)
+    lines = jnp.where(active[:, None], lines, 0)[order]
+    lines = jnp.pad(lines, ((0, 90 - count), (0, 0)))
+    return body, bias, cached, identifiers, total, lines, active.sum(dtype=jnp.int32)

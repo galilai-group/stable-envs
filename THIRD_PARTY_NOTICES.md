@@ -18,8 +18,8 @@ from the envX commit above under Apache-2.0.
 
 ## envX PushT
 
-The JAX implementation in `stable_envs/envs/pusht/` adapts
-`src/envx/pusht/{environment,geometry,physics,rendering}.py`
+`stable_envs/envs/pusht/simulation/jax_physics.py` adapts
+`src/envx/pusht/physics.py`
 from the envX commit above under Apache-2.0.
 
 ## Craftax

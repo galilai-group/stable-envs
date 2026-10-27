@@ -351,8 +351,7 @@ class PushTReplay:
                         if not node.contains(get_value(state, prefix + "/variation" + path + "/" + label)):
                             raise ValueError("PushT Variation value outside source space")
 
-    def reconstruct(self, state):
-        self.validate(state)
+    def reconstruct_anchor(self, state):
         target = type(self)(discrete=self.discrete, config=self.config, initialize=False)
         anchor = {k.removeprefix("anchor/"): v.copy() for k, v in state.items() if k.startswith("anchor/")}
         try:
@@ -378,6 +377,15 @@ class PushTReplay:
             )
             target._install_metadata(anchor)
             target.anchor = anchor
+            return target
+        except BaseException:
+            target.close()
+            raise
+
+    def reconstruct(self, state):
+        self.validate(state)
+        target = self.reconstruct_anchor(state)
+        try:
             length = int(state["history/lengths"])
             # ``validate`` has checked every typed action.
             for action, code in zip(state["history/actions"][:length], state["history/dtypes"][:length], strict=True):
