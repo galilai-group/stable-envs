@@ -83,14 +83,24 @@ def offline(root: Path, names):
     return rows
 
 
+#: Actions per call (T) that the tables report.
+TS = (1, 16)
+
+
 def _arm(d, prefix):
-    """Best steps/s over T of the arms whose key starts with ``prefix``, with its T."""
+    """Best steps/s over the reported T of the arms whose key starts with ``prefix``, with its T."""
     best = None
     for k, v in (d or {}).get("arms", {}).items():
-        if k.startswith(prefix) and v.get("status") == "ok":
+        if k.startswith(prefix) and v.get("status") == "ok" and v.get("actions_per_call", 1) in TS:
             if best is None or v["steps_per_s"] > best[0]:
                 best = (v["steps_per_s"], v.get("actions_per_call"), v)
     return best
+
+
+def _at(d, prefix, t):
+    """Steps/s of the arm ``prefix`` at T actions per call."""
+    v = (d or {}).get("arms", {}).get(f"{prefix}-T{t}") or {}
+    return v.get("steps_per_s") if v.get("status") == "ok" else None
 
 
 def _invalid(d, prefix):
@@ -144,9 +154,23 @@ def online(root: Path, names):
                 "rollout_mse_gpu": rollout(src_rg),
                 "rollout_mse_cpu": rollout(src_rc),
                 "gpu_source": gpu_source,
+                **{
+                    f"{k}_T{t}": _at(d, k, t)
+                    for k, d in (
+                        ("snv-step", step),
+                        ("snv-step-gpu", ng),
+                        ("snv-render-gpu", ng),
+                        ("snv-render-cpu", nc),
+                    )
+                    for t in TS
+                },
             }
         )
     return rows
+
+
+def _pair(r, k):
+    return " / ".join(_fmt(r.get(f"{k}_T{t}")) for t in TS)
 
 
 def craftax(root: Path):
@@ -214,14 +238,14 @@ def markdown(roots: list[Path]) -> str:
         "## Online stepping and rendering (steps/s, the same seeded episodes and actions)",
         "",
         "Source: its envs in ProcessAdapter workers (one process per core), one action per call, the next step",
-        "submitted before the current one is taken. SNV: best over T actions per call (T shown).",
+        "submitted before the current one is taken. SNV: T=1 / T=16 actions per call; speedups use the faster.",
         "Step: physics only. Render: physics plus a frame every step. GPU render for the source is MuJoCo on EGL.",
         "'invalid': the source's worker frames differ from a one-env replay of the same episode (no speed is reported).",
         "Rollout MSE compares SNV and source frames of the same seeded episode up to its first end; it includes any",
         "physics divergence, not only rendering.",
         "",
-        "| Env | Src step | SNV step CPU (T) | SNV step GPU (mode) | Step speedup "
-        "| Src render GPU | SNV render GPU (T) | GPU speedup | Src render CPU | SNV render CPU (T) | CPU speedup "
+        "| Env | Src step | SNV step CPU (T=1 / 16) | SNV step GPU (T=1 / 16, mode) | Step speedup "
+        "| Src render GPU | SNV render GPU (T=1 / 16) | GPU speedup | Src render CPU | SNV render CPU (T=1 / 16) | CPU speedup "
         "| Rollout MSE GPU | Rollout MSE CPU | Src frame check |",
         "|---|" + "---|" * 13,
     ]
@@ -229,11 +253,11 @@ def markdown(roots: list[Path]) -> str:
         best_step = max(x for x in (r["snv_step"] or 0, r["snv_step_gpu"] or 0))
         bad = [b for b in r["src_frames_bad"] if b is not None]
         lines.append(
-            f"| {r['env']} | {_fmt(r['src_step'])} | {_fmt(r['snv_step'])} ({r['snv_step_t'] or '–'}) "
-            f"| {_fmt(r['snv_step_gpu'])} ({r['snv_step_gpu_mode'] or '–'}) | {_ratio(best_step, r['src_step'])} "
-            f"| {'invalid' if r['src_render_gpu_invalid'] else _fmt(r['src_render_gpu'])} | {_fmt(r['snv_render_gpu'])} ({r['snv_render_gpu_t'] or '–'}) "
+            f"| {r['env']} | {_fmt(r['src_step'])} | {_pair(r, 'snv-step')} "
+            f"| {_pair(r, 'snv-step-gpu')} ({r['snv_step_gpu_mode'] or '–'}) | {_ratio(best_step, r['src_step'])} "
+            f"| {'invalid' if r['src_render_gpu_invalid'] else _fmt(r['src_render_gpu'])} | {_pair(r, 'snv-render-gpu')} "
             f"| {_ratio(r['snv_render_gpu'], r['src_render_gpu']) if r['gpu_source'] else 'no src GPU'} "
-            f"| {'invalid' if r['src_render_cpu_invalid'] else _fmt(r['src_render_cpu'])} | {_fmt(r['snv_render_cpu'])} ({r['snv_render_cpu_t'] or '–'}) "
+            f"| {'invalid' if r['src_render_cpu_invalid'] else _fmt(r['src_render_cpu'])} | {_pair(r, 'snv-render-cpu')} "
             f"| {_ratio(r['snv_render_cpu'], r['src_render_cpu'])} | {_fmt(r['rollout_mse_gpu'], 2)} | {_fmt(r['rollout_mse_cpu'], 2)} "
             f"| {'ok' if bad and not any(bad) else ('MISMATCH' if any(bad) else '–')} |"
         )

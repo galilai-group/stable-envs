@@ -447,7 +447,7 @@ def main() -> None:
     r.add_argument(
         "--src-label", default=os.environ.get("MUJOCO_GL", "gl"), help="device label of the source render arm"
     )
-    r.add_argument("--chunks", type=int, nargs="+", default=[1, 4, 16], help="actions per stable-envs step call (T)")
+    r.add_argument("--chunks", type=int, nargs="+", default=[1, 16], help="actions per stable-envs step call (T)")
     r.add_argument(
         "--ours-device", default="cpu", help="device of the stable-envs lane the source rollout is compared with"
     )
