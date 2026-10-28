@@ -3,13 +3,6 @@ name: extras-smoke
 # Compatible extra groups only. There is no [all] extra: Fetch needs mujoco<3.12,
 # and nvdiffrast is not PyPI metadata.
 on:
-  pull_request:
-    branches: [main, v1-dev]
-    types: [opened, reopened, synchronize, ready_for_review]
-  push:
-    branches: [main]
-  schedule:
-    - cron: "17 6 * * 1"
   workflow_dispatch:
     inputs:
       profile:

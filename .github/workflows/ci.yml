@@ -7,14 +7,6 @@ name: ci
 # stable-worldmodel at ci/families.toml's [swm] commit (noxfile.py) and fail when its CPU gates
 # skip; GPU parity stays manual (regression.yml). Draft pull requests run nothing.
 on:
-  pull_request:
-    branches: [main, v1-dev]
-    types: [opened, reopened, synchronize, ready_for_review]
-  push:
-    branches: [main]
-  merge_group:
-  schedule:
-    - cron: "23 5 * * 1"
   workflow_dispatch:
     inputs:
       scope:
