@@ -11,7 +11,78 @@ from tests.helpers.reference.semantics import assert_same_state
 pytestmark = pytest.mark.family("navigation")
 
 
-def test_collisions_with_fractional_per_lane_geometry():
+@pytest.mark.parametrize("batch", [1, 17])
+def test_torch_and_jax_have_identical_public_steps_and_restore(batch):
+    with (
+        se.TwoRoom(num_envs=batch, device="cpu", simulation_backend="torch") as native,
+        se.TwoRoom(
+            num_envs=batch,
+            device="cpu",
+            simulation_backend="jax",
+        ) as accelerated,
+    ):
+        assert native.execution_mode == "NATIVE_TORCH"
+        assert accelerated.execution_mode == "NATIVE_JAX"
+        variation = {
+            "wall.axis": np.arange(batch).reshape(-1, 1) % 2,
+            "agent.speed": np.linspace(1.25, 7.75, batch).reshape(-1, 1),
+            "agent.radius": np.linspace(7, 12.25, batch).reshape(-1, 1),
+        }
+        for env in (native, accelerated):
+            env.set_variation(variation)
+            env.reset(seed=17, options={"state": [60, 60], "target_state": [180, 180]})
+        checkpoint = native.get_state()
+        actions = torch.from_numpy(np.random.default_rng(43).uniform(-2, 2, (batch, 8, 2)).astype(np.float32))
+        expected = native.step(actions, states=slice(None), frames=None)
+        assert_same_state(accelerated.step(actions, states=slice(None), frames=None), expected)
+        for env in (native, accelerated):
+            env.set_state(checkpoint)
+            assert_same_state(env.step(actions, states=slice(None), frames=None), expected)
+
+
+def test_invalid_simulation_backend():
+    with pytest.raises(ValueError, match="simulation_backend"):
+        se.TwoRoom(simulation_backend="unknown")
+
+
+@pytest.mark.parametrize(
+    "batch,threshold,backend,expected",
+    [
+        (1, 1, "auto", "jax"),
+        (7, 8, "auto", "torch"),
+        (8, 8, "auto", "jax"),
+        (1, 8, "jax", "jax"),
+        (8, 8, "torch", "torch"),
+    ],
+)
+def test_batch_selection_matches_explicit_backend_and_restores(batch, threshold, backend, expected):
+    with (
+        se.TwoRoom(
+            num_envs=batch,
+            device="cpu",
+            simulation_backend=backend,
+            jax_min_envs=threshold,
+        ) as env,
+        se.TwoRoom(num_envs=batch, device="cpu", simulation_backend=expected) as reference,
+    ):
+        assert env.simulation_backend == expected
+        checkpoint = env.reset(seed=17)
+        reference.reset(seed=17)
+        action = torch.linspace(-1, 1, batch * 2).reshape(batch, 2)
+        actual = env.step(action, frames=None)
+        assert_same_state(actual, reference.step(action, frames=None))
+        env.set_state(checkpoint)
+        assert_same_state(env.step(action, frames=None), actual)
+
+
+@pytest.mark.parametrize("threshold", [0, -1, True, 1.5, "8"])
+def test_invalid_jax_cutoff(threshold):
+    with pytest.raises(ValueError, match="jax_min_envs"):
+        se.TwoRoom(jax_min_envs=threshold)
+
+
+@pytest.mark.parametrize("backend", ["torch", "jax"])
+def test_collisions_with_fractional_per_lane_geometry(backend):
     positions = [[95, 100], [130, 100], [100, 49], [50, 21], [202, 100], [49, 100], [100, 130]]
     actions = torch.tensor([[1, 0], [-1, 0], [1, 0], [0, -5], [5, 0], [0, 1], [0, -1]], dtype=torch.float64)
     variation = {
@@ -23,7 +94,7 @@ def test_collisions_with_fractional_per_lane_geometry():
         "door.position": [[49, 112, 180]] * 7,
         "door.size": [[14.25, 10.5, 7.75]] * 7,
     }
-    with se.TwoRoom(num_envs=7, device="cpu") as env:
+    with se.TwoRoom(num_envs=7, device="cpu", simulation_backend=backend) as env:
         env.set_variation(variation)
         env.reset(seed=0, options={"state": positions, "target_state": [180, 180]})
         for step in range(1, 7):
@@ -144,10 +215,11 @@ def test_step_uses_the_observation_hook(monkeypatch):
         assert_same_state(env.step(torch.zeros(1, 2), frames=None)["observation"], expected)
 
 
-def test_continuous_action_multiply_rounds_before_position_addition():
+@pytest.mark.parametrize("backend", ["torch", "jax"])
+def test_continuous_action_multiply_rounds_before_position_addition(backend):
     options = {"state": [53.47578811645508, 60], "target_state": [180, 180]}
     action = torch.tensor([[-0.9868243932723999, 0.0]])
-    with se.TwoRoom(device="cpu") as env:
+    with se.TwoRoom(device="cpu", simulation_backend=backend) as env:
         env.reset(seed=0, options=options)
         actual = env.step(action, frames=None)
         assert actual["state", "agent", "position"][0, 0].item() == 48.541664123535156
