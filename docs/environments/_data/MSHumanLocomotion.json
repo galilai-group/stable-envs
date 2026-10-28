@@ -1,0 +1,50 @@
+{
+ "class_name": "MSHumanLocomotion",
+ "module": "stable_envs.envs.mshuman.envs",
+ "family": "mshuman",
+ "domain": "mshuman",
+ "reference_id": "ms-human-700/Locomotion",
+ "requires_cuda": false,
+ "has_dynamics": true,
+ "default_size": 128,
+ "frame_shape": [128, 128, 3],
+ "physics": null,
+ "renderers": {
+  "cpu": "opengl (MuJoCo)",
+  "cuda": "opengl (MuJoCo)"
+ },
+ "action": {
+  "shape": [100],
+  "dtype": "float32",
+  "low": 0,
+  "high": 1
+ },
+ "state": [
+  {
+   "key": "qpos",
+   "shape": [36],
+   "dtype": "float32"
+  },
+  {
+   "key": "qvel",
+   "shape": [36],
+   "dtype": "float32"
+  },
+  {
+   "key": "act",
+   "shape": [100],
+   "dtype": "float32"
+  },
+  {
+   "key": "time",
+   "shape": [1],
+   "dtype": "float32"
+  },
+  {
+   "key": "warmstart",
+   "shape": [36],
+   "dtype": "float32"
+  }
+ ],
+ "variation": []
+}

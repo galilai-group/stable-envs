@@ -47,6 +47,11 @@ def parse_flag(text: str) -> bool:
     return t == "1"
 
 
+def parse_path(text: str) -> str | None:
+    """Return a non-empty path string, or None when empty."""
+    return text.strip() or None
+
+
 def register(name: str, kind: str, default: Any, doc: str, parse: Callable[[str], Any]) -> Variable:
     """Add a variable to the registry; registering the same name twice keeps the first entry."""
     if not name.startswith(PREFIX):
@@ -113,4 +118,11 @@ register(
     "1 lets OGBench Cube and Scene cells without measured visual fidelity register, with placeholder "
     "values, while measuring them. Never set it for normal use.",
     parse_flag,
+)
+register(
+    "STABLE_ENVS_MSHUMAN_HOME",
+    "path",
+    None,
+    "Path to an existing MS-Human-700 checkout; unset clones the pinned commit into the cache.",
+    parse_path,
 )

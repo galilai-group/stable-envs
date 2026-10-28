@@ -88,6 +88,13 @@ mjwarp = [
   "mujoco-warp>=3.11,<3.13",
   "warp-lang>=1.16",
 ]
+# MS-Human-700 musculoskeletal locomotion. Physics and frames use the MuJoCo Warp backend;
+# the model (Apache-2.0) is fetched from LNSGroup/MS-Human-700 at a pinned commit on first use.
+mshuman = [
+  "mujoco>=3.11,<3.13",
+  "mujoco-warp>=3.11,<3.13",
+  "warp-lang>=1.16",
+]
 # Official replay-backed Rocket dynamics; GPU rendering also requires nvdiffrast and Triton.
 # Rocket checks these exact PyFlyt and pybullet versions at construction. PyFlyt 0.29.0 declares
 # numpy<2; the rocket reference profile runs it on numpy 2.5.3.
