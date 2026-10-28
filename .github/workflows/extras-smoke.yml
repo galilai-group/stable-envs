@@ -3,6 +3,13 @@ name: extras-smoke
 # Compatible extra groups only. There is no [all] extra: Fetch needs mujoco<3.12,
 # and nvdiffrast is not PyPI metadata.
 on:
+  pull_request:
+    branches: [main, v1-dev]
+    types: [opened, reopened, synchronize, ready_for_review]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 6 * * 1"
   workflow_dispatch:
     inputs:
       profile:
@@ -20,7 +27,7 @@ concurrency:
 
 jobs:
   cheap:
-    if: github.event_name != 'schedule' && (github.event_name != 'workflow_dispatch' || inputs.profile == 'cheap') && (github.event_name != 'pull_request' || !github.event.pull_request.draft)
+    if: (vars.STABLE_ENVS_CI == 'true' || github.event_name == 'workflow_dispatch') && (github.event_name != 'schedule' && (github.event_name != 'workflow_dispatch' || inputs.profile == 'cheap') && (github.event_name != 'pull_request' || !github.event.pull_request.draft))
     name: cheap extras
     runs-on: ubuntu-latest
     steps:
@@ -40,7 +47,7 @@ jobs:
         run: python scripts/ci/smoke_extra.py --profile cheap
 
   mujoco:
-    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.profile == 'mujoco')
+    if: (vars.STABLE_ENVS_CI == 'true' || github.event_name == 'workflow_dispatch') && (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.profile == 'mujoco'))
     name: MuJoCo extras
     runs-on: ubuntu-latest
     steps:
