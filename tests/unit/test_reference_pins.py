@@ -53,5 +53,10 @@ def test_every_pin_group_is_mutually_exclusive_with_the_others():
 
 def test_user_extras_state_ranges_not_reference_pins():
     extras = PYPROJECT["project"]["optional-dependencies"]
-    pinned = {name: [req for req in reqs if "==" in req] for name, reqs in extras.items() if name not in EXACT_EXTRAS}
+
+    def version_pins(reqs):
+        # A pin is a ``==`` on the version; an environment marker like ``sys_platform == 'linux'`` is not.
+        return [req for req in reqs if any(spec.operator == "==" for spec in Requirement(req).specifier)]
+
+    pinned = {name: version_pins(reqs) for name, reqs in extras.items() if name not in EXACT_EXTRAS}
     assert {name: reqs for name, reqs in pinned.items() if reqs} == {}
