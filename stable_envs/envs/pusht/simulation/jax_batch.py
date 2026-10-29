@@ -27,8 +27,18 @@ def from_torch(value):
 
 
 class PushTJaxAdapter(PushTReplayAdapter):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, batch, device="cpu", seed=0, *, discrete=False, config=None):
+        device = torch.device(device)
+        if device.type == "cuda":
+            try:
+                devices = jax.devices("gpu")
+                devices[device.index if device.index is not None else torch.cuda.current_device()]
+            except (RuntimeError, IndexError) as exc:
+                raise RuntimeError(
+                    f"PushT JAX cannot use {device}; install CUDA support with "
+                    "pip install 'stable-envs[pusht-gpu]' and ensure JAX can see the selected GPU"
+                ) from exc
+        super().__init__(batch, device, seed, discrete=discrete, config=config)
         try:
             self._initialize_device()
         except BaseException:
@@ -39,6 +49,12 @@ class PushTJaxAdapter(PushTReplayAdapter):
         fields = super().render_fields()
         self._fixed = {key: torch.as_tensor(value, device=self.device).clone() for key, value in fields.items()}
         self._fixed["recipe/version"].fill_(3)
+        self._latest_tags = torch.tensor([[4, 0], [4, 1]], dtype=torch.uint8, device=self.device)
+        self._symmetries = torch.tensor(
+            [2 * np.pi, 2 * np.pi, 2 * np.pi, np.pi, np.pi / 2, np.pi, 2 * np.pi, np.pi / 2],
+            dtype=torch.float64,
+            device=self.device,
+        )
         bodies = []
         geometry = []
         shapes = max(len(getattr(owner.env, name).shapes) for owner in self.envs for name in ("agent", "block"))
@@ -87,18 +103,6 @@ class PushTJaxAdapter(PushTReplayAdapter):
         self._codes = torch.zeros(self.num_envs, 0, dtype=torch.uint8, device=self.device)
         self._contacts = self._fixed["current/contacts"]
         self._refresh_current()
-        self._anchor = {
-            key: value.clone()
-            for key, value in {
-                "body": self._body,
-                "latest/value": self._fixed["current/latest/value"],
-                "latest/type": self._fixed["current/latest/type"],
-                "latest_present": self._fixed["current/latest_present"],
-                "contacts": self._contacts,
-                "render_segments": self._fixed["current/render_segments"],
-                "render_segment_count": self._fixed["current/render_segment_count"],
-            }.items()
-        }
 
     def _refresh_current(self):
         for index, name in enumerate(("agent", "block")):
@@ -114,10 +118,13 @@ class PushTJaxAdapter(PushTReplayAdapter):
         )
         self._fixed["current/contacts"] = self._contacts
 
+    def _solver_state(self):
+        return {"bias": self._bias, "impulse": self._impulse, "identifiers": self._identifiers}
+
     def get_state(self):
         width = int(self._lengths.max())
         fields = dict(self._fixed)
-        fields.update({"anchor/jax/" + key: value for key, value in self._anchor.items()})
+        fields.update({"current/jax/" + key: value for key, value in self._solver_state().items()})
         fields.update(
             {
                 "history/actions": self._actions[:, :width],
@@ -168,7 +175,7 @@ class PushTJaxAdapter(PushTReplayAdapter):
     def render_fields(self):
         return dict(self._fixed)
 
-    def step(self, actions, *, active=None, capture_state=True, codes=None):
+    def step(self, actions, *, active=None, capture_state=True):
         actions = torch.as_tensor(actions, device=self.device)
         discrete = self.template.discrete
         allowed = (torch.int32, torch.int64) if discrete else (torch.float32, torch.float64)
@@ -193,9 +200,6 @@ class PushTJaxAdapter(PushTReplayAdapter):
         else:
             relative = actions
         target = (self._body[:, 0, :2].to(relative.dtype) + relative * 100).to(torch.float64)
-        if codes is not None and not discrete:
-            single = self._body[:, 0, :2].to(torch.float32) + relative.to(torch.float32) * 100
-            target = torch.where((codes == 0)[:, None], single.to(torch.float64), target)
         with enable_x64():
             outputs = advance(
                 from_torch(self._body),
@@ -231,17 +235,13 @@ class PushTJaxAdapter(PushTReplayAdapter):
             if discrete
             else (torch.float32, torch.float64).index(actions.dtype)
         )
-        self._codes[lane, index] = torch.where(active, code if codes is None else codes, 0).to(torch.uint8)
+        self._codes[lane, index] = torch.where(active, code, 0).to(torch.uint8)
         self._lengths = self._lengths + active
         self._fixed["current/latest/value"] = torch.where(
             active[:, None], relative.to(torch.float64), self._fixed["current/latest/value"]
         )
         tags = self._fixed["current/latest/type"]
-        new_tags = torch.tensor(
-            [4, 0 if relative.dtype == torch.float32 else 1], dtype=torch.uint8, device=self.device
-        )
-        if codes is not None and not discrete:
-            new_tags = torch.stack((torch.full_like(codes, 4), codes), 1)
+        new_tags = self._latest_tags[0 if relative.dtype == torch.float32 else 1]
         self._fixed["current/latest/type"] = torch.where(active[:, None], new_tags, tags)
         self._fixed["current/latest_present"] = self._fixed["current/latest_present"] | active
         self._fixed["current/render_segments"] = torch.where(
@@ -255,11 +255,7 @@ class PushTJaxAdapter(PushTReplayAdapter):
         goal = self._fixed["current/goal/value"]
         distance = (goal - observation).norm(dim=1)
         shape = self._fixed["owned/variation/block/shape/current/value"].to(torch.int64)
-        symmetry = torch.tensor(
-            [2 * np.pi, 2 * np.pi, 2 * np.pi, np.pi, np.pi / 2, np.pi, 2 * np.pi, np.pi / 2],
-            device=self.device,
-            dtype=torch.float64,
-        )[shape]
+        symmetry = self._symmetries[shape]
         angle = (goal[:, 4] - observation[:, 4]).abs() % symmetry
         success = ((goal[:, :4] - observation[:, :4]).norm(dim=1) < 20) & (
             torch.minimum(angle, symmetry - angle) < np.pi / 9
@@ -283,7 +279,7 @@ class PushTJaxAdapter(PushTReplayAdapter):
             raise ValueError("PushT full State requires batch [num_envs]")
         base = self.template.get_state()
         keys = [tuple(key.split("/")) for key in base]
-        extras = {tuple(("anchor/jax/" + key).split("/")) for key in self._anchor}
+        extras = {("current", "jax", key) for key in self._solver_state()}
         actual_keys = set(state.keys(True, True))
         if not set(keys) <= actual_keys:
             raise ValueError("PushT full State keys differ")
@@ -291,11 +287,6 @@ class PushTJaxAdapter(PushTReplayAdapter):
         new = bool((version == 3).all())
         if actual_keys != set(keys) | (extras if new else set()):
             raise ValueError("PushT full State keys differ")
-        for key, sample in self._anchor.items():
-            if new:
-                value = state[tuple(("anchor/jax/" + key).split("/"))]
-                if value.shape != sample.shape or value.dtype != sample.dtype or not bool(torch.isfinite(value).all()):
-                    raise ValueError("Invalid PushT JAX anchor")
         fields = state_columns(state.select(*keys), base, self.num_envs)
         rows = [{k: np.asarray(v[i]).copy() for k, v in fields.items()} for i in range(self.num_envs)]
         for owner, row in zip(self.envs, rows, strict=True):
@@ -313,11 +304,33 @@ class PushTJaxAdapter(PushTReplayAdapter):
                 )
             staged._initialize_device()
             if new:
-                staged._anchor = {
-                    key: state[tuple(("anchor/jax/" + key).split("/"))].to(self.device).clone() for key in self._anchor
-                }
-                staged._body = staged._anchor["body"].clone()
-                staged._contacts = staged._anchor["contacts"].clone()
+                staged._body = (
+                    torch.stack(
+                        [
+                            torch.cat(
+                                [
+                                    state["current", "body", name, "position"],
+                                    state["current", "body", name, "velocity"],
+                                    state["current", "body", name, "angle"][:, None],
+                                    state["current", "body", name, "angular_velocity"][:, None],
+                                ],
+                                1,
+                            )
+                            for name in ("agent", "block")
+                        ],
+                        1,
+                    )
+                    .to(self.device)
+                    .clone()
+                )
+                for key, sample in staged._solver_state().items():
+                    value = state["current", "jax", key]
+                    if value.shape != sample.shape or value.dtype != sample.dtype or not bool(value.isfinite().all()):
+                        raise ValueError(f"Invalid PushT JAX solver cache: {key}")
+                    setattr(staged, "_" + key, value.to(self.device).clone())
+                if bool((staged._impulse < 0).any() | (staged._identifiers < -1).any()):
+                    raise ValueError("Invalid PushT JAX contact cache")
+                staged._contacts = state["current", "contacts"].to(self.device).clone()
                 for key in (
                     "latest/value",
                     "latest/type",
@@ -325,25 +338,13 @@ class PushTJaxAdapter(PushTReplayAdapter):
                     "render_segments",
                     "render_segment_count",
                 ):
-                    staged._fixed["current/" + key] = staged._anchor[key].clone()
-                staged._refresh_current()
-                length = int(fields["history/lengths"].max())
-                for t in range(length):
-                    codes = torch.tensor(fields["history/dtypes"][:, t], device=self.device)
-                    actions = torch.tensor(fields["history/actions"][:, t], device=self.device)
-                    if self.template.discrete:
-                        actions = actions.to(torch.int64)
-                    else:
-                        # Float32 multiplication rounds before addition to the double position.
-                        actions = torch.where(
-                            (codes == 0)[:, None], actions.to(torch.float32).to(torch.float64), actions
-                        )
-                    staged.step(
-                        actions,
-                        active=torch.tensor(t < fields["history/lengths"], device=self.device),
-                        capture_state=False,
-                        codes=codes,
+                    staged._fixed["current/" + key] = (
+                        state[tuple(("current/" + key).split("/"))].to(self.device).clone()
                     )
+                staged._refresh_current()
+                staged._actions = torch.tensor(fields["history/actions"], device=self.device)
+                staged._codes = torch.tensor(fields["history/dtypes"], device=self.device)
+                staged._lengths = torch.tensor(fields["history/lengths"], device=self.device)
                 for owner, row in zip(staged.envs, rows, strict=True):
                     owner._install_metadata(
                         {k.removeprefix("owned/"): v for k, v in row.items() if k.startswith("owned/")}

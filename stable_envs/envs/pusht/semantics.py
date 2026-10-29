@@ -70,7 +70,7 @@ class PushT(Env):
     Actions are relative controls in [-1, 1], not absolute pixel targets.
     CUDA runs batched JAX physics with DLPack tensor exchange. CPU uses Pymunk.
     The two solvers share controls and rewards but differ numerically at contacts.
-    Restoring a checkpoint replays its history; ordinary stepping does not.
+    CUDA checkpoints restore the solver cache; CPU checkpoints replay their history.
     """
 
     family = domain = "pusht"
@@ -435,7 +435,7 @@ class PushT(Env):
 class PushTDiscrete(PushT):
     """Source-aligned PushT with two discrete polar-action indices in [0, 16).
 
-    Complete State restores by replay. CUDA uses batched JAX physics.
+    CUDA uses batched JAX physics and restores the contact-solver cache.
     """
 
     name = "push-t-discrete"

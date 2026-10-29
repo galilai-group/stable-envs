@@ -53,6 +53,10 @@ Source = "https://github.com/galilai-group/stable-envs"
 classic = ["numba>=0.60"]
 # PushT replay checks this exact Pymunk at construction.
 pusht = ["pygame>=2.5", "pymunk==7.2.0", "opencv-python-headless", "shapely", "numba>=0.60"]
+pusht-gpu = [
+  "pygame>=2.5", "pymunk==7.2.0", "opencv-python-headless", "shapely", "numba>=0.60",
+  "jax[cuda12]>=0.4.35; sys_platform == 'linux'",
+]
 # PushT reference checks run against gym-pusht.
 pusht-reference = ["gym-pusht"]
 # SimplePointMaze's exact cached info.goal image uses Matplotlib Agg.

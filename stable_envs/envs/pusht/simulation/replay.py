@@ -25,6 +25,10 @@ from .task import PushT, PushTDiscrete
 
 ACTION_DTYPES = (np.dtype("float32"), np.dtype("float64"), np.dtype("int32"), np.dtype("int64"))
 HISTORY_KEYS = {"history/actions", "history/dtypes", "history/valid"}
+JAX_STATE_ERROR = (
+    "This PushT State was produced by the CUDA/JAX solver and cannot be restored on CPU: "
+    "CPU uses the different Pymunk solver and would diverge. Load it into a CUDA environment instead."
+)
 
 
 @cache
@@ -300,6 +304,11 @@ class PushTReplay:
         return result
 
     def validate(self, state):
+        if isinstance(state, dict) and (
+            np.any(state.get("recipe/version", 0) == 3)
+            or any(key.startswith(("anchor/jax/", "current/jax/")) for key in state)
+        ):
+            raise ValueError(JAX_STATE_ERROR)
         template = self.get_state()
         if not isinstance(state, dict) or state.keys() != template.keys():
             raise ValueError("PushT State keys differ")

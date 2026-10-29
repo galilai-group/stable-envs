@@ -60,7 +60,7 @@ def test_relative_controls_and_contact_track_main(device, initial, action):
     try:
         env.reset(0, options)
         ref.reset(0, options)
-        for _ in range(8):
+        for _ in range(200):
             got = env.step(torch.tensor([action], device=device))
             want = ref.step(np.array([action], np.float32))
             np.testing.assert_allclose(
@@ -116,3 +116,77 @@ def test_shapes_variations_reward_mask_and_source_checkpoint(device, monkeypatch
     finally:
         env.close()
         ref.close()
+
+
+@pytest.mark.parametrize("failure", [RuntimeError("Unknown backend cuda"), IndexError()])
+def test_missing_jax_cuda_fails_before_constructing_owners(monkeypatch, failure):
+    def unavailable(*args, **kwargs):
+        raise failure
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("Constructed CPU owners before checking JAX CUDA support")
+
+    monkeypatch.setattr("jax.devices", unavailable)
+    monkeypatch.setattr(PushTReplayAdapter, "__init__", forbidden)
+    with pytest.raises(RuntimeError, match=r"pip install 'stable-envs\[pusht-gpu\]'"):
+        PushTJaxAdapter(1, "cuda:0")
+
+
+@pytest.mark.parametrize("discrete", [False, True])
+def test_episode_checkpoint_restores_without_physics_replay(device, discrete, monkeypatch):
+    env = PushTJaxAdapter(2, device, 0, discrete=discrete, config=dict(resolution=32))
+    try:
+        env.reset(0, dict(variation=[], state=np.array([100, 215, 200, 200, 0, 0, 0], np.float64)))
+        for _ in range(200):
+            relative = (env._body[:, 1, :2] - env._body[:, 0, :2]) / 100
+            if discrete:
+                angle = torch.atan2(relative[:, 1], relative[:, 0]).remainder(2 * np.pi)
+                action = torch.stack((relative.norm(dim=1) * 16, angle * (16 / (2 * np.pi))), 1)
+                action = action.floor().clamp(0, 15).to(torch.int64)
+            else:
+                action = relative.clamp(-1, 1).to(torch.float32)
+            env.step(action, capture_state=False)
+        assert env._impulse.count_nonzero() > 0
+        checkpoint = env.get_state()
+        expected = env.step(action)
+
+        def forbidden(*args, **kwargs):
+            raise AssertionError("Checkpoint restore replayed physics")
+
+        with monkeypatch.context() as patch:
+            patch.setattr("stable_envs.envs.pusht.simulation.jax_batch.advance", forbidden)
+            env.set_state(checkpoint)
+        assert_same_state(checkpoint, env.get_state())
+        assert_same_state(expected, env.step(action))
+        bad = checkpoint.clone()
+        bad["current", "jax", "bias"][1, 0, 0] = float("nan")
+        before = env.get_state()
+        with pytest.raises(ValueError, match="solver cache"):
+            env.set_state(bad)
+        assert_same_state(before, env.get_state())
+    finally:
+        env.close()
+
+
+@pytest.mark.parametrize("discrete", [False, True])
+@pytest.mark.parametrize("processes", [0, 1])
+def test_cpu_can_render_jax_checkpoints_but_cannot_restore_them(device, discrete, processes, monkeypatch):
+    import stable_envs as se
+
+    monkeypatch.setattr("stable_envs.envs.pusht.simulation.execution.process_count", lambda *a, **kw: processes)
+
+    env = PushTJaxAdapter(1, device, 0, discrete=discrete, config=dict(resolution=32))
+    try:
+        action = torch.tensor([[3, 4]] if discrete else [[0.5, 0.0]], device=device)
+        state = env.step(action)["state"]
+        cls = se.PushTDiscrete if discrete else se.PushT
+        with cls(device="cpu", size=32) as cpu:
+            before = cpu.get_state()
+            with pytest.raises(ValueError, match="Pymunk.*Load it into a CUDA environment"):
+                cpu.set_state(state)
+            frame = cpu.render(state)
+            assert frame.shape == (1, 32, 32, 3)
+            assert torch.equal(frame, cpu.render(cpu.to_render_state(state)))
+            assert_same_state(before, cpu.get_state())
+    finally:
+        env.close()
