@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import threading
+
 import mujoco
 import numpy as np
 import torch
@@ -9,12 +11,23 @@ import torch
 from ..._core.mujoco_gl import mujoco_renderer
 from ...env import Env, render_states_arg, require_contiguous_out
 from ...registry import register
+from ...render._resources import retain_process_lifetime
 from ...spaces import Dict
 from .assets import _COMMIT, _XML
 from .assets import model as _model
 from .simulation.adapter import WarpAdapter
 
 _NQ, _NV, _NA, _NU = 36, 36, 100, 100
+_LOCK = threading.RLock()
+_RENDERERS: dict[int, tuple] = {}
+
+
+def _renderer(model, size: int):
+    if size not in _RENDERERS:
+        entry = (mujoco_renderer(model, height=size, width=size), mujoco.MjData(model))
+        retain_process_lifetime(entry, "MS-Human OpenGL context must remain alive with sibling contexts")
+        _RENDERERS[size] = entry
+    return _RENDERERS[size]
 
 
 @register
@@ -37,7 +50,6 @@ class MSHumanLocomotion(Env):
 
     def __init__(self, num_envs: int = 1, **kwargs):
         super().__init__(num_envs, **kwargs)
-        self._renderers: dict[int, tuple] = {}
         self._model = _model()
         dims = (self._model.nq, self._model.nv, self._model.na, self._model.nu)
         if dims != (_NQ, _NV, _NA, _NU):
@@ -64,26 +76,20 @@ class MSHumanLocomotion(Env):
         self._check_open("step")
         return self._simulator.step(actions)
 
-    def _renderer(self, size: int):
-        hit = self._renderers.get(size)
-        if hit is None:
-            hit = (mujoco_renderer(self._model, height=size, width=size), mujoco.MjData(self._model))
-            self._renderers[size] = hit
-        return hit
-
     @torch.no_grad()
     def _render(self, states=None, size=None, supersample=None, variation=None, style=None, out=None):
         require_contiguous_out(f"{type(self).__name__}.render", out)
         states = render_states_arg(self, states)
         size = int(size or self.size)
-        renderer, data = self._renderer(size)
         rows = states.reshape(-1, self.state_dim).detach().cpu().numpy()
         frames = np.empty((len(rows), size, size, 3), np.uint8)
-        for i, qpos in enumerate(rows):
-            data.qpos[:] = qpos
-            mujoco.mj_forward(self._model, data)
-            renderer.update_scene(data)
-            frames[i] = renderer.render()
+        with _LOCK:
+            renderer, data = _renderer(self._model, size)
+            for i, qpos in enumerate(rows):
+                data.qpos[:] = qpos
+                mujoco.mj_forward(self._model, data)
+                renderer.update_scene(data)
+                frames[i] = renderer.render()
         result = torch.as_tensor(frames, device=self.device).reshape(*states.shape[:-1], size, size, 3)
         if out is not None:
             out.copy_(result)
@@ -91,8 +97,5 @@ class MSHumanLocomotion(Env):
         return result
 
     def _close(self):
-        for renderer, _data in self._renderers.values():
-            renderer.close()
-        self._renderers.clear()
         if hasattr(self, "_simulator"):
             self._simulator.close()
