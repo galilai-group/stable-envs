@@ -169,11 +169,8 @@ def test_episode_checkpoint_restores_without_physics_replay(device, discrete, mo
 
 
 @pytest.mark.parametrize("discrete", [False, True])
-@pytest.mark.parametrize("processes", [0, 1])
-def test_cpu_can_render_jax_checkpoints_but_cannot_restore_them(device, discrete, processes, monkeypatch):
+def test_public_cpu_restores_the_same_jax_checkpoint(device, discrete):
     import stable_envs as se
-
-    monkeypatch.setattr("stable_envs.envs.pusht.simulation.execution.process_count", lambda *a, **kw: processes)
 
     env = PushTJaxAdapter(1, device, 0, discrete=discrete, config=dict(resolution=32))
     try:
@@ -181,12 +178,15 @@ def test_cpu_can_render_jax_checkpoints_but_cannot_restore_them(device, discrete
         state = env.step(action)["state"]
         cls = se.PushTDiscrete if discrete else se.PushT
         with cls(device="cpu", size=32) as cpu:
-            before = cpu.get_state()
-            with pytest.raises(ValueError, match="Pymunk.*Load it into a CUDA environment"):
-                cpu.set_state(state)
+            assert isinstance(cpu._simulator, PushTJaxAdapter)
+            assert cpu.execution_mode == "NATIVE_JAX"
+            cpu.set_state(state)
+            assert_same_state(state.cpu(), cpu.get_state())
             frame = cpu.render(state)
             assert frame.shape == (1, 32, 32, 3)
             assert torch.equal(frame, cpu.render(cpu.to_render_state(state)))
-            assert_same_state(before, cpu.get_state())
+            got = cpu.step(action.cpu(), frames=None)["state", "current", "observation"]
+            want = env.step(action)["state", "current", "observation"].cpu()
+            torch.testing.assert_close(got, want, rtol=0, atol=5e-8)
     finally:
         env.close()

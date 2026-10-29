@@ -26,8 +26,8 @@ from .task import PushT, PushTDiscrete
 ACTION_DTYPES = (np.dtype("float32"), np.dtype("float64"), np.dtype("int32"), np.dtype("int64"))
 HISTORY_KEYS = {"history/actions", "history/dtypes", "history/valid"}
 JAX_STATE_ERROR = (
-    "This PushT State was produced by the CUDA/JAX solver and cannot be restored on CPU: "
-    "CPU uses the different Pymunk solver and would diverge. Load it into a CUDA environment instead."
+    "This PushT State was produced by the JAX solver and cannot be restored into the Pymunk reference. "
+    "Load it into a public PushT environment instead."
 )
 
 
