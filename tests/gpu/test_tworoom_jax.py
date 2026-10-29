@@ -17,6 +17,27 @@ pytestmark = [
 ]
 
 
+@pytest.mark.parametrize("batch,expected", [(1, "torch"), (8, "jax")])
+def test_auto_cutoff_preserves_cuda_outputs(batch, expected):
+    with (
+        se.TwoRoom(num_envs=batch, device="cuda", jax_min_envs=8) as env,
+        se.TwoRoom(
+            num_envs=batch,
+            device="cuda",
+            simulation_backend=expected,
+        ) as reference,
+    ):
+        assert env.simulation_backend == expected
+        checkpoint = env.reset(seed=17)
+        reference.reset(seed=17)
+        action = torch.zeros(batch, 2, device="cuda")
+        actual = env.step(action, frames=None)
+        assert all(leaf.device.type == "cuda" for leaf in actual.values(True, True))
+        assert_same_state(actual, reference.step(action, frames=None))
+        env.set_state(checkpoint)
+        assert_same_state(env.step(action, frames=None), actual)
+
+
 @pytest.mark.parametrize("batch", [1, 64, 4096])
 @pytest.mark.swm
 def test_cuda_batched_steps_match_cpu_and_swm_with_arbitrary_actions(batch):

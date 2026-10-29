@@ -58,7 +58,7 @@ pusht-reference = ["gym-pusht"]
 # SimplePointMaze's exact cached info.goal image uses Matplotlib Agg.
 # TwoRoom dynamics use the core JAX dependency; CUDA needs its GPU runtime.
 navigation = ["matplotlib>=3.10", "numba>=0.60"]
-navigation-gpu = ["jax[cuda12]>=0.4.35"]
+navigation-gpu = ["jax[cuda12]>=0.4.35; sys_platform == 'linux'"]
 ogbench = ["mujoco>=3.11,<3.13", "ogbench>=1.2.1,<1.3"]
 # Cube/Scene semantics and renderer. Their renderers check these exact MuJoCo, OGBench and
 # MuJoCo Warp versions when they render, and the CPU semantics check the OGBench version at
@@ -76,7 +76,7 @@ dmcontrol = ["dm-control>=1.0.44", "mujoco>=3.11,<3.13"]
 # without this extra TrackCom renders on 3.11 without the reflection.
 dmcontrol-gpu = [
   "dm-control>=1.0.45", "mujoco>=3.12,<3.13", "mujoco-warp>=3.12,<3.13", "warp-lang>=1.16",
-  "mujoco-mjx>=3.12,<3.13", "jax[cuda12]>=0.4.35",
+  "mujoco-mjx>=3.12,<3.13", "jax[cuda12]>=0.4.35; sys_platform == 'linux'",
 ]
 # gymnasium-robotics 1.4.2's Fetch setters fail with MuJoCo 3.12.
 robotics = ["gymnasium-robotics>=1.4.2,<1.5", "mujoco>=3.11,<3.12", "opencv-python-headless"]
@@ -94,7 +94,7 @@ mjwarp = [
 rocket = ["pillow", "scipy", "PyFlyt==0.29.0", "pybullet==3.2.7"]
 # Craftax on CPU; craftax-gpu takes JAX's CUDA 12 build for device="cuda".
 craftax = ["craftax>=1.6.1", "jax>=0.4.30"]
-craftax-gpu = ["craftax>=1.6.1", "jax[cuda12]>=0.4.30"]
+craftax-gpu = ["craftax>=1.6.1", "jax[cuda12]>=0.4.30; sys_platform == 'linux'"]
 hf = ["datasets>=2.14"]
 examples = ["imageio", "imageio-ffmpeg", "opencv-python"]
 # No `all` extra: Fetch needs mujoco<3.12, and nvdiffrast cannot be expressed

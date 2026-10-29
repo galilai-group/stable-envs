@@ -844,16 +844,33 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
         }
     )
 
-    def __init__(self, *args, **kwargs):
-        from .tworoom_jax import Kernel
+    def __init__(self, *args, simulation_backend="auto", jax_min_envs=1, **kwargs):
+        """Use Torch below ``jax_min_envs`` and JAX at or above it when selection is automatic.
 
+        The cutoff defaults to 1. ``simulation_backend="torch"`` or ``"jax"``
+        selects that implementation at every batch size.
+        """
+        if simulation_backend not in ("auto", "torch", "jax"):
+            raise ValueError("simulation_backend must be 'auto', 'torch' or 'jax'")
+        if isinstance(jax_min_envs, bool) or not isinstance(jax_min_envs, int) or jax_min_envs < 1:
+            raise ValueError("jax_min_envs must be an int >= 1")
+        self.jax_min_envs = jax_min_envs
         super().__init__(*args, **kwargs)
-        self._jax_kernel = Kernel(self.device, self._style.layout)
+        if simulation_backend == "auto":
+            simulation_backend = "jax" if self.B >= jax_min_envs else "torch"
+        self.simulation_backend = simulation_backend
+        self.execution_mode = "NATIVE_JAX" if self.simulation_backend == "jax" else "NATIVE_TORCH"
+        if self.simulation_backend == "jax":
+            from .tworoom_jax import Kernel
+
+            self._jax_kernel = Kernel(self.device, self._style.layout)
 
     def make_variation_space(self) -> Dict:
         return Dict({"agent": Dict(self._agent_space()), **self._structure_space()})
 
     def _advance_rows(self, rows, action, sty):
+        if self.simulation_backend == "torch":
+            return super()._advance_rows(rows, action, sty)
         return self._jax_kernel.advance(rows, action, sty.values)
 
     def _reset_value_ok(self, path, value, lane):

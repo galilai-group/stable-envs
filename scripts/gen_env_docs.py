@@ -52,18 +52,8 @@ PHYSICS = {
     "DELEGATED_CPU": "source simulator on CPU",
     "NATIVE_TORCH": "native torch on the env device",
     "NATIVE_JAX": "native JAX on the env device",
+    "AUTO_NATIVE_MJX": "native MuJoCo on CPU; CUDA batches use native below 32 lanes, JAX/MJX otherwise",
 }
-
-
-#: Physics placement of classes whose CUDA instances run another execution mode, by (CPU mode, CUDA mode).
-SPLIT_PHYSICS = {("DELEGATED_CPU", "JAX_MJX"): "native MuJoCo on CPU; JAX/MJX on CUDA"}
-
-
-def physics(cls) -> str | None:
-    """Physics placement of ``cls`` on each device, from its execution modes."""
-    mode = getattr(cls, "execution_mode", "")
-    cuda = getattr(cls, "CUDA_EXECUTION_MODE", None)
-    return SPLIT_PHYSICS.get((mode, cuda)) if cuda else PHYSICS.get(mode, None)
 
 
 def renderer_cell(cls) -> str:
@@ -178,7 +168,7 @@ def metadata(name: str, device: str = "cpu") -> dict:
             "has_dynamics": info["has_dynamics"],
             "default_size": info["default_size"],
             "frame_shape": list(env.frame_spec.shape),
-            "physics": physics(cls),
+            "physics": PHYSICS.get(getattr(cls, "execution_mode", ""), None),
             "renderers": RENDERERS[renderer_cell(cls)],
             "action": action,
             "state": _state(env),

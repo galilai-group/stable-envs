@@ -10,6 +10,28 @@ from stable_envs.envs.dmcontrol.simulation.first_family import ReacherAdapter  #
 from tests.helpers.reference.semantics import assert_same_state  # noqa: E402
 
 
+@pytest.mark.parametrize("backend", ["auto", "native"])
+def test_public_cpu_reacher_keeps_native_physics(backend):
+    import stable_envs as se
+
+    reference = ReacherAdapter(1, "cpu", 7)
+    try:
+        with se.DMCReacher(num_envs=1, device="cpu", simulation_backend=backend) as env:
+            assert env.simulation_backend == "native"
+            assert env.execution_mode == "DELEGATED_CPU"
+            checkpoint = env.reset(seed=7)
+            reference.reset(7)
+            action = torch.tensor([[0.2, -0.4]])
+            expected = reference.step(action)
+            actual = env.step(action, frames=None)
+            for key in expected.keys():
+                assert_same_state(actual[key], expected[key])
+            env.set_state(checkpoint)
+            assert_same_state(env.step(action, frames=None), actual)
+    finally:
+        reference.close()
+
+
 @pytest.fixture
 def pair():
     pytest.importorskip("mujoco.mjx")
