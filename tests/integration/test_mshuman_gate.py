@@ -1,9 +1,4 @@
-"""MSHumanLocomotion reproduces a plain MuJoCo Warp rollout of the upstream model.
-
-MS-Human-700 ships a MuJoCo model rather than a task library, so the source dynamics are
-MuJoCo Warp stepping that model. This gate rolls the pinned model out directly and requires
-every physics field the env exposes to match it bit-for-bit at each step.
-"""
+"""MSHumanLocomotion against a direct MuJoCo Warp rollout of the pinned model."""
 
 from __future__ import annotations
 
@@ -13,10 +8,7 @@ import torch
 
 import stable_envs as se
 
-pytestmark = pytest.mark.unit
-
 LANES, STEPS, SEED = 3, 12, 7
-# env State field -> MuJoCo Warp Data buffer it mirrors.
 _FIELDS = (("qpos", "qpos"), ("qvel", "qvel"), ("act", "act"), ("warmstart", "qacc_warmstart"))
 
 
