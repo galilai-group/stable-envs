@@ -24,10 +24,10 @@ fi
 # Arms that draw with software OpenGL play the first SWEPISODES episodes only; steps/s does not depend on the count.
 REPEATS=${REPEATS:-3}
 # SRC_LANES envs per source worker (one avoids the multi-env corruption some sources show);
-# ONLY_SOURCE=1 runs only the source arms (for example a second core budget).
+# ONLY_SOURCE=1 runs only the source arms (for example a second core budget); SKIP_OFFLINE=1 skips the offline arms.
 SLANES=${SRC_LANES:-$SLANES}
 ONLY_SOURCE=${ONLY_SOURCE:-0}
-export PYTHONPATH=$REPO SDL_VIDEODRIVER=dummy PYTHONWARNINGS=ignore PYTHONDONTWRITEBYTECODE=1
+export PYTHONPATH=$REPO SDL_VIDEODRIVER=dummy PYTHONWARNINGS=ignore PYTHONDONTWRITEBYTECODE=1 MPLBACKEND=Agg
 # The uv cache stays in home: node-local disk holds one family venv at a time.
 export UV_HTTP_TIMEOUT=600 UV_LINK_MODE=copy UV_CACHE_DIR=${UV_CACHE_DIR:-$HOME/.cache/uv} XDG_CACHE_HOME=$WORK/cache
 # One GPU only: --exclusive exposes all of them, and torch and JAX may number several differently.
@@ -102,17 +102,19 @@ for spec in "$@"; do
   fi
   OFF="$PIN $P -m benchmarks.offline_sweep"; ON="$PIN $P -m benchmarks.online_ladder"
   S=$WORK/states-$fam; D=$WORK/episodes-$fam; mkdir -p $S $D
-  egl $OFF states --envs "${envs[@]}" --out $S --n $N --device cuda --lanes 1024
+  [ "${SKIP_OFFLINE:-0}" = 1 ] || egl $OFF states --envs "${envs[@]}" --out $S --n $N --device cuda --lanes 1024
   egl $ON dataset --envs "${envs[@]}" --out $D --episodes $EPISODES --length $LENGTH
   for E in "${envs[@]}"; do
     echo "--- $E $(date -Is) load $(cut -d' ' -f1-3 /proc/loadavg)"
     o=$OUT/offline/$E; mkdir -p $o
-    if [ $ONLY_SOURCE != 1 ]; then
+    if [ "${SKIP_OFFLINE:-0}" = 1 ]; then :
+    elif [ $ONLY_SOURCE != 1 ]; then
       egl $OFF ours --envs $E --states $S --device cuda --batches $BATCHES --repeats $REPEATS --output $o/snv-gpu.json
       sw $OFF ours --envs $E --states $S --device cpu --threads $NCORES --batches $BATCHES --repeats $REPEATS --output $o/snv-cpu.json
       egl $OFF mse --envs $E --states $S --device cuda --output $o/mse-gpu.json
       sw $OFF mse --envs $E --states $S --device cpu --output $o/mse-cpu.json
     fi
+    [ "${SKIP_OFFLINE:-0}" = 1 ] || {
     case $E in OGBCube|OGBScene)
       egl $OFF source-upstream --envs $E --states $S --procs 1 --keep $o/upstream-gpu-frames.npy --repeats $REPEATS --output $o/src-upstream-gpu-1p.json
       egl $OFF source-upstream --envs $E --states $S --procs $NCORES --repeats $REPEATS --output $o/src-upstream-gpu-${NCORES}p.json
@@ -123,6 +125,7 @@ for spec in "$@"; do
       egl $OFF source --envs $E --states $S --procs $p --repeats $REPEATS --output $o/src-gpu-${p}p.json
       sw $OFF source --envs $E --states $S --procs $p --repeats $REPEATS --output $o/src-cpu-${p}p.json
     done
+    }
     n=$OUT/online/$E; mkdir -p $n
     COMMON="--env $E --data $D --procs $NCORES --source-lanes $SLANES --lanes $LANES --threads $NCORES --repeats $REPEATS"
     egl $ON run $COMMON --arms src-pipelined-render --src-label gpu --ours-device cuda --output $n/src-render-gpu.json

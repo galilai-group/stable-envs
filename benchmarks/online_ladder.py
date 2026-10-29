@@ -17,8 +17,8 @@ import argparse
 import functools
 import hashlib
 import json
+import multiprocessing as mp
 import os
-import re
 from pathlib import Path
 
 import numpy as np
@@ -115,10 +115,10 @@ def _make_source(name: str, size: int):
         domain, task = sid.split("/", 1)[1].split("-", 1)
         return _DMCSource(domain, task, snv.registry.REGISTRY[name].CAMERA, size)
     if sid.startswith("ogbench/"):
-        import ogbench  # noqa: F401  registers the ids
+        import stable_envs as snv
 
-        maze = re.sub(r"(?<!^)(?=[A-Z])", "-", name).lower()
-        return _GymSource(gym.make(f"{maze}-v0", render_mode="rgb_array", width=size, height=size))
+        # The class's own reference: the OGBench env and the floor that SNV's frames are compared against.
+        return _GymSource(snv.registry.REGISTRY[name].reference_env(size=size))
     import stable_worldmodel  # noqa: F401  registers the swm/ ids
 
     return _GymSource(gym.make(sid, render_mode="rgb_array", **SOURCE_KWARGS.get(sid, {})))
@@ -155,7 +155,17 @@ def _digest(frame) -> str:
 
 
 def _replay_frames(name, size, seed, actions):
-    """Every frame of one episode played by a single source env in this process, and the first step that ends it."""
+    """Every frame of one episode played by a single source env, and the first step that ends it.
+
+    Each replay runs in a fresh process: some sources (OGBench, gymnasium-robotics) keep their GL
+    context alive, and a second context in one process changes the frames it draws.
+    """
+    ctx = mp.get_context("spawn")
+    with ctx.Pool(1) as pool:
+        return pool.apply(_replay_here, (name, size, seed, actions))
+
+
+def _replay_here(name, size, seed, actions):
     env = _make_source(name, size)
     try:
         env.reset(seed=seed)
