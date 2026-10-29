@@ -111,7 +111,7 @@ ORIGINAL_GATES: dict[str, str] = {
         ("CraftaxClassicPixels", "CraftaxClassicSymbolic", "CraftaxPixels", "CraftaxSymbolic"),
         "tests/unit/test_craftax.py::test_lanes_match_craftax_called_directly",
     ),
-    "MSHumanLocomotion": "tests/integration/test_mshuman_gate.py::test_matches_a_plain_mujoco_warp_rollout",
+    "MSHumanLocomotion": "tests/integration/test_mshuman_gate.py::test_matches_a_plain_mujoco_rollout",
 }
 
 _DMC_SWM = "tests/integration/test_dmc_swm_semantics.py::test_dmc_full_state_semantics"
