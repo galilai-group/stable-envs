@@ -8,7 +8,7 @@
  "has_dynamics": true,
  "default_size": 84,
  "frame_shape": [84, 84, 3],
- "physics": "native MuJoCo on CPU; JAX/MJX on CUDA",
+ "physics": "native MuJoCo on CPU; CUDA batches use native below 32 lanes, JAX/MJX otherwise",
  "renderers": {
   "cpu": "raycast3d (torch)",
   "cuda": "raycast3d (torch)"

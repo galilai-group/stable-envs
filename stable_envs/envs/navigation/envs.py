@@ -844,16 +844,33 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
         }
     )
 
-    def __init__(self, *args, **kwargs):
-        from .tworoom_jax import Kernel
+    def __init__(self, *args, simulation_backend="auto", jax_min_envs=1, **kwargs):
+        """Use Torch below ``jax_min_envs`` and JAX at or above it when selection is automatic.
 
+        The cutoff defaults to 1. ``simulation_backend="torch"`` or ``"jax"``
+        selects that implementation at every batch size.
+        """
+        if simulation_backend not in ("auto", "torch", "jax"):
+            raise ValueError("simulation_backend must be 'auto', 'torch' or 'jax'")
+        if isinstance(jax_min_envs, bool) or not isinstance(jax_min_envs, int) or jax_min_envs < 1:
+            raise ValueError("jax_min_envs must be an int >= 1")
+        self.jax_min_envs = jax_min_envs
         super().__init__(*args, **kwargs)
-        self._jax_kernel = Kernel(self.device, self._style.layout)
+        if simulation_backend == "auto":
+            simulation_backend = "jax" if self.B >= jax_min_envs else "torch"
+        self.simulation_backend = simulation_backend
+        self.execution_mode = "NATIVE_JAX" if self.simulation_backend == "jax" else "NATIVE_TORCH"
+        if self.simulation_backend == "jax":
+            from .tworoom_jax import Kernel
+
+            self._jax_kernel = Kernel(self.device, self._style.layout)
 
     def make_variation_space(self) -> Dict:
         return Dict({"agent": Dict(self._agent_space()), **self._structure_space()})
 
     def _advance_rows(self, rows, action, sty):
+        if self.simulation_backend == "torch":
+            return super()._advance_rows(rows, action, sty)
         return self._jax_kernel.advance(rows, action, sty.values)
 
     def _reset_value_ok(self, path, value, lane):
@@ -906,6 +923,26 @@ class TwoRoomTarget(_TwoRoomBase):
     state_layout = ((("agent", "position"), 2, 0), (("target", "position"), 2, 2))
     state_bounds = {("agent", "position"): (POS_LO, POS_HI), ("target", "position"): (POS_LO, POS_HI)}
     step_reference_groups = (("agent", (0, 1), "euclidean"), ("target", (2, 3), "euclidean"))
+    # Seeded resets draw from the same tree and rejection rule as TwoRoom, so they start where SWM's TwoRoom does.
+    reset_leaves = (
+        ResetLeaf("agent.position", (60.0, 112.0)),
+        ResetLeaf("target.position", (164.0, 112.0)),
+    )
+    reset_tree_factory = staticmethod(_two_room_reset_tree)
+
+    def reset(self, seed=None, options=None):
+        self._check_open("reset")
+        if seed is not None:
+            self.rng = np.random.default_rng(int(seed))
+            self._seed = int(seed)
+        values = self.draw_reset_values(seed, dict(options or {}))
+        agent, target = np.stack(list(values["agent.position"])), np.stack(list(values["target.position"]))
+        self._set_render_state(np.concatenate([agent, target], axis=1))
+        self._live_rows = self.B
+        return self.get_state()
+
+    def _reset_value_ok(self, path, value, lane):
+        return TwoRoom._reset_value_ok(self, path, value, lane)
 
     def make_variation_space(self) -> Dict:
         return Dict(
@@ -1121,10 +1158,23 @@ class PiecewiseZones(_PiecewiseBase):
     """Piecewise renderer with a distinct tint for each motion-bias zone."""
 
     name = "piecewise-zones"
+    # Seeded resets draw the agent from the same tree as Piecewise, so they start where SWM's Piecewise does.
+    reset_leaves = (ResetLeaf("agent.position", (60.0, 112.0)),)
+    reset_tree_factory = staticmethod(_piecewise_reset_tree)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._zones = _zone_map(self.device)
+
+    def reset(self, seed=None, options=None):
+        self._check_open("reset")
+        if seed is not None:
+            self.rng = np.random.default_rng(int(seed))
+            self._seed = int(seed)
+        values = self.draw_reset_values(seed, dict(options or {}))
+        self._set_render_state(np.stack(list(values["agent.position"])))
+        self._live_rows = self.B
+        return self.get_state()
 
     def make_variation_space(self) -> Dict:
         z = {**self._zone_bias_space(), **{f"color_{i}": RGBBox(init_value=ZONE_C[i]) for i in range(N_ZONES)}}

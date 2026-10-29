@@ -309,9 +309,9 @@
    "seed": 20260811,
    "n": 64,
    "size": 84,
-   "mse_mean": 26.8249,
-   "mse_p95": 29.595,
-   "mse_max": 30.0436,
+   "mse_mean": 9.514,
+   "mse_p95": 11.9494,
+   "mse_max": 12.725,
    "reference_versions": {},
    "gpu": "NVIDIA GeForce RTX 3090",
    "torch": "2.14.1+cu126"

@@ -182,7 +182,7 @@ The sections below cover CI internals and rules that most contributions do not n
 
 ### Continuous integration
 
-`.github/workflows/ci.yml` runs on ready (non-draft) pull requests into `main` and `v1-dev`, on pushes to `main`, and weekly. Pull requests test core on Python 3.12 only.
+`.github/workflows/ci.yml` runs on ready (non-draft) pull requests into `main` and `v1-dev`, on pushes to `main`, and weekly. The `ci`, `docs` and `extras-smoke` jobs run on these events only when the repository variable `STABLE_ENVS_CI` is `true`. A manual run from the Actions tab always runs. Pull requests test core on Python 3.12 only.
 `scripts/ci/plan.py` maps the diff to profiles through `ci/families.toml`:
 
 - A docs-only change runs the docs build.

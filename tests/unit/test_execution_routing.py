@@ -59,6 +59,7 @@ TARGETS = [
     ("classic", _classic, "cartpole", ("cpu", "cuda"), False),
     ("classic", _classic, "mountain_car_continuous", ("cpu", "cuda"), False),
     ("dmc", _dmc, "cheetah", ("cpu",), True),
+    ("dmc", _dmc, "reacher", ("cpu",), True),
     ("dmc", _dmc, "quadruped", ("cpu",), False),
     ("fetch", _fetch, "Push", ("cpu",), True),
     ("ogbench", _ogbench, "Maze", ("cpu", "cuda"), True),
@@ -103,3 +104,61 @@ def test_routing(monkeypatch, route, target, device, eligible, platform, batch, 
     assert kind == ("process" if expected else "local")
     assert args == expected_args
     assert kwargs == (dict(processes=expected, cpus=cpus, **process_kwargs) if expected else local_kwargs)
+
+
+@pytest.mark.family("dmc")
+@pytest.mark.parametrize(
+    "batch,device,backend,threshold,expected",
+    [
+        (1, "cuda", "auto", 32, "native"),
+        (31, "cuda:1", "auto", 32, "native"),
+        (32, "cuda:1", "auto", 32, "mjx"),
+        (4096, "cpu", "auto", 32, "native"),
+        (4096, "cuda", "native", 32, "native"),
+        (1, "cuda", "mjx", 32, "mjx"),
+        (32, "cuda", "auto", 64, "native"),
+        (64, "cuda", "auto", 64, "mjx"),
+    ],
+)
+def test_reacher_routes_without_changing_the_output_device(monkeypatch, batch, device, backend, threshold, expected):
+    import sys
+
+    from stable_envs.envs.dmcontrol.simulation import execution
+
+    monkeypatch.setattr(execution, "make_local", _local)
+    monkeypatch.setattr(execution, "process_count", lambda *args, **kwargs: 0)
+    monkeypatch.setitem(
+        sys.modules,
+        "stable_envs.envs.dmcontrol.simulation.reacher_mjx",
+        SimpleNamespace(
+            ReacherMJXAdapter=lambda *args: ("mjx", args, {}),
+        ),
+    )
+    kind, args, _ = execution.make_dmc_adapter(
+        "reacher",
+        batch,
+        device,
+        17,
+        simulation_backend=backend,
+        mjx_min_envs=threshold,
+    )
+    assert kind == ("mjx" if expected == "mjx" else "local")
+    assert args == ((batch, device, 17) if expected == "mjx" else ("reacher", batch, device, 17))
+
+
+@pytest.mark.family("dmc")
+@pytest.mark.parametrize(
+    "backend,device,threshold",
+    [
+        ("unknown", "cuda", 32),
+        ("mjx", "cpu", 32),
+        ("auto", "cuda", 0),
+        ("auto", "cuda", True),
+        ("auto", "cuda", 1.5),
+    ],
+)
+def test_reacher_rejects_invalid_simulation_selection(backend, device, threshold):
+    from stable_envs.envs.dmcontrol.simulation.execution import reacher_backend
+
+    with pytest.raises(ValueError):
+        reacher_backend(1, device, backend, threshold)

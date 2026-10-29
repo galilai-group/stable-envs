@@ -140,6 +140,35 @@ A body with four legs walks forward.
 
 A planar arm with two links moves its fingertip to a random target.
 
+`simulation_backend="auto"` chooses physics when you construct the environment:
+
+| Output device | Number of environments | Physics |
+|---|---:|---|
+| CPU | Any | Native MuJoCo on CPU |
+| CUDA | Fewer than 32 | Native MuJoCo on CPU |
+| CUDA | 32 or more | JAX/MJX on CUDA |
+
+Previously, every CUDA batch used MJX, including one environment. Small CUDA batches now run
+physics on CPU and return State and observations on CUDA. Rendering still uses the requested device.
+
+```python
+with snv.DMCReacher(num_envs=1, device="cuda") as env:
+    print(env.simulation_backend)  # "native"
+
+with snv.DMCReacher(num_envs=1024, device="cuda") as env:
+    print(env.simulation_backend)  # "mjx"
+```
+
+Set `simulation_backend="native"` or `"mjx"` to choose explicitly. MJX requires CUDA and
+`stable-envs[dmcontrol-gpu]`. Set `mjx_min_envs` to change the automatic cutoff.
+
+The default cutoff of 32 is provisional. Earlier A40 measurements compared native physics with
+CPU outputs against MJX with CUDA outputs. The comparison with both implementations returning
+CUDA tensors remains unmeasured, so the cutoff does not guarantee the fastest choice.
+
+Native physics uses float64. MJX uses float32 and can produce different trajectories and rewards.
+Select the same backend when comparing experiments.
+
 <!-- env: DMCReacher -->
 
 ## Swimmer
