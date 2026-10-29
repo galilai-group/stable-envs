@@ -6,7 +6,6 @@ The model is not on PyPI, so first use clones a pinned commit into the cache; se
 
 from __future__ import annotations
 
-import os
 import subprocess
 from functools import cache
 from pathlib import Path
@@ -14,6 +13,7 @@ from pathlib import Path
 import mujoco
 
 from ..._core import environ
+from ..._core.cache import cache_dir
 
 _HOME_VAR = "STABLE_ENVS_MSHUMAN_HOME"
 _REPO = "https://github.com/LNSGroup/MS-Human-700.git"
@@ -25,8 +25,7 @@ def home() -> Path:
     override = environ.read(_HOME_VAR)
     if override:
         return Path(override).expanduser()
-    base = os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache"
-    return Path(base) / "stable-envs" / "ms-human-700"
+    return cache_dir() / "ms-human-700"
 
 
 def _ensure(root: Path) -> Path:
