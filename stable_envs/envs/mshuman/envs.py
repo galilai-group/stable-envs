@@ -10,6 +10,7 @@ import warp as wp
 from tensordict import TensorDict
 
 from ..._core.mujoco_gl import mujoco_renderer
+from ..._core.warp_cuda import require_warp_cuda
 from ...env import Env
 from ...registry import register
 from ...spaces import Dict
@@ -46,6 +47,8 @@ class MSHumanLocomotion(Env):
 
     def __init__(self, num_envs: int = 1, **kwargs):
         super().__init__(num_envs, **kwargs)
+        if self.device.type == "cuda":
+            require_warp_cuda("MS-Human-700 GPU physics")
         self._wp = "cpu" if self.device.type == "cpu" else f"cuda:{self.device.index or 0}"
         self._model = _model()
         dims = (self._model.nq, self._model.nv, self._model.na, self._model.nu)
