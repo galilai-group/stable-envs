@@ -99,7 +99,6 @@ class PushTJaxAdapter(PushTReplayAdapter):
         self._impulse = torch.zeros(self.num_envs, count, dtype=torch.float64, device=self.device)
         self._identifiers = torch.full((self.num_envs, count), -1, dtype=torch.int64, device=self.device)
         self._lengths = torch.zeros(self.num_envs, dtype=torch.int64, device=self.device)
-        self._width: int | None = 0
         self._actions = torch.zeros(self.num_envs, 0, 2, dtype=torch.float64, device=self.device)
         self._codes = torch.zeros(self.num_envs, 0, dtype=torch.uint8, device=self.device)
         self._contacts = self._fixed["current/contacts"]
@@ -123,9 +122,7 @@ class PushTJaxAdapter(PushTReplayAdapter):
         return {"bias": self._bias, "impulse": self._impulse, "identifiers": self._identifiers}
 
     def get_state(self):
-        if self._width is None:
-            self._width = int(self._lengths.max())
-        width = self._width
+        width = int(self._lengths.max())
         fields = dict(self._fixed)
         fields.update({"current/jax/" + key: value for key, value in self._solver_state().items()})
         fields.update(
@@ -190,8 +187,7 @@ class PushTJaxAdapter(PushTReplayAdapter):
             & (actions < 16 if discrete else actions <= 1).all()
         ):
             raise ValueError("PushT actions must be finite and within the action space")
-        all_active = active is None
-        if all_active:
+        if active is None:
             active = torch.ones(self.num_envs, dtype=torch.bool, device=self.device)
         else:
             active = torch.as_tensor(active, device=self.device)
@@ -222,7 +218,7 @@ class PushTJaxAdapter(PushTReplayAdapter):
         self._impulse = torch.where(active[:, None], impulse, self._impulse)
         self._identifiers = torch.where(active[:, None], identifiers, self._identifiers)
         self._contacts = torch.where(active, contacts.to(torch.int64), self._contacts)
-        width = (int(self._lengths.max()) if self._width is None else self._width) + 1
+        width = int(self._lengths.max()) + 1
         if width > self._actions.shape[1]:
             capacity = max(16, 2 * self._actions.shape[1])
             self._actions = torch.cat(
@@ -241,7 +237,6 @@ class PushTJaxAdapter(PushTReplayAdapter):
         )
         self._codes[lane, index] = torch.where(active, code, 0).to(torch.uint8)
         self._lengths = self._lengths + active
-        self._width = width if all_active else None
         self._fixed["current/latest/value"] = torch.where(
             active[:, None], relative.to(torch.float64), self._fixed["current/latest/value"]
         )
@@ -350,7 +345,6 @@ class PushTJaxAdapter(PushTReplayAdapter):
                 staged._actions = torch.tensor(fields["history/actions"], device=self.device)
                 staged._codes = torch.tensor(fields["history/dtypes"], device=self.device)
                 staged._lengths = torch.tensor(fields["history/lengths"], device=self.device)
-                staged._width = int(fields["history/lengths"].max())
                 for owner, row in zip(staged.envs, rows, strict=True):
                     owner._install_metadata(
                         {k.removeprefix("owned/"): v for k, v in row.items() if k.startswith("owned/")}

@@ -198,7 +198,7 @@ def advance(body, bias, cached, identifiers, geometry, target, circle_agent):
 
         impulses = tuple(cached[i] for i in range(count))
         velocities, bias, impulses, _ = jax.lax.fori_loop(
-            0, 10, iteration, (velocities, bias, impulses, (zero,) * count), unroll=2
+            0, 10, iteration, (velocities, bias, impulses, (zero,) * count)
         )
         velocities = jnp.array(velocities)
         bias, cached = jnp.array(bias), jnp.stack(impulses)
