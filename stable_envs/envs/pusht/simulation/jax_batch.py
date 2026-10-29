@@ -385,7 +385,3 @@ class PushTJaxAdapter(PushTReplayAdapter):
         staged, self._prepared = self._prepared, None
         if staged is not None:
             staged.close()
-
-    def set_state(self, state):
-        self.prepare_restore(state)
-        self.commit_restore()
