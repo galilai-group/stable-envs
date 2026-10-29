@@ -64,7 +64,8 @@ venv() {  # venv FAMILY -> python path of a fresh family venv in $WORK
   ( cd "$REPO" && UV_PROJECT_ENVIRONMENT=$v $UV sync --frozen --python 3.12 --no-default-groups \
       $(for e in $extras; do echo --extra $e; done) $(for g in $groups torch-cuda test; do echo --group $g; done) ) \
       > "$OUT/logs/venv-$fam.log" 2>&1 || { echo "venv $fam failed" >&2; return 1; }
-  local tv; tv=$($v/bin/python -c "import torch; print(torch.__version__.split('+')[0])")
+  # Every paper number uses torch 2.14.1+cu126; main locks 2.15.0 for CUDA 13.2. TORCH_VERSION overrides.
+  local tv=${TORCH_VERSION:-2.14.1}
   local cu=(--extra-index-url https://download.pytorch.org/whl/cu126 --index-strategy unsafe-best-match)
   $UV pip install --python $v/bin/python "${cu[@]}" --reinstall-package torch "torch==$tv+cu126" \
       >> "$OUT/logs/venv-$fam.log" 2>&1 || { echo "torch $fam failed" >&2; return 1; }
