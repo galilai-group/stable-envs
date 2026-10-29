@@ -314,6 +314,11 @@ def run_source(args, name: str, render: bool) -> dict:
         # Every source replay runs before any stable-envs env exists in this process: OGBench keeps
         # its GL contexts alive, and a second context in one process corrupts the source's frames.
         theirs = {lane: _replay_frames(name, args.size, int(seeds[lane]), actions[lane]) for lane in check_lanes}
+        # A second replay of the first lane: a source whose seeded reset is not reproducible cannot be checked.
+        again = _replay_frames(name, args.size, int(seeds[check_lanes[0]]), actions[check_lanes[0]])[0]
+        reproducible = again.shape == theirs[check_lanes[0]][0].shape and bool(
+            (again == theirs[check_lanes[0]][0]).all()
+        )
         for lane in check_lanes:
             bad += [f"{lane}/{step}" for step in check_steps if got[lane, step] != _digest(theirs[lane][0][step])]
         compared = []
@@ -336,6 +341,7 @@ def run_source(args, name: str, render: bool) -> dict:
         if per_frame:
             rollout.update(C.mse_summary(np.concatenate(per_frame)))
         check = {
+            "reproducible": reproducible,
             "lanes": check_lanes,
             "steps": list(check_steps),
             "frames": len(got),
@@ -351,8 +357,20 @@ def run_source(args, name: str, render: bool) -> dict:
         "actions_per_call": 1,
         "steps_per_s": t["rate"],
         **t,
-        "rollout_mse": rollout,
-        **({"frame_check": check, "status": "invalid"} if check and check["mismatched"] else {"frame_check": check}),
+        # Without a reproducible source episode, neither the check nor the rollout MSE says anything.
+        "rollout_mse": rollout if not check or check["reproducible"] else None,
+        **(
+            {"frame_check": check, "status": "invalid"}
+            if check and check["reproducible"] and check["mismatched"]
+            else {
+                "frame_check": check,
+                **(
+                    {"unverified": "source seeded reset is not reproducible"}
+                    if check and not check["reproducible"]
+                    else {}
+                ),
+            }
+        ),
     }
 
 
