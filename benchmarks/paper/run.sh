@@ -70,7 +70,9 @@ venv() {  # venv FAMILY -> python path of a fresh family venv in $WORK
       >> "$OUT/logs/venv-$fam.log" 2>&1 || { echo "torch $fam failed" >&2; return 1; }
   $UV pip freeze --python $v/bin/python | grep "==" > $WORK/constraints-$fam.txt
   # Importing stable_worldmodel registers every swm env; its PushT module needs the pusht extra.
-  $UV pip install --python $v/bin/python "${cu[@]}" -c $WORK/constraints-$fam.txt -e "$SWM" "pymunk==7.2.0" shapely opencv-python-headless \
+  # torchvision must be the build made for this torch (torch 2.X.Y pairs with torchvision 0.(X+15).Y).
+  local tvv; tvv=$(echo "$tv" | awk -F. '{print "0." $2 + 15 "." $3}')
+  $UV pip install --python $v/bin/python "${cu[@]}" -c $WORK/constraints-$fam.txt -e "$SWM" "pymunk==7.2.0" shapely opencv-python-headless "torchvision==$tvv+cu126" \
       >> "$OUT/logs/venv-$fam.log" 2>&1 || { echo "swm $fam failed" >&2; return 1; }
   if [ $fam = rocket ]; then
     # nvdiffrast is not package metadata; reuse the build made for this node's CUDA toolkit. SWM's Rocket needs cvxpy.
