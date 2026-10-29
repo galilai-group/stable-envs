@@ -58,7 +58,7 @@ knob does and its default.
 
 | variable | default | effect |
 |---|---|---|
-| `STABLE_ENVS_MSHUMAN_HOME` | unset | Path to an existing MS-Human-700 checkout. Unset clones the pinned commit into the cache (`$XDG_CACHE_HOME/stable-envs/ms-human-700`). |
+| `STABLE_ENVS_MSHUMAN_HOME` | unset | Path to an existing MS-Human-700 checkout. Unset downloads the pinned commit into the cache (`$XDG_CACHE_HOME/stable-envs/ms-human-700`). |
 
 ## Development
 

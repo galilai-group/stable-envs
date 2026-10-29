@@ -91,6 +91,7 @@ mjwarp = [
 # MS-Human-700 musculoskeletal locomotion. Physics and frames use the MuJoCo Warp backend;
 # the model (Apache-2.0) is fetched from LNSGroup/MS-Human-700 at a pinned commit on first use.
 mshuman = [
+  "filelock>=3.0",
   "mujoco>=3.11,<3.13",
   "mujoco-warp>=3.11,<3.13",
   "warp-lang>=1.16",

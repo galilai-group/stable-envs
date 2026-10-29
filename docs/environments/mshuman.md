@@ -9,7 +9,7 @@ steps the physics on the env device; MuJoCo OpenGL draws the frames.
 The action has 100 values in `[0, 1]`, one activation per muscle. This is a control sandbox with no
 task reward; `reset` starts every lane from the model's `init` keyframe.
 
-The model is Apache-2.0 and is not on PyPI, so first use clones a pinned commit into the cache. Set
+The model is Apache-2.0 and is not on PyPI, so first use downloads a pinned commit into the cache. Set
 `STABLE_ENVS_MSHUMAN_HOME` to an existing checkout to skip the download. Install the backend with the
 `mshuman` extra; see [System setup](../system-setup.md).
 

@@ -123,6 +123,6 @@ register(
     "STABLE_ENVS_MSHUMAN_HOME",
     "path",
     None,
-    "Path to an existing MS-Human-700 checkout; unset clones the pinned commit into the cache.",
+    "Path to an existing MS-Human-700 checkout; unset downloads the pinned commit into the cache.",
     parse_path,
 )
