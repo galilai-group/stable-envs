@@ -52,6 +52,9 @@ class WarpAdapter(SimulatorAdapter):
     def _buf(self, name: str) -> torch.Tensor:
         return wp.to_torch(getattr(self._d, name))
 
+    def _torch_stream(self):
+        return wp.stream_from_torch(self._wp) if self.device.type == "cuda" else None
+
     def _restore_data(self) -> None:
         for name, value in self._init.items():
             self._buf(name).copy_(torch.as_tensor(value, device=self._wp))
@@ -61,9 +64,9 @@ class WarpAdapter(SimulatorAdapter):
 
     def reset(self, seed: int | None = None) -> TensorDict:
         self._check_open()
-        with wp.ScopedDevice(self._wp):
+        with wp.ScopedDevice(self._wp), wp.ScopedStream(self._torch_stream()):
             self._restore_data()
-            wp.synchronize()
+            wp.synchronize_stream(self._wp)
         return self.get_state()
 
     def get_state(self) -> TensorDict:
@@ -83,7 +86,7 @@ class WarpAdapter(SimulatorAdapter):
 
     def set_state(self, state) -> None:
         self._check_open()
-        with wp.ScopedDevice(self._wp):
+        with wp.ScopedDevice(self._wp), wp.ScopedStream(self._torch_stream()):
             for field, name in (
                 ("qpos", "qpos"),
                 ("qvel", "qvel"),
@@ -94,18 +97,18 @@ class WarpAdapter(SimulatorAdapter):
                 buf = self._buf(name)
                 buf.copy_(state[field].reshape(buf.shape).to(self._wp, buf.dtype))
             mjw.forward(self._m, self._d)
-            wp.synchronize()
+            wp.synchronize_stream(self._wp)
 
     def step(self, actions) -> TensorDict:
         self._check_open()
         action = torch.as_tensor(actions, device=self._wp).reshape(self.num_envs, self.action_dim)
-        with wp.ScopedDevice(self._wp):
+        with wp.ScopedDevice(self._wp), wp.ScopedStream(self._torch_stream()):
             self._buf("ctrl").copy_(action.to(self._buf("ctrl").dtype))
             if self._step_graph is None:
                 mjw.step(self._m, self._d)
             else:
                 wp.capture_launch(self._step_graph)
-            wp.synchronize()
+            wp.synchronize_stream(self._wp)
         return TensorDict({"state": self.get_state()}, batch_size=[self.num_envs], device=self.device)
 
     def close(self) -> None:
