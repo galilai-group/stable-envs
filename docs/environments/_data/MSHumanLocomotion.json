@@ -3,7 +3,7 @@
  "module": "stable_envs.envs.mshuman.envs",
  "family": "mshuman",
  "domain": "mshuman",
- "reference_id": "ms-human-700/Locomotion",
+ "reference_id": "LNSGroup/MS-Human-700/MS-Human-700-Locomotion.xml@2d686957aefd5739cf4d2859a6acfd94c8f84400",
  "requires_cuda": false,
  "has_dynamics": true,
  "default_size": 128,

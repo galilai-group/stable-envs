@@ -13,6 +13,7 @@ from ..._core.mujoco_gl import mujoco_renderer
 from ...env import Env
 from ...registry import register
 from ...spaces import Dict
+from .assets import _COMMIT, _XML
 from .assets import model as _model
 
 _NQ, _NV, _NA, _NU = 36, 36, 100, 100
@@ -30,7 +31,7 @@ class MSHumanLocomotion(Env):
     """MS-Human-700 whole-body locomotion: 100 muscles actuate 36 DoF, controls in ``[0, 1]``."""
 
     family = "mshuman"
-    reference_id = "ms-human-700/Locomotion"
+    reference_id = f"LNSGroup/MS-Human-700/{_XML}@{_COMMIT}"
     default_size = 128
     action_dim = _NU
     action_low, action_high = 0.0, 1.0
