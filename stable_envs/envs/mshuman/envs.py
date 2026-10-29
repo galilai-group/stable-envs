@@ -18,13 +18,6 @@ from .assets import _COMMIT, _XML
 from .assets import model as _model
 
 _NQ, _NV, _NA, _NU = 36, 36, 100, 100
-_RENDERERS: dict[int, tuple] = {}
-
-
-def _renderer(model, size: int):
-    if size not in _RENDERERS:
-        _RENDERERS[size] = (mujoco_renderer(model, height=size, width=size), mujoco.MjData(model))
-    return _RENDERERS[size]
 
 
 @register
@@ -47,6 +40,7 @@ class MSHumanLocomotion(Env):
 
     def __init__(self, num_envs: int = 1, **kwargs):
         super().__init__(num_envs, **kwargs)
+        self._renderers: dict[int, tuple] = {}
         if self.device.type == "cuda":
             require_warp_cuda("MS-Human-700 GPU physics")
         self._wp = "cpu" if self.device.type == "cpu" else f"cuda:{self.device.index or 0}"
@@ -116,10 +110,17 @@ class MSHumanLocomotion(Env):
             wp.synchronize()
         return self._step_result(self.get_state())
 
+    def _renderer(self, size: int):
+        hit = self._renderers.get(size)
+        if hit is None:
+            hit = (mujoco_renderer(self._model, height=size, width=size), mujoco.MjData(self._model))
+            self._renderers[size] = hit
+        return hit
+
     @torch.no_grad()
     def _render(self, states=None, size=None, supersample=None, variation=None, style=None, out=None):
         size = int(size or self.size)
-        renderer, data = _renderer(self._model, size)
+        renderer, data = self._renderer(size)
         rows = states.reshape(-1, self.state_dim).detach().cpu().numpy()
         frames = np.empty((len(rows), size, size, 3), np.uint8)
         for i, qpos in enumerate(rows):
@@ -134,4 +135,7 @@ class MSHumanLocomotion(Env):
         return result
 
     def _close(self):
+        for renderer, _data in self._renderers.values():
+            renderer.close()
+        self._renderers.clear()
         self._m = self._d = None
