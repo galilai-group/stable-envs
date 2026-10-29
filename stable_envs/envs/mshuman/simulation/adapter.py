@@ -32,8 +32,8 @@ class WarpAdapter(SimulatorAdapter):
                 model,
                 data,
                 nworld=self.num_envs,
-                nconmax=self.num_envs * model.nconmax,
-                njmax=self.num_envs * model.njmax,
+                nconmax=model.nconmax,
+                njmax=model.njmax,
             )
             self._step_graph = None
             if self.device.type == "cuda":
