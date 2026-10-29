@@ -35,6 +35,14 @@ class WarpAdapter(SimulatorAdapter):
                 nconmax=self.num_envs * model.nconmax,
                 njmax=self.num_envs * model.njmax,
             )
+            self._step_graph = None
+            if self.device.type == "cuda":
+                mjw.step(self._m, self._d)
+                self._restore_data()
+                wp.synchronize()
+                with wp.ScopedCapture() as capture:
+                    mjw.step(self._m, self._d)
+                self._step_graph = capture.graph
         self._closed = False
 
     def _check_open(self) -> None:
@@ -44,14 +52,17 @@ class WarpAdapter(SimulatorAdapter):
     def _buf(self, name: str) -> torch.Tensor:
         return wp.to_torch(getattr(self._d, name))
 
+    def _restore_data(self) -> None:
+        for name, value in self._init.items():
+            self._buf(name).copy_(torch.as_tensor(value, device=self._wp))
+        self._buf("ctrl").zero_()
+        self._buf("time").zero_()
+        mjw.forward(self._m, self._d)
+
     def reset(self, seed: int | None = None) -> TensorDict:
         self._check_open()
         with wp.ScopedDevice(self._wp):
-            for name, value in self._init.items():
-                self._buf(name).copy_(torch.as_tensor(value, device=self._wp))
-            self._buf("ctrl").zero_()
-            self._buf("time").zero_()
-            mjw.forward(self._m, self._d)
+            self._restore_data()
             wp.synchronize()
         return self.get_state()
 
@@ -90,7 +101,10 @@ class WarpAdapter(SimulatorAdapter):
         action = torch.as_tensor(actions, device=self._wp).reshape(self.num_envs, self.action_dim)
         with wp.ScopedDevice(self._wp):
             self._buf("ctrl").copy_(action.to(self._buf("ctrl").dtype))
-            mjw.step(self._m, self._d)
+            if self._step_graph is None:
+                mjw.step(self._m, self._d)
+            else:
+                wp.capture_launch(self._step_graph)
             wp.synchronize()
         return TensorDict({"state": self.get_state()}, batch_size=[self.num_envs], device=self.device)
 
@@ -98,4 +112,4 @@ class WarpAdapter(SimulatorAdapter):
         if self._closed:
             return
         self._closed = True
-        self._m = self._d = None
+        self._m = self._d = self._step_graph = None
