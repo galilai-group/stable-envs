@@ -11,7 +11,7 @@
  "physics": null,
  "renderers": {
   "cpu": "opengl (MuJoCo)",
-  "cuda": "opengl (MuJoCo)"
+  "cuda": "host-side serial MuJoCo OpenGL, frames copied to CUDA"
  },
  "action": {
   "shape": [100],

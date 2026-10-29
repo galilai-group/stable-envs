@@ -81,6 +81,7 @@ class MSHumanLocomotion(Env):
         require_contiguous_out(f"{type(self).__name__}.render", out)
         states = render_states_arg(self, states)
         size = int(size or self.size)
+        # TODO: render CUDA envs on the GPU with render/mjwarp once MuJoCo Warp draws tendons.
         rows = states.reshape(-1, self.state_dim).detach().cpu().numpy()
         frames = np.empty((len(rows), size, size, 3), np.uint8)
         with _LOCK:

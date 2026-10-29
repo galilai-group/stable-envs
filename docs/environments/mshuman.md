@@ -4,7 +4,8 @@
 [MS-Human-700](https://github.com/LNSGroup/MS-Human-700)
 ([Zuo et al.](https://lnsgroup.cc/research/MS-Human/)), a whole-body musculoskeletal human. The model
 has 36 degrees of freedom driven by 100 muscle actuators. [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp)
-steps the physics on the env device; MuJoCo OpenGL draws the frames.
+steps the physics on the env device. Frames come from host-side serial MuJoCo OpenGL because MuJoCo Warp's
+renderer does not draw the muscle tendons, so a CUDA env copies its states to the host and its frames back.
 
 The action has 100 values in `[0, 1]`, one activation per muscle. This is a control sandbox with no
 task reward; `reset` starts every lane from the model's `init` keyframe.
