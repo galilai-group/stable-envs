@@ -11,7 +11,7 @@ from tensordict import TensorDict
 
 from ..._core.mujoco_gl import mujoco_renderer
 from ..._core.warp_cuda import require_warp_cuda
-from ...env import Env
+from ...env import Env, render_states_arg, require_contiguous_out
 from ...registry import register
 from ...spaces import Dict
 from .assets import _COMMIT, _XML
@@ -119,6 +119,8 @@ class MSHumanLocomotion(Env):
 
     @torch.no_grad()
     def _render(self, states=None, size=None, supersample=None, variation=None, style=None, out=None):
+        require_contiguous_out(f"{type(self).__name__}.render", out)
+        states = render_states_arg(self, states)
         size = int(size or self.size)
         renderer, data = self._renderer(size)
         rows = states.reshape(-1, self.state_dim).detach().cpu().numpy()
