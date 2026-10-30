@@ -5,7 +5,6 @@ from stable_envs.envs.classic_control.simulation.local import ClassicControlAdap
 from stable_envs.envs.classic_control.simulation.process import AcrobotProcessAdapter
 from stable_envs.envs.dmcontrol.simulation.batch import DMCBatchAdapter
 from stable_envs.envs.dmcontrol.simulation.factory import DMCAdapter
-from stable_envs.envs.dmcontrol.simulation.process import DMCProcessAdapter
 from stable_envs.envs.fetch.simulation.adapter import FetchAdapter
 from stable_envs.envs.fetch.simulation.process import FetchProcessAdapter
 from stable_envs.envs.ogbench.simulation.manipulation import OGBManipulationAdapter
@@ -32,8 +31,7 @@ def local_adapters(
 def process_adapters(
     classic: AcrobotProcessAdapter,
     fetch: FetchProcessAdapter,
-    dmc: DMCProcessAdapter,
     maze: OGBMazeProcessAdapter,
     manipulation: OGBManipulationProcessAdapter,
 ) -> tuple[tuple[SimulatorAdapter, StepPipeline], ...]:
-    return (classic, classic), (fetch, fetch), (dmc, dmc), (maze, maze), (manipulation, manipulation)
+    return (classic, classic), (fetch, fetch), (maze, maze), (manipulation, manipulation)

@@ -76,11 +76,10 @@ All notable changes to this project are listed here. The format follows
 - A mid-episode physics `set_variation()` on DM Control now takes full effect from the next step. Before,
   the first step after the change still used quantities computed before it.
 - One process adapter (`stable_envs._execution.process.ProcessAdapter`) runs the worker processes of
-  DM Control, classic Acrobot, Fetch, OGBench Maze and OGBench Cube/Scene. It replaces five copies of
+  classic Acrobot, Fetch, OGBench Maze and OGBench Cube/Scene. It replaces four copies of
   the worker loop. Outputs do not change.
 - With worker processes, `set_state` checks every lane in every worker before any worker restores.
-  A State that is not valid in one lane raises and changes no lane in DM Control, classic Acrobot and
-  Fetch too.
+  A State that is not valid in one lane raises and changes no lane in classic Acrobot and Fetch too.
 - PushT runs in worker processes on Linux for batches of at least `worker_min_lanes` lanes (tuning
   path `pusht-sim`).
 - `PyFlytRocketLanding` runs in worker processes on Linux for batches of at least `worker_min_lanes`

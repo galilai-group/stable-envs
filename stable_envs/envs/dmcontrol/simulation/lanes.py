@@ -4,7 +4,6 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ...._execution.process import PER_LANE
 from ...._execution.protocol import SimulatorAdapter
 from ...._execution.state_columns import require_columns
 from . import physics as _physics
@@ -17,9 +16,6 @@ class DMCLanes(SimulatorAdapter):
     ``device`` controls returned tensor placement. State holds physics, lifecycle,
     task RNG, episode-drawn model entries and the lane's physics Variation.
     """
-
-    process_methods = {"configure_physics": PER_LANE}
-    process_attributes = ("key", "action_dim", "fields", "physics_layout", "physics_dim")
 
     def __init__(self, key, num_envs, device, seed, make, fields):
         self.key = key

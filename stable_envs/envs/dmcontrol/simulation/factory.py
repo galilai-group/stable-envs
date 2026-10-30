@@ -1,4 +1,4 @@
-"""Construct the same domain implementation in local and process execution."""
+"""Construct the same domain implementation in local and batch execution."""
 
 from collections.abc import Callable
 from functools import partial
