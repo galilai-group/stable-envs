@@ -148,3 +148,4 @@ class DMCBatchAdapter(SimulatorAdapter):
 
     def close(self):
         self.lanes.close()
+        self.b = self.task = None

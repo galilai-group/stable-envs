@@ -58,3 +58,12 @@ def test_batch_matches_local_under_physics_variation(domain):
         counts=(1, 5),
         foreign=foreign,
     )
+
+
+def test_close_is_idempotent_and_releases_the_batch():
+    adapter = make_batch("cartpole", 2, threads=1)
+    adapter.close()
+    adapter.close()
+    assert adapter.b is None and adapter.task is None
+    with pytest.raises(RuntimeError, match="closed"):
+        adapter.get_state()
