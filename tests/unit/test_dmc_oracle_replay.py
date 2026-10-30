@@ -1,4 +1,4 @@
-"""Each DM Control adapter replays its frozen SWM corpus, from any reached State."""
+"""Each DM Control corpus replays through the batch adapter, from any reached State."""
 
 import hashlib
 import json
@@ -8,10 +8,7 @@ import numpy as np
 import pytest
 
 import stable_envs as se
-from stable_envs.envs.dmcontrol.simulation.aligned import DMCAlignedAdapter
-from stable_envs.envs.dmcontrol.simulation.continuation import DMCContinuationAdapter
-from stable_envs.envs.dmcontrol.simulation.first_family import FirstFamilyAdapter, ReacherAdapter
-from stable_envs.envs.dmcontrol.simulation.humanoid import DMCHumanoidAdapter
+from stable_envs.envs.dmcontrol.simulation.factory import make_batch
 from tests.helpers.reference.crosswalk import canonical_names, class_for_frozen_cell
 from tests.helpers.reference.oracle import assert_outputs, state_at
 from tests.helpers.reference.saved import FROZEN_FLOAT64_ATOL
@@ -24,19 +21,19 @@ FIRST_FAMILY_KEYS = ("reward", "terminated", "truncated", "observation", "score"
 # (corpus directory, domain, adapter factory, assert_outputs kwargs)
 CORPORA = [
     *[
-        ("dmc_first_family", d, lambda b, d=d: FirstFamilyAdapter(d, b), dict(keys=FIRST_FAMILY_KEYS, equal_nan=False))
+        ("dmc_first_family", d, lambda b, d=d: make_batch(d, b), dict(keys=FIRST_FAMILY_KEYS, equal_nan=False))
         for d in ("acrobot", "pendulum", "cartpole")
     ],
     *[
-        ("dmc_aligned", d, lambda b, d=d: DMCAlignedAdapter(d, b), dict(equal_nan=True))
+        ("dmc_aligned", d, lambda b, d=d: make_batch(d, b), dict(equal_nan=True))
         for d in ("ball_in_cup", "finger", "manipulator", "quadruped")
     ],
     *[
-        ("dmc_continuation", d, lambda b, d=d: DMCContinuationAdapter(d, b), dict(equal_nan=True))
+        ("dmc_continuation", d, lambda b, d=d: make_batch(d, b), dict(equal_nan=True))
         for d in ("cheetah", "hopper", "walker")
     ],
-    ("dmc_humanoid", None, DMCHumanoidAdapter, dict(equal_nan=True)),
-    ("reacher", None, ReacherAdapter, dict(keys=FIRST_FAMILY_KEYS, equal_nan=False)),
+    ("dmc_humanoid", None, lambda b: make_batch("humanoid", b), dict(equal_nan=True)),
+    ("reacher", None, lambda b: make_batch("reacher", b), dict(keys=FIRST_FAMILY_KEYS, equal_nan=False)),
 ]
 
 
