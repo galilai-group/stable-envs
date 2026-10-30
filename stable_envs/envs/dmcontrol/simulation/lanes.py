@@ -51,6 +51,9 @@ class DMCLanes(SimulatorAdapter):
         if self.physics is None:
             raise ValueError(f"{self.key} declares no physics Variation")
         self.physics.configure(values)
+        # dm_control's step begins with mj_step2, which reuses the position and velocity stages in data.
+        for env in self.envs:
+            env.physics.forward()
 
     def reset(self, seed=None):
         self._check_open()

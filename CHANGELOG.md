@@ -73,6 +73,8 @@ All notable changes to this project are listed here. The format follows
   `workers` and `worker_min_lanes` knobs no longer apply to it. Reacher on CUDA still steps with MJX. With
   1024 lanes on 32 cores, physics-only stepping is approximately 2.4 (Humanoid) to 8 (Cartpole) times
   faster than with 32 worker processes. Outputs do not change.
+- A mid-episode physics `set_variation()` on DM Control now takes full effect from the next step. Before,
+  the first step after the change still used quantities computed before it.
 - One process adapter (`stable_envs._execution.process.ProcessAdapter`) runs the worker processes of
   DM Control, classic Acrobot, Fetch, OGBench Maze and OGBench Cube/Scene. It replaces five copies of
   the worker loop. Outputs do not change.
