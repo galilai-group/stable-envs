@@ -7,7 +7,6 @@ sample order reduces case-order bias; output allocation/JIT/bake are excluded.
 
 import argparse
 import json
-import time
 from contextlib import ExitStack
 from importlib.metadata import version
 from pathlib import Path
@@ -20,7 +19,7 @@ from stable_envs.envs.object_permanence.rendering.rigid_nvdiff import RigidScene
 from stable_envs.envs.object_permanence.rendering.visibility import CONTRACT
 
 from ._common import configure_threads, positive_ints
-from .object_permanence_recordings import profile_draw
+from .object_permanence_recordings import compare, profile_draw
 
 
 def run(args):
@@ -66,18 +65,11 @@ def run(args):
                     def draw(name):
                         renderers[name].render_many(frames, modes=modes, out=buffers[name])
 
-                    for _ in range(args.warmup):
-                        for name in renderers:
-                            draw(name)
-                    times: dict[str, list[float]] = {name: [] for name in renderers}
-                    for sample in range(args.repeats):
-                        order = ("full", "cached") if sample % 2 == 0 else ("cached", "full")
-                        for name in order:
-                            torch.cuda.synchronize()
-                            start = time.perf_counter()
-                            draw(name)
-                            torch.cuda.synchronize()
-                            times[name].append((time.perf_counter() - start) * 1000)
+                    times = compare(
+                        {name: lambda name=name: draw(name) for name in renderers},
+                        warmup=args.warmup,
+                        repeats=args.repeats,
+                    )
                     seed = renderers["cached"].renderer._ray_coverage
                     memory = {
                         "pixel_seed_bytes": sum(x.numel() * x.element_size() for x in (seed._depth, seed._winner)),

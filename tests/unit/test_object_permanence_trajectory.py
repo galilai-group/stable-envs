@@ -79,6 +79,17 @@ def test_multi_objects_share_assets_and_nodes_without_sharing_returned_memory(tm
         np.testing.assert_array_equal(expanded[:, 0], expanded[:, 1])
         np.testing.assert_array_equal(expanded[:, 2], selected[:, 1])
         np.testing.assert_array_equal(expanded[:, 3, 0], [9, 9, 9])
+        import torch
+
+        from stable_envs.envs.object_permanence.rendering.transforms import expand_nodes
+
+        layout = trajectory._layout
+        device_values = expand_nodes(
+            torch.from_numpy(selected), torch.from_numpy(layout.poses), layout.moving, layout.dynamic
+        )
+        np.testing.assert_array_equal(device_values, expanded)
+        device_values.zero_()
+        assert trajectory.object_poses(indices)[0, 3, 0] == 9
         selected.fill(0)
         expanded.fill(0)
         assert trajectory.poses(indices)[0, 0, 3] == 1
@@ -98,6 +109,8 @@ def test_multi_objects_share_assets_and_nodes_without_sharing_returned_memory(tm
         assert trajectory.mesh(key)["vertices"][0, 0] == 0
     with pytest.raises(RuntimeError):
         trajectory.poses([0])
+    with pytest.raises(RuntimeError):
+        trajectory.object_poses([0])
     with pytest.raises(FileExistsError):
         write(tmp_path, recording)
     assert path.exists()

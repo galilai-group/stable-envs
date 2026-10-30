@@ -39,6 +39,11 @@ dynamic poses and optional scales. Fixed-camera static visibility is cached,
 then combined with moving objects using shared depth and semantic-ID rules.
 Changing the camera or relevant geometry invalidates the cache.
 
+One object layout maps assets, dynamic nodes and semantic IDs for CPU selection
+and all GPU backends. Disabling static caching changes visibility reuse, not
+the uploaded state representation. Opaque, alpha and optical paths share output
+buffer validation; exact optical matrices retain their recorded float64 values.
+
 ## Dataset layout
 
 ```text
@@ -56,6 +61,13 @@ materials, static poses, numeric-array hashes and coordinate conventions.
 Assets contain local `float32[V,3]` vertices/normals and `int32[F,3]` triangles.
 Object names and roles describe semantics; hashes identify exact reusable geometry.
 Colors belong to instances, so differently colored balls can share one mesh.
+
+The manifest is a scene description plus provenance, not per-frame geometry.
+Most lines are formatted object records, asset references and audit metadata.
+Minified JSON or archive compression reduces distribution size without changing
+the schema; current frozen manifests remain byte-for-byte unchanged. A future
+format could separate scene data from export provenance, but needs an explicit
+version and must preserve the source hashes and semantic object mapping.
 
 `poses.npy` is `float32[T,D,7]`, storing world-space xyz + quaternion wxyz for D
 dynamic nodes. `frames.npy` is `int64[T]` with original source frame numbers.

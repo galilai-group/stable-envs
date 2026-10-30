@@ -14,9 +14,10 @@ import numpy as np
 import torch
 
 from ....render._resources import Closeable
+from .buffers import outputs
 from .optics import CONTRACT, MATERIAL, POLICY, closed_volume, validate_material
 from .optics_cuda import TriangleQuery
-from .transforms import row_matrix3
+from .transforms import expand_nodes, row_matrix3
 from .visibility import local_planes, validate_camera
 
 
@@ -103,7 +104,10 @@ class OpticalSceneRenderer(Closeable):
         if self.count > 62:
             raise ValueError("optical v1 supports at most 62 volume membership bits")
         self.base = torch.tensor([o["transform"] for o in self.objects], device=self.device, dtype=torch.float64)
-        self.nodes = torch.tensor([o["node"] for o in self.objects], device=self.device)
+        layout = trajectory._layout
+        self.nodes = torch.as_tensor(layout.nodes, device=self.device)
+        self._moving = torch.as_tensor(layout.moving, device=self.device)
+        self._nodes = torch.as_tensor(layout.dynamic, device=self.device)
         self.static = self.nodes < 0
         self.material = torch.tensor(
             [[o["rgba"][3], o["optics"]["transmission"], o["optics"]["ior"]] for o in self.objects],
@@ -123,12 +127,12 @@ class OpticalSceneRenderer(Closeable):
             if o["optics"]["transmission"]:
                 closed_volume(tri)
             meshes.append(tri)
-        self.query = TriangleQuery(meshes, device=self.device, semantic_ids=[o["id"] for o in self.objects])
+        self.query = TriangleQuery(meshes, device=self.device, semantic_ids=layout.ids)
         self.local_planes = torch.tensor(
             np.concatenate([local_planes(t.reshape(-1, 3), np.arange(t.size // 3).reshape(-1, 3)) for t in meshes]),
             device=self.device,
         )
-        self.labels = torch.tensor([o["id"] for o in self.objects], device=self.device, dtype=torch.int16)
+        self.labels = torch.as_tensor(layout.ids, device=self.device)
         self.background = torch.tensor([0.96, 0.97, 0.98], device=self.device, dtype=torch.float64)
         world = torch.tensor(camera["world"], device=self.device, dtype=torch.float64)
         p = np.asarray(camera["projection"])
@@ -164,9 +168,7 @@ class OpticalSceneRenderer(Closeable):
         self._opened()
 
     def _transforms(self, exact):
-        base = self.base.clone()
-        moving = self.nodes >= 0
-        base[moving] = exact[self.nodes[moving]]
+        base = expand_nodes(exact[None], self.base, self._moving, self._nodes)[0]
         positions = base[:, :3, 3].contiguous()
         inverse = torch.linalg.inv(base[:, :3, :3]).contiguous()
         normals = row_matrix3(self.local_planes[:, :3], inverse[self.query.labels])
@@ -358,9 +360,18 @@ class OpticalSceneRenderer(Closeable):
         """Include owned CPU pose selection and CUDA upload in the public call."""
         self._check_open("render")
         modes = tuple(modes)
-        if not modes or len(set(modes)) != len(modes) or set(modes) - {"rgb", "depth", "ids", "masks", "path_depth"}:
-            raise ValueError("invalid optical output modes")
-        exact = torch.as_tensor(self.trajectory.transforms(frames), device=self.device)
+        rows = self.trajectory.transforms(frames)
+        result = outputs(
+            modes,
+            out,
+            batch=len(rows),
+            height=self.height,
+            width=self.width,
+            objects=self.count,
+            device=self.device,
+            allowed={"rgb", "depth", "ids", "masks", "path_depth"},
+        )
+        exact = torch.as_tensor(rows, device=self.device)
         cached = self.cache_static and self._cache_possible
         if self.cache_static and not self._cache_possible:
             self.fallbacks += 1
@@ -368,33 +379,6 @@ class OpticalSceneRenderer(Closeable):
             p, inv = self._transforms(exact[0])
             _, self._segments = self._walk(p, inv, self.static & (self.material[:, 0] > 0), save=True, collect=False)
             self.builds += 1
-        shapes = {k: (len(exact), self.height, self.width) + ((3,) if k == "rgb" else ()) for k in modes}
-        for k in ("masks", "path_depth"):
-            if k in modes:
-                shapes[k] = (len(exact), self.count, self.height, self.width)
-        types = {
-            "rgb": torch.uint8,
-            "depth": torch.float32,
-            "ids": torch.int16,
-            "masks": torch.bool,
-            "path_depth": torch.float32,
-        }
-        if out is not None:
-            if set(out) != set(modes):
-                raise ValueError("out must contain exactly the requested modes")
-            for k in modes:
-                value = out[k]
-                if (
-                    not torch.is_tensor(value)
-                    or tuple(value.shape) != shapes[k]
-                    or value.dtype != types[k]
-                    or value.device != self.device
-                    or not value.is_contiguous()
-                ):
-                    raise ValueError("out must match shape, dtype, device and be contiguous")
-        result = (
-            out if out is not None else {k: torch.empty(shapes[k], dtype=types[k], device=self.device) for k in modes}
-        )
         selected = self.material[:, 0] > 0
         collect = bool(set(modes) & {"masks", "path_depth"})
         for index, matrix in enumerate(exact):

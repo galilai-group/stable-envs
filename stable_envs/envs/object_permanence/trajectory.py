@@ -51,6 +51,22 @@ def _poses(value, shape):
         raise ValueError("pose quaternions must have unit length")
 
 
+class _ObjectLayout:
+    """One object order for assets, semantic IDs and sampled world-pose nodes."""
+
+    def __init__(self, objects):
+        self.nodes = np.asarray([o["node"] for o in objects], np.int64)
+        self.moving = np.flatnonzero(self.nodes >= 0)
+        self.dynamic = self.nodes[self.moving]
+        self.poses = np.asarray([o["pose"] for o in objects], np.float32)
+        self.ids = np.asarray([o["id"] for o in objects], np.int16)
+
+    def expand(self, rows, base):
+        result = np.broadcast_to(base, (len(rows), *base.shape)).copy()
+        result[:, self.moving] = rows[:, self.dynamic]
+        return result
+
+
 class RigidTrajectory(Closeable):
     """Read one immutable clip under ``root/clips/<clip>/manifest.json``.
 
@@ -206,6 +222,7 @@ class RigidTrajectory(Closeable):
                 used.add(node)
         if used != set(range(len(nodes))):
             raise ValueError("unreferenced dynamic node")
+        self._layout = _ObjectLayout(objects)
         self._meshes = {}
         for key, description in m["assets"].items():
             if not re.fullmatch(r"[0-9a-f]{64}", key):
@@ -314,25 +331,13 @@ class RigidTrajectory(Closeable):
 
     def object_scales(self, indices):
         """Expand relative node scales to owned CPU float32 [B,G,3]."""
-        rows = self.scales(indices)
-        objects = self._manifest["objects"]
-        out = np.ones((len(rows), len(objects), 3), np.float32)
-        for index, obj in enumerate(objects):
-            if obj["node"] >= 0:
-                out[:, index] = rows[:, obj["node"]]
-        return out
+        self._check_open("object_scales")
+        return self._layout.expand(self.scales(indices), np.ones((len(self._layout.nodes), 3), np.float32))
 
     def object_poses(self, indices):
         """Expand dynamic-node poses to owned CPU float32 [B,G,7] world poses."""
-        rows = self.poses(indices)
-        objects = self._manifest["objects"]
-        out = np.broadcast_to(
-            np.asarray([o["pose"] for o in objects], np.float32), (len(rows), len(objects), 7)
-        ).copy()
-        for index, obj in enumerate(objects):
-            if obj["node"] >= 0:
-                out[:, index] = rows[:, obj["node"]]
-        return out
+        self._check_open("object_poses")
+        return self._layout.expand(self.poses(indices), self._layout.poses)
 
     def mesh(self, key):
         """Return independent local mesh arrays for one content-addressed asset."""
@@ -370,3 +375,4 @@ class RigidTrajectory(Closeable):
         self._arrays.clear()
         self.frames = self._poses = self._scales = None
         self._meshes.clear()
+        self._layout = None

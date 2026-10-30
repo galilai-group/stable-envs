@@ -69,6 +69,11 @@ CPU frame selection and pose upload, with startup/JIT/cache construction reporte
 separately. `--modes rgb,depth,ids` measures combined outputs. Both G34 and G62
 use the same recorded-trajectory and shared-renderer path.
 
+Use `--clips g13-nominal g146-nominal g01-nominal` for other recordings; their
+manifest selects the explicit orthographic, scale, alpha or optical contract.
+Both cache settings upload only dynamic nodes, including optional scales or
+exact optical matrices. Specialized diagnostic commands remain available.
+
 The same command can build native-source/shared GIFs from source previews.
 See [the recording guide](../docs/adding/object-permanence-recordings.md) for the
 import, independent oracle, validation and preview workflow.

@@ -13,6 +13,7 @@ from stable_envs.envs.object_permanence import RigidTrajectory
 from stable_envs.envs.object_permanence.rendering.rigid_nvdiff import RigidSceneRenderer
 
 from ._common import nonnegative_int, positive_int, positive_ints
+from .object_permanence_recordings import compare
 
 
 def run(args):
@@ -52,18 +53,14 @@ def run(args):
                     assert all(
                         torch.equal(buffers["baseline"][m], buffers[name][m]) for name in renderers for m in modes
                     )
-                    for _ in range(args.warmup):
-                        for name, r in renderers.items():
-                            r.render_many(frames, modes=modes, out=buffers[name])
-                    times: dict[str, list[float]] = {name: [] for name in renderers}
-                    for repeat in range(args.repeats):
-                        order = list(renderers) if repeat % 2 == 0 else list(reversed(renderers))
-                        for name in order:
-                            torch.cuda.synchronize()
-                            start = time.perf_counter()
-                            renderers[name].render_many(frames, modes=modes, out=buffers[name])
-                            torch.cuda.synchronize()
-                            times[name].append((time.perf_counter() - start) * 1000)
+                    times = compare(
+                        {
+                            name: lambda r=r, name=name: r.render_many(frames, modes=modes, out=buffers[name])
+                            for name, r in renderers.items()
+                        },
+                        warmup=args.warmup,
+                        repeats=args.repeats,
+                    )
                     point = {
                         "task": task,
                         "batch": batch,

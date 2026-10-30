@@ -76,5 +76,10 @@ def test_gpu_alpha_shared_edges_overlapping_masks_ties_and_composition(orthograp
             buffers = {key: torch.empty_like(value) for key, value in actual.items()}
             assert r.render_many(positions, matrices, cam, modes=modes, out=buffers) is buffers
             assert all(torch.equal(buffers[k], v) for k, v in actual.items())
+            bad = {key: torch.ones_like(value) for key, value in actual.items()}
+            bad["layer_ids"] = bad["layer_ids"].cpu()
+            with pytest.raises(ValueError, match="out"):
+                r.render_many(positions, matrices, cam, modes=modes, out=bad)
+            assert all(torch.all(value == 1) for value in bad.values())
             for mode in modes:
                 assert torch.equal(actual[mode], r.render_many(positions, matrices, cam, modes=(mode,))[mode])

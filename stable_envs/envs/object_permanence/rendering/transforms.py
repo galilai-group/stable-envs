@@ -3,6 +3,13 @@
 import torch
 
 
+def expand_nodes(rows, base, moving, nodes):
+    """Expand CUDA node values in the fixed object order, owning the result."""
+    result = base.expand(len(rows), *base.shape).clone()
+    result[:, moving] = rows[:, nodes]
+    return result
+
+
 def row_matrix3(vectors, matrices):
     """Multiply (..., 3) rows by (..., 3, 3) matrices in a fixed order.
 

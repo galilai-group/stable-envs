@@ -28,6 +28,9 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- Object-permanence shares object/node expansion and output buffer validation
+  across rendering paths; static-cache settings retain dynamic-only uploads.
+
 - `stable-envs doctor` reports how many render paths are tuned on this machine, lists the
   `STABLE_ENVS_*` variables that are set and flags unknown names, and checks torch's compiled GPU
   architectures with binary-compatibility rules.

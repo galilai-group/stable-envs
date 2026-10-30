@@ -97,6 +97,23 @@ def profile_draw(draw):
     }
 
 
+def compare(draws, *, warmup, repeats):
+    """Time retained outputs, alternating variants to limit sample-order bias."""
+    for _ in range(warmup):
+        for draw in draws.values():
+            draw()
+    times = {name: [] for name in draws}
+    for sample in range(repeats):
+        order = list(draws) if sample % 2 == 0 else list(reversed(draws))
+        for name in order:
+            torch.cuda.synchronize()
+            start = time.perf_counter()
+            draws[name]()
+            torch.cuda.synchronize()
+            times[name].append((time.perf_counter() - start) * 1000)
+    return times
+
+
 def benchmark(args):
     configure_threads(1)
     modes = tuple(args.modes.split(","))
@@ -120,16 +137,18 @@ def benchmark(args):
         "points": [],
         "profiles": {},
     }
-    cases = [
-        ("g34", "shared"),
-        ("g62", "shared"),
-        ("g34", "shared-full"),
-        ("g62", "shared-full"),
-    ]
-    cases = [(task, backend) for task, backend in cases if backend in args.backends.split(",")]
-    for task, backend in cases:
-        with RigidTrajectory(args.recordings, f"{task}-nominal") as clip:
-            owned = RigidSceneRenderer(clip, size=args.size, cache_static=backend == "shared")
+    clips = getattr(args, "clips", ("g34-nominal", "g62-nominal"))
+    cases = [(clip, backend) for backend in args.backends.split(",") for clip in clips]
+    for clip_name, backend in cases:
+        task = clip_name.removesuffix("-nominal")
+        with RigidTrajectory(args.recordings, clip_name) as clip:
+            manifest = clip.manifest
+            owned = RigidSceneRenderer(
+                clip,
+                size=args.size,
+                cache_static=backend == "shared",
+                visibility_contract=manifest.get("visibility_contract"),
+            )
 
             def render(indices, out=None):
                 return owned.render_many(indices, modes=modes, out=out)
@@ -157,12 +176,8 @@ def benchmark(args):
                         "timing": timing,
                         "frames_per_second": batch * 1000 / timing["median_ms"],
                         "pose_upload_bytes": batch
-                        * 28
-                        * (
-                            len(clip.manifest["objects"])
-                            if backend == "shared-full"
-                            else len(clip.manifest["dynamic_nodes"])
-                        ),
+                        * len(manifest["dynamic_nodes"])
+                        * (128 if "transforms" in manifest["arrays"] else 28 + (12 if clip.has_scales else 0)),
                     }
                     result["points"].append(point)
                     print(
@@ -193,6 +208,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--recordings", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--clips", nargs="+", default=["g34-nominal", "g62-nominal"])
     parser.add_argument("--batches", type=positive_ints, default=[1, 16, 64, 256, 1024])
     parser.add_argument("--size", type=int, default=180)
     parser.add_argument("--modes", default="rgb")

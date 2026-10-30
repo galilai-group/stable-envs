@@ -1,12 +1,10 @@
 """Export audited optical members without changing existing nominal exports."""
 
 import argparse
-import json
 import platform
-import runpy
 from pathlib import Path
 
-from .object_permanence import SOURCE_COMMIT, check_source, sample_scene, sha256, source_prefix, write_recording
+from .object_permanence import SOURCE_COMMIT, sample_scene, sha256, source_recipe, write_recording
 
 MEMBERS = {
     ("G01", 0): ("$prefix:render_png", ""),
@@ -20,19 +18,9 @@ def prepare(root, task, member):
 
     if bpy.app.version[:2] != (4, 4) or type(member) is not int or (task, member) not in MEMBERS:
         raise ValueError("optical export requires Blender 4.4 and an audited member")
-    check_source(root)
-    (taskpath,) = (root / "object_permanence/generator/tasks").glob(task + "_*/task.json")
-    meta = json.loads(taskpath.read_text())
-    script = taskpath.parent / meta["member_scripts"][member]
-    build, animate = MEMBERS[task, member]
-    if build.startswith("$prefix:"):
-        source_prefix(script, build.split(":", 1)[1])
-    else:
-        source = runpy.run_path(str(script), run_name="audited_optical_source")
-        source["clear_scene"]()
-        objects = source[build]()
-        source[animate](**{k: objects[k] for k in ("scene", "wall", "ball", "ball_z")})
-    return bpy.context.scene, script, meta
+    from .object_permanence import prepare as prepare_source
+
+    return prepare_source(root, task, member=member)
 
 
 def export(root, output, *, task="G01", member=0):
@@ -42,7 +30,8 @@ def export(root, output, *, task="G01", member=0):
     if (output / "clips" / clip).exists():
         raise FileExistsError("refusing to overwrite optical recording")
     scene, script, _ = prepare(root, task, member)
-    recording = sample_scene(scene, allow_transparent=True, allow_optical=True)
+    _, options = source_recipe(task, member)
+    recording = sample_scene(scene, **options)
     source = {
         "url": "https://github.com/hokindeng/object-permanence",
         "commit": SOURCE_COMMIT,

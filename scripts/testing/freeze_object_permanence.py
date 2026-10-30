@@ -618,35 +618,11 @@ def write_depth_parts(output, bits):
     return parts
 
 
-def freeze(root, output, task, width=320, height=180):
+def capture_bvh(scene, width, height, targets, task):
+    """Capture legacy Blender ray-cast fields; independent of candidate extraction."""
     import bpy
     from mathutils import Vector
 
-    if bpy.app.version[:2] != (4, 4):
-        raise ValueError("rigid scene oracle requires Blender 4.4.x")
-    commit = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
-    if commit != SOURCE_COMMIT or subprocess.check_output(
-        ["git", "-C", str(root), "status", "--porcelain"], text=True
-    ):
-        raise ValueError("reference source must be the clean pinned commit")
-    if output.exists():
-        raise FileExistsError(f"refusing to overwrite oracle: {output}")
-    if task not in REFERENCE_CASES:
-        raise ValueError("unaudited independent reference entry")
-    matches = list((root / "object_permanence/generator/tasks").glob(task + "_*/task.json"))
-    if len(matches) != 1:
-        raise ValueError("source task must be unique")
-    task_manifest = matches[0]
-    metadata = json.loads(task_manifest.read_text())
-    if metadata["id"] != task:
-        raise ValueError("source task identity differs")
-    script = task_manifest.parent / metadata["member_scripts"][0]
-    source_script = str(script.relative_to(root))
-    build, animate, targets = REFERENCE_CASES[task]
-    prepare_reference(script, task)
-    scene = bpy.context.scene
-    scene.render.resolution_x, scene.render.resolution_y = width, height
-    scene.render.resolution_percentage = 100
     scene.frame_set(scene.frame_start)
     bpy.context.view_layer.update()
     camera = scene.camera
@@ -699,6 +675,38 @@ def freeze(root, output, task, width=320, height=180):
     }
     reconstructed = (arrays["depth_xor"] ^ arrays["depth_base"].view(np.uint32)).view(np.float32)
     np.testing.assert_array_equal(reconstructed, depths)
+    return arrays, names, labels
+
+
+def freeze(root, output, task, width=320, height=180):
+    import bpy
+
+    if bpy.app.version[:2] != (4, 4):
+        raise ValueError("rigid scene oracle requires Blender 4.4.x")
+    commit = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
+    if commit != SOURCE_COMMIT or subprocess.check_output(
+        ["git", "-C", str(root), "status", "--porcelain"], text=True
+    ):
+        raise ValueError("reference source must be the clean pinned commit")
+    if output.exists():
+        raise FileExistsError(f"refusing to overwrite oracle: {output}")
+    if task not in REFERENCE_CASES:
+        raise ValueError("unaudited independent reference entry")
+    matches = list((root / "object_permanence/generator/tasks").glob(task + "_*/task.json"))
+    if len(matches) != 1:
+        raise ValueError("source task must be unique")
+    task_manifest = matches[0]
+    metadata = json.loads(task_manifest.read_text())
+    if metadata["id"] != task:
+        raise ValueError("source task identity differs")
+    script = task_manifest.parent / metadata["member_scripts"][0]
+    source_script = str(script.relative_to(root))
+    build, animate, targets = REFERENCE_CASES[task]
+    prepare_reference(script, task)
+    scene = bpy.context.scene
+    scene.render.resolution_x, scene.render.resolution_y = width, height
+    scene.render.resolution_percentage = 100
+    arrays, names, labels = capture_bvh(scene, width, height, targets, task)
     output.mkdir(parents=True)
     archive = output / f"blender_{task.lower()}_nominal.npz"
     # Chunk only lossless depth bits, never downsample frames or reduce precision.
@@ -727,7 +735,9 @@ def freeze(root, output, task, width=320, height=180):
         "object_ids": labels,
         "object_order": names,
         "targets": list(targets),
-        "target_visible_pixels": {name: (ids == labels[name]).sum(axis=(1, 2)).tolist() for name in targets},
+        "target_visible_pixels": {
+            name: (arrays["object_ids"] == labels[name]).sum(axis=(1, 2)).tolist() for name in targets
+        },
         "depth_encoding": "float32 bitwise XOR against depth_base; lossless chunks of at most 30 frames",
         "depth_parts": depth_parts,
         "depth_convention": "positive camera-axis distance in source scene units; zero for no hit",

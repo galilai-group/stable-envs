@@ -7,6 +7,7 @@ import triton.language as tl
 
 from ....render import nvdiff as ND
 from ....render.nvdiff_coverage import _vertex
+from .buffers import outputs
 from .transparency import CONTRACT as ALPHA_CONTRACT
 from .transparency_cache import StaticAlphaCoverage, merge
 from .visibility import CONTRACT_V2
@@ -233,12 +234,25 @@ class AlphaRenderer(ContractRenderer):
         import nvdiffrast.torch as dr
 
         self._check_open("render")
+        modes = tuple(modes)
         allowed = {"rgb", "depth", "ids", "masks", "weights", "layer_depth", "layer_ids"}
         if not modes or len(set(modes)) != len(modes) or set(modes) - allowed:
             raise ValueError("invalid alpha rendering modes")
-        self._refresh_alpha()
         h, w = self._alpha_resolution
         b = len(xpos)
+        if out is not None:
+            outputs(
+                modes,
+                out,
+                batch=b,
+                height=h,
+                width=w,
+                objects=self.scene.G,
+                device=self.scene.vert.device,
+                allowed=allowed,
+                layers=self.max_layers,
+            )
+        self._refresh_alpha()
         scene = self.scene
         view, projection = cam.matrices(aspect=w / h)
         clip, normals, _ = self._clip(xpos, xmat, view, projection)
@@ -314,18 +328,8 @@ class AlphaRenderer(ContractRenderer):
             rgb += transmittance[..., None] * torch.as_tensor(self.background, dtype=torch.float32, device=self.device)
             images["rgb"] = ND.QUANT(rgb, self.quant).flip(1)
         if out is not None:
-            if set(out) != set(modes):
-                raise ValueError("out must match requested modes")
             for mode in modes:
-                value = out[mode]
-                if (
-                    value.shape != images[mode].shape
-                    or value.dtype != images[mode].dtype
-                    or value.device != self.scene.vert.device
-                    or not value.is_contiguous()
-                ):
-                    raise ValueError("out must match shape, dtype, device and be contiguous")
-                value.copy_(images[mode])
+                out[mode].copy_(images[mode])
             return out
         return images
 

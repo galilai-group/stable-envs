@@ -17,6 +17,8 @@ from pathlib import Path
 
 import numpy as np
 
+from .freeze_object_permanence import capture_bvh
+
 SOURCE_COMMIT = "824baddcdad087810d35638bf8f273b884f74975"
 SOURCE_SCRIPT = (
     "object_permanence/generator/tasks/G62_two_balls_cross_tunnel/"
@@ -30,7 +32,6 @@ def sha256(path):
 
 def freeze(root, output, width=320, height=180):
     import bpy
-    from mathutils import Vector
 
     if bpy.app.version[:2] != (4, 4):
         raise ValueError("G62 oracle requires Blender 4.4.x")
@@ -48,56 +49,7 @@ def freeze(root, output, width=320, height=180):
     namespace["animate_scene_by_kind"](scene, metadata)
     scene.render.resolution_x, scene.render.resolution_y = width, height
     scene.render.resolution_percentage = 100
-    scene.frame_set(scene.frame_start)
-    bpy.context.view_layer.update()
-    camera = scene.camera
-    world = camera.matrix_world.copy()
-    corners = camera.data.view_frame(scene=scene)
-    xmax, ymax = max(p.x / -p.z for p in corners), max(p.y / -p.z for p in corners)
-    origin, rotation = world.translation.copy(), world.to_3x3()
-    forward = rotation @ Vector((0, 0, -1))
-    directions = [
-        (rotation @ Vector(((2 * (x + 0.5) / width - 1) * xmax, (1 - 2 * (y + 0.5) / height) * ymax, -1))).normalized()
-        for y in range(height)
-        for x in range(width)
-    ]
-    names = sorted(o.name for o in scene.objects if o.type == "MESH")
-    labels = {name: index + 1 for index, name in enumerate(names)}
-    frames = np.arange(scene.frame_start, scene.frame_end + 1, dtype=np.int64)
-    depths = np.zeros((len(frames), height, width), np.float32)
-    ids = np.zeros((len(frames), height, width), np.int16)
-    poses = np.empty((len(frames), len(names), 7), np.float64)
-    for row, frame in enumerate(frames):
-        scene.frame_set(int(frame))
-        bpy.context.view_layer.update()
-        depsgraph = bpy.context.evaluated_depsgraph_get()
-        if not np.array_equal(world, scene.camera.matrix_world):
-            raise ValueError("reference camera changed")
-        for index, name in enumerate(names):
-            matrix = bpy.data.objects[name].evaluated_get(depsgraph).matrix_world
-            poses[row, index] = [*matrix.translation, *matrix.to_quaternion()]
-        for pixel, direction in enumerate(directions):
-            hit, location, _, _, obj, _ = scene.ray_cast(depsgraph, origin, direction, distance=camera.data.clip_end)
-            if hit:
-                y, x = divmod(pixel, width)
-                depths[row, y, x] = (location - origin).dot(forward)
-                ids[row, y, x] = labels[obj.name]
-        if row % 10 == 0 or row == len(frames) - 1:
-            print(
-                f"source frame {frame}: red/blue pixels "
-                + str([int((ids[row] == labels[n]).sum()) for n in ("cross_ball_red", "cross_ball_blue")]),
-                flush=True,
-            )
-    arrays = {
-        "source_frames": frames,
-        "poses": poses,
-        "depth_base": depths[0].copy(),
-        "depth_xor": depths.view(np.uint32) ^ depths[0].view(np.uint32),
-        "object_ids": ids,
-        "camera_matrix": np.asarray(world, np.float64),
-    }
-    reconstructed = (arrays["depth_xor"] ^ arrays["depth_base"].view(np.uint32)).view(np.float32)
-    np.testing.assert_array_equal(reconstructed, depths)
+    arrays, names, labels = capture_bvh(scene, width, height, ("cross_ball_red", "cross_ball_blue"), "G62")
     output.mkdir(parents=True)
     archive = output / "blender_g62_nominal.npz"
     np.savez_compressed(archive, **arrays)

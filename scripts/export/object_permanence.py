@@ -29,92 +29,62 @@ from scripts.object_permanence_member import Member
 
 from .object_permanence_geometry import GEOMETRY_CONVERSION, evaluated_mesh, source_geometry, validate_instances
 
-# Additional scripts are audited separately from the first-member registry.
-AUDITED_MEMBERS = {
-    ("G02", 1): ("$prefix:render_png", ""),
-    ("G02", 2): ("$prefix:render_png", ""),
-    ("G04", 1): ("build_scene", "animate_scene"),
-    ("G05", 1): ("build_scene", "animate_scene"),
-    ("G05", 2): ("build_scene", "animate_scene"),
-    ("G05", 3): ("$main:render_png", ""),
-    ("G05", 4): ("build_scene", "animate_scene"),
-    ("G05", 5): ("build_scene", "animate_scene"),
-    ("G05", 6): ("build_scene", "animate_scene"),
-    ("G06", 1): ("build_scene", "animate_scene"),
-    ("G06", 2): ("build_scene", "animate_scene"),
-    ("G07", 1): ("build_scene", "animate_scene"),
-    ("G08", 1): ("build_scene", "animate_scene"),
-    ("G09", 1): ("build_scene_by_kind", "animate_scene_by_kind"),
-    ("G09", 2): ("build_scene_by_kind", "animate_scene_by_kind"),
-    ("G10", 1): ("build_scene", "animate_scene"),
-    ("G11", 1): ("build_scene", "animate_scene"),
-    ("G11", 2): ("build_scene", "animate_scene"),
-    ("G12", 1): ("build_scene", "animate_scene"),
-    ("G12", 2): ("build_scene", "animate_scene"),
-    ("G13", 1): ("build_scene", "animate_scene"),
-    ("G13", 2): ("build_scene", "animate_scene"),
-    ("G13", 3): ("build_scene", "animate_scene"),
-    ("G13", 4): ("build_scene", "animate_scene"),
-    ("G14", 1): ("build_scene", "animate_scene"),
-    ("G14", 2): ("build_scene", "animate_scene"),
-    ("G14", 3): ("build_scene", "animate_scene"),
-    ("G14", 4): ("build_scene", "animate_scene"),
-    ("G14", 5): ("build_scene", "animate_scene"),
-    ("G15", 1): ("build_scene", "animate_scene"),
-    ("G16", 1): ("build_scene", "animate_scene"),
-    ("G17", 1): ("build_scene", "animate_scene"),
-    ("G18", 1): ("build_scene", "animate_scene"),
-    ("G18", 2): ("build_scene", "animate_scene"),
-    ("G18", 3): ("build_scene", "animate_scene"),
-    ("G19", 1): ("build_scene", "animate_scene"),
-    ("G19", 2): ("build_scene", "animate_scene"),
-    ("G20", 1): ("build_scene", "animate_scene"),
-    ("G21", 1): ("build_scene", "animate_scene"),
-    ("G22", 1): ("build_scene", "animate_scene"),
-    ("G23", 1): ("build_scene", "animate_scene"),
-    ("G24", 1): ("build_scene", "animate_scene"),
-    ("G24", 2): ("build_scene", "animate_scene"),
-    ("G25", 1): ("build_scene", "animate_scene"),
-    ("G26", 1): ("build_scene", "animate_scene"),
+# Explicitly audited source entries, grouped by their common build/animate API.
+# Grouping is data compression, never discovery or permission to run new scripts.
+AUDITED_TASKS = {
+    task: recipe
+    for recipe, tasks in {
+        ("build_scene_by_kind", "animate_scene_by_kind"): (
+            "G07 G09 G15 G16 G34 G36 G45 G49 G50 G54 G57 G59 G61 G62 G64 G67 G71 G72 G75 G76 G77 G78 "
+            "G79 G91 G92 G96 G97 G98 G101 G102 G103 G110 G112 G116 G117 G118 G121 G122 G128 G131 G132 "
+            "G144 "
+        ),
+        ("$prefix:render_png", ""): ("G02 G03 "),
+        ("build_scene", "animate_scene"): (
+            "G04 G05 G06 G08 G10 G11 G12 G13 G14 G17 G18 G19 G20 G21 G22 G23 G24 G25 G26 G27 G28 G29 "
+            "G30 G31 G32 G33 G35 G43 G46 G47 G48 G51 G53 G109 G111 G127 "
+        ),
+        ("build_scene_by_kind", "animate_scene"): (
+            "G37 G38 G39 G40 G41 G42 G44 G55 G56 G58 G60 G63 G65 G66 G68 G69 G70 G73 G74 G80 G81 G82 "
+            "G83 G84 G85 G86 G87 G88 G89 G90 G93 G94 G95 G99 G100 G104 G105 G106 G107 G108 G113 G114 "
+            "G115 G119 G120 G123 G124 G125 G126 G129 G130 G133 G134 G135 G136 G137 G138 G139 G140 G141 "
+            "G142 G143 G145 G146 G147 G148 G149 G150 "
+        ),
+        ("build_scene", ""): ("G52 "),
+    }.items()
+    for task in tasks.split()
 }
-# Extra members are audited independently of their task's first camera.
-ORTHOGRAPHIC_MEMBERS = frozenset(
-    {
-        ("G08", 1),
-        ("G09", 1),
-        ("G09", 2),
-        ("G10", 1),
-        ("G11", 1),
-        ("G11", 2),
-        ("G12", 1),
-        ("G12", 2),
-        ("G13", 1),
-        ("G13", 2),
-        ("G13", 3),
-        ("G13", 4),
-        ("G14", 1),
-        ("G14", 2),
-        ("G14", 3),
-        ("G14", 4),
-        ("G14", 5),
-        ("G15", 1),
-        ("G16", 1),
-        ("G17", 1),
-        ("G18", 1),
-        ("G18", 2),
-        ("G18", 3),
-        ("G19", 1),
-        ("G19", 2),
-        ("G20", 1),
-        ("G21", 1),
-        ("G22", 1),
-        ("G23", 1),
-        ("G24", 1),
-        ("G24", 2),
-        ("G25", 1),
-        ("G26", 1),
-    }
-)
+AUDITED_MEMBERS = {
+    (task, member): ("build_scene", "animate_scene")
+    for task, members in {
+        "G04": (1,),
+        "G05": (1, 2, 4, 5, 6),
+        "G06": (1, 2),
+        "G07": (1,),
+        "G08": (1,),
+        "G10": (1,),
+        "G11": (1, 2),
+        "G12": (1, 2),
+        "G13": (1, 2, 3, 4),
+        "G14": (1, 2, 3, 4, 5),
+        "G15": (1,),
+        "G16": (1,),
+        "G17": (1,),
+        "G18": (1, 2, 3),
+        "G19": (1, 2),
+        "G20": (1,),
+        "G21": (1,),
+        "G22": (1,),
+        "G23": (1,),
+        "G24": (1, 2),
+        "G25": (1,),
+        "G26": (1,),
+    }.items()
+    for member in members
+}
+AUDITED_MEMBERS.update(dict.fromkeys((("G02", 1), ("G02", 2)), ("$prefix:render_png", "")))
+AUDITED_MEMBERS.update(dict.fromkeys((("G05", 3),), ("$main:render_png", "")))
+AUDITED_MEMBERS.update(dict.fromkeys((("G09", 1), ("G09", 2)), ("build_scene_by_kind", "animate_scene_by_kind")))
 
 SOURCE_COMMIT = "824baddcdad087810d35638bf8f273b884f74975"
 SCHEMA = "stable-envs/object-permanence-rigid-v1"
@@ -123,420 +93,56 @@ SCHEMA_V3 = "stable-envs/object-permanence-rigid-v3"
 SCHEMA_V4 = "stable-envs/object-permanence-rigid-v4"
 ALPHA_MATERIAL = "stable-envs/constant-alpha-surfaces-v1"
 ALPHA_CONTRACT = "stable-envs/transparent-pixel-rays-v1"
-ALPHA_TASKS = {"G36", "G54", "G61", "G90"}
+ALPHA_TASKS = {"G54", "G61", "G36", "G90"}
 ALPHA_ORTHOGRAPHIC_TASKS = {"G54", "G61"}
 OPTICAL_TASKS = {"G01"}
 SCALE_CONVENTION = "stable-envs/asset-relative-positive-diagonal-v1"
 ANIMATED_SCALE_TASKS = {"G146"}
 ANIMATED_SCALE_MEMBERS = {("G05", 3)}
 CONVENTIONS = {"world": "right-handed-z-up", "quaternion": "wxyz", "units": "source-scene-units"}
-# Context audit supplies nominal globals independently of camera/type certification.
-SOURCE_CONTEXT_TASKS = frozenset({"G08", "G44", "G45", "G46", "G48"})
+SOURCE_CONTEXT_TASKS = frozenset({"G46", "G44", "G08", "G48", "G45"})
 NATIVE_SCENE_TASKS = frozenset({"G98", "G132"})
 NATIVE_SCENES = Path(__file__).resolve().parents[2] / "tests/fixtures/source/object_permanence"
-CONVERTED_GEOMETRY_TASKS = {
-    "G04",
-    "G13",
-    "G14",
-    "G29",
-    "G31",
-    "G46",
-}
-# Certified orthographic entries are bound to the separate v2 visibility gate.
-ORTHOGRAPHIC_TASKS = {
-    "G08",
-    "G09",
-    "G10",
-    "G101",
-    "G102",
-    "G109",
-    "G11",
-    "G110",
-    "G112",
-    "G12",
-    "G122",
-    "G128",
-    "G15",
-    "G16",
-    "G17",
-    "G18",
-    "G19",
-    "G20",
-    "G21",
-    "G22",
-    "G23",
-    "G24",
-    "G25",
-    "G26",
-    "G43",
-    "G45",
-    "G47",
-    "G48",
-    "G49",
-    "G50",
-    "G51",
-    "G52",
-    "G53",
-    "G57",
-    "G67",
-    "G75",
-    "G76",
-    "G77",
-    "G78",
-    "G91",
-    "G92",
-    "G13",
-    "G14",
-    "G46",
-}
-AUDITED_TASKS = {
-    "G98": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G132": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G02": ("$prefix:render_png", ""),
-    "G03": ("$prefix:render_png", ""),
-    "G05": ("build_scene", "animate_scene"),
-    "G06": ("build_scene", "animate_scene"),
-    "G07": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G27": ("build_scene", "animate_scene"),
-    "G34": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G62": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G37": ("build_scene_by_kind", "animate_scene"),
-    "G38": ("build_scene_by_kind", "animate_scene"),
-    "G64": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G55": ("build_scene_by_kind", "animate_scene"),
-    "G63": ("build_scene_by_kind", "animate_scene"),
-    "G66": ("build_scene_by_kind", "animate_scene"),
-    "G80": ("build_scene_by_kind", "animate_scene"),
-    "G81": ("build_scene_by_kind", "animate_scene"),
-    "G65": ("build_scene_by_kind", "animate_scene"),
-    "G83": ("build_scene_by_kind", "animate_scene"),
-    "G82": ("build_scene_by_kind", "animate_scene"),
-    "G84": ("build_scene_by_kind", "animate_scene"),
-    "G86": ("build_scene_by_kind", "animate_scene"),
-    "G85": ("build_scene_by_kind", "animate_scene"),
-    "G87": ("build_scene_by_kind", "animate_scene"),
-    "G88": ("build_scene_by_kind", "animate_scene"),
-    "G89": ("build_scene_by_kind", "animate_scene"),
-    "G93": ("build_scene_by_kind", "animate_scene"),
-    "G94": ("build_scene_by_kind", "animate_scene"),
-    "G95": ("build_scene_by_kind", "animate_scene"),
-    "G96": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G97": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G99": ("build_scene_by_kind", "animate_scene"),
-    "G100": ("build_scene_by_kind", "animate_scene"),
-    "G103": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G28": ("build_scene", "animate_scene"),
-    "G30": ("build_scene", "animate_scene"),
-    "G32": ("build_scene", "animate_scene"),
-    "G33": ("build_scene", "animate_scene"),
-    "G35": ("build_scene", "animate_scene"),
-    "G39": ("build_scene_by_kind", "animate_scene"),
-    "G40": ("build_scene_by_kind", "animate_scene"),
-    "G41": ("build_scene_by_kind", "animate_scene"),
-    "G42": ("build_scene_by_kind", "animate_scene"),
-    "G44": ("build_scene_by_kind", "animate_scene"),
-    "G56": ("build_scene_by_kind", "animate_scene"),
-    "G58": ("build_scene_by_kind", "animate_scene"),
-    "G59": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G60": ("build_scene_by_kind", "animate_scene"),
-    "G68": ("build_scene_by_kind", "animate_scene"),
-    "G69": ("build_scene_by_kind", "animate_scene"),
-    "G70": ("build_scene_by_kind", "animate_scene"),
-    "G71": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G72": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G73": ("build_scene_by_kind", "animate_scene"),
-    "G74": ("build_scene_by_kind", "animate_scene"),
-    "G79": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G104": ("build_scene_by_kind", "animate_scene"),
-    "G105": ("build_scene_by_kind", "animate_scene"),
-    "G106": ("build_scene_by_kind", "animate_scene"),
-    "G107": ("build_scene_by_kind", "animate_scene"),
-    "G108": ("build_scene_by_kind", "animate_scene"),
-    "G111": ("build_scene", "animate_scene"),
-    "G113": ("build_scene_by_kind", "animate_scene"),
-    "G114": ("build_scene_by_kind", "animate_scene"),
-    "G115": ("build_scene_by_kind", "animate_scene"),
-    "G116": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G117": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G118": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G119": ("build_scene_by_kind", "animate_scene"),
-    "G120": ("build_scene_by_kind", "animate_scene"),
-    "G121": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G123": ("build_scene_by_kind", "animate_scene"),
-    "G124": ("build_scene_by_kind", "animate_scene"),
-    "G125": ("build_scene_by_kind", "animate_scene"),
-    "G126": ("build_scene_by_kind", "animate_scene"),
-    "G127": ("build_scene", "animate_scene"),
-    "G129": ("build_scene_by_kind", "animate_scene"),
-    "G130": ("build_scene_by_kind", "animate_scene"),
-    "G131": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G133": ("build_scene_by_kind", "animate_scene"),
-    "G134": ("build_scene_by_kind", "animate_scene"),
-    "G135": ("build_scene_by_kind", "animate_scene"),
-    "G136": ("build_scene_by_kind", "animate_scene"),
-    "G137": ("build_scene_by_kind", "animate_scene"),
-    "G138": ("build_scene_by_kind", "animate_scene"),
-    "G139": ("build_scene_by_kind", "animate_scene"),
-    "G140": ("build_scene_by_kind", "animate_scene"),
-    "G141": ("build_scene_by_kind", "animate_scene"),
-    "G142": ("build_scene_by_kind", "animate_scene"),
-    "G143": ("build_scene_by_kind", "animate_scene"),
-    "G144": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G145": ("build_scene_by_kind", "animate_scene"),
-    "G146": ("build_scene_by_kind", "animate_scene"),
-    "G147": ("build_scene_by_kind", "animate_scene"),
-    "G148": ("build_scene_by_kind", "animate_scene"),
-    "G149": ("build_scene_by_kind", "animate_scene"),
-    "G150": ("build_scene_by_kind", "animate_scene"),
-    # Fixed orthographic nominal entries, certified under opaque-pixel-rays-v2.
-    "G08": ("build_scene", "animate_scene"),
-    "G09": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G10": ("build_scene", "animate_scene"),
-    "G101": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G102": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G109": ("build_scene", "animate_scene"),
-    "G11": ("build_scene", "animate_scene"),
-    "G110": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G112": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G12": ("build_scene", "animate_scene"),
-    "G122": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G128": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G15": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G16": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G17": ("build_scene", "animate_scene"),
-    "G18": ("build_scene", "animate_scene"),
-    "G19": ("build_scene", "animate_scene"),
-    "G20": ("build_scene", "animate_scene"),
-    "G21": ("build_scene", "animate_scene"),
-    "G22": ("build_scene", "animate_scene"),
-    "G23": ("build_scene", "animate_scene"),
-    "G24": ("build_scene", "animate_scene"),
-    "G25": ("build_scene", "animate_scene"),
-    "G26": ("build_scene", "animate_scene"),
-    "G43": ("build_scene", "animate_scene"),
-    "G45": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G47": ("build_scene", "animate_scene"),
-    "G48": ("build_scene", "animate_scene"),
-    "G49": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G50": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G51": ("build_scene", "animate_scene"),
-    "G52": ("build_scene", ""),
-    "G53": ("build_scene", "animate_scene"),
-    "G57": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G67": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G75": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G76": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G77": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G78": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G91": ("build_scene_by_kind", "animate_scene_by_kind"),
-    "G92": ("build_scene_by_kind", "animate_scene_by_kind"),
-    # Evaluated Curve/FONT entries; source objects retain their semantic identity.
-    "G04": ("build_scene", "animate_scene"),
-    "G13": ("build_scene", "animate_scene"),
-    "G14": ("build_scene", "animate_scene"),
-    "G29": ("build_scene", "animate_scene"),
-    "G31": ("build_scene", "animate_scene"),
-    "G46": ("build_scene", "animate_scene"),
-}
-# These preparation recipes are certified only with the versioned ray contract.
-# The legacy BVH deferrals above/below remain meaningful and are never erased.
-RAY_CONTRACT_TASKS = {
-    "G98",
-    "G132",
-    "G02",
-    "G03",
-    "G05",
-    "G06",
-    "G07",
-    "G28",
-    "G30",
-    "G32",
-    "G33",
-    "G35",
-    "G39",
-    "G40",
-    "G41",
-    "G42",
-    "G44",
-    "G56",
-    "G58",
-    "G59",
-    "G60",
-    "G63",
-    "G65",
-    "G66",
-    "G68",
-    "G69",
-    "G70",
-    "G71",
-    "G72",
-    "G73",
-    "G74",
-    "G79",
-    "G80",
-    "G81",
-    "G82",
-    "G83",
-    "G84",
-    "G85",
-    "G86",
-    "G87",
-    "G88",
-    "G89",
-    "G93",
-    "G94",
-    "G95",
-    "G96",
-    "G97",
-    "G99",
-    "G100",
-    "G103",
-    "G104",
-    "G105",
-    "G106",
-    "G107",
-    "G108",
-    "G111",
-    "G113",
-    "G114",
-    "G115",
-    "G116",
-    "G117",
-    "G118",
-    "G119",
-    "G120",
-    "G121",
-    "G123",
-    "G124",
-    "G125",
-    "G126",
-    "G127",
-    "G129",
-    "G130",
-    "G131",
-    "G133",
-    "G134",
-    "G135",
-    "G136",
-    "G137",
-    "G138",
-    "G139",
-    "G140",
-    "G141",
-    "G142",
-    "G143",
-    "G144",
-    "G145",
-    "G147",
-    "G148",
-    "G149",
-    "G150",
-    "G04",
-    "G29",
-    "G31",
-}
-CONTRACT_ONLY_TASKS = {
-    "G02",
-    "G03",
-    "G05",
-    "G06",
-    "G07",
-    "G28",
-    "G30",
-    "G32",
-    "G33",
-    "G35",
-    "G39",
-    "G40",
-    "G41",
-    "G42",
-    "G44",
-    "G56",
-    "G58",
-    "G59",
-    "G60",
-    "G65",
-    "G68",
-    "G69",
-    "G70",
-    "G71",
-    "G72",
-    "G73",
-    "G74",
-    "G79",
-    "G82",
-    "G83",
-    "G84",
-    "G85",
-    "G86",
-    "G87",
-    "G88",
-    "G89",
-    "G93",
-    "G94",
-    "G95",
-    "G96",
-    "G97",
-    "G99",
-    "G100",
-    "G103",
-    "G104",
-    "G105",
-    "G106",
-    "G107",
-    "G108",
-    "G111",
-    "G113",
-    "G114",
-    "G115",
-    "G116",
-    "G117",
-    "G118",
-    "G119",
-    "G120",
-    "G121",
-    "G123",
-    "G124",
-    "G125",
-    "G126",
-    "G127",
-    "G129",
-    "G130",
-    "G131",
-    "G133",
-    "G134",
-    "G135",
-    "G136",
-    "G137",
-    "G138",
-    "G139",
-    "G140",
-    "G141",
-    "G142",
-    "G143",
-    "G144",
-    "G145",
-    "G147",
-    "G148",
-    "G149",
-    "G150",
-}
-AUDITED_TASKS.update(
-    {
-        "G36": ("build_scene_by_kind", "animate_scene_by_kind"),
-        "G54": ("build_scene_by_kind", "animate_scene_by_kind"),
-        "G61": ("build_scene_by_kind", "animate_scene_by_kind"),
-        "G90": ("build_scene_by_kind", "animate_scene"),
+CONVERTED_GEOMETRY_TASKS = set(("G04 G13 G14 G29 G31 G46").split())
+ORTHOGRAPHIC_TASKS = set(
+    (
+        "G08 G09 G10 G11 G12 G13 G14 G15 G16 G17 G18 G19 G20 G21 G22 G23 G24 G25 G26 G43 G45 G46 G47 G48 G49 "
+        "G50 G51 G52 G53 G57 G67 G75 G76 G77 G78 G91 G92 G101 G102 G109 G110 G112 G122 G128"
+    ).split()
+)
+# Additional camera audits remain explicit, independent of nominal defaults.
+ORTHOGRAPHIC_MEMBERS = frozenset(
+    (task, member)
+    for task, member in AUDITED_MEMBERS
+    if task
+    in {
+        "G08",
+        "G09",
+        "G10",
+        "G11",
+        "G12",
+        "G13",
+        "G14",
+        "G15",
+        "G16",
+        "G17",
+        "G18",
+        "G19",
+        "G20",
+        "G21",
+        "G22",
+        "G23",
+        "G24",
+        "G25",
+        "G26",
     }
 )
-RAY_CONTRACT_TASKS |= ANIMATED_SCALE_TASKS
-CONTRACT_ONLY_TASKS |= (
-    ORTHOGRAPHIC_TASKS
-    | CONVERTED_GEOMETRY_TASKS
-    | ANIMATED_SCALE_TASKS
-    | ALPHA_TASKS
-    | OPTICAL_TASKS
-    | NATIVE_SCENE_TASKS
+# Preserve the original legacy gates; no existing source route is promoted.
+RAY_CONTRACT_TASKS = (
+    set(AUDITED_TASKS) - ORTHOGRAPHIC_TASKS - ALPHA_TASKS - {"G27", "G34", "G37", "G38", "G55", "G62", "G64"}
+)
+CONTRACT_ONLY_TASKS = (
+    (RAY_CONTRACT_TASKS - {"G63", "G66", "G80", "G81"}) | ORTHOGRAPHIC_TASKS | ALPHA_TASKS | OPTICAL_TASKS
 )
 # Legacy unversioned BVH gates failed; explicit pixel-ray contracts passed.
 # Block only the old route so frozen references are not silently reinterpreted.
@@ -553,6 +159,27 @@ G34_ORDER = (
     "wide_opaque_screen",
     "small_orange_ball",
 )
+
+
+def source_recipe(task, member=0):
+    """Resolve one audited preparation and its sampling capabilities."""
+    from .object_permanence_optical import MEMBERS
+
+    optical = (task, member) in MEMBERS
+    entries = AUDITED_TASKS if member == 0 else AUDITED_MEMBERS
+    key = task if member == 0 else (task, member)
+    if not optical and key not in entries:
+        raise ValueError(f"unaudited preparation entry point: {task}/{member}")
+    preparation = MEMBERS[task, member] if optical else entries[key]
+    return preparation, {
+        "allow_orthographic": task in ORTHOGRAPHIC_TASKS | ALPHA_ORTHOGRAPHIC_TASKS
+        if member == 0
+        else (task, member) in ORTHOGRAPHIC_MEMBERS,
+        "allow_evaluated_geometry": task in CONVERTED_GEOMETRY_TASKS,
+        "allow_animated_scale": task in ANIMATED_SCALE_TASKS or (task, member) in ANIMATED_SCALE_MEMBERS,
+        "allow_transparent": optical or task in ALPHA_TASKS,
+        "allow_optical": optical,
+    }
 
 
 def sha256(path):
@@ -635,15 +262,6 @@ def inventory(root, output):
     """
     check_source(root)
     rows, members = [], 0
-    audit_path = Path(__file__).resolve().parents[2] / "docs/adding/object-permanence-audit.json"
-    measured = {}
-    additional = set()
-    if audit_path.exists():
-        audit = json.loads(audit_path.read_text())
-        if audit["source_commit"] != SOURCE_COMMIT:
-            raise ValueError("measured source audit has a different source pin")
-        measured = {entry["task"]: entry for entry in audit["entries"]}
-        additional = {(e["task"], e["member"]) for e in audit.get("additional_certified_members", [])}
     groups: dict[str, int] = {}
     for path in task_manifests(root):
         task = json.loads(path.read_text())
@@ -651,12 +269,17 @@ def inventory(root, output):
         for member, name in enumerate(task["member_scripts"]):
             members += 1
             tree = ast.parse((path.parent / name).read_text())
-            group = capability_group(tree, audited=task["id"] in (set(AUDITED_TASKS) | OPTICAL_TASKS) and member == 0)
+            try:
+                source_recipe(task["id"], member)
+                audited = True
+            except ValueError:
+                audited = False
+            group = capability_group(tree, audited=audited)
             if task["id"] in DEFERRED_TASKS and name == task["member_scripts"][0]:
                 group = "source-fidelity-review"
             elif task["id"] in CONTRACT_ONLY_TASKS and name == task["member_scripts"][0]:
                 group = "versioned-visibility-runtime-gate"
-            if (task["id"], member) in additional:
+            if (task["id"], member) in AUDITED_MEMBERS:
                 group = "versioned-visibility-runtime-gate"
             groups[group] = groups.get(group, 0) + 1
             review_groups.append(group)
@@ -687,12 +310,8 @@ def inventory(root, output):
             if task["id"] in AUDITED_TASKS
             else "not evaluated"
         )
-        result = measured.get(task["id"])
-        outcome = "not recorded" if result is None else result["status"]
-        if result is not None and result["status"] == "deferred":
-            outcome += ": " + result["category"]
         rows.append(
-            f"| {task['id']} {task['name']} | {len(task['member_scripts'])} | {', '.join(sorted(signals)) or 'none found'} | {review_groups[0]} | {pilot} | {outcome} |"
+            f"| {task['id']} {task['name']} | {len(task['member_scripts'])} | {', '.join(sorted(signals)) or 'none found'} | {review_groups[0]} | {pilot} |"
         )
     text = (
         "# Object-permanence source inventory\n\n"
@@ -703,9 +322,8 @@ def inventory(root, output):
         "Only explicitly listed nominal and additional members have audited preparation entry points;\n"
         "run export to check their evaluated geometry, transforms, materials and camera at every frame.\n"
         "Diversity variants, sampled scene semantics and downstream accuracy are not certified here.\n\n"
-        "The measured nominal column comes from the separately recorded "
-        "optional local source audit, not from static hints. "
-        "It covers first nominal members; additionally certified members are listed separately in that audit.\n\n"
+        "This inventory reports preparation support, not measured fidelity. "
+        "Full-frame validation reports are separate local artifacts.\n\n"
         "## Capability triage\n\n"
         "Groups cover every member. Static groups are conservative AST hints, not proof of support.\n"
         "Known source-fidelity failures form a separate measured deferral queue.\n"
@@ -715,8 +333,8 @@ def inventory(root, output):
         "| Review group | Members |\n|---|---:|\n"
         + "".join(f"| {group} | {count} |\n" for group, count in sorted(groups.items()))
         + "\n## Source tasks\n\n"
-        "| Task | Members | Script-wide signals | First-member review group | Nominal preparation coverage | Measured nominal audit |\n"
-        "|---|---:|---|---|---|---|\n" + "\n".join(rows) + "\n"
+        "| Task | Members | Script-wide signals | First-member review group | Nominal preparation coverage |\n"
+        "|---|---:|---|---|---|\n" + "\n".join(rows) + "\n"
     )
     output.write_text(text)
 
@@ -829,14 +447,8 @@ def prepare(root, task, *, member=0, profile="nominal"):
 
     if bpy.app.version[:2] != (4, 4):
         raise ValueError("export requires Blender 4.4.x")
-    entry = Member(task, member, profile)
-    from .object_permanence_optical import MEMBERS
-    from .object_permanence_optical import prepare as prepare_optical
-
-    if (task, member) in MEMBERS:
-        return prepare_optical(root, task, member)
-    if (member == 0 and task not in AUDITED_TASKS) or (member != 0 and (task, member) not in AUDITED_MEMBERS):
-        raise ValueError(f"unaudited preparation entry point: {entry}")
+    Member(task, member, profile)
+    (build, animate), _ = source_recipe(task, member)
     check_source(root)
     paths = [p for p in task_manifests(root) if json.loads(p.read_text())["id"] == task]
     if len(paths) != 1:
@@ -855,7 +467,6 @@ def prepare(root, task, *, member=0, profile="nominal"):
             raise ValueError("native source realization source/Blender version mismatch")
         bpy.ops.wm.open_mainfile(filepath=str(native / "source.blend"), load_ui=False, use_scripts=False)
         return bpy.context.scene, source, metadata
-    build, animate = AUDITED_TASKS[task] if member == 0 else AUDITED_MEMBERS[task, member]
     if build.startswith("$prefix:"):
         source_prefix(source, build.removeprefix("$prefix:"))
         return bpy.context.scene, source, metadata
@@ -1386,19 +997,9 @@ def export(root, output, task, *, member=0, profile="nominal"):
     if (output / "clips" / entry.clip).exists():
         raise FileExistsError("refusing to overwrite an existing clip")
     scene, script, task_metadata = prepare(root, task, member=member, profile=profile)
-    orthographic = (
-        task in ORTHOGRAPHIC_TASKS | ALPHA_ORTHOGRAPHIC_TASKS
-        if member == 0
-        else (task, member) in ORTHOGRAPHIC_MEMBERS
-    )
-    recording = sample_scene(
-        scene,
-        object_order=G34_ORDER if task == "G34" else None,
-        allow_orthographic=orthographic,
-        allow_evaluated_geometry=task in CONVERTED_GEOMETRY_TASKS,
-        allow_animated_scale=task in ANIMATED_SCALE_TASKS or (task, member) in ANIMATED_SCALE_MEMBERS,
-        allow_transparent=task in ALPHA_TASKS,
-    )
+    _, options = source_recipe(task, member)
+    orthographic = options["allow_orthographic"]
+    recording = sample_scene(scene, object_order=G34_ORDER if task == "G34" else None, **options)
     if orthographic and recording["camera"].get("projection_type") != "orthographic":
         raise ValueError("audited orthographic entry changed projection type")
     source = {
