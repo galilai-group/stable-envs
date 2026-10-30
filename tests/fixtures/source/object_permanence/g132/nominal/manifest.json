@@ -1,0 +1,38 @@
+{
+  "file": "source.blend",
+  "fps": 24.0,
+  "frames": [
+    1,
+    120
+  ],
+  "generator": "scripts/testing/capture_object_permanence_scene.py",
+  "generator_sha256": "62e6b6b2dc3254818af8a5ab8e34201a164f0dd5360352d47f3f2f31cf0c1654",
+  "member": 0,
+  "objects": [
+    "capsule_cover_bottom",
+    "capsule_lid_top",
+    "capsule_support_cap",
+    "capsule_support_pedestal",
+    "hidden_ball_in_capsule",
+    "large_floor_base",
+    "rear_backdrop_panel"
+  ],
+  "schema": "stable-envs/native-source-realization-v1",
+  "scope": "one unmodified native build; no diversity, normal replacement or source rewriting",
+  "sha256": "97022c3c4845097d603f67056f73cfa1c284d1891136241f80295a6ca64fa6d0",
+  "source_commit": "824baddcdad087810d35638bf8f273b884f74975",
+  "source_license": "CC-BY-NC-4.0",
+  "source_preparation_recipe": {
+    "animate": "animate_scene_by_kind",
+    "build": "build_scene_by_kind"
+  },
+  "source_script": "object_permanence/generator/tasks/G132_twist_open_capsule/pb_task_00000178_pb_twist_open_capsule_0179_blender.py",
+  "source_script_sha256": "1aa6eb4b3640d907a658703f9d1f12b8272e967778680cc277b2b80557b4e8da",
+  "source_task_manifest_sha256": "d2c3439c1516bbb5cd94a23e1851dff9201cca65513642030f3db5367962c521",
+  "source_url": "https://github.com/hokindeng/object-permanence",
+  "task": "G132",
+  "versions": {
+    "blender": "4.4.0",
+    "python": "3.11.16"
+  }
+}

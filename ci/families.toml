@@ -135,6 +135,25 @@ capabilities = ["gl", "swm"]
 linux_env = { MUJOCO_GL = "osmesa", PYOPENGL_PLATFORM = "osmesa" }
 shards = { pr = 3, nightly = 4 }
 
+[family.object_permanence]
+aliases = ["object_permanence"]
+extras = []
+groups = ["pin-object-permanence"]
+paths = [
+  "stable_envs/envs/object_permanence/**",
+  "scripts/export/*object_permanence*.py",
+  "scripts/object_permanence_member.py",
+  "benchmarks/object_permanence*.py",
+  "scripts/testing/check_object_permanence*.py",
+  "scripts/testing/capture_object_permanence_scene.py",
+  "scripts/testing/object_permanence_ray_reference.py",
+  "scripts/testing/object_permanence_alpha_reference.py",
+  "scripts/testing/object_permanence_optical_*.py",
+  "scripts/testing/freeze_object_permanence*.py",
+]
+tests = ["test_object_permanence_*"]
+requires = []
+
 [family.fetch]
 extras = ["robotics"]
 groups = ["pin-fetch"]

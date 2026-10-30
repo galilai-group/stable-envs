@@ -1,5 +1,21 @@
 # Third-party notices
 
+## Object-permanence reference and recorded data
+
+Recorded meshes, trajectories and independent source geometry samples under
+`tests/fixtures/{saved,semantics,source}/object_permanence*/` derive from
+[Hokin Deng's object-permanence](https://github.com/hokindeng/object-permanence)
+at commit `824baddcdad087810d35638bf8f273b884f74975`, evaluated in Blender 4.4.0.
+They retain CC-BY-NC-4.0 terms and attribution (Copyright (c) 2026 Hokin Deng);
+license texts are included with the data. They are not relicensed under MIT.
+Hash-pinned native Blender inputs for G98/G132 reproduce specific source mesh
+realizations; they are offline source inputs, not runtime physics models.
+
+The three comparisons in `docs/assets/media/object-permanence/` are also derived
+from that source and retain its attribution and license. They are reduced-quality
+native previews, not original dataset videos.
+See `docs/adding/object-permanence-recordings.md` for the workflow and scope.
+
 ## Craftax
 
 The `craftax` family (`stable_envs/envs/craftax/`) runs

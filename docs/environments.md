@@ -44,6 +44,11 @@ env = snv.CartPole(num_envs=8)
 
 ## Families
 
+Object-permanence supplies a recorded-trajectory reader (`RigidTrajectory`)
+and a shared GPU renderer (`RigidSceneRenderer`). It does not register action-driven `Env`
+classes; its CI profile is `object_permanence`. See
+[the recording workflow](adding/object-permanence-recordings.md).
+
 `list_envs(family=…)` matches the class attribute `family`.
 
 | family | environments | examples |
@@ -57,7 +62,8 @@ env = snv.CartPole(num_envs=8)
 | `pusht` | 2 | `PushT`, `PushTDiscrete` |
 | `pyflyt` | 1 | `PyFlytRocketLanding` |
 
-With every extra installed, these 74 classes register. Without PyFlyt, 73 classes register.
+Across the supported extra combinations, these are 74 classes, or 73 without PyFlyt.
+Conflicting MuJoCo pins require separate interpreters; not every extra can be installed together.
 
 ## Fidelity
 

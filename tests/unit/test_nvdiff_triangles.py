@@ -172,6 +172,12 @@ def test_offset_clip_moves_by_exactly_the_requested_pixels():
     assert ND.offset_clip(pos, R, (0.0, 0.0)) is pos  # the default is a no-op, not a copy
 
 
+def test_rectangular_pixel_offset_uses_each_axes_resolution():
+    pos = torch.tensor([[[0.0, 0.0, 0.5, 2.0]]])
+    out = ND.offset_clip(pos, (90, 160), (0.5, 0.5))
+    assert torch.allclose(out[..., :2] / out[..., 3:4], torch.tensor([[[1 / 160, 1 / 90]]]))
+
+
 def test_quant_trunc_is_what_tinyrenderer_does():
     x = torch.tensor([0.9999, 0.5, 254.6 / 255.0])
     assert ND.QUANT(x, "trunc").tolist() == [254, 127, 254]

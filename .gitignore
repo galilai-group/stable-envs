@@ -291,3 +291,7 @@ GIT_COMMIT
 
 # Default output directory of the example benchmarks and training scripts.
 /results/
+
+# Generated object-permanence audit outputs; the maintained guide is tracked.
+/docs/adding/object-permanence-audit.json
+/docs/adding/object-permanence-inventory.md

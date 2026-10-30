@@ -4,6 +4,25 @@
 uint8 output. Rocket reuses its scene and shading support with a family-specific
 rasterizer that follows Bullet's triangle coverage rules. It is not a CPU renderer.
 
+`Scene.from_triangles()` accepts meshes without importing MuJoCo. Supply per-geom
+positions `(B,G,3)`, rotations `(B,G,3,3)` and a `Camera` to `BatchRenderer.render()`.
+MuJoCo model import and camera/light resolution are optional conveniences.
+`res=(height,width)` supports rectangular images; integer resolution retains the
+existing square path. Diagnostic `mode="depth"` returns positive camera-axis
+float32 distance; `mode="ids"` returns one-based int16 geom IDs. Both use zero for
+background and require `supersample=1`. IDs are geom order, not source semantic
+labels unless the family explicitly makes that order agree.
+
+`render_many(xpos, xmat, camera, modes=("rgb", "depth", "ids"), out=buffers)`
+returns a dictionary and shares one transform/coverage pass across outputs.
+RGB and depth also share attribute interpolation. Optional output buffers must
+match every requested key, shape, dtype and device; validation precedes writes.
+`render()` retains its single-Tensor/out contract and the same shading path.
+Diagnostics require `supersample=1`, including in a multi-output request.
+
+The G34 path uses the same pipeline with higher-precision coverage and cached
+static plates; see [engine-free replay](../adding/object-permanence-recordings.md#read-and-render).
+
 ## Rendering contract
 
 Scenes contain tessellated geometry, normals, materials, and texture coordinates.

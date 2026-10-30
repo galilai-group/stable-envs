@@ -56,12 +56,18 @@ The `rocket` extra resolves numpy < 2 because of PyFlyt's metadata.
 PushT renders with pygame on CPU. `device="cuda"` places the output tensors on the GPU. The drawing
 still runs on CPU.
 
+Object-permanence trajectory reading and replay use the base dependencies.
+GPU rendering uses CUDA PyTorch, Triton and nvdiffrast below; neither MuJoCo nor
+Blender is a runtime dependency. Install Pillow for optional GIF output. Blender
+is used only by the offline source exporter and independent oracle tools.
+See [the recording workflow](adding/object-permanence-recordings.md).
+
 ## Reference profiles
 
 Extras declare compatible version ranges. Exact parity with an upstream renderer is checked only under
 that family's reference profile. The reference profiles are the `pin-<profile>` dependency groups in
 `pyproject.toml`: `pin-classic`, `pin-navigation`, `pin-pusht`, `pin-dmc`, `pin-fetch`, `pin-ogbench`,
-`pin-rocket` and `pin-craftax`.
+`pin-object-permanence`, `pin-rocket` and `pin-craftax`.
 
 - The profiles are for development.
 - You cannot combine two profiles.

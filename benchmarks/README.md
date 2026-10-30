@@ -1,6 +1,6 @@
 # stable-envs benchmarks
 
-Two scripts measure rendering cost through the public `stable_envs` API:
+The general-purpose scripts measure rendering cost through the public `stable_envs` API:
 
 - `render.py` measures synchronized `env.render(state, out=buffer)` throughput at given batch sizes.
 - `pipeline.py` measures host-state transfer plus rendering. It can also time JPEG decoding of a
@@ -60,3 +60,20 @@ configuration and the Git revision.
   shape, settings, timing distribution and optional CUDA peak memory.
 - `pipeline.py` writes one point per environment, with packed-state and frame byte sizes. The JPEG
   result and the throughput ratio are nested under that environment.
+
+## Object-permanence replay
+
+`python -m benchmarks.object_permanence_recordings --recordings <dataset> --output <json>`
+measures the shared GPU renderer with and without static caching. Timings include
+CPU frame selection and pose upload, with startup/JIT/cache construction reported
+separately. `--modes rgb,depth,ids` measures combined outputs. Both G34 and G62
+use the same recorded-trajectory and shared-renderer path.
+
+Use `--clips g13-nominal g146-nominal g01-nominal` for other recordings; their
+manifest selects the explicit orthographic, scale, alpha or optical contract.
+Both cache settings upload only dynamic nodes, including optional scales or
+exact optical matrices. Specialized diagnostic commands remain available.
+
+The same command can build native-source/shared GIFs from source previews.
+See [the recording guide](../docs/adding/object-permanence-recordings.md) for the
+import, independent oracle, validation and preview workflow.

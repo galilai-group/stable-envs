@@ -1,0 +1,3 @@
+# Isolated Python 3.11 reference environment, not runtime or ordinary tests.
+bpy==4.4.0
+numpy==1.26.4

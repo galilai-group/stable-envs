@@ -8,6 +8,11 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Object-permanence recorded trajectories and shared GPU RGB/depth/ID rendering,
+  including orthographic cameras, evaluated Curve/FONT geometry, sampled scale,
+  alpha surfaces and ideal dielectric paths. Adds independent source export and
+  validation tools, a small frozen CI sample and visual source comparisons.
+
 - Craftax: `CraftaxClassicPixels`, `CraftaxClassicSymbolic`, `CraftaxPixels` and `CraftaxSymbolic`
   run the upstream JAX simulator with all lanes in one jitted `vmap` (`craftax` / `craftax-gpu` extras).
   With Craftax, the extras provide 74 classes. Fetch and `OGBCube`/`OGBScene` pin different MuJoCo versions,
@@ -22,6 +27,9 @@ All notable changes to this project are listed here. The format follows
 - docs/environment-variables.md lists every `STABLE_ENVS_*` variable.
 
 ### Changed
+
+- Object-permanence shares object/node expansion and output buffer validation
+  across rendering paths; static-cache settings retain dynamic-only uploads.
 
 - `stable-envs doctor` reports how many render paths are tuned on this machine, lists the
   `STABLE_ENVS_*` variables that are set and flags unknown names, and checks torch's compiled GPU
