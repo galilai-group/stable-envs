@@ -12,6 +12,7 @@ pytest.importorskip("mujoco.batch")
 from stable_envs.envs.dmcontrol.simulation.factory import FACTORIES, make_batch, make_local  # noqa: E402
 from stable_envs.envs.dmcontrol.simulation.physics import LEAVES  # noqa: E402
 from tests.helpers.process_equivalence import assert_process_matches_local  # noqa: E402
+from tests.helpers.reference.semantics import assert_same_state  # noqa: E402
 
 
 def _foreign_and_actions(domain):
@@ -58,6 +59,27 @@ def test_batch_matches_local_under_physics_variation(domain):
         counts=(1, 5),
         foreign=foreign,
     )
+
+
+def test_batch_matches_local_when_physics_changes_mid_episode():
+    rng = np.random.default_rng(3)
+    values = {leaf.path: rng.uniform(leaf.low, leaf.high, 5) for leaf in LEAVES["walker"]}
+    # After 15 zero actions every lane touches the floor, so the change lands during contact.
+    actions = [np.zeros((5, 6))] * 15 + list(rng.uniform(-1, 1, (4, 5, 6)))
+    for threads in (1, 5):
+        local, batch = make_local("walker", 5, seed=17), make_batch("walker", 5, seed=17, threads=threads)
+        try:
+            for t, action in enumerate(actions):
+                if t == 15:
+                    local.configure_physics(values)
+                    batch.configure_physics(values)
+                try:
+                    assert_same_state(batch.step(action), local.step(action))
+                except AssertionError as error:
+                    raise AssertionError(f"threads={threads}, step {t}: {error}") from error
+        finally:
+            local.close()
+            batch.close()
 
 
 def test_close_is_idempotent_and_releases_the_batch():
