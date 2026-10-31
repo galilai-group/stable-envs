@@ -525,8 +525,14 @@ class Pendulum(ClassicControlSemantics, _Classic):
     sim_state_names = ("theta", "theta_dot", "torque")
     render_from_sim = (0, 2)
     action_low, action_high = -2.0, 2.0
+    execution_mode = "AUTO_NATIVE_TORCH"
 
-    def __init__(self, *a, **kw):
+    def __init__(self, *a, simulation_backend="auto", **kw):
+        """``simulation_backend="auto"`` steps CUDA lanes in Torch and CPU lanes with Gymnasium.
+
+        ``"gym"`` or ``"torch"`` selects one on any device. Torch steps agree with Gymnasium to rounding.
+        """
+        self.simulation_backend = simulation_backend
         super().__init__(*a, **kw)
         self._sprite = _torque_sprites(self.device)
 
