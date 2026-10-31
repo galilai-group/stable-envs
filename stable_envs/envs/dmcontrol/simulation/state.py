@@ -2,6 +2,8 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .batch import gather
+
 _DTYPES = {torch.float64: np.float64, torch.int64: np.int64, torch.bool: np.bool_}
 
 #: State fields that hold episode-drawn model entries: ``key -> (named model field, index)``.
@@ -86,10 +88,10 @@ def export_state(lanes, fields, device, extra=None):
     """
     views, bases, batch = lanes._views, lanes._bases, lanes.num_envs
     values = {
-        "qpos": np.stack(views.data("qpos")),
-        "qvel": np.stack(views.data("qvel")),
+        "qpos": gather(views.data("qpos")),
+        "qvel": gather(views.data("qvel")),
         "time": np.array([d.time for d in views.datas]),
-        "warmstart": np.stack(views.data("qacc_warmstart")),
+        "warmstart": gather(views.data("qacc_warmstart")),
         ("lifecycle", "step_count"): np.array([b._step_count for b in bases]),
         ("lifecycle", "reset_next_step"): np.array([b._reset_next_step for b in bases]),
         ("task", "cumulative_reward"): lanes._cumulative.copy(),
@@ -97,7 +99,7 @@ def export_state(lanes, fields, device, extra=None):
         **(extra or {}),
     }
     if "activation" in fields:
-        values["activation"] = np.stack(views.data("act"))
+        values["activation"] = gather(views.data("act"))
     for key, field, row, columns in lanes._model_entries:
         values[key] = np.stack([view[row] for view in views.model(field)])[:, columns]
     return TensorDict(

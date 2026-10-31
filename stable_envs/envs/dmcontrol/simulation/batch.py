@@ -55,6 +55,9 @@ def _tolerance(x, lower, upper, margin=0.0, sigmoid="gaussian", value_at_margin=
     from dm_control.utils import rewards
 
     params = np.stack([np.broadcast_to(np.asarray(v, np.float64), x.shape) for v in (lower, upper, margin)], axis=-1)
+    if (params == params[0]).all():
+        lo, hi, m = params[0]
+        return rewards.tolerance(x, bounds=(lo, hi), margin=m, sigmoid=sigmoid, value_at_margin=value_at_margin)
     out = np.empty(len(x))
     rows, inverse = np.unique(params, axis=0, return_inverse=True)
     for k, (lo, hi, m) in enumerate(rows):
@@ -63,6 +66,11 @@ def _tolerance(x, lower, upper, margin=0.0, sigmoid="gaussian", value_at_margin=
             x[lanes], bounds=(lo, hi), margin=m, sigmoid=sigmoid, value_at_margin=value_at_margin
         )
     return out
+
+
+def gather(views) -> np.ndarray:
+    """Copy same-shape per-lane arrays into one ``(lanes, ...)`` array."""
+    return np.concatenate(views).reshape(len(views), *views[0].shape)
 
 
 class Snapshot:
@@ -76,13 +84,13 @@ class Snapshot:
     def data(self, name: str) -> np.ndarray:
         value = self._data.get(name)
         if value is None:
-            value = self._data[name] = np.stack(self._views.data(name))
+            value = self._data[name] = gather(self._views.data(name))
         return value
 
     def model(self, name: str) -> np.ndarray:
         value = self._model.get(name)
         if value is None:
-            value = self._model[name] = np.stack(self._views.model(name))
+            value = self._model[name] = gather(self._views.model(name))
         return value
 
 

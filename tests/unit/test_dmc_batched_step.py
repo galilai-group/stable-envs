@@ -154,3 +154,35 @@ def test_batched_step_equals_dm_control_lane_by_lane(key):
     finally:
         batched.close()
         source.close()
+
+
+@pytest.mark.parametrize("sigmoid", ["gaussian", "long_tail"])
+def test_per_lane_tolerance_equals_dm_control_per_lane(sigmoid):
+    from dm_control.utils import rewards
+
+    from stable_envs.envs.dmcontrol.simulation.batch import _tolerance
+
+    x = np.random.default_rng(2).uniform(-0.2, 0.4, 64)
+    upper = np.repeat([0.015, 0.02, 0.03, 0.05], 16)
+    margin = np.where(np.arange(64) % 3 == 0, 0.0, 5 * upper)
+    expected = [rewards.tolerance(v, bounds=(0, u), margin=m, sigmoid=sigmoid) for v, u, m in zip(x, upper, margin)]
+    assert_same_state(
+        torch.from_numpy(_tolerance(x, 0, upper, margin, sigmoid)), torch.tensor(expected, dtype=torch.float64)
+    )
+
+
+def test_divergent_lane_raises_physics_error_as_dm_control_does():
+    from dm_control.rl.control import PhysicsError
+
+    lanes = make_local("cheetah", 2, "cpu", 0)
+    try:
+        action = np.zeros((2, lanes.action_dim))
+        lanes.envs[1].physics.data.qvel[:] = 1e12
+        with pytest.raises(PhysicsError) as batched:
+            lanes.step(action)
+        lanes.envs[0].physics.data.qvel[:] = 1e12
+        with pytest.raises(PhysicsError) as source:
+            lanes.envs[0].step(action[0])
+        assert str(batched.value) == str(source.value)
+    finally:
+        lanes.close()
