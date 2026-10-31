@@ -124,3 +124,23 @@ def test_a_batch_above_one_process_restores():
         first = env.step(actions, frames=None)
         env.set_state(saved)
         assert_same_state(env.step(actions, frames=None), first)
+
+
+@pytest.mark.parametrize("workers", [0, 2])
+def test_step_frames_match_state_render(monkeypatch, workers):
+    with monkeypatch.context() as patch:
+        patch.setattr(execution, "process_count", lambda num_envs, cpus, **_: workers)
+        env = se.make("PyFlytRocketLanding", num_envs=4, size=40, supersample=2, device="cpu", seed=3)
+    try:
+        assert isinstance(env._simulator, RocketProcessAdapter) == bool(workers)
+        env.set_variation({"rocket.body_color": np.array([10.0, 200.0, 30.0])})
+        actions = torch.as_tensor(np.stack(_actions(4, 6), axis=1))
+        env.reset(seed=11)
+        out = env.step(actions, states=slice(None), frames=slice(None))
+        for t in range(actions.shape[1]):
+            torch.testing.assert_close(out["frames"][:, t], env.render(out["states"][:, t]), rtol=0, atol=0)
+        env.reset(seed=11)
+        frames = env.step(actions, states=None, frames=slice(None))["frames"]
+        torch.testing.assert_close(frames, out["frames"], rtol=0, atol=0)
+    finally:
+        env.close()

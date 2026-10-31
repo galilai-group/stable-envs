@@ -51,17 +51,19 @@ class RocketAdapter(SimulatorAdapter):
     for the whole batch before replacing its current engines.
     """
 
-    process_methods = {"configure": PER_LANE, "rgba": BROADCAST, "variation_rows": BROADCAST}
+    process_methods = {"configure": PER_LANE, "rgba": BROADCAST, "variation_rows": BROADCAST, "draw": BROADCAST}
     process_attributes = ("fields",)
     action_dim = 7
 
-    def __init__(self, batch, device, seed, config=None):
+    def __init__(self, batch, device, seed, config=None, frame=None):
         if type(batch) is not int or batch < 1:
             raise ValueError("num_envs must be a positive integer")
         self.num_envs, self.device = batch, torch.device(device)
         if self.device.type not in ("cpu", "cuda"):
             raise ValueError("Rocket supports CPU dynamics and CPU/CUDA State storage")
         self.envs, self._prepared = [], None
+        # ``(size, supersample)`` of the TinyRenderer frames ``render_live`` draws; None draws none.
+        self.frame, self._scene = frame, None
         try:
             for lane in range(batch):
                 self.envs.append(RocketReplay(config, None if seed is None else seed + lane))
@@ -182,6 +184,23 @@ class RocketAdapter(SimulatorAdapter):
             device=self.device,
         )
 
+    @property
+    def frame_shape(self):
+        return None if self.frame is None else (self.frame[0], self.frame[0], 3)
+
+    def draw(self, body, links, colors, size, ss):
+        """Draw explicit body poses, camera link poses and colours with TinyRenderer."""
+        from ..render import draw_tiny, tiny_scene
+
+        if self._scene is None:
+            self._scene = tiny_scene()
+        return draw_tiny(self._scene, body, links, colors, size, ss)
+
+    def render_live(self):
+        """Draw every lane's running scene with TinyRenderer, as ``render`` draws its State."""
+        body, links, colors = (np.stack(column) for column in zip(*(env.render_fields() for env in self.envs)))
+        return self.draw(body, links, colors, *self.frame)
+
     def configure(self, values):
         check_values(self.envs[0], values, self.num_envs)
         for env, row in zip(self.envs, values, strict=True):
@@ -203,3 +222,8 @@ class RocketAdapter(SimulatorAdapter):
         for env in self.envs:
             env.close()
         self.envs = []
+        if self._scene is not None:
+            import pybullet
+
+            pybullet.disconnect(self._scene[0])
+            self._scene = None
