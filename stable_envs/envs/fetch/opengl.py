@@ -8,6 +8,7 @@ batches draw in render worker processes, each with its own OpenGL context.
 
 import copy
 import threading
+from collections import OrderedDict
 
 import numpy as np
 import torch
@@ -19,6 +20,7 @@ from ...render._resources import retain_process_lifetime
 PATH = "fetch-opengl"
 _LOCK = threading.RLock()
 _CACHE = {}
+_SKIES = {}
 
 
 class _Readback:
@@ -75,6 +77,39 @@ class _Readback:
                 )
         finally:
             mujoco.mjr_restoreBuffer(context)
+
+
+class _SkyTextures:
+    """Skybox textures of one OpenGL context, keyed by their texel bytes, so each look uploads once.
+
+    The context's own texture keeps the registered sky. The others are kept least recently used first.
+    """
+
+    def __init__(self, context, slot: int):
+        self.context, self.slot = context, slot
+        self.default = int(context.texture[slot])
+        self.textures = OrderedDict()
+
+    def bind(self, model, key) -> None:
+        """Point the context's skybox at the texture of ``key`` (None: the registered sky)."""
+        import mujoco
+        from OpenGL import GL
+
+        tex = self.default if key is None else self.textures.get(key)
+        if tex is None:
+            tex = int(GL.glGenTextures(1))
+            self.context.texture[self.slot] = tex
+            mujoco.mjr_uploadTexture(model, self.context, self.slot)
+            self.textures[key] = tex
+        elif key is not None:
+            self.textures.move_to_end(key)
+        self.context.texture[self.slot] = tex
+
+    def trim(self, capacity: int) -> None:
+        from OpenGL import GL
+
+        while len(self.textures) > capacity:
+            GL.glDeleteTextures([self.textures.popitem(last=False)[1]])
 
 
 class _Drawer:
@@ -175,7 +210,9 @@ def draw(scene, rows, values, ss, device_type, images, start=0, total=None):
             )
             retain_process_lifetime(entry, "Fetch fidelity OpenGL context must remain alive with sibling contexts")
             _CACHE[key] = entry
+            _SKIES[key] = _SkyTextures(renderer._mjr_context, b.info["sky"])
         model, data, renderer, vendor, gl_device = _CACHE[key]
+        skies = _SKIES[key]
         software = any(s in gl_device.lower() for s in ("llvmpipe", "softpipe", "swrast", "software rasterizer"))
         if device_type == "cpu" and not software:
             raise RuntimeError(f"CPU rendering requires software OpenGL, found {vendor}: {gl_device}")
@@ -187,10 +224,10 @@ def draw(scene, rows, values, ss, device_type, images, start=0, total=None):
             fetch._restore(model, b.pristine)
             want = None
             if "sky.color" in values and fetch._flat_sky(model, values["sky.color"][i]):
-                want = tuple(np.round(values["sky.color"][i].astype(np.float64), 6).tolist())
+                want = fetch._sky_texels(model)[0].tobytes()
             if want != sky:
                 renderer._gl_context.make_current()
-                mujoco.mjr_uploadTexture(model, renderer._mjr_context, b.info["sky"])
+                skies.bind(model, want)
                 sky = want
             if "rendering.transparent_arm" in values and values["rendering.transparent_arm"][i, 0] > 0.5:
                 model.geom_rgba[b.info["robot"], 3] = fetch.ARM_ALPHA
@@ -231,7 +268,8 @@ def draw(scene, rows, values, ss, device_type, images, start=0, total=None):
                 image = renderer.render()
                 image = np.rint(image.reshape(native_size, ss, native_size, ss, 3).mean((1, 3))).astype(np.uint8)
                 images[i] = cv2.resize(image, (size, size))
+        renderer._gl_context.make_current()
         if sky is not None:
             fetch._restore(model, b.pristine)
-            renderer._gl_context.make_current()
-            mujoco.mjr_uploadTexture(model, renderer._mjr_context, b.info["sky"])
+            skies.bind(model, None)
+        skies.trim(max(len(rows), 64))
