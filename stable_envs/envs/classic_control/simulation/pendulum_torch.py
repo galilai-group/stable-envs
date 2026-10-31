@@ -45,11 +45,16 @@ class PendulumTorchAdapter(ClassicControlAdapter):
     def configure(self, values) -> None:
         super().configure(values)
         if self._fixed is not None:
-            self._load(self.get_state())
+            # New physics values from the Gymnasium environments; the lanes keep their live dynamics.
+            state = ClassicControlAdapter.get_state(self)
+            for key in _DYNAMIC:
+                state[key] = self.get_state()[key]
+            self._load(state)
 
     def reset(self, seed: int | None = None, options: dict | None = None) -> TensorDict:
-        state = super().reset(seed=seed, options=options)
-        self._load(state)
+        # The base reset ends with self.get_state(), which here would return the lanes from before the reset.
+        super().reset(seed=seed, options=options)
+        self._load(ClassicControlAdapter.get_state(self))
         return self.get_state()
 
     def set_state(self, state: TensorDict) -> None:
