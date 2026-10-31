@@ -8,6 +8,12 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- DM Control on CPU: Numba kernels cast the camera, shadow and mirror rays of all 17 classes. Each tile
+  of 8 × 8 pixels tests its rays only against the moving geometry that its bounds can reach. The
+  body-tracking classes also shade in the kernel. `backend="auto"` (the default) uses the kernels when
+  Numba imports, and `backend="torch"` selects the Torch renderers. The frames are the same as the Torch
+  frames, except for rare pixels that differ by one level, because Torch's CPU square root can round
+  through MKL. The `dmcontrol` extra installs Numba, and the `pin-dmc` group pins it.
 - `Pendulum(simulation_backend=...)`: CUDA lanes step Pendulum-v1 in batched float64 Torch on the GPU
   (`"auto"`, the default), and CPU lanes keep the Gymnasium simulator. Resets, the PCG64 streams and
   State export still come from Gymnasium. Torch steps match Gymnasium to rounding; `"gym"` or `"torch"`

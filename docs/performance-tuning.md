@@ -66,7 +66,7 @@ names one.
 | `workers` | 8 | min(value, CPUs in the process affinity, lanes) | not recorded | Most worker processes of a CPU simulator batch, or of a PushT render, on Linux. The value 0 steps every lane, and draws every PushT frame, in the main process. |
 | `worker_min_lanes` | 64 | none | not recorded | Smallest batch that uses worker processes, or Fetch simulator threads. For PushT, the smallest number of rendered States that uses render workers. |
 | `fetch_threads` | 4 | min(value, CPUs in the process affinity, lanes) | not recorded | Most simulator threads of an in-process Fetch batch. |
-| `cpu3d_chunk` | 16 | none (TrackCom cells use a per-cell table) | Xeon Platinum 8268 | Frames per chunk of the CPU ray caster (`cpu3d`). |
+| `cpu3d_chunk` | 16 | none (TrackCom cells use a per-cell table) | Xeon Platinum 8268 | Frames per chunk of the Torch CPU ray caster (`cpu3d`, `backend="torch"`). The Numba kernel draws all frames in one call. |
 | `dmc_cpu_ray_budget` | 2^21 | 2^21 × L3 size / 35.75 MiB, rounded to a power of two, in [2^18, 2^21] | not recorded | Rays per CPU render chunk of the fixed-camera DMC cells, counting supersamples. |
 | `dmc_ray_budget` | 2^24 | min(2^24, free GPU memory / 512), rounded down to a power of two | not recorded | Rays per CUDA render chunk of the fixed-camera DMC cells. |
 | `dmc_launch_rays` | 256 × 224 × 224 | none | not recorded | Rays per MJWarp launch of the DMC TrackCom cells. This value sets worlds per launch (at most 256). |
@@ -94,8 +94,10 @@ cannot read the hardware, the fallback applies.
 
 - Out of GPU memory: lower `dmc_ray_budget`, `nvd_budget_bytes`, `dmc_launch_rays`,
   `fetch_mjw_worlds`, `ogb_mjw_worlds` or `ogb_context_cache_bytes`.
-- Slow CPU rendering of DMC cells: try `cpu3d_chunk` (TrackCom cells) or `dmc_cpu_ray_budget`
-  (fixed-camera cells) in powers of two. Smaller chunks stay in the CPU cache.
+- Slow CPU rendering of DMC cells: try `dmc_cpu_ray_budget` (fixed-camera cells) in powers of two.
+  Smaller chunks stay in the CPU cache. With `backend="torch"`, also try `cpu3d_chunk` (TrackCom cells).
+  The Numba kernels use one thread for each CPU in the process affinity. To use fewer threads, set
+  `NUMBA_NUM_THREADS` before the first render.
 - Slow CPU stepping: try `workers` between 0 and the number of cores, and `worker_min_lanes`
   for small batches. The library uses worker processes only on Linux.
 - Slow classic control CPU rendering without Numba: try `render_workers` between 0 and the number of
