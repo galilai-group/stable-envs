@@ -54,6 +54,12 @@ knob does and its default.
 |---|---|---|
 | `STABLE_ENVS_VERBOSE` | `WARNING` | Default log level, with the same values as `snv.set(verbose=...)`. `snv.set` overrides it. |
 
+## Environments
+
+| variable | default | effect |
+|---|---|---|
+| `STABLE_ENVS_MSHUMAN_HOME` | unset | Path to an existing MS-Human-700 checkout. Unset downloads the pinned commit into the cache (`$XDG_CACHE_HOME/stable-envs/ms-human-700`). |
+
 ## Development
 
 | variable | default | effect |
