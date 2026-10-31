@@ -80,32 +80,3 @@ class DMCContinuationAdapter(DMCLanes):
         super().__init__(
             domain, num_envs, device, seed, lambda s: _make_env(domain, s), core_fields(cfg["nq"], cfg["nv"])
         )
-
-    def _info(self, env, lane):
-        physics, domain = env.physics, self.domain
-        if domain == "cheetah":
-            extra = {
-                "speed": physics.speed(),
-                "torso_height": physics.named.data.xpos["torso", "z"],
-                "bfoot_height": physics.named.data.xpos["bfoot", "z"],
-                "ffoot_height": physics.named.data.xpos["ffoot", "z"],
-                "angmomentum": physics.named.data.subtree_angmom["torso"][1],
-            }
-        elif domain == "hopper":
-            extra = {
-                "speed": physics.speed(),
-                "height": physics.height(),
-                "angmomentum": physics.named.data.subtree_angmom["torso"][1],
-            }
-        else:
-            extra = {
-                "speed": physics.horizontal_velocity(),
-                "torso_height": physics.torso_height(),
-                "torso_upright": physics.torso_upright(),
-                "left_foot_height": physics.named.data.xpos["left_foot", "z"],
-                "right_foot_height": physics.named.data.xpos["right_foot", "z"],
-                "left_thigh_height": physics.named.data.xpos["left_thigh", "z"],
-                "right_thigh_height": physics.named.data.xpos["right_thigh", "z"],
-            }
-        common = {"qpos": physics.data.qpos.copy(), "qvel": physics.data.qvel.copy()}
-        return float("nan"), {**common, **{key: np.asarray(value, np.float64) for key, value in extra.items()}}

@@ -13,6 +13,8 @@ MODEL_FIELDS = {
     ("model", "target_geom_xy"): ("geom_pos", ("target", ["x", "y"])),
     ("model", "target_light_xy"): ("light_pos", ("target_light", ["x", "y"])),
 }
+_COLUMNS = {"x": 0, "y": 1, "z": 2, "qw": 0, "qx": 1, "qy": 2, "qz": 3}
+_RNG = (("rng", "keys"), ("rng", "position"), ("rng", "has_gauss"), ("rng", "cached_gaussian"))
 
 
 def core_fields(nq, nv, na=0):
@@ -35,42 +37,76 @@ def core_fields(nq, nv, na=0):
     return fields
 
 
-def export_state(envs, cumulative, fields, device, extra=None):
-    """Export fresh State columns with one device transfer per field.
+def model_entries(model, fields):
+    """Resolve the episode-drawn model entries of ``fields`` to ``(key, model field, row, columns)``."""
+    import mujoco
 
-    Read live lane owners into owned host arrays. CPU tensors retain those arrays;
-    later simulation and exports cannot overwrite the snapshot.
+    entries = []
+    for key in fields:
+        if key not in MODEL_FIELDS:
+            continue
+        field, index = MODEL_FIELDS[key]
+        name, columns = index if isinstance(index, tuple) else (index, None)
+        kind = field.split("_")[0]
+        row = mujoco.mj_name2id(model, getattr(mujoco.mjtObj, f"mjOBJ_{kind.upper()}"), name)
+        if row < 0:
+            raise KeyError(f"{key}: no {kind} named {name!r}")
+        width = getattr(model, field).shape[1]
+        entries.append((key, field, row, list(range(width)) if columns is None else [_COLUMNS[c] for c in columns]))
+    return entries
+
+
+class RNGColumns:
+    """The task RNG State of every lane; a lane is read again only after code that can draw from it ran."""
+
+    def __init__(self, num_envs):
+        self.columns = {
+            ("rng", "keys"): np.zeros((num_envs, 624), np.int64),
+            ("rng", "position"): np.zeros((num_envs, 1), np.int64),
+            ("rng", "has_gauss"): np.zeros((num_envs, 1), np.bool_),
+            ("rng", "cached_gaussian"): np.zeros((num_envs, 1), np.float64),
+        }
+        self.stale = np.ones(num_envs, bool)
+
+    def read(self, envs):
+        for lane in np.flatnonzero(self.stale):
+            algorithm, *values = envs[lane].task.random.get_state()
+            if algorithm != "MT19937":
+                raise ValueError(f"Unsupported DMC RNG algorithm: {algorithm}")
+            for key, value in zip(_RNG, values, strict=True):
+                self.columns[key][lane] = value
+        self.stale[:] = False
+        return {key: value.copy() for key, value in self.columns.items()}
+
+
+def export_state(lanes, fields, device, extra=None):
+    """Export fresh State columns of a ``DMCLanes`` batch with one device transfer per field.
+
+    CPU tensors retain fresh host arrays; later simulation and exports cannot overwrite the snapshot.
     """
-    batch = len(envs)
-    columns = {key: np.empty((batch, width), dtype=_DTYPES[dtype]) for key, (width, dtype) in fields.items()}
-    model_fields = [(key, *MODEL_FIELDS[key]) for key in columns if key in MODEL_FIELDS]
-    for i, env in enumerate(envs):
-        physics, base = env.physics, env._env
-        data = physics.data
-        algorithm, keys, position, has_gauss, cached = env.task.random.get_state()
-        if algorithm != "MT19937":
-            raise ValueError(f"Unsupported DMC RNG algorithm: {algorithm}")
-        columns["qpos"][i] = data.qpos
-        columns["qvel"][i] = data.qvel
-        columns["time"][i] = data.time
-        columns["warmstart"][i] = data.qacc_warmstart
-        columns["lifecycle", "step_count"][i] = base._step_count
-        columns["lifecycle", "reset_next_step"][i] = base._reset_next_step
-        columns["task", "cumulative_reward"][i] = cumulative[i]
-        columns["rng", "keys"][i] = keys
-        columns["rng", "position"][i] = position
-        columns["rng", "has_gauss"][i] = has_gauss
-        columns["rng", "cached_gaussian"][i] = cached
-        for key, field, index in model_fields:
-            columns[key][i] = getattr(physics.named.model, field)[index]
-        if "activation" in columns:
-            columns["activation"][i] = data.act
-    for key, value in (extra or {}).items():
-        columns[key][:] = value
-    # On CPU, from_numpy retains these fresh arrays. No owner/buffer is reused
-    # by a later step, reset or export; CUDA conversion also owns its storage.
+    views, bases, batch = lanes._views, lanes._bases, lanes.num_envs
+    values = {
+        "qpos": np.stack(views.data("qpos")),
+        "qvel": np.stack(views.data("qvel")),
+        "time": np.array([d.time for d in views.datas]),
+        "warmstart": np.stack(views.data("qacc_warmstart")),
+        ("lifecycle", "step_count"): np.array([b._step_count for b in bases]),
+        ("lifecycle", "reset_next_step"): np.array([b._reset_next_step for b in bases]),
+        ("task", "cumulative_reward"): lanes._cumulative.copy(),
+        **lanes._rng.read(lanes.envs),
+        **(extra or {}),
+    }
+    if "activation" in fields:
+        values["activation"] = np.stack(views.data("act"))
+    for key, field, row, columns in lanes._model_entries:
+        values[key] = np.stack([view[row] for view in views.model(field)])[:, columns]
     return TensorDict(
-        {key: torch.from_numpy(value).to(device) for key, value in columns.items()}, [batch], device=device
+        {
+            key: torch.from_numpy(np.asarray(values[key], _DTYPES[dtype]).reshape(batch, width)).to(device)
+            for key, (width, dtype) in fields.items()
+        },
+        [batch],
+        device=device,
     )
 
 
