@@ -1,9 +1,10 @@
-"""Side-by-side GIFs of one episode per env: stable-envs | source | |diff|, with per-frame pixel statistics.
+"""Side-by-side GIFs of one episode per env, with per-frame pixel statistics.
 
-Envs with compact render rows: one stable-envs lane is reset with a seed and stepped with random actions; the rows of
-every step are drawn by stable-envs on ``--device`` and by the source reference renderer (the frame-MSE path), so the
-diff shows rendering only. Envs without compact rows: the stable-envs lane and one source env play the same seed and
-actions (the online frame check), so the diff also shows any difference in the episode.
+The source env is reset with a seed and stepped with seeded random actions, and draws with its own render ("source
+native"). One stable-envs lane plays the same seed and actions on ``--device``. For envs with compact render rows, the
+bridge that the frame-MSE uses (``reference_render``) also loads each stable-envs state into the source and draws it
+("source via bridge"): bridge vs native checks the bridge, ours vs bridge is the frame-MSE comparison. The diff panel
+is stable-envs against source native.
 
 Per frame: MSE (mean over pixels and channels of the squared difference, 0-255 scale), RMSE, the share of pixels that
 differ in any channel, and the share that differ by more than 16 levels.
@@ -53,29 +54,37 @@ def _actions(name, steps, seed):
 
 
 def episode(name, size, device, steps, seed):
-    """Return (ours, theirs, unreachable flags, how) for one episode."""
+    """Frames after each of ``steps`` seeded random actions: stable-envs, the source via the bridge (or None), the
+    source played natively with the same seed and actions, the bridge's unreachable flags, and a label."""
     import stable_envs as snv
     from benchmarks.online_ladder import _ours_frames, _replay_frames
 
     actions = _actions(name, steps, seed)
+    native, end = _replay_frames(name, size, seed, actions)
+    n = len(native) if end is None else end + 1
     cls = snv.registry.REGISTRY[name]
     if int(getattr(cls, "state_dim", 0) or 0) > 0:
         env = snv.make(name, num_envs=1, size=size, device=device)
         try:
             env.reset(seed=seed)
-            rows = [env._pack_render_state(env.get_state())]
-            for a in actions[:-1]:
+            rows = []
+            for a in actions:
                 env.step(torch.as_tensor(a[None], device=env.device), frames=None)
-                rows.append(env._pack_render_state(env.get_state()))
-            rows = torch.as_tensor(np.concatenate([np.asarray(torch.as_tensor(r).cpu()) for r in rows])).float()
+                rows.append(np.asarray(torch.as_tensor(env._pack_render_state(env.get_state())).cpu()))
+            rows = torch.as_tensor(np.concatenate(rows)).float()
             ours = env._render(rows.to(env.device)).cpu().numpy()
         finally:
             env.close()
-        theirs, flags = _in_spawn(_source_rows, name, size, rows.numpy())
-        return ours, theirs, flags, "same states"
-    theirs, _ = _replay_frames(name, size, seed, actions)
+        bridged, flags = _in_spawn(_source_rows, name, size, rows.numpy())
+        return (
+            ours[:n],
+            np.asarray(bridged)[:n],
+            native[:n],
+            flags[:n],
+            "same seed and actions; bridge draws our states",
+        )
     ours, _ = _ours_frames(name, size, device, seed, actions)
-    return ours, theirs, np.zeros(len(ours), bool), "same seed and actions"
+    return ours[:n], None, native[:n], np.zeros(n, bool), "same seed and actions"
 
 
 def stats(a, b):
@@ -91,35 +100,49 @@ def stats(a, b):
     }
 
 
-def write_gif(name, ours, theirs, flags, how, out: Path):
-    ours, theirs = ours[..., :3], theirs[..., :3]
+def write_gif(name, ours, bridged, native, flags, how, out: Path):
+    """Panels: stable-envs | source via bridge (when there is one) | source native | |stable-envs - source native| x4."""
+    ours, native = ours[..., :3], native[..., :3]
     keep = ~flags
-    s = stats(ours, theirs)
-    diff = np.abs(ours.astype(np.int16) - theirs.astype(np.int16)).max(-1)
+    s = stats(ours, native)
+    b = stats(bridged[..., :3], native) if bridged is not None else None
+    sb = stats(ours, bridged[..., :3]) if bridged is not None else None
+    diff = np.abs(ours.astype(np.int16) - native.astype(np.int16)).max(-1)
     amp = np.clip(diff * 4, 0, 255).astype(np.uint8)[..., None].repeat(3, -1)
+    panels = [ours] + ([bridged[..., :3]] if bridged is not None else []) + [native, amp]
+    titles = (
+        ["stable-envs"]
+        + (["source via bridge"] if bridged is not None else [])
+        + ["source native", "|ours - native| x4"]
+    )
     h, w = ours.shape[1:3]
     frames = []
     for t in range(len(ours)):
-        im = Image.new("RGB", (3 * w, h + 30), (0, 0, 0))
-        im.paste(Image.fromarray(np.ascontiguousarray(ours[t])), (0, 30))
-        im.paste(Image.fromarray(np.ascontiguousarray(theirs[t])), (w, 30))
-        im.paste(Image.fromarray(amp[t]), (2 * w, 30))
+        im = Image.new("RGB", (len(panels) * w, h + 44), (0, 0, 0))
         dr = ImageDraw.Draw(im)
-        dr.text((4, 2), f"{name}  t={t}  stable-envs | source | |diff| x4  ({how})", fill=(255, 255, 255))
-        note = " unreachable by source" if flags[t] else ""
-        dr.text(
-            (4, 15),
-            f"MSE {s['mse'][t]:.1f}  RMSE {s['rmse'][t]:.1f}  pixels differing {s['pct_differ'][t]:.1f}%"
-            f"  >16 levels {s['pct_over16'][t]:.1f}%{note}",
-            fill=(255, 255, 0),
+        for i, (p, title) in enumerate(zip(panels, titles)):
+            im.paste(Image.fromarray(np.ascontiguousarray(p[t])), (i * w, 44))
+            dr.text((i * w + 4, 30), title, fill=(255, 255, 255))
+        dr.text((4, 2), f"{name}  t={t}  ({how})", fill=(255, 255, 255))
+        line = (
+            f"ours vs native: MSE {s['mse'][t]:.1f} RMSE {s['rmse'][t]:.1f} differ {s['pct_differ'][t]:.1f}%"
+            f" >16 {s['pct_over16'][t]:.1f}%"
         )
+        if b is not None:
+            line += f" | bridge vs native: MSE {b['mse'][t]:.1f} >16 {b['pct_over16'][t]:.1f}%"
+        if flags[t]:
+            line += " | unreachable by bridge"
+        dr.text((4, 15), line, fill=(255, 255, 0))
         frames.append(im)
     frames[0].save(out / f"{name}.gif", save_all=True, append_images=frames[1:], duration=200, loop=0)
-    summary = {k: float(v[keep].mean()) if keep.any() else None for k, v in s.items()}
+    summary = {f"native_{k}": float(v.mean()) for k, v in s.items()}
+    summary["native_mse_max"] = float(s["mse"].max())
+    if b is not None:
+        summary.update({f"bridge_vs_native_{k}": float(v.mean()) for k, v in b.items()})
+        summary.update({f"ours_vs_bridge_{k}": float(v[keep].mean()) if keep.any() else None for k, v in sb.items()})
     summary.update(
         env=name, how=how, frames=int(len(ours)), unreachable=int(flags.sum()), frame_shape=list(ours.shape[1:])
     )
-    summary["mse_max"] = float(s["mse"][keep].max()) if keep.any() else None
     return summary
 
 
@@ -141,16 +164,17 @@ def main() -> None:
         size = int(getattr(cls, "fixed_size", None) or args.size)
         try:
             try:
-                ours, theirs, flags, how = episode(name, size, args.device, args.steps, args.seed)
+                ours, bridged, native, flags, how = episode(name, size, args.device, args.steps, args.seed)
             except ValueError as e:
                 if "renders" not in str(e) or "only" not in str(e):
                     raise
                 size = cls.default_size
-                ours, theirs, flags, how = episode(name, size, args.device, args.steps, args.seed)
-            if ours.shape[1:3] != theirs.shape[1:3]:
-                raise AssertionError(f"frame shapes differ: ours {ours.shape} source {theirs.shape}")
-            n = min(len(ours), len(theirs))
-            row = write_gif(name, ours[:n], theirs[:n], flags[:n], how, out)
+                ours, bridged, native, flags, how = episode(name, size, args.device, args.steps, args.seed)
+            if ours.shape[1:3] != native.shape[1:3]:
+                raise AssertionError(f"frame shapes differ: ours {ours.shape} source {native.shape}")
+            n = min(len(ours), len(native))
+            bridged = bridged[:n] if bridged is not None else None
+            row = write_gif(name, ours[:n], bridged, native[:n], flags[:n], how, out)
             row["status"] = "ok"
         except Exception as e:  # noqa: BLE001
             row = {"env": name, "status": "error", "error": f"{type(e).__name__}: {e}"[:400]}
