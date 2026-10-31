@@ -152,26 +152,26 @@ A planar arm with two links moves its fingertip to a random target.
 | Output device | Number of environments | Physics |
 |---|---:|---|
 | CPU | Any | Native MuJoCo on CPU |
-| CUDA | Fewer than 32 | Native MuJoCo on CPU |
-| CUDA | 32 or more | JAX/MJX on CUDA |
+| CUDA | Fewer than 4096 | Native MuJoCo on CPU |
+| CUDA | 4096 or more | JAX/MJX on CUDA |
 
-Previously, every CUDA batch used MJX, including one environment. Small CUDA batches now run
-physics on CPU and return State and observations on CUDA. Rendering still uses the requested device.
+Native physics returns State and observations on CUDA. Rendering uses the requested device.
 
 ```python
-with snv.DMCReacher(num_envs=1, device="cuda") as env:
+with snv.DMCReacher(num_envs=256, device="cuda") as env:
     print(env.simulation_backend)  # "native"
 
-with snv.DMCReacher(num_envs=1024, device="cuda") as env:
+with snv.DMCReacher(num_envs=4096, device="cuda") as env:
     print(env.simulation_backend)  # "mjx"
 ```
 
 Set `simulation_backend="native"` or `"mjx"` to choose explicitly. MJX requires CUDA and
 `stable-envs[dmcontrol-gpu]`. Set `mjx_min_envs` to change the automatic cutoff.
 
-The default cutoff of 32 is provisional. Earlier A40 measurements compared native physics with
-CPU outputs against MJX with CUDA outputs. The comparison with both implementations returning
-CUDA tensors remains unmeasured, so the cutoff does not guarantee the fastest choice.
+The cutoff comes from one L40S with 8 CPU cores, with both implementations returning CUDA
+tensors. Native physics was faster up to 2048 environments for 1 and 16 actions per call. At 4096
+environments, MJX was faster for 1 action per call and native physics was faster for 16. On a
+machine with more CPU cores, native physics is faster for larger batches.
 
 Native physics uses float64. MJX uses float32 and can produce different trajectories and rewards.
 Select the same backend when comparing experiments.

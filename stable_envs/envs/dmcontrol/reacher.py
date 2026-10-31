@@ -14,7 +14,7 @@ class _ReacherSemantics(DelegatedSemantics):
 
     execution_mode = "AUTO_NATIVE_MJX"
 
-    def __init__(self, *args, simulation_backend="auto", mjx_min_envs=32, **kwargs):
+    def __init__(self, *args, simulation_backend="auto", mjx_min_envs=4096, **kwargs):
         """Select physics at construction and return tensors on the requested device.
 
         ``"auto"`` uses native CPU physics below ``mjx_min_envs`` and MJX for
@@ -72,6 +72,6 @@ DMCReacher.name = "dmc-reacher"
 DMCReacher.__doc__ = """Reacher with native float64 CPU or float32 MJX CUDA physics.
 
 ``simulation_backend="auto"`` uses native CPU physics below ``mjx_min_envs``.
-The cutoff defaults to 32. Larger CUDA batches use MJX. Set ``simulation_backend``
+The cutoff defaults to 4096. Larger CUDA batches use MJX. Set ``simulation_backend``
 to ``"native"`` or ``"mjx"`` to choose explicitly. ``device`` controls output and rendering.
 """
