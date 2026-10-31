@@ -22,7 +22,7 @@ PYPROJECT = tomllib.loads((ROOT / "pyproject.toml").read_text())
 GROUPS = PYPROJECT["dependency-groups"]
 GROUP_OF_PROFILE = {"native": "pin-classic"}
 # Extras whose code checks exact versions at import or construction; every other extra states a range.
-EXACT_EXTRAS = {"pusht", "rocket", "ogbench-manipulation", "ogbench-manipulation-gpu"}
+EXACT_EXTRAS = {"pusht", "pusht-gpu", "rocket", "ogbench-manipulation", "ogbench-manipulation-gpu"}
 # Packages that speed up stable-envs without being part of a source reference; pinned, but not in PINS.
 ACCELERATORS = {"numba", "mujoco-mjx"}
 
