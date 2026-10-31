@@ -26,7 +26,9 @@ from PIL import Image, ImageDraw
 
 
 def _source_rows(name, size, rows):
-    import stable_envs as snv
+    from benchmarks.offline_sweep import _snv
+
+    snv = _snv()
 
     cls = snv.registry.REGISTRY[name]
     ref = cls.reference_env(size=size)
@@ -43,7 +45,9 @@ def _in_spawn(fn, *args):
 
 
 def _actions(name, steps, seed):
-    import stable_envs as snv
+    from benchmarks.offline_sweep import _snv
+
+    snv = _snv()
 
     env = snv.make(name, num_envs=1, device="cpu")
     try:
@@ -56,7 +60,9 @@ def _actions(name, steps, seed):
 def episode(name, size, device, steps, seed):
     """Frames after each of ``steps`` seeded random actions: stable-envs, the source via the bridge (or None), the
     source played natively with the same seed and actions, the bridge's unreachable flags, and a label."""
-    import stable_envs as snv
+    from benchmarks.offline_sweep import _snv
+
+    snv = _snv()
     from benchmarks.online_ladder import _ours_frames, _replay_frames
 
     actions = _actions(name, steps, seed)
@@ -157,7 +163,9 @@ def main() -> None:
     args = p.parse_args()
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    import stable_envs as snv
+    from benchmarks.offline_sweep import _snv
+
+    snv = _snv()
 
     for name in args.envs:
         cls = snv.registry.REGISTRY[name]
