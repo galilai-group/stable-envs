@@ -2,7 +2,8 @@
 
 Uses the same compact pose and appearance contract as MJWarp, including the hidden
 translucent mocap markers. Frames are rasterized at the source's 480 px and then
-resized; supersampling raises that raster's density.
+resized; supersampling raises that raster's density. On Linux, large CPU batches draw in render
+worker processes, each with its own OpenGL context.
 """
 
 import copy
@@ -11,26 +12,31 @@ import threading
 import numpy as np
 import torch
 
+from ... import tuning
 from ..._core.mujoco_gl import mujoco_renderer
 from ...render._resources import retain_process_lifetime
 
+PATH = "fetch-opengl"
 _LOCK = threading.RLock()
 _CACHE = {}
 
 
 class _Readback:
-    """Collect resized frames in a bounded OpenGL buffer, then read each chunk once."""
+    """Collect resized frames in a bounded OpenGL buffer, then read each chunk once into ``images``.
 
-    def __init__(self, renderer, size: int, batch: int):
+    ``images`` holds rows ``start:start + len(images)`` of a batch of ``total`` rows. A frame's bytes
+    depend on the buffer height and on its slot, which both follow from ``total`` and its row.
+    """
+
+    def __init__(self, renderer, size: int, images: np.ndarray, start: int, total: int):
         import mujoco
         from OpenGL import GL
 
-        if batch < 1:
+        if len(images) < 1:
             raise ValueError("Cannot render an empty Fetch batch")
-        self.renderer, self.size = renderer, size
-        self.images = np.empty((batch, size, size, 3), dtype=np.uint8)
+        self.renderer, self.size, self.images, self.start = renderer, size, images, start
         renderer._gl_context.make_current()
-        self.capacity = min(batch, max(1, int(GL.glGetIntegerv(GL.GL_MAX_RENDERBUFFER_SIZE)) // size))
+        self.capacity = min(total, max(1, int(GL.glGetIntegerv(GL.GL_MAX_RENDERBUFFER_SIZE)) // size))
         context = renderer._mjr_context
         for index, width, height in ((0, renderer.width, renderer.height), (1, size, size * self.capacity)):
             if context.auxWidth[index] != width or context.auxHeight[index] != height:
@@ -44,7 +50,7 @@ class _Readback:
         renderer, size = self.renderer, self.size
         context = renderer._mjr_context
         width, height = renderer.width, renderer.height
-        slot = index % self.capacity
+        slot = (self.start + index) % self.capacity
         mujoco.mjr_render(renderer._rect, renderer.scene, context)
         try:
             # Resolve multisampling at native size before resizing and flipping each frame.
@@ -56,27 +62,35 @@ class _Readback:
                 0, height, width, 0, 0, slot * size, size, (slot + 1) * size, GL.GL_COLOR_BUFFER_BIT, GL.GL_LINEAR
             )
             if slot + 1 == self.capacity or index + 1 == len(self.images):
+                first = max(0, index - slot)
                 GL.glBindFramebuffer(GL.GL_READ_FRAMEBUFFER, int(context.auxFBO[1]))
                 GL.glReadPixels(
                     0,
-                    0,
+                    (slot - index + first) * size,
                     size,
-                    (slot + 1) * size,
+                    (index - first + 1) * size,
                     GL.GL_RGB,
                     GL.GL_UNSIGNED_BYTE,
-                    self.images[index - slot : index + 1],
+                    self.images[first : index + 1],
                 )
         finally:
             mujoco.mjr_restoreBuffer(context)
 
 
+class _Drawer:
+    """Picklable factory of a render worker's drawer: ``draw(args, frames)`` with this process's OpenGL."""
+
+    def __call__(self):
+        def draw_rows(args, frames):
+            scene, rows, values, ss, start, total = args
+            draw(scene, rows, values, ss, "cpu", frames, start, total)
+
+        return draw_rows
+
+
 def render(env, states=None, size=None, supersample=None, variation=None, style=None, out=None):
     env._check_open("render")
-    import cv2
-    import mujoco
-    from OpenGL import GL
-
-    from . import envs as fetch
+    from ..._execution import render_pool
 
     rows = torch.as_tensor(env._render_state if states is None else states, device=env.device)
     lead = tuple(rows.shape[:-1])
@@ -84,14 +98,63 @@ def render(env, states=None, size=None, supersample=None, variation=None, style=
     size, ss = int(size or env.size), int(env.ss if supersample is None else supersample)
     if size < 1 or not 1 <= ss <= 4:
         raise ValueError("Invalid Fetch render size/supersample")
+    if not len(rows):
+        raise ValueError("Cannot render an empty Fetch batch")
     style = env.resolve_style(style, variation, batch=len(rows))
-    values = {k: style[k].detach().cpu().numpy() for k in env.variation_space.names()}
+    values = {k: style[k].detach().cpu().numpy().reshape(len(rows), -1) for k in env.variation_space.names()}
+    shape = (*lead, size, size, 3)
+    if out is not None and (
+        out.shape != shape or out.device != env.device or out.dtype != torch.uint8 or not out.is_contiguous()
+    ):
+        raise ValueError("Invalid Fetch render output buffer")
+    host = None if out is None or env.device.type != "cpu" else out.view(-1, size, size, 3).numpy()
+    images = None
+    if env.device.type == "cpu":
+        tuning.on_render(PATH, size, len(rows), env)
+        workers = render_pool.pool(
+            PATH, _Drawer(), len(rows), PATH, size, software_gl=True, name=f"{type(env).__name__} OpenGL"
+        )
+        if workers is not None:
+            with workers.lock:
+                images = workers.render(
+                    len(rows),
+                    (size, size, 3),
+                    lambda part: (
+                        env.SCENE,
+                        rows[part],
+                        {k: v[part] for k, v in values.items()},
+                        ss,
+                        part.start,
+                        len(rows),
+                    ),
+                    host,
+                )
+    if images is None:
+        images = np.empty((len(rows), size, size, 3), np.uint8) if host is None else host
+        draw(env.SCENE, rows, values, ss, env.device.type, images)
+    if host is not None:
+        return out
+    result = torch.from_numpy(images).to(env.device).reshape(shape)
+    return result if out is None else out.copy_(result)
+
+
+def draw(scene, rows, values, ss, device_type, images, start=0, total=None):
+    """Draw compact ``rows`` with appearance ``values`` into ``(B, size, size, 3)`` uint8 ``images`` in place.
+
+    The rows are rows ``start:start + B`` of a batch of ``total`` rows (default ``B``).
+    """
+    import cv2
+    import mujoco
+    from OpenGL import GL
+
+    from . import envs as fetch
+
+    size = images.shape[1]
     native_size = 480
     raster_size = native_size * ss
-    key = (env.SCENE, raster_size)
-    images = []
+    key = (scene, raster_size)
     with _LOCK:
-        b = fetch._build_bundle(env.SCENE)
+        b = fetch._build_bundle(scene)
         if key not in _CACHE:
             model = copy.copy(b.model)
             fetch._restore(model, b.pristine)
@@ -111,11 +174,11 @@ def render(env, states=None, size=None, supersample=None, variation=None, style=
             _CACHE[key] = entry
         model, data, renderer, vendor, gl_device = _CACHE[key]
         software = any(s in gl_device.lower() for s in ("llvmpipe", "softpipe", "swrast", "software rasterizer"))
-        if env.device.type == "cpu" and not software:
+        if device_type == "cpu" and not software:
             raise RuntimeError(f"CPU rendering requires software OpenGL, found {vendor}: {gl_device}")
-        if env.device.type == "cuda" and (software or "nvidia" not in vendor.lower()):
+        if device_type == "cuda" and (software or "nvidia" not in vendor.lower()):
             raise RuntimeError(f"CUDA rendering requires NVIDIA OpenGL, found {vendor}: {gl_device}")
-        readback = _Readback(renderer, size, len(rows)) if ss == 1 else None
+        readback = _Readback(renderer, size, images, start, len(rows) if total is None else total) if ss == 1 else None
         sky = None
         for i, row in enumerate(rows):
             fetch._restore(model, b.pristine)
@@ -126,7 +189,7 @@ def render(env, states=None, size=None, supersample=None, variation=None, style=
                 renderer._gl_context.make_current()
                 mujoco.mjr_uploadTexture(model, renderer._mjr_context, b.info["sky"])
                 sky = want
-            if "rendering.transparent_arm" in values and values["rendering.transparent_arm"].reshape(-1)[i] > 0.5:
+            if "rendering.transparent_arm" in values and values["rendering.transparent_arm"][i, 0] > 0.5:
                 model.geom_rgba[b.info["robot"], 3] = fetch.ARM_ALPHA
             for name, geoms in (
                 ("floor", [b.info["floor"]]),
@@ -147,9 +210,9 @@ def render(env, states=None, size=None, supersample=None, variation=None, style=
                 model,
                 data,
                 cam["lookat"],
-                cam["distance"] * values["camera.distance_scale"].reshape(len(rows), -1)[i, 0],
-                cam["azimuth"] + values["camera.azimuth_delta"].reshape(len(rows), -1)[i, 0],
-                cam["elevation"] + values["camera.elevation_delta"].reshape(len(rows), -1)[i, 0],
+                cam["distance"] * values["camera.distance_scale"][i, 0],
+                cam["azimuth"] + values["camera.azimuth_delta"][i, 0],
+                cam["elevation"] + values["camera.elevation_delta"][i, 0],
             )
             model.cam_pos[b.info["cam"]], model.cam_quat[b.info["cam"]] = pos, quat
             data.qpos[:] = row[: b.nq]
@@ -161,21 +224,8 @@ def render(env, states=None, size=None, supersample=None, variation=None, style=
             else:
                 image = renderer.render()
                 image = np.rint(image.reshape(native_size, ss, native_size, ss, 3).mean((1, 3))).astype(np.uint8)
-                images.append(cv2.resize(image, (size, size)))
+                images[i] = cv2.resize(image, (size, size))
         if sky is not None:
             fetch._restore(model, b.pristine)
             renderer._gl_context.make_current()
             mujoco.mjr_uploadTexture(model, renderer._mjr_context, b.info["sky"])
-    images = readback.images if readback is not None else np.stack(images)
-    result = torch.as_tensor(images, device=env.device).reshape(*lead, size, size, 3)
-    if out is not None:
-        if (
-            out.shape != result.shape
-            or out.device != result.device
-            or out.dtype != result.dtype
-            or not out.is_contiguous()
-        ):
-            raise ValueError("Invalid Fetch render output buffer")
-        out.copy_(result)
-        return out
-    return result
