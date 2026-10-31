@@ -119,3 +119,15 @@ def test_a_held_padded_goal_is_not_written_by_later_steps():
         assert not out["info", "goal"][lane, 1:].any()
         for other in {0, 1, 2} - {lane}:
             assert all(torch.equal(out["info", "goal"][other, t], goal[other]) for t in range(4))
+
+
+def test_a_dropped_padded_goal_lends_its_memory_to_the_next_step():
+    actions = torch.zeros(3, 4, 2)
+    with snv.make("SimplePointMaze", num_envs=3, device="cpu") as env:
+        state = env.reset(seed=8)
+        state["agent", "position"][1] = state["goal", "position"][1].to(torch.float64)
+        env.set_state(state)
+        first = env.step(actions, frames=None)["info", "goal"].data_ptr()
+        held = env.step(actions, frames=None)
+        assert held["info", "goal"].data_ptr() == first
+        assert env.step(actions, frames=None)["info", "goal"].data_ptr() != first

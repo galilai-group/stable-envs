@@ -6,10 +6,14 @@ keeps at most one transition in flight and renders owned snapshots in the parent
 
 from __future__ import annotations
 
+import sys
+
 import numpy as np
 import torch
 
 from .tensordicts import build_tensordict
+
+_NUMPY_DTYPES = {torch.uint8: np.uint8, torch.float32: np.float32, torch.float64: np.float64, torch.bool: np.bool_}
 
 
 def _actions(env, actions):
@@ -62,27 +66,26 @@ def _same_view(a, b):
     return a.data_ptr() == b.data_ptr() and a.shape == b.shape and a.stride() == b.stride()
 
 
-def _use_count(tensor) -> int | None:
-    count = getattr(torch._C, "_storage_Use_Count", None)
-    return None if count is None else count(tensor.untyped_storage()._cdata)
+def _refs(spares, key) -> int:
+    return sys.getrefcount(spares[key][0])
 
 
 def _padded_buffer(spares, key, like, shape):
     """Return a tensor for a padded copy of a shared output.
 
-    On CPU, the buffer of the previous copy is used again once no returned tensor refers to it, so
-    the copy does not fault in new pages.
+    On CPU the copy goes into memory that NumPy owns and that is kept for the next copy. A tensor
+    made by ``torch.from_numpy`` holds one reference to the array until its last view is freed, so
+    the reference count tells when no returned tensor uses the memory. Reused memory needs no new
+    pages.
     """
-    held = spares.get(key)
-    if held is not None:
-        buffer, idle = held
-        if buffer.shape == shape and buffer.dtype == like.dtype and _use_count(buffer) == idle:
-            return buffer.view(shape)
-    buffer = torch.empty(shape, dtype=like.dtype, device=like.device)
-    if like.device.type == "cpu" and _use_count(buffer) is not None:
-        spares[key] = (buffer, _use_count(buffer))
-        return buffer.view(shape)
-    return buffer
+    if like.device.type != "cpu" or like.dtype not in _NUMPY_DTYPES:
+        return torch.empty(shape, dtype=like.dtype, device=like.device)
+    if key in spares and spares[key][0].shape == tuple(shape) and _refs(spares, key) == spares[key][1]:
+        return torch.from_numpy(spares[key][0])
+    # Count the references of the idle array the same way the check above does.
+    spares[key] = [np.empty(shape, dtype=_NUMPY_DTYPES[like.dtype]), 0]
+    spares[key][1] = _refs(spares, key)
+    return torch.from_numpy(spares[key][0])
 
 
 def _stack_outputs(history, valid, shared=(), spares=None):
