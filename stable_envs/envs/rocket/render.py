@@ -137,35 +137,65 @@ def _gpu_context(env, size, ss):
     return cache[key]
 
 
-def _cpu_context(env):
+def tiny_scene():
+    """Open a PyBullet client with the ground, the rocket and the pad for TinyRenderer drawing."""
     from pathlib import Path
 
     import pybullet as bullet
     import pybullet_data
     import PyFlyt
 
-    if not hasattr(env, "_rocket_pixel_cpu"):
-        client = bullet.connect(bullet.DIRECT)
-        try:
-            assets = Path(PyFlyt.__file__).parent
-            ground = bullet.loadURDF(
-                str(Path(pybullet_data.getDataPath()) / "plane.urdf"), useFixedBase=True, physicsClientId=client
-            )
-            rocket = bullet.loadURDF(
-                str(assets / "models/vehicles/rocket/rocket.urdf"),
-                flags=bullet.URDF_USE_INERTIA_FROM_FILE,
-                physicsClientId=client,
-            )
-            pad = bullet.loadURDF(str(assets / "models/landing_pad.urdf"), physicsClientId=client)
-            names = {
-                bullet.getJointInfo(rocket, i, physicsClientId=client)[12].decode(): i
-                for i in range(bullet.getNumJoints(rocket, physicsClientId=client))
-            }
-            env._rocket_pixel_cpu = client, (ground, rocket, pad), names
-        except BaseException:
-            bullet.disconnect(client)
-            raise
-    return env._rocket_pixel_cpu
+    client = bullet.connect(bullet.DIRECT)
+    try:
+        assets = Path(PyFlyt.__file__).parent
+        ground = bullet.loadURDF(
+            str(Path(pybullet_data.getDataPath()) / "plane.urdf"), useFixedBase=True, physicsClientId=client
+        )
+        rocket = bullet.loadURDF(
+            str(assets / "models/vehicles/rocket/rocket.urdf"),
+            flags=bullet.URDF_USE_INERTIA_FROM_FILE,
+            physicsClientId=client,
+        )
+        pad = bullet.loadURDF(str(assets / "models/landing_pad.urdf"), physicsClientId=client)
+        painted = []
+        for i in range(bullet.getNumJoints(rocket, physicsClientId=client)):
+            name = bullet.getJointInfo(rocket, i, physicsClientId=client)[12].decode()
+            slot = next((slot for part, slot in LINK_COLORS if part in name), None)
+            if slot is not None:
+                painted.append((i, slot))
+    except BaseException:
+        bullet.disconnect(client)
+        raise
+    return client, (ground, rocket, pad), painted
+
+
+def draw_tiny(scene, body, links, colors, size, ss):
+    """Draw ``(B, 3, 7)`` body poses, ``(B, 7)`` camera link poses and ``(B, 6, 4)`` colours to uint8 frames."""
+    import pybullet as bullet
+
+    client, bodies, painted = scene
+    images = np.empty((len(body), size, size, 3), np.uint8)
+    for i in range(len(body)):
+        for j, uid in enumerate(bodies):
+            bullet.resetBasePositionAndOrientation(uid, body[i, j, :3], body[i, j, 3:], physicsClientId=client)
+        bullet.changeVisualShape(bodies[1], -1, rgbaColor=colors[i, BODY_COLOR], physicsClientId=client)
+        bullet.changeVisualShape(bodies[2], -1, rgbaColor=colors[i, PAD_COLOR], physicsClientId=client)
+        for index, color in painted:
+            bullet.changeVisualShape(bodies[1], index, rgbaColor=colors[i, color], physicsClientId=client)
+        view, projection = camera_matrices(links[i], bullet)
+        raw = bullet.getCameraImage(
+            size * ss,
+            size * ss,
+            viewMatrix=view,
+            projectionMatrix=projection,
+            renderer=bullet.ER_TINY_RENDERER,
+            physicsClientId=client,
+        )[2]
+        image = np.asarray(raw, np.uint8).reshape(size * ss, size * ss, 4)[..., :3]
+        if ss > 1:
+            image = np.rint(image.reshape(size, ss, size, ss, 3).mean((1, 3))).astype(np.uint8)
+        images[i] = image
+    return images
 
 
 def render(env, state, size, ss, chunk_size=None):
@@ -179,31 +209,7 @@ def render(env, state, size, ss, chunk_size=None):
     lock = env.__dict__.setdefault("_rocket_pixel_lock", threading.RLock())
     with lock:
         if env.device.type == "cpu":
-            client, bodies, names = _cpu_context(env)
-            images = []
-            for i in range(len(state)):
-                for j, uid in enumerate(bodies):
-                    bullet.resetBasePositionAndOrientation(uid, body[i, j, :3], body[i, j, 3:], physicsClientId=client)
-                bullet.changeVisualShape(bodies[1], -1, rgbaColor=colors[i, BODY_COLOR], physicsClientId=client)
-                bullet.changeVisualShape(bodies[2], -1, rgbaColor=colors[i, PAD_COLOR], physicsClientId=client)
-                for name, index in names.items():
-                    color = next((slot for part, slot in LINK_COLORS if part in name), None)
-                    if color is not None:
-                        bullet.changeVisualShape(bodies[1], index, rgbaColor=colors[i, color], physicsClientId=client)
-                view, projection = camera_matrices(links[i], bullet)
-                raw = bullet.getCameraImage(
-                    size * ss,
-                    size * ss,
-                    viewMatrix=view,
-                    projectionMatrix=projection,
-                    renderer=bullet.ER_TINY_RENDERER,
-                    physicsClientId=client,
-                )[2]
-                image = np.asarray(raw, np.uint8).reshape(size * ss, size * ss, 4)[..., :3]
-                if ss > 1:
-                    image = np.rint(image.reshape(size, ss, size, ss, 3).mean((1, 3))).astype(np.uint8)
-                images.append(image.copy())
-            return torch.from_numpy(np.stack(images))
+            return torch.from_numpy(env._simulator.draw(body, links, colors, size, ss))
         if env.device.type != "cuda":
             raise ValueError("Rocket rendering supports CPU TinyRenderer or CUDA nvdiffrast")
         tuning.on_render("rocket-nvdiff", size, len(state), env)
@@ -255,10 +261,5 @@ def render(env, state, size, ss, chunk_size=None):
 
 
 def close(env):
-    if hasattr(env, "_rocket_pixel_cpu"):
-        import pybullet
-
-        pybullet.disconnect(env._rocket_pixel_cpu[0])
-        del env._rocket_pixel_cpu
     for renderer, _ in env.__dict__.pop("_rocket_pixel_gpu", {}).values():
         renderer.close()

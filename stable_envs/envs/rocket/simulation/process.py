@@ -4,18 +4,20 @@ from __future__ import annotations
 
 from functools import partial
 
+import numpy as np
 import torch
 
 from ...._execution.process import ProcessAdapter
+from ...._execution.requests import lane_slices
 from .adapter import RocketAdapter, check_values, state_rows
 
-#: Lanes one process may own. A staged restore or reset holds two PyBullet clients per lane, and
-#: PyBullet allows 1024 clients in one process.
-LANES_PER_PROCESS = 512
+#: Lanes one process may own. A staged restore or reset holds two PyBullet clients per lane, frames
+#: use one more client, and PyBullet allows 1024 clients in one process.
+LANES_PER_PROCESS = 511
 
 
-def _lanes(config, count, seed):
-    return RocketAdapter(count, "cpu", seed, config)
+def _lanes(config, frame, count, seed):
+    return RocketAdapter(count, "cpu", seed, config, frame)
 
 
 class RocketProcessAdapter(ProcessAdapter):
@@ -23,14 +25,14 @@ class RocketProcessAdapter(ProcessAdapter):
 
     name = "Rocket"
 
-    def __init__(self, batch, device, seed, config=None, *, processes=8, cpus=None):
+    def __init__(self, batch, device, seed, config=None, *, processes=8, cpus=None, frame=None):
         if type(batch) is not int or batch < 1:
             raise ValueError("num_envs must be a positive integer")
         if torch.device(device).type not in ("cpu", "cuda"):
             raise ValueError("Rocket supports CPU dynamics and CPU/CUDA State storage")
         if type(processes) is int and processes > 0 and -(-batch // processes) > LANES_PER_PROCESS:
             raise ValueError(f"Rocket processes may own at most {LANES_PER_PROCESS} lanes each")
-        super().__init__(partial(_lanes, config), batch, device, seed, processes=processes, cpus=cpus)
+        super().__init__(partial(_lanes, config, frame), batch, device, seed, processes=processes, cpus=cpus)
 
     @property
     def template(self):
@@ -60,3 +62,17 @@ class RocketProcessAdapter(ProcessAdapter):
                 None if seed is None else seed + lane, options, None if values is None else values[lane]
             )
         return self._reset(seed, [(options, None if values is None else values[rows]) for rows in self._slices])
+
+    def draw(self, body, links, colors, size, ss):
+        """Draw explicit poses with TinyRenderer, split across the workers.
+
+        While a step is in flight, or for one row, the parent draws them.
+        """
+        self._check_open()
+        count = min(len(body), len(self._connections))
+        if self._pending is not None or count < 2:
+            return self._metadata.draw(body, links, colors, size, ss)
+        rows = lane_slices(len(body), count) + [slice(0, 0)] * (len(self._connections) - count)
+        return np.concatenate(
+            self._request("call", [("draw", (body[r], links[r], colors[r], size, ss)) for r in rows])
+        )
