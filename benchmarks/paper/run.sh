@@ -1,7 +1,9 @@
 #!/bin/bash
 # Offline and online speed of stable-envs against the source, every arm pinned to the same CPU cores.
 # usage (from the repository root): sbatch -p qed -n 1 -c 8 --hint=nomultithread --mem=128G --gres=gpu:1 -t 48:00:00 benchmarks/paper/run.sh OUT FAMILY=ENV,ENV ...
-#   SMOKE=1 uses small state, batch and episode counts. THROUGHPUT=1 runs only the throughput arms (see the THROUGHPUT block). CORES (default: the first NPIN, default 8, cores the job may use) is the
+#   SMOKE=1 uses small state, batch and episode counts. THROUGHPUT=1 runs only the throughput arms (see the THROUGHPUT block).
+#   REGIME=offline-gpu runs only stable-envs GPU frames from States, their frame MSE, and the source arms they are compared with.
+#   CORES (default: the first NPIN, default 8, cores the job may use) is the
 #   core set of every arm. STEP_LIMIT (default 6h) stops one arm that does not exit.
 set -uo pipefail
 OUT=$(realpath -m "$1"); shift
@@ -106,10 +108,10 @@ for spec in "$@"; do
   OFF="$PIN $P -m benchmarks.offline_sweep"; ON="$PIN $P -m benchmarks.online_ladder"
   S=$WORK/states-$fam; D=$WORK/episodes-$fam; mkdir -p $S $D
   [ "${SKIP_OFFLINE:-0}" = 1 ] || [ "${THROUGHPUT:-0}" = 1 ] || egl $OFF states --envs "${envs[@]}" --out $S --n $N --device cuda --lanes 1024
-  egl $ON dataset --envs "${envs[@]}" --out $D --episodes $EPISODES --length $LENGTH
+  [ "${REGIME:-all}" = offline-gpu ] || egl $ON dataset --envs "${envs[@]}" --out $D --episodes $EPISODES --length $LENGTH
   if [ "${THROUGHPUT:-0}" = 1 ]; then
     # Online throughput with frames on one CPU budget or one GPU: the source as one env, a Gymnasium SyncVectorEnv
-    # and an AsyncVectorEnv (CPU OpenGL), stable-envs on CPU and on CUDA, and decoding stored JPEGs of the same frames.
+    # and an AsyncVectorEnv (CPU OpenGL), and stable-envs on CPU and on CUDA.
     for E in "${envs[@]}"; do
       echo "--- $E $(date -Is) load $(cut -d' ' -f1-3 /proc/loadavg)"
       n=$OUT/throughput/$E; mkdir -p $n
@@ -117,7 +119,6 @@ for spec in "$@"; do
       sw $ON run $COMMON --episodes $SWEPISODES --arms src-single-render src-sync-render src-async-render --output $n/source-cpu.json
       sw $ON run $COMMON --episodes $SWEPISODES --arms snv-render-cpu --output $n/snv-cpu.json
       egl $ON run $COMMON --arms snv-render-gpu --output $n/snv-gpu.json
-      egl $ON run $COMMON --arms jpeg-decode-cpu jpeg-decode-gpu --output $n/jpeg.json
     done
     rm -rf $WORK/venv-$fam $S $D
     continue
@@ -128,9 +129,11 @@ for spec in "$@"; do
     if [ "${SKIP_OFFLINE:-0}" = 1 ]; then :
     elif [ $ONLY_SOURCE != 1 ]; then
       egl $OFF ours --envs $E --states $S --device cuda --batches $BATCHES --repeats $REPEATS --output $o/snv-gpu.json
-      sw $OFF ours --envs $E --states $S --device cpu --threads $NCORES --batches $BATCHES --repeats $REPEATS --output $o/snv-cpu.json
       egl $OFF mse --envs $E --states $S --device cuda --output $o/mse-gpu.json
-      sw $OFF mse --envs $E --states $S --device cpu --output $o/mse-cpu.json
+      if [ "${REGIME:-all}" != offline-gpu ]; then
+        sw $OFF ours --envs $E --states $S --device cpu --threads $NCORES --batches $BATCHES --repeats $REPEATS --output $o/snv-cpu.json
+        sw $OFF mse --envs $E --states $S --device cpu --output $o/mse-cpu.json
+      fi
     fi
     [ "${SKIP_OFFLINE:-0}" = 1 ] || {
     case $E in OGBCube|OGBScene)
@@ -144,6 +147,7 @@ for spec in "$@"; do
       sw $OFF source --envs $E --states $S --procs $p --repeats $REPEATS --output $o/src-cpu-${p}p.json
     done
     }
+    [ "${REGIME:-all}" = offline-gpu ] && continue
     n=$OUT/online/$E; mkdir -p $n
     COMMON="--env $E --data $D --procs $NCORES --source-lanes $SLANES --lanes $LANES --threads $NCORES --repeats $REPEATS"
     egl $ON run $COMMON --arms src-pipelined-render --src-label gpu --ours-device cuda --output $n/src-render-gpu.json

@@ -12,8 +12,6 @@ Arms:
   src-single-render     one source env in this process: step, then draw, one action at a time.
   src-sync-render       ``--procs`` source envs in a Gymnasium ``SyncVectorEnv`` in this process; frames by ``call("render")``.
   src-async-render      as src-sync-render in an ``AsyncVectorEnv`` with one worker process per env.
-  jpeg-decode-cpu       decode stored 224 px JPEGs of this env's frames in ``--procs`` DataLoader workers (frames/s).
-  jpeg-decode-gpu       decode the same JPEGs in batches with nvJPEG on CUDA (frames/s).
 """
 
 from __future__ import annotations
@@ -534,77 +532,6 @@ def run_source_vector(args, name: str, asynchronous: bool) -> dict:
     }
 
 
-class _JpegFiles(torch.utils.data.Dataset):
-    def __init__(self, paths):
-        self.paths = paths
-
-    def __len__(self):
-        return len(self.paths)
-
-    def __getitem__(self, i):
-        from torchvision.io import decode_jpeg
-
-        with open(self.paths[i], "rb") as f:
-            data = torch.frombuffer(bytearray(f.read()), dtype=torch.uint8)
-        return decode_jpeg(data)
-
-
-def _jpeg_files(args, name: str) -> list:
-    """Encode frames of this env's stored episodes (stable-envs on CUDA) as JPEG files on node-local disk, once."""
-    from PIL import Image
-
-    root = Path(os.environ.get("TMPDIR", "/tmp")) / f"jpeg-{os.getpid()}" / name
-    if root.exists():
-        return sorted(root.glob("*.jpg"))
-    root.mkdir(parents=True)
-    data = np.load(Path(args.data) / f"{name}.npz")
-    paths = []
-    for s in range(min(16, len(data["seeds"]))):
-        frames, _ = _ours_frames(name, args.size, "cuda", int(data["seeds"][s]), data["actions"][s])
-        for t, frame in enumerate(frames):
-            p = root / f"{s:03d}_{t:03d}.jpg"
-            Image.fromarray(np.ascontiguousarray(frame[..., :3])).save(p, quality=95)
-            paths.append(p)
-    return paths
-
-
-def run_jpeg(args, name: str, device: str) -> dict:
-    """Frames per second of loading and decoding stored JPEG frames: the data-loading floor of an offline pipeline."""
-    paths = _jpeg_files(args, name)
-    if device == "cpu":
-        loader = torch.utils.data.DataLoader(
-            _JpegFiles(paths), batch_size=64, num_workers=args.procs, persistent_workers=True, prefetch_factor=4
-        )
-
-        def units():
-            for batch in loader:
-                yield len(batch)
-
-        t = _timed(_cycle(units), seconds=args.seconds, repeats=args.repeats)
-        del loader
-    else:
-        from torchvision.io import decode_jpeg
-
-        def units():
-            for i in range(0, len(paths), 256):
-                data = []
-                for p in paths[i : i + 256]:
-                    with open(p, "rb") as f:
-                        data.append(torch.frombuffer(bytearray(f.read()), dtype=torch.uint8))
-                yield len(decode_jpeg(data, device="cuda"))
-
-        t = _timed(_cycle(units), seconds=args.seconds, repeats=args.repeats, sync=torch.cuda.synchronize)
-    return {
-        "files": len(paths),
-        "quality": 95,
-        "workers": args.procs if device == "cpu" else 0,
-        "device": device,
-        "frames_per_s": t["rate"],
-        "steps_per_s": t["rate"],
-        **t,
-    }
-
-
 ARMS = (
     "src-pipelined-render",
     "src-pipelined-step",
@@ -615,11 +542,9 @@ ARMS = (
     "src-single-render",
     "src-sync-render",
     "src-async-render",
-    "jpeg-decode-cpu",
-    "jpeg-decode-gpu",
 )
 #: Arms that take one action per call; the others run once per ``--chunks`` value.
-SINGLE_CALL = ("src-", "jpeg-")
+SINGLE_CALL = ("src-",)
 #: Stable-envs arms: (device, frames). snv-step-gpu steps on CUDA, which only moves physics for GPU-native classes.
 OURS = {
     "snv-step": ("cpu", False),
@@ -645,8 +570,6 @@ def cmd_run(args) -> None:
                     r = run_source_single(args, args.env)
                 elif arm in ("src-sync-render", "src-async-render"):
                     r = run_source_vector(args, args.env, arm == "src-async-render")
-                elif arm.startswith("jpeg-"):
-                    r = run_jpeg(args, args.env, "cpu" if arm == "jpeg-decode-cpu" else "cuda")
                 else:
                     r = run_ours(args, args.env, *OURS[arm], chunk)
                 r.setdefault("status", "ok")
