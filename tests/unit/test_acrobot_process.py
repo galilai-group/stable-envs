@@ -117,9 +117,9 @@ def test_worker_death_fails_closed():
 def test_public_chunks_slices_early_stop_and_current_render(pipeline, device):
     if device == "cuda" and not torch.cuda.is_available():
         pytest.skip("requires CUDA")
-    local = se.make("Acrobot", num_envs=4, seed=17, device=device)
+    local = se.make("Acrobot", num_envs=4, seed=17, device=device, simulation_backend="gym")
     with patch.object(semantics, "ClassicControlAdapter", partial(AcrobotProcessAdapter, processes=2)):
-        remote = se.make("Acrobot", num_envs=4, seed=17, device=device)
+        remote = se.make("Acrobot", num_envs=4, seed=17, device=device, simulation_backend="gym")
     if pipeline:
         remote._step_pipeline = lambda: remote._simulator
     try:
