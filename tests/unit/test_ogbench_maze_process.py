@@ -142,3 +142,34 @@ def test_public_chunks_and_early_stop(monkeypatch):
     finally:
         local.close()
         remote.close()
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("maze", ["large", "medium"])
+def test_point_lanes_step_as_the_source_step_does(dtype, maze):
+    """Point lanes step in one loop; each output and State leaf equals the per-lane source step."""
+    batched, source = OGBMazeAdapter(6, seed=23, maze=maze), OGBMazeAdapter(6, seed=23, maze=maze)
+    source._point = False
+    try:
+        assert batched._point and batched.process_static_leaves
+        assert_same_state(batched.get_state(), source.get_state())
+        state = batched.get_state()
+        # Distances to the goal on both sides of the success tolerance, including exactly on it.
+        offsets = torch.tensor([[0.0, 0.0], [0.6, 0.8], [1.0, 0.0], [0.0, -1.0000001], [3.0, 0.0], [0.7, 0.7]])
+        state["root", "position"] = state["task", "goal_pos"][:, :2] + offsets.to(torch.float64)
+        state["root", "velocity"].zero_()
+        for adapter in (batched, source):
+            adapter.set_state(state)
+        actions = np.random.default_rng(5).uniform(-1, 1, (6, 12, 2)).astype(dtype)
+        actions[:, 0] = 0
+        for t in range(12):
+            mask = None if t < 2 else torch.tensor([True, t % 2 == 0, True, False, True, t % 3 == 0])
+            assert_same_state(batched.step(actions[:, t], active=mask), source.step(actions[:, t], active=mask))
+        assert_same_state(
+            batched.step(actions[:, 1], capture_state=False), source.step(actions[:, 1], capture_state=False)
+        )
+        assert_same_state(batched.get_state(), source.get_state())
+        assert_same_state(batched.reset(7), source.reset(7))
+    finally:
+        batched.close()
+        source.close()

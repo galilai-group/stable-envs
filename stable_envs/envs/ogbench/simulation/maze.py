@@ -97,8 +97,16 @@ class OGBMazeAdapter(SimulatorAdapter):
         self._qpos, self._qvel, self.action_dim = BODIES[loco]
         self.envs = [_make_maze(loco, maze) for _ in range(self.num_envs)]
         self._global_rng = [np.random.RandomState(int(seed) + i).get_state() for i in range(self.num_envs)]
+        # A point step outside the teleport maze draws no random numbers, so the lanes step in one loop.
+        self._point = loco == "point" and all(env._teleport_info is None for env in self.envs)
+        self._static_keys = tuple(key for key in self.fields if key[0] in ("task", "rng"))
         self._closed = False
         self.reset(seed=seed)
+
+    @property
+    def process_static_leaves(self):
+        """State leaves that only reset and restore change, for point lanes."""
+        return self._static_keys if self._point else ()
 
     def _check_open(self):
         if self._closed:
@@ -148,6 +156,22 @@ class OGBMazeAdapter(SimulatorAdapter):
     def get_state(self):
         self._check_open()
         return owned_columns((self._values(i, env) for i, env in enumerate(self.envs)), self.num_envs, self.device)
+
+    def process_step_state(self):
+        """Return ``{key: (num_envs, width) array}`` for the State leaves a step changes."""
+        data = [env.data for env in self.envs]
+        out = {}
+        for fields, values in (
+            (self._qpos, np.stack([d.qpos for d in data])),
+            (self._qvel, np.stack([d.qvel for d in data])),
+        ):
+            start = 0
+            for key, width in fields:
+                out[key] = np.ascontiguousarray(values[:, start : start + width])
+                start += width
+        out["simulator", "time"] = np.array([[d.time] for d in data], np.float64)
+        out["simulator", "warmstart"] = np.stack([d.qacc_warmstart for d in data])
+        return out
 
     def validate(self, state):
         self._check_open()
@@ -214,6 +238,8 @@ class OGBMazeAdapter(SimulatorAdapter):
         actions = np.asarray(actions)
         if actions.shape != (self.num_envs, self.action_dim) or not np.isfinite(actions).all():
             raise ValueError(f"OGBMaze action must have finite shape (num_envs, {self.action_dim})")
+        if self._point:
+            return self._step_point(actions, active, capture_state)
         outputs = [
             self._in_legacy_rng(i, env.step, action) if active is None or active[i] else self._last_outputs[i]
             for i, (env, action) in enumerate(zip(self.envs, actions, strict=True))
@@ -237,6 +263,71 @@ class OGBMazeAdapter(SimulatorAdapter):
                     device=self.device,
                 ),
             },
+            batch_size=[self.num_envs],
+            device=self.device,
+        )
+
+    def _success(self, xy, goal):
+        """``norm(xy - goal) <= tol`` per lane, with the source's norm wherever rounding could flip it."""
+        tol = self.envs[0]._goal_tol
+        diff = xy - goal
+        dist = np.sqrt(diff[:, 0] * diff[:, 0] + diff[:, 1] * diff[:, 1])
+        for i in np.flatnonzero(np.abs(dist - tol) <= 1e-9 * max(1.0, tol)):
+            dist[i] = np.linalg.norm(diff[i])
+        return dist <= tol
+
+    def _step_point(self, actions, active, capture_state):
+        """Step point lanes as ``PointEnv.step`` and ``MazeEnv.step`` do, with task outputs for the whole batch."""
+        import mujoco
+
+        envs = self.envs
+        first = envs[0]
+        prev_qpos = np.stack([env.data.qpos for env in envs])
+        prev_qvel = np.stack([env.data.qvel for env in envs])
+        goal = np.stack([env.cur_goal_xy for env in envs])
+        if first._success_timing == "pre":
+            success = self._success(prev_qpos, goal)
+        target = prev_qpos + 0.2 * actions
+        for i in range(self.num_envs) if active is None else np.flatnonzero(active):
+            env = envs[i]
+            data = env.data
+            data.qpos[:] = target[i]
+            data.qvel[:] = 0.0
+            mujoco.mj_step(env.model, data, nstep=env.frame_skip)
+        qpos = np.stack([env.data.qpos for env in envs])
+        qvel = np.stack([env.data.qvel for env in envs])
+        if first._success_timing == "post":
+            success = self._success(qpos, goal)
+        reward = np.where(success, 1.0, 0.0)
+        if first._reward_task_id is not None:
+            reward = reward - 1.0
+        values = {
+            "reward": reward,
+            "terminated": success & bool(first._terminate_at_goal),
+            "truncated": np.zeros(self.num_envs, bool),
+            "observation": qpos,
+            "success": np.where(success, 1.0, 0.0),
+            "xy": qpos,
+            "prev_qpos": prev_qpos,
+            "prev_qvel": prev_qvel,
+            "qpos": qpos,
+            "qvel": qvel,
+        }
+        if active is not None:
+            idle = ~active
+            values = {
+                key: np.where(idle.reshape(-1, *[1] * (v.ndim - 1)), self._last_point[key], v)
+                for key, v in values.items()
+            }
+        self._last_point = values
+        out = {key: torch.tensor(value, device=self.device) for key, value in values.items()}
+        info = TensorDict(
+            {key: out.pop(key) for key in ("xy", "prev_qpos", "prev_qvel", "qpos", "qvel")},
+            [self.num_envs],
+            device=self.device,
+        )
+        return TensorDict(
+            {**({"state": self.get_state()} if capture_state else {}), **out, "info": info},
             batch_size=[self.num_envs],
             device=self.device,
         )
