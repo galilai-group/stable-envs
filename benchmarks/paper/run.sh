@@ -2,6 +2,7 @@
 # Offline and online speed of stable-envs against the source, every arm pinned to the same CPU cores.
 # usage (from the repository root): sbatch -p qed -n 1 -c 8 --hint=nomultithread --mem=128G --gres=gpu:1 -t 48:00:00 benchmarks/paper/run.sh OUT FAMILY=ENV,ENV ...
 #   SMOKE=1 uses small state, batch and episode counts. THROUGHPUT=1 runs only the throughput arms (see the THROUGHPUT block).
+#   REGIME=gifs writes one stable-envs | source | diff GIF per env (benchmarks/gifs.py) and nothing else.
 #   REGIME=offline-gpu runs only stable-envs GPU frames from States, their frame MSE, and the source arms they are compared with.
 #   CORES (default: the first NPIN, default 8, cores the job may use) is the
 #   core set of every arm. STEP_LIMIT (default 6h) stops one arm that does not exit.
@@ -102,6 +103,11 @@ for spec in "$@"; do
     $PIN $P -m benchmarks.craftax_bench --envs "${envs[@]}" --device cuda --repeats $REPEATS --output $OUT/craftax/gpu.json
     JAX_PLATFORMS=cpu $PIN $P -m benchmarks.craftax_bench --envs "${envs[@]}" --device cpu --batches 64 256 \
       --repeats $REPEATS --calls 10 --output $OUT/craftax/cpu.json
+    rm -rf $WORK/venv-$fam
+    continue
+  fi
+  if [ "${REGIME:-all}" = gifs ]; then
+    egl $PIN $P -m benchmarks.gifs --envs "${envs[@]}" --out $OUT/gifs --device cuda
     rm -rf $WORK/venv-$fam
     continue
   fi
