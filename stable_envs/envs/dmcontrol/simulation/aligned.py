@@ -116,17 +116,3 @@ class DMCAlignedAdapter(DMCLanes):
             raise ValueError(f"Unsupported aligned DMC domain {domain!r}")
         self.domain = domain
         super().__init__(domain, num_envs, device, seed, lambda s: _make_env(domain, s), _core(domain))
-
-    def _info(self, env, lane):
-        physics = env.physics
-        info = {"qpos": physics.data.qpos.copy(), "qvel": physics.data.qvel.copy()}
-        success = float(physics.in_target()) if self.domain == "ball_in_cup" else float("nan")
-        if self.domain.startswith("finger"):
-            info.update(
-                hinge_velocity=np.asarray(physics.hinge_velocity()),
-                target_position=physics.target_position().copy(),
-                tip_position=physics.tip_position().copy(),
-            )
-        elif self.domain == "quadruped":
-            info["torso_velocity"] = physics.torso_velocity().copy()
-        return success, info

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import numpy as np
-
 from . import physics as _physics
 from .lanes import DMCLanes
 from .registered import apply_appearance, apply_floor_friction, compile_physics, normalized, source_model
@@ -51,13 +49,3 @@ class DMCHumanoidAdapter(DMCLanes):
 
     def __init__(self, num_envs, device="cpu", seed=0):
         super().__init__("humanoid", num_envs, device, seed, _make_env, core_fields(28, 27))
-
-    def _info(self, env, lane):
-        physics = env.physics
-        return float("nan"), {
-            "qpos": physics.data.qpos.copy(),
-            "qvel": physics.data.qvel.copy(),
-            "speed": np.linalg.norm(physics.center_of_mass_velocity()[[0, 1]]),
-            "torso_upright": physics.torso_upright(),
-            "head_height": physics.head_height(),
-        }
