@@ -15,19 +15,40 @@ from .simulation.local import (
     validate_classic_state,
 )
 
+_EXECUTION_MODES = {"gym": "DELEGATED_CPU", "numpy": "NATIVE_NUMPY", "torch": "NATIVE_TORCH"}
+
 
 class ClassicControlSemantics:
-    """Pair the exact renderer with the authoritative Gymnasium CPU simulator."""
+    """Pair the exact renderer with Gymnasium resets and batched or Gymnasium steps."""
 
-    execution_mode = "DELEGATED_CPU"
+    #: Gymnasium resets every backend; ``__init__`` sets the mode of the selected step backend.
+    execution_mode = "AUTO_BATCHED"
+    #: Every simulator returns new output tensors on each step.
+    _step_outputs_owned = True
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, simulation_backend: str = "auto", **kwargs):
+        """Select the step backend. ``"auto"`` steps all lanes at once in NumPy or Torch.
+
+        ``"auto"`` uses Torch for ``TORCH_MIN_ENVS`` or more CUDA lanes and NumPy on the host for fewer
+        lanes. Below ``NUMPY_MIN_ENVS`` lanes it steps with Gymnasium, which is faster there.
+
+        ``"gym"`` steps one Gymnasium environment per lane. ``"numpy"`` or ``"torch"`` selects a batched
+        backend on any device. NumPy steps equal Gymnasium steps, and Torch steps agree with them to rounding.
+        """
         super().__init__(*args, **kwargs)
+        from .simulation.batched import BatchedClassicAdapter, classic_backend
         from .simulation.execution import make_classic_adapter
 
-        self._simulator = make_classic_adapter(
-            self.CLASSIC_DOMAIN, self.B, self.device, self._seed, ClassicControlAdapter
-        )
+        self.simulation_backend = classic_backend(self.CLASSIC_DOMAIN, self.device, self.B, simulation_backend)
+        self.execution_mode = _EXECUTION_MODES[self.simulation_backend]
+        if self.simulation_backend == "gym":
+            self._simulator = make_classic_adapter(
+                self.CLASSIC_DOMAIN, self.B, self.device, self._seed, ClassicControlAdapter
+            )
+        else:
+            self._simulator = BatchedClassicAdapter(
+                self.CLASSIC_DOMAIN, self.B, self.device, self._seed, self.simulation_backend
+            )
         self._configure_simulator()
         self.reset(seed=self._seed)
 

@@ -8,6 +8,14 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Classic control `simulation_backend`: `CartPole`, `Pendulum`, `Acrobot`, `MountainCar` and
+  `MountainCarContinuous` step all lanes in one batched float64 operation. With `"auto"`, the default,
+  the lanes step in NumPy on the host, and 4096 or more CUDA lanes step in Torch. Below 2 lanes
+  (CartPole, Acrobot) or 8 lanes (MountainCarContinuous), `"auto"` keeps the Gymnasium loop because it
+  is faster there. Gymnasium still resets the lanes, owns the PCG64 streams and supplies the State.
+  NumPy steps give State and outputs equal to the Gymnasium steps, and the native contract tests check
+  this. Torch steps agree with Gymnasium to rounding. `"gym"`, `"numpy"` and `"torch"`
+  select one backend on any device.
 - MS-Human-700: `MSHumanLocomotion` wraps the whole-body musculoskeletal locomotion model (36 DoF,
   100 muscles) on the MuJoCo Warp backend (`mshuman` extra). Physics and State run on the env device;
   frames come from MuJoCo's OpenGL renderer. The Apache-2.0 model is fetched from LNSGroup/MS-Human-700
