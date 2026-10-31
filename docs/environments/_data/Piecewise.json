@@ -10,8 +10,8 @@
  "frame_shape": [224, 224, 3],
  "physics": "native torch on the env device",
  "renderers": {
-  "cpu": "raster2d (torch)",
-  "cuda": "raster2d (torch) with the Triton dot compositor"
+  "cpu": "Numba dot compositor",
+  "cuda": "Triton dot compositor"
  },
  "action": {
   "shape": [2],

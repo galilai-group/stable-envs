@@ -100,7 +100,7 @@ cannot read the hardware, the fallback applies.
   for small batches. The library uses worker processes only on Linux.
 - Slow classic control CPU rendering without Numba: try `render_workers` between 0 and the number of
   cores, and `render_worker_min_rows` for small batches.
-- Classic control CPU rendering with Numba: the kernel uses one thread for each CPU in the process
+- Classic control and navigation CPU rendering with Numba: the kernel uses one thread for each CPU in the process
   affinity. To use fewer threads, set `NUMBA_NUM_THREADS` before the first render.
 - Triton kernels on a new GPU: try the `*_warps` knobs (1, 2, 4, 8) and the `*_block` knobs in powers of two.
 
