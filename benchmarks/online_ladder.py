@@ -9,6 +9,11 @@ Arms:
   snv-step-gpu          as snv-step with device="cuda"; physics moves to the GPU only where the class is GPU-native.
   snv-render-cpu               stable-envs physics and frames on CPU, ``T`` actions per call; stepping and rendering overlap.
   snv-render-gpu               as snv-render-cpu with frames on CUDA.
+  src-single-render     one source env in this process: step, then draw, one action at a time.
+  src-sync-render       ``--procs`` source envs in a Gymnasium ``SyncVectorEnv`` in this process; frames by ``call("render")``.
+  src-async-render      as src-sync-render in an ``AsyncVectorEnv`` with one worker process per env.
+  jpeg-decode-cpu       decode stored 224 px JPEGs of this env's frames in ``--procs`` DataLoader workers (frames/s).
+  jpeg-decode-gpu       decode the same JPEGs in batches with nvJPEG on CUDA (frames/s).
 """
 
 from __future__ import annotations
@@ -430,7 +435,181 @@ def run_ours(args, name: str, dev: str, render: bool, chunk: int) -> dict:
     }
 
 
-ARMS = ("src-pipelined-render", "src-pipelined-step", "snv-step", "snv-step-gpu", "snv-render-cpu", "snv-render-gpu")
+def _gym_lane(name, size, action_dim):
+    """A source env as a ``gymnasium.Env`` for the vector-env arms: observations are dropped, frames come from render."""
+    import gymnasium as gym
+
+    class GymLane(gym.Env):
+        metadata = {"render_modes": ["rgb_array"]}
+        render_mode = "rgb_array"
+
+        def __init__(self):
+            self.src = _make_source(name, size)
+            self.action_space = gym.spaces.Box(-np.inf, np.inf, (action_dim,), np.float64)
+            self.observation_space = gym.spaces.Box(0.0, 0.0, (1,), np.float32)
+
+        def reset(self, *, seed=None, options=None):
+            self.src.reset(seed=seed)
+            return np.zeros(1, np.float32), {}
+
+        def step(self, action):
+            done = self.src.step(action)
+            return np.zeros(1, np.float32), 0.0, False, done, {}
+
+        def render(self):
+            return self.src.render()
+
+        def close(self):
+            self.src.close()
+
+    return GymLane()
+
+
+def run_source_single(args, name: str) -> dict:
+    """Play the stored episodes through one source env in this process, drawing a frame after every step."""
+    data = np.load(Path(args.data) / f"{name}.npz")
+    seeds, actions = data["seeds"][: args.episodes], data["actions"][: args.episodes]
+    env = _make_source(name, args.size)
+
+    def play():
+        for s in range(len(seeds)):
+            env.reset(seed=int(seeds[s]))
+            for a in actions[s]:
+                env.step(a)
+                np.asarray(env.render())
+                yield 1
+
+    try:
+        t = _timed(_cycle(play), seconds=args.seconds, repeats=args.repeats)
+    finally:
+        env.close()
+    return {"source": source_id(name), "envs": 1, "procs": 1, "steps_per_s": t["rate"], **t}
+
+
+def run_source_vector(args, name: str, asynchronous: bool) -> dict:
+    """Play the stored episodes through ``--procs`` source envs in a Gymnasium vector env; one frame per env per step."""
+    import gymnasium as gym
+
+    data = np.load(Path(args.data) / f"{name}.npz")
+    seeds, actions = data["seeds"][: args.episodes], data["actions"][: args.episodes]
+    n, length = actions.shape[:2]
+    k = min(args.procs, n)
+    fns = [functools.partial(_gym_lane, name, args.size, actions.shape[-1]) for _ in range(k)]
+    if asynchronous:
+        venv = gym.vector.AsyncVectorEnv(fns, shared_memory=False, context="spawn")
+    else:
+        venv = gym.vector.SyncVectorEnv(fns)
+
+    def play(groups):
+        for s in groups:
+            venv.reset(seed=[int(x) for x in seeds[s : s + k]])
+            for t in range(length):
+                venv.step(actions[s : s + k, t].astype(np.float64))
+                frames = venv.call("render")
+                np.stack([np.asarray(f) for f in frames])
+                yield k
+
+    groups = list(range(0, n - k + 1, k))
+    try:
+        t = _timed(_cycle(lambda: play(groups)), seconds=args.seconds, repeats=args.repeats)
+    finally:
+        venv.close()
+    return {
+        "source": source_id(name),
+        "vector": "async" if asynchronous else "sync",
+        "envs": k,
+        "procs": k if asynchronous else 1,
+        "steps_per_s": t["rate"],
+        **t,
+    }
+
+
+class _JpegFiles(torch.utils.data.Dataset):
+    def __init__(self, paths):
+        self.paths = paths
+
+    def __len__(self):
+        return len(self.paths)
+
+    def __getitem__(self, i):
+        from torchvision.io import decode_jpeg
+
+        with open(self.paths[i], "rb") as f:
+            data = torch.frombuffer(bytearray(f.read()), dtype=torch.uint8)
+        return decode_jpeg(data)
+
+
+def _jpeg_files(args, name: str) -> list:
+    """Encode frames of this env's stored episodes (stable-envs on CUDA) as JPEG files on node-local disk, once."""
+    from PIL import Image
+
+    root = Path(os.environ.get("TMPDIR", "/tmp")) / f"jpeg-{os.getpid()}" / name
+    if root.exists():
+        return sorted(root.glob("*.jpg"))
+    root.mkdir(parents=True)
+    data = np.load(Path(args.data) / f"{name}.npz")
+    paths = []
+    for s in range(min(16, len(data["seeds"]))):
+        frames, _ = _ours_frames(name, args.size, "cuda", int(data["seeds"][s]), data["actions"][s])
+        for t, frame in enumerate(frames):
+            p = root / f"{s:03d}_{t:03d}.jpg"
+            Image.fromarray(np.ascontiguousarray(frame[..., :3])).save(p, quality=95)
+            paths.append(p)
+    return paths
+
+
+def run_jpeg(args, name: str, device: str) -> dict:
+    """Frames per second of loading and decoding stored JPEG frames: the data-loading floor of an offline pipeline."""
+    paths = _jpeg_files(args, name)
+    if device == "cpu":
+        loader = torch.utils.data.DataLoader(
+            _JpegFiles(paths), batch_size=64, num_workers=args.procs, persistent_workers=True, prefetch_factor=4
+        )
+
+        def units():
+            for batch in loader:
+                yield len(batch)
+
+        t = _timed(_cycle(units), seconds=args.seconds, repeats=args.repeats)
+        del loader
+    else:
+        from torchvision.io import decode_jpeg
+
+        def units():
+            for i in range(0, len(paths), 256):
+                data = []
+                for p in paths[i : i + 256]:
+                    with open(p, "rb") as f:
+                        data.append(torch.frombuffer(bytearray(f.read()), dtype=torch.uint8))
+                yield len(decode_jpeg(data, device="cuda"))
+
+        t = _timed(_cycle(units), seconds=args.seconds, repeats=args.repeats, sync=torch.cuda.synchronize)
+    return {
+        "files": len(paths),
+        "quality": 95,
+        "workers": args.procs if device == "cpu" else 0,
+        "device": device,
+        "frames_per_s": t["rate"],
+        "steps_per_s": t["rate"],
+        **t,
+    }
+
+
+ARMS = (
+    "src-pipelined-render",
+    "src-pipelined-step",
+    "snv-step",
+    "snv-step-gpu",
+    "snv-render-cpu",
+    "snv-render-gpu",
+    "src-single-render",
+    "src-sync-render",
+    "src-async-render",
+    "jpeg-decode-cpu",
+    "jpeg-decode-gpu",
+)
+#: Arms that take one action per call; the others run once per ``--chunks`` value.
+SINGLE_CALL = ("src-", "jpeg-")
 #: Stable-envs arms: (device, frames). snv-step-gpu steps on CUDA, which only moves physics for GPU-native classes.
 OURS = {
     "snv-step": ("cpu", False),
@@ -443,15 +622,21 @@ OURS = {
 def cmd_run(args) -> None:
     res = {"host": _host(), "env": args.env, "arms": {}, "budget_s": args.budget, "repeats_max": args.repeats}
     for arm in args.arms:
-        chunks = [1] if arm.startswith("src-") else args.chunks
+        chunks = [1] if arm.startswith(SINGLE_CALL) else args.chunks
         for chunk in chunks:
             key = f"{arm}-{args.src_label}" if arm == "src-pipelined-render" else arm
-            key = key if arm.startswith("src-") else f"{key}-T{chunk}"
+            key = key if arm.startswith(SINGLE_CALL) else f"{key}-T{chunk}"
             try:
                 if arm == "src-pipelined-render":
                     r = run_source(args, args.env, True)
                 elif arm == "src-pipelined-step":
                     r = run_source(args, args.env, False)
+                elif arm == "src-single-render":
+                    r = run_source_single(args, args.env)
+                elif arm in ("src-sync-render", "src-async-render"):
+                    r = run_source_vector(args, args.env, arm == "src-async-render")
+                elif arm.startswith("jpeg-"):
+                    r = run_jpeg(args, args.env, "cpu" if arm == "jpeg-decode-cpu" else "cuda")
                 else:
                     r = run_ours(args, args.env, *OURS[arm], chunk)
                 r.setdefault("status", "ok")
