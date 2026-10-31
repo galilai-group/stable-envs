@@ -25,9 +25,18 @@ class ClassicControlSemantics:
         super().__init__(*args, **kwargs)
         from .simulation.execution import make_classic_adapter
 
-        self._simulator = make_classic_adapter(
-            self.CLASSIC_DOMAIN, self.B, self.device, self._seed, ClassicControlAdapter
-        )
+        # Classes with a Torch simulator set ``simulation_backend`` before this runs; the device decides "auto".
+        if getattr(self, "simulation_backend", None) is not None:
+            from .simulation.pendulum_torch import PendulumTorchAdapter, pendulum_backend
+
+            self.simulation_backend = pendulum_backend(self.device, self.simulation_backend)
+            self.execution_mode = "NATIVE_TORCH" if self.simulation_backend == "torch" else "DELEGATED_CPU"
+        if getattr(self, "simulation_backend", None) == "torch":
+            self._simulator = PendulumTorchAdapter(self.B, self.device, self._seed)
+        else:
+            self._simulator = make_classic_adapter(
+                self.CLASSIC_DOMAIN, self.B, self.device, self._seed, ClassicControlAdapter
+            )
         self._configure_simulator()
         self.reset(seed=self._seed)
 

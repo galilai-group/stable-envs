@@ -8,6 +8,10 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- `Pendulum(simulation_backend=...)`: CUDA lanes step Pendulum-v1 in batched float64 Torch on the GPU
+  (`"auto"`, the default), and CPU lanes keep the Gymnasium simulator. Resets, the PCG64 streams and
+  State export still come from Gymnasium. Torch steps match Gymnasium to rounding; `"gym"` or `"torch"`
+  selects one backend on any device.
 - Classic control on CPU: a Numba kernel draws the same primitive records as the Triton kernel, in
   parallel over frames. `backend="auto"` and `backend="port"` use it when Numba imports; otherwise the
   CPU paths below apply. Frames are byte-identical to the Torch port. The `classic` extra installs
