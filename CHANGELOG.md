@@ -63,6 +63,8 @@ All notable changes to this project are listed here. The format follows
   into one shared buffer. Frames do not change. The knobs use the new tuning path `fetch-opengl`.
   On 8 CPU cores, rendering stored States is approximately 2 times faster, and `step` with frames is
   approximately 2.5 times faster.
+- Fetch with OpenGL (CPU, or `backend="opengl"` on CUDA) draws the translucent mocap markers at the
+  gripper, as Gymnasium Robotics does. Frames change where the markers are.
 
 - One process adapter (`stable_envs._execution.process.ProcessAdapter`) runs the worker processes of
   DM Control, classic Acrobot, Fetch, OGBench Maze and OGBench Cube/Scene. It replaces five copies of
