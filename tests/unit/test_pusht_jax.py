@@ -37,6 +37,7 @@ def test_mixed_action_dtypes_and_reset_restore(device, discrete):
     [
         ([480, 100, 200, 250, 0, 0, 0], [1.0, 0.0]),
         ([100, 215, 200, 200, 0, 0, 0], [0.5, 0.0]),
+        ([300, 300, 200, 250, 0, 0, 0], [1.6, -1.3]),
     ],
 )
 def test_relative_controls_and_contact_track_main(device, initial, action):
