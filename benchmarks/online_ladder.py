@@ -435,9 +435,15 @@ def run_ours(args, name: str, dev: str, render: bool, chunk: int) -> dict:
     }
 
 
-def _gym_lane(name, size, action_dim):
-    """A source env as a ``gymnasium.Env`` for the vector-env arms: observations are dropped, frames come from render."""
+def _gym_lane(name, size, action_dim, threads=None):
+    """A source env as a ``gymnasium.Env`` for the vector-env arms: observations are dropped, frames come from render.
+
+    ``threads`` sets torch's thread count in the process that builds the env (one per AsyncVectorEnv worker).
+    """
     import gymnasium as gym
+
+    if threads is not None:
+        torch.set_num_threads(threads)
 
     class GymLane(gym.Env):
         metadata = {"render_modes": ["rgb_array"]}
@@ -494,7 +500,10 @@ def run_source_vector(args, name: str, asynchronous: bool) -> dict:
     seeds, actions = data["seeds"][: args.episodes], data["actions"][: args.episodes]
     n, length = actions.shape[:2]
     k = min(args.procs, n)
-    fns = [functools.partial(_gym_lane, name, args.size, actions.shape[-1]) for _ in range(k)]
+    # One torch thread per worker: k workers on k cores. Sources that draw with torch on CPU (swm TwoRoom) otherwise
+    # start k threads in every worker.
+    threads = 1 if asynchronous else None
+    fns = [functools.partial(_gym_lane, name, args.size, actions.shape[-1], threads) for _ in range(k)]
     if asynchronous:
         venv = gym.vector.AsyncVectorEnv(fns, shared_memory=False, context="spawn")
     else:
@@ -519,6 +528,7 @@ def run_source_vector(args, name: str, asynchronous: bool) -> dict:
         "vector": "async" if asynchronous else "sync",
         "envs": k,
         "procs": k if asynchronous else 1,
+        "worker_threads": threads,
         "steps_per_s": t["rate"],
         **t,
     }
