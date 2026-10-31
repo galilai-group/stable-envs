@@ -7,8 +7,11 @@ as ``ndarray.dot``, so the values equal dm_control's per-lane values.
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 
+_pow = np.frompyfunc(math.pow, 2, 1)
 _XMAT = {name: i for i, name in enumerate(("xx", "xy", "xz", "yx", "yy", "yz", "zx", "zy", "zz"))}
 
 
@@ -51,21 +54,28 @@ def _norm(x: np.ndarray) -> np.ndarray:
 
 
 def _tolerance(x, lower, upper, margin=0.0, sigmoid="gaussian", value_at_margin=0.1):
-    """``rewards.tolerance`` with per-lane bounds and margin, one call per distinct parameter row."""
-    from dm_control.utils import rewards
+    """``rewards.tolerance`` of one scalar per lane, with per-lane bounds and margin.
 
-    params = np.stack([np.broadcast_to(np.asarray(v, np.float64), x.shape) for v in (lower, upper, margin)], axis=-1)
-    if (params == params[0]).all():
-        lo, hi, m = params[0]
-        return rewards.tolerance(x, bounds=(lo, hi), margin=m, sigmoid=sigmoid, value_at_margin=value_at_margin)
-    out = np.empty(len(x))
-    rows, inverse = np.unique(params, axis=0, return_inverse=True)
-    for k, (lo, hi, m) in enumerate(rows):
-        lanes = inverse.reshape(-1) == k
-        out[lanes] = rewards.tolerance(
-            x[lanes], bounds=(lo, hi), margin=m, sigmoid=sigmoid, value_at_margin=value_at_margin
-        )
-    return out
+    For a scalar, dm_control squares with libm ``pow``, which can round differently from ``x * x``.
+    """
+    x = np.asarray(x, np.float64)
+    lower, upper, margin = (np.broadcast_to(np.asarray(v, np.float64), x.shape) for v in (lower, upper, margin))
+    in_bounds = np.logical_and(lower <= x, x <= upper)
+    value = np.where(in_bounds, 1.0, 0.0)
+    soft = margin != 0
+    if soft.any():
+        x, lower, upper, margin = x[soft], lower[soft], upper[soft], margin[soft]
+        d = np.where(x < lower, lower - x, x - upper) / margin
+        if sigmoid == "gaussian":
+            scale = np.sqrt(-2 * np.log(value_at_margin))
+            curve = np.exp(-0.5 * _pow(d * scale, 2).astype(np.float64))
+        elif sigmoid == "long_tail":
+            scale = np.sqrt(1 / value_at_margin - 1)
+            curve = 1 / (_pow(d * scale, 2).astype(np.float64) + 1)
+        else:
+            raise ValueError(f"unsupported sigmoid {sigmoid!r}")
+        value[soft] = np.where(in_bounds[soft], 1.0, curve)
+    return value
 
 
 def gather(views) -> np.ndarray:
@@ -200,7 +210,7 @@ class Cartpole(BatchTask):
             angle_in_bounds = rewards.tolerance(cosine, self.task._ANGLE_COSINE_RANGE).prod(axis=1)
             return cart_in_bounds * angle_in_bounds
         upright = (cosine + 1) / 2
-        centered = rewards.tolerance(cart, margin=2)
+        centered = _tolerance(cart, 0.0, 0.0, 2)
         centered = (1 + centered) / 2
         small_control = rewards.tolerance(s.data("ctrl"), margin=1, value_at_margin=0, sigmoid="quadratic")[:, 0]
         small_control = (4 + small_control) / 5
@@ -335,11 +345,10 @@ class Manipulator(BatchTask):
         return [arm_pos, qvel[:, self.arm_dof], touch, hand, obj, qvel[:, self.object_dof], target]
 
     def reward(self, s):
-        from dm_control.utils import rewards
 
         site = s.data("site_xpos")
         distance = _norm(site[:, self.ball] - site[:, self.target])
-        return rewards.tolerance(distance, (0, self.close), self.close * 2)
+        return _tolerance(distance, 0, self.close, self.close * 2)
 
     def info(self, s):
         return _state_info(s)
@@ -542,10 +551,8 @@ class Walker(BatchTask):
         from dm_control.suite import walker
         from dm_control.utils import rewards
 
-        standing = rewards.tolerance(
-            s.data("xpos")[:, self.torso, 2],
-            bounds=(walker._STAND_HEIGHT, float("inf")),
-            margin=walker._STAND_HEIGHT / 2,
+        standing = _tolerance(
+            s.data("xpos")[:, self.torso, 2], walker._STAND_HEIGHT, float("inf"), walker._STAND_HEIGHT / 2
         )
         upright = (1 + s.data("xmat")[:, self.torso, _XMAT["zz"]]) / 2
         stand_reward = (3 * standing + upright) / 4
@@ -609,10 +616,8 @@ class Humanoid(BatchTask):
         from dm_control.suite import humanoid
         from dm_control.utils import rewards
 
-        standing = rewards.tolerance(
-            s.data("xpos")[:, self.head, 2],
-            bounds=(humanoid._STAND_HEIGHT, float("inf")),
-            margin=humanoid._STAND_HEIGHT / 4,
+        standing = _tolerance(
+            s.data("xpos")[:, self.head, 2], humanoid._STAND_HEIGHT, float("inf"), humanoid._STAND_HEIGHT / 4
         )
         upright = rewards.tolerance(
             s.data("xmat")[:, self.torso, _XMAT["zz"]],
