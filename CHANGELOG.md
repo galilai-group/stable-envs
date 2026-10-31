@@ -61,6 +61,8 @@ All notable changes to this project are listed here. The format follows
 - Fetch on CPU: on Linux, batches of at least `render_worker_min_rows` states draw with software OpenGL
   in up to `render_workers` worker processes. Each worker has its own OpenGL context and writes its frames
   into one shared buffer. Frames do not change. The knobs use the new tuning path `fetch-opengl`.
+  On 8 CPU cores, rendering stored States is approximately 2 times faster, and `step` with frames is
+  approximately 2.5 times faster.
 
 - One process adapter (`stable_envs._execution.process.ProcessAdapter`) runs the worker processes of
   DM Control, classic Acrobot, Fetch, OGBench Maze and OGBench Cube/Scene. It replaces five copies of
