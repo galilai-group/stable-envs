@@ -163,7 +163,8 @@ def test_accepted_classic_matches_repeated_steps(name, dtype):
 
 
 def test_classic_stops_at_distinct_time_limits_without_step_or_reset(monkeypatch):
-    with snv.CartPole(num_envs=3, device="cpu") as env:
+    # Per-lane Gymnasium time limits and step counts need the Gymnasium backend.
+    with snv.CartPole(num_envs=3, device="cpu", simulation_backend="gym") as env:
         env.reset(seed=17)
         for lane, upstream in enumerate(env._simulator.envs):
             upstream._max_episode_steps = lane + 1
