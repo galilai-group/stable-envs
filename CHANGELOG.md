@@ -12,6 +12,16 @@ All notable changes to this project are listed here. The format follows
   100 muscles) on the MuJoCo Warp backend (`mshuman` extra). Physics and State run on the env device;
   frames come from MuJoCo's OpenGL renderer. The Apache-2.0 model is fetched from LNSGroup/MS-Human-700
   at a pinned commit on first use, overridable with `STABLE_ENVS_MSHUMAN_HOME`.
+- DM Control on CPU: Numba kernels cast the camera, shadow and mirror rays of all 17 classes. Each tile
+  of 8 × 8 pixels tests its rays only against the moving geometry that its bounds can reach. The
+  body-tracking classes also shade in the kernel. `backend="auto"` (the default) uses the kernels when
+  Numba imports, and `backend="torch"` selects the Torch renderers. The frames are the same as the Torch
+  frames, except for rare pixels that differ by one level, because Torch's CPU square root can round
+  through MKL. The `dmcontrol` extra installs Numba, and the `pin-dmc` group pins it.
+- `Pendulum(simulation_backend=...)`: CUDA lanes step Pendulum-v1 in batched float64 Torch on the GPU
+  (`"auto"`, the default), and CPU lanes keep the Gymnasium simulator. Resets, the PCG64 streams and
+  State export still come from Gymnasium. Torch steps match Gymnasium to rounding; `"gym"` or `"torch"`
+  selects one backend on any device.
 - Classic control on CPU: a Numba kernel draws the same primitive records as the Triton kernel, in
   parallel over frames. `backend="auto"` and `backend="port"` use it when Numba imports; otherwise the
   CPU paths below apply. Frames are byte-identical to the Torch port. The `classic` extra installs
