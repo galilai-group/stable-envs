@@ -157,14 +157,15 @@ def test_batched_step_equals_dm_control_lane_by_lane(key):
 
 
 @pytest.mark.parametrize("sigmoid", ["gaussian", "long_tail"])
-def test_per_lane_tolerance_equals_dm_control_per_lane(sigmoid):
+def test_lane_tolerance_equals_dm_control_on_each_scalar(sigmoid):
     from dm_control.utils import rewards
 
     from stable_envs.envs.dmcontrol.simulation.batch import _tolerance
 
-    x = np.random.default_rng(2).uniform(-0.2, 0.4, 64)
-    upper = np.repeat([0.015, 0.02, 0.03, 0.05], 16)
-    margin = np.where(np.arange(64) % 3 == 0, 0.0, 5 * upper)
+    lanes = 20000
+    x = np.random.default_rng(2).uniform(-3, 3, lanes)
+    upper = np.repeat([0.015, 0.02, 0.03, 0.6], lanes // 4)
+    margin = np.where(np.arange(lanes) % 7 == 0, 0.0, 5 * upper)
     expected = [rewards.tolerance(v, bounds=(0, u), margin=m, sigmoid=sigmoid) for v, u, m in zip(x, upper, margin)]
     assert_same_state(
         torch.from_numpy(_tolerance(x, 0, upper, margin, sigmoid)), torch.tensor(expected, dtype=torch.float64)
