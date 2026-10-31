@@ -58,6 +58,9 @@ All notable changes to this project are listed here. The format follows
   for `OGBScene`. `supersample=2` or `backend="mjwarp_fidelity"` keeps the MJWarp renderer.
 - `OGBCube` and `OGBScene` draw OpenGL batches of 2 or more states in up to `ogb_gl_workers` worker
   processes on Linux, and read many frames back in one call. Frames do not change.
+- Fetch on CPU: on Linux, batches of at least `render_worker_min_rows` states draw with software OpenGL
+  in up to `render_workers` worker processes. Each worker has its own OpenGL context and writes its frames
+  into one shared buffer. Frames do not change. The knobs use the new tuning path `fetch-opengl`.
 
 - One process adapter (`stable_envs._execution.process.ProcessAdapter`) runs the worker processes of
   DM Control, classic Acrobot, Fetch, OGBench Maze and OGBench Cube/Scene. It replaces five copies of
