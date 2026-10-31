@@ -37,7 +37,7 @@ env:
 
 jobs:
   plan:
-    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    if: (vars.STABLE_ENVS_CI == 'true' || github.event_name == 'workflow_dispatch') && (github.event_name != 'pull_request' || !github.event.pull_request.draft)
     runs-on: ubuntu-latest
     outputs:
       core: ${{ steps.plan.outputs.core }}
@@ -67,7 +67,7 @@ jobs:
           cat "$GITHUB_OUTPUT"
 
   static:
-    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    if: (vars.STABLE_ENVS_CI == 'true' || github.event_name == 'workflow_dispatch') && (github.event_name != 'pull_request' || !github.event.pull_request.draft)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -156,7 +156,7 @@ jobs:
             durations-*.json
 
   docs:
-    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    if: (vars.STABLE_ENVS_CI == 'true' || github.event_name == 'workflow_dispatch') && (github.event_name != 'pull_request' || !github.event.pull_request.draft)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -222,7 +222,7 @@ jobs:
 
   # The only check branch protection requires. Jobs the plan skipped count as passing.
   ci-ok:
-    if: always() && (github.event_name != 'pull_request' || !github.event.pull_request.draft)
+    if: (vars.STABLE_ENVS_CI == 'true' || github.event_name == 'workflow_dispatch') && (always() && (github.event_name != 'pull_request' || !github.event.pull_request.draft))
     needs: [plan, static, core, family, docs, package, install]
     runs-on: ubuntu-latest
     steps:
