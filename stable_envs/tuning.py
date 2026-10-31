@@ -123,8 +123,8 @@ class Knob:
 
 
 _KINDS = {"n": "an int >= 1", "n0": "an int >= 0", "pow2": "a power of two", "warps": f"one of {list(_WARPS)}"}
-_SIM = ("classic-sim", "dmc-sim", "fetch-sim", "ogb-sim", "pusht-sim", "pusht-render", "rocket-sim")
-_RENDER = ("classic-render",)
+_SIM = ("classic-sim", "dmc-sim", "fetch-sim", "ogb-sim", "pusht-sim", "pusht-render", "rocket-sim", "roadster-sim")
+_RENDER = ("classic-render", "roadster-render")
 
 KNOBS: dict[str, Knob] = {
     k.name: k
@@ -166,6 +166,7 @@ RENDER_PATHS: dict[str, tuple[str, ...]] = {
     "navigation": ("navigation", "raster2d"),
     "pusht": ("raster2d", "pusht-sim", "pusht-render"),
     "classic_control": ("gfxdraw", "classic-render", "classic-sim"),
+    "roadster": ("roadster-render", "roadster-sim"),
 }
 
 for _k in KNOBS.values():

@@ -48,6 +48,7 @@ package, which tests use for comparison.
 | `mjwarp` | Fetch on CUDA | MuJoCo Warp |
 | `rocket` | PyFlytRocketLanding | PyFlyt 0.29.0, pybullet 3.2.7, Pillow, SciPy |
 | `craftax` / `craftax-gpu` | Craftax | Craftax, JAX. `-gpu` takes JAX's CUDA 12 build for `device="cuda"` |
+| `roadster` | Roadster (5 classes) | MuJoCo >= 3.11, Pillow |
 | `docs` / `dev` / `examples` / `hf` | not needed to render | docs, tests, example helpers, HuggingFace |
 
 On CUDA, TrackCom domains draw the floor reflection only with MuJoCo Warp 3.12, which `dmcontrol-gpu`

@@ -119,6 +119,7 @@ nav:
       - OGBench: environments/ogbench.md
       - PushT: environments/pusht.md
       - PyFlyt: environments/pyflyt.md
+      - Roadster: environments/roadster.md
   - Reference:
       - Env: api/env.md
       - Registered environments: api/envs.md

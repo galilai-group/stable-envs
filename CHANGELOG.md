@@ -8,6 +8,15 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Roadster: `RoadsterLoop`, `RoadsterMission`, `RoadsterTrafficJam`, `RoadsterRooftop` and `RoadsterCarHop`:
+  five planning tasks for a jet-powered car in MuJoCo, ported from roadster-jets into
+  `stable_envs/envs/roadster/source/`, with a complete State, the `weather.wind` / `weather.rain` physics
+  leaves and the world-model camera drawn by MuJoCo's OpenGL renderer, on the GPU with a GPU's EGL driver and on
+  the CPU otherwise (`roadster` extra: MuJoCo, Pillow). The visual Variation leaf `rendering.cinematic` draws the same State on a dark-space scene with
+  shadows and MSAA. The exhaust smoke is drawn from the exhaust history in State (`fx`), so `render(state)`
+  shows it. Large CPU batches step their lanes in worker processes and draw frames in render workers
+  (`roadster-sim` and `roadster-render` tuning paths); steps that need frames but no State build no
+  snapshot.
 - Classic control on CPU: a Numba kernel draws the same primitive records as the Triton kernel, in
   parallel over frames. `backend="auto"` and `backend="port"` use it when Numba imports; otherwise the
   CPU paths below apply. Frames are byte-identical to the Torch port. The `classic` extra installs
