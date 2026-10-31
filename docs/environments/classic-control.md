@@ -2,7 +2,8 @@
 
 These five classes port the classic control tasks of
 [Gymnasium](https://gymnasium.farama.org/environments/classic_control/)
-([Towers et al., 2024](https://arxiv.org/abs/2407.17032)). The source simulator steps the physics on CPU.
+([Towers et al., 2024](https://arxiv.org/abs/2407.17032)). The source simulator resets the lanes, and a
+batched port of its `step` advances all lanes at once (see [Physics backends](#physics-backends)).
 The renderer is a port of the Gymnasium pygame `gfxdraw` code. It draws the source frame for the same
 State. On CUDA, a fused Triton kernel draws the frames. On CPU, a Numba kernel draws the same
 primitive records in parallel over frames and gives the same frames as the Triton kernel. The
@@ -22,6 +23,32 @@ frames = env.render()          # (8, 400, 600, 3) uint8
 
 The `physics` key of the State holds the physical constants of each lane, for example gravity and
 masses. The Variation can change them.
+
+## Physics backends
+
+Gymnasium resets each lane and owns its PCG64 random stream. The `simulation_backend` argument selects
+how the lanes step:
+
+| Value | Steps |
+| --- | --- |
+| `"auto"` (default) | `"numpy"`, or `"torch"` for 4096 or more CUDA lanes, or `"gym"` for very few lanes |
+| `"numpy"` | All lanes in one batched NumPy operation on the host. Outputs move to the environment device. |
+| `"torch"` | All lanes in one batched Torch operation on the environment device |
+| `"gym"` | One Gymnasium environment per lane |
+
+`"auto"` uses `"gym"` below 2 lanes for CartPole and Acrobot and below 8 lanes for
+MountainCarContinuous. At these batch sizes the Gymnasium loop is faster. Up to 4095 CUDA lanes, NumPy
+steps on the host and a copy of the outputs are faster than the Torch kernels.
+
+The NumPy steps give State, observations, rewards and episode flags equal to the Gymnasium steps. Torch computes `sin`, `cos` and powers with its own
+code, so Torch steps agree with Gymnasium to rounding. `env.simulation_backend` reports the selected
+backend.
+
+```python
+env = snv.Acrobot(num_envs=256)                                 # NumPy steps
+env = snv.Acrobot(num_envs=8192, device="cuda")                 # Torch steps on the GPU
+env = snv.Acrobot(num_envs=256, simulation_backend="gym")       # Gymnasium steps
+```
 
 ## CartPole
 
