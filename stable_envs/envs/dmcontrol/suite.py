@@ -8,6 +8,7 @@ from ..._core.plate_texels import substitute as _substitute_texels
 from ..._core.plate_texels import texel_key as _texel_key
 from ..._core.plate_texels import texel_slots as _texel_slots
 from ...render import raycast3d as R3
+from ...render.cpu_raster import ray_module
 from ...render.mjwarp import effective_alpha
 from ...spaces import Box, Dict
 from ._model import (
@@ -577,12 +578,8 @@ class DMControlSuite(_DMCModel):
         return R3.cast_nearest(sc.prims.kind, sizes, xpos, xmat, o, d)
 
     @staticmethod
-    def _occluded(sc, p, L, sl, xpos, xmat, sizes, skip=None, eps: float = 1e-6):
-        """Return whether movers block rays from ``p`` to light ``sl``.
-
-        ``skip`` excludes each ray’s originating convex primitive. Its front-facing
-        surface cannot occlude itself; back-facing illumination is already zero.
-        """
+    def _shadow_rays(p, L, sl, eps: float = 1e-6):
+        """Return origins, unit directions and lengths of rays from ``p`` to light ``sl``."""
         shape = (1,) * (p.dim() - 1) + (3,)
         if L["kind"][sl] == LIGHT_DIRECTIONAL:
             d = (-_norm(L["dir"][sl].view(shape))).expand_as(p)
@@ -591,7 +588,16 @@ class DMControlSuite(_DMCModel):
             v = L["pos"][sl].view(shape) - p
             lim = torch.sqrt(torch.clamp(_dot(v, v), min=1e-24))
             d = v / lim.unsqueeze(-1)
-        o = p + d * eps
+        return p + d * eps, d, lim
+
+    @staticmethod
+    def _occluded(sc, p, L, sl, xpos, xmat, sizes, skip=None, eps: float = 1e-6):
+        """Return whether movers block rays from ``p`` to light ``sl``.
+
+        ``skip`` excludes each ray’s originating convex primitive. Its front-facing
+        surface cannot occlude itself; back-facing illumination is already zero.
+        """
+        o, d, lim = DMControlSuite._shadow_rays(p, L, sl, eps)
         return R3.any_blocking(sc.prims.kind, sizes, xpos, xmat, o, d, lim, skip=skip)
 
     @torch.no_grad()
@@ -717,6 +723,9 @@ class DMControlSuite(_DMCModel):
         return out
 
     def _render_group(self, sc: _Scene, s: torch.Tensor, size: int, ss: int, rows=None) -> torch.Tensor:
+        rays = ray_module(self._ray_backend(), self.device)
+        if rays is not None and len(sc.prims) and all(int(k) != R3.PLANE for k in sc.prims.kind):
+            return self._render_group_rays(rays, sc, s, size, ss, rows)
         dev = self.device
         B = s.shape[0]
         R = size * ss
@@ -812,3 +821,110 @@ class DMControlSuite(_DMCModel):
         w3 = widx.unsqueeze(-1).expand(-1, -1, 3)
         # base is this render’s private canvas; in-place scatter avoids another full-frame copy.
         return base.scatter_(1, w3, torch.where(seen.unsqueeze(-1), val, base.gather(1, w3)))
+
+    def _ray_constants(self, rays, sc: _Scene, ss: int):
+        """Cache the Numba inputs that depend only on the scene: tile cones, static shadow and mirror rays."""
+        key = ("rays", int(ss))
+        hit = sc.const.get(key)
+        if hit is not None:
+            return hit
+        o, d, _, _, _, _, L = self._per_chunk_constants(sc, ss)
+        R = sc.size * int(ss)
+        N = R * R
+        dn = d.contiguous().numpy()
+        out: dict = {"kinds": np.asarray(sc.prims.kind, np.int64), "dirs": dn}
+        out["cones"] = rays.tile_cones(dn, R, R, rays.TILE)
+        sl = sc.shadow_light
+        if sl >= 0:
+            cand, _ = self._shadow_candidates(sc, ss)
+            st = self._static_t(sc, ss).view(1, N)
+            stc = st[:, cand]
+            ps = o + stc.clamp(max=1e6).unsqueeze(-1) * d[cand]
+            so, sd, slim = self._shadow_rays(ps, L, sl, eps=sc.eps)
+            so, sd = so[0].contiguous().numpy(), sd[0].contiguous().numpy()
+            starts = rays.packets(np.zeros(len(so), np.int64), rays.PACKET)
+            out["shadow"] = (so, sd, slim[0].contiguous().numpy(), *rays.packet_bounds(so, sd, starts), starts)
+            out["shadow_reach"] = stc < R3.INF
+        if sc.reflectance > 0:
+            idx, ro, rd, _ = self._floor_rays(sc, ss)
+            ro, rd = ro[0].contiguous().numpy(), rd[0].contiguous().numpy()
+            starts = rays.packets(np.zeros(len(ro), np.int64), rays.PACKET)
+            out["mirror"] = (ro, rd, *rays.packet_bounds(ro, rd, starts), starts)
+        sc.const[key] = out
+        return out
+
+    def _render_group_rays(self, rays, sc: _Scene, s: torch.Tensor, size: int, ss: int, rows=None) -> torch.Tensor:
+        """``_render_group`` with Numba ray casts: each ray tests only the movers whose bounds reach its packet."""
+        B = s.shape[0]
+        R = size * ss
+        N = R * R
+        o, d, plate_f, tex_rgb, spec, shin, L = self._per_chunk_constants(sc, ss)
+        rc = self._ray_constants(rays, sc, ss)
+        kinds = rc["kinds"]
+        xpos, xmat, sizes, mat_rgb = self._fk(s, sc, rows)
+        S, P, M = sizes.contiguous().numpy(), xpos.contiguous().numpy(), xmat.contiguous().numpy()
+        P_count = xpos.shape[1]
+        sl = sc.shadow_light
+        st = self._static_t(sc, ss).view(1, N)
+
+        t = np.empty((B, N), np.float32)
+        n = np.empty((B, N, 3), np.float32)
+        i = np.empty((B, N), np.int64)
+        origin = np.ascontiguousarray(np.broadcast_to(o.numpy(), (B, 3)))
+        rays.cast_grid(kinds, S, P, M, origin, rc["dirs"], R, R, rays.TILE, rc["cones"], t, n, i)
+        t, n, i = torch.from_numpy(t), torch.from_numpy(n), torch.from_numpy(i)
+        bi, js = (t < st).nonzero(as_tuple=True)
+        t_w, n_w, i_w, dd_w = t[bi, js], n[bi, js], i[bi, js], d[js]
+        pm_w = o + t_w.clamp(max=1e6).unsqueeze(-1) * dd_w
+        unlit_w = None
+        if sl >= 0 and P_count > 1 and bi.numel():
+            so, sd, slim = self._shadow_rays(pm_w, L, sl, eps=sc.eps)
+            e = bi.contiguous().numpy()
+            blocked = np.empty(len(e), np.bool_)
+            rays.blocked_rays(
+                kinds,
+                S,
+                P,
+                M,
+                e,
+                so.contiguous().numpy(),
+                sd.contiguous().numpy(),
+                slim.contiguous().numpy(),
+                i_w.contiguous().numpy(),
+                rays.packets(e, rays.PACKET),
+                blocked,
+            )
+            unlit_w = torch.from_numpy(blocked)
+        col_w = _shade(pm_w, n_w, -dd_w, L, mat_rgb[bi, i_w], spec[i_w], shin[i_w], unlit_w) * tex_rgb[i_w] * 255.0
+
+        base = plate_f.expand(B, N, 3).clone()
+        if sl >= 0 and "shadow" in rc:
+            cand, dark = self._shadow_candidates(sc, ss)
+            if cand.numel():
+                so, sd, slim, sphere, cone, starts = rc["shadow"]
+                occ = np.empty((B, len(so)), np.bool_)
+                rays.blocked_shared(kinds, S, P, M, so, sd, slim, sphere, cone, starts, occ)
+                occ = torch.from_numpy(occ) & rc["shadow_reach"]
+                base[:, cand] = torch.where(occ.unsqueeze(-1), dark, base[:, cand])
+        if sc.reflectance > 0:
+            idx, _, _, surf = self._floor_rays(sc, ss)
+            if idx.numel():
+                ro, rd, sphere, cone, starts = rc["mirror"]
+                F = len(ro)
+                t_r = np.empty((B, F), np.float32)
+                n_r = np.empty((B, F, 3), np.float32)
+                i_r = np.empty((B, F), np.int64)
+                rays.cast_shared(kinds, S, P, M, ro, rd, sphere, cone, starts, t_r, n_r, i_r)
+                t_r, n_r, i_r = torch.from_numpy(t_r), torch.from_numpy(n_r), torch.from_numpy(i_r)
+                rb, rf = (t_r < R3.INF).nonzero(as_tuple=True)
+                if rb.numel():
+                    ro_t, rd_t = torch.from_numpy(ro)[rf], torch.from_numpy(rd)[rf]
+                    ih = i_r[rb, rf]
+                    pr = ro_t + t_r[rb, rf].clamp(max=1e6).unsqueeze(-1) * rd_t
+                    colr = _shade(pr, n_r[rb, rf], -rd_t, L, mat_rgb[rb, ih], spec[ih], shin[ih], None) * tex_rgb[ih]
+                    r = float(sc.reflectance)
+                    base[rb, idx[rf]] = r * (colr * 255.0) + (1.0 - r) * surf[0, rf]
+
+        base[bi, js] = col_w
+        frame = base.view(B, size, ss, size, ss, 3).sum((2, 4)) / (ss * ss)
+        return torch.clamp(torch.round(frame), 0, 255).to(torch.uint8)

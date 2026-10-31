@@ -464,6 +464,7 @@ class DMControlTrackCom(_DMCModel):
             chunk_size=chunk,
             plane_mat=self._row_floor(sty, 0, B),
             plane_palette=self._row_palette(sty, 0, B),
+            backend=self._ray_backend(),
         )
 
     @torch.no_grad()
