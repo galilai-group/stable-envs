@@ -404,7 +404,10 @@ class _LightPasses:
             lp = lpos[rows]
             L, dist, gain = self._spot_terms(X, lp)
             got = _light_pass(n, v, [(L, gain, self.spot["colours"])], mat, tex, ms, shin)
-            dark = self._spot_shadow(Xr, nr, L.unsqueeze(1), dist.unsqueeze(1), lp.unsqueeze(1), mine, skip).squeeze(1)
+            every = torch.ones(Xr.shape[:-1], device=Xr.device, dtype=torch.bool)
+            dark = self._spot_shadow(
+                Xr, nr, L.unsqueeze(1), dist.unsqueeze(1), lp.unsqueeze(1), mine, skip, every
+            ).squeeze(1)
             return torch.clamp(total + torch.where(dark.unsqueeze(-1), 0.0, got), max=255.0)
 
         return run
