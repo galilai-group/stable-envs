@@ -10,7 +10,7 @@ from ...._execution.process import PER_LANE
 from ...._execution.protocol import SimulatorAdapter
 from ...._execution.state_columns import require_columns
 from . import physics as _physics
-from .batch import TASKS, LaneViews
+from .batch import TASKS, LaneViews, gather
 from .state import RNGColumns, export_state, model_entries, restore_lane
 
 _INVALID_PHYSICS_STATE = "Physics state is invalid. Warning(s) raised: {warning_names}"
@@ -82,6 +82,12 @@ class DMCLanes(SimulatorAdapter):
         self._cumulative.fill(0)
         return self.get_state()
 
+    def _reset_lanes(self, lanes):
+        """Start a new episode on ``lanes`` with the source's reset."""
+        for lane in lanes:
+            self.envs[lane].reset()
+        self._rng.stale[lanes] = True
+
     def get_state(self):
         self._check_open()
         extra = None if self.physics is None else self.physics.export()
@@ -119,18 +125,17 @@ class DMCLanes(SimulatorAdapter):
                 )
         return actions, None
 
-    def _advance(self, actions, control):
+    def _advance(self, actions, control, warnings):
         """Advance every lane by one source step and return the mask of lanes that stepped physics.
 
         A lane that is due to reset runs the source's ``step``, which resets it. The other lanes
         make the MuJoCo calls of dm_control's legacy ``Physics.step`` and count the step toward
-        the time limit.
+        the time limit. ``warnings`` holds each lane's MuJoCo warning counts and is updated.
         """
         import mujoco
 
         step, step1, step2 = mujoco.mj_step, mujoco.mj_step1, mujoco.mj_step2
         views, rk4, substeps = self._views, self._rk4, self._substeps
-        before = np.stack(self._warnings)
         stepped = np.ones(self.num_envs, bool)
         for i, (base, m, d, ctrl) in enumerate(zip(self._bases, views.models, views.datas, views.data("ctrl"))):
             if base._reset_next_step:
@@ -149,7 +154,9 @@ class DMCLanes(SimulatorAdapter):
             base._step_count += 1
             if base._step_count >= base._step_limit:
                 base._reset_next_step = True
-        raised = (np.stack(self._warnings) > before) & stepped[:, None]
+        after = gather(self._warnings)
+        raised = (after > warnings) & stepped[:, None]
+        warnings[:] = after
         for lane in np.flatnonzero(raised.any(axis=1)):
             names = ", ".join(np.compress(raised[lane], list(mujoco.mjtWarning.__members__)))
             message = _INVALID_PHYSICS_STATE.format(warning_names=names)
@@ -173,8 +180,9 @@ class DMCLanes(SimulatorAdapter):
             raise ValueError(f"{self.key} action must have finite shape (num_envs, {self.action_dim})")
         control = self.envs[0]._transform(actions)
         rewards = np.zeros(self.num_envs, np.float64)
+        warnings = gather(self._warnings)
         for _ in range(2):
-            stepped = self._advance(actions, control)
+            stepped = self._advance(actions, control, warnings)
             snapshot = self._views.snapshot()
             rewards += np.where(stepped, self._task.reward(snapshot), 0.0)
         self._cumulative += rewards
