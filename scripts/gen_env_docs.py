@@ -40,7 +40,9 @@ RENDERERS = {
     "dmcontrol-suite": {"cpu": "raycast3d (torch)", "cuda": "raycast3d (torch)"},
     "dmcontrol-trackcom": {"cpu": "cpu3d", "cuda": "mjwarp"},
     "fetch": {"cpu": "opengl (MuJoCo)", "cuda": "mjwarp"},
+    "mshuman": {"cpu": "opengl (MuJoCo)", "cuda": "host-side serial MuJoCo OpenGL, frames copied to CUDA"},
     "navigation": {"cpu": "raster2d (torch)", "cuda": "raster2d (torch) with the Triton dot compositor"},
+    "navigation-dots": {"cpu": "Numba dot compositor", "cuda": "Triton dot compositor"},
     "ogbench-maze": {"cpu": "raycast3d (torch)", "cuda": "raycast3d (torch)"},
     "ogbench-manipulation": {"cpu": "opengl (MuJoCo)", "cuda": "mjwarp"},
     "pusht": {"cpu": "pygame (source renderer)", "cuda": "pygame on CPU, frames copied to CUDA"},
@@ -53,7 +55,7 @@ PHYSICS = {
     "NATIVE_TORCH": "native torch on the env device",
     "NATIVE_JAX": "native JAX on the env device",
     "AUTO_NATIVE_MJX": "native MuJoCo on CPU; CUDA batches use native below 32 lanes, JAX/MJX otherwise",
-    "AUTO_NATIVE_TORCH": "Gymnasium on CPU; CUDA lanes step in native torch",
+    "AUTO_BATCHED": "batched NumPy, or batched Torch for large CUDA batches, with Gymnasium resets",
 }
 
 
@@ -68,6 +70,10 @@ def renderer_cell(cls) -> str:
         from stable_envs.envs.ogbench.manipulation_semantics import ManipulationSemantics
 
         return "ogbench-manipulation" if issubclass(cls, ManipulationSemantics) else "ogbench-maze"
+    if family == "navigation":
+        from stable_envs.envs.navigation.envs import _TorchNavBase
+
+        return "navigation-dots" if issubclass(cls, _TorchNavBase) else "navigation"
     return family
 
 

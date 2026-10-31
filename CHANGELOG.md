@@ -8,19 +8,30 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
-- `Pendulum(simulation_backend=...)`: CUDA lanes step Pendulum-v1 in batched float64 Torch on the GPU
-  (`"auto"`, the default), and CPU lanes keep the Gymnasium simulator. Resets, the PCG64 streams and
-  State export still come from Gymnasium. Torch steps match Gymnasium to rounding; `"gym"` or `"torch"`
-  selects one backend on any device.
+- Classic control `simulation_backend`: `CartPole`, `Pendulum`, `Acrobot`, `MountainCar` and
+  `MountainCarContinuous` step all lanes in one batched float64 operation. With `"auto"`, the default,
+  the lanes step in NumPy on the host, and 4096 or more CUDA lanes step in Torch. Below 2 lanes
+  (CartPole, Acrobot) or 8 lanes (MountainCarContinuous), `"auto"` keeps the Gymnasium loop because it
+  is faster there. Gymnasium still resets the lanes, owns the PCG64 streams and supplies the State.
+  NumPy steps give State and outputs equal to the Gymnasium steps, and the native contract tests check
+  this. Torch steps agree with Gymnasium to rounding. `"gym"`, `"numpy"` and `"torch"`
+  select one backend on any device.
+- MS-Human-700: `MSHumanLocomotion` wraps the whole-body musculoskeletal locomotion model (36 DoF,
+  100 muscles) on the MuJoCo Warp backend (`mshuman` extra). Physics and State run on the env device;
+  frames come from MuJoCo's OpenGL renderer. The Apache-2.0 model is fetched from LNSGroup/MS-Human-700
+  at a pinned commit on first use, overridable with `STABLE_ENVS_MSHUMAN_HOME`.
 - Classic control on CPU: a Numba kernel draws the same primitive records as the Triton kernel, in
   parallel over frames. `backend="auto"` and `backend="port"` use it when Numba imports; otherwise the
   CPU paths below apply. Frames are byte-identical to the Torch port. The `classic` extra installs
   Numba, and so do the `navigation` and `pusht` extras. `backend="auto"` draws batches of fewer than 8 rows of the default appearance with the source.
   The `pin-classic`, `pin-navigation` and `pin-pusht`
   groups pin Numba.
+- Navigation on CPU: a Numba kernel draws the dots of TwoRoom, TwoRoomTarget, Piecewise and
+  PiecewiseZones, in parallel over frames. `backend="auto"` uses it when Numba imports. Frames are
+  byte-identical to the Torch path, and `backend="torch"` selects the Torch path.
 - Craftax: `CraftaxClassicPixels`, `CraftaxClassicSymbolic`, `CraftaxPixels` and `CraftaxSymbolic`
   run the upstream JAX simulator with all lanes in one jitted `vmap` (`craftax` / `craftax-gpu` extras).
-  With Craftax, the extras provide 74 classes. Fetch and `OGBCube`/`OGBScene` pin different MuJoCo versions,
+  With Craftax, the extras provide 75 classes. Fetch and `OGBCube`/`OGBScene` pin different MuJoCo versions,
   so they need separate Python environments.
 - `snv.tuning`: chunk sizes, Triton block sizes, worker counts and memory budgets are named knobs with
   `snv.tuning.set`, `snv.tuning.override` and `STABLE_ENVS_<KNOB>` variables. Some defaults are derived from the GPU's free memory or the CPU's L3 size.

@@ -4,8 +4,9 @@ Every environment runs well with no setup. Chunk sizes, Triton block sizes, work
 budgets have defaults, and the library computes some defaults from the hardware. You can change them to
 trade speed against memory. Frames and State are the same for every valid value.
 
-The `simulation_backend` constructor argument selects physics for [Reacher](environments/dmcontrol.md#reacher)
-and [TwoRoom](environments/navigation.md#tworoom). Reacher chooses native CPU physics below a provisional
+The `simulation_backend` constructor argument selects physics for [Reacher](environments/dmcontrol.md#reacher),
+[TwoRoom](environments/navigation.md#tworoom) and the
+[classic control](environments/classic-control.md#physics-backends) classes. Reacher chooses native CPU physics below a provisional
 cutoff of 32 environments and MJX for larger CUDA batches. TwoRoom uses Torch below `jax_min_envs`
 and JAX at or above it. Its cutoff defaults to 1 because current measurements favor JAX for one
 environment. Both cutoffs are constructor arguments and require measurements on your hardware to
@@ -100,7 +101,7 @@ cannot read the hardware, the fallback applies.
   for small batches. The library uses worker processes only on Linux.
 - Slow classic control CPU rendering without Numba: try `render_workers` between 0 and the number of
   cores, and `render_worker_min_rows` for small batches.
-- Classic control CPU rendering with Numba: the kernel uses one thread for each CPU in the process
+- Classic control and navigation CPU rendering with Numba: the kernel uses one thread for each CPU in the process
   affinity. To use fewer threads, set `NUMBA_NUM_THREADS` before the first render.
 - Triton kernels on a new GPU: try the `*_warps` knobs (1, 2, 4, 8) and the `*_block` knobs in powers of two.
 
