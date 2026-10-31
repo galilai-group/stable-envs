@@ -793,8 +793,9 @@ class Env:
         if not self.reset_leaves:
             return out
         lanes = []
+        # Seeding replaces every generator in the tree, so one tree serves every lane.
+        tree = self.reset_tree_factory()
         for lane in range(self.B):
-            tree = self.reset_tree_factory()
             tree.seed(None if seed is None else int(seed) + lane)
             lanes.append(self._draw_reset_lane(tree, lane, sampled, values))
         for path in lanes[0]:
