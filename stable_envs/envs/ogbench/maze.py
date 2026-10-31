@@ -104,6 +104,7 @@ class _Scene:
         "agent_is_self",
         "prims_base",
         "passes",
+        "goal",
     )
 
 
@@ -154,6 +155,14 @@ def _light_pass(n, v, terms, c, tex, ms, shin):
 
 
 _SHADOW_EPS = 1e-3  # shadow-ray origin offset along the surface normal
+_BOX = 6  # mjGEOM_BOX
+# World-unit margin of the wall cull, far above the rounding error of a box test.
+_CULL_SLACK = 0.05
+# Centre of the padding box, far beyond every shadow ray.
+_FAR = 1.0e6
+_CULL_WALLS = True
+# Composite the goal and the body in separate tiles when their screen bounds do not meet.
+_SPLIT_MOVERS = True
 
 
 _PASS_ROWS = 1024
@@ -219,6 +228,17 @@ class _LightPasses:
         self.wall_size = f(np.stack([m.geom_size[g] for g in walls]))[None]
         self.wall_pos = f(np.stack([d.geom_xpos[g] for g in walls]))[None]
         self.wall_rot = f(np.stack([d.geom_xmat[g].reshape(3, 3) for g in walls]))[None]
+        # World boxes of the walls, for culling walls that no shadow ray of a frame can reach.
+        self.wall_boxes = None
+        if walls and all(kind == _BOX for kind in self.wall_kinds):
+            half = np.stack(
+                [np.abs(d.geom_xmat[g].reshape(3, 3)) @ np.asarray(m.geom_size[g], np.float64) for g in walls]
+            )
+            centre = np.stack([d.geom_xpos[g] for g in walls])
+            self.wall_boxes = (
+                torch.as_tensor(centre - half, device=device, dtype=torch.float64),
+                torch.as_tensor(centre + half, device=device, dtype=torch.float64),
+            )
 
         self.hit, self.normal, which, self.valid = static_hit
         mats = f(np.stack([_mat_and_tex(m, g)[0] for g in static_ids]))
@@ -249,8 +269,33 @@ class _LightPasses:
         gain = gain / (k0 + k1 * dist + k2 * dist * dist)
         return L, dist, gain
 
-    def _spot_shadow(self, X, n, L, dist, lpos, agent, skip):
-        """Shadowed by walls or agent, within the square shadow-map frustum; lit outside it."""
+    def _near_walls(self, o, L, lim, valid):
+        """Per-row wall parameters, keeping only walls whose box meets the box of the row's shadow rays.
+
+        A culled wall cannot hit a ray, and a far box pads the rows with fewer walls; the hits
+        are the same as with every wall. Rays outside ``valid`` do not set the box.
+        """
+        lo_w, hi_w = self.wall_boxes
+        o64, end64 = o.to(torch.float64), (o + lim.unsqueeze(-1) * L).to(torch.float64)
+        keep = valid.unsqueeze(-1)
+        big = torch.tensor(np.inf, dtype=torch.float64, device=o.device)
+        lo = torch.where(keep, torch.minimum(o64, end64), big).amin(1) - _CULL_SLACK
+        hi = torch.where(keep, torch.maximum(o64, end64), -big).amax(1) + _CULL_SLACK
+        near = ((lo_w.unsqueeze(0) <= hi.unsqueeze(1)) & (hi_w.unsqueeze(0) >= lo.unsqueeze(1))).all(-1)
+        count = near.sum(1)
+        width = max(int(count.max()), 1)
+        order = torch.argsort((~near).to(torch.int8), dim=1, stable=True)[:, :width]
+        used = (torch.arange(width, device=o.device).unsqueeze(0) < count.unsqueeze(1)).unsqueeze(-1)
+        size = torch.where(used, self.wall_size[0][order], 1.0)
+        pos = torch.where(used, self.wall_pos[0][order], _FAR)
+        rot = torch.where(used.unsqueeze(-1), self.wall_rot[0][order], torch.eye(3, device=o.device))
+        return [_BOX] * width, size, pos, rot
+
+    def _spot_shadow(self, X, n, L, dist, lpos, agent, skip, valid=None):
+        """Shadowed by walls or agent, within the square shadow-map frustum; lit outside it.
+
+        ``valid`` marks the rows' pixels whose result is used; the others may differ.
+        """
         sp = self.spot
         if not sp["castshadow"]:
             return torch.zeros(X.shape[:-1], device=X.device, dtype=torch.bool)
@@ -263,15 +308,16 @@ class _LightPasses:
         # One launch row per frame keeps the per-row block count within the CUDA grid limit.
         rows = X.shape[0] if X.dim() == 3 and X.shape[1] > 1 else 1
         wk = len(self.wall_kinds)
-        walls = R3.any_blocking(
-            self.wall_kinds,
-            self.wall_size.expand(rows, wk, 3),
-            self.wall_pos.expand(rows, wk, 3),
-            self.wall_rot.expand(rows, wk, 3, 3),
-            o.reshape(rows, -1, 3),
-            L.reshape(rows, -1, 3).contiguous(),
-            lim.reshape(rows, -1),
-        ).view(X.shape[:-1])
+        o, L, lim = o.reshape(rows, -1, 3), L.reshape(rows, -1, 3).contiguous(), lim.reshape(rows, -1)
+        if valid is not None and self.wall_boxes is not None and X.device.type == "cpu" and _CULL_WALLS:
+            kinds, size, pos, rot = self._near_walls(o, L, lim, valid.reshape(rows, -1))
+        else:
+            kinds = self.wall_kinds
+            size = self.wall_size.expand(rows, wk, 3)
+            pos = self.wall_pos.expand(rows, wk, 3)
+            rot = self.wall_rot.expand(rows, wk, 3, 3)
+        walls = R3.any_blocking(kinds, size, pos, rot, o, L, lim).view(X.shape[:-1])
+        o, L, lim = o.view(X.shape), L.view(X.shape), lim.view(X.shape[:-1])
         kinds, size, pos, rot = agent
         moving = R3.any_blocking(kinds, size, pos, rot, o, L.contiguous(), lim, skip)
         return inside & (walls | moving)
@@ -326,12 +372,13 @@ class _LightPasses:
         lp = lpos.unsqueeze(1).expand(B, idx.shape[1], 3)
         L, dist, gain = self._spot_terms(X, lp)
         add = _light_pass(n, v, [(L, gain, self.spot["colours"])], c, tex, ms, shin)
-        add = torch.where(self._spot_shadow(X, n, L, dist, lp, agent, None).unsqueeze(-1), 0.0, add)
+        valid = self.valid[idx]
+        add = torch.where(self._spot_shadow(X, n, L, dist, lp, agent, None, valid).unsqueeze(-1), 0.0, add)
         one = torch.ones_like(gain)
         for light in self.shadowed:
             lost = _light_pass(n, v, [(light["to_light"].expand_as(n), one, light["colours"])], c, tex, ms, shin)
             add = add - torch.where(self._dir_shadow(X, n, light, agent, None).unsqueeze(-1), lost, 0.0)
-        add = torch.where(self.valid[idx].unsqueeze(-1), add, 0.0)
+        add = torch.where(valid.unsqueeze(-1), add, 0.0)
         flat = plate.reshape(H * W, 3)
         patch = (flat[idx].to(torch.float32) + add).clamp(0, 255).to(torch.uint8)
         out = flat.unsqueeze(0).repeat(B, 1, 1)
@@ -791,6 +838,10 @@ class OGBenchMaze(Env):
                 specular=np.array([np.mean(r.scene.lights[i].specular) for i in range(L)]),
                 exponent=float(m.mat_shininess[selfmat]) * 128,
             )
+        sc.goal = None
+        if getattr(self, "RENDER_OB_TYPE", "pixels") == "states" and len(agent) > 1:
+            target = agent.index(m.geom("target").id)
+            sc.goal = ([target], [i for i in range(len(agent)) if i != target])
         sc.passes = None
         if track:
             assert len(track) == 1 and self.LOCO == "point", "a tracking light is modelled for the point body only"
@@ -908,7 +959,7 @@ class OGBenchMaze(Env):
                 sub = torch.as_tensor(part, device=self.device, dtype=torch.long)
                 mat, scale = self._agent_appearance(sc, sty, sub)
                 xpos, xmat = self._fk(s[sub], sc)
-                plate, shader = sc.plate, None
+                plate, shader, agent, lpos = sc.plate, None, None, None
                 if sc.passes is not None:
                     size_b = torch.as_tensor(np.asarray(sc.prims_base.size), device=self.device, dtype=torch.float32)
                     agent = (list(sc.prims_base.kind), size_b * scale.view(-1, 1, 1), xpos, xmat)
@@ -918,26 +969,78 @@ class OGBenchMaze(Env):
                 # Advanced indexing makes buf[sub] a copy. With multiple groups, render to a
                 # temporary and assign back explicitly; one group can write directly into buf.
                 dst = buf if len(uniq) == 1 and len(part) == B else None
-                got = R3.composite(
-                    plate,
-                    sc.plate_t,
-                    sc.cam,
-                    sc.prims_base,
-                    xpos,
-                    xmat,
-                    sc.lights,
-                    size,
-                    size,
-                    supersample=ss,
-                    out=dst,
-                    tile=self.TILE,
-                    mat_rgb=mat,
-                    size_scale=scale,
-                    shader=shader,
-                )
+                apart = self._movers_apart(sc, xpos, scale, size)
+                if apart is None:
+                    got = R3.composite(
+                        plate,
+                        sc.plate_t,
+                        sc.cam,
+                        sc.prims_base,
+                        xpos,
+                        xmat,
+                        sc.lights,
+                        size,
+                        size,
+                        supersample=ss,
+                        out=dst,
+                        tile=self.TILE,
+                        mat_rgb=mat,
+                        size_scale=scale,
+                        shader=shader,
+                    )
+                else:
+                    got = self._composite_apart(sc, apart, plate, agent, lpos, xpos, xmat, mat, scale, size, ss, dst)
                 if dst is None:
                     buf[sub] = got
         return buf.view(*lead, size, size, 3) if lead else buf
+
+    def _movers_apart(self, sc: _Scene, xpos, scale, size):
+        """Return a host mask of rows whose goal and body screen bounds do not meet, or None.
+
+        None means that every row is drawn in one composite.
+        """
+        if sc.goal is None or not _SPLIT_MOVERS:
+            return None
+        bs = float(scale.max())
+        bounds = []
+        for ids in sc.goal:
+            got = R3.screen_bounds(sc.cam, sc.prims_base.subset(ids), xpos[:, ids], size, size, self.device, bs)
+            if got is None:
+                return None
+            bounds.append(got)
+        (gx0, gx1, gy0, gy1), gndc = bounds[0]
+        (ax0, ax1, ay0, ay1), andc = bounds[1]
+        apart = (ax1 < gx0) | (gx1 < ax0) | (ay1 < gy0) | (gy1 < ay0)
+        finite = torch.isfinite(gndc).flatten(1).all(1) & torch.isfinite(andc).flatten(1).all(1)
+        apart = (apart & finite).cpu().numpy()
+        return apart if apart.any() else None
+
+    def _composite_apart(self, sc, apart, plate, agent, lpos, xpos, xmat, mat, scale, size, ss, out):
+        """Composite rows whose goal and body do not meet in two small tiles, the others in one pass.
+
+        Neither mover can cover a sample of the other's tile, so each tile gets the bytes of one pass.
+        """
+        if out is None:
+            out = torch.empty((len(xpos), size, size, 3), dtype=torch.uint8, device=self.device)
+        for rows, split in ((np.flatnonzero(apart), True), (np.flatnonzero(~apart), False)):
+            if not len(rows):
+                continue
+            r = torch.as_tensor(rows, device=self.device, dtype=torch.long)
+            shader = None
+            if sc.passes is not None:
+                kinds, sizes, _, _ = agent
+                shader = sc.passes.shader(lpos[r], (kinds, sizes[r], xpos[r], xmat[r]))
+            base = plate[r] if plate.dim() == 4 else plate
+            args = (sc.plate_t, sc.cam, sc.prims_base, xpos[r], xmat[r], sc.lights, size, size)
+            kw = dict(supersample=ss, tile=self.TILE, mat_rgb=mat[r], size_scale=scale[r], shader=shader)
+            if split:
+                goal_ids, body_ids = sc.goal
+                base = R3.composite(base, *args, cast=goal_ids, **kw)
+                got = R3.composite(base, *args, cast=body_ids, **kw)
+            else:
+                got = R3.composite(base, *args, **kw)
+            out[r] = got
+        return out
 
     def _agent_appearance(self, sc: _Scene, sty, sub):
         """Return per-geom colours and per-row scale, preserving non-self materials.

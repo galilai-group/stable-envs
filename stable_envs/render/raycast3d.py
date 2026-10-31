@@ -1143,6 +1143,7 @@ def composite(
     mat_rgb: torch.Tensor | None = None,
     size_scale: torch.Tensor | None = None,
     shader=None,
+    cast: Sequence[int] | None = None,
 ) -> torch.Tensor:
     """Draw moving primitives over a static plate; return (B, H, W, 3) uint8.
 
@@ -1153,8 +1154,13 @@ def composite(
     environment. ``shader(rows, hit, normal, view, prim, mat)`` replaces ``lights``
     and returns covered-sample colour in [0, 255].
     A supplied ``out`` buffer is filled and returned as a (B, H, W, 3) view.
+    ``cast`` limits the cast to these primitive indices; hits keep their index in ``prims``.
+    The other primitives must not cover any sample that these can cover.
     """
     device = plate.device
+    ids = None if cast is None else [int(j) for j in cast]
+    bound_prims = prims if ids is None else prims.subset(ids)
+    bound_pos = xpos if ids is None else xpos[:, ids]
     B = xpos.shape[0]
     ss = int(supersample)
     Rh, Rw = H * ss, W * ss
@@ -1171,7 +1177,7 @@ def composite(
     org = None
     if tile is not None and tile < H and tile < W:
         bs = 1.0 if size_scale is None else float(size_scale.max())
-        fit = _fit_tile(cam, prims, xpos, H, W, tile, device, bound_scale=bs)
+        fit = _fit_tile(cam, bound_prims, bound_pos, H, W, tile, device, bound_scale=bs)
         if fit is not None:
             org, tile = fit
     if org is None:
@@ -1194,7 +1200,13 @@ def composite(
     sz = P["size"].view(1, nprim, 3)
     if size_scale is not None:
         sz = sz * size_scale.view(B, 1, 1)
-    t, n, i_hit = cast_nearest(P["kind"], sz.expand(B, nprim, 3), xpos, xmat, oo, dd)
+    if ids is None:
+        t, n, i_hit = cast_nearest(P["kind"], sz.expand(B, nprim, 3), xpos, xmat, oo, dd)
+    else:
+        sel = torch.as_tensor(ids, device=device)
+        kinds = [P["kind"][j] for j in ids]
+        t, n, i_hit = cast_nearest(kinds, sz.expand(B, nprim, 3)[:, sel], xpos[:, sel], xmat[:, sel], oo, dd)
+        i_hit = sel[i_hit]
     cov = t < bt
 
     col = torch.zeros((B, N, 3), device=device, dtype=n.dtype)
@@ -1268,11 +1280,12 @@ def _upsample_t(plate_t, H, W, ss):
     return plate_t.view(H, W).repeat_interleave(ss, 0).repeat_interleave(ss, 1).reshape(-1)
 
 
-def screen_span(cam: Camera, prims: Primitives, xpos: torch.Tensor, H: int, W: int, device, bound_scale: float = 1.0):
-    """Return (x0, y0, width, height) for projected primitive bounds, or None if unbounded.
+def screen_bounds(
+    cam: Camera, prims: Primitives, xpos: torch.Tensor, H: int, W: int, device, bound_scale: float = 1.0
+):
+    """Return per-row pixel bounds (x0, x1, y0, y1) and the projected corners, or None if unbounded.
 
-    Origins are per-row device tensors; extents are host integers covering the batch.
-    Projects all eight bounding-box corners and synchronises once.
+    The bounds hold every sample that the primitives can cover, with one pixel of margin.
     """
     radt = prims.radii(device, xpos.dtype, bound_scale)
     if radt is None:  # host-side: a PLANE has no finite bound
@@ -1288,6 +1301,19 @@ def screen_span(cam: Camera, prims: Primitives, xpos: torch.Tensor, H: int, W: i
     x1 = px.amax(1).ceil().long() + 1
     y0 = py.amin(1).floor().long() - 1
     y1 = py.amax(1).ceil().long() + 1
+    return (x0, x1, y0, y1), ndc
+
+
+def screen_span(cam: Camera, prims: Primitives, xpos: torch.Tensor, H: int, W: int, device, bound_scale: float = 1.0):
+    """Return (x0, y0, width, height) for projected primitive bounds, or None if unbounded.
+
+    Origins are per-row device tensors; extents are host integers covering the batch.
+    Projects all eight bounding-box corners and synchronises once.
+    """
+    bounds = screen_bounds(cam, prims, xpos, H, W, device, bound_scale)
+    if bounds is None:
+        return None
+    (x0, x1, y0, y1), ndc = bounds
     probe = torch.stack(
         [(x1 - x0).max(), (y1 - y0).max(), torch.isfinite(ndc).all().long()]
     ).cpu()  # the only synchronization
