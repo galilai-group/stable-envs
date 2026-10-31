@@ -27,7 +27,7 @@ TILE = 8
 _REL, _ABS, _NOISE, _ANGLE = 1.01, 1e-6, 16.0 * 1.1920929e-7, 1e-5
 
 
-@njit(cache=True, inline="always")
+@njit(cache=True, error_model="numpy", inline="always")
 def _mv(R, b, k, x, y, z):
     return (
         R[b, k, 0, 0] * x + R[b, k, 0, 1] * y + R[b, k, 0, 2] * z,
@@ -36,7 +36,7 @@ def _mv(R, b, k, x, y, z):
     )
 
 
-@njit(cache=True, inline="always")
+@njit(cache=True, error_model="numpy", inline="always")
 def _mtv(R, b, k, x, y, z):
     return (
         R[b, k, 0, 0] * x + R[b, k, 1, 0] * y + R[b, k, 2, 0] * z,
@@ -45,14 +45,14 @@ def _mtv(R, b, k, x, y, z):
     )
 
 
-@njit(cache=True, inline="always")
+@njit(cache=True, error_model="numpy", inline="always")
 def _unit(x, y, z):
     n = math.sqrt(x * x + y * y + z * z)
     n = max(n, TINY)
     return x / n, y / n, z / n
 
 
-@njit(cache=True)
+@njit(cache=True, error_model="numpy")
 def hit(kind, S, P, R, b, k, ox, oy, oz, dx, dy, dz, normal):
     """Return (t, nx, ny, nz) of one ray and primitive ``k`` of row ``b``; t is INF on a miss."""
     s0 = S[b, k, 0]
@@ -207,7 +207,7 @@ def hit(kind, S, P, R, b, k, ox, oy, oz, dx, dy, dz, normal):
     return INF, nx, ny, nz
 
 
-@njit(cache=True, inline="always")
+@njit(cache=True, error_model="numpy", inline="always")
 def _radius(kind, S, b, k):
     s0 = float(S[b, k, 0])
     s1 = float(S[b, k, 1])
@@ -221,7 +221,7 @@ def _radius(kind, S, b, k):
     return max(max(s0, s1), s2)
 
 
-@njit(cache=True, inline="always")
+@njit(cache=True, error_model="numpy", inline="always")
 def _overlaps(cx, cy, cz, spread, ax, ay, az, angle, kind, S, P, b, k):
     """Whether rays from within ``spread`` of c, inside the cone (axis, angle), can meet primitive k."""
     vx = float(P[b, k, 0]) - cx
@@ -237,7 +237,7 @@ def _overlaps(cx, cy, cz, spread, ax, ay, az, angle, kind, S, P, b, k):
     return math.acos(cos_phi) <= angle + math.asin(min(1.0, r / dist)) + _ANGLE
 
 
-@njit(cache=True)
+@njit(cache=True, error_model="numpy")
 def _packet_bounds(o, d, a, e):
     """Return the bounding sphere (centre, radius) of origins and the direction cone (axis, half-angle)."""
     cx = 0.0
@@ -286,7 +286,7 @@ def _packet_bounds(o, d, a, e):
     return cx, cy, cz, spread * (1.0 + 1e-6) + 1e-7, ax, ay, az, angle
 
 
-@njit(cache=True)
+@njit(cache=True, error_model="numpy")
 def packet_bounds(o, d, starts):
     """Per-packet origin spheres (P, 4) and direction cones (P, 4) of rays split at ``starts``."""
     n = len(starts) - 1
@@ -305,7 +305,7 @@ def packet_bounds(o, d, starts):
     return sphere, cone
 
 
-@njit(cache=True)
+@njit(cache=True, error_model="numpy")
 def packets(env, size):
     """Split rays sorted by row into runs of at most ``size`` rays of one row; return run starts."""
     n = len(env)
@@ -322,7 +322,7 @@ def packets(env, size):
     return out[: m + 1]
 
 
-@njit(cache=True)
+@njit(cache=True, error_model="numpy")
 def tile_cones(dirs, H, W, tile):
     """Direction cones (T, 4) of the camera-ray tiles of an H x W grid, row-major tiles."""
     tx = (W + tile - 1) // tile
@@ -346,7 +346,7 @@ def tile_cones(dirs, H, W, tile):
     return out
 
 
-@njit(cache=True, inline="always")
+@njit(cache=True, error_model="numpy", inline="always")
 def _candidates(kinds, S, P, b, cx, cy, cz, spread, ax, ay, az, angle, cand):
     nc = 0
     for k in range(len(kinds)):
@@ -356,30 +356,52 @@ def _candidates(kinds, S, P, b, cx, cy, cz, spread, ax, ay, az, angle, cand):
     return nc
 
 
-@njit(cache=True, inline="always")
+@njit(cache=True, error_model="numpy", inline="always")
+def _near(kind, S, P, b, k, ox, oy, oz, dx, dy, dz):
+    """Whether one ray can meet primitive k's inflated bounding sphere; float64, so it never rejects a hit."""
+    vx = float(P[b, k, 0]) - float(ox)
+    vy = float(P[b, k, 1]) - float(oy)
+    vz = float(P[b, k, 2]) - float(oz)
+    ex = float(dx)
+    ey = float(dy)
+    ez = float(dz)
+    d2 = ex * ex + ey * ey + ez * ez
+    if d2 == 0.0:
+        return True
+    r = _radius(kind, S, b, k) * _REL + _ABS
+    r2 = r * r + _NOISE * (vx * vx + vy * vy + vz * vz)
+    cx = vy * ez - vz * ey
+    cy = vz * ex - vx * ez
+    cz = vx * ey - vy * ex
+    if cx * cx + cy * cy + cz * cz > r2 * d2:
+        return False
+    return vx * ex + vy * ey + vz * ez + math.sqrt(r2 * d2) >= 0.0
+
+
+@njit(cache=True, error_model="numpy", inline="always")
 def _nearest(kinds, S, P, R, b, cand, nc, ox, oy, oz, dx, dy, dz):
+    """Nearest hit among the candidates; only the nearest primitive computes its normal."""
     best = INF
-    bx = ZERO
-    by = ZERO
-    bz = ZERO
-    bi = 0
+    bi = -1
     for c in range(nc):
         k = cand[c]
-        t, nx, ny, nz = hit(kinds[k], S, P, R, b, k, ox, oy, oz, dx, dy, dz, True)
+        if not _near(kinds[k], S, P, b, k, ox, oy, oz, dx, dy, dz):
+            continue
+        t = hit(kinds[k], S, P, R, b, k, ox, oy, oz, dx, dy, dz, False)[0]
         if t < best:
             best = t
-            bx = nx
-            by = ny
-            bz = nz
             bi = k
-    return best, bx, by, bz, bi
+    if bi < 0:
+        return best, ZERO, ZERO, ZERO, 0
+    _, nx, ny, nz = hit(kinds[bi], S, P, R, b, bi, ox, oy, oz, dx, dy, dz, True)
+    return best, nx, ny, nz, bi
 
 
-@njit(cache=True, inline="always")
+@njit(cache=True, error_model="numpy", inline="always")
 def _blocked(kinds, S, P, R, b, cand, nc, ox, oy, oz, dx, dy, dz, lim, skip):
     for c in range(nc):
         k = cand[c]
-        if k == skip:
+        if k == skip or not _near(kinds[k], S, P, b, k, ox, oy, oz, dx, dy, dz):
             continue
         t = hit(kinds[k], S, P, R, b, k, ox, oy, oz, dx, dy, dz, False)[0]
         if t > ZERO and t < lim:
@@ -387,7 +409,7 @@ def _blocked(kinds, S, P, R, b, cand, nc, ox, oy, oz, dx, dy, dz, lim, skip):
     return False
 
 
-@njit(parallel=True, cache=True)
+@njit(parallel=True, cache=True, error_model="numpy")
 def cast_grid(kinds, S, P, R, origin, dirs, H, W, tile, cones, t_out, n_out, i_out):
     """Nearest hits of every camera ray (pixel-centre ``dirs``, origin per row) of each row."""
     B = P.shape[0]
@@ -430,7 +452,7 @@ def cast_grid(kinds, S, P, R, origin, dirs, H, W, tile, cones, t_out, n_out, i_o
                 i_out[b, j] = i
 
 
-@njit(parallel=True, cache=True)
+@njit(parallel=True, cache=True, error_model="numpy")
 def cast_rays(kinds, S, P, R, env, o, d, starts, t_out, n_out, i_out):
     """Nearest hits of a ray list sorted by row ``env``, packets split at ``starts``."""
     for p in prange(len(starts) - 1):
@@ -451,7 +473,7 @@ def cast_rays(kinds, S, P, R, env, o, d, starts, t_out, n_out, i_out):
             i_out[q] = i
 
 
-@njit(parallel=True, cache=True)
+@njit(parallel=True, cache=True, error_model="numpy")
 def cast_shared(kinds, S, P, R, o, d, sphere, cone, starts, t_out, n_out, i_out):
     """Nearest hits of one ray list for every row, with precomputed packet bounds."""
     B = P.shape[0]
@@ -486,7 +508,7 @@ def cast_shared(kinds, S, P, R, o, d, sphere, cone, starts, t_out, n_out, i_out)
             i_out[b, q] = i
 
 
-@njit(parallel=True, cache=True)
+@njit(parallel=True, cache=True, error_model="numpy")
 def blocked_rays(kinds, S, P, R, env, o, d, lim, skip, starts, out):
     """Whether a primitive other than ``skip`` meets each ray with 0 < t < lim; rays sorted by row."""
     for p in prange(len(starts) - 1):
@@ -502,7 +524,7 @@ def blocked_rays(kinds, S, P, R, env, o, d, lim, skip, starts, out):
             )
 
 
-@njit(parallel=True, cache=True)
+@njit(parallel=True, cache=True, error_model="numpy")
 def blocked_shared(kinds, S, P, R, o, d, lim, sphere, cone, starts, out):
     """``blocked_rays`` of one ray list for every row, with precomputed packet bounds."""
     B = P.shape[0]
