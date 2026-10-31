@@ -22,9 +22,8 @@ def gl_device() -> str:
 
 
 class CpuReadback:
-    def __init__(self, renderer, size: int, batch: int):
-        self.renderer, self.size = renderer, size
-        self.images = np.empty((batch, size, size, 3), dtype=np.uint8)
+    def __init__(self, renderer, size: int, images: np.ndarray, start: int, total: int):
+        self.renderer, self.size, self.images = renderer, size, images
 
     def render(self, index: int) -> None:
         import cv2
