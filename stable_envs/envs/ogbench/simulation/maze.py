@@ -79,6 +79,68 @@ def _make_maze(loco, maze):
     )
 
 
+# Clearance in world units between the ball and every wall below which a lane takes a full MuJoCo step.
+_REST_CLEARANCE = 1e-3
+
+
+def _rest_walls(model):
+    """Return the wall boxes ``(lo, hi)``, ball radius and ball offset of a point maze, or None.
+
+    A step sets the ball velocity to zero. With gravity normal to both slide joints, no joint damping,
+    stiffness, friction or limits, and only the floor in contact, MuJoCo then leaves the ball where it
+    is. None means that the model does not meet these conditions.
+    """
+    import mujoco
+
+    m = model
+    slide = int(mujoco.mjtJoint.mjJNT_SLIDE)
+    if m.nv != 2 or m.njnt != 2 or any(int(t) != slide for t in m.jnt_type):
+        return None
+    if not np.array_equal(m.jnt_axis, np.eye(3)[:2]) or m.jnt_limited.any() or m.jnt_stiffness.any():
+        return None
+    if (
+        m.dof_damping.any()
+        or m.dof_frictionloss.any()
+        or m.neq
+        or m.ntendon
+        or m.npair
+        or m.nexclude
+        or m.nmocap
+        or m.na
+    ):
+        return None
+    if m.opt.gravity[:2].any() or m.opt.wind.any() or m.opt.density or m.opt.viscosity:
+        return None
+    body = int(m.jnt_bodyid[0])
+    own = [g for g in range(m.ngeom) if int(m.geom_bodyid[g]) == body and (m.geom_contype[g] or m.geom_conaffinity[g])]
+    if len(own) != 1 or int(m.geom_type[own[0]]) != int(mujoco.mjtGeom.mjGEOM_SPHERE):
+        return None
+    ball = own[0]
+    radius = float(m.geom_size[ball][0])
+    offset = np.asarray(m.geom_pos[ball], np.float64)
+    data = mujoco.MjData(m)
+    mujoco.mj_kinematics(m, data)
+    boxes, floors = [], 0
+    for g in range(m.ngeom):
+        if int(m.geom_bodyid[g]) == body:
+            continue
+        if not (m.geom_contype[g] & m.geom_conaffinity[ball] or m.geom_conaffinity[g] & m.geom_contype[ball]):
+            continue
+        if m.geom_margin[g] or m.geom_gap[g] or not np.array_equal(data.geom_xmat[g], np.eye(3).ravel()):
+            return None
+        kind = int(m.geom_type[g])
+        if kind == int(mujoco.mjtGeom.mjGEOM_PLANE) and data.geom_xpos[g][2] == 0 and offset[2] == radius:
+            floors += 1
+        elif kind == int(mujoco.mjtGeom.mjGEOM_BOX):
+            boxes.append((data.geom_xpos[g] - m.geom_size[g], data.geom_xpos[g] + m.geom_size[g]))
+        else:
+            return None
+    if floors != 1 or not boxes or m.geom_margin[ball] or m.geom_gap[ball]:
+        return None
+    lo, hi = (np.stack(side) for side in zip(*boxes, strict=True))
+    return lo, hi, radius, offset
+
+
 class OGBMazeAdapter(SimulatorAdapter):
     """Independent CPU locomotion-maze simulators with owned State snapshots.
 
@@ -99,6 +161,7 @@ class OGBMazeAdapter(SimulatorAdapter):
         self._global_rng = [np.random.RandomState(int(seed) + i).get_state() for i in range(self.num_envs)]
         # A point step outside the teleport maze draws no random numbers, so the lanes step in one loop.
         self._point = loco == "point" and all(env._teleport_info is None for env in self.envs)
+        self._rest = _rest_walls(self.envs[0].model) if self._point else None
         self._static_keys = tuple(key for key in self.fields if key[0] in ("task", "rng"))
         self._closed = False
         self.reset(seed=seed)
@@ -276,6 +339,17 @@ class OGBMazeAdapter(SimulatorAdapter):
             dist[i] = np.linalg.norm(diff[i])
         return dist <= tol
 
+    def _resting(self, qpos):
+        """Lanes whose ball at ``qpos`` keeps a clearance from every wall."""
+        if self._rest is None:
+            return np.zeros(len(qpos), bool)
+        lo, hi, radius, offset = self._rest
+        centre = np.zeros((len(qpos), 3))
+        centre[:, :2] = qpos
+        centre += offset
+        near = np.clip(centre[:, None], lo, hi) - centre[:, None]
+        return (near * near).sum(-1).min(1) > (radius + _REST_CLEARANCE) ** 2
+
     def _step_point(self, actions, active, capture_state):
         """Step point lanes as ``PointEnv.step`` and ``MazeEnv.step`` do, with task outputs for the whole batch."""
         import mujoco
@@ -288,12 +362,21 @@ class OGBMazeAdapter(SimulatorAdapter):
         if first._success_timing == "pre":
             success = self._success(prev_qpos, goal)
         target = prev_qpos + 0.2 * actions
+        resting = self._resting(target)
         for i in range(self.num_envs) if active is None else np.flatnonzero(active):
             env = envs[i]
             data = env.data
             data.qpos[:] = target[i]
             data.qvel[:] = 0.0
-            mujoco.mj_step(env.model, data, nstep=env.frame_skip)
+            if resting[i] and not (data.ctrl.any() or data.qfrc_applied.any() or data.xfrc_applied.any()):
+                # mj_step leaves a resting ball in place; only the clock advances.
+                time, h = data.time, env.model.opt.timestep
+                for _ in range(env.frame_skip):
+                    time += h
+                data.time = time
+                data.qacc_warmstart[:] = 0.0
+            else:
+                mujoco.mj_step(env.model, data, nstep=env.frame_skip)
         qpos = np.stack([env.data.qpos for env in envs])
         qvel = np.stack([env.data.qvel for env in envs])
         if first._success_timing == "post":
