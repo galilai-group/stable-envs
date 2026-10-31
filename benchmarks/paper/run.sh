@@ -2,6 +2,7 @@
 # Offline and online speed of stable-envs against the source, every arm pinned to the same CPU cores.
 # usage (from the repository root): sbatch -p qed -n 1 -c 8 --hint=nomultithread --mem=128G --gres=gpu:1 -t 48:00:00 benchmarks/paper/run.sh OUT FAMILY=ENV,ENV ...
 #   SMOKE=1 uses small state, batch and episode counts. THROUGHPUT=1 runs only the throughput arms (see the THROUGHPUT block).
+#   REGIME=cpu runs every CPU arm (frames, steps, steps with frames) and its source arm, and needs no GPU.
 #   REGIME=gifs writes one stable-envs | source | diff GIF per env (benchmarks/gifs.py) and nothing else.
 #   REGIME=offline-gpu runs only stable-envs GPU frames from States, their frame MSE, and the source arms they are compared with.
 #   CORES (default: the first NPIN, default 8, cores the job may use) is the
@@ -113,6 +114,26 @@ for spec in "$@"; do
   fi
   OFF="$PIN $P -m benchmarks.offline_sweep"; ON="$PIN $P -m benchmarks.online_ladder"
   S=$WORK/states-$fam; D=$WORK/episodes-$fam; mkdir -p $S $D
+  if [ "${REGIME:-all}" = cpu ]; then
+    # Every CPU arm and its source arm, with no GPU: frames from States, physics steps, and steps with frames.
+    sw $OFF states --envs "${envs[@]}" --out $S --n $N --device cpu --lanes 1024
+    sw $ON dataset --envs "${envs[@]}" --out $D --episodes $EPISODES --length $LENGTH
+    for E in "${envs[@]}"; do
+      echo "--- $E $(date -Is) load $(cut -d' ' -f1-3 /proc/loadavg)"
+      o=$OUT/offline/$E; n=$OUT/online/$E; mkdir -p $o $n
+      sw $OFF ours --envs $E --states $S --device cpu --threads $NCORES --batches $BATCHES --repeats $REPEATS --output $o/snv-cpu.json
+      sw $OFF mse --envs $E --states $S --device cpu --output $o/mse-cpu.json
+      for p in 1 $NCORES; do
+        sw $OFF source --envs $E --states $S --procs $p --repeats $REPEATS --output $o/src-cpu-${p}p.json
+      done
+      COMMON="--env $E --data $D --procs $NCORES --source-lanes $SLANES --lanes $LANES --threads $NCORES --repeats $REPEATS"
+      sw $ON run $COMMON --arms src-pipelined-step snv-step --output $n/step.json
+      sw $ON run $COMMON --episodes $SWEPISODES --arms src-pipelined-render --src-label cpu --ours-device cpu --output $n/src-render-cpu.json
+      sw $ON run $COMMON --episodes $SWEPISODES --arms snv-render-cpu --output $n/snv-render-cpu.json
+    done
+    rm -rf $WORK/venv-$fam $S $D
+    continue
+  fi
   [ "${SKIP_OFFLINE:-0}" = 1 ] || [ "${THROUGHPUT:-0}" = 1 ] || egl $OFF states --envs "${envs[@]}" --out $S --n $N --device cuda --lanes 1024
   [ "${REGIME:-all}" = offline-gpu ] || egl $ON dataset --envs "${envs[@]}" --out $D --episodes $EPISODES --length $LENGTH
   if [ "${THROUGHPUT:-0}" = 1 ]; then
