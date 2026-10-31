@@ -1,9 +1,9 @@
 """OpenGL backend for the Fetch render-only model, on CPU (software GL) or GPU.
 
-Uses the same compact pose and appearance contract as MJWarp, including the hidden
-translucent mocap markers. Frames are rasterized at the source's 480 px and then
-resized; supersampling raises that raster's density. On Linux, large CPU batches draw in render
-worker processes, each with its own OpenGL context.
+Uses the same compact pose and appearance contract as MJWarp. Unlike MJWarp, it draws the
+translucent mocap markers where Gymnasium Robotics draws them. Frames are rasterized at the
+source's 480 px and then resized; supersampling raises that raster's density. On Linux, large CPU
+batches draw in render worker processes, each with its own OpenGL context.
 """
 
 import copy
@@ -145,6 +145,7 @@ def draw(scene, rows, values, ss, device_type, images, start=0, total=None):
     """
     import cv2
     import mujoco
+    from gymnasium_robotics.utils import mujoco_utils
     from OpenGL import GL
 
     from . import envs as fetch
@@ -158,6 +159,8 @@ def draw(scene, rows, values, ss, device_type, images, start=0, total=None):
         if key not in _CACHE:
             model = copy.copy(b.model)
             fetch._restore(model, b.pristine)
+            markers, groups = b.info["markers"]
+            model.geom_group[markers] = groups
             model.vis.global_.offwidth = max(model.vis.global_.offwidth, raster_size)
             model.vis.global_.offheight = max(model.vis.global_.offheight, raster_size)
             data = mujoco.MjData(model)
@@ -217,6 +220,9 @@ def draw(scene, rows, values, ss, device_type, images, start=0, total=None):
             model.cam_pos[b.info["cam"]], model.cam_quat[b.info["cam"]] = pos, quat
             data.qpos[:] = row[: b.nq]
             data.mocap_pos[b.info["goal_mocap"]] = row[b.nq : b.nq + 3]
+            mujoco.mj_forward(model, data)
+            # Gymnasium Robotics puts the mocap markers on the gripper before it draws.
+            mujoco_utils.reset_mocap2body_xpos(model, data)
             mujoco.mj_forward(model, data)
             renderer.update_scene(data, camera=b.info["cam"])
             if readback is not None:
