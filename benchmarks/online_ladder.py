@@ -1,5 +1,8 @@
 """Time playing a stored set of episodes (seeded starts, fixed action sequences) through source and stable-envs pipelines.
 
+Every arm counts its lane-steps once per complete episode (the seeded reset and all its steps), so each timed window
+holds whole episodes and the reset cost is always part of the rate.
+
 Arms:
   src-pipelined-render  source envs in ``--procs`` ProcessAdapter workers, the transport stable-envs uses; each worker
                         steps its envs one action at a time and then draws their frames; the parent submits step t+1
@@ -306,12 +309,7 @@ def run_source(args, name: str, render: bool) -> dict:
                     adapter.submit_step(actions[s : s + lanes, t + 1], capture_state=False, capture_frame=render)
                 if render:
                     out["frame"].numpy()
-                try:
-                    yield lanes
-                except GeneratorExit:
-                    if t + 1 < length:
-                        adapter.receive_step()
-                    raise
+            yield lanes * length
 
     groups = list(range(0, n - lanes + 1, lanes))
     check_lanes = sorted({0, lanes // 2, lanes - 1})
@@ -433,7 +431,7 @@ def run_ours(args, name: str, dev: str, render: bool, chunk: int) -> dict:
             env.reset(seed=int(seeds[s]))
             for t0 in range(0, length, chunk):
                 env.step(acts[s : s + lanes, t0 : t0 + chunk], states=None, frames=frames)
-                yield lanes * min(chunk, length - t0)
+            yield lanes * length
 
     groups = list(range(0, n - lanes + 1, lanes))
     try:
@@ -504,7 +502,7 @@ def run_source_single(args, name: str) -> dict:
             for a in actions[s]:
                 env.step(a)
                 np.asarray(env.render())
-                yield 1
+            yield len(actions[s])
 
     try:
         t = _timed(_cycle(play), seconds=args.seconds, repeats=args.repeats)
@@ -537,7 +535,7 @@ def run_source_vector(args, name: str, asynchronous: bool) -> dict:
                 venv.step(actions[s : s + k, t].astype(np.float64))
                 frames = venv.call("render")
                 np.stack([np.asarray(f) for f in frames])
-                yield k
+            yield k * length
 
     groups = list(range(0, n - k + 1, k))
     try:
