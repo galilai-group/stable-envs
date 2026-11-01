@@ -104,8 +104,7 @@ snapshot. At most one transition is in flight. Every submitted transition finish
 returns. This does not change the outputs.
 
 On a CUDA device, `step` keeps the worker outputs and its bookkeeping on the CPU. Before `step` returns,
-the outputs move to the device in one copy. The output leaves are views into one device buffer. Frames
-are drawn on the device.
+the outputs move to the device. Frames are drawn on the device.
 
 Scripts that use this path must follow the usual rules for spawn-based process pools:
 

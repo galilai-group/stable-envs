@@ -35,9 +35,8 @@ All notable changes to this project are listed here. The format follows
 ### Changed
 
 - Envs that step in worker processes (OGBench, dm_control, Fetch, PyFlyt, PushT and classic control) on a
-  CUDA device keep the step bookkeeping on the CPU. At the end of `step`, the outputs move to the device
-  in one copy. The output leaves are views into one device buffer. Their values, dtypes and shapes do
-  not change.
+  CUDA device keep the step bookkeeping on the CPU. At the end of `step`, the outputs move to the device.
+  The outputs do not change.
 - `SimplePointMaze` draws the `info.goal` images faster. Each distinct background is drawn once with
   Matplotlib Agg. Then only the agent disc is drawn over a copy of it, in the render worker processes on
   Linux. The image bytes do not change. Steps return the goal image without a copy: it is the same

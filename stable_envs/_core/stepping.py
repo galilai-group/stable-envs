@@ -12,7 +12,7 @@ import sys
 import numpy as np
 import torch
 
-from .tensordicts import build_tensordict, to_device_batched
+from .tensordicts import build_tensordict
 
 _NUMPY_DTYPES = {torch.uint8: np.uint8, torch.float32: np.float32, torch.float64: np.float64, torch.bool: np.bool_}
 
@@ -196,7 +196,7 @@ def _step(env, actions, states, frames, *, render_threads):
     result, live_state, live_frame = None, None, None
     pipeline = getattr(env, "_step_pipeline", lambda: None)()
     # A process pipeline on an accelerator keeps the outputs and this bookkeeping on the host until
-    # the end; then the outputs move to the device together.
+    # the end of the step; then the outputs move to the device.
     host = _host_pipeline(env, pipeline)
     work = torch.device("cpu") if host else env.device
     active = torch.ones(env.num_envs, dtype=torch.bool, device=work)
@@ -257,7 +257,7 @@ def _step(env, actions, states, frames, *, render_threads):
                     elif live_frame is None:
                         # Workers drew no frame after the last transition when every lane finished before it.
                         live_state = env.get_state().to(work) if live_state is None else live_state
-                        live_frame = env.render(to_device_batched(live_state, env.device) if host else live_state)
+                        live_frame = env.render(live_state.to(env.device))
                 saved_frames[t] = live_frame
             active = next_active
             all_active = next_all_active
@@ -288,9 +288,7 @@ def _step(env, actions, states, frames, *, render_threads):
     if not host:
         return build_tensordict(out, [env.num_envs], env.device)
     frames = out.get("frames")
-    moved = to_device_batched(
-        build_tensordict({k: v for k, v in out.items() if k != "frames"}, [env.num_envs], work), env.device
-    )
+    moved = build_tensordict({k: v for k, v in out.items() if k != "frames"}, [env.num_envs], work).to(env.device)
     return build_tensordict(
         {key: frames if key == "frames" else moved[key] for key in out}, [env.num_envs], env.device
     )
