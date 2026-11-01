@@ -3,7 +3,7 @@
 # usage (from the repository root): sbatch -p qed -n 1 -c 8 --hint=nomultithread --mem=128G --gres=gpu:1 -t 48:00:00 benchmarks/paper/run.sh OUT FAMILY=ENV,ENV ...
 #   SMOKE=1 uses small state, batch and episode counts. THROUGHPUT=1 runs only the throughput arms (see the THROUGHPUT block).
 #   REGIME=cpu runs every CPU arm (frames, steps, steps with frames) and its source arm, and needs no GPU. Its online
-#   arms run at every lane count of LANE_SWEEP (override with LANE_SWEEP_OVERRIDE) and write one file per count.
+#   arms run at every lane count of LANE_SWEEP (override with LANE_SWEEP_OVERRIDE, colon-separated) and write one file per count.
 #   REGIME=gifs writes one stable-envs | source | diff GIF per env (benchmarks/gifs.py) and nothing else.
 #   REGIME=offline-gpu runs only stable-envs GPU frames from States, their frame MSE, and the source arms they are compared with.
 #   CORES (default: the first NPIN, default 8, cores the job may use) is the
@@ -26,7 +26,7 @@ if [ "${SMOKE:-0}" = 1 ]; then
 else
   N=2048; BATCHES="1 256 1024 2048"; EPISODES=256; LENGTH=64; LANES=256; SLANES=8; SWEPISODES=64; LANE_SWEEP="1 8 64 256 1024"
 fi
-LANE_SWEEP=${LANE_SWEEP_OVERRIDE:-$LANE_SWEEP}
+LANE_SWEEP=$(echo ${LANE_SWEEP_OVERRIDE:-$LANE_SWEEP} | tr : " ")
 # Arms that draw with software OpenGL play the first SWEPISODES episodes only; steps/s does not depend on the count.
 REPEATS=${REPEATS:-3}
 # SRC_LANES envs per source worker (one avoids the multi-env corruption some sources show);
