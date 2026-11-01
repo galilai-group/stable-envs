@@ -28,20 +28,20 @@ _REL, _ABS, _NOISE, _ANGLE = 1.01, 1e-6, 16.0 * 1.1920929e-7, 1e-5
 
 
 @njit(cache=True, error_model="numpy", inline="always")
-def _mv(R, b, k, x, y, z):
+def _mv(r00, r01, r02, r10, r11, r12, r20, r21, r22, x, y, z):
     return (
-        R[b, k, 0, 0] * x + R[b, k, 0, 1] * y + R[b, k, 0, 2] * z,
-        R[b, k, 1, 0] * x + R[b, k, 1, 1] * y + R[b, k, 1, 2] * z,
-        R[b, k, 2, 0] * x + R[b, k, 2, 1] * y + R[b, k, 2, 2] * z,
+        r00 * x + r01 * y + r02 * z,
+        r10 * x + r11 * y + r12 * z,
+        r20 * x + r21 * y + r22 * z,
     )
 
 
 @njit(cache=True, error_model="numpy", inline="always")
-def _mtv(R, b, k, x, y, z):
+def _mtv(r00, r01, r02, r10, r11, r12, r20, r21, r22, x, y, z):
     return (
-        R[b, k, 0, 0] * x + R[b, k, 1, 0] * y + R[b, k, 2, 0] * z,
-        R[b, k, 0, 1] * x + R[b, k, 1, 1] * y + R[b, k, 2, 1] * z,
-        R[b, k, 0, 2] * x + R[b, k, 1, 2] * y + R[b, k, 2, 2] * z,
+        r00 * x + r10 * y + r20 * z,
+        r01 * x + r11 * y + r21 * z,
+        r02 * x + r12 * y + r22 * z,
     )
 
 
@@ -53,18 +53,15 @@ def _unit(x, y, z):
 
 
 @njit(cache=True, error_model="numpy")
-def hit(kind, S, P, R, b, k, ox, oy, oz, dx, dy, dz, normal):
-    """Return (t, nx, ny, nz) of one ray and primitive ``k`` of row ``b``; t is INF on a miss."""
-    s0 = S[b, k, 0]
-    s1 = S[b, k, 1]
-    s2 = S[b, k, 2]
+def hit(kind, s0, s1, s2, px, py, pz, r00, r01, r02, r10, r11, r12, r20, r21, r22, ox, oy, oz, dx, dy, dz, normal):
+    """Return (t, nx, ny, nz) of one ray and one primitive of size s, position p and rotation r; t is INF on a miss."""
     nx = ZERO
     ny = ZERO
     nz = ZERO
     if kind == SPHERE:
-        cx = ox - P[b, k, 0]
-        cy = oy - P[b, k, 1]
-        cz = oz - P[b, k, 2]
+        cx = ox - px
+        cy = oy - py
+        cz = oz - pz
         bq = cx * dx + cy * dy + cz * dz
         c = (cx * cx + cy * cy + cz * cz) - s0 * s0
         disc = bq * bq - c
@@ -80,8 +77,8 @@ def hit(kind, S, P, R, b, k, ox, oy, oz, dx, dy, dz, normal):
             ny = (cy + tc * dy) / s0
             nz = (cz + tc * dz) / s0
         return t, nx, ny, nz
-    ox, oy, oz = _mtv(R, b, k, ox - P[b, k, 0], oy - P[b, k, 1], oz - P[b, k, 2])
-    dx, dy, dz = _mtv(R, b, k, dx, dy, dz)
+    ox, oy, oz = _mtv(r00, r01, r02, r10, r11, r12, r20, r21, r22, ox - px, oy - py, oz - pz)
+    dx, dy, dz = _mtv(r00, r01, r02, r10, r11, r12, r20, r21, r22, dx, dy, dz)
     if kind == CAPSULE or kind == CYLINDER:
         a = dx * dx + dy * dy
         bq = ox * dx + oy * dy
@@ -117,7 +114,7 @@ def hit(kind, S, P, R, b, k, ox, oy, oz, dx, dy, dz, normal):
                 pz = oz + tc * dz
                 zc = max(min(pz, s1), -s1)
                 lx, ly, lz = _unit(px - ZERO, py - ZERO, pz - zc)
-                nx, ny, nz = _mv(R, b, k, lx, ly, lz)
+                nx, ny, nz = _mv(r00, r01, r02, r10, r11, r12, r20, r21, r22, lx, ly, lz)
             return best, nx, ny, nz
         capz = ZERO
         flat = abs(dz) > TINY
@@ -141,7 +138,7 @@ def hit(kind, S, P, R, b, k, ox, oy, oz, dx, dy, dz, normal):
                 lx = ZERO
                 ly = ZERO
                 lz = capz
-            nx, ny, nz = _mv(R, b, k, lx, ly, lz)
+            nx, ny, nz = _mv(r00, r01, r02, r10, r11, r12, r20, r21, r22, lx, ly, lz)
         return best, nx, ny, nz
     if kind == BOX:
         ix = ONE / (TINY if abs(dx) < TINY else dx)
@@ -176,7 +173,7 @@ def hit(kind, S, P, R, b, k, ox, oy, oz, dx, dy, dz, normal):
                 lz = ONE if pz > ZERO else (-ONE if pz < ZERO else ZERO)
             else:
                 lx = ONE if px > ZERO else (-ONE if px < ZERO else ZERO)
-            nx, ny, nz = _mv(R, b, k, lx, ly, lz)
+            nx, ny, nz = _mv(r00, r01, r02, r10, r11, r12, r20, r21, r22, lx, ly, lz)
         return t, nx, ny, nz
     if kind == ELLIPSOID:
         ix = ONE / max(s0, TINY)
@@ -202,9 +199,39 @@ def hit(kind, S, P, R, b, k, ox, oy, oz, dx, dy, dz, normal):
         if normal:
             tc = min(t, CLAMP)
             lx, ly, lz = _unit((ox + tc * dx) * ix * ix, (oy + tc * dy) * iy * iy, (oz + tc * dz) * iz * iz)
-            nx, ny, nz = _mv(R, b, k, lx, ly, lz)
+            nx, ny, nz = _mv(r00, r01, r02, r10, r11, r12, r20, r21, r22, lx, ly, lz)
         return t, nx, ny, nz
     return INF, nx, ny, nz
+
+
+@njit(cache=True, error_model="numpy", inline="always")
+def _hit(kinds, S, P, R, b, k, ox, oy, oz, dx, dy, dz, normal):
+    """``hit`` of primitive k of row b; scalar arguments keep array reference counting out of the hot call."""
+    return hit(
+        kinds[k],
+        S[b, k, 0],
+        S[b, k, 1],
+        S[b, k, 2],
+        P[b, k, 0],
+        P[b, k, 1],
+        P[b, k, 2],
+        R[b, k, 0, 0],
+        R[b, k, 0, 1],
+        R[b, k, 0, 2],
+        R[b, k, 1, 0],
+        R[b, k, 1, 1],
+        R[b, k, 1, 2],
+        R[b, k, 2, 0],
+        R[b, k, 2, 1],
+        R[b, k, 2, 2],
+        ox,
+        oy,
+        oz,
+        dx,
+        dy,
+        dz,
+        normal,
+    )
 
 
 @njit(cache=True, error_model="numpy", inline="always")
@@ -263,26 +290,27 @@ def _packet_bounds(o, d, a, e):
     cy /= m
     cz /= m
     spread = 0.0
-    angle = 0.0
     n = math.sqrt(ax * ax + ay * ay + az * az)
-    if n < 1e-9:
-        angle = math.pi
-    else:
+    wide = n < 1e-9
+    if not wide:
         ax /= n
         ay /= n
         az /= n
+    # The widest ray has the smallest cosine to the axis; one arccosine then gives the half-angle.
+    lowest = 1.0
     for q in range(a, e):
         x = o[q, 0] - cx
         y = o[q, 1] - cy
         z = o[q, 2] - cz
         spread = max(spread, math.sqrt(x * x + y * y + z * z))
-        if angle < math.pi:
+        if not wide:
             x = float(d[q, 0])
             y = float(d[q, 1])
             z = float(d[q, 2])
             dn = math.sqrt(x * x + y * y + z * z)
             if dn > 0:
-                angle = max(angle, math.acos(min(1.0, max(-1.0, (x * ax + y * ay + z * az) / dn))))
+                lowest = min(lowest, (x * ax + y * ay + z * az) / dn)
+    angle = math.pi if wide else math.acos(min(1.0, max(-1.0, lowest)))
     return cx, cy, cz, spread * (1.0 + 1e-6) + 1e-7, ax, ay, az, angle
 
 
@@ -387,13 +415,13 @@ def _nearest(kinds, S, P, R, b, cand, nc, ox, oy, oz, dx, dy, dz):
         k = cand[c]
         if not _near(kinds[k], S, P, b, k, ox, oy, oz, dx, dy, dz):
             continue
-        t = hit(kinds[k], S, P, R, b, k, ox, oy, oz, dx, dy, dz, False)[0]
+        t = _hit(kinds, S, P, R, b, k, ox, oy, oz, dx, dy, dz, False)[0]
         if t < best:
             best = t
             bi = k
     if bi < 0:
         return best, ZERO, ZERO, ZERO, 0
-    _, nx, ny, nz = hit(kinds[bi], S, P, R, b, bi, ox, oy, oz, dx, dy, dz, True)
+    _, nx, ny, nz = _hit(kinds, S, P, R, b, bi, ox, oy, oz, dx, dy, dz, True)
     return best, nx, ny, nz, bi
 
 
@@ -403,53 +431,10 @@ def _blocked(kinds, S, P, R, b, cand, nc, ox, oy, oz, dx, dy, dz, lim, skip):
         k = cand[c]
         if k == skip or not _near(kinds[k], S, P, b, k, ox, oy, oz, dx, dy, dz):
             continue
-        t = hit(kinds[k], S, P, R, b, k, ox, oy, oz, dx, dy, dz, False)[0]
+        t = _hit(kinds, S, P, R, b, k, ox, oy, oz, dx, dy, dz, False)[0]
         if t > ZERO and t < lim:
             return True
     return False
-
-
-@njit(parallel=True, cache=True, error_model="numpy")
-def cast_grid(kinds, S, P, R, origin, dirs, H, W, tile, cones, t_out, n_out, i_out):
-    """Nearest hits of every camera ray (pixel-centre ``dirs``, origin per row) of each row."""
-    B = P.shape[0]
-    tx = (W + tile - 1) // tile
-    T = cones.shape[0]
-    for job in prange(B * T):
-        b = job // T
-        tl = job % T
-        ox = origin[b, 0]
-        oy = origin[b, 1]
-        oz = origin[b, 2]
-        cand = np.empty(len(kinds), np.int64)
-        nc = _candidates(
-            kinds,
-            S,
-            P,
-            b,
-            float(ox),
-            float(oy),
-            float(oz),
-            0.0,
-            cones[tl, 0],
-            cones[tl, 1],
-            cones[tl, 2],
-            cones[tl, 3],
-            cand,
-        )
-        x0 = (tl % tx) * tile
-        y0 = (tl // tx) * tile
-        for y in range(y0, min(y0 + tile, H)):
-            for x in range(x0, min(x0 + tile, W)):
-                j = y * W + x
-                t, nx, ny, nz, i = _nearest(
-                    kinds, S, P, R, b, cand, nc, ox, oy, oz, dirs[j, 0], dirs[j, 1], dirs[j, 2]
-                )
-                t_out[b, j] = t
-                n_out[b, j, 0] = nx
-                n_out[b, j, 1] = ny
-                n_out[b, j, 2] = nz
-                i_out[b, j] = i
 
 
 @njit(parallel=True, cache=True, error_model="numpy")
@@ -474,41 +459,6 @@ def cast_rays(kinds, S, P, R, env, o, d, starts, t_out, n_out, i_out):
 
 
 @njit(parallel=True, cache=True, error_model="numpy")
-def cast_shared(kinds, S, P, R, o, d, sphere, cone, starts, t_out, n_out, i_out):
-    """Nearest hits of one ray list for every row, with precomputed packet bounds."""
-    B = P.shape[0]
-    n = len(starts) - 1
-    for job in prange(B * n):
-        b = job // n
-        p = job % n
-        cand = np.empty(len(kinds), np.int64)
-        nc = _candidates(
-            kinds,
-            S,
-            P,
-            b,
-            sphere[p, 0],
-            sphere[p, 1],
-            sphere[p, 2],
-            sphere[p, 3],
-            cone[p, 0],
-            cone[p, 1],
-            cone[p, 2],
-            cone[p, 3],
-            cand,
-        )
-        for q in range(starts[p], starts[p + 1]):
-            t, nx, ny, nz, i = _nearest(
-                kinds, S, P, R, b, cand, nc, o[q, 0], o[q, 1], o[q, 2], d[q, 0], d[q, 1], d[q, 2]
-            )
-            t_out[b, q] = t
-            n_out[b, q, 0] = nx
-            n_out[b, q, 1] = ny
-            n_out[b, q, 2] = nz
-            i_out[b, q] = i
-
-
-@njit(parallel=True, cache=True, error_model="numpy")
 def blocked_rays(kinds, S, P, R, env, o, d, lim, skip, starts, out):
     """Whether a primitive other than ``skip`` meets each ray with 0 < t < lim; rays sorted by row."""
     for p in prange(len(starts) - 1):
@@ -521,34 +471,4 @@ def blocked_rays(kinds, S, P, R, env, o, d, lim, skip, starts, out):
         for q in range(a, e):
             out[q] = _blocked(
                 kinds, S, P, R, b, cand, nc, o[q, 0], o[q, 1], o[q, 2], d[q, 0], d[q, 1], d[q, 2], lim[q], skip[q]
-            )
-
-
-@njit(parallel=True, cache=True, error_model="numpy")
-def blocked_shared(kinds, S, P, R, o, d, lim, sphere, cone, starts, out):
-    """``blocked_rays`` of one ray list for every row, with precomputed packet bounds."""
-    B = P.shape[0]
-    n = len(starts) - 1
-    for job in prange(B * n):
-        b = job // n
-        p = job % n
-        cand = np.empty(len(kinds), np.int64)
-        nc = _candidates(
-            kinds,
-            S,
-            P,
-            b,
-            sphere[p, 0],
-            sphere[p, 1],
-            sphere[p, 2],
-            sphere[p, 3],
-            cone[p, 0],
-            cone[p, 1],
-            cone[p, 2],
-            cone[p, 3],
-            cand,
-        )
-        for q in range(starts[p], starts[p + 1]):
-            out[b, q] = _blocked(
-                kinds, S, P, R, b, cand, nc, o[q, 0], o[q, 1], o[q, 2], d[q, 0], d[q, 1], d[q, 2], lim[q], -1
             )
