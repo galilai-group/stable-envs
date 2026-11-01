@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import threading
+
 import torch
 from tensordict import TensorDict
 
@@ -48,6 +50,17 @@ def build_tensordict(source: dict, batch_size, device) -> TensorDict:
 
 # Byte alignment of each leaf in the transfer buffer; a multiple of every element size.
 _ALIGN = 64
+_STAGING = threading.local()
+
+
+def _staging(size: int, *, pinned: bool) -> torch.Tensor:
+    """Return ``size`` bytes of this thread's host staging memory; a new buffer would fault its pages each call."""
+    key = "pinned" if pinned else "pageable"
+    buffer = getattr(_STAGING, key, None)
+    if buffer is None or buffer.numel() < size:
+        buffer = torch.empty(max(size, 1 << 20), dtype=torch.uint8, pin_memory=pinned)
+        setattr(_STAGING, key, buffer)
+    return buffer[:size]
 
 
 def to_device_batched(td: TensorDict, device) -> TensorDict:
@@ -65,18 +78,26 @@ def to_device_batched(td: TensorDict, device) -> TensorDict:
     for key, value in leaves.items():
         offsets[key] = total
         total += -(-value.numel() * value.element_size() // _ALIGN) * _ALIGN
-    host = torch.empty(total, dtype=torch.uint8)
+    host = _staging(total, pinned=device.type == "cuda")
+    flat = host.numpy()
     for key, value in leaves.items():
         size = value.numel() * value.element_size()
         if size:
-            host[offsets[key] : offsets[key] + size] = value.contiguous().reshape(-1).view(torch.uint8)
-    moved = host.to(device)
+            # NumPy copies in this thread; a torch copy of a large leaf would wake the intra-op pool.
+            flat[offsets[key] : offsets[key] + size] = value.contiguous().reshape(-1).view(torch.uint8).numpy()
+    # The copy is synchronous, so the staging memory is free again when it returns.
+    moved = host.to(device) if device.type != "cpu" else host.clone()
 
-    def place(value):
-        key = id(value)
-        if key not in leaves:
-            return value
-        size = value.numel() * value.element_size()
-        return moved[offsets[key] : offsets[key] + size].view(value.dtype).view(value.shape)
+    def place(node):
+        data = {}
+        for key, value in node.items():
+            if isinstance(value, TensorDict):
+                data[key] = place(value)
+            elif id(value) in leaves:
+                start, size = offsets[id(value)], value.numel() * value.element_size()
+                data[key] = moved[start : start + size].view(value.dtype).view(value.shape)
+            else:
+                data[key] = value
+        return TensorDict._new_unsafe(data, batch_size=node.batch_size, device=device)
 
-    return td.apply(place, device=device)
+    return place(td)
