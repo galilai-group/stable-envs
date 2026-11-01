@@ -10,6 +10,7 @@ torch = pytest.importorskip("torch")
 
 import stable_envs as snv
 from stable_envs import tuning
+from tests.helpers.reference.semantics import assert_same_state
 
 pytestmark = pytest.mark.unit
 
@@ -39,3 +40,18 @@ def test_cpu_ray_budget_keeps_fixed_camera_frames(supersample):
         for budget in (1 << 12, 1 << 13, 1 << 15, 1 << 21, 1 << 23):
             with tuning.override(dmc_cpu_ray_budget=budget):
                 assert torch.equal(env.render(state), reference), budget
+
+
+@pytest.mark.parametrize("threads", [2, 3, 6])
+def test_thread_count_keeps_state(threads):
+    with tuning.override(dmc_threads=1):
+        reference = snv.make("DMCCartpoleSwingup", num_envs=6, seed=3, device="cpu")
+    with tuning.override(dmc_threads=threads):
+        candidate = snv.make("DMCCartpoleSwingup", num_envs=6, seed=3, device="cpu")
+    with reference, candidate:
+        assert reference._simulator.b.nthread == 1
+        assert candidate._simulator.b.nthread > 1
+        assert_same_state(reference.reset(seed=3), candidate.reset(seed=3))
+        rng = np.random.default_rng(9)
+        actions = torch.stack([reference.action_spec.sample(6, rng=rng) for _ in range(4)], 1)
+        assert_same_state(reference.step(actions, frames=None), candidate.step(actions, frames=None))
