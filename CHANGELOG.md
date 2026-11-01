@@ -65,6 +65,8 @@ All notable changes to this project are listed here. The format follows
 - Seeded resets of the navigation classes seed only the nodes of the source reset tree that a lane
   reads. A bounded float leaf draws its values with one `uniform` call, as `Box.sample` does. The reset
   values do not change.
+  On 8 cores of a Xeon Platinum 8268, episodes of physics steps (64 steps after each seeded reset) of
+  the four classes are 2 to 6 times faster than before, from 1 to 1024 lanes.
 - `SimplePointMaze` draws the `info.goal` images faster. Each distinct background is drawn once with
   Matplotlib Agg. Then only the agent disc is drawn over a copy of it, in the render worker processes on
   Linux. The image bytes do not change. Steps return the goal image without a copy: it is the same
