@@ -53,9 +53,9 @@ The local adapter declares what the parent needs:
 - `process_static_leaves` (optional) names the State leaves that only reset,
   restore and process methods change. After a step with State, the worker
   writes only `process_step_state()`, a `{key tuple: array}` of the other
-  leaves in the shared buffers. The parent copies the static leaves from a
-  cache. A thread copies the cache for the next snapshot while the workers
-  step.
+  leaves in the shared buffers. A thread copies the static leaves from the
+  shared buffers for the next snapshot while the workers step. Resets,
+  restores and process methods wait for this copy before they start.
 - `process_sequences = True` (optional) lets one worker request run a sequence
   of actions. `step_sequence` sends up to `sequence_steps` actions per lane in
   one request. Each worker steps its lanes once per action, and a lane whose

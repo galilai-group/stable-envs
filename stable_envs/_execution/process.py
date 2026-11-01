@@ -78,10 +78,6 @@ def ended(result, count):
     return done
 
 
-def _clone_all(tensors):
-    return {key: value.clone() for key, value in tensors.items()}
-
-
 def _shared_state(views, rows, count, leaves):
     values = {path[1:]: torch.from_numpy(view[rows].copy()) for path, view in views.items() if path[0] == "state"}
     values.update((key, torch.from_numpy(value)) for key, value in leaves.items())
@@ -227,7 +223,7 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         self._pending_frame = None
         self._connections, self._processes = [], []
         self._metadata = None
-        self._static, self._static_cache, self._spare, self._copier = frozenset(), None, None, None
+        self._static, self._spare, self._copier = frozenset(), None, None
         self.process_methods: dict[str, str] = {}
         try:
             # The one-lane prototype stays open for parent-side queries and checks.
@@ -315,30 +311,40 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
     def _owned(self, group):
         return owned_group(self._views, group, self.num_envs, self._output_device)
 
+    def _copy_static(self):
+        return {
+            key[1:]: torch.from_numpy(view).clone()
+            for key, view in self._views.items()
+            if key[0] == "state" and key[1:] in self._static
+        }
+
+    def _settle_static(self, *, keep: bool = False) -> None:
+        """Wait for the copy of the static leaves; drop it unless ``keep``, because the next request may change them."""
+        if self._spare is not None:
+            self._spare.result()
+            if not keep:
+                self._spare = None
+
     def _state_leaves(self):
-        """Copy the shared State leaves to ``{key: tensor}``; leaves that only resets, restores and calls
-        change come from a cache."""
+        """Copy the shared State leaves to ``{key: tensor}``.
+
+        Only resets, restores and calls change the static leaves, and they wait for the copy first, so
+        a thread copies the static leaves for the next snapshot while the workers step.
+        """
         if not self._static:
             return {
                 key[1:]: torch.from_numpy(view.copy()).to(self._output_device)
                 for key, view in self._views.items()
                 if key[0] == "state"
             }
-        if self._static_cache is None:
-            self._static_cache = {
-                key[1:]: torch.from_numpy(view.copy()) for key, view in self._views.items() if key[1:] in self._static
-            }
-            self._spare = None
-        cache = self._static_cache
-        # A thread copies the cache for the next snapshot while the workers step.
-        spare = self._spare.result() if self._spare is not None else _clone_all(cache)
+        static = self._spare.result() if self._spare is not None else self._copy_static()
         if self._copier is None:
             self._copier = ThreadPoolExecutor(1)
-        self._spare = self._copier.submit(_clone_all, cache)
+        self._spare = self._copier.submit(self._copy_static)
         values = {}
         for key, view in self._views.items():
             if key[0] == "state":
-                value = spare[key[1:]] if key[1:] in spare else torch.from_numpy(view.copy())
+                value = static[key[1:]] if key[1:] in static else torch.from_numpy(view.copy())
                 values[key[1:]] = value.to(self._output_device)
         return values
 
@@ -362,13 +368,15 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         kind = self.process_methods.get(name)
         if kind not in (PER_LANE, BROADCAST):
             raise ValueError(f"{name!r} is not a declared process method")
-        self._static_cache = None
+        self._settle_static()
         payloads = [
             (name, (lane_rows(args[0], rows), *args[1:]) if kind == PER_LANE else args) for rows in self._slices
         ]
         return gather(self._request("call", payloads))
 
     def get_state(self) -> TensorDict:
+        # Workers write the static leaves again, with the same values.
+        self._settle_static(keep=True)
         self._request("get_state")
         return self._state()
 
@@ -378,7 +386,7 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
             (None if seed is None else int(seed) + rows.start, () if args is None else tuple(args[index]))
             for index, rows in enumerate(self._slices)
         ]
-        self._static_cache = None
+        self._settle_static()
         self._request("reset", payloads)
         return self._state()
 
@@ -397,7 +405,7 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         """Restore every lane, or no lane when any worker rejects its rows."""
         self._check_idle()
         self.validate(state)
-        self._static_cache = None
+        self._settle_static()
         host = state.cpu()
         leaves = {}
         for key in (key_path(key) for key in host.keys(True, True)):

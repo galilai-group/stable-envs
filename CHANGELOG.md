@@ -63,6 +63,10 @@ All notable changes to this project are listed here. The format follows
   take 2 to 3 times less time. The State and the outputs do not change.
 - dm_control envs that step in this process export the State only after the last action of a `step`
   call. The State and the outputs do not change.
+- Process adapters with static State leaves (PushT and the OGBench mazes) copy these leaves directly
+  from the shared buffers, in a thread while the workers step. A reset copies them once in the main
+  thread, not twice. With 256 PushT lanes, the State of a reset takes 8 ms, not 130 ms. The State does
+  not change.
 - Envs that step in worker processes (OGBench, dm_control, Fetch, PyFlyt, PushT and classic control) on a
   CUDA device keep the step bookkeeping on the CPU. At the end of `step`, the outputs move to the device.
   The outputs do not change.
