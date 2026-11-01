@@ -1,4 +1,5 @@
-"""Action sequences that run in the workers give the outputs of the per-action process loop."""
+"""Action sequences that run in one simulator loop, in the workers or in this process, give the outputs
+of the per-action loop."""
 
 import numpy as np
 import pytest
@@ -77,6 +78,41 @@ def test_worker_sequences_match_the_per_action_loop(processes, capacity, states)
     finally:
         sequenced.close()
         looped.close()
+
+
+class _LocalEnv(_Env):
+    """An environment that steps its local simulator in this process."""
+
+    def __init__(self, adapter, sequences):
+        super().__init__(adapter)
+        self.sequences = sequences
+
+    def _step_pipeline(self):
+        return None
+
+    def _advance_without_snapshot(self, actions, *, active=None):
+        return self._simulator.step(actions, active=active, capture_state=False)
+
+    def _sequence_simulator(self):
+        return self._simulator if self.sequences else None
+
+
+@pytest.mark.parametrize("states", [None, slice(-1, None)])
+def test_local_sequences_match_the_per_action_loop(states):
+    rng = np.random.default_rng(7)
+    actions = [torch.from_numpy(rng.uniform(0, 1, (6, 8, 1))) for _ in range(3)] + [torch.full((6, 8, 1), 9.0)]
+    results = []
+    for sequences in (False, True):
+        adapter = SequenceLanes(6, 0)
+        env = _LocalEnv(adapter, sequences)
+        outputs = [step(env, a, states=states, frames=None) for a in actions]
+        results.append((outputs, adapter.get_state()))
+    (expected, expected_end), (actual, actual_end) = results
+    for e, a in zip(expected, actual, strict=True):
+        assert_same_state(a, e)
+        assert list(a.keys(True, True)) == list(e.keys(True, True))
+    assert_same_state(actual_end, expected_end)
+    assert not bool(expected[0]["valid"].all())
 
 
 def test_a_rejected_action_takes_the_actions_before_it():

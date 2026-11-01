@@ -15,6 +15,7 @@ from tensordict import TensorDict
 from .._core.tensordicts import build_tensordict
 from .protocol import SimulatorAdapter
 from .requests import ProcessRequests, lane_slices
+from .sequences import run_sequence
 from .shared_memory import allocate_buffers, buffer_views, key_path, owned_group
 from .state_columns import require_columns
 from .workers import pin_worker, send_failure, send_ready
@@ -69,15 +70,6 @@ def leaf_tensordict(leaves, batch, device):
     return build_tensordict(tree, [batch], device)
 
 
-def ended(result, count):
-    """Lanes whose ``terminated``, ``truncated`` or ``done`` output is set, as the step dispatcher reads them."""
-    done = np.zeros(count, bool)
-    for key in ("terminated", "truncated", "done"):
-        if key in result.keys():
-            done |= result[key].numpy().astype(bool).reshape(count, -1).any(-1)
-    return done
-
-
 def _shared_state(views, rows, count, leaves):
     values = {path[1:]: torch.from_numpy(view[rows].copy()) for path, view in views.items() if path[0] == "state"}
     values.update((key, torch.from_numpy(value)) for key, value in leaves.items())
@@ -129,21 +121,8 @@ def process_worker(conn, factory, start, count, batch, seed, cpus, buffers, spec
                     views[("frame",)][rows] = adapter.render_live()
             elif command == "steps":
                 actions, active, capture = payload
-                valid = views[("sequence_valid",)]
-                lanes = np.ones(count, bool) if active is None else active.copy()
-                for t in range(actions.shape[1]):
-                    valid[rows, t] = lanes
-                    # Finished lanes stay finished; a step of only finished lanes changes no simulator.
-                    if not lanes.any():
-                        continue
-                    result = adapter.step(
-                        actions[:, t],
-                        active=None if lanes.all() else torch.from_numpy(lanes.copy()),
-                        capture_state=False,
-                    )
-                    for path in sequence:
-                        views[path][rows, t] = result[path[1:]].numpy()
-                    lanes &= ~ended(result, count)
+                outputs = {path[1:]: views[path][rows] for path in sequence}
+                lanes = run_sequence(adapter, actions, active, outputs, views[("sequence_valid",)][rows])
                 views[("sequence_active",)][rows] = lanes
                 if capture and static:
                     for key, value in adapter.process_step_state().items():
@@ -341,11 +320,12 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         if self._copier is None:
             self._copier = ThreadPoolExecutor(1)
         self._spare = self._copier.submit(self._copy_static)
+        device = self._output_device
         values = {}
         for key, view in self._views.items():
             if key[0] == "state":
                 value = static[key[1:]] if key[1:] in static else torch.from_numpy(view.copy())
-                values[key[1:]] = value.to(self._output_device)
+                values[key[1:]] = value if device.type == "cpu" else value.to(device)
         return values
 
     def _owned_state(self):
@@ -507,7 +487,13 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         return self._sequence_steps
 
     def check_sequence(self, actions) -> np.ndarray:
-        """Return the host ``[B, T, ...]`` actions after the local ``check_step`` accepts each of them."""
+        """Return the host ``[B, T, ...]`` actions after the local ``check_step`` accepts each of them.
+
+        A local adapter may define ``check_steps``, which checks all of them at once in the same way.
+        """
+        check = getattr(self._local, "check_steps", None)
+        if check is not None:
+            return check(self, actions)
         return np.stack([self._local.check_step(self, actions[:, t], None)[0] for t in range(actions.shape[1])], 1)
 
     def step_sequence(self, actions: np.ndarray, *, host: bool = False) -> tuple[TensorDict, torch.Tensor, object]:

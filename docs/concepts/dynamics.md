@@ -106,8 +106,8 @@ returns. This does not change the outputs.
 PushT, the OGBench maze classes and the DM Control classes also send a sequence of actions to the
 workers in one request. `step` does this when `T > 1`, `frames=None` and `states` selects no State
 before the last action. One request holds up to 64 actions per lane. Each worker steps its lanes once
-per action. A lane that ends takes no more actions, as in the per-action loop. This does not change
-the outputs.
+per action. A lane that ends takes no more actions, as in the per-action loop. Without workers, these
+classes run the same loop in the calling process. This does not change the outputs.
 
 On a CUDA device, `step` keeps the worker outputs and its bookkeeping on the CPU. Before `step` returns,
 the outputs move to the device. Frames are drawn on the device.

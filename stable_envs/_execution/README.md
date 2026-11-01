@@ -62,7 +62,14 @@ The local adapter declares what the parent needs:
   step sets `terminated`, `truncated` or `done` takes no more actions. The
   workers write the task outputs of every action to shared buffers. An adapter
   declares this only when a step with no active lane changes no simulator and
-  `step(actions, active=None)` equals a step with every lane active.
+  `step(actions, active=None)` equals a step with every lane active. The
+  optional `step_arrays(actions, active)` returns the task outputs of `step` as
+  `{key tuple: array}` without State, and the optional `check_steps(actions)`
+  checks all actions of a sequence as `check_step` checks each one. Without
+  them, the worker converts the outputs of `step`, and the parent calls
+  `check_step` once per action. The step dispatcher runs the same loop in the
+  calling process for an env whose `_sequence_simulator()` returns its local
+  adapter.
 - `render_live()` and `frame_shape` (optional) let the workers draw the frame
   of their running lanes into a shared buffer. `live_frames` is then true, and
   `submit_step(..., capture_frame=True)` returns the frame as `"frame"`. The

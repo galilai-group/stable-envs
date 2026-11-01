@@ -63,6 +63,8 @@ def _model():
 class ReacherMJXAdapter(ReacherAdapter):
     """Batched MJX Reacher dynamics."""
 
+    process_sequences = False
+
     def __init__(self, num_envs, device="cuda", seed=0):
         super().__init__(num_envs, device, seed)
         backend = "gpu" if self.device.type == "cuda" else "cpu"
