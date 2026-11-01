@@ -183,3 +183,20 @@ def test_dmc_numba_frames_match_torch_frames(name):
             env.close()
     for a, b in zip(frames["numba"], frames["torch"]):
         assert_close_frames(a, b)
+
+
+@pytest.mark.gl
+@pytest.mark.parametrize("name", ["DMCReacher", "DMCBallInCupCatch"])
+def test_dmc_numba_supersampled_frames_match_torch_frames(name):
+    import stable_envs as se
+    from stable_envs.testing import conformance as C
+
+    frames = {}
+    for backend in ("torch", "numba"):
+        env = se.make(name, num_envs=3, size=48, supersample=2, device="cpu", backend=backend)
+        try:
+            rows = torch.as_tensor(C.sample_render_rows(env, 3, rng=np.random.default_rng(5)))
+            frames[backend] = env._render(rows).numpy()
+        finally:
+            env.close()
+    assert_close_frames(frames["numba"], frames["torch"])
