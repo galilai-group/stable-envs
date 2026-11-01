@@ -12,13 +12,13 @@ The renderers come in two groups:
   and MJWarp on CUDA. Their frames differ from MuJoCo's frames. `env.describe()["visual_fidelity"]`
   gives the measured agreement.
 
-On CPU, compiled Numba kernels cast the rays of both groups. The `dmcontrol` extra installs Numba.
-The kernels divide each frame into tiles of 8 × 8 pixels. Each tile tests its rays only against the
-moving geometry that its bounds can reach. Shadow rays and mirror rays use the same test. For the
-body-tracking tasks, one kernel also does the shading. `backend="torch"` selects the Torch renderers,
-and `backend="auto"` (the default) selects Numba when it imports. The two backends give the same frames,
-except for rare pixels that differ by one level. Torch's CPU square root can round differently from
-the IEEE square root that the kernels use.
+On CPU, one compiled Numba kernel draws the frames of each group. The `dmcontrol` extra installs Numba.
+The kernel divides each frame into tiles of 8 × 8 pixels. Each tile tests its rays only against the
+moving geometry that its bounds can reach. Shadow rays and mirror rays use the same test. The kernel
+then shades the pixels in the same order of float32 operations as the Torch renderer.
+`backend="torch"` selects the Torch renderers, and `backend="auto"` (the default) selects Numba when it
+imports. The two backends give the same frames, except for rare pixels. Torch's CPU square root can
+round differently from the IEEE square root that the kernels use.
 
 Each action dimension drives one actuator of the model, in the order of the MuJoCo model. The bounds
 come from the actuator control range.
