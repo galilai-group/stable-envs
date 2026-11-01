@@ -45,6 +45,19 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- `SimplePointMaze` draws the `info.goal` images faster. Each distinct background is drawn once with
+  Matplotlib Agg. Then only the agent disc is drawn over a copy of it, in the render worker processes on
+  Linux. The image bytes do not change. Steps return the goal image without a copy: it is the same
+  tensor at each step, and a `[B, T]` step returns a view of it along the time axis. Do not write into
+  `info.goal`.
+- OGBench point mazes, except `teleport`: the lanes of a worker step in one loop. The loop does not swap
+  the NumPy legacy RNG for each lane, because a point step draws no random numbers. A step sets the
+  ball velocity to zero, so a ball that does not touch a wall stays where it is. For such a lane the
+  step advances only the clock and does not call MuJoCo. Workers send only the State leaves that a step
+  changes. State and task outputs do not change.
+- `PointMazeLargeNavigate` on CPU: the spotlight shadow rays of a frame, and of the goal and agent
+  samples, test only the walls near them. The goal and the agent are drawn in two small tiles when their screen bounds do not meet.
+  Frames do not change.
 - Reacher with CUDA output now uses native CPU physics below 32 environments. Larger CUDA batches
   keep JAX/MJX physics. `simulation_backend` selects either implementation and `mjx_min_envs` changes
   the provisional cutoff. TwoRoom uses Torch below `jax_min_envs` and JAX at or above it. Its cutoff
