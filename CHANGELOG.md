@@ -66,6 +66,9 @@ All notable changes to this project are listed here. The format follows
 - PushT, OGBench maze and dm_control envs that step in this process run the actions of a `step` call
   with `T > 1`, no frames and no State before the last action in one loop. The simulators give their
   task outputs as NumPy arrays, and the loop stacks them. The State and the outputs do not change.
+- OGBench Cube and Scene: the lanes of one worker keep the MJCF XML of each set of MJCF Variation
+  values, so a reset does not write the XML again when the values did not change. Cube and Scene resets take
+  about 8 times less time. The State and the outputs do not change.
 - Process adapters with static State leaves (PushT and the OGBench mazes) copy these leaves directly
   from the shared buffers, in a thread while the workers step. A reset copies them once in the main
   thread, not twice. With 256 PushT lanes, the State of a reset takes 8 ms, not 130 ms. The State does
