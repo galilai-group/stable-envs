@@ -141,6 +141,26 @@ def _rest_walls(model):
     return lo, hi, radius, offset
 
 
+def _resting_lanes(rest, envs, qpos):
+    """Lanes whose step leaves the ball where it is, so only the clock advances.
+
+    This is exact: the step sets the velocity to zero, ``_rest_walls`` checked that no joint, gravity
+    or fluid term then makes a force, and here the lane has no control or applied force and its ball
+    keeps a clearance from every wall. The only contact is the floor, whose normal is orthogonal to
+    both joints, so MuJoCo computes zero acceleration and the warmstart it stores is zero.
+    """
+    if rest is None:
+        return np.zeros(len(qpos), bool)
+    lo, hi, radius, offset = rest
+    centre = np.zeros((len(qpos), 3))
+    centre[:, :2] = qpos
+    centre += offset
+    near = np.clip(centre[:, None], lo, hi) - centre[:, None]
+    clear = (near * near).sum(-1).min(1) > (radius + _REST_CLEARANCE) ** 2
+    idle = [not (e.data.ctrl.any() or e.data.qfrc_applied.any() or e.data.xfrc_applied.any()) for e in envs]
+    return clear & np.asarray(idle, bool)
+
+
 class OGBMazeAdapter(SimulatorAdapter):
     """Independent CPU locomotion-maze simulators with owned State snapshots.
 
@@ -339,17 +359,6 @@ class OGBMazeAdapter(SimulatorAdapter):
             dist[i] = np.linalg.norm(diff[i])
         return dist <= tol
 
-    def _resting(self, qpos):
-        """Lanes whose ball at ``qpos`` keeps a clearance from every wall."""
-        if self._rest is None:
-            return np.zeros(len(qpos), bool)
-        lo, hi, radius, offset = self._rest
-        centre = np.zeros((len(qpos), 3))
-        centre[:, :2] = qpos
-        centre += offset
-        near = np.clip(centre[:, None], lo, hi) - centre[:, None]
-        return (near * near).sum(-1).min(1) > (radius + _REST_CLEARANCE) ** 2
-
     def _step_point(self, actions, active, capture_state):
         """Step point lanes as ``PointEnv.step`` and ``MazeEnv.step`` do, with task outputs for the whole batch."""
         import mujoco
@@ -362,14 +371,13 @@ class OGBMazeAdapter(SimulatorAdapter):
         if first._success_timing == "pre":
             success = self._success(prev_qpos, goal)
         target = prev_qpos + 0.2 * actions
-        resting = self._resting(target)
+        resting = _resting_lanes(self._rest, envs, target)
         for i in range(self.num_envs) if active is None else np.flatnonzero(active):
             env = envs[i]
             data = env.data
             data.qpos[:] = target[i]
             data.qvel[:] = 0.0
-            if resting[i] and not (data.ctrl.any() or data.qfrc_applied.any() or data.xfrc_applied.any()):
-                # mj_step leaves a resting ball in place; only the clock advances.
+            if resting[i]:
                 time, h = data.time, env.model.opt.timestep
                 for _ in range(env.frame_skip):
                     time += h
