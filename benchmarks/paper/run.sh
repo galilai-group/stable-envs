@@ -2,7 +2,8 @@
 # Offline and online speed of stable-envs against the source, every arm pinned to the same CPU cores.
 # usage (from the repository root): sbatch -p qed -n 1 -c 8 --hint=nomultithread --mem=128G --gres=gpu:1 -t 48:00:00 benchmarks/paper/run.sh OUT FAMILY=ENV,ENV ...
 #   SMOKE=1 uses small state, batch and episode counts. THROUGHPUT=1 runs only the throughput arms (see the THROUGHPUT block).
-#   REGIME=cpu runs every CPU arm (frames, steps, steps with frames) and its source arm, and needs no GPU.
+#   REGIME=cpu runs every CPU arm (frames, steps, steps with frames) and its source arm, and needs no GPU. Its online
+#   arms run at every lane count of LANE_SWEEP (override with LANE_SWEEP_OVERRIDE) and write one file per count.
 #   REGIME=gifs writes one stable-envs | source | diff GIF per env (benchmarks/gifs.py) and nothing else.
 #   REGIME=offline-gpu runs only stable-envs GPU frames from States, their frame MSE, and the source arms they are compared with.
 #   CORES (default: the first NPIN, default 8, cores the job may use) is the
@@ -21,10 +22,11 @@ WORK=${TMPDIR:-/tmp}/snv-bench-$$
 mkdir -p "$OUT"/{offline,online,logs} "$WORK"
 trap 'rm -rf "$WORK"' EXIT
 if [ "${SMOKE:-0}" = 1 ]; then
-  N=256; BATCHES="1 64 256"; EPISODES=64; LENGTH=32; LANES=64; SLANES=8; SWEPISODES=64
+  N=256; BATCHES="1 64 256"; EPISODES=64; LENGTH=32; LANES=64; SLANES=8; SWEPISODES=64; LANE_SWEEP="1 8 64"
 else
-  N=2048; BATCHES="1 256 1024 2048"; EPISODES=256; LENGTH=64; LANES=256; SLANES=8; SWEPISODES=64
+  N=2048; BATCHES="1 256 1024 2048"; EPISODES=256; LENGTH=64; LANES=256; SLANES=8; SWEPISODES=64; LANE_SWEEP="1 8 64 256 1024"
 fi
+LANE_SWEEP=${LANE_SWEEP_OVERRIDE:-$LANE_SWEEP}
 # Arms that draw with software OpenGL play the first SWEPISODES episodes only; steps/s does not depend on the count.
 REPEATS=${REPEATS:-3}
 # SRC_LANES envs per source worker (one avoids the multi-env corruption some sources show);
@@ -117,7 +119,9 @@ for spec in "$@"; do
   if [ "${REGIME:-all}" = cpu ]; then
     # Every CPU arm and its source arm, with no GPU: frames from States, physics steps, and steps with frames.
     sw $OFF states --envs "${envs[@]}" --out $S --n $N --device cpu --lanes 1024
-    sw $ON dataset --envs "${envs[@]}" --out $D --episodes $EPISODES --length $LENGTH
+    # Every lane count of the sweep plays its own episodes, so the dataset holds as many as the largest count.
+    MAXL=$(echo $LANE_SWEEP | tr ' ' '\n' | sort -n | tail -1)
+    sw $ON dataset --envs "${envs[@]}" --out $D --episodes $(( MAXL > EPISODES ? MAXL : EPISODES )) --length $LENGTH
     for E in "${envs[@]}"; do
       echo "--- $E $(date -Is) load $(cut -d' ' -f1-3 /proc/loadavg)"
       o=$OUT/offline/$E; n=$OUT/online/$E; mkdir -p $o $n
@@ -126,10 +130,14 @@ for spec in "$@"; do
       for p in 1 $NCORES; do
         sw $OFF source --envs $E --states $S --procs $p --repeats $REPEATS --output $o/src-cpu-${p}p.json
       done
-      COMMON="--env $E --data $D --procs $NCORES --source-lanes $SLANES --lanes $LANES --threads $NCORES --repeats $REPEATS"
-      sw $ON run $COMMON --arms src-pipelined-step snv-step --output $n/step.json
-      sw $ON run $COMMON --episodes $SWEPISODES --arms src-pipelined-render --src-label cpu --ours-device cpu --output $n/src-render-cpu.json
-      sw $ON run $COMMON --episodes $SWEPISODES --arms snv-render-cpu --output $n/snv-render-cpu.json
+      # Online arms at every lane count L: ours with L lanes; the source with L envs over min(L, NCORES) workers.
+      for L in $LANE_SWEEP; do
+        p=$(( L < NCORES ? L : NCORES )); sl=$(( (L + p - 1) / p ))
+        COMMON="--env $E --data $D --procs $p --source-lanes $sl --lanes $L --threads $NCORES --repeats $REPEATS --episodes $L"
+        sw $ON run $COMMON --arms src-pipelined-step snv-step --output $n/step-L$L.json
+        sw $ON run $COMMON --arms src-pipelined-render --src-label cpu --ours-device cpu --output $n/src-render-cpu-L$L.json
+        sw $ON run $COMMON --arms snv-render-cpu --output $n/snv-render-cpu-L$L.json
+      done
     done
     rm -rf $WORK/venv-$fam $S $D
     continue
