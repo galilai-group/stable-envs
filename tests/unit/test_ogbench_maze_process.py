@@ -10,7 +10,7 @@ import torch
 pytest.importorskip("ogbench")
 
 import stable_envs as se
-from stable_envs.envs.ogbench.simulation.maze import OGBMazeAdapter
+from stable_envs.envs.ogbench.simulation.maze import OGBMazeAdapter, _resting_lanes
 from stable_envs.envs.ogbench.simulation.maze_process import OGBMazeProcessAdapter
 from tests.helpers.reference.semantics import assert_same_state
 
@@ -168,7 +168,7 @@ def test_point_lanes_step_as_the_source_step_does(dtype, maze):
         for t in range(steps):
             mask = None if t < 2 else torch.tensor([t % (lane % 4 + 1) == 0 for lane in range(lanes)])
             prev = np.stack([env.data.qpos for env in batched.envs])
-            resting.append(batched._resting(prev + 0.2 * actions[:, t]))
+            resting.append(_resting_lanes(batched._rest, batched.envs, prev + 0.2 * actions[:, t]))
             assert_same_state(batched.step(actions[:, t], active=mask), source.step(actions[:, t], active=mask))
         resting = np.stack(resting)
         assert resting.any() and not resting.all()
