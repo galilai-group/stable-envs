@@ -6,6 +6,7 @@ keeps at most one transition in flight and renders owned snapshots in the parent
 
 from __future__ import annotations
 
+import contextlib
 import sys
 
 import numpy as np
@@ -139,8 +140,36 @@ def _columns(valid, indices):
     return valid[:, indices[0] : indices[-1] + 1 : stride].clone()
 
 
+@contextlib.contextmanager
+def _threads(count):
+    previous = torch.get_num_threads()
+    if count == previous:
+        yield
+        return
+    torch.set_num_threads(count)
+    try:
+        yield
+    finally:
+        torch.set_num_threads(previous)
+
+
+def _host_pipeline(env, pipeline) -> bool:
+    """Whether the step keeps the outputs of ``pipeline`` and its bookkeeping on the host."""
+    return pipeline is not None and getattr(pipeline, "host_outputs", False) and env.device.type != "cpu"
+
+
 @torch.no_grad()
 def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
+    env._check_open("step")
+    if not _host_pipeline(env, getattr(env, "_step_pipeline", lambda: None)()):
+        return _step(env, actions, states, frames, render_threads=None)
+    # Host bookkeeping runs in one thread: idle intra-op threads spin on the cores of the workers.
+    threads = torch.get_num_threads()
+    with _threads(1):
+        return _step(env, actions, states, frames, render_threads=threads)
+
+
+def _step(env, actions, states, frames, *, render_threads):
     env._check_open("step")
     if not env.has_dynamics:
         from .dynamics import no_dynamics
@@ -168,7 +197,7 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
     pipeline = getattr(env, "_step_pipeline", lambda: None)()
     # A process pipeline on an accelerator keeps the outputs and this bookkeeping on the host until
     # the end; then the outputs move to the device together.
-    host = pipeline is not None and getattr(pipeline, "host_outputs", False) and env.device.type != "cpu"
+    host = _host_pipeline(env, pipeline)
     work = torch.device("cpu") if host else env.device
     active = torch.ones(env.num_envs, dtype=torch.bool, device=work)
     # Frames drawn from the live lanes, here or in pipeline workers, need no State snapshot.
@@ -219,15 +248,16 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
             if t in state_times:
                 saved_states[t] = live_state
             if t in frame_times:
-                if live_frame is None and pipeline_frames:
-                    # Workers copied the leaves on receipt; the next step is already running.
-                    live_frame = pipeline.take_frame() if hasattr(pipeline, "take_frame") else None
-                if live_frame is None and draws_live and pipeline is None:
-                    live_frame = render_live()
-                elif live_frame is None:
-                    # Workers drew no frame after the last transition when every lane finished before it.
-                    live_state = env.get_state().to(work) if live_state is None else live_state
-                    live_frame = env.render(to_device_batched(live_state, env.device) if host else live_state)
+                with _threads(render_threads or torch.get_num_threads()):
+                    if live_frame is None and pipeline_frames:
+                        # Workers copied the leaves on receipt; the next step is already running.
+                        live_frame = pipeline.take_frame() if hasattr(pipeline, "take_frame") else None
+                    if live_frame is None and draws_live and pipeline is None:
+                        live_frame = render_live()
+                    elif live_frame is None:
+                        # Workers drew no frame after the last transition when every lane finished before it.
+                        live_state = env.get_state().to(work) if live_state is None else live_state
+                        live_frame = env.render(to_device_batched(live_state, env.device) if host else live_state)
                 saved_frames[t] = live_frame
             active = next_active
             all_active = next_all_active
