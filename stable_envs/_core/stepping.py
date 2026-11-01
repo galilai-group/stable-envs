@@ -11,7 +11,7 @@ import sys
 import numpy as np
 import torch
 
-from .tensordicts import build_tensordict
+from .tensordicts import build_tensordict, to_device_batched
 
 _NUMPY_DTYPES = {torch.uint8: np.uint8, torch.float32: np.float32, torch.float64: np.float64, torch.bool: np.bool_}
 
@@ -163,10 +163,14 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
     shared = tuple(getattr(env, "_shared_outputs", ()))
     # Draws the live lanes without rebuilding them from the State snapshot.
     render_live = getattr(env, "_render_live", None)
-    active = torch.ones(env.num_envs, dtype=torch.bool, device=env.device)
     all_active = True
     result, live_state, live_frame = None, None, None
     pipeline = getattr(env, "_step_pipeline", lambda: None)()
+    # A process pipeline on an accelerator keeps the outputs and this bookkeeping on the host until
+    # the end; then the outputs move to the device together.
+    host = pipeline is not None and getattr(pipeline, "host_outputs", False) and env.device.type != "cpu"
+    work = torch.device("cpu") if host else env.device
+    active = torch.ones(env.num_envs, dtype=torch.bool, device=work)
     # Frames drawn from the live lanes, here or in pipeline workers, need no State snapshot.
     pipeline_frames = pipeline is not None and getattr(pipeline, "live_frames", False)
     draws_live = render_live is not None and (pipeline is None or pipeline_frames)
@@ -191,7 +195,7 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
             validity.append(active if all_active else active.clone())
             if pipeline is not None:
                 if pending:
-                    result = pipeline.receive_step()
+                    result = pipeline.receive_step(host=True) if host else pipeline.receive_step()
                     pending = False
                     live_state, live_frame = result.get("state", None), result.get("frame", None)
             elif all_active:
@@ -203,7 +207,7 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
                 live_state, live_frame = result.get("state", None), None
             needs_state = t in state_times or t == length - 1 or (t in frame_times and not draws_live)
             if needs_state and live_state is None:
-                live_state = env.get_state()
+                live_state = env.get_state().to(work)
             next_active = active & ~_done(result) if t + 1 < length else active
             # Reuse the routing decision for padding to avoid another readback or empty indexing of large images.
             next_all_active = bool(next_active.all()) if t + 1 < length else all_active
@@ -222,8 +226,8 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
                     live_frame = render_live()
                 elif live_frame is None:
                     # Workers drew no frame after the last transition when every lane finished before it.
-                    live_state = env.get_state() if live_state is None else live_state
-                    live_frame = env.render(live_state)
+                    live_state = env.get_state().to(work) if live_state is None else live_state
+                    live_frame = env.render(to_device_batched(live_state, env.device) if host else live_state)
                 saved_frames[t] = live_frame
             active = next_active
             all_active = next_all_active
@@ -246,9 +250,17 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
         out["state_valid"] = _columns(valid, state_indices)
     if frame_indices is not None:
         out["frames"] = (
-            torch.stack([saved_frames[t] for t in frame_indices], dim=1)
+            torch.stack([saved_frames[t].to(env.device) for t in frame_indices], dim=1)
             if frame_indices
             else torch.empty((env.num_envs, 0, *env.frame_spec.shape), dtype=env.frame_spec.dtype, device=env.device)
         )
         out["frame_valid"] = _columns(valid, frame_indices)
-    return build_tensordict(out, [env.num_envs], env.device)
+    if not host:
+        return build_tensordict(out, [env.num_envs], env.device)
+    frames = out.get("frames")
+    moved = to_device_batched(
+        build_tensordict({k: v for k, v in out.items() if k != "frames"}, [env.num_envs], work), env.device
+    )
+    return build_tensordict(
+        {key: frames if key == "frames" else moved[key] for key in out}, [env.num_envs], env.device
+    )
