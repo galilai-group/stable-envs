@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+from multiprocessing.shared_memory import SharedMemory
 
 import numpy as np
 import torch
@@ -63,7 +64,7 @@ class RocketAdapter(SimulatorAdapter):
             raise ValueError("Rocket supports CPU dynamics and CPU/CUDA State storage")
         self.envs, self._prepared = [], None
         # ``(size, supersample)`` of the TinyRenderer frames ``render_live`` draws; None draws none.
-        self.frame, self._scene = frame, None
+        self.frame, self._scene, self._canvas = frame, None, None
         try:
             for lane in range(batch):
                 self.envs.append(RocketReplay(config, None if seed is None else seed + lane))
@@ -188,13 +189,31 @@ class RocketAdapter(SimulatorAdapter):
     def frame_shape(self):
         return None if self.frame is None else (self.frame[0], self.frame[0], 3)
 
-    def draw(self, body, links, colors, size, ss):
-        """Draw explicit body poses, camera link poses and colours with TinyRenderer."""
+    def draw(self, body, links, colors, size, ss, canvas=None):
+        """Draw explicit body poses, camera link poses and colours with TinyRenderer.
+
+        ``canvas`` is ``(shared memory name, byte offset)``: the frames go there and nothing is returned.
+        """
         from ..render import draw_tiny, tiny_scene
 
         if self._scene is None:
             self._scene = tiny_scene()
-        return draw_tiny(self._scene, body, links, colors, size, ss)
+        if canvas is None:
+            return draw_tiny(self._scene, body, links, colors, size, ss)
+        if not len(body):
+            return None
+        name, offset = canvas
+        if self._canvas is None or self._canvas.name != name:
+            self._close_canvas()
+            self._canvas = SharedMemory(name=name)
+        out = np.ndarray((len(body), size, size, 3), np.uint8, buffer=self._canvas.buf, offset=offset)
+        draw_tiny(self._scene, body, links, colors, size, ss, out)
+        return None
+
+    def _close_canvas(self):
+        if self._canvas is not None:
+            self._canvas.close()
+            self._canvas = None
 
     def render_live(self):
         """Draw every lane's running scene with TinyRenderer, as ``render`` draws its State."""
@@ -222,6 +241,7 @@ class RocketAdapter(SimulatorAdapter):
         for env in self.envs:
             env.close()
         self.envs = []
+        self._close_canvas()
         if self._scene is not None:
             import pybullet
 

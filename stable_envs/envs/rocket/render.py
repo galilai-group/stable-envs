@@ -169,12 +169,12 @@ def tiny_scene():
     return client, (ground, rocket, pad), painted
 
 
-def draw_tiny(scene, body, links, colors, size, ss):
+def draw_tiny(scene, body, links, colors, size, ss, out=None):
     """Draw ``(B, 3, 7)`` body poses, ``(B, 7)`` camera link poses and ``(B, 6, 4)`` colours to uint8 frames."""
     import pybullet as bullet
 
     client, bodies, painted = scene
-    images = np.empty((len(body), size, size, 3), np.uint8)
+    images = np.empty((len(body), size, size, 3), np.uint8) if out is None else out
     for i in range(len(body)):
         for j, uid in enumerate(bodies):
             bullet.resetBasePositionAndOrientation(uid, body[i, j, :3], body[i, j, 3:], physicsClientId=client)

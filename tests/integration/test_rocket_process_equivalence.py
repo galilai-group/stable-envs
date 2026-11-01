@@ -139,6 +139,11 @@ def test_step_frames_match_state_render(monkeypatch, workers):
         out = env.step(actions, states=slice(None), frames=slice(None))
         for t in range(actions.shape[1]):
             torch.testing.assert_close(out["frames"][:, t], env.render(out["states"][:, t]), rtol=0, atol=0)
+        # RenderStates of other batch sizes split across the workers in the same way.
+        first, last = env.to_render_state(out["states"][:, 0]), env.to_render_state(out["states"][:, -1])
+        torch.testing.assert_close(env.render(first[1:3]), out["frames"][1:3, 0], rtol=0, atol=0)
+        frames = torch.cat([out["frames"][:, 0], out["frames"][:, -1]])
+        torch.testing.assert_close(env.render(torch.cat([first, last])), frames, rtol=0, atol=0)
         env.reset(seed=11)
         frames = env.step(actions, states=None, frames=slice(None))["frames"]
         torch.testing.assert_close(frames, out["frames"], rtol=0, atol=0)
