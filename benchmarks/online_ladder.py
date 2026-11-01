@@ -34,15 +34,25 @@ from benchmarks.offline_sweep import _cycle, _host, _timed
 SOURCE_KWARGS = {"swm/PushT-v1": {"resolution": 224}, "swm/PushT-Discrete-v1": {"resolution": 224}}
 
 
+#: Physics steps per action of every DM Control class, which the dm_control source repeats to do the same work.
+DMC_ACTION_REPEAT = 2
+
+
 def source_id(name: str) -> str:
-    """The source a class is timed against: its SWM gym id, else its ``reference_id`` (dm_control/..., ogbench/...)."""
+    """The source a class is timed against.
+
+    DM Control classes use their dm_control suite task directly. Other classes use their SWM gym id, else their
+    ``reference_id`` (ogbench/...).
+    """
     import stable_envs as snv
     from tests.helpers.reference.crosswalk import swm_ids_for_class
 
+    ref = snv.registry.REGISTRY[name].reference_id
+    if ref and ref.startswith("dm_control/"):
+        return ref
     ids = swm_ids_for_class(name)
     if ids:
         return ids[0]
-    ref = snv.registry.REGISTRY[name].reference_id
     if not ref:
         raise ValueError(f"{name}: no SWM id and no reference_id")
     return ref
@@ -64,7 +74,11 @@ class _DMCSource:
 
     def step(self, action):
         """Return whether the episode ended."""
-        return bool(self.env.step(np.asarray(action, np.float64)).last())
+        a = np.asarray(action, np.float64)
+        for _ in range(DMC_ACTION_REPEAT):
+            if self.env.step(a).last():
+                return True
+        return False
 
     def render(self):
         return self.env.physics.render(self.size, self.size, camera_id=self.camera)
