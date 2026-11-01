@@ -56,6 +56,15 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- TwoRoom, TwoRoomTarget, Piecewise and PiecewiseZones on CPU: one Numba kernel moves all lanes. The
+  same call returns the State, the observation, the reward and the termination flags. The kernel does
+  each float32 operation of the Torch step with the same rounding, so State and task outputs do not
+  change. `simulation_backend="auto"` (the default) selects the kernel on CPU when Numba imports.
+  `"torch"` selects the Torch physics, and TwoRoom also accepts `"jax"`. On CUDA, TwoRoom uses
+  `jax_min_envs` to select Torch or JAX, as before. `execution_mode` is `NATIVE_NUMBA` for the kernel.
+- Seeded resets of the navigation classes seed only the nodes of the source reset tree that a lane
+  reads. A bounded float leaf draws its values with one `uniform` call, as `Box.sample` does. The reset
+  values do not change.
 - `SimplePointMaze` draws the `info.goal` images faster. Each distinct background is drawn once with
   Matplotlib Agg. Then only the agent disc is drawn over a copy of it, in the render worker processes on
   Linux. The image bytes do not change. Steps return the goal image without a copy: it is the same

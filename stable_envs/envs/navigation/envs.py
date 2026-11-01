@@ -143,6 +143,17 @@ def _bias_field_rgba(biases) -> np.ndarray:
     return rgba
 
 
+_WALL_RESET_PATHS = ("wall.axis", "wall.thickness", "agent.radius")
+_EXECUTION_MODES = {"torch": "NATIVE_TORCH", "jax": "NATIVE_JAX", "numba": "NATIVE_NUMBA"}
+_NO_MASK = np.zeros(0, np.bool_)
+
+
+def _numba_available() -> bool:
+    from ...render import cpu_raster
+
+    return cpu_raster.available()
+
+
 def _u(env):
     return getattr(env, "unwrapped", env)
 
@@ -413,6 +424,8 @@ class _HiddenTargetSemantics:
 
     execution_mode = "NATIVE_TORCH"
     _step_outputs_owned = True
+    # TwoRoom observations append the door centers.
+    _numba_doors = False
     state_layout = ((("agent", "position"), 2, 0), (("target", "position"), 2, None))
     state_bounds = {
         ("agent", "position"): (POS_LO, POS_HI),
@@ -517,6 +530,8 @@ class _HiddenTargetSemantics:
     def _step(self, action, *, active=None):
         self._check_open("step")
         act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
+        if self.simulation_backend == "numba":
+            return self._numba_step(act, active)
         next_rows = self._advance_rows(self._render_state, act, self._style)
         if active is not None:
             next_rows = torch.where(active[:, None], next_rows, self._render_state)
@@ -524,6 +539,33 @@ class _HiddenTargetSemantics:
         # Physics already produces valid packed rows. Own the snapshot directly;
         # the public get_state() validation would synchronize CUDA every step.
         return self._outputs(self._full_state(self._render_state))
+
+    def _numba_step(self, action, active):
+        """Advance the lanes and build State and task outputs in one Numba call."""
+        from . import navstep_cpu
+
+        values = navstep_cpu.task_step(
+            self._numba_kind, *self._numba_inputs(action, active), self._target_position.numpy(), self._numba_doors
+        )
+        agent, target, observation, proprio, state, goal_state, distance, terminated = map(torch.from_numpy, values)
+        n = self.B
+        return build_tensordict(
+            {
+                "state": {"agent": {"position": agent}, "target": {"position": target}},
+                "reward": torch.zeros(n, dtype=torch.float64),
+                "terminated": terminated,
+                "truncated": torch.zeros(n, dtype=torch.bool),
+                "observation": observation,
+                "info": {
+                    "proprio": proprio,
+                    "state": state,
+                    "goal_state": goal_state,
+                    "distance_to_target": distance,
+                },
+            },
+            [n],
+            self.device,
+        )
 
 
 class _TorchNavBase(_GymReferencePort):
@@ -538,10 +580,78 @@ class _TorchNavBase(_GymReferencePort):
 
     dynamics_variation_leaves = frozenset({"agent.speed"})
 
-    def __init__(self, *args, **kwargs):
+    #: Physics implementations that ``simulation_backend`` accepts in addition to ``"auto"``.
+    simulation_backends: tuple[str, ...] = ("torch", "numba")
+    #: Kernel selector and Variation columns of the Numba step.
+    _numba_kind = 0
+    _numba_paths: tuple[str, ...] = ()
+
+    def __init__(self, *args, simulation_backend="auto", **kwargs):
+        """Select the physics implementation; ``"auto"`` uses Numba on CPU when it imports and Torch otherwise."""
+        choices = ("auto", *self.simulation_backends)
+        if simulation_backend not in choices:
+            raise ValueError(f"simulation_backend must be one of {', '.join(map(repr, choices))}")
         super().__init__(*args, **kwargs)
         self._gy, self._gx = _grids(self.device)
         self._border = _border_mask(self.device)
+        if simulation_backend == "auto":
+            simulation_backend = self._auto_simulation_backend()
+        if simulation_backend == "numba":
+            if self.device.type != "cpu":
+                raise ValueError(f"simulation_backend='numba' needs device='cpu', got {self.device}")
+            if not _numba_available():
+                raise ImportError("simulation_backend='numba' needs Numba; install stable-envs[navigation]")
+            layout = self._style.layout
+            self._numba_cols = np.asarray([layout[path][0] for path in self._numba_paths], np.int64)
+        self.simulation_backend = simulation_backend
+        self.execution_mode = _EXECUTION_MODES[simulation_backend]
+
+    def _auto_simulation_backend(self) -> str:
+        return "numba" if self.device.type == "cpu" and _numba_available() else "torch"
+
+    def _numba_inputs(self, action, active):
+        """Return the arrays that every Numba step reads; the kernel updates the live rows in place."""
+        act = action.numpy()
+        if not act.flags.c_contiguous:
+            act = np.ascontiguousarray(act)
+        mask = _NO_MASK if active is None else active.numpy()
+        style = self._style.values.numpy()
+        if style.shape[0] != self.B:
+            raise ValueError(f"{type(self).__name__}: the installed Variation has {style.shape[0]} rows, not {self.B}")
+        return self._render_state.numpy(), act, style, self._numba_cols, mask, active is not None
+
+    def _advance_rows(self, rows, action, sty) -> torch.Tensor:
+        numba = self.simulation_backend == "numba" and rows.dtype == action.dtype == torch.float32
+        if numba and sty.batch == rows.shape[0] == action.shape[0]:
+            from . import navstep_cpu
+
+            out = rows.clone(memory_format=torch.contiguous_format)
+            act = np.ascontiguousarray(action.numpy())
+            navstep_cpu.advance(
+                self._numba_kind, out.numpy(), act, sty.values.numpy(), self._numba_cols, _NO_MASK, False
+            )
+            return out
+        return self._advance_rows_torch(rows, action, sty)
+
+    def _advance_rows_torch(self, rows, action, sty) -> torch.Tensor:
+        raise NotImplementedError
+
+    @torch.no_grad()
+    def _step(self, action, *, active=None) -> TensorDict:
+        if self.simulation_backend != "numba" or self._live_rows != self.B or self.state_dim not in (2, 4):
+            return super()._step(action, active=active)
+        from . import navstep_cpu
+
+        self._check_open("step")
+        act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
+        agent, rest, finite = navstep_cpu.state_step(self._numba_kind, *self._numba_inputs(act, active))
+        if not finite:
+            # get_state names the non-finite lanes and raises.
+            return self._step_result(self.state)
+        state = {"agent": {"position": torch.from_numpy(agent)}}
+        if self.state_dim == 4:
+            state["target"] = {"position": torch.from_numpy(rest)}
+        return build_tensordict({"state": state}, [self.B], self.device)
 
     def _agent_space(self) -> dict:
         return {
@@ -749,6 +859,15 @@ class _TorchNavBase(_GymReferencePort):
 
 class _TwoRoomBase(_TorchNavBase):
     reference_id = None
+    _numba_paths = (
+        "agent.speed",
+        "agent.radius",
+        "wall.thickness",
+        "wall.axis",
+        "door.number",
+        "door.position",
+        "door.size",
+    )
 
     def _structure_space(self) -> dict:
         return {
@@ -795,6 +914,32 @@ class _TwoRoomBase(_TorchNavBase):
         wall = (stripe & ~span) | self._border.unsqueeze(0)
         return door, wall
 
+    _reset_walls: dict | None = None
+
+    def draw_reset_values(self, seed=None, options=None):
+        self._reset_walls = {}
+        try:
+            return super().draw_reset_values(seed, options)
+        finally:
+            self._reset_walls = None
+
+    def _reset_value_ok(self, path, value, lane):
+        """Reject agent positions inside the band that the wall and the agent radius cover."""
+        if path != "agent.position":
+            return True
+        # A reset reads the installed Variation once, not once for each lane.
+        walls = self._reset_walls
+        if not walls:
+            walls = {p: self._style[p].detach().cpu().numpy().reshape(-1) for p in _WALL_RESET_PATHS}
+            if self._reset_walls is not None:
+                self._reset_walls = walls
+        axis = int(walls["wall.axis"][lane])
+        thickness = int(walls["wall.thickness"][lane])
+        radius = float(walls["agent.radius"][lane])
+        lo = WALL_CENTER - thickness // 2 - radius
+        hi = WALL_CENTER + thickness // 2 + radius
+        return not (lo <= float(value[0 if axis == 1 else 1]) <= hi)
+
     def base_image(self, sl, k) -> torch.Tensor:
         img = self._fill(k, sl("background.color"))
         door, wall = self._masks(sl, k)
@@ -809,7 +954,7 @@ class _TwoRoomBase(_TorchNavBase):
             hit |= inside & (num > i)
         return hit
 
-    def _advance_rows(self, rows, action, sty) -> torch.Tensor:
+    def _advance_rows_torch(self, rows, action, sty) -> torch.Tensor:
         """Move the agent through doors or clamp it to the wall face with pushback.
 
         Use the pre-move position to determine which side of the wall it starts on.
@@ -872,44 +1017,38 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
         }
     )
 
-    def __init__(self, *args, simulation_backend="auto", jax_min_envs=1, **kwargs):
-        """Use Torch below ``jax_min_envs`` and JAX at or above it when selection is automatic.
+    simulation_backends = ("torch", "jax", "numba")
+    _numba_doors = True
 
-        The cutoff defaults to 1. ``simulation_backend="torch"`` or ``"jax"``
-        selects that implementation at every batch size.
+    def __init__(self, *args, simulation_backend="auto", jax_min_envs=1, **kwargs):
+        """Select the physics implementation.
+
+        With ``"auto"``, CPU lanes step in Numba when it imports. CUDA lanes step in Torch below
+        ``jax_min_envs`` and in JAX at or above it; the cutoff defaults to 1.
+        ``simulation_backend="torch"``, ``"jax"`` or ``"numba"`` selects that implementation at
+        every batch size; Numba runs on CPU only.
         """
-        if simulation_backend not in ("auto", "torch", "jax"):
-            raise ValueError("simulation_backend must be 'auto', 'torch' or 'jax'")
         if isinstance(jax_min_envs, bool) or not isinstance(jax_min_envs, int) or jax_min_envs < 1:
             raise ValueError("jax_min_envs must be an int >= 1")
         self.jax_min_envs = jax_min_envs
-        super().__init__(*args, **kwargs)
-        if simulation_backend == "auto":
-            simulation_backend = "jax" if self.B >= jax_min_envs else "torch"
-        self.simulation_backend = simulation_backend
-        self.execution_mode = "NATIVE_JAX" if self.simulation_backend == "jax" else "NATIVE_TORCH"
+        super().__init__(*args, simulation_backend=simulation_backend, **kwargs)
         if self.simulation_backend == "jax":
             from .tworoom_jax import Kernel
 
             self._jax_kernel = Kernel(self.device, self._style.layout)
 
+    def _auto_simulation_backend(self) -> str:
+        if self.device.type == "cpu" and _numba_available():
+            return "numba"
+        return "jax" if self.B >= self.jax_min_envs else "torch"
+
     def make_variation_space(self) -> Dict:
         return Dict({"agent": Dict(self._agent_space()), **self._structure_space()})
 
     def _advance_rows(self, rows, action, sty):
-        if self.simulation_backend == "torch":
-            return super()._advance_rows(rows, action, sty)
-        return self._jax_kernel.advance(rows, action, sty.values)
-
-    def _reset_value_ok(self, path, value, lane):
-        if path != "agent.position":
-            return True
-        axis = int(self._style["wall.axis"][lane].item())
-        thickness = int(self._style["wall.thickness"][lane].item())
-        radius = float(self._style["agent.radius"][lane].item())
-        lo = WALL_CENTER - thickness // 2 - radius
-        hi = WALL_CENTER + thickness // 2 + radius
-        return not (lo <= float(value[0 if axis == 1 else 1]) <= hi)
+        if self.simulation_backend == "jax":
+            return self._jax_kernel.advance(rows, action, sty.values)
+        return super()._advance_rows(rows, action, sty)
 
     def _observation(self, agent, target):
         n = int(agent.shape[0])
@@ -969,9 +1108,6 @@ class TwoRoomTarget(_TwoRoomBase):
         self._live_rows = self.B
         return self.get_state()
 
-    def _reset_value_ok(self, path, value, lane):
-        return TwoRoom._reset_value_ok(self, path, value, lane)
-
     def make_variation_space(self) -> Dict:
         return Dict(
             {
@@ -1023,6 +1159,8 @@ class TwoRoomTarget(_TwoRoomBase):
 
 class _PiecewiseBase(_TorchNavBase):
     reference_id = None
+    _numba_kind = 1
+    _numba_paths = ("agent.speed", "agent.radius", *(f"zones.bias_{i}" for i in range(N_ZONES)))
     state_dim = 2
     state_names = ("agent_x", "agent_y")
     state_layout = ((("agent", "position"), 2, 0),)
@@ -1096,7 +1234,7 @@ class _PiecewiseBase(_TorchNavBase):
         rng = rng or self.rng
         return rng.uniform(POS_LO, POS_HI, (int(batch), 2)).astype(np.float32)
 
-    def _advance_rows(self, rows, action, sty) -> torch.Tensor:
+    def _advance_rows_torch(self, rows, action, sty) -> torch.Tensor:
         """Apply the current zone bias to the action, then clamp the result to the arena."""
         a = action.clamp(-1.0, 1.0)
         r = sty["agent.radius"].reshape(-1)
