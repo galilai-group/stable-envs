@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from stable_envs import tuning
 from stable_envs._execution import policy
 
 
@@ -53,6 +54,18 @@ def _ogbench(monkeypatch, target, batch, device):
     return execution.make_manipulation_adapter(target, batch, device, 17, 1, _local), args, {}, {}
 
 
+def _platform(monkeypatch, platform, cores, daemon=False):
+    monkeypatch.setattr(policy.sys, "platform", platform)
+    # Real affinity IDs need not be contiguous or start at zero.
+    cpus = None if cores is None else [2 * i + 1 for i in range(cores)]
+    if cpus is None:
+        monkeypatch.delattr(policy.os, "sched_getaffinity", raising=False)
+    else:
+        monkeypatch.setattr(policy.os, "sched_getaffinity", lambda _: set(cpus), raising=False)
+    monkeypatch.setattr(policy.mp, "current_process", lambda: SimpleNamespace(daemon=daemon))
+    return cpus
+
+
 #: (family, route, target, devices, whether the target may use processes)
 TARGETS = [
     ("classic", _classic, "acrobot", ("cpu", "cuda"), True),
@@ -91,19 +104,44 @@ TARGETS = [
     ],
 )
 def test_routing(monkeypatch, route, target, device, eligible, platform, batch, cores, daemon, count):
-    monkeypatch.setattr(policy.sys, "platform", platform)
-    # Real affinity IDs need not be contiguous or start at zero.
-    cpus = None if cores is None else [2 * i + 1 for i in range(cores)]
-    if cpus is None:
-        monkeypatch.delattr(policy.os, "sched_getaffinity", raising=False)
-    else:
-        monkeypatch.setattr(policy.os, "sched_getaffinity", lambda _: set(cpus), raising=False)
-    monkeypatch.setattr(policy.mp, "current_process", lambda: SimpleNamespace(daemon=daemon))
-    (kind, args, kwargs), expected_args, local_kwargs, process_kwargs = route(monkeypatch, target, batch, device)
+    cpus = _platform(monkeypatch, platform, cores, daemon)
+    with tuning.override(worker_min_lanes=64):
+        (kind, args, kwargs), expected_args, local_kwargs, process_kwargs = route(monkeypatch, target, batch, device)
     expected = count if eligible else 0
     assert kind == ("process" if expected else "local")
     assert args == expected_args
     assert kwargs == (dict(processes=expected, cpus=cpus, **process_kwargs) if expected else local_kwargs)
+
+
+#: (family, route, target, batch, workers) with the measured defaults on 8 CPUs.
+DEFAULTS = [
+    ("classic", _classic, "acrobot", 63, 0),
+    ("classic", _classic, "acrobot", 64, 8),
+    ("dmc", _dmc, "quadruped", 1, 0),
+    ("dmc", _dmc, "quadruped", 2, 2),
+    ("dmc", _dmc, "reacher", 8, 8),
+    ("fetch", _fetch, "Push", 1, 0),
+    ("fetch", _fetch, "Push", 2, 2),
+    ("ogbench", _ogbench, "Maze", 1, 0),
+    ("ogbench", _ogbench, "Maze", 8, 8),
+    ("ogbench", _ogbench, "Cube", 3, 0),
+    ("ogbench", _ogbench, "Cube", 4, 2),
+    ("ogbench", _ogbench, "Cube", 8, 4),
+    ("ogbench", _ogbench, "Cube", 16, 8),
+]
+
+
+@pytest.mark.parametrize(
+    "route,target,batch,count",
+    [
+        pytest.param(route, target, batch, count, id=f"{target}-{batch}", marks=pytest.mark.family(family))
+        for family, route, target, batch, count in DEFAULTS
+    ],
+)
+def test_measured_defaults(monkeypatch, route, target, batch, count):
+    _platform(monkeypatch, "linux", 8)
+    (kind, _, kwargs), _, _, _ = route(monkeypatch, target, batch, "cpu")
+    assert (kind, kwargs.get("processes", 0)) == ("process" if count else "local", count)
 
 
 @pytest.mark.family("dmc")

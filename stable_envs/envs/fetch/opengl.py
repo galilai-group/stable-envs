@@ -19,6 +19,9 @@ from ..._core.mujoco_gl import mujoco_renderer
 from ...render._resources import retain_process_lifetime
 
 PATH = "fetch-opengl"
+#: Fewest CPU frames drawn in render workers when the ``render_worker_min_rows`` knob is not set; measured
+#: on 8 cores. One frame draws faster in this process.
+RENDER_MIN_ROWS = 2
 _LOCK = threading.RLock()
 _CACHE = {}
 _SKIES = {}
@@ -144,7 +147,14 @@ def render(env, states=None, size=None, supersample=None, variation=None, style=
     if env.device.type == "cpu":
         tuning.on_render(PATH, size, len(rows), env)
         workers = render_pool.pool(
-            PATH, _Drawer(), len(rows), PATH, size, software_gl=True, name=f"{type(env).__name__} OpenGL"
+            PATH,
+            _Drawer(),
+            len(rows),
+            PATH,
+            size,
+            min_rows=RENDER_MIN_ROWS,
+            software_gl=True,
+            name=f"{type(env).__name__} OpenGL",
         )
         if workers is not None:
             with workers.lock:

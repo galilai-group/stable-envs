@@ -94,7 +94,8 @@ batch uses enough processes to hold it, on every platform and for every value of
 
 Two tuning knobs control the pool:
 
-- `worker_min_lanes` is the smallest batch that uses workers. The default is 64.
+- `worker_min_lanes` is the smallest batch that uses workers. Each family has a measured default,
+  for example 2 for DM Control and `PyFlytRocketLanding`.
 - `workers` is the largest number of processes. The default is 8.
 
 See [Performance tuning](../performance-tuning.md).

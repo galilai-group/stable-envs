@@ -11,6 +11,10 @@ from .... import tuning
 from ...._execution.process import BROADCAST, PER_LANE
 from ...._execution.protocol import SimulatorAdapter
 
+#: Fewest lanes that use worker processes, or threads in this process, when the ``worker_min_lanes``
+#: knob is not set; measured on 8 cores.
+WORKER_MIN_LANES = 2
+
 FIELDS = {
     "qpos": (22, torch.float64),
     "qvel": (21, torch.float64),
@@ -135,7 +139,7 @@ class FetchAdapter(SimulatorAdapter):
         # Bound threads by scheduler affinity and keep small batches serial.
         available = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else (os.cpu_count() or 1)
         where = dict(path="fetch-sim", size=0, batch=self.num_envs)
-        if self.num_envs >= tuning.get("worker_min_lanes", **where) and available > 1:
+        if self.num_envs >= tuning.get("worker_min_lanes", **where, default=WORKER_MIN_LANES) and available > 1:
             self._set_workers(min(tuning.get("fetch_threads", **where), available, self.num_envs))
 
     def _set_workers(self, workers):

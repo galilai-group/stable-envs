@@ -34,9 +34,9 @@ out = env.step(env.action_spec.sample(8))
 Each lane is a dm_control environment, and each action advances it by two dm_control steps. A step
 makes the MuJoCo calls of dm_control's step for every lane. Then it computes the observations, rewards
 and task outputs of all lanes in one NumPy pass. These values are equal to dm_control's values. A lane
-whose episode ends runs dm_control's own reset. On Linux with 4 or more CPUs, a batch of 64 or more
+whose episode ends runs dm_control's own reset. On Linux with 4 or more CPUs, a batch of 2 or more
 lanes runs in worker processes. The `workers` and `worker_min_lanes` knobs set this split (see
-[performance tuning](../performance-tuning.md)).
+[performance tuning](../performance-tuning.md#worker-defaults)).
 
 The reward of each task is in [0, 1] for each step. The suite does not define a success criterion. Ball
 in cup is the exception: its `success` value is 1 when the ball is in the cup.

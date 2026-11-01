@@ -164,12 +164,16 @@ def _llvmpipe_threads(device_type, workers):
     return max(1, len(os.sched_getaffinity(0)) // workers)
 
 
-def workers(batch):
+#: States per worker below which inter-process traffic outweighs the parallel draws. A software
+#: OpenGL frame takes far longer than the traffic, so CPU batches give each worker one state.
+STATES_PER_WORKER = {"cpu": 1, "cuda": 8}
+
+
+def workers(batch, device_type):
     """Number of OpenGL worker processes a batch of ``batch`` states uses; 0 draws in this process."""
-    if batch < 16 or not sys.platform.startswith("linux") or mp.current_process().daemon:
+    if not sys.platform.startswith("linux") or mp.current_process().daemon:
         return 0
-    # Below about eight states per worker, inter-process traffic outweighs the parallel draws.
-    count = min(tuning.get("ogb_gl_workers"), len(os.sched_getaffinity(0)), batch // 8)
+    count = min(tuning.get("ogb_gl_workers"), len(os.sched_getaffinity(0)), batch // STATES_PER_WORKER[device_type])
     return count if count >= 2 else 0
 
 
@@ -193,7 +197,7 @@ def draw(family, columns, device_type, size):
 
     The returned array is a view of the shared buffer, valid until the next call.
     """
-    if not workers(len(columns[_SIZE])):
+    if not workers(len(columns[_SIZE]), device_type):
         return None
     with _LOCK:
         pool, key = _pool(family, device_type)

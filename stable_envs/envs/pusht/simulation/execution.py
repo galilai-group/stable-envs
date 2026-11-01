@@ -7,6 +7,9 @@ from typing import TYPE_CHECKING
 from ...._execution.policy import cpu_affinity, process_count
 from .replay_batch import PushTReplayAdapter
 
+#: Fewest lanes that use workers when the ``worker_min_lanes`` knob is not set; measured on 8 cores.
+MIN_LANES = 2
+
 if TYPE_CHECKING:
     import torch
 
@@ -23,7 +26,11 @@ def make_pusht_adapter(
 
         return PushTJaxAdapter(num_envs, device, seed, discrete=discrete, config=config)
     cpus = cpu_affinity()
-    count = process_count(num_envs, cpus, path="pusht-sim") if type(num_envs) is int and num_envs > 0 else 0
+    count = (
+        process_count(num_envs, cpus, path="pusht-sim", min_lanes=MIN_LANES)
+        if type(num_envs) is int and num_envs > 0
+        else 0
+    )
     if count:
         from .process import PushTProcessAdapter
 
