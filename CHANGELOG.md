@@ -63,8 +63,14 @@ All notable changes to this project are listed here. The format follows
   into one shared buffer. Frames do not change. The knobs use the new tuning path `fetch-opengl`.
   On 8 CPU cores, rendering stored States is approximately 2 times faster, and `step` with frames is
   approximately 2.5 times faster.
-- Fetch with OpenGL (CPU, or `backend="opengl"` on CUDA) draws the translucent mocap markers at the
-  gripper, as Gymnasium Robotics does. Frames change where the markers are.
+- Fetch with OpenGL (CPU, or `backend="opengl"` on CUDA) draws each frame at the requested size, as
+  Gymnasium Robotics does when it is built at that size, and draws the translucent mocap markers at the
+  gripper. Before, frames were drawn at 480 px and then resized, and the markers were not drawn. On CPU,
+  frames now equal the Gymnasium Robotics frames byte for byte at 64, 224 and 480 px (64 States of each
+  task). Per-frame MSE at 224 px against Gymnasium Robotics was 14 to 17 and is now 0.
+- Fetch with OpenGL uploads each sky colour once for each OpenGL context and keeps the textures
+  for later renders. A batch with a different sky colour in each lane renders as fast as a batch with
+  one sky colour. Frames do not change.
 
 - One process adapter (`stable_envs._execution.process.ProcessAdapter`) runs the worker processes of
   DM Control, classic Acrobot, Fetch, OGBench Maze and OGBench Cube/Scene. It replaces five copies of
