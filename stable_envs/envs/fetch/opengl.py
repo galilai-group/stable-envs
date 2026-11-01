@@ -1,9 +1,10 @@
 """OpenGL backend for the Fetch render-only model, on CPU (software GL) or GPU.
 
 Uses the same compact pose and appearance contract as MJWarp. Unlike MJWarp, it draws the
-translucent mocap markers where Gymnasium Robotics draws them. Frames are rasterized at the
-source's 480 px and then resized; supersampling raises that raster's density. On Linux, large CPU
-batches draw in render worker processes, each with its own OpenGL context.
+translucent mocap markers where Gymnasium Robotics draws them. Frames are drawn at the requested
+size with the model's multisampling, as Gymnasium Robotics draws them at that size; supersampling
+draws at a multiple of the size and averages. On Linux, large CPU batches draw in render worker
+processes, each with its own OpenGL context.
 """
 
 import copy
@@ -24,56 +25,52 @@ _SKIES = {}
 
 
 class _Readback:
-    """Collect resized frames in a bounded OpenGL buffer, then read each chunk once into ``images``.
+    """Collect flipped frames in a bounded OpenGL buffer, then read each chunk once into ``images``."""
 
-    ``images`` holds rows ``start:start + len(images)`` of a batch of ``total`` rows. A frame's bytes
-    depend on the buffer height and on its slot, which both follow from ``total`` and its row.
-    """
-
-    def __init__(self, renderer, size: int, images: np.ndarray, start: int, total: int):
+    def __init__(self, renderer, images: np.ndarray):
         import mujoco
         from OpenGL import GL
 
         if len(images) < 1:
             raise ValueError("Cannot render an empty Fetch batch")
-        self.renderer, self.size, self.images, self.start = renderer, size, images, start
+        self.renderer, self.images = renderer, images
+        size = renderer.width
         renderer._gl_context.make_current()
-        self.capacity = min(total, max(1, int(GL.glGetIntegerv(GL.GL_MAX_RENDERBUFFER_SIZE)) // size))
+        self.capacity = min(len(images), max(1, int(GL.glGetIntegerv(GL.GL_MAX_RENDERBUFFER_SIZE)) // size))
         context = renderer._mjr_context
-        for index, width, height in ((0, renderer.width, renderer.height), (1, size, size * self.capacity)):
-            if context.auxWidth[index] != width or context.auxHeight[index] != height:
-                mujoco.mjr_addAux(index, width, height, 0, context)
+        for index, height in ((0, size), (1, size * self.capacity)):
+            if context.auxWidth[index] != size or context.auxHeight[index] != height:
+                mujoco.mjr_addAux(index, size, height, 0, context)
         mujoco.mjr_restoreBuffer(context)
 
     def render(self, index: int) -> None:
         import mujoco
         from OpenGL import GL
 
-        renderer, size = self.renderer, self.size
+        renderer = self.renderer
         context = renderer._mjr_context
-        width, height = renderer.width, renderer.height
-        slot = (self.start + index) % self.capacity
+        size = renderer.width
+        slot = index % self.capacity
         mujoco.mjr_render(renderer._rect, renderer.scene, context)
         try:
-            # Resolve multisampling at native size before resizing and flipping each frame.
+            # Resolve multisampling as mjr_readPixels does, then copy the frame flipped into its slot.
             GL.glBindFramebuffer(GL.GL_DRAW_FRAMEBUFFER, int(context.auxFBO[0]))
-            GL.glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL.GL_COLOR_BUFFER_BIT, GL.GL_NEAREST)
+            GL.glBlitFramebuffer(0, 0, size, size, 0, 0, size, size, GL.GL_COLOR_BUFFER_BIT, GL.GL_NEAREST)
             GL.glBindFramebuffer(GL.GL_READ_FRAMEBUFFER, int(context.auxFBO[0]))
             GL.glBindFramebuffer(GL.GL_DRAW_FRAMEBUFFER, int(context.auxFBO[1]))
             GL.glBlitFramebuffer(
-                0, height, width, 0, 0, slot * size, size, (slot + 1) * size, GL.GL_COLOR_BUFFER_BIT, GL.GL_LINEAR
+                0, size, size, 0, 0, slot * size, size, (slot + 1) * size, GL.GL_COLOR_BUFFER_BIT, GL.GL_NEAREST
             )
             if slot + 1 == self.capacity or index + 1 == len(self.images):
-                first = max(0, index - slot)
                 GL.glBindFramebuffer(GL.GL_READ_FRAMEBUFFER, int(context.auxFBO[1]))
                 GL.glReadPixels(
                     0,
-                    (slot - index + first) * size,
+                    0,
                     size,
-                    (index - first + 1) * size,
+                    (slot + 1) * size,
                     GL.GL_RGB,
                     GL.GL_UNSIGNED_BYTE,
-                    self.images[first : index + 1],
+                    self.images[index - slot : index + 1],
                 )
         finally:
             mujoco.mjr_restoreBuffer(context)
@@ -117,8 +114,8 @@ class _Drawer:
 
     def __call__(self):
         def draw_rows(args, frames):
-            scene, rows, values, ss, start, total = args
-            draw(scene, rows, values, ss, "cpu", frames, start, total)
+            scene, rows, values, ss = args
+            draw(scene, rows, values, ss, "cpu", frames)
 
         return draw_rows
 
@@ -154,14 +151,7 @@ def render(env, states=None, size=None, supersample=None, variation=None, style=
                 images = workers.render(
                     len(rows),
                     (size, size, 3),
-                    lambda part: (
-                        env.SCENE,
-                        rows[part],
-                        {k: v[part] for k, v in values.items()},
-                        ss,
-                        part.start,
-                        len(rows),
-                    ),
+                    lambda part: (env.SCENE, rows[part], {k: v[part] for k, v in values.items()}, ss),
                     host,
                 )
     if images is None:
@@ -173,12 +163,8 @@ def render(env, states=None, size=None, supersample=None, variation=None, style=
     return result if out is None else out.copy_(result)
 
 
-def draw(scene, rows, values, ss, device_type, images, start=0, total=None):
-    """Draw compact ``rows`` with appearance ``values`` into ``(B, size, size, 3)`` uint8 ``images`` in place.
-
-    The rows are rows ``start:start + B`` of a batch of ``total`` rows (default ``B``).
-    """
-    import cv2
+def draw(scene, rows, values, ss, device_type, images):
+    """Draw compact ``rows`` with appearance ``values`` into ``(B, size, size, 3)`` uint8 ``images`` in place."""
     import mujoco
     from gymnasium_robotics.utils import mujoco_utils
     from OpenGL import GL
@@ -186,8 +172,7 @@ def draw(scene, rows, values, ss, device_type, images, start=0, total=None):
     from . import envs as fetch
 
     size = images.shape[1]
-    native_size = 480
-    raster_size = native_size * ss
+    raster_size = size * ss
     key = (scene, raster_size)
     with _LOCK:
         b = fetch._build_bundle(scene)
@@ -196,8 +181,8 @@ def draw(scene, rows, values, ss, device_type, images, start=0, total=None):
             fetch._restore(model, b.pristine)
             markers, groups = b.info["markers"]
             model.geom_group[markers] = groups
-            model.vis.global_.offwidth = max(model.vis.global_.offwidth, raster_size)
-            model.vis.global_.offheight = max(model.vis.global_.offheight, raster_size)
+            # An offscreen buffer of the frame's size, as Gymnasium Robotics allocates for its renderer.
+            model.vis.global_.offwidth = model.vis.global_.offheight = raster_size
             data = mujoco.MjData(model)
             renderer = mujoco_renderer(model, height=raster_size, width=raster_size)
             renderer._gl_context.make_current()
@@ -218,7 +203,7 @@ def draw(scene, rows, values, ss, device_type, images, start=0, total=None):
             raise RuntimeError(f"CPU rendering requires software OpenGL, found {vendor}: {gl_device}")
         if device_type == "cuda" and (software or "nvidia" not in vendor.lower()):
             raise RuntimeError(f"CUDA rendering requires NVIDIA OpenGL, found {vendor}: {gl_device}")
-        readback = _Readback(renderer, size, images, start, len(rows) if total is None else total) if ss == 1 else None
+        readback = _Readback(renderer, images) if ss == 1 else None
         sky = None
         for i, row in enumerate(rows):
             fetch._restore(model, b.pristine)
@@ -266,8 +251,7 @@ def draw(scene, rows, values, ss, device_type, images, start=0, total=None):
                 readback.render(i)
             else:
                 image = renderer.render()
-                image = np.rint(image.reshape(native_size, ss, native_size, ss, 3).mean((1, 3))).astype(np.uint8)
-                images[i] = cv2.resize(image, (size, size))
+                images[i] = np.rint(image.reshape(size, ss, size, ss, 3).mean((1, 3))).astype(np.uint8)
         renderer._gl_context.make_current()
         if sky is not None:
             fetch._restore(model, b.pristine)

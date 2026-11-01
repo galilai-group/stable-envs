@@ -22,13 +22,11 @@ def gl_device() -> str:
 
 
 class CpuReadback:
-    def __init__(self, renderer, size: int, images: np.ndarray, start: int, total: int):
-        self.renderer, self.size, self.images = renderer, size, images
+    def __init__(self, renderer, images: np.ndarray):
+        self.renderer, self.images = renderer, images
 
     def render(self, index: int) -> None:
-        import cv2
-
-        self.images[index] = cv2.resize(self.renderer.render(), (self.size, self.size))
+        self.images[index] = self.renderer.render()
 
 
 @pytest.mark.parametrize("scene", ["Reach", "Push", "Slide", "PickAndPlace"])
@@ -45,9 +43,12 @@ def test_fetch_resize_preserves_pixels_and_output_ownership(scene: str, gl_devic
             maximum = error.abs().max().item()
             mse = (error.double() / 255).square().mean().item()
             record_property(f"resize_{index}", json.dumps(dict(size=size, max_channel=maximum, mse=mse)))
-            # Hardware interpolation and OpenCV use different coefficient/rounding precision.
-            assert maximum <= 2
-            assert mse <= (1 / 255) ** 2
+            # The batched readback resolves and flips the frame as mujoco.Renderer does.
+            if gl_device == "cpu":
+                assert maximum == 0
+            else:
+                assert maximum <= 2
+                assert mse <= (1 / 255) ** 2
             out = torch.empty_like(actual)
             returned = env.render(state, size=size, out=out)
             assert returned.data_ptr() == out.data_ptr()
@@ -82,6 +83,21 @@ def test_fetch_resize_reads_only_output_pixels_and_restores_context(gl_device: s
         )
         torch.testing.assert_close(push.render(), expected, rtol=0, atol=0)
         assert reads == [(64, 128), (64, 64)]
-        renderer = fetch_opengl._CACHE[("Push", 480)][2]
+        renderer = fetch_opengl._CACHE[("Push", 64)][2]
         assert GL.glGetIntegerv(GL.GL_READ_FRAMEBUFFER_BINDING) == renderer._mjr_context.offFBO
         assert GL.glGetIntegerv(GL.GL_DRAW_FRAMEBUFFER_BINDING) == renderer._mjr_context.offFBO
+
+
+@pytest.mark.parametrize("scene", ["Reach", "PickAndPlace"])
+def test_cpu_frames_equal_gymnasium_robotics_at_the_requested_size(scene: str, gl_device: str) -> None:
+    if gl_device != "cpu":
+        pytest.skip("NVIDIA OpenGL can change a few pixels between two draws")
+    cls = se.registry.REGISTRY[f"Fetch{scene}"]
+    with se.make(f"Fetch{scene}", num_envs=2, device="cpu", backend="opengl", size=64) as env:
+        rows = env.sample_states(6, rng=np.random.default_rng(3))
+        ours = env._render(torch.as_tensor(rows)).numpy()
+    reference = cls.reference_env(size=64)
+    try:
+        np.testing.assert_array_equal(ours, cls.reference_render(reference, rows))
+    finally:
+        reference.close()
