@@ -61,8 +61,8 @@ All notable changes to this project are listed here. The format follows
 - Fetch on CPU: on Linux, batches of at least `render_worker_min_rows` states draw with software OpenGL
   in up to `render_workers` worker processes. Each worker has its own OpenGL context and writes its frames
   into one shared buffer. Frames do not change. The knobs use the new tuning path `fetch-opengl`.
-  On 8 CPU cores, rendering stored States is approximately 2 times faster, and `step` with frames is
-  approximately 2.5 times faster.
+  Together with the native frame size below, on 8 CPU cores rendering stored States at 224 px is
+  approximately 3.5 times faster, and `step` with frames is approximately 4 times faster.
 - Fetch with OpenGL (CPU, or `backend="opengl"` on CUDA) draws each frame at the requested size, as
   Gymnasium Robotics does when it is built at that size, and draws the translucent mocap markers at the
   gripper. Before, frames were drawn at 480 px and then resized, and the markers were not drawn. On CPU,
