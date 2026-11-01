@@ -23,6 +23,8 @@ from .workers import pin_worker, send_failure, send_ready
 FRAME_DRAW, FRAME_FIELDS = 1, 2
 #: ``process_methods`` kinds: split the first argument by lane, or send every worker the same arguments.
 PER_LANE, BROADCAST = "per_lane", "broadcast"
+#: Most actions per worker request of ``step_sequence``, and most bytes of task outputs that the requests hold.
+SEQUENCE_STEPS, SEQUENCE_BYTES = 64, 64 << 20
 
 
 def lane_rows(value, rows):
@@ -67,6 +69,15 @@ def leaf_tensordict(leaves, batch, device):
     return build_tensordict(tree, [batch], device)
 
 
+def ended(result, count):
+    """Lanes whose ``terminated``, ``truncated`` or ``done`` output is set, as the step dispatcher reads them."""
+    done = np.zeros(count, bool)
+    for key in ("terminated", "truncated", "done"):
+        if key in result.keys():
+            done |= result[key].numpy().astype(bool).reshape(count, -1).any(-1)
+    return done
+
+
 def _clone_all(tensors):
     return {key: value.clone() for key, value in tensors.items()}
 
@@ -91,6 +102,8 @@ def process_worker(conn, factory, start, count, batch, seed, cpus, buffers, spec
         def write(group, values):
             for path in groups[group]:
                 views[path][rows] = values[path[1:]].numpy()
+
+        sequence = [path for path in views if path[0] == "sequence"]
 
         # Leaves that only resets, restores and process methods change stay in the buffers between steps.
         static = bool(getattr(adapter, "process_static_leaves", ()))
@@ -118,6 +131,29 @@ def process_worker(conn, factory, start, count, batch, seed, cpus, buffers, spec
                     write("state", result["state"])
                 if frame == FRAME_DRAW:
                     views[("frame",)][rows] = adapter.render_live()
+            elif command == "steps":
+                actions, active, capture = payload
+                valid = views[("sequence_valid",)]
+                lanes = np.ones(count, bool) if active is None else active.copy()
+                for t in range(actions.shape[1]):
+                    valid[rows, t] = lanes
+                    # Finished lanes stay finished; a step of only finished lanes changes no simulator.
+                    if not lanes.any():
+                        continue
+                    result = adapter.step(
+                        actions[:, t],
+                        active=None if lanes.all() else torch.from_numpy(lanes.copy()),
+                        capture_state=False,
+                    )
+                    for path in sequence:
+                        views[path][rows, t] = result[path[1:]].numpy()
+                    lanes &= ~ended(result, count)
+                views[("sequence_active",)][rows] = lanes
+                if capture and static:
+                    for key, value in adapter.process_step_state().items():
+                        views[("state", *key)][rows] = value
+                elif capture:
+                    write("state", adapter.get_state())
             elif command == "get_state":
                 write("state", adapter.get_state())
             elif command == "reset":
@@ -214,6 +250,15 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
                     if key_path(key) not in self._pipe_leaves
                 }
             )
+            self._sequence_steps = 0
+            if getattr(prototype, "process_sequences", False):
+                task_specs = [(key, spec) for key, spec in self._specs.items() if key[0] == "task"]
+                lane_bytes = 1 + sum(int(np.prod(shape)) * dtype.itemsize for _, (shape, dtype) in task_specs)
+                self._sequence_steps = max(1, min(SEQUENCE_STEPS, SEQUENCE_BYTES // (num_envs * lane_bytes)))
+                for key, (shape, dtype) in task_specs:
+                    self._specs[("sequence", *key[1:])] = ((self._sequence_steps, *shape), dtype)
+                self._specs[("sequence_valid",)] = ((self._sequence_steps,), np.dtype(np.bool_))
+                self._specs[("sequence_active",)] = ((), np.dtype(np.bool_))
             # Local adapters that draw their running lanes draw step frames in the workers.
             frame_shape = getattr(prototype, "frame_shape", None) if hasattr(prototype, "render_live") else None
             if frame_shape is not None:
@@ -446,6 +491,69 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         finally:
             self._host_outputs = False
         return result
+
+    @property
+    def sequence_steps(self) -> int:
+        """Most actions of one ``step_sequence`` worker request; 0 when the local adapter does not declare
+        ``process_sequences``."""
+        return self._sequence_steps
+
+    def check_sequence(self, actions) -> np.ndarray:
+        """Return the host ``[B, T, ...]`` actions after the local ``check_step`` accepts each of them."""
+        return np.stack([self._local.check_step(self, actions[:, t], None)[0] for t in range(actions.shape[1])], 1)
+
+    def step_sequence(self, actions: np.ndarray, *, host: bool = False) -> tuple[TensorDict, torch.Tensor, object]:
+        """Advance ``check_sequence`` actions in the workers, ``sequence_steps`` actions per request.
+
+        A lane whose step ends it takes no more actions. Return the task outputs with a time axis, zero
+        after a lane ended; the ``[B, T]`` mask of the actions that ran; and the State after the last
+        action, or None when every lane ended before it.
+        """
+        self._check_idle()
+        count, length = actions.shape[:2]
+        keys = [key for key in self._views if key[0] == "sequence"]
+        outputs = {key: np.zeros((count, length, *self._views[key].shape[2:]), self._views[key].dtype) for key in keys}
+        valid = np.zeros((count, length), np.bool_)
+        active, state = None, None
+        self._host_outputs = bool(host)
+        device = self._output_device
+        try:
+            for start in range(0, length, self._sequence_steps):
+                if active is not None and not active.any():
+                    break
+                stop = min(start + self._sequence_steps, length)
+                capture = stop == length
+                self._request(
+                    "steps",
+                    [
+                        (
+                            actions[rows, start:stop],
+                            None if active is None or active[rows].all() else active[rows],
+                            capture,
+                        )
+                        for rows in self._slices
+                    ],
+                )
+                steps = stop - start
+                valid[:, start:stop] = self._views[("sequence_valid",)][:, :steps]
+                for key in keys:
+                    outputs[key][:, start:stop] = self._views[key][:, :steps]
+                for t in range(start, stop):
+                    self._submitted(actions[:, t], None if valid[:, t].all() else valid[:, t])
+                active = self._views[("sequence_active",)].copy()
+                if capture:
+                    state = self._state()
+        finally:
+            self._host_outputs = False
+        ended_lanes = ~valid
+        for value in outputs.values():
+            value[ended_lanes] = 0
+        result = TensorDict(
+            {key[1:]: torch.from_numpy(value).to(device) for key, value in outputs.items()},
+            [count, length],
+            device=device,
+        )
+        return result, torch.from_numpy(valid).to(device), state
 
     @property
     def _output_device(self) -> torch.device:

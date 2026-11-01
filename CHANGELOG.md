@@ -56,6 +56,13 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- PushT, OGBench maze and dm_control envs that step in worker processes run a sequence of actions in
+  the workers. A `step` call with `T > 1` actions, no frames and no State before the last action sends
+  the workers up to 64 actions per request, not one. Each worker steps its lanes once per action, and
+  a lane that ends takes no more actions, as before. With 64 lanes in 8 workers, 64 steps at `T = 16`
+  take 2 to 3 times less time. The State and the outputs do not change.
+- dm_control envs that step in this process export the State only after the last action of a `step`
+  call. The State and the outputs do not change.
 - Envs that step in worker processes (OGBench, dm_control, Fetch, PyFlyt, PushT and classic control) on a
   CUDA device keep the step bookkeeping on the CPU. At the end of `step`, the outputs move to the device.
   The outputs do not change.

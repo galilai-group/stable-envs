@@ -215,11 +215,28 @@ def _step(env, actions, states, frames, *, render_threads):
             **({"capture_frame": True} if frame and pipeline_frames else {}),
         )
 
+    sequence_actions = None
+    if (
+        sequence
+        and pipeline is not None
+        and getattr(pipeline, "sequence_steps", 0)
+        and frame_indices is None
+        and not shared
+        and state_times <= {length - 1}
+    ):
+        # A rejected action goes through the per-action loop, which takes the actions before it.
+        with contextlib.suppress(Exception):
+            sequence_actions = pipeline.check_sequence(acts)
     try:
-        if pipeline is not None:
+        if sequence_actions is not None:
+            stacked, valid, live_state = pipeline.step_sequence(sequence_actions, host=host)
+            if live_state is None:
+                live_state = env.get_state().to(work)
+            saved_states = dict.fromkeys(state_times, live_state)
+        if pipeline is not None and sequence_actions is None:
             submit(0, active, all_active)
             pending = True
-        for t in range(length):
+        for t in range(length if sequence_actions is None else 0):
             # The all-true mask is never handed to the family, so it needs no copy.
             validity.append(active if all_active else active.clone())
             if pipeline is not None:
@@ -266,10 +283,12 @@ def _step(env, actions, states, frames, *, render_threads):
             pipeline.abort_step()
         raise
 
-    valid = torch.stack(validity, dim=1)
+    if sequence_actions is None:
+        valid = torch.stack(validity, dim=1)
+        spares = env.__dict__.setdefault("_padded_output_buffers", {}) if shared else None
+        stacked = _stack_outputs(history, valid, shared, spares) if sequence else history[0]
     out = {"state": live_state}
-    spares = env.__dict__.setdefault("_padded_output_buffers", {}) if shared else None
-    out.update((_stack_outputs(history, valid, shared, spares) if sequence else history[0]).items())
+    out.update(stacked.items())
     out["valid"] = valid
     if state_indices is not None:
         out["states"] = (

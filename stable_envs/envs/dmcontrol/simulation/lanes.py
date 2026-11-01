@@ -26,6 +26,7 @@ class DMCLanes(SimulatorAdapter):
     """
 
     process_methods = {"configure_physics": PER_LANE}
+    process_sequences = True
     process_attributes = ("key", "action_dim", "fields", "physics_layout", "physics_dim")
 
     def __init__(self, key, num_envs, device, seed, make, fields):

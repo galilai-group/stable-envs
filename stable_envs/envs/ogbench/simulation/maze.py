@@ -170,6 +170,7 @@ class OGBMazeAdapter(SimulatorAdapter):
     """
 
     process_attributes = ("action_dim", "fields")
+    process_sequences = True
 
     def __init__(self, num_envs, device="cpu", seed=0, *, loco="point", maze="large"):
         self.num_envs = int(num_envs)

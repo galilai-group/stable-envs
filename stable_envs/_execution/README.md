@@ -56,6 +56,13 @@ The local adapter declares what the parent needs:
   leaves in the shared buffers. The parent copies the static leaves from a
   cache. A thread copies the cache for the next snapshot while the workers
   step.
+- `process_sequences = True` (optional) lets one worker request run a sequence
+  of actions. `step_sequence` sends up to `sequence_steps` actions per lane in
+  one request. Each worker steps its lanes once per action, and a lane whose
+  step sets `terminated`, `truncated` or `done` takes no more actions. The
+  workers write the task outputs of every action to shared buffers. An adapter
+  declares this only when a step with no active lane changes no simulator and
+  `step(actions, active=None)` equals a step with every lane active.
 - `render_live()` and `frame_shape` (optional) let the workers draw the frame
   of their running lanes into a shared buffer. `live_frames` is then true, and
   `submit_step(..., capture_frame=True)` returns the frame as `"frame"`. The

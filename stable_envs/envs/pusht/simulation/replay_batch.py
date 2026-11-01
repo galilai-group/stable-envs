@@ -120,6 +120,7 @@ class PushTReplayAdapter(SimulatorAdapter):
     """
 
     process_methods = {"install_variation": PER_LANE, "variation_rows": BROADCAST}
+    process_sequences = True
     action_dim = 2
 
     def __init__(self, batch, device="cpu", seed=0, *, discrete=False, config=None):
