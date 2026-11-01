@@ -8,6 +8,7 @@ import torch
 
 import stable_envs as se
 from stable_envs.envs.fetch import opengl as fetch_opengl
+from stable_envs.render._resources import retain_process_lifetime
 
 pytestmark = pytest.mark.egl
 
@@ -96,8 +97,6 @@ def test_cpu_frames_equal_gymnasium_robotics_at_the_requested_size(scene: str, g
     with se.make(f"Fetch{scene}", num_envs=2, device="cpu", backend="opengl", size=64) as env:
         rows = env.sample_states(6, rng=np.random.default_rng(3))
         ours = env._render(torch.as_tensor(rows)).numpy()
-    reference = cls.reference_env(size=64)
-    try:
-        np.testing.assert_array_equal(ours, cls.reference_render(reference, rows))
-    finally:
-        reference.close()
+    # Closing a Gymnasium renderer terminates GLFW and with it every other context in the process.
+    reference = retain_process_lifetime(cls.reference_env(size=64), "Gymnasium Robotics reference renderer")
+    np.testing.assert_array_equal(ours, cls.reference_render(reference, rows))
