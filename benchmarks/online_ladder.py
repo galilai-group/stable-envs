@@ -36,19 +36,22 @@ SOURCE_KWARGS = {"swm/PushT-v1": {"resolution": 224}, "swm/PushT-Discrete-v1": {
 
 #: Physics steps per action of every DM Control class, which the dm_control source repeats to do the same work.
 DMC_ACTION_REPEAT = 2
+#: ``reference_id`` prefixes timed against the original library rather than a stable-worldmodel id.
+ORIGINAL_SOURCES = ("dm_control/", "Fetch")
 
 
 def source_id(name: str) -> str:
     """The source a class is timed against.
 
-    DM Control classes use their dm_control suite task directly. Other classes use their SWM gym id, else their
-    ``reference_id`` (ogbench/...).
+    DM Control and Fetch classes use their original library directly. Other classes use their SWM gym id, else
+    their ``reference_id`` (ogbench/...).
     """
     import stable_envs as snv
     from tests.helpers.reference.crosswalk import swm_ids_for_class
 
     ref = snv.registry.REGISTRY[name].reference_id
-    if ref and ref.startswith("dm_control/"):
+    # The original library, where stable-worldmodel's wrapper changes the episode (Fetch samples colours at reset).
+    if ref and ref.startswith(ORIGINAL_SOURCES):
         return ref
     ids = swm_ids_for_class(name)
     if ids:
@@ -136,6 +139,12 @@ def _make_source(name: str, size: int):
 
         # The class's own reference: the OGBench env and the floor that SNV's frames are compared against.
         return _GymSource(snv.registry.REGISTRY[name].reference_env(size=size))
+    if sid.startswith("Fetch"):
+        import gymnasium_robotics
+
+        gym.register_envs(gymnasium_robotics)
+        # Gymnasium Robotics draws natively at the requested size.
+        return _GymSource(gym.make(sid, render_mode="rgb_array", width=size, height=size))
     import stable_worldmodel  # noqa: F401  registers the swm/ ids
 
     return _GymSource(gym.make(sid, render_mode="rgb_array", **SOURCE_KWARGS.get(sid, {})))
