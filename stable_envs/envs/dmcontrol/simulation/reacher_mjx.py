@@ -177,8 +177,7 @@ class ReacherMJXAdapter(ReacherAdapter):
             resetting = self._reset_next[:, 0].copy()
             if resetting.any():
                 cumulative = self._state["task", "cumulative_reward"].clone()
-                for lane in np.flatnonzero(resetting):
-                    self.envs[lane].reset()
+                self._reset_lanes(np.flatnonzero(resetting))
                 mask = torch.as_tensor(resetting, device=self.device)
                 self._state[mask] = super().get_state()[mask]
                 self._state["task", "cumulative_reward"] = cumulative

@@ -60,7 +60,7 @@ TARGETS = [
     ("classic", _classic, "mountain_car_continuous", ("cpu", "cuda"), False),
     ("dmc", _dmc, "cheetah", ("cpu",), True),
     ("dmc", _dmc, "reacher", ("cpu",), True),
-    ("dmc", _dmc, "quadruped", ("cpu",), False),
+    ("dmc", _dmc, "quadruped", ("cpu",), True),
     ("fetch", _fetch, "Push", ("cpu",), True),
     ("ogbench", _ogbench, "Maze", ("cpu", "cuda"), True),
     ("ogbench", _ogbench, "Cube", ("cpu", "cuda"), True),

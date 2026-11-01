@@ -20,6 +20,17 @@ All notable changes to this project are listed here. The format follows
   100 muscles) on the MuJoCo Warp backend (`mshuman` extra). Physics and State run on the env device;
   frames come from MuJoCo's OpenGL renderer. The Apache-2.0 model is fetched from LNSGroup/MS-Human-700
   at a pinned commit on first use, overridable with `STABLE_ENVS_MSHUMAN_HOME`.
+- DM Control on CPU: one Numba kernel draws the frames of all 17 classes. Each tile of 8 × 8 pixels
+  tests its camera, shadow and mirror rays only against the moving geometry that its bounds can reach.
+  The kernel then shades the pixels in the float32 operation order of the Torch renderer.
+  `backend="auto"` (the default) uses the kernel when Numba imports, and `backend="torch"` selects the
+  Torch renderers. The frames are the same as the Torch frames, except for rare pixels, because Torch's
+  CPU square root can round through MKL. The `dmcontrol` extra installs Numba, and the `pin-dmc` group
+  pins it.
+- `Pendulum(simulation_backend=...)`: CUDA lanes step Pendulum-v1 in batched float64 Torch on the GPU
+  (`"auto"`, the default), and CPU lanes keep the Gymnasium simulator. Resets, the PCG64 streams and
+  State export still come from Gymnasium. Torch steps match Gymnasium to rounding; `"gym"` or `"torch"`
+  selects one backend on any device.
 - Classic control on CPU: a Numba kernel draws the same primitive records as the Triton kernel, in
   parallel over frames. `backend="auto"` and `backend="port"` use it when Numba imports; otherwise the
   CPU paths below apply. Frames are byte-identical to the Torch port. The `classic` extra installs
@@ -45,6 +56,45 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- Envs that step in worker processes (OGBench, dm_control, Fetch, PyFlyt, PushT and classic control) on a
+  CUDA device keep the step bookkeeping on the CPU. At the end of `step`, the outputs move to the device.
+  The outputs do not change.
+- TwoRoom, TwoRoomTarget, Piecewise and PiecewiseZones on CPU: one Numba kernel moves all lanes. The
+  same call returns the State, the observation, the reward and the termination flags. The kernel does
+  each float32 operation of the Torch step with the same rounding, so State and task outputs do not
+  change. `simulation_backend="auto"` (the default) selects the kernel on CPU when Numba imports.
+  `"torch"` selects the Torch physics, and TwoRoom also accepts `"jax"`. On CUDA, TwoRoom uses
+  `jax_min_envs` to select Torch or JAX, as before. `execution_mode` is `NATIVE_NUMBA` for the kernel.
+- Seeded resets of the navigation classes seed only the nodes of the source reset tree that a lane
+  reads. A bounded float leaf draws its values with one `uniform` call, as `Box.sample` does. The reset
+  values do not change.
+  On 8 cores of a Xeon Platinum 8268, episodes of physics steps (64 steps after each seeded reset) of
+  the four classes are 2 to 6 times faster than before, from 1 to 1024 lanes.
+- `SimplePointMaze` draws the `info.goal` images faster. Each distinct background is drawn once with
+  Matplotlib Agg. Then only the agent disc is drawn over a copy of it, in the render worker processes on
+  Linux. The image bytes do not change. Steps return the goal image without a copy: it is the same
+  tensor at each step, and a `[B, T]` step returns a view of it along the time axis. Do not write into
+  `info.goal`.
+- OGBench point mazes, except `teleport`: the lanes of a worker step in one loop. The loop does not swap
+  the NumPy legacy RNG for each lane, because a point step draws no random numbers. A step sets the
+  ball velocity to zero, so a ball that does not touch a wall stays where it is. For such a lane the
+  step advances only the clock and does not call MuJoCo. Workers send only the State leaves that a step
+  changes. State and task outputs do not change.
+- `PointMazeLargeNavigate` on CPU: the spotlight shadow rays of a frame, and of the goal and agent
+  samples, test only the walls near them. The goal and the agent are drawn in two small tiles when their screen bounds do not meet.
+  Frames do not change.
+- DM Control: a step makes MuJoCo's step calls for every lane directly. Then it computes the
+  observations, rewards and task outputs of all lanes in one NumPy pass. It does not run dm_control's
+  Python step for each lane. State, observations, rewards, task outputs and the task RNG are equal to
+  dm_control. State export reads the task RNG again only after a reset or a restore. Quadruped now
+  runs in worker processes, as the other DM Control tasks do.
+- Reacher with CUDA output uses native CPU physics below 4096 environments, not below 32. On an
+  L40S with 8 CPU cores, native physics was faster than MJX up to 2048 environments.
+- `PyFlytRocketLanding` on CPU: the physics worker processes draw the step frames of their running
+  lanes with TinyRenderer, in parallel. They also draw `render` batches of 2 or more States. Before, the
+  main process drew every frame. A step that returns only frames does not export a State. The frames are
+  byte-identical. One process now holds at most 511 Rocket lanes, because the frames use one more
+  PyBullet client.
 - Reacher with CUDA output now uses native CPU physics below 32 environments. Larger CUDA batches
   keep JAX/MJX physics. `simulation_backend` selects either implementation and `mjx_min_envs` changes
   the provisional cutoff. TwoRoom uses Torch below `jax_min_envs` and JAX at or above it. Its cutoff
@@ -69,6 +119,19 @@ All notable changes to this project are listed here. The format follows
   for `OGBScene`. `supersample=2` or `backend="mjwarp_fidelity"` keeps the MJWarp renderer.
 - `OGBCube` and `OGBScene` draw OpenGL batches of 2 or more states in up to `ogb_gl_workers` worker
   processes on Linux, and read many frames back in one call. Frames do not change.
+- Fetch on CPU: on Linux, batches of at least `render_worker_min_rows` states draw with software OpenGL
+  in up to `render_workers` worker processes. Each worker has its own OpenGL context and writes its frames
+  into one shared buffer. Frames do not change. The knobs use the new tuning path `fetch-opengl`.
+  Together with the native frame size below, on 8 CPU cores rendering stored States at 224 px is
+  approximately 3.5 times faster, and `step` with frames is approximately 4 times faster.
+- Fetch with OpenGL (CPU, or `backend="opengl"` on CUDA) draws each frame at the requested size, as
+  Gymnasium Robotics does when it is built at that size, and draws the translucent mocap markers at the
+  gripper. Before, frames were drawn at 480 px and then resized, and the markers were not drawn. On CPU,
+  frames now equal the Gymnasium Robotics frames byte for byte at 64, 224 and 480 px (64 States of each
+  task). Per-frame MSE at 224 px against Gymnasium Robotics was 14 to 17 and is now 0.
+- Fetch with OpenGL uploads each sky colour once for each OpenGL context and keeps the textures
+  for later renders. A batch with a different sky colour in each lane renders as fast as a batch with
+  one sky colour. Frames do not change.
 
 - One process adapter (`stable_envs._execution.process.ProcessAdapter`) runs the worker processes of
   DM Control, classic Acrobot, Fetch, OGBench Maze and OGBench Cube/Scene. It replaces five copies of

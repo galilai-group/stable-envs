@@ -742,6 +742,8 @@ class Env:
         return tuple(sampled), values
 
     def _draw_reset_lane(self, tree, lane: int, sampled, values) -> dict[str, np.ndarray]:
+        from ._core.reset_tree import sample as sample_space
+
         out = {}
         for leaf in self.reset_leaves:
             value = np.asarray(leaf.default, leaf.dtype)
@@ -750,7 +752,7 @@ class Env:
                 for part in leaf.path.split("."):
                     node = node[part]
                 for _ in range(1000):
-                    candidate = node.sample()
+                    candidate = sample_space(node)
                     if self._reset_value_ok(leaf.path, candidate, lane):
                         value = candidate
                         break
@@ -792,10 +794,14 @@ class Env:
         out = {path: np.asarray(value) for path, value in variation.items()}
         if not self.reset_leaves:
             return out
+        from ._core.reset_tree import PathSeeder
+
         lanes = []
+        # Seeding replaces the generators that the lane reads, so one tree serves every lane.
+        tree = self.reset_tree_factory()
+        seeder = PathSeeder(tree, [leaf.path for leaf in self.reset_leaves])
         for lane in range(self.B):
-            tree = self.reset_tree_factory()
-            tree.seed(None if seed is None else int(seed) + lane)
+            seeder.seed(None if seed is None else int(seed) + lane)
             lanes.append(self._draw_reset_lane(tree, lane, sampled, values))
         for path in lanes[0]:
             out[path] = np.stack([row[path] for row in lanes])
@@ -1143,12 +1149,16 @@ class Env:
     def reset(self, seed: int | None = None) -> TensorDict:
         """Reset the environment and return full State; an explicit seed restarts its sampler."""
         self._require_state("reset")
-        if seed is not None:
-            self.rng = np.random.default_rng(int(seed))
-            self._seed = int(seed)
+        self._reseed(seed)
         self.draw_reset_values(seed)
         self._set_render_state(self.sample_states(self.B, self.rng))
         return self.state
+
+    def _reseed(self, seed: int | None) -> None:
+        """Restart the environment sampler from ``seed``; None keeps the current sampler."""
+        if seed is not None:
+            self.rng = np.random.default_rng(int(seed))
+            self._seed = int(seed)
 
     def step(self, actions, *, states=slice(None), frames=slice(-1, None)) -> TensorDict:
         """Advance ``[B, A]`` or ``[B, T, A]`` actions and select post-action outputs.

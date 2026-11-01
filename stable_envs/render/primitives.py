@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 import numpy as np
@@ -114,6 +115,21 @@ class Primitives:
 
     def __len__(self) -> int:
         return len(self.kind)
+
+    def subset(self, ids: Sequence[int]) -> Primitives:
+        """Return the primitives at ``ids``; each subset is cached, so its radii are cached too."""
+        key = tuple(int(j) for j in ids)
+        cache = self.__dict__.setdefault("_subset_cache", {})
+        if key not in cache:
+            take = np.asarray(key, np.intp)
+            cache[key] = Primitives(
+                kind=np.asarray(self.kind)[take],
+                size=np.asarray(self.size)[take],
+                mat_rgb=np.asarray(self.mat_rgb)[take],
+                tex_rgb=np.asarray(self.tex_rgb)[take],
+                spec=np.asarray(self.spec)[take],
+            )
+        return cache[key]
 
     def to(self, device, dtype=torch.float32) -> dict:
         """Copy numeric arrays to device tensors; keep kinds as host integers for dispatch."""

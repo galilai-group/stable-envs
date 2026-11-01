@@ -136,7 +136,8 @@ entry. `.github/CODEOWNERS` assigns the file a code owner.
 
 `tests/contracts/` holds shared source-contract tests for representative registrations. Each profile
 compares State, simulation, task and source pixels against a pinned stable-worldmodel checkout. Pins
-are in `tests/helpers/reference/profiles.py`.
+are in `tests/helpers/reference/profiles.py`. The Fetch profile builds the source env at the contract frame
+size, so its source pixels are the Gymnasium Robotics frames at that size.
 
 ```bash
 python -m pytest tests/contracts --contract-profile native \

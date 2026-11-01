@@ -12,6 +12,14 @@ The renderers come in two groups:
   and MJWarp on CUDA. Their frames differ from MuJoCo's frames. `env.describe()["visual_fidelity"]`
   gives the measured agreement.
 
+On CPU, one compiled Numba kernel draws the frames of each group. The `dmcontrol` extra installs Numba.
+The kernel divides each frame into tiles of 8 × 8 pixels. Each tile tests its rays only against the
+moving geometry that its bounds can reach. Shadow rays and mirror rays use the same test. The kernel
+then shades the pixels in the same order of float32 operations as the Torch renderer.
+`backend="torch"` selects the Torch renderers, and `backend="auto"` (the default) selects Numba when it
+imports. The two backends give the same frames, except for rare pixels. Torch's CPU square root can
+round differently from the IEEE square root that the kernels use.
+
 Each action dimension drives one actuator of the model, in the order of the MuJoCo model. The bounds
 come from the actuator control range.
 
@@ -22,6 +30,13 @@ env = snv.DMCReacher(num_envs=8)
 state = env.reset(seed=0)
 out = env.step(env.action_spec.sample(8))
 ```
+
+Each lane is a dm_control environment, and each action advances it by two dm_control steps. A step
+makes the MuJoCo calls of dm_control's step for every lane. Then it computes the observations, rewards
+and task outputs of all lanes in one NumPy pass. These values are equal to dm_control's values. A lane
+whose episode ends runs dm_control's own reset. On Linux with 4 or more CPUs, a batch of 64 or more
+lanes runs in worker processes. The `workers` and `worker_min_lanes` knobs set this split (see
+[performance tuning](../performance-tuning.md)).
 
 The reward of each task is in [0, 1] for each step. The suite does not define a success criterion. Ball
 in cup is the exception: its `success` value is 1 when the ball is in the cup.
@@ -145,26 +160,26 @@ A planar arm with two links moves its fingertip to a random target.
 | Output device | Number of environments | Physics |
 |---|---:|---|
 | CPU | Any | Native MuJoCo on CPU |
-| CUDA | Fewer than 32 | Native MuJoCo on CPU |
-| CUDA | 32 or more | JAX/MJX on CUDA |
+| CUDA | Fewer than 4096 | Native MuJoCo on CPU |
+| CUDA | 4096 or more | JAX/MJX on CUDA |
 
-Previously, every CUDA batch used MJX, including one environment. Small CUDA batches now run
-physics on CPU and return State and observations on CUDA. Rendering still uses the requested device.
+Native physics returns State and observations on CUDA. Rendering uses the requested device.
 
 ```python
-with snv.DMCReacher(num_envs=1, device="cuda") as env:
+with snv.DMCReacher(num_envs=256, device="cuda") as env:
     print(env.simulation_backend)  # "native"
 
-with snv.DMCReacher(num_envs=1024, device="cuda") as env:
+with snv.DMCReacher(num_envs=4096, device="cuda") as env:
     print(env.simulation_backend)  # "mjx"
 ```
 
 Set `simulation_backend="native"` or `"mjx"` to choose explicitly. MJX requires CUDA and
 `stable-envs[dmcontrol-gpu]`. Set `mjx_min_envs` to change the automatic cutoff.
 
-The default cutoff of 32 is provisional. Earlier A40 measurements compared native physics with
-CPU outputs against MJX with CUDA outputs. The comparison with both implementations returning
-CUDA tensors remains unmeasured, so the cutoff does not guarantee the fastest choice.
+The cutoff comes from one L40S with 8 CPU cores, with both implementations returning CUDA
+tensors. Native physics was faster up to 2048 environments for 1 and 16 actions per call. At 4096
+environments, MJX was faster for 1 action per call and native physics was faster for 16. On a
+machine with more CPU cores, native physics is faster for larger batches.
 
 Native physics uses float64. MJX uses float32 and can produce different trajectories and rewards.
 Select the same backend when comparing experiments.

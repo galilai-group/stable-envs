@@ -78,13 +78,13 @@ def test_plane_reflections_match_analytic_sphere_and_material_addition(tilt):
 @pytest.mark.parametrize("shadows", [False, True])
 def test_reflected_bounds_chunks_and_output_ownership(monkeypatch, shadows):
     scene, args = reflective_scene(shadows=shadows)
-    expected = cpu3d.render(scene, *args)
-    assert torch.equal(expected, cpu3d.render(scene, *args, chunk_size=1))
+    expected = cpu3d.render(scene, *args, backend="torch")
+    assert torch.equal(expected, cpu3d.render(scene, *args, chunk_size=1, backend="torch"))
     monkeypatch.setattr(cpu3d, "FORCE_FULL_FRAME", True)
-    assert torch.equal(expected, cpu3d.render(scene, *args))
+    assert torch.equal(expected, cpu3d.render(scene, *args, backend="torch"))
     saved = expected.clone()
     args[5][:, 1] = 0
-    assert not torch.equal(expected, cpu3d.render(scene, *args))
+    assert not torch.equal(expected, cpu3d.render(scene, *args, backend="torch"))
     assert torch.equal(expected, saved)
 
 

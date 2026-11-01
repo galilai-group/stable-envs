@@ -22,7 +22,10 @@ Each task comes in three classes:
   stable-worldmodel id `swm/Fetch<Task>Dict-v3`.
 
 Fetch needs `mujoco<3.12`. Install it in its own environment with the `robotics` extra. On CPU, MuJoCo
-OpenGL draws the frames. On CUDA, MJWarp draws them. See [System setup](../system-setup.md).
+OpenGL draws the frames at the requested size, as Gymnasium Robotics does. On CUDA, MJWarp draws them. See [System setup](../system-setup.md).
+On Linux, a CPU batch of at least `render_worker_min_rows` states draws in up to `render_workers`
+worker processes. Each worker has its own OpenGL context. The frames do not change. See
+[Performance tuning](../performance-tuning.md).
 
 ```python
 import stable_envs as snv

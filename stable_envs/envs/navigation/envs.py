@@ -15,6 +15,7 @@ from ...render import _resources as _RES
 from ...render.scene import Scene2D, SceneBuilder
 from ...spaces import Box, Dict, Discrete, RGBBox
 from . import navdot
+from .maze_goal import GoalPainter, goal_frames
 
 IMG = 224
 # Playfield inset, distinct from the border stroke width.
@@ -140,6 +141,17 @@ def _bias_field_rgba(biases) -> np.ndarray:
     rgba = np.frombuffer(buf, dtype=np.uint8).reshape(h, w, 4).copy()
     fig.clear()
     return rgba
+
+
+_WALL_RESET_PATHS = ("wall.axis", "wall.thickness", "agent.radius")
+_EXECUTION_MODES = {"torch": "NATIVE_TORCH", "jax": "NATIVE_JAX", "numba": "NATIVE_NUMBA"}
+_NO_MASK = np.zeros(0, np.bool_)
+
+
+def _numba_available() -> bool:
+    from ...render import cpu_raster
+
+    return cpu_raster.available()
 
 
 def _u(env):
@@ -412,6 +424,8 @@ class _HiddenTargetSemantics:
 
     execution_mode = "NATIVE_TORCH"
     _step_outputs_owned = True
+    # TwoRoom observations append the door centers.
+    _numba_doors = False
     state_layout = ((("agent", "position"), 2, 0), (("target", "position"), 2, None))
     state_bounds = {
         ("agent", "position"): (POS_LO, POS_HI),
@@ -516,6 +530,8 @@ class _HiddenTargetSemantics:
     def _step(self, action, *, active=None):
         self._check_open("step")
         act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
+        if self.simulation_backend == "numba":
+            return self._numba_step(act, active)
         next_rows = self._advance_rows(self._render_state, act, self._style)
         if active is not None:
             next_rows = torch.where(active[:, None], next_rows, self._render_state)
@@ -523,6 +539,33 @@ class _HiddenTargetSemantics:
         # Physics already produces valid packed rows. Own the snapshot directly;
         # the public get_state() validation would synchronize CUDA every step.
         return self._outputs(self._full_state(self._render_state))
+
+    def _numba_step(self, action, active):
+        """Advance the lanes and build State and task outputs in one Numba call."""
+        from . import navstep_cpu
+
+        values = navstep_cpu.task_step(
+            self._numba_kind, *self._numba_inputs(action, active), self._target_position.numpy(), self._numba_doors
+        )
+        agent, target, observation, proprio, state, goal_state, distance, terminated = map(torch.from_numpy, values)
+        n = self.B
+        return build_tensordict(
+            {
+                "state": {"agent": {"position": agent}, "target": {"position": target}},
+                "reward": torch.zeros(n, dtype=torch.float64),
+                "terminated": terminated,
+                "truncated": torch.zeros(n, dtype=torch.bool),
+                "observation": observation,
+                "info": {
+                    "proprio": proprio,
+                    "state": state,
+                    "goal_state": goal_state,
+                    "distance_to_target": distance,
+                },
+            },
+            [n],
+            self.device,
+        )
 
 
 class _TorchNavBase(_GymReferencePort):
@@ -537,10 +580,78 @@ class _TorchNavBase(_GymReferencePort):
 
     dynamics_variation_leaves = frozenset({"agent.speed"})
 
-    def __init__(self, *args, **kwargs):
+    #: Physics implementations that ``simulation_backend`` accepts in addition to ``"auto"``.
+    simulation_backends: tuple[str, ...] = ("torch", "numba")
+    #: Kernel selector and Variation columns of the Numba step.
+    _numba_kind = 0
+    _numba_paths: tuple[str, ...] = ()
+
+    def __init__(self, *args, simulation_backend="auto", **kwargs):
+        """Select the physics implementation; ``"auto"`` uses Numba on CPU when it imports and Torch otherwise."""
+        choices = ("auto", *self.simulation_backends)
+        if simulation_backend not in choices:
+            raise ValueError(f"simulation_backend must be one of {', '.join(map(repr, choices))}")
         super().__init__(*args, **kwargs)
         self._gy, self._gx = _grids(self.device)
         self._border = _border_mask(self.device)
+        if simulation_backend == "auto":
+            simulation_backend = self._auto_simulation_backend()
+        if simulation_backend == "numba":
+            if self.device.type != "cpu":
+                raise ValueError(f"simulation_backend='numba' needs device='cpu', got {self.device}")
+            if not _numba_available():
+                raise ImportError("simulation_backend='numba' needs Numba; install stable-envs[navigation]")
+            layout = self._style.layout
+            self._numba_cols = np.asarray([layout[path][0] for path in self._numba_paths], np.int64)
+        self.simulation_backend = simulation_backend
+        self.execution_mode = _EXECUTION_MODES[simulation_backend]
+
+    def _auto_simulation_backend(self) -> str:
+        return "numba" if self.device.type == "cpu" and _numba_available() else "torch"
+
+    def _numba_inputs(self, action, active):
+        """Return the arrays that every Numba step reads; the kernel updates the live rows in place."""
+        act = action.numpy()
+        if not act.flags.c_contiguous:
+            act = np.ascontiguousarray(act)
+        mask = _NO_MASK if active is None else active.numpy()
+        style = self._style.values.numpy()
+        if style.shape[0] != self.B:
+            raise ValueError(f"{type(self).__name__}: the installed Variation has {style.shape[0]} rows, not {self.B}")
+        return self._render_state.numpy(), act, style, self._numba_cols, mask, active is not None
+
+    def _advance_rows(self, rows, action, sty) -> torch.Tensor:
+        numba = self.simulation_backend == "numba" and rows.dtype == action.dtype == torch.float32
+        if numba and sty.batch == rows.shape[0] == action.shape[0]:
+            from . import navstep_cpu
+
+            out = rows.clone(memory_format=torch.contiguous_format)
+            act = np.ascontiguousarray(action.numpy())
+            navstep_cpu.advance(
+                self._numba_kind, out.numpy(), act, sty.values.numpy(), self._numba_cols, _NO_MASK, False
+            )
+            return out
+        return self._advance_rows_torch(rows, action, sty)
+
+    def _advance_rows_torch(self, rows, action, sty) -> torch.Tensor:
+        raise NotImplementedError
+
+    @torch.no_grad()
+    def _step(self, action, *, active=None) -> TensorDict:
+        if self.simulation_backend != "numba" or self._live_rows != self.B or self.state_dim not in (2, 4):
+            return super()._step(action, active=active)
+        from . import navstep_cpu
+
+        self._check_open("step")
+        act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
+        agent, rest, finite = navstep_cpu.state_step(self._numba_kind, *self._numba_inputs(act, active))
+        if not finite:
+            # get_state names the non-finite lanes and raises.
+            return self._step_result(self.state)
+        state = {"agent": {"position": torch.from_numpy(agent)}}
+        if self.state_dim == 4:
+            state["target"] = {"position": torch.from_numpy(rest)}
+        return build_tensordict({"state": state}, [self.B], self.device)
 
     def _agent_space(self) -> dict:
         return {
@@ -748,6 +859,15 @@ class _TorchNavBase(_GymReferencePort):
 
 class _TwoRoomBase(_TorchNavBase):
     reference_id = None
+    _numba_paths = (
+        "agent.speed",
+        "agent.radius",
+        "wall.thickness",
+        "wall.axis",
+        "door.number",
+        "door.position",
+        "door.size",
+    )
 
     def _structure_space(self) -> dict:
         return {
@@ -794,6 +914,32 @@ class _TwoRoomBase(_TorchNavBase):
         wall = (stripe & ~span) | self._border.unsqueeze(0)
         return door, wall
 
+    _reset_walls: dict | None = None
+
+    def draw_reset_values(self, seed=None, options=None):
+        self._reset_walls = {}
+        try:
+            return super().draw_reset_values(seed, options)
+        finally:
+            self._reset_walls = None
+
+    def _reset_value_ok(self, path, value, lane):
+        """Reject agent positions inside the band that the wall and the agent radius cover."""
+        if path != "agent.position":
+            return True
+        # A reset reads the installed Variation once, not once for each lane.
+        walls = self._reset_walls
+        if not walls:
+            walls = {p: self._style[p].detach().cpu().numpy().reshape(-1) for p in _WALL_RESET_PATHS}
+            if self._reset_walls is not None:
+                self._reset_walls = walls
+        axis = int(walls["wall.axis"][lane])
+        thickness = int(walls["wall.thickness"][lane])
+        radius = float(walls["agent.radius"][lane])
+        lo = WALL_CENTER - thickness // 2 - radius
+        hi = WALL_CENTER + thickness // 2 + radius
+        return not (lo <= float(value[0 if axis == 1 else 1]) <= hi)
+
     def base_image(self, sl, k) -> torch.Tensor:
         img = self._fill(k, sl("background.color"))
         door, wall = self._masks(sl, k)
@@ -808,7 +954,7 @@ class _TwoRoomBase(_TorchNavBase):
             hit |= inside & (num > i)
         return hit
 
-    def _advance_rows(self, rows, action, sty) -> torch.Tensor:
+    def _advance_rows_torch(self, rows, action, sty) -> torch.Tensor:
         """Move the agent through doors or clamp it to the wall face with pushback.
 
         Use the pre-move position to determine which side of the wall it starts on.
@@ -871,44 +1017,38 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
         }
     )
 
-    def __init__(self, *args, simulation_backend="auto", jax_min_envs=1, **kwargs):
-        """Use Torch below ``jax_min_envs`` and JAX at or above it when selection is automatic.
+    simulation_backends = ("torch", "jax", "numba")
+    _numba_doors = True
 
-        The cutoff defaults to 1. ``simulation_backend="torch"`` or ``"jax"``
-        selects that implementation at every batch size.
+    def __init__(self, *args, simulation_backend="auto", jax_min_envs=1, **kwargs):
+        """Select the physics implementation.
+
+        With ``"auto"``, CPU lanes step in Numba when it imports. CUDA lanes step in Torch below
+        ``jax_min_envs`` and in JAX at or above it; the cutoff defaults to 1.
+        ``simulation_backend="torch"``, ``"jax"`` or ``"numba"`` selects that implementation at
+        every batch size; Numba runs on CPU only.
         """
-        if simulation_backend not in ("auto", "torch", "jax"):
-            raise ValueError("simulation_backend must be 'auto', 'torch' or 'jax'")
         if isinstance(jax_min_envs, bool) or not isinstance(jax_min_envs, int) or jax_min_envs < 1:
             raise ValueError("jax_min_envs must be an int >= 1")
         self.jax_min_envs = jax_min_envs
-        super().__init__(*args, **kwargs)
-        if simulation_backend == "auto":
-            simulation_backend = "jax" if self.B >= jax_min_envs else "torch"
-        self.simulation_backend = simulation_backend
-        self.execution_mode = "NATIVE_JAX" if self.simulation_backend == "jax" else "NATIVE_TORCH"
+        super().__init__(*args, simulation_backend=simulation_backend, **kwargs)
         if self.simulation_backend == "jax":
             from .tworoom_jax import Kernel
 
             self._jax_kernel = Kernel(self.device, self._style.layout)
 
+    def _auto_simulation_backend(self) -> str:
+        if self.device.type == "cpu" and _numba_available():
+            return "numba"
+        return "jax" if self.B >= self.jax_min_envs else "torch"
+
     def make_variation_space(self) -> Dict:
         return Dict({"agent": Dict(self._agent_space()), **self._structure_space()})
 
     def _advance_rows(self, rows, action, sty):
-        if self.simulation_backend == "torch":
-            return super()._advance_rows(rows, action, sty)
-        return self._jax_kernel.advance(rows, action, sty.values)
-
-    def _reset_value_ok(self, path, value, lane):
-        if path != "agent.position":
-            return True
-        axis = int(self._style["wall.axis"][lane].item())
-        thickness = int(self._style["wall.thickness"][lane].item())
-        radius = float(self._style["agent.radius"][lane].item())
-        lo = WALL_CENTER - thickness // 2 - radius
-        hi = WALL_CENTER + thickness // 2 + radius
-        return not (lo <= float(value[0 if axis == 1 else 1]) <= hi)
+        if self.simulation_backend == "jax":
+            return self._jax_kernel.advance(rows, action, sty.values)
+        return super()._advance_rows(rows, action, sty)
 
     def _observation(self, agent, target):
         n = int(agent.shape[0])
@@ -959,17 +1099,12 @@ class TwoRoomTarget(_TwoRoomBase):
 
     def reset(self, seed=None, options=None):
         self._check_open("reset")
-        if seed is not None:
-            self.rng = np.random.default_rng(int(seed))
-            self._seed = int(seed)
+        self._reseed(seed)
         values = self.draw_reset_values(seed, dict(options or {}))
         agent, target = np.stack(list(values["agent.position"])), np.stack(list(values["target.position"]))
         self._set_render_state(np.concatenate([agent, target], axis=1))
         self._live_rows = self.B
         return self.get_state()
-
-    def _reset_value_ok(self, path, value, lane):
-        return TwoRoom._reset_value_ok(self, path, value, lane)
 
     def make_variation_space(self) -> Dict:
         return Dict(
@@ -1022,6 +1157,8 @@ class TwoRoomTarget(_TwoRoomBase):
 
 class _PiecewiseBase(_TorchNavBase):
     reference_id = None
+    _numba_kind = 1
+    _numba_paths = ("agent.speed", "agent.radius", *(f"zones.bias_{i}" for i in range(N_ZONES)))
     state_dim = 2
     state_names = ("agent_x", "agent_y")
     state_layout = ((("agent", "position"), 2, 0),)
@@ -1095,7 +1232,7 @@ class _PiecewiseBase(_TorchNavBase):
         rng = rng or self.rng
         return rng.uniform(POS_LO, POS_HI, (int(batch), 2)).astype(np.float32)
 
-    def _advance_rows(self, rows, action, sty) -> torch.Tensor:
+    def _advance_rows_torch(self, rows, action, sty) -> torch.Tensor:
         """Apply the current zone bias to the action, then clamp the result to the arena."""
         a = action.clamp(-1.0, 1.0)
         r = sty["agent.radius"].reshape(-1)
@@ -1195,9 +1332,7 @@ class PiecewiseZones(_PiecewiseBase):
 
     def reset(self, seed=None, options=None):
         self._check_open("reset")
-        if seed is not None:
-            self.rng = np.random.default_rng(int(seed))
-            self._seed = int(seed)
+        self._reseed(seed)
         values = self.draw_reset_values(seed, dict(options or {}))
         self._set_render_state(np.stack(list(values["agent.position"])))
         self._live_rows = self.B
@@ -1254,6 +1389,17 @@ def _default_walls() -> tuple[np.ndarray, np.ndarray]:
 
 
 DEFAULT_WALL_SHAPE, DEFAULT_WALL_POS = _default_walls()
+_GOAL_IMAGE_PATHS = (
+    "background.color",
+    "walls.number",
+    "walls.shape",
+    "walls.positions",
+    "walls.color",
+    "goal.radius",
+    "goal.color",
+    "agent.radius",
+    "agent.color",
+)
 
 
 @register
@@ -1262,6 +1408,9 @@ class SimplePointMaze(_GymReferencePort):
 
     name = "simple-point-maze"
     execution_mode = "NATIVE_TORCH"
+    _step_outputs_owned = True
+    # The goal image is replaced at reset and restore and never written, so steps share it.
+    _shared_outputs = (("info", "goal"),)
     state_dim = 4
     state_names = ("agent_x", "agent_y", "goal_x", "goal_y")
     default_size = SIZE
@@ -1345,6 +1494,8 @@ class SimplePointMaze(_GymReferencePort):
         self._agent_position = torch.full((self.B, 2), 0.5, device=self.device, dtype=torch.float64)
         self._state_is_float64 = torch.zeros(self.B, 1, device=self.device, dtype=torch.bool)
         self._cached_goal_image = torch.zeros(self.B, SIZE, SIZE, 3, device=self.device, dtype=torch.uint8)
+        self._goal_painter = GoalPainter(WORLD)
+        self._drawing_reset, self._reset_walls = False, None
 
     def _hidden_state(self):
         return {
@@ -1381,12 +1532,32 @@ class SimplePointMaze(_GymReferencePort):
         self._state_is_float64[:n].zero_()
         return self
 
+    def _wall_rows(self):
+        """Host copies of the wall and radius leaves, read once per reset draw."""
+        rows = self._reset_walls
+        if rows is None:
+            rows = {
+                path: self._style[path].detach().cpu().numpy().reshape(self.B, -1)
+                for path in ("walls.number", "walls.positions", "walls.shape", "agent.radius", "goal.radius")
+            }
+            if self._drawing_reset:
+                self._reset_walls = rows
+        return rows
+
+    def draw_reset_values(self, seed=None, options=None):
+        self._drawing_reset, self._reset_walls = True, None
+        try:
+            return super().draw_reset_values(seed, options)
+        finally:
+            self._drawing_reset, self._reset_walls = False, None
+
     def _position_collides(self, value, lane, entity="agent"):
         p = np.asarray(value, np.float32)
-        number = int(self._style["walls.number"][lane].item())
-        positions = self._style["walls.positions"][lane].detach().cpu().numpy().reshape(MAX_WALLS, 2)
-        shapes = self._style["walls.shape"][lane].detach().cpu().numpy().reshape(MAX_WALLS, 2)
-        radius = float(self._style[f"{entity}.radius"][lane].item())
+        rows = self._wall_rows()
+        number = int(rows["walls.number"][lane, 0])
+        positions = rows["walls.positions"][lane].reshape(MAX_WALLS, 2)
+        shapes = rows["walls.shape"][lane].reshape(MAX_WALLS, 2)
+        radius = float(rows[f"{entity}.radius"][lane, 0])
         for corner, shape in zip(positions[:number], shapes[:number], strict=True):
             lo = np.minimum(corner, corner + shape)
             hi = np.maximum(corner, corner + shape)
@@ -1428,50 +1599,26 @@ class SimplePointMaze(_GymReferencePort):
         """Rebuild the source-compatible ``info.goal`` image from State and Variation.
 
         Use Matplotlib Agg for this cached task image; stepping and normal
-        rendering use the native implementation.
+        rendering use the native implementation. Step outputs share the image,
+        so replace it and never write into it.
         """
-        try:
-            from matplotlib.backends.backend_agg import FigureCanvasAgg
-            from matplotlib.figure import Figure
-            from matplotlib.patches import Circle, Rectangle
-        except ImportError as exc:
-            raise ImportError(
-                "SimplePointMaze exact info.goal output requires matplotlib (validated with 3.10.9)"
-            ) from exc
-
-        rows = self._render_state.detach().cpu().numpy()
-        cached = self._cached_goal_agent_position.detach().cpu().numpy()
-        images = []
-        for lane in range(self.B):
-            fig = Figure(figsize=(5, 5))
-            FigureCanvasAgg(fig)
-            ax = fig.subplots()
-            ax.set_xlim(0, WORLD)
-            ax.set_ylim(0, WORLD)
-            ax.set_aspect("equal")
-            ax.set_xticks([])
-            ax.set_yticks([])
-            background = self._style["background.color"][lane].detach().cpu().numpy() / 255.0
-            ax.set_facecolor(background)
-            number = int(self._style["walls.number"][lane].item())
-            shapes = self._style["walls.shape"][lane].detach().cpu().numpy().reshape(MAX_WALLS, 2)
-            positions = self._style["walls.positions"][lane].detach().cpu().numpy().reshape(MAX_WALLS, 2)
-            wall_color = self._style["walls.color"][lane].detach().cpu().numpy() / 255.0
-            for position, shape in zip(positions[:number], shapes[:number], strict=True):
-                ax.add_patch(Rectangle(position, shape[0], shape[1], facecolor=wall_color))
-            goal_color = self._style["goal.color"][lane].detach().cpu().numpy() / 255.0
-            goal_radius = float(self._style["goal.radius"][lane].item())
-            ax.add_patch(Circle(rows[lane, 2:4], goal_radius, facecolor=goal_color, alpha=0.5))
-            agent_color = self._style["agent.color"][lane].detach().cpu().numpy() / 255.0
-            agent_radius = float(self._style["agent.radius"][lane].item())
-            ax.add_patch(Circle(cached[lane], agent_radius, facecolor=agent_color))
-            fig.tight_layout(pad=0)
-            fig.canvas.draw()
-            width, height = fig.canvas.get_width_height()
-            image = np.frombuffer(fig.canvas.tostring_argb(), dtype=np.uint8).reshape(height, width, 4)[:, :, 1:]
-            images.append(image.copy())
-            fig.clear()
-        self._cached_goal_image.copy_(torch.as_tensor(np.stack(images), device=self.device))
+        n = self.B
+        style = {path: self._style[path].detach().cpu().numpy() for path in _GOAL_IMAGE_PATHS}
+        rows = dict(
+            background=style["background.color"] / 255.0,
+            number=style["walls.number"].reshape(n),
+            shapes=style["walls.shape"].reshape(n, MAX_WALLS, 2),
+            positions=style["walls.positions"].reshape(n, MAX_WALLS, 2),
+            wall_color=style["walls.color"] / 255.0,
+            goal=self._render_state[:n, 2:4].detach().cpu().numpy(),
+            goal_radius=style["goal.radius"].reshape(n),
+            goal_color=style["goal.color"] / 255.0,
+            agent=self._cached_goal_agent_position[:n].detach().cpu().numpy(),
+            agent_radius=style["agent.radius"].reshape(n),
+            agent_color=style["agent.color"] / 255.0,
+        )
+        images = goal_frames(self._goal_painter, rows, SIZE)
+        self._cached_goal_image = torch.as_tensor(images, device=self.device)
 
     def scene(self, states, variation: dict | None = None, style=None) -> Scene2D:
         s = torch.as_tensor(states, device=self.device, dtype=torch.float32).reshape(-1, 4)
@@ -1608,7 +1755,7 @@ class SimplePointMaze(_GymReferencePort):
                 "terminated": terminated,
                 "truncated": torch.zeros(n, device=self.device, dtype=torch.bool),
                 "observation": observation,
-                "info": {"goal": self._cached_goal_image[:n].clone()},
+                "info": {"goal": self._cached_goal_image if n == self.B else self._cached_goal_image[:n]},
             },
             batch_size=[n],
             device=self.device,

@@ -29,8 +29,10 @@ State keeps the task.
 
 ### Dynamics
 
-TwoRoom runs on CPU or CUDA and accepts and returns Torch tensors. Its JAX physics backend
-uses the requested device; JAX is included in the base installation. For CUDA, install
+TwoRoom runs on CPU or CUDA and accepts and returns Torch tensors. On CPU, a Numba kernel steps all
+lanes. One call of the kernel moves the agents and computes the State, the observation, the reward and
+the termination flags. The `navigation` extra installs Numba. On CUDA, the JAX physics backend steps the
+lanes on the GPU; JAX is included in the base installation. For CUDA, install
 `stable-envs[navigation-gpu]`:
 
 ```python
@@ -48,19 +50,20 @@ task outputs. Allow warm-up steps before measuring throughput; a new batch shape
 Torch and JAX exchange tensors through DLPack on the selected device, without copying them to CPU
 during stepping. A missing JAX CUDA runtime raises an error explaining which extra to install.
 
-`simulation_backend="auto"` uses the original Torch physics below `jax_min_envs` environments
-and JAX at or above that cutoff. The default cutoff is 1 because the measurements so far favor
-JAX even for a single environment. If Torch is faster for small batches on your machine, set a
-higher cutoff:
+`simulation_backend="auto"` uses the Numba kernel on CPU when Numba imports. On CUDA, it uses the
+original Torch physics below `jax_min_envs` environments and JAX at or above that cutoff. The default
+cutoff is 1 because the measurements so far favor JAX even for a single environment. If Torch is faster
+for small CUDA batches on your machine, set a higher cutoff:
 
 ```python
-with snv.TwoRoom(num_envs=4, device="cpu", jax_min_envs=8) as env:
+with snv.TwoRoom(num_envs=4, device="cuda", jax_min_envs=8) as env:
     print(env.simulation_backend)  # "torch"
 ```
 
 The choice is fixed at construction. The library does not benchmark your machine automatically.
-Set `simulation_backend="torch"` or `"jax"` to choose explicitly at any batch size. Both use the
-requested device. `env.simulation_backend` reports the selected implementation.
+Set `simulation_backend="torch"`, `"jax"` or `"numba"` to choose explicitly at any batch size. Torch
+and JAX use the requested device. Numba runs on CPU only. `env.simulation_backend` reports the selected
+implementation. All three give the same State and task outputs.
 
 <!-- env: TwoRoom -->
 
@@ -68,6 +71,10 @@ requested device. `env.simulation_backend` reports the selected implementation.
 
 This class draws the TwoRoom arena with a visible target. The target position is part of the
 renderer input.
+
+TwoRoomTarget, Piecewise and PiecewiseZones also take `simulation_backend`. `"auto"` (the default)
+steps CPU lanes with the Numba kernel when Numba imports and uses Torch otherwise. `"torch"` and
+`"numba"` select one implementation. Both give the same State and task outputs.
 
 <!-- env: TwoRoomTarget -->
 
@@ -93,5 +100,10 @@ Matplotlib figure of 500 × 500 px.
 
 **Success:** the episode terminates when the agent is inside the goal radius. The reward is 1 at the
 goal and -0.01 for every other step.
+
+**Goal image:** `info.goal` is the Matplotlib figure of the goal frame that `reset` and `set_state`
+draw. Every step returns the same image tensor. Do not write into it. For `[B, T]` actions, `info.goal`
+is a view of this image along the time axis. When a lane ends inside the sequence, `info.goal` is a
+copy with zeros after the end.
 
 <!-- env: SimplePointMaze -->
