@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from stable_envs import tuning
 from stable_envs._execution import policy
 
 
@@ -150,3 +151,46 @@ def test_reacher_rejects_invalid_simulation_selection(backend, device, threshold
 
     with pytest.raises(ValueError):
         reacher_backend(1, device, backend, threshold)
+
+
+@pytest.fixture
+def dmc_factory(monkeypatch, tmp_path):
+    from stable_envs.envs.dmcontrol.simulation import factory
+
+    monkeypatch.delenv("STABLE_ENVS_DMC_THREADS", raising=False)
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+    monkeypatch.setattr(factory, "make_local", lambda *args: None)
+    monkeypatch.setattr(factory, "DMCBatchAdapter", lambda lanes, task, threads: threads)
+    monkeypatch.setattr(factory.os, "cpu_count", lambda: 6)
+    tuning.reset()
+    tuning._clear_caches()
+    yield factory
+    tuning._clear_caches()
+
+
+@pytest.mark.family("dmc")
+@pytest.mark.parametrize(
+    "knobs,cpus,batch,expected",
+    [
+        ({}, 32, 1024, 8),
+        ({}, 32, 1, 1),
+        ({}, 32, 2, 2),
+        ({"dmc_threads": 4}, 32, 1024, 4),
+        ({"dmc_threads": 64}, 16, 1024, 16),
+        ({"dmc_threads": 8}, None, 1024, 6),
+    ],
+)
+def test_dmc_batch_threads_follow_the_knob_within_cpus_and_lanes(
+    monkeypatch, dmc_factory, knobs, cpus, batch, expected
+):
+    monkeypatch.setattr(dmc_factory, "cpu_affinity", lambda: None if cpus is None else list(range(cpus)))
+    with tuning.override(**knobs):
+        assert dmc_factory.make_batch("cartpole", batch) == expected
+
+
+@pytest.mark.family("dmc")
+def test_dmc_batch_threads_use_the_value_tuned_for_their_batch_range(monkeypatch, dmc_factory):
+    monkeypatch.setattr(dmc_factory, "cpu_affinity", lambda: list(range(32)))
+    tuning.write_cache({tuning.entry_key("dmc-sim", 0, 1024): {"dmc_threads": 16}}, "cpu")
+    assert dmc_factory.make_batch("cartpole", 1024) == 16
+    assert dmc_factory.make_batch("cartpole", 512) == 8
