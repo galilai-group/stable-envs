@@ -57,13 +57,13 @@ def _pow_scalar(x, e):
 
 
 @njit(cache=True, error_model="numpy", inline="always")
-def _light(kind, lp, ld, cut, expo, px, py, pz):
+def _light(kind, lp0, lp1, lp2, ld0, ld1, ld2, cut, expo, px, py, pz):
     """Direction toward the light, its distance, the spot attenuation and the cone test at a point."""
     if kind == DIRECTIONAL:
-        lx, ly, lz, _ = _normalize(-ld[0], -ld[1], -ld[2])
+        lx, ly, lz, _ = _normalize(-ld0, -ld1, -ld2)
         return lx, ly, lz, FAR, ONE, True
-    lx, ly, lz, dist = _normalize(lp[0] - px, lp[1] - py, lp[2] - pz)
-    ax, ay, az, _ = _normalize(ld[0], ld[1], ld[2])
+    lx, ly, lz, dist = _normalize(lp0 - px, lp1 - py, lp2 - pz)
+    ax, ay, az, _ = _normalize(ld0, ld1, ld2)
     cosine = (-lx) * ax + (-ly) * ay + (-lz) * az
     return lx, ly, lz, dist, _pow_scalar(max(cosine, ZERO), expo), cosine >= cut
 
@@ -90,7 +90,7 @@ def _search(g, x):
     return lo
 
 
-@njit(cache=True, error_model="numpy")
+@njit(cache=True, error_model="numpy", inline="always")
 def _trilinear(texels, sizes, offsets, u, v, lod, out):
     count = sizes.shape[0]
     lod = min(max(lod, ZERO), F32(count - 1))
@@ -124,7 +124,7 @@ def _trilinear(texels, sizes, offsets, u, v, lod, out):
                 out[c] = out[c] + value * frac
 
 
-@njit(cache=True, error_model="numpy")
+@njit(cache=True, error_model="numpy", inline="always")
 def _sample(texels, sizes, offsets, tex_h, tex_w, u, v, g0, g1, g2, g3, out):
     a = g0 * F32(tex_w)
     b = g1 * F32(tex_h)
@@ -175,7 +175,18 @@ def _vertex(
         if not lights_i[li, 1]:
             continue
         lx, ly, lz, _, att, cone = _light(
-            lights_i[li, 0], lrel[b, li], ldir[b, li], lights_cut[li], lights_exp[li], px, py, pz
+            lights_i[li, 0],
+            lrel[b, li, 0],
+            lrel[b, li, 1],
+            lrel[b, li, 2],
+            ldir[b, li, 0],
+            ldir[b, li, 1],
+            ldir[b, li, 2],
+            lights_cut[li],
+            lights_exp[li],
+            px,
+            py,
+            pz,
         )
         vdot = max(_dot(pnx, pny, pnz, lx, ly, lz), ZERO)
         vw = att * (ONE if (cone and vdot > ZERO) else ZERO)
@@ -192,15 +203,16 @@ def _vertex(
 
 
 @njit(cache=True, error_model="numpy")
-def _shade(
+def _shade_many(
     b,
+    count,
     base,
     p,
     n,
     view,
     pid,
     vis,
-    mat_idx,
+    prim_mat,
     lights_i,
     lights_cut,
     lights_exp,
@@ -225,158 +237,177 @@ def _shade(
     vval,
     out,
 ):
-    """``cpu3d._shade_hits`` for one hit; ``vis`` holds each light's shadow visibility.
+    """``cpu3d._shade_hits`` for the first ``count`` hits; ``pid < 0`` skips a hit, ``vis`` holds shadow visibility.
 
     The floor is lit at its grid triangle's vertices and interpolated, as MuJoCo tessellates it.
     ``vkey`` and ``vval`` cache lit vertices of this row; ``vkey[-1]`` counts the cached vertices.
     """
-    sp_m = mspec[mat_idx] if enable_specular else F32(0.5)
-    sh_m = mshin[mat_idx] if enable_specular else F32(64.0)
-    em = memis[mat_idx]
-    r0 = base[0] * em
-    r1 = base[1] * em
-    r2 = base[2] * em
-    nl = lights_i.shape[0]
-    if head_active:
-        r0 = r0 + base[0] * head[0, 0]
-        r1 = r1 + base[1] * head[0, 1]
-        r2 = r2 + base[2] * head[0, 2]
-    elif nl == 0:
-        fb = F32(0.3)
-        r0 = r0 + base[0] * fb
-        r1 = r1 + base[1] * fb
-        r2 = r2 + base[2] * fb
-    for li in range(nl):
-        if lights_i[li, 1]:
-            r0 = r0 + base[0] * lights_amb[li, 0]
-            r1 = r1 + base[1] * lights_amb[li, 1]
-            r2 = r2 + base[2] * lights_amb[li, 2]
-    on_plane = pid == 0
-    s_a = 0
-    s_b = 0
-    s_c = 0
-    w0 = ZERO
-    w1 = ZERO
-    w2 = ZERO
-    if on_plane:
-        lx = (p[0] + cam[b, 0]) - plane[0]
-        ly = (p[1] + cam[b, 1]) - plane[1]
-        lz = (p[2] + cam[b, 2]) - plane[2]
-        x = _dot(lx, ly, lz, pm[b, 0, 0], pm[b, 1, 0], pm[b, 2, 0])
-        y = _dot(lx, ly, lz, pm[b, 0, 1], pm[b, 1, 1], pm[b, 2, 1])
-        gx_n = len(grid_x)
-        ix = min(max(_search(grid_x, x), 1), gx_n - 1)
-        iy = min(max(_search(grid_y, y), 1), len(grid_y) - 1)
-        fx = min(max((x - grid_x[ix - 1]) / (grid_x[ix] - grid_x[ix - 1]), ZERO), ONE)
-        fy = min(max((y - grid_y[iy - 1]) / (grid_y[iy] - grid_y[iy - 1]), ZERO), ONE)
-        first = (iy - 1) * gx_n + ix - 1
-        last = iy * gx_n + ix
-        other = first + (1 if fx >= fy else gx_n)
-        w0 = ONE - max(fx, fy)
-        w1 = min(fx, fy)
-        w2 = abs(fx - fy)
-        size = len(vkey) - 1
-        if vkey[size] > size - 3:
-            vkey[size] = 0
-        for k in range(3):
-            vtx = first if k == 0 else (last if k == 1 else other)
-            slot = -1
-            for q in range(vkey[size]):
-                if vkey[q] == vtx:
-                    slot = q
-                    break
-            if slot < 0:
-                slot = vkey[size]
-                vkey[size] += 1
-                vkey[slot] = vtx
-                _vertex(
-                    vtx,
-                    slot,
-                    b,
-                    lights_i,
-                    lights_cut,
-                    lights_exp,
-                    lrel,
-                    ldir,
-                    head_active,
-                    cam_back,
-                    mspec[mat_idx],
-                    mshin[mat_idx],
-                    enable_specular,
-                    plane,
-                    pm,
-                    grid_x,
-                    grid_y,
-                    cam,
-                    vval,
-                )
-            if k == 0:
-                s_a = slot
-            elif k == 1:
-                s_b = slot
-            else:
-                s_c = slot
-    for li in range(nl):
-        if not lights_i[li, 1]:
+    for q in range(count):
+        if pid[q] < 0:
             continue
+        mat_idx = prim_mat[pid[q]]
+        sp_m = mspec[mat_idx] if enable_specular else F32(0.5)
+        sh_m = mshin[mat_idx] if enable_specular else F32(64.0)
+        em = memis[mat_idx]
+        r0 = base[q, 0] * em
+        r1 = base[q, 1] * em
+        r2 = base[q, 2] * em
+        nl = lights_i.shape[0]
+        if head_active:
+            r0 = r0 + base[q, 0] * head[0, 0]
+            r1 = r1 + base[q, 1] * head[0, 1]
+            r2 = r2 + base[q, 2] * head[0, 2]
+        elif nl == 0:
+            fb = F32(0.3)
+            r0 = r0 + base[q, 0] * fb
+            r1 = r1 + base[q, 1] * fb
+            r2 = r2 + base[q, 2] * fb
+        for li in range(nl):
+            if lights_i[li, 1]:
+                r0 = r0 + base[q, 0] * lights_amb[li, 0]
+                r1 = r1 + base[q, 1] * lights_amb[li, 1]
+                r2 = r2 + base[q, 2] * lights_amb[li, 2]
+        on_plane = pid[q] == 0
+        s_a = 0
+        s_b = 0
+        s_c = 0
+        w0 = ZERO
+        w1 = ZERO
+        w2 = ZERO
         if on_plane:
-            g = 2 * li
-            d0 = ((ldif[b, li, 0] * vval[s_a, g]) * w0 + (ldif[b, li, 0] * vval[s_b, g]) * w1) + (
-                ldif[b, li, 0] * vval[s_c, g]
-            ) * w2
-            d1 = ((ldif[b, li, 1] * vval[s_a, g]) * w0 + (ldif[b, li, 1] * vval[s_b, g]) * w1) + (
-                ldif[b, li, 1] * vval[s_c, g]
-            ) * w2
-            d2 = ((ldif[b, li, 2] * vval[s_a, g]) * w0 + (ldif[b, li, 2] * vval[s_b, g]) * w1) + (
-                ldif[b, li, 2] * vval[s_c, g]
-            ) * w2
-            d0 = d0 * vis[li]
-            d1 = d1 * vis[li]
-            d2 = d2 * vis[li]
-            sp = ((vval[s_a, g + 1] * w0 + vval[s_b, g + 1] * w1) + vval[s_c, g + 1] * w2) * vis[li]
-        else:
-            lx, ly, lz, _, att, cone = _light(
-                lights_i[li, 0], lrel[b, li], ldir[b, li], lights_cut[li], lights_exp[li], p[0], p[1], p[2]
-            )
-            ndotl = max(_dot(n[0], n[1], n[2], lx, ly, lz), ZERO)
-            live = cone and ndotl > ZERO
-            wgt = att * vis[li] * (ONE if live else ZERO)
-            f = ndotl * wgt
-            d0 = ldif[b, li, 0] * f
-            d1 = ldif[b, li, 1] * f
-            d2 = ldif[b, li, 2] * f
-            sp = ZERO
-            if enable_specular:
-                sp = _specular(n[0], n[1], n[2], lx, ly, lz, view[0], view[1], view[2], sp_m, sh_m, wgt)
-        r0 = r0 + base[0] * d0
-        r1 = r1 + base[1] * d1
-        r2 = r2 + base[2] * d2
-        if enable_specular:
-            r0 = r0 + lights_spec[li, 0] * sp
-            r1 = r1 + lights_spec[li, 1] * sp
-            r2 = r2 + lights_spec[li, 2] * sp
-    if head_active:
-        lx = cam_back[0]
-        ly = cam_back[1]
-        lz = cam_back[2]
-        ndotl = max(_dot(n[0], n[1], n[2], lx, ly, lz), ZERO)
-        wgt = ONE if ndotl > ZERO else ZERO
-        f = ndotl * wgt
-        r0 = r0 + base[0] * (head[1, 0] * f)
-        r1 = r1 + base[1] * (head[1, 1] * f)
-        r2 = r2 + base[2] * (head[1, 2] * f)
-        if enable_specular:
+            lx = (p[q, 0] + cam[b, 0]) - plane[0]
+            ly = (p[q, 1] + cam[b, 1]) - plane[1]
+            lz = (p[q, 2] + cam[b, 2]) - plane[2]
+            x = _dot(lx, ly, lz, pm[b, 0, 0], pm[b, 1, 0], pm[b, 2, 0])
+            y = _dot(lx, ly, lz, pm[b, 0, 1], pm[b, 1, 1], pm[b, 2, 1])
+            gx_n = len(grid_x)
+            ix = min(max(_search(grid_x, x), 1), gx_n - 1)
+            iy = min(max(_search(grid_y, y), 1), len(grid_y) - 1)
+            fx = min(max((x - grid_x[ix - 1]) / (grid_x[ix] - grid_x[ix - 1]), ZERO), ONE)
+            fy = min(max((y - grid_y[iy - 1]) / (grid_y[iy] - grid_y[iy - 1]), ZERO), ONE)
+            first = (iy - 1) * gx_n + ix - 1
+            last = iy * gx_n + ix
+            other = first + (1 if fx >= fy else gx_n)
+            w0 = ONE - max(fx, fy)
+            w1 = min(fx, fy)
+            w2 = abs(fx - fy)
+            size = len(vkey) - 1
+            if vkey[size] > size - 3:
+                vkey[size] = 0
+            for k in range(3):
+                vtx = first if k == 0 else (last if k == 1 else other)
+                slot = -1
+                for e in range(vkey[size]):
+                    if vkey[e] == vtx:
+                        slot = e
+                        break
+                if slot < 0:
+                    slot = vkey[size]
+                    vkey[size] += 1
+                    vkey[slot] = vtx
+                    _vertex(
+                        vtx,
+                        slot,
+                        b,
+                        lights_i,
+                        lights_cut,
+                        lights_exp,
+                        lrel,
+                        ldir,
+                        head_active,
+                        cam_back,
+                        mspec[mat_idx],
+                        mshin[mat_idx],
+                        enable_specular,
+                        plane,
+                        pm,
+                        grid_x,
+                        grid_y,
+                        cam,
+                        vval,
+                    )
+                if k == 0:
+                    s_a = slot
+                elif k == 1:
+                    s_b = slot
+                else:
+                    s_c = slot
+        for li in range(nl):
+            if not lights_i[li, 1]:
+                continue
             if on_plane:
-                h = 2 * nl
-                sp = (vval[s_a, h] * w0 + vval[s_b, h] * w1) + vval[s_c, h] * w2
+                g = 2 * li
+                d0 = ((ldif[b, li, 0] * vval[s_a, g]) * w0 + (ldif[b, li, 0] * vval[s_b, g]) * w1) + (
+                    ldif[b, li, 0] * vval[s_c, g]
+                ) * w2
+                d1 = ((ldif[b, li, 1] * vval[s_a, g]) * w0 + (ldif[b, li, 1] * vval[s_b, g]) * w1) + (
+                    ldif[b, li, 1] * vval[s_c, g]
+                ) * w2
+                d2 = ((ldif[b, li, 2] * vval[s_a, g]) * w0 + (ldif[b, li, 2] * vval[s_b, g]) * w1) + (
+                    ldif[b, li, 2] * vval[s_c, g]
+                ) * w2
+                d0 = d0 * vis[q, li]
+                d1 = d1 * vis[q, li]
+                d2 = d2 * vis[q, li]
+                sp = ((vval[s_a, g + 1] * w0 + vval[s_b, g + 1] * w1) + vval[s_c, g + 1] * w2) * vis[q, li]
             else:
-                sp = _specular(n[0], n[1], n[2], lx, ly, lz, view[0], view[1], view[2], sp_m, sh_m, wgt)
-            r0 = r0 + head[2, 0] * sp
-            r1 = r1 + head[2, 1] * sp
-            r2 = r2 + head[2, 2] * sp
-    out[0] = min(max(r0, ZERO), ONE)
-    out[1] = min(max(r1, ZERO), ONE)
-    out[2] = min(max(r2, ZERO), ONE)
+                lx, ly, lz, _, att, cone = _light(
+                    lights_i[li, 0],
+                    lrel[b, li, 0],
+                    lrel[b, li, 1],
+                    lrel[b, li, 2],
+                    ldir[b, li, 0],
+                    ldir[b, li, 1],
+                    ldir[b, li, 2],
+                    lights_cut[li],
+                    lights_exp[li],
+                    p[q, 0],
+                    p[q, 1],
+                    p[q, 2],
+                )
+                ndotl = max(_dot(n[q, 0], n[q, 1], n[q, 2], lx, ly, lz), ZERO)
+                live = cone and ndotl > ZERO
+                wgt = att * vis[q, li] * (ONE if live else ZERO)
+                f = ndotl * wgt
+                d0 = ldif[b, li, 0] * f
+                d1 = ldif[b, li, 1] * f
+                d2 = ldif[b, li, 2] * f
+                sp = ZERO
+                if enable_specular:
+                    sp = _specular(
+                        n[q, 0], n[q, 1], n[q, 2], lx, ly, lz, view[q, 0], view[q, 1], view[q, 2], sp_m, sh_m, wgt
+                    )
+            r0 = r0 + base[q, 0] * d0
+            r1 = r1 + base[q, 1] * d1
+            r2 = r2 + base[q, 2] * d2
+            if enable_specular:
+                r0 = r0 + lights_spec[li, 0] * sp
+                r1 = r1 + lights_spec[li, 1] * sp
+                r2 = r2 + lights_spec[li, 2] * sp
+        if head_active:
+            lx = cam_back[0]
+            ly = cam_back[1]
+            lz = cam_back[2]
+            ndotl = max(_dot(n[q, 0], n[q, 1], n[q, 2], lx, ly, lz), ZERO)
+            wgt = ONE if ndotl > ZERO else ZERO
+            f = ndotl * wgt
+            r0 = r0 + base[q, 0] * (head[1, 0] * f)
+            r1 = r1 + base[q, 1] * (head[1, 1] * f)
+            r2 = r2 + base[q, 2] * (head[1, 2] * f)
+            if enable_specular:
+                if on_plane:
+                    h = 2 * nl
+                    sp = (vval[s_a, h] * w0 + vval[s_b, h] * w1) + vval[s_c, h] * w2
+                else:
+                    sp = _specular(
+                        n[q, 0], n[q, 1], n[q, 2], lx, ly, lz, view[q, 0], view[q, 1], view[q, 2], sp_m, sh_m, wgt
+                    )
+                r0 = r0 + head[2, 0] * sp
+                r1 = r1 + head[2, 1] * sp
+                r2 = r2 + head[2, 2] * sp
+        out[q, 0] = min(max(r0, ZERO), ONE)
+        out[q, 1] = min(max(r1, ZERO), ONE)
+        out[q, 2] = min(max(r2, ZERO), ONE)
 
 
 @njit(cache=True, error_model="numpy", inline="always")
@@ -602,8 +633,12 @@ def render(
                         continue
                     lx, ly, lz, dist, _, cone = _light(
                         lights_i[li, 0],
-                        lrel[b, li],
-                        ldir[b, li],
+                        lrel[b, li, 0],
+                        lrel[b, li, 1],
+                        lrel[b, li, 2],
+                        ldir[b, li, 0],
+                        ldir[b, li, 1],
+                        ldir[b, li, 2],
                         lights_cut[li],
                         lights_exp[li],
                         pt[i, 0],
@@ -663,50 +698,49 @@ def render(
                         vis[idx[r], li] = ZERO
 
         rgb = np.empty((m, 3), np.float32)
-        view = np.empty(3, np.float32)
+        view = np.empty((m, 3), np.float32)
         vkey = np.zeros(33, np.int64)
         vval = np.empty((32, 2 * nl + 1), np.float32)
         for i in range(m):
             j = jj[i]
-            if pid[i] < 0:
-                for c in range(3):
-                    rgb[i, c] = sky[j, c]
-                continue
             for c in range(3):
-                view[c] = -dirs[j, c]
-            _shade(
-                b,
-                base[i],
-                pt[i],
-                nrm[i],
-                view,
-                pid[i],
-                vis[i],
-                prim_mat[pid[i]],
-                lights_i,
-                lights_cut,
-                lights_exp,
-                lights_amb,
-                lights_spec,
-                lrel,
-                ldir,
-                ldif,
-                head,
-                head_active,
-                cam_back,
-                mspec,
-                mshin,
-                memis,
-                enable_specular,
-                plane,
-                pm,
-                grid_x,
-                grid_y,
-                cam,
-                vkey,
-                vval,
-                rgb[i],
-            )
+                view[i, c] = -dirs[j, c]
+                if pid[i] < 0:
+                    rgb[i, c] = sky[j, c]
+        _shade_many(
+            b,
+            m,
+            base,
+            pt,
+            nrm,
+            view,
+            pid,
+            vis,
+            prim_mat,
+            lights_i,
+            lights_cut,
+            lights_exp,
+            lights_amb,
+            lights_spec,
+            lrel,
+            ldir,
+            ldif,
+            head,
+            head_active,
+            cam_back,
+            mspec,
+            mshin,
+            memis,
+            enable_specular,
+            plane,
+            pm,
+            grid_x,
+            grid_y,
+            cam,
+            vkey,
+            vval,
+            rgb,
+        )
 
         # Mirror rays from floor pixels, cast as one packet per tile.
         if reflectance > ZERO and K:
@@ -737,12 +771,13 @@ def render(
                 cx, cy, cz, sp, ax, ay, az, ang = _packet_bounds(ro, rd, 0, q)
                 nrc = _candidates(kinds, S, P, b, cx, cy, cz, sp, ax, ay, az, ang, cand)
                 if nrc:
-                    ones = np.ones(max(nl, 1), np.float32)
-                    rbase = np.empty(3, np.float32)
-                    rp = np.empty(3, np.float32)
-                    rn = np.empty(3, np.float32)
-                    rv = np.empty(3, np.float32)
-                    refl = np.empty(3, np.float32)
+                    ones = np.ones((q, max(nl, 1)), np.float32)
+                    rbase = np.empty((q, 3), np.float32)
+                    rp = np.empty((q, 3), np.float32)
+                    rn = np.empty((q, 3), np.float32)
+                    rv = np.empty((q, 3), np.float32)
+                    rpid = np.full(q, -1, np.int64)
+                    refl = np.empty((q, 3), np.float32)
                     for r in range(q):
                         t, mx, my, mz, im = _nearest(
                             kinds, S, P, R, b, cand, nrc, ro[r, 0], ro[r, 1], ro[r, 2], rd[r, 0], rd[r, 1], rd[r, 2]
@@ -751,50 +786,55 @@ def render(
                             continue
                         k = im + 1
                         mi = prim_mat[k]
+                        rpid[r] = k
                         for c in range(3):
                             v = mat_rgb[b, mi, c] if mi < nmat else own_rgb[k, c]
-                            rbase[c] = v * tex00[mi, c] * reflectance
-                            rp[c] = ro[r, c] + t * rd[r, c]
-                            rv[c] = -rd[r, c]
-                        rn[0] = mx
-                        rn[1] = my
-                        rn[2] = mz
-                        _shade(
-                            b,
-                            rbase,
-                            rp,
-                            rn,
-                            rv,
-                            k,
-                            ones,
-                            mi,
-                            lights_i,
-                            lights_cut,
-                            lights_exp,
-                            lights_amb,
-                            lights_spec,
-                            lrel,
-                            ldir,
-                            ldif,
-                            head,
-                            head_active,
-                            cam_back,
-                            mspec,
-                            mshin,
-                            memis,
-                            enable_specular,
-                            plane,
-                            pm,
-                            grid_x,
-                            grid_y,
-                            cam,
-                            vkey,
-                            vval,
-                            refl,
-                        )
+                            rbase[r, c] = v * tex00[mi, c] * reflectance
+                            rp[r, c] = ro[r, c] + t * rd[r, c]
+                            rv[r, c] = -rd[r, c]
+                        rn[r, 0] = mx
+                        rn[r, 1] = my
+                        rn[r, 2] = mz
+                    _shade_many(
+                        b,
+                        q,
+                        rbase,
+                        rp,
+                        rn,
+                        rv,
+                        rpid,
+                        ones,
+                        prim_mat,
+                        lights_i,
+                        lights_cut,
+                        lights_exp,
+                        lights_amb,
+                        lights_spec,
+                        lrel,
+                        ldir,
+                        ldif,
+                        head,
+                        head_active,
+                        cam_back,
+                        mspec,
+                        mshin,
+                        memis,
+                        enable_specular,
+                        plane,
+                        pm,
+                        grid_x,
+                        grid_y,
+                        cam,
+                        vkey,
+                        vval,
+                        refl,
+                    )
+                    for r in range(q):
+                        if rpid[r] < 0:
+                            continue
                         i = idx[r]
                         for c in range(3):
-                            rgb[i, c] = min(max(refl[c] + rgb[i, c], ZERO), ONE)
+                            rgb[i, c] = min(max(refl[r, c] + rgb[i, c], ZERO), ONE)
 
         for i in range(m):
             j = jj[i]
