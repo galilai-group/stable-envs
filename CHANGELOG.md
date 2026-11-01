@@ -37,6 +37,35 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- TwoRoom, TwoRoomTarget, Piecewise and PiecewiseZones on CPU: one Numba kernel moves all lanes. The
+  same call returns the State, the observation, the reward and the termination flags. The kernel does
+  each float32 operation of the Torch step with the same rounding, so State and task outputs do not
+  change. `simulation_backend="auto"` (the default) selects the kernel on CPU when Numba imports.
+  `"torch"` selects the Torch physics, and TwoRoom also accepts `"jax"`. On CUDA, TwoRoom uses
+  `jax_min_envs` to select Torch or JAX, as before. `execution_mode` is `NATIVE_NUMBA` for the kernel.
+- Seeded resets of the navigation classes seed only the nodes of the source reset tree that a lane
+  reads. A bounded float leaf draws its values with one `uniform` call, as `Box.sample` does. The reset
+  values do not change.
+- `SimplePointMaze` draws the `info.goal` images faster. Each distinct background is drawn once with
+  Matplotlib Agg. Then only the agent disc is drawn over a copy of it, in the render worker processes on
+  Linux. The image bytes do not change. Steps return the goal image without a copy: it is the same
+  tensor at each step, and a `[B, T]` step returns a view of it along the time axis. Do not write into
+  `info.goal`.
+- OGBench point mazes, except `teleport`: the lanes of a worker step in one loop. The loop does not swap
+  the NumPy legacy RNG for each lane, because a point step draws no random numbers. A step sets the
+  ball velocity to zero, so a ball that does not touch a wall stays where it is. For such a lane the
+  step advances only the clock and does not call MuJoCo. Workers send only the State leaves that a step
+  changes. State and task outputs do not change.
+- `PointMazeLargeNavigate` on CPU: the spotlight shadow rays of a frame, and of the goal and agent
+  samples, test only the walls near them. The goal and the agent are drawn in two small tiles when their screen bounds do not meet.
+  Frames do not change.
+- DM Control: a step makes MuJoCo's step calls for every lane directly. Then it computes the
+  observations, rewards and task outputs of all lanes in one NumPy pass. It does not run dm_control's
+  Python step for each lane. State, observations, rewards, task outputs and the task RNG are equal to
+  dm_control. State export reads the task RNG again only after a reset or a restore. Quadruped now
+  runs in worker processes, as the other DM Control tasks do.
+- Reacher with CUDA output uses native CPU physics below 4096 environments, not below 32. On an
+  L40S with 8 CPU cores, native physics was faster than MJX up to 2048 environments.
 - Reacher with CUDA output now uses native CPU physics below 32 environments. Larger CUDA batches
   keep JAX/MJX physics. `simulation_backend` selects either implementation and `mjx_min_envs` changes
   the provisional cutoff. TwoRoom uses Torch below `jax_min_envs` and JAX at or above it. Its cutoff

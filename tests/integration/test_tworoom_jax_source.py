@@ -13,19 +13,24 @@ from tests.helpers.reference.semantics import compare_state
 pytestmark = [pytest.mark.family("navigation"), pytest.mark.swm]
 
 
+@pytest.mark.parametrize("backend", ["jax", "numba"])
 @pytest.mark.parametrize("seed", [0, 7, 31])
-def test_public_steps_match_swm(seed):
-    with closing(NativeNavigationReference("two_room", 8)) as source, se.TwoRoom(num_envs=8, device="cpu") as env:
+def test_public_steps_match_swm(seed, backend):
+    with (
+        closing(NativeNavigationReference("two_room", 8)) as source,
+        se.TwoRoom(num_envs=8, device="cpu", simulation_backend=backend) as env,
+    ):
         compare_state(env.reset(seed=seed), source.reset(seed=seed))
-        assert env.execution_mode == "NATIVE_JAX"
+        assert env.execution_mode == {"jax": "NATIVE_JAX", "numba": "NATIVE_NUMBA"}[backend]
         actions = np.random.default_rng(seed).uniform(-2, 2, (40, 8, 2)).astype(np.float32)
         for action in actions:
             compare_state(env.step(action, states=None, frames=None).exclude("valid"), source.step(action))
 
 
+@pytest.mark.parametrize("backend", ["jax", "numba"])
 @pytest.mark.parametrize("axis", [0, 1])
 @pytest.mark.parametrize("doors", [1, 2, 3])
-def test_collisions_and_observations_match_swm_with_variation(axis, doors):
+def test_collisions_and_observations_match_swm_with_variation(axis, doors, backend):
     values = {
         "agent.radius": [7.125],
         "agent.speed": [5.5],
@@ -39,7 +44,7 @@ def test_collisions_and_observations_match_swm_with_variation(axis, doors):
     actions = torch.tensor([[1, 0], [-1, 0], [1, 0], [0, -5], [5, 0], [0, 1], [0, -1]], dtype=torch.float64)
     with (
         closing(NativeNavigationReference("two_room", 7, persistent_values=values)) as source,
-        se.TwoRoom(num_envs=7, device="cpu") as env,
+        se.TwoRoom(num_envs=7, device="cpu", simulation_backend=backend) as env,
     ):
         env.set_variation(values)
         state = env.reset(seed=0, options={"state": positions, "target_state": [180, 180]})
