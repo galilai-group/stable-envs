@@ -85,7 +85,7 @@ venv() {  # venv FAMILY -> python path of a fresh family venv in $WORK
   if [ $fam = rocket ]; then
     # nvdiffrast is not package metadata; reuse the build made for this node's CUDA toolkit. SWM's Rocket needs cvxpy.
     local sp; sp=$($v/bin/python -c "import site; print(site.getsitepackages()[0])")
-    cp -r ${NVDIFFRAST_SITE:-$HOME/lewm-hyd/lewm/venv/lib/python3.12/site-packages}/{nvdiffrast,nvdiffrast-0.4.0.dist-info,_nvdiffrast_c*.so} "$sp"/ 2>/dev/null
+    cp -r ${NVDIFFRAST_SITE:-$HOME/nvdiffrast-site}/{nvdiffrast,nvdiffrast-0.4.0.dist-info,_nvdiffrast_c*.so} "$sp"/ 2>/dev/null
     $UV pip install --python $v/bin/python "${cu[@]}" -c $WORK/constraints-$fam.txt cvxpy >> "$OUT/logs/venv-$fam.log" 2>&1
     $v/bin/python -c "import nvdiffrast.torch" >> "$OUT/logs/venv-$fam.log" 2>&1 || { echo "nvdiffrast $fam failed" >&2; return 1; }
   fi
