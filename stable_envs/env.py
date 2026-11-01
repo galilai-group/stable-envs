@@ -1149,12 +1149,16 @@ class Env:
     def reset(self, seed: int | None = None) -> TensorDict:
         """Reset the environment and return full State; an explicit seed restarts its sampler."""
         self._require_state("reset")
-        if seed is not None:
-            self.rng = np.random.default_rng(int(seed))
-            self._seed = int(seed)
+        self._reseed(seed)
         self.draw_reset_values(seed)
         self._set_render_state(self.sample_states(self.B, self.rng))
         return self.state
+
+    def _reseed(self, seed: int | None) -> None:
+        """Restart the environment sampler from ``seed``; None keeps the current sampler."""
+        if seed is not None:
+            self.rng = np.random.default_rng(int(seed))
+            self._seed = int(seed)
 
     def step(self, actions, *, states=slice(None), frames=slice(-1, None)) -> TensorDict:
         """Advance ``[B, A]`` or ``[B, T, A]`` actions and select post-action outputs.
