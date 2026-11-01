@@ -37,8 +37,6 @@ ACTION_DIMS = {
 }
 #: State fields that follow qpos in the compact render row, in order.
 RENDER_KEYS = MODEL_KEYS
-# Quadruped always runs in-process.
-PROCESS_DOMAINS = frozenset(FACTORIES) - {"quadruped"}
 
 
 def make_local(domain: str, num_envs: int, device: str | torch.device = "cpu", seed: int = 0) -> DMCAdapter:

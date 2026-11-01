@@ -69,6 +69,13 @@ All notable changes to this project are listed here. The format follows
 - `PointMazeLargeNavigate` on CPU: the spotlight shadow rays of a frame, and of the goal and agent
   samples, test only the walls near them. The goal and the agent are drawn in two small tiles when their screen bounds do not meet.
   Frames do not change.
+- DM Control: a step makes MuJoCo's step calls for every lane directly. Then it computes the
+  observations, rewards and task outputs of all lanes in one NumPy pass. It does not run dm_control's
+  Python step for each lane. State, observations, rewards, task outputs and the task RNG are equal to
+  dm_control. State export reads the task RNG again only after a reset or a restore. Quadruped now
+  runs in worker processes, as the other DM Control tasks do.
+- Reacher with CUDA output uses native CPU physics below 4096 environments, not below 32. On an
+  L40S with 8 CPU cores, native physics was faster than MJX up to 2048 environments.
 - Reacher with CUDA output now uses native CPU physics below 32 environments. Larger CUDA batches
   keep JAX/MJX physics. `simulation_backend` selects either implementation and `mjx_min_envs` changes
   the provisional cutoff. TwoRoom uses Torch below `jax_min_envs` and JAX at or above it. Its cutoff
