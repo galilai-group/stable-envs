@@ -46,16 +46,21 @@ def test_local_lanes_refuse_an_empty_batch(num_envs):
 
 
 def _foreign_and_actions(domain):
-    """A State whose lanes reach the time limit in the first or the second control step of the next actions."""
+    """A State whose lanes reach the time limit in the first or the second control step of the next actions.
+
+    Acrobot and Cartpole lanes start upright, inside the sparse target that random actions never reach.
+    """
     other = make_local(domain, 5, seed=99)
     try:
         other.step(np.full((5, other.action_dim), 0.2))
         foreign = other.get_state()
         limit = math.ceil(other.envs[0]._env._step_limit)
-        actions = list(np.random.default_rng(5).uniform(-1, 1, (8, 5, other.action_dim)))
+        actions = list(np.random.default_rng(5).uniform(-1, 1, (200, 5, other.action_dim)))
     finally:
         other.close()
     foreign["lifecycle", "step_count"] = limit - torch.tensor([[2], [3], [2], [3], [2]])
+    if domain in ("acrobot", "cartpole"):
+        foreign["qpos"].zero_()
     return foreign, actions
 
 
