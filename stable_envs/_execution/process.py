@@ -186,6 +186,7 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         if cpus is not None and (len(set(cpus)) != len(cpus) or len(cpus) < processes):
             raise ValueError("CPU allocation must provide at least one distinct core per process")
         self.num_envs, self.device = num_envs, torch.device(device)
+        self._host_outputs = False
         self._closed, self._pending, self._capture, self._capture_frame = False, None, False, False
         self._pending_frame = None
         self._connections, self._processes = [], []
@@ -267,14 +268,14 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
             raise RuntimeError(f"{type(self).__name__} is closed")
 
     def _owned(self, group):
-        return owned_group(self._views, group, self.num_envs, self.device)
+        return owned_group(self._views, group, self.num_envs, self._output_device)
 
     def _state_leaves(self):
         """Copy the shared State leaves to ``{key: tensor}``; leaves that only resets, restores and calls
         change come from a cache."""
         if not self._static:
             return {
-                key[1:]: torch.from_numpy(view.copy()).to(self.device)
+                key[1:]: torch.from_numpy(view.copy()).to(self._output_device)
                 for key, view in self._views.items()
                 if key[0] == "state"
             }
@@ -293,11 +294,11 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         for key, view in self._views.items():
             if key[0] == "state":
                 value = spare[key[1:]] if key[1:] in spare else torch.from_numpy(view.copy())
-                values[key[1:]] = value.to(self.device)
+                values[key[1:]] = value.to(self._output_device)
         return values
 
     def _owned_state(self):
-        return leaf_tensordict(self._state_leaves(), self.num_envs, self.device)
+        return leaf_tensordict(self._state_leaves(), self.num_envs, self._output_device)
 
     def _state(self):
         return self._owned_state()
@@ -373,6 +374,8 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
             raise (error if isinstance(error, type) and issubclass(error, Exception) else RuntimeError)(message)
         self._request("commit_restore")
 
+    #: ``receive_step`` accepts ``host=True``.
+    host_outputs = True
     #: How ``capture_frame`` obtains a frame: ``FRAME_DRAW`` or ``FRAME_FIELDS`` (see ``_fields_frame``).
     frame_mode = FRAME_DRAW
 
@@ -422,20 +425,32 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
     def _submitted(self, actions, active):
         """Record a dispatched step; ``actions`` and ``active`` are the checked host arrays."""
 
-    def receive_step(self) -> TensorDict:
-        """Wait for the transition and copy its outputs before workers can reuse the buffers."""
+    def receive_step(self, host: bool = False) -> TensorDict:
+        """Wait for the transition and copy its outputs before workers can reuse the buffers.
+
+        With ``host``, the outputs stay on the CPU, so the caller can move them to ``device`` together.
+        """
         self._check_open()
         if self._pending != "step":
             raise RuntimeError(f"No {self.name} step in flight")
         self._receive()
-        result = self._owned("task")
-        if self._capture:
-            result["state"] = self._state()
-        if self._capture_frame and self.frame_mode == FRAME_FIELDS:
-            self._pending_frame = self._frame_fields()
-        elif self._capture_frame:
-            result["frame"] = torch.from_numpy(self._views[("frame",)]).clone().to(self.device)
+        self._host_outputs = bool(host)
+        try:
+            result = self._owned("task")
+            if self._capture:
+                result["state"] = self._state()
+            if self._capture_frame and self.frame_mode == FRAME_FIELDS:
+                self._pending_frame = self._frame_fields()
+            elif self._capture_frame:
+                result["frame"] = torch.from_numpy(self._views[("frame",)]).clone().to(self._output_device)
+        finally:
+            self._host_outputs = False
         return result
+
+    @property
+    def _output_device(self) -> torch.device:
+        """The device of step outputs: ``device``, or the CPU while ``receive_step(host=True)`` copies them."""
+        return torch.device("cpu") if self._host_outputs else self.device
 
     def step(self, actions, *, active=None, capture_state: bool = True) -> TensorDict:
         self.submit_step(actions, active=active, capture_state=capture_state)

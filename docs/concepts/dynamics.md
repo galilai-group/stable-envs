@@ -103,6 +103,9 @@ When a worker pool is active, the next known action runs while the parent render
 snapshot. At most one transition is in flight. Every submitted transition finishes before `step`
 returns. This does not change the outputs.
 
+On a CUDA device, `step` keeps the worker outputs and its bookkeeping on the CPU. Before `step` returns,
+the outputs move to the device. Frames are drawn on the device.
+
 Scripts that use this path must follow the usual rules for spawn-based process pools:
 
 - Put env construction and the main loop inside a function guarded by `if __name__ == "__main__":`.
