@@ -10,7 +10,7 @@
  "frame_shape": [84, 84, 3],
  "physics": "source simulator on CPU",
  "renderers": {
-  "cpu": "cpu3d",
+  "cpu": "cpu3d (Numba)",
   "cuda": "mjwarp"
  },
  "action": {
