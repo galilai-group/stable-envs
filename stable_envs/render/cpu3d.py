@@ -470,7 +470,7 @@ def render(
     ``chunk_size`` frames are cast at a time; None reads the ``cpu3d_chunk`` tuning knob.
     ``backend="numba"`` draws every frame in one compiled kernel that tests each tile of rays against
     only the movers whose bounds reach it; ``"torch"`` draws with Torch, and ``"auto"`` takes Numba
-    when it imports. The two agree up to rare one-level differences from Torch's CPU square root.
+    when it imports. The two agree except on rare pixels, where Torch's CPU square root rounds differently.
     """
     if chunk_size is None:
         chunk_size = tuning.get("cpu3d_chunk")
