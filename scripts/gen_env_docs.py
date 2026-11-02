@@ -59,6 +59,13 @@ PHYSICS = {
 }
 
 
+def _execution_mode(cls, env) -> str:
+    """An ``AUTO_`` class mode, which names the physics of every device; otherwise the env's own mode, which some
+    classes choose on construction (navigation uses Numba on CPU)."""
+    mode = getattr(cls, "execution_mode", "")
+    return mode if mode.startswith("AUTO_") else getattr(env, "execution_mode", mode)
+
+
 def renderer_cell(cls) -> str:
     """Key of :data:`RENDERERS` for ``cls``."""
     family = cls.family
@@ -175,8 +182,7 @@ def metadata(name: str, device: str = "cpu") -> dict:
             "has_dynamics": info["has_dynamics"],
             "default_size": info["default_size"],
             "frame_shape": list(env.frame_spec.shape),
-            # The env's own mode: some classes choose their physics on construction (navigation uses Numba on CPU).
-            "physics": PHYSICS.get(getattr(env, "execution_mode", ""), None),
+            "physics": PHYSICS.get(_execution_mode(cls, env), None),
             "renderers": RENDERERS[renderer_cell(cls)],
             "action": action,
             "state": _state(env),
