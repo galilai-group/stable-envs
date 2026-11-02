@@ -167,3 +167,13 @@ def test_sampled_rows_draw_with_ours_and_with_the_source(name):
         if has_reference_renderer(cls):
             frames = np.asarray(cls.reference_render(C.reference_env(cls, env.size), rows))
             assert frames.shape == (LANES, *env.frame_spec.shape)
+
+
+@pytest.mark.parametrize("name", envs("reference_origin"))
+def test_the_reference_is_the_source_library_not_this_one(name):
+    cls = se.registry.REGISTRY[name]
+    if not has_reference_renderer(cls):
+        pytest.skip("no source renderer")
+    ref = C.reference_env(cls, cls.native_size or cls.default_size)
+    source = getattr(ref, "unwrapped", ref)
+    assert not type(source).__module__.startswith("stable_envs"), type(source).__module__

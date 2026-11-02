@@ -56,3 +56,9 @@ env = "PyFlytRocketLanding"
 family = "rocket"
 checks = ["original"]
 reason = "the only oracle is swm's fork of PyFlyt's RocketLandingEnv; PyFlyt's own env is not yet compared"
+
+[[exemption]]
+env = "PushT*"
+family = "pusht"
+checks = ["reference_origin"]
+reason = "the reference draws through the swm PushT task code vendored in stable_envs/envs/pusht/simulation/task.py, not the installed stable-worldmodel package"
