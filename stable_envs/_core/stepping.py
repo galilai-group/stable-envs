@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import contextlib
 import sys
+import threading
 
 import numpy as np
 import torch
@@ -140,17 +141,36 @@ def _columns(valid, indices):
     return valid[:, indices[0] : indices[-1] + 1 : stride].clone()
 
 
+# torch's intra-op thread count is process-wide. Steps on several Python threads share one record: the count
+# before the first override, and the counts still requested. The newest request applies; the first count
+# returns when the last override ends.
+_THREADS_LOCK = threading.Lock()
+_THREAD_REQUESTS: list[int] = []
+_THREADS_BEFORE = [0]
+
+
+def _threads_outside_steps() -> int:
+    """The intra-op thread count that applies when no step overrides it."""
+    with _THREADS_LOCK:
+        return _THREADS_BEFORE[0] if _THREAD_REQUESTS else torch.get_num_threads()
+
+
 @contextlib.contextmanager
 def _threads(count):
-    previous = torch.get_num_threads()
-    if count == previous:
-        yield
-        return
-    torch.set_num_threads(count)
+    with _THREADS_LOCK:
+        if not _THREAD_REQUESTS:
+            _THREADS_BEFORE[0] = torch.get_num_threads()
+        _THREAD_REQUESTS.append(count)
+        if torch.get_num_threads() != count:
+            torch.set_num_threads(count)
     try:
         yield
     finally:
-        torch.set_num_threads(previous)
+        with _THREADS_LOCK:
+            _THREAD_REQUESTS.remove(count)
+            target = _THREAD_REQUESTS[-1] if _THREAD_REQUESTS else _THREADS_BEFORE[0]
+            if torch.get_num_threads() != target:
+                torch.set_num_threads(target)
 
 
 def _host_pipeline(env, pipeline) -> bool:
@@ -161,16 +181,16 @@ def _host_pipeline(env, pipeline) -> bool:
 @torch.no_grad()
 def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
     env._check_open("step")
-    if not _host_pipeline(env, getattr(env, "_step_pipeline", lambda: None)()):
-        return _step(env, actions, states, frames, render_threads=None)
+    pipeline = getattr(env, "_step_pipeline", lambda: None)()
+    if not _host_pipeline(env, pipeline):
+        return _step(env, actions, states, frames, pipeline, render_threads=None)
     # Host bookkeeping runs in one thread: idle intra-op threads spin on the cores of the workers.
-    threads = torch.get_num_threads()
+    threads = _threads_outside_steps()
     with _threads(1):
-        return _step(env, actions, states, frames, render_threads=threads)
+        return _step(env, actions, states, frames, pipeline, render_threads=threads)
 
 
-def _step(env, actions, states, frames, *, render_threads):
-    env._check_open("step")
+def _step(env, actions, states, frames, pipeline, *, render_threads):
     if not env.has_dynamics:
         from .dynamics import no_dynamics
 
@@ -194,7 +214,6 @@ def _step(env, actions, states, frames, *, render_threads):
     render_live = getattr(env, "_render_live", None)
     all_active = True
     result, live_state, live_frame = None, None, None
-    pipeline = getattr(env, "_step_pipeline", lambda: None)()
     # A process pipeline on an accelerator keeps the outputs and this bookkeeping on the host until
     # the end of the step; then the outputs move to the device.
     host = _host_pipeline(env, pipeline)
@@ -248,7 +267,7 @@ def _step(env, actions, states, frames, *, render_threads):
             if t in state_times:
                 saved_states[t] = live_state
             if t in frame_times:
-                with _threads(render_threads or torch.get_num_threads()):
+                with _threads(render_threads or _threads_outside_steps()):
                     if live_frame is None and pipeline_frames:
                         # Workers copied the leaves on receipt; the next step is already running.
                         live_frame = pipeline.take_frame() if hasattr(pipeline, "take_frame") else None
