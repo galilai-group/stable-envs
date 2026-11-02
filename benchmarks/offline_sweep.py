@@ -12,6 +12,7 @@ import statistics
 import subprocess
 import sys
 import time
+import traceback
 from pathlib import Path
 
 import numpy as np
@@ -179,6 +180,7 @@ def cmd_states(args) -> None:
                 env.close()
         except Exception as e:  # noqa: BLE001
             print(f"FAIL states {name}: {type(e).__name__}: {e}", flush=True)
+            traceback.print_exc()
             (out / f"{name}.error.txt").write_text(f"{type(e).__name__}: {e}\n")
             continue
         blob.update(name=name, seed=args.seed, n=args.n, size=size)
