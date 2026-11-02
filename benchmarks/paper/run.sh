@@ -2,9 +2,10 @@
 # Offline and online speed of stable-envs against the source, every arm pinned to the same CPU cores.
 # usage (from the repository root): sbatch -p qed -n 1 -c 8 --hint=nomultithread --mem=128G [--gres=gpu:1] -t 24:00:00 benchmarks/paper/run.sh OUT FAMILY=ENV,ENV ...
 #   For each env, each device in DEVICES ("cpu cuda") and each arm in ARMS ("offline step frames"):
-#     offline  stable-envs frames from stored full States at each batch of the sweep, their frame MSE, and the source
-#              drawing the same States in 1 and NCORES processes (with EGL on CUDA where reference_gpu_render is
-#              "mujoco-egl");
+#     offline  stable-envs frames at each batch of the sweep from stored inputs: rows from the family sampler
+#              (sample_states) where the class has one and draws rows on the device, else full States saved
+#              along random-action rollouts; their frame MSE; and the source drawing the same inputs in 1 and
+#              NCORES processes (with EGL on CUDA where reference_gpu_render is "mujoco-egl");
 #     step     physics steps with L lanes for each L of the sweep, and the source stepping L envs on CPU;
 #     frames   steps with frames, and the source drawing on CPU, plus on the GPU where the class has reference_gpu_render.
 #   SWEEP_CPU (1:8:64:256:1024) and SWEEP_CUDA (1:256:512:1024:2048) are the batches and lane counts, colon-separated.
@@ -140,7 +141,7 @@ for spec in "$@"; do
   gl() { local d=$1; shift; [ $d = cpu ] && sw "$@" || egl "$@"; }
   # once FILE CMD...: run CMD unless FILE holds a result.
   once() { local f=$1; shift; [ -s "$f" ] && { echo "have $f"; return 0; }; "$@"; }
-  has offline && sw $OFF states --envs "${envs[@]}" --out $S --n $N --lanes 1024
+  has offline && sw $OFF states --envs "${envs[@]}" --out $S --n $N --devices $DEVICES
   if has step || has frames; then sw $ON dataset --envs "${envs[@]}" --out $D --episodes $N --length $LENGTH; fi
   for E in "${envs[@]}"; do
     echo "--- $E $(date -Is) load $(cut -d' ' -f1-3 /proc/loadavg)"

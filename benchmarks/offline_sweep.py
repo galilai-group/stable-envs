@@ -152,7 +152,12 @@ def _snv():
 
 
 def cmd_states(args) -> None:
-    """Save ``n`` full States per env from seeded resets and random rollouts, with what the source draws for them."""
+    """Save ``n`` frame inputs per env: rows from the family sampler, and full States where a device needs them.
+
+    A class with a sampler (``sample_states``) gives rows that spread over its whole reachable space; they are drawn
+    with ``render_rows`` on ``row_render_devices``. Classes without a sampler, and devices that cannot draw rows,
+    use full States from seeded resets and random actions, saved every ``--every`` steps up to ``--steps``.
+    """
     snv = _snv()
     from tests.helpers.reference.certification import has_reference_renderer
 
@@ -165,37 +170,70 @@ def cmd_states(args) -> None:
             continue
         cls = snv.registry.REGISTRY[name]
         size = cls.native_size or args.size
+        reference = has_reference_renderer(cls)
         t = time.time()
         try:
             with snv.make(name, num_envs=args.lanes, size=size, device="cpu") as env:
-                states, inputs = _rollouts(env, args.n, args.seed, args.steps, has_reference_renderer(cls))
+                try:
+                    rows = env.sample_states(args.n, rng=np.random.default_rng(args.seed))
+                except NotImplementedError:
+                    rows = None
+                states = inputs = None
+                if rows is None or set(args.devices) - set(cls.row_render_devices):
+                    states, inputs = _rollouts(env, args.n, args.seed, args.steps, args.every, reference)
         except Exception as e:  # noqa: BLE001
             print(f"FAIL states {name}: {type(e).__name__}: {e}", flush=True)
             traceback.print_exc()
             (out / f"{name}.error.txt").write_text(f"{type(e).__name__}: {e}\n")
             continue
-        blob = {"states": states, "inputs": inputs, "name": name, "seed": args.seed, "n": args.n, "size": size}
+        blob = {"rows": rows, "states": states, "inputs": inputs, "name": name, "seed": args.seed, "size": size}
+        blob["spread"] = {k: _spread(v) for k, v in (("rows", rows), ("states", inputs)) if isinstance(v, np.ndarray)}
         torch.save(blob, path)
-        print(f"saved {path} in {time.time() - t:.1f}s", flush=True)
+        print(f"saved {path} in {time.time() - t:.1f}s spread {blob['spread']}", flush=True)
 
 
-def _rollouts(env, n: int, seed: int, steps: int, reference: bool):
-    """``n`` full States from seeded resets and 0 to ``steps`` random actions, and their ``reference_inputs``."""
+def _spread(rows: np.ndarray) -> dict:
+    """How far the frame inputs spread: the standard deviation and range of each render-row column."""
+    rows = np.asarray(rows, np.float64)
+    return {
+        "std": rows.std(0).round(4).tolist(),
+        "min": rows.min(0).round(4).tolist(),
+        "max": rows.max(0).round(4).tolist(),
+    }
+
+
+def _rollouts(env, n: int, seed: int, steps: int, every: int, reference: bool):
+    """``n`` full States saved every ``every`` random actions after seeded resets, up to ``steps`` actions per reset,
+    and their ``reference_inputs``."""
     rng = np.random.default_rng(seed)
     states, inputs, have = [], [], 0
     while have < n:
         env.reset(seed=int(rng.integers(0, 2**31 - 1)))
-        for _ in range(int(rng.integers(0, steps + 1))):
+        for t in range(steps + 1):
+            if t % every == 0:
+                st = env.get_state()
+                if reference:
+                    inputs.append(env.reference_inputs(st))
+                states.append(st.cpu())
+                have += int(st.batch_size[0])
+                if have >= n:
+                    break
             env.step(env.action_spec.sample(env.B, rng), frames=None)
-        st = env.get_state()
-        if reference:
-            inputs.append(env.reference_inputs(st))
-        states.append(st.cpu())
-        have += int(st.batch_size[0])
     if not reference:
         return torch.cat(states)[:n], None
     joined = np.concatenate(inputs) if isinstance(inputs[0], np.ndarray) else [x for part in inputs for x in part]
     return torch.cat(states)[:n], joined[:n]
+
+
+def _frames_of(cls, blob, device: str):
+    """``(kind, data)`` that stable-envs draws on ``device``: sampled rows where it can draw rows, else States."""
+    if blob["rows"] is not None and device in cls.row_render_devices:
+        return "rows", blob["rows"]
+    return "states", blob["states"]
+
+
+def _source_inputs(blob, kind: str):
+    return blob["rows"] if kind == "rows" else blob["inputs"]
 
 
 def _chunks(n: int, b: int):
@@ -227,8 +265,13 @@ def cmd_ours(args) -> None:
             env = None
             try:
                 env = snv.make(name, num_envs=b, size=blob["size"], device=args.device)
-                data = blob["states"].to(dev)
-                render = lambda s, e: env.render(data[s:e])  # noqa: E731
+                kind, data = _frames_of(snv.registry.REGISTRY[name], blob, dev.type)
+                if kind == "rows":
+                    data = torch.as_tensor(data, device=dev)
+                    render = lambda s, e: env.render_rows(data[s:e])  # noqa: E731
+                else:
+                    data = data.to(dev)
+                    render = lambda s, e: env.render(data[s:e])  # noqa: E731
                 n = len(data)
                 spans = _chunks(n, b)
                 frame = render(*spans[0])
@@ -257,7 +300,7 @@ def cmd_ours(args) -> None:
                     torch.cuda.reset_peak_memory_stats()
             print(f"{name} {dev.type} b={b} {row['status']} {row.get('fps', 0):.0f} fps", flush=True)
             rows.append(row)
-        results["envs"][name] = {"size": blob["size"], "points": rows}
+        results["envs"][name] = {"size": blob["size"], "kind": kind, "spread": blob["spread"], "points": rows}
     Path(args.output).write_text(json.dumps(results, indent=1))
 
 
@@ -271,7 +314,8 @@ def _worker_init(name: str, states: str, size: int) -> None:
     cls = snv.registry.REGISTRY[name]
     _W["cls"] = cls
     _W["ref"] = cls.reference_env(size=size)
-    _W["inputs"] = _load_states(Path(states) / f"{name}.pt")["inputs"]
+    blob = _load_states(Path(states) / f"{name}.pt")
+    _W["inputs"] = blob["rows"] if blob["rows"] is not None else blob["inputs"]
 
 
 def _worker_render(span) -> int:
@@ -285,7 +329,7 @@ def _source_skip(cls, blob, gpu: bool) -> str | None:
     """Why the source arm cannot run for ``cls``, or None."""
     from tests.helpers.reference.certification import has_reference_renderer
 
-    if not has_reference_renderer(cls) or blob["inputs"] is None:
+    if not has_reference_renderer(cls) or (blob["rows"] is None and blob["inputs"] is None):
         return "no source renderer"
     if gpu and cls.reference_gpu_render != "mujoco-egl":
         return f"the offline source draws on CPU (reference_gpu_render={cls.reference_gpu_render})"
@@ -312,7 +356,7 @@ def cmd_source(args) -> None:
         if reason:
             results["envs"][name] = {"status": "skipped", "reason": reason}
             continue
-        n = len(blob["inputs"])
+        n = len(blob["rows"] if blob["rows"] is not None else blob["inputs"])
         try:
             if args.procs == 1:
                 _worker_init(name, args.states, blob["size"])
@@ -352,18 +396,24 @@ def cmd_mse(args) -> None:
             results["envs"][name] = {"status": "skipped", "reason": reason}
             continue
         try:
-            n = min(args.n, len(blob["inputs"]))
+            kind, data = _frames_of(cls, blob, args.device.split(":")[0])
+            inputs = _source_inputs(blob, kind)
+            n = min(args.n, len(inputs))
             # The source draws before any stable-envs env exists in this process (see online_ladder).
             ref = cls.reference_env(size=blob["size"])
             if "return_flags" in inspect.signature(cls.reference_render).parameters:
-                theirs, flags = cls.reference_render(ref, blob["inputs"][:n], return_flags=True)
+                theirs, flags = cls.reference_render(ref, inputs[:n], return_flags=True)
                 keep = ~np.asarray(flags, bool)
             else:
-                theirs, keep = cls.reference_render(ref, blob["inputs"][:n]), np.ones(n, bool)
+                theirs, keep = cls.reference_render(ref, inputs[:n]), np.ones(n, bool)
             with snv.make(name, num_envs=n, size=blob["size"], device=args.device) as env:
-                ours = env.render(blob["states"][:n].to(env.device)).cpu().numpy()
+                if kind == "rows":
+                    ours = env.render_rows(data[:n]).cpu().numpy()
+                else:
+                    ours = env.render(data[:n].to(env.device)).cpu().numpy()
             per_frame = C.frame_mse(ours[keep], np.asarray(theirs)[keep])
-            row = {"status": "ok", "frames": int(keep.sum()), "excluded_unreachable": int((~keep).sum())}
+            row = {"status": "ok", "kind": kind, "spread": blob["spread"].get(kind)}
+            row.update(frames=int(keep.sum()), excluded_unreachable=int((~keep).sum()))
             row.update(C.mse_summary(per_frame))
             if args.keep:
                 order = np.argsort(per_frame)
@@ -409,13 +459,20 @@ def cmd_codec(args) -> None:
             continue
         blob = _load_states(path)
         decode = name in args.decode
-        n = len(blob["states"]) if decode else args.sample
+        cls = snv.registry.REGISTRY[name]
+        kind, data = _frames_of(cls, blob, dev.type)
+        n = len(data) if decode else args.sample
         row = {"frames_encoded": n}
         try:
-            data = blob["states"].to(dev)
             with snv.make(name, num_envs=256, size=blob["size"], device=args.device) as env:
-                frames = np.concatenate([env.render(data[s:e]).cpu().numpy() for s, e in _chunks(n, 256)])
-            row["state_bytes"] = int(sum(v.numel() * v.element_size() for v in blob["states"][0].values(True, True)))
+                if kind == "rows":
+                    rows = torch.as_tensor(data, device=dev)
+                    frames = np.concatenate([env.render_rows(rows[s:e]).cpu().numpy() for s, e in _chunks(n, 256)])
+                    row["state_bytes"] = int(rows.shape[1]) * 4
+                else:
+                    data = data.to(dev)
+                    frames = np.concatenate([env.render(data[s:e]).cpu().numpy() for s, e in _chunks(n, 256)])
+                    row["state_bytes"] = int(sum(v.numel() * v.element_size() for v in data[0].values(True, True)))
             row["raw_bytes"] = int(frames[0].nbytes)
             for fmt, kw in (("jpeg", {"quality": 95}), ("png", {})):
                 d = Path(args.out) / fmt / name
@@ -472,8 +529,10 @@ def main() -> None:
     s.add_argument("--n", type=int, default=10_000)
     s.add_argument("--seed", type=int, default=20261022)
     s.add_argument("--size", type=int, default=224)
-    s.add_argument("--lanes", type=int, default=1024)
-    s.add_argument("--steps", type=int, default=200, help="most random actions after each seeded reset")
+    s.add_argument("--lanes", type=int, default=64)
+    s.add_argument("--steps", type=int, default=1000, help="most random actions after each seeded reset")
+    s.add_argument("--every", type=int, default=30, help="random actions between two saved States")
+    s.add_argument("--devices", nargs="+", default=["cpu", "cuda"], help="devices whose arms read these inputs")
     o = sub.add_parser("ours", parents=[common])
     o.add_argument("--device", default="cuda")
     o.add_argument("--batches", type=int, nargs="+", default=[1, 256, 512, 1024, 2048, 4096])
