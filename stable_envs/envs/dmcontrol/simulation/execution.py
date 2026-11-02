@@ -2,12 +2,9 @@ from __future__ import annotations
 
 import torch
 
-from ...._execution.policy import cpu_affinity, process_count
-from .factory import FACTORIES, DMCAdapter, make_local
-from .process import DMCProcessAdapter
-
-#: Fewest lanes that use workers when the ``worker_min_lanes`` knob is not set; measured on 8 cores.
-MIN_LANES = 2
+from .batch import DMCBatchAdapter
+from .factory import make_batch
+from .first_family import ReacherAdapter
 
 
 def reacher_backend(num_envs: int, device: str | torch.device, backend: str = "auto", mjx_min_envs: int = 4096) -> str:
@@ -32,13 +29,9 @@ def make_dmc_adapter(
     *,
     simulation_backend: str = "auto",
     mjx_min_envs: int = 4096,
-) -> DMCAdapter | DMCProcessAdapter:
+) -> DMCBatchAdapter | ReacherAdapter:
     if domain == "reacher" and reacher_backend(num_envs, device, simulation_backend, mjx_min_envs) == "mjx":
         from .reacher_mjx import ReacherMJXAdapter
 
         return ReacherMJXAdapter(num_envs, device, seed)
-    cpus = cpu_affinity()
-    count = process_count(num_envs, cpus, eligible=domain in FACTORIES, path="dmc-sim", min_lanes=MIN_LANES)
-    if count:
-        return DMCProcessAdapter(domain, num_envs, device, seed, processes=count, cpus=cpus)
-    return make_local(domain, num_envs, device, seed)
+    return make_batch(domain, num_envs, device, seed)

@@ -22,6 +22,7 @@ knob does and its default.
 | `STABLE_ENVS_WORKER_MIN_LANES` | int |
 | `STABLE_ENVS_WORKER_TIMEOUT` | int |
 | `STABLE_ENVS_FETCH_THREADS` | int |
+| `STABLE_ENVS_DMC_THREADS` | int |
 | `STABLE_ENVS_CPU3D_CHUNK` | int |
 | `STABLE_ENVS_DMC_CPU_RAY_BUDGET` | int, power of two |
 | `STABLE_ENVS_DMC_RAY_BUDGET` | int, power of two |

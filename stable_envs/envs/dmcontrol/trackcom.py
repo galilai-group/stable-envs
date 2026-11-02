@@ -150,15 +150,15 @@ def _launch_worlds(size: int, batch: int) -> int:
 
 
 def _reflection_supported(rc) -> bool:
-    """The floor reflection reuses MJWarp 3.12 render internals; older versions render without it."""
+    """The floor reflection reuses MJWarp 3.17 render internals; other versions render without it."""
     try:
         from mujoco_warp._src import render as upstream
     except ImportError:
         return False
-    if hasattr(rc, "splat_count") and hasattr(upstream, "_make_cast_ray"):
+    if hasattr(rc, "splat_count") and hasattr(upstream, "_make_sample_texture"):
         return True
     warnings.warn(
-        "TrackCom floor reflections need mujoco-warp 3.12; rendering without them, so frames differ from "
+        "TrackCom floor reflections need mujoco-warp 3.17; rendering without them, so frames differ from "
         "the measured appearance. Install stable-envs[dmcontrol-gpu] for the full renderer.",
         RuntimeWarning,
         stacklevel=3,
@@ -508,7 +508,7 @@ class DMControlTrackCom(_DMCModel):
         if palette is not None and (c.reflection is None or c.reflection.palette is None):
             raise RuntimeError(
                 f"{type(self).__name__}: floor.color is drawn by the floor reflection pass, which needs "
-                f"mujoco-warp 3.12; install stable-envs[dmcontrol-gpu]"
+                f"mujoco-warp 3.17; install stable-envs[dmcontrol-gpu]"
             )
         for lo in range(0, B, worlds):
             hi = min(B, lo + worlds)

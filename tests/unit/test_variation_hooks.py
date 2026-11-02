@@ -206,41 +206,24 @@ def test_model_fields_write_through_a_transform():
         PhysicsKnobs([ModelField("x", "geom_friction", "geom", "missing", 0)], m)
 
 
-def test_process_shards_carry_and_restore_per_lane_physics():
-    from stable_envs.envs.dmcontrol.simulation.process import DMCProcessAdapter, make_local
-
+def test_dmc_batch_rejects_a_state_without_its_physics():
     pytest.importorskip("dm_control")
-    local = make_local("cartpole", 4, seed=5)
-    remote = DMCProcessAdapter("cartpole", 4, seed=5, processes=2)
+    from stable_envs.envs.dmcontrol.simulation.factory import make_batch
+
+    adapter = make_batch("cartpole", 2)
     try:
-        assert remote.physics_layout == local.physics_layout
-        rows = np.asarray(
-            [[0.0, 0.0, -9.81, 1.0], [0.0, 0.0, -2.0, 1.0], [1.0, 0.0, -9.81, 0.7], [0.0, 0.0, -15.0, 1.4]]
-        )
-        for owner in (local, remote):
-            owner.configure_physics(rows)
-        action = np.full((4, 1), 0.4)
-        expected, actual = local.step(action), remote.step(action)
-        for key in expected.keys(True, True):
-            torch.testing.assert_close(expected[key], actual[key], rtol=0, atol=0, msg=str(key))
-        saved = remote.get_state()
-        for owner in (local, remote):
-            owner.configure_physics(np.tile([0.0, 0.0, -9.81, 1.0], (4, 1)))
-            owner.set_state(saved)
-        torch.testing.assert_close(remote.get_state()[state_key("gravity.z")], saved[state_key("gravity.z")])
+        stale = adapter.get_state().exclude(state_key("gravity.y"))
+        current = adapter.step(np.full((2, 1), 0.4))["state"]
         with pytest.raises(ValueError, match="does not record the physics"):
-            local.set_state(saved.exclude(state_key("gravity.y")))
-        expected, actual = local.step(action), remote.step(action)
-        for key in expected.keys(True, True):
-            torch.testing.assert_close(expected[key], actual[key], rtol=0, atol=0, msg=str(key))
+            adapter.set_state(stale)
+        assert (adapter.get_state() == current).all()
     finally:
-        local.close()
-        remote.close()
+        adapter.close()
 
 
 def _gravity(env):
     state = env.get_state()
-    sim = np.stack([e.physics.model.opt.gravity for e in env._simulator.envs])
+    sim = np.stack([e.physics.model.opt.gravity for e in env._simulator.lanes.envs])
     style = np.concatenate([env._style[f"gravity.{axis}"].reshape(-1, 1).cpu().numpy() for axis in "xyz"], axis=1)
     rows = torch.cat([state["physics", "gravity", axis] for axis in "xyz"], dim=1).numpy()
     np.testing.assert_array_equal(rows, sim)
