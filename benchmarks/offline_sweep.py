@@ -70,13 +70,17 @@ def _sweeps(fn, *, warmup: int, repeats: int, budget_s: float, sync=None) -> dic
     return {"median_s": statistics.median(times), "samples_s": times, "repeats": len(times), "warmup": warmup}
 
 
-def _timed(units, *, seconds: float, repeats: int, sync=None, warmup_s: float = 2.0) -> dict:
-    """Items per second over ``repeats`` windows of about ``seconds``; each ``next(units)`` does work and returns its items."""
+def _timed(units, *, seconds: float, repeats: int, sync=None, warmup_s: float = 2.0, budget_s: float = 60.0) -> dict:
+    """Items per second over up to ``repeats`` windows of about ``seconds``; each ``next(units)`` does work and returns
+    its items. After the first window, no new window starts once the windows took ``budget_s`` in total: a unit of a
+    slow source can take minutes, and one window of whole units is then enough."""
     end = time.perf_counter() + warmup_s
     while time.perf_counter() < end:
         next(units)
     rates, windows, items = [], [], []
     for _ in range(repeats):
+        if windows and sum(windows) >= budget_s:
+            break
         if sync:
             sync()
         t = time.perf_counter()
@@ -89,7 +93,13 @@ def _timed(units, *, seconds: float, repeats: int, sync=None, warmup_s: float = 
         rates.append(done / dt)
         windows.append(dt)
         items.append(done)
-    return {"rate": statistics.median(rates), "rates": rates, "window_s": windows, "items": items, "repeats": repeats}
+    return {
+        "rate": statistics.median(rates),
+        "rates": rates,
+        "window_s": windows,
+        "items": items,
+        "repeats": len(rates),
+    }
 
 
 def _cycle(make):

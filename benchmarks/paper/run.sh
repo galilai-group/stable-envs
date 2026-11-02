@@ -119,14 +119,15 @@ for spec in "$@"; do
   S=$WORK/states-$fam; D=$WORK/episodes-$fam; mkdir -p $S $D
   if [ "${REGIME:-all}" = cpu ]; then
     # Every CPU arm and its source arm, with no GPU: frames from States, physics steps, and steps with frames.
-    [ "${STEP_ONLY:-0}" = 1 ] || sw $OFF states --envs "${envs[@]}" --out $S --n $N --device cpu --lanes 1024
+    OFFLINE=1; [ "${STEP_ONLY:-0}" = 1 ] || [ "${SKIP_OFFLINE:-0}" = 1 ] && OFFLINE=0
+    [ $OFFLINE = 0 ] || sw $OFF states --envs "${envs[@]}" --out $S --n $N --device cpu --lanes 1024
     # Every lane count of the sweep plays its own episodes, so the dataset holds as many as the largest count.
     MAXL=$(echo $LANE_SWEEP | tr ' ' '\n' | sort -n | tail -1)
     sw $ON dataset --envs "${envs[@]}" --out $D --episodes $(( MAXL > EPISODES ? MAXL : EPISODES )) --length $LENGTH
     for E in "${envs[@]}"; do
       echo "--- $E $(date -Is) load $(cut -d' ' -f1-3 /proc/loadavg)"
       o=$OUT/offline/$E; n=$OUT/online/$E; mkdir -p $o $n
-      if [ "${STEP_ONLY:-0}" != 1 ]; then
+      if [ $OFFLINE = 1 ]; then
         sw $OFF ours --envs $E --states $S --device cpu --threads $NCORES --batches $BATCHES --repeats $REPEATS --output $o/snv-cpu.json
         sw $OFF mse --envs $E --states $S --device cpu --output $o/mse-cpu.json
         for p in 1 $NCORES; do
