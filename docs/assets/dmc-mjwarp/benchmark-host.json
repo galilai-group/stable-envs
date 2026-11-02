@@ -1,0 +1,16 @@
+{
+  "source_command": "srun --jobid=126023 --overlap --ntasks=1 --cpus-per-task=1 --gres=none lscpu --json",
+  "host": "gpu2201",
+  "processor": "AMD EPYC 7443 24-Core Processor",
+  "architecture": "x86_64",
+  "sockets": 2,
+  "cores_per_socket": 24,
+  "threads_per_core": 2,
+  "host_logical_cpus": 96,
+  "allocated_logical_cpus_per_reservation": 8,
+  "torch_threads_per_process": 1,
+  "notes": [
+    "CPU model and topology read on the allocated node; both benchmark reservations use this host.",
+    "This is a shared node; reservation CPU counts do not imply exclusive access to the host."
+  ]
+}

@@ -1,0 +1,517 @@
+{
+  "schema": "stable-envs-dmc-mjwarp-validation-summary/v1",
+  "scope": {
+    "public_mjwarp_environment_count": 16,
+    "excluded_from_new_public_integration": [
+      "DMCReacher"
+    ],
+    "reacher_existing_backends": [
+      "native",
+      "mjx"
+    ],
+    "base_revision": "37c7b9edd51ea82d7733277d7ead34579bc225c4"
+  },
+  "interpretation": {
+    "do_not_sum_runs": true,
+    "reason": "Runs overlap and use different scopes; no aggregate test total is reported.",
+    "pytest_counts": "Counts reproduce each printed pytest summary; skipped counts can include collection-time skips.",
+    "full_numerical_acceptance": false,
+    "historical_results_are_not_current_acceptance": true,
+    "log_provenance": "Raw evidence bytes are preserved. Original machine paths inside logs are provenance only; all summary evidence references are portable ZIP members. Except the structured integration report, plain logs do not bind themselves to a full source snapshot.",
+    "shutdown_messages": "Some remote logs contain ignored EGL/renderer cleanup exceptions after pytest completion. These are preserved and do not erase reported failures or passes."
+  },
+  "runs": [
+    {
+      "id": "cuda_integration_16",
+      "scope": "current_reduced_scope",
+      "counts": {
+        "passed": 53,
+        "failed": 0,
+        "skipped": 0,
+        "deselected": 0,
+        "warnings": 688
+      },
+      "summary": "16 public environment integration cases plus 37 focused cases, including both CPU and CUDA tests. Smoke only; no calibrated trajectory acceptance.",
+      "evidence": [
+        "logs/remote/dmc-mjwarp-integration-16.log"
+      ],
+      "status": "passed",
+      "duration_seconds": 44.65,
+      "exit_status": 0,
+      "structured_report": "reports/integration-16.json"
+    },
+    {
+      "id": "cpu_dmc_profile",
+      "scope": "final_validation",
+      "counts": {
+        "passed": 875,
+        "failed": 0,
+        "skipped": 112,
+        "warnings": 134341
+      },
+      "summary": "DMC CPU profile; missing optional dependencies and CUDA cases are skipped. This is not GPU validation.",
+      "evidence": [
+        "logs/remote/dmc-mjwarp-dmc-final.log"
+      ],
+      "status": "passed_with_skips",
+      "duration_seconds": 249.84
+    },
+    {
+      "id": "local_core_profile",
+      "scope": "final_validation",
+      "counts": {
+        "passed": 1396,
+        "failed": 1,
+        "skipped": 283,
+        "warnings": 2
+      },
+      "summary": "Core profile; one existing navigation declaration failure remains.",
+      "evidence": [
+        "logs/local/dmc-mjwarp-core-final.log"
+      ],
+      "status": "failed",
+      "duration_seconds": 44.27,
+      "known_failure_ids": [
+        "navigation_base_attribute_shadowing"
+      ]
+    },
+    {
+      "id": "existing_gpu_contracts",
+      "scope": "existing_backends",
+      "counts": {
+        "passed": 625,
+        "failed": 2,
+        "skipped": 183,
+        "deselected": 2277,
+        "warnings": 495794
+      },
+      "summary": "Selected existing conformance, reproducibility, fast-path and golden-frame tests. Exercises existing backend behavior, not a new 53-test smoke or full MJWarp numerical acceptance.",
+      "evidence": [
+        "logs/remote/dmc-existing-contracts.log"
+      ],
+      "status": "failed",
+      "duration_seconds": 872.47,
+      "known_failure_ids": [
+        "ball_in_cup_inert_gravity",
+        "quadruped_reference_history_pixels"
+      ]
+    },
+    {
+      "id": "existing_gpu_baseline_reproduction",
+      "scope": "baseline_reproduction",
+      "counts": {
+        "passed": 0,
+        "failed": 2,
+        "skipped": 0,
+        "warnings": 541
+      },
+      "summary": "Separate supplied baseline reproduction of the two existing GPU contract failures; the log does not print a Git revision.",
+      "evidence": [
+        "logs/remote/dmc-existing-baseline-failures.log"
+      ],
+      "status": "failed",
+      "duration_seconds": 8.49,
+      "known_failure_ids": [
+        "ball_in_cup_inert_gravity",
+        "quadruped_reference_history_pixels"
+      ]
+    },
+    {
+      "id": "existing_native_state_process_contracts",
+      "scope": "existing_backends",
+      "counts": {
+        "passed": 34,
+        "failed": 0,
+        "skipped": 0,
+        "deselected": 59,
+        "warnings": 3125
+      },
+      "summary": "Existing DMC state-export and process-adapter tests, including the existing Reacher path.",
+      "evidence": [
+        "logs/remote/dmc-existing-state.log"
+      ],
+      "status": "passed",
+      "duration_seconds": 150.23
+    },
+    {
+      "id": "existing_reacher_mjx",
+      "scope": "existing_backends",
+      "counts": {
+        "passed": 6,
+        "failed": 0,
+        "skipped": 0,
+        "warnings": 317
+      },
+      "summary": "Existing Reacher MJX tests; Reacher is excluded from the new public MJWarp integration.",
+      "evidence": [
+        "logs/remote/dmc-mjwarp-mjx-final.log"
+      ],
+      "status": "passed",
+      "duration_seconds": 60.01
+    },
+    {
+      "id": "contact_runtime_streams",
+      "scope": "earlier_focused_candidate_verification",
+      "counts": {
+        "passed": 36,
+        "failed": 0,
+        "skipped": 0,
+        "warnings": 115
+      },
+      "summary": "Separate focused CPU/CUDA contact, runtime and stream verification. Overlaps the final smoke; not 36 additional public environments.",
+      "evidence": [
+        "logs/remote/dmc-native-contacts-gpu.log"
+      ],
+      "status": "passed",
+      "duration_seconds": 32.56
+    },
+    {
+      "id": "typing",
+      "scope": "final_validation",
+      "status": "passed",
+      "source_files": 9,
+      "summary": "Type checker reports no issues in 9 source files. This is not a pytest test count.",
+      "evidence": [
+        "logs/local/dmc-mjwarp-typing-final.log"
+      ]
+    },
+    {
+      "id": "documentation_build",
+      "scope": "final_validation",
+      "status": "built",
+      "duration_seconds": 2.4,
+      "summary": "Documentation build completed. Log includes Material for MkDocs end-of-life and signature-formatting notices.",
+      "evidence": [
+        "logs/local/dmc-mjwarp-docs-final.log"
+      ]
+    },
+    {
+      "id": "precommit",
+      "scope": "final_validation",
+      "status": "passed_applicable_hooks",
+      "hook_counts": {
+        "passed": 12,
+        "skipped_no_files": 3
+      },
+      "summary": "Applicable hooks passed; TOML, YAML and shellcheck had no files to check. Log does not enumerate the submitted file set.",
+      "evidence": [
+        "logs/local/dmc-mjwarp-precommit-final.log"
+      ]
+    }
+  ],
+  "packaging": {
+    "scope": "final_local_packaging_verification",
+    "build": {
+      "status": "passed",
+      "archives": {
+        "stable_envs-0.1.0-py3-none-any.whl": {
+          "sha256": "da677266b688e764000bf714e0a541e31d9c3ca28c0aaf0f8d1bb9e638feb520",
+          "python_files": 187,
+          "all_python_bytes_match_live_source": true,
+          "latest_notices_bytes_match": true,
+          "notice_sha256": "c6fb0c922ad010b2b1ab089bc553fe6c367a00c8ff89ff385c8e6268c2dc2151",
+          "license_files": [
+            "LICENSE",
+            "THIRD_PARTY_NOTICES.md",
+            "licenses/envX-APACHE-2.0.txt",
+            "licenses/ms-human-700-APACHE-2.0.txt"
+          ]
+        },
+        "stable_envs-0.1.0.tar.gz": {
+          "sha256": "854057c931f2e58d17ee1848aa4668e5c15796286e9bd3de35cd16c29094cc58",
+          "python_files": 187,
+          "all_python_bytes_match_live_source": true,
+          "latest_notices_bytes_match": true,
+          "notice_sha256": "c6fb0c922ad010b2b1ab089bc553fe6c367a00c8ff89ff385c8e6268c2dc2151",
+          "license_files": [
+            "LICENSE",
+            "THIRD_PARTY_NOTICES.md",
+            "licenses/envX-APACHE-2.0.txt",
+            "licenses/ms-human-700-APACHE-2.0.txt"
+          ]
+        }
+      },
+      "python_files_per_archive": 187,
+      "source_hashes_match_workspace_at_bundle_creation": true,
+      "evidence": [
+        "reports/packaging/audit-bytes.json",
+        "logs/packaging/build.log",
+        "logs/packaging/audit-bytes.log"
+      ]
+    },
+    "original_distribution_audit": {
+      "status": "failed",
+      "known_failure_id": "distribution_license_metadata",
+      "evidence": [
+        "logs/packaging/audit-existing.log"
+      ]
+    },
+    "in_memory_allowance_diagnostic": {
+      "status": "other_existing_checks_passed",
+      "original_audit_is_still_failed": true,
+      "summary": "Diagnostic expands the expected license set in memory only. It is not a clean pass of the unchanged original audit.",
+      "evidence": [
+        "reports/packaging/audit-existing-diagnostic.json"
+      ]
+    },
+    "installed_wheel_smoke": {
+      "status": "passed",
+      "cases": [
+        {
+          "environment": "DMCCartpoleBalance",
+          "requested_backend": "native",
+          "resolved_backend": "native",
+          "reset_state_restore_step_render": true,
+          "pixels": [
+            2,
+            32,
+            32,
+            3
+          ],
+          "reward_shape": [
+            2
+          ]
+        },
+        {
+          "environment": "DMCReacher",
+          "requested_backend": "native",
+          "resolved_backend": "native",
+          "reset_state_restore_step_render": true,
+          "pixels": [
+            2,
+            32,
+            32,
+            3
+          ],
+          "reward_shape": [
+            2
+          ]
+        },
+        {
+          "environment": "DMCReacher",
+          "requested_backend": "auto",
+          "resolved_backend": "native",
+          "reset_state_restore_step_render": true,
+          "pixels": [
+            2,
+            32,
+            32,
+            3
+          ],
+          "reward_shape": [
+            2
+          ]
+        }
+      ],
+      "warp_installed": false,
+      "mujoco_warp_installed": false,
+      "dmc_backend_import_attempts": [],
+      "runtime_wp_mjw_remain_none": true,
+      "all_imports_from_isolated_wheel": true,
+      "existing_mshuman_optional_import_attempts": 2,
+      "summary": "Three installed-wheel native CPU reset/restore/step/render cases. Existing MS-Human registration attempted an unavailable optional import; the DMC backend did not load Warp. No installed-wheel CUDA claim.",
+      "evidence": [
+        "reports/packaging/smoke-native.json",
+        "logs/packaging/smoke-native.log"
+      ]
+    },
+    "report": "reports/packaging/result.json"
+  },
+  "known_baseline_failures": [
+    {
+      "id": "navigation_base_attribute_shadowing",
+      "nodeid": "tests/regression/test_declarations.py::test_no_env_shadows_an_attribute_the_base_class_owns",
+      "detail": "envs/navigation/envs.py shadows base attributes '_seed' and 'rng'.",
+      "baseline_evidence": "Navigation, base Env and declaration-test files are byte-identical to the base revision.",
+      "evidence": [
+        "logs/local/dmc-mjwarp-core-final.log",
+        "reports/baseline-source-check.json"
+      ]
+    },
+    {
+      "id": "ball_in_cup_inert_gravity",
+      "nodeid": "tests/gpu/test_conformance.py::test_variations_all_do_something[DMCBallInCupCatch]",
+      "detail": "Declared variation 'gravity.z' was reported as changing nothing.",
+      "evidence": [
+        "logs/remote/dmc-existing-contracts.log",
+        "logs/remote/dmc-existing-baseline-failures.log"
+      ]
+    },
+    {
+      "id": "quadruped_reference_history_pixels",
+      "nodeid": "tests/gpu/test_conformance.py::test_state_is_sufficient[DMCQuadrupedWalk]",
+      "detail": "Official renderer history dependence: maximum 1/255 difference on up to 9 pixels per frame; allowed pixel count 2. Baseline assertion: 1 <= 1 and 9 <= 2.",
+      "evidence": [
+        "logs/remote/dmc-existing-contracts.log",
+        "logs/remote/dmc-existing-baseline-failures.log"
+      ]
+    },
+    {
+      "id": "distribution_license_metadata",
+      "check": "scripts/ci/audit_dist.py::_audit_metadata",
+      "detail": "Original audit requires exactly 3 license files; existing MS-Human adds licenses/ms-human-700-APACHE-2.0.txt as a fourth. The original audit failed.",
+      "baseline_evidence": "audit_dist.py, pyproject.toml and the MS-Human license are byte-identical to the base revision.",
+      "evidence": [
+        "logs/packaging/audit-existing.log",
+        "reports/packaging/audit-existing-diagnostic.json",
+        "reports/baseline-source-check.json"
+      ]
+    }
+  ],
+  "historical_numerical_run": {
+    "scope": "historical_v3_before_contact_corrections_and_scope_reduction",
+    "environment_count": 17,
+    "includes_reacher": true,
+    "counts": {
+      "passed": 144,
+      "failed": 9,
+      "skipped": 0,
+      "deselected": 0
+    },
+    "exit_status": 1,
+    "status": "failed_and_deferred",
+    "summary": "Derived from the preserved deferred-fidelity report, not a new run. Its 9 failures and old caps do not establish numerical acceptance of the corrected 16-class implementation.",
+    "evidence": [
+      "reports/deferred-fidelity.json"
+    ]
+  },
+  "current_integration_source_binding": {
+    "candidate_files": {
+      "entries": 187,
+      "matches_workspace_at_bundle_creation": true
+    },
+    "recipe_files": {
+      "entries": 84,
+      "matches_workspace_at_bundle_creation": true
+    }
+  },
+  "archive": {
+    "path": "validation-logs.zip",
+    "bytes": 61292,
+    "sha256": "236e06301aced1aa813622e7be20e873acadd66b399ff8b29b68884fd79b4a44",
+    "members": 24,
+    "uncompressed_bytes": 419486
+  },
+  "evidence": [
+    {
+      "zip_member": "logs/local/dmc-mjwarp-core-final.log",
+      "bytes": 10068,
+      "sha256": "4a7ca14d5c047088da02027b3545cf5e1dd7299de89bec60fd8ab4d25f97b450"
+    },
+    {
+      "zip_member": "logs/local/dmc-mjwarp-docs-final.log",
+      "bytes": 768,
+      "sha256": "d8efd7f0278f72b05004e426b5902203c787f1686a1bb37f844a136e4a3f9b0d"
+    },
+    {
+      "zip_member": "logs/local/dmc-mjwarp-precommit-final.log",
+      "bytes": 1200,
+      "sha256": "7f163c75f2432ffdd0ae2d6b82c9d834cd4f49f419f51e959a01673283203fe7"
+    },
+    {
+      "zip_member": "logs/local/dmc-mjwarp-typing-final.log",
+      "bytes": 43,
+      "sha256": "46984ca20bf69f7b14ec1fd9bd82101d56a4e109e68f016fd2a04f22481b09b3"
+    },
+    {
+      "zip_member": "logs/packaging/audit-bytes.log",
+      "bytes": 1079,
+      "sha256": "b1e6041cf2d2deccd8939677c4ae95a5d7797fd1eb828b89ff6864c0dd01926c"
+    },
+    {
+      "zip_member": "logs/packaging/audit-existing.log",
+      "bytes": 734,
+      "sha256": "0411dc924904b806a539629a528b310b5d1dfdf05bb335f4fc582e99045dd522"
+    },
+    {
+      "zip_member": "logs/packaging/build.log",
+      "bytes": 76075,
+      "sha256": "c75d26e042ae4461f76db1a3dde9b17d54bc1eb4bf3cf7f2ef3148d8d71fcf18"
+    },
+    {
+      "zip_member": "logs/packaging/install.log",
+      "bytes": 31044,
+      "sha256": "e143f8748a1ee66457a27e86c77a32759d1b787c330afeb993c6984f53f046e5"
+    },
+    {
+      "zip_member": "logs/packaging/smoke-native.log",
+      "bytes": 3311,
+      "sha256": "6f81bc2d46eabc8f51580ee4335691386ce8d566547fdda20451afac7b17997b"
+    },
+    {
+      "zip_member": "logs/packaging/venv.log",
+      "bytes": 246,
+      "sha256": "3c830581067bab0c917d2d31c81fddf17ec196d561807838f4662364cd47b5c8"
+    },
+    {
+      "zip_member": "logs/remote/dmc-existing-baseline-failures.log",
+      "bytes": 7738,
+      "sha256": "175cb49923830137c2434318f1d1417d7a9349241dad0f87bf9a3dba6d04e7d2"
+    },
+    {
+      "zip_member": "logs/remote/dmc-existing-contracts.log",
+      "bytes": 77654,
+      "sha256": "4d8dd7fe2f38bc4ad1ad90062003cfc6fffced7d57e7dfb347c048d7e14e50b6"
+    },
+    {
+      "zip_member": "logs/remote/dmc-existing-state.log",
+      "bytes": 1707,
+      "sha256": "d5f5a537279327e1ea8cff18e8e9f89229b996802d25d11555aa77a7d1e8fa01"
+    },
+    {
+      "zip_member": "logs/remote/dmc-mjwarp-dmc-final.log",
+      "bytes": 65741,
+      "sha256": "434b144320fdc3cef6c0098696da942c85be626bdc57f636d99b78911b545b61"
+    },
+    {
+      "zip_member": "logs/remote/dmc-mjwarp-integration-16.log",
+      "bytes": 26739,
+      "sha256": "9b15b9c5a7c525fd2fba6820242f58e65be2645f62a198b54159318cb560835f"
+    },
+    {
+      "zip_member": "logs/remote/dmc-mjwarp-mjx-final.log",
+      "bytes": 1070,
+      "sha256": "ec835277a6bc937fad43a9738cb65b66a5bbde1b9bc121804c39f065faff305b"
+    },
+    {
+      "zip_member": "logs/remote/dmc-native-contacts-gpu.log",
+      "bytes": 1771,
+      "sha256": "04379a86a38d934463eeba60f12c4ab53364bcaea45efc42a61cff8865080254"
+    },
+    {
+      "zip_member": "reports/baseline-source-check.json",
+      "bytes": 997,
+      "sha256": "6750a375cdb200b7348b62fef80f06526b505fd3bca76166d9174ec9cae9e36f"
+    },
+    {
+      "zip_member": "reports/deferred-fidelity.json",
+      "bytes": 10838,
+      "sha256": "3865aba97f525d23ecac6c44b05aef4e23fc638662e7b1a038b5696cea34ef92"
+    },
+    {
+      "zip_member": "reports/integration-16.json",
+      "bytes": 67963,
+      "sha256": "a433ac48a0a66993105663c0662d85ccaae712895e8725a0fdc8e6d5d6dd6f3d"
+    },
+    {
+      "zip_member": "reports/packaging/audit-bytes.json",
+      "bytes": 22516,
+      "sha256": "aea81376cf82d42e2c5dc53a15429dea6094a7259f2ea6ab3aa4b5e9ebc655ee"
+    },
+    {
+      "zip_member": "reports/packaging/audit-existing-diagnostic.json",
+      "bytes": 415,
+      "sha256": "e69bb6b88da13590db8a90dad4ce572fc2ce00699ef6d138496b56f21815c39c"
+    },
+    {
+      "zip_member": "reports/packaging/result.json",
+      "bytes": 6458,
+      "sha256": "89d6f65c1314959e80608b87dc5ec98e1d7069d1b391e92f157afd9e60ee00d5"
+    },
+    {
+      "zip_member": "reports/packaging/smoke-native.json",
+      "bytes": 3311,
+      "sha256": "6f81bc2d46eabc8f51580ee4335691386ce8d566547fdda20451afac7b17997b"
+    }
+  ]
+}

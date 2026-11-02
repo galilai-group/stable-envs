@@ -16,6 +16,17 @@ The Apache license is included in `licenses/envX-APACHE-2.0.txt` and distributed
 `stable_envs/envs/dmcontrol/simulation/reacher_mjx.py` adapts `src/envx/reacher/env.py`
 from the envX commit above under Apache-2.0.
 
+## DeepMind Control Suite and MuJoCo
+
+`stable_envs/envs/dmcontrol/simulation/mjwarp_tasks.py` adapts task observations and reward rules
+from the [DeepMind Control Suite](https://github.com/google-deepmind/dm_control/tree/main/dm_control/suite)
+(Copyright 2017 The dm_control Authors, Apache-2.0) to batched Torch arrays.
+The contact compatibility routines in `simulation/mjwarp_runtime.py` adapt the primitive collision
+and frame construction rules of [MuJoCo 3.12.0](https://github.com/google-deepmind/mujoco/tree/3.12.0/src/engine)
+(Copyright 2021 DeepMind Technologies Limited, Apache-2.0) to runtime-local Warp kernels.
+The Apache-2.0 license text is distributed in `licenses/envX-APACHE-2.0.txt`; the copyright notices
+above apply to these adaptations.
+
 ## envX PushT
 
 `stable_envs/envs/pusht/simulation/jax_physics.py` adapts

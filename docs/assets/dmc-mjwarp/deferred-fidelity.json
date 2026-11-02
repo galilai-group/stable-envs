@@ -1,0 +1,252 @@
+{
+  "acceptance": {
+    "current_integration_smoke": {
+      "cuda_environment_cases_passed": 16,
+      "deselected": 0,
+      "exit_status": 0,
+      "other_focused_cases_include_cpu_and_cuda": true,
+      "other_focused_cases_passed": 37,
+      "passed": 53,
+      "report": "integration-16.json",
+      "runner": "CUDA integration runner",
+      "skipped": 0
+    },
+    "fully_accepted": false,
+    "historical_v3": {
+      "deselected": 0,
+      "environment_count": 17,
+      "exit_status": 1,
+      "failed": 9,
+      "failed_nodeids": [
+        "tests/gpu/test_dmc_mjwarp.py::test_held_out_independent_source_and_reset_boundaries[DMCFingerSpin]",
+        "tests/gpu/test_dmc_mjwarp.py::test_held_out_independent_source_and_reset_boundaries[DMCHumanoidWalk]",
+        "tests/gpu/test_dmc_mjwarp.py::test_held_out_independent_source_and_reset_boundaries[DMCPointMassEasy]",
+        "tests/gpu/test_dmc_mjwarp.py::test_held_out_resume_and_fault_detection[DMCCheetahRun]",
+        "tests/gpu/test_dmc_mjwarp.py::test_held_out_resume_and_fault_detection[DMCHopperHop]",
+        "tests/gpu/test_dmc_mjwarp.py::test_held_out_resume_and_fault_detection[DMCManipulatorBringBall]",
+        "tests/gpu/test_dmc_mjwarp.py::test_held_out_resume_and_fault_detection[DMCPointMassEasy]",
+        "tests/gpu/test_dmc_mjwarp.py::test_contact_and_constraint_faults_are_detected[DMCHopperHop-contact]",
+        "tests/gpu/test_dmc_mjwarp.py::test_contact_and_constraint_faults_are_detected[DMCHopperHop-constraint]"
+      ],
+      "includes_reacher": true,
+      "passed": 144,
+      "predates_contact_corrections": true,
+      "skipped": 0
+    },
+    "limitation": "Historical v3 included Reacher and predates the two contact corrections. Its caps cannot establish numerical acceptance of the corrected 16-environment implementation.",
+    "new_calibrated_numerical_acceptance_completed": false
+  },
+  "corrected_contact_causes": [
+    {
+      "causal_evidence": "Changing only the native contact frame reproduced the Warp impulse; prototype correction reduced contact-case qpos error from approximately 0.2638 to 4.89e-6 on CPU.",
+      "cause": "MuJoCo Warp 3.12 tested the tangent norm after projection; native MuJoCo tests the full capsule axis before projection. This rotated a pyramidal-friction frame by 131.64 degrees for the failing foot contact.",
+      "environment": "DMCHumanoidWalk",
+      "id": "plane_capsule_tangent_frame",
+      "status": "implementation_corrected; focused contact regressions pass; full numerical acceptance not rerun",
+      "verification": {
+        "contact_test_cases_passed": 22,
+        "devices": [
+          "cpu",
+          "cuda"
+        ],
+        "report": "integration-16.json",
+        "test_file": "tests/unit/test_dmc_mjwarp_contacts.py"
+      }
+    },
+    {
+      "calibration_outliers": [
+        {
+          "component": 5,
+          "field": "qvel",
+          "horizon": 1,
+          "lane": 2,
+          "measured_error": 18.894719,
+          "seed": 13
+        },
+        {
+          "component": 5,
+          "field": "qpos",
+          "horizon": 8,
+          "lane": 0,
+          "measured_error": 2.348531,
+          "seed": 15
+        }
+      ],
+      "causal_evidence": "Both use initial RNG seed 15. Native normal/frame-only replacement reproduces Warp first microstep within 4.07e-8 qpos and 4.68e-6 qvel. F64 closest-point evaluation from device transforms finds separation 1.04e-17 and the native cross-axis normal. Source and variation reset states matched.",
+      "cause": "Intersecting nose/calf capsule axes should use native cross-axis fallback normal. Float32 nearest-point cancellation produced a false separation and an in-plane normal instead.",
+      "environment": "DMCHopperHop",
+      "id": "intersecting_capsule_normal",
+      "status": "implementation_corrected; focused contact regressions pass; full numerical acceptance not rerun",
+      "verification": {
+        "contact_test_cases_passed": 22,
+        "devices": [
+          "cpu",
+          "cuda"
+        ],
+        "report": "integration-16.json",
+        "test_file": "tests/unit/test_dmc_mjwarp_contacts.py"
+      }
+    }
+  ],
+  "current_scope": {
+    "environment_count": 16,
+    "excluded_from_new_integration": [
+      "DMCReacher"
+    ],
+    "existing_reacher_backends": [
+      "native",
+      "mjx"
+    ]
+  },
+  "deferred_followup": [
+    "Preserve failed v2/v3 records. Recalibrate corrected contact physics before claiming full numerical acceptance; old broad source caps were polluted by actual defects.",
+    "Investigate FingerSpin contact warmstart and Cheetah/Manipulator bounded CUDA replay only in the focused follow-up. Do not claim bit-exact future dynamics.",
+    "Consider source-owned graded-reward/contact-diversity coverage and repeated replay sampling in a separately reviewed future protocol. No extra V4 protocol is merged.",
+    "Keep meaningful physical fault rejection independent at H1 and H8. Do not relax caps manually, substitute H1 rejection for H8, or select replacement cases solely to pass."
+  ],
+  "provenance": {
+    "counts_and_failed_nodeids_verified_against_historical_acceptance": true,
+    "derived_from": {
+      "bytes": 11593,
+      "input_filename": "dmc-mjwarp-deferred.json",
+      "sha256": "b73151343382dba5dc442904059afab7a408d2a68820a0913a4ecb21b56cc838"
+    },
+    "failure_magnitudes_source": "Preserved deferred report transcribed from historical assertion output; aggregate acceptance JSON records statuses and node IDs but does not contain the assertion magnitudes.",
+    "historical_sources": {
+      "acceptance.json": {
+        "bytes": 155337,
+        "included_in_this_compact_package": false,
+        "sha256": "90cc60b9525109fd5f0550504d5be26558d8d65503a7610c96f3f4b6b938b4ab"
+      },
+      "calibration.json": {
+        "bytes": 1245129,
+        "included_in_this_compact_package": false,
+        "sha256": "557a9f05bd702c51efd2b2369e2b61f00b9a19e2ec06560e1286a205b74e7d9d"
+      }
+    },
+    "reproduction_requirement": "Historical assertions require the implementation and dependencies recorded by the v3 evidence. Corrected 16-environment code has a different scope and must not be treated as that historical run."
+  },
+  "record_date": "2026-11-01",
+  "remaining_or_historical_failures": [
+    {
+      "absolute_error": 0.366926874,
+      "environment": "DMCFingerSpin",
+      "field": "state/warmstart",
+      "frozen_cap": 0.183443631,
+      "horizon": 8,
+      "kind": "native_source",
+      "mode": "contact",
+      "note": "Native CPU trace gave only about 0.05925 at this step; CUDA-sized miss remains unresolved.",
+      "public_step": 6,
+      "record_scope": "historical_v3",
+      "seed": 10014,
+      "status": "deferred"
+    },
+    {
+      "absolute_error": 0.263801877,
+      "cause_id": "plane_capsule_tangent_frame",
+      "environment": "DMCHumanoidWalk",
+      "field": "info/qpos",
+      "frozen_cap": 0.192568065,
+      "horizon": 1,
+      "kind": "native_source",
+      "mode": "contact",
+      "public_step": 1,
+      "record_scope": "historical_v3",
+      "seed": 10011,
+      "status": "contact_cause_corrected; full numerical acceptance not rerun"
+    },
+    {
+      "absolute_error": 1.30831672e-07,
+      "environment": "DMCPointMassEasy",
+      "field": "reward",
+      "frozen_cap": 1.19595629e-07,
+      "horizon": 8,
+      "kind": "native_source",
+      "mode": "source",
+      "note": "Calibration maximum reference reward was approximately 0.0001059279; known validation lane reached approximately 0.26\u20130.38. CPU Warp reproduced the error. Near-target graded-reward coverage is missing; no manual cap increase was applied.",
+      "public_step": 2,
+      "record_scope": "historical_v3",
+      "seed": 10010,
+      "status": "deferred_reference_coverage"
+    },
+    {
+      "absolute_error": 3.48091125e-05,
+      "environment": "DMCCheetahRun",
+      "field": "info/qvel",
+      "frozen_cap": 2.96565399e-05,
+      "horizon": 8,
+      "kind": "cuda_replay",
+      "mode": "replay",
+      "note": "Follow-up full engine-buffer repeat experiments still drifted; omitting public State fields is not established as the cause.",
+      "public_step": 7,
+      "record_scope": "historical_v3",
+      "seed": 10016,
+      "status": "deferred"
+    },
+    {
+      "absolute_error": 0.95703125,
+      "environment": "DMCManipulatorBringBall",
+      "field": "state/warmstart",
+      "frozen_cap": 0.427966804,
+      "horizon": 8,
+      "kind": "cuda_replay",
+      "mode": "replay",
+      "note": "Follow-up full engine-buffer repeat experiments still drifted. GPU execution nondeterminism remains a candidate explanation; no specific mechanism, exact future replay guarantee, or new acceptance cap is established.",
+      "public_step": 8,
+      "record_scope": "historical_v3",
+      "seed": 10010,
+      "status": "deferred"
+    },
+    {
+      "environment": "DMCHopperHop",
+      "fault": "missing_repeat",
+      "horizon": 8,
+      "kind": "fault_sensitivity",
+      "note": "The real fault was not rejected by the old pooled H8 envelope. H1 rejection did not satisfy H8. Hopper capsule-normal defect polluted those bounds; recalibration of corrected physics is required.",
+      "record_scope": "historical_v3",
+      "seed": 10010,
+      "status": "historical_gate_failed"
+    },
+    {
+      "environment": "DMCHopperHop",
+      "fault": "disabled_contact",
+      "horizon": 8,
+      "kind": "fault_sensitivity",
+      "note": "Same old-envelope sensitivity failure; do not weaken the per-horizon fault requirement.",
+      "record_scope": "historical_v3",
+      "seed": 10010,
+      "status": "historical_gate_failed"
+    },
+    {
+      "environment": "DMCHopperHop",
+      "fault": "disabled_constraints",
+      "horizon": 8,
+      "kind": "fault_sensitivity",
+      "note": "Same old-envelope sensitivity failure; do not replace it with artificial reward corruption.",
+      "record_scope": "historical_v3",
+      "seed": 10010,
+      "status": "historical_gate_failed"
+    },
+    {
+      "environment": "DMCPointMassEasy",
+      "field": "reward",
+      "horizon": 8,
+      "kind": "fault_baseline",
+      "note": "The correct source-vs-GPU baseline hit the reward-coverage miss before injected faults were evaluated; this is not evidence that a physics fault escaped detection.",
+      "record_scope": "historical_v3",
+      "seed": 10010,
+      "status": "baseline_failed_before_fault_detection"
+    }
+  ],
+  "schema": "stable-envs-dmc-mjwarp-deferred-fidelity/v1",
+  "unapplied_proposals": {
+    "merged": false,
+    "proposals": [
+      "source-owned PointMass target-reward fixture",
+      "source-owned Finger contact-diversity fixture",
+      "additional replay sampling and coverage"
+    ],
+    "status": "No V4 protocol, GPU-calibrated V4 caps, or V4 acceptance claim is included."
+  }
+}

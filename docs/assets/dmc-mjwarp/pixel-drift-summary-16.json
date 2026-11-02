@@ -1,0 +1,2266 @@
+{
+  "all_live_states_unchanged": true,
+  "batch": 3,
+  "by_environment_and_horizon": [
+    {
+      "env": "DMCAcrobotBalance",
+      "frames": 30,
+      "horizon": 1,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 9.44822373393802e-05,
+          "mean": 4.72411186696901e-06,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 2.598261526832942e-05,
+            "0.99": 8.078231292517011e-05
+          },
+          "sd": 1.8698573455275127e-05,
+          "worst_index": 15
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0001417233560090703,
+          "mean": 9.44822373393802e-06,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 7.794784580498827e-05,
+            "0.99": 0.0001417233560090703
+          },
+          "sd": 3.5352016125982056e-05,
+          "worst_index": 15
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 1.0,
+          "mean": 0.06666666666666667,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.5499999999999972,
+            "0.99": 1.0
+          },
+          "sd": 0.24944382578492943,
+          "worst_index": 15
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 1.4530140305940822e-09,
+          "mean": 7.26507015297041e-11,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 3.9957885841337057e-10,
+            "0.99": 1.242326996157941e-09
+          },
+          "sd": 2.8755976094233186e-10,
+          "worst_index": 15
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 0,
+        "normalized_mse": 1.4530140305940822e-09,
+        "seed": 10015
+      }
+    },
+    {
+      "env": "DMCAcrobotBalance",
+      "frames": 30,
+      "horizon": 8,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0001889644746787604,
+          "mean": 2.6769967246157725e-05,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.0001417233560090703,
+            "0.99": 0.0001752645502645503
+          },
+          "sd": 5.27231955240086e-05,
+          "worst_index": 1
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0002834467120181406,
+          "mean": 4.72411186696901e-05,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.0002834467120181406,
+            "0.99": 0.0002834467120181406
+          },
+          "sd": 9.208989365843694e-05,
+          "worst_index": 0
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 1.0,
+          "mean": 0.23333333333333334,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 1.0,
+            "0.99": 1.0
+          },
+          "sd": 0.4229525846816506,
+          "worst_index": 0
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 2.9060280611881645e-09,
+          "mean": 4.1168730866832334e-10,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 2.1795210458911233e-09,
+            "0.99": 2.695341026752023e-09
+          },
+          "sd": 8.108142333565334e-10,
+          "worst_index": 1
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 1,
+        "normalized_mse": 2.9060280611881645e-09,
+        "seed": 10010
+      }
+    },
+    {
+      "env": "DMCBallInCupCatch",
+      "frames": 30,
+      "horizon": 1,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0005196523053665911,
+          "mean": 0.0001118039808515999,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.0003779289493575208,
+            "0.99": 0.0004785525321239608
+          },
+          "sd": 0.00014963002377707573,
+          "worst_index": 2
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0007086167800453515,
+          "mean": 0.00013227513227513228,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.0005668934240362812,
+            "0.99": 0.0006675170068027212
+          },
+          "sd": 0.0001934003164253469,
+          "worst_index": 2
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 18.0,
+          "mean": 1.5666666666666667,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 7.199999999999989,
+            "0.99": 15.390000000000008
+          },
+          "sd": 3.621080256252576,
+          "worst_index": 28
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 7.083443399146151e-07,
+          "mean": 3.4702818430688664e-08,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 1.2459595312344222e-07,
+            "0.99": 5.551748658795404e-07
+          },
+          "sd": 1.2968379953705658e-07,
+          "worst_index": 28
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 1,
+        "normalized_mse": 7.083443399146151e-07,
+        "seed": 10019
+      }
+    },
+    {
+      "env": "DMCBallInCupCatch",
+      "frames": 30,
+      "horizon": 8,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0008030990173847317,
+          "mean": 0.00038737717309145876,
+          "quantiles": {
+            "0.5": 0.00033068783068783067,
+            "0.95": 0.0007086167800453515,
+            "0.99": 0.0007756991685563115
+          },
+          "sd": 0.00019416808568655013,
+          "worst_index": 12
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0017006802721088435,
+          "mean": 0.0008219954648526075,
+          "quantiles": {
+            "0.5": 0.0008503401360544217,
+            "0.95": 0.0015589569160997733,
+            "0.99": 0.0016595804988662132
+          },
+          "sd": 0.0004381979828157683,
+          "worst_index": 4
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 47.0,
+          "mean": 4.666666666666667,
+          "quantiles": {
+            "0.5": 2.0,
+            "0.95": 20.649999999999935,
+            "0.99": 42.360000000000014
+          },
+          "sd": 9.554521907918202,
+          "worst_index": 25
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 2.245633184283154e-06,
+          "mean": 1.1674967735823451e-07,
+          "quantiles": {
+            "0.5": 9.081337691213013e-09,
+            "0.95": 5.134225077104167e-07,
+            "0.99": 1.8470133151299746e-06
+          },
+          "sd": 4.2446040610763043e-07,
+          "worst_index": 25
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 1,
+        "normalized_mse": 2.245633184283154e-06,
+        "seed": 10018
+      }
+    },
+    {
+      "env": "DMCCartpoleBalance",
+      "frames": 30,
+      "horizon": 1,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "0.99": 0.0
+          },
+          "sd": 0.0,
+          "worst_index": 0
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "0.99": 0.0
+          },
+          "sd": 0.0,
+          "worst_index": 0
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "0.99": 0.0
+          },
+          "sd": 0.0,
+          "worst_index": 0
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "0.99": 0.0
+          },
+          "sd": 0.0,
+          "worst_index": 0
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 0,
+        "normalized_mse": 0.0,
+        "seed": 10010
+      }
+    },
+    {
+      "env": "DMCCartpoleBalance",
+      "frames": 30,
+      "horizon": 8,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "0.99": 0.0
+          },
+          "sd": 0.0,
+          "worst_index": 0
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "0.99": 0.0
+          },
+          "sd": 0.0,
+          "worst_index": 0
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "0.99": 0.0
+          },
+          "sd": 0.0,
+          "worst_index": 0
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "0.99": 0.0
+          },
+          "sd": 0.0,
+          "worst_index": 0
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 0,
+        "normalized_mse": 0.0,
+        "seed": 10010
+      }
+    },
+    {
+      "env": "DMCCartpoleSwingup",
+      "frames": 30,
+      "horizon": 1,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "0.99": 0.0
+          },
+          "sd": 0.0,
+          "worst_index": 0
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "0.99": 0.0
+          },
+          "sd": 0.0,
+          "worst_index": 0
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "0.99": 0.0
+          },
+          "sd": 0.0,
+          "worst_index": 0
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.0,
+            "0.99": 0.0
+          },
+          "sd": 0.0,
+          "worst_index": 0
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 0,
+        "normalized_mse": 0.0,
+        "seed": 10010
+      }
+    },
+    {
+      "env": "DMCCartpoleSwingup",
+      "frames": 30,
+      "horizon": 8,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 4.72411186696901e-05,
+          "mean": 3.149407911312673e-06,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 2.598261526832942e-05,
+            "0.99": 4.72411186696901e-05
+          },
+          "sd": 1.1784005375327354e-05,
+          "worst_index": 4
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0001417233560090703,
+          "mean": 9.44822373393802e-06,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 7.794784580498827e-05,
+            "0.99": 0.0001417233560090703
+          },
+          "sd": 3.5352016125982056e-05,
+          "worst_index": 4
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 1.0,
+          "mean": 0.06666666666666667,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.5499999999999972,
+            "0.99": 1.0
+          },
+          "sd": 0.24944382578492943,
+          "worst_index": 4
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 7.265070152970411e-10,
+          "mean": 4.843380101980274e-11,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 3.9957885841337057e-10,
+            "0.99": 7.265070152970411e-10
+          },
+          "sd": 1.8122268935528417e-10,
+          "worst_index": 4
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 1,
+        "normalized_mse": 7.265070152970411e-10,
+        "seed": 10011
+      }
+    },
+    {
+      "env": "DMCCheetahRun",
+      "frames": 30,
+      "horizon": 1,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0003779289493575208,
+          "mean": 0.00012597631645250691,
+          "quantiles": {
+            "0.5": 9.44822373393802e-05,
+            "0.95": 0.00030942932728647,
+            "0.99": 0.0003642290249433107
+          },
+          "sd": 0.00010656918818146027,
+          "worst_index": 12
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0008503401360544217,
+          "mean": 0.00033541194255479976,
+          "quantiles": {
+            "0.5": 0.0002834467120181406,
+            "0.95": 0.0007865646258503397,
+            "0.99": 0.0008503401360544217
+          },
+          "sd": 0.0002676116598312272,
+          "worst_index": 12
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 14.0,
+          "mean": 1.2,
+          "quantiles": {
+            "0.5": 1.0,
+            "0.95": 1.0,
+            "0.99": 10.230000000000011
+          },
+          "sd": 2.4138489320308896,
+          "worst_index": 12
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 2.4483286415510287e-07,
+          "mean": 9.904712308549664e-09,
+          "quantiles": {
+            "0.5": 1.4530140305940822e-09,
+            "0.95": 4.758620950195617e-09,
+            "0.99": 1.7530614279117624e-07
+          },
+          "sd": 4.364990681578686e-08,
+          "worst_index": 12
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 0,
+        "normalized_mse": 2.4483286415510287e-07,
+        "seed": 10014
+      }
+    },
+    {
+      "env": "DMCCheetahRun",
+      "frames": 30,
+      "horizon": 8,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0006141345427059713,
+          "mean": 0.00025352733686067014,
+          "quantiles": {
+            "0.5": 0.0002362055933484505,
+            "0.95": 0.0005243764172335599,
+            "0.99": 0.0006004346182917613
+          },
+          "sd": 0.00014712320092745516,
+          "worst_index": 13
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0015589569160997733,
+          "mean": 0.0006519274376417234,
+          "quantiles": {
+            "0.5": 0.0006377551020408164,
+            "0.95": 0.001353458049886621,
+            "0.99": 0.001517857142857143
+          },
+          "sd": 0.00038483393526863755,
+          "worst_index": 13
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 104.0,
+          "mean": 4.6,
+          "quantiles": {
+            "0.5": 1.0,
+            "0.95": 3.0999999999999943,
+            "0.99": 75.00000000000009
+          },
+          "sd": 18.467268341582084,
+          "worst_index": 16
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 9.555020265186685e-06,
+          "mean": 3.230292359015744e-07,
+          "quantiles": {
+            "0.5": 3.9957885841337265e-09,
+            "0.95": 1.8199000733190855e-08,
+            "0.99": 6.790384999315639e-06
+          },
+          "sd": 1.714342710441111e-06,
+          "worst_index": 16
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 1,
+        "normalized_mse": 9.555020265186685e-06,
+        "seed": 10015
+      }
+    },
+    {
+      "env": "DMCFingerSpin",
+      "frames": 30,
+      "horizon": 1,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0002362055933484505,
+          "mean": 1.5747039556563368e-05,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 9.44822373393802e-05,
+            "0.99": 0.00019510582010582022
+          },
+          "sd": 4.776313582798912e-05,
+          "worst_index": 18
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.00042517006802721087,
+          "mean": 3.779289493575208e-05,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.0002834467120181406,
+            "0.99": 0.0003840702947845806
+          },
+          "sd": 0.00010306795270819834,
+          "worst_index": 18
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 1.0,
+          "mean": 0.13333333333333333,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 1.0,
+            "0.99": 1.0
+          },
+          "sd": 0.33993463423951903,
+          "worst_index": 3
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 3.6325350764852057e-09,
+          "mean": 2.421690050990137e-10,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 1.4530140305940822e-09,
+            "0.99": 3.000473973176782e-09
+          },
+          "sd": 7.345349608302826e-10,
+          "worst_index": 18
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 0,
+        "normalized_mse": 3.6325350764852057e-09,
+        "seed": 10016
+      }
+    },
+    {
+      "env": "DMCFingerSpin",
+      "frames": 30,
+      "horizon": 8,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.00033068783068783067,
+          "mean": 4.72411186696901e-05,
+          "quantiles": {
+            "0.5": 2.362055933484505e-05,
+            "0.95": 0.0001889644746787604,
+            "0.99": 0.0002895880574452004
+          },
+          "sd": 7.318562634556719e-05,
+          "worst_index": 5
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0005668934240362812,
+          "mean": 0.00011337868480725624,
+          "quantiles": {
+            "0.5": 7.086167800453515e-05,
+            "0.95": 0.00036139455782312885,
+            "0.99": 0.0005257936507936509
+          },
+          "sd": 0.00014360056834439403,
+          "worst_index": 22
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 1.0,
+          "mean": 0.5,
+          "quantiles": {
+            "0.5": 0.5,
+            "0.95": 1.0,
+            "0.99": 1.0
+          },
+          "sd": 0.5,
+          "worst_index": 1
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 5.085549107079288e-09,
+          "mean": 7.265070152970411e-10,
+          "quantiles": {
+            "0.5": 3.6325350764852056e-10,
+            "0.95": 2.9060280611881645e-09,
+            "0.99": 4.453488003770864e-09
+          },
+          "sd": 1.125499828459319e-09,
+          "worst_index": 5
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 2,
+        "normalized_mse": 5.085549107079288e-09,
+        "seed": 10011
+      }
+    },
+    {
+      "env": "DMCFingerTurnEasy",
+      "frames": 30,
+      "horizon": 1,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 9.44822373393802e-05,
+          "mean": 2.362055933484505e-05,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 7.322373393801952e-05,
+            "0.99": 9.44822373393802e-05
+          },
+          "sd": 2.9248827823454763e-05,
+          "worst_index": 1
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0002834467120181406,
+          "mean": 7.086167800453514e-05,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.00021967120181405858,
+            "0.99": 0.0002834467120181406
+          },
+          "sd": 8.77464834703643e-05,
+          "worst_index": 1
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 1.0,
+          "mean": 0.43333333333333335,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 1.0,
+            "0.99": 1.0
+          },
+          "sd": 0.4955356249106168,
+          "worst_index": 0
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 1.4530140305940822e-09,
+          "mean": 3.632535076485206e-10,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 1.1260858737104117e-09,
+            "0.99": 1.4530140305940822e-09
+          },
+          "sd": 4.49808963067355e-10,
+          "worst_index": 1
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 1,
+        "normalized_mse": 1.4530140305940822e-09,
+        "seed": 10010
+      }
+    },
+    {
+      "env": "DMCFingerTurnEasy",
+      "frames": 30,
+      "horizon": 8,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.00033068783068783067,
+          "mean": 6.771227009322246e-05,
+          "quantiles": {
+            "0.5": 4.72411186696901e-05,
+            "0.95": 0.00021494708994708982,
+            "0.99": 0.0003032879818594105
+          },
+          "sd": 8.153561014109106e-05,
+          "worst_index": 4
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0007086167800453515,
+          "mean": 0.0001842403628117914,
+          "quantiles": {
+            "0.5": 0.0001417233560090703,
+            "0.95": 0.0005668934240362812,
+            "0.99": 0.0006675170068027212
+          },
+          "sd": 0.0002009275351297878,
+          "worst_index": 4
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 1.0,
+          "mean": 0.6333333333333333,
+          "quantiles": {
+            "0.5": 1.0,
+            "0.95": 1.0,
+            "0.99": 1.0
+          },
+          "sd": 0.4818944098266986,
+          "worst_index": 0
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 5.085549107079288e-09,
+          "mean": 1.0413267219257588e-09,
+          "quantiles": {
+            "0.5": 7.265070152970411e-10,
+            "0.95": 3.305606919601535e-09,
+            "0.99": 4.664175038207005e-09
+          },
+          "sd": 1.2539117284289283e-09,
+          "worst_index": 4
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 1,
+        "normalized_mse": 5.085549107079288e-09,
+        "seed": 10011
+      }
+    },
+    {
+      "env": "DMCFingerTurnHard",
+      "frames": 30,
+      "horizon": 1,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 9.44822373393802e-05,
+          "mean": 2.362055933484505e-05,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 7.322373393801952e-05,
+            "0.99": 9.44822373393802e-05
+          },
+          "sd": 2.9248827823454763e-05,
+          "worst_index": 1
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0002834467120181406,
+          "mean": 7.086167800453514e-05,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.00021967120181405858,
+            "0.99": 0.0002834467120181406
+          },
+          "sd": 8.77464834703643e-05,
+          "worst_index": 1
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 1.0,
+          "mean": 0.43333333333333335,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 1.0,
+            "0.99": 1.0
+          },
+          "sd": 0.4955356249106168,
+          "worst_index": 0
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 1.4530140305940822e-09,
+          "mean": 3.632535076485206e-10,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 1.1260858737104117e-09,
+            "0.99": 1.4530140305940822e-09
+          },
+          "sd": 4.49808963067355e-10,
+          "worst_index": 1
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 1,
+        "normalized_mse": 1.4530140305940822e-09,
+        "seed": 10010
+      }
+    },
+    {
+      "env": "DMCFingerTurnHard",
+      "frames": 30,
+      "horizon": 8,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.00033068783068783067,
+          "mean": 6.771227009322246e-05,
+          "quantiles": {
+            "0.5": 4.72411186696901e-05,
+            "0.95": 0.00021494708994708982,
+            "0.99": 0.0003032879818594105
+          },
+          "sd": 8.153561014109106e-05,
+          "worst_index": 4
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0007086167800453515,
+          "mean": 0.0001842403628117914,
+          "quantiles": {
+            "0.5": 0.0001417233560090703,
+            "0.95": 0.0005668934240362812,
+            "0.99": 0.0006675170068027212
+          },
+          "sd": 0.0002009275351297878,
+          "worst_index": 4
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 1.0,
+          "mean": 0.6333333333333333,
+          "quantiles": {
+            "0.5": 1.0,
+            "0.95": 1.0,
+            "0.99": 1.0
+          },
+          "sd": 0.4818944098266986,
+          "worst_index": 0
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 5.085549107079288e-09,
+          "mean": 1.0413267219257588e-09,
+          "quantiles": {
+            "0.5": 7.265070152970411e-10,
+            "0.95": 3.305606919601535e-09,
+            "0.99": 4.664175038207005e-09
+          },
+          "sd": 1.2539117284289283e-09,
+          "worst_index": 4
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 1,
+        "normalized_mse": 5.085549107079288e-09,
+        "seed": 10011
+      }
+    },
+    {
+      "env": "DMCHopperHop",
+      "frames": 30,
+      "horizon": 1,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0003779289493575208,
+          "mean": 0.00016376921138825905,
+          "quantiles": {
+            "0.5": 0.00016534391534391533,
+            "0.95": 0.0003566704459561601,
+            "0.99": 0.0003779289493575208
+          },
+          "sd": 0.00011359718314985786,
+          "worst_index": 3
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0011337868480725624,
+          "mean": 0.0004440665154950869,
+          "quantiles": {
+            "0.5": 0.00042517006802721087,
+            "0.95": 0.0010062358276643982,
+            "0.99": 0.0011337868480725624
+          },
+          "sd": 0.0003226260596931949,
+          "worst_index": 3
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 78.0,
+          "mean": 3.4,
+          "quantiles": {
+            "0.5": 1.0,
+            "0.95": 1.0,
+            "0.99": 55.670000000000066
+          },
+          "sd": 13.857849761056007,
+          "worst_index": 1
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 5.2860650433012714e-06,
+          "mean": 1.7857542436001272e-07,
+          "quantiles": {
+            "0.5": 2.542774553539644e-09,
+            "0.95": 5.812056122376329e-09,
+            "0.99": 3.7547916770193964e-06
+          },
+          "sd": 9.484385593709214e-07,
+          "worst_index": 1
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 1,
+        "normalized_mse": 5.2860650433012714e-06,
+        "seed": 10010
+      }
+    },
+    {
+      "env": "DMCHopperHop",
+      "frames": 30,
+      "horizon": 8,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.000472411186696901,
+          "mean": 0.0002157344419249181,
+          "quantiles": {
+            "0.5": 0.0001889644746787604,
+            "0.95": 0.0004039115646258502,
+            "0.99": 0.0004587112622826909
+          },
+          "sd": 0.00011091327571768917,
+          "worst_index": 0
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0012755102040816326,
+          "mean": 0.0005621693121693122,
+          "quantiles": {
+            "0.5": 0.0005668934240362812,
+            "0.95": 0.0010700113378684802,
+            "0.99": 0.0012344104308390023
+          },
+          "sd": 0.00026761165983122726,
+          "worst_index": 21
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 35.0,
+          "mean": 2.1333333333333333,
+          "quantiles": {
+            "0.5": 1.0,
+            "0.95": 1.0,
+            "0.99": 25.14000000000003
+          },
+          "sd": 6.103186781419106,
+          "worst_index": 19
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 1.5104080848025485e-06,
+          "mean": 5.3495133226372126e-08,
+          "quantiles": {
+            "0.5": 2.9060280611881645e-09,
+            "0.95": 6.9381419960867405e-09,
+            "0.99": 1.0744966105541722e-06
+          },
+          "sd": 2.7054712104071596e-07,
+          "worst_index": 19
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 1,
+        "normalized_mse": 1.5104080848025485e-06,
+        "seed": 10016
+      }
+    },
+    {
+      "env": "DMCHumanoidWalk",
+      "frames": 30,
+      "horizon": 1,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0011810279667422525,
+          "mean": 0.0007054673721340387,
+          "quantiles": {
+            "0.5": 0.0006849962207105064,
+            "0.95": 0.0011125283446712017,
+            "0.99": 0.0011673280423280424
+          },
+          "sd": 0.00026130597773609904,
+          "worst_index": 24
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.002976190476190476,
+          "mean": 0.0016628873771730912,
+          "quantiles": {
+            "0.5": 0.0017006802721088435,
+            "0.95": 0.0026927437641723357,
+            "0.99": 0.0028939909297052155
+          },
+          "sd": 0.0006347912710597439,
+          "worst_index": 7
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 46.0,
+          "mean": 2.7333333333333334,
+          "quantiles": {
+            "0.5": 1.0,
+            "0.95": 2.549999999999997,
+            "0.99": 33.53000000000004
+          },
+          "sd": 8.04956865649058,
+          "worst_index": 20
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 2.4141828118320677e-06,
+          "mean": 9.158831772844698e-08,
+          "quantiles": {
+            "0.5": 1.0897605229455616e-08,
+            "0.95": 2.2340090720384004e-08,
+            "0.99": 1.7210224685371628e-06
+          },
+          "sd": 4.313195702269402e-07,
+          "worst_index": 20
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 2,
+        "normalized_mse": 2.4141828118320677e-06,
+        "seed": 10016
+      }
+    },
+    {
+      "env": "DMCHumanoidWalk",
+      "frames": 30,
+      "horizon": 8,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0016061980347694634,
+          "mean": 0.0006881456286218191,
+          "quantiles": {
+            "0.5": 0.0006377551020408164,
+            "0.95": 0.0010865457294028723,
+            "0.99": 0.0014554988662131524
+          },
+          "sd": 0.00026798204395343594,
+          "worst_index": 16
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.003401360544217687,
+          "mean": 0.0016959561602418747,
+          "quantiles": {
+            "0.5": 0.0017006802721088435,
+            "0.95": 0.0027990362811791364,
+            "0.99": 0.0033191609977324264
+          },
+          "sd": 0.0005744993975853985,
+          "worst_index": 16
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 127.0,
+          "mean": 12.733333333333333,
+          "quantiles": {
+            "0.5": 1.0,
+            "0.95": 81.94999999999986,
+            "0.99": 120.33000000000001
+          },
+          "sd": 30.53624440271302,
+          "worst_index": 25
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 1.4060816774058934e-05,
+          "mean": 1.1403980619117657e-06,
+          "quantiles": {
+            "0.5": 1.1260858737104136e-08,
+            "0.95": 8.820449022019818e-06,
+            "0.99": 1.3875833557824002e-05
+          },
+          "sd": 3.454847734879573e-06,
+          "worst_index": 25
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 1,
+        "normalized_mse": 1.4060816774058934e-05,
+        "seed": 10018
+      }
+    },
+    {
+      "env": "DMCManipulatorBringBall",
+      "frames": 30,
+      "horizon": 1,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 3.985969387755102e-05,
+          "mean": 1.0407808956916101e-05,
+          "quantiles": {
+            "0.5": 6.64328231292517e-06,
+            "0.95": 3.3880739795918326e-05,
+            "0.99": 3.985969387755102e-05
+          },
+          "sd": 1.17197408432533e-05,
+          "worst_index": 9
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 5.978954081632653e-05,
+          "mean": 1.6608205782312927e-05,
+          "quantiles": {
+            "0.5": 1.992984693877551e-05,
+            "0.95": 3.985969387755102e-05,
+            "0.99": 5.400988520408165e-05
+          },
+          "sd": 1.5508898716423192e-05,
+          "worst_index": 21
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 204.0,
+          "mean": 18.933333333333334,
+          "quantiles": {
+            "0.5": 1.0,
+            "0.95": 100.69999999999996,
+            "0.99": 175.8700000000001
+          },
+          "sd": 43.851213083435766,
+          "worst_index": 9
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 6.132763562941517e-06,
+          "mean": 3.242344050910124e-07,
+          "quantiles": {
+            "0.5": 1.021650490261464e-10,
+            "0.95": 1.289690712886461e-06,
+            "0.99": 4.768163392808107e-06
+          },
+          "sd": 1.1316262704885084e-06,
+          "worst_index": 9
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 0,
+        "normalized_mse": 6.132763562941517e-06,
+        "seed": 10013
+      }
+    },
+    {
+      "env": "DMCManipulatorBringBall",
+      "frames": 30,
+      "horizon": 8,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.00031887755102040814,
+          "mean": 5.9789540816326536e-05,
+          "quantiles": {
+            "0.5": 3.6538052721088435e-05,
+            "0.95": 0.00026672778486394534,
+            "0.99": 0.00031502444727891157
+          },
+          "sd": 7.964553930223914e-05,
+          "worst_index": 15
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0003786670918367347,
+          "mean": 7.44047619047619e-05,
+          "quantiles": {
+            "0.5": 3.985969387755102e-05,
+            "0.95": 0.0003318319515306121,
+            "0.99": 0.0003728874362244898
+          },
+          "sd": 9.749115820495398e-05,
+          "worst_index": 15
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 190.0,
+          "mean": 48.3,
+          "quantiles": {
+            "0.5": 18.5,
+            "0.95": 178.44999999999993,
+            "0.99": 189.13
+          },
+          "sd": 59.85824922264265,
+          "worst_index": 16
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 8.591058972608651e-06,
+          "mean": 1.1079935786950945e-06,
+          "quantiles": {
+            "0.5": 9.64438062806822e-08,
+            "0.95": 6.4178959982685815e-06,
+            "0.99": 8.272529804405423e-06
+          },
+          "sd": 2.1592150770147057e-06,
+          "worst_index": 16
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 1,
+        "normalized_mse": 8.591058972608651e-06,
+        "seed": 10015
+      }
+    },
+    {
+      "env": "DMCPendulumSwingup",
+      "frames": 30,
+      "horizon": 1,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0002362055933484505,
+          "mean": 1.889644746787604e-05,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.00012046485260770962,
+            "0.99": 0.00020880574452003032
+          },
+          "sd": 5.2605483397864904e-05,
+          "worst_index": 22
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0007086167800453515,
+          "mean": 5.19652305366591e-05,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.0002834467120181406,
+            "0.99": 0.0005853174603174607
+          },
+          "sd": 0.00014856561974221834,
+          "worst_index": 22
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 1.0,
+          "mean": 0.13333333333333333,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 1.0,
+            "0.99": 1.0
+          },
+          "sd": 0.33993463423951903,
+          "worst_index": 0
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 3.6325350764852057e-09,
+          "mean": 2.906028061188164e-10,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 1.8525928890074527e-09,
+            "0.99": 3.211161007612923e-09
+          },
+          "sd": 8.090039738233742e-10,
+          "worst_index": 22
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 1,
+        "normalized_mse": 3.6325350764852057e-09,
+        "seed": 10017
+      }
+    },
+    {
+      "env": "DMCPendulumSwingup",
+      "frames": 30,
+      "horizon": 8,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0003779289493575208,
+          "mean": 7.873519778281683e-05,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.00030942932728647,
+            "0.99": 0.0003642290249433107
+          },
+          "sd": 0.00011398942473452921,
+          "worst_index": 18
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0008503401360544217,
+          "mean": 0.00020786092214663645,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.0007865646258503397,
+            "0.99": 0.0008503401360544217
+          },
+          "sd": 0.0002944148989206894,
+          "worst_index": 11
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 1.0,
+          "mean": 0.4,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 1.0,
+            "0.99": 1.0
+          },
+          "sd": 0.4898979485566357,
+          "worst_index": 2
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 5.812056122376329e-09,
+          "mean": 1.2108450254950685e-09,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 4.758620950195617e-09,
+            "0.99": 5.6013690879401875e-09
+          },
+          "sd": 1.753009223137704e-09,
+          "worst_index": 18
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 0,
+        "normalized_mse": 5.812056122376329e-09,
+        "seed": 10016
+      }
+    },
+    {
+      "env": "DMCPointMassEasy",
+      "frames": 30,
+      "horizon": 1,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0001889644746787604,
+          "mean": 1.889644746787604e-05,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.00012046485260770962,
+            "0.99": 0.0001752645502645503
+          },
+          "sd": 4.660698093647248e-05,
+          "worst_index": 12
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0002834467120181406,
+          "mean": 2.8344671201814057e-05,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.0001417233560090703,
+            "0.99": 0.00024234693877551035
+          },
+          "sd": 6.747381357277826e-05,
+          "worst_index": 12
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 1.0,
+          "mean": 0.16666666666666666,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 1.0,
+            "0.99": 1.0
+          },
+          "sd": 0.37267799624996495,
+          "worst_index": 12
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 2.9060280611881645e-09,
+          "mean": 2.906028061188164e-10,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 1.8525928890074527e-09,
+            "0.99": 2.695341026752023e-09
+          },
+          "sd": 7.167548010222603e-10,
+          "worst_index": 12
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 0,
+        "normalized_mse": 2.9060280611881645e-09,
+        "seed": 10014
+      }
+    },
+    {
+      "env": "DMCPointMassEasy",
+      "frames": 30,
+      "horizon": 8,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0001889644746787604,
+          "mean": 2.204585537918871e-05,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 7.322373393801952e-05,
+            "0.99": 0.00016156462585034022
+          },
+          "sd": 3.996150648919602e-05,
+          "worst_index": 0
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.00042517006802721087,
+          "mean": 6.141345427059713e-05,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 0.00021967120181405858,
+            "0.99": 0.0003840702947845806
+          },
+          "sd": 0.0001014309833408158,
+          "worst_index": 0
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 1.0,
+          "mean": 0.3333333333333333,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 1.0,
+            "0.99": 1.0
+          },
+          "sd": 0.4714045207910317,
+          "worst_index": 0
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 2.9060280611881645e-09,
+          "mean": 3.3903660713861915e-10,
+          "quantiles": {
+            "0.5": 0.0,
+            "0.95": 1.1260858737104117e-09,
+            "0.99": 2.484653992315882e-09
+          },
+          "sd": 6.145560398184701e-10,
+          "worst_index": 0
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 0,
+        "normalized_mse": 2.9060280611881645e-09,
+        "seed": 10010
+      }
+    },
+    {
+      "env": "DMCQuadrupedWalk",
+      "frames": 30,
+      "horizon": 1,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0004185267857142857,
+          "mean": 0.0003292853599773242,
+          "quantiles": {
+            "0.5": 0.00034545068027210885,
+            "0.95": 0.0004185267857142857,
+            "0.99": 0.0004185267857142857
+          },
+          "sd": 6.869045402335401e-05,
+          "worst_index": 20
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0007374043367346938,
+          "mean": 0.0005440848214285714,
+          "quantiles": {
+            "0.5": 0.0005480707908163265,
+            "0.95": 0.0006885762117346938,
+            "0.99": 0.0007258450255102041
+          },
+          "sd": 0.00010942072837423303,
+          "worst_index": 21
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 112.0,
+          "mean": 25.3,
+          "quantiles": {
+            "0.5": 1.0,
+            "0.95": 100.14999999999996,
+            "0.99": 110.26
+          },
+          "sd": 37.32483534234723,
+          "worst_index": 3
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 2.491907710796737e-06,
+          "mean": 3.7782678430849456e-07,
+          "quantiles": {
+            "0.5": 5.6190776964380524e-09,
+            "0.95": 1.5545791437490018e-06,
+            "0.99": 2.277105695219265e-06
+          },
+          "sd": 6.47462516312582e-07,
+          "worst_index": 3
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 0,
+        "normalized_mse": 2.491907710796737e-06,
+        "seed": 10011
+      }
+    },
+    {
+      "env": "DMCQuadrupedWalk",
+      "frames": 30,
+      "horizon": 8,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.000744047619047619,
+          "mean": 0.00040944763321995473,
+          "quantiles": {
+            "0.5": 0.00041852678571428575,
+            "0.95": 0.0005577035501700679,
+            "0.99": 0.0006978103741496599
+          },
+          "sd": 0.0001152628094245093,
+          "worst_index": 20
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0014349489795918368,
+          "mean": 0.000718138818027211,
+          "quantiles": {
+            "0.5": 0.0007374043367346938,
+            "0.95": 0.0010114397321428568,
+            "0.99": 0.001325135522959184
+          },
+          "sd": 0.00021541963316169807,
+          "worst_index": 20
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 144.0,
+          "mean": 26.933333333333334,
+          "quantiles": {
+            "0.5": 1.5,
+            "0.95": 101.04999999999997,
+            "0.99": 132.98000000000002
+          },
+          "sd": 38.75128671698815,
+          "worst_index": 19
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 4.255685117184129e-06,
+          "mean": 4.2554467320697345e-07,
+          "quantiles": {
+            "0.5": 7.151553431830248e-09,
+            "0.95": 2.2512834790779044e-06,
+            "0.99": 3.7286054127533383e-06
+          },
+          "sd": 9.195083660045329e-07,
+          "worst_index": 19
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 1,
+        "normalized_mse": 4.255685117184129e-06,
+        "seed": 10016
+      }
+    },
+    {
+      "env": "DMCSwimmerSwimmer6",
+      "frames": 30,
+      "horizon": 1,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0007086167800453515,
+          "mean": 0.00027399848828420253,
+          "quantiles": {
+            "0.5": 0.0002362055933484505,
+            "0.95": 0.0005196523053665911,
+            "0.99": 0.0006538170823885111
+          },
+          "sd": 0.00013767632271601408,
+          "worst_index": 7
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0015589569160997733,
+          "mean": 0.0006613756613756613,
+          "quantiles": {
+            "0.5": 0.0005668934240362812,
+            "0.95": 0.0012755102040816326,
+            "0.99": 0.0014767573696145128
+          },
+          "sd": 0.0003154914561047619,
+          "worst_index": 7
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 2.0,
+          "mean": 1.0333333333333334,
+          "quantiles": {
+            "0.5": 1.0,
+            "0.95": 1.0,
+            "0.99": 1.7100000000000009
+          },
+          "sd": 0.1795054935711501,
+          "worst_index": 9
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 1.0897605229455616e-08,
+          "mean": 4.286391390252542e-09,
+          "quantiles": {
+            "0.5": 3.6325350764852057e-09,
+            "0.95": 9.190313743507563e-09,
+            "0.99": 1.0686918195019475e-08
+          },
+          "sd": 2.2770326233454414e-09,
+          "worst_index": 7
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 1,
+        "normalized_mse": 1.0897605229455616e-08,
+        "seed": 10012
+      }
+    },
+    {
+      "env": "DMCSwimmerSwimmer6",
+      "frames": 30,
+      "horizon": 8,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0007558578987150416,
+          "mean": 0.00030549256739732935,
+          "quantiles": {
+            "0.5": 0.0002834467120181406,
+            "0.95": 0.0005716175359032499,
+            "0.99": 0.0007147581254724113
+          },
+          "sd": 0.0001527056931519357,
+          "worst_index": 7
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0018424036281179139,
+          "mean": 0.0007794784580498868,
+          "quantiles": {
+            "0.5": 0.0007086167800453515,
+            "0.95": 0.001353458049886621,
+            "0.99": 0.001719104308390023
+          },
+          "sd": 0.0003816018145645198,
+          "worst_index": 16
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 255.0,
+          "mean": 9.533333333333333,
+          "quantiles": {
+            "0.5": 1.0,
+            "0.95": 2.0999999999999943,
+            "0.99": 181.92000000000021
+          },
+          "sd": 45.58342778783632,
+          "worst_index": 6
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 7.139602391428612e-05,
+          "mean": 2.3846139763094786e-06,
+          "quantiles": {
+            "0.5": 4.3590420917822465e-09,
+            "0.95": 1.24232699615794e-08,
+            "0.99": 5.069496934576306e-05
+          },
+          "sd": 1.2815097402579053e-05,
+          "worst_index": 6
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 0,
+        "normalized_mse": 7.139602391428612e-05,
+        "seed": 10012
+      }
+    },
+    {
+      "env": "DMCWalkerWalk",
+      "frames": 30,
+      "horizon": 1,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0011337868480725624,
+          "mean": 0.00048028470647518276,
+          "quantiles": {
+            "0.5": 0.00044879062736205593,
+            "0.95": 0.0009070294784580494,
+            "0.99": 0.0010926870748299321
+          },
+          "sd": 0.0002433669174477455,
+          "worst_index": 16
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.002551020408163265,
+          "mean": 0.0012188208616780044,
+          "quantiles": {
+            "0.5": 0.0011337868480725624,
+            "0.95": 0.0021541950113378667,
+            "0.99": 0.002509920634920635
+          },
+          "sd": 0.000525969979581133,
+          "worst_index": 16
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 39.0,
+          "mean": 2.3666666666666667,
+          "quantiles": {
+            "0.5": 1.0,
+            "0.95": 2.6499999999999915,
+            "0.99": 28.85000000000003
+          },
+          "sd": 6.823895922092859,
+          "worst_index": 12
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 2.4316189801991967e-06,
+          "mean": 8.856120516470929e-08,
+          "quantiles": {
+            "0.5": 6.901816645321891e-09,
+            "0.95": 2.5536721587690927e-08,
+            "0.99": 1.7369838276632388e-06
+          },
+          "sd": 4.351366790639094e-07,
+          "worst_index": 12
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 0,
+        "normalized_mse": 2.4316189801991967e-06,
+        "seed": 10014
+      }
+    },
+    {
+      "env": "DMCWalkerWalk",
+      "frames": 30,
+      "horizon": 8,
+      "metrics": {
+        "changed_channel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.0013699924414210128,
+          "mean": 0.00045823885109599395,
+          "quantiles": {
+            "0.5": 0.00040154950869236586,
+            "0.95": 0.0008503401360544217,
+            "0.99": 0.001219293272864702
+          },
+          "sd": 0.00025297902081060445,
+          "worst_index": 13
+        },
+        "changed_pixel_fraction": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 0.003401360544217687,
+          "mean": 0.0011715797430083142,
+          "quantiles": {
+            "0.5": 0.000992063492063492,
+            "0.95": 0.0020620748299319726,
+            "0.99": 0.0030314625850340147
+          },
+          "sd": 0.0006166006651175258,
+          "worst_index": 13
+        },
+        "max_abs_channel_error_uint8": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 50.0,
+          "mean": 2.6666666666666665,
+          "quantiles": {
+            "0.5": 1.0,
+            "0.95": 1.5499999999999972,
+            "0.99": 36.08000000000004
+          },
+          "sd": 8.79140994885854,
+          "worst_index": 17
+        },
+        "normalized_mse": {
+          "count": 30,
+          "ddof": 0,
+          "maximum": 3.1733826428174756e-06,
+          "mean": 1.1246328596798195e-07,
+          "quantiles": {
+            "0.5": 6.17530963002485e-09,
+            "0.95": 1.7472493717893815e-08,
+            "0.99": 2.2592116003990584e-06
+          },
+          "sd": 5.684111340304442e-07,
+          "worst_index": 17
+        }
+      },
+      "mode": "source",
+      "worst_mse_frame": {
+        "lane": 2,
+        "normalized_mse": 3.1733826428174756e-06,
+        "seed": 10015
+      }
+    }
+  ],
+  "by_horizon": [
+    {
+      "frames": 480,
+      "horizon": 1,
+      "metrics": {
+        "changed_channel_fraction": {
+          "max": 0.0011810279667422525,
+          "mean": 0.00014415615059681282
+        },
+        "changed_pixel_fraction": {
+          "max": 0.002976190476190476,
+          "mean": 0.00033030030588624315
+        },
+        "max_abs_channel_error_uint8": {
+          "max": 204.0,
+          "mean": 3.61875
+        },
+        "normalized_mse": {
+          "max": 6.132763562941517e-06,
+          "mean": 6.945641194477079e-08
+        }
+      },
+      "worst_mse_frame": {
+        "changed_channel_fraction": 3.985969387755102e-05,
+        "changed_pixel_fraction": 3.985969387755102e-05,
+        "env": "DMCManipulatorBringBall",
+        "horizon": 1,
+        "lane": 0,
+        "max_abs_channel_error_uint8": 204.0,
+        "mode": "source",
+        "normalized_mse": 6.132763562941517e-06,
+        "qpos_max_abs_difference": 2.3744755606180945e-07,
+        "seed": 10013
+      }
+    },
+    {
+      "frames": 480,
+      "horizon": 8,
+      "metrics": {
+        "changed_channel_fraction": {
+          "max": 0.0016061980347694634,
+          "mean": 0.00019319495376275507
+        },
+        "changed_pixel_fraction": {
+          "max": 0.003401360544217687,
+          "mean": 0.0004552170803217114
+        },
+        "max_abs_channel_error_uint8": {
+          "max": 255.0,
+          "mean": 7.147916666666666
+        },
+        "normalized_mse": {
+          "max": 7.139602391428612e-05,
+          "mean": 3.5431917411118417e-07
+        }
+      },
+      "worst_mse_frame": {
+        "changed_channel_fraction": 0.0002834467120181406,
+        "changed_pixel_fraction": 0.00042517006802721087,
+        "env": "DMCSwimmerSwimmer6",
+        "horizon": 8,
+        "lane": 0,
+        "max_abs_channel_error_uint8": 255.0,
+        "mode": "source",
+        "normalized_mse": 7.139602391428612e-05,
+        "qpos_max_abs_difference": 1.038438819267462e-06,
+        "seed": 10012
+      }
+    }
+  ],
+  "complete": true,
+  "environment_count": 16,
+  "environments": [
+    "DMCAcrobotBalance",
+    "DMCBallInCupCatch",
+    "DMCCartpoleBalance",
+    "DMCCartpoleSwingup",
+    "DMCCheetahRun",
+    "DMCFingerSpin",
+    "DMCFingerTurnEasy",
+    "DMCFingerTurnHard",
+    "DMCHopperHop",
+    "DMCHumanoidWalk",
+    "DMCManipulatorBringBall",
+    "DMCPendulumSwingup",
+    "DMCPointMassEasy",
+    "DMCQuadrupedWalk",
+    "DMCSwimmerSwimmer6",
+    "DMCWalkerWalk"
+  ],
+  "errors": [],
+  "frames": 960,
+  "horizon_definition": "endpoint after N public actions; each public action contains two control rounds",
+  "horizons": [
+    1,
+    8
+  ],
+  "identical_state_fidelity": {
+    "check": "candidate image rerendered after the reference image; live State checked after every render",
+    "successful_trials_exact_and_observational": 160
+  },
+  "limitations": [
+    "Nominal source mode only; this diagnostic does not cover variation or selected contact fixtures.",
+    "Source and candidate trajectories are rendered through the same existing renderer. This does not compare source and candidate renderer implementations.",
+    "Exact repeated-state rendering is separate from trajectory-induced pixel drift.",
+    "No pixel acceptance cap was applied. Pixel results do not establish numerical physics acceptance."
+  ],
+  "metric_definitions": {
+    "changed_channel_fraction": "fraction of individual RGB channels that differ",
+    "changed_pixel_fraction": "fraction of spatial pixels with any unequal RGB channel",
+    "max_abs_channel_error_uint8": "maximum absolute RGB channel error on the 0..255 scale",
+    "normalized_mse": "mean squared RGB channel difference / 255^2"
+  },
+  "modes_by_environment": {
+    "DMCAcrobotBalance": [
+      "source"
+    ],
+    "DMCBallInCupCatch": [
+      "source"
+    ],
+    "DMCCartpoleBalance": [
+      "source"
+    ],
+    "DMCCartpoleSwingup": [
+      "source"
+    ],
+    "DMCCheetahRun": [
+      "source"
+    ],
+    "DMCFingerSpin": [
+      "source"
+    ],
+    "DMCFingerTurnEasy": [
+      "source"
+    ],
+    "DMCFingerTurnHard": [
+      "source"
+    ],
+    "DMCHopperHop": [
+      "source"
+    ],
+    "DMCHumanoidWalk": [
+      "source"
+    ],
+    "DMCManipulatorBringBall": [
+      "source"
+    ],
+    "DMCPendulumSwingup": [
+      "source"
+    ],
+    "DMCPointMassEasy": [
+      "source"
+    ],
+    "DMCQuadrupedWalk": [
+      "source"
+    ],
+    "DMCSwimmerSwimmer6": [
+      "source"
+    ],
+    "DMCWalkerWalk": [
+      "source"
+    ]
+  },
+  "report": "pixel-drift-16.json.gz",
+  "report_uncompressed_sha256": "49113cdc5a8c5b7eedd7867e4aaebfd5bb9a817ef8b959a703cfd52fd59029a2",
+  "schema": "stable-envs-dmc-mjwarp-pixel-summary/v1",
+  "scope": "trajectory-induced drift through the same renderer; no source-renderer fidelity claim or pixel cap",
+  "seeds": [
+    10010,
+    10011,
+    10012,
+    10013,
+    10014,
+    10015,
+    10016,
+    10017,
+    10018,
+    10019
+  ],
+  "trials": 160
+}

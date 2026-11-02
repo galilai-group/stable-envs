@@ -1,0 +1,226 @@
+{
+  "artifacts": {
+    "benchmark-16.json.gz": {
+      "bytes": 298094,
+      "compression": "gzip",
+      "sha256": "a8f4a9343148968eb9da2b858f39614470a77f6792a39dede34649eb463582b2",
+      "uncompressed_bytes": 2742580,
+      "uncompressed_sha256": "f838cc2eacae9fdabdd337d2dfea4d3cae489be4c0bad9183d4622f14132b19a"
+    },
+    "benchmark-host.json": {
+      "bytes": 598,
+      "sha256": "732e8030081f5884071abfa8344184e614d181f103d2bc28a9f8af678d965263"
+    },
+    "benchmark-segments.zip": {
+      "bytes": 832560,
+      "sha256": "dc567ac5f294094aa0c41ac7e9eb84eb77d92499fa81f00d981cd4ab13d259e2"
+    },
+    "benchmark-summary-16.json": {
+      "bytes": 24479,
+      "sha256": "fc504c1cc03b97c56de55f48a449ca59cb3ce3c8ac2716e6c07e9f3cbd3bdcef"
+    },
+    "deferred-fidelity.json": {
+      "bytes": 10838,
+      "sha256": "3865aba97f525d23ecac6c44b05aef4e23fc638662e7b1a038b5696cea34ef92"
+    },
+    "integration-16.json": {
+      "bytes": 67963,
+      "sha256": "a433ac48a0a66993105663c0662d85ccaae712895e8725a0fdc8e6d5d6dd6f3d"
+    },
+    "pixel-drift-16.json.gz": {
+      "bytes": 215580,
+      "compression": "gzip",
+      "sha256": "6aba0187378de62daaa8c9d0c39b0d2388b9dfb47d17036e63e8c6d845df2d6a",
+      "uncompressed_bytes": 1238237,
+      "uncompressed_sha256": "49113cdc5a8c5b7eedd7867e4aaebfd5bb9a817ef8b959a703cfd52fd59029a2"
+    },
+    "pixel-drift-summary-16.json": {
+      "bytes": 61794,
+      "sha256": "1e49fe54a70a1c353a863ccacd125d4821f6066b89f548920e0aebcfdc5e3aac"
+    },
+    "validation-logs.zip": {
+      "bytes": 61292,
+      "sha256": "236e06301aced1aa813622e7be20e873acadd66b399ff8b29b68884fd79b4a44"
+    },
+    "validation-summary.json": {
+      "bytes": 17706,
+      "sha256": "59873ac39b07bf4d4aae5b2b98b78aa464470407030532675d8ac396f05ceb8e"
+    }
+  },
+  "benchmark_evidence": {
+    "aggregate_sha256": "f838cc2eacae9fdabdd337d2dfea4d3cae489be4c0bad9183d4622f14132b19a",
+    "batches": [
+      1,
+      16,
+      64,
+      256,
+      1024
+    ],
+    "errors": 0,
+    "host": "benchmark-host.json",
+    "included": true,
+    "job_completion": {
+      "exit_code": "0:0",
+      "job_id": 126023,
+      "state": "COMPLETED",
+      "temporary_runtime_removed": true
+    },
+    "matched_pairs": 80,
+    "measurement_records": 160,
+    "missing": 0,
+    "physical_gpu_uuids": [
+      "9aeb0d0e-1a19-7add-5f1a-24e81031c01e"
+    ],
+    "raw_aggregate_reconstruction": "byte-for-byte identical",
+    "raw_evidence_and_analysis": "benchmark-segments.zip",
+    "raw_segments": 12,
+    "report": "benchmark-16.json.gz",
+    "same_segment_eligible_pairs": 80,
+    "scope": "Performance measurements; no numerical acceptance claim. Native is the existing route in the measured worktree, not a separate pristine checkout.",
+    "simulation_backends": [
+      "native",
+      "mjwarp"
+    ],
+    "status": "complete",
+    "summary": "benchmark-summary-16.json"
+  },
+  "current_source_hash_verification": {
+    "benchmark": {
+      "benchmark_files": {
+        "matching_current_files": 2,
+        "mismatches": [],
+        "recorded_files": 2
+      },
+      "candidate_files": {
+        "matching_current_files": 187,
+        "mismatches": [],
+        "recorded_files": 187
+      }
+    },
+    "integration": {
+      "candidate_files": {
+        "matching_current_files": 187,
+        "mismatches": [],
+        "recorded_files": 187
+      },
+      "recipe_files": {
+        "matching_current_files": 84,
+        "mismatches": [],
+        "recorded_files": 84
+      }
+    },
+    "pixels": {
+      "candidate_files": {
+        "matching_current_files": 187,
+        "mismatches": [],
+        "recorded_files": 187
+      },
+      "diagnostic_files": {
+        "matching_current_files": 2,
+        "mismatches": [],
+        "recorded_files": 2
+      },
+      "recipe_files": {
+        "matching_current_files": 84,
+        "mismatches": [],
+        "recorded_files": 84
+      }
+    }
+  },
+  "full_numerical_acceptance": false,
+  "independent_source": {
+    "commit": "21446f1ede6d5284e981bd7b47f432b994e6d812",
+    "file_hashes_location": "pixel-drift-16.json.gz:source.files",
+    "hashes_reverified_against_local_independent_source": false,
+    "recorded_source_files": 123
+  },
+  "inputs": {
+    "deferred": {
+      "bytes": 11593,
+      "input_filename": "dmc-mjwarp-deferred.json",
+      "sha256": "b73151343382dba5dc442904059afab7a408d2a68820a0913a4ecb21b56cc838"
+    },
+    "integration": {
+      "bytes": 67963,
+      "input_filename": "dmc-mjwarp-integration-16.json",
+      "sha256": "a433ac48a0a66993105663c0662d85ccaae712895e8725a0fdc8e6d5d6dd6f3d"
+    },
+    "pixels": {
+      "bytes": 1238237,
+      "input_filename": "dmc-mjwarp-pixel-drift-16.json",
+      "sha256": "49113cdc5a8c5b7eedd7867e4aaebfd5bb9a817ef8b959a703cfd52fd59029a2"
+    }
+  },
+  "integration_smoke": {
+    "cuda_environment_cases_passed": 16,
+    "deselected": 0,
+    "exit_status": 0,
+    "other_focused_cases_include_cpu_and_cuda": true,
+    "other_focused_cases_passed": 37,
+    "passed": 53,
+    "runner": "CUDA integration runner",
+    "skipped": 0,
+    "test_calls_by_file": {
+      "tests/gpu/test_dmc_mjwarp.py": 16,
+      "tests/gpu/test_dmc_mjwarp_streams.py": 2,
+      "tests/unit/test_dmc_capture_selection.py": 8,
+      "tests/unit/test_dmc_mjwarp_contacts.py": 22,
+      "tests/unit/test_dmc_mjwarp_runtime.py": 1,
+      "tests/unit/test_dmc_sparse_outputs.py": 4
+    }
+  },
+  "machine": {
+    "compute_capability": [
+      8,
+      6
+    ],
+    "device": "NVIDIA RTX A6000",
+    "torch_cuda": "13.2",
+    "total_memory": 50952536064,
+    "uuid": "9aeb0d0e-1a19-7add-5f1a-24e81031c01e",
+    "versions": {
+      "dm-control": "1.0.45",
+      "mujoco": "3.12.0",
+      "mujoco-warp": "3.12.0",
+      "numpy": "2.5.3",
+      "torch": "2.15.0",
+      "warp-lang": "1.17.0"
+    },
+    "warp_driver": [
+      13,
+      4
+    ]
+  },
+  "pixel_diagnostic": {
+    "complete": true,
+    "errors": 0,
+    "frames": 960,
+    "nominal_source_mode_only": true,
+    "trials": 160
+  },
+  "provenance_limitations": [
+    "The pixel report has a null stable_envs_git_revision; its 187 production, 84 recipe, and two diagnostic file hashes match the current worktree.",
+    "The independent source checkout hashes are preserved from execution; this packaging step did not reverify that separate remote checkout.",
+    "Raw reports retain their original machine paths as provenance. No execution of those paths is needed to read this package.",
+    "The historical v3 calibration and acceptance files are referenced by SHA256 but not included in this compact package.",
+    "Smoke passes and trajectory-pixel diagnostics do not establish full numerical acceptance. Historical failed gates remain documented separately."
+  ],
+  "review_context": {
+    "base_and_latest_main_revision": "37c7b9edd51ea82d7733277d7ead34579bc225c4",
+    "reacher": "Excluded from public MJWarp integration; existing native/MJX routing retained.",
+    "related_pull_requests": {
+      "22": {
+        "head_revision": "61da8fed783fdc9328a623876d0530b0a70b4ba0",
+        "state": "OPEN"
+      },
+      "8": {
+        "head_revision": "cc2adb4307e24535b0cdc9d0c577aaaccff5e9ab",
+        "state": "OPEN"
+      }
+    },
+    "verification_source": "Authenticated GitHub API"
+  },
+  "schema": "stable-envs-dmc-mjwarp-evidence-package/v1",
+  "scope": "Current 16-environment integration smoke and nominal trajectory-pixel diagnostic, plus explicitly historical unresolved numerical gates.",
+  "validation_summary": "validation-summary.json (separate overlapping runs; full numerical acceptance incomplete)"
+}

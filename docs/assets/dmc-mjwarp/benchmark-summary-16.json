@@ -1,0 +1,763 @@
+{
+  "artifacts": {
+    "benchmark-16.json.gz": {
+      "bytes": 298094,
+      "sha256": "a8f4a9343148968eb9da2b858f39614470a77f6792a39dede34649eb463582b2",
+      "uncompressed_sha256": "f838cc2eacae9fdabdd337d2dfea4d3cae489be4c0bad9183d4622f14132b19a"
+    },
+    "benchmark-host.json": {
+      "bytes": 598,
+      "sha256": "732e8030081f5884071abfa8344184e614d181f103d2bc28a9f8af678d965263"
+    },
+    "benchmark-segments.zip": {
+      "bytes": 832560,
+      "sha256": "dc567ac5f294094aa0c41ac7e9eb84eb77d92499fa81f00d981cd4ab13d259e2"
+    }
+  },
+  "batch_1024_by_environment": [
+    {
+      "batch": 1024,
+      "env": "DMCAcrobotBalance",
+      "median_latency_ms": {
+        "public_state_and_tasks": {
+          "mjwarp": 6.621679000090808,
+          "native": 50.49331148620695
+        },
+        "public_with_pixels": {
+          "mjwarp": 35.35731352167204,
+          "native": 81.25357399694622
+        },
+        "raw_physics": {
+          "mjwarp": 3.6123149911873043,
+          "native": 33.64310701726936
+        }
+      },
+      "native_over_mjwarp": {
+        "public_state_and_tasks": 7.625454433160305,
+        "public_with_pixels": 2.298069788224786,
+        "raw_physics": 9.313447774999117
+      }
+    },
+    {
+      "batch": 1024,
+      "env": "DMCBallInCupCatch",
+      "median_latency_ms": {
+        "public_state_and_tasks": {
+          "mjwarp": 12.709825503407046,
+          "native": 74.05694501358084
+        },
+        "public_with_pixels": {
+          "mjwarp": 77.53713149577379,
+          "native": 142.1535724948626
+        },
+        "raw_physics": {
+          "mjwarp": 9.042721503647044,
+          "native": 100.46011250233278
+        }
+      },
+      "native_over_mjwarp": {
+        "public_state_and_tasks": 5.826747581524927,
+        "public_with_pixels": 1.8333612522486824,
+        "raw_physics": 11.109499774135026
+      }
+    },
+    {
+      "batch": 1024,
+      "env": "DMCCartpoleBalance",
+      "median_latency_ms": {
+        "public_state_and_tasks": {
+          "mjwarp": 8.719386998564005,
+          "native": 71.9807879650034
+        },
+        "public_with_pixels": {
+          "mjwarp": 26.377811533166096,
+          "native": 90.74964901083149
+        },
+        "raw_physics": {
+          "mjwarp": 3.612449479987845,
+          "native": 33.18495850544423
+        }
+      },
+      "native_over_mjwarp": {
+        "public_state_and_tasks": 8.255257849761447,
+        "public_with_pixels": 3.4403782473283493,
+        "raw_physics": 9.18627615120472
+      }
+    },
+    {
+      "batch": 1024,
+      "env": "DMCCartpoleSwingup",
+      "median_latency_ms": {
+        "public_state_and_tasks": {
+          "mjwarp": 7.438134984113276,
+          "native": 47.26892602047883
+        },
+        "public_with_pixels": {
+          "mjwarp": 26.7142474767752,
+          "native": 69.50195250101388
+        },
+        "raw_physics": {
+          "mjwarp": 3.5477440105751157,
+          "native": 32.67628751927987
+        }
+      },
+      "native_over_mjwarp": {
+        "public_state_and_tasks": 6.354943291757687,
+        "public_with_pixels": 2.6016810902660614,
+        "raw_physics": 9.210441176668438
+      }
+    },
+    {
+      "batch": 1024,
+      "env": "DMCCheetahRun",
+      "median_latency_ms": {
+        "public_state_and_tasks": {
+          "mjwarp": 6.012798025039956,
+          "native": 44.49329149792902
+        },
+        "public_with_pixels": {
+          "mjwarp": 12.753471004543826,
+          "native": 51.75287747988477
+        },
+        "raw_physics": {
+          "mjwarp": 2.459609997458756,
+          "native": 47.328738000942394
+        }
+      },
+      "native_over_mjwarp": {
+        "public_state_and_tasks": 7.399764853673654,
+        "public_with_pixels": 4.057944496948806,
+        "raw_physics": 19.242375030936596
+      }
+    },
+    {
+      "batch": 1024,
+      "env": "DMCFingerSpin",
+      "median_latency_ms": {
+        "public_state_and_tasks": {
+          "mjwarp": 6.347844493575394,
+          "native": 48.09057802776806
+        },
+        "public_with_pixels": {
+          "mjwarp": 33.57583750039339,
+          "native": 74.95674397796392
+        },
+        "raw_physics": {
+          "mjwarp": 2.8125325043220073,
+          "native": 40.03677301807329
+        }
+      },
+      "native_over_mjwarp": {
+        "public_state_and_tasks": 7.575891009371792,
+        "public_with_pixels": 2.2324608872998537,
+        "raw_physics": 14.235132556352307
+      }
+    },
+    {
+      "batch": 1024,
+      "env": "DMCFingerTurnEasy",
+      "median_latency_ms": {
+        "public_state_and_tasks": {
+          "mjwarp": 7.471367018297315,
+          "native": 72.05127098131925
+        },
+        "public_with_pixels": {
+          "mjwarp": 40.99454201059416,
+          "native": 107.47336549684405
+        },
+        "raw_physics": {
+          "mjwarp": 2.845281967893243,
+          "native": 39.53216748777777
+        }
+      },
+      "native_over_mjwarp": {
+        "public_state_and_tasks": 9.643653002839546,
+        "public_with_pixels": 2.621650596049344,
+        "raw_physics": 13.893936676177272
+      }
+    },
+    {
+      "batch": 1024,
+      "env": "DMCFingerTurnHard",
+      "median_latency_ms": {
+        "public_state_and_tasks": {
+          "mjwarp": 7.587946485728025,
+          "native": 70.17601648112759
+        },
+        "public_with_pixels": {
+          "mjwarp": 37.412846024381,
+          "native": 103.26414299197495
+        },
+        "raw_physics": {
+          "mjwarp": 2.834378508850932,
+          "native": 39.55720050726086
+        }
+      },
+      "native_over_mjwarp": {
+        "public_state_and_tasks": 9.248354164479133,
+        "public_with_pixels": 2.7601253036104323,
+        "raw_physics": 13.956216639286296
+      }
+    },
+    {
+      "batch": 1024,
+      "env": "DMCHopperHop",
+      "median_latency_ms": {
+        "public_state_and_tasks": {
+          "mjwarp": 11.756366526242346,
+          "native": 62.12292652344331
+        },
+        "public_with_pixels": {
+          "mjwarp": 18.61774700228125,
+          "native": 68.53043398587033
+        },
+        "raw_physics": {
+          "mjwarp": 6.88167501357384,
+          "native": 86.5535790217109
+        }
+      },
+      "native_over_mjwarp": {
+        "public_state_and_tasks": 5.284194430717489,
+        "public_with_pixels": 3.6809198222251727,
+        "raw_physics": 12.577399957275995
+      }
+    },
+    {
+      "batch": 1024,
+      "env": "DMCHumanoidWalk",
+      "median_latency_ms": {
+        "public_state_and_tasks": {
+          "mjwarp": 21.59042950370349,
+          "native": 153.17928799777292
+        },
+        "public_with_pixels": {
+          "mjwarp": 35.31003152602352,
+          "native": 168.80462149856612
+        },
+        "raw_physics": {
+          "mjwarp": 13.533837482100353,
+          "native": 328.821520000929
+        }
+      },
+      "native_over_mjwarp": {
+        "public_state_and_tasks": 7.09477724708985,
+        "public_with_pixels": 4.780642049955604,
+        "raw_physics": 24.296251557315014
+      }
+    },
+    {
+      "batch": 1024,
+      "env": "DMCManipulatorBringBall",
+      "median_latency_ms": {
+        "public_state_and_tasks": {
+          "mjwarp": 20.066761993803084,
+          "native": 155.08240449707955
+        },
+        "public_with_pixels": {
+          "mjwarp": 154.9058984965086,
+          "native": 290.59322754619643
+        },
+        "raw_physics": {
+          "mjwarp": 14.568050508387387,
+          "native": 223.10199501225725
+        }
+      },
+      "native_over_mjwarp": {
+        "public_state_and_tasks": 7.728322314530431,
+        "public_with_pixels": 1.8759339080477047,
+        "raw_physics": 15.314471547432435
+      }
+    },
+    {
+      "batch": 1024,
+      "env": "DMCPendulumSwingup",
+      "median_latency_ms": {
+        "public_state_and_tasks": {
+          "mjwarp": 4.727960505988449,
+          "native": 35.350701975403354
+        },
+        "public_with_pixels": {
+          "mjwarp": 30.746468517463654,
+          "native": 65.03041749238037
+        },
+        "raw_physics": {
+          "mjwarp": 1.8960325105581433,
+          "native": 17.97012801398523
+        }
+      },
+      "native_over_mjwarp": {
+        "public_state_and_tasks": 7.4769452770656715,
+        "public_with_pixels": 2.115053228159969,
+        "raw_physics": 9.477753104927134
+      }
+    },
+    {
+      "batch": 1024,
+      "env": "DMCPointMassEasy",
+      "median_latency_ms": {
+        "public_state_and_tasks": {
+          "mjwarp": 6.0458870138973,
+          "native": 49.73011399852112
+        },
+        "public_with_pixels": {
+          "mjwarp": 38.23210549307987,
+          "native": 84.69901551143266
+        },
+        "raw_physics": {
+          "mjwarp": 1.930122496560216,
+          "native": 21.652379509760067
+        }
+      },
+      "native_over_mjwarp": {
+        "public_state_and_tasks": 8.22544547792733,
+        "public_with_pixels": 2.215389773047248,
+        "raw_physics": 11.218137474874283
+      }
+    },
+    {
+      "batch": 1024,
+      "env": "DMCQuadrupedWalk",
+      "median_latency_ms": {
+        "public_state_and_tasks": {
+          "mjwarp": 14.069425029447302,
+          "native": 460.3761374892201
+        },
+        "public_with_pixels": {
+          "mjwarp": 60.08493201807141,
+          "native": 508.07661400176585
+        },
+        "raw_physics": {
+          "mjwarp": 8.95218801451847,
+          "native": 236.7605704930611
+        }
+      },
+      "native_over_mjwarp": {
+        "public_state_and_tasks": 32.72174495586373,
+        "public_with_pixels": 8.455973851296935,
+        "raw_physics": 26.44722944927964
+      }
+    },
+    {
+      "batch": 1024,
+      "env": "DMCSwimmerSwimmer6",
+      "median_latency_ms": {
+        "public_state_and_tasks": {
+          "mjwarp": 16.81342298979871,
+          "native": 80.29460598481819
+        },
+        "public_with_pixels": {
+          "mjwarp": 30.85476899286732,
+          "native": 95.76813847525045
+        },
+        "raw_physics": {
+          "mjwarp": 12.27940700482577,
+          "native": 135.50414101337083
+        }
+      },
+      "native_over_mjwarp": {
+        "public_state_and_tasks": 4.775625167673217,
+        "public_with_pixels": 3.1038358607510275,
+        "raw_physics": 11.035072048684281
+      }
+    },
+    {
+      "batch": 1024,
+      "env": "DMCWalkerWalk",
+      "median_latency_ms": {
+        "public_state_and_tasks": {
+          "mjwarp": 20.694613485829905,
+          "native": 104.5624899561517
+        },
+        "public_with_pixels": {
+          "mjwarp": 29.79275002144277,
+          "native": 115.87266801507212
+        },
+        "raw_physics": {
+          "mjwarp": 14.682340988656506,
+          "native": 219.40920848282985
+        }
+      },
+      "native_over_mjwarp": {
+        "public_state_and_tasks": 5.052642806194381,
+        "public_with_pixels": 3.889290781538292,
+        "raw_physics": 14.943748319995033
+      }
+    }
+  ],
+  "batch_1024_costs_ms_across_16_environments": {
+    "mjwarp": {
+      "construction": {
+        "maximum": 138917.26889600977,
+        "median": 86737.9584289738,
+        "minimum": 68464.39332299633
+      },
+      "first_public_step": {
+        "maximum": 990.4359129723161,
+        "median": 410.26962400064804,
+        "minimum": 272.03448401996866
+      },
+      "reset": {
+        "maximum": 9025.939386512619,
+        "median": 936.1526557477191,
+        "minimum": 837.1304765169043
+      },
+      "restore": {
+        "maximum": 1034.4537354831118,
+        "median": 914.6496039902559,
+        "minimum": 763.9727844798472
+      }
+    },
+    "native": {
+      "construction": {
+        "maximum": 137928.53424296482,
+        "median": 25341.948368033627,
+        "minimum": 19904.322128975764
+      },
+      "first_public_step": {
+        "maximum": 468.7212760327384,
+        "median": 77.31035852339119,
+        "minimum": 44.888351985719055
+      },
+      "reset": {
+        "maximum": 8342.57578101824,
+        "median": 74.4101377640618,
+        "minimum": 50.88306198013015
+      },
+      "restore": {
+        "maximum": 165.92852849862538,
+        "median": 39.697554500889964,
+        "minimum": 29.415836004773155
+      }
+    }
+  },
+  "controls": "Zero normalized actions; two control rounds per public action. Source model/substeps/action/render-size parameters match within all 80 pairs.",
+  "coverage": {
+    "all_segments_same_gpu_uuid_and_machine_versions": true,
+    "eligible_same_segment_pairs": 80,
+    "errors": 0,
+    "incomplete": 0,
+    "ok": 160,
+    "raw_segments": 12,
+    "records": 160
+  },
+  "host_metadata": "benchmark-host.json",
+  "integrity": {
+    "aggregate_reconstructed_byte_for_byte_from_raw_segments": true,
+    "aggregate_sha256": "f838cc2eacae9fdabdd337d2dfea4d3cae489be4c0bad9183d4622f14132b19a",
+    "audit_helper_in_archive": "audit/audit_dmc_benchmark.py",
+    "audit_helper_sha256": "07fb1c5f03f889ae65a656f7d1cec00bf6b0d391308e097958367c403aafa370",
+    "offline_audit_errors": [],
+    "original_archive_members_verified": 55,
+    "original_archive_sha256": "b197e011f5e422b883b84b756b4296d37f39b605c87287d73a2f601721eb3ffd",
+    "raw_segment_hashes_verified": 12
+  },
+  "interpretation": [
+    "Native physics executes on CPU and returns CUDA tensors; Warp physics executes on CUDA. These are explicitly different simulation routes, not two GPU engines.",
+    "Public no-pixels timing uses one public action and still returns its final owned State, reward, observation and info; states=None suppresses history only.",
+    "Public with-pixels timing adds the final frame. render_saved_state measures a fixed saved reset State. Rendering records backend=auto, not the resolved renderer implementation.",
+    "Raw Warp measures two runtime.advance calls with precomputed controls, including interop and runtime guards. Raw native measures sequential local CPU lanes without public task/IPC/snapshot/render overhead. Raw is not a kernel-only comparison.",
+    "Construction and first public step each have one timed sample. Reset and restore are separate stages. First-step memory profiling is an extra untimed second call, not a native/driver peak during cold capture.",
+    "Construction measures the environment constructor and model initialization. Imports and initial CUDA context setup precede its timer; it does not measure total process startup.",
+    "Each steady stage has five warmups and ten synchronized samples in this configuration. Physics advances during the step samples; this is one seed and zero normalized actions, not a workload distribution or tail-latency study.",
+    "Fresh worker processes isolate records, but disk JIT caches can survive. First-step latency is not a guaranteed cold-compilation measurement.",
+    "RSS and NVML are before/after samples, not transient peaks. RSS sums may count shared pages in multiple workers. NVML device totals include other processes. Stage allocations can include retained allocations from earlier phases.",
+    "Torch allocator peaks exclude non-Torch Warp/driver allocations; tracemalloc excludes native allocations. Parent CPU/wall ratios omit child simulation workers and GPU utilization.",
+    "The baseline revision is a caller label; native was measured from this worktree, not a separately checked-out baseline. Source hashes provide implementation provenance.",
+    "For continued aggregates, each raw segment retains its own machine, device UUID and versions; ratios are allowed only within eligible same-segment native/Warp pairs.",
+    "Performance evidence does not establish numerical correctness; numerical acceptance remains deferred."
+  ],
+  "machine": {
+    "compute_capability": [
+      8,
+      6
+    ],
+    "device": "NVIDIA RTX A6000",
+    "torch_cuda": "13.2",
+    "total_memory": 50952536064,
+    "uuid": "9aeb0d0e-1a19-7add-5f1a-24e81031c01e",
+    "versions": {
+      "dm-control": "1.0.45",
+      "mujoco": "3.12.0",
+      "mujoco-warp": "3.12.0",
+      "numpy": "2.5.3",
+      "torch": "2.15.0",
+      "warp-lang": "1.17.0"
+    },
+    "warp_driver": [
+      13,
+      4
+    ]
+  },
+  "max_sampled_memory_and_torch_allocator_peaks": {
+    "mjwarp": {
+      "nvml_device_used_bytes": {
+        "batch": 1024,
+        "bytes": 5465571328,
+        "env": "DMCManipulatorBringBall",
+        "gib": 5.0902099609375,
+        "sampling_point": "before",
+        "stage": "public_step_with_pixels"
+      },
+      "nvml_parent_and_workers_used_bytes": {
+        "batch": 1024,
+        "bytes": 4567597056,
+        "env": "DMCManipulatorBringBall",
+        "gib": 4.25390625,
+        "sampling_point": "before",
+        "stage": "public_step_with_pixels"
+      },
+      "rss_parent_and_workers_bytes": {
+        "batch": 1024,
+        "bytes": 31495962624,
+        "env": "DMCManipulatorBringBall",
+        "gib": 29.332901000976562,
+        "sampling_point": "before",
+        "stage": "public_step_with_pixels"
+      },
+      "torch_peak_allocated_bytes": {
+        "batch": 1024,
+        "bytes": 2131010560,
+        "env": "DMCManipulatorBringBall",
+        "gib": 1.9846582412719727,
+        "stage": "public_step_with_pixels"
+      },
+      "torch_peak_reserved_bytes": {
+        "batch": 1024,
+        "bytes": 4022337536,
+        "env": "DMCManipulatorBringBall",
+        "gib": 3.74609375,
+        "stage": "public_step_with_pixels"
+      }
+    },
+    "native": {
+      "nvml_device_used_bytes": {
+        "batch": 1024,
+        "bytes": 5220335616,
+        "env": "DMCManipulatorBringBall",
+        "gib": 4.86181640625,
+        "sampling_point": "before",
+        "stage": "public_step_with_pixels"
+      },
+      "nvml_parent_and_workers_used_bytes": {
+        "batch": 1024,
+        "bytes": 4322230272,
+        "env": "DMCManipulatorBringBall",
+        "gib": 4.025390625,
+        "sampling_point": "before",
+        "stage": "public_step_with_pixels"
+      },
+      "rss_parent_and_workers_bytes": {
+        "batch": 1024,
+        "bytes": 27157426176,
+        "env": "DMCManipulatorBringBall",
+        "gib": 25.29232406616211,
+        "sampling_point": "after",
+        "stage": "public_step_with_pixels"
+      },
+      "torch_peak_allocated_bytes": {
+        "batch": 1024,
+        "bytes": 2124872192,
+        "env": "DMCManipulatorBringBall",
+        "gib": 1.9789414405822754,
+        "stage": "public_step_with_pixels"
+      },
+      "torch_peak_reserved_bytes": {
+        "batch": 1024,
+        "bytes": 3997171712,
+        "env": "DMCManipulatorBringBall",
+        "gib": 3.72265625,
+        "stage": "public_step_with_pixels"
+      }
+    }
+  },
+  "measurement_config": {
+    "backend": "auto",
+    "batches": [
+      1,
+      16,
+      64,
+      256,
+      1024
+    ],
+    "device": "cuda:0",
+    "envs": [
+      "DMCAcrobotBalance",
+      "DMCBallInCupCatch",
+      "DMCCartpoleBalance",
+      "DMCCartpoleSwingup",
+      "DMCCheetahRun",
+      "DMCFingerSpin",
+      "DMCFingerTurnEasy",
+      "DMCFingerTurnHard",
+      "DMCHopperHop",
+      "DMCHumanoidWalk",
+      "DMCManipulatorBringBall",
+      "DMCPendulumSwingup",
+      "DMCPointMassEasy",
+      "DMCQuadrupedWalk",
+      "DMCSwimmerSwimmer6",
+      "DMCWalkerWalk"
+    ],
+    "repeats": 10,
+    "seed": 0,
+    "simulation_backends": [
+      "native",
+      "mjwarp"
+    ],
+    "size": null,
+    "supersample": null,
+    "threads": 1,
+    "warmup": 5
+  },
+  "numerical_acceptance": "Deferred; these timing and memory measurements do not establish numerical correctness.",
+  "ratio_definition": "Native median latency divided by MJWarp median latency; greater than one favors MJWarp. Geometric means pair all 16 environments at each batch size.",
+  "schema": "stable-envs-dmc-mjwarp-benchmark-summary/v1",
+  "scope": "16 DMC environments excluding Reacher; native CPU physics versus direct MJWarp CUDA physics, both returning CUDA tensors.",
+  "source_hashes": {
+    "benchmark_files": {
+      "files": 2,
+      "mismatches": []
+    },
+    "candidate_files": {
+      "files": 187,
+      "mismatches": []
+    }
+  },
+  "speedups_by_batch": [
+    {
+      "batch": 1,
+      "paired_environments": 16,
+      "ratios": {
+        "public_state_and_tasks": {
+          "geometric_mean_native_over_mjwarp": 0.1366795202143431,
+          "maximum": 0.1972777096672162,
+          "median": 0.13693199523146998,
+          "minimum": 0.08283470725511428,
+          "warp_faster_environments": 0
+        },
+        "public_with_pixels": {
+          "geometric_mean_native_over_mjwarp": 0.44181663860086895,
+          "maximum": 0.6988690885103293,
+          "median": 0.5195601443093139,
+          "minimum": 0.21007917453084668,
+          "warp_faster_environments": 0
+        },
+        "raw_physics": {
+          "geometric_mean_native_over_mjwarp": 0.01974025809820336,
+          "maximum": 0.05103075207340885,
+          "median": 0.017695684935921628,
+          "minimum": 0.012837451880067442,
+          "warp_faster_environments": 0
+        }
+      }
+    },
+    {
+      "batch": 16,
+      "paired_environments": 16,
+      "ratios": {
+        "public_state_and_tasks": {
+          "geometric_mean_native_over_mjwarp": 0.5922581010768346,
+          "maximum": 0.7237106936306565,
+          "median": 0.6024502172877477,
+          "minimum": 0.4181168105137889,
+          "warp_faster_environments": 0
+        },
+        "public_with_pixels": {
+          "geometric_mean_native_over_mjwarp": 0.7472499678450061,
+          "maximum": 0.8664711661898953,
+          "median": 0.790815206887922,
+          "minimum": 0.5118956238007973,
+          "warp_faster_environments": 0
+        },
+        "raw_physics": {
+          "geometric_mean_native_over_mjwarp": 0.2411962608731271,
+          "maximum": 0.5468127998962389,
+          "median": 0.23309031062022262,
+          "minimum": 0.14343421920196295,
+          "warp_faster_environments": 0
+        }
+      }
+    },
+    {
+      "batch": 64,
+      "paired_environments": 16,
+      "ratios": {
+        "public_state_and_tasks": {
+          "geometric_mean_native_over_mjwarp": 0.7323470724011145,
+          "maximum": 2.2820165547372326,
+          "median": 0.7133555729244881,
+          "minimum": 0.45297044228643263,
+          "warp_faster_environments": 1
+        },
+        "public_with_pixels": {
+          "geometric_mean_native_over_mjwarp": 0.9246551490057502,
+          "maximum": 1.8857259180468577,
+          "median": 0.951623636524094,
+          "minimum": 0.594643092051987,
+          "warp_faster_environments": 3
+        },
+        "raw_physics": {
+          "geometric_mean_native_over_mjwarp": 0.8573631399266923,
+          "maximum": 1.857905643095057,
+          "median": 0.7926071704115376,
+          "minimum": 0.5855788215416511,
+          "warp_faster_environments": 5
+        }
+      }
+    },
+    {
+      "batch": 256,
+      "paired_environments": 16,
+      "ratios": {
+        "public_state_and_tasks": {
+          "geometric_mean_native_over_mjwarp": 2.111121796957233,
+          "maximum": 8.92119739940499,
+          "median": 2.0119678975315747,
+          "minimum": 1.2175808251022762,
+          "warp_faster_environments": 16
+        },
+        "public_with_pixels": {
+          "geometric_mean_native_over_mjwarp": 1.5910097941096326,
+          "maximum": 5.005681376970059,
+          "median": 1.4373662892933203,
+          "minimum": 1.2518516616859732,
+          "warp_faster_environments": 16
+        },
+        "raw_physics": {
+          "geometric_mean_native_over_mjwarp": 3.101395744801691,
+          "maximum": 7.279393369364006,
+          "median": 2.8262845146477718,
+          "minimum": 2.1570439859793806,
+          "warp_faster_environments": 16
+        }
+      }
+    },
+    {
+      "batch": 1024,
+      "paired_environments": 16,
+      "ratios": {
+        "public_state_and_tasks": {
+          "geometric_mean_native_over_mjwarp": 7.734330497173232,
+          "maximum": 32.72174495586373,
+          "median": 7.526418143218732,
+          "minimum": 4.775625167673217,
+          "warp_faster_environments": 16
+        },
+        "public_with_pixels": {
+          "geometric_mean_native_over_mjwarp": 2.9817027112427437,
+          "maximum": 8.455973851296935,
+          "median": 2.690887949829888,
+          "minimum": 1.8333612522486824,
+          "warp_faster_environments": 16
+        },
+        "raw_physics": {
+          "geometric_mean_native_over_mjwarp": 13.342722650498946,
+          "maximum": 26.44722944927964,
+          "median": 13.235668316726635,
+          "minimum": 9.18627615120472,
+          "warp_faster_environments": 16
+        }
+      }
+    }
+  ]
+}

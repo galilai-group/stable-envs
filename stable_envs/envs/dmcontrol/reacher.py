@@ -22,7 +22,7 @@ class _ReacherSemantics(DelegatedSemantics):
         """
         self.simulation_backend = simulation_backend
         self.mjx_min_envs = mjx_min_envs
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, simulation_backend=simulation_backend, **kwargs)
         self.execution_mode = "JAX_MJX" if self.simulation_backend == "mjx" else "DELEGATED_CPU"
 
     def _make_simulator(self):

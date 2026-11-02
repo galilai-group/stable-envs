@@ -1,0 +1,1263 @@
+{
+  "allow_implementation_change": false,
+  "calibration": null,
+  "candidate_files": {
+    "stable_envs/__about__.py": "b05a238997922d6ad305eb48226dbe06f98c6ebecbb67209eee03ca365f9c73a",
+    "stable_envs/__init__.py": "1a009ab5ca9b4bc2461ccae98e488944bdeb919219e5e0ba2201aff559b74aac",
+    "stable_envs/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
+    "stable_envs/_core/__init__.py": "a7ee6dd850b15cb72e3be03193bd783ae8f705566227719edd222c889de9f6fa",
+    "stable_envs/_core/cache.py": "1ee4baaa624b9e43fb12fb326106c8f81d15ecfc3a0891955031951e1aaac214",
+    "stable_envs/_core/config.py": "72e5cf95ffb1b89e4877a3fe1a9d39f757dd06976e89164d5c4c6817bd6a4e0f",
+    "stable_envs/_core/dynamics.py": "f4747720eeb6809a002f2a39a92bd9a654bc1745e2a21f0e169a3149547a8158",
+    "stable_envs/_core/environ.py": "2a491b1822fddba90be50e063e5895cbb63c78702ad41a7a902d7373d7cd9d57",
+    "stable_envs/_core/mujoco_gl.py": "eddb3bb8e3b19a807869f4a093dbe15a83f0fb77f1cccd596bc28364196fae31",
+    "stable_envs/_core/physics.py": "a7b7da25061fb2b5abdac69c9e8ea09cefa95722f45b74fae21ac9a62de345bb",
+    "stable_envs/_core/plate_texels.py": "4373539bcd577aa80a65a139b2892a7d85ace9a74cfc6ffcd5165607ba4614c7",
+    "stable_envs/_core/space_nodes.py": "9e304c0eea43bec948855a34311f7840b0e2286fdbc1b347f82225efa0734291",
+    "stable_envs/_core/stepping.py": "2d246c9722be8d5fdbc0d85813da99e2077be1b47d115f0baf42354dcea49972",
+    "stable_envs/_core/style.py": "8ba29ec409bc9f02ac96fc3050730f2191b2ff94101f967dfeffb79efc8292da",
+    "stable_envs/_core/tensordicts.py": "8f3baa8e66aab130e66ccca586793f55ad5aee7ed0492ddf106997a59b6dfc8e",
+    "stable_envs/_core/warp_cuda.py": "97ce97befb1c032892ec58b9bc3ac1fe34cbc66e5ac761aab42b6790a8c8d667",
+    "stable_envs/_execution/__init__.py": "bb315dd37f00a93822abc8f608e5ed972b52486cd45184366b077143688109a6",
+    "stable_envs/_execution/policy.py": "173f545a3a802320b9aef79734efc90f567b4b5cf36c6b72d4fa484e1d010210",
+    "stable_envs/_execution/process.py": "73a685fef794098c9838efcef126e72b2b9d070ae8367a837223212fb81d2023",
+    "stable_envs/_execution/protocol.py": "05c458e0eefb4a524a72de62c0d523f69659d45fcb175ca226a6778233ccf1d1",
+    "stable_envs/_execution/render_pool.py": "5131125f866003a3daf074c839e0e8c2b1350543840a5fd05cf89c8206385d57",
+    "stable_envs/_execution/requests.py": "245689692712dd4525a1ed177680dc56dcada035e37e82b57e108966b02161a1",
+    "stable_envs/_execution/shared_memory.py": "143f80832bb6d531e5e5c1449a38c6d2d645abd913ef8904d0549e86a2130cb5",
+    "stable_envs/_execution/state_columns.py": "0e2e5094b43f7de2aac5287a13b3d99806fa255ded2a3fdd0f22da3c2a1ae947",
+    "stable_envs/_execution/workers.py": "6f110db20f73fc64927ca990d3097616ceff085c1a5571bf25558dd39f3d7908",
+    "stable_envs/_tune.py": "e6696f88a0c1df9122ce1c9f854512de3600cca6a9ca1f11a53c044fa8e9413f",
+    "stable_envs/cli.py": "14671c3f78b69d15f6977eb502f751551faff4a87d8c72685241cb26a6c88694",
+    "stable_envs/doctor.py": "c72fff5afe652b13bc4a547311ae47bb2e37825d460d76060e802a373d4fa399",
+    "stable_envs/env.py": "18ff248147626cb6fab8c1a01c5df98a9c266c4b7c5ee21619b12d7f7564fd0c",
+    "stable_envs/envs/__init__.py": "2b79660c96fa9160497a37ced3d52cce9554ecfeb290c56d29138a928028059c",
+    "stable_envs/envs/classic_control/__init__.py": "d7ff62c880d3dd8a2a291af0c61c0caddfdf44ebf75a2f7133de456ade7223fa",
+    "stable_envs/envs/classic_control/envs.py": "f21f091c90fb2907e77f011d2f4ca1a0d1a7af80c8e99a1172322c46d59637cf",
+    "stable_envs/envs/classic_control/semantics.py": "3a3707efb446faaf201c3beac77f09c0c9593bad41ea9ebb27f984d3f893db25",
+    "stable_envs/envs/classic_control/simulation/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stable_envs/envs/classic_control/simulation/execution.py": "8587cc76b85cc488c8e607e09b701fcf0edef22a2ae0285967f031efff638f65",
+    "stable_envs/envs/classic_control/simulation/local.py": "ee0653dfccc7913c631eff19f3fc443355ae72c4791f02102a9cd76013d13d23",
+    "stable_envs/envs/classic_control/simulation/process.py": "0b989051f2a9248222c3ca5417f210698ab37e12ae06f3516447b82aabd6947b",
+    "stable_envs/envs/craftax/__init__.py": "05f33e2c630de8840abd2d69bc0b20a9b892c75d5f5329eb4c7c0a3061c77eea",
+    "stable_envs/envs/craftax/envs.py": "db0e43c8e7c864aea68f24717220ad1925e4e3c6a5aa62482069fa5c790d0d02",
+    "stable_envs/envs/craftax/kernel.py": "b348c700e05e900e4f63deec39cd2e9eb60798edf6c583cc4aeb55a5bf84e32a",
+    "stable_envs/envs/dmcontrol/__init__.py": "9e576b0e13b9e47049c3a6d16b904a3af8303bb452fb53fb2b32c39cfad66f80",
+    "stable_envs/envs/dmcontrol/_aligned.py": "ba1cbfae34a61ba5d94f77c704bdaa3cdbe6796873cdabdac80e6f4f2451d0df",
+    "stable_envs/envs/dmcontrol/_cells.py": "a2f0b25f3e67ff688f69b936e1ad9b5c4d5a01ab6d1c2a2f49fc240499ebeab4",
+    "stable_envs/envs/dmcontrol/_continuation.py": "23e99e30e1598c2d643cdc6a12ad79cc3cc5717e9b5ea5f9e5e251a6c20d738d",
+    "stable_envs/envs/dmcontrol/_delegated.py": "1e84b77c1f1efa76833d971a14c1711db86e2f1c2210bb25a5f468493b174deb",
+    "stable_envs/envs/dmcontrol/_family.py": "bf746d9b44cd54640be366b40a606d8ba0589140c0419a7700ea058779f90fd7",
+    "stable_envs/envs/dmcontrol/_first_family.py": "6e4f29fb1e9e2c2e409d331b1e7a4ecf17924d8fc3da6d69beb8cd98f290e35d",
+    "stable_envs/envs/dmcontrol/_humanoid.py": "791799f11c25761f02a270864acabf3052e33ff03732a30ae5db79715fc63bba",
+    "stable_envs/envs/dmcontrol/_mass_rows.py": "d15356bc6b16f08651a8bdb2292709ff36d36b167f82354a20fb729b927c88af",
+    "stable_envs/envs/dmcontrol/_model.py": "459aa84038becc8eda6d77466361c348a9d370be6adbf81d29a3c4c125f1d1bd",
+    "stable_envs/envs/dmcontrol/_shading.py": "8cc5f396cfbd4c924869ddbf3230844959d420cb33485c7f1f323ddfd9560c74",
+    "stable_envs/envs/dmcontrol/_tendon.py": "68786e82e4dbd6cae904db76616de3e083cc0732a9268654b4758d579fce5151",
+    "stable_envs/envs/dmcontrol/acrobot.py": "d717ab24a27bf1bbe3dd53b356b0e4708486f9707267c322b59b4e43787ef805",
+    "stable_envs/envs/dmcontrol/ball_in_cup.py": "3468572c7d8891dd6ae765532a880fd0953d334818bdfc999507630cbb141373",
+    "stable_envs/envs/dmcontrol/base.py": "f6926413a0aab77c99428105a123871019fcdb268026ce91c6a5f2ea4593f0e3",
+    "stable_envs/envs/dmcontrol/cartpole.py": "c8d16c4beff9f01ab8427d596fdfbd3f77b71e4acb00f3dfc65b87506f9c3f8e",
+    "stable_envs/envs/dmcontrol/cheetah.py": "0e6d1499ec3bbf862cd60aee6ecf26d947c3735082d642ec1a308183ef0bc17b",
+    "stable_envs/envs/dmcontrol/finger.py": "3efeb1548952f2c1586750129ccc22e2dfc1900bcb834dbde9663862c9431e79",
+    "stable_envs/envs/dmcontrol/hopper.py": "37e2e484734847df6932439615e89b93884780b96f208d4feabe321647d4f1e6",
+    "stable_envs/envs/dmcontrol/humanoid.py": "401a69b158fed3d6ec419cd919941fef9f42e4b8624a0005bfc9ec7a7b9cd44f",
+    "stable_envs/envs/dmcontrol/manipulator.py": "f1d96104ac341fed05bad7b833ec5c138d168fc2dc142988f983ec909c98adc8",
+    "stable_envs/envs/dmcontrol/pendulum.py": "bc2adf926e06017216abd60343f1f2d5fcd2e4fedafb2726969b98443854691a",
+    "stable_envs/envs/dmcontrol/point_mass.py": "d2e12d6773c320e98ceb6b3d529c28a42f0bf1cb3f9657cdc643f94d6d69ef0b",
+    "stable_envs/envs/dmcontrol/quadruped.py": "96ea0442ad990e6c12ff3edcd83bd8b5a8aef0206d183653e58ee88bc8942fd8",
+    "stable_envs/envs/dmcontrol/reacher.py": "03f22a1e45f8dff8b84f2bf62ead08d0bcdd7b756bab78cb21836a27ed8477c4",
+    "stable_envs/envs/dmcontrol/simulation/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stable_envs/envs/dmcontrol/simulation/aligned.py": "461a10eb9c0b0450e90ca9fa5c17623d6d2b4a0f8b6925256836a819b3d62783",
+    "stable_envs/envs/dmcontrol/simulation/continuation.py": "b5acd938afc1dc2fbce6e8df493d4496fefe290cb18e0d2f423e683de65f1dd1",
+    "stable_envs/envs/dmcontrol/simulation/execution.py": "b55f1ea98365637c217f68f2ec5e00a27e32c1461c09818bb4843ee6ad0404fa",
+    "stable_envs/envs/dmcontrol/simulation/factory.py": "eab3b5e5080ba4c253240d9a427f1ebb382ff8009c9f35cd4c7c117e5bb37ef8",
+    "stable_envs/envs/dmcontrol/simulation/first_family.py": "9bd9f7e759d6d6c8d3c1db1cdcf2c29bd5046b971fc5d50c2a43518a5bcde422",
+    "stable_envs/envs/dmcontrol/simulation/humanoid.py": "290e68c006e680905e347eb0862c10185564066d9f731a4726c378a18c689702",
+    "stable_envs/envs/dmcontrol/simulation/lanes.py": "0f4934409dd37123d2e5858af991d7ea82b8de5f8ea877c9a078455cfacabd14",
+    "stable_envs/envs/dmcontrol/simulation/mjwarp.py": "245a989a9b1557db27a8f31101774e730d56ca418f75a6c2c2efe15294ad3d20",
+    "stable_envs/envs/dmcontrol/simulation/mjwarp_runtime.py": "ba79f8870f4edc1353ff29c8bfd774f3f25c9f241de89ed707d085da899c6d01",
+    "stable_envs/envs/dmcontrol/simulation/mjwarp_tasks.py": "2ce265f03dc6bfc488775c32edbb3c5a7b8f04157de1ba9c65838bfb4643f472",
+    "stable_envs/envs/dmcontrol/simulation/physics.py": "88a5d09807bbd7c10c875ddaa3294b96845ff287410d2349786187d4d6db376b",
+    "stable_envs/envs/dmcontrol/simulation/process.py": "957fe3c033ee0860fa56526a03b5566e11d34c4fe48ade94f0452f2edecc8279",
+    "stable_envs/envs/dmcontrol/simulation/reacher_mjx.py": "2fcc8539fb31b29b896829058c6985b369acb03c469a8283ced65db078015f1e",
+    "stable_envs/envs/dmcontrol/simulation/registered.py": "20f0dacaa80b2ba1af9cf1fe31fb873ed089e186416db102e60c67bab2845136",
+    "stable_envs/envs/dmcontrol/simulation/state.py": "1cd0018b4fb644fab35a886eb7b623ecf1e1738c041af3fd6452be45250e8a6a",
+    "stable_envs/envs/dmcontrol/suite.py": "2fb982cc7ea4085f8e58111b6b212040d27c756051d06e24fcdfbbac541780d3",
+    "stable_envs/envs/dmcontrol/swimmer.py": "e204a55cd891804ca30c798e02adab41a0210e708a47752bdb488a1c66fa67f5",
+    "stable_envs/envs/dmcontrol/trackcom.py": "62b8001b349a26a58390aab45edf06da13f83587d3ad21852d9887957bb0a4e9",
+    "stable_envs/envs/dmcontrol/trackcom_opengl.py": "7c8f1a59fe6a0624d0012aeca462ee7b83b3bcf32e8bedaa679ab13fd716a117",
+    "stable_envs/envs/dmcontrol/trackcom_reflection.py": "11559173a73239094f799fd8f7406650e81776ec6d83be331b7b981164cc4e9b",
+    "stable_envs/envs/dmcontrol/trackcom_texture.py": "1a2c9c143070a56c641a6db0e9de498b5aefa6fd32eca165a932cdf7e04cee88",
+    "stable_envs/envs/dmcontrol/walker.py": "0325dc2b54c2d671a16c1c1117ac54fb955123de1663a9764902020dca4fbe01",
+    "stable_envs/envs/fetch/__init__.py": "a2635100ec37aafd84d28936841870d3d95b644dbabe38137a65dfa2334157a1",
+    "stable_envs/envs/fetch/envs.py": "f70316b91738eac1aa58210de2f85a68cb8e7a2a561e0776d326d63dc88e48fd",
+    "stable_envs/envs/fetch/opengl.py": "bf465e67fd76c64118ba6101dcf226d954303dabfc008ce8a8f901e6e9c78c7e",
+    "stable_envs/envs/fetch/semantics.py": "79b7efd18701da110b0fecd84d88a521033c104cf2fa038d6e6e6b1c3d9344bd",
+    "stable_envs/envs/fetch/simulation/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stable_envs/envs/fetch/simulation/adapter.py": "234734588932403a69711c6905b9a5e8d824790e1a635028a7db928eefb7e7ab",
+    "stable_envs/envs/fetch/simulation/execution.py": "a64098d0b415e96f926e5b7ed8fa3a8ca8c880f28e341e8b6ea9b31ccda7aeab",
+    "stable_envs/envs/fetch/simulation/observations.py": "970c671827770a5bb2b38100739d18458a84197df0ebca7aae4ca9dfaac8ef44",
+    "stable_envs/envs/fetch/simulation/process.py": "2e41a5177e7c86b2f185feb42b4878c19fb7b8121656f9f20a05c12a4596c223",
+    "stable_envs/envs/fetch/transparency.py": "67f6e5df52678c12ee011e606a529aa0dcfac63ca969f1c86ec3d25baa88e5ac",
+    "stable_envs/envs/mshuman/__init__.py": "7bbd24618182d66e92fb3996446dbb1f834cd3eaa916b59a993fd59db4e38568",
+    "stable_envs/envs/mshuman/assets.py": "de118a6260b97453c235048804d8e3835b5d01513bf8f78247477a55756c915a",
+    "stable_envs/envs/mshuman/envs.py": "814a3a417669fdeb08f7d0710fae0f9a3d15821231ad0e10f5758f43380ea227",
+    "stable_envs/envs/mshuman/simulation/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stable_envs/envs/mshuman/simulation/adapter.py": "42615c0ba24b15309802d1341e63b223b57622895bbd70c09c091aa120700508",
+    "stable_envs/envs/navigation/__init__.py": "26e079a9c2eb428f4576e0b0c7c4e8b1984365ea12e94870bf8898230337138a",
+    "stable_envs/envs/navigation/envs.py": "651c3d682b09f1ac208b101160d464f8f481e475eb67baed6a24513b90dc3ab5",
+    "stable_envs/envs/navigation/navdot.py": "0ce6133e9015fc863a35de5fab6898bc5f161ddf0a8d61044e6780f1c00348c1",
+    "stable_envs/envs/navigation/tworoom_jax.py": "7bf9dba38684d03c2f3cbf5ab967ba9e42cee39360d831ebbe5b6cd79c0dee3a",
+    "stable_envs/envs/ogbench/__init__.py": "6bc8dc557fdb7e323a43900d553711505a9eb4a6c3204afb49e22c7baece7e2d",
+    "stable_envs/envs/ogbench/context_cache.py": "cd3a900033421b9236fbd9aa6b2a5ef756c1b765a0e5b128be04b358ff28c3b1",
+    "stable_envs/envs/ogbench/manipulation.py": "dcc60a8721e79ea5954efad2f90e4974fc3447bdb1c64e81a76aded8f1409a92",
+    "stable_envs/envs/ogbench/manipulation_fidelity.py": "b9d83cb7b72b5306318fa07a9cff02967c2e7d5dc83caf02ed2abeabad07a084",
+    "stable_envs/envs/ogbench/manipulation_opengl.py": "8f4a1be9b69ce360930b44bff032e065b3b3a739cb65ed6c335ec8326f5bea56",
+    "stable_envs/envs/ogbench/manipulation_opengl_pool.py": "94ea3fe0d082aab4261f6e093df16add8a7def87f91b173c5042ebf8f3c3ae21",
+    "stable_envs/envs/ogbench/manipulation_renderer.py": "7f4324c1781cef044a0a20c05de7d493f596700ebb66d9398250d627165045a6",
+    "stable_envs/envs/ogbench/manipulation_semantics.py": "056f022a2b4b05d77316e76fd650615aab008e01cfb8a2d74b3471d6bab8cb54",
+    "stable_envs/envs/ogbench/maze.py": "3158dd4ba6fd0284adc2feb0fa9999ad532c5c4f5a6d2c6d314a8e5104709128",
+    "stable_envs/envs/ogbench/simulation/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stable_envs/envs/ogbench/simulation/compatibility.py": "64cc7781a2368b1f2f2a16209d0d4e15c5f9cfeabbb836ae56b3690e4880abfb",
+    "stable_envs/envs/ogbench/simulation/execution.py": "8f7e750d809ed338cc480767e9d47855e14d714b58d4c711fe78b9c84e2c4ddd",
+    "stable_envs/envs/ogbench/simulation/manipulation.py": "ad920869872ea4ef25a1c268b39586d89750b066c5b5721bf1808ac20517a6e0",
+    "stable_envs/envs/ogbench/simulation/manipulation_process.py": "94e26855729a822e8ecaf5fc63799332c3e8be308576b898eb0269e05aeb9ba7",
+    "stable_envs/envs/ogbench/simulation/maze.py": "5e42a5b72de5cb40a31fdb36db8aa461584bf3f803a7b160959dd67561dff8fe",
+    "stable_envs/envs/ogbench/simulation/maze_process.py": "7568a79f7f138e482ae4cc3b4064700ad95b74c327265bfd0503f333f5bcd316",
+    "stable_envs/envs/ogbench/simulation/pcg.py": "d612b1d7d3dc420428c589dc156dba51fa4880e650679cf1e8b1e9cc08d685f2",
+    "stable_envs/envs/ogbench/simulation/render_state.py": "3a0b5d56116d345c8b3dfd46157aaa6fc6e82d4a3643eaf093ec1094f8960890",
+    "stable_envs/envs/pusht/__init__.py": "5f5546a5232b0fd4ebe536119b05dbe51425b27d72d9352e61f0dd9ae3885a40",
+    "stable_envs/envs/pusht/draw.py": "0eab41fd37cd9e1dc3f5ef986cf347a56a9cb8807c9a671af5c762934c708ea9",
+    "stable_envs/envs/pusht/legacy.py": "ebc74f6d78f3aa39c987aaaf2dc576d6e48888cb50d92638c2bc7b9c15f61b5e",
+    "stable_envs/envs/pusht/projection.py": "f37c375ff267c30e94d54715a001102682eecca75ea499ecab249fac5ae12789",
+    "stable_envs/envs/pusht/raster.py": "b6d556795d8b3576e199050e3dc49e595b29dac76e7dc2906cdabbb5765b0f53",
+    "stable_envs/envs/pusht/raster_cpu.py": "a5194c18a86e0787a7eec3a799f65b09aa48bb931b312c9b3b296f9d9f30c787",
+    "stable_envs/envs/pusht/raster_device.py": "c867089c71ecfe7d940ffc5f230c5e2310b5f075f984481769aa8e71276bf4e1",
+    "stable_envs/envs/pusht/render_pool.py": "49da8577b3ab18f86f146992f28db1ea58a32b0250780ff4ba867d778026e89b",
+    "stable_envs/envs/pusht/semantics.py": "7810805b3ec13d7568e9409488dfb12c6ef086e132c404cf8f403eac333cd4ac",
+    "stable_envs/envs/pusht/simulation/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stable_envs/envs/pusht/simulation/contacts.py": "9fc133ab8e88ada1e58248f27dd43daf2ffebbc50d5111881d35ba4628184634",
+    "stable_envs/envs/pusht/simulation/execution.py": "cddda8436da2a21db68466b63b0fb124862de03890bfdb5dd75647e11df77cf0",
+    "stable_envs/envs/pusht/simulation/history.py": "08181e3f8bce90b6707a2a7acbafbf6ed1473293aaf78bd35ae535c48e907644",
+    "stable_envs/envs/pusht/simulation/jax_batch.py": "1fb48f0fdbc7f63a867d0ec0674bf6ee05414d9a35bb945156df5dd1975362f0",
+    "stable_envs/envs/pusht/simulation/jax_physics.py": "e32474e6c71b4bf55cd122e852f6102c6d6c352bb0a332d2997c6fac1ff3e1d6",
+    "stable_envs/envs/pusht/simulation/numeric.py": "f6034ed48fddbd37a4d3345675aff170ae3d8245dee16026a45dba40902cefb6",
+    "stable_envs/envs/pusht/simulation/process.py": "3609ff5d7bd66bfc741435d43466b0550ef65aed7e93319ce1036f2a94c63b6b",
+    "stable_envs/envs/pusht/simulation/quantizer.py": "9dacf30f6f47f08ee8e3d2397c2fe5e0011f35e38e3a6b0f8aca23e2055aa75e",
+    "stable_envs/envs/pusht/simulation/replay.py": "f540e9e8e62577bf5ddc88f253c92342a1c2547364b31407635a020a183e098c",
+    "stable_envs/envs/pusht/simulation/replay_batch.py": "3f8db6be8551213f020271f2761375c2ef81a1c803c757eaf9ea60539b22a370",
+    "stable_envs/envs/pusht/simulation/task.py": "4b944c7eaff40bb1e08c700fb2ed6d10572e62cb07a32eb428ec559d4f26aed2",
+    "stable_envs/envs/rocket/__init__.py": "91fe3f0f9d32257184e7f201c86bbec589e06f768a507f21e77946f94b70805a",
+    "stable_envs/envs/rocket/legacy.py": "e0fbd194c2836bb9f1085913f8a8c94b178580fdd5e9b1751fb14881c669048b",
+    "stable_envs/envs/rocket/raster.py": "a5d12dfae50a39c6327ce82523d2b992a70c0f432675c7b616be3f2e8c593a1a",
+    "stable_envs/envs/rocket/render.py": "988e63562b8aea469b14795cd95f9a6282fd3c47582c90253040bf92a87319fd",
+    "stable_envs/envs/rocket/semantics.py": "459ebe2a825c7bb50ed725b0d8a44c9cffd105ca47beae10af3afba51fe30b46",
+    "stable_envs/envs/rocket/simulation/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stable_envs/envs/rocket/simulation/actions.py": "142e86b043746615f47eff69dc745f4680cc02bb6349d008ccc572c4247e687f",
+    "stable_envs/envs/rocket/simulation/adapter.py": "6d6475c74c7e44e0f5eb99c2ca2747f5c9d8962c5b12a21bec309b9dde251e48",
+    "stable_envs/envs/rocket/simulation/execution.py": "833fb66e864a098c98af0113fdf80585edde321e904ab621f4bb347f2947b18e",
+    "stable_envs/envs/rocket/simulation/numeric.py": "c26808546ffef24abe34aac94b94f2879c7fe5595d9c729f6e44cb8fae111d01",
+    "stable_envs/envs/rocket/simulation/process.py": "52bf502ba2869fb00c61f80c24a93cc22f036efba4c35e6da64f8d99d85ca01e",
+    "stable_envs/envs/rocket/simulation/replay.py": "79fb229a0a25d7498d5aad0bb6cd9dbd68ad84667dd14aa3ea8dc160bbfab7f7",
+    "stable_envs/envs/rocket/simulation/task.py": "7b57063a4c9c61a107abcc30ec02c0d93a508f67ef74d3fc586669789531551f",
+    "stable_envs/registry.py": "c6fdf1d1659e48a7de88883c62b7f69f2c72402b17f91cbeff43285adab6481e",
+    "stable_envs/render/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stable_envs/render/_resources.py": "6ef4505c5d9b6d26f4e5decf91fddc37e9b3897a45be3bba91dc00d74f989c57",
+    "stable_envs/render/cpu3d.py": "a99fb4c12bed35550117f4344e6f8fd29680271ed01b2647d1a2c7c2fc6e512c",
+    "stable_envs/render/cpu_raster/__init__.py": "3c4dd9a005c22cad69c20b68d67e2436d79c7b026241975c0ed87e23db23a0c1",
+    "stable_envs/render/cpu_raster/_common.py": "115e9a55c32549cade6beb64429eccff4b8533a1267e880a7880e9e061c2648e",
+    "stable_envs/render/cpu_raster/classic.py": "b497143abb0fca73928ea35bf6ff052e3a498a692705388331a7c62396c4a457",
+    "stable_envs/render/gfxdraw/__init__.py": "88cc88f61d0a7542b627db65b929fb00bfcac182d83d1428d9a2304d59e513ab",
+    "stable_envs/render/gfxdraw/classic.py": "4e621ce6ae40609f4bc0d89ac2a97438e3542e4e012e5373f205fca58089d689",
+    "stable_envs/render/gfxdraw/fused.py": "a2808115f5f9b2726671ec7e81f59ff1fb5f36256e008cd3bbdbc78b84ffa503",
+    "stable_envs/render/mjwarp/__init__.py": "6389dd18cb5f1c87df950a2c3947338ca98b64aff2aef555d82a78e26fa5845b",
+    "stable_envs/render/nvdiff.py": "9820414138e44427653cc38fcc6e7c97a7bedc9996ef029f32acbe8bab3569cb",
+    "stable_envs/render/primitives.py": "cfbacbb164abc250234deddac08eb42dc61372cc1ea03a6ea94ade8c13eddd20",
+    "stable_envs/render/raster2d.py": "fe63f7ffafb78caf436f3d88b7a9ebe7fb4c9ce30924dfac22597aa24098c392",
+    "stable_envs/render/raycast3d.py": "e446b5a81c12cb76b0cad49c4bdd9176cbd4b7d23fb2570fff5d5e90acc73fa4",
+    "stable_envs/render/scene.py": "917d8140c62dfaafe548d0d78409cf9a107568d96b69d1cfe0e1900fcf53a221",
+    "stable_envs/render/texture_mip.py": "97ec405bc928841ca65b22b90204d441574291de66a739820393f66825c0308e",
+    "stable_envs/spaces.py": "6b240b59d4468aca5a72ff66e7a204890bfb64e5d3d5f1f21d9a50419caf184c",
+    "stable_envs/specs.py": "364d2d61f9411fe3f2324f9473c08e8b9c2a7ba7d33bc80c98b7c2af12fbe70c",
+    "stable_envs/testing/__init__.py": "4b9a669a54084ae20b469dc2305bbad13335c139345c7f54d34f989f299b18bb",
+    "stable_envs/testing/_data.py": "250a2163ea4c458d07e4287ea5f35c8a59a30092c02d0ecf0487040af2ee80fa",
+    "stable_envs/testing/_sampling.py": "a1721a5a16f396a574842d360ef0ea9d87c70a1dc2cdc8ad1d8e51d039fc2d3d",
+    "stable_envs/testing/conformance.py": "2e66b579305e155f13b333cdd52f6de71c43a57f6f657cdcb7d27078707952e9",
+    "stable_envs/testing/corpus.py": "aa91f2363236b7c3647e617e1bc22c44cd0945340433461d4309d111ad6088b9",
+    "stable_envs/testing/evidence.py": "d4575208193a6023a6a76c1a3dc8f8add91807aabdcb7a9173d654988f9e30fc",
+    "stable_envs/testing/metrics.py": "ec0af4f39a11416a838fadaa6046cba707c4155de91d8afe20791b5148c299de",
+    "stable_envs/testing/provenance.py": "7a9543a70c9c78d561c596c66b0549f45ad4ced5e3bdc7121f0e1a9e541058e1",
+    "stable_envs/tuning.py": "f2294fd0c1799134d8bfecbd0823c8cf88a1d856b43483c15f62fa3fa603afec"
+  },
+  "deselected": [],
+  "exit_status": 0,
+  "machine": {
+    "compute_capability": [
+      8,
+      6
+    ],
+    "device": "NVIDIA RTX A6000",
+    "torch_cuda": "13.2",
+    "total_memory": 50952536064,
+    "uuid": "9aeb0d0e-1a19-7add-5f1a-24e81031c01e",
+    "versions": {
+      "dm-control": "1.0.45",
+      "mujoco": "3.12.0",
+      "mujoco-warp": "3.12.0",
+      "numpy": "2.5.3",
+      "torch": "2.15.0",
+      "warp-lang": "1.17.0"
+    },
+    "warp_driver": [
+      13,
+      4
+    ]
+  },
+  "passed": 53,
+  "recipe_files": {
+    "scripts/ci/run_dmc_mjwarp.py": "40e75dabae646c21ec389ef4a6d36da9e21a6cadf0788f5bfa08ed1b0b1e5af6",
+    "tests/gpu/test_dmc_mjwarp.py": "3cdf2677c5efa9ba98cba97695ac92876e32f7b63ba2cc768603b505542d0ed7",
+    "tests/gpu/test_dmc_mjwarp_streams.py": "0f956f326c8a3652ee60a75440494ec73db62af52285bd063bcc81010937ec9d",
+    "tests/helpers/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tests/helpers/counter_env.py": "e973fd612f93a5fbb5a7338dcc320a0c4044412f1e5e82a4cc69ff25308f337d",
+    "tests/helpers/exemptions.py": "36a48806256182bfdab49134d19b3853267b22ca843f1f5f1f2dc247f5cfaa3c",
+    "tests/helpers/families.py": "6b3b94c1d95a8fe67895ec635ad66180e116554e6732a1b0ad64976c14359d0f",
+    "tests/helpers/gfxdraw_reference.py": "4bcf31fe41a990ef42d3dcd0f54c7f6e0fa1c986d3bea46aad0287525c68b3c9",
+    "tests/helpers/golden.py": "fdd6690d93dd8df93ecb107348b505f18f66823b2a83d3b1680fa75267e513f3",
+    "tests/helpers/ogbench_golden.py": "fbb25e0badc7ced58a960fac47d5bad642e168846961d718a21dd0c5ad481642",
+    "tests/helpers/ogbench_opengl.py": "d6c23f2fa30abf82dc39d6db1507425bbb55891cad6b410dcbc44194a6cfd1c5",
+    "tests/helpers/process_equivalence.py": "46c51592937a68810181087903875c82427f0e700b3df73eeb580c35b2f6a02a",
+    "tests/helpers/raycast_reference.py": "fba6d1cfe47831c4947f760fbb0e4bd6121e1b235ae09a17b804a92a664e511b",
+    "tests/helpers/reference/__init__.py": "3112bf55f0ba5f5638d0a9963a19adf56d481a76a91413f2638fc0d38cdd39cb",
+    "tests/helpers/reference/bridges.py": "879d149243d1707b6e6dcc4900c6ab675ff0c1c1603a2058f9eb2474c8608cb0",
+    "tests/helpers/reference/cases.py": "2d31118c4b06e72741c60d74829321afa6eb88965d2647b528af68dc7c45bfdc",
+    "tests/helpers/reference/certification.py": "d96c305b5aece3a7c020e5b822221baa4f957b3aa687cda21f55f2fea3034302",
+    "tests/helpers/reference/classic_state_export.py": "8da230e32099c1103e9e2900aec63501a15c70e0396562b020e020f0db553260",
+    "tests/helpers/reference/craftax.py": "dfd9f58b77c064ccc6b09458b91a4a0c6fe419d7e520eb7d27bee022c2ab5168",
+    "tests/helpers/reference/crosswalk.py": "679c8f5495ba0ffb43dd47a8db0587615c817b50d32156f901e9d55e03e53489",
+    "tests/helpers/reference/dmc_mjwarp.py": "d6c5b78eda57b921786ea473be684a70fe52f1b7ab9accd15148a8a012a9ffa9",
+    "tests/helpers/reference/dmc_pixels.py": "99d9467d92b529140250c6efc4fc85df6c13db2a52f0e005904537d77e2de576",
+    "tests/helpers/reference/dmc_semantics.py": "1a6d7ca27d3f61d76130365fed0f45e7e550726499413497dc6c03b4f9682319",
+    "tests/helpers/reference/dmc_source_render.py": "33ce22eefd347f3d582d4c1a9259abd4a2b03504fde842e462cb52b7d48c8fae",
+    "tests/helpers/reference/dmc_suite.py": "829c5582c7e0cd44c502637dc40e1c96bf14d850cebf3acf8d7a309d1c9467c6",
+    "tests/helpers/reference/fetch_compare.py": "d014a4dda42c6961e756a5ae7235916c1a0212d99bcff1412331586c97599fda",
+    "tests/helpers/reference/fetch_pixels.py": "e37801185986c04ecdfc176ecd3a067051f9d53e0852cc468c07083d6c8dd0b8",
+    "tests/helpers/reference/fetch_semantics.py": "167558b2edc1aef3d33823285de0385ebdd42e272a3df4af70d93f25d847b983",
+    "tests/helpers/reference/gates/__init__.py": "bac4064aca65a5f477e6ef18c5853c3cc0dde07a424d1e1d20a4f5704b5eeb43",
+    "tests/helpers/reference/gates/dmc_aligned.py": "77d2f69099275ada099f1eced15062c390b995768b3e55f7dfb89d50a0731c54",
+    "tests/helpers/reference/gates/dmc_appearance.py": "56f0531de49c814e16a1fcfcb7e163cc57159565e07280b92b4ba5bea11f545d",
+    "tests/helpers/reference/gates/dmc_continuation.py": "af34d38db15f38edea720e80f66b2d2f80b3d2cfbf8cefd68e4a8e1f01e5e77a",
+    "tests/helpers/reference/gates/dmc_first_family.py": "149dfc84c90d89839346cbf795810334d3e3487c49c69f89526dce27c05d38a2",
+    "tests/helpers/reference/gates/dmc_humanoid.py": "1bbb643f984a20c620b5e1835a9e13612ac1a8abb6b8fb0c840f647c38760c41",
+    "tests/helpers/reference/gates/dmc_physics.py": "ef37a8695ec06bf72b977d3096b17035454e0fe7838f8ab3a27eb343765ccb95",
+    "tests/helpers/reference/gates/fetch_variation.py": "3dd20665b846ad56b07dd21fcdf772d7ca7baee3c558d4cd55fdf4c5e5ef5e84",
+    "tests/helpers/reference/gates/native_navigation.py": "0f362dbf9030084f0216824909cc9539d832e8b17e40a7b144a407bc0d1eaf79",
+    "tests/helpers/reference/gates/ogb_variation.py": "7e27c662fd6e2dbf8a584562946b87ceb0246adcccc15a62361341cf5048a838",
+    "tests/helpers/reference/gates/ogbench_maze.py": "87787f64d09942852ee4deab2202eebf485b2bc151b90cee2b067fc383487db1",
+    "tests/helpers/reference/gates/reacher.py": "64c14400221a4fbf6280ef29cbf3b32a838bcf9ac49ba75f9292ef59db9c06b3",
+    "tests/helpers/reference/gates/variation_classic.py": "24b70a9765f4d13379164deec57138a4b977412f95e83f063dc25cd05af0e88b",
+    "tests/helpers/reference/gates/variation_navigation.py": "96e0b22898c63d7ce2cbb5643b5ba0541ed6848a29f1d58f31622beee9f20d5a",
+    "tests/helpers/reference/gates/variation_pusht.py": "45def7793dc11f12e83bd3b4e0dec8157f2d580dd9ac65fefe18548841cd0ce0",
+    "tests/helpers/reference/gates/variation_rocket.py": "b660f14d066af417f35d0da9d978174d6927d480a3387f0c71432b4552c2d529",
+    "tests/helpers/reference/isolated.py": "54f1f6be70ff7cd70c238e860568c2d3211a87a33c3171d081d9b696fd60b29b",
+    "tests/helpers/reference/native_acceptance.py": "c0ee7d53399c7dd64f7169b28ab7b276ec004f9a4d705ff5b3136beee9c643b9",
+    "tests/helpers/reference/native_classic_semantics.py": "5660b0531973ea54d51f2abbccc3897aae251cdd0169cd1c489c03c9f71eab2a",
+    "tests/helpers/reference/native_navigation_semantics.py": "27afc1e6a1d4a6b7868261509b926baf39c98cb2a266e233896a3557ea8613ea",
+    "tests/helpers/reference/native_pixels.py": "7a122f793036f9efdf579a2638ae4a87bc24c48e4669aa57235b82edfa9b24e7",
+    "tests/helpers/reference/navigation_pixels.py": "318f892ce8f309f692014b0f947ca2fd0f8f77b367504de18c662c0164cb910f",
+    "tests/helpers/reference/ogbench_manipulation_semantics.py": "3866fc273fe34bc9b5740cb18f2eba7c9c438263366e5facc4f109d9aa0c8ffa",
+    "tests/helpers/reference/ogbench_manipulation_source.py": "06000c56c9b85cfc323dd34ccee3706a615022547636b2afc6aa600def03b522",
+    "tests/helpers/reference/ogbench_maze_semantics.py": "f0ecd84cf65552dcf6481c14c5a42a69dd36dc57e4e1d366a2c6a8267c78b40b",
+    "tests/helpers/reference/ogbench_pixels.py": "dd3155257ff1fb35f7d11ea7b2f55c0171b963f4cb61e286d8eb7e93b05915ef",
+    "tests/helpers/reference/ogbench_state_export.py": "a122c8bb6b6bb9482e02fbcfaab56f5ab14a21e1d09470d897742f6fac4a2678",
+    "tests/helpers/reference/oracle.py": "876454ae8624d7cc8d0d1a6cef5939ecf2997db86ba3f8ae89154cd1defe48df",
+    "tests/helpers/reference/pixels.py": "a3ee971b0cbe1f1a36dd9f14084e3e3f92e342de633464c4ef4ebe06926adf76",
+    "tests/helpers/reference/profiles.py": "1f6650f093f87a9bcef41627bf5660aa6efeea54caac6eb4d3570baedd15d044",
+    "tests/helpers/reference/pusht_pixels.py": "b6a990738723344c6ca1ac012227a4461176b68db6e19a9cad53b1d4090d2b55",
+    "tests/helpers/reference/pusht_semantics.py": "dec2de2d6ad4382da4a5460e5696a46d9267486351f2453865b4ab2d5c6c2bb6",
+    "tests/helpers/reference/readiness.py": "8988259856eec882bfeec7492f447c7be40e3a51c43f9995f0b71b65a3d397e2",
+    "tests/helpers/reference/rocket_pixels.py": "5ce29d1e9ed902b179ad689900b19c1e3108e3d89e217c6ec198c15e2d81a30d",
+    "tests/helpers/reference/rocket_semantics.py": "fbcae5522cddc4e98ca2a1dda43a175e1dfcf77ba2356b57b35c83dda4afb0ed",
+    "tests/helpers/reference/saved.py": "340de12bd6ff4688aaba1c456ae1bdc9472b0cd9bb80f55aae7b97db9b503c2e",
+    "tests/helpers/reference/semantics.py": "a092cbddd88190ecbe7efccaa861848420f2137b4601acc36616e8cfcdc77c0d",
+    "tests/helpers/reference/step_capture.py": "b06ce2c9acf7a2fbdd425f7f6aef68a127e5fbf75427ae98facf774ca7763276",
+    "tests/helpers/reference/swap_renderer.py": "c9606d53582027caab8e587de822391b34d50d6496032299a90bf46e7ce8f542",
+    "tests/helpers/reference/variation.py": "23f780be4407ad9ce9e848f7c59e4e678afebfe6673c6e2342c8eee52e5052c3",
+    "tests/helpers/reference/variation_maps/__init__.py": "65e5285c2b0bb25f6ad15cf729029d2ff8b39aca7d216ac45ac0850feb777e1b",
+    "tests/helpers/reference/variation_maps/dmc_control.py": "a64b28a319f5e38b8a9c2da8c4eb2dce5f25d50b5c8e2707f056a2008848fe8b",
+    "tests/helpers/reference/variation_maps/fetch.py": "29d0f81b7c2a92b28b95a22b8c0cd5f59dfd90945c1fe88d9a27ecd76fa42e74",
+    "tests/helpers/reference/variation_maps/newcells.py": "b932ec34f4def9aa7c6c71de845a2421ae750a112c4c52d7ae633de25cc1eb47",
+    "tests/helpers/repository.py": "a47aa27c6608faab2ee6f427eb78ebb382ce47771c70ba0f40378a2caae2d245",
+    "tests/helpers/rollout.py": "a825e4513ae25e4d0ac7183eeb32514db54e05f02129516fd1e8d5eefe3d5165",
+    "tests/helpers/source_mse.py": "c6a1552c8ba551cc04270c08dc539907820cba9e3c7aa6c33ade8635674de896",
+    "tests/helpers/stepping.py": "abb4f2998a6a68ab4bff677cb287997d6d778f6ee0c294319043da081c7ecb3d",
+    "tests/helpers/tiny_env.py": "a149e1bab77a18d9c5d08735b58b4084c316cdcf9f9c6ff5c9604f20b0b3f9f2",
+    "tests/unit/test_dmc_capture_selection.py": "c9a38b6de1717878ac64c2a4b9303e95fa93ad5b1ae937fcc1a58ea4d9976e9a",
+    "tests/unit/test_dmc_mjwarp_adapter.py": "bef2a5d5debcdb2394cb6670c0de6eeeb0d99599588a7c732132dfad130c0834",
+    "tests/unit/test_dmc_mjwarp_contacts.py": "e16575a989ed384f0192ea737c4ee450394769241d82662762e2f87979254845",
+    "tests/unit/test_dmc_mjwarp_routing.py": "7ff374a9c0b7966fbf7c6f95db36093dfdd30052b332bb41ece2dfb31d6ef49e",
+    "tests/unit/test_dmc_mjwarp_runtime.py": "2f7aae6363a3c6d277e207892eb19cc27722abd1b06d0af99c4b7bd08a4f6e2c",
+    "tests/unit/test_dmc_mjwarp_tasks.py": "a150cfb36b88e1408ab9d7461a6aac6f3ec144e11a52223a72073a7bc660e727",
+    "tests/unit/test_dmc_sparse_outputs.py": "163ff043f802dc508efc5f7b39cc8f7ef8369e4cf723e4701161c537b4de2740"
+  },
+  "results": [
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCAcrobotBalance]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0005472360062412918
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCAcrobotBalance]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 6.913286925991997
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCAcrobotBalance]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.0004630270414054394
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCBallInCupCatch]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.00038035697070881724
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCBallInCupCatch]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 2.577574238006491
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCBallInCupCatch]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.0002546680043451488
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCCartpoleBalance]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.00037472700932994485
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCCartpoleBalance]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 1.2785234880284406
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCCartpoleBalance]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.0005221369792707264
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCCartpoleSwingup]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.00043062696931883693
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCCartpoleSwingup]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 1.307351742987521
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCCartpoleSwingup]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.0002680280013009906
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCCheetahRun]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0003856379771605134
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCCheetahRun]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 2.943897698947694
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCCheetahRun]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00033223803620785475
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCFingerSpin]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.00043961696792393923
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCFingerSpin]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 2.338497550052125
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCFingerSpin]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00046215602196753025
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCFingerTurnEasy]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.00036341801751405
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCFingerTurnEasy]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 1.2312658430309966
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCFingerTurnEasy]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.0002664980129338801
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCFingerTurnHard]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.00037807703483849764
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCFingerTurnHard]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 1.3603563329670578
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCFingerTurnHard]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.0002449379535391927
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCHopperHop]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.00036698702024295926
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCHopperHop]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 2.3134643560042605
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCHopperHop]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00024225900415331125
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCHumanoidWalk]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0003579669864848256
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCHumanoidWalk]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 2.360549626988359
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCHumanoidWalk]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.0004784769844263792
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCManipulatorBringBall]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.00037493702257052064
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCManipulatorBringBall]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 3.8380908659892157
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCManipulatorBringBall]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00030672800494357944
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCPendulumSwingup]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0005348260165192187
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCPendulumSwingup]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 1.4992710429942235
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCPendulumSwingup]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.0005012559704482555
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCPointMassEasy]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.00043539702892303467
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCPointMassEasy]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 1.7085927620064467
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCPointMassEasy]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00022789801005274057
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCQuadrupedWalk]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0003427980118431151
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCQuadrupedWalk]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 2.6943734619999304
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCQuadrupedWalk]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.000244517985265702
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCSwimmerSwimmer6]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0003544780192896724
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCSwimmerSwimmer6]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 1.8239025140064768
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCSwimmerSwimmer6]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.0002632880350574851
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCWalkerWalk]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0003856370458379388
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCWalkerWalk]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 2.595697173033841
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp.py::test_cuda_stepping_snapshot_ownership_and_pixels[DMCWalkerWalk]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00038450700230896473
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp_streams.py::test_reset_step_and_snapshot_across_caller_streams",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0005249460227787495
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp_streams.py::test_reset_step_and_snapshot_across_caller_streams",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.48432082700310275
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp_streams.py::test_reset_step_and_snapshot_across_caller_streams",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.0003320079995319247
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp_streams.py::test_prepared_restore_and_owned_state_across_caller_streams",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0004681670106947422
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp_streams.py::test_prepared_restore_and_owned_state_across_caller_streams",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.4935583139886148
+    },
+    {
+      "nodeid": "tests/gpu/test_dmc_mjwarp_streams.py::test_prepared_restore_and_owned_state_across_caller_streams",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00034796801628544927
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cpu-normal0-axis0]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0006195860332809389
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cpu-normal0-axis0]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.6935955859953538
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cpu-normal0-axis0]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.0003575580194592476
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cpu-normal1-axis1]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0006097560399211943
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cpu-normal1-axis1]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.05216096801450476
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cpu-normal1-axis1]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00032377796014770865
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cpu-normal2-axis2]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0005856860079802573
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cpu-normal2-axis2]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.042807381018064916
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cpu-normal2-axis2]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00032516702776774764
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cpu-normal3-axis3]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0005863460246473551
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cpu-normal3-axis3]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.06267779797781259
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cpu-normal3-axis3]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.0003574570291675627
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cpu-normal4-axis4]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0006357959937304258
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cpu-normal4-axis4]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.040757046022918075
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cpu-normal4-axis4]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00023107900051400065
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cuda-normal0-axis0]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.00040999799966812134
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cuda-normal0-axis0]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.5569024079595692
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cuda-normal0-axis0]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00023845804389566183
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cuda-normal1-axis1]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.00041807699017226696
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cuda-normal1-axis1]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.08090674498816952
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cuda-normal1-axis1]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00026424799580127
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cuda-normal2-axis2]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.00042378698708489537
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cuda-normal2-axis2]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.0876049890066497
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cuda-normal2-axis2]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.000313867989461869
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cuda-normal3-axis3]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0005470360047183931
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cuda-normal3-axis3]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.11250601301435381
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cuda-normal3-axis3]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00023788900580257177
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cuda-normal4-axis4]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0004191169864498079
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cuda-normal4-axis4]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.07153615797869861
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_plane_capsule_frames_and_one_step_match_native[cuda-normal4-axis4]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00022091803839430213
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_upstream_contact_frame_fault_is_detected_and_model_callback_is_local[cpu]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0002917179954238236
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_upstream_contact_frame_fault_is_detected_and_model_callback_is_local[cpu]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.053009912953712046
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_upstream_contact_frame_fault_is_detected_and_model_callback_is_local[cpu]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00020294799469411373
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_upstream_contact_frame_fault_is_detected_and_model_callback_is_local[cuda]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0003126080264337361
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_upstream_contact_frame_fault_is_detected_and_model_callback_is_local[cuda]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.07194043602794409
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_upstream_contact_frame_fault_is_detected_and_model_callback_is_local[cuda]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00021420902339741588
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_other_primitives_are_unchanged[cpu]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.00029899796936661005
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_other_primitives_are_unchanged[cpu]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.02610164397628978
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_other_primitives_are_unchanged[cpu]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.0001876290189102292
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_other_primitives_are_unchanged[cuda]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0002889379975385964
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_other_primitives_are_unchanged[cuda]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.0373937480035238
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_other_primitives_are_unchanged[cuda]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.000220458023250103
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_intersecting_capsules_use_native_cross_axis_normal_and_position[cpu-0.03]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0003739770036190748
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_intersecting_capsules_use_native_cross_axis_normal_and_position[cpu-0.03]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.057408523047342896
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_intersecting_capsules_use_native_cross_axis_normal_and_position[cpu-0.03]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00024252897128462791
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_intersecting_capsules_use_native_cross_axis_normal_and_position[cpu-0.05]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.00037495698779821396
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_intersecting_capsules_use_native_cross_axis_normal_and_position[cpu-0.05]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.05732549401000142
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_intersecting_capsules_use_native_cross_axis_normal_and_position[cpu-0.05]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.0002273090067319572
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_intersecting_capsules_use_native_cross_axis_normal_and_position[cuda-0.03]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.00037569698179140687
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_intersecting_capsules_use_native_cross_axis_normal_and_position[cuda-0.03]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.10738047596532851
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_intersecting_capsules_use_native_cross_axis_normal_and_position[cuda-0.03]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00024204899091273546
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_intersecting_capsules_use_native_cross_axis_normal_and_position[cuda-0.05]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0003916980349458754
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_intersecting_capsules_use_native_cross_axis_normal_and_position[cuda-0.05]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.11220932396827266
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_intersecting_capsules_use_native_cross_axis_normal_and_position[cuda-0.05]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00023290800163522363
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_per_world_plane_orientation_is_used[cpu]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.00031995796598494053
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_per_world_plane_orientation_is_used[cpu]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.04842388298129663
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_per_world_plane_orientation_is_used[cpu]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00021476898109540343
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_per_world_plane_orientation_is_used[cuda]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.00031843804754316807
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_per_world_plane_orientation_is_used[cuda]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.06791874201735482
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_per_world_plane_orientation_is_used[cuda]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.0002087780158035457
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_nonintersecting_capsules_remain_unchanged[cpu]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.00038816698361188173
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_nonintersecting_capsules_remain_unchanged[cpu]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.05260617600288242
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_nonintersecting_capsules_remain_unchanged[cpu]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.0002156189875677228
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_nonintersecting_capsules_remain_unchanged[cuda]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0003128279931843281
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_nonintersecting_capsules_remain_unchanged[cuda]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.07682108198059723
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_contacts.py::test_nonintersecting_capsules_remain_unchanged[cuda]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00022994796745479107
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_sparse_outputs.py::test_sparse_reward_positives_and_negatives_match_native[cpu-ball_in_cup]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.00034966698149219155
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_sparse_outputs.py::test_sparse_reward_positives_and_negatives_match_native[cpu-ball_in_cup]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.4044068250223063
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_sparse_outputs.py::test_sparse_reward_positives_and_negatives_match_native[cpu-ball_in_cup]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00029908795841038227
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_sparse_outputs.py::test_sparse_reward_positives_and_negatives_match_native[cpu-finger-spin]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0004239379777573049
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_sparse_outputs.py::test_sparse_reward_positives_and_negatives_match_native[cpu-finger-spin]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.42344390699872747
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_sparse_outputs.py::test_sparse_reward_positives_and_negatives_match_native[cpu-finger-spin]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00029242801247164607
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_sparse_outputs.py::test_sparse_reward_positives_and_negatives_match_native[cuda-ball_in_cup]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0004660369595512748
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_sparse_outputs.py::test_sparse_reward_positives_and_negatives_match_native[cuda-ball_in_cup]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.2999084790353663
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_sparse_outputs.py::test_sparse_reward_positives_and_negatives_match_native[cuda-ball_in_cup]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.0002502179704606533
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_sparse_outputs.py::test_sparse_reward_positives_and_negatives_match_native[cuda-finger-spin]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0003509569796733558
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_sparse_outputs.py::test_sparse_reward_positives_and_negatives_match_native[cuda-finger-spin]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.2275191870285198
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_sparse_outputs.py::test_sparse_reward_positives_and_negatives_match_native[cuda-finger-spin]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00023727898951619864
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_warp_exports_only_requested_snapshots[None-None-1-None-None]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.00044818699825555086
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_warp_exports_only_requested_snapshots[None-None-1-None-None]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.0016542990342713892
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_warp_exports_only_requested_snapshots[None-None-1-None-None]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00018320902017876506
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_warp_exports_only_requested_snapshots[states1-None-3-state_values1-None]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0004045169916935265
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_warp_exports_only_requested_snapshots[states1-None-3-state_values1-None]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.0015178699977695942
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_warp_exports_only_requested_snapshots[states1-None-3-state_values1-None]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.0001780680031515658
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_warp_exports_only_requested_snapshots[states2-None-4-state_values2-None]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0003913469845429063
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_warp_exports_only_requested_snapshots[states2-None-4-state_values2-None]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.0014553299988619983
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_warp_exports_only_requested_snapshots[states2-None-4-state_values2-None]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00019753898959606886
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_warp_exports_only_requested_snapshots[None-frames3-3-None-frame_values3]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0003809379995800555
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_warp_exports_only_requested_snapshots[None-frames3-3-None-frame_values3]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.0015444799792021513
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_warp_exports_only_requested_snapshots[None-frames3-3-None-frame_values3]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00017481797840446234
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_warp_exports_only_requested_snapshots[states4-frames4-3-state_values4-frame_values4]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0004162570112384856
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_warp_exports_only_requested_snapshots[states4-frames4-3-state_values4-frame_values4]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.0015264790272340178
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_warp_exports_only_requested_snapshots[states4-frames4-3-state_values4-frame_values4]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00017756898887455463
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_warp_exports_only_requested_snapshots[states5-frames5-1-state_values5-frame_values5]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.00041119701927527785
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_warp_exports_only_requested_snapshots[states5-frames5-1-state_values5-frame_values5]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.0015511189703829587
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_warp_exports_only_requested_snapshots[states5-frames5-1-state_values5-frame_values5]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00017434899928048253
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_existing_backends_keep_adapter_step_signature[native]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.00021883804583922029
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_existing_backends_keep_adapter_step_signature[native]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.0007934639579616487
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_existing_backends_keep_adapter_step_signature[native]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00015435903333127499
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_existing_backends_keep_adapter_step_signature[mjx]",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.0002285779919475317
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_existing_backends_keep_adapter_step_signature[mjx]",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.0008013249607756734
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_capture_selection.py::test_existing_backends_keep_adapter_step_signature[mjx]",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00015467900084331632
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_runtime.py::test_cuda_capture_restore_and_alternate_caller_streams",
+      "outcome": "passed",
+      "phase": "setup",
+      "seconds": 0.00016094802413135767
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_runtime.py::test_cuda_capture_restore_and_alternate_caller_streams",
+      "outcome": "passed",
+      "phase": "call",
+      "seconds": 0.11684031301410869
+    },
+    {
+      "nodeid": "tests/unit/test_dmc_mjwarp_runtime.py::test_cuda_capture_restore_and_alternate_caller_streams",
+      "outcome": "passed",
+      "phase": "teardown",
+      "seconds": 0.00020687899086624384
+    }
+  ],
+  "schema": "stable-envs-dmc-mjwarp-acceptance/v1",
+  "skipped": [],
+  "smoke": true
+}

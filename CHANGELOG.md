@@ -8,6 +8,17 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- The 16 DMC classes other than Reacher accept explicit `simulation_backend="mjwarp"` for direct CUDA MuJoCo Warp
+  stepping, with shared DMC lifecycle/runtime code and domain-specific batched task outputs.
+  Native resets, physical variation, complete checkpoints, action repetition, RK4 and sensor timing
+  retain their DMC semantics. Automatic routing, CPU physics and Reacher's MJX option are unchanged.
+  The CUDA validation runner separates exact checkpoint/pixel checks from calibrated numerical
+  trajectory bounds and fails skipped required cases. The 16-class integration suite passes;
+  full numerical acceptance remains unfinished, with failures recorded for focused follow-up
+  in the DMC documentation. On an RTX A6000 at batch 1024, public stepping was 7.73 times faster
+  than native stepping by geometric mean across the 16 tasks (2.98 times with frames); small batches
+  were generally slower, and construction/reset/restore costs were higher. The DMC documentation
+  includes all 160 measurements and their limitations.
 - MS-Human-700: `MSHumanLocomotion` wraps the whole-body musculoskeletal locomotion model (36 DoF,
   100 muscles) on the MuJoCo Warp backend (`mshuman` extra). Physics and State run on the env device;
   frames come from MuJoCo's OpenGL renderer. The Apache-2.0 model is fetched from LNSGroup/MS-Human-700
