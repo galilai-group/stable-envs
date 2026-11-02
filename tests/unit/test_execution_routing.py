@@ -162,3 +162,29 @@ def test_reacher_rejects_invalid_simulation_selection(backend, device, threshold
 
     with pytest.raises(ValueError):
         reacher_backend(1, device, backend, threshold)
+
+
+@pytest.mark.family("dmc")
+def test_dmc_warp_requires_explicit_cuda_selection(monkeypatch):
+    import sys
+
+    from stable_envs.envs.dmcontrol.simulation import execution
+
+    monkeypatch.setattr(execution, "make_local", _local)
+    monkeypatch.setattr(execution, "process_count", lambda *args, **kwargs: 0)
+    monkeypatch.setitem(
+        sys.modules,
+        "stable_envs.envs.dmcontrol.simulation.mjwarp",
+        SimpleNamespace(DMCWarpAdapter=lambda *args: ("mjwarp", args, {})),
+    )
+    for backend in ("auto", "native", "mjwarp"):
+        result = execution.make_dmc_adapter("walker", 64, "cuda:1", 17, simulation_backend=backend)
+        assert result == ("mjwarp" if backend == "mjwarp" else "local", ("walker", 64, "cuda:1", 17), {})
+    for domain, device, backend in (
+        ("walker", "cpu", "mjwarp"),
+        ("reacher", "cuda", "mjwarp"),
+        ("walker", "cuda", "mjx"),
+        ("walker", "cuda", "unknown"),
+    ):
+        with pytest.raises(ValueError):
+            execution.make_dmc_adapter(domain, 3, device, 17, simulation_backend=backend)

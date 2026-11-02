@@ -23,8 +23,89 @@ state = env.reset(seed=0)
 out = env.step(env.action_spec.sample(8))
 ```
 
-The reward of each task is in [0, 1] for each step. The suite does not define a success criterion. Ball
+The reward of each source control step is in [0, 1]. Each public action repeats twice and returns
+the sum of both rewards. The suite does not define a success criterion. Ball
 in cup is the exception: its `success` value is 1 when the ball is in the cup.
+
+## Direct MuJoCo Warp physics
+
+The 16 classes other than Reacher accept `simulation_backend="mjwarp"` for direct batched physics on
+CUDA. Install `stable-envs[dmcontrol-gpu]`; this backend uses MuJoCo/MuJoCo Warp 3.12. Explicit selection
+raises an error if CUDA or the dependencies are unavailable. `backend` still selects rendering.
+Automatic routing is unchanged, including Reacher's existing native/MJX selection.
+
+```python
+with snv.DMCFingerTurnHard(num_envs=256, device="cuda", simulation_backend="mjwarp") as env:
+    state = env.reset(seed=7)
+    result = env.step(env.action_spec.sample(256))
+    checkpoint = env.get_state()
+    env.set_state(checkpoint)
+```
+
+The shared adapter owns lifecycle, the two action repetitions, native reset sampling and checkpoints.
+A private runtime owns Warp buffers, CUDA stream ordering, graph capture and physics substeps. Bound
+domain tasks compute observations, rewards and info on device; Cartpole and Finger variants share
+formulas. Existing model factories, State schemas and physical-variation calculations are reused.
+
+Warp physics uses float32; public State retains its existing shapes and dtypes, including float64
+physical columns. `set_state(s); get_state()` preserves the supplied checkpoint exactly, including
+warmstart, activation, lifecycle, cumulative reward, complete RNG, episode targets and variation.
+Snapshots own their memory. This does not guarantee bitwise identical future GPU trajectories.
+Rendering continues to consume State, independently of the stepping backend.
+
+Source physics substeps, RK4 and acceleration-stage sensor timing are retained. Native environments
+remain authoritative for resets and RNG. A pending reset consumes a control round with zero reward;
+continuing lanes use a compact scratch runtime. A changed active-lane count requires a new scratch
+allocation, so mixed resets can cost more than steady-state stepping.
+
+For Warp 3.12 the runtime corrects plane–capsule friction frames and intersecting-capsule normals to
+follow native MuJoCo's [primitive collisions](https://github.com/google-deepmind/mujoco/blob/3.12.0/src/engine/engine_collision_primitive.c).
+The latter correction uses float64 scratch arithmetic; stored dynamics and integration remain float32.
+Focused tests compare the corrected contacts against native MuJoCo.
+
+### Validation status
+
+This backend is experimental. The implementation has passed CUDA integration for all 16 classes,
+including checkpoint ownership/restoration and rendering captured States. Full numerical source and
+resumed-rollout acceptance remains unfinished. Follow-up covers FingerSpin contact warmstart,
+Cheetah/Manipulator replay, PointMass near-target reward coverage, and full revalidation after the
+Humanoid/Hopper contact corrections. Exact State restoration and identical-State rendering are
+separate from numerical agreement after advancing physics. Existing thresholds and frozen fixtures
+have not been loosened.
+
+Run the focused CUDA checks with `python scripts/ci/run_dmc_mjwarp.py`; missing CUDA or skipped
+required cases fail this runner. These are core regression checks, not a numerical certification.
+
+### Measured performance
+
+All 16 environments were measured with native and Warp at batches 1, 16, 64, 256 and 1024: 160 runs,
+80 matched pairs. Measurements used an RTX A6000 on a shared AMD EPYC 7443 host, eight visible CPUs,
+one Torch thread per process, seed 0, zero normalized actions, five warmups and ten synchronized
+samples. Each case used a fresh process. Both backends returned CUDA tensors; native physics ran on
+CPU. `python benchmarks/dmc_mjwarp.py --help` describes how to repeat the measurements.
+
+The geometric mean of native median latency divided by Warp median latency is below. Values above
+1 favor Warp. Public stepping includes final owned State and task outputs; the frame column adds
+one frame. State/frame history is omitted.
+
+| Batch | Raw physics | Public step | Public step + frame |
+|---:|---:|---:|---:|
+| 1 | 0.020× | 0.137× | 0.442× |
+| 16 | 0.241× | 0.592× | 0.747× |
+| 64 | 0.857× | 0.732× | 0.925× |
+| 256 | 3.101× | 2.111× | 1.591× |
+| 1024 | 13.343× | 7.734× | 2.982× |
+
+![Native-to-Warp latency ratios for all 16 DMC environments](../assets/dmc-mjwarp-speedup.png)
+
+All 16 environments had faster public stepping at batches 256 and 1024. Small batches generally
+favored native. Raw native physics uses sequential local CPU lanes; public native stepping retains
+its existing worker routing. Raw Warp includes runtime guards and stream interop, not just kernels.
+
+At batch 1024, median constructor costs across tasks were 25.34 s native versus 86.74 s Warp; reset
+costs were 74.41 versus 936.15 ms, and restore costs were 39.70 versus 914.65 ms. Construction excludes
+imports and CUDA context setup; disk kernel caches can survive between processes. These single-seed,
+single-machine timings do not establish numerical correctness or training performance.
 
 ## Acrobot
 

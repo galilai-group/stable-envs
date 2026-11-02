@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import torch
 
 from ...._execution.policy import cpu_affinity, process_count
 from .factory import PROCESS_DOMAINS, DMCAdapter, make_local
 from .process import DMCProcessAdapter
+
+if TYPE_CHECKING:
+    from .mjwarp import DMCWarpAdapter
 
 
 def reacher_backend(num_envs: int, device: str | torch.device, backend: str = "auto", mjx_min_envs: int = 32) -> str:
@@ -29,7 +34,20 @@ def make_dmc_adapter(
     *,
     simulation_backend: str = "auto",
     mjx_min_envs: int = 32,
-) -> DMCAdapter | DMCProcessAdapter:
+) -> DMCAdapter | DMCProcessAdapter | DMCWarpAdapter:
+    if simulation_backend == "mjwarp":
+        if domain == "reacher":
+            raise ValueError("DMCReacher does not support simulation_backend='mjwarp'; use 'native' or 'mjx'")
+        if torch.device(device).type != "cuda":
+            raise ValueError("simulation_backend='mjwarp' requires device='cuda'")
+        try:
+            from .mjwarp import DMCWarpAdapter
+        except ImportError as exc:
+            raise ImportError("simulation_backend='mjwarp' requires the DMC and GPU dependencies") from exc
+
+        return DMCWarpAdapter(domain, num_envs, device, seed)
+    if domain != "reacher" and simulation_backend not in ("auto", "native"):
+        raise ValueError("DMC simulation_backend must be 'auto', 'native' or 'mjwarp'; 'mjx' is Reacher-only")
     if domain == "reacher" and reacher_backend(num_envs, device, simulation_backend, mjx_min_envs) == "mjx":
         from .reacher_mjx import ReacherMJXAdapter
 

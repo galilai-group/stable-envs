@@ -8,6 +8,11 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- The 16 DMC classes other than Reacher accept experimental `simulation_backend="mjwarp"`
+  for direct CUDA physics on MuJoCo Warp 3.12. Automatic routing and Reacher's native/MJX
+  selection remain unchanged. Exact checkpoints and core CUDA integration pass; full numerical
+  source/replay acceptance remains unfinished. See the DMC documentation for limitations and
+  measured performance across all 16 tasks.
 - MS-Human-700: `MSHumanLocomotion` wraps the whole-body musculoskeletal locomotion model (36 DoF,
   100 muscles) on the MuJoCo Warp backend (`mshuman` extra). Physics and State run on the env device;
   frames come from MuJoCo's OpenGL renderer. The Apache-2.0 model is fetched from LNSGroup/MS-Human-700
