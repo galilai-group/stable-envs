@@ -151,6 +151,19 @@ class LanePool:
         self.ik = None
         self.tree = None
         self.models = {}
+        self.xml = OrderedDict()
+
+    def xml_of(self, root, values):
+        """The XML of the shared tree whose slots hold ``values``; the slots are all a lane changes in it."""
+        key = tuple(None if v is None else (v.dtype.str, v.shape, v.tobytes()) for v in values)
+        xml = self.xml.get(key)
+        if xml is None:
+            xml = self.xml[key] = mjcf_utils.to_string(root)
+            if len(self.xml) > _XML_CACHE_MAX:
+                self.xml.popitem(last=False)
+        else:
+            self.xml.move_to_end(key)
+        return xml
 
     def join(self, lane, key, compile_model):
         self.leave(lane)
@@ -525,7 +538,8 @@ class Compatibility:
         root = self._mjcf_model
         getattr(root.visual, "global").offwidth = self._render_width
         getattr(root.visual, "global").offheight = self._render_height
-        xml = mjcf_utils.to_string(root)
+        size = np.array([self._render_width, self._render_height])
+        xml = self._pool.xml_of(root, [size, *self._pool.tree.read()])
         self._pool.join(self, xml, lambda: mujoco.MjModel.from_xml_string(xml=xml, assets=mjcf_utils.get_assets(root)))
         self._data = mujoco.MjData(self._model)
         self._model.opt.timestep = self._physics_timestep
@@ -562,6 +576,8 @@ _COMPILE_LOCK = threading.Lock()
 _SCRATCH: dict = {}
 _COMPILED_CACHE: OrderedDict = OrderedDict()
 _COMPILED_CACHE_MAX = 64
+#: Most XML strings a lane pool keeps, one per distinct set of MJCF Variation values.
+_XML_CACHE_MAX = 64
 
 
 def values_key(values):

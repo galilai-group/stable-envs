@@ -72,13 +72,11 @@ class PushTProcessAdapter(ProcessAdapter):
         )
 
     def _frame_fields(self):
-        if self._static_cache is None:
-            self._state_leaves()
         fields = {}
         for key, view in self._views.items():
             if key[0] == "state":
-                cached = self._static_cache.get(key[1:])
-                fields["/".join(key[1:])] = view.copy() if cached is None else cached.numpy()
+                # Steps do not change the static leaves, so the frame reads their shared views.
+                fields["/".join(key[1:])] = view if key[1:] in self._static else view.copy()
         return fields
 
     def _fields_frame(self, fields):

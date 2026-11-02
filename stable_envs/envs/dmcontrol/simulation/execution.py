@@ -6,6 +6,9 @@ from ...._execution.policy import cpu_affinity, process_count
 from .factory import FACTORIES, DMCAdapter, make_local
 from .process import DMCProcessAdapter
 
+#: Fewest lanes that use workers when the ``worker_min_lanes`` knob is not set; measured on 8 cores.
+MIN_LANES = 2
+
 
 def reacher_backend(num_envs: int, device: str | torch.device, backend: str = "auto", mjx_min_envs: int = 4096) -> str:
     """Use native physics for small batches and MJX for larger CUDA batches."""
@@ -35,7 +38,7 @@ def make_dmc_adapter(
 
         return ReacherMJXAdapter(num_envs, device, seed)
     cpus = cpu_affinity()
-    count = process_count(num_envs, cpus, eligible=domain in FACTORIES, path="dmc-sim")
+    count = process_count(num_envs, cpus, eligible=domain in FACTORIES, path="dmc-sim", min_lanes=MIN_LANES)
     if count:
         return DMCProcessAdapter(domain, num_envs, device, seed, processes=count, cpus=cpus)
     return make_local(domain, num_envs, device, seed)

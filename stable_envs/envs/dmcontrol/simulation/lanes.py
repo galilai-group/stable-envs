@@ -26,6 +26,7 @@ class DMCLanes(SimulatorAdapter):
     """
 
     process_methods = {"configure_physics": PER_LANE}
+    process_sequences = True
     process_attributes = ("key", "action_dim", "fields", "physics_layout", "physics_dim")
 
     def __init__(self, key, num_envs, device, seed, make, fields):
@@ -168,6 +169,21 @@ class DMCLanes(SimulatorAdapter):
         return stepped
 
     def step(self, actions, *, active=None, capture_state=True):
+        values = self.step_arrays(actions, active)
+        out = {"state": self.get_state()} if capture_state else {}
+        info = {}
+        for key, value in values.items():
+            if key[0] == "info":
+                info[key[1]] = torch.as_tensor(value, device=self.device)
+            else:
+                out[key[0]] = torch.from_numpy(value).to(self.device)
+        # Tasks with a success output also return an info group, which may be empty.
+        if ("success",) in values:
+            out["info"] = TensorDict(info, [self.num_envs], device=self.device)
+        return TensorDict(out, [self.num_envs], device=self.device)
+
+    def step_arrays(self, actions, active=None):
+        """Return the task outputs of ``step`` as ``{key tuple: array}``, without State."""
         self._check_open()
         if active is not None and not bool(torch.as_tensor(active).all()):
             raise ValueError(
@@ -192,26 +208,21 @@ class DMCLanes(SimulatorAdapter):
             dtype=np.float32,
         )
         out = {
-            **({"state": self.get_state()} if capture_state else {}),
-            "reward": torch.from_numpy(rewards).to(self.device),
-            "terminated": torch.zeros(self.num_envs, dtype=torch.bool, device=self.device),
-            "truncated": torch.zeros(self.num_envs, dtype=torch.bool, device=self.device),
-            "observation": torch.from_numpy(observation).to(self.device),
+            ("reward",): rewards,
+            ("terminated",): np.zeros(self.num_envs, bool),
+            ("truncated",): np.zeros(self.num_envs, bool),
+            ("observation",): observation,
         }
-        score = torch.tensor(self._cumulative / 1000.0, dtype=torch.float64, device=self.device)
+        score = self._cumulative / 1000.0
         info = self._task.info(snapshot)
         if info is None:
-            out["score"] = score
+            out[("score",)] = score
         else:
             success, values = info
-            out["success"] = torch.as_tensor(np.asarray(success, np.float64), device=self.device)
-            out["score"] = score
-            out["info"] = TensorDict(
-                {key: torch.as_tensor(np.array(value), device=self.device) for key, value in values.items()},
-                [self.num_envs],
-                device=self.device,
-            )
-        return TensorDict(out, [self.num_envs], device=self.device)
+            out[("success",)] = np.asarray(success, np.float64)
+            out[("score",)] = score
+            out.update((("info", key), np.array(value)) for key, value in values.items())
+        return out
 
     def close(self):
         if not self._closed:

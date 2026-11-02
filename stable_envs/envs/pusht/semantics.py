@@ -198,6 +198,10 @@ class PushT(Env):
     def _step_pipeline(self) -> StepPipeline | None:
         return step_pipeline(self._simulator)
 
+    def _sequence_simulator(self):
+        """The local simulator when it runs a sequence of actions in this process, else None."""
+        return self._simulator if getattr(self._simulator, "process_sequences", False) else None
+
     def _render_live(self):
         if self._rasterizes(self.size):
             from . import raster

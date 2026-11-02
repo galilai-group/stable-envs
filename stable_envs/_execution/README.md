@@ -53,9 +53,23 @@ The local adapter declares what the parent needs:
 - `process_static_leaves` (optional) names the State leaves that only reset,
   restore and process methods change. After a step with State, the worker
   writes only `process_step_state()`, a `{key tuple: array}` of the other
-  leaves in the shared buffers. The parent copies the static leaves from a
-  cache. A thread copies the cache for the next snapshot while the workers
-  step.
+  leaves in the shared buffers. A thread copies the static leaves from the
+  shared buffers for the next snapshot while the workers step. Resets,
+  restores and process methods wait for this copy before they start.
+- `process_sequences = True` (optional) lets one worker request run a sequence
+  of actions. `step_sequence` sends up to `sequence_steps` actions per lane in
+  one request. Each worker steps its lanes once per action, and a lane whose
+  step sets `terminated`, `truncated` or `done` takes no more actions. The
+  workers write the task outputs of every action to shared buffers. An adapter
+  declares this only when a step with no active lane changes no simulator and
+  `step(actions, active=None)` equals a step with every lane active. The
+  optional `step_arrays(actions, active)` returns the task outputs of `step` as
+  `{key tuple: array}` without State, and the optional `check_steps(actions)`
+  checks all actions of a sequence as `check_step` checks each one. Without
+  them, the worker converts the outputs of `step`, and the parent calls
+  `check_step` once per action. The step dispatcher runs the same loop in the
+  calling process for an env whose `_sequence_simulator()` returns its local
+  adapter.
 - `render_live()` and `frame_shape` (optional) let the workers draw the frame
   of their running lanes into a shared buffer. `live_frames` is then true, and
   `submit_step(..., capture_frame=True)` returns the frame as `"frame"`. The

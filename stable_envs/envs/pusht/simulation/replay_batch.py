@@ -120,6 +120,7 @@ class PushTReplayAdapter(SimulatorAdapter):
     """
 
     process_methods = {"install_variation": PER_LANE, "variation_rows": BROADCAST}
+    process_sequences = True
     action_dim = 2
 
     def __init__(self, batch, device="cpu", seed=0, *, discrete=False, config=None):
@@ -331,10 +332,31 @@ class PushTReplayAdapter(SimulatorAdapter):
             raise ValueError("PushT active mask requires bool [num_envs]")
         return actions, active
 
+    def check_steps(self, actions):
+        """``check_step`` for every action of ``[num_envs, T, 2]`` actions at once."""
+        if torch.is_tensor(actions):
+            actions = actions.detach().cpu().numpy()
+        if not isinstance(actions, np.ndarray) or actions.ndim != 3 or actions.shape[::2] != (self.num_envs, 2):
+            raise ValueError("PushT actions require shape [num_envs, 2]")
+        validate_actions(actions, self.template.discrete)
+        return actions
+
     def probe_actions(self):
         return np.zeros((1, 2), np.int64 if self.template.discrete else np.float64)
 
     def step(self, actions, *, active=None, capture_state=True):
+        values = self.step_arrays(actions, active)
+        return TensorDict(
+            dict(
+                **(dict(state=self.get_state()) if capture_state else {}),
+                **{key[0]: torch.from_numpy(value).to(self.device) for key, value in values.items()},
+            ),
+            [self.num_envs],
+            device=self.device,
+        )
+
+    def step_arrays(self, actions, active=None):
+        """Return the task outputs of ``step`` as ``{key tuple: array}``, without State."""
         if torch.is_tensor(actions):
             actions = actions.detach().cpu().numpy()
         if not isinstance(actions, np.ndarray) or actions.shape != (self.num_envs, 2):
@@ -350,17 +372,12 @@ class PushTReplayAdapter(SimulatorAdapter):
             env.advance(action) if enabled else env.evaluate()
             for env, action, enabled in zip(self.envs, actions, active, strict=True)
         ]
-        return TensorDict(
-            dict(
-                **(dict(state=self.get_state()) if capture_state else {}),
-                reward=torch.tensor([v[0] for v in outputs], dtype=torch.float64, device=self.device),
-                success=torch.tensor([v[1] for v in outputs], dtype=torch.bool, device=self.device),
-                terminated=torch.tensor([v[1] for v in outputs], dtype=torch.bool, device=self.device),
-                truncated=torch.zeros(self.num_envs, dtype=torch.bool, device=self.device),
-            ),
-            [self.num_envs],
-            device=self.device,
-        )
+        return {
+            ("reward",): np.array([v[0] for v in outputs], np.float64),
+            ("success",): np.array([v[1] for v in outputs], np.bool_),
+            ("terminated",): np.array([v[1] for v in outputs], np.bool_),
+            ("truncated",): np.zeros(self.num_envs, np.bool_),
+        }
 
     @property
     def frame_shape(self):

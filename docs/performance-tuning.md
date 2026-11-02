@@ -28,7 +28,8 @@ When the library reads a knob, it uses the first value it finds in this list:
    range of the call.
 4. A value derived from the hardware, for knobs that have a rule.
 5. The call site's default. TrackCom cells use a per-cell `cpu3d_chunk` table measured on a Xeon
-   Platinum 8268.
+   Platinum 8268. The simulator families set `worker_min_lanes` and Fetch sets `render_worker_min_rows`
+   (see [Worker defaults](#worker-defaults)).
 6. The fallback in the table below.
 
 The library reads knobs each time it does the work, so a change applies to the next call. These
@@ -65,7 +66,7 @@ names one.
 | knob | fallback | derived default | machine | what it controls |
 |---|---|---|---|---|
 | `workers` | 8 | min(value, CPUs in the process affinity, lanes) | not recorded | Most worker processes of a CPU simulator batch, or of a PushT render, on Linux. The value 0 steps every lane, and draws every PushT frame, in the main process. |
-| `worker_min_lanes` | 64 | none | not recorded | Smallest batch that uses worker processes, or Fetch simulator threads. For PushT, the smallest number of rendered States that uses render workers. |
+| `worker_min_lanes` | 64 | per family, see [Worker defaults](#worker-defaults) | Xeon Platinum 8268 | Smallest batch that uses worker processes, or Fetch simulator threads. For PushT, the smallest number of rendered States that uses render workers. |
 | `fetch_threads` | 4 | min(value, CPUs in the process affinity, lanes) | not recorded | Most simulator threads of an in-process Fetch batch. |
 | `cpu3d_chunk` | 16 | none (TrackCom cells use a per-cell table) | Xeon Platinum 8268 | Frames per chunk of the Torch CPU ray caster (`cpu3d`, `backend="torch"`). The Numba kernel draws all frames in one call. |
 | `dmc_cpu_ray_budget` | 2^21 | 2^21 × L3 size / 35.75 MiB, rounded to a power of two, in [2^18, 2^21] | not recorded | Rays per CPU render chunk of the fixed-camera DMC cells, counting supersamples. |
@@ -76,7 +77,7 @@ names one.
 | `ogb_mjw_worlds` | 256 | none | not recorded | Most worlds per MJWarp launch of the OGBench Cube and Scene cells. |
 | `ogb_gl_workers` | 8 | min(value, CPUs in the process affinity, rows) | not recorded | Most OpenGL worker processes of an OGBench Cube and Scene batch on Linux. A batch that uses fewer than 2 workers draws in the main process. The value 0 draws every batch in the main process. |
 | `render_workers` | 8 | min(value, CPUs in the process affinity) | not recorded | Most worker processes of a CPU render batch on Linux, for classic control when Numba is not installed and for Fetch (software OpenGL). Each Fetch worker has its own OpenGL context. The values 0 and 1 draw every frame in the main process. |
-| `render_worker_min_rows` | 16 | none | not recorded | Smallest classic control or Fetch CPU render batch that uses render worker processes. |
+| `render_worker_min_rows` | 16 | 2 for Fetch | Xeon Platinum 8268 | Smallest classic control or Fetch CPU render batch that uses render worker processes. |
 | `ogb_context_cache_bytes` | none | min(total GPU memory / 4, free GPU memory / 2), per device | not recorded | GPU bytes the OGBench MJWarp context cache keeps. |
 | `nvd_budget_bytes` | 6 GiB | min(6 GiB, free GPU memory / 2) | not recorded | GPU bytes one nvdiffrast chunk of the Rocket cells may use. |
 | `nav_render_chunk` | 256 | none | not recorded | Frames per render chunk of the navigation cells. |
@@ -86,6 +87,30 @@ names one.
 | `raster2d_cull_warps` | 4 | none | not recorded | Triton warps per tile of the 2-D rasterizer with culling. |
 | `gfxdraw_warps` | 1 | none | not recorded | Triton warps per tile of the classic-control rasterizer. |
 | `raycast_block` | 256 | none | not recorded | Rays per Triton program of the analytic ray caster (power of two). |
+
+### Worker defaults
+
+Each simulator family gives `worker_min_lanes` a default that was measured from 1 to 64 lanes on 8
+pinned Xeon Platinum 8268 cores, with 1 and 16 actions for each `step` call. The source ran on the
+same cores, with one worker process for each of up to 8 environments. A setting of the knob replaces
+these defaults.
+
+| family | `worker_min_lanes` default |
+|---|---|
+| DM Control | 2 |
+| `PyFlytRocketLanding` | 2 |
+| Fetch (worker processes, and simulator threads when `workers` is 0) | 2 |
+| OGBench mazes | 2 |
+| `OGBCube`, `OGBScene` (each worker gets at least 2 lanes) | 4 |
+| PushT | 2 |
+| classic `Acrobot` | 64 |
+
+A small batch with one action for each `step` call can step faster in the main process. The parent
+sends each action to each worker, and this time increases with the number of workers. To step a small
+batch in the main process, set `workers` to 0.
+
+`OGBCube` and `OGBScene` draw a CPU batch of 2 or more states in OpenGL worker processes, and a CUDA
+batch of 16 or more. Fetch draws a CPU batch of 2 or more frames in render workers.
 
 The library computes each hardware rule once per process and device. GPU rules read
 `torch.cuda.mem_get_info`. The CPU rule reads the L3 size from `sysconf`. If the library

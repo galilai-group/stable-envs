@@ -5,6 +5,7 @@ import torch
 from tensordict import TensorDict
 
 from ...._execution.protocol import SimulatorAdapter
+from ...._execution.sequences import arrays_of
 from ...._execution.state_columns import owned_columns, require_columns
 from .pcg import bytes_uint128, pcg_state
 from .pcg import uint128_bytes as _uint128_bytes
@@ -78,6 +79,9 @@ def _make_maze(loco, maze):
         height=224,
     )
 
+
+#: Point task outputs that ``step`` returns under ``info``.
+_INFO = ("xy", "prev_qpos", "prev_qvel", "qpos", "qvel")
 
 # Clearance in world units between the ball and every wall below which a lane takes a full MuJoCo step.
 _REST_CLEARANCE = 1e-3
@@ -170,6 +174,7 @@ class OGBMazeAdapter(SimulatorAdapter):
     """
 
     process_attributes = ("action_dim", "fields")
+    process_sequences = True
 
     def __init__(self, num_envs, device="cpu", seed=0, *, loco="point", maze="large"):
         self.num_envs = int(num_envs)
@@ -313,14 +318,28 @@ class OGBMazeAdapter(SimulatorAdapter):
                 raise ValueError("active must be a bool vector with shape [num_envs]")
         return actions, active
 
-    def step(self, actions, *, active=None, capture_state=True):
-        active = None if active is None else np.asarray(active.detach().cpu(), dtype=bool)
+    def _checked(self, actions, active):
+        if active is not None:
+            active = np.asarray(active.detach().cpu() if torch.is_tensor(active) else active, dtype=bool)
         self._check_open()
         if torch.is_tensor(actions):
             actions = actions.detach().cpu().numpy()
         actions = np.asarray(actions)
         if actions.shape != (self.num_envs, self.action_dim) or not np.isfinite(actions).all():
             raise ValueError(f"OGBMaze action must have finite shape (num_envs, {self.action_dim})")
+        return actions, active
+
+    def step_arrays(self, actions, active=None):
+        """Return the task outputs of ``step`` as ``{key tuple: array}``, without State."""
+        actions, active = self._checked(actions, active)
+        if not self._point:
+            active = None if active is None else torch.from_numpy(active)
+            return arrays_of(self.step(actions, active=active, capture_state=False))
+        values = self._point_values(actions, active)
+        return {("info", key) if key in _INFO else (key,): value for key, value in values.items()}
+
+    def step(self, actions, *, active=None, capture_state=True):
+        actions, active = self._checked(actions, active)
         if self._point:
             return self._step_point(actions, active, capture_state)
         outputs = [
@@ -360,7 +379,17 @@ class OGBMazeAdapter(SimulatorAdapter):
         return dist <= tol
 
     def _step_point(self, actions, active, capture_state):
-        """Step point lanes as ``PointEnv.step`` and ``MazeEnv.step`` do, with task outputs for the whole batch."""
+        values = self._point_values(actions, active)
+        out = {key: torch.tensor(value, device=self.device) for key, value in values.items()}
+        info = TensorDict({key: out.pop(key) for key in _INFO}, [self.num_envs], device=self.device)
+        return TensorDict(
+            {**({"state": self.get_state()} if capture_state else {}), **out, "info": info},
+            batch_size=[self.num_envs],
+            device=self.device,
+        )
+
+    def _point_values(self, actions, active):
+        """Step point lanes as ``PointEnv.step`` and ``MazeEnv.step`` do; return the task outputs of the batch."""
         import mujoco
 
         envs = self.envs
@@ -411,17 +440,7 @@ class OGBMazeAdapter(SimulatorAdapter):
                 for key, v in values.items()
             }
         self._last_point = values
-        out = {key: torch.tensor(value, device=self.device) for key, value in values.items()}
-        info = TensorDict(
-            {key: out.pop(key) for key in ("xy", "prev_qpos", "prev_qvel", "qpos", "qvel")},
-            [self.num_envs],
-            device=self.device,
-        )
-        return TensorDict(
-            {**({"state": self.get_state()} if capture_state else {}), **out, "info": info},
-            batch_size=[self.num_envs],
-            device=self.device,
-        )
+        return values
 
     def close(self):
         if not self._closed:

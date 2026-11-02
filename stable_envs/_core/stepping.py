@@ -11,7 +11,9 @@ import sys
 
 import numpy as np
 import torch
+from tensordict import TensorDict
 
+from .._execution.sequences import run_sequence
 from .tensordicts import build_tensordict
 
 _NUMPY_DTYPES = {torch.uint8: np.uint8, torch.float32: np.float32, torch.float64: np.float64, torch.bool: np.bool_}
@@ -158,6 +160,20 @@ def _host_pipeline(env, pipeline) -> bool:
     return pipeline is not None and getattr(pipeline, "host_outputs", False) and env.device.type != "cpu"
 
 
+def _local_sequence(simulator, acts, device):
+    """Run every action of ``acts`` on a local simulator; return the stacked task outputs and validity."""
+    count, length = acts.shape[:2]
+    outputs, valid = {}, np.zeros((count, length), np.bool_)
+    run_sequence(simulator, acts, None, outputs, valid)
+    ended = ~valid
+    for value in outputs.values():
+        value[ended] = 0
+    stacked = TensorDict(
+        {key: torch.from_numpy(value).to(device) for key, value in outputs.items()}, [count, length], device=device
+    )
+    return stacked, torch.from_numpy(valid).to(device)
+
+
 @torch.no_grad()
 def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
     env._check_open("step")
@@ -215,11 +231,30 @@ def _step(env, actions, states, frames, *, render_threads):
             **({"capture_frame": True} if frame and pipeline_frames else {}),
         )
 
+    # Sequences without frames or earlier States can run in one loop of the simulator, or of its workers.
+    whole = length > 1 and frame_indices is None and not shared and state_times <= {length - 1}
+    sequence_actions, local = None, None
+    if whole and pipeline is not None and getattr(pipeline, "sequence_steps", 0):
+        # A rejected action goes through the per-action loop, which takes the actions before it.
+        with contextlib.suppress(Exception):
+            sequence_actions = pipeline.check_sequence(acts)
+    elif whole and pipeline is None:
+        local = getattr(env, "_sequence_simulator", lambda: None)()
+    looped = sequence_actions is None and local is None
     try:
-        if pipeline is not None:
+        if not looped:
+            if local is not None:
+                stacked, valid = _local_sequence(local, acts, work)
+                live_state = None
+            else:
+                stacked, valid, live_state = pipeline.step_sequence(sequence_actions, host=host)
+            if live_state is None:
+                live_state = env.get_state().to(work)
+            saved_states = dict.fromkeys(state_times, live_state)
+        if pipeline is not None and looped:
             submit(0, active, all_active)
             pending = True
-        for t in range(length):
+        for t in range(length if looped else 0):
             # The all-true mask is never handed to the family, so it needs no copy.
             validity.append(active if all_active else active.clone())
             if pipeline is not None:
@@ -266,10 +301,12 @@ def _step(env, actions, states, frames, *, render_threads):
             pipeline.abort_step()
         raise
 
-    valid = torch.stack(validity, dim=1)
+    if looped:
+        valid = torch.stack(validity, dim=1)
+        spares = env.__dict__.setdefault("_padded_output_buffers", {}) if shared else None
+        stacked = _stack_outputs(history, valid, shared, spares) if sequence else history[0]
     out = {"state": live_state}
-    spares = env.__dict__.setdefault("_padded_output_buffers", {}) if shared else None
-    out.update((_stack_outputs(history, valid, shared, spares) if sequence else history[0]).items())
+    out.update(stacked.items())
     out["valid"] = valid
     if state_indices is not None:
         out["states"] = (
