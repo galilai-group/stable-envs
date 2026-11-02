@@ -208,9 +208,8 @@ def test_shared_distance_matches_cpu_norm_without_host_conversion(name, monkeypa
         assert_same_state(result["terminated"], expected < 16)
 
 
-@pytest.mark.parametrize("backend", ["torch", "jax"])
+@pytest.mark.parametrize("backend", ["torch", "jax", "numba"])
 def test_step_uses_the_observation_hook(monkeypatch, backend):
-    # The Numba step computes the observation in its kernel.
     with se.TwoRoom(device="cpu", simulation_backend=backend) as env:
         env.reset(seed=0)
         expected = torch.arange(10, dtype=torch.float32).reshape(1, 10)

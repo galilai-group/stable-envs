@@ -499,6 +499,9 @@ class _HiddenTargetSemantics:
     def _observation(self, agent, target):
         return torch.cat([agent, target], dim=1)
 
+    #: The observation hook that the Numba step computes in its kernel; another hook runs after the kernel.
+    _numba_observation = _observation
+
     def _task_tensors(self, agent, target):
         observation = self._observation(agent, target)
         # Match the two-element CPU torch.norm: round x*x, accumulate y*y with
@@ -547,6 +550,8 @@ class _HiddenTargetSemantics:
             self._numba_kind, *self._numba_inputs(action, active), self._target_position.numpy(), self._numba_doors
         )
         agent, target, observation, proprio, state, goal_state, distance, terminated = map(torch.from_numpy, values)
+        if getattr(self._observation, "__func__", None) is not type(self)._numba_observation:
+            observation = self._observation(agent, target)
         n = self.B
         return build_tensordict(
             {
@@ -1059,6 +1064,8 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
         live = torch.arange(MAX_DOOR, device=self.device) < count
         doors = torch.where(live[..., None], doors, 0.0)
         return torch.cat((agent, target, doors.flatten(1)), dim=1)
+
+    _numba_observation = _observation
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """Sample agent positions in [14, 209]^2, rejecting positions inside the central wall."""

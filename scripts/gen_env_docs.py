@@ -54,6 +54,7 @@ PHYSICS = {
     "DELEGATED_CPU": "source simulator on CPU",
     "NATIVE_TORCH": "native torch on the env device",
     "NATIVE_JAX": "native JAX on the env device",
+    "NATIVE_NUMBA": "native Numba on CPU",
     "AUTO_NATIVE_MJX": "native MuJoCo on CPU; CUDA batches use native below 32 lanes, JAX/MJX otherwise",
 }
 
@@ -174,7 +175,8 @@ def metadata(name: str, device: str = "cpu") -> dict:
             "has_dynamics": info["has_dynamics"],
             "default_size": info["default_size"],
             "frame_shape": list(env.frame_spec.shape),
-            "physics": PHYSICS.get(getattr(cls, "execution_mode", ""), None),
+            # The env's own mode: some classes choose their physics on construction (navigation uses Numba on CPU).
+            "physics": PHYSICS.get(getattr(env, "execution_mode", ""), None),
             "renderers": RENDERERS[renderer_cell(cls)],
             "action": action,
             "state": _state(env),
