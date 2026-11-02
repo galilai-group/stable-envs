@@ -36,6 +36,8 @@ sweep() { [ $1 = cpu ] && echo $SWEEP_CPU | tr : " " || echo $SWEEP_CUDA | tr : 
 # The stored States hold the largest offline batch; the episode set holds one episode per lane of the largest count.
 N=$(for d in $DEVICES; do sweep $d; done | tr " " "\n" | sort -n | tail -1)
 has() { [[ " $ARMS " == *" $1 "* ]]; }
+# Source workers can hold hundreds of envs whose reset takes seconds each (HumanoidMaze: 4 s).
+export STABLE_ENVS_WORKER_TIMEOUT=${STABLE_ENVS_WORKER_TIMEOUT:-3600}
 export PYTHONPATH=$REPO SDL_VIDEODRIVER=dummy PYTHONWARNINGS=ignore PYTHONDONTWRITEBYTECODE=1 MPLBACKEND=Agg
 # The uv cache stays in home: node-local disk holds one family venv at a time.
 export UV_HTTP_TIMEOUT=600 UV_LINK_MODE=copy UV_CACHE_DIR=${UV_CACHE_DIR:-$HOME/.cache/uv} XDG_CACHE_HOME=$WORK/cache
