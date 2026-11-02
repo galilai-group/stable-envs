@@ -488,7 +488,7 @@ class Env:
 
         Frame checks and benchmarks draw ``state`` with :meth:`render` and these inputs with the source.
         """
-        self._validate_state(state)
+        self._check_open("reference_inputs")
         return np.asarray(torch.as_tensor(self._pack_render_state(state)).detach().cpu(), np.float32)
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:

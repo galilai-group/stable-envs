@@ -21,7 +21,18 @@ except ImportError:  # Python 3.10
     import tomli as tomllib
 
 FILE = ROOT / "tests" / "exemptions.toml"
-CONFORMANCE = ("specs", "seeded", "lanes", "state", "variation", "batch_render", "native_size", "reference", "sampler")
+CONFORMANCE = (
+    "specs",
+    "seeded",
+    "lanes",
+    "state",
+    "variation",
+    "batch_render",
+    "native_size",
+    "reference",
+    "sampler",
+    "reference_origin",
+)
 COVERAGE = ("owner", "original", "swm", "variation_map")
 CHECKS = CONFORMANCE + COVERAGE
 ENTRIES: list[dict] = tomllib.loads(FILE.read_text()).get("exemption", [])
