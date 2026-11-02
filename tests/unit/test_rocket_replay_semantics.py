@@ -7,14 +7,16 @@ import torch
 pytest.importorskip("PyFlyt")
 pytest.importorskip("pybullet")
 
-from stable_envs import make
+from stable_envs import make, tuning
 from tests.helpers.reference.semantics import assert_same_state
 
 
 @pytest.fixture
 def pair():
     torch.set_num_threads(1)
-    a, b = make("PyFlytRocketLanding", num_envs=2), make("PyFlytRocketLanding", num_envs=2, seed=42)
+    # These tests read the lanes of the in-process simulator.
+    with tuning.override(workers=0):
+        a, b = make("PyFlytRocketLanding", num_envs=2), make("PyFlytRocketLanding", num_envs=2, seed=42)
     try:
         yield a, b
     finally:
@@ -103,7 +105,8 @@ def test_seeded_future_reset_and_fresh_entropy(pair):
 
 
 def test_cpu_render_supplied_state_is_exact_and_nonmutating():
-    env = make("PyFlytRocketLanding", num_envs=2, simulator_config={"render_mode": "rgb_array"})
+    with tuning.override(workers=0):
+        env = make("PyFlytRocketLanding", num_envs=2, simulator_config={"render_mode": "rgb_array"})
     try:
         state = env.get_state()
         pixels = env.render(state)

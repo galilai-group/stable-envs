@@ -218,6 +218,25 @@ def test_worker_knobs_drive_process_count(monkeypatch, knobs, batch, expected):
 
 
 @pytest.mark.parametrize(
+    ("knobs", "batch", "call", "expected"),
+    [
+        ({}, 2, {"min_lanes": 2}, 2),
+        ({}, 1, {"min_lanes": 2}, 0),
+        ({}, 32, {}, 0),
+        ({"worker_min_lanes": 64}, 32, {"min_lanes": 2}, 0),
+        ({"workers": 3}, 8, {"min_lanes": 2}, 3),
+        ({}, 8, {"min_lanes": 4, "lanes_per_worker": 2}, 4),
+        ({}, 5, {"min_lanes": 4, "lanes_per_worker": 2}, 2),
+    ],
+)
+def test_call_site_min_lanes_is_below_the_knob(monkeypatch, knobs, batch, call, expected):
+    monkeypatch.setattr(policy.sys, "platform", "linux")
+    monkeypatch.setattr(policy.mp, "current_process", lambda: SimpleNamespace(daemon=False))
+    with tuning.override(**knobs):
+        assert policy.process_count(batch, list(range(16)), path="dmc-sim", **call) == expected
+
+
+@pytest.mark.parametrize(
     ("capability", "arches", "ok"),
     [
         ((8, 6), ["sm_80"], True),

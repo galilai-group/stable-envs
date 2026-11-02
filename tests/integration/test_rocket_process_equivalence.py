@@ -71,11 +71,13 @@ def test_replay_mismatch_in_one_worker_restores_no_lane():
 
 
 def test_public_env_with_workers_matches_local(monkeypatch):
-    local = se.make("PyFlytRocketLanding", num_envs=4, size=64, device="cpu", seed=17)
+    with se.tuning.override(workers=0):
+        local = se.make("PyFlytRocketLanding", num_envs=4, size=64, device="cpu", seed=17)
     with monkeypatch.context() as patch:
         patch.setattr(execution, "process_count", lambda num_envs, cpus, **_: 2)
         remote = se.make("PyFlytRocketLanding", num_envs=4, size=64, device="cpu", seed=17)
     try:
+        assert isinstance(local._simulator, RocketAdapter)
         assert isinstance(remote._simulator, RocketProcessAdapter)
         actions = torch.as_tensor(np.stack(_actions(4, 8), axis=1))
         for env in (local, remote):

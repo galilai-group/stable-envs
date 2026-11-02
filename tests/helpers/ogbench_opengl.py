@@ -10,6 +10,8 @@ import pytest
 import torch
 from tensordict import TensorDict
 
+from stable_envs import tuning
+
 MODEL_VALUES = ("cube.size", "agent.color", "floor.color", "camera.angle_delta", "light.intensity")
 
 
@@ -37,7 +39,9 @@ def opengl():
         # A prior test may have populated the parent package attribute already.
         module.pixels = pixels
         module.version = Mock(side_effect=lambda name: {"mujoco": "3.12.0", "ogbench": "1.2.1"}[name])
-        yield module, mujoco
+        # The mocked renderer exists only in this process.
+        with tuning.override(ogb_gl_workers=0):
+            yield module, mujoco
 
 
 def state(supersample=1):

@@ -7,6 +7,9 @@ from typing import TYPE_CHECKING
 from ...._execution.policy import cpu_affinity, process_count
 from .adapter import RocketAdapter
 
+#: Fewest lanes that use workers when the ``worker_min_lanes`` knob is not set; measured on 8 cores.
+MIN_LANES = 2
+
 if TYPE_CHECKING:
     import torch
 
@@ -25,7 +28,7 @@ def make_rocket_adapter(
 
     cpus = cpu_affinity()
     count = (
-        process_count(num_envs, cpus, path="rocket-sim", lanes_per_process=LANES_PER_PROCESS)
+        process_count(num_envs, cpus, path="rocket-sim", lanes_per_process=LANES_PER_PROCESS, min_lanes=MIN_LANES)
         if type(num_envs) is int and num_envs > 0
         else 0
     )

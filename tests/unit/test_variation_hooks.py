@@ -251,7 +251,10 @@ def _gravity(env):
 @pytest.fixture
 def cartpole():
     pytest.importorskip("dm_control")
-    with se.make("DMCCartpoleSwingup", num_envs=3, device="cpu") as env:
+    # _gravity reads the models of the in-process lanes.
+    with se.tuning.override(workers=0):
+        env = se.make("DMCCartpoleSwingup", num_envs=3, device="cpu")
+    with env:
         yield env
 
 

@@ -60,11 +60,13 @@ def test_invalid_last_lane_restores_no_lane():
 
 
 def test_public_env_with_workers_matches_local(monkeypatch):
-    local = se.make("PushT", num_envs=4, size=32, device="cpu", seed=17)
+    with se.tuning.override(workers=0):
+        local = se.make("PushT", num_envs=4, size=32, device="cpu", seed=17)
     with monkeypatch.context() as patch:
         patch.setattr(execution, "process_count", lambda num_envs, cpus, **_: 2)
         remote = se.make("PushT", num_envs=4, size=32, device="cpu", seed=17)
     try:
+        assert isinstance(local._simulator, PushTReplayAdapter)
         assert isinstance(remote._simulator, PushTProcessAdapter)
         actions = np.random.default_rng(3).uniform(-1, 1, (4, 6, 2)).astype(np.float32)
         for env in (local, remote):
@@ -90,6 +92,6 @@ def test_public_env_with_workers_matches_local(monkeypatch):
     assert all(not p.is_alive() for p in remote._simulator._processes)
 
 
-def test_routing_keeps_small_batches_local():
-    with se.make("PushT", num_envs=2, size=32, device="cpu") as env:
+def test_routing_keeps_one_lane_local():
+    with se.make("PushT", num_envs=1, size=32, device="cpu") as env:
         assert isinstance(env._simulator, PushTReplayAdapter)

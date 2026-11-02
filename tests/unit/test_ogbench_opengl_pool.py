@@ -43,10 +43,10 @@ def test_worker_frames_equal_in_process_frames(name):
         if name == "OGBScene":
             state["pose", "buttons"][::2] = 1 - state["pose", "buttons"][::2]
         with tuning.override(ogb_gl_workers=0):
-            assert pool.workers(len(state)) == 0
+            assert pool.workers(len(state), torch.device(device).type) == 0
             alone = env.render(state, backend="opengl")
         with tuning.override(ogb_gl_workers=3):
-            if pool.workers(len(state)) == 0:
+            if pool.workers(len(state), torch.device(device).type) == 0:
                 pytest.skip("Fewer than 2 CPUs in the process affinity")
             shared = env.render(state, backend="opengl")
             again = env.render(state[3:19], backend="opengl")

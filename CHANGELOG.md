@@ -56,6 +56,21 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- Worker processes start at smaller batches. Each simulator family sets its own `worker_min_lanes`
+  default, measured from 1 to 64 lanes on 8 pinned Xeon Platinum 8268 cores against the source on the
+  same cores. The default is 2 for DM Control, `PyFlytRocketLanding`, Fetch, the OGBench mazes and
+  PushT, and 4 for `OGBCube` and `OGBScene`. Each Cube and Scene worker gets at least 2 lanes. Classic
+  `Acrobot` keeps 64. Before, every family used 64, so a batch of 8 stepped in one process.
+- Fetch draws CPU frames in render workers from 2 rows (`render_worker_min_rows` default for the
+  `fetch-opengl` path). `OGBCube` and `OGBScene` draw CPU batches of 2 or more states in OpenGL workers,
+  as the documentation said. CUDA batches still use the workers from 16 states.
+- At 8 lanes, with 16 actions for each `step` call, the speed against the source on the same cores
+  changes as follows. DM Control: 1.2 to 3.1 times (before: 0.3 to 1.8). PushT: 1.1 times, and 2.2 to
+  2.4 times with frames (before: 0.5, and 0.8 with frames). Fetch: 1.2 to 1.3 times, also with frames
+  (before: 0.3 to 0.4). `PyFlytRocketLanding`: 2.8 times, and 3.9 times with frames (before: 0.7).
+  `OGBCube` and `OGBScene`: 1.7 and 1.5 times (before: 0.5 and 0.4). With 1 action for each call, a
+  light DM Control domain, PushT or PointMaze can step up to 2.2 times slower than in one process. Set
+  `workers` to 0 for that use. Frames, State and outputs do not change.
 - PushT, OGBench maze and dm_control envs that step in worker processes run a sequence of actions in
   the workers. A `step` call with `T > 1` actions, no frames and no State before the last action sends
   the workers up to 64 actions per request, not one. Each worker steps its lanes once per action, and

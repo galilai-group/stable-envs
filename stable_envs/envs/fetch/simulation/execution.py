@@ -7,7 +7,7 @@ from ...._execution.policy import cpu_affinity, process_count
 if TYPE_CHECKING:
     import torch
 
-from .adapter import FetchAdapter
+from .adapter import WORKER_MIN_LANES, FetchAdapter
 from .process import FetchProcessAdapter
 
 
@@ -20,7 +20,7 @@ def make_fetch_adapter(
 ) -> FetchAdapter:
     # Daemonic workers cannot spawn children; keep their simulators local.
     cpus = cpu_affinity()
-    count = process_count(num_envs, cpus, path="fetch-sim")
+    count = process_count(num_envs, cpus, path="fetch-sim", min_lanes=WORKER_MIN_LANES)
     if count:
         return FetchProcessAdapter(
             num_envs, device, seed, task, reward_type, processes=count, threads_per_process=1, cpus=cpus
