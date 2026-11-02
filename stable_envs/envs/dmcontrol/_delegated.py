@@ -141,10 +141,6 @@ class DelegatedSemantics:
         self._check_open("step")
         return self._simulator.step(actions, active=active, capture_state=False)
 
-    def _sequence_simulator(self):
-        """The local simulator when it runs a sequence of actions in this process, else None."""
-        return self._simulator if getattr(self._simulator, "process_sequences", False) else None
-
     def _close(self):
         if hasattr(self, "_simulator"):
             self._simulator.close()

@@ -5,6 +5,7 @@ from typing import Any
 import numpy as np
 
 from . import physics as _physics
+from .batch import XX, XZ, ZZ, scalar_tolerance, tolerance
 from .lanes import DMCLanes
 from .registered import apply_appearance, apply_floor_friction, compile_physics, normalized, source_model
 from .state import core_fields
@@ -80,3 +81,131 @@ class DMCContinuationAdapter(DMCLanes):
         super().__init__(
             domain, num_envs, device, seed, lambda s: _make_env(domain, s), core_fields(cfg["nq"], cfg["nv"])
         )
+
+    def _info(self, env, lane):
+        physics, domain = env.physics, self.domain
+        if domain == "cheetah":
+            extra = {
+                "speed": physics.speed(),
+                "torso_height": physics.named.data.xpos["torso", "z"],
+                "bfoot_height": physics.named.data.xpos["bfoot", "z"],
+                "ffoot_height": physics.named.data.xpos["ffoot", "z"],
+                "angmomentum": physics.named.data.subtree_angmom["torso"][1],
+            }
+        elif domain == "hopper":
+            extra = {
+                "speed": physics.speed(),
+                "height": physics.height(),
+                "angmomentum": physics.named.data.subtree_angmom["torso"][1],
+            }
+        else:
+            extra = {
+                "speed": physics.horizontal_velocity(),
+                "torso_height": physics.torso_height(),
+                "torso_upright": physics.torso_upright(),
+                "left_foot_height": physics.named.data.xpos["left_foot", "z"],
+                "right_foot_height": physics.named.data.xpos["right_foot", "z"],
+                "left_thigh_height": physics.named.data.xpos["left_thigh", "z"],
+                "right_thigh_height": physics.named.data.xpos["right_thigh", "z"],
+            }
+        common = {"qpos": physics.data.qpos.copy(), "qvel": physics.data.qvel.copy()}
+        return float("nan"), {**common, **{key: np.asarray(value, np.float64) for key, value in extra.items()}}
+
+
+class HopperBatch:
+    """Hopper Hop batch lanes."""
+
+    def __init__(self, b, models):
+        m = models[0]
+        self.torso, self.foot = m.body("torso").id, m.body("foot").id
+        self.speed_adr = int(m.sensor("torso_subtreelinvel").adr[0])
+        self.touch = [int(m.sensor(name).adr[0]) for name in ("touch_toe", "touch_heel")]
+        self.qpos, self.qvel, self.xipos = b.bind("qpos"), b.bind("qvel"), b.bind("xipos")
+        self.sensordata, self.angmom = b.bind("sensordata"), b.bind("subtree_angmom")
+
+    def _height(self):
+        return self.xipos[:, self.torso, 2] - self.xipos[:, self.foot, 2]
+
+    def reward(self):
+        standing = tolerance(self._height(), (0.6, 2))
+        speed = self.sensordata[:, self.speed_adr]
+        return standing * tolerance(speed, bounds=(2, float("inf")), margin=1, value_at_margin=0.5, sigmoid="linear")
+
+    def observation(self):
+        touch = np.log1p(self.sensordata[:, self.touch])
+        return np.concatenate([self.qpos[:, 1:], self.qvel, touch], axis=1, dtype=np.float32)
+
+    def info(self):
+        return np.full(len(self.qpos), np.nan), {
+            "qpos": self.qpos,
+            "qvel": self.qvel,
+            "speed": self.sensordata[:, self.speed_adr],
+            "height": self._height(),
+            "angmomentum": self.angmom[:, self.torso, 1],
+        }
+
+
+class CheetahBatch:
+    """Cheetah Run batch lanes."""
+
+    def __init__(self, b, models):
+        m = models[0]
+        self.torso, self.bfoot, self.ffoot = (m.body(name).id for name in ("torso", "bfoot", "ffoot"))
+        self.speed_adr = int(m.sensor("torso_subtreelinvel").adr[0])
+        self.qpos, self.qvel, self.xpos = b.bind("qpos"), b.bind("qvel"), b.bind("xpos")
+        self.sensordata, self.angmom = b.bind("sensordata"), b.bind("subtree_angmom")
+
+    def reward(self):
+        speed = self.sensordata[:, self.speed_adr]
+        return tolerance(speed, bounds=(10, float("inf")), margin=10, value_at_margin=0, sigmoid="linear")
+
+    def observation(self):
+        return np.concatenate([self.qpos[:, 1:], self.qvel], axis=1, dtype=np.float32)
+
+    def info(self):
+        return np.full(len(self.qpos), np.nan), {
+            "qpos": self.qpos,
+            "qvel": self.qvel,
+            "speed": self.sensordata[:, self.speed_adr],
+            "torso_height": self.xpos[:, self.torso, 2],
+            "bfoot_height": self.xpos[:, self.bfoot, 2],
+            "ffoot_height": self.xpos[:, self.ffoot, 2],
+            "angmomentum": self.angmom[:, self.torso, 1],
+        }
+
+
+class WalkerBatch:
+    """Walker Walk batch lanes."""
+
+    def __init__(self, b, models):
+        m = models[0]
+        self.torso = m.body("torso").id
+        limbs = ("left_foot", "right_foot", "left_thigh", "right_thigh")
+        self.limbs = {f"{name}_height": m.body(name).id for name in limbs}
+        self.speed_adr = int(m.sensor("torso_subtreelinvel").adr[0])
+        self.qpos, self.qvel, self.xpos = b.bind("qpos"), b.bind("qvel"), b.bind("xpos")
+        self.xmat, self.sensordata = b.bind("xmat"), b.bind("sensordata")
+
+    def reward(self):
+        standing = scalar_tolerance(self.xpos[:, self.torso, 2], bounds=(1.2, float("inf")), margin=0.6)
+        stand_reward = (3 * standing + (1 + self.xmat[:, self.torso, ZZ]) / 2) / 4
+        speed = self.sensordata[:, self.speed_adr]
+        move = tolerance(speed, bounds=(1, float("inf")), margin=0.5, value_at_margin=0.5, sigmoid="linear")
+        return stand_reward * (5 * move + 1) / 6
+
+    def observation(self):
+        orientations = self.xmat[:, 1:][:, :, [XX, XZ]].reshape(len(self.xmat), -1)
+        return np.concatenate([orientations, self.xpos[:, self.torso, 2:], self.qvel], axis=1, dtype=np.float32)
+
+    def info(self):
+        return np.full(len(self.qpos), np.nan), {
+            "qpos": self.qpos,
+            "qvel": self.qvel,
+            "speed": self.sensordata[:, self.speed_adr],
+            "torso_height": self.xpos[:, self.torso, 2],
+            "torso_upright": self.xmat[:, self.torso, ZZ],
+            **{key: self.xpos[:, body, 2] for key, body in self.limbs.items()},
+        }
+
+
+CONTINUATION_BATCH = {"cheetah": CheetahBatch, "hopper": HopperBatch, "walker": WalkerBatch}

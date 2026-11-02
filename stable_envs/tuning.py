@@ -124,7 +124,7 @@ class Knob:
 
 
 _KINDS = {"n": "an int >= 1", "n0": "an int >= 0", "pow2": "a power of two", "warps": f"one of {list(_WARPS)}"}
-_SIM = ("classic-sim", "dmc-sim", "fetch-sim", "ogb-sim", "pusht-sim", "pusht-render", "rocket-sim")
+_SIM = ("classic-sim", "fetch-sim", "ogb-sim", "pusht-sim", "pusht-render", "rocket-sim")
 _RENDER = ("classic-render", "fetch-opengl")
 
 KNOBS: dict[str, Knob] = {
@@ -135,6 +135,7 @@ KNOBS: dict[str, Knob] = {
         Knob("render_workers", 8, _RENDER, "cpu", "n0", "cpus", "Most worker processes of a CPU render batch on Linux; 0 or 1 draws in-process."),
         Knob("render_worker_min_rows", 16, _RENDER, "cpu", "n", None, "Smallest CPU render batch that uses render worker processes."),
         Knob("fetch_threads", 4, ("fetch-sim",), "cpu", "n", "cpus", "Most simulator threads of an in-process Fetch batch.", step=True),
+        Knob("dmc_threads", 8, ("dmc-sim",), "cpu", "n", "cpus", "Most mujoco.batch threads of a DM Control batch.", step=True),
         Knob("cpu3d_chunk", 16, ("dmc-trackcom",), "cpu", "n", "rows", "Frames per cpu3d ray-casting chunk."),
         Knob("dmc_cpu_ray_budget", 1 << 21, ("dmc-suite",), "cpu", "pow2", "rays", "Rays per CPU render chunk of fixed-camera DMC cells.", _cpu_rays),
         Knob("dmc_ray_budget", 1 << 24, ("dmc-suite",), "cuda", "pow2", "rays", "Rays per CUDA render chunk of fixed-camera DMC cells.", _cuda_rays),
@@ -159,7 +160,6 @@ KNOBS: dict[str, Knob] = {
 RENDER_PATHS: dict[str, tuple[str, ...]] = {
     "DMControlSuite": ("dmc-suite", "dmc-render", "dmc-sim"),
     "DMControlTrackCom": ("dmc-trackcom", "dmc-render", "dmc-sim"),
-    "dmcontrol": ("dmc-sim",),
     "OGBManipBase": ("ogb-manipulation", "ogb-sim"),
     "ogbench": ("ogb-maze", "ogb-sim"),
     "fetch": ("fetch-mjwarp", "fetch-opengl", "fetch-sim"),

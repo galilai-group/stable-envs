@@ -73,8 +73,10 @@ jobs:
         include:
           - profile: native
             install: .[dev]
-          - profile: mjwarp-dmc-ogbench
-            install: .[dev,mjwarp,dmcontrol,ogbench]
+          - profile: mjwarp-dmc
+            install: .[dev,mjwarp,dmcontrol]
+          - profile: mjwarp-ogbench
+            install: .[dev,mjwarp,ogbench,ogbench-manipulation-gpu]
           - profile: mjwarp-fetch
             install: .[dev,mjwarp,robotics]
           - profile: nvdiff

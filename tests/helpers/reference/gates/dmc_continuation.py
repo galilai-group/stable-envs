@@ -171,16 +171,13 @@ def run_gate(device="cpu"):
                         other.reset(seed=seed + 991)
                         for action in -actions[:9]:
                             other.step(action, states=None, frames=None).exclude("valid")
+                        # set_state reloads every lane's ctrl from dm_control, so the divergence is read before it.
+                        control_diverged = not np.array_equal(env._simulator.b.ctrl, other._simulator.b.ctrl)
                         snapshot = env.get_state()
                         env.set_state(snapshot)
                         other.set_state(snapshot)
                         warmstart_equal = np.array_equal(
-                            np.stack([wrapper.physics.data.qacc_warmstart for wrapper in env._simulator.envs]),
-                            np.stack([wrapper.physics.data.qacc_warmstart for wrapper in other._simulator.envs]),
-                        )
-                        control_diverged = not np.array_equal(
-                            np.stack([wrapper.physics.data.ctrl for wrapper in env._simulator.envs]),
-                            np.stack([wrapper.physics.data.ctrl for wrapper in other._simulator.envs]),
+                            env._simulator.b.qacc_warmstart, other._simulator.b.qacc_warmstart
                         )
                         assert warmstart_equal and control_diverged
                         history = check_two_histories_same_state(env, other, snapshot, actions[:8])
@@ -272,7 +269,7 @@ def run_gate(device="cpu"):
             try:
                 env.set_variation({"light.diffuse_scale": [1.1]})
                 assert np.array_equal(
-                    env._simulator.envs[0].physics.model.opt.gravity,
+                    env._simulator.lanes.envs[0].physics.model.opt.gravity,
                     np.array([0.0, 0.0, -9.81], np.float64),
                 )
                 check_reset_matches_reference(env, ref, seed=23)
