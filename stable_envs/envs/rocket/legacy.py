@@ -582,6 +582,7 @@ class PyFlytRocketLanding(Env):
     """
 
     family = "pyflyt"
+    reference_gpu_render = "pybullet-egl"
     domain = "rocket_landing"
     requires_cuda = True
 

@@ -573,7 +573,7 @@ class _TorchNavBase(_GymReferencePort):
 
     default_size = IMG
     # Reference geometry and dot radii are defined at this pixel resolution.
-    fixed_size = IMG
+    native_size = IMG
     action_dim = 2
     action_low = -1.0
     action_high = 1.0
@@ -685,9 +685,9 @@ class _TorchNavBase(_GymReferencePort):
         s = s.reshape(-1, self.state_dim)
         n = int(s.shape[0])
         t = int(size or self.size)
-        if t != self.fixed_size:
+        if t != self.native_size:
             raise ValueError(
-                f"{type(self).__name__} renders at {self.fixed_size}px only (got {t}); every length in "
+                f"{type(self).__name__} renders at {self.native_size}px only (got {t}); every length in "
                 f"the reference is in output pixels. Resize the frames afterwards instead."
             )
         if supersample not in (None, 1):
@@ -779,7 +779,7 @@ class _TorchNavBase(_GymReferencePort):
         cls = type(self).__name__
         plates = []
         for key, idx in order.items():
-            ck = (cls, int(self.fixed_size), str(self.device), key)
+            ck = (cls, int(self.native_size), str(self.device), key)
             hit = _TorchNavBase._BAKE_CACHE.get(ck)
             if hit is None:
                 first = lo + idx[0]
@@ -1413,7 +1413,7 @@ class SimplePointMaze(_GymReferencePort):
     _shared_outputs = (("info", "goal"),)
     state_dim = 4
     state_names = ("agent_x", "agent_y", "goal_x", "goal_y")
-    default_size = SIZE
+    default_size = native_size = SIZE
     reference_id = None
     reference_kwargs = {"show_goal": True}
     reference_render_args = ("rgb_array",)

@@ -383,15 +383,6 @@ class ManipulationSemantics:
         frames = self._render_frames(state, checked, out=out, **kwargs)
         return frames.reshape(*lead, *frames.shape[1:])
 
-    @classmethod
-    def reference_env(cls, size=None):
-        """MuJoCo's own OpenGL renderer drawing the same compiled Cube/Scene model."""
-        return cls(num_envs=1, size=size, device="cuda", backend="opengl")
-
-    @classmethod
-    def reference_render(cls, env, states):
-        return env._render(states).cpu().numpy()
-
     def sample_states(self, batch, rng=None):
         self._check_open("sample_states")
         raise NotImplementedError("Cube/Scene dataset sampling is not supported")

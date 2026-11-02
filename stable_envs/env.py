@@ -338,7 +338,11 @@ class Env:
     state_names: tuple[str, ...] = ()
     requires_cuda: bool = False
     default_size: int = 96
+    #: The only frame width the class draws, which is then also ``default_size``; None draws any size.
+    native_size: int | None = None
     reference_id: str | None = None
+    #: How the source draws on a GPU: ``"mujoco-egl"``, ``"pybullet-egl"``, or None when it draws on CPU only.
+    reference_gpu_render: str | None = None
     #: Variation leaves that change dynamics and must be excluded from appearance-only checks.
     dynamics_variation_leaves: frozenset[str] = frozenset()
     #: Variation leaves the source declares but never draws; appearance checks skip them too.
@@ -463,6 +467,14 @@ class Env:
         Families whose field of view depends on output resolution also accept ``size``.
         """
         raise NotImplementedError(f"{type(self).__name__} does not build a Scene2D; it must override render() instead")
+
+    def reference_inputs(self, state: State) -> np.ndarray:
+        """Return what the class's ``reference_render`` draws for full State ``state``: its compact render rows.
+
+        Frame checks and benchmarks draw ``state`` with :meth:`render` and these inputs with the source.
+        """
+        self._validate_state(state)
+        return np.asarray(torch.as_tensor(self._pack_render_state(state)).detach().cpu(), np.float32)
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """Sample ``(batch, state_dim)`` compact renderer rows using the family sampler."""

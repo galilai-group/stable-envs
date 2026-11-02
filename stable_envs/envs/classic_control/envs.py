@@ -102,6 +102,7 @@ class _Classic(Env):
 
     def __init_subclass__(cls, **kw):
         super().__init_subclass__(**kw)
+        cls.native_size = cls.native[1] or None
         if cls.sim_state_names:
             col = {i: j for j, i in enumerate(cls.render_from_sim)}
             # Keep numerical fields in float64; the packed renderer row remains float32.

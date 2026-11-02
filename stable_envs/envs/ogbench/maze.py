@@ -513,6 +513,7 @@ class OGBenchMaze(Env):
     """
 
     family = "ogbench"
+    reference_gpu_render = "mujoco-egl"
 
     LOCO: str = ""
     MAZE: str = ""

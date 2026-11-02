@@ -336,6 +336,21 @@ class PushT(Env):
             raise error
         return fields
 
+    @classmethod
+    def reference_env(cls, size=None):
+        """One CPU lane that draws with the source's own pygame code (``reference_id``) in this process."""
+        return cls(num_envs=1, size=size, device="cpu", backend="source")
+
+    def reference_inputs(self, state):
+        """Return one host dict of render fields per lane, as the source's drawing code reads them."""
+        fields = self._render_fields_of(state)
+        return [{k: v[i] for k, v in fields.items()} for i in range(len(fields["recipe/config"]))]
+
+    @staticmethod
+    def reference_render(env, inputs) -> np.ndarray:
+        """Draw ``reference_inputs`` rows one at a time with the source's pygame code in one scene of this process."""
+        return np.stack([np.asarray(env._projection.render([row], env.size))[0] for row in inputs])
+
     def render(self, state=None, *, size=None, out=None):
         self._check_open("render")
         size = self.size if size is None else size

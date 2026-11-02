@@ -25,6 +25,7 @@ class _DMCModel(Env):
     """
 
     family = "dmcontrol"
+    reference_gpu_render = "mujoco-egl"
 
     DOMAIN: str = ""
     TASK: str = ""
