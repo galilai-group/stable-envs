@@ -19,8 +19,14 @@ snv.import_errors()                  # {module: exception} for families this mac
 EGL context or a compiled scene.
 
 `info` returns `class_name`, `id`, `class`, `module`, `family`, `domain`, `reference_id`,
-`render_state_dim`, `render_state_names`, `default_size`, `action_dim`, `has_dynamics` and
-`requires_cuda`. `class` is the class object and `module` is the name of its module.
+`reference_gpu_render`, `render_state_dim`, `render_state_names`, `default_size`, `native_size`,
+`action_dim`, `has_dynamics` and `requires_cuda`. `class` is the class object and `module` is the name
+of its module.
+
+`native_size` is the only frame width that a class draws, and it is also `default_size`. It is set for
+the classes whose source draws every primitive in fixed pixels: the classic control classes,
+`SimplePointMaze` and the Gaussian-dot navigation classes. It is None for the classes that draw any
+size.
 
 `snv.info` returns metadata. It does not return an `snv.Spec`. An `snv.Spec` describes tensors
 (`env.frame_spec`, `env.state_spec`, …).
@@ -63,7 +69,14 @@ With every extra installed, these 74 classes register. Without PyFlyt, 73 classe
 
 ## Comparison with the source
 
-`reference_id` names the source that the tests compare a class with. The "Renderer on CPU" and
+`reference_id` names the source that the tests compare a class with. `env.reference_inputs(state)`
+returns what the class's `reference_render(reference_env(size), inputs)` draws for a full State:
+usually the compact render rows, and for PushT one dict of render fields per lane, which the source's
+pygame code draws. The frame checks compare these frames with `env.render(state)`.
+`reference_gpu_render` tells how the source draws on a GPU: `"mujoco-egl"` (DM Control, Fetch,
+OGBench), `"pybullet-egl"` (PyFlytRocketLanding), or None when the source draws on CPU only.
+
+The "Renderer on CPU" and
 "Renderer on CUDA" rows of each class on its family page name the code that draws the frames. For
 example, PushT uses the source's own pygame drawing, and PyFlytRocketLanding uses TinyRenderer on CPU.
 

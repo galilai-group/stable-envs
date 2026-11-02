@@ -484,6 +484,7 @@ class OGBManipBase(Env):
     """Base for the two manipulation cells. ``CELL`` is set by the generated subclasses."""
 
     family = "ogbench"
+    reference_gpu_render = "mujoco-egl"
     requires_cuda = True
 
     CELL: str = ""

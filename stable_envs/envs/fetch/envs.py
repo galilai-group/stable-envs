@@ -461,6 +461,7 @@ class FetchBase(Env):
     """
 
     family = "fetch"
+    reference_gpu_render = "mujoco-egl"
 
     SCENE: str = ""
     REF_ID: str = ""

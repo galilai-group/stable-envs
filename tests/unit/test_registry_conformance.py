@@ -11,7 +11,9 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs.testing import conformance as C
 from tests.helpers.exemptions import param
+from tests.helpers.reference.certification import has_reference_renderer
 from tests.helpers.reference.semantics import assert_same_state
 
 pytestmark = pytest.mark.unit
@@ -121,3 +123,28 @@ def test_a_lane_renders_the_same_alone_as_in_a_batch(name):
         frames = env.render(state)
         for lane in range(LANES):
             assert_same_state(env.render(state[lane : lane + 1])[0], frames[lane])
+
+
+@pytest.mark.parametrize("name", envs("native_size"))
+def test_a_class_draws_any_size_unless_it_declares_its_native_size(name):
+    cls = se.registry.REGISTRY[name]
+    if cls.native_size is not None:
+        assert cls.default_size == cls.native_size
+        with _make(name) as env:
+            assert env.render(env.reset(seed=SEED)).shape[2] == cls.native_size
+        return
+    with se.make(name, num_envs=1, size=128, device="cpu") as env:
+        assert env.render(env.reset(seed=SEED)).shape[1:3] == (128, 128)
+
+
+@pytest.mark.parametrize("name", envs("reference"))
+def test_the_source_draws_the_reference_inputs_of_a_state(name):
+    cls = se.registry.REGISTRY[name]
+    if not has_reference_renderer(cls):
+        pytest.skip("no source renderer")
+    with _make(name) as env:
+        state = env.reset(seed=SEED)
+        inputs = env.reference_inputs(state)
+        assert len(inputs) == env.num_envs
+        frames = np.asarray(cls.reference_render(C.reference_env(cls, env.size), inputs))
+        assert frames.shape == tuple(env.render(state).shape)
