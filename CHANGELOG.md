@@ -15,6 +15,9 @@ All notable changes to this project are listed here. The format follows
   compact render rows, or for PushT one dict of render fields per lane. `PushT.reference_env()` and
   `PushT.reference_render()` draw these fields with the source's pygame code. A conformance check on every
   registered class compares the shape of these frames with `env.render(state)`.
+- Tuning knob `worker_timeout` (`STABLE_ENVS_WORKER_TIMEOUT`, default 120): the seconds a CPU simulator
+  worker can take to answer one request before the batch fails. Before, this limit was fixed at 120
+  seconds, which is too short for lanes whose reset takes minutes in one worker.
 - `Env.reference_gpu_render` tells how the source draws on a GPU: `"mujoco-egl"` for DM Control, Fetch
   and OGBench, `"pybullet-egl"` for PyFlytRocketLanding, and None for sources that draw on CPU only.
   `snv.info()` returns it.
