@@ -384,8 +384,11 @@ class ManipulationSemantics:
         return frames.reshape(*lead, *frames.shape[1:])
 
     def sample_states(self, batch, rng=None):
+        """Render rows from OGBench's own seeded resets, which place the objects anywhere they can start."""
         self._check_open("sample_states")
-        raise NotImplementedError("Cube/Scene dataset sampling is not supported")
+        from .manipulation import sample_render_rows
+
+        return sample_render_rows(self.CELL, batch, rng)
 
     def _close(self):
         self._simulator.close()

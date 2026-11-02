@@ -21,7 +21,7 @@ except ImportError:  # Python 3.10
     import tomli as tomllib
 
 FILE = ROOT / "tests" / "exemptions.toml"
-CONFORMANCE = ("specs", "seeded", "lanes", "state", "variation", "batch_render", "native_size", "reference")
+CONFORMANCE = ("specs", "seeded", "lanes", "state", "variation", "batch_render", "native_size", "reference", "sampler")
 COVERAGE = ("owner", "original", "swm", "variation_map")
 CHECKS = CONFORMANCE + COVERAGE
 ENTRIES: list[dict] = tomllib.loads(FILE.read_text()).get("exemption", [])
@@ -62,7 +62,7 @@ def param(name: str, cls, check: str):
     marks = [pytest.mark.family(family)]
     if check in CONFORMANCE and "gl" in FAMILIES[family].get("capabilities", ()):
         marks.append(pytest.mark.gl)
-    if check in ("specs", "batch_render", "native_size", "reference") and any(
+    if check in ("specs", "batch_render", "native_size", "reference", "sampler") and any(
         fnmatch.fnmatchcase(name, glob) for glob in EGL_RENDERED
     ):
         marks.append(pytest.mark.egl)

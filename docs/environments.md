@@ -73,6 +73,10 @@ With every extra installed, these 74 classes register. Without PyFlyt, 73 classe
 returns what the class's `reference_render(reference_env(size), inputs)` draws for a full State:
 usually the compact render rows, and for PushT one dict of render fields per lane, which the source's
 pygame code draws. The frame checks compare these frames with `env.render(state)`.
+`env.sample_states(n)` returns `n` compact render rows from the family's own sampler, which spreads
+the poses over the whole reachable space, and `env.render_rows(rows)` draws them on the devices in
+`row_render_devices`. The frame checks use these rows where the class has a sampler, and full States
+from resets and random actions where it does not.
 `reference_gpu_render` tells how the source draws on a GPU: `"mujoco-egl"` (DM Control, Fetch,
 OGBench), `"pybullet-egl"` (PyFlytRocketLanding), or None when the source draws on CPU only.
 

@@ -15,6 +15,11 @@ All notable changes to this project are listed here. The format follows
   compact render rows, or for PushT one dict of render fields per lane. `PushT.reference_env()` and
   `PushT.reference_render()` draw these fields with the source's pygame code. A conformance check on every
   registered class compares the shape of these frames with `env.render(state)`.
+- `env.render_rows(rows)` draws compact render rows, such as `sample_states` returns, without a full
+  State. `Env.row_render_devices` names the devices on which it can: `PyFlytRocketLanding` draws rows
+  only on CUDA, because TinyRenderer on CPU needs every body pose and the lagged camera.
+- `OGBCube.sample_states` and `OGBScene.sample_states` return render rows from OGBench's own seeded
+  resets followed by 0 to 25 random actions. Before, these classes did not sample rows.
 - Tuning knob `worker_timeout` (`STABLE_ENVS_WORKER_TIMEOUT`, default 120): the seconds a CPU simulator
   worker can take to answer one request before the batch fails. Before, this limit was fixed at 120
   seconds, which is too short for lanes whose reset takes minutes in one worker.

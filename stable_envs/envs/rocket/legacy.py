@@ -583,6 +583,8 @@ class PyFlytRocketLanding(Env):
 
     family = "pyflyt"
     reference_gpu_render = "pybullet-egl"
+    #: TinyRenderer on CPU needs every body pose and the lagged camera, which compact rows do not hold.
+    row_render_devices = ("cuda",)
     domain = "rocket_landing"
     requires_cuda = True
 

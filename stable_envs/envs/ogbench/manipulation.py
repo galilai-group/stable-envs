@@ -480,6 +480,53 @@ SPEC = {
 }
 
 
+def _reset_variation_values(cell: str, rng: np.random.Generator) -> dict:
+    """Sample reset variation leaves explicitly from rng, avoiding upstream entropy-based seeding."""
+    vs = getattr(_bundle(cell).unwrapped, "variation_space", None)
+    if vs is None:
+        return {}
+    out = {}
+    for path in DEFAULT_VARIATION_PATHS.get(cell, ()):
+        node = vs
+        try:
+            for part in path.split("."):
+                node = node[part]
+        except Exception:
+            continue
+        lo = np.asarray(node.low, np.float64)
+        hi = np.asarray(node.high, np.float64)
+        out[path] = rng.uniform(lo, hi).reshape(np.asarray(node.value).shape)
+    return out
+
+
+def sample_render_rows(cell: str, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
+    """Return float32 render rows of ``cell`` from OGBench's own seeded resets followed by 0–25 random actions."""
+    rng = np.random.default_rng(0) if rng is None else rng
+    b = _bundle(cell)
+    # Building and resetting the upstream env consume NumPy's global RNG; restore it after sampling.
+    gstate = np.random.get_state()
+    try:
+        env = _reference_env(cell, role="sample")  # reset many times; never rendered
+        u = env.unwrapped
+        out = []
+        for k in range(int(batch)):
+            sd = int(rng.integers(0, 1 << 30))
+            np.random.seed(int(rng.integers(0, 1 << 31)))
+            # Seed both the environment generator and its action-space descriptor before reset.
+            u.np_random = np.random.default_rng(sd)
+            with _seeded_action_space(u, sd):
+                env.reset(seed=sd, options={"variation_values": _reset_variation_values(cell, rng)})
+                d = u.data
+                for _ in range(int(rng.integers(0, 26))):
+                    env.step(u.action_space.sample())
+            bits = [float(x) for x in list(getattr(u, "_cur_button_states", []))[: b.nbuttons]]
+            out.append(np.concatenate([d.qpos.copy(), d.mocap_pos.ravel().copy(), np.asarray(bits, np.float64)]))
+    finally:
+        np.random.set_state(gstate)
+    # float32 matches the render inputs of both candidate and reference.
+    return np.stack(out).astype(np.float32)
+
+
 class OGBManipBase(Env):
     """Base for the two manipulation cells. ``CELL`` is set by the generated subclasses."""
 
@@ -566,49 +613,11 @@ class OGBManipBase(Env):
         return qpos, mp, IDENTITY_QUAT(b.nmocap), bits
 
     def _variation_values(self, rng: np.random.Generator) -> dict:
-        """Sample reset variation leaves explicitly from rng, avoiding upstream entropy-based seeding."""
-        vs = getattr(self._b.unwrapped, "variation_space", None)
-        if vs is None:
-            return {}
-        out = {}
-        for path in DEFAULT_VARIATION_PATHS.get(self.CELL, ()):
-            node = vs
-            try:
-                for part in path.split("."):
-                    node = node[part]
-            except Exception:
-                continue
-            lo = np.asarray(node.low, np.float64)
-            hi = np.asarray(node.high, np.float64)
-            out[path] = rng.uniform(lo, hi).reshape(np.asarray(node.value).shape)
-        return out
+        return _reset_variation_values(self.CELL, rng)
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """Return float32 render rows from seeded resets followed by 0–25 random actions."""
-        rng = np.random.default_rng(0) if rng is None else rng
-        b = self._b
-        # Building and resetting the upstream env consume NumPy's global RNG; restore it after sampling.
-        gstate = np.random.get_state()
-        try:
-            env = _reference_env(self.CELL, role="sample")  # reset many times; never rendered
-            u = env.unwrapped
-            out = []
-            for k in range(int(batch)):
-                sd = int(rng.integers(0, 1 << 30))
-                np.random.seed(int(rng.integers(0, 1 << 31)))
-                # Seed both the environment generator and its action-space descriptor before reset.
-                u.np_random = np.random.default_rng(sd)
-                with _seeded_action_space(u, sd):
-                    env.reset(seed=sd, options={"variation_values": self._variation_values(rng)})
-                    d = u.data
-                    for _ in range(int(rng.integers(0, 26))):
-                        env.step(u.action_space.sample())
-                bits = [float(x) for x in list(getattr(u, "_cur_button_states", []))[: b.nbuttons]]
-                out.append(np.concatenate([d.qpos.copy(), d.mocap_pos.ravel().copy(), np.asarray(bits, np.float64)]))
-        finally:
-            np.random.set_state(gstate)
-        # float32 matches the render inputs of both candidate and reference.
-        return np.stack(out).astype(np.float32)
+        return sample_render_rows(self.CELL, batch, rng)
 
     def make_variation_space(self) -> Dict:
         """Expose per-world cube RGB and per-background checker RGB."""
