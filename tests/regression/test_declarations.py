@@ -1,8 +1,8 @@
-"""Fidelity-tier declarations, registration refusals, and reference-version declarations.
+"""Fidelity declarations, registration refusals, and reference-version declarations.
 
-A ``visual`` tier env must declare measurements, thresholds, a ``visual_note`` and say so in its class
-docstring; ``register`` enforces this. Each refusal is checked against a synthetic class that breaks
-one rule, on CPU; the registry-wide tests check that the real classes satisfy the rules.
+An env that declares ``visual_fidelity`` must carry ``measured_at``, well-formed MSE values and a
+``visual_note``; ``register`` enforces this. Each refusal is checked against a synthetic class that
+breaks one rule, on CPU; the registry-wide tests check that the real classes satisfy the rules.
 """
 
 from __future__ import annotations
@@ -25,15 +25,13 @@ from stable_envs.registry import (
     register,
     registry_table,
 )
+from tests.helpers import source_mse as SM
 
 #: A complete measurement; tests below remove one field at a time.
 VF = {
-    "mean_abs": 2.45,
-    "within8_frac": 0.935,
-    "ssim": 0.97,
-    "mean_abs_max": 3.2,
-    "within8_min": 0.88,
-    "ssim_min": 0.92,
+    "mse_mean": 2.45,
+    "mse_p95": 4.1,
+    "mse_max": 6.3,
     "measured_at": "a test",
 }
 
@@ -64,65 +62,50 @@ def _cls(name: str, doc: str, **attrs):
 
 
 def _visual(name="Vis", **over):
-    """A well-formed visual-tier class, with ``over`` applied."""
+    """A well-formed class with a ``visual_fidelity`` record, with ``over`` applied."""
     attrs = {
-        "fidelity_tier": "visual",
         "visual_fidelity": dict(VF),
         "visual_note": "a different rasterizer draws the same scene",
-        "parity_interior_min": None,
     }
     attrs.update(over)
-    return _cls(name, "A test env. VISUAL TIER: the frames are a different render.", **attrs)
+    return _cls(name, "A test env drawn by a different rasterizer.", **attrs)
 
 
-# ------------------------------------------------------------------ the tier
+# ------------------------------------------------------------------ the declaration
 
 
 def test_a_well_formed_declaration_of_each_kind_registers():
-    """Well-formed parity and visual declarations register (the control for the refusals below)."""
-    register(_cls("Plain", "An ordinary parity env."))
+    """Classes with and without ``visual_fidelity`` register (the control for the refusals below)."""
+    register(_cls("Plain", "An ordinary env."))
     register(_visual("GoodVisual"))
     assert {"Plain", "GoodVisual"} <= set(se.registry.REGISTRY)
 
 
-def test_an_unknown_tier_is_refused_by_name():
-    with pytest.raises(ValueError, match="fidelity_tier must be one of"):
-        register(_cls("Bad", "doc", fidelity_tier="approximate"))
-
-
-def test_a_parity_env_carrying_visual_fidelity_is_refused():
-    """A parity-tier class that also carries ``visual_fidelity`` is refused."""
-    with pytest.raises(ValueError, match="declares fidelity_tier='parity' and also carries"):
-        register(_cls("Bad", "doc", visual_fidelity=dict(VF)))
-
-
 @pytest.mark.parametrize("missing", REQUIRED_VISUAL_FIDELITY)
 def test_a_visual_env_missing_any_required_measurement_is_refused(missing):
-    """A visual env missing any one required ``visual_fidelity`` field is refused.
+    """An env missing any one required ``visual_fidelity`` field is refused.
 
-    Measurements and thresholds are separate fields; ``measured_at`` records where they were taken.
+    ``measured_at`` records where the measurements were taken.
     """
     vf = {k: v for k, v in VF.items() if k != missing}
-    with pytest.raises(ValueError, match="declares the VISUAL tier without"):
+    with pytest.raises(ValueError, match="declares visual_fidelity without"):
         register(_visual("Bad", visual_fidelity=vf))
 
 
+@pytest.mark.parametrize(
+    "bad",
+    [{"mse_mean": -1.0}, {"mse_p95": float("nan")}, {"mse_max": "6.3"}, {"mse_mean": 7.0}, {"mse_p95": 6.4}],
+)
+def test_a_visual_env_with_a_malformed_mse_is_refused(bad):
+    """An MSE that is negative, not finite, not a number, or above ``mse_max`` is refused."""
+    with pytest.raises(ValueError, match="MSE|exceed mse_max"):
+        register(_visual("Bad", visual_fidelity=dict(VF, **bad)))
+
+
 def test_a_visual_env_with_no_visual_note_is_refused():
-    """A visual env with an empty ``visual_note`` is refused."""
-    with pytest.raises(ValueError, match="VISUAL tier with no visual_note"):
+    """An env with ``visual_fidelity`` and an empty ``visual_note`` is refused."""
+    with pytest.raises(ValueError, match="visual_fidelity with no visual_note"):
         register(_visual("Bad", visual_note=""))
-
-
-def test_a_visual_env_that_leaves_parity_interior_min_set_is_refused():
-    """A visual env must set ``parity_interior_min = None`` so the parity assertion cannot apply to it."""
-    with pytest.raises(ValueError, match="leaves parity_interior_min at"):
-        register(_visual("Bad", parity_interior_min=1.0))
-
-
-def test_a_visual_env_that_does_not_say_so_in_its_docstring_is_refused():
-    """A visual env whose class docstring does not say VISUAL TIER is refused."""
-    with pytest.raises(ValueError, match="does not say so in its class docstring"):
-        register(_visual("Bad", __doc__="A fast env with no warning in it."))
 
 
 # ------------------------------------------------------------------ registration itself
@@ -155,19 +138,13 @@ def test_an_unknown_env_name_lists_the_ones_that_exist():
 # ------------------------------------------------------------------ what the listing shows
 
 
-def test_the_listing_marks_a_visual_env():
-    """``registry_table`` and ``format_registry`` mark visual-tier envs and leave parity envs unmarked."""
-    register(_cls("PlainOne", "An ordinary parity env."))
-    register(_visual("VisualOne"))
-    rows = {r["name"]: r for r in registry_table()}
-    assert rows["PlainOne"]["tier"] == "parity"
-    assert rows["VisualOne"]["tier"] == "visual"
-
+def test_the_listing_names_each_class_and_its_reference():
+    """``format_registry`` lists every registered class with its reference ID."""
+    register(_cls("PlainOne", "An ordinary env."))
     txt = format_registry()
-    assert "not the official pixels" in txt
-    for line in txt.splitlines():
-        if line.strip().startswith("PlainOne"):
-            assert "VISUAL" not in line, "a parity env must not be marked"
+    assert txt.startswith(f"{len(registry_table())} environments")
+    line = next(line for line in txt.splitlines() if line.strip().startswith("PlainOne"))
+    assert "fake/Env-v0" in line
 
 
 def test_registry_table_reports_no_state_dim_rather_than_a_wrong_one():
@@ -177,15 +154,15 @@ def test_registry_table_reports_no_state_dim_rather_than_a_wrong_one():
     assert row["render_state_dim"] is None
 
 
-def test_describe_tells_a_consumer_what_the_frames_are_not_for():
-    """``describe()`` of a visual env includes ``not_for`` and its thresholds; a parity env has neither."""
+def test_describe_reports_the_measured_agreement_only_when_declared():
+    """``describe()`` includes ``visual_fidelity`` and ``visual_note`` only for a class that declares them."""
     plain = _cls("P2", "doc")(num_envs=1, device="cpu").describe()
-    assert plain["fidelity_tier"] == "parity"
-    assert "not_for" not in plain and plain["parity_interior_min"] == 1.0
+    assert plain["reference_id"] == "fake/Env-v0"
+    assert "visual_fidelity" not in plain and "visual_note" not in plain
 
     vis = _visual("V2")(num_envs=1, device="cpu").describe()
-    assert "different render of the same scene" in vis["not_for"]
-    assert vis["visual_fidelity"]["ssim_min"] == 0.92
+    assert vis["visual_fidelity"]["mse_mean"] == 2.45
+    assert vis["visual_note"] == "a different rasterizer draws the same scene"
 
 
 # ------------------------------------------------------------------ the real registry
@@ -203,6 +180,28 @@ def test_every_registered_class_still_satisfies_its_fidelity_declaration():
         except ValueError as e:
             bad.append(f"{name}: {e}")
     assert not bad, "registered classes with an inadmissible declaration:\n  " + "\n  ".join(bad)
+
+
+def test_every_declared_visual_fidelity_mse_is_the_recorded_one():
+    """A class that declares ``visual_fidelity`` states the MSE values of ``tests/fixtures/source_mse.json``."""
+    records = SM.load()
+    if not records:
+        pytest.skip(f"no MSE record; run {SM.RECORD}")
+    bad = []
+    for name, cls in sorted(se.registry.REGISTRY.items()):
+        if cls.visual_fidelity and name in records:
+            bad += SM.declared_problems(name, cls.visual_fidelity, records[name])
+    assert not bad, "visual_fidelity and tests/fixtures/source_mse.json disagree:\n  " + "\n  ".join(bad)
+
+
+def test_every_mse_record_is_well_formed():
+    """Each record names its draw and has finite, ordered MSE values."""
+    records = SM.load()
+    if not records:
+        pytest.skip(f"no MSE record; run {SM.RECORD}")
+    for name, rec in records.items():
+        assert {"seed", "n", "size", "reference_versions", "gpu", *SM.KEYS} <= set(rec), name
+        assert 0 <= rec["mse_mean"] <= rec["mse_max"] and 0 <= rec["mse_p95"] <= rec["mse_max"], name
 
 
 def test_the_import_error_report_is_a_readable_mapping_and_costs_nothing():
@@ -344,7 +343,7 @@ RV = {"mujoco": "3.11.0", "mujoco_warp": "3.11.0"}
 
 
 def test_a_visual_env_may_declare_the_reference_versions_it_was_measured_against():
-    """A visual env's ``visual_fidelity`` may declare reference versions, published by ``describe()``.
+    """An env's ``visual_fidelity`` may declare reference versions, published by ``describe()``.
 
     The certifier compares them with the measuring interpreter's ``reference_packages``.
     """
@@ -354,8 +353,8 @@ def test_a_visual_env_may_declare_the_reference_versions_it_was_measured_against
     assert cls(num_envs=1, device="cpu").describe()[REFERENCE_VERSIONS_KEY] == RV
 
 
-def test_a_parity_env_carries_reference_versions_as_a_class_attribute():
-    cls = _cls("VersionedParity", "An ordinary parity env.", reference_versions=dict(RV))
+def test_an_env_carries_reference_versions_as_a_class_attribute():
+    cls = _cls("VersionedParity", "An ordinary env.", reference_versions=dict(RV))
     register(cls)
     assert reference_versions_of(cls) == RV
     assert cls(num_envs=1, device="cpu").describe()[REFERENCE_VERSIONS_KEY] == RV
@@ -364,7 +363,7 @@ def test_a_parity_env_carries_reference_versions_as_a_class_attribute():
 def test_an_undeclared_reference_version_is_absent_not_empty():
     """Absent means "no claim about the reference version", which the certifier must not confuse with
     "measured against nothing"; ``describe()`` leaves the key out rather than publishing ``{}``."""
-    cls = _cls("Plain", "An ordinary parity env.")
+    cls = _cls("Plain", "An ordinary env.")
     register(cls)
     assert reference_versions_of(cls) == {}
     assert REFERENCE_VERSIONS_KEY not in cls(num_envs=1, device="cpu").describe()
@@ -431,10 +430,7 @@ def _declared_reference_versions() -> list[tuple[str, dict, str]]:
     for name, cls in sorted(se.registry.REGISTRY.items()):
         rv = reference_versions_of(cls)
         if rv:
-            # Visual envs state provenance in visual_fidelity["measured_at"]; parity envs cannot carry
-            # visual_fidelity, so theirs is parity_note.
-            at = str((getattr(cls, "visual_fidelity", {}) or {}).get("measured_at", ""))
-            rows.append((name, rv, at or str(getattr(cls, "parity_note", "") or "")))
+            rows.append((name, rv, str((getattr(cls, "visual_fidelity", {}) or {}).get("measured_at", ""))))
     for name, vf in sorted(_dmc_declaration_table().items()):
         for key in (REFERENCE_VERSIONS_KEY, MEASURED_WITH_KEY):
             if key in vf:

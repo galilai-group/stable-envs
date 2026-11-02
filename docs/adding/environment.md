@@ -26,6 +26,10 @@ step and close. It has no rendering method. Examples:
   `ClassicControlSemantics` in `stable_envs/envs/classic_control/semantics.py` uses
 - the Fetch adapter in `stable_envs/envs/fetch/simulation/adapter.py`
 
+To run a backend in worker processes, subclass `stable_envs._execution.process.ProcessAdapter`. The
+local adapter must accept `step(actions, *, active=None, capture_state=True)` and must not change a lane
+in `validate(state)`. `stable_envs/_execution/README.md` gives the full contract.
+
 Family mixins combine these backends with renderers. Register public classes with `@register` from
 `stable_envs.registry`. Class names are the lookup keys. Set family, domain and default configuration
 explicitly. `import_errors()` reports missing optional dependencies.

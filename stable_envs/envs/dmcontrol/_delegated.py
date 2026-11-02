@@ -35,7 +35,10 @@ class DelegatedSemantics:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._simulator = make_dmc_adapter(self._simulator_key(), self.B, self.device, self._seed)
+        self._simulator = self._make_simulator()
+
+    def _make_simulator(self):
+        return make_dmc_adapter(self._simulator_key(), self.B, self.device, self._seed)
 
     @property
     def _resume_fields(self):

@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._execution.process import PER_LANE
 from ...._execution.protocol import SimulatorAdapter
 from ...._execution.state_columns import require_columns
 from . import physics as _physics
@@ -16,6 +17,9 @@ class DMCLanes(SimulatorAdapter):
     ``device`` controls returned tensor placement. State holds physics, lifecycle,
     task RNG, episode-drawn model entries and the lane's physics Variation.
     """
+
+    process_methods = {"configure_physics": PER_LANE}
+    process_attributes = ("key", "action_dim", "fields", "physics_layout", "physics_dim")
 
     def __init__(self, key, num_envs, device, seed, make, fields):
         self.key = key
@@ -38,6 +42,10 @@ class DMCLanes(SimulatorAdapter):
     def physics_layout(self):
         return None if self.physics is None else self.physics.layout
 
+    @property
+    def physics_dim(self):
+        return 0 if self.physics is None else self.physics.spec.dim
+
     def configure_physics(self, values):
         self._check_open()
         if self.physics is None:
@@ -58,25 +66,47 @@ class DMCLanes(SimulatorAdapter):
         extra = None if self.physics is None else self.physics.export()
         return export_state(self.envs, self._cumulative, self.fields, self.device, extra)
 
-    def set_state(self, state):
+    def validate(self, state):
+        """Check every lane of ``state`` and return its physics rows, or None without physics Variation."""
         self._check_open()
         if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):
             raise TypeError(f"{self.key} requires full TensorDict State with batch [num_envs]")
-        # Validate the entire batch before mutating any lane.
         rows = None if self.physics is None else self.physics.rows_from_state(state)
         require_columns(state, {key: ((self.num_envs, width), dtype) for key, (width, dtype) in self.fields.items()})
+        return rows
+
+    def set_state(self, state):
+        rows = self.validate(state)
         host = state.cpu()
         if rows is not None:
             self.physics.configure(rows)
         for i, env in enumerate(self.envs):
             restore_lane(env, host[i], self._base_fields, self._cumulative, i)
 
+    def check_step(self, actions, active):
+        if torch.is_tensor(actions):
+            actions = actions.detach().cpu().numpy()
+        actions = np.asarray(actions, np.float64)
+        if actions.shape != (self.num_envs, self.action_dim) or not np.isfinite(actions).all():
+            raise ValueError(f"DMC actions must be finite with shape {(self.num_envs, self.action_dim)}")
+        if active is not None:
+            active = active.detach().cpu().numpy() if torch.is_tensor(active) else np.asarray(active)
+            if active.shape != (self.num_envs,) or not active.all():
+                raise ValueError(
+                    "Accepted DMC wrappers do not expose terminal lanes; partial active masks are unsupported"
+                )
+        return actions, None
+
     def _info(self, env, lane):
         """Return ``(success, info)`` for task outputs beyond reward, or None."""
         return None
 
-    def step(self, actions, *, capture_state=True):
+    def step(self, actions, *, active=None, capture_state=True):
         self._check_open()
+        if active is not None and not bool(torch.as_tensor(active).all()):
+            raise ValueError(
+                "Accepted DMC wrappers do not expose terminal lanes; partial active masks are unsupported"
+            )
         if torch.is_tensor(actions):
             actions = actions.detach().cpu().numpy()
         actions = np.asarray(actions, np.float64)

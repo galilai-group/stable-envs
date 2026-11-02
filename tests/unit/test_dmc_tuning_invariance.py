@@ -34,7 +34,7 @@ def test_cpu3d_chunk_keeps_trackcom_frames():
 @pytest.mark.gl
 @pytest.mark.parametrize("supersample", [1, 2])
 def test_cpu_ray_budget_keeps_fixed_camera_frames(supersample):
-    with snv.make("DMCReacherEasy", num_envs=5, size=64, supersample=supersample, device="cpu") as env:
+    with snv.make("DMCReacher", num_envs=5, size=64, supersample=supersample, device="cpu") as env:
         state = _moved(env)
         reference = env.render(state)
         for budget in (1 << 12, 1 << 13, 1 << 15, 1 << 21, 1 << 23):

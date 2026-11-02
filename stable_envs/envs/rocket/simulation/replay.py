@@ -41,6 +41,30 @@ def paint(env, path):
         p.changeVisualShape(body, link, rgbaColor=rgba, physicsClientId=client)
 
 
+def recolor_flame(env):
+    """Apply the flame colour change that the source's ``step`` makes only when it has a render mode.
+
+    The pixel env renders, so its flame turns ``ignition_color`` at ignition. With a render mode the
+    source has already made the change and this does nothing.
+    """
+    if env.ignition_state != env.previous_render_ignition_state:
+        env.previous_render_ignition_state = env.ignition_state
+        env.env.changeVisualShape(env.env.drones[0].Id, 9, rgbaColor=env.ignition_color)
+
+
+def restore_reset(env):
+    """Save and restore the engine as the source's ``reset`` does around its goal render with a render mode.
+
+    The restore recomputes the cached link poses at the reset pose. The camera and the first
+    physics substeps read these poses. With a render mode the source has already done this.
+    """
+    if env.render_mode is None:
+        client = env.env._client
+        state = p.saveState(physicsClientId=client)
+        p.restoreState(stateId=state, physicsClientId=client)
+        p.removeState(stateUniqueId=state, physicsClientId=client)
+
+
 def encode_rng(state):
     if state is None:
         return np.zeros(11, np.int64)
@@ -135,13 +159,13 @@ class RocketReplay:
                 self.close()
                 raise
 
-    def reset(self, seed=None, options=None, values=None):
-        """``values`` sets leaves for this episode only; the drawn colours among them are painted."""
+    def check_reset(self, seed=None, options=None, values=None):
+        """Raise for a reset ``reset`` would refuse; change nothing."""
         if seed is not None and (
             isinstance(seed, (bool, np.bool_)) or not isinstance(seed, (int, np.integer)) or not 0 <= seed < 2**63
         ):
             raise ValueError("Rocket seed must be None or a nonnegative int64")
-        options = copy.deepcopy(options or {})
+        options = options or {}
         # ``randoimize_drop`` is PyFlyt's spelling of its random entry velocity option, passed through as is.
         if set(options) - {"variation", "randomize_drop", "accelerate_drop", "randoimize_drop"}:
             raise ValueError("Unsupported Rocket reset option")
@@ -151,13 +175,18 @@ class RocketReplay:
         for key in ["randomize_drop", "accelerate_drop", "randoimize_drop"]:
             if key in options and type(options[key]) is not bool:
                 raise ValueError("Reset flags must be bool")
-        values = dict(values or {})
-        for path, value in values.items():
+        for path, value in (values or {}).items():
             node = self.env.variation_space._walk(path) if path in self.names else None
             if node is None or hasattr(node, "spaces") or not node.contains(value):
                 raise ValueError(f"Invalid Rocket Variation value: {path}")
             if any(k == "all" or path == k or path.startswith(k + ".") for k in selection):
                 raise ValueError(f"Rocket Variation {path} is both sampled and set")
+
+    def reset(self, seed=None, options=None, values=None):
+        """``values`` sets leaves for this episode only; the drawn colours among them are painted."""
+        self.check_reset(seed, options, values)
+        options = copy.deepcopy(options or {})
+        values = dict(values or {})
         # An explicit value is this episode's default, so the replay anchor reproduces it.
         defaults = {path: self.env.variation_space._walk(path).init_value for path in values}
         for path, value in values.items():
@@ -171,6 +200,7 @@ class RocketReplay:
                 if not hasattr(node, "spaces")
             }
             output = self.env.reset(seed=seed, options=copy.deepcopy(options))
+            restore_reset(self.env)
         finally:
             for path, value in defaults.items():
                 self.env.variation_space._walk(path)._init_value = value
@@ -203,6 +233,7 @@ class RocketReplay:
         if self.env.step_count >= np.iinfo(np.int64).max - 1:
             raise OverflowError("Rocket lifecycle counter exhausted int64")
         result = self.env.step(action.copy())
+        recolor_flame(self.env)
         self.last_dtype = 1 if action.dtype == np.float32 else 2
         if physical:
             self.history[self.length] = action
@@ -211,6 +242,21 @@ class RocketReplay:
         else:
             self.post += 1
         return result
+
+    def rgba(self):
+        """Drawn body, fin, leg, booster, pad and flame colours in ``render/rgba`` row order."""
+        e = self.env
+        visuals = {v[1]: np.array(v[7]) for v in e.env.getVisualShapeData(e.env.drones[0].Id)}
+        return np.stack(
+            [
+                visuals[-1],
+                visuals[2],
+                visuals[6],
+                visuals[1],
+                np.array(e.env.getVisualShapeData(e.landing_pad_id)[0][7]),
+                visuals[9],
+            ]
+        )
 
     def get_state(self):
         e = self.env
@@ -250,17 +296,7 @@ class RocketReplay:
             "lifecycle/last_action_dtype": np.array(self.last_dtype, np.uint8),
             "rng/action_space": encode_rng(generator_state(e.action_space)),
         }
-        visuals = {v[1]: np.array(v[7]) for v in e.env.getVisualShapeData(e.env.drones[0].Id)}
-        state["render/rgba"] = np.stack(
-            [
-                visuals[-1],
-                visuals[2],
-                visuals[6],
-                visuals[1],
-                np.array(e.env.getVisualShapeData(e.landing_pad_id)[0][7]),
-                visuals[9],
-            ]
-        )
+        state["render/rgba"] = self.rgba()
         for key, value in capture(e).items():
             # These two source fields change bool/float types on the first step.
             if key in ["wrapper/previous_render_ignition_state", "wrapper/ignition_state"] or value.dtype.kind == "f":

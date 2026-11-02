@@ -1,0 +1,197 @@
+{
+ "class_name": "Acrobot",
+ "module": "stable_envs.envs.classic_control.envs",
+ "family": "classic_control",
+ "domain": "classic_control",
+ "reference_id": "Acrobot-v1",
+ "requires_cuda": false,
+ "has_dynamics": true,
+ "default_size": 500,
+ "frame_shape": [500, 500, 3],
+ "physics": "source simulator on CPU",
+ "renderers": {
+  "cpu": "gfxdraw port (torch)",
+  "cuda": "gfxdraw port (fused Triton kernel)"
+ },
+ "action": {
+  "shape": [1],
+  "dtype": "int64",
+  "n": 3,
+  "low": 0,
+  "high": 2
+ },
+ "state": [
+  {
+   "key": "theta1",
+   "shape": [1],
+   "dtype": "float64"
+  },
+  {
+   "key": "theta2",
+   "shape": [1],
+   "dtype": "float64"
+  },
+  {
+   "key": "dtheta1",
+   "shape": [1],
+   "dtype": "float64"
+  },
+  {
+   "key": "dtheta2",
+   "shape": [1],
+   "dtype": "float64"
+  },
+  {
+   "key": "lifecycle",
+   "leaves": 1,
+   "numel": 1,
+   "dtypes": ["int64"]
+  },
+  {
+   "key": "rng",
+   "leaves": 4,
+   "numel": 10,
+   "dtypes": ["int64"]
+  },
+  {
+   "key": "physics",
+   "leaves": 7,
+   "numel": 7,
+   "dtypes": ["float64"]
+  }
+ ],
+ "variation": [
+  {
+   "path": "background.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 255
+  },
+  {
+   "path": "ground.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 0
+  },
+  {
+   "path": "joint.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": [204, 204, 0]
+  },
+  {
+   "path": "link.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": [0, 204, 204]
+  },
+  {
+   "path": "physics.link_com_pos_1",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.25,
+   "high": 0.75,
+   "default": 0.5
+  },
+  {
+   "path": "physics.link_com_pos_2",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.25,
+   "high": 0.75,
+   "default": 0.5
+  },
+  {
+   "path": "physics.link_length_1",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.5,
+   "high": 1.5,
+   "default": 1
+  },
+  {
+   "path": "physics.link_length_2",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.5,
+   "high": 1.5,
+   "default": 1
+  },
+  {
+   "path": "physics.link_mass_1",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.5,
+   "high": 1.5,
+   "default": 1
+  },
+  {
+   "path": "physics.link_mass_2",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.5,
+   "high": 1.5,
+   "default": 1
+  },
+  {
+   "path": "physics.link_moi",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.5,
+   "high": 1.5,
+   "default": 1
+  },
+  {
+   "path": "rendering.antialias",
+   "type": "Discrete",
+   "reset": false,
+   "n": 2,
+   "start": 0,
+   "default": 1
+  }
+ ],
+ "devices": {
+  "cpu": "ok",
+  "cuda": "ok"
+ },
+ "media": {
+  "device": "cuda",
+  "render_size": 500,
+  "rollout": {
+   "file": "rollout.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 61,
+   "fps": 15,
+   "bytes": 9716
+  },
+  "variation": {
+   "file": "variation.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 46,
+   "fps": 15,
+   "bytes": 10145
+  },
+  "variation_leaves": "all"
+ }
+}

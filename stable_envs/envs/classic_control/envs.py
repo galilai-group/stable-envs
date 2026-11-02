@@ -75,6 +75,7 @@ class _Classic(Env):
         self._sim = torch.zeros(self.B, max(1, len(self.sim_state_names)), **f)
         self._cols = torch.tensor(self.render_from_sim, dtype=torch.long, device=self.device)
         self._disc_tables = None
+        self._reference = self._reference_style = self._has_pygame = None
 
     def _set_render_state(self, states, variation=None, style=None) -> _Classic:
         """Install compact render rows and zero simulation variables absent from those rows."""
@@ -174,8 +175,18 @@ class _Classic(Env):
         variation: dict | None = None,
         style=None,
         out=None,
+        backend: str = "auto",
     ) -> torch.Tensor:
-        """Render (..., state_dim) rows to native (..., H, W, 3) uint8 frames."""
+        """Render (..., state_dim) rows to native (..., H, W, 3) uint8 frames.
+
+        ``backend`` is ``"auto"``, ``"source"`` (the Gymnasium renderer; CPU and the default appearance only)
+        or ``"port"`` (the gfxdraw port). On CPU, ``"auto"`` and ``"port"`` use the compiled Numba port when
+        numba is installed, except that ``"auto"`` draws batches of fewer than 8 rows of the default appearance with
+        the source. Without numba, ``"auto"`` uses the source for the default appearance when pygame is installed
+        and the Torch port otherwise. All give the same frames.
+        """
+        if backend not in ("auto", "source", "port"):
+            raise ValueError(f"backend must be 'auto', 'source' or 'port', got {backend!r}")
         H, W = self.native
         want = int(self.size if size is None else size)
         if want != W:
@@ -192,13 +203,50 @@ class _Classic(Env):
         lead = tuple(s.shape[:-1])
         # float64 from here on: the frame depends on trunc() of the vertex coordinates, so float32
         # arithmetic lands on the wrong integer whenever a vertex falls within ~1e-5 of one.
-        s = s.reshape(-1, self.state_dim).to(torch.float64)
+        rows = s.reshape(-1, self.state_dim)
+        s = rows.to(torch.float64)
         n = s.shape[0]
         variation, style = _split_appearance(variation, style)
         sty = self.resolve_style(style, variation, batch=n)
+        o = None if out is None else out.reshape(-1, H, W, 3)
+        if backend == "source" and self.device.type != "cpu":
+            raise ValueError(f"{type(self).__name__}: backend='source' renders on CPU only")
+        small = backend == "auto" and n < _NUMBA_MIN_ROWS and self._reference_draws(sty)
+        if not small and self._use_numba(backend):
+            from ...render.cpu_raster import classic as N
+
+            geo = self._varied_geometry(sty, own=style is None and not variation)
+            extra = () if geo is None else (geo,)
+            ops = self._ops(s, sty, *extra).finish()
+            img = N.render_classic_cpu(ops, out=o)
+            return img.view(*lead, H, W, 3) if lead else img
+        if self.device.type == "cpu" and not self._use_fused():
+            from ..._execution import render_pool
+
+            host = rows.cpu().numpy()
+            # The source draws only the default appearance; it is the fastest exact CPU path for it.
+            reference = backend != "port" and self._reference_draws(sty)
+            if backend == "source" and not reference:
+                raise ValueError(f"{type(self).__name__}: backend='source' needs pygame and the default appearance")
+            img = render_pool.render_rows(
+                self,
+                (type(self).__name__, "reference" if reference else "classic"),
+                host,
+                sty.values.numpy(),
+                (H, W, 3),
+                "classic-render",
+                o,
+                factory=render_pool.ReferenceRows(type(self).__name__) if reference else None,
+            )
+            if img is None and reference:
+                if self._reference is None:
+                    self._reference = type(self).reference_env()
+                frames = torch.from_numpy(type(self).reference_render(self._reference, host))
+                img = frames if o is None else o.copy_(frames)
+            if img is not None:
+                return img.view(*lead, H, W, 3) if lead else img
         geo = self._varied_geometry(sty, own=style is None and not variation)
         extra = () if geo is None else (geo,)
-        o = None if out is None else out.reshape(-1, H, W, 3)
         if self._use_fused():
             from ... import tuning
             from ...render.gfxdraw import classic as F
@@ -237,6 +285,26 @@ class _Classic(Env):
             self._geometry_host = None if (host == const).all() else host.astype(np.float64)
             self._geometry_of = src
         return self._geometry_host
+
+    def _reference_draws(self, sty) -> bool:
+        """Return whether the Gymnasium reference can draw ``sty``: the default appearance, with pygame installed."""
+        if self._has_pygame is None:
+            import importlib.util
+
+            self._has_pygame = importlib.util.find_spec("pygame") is not None
+        if not self._has_pygame:
+            return False
+        if self._reference_style is None:
+            self._reference_style = self.resolve_style(None, None, batch=1).values
+        return bool((sty.values == self._reference_style).all())
+
+    def _use_numba(self, backend: str) -> bool:
+        """Select the Numba twin of the fused kernel on CPU for ``"auto"`` and ``"port"`` when numba imports."""
+        if backend == "source" or self.device.type != "cpu" or not (self.fused_capable and self.use_fused_render):
+            return False
+        from ...render import cpu_raster
+
+        return cpu_raster.available()
 
     def _use_fused(self) -> bool:
         """Select the fused renderer only when enabled and CUDA/Triton are available."""
@@ -806,15 +874,14 @@ class MountainCar(ClassicControlSemantics, _Classic):
             )
         )
 
-    def _terrain_base(self, bg, terrain) -> torch.Tensor:
-        """Return a planar static background, baked per distinct background/terrain color pair.
+    def _terrain_images(self, bg, terrain):
+        """Return the distinct baked (U, 3, H, W) terrain images and the (B,) image index of each lane.
 
         Pygame quantizes each color blend, so coverage derived from one baked color
         pair cannot reproduce arbitrary other pairs exactly.
         """
         key = torch.cat([bg, terrain], 1).to(torch.uint8).cpu().numpy()
         uniq, inv = np.unique(key, axis=0, return_inverse=True)
-        # Keep the background planar so a shared appearance broadcasts without transposing each frame.
         imgs = torch.stack(
             [
                 torch.as_tensor(
@@ -824,10 +891,16 @@ class MountainCar(ClassicControlSemantics, _Classic):
                 ).permute(2, 0, 1)
                 for u in uniq
             ]
-        )  # (U,3,H,W)
-        if len(uniq) == 1:
+        )
+        return imgs, torch.as_tensor(inv.reshape(-1), device=self.device)
+
+    def _terrain_base(self, bg, terrain) -> torch.Tensor:
+        """Return a planar static background, baked per distinct background/terrain color pair."""
+        imgs, inv = self._terrain_images(bg, terrain)
+        # Keep the background planar so a shared appearance broadcasts without transposing each frame.
+        if len(imgs) == 1:
             return imgs[0].unsqueeze(1)  # (3,1,H,W)
-        return imgs.index_select(0, torch.as_tensor(inv, device=self.device).reshape(-1)).transpose(0, 1)  # (3,B,H,W)
+        return imgs.index_select(0, inv).transpose(0, 1)  # (3,B,H,W)
 
     # The sine bounds car rows for the entire track; flag coordinates are fixed and disc stencils bound wheels.
     _CARY = (10.0 + 0.1 * SCALE, 10.0 + 1.0 * SCALE)
@@ -890,7 +963,11 @@ class MountainCar(ClassicControlSemantics, _Classic):
     def _ops(self, s, sty):
         g, B = self.gfx, s.shape[0]
         ops = self._ops_begin(s, sty)
-        ops.plate = self._terrain_base(sty["background.color"], sty["terrain.color"])
+        if self.device.type == "cpu":
+            imgs, ops.plate_idx = self._terrain_images(sty["background.color"], sty["terrain.color"])
+            ops.plate = imgs.transpose(0, 1)
+        else:
+            ops.plate = self._terrain_base(sty["background.color"], sty["terrain.color"])
         pos = s[:, 0]
         ang = torch.cos(3 * pos).view(B, 1)
         ctr = torch.stack(
@@ -945,6 +1022,9 @@ def _mc_height(x):
     """Evaluate source terrain height with NumPy sine before integer pixel conversion."""
     return float(np.sin(3 * x) * 0.45 + 0.55)
 
+
+# Below this many rows the in-process source draws faster than building the Numba records.
+_NUMBA_MIN_ROWS = 8
 
 # Bound the color-keyed cache because randomized appearance can create a new background every call.
 _TERRAIN_CACHE_MAX = 512

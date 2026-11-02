@@ -21,10 +21,9 @@ Constants that read plausibly from the source can still be wrong. The table show
 2. Time a speedup on the code path a caller actually reaches.
 3. Test on states where the question arises. For example, draw order only matters where two bodies
    overlap.
-4. Split the metric. Interior pixels (a flat 3×3 neighbourhood in the reference) must match exactly.
-   Report all-pixel agreement separately with a looser bar. A wrong corner shape can cost 2% of
-   interior pixels and nothing visible in an all-pixel mean.
+4. Look at the worst frame and at the region that differs, not only at the mean. A wrong corner shape
+   or a small part drawn at the wrong pose changes few pixels and moves the mean MSE very little.
 5. Record rejected environments with the check that rejected them.
 
-[Fidelity tiers](fidelity-tiers.md) describes the two tiers of claim. [Adding a component](../adding/index.md)
-contains the contributor guides.
+[Testing](../testing.md#gpu-conformance) lists the tests that compare frames with the source.
+[Adding a component](../adding/index.md) contains the contributor guides.

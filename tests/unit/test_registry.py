@@ -132,12 +132,17 @@ def test_every_canonical_class_name_resolves_to_the_same_class_as_at_the_baselin
         assert R._resolve(name) is R.REGISTRY[name]
 
 
+def test_no_fidelity_tier_is_published():
+    assert all("fidelity_tier" not in snv.info(name) for name in snv.list_envs())
+    assert not hasattr(snv.Env, "fidelity_tier")
+
+
 def test_list_envs_and_info_answer_without_constructing_anything():
     names = R.list_envs()
     assert names == sorted(R.REGISTRY) and "PushT" in names
     assert R.list_envs(family="pusht") == ["PushT", "PushTDiscrete"]
     s = R.info("PushT")
-    assert s["render_state_dim"] in (0, None) and s["family"] == "pusht" and s["fidelity_tier"] == "parity"
+    assert s["render_state_dim"] in (0, None) and s["family"] == "pusht"
     assert s["reference_id"] == "swm/PushT-v1"
     assert s["class_name"] == "PushT" and s["id"] == "push-t"
     assert "swm_ids" not in s
@@ -149,7 +154,7 @@ def test_list_envs_and_info_answer_without_constructing_anything():
 
 def test_renamed_class_names_do_not_resolve():
     """Renamed classes and frozen SWM ids are not public aliases."""
-    samples = ("DMCAcrobotSwingup", "PointmazeLargeNavigate", "MujocoAnt", "PFRocketLanding")
+    samples = ("DMCAcrobotSwingup", "DMCReacherHard", "PointmazeLargeNavigate", "MujocoAnt", "PFRocketLanding")
     for old in samples:
         live = canonical_from_frozen(old)
         if live == old or live not in R.REGISTRY:

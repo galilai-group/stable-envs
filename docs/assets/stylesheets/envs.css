@@ -1,0 +1,20 @@
+.env-media {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.env-media figure {
+  margin: 0;
+}
+
+.env-media video {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.2rem;
+}
+
+.env-media figcaption {
+  font-size: 0.7rem;
+}

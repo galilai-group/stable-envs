@@ -18,28 +18,33 @@ snv.import_errors()     # families this interpreter could not import
 | PushT, PushTDiscrete | source physics and pygame rendering | output storage only (rendering stays on CPU) |
 | classic control, navigation, OGBench mazes | yes | yes |
 | Fetch (12 classes) | software OpenGL | MJWarp or explicit NVIDIA OpenGL |
-| OGBCube, OGBScene | software OpenGL | MJWarp or explicit NVIDIA OpenGL |
+| OGBCube, OGBScene | software OpenGL | NVIDIA OpenGL, or MJWarp with `supersample` 2 or more |
 | PyFlytRocketLanding | TinyRenderer | CUDA rendering |
-| DM Control body-tracking (visual tier) | CPU3D | MJWarp |
+| DM Control body-tracking | CPU3D | MJWarp |
 
 `device=` is a constructor argument. A class that cannot run on a device refuses at construction.
 
 For Cube and Scene, physics runs on CPU whatever the render backend. CPU rendering needs Mesa software
 OpenGL, configured before the first MuJoCo import. See [System setup](../system-setup.md).
 
-## Fidelity
+## Agreement with the source
 
-- **Parity tier**: interior pixels match the official renderer. The floor is 1.0 unless the class
-  declares a `parity_note` that names the cause.
-- **Visual tier**: a different rasterizer draws the same scene. Use it for training frames. It is not
-  interchangeable with official pixels at evaluation. `info(name)["fidelity_tier"]` reports the tier.
-
-See [Fidelity tiers](fidelity-tiers.md).
+- The tests measure the per-frame MSE between our frames and the source frames, and compare it with a
+  recorded value for each class. See [Frame regression checks](../testing.md#frame-regression-checks).
+- The DM Control body-tracking classes and PyFlytRocketLanding on CUDA draw with a different
+  rasterizer from the source. `env.describe()["visual_fidelity"]` gives their measured MSE.
+  `env.describe()["visual_note"]` tells where the frames differ.
+- OGBCube and OGBScene draw with the source's renderer, MuJoCo OpenGL. On CPU, the frames are
+  bit-exact and repeatable. On CUDA, the NVIDIA OpenGL driver can change a pixel by 1/255 between two
+  draws of the same state, on a few pixels of a few frames in each pass. The source shows the same
+  variation. See [OGBench](../environments/ogbench.md#manipulation).
 
 ## Rendering details
 
 - Fetch `sky.color` at its default draws the registered gradient skybox. The official wrapper's
   `background.color` cannot express it, because `background.color` fills the sky with one colour.
+- Fetch does not draw the translucent mocap markers (the 1 cm cube and the three crosshair bars).
+  MJWarp has no alpha blending and would draw them opaque.
 - DM Control body-tracking cells draw `floor.color` from a per-texel palette texture.
   `DMCWalkerWalk` `floor.rotation_y` tilts the floor per row.
 - OGBench `light.intensity`, `camera.angle_delta`, `cube.size` and Scene `lock_color` are per-world

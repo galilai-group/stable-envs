@@ -33,8 +33,7 @@ PARITY = (
     "DMCManipulatorBringBall",
     "DMCPendulumSwingup",
     "DMCPointMassEasy",
-    "DMCReacherEasy",
-    "DMCReacherHard",
+    "DMCReacher",
 )
 TRACKCOM = (
     "DMCCheetahRun",
@@ -58,8 +57,7 @@ WRITTEN_IN = {
     "DMCManipulatorBringBall": "manipulator",
     "DMCPendulumSwingup": "pendulum",
     "DMCPointMassEasy": "point_mass",
-    "DMCReacherEasy": "reacher",
-    "DMCReacherHard": "reacher",
+    "DMCReacher": "reacher",
     "DMCCheetahRun": "cheetah",
     "DMCHopperHop": "hopper",
     "DMCHumanoidWalk": "humanoid",
@@ -92,8 +90,6 @@ def test_package_exports_the_names_callers_import():
         "SHAPE_KNOB_SPECS",
         "RENDER_INVARIANT_DIMS",
         "STATE_DIMS_NOTE",
-        "ALL_EXACT_FLOOR",
-        "PARITY_NOTE",
         "VISUAL_NOTE",
         "SPECULAR_NOTE",
         "QUADRUPED_NOTE",
@@ -163,16 +159,12 @@ def test_renderer_tiers_share_one_base():
     assert dmc._DMCModel.__bases__ == (snv.Env,)
 
 
-def test_declared_provenance_floors_notes_and_cameras():
+def test_declared_provenance_notes_and_cameras():
     for n in TRACKCOM:
         vf = snv.registry.REGISTRY[n].visual_fidelity
         assert vf["reference_versions"] == {"mujoco": "3.12.0"}, n
         assert vf["measured_with"] == {"mujoco_warp": "3.12.0"}, n
         assert "3.12.0" in vf["measured_at"], n
-    assert dmc.ALL_EXACT_FLOOR == {"DMCFingerTurnEasy": 0.89}
-    assert snv.registry.REGISTRY["DMCFingerTurnEasy"].parity_all_exact_min == 0.89
-    interior = snv.registry.REGISTRY["DMCCartpoleBalance"].parity_interior_min
-    assert all(snv.registry.REGISTRY[n].parity_interior_min == interior for n in PARITY)
     assert dmc.RENDER_INVARIANT_DIMS == {
         "DMCManipulatorBringBall": ("ball_y", "target_ball_quat_qw", "target_ball_quat_qy")
     }
@@ -247,3 +239,12 @@ def test_render_of_state_packed_row_and_live_state_agree_to_the_bit(name):
         assert torch.equal(a, b) and torch.equal(a, c)
         assert tuple(a.shape) == (2, env.size, env.size, 3) and a.dtype == torch.uint8
         assert tuple(env.frame_spec.shape) == (env.size, env.size, 3)
+
+
+def test_reacher_has_one_public_registration():
+    assert snv.list_envs(family="dmcontrol", domain="reacher") == ["DMCReacher"]
+    assert snv.info("DMCReacher")["id"] == "dmc-reacher"
+    for name in ("DMCReacherEasy", "DMCReacherHard"):
+        with pytest.raises(KeyError, match="unknown env"):
+            snv.make(name)
+        assert not hasattr(snv, name)

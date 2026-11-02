@@ -6,18 +6,39 @@ from tensordict import TensorDict
 from ...render import raycast3d as R3
 from ._cells import parity_cell
 from ._delegated import DelegatedSemantics
+from .simulation.execution import make_dmc_adapter, reacher_backend
 
 
 class _ReacherSemantics(DelegatedSemantics):
-    """Reacher on CPU dm_control lanes.
+    """Reacher with native CPU or CUDA MJX physics."""
 
-    The four-column renderer projection cannot resume physics or implicit resets.
-    """
+    execution_mode = "AUTO_NATIVE_MJX"
+
+    def __init__(self, *args, simulation_backend="auto", mjx_min_envs=32, **kwargs):
+        """Select physics at construction and return tensors on the requested device.
+
+        ``"auto"`` uses native CPU physics below ``mjx_min_envs`` and MJX for
+        larger CUDA batches. ``"native"`` and ``"mjx"`` select explicitly.
+        """
+        self.simulation_backend = simulation_backend
+        self.mjx_min_envs = mjx_min_envs
+        super().__init__(*args, **kwargs)
+        self.execution_mode = "JAX_MJX" if self.simulation_backend == "mjx" else "DELEGATED_CPU"
+
+    def _make_simulator(self):
+        self.simulation_backend = reacher_backend(self.B, self.device, self.simulation_backend, self.mjx_min_envs)
+        return make_dmc_adapter(
+            self._simulator_key(),
+            self.B,
+            self.device,
+            self._seed,
+            simulation_backend=self.simulation_backend,
+            mjx_min_envs=self.mjx_min_envs,
+        )
 
     def make_variation_space(self):
         space = super().make_variation_space()
-        if self._simulator_key() == "reacher":
-            space["visibility"]["target"].set_init_value(0)
+        space["visibility"]["target"].set_init_value(0)
         return space
 
     def _layout(self):
@@ -36,21 +57,21 @@ class _ReacherSemantics(DelegatedSemantics):
         )
 
 
-DMCReacherEasy = parity_cell("DMCReacherEasy", "reacher", "easy", bases=(_ReacherSemantics,), SIMULATOR="reacher-easy")
 # The registered wrapper's target alternatives at the task's size; the sphere is the compiled model's own.
-_HARD_TARGET = 0.015
+_TARGET_RADIUS = 0.015
 
-DMCReacherHard = parity_cell(
-    "DMCReacherHard",
+DMCReacher = parity_cell(
+    "DMCReacher",
     "reacher",
     "hard",
     bases=(_ReacherSemantics,),
-    SHAPE_KNOBS={"target": ((R3.BOX, (_HARD_TARGET,) * 3), (R3.SPHERE, (_HARD_TARGET, 0.0, 0.0)))},
+    SHAPE_KNOBS={"target": ((R3.BOX, (_TARGET_RADIUS,) * 3), (R3.SPHERE, (_TARGET_RADIUS, 0.0, 0.0)))},
 )
 
-DMCReacherHard.__doc__ = """DM Control Reacher hard with authoritative CPU simulation and batched rendering.
+DMCReacher.name = "dmc-reacher"
+DMCReacher.__doc__ = """Reacher with native float64 CPU or float32 MJX CUDA physics.
 
-Public State includes positions, velocities, integration warm-start values, clock,
-RNG, lifecycle counters, cumulative reward and the target that changes on implicit
-resets. Device selects State/render placement; physics runs on CPU.
+``simulation_backend="auto"`` uses native CPU physics below ``mjx_min_envs``.
+The cutoff defaults to 32. Larger CUDA batches use MJX. Set ``simulation_backend``
+to ``"native"`` or ``"mjx"`` to choose explicitly. ``device`` controls output and rendering.
 """

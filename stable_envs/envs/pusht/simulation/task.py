@@ -1,5 +1,7 @@
 """PushT task on Pymunk: the scene, its variation space, reward and frame drawing."""
 
+import sys
+import threading
 from functools import partial
 
 import cv2
@@ -9,6 +11,7 @@ import pygame
 import pymunk
 import pymunk.pygame_util
 from gymnasium import spaces
+from pymunk._chipmunk_cffi import lib
 from pymunk.vec2d import Vec2d
 
 from ....spaces import Box as VariationBox
@@ -24,6 +27,33 @@ DEFAULT_VARIATIONS = (
     "block.start_position",
     "block.angle",
 )
+
+
+def resized_rgb(canvas, size):
+    """Resize the canvas to ``size`` RGB; linear resampling is per channel, so the 32-bit pixels need no RGB copy."""
+    if canvas.get_bytesize() != 4 or sys.byteorder != "little":
+        img = np.frombuffer(pygame.image.tobytes(canvas, "RGB"), np.uint8)
+        return cv2.resize(img.reshape(canvas.get_height(), canvas.get_width(), 3), (size, size))
+    height, width = canvas.get_height(), canvas.get_width()
+    pixels = np.frombuffer(canvas.get_buffer(), np.uint8).reshape(height, canvas.get_pitch())
+    pixels = pixels[:, : width * 4].reshape(height, width, 4)
+    channels = [shift // 8 for shift in canvas.get_shifts()[:3]]
+    resized = cv2.resize(pixels, (size, size))
+    if channels == [2, 1, 0]:
+        return cv2.cvtColor(resized, cv2.COLOR_BGRA2RGB)
+    return np.ascontiguousarray(resized[..., channels])
+
+
+_CANVASES = threading.local()
+
+
+def _canvas(size):
+    """Return this thread's ``size`` canvas and its draw options; the fill covers every pixel of a frame."""
+    cached = getattr(_CANVASES, "value", None)
+    if cached is None or cached[0].get_width() != size:
+        canvas = pygame.Surface((size, size))
+        cached = _CANVASES.value = (canvas, DrawOptions(canvas))
+    return cached
 
 
 class PushT(gym.Env):
@@ -273,20 +303,7 @@ class PushT(gym.Env):
         return observation, info
 
     def step(self, action):
-        self.n_contact_points = 0
-        n_steps = int(1 / (self.dt * self.control_hz))
-
-        self.latest_action = action
-
-        if self.relative:
-            action = self.agent.position + action * self.action_scale
-
-        for _ in range(n_steps):
-            acceleration = self.k_p * (action - self.agent.position) + self.k_v * (Vec2d(0, 0) - self.agent.velocity)
-            self.agent.velocity += acceleration * self.dt
-
-            self.space.step(self.dt)
-
+        self._substeps(action)
         state = self._get_obs()
         proprio = np.concatenate((state[:2], state[-2:]))
         observation = {"proprio": proprio, "state": state}
@@ -298,6 +315,40 @@ class PushT(gym.Env):
 
         truncated = False
         return observation, reward, terminated, truncated, info
+
+    def advance(self, action):
+        """Run the control and physics substeps of ``step`` without building its outputs."""
+        self._substeps(action)
+
+    def _substeps(self, action):
+        self.n_contact_points = 0
+        n_steps = int(1 / (self.dt * self.control_hz))
+
+        self.latest_action = action
+
+        if self.relative:
+            # The Vec2d arithmetic below, written per component: the same operands, order and
+            # scalar types, so NumPy float32 actions round exactly as they do through Vec2d.
+            # The body accessors are the Chipmunk calls that the pymunk properties make.
+            body, space, k_p, k_v, dt = self.agent._body, self.space, self.k_p, self.k_v, self.dt
+            position = lib.cpBodyGetPosition(body)
+            offset = action * self.action_scale
+            target_x, target_y = position.x + offset[0], position.y + offset[1]
+            for _ in range(n_steps):
+                position, velocity = lib.cpBodyGetPosition(body), lib.cpBodyGetVelocity(body)
+                vx, vy = velocity.x, velocity.y
+                ax = (target_x - position.x) * k_p + (0 - vx) * k_v
+                ay = (target_y - position.y) * k_p + (0 - vy) * k_v
+                lib.cpBodySetVelocity(body, (vx + ax * dt, vy + ay * dt))
+                space.step(dt)
+        else:
+            for _ in range(n_steps):
+                acceleration = self.k_p * (action - self.agent.position) + self.k_v * (
+                    Vec2d(0, 0) - self.agent.velocity
+                )
+                self.agent.velocity += acceleration * self.dt
+
+                self.space.step(self.dt)
 
     def eval_state(self, goal_state, cur_state):
         # success if position difference is < 20, and angle difference < np.pi/9
@@ -366,12 +417,10 @@ class PushT(gym.Env):
         if self.clock is None and mode == "human":
             self.clock = pygame.time.Clock()
 
-        canvas = pygame.Surface((self.window_size, self.window_size))
+        canvas, draw_options = _canvas(self.window_size)
         canvas.fill(self.variation_space["background"]["color"].value)
 
         self.screen = canvas
-
-        draw_options = DrawOptions(canvas)
 
         render_goal = bool(self.variation_space["rendering"]["render_goal"].value) and self.with_target
         if render_goal:
@@ -412,10 +461,7 @@ class PushT(gym.Env):
             pygame.event.pump()
             pygame.display.update()
 
-        img = np.frombuffer(pygame.image.tobytes(canvas, "RGB"), np.uint8).reshape(
-            self.window_size, self.window_size, 3
-        )
-        img = cv2.resize(img, (self.render_size, self.render_size))
+        img = resized_rgb(canvas, self.render_size)
         if self.render_action:
             if self.render_action and (self.latest_action is not None):
                 action = np.array(self.latest_action)
@@ -852,3 +898,6 @@ class PushTDiscrete(PushT):
     def step(self, quantized_action):
         action = self.quantizer.dequantize(quantized_action)
         return super().step(action)
+
+    def advance(self, quantized_action):
+        self._substeps(self.quantizer.dequantize(quantized_action))

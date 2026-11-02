@@ -57,7 +57,7 @@ def test_requires_python_matches_the_ci_matrix() -> None:
 def test_core_dependencies_are_minimal() -> None:
     deps = _pyproject()["project"]["dependencies"]
     names = {re.match(r"[A-Za-z0-9_.-]+", dep).group(0).lower() for dep in deps}
-    assert names == {"gymnasium", "loguru", "numpy", "tensordict", "torch"}
+    assert names == {"gymnasium", "jax", "loguru", "numpy", "tensordict", "torch"}
 
 
 def test_optional_extras_are_installable_on_pypi() -> None:

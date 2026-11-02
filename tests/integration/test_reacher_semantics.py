@@ -14,7 +14,7 @@ from tests.helpers.reference.gates.reacher import run_gate
 
 
 def test_reacher_full_state_semantics():
-    with se.make("DMCReacherHard", device="cpu", num_envs=1) as env:
+    with se.make("DMCReacher", device="cpu", num_envs=1) as env:
         assert env.action_spec.dtype == torch.float64
         assert env.state_spec["rng", "keys"].dtype == torch.int64
         assert env.state_spec["lifecycle", "reset_next_step"].dtype == torch.bool

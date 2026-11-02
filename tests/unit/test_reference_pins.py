@@ -23,6 +23,8 @@ GROUPS = PYPROJECT["dependency-groups"]
 GROUP_OF_PROFILE = {"native": "pin-classic"}
 # Extras whose code checks exact versions at import or construction; every other extra states a range.
 EXACT_EXTRAS = {"pusht", "rocket", "ogbench-manipulation", "ogbench-manipulation-gpu"}
+# Packages that speed up stable-envs without being part of a source reference; pinned, but not in PINS.
+ACCELERATORS = {"numba", "mujoco-mjx"}
 
 
 def _exact(group: str) -> dict[str, str]:
@@ -40,7 +42,7 @@ def _exact(group: str) -> dict[str, str]:
 def test_each_reference_profile_has_a_pin_group_with_its_exact_versions(profile):
     group = GROUP_OF_PROFILE.get(profile, f"pin-{profile}")
     expected = {canonicalize_name(name): version for name, version in PINS[profile].items()}
-    assert _exact(group) == expected
+    assert {name: v for name, v in _exact(group).items() if name not in ACCELERATORS} == expected
 
 
 def test_every_pin_group_is_mutually_exclusive_with_the_others():
@@ -51,5 +53,10 @@ def test_every_pin_group_is_mutually_exclusive_with_the_others():
 
 def test_user_extras_state_ranges_not_reference_pins():
     extras = PYPROJECT["project"]["optional-dependencies"]
-    pinned = {name: [req for req in reqs if "==" in req] for name, reqs in extras.items() if name not in EXACT_EXTRAS}
+
+    def version_pins(reqs):
+        # A pin is a ``==`` on the version; an environment marker like ``sys_platform == 'linux'`` is not.
+        return [req for req in reqs if any(spec.operator == "==" for spec in Requirement(req).specifier)]
+
+    pinned = {name: version_pins(reqs) for name, reqs in extras.items() if name not in EXACT_EXTRAS}
     assert {name: reqs for name, reqs in pinned.items() if reqs} == {}

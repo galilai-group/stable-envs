@@ -81,6 +81,7 @@ class Ops:
         self.verts: list[torch.Tensor] = []
         self.bg = None
         self.plate = None
+        self.plate_idx = None
         self.sprite = None
         self.aa = None
         self.discs = None

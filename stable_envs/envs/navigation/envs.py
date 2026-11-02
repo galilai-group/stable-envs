@@ -8,6 +8,7 @@ from gymnasium import spaces as gym_spaces
 from tensordict import TensorDict
 
 from ... import tuning
+from ..._core.tensordicts import build_tensordict
 from ...env import Env, ResetLeaf, StepResult, check_states
 from ...registry import register
 from ...render import _resources as _RES
@@ -410,6 +411,7 @@ class _HiddenTargetSemantics:
     """
 
     execution_mode = "NATIVE_TORCH"
+    _step_outputs_owned = True
     state_layout = ((("agent", "position"), 2, 0), (("target", "position"), 2, None))
     state_bounds = {
         ("agent", "position"): (POS_LO, POS_HI),
@@ -425,6 +427,17 @@ class _HiddenTargetSemantics:
         self._target_position = torch.full((self.B, 2), 0.0, device=self.device, dtype=torch.float32)
         self._target_position[:, 0] = 164.0
         self._target_position[:, 1] = 112.0
+        if self.device.type == "cuda":
+            from torch._inductor import list_options
+
+            # Older compilers can eliminate the float32 rounding points below.
+            # Keep their eager path; supported compilers fuse the same task code.
+            if "emulate_precision_casts" in list_options():
+                self._task_tensors = torch.compile(
+                    self._task_tensors,
+                    fullgraph=True,
+                    options={"emulate_precision_casts": True, "aggressive_fusion": True, "triton.cudagraphs": False},
+                )
 
     def _hidden_state(self):
         return {("target", "position"): self._target_position[: self._live_rows]}
@@ -461,7 +474,7 @@ class _HiddenTargetSemantics:
 
     def _full_state(self, agent):
         n = int(agent.shape[0])
-        return TensorDict(
+        return build_tensordict(
             {
                 "agent": {"position": agent.clone()},
                 "target": {"position": self._target_position[:n].clone()},
@@ -473,33 +486,31 @@ class _HiddenTargetSemantics:
     def _observation(self, agent, target):
         return torch.cat([agent, target], dim=1)
 
-    def _outputs(self, state):
-        agent = state["agent", "position"]
-        target = state["target", "position"]
+    def _task_tensors(self, agent, target):
         observation = self._observation(agent, target)
-        # Reduce each lane on CPU to match the source torch.norm rounding before moving outputs.
-        host_delta = (agent - target).detach().cpu()
-        distance = torch.tensor(
-            [float(torch.norm(row)) for row in host_delta], dtype=torch.float64, device=self.device
-        )
-        n = int(state.batch_size[0])
-        return StepResult(
-            {
-                "state": state,
-                "reward": torch.zeros(n, device=self.device, dtype=torch.float64),
-                "terminated": distance < 16.0,
-                "truncated": torch.zeros(n, device=self.device, dtype=torch.bool),
-                "observation": observation,
-                "info": {
-                    "proprio": agent.clone(),
-                    "state": agent.clone(),
-                    "goal_state": target.clone(),
-                    "distance_to_target": distance,
-                },
+        # Match the two-element CPU torch.norm: round x*x, accumulate y*y with
+        # one float32 rounding, then round sqrt. Reassociation can flip success at 16 px.
+        delta = (agent - target).detach().double()
+        first = delta[:, 0].square().float()
+        squared = torch.addcmul(first.double(), delta[:, 1], delta[:, 1]).float()
+        distance = squared.double().sqrt().float().double()
+        n = int(agent.shape[0])
+        return {
+            "reward": torch.zeros(n, device=self.device, dtype=torch.float64),
+            "terminated": distance < 16.0,
+            "truncated": torch.zeros(n, device=self.device, dtype=torch.bool),
+            "observation": observation,
+            "info": {
+                "proprio": agent.clone(),
+                "state": agent.clone(),
+                "goal_state": target.clone(),
+                "distance_to_target": distance,
             },
-            batch_size=[n],
-            device=self.device,
-        )
+        }
+
+    def _outputs(self, state):
+        values = self._task_tensors(state["agent", "position"], state["target", "position"])
+        return build_tensordict({"state": state, **values}, state.batch_size, self.device)
 
     @torch.no_grad()
     def _step(self, action, *, active=None):
@@ -509,7 +520,9 @@ class _HiddenTargetSemantics:
         if active is not None:
             next_rows = torch.where(active[:, None], next_rows, self._render_state)
         self._render_state.copy_(next_rows)
-        return self._outputs(self.get_state())
+        # Physics already produces valid packed rows. Own the snapshot directly;
+        # the public get_state() validation would synchronize CUDA every step.
+        return self._outputs(self._full_state(self._render_state))
 
 
 class _TorchNavBase(_GymReferencePort):
@@ -518,14 +531,6 @@ class _TorchNavBase(_GymReferencePort):
     default_size = IMG
     # Reference geometry and dot radii are defined at this pixel resolution.
     fixed_size = IMG
-    parity_interior_min = 0.999995
-    parity_note = (
-        "1 ulp of exp, not geometry. With the reference's own float32 exp on the CPU this renderer "
-        "reproduces the official frame bit for bit; the residual is that this exp is correctly rounded "
-        "while torch's CPU float32 exp is only faithful. That ulp changes a pixel only where the dot's "
-        "colour equals the background, because 255*(1-a)+255*a is the identity in exact arithmetic "
-        "but not in float32. Worst of 800 seeded draws: 2 pixels of 2.3 million, 1/255, one channel."
-    )
     action_dim = 2
     action_low = -1.0
     action_high = 1.0
@@ -821,6 +826,7 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
     """
 
     name = "two-room"
+    execution_mode = "NATIVE_JAX"
     state_dim = 2
     state_names = ("agent_x", "agent_y")
     reference_kwargs = {"render_target": False}
@@ -838,11 +844,34 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
         }
     )
 
+    def __init__(self, *args, simulation_backend="auto", jax_min_envs=1, **kwargs):
+        """Use Torch below ``jax_min_envs`` and JAX at or above it when selection is automatic.
+
+        The cutoff defaults to 1. ``simulation_backend="torch"`` or ``"jax"``
+        selects that implementation at every batch size.
+        """
+        if simulation_backend not in ("auto", "torch", "jax"):
+            raise ValueError("simulation_backend must be 'auto', 'torch' or 'jax'")
+        if isinstance(jax_min_envs, bool) or not isinstance(jax_min_envs, int) or jax_min_envs < 1:
+            raise ValueError("jax_min_envs must be an int >= 1")
+        self.jax_min_envs = jax_min_envs
+        super().__init__(*args, **kwargs)
+        if simulation_backend == "auto":
+            simulation_backend = "jax" if self.B >= jax_min_envs else "torch"
+        self.simulation_backend = simulation_backend
+        self.execution_mode = "NATIVE_JAX" if self.simulation_backend == "jax" else "NATIVE_TORCH"
+        if self.simulation_backend == "jax":
+            from .tworoom_jax import Kernel
+
+            self._jax_kernel = Kernel(self.device, self._style.layout)
+
     def make_variation_space(self) -> Dict:
         return Dict({"agent": Dict(self._agent_space()), **self._structure_space()})
 
-    def _step(self, action, *, active=None) -> TensorDict:
-        return super()._step(action, active=active)
+    def _advance_rows(self, rows, action, sty):
+        if self.simulation_backend == "torch":
+            return super()._advance_rows(rows, action, sty)
+        return self._jax_kernel.advance(rows, action, sty.values)
 
     def _reset_value_ok(self, path, value, lane):
         if path != "agent.position":
@@ -856,19 +885,14 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
 
     def _observation(self, agent, target):
         n = int(agent.shape[0])
-        axis = self._style["wall.axis"][:n] > 0.5
-        count = self._style["door.number"][:n].trunc()
+        axis = (self._style["wall.axis"][:n] > 0.5).reshape(n, 1)
+        count = self._style["door.number"][:n].trunc().reshape(n, 1)
         positions = self._style["door.position"][:n]
-        doors = []
-        center = torch.full((n,), float(WALL_CENTER), device=self.device, dtype=torch.float32)
-        zeros = torch.zeros_like(center)
-        for i in range(MAX_DOOR):
-            live = count > i
-            p = positions[:, i]
-            x = torch.where(live, torch.where(axis, center, p), zeros)
-            y = torch.where(live, torch.where(axis, p, center), zeros)
-            doors.extend([x, y])
-        return torch.cat([agent, target, torch.stack(doors, dim=1)], dim=1)
+        center = torch.full_like(positions, float(WALL_CENTER))
+        doors = torch.stack((torch.where(axis, center, positions), torch.where(axis, positions, center)), dim=-1)
+        live = torch.arange(MAX_DOOR, device=self.device) < count
+        doors = torch.where(live[..., None], doors, 0.0)
+        return torch.cat((agent, target, doors.flatten(1)), dim=1)
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """Sample agent positions in [14, 209]^2, rejecting positions inside the central wall."""
@@ -899,6 +923,26 @@ class TwoRoomTarget(_TwoRoomBase):
     state_layout = ((("agent", "position"), 2, 0), (("target", "position"), 2, 2))
     state_bounds = {("agent", "position"): (POS_LO, POS_HI), ("target", "position"): (POS_LO, POS_HI)}
     step_reference_groups = (("agent", (0, 1), "euclidean"), ("target", (2, 3), "euclidean"))
+    # Seeded resets draw from the same tree and rejection rule as TwoRoom, so they start where SWM's TwoRoom does.
+    reset_leaves = (
+        ResetLeaf("agent.position", (60.0, 112.0)),
+        ResetLeaf("target.position", (164.0, 112.0)),
+    )
+    reset_tree_factory = staticmethod(_two_room_reset_tree)
+
+    def reset(self, seed=None, options=None):
+        self._check_open("reset")
+        if seed is not None:
+            self.rng = np.random.default_rng(int(seed))
+            self._seed = int(seed)
+        values = self.draw_reset_values(seed, dict(options or {}))
+        agent, target = np.stack(list(values["agent.position"])), np.stack(list(values["target.position"]))
+        self._set_render_state(np.concatenate([agent, target], axis=1))
+        self._live_rows = self.B
+        return self.get_state()
+
+    def _reset_value_ok(self, path, value, lane):
+        return TwoRoom._reset_value_ok(self, path, value, lane)
 
     def make_variation_space(self) -> Dict:
         return Dict(
@@ -1114,10 +1158,23 @@ class PiecewiseZones(_PiecewiseBase):
     """Piecewise renderer with a distinct tint for each motion-bias zone."""
 
     name = "piecewise-zones"
+    # Seeded resets draw the agent from the same tree as Piecewise, so they start where SWM's Piecewise does.
+    reset_leaves = (ResetLeaf("agent.position", (60.0, 112.0)),)
+    reset_tree_factory = staticmethod(_piecewise_reset_tree)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._zones = _zone_map(self.device)
+
+    def reset(self, seed=None, options=None):
+        self._check_open("reset")
+        if seed is not None:
+            self.rng = np.random.default_rng(int(seed))
+            self._seed = int(seed)
+        values = self.draw_reset_values(seed, dict(options or {}))
+        self._set_render_state(np.stack(list(values["agent.position"])))
+        self._live_rows = self.B
+        return self.get_state()
 
     def make_variation_space(self) -> Dict:
         z = {**self._zone_bias_space(), **{f"color_{i}": RGBBox(init_value=ZONE_C[i]) for i in range(N_ZONES)}}

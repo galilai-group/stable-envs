@@ -4,9 +4,17 @@ Every environment runs well with no setup. Chunk sizes, Triton block sizes, work
 budgets have defaults, and the library computes some defaults from the hardware. You can change them to
 trade speed against memory. Frames and State are the same for every valid value.
 
+The `simulation_backend` constructor argument selects physics for [Reacher](environments/dmcontrol.md#reacher)
+and [TwoRoom](environments/navigation.md#tworoom). Reacher chooses native CPU physics below a provisional
+cutoff of 32 environments and MJX for larger CUDA batches. TwoRoom uses Torch below `jax_min_envs`
+and JAX at or above it. Its cutoff defaults to 1 because current measurements favor JAX for one
+environment. Both cutoffs are constructor arguments and require measurements on your hardware to
+choose the fastest implementation. Reacher's backends use different precision and can produce
+different trajectories, so these arguments are separate from the tuning knobs below.
+
 The library stores measured values per render path. For example, every fixed-camera DM Control cell
 uses the `dmc-suite` path, so a value measured with `DMCCartpoleSwingup` also applies to
-`DMCReacherEasy`. The Triton block and warp knobs and `ogb_mjw_worlds` have one measured value for the
+`DMCReacher`. The Triton block and warp knobs and `ogb_mjw_worlds` have one measured value for the
 whole device instead of one per path.
 
 ## Where a value comes from
@@ -55,8 +63,8 @@ names one.
 
 | knob | fallback | derived default | machine | what it controls |
 |---|---|---|---|---|
-| `workers` | 8 | min(value, CPUs in the process affinity, lanes) | not recorded | Most worker processes of a CPU simulator batch on Linux. The value 0 steps every lane in the main process. |
-| `worker_min_lanes` | 64 | none | not recorded | Smallest batch that uses worker processes, or Fetch simulator threads. |
+| `workers` | 8 | min(value, CPUs in the process affinity, lanes) | not recorded | Most worker processes of a CPU simulator batch, or of a PushT render, on Linux. The value 0 steps every lane, and draws every PushT frame, in the main process. |
+| `worker_min_lanes` | 64 | none | not recorded | Smallest batch that uses worker processes, or Fetch simulator threads. For PushT, the smallest number of rendered States that uses render workers. |
 | `fetch_threads` | 4 | min(value, CPUs in the process affinity, lanes) | not recorded | Most simulator threads of an in-process Fetch batch. |
 | `cpu3d_chunk` | 16 | none (TrackCom cells use a per-cell table) | Xeon Platinum 8268 | Frames per chunk of the CPU ray caster (`cpu3d`). |
 | `dmc_cpu_ray_budget` | 2^21 | 2^21 × L3 size / 35.75 MiB, rounded to a power of two, in [2^18, 2^21] | not recorded | Rays per CPU render chunk of the fixed-camera DMC cells, counting supersamples. |
@@ -65,6 +73,9 @@ names one.
 | `dmc_min_worlds` | 64 | none | not recorded | Fewest worlds per MJWarp launch of the DMC TrackCom cells. |
 | `fetch_mjw_worlds` | 256 | none | not recorded | Most worlds per MJWarp launch of the Fetch cells. |
 | `ogb_mjw_worlds` | 256 | none | not recorded | Most worlds per MJWarp launch of the OGBench Cube and Scene cells. |
+| `ogb_gl_workers` | 8 | min(value, CPUs in the process affinity, rows) | not recorded | Most OpenGL worker processes of an OGBench Cube and Scene batch on Linux. A batch that uses fewer than 2 workers draws in the main process. The value 0 draws every batch in the main process. |
+| `render_workers` | 8 | min(value, CPUs in the process affinity) | not recorded | Most worker processes of a classic control CPU render batch on Linux when Numba is not installed. The values 0 and 1 draw every frame in the main process. |
+| `render_worker_min_rows` | 16 | none | not recorded | Smallest classic control CPU render batch that uses render worker processes. |
 | `ogb_context_cache_bytes` | none | min(total GPU memory / 4, free GPU memory / 2), per device | not recorded | GPU bytes the OGBench MJWarp context cache keeps. |
 | `nvd_budget_bytes` | 6 GiB | min(6 GiB, free GPU memory / 2) | not recorded | GPU bytes one nvdiffrast chunk of the Rocket cells may use. |
 | `nav_render_chunk` | 256 | none | not recorded | Frames per render chunk of the navigation cells. |
@@ -87,6 +98,10 @@ cannot read the hardware, the fallback applies.
   (fixed-camera cells) in powers of two. Smaller chunks stay in the CPU cache.
 - Slow CPU stepping: try `workers` between 0 and the number of cores, and `worker_min_lanes`
   for small batches. The library uses worker processes only on Linux.
+- Slow classic control CPU rendering without Numba: try `render_workers` between 0 and the number of
+  cores, and `render_worker_min_rows` for small batches.
+- Classic control CPU rendering with Numba: the kernel uses one thread for each CPU in the process
+  affinity. To use fewer threads, set `NUMBA_NUM_THREADS` before the first render.
 - Triton kernels on a new GPU: try the `*_warps` knobs (1, 2, 4, 8) and the `*_block` knobs in powers of two.
 
 ## `stable-envs tune`
@@ -119,7 +134,7 @@ The command prints a table and the location where it saved the values. Example o
 ```text
   knob                        default        tuned  speedup
   dmc_cpu_ray_budget          2097152       524288    1.12x
-saved for: dmc-suite, 84 px, batch 64-127 (also covers: DMCCartpoleSwingup, DMCReacherEasy, ...)
+saved for: dmc-suite, 84 px, batch 64-127 (also covers: DMCCartpoleSwingup, DMCReacher, ...)
 ```
 
 The command saves values for the render path, the frame size and the batch range. Batch ranges are

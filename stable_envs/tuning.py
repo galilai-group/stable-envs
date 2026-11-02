@@ -123,13 +123,16 @@ class Knob:
 
 
 _KINDS = {"n": "an int >= 1", "n0": "an int >= 0", "pow2": "a power of two", "warps": f"one of {list(_WARPS)}"}
-_SIM = ("classic-sim", "dmc-sim", "fetch-sim", "ogb-sim")
+_SIM = ("classic-sim", "dmc-sim", "fetch-sim", "ogb-sim", "pusht-sim", "pusht-render", "rocket-sim")
+_RENDER = ("classic-render",)
 
 KNOBS: dict[str, Knob] = {
     k.name: k
     for k in (
-        Knob("workers", 8, _SIM, "cpu", "n0", "cpus", "Most worker processes of a CPU simulator batch on Linux; 0 steps in-process.", step=True),
+        Knob("workers", 8, _SIM, "cpu", "n0", "cpus", "Most worker processes of a CPU simulator batch or PushT render on Linux; 0 runs in-process.", step=True),
         Knob("worker_min_lanes", 64, _SIM, "cpu", "n", None, "Smallest batch that uses worker processes or Fetch threads."),
+        Knob("render_workers", 8, _RENDER, "cpu", "n0", "cpus", "Most worker processes of a CPU render batch on Linux; 0 or 1 draws in-process."),
+        Knob("render_worker_min_rows", 16, _RENDER, "cpu", "n", None, "Smallest CPU render batch that uses render worker processes."),
         Knob("fetch_threads", 4, ("fetch-sim",), "cpu", "n", "cpus", "Most simulator threads of an in-process Fetch batch.", step=True),
         Knob("cpu3d_chunk", 16, ("dmc-trackcom",), "cpu", "n", "rows", "Frames per cpu3d ray-casting chunk."),
         Knob("dmc_cpu_ray_budget", 1 << 21, ("dmc-suite",), "cpu", "pow2", "rays", "Rays per CPU render chunk of fixed-camera DMC cells.", _cpu_rays),
@@ -138,6 +141,7 @@ KNOBS: dict[str, Knob] = {
         Knob("dmc_min_worlds", 64, ("dmc-trackcom",), "cuda", "pow2", "rows", "Fewest worlds per MJWarp launch of DMC TrackCom cells."),
         Knob("fetch_mjw_worlds", 256, ("fetch-mjwarp",), "cuda", "pow2", "rows", "Most worlds per MJWarp launch of Fetch cells."),
         Knob("ogb_mjw_worlds", 256, ("ogb-manipulation",), "cuda", "pow2", "rows", "Most worlds per MJWarp launch of OGBench Cube and Scene.", per_path=False),
+        Knob("ogb_gl_workers", 8, ("ogb-manipulation",), "any", "n0", None, "Most OpenGL worker processes of an OGBench Cube and Scene batch on Linux; 0 draws in-process.", per_path=False),
         Knob("ogb_context_cache_bytes", None, ("ogb-manipulation",), "cuda", "n", None, "GPU bytes the OGBench context cache keeps per device."),
         Knob("nvd_budget_bytes", 6 << 30, ("rocket-nvdiff",), "cuda", "n", "bytes", "GPU bytes per nvdiffrast chunk of Rocket cells.", _nvd_bytes),
         Knob("nav_render_chunk", 256, ("navigation",), "any", "n", "rows", "Frames per render chunk of navigation cells."),
@@ -152,16 +156,16 @@ KNOBS: dict[str, Knob] = {
 
 #: Render and simulation paths per environment class or family; the most derived class wins.
 RENDER_PATHS: dict[str, tuple[str, ...]] = {
-    "DMControlSuite": ("dmc-suite", "dmc-sim"),
-    "DMControlTrackCom": ("dmc-trackcom", "dmc-sim"),
+    "DMControlSuite": ("dmc-suite", "dmc-render", "dmc-sim"),
+    "DMControlTrackCom": ("dmc-trackcom", "dmc-render", "dmc-sim"),
     "dmcontrol": ("dmc-sim",),
     "OGBManipBase": ("ogb-manipulation", "ogb-sim"),
     "ogbench": ("ogb-maze", "ogb-sim"),
     "fetch": ("fetch-mjwarp", "fetch-sim"),
-    "PyFlytRocketLanding": ("rocket-nvdiff",),
+    "PyFlytRocketLanding": ("rocket-nvdiff", "rocket-sim"),
     "navigation": ("navigation", "raster2d"),
-    "pusht": ("raster2d",),
-    "classic_control": ("gfxdraw", "classic-sim"),
+    "pusht": ("raster2d", "pusht-sim", "pusht-render"),
+    "classic_control": ("gfxdraw", "classic-render", "classic-sim"),
 }
 
 for _k in KNOBS.values():

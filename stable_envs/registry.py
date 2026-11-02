@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 import importlib
+import math
 import pkgutil
 from typing import Any
 
 from ._core.config import log as _log
 from .env import (
-    FIDELITY_TIERS,
     MEASURED_WITH_KEY,
     REFERENCE_VERSIONS_KEY,
     REQUIRED_VISUAL_FIDELITY,
+    VISUAL_FIDELITY_MSE,
     Env,
     _check_reference_versions_shape,
 )
@@ -21,14 +22,12 @@ REGISTRY: dict[str, type[Env]] = {}
 
 
 def check_fidelity_declaration(cls: type[Env]) -> None:
-    """Validate the declared fidelity tier and its required metadata.
+    """Validate the declared comparison with the source.
 
-    Visual classes must include VISUAL TIER in their class docstring. This checks
-    declaration completeness, not whether the measured acceptance gates pass.
+    A ``visual_fidelity`` record must carry ``measured_at`` and a ``visual_note``. Its MSE values must be
+    finite and non-negative, with the mean and the 95th percentile at most the worst frame. Version fields
+    must be dicts of package names to exact versions. The source-comparison tests check the measurement.
     """
-    tier = getattr(cls, "fidelity_tier", "parity")
-    if tier not in FIDELITY_TIERS:
-        raise ValueError(f"{cls.__name__}: fidelity_tier must be one of {FIDELITY_TIERS}, got {tier!r}")
     vf = dict(getattr(cls, "visual_fidelity", {}) or {})
     # Version metadata is optional, but malformed declarations cannot identify a reference.
     if REFERENCE_VERSIONS_KEY in cls.__dict__ or getattr(cls, REFERENCE_VERSIONS_KEY, None):
@@ -39,35 +38,32 @@ def check_fidelity_declaration(cls: type[Env]) -> None:
         )
     if MEASURED_WITH_KEY in vf:
         _check_reference_versions_shape(cls, f"visual_fidelity[{MEASURED_WITH_KEY!r}]", vf[MEASURED_WITH_KEY])
-    if tier == "parity":
-        if vf:
-            raise ValueError(
-                f"{cls.__name__} declares fidelity_tier='parity' and also carries visual_fidelity; "
-                f"drop the dict or declare the visual tier."
-            )
+    if not vf:
         return
     missing = [k for k in REQUIRED_VISUAL_FIDELITY if k not in vf]
     if missing:
         raise ValueError(
-            f"{cls.__name__} declares the VISUAL tier without {missing}; a visual declaration "
-            f"carries its measured agreement and acceptance limits."
+            f"{cls.__name__} declares visual_fidelity without {missing}; the record carries the "
+            f"measured agreement and how it was measured."
         )
+    _check_mse_values(cls, vf)
     if not getattr(cls, "visual_note", ""):
         raise ValueError(
-            f"{cls.__name__} declares the VISUAL tier with no visual_note; the note states the "
-            f"residual difference and what the frames must not be used for."
+            f"{cls.__name__} declares visual_fidelity with no visual_note; the note states where and "
+            f"why the frames differ from the source renderer."
         )
-    if getattr(cls, "parity_interior_min", None) is not None:
-        raise ValueError(
-            f"{cls.__name__} declares the VISUAL tier but leaves parity_interior_min at "
-            f"{cls.parity_interior_min!r}. Set it to None: the parity gate does not apply to this env."
-        )
-    doc = (cls.__doc__ or "").upper()
-    if "VISUAL TIER" not in doc:
-        raise ValueError(
-            f"{cls.__name__} declares the VISUAL tier and does not say so in its class docstring. "
-            f"Put the words 'VISUAL TIER' in it, with what the residual is."
-        )
+
+
+def _check_mse_values(cls: type[Env], vf: dict) -> None:
+    mse = {k: vf[k] for k in VISUAL_FIDELITY_MSE if k in vf}
+    for k, v in mse.items():
+        if isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) or v < 0:
+            raise ValueError(f"{cls.__name__}: visual_fidelity[{k!r}] = {v!r}; an MSE is a finite number >= 0.")
+    worst = mse.get("mse_max")
+    if worst is not None:
+        over = [k for k in ("mse_mean", "mse_p95") if k in mse and mse[k] > worst]
+        if over:
+            raise ValueError(f"{cls.__name__}: visual_fidelity {over} exceed mse_max = {worst}.")
 
 
 def register(cls: type[Env]) -> type[Env]:
@@ -107,7 +103,6 @@ def registry_table() -> list[dict[str, Any]]:
         {
             "class_name": n,
             "name": n,
-            "tier": getattr(c, "fidelity_tier", "parity"),
             "family": getattr(c, "family", "") or None,
             "domain": getattr(c, "domain", "") or None,
             "render_state_dim": (int(c.state_dim) or None) if isinstance(getattr(c, "state_dim", None), int) else None,
@@ -119,19 +114,12 @@ def registry_table() -> list[dict[str, Any]]:
 
 
 def format_registry(width: int = 34) -> str:
-    """Return a text listing of registered classes with visual-tier classes marked."""
+    """Return a text listing of registered classes with their reference IDs."""
     rows = registry_table()
-    n_visual = sum(r["tier"] == "visual" for r in rows)
-    out = [f"{len(rows)} environments; {len(rows) - n_visual} parity, {n_visual} visual"]
+    out = [f"{len(rows)} environments"]
     for r in rows:
-        mark = "   [VISUAL TIER — not the official pixels]" if r["tier"] == "visual" else ""
-        out.append(f"  {r['name']:<{width}}{mark}")
-    if n_visual:
-        out.append(
-            "  visual tier: fast re-render of the same scene by a different rasterizer. Good "
-            "for live training data; NOT a substitute for a stored dataset when a policy will "
-            "be evaluated on official pixels. See each env's visual_fidelity / visual_note."
-        )
+        ref = r["reference_id"] or "-"
+        out.append(f"  {r['name']:<{width}}{ref}")
     return "\n".join(out)
 
 
@@ -167,7 +155,6 @@ def info(name: str) -> dict[str, Any]:
         "render_state_names": list(getattr(cls, "state_names", ()) or ()),
         "default_size": getattr(cls, "default_size", None),
         "reference_id": getattr(cls, "reference_id", None),
-        "fidelity_tier": getattr(cls, "fidelity_tier", "parity"),
         "action_dim": getattr(cls, "action_dim", None),
         "has_dynamics": getattr(cls, "_step", None) is not Env._step,
         "requires_cuda": bool(getattr(cls, "requires_cuda", False)),

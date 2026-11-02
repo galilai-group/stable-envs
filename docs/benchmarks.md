@@ -39,7 +39,8 @@ drawing is the same on both sides. The difference is Python work per frame.
 
 - Ray-cast and CPU3D families (OGBench mazes, DM Control, navigation) depend on the host CPU. Their
   numbers change with machine load.
-- Visual-tier classes are for live training data. They do not substitute for stored official pixels.
+- Some classes draw with a different rasterizer from the source. Their frames differ from the source
+  frames. `env.describe()["visual_fidelity"]` gives the measured agreement.
 - The official renderers run in one process. They have no batched entry point.
 - Use the class's native supersampling. Forcing `1` on a class that declares `2` measures a cheaper
   picture than `snv.make(name)` returns.

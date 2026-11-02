@@ -86,6 +86,7 @@ paths = [
   "stable_envs/render/primitives.py",
 ]
 tests = [
+  "test_tworoom_jax*",
   "test_native_navigation_*",
   "test_nav_*",
   "test_navdot_*",
@@ -95,7 +96,7 @@ tests = [
   "test_variation_navigation.py",
   "test_navigation_source_pixels.py",
 ]
-requires = ["matplotlib"]
+requires = ["jax", "matplotlib"]
 capabilities = ["swm"]
 swm_with = ["scipy"]
 
@@ -179,6 +180,7 @@ tests = ["test_craftax*"]
 requires = ["craftax", "jax"]
 capabilities = ["swm"]
 shards = { pr = 1, nightly = 1 }
+env_affinity = true
 
 [family.miniworld]
 extras = ["miniworld"]

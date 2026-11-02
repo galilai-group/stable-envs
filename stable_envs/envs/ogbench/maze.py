@@ -156,6 +156,9 @@ def _light_pass(n, v, terms, c, tex, ms, shin):
 _SHADOW_EPS = 1e-3  # shadow-ray origin offset along the surface normal
 
 
+_PASS_ROWS = 1024
+
+
 class _LightPasses:
     """MuJoCo's light passes for a scene with a spotlight that tracks the agent.
 
@@ -257,16 +260,17 @@ class _LightPasses:
         inside = (depth > 0) & (dot3(rel, sp["s"]).abs() <= reach) & (dot3(rel, sp["u"]).abs() <= reach)
         o = X + _SHADOW_EPS * n
         lim = dist - _SHADOW_EPS
-        flat = o.reshape(1, -1, 3)
+        # One launch row per frame keeps the per-row block count within the CUDA grid limit.
+        rows = X.shape[0] if X.dim() == 3 and X.shape[1] > 1 else 1
         wk = len(self.wall_kinds)
         walls = R3.any_blocking(
             self.wall_kinds,
-            self.wall_size.expand(1, wk, 3),
-            self.wall_pos,
-            self.wall_rot,
-            flat,
-            L.reshape(1, -1, 3).contiguous(),
-            lim.reshape(1, -1),
+            self.wall_size.expand(rows, wk, 3),
+            self.wall_pos.expand(rows, wk, 3),
+            self.wall_rot.expand(rows, wk, 3, 3),
+            o.reshape(rows, -1, 3),
+            L.reshape(rows, -1, 3).contiguous(),
+            lim.reshape(rows, -1),
         ).view(X.shape[:-1])
         kinds, size, pos, rot = agent
         moving = R3.any_blocking(kinds, size, pos, rot, o, L.contiguous(), lim, skip)
@@ -417,6 +421,28 @@ def _scene_env(loco: str, maze: str, size: int, ob_type: str = "pixels"):
     return _ENV_CACHE[key]
 
 
+def _upload_xml_checker(env, loco: str) -> None:
+    """Replace a pixel-scene source floor with the locomotion XML's checker texels and upload them."""
+    import importlib
+
+    import mujoco
+
+    module = importlib.import_module(f"ogbench.locomaze.{loco}")
+    xml = mujoco.MjModel.from_xml_path(getattr(module, f"{loco.capitalize()}Env").xml_file)
+    u = env.unwrapped
+    m = u.model
+    attr = "tex_rgb" if hasattr(m, "tex_rgb") else "tex_data"
+    src, dst = xml.tex("grid"), m.tex("grid")
+    shape = (int(dst.height[0]), int(dst.width[0]))
+    if (int(src.height[0]), int(src.width[0])) != shape:
+        raise RuntimeError(f"the {loco} XML checker and the source floor texture differ in size")
+    n = 3 * shape[0] * shape[1]
+    getattr(m, attr)[int(dst.adr[0]) : int(dst.adr[0]) + n] = getattr(xml, attr)[int(src.adr[0]) : int(src.adr[0]) + n]
+    r = u.custom_renderer
+    r._gl_context.make_current()
+    mujoco.mjr_uploadTexture(m, r._mjr_context, int(dst.id))
+
+
 def _checker_masks(loco: str):
     """Texel masks of the XML checker's two colours; pixel scenes overwrite it at construction."""
     import importlib
@@ -445,24 +471,6 @@ class OGBenchMaze(Env):
     default_supersample = 2
     # Moving-primitive cast window; oversized projections fall back to the full frame.
     TILE = 32
-    # The flat-interior metric excludes most small shaded agent pixels.
-    parity_interior_min = 1.0
-
-    parity_note = (
-        "Agent-pixel parity (supersample 2, against MuJoCo at its default offsamples=4, 25 cells x 64 "
-        "states). Every disagreement is inside the agent's own silhouette: the baked plate is exact by "
-        "construction, non-agent pixels are 99.88-99.99% bit-identical, and that residual is the "
-        "reference's multisampling bleeding agent colour into neighbouring wall/floor pixels. On "
-        "agent-interior pixels (eroded by one, so coverage is not in play) the shader reaches 48-84% "
-        "within 1/255 for pointmaze (mean 1.2-2.5/255), 0-51% for antmaze and 0-3% for humanoidmaze. "
-        "The legged numbers are not a shading result: at the official whole-maze camera the ant is "
-        "12-70 px and the humanoid 4-21 px of 50176, and eroding leaves as few as 1 interior pixel, so "
-        "their agreement is a statement about a silhouette under the reference's coverage rule. "
-        "Against a non-multisampled reference the same shader reaches 92.4% within 1/255 over 13,069 "
-        "pooled agent-interior pixels (mean 0.88/255), which localises most of the remaining gap in "
-        "MSAA sample positions -- GPU-specific, not recoverable by fitting -- rather than in shading."
-    )
-
     # Pose layout by body: point slides, or free-joint pose followed by hinges.
     # The simulator mixin supplies continuation fields separately.
     STATE_LAYOUT = {
@@ -893,38 +901,42 @@ class OGBenchMaze(Env):
             idx = np.flatnonzero(inv == gi)
             over = {p: uniq[gi][o : o + w] for p, (o, w) in zip(self.PLATE_PATHS, _offsets(self.PLATE_PATHS, sty))}
             sc = self._scene(size, over)
-            sub = torch.as_tensor(idx, device=self.device, dtype=torch.long)
-            mat, scale = self._agent_appearance(sc, sty, sub)
-            xpos, xmat = self._fk(s[sub], sc)
-            plate, shader = sc.plate, None
-            if sc.passes is not None:
-                size_b = torch.as_tensor(np.asarray(sc.prims_base.size), device=self.device, dtype=torch.float32)
-                agent = (list(sc.prims_base.kind), size_b * scale.view(-1, 1, 1), xpos, xmat)
-                lpos = sc.passes.light_pos(s[sub][:, :2])
-                plate = sc.passes.plates(sc.plate, sc.cam, lpos, agent)
-                shader = sc.passes.shader(lpos, agent)
-            # Advanced indexing makes buf[sub] a copy. With multiple groups, render to a
-            # temporary and assign back explicitly; one group can write directly into buf.
-            dst = buf if len(uniq) == 1 else None
-            got = R3.composite(
-                plate,
-                sc.plate_t,
-                sc.cam,
-                sc.prims_base,
-                xpos,
-                xmat,
-                sc.lights,
-                size,
-                size,
-                supersample=ss,
-                out=dst,
-                tile=self.TILE,
-                mat_rgb=mat,
-                size_scale=scale,
-                shader=shader,
-            )
-            if dst is None:
-                buf[sub] = got
+            # Per-row lighting holds several float images per row; bound the rows in flight.
+            step = _PASS_ROWS if sc.passes is not None else len(idx)
+            for lo in range(0, len(idx), step):
+                part = idx[lo : lo + step]
+                sub = torch.as_tensor(part, device=self.device, dtype=torch.long)
+                mat, scale = self._agent_appearance(sc, sty, sub)
+                xpos, xmat = self._fk(s[sub], sc)
+                plate, shader = sc.plate, None
+                if sc.passes is not None:
+                    size_b = torch.as_tensor(np.asarray(sc.prims_base.size), device=self.device, dtype=torch.float32)
+                    agent = (list(sc.prims_base.kind), size_b * scale.view(-1, 1, 1), xpos, xmat)
+                    lpos = sc.passes.light_pos(s[sub][:, :2])
+                    plate = sc.passes.plates(sc.plate, sc.cam, lpos, agent)
+                    shader = sc.passes.shader(lpos, agent)
+                # Advanced indexing makes buf[sub] a copy. With multiple groups, render to a
+                # temporary and assign back explicitly; one group can write directly into buf.
+                dst = buf if len(uniq) == 1 and len(part) == B else None
+                got = R3.composite(
+                    plate,
+                    sc.plate_t,
+                    sc.cam,
+                    sc.prims_base,
+                    xpos,
+                    xmat,
+                    sc.lights,
+                    size,
+                    size,
+                    supersample=ss,
+                    out=dst,
+                    tile=self.TILE,
+                    mat_rgb=mat,
+                    size_scale=scale,
+                    shader=shader,
+                )
+                if dst is None:
+                    buf[sub] = got
         return buf.view(*lead, size, size, 3) if lead else buf
 
     def _agent_appearance(self, sc: _Scene, sty, sub):
@@ -977,9 +989,14 @@ class OGBenchMaze(Env):
     def reference_env(cls, size: int = 224):
         """Construct an independent source environment for reference comparisons.
 
-        Keep its GL context alive while other renderers are in use.
+        A pixel scene shows the XML checker floor, which is the default ``floor.pixel_encoding=0``
+        and what swm's first reset draws. Keep its GL context alive while other renderers are in use.
         """
-        return _build_reference(cls.LOCO, cls.MAZE, size, getattr(cls, "RENDER_OB_TYPE", "pixels"))
+        ob_type = getattr(cls, "RENDER_OB_TYPE", "pixels")
+        env = _build_reference(cls.LOCO, cls.MAZE, size, ob_type)
+        if ob_type == "pixels":
+            _upload_xml_checker(env, cls.LOCO)
+        return env
 
     @classmethod
     def reference_render(cls, env, states) -> np.ndarray:
@@ -1081,19 +1098,6 @@ class _StatesScene:
     """Render the state-observation scene: checker floor, white walls and the goal disc."""
 
     RENDER_OB_TYPE = "states"
-    parity_note = (
-        "Agent-pixel parity, state-observation scene (supersample 2, against MuJoCo 3.12.0 / ogbench 1.2.1 at "
-        "offsamples=4, 64 states, RTX A5000). This scene keeps the XML's white walls, global ambient light, the "
-        "goal disc and a torso spotlight that tracks the agent. The plate is baked without that spotlight; per "
-        "row its GL fixed-function contribution (cone, exponent, specular, and wall and agent shadows inside the "
-        "square shadow-map frustum) is added to static pixels, the agent's global-light shadow is removed from "
-        "them, and agent and goal are shaded as MuJoCo's separately byte-rounded light passes. Interior pixels "
-        "are 100% bit-identical; all pixels are 97.3% exact, mean 0.075/255. No interior pixel lies in the lit "
-        "floor disc, which is shaded per pixel and is off by 1/255 on part of it (83% of disagreeing pixels are "
-        "off by 1/255); Gouraud interpolation over MuJoCo's plane grid does not close that gap on the NVIDIA "
-        "driver. The rest is agent, goal-rim and one-pixel wall-face edges under the reference's multisampling "
-        "and sphere tessellation."
-    )
 
 
 #: ``__module__`` is pinned to the package so ``stable_envs.envs.ogbench.<Cell>`` resolves.

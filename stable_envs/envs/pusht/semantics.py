@@ -9,13 +9,64 @@ import copy
 
 import numpy as np
 import torch
-from tensordict import TensorDict
+from tensordict import TensorDict, TensorDictBase
 
+from ... import tuning
+from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env
 from ...registry import REGISTRY, register
 from ...spaces import Box, Dict, Discrete
 from ...specs import CompositeSpec, Spec
 from . import legacy
+
+
+def _to_host(tensors):
+    """Copy ``{key: tensor}`` to host tensors with one transfer per dtype."""
+    if not any(value.device.type != "cpu" for value in tensors.values()):
+        return dict(tensors)
+    groups = {}
+    for key, value in tensors.items():
+        groups.setdefault(value.dtype, []).append(key)
+    host = {}
+    for keys in groups.values():
+        flat = torch.cat([tensors[key].reshape(-1) for key in keys]).cpu()
+        offset = 0
+        for key in keys:
+            size = tensors[key].numel()
+            host[key] = flat[offset : offset + size].view(tensors[key].shape)
+            offset += size
+    return {key: host[key] for key in tensors}
+
+
+def _lookup(nodes, key):
+    """``state.get(key, None)`` through ``nodes``: the children of each nested TensorDict already reached."""
+    parent = key[:-1]
+    if parent not in nodes:
+        node = _lookup(nodes, parent)
+        nodes[parent] = dict(node.items()) if isinstance(node, TensorDictBase) else None
+    children = nodes[parent]
+    return None if children is None else children.get(key[-1])
+
+
+def _to_device(fields, device):
+    """Copy host render ``fields`` to ``device`` with one transfer per dtype."""
+    groups = {}
+    for key, value in fields.items():
+        groups.setdefault(value.dtype, []).append(key)
+    out = {}
+    for keys in groups.values():
+        flat = torch.from_numpy(np.concatenate([np.ascontiguousarray(fields[key]).reshape(-1) for key in keys]))
+        flat = flat.to(device, non_blocking=True)
+        offset = 0
+        for key in keys:
+            size = fields[key].size
+            out[key] = flat[offset : offset + size].view(fields[key].shape)
+            offset += size
+    return {key: out[key] for key in fields}
+
+
+#: Smallest CPU batch that ``backend="auto"`` draws with the Numba rasterizer.
+_NUMBA_MIN_ROWS = 8
 
 
 class PushT(Env):
@@ -38,6 +89,17 @@ class PushT(Env):
     action_dtype = torch.float32
     action_low, action_high = -1.0, 1.0
     discrete = False
+    #: As in the source: every reset draws the start poses, and the goal is drawn with the block's shape
+    #: and scale.
+    undrawn_variation_leaves = frozenset(
+        {
+            "agent.start_position",
+            "block.start_position",
+            "block.angle",
+            "goal.scale",
+            "agent.angle",  # undrawn only because the default agent is round; other agent shapes show it
+        }
+    )
 
     def __init__(
         self,
@@ -52,17 +114,18 @@ class PushT(Env):
         with_target=True,
     ):
         from .projection import PushTProjection
-        from .simulation.replay_batch import PushTReplayAdapter
+        from .simulation.execution import make_pusht_adapter
 
-        if backend not in ("auto", "pygame"):
-            raise ValueError("Source-aligned PushT supports backend='pygame' only")
+        if backend not in ("auto", "source", "port", "pygame"):
+            raise ValueError("PushT backend must be 'auto', 'source' (pygame) or 'port'")
+        self._render_backend = "source" if backend == "pygame" else backend
         if supersample != 1:
             raise ValueError("The source PushT renderer has no supersample setting")
         device = Env.resolve_device(device)
         resolution = self.default_size if size is None else size
         if render_action and resolution < 96:
             raise ValueError("Source PushT action markers require size >= 96")
-        self._simulator = PushTReplayAdapter(
+        self._simulator = make_pusht_adapter(
             num_envs,
             device,
             seed,
@@ -70,9 +133,11 @@ class PushT(Env):
             config=dict(resolution=resolution, render_action=render_action, with_target=with_target),
         )
         self._projection = PushTProjection()
+        self._render_pool = None
+        self._device_renderer = None
         try:
             super().__init__(num_envs, resolution, 1, device, "pygame", 0 if seed is None else seed)
-            row = self._simulator.envs[0].get_state()
+            row = self._simulator.template.get_state()
             self._fixed_fields = {k: (v.shape, v.dtype) for k, v in row.items() if not k.startswith("history/")}
             self._render_fields = [
                 (tuple(k.split("/")), shape, torch.from_numpy(np.empty((), dtype)).dtype)
@@ -92,7 +157,7 @@ class PushT(Env):
                 return Discrete(int(node.n), start=int(node.start), init_value=copy.deepcopy(node.init_value))
             return Box(node.low, node.high, dtype=node.dtype, init_value=copy.deepcopy(node.init_value))
 
-        return convert(self._simulator.envs[0].env.variation_space)
+        return convert(self._simulator.template.env.variation_space)
 
     @property
     def state_spec(self):
@@ -131,6 +196,22 @@ class PushT(Env):
     def _step(self, actions, *, active=None):
         return self._simulator.step(actions, active=active)
 
+    def _advance_without_snapshot(self, actions, *, active=None):
+        return self._simulator.step(actions, active=active, capture_state=False)
+
+    def _step_pipeline(self) -> StepPipeline | None:
+        return step_pipeline(self._simulator)
+
+    def _render_live(self):
+        if self._rasterizes(self.size):
+            from . import raster
+
+            fields = self._simulator.render_fields()
+            if raster.HAVE_TRITON:
+                return self._draw_device(_to_device(fields, self.device), self.size)
+            return raster.render(fields, self.size, self.device, lambda rows: self._draw_pygame(rows, self.size))
+        return torch.as_tensor(self._simulator.render_live(), device=self.device)
+
     @staticmethod
     def _stack_states(values):
         from .simulation.history import stack_states
@@ -138,24 +219,8 @@ class PushT(Env):
         return stack_states(values)
 
     def _variation_rows(self, attribute):
-        from ..._core.space_nodes import nodes
-
-        rows = []
-        for lane in self._simulator.envs:
-            leaves = {
-                p.strip("/").replace("/", "."): n
-                for p, n in nodes(lane.env.variation_space)
-                if not hasattr(n, "spaces")
-            }
-            rows.append(
-                np.concatenate(
-                    [
-                        np.asarray(getattr(leaves[k], attribute)).reshape(-1)
-                        for k, _, _ in self.variation_space.flat_layout()
-                    ]
-                )
-            )
-        return torch.as_tensor(np.stack(rows), device=self.device)
+        keys = [key for key, _, _ in self.variation_space.flat_layout()]
+        return torch.as_tensor(self._simulator.variation_rows(attribute, keys), device=self.device)
 
     def get_variation(self):
         self._check_open("get_variation")
@@ -207,7 +272,7 @@ class PushT(Env):
         Appearance leaves (``immediate_variation_leaves``) also apply to the running episode;
         the others take effect at the next reset.
         """
-        from ..._core.space_nodes import nodes
+        from .simulation.replay_batch import resolve_variation
 
         self._check_open("set_variation")
         if isinstance(variation, dict):
@@ -223,38 +288,8 @@ class PushT(Env):
             for key, off, width in self.variation_space.flat_layout():
                 overrides[key] = rows[:, off : off + width].reshape(self.B, *self.variation_space._walk(key).shape)
                 flat_keys.add(key)
-        staged = []
-        for lane, replay in enumerate(self._simulator.envs):
-            space = copy.deepcopy(replay.env.variation_space)
-            leaves = {p.strip("/").replace("/", "."): n for p, n in nodes(space) if not hasattr(n, "spaces")}
-            for key, raw in overrides.items():
-                if key not in leaves:
-                    raise ValueError(f"Unknown PushT Variation: {key}")
-                node = leaves[key]
-                value = np.asarray(raw.detach().cpu() if torch.is_tensor(raw) else raw)
-                if value.shape == (self.B, *node.shape):
-                    value = value[lane]
-                if value.shape != node.shape or not np.isfinite(value).all():
-                    raise ValueError(f"Invalid PushT Variation shape/value: {key}")
-                # Keep Python scalar versus NumPy scalar/array representation;
-                # source reset arithmetic and checkpoint equality depend on it.
-                converted = copy.deepcopy(raw) if type(raw) in (int, float, bool) else value.copy()
-                if key in flat_keys:
-                    dtype = np.dtype(node.dtype)
-                    converted = value.astype(dtype)
-                    if dtype.kind in "iub" and not np.array_equal(converted, value):
-                        raise ValueError(f"Nonintegral PushT Variation: {key}")
-                    if hasattr(node, "n"):
-                        converted = int(converted)
-                if not node.contains(converted):
-                    raise ValueError(f"Invalid PushT Variation range/dtype: {key}")
-                node.set_init_value(converted, reset_value=False)
-                if key in self.immediate_variation_leaves:
-                    node.set_value(copy.deepcopy(converted))
-            staged.append(space)
-        for replay, space in zip(self._simulator.envs, staged, strict=True):
-            replay.env.variation_space = space
-            replay.env.goal_pose = np.concatenate([space["goal"]["position"].value, [space["goal"]["angle"].value]])
+        lanes = resolve_variation(self._simulator.template.env.variation_space, overrides, self.B, flat_keys)
+        self._simulator.install_variation(lanes, self.immediate_variation_leaves)
         return self._variation_rows("init_value")
 
     def to_render_state(self, state=None):
@@ -263,22 +298,38 @@ class PushT(Env):
         self._render_fields_of(state)
         return state.select(*(key for key, _, _ in self._render_fields)).clone()
 
-    def _render_fields_of(self, state):
+    def _render_fields_of(self, state, on_device=False):
         self._check_open("to_render_state")
         state = self.get_state() if state is None else state
         if not isinstance(state, TensorDict) or len(state.batch_size) != 1 or not state.batch_size[0]:
             raise ValueError("PushT render requires a nonempty State batch")
-        flat = dict(state.items(include_nested=True, leaves_only=True))
-        fields = {}
+        selected, error, nodes = {}, None, {(): dict(state.items())}
+        batch = tuple(state.batch_size)
         for key, shape, dtype in self._render_fields:
-            value = flat.get(key)
-            if value is None:
-                raise KeyError(key)
-            if value.shape != (*state.batch_size, *shape) or value.dtype != dtype:
-                raise ValueError(f"Invalid PushT render field: {key}")
-            if value.is_floating_point() and not torch.isfinite(value).all():
+            value = _lookup(nodes, key)
+            if not isinstance(value, torch.Tensor):
+                error = KeyError(key)
+                break
+            if value.shape != (*batch, *shape) or value.dtype != dtype:
+                error = ValueError(f"Invalid PushT render field: {key}")
+                break
+            selected[key] = value
+        if error is None and on_device and all(value.is_cuda for value in selected.values()):
+            floats = [value.reshape(-1) for value in selected.values() if value.is_floating_point()]
+            if floats and not bool(torch.isfinite(torch.cat(floats)).all()):
+                key = next(k for k, v in selected.items() if v.is_floating_point() and not bool(v.isfinite().all()))
                 raise ValueError(f"Nonfinite PushT render field: {key}")
-            fields["/".join(key)] = value
+            return {"/".join(key): value for key, value in selected.items()}
+        host = _to_host(selected)
+        fields = {}
+        # Fields are checked in order, so an earlier nonfinite field is reported before a later layout error.
+        for key, value in host.items():
+            array = value.numpy()
+            if array.dtype.kind == "f" and not np.isfinite(array).all():
+                raise ValueError(f"Nonfinite PushT render field: {key}")
+            fields["/".join(key)] = array
+        if error is not None:
+            raise error
         return fields
 
     def render(self, state=None, *, size=None, out=None):
@@ -286,11 +337,22 @@ class PushT(Env):
         size = self.size if size is None else size
         if type(size) is not int or size < 1:
             raise ValueError("PushT render size must be a positive integer")
-        if self._simulator.envs[0].config["render_action"] and size < 96:
+        if self._simulator.template.config["render_action"] and size < 96:
             raise ValueError("Source PushT action markers require size >= 96")
-        fields = {k: v.cpu().numpy() for k, v in self._render_fields_of(state).items()}
-        rows = [{k: v[i] for k, v in fields.items()} for i in range(len(fields["recipe/config"]))]
-        frames = torch.as_tensor(self._projection.render(rows, size), device=self.device)
+        fields = self._render_fields_of(state, on_device=self._rasterizes(size))
+        if self._rasterizes(size):
+            from . import raster
+
+            if isinstance(next(iter(fields.values())), torch.Tensor):
+                frames = self._draw_device(fields, size)
+            else:
+                frames = raster.render(fields, size, self.device, lambda rows: self._draw_pygame(rows, size))
+        elif self._cpu_port(size, len(fields["recipe/config"])):
+            from . import raster
+
+            frames = raster.render_cpu(fields, size, lambda rows: self._draw_pygame(rows, size))
+        else:
+            frames = torch.as_tensor(self._draw_pygame(fields, size), device=self.device)
         if out is not None:
             if (
                 out.shape != frames.shape
@@ -298,12 +360,74 @@ class PushT(Env):
                 or out.device != frames.device
                 or not out.is_contiguous()
             ):
-                raise ValueError("Invalid PushT render output buffer")
+                raise ValueError(
+                    "PushT render output buffer must be contiguous and match the frames in shape, dtype and device"
+                )
             out.copy_(frames)
             return out
         return frames
 
+    def _rasterizes(self, size):
+        """Whether CUDA output uses the batched rasterizer, which draws the same bytes as pygame."""
+        if self.device.type != "cuda":
+            return False
+        from . import raster
+
+        return raster.HAVE_TRITON and raster.resize_supported(size)
+
+    def _cpu_port(self, size, count=_NUMBA_MIN_ROWS):
+        """Whether CPU output uses the Numba rasterizer, which draws the same bytes as pygame.
+
+        With ``backend="auto"``, batches of fewer than ``_NUMBA_MIN_ROWS`` rows draw with pygame, which is
+        faster for them.
+        """
+        if self.device.type != "cpu" or self._render_backend == "source":
+            return False
+        if self._render_backend == "auto" and count < _NUMBA_MIN_ROWS:
+            return False
+        from ...render import cpu_raster
+        from . import raster
+
+        ok = cpu_raster.available() and raster.resize_supported(size)
+        if self._render_backend == "port" and not ok:
+            raise ValueError(f"PushT backend='port' on CPU needs numba and a supported size, got size={size}")
+        return ok
+
+    def _draw_device(self, fields, size):
+        """Draw device render fields with primitives built on the GPU."""
+        from . import raster_device
+
+        if self._device_renderer is None:
+            self._device_renderer = raster_device.DeviceRenderer(self.device)
+        return self._device_renderer(fields, size, lambda rows: self._draw_pygame(rows, size))
+
+    def _draw_pygame(self, fields, size):
+        """Draw host render fields with the source pygame code, in render workers for large batches."""
+        count = len(fields["recipe/config"])
+        pool = self._pool(count)
+        if pool is not None:
+            return pool.render(fields, size)
+        return self._projection.render([{k: v[i] for k, v in fields.items()} for i in range(count)], size)
+
+    def _pool(self, count):
+        """Return the render worker pool for ``count`` rows, or None to draw in this process."""
+        from ..._execution.policy import cpu_affinity, process_count
+
+        if self._render_pool is None:
+            cpus = cpu_affinity()
+            processes = process_count(count, cpus, path="pusht-render")
+            if processes < 2:
+                return None
+            from .render_pool import PushTRenderPool
+
+            self._render_pool = PushTRenderPool(processes, cpus)
+        elif count < int(tuning.get("worker_min_lanes", path="pusht-render", size=self.size, batch=count) or 0):
+            return None
+        return self._render_pool
+
     def _close(self):
+        if self._render_pool is not None:
+            self._render_pool.close()
         self._projection.close()
         self._simulator.close()
 

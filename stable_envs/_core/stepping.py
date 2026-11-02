@@ -39,9 +39,13 @@ def _done(result):
     return done
 
 
-def _task_outputs(result, active, *, all_active):
+def _task_outputs(result, active, *, all_active, owned=False):
     """Own the task outputs and zero them where a lane had already finished."""
-    out = result.exclude("state").clone()
+    out = result.exclude("state", "frame")
+    # Families may guarantee fresh output storage. Padding still needs a copy:
+    # once every lane finishes, result can be reused for later sequence entries.
+    if not owned or not all_active:
+        out = out.clone()
     if not all_active:
         inactive = (~active).nonzero(as_tuple=True)[0]
         for value in out.values(True, True):
@@ -94,20 +98,26 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
         acts = acts.detach().cpu().numpy()
     history, saved_states, saved_frames, validity = [], {}, {}, []
     advance = getattr(env, "_advance_without_snapshot", env._step)
+    outputs_owned = getattr(env, "_step_outputs_owned", False)
     # Draws the live lanes without rebuilding them from the State snapshot.
     render_live = getattr(env, "_render_live", None)
     active = torch.ones(env.num_envs, dtype=torch.bool, device=env.device)
     all_active = True
     result, live_state, live_frame = None, None, None
     pipeline = getattr(env, "_step_pipeline", lambda: None)()
+    # Frames drawn from the live lanes, here or in pipeline workers, need no State snapshot.
+    pipeline_frames = pipeline is not None and getattr(pipeline, "live_frames", False)
+    draws_live = render_live is not None and (pipeline is None or pipeline_frames)
     pending = False
 
     def submit(t, mask, all_active):
+        frame = t in frame_times
         pipeline.submit_step(
             acts[:, t],
             # The initial mask is already known to be all true; avoid a GPU readback.
             active=None if all_active else mask,
-            capture_state=t in state_times or t in frame_times or t == length - 1,
+            capture_state=t in state_times or t == length - 1 or (frame and not draws_live),
+            **({"capture_frame": True} if frame and pipeline_frames else {}),
         )
 
     try:
@@ -121,7 +131,7 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
                 if pending:
                     result = pipeline.receive_step()
                     pending = False
-                    live_state, live_frame = result.get("state", None), None
+                    live_state, live_frame = result.get("state", None), result.get("frame", None)
             elif all_active:
                 result = advance(acts[:, t])
                 live_state, live_frame = result.get("state", None), None
@@ -129,7 +139,7 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
                 # Skip finished lanes through the family hook, without stepping and restoring them.
                 result = advance(acts[:, t], active=active)
                 live_state, live_frame = result.get("state", None), None
-            needs_state = t in state_times or t in frame_times or t == length - 1
+            needs_state = t in state_times or t == length - 1 or (t in frame_times and not draws_live)
             if needs_state and live_state is None:
                 live_state = env.get_state()
             next_active = active & ~_done(result) if t + 1 < length else active
@@ -139,14 +149,19 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
                 # Received outputs own their storage, so workers can reuse buffers while the parent renders.
                 submit(t + 1, next_active, next_all_active)
                 pending = True
-            history.append(_task_outputs(result, active, all_active=all_active))
+            history.append(_task_outputs(result, active, all_active=all_active, owned=outputs_owned))
             if t in state_times:
                 saved_states[t] = live_state
             if t in frame_times:
-                if live_frame is None:
-                    live_frame = (
-                        render_live() if render_live is not None and pipeline is None else env.render(live_state)
-                    )
+                if live_frame is None and pipeline_frames:
+                    # Workers copied the leaves on receipt; the next step is already running.
+                    live_frame = pipeline.take_frame() if hasattr(pipeline, "take_frame") else None
+                if live_frame is None and draws_live and pipeline is None:
+                    live_frame = render_live()
+                elif live_frame is None:
+                    # Workers drew no frame after the last transition when every lane finished before it.
+                    live_state = env.get_state() if live_state is None else live_state
+                    live_frame = env.render(live_state)
                 saved_frames[t] = live_frame
             active = next_active
             all_active = next_all_active

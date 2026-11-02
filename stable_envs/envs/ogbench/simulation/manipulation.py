@@ -8,6 +8,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._execution.process import PER_LANE
 from ...._execution.protocol import SimulatorAdapter
 from ...._execution.state_columns import owned_columns
 from .compatibility import MODEL_VALUES, CompatibleCube, CompatibleScene, LanePool, nodes, variation_tree
@@ -88,6 +89,9 @@ class OGBManipulationAdapter(SimulatorAdapter):
     """
 
     execution_mode = "DELEGATED_CPU"
+    process_methods = {"configure": PER_LANE}
+    process_attributes = ("family", "fields", "nq")
+    action_dim = 5
 
     def __init__(self, family, num_envs=1, device="cpu", seed=0, reward_task_id=None):
         if family not in ("Cube", "Scene") or type(num_envs) is not int or num_envs < 1:
@@ -186,6 +190,26 @@ class OGBManipulationAdapter(SimulatorAdapter):
     def get_state(self):
         self._check_open()
         return owned_columns((self._values(env) for env in self.envs), self.num_envs, self.device)
+
+    def render_columns(self):
+        """The State leaves a RenderState projects, as ``get_state`` holds them, as stacked NumPy columns."""
+        self._check_open()
+        rows = [self._render_values(env) for env in self.envs]
+        return {key: np.stack([row[key] for row in rows]) for key in rows[0]}
+
+    def _render_values(self, env):
+        # The same values mj_getState copies for these flags.
+        values = {
+            ("physics", name): getattr(env.data, name).ravel().copy() for name in ("qpos", "mocap_pos", "mocap_quat")
+        }
+        for key in MODEL_VALUES:
+            values["model", "compiled", key] = env._model_values[key].copy()
+        names = ("cube.color", "lock_color") if self.family == "Scene" else ("cube.color",)
+        for name in names:
+            values["variation", "current", name] = np.asarray(env.variation_space._walk(name).value, np.float64).copy()
+        if self.family == "Scene":
+            values["scene", "cur_button_states"] = np.asarray(env._cur_button_states, np.int64).copy()
+        return values
 
     def validate(self, state, *, _batch_size=None):
         batch = self.num_envs if _batch_size is None else _batch_size
@@ -404,6 +428,20 @@ class OGBManipulationAdapter(SimulatorAdapter):
             env.validate_options({"variation": [], "variation_values": value})
         for env, value in zip(self.envs, values):
             env.configure_variation(value)
+
+    def check_step(self, actions, active):
+        actions = actions.detach().cpu().numpy() if torch.is_tensor(actions) else np.asarray(actions)
+        if (
+            actions.shape != (self.num_envs, 5)
+            or actions.dtype not in (np.float32, np.float64)
+            or not np.isfinite(actions).all()
+        ):
+            raise ValueError("Actions must be finite float32/float64 [num_envs, 5]")
+        if active is not None:
+            active = active.detach().cpu().numpy() if torch.is_tensor(active) else np.asarray(active)
+            if active.shape != (self.num_envs,) or active.dtype != np.bool_:
+                raise ValueError("active must be a bool vector with shape [num_envs]")
+        return actions, active
 
     def step(self, actions, *, active=None, capture_state=True):
         active = None if active is None else np.asarray(active.detach().cpu(), dtype=bool)

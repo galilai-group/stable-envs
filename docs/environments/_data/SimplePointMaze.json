@@ -1,0 +1,158 @@
+{
+ "class_name": "SimplePointMaze",
+ "module": "stable_envs.envs.navigation.envs",
+ "family": "navigation",
+ "domain": "navigation",
+ "reference_id": null,
+ "requires_cuda": false,
+ "has_dynamics": true,
+ "default_size": 500,
+ "frame_shape": [500, 500, 3],
+ "physics": "native torch on the env device",
+ "renderers": {
+  "cpu": "raster2d (torch)",
+  "cuda": "raster2d (torch) with the Triton dot compositor"
+ },
+ "action": {
+  "shape": [2],
+  "dtype": "float32",
+  "low": -0.2,
+  "high": 0.2
+ },
+ "state": [
+  {
+   "key": "agent",
+   "leaves": 1,
+   "numel": 2,
+   "dtypes": ["float64"]
+  },
+  {
+   "key": "goal",
+   "leaves": 1,
+   "numel": 2,
+   "dtypes": ["float32"]
+  },
+  {
+   "key": "task",
+   "leaves": 2,
+   "numel": 3,
+   "dtypes": ["bool", "float32"]
+  }
+ ],
+ "variation": [
+  {
+   "path": "agent.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": [255, 0, 0]
+  },
+  {
+   "path": "agent.radius",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.05,
+   "high": 0.5,
+   "default": 0.1
+  },
+  {
+   "path": "agent.speed",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.05,
+   "high": 8,
+   "default": 1
+  },
+  {
+   "path": "background.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 255
+  },
+  {
+   "path": "goal.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": [0, 255, 0]
+  },
+  {
+   "path": "goal.radius",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.05,
+   "high": 0.5,
+   "default": 0.2
+  },
+  {
+   "path": "walls.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 0
+  },
+  {
+   "path": "walls.number",
+   "type": "Discrete",
+   "reset": false,
+   "n": 3,
+   "start": 4,
+   "default": 5
+  },
+  {
+   "path": "walls.positions",
+   "type": "Box",
+   "reset": false,
+   "shape": [6, 2],
+   "low": 0,
+   "high": 5,
+   "default": [1.03526, 3.45547, 3.00235, 3.4423, 1.53452, 2.91654, 2.14218, 2.78309, 1.26033, 3.45332, 1.5043, 2.3973]
+  },
+  {
+   "path": "walls.shape",
+   "type": "Box",
+   "reset": false,
+   "shape": [6, 2],
+   "low": 0.5,
+   "high": 1.5,
+   "default": [1.28939, 0.840687, 1.2444, 1.04282, 0.659793, 1.36393, 1.11248, 1.09949, 0.963912, 0.616462, 0.714129, 0.655604]
+  }
+ ],
+ "devices": {
+  "cpu": "ok",
+  "cuda": "ok"
+ },
+ "media": {
+  "device": "cuda",
+  "render_size": 500,
+  "rollout": {
+   "file": "rollout.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 61,
+   "fps": 15,
+   "bytes": 5203
+  },
+  "variation": {
+   "file": "variation.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 46,
+   "fps": 15,
+   "bytes": 7759
+  },
+  "variation_leaves": "all"
+ }
+}

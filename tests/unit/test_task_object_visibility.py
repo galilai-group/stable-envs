@@ -39,7 +39,6 @@ class FakeEnv:
     """
 
     reference_id = "synthetic/disc"
-    fidelity_tier = "parity"
 
     def __init__(self, n: int = 8, declared: int = 1, official_draws: bool = True, jitter: int = 1):
         self.B, self.size, self.n = n, SIZE, n

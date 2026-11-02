@@ -7,15 +7,16 @@ import torch
 from tensordict import TensorDict
 
 from ..._core.style import StyleTensor
+from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env, _split_appearance
 from ...registry import REGISTRY, register
 from ...specs import CompositeSpec, Spec
 from . import legacy as frozen
-from .simulation.adapter import RocketAdapter
+from .simulation.execution import make_rocket_adapter
 
 
 class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
-    """Rocket CPU dynamics with replay-backed State and CPU/CUDA rendering; VISUAL TIER.
+    """Rocket CPU dynamics with replay-backed State and CPU/CUDA rendering.
 
     PyFlyt 0.29.0/PyBullet 3.2.7 run physics on CPU. Explicit body and cached camera
     poses drive TinyRenderer on CPU or the nvdiffrast path on CUDA.
@@ -40,7 +41,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         self, num_envs=1, size=None, supersample=None, device="cpu", backend="auto", seed=0, *, simulator_config=None
     ):
         device = Env.resolve_device(device)
-        self._simulator = RocketAdapter(num_envs, device, seed, simulator_config)
+        self._simulator = make_rocket_adapter(num_envs, device, seed, simulator_config)
         try:
             Env.__init__(
                 self,
@@ -56,7 +57,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
             raise
 
     def make_variation_space(self):
-        return copy.deepcopy(self._simulator.envs[0].env.variation_space)
+        return copy.deepcopy(self._simulator.template.env.variation_space)
 
     def _layout(self):
         return tuple((k, int(np.prod(shape)), None) for k, (shape, _) in self._simulator.fields.items())
@@ -101,17 +102,18 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         self._check_open("step")
         return self._simulator.step(actions, active=active)
 
+    def _advance_without_snapshot(self, actions, *, active=None):
+        self._check_open("step")
+        return self._simulator.step(actions, active=active, capture_state=False)
+
+    def _step_pipeline(self) -> StepPipeline | None:
+        return step_pipeline(self._simulator)
+
     def _variation_rows(self, attribute):
-        rows = [
-            np.concatenate(
-                [
-                    np.asarray(getattr(env.env.variation_space._walk(key), attribute)).reshape(-1)
-                    for key, _, _ in self.variation_space.flat_layout()
-                ]
-            )
-            for env in self._simulator.envs
-        ]
-        return torch.as_tensor(np.stack(rows), dtype=torch.float32, device=self.device)
+        keys = [key for key, _, _ in self.variation_space.flat_layout()]
+        return torch.as_tensor(
+            self._simulator.variation_rows(attribute, keys), dtype=torch.float32, device=self.device
+        )
 
     def get_variation(self):
         self._check_open("get_variation")
@@ -193,11 +195,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
                 values[i][key] = converted.copy()
         return values
 
-    def to_render_state(self, state=None, *, size=None, supersample=None):
-        self._check_open("to_render_state")
-        state = self.get_state() if state is None else state
-        self._simulator.validate(state)
-        rgba = state["render", "rgba"]
+    def _style_of(self, rgba):
         style = torch.zeros((self.B, 16), dtype=torch.float32, device=rgba.device)
         # Renderer style is alphabetical, not source/corpus order.
         layout = frozen.style_layout()
@@ -207,6 +205,13 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         style[:, layout["flame.ignited"][0]] = torch.isclose(
             rgba[:, 5], torch.tensor(frozen.IGNITION_RGBA, device=rgba.device, dtype=rgba.dtype)
         ).all(-1)
+        return style
+
+    def to_render_state(self, state=None, *, size=None, supersample=None):
+        self._check_open("to_render_state")
+        state = self.get_state() if state is None else state
+        self._simulator.validate(state)
+        style = self._style_of(state["render", "rgba"])
         result = TensorDict(
             {
                 ("renderer", "pose"): state["current", "wrapper", "state"][:, :13].to(torch.float32).clone(),
@@ -263,7 +268,10 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         return out
 
     def resolve_style(self, style=None, variation=None, batch=None):
-        """Renderer appearance: an explicit style, else one set for rendering, else the State's."""
+        """Renderer appearance: an explicit style, else one set for rendering, else the State's.
+
+        Supplied pose rows carry no ignition, so the State's appearance applies to them with the flame off.
+        """
         overrides, style = _split_appearance(variation, style)
         if isinstance(style, StyleTensor):
             rows = style.values
@@ -277,7 +285,9 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         elif self._render_style is not None:
             rows = self._render_style
         else:
-            rows = self.to_render_state()["renderer", "style"]
+            # The live colours alone; exporting and validating the whole State is not needed for them.
+            rows = self._style_of(self._simulator.rgba())
+            rows[:, frozen.style_layout()["flame.ignited"][0]] = 0
         if overrides:
             rows = rows.clone()
             layout = frozen.style_layout()

@@ -12,9 +12,12 @@ and keeps classes sharing a source ID from sharing incompatible configuration.
 from __future__ import annotations
 
 import hashlib
+import inspect
 
 import numpy as np
 import torch
+
+from ._sampling import render_any
 
 _REFERENCE_ENVS: dict = {}
 
@@ -178,19 +181,44 @@ def reference_accepts_style(cls) -> bool:
         return False
 
 
-def check_visual_fidelity(env, n: int = 64) -> dict:
-    """Measure pixel error and SSIM against the source at default appearance."""
+def frame_mse(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """Return the MSE of each frame over its pixels and channels, on the 0-255 scale."""
+    if a.shape != b.shape:
+        raise AssertionError(f"shape {a.shape} vs {b.shape}")
+    d = a.astype(np.float64) - b.astype(np.float64)
+    return (d * d).reshape(len(d), -1).mean(1)
+
+
+def mse_summary(per_frame: np.ndarray) -> dict:
+    """Return the mean, the 95th percentile and the worst of per-frame MSE values."""
+    v = np.asarray(per_frame, np.float64)
+    return {"mse_mean": float(v.mean()), "mse_p95": float(np.percentile(v, 95)), "mse_max": float(v.max())}
+
+
+def check_source_mse(env, n: int = 64, seed: int = 0) -> dict:
+    """Measure per-frame MSE against the source on ``n`` render rows drawn from ``default_rng(seed)``.
+
+    Rows the reference cannot reach (``reference_render(..., return_flags=True)``) are left out and counted.
+    """
     cls = type(env)
     ref = reference_env(cls, env.size)
-    states = sample_render_rows(env, int(n))
-    official = cls.reference_render(ref, states)
+    states = sample_render_rows(env, int(n), rng=np.random.default_rng(int(seed)))
     ours = env._render(states).cpu().numpy()
-    if ours.shape != official.shape:
-        raise AssertionError(f"shape {ours.shape} vs official {official.shape}")
-    out = pixel_agreement(ours, official)
-    out["ssim"] = ssim(ours, official)
-    out["n_states"] = int(n)
-    return out
+    if "return_flags" in inspect.signature(cls.reference_render).parameters:
+        official, flags = cls.reference_render(ref, states, return_flags=True)
+        keep = ~np.asarray(flags, bool)
+    else:
+        official = cls.reference_render(ref, states)
+        keep = np.ones(len(official), bool)
+    per_frame = frame_mse(ours[keep], official[keep])
+    return {
+        **mse_summary(per_frame),
+        "per_frame": per_frame.tolist(),
+        "excluded_unreachable": int((~keep).sum()),
+        "n": int(n),
+        "seed": int(seed),
+        "size": int(env.size),
+    }
 
 
 def check_render_state_roundtrip(env, n: int = 64) -> dict:
@@ -919,9 +947,9 @@ def uniform_style(env, n: int, groups: int = 2, seed: int = 0):
 
 
 def check_batch_size_invariance(env, states, style=None, sizes=(1, 7, 64), probes: int = 4) -> dict:
-    """Compare selected rows in the full batch and smaller contiguous batches."""
+    """Compare selected rows (or full States) in the full batch and smaller contiguous batches."""
     n = len(states)
-    full = env._render(states, style=style).detach().cpu().numpy()
+    full = render_any(env, states, style=style).detach().cpu().numpy()
     idx = np.linspace(0, n - 1, min(int(probes), n)).astype(int)
     worst, where = 0, ""
     for b in sizes:
@@ -930,7 +958,7 @@ def check_batch_size_invariance(env, states, style=None, sizes=(1, 7, 64), probe
             lo = max(0, min(int(i) - b // 2, n - b))
             sub = states[lo : lo + b]
             k = None if style is None else style[lo : lo + b]
-            got = env._render(sub, style=k).detach().cpu().numpy()[int(i) - lo]
+            got = render_any(env, sub, style=k).detach().cpu().numpy()[int(i) - lo]
             d = int(np.abs(got.astype(np.int16) - full[int(i)].astype(np.int16)).max())
             if d > worst:
                 worst, where = d, f"row {int(i)} in a batch of {b}"
@@ -1137,10 +1165,10 @@ def check_resolution_consistency(env, states, style=None, factor: int = 2) -> di
     separately. Skip when the renderer does not produce the requested size ratio.
     """
     S = int(env.size)
-    a = env._render(states, size=S, style=style).detach().cpu().numpy()
-    big = env._render(states, size=S * int(factor), style=style).detach().cpu().numpy()
+    a = render_any(env, states, size=S, style=style).detach().cpu().numpy()
+    big = render_any(env, states, size=S * int(factor), style=style).detach().cpu().numpy()
     # Leave size-dependent renderer caches at the original resolution.
-    env._render(states[:1], size=S, style=None if style is None else style[:1])
+    render_any(env, states[:1], size=S, style=None if style is None else style[:1])
     if big.shape[-3] != a.shape[-3] * factor or big.shape[-2] != a.shape[-2] * factor:
         return {"skipped": f"size={S * factor} is not a {factor}x frame ({big.shape} vs {a.shape})"}
     d = np.abs(_box_downsample(big, factor).astype(np.int16) - a.astype(np.int16))

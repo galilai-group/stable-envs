@@ -1,0 +1,182 @@
+{
+ "class_name": "PiecewiseZones",
+ "module": "stable_envs.envs.navigation.envs",
+ "family": "navigation",
+ "domain": "navigation",
+ "reference_id": null,
+ "requires_cuda": false,
+ "has_dynamics": true,
+ "default_size": 224,
+ "frame_shape": [224, 224, 3],
+ "physics": null,
+ "renderers": {
+  "cpu": "raster2d (torch)",
+  "cuda": "raster2d (torch) with the Triton dot compositor"
+ },
+ "action": {
+  "shape": [2],
+  "dtype": "float32",
+  "low": -1,
+  "high": 1
+ },
+ "state": [
+  {
+   "key": "agent",
+   "leaves": 1,
+   "numel": 2,
+   "dtypes": ["float32"]
+  }
+ ],
+ "variation": [
+  {
+   "path": "agent.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": [255, 0, 0]
+  },
+  {
+   "path": "agent.radius",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 7,
+   "high": 14,
+   "default": 7
+  },
+  {
+   "path": "agent.speed",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.1,
+   "high": 50,
+   "default": 5
+  },
+  {
+   "path": "background.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 255
+  },
+  {
+   "path": "border.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 0
+  },
+  {
+   "path": "rendering.render_bias_field",
+   "type": "Discrete",
+   "reset": false,
+   "n": 2,
+   "start": 0,
+   "default": 0
+  },
+  {
+   "path": "zones.bias_0",
+   "type": "Box",
+   "reset": false,
+   "shape": [2],
+   "low": -10,
+   "high": 10,
+   "default": [2, 0]
+  },
+  {
+   "path": "zones.bias_1",
+   "type": "Box",
+   "reset": false,
+   "shape": [2],
+   "low": -10,
+   "high": 10,
+   "default": [0, 2]
+  },
+  {
+   "path": "zones.bias_2",
+   "type": "Box",
+   "reset": false,
+   "shape": [2],
+   "low": -10,
+   "high": 10,
+   "default": [-2, 0]
+  },
+  {
+   "path": "zones.bias_3",
+   "type": "Box",
+   "reset": false,
+   "shape": [2],
+   "low": -10,
+   "high": 10,
+   "default": [0, -2]
+  },
+  {
+   "path": "zones.color_0",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": [255, 191, 191]
+  },
+  {
+   "path": "zones.color_1",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": [223, 255, 191]
+  },
+  {
+   "path": "zones.color_2",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": [191, 255, 255]
+  },
+  {
+   "path": "zones.color_3",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": [223, 191, 255]
+  }
+ ],
+ "devices": {
+  "cpu": "ok",
+  "cuda": "ok"
+ },
+ "media": {
+  "device": "cuda",
+  "render_size": 224,
+  "rollout": {
+   "file": "rollout.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 61,
+   "fps": 15,
+   "bytes": 6469
+  },
+  "variation": {
+   "file": "variation.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 46,
+   "fps": 15,
+   "bytes": 12934
+  },
+  "variation_leaves": "all"
+ }
+}

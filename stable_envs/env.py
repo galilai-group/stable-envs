@@ -260,20 +260,12 @@ def check_states(
     return raw.to(device=env.device, dtype=torch.float32) if move else raw.to(dtype=torch.float32)
 
 
-#: Fidelity declarations select exact-pixel or measured visual-agreement checks.
-#: A declared tier alone is not evidence that those checks passed.
-FIDELITY_TIERS = ("parity", "visual")
+#: A ``visual_fidelity`` record states how the agreement with the source was measured.
+REQUIRED_VISUAL_FIDELITY = ("measured_at",)
 
-#: Visual declarations report both measured metrics and the acceptance limits to assert.
-REQUIRED_VISUAL_FIDELITY = (
-    "mean_abs",
-    "within8_frac",
-    "ssim",
-    "mean_abs_max",
-    "within8_min",
-    "ssim_min",
-    "measured_at",
-)
+#: Per-frame MSE against the source over pixels and channels on the 0-255 scale: the mean, the 95th
+#: percentile and the worst frame of one seeded draw.
+VISUAL_FIDELITY_MSE = ("mse_mean", "mse_p95", "mse_max")
 
 #: Source dependency versions bind reference evidence; mismatches block its acceptance.
 #: Candidate implementation versions belong in measured_with instead.
@@ -284,7 +276,7 @@ MEASURED_WITH_KEY = "measured_with"
 
 
 def reference_versions_of(cls) -> dict[str, str]:
-    """Return source-version declarations from either fidelity tier, or an empty dict."""
+    """Return the declared source package versions, or an empty dict."""
     out = dict(getattr(cls, REFERENCE_VERSIONS_KEY, {}) or {})
     out.update((getattr(cls, "visual_fidelity", {}) or {}).get(REFERENCE_VERSIONS_KEY) or {})
     return out
@@ -351,19 +343,11 @@ class Env:
     dynamics_variation_leaves: frozenset[str] = frozenset()
     #: Variation leaves the source declares but never draws; appearance checks skip them too.
     undrawn_variation_leaves: frozenset[str] = frozenset()
-    #: Minimum exact interior-pixel fraction; lowering it requires a mechanism in parity_note.
-    parity_interior_min: float | None = 1.0
-    #: Override the shared all-pixel exactness threshold, or use its default with None.
-    parity_all_exact_min: float | None = None
-    #: Explain any relaxed exact-pixel threshold and the remaining mismatch.
-    parity_note: str = ""
-    #: Select the parity or visual acceptance checks.
-    fidelity_tier: str = "parity"
-    #: Measured agreement and acceptance thresholds; required only for the visual tier.
+    #: Measured agreement with the source renderer and its measurement setup; empty when not measured.
     visual_fidelity: dict[str, Any] = {}
-    #: Explain residual visual differences and limits on using the frames.
+    #: Where and why frames differ from the source renderer when ``visual_fidelity`` is declared.
     visual_note: str = ""
-    #: Source package versions for parity evidence; visual evidence stores these in visual_fidelity.
+    #: Source package versions the comparison with the source used; ``visual_fidelity`` can also carry them.
     reference_versions: dict[str, str] = {}
 
     #: Entries are (key_path, width, render_offset[, public_dtype]); None offsets denote hidden fields.
@@ -875,7 +859,10 @@ class Env:
         self._variation_is_default = False
 
     def describe(self) -> dict[str, Any]:
-        """Return environment specs, renderer fidelity declarations, and their stated limitations."""
+        """Return environment specs and the declared comparison with the source.
+
+        ``state_fields`` maps each State leaf, as a ``/``-joined key path, to its per-lane shape and dtype.
+        """
         d = {
             "class_name": type(self).__name__,
             "id": self.id,
@@ -883,24 +870,22 @@ class Env:
             "domain": self.domain,
             "render_state_dim": int(self.render_state_dim),
             "render_state_names": list(self.render_state_names),
+            "state_fields": {
+                "/".join(key): {"shape": list(spec.shape), "dtype": str(spec.dtype).removeprefix("torch.")}
+                for key, spec in self.state_spec.items(nested=True)
+            },
             "size": self.size,
             "variation_dim": int(self.variation_dim),
             "variation_names": list(self.variation_names),
             "reference_id": self.reference_id,
-            "fidelity_tier": self.fidelity_tier,
             "variations": self.variation_space.names(),
         }
-        if self.fidelity_tier == "visual":
+        if self.visual_fidelity:
             d["visual_fidelity"] = dict(self.visual_fidelity)
             d["visual_note"] = self.visual_note
-            d["not_for"] = (
-                "evaluating a policy on official pixels after training on these — the "
-                "frames are a different render of the same scene, not the same frame"
-            )
         rv = reference_versions_of(type(self))
         if rv:
             d[REFERENCE_VERSIONS_KEY] = rv
-        d["parity_interior_min"] = self.parity_interior_min
         return d
 
     @property

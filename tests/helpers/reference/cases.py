@@ -84,7 +84,7 @@ ORIGINAL_GATES: dict[str, str] = {
             "DMCCheetahRun",
             "DMCHopperHop",
             "DMCHumanoidWalk",
-            "DMCReacherHard",
+            "DMCReacher",
         ),
         _DMC_SWM_CELL,
     ),
@@ -98,7 +98,6 @@ ORIGINAL_GATES: dict[str, str] = {
             "DMCFingerSpin",
             "DMCFingerTurnEasy",
             "DMCPointMassEasy",
-            "DMCReacherEasy",
             "DMCSwimmerSwimmer6",
         ),
         _DMC_SUITE,
@@ -139,7 +138,7 @@ SWM_GATES: dict[str, str] = {
     ),
     **dict.fromkeys(("DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk"), _DMC_SWM),
     "DMCHumanoidWalk": _DMC_SWM,
-    "DMCReacherHard": "tests/integration/test_reacher_semantics.py::test_reacher_full_state_semantics",
+    "DMCReacher": "tests/integration/test_reacher_semantics.py::test_reacher_full_state_semantics",
     **{
         f"Fetch{task}": "tests/integration/test_fetch_variation.py::test_reset_leaves_match_swm"
         for task in ("Reach", "Push", "Slide", "PickAndPlace")

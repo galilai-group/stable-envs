@@ -86,15 +86,12 @@ def test_the_rocket_colour_exactness_declaration_survives_verbatim():
     assert d["status"].startswith("not_applicable")
 
 
-def test_the_rocket_tier_and_reference_versions_survive():
+def test_the_rocket_mse_and_reference_versions_survive():
     cls = RL.PyFlytRocketLanding
-    assert cls.fidelity_tier == "visual" and cls.parity_interior_min is None
     v = cls.visual_fidelity
     assert v["reference_versions"] == {"PyFlyt": "0.29.0", "pybullet": "3.2.7"}
-    assert (v["mean_abs_max"], v["within8_min"], v["ssim_min"]) == (10.0, 0.91, 0.80)
-    assert v["mean_abs"] == 7.71 and v["ssim"] == 0.854
+    assert (v["mse_mean"], v["mse_p95"], v["mse_max"]) == (4.1989, 8.2096, 9.3401)
     assert cls.default_size == 480 and cls.default_supersample == 1
-    assert "NOT a substitute" in cls.visual_note
 
 
 def test_the_rocket_flame_and_ignition_semantics_survive():

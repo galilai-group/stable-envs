@@ -2,8 +2,6 @@ import time
 
 import numpy as np
 
-from .shared_memory import owned_group
-
 
 def lane_slices(num_envs, processes):
     """Split ``num_envs`` lanes into ``processes`` contiguous, nearly equal slices."""
@@ -113,34 +111,3 @@ class ProcessRequests:
                         process.join(timeout=5)
             finally:
                 self._abort()
-
-
-class SharedOutputProcess(ProcessRequests):
-    """Process requests whose workers write State and task outputs to ``self._views``."""
-
-    _step_family = "Simulation"
-
-    def _check_open(self):
-        if self._closed:
-            raise RuntimeError(f"{type(self).__name__} is closed")
-
-    def _owned(self, group):
-        return owned_group(self._views, group, self.num_envs, self.device)
-
-    def get_state(self):
-        self._request("get_state")
-        return self._owned("state")
-
-    def receive_step(self):
-        self._check_open()
-        if self._pending not in ("step", "advance"):
-            raise RuntimeError(f"No {self._step_family} step in flight")
-        capture = self._pending == "step"
-        self._receive()
-        result = self._owned("task")
-        if capture:
-            result["state"] = self._owned("state")
-        return result
-
-    def abort_step(self):
-        self._abort()

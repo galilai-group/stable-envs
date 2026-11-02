@@ -1,9 +1,4 @@
-"""DM Control classes combining renderers with optional CPU simulation adapters.
-
-CUDA selects State and frame placement, not GPU physics. Public simulator
-State includes continuation fields; qpos and episode-model render projections
-cannot restore it. Domain imports register classes and supply fidelity metadata.
-"""
+"""DM Control classes combining renderers with simulation adapters."""
 
 import importlib
 

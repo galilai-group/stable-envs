@@ -28,7 +28,6 @@ from . import (  # noqa: F401
 )
 from ._cells import (  # noqa: F401
     DOMAINS,
-    PARITY_NOTE,
     TRACKCOM_DOMAINS,
     VISUAL_NOTE,
     parity_cell,
@@ -60,7 +59,7 @@ from .ball_in_cup import DMCBallInCupCatch  # noqa: F401
 from .base import _DMCModel  # noqa: F401
 from .cartpole import DMCCartpoleBalance, DMCCartpoleSwingup  # noqa: F401
 from .cheetah import DMCCheetahRun  # noqa: F401
-from .finger import ALL_EXACT_FLOOR, DMCFingerSpin, DMCFingerTurnEasy, DMCFingerTurnHard  # noqa: F401
+from .finger import DMCFingerSpin, DMCFingerTurnEasy, DMCFingerTurnHard  # noqa: F401
 from .hopper import DMCHopperHop  # noqa: F401
 from .humanoid import DMCHumanoidWalk  # noqa: F401
 from .manipulator import (  # noqa: F401
@@ -77,7 +76,7 @@ from .quadruped import (  # noqa: F401
     _transcribed_quadruped_env,
     _TranscribedQuadrupedModel,
 )
-from .reacher import DMCReacherEasy, DMCReacherHard  # noqa: F401
+from .reacher import DMCReacher  # noqa: F401
 from .suite import DMControlSuite  # noqa: F401
 from .swimmer import SPECULAR_NOTE, TRACKCOM_RENDER_FLAGS, DMCSwimmerSwimmer6  # noqa: F401
 from .trackcom import DMControlTrackCom, _tc_context, _TCtx  # noqa: F401

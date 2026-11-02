@@ -1,0 +1,180 @@
+{
+ "class_name": "PyFlytRocketLanding",
+ "module": "stable_envs.envs.rocket.semantics",
+ "family": "pyflyt",
+ "domain": "rocket_landing",
+ "reference_id": null,
+ "requires_cuda": false,
+ "has_dynamics": true,
+ "default_size": 480,
+ "frame_shape": [480, 480, 3],
+ "physics": "source simulator on CPU",
+ "renderers": {
+  "cpu": "tiny (TinyRenderer)",
+  "cuda": "nvdiffrast"
+ },
+ "action": {
+  "shape": [7],
+  "dtype": "float64",
+  "low": [-1, -1, -1, 0, 0, -1, -1],
+  "high": 1
+ },
+ "state": [
+  {
+   "key": "recipe",
+   "leaves": 8,
+   "numel": 38,
+   "dtypes": ["bool", "float64", "int64"]
+  },
+  {
+   "key": "history",
+   "leaves": 4,
+   "numel": 10819,
+   "dtypes": ["bool", "float64", "int64", "uint8"]
+  },
+  {
+   "key": "lifecycle",
+   "leaves": 2,
+   "numel": 2,
+   "dtypes": ["int64", "uint8"]
+  },
+  {
+   "key": "rng",
+   "leaves": 1,
+   "numel": 11,
+   "dtypes": ["int64"]
+  },
+  {
+   "key": "render",
+   "leaves": 1,
+   "numel": 24,
+   "dtypes": ["float64"]
+  },
+  {
+   "key": "current",
+   "leaves": 91,
+   "numel": 691769,
+   "dtypes": ["bool", "float64", "int64", "uint8"]
+  },
+  {
+   "key": "anchor",
+   "leaves": 13,
+   "numel": 143,
+   "dtypes": ["int64"]
+  },
+  {
+   "key": "variation",
+   "leaves": 67,
+   "numel": 239,
+   "dtypes": ["float64", "int64", "uint8"]
+  }
+ ],
+ "variation": [
+  {
+   "path": "environment.sky_color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": [135, 206, 235]
+  },
+  {
+   "path": "environment.start_height_ratio",
+   "type": "Box",
+   "reset": false,
+   "shape": [],
+   "low": 0.7,
+   "high": 0.95,
+   "default": 0.9
+  },
+  {
+   "path": "environment.start_horizontal_offset",
+   "type": "Box",
+   "reset": false,
+   "shape": [2],
+   "low": -2,
+   "high": 2,
+   "default": 0
+  },
+  {
+   "path": "environment.start_tilt",
+   "type": "Box",
+   "reset": false,
+   "shape": [2],
+   "low": -0.2,
+   "high": 0.2,
+   "default": 0
+  },
+  {
+   "path": "pad.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 200
+  },
+  {
+   "path": "rocket.body_color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": [255, 204, 0]
+  },
+  {
+   "path": "rocket.booster_color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 51
+  },
+  {
+   "path": "rocket.fin_color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 51
+  },
+  {
+   "path": "rocket.leg_color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 0
+  }
+ ],
+ "devices": {
+  "cpu": "ok",
+  "cuda": "ModuleNotFoundError: No module named 'nvdiffrast'"
+ },
+ "media": {
+  "device": "cpu",
+  "render_size": 480,
+  "rollout": {
+   "file": "rollout.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 61,
+   "fps": 15,
+   "bytes": 9674
+  },
+  "variation": {
+   "file": "variation.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 46,
+   "fps": 15,
+   "bytes": 8907
+  },
+  "variation_leaves": "all"
+ }
+}
