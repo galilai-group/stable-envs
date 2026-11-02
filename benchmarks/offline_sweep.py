@@ -171,9 +171,14 @@ def cmd_states(args) -> None:
                     try:
                         env._render(blob["rows"][:1].to(env.device))
                     except ValueError as e:
-                        if "renders" not in str(e) or "only" not in str(e):
+                        if "Expected a cuda device" in str(e):
+                            # No row renderer on this device: ours draws full States, the source their pose rows.
+                            state, rows = _rollout_states(env, args.n, args.seed, with_rows=True)
+                            blob = {"kind": "rows", "rows": rows, "state": state}
+                        elif "renders" not in str(e) or "only" not in str(e):
                             raise
-                        size = None
+                        else:
+                            size = None
                 else:
                     blob = {"kind": "state", "state": _rollout_states(env, args.n, args.seed)}
             finally:
@@ -188,17 +193,22 @@ def cmd_states(args) -> None:
         print(f"saved {path} kind={blob['kind']} in {time.time() - t:.1f}s", flush=True)
 
 
-def _rollout_states(env, n: int, seed: int):
-    """Full States from seeded resets and short random rollouts, stacked to ``n`` rows."""
+def _rollout_states(env, n: int, seed: int, with_rows: bool = False):
+    """Full States from seeded resets and short random rollouts, stacked to ``n`` rows; with ``with_rows``, also
+    their compact render rows."""
     rng = np.random.default_rng(seed)
-    parts, have = [], 0
+    parts, rows, have = [], [], 0
     while have < n:
         env.reset(seed=int(rng.integers(0, 2**31 - 1)))
         for _ in range(int(rng.integers(0, 20))):
             env.step(env.action_spec.sample(env.B, rng), frames=None)
+        if with_rows:
+            rows.append(torch.as_tensor(env._pack_render_state(env.get_state())).float().cpu())
         st = env.to_render_state().cpu()
         parts.append(st)
         have += int(st.batch_size[0])
+    if with_rows:
+        return torch.cat(parts)[:n], torch.cat(rows)[:n]
     return torch.cat(parts)[:n]
 
 
@@ -231,7 +241,7 @@ def cmd_ours(args) -> None:
             env = None
             try:
                 env = snv.make(name, num_envs=b, size=blob["size"], device=args.device)
-                if blob["kind"] == "rows":
+                if blob["kind"] == "rows" and "state" not in blob:
                     data = blob["rows"].to(dev)
                     render = lambda s, e: env._render(data[s:e])  # noqa: E731
                 else:
@@ -371,7 +381,10 @@ def cmd_mse(args) -> None:
                 theirs, keep = cls.reference_render(ref, rows.numpy()), np.ones(len(rows), bool)
             env = snv.make(name, num_envs=len(rows), size=blob["size"], device=args.device)
             try:
-                ours = env._render(rows.to(env.device)).cpu().numpy()
+                if "state" in blob:
+                    ours = env.render(blob["state"][: len(rows)].to(env.device)).cpu().numpy()
+                else:
+                    ours = env._render(rows.to(env.device)).cpu().numpy()
             finally:
                 env.close()
             per_frame = C.frame_mse(ours[keep], np.asarray(theirs)[keep])
