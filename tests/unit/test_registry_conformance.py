@@ -148,3 +148,22 @@ def test_the_source_draws_the_reference_inputs_of_a_state(name):
         assert len(inputs) == env.num_envs
         frames = np.asarray(cls.reference_render(C.reference_env(cls, env.size), inputs))
         assert frames.shape == tuple(env.render(state).shape)
+
+
+@pytest.mark.parametrize("name", envs("sampler"))
+def test_sampled_rows_draw_with_ours_and_with_the_source(name):
+    cls = se.registry.REGISTRY[name]
+    with _make(name) as env:
+        try:
+            rows = env.sample_states(LANES, rng=np.random.default_rng(SEED))
+        except NotImplementedError:
+            pytest.skip("no render-row sampler")
+        assert rows.shape == (LANES, env.render_state_dim)
+        if "cpu" in cls.row_render_devices:
+            assert tuple(env.render_rows(rows).shape) == (LANES, *env.frame_spec.shape)
+        else:
+            with pytest.raises(NotImplementedError):
+                env.render_rows(rows)
+        if has_reference_renderer(cls):
+            frames = np.asarray(cls.reference_render(C.reference_env(cls, env.size), rows))
+            assert frames.shape == (LANES, *env.frame_spec.shape)
