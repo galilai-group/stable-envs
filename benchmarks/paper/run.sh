@@ -1,14 +1,18 @@
 #!/bin/bash
 # Offline and online speed of stable-envs against the source, every arm pinned to the same CPU cores.
-# usage (from the repository root): sbatch -p qed -n 1 -c 8 --hint=nomultithread --mem=128G --gres=gpu:1 -t 48:00:00 benchmarks/paper/run.sh OUT FAMILY=ENV,ENV ...
-#   SMOKE=1 uses small state, batch and episode counts. THROUGHPUT=1 runs only the throughput arms (see the THROUGHPUT block).
-#   REGIME=cpu runs every CPU arm (frames, steps, steps with frames) and its source arm, and needs no GPU. Its online
-#   arms run at every lane count of LANE_SWEEP (override with LANE_SWEEP_OVERRIDE, colon-separated) and write one file per count.
-#   STEP_ONLY=1 with REGIME=cpu runs only the online physics-step arms.
-#   REGIME=gifs writes one stable-envs | source | diff GIF per env (benchmarks/gifs.py) and nothing else.
-#   REGIME=offline-gpu runs only stable-envs GPU frames from States, their frame MSE, and the source arms they are compared with.
-#   CORES (default: the first NPIN, default 8, cores the job may use) is the
-#   core set of every arm. STEP_LIMIT (default 6h) stops one arm that does not exit.
+# usage (from the repository root): sbatch -p qed -n 1 -c 8 --hint=nomultithread --mem=128G [--gres=gpu:1] -t 24:00:00 benchmarks/paper/run.sh OUT FAMILY=ENV,ENV ...
+#   For each env, each device in DEVICES ("cpu cuda") and each arm in ARMS ("offline step frames"):
+#     offline  stable-envs frames from stored full States at each batch of the sweep, their frame MSE, and the source
+#              drawing the same States in 1 and NCORES processes (with EGL on CUDA where reference_gpu_render is
+#              "mujoco-egl");
+#     step     physics steps with L lanes for each L of the sweep, and the source stepping L envs on CPU;
+#     frames   steps with frames, and the source drawing on CPU, plus on the GPU where the class has reference_gpu_render.
+#   SWEEP_CPU (1:8:64:256:1024) and SWEEP_CUDA (1:256:512:1024:2048) are the batches and lane counts, colon-separated.
+#   CPU_SOURCES=0 leaves out the source arms that run on CPU (for GPU jobs whose CPU source cells come from a CPU job).
+#   An output file that exists is kept, so a rerun with the same OUT fills in only what is missing.
+#   SMOKE=1 uses small counts. MODE=throughput runs the throughput arms, MODE=gifs one GIF per env.
+#   CORES (default: the first NPIN, default 8, cores the job may use) is the core set of every arm. STEP_LIMIT
+#   (default 6h) stops one arm that does not exit.
 set -uo pipefail
 OUT=$(realpath -m "$1"); shift
 # Slurm runs a copy of this script, so the repository is the submit directory.
@@ -23,17 +27,15 @@ WORK=${TMPDIR:-/tmp}/snv-bench-$$
 mkdir -p "$OUT"/{offline,online,logs} "$WORK"
 trap 'rm -rf "$WORK"' EXIT
 if [ "${SMOKE:-0}" = 1 ]; then
-  N=256; BATCHES="1 64 256"; EPISODES=64; LENGTH=32; LANES=64; SLANES=8; SWEPISODES=64; LANE_SWEEP="1 8 64"
+  SWEEP_CPU=${SWEEP_CPU:-1:8:64}; SWEEP_CUDA=${SWEEP_CUDA:-1:64:256}; LENGTH=32; LANES=64; SWEPISODES=64
 else
-  N=2048; BATCHES="1 256 1024 2048"; EPISODES=256; LENGTH=64; LANES=256; SLANES=8; SWEPISODES=64; LANE_SWEEP="1 8 64 256 1024"
+  SWEEP_CPU=${SWEEP_CPU:-1:8:64:256:1024}; SWEEP_CUDA=${SWEEP_CUDA:-1:256:512:1024:2048}; LENGTH=64; LANES=256; SWEPISODES=64
 fi
-LANE_SWEEP=$(echo ${LANE_SWEEP_OVERRIDE:-$LANE_SWEEP} | tr : " ")
-# Arms that draw with software OpenGL play the first SWEPISODES episodes only; steps/s does not depend on the count.
-REPEATS=${REPEATS:-3}
-# SRC_LANES envs per source worker (one avoids the multi-env corruption some sources show);
-# ONLY_SOURCE=1 runs only the source arms (for example a second core budget); SKIP_OFFLINE=1 skips the offline arms.
-SLANES=${SRC_LANES:-$SLANES}
-ONLY_SOURCE=${ONLY_SOURCE:-0}
+DEVICES=${DEVICES:-cpu cuda}; ARMS=${ARMS:-offline step frames}; REPEATS=${REPEATS:-3}; CPU_SOURCES=${CPU_SOURCES:-1}
+sweep() { [ $1 = cpu ] && echo $SWEEP_CPU | tr : " " || echo $SWEEP_CUDA | tr : " "; }
+# The stored States hold the largest offline batch; the episode set holds one episode per lane of the largest count.
+N=$(for d in $DEVICES; do sweep $d; done | tr " " "\n" | sort -n | tail -1)
+has() { [[ " $ARMS " == *" $1 "* ]]; }
 export PYTHONPATH=$REPO SDL_VIDEODRIVER=dummy PYTHONWARNINGS=ignore PYTHONDONTWRITEBYTECODE=1 MPLBACKEND=Agg
 # The uv cache stays in home: node-local disk holds one family venv at a time.
 export UV_HTTP_TIMEOUT=600 UV_LINK_MODE=copy UV_CACHE_DIR=${UV_CACHE_DIR:-$HOME/.cache/uv} XDG_CACHE_HOME=$WORK/cache
@@ -48,9 +50,9 @@ sw() { env LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe PYOPENGL_PLATFORM=glx
   echo " \"dirty\": $(git -C "$REPO" diff --quiet && echo false || echo true), \"swm\": \"$(git -C "$SWM" rev-parse HEAD)\","
   echo " \"host\": \"$(hostname)\", \"job\": \"${SLURM_JOB_ID:-}\", \"start\": \"$(date -Is)\", \"cores\": \"$CORES\", \"ncores\": $NCORES,"
   echo " \"cuda_visible_devices\": \"$CUDA_VISIBLE_DEVICES\", \"gpu\": \"$(nvidia-smi -i $CUDA_VISIBLE_DEVICES --query-gpu=name,driver_version --format=csv,noheader)\", \"smoke\": ${SMOKE:-0},"
-  echo " \"src_lanes\": ${SRC_LANES:-null}, \"only_source\": ${ONLY_SOURCE:-0},"
   echo " \"node_jobs_at_start\": \"$(squeue -h -w "$(hostname -s)" -o '%i %u %b %C' 2>/dev/null | tr '\n' ';')\","
-  echo " \"n_states\": $N, \"batches\": \"$BATCHES\", \"episodes\": $EPISODES, \"software_gl_episodes\": $SWEPISODES, \"length\": $LENGTH, \"lanes\": $LANES, \"repeats\": $REPEATS}"
+  echo " \"cpu_sources\": $CPU_SOURCES, \"devices\": \"$DEVICES\", \"arms\": \"$ARMS\", \"sweep_cpu\": \"$SWEEP_CPU\", \"sweep_cuda\": \"$SWEEP_CUDA\","
+  echo " \"n_states\": $N, \"length\": $LENGTH, \"repeats\": $REPEATS}"
 } > "$OUT/run.json"
 cat "$OUT/run.json"
 
@@ -100,7 +102,7 @@ for spec in "$@"; do
   echo "=== family $fam: ${envs[*]} $(date -Is)"
   df -h "$WORK" | tail -1
   P=$(venv $fam) || { rm -rf $WORK/venv-$fam; continue; }
-  $P -c "import torch; print('torch', torch.__version__, torch.cuda.get_device_name(0))"
+  $P -c "import torch; print('torch', torch.__version__, torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'no GPU')"
   if [ $fam = craftax ]; then
     # Craftax has no source renderer to restore States into; its comparison is the upstream jitted step.
     mkdir -p $OUT/craftax
@@ -110,48 +112,17 @@ for spec in "$@"; do
     rm -rf $WORK/venv-$fam
     continue
   fi
-  if [ "${REGIME:-all}" = gifs ]; then
+  if [ "${MODE:-sweep}" = gifs ]; then
     egl $PIN $P -m benchmarks.gifs --envs "${envs[@]}" --out $OUT/gifs --device cuda
     rm -rf $WORK/venv-$fam
     continue
   fi
   OFF="$PIN $P -m benchmarks.offline_sweep"; ON="$PIN $P -m benchmarks.online_ladder"
   S=$WORK/states-$fam; D=$WORK/episodes-$fam; mkdir -p $S $D
-  if [ "${REGIME:-all}" = cpu ]; then
-    # Every CPU arm and its source arm, with no GPU: frames from States, physics steps, and steps with frames.
-    OFFLINE=1; [ "${STEP_ONLY:-0}" = 1 ] || [ "${SKIP_OFFLINE:-0}" = 1 ] && OFFLINE=0
-    [ $OFFLINE = 0 ] || sw $OFF states --envs "${envs[@]}" --out $S --n $N --device cpu --lanes 1024
-    # Every lane count of the sweep plays its own episodes, so the dataset holds as many as the largest count.
-    MAXL=$(echo $LANE_SWEEP | tr ' ' '\n' | sort -n | tail -1)
-    sw $ON dataset --envs "${envs[@]}" --out $D --episodes $(( MAXL > EPISODES ? MAXL : EPISODES )) --length $LENGTH
-    for E in "${envs[@]}"; do
-      echo "--- $E $(date -Is) load $(cut -d' ' -f1-3 /proc/loadavg)"
-      o=$OUT/offline/$E; n=$OUT/online/$E; mkdir -p $o $n
-      if [ $OFFLINE = 1 ]; then
-        sw $OFF ours --envs $E --states $S --device cpu --threads $NCORES --batches $BATCHES --repeats $REPEATS --output $o/snv-cpu.json
-        sw $OFF mse --envs $E --states $S --device cpu --output $o/mse-cpu.json
-        for p in 1 $NCORES; do
-          sw $OFF source --envs $E --states $S --procs $p --repeats $REPEATS --output $o/src-cpu-${p}p.json
-        done
-      fi
-      # Online arms at every lane count L: ours with L lanes; the source with L envs over min(L, NCORES) workers.
-      for L in $LANE_SWEEP; do
-        p=$(( L < NCORES ? L : NCORES )); sl=$(( (L + p - 1) / p ))
-        COMMON="--env $E --data $D --procs $p --source-lanes $sl --lanes $L --threads $NCORES --repeats $REPEATS --episodes $L"
-        sw $ON run $COMMON --arms src-pipelined-step snv-step --output $n/step-L$L.json
-        [ "${STEP_ONLY:-0}" = 1 ] && continue
-        sw $ON run $COMMON --arms src-pipelined-render --src-label cpu --ours-device cpu --output $n/src-render-cpu-L$L.json
-        sw $ON run $COMMON --arms snv-render-cpu --output $n/snv-render-cpu-L$L.json
-      done
-    done
-    rm -rf $WORK/venv-$fam $S $D
-    continue
-  fi
-  [ "${SKIP_OFFLINE:-0}" = 1 ] || [ "${THROUGHPUT:-0}" = 1 ] || egl $OFF states --envs "${envs[@]}" --out $S --n $N --device cuda --lanes 1024
-  [ "${REGIME:-all}" = offline-gpu ] || egl $ON dataset --envs "${envs[@]}" --out $D --episodes $EPISODES --length $LENGTH
-  if [ "${THROUGHPUT:-0}" = 1 ]; then
+  if [ "${MODE:-sweep}" = throughput ]; then
     # Online throughput with frames on one CPU budget or one GPU: the source as one env, a Gymnasium SyncVectorEnv
     # and an AsyncVectorEnv (CPU OpenGL), and stable-envs on CPU and on CUDA.
+    sw $ON dataset --envs "${envs[@]}" --out $D --episodes $LANES --length $LENGTH
     for E in "${envs[@]}"; do
       echo "--- $E $(date -Is) load $(cut -d' ' -f1-3 /proc/loadavg)"
       n=$OUT/throughput/$E; mkdir -p $n
@@ -163,45 +134,42 @@ for spec in "$@"; do
     rm -rf $WORK/venv-$fam $S $D
     continue
   fi
+  # gl DEVICE CMD...: run CMD under software OpenGL for CPU arms and under EGL for CUDA arms.
+  gl() { local d=$1; shift; [ $d = cpu ] && sw "$@" || egl "$@"; }
+  # once FILE CMD...: run CMD unless FILE holds a result.
+  once() { local f=$1; shift; [ -s "$f" ] && { echo "have $f"; return 0; }; "$@"; }
+  has offline && sw $OFF states --envs "${envs[@]}" --out $S --n $N --lanes 1024
+  if has step || has frames; then sw $ON dataset --envs "${envs[@]}" --out $D --episodes $N --length $LENGTH; fi
   for E in "${envs[@]}"; do
     echo "--- $E $(date -Is) load $(cut -d' ' -f1-3 /proc/loadavg)"
-    o=$OUT/offline/$E; mkdir -p $o
-    if [ "${SKIP_OFFLINE:-0}" = 1 ]; then :
-    elif [ $ONLY_SOURCE != 1 ]; then
-      egl $OFF ours --envs $E --states $S --device cuda --batches $BATCHES --repeats $REPEATS --output $o/snv-gpu.json
-      egl $OFF mse --envs $E --states $S --device cuda --output $o/mse-gpu.json
-      if [ "${REGIME:-all}" != offline-gpu ]; then
-        sw $OFF ours --envs $E --states $S --device cpu --threads $NCORES --batches $BATCHES --repeats $REPEATS --output $o/snv-cpu.json
-        sw $OFF mse --envs $E --states $S --device cpu --output $o/mse-cpu.json
+    o=$OUT/offline/$E; n=$OUT/online/$E; mkdir -p $o $n
+    GPUSRC=$($P -c "import stable_envs as s; print(s.info('$E')['reference_gpu_render'] or '')")
+    for dev in $DEVICES; do
+      tag=$([ $dev = cpu ] && echo cpu || echo gpu)
+      if has offline; then
+        once $o/snv-$tag.json gl $dev $OFF ours --envs $E --states $S --device $dev --threads $NCORES --batches $(sweep $dev) --repeats $REPEATS --output $o/snv-$tag.json
+        once $o/mse-$tag.json gl $dev $OFF mse --envs $E --states $S --device $dev --output $o/mse-$tag.json
+        for p in 1 $NCORES; do
+          [ $CPU_SOURCES = 1 ] && once $o/src-cpu-${p}p.json sw $OFF source --envs $E --states $S --procs $p --repeats $REPEATS --output $o/src-cpu-${p}p.json
+          [ $dev = cuda ] && [ "$GPUSRC" = mujoco-egl ] && once $o/src-gpu-${p}p.json egl $OFF source --gpu --envs $E --states $S --procs $p --repeats $REPEATS --output $o/src-gpu-${p}p.json
+        done
       fi
-    fi
-    [ "${SKIP_OFFLINE:-0}" = 1 ] || {
-    case $E in OGBCube|OGBScene)
-      egl $OFF source-upstream --envs $E --states $S --procs 1 --keep $o/upstream-gpu-frames.npy --repeats $REPEATS --output $o/src-upstream-gpu-1p.json
-      egl $OFF source-upstream --envs $E --states $S --procs $NCORES --repeats $REPEATS --output $o/src-upstream-gpu-${NCORES}p.json
-      sw $OFF source-upstream --envs $E --states $S --procs 1 --repeats $REPEATS --output $o/src-upstream-cpu-1p.json
-      sw $OFF source-upstream --envs $E --states $S --procs $NCORES --repeats $REPEATS --output $o/src-upstream-cpu-${NCORES}p.json;;
-    esac
-    for p in 1 $NCORES; do
-      egl $OFF source --envs $E --states $S --procs $p --repeats $REPEATS --output $o/src-gpu-${p}p.json
-      sw $OFF source --envs $E --states $S --procs $p --repeats $REPEATS --output $o/src-cpu-${p}p.json
+      # Online arms at every lane count L: ours with L lanes; the source with L envs over min(L, NCORES) workers.
+      for L in $(sweep $dev); do
+        p=$(( L < NCORES ? L : NCORES )); sl=$(( (L + p - 1) / p ))
+        COMMON="--env $E --data $D --procs $p --source-lanes $sl --lanes $L --threads $NCORES --repeats $REPEATS --episodes $L"
+        if has step; then
+          [ $CPU_SOURCES = 1 ] && once $n/src-step-L$L.json sw $ON run $COMMON --arms src-pipelined-step --output $n/src-step-L$L.json
+          arm=$([ $dev = cpu ] && echo snv-step || echo snv-step-gpu)
+          once $n/snv-step-$tag-L$L.json gl $dev $ON run $COMMON --arms $arm --output $n/snv-step-$tag-L$L.json
+        fi
+        if has frames; then
+          [ $CPU_SOURCES = 1 ] && once $n/src-render-cpu-L$L.json sw $ON run $COMMON --arms src-pipelined-render --src-label cpu --ours-device cpu --output $n/src-render-cpu-L$L.json
+          [ $dev = cuda ] && [ -n "$GPUSRC" ] && once $n/src-render-gpu-L$L.json egl $ON run $COMMON --arms src-pipelined-render --src-label gpu --ours-device cuda --output $n/src-render-gpu-L$L.json
+          once $n/snv-render-$tag-L$L.json gl $dev $ON run $COMMON --arms snv-render-$tag --output $n/snv-render-$tag-L$L.json
+        fi
+      done
     done
-    }
-    [ "${REGIME:-all}" = offline-gpu ] && continue
-    n=$OUT/online/$E; mkdir -p $n
-    COMMON="--env $E --data $D --procs $NCORES --source-lanes $SLANES --lanes $LANES --threads $NCORES --repeats $REPEATS"
-    egl $ON run $COMMON --arms src-pipelined-render --src-label gpu --ours-device cuda --output $n/src-render-gpu.json
-    sw $ON run $COMMON --episodes $SWEPISODES --arms src-pipelined-render --src-label cpu --ours-device cpu --output $n/src-render-cpu.json
-    if [ "$E" = PyFlytRocketLanding ]; then
-      SRC_PYBULLET_EGL=1 egl $ON run $COMMON --arms src-pipelined-render --src-label gpu-pybullet-egl --ours-device cuda --output $n/src-render-gpu-pybullet-egl.json
-    fi
-    if [ $ONLY_SOURCE = 1 ]; then
-      sw $ON run $COMMON --arms src-pipelined-step --output $n/step.json
-    else
-      sw $ON run $COMMON --arms src-pipelined-step snv-step --output $n/step.json
-      sw $ON run $COMMON --episodes $SWEPISODES --arms snv-render-cpu --output $n/snv-render-cpu.json
-      egl $ON run $COMMON --arms snv-step-gpu snv-render-gpu --output $n/snv-gpu.json
-    fi
   done
   rm -rf $WORK/venv-$fam $S $D
 done

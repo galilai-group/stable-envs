@@ -104,15 +104,16 @@ def _pybullet_egl(env):
 class _GymSource:
     """A gym env whose actions are converted to its own action space."""
 
-    def __init__(self, env):
+    def __init__(self, env, pybullet_egl: bool = False):
         self.env = env
+        self.pybullet_egl = pybullet_egl
         space = env.action_space
         self.discrete = hasattr(space, "n") and not hasattr(space, "nvec")
         self.shape, self.dtype = getattr(space, "shape", ()), getattr(space, "dtype", None)
 
     def reset(self, seed=None):
         self.env.reset(seed=seed)
-        if os.environ.get("SRC_PYBULLET_EGL") == "1":
+        if self.pybullet_egl:
             _pybullet_egl(self.env)
 
     def step(self, action):
@@ -128,18 +129,18 @@ class _GymSource:
         self.env.close()
 
 
-def _make_source(name: str, size: int):
+def _make_source(name: str, size: int, gpu: bool = False):
+    """The source env of class ``name``; ``gpu`` draws with the source's GPU renderer (``reference_gpu_render``)."""
     import gymnasium as gym
 
-    sid = source_id(name)
-    if sid.startswith("dm_control/"):
-        import stable_envs as snv
+    import stable_envs as snv
 
+    sid = source_id(name)
+    pybullet_egl = gpu and snv.registry.REGISTRY[name].reference_gpu_render == "pybullet-egl"
+    if sid.startswith("dm_control/"):
         domain, task = sid.split("/", 1)[1].split("-", 1)
         return _DMCSource(domain, task, snv.registry.REGISTRY[name].CAMERA, size)
     if sid.startswith("ogbench/"):
-        import stable_envs as snv
-
         # The class's own reference: the OGBench env and the floor that SNV's frames are compared against.
         return _GymSource(snv.registry.REGISTRY[name].reference_env(size=size))
     if sid.startswith("Fetch"):
@@ -150,7 +151,7 @@ def _make_source(name: str, size: int):
         return _GymSource(gym.make(sid, render_mode="rgb_array", width=size, height=size))
     import stable_worldmodel  # noqa: F401  registers the swm/ ids
 
-    return _GymSource(gym.make(sid, render_mode="rgb_array", **SOURCE_KWARGS.get(sid, {})))
+    return _GymSource(gym.make(sid, render_mode="rgb_array", **SOURCE_KWARGS.get(sid, {})), pybullet_egl)
 
 
 def cmd_dataset(args) -> None:
@@ -236,8 +237,8 @@ class SourceLanes:
     process_methods: dict = {}
     process_attributes = ("frame_shape",)
 
-    def __init__(self, name: str, size: int, render: bool, count: int, seed: int | None):
-        self.envs = [_make_source(name, size) for _ in range(count)]
+    def __init__(self, name: str, size: int, render: bool, count: int, seed: int | None, gpu: bool = False):
+        self.envs = [_make_source(name, size, gpu) for _ in range(count)]
         self.render = render
         self.count = count
         self.t = torch.zeros(count, 1, dtype=torch.int64)
@@ -280,8 +281,8 @@ class SourceLanes:
             env.close()
 
 
-def _source_factory(name, size, render, probe, count, seed):
-    lanes = SourceLanes(name, size, render, count, seed)
+def _source_factory(name, size, render, probe, count, seed, gpu=False):
+    lanes = SourceLanes(name, size, render, count, seed, gpu)
     lanes._probe = probe
     return lanes
 
@@ -295,7 +296,7 @@ def run_source(args, name: str, render: bool) -> dict:
     n, length = actions.shape[:2]
     lanes = min(args.procs * args.source_lanes, n)
     cpus = sorted(os.sched_getaffinity(0))[: args.procs]
-    factory = functools.partial(_source_factory, name, args.size, render, actions[:1, 0])
+    factory = functools.partial(_source_factory, name, args.size, render, actions[:1, 0], gpu=args.src_label == "gpu")
     adapter = ProcessAdapter(factory, lanes, "cpu", int(seeds[0]), processes=args.procs, cpus=cpus)
     frame_shape = getattr(adapter, "frame_shape", None)
 
@@ -399,19 +400,10 @@ def run_source(args, name: str, render: bool) -> dict:
 
 
 def _make_ours(name: str, lanes: int, size: int, device: str):
-    """The class at ``size``, or at its one native size when it refuses to draw another."""
+    """The class at ``size``, or at its native size when it declares one."""
     import stable_envs as snv
 
-    env = snv.make(name, num_envs=lanes, size=size, device=device)
-    try:
-        env.reset(seed=0)
-        env.render(env.get_state())
-        return env
-    except ValueError as e:
-        env.close()
-        if "renders" not in str(e) or "only" not in str(e):
-            raise
-    return snv.make(name, num_envs=lanes, device=device)
+    return snv.make(name, num_envs=lanes, size=snv.registry.REGISTRY[name].native_size or size, device=device)
 
 
 def run_ours(args, name: str, dev: str, render: bool, chunk: int) -> dict:

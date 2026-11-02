@@ -152,9 +152,9 @@ def _snv():
 
 
 def cmd_states(args) -> None:
-    """Draw ``n`` render states per env with a fixed seed and save them."""
+    """Save ``n`` full States per env from seeded resets and random rollouts, with what the source draws for them."""
     snv = _snv()
-    from stable_envs.testing import conformance as C
+    from tests.helpers.reference.certification import has_reference_renderer
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -164,62 +164,38 @@ def cmd_states(args) -> None:
             print(f"have {path}", flush=True)
             continue
         cls = snv.registry.REGISTRY[name]
-        size = int(getattr(cls, "fixed_size", None) or args.size)
+        size = cls.native_size or args.size
         t = time.time()
         try:
-            try:
-                env = snv.make(name, num_envs=args.lanes, size=size, device=args.device)
-            except ValueError as e:
-                if "renders" not in str(e) or "only" not in str(e):
-                    raise
-                size = None
-                env = snv.make(name, num_envs=args.lanes, device=args.device)
-            try:
-                if int(getattr(env, "state_dim", 0) or 0) > 0:
-                    rows = C.sample_render_rows(env, args.n, rng=np.random.default_rng(args.seed))
-                    blob = {"kind": "rows", "rows": torch.as_tensor(rows)}
-                    try:
-                        env._render(blob["rows"][:1].to(env.device))
-                    except ValueError as e:
-                        if "Expected a cuda device" in str(e):
-                            # No row renderer on this device: ours draws full States, the source their pose rows.
-                            state, rows = _rollout_states(env, args.n, args.seed, with_rows=True)
-                            blob = {"kind": "rows", "rows": rows, "state": state}
-                        elif "renders" not in str(e) or "only" not in str(e):
-                            raise
-                        else:
-                            size = None
-                else:
-                    blob = {"kind": "state", "state": _rollout_states(env, args.n, args.seed)}
-            finally:
-                env.close()
+            with snv.make(name, num_envs=args.lanes, size=size, device="cpu") as env:
+                states, inputs = _rollouts(env, args.n, args.seed, args.steps, has_reference_renderer(cls))
         except Exception as e:  # noqa: BLE001
             print(f"FAIL states {name}: {type(e).__name__}: {e}", flush=True)
             traceback.print_exc()
             (out / f"{name}.error.txt").write_text(f"{type(e).__name__}: {e}\n")
             continue
-        blob.update(name=name, seed=args.seed, n=args.n, size=size)
+        blob = {"states": states, "inputs": inputs, "name": name, "seed": args.seed, "n": args.n, "size": size}
         torch.save(blob, path)
-        print(f"saved {path} kind={blob['kind']} in {time.time() - t:.1f}s", flush=True)
+        print(f"saved {path} in {time.time() - t:.1f}s", flush=True)
 
 
-def _rollout_states(env, n: int, seed: int, with_rows: bool = False):
-    """Full States from seeded resets and short random rollouts, stacked to ``n`` rows; with ``with_rows``, also
-    their compact render rows."""
+def _rollouts(env, n: int, seed: int, steps: int, reference: bool):
+    """``n`` full States from seeded resets and 0 to ``steps`` random actions, and their ``reference_inputs``."""
     rng = np.random.default_rng(seed)
-    parts, rows, have = [], [], 0
+    states, inputs, have = [], [], 0
     while have < n:
         env.reset(seed=int(rng.integers(0, 2**31 - 1)))
-        for _ in range(int(rng.integers(0, 20))):
+        for _ in range(int(rng.integers(0, steps + 1))):
             env.step(env.action_spec.sample(env.B, rng), frames=None)
-        if with_rows:
-            rows.append(torch.as_tensor(env._pack_render_state(env.get_state())).float().cpu())
-        st = env.to_render_state().cpu()
-        parts.append(st)
+        st = env.get_state()
+        if reference:
+            inputs.append(env.reference_inputs(st))
+        states.append(st.cpu())
         have += int(st.batch_size[0])
-    if with_rows:
-        return torch.cat(parts)[:n], torch.cat(rows)[:n]
-    return torch.cat(parts)[:n]
+    if not reference:
+        return torch.cat(states)[:n], None
+    joined = np.concatenate(inputs) if isinstance(inputs[0], np.ndarray) else [x for part in inputs for x in part]
+    return torch.cat(states)[:n], joined[:n]
 
 
 def _chunks(n: int, b: int):
@@ -251,12 +227,8 @@ def cmd_ours(args) -> None:
             env = None
             try:
                 env = snv.make(name, num_envs=b, size=blob["size"], device=args.device)
-                if blob["kind"] == "rows" and "state" not in blob:
-                    data = blob["rows"].to(dev)
-                    render = lambda s, e: env._render(data[s:e])  # noqa: E731
-                else:
-                    data = blob["state"].to(dev)
-                    render = lambda s, e: env.render(data[s:e])  # noqa: E731
+                data = blob["states"].to(dev)
+                render = lambda s, e: env.render(data[s:e])  # noqa: E731
                 n = len(data)
                 spans = _chunks(n, b)
                 frame = render(*spans[0])
@@ -285,7 +257,7 @@ def cmd_ours(args) -> None:
                     torch.cuda.reset_peak_memory_stats()
             print(f"{name} {dev.type} b={b} {row['status']} {row.get('fps', 0):.0f} fps", flush=True)
             rows.append(row)
-        results["envs"][name] = {"kind": blob["kind"], "size": blob["size"], "points": rows}
+        results["envs"][name] = {"size": blob["size"], "points": rows}
     Path(args.output).write_text(json.dumps(results, indent=1))
 
 
@@ -298,26 +270,33 @@ def _worker_init(name: str, states: str, size: int) -> None:
     snv = _snv()
     cls = snv.registry.REGISTRY[name]
     _W["cls"] = cls
-    _W["ref"] = cls.reference_env(size=size or cls.default_size)
-    # Cube and Scene's reference is their exact-OpenGL path, built for CUDA; under software GL it draws on CPU.
-    if name in ("OGBCube", "OGBScene") and os.environ.get("MUJOCO_GL") != "egl":
-        _W["ref"] = cls(num_envs=1, size=size or cls.default_size, device="cpu", backend="opengl")
-    blob = _load_states(Path(states) / f"{name}.pt")
-    _W["rows"] = blob["rows"].numpy() if blob["kind"] == "rows" else None
+    _W["ref"] = cls.reference_env(size=size)
+    _W["inputs"] = _load_states(Path(states) / f"{name}.pt")["inputs"]
 
 
 def _worker_render(span) -> int:
     s, e = span
-    rows = _W["rows"][s:e]
-    for i in range(0, len(rows), 64):
-        _W["cls"].reference_render(_W["ref"], rows[i : i + 64])
+    for i in range(s, e, 64):
+        _W["cls"].reference_render(_W["ref"], _W["inputs"][i : min(i + 64, e)])
     return e - s
 
 
+def _source_skip(cls, blob, gpu: bool) -> str | None:
+    """Why the source arm cannot run for ``cls``, or None."""
+    from tests.helpers.reference.certification import has_reference_renderer
+
+    if not has_reference_renderer(cls) or blob["inputs"] is None:
+        return "no source renderer"
+    if gpu and cls.reference_gpu_render != "mujoco-egl":
+        return f"the offline source draws on CPU (reference_gpu_render={cls.reference_gpu_render})"
+    return None
+
+
 def cmd_source(args) -> None:
-    """Sweep every stored state through the source renderer in ``procs`` processes."""
+    """Sweep the stored States through the source renderer in ``procs`` processes; ``--gpu`` draws with EGL."""
+    snv = _snv()
     results = {
-        "arm": f"source-{args.procs}p",
+        "arm": f"source-{'gpu' if args.gpu else 'cpu'}-{args.procs}p",
         "host": _host(),
         "envs": {},
         "budget_s": args.budget,
@@ -329,22 +308,15 @@ def cmd_source(args) -> None:
             results["envs"][name] = {"status": "skipped", "reason": "no state file"}
             continue
         blob = _load_states(path)
-        if blob["kind"] != "rows":
-            results["envs"][name] = {"status": "skipped", "reason": "source reference renders compact rows only"}
+        reason = _source_skip(snv.registry.REGISTRY[name], blob, args.gpu)
+        if reason:
+            results["envs"][name] = {"status": "skipped", "reason": reason}
             continue
-        snv = _snv()
-        cls = snv.registry.REGISTRY[name]
-        from tests.helpers.reference.certification import has_reference_renderer
-
-        if not has_reference_renderer(cls):
-            results["envs"][name] = {"status": "skipped", "reason": "no reference renderer"}
-            continue
-        n = len(blob["rows"])
+        n = len(blob["inputs"])
         try:
             if args.procs == 1:
                 _worker_init(name, args.states, blob["size"])
-                frame = _W["cls"].reference_render(_W["ref"], _W["rows"][:1])
-                shape = list(np.asarray(frame).shape[1:])
+                shape = list(np.asarray(_W["cls"].reference_render(_W["ref"], _W["inputs"][:1])).shape[1:])
                 rows8 = lambda: (_worker_render((i, min(i + 8, n))) for i in range(0, n, 8))  # noqa: E731
                 t = _timed(_cycle(rows8), seconds=args.seconds, repeats=args.repeats)
             else:
@@ -358,14 +330,14 @@ def cmd_source(args) -> None:
             row = {"status": "ok", "frames": n, "fps": t["rate"], "frame_shape": shape, **t}
         except Exception as e:  # noqa: BLE001
             row = {"status": "error", "error": f"{type(e).__name__}: {e}"[:500]}
-        print(f"{name} source {args.procs}p {row['status']} {row.get('fps', 0):.0f} fps", flush=True)
+        print(f"{name} {results['arm']} {row['status']} {row.get('fps', 0):.0f} fps", flush=True)
         results["envs"][name] = row
         _W.clear()
     Path(args.output).write_text(json.dumps(results, indent=1))
 
 
 def cmd_mse(args) -> None:
-    """Per-frame MSE of stable-envs frames against the source's for the first ``n`` stored states, on the 0-255 scale."""
+    """Per-frame MSE of stable-envs frames against the source's for the first ``n`` stored States, on the 0-255 scale."""
     import inspect
 
     snv = _snv()
@@ -374,29 +346,22 @@ def cmd_mse(args) -> None:
     results = {"arm": f"mse-{args.device}", "host": _host(), "envs": {}}
     for name in args.envs:
         blob = _load_states(Path(args.states) / f"{name}.pt")
-        if blob["kind"] != "rows":
-            results["envs"][name] = {"status": "skipped", "reason": "source reference renders compact rows only"}
+        cls = snv.registry.REGISTRY[name]
+        reason = _source_skip(cls, blob, gpu=False)
+        if reason:
+            results["envs"][name] = {"status": "skipped", "reason": reason}
             continue
         try:
-            cls = snv.registry.REGISTRY[name]
-            rows = blob["rows"][: args.n]
+            n = min(args.n, len(blob["inputs"]))
             # The source draws before any stable-envs env exists in this process (see online_ladder).
-            ref = cls.reference_env(size=blob["size"] or cls.default_size)
-            if name in ("OGBCube", "OGBScene") and args.device == "cpu":
-                ref = cls(num_envs=1, size=blob["size"] or cls.default_size, device="cpu", backend="opengl")
+            ref = cls.reference_env(size=blob["size"])
             if "return_flags" in inspect.signature(cls.reference_render).parameters:
-                theirs, flags = cls.reference_render(ref, rows.numpy(), return_flags=True)
+                theirs, flags = cls.reference_render(ref, blob["inputs"][:n], return_flags=True)
                 keep = ~np.asarray(flags, bool)
             else:
-                theirs, keep = cls.reference_render(ref, rows.numpy()), np.ones(len(rows), bool)
-            env = snv.make(name, num_envs=len(rows), size=blob["size"], device=args.device)
-            try:
-                if "state" in blob:
-                    ours = env.render(blob["state"][: len(rows)].to(env.device)).cpu().numpy()
-                else:
-                    ours = env._render(rows.to(env.device)).cpu().numpy()
-            finally:
-                env.close()
+                theirs, keep = cls.reference_render(ref, blob["inputs"][:n]), np.ones(n, bool)
+            with snv.make(name, num_envs=n, size=blob["size"], device=args.device) as env:
+                ours = env.render(blob["states"][:n].to(env.device)).cpu().numpy()
             per_frame = C.frame_mse(ours[keep], np.asarray(theirs)[keep])
             row = {"status": "ok", "frames": int(keep.sum()), "excluded_unreachable": int((~keep).sum())}
             row.update(C.mse_summary(per_frame))
@@ -414,85 +379,6 @@ def cmd_mse(args) -> None:
             row = {"status": "error", "error": f"{type(e).__name__}: {e}"[:500]}
         print(f"{name} mse {args.device} {row}", flush=True)
         results["envs"][name] = row
-    Path(args.output).write_text(json.dumps(results, indent=1))
-
-
-#: Upstream gym ids and constructor arguments for the classes whose offline reference is not the upstream env.
-UPSTREAM = {
-    "OGBCube": ("swm/OGBCube-v0", {"env_type": "single"}),
-    "OGBScene": ("swm/OGBScene-v0", {}),
-}
-
-
-def _upstream_init(name: str, states: str, size: int, keep: str | None) -> None:
-    os.environ.setdefault("OMP_NUM_THREADS", "1")
-    torch.set_num_threads(1)
-    import gymnasium as gym
-    import stable_worldmodel  # noqa: F401
-
-    gid, kw = UPSTREAM[name]
-    env = gym.make(gid, render_mode="rgb_array", width=size, height=size, **kw)
-    env.reset(seed=0)
-    _W["env"], _W["u"] = env, env.unwrapped
-    _W["rows"] = _load_states(Path(states) / f"{name}.pt")["rows"].numpy().astype(np.float64)
-    _W["keep"] = keep
-
-
-def _upstream_render(span) -> int:
-    """Write each row's qpos, goal and buttons into the upstream env and draw it with the env's own render()."""
-    import mujoco
-
-    u, rows = _W["u"], _W["rows"]
-    nq, nmocap = int(u.model.nq), int(u.model.nmocap)
-    goals = 3 if nmocap == 1 else 3 * nmocap
-    kept = []
-    for i in range(*span):
-        r = rows[i]
-        u.data.qpos[:] = r[:nq]
-        u.data.qvel[:] = 0
-        u.data.mocap_pos[:] = r[nq : nq + goals].reshape(-1, 3)[: u.data.mocap_pos.shape[0]]
-        buttons = r[nq + goals :]
-        if len(buttons) and hasattr(u, "_cur_button_states"):
-            u._cur_button_states = buttons.round().astype(np.int64)
-            u._apply_button_states()
-        mujoco.mj_forward(u.model, u.data)
-        frame = _W["env"].render()
-        if _W["keep"] and i < 16:
-            kept.append(np.asarray(frame))
-    if kept:
-        np.save(_W["keep"], np.stack(kept))
-    return span[1] - span[0]
-
-
-def cmd_source_upstream(args) -> None:
-    """Sweep the stored states through the upstream env's own renderer in ``procs`` processes (Cube, Scene)."""
-    results = {"arm": f"source-upstream-{args.procs}p", "host": _host(), "envs": {}}
-    for name in args.envs:
-        if name not in UPSTREAM:
-            results["envs"][name] = {"status": "skipped", "reason": "no upstream renderer is wired for this class"}
-            continue
-        blob = _load_states(Path(args.states) / f"{name}.pt")
-        n, size = len(blob["rows"]), int(blob["size"] or 224)
-        try:
-            if args.procs == 1:
-                _upstream_init(name, args.states, size, args.keep)
-                _upstream_render((0, min(16, n)))
-                _W["keep"] = None
-                rows8 = lambda: (_upstream_render((i, min(i + 8, n))) for i in range(0, n, 8))  # noqa: E731
-                t = _timed(_cycle(rows8), seconds=args.seconds, repeats=args.repeats)
-            else:
-                ctx = mp.get_context("spawn")
-                spans = [(n * k // args.procs, n * (k + 1) // args.procs) for k in range(args.procs)]
-                with ctx.Pool(
-                    args.procs, initializer=_upstream_init, initargs=(name, args.states, size, None)
-                ) as pool:
-                    t = _pool_timed(pool, _upstream_render, spans, seconds=args.seconds, repeats=args.repeats)
-            row = {"status": "ok", "frames": n, "fps": t["rate"], "upstream": UPSTREAM[name][0], **t}
-        except Exception as e:  # noqa: BLE001
-            row = {"status": "error", "error": f"{type(e).__name__}: {e}"[:500]}
-        print(f"{name} source-upstream {args.procs}p {row['status']} {row.get('fps', 0):.0f} fps", flush=True)
-        results["envs"][name] = row
-        _W.clear()
     Path(args.output).write_text(json.dumps(results, indent=1))
 
 
@@ -523,22 +409,13 @@ def cmd_codec(args) -> None:
             continue
         blob = _load_states(path)
         decode = name in args.decode
-        n = len(blob["rows"] if blob["kind"] == "rows" else blob["state"]) if decode else args.sample
+        n = len(blob["states"]) if decode else args.sample
         row = {"frames_encoded": n}
         try:
-            env = snv.make(name, num_envs=256, size=blob["size"], device=args.device)
-            data = (blob["rows"] if blob["kind"] == "rows" else blob["state"]).to(dev)
-            frames = []
-            for s, e in _chunks(n, 256):
-                f = env._render(data[s:e]) if blob["kind"] == "rows" else env.render(data[s:e])
-                frames.append(f.cpu().numpy())
-            env.close()
-            frames = np.concatenate(frames)
-            row["state_bytes"] = (
-                int(blob["rows"].shape[1]) * 4
-                if blob["kind"] == "rows"
-                else int(sum(v.numel() * v.element_size() for v in blob["state"][0].values(True, True)))
-            )
+            data = blob["states"].to(dev)
+            with snv.make(name, num_envs=256, size=blob["size"], device=args.device) as env:
+                frames = np.concatenate([env.render(data[s:e]).cpu().numpy() for s, e in _chunks(n, 256)])
+            row["state_bytes"] = int(sum(v.numel() * v.element_size() for v in blob["states"][0].values(True, True)))
             row["raw_bytes"] = int(frames[0].nbytes)
             for fmt, kw in (("jpeg", {"quality": 95}), ("png", {})):
                 d = Path(args.out) / fmt / name
@@ -596,7 +473,7 @@ def main() -> None:
     s.add_argument("--seed", type=int, default=20261022)
     s.add_argument("--size", type=int, default=224)
     s.add_argument("--lanes", type=int, default=1024)
-    s.add_argument("--device", default="cuda")
+    s.add_argument("--steps", type=int, default=200, help="most random actions after each seeded reset")
     o = sub.add_parser("ours", parents=[common])
     o.add_argument("--device", default="cuda")
     o.add_argument("--batches", type=int, nargs="+", default=[1, 256, 512, 1024, 2048, 4096])
@@ -604,6 +481,7 @@ def main() -> None:
     o.add_argument("--output", required=True)
     r = sub.add_parser("source", parents=[common])
     r.add_argument("--procs", type=int, default=1)
+    r.add_argument("--gpu", action="store_true", help="the source draws with MuJoCo EGL on the GPU")
     r.add_argument("--output", required=True)
     c = sub.add_parser("codec", parents=[common])
     c.add_argument("--out", required=True)
@@ -611,10 +489,6 @@ def main() -> None:
     c.add_argument("--sample", type=int, default=256)
     c.add_argument("--device", default="cuda")
     c.add_argument("--output", required=True)
-    u = sub.add_parser("source-upstream", parents=[common])
-    u.add_argument("--procs", type=int, default=1)
-    u.add_argument("--keep", default=None, help="save the first 16 frames to this .npy (1 process only)")
-    u.add_argument("--output", required=True)
     m = sub.add_parser("mse", parents=[common])
     m.add_argument("--device", default="cuda")
     m.add_argument("--n", type=int, default=256)
@@ -628,7 +502,6 @@ def main() -> None:
         "ours": cmd_ours,
         "source": cmd_source,
         "codec": cmd_codec,
-        "source-upstream": cmd_source_upstream,
         "mse": cmd_mse,
         "list": cmd_list,
     }[args.cmd](args)

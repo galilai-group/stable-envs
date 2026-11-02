@@ -25,7 +25,7 @@ import torch
 from PIL import Image, ImageDraw
 
 
-def _source_rows(name, size, rows):
+def _source_rows(name, size, inputs):
     from benchmarks.offline_sweep import _snv
 
     snv = _snv()
@@ -33,9 +33,9 @@ def _source_rows(name, size, rows):
     cls = snv.registry.REGISTRY[name]
     ref = cls.reference_env(size=size)
     if "return_flags" in inspect.signature(cls.reference_render).parameters:
-        frames, flags = cls.reference_render(ref, rows, return_flags=True)
+        frames, flags = cls.reference_render(ref, inputs, return_flags=True)
     else:
-        frames, flags = cls.reference_render(ref, rows), np.zeros(len(rows), bool)
+        frames, flags = cls.reference_render(ref, inputs), np.zeros(len(inputs), bool)
     return np.asarray(frames), np.asarray(flags, bool)
 
 
@@ -63,34 +63,26 @@ def episode(name, size, device, steps, seed):
     from benchmarks.offline_sweep import _snv
 
     snv = _snv()
-    from benchmarks.online_ladder import _ours_frames, _replay_frames
+    from benchmarks.online_ladder import _replay_frames
+    from tests.helpers.reference.certification import has_reference_renderer
 
     actions = _actions(name, steps, seed)
     native, end = _replay_frames(name, size, seed, actions)
     n = len(native) if end is None else end + 1
-    cls = snv.registry.REGISTRY[name]
-    if int(getattr(cls, "state_dim", 0) or 0) > 0:
-        env = snv.make(name, num_envs=1, size=size, device=device)
-        try:
-            env.reset(seed=seed)
-            rows = []
-            for a in actions:
-                env.step(torch.as_tensor(a[None], device=env.device), frames=None)
-                rows.append(np.asarray(torch.as_tensor(env._pack_render_state(env.get_state())).cpu()))
-            rows = torch.as_tensor(np.concatenate(rows)).float()
-            ours = env._render(rows.to(env.device)).cpu().numpy()
-        finally:
-            env.close()
-        bridged, flags = _in_spawn(_source_rows, name, size, rows.numpy())
-        return (
-            ours[:n],
-            np.asarray(bridged)[:n],
-            native[:n],
-            flags[:n],
-            "same seed and actions; bridge draws our states",
-        )
-    ours, _ = _ours_frames(name, size, device, seed, actions)
-    return ours[:n], None, native[:n], np.zeros(n, bool), "same seed and actions"
+    bridge = has_reference_renderer(snv.registry.REGISTRY[name])
+    with snv.make(name, num_envs=1, size=size, device=device) as env:
+        env.reset(seed=seed)
+        ours, inputs = [], []
+        for a in actions:
+            out = env.step(torch.as_tensor(a[None], device=env.device), frames=slice(None))
+            ours.append(out["frames"][0, -1].cpu().numpy())
+            if bridge:
+                inputs.extend(env.reference_inputs(out["state"]))
+    ours = np.stack(ours)
+    if not bridge:
+        return ours[:n], None, native[:n], np.zeros(n, bool), "same seed and actions"
+    bridged, flags = _in_spawn(_source_rows, name, size, inputs if isinstance(inputs[0], dict) else np.stack(inputs))
+    return ours[:n], bridged[:n], native[:n], flags[:n], "same seed and actions; bridge draws our States"
 
 
 def stats(a, b):
@@ -169,15 +161,9 @@ def main() -> None:
 
     for name in args.envs:
         cls = snv.registry.REGISTRY[name]
-        size = int(getattr(cls, "fixed_size", None) or args.size)
+        size = cls.native_size or args.size
         try:
-            try:
-                ours, bridged, native, flags, how = episode(name, size, args.device, args.steps, args.seed)
-            except ValueError as e:
-                if "renders" not in str(e) or "only" not in str(e):
-                    raise
-                size = cls.default_size
-                ours, bridged, native, flags, how = episode(name, size, args.device, args.steps, args.seed)
+            ours, bridged, native, flags, how = episode(name, size, args.device, args.steps, args.seed)
             if ours.shape[1:3] != native.shape[1:3]:
                 raise AssertionError(f"frame shapes differ: ours {ours.shape} source {native.shape}")
             n = min(len(ours), len(native))
