@@ -7,7 +7,7 @@ from .factory import make_batch
 from .first_family import ReacherAdapter
 
 
-def reacher_backend(num_envs: int, device: str | torch.device, backend: str = "auto", mjx_min_envs: int = 32) -> str:
+def reacher_backend(num_envs: int, device: str | torch.device, backend: str = "auto", mjx_min_envs: int = 4096) -> str:
     """Use native physics for small batches and MJX for larger CUDA batches."""
     if backend not in ("auto", "native", "mjx"):
         raise ValueError("simulation_backend must be 'auto', 'native' or 'mjx'")
@@ -28,7 +28,7 @@ def make_dmc_adapter(
     seed: int,
     *,
     simulation_backend: str = "auto",
-    mjx_min_envs: int = 32,
+    mjx_min_envs: int = 4096,
 ) -> DMCBatchAdapter | ReacherAdapter:
     if domain == "reacher" and reacher_backend(num_envs, device, simulation_backend, mjx_min_envs) == "mjx":
         from .reacher_mjx import ReacherMJXAdapter
