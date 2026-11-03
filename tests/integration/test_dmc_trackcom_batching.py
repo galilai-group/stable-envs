@@ -27,7 +27,7 @@ CASES = (
 
 
 def _saved_states(fixture: str) -> TensorDict:
-    with np.load(FIXTURES / f"{fixture}_swm_176d545_mujoco312.npz", allow_pickle=False) as saved:
+    with np.load(FIXTURES / f"{fixture}_swm_176d545_mujoco317.npz", allow_pickle=False) as saved:
         shape = saved["state/qpos"].shape[:2]
         state = TensorDict(
             {
@@ -47,7 +47,7 @@ def test_gpu_batch_capacity_and_per_row_style(name: str, fixture: str, size: int
     pytest.importorskip("mujoco_warp")
     states = _saved_states(fixture)
     with se.make(name, num_envs=1, size=size, device="cuda") as env:
-        # The saved corpus has no State physics fields; it was recorded at the registered physics.
+        # The saved corpus was recorded at the registered physics, so its physics fields take the nominal values.
         layout = env._physics_layout()
         for leaf, offset, width in zip(layout.leaves, layout.offsets, layout.widths, strict=True):
             value = torch.tensor(layout.nominal[offset : offset + width], dtype=torch.float64, device="cuda")
