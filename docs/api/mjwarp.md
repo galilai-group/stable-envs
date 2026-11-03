@@ -35,9 +35,9 @@ With `backend="auto"` on CUDA:
 Explicit backends and sampling settings in a supplied RenderState keep their meaning. CPU rendering
 uses software OpenGL.
 
-The measurements use one RTX 3090 at 64×64 and compare against source NVIDIA OpenGL on 32
-independently reached saved States. Larger batches repeat those States. Each measurement uses three
-warmups and six timed samples. Timing covers public
+The measurements use one RTX 3090 with MuJoCo and MuJoCo Warp 3.12.0 at 64×64 and compare against
+source NVIDIA OpenGL on 32 independently reached saved States. Larger batches repeat those States.
+Each measurement uses three warmups and six timed samples. Timing covers public
 rendering and synchronization. It excludes rollout, loading, projection, initial transfer and batch
 indexing. The source returns NumPy images including readback. This renderer returns CUDA images.
 

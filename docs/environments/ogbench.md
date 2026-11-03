@@ -142,7 +142,7 @@ ray caster `raycast3d`. It draws the maze, the body and the floor from the State
 
 ## Manipulation
 
-Cube and Scene need `mujoco==3.12.0` and the `ogbench-manipulation` extra. MuJoCo OpenGL draws
+Cube and Scene need `mujoco==3.17.0` and the `ogbench-manipulation` extra. MuJoCo OpenGL draws
 the frames on CPU (software OpenGL) and on CUDA (NVIDIA OpenGL). Physics runs on CPU with both renderers.
 
 - CPU frames are bit-exact. A draw of the same state gives the same frame each time.

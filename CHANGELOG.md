@@ -28,7 +28,8 @@ All notable changes to this project are listed here. The format follows
 - MS-Human-700: `MSHumanLocomotion` wraps the whole-body musculoskeletal locomotion model (36 DoF,
   100 muscles) on the MuJoCo Warp backend (`mshuman` extra). Physics and State run on the env device;
   frames come from MuJoCo's OpenGL renderer. The Apache-2.0 model is fetched from LNSGroup/MS-Human-700
-  at a pinned commit on first use, overridable with `STABLE_ENVS_MSHUMAN_HOME`.
+  at a pinned commit on first use, overridable with `STABLE_ENVS_MSHUMAN_HOME`. The extra needs
+  MuJoCo and MuJoCo Warp 3.17.
 - Classic control on CPU: a Numba kernel draws the same primitive records as the Triton kernel, in
   parallel over frames. `backend="auto"` and `backend="port"` use it when Numba imports; otherwise the
   CPU paths below apply. Frames are byte-identical to the Torch port. The `classic` extra installs
@@ -78,6 +79,8 @@ All notable changes to this project are listed here. The format follows
 
 - The `dmcontrol` and `dmcontrol-gpu` extras need MuJoCo 3.17 and dm_control 1.0.50, and `dmcontrol-gpu`
   installs MuJoCo Warp and MJX 3.17. The `ogbench` and `mjwarp` extras accept MuJoCo 3.17.
+- The `ogbench-manipulation` extras pin MuJoCo 3.17.0 (and MuJoCo Warp 3.17.0 for `-gpu`) with dm_control
+  1.0.50 or later, so they install next to `dmcontrol`.
 - DM Control steps every lane in one `mujoco.batch` call on CPU threads instead of worker processes. The
   `dmc_threads` knob sets the number of threads (8 by default), at most one per lane and one per CPU in
   the process affinity. The `workers` and `worker_min_lanes` knobs no longer apply to DM Control. Reacher
