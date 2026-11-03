@@ -67,6 +67,7 @@ names one.
 |---|---|---|---|---|
 | `workers` | 8 | min(value, CPUs in the process affinity, lanes) | not recorded | Most worker processes of a CPU simulator batch, or of a PushT render, on Linux. The value 0 steps every lane, and draws every PushT frame, in the main process. |
 | `worker_min_lanes` | 64 | per family, see [Worker defaults](#worker-defaults) | Xeon Platinum 8268 | Smallest batch that uses worker processes, or Fetch simulator threads. For PushT, the smallest number of rendered States that uses render workers. |
+| `worker_timeout` | 120 | none | not recorded | Seconds that a CPU simulator worker can take to answer one request before the batch fails. A worker can take up to the larger of this value and 300 seconds to start. Set a larger value for lanes whose reset or step takes minutes in one worker. |
 | `fetch_threads` | 4 | min(value, CPUs in the process affinity, lanes) | not recorded | Most simulator threads of an in-process Fetch batch. |
 | `dmc_threads` | 8 | min(value, CPUs in the process affinity, lanes) | not recorded | Most `mujoco.batch` threads of a DM Control batch, for CPU and CUDA output. MJX Reacher does not read it. |
 | `cpu3d_chunk` | 16 | none (TrackCom cells use a per-cell table) | Xeon Platinum 8268 | Frames per chunk of the Torch CPU ray caster (`cpu3d`, `backend="torch"`). The Numba kernel draws all frames in one call. |

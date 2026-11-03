@@ -8,6 +8,25 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- `Env.native_size`: the only frame width that a class draws, and also its `default_size`. The classic
+  control classes, `SimplePointMaze` and the Gaussian-dot navigation classes set it; it is None for the
+  classes that draw any size. `snv.info()` returns it.
+- `env.reference_inputs(state)` returns what the class's `reference_render` draws for a full State: the
+  compact render rows, or for PushT one dict of render fields per lane. `PushT.reference_env()` and
+  `PushT.reference_render()` draw these fields with the source's pygame code. A conformance check on every
+  registered class compares the shape of these frames with `env.render(state)`.
+- `env.render_rows(rows)` draws compact render rows, such as `sample_states` returns, without a full
+  State. `Env.row_render_devices` names the devices on which it can: `PyFlytRocketLanding` draws rows
+  only on CUDA, because TinyRenderer on CPU needs every body pose and the lagged camera.
+- `OGBCube.sample_states` and `OGBScene.sample_states` return render rows from OGBench's own seeded
+  resets followed by 0 to 25 random actions. Before, these classes did not sample rows.
+- Tuning knob `worker_timeout` (`STABLE_ENVS_WORKER_TIMEOUT`, default 120): the seconds a CPU simulator
+  worker can take to answer one request before the batch fails. Before, this limit was fixed at 120
+  seconds, which is too short for lanes whose reset takes minutes in one worker.
+- `Env.reference_gpu_render` tells how the source draws on a GPU: `"mujoco-egl"` for DM Control, Fetch
+  and OGBench, `"pybullet-egl"` for PyFlytRocketLanding, and None for sources that draw on CPU only.
+  `snv.info()` returns it.
+
 - Classic control `simulation_backend`: `CartPole`, `Pendulum`, `Acrobot`, `MountainCar` and
   `MountainCarContinuous` step all lanes in one batched float64 operation. With `"auto"`, the default,
   the lanes step in NumPy on the host, and 4096 or more CUDA lanes step in Torch. Below 2 lanes
@@ -56,6 +75,10 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- `OGBCube` and `OGBScene` compare with the original OGBench environments (`CubeEnv`, `SceneEnv`):
+  `reference_env()` builds the OGBench environment and `reference_render()` draws compact rows with its
+  own renderer. Before, the reference was the class itself with `backend="opengl"`.
+- The navigation attribute `fixed_size` is now `native_size`.
 - Worker processes start at smaller batches. Each simulator family sets its own `worker_min_lanes`
   default, measured from 1 to 64 lanes on 8 pinned Xeon Platinum 8268 cores against the source on the
   same cores. The default is 2 for DM Control, `PyFlytRocketLanding`, Fetch, the OGBench mazes and

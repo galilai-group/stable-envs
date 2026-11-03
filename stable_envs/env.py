@@ -338,7 +338,13 @@ class Env:
     state_names: tuple[str, ...] = ()
     requires_cuda: bool = False
     default_size: int = 96
+    #: The only frame width the class draws, which is then also ``default_size``; None draws any size.
+    native_size: int | None = None
     reference_id: str | None = None
+    #: Devices on which :meth:`render_rows` draws compact render rows.
+    row_render_devices: tuple[str, ...] = ("cpu", "cuda")
+    #: How the source draws on a GPU: ``"mujoco-egl"``, ``"pybullet-egl"``, or None when it draws on CPU only.
+    reference_gpu_render: str | None = None
     #: Variation leaves that change dynamics and must be excluded from appearance-only checks.
     dynamics_variation_leaves: frozenset[str] = frozenset()
     #: Variation leaves the source declares but never draws; appearance checks skip them too.
@@ -463,6 +469,27 @@ class Env:
         Families whose field of view depends on output resolution also accept ``size``.
         """
         raise NotImplementedError(f"{type(self).__name__} does not build a Scene2D; it must override render() instead")
+
+    def render_rows(self, rows, **kwargs) -> torch.Tensor:
+        """Draw ``(..., render_state_dim)`` compact render rows, such as :meth:`sample_states` returns.
+
+        Rows hold only what the frame shows, not a restorable State. Renderer options are as for :meth:`render`.
+        """
+        self._check_open("render_rows")
+        if self.device.type not in self.row_render_devices:
+            raise NotImplementedError(
+                f"{type(self).__name__} draws compact rows only on {', '.join(self.row_render_devices)}; "
+                "render a full State instead"
+            )
+        return self._render(torch.as_tensor(rows, device=self.device, dtype=torch.float32), **kwargs)
+
+    def reference_inputs(self, state: State) -> np.ndarray:
+        """Return what the class's ``reference_render`` draws for full State ``state``: its compact render rows.
+
+        Frame checks and benchmarks draw ``state`` with :meth:`render` and these inputs with the source.
+        """
+        self._check_open("reference_inputs")
+        return np.asarray(torch.as_tensor(self._pack_render_state(state)).detach().cpu(), np.float32)
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """Sample ``(batch, state_dim)`` compact renderer rows using the family sampler."""

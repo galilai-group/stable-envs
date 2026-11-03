@@ -20,6 +20,7 @@ knob does and its default.
 |---|---|
 | `STABLE_ENVS_WORKERS` | int (0 or more) |
 | `STABLE_ENVS_WORKER_MIN_LANES` | int |
+| `STABLE_ENVS_WORKER_TIMEOUT` | int |
 | `STABLE_ENVS_FETCH_THREADS` | int |
 | `STABLE_ENVS_DMC_THREADS` | int |
 | `STABLE_ENVS_CPU3D_CHUNK` | int |
