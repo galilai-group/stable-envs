@@ -206,8 +206,7 @@ def test_variation_anchors_model_restore_and_rejections(family):
             CLASSES[family](mode="data_collection")
         with pytest.raises(TypeError):
             CLASSES[family](multiview=True)
-        with pytest.raises(NotImplementedError, match="dataset sampling"):
-            a.sample_states(1)
+        assert a.sample_states(2, rng=np.random.default_rng(0)).shape == (2, a.state_dim)
         payload = copy.deepcopy(a._simulator.envs[0].task_infos[0])
         if family == "Cube":
             payload["init_xyzs"] = payload["init_xyzs"].tolist()
