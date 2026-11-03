@@ -4,8 +4,6 @@ This module has no task, episode or RNG policy. Its caller supplies native
 models and physical checkpoints, and only passes lanes that should integrate.
 """
 
-from __future__ import annotations
-
 from contextlib import contextmanager
 from dataclasses import fields
 from functools import cache
@@ -230,6 +228,103 @@ def _capsule_intersection_kernel():
     return repair_capsule_intersections
 
 
+@cache
+def _constraint_order_kernels():
+    @wp.struct
+    class Rows:
+        type: wp.array2d[int]
+        id: wp.array2d[int]
+        J: wp.array3d[float]
+        pos: wp.array2d[float]
+        margin: wp.array2d[float]
+        D: wp.array2d[float]
+        vel: wp.array2d[float]
+        aref: wp.array2d[float]
+        frictionloss: wp.array2d[float]
+        force: wp.array2d[float]
+        state: wp.array2d[int]
+        island: wp.array2d[int]
+        Jqvel: wp.array2d[float]
+
+    @wp.kernel
+    def order(
+        ngeom: int,
+        nobject: int,
+        ncontact: int,
+        nefc: wp.array[int],
+        rows: Rows,
+        geom: wp.array[wp.vec2i],
+        point: wp.array[int],
+        address: wp.array2d[int],
+        keys: wp.array2d[wp.int64],
+        permutation: wp.array2d[int],
+        inverse: wp.array2d[int],
+    ):
+        world = wp.tid()
+        capacity = permutation.shape[1]
+        count = wp.min(nefc[world], capacity)
+        # Cheetah has few active rows. Insertion sort visits only those rows,
+        # with independent worlds remaining parallel and no global atomics.
+        for row in range(count):
+            kind = rows.type[world, row]
+            obj = rows.id[world, row]
+            contact_point = int(0)  # noqa: UP018 - Warp needs a dynamic kernel variable.
+            component = row
+            if kind >= 5:  # MuJoCo's three contact constraint types.
+                contact_point = point[obj]
+                component = row - address[obj, 0]
+                pair = geom[obj]
+                obj = pair[0] * ngeom + pair[1]
+            key = (
+                (wp.int64(kind) * wp.int64(nobject) + wp.int64(obj)) * wp.int64(ncontact) + wp.int64(contact_point)
+            ) * wp.int64(capacity) + wp.int64(component)
+            cursor = row
+            while cursor > 0:
+                if keys[world, cursor - 1] <= key:
+                    break
+                keys[world, cursor] = keys[world, cursor - 1]
+                permutation[world, cursor] = permutation[world, cursor - 1]
+                cursor -= 1
+            keys[world, cursor] = key
+            permutation[world, cursor] = row
+        for row in range(count):
+            inverse[world, permutation[world, row]] = row
+
+    @wp.kernel
+    def copy_rows(nefc: wp.array[int], permutation: wp.array2d[int], gather: bool, source: Rows, target: Rows):
+        world, row = wp.tid()
+        if row >= nefc[world]:
+            return
+        old = row
+        if gather:
+            old = permutation[world, row]
+        target.type[world, row] = source.type[world, old]
+        target.id[world, row] = source.id[world, old]
+        target.pos[world, row] = source.pos[world, old]
+        target.margin[world, row] = source.margin[world, old]
+        target.D[world, row] = source.D[world, old]
+        target.vel[world, row] = source.vel[world, old]
+        target.aref[world, row] = source.aref[world, old]
+        target.frictionloss[world, row] = source.frictionloss[world, old]
+        target.force[world, row] = source.force[world, old]
+        target.state[world, row] = source.state[world, old]
+        target.island[world, row] = source.island[world, old]
+        target.Jqvel[world, row] = source.Jqvel[world, old]
+        for dof in range(source.J.shape[2]):
+            target.J[world, row, dof] = source.J[world, old, dof]
+
+    @wp.kernel
+    def remap(nacon: wp.array[int], world: wp.array[int], inverse: wp.array2d[int], address: wp.array2d[int]):
+        contact, component = wp.tid()
+        if contact >= nacon[0]:
+            return
+        old = address[contact, component]
+        if old >= 0 and old < inverse.shape[1]:
+            address[contact, component] = inverse[world[contact], old]
+
+    return Rows, order, copy_rows, remap
+
+
 class WarpSnapshot:
     """Borrowed B-first views, valid until the runtime is advanced or loaded."""
 
@@ -267,7 +362,7 @@ class WarpRuntime:
     subsequent loads copy values into stable buffers rather than replacing them.
     """
 
-    def __init__(self, models, device, nsubsteps):
+    def __init__(self, models, device, nsubsteps, *, ordered_constraints=False):
         _load_backend()
         self._capacity_overflow = sum(
             int(flag)
@@ -298,6 +393,7 @@ class WarpRuntime:
         self._warp_stream = wp.Stream(self._wp_device) if self.device.type == "cuda" else None
         self._torch_stream = wp.stream_to_torch(self._warp_stream) if self._warp_stream is not None else None
         self._graph = None
+        self._constraint_buffers = None
         self._model_fields = _batch_fields(mjw.Model)
         self._option_fields = _batch_fields(mjw.Option)
         self._reference = self.models[0]
@@ -343,7 +439,60 @@ class WarpRuntime:
             self._capsule_pairs = capsule_count > 1
             if self._plane_capsules or self._capsule_pairs:
                 self._m.callback.contactfilter = self._correct_contact_frames
+            if ordered_constraints:
+                if (
+                    self._m.is_sparse
+                    or self._m.nflex
+                    or self._reference.opt.enableflags & mujoco.mjtEnableBit.mjENBL_SLEEP
+                    or self._reference.opt.disableflags & mujoco.mjtDisableBit.mjDSBL_ACTUATION
+                ):
+                    raise ValueError("Ordered constraints require dense, awake rigid worlds with actuation enabled")
+                rows, *_ = _constraint_order_kernels()
+                source, scratch = rows(), rows()
+                for name in rows.vars:
+                    value = getattr(self._d.efc, name)
+                    setattr(source, name, value)
+                    setattr(scratch, name, wp.empty_like(value))
+                shape = (self.num_envs, self._d.njmax)
+                self._constraint_buffers = (
+                    source,
+                    scratch,
+                    wp.empty(shape, dtype=wp.int64),
+                    wp.empty(shape, dtype=int),
+                    wp.empty(shape, dtype=int),
+                )
+                # Warp 3.12 invokes this hook after building constraints and
+                # before solving, in both forward() and step1(). Keep ctrl intact.
+                self._m.callback.control = self._order_constraints
             self._upload_models(self.models)
+
+    def _order_constraints(self, model, data):
+        source, scratch, keys, permutation, inverse = self._constraint_buffers
+        _, order, copy_rows, remap = _constraint_order_kernels()
+        wp.launch(
+            order,
+            dim=data.nworld,
+            inputs=[
+                model.ngeom,
+                model.ngeom**2 + model.nv + model.neq,
+                data.naconmax,
+                data.nefc,
+                source,
+                data.contact.geom,
+                data.contact.geomcollisionid,
+                data.contact.efc_address,
+                keys,
+                permutation,
+                inverse,
+            ],
+        )
+        wp.launch(copy_rows, dim=permutation.shape, inputs=[data.nefc, permutation, True, source, scratch])
+        wp.launch(copy_rows, dim=permutation.shape, inputs=[data.nefc, permutation, False, scratch, source])
+        wp.launch(
+            remap,
+            dim=data.contact.efc_address.shape,
+            inputs=[data.nacon, data.contact.worldid, inverse, data.contact.efc_address],
+        )
 
     def _correct_contact_frames(self, model, data):
         if self._plane_capsules:
@@ -589,6 +738,7 @@ class WarpRuntime:
                 self._torch_stream.wait_stream(torch.cuda.current_stream(self.device))
                 self._torch_stream.synchronize()
             self._graph = self._m = self._d = None
+            self._constraint_buffers = None
             self._acc_indices = self._acc_values = None
             self._fixed_indices = self._fixed_positions = self._fixed_rotations = None
             self._native_model_views.clear()

@@ -1,4 +1,4 @@
-"""Native regressions for the two corrected MuJoCo Warp 3.12 contact cases."""
+"""Core regressions for MuJoCo Warp 3.12 contact geometry and constraint ordering."""
 
 from contextlib import closing
 
@@ -102,3 +102,69 @@ def test_intersecting_capsules_use_native_normal_and_position(device):
         models.append(model)
         datas.append(data)
     _check_contact_step(models, datas, device)
+
+
+@pytest.mark.parametrize("device", DEVICES)
+def test_constraint_order_preserves_contact_impulses(device):
+    model = mujoco.MjModel.from_xml_string("""<mujoco>
+      <option timestep=".005" cone="pyramidal" iterations="100" tolerance="1e-8"/>
+      <worldbody><geom type="plane" size="1 1 .1"/>
+        <body pos="0 0 .045"><freejoint/>
+          <geom type="capsule" fromto="-.2 0 0 .2 0 0" size=".05"/>
+        </body>
+        <body pos="0 0 1"><joint limited="true" range="-20 20"/>
+          <geom type="capsule" fromto="0 0 0 .2 0 0" size=".03"/>
+        </body>
+      </worldbody></mujoco>""")
+    datas = [mujoco.MjData(model) for _ in range(2)]
+    for lane, data in enumerate(datas):
+        data.qpos[-1] = 0.5
+        data.qpos[2] += lane * 0.5
+        data.qvel[:] = np.linspace(-0.3, 0.2, model.nv)
+        mujoco.mj_forward(model, data)
+    assert [data.ncon for data in datas] == [2, 0]
+    state = TensorDict(
+        {
+            "qpos": torch.tensor(np.stack([d.qpos for d in datas])),
+            "qvel": torch.tensor(np.stack([d.qvel for d in datas])),
+            "time": torch.zeros(2, 1),
+            "warmstart": torch.zeros(2, model.nv),
+        },
+        [2],
+    ).to(device)
+    with closing(WarpRuntime([model, model], device, 1, ordered_constraints=True)) as runtime:
+        import warp as wp
+
+        runtime.load(state)
+        controls = torch.empty(2, 0, device=device)
+        runtime.advance(controls)
+        expected = runtime.physical_state()
+        runtime.load(state)
+        with runtime._scope():
+            data = runtime._d
+            count = int(data.nefc.numpy()[0])
+            assert count == 9
+            rows = runtime._constraint_buffers[0]
+            before = {name: wp.to_torch(getattr(rows, name)).clone() for name in rows._cls.vars}
+            addresses = wp.to_torch(data.contact.efc_address)
+            old_addresses = addresses.clone()
+            # Exchange lane 0's contact blocks and move its joint limit last,
+            # retaining the four local friction rows. Lane 1 stays intact.
+            order = torch.tensor([5, 6, 7, 8, 1, 2, 3, 4, 0], device=device)
+            inverse = torch.argsort(order)
+            for name, saved in before.items():
+                wp.to_torch(getattr(rows, name))[0, :count].copy_(saved[0, order])
+            world = wp.to_torch(data.contact.worldid)
+            active = torch.arange(data.naconmax, device=device) < wp.to_torch(data.nacon)[0]
+            mask = active[:, None] & (world[:, None] == 0) & (old_addresses >= 0)
+            addresses.copy_(torch.where(mask, inverse[old_addresses.clamp(0, count - 1).long()], old_addresses))
+            runtime._order_constraints(runtime._m, data)
+            for name, saved in before.items():
+                torch.testing.assert_close(wp.to_torch(getattr(rows, name)), saved, atol=0, rtol=0, equal_nan=True)
+            torch.testing.assert_close(addresses, old_addresses, atol=0, rtol=0)
+        runtime.advance(controls)
+        for name, value in expected.items():
+            torch.testing.assert_close(runtime.physical_state()[name], value, atol=0, rtol=0)
+        for data in datas:
+            mujoco.mj_step2(model, data)
+        np.testing.assert_allclose(expected["qvel"].cpu(), np.stack([d.qvel for d in datas]), atol=4e-5, rtol=4e-5)

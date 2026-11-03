@@ -62,13 +62,20 @@ For Warp 3.12 the runtime corrects plane–capsule friction frames and intersect
 follow native MuJoCo's [primitive collisions](https://github.com/google-deepmind/mujoco/blob/3.12.0/src/engine/engine_collision_primitive.c).
 The latter correction uses float64 scratch arithmetic; stored dynamics and integration remain float32.
 Focused tests compare the corrected contacts against native MuJoCo.
+Cheetah also orders joint-limit and contact constraints consistently before each solve, including
+after checkpoint restoration and mixed resets. This removes replay variation caused by parallel
+constraint allocation; the solver equations, contacts and iteration settings stay unchanged.
 
 ### Validation status
 
 This backend is experimental. The implementation has passed CUDA integration for all 16 classes,
 including checkpoint ownership/restoration and rendering captured States. Full numerical source and
-resumed-rollout acceptance remains unfinished. Follow-up covers FingerSpin contact warmstart,
-Cheetah/Manipulator replay, PointMass near-target reward coverage, and full revalidation after the
+resumed-rollout acceptance remains unfinished. Cheetah's ordering fix passed 60 repeated CUDA replay
+comparisons (including 30 on fresh seeds), 100 independent CPU-reference comparisons and checks that
+reject missing action repetition, wrong controls and disabled contacts. The measured eight-step
+replays were bitwise identical; this is not a guarantee for arbitrary horizons or different devices.
+Follow-up covers FingerSpin contact warmstart, Manipulator replay, PointMass near-target reward
+coverage, and full revalidation after the
 Humanoid/Hopper contact corrections. Exact State restoration and identical-State rendering are
 separate from numerical agreement after advancing physics. Existing thresholds and frozen fixtures
 have not been loosened.
@@ -83,6 +90,10 @@ All 16 environments were measured with native and Warp at batches 1, 16, 64, 256
 one Torch thread per process, seed 0, zero normalized actions, five warmups and ten synchronized
 samples. Each case used a fresh process. Both backends returned CUDA tensors; native physics ran on
 CPU. `python benchmarks/dmc_mjwarp.py --help` describes how to repeat the measurements.
+The all-environment sweep below predates the Cheetah constraint-ordering fix. A matched RTX A6000
+check at the same five batch sizes, with ten warmups and 40 synchronized samples, measured 4–11%
+additional raw-physics latency and at most 1.4% additional median public-step latency for Cheetah.
+The ordering scratch buffers use 56 MiB at batch 1024. Other environments do not enable this ordering.
 
 The geometric mean of native median latency divided by Warp median latency is below. Values above
 1 favor Warp. Public stepping includes final owned State and task outputs; the frame column adds

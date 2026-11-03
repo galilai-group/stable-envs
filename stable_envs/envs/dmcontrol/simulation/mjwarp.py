@@ -78,7 +78,9 @@ class DMCWarpAdapter(SimulatorAdapter):
             self._scale = torch.as_tensor(
                 (spec.maximum - spec.minimum).copy() / 2, device=self.device, dtype=torch.float64
             )
-            self._runtime = WarpRuntime(self._models, self.device, self._nsubsteps)
+            self._runtime = WarpRuntime(
+                self._models, self.device, self._nsubsteps, ordered_constraints=self.key == "cheetah"
+            )
             # make_local already performed the registered initial reset. Warm-up
             # must not draw another source reset or change its RNG sequence.
             self._install(self._source.get_state())
@@ -256,7 +258,12 @@ class DMCWarpAdapter(SimulatorAdapter):
                 if self._scratch is None or self._scratch.num_envs != len(continuing):
                     if self._scratch is not None:
                         self._scratch.close()
-                    self._scratch = WarpRuntime([self._models[i] for i in continuing], self.device, self._nsubsteps)
+                    self._scratch = WarpRuntime(
+                        [self._models[i] for i in continuing],
+                        self.device,
+                        self._nsubsteps,
+                        ordered_constraints=self.key == "cheetah",
+                    )
                 ids = torch.as_tensor(continuing, device=self.device)
                 self._scratch.load(self._state[ids], models=[self._models[i] for i in continuing])
                 self._scratch.advance(controls[ids])
