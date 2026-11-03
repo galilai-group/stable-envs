@@ -210,7 +210,9 @@ def _rollouts(env, n: int, seed: int, steps: int, every: int, reference: bool):
     while have < n:
         env.reset(seed=int(rng.integers(0, 2**31 - 1)))
         for t in range(steps + 1):
-            if t % every == 0:
+            # The first State is saved after ``every`` actions: right after a reset some classes (Rocket) hold
+            # pose rows that the first step fills.
+            if t and t % every == 0:
                 st = env.get_state()
                 if reference:
                     inputs.append(env.reference_inputs(st))
