@@ -32,19 +32,25 @@ def _check_contact_step(models, datas, device):
         },
         [len(models)],
     )
-    assert all(data.ncon == 1 for data in datas)
     with closing(WarpRuntime(models, device, 1)) as runtime:
         runtime.load(state.to(device))
         count = int(runtime._d.nacon.numpy()[0])
-        worlds = runtime._d.contact.worldid.numpy()[:count]
-        assert sorted(worlds.tolist()) == list(range(len(models)))
-        for index, world in enumerate(worlds):
-            expected = datas[world].contact[0]
-            for name in ("frame", "pos", "dist"):
-                actual = getattr(runtime._d.contact, name).numpy()[index]
-                np.testing.assert_allclose(
-                    actual, np.asarray(getattr(expected, name)).reshape(actual.shape), atol=8e-7, rtol=8e-7
-                )
+        contacts = runtime._d.contact
+        worlds = contacts.worldid.numpy()[:count]
+        active = contacts.type.numpy()[:count] != 0
+        # Touch sensors use constraint addresses, including for inactive slots.
+        assert (contacts.efc_address.numpy()[:count][~active] == -1).all()
+        np.testing.assert_array_equal(runtime._d.nefc.numpy(), [data.nefc for data in datas])
+        for world, data in enumerate(datas):
+            indices = np.flatnonzero(active & (worlds == world))
+            indices = indices[np.argsort(contacts.geomcollisionid.numpy()[indices])]
+            assert len(indices) == data.ncon
+            for index, expected in zip(indices, data.contact, strict=True):
+                for name in ("frame", "pos", "dist"):
+                    actual = getattr(contacts, name).numpy()[index]
+                    np.testing.assert_allclose(
+                        actual, np.asarray(getattr(expected, name)).reshape(actual.shape), atol=8e-7, rtol=8e-7
+                    )
         # Integrating the native constraint proves that contact geometry also
         # produces the correct impulse, rather than matching diagnostics only.
         for model, data in zip(models, datas, strict=True):
@@ -57,6 +63,9 @@ def _check_contact_step(models, datas, device):
         )
         np.testing.assert_allclose(
             physical["qvel"].cpu(), np.stack([data.qvel for data in datas]), atol=4e-5, rtol=4e-5
+        )
+        np.testing.assert_allclose(
+            runtime._d.sensordata.numpy(), np.stack([data.sensordata for data in datas]), atol=4e-5, rtol=4e-5
         )
 
 
@@ -101,6 +110,29 @@ def test_intersecting_capsules_use_native_normal_and_position(device):
         mujoco.mj_forward(model, data)
         models.append(model)
         datas.append(data)
+    _check_contact_step(models, datas, device)
+
+
+@pytest.mark.parametrize("device", DEVICES)
+def test_near_parallel_capsules_preserve_contacts_and_impulses(device):
+    models, datas = [], []
+    # Opposite tilts choose opposite endpoints. Exactly parallel capsules keep
+    # both contacts; the separated lane must receive neither impulses nor touch.
+    for tilt, offset in ((3e-5, 0.055), (-3e-5, 0.055), (0, 0.055), (3e-5, 1)):
+        model = mujoco.MjModel.from_xml_string(f'''<mujoco>
+          <option timestep=".005" iterations="100" tolerance="1e-8" gravity="0 0 0"/>
+          <worldbody><geom type="capsule" size=".03 .125"/>
+            <body pos="{offset} 0 .05"><freejoint/>
+              <geom type="capsule" size=".03 .125" zaxis="{tilt} 0 1"/>
+              <site name="touch" type="sphere" size=".3"/>
+            </body>
+          </worldbody><sensor><touch site="touch"/></sensor></mujoco>''')
+        data = mujoco.MjData(model)
+        data.qvel[:] = [0.1, 0.2, -0.1, 0.05, 0.1, 0]
+        mujoco.mj_forward(model, data)
+        models.append(model)
+        datas.append(data)
+    assert [data.ncon for data in datas] == [1, 1, 2, 0]
     _check_contact_step(models, datas, device)
 
 

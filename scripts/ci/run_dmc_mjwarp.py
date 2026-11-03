@@ -46,6 +46,8 @@ def main():
             + "::test_constraint_order_preserves_contact_impulses[cuda]",
             str(ROOT / "tests/unit/test_dmc_mjwarp_contacts.py")
             + "::test_elliptic_contact_reduction_preserves_impulses[cuda]",
+            str(ROOT / "tests/unit/test_dmc_mjwarp_contacts.py")
+            + "::test_near_parallel_capsules_preserve_contacts_and_impulses[cuda]",
             "-ra",
         ],
         plugins=[RequireEveryCase()],

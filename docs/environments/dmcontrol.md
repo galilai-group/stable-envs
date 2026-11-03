@@ -58,10 +58,14 @@ remain authoritative for resets and RNG. A pending reset consumes a control roun
 continuing lanes use a compact scratch runtime. A changed active-lane count requires a new scratch
 allocation, so mixed resets can cost more than steady-state stepping.
 
-For Warp 3.12 the runtime corrects plane–capsule friction frames and intersecting-capsule normals to
+For Warp 3.12 the runtime corrects plane–capsule friction frames and capsule–capsule geometry to
 follow native MuJoCo's [primitive collisions](https://github.com/google-deepmind/mujoco/blob/3.12.0/src/engine/engine_collision_primitive.c).
-The latter correction uses float64 scratch arithmetic; stored dynamics and integration remain float32.
-Focused tests compare the corrected contacts against native MuJoCo.
+The capsule correction uses float64 local arithmetic for closest points and intersecting-axis normals.
+This avoids choosing the wrong endpoint or creating a duplicate constraint for nearly parallel
+capsules, as observed in Hopper. Genuinely parallel pairs retain upstream handling; stored dynamics
+and integration remain float32. Focused tests compare contact geometry, impulses and touch sensors
+against native MuJoCo. Acceleration-stage readings are cleared before stepping so touch forces do
+not accumulate from checkpoint reconstruction.
 Cheetah also orders joint-limit and contact constraints consistently before each solve, including
 after checkpoint restoration and mixed resets. This removes replay variation caused by parallel
 constraint allocation; the solver equations, contacts and iteration settings stay unchanged.
@@ -74,15 +78,21 @@ and factorization kernels, with the original warmstart and iteration settings.
 
 This backend is experimental. The implementation has passed CUDA integration for all 16 classes,
 including checkpoint ownership/restoration and rendering captured States. Full numerical source and
-resumed-rollout acceptance remains unfinished. Cheetah and Manipulator each passed 60 repeated CUDA
+resumed-rollout acceptance remains unfinished. Earlier Cheetah and Manipulator checks each passed 60 repeated CUDA
 replay comparisons (including 30 on fresh seeds), 100 independent CPU-reference comparisons and
 checks that reject missing action repetition, wrong controls and disabled contacts. Their measured
 eight-step replays were exactly equal; this is not a guarantee for arbitrary horizons or different
 devices. Manipulator also passed mixed resets, strided actions and nondefault-stream replay.
-Follow-up covers FingerSpin contact warmstart, PointMass near-target reward coverage, and full
-revalidation after the
-Humanoid/Hopper contact corrections. Exact State restoration and identical-State rendering are
-separate from numerical agreement after advancing physics. Existing thresholds and frozen fixtures
+On Hopper's recorded near-parallel contact case, the capsule correction reduced maximum eight-step
+velocity error from 2.42 to 0.0000243 and position error from 0.0090 to 0.00000127 against native MuJoCo.
+The subsequent Titan RTX run passed 100 source comparisons each for Hopper, Humanoid, Cheetah and
+Manipulator; FingerSpin retained one known warmstart failure in 80 trials. All 140 replay comparisons
+met unchanged bounds, including 60 exact Hopper replays. Some Humanoid and Manipulator replays had
+bounded differences, so the earlier exact results do not establish universal determinism.
+Follow-up covers FingerSpin contact warmstart, PointMass near-target reward coverage, and fresh
+calibration and fault-sensitivity checks for contact-heavy trajectories. Hopper's historical
+eight-step bounds are too broad to certify correctness. Exact State restoration and identical-State
+rendering are separate from numerical agreement after advancing physics. Existing thresholds and frozen fixtures
 have not been loosened.
 
 Run the focused CUDA checks with `python scripts/ci/run_dmc_mjwarp.py`; missing CUDA or skipped
@@ -95,12 +105,16 @@ All 16 environments were measured with native and Warp at batches 1, 16, 64, 256
 one Torch thread per process, seed 0, zero normalized actions, five warmups and ten synchronized
 samples. Each case used a fresh process. Both backends returned CUDA tensors; native physics ran on
 CPU. `python benchmarks/dmc_mjwarp.py --help` describes how to repeat the measurements.
-The all-environment sweep below predates the Cheetah and Manipulator solver fixes. A matched RTX A6000
+The all-environment sweep below predates the Cheetah, Manipulator and Hopper fixes. A matched RTX A6000
 check at the same five batch sizes, with ten warmups and 40 synchronized samples, measured 4–11%
 additional raw-physics latency and at most 1.4% additional median public-step latency for Cheetah.
 The ordering scratch buffers use 56 MiB at batch 1024. Other environments do not enable this ordering.
 For Manipulator, the same matched protocol measured 0–7% lower raw-physics latency; median public-step
 latency changed by between -1.3% and +1.6%. These checks used zero actions and exclude warm-up/capture.
+Hopper's matched follow-up used a Titan RTX with the same five batches, ten warmups and 40 samples.
+Raw-physics median latency changed by -28.1% to +4.2%; public-step medians changed by -0.3% to +10.3%.
+These measurements compare the contact correction with its parent implementation; they do not
+refresh the all-environment native/Warp curves below.
 
 The geometric mean of native median latency divided by Warp median latency is below. Values above
 1 favor Warp. Public stepping includes final owned State and task outputs; the frame column adds

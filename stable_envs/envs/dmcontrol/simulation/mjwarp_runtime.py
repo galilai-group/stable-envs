@@ -130,13 +130,13 @@ def _plane_capsule_frame_kernel():
 
 
 @cache
-def _capsule_intersection_kernel():
-    # Native mjraw_SphereSphere uses the capsule-axis cross product when
-    # centerlines intersect. Float32 nearest-point cancellation can invent a
-    # separation and an arbitrary normal. Evaluate only this geometric test
-    # in float64, retaining MuJoCo's mjMINVAL rather than widening tolerance.
+def _capsule_contact_kernel():
+    # The capsule closest-point determinant loses its sign near parallel
+    # axes in float32, moving the contact or emitting a second one. Compute
+    # native geometry in float64, retaining MuJoCo's mjMINVAL. Live physics
+    # remains float32; genuine parallel pairs keep the upstream two contacts.
     @wp.kernel
-    def repair_capsule_intersections(
+    def repair_capsule_contacts(
         geom_type: wp.array[int],
         geom_size: wp.array2d[wp.vec3],
         geom_xpos: wp.array2d[wp.vec3],
@@ -147,6 +147,8 @@ def _capsule_intersection_kernel():
         distance: wp.array[float],
         position: wp.array[wp.vec3],
         frame: wp.array[wp.mat33],
+        collision_id: wp.array[int],
+        contact_type: wp.array[int],
     ):
         index = wp.tid()
         if index >= nacon[0]:
@@ -179,6 +181,11 @@ def _capsule_intersection_kernel():
         # Parallel axes have up to two contacts, handled by the original primitive.
         if wp.abs(determinant) < 1.0e-15:
             return
+        # Native nonparallel pairs have one contact. Disable the extra slot
+        # before constraint/sensor assembly without moving captured buffers.
+        if collision_id[index] > 0:
+            contact_type[index] = 0
+            return
         x1 = (mc * u - mb * v) / determinant
         x2 = (ma * v - mb * u) / determinant
         if x1 > 1.0:
@@ -196,9 +203,11 @@ def _capsule_intersection_kernel():
         closest1 = p1 + axis1 * x1
         closest2 = p2 + axis2 * x2
         separation = wp.length(closest2 - closest1)
-        if separation >= 1.0e-15:
-            return
-        normal = wp.cross(z1, z2)
+        normal = closest2 - closest1
+        # Native mjraw_SphereSphere uses the axis cross product at an
+        # intersection, where nearest-point cancellation cannot give a normal.
+        if separation < 1.0e-15:
+            normal = wp.cross(z1, z2)
         length = wp.length(normal)
         if length < 1.0e-15:
             normal = wp.vec3d(1.0, 0.0, 0.0)
@@ -225,7 +234,7 @@ def _capsule_intersection_kernel():
         distance[index] = wp.float32(dist)
         position[index] = wp.vec3(wp.float32(center[0]), wp.float32(center[1]), wp.float32(center[2]))
 
-    return repair_capsule_intersections
+    return repair_capsule_contacts
 
 
 @cache
@@ -706,7 +715,7 @@ class WarpRuntime:
             )
         if self._capsule_pairs:
             wp.launch(
-                _capsule_intersection_kernel(),
+                _capsule_contact_kernel(),
                 dim=data.naconmax,
                 inputs=[
                     model.geom_type,
@@ -719,6 +728,8 @@ class WarpRuntime:
                     data.contact.dist,
                     data.contact.pos,
                     data.contact.frame,
+                    data.contact.geomcollisionid,
+                    data.contact.type,
                 ],
                 device=self._wp_device,
             )
@@ -866,6 +877,9 @@ class WarpRuntime:
         # dm_control Physics.legacy_step refreshes position/velocity after the
         # integration while retaining acceleration-stage sensors from that step.
         sensors = self._data_view("sensordata")
+        # load() computed acceleration sensors already. Warp's step2 adds
+        # touch forces without clearing them; native sensorAcc starts afresh.
+        sensors.index_fill_(1, self._acc_indices, 0)
         if self._elliptic_solver is not None:
             for substep in range(self.nsubsteps):
                 self._elliptic_forward()
