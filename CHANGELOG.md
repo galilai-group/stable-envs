@@ -14,6 +14,8 @@ All notable changes to this project are listed here. The format follows
   source/replay acceptance remains unfinished. See the DMC documentation for limitations and
   measured performance across all 16 tasks. Cheetah uses stable constraint ordering to remove
   replay variation from parallel contact allocation, with unchanged numerical acceptance bounds.
+  Manipulator uses ordered elliptic Hessian accumulation within each world to remove another source
+  of replay variation, retaining the upstream Newton equations and unchanged acceptance bounds.
 - MS-Human-700: `MSHumanLocomotion` wraps the whole-body musculoskeletal locomotion model (36 DoF,
   100 muscles) on the MuJoCo Warp backend (`mshuman` extra). Physics and State run on the env device;
   frames come from MuJoCo's OpenGL renderer. The Apache-2.0 model is fetched from LNSGroup/MS-Human-700

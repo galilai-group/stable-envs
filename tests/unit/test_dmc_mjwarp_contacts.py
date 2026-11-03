@@ -168,3 +168,63 @@ def test_constraint_order_preserves_contact_impulses(device):
         for data in datas:
             mujoco.mj_step2(model, data)
         np.testing.assert_allclose(expected["qvel"].cpu(), np.stack([d.qvel for d in datas]), atol=4e-5, rtol=4e-5)
+
+
+@pytest.mark.parametrize("device", DEVICES)
+def test_elliptic_contact_reduction_preserves_impulses(device):
+    import warp as wp
+
+    model = mujoco.MjModel.from_xml_string("""<mujoco>
+      <option timestep=".005" cone="elliptic" solver="Newton" iterations="100" tolerance="1e-8"/>
+      <worldbody><geom type="plane" size="1 1 .1"/>
+        <body pos="0 0 .045"><freejoint/>
+          <geom type="sphere" size=".05" pos="-.15 -.1 0"/>
+          <geom type="sphere" size=".05" pos=".15 -.1 0"/>
+          <geom type="sphere" size=".05" pos="0 .15 0"/>
+        </body>
+      </worldbody></mujoco>""")
+    datas = [mujoco.MjData(model) for _ in range(2)]
+    for lane, data in enumerate(datas):
+        data.qpos[2] += lane
+        data.qvel[:] = [1, 0.7, -0.3, 0.1, 0.2, 0.3]
+        mujoco.mj_forward(model, data)
+    state = TensorDict(
+        {
+            "qpos": torch.tensor(np.stack([d.qpos for d in datas])),
+            "qvel": torch.tensor(np.stack([d.qvel for d in datas])),
+            "time": torch.zeros(2, 1),
+            "warmstart": torch.zeros(2, model.nv),
+        },
+        [2],
+    ).to(device)
+    with closing(WarpRuntime([model, model], device, 1, ordered_elliptic=True)) as runtime:
+        runtime.load(state)
+        with runtime._scope():
+            data, solver = runtime._d, runtime._elliptic_solver
+            assert data.nefc.numpy().tolist() == [9, 0]
+            assert (data.efc.state.numpy()[0, :9] == mujoco.mjtConstraintState.mjCNSTRSTATE_CONE).all()
+            solver.ctx.done.zero_()
+            solver.gradient()
+            expected_h = wp.to_torch(solver.ctx.h).clone()
+            # Contact storage may be allocated in a different order on CUDA.
+            # Keep physical constraint rows fixed and reverse their contact IDs.
+            order = torch.tensor([2, 1, 0], device=device)
+            for name in ("friction", "dim", "efc_address"):
+                view = wp.to_torch(getattr(data.contact, name))
+                view[:3].copy_(view[:3][order])
+            ids = wp.to_torch(data.efc.id)
+            ids[0, :9] = order[ids[0, :9].long()]
+            for _ in range(10):
+                solver.gradient()
+                torch.testing.assert_close(wp.to_torch(solver.ctx.h), expected_h, atol=0, rtol=0)
+        controls = torch.empty(2, 0, device=device)
+        runtime.load(state)
+        runtime.advance(controls)
+        expected = runtime.physical_state()
+        runtime.load(state)
+        runtime.advance(controls)
+        for name, value in expected.items():
+            torch.testing.assert_close(runtime.physical_state()[name], value, atol=0, rtol=0)
+        for data in datas:
+            mujoco.mj_step2(model, data)
+        np.testing.assert_allclose(expected["qvel"].cpu(), np.stack([d.qvel for d in datas]), atol=4e-5, rtol=4e-5)

@@ -325,6 +325,196 @@ def _constraint_order_kernels():
     return Rows, order, copy_rows, remap
 
 
+@cache
+def _elliptic_hessian_kernel():
+    from mujoco_warp._src import math, solver, types
+
+    # MuJoCo Warp 3.12 adds elliptic contact curvature to H with floating-point
+    # atomics. Give each (world, matrix entry) one writer in constraint-row order.
+    # Reuse the upstream curvature formula and retain parallelism across worlds.
+    @wp.kernel
+    def accumulate(
+        impratio: wp.array[float],
+        tri_row: wp.array[int],
+        tri_col: wp.array[int],
+        nefc: wp.array[int],
+        efc_type: wp.array2d[int],
+        efc_id: wp.array2d[int],
+        friction: wp.array[types.vec5],
+        dimension: wp.array[int],
+        address: wp.array2d[int],
+        jacobian: wp.array3d[float],
+        diagonal: wp.array2d[float],
+        state: wp.array2d[int],
+        jaref: wp.array2d[float],
+        done: wp.array[bool],
+        hessian: wp.array3d[float],
+    ):
+        world, element = wp.tid()
+        if done[world]:
+            return
+        dof1, dof2 = tri_row[element], tri_col[element]
+        value = hessian[world, dof1, dof2]
+        for row in range(wp.min(nefc[world], state.shape[1])):
+            if efc_type[world, row] != types.ConstraintType.CONTACT_ELLIPTIC:
+                continue
+            contact = efc_id[world, row]
+            if address[contact, 0] != row or state[world, row] != types.ConstraintState.CONE:
+                continue
+            fri = friction[contact]
+            mu = fri[0] * impratio[world % impratio.shape[0]]
+            mu2 = mu * mu
+            dm = math.safe_div(diagonal[world, row], mu2 * (1.0 + mu2))
+            if dm == 0.0:
+                continue
+            n = jaref[world, row] * mu
+            z01, z02 = mu * jacobian[world, row, dof1], mu * jacobian[world, row, dof2]
+            tt = float(0.0)  # noqa: UP018 - Warp needs dynamic loop accumulators.
+            projection1 = float(0.0)  # noqa: UP018
+            projection2 = float(0.0)  # noqa: UP018
+            tangent_dot = float(0.0)  # noqa: UP018
+            for component in range(1, dimension[contact]):
+                efcid = address[contact, component]
+                if efcid >= 0:
+                    scale = fri[component - 1]
+                    u = jaref[world, efcid] * scale
+                    z1, z2 = scale * jacobian[world, efcid, dof1], scale * jacobian[world, efcid, dof2]
+                    tt += u * u
+                    projection1 += u * z1
+                    projection2 += u * z2
+                    tangent_dot += z1 * z2
+            t = wp.max(wp.sqrt(tt), types.MJ_MINVAL)
+            ttt = wp.max(t * t * t, types.MJ_MINVAL)
+            mu_tinv = math.safe_div(mu, t)
+            value += solver._elliptic_hessian_entry_from_projections(
+                dm,
+                mu_tinv,
+                mu * math.safe_div(n, ttt),
+                mu2 - n * mu_tinv,
+                z01,
+                z02,
+                projection1,
+                projection2,
+                tangent_dot,
+            )
+        hessian[world, dof1, dof2] = value
+
+    return accumulate
+
+
+class _DenseEllipticSolver:
+    """The 3.12 dense Newton loop with ordered elliptic Hessian accumulation.
+
+    Solver kernels, line search, convergence, warmstart and tolerances remain
+    upstream's. Context and reduction buffers belong only to this runtime.
+    """
+
+    def __init__(self, model, data):
+        from mujoco_warp._src import solver, types
+
+        self._solver, self._types = solver, types
+        self.m, self.d = model, data
+        if (
+            model.is_sparse
+            or model.opt.solver != types.SolverType.NEWTON
+            or model.opt.cone != types.ConeType.ELLIPTIC
+            or model.opt.enableflags & types.EnableBit.SLEEP
+            or model.nflex
+            or not model.nv
+            or not data.njmax
+        ):
+            raise ValueError("Ordered elliptic solving requires dense, awake rigid Newton worlds")
+        self.ctx = solver._create_solver_context(model, data)
+        self.nsolving = wp.empty(1, dtype=int)
+
+    def gradient(self):
+        m, d, ctx = self.m, self.d, self.ctx
+        solver, types = self._solver, self._types
+        wp.launch(
+            solver._update_gradient_zero_grad_dot(False),
+            dim=d.nworld,
+            inputs=[d.nefc, ctx.alpha, ctx.done],
+            outputs=[ctx.grad_dot, ctx.newton_decrement, ctx.grad_scale, ctx.search_unchanged],
+        )
+        wp.launch(
+            solver._update_gradient_grad(False),
+            dim=(d.nworld, m.nv),
+            inputs=[d.qfrc_smooth, d.qfrc_constraint, d.efc.Ma, d.nefc, ctx.done],
+            outputs=[ctx.grad, ctx.grad_dot],
+        )
+        wp.launch_tiled(
+            solver._update_gradient_JTDAJ_dense_tiled(
+                m.nv_pad, types.TILE_SIZE_JTDAJ_DENSE, d.njmax, m.M_colind.shape[0]
+            ),
+            dim=d.nworld,
+            inputs=[m.M_colind, m.M_hinit_i, d.nefc, d.M, d.efc.J, d.efc.D, d.efc.state, ctx.done],
+            outputs=[ctx.h],
+            block_dim=m.block_dim.update_gradient_JTDAJ_dense,
+        )
+        wp.launch(
+            _elliptic_hessian_kernel(),
+            dim=(d.nworld, m.dof_tri_row.size),
+            inputs=[
+                m.opt.impratio_invsqrt,
+                m.dof_tri_row,
+                m.dof_tri_col,
+                d.nefc,
+                d.efc.type,
+                d.efc.id,
+                d.contact.friction,
+                d.contact.dim,
+                d.contact.efc_address,
+                d.efc.J,
+                d.efc.D,
+                d.efc.state,
+                ctx.Jaref,
+                ctx.done,
+            ],
+            outputs=[ctx.h],
+        )
+        solver._cholesky_factorize_solve(m, d, ctx)
+
+    def iteration(self):
+        m, d, ctx = self.m, self.d, self.ctx
+        solver = self._solver
+        solver._linesearch(m, d, ctx)
+        solver._update_constraint(m, d, ctx)
+        self.gradient()
+        wp.launch(
+            solver._solve_done(bool(m.opt.warn_overflow)),
+            dim=d.nworld,
+            inputs=[
+                m.nv,
+                m.opt.tolerance,
+                m.opt.iterations,
+                m.stat.meaninertia,
+                ctx.grad_dot,
+                ctx.newton_decrement,
+                ctx.improvement,
+                ctx.done,
+            ],
+            outputs=[d.solver_niter, d.overflow, self.nsolving, ctx.done],
+        )
+
+    def solve(self):
+        m, d, ctx = self.m, self.d, self.ctx
+        solver, types = self._solver, self._types
+        wp.launch(
+            solver._solve_init_dof(not (m.opt.disableflags & types.DisableBit.WARMSTART), False),
+            dim=(d.nworld, m.nv),
+            inputs=[d.nefc, d.qacc_warmstart, d.qacc_smooth],
+            outputs=[d.qacc, d.qfrc_constraint],
+        )
+        solver.init_context(m, d, ctx, grad=False)
+        self.gradient()
+        self.nsolving.fill_(d.nworld)
+        if m.opt.iterations and m.opt.graph_conditional:
+            wp.capture_while(self.nsolving, while_body=self.iteration)
+        else:
+            for _ in range(m.opt.iterations):
+                self.iteration()
+
+
 class WarpSnapshot:
     """Borrowed B-first views, valid until the runtime is advanced or loaded."""
 
@@ -362,7 +552,7 @@ class WarpRuntime:
     subsequent loads copy values into stable buffers rather than replacing them.
     """
 
-    def __init__(self, models, device, nsubsteps, *, ordered_constraints=False):
+    def __init__(self, models, device, nsubsteps, *, ordered_constraints=False, ordered_elliptic=False):
         _load_backend()
         self._capacity_overflow = sum(
             int(flag)
@@ -394,6 +584,7 @@ class WarpRuntime:
         self._torch_stream = wp.stream_to_torch(self._warp_stream) if self._warp_stream is not None else None
         self._graph = None
         self._constraint_buffers = None
+        self._elliptic_solver = None
         self._model_fields = _batch_fields(mjw.Model)
         self._option_fields = _batch_fields(mjw.Option)
         self._reference = self.models[0]
@@ -464,6 +655,10 @@ class WarpRuntime:
                 # Warp 3.12 invokes this hook after building constraints and
                 # before solving, in both forward() and step1(). Keep ctrl intact.
                 self._m.callback.control = self._order_constraints
+            if ordered_elliptic:
+                if self._integrator == mujoco.mjtIntegrator.mjINT_RK4:
+                    raise ValueError("Ordered elliptic solving requires split-step integration")
+                self._elliptic_solver = _DenseEllipticSolver(self._m, self._d)
             self._upload_models(self.models)
 
     def _order_constraints(self, model, data):
@@ -635,7 +830,11 @@ class WarpRuntime:
             view.copy_(state[key].to(device=self.device, dtype=view.dtype).reshape(view.shape))
         self._data_view("geom_xpos").index_copy_(1, self._fixed_indices, self._fixed_positions)
         self._data_view("geom_xmat").index_copy_(1, self._fixed_indices, self._fixed_rotations)
-        mjw.forward(self._m, self._d)
+        if self._elliptic_solver is None:
+            mjw.forward(self._m, self._d)
+        else:
+            mjw.step1(self._m, self._d)
+            self._elliptic_forward()
         self._data_view("qacc_warmstart").copy_(state["warmstart"].to(self.device, torch.float32))
 
     def load(self, state, models=None):
@@ -657,11 +856,27 @@ class WarpRuntime:
             self._load(converted)
             self._check_result()
 
+    def _elliptic_forward(self):
+        mjw.fwd_actuation(self._m, self._d)
+        mjw.fwd_acceleration(self._m, self._d)
+        self._elliptic_solver.solve()
+        mjw.sensor_acc(self._m, self._d)
+
     def _advance(self):
         # dm_control Physics.legacy_step refreshes position/velocity after the
         # integration while retaining acceleration-stage sensors from that step.
         sensors = self._data_view("sensordata")
-        if self._integrator == mujoco.mjtIntegrator.mjINT_RK4:
+        if self._elliptic_solver is not None:
+            for substep in range(self.nsubsteps):
+                self._elliptic_forward()
+                if self._integrator in (mujoco.mjtIntegrator.mjINT_IMPLICIT, mujoco.mjtIntegrator.mjINT_IMPLICITFAST):
+                    mjw.implicit(self._m, self._d)
+                else:
+                    mjw.euler(self._m, self._d)
+                if substep + 1 < self.nsubsteps:
+                    mjw.step1(self._m, self._d)
+            torch.index_select(sensors, 1, self._acc_indices, out=self._acc_values)
+        elif self._integrator == mujoco.mjtIntegrator.mjINT_RK4:
             for _ in range(self.nsubsteps):
                 mjw.forward(self._m, self._d)
                 # Native RK4 skips sensors at its intermediate stages. Warp
@@ -739,6 +954,7 @@ class WarpRuntime:
                 self._torch_stream.synchronize()
             self._graph = self._m = self._d = None
             self._constraint_buffers = None
+            self._elliptic_solver = None
             self._acc_indices = self._acc_values = None
             self._fixed_indices = self._fixed_positions = self._fixed_rotations = None
             self._native_model_views.clear()

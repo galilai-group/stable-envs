@@ -79,7 +79,11 @@ class DMCWarpAdapter(SimulatorAdapter):
                 (spec.maximum - spec.minimum).copy() / 2, device=self.device, dtype=torch.float64
             )
             self._runtime = WarpRuntime(
-                self._models, self.device, self._nsubsteps, ordered_constraints=self.key == "cheetah"
+                self._models,
+                self.device,
+                self._nsubsteps,
+                ordered_constraints=self.key == "cheetah",
+                ordered_elliptic=self.key == "manipulator",
             )
             # make_local already performed the registered initial reset. Warm-up
             # must not draw another source reset or change its RNG sequence.
@@ -263,6 +267,7 @@ class DMCWarpAdapter(SimulatorAdapter):
                         self.device,
                         self._nsubsteps,
                         ordered_constraints=self.key == "cheetah",
+                        ordered_elliptic=self.key == "manipulator",
                     )
                 ids = torch.as_tensor(continuing, device=self.device)
                 self._scratch.load(self._state[ids], models=[self._models[i] for i in continuing])
