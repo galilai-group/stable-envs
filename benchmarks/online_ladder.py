@@ -336,6 +336,7 @@ def run_source(args, name: str, render: bool) -> dict:
             for step in range(max(check_steps) + 1):
                 adapter.submit_step(actions[:lanes, step], capture_state=False, capture_frame=True)
                 frame = adapter.receive_step()["frame"].numpy()
+                frame_shape = frame_shape or frame.shape[1:]
                 if step in check_steps:
                     for lane in check_lanes:
                         got[lane, step] = _digest(frame[lane])
