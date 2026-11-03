@@ -64,7 +64,7 @@ venv() {  # venv FAMILY -> python path of a fresh family venv in $WORK
   case $fam in
     classic) extras="classic"; groups="pin-classic";;
     navigation) extras="navigation navigation-gpu"; groups="pin-navigation";;
-    pusht) extras="pusht"; groups="pin-pusht";;
+    pusht) extras="pusht pusht-gpu"; groups="pin-pusht";;
     dmc) extras="dmcontrol dmcontrol-gpu"; groups="pin-dmc gpu-mjwarp";;
     ogbench) extras="ogbench ogbench-manipulation ogbench-manipulation-gpu"; groups="pin-ogbench gpu-mjwarp";;
     fetch) extras="robotics mjwarp"; groups="pin-fetch";;
