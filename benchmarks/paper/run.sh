@@ -180,6 +180,7 @@ for spec in "$@"; do
       done
     done
   done
+  echo "=== end of family $fam $(date -Is) $(peak_memory)"
   rm -rf $WORK/venv-$fam $S $D
 done
 echo "{\"end\": \"$(date -Is)\"}" > "$OUT/end.json"
