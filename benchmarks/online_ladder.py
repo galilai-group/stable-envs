@@ -35,6 +35,8 @@ from benchmarks.offline_sweep import _cycle, _host, _timed
 
 #: Constructor keyword arguments of source gym ids that need them.
 SOURCE_KWARGS = {"swm/PushT-v1": {"resolution": 224}, "swm/PushT-Discrete-v1": {"resolution": 224}}
+#: Source ids whose frame size is a constructor argument; without it they draw at their own default (PyFlyt: 480).
+SIZED_SOURCES = {"swm/PFRocketLanding-v0": "render_resolution"}
 
 
 #: Physics steps per action of every DM Control class, which the dm_control source repeats to do the same work.
@@ -151,7 +153,10 @@ def _make_source(name: str, size: int, gpu: bool = False):
         return _GymSource(gym.make(sid, render_mode="rgb_array", width=size, height=size))
     import stable_worldmodel  # noqa: F401  registers the swm/ ids
 
-    return _GymSource(gym.make(sid, render_mode="rgb_array", **SOURCE_KWARGS.get(sid, {})), pybullet_egl)
+    kwargs = dict(SOURCE_KWARGS.get(sid, {}))
+    if sid in SIZED_SOURCES:
+        kwargs[SIZED_SOURCES[sid]] = (size, size)
+    return _GymSource(gym.make(sid, render_mode="rgb_array", **kwargs), pybullet_egl)
 
 
 def cmd_dataset(args) -> None:
