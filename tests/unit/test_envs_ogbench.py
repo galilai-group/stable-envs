@@ -94,8 +94,8 @@ def test_the_manipulation_declarations_are_still_the_measured_visual_ones(cell):
     vf = cls.visual_fidelity
     for k in ("measured_at", "reference_versions", "measured_with"):
         assert k in vf, f"{cell}: visual_fidelity is missing {k}"
-    assert vf["reference_versions"] == {"mujoco": "3.12.0", "ogbench": "1.2.1"}
-    assert vf["measured_with"] == {"mujoco_warp": "3.12.0"}
+    assert vf["reference_versions"] == {"mujoco": "3.17.0", "ogbench": "1.2.1"}
+    assert vf["measured_with"] == {"mujoco_warp": "3.17.0"}
     assert "can differ from MuJoCo" in cls.visual_note and "visual_fidelity records" in cls.visual_note
     assert cls.default_size == MANIP.SPEC[cls.CELL]["size"]
 

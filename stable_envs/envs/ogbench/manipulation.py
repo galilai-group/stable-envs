@@ -1041,9 +1041,9 @@ _MEASURED: dict = {
 _UNMEASURED = _environ.read("STABLE_ENVS_OGB_UNMEASURED")
 
 # Pin the upstream renderer and scene package independently of our rendering backend.
-_REFERENCE_VERSIONS = {"mujoco": "3.12.0", "ogbench": "1.2.1"}
+_REFERENCE_VERSIONS = {"mujoco": "3.17.0", "ogbench": "1.2.1"}
 
-_MEASURED_WITH = {"mujoco_warp": "3.12.0"}
+_MEASURED_WITH = {"mujoco_warp": "3.17.0"}
 
 
 def _fidelity(cell: str) -> dict:
