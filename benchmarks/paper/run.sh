@@ -137,6 +137,12 @@ for spec in "$@"; do
     rm -rf $WORK/venv-$fam $S $D
     continue
   fi
+  # peak_memory: the highest memory use of this job so far, from the job's cgroup (cgroup v2).
+  peak_memory() {
+    local d=/sys/fs/cgroup$(cut -d: -f3 /proc/self/cgroup | tail -1)
+    while [ "$d" != /sys/fs/cgroup ] && [[ $d != */job_* ]]; do d=$(dirname "$d"); done
+    [ -r "$d/memory.peak" ] && echo "peak_mem_GiB $(( $(cat "$d/memory.peak") >> 30 ))"
+  }
   # gl DEVICE CMD...: run CMD under software OpenGL for CPU arms and under EGL for CUDA arms.
   gl() { local d=$1; shift; [ $d = cpu ] && sw "$@" || egl "$@"; }
   # once FILE CMD...: run CMD unless FILE holds a result.
@@ -144,7 +150,7 @@ for spec in "$@"; do
   has offline && sw $OFF states --envs "${envs[@]}" --out $S --n $N --devices $DEVICES
   if has step || has frames; then sw $ON dataset --envs "${envs[@]}" --out $D --episodes $N --length $LENGTH; fi
   for E in "${envs[@]}"; do
-    echo "--- $E $(date -Is) load $(cut -d' ' -f1-3 /proc/loadavg)"
+    echo "--- $E $(date -Is) load $(cut -d' ' -f1-3 /proc/loadavg) $(peak_memory)"
     o=$OUT/offline/$E; n=$OUT/online/$E; mkdir -p $o $n
     GPUSRC=$($P -c "import stable_envs as s; print(s.info('$E')['reference_gpu_render'] or '')")
     for dev in $DEVICES; do
