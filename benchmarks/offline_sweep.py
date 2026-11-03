@@ -187,13 +187,17 @@ def cmd_states(args) -> None:
             (out / f"{name}.error.txt").write_text(f"{type(e).__name__}: {e}\n")
             continue
         blob = {"rows": rows, "states": states, "inputs": inputs, "name": name, "seed": args.seed, "size": size}
-        blob["spread"] = {k: _spread(v) for k, v in (("rows", rows), ("states", inputs)) if isinstance(v, np.ndarray)}
+        blob["spread"] = {k: _spread(v) for k, v in (("rows", rows), ("states", inputs)) if v is not None}
         torch.save(blob, path)
         print(f"saved {path} in {time.time() - t:.1f}s spread {blob['spread']}", flush=True)
 
 
-def _spread(rows: np.ndarray) -> dict:
-    """How far the frame inputs spread: the standard deviation and range of each render-row column."""
+def _spread(rows) -> dict:
+    """How far the frame inputs spread: the standard deviation and range of each render-row column. Inputs that are
+    one dict per lane (PushT) use their body poses."""
+    if not isinstance(rows, np.ndarray):
+        keys = sorted(k for k in rows[0] if k.startswith("current/body/"))
+        rows = [np.concatenate([np.ravel(r[k]) for k in keys]) for r in rows]
     rows = np.asarray(rows, np.float64)
     return {
         "std": rows.std(0).round(4).tolist(),
