@@ -80,6 +80,7 @@ All notable changes to this project are listed here. The format follows
   builds OGBench with `ob_type="pixels"`, so it draws the same `front_pixels` camera. Before, the arm was
   opaque, the goal cube was drawn with alpha 0.2, and the reference drew the `front` camera of
   `ob_type="states"`. The RenderState field `appearance/target_alpha` is now 0.
+- The `OGBScene` default of `light.intensity` is now 0.7, which is the OGBench light. Before, it was 0.6.
 - `OGBCube` and `OGBScene` compare with the original OGBench environments (`CubeEnv`, `SceneEnv`):
   `reference_env()` builds the OGBench environment and `reference_render()` draws compact rows with its
   own renderer. Before, the reference was the class itself with `backend="opengl"`.

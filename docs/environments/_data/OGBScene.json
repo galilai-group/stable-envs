@@ -179,7 +179,7 @@
    "shape": [1],
    "low": 0,
    "high": 1,
-   "default": 0.6
+   "default": 0.7
   },
   {
    "path": "lock_color",
