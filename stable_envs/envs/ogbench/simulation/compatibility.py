@@ -115,7 +115,8 @@ def variation_tree(env):
         ),
         "floor": Dict({"color": box(0.0, 1.0, (2, 3), [[0.08, 0.11, 0.16], [0.15, 0.18, 0.25]])}),
         "camera": Dict({"angle_delta": box(-angle, angle, (1, 2), [[0.0, 0.0]])}),
-        "light": Dict({"intensity": box(0.0, 1.0, (1,), [0.7 if env.family == "Cube" else 0.6])}),
+        # MuJoCo's default directional diffuse, which OGBench leaves unset.
+        "light": Dict({"intensity": box(0.0, 1.0, (1,), [0.7])}),
     }
     if env.family == "Scene":
         result["lock_color"] = box(0.0, 1.0, (2, 3), [env._colors["red"][:3]] * 2)

@@ -97,6 +97,7 @@ All notable changes to this project are listed here. The format follows
   builds OGBench with `ob_type="pixels"`, so it draws the same `front_pixels` camera. Before, the arm was
   opaque, the goal cube was drawn with alpha 0.2, and the reference drew the `front` camera of
   `ob_type="states"`. The RenderState field `appearance/target_alpha` is now 0.
+- The `OGBScene` default of `light.intensity` is now 0.7, which is the OGBench light. Before, it was 0.6.
 - Fetch: the twelve Fetch classes step all environments in one batched call. On CPU, the Gymnasium Robotics
   step runs on arrays and MuJoCo steps every environment in `mujoco.batch`, or on up to 8 threads when the
   installed MuJoCo has no `mujoco.batch`. State and outputs are equal to Gymnasium Robotics bit for bit, and
