@@ -191,14 +191,14 @@
    "seed": 20260811,
    "n": 64,
    "size": 84,
-   "mse_mean": 17.0949,
-   "mse_p95": 22.8066,
-   "mse_max": 25.0461,
+   "mse_mean": 17.3005,
+   "mse_p95": 22.9687,
+   "mse_max": 25.2018,
    "reference_versions": {
-    "mujoco": "3.12.0"
+    "mujoco": "3.17.0"
    },
-   "gpu": "NVIDIA GeForce RTX 3090",
-   "torch": "2.14.1+cu126"
+   "gpu": "NVIDIA H200",
+   "torch": "2.15.0+cu132"
   },
   "DMCFingerSpin": {
    "seed": 20260811,
@@ -237,27 +237,27 @@
    "seed": 20260811,
    "n": 64,
    "size": 84,
-   "mse_mean": 11.0432,
-   "mse_p95": 15.0077,
-   "mse_max": 16.8663,
+   "mse_mean": 11.1461,
+   "mse_p95": 15.102,
+   "mse_max": 16.9639,
    "reference_versions": {
-    "mujoco": "3.12.0"
+    "mujoco": "3.17.0"
    },
-   "gpu": "NVIDIA GeForce RTX 3090",
-   "torch": "2.14.1+cu126"
+   "gpu": "NVIDIA H200",
+   "torch": "2.15.0+cu132"
   },
   "DMCHumanoidWalk": {
    "seed": 20260811,
    "n": 64,
    "size": 84,
-   "mse_mean": 23.8993,
-   "mse_p95": 30.0803,
-   "mse_max": 30.9031,
+   "mse_mean": 24.0855,
+   "mse_p95": 30.3416,
+   "mse_max": 31.173,
    "reference_versions": {
-    "mujoco": "3.12.0"
+    "mujoco": "3.17.0"
    },
-   "gpu": "NVIDIA GeForce RTX 3090",
-   "torch": "2.14.1+cu126"
+   "gpu": "NVIDIA H200",
+   "torch": "2.15.0+cu132"
   },
   "DMCManipulatorBringBall": {
    "seed": 20260811,
@@ -296,14 +296,14 @@
    "seed": 20260811,
    "n": 64,
    "size": 224,
-   "mse_mean": 8.3424,
-   "mse_p95": 14.7919,
-   "mse_max": 17.3164,
+   "mse_mean": 8.4171,
+   "mse_p95": 14.8732,
+   "mse_max": 17.4349,
    "reference_versions": {
-    "mujoco": "3.12.0"
+    "mujoco": "3.17.0"
    },
-   "gpu": "NVIDIA GeForce RTX 3090",
-   "torch": "2.14.1+cu126"
+   "gpu": "NVIDIA H200",
+   "torch": "2.15.0+cu132"
   },
   "DMCReacher": {
    "seed": 20260811,
@@ -320,27 +320,27 @@
    "seed": 20260811,
    "n": 64,
    "size": 84,
-   "mse_mean": 27.5853,
-   "mse_p95": 51.7046,
-   "mse_max": 58.1057,
+   "mse_mean": 27.5458,
+   "mse_p95": 51.5474,
+   "mse_max": 57.8253,
    "reference_versions": {
-    "mujoco": "3.12.0"
+    "mujoco": "3.17.0"
    },
-   "gpu": "NVIDIA GeForce RTX 3090",
-   "torch": "2.14.1+cu126"
+   "gpu": "NVIDIA H200",
+   "torch": "2.15.0+cu132"
   },
   "DMCWalkerWalk": {
    "seed": 20260811,
    "n": 64,
    "size": 84,
-   "mse_mean": 26.9435,
-   "mse_p95": 35.8297,
-   "mse_max": 40.1172,
+   "mse_mean": 27.25,
+   "mse_p95": 36.0283,
+   "mse_max": 40.3739,
    "reference_versions": {
-    "mujoco": "3.12.0"
+    "mujoco": "3.17.0"
    },
-   "gpu": "NVIDIA GeForce RTX 3090",
-   "torch": "2.14.1+cu126"
+   "gpu": "NVIDIA H200",
+   "torch": "2.15.0+cu132"
   },
   "FetchPickAndPlace": {
    "seed": 20260811,

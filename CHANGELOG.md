@@ -17,6 +17,14 @@ All notable changes to this project are listed here. The format follows
   shows it. Large CPU batches step their lanes in worker processes and draw frames in render workers
   (`roadster-sim` and `roadster-render` tuning paths); steps that need frames but no State build no
   snapshot.
+- Miniworld: `MiniWorldMovingBlockWorld` runs the 3D Dynamic Blockworld of Flow Equivariant World Models
+  (`MovingBlockWorld` from the hlillemark/Miniworld fork's `flowm_release` branch) with a complete State: room and block textures,
+  block kinds, sizes, poses and velocities, the agent and its carried block, and the env's generator.
+  `preset="flowm"` (default) is the paper's dynamic dataset, `preset="flowm-textured"` its textured split and
+  `preset="upstream"` the registered env. Each lane draws 6 to 10 blocks per episode, as the dataset script does;
+  State pads to 10 blocks with a `blocks.present` mask. Frames are Miniworld's own OpenGL agent view
+  (`miniworld` extra). Large batches step in worker processes and draw `render(state)` in render workers
+  (`miniworld-sim` and `miniworld-render` tuning paths).
 - MS-Human-700: `MSHumanLocomotion` wraps the whole-body musculoskeletal locomotion model (36 DoF,
   100 muscles) on the MuJoCo Warp backend (`mshuman` extra). Physics and State run on the env device;
   frames come from MuJoCo's OpenGL renderer. The Apache-2.0 model is fetched from LNSGroup/MS-Human-700
@@ -68,12 +76,22 @@ All notable changes to this project are listed here. The format follows
 - `OGBCube` and `OGBScene` draw OpenGL batches of 2 or more states in up to `ogb_gl_workers` worker
   processes on Linux, and read many frames back in one call. Frames do not change.
 
+- The `dmcontrol` and `dmcontrol-gpu` extras need MuJoCo 3.17 and dm_control 1.0.50, and `dmcontrol-gpu`
+  installs MuJoCo Warp and MJX 3.17. The `ogbench` and `mjwarp` extras accept MuJoCo 3.17.
+- DM Control steps every lane in one `mujoco.batch` call on CPU threads instead of worker processes. The
+  `dmc_threads` knob sets the number of threads (8 by default), at most one per lane and one per CPU in
+  the process affinity. The `workers` and `worker_min_lanes` knobs no longer apply to DM Control. Reacher
+  on CUDA still steps with MJX. With 1024 lanes on 32 cores and `dmc_threads=32`, physics-only stepping is
+  approximately 2.4 (Humanoid) to 8 (Cartpole) times faster than with 32 worker processes. Lanes copy one
+  compiled model instead of each compiling their own, so 1024 lanes build in approximately 12 s. Outputs do
+  not change.
+- A mid-episode physics `set_variation()` on DM Control now takes full effect from the next step. Before,
+  the first step after the change still used quantities computed before it.
 - One process adapter (`stable_envs._execution.process.ProcessAdapter`) runs the worker processes of
-  DM Control, classic Acrobot, Fetch, OGBench Maze and OGBench Cube/Scene. It replaces five copies of
+  classic Acrobot, Fetch, OGBench Maze and OGBench Cube/Scene. It replaces four copies of
   the worker loop. Outputs do not change.
 - With worker processes, `set_state` checks every lane in every worker before any worker restores.
-  A State that is not valid in one lane raises and changes no lane in DM Control, classic Acrobot and
-  Fetch too.
+  A State that is not valid in one lane raises and changes no lane in classic Acrobot and Fetch too.
 - PushT runs in worker processes on Linux for batches of at least `worker_min_lanes` lanes (tuning
   path `pusht-sim`).
 - `PyFlytRocketLanding` runs in worker processes on Linux for batches of at least `worker_min_lanes`

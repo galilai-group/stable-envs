@@ -162,9 +162,9 @@ def test_renderer_tiers_share_one_base():
 def test_declared_provenance_notes_and_cameras():
     for n in TRACKCOM:
         vf = snv.registry.REGISTRY[n].visual_fidelity
-        assert vf["reference_versions"] == {"mujoco": "3.12.0"}, n
-        assert vf["measured_with"] == {"mujoco_warp": "3.12.0"}, n
-        assert "3.12.0" in vf["measured_at"], n
+        assert vf["reference_versions"] == {"mujoco": "3.17.0"}, n
+        assert vf["measured_with"] == {"mujoco_warp": "3.17.0"}, n
+        assert "3.17.0" in vf["measured_at"], n
     assert dmc.RENDER_INVARIANT_DIMS == {
         "DMCManipulatorBringBall": ("ball_y", "target_ball_quat_qw", "target_ball_quat_qy")
     }

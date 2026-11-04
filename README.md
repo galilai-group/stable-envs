@@ -23,7 +23,7 @@ stable-envs doctor                            # check what works on this machine
 
 A missing extra disables only that family. `snv.import_errors()` lists the modules that did not load.
 
-The 3-D families and most MuJoCo families need CUDA. PushT, classic control, navigation, Roadster and
+The 3-D families and most MuJoCo families need CUDA. PushT, classic control, navigation, Miniworld, Roadster and
 several 2-D families run on CPU. [Install](docs/install.md) covers extras, version pins and the nvdiffrast build.
 [Contributing](CONTRIBUTING.md) covers an editable install from a clone.
 
@@ -81,8 +81,9 @@ snv.CartPole / snv.Pendulum / …                  concrete env classes
 ## Environments
 
 The extras together provide 80 environment classes. One Python environment cannot hold every extra.
-The `robotics` extra for Fetch pins MuJoCo < 3.12, and the `ogbench-manipulation` extra for `OGBCube`
-and `OGBScene` pins MuJoCo 3.12.0. Install them in separate environments.
+The `robotics` extra for Fetch pins MuJoCo < 3.12, the `ogbench-manipulation` extra for `OGBCube`
+and `OGBScene` pins MuJoCo 3.12.0, and the `dmcontrol` extra needs MuJoCo 3.17. Install them in separate
+environments.
 
 | family | environments |
 |---|---:|
@@ -90,6 +91,7 @@ and `OGBScene` pins MuJoCo 3.12.0. Install them in separate environments.
 | `craftax` | 4 |
 | `dmcontrol` | 18 |
 | `fetch` | 12 |
+| `miniworld` | 1 |
 | `mshuman` | 1 |
 | `navigation` | 5 |
 | `ogbench` | 27 |
@@ -99,7 +101,7 @@ and `OGBScene` pins MuJoCo 3.12.0. Install them in separate environments.
 
 A family registers only when its module imports. `snv.import_errors()` names each module that did not
 import. Craftax needs the `craftax` extra to register. `PyFlytRocketLanding` needs the `rocket` extra,
-and without it the count is 78. DM Control compiles a test model at import, so it registers only with
+and without it the count is 79. DM Control compiles a test model at import, so it registers only with
 `dm_control` and MuJoCo installed. The Fetch and OGBench modules import MuJoCo and their simulator
 packages inside functions. These classes register without them and raise an error when you use them.
 

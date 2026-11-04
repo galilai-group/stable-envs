@@ -10,8 +10,8 @@ from tests.helpers.reference.saved import assert_frozen_equal
 def state_at(arrays: Mapping[str, NDArray], index: int, *, batch: int, physics=None) -> TensorDict:
     """Copy a full State from a reference NPZ corpus.
 
-    The corpora carry no State physics fields and were recorded at the registered physics;
-    ``physics`` is a ``PhysicsLayout`` whose nominal values are added."""
+    The corpora were recorded at the registered physics; ``physics`` is a ``PhysicsLayout`` whose
+    nominal values are written into the State physics fields."""
     state = TensorDict({}, [batch])
     for key in arrays:
         if key.startswith("state/"):
