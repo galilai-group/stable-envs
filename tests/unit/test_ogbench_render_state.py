@@ -129,7 +129,7 @@ def test_named_render_state_boundary(family, cls):
             (("renderer", "size"), 0),
             (("renderer", "supersample"), 0),
             (("appearance", "cube.size"), 0.3),
-            (("appearance", "target_alpha"), 0),
+            (("appearance", "target_alpha"), 0.2),
             (("appearance", "camera.angle_delta"), 30),
             (("appearance", "light.intensity"), 2),
             (("pose", "mocap_quat"), 0),

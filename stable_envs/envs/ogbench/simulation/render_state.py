@@ -7,10 +7,9 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from .compatibility import CompatibleCube, CompatibleScene
+from .compatibility import TARGET_ALPHA, CompatibleCube, CompatibleScene
 
 OBJECT_QPOS_ADR = 14
-TARGET_ALPHA = 0.2
 
 STATIC = ("cube.size", "camera.angle_delta", "light.intensity")
 # agent.color is these materials' RGB, written per world by the renderers.
@@ -159,7 +158,7 @@ def validate(family, state):
     if torch.any(state["renderer", "camera"] != 0):
         raise ValueError("Only registered front_pixels camera is supported")
     if not torch.all(state["appearance", "target_alpha"] == TARGET_ALPHA):
-        raise ValueError("Only registered visible target alpha 0.2 is supported")
+        raise ValueError("Only the registered hidden target (alpha 0) is supported")
     qadr = OBJECT_QPOS_ADR
     for q in (state["pose", "qpos"][:, qadr + 3 : qadr + 7], state["pose", "mocap_quat"]):
         if not torch.allclose(
@@ -216,7 +215,7 @@ def _validate_host(family, state, schema):
     if np.any(values["renderer", "camera"] != 0):
         raise ValueError("Only registered front_pixels camera is supported")
     if not np.all(values["appearance", "target_alpha"] == np.float32(TARGET_ALPHA)):
-        raise ValueError("Only registered visible target alpha 0.2 is supported")
+        raise ValueError("Only the registered hidden target (alpha 0) is supported")
     qadr = OBJECT_QPOS_ADR
     for q in (values["pose", "qpos"][:, qadr + 3 : qadr + 7], values["pose", "mocap_quat"]):
         if not np.all(np.abs(np.sqrt(np.sum(q * q, axis=-1)) - 1.0) <= 1e-6):
