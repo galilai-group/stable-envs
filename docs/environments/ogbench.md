@@ -168,6 +168,9 @@ The resets, restores and Variations run OGBench's own code on one OGBench object
 backend then loads the result. A small CUDA batch steps faster on `mujoco.batch` than on MuJoCo Warp; use
 `simulation_backend="auto"` for this.
 
+The frames have the look of the OGBench pixel tasks `visual-cube-single-v0` and `visual-scene-v0`: the
+`front_pixels` camera, a purple gripper, a see-through arm, and no goal cube.
+
 - CPU frames are bit-exact. A draw of the same state gives the same frame each time.
 - CUDA frames use the same MuJoCo OpenGL path. The NVIDIA driver can change a pixel by 1/255 between
   two draws of the same state, and the same variation appears in the comparison renderer.

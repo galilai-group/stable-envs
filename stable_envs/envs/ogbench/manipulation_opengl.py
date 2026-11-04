@@ -363,7 +363,7 @@ def draw(family, host, device_type, images):
                         env.model.material(material).rgba[:3] = agent_colors[index]
                     env._cube_colors_from_variation()
                     for ids in env._cube_target_geom_ids_list:
-                        env.model.geom_rgba[ids, 3] = 0.2
+                        env.model.geom_rgba[ids, 3] = pixels.TARGET_ALPHA
                     _APPLIED[id(env)] = look
                 if family == "Scene":
                     env.variation_space._walk("lock_color")._value = lock_colors[index].copy()

@@ -92,6 +92,11 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- `OGBCube` and `OGBScene` frames have the look of the OGBench pixel tasks (`visual-cube-single-v0`,
+  `visual-scene-v0`): the arm is see-through and the goal cube is not drawn. The `reference_env()`
+  builds OGBench with `ob_type="pixels"`, so it draws the same `front_pixels` camera. Before, the arm was
+  opaque, the goal cube was drawn with alpha 0.2, and the reference drew the `front` camera of
+  `ob_type="states"`. The RenderState field `appearance/target_alpha` is now 0.
 - Fetch: the twelve Fetch classes step all environments in one batched call. On CPU, the Gymnasium Robotics
   step runs on arrays and MuJoCo steps every environment in `mujoco.batch`, or on up to 8 threads when the
   installed MuJoCo has no `mujoco.batch`. State and outputs are equal to Gymnasium Robotics bit for bit, and

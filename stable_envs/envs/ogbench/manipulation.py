@@ -103,22 +103,27 @@ def _reference_env(cell: str, size: int | None = None, role: str = "render"):
     kw = {}
     if size:
         kw = {"width": int(size), "height": int(size)}
-    env = _ogbench_make(cell, kw)
+    env = _ogbench_make(cell, kw, pixels=role == "render")
     env.reset(seed=0)
     _REF_CACHE[key] = env
     return env
 
 
-def _ogbench_make(cell: str, kw: dict):
+def _ogbench_make(cell: str, kw: dict, pixels: bool = True):
+    """Build OGBench's env; ``pixels`` gives the look of its visual-cube-single-v0 and visual-scene-v0 tasks.
+
+    State sampling uses ``ob_type="states"``, which has the same physics and does not render on reset.
+    """
     size = int(kw.get("height") or kw.get("width") or SPEC[cell]["size"])
+    look = {"ob_type": "pixels", "visualize_info": False} if pixels else {"ob_type": "states"}
     if cell == "Cube":
         from ogbench.manipspace.envs.cube_env import CubeEnv
 
-        return CubeEnv(env_type="single", ob_type="states", height=size, width=size)
+        return CubeEnv(env_type="single", height=size, width=size, **look)
     if cell == "Scene":
         from ogbench.manipspace.envs.scene_env import SceneEnv
 
-        return SceneEnv(env_type="scene", ob_type="states", height=size, width=size)
+        return SceneEnv(env_type="scene", height=size, width=size, **look)
     raise KeyError(f"no OGBench constructor for {cell!r}")
 
 

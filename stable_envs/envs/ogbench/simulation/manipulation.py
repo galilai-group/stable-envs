@@ -10,7 +10,7 @@ from tensordict import TensorDict
 
 from ...._execution.process import PER_LANE
 from ...._execution.protocol import SimulatorAdapter
-from .compatibility import MODEL_VALUES, CompatibleCube, CompatibleScene, LanePool, nodes, variation_tree
+from .compatibility import MODEL_VALUES, TARGET_ALPHA, CompatibleCube, CompatibleScene, LanePool, nodes, variation_tree
 from .pcg import pcg_decode, pcg_encode
 
 PARTS = (
@@ -396,7 +396,7 @@ class OGBManipulationAdapter(SimulatorAdapter):
             env._cube_colors_from_variation()
             # Match target visibility without calling state-changing post_step.
             for ids in env._cube_target_geom_ids_list:
-                env.model.geom_rgba[ids, 3] = 0.2
+                env.model.geom_rgba[ids, 3] = TARGET_ALPHA
             for pass_index in range(2):
                 for name, flag in FLAGS.items():
                     if ("physics", name) in row:
