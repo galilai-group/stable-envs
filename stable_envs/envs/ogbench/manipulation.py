@@ -1033,10 +1033,11 @@ def _plate_rig(cell: str, res: int) -> _PlateRig:
     return rig
 
 
-# Per-frame MSE against the source over 64 render rows; tests/fixtures/source_mse.json holds the same values.
+# Per-frame MSE of the public supersample-2 MJWarp path against the registered
+# stable-envs MuJoCo OpenGL reference with the same compiled appearance.
 _MEASURED: dict = {
-    "Cube": {"mse_mean": 25.1974, "mse_p95": 29.4667, "mse_max": 29.9812},
-    "Scene": {"mse_mean": 40.1919, "mse_p95": 58.8783, "mse_max": 60.6254},
+    "Cube": {"mse_mean": 25.1494, "mse_p95": 29.4048, "mse_max": 29.9536},
+    "Scene": {"mse_mean": 37.1270, "mse_p95": 46.4231, "mse_max": 47.4414},
 }
 _UNMEASURED = _environ.read("STABLE_ENVS_OGB_UNMEASURED")
 
@@ -1062,10 +1063,11 @@ def _fidelity(cell: str) -> dict:
     return {
         **{k: float(d[k]) for k in ("mse_mean", "mse_p95", "mse_max")},
         "measured_at": (
-            f"mujoco 3.12.0 / ogbench 1.2.1 reference; {spec['size']} px, camera {spec['camera']}; per-frame "
-            "MSE over pixels and channels on the 0-255 scale, over the 64 render rows of "
-            "sample_render_rows(default_rng(20260811)); NVIDIA GeForce RTX 3090 / driver 575.57.08 / "
-            "MUJOCO_GL=egl, torch 2.14.1+cu126, mujoco-warp 3.12.0, warp-lang 1.17.0."
+            f"mujoco 3.17.0 / ogbench 1.2.1; {spec['size']} px, camera {spec['camera']}, supersample 2; "
+            "per-frame MSE over pixels and channels on the 0-255 scale, over the 64 render rows of "
+            "sample_render_rows(default_rng(20260811)); the reference is the registered stable-envs MuJoCo OpenGL "
+            "path with the same compiled appearance; NVIDIA H200 / driver 580.173.02 / MUJOCO_GL=egl, "
+            "torch 2.15.0+cu132, mujoco-warp 3.17.0, warp-lang 1.17.0."
         ),
         # Reference side, compared by the certifier.
         "reference_versions": _REFERENCE_VERSIONS,

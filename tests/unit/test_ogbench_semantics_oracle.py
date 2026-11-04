@@ -26,7 +26,7 @@ def test_ogbench_maze_oracle_hash():
 
 def test_ogbench_maze_replays_independent_full_state_corpus():
     pytest.importorskip("ogbench")
-    data = np.load(ROOT / "swm_176d545_ogbench121_mujoco312.npz")
+    data = np.load(ROOT / "swm_176d545_ogbench121_mujoco317.npz")
 
     def state_at(t):
         state = TensorDict({}, [3])
