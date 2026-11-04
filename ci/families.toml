@@ -163,6 +163,14 @@ linux_env = { MUJOCO_GL = "osmesa", PYOPENGL_PLATFORM = "osmesa" }
 shards = { pr = 6, nightly = 6 }
 env_affinity = true
 
+[family.mshuman]
+aliases = ["ms_human", "musculoskeletal"]
+extras = ["mshuman"]
+paths = ["stable_envs/envs/mshuman/**"]
+tests = ["test_mshuman_*"]
+requires = ["mujoco", "warp-lang"]
+linux_env = { MUJOCO_GL = "osmesa", PYOPENGL_PLATFORM = "osmesa" }
+
 [family.rocket]
 extras = ["rocket"]
 groups = ["pin-rocket"]

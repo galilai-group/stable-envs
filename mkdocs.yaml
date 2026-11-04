@@ -116,6 +116,7 @@ nav:
       - DM Control: environments/dmcontrol.md
       - Fetch: environments/fetch.md
       - Miniworld: environments/miniworld.md
+      - MS-Human-700: environments/mshuman.md
       - Navigation: environments/navigation.md
       - OGBench: environments/ogbench.md
       - PushT: environments/pusht.md

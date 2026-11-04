@@ -16,6 +16,7 @@ REQUIRED_EXTRAS = {
     "mjwarp",
     "rocket",
     "navigation-gpu",
+    "pusht-gpu",
 }
 EXPECTED_AUTHORS = ("Randall Balestriero", "Sami BuGhanem")
 REQUIRED_LICENSES = {"LICENSE", "THIRD_PARTY_NOTICES.md", "licenses/envX-APACHE-2.0.txt"}

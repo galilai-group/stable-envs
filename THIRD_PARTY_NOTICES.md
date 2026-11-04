@@ -16,6 +16,12 @@ The Apache license is included in `licenses/envX-APACHE-2.0.txt` and distributed
 `stable_envs/envs/dmcontrol/simulation/reacher_mjx.py` adapts `src/envx/reacher/env.py`
 from the envX commit above under Apache-2.0.
 
+## envX PushT
+
+`stable_envs/envs/pusht/simulation/jax_physics.py` adapts
+`src/envx/pusht/physics.py`
+from the envX commit above under Apache-2.0.
+
 ## Craftax
 
 The `craftax` family (`stable_envs/envs/craftax/`) runs
@@ -81,3 +87,11 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## MS-Human-700
+
+The `mshuman` family (`stable_envs/envs/mshuman/`) loads the locomotion model of
+[MS-Human-700](https://github.com/LNSGroup/MS-Human-700) at commit
+`2d686957aefd5739cf4d2859a6acfd94c8f84400` (Apache-2.0). The MJCF and its assets are fetched at
+runtime, not vendored here; `MSHumanLocomotion` steps and draws them through MuJoCo Warp and MuJoCo.
+The Apache license is included in `licenses/ms-human-700-APACHE-2.0.txt` and distributed with the package.

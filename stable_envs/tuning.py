@@ -31,6 +31,7 @@ from pathlib import Path
 from typing import Any
 
 from ._core import environ as _environ
+from ._core.cache import cache_dir as _cache_dir
 from ._core.config import log as _log
 
 __all__ = ["Knob", "KNOBS", "RENDER_PATHS", "get", "set", "reset", "override", "describe", "cache_path"]
@@ -261,8 +262,7 @@ def cache_path(device="cpu") -> Path | None:
     if where is None:
         return None
     slug = re.sub(r"[^a-z0-9._-]+", "-", stamp(where)["device"].lower()).strip("-") or "device"
-    base = os.environ.get("XDG_CACHE_HOME") or str(Path.home() / ".cache")
-    return Path(base) / "stable-envs" / "tuning" / f"{slug}.json"
+    return _cache_dir() / "tuning" / f"{slug}.json"
 
 
 def batch_range(batch: int) -> tuple[int, int]:

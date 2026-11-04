@@ -91,6 +91,7 @@ and `OGBScene` pins MuJoCo 3.12.0. Install them in separate environments.
 | `dmcontrol` | 18 |
 | `fetch` | 12 |
 | `miniworld` | 1 |
+| `mshuman` | 1 |
 | `navigation` | 5 |
 | `ogbench` | 27 |
 | `pusht` | 2 |

@@ -16,6 +16,10 @@ All notable changes to this project are listed here. The format follows
   State pads to 10 blocks with a `blocks.present` mask. Frames are Miniworld's own OpenGL agent view
   (`miniworld` extra). Large batches step in worker processes and draw `render(state)` in render workers
   (`miniworld-sim` and `miniworld-render` tuning paths).
+- MS-Human-700: `MSHumanLocomotion` wraps the whole-body musculoskeletal locomotion model (36 DoF,
+  100 muscles) on the MuJoCo Warp backend (`mshuman` extra). Physics and State run on the env device;
+  frames come from MuJoCo's OpenGL renderer. The Apache-2.0 model is fetched from LNSGroup/MS-Human-700
+  at a pinned commit on first use, overridable with `STABLE_ENVS_MSHUMAN_HOME`.
 - Classic control on CPU: a Numba kernel draws the same primitive records as the Triton kernel, in
   parallel over frames. `backend="auto"` and `backend="port"` use it when Numba imports; otherwise the
   CPU paths below apply. Frames are byte-identical to the Torch port. The `classic` extra installs
@@ -24,7 +28,7 @@ All notable changes to this project are listed here. The format follows
   groups pin Numba.
 - Craftax: `CraftaxClassicPixels`, `CraftaxClassicSymbolic`, `CraftaxPixels` and `CraftaxSymbolic`
   run the upstream JAX simulator with all lanes in one jitted `vmap` (`craftax` / `craftax-gpu` extras).
-  With Craftax, the extras provide 74 classes. Fetch and `OGBCube`/`OGBScene` pin different MuJoCo versions,
+  With Craftax, the extras provide 75 classes. Fetch and `OGBCube`/`OGBScene` pin different MuJoCo versions,
   so they need separate Python environments.
 - `snv.tuning`: chunk sizes, Triton block sizes, worker counts and memory budgets are named knobs with
   `snv.tuning.set`, `snv.tuning.override` and `STABLE_ENVS_<KNOB>` variables. Some defaults are derived from the GPU's free memory or the CPU's L3 size.

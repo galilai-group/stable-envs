@@ -1,0 +1,50 @@
+{
+ "class_name": "MSHumanLocomotion",
+ "module": "stable_envs.envs.mshuman.envs",
+ "family": "mshuman",
+ "domain": "mshuman",
+ "reference_id": "LNSGroup/MS-Human-700/MS-Human-700-Locomotion.xml@2d686957aefd5739cf4d2859a6acfd94c8f84400",
+ "requires_cuda": false,
+ "has_dynamics": true,
+ "default_size": 128,
+ "frame_shape": [128, 128, 3],
+ "physics": null,
+ "renderers": {
+  "cpu": "opengl (MuJoCo)",
+  "cuda": "host-side serial MuJoCo OpenGL, frames copied to CUDA"
+ },
+ "action": {
+  "shape": [100],
+  "dtype": "float32",
+  "low": 0,
+  "high": 1
+ },
+ "state": [
+  {
+   "key": "qpos",
+   "shape": [36],
+   "dtype": "float32"
+  },
+  {
+   "key": "qvel",
+   "shape": [36],
+   "dtype": "float32"
+  },
+  {
+   "key": "act",
+   "shape": [100],
+   "dtype": "float32"
+  },
+  {
+   "key": "time",
+   "shape": [1],
+   "dtype": "float32"
+  },
+  {
+   "key": "warmstart",
+   "shape": [36],
+   "dtype": "float32"
+  }
+ ],
+ "variation": []
+}
