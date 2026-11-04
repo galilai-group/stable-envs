@@ -38,7 +38,7 @@ def test_state_layout_is_qpos_goal_and_buttons(cell, nq, nbuttons):
 @pytest.mark.parametrize("cell", ["Cube", "Scene"])
 def test_mocap_quat_really_is_constant_in_the_registered_distribution(cell):
     """mocap_quat is not a state column because it never varies under the registered distribution."""
-    env = ogb._reference_env(cell)
+    env = ogb._reference_env(cell, role="sample")
     u = env.unwrapped
     seen = set()
     for s in range(4):
