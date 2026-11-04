@@ -14,7 +14,7 @@ from ...._execution.process import BROADCAST, PER_LANE
 from ...._execution.protocol import SimulatorAdapter
 from .contacts import contact_segments
 from .numeric import BODY_ROW, body_fields, body_row, latest_fields
-from .replay import ACTION_DTYPES, PushTReplay, validate_seed
+from .replay import ACTION_DTYPES, JAX_STATE_ERROR, PushTReplay, validate_seed
 
 
 def _leaves(space):
@@ -71,6 +71,15 @@ def resolve_variation(space, overrides, num_envs, flat_keys=frozenset()):
             values[key] = converted
         lanes.append(values)
     return lanes
+
+
+def reject_jax_state(state):
+    version = state.get(("recipe", "version"), None) if isinstance(state, TensorDict) else None
+    if isinstance(state, TensorDict) and (
+        (torch.is_tensor(version) and bool((version == 3).any()))
+        or any(key[:2] in (("anchor", "jax"), ("current", "jax")) for key in state.keys(True, True))
+    ):
+        raise ValueError(JAX_STATE_ERROR)
 
 
 def state_columns(state, template, num_envs):
@@ -216,6 +225,7 @@ class PushTReplayAdapter(SimulatorAdapter):
         return build_tensordict(tree, [count], self.device)
 
     def validate(self, state):
+        reject_jax_state(state)
         fields = state_columns(state, self.envs[0].get_state(), self.num_envs)
         rows = [
             {key: np.asarray(value[lane]).copy() for key, value in fields.items()} for lane in range(self.num_envs)

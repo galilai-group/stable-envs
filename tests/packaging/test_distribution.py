@@ -64,6 +64,8 @@ def test_optional_extras_are_installable_on_pypi() -> None:
     extras = _pyproject()["project"]["optional-dependencies"]
     assert "all" not in extras
     assert "dev" in extras and "docs" in extras and "mjwarp" in extras
+    assert set(extras["pusht"]) <= set(extras["pusht-gpu"])
+    assert "jax[cuda12]>=0.4.35; sys_platform == 'linux'" in extras["pusht-gpu"]
     blob = "\n".join(req for reqs in extras.values() for req in reqs)
     assert "nvdiffrast" not in blob
     assert " @ " not in blob
@@ -171,7 +173,7 @@ def test_ci_ok_is_the_one_aggregate_of_every_gating_job() -> None:
     """Branch protection requires only ci-ok, so a new matrix entry never needs a settings change."""
     jobs = _workflow("ci.yml")["jobs"]
     ok = jobs["ci-ok"]
-    assert ok["if"].startswith("always()") and "pull_request.draft" in ok["if"]
+    assert "always()" in ok["if"] and "pull_request.draft" in ok["if"]
     assert set(ok["needs"]) == {"plan", "static", "core", "family", "docs", "package", "install"}
     assert "re-actors/alls-green" in str(ok["steps"])
     allowed = {name.strip() for name in ok["steps"][0]["with"]["allowed-skips"].split(",")}

@@ -10,7 +10,7 @@ import torch
 from ...._execution.process import FRAME_FIELDS, ProcessAdapter, leaf_tensordict
 from ...._execution.shared_memory import key_path
 from .replay import ACTION_DTYPES, reset_options, validate_seed
-from .replay_batch import PushTReplayAdapter, lane_options, state_columns
+from .replay_batch import PushTReplayAdapter, lane_options, reject_jax_state, state_columns
 
 _ACTIONS, _CODES, _VALID = ("history", "actions"), ("history", "dtypes"), ("history", "valid")
 
@@ -105,6 +105,7 @@ class PushTProcessAdapter(ProcessAdapter):
 
     def validate(self, state):
         self._check_open()
+        reject_jax_state(state)
         state_columns(state, self._metadata.template.get_state(), self.num_envs)
 
     def set_state(self, state):

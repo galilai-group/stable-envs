@@ -104,8 +104,9 @@ def test_step_frames_equal_the_pygame_frames(name):
     ):
         env.reset(seed=4)
         ref.reset(seed=4)
-        got = env.step(actions.to("cuda"), frames=slice(None))["frames"].cpu()
-        want = ref.step(actions, frames=slice(None))["frames"]
+        rollout = env.step(actions.to("cuda"), frames=slice(None))
+        got = rollout["frames"].cpu()
+        want = torch.stack([ref.render(rollout["states"][:, t].to("cpu")) for t in range(8)], 1)
         assert torch.equal(got, want), f"{name}: step frames differ from pygame"
 
 

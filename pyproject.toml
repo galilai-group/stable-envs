@@ -53,6 +53,10 @@ Source = "https://github.com/galilai-group/stable-envs"
 classic = ["numba>=0.60"]
 # PushT replay checks this exact Pymunk at construction.
 pusht = ["pygame>=2.5", "pymunk==7.2.0", "opencv-python-headless", "shapely", "numba>=0.60"]
+pusht-gpu = [
+  "pygame>=2.5", "pymunk==7.2.0", "opencv-python-headless", "shapely", "numba>=0.60",
+  "jax[cuda12]>=0.4.35; sys_platform == 'linux'",
+]
 # PushT reference checks run against gym-pusht.
 pusht-reference = ["gym-pusht"]
 # SimplePointMaze's exact cached info.goal image uses Matplotlib Agg.
@@ -84,6 +88,14 @@ robotics = ["gymnasium-robotics>=1.4.2,<1.5", "mujoco>=3.11,<3.12", "opencv-pyth
 # PyPI rejects direct-URL requirements and its CUDA extension needs a matching
 # local toolkit. The source install is documented in docs/install.md.
 mjwarp = [
+  "mujoco>=3.11,<3.13",
+  "mujoco-warp>=3.11,<3.13",
+  "warp-lang>=1.16",
+]
+# MS-Human-700 musculoskeletal locomotion. Physics and frames use the MuJoCo Warp backend;
+# the model (Apache-2.0) is fetched from LNSGroup/MS-Human-700 at a pinned commit on first use.
+mshuman = [
+  "filelock>=3.0",
   "mujoco>=3.11,<3.13",
   "mujoco-warp>=3.11,<3.13",
   "warp-lang>=1.16",
