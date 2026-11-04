@@ -140,7 +140,8 @@ for spec in "$@"; do
   # peak_memory: the highest memory use of this job so far, from the job's cgroup (cgroup v2).
   peak_memory() {
     local d=/sys/fs/cgroup$(cut -d: -f3 /proc/self/cgroup | tail -1)
-    while [ "$d" != /sys/fs/cgroup ] && [[ $d != */job_* ]]; do d=$(dirname "$d"); done
+    d=${d%/}
+    while [[ $d == /sys/fs/cgroup/* ]] && [[ ${d##*/} != job_* ]]; do d=$(dirname "$d"); done
     [ -r "$d/memory.peak" ] && echo "peak_mem_GiB $(( $(cat "$d/memory.peak") >> 30 ))"
   }
   # gl DEVICE CMD...: run CMD under software OpenGL for CPU arms and under EGL for CUDA arms.
