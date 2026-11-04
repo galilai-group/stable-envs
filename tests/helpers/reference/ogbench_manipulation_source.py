@@ -14,6 +14,8 @@ from stable_worldmodel import spaces as swm_spaces
 from stable_worldmodel.envs.ogbench.cube_env import CubeEnv
 from stable_worldmodel.envs.ogbench.scene_env import SceneEnv
 
+from stable_envs.envs.ogbench.simulation.compatibility import PIXEL_ALPHAS
+
 PARTS = (
     "TIME",
     "QPOS",
@@ -154,8 +156,14 @@ class Ownership:
         self.reset_sequence = []
         self._record_reset = False
         self._seed_owned(entropy_seed)
+        # stable-envs draws the OGBench pixel-task look instead of SWM's: no goal cube, a see-through arm and
+        # OGBench's light. The oracle takes the same look; everything else stays SWM's.
+        kwargs.setdefault("visualize_info", False)
         super().__init__(*args, **kwargs)
         self.variation_space = OwnedVariation(self.variation_space, self)
+        # Stored as SWM stores the Cube default, a list, so no dtype cast changes the value.
+        light = self.variation_space["light"]["intensity"]
+        light._init_value = light._value = [0.7]
         self.variation_space.seed(0)  # No external entropy before the first reset.
         gym.Env.reset(self, seed=self.entropy_seed)
 
@@ -207,6 +215,12 @@ class Ownership:
         if self._record_reset:
             self.reset_sequence.append("initialize_arm")
         return super().initialize_arm()
+
+    def modify_mjcf_model(self, mjcf_model):
+        mjcf_model = super().modify_mjcf_model(mjcf_model)
+        for name, alpha in PIXEL_ALPHAS.items():
+            mjcf_model.find("material", name).rgba[3] = alpha
+        return mjcf_model
 
 
 class OwnedCube(Ownership, CubeEnv):

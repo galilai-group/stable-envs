@@ -21,6 +21,7 @@ def opengl():
     pixels = ModuleType("stable_envs.envs.ogbench.simulation.render_state")
     pixels.validate = Mock()
     pixels.AGENT_MATERIALS = ("ur5e/robotiq/black", "ur5e/robotiq/pad_gray")
+    pixels.TARGET_ALPHA = 0.0
     compat = ModuleType("stable_envs.envs.ogbench.simulation.compatibility")
     compat.MODEL_VALUES = MODEL_VALUES
     compat.CompatibleCube = compat.CompatibleScene = object
