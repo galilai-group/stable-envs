@@ -73,8 +73,8 @@ BOX, BALL = 0, 1
 ACTION_HIGH = 8
 
 #: The FloWM dynamic dataset ("SUNDAY V2" in the fork's ``scripts/old_generation_commands.py``): plain
-#: coloured boxes in the env's white-walled, concrete-floored room. The script draws ``num_blocks`` in
-#: [6, 10] per video; this preset fixes it per instance.
+#: coloured boxes in the env's white-walled, concrete-floored room. Like the script's
+#: ``--num-blocks-min 6 --num-blocks-max 10``, each lane draws its block count uniformly from [6, 10] at reset.
 FLOWM = {
     "room_size": 16,
     "grid_mode": True,
@@ -85,7 +85,7 @@ FLOWM = {
     "block_height": 1.5,
     "box_allow_overlap": True,
     "agent_box_allow_overlap": True,
-    "num_blocks": 8,
+    "num_blocks": (6, 10),
     "ensure_base_palette": True,
     # --turn-step-deg, --forward-step, --cam-fov-y: fixed (non-randomised) parameters
     "turn_step": 90.0,
@@ -172,10 +172,12 @@ def resolve_config(preset: str, overrides: dict) -> dict:
     config = {**UPSTREAM, **PRESETS[preset], **overrides}
     if "color_pool" in config and config["color_pool"] is not None:
         config["color_pool"] = tuple(config["color_pool"])
-    num_blocks = int(config.get("num_blocks", 6))
-    if num_blocks < 1:
-        raise ValueError("num_blocks must be at least 1")
-    config["num_blocks"] = num_blocks
+    # An int fixes the count; a (min, max) pair draws it per lane and reset, like the dataset script.
+    count = config.get("num_blocks", 6)
+    lo, hi = (int(count), int(count)) if isinstance(count, (int, np.integer)) else (int(count[0]), int(count[1]))
+    if not 1 <= lo <= hi:
+        raise ValueError(f"num_blocks must be a positive int or a (min, max) pair with 1 <= min <= max, got {count!r}")
+    config["num_blocks"] = (lo, hi)
     return config
 
 
@@ -188,6 +190,7 @@ def source_kwargs(config: dict, size: int) -> dict:
     from miniworld.params import DEFAULT_PARAMS
 
     kwargs = {k: v for k, v in config.items() if k in WORLD_KEYS}
+    kwargs["num_blocks"] = int(config["num_blocks"][1])  # each reset sets the lane's own count
     if "room_size" in kwargs:
         kwargs["size"] = int(kwargs.pop("room_size"))
     if "color_pool" in kwargs and kwargs["color_pool"] is not None:
@@ -208,14 +211,46 @@ def source_kwargs(config: dict, size: int) -> dict:
     return dict(kwargs, obs_width=_OBS_SIZE, obs_height=_OBS_SIZE, window_width=int(size), window_height=int(size))
 
 
+#: The room that GL display list 1 holds, as ``(configuration, room textures)``, or None when unknown.
+#: Every Miniworld env compiles its static scene (room and lights) into list 1, and pyglet puts all
+#: contexts of a process in one share group, so the last env to compile it supplies every env's room.
+_COMPILED: list = [None]
+
+
+def _track_display_list() -> None:
+    """Clear the record of list 1 whenever any Miniworld env compiles it (resets of envs this family does not own)."""
+    from miniworld.miniworld import MiniWorldEnv
+
+    if getattr(MiniWorldEnv._render_static, "_se_tracked", False):
+        return
+    compile_static = MiniWorldEnv._render_static
+
+    def tracked(self):
+        compile_static(self)
+        _COMPILED[0] = None
+
+    tracked._se_tracked = True
+    MiniWorldEnv._render_static = tracked
+
+
 def make_source(config: dict, size: int):
     """A ``MovingBlockWorld`` for ``config`` drawing ``size`` px frames, as the dataset script builds it."""
     configure_pyglet()
     from miniworld.envs import MovingBlockWorld
 
+    _track_display_list()
     env = MovingBlockWorld(**source_kwargs(config, size))
     env.max_episode_steps = math.inf if config["max_episode_steps"] is None else int(config["max_episode_steps"])
+    env._se_config = repr(sorted(config.items()))
+    set_room(env)
     return env
+
+
+def set_room(env) -> None:
+    """Record the room ``env`` holds, the key of its display list in ``_COMPILED``."""
+    room = env.rooms[0]
+    names = (room.floor_tex_name, room.wall_tex_name, room.ceil_tex_name)
+    env._se_room = (env._se_config, tuple(TEXTURES.index(n) for n in names))
 
 
 _POOL: dict[tuple, list] = {}
@@ -246,12 +281,14 @@ def release(config: dict, size: int, envs: list) -> None:
 def frame(env) -> np.ndarray:
     """The agent view ``env.render()`` returns in ``rgb_array`` mode: ``render_obs`` into the window buffer.
 
-    Every Miniworld env compiles its room into GL display list 1, and pyglet puts all contexts of a process
-    in one share group, so with several envs the last one reset would supply every room. The list is
-    recompiled before each frame, so each env draws its own room as a lone env in its process does.
+    Display list 1 is recompiled only when it holds another room (see ``_COMPILED``), so each env draws its
+    own room, as a lone env in its process does, and lanes that share a room compile it once.
     """
     env.shadow_window.switch_to()
-    env._render_static()
+    room = env._se_room
+    if _COMPILED[0] != room:
+        env._render_static()
+        _COMPILED[0] = room
     return env.render_obs(env.vis_fb)
 
 
@@ -263,6 +300,7 @@ def state_fields(num_blocks: int) -> dict[tuple[str, str], tuple[int, torch.dtyp
         ("agent", "dir"): (1, f64),
         ("agent", "carrying"): (1, i64),  # index of the carried block, -1 for none
         ("room", "textures"): (3, i64),  # floor, wall, ceiling: indices into TEXTURES
+        ("blocks", "present"): (m, torch.bool),  # the lane's blocks first; absent slots hold fixed padding
         ("blocks", "kind"): (m, i64),  # BOX or BALL
         ("blocks", "color"): (m, i64),  # index into COLORS
         ("blocks", "texture"): (m, i64),  # index into TEXTURES, -1 for a plain box or a ball
@@ -293,12 +331,13 @@ def _ball_colors() -> dict[int, str]:
 
 
 def read_lane(env, num_blocks: int) -> dict:
-    """One lane's State values, read from the source env."""
+    """One lane's State values, read from the source env; ``num_blocks`` is the padded width."""
     from miniworld.entity import Ball, Box
 
     blocks = env.entities[1:]
-    if env.entities[0] is not env.agent or len(blocks) != num_blocks:
-        raise RuntimeError("MovingBlockWorld lists the agent first and then exactly num_blocks blocks")
+    if env.entities[0] is not env.agent or not 1 <= len(blocks) <= num_blocks:
+        raise RuntimeError("MovingBlockWorld lists the agent first and then at most num_blocks blocks")
+    pad = num_blocks - len(blocks)
     balls = _ball_colors()
     kind, color, texture, size = [], [], [], []
     for ent in blocks:
@@ -314,6 +353,8 @@ def read_lane(env, num_blocks: int) -> dict:
             size.extend([ent.height] * 3)
         else:
             raise RuntimeError(f"unexpected MovingBlockWorld entity {type(ent).__name__}")
+    kind, color, texture, size = kind + [BOX] * pad, color + [0] * pad, texture + [-1] * pad, size + [1.0] * 3 * pad
+    zeros = [0.0] * 3 * pad
     room = env.rooms[0]
     rng = env.np_random.bit_generator.state
     if rng["bit_generator"] != "PCG64":
@@ -326,13 +367,14 @@ def read_lane(env, num_blocks: int) -> dict:
         ("room", "textures"): [
             TEXTURES.index(n) for n in (room.floor_tex_name, room.wall_tex_name, room.ceil_tex_name)
         ],
+        ("blocks", "present"): [True] * len(blocks) + [False] * pad,
         ("blocks", "kind"): kind,
         ("blocks", "color"): color,
         ("blocks", "texture"): texture,
         ("blocks", "size"): size,
-        ("blocks", "pos"): np.concatenate([ent.pos for ent in blocks]),
-        ("blocks", "dir"): [ent.dir for ent in blocks],
-        ("blocks", "velocity"): np.concatenate([ent.velocity for ent in blocks]),
+        ("blocks", "pos"): np.concatenate([*(ent.pos for ent in blocks), zeros]),
+        ("blocks", "dir"): [ent.dir for ent in blocks] + [0.0] * pad,
+        ("blocks", "velocity"): np.concatenate([*(ent.velocity for ent in blocks), zeros]),
         ("rng", "state"): _limbs(rng["state"]["state"]),
         ("rng", "increment"): _limbs(rng["state"]["inc"]),
         ("rng", "has_uint32"): [rng["has_uint32"]],
@@ -347,6 +389,7 @@ def _world(row: dict) -> tuple:
         tuple(np.asarray(row[key]).reshape(-1).tolist())
         for key in (
             ("room", "textures"),
+            ("blocks", "present"),
             ("blocks", "kind"),
             ("blocks", "color"),
             ("blocks", "texture"),
@@ -356,30 +399,43 @@ def _world(row: dict) -> tuple:
 
 
 def build_world(env, row: dict) -> None:
-    """Rebuild ``env``'s room and entities from State, as ``MiniWorldEnv.reset`` builds them after ``_gen_world``."""
+    """Rebuild ``env``'s room and entities from State, as ``MiniWorldEnv.reset`` builds them after ``_gen_world``.
+
+    The room (geometry, textures, collision segments and lights) is rebuilt only when its textures differ:
+    lanes of one configuration differ only in their blocks, which are drawn per frame. ``frame`` compiles
+    the room's display list when it draws.
+    """
     from miniworld.entity import Agent, Ball, Box
 
-    floor, wall, ceil = (TEXTURES[int(i)] for i in row["room", "textures"])
+    textures = tuple(int(i) for i in row["room", "textures"])
+    if getattr(env, "_se_room", (None, None))[1] != textures:
+        floor, wall, ceil = (TEXTURES[i] for i in textures)
+        env.rooms, env.wall_segs = [], []
+        env.add_rect_room(
+            min_x=0, max_x=env.size, min_z=0, max_z=env.size, floor_tex=floor, wall_tex=wall, ceil_tex=ceil
+        )
+        env._gen_static_data()  # place_entity generates it before placing the agent
+        rand = env.np_random if env.domain_rand else None
+        env.params.sample_many(rand, env, ["sky_color", "light_pos", "light_color", "light_ambient"])
+        env.max_forward_step = env.params.get_max("forward_step")
+        env.min_x, env.max_x = min(r.min_x for r in env.rooms), max(r.max_x for r in env.rooms)
+        env.min_z, env.max_z = min(r.min_z for r in env.rooms), max(r.max_z for r in env.rooms)
+        set_room(env)
     env.agent = Agent()
-    env.entities, env.rooms, env.wall_segs = [], [], []
-    env.add_rect_room(min_x=0, max_x=env.size, min_z=0, max_z=env.size, floor_tex=floor, wall_tex=wall, ceil_tex=ceil)
-    env._gen_static_data()  # place_entity generates it before placing the agent
-    env.entities.append(env.agent)
+    env.entities = [env.agent]
     sizes = np.asarray(row["blocks", "size"], np.float64).reshape(-1, 3)
-    for kind, color, tex, size in zip(row["blocks", "kind"], row["blocks", "color"], row["blocks", "texture"], sizes):
+    count = int(np.asarray(row["blocks", "present"]).sum())
+    env.num_blocks = count
+    columns = (row["blocks", "kind"], row["blocks", "color"], row["blocks", "texture"], sizes)
+    for kind, color, tex, size in list(zip(*columns))[:count]:
         if int(kind) == BALL:
             ent = Ball(color=COLORS[int(color)], size=float(size[0]))
         else:
             ent = Box(color=COLORS[int(color)], size=size.copy(), texture=None if tex < 0 else TEXTURES[int(tex)])
         env.entities.append(ent)
     rand = env.np_random if env.domain_rand else None
-    env.params.sample_many(rand, env, ["sky_color", "light_pos", "light_color", "light_ambient"])
-    env.max_forward_step = env.params.get_max("forward_step")
     for ent in env.entities:
         ent.randomize(env.params, rand)
-    env.min_x, env.max_x = min(r.min_x for r in env.rooms), max(r.max_x for r in env.rooms)
-    env.min_z, env.max_z = min(r.min_z for r in env.rooms), max(r.max_z for r in env.rooms)
-    env._render_static()
     env._se_world = _world(row)
 
 
@@ -405,6 +461,7 @@ def write_lane(env, row: dict) -> None:
         "has_uint32": int(row["rng", "has_uint32"][0]),
         "uinteger": int(row["rng", "uinteger"][0]),
     }
+    set_room(env)
 
 
 def wrap_heading(env) -> None:
@@ -425,14 +482,35 @@ def host_actions(actions, num_envs: int) -> np.ndarray:
     return a
 
 
+def host_active(active, num_envs: int) -> np.ndarray | None:
+    """The active-lane mask as a ``(num_envs,)`` bool host array, or None for every lane."""
+    if active is None:
+        return None
+    a = np.asarray(active.detach().cpu() if torch.is_tensor(active) else active, dtype=bool).reshape(-1)
+    if a.shape != (num_envs,):
+        raise ValueError(f"active must have one entry per lane ({num_envs}), got {a.shape}")
+    return a
+
+
 class MovingBlockWorldAdapter(SimulatorAdapter):
-    """``num_envs`` source envs on one configuration; lane ``i`` of ``reset(seed)`` is ``reset(seed=seed + i)``."""
+    """``num_envs`` source envs on one configuration; lane ``i`` of ``reset(seed)`` is ``reset(seed=seed + i)``.
+
+    It is also the local adapter that ``MiniWorldProcessAdapter`` runs in each worker: workers step their lanes
+    and draw their step frames (``render_live``), and the parent copies ``process_attributes`` from a
+    one-lane prototype.
+    """
+
+    process_attributes = ("config", "size", "num_blocks", "count_range", "fields", "frame_shape")
+    action_dim = 1
 
     def __init__(self, config: dict, num_envs: int, size: int, device="cpu"):
         if type(num_envs) is not int or num_envs < 1:
             raise ValueError("num_envs must be a positive integer")
         self.config, self.num_envs, self.size = config, num_envs, int(size)
-        self.num_blocks = int(config["num_blocks"])
+        #: The block count range; State pads every lane to ``num_blocks``, the most blocks a lane can hold.
+        self.count_range = tuple(config["num_blocks"])
+        self.num_blocks = int(self.count_range[1])
+        self.frame_shape = (self.size, self.size, 3)
         self.device = torch.device(device)
         self.fields = state_fields(self.num_blocks)
         self.envs = acquire(config, self.size, num_envs)
@@ -453,11 +531,27 @@ class MovingBlockWorldAdapter(SimulatorAdapter):
         if self.config["wrap_heading"]:
             wrap_heading(env)
         env._se_world = _world(read_lane(env, self.num_blocks))
+        set_room(env)
+
+    def _draw_count(self, env, seed: int | None) -> None:
+        """Set the lane's block count for the next reset, uniform in the configured range.
+
+        A seeded reset draws it from its own generator seeded with the lane's seed, so the source's
+        generator is untouched; an unseeded reset draws it from the lane's generator, which State holds.
+        """
+        lo, hi = self.count_range
+        if lo == hi:
+            env.num_blocks = lo
+            return
+        rng = env.np_random if seed is None else np.random.default_rng(seed)
+        env.num_blocks = int(rng.integers(lo, hi + 1))
 
     def reset(self, seed: int | None = None) -> TensorDict:
         self._check_open()
         for i, env in enumerate(self.envs):
-            env.reset(seed=None if seed is None else int(seed) + i)
+            lane_seed = None if seed is None else int(seed) + i
+            self._draw_count(env, lane_seed)
+            env.reset(seed=lane_seed)
             self._after_reset(env)
         return self.get_state()
 
@@ -506,6 +600,15 @@ class MovingBlockWorldAdapter(SimulatorAdapter):
             if bool((v < lo).any() or (v > hi).any()):
                 raise ValueError(f"State field {key!r} must lie in [{lo}, {hi}]")
 
+        present = host["blocks", "present"]
+        count = present.sum(-1)
+        lo, hi = self.count_range
+        if bool((present != (torch.arange(self.num_blocks) < count[:, None])).any()):
+            raise ValueError("State field ('blocks', 'present') must list a lane's blocks first")
+        if bool(((count < lo) | (count > hi)).any()):
+            raise ValueError(f"State field ('blocks', 'present') must mark between {lo} and {hi} blocks")
+        if bool((host["agent", "carrying"][:, 0] >= count).any()):
+            raise ValueError("State field ('agent', 'carrying') must name a present block or -1")
         within(("agent", "carrying"), -1, self.num_blocks - 1)
         within(("room", "textures"), 0, len(TEXTURES) - 1)
         within(("blocks", "kind"), BOX, BALL)
@@ -528,12 +631,16 @@ class MovingBlockWorldAdapter(SimulatorAdapter):
         for env, row in zip(self.envs, self.unpack(state), strict=True):
             write_lane(env, row)
 
-    def step(self, actions, *, active=None) -> TensorDict:
+    def check_step(self, actions, active):
+        return host_actions(actions, self.num_envs), host_active(active, self.num_envs)
+
+    def probe_actions(self) -> np.ndarray:
+        return np.full((1, 1), 4, np.int64)  # do nothing
+
+    def step(self, actions, *, active=None, capture_state=True) -> TensorDict:
         """Advance one action per lane; an inactive lane holds its state and reports zero outputs."""
         self._check_open()
-        actions = host_actions(actions, self.num_envs)
-        if active is not None:
-            active = np.asarray(active.detach().cpu() if torch.is_tensor(active) else active, dtype=bool)
+        actions, active = self.check_step(actions, active)
         reward = np.zeros(self.num_envs)
         terminated = np.zeros(self.num_envs, bool)
         truncated = np.zeros(self.num_envs, bool)
@@ -544,37 +651,82 @@ class MovingBlockWorldAdapter(SimulatorAdapter):
             if self.config["wrap_heading"]:
                 wrap_heading(env)
         dev = self.device
-        return TensorDict(
-            {
-                "state": self.get_state(),
-                "reward": torch.tensor(reward, dtype=torch.float64, device=dev),
-                "terminated": torch.tensor(terminated, device=dev),
-                "truncated": torch.tensor(truncated, device=dev),
-            },
-            batch_size=[self.num_envs],
-            device=dev,
-        )
+        out = {
+            "reward": torch.tensor(reward, dtype=torch.float64, device=dev),
+            "terminated": torch.tensor(terminated, device=dev),
+            "truncated": torch.tensor(truncated, device=dev),
+        }
+        if capture_state:
+            out["state"] = self.get_state()
+        return TensorDict(out, batch_size=[self.num_envs], device=dev)
+
+    def render_live(self) -> np.ndarray:
+        """The live lanes' agent views, ``(num_envs, size, size, 3)`` uint8."""
+        self._check_open()
+        return np.stack([frame(env) for env in self.envs])
 
     def frames(self) -> torch.Tensor:
-        """The live lanes' agent views, ``(num_envs, size, size, 3)`` uint8 on the adapter's device."""
-        self._check_open()
-        return torch.from_numpy(np.stack([frame(env) for env in self.envs])).to(self.device)
+        """``render_live`` on the adapter's device."""
+        return torch.from_numpy(self.render_live()).to(self.device)
 
 
-#: Render-only envs per configuration and size, for ``render(state)``; built on first use, never released.
+def pack_rows(state: TensorDict, fields: dict) -> np.ndarray:
+    """A validated State as ``(n, D)`` float64 rows for the render workers; every integer field is exact."""
+    return np.concatenate([state[key].detach().cpu().numpy().astype(np.float64) for key in fields], axis=1)
+
+
+def unpack_rows(rows: np.ndarray, fields: dict) -> list[dict]:
+    """Inverse of :func:`pack_rows`: one State value dict per row."""
+    lanes, offset = [{} for _ in range(len(rows))], 0
+    for key, (width, dtype) in fields.items():
+        part = rows[:, offset : offset + width]
+        if dtype == torch.bool:
+            part = part > 0.5
+        elif not dtype.is_floating_point:
+            part = np.rint(part).astype(np.int64)
+        for lane, value in zip(lanes, part, strict=True):
+            lane[key] = value
+        offset += width
+    return lanes
+
+
+def draw_rows(env, rows: list[dict], out: np.ndarray) -> None:
+    """Draw State value dicts into ``out`` with ``env``.
+
+    Rows are drawn in order of their world, room first, so each room's display list is compiled once and
+    each world's blocks are built once.
+    """
+    for i in sorted(range(len(rows)), key=lambda i: _world(rows[i])):
+        write_lane(env, rows[i])
+        out[i] = frame(env)
+
+
+class RenderRows:
+    """Picklable factory of a render worker's drawer: one render env for ``config`` and ``size``."""
+
+    def __init__(self, config: dict, size: int):
+        self.config, self.size = config, int(size)
+
+    def __call__(self):
+        env = make_source(self.config, self.size)
+        fields = state_fields(int(self.config["num_blocks"][1]))
+
+        def draw(rows, frames):
+            draw_rows(env, unpack_rows(rows, fields), frames)
+
+        return draw
+
+
+#: Render-only envs per configuration and size, for ``render(state)`` in this process; never released.
 _RENDERERS: dict[tuple, object] = {}
 
 
-def render_rows(config: dict, size: int, adapter: MovingBlockWorldAdapter, state: TensorDict) -> torch.Tensor:
-    """Draw a validated State of any batch with the process-wide render env for ``config`` and ``size``."""
+def render_here(config: dict, size: int, rows: np.ndarray) -> np.ndarray:
+    """Draw packed rows with this process's render env for ``config`` and ``size``."""
     key = _pool_key(config, size)
     env = _RENDERERS.get(key)
     if env is None:
         env = _RENDERERS[key] = make_source(config, size)
-    rows = adapter.unpack(state)
     out = np.empty((len(rows), int(size), int(size), 3), np.uint8)
-    # Rows that share a world are drawn together, so the display list is rebuilt once per world.
-    for i in sorted(range(len(rows)), key=lambda i: _world(rows[i])):
-        write_lane(env, rows[i])
-        out[i] = frame(env)
-    return torch.from_numpy(out)
+    draw_rows(env, unpack_rows(rows, state_fields(int(config["num_blocks"][1]))), out)
+    return out

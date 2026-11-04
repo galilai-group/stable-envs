@@ -4,6 +4,7 @@ Each lane runs the hlillemark/Miniworld fork's ``MovingBlockWorld``: an agent in
 and balls that each move by a fixed velocity every step and bounce off walls. The default ``preset="flowm"`` is the FloWM dynamic
 dataset: plain coloured boxes, each moving one cell per step in a cardinal direction through the agent and
 each other, in a 16 x 16 grid room with 90 degree turns, unit forward steps and 500 steps.
+Each lane draws 6 to 10 blocks per episode, as the dataset script does.
 ``preset="flowm-textured"`` is the paper's textured split (random wall, floor and block textures, and balls);
 ``preset="upstream"`` is the env as the fork registers it. Keyword arguments override single options of either preset.
 
@@ -23,6 +24,8 @@ import torch
 if importlib.util.find_spec("miniworld") is None or importlib.util.find_spec("pyglet") is None:
     raise ImportError("Miniworld needs the miniworld extra: pip install 'stable-envs[miniworld]'")
 
+from ..._execution import render_pool
+from ..._execution.process import ProcessAdapter
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env
 from ...registry import register
@@ -31,10 +34,12 @@ from .simulation.adapter import (
     ACTION_HIGH,
     FORK_COMMIT,
     FORK_URL,
-    MovingBlockWorldAdapter,
-    render_rows,
+    RenderRows,
+    pack_rows,
+    render_here,
     resolve_config,
 )
+from .simulation.execution import make_miniworld_adapter
 
 
 def _require_fork() -> None:
@@ -82,7 +87,10 @@ class MiniWorldMovingBlockWorld(Env):
             raise ValueError("Miniworld draws with OpenGL; backend must be 'auto' or 'opengl'")
         self.config = resolve_config(preset, options)
         device = Env.resolve_device(device)
-        self._simulator = MovingBlockWorldAdapter(self.config, int(num_envs), int(size or self.default_size), device)
+        # Large batches step in worker processes (``miniworld-sim`` tuning path), each with its lanes' GL contexts.
+        self._simulator = make_miniworld_adapter(
+            self.config, int(num_envs), int(size or self.default_size), device, seed
+        )
         try:
             super().__init__(num_envs, size, supersample, device, backend, seed)
             self.reset(seed=seed)
@@ -123,16 +131,51 @@ class MiniWorldMovingBlockWorld(Env):
         self._check_open("step")
         return self._simulator.step(actions, active=active)
 
-    def render(self, state=None):
-        """Draw ``(N, size, size, 3)`` uint8 frames from a State of any batch, or from the live lanes."""
+    def render(self, state=None, *, size=None, supersample=None, variation=None, style=None, out=None):
+        """Draw ``(N, size, size, 3)`` uint8 frames from a State of any batch, or from the live lanes.
+
+        ``size`` defaults to the env's; ``out`` takes a contiguous uint8 buffer of the frames' shape. Miniworld
+        has no supersampling and no Variation, so ``supersample`` other than 1, ``variation`` and ``style``
+        raise. A State batch of at least ``render_worker_min_rows`` rows draws in render workers
+        (``miniworld-render`` tuning path); the frames are the same as drawn in this process.
+        """
         self._check_open("render")
-        if state is None:
-            return self._simulator.frames()
-        self._simulator.validate(state)
-        return render_rows(self.config, self.size, self._simulator, state).to(self.device)
+        if supersample not in (None, 1):
+            raise ValueError("Miniworld draws its frames without supersampling")
+        if variation or style is not None:
+            raise ValueError("Miniworld has no Variation; render takes State only")
+        size = self.size if size is None else int(size)
+        if size < 1:
+            raise ValueError(f"size must be a positive int, got {size}")
+        if state is None and size == self.size and not isinstance(self._simulator, ProcessAdapter):
+            frames = self._simulator.frames()
+        else:
+            # Worker lanes draw their frames during steps; between steps, and at other sizes, lanes draw from State.
+            state = self._simulator.get_state() if state is None else state
+            self._simulator.validate(state)
+            rows = pack_rows(state, self._simulator.fields)
+            frames = render_pool.render_rows(
+                self,
+                (type(self).__name__, repr(sorted(self.config.items())), size),
+                rows,
+                None,
+                (size, size, 3),
+                "miniworld-render",
+                factory=RenderRows(self.config, size),
+                software_gl=True,
+            )
+            if frames is None:
+                frames = torch.from_numpy(render_here(self.config, size, rows))
+        if out is None:
+            return frames.to(self.device)
+        if tuple(out.shape) != tuple(frames.shape) or out.dtype != torch.uint8:
+            raise ValueError(
+                f"out must be a uint8 buffer of shape {tuple(frames.shape)}, got {tuple(out.shape)} {out.dtype}"
+            )
+        return out.copy_(frames)
 
     def _render_live(self):
-        return self._simulator.frames()
+        return self.render()
 
     def _close(self):
         if hasattr(self, "_simulator"):

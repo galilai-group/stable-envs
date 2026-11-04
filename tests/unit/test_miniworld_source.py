@@ -42,6 +42,7 @@ def _flowm_source(lane: int, textured: bool):
         params.set("turn_step", 90.0, 90.0, 90.0)
         params.set("forward_step", 1.0, 1.0, 1.0)
         params.set("cam_fov_y", 60.0, 60.0, 60.0)
+        # num_blocks is the most a lane draws; each test sets the lane's count before reset.
         env = MovingBlockWorld(
             view="agent",
             render_mode="rgb_array",
@@ -56,7 +57,7 @@ def _flowm_source(lane: int, textured: bool):
             grid_vel_min=-1,
             grid_vel_max=1,
             grid_cardinal_only=True,
-            num_blocks=8,
+            num_blocks=10,
             ensure_base_palette=True,
             block_size_xy=0.7,
             block_height=1.5,
@@ -95,14 +96,20 @@ def _assert_lane(state, lane, src, t):
     np.testing.assert_array_equal(state["agent", "pos"][lane].numpy(), src.agent.pos, err_msg=msg)
     assert state["agent", "dir"][lane].item() == src.agent.dir, msg
     blocks = src.entities[1:]
-    np.testing.assert_array_equal(
-        state["blocks", "pos"][lane].numpy().reshape(-1, 3), np.stack([b.pos for b in blocks]), err_msg=msg
+    n = len(blocks)
+    assert state["blocks", "present"][lane].tolist() == [True] * n + [False] * (
+        state["blocks", "present"].shape[1] - n
     )
     np.testing.assert_array_equal(
-        state["blocks", "velocity"][lane].numpy().reshape(-1, 3), np.stack([b.velocity for b in blocks]), err_msg=msg
+        state["blocks", "pos"][lane].numpy().reshape(-1, 3)[:n], np.stack([b.pos for b in blocks]), err_msg=msg
     )
-    assert state["blocks", "dir"][lane].tolist() == [b.dir for b in blocks], msg
-    assert state["blocks", "kind"][lane].tolist() == [0 if isinstance(b, Box) else 1 for b in blocks], msg
+    np.testing.assert_array_equal(
+        state["blocks", "velocity"][lane].numpy().reshape(-1, 3)[:n],
+        np.stack([b.velocity for b in blocks]),
+        err_msg=msg,
+    )
+    assert state["blocks", "dir"][lane].tolist()[:n] == [b.dir for b in blocks], msg
+    assert state["blocks", "kind"][lane].tolist()[:n] == [0 if isinstance(b, Box) else 1 for b in blocks], msg
     carried = src.agent.carrying
     assert state["agent", "carrying"][lane].item() == (-1 if carried is None else blocks.index(carried)), msg
     assert state["lifecycle", "elapsed_steps"][lane].item() == src.step_count, msg
@@ -140,9 +147,11 @@ def test_lanes_match_the_source_called_directly(preset, wrap):
     with snv.MiniWorldMovingBlockWorld(
         num_envs=LANES, size=SIZE, device="cpu", preset=preset, wrap_heading=wrap
     ) as env:
-        env.reset(seed=SEED)
+        state = env.reset(seed=SEED)
         sources = [_flowm_source(lane, textured=preset == "flowm-textured") for lane in range(LANES)]
         for lane, src in enumerate(sources):
+            # --num-blocks-min 6 --num-blocks-max 10: the script draws the count per video and builds the env with it.
+            src.num_blocks = int(state["blocks", "present"][lane].sum())
             src.reset(seed=SEED + lane)
             src.agent.dir = 0.0  # --heading-zero
             if wrap:

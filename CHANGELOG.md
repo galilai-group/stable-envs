@@ -12,8 +12,10 @@ All notable changes to this project are listed here. The format follows
   (`MovingBlockWorld` from the hlillemark/Miniworld fork's `flowm_release` branch) with a complete State: room and block textures,
   block kinds, sizes, poses and velocities, the agent and its carried block, and the env's generator.
   `preset="flowm"` (default) is the paper's dynamic dataset, `preset="flowm-textured"` its textured split and
-  `preset="upstream"` the registered env.
-  Frames are Miniworld's own OpenGL agent view (`miniworld` extra).
+  `preset="upstream"` the registered env. Each lane draws 6 to 10 blocks per episode, as the dataset script does;
+  State pads to 10 blocks with a `blocks.present` mask. Frames are Miniworld's own OpenGL agent view
+  (`miniworld` extra). Large batches step in worker processes and draw `render(state)` in render workers
+  (`miniworld-sim` and `miniworld-render` tuning paths).
 - Classic control on CPU: a Numba kernel draws the same primitive records as the Triton kernel, in
   parallel over frames. `backend="auto"` and `backend="port"` use it when Numba imports; otherwise the
   CPU paths below apply. Frames are byte-identical to the Torch port. The `classic` extra installs
