@@ -43,6 +43,20 @@ COMPILED_FIELDS = (
     "light_poscom0",
     "tex_data",
 )
+# OGBench pixel tasks hide the goal cube (visualize_info=False).
+TARGET_ALPHA = 0.0
+# Material alphas OGBench's pixel tasks apply (ob_type="pixels", pixel_transparent_arm=True).
+PIXEL_ALPHAS = {
+    "ur5e/robotiq/metal": 0.1,
+    "ur5e/robotiq/silicone": 0.1,
+    "ur5e/robotiq/gray": 0.1,
+    "ur5e/robotiq/black": 0.1,
+    "ur5e/robotiq/pad_gray": 0.5,
+    "ur5e/black": 0.1,
+    "ur5e/jointgray": 0.1,
+    "ur5e/linkgray": 0.1,
+    "ur5e/lightblue": 0.1,
+}
 # MjModel arrays written per lane after compilation; lanes sharing a model swap them in.
 LANE_FIELDS = ("geom_rgba", "mat_rgba", "site_pos", "dof_damping", "actuator_gainprm", "actuator_biasprm")
 
@@ -232,6 +246,7 @@ class Compatibility:
             ob_type="states",
             height=224,
             width=224,
+            visualize_info=False,
             reward_task_id=reward_task_id,
         )
         gym.Env.reset(self, seed=self._construction_seed)
@@ -499,6 +514,8 @@ class Compatibility:
             changes.append(same if equal_means_dirty else not same)
             setattr(element, attr, value)
 
+        for name, alpha in PIXEL_ALPHAS.items():
+            model.find("material", name).rgba[3] = alpha
         for i, attr in enumerate(("rgb1", "rgb2")):
             assign(model.find("texture", "grid"), attr, v["floor"]["color"].value[i])
         for name in ("black", "pad_gray"):
