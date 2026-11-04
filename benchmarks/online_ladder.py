@@ -39,8 +39,11 @@ SOURCE_KWARGS = {"swm/PushT-v1": {"resolution": 224}, "swm/PushT-Discrete-v1": {
 #: (PyFlyt 480 px, OGBench Scene 200 px).
 SIZED_SOURCES = {
     "swm/PFRocketLanding-v0": lambda size: {"render_resolution": (size, size)},
-    "swm/OGBCube-v0": lambda size: {"width": size, "height": size},
-    "swm/OGBScene-v0": lambda size: {"width": size, "height": size},
+}
+#: Classes timed against OGBench's own pixel task, by OGBench constructor and env_type.
+OGB_PIXEL_SOURCES = {
+    "OGBCube": ("ogbench/visual-cube-single-v0", "cube_env", "CubeEnv", "single"),
+    "OGBScene": ("ogbench/visual-scene-v0", "scene_env", "SceneEnv", "scene"),
 }
 
 
@@ -59,6 +62,8 @@ def source_id(name: str) -> str:
     import stable_envs as snv
     from tests.helpers.reference.crosswalk import swm_ids_for_class
 
+    if name in OGB_PIXEL_SOURCES:
+        return OGB_PIXEL_SOURCES[name][0]
     ref = snv.registry.REGISTRY[name].reference_id
     # The original library, where stable-worldmodel's wrapper changes the episode (Fetch samples colours at reset).
     if ref and ref.startswith(ORIGINAL_SOURCES):
@@ -136,12 +141,35 @@ class _GymSource:
         self.env.close()
 
 
+class _OGBPixelSource(_GymSource):
+    """OGBench's visual task env (ob_type="pixels", visualize_info=False) at ``size``.
+
+    The pixel look is set when the model is built. After that the env returns state observations, so a step
+    does not draw, and ``render`` draws the frame that the pixel task returns as its observation.
+    """
+
+    def __init__(self, name, size):
+        import importlib
+
+        _, module, cls, env_type = OGB_PIXEL_SOURCES[name]
+        make = getattr(importlib.import_module(f"ogbench.manipspace.envs.{module}"), cls)
+        env = make(env_type=env_type, ob_type="pixels", visualize_info=False, width=size, height=size)
+        env.reset(seed=0)
+        env.unwrapped._ob_type = "states"
+        super().__init__(env)
+
+    def render(self):
+        return self.env.unwrapped.render(camera="front_pixels")
+
+
 def _make_source(name: str, size: int, gpu: bool = False):
     """The source env of class ``name``; ``gpu`` draws with the source's GPU renderer (``reference_gpu_render``)."""
     import gymnasium as gym
 
     import stable_envs as snv
 
+    if name in OGB_PIXEL_SOURCES:
+        return _OGBPixelSource(name, size)
     sid = source_id(name)
     pybullet_egl = gpu and snv.registry.REGISTRY[name].reference_gpu_render == "pybullet-egl"
     if sid.startswith("dm_control/"):
