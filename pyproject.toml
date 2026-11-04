@@ -107,6 +107,9 @@ rocket = ["pillow", "scipy", "PyFlyt==0.29.0", "pybullet==3.2.7"]
 # Craftax on CPU; craftax-gpu takes JAX's CUDA 12 build for device="cuda".
 craftax = ["craftax>=1.6.1", "jax>=0.4.30"]
 craftax-gpu = ["craftax>=1.6.1", "jax[cuda12]>=0.4.30; sys_platform == 'linux'"]
+# MovingBlockWorld is in the hlillemark/Miniworld fork, not on PyPI; uv takes it from [tool.uv.sources],
+# pip needs `pip install "miniworld @ git+https://github.com/hlillemark/Miniworld@<commit>"` first.
+miniworld = ["miniworld>=2.1", "pyglet>=1.5.27,<2"]
 hf = ["datasets>=2.14"]
 examples = ["imageio", "imageio-ffmpeg", "opencv-python"]
 # No `all` extra: Fetch needs mujoco<3.12, and nvdiffrast cannot be expressed
@@ -243,6 +246,7 @@ requires-dist = ["numba", "numpy", "scipy", "gymnasium", "pettingzoo", "pybullet
 
 [tool.uv.sources]
 torch = [{ index = "pytorch-cpu", group = "torch-cpu", marker = "sys_platform == 'linux'" }]
+miniworld = { git = "https://github.com/hlillemark/Miniworld", rev = "bc7972050155b67e242c07bfdccfe1eeddbf9882" }
 
 [[tool.uv.index]]
 name = "pytorch-cpu"

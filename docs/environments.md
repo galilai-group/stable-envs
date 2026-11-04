@@ -54,12 +54,13 @@ State keys and the Variation leaves of each class.
 | [`craftax`](environments/craftax.md) | 4 | `CraftaxClassicPixels`, `CraftaxSymbolic` |
 | [`dmcontrol`](environments/dmcontrol.md) | 17 | `DMCReacher`, `DMCCheetahRun` (`domain="reacher"`, `"cheetah"`, …) |
 | [`fetch`](environments/fetch.md) | 12 | `FetchReach`, `FetchPush`, … |
+| [`miniworld`](environments/miniworld.md) | 1 | `MiniWorldMovingBlockWorld` |
 | [`navigation`](environments/navigation.md) | 5 | `TwoRoom`, `Piecewise`, `SimplePointMaze` |
 | [`ogbench`](environments/ogbench.md) | 27 | `PointMazeLargeNavigate`, `OGBCube` (`domain="pointmaze"`, `"cube"`, …) |
 | [`pusht`](environments/pusht.md) | 2 | `PushT`, `PushTDiscrete` |
 | [`pyflyt`](environments/pyflyt.md) | 1 | `PyFlytRocketLanding` |
 
-With every extra installed, these 74 classes register. Without PyFlyt, 73 classes register.
+With every extra installed, these 75 classes register. Without PyFlyt, 74 classes register.
 
 ## Comparison with the source
 
