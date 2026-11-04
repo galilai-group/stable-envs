@@ -10,13 +10,13 @@ from tests.helpers.reference.dmc_semantics import DMCHumanoidReference
 
 ROOT = Path("tests/fixtures/semantics/dmc_humanoid")
 ROOT.mkdir(parents=True, exist_ok=True)
-PATH = ROOT / "humanoid_walk_swm_176d545_mujoco312.npz"
+PATH = ROOT / "humanoid_walk_swm_176d545_mujoco317.npz"
 MANIFEST = ROOT / "manifest.json"
 if PATH.exists() or MANIFEST.exists():
     raise FileExistsError(f"Refusing to overwrite frozen semantic oracle under {ROOT}")
 
 pin = pinned_commit()
-assert importlib.metadata.version("mujoco") == "3.12.0"
+assert importlib.metadata.version("mujoco") == "3.17.0"
 
 reference = DMCHumanoidReference(3)
 try:

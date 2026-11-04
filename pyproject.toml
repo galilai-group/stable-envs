@@ -63,7 +63,7 @@ pusht-reference = ["gym-pusht"]
 # TwoRoom dynamics use the core JAX dependency; CUDA needs its GPU runtime.
 navigation = ["matplotlib>=3.10", "numba>=0.60"]
 navigation-gpu = ["jax[cuda12]>=0.4.35; sys_platform == 'linux'"]
-ogbench = ["mujoco>=3.11,<3.13", "ogbench>=1.2.1,<1.3"]
+ogbench = ["mujoco>=3.11,<3.18", "ogbench>=1.2.1,<1.3"]
 # Cube/Scene semantics and renderer. Their renderers check these exact MuJoCo, OGBench and
 # MuJoCo Warp versions when they render, and the CPU semantics check the OGBench version at
 # construction. Other OGBench cells need only the extra above.
@@ -75,12 +75,11 @@ ogbench-manipulation-gpu = [
   "mujoco-warp==3.12.0",
   "warp-lang==1.17.0",
 ]
-dmcontrol = ["dm-control>=1.0.44", "mujoco>=3.11,<3.13"]
-# GPU DM Control with the TrackCom floor reflection, which needs MuJoCo Warp 3.12. Fetch keeps MuJoCo 3.11;
-# without this extra TrackCom renders on 3.11 without the reflection.
+dmcontrol = ["dm-control>=1.0.50", "mujoco>=3.17,<3.18"]
+# GPU DM Control with the TrackCom floor reflection, which needs MuJoCo Warp 3.17.
 dmcontrol-gpu = [
-  "dm-control>=1.0.45", "mujoco>=3.12,<3.13", "mujoco-warp>=3.12,<3.13", "warp-lang>=1.16",
-  "mujoco-mjx>=3.12,<3.13", "jax[cuda12]>=0.4.35; sys_platform == 'linux'",
+  "dm-control>=1.0.50", "mujoco>=3.17,<3.18", "mujoco-warp>=3.17,<3.18", "warp-lang>=1.16",
+  "mujoco-mjx>=3.17,<3.18", "jax[cuda12]>=0.4.35; sys_platform == 'linux'",
 ]
 # gymnasium-robotics 1.4.2's Fetch setters fail with MuJoCo 3.12.
 robotics = ["gymnasium-robotics>=1.4.2,<1.5", "mujoco>=3.11,<3.12", "opencv-python-headless"]
@@ -88,8 +87,8 @@ robotics = ["gymnasium-robotics>=1.4.2,<1.5", "mujoco>=3.11,<3.12", "opencv-pyth
 # PyPI rejects direct-URL requirements and its CUDA extension needs a matching
 # local toolkit. The source install is documented in docs/install.md.
 mjwarp = [
-  "mujoco>=3.11,<3.13",
-  "mujoco-warp>=3.11,<3.13",
+  "mujoco>=3.11,<3.18",
+  "mujoco-warp>=3.11,<3.18",
   "warp-lang>=1.16",
 ]
 # MS-Human-700 musculoskeletal locomotion. Physics and frames use the MuJoCo Warp backend;
@@ -180,9 +179,9 @@ pin-pusht = [
 pin-dmc = [
   "numpy==2.5.3; python_version >= '3.12'",
   "gymnasium==1.3.0; python_version >= '3.12'",
-  "dm-control==1.0.45; python_version >= '3.12'",
-  "mujoco==3.12.0; python_version >= '3.12'",
-  "mujoco-mjx==3.12.0; python_version >= '3.12'",
+  "dm-control==1.0.50; python_version >= '3.12'",
+  "mujoco==3.17.0; python_version >= '3.12'",
+  "mujoco-mjx==3.17.0; python_version >= '3.12'",
 ]
 pin-fetch = [
   "numpy==2.5.3; python_version >= '3.12'",
@@ -208,8 +207,8 @@ pin-craftax = [
   "jax==0.11.2; python_version >= '3.12'",
   "jaxlib==0.11.2; python_version >= '3.12'",
 ]
-# GPU add-on, combinable with pin-dmc or pin-ogbench.
-gpu-mjwarp = ["mujoco-warp==3.12.0; python_version >= '3.12'", "warp-lang==1.17.0; python_version >= '3.12'"]
+# GPU add-on for pin-dmc. OGBench's Cube and Scene take ogbench-manipulation-gpu, which pins MuJoCo Warp 3.12.0.
+gpu-mjwarp = ["mujoco-warp==3.17.0; python_version >= '3.12'", "warp-lang==1.17.0; python_version >= '3.12'"]
 
 [tool.uv]
 environments = ["sys_platform == 'darwin'", "sys_platform == 'linux'"]
@@ -225,7 +224,7 @@ conflicts = [
     { group = "pin-rocket" },
     { group = "pin-craftax" },
   ],
-  # Fetch needs MuJoCo 3.11; these need 3.12.
+  # Fetch needs MuJoCo 3.11, MS-Human and Cube/Scene need 3.12, and DM Control needs 3.17.
   [{ extra = "robotics" }, { group = "pin-dmc" }],
   [{ extra = "robotics" }, { group = "pin-ogbench" }],
   [{ extra = "robotics" }, { group = "gpu-mjwarp" }],
@@ -235,6 +234,24 @@ conflicts = [
   [{ extra = "dmcontrol-gpu" }, { group = "pin-fetch" }],
   [{ extra = "ogbench-manipulation" }, { group = "pin-fetch" }],
   [{ extra = "ogbench-manipulation-gpu" }, { group = "pin-fetch" }],
+  [{ extra = "robotics" }, { extra = "dmcontrol" }],
+  [{ extra = "dmcontrol" }, { group = "pin-fetch" }],
+  [{ extra = "dmcontrol" }, { extra = "ogbench-manipulation" }],
+  [{ extra = "dmcontrol" }, { extra = "ogbench-manipulation-gpu" }],
+  [{ extra = "dmcontrol-gpu" }, { extra = "ogbench-manipulation" }],
+  [{ extra = "dmcontrol-gpu" }, { extra = "ogbench-manipulation-gpu" }],
+  [{ extra = "dmcontrol" }, { group = "pin-ogbench" }],
+  [{ extra = "dmcontrol-gpu" }, { group = "pin-ogbench" }],
+  [{ extra = "mshuman" }, { extra = "dmcontrol" }],
+  [{ extra = "mshuman" }, { extra = "dmcontrol-gpu" }],
+  [{ extra = "mshuman" }, { group = "pin-dmc" }],
+  [{ extra = "mshuman" }, { group = "gpu-mjwarp" }],
+  [{ extra = "ogbench-manipulation" }, { group = "pin-dmc" }],
+  [{ extra = "ogbench-manipulation-gpu" }, { group = "pin-dmc" }],
+  [{ group = "gpu-mjwarp" }, { group = "pin-ogbench" }],
+  [{ group = "gpu-mjwarp" }, { group = "pin-fetch" }],
+  [{ group = "gpu-mjwarp" }, { extra = "ogbench-manipulation" }],
+  [{ group = "gpu-mjwarp" }, { extra = "ogbench-manipulation-gpu" }],
 ]
 
 # PyFlyt 0.29.0 declares numpy<2 but runs on 2.5.3 in the rocket reference profile. This

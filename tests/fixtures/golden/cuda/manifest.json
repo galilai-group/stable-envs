@@ -305,25 +305,25 @@
     },
     "DMCAcrobotBalance": {
       "file": "DMCAcrobotBalance.npz",
-      "sha256": "0c8c9da4654cae4016946a55a0b9f21083d1b2e65adaabfb414ff0f538fe8973",
+      "sha256": "e911a052ba366e1933f77089cab30535538fc8f6d987ac02e3cb19965c64f206",
       "size": 84,
-      "bytes": 13389,
+      "bytes": 13388,
       "profile": {
         "device": "cuda",
         "versions": {
-          "torch": "2.14.1+cu126",
+          "torch": "2.15.0",
           "numpy": "2.5.3",
-          "triton": "3.8.0",
-          "mujoco": "3.12.0",
-          "mujoco-warp": "3.12.0",
+          "triton": "3.9.0",
+          "mujoco": "3.17.0",
+          "mujoco-warp": "3.17.0",
           "warp-lang": "1.17.0",
           "nvdiffrast": null,
           "pygame": "2.6.1",
           "pymunk": null,
-          "jax": null
+          "jax": "0.12.0.1"
         },
         "machine": "x86_64",
-        "gpu": "NVIDIA GeForce RTX 3090"
+        "gpu": "NVIDIA H200"
       }
     },
     "DMCBallInCupCatch": {
@@ -334,88 +334,88 @@
       "profile": {
         "device": "cuda",
         "versions": {
-          "torch": "2.14.1+cu126",
+          "torch": "2.15.0",
           "numpy": "2.5.3",
-          "triton": "3.8.0",
-          "mujoco": "3.12.0",
-          "mujoco-warp": "3.12.0",
+          "triton": "3.9.0",
+          "mujoco": "3.17.0",
+          "mujoco-warp": "3.17.0",
           "warp-lang": "1.17.0",
           "nvdiffrast": null,
           "pygame": "2.6.1",
           "pymunk": null,
-          "jax": null
+          "jax": "0.12.0.1"
         },
         "machine": "x86_64",
-        "gpu": "NVIDIA GeForce RTX 3090"
+        "gpu": "NVIDIA H200"
       }
     },
     "DMCCartpoleBalance": {
       "file": "DMCCartpoleBalance.npz",
-      "sha256": "fc57212e3a6576adffd0db5b0a74021aa4a6ebbfb6c9dfbb7741941827fd35cb",
+      "sha256": "c236767d24969a72a9fef66dda9c43ad4a698403ec77beb6d2a7ca2db2f22867",
       "size": 84,
-      "bytes": 12723,
+      "bytes": 12714,
       "profile": {
         "device": "cuda",
         "versions": {
-          "torch": "2.14.1+cu126",
+          "torch": "2.15.0",
           "numpy": "2.5.3",
-          "triton": "3.8.0",
-          "mujoco": "3.12.0",
-          "mujoco-warp": "3.12.0",
+          "triton": "3.9.0",
+          "mujoco": "3.17.0",
+          "mujoco-warp": "3.17.0",
           "warp-lang": "1.17.0",
           "nvdiffrast": null,
           "pygame": "2.6.1",
           "pymunk": null,
-          "jax": null
+          "jax": "0.12.0.1"
         },
         "machine": "x86_64",
-        "gpu": "NVIDIA GeForce RTX 3090"
+        "gpu": "NVIDIA H200"
       }
     },
     "DMCCartpoleSwingup": {
       "file": "DMCCartpoleSwingup.npz",
-      "sha256": "8d189c697396467593206ec5bdb205ca2e7b2db63b6c5c00c8dc0db3d941acfd",
+      "sha256": "142554158a34924b6f280090018af6566b7d413fbfd509aaccff62204f0f5293",
       "size": 84,
-      "bytes": 12972,
+      "bytes": 12968,
       "profile": {
         "device": "cuda",
         "versions": {
-          "torch": "2.14.1+cu126",
+          "torch": "2.15.0",
           "numpy": "2.5.3",
-          "triton": "3.8.0",
-          "mujoco": "3.12.0",
-          "mujoco-warp": "3.12.0",
+          "triton": "3.9.0",
+          "mujoco": "3.17.0",
+          "mujoco-warp": "3.17.0",
           "warp-lang": "1.17.0",
           "nvdiffrast": null,
           "pygame": "2.6.1",
           "pymunk": null,
-          "jax": null
+          "jax": "0.12.0.1"
         },
         "machine": "x86_64",
-        "gpu": "NVIDIA GeForce RTX 3090"
+        "gpu": "NVIDIA H200"
       }
     },
     "DMCCheetahRun": {
       "file": "DMCCheetahRun.npz",
-      "sha256": "54d6c39bd21db4a9c0f5a30f8856a4c0435f4cb64afb8413fa325a598e67834b",
+      "sha256": "504bf11c5025522b4e5a82c4728a0ce1b9257b58bf761577c550bbb05ec85a67",
       "size": 84,
-      "bytes": 26761,
+      "bytes": 26722,
       "profile": {
         "device": "cuda",
         "versions": {
-          "torch": "2.14.1+cu126",
+          "torch": "2.15.0",
           "numpy": "2.5.3",
-          "triton": "3.8.0",
-          "mujoco": "3.12.0",
-          "mujoco-warp": "3.12.0",
+          "triton": "3.9.0",
+          "mujoco": "3.17.0",
+          "mujoco-warp": "3.17.0",
           "warp-lang": "1.17.0",
           "nvdiffrast": null,
           "pygame": "2.6.1",
           "pymunk": null,
-          "jax": null
+          "jax": "0.12.0.1"
         },
         "machine": "x86_64",
-        "gpu": "NVIDIA GeForce RTX 3090"
+        "gpu": "NVIDIA H200"
       }
     },
     "DMCFingerSpin": {
@@ -426,19 +426,19 @@
       "profile": {
         "device": "cuda",
         "versions": {
-          "torch": "2.14.1+cu126",
+          "torch": "2.15.0",
           "numpy": "2.5.3",
-          "triton": "3.8.0",
-          "mujoco": "3.12.0",
-          "mujoco-warp": "3.12.0",
+          "triton": "3.9.0",
+          "mujoco": "3.17.0",
+          "mujoco-warp": "3.17.0",
           "warp-lang": "1.17.0",
           "nvdiffrast": null,
           "pygame": "2.6.1",
           "pymunk": null,
-          "jax": null
+          "jax": "0.12.0.1"
         },
         "machine": "x86_64",
-        "gpu": "NVIDIA GeForce RTX 3090"
+        "gpu": "NVIDIA H200"
       }
     },
     "DMCFingerTurnEasy": {
@@ -449,19 +449,19 @@
       "profile": {
         "device": "cuda",
         "versions": {
-          "torch": "2.14.1+cu126",
+          "torch": "2.15.0",
           "numpy": "2.5.3",
-          "triton": "3.8.0",
-          "mujoco": "3.12.0",
-          "mujoco-warp": "3.12.0",
+          "triton": "3.9.0",
+          "mujoco": "3.17.0",
+          "mujoco-warp": "3.17.0",
           "warp-lang": "1.17.0",
           "nvdiffrast": null,
           "pygame": "2.6.1",
           "pymunk": null,
-          "jax": null
+          "jax": "0.12.0.1"
         },
         "machine": "x86_64",
-        "gpu": "NVIDIA GeForce RTX 3090"
+        "gpu": "NVIDIA H200"
       }
     },
     "DMCFingerTurnHard": {
@@ -472,65 +472,65 @@
       "profile": {
         "device": "cuda",
         "versions": {
-          "torch": "2.14.1+cu126",
+          "torch": "2.15.0",
           "numpy": "2.5.3",
-          "triton": "3.8.0",
-          "mujoco": "3.12.0",
-          "mujoco-warp": "3.12.0",
+          "triton": "3.9.0",
+          "mujoco": "3.17.0",
+          "mujoco-warp": "3.17.0",
           "warp-lang": "1.17.0",
           "nvdiffrast": null,
           "pygame": "2.6.1",
           "pymunk": null,
-          "jax": null
+          "jax": "0.12.0.1"
         },
         "machine": "x86_64",
-        "gpu": "NVIDIA GeForce RTX 3090"
+        "gpu": "NVIDIA H200"
       }
     },
     "DMCHopperHop": {
       "file": "DMCHopperHop.npz",
-      "sha256": "8408fbef3c960d25cd62880420ef63ced098b165e6c81042da0c87addd4b4da0",
+      "sha256": "d48af2d28c68a5dee668545a6a68a930dabd0302da8303d404c7bb01cd6ed748",
       "size": 84,
-      "bytes": 30073,
+      "bytes": 30108,
       "profile": {
         "device": "cuda",
         "versions": {
-          "torch": "2.14.1+cu126",
+          "torch": "2.15.0",
           "numpy": "2.5.3",
-          "triton": "3.8.0",
-          "mujoco": "3.12.0",
-          "mujoco-warp": "3.12.0",
+          "triton": "3.9.0",
+          "mujoco": "3.17.0",
+          "mujoco-warp": "3.17.0",
           "warp-lang": "1.17.0",
           "nvdiffrast": null,
           "pygame": "2.6.1",
           "pymunk": null,
-          "jax": null
+          "jax": "0.12.0.1"
         },
         "machine": "x86_64",
-        "gpu": "NVIDIA GeForce RTX 3090"
+        "gpu": "NVIDIA H200"
       }
     },
     "DMCHumanoidWalk": {
       "file": "DMCHumanoidWalk.npz",
-      "sha256": "683b3c7c1bdc260c1ce719c43d29899ce68428d153d0c95074b711ddb9635261",
+      "sha256": "3410d045339a8bbc90f4704be59a9315a56031a93afe443ea25306f0d9d203fc",
       "size": 84,
-      "bytes": 55837,
+      "bytes": 55856,
       "profile": {
         "device": "cuda",
         "versions": {
-          "torch": "2.14.1+cu126",
+          "torch": "2.15.0",
           "numpy": "2.5.3",
-          "triton": "3.8.0",
-          "mujoco": "3.12.0",
-          "mujoco-warp": "3.12.0",
+          "triton": "3.9.0",
+          "mujoco": "3.17.0",
+          "mujoco-warp": "3.17.0",
           "warp-lang": "1.17.0",
           "nvdiffrast": null,
           "pygame": "2.6.1",
           "pymunk": null,
-          "jax": null
+          "jax": "0.12.0.1"
         },
         "machine": "x86_64",
-        "gpu": "NVIDIA GeForce RTX 3090"
+        "gpu": "NVIDIA H200"
       }
     },
     "DMCManipulatorBringBall": {
@@ -541,157 +541,157 @@
       "profile": {
         "device": "cuda",
         "versions": {
-          "torch": "2.14.1+cu126",
+          "torch": "2.15.0",
           "numpy": "2.5.3",
-          "triton": "3.8.0",
-          "mujoco": "3.12.0",
-          "mujoco-warp": "3.12.0",
+          "triton": "3.9.0",
+          "mujoco": "3.17.0",
+          "mujoco-warp": "3.17.0",
           "warp-lang": "1.17.0",
           "nvdiffrast": null,
           "pygame": "2.6.1",
           "pymunk": null,
-          "jax": null
+          "jax": "0.12.0.1"
         },
         "machine": "x86_64",
-        "gpu": "NVIDIA GeForce RTX 3090"
+        "gpu": "NVIDIA H200"
       }
     },
     "DMCPendulumSwingup": {
       "file": "DMCPendulumSwingup.npz",
-      "sha256": "5aa3798aa10cded7b093ad9b597a878395c89ecf59e5e4c986c503a85ba8a7b1",
+      "sha256": "97d3bfcbe21113f905f641bfd53055a35f1bd09fb512839fb4a50c8aba998c4f",
       "size": 84,
-      "bytes": 13252,
+      "bytes": 13324,
       "profile": {
         "device": "cuda",
         "versions": {
-          "torch": "2.14.1+cu126",
+          "torch": "2.15.0",
           "numpy": "2.5.3",
-          "triton": "3.8.0",
-          "mujoco": "3.12.0",
-          "mujoco-warp": "3.12.0",
+          "triton": "3.9.0",
+          "mujoco": "3.17.0",
+          "mujoco-warp": "3.17.0",
           "warp-lang": "1.17.0",
           "nvdiffrast": null,
           "pygame": "2.6.1",
           "pymunk": null,
-          "jax": null
+          "jax": "0.12.0.1"
         },
         "machine": "x86_64",
-        "gpu": "NVIDIA GeForce RTX 3090"
+        "gpu": "NVIDIA H200"
       }
     },
     "DMCPointMassEasy": {
       "file": "DMCPointMassEasy.npz",
-      "sha256": "8488f179b48eac9873b1667f59cc621f8c6657229b130032053b8ed63b6fcef0",
+      "sha256": "6739ca2a43cd9f2cc66c80135aed8886f8b20da2eb33d237f388ac5326225c2f",
       "size": 84,
-      "bytes": 6943,
+      "bytes": 6926,
       "profile": {
         "device": "cuda",
         "versions": {
-          "torch": "2.14.1+cu126",
+          "torch": "2.15.0",
           "numpy": "2.5.3",
-          "triton": "3.8.0",
-          "mujoco": "3.12.0",
-          "mujoco-warp": "3.12.0",
+          "triton": "3.9.0",
+          "mujoco": "3.17.0",
+          "mujoco-warp": "3.17.0",
           "warp-lang": "1.17.0",
           "nvdiffrast": null,
           "pygame": "2.6.1",
           "pymunk": null,
-          "jax": null
+          "jax": "0.12.0.1"
         },
         "machine": "x86_64",
-        "gpu": "NVIDIA GeForce RTX 3090"
+        "gpu": "NVIDIA H200"
       }
     },
     "DMCQuadrupedWalk": {
       "file": "DMCQuadrupedWalk.npz",
-      "sha256": "d9ef63128cb62ee3b3b37196feabc50eaf9fa7885f09dddb87015f1c84b85619",
+      "sha256": "cd70e296e178d9a34ad67cdc33d564e7fb12115176659c33fbfbe02076a446bd",
       "size": 224,
-      "bytes": 240247,
+      "bytes": 242249,
       "profile": {
         "device": "cuda",
         "versions": {
-          "torch": "2.14.1+cu126",
+          "torch": "2.15.0",
           "numpy": "2.5.3",
-          "triton": "3.8.0",
-          "mujoco": "3.12.0",
-          "mujoco-warp": "3.12.0",
+          "triton": "3.9.0",
+          "mujoco": "3.17.0",
+          "mujoco-warp": "3.17.0",
           "warp-lang": "1.17.0",
           "nvdiffrast": null,
           "pygame": "2.6.1",
           "pymunk": null,
-          "jax": null
+          "jax": "0.12.0.1"
         },
         "machine": "x86_64",
-        "gpu": "NVIDIA GeForce RTX 3090"
+        "gpu": "NVIDIA H200"
       }
     },
     "DMCReacher": {
       "file": "DMCReacher.npz",
-      "sha256": "5fb6f42a5fc25eb23282764dab1c07763a8a01c1a312c83fc224c892b13ab057",
+      "sha256": "d413afbfcaf4489fa613ad0e0a3991c41f3c32a1541b7c33905f5828d07c86eb",
       "size": 84,
-      "bytes": 9131,
+      "bytes": 9133,
       "profile": {
         "device": "cuda",
         "versions": {
-          "torch": "2.14.1+cu126",
+          "torch": "2.15.0",
           "numpy": "2.5.3",
-          "triton": "3.8.0",
-          "mujoco": "3.12.0",
-          "mujoco-warp": "3.12.0",
+          "triton": "3.9.0",
+          "mujoco": "3.17.0",
+          "mujoco-warp": "3.17.0",
           "warp-lang": "1.17.0",
           "nvdiffrast": null,
           "pygame": "2.6.1",
           "pymunk": null,
-          "jax": null
+          "jax": "0.12.0.1"
         },
         "machine": "x86_64",
-        "gpu": "NVIDIA GeForce RTX 3090"
+        "gpu": "NVIDIA H200"
       }
     },
     "DMCSwimmerSwimmer6": {
       "file": "DMCSwimmerSwimmer6.npz",
-      "sha256": "3cfc369263f6c367650ae4ccaf6e24aea83f18dcee1ff6425f94521964bd319a",
+      "sha256": "8f0de0fcbec1e7ab126b7038304c52fd71809ac04e46797a92aa9c5cc27bf446",
       "size": 84,
-      "bytes": 46039,
+      "bytes": 46031,
       "profile": {
         "device": "cuda",
         "versions": {
-          "torch": "2.14.1+cu126",
+          "torch": "2.15.0",
           "numpy": "2.5.3",
-          "triton": "3.8.0",
-          "mujoco": "3.12.0",
-          "mujoco-warp": "3.12.0",
+          "triton": "3.9.0",
+          "mujoco": "3.17.0",
+          "mujoco-warp": "3.17.0",
           "warp-lang": "1.17.0",
           "nvdiffrast": null,
           "pygame": "2.6.1",
           "pymunk": null,
-          "jax": null
+          "jax": "0.12.0.1"
         },
         "machine": "x86_64",
-        "gpu": "NVIDIA GeForce RTX 3090"
+        "gpu": "NVIDIA H200"
       }
     },
     "DMCWalkerWalk": {
       "file": "DMCWalkerWalk.npz",
-      "sha256": "cc71de0ce61ac53288e67c1dffa4cb9f24a28c6d7355663ee274195f8349e419",
+      "sha256": "8317def990fb32f9dd9fff4226e2936b49675bbe5dd8858a1f3e7ea7f76e1544",
       "size": 84,
-      "bytes": 42176,
+      "bytes": 42180,
       "profile": {
         "device": "cuda",
         "versions": {
-          "torch": "2.14.1+cu126",
+          "torch": "2.15.0",
           "numpy": "2.5.3",
-          "triton": "3.8.0",
-          "mujoco": "3.12.0",
-          "mujoco-warp": "3.12.0",
+          "triton": "3.9.0",
+          "mujoco": "3.17.0",
+          "mujoco-warp": "3.17.0",
           "warp-lang": "1.17.0",
           "nvdiffrast": null,
           "pygame": "2.6.1",
           "pymunk": null,
-          "jax": null
+          "jax": "0.12.0.1"
         },
         "machine": "x86_64",
-        "gpu": "NVIDIA GeForce RTX 3090"
+        "gpu": "NVIDIA H200"
       }
     },
     "FetchPickAndPlace": {

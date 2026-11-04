@@ -66,6 +66,7 @@ names one.
 | `workers` | 8 | min(value, CPUs in the process affinity, lanes) | not recorded | Most worker processes of a CPU simulator batch, or of a PushT render, on Linux. The value 0 steps every lane, and draws every PushT frame, in the main process. |
 | `worker_min_lanes` | 64 | none | not recorded | Smallest batch that uses worker processes, or Fetch simulator threads. For PushT, the smallest number of rendered States that uses render workers. |
 | `fetch_threads` | 4 | min(value, CPUs in the process affinity, lanes) | not recorded | Most simulator threads of an in-process Fetch batch. |
+| `dmc_threads` | 8 | min(value, CPUs in the process affinity, lanes) | not recorded | Most `mujoco.batch` threads of a DM Control batch, for CPU and CUDA output. MJX Reacher does not read it. |
 | `cpu3d_chunk` | 16 | none (TrackCom cells use a per-cell table) | Xeon Platinum 8268 | Frames per chunk of the CPU ray caster (`cpu3d`). |
 | `dmc_cpu_ray_budget` | 2^21 | 2^21 × L3 size / 35.75 MiB, rounded to a power of two, in [2^18, 2^21] | not recorded | Rays per CPU render chunk of the fixed-camera DMC cells, counting supersamples. |
 | `dmc_ray_budget` | 2^24 | min(2^24, free GPU memory / 512), rounded down to a power of two | not recorded | Rays per CUDA render chunk of the fixed-camera DMC cells. |
@@ -97,7 +98,10 @@ cannot read the hardware, the fallback applies.
 - Slow CPU rendering of DMC cells: try `cpu3d_chunk` (TrackCom cells) or `dmc_cpu_ray_budget`
   (fixed-camera cells) in powers of two. Smaller chunks stay in the CPU cache.
 - Slow CPU stepping: try `workers` between 0 and the number of cores, and `worker_min_lanes`
-  for small batches. The library uses worker processes only on Linux.
+  for small batches. The library uses worker processes only on Linux. For DM Control, try
+  `dmc_threads` between 1 and the number of cores.
+- Several DM Control envs in one process, or an env beside data-loader workers: set `dmc_threads`
+  so that all of their threads fit in the CPU affinity.
 - Slow classic control CPU rendering without Numba: try `render_workers` between 0 and the number of
   cores, and `render_worker_min_rows` for small batches.
 - Classic control CPU rendering with Numba: the kernel uses one thread for each CPU in the process

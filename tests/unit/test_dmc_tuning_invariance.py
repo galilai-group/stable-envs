@@ -42,13 +42,15 @@ def test_cpu_ray_budget_keeps_fixed_camera_frames(supersample):
                 assert torch.equal(env.render(state), reference), budget
 
 
-@pytest.mark.parametrize("workers", [1, 2, 4])
-def test_worker_count_keeps_state(workers):
-    with tuning.override(workers=0):
+@pytest.mark.parametrize("threads", [2, 3, 6])
+def test_thread_count_keeps_state(threads):
+    with tuning.override(dmc_threads=1):
         reference = snv.make("DMCCartpoleSwingup", num_envs=6, seed=3, device="cpu")
-    with tuning.override(workers=workers, worker_min_lanes=4):
+    with tuning.override(dmc_threads=threads):
         candidate = snv.make("DMCCartpoleSwingup", num_envs=6, seed=3, device="cpu")
     with reference, candidate:
+        assert reference._simulator.b.nthread == 1
+        assert candidate._simulator.b.nthread > 1
         assert_same_state(reference.reset(seed=3), candidate.reset(seed=3))
         rng = np.random.default_rng(9)
         actions = torch.stack([reference.action_spec.sample(6, rng=rng) for _ in range(4)], 1)
