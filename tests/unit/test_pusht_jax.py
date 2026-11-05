@@ -33,13 +33,16 @@ def test_mixed_action_dtypes_and_reset_restore(device, discrete):
 
 
 @pytest.mark.parametrize(
-    "initial,action",
+    "initial,action,steps,atol",
     [
-        ([480, 100, 200, 250, 0, 0, 0], [1.0, 0.0]),
-        ([100, 215, 200, 200, 0, 0, 0], [0.5, 0.0]),
+        ([480, 100, 200, 250, 0, 0, 0], [1.0, 0.0], 200, 5e-4),
+        ([100, 215, 200, 200, 0, 0, 0], [0.5, 0.0], 200, 5e-4),
+        # Outside the action space, as SWM accepts. The faster agent lets float32 rounding grow: over 200 steps
+        # the largest gap measured was 0.0078 px of observation and 0.0048 of reward.
+        ([300, 300, 200, 250, 0, 0, 0], [1.6, -1.3], 200, 2e-2),
     ],
 )
-def test_relative_controls_and_contact_track_main(device, initial, action):
+def test_relative_controls_and_contact_track_main(device, initial, action, steps, atol):
     options = dict(
         variation=[], state=np.array(initial, np.float64), goal_state=np.array([100, 100, 300, 250, np.pi / 4, 0, 0])
     )
@@ -49,16 +52,16 @@ def test_relative_controls_and_contact_track_main(device, initial, action):
     ):
         env.reset(0, options)
         ref.reset(0, options)
-        for _ in range(200):
+        for _ in range(steps):
             got = env.step(torch.tensor([action], device=device))
             want = ref.step(np.array([action], np.float32))
             np.testing.assert_allclose(
                 got["state", "current", "observation"].cpu(),
                 want["state", "current", "observation"],
-                atol=5e-4,
+                atol=atol,
                 rtol=0,
             )
-            assert got["reward"].item() == pytest.approx(want["reward"].item(), abs=5e-4)
+            assert got["reward"].item() == pytest.approx(want["reward"].item(), abs=atol)
             assert got["success"].item() == want["success"].item()
             assert not got["truncated"].any()
 

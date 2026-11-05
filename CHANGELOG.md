@@ -52,6 +52,8 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- `PushT` accepts continuous actions outside [-1, 1], as stable-worldmodel does. Such an action moves the target
+  further from the agent. Discrete `PushTDiscrete` indices must still be in [0, 16).
 - Reacher with CUDA output now uses native CPU physics below 32 environments. Larger CUDA batches
   keep JAX/MJX physics. `simulation_backend` selects either implementation and `mjx_min_envs` changes
   the provisional cutoff. TwoRoom uses Torch below `jax_min_envs` and JAX at or above it. Its cutoff
