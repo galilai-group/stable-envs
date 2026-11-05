@@ -59,8 +59,9 @@ State keys and the Variation leaves of each class.
 | [`ogbench`](environments/ogbench.md) | 27 | `PointMazeLargeNavigate`, `OGBCube` (`domain="pointmaze"`, `"cube"`, …) |
 | [`pusht`](environments/pusht.md) | 2 | `PushT`, `PushTDiscrete` |
 | [`pyflyt`](environments/pyflyt.md) | 1 | `PyFlytRocketLanding` |
+| [`roadster`](environments/roadster.md) | 5 | `RoadsterTrafficJam`, `RoadsterCarHop` (`domain="traffic"`, `"carhop"`, …) |
 
-With every extra installed, these 75 classes register. Without PyFlyt, 74 classes register.
+With every extra installed, these 80 classes register. Without PyFlyt, 79 classes register.
 
 ## Comparison with the source
 

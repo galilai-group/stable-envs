@@ -96,6 +96,7 @@ FAMILIES = (
     ),
     Family("craftax", "craftax", "craftax", ("craftax",)),
     Family("miniworld", "miniworld", "miniworld", ("miniworld",)),
+    Family("roadster", "roadster", "mujoco", ("roadster",), cpu=("gl",)),
 )
 
 

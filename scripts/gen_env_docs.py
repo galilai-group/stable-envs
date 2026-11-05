@@ -47,6 +47,7 @@ RENDERERS = {
     "ogbench-manipulation": {"cpu": "opengl (MuJoCo)", "cuda": "mjwarp"},
     "pusht": {"cpu": "pygame (source renderer)", "cuda": "pygame on CPU, frames copied to CUDA"},
     "pyflyt": {"cpu": "tiny (TinyRenderer)", "cuda": "nvdiffrast"},
+    "roadster": {"cpu": "opengl (MuJoCo)", "cuda": "opengl (MuJoCo) on CPU, frames copied to CUDA"},
 }
 
 #: Physics placement declared by ``execution_mode``.
