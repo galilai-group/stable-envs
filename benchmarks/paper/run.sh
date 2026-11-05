@@ -195,7 +195,9 @@ for spec in "$@"; do
         fi
         if has frames; then
           [ $CPU_SOURCES = 1 ] && once $n/src-render-cpu-L$L.json sw $ON run $COMMON --arms src-pipelined-render --src-label cpu --ours-device cpu --output $n/src-render-cpu-L$L.json
-          [ $dev = cuda ] && [ -n "$GPUSRC" ] && once $n/src-render-gpu-L$L.json egl $ON run $COMMON --arms src-pipelined-render --src-label gpu --ours-device cuda --output $n/src-render-gpu-L$L.json
+          # OGBench maze sources take hours per whole episode at 1024 lanes and more; time their first 8 steps there.
+          slice=$([ $fam = ogbench ] && [ $L -ge 1024 ] && [[ $E == *Maze* ]] && echo "--source-steps 8")
+          [ $dev = cuda ] && [ -n "$GPUSRC" ] && once $n/src-render-gpu-L$L.json egl $ON run $COMMON --arms src-pipelined-render --src-label gpu --ours-device cuda $slice --output $n/src-render-gpu-L$L.json
           once $n/snv-render-$tag-L$L.json gl $dev $ON run $COMMON --arms snv-render-$tag --output $n/snv-render-$tag-L$L.json
         fi
       done

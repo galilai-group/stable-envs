@@ -332,6 +332,9 @@ def run_source(args, name: str, render: bool) -> dict:
     data = np.load(Path(args.data) / f"{name}.npz")
     seeds, actions = data["seeds"][: args.episodes], data["actions"][: args.episodes]
     n, length = actions.shape[:2]
+    # --source-steps times a fixed slice of each episode (its reset and first steps) where whole episodes take hours.
+    if args.source_steps:
+        length = min(length, args.source_steps)
     lanes = min(args.procs * args.source_lanes, n)
     cpus = sorted(os.sched_getaffinity(0))[: args.procs]
     factory = functools.partial(_source_factory, name, args.size, render, actions[:1, 0], gpu=args.src_label == "gpu")
@@ -419,6 +422,7 @@ def run_source(args, name: str, render: bool) -> dict:
         "lanes": lanes,
         "cpus": cpus,
         "actions_per_call": 1,
+        "steps_per_episode": length,
         "steps_per_s": t["rate"],
         **t,
         # Without a reproducible source episode, neither the check nor the rollout MSE says anything.
@@ -658,6 +662,7 @@ def main() -> None:
     r.add_argument("--source-lanes", type=int, default=8)
     r.add_argument("--lanes", type=int, default=1024)
     r.add_argument("--episodes", type=int, default=None, help="play only the first N stored episodes")
+    r.add_argument("--source-steps", type=int, default=None, help="time only the first N steps of each source episode")
     r.add_argument("--threads", type=int, default=8)
     r.add_argument("--size", type=int, default=224)
     r.add_argument("--repeats", type=int, default=10)
