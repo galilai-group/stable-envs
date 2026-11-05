@@ -57,6 +57,11 @@ All notable changes to this project are listed here. The format follows
 
 - `PushT` accepts continuous actions outside [-1, 1], as stable-worldmodel does. Such an action moves the target
   further from the agent. Discrete `PushTDiscrete` indices must still be in [0, 16).
+- `PyFlytRocketLanding` on CPU: the physics worker processes draw the step frames of their running
+  lanes with TinyRenderer, in parallel. They also draw `render` batches of 2 or more States. Before, the
+  main process drew every frame. A step that returns only frames does not export a State. The frames are
+  byte-identical. One process now holds at most 511 Rocket lanes, because the frames use one more
+  PyBullet client.
 - `SimplePointMaze` draws the `info.goal` images faster. Each distinct background is drawn once with
   Matplotlib Agg. Then only the agent disc is drawn over a copy of it, in the render worker processes on
   Linux. The image bytes do not change. Steps return the goal image without a copy: it is the same
