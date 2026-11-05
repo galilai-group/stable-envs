@@ -57,6 +57,11 @@ All notable changes to this project are listed here. The format follows
 
 - `PushT` accepts continuous actions outside [-1, 1], as stable-worldmodel does. Such an action moves the target
   further from the agent. Discrete `PushTDiscrete` indices must still be in [0, 16).
+- `PyFlytRocketLanding` on CPU: the physics worker processes draw the step frames of their running
+  lanes with TinyRenderer, in parallel. They also draw `render` batches of 2 or more States. Before, the
+  main process drew every frame. A step that returns only frames does not export a State. The frames are
+  byte-identical. One process now holds at most 511 Rocket lanes, because the frames use one more
+  PyBullet client.
 - Reacher with CUDA output now uses native CPU physics below 32 environments. Larger CUDA batches
   keep JAX/MJX physics. `simulation_backend` selects either implementation and `mjx_min_envs` changes
   the provisional cutoff. TwoRoom uses Torch below `jax_min_envs` and JAX at or above it. Its cutoff
