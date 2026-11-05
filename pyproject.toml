@@ -67,12 +67,12 @@ ogbench = ["mujoco>=3.11,<3.18", "ogbench>=1.2.1,<1.3"]
 # Cube/Scene semantics and renderer. Their renderers check these exact MuJoCo, OGBench and
 # MuJoCo Warp versions when they render, and the CPU semantics check the OGBench version at
 # construction. Other OGBench cells need only the extra above.
-ogbench-manipulation = ["ogbench==1.2.1", "mujoco==3.12.0", "dm-control>=1.0.45"]
+ogbench-manipulation = ["ogbench==1.2.1", "mujoco==3.17.0", "dm-control>=1.0.50"]
 ogbench-manipulation-gpu = [
   "ogbench==1.2.1",
-  "mujoco==3.12.0",
-  "dm-control>=1.0.45",
-  "mujoco-warp==3.12.0",
+  "mujoco==3.17.0",
+  "dm-control>=1.0.50",
+  "mujoco-warp==3.17.0",
   "warp-lang==1.17.0",
 ]
 # numba adds the compiled CPU renderer of every DM Control task.
@@ -96,8 +96,8 @@ mjwarp = [
 # the model (Apache-2.0) is fetched from LNSGroup/MS-Human-700 at a pinned commit on first use.
 mshuman = [
   "filelock>=3.0",
-  "mujoco>=3.11,<3.13",
-  "mujoco-warp>=3.11,<3.13",
+  "mujoco>=3.17,<3.18",
+  "mujoco-warp>=3.17,<3.18",
   "warp-lang>=1.16",
 ]
 # Official replay-backed Rocket dynamics; GPU rendering also requires nvdiffrast and Triton.
@@ -106,7 +106,11 @@ mshuman = [
 rocket = ["pillow", "scipy", "PyFlyt==0.29.0", "pybullet==3.2.7"]
 # Craftax on CPU; craftax-gpu takes JAX's CUDA 12 build for device="cuda".
 craftax = ["craftax>=1.6.1", "jax>=0.4.30"]
+roadster = ["mujoco>=3.11", "pillow"]
 craftax-gpu = ["craftax>=1.6.1", "jax[cuda12]>=0.4.30; sys_platform == 'linux'"]
+# MovingBlockWorld is in the hlillemark/Miniworld fork, not on PyPI; uv takes it from [tool.uv.sources],
+# pip needs `pip install "miniworld @ git+https://github.com/hlillemark/Miniworld@<commit>"` first.
+miniworld = ["miniworld>=2.1", "pyglet>=1.5.27,<2"]
 hf = ["datasets>=2.14"]
 examples = ["imageio", "imageio-ffmpeg", "opencv-python"]
 # No `all` extra: Fetch needs mujoco<3.12, and nvdiffrast cannot be expressed
@@ -192,8 +196,8 @@ pin-ogbench = [
   "numpy==2.2.6; python_version >= '3.12'",
   "gymnasium==1.2.3; python_version >= '3.12'",
   "ogbench==1.2.1; python_version >= '3.12'",
-  "mujoco==3.12.0; python_version >= '3.12'",
-  "dm-control==1.0.45; python_version >= '3.12'",
+  "mujoco==3.17.0; python_version >= '3.12'",
+  "dm-control==1.0.50; python_version >= '3.12'",
 ]
 pin-rocket = [
   "numpy==2.5.3; python_version >= '3.12'",
@@ -206,7 +210,7 @@ pin-craftax = [
   "jax==0.11.2; python_version >= '3.12'",
   "jaxlib==0.11.2; python_version >= '3.12'",
 ]
-# GPU add-on for pin-dmc. OGBench's Cube and Scene take ogbench-manipulation-gpu, which pins MuJoCo Warp 3.12.0.
+# GPU add-on, combinable with pin-dmc or pin-ogbench.
 gpu-mjwarp = ["mujoco-warp==3.17.0; python_version >= '3.12'", "warp-lang==1.17.0; python_version >= '3.12'"]
 
 [tool.uv]
@@ -223,34 +227,21 @@ conflicts = [
     { group = "pin-rocket" },
     { group = "pin-craftax" },
   ],
-  # Fetch needs MuJoCo 3.11, MS-Human and Cube/Scene need 3.12, and DM Control needs 3.17.
+  # Fetch needs MuJoCo 3.11; these need 3.13 or later.
   [{ extra = "robotics" }, { group = "pin-dmc" }],
   [{ extra = "robotics" }, { group = "pin-ogbench" }],
   [{ extra = "robotics" }, { group = "gpu-mjwarp" }],
   [{ extra = "robotics" }, { extra = "dmcontrol-gpu" }],
   [{ extra = "robotics" }, { extra = "ogbench-manipulation" }],
   [{ extra = "robotics" }, { extra = "ogbench-manipulation-gpu" }],
+  [{ extra = "robotics" }, { extra = "mshuman" }],
   [{ extra = "dmcontrol-gpu" }, { group = "pin-fetch" }],
   [{ extra = "ogbench-manipulation" }, { group = "pin-fetch" }],
   [{ extra = "ogbench-manipulation-gpu" }, { group = "pin-fetch" }],
+  [{ extra = "mshuman" }, { group = "pin-fetch" }],
   [{ extra = "robotics" }, { extra = "dmcontrol" }],
   [{ extra = "dmcontrol" }, { group = "pin-fetch" }],
-  [{ extra = "dmcontrol" }, { extra = "ogbench-manipulation" }],
-  [{ extra = "dmcontrol" }, { extra = "ogbench-manipulation-gpu" }],
-  [{ extra = "dmcontrol-gpu" }, { extra = "ogbench-manipulation" }],
-  [{ extra = "dmcontrol-gpu" }, { extra = "ogbench-manipulation-gpu" }],
-  [{ extra = "dmcontrol" }, { group = "pin-ogbench" }],
-  [{ extra = "dmcontrol-gpu" }, { group = "pin-ogbench" }],
-  [{ extra = "mshuman" }, { extra = "dmcontrol" }],
-  [{ extra = "mshuman" }, { extra = "dmcontrol-gpu" }],
-  [{ extra = "mshuman" }, { group = "pin-dmc" }],
-  [{ extra = "mshuman" }, { group = "gpu-mjwarp" }],
-  [{ extra = "ogbench-manipulation" }, { group = "pin-dmc" }],
-  [{ extra = "ogbench-manipulation-gpu" }, { group = "pin-dmc" }],
-  [{ group = "gpu-mjwarp" }, { group = "pin-ogbench" }],
   [{ group = "gpu-mjwarp" }, { group = "pin-fetch" }],
-  [{ group = "gpu-mjwarp" }, { extra = "ogbench-manipulation" }],
-  [{ group = "gpu-mjwarp" }, { extra = "ogbench-manipulation-gpu" }],
 ]
 
 # PyFlyt 0.29.0 declares numpy<2 but runs on 2.5.3 in the rocket reference profile. This
@@ -262,6 +253,7 @@ requires-dist = ["numba", "numpy", "scipy", "gymnasium", "pettingzoo", "pybullet
 
 [tool.uv.sources]
 torch = [{ index = "pytorch-cpu", group = "torch-cpu", marker = "sys_platform == 'linux'" }]
+miniworld = { git = "https://github.com/hlillemark/Miniworld", rev = "bc7972050155b67e242c07bfdccfe1eeddbf9882" }
 
 [[tool.uv.index]]
 name = "pytorch-cpu"

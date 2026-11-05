@@ -39,7 +39,7 @@ def opengl():
         spec.loader.exec_module(module)
         # A prior test may have populated the parent package attribute already.
         module.pixels = pixels
-        module.version = Mock(side_effect=lambda name: {"mujoco": "3.12.0", "ogbench": "1.2.1"}[name])
+        module.version = Mock(side_effect=lambda name: {"mujoco": "3.17.0", "ogbench": "1.2.1"}[name])
         # The mocked renderer exists only in this process.
         with tuning.override(ogb_gl_workers=0):
             yield module, mujoco

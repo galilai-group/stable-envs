@@ -34,10 +34,10 @@ _PINNED_ROWS = 8
 @lru_cache
 def check_versions(renderer, *, warp=False):
     """Raise ImportError unless the pinned MuJoCo and OGBench, and with ``warp`` MJWarp and Warp, are installed."""
-    if version("mujoco") != "3.12.0" or version("ogbench") != "1.2.1":
-        raise ImportError(f"Cube/Scene {renderer} rendering requires mujoco==3.12.0 and ogbench==1.2.1")
-    if warp and (version("mujoco-warp") != "3.12.0" or version("warp-lang") != "1.17.0"):
-        raise ImportError("Cube/Scene GPU rendering requires mujoco-warp==3.12.0 and warp-lang==1.17.0")
+    if version("mujoco") != "3.17.0" or version("ogbench") != "1.2.1":
+        raise ImportError(f"Cube/Scene {renderer} rendering requires mujoco==3.17.0 and ogbench==1.2.1")
+    if warp and (version("mujoco-warp") != "3.17.0" or version("warp-lang") != "1.17.0"):
+        raise ImportError("Cube/Scene GPU rendering requires mujoco-warp==3.17.0 and warp-lang==1.17.0")
 
 
 def _key(family, row, resolution):

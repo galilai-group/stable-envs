@@ -106,8 +106,6 @@ def validate_actions(actions, discrete):
         raise ValueError("PushT action must be finite")
     if discrete and (np.any(actions < 0) or np.any(actions >= 16)):
         raise ValueError("PushT discrete indices must be in [0, 16)")
-    if not discrete and (np.any(actions < -1) or np.any(actions > 1)):
-        raise ValueError("PushT continuous actions must be in [-1, 1]")
 
 
 class PushTReplayAdapter(SimulatorAdapter):
