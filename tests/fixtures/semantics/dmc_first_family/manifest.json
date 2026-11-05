@@ -3,18 +3,18 @@
   "seed": 17,
   "batch": 3,
   "steps": 32,
-  "generator": "scripts/recovery/freeze_dmc_first_family_oracle.py",
+  "generator": "scripts/testing/freeze_dmc_first_family_oracle.py",
   "versions": {
     "numpy": "2.5.3",
-    "mujoco": "3.12.0",
-    "dm-control": "1.0.45",
+    "mujoco": "3.17.0",
+    "dm-control": "1.0.50",
     "stable-worldmodel": "0.0.6"
   },
   "source": "Real SWM wrappers only; independent of candidate adapter",
   "domains": {
     "acrobot": {
-      "file": "acrobot_swm_176d545_mujoco312.npz",
-      "sha256": "3b3656e74cfa9f5ea164b6dd5917395b2b99d4872ca54313cc5813e4ce0b2753",
+      "file": "acrobot_swm_176d545_mujoco317.npz",
+      "sha256": "db2d5ca8d5f09257f956b55b228c8ad9ecd270cb8b67fbf58a1721b93ffa3d17",
       "arrays": {
         "actions": {
           "shape": [
@@ -105,6 +105,30 @@
           "dtype": "bool"
         },
         "state/rng/cached_gaussian": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/x": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/y": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/z": {
           "shape": [
             33,
             3,
@@ -151,8 +175,8 @@
       }
     },
     "pendulum": {
-      "file": "pendulum_swm_176d545_mujoco312.npz",
-      "sha256": "5fe710036d71873c8515b380ec04719cb12e8e97d85072ba78e008ee08624792",
+      "file": "pendulum_swm_176d545_mujoco317.npz",
+      "sha256": "54501ff75f811af2d2ffd4325b5cf097798e1bf2a272cd56d97f40a3c5e68332",
       "arrays": {
         "actions": {
           "shape": [
@@ -243,6 +267,30 @@
           "dtype": "bool"
         },
         "state/rng/cached_gaussian": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/x": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/y": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/z": {
           "shape": [
             33,
             3,
@@ -289,8 +337,8 @@
       }
     },
     "cartpole": {
-      "file": "cartpole_swm_176d545_mujoco312.npz",
-      "sha256": "934f47b640e47563c16dc05d0949e307bd23ab82f91c6baef5e1b5a19c092927",
+      "file": "cartpole_swm_176d545_mujoco317.npz",
+      "sha256": "d0c3dbd59f8e037dbfd7216f8bfd84c039ddbf8f1e2318847eeb0ba1e67de8b7",
       "arrays": {
         "actions": {
           "shape": [
@@ -381,6 +429,38 @@
           "dtype": "bool"
         },
         "state/rng/cached_gaussian": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/x": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/y": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/z": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/agent/cart_mass": {
           "shape": [
             33,
             3,

@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from functools import partial
+
 import numpy as np
 import torch
 
 from . import physics as _physics
+from .batch import XZ, ZZ, scalar_tolerance, tolerance
 from .lanes import DMCLanes
 from .registered import compile_physics, normalized, source_model
 from .state import core_fields
@@ -78,6 +81,69 @@ class FirstFamilyAdapter(DMCLanes):
         super().__init__(domain, num_envs, device, seed, lambda s: _make_first_family(domain, s), _FIRST_CORE[domain])
 
 
+class CartpoleBatch:
+    """Cartpole swingup-sparse and smooth balance batch lanes."""
+
+    def __init__(self, b, models, sparse):
+        self.sparse = sparse
+        self.qpos, self.qvel, self.ctrl, self.xmat = b.bind("qpos"), b.bind("qvel"), b.bind("ctrl"), b.bind("xmat")
+
+    def reward(self):
+        cart, cosine = self.qpos[:, 0], self.xmat[:, 2:, ZZ]
+        if self.sparse:
+            return tolerance(cart, (-0.25, 0.25)) * tolerance(cosine, (0.995, 1)).prod(axis=1)
+        centered = (1 + scalar_tolerance(cart, margin=2)) / 2
+        small_control = (4 + tolerance(self.ctrl, margin=1, value_at_margin=0, sigmoid="quadratic")[:, 0]) / 5
+        small_velocity = (1 + tolerance(self.qvel[:, 1:], margin=5).min(axis=1)) / 2
+        return ((cosine + 1) / 2).mean(axis=1) * small_control * small_velocity * centered
+
+    def observation(self):
+        poles = self.xmat[:, 2:][:, :, [ZZ, XZ]].reshape(len(self.xmat), -1)
+        return np.concatenate([self.qpos[:, :1], poles, self.qvel], axis=1, dtype=np.float32)
+
+    def info(self):
+        return None
+
+
+class AcrobotBatch:
+    """Acrobot swingup-sparse batch lanes."""
+
+    def __init__(self, b, models):
+        m = models[0]
+        self.arms = [m.body("upper_arm").id, m.body("lower_arm").id]
+        self.target, self.tip = m.site("target").id, m.site("tip").id
+        self.radius = np.array([model.site_size[self.target, 0] for model in models])
+        self.qvel, self.xmat, self.site_xpos = b.bind("qvel"), b.bind("xmat"), b.bind("site_xpos")
+
+    def reward(self):
+        v = self.site_xpos[:, self.target] - self.site_xpos[:, self.tip]
+        return (np.sqrt(np.vecdot(v, v)) <= self.radius).astype(np.float64)
+
+    def observation(self):
+        arms = self.xmat[:, self.arms]
+        return np.concatenate([arms[:, :, XZ], arms[:, :, ZZ], self.qvel], axis=1, dtype=np.float32)
+
+    def info(self):
+        return None
+
+
+class PendulumBatch:
+    """Pendulum swingup batch lanes."""
+
+    def __init__(self, b, models):
+        self.pole = models[0].body("pole").id
+        self.qvel, self.xmat = b.bind("qvel"), b.bind("xmat")
+
+    def reward(self):
+        return tolerance(self.xmat[:, self.pole, ZZ], (np.cos(np.deg2rad(8)), 1))
+
+    def observation(self):
+        return np.concatenate([self.xmat[:, self.pole, [ZZ, XZ]], self.qvel], axis=1, dtype=np.float32)
+
+    def info(self):
+        return None
+
+
 def _make_reacher(seed):
     """Construct Reacher with the registered model and action scaling."""
     from dm_control.rl import control
@@ -105,3 +171,35 @@ class ReacherAdapter(DMCLanes):
 
     def __init__(self, num_envs, device="cpu", seed=0):
         super().__init__("reacher", num_envs, device, seed, _make_reacher, _REACHER_CORE)
+
+
+class ReacherBatch:
+    """Reacher batch lanes."""
+
+    def __init__(self, b, models):
+        m = models[0]
+        self.target, self.finger = m.geom("target").id, m.geom("finger").id
+        self.radii = np.array([model.geom_size[[self.target, self.finger], 0].sum() for model in models])
+        self.qpos, self.qvel, self.geom_xpos = b.bind("qpos"), b.bind("qvel"), b.bind("geom_xpos")
+
+    def _to_target(self):
+        return self.geom_xpos[:, self.target, :2] - self.geom_xpos[:, self.finger, :2]
+
+    def reward(self):
+        v = self._to_target()
+        return (np.sqrt(np.vecdot(v, v)) <= self.radii).astype(np.float64)
+
+    def observation(self):
+        return np.concatenate([self.qpos, self._to_target(), self.qvel], axis=1, dtype=np.float32)
+
+    def info(self):
+        return None
+
+
+FIRST_FAMILY_BATCH = {
+    "acrobot": AcrobotBatch,
+    "pendulum": PendulumBatch,
+    "cartpole": partial(CartpoleBatch, sparse=True),
+    "cartpole-balance": partial(CartpoleBatch, sparse=False),
+    "reacher": ReacherBatch,
+}
