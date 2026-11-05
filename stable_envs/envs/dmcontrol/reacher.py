@@ -10,7 +10,7 @@ from .simulation.execution import make_dmc_adapter, reacher_backend
 
 
 class _ReacherSemantics(DelegatedSemantics):
-    """Reacher with native CPU or CUDA MJX physics."""
+    """Reacher with native CPU, CUDA MJX or explicit CUDA MuJoCo Warp physics."""
 
     execution_mode = "AUTO_NATIVE_MJX"
 
@@ -18,12 +18,11 @@ class _ReacherSemantics(DelegatedSemantics):
         """Select physics at construction and return tensors on the requested device.
 
         ``"auto"`` uses native CPU physics below ``mjx_min_envs`` and MJX for
-        larger CUDA batches. ``"native"`` and ``"mjx"`` select explicitly.
+        larger CUDA batches. ``"native"``, ``"mjx"`` and ``"mjwarp"`` select explicitly.
         """
         self.simulation_backend = simulation_backend
         self.mjx_min_envs = mjx_min_envs
         super().__init__(*args, simulation_backend=simulation_backend, **kwargs)
-        self.execution_mode = "JAX_MJX" if self.simulation_backend == "mjx" else "DELEGATED_CPU"
 
     def _make_simulator(self):
         self.simulation_backend = reacher_backend(self.B, self.device, self.simulation_backend, self.mjx_min_envs)
@@ -69,9 +68,9 @@ DMCReacher = parity_cell(
 )
 
 DMCReacher.name = "dmc-reacher"
-DMCReacher.__doc__ = """Reacher with native float64 CPU or float32 MJX CUDA physics.
+DMCReacher.__doc__ = """Reacher with native float64 CPU or float32 MJX/MuJoCo Warp CUDA physics.
 
 ``simulation_backend="auto"`` uses native CPU physics below ``mjx_min_envs``.
 The cutoff defaults to 32. Larger CUDA batches use MJX. Set ``simulation_backend``
-to ``"native"`` or ``"mjx"`` to choose explicitly. ``device`` controls output and rendering.
+to ``"native"``, ``"mjx"`` or ``"mjwarp"`` to choose explicitly. ``device`` controls output and rendering.
 """

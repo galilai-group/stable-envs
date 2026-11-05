@@ -14,13 +14,13 @@ if TYPE_CHECKING:
 
 def reacher_backend(num_envs: int, device: str | torch.device, backend: str = "auto", mjx_min_envs: int = 32) -> str:
     """Use native physics for small batches and MJX for larger CUDA batches."""
-    if backend not in ("auto", "native", "mjx"):
-        raise ValueError("simulation_backend must be 'auto', 'native' or 'mjx'")
+    if backend not in ("auto", "native", "mjx", "mjwarp"):
+        raise ValueError("simulation_backend must be 'auto', 'native', 'mjx' or 'mjwarp'")
     if isinstance(mjx_min_envs, bool) or not isinstance(mjx_min_envs, int) or mjx_min_envs < 1:
         raise ValueError("mjx_min_envs must be an int >= 1")
     cuda = torch.device(device).type == "cuda"
-    if backend == "mjx" and not cuda:
-        raise ValueError("simulation_backend='mjx' requires device='cuda'")
+    if backend in ("mjx", "mjwarp") and not cuda:
+        raise ValueError(f"simulation_backend={backend!r} requires device='cuda'")
     if backend == "auto":
         return "mjx" if cuda and num_envs >= mjx_min_envs else "native"
     return backend
@@ -36,8 +36,6 @@ def make_dmc_adapter(
     mjx_min_envs: int = 32,
 ) -> DMCAdapter | DMCProcessAdapter | DMCWarpAdapter:
     if simulation_backend == "mjwarp":
-        if domain == "reacher":
-            raise ValueError("DMCReacher does not support simulation_backend='mjwarp'; use 'native' or 'mjx'")
         if torch.device(device).type != "cuda":
             raise ValueError("simulation_backend='mjwarp' requires device='cuda'")
         try:

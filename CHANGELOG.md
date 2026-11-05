@@ -8,12 +8,13 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
-- The 16 DMC classes other than Reacher accept experimental `simulation_backend="mjwarp"`
+- All 17 DMC classes accept experimental `simulation_backend="mjwarp"`
   for direct CUDA physics on MuJoCo Warp 3.17. Automatic routing and Reacher's native/MJX
-  selection remain unchanged. Exact checkpoints and core CUDA integration pass; full numerical
-  source/replay acceptance remains unfinished. See the DMC documentation for limitations and
-  measured performance across all 16 tasks. Cheetah uses stable constraint ordering to remove
-  replay variation from parallel contact allocation, with unchanged numerical acceptance bounds.
+  selection remain unchanged. Reacher uses the shared adapter for targets, resets, physics variation
+  and checkpoints. Required CUDA checks cover all 17 classes; full numerical source/replay acceptance
+  remains unfinished. See the DMC documentation for limitations and historical measured performance
+  across the original 16 tasks. Cheetah uses stable constraint ordering to remove replay variation
+  from parallel contact allocation, with unchanged numerical acceptance bounds.
   Manipulator uses ordered elliptic Hessian accumulation within each world to remove another source
   of replay variation, retaining the upstream Newton equations and unchanged acceptance bounds.
   Capsule contact corrections also avoid wrong endpoints and duplicate constraints for nearly
@@ -45,9 +46,9 @@ All notable changes to this project are listed here. The format follows
 ### Changed
 
 - Reacher with CUDA output now uses native CPU physics below 32 environments. Larger CUDA batches
-  keep JAX/MJX physics. `simulation_backend` selects either implementation and `mjx_min_envs` changes
-  the provisional cutoff. TwoRoom uses Torch below `jax_min_envs` and JAX at or above it. Its cutoff
-  defaults to 1, which keeps JAX at every batch size. Both environments allow explicit backend selection.
+  keep JAX/MJX physics. `simulation_backend` selects native, MJX or MJWarp explicitly, and
+  `mjx_min_envs` changes the provisional cutoff. TwoRoom uses Torch below `jax_min_envs` and JAX at or above it.
+  Its cutoff defaults to 1, which keeps JAX at every batch size. Both environments allow explicit backend selection.
 - `PiecewiseZones` and `TwoRoomTarget` draw seeded resets from the same distribution tree as `Piecewise`
   and `TwoRoom`, so `reset(seed=k)` starts the agent (and `TwoRoomTarget`'s target) where stable-worldmodel
   does for the same seed. Before, they drew from `sample_states` and matched for no seed.

@@ -33,7 +33,7 @@ class SourceSnapshot:
         return self._field("model", name)
 
 
-@pytest.mark.parametrize("key", sorted(set(FACTORIES) - {"reacher"}))
+@pytest.mark.parametrize("key", sorted(FACTORIES))
 def test_task_outputs_match_source_after_steps_and_resets(key):
     with closing(make_local(key, 3, "cpu", 7)) as lanes:
         task = bind_task(key, lanes.envs[0])
@@ -66,6 +66,21 @@ def test_task_outputs_match_source_after_steps_and_resets(key):
                 fp32 = SourceSnapshot(lanes.envs, dtype=torch.float32)
                 torch.testing.assert_close(task.observation(fp32), observation, atol=2e-5, rtol=2e-5)
                 torch.testing.assert_close(task.reward(fp32), reward, atol=2e-6, rtol=2e-6)
+
+
+def test_reacher_sparse_reward_uses_each_lanes_target():
+    with closing(make_local("reacher", 3, "cpu", 7)) as lanes:
+        for env, target in zip(lanes.envs, ((0.26, 0, 0.01), (0.27, 0, 0.01), (0.24, 0.1, 0.01)), strict=True):
+            physics = env.physics
+            physics.data.qpos[:] = 0
+            physics.data.qvel[:] = 0
+            physics.named.model.geom_pos["target"] = target
+            physics.after_reset()
+        task = bind_task("reacher", lanes.envs[0])
+        reward = torch.tensor([env.task.get_reward(env.physics) for env in lanes.envs], dtype=torch.float64)
+        assert reward.tolist() == [1.0, 0.0, 0.0]
+        for dtype in (torch.float32, torch.float64):
+            torch.testing.assert_close(task.reward(SourceSnapshot(lanes.envs, dtype=dtype)), reward, atol=0, rtol=0)
 
 
 @pytest.mark.parametrize("key", ["ball_in_cup", "finger-spin"])

@@ -16,7 +16,7 @@ from tests.gpu._shared import family_params, resolve_family
 from tests.helpers.reference.semantics import assert_same_state
 
 pytestmark = [pytest.mark.family("dmc"), pytest.mark.skipif(not torch.cuda.is_available(), reason="requires CUDA")]
-DMC_NAMES = [name for name, cls in se.registry.REGISTRY.items() if cls.family == "dmcontrol" and name != "DMCReacher"]
+DMC_NAMES = [name for name, cls in se.registry.REGISTRY.items() if cls.family == "dmcontrol"]
 
 
 @pytest.mark.parametrize("name", family_params(DMC_NAMES, family="dmc"))
@@ -24,6 +24,7 @@ def test_cuda_stepping_snapshot_ownership_and_pixels(name):
     resolve_family(name, family="dmc", modules=("dmcontrol._family",), subject="MJWarp stepping")
     with se.make(name, num_envs=3, device="cuda", simulation_backend="mjwarp", size=32) as env:
         assert env.simulation_backend == env._simulator.simulation_backend == "mjwarp"
+        assert env.execution_mode == "MUJOCO_WARP"
         env.reset(seed=31)
         actions = torch.zeros(3, 2 * env.action_dim, device="cuda", dtype=torch.float64)[:, ::2]
         assert not actions.is_contiguous()

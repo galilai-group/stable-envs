@@ -116,6 +116,8 @@ def test_routing(monkeypatch, route, target, device, eligible, platform, batch, 
         (4096, "cpu", "auto", 32, "native"),
         (4096, "cuda", "native", 32, "native"),
         (1, "cuda", "mjx", 32, "mjx"),
+        (1, "cuda", "mjwarp", 32, "mjwarp"),
+        (64, "cuda:1", "mjwarp", 32, "mjwarp"),
         (32, "cuda", "auto", 64, "native"),
         (64, "cuda", "auto", 64, "mjx"),
     ],
@@ -125,6 +127,7 @@ def test_reacher_routes_without_changing_the_output_device(monkeypatch, batch, d
 
     from stable_envs.envs.dmcontrol.simulation import execution
 
+    assert execution.reacher_backend(batch, device, backend, threshold) == expected
     monkeypatch.setattr(execution, "make_local", _local)
     monkeypatch.setattr(execution, "process_count", lambda *args, **kwargs: 0)
     monkeypatch.setitem(
@@ -134,6 +137,11 @@ def test_reacher_routes_without_changing_the_output_device(monkeypatch, batch, d
             ReacherMJXAdapter=lambda *args: ("mjx", args, {}),
         ),
     )
+    monkeypatch.setitem(
+        sys.modules,
+        "stable_envs.envs.dmcontrol.simulation.mjwarp",
+        SimpleNamespace(DMCWarpAdapter=lambda *args: ("mjwarp", args, {})),
+    )
     kind, args, _ = execution.make_dmc_adapter(
         "reacher",
         batch,
@@ -142,7 +150,7 @@ def test_reacher_routes_without_changing_the_output_device(monkeypatch, batch, d
         simulation_backend=backend,
         mjx_min_envs=threshold,
     )
-    assert kind == ("mjx" if expected == "mjx" else "local")
+    assert kind == (expected if expected in {"mjx", "mjwarp"} else "local")
     assert args == ((batch, device, 17) if expected == "mjx" else ("reacher", batch, device, 17))
 
 
@@ -152,6 +160,7 @@ def test_reacher_routes_without_changing_the_output_device(monkeypatch, batch, d
     [
         ("unknown", "cuda", 32),
         ("mjx", "cpu", 32),
+        ("mjwarp", "cpu", 32),
         ("auto", "cuda", 0),
         ("auto", "cuda", True),
         ("auto", "cuda", 1.5),
@@ -182,7 +191,7 @@ def test_dmc_warp_requires_explicit_cuda_selection(monkeypatch):
         assert result == ("mjwarp" if backend == "mjwarp" else "local", ("walker", 64, "cuda:1", 17), {})
     for domain, device, backend in (
         ("walker", "cpu", "mjwarp"),
-        ("reacher", "cuda", "mjwarp"),
+        ("reacher", "cpu", "mjwarp"),
         ("walker", "cuda", "mjx"),
         ("walker", "cuda", "unknown"),
     ):

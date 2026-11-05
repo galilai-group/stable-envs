@@ -34,13 +34,14 @@ def main():
         raise RuntimeError("DMC MJWarp integration requires an actual CUDA device")
     from stable_envs.registry import REGISTRY
 
-    names = {name for name, cls in REGISTRY.items() if cls.family == "dmcontrol" and name != "DMCReacher"}
-    if len(names) != 16:
-        raise RuntimeError(f"Expected all 16 DMC MJWarp environments, found {len(names)}")
+    names = {name for name, cls in REGISTRY.items() if cls.family == "dmcontrol"}
+    if len(names) != 17:
+        raise RuntimeError(f"Expected all 17 DMC MJWarp environments, found {len(names)}")
     os.environ["SE_REQUIRE_FAMILIES"] = "dmc"
     return pytest.main(
         [
             str(ROOT / "tests/gpu/test_dmc_mjwarp.py"),
+            str(ROOT / "tests/gpu/test_dmc_mjwarp_reacher.py"),
             str(ROOT / "tests/gpu/test_dmc_mjwarp_streams.py"),
             str(ROOT / "tests/unit/test_dmc_mjwarp_contacts.py")
             + "::test_constraint_order_preserves_contact_impulses[cuda]",

@@ -29,7 +29,7 @@ in cup is the exception: its `success` value is 1 when the ball is in the cup.
 
 ## Direct MuJoCo Warp physics
 
-The 16 classes other than Reacher accept `simulation_backend="mjwarp"` for direct batched physics on
+All 17 classes accept `simulation_backend="mjwarp"` for direct batched physics on
 CUDA. Install `stable-envs[dmcontrol-gpu]`; this backend uses MuJoCo/MuJoCo Warp 3.17
 and dm-control 1.0.50. Explicit selection
 raises an error if CUDA or the dependencies are unavailable. `backend` still selects rendering.
@@ -77,9 +77,10 @@ and factorization kernels, with the original warmstart and iteration settings.
 ### Validation status
 
 This backend is experimental. The following numerical results were recorded on MuJoCo/Warp 3.12;
-they do not establish 3.17 numerical acceptance. The implementation passed CUDA integration for all 16 classes,
-including checkpoint ownership/restoration and rendering captured States. Full numerical source and
-resumed-rollout acceptance remains unfinished. Earlier Cheetah and Manipulator checks each passed 60 repeated CUDA
+they do not establish 3.17 numerical acceptance. Historical CUDA integration passed for the original
+16 classes, excluding Reacher. It covered checkpoint ownership/restoration and rendering captured States.
+Full numerical source and resumed-rollout acceptance remains unfinished. Earlier Cheetah and
+Manipulator checks each passed 60 repeated CUDA
 replay comparisons (including 30 on fresh seeds), 100 independent CPU-reference comparisons and
 checks that reject missing action repetition, wrong controls and disabled contacts. Their measured
 eight-step replays were exactly equal; this is not a guarantee for arbitrary horizons or different
@@ -97,17 +98,20 @@ rendering are separate from numerical agreement after advancing physics. Existin
 have not been loosened.
 
 Run the focused CUDA checks with `python scripts/ci/run_dmc_mjwarp.py`; missing CUDA or skipped
-required cases fail this runner. These are core regression checks, not a numerical certification.
+required cases fail this runner. The runner covers all 17 classes and includes Reacher's target,
+physics variation, mixed-reset and 100-call replay checks. These are core regression checks, not a
+numerical certification.
 
 ### Measured performance
 
-These measurements used MuJoCo/Warp 3.12 and have not been repeated on 3.17.
+These historical measurements used MuJoCo/Warp 3.12 and do not include Reacher.
 
-All 16 environments were measured with native and Warp at batches 1, 16, 64, 256 and 1024: 160 runs,
+The original 16 environments were measured with native and Warp at batches 1, 16, 64, 256 and 1024: 160 runs,
 80 matched pairs. Measurements used an RTX A6000 on a shared AMD EPYC 7443 host, eight visible CPUs,
 one Torch thread per process, seed 0, zero normalized actions, five warmups and ten synchronized
 samples. Each case used a fresh process. Both backends returned CUDA tensors; native physics ran on
-CPU. `python benchmarks/dmc_mjwarp.py --help` describes how to repeat the measurements.
+CPU. `python benchmarks/dmc_mjwarp.py --help` describes how to run the benchmark. Its current default
+matrix includes Reacher: 17 environments and 170 native/Warp records at the same five batch sizes.
 The all-environment sweep below predates the Cheetah, Manipulator and Hopper fixes. A matched RTX A6000
 check at the same five batch sizes, with ten warmups and 40 synchronized samples, measured 4–11%
 additional raw-physics latency and at most 1.4% additional median public-step latency for Cheetah.
@@ -131,7 +135,7 @@ one frame. State/frame history is omitted.
 | 256 | 3.101× | 2.111× | 1.591× |
 | 1024 | 13.343× | 7.734× | 2.982× |
 
-![Native-to-Warp latency ratios for all 16 DMC environments](../assets/dmc-mjwarp-speedup.png)
+![Historical native-to-Warp latency ratios for 16 DMC environments, excluding Reacher](../assets/dmc-mjwarp-speedup.png)
 
 All 16 environments had faster public stepping at batches 256 and 1024. Small batches generally
 favored native. Raw native physics uses sequential local CPU lanes; public native stepping retains
@@ -275,14 +279,22 @@ with snv.DMCReacher(num_envs=1024, device="cuda") as env:
     print(env.simulation_backend)  # "mjx"
 ```
 
-Set `simulation_backend="native"` or `"mjx"` to choose explicitly. MJX requires CUDA and
-`stable-envs[dmcontrol-gpu]`. Set `mjx_min_envs` to change the automatic cutoff.
+Set `simulation_backend="native"`, `"mjx"` or `"mjwarp"` to choose explicitly. Both GPU backends
+require CUDA and `stable-envs[dmcontrol-gpu]`. Reacher's MJWarp path uses the same adapter as the
+other DMC tasks, including native reset sampling, per-lane targets, physics variation and full
+checkpoints. Set `mjx_min_envs` to change the automatic native/MJX cutoff; MJWarp is selected explicitly.
+
+```python
+with snv.DMCReacher(num_envs=256, device="cuda", simulation_backend="mjwarp") as env:
+    state = env.reset(seed=7)
+    result = env.step(env.action_spec.sample(256), states=None, frames=None)
+```
 
 The default cutoff of 32 is provisional. Earlier A40 measurements compared native physics with
-CPU outputs against MJX with CUDA outputs. The comparison with both implementations returning
-CUDA tensors remains unmeasured, so the cutoff does not guarantee the fastest choice.
+CPU outputs against MJX with CUDA outputs. Those measurements used different output devices,
+so the cutoff does not guarantee the fastest choice.
 
-Native physics uses float64. MJX uses float32 and can produce different trajectories and rewards.
+Native physics uses float64. MJX and MJWarp use float32 and can produce different trajectories and rewards.
 Select the same backend when comparing experiments.
 
 <!-- env: DMCReacher -->

@@ -2,8 +2,8 @@
 
 Example: python benchmarks/dmc_mjwarp.py --output results/dmc-mjwarp.json --pretty
 
-The default matrix is 16 DMC cells x batches 1,16,64,256,1024 x native/MJWarp
-(160 records). Install psutil and nvidia-ml-py for memory measurements.
+The default matrix is 17 DMC cells x batches 1,16,64,256,1024 x native/MJWarp
+(170 records). Install psutil and nvidia-ml-py for memory measurements.
 Each environment/batch/backend record runs in a fresh process so allocator
 caches from earlier records cannot contaminate its process memory measurements.
 An output file is atomically updated after each record, so a long sweep retains
@@ -34,7 +34,7 @@ from benchmarks import _common as common  # noqa: E402
 from stable_envs.registry import REGISTRY  # noqa: E402
 from stable_envs.testing.evidence import sha256  # noqa: E402
 
-CELLS = tuple(sorted(name for name, cls in REGISTRY.items() if cls.family == "dmcontrol" and name != "DMCReacher"))
+CELLS = tuple(sorted(name for name, cls in REGISTRY.items() if cls.family == "dmcontrol"))
 
 
 class MemoryProbe:
@@ -340,7 +340,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     common.add_common_arguments(parser, batches=True)
     parser.set_defaults(envs=list(CELLS), batches=[1, 16, 64, 256, 1024], device="cuda")
-    parser._option_string_actions["--envs"].help = "comma-separated supported DMC environment names (default: all 16)"
+    parser._option_string_actions["--envs"].help = "comma-separated supported DMC environment names (default: all 17)"
     parser.add_argument(
         "--simulation-backends", type=common.names, default=["native", "mjwarp"], help="native,mjwarp (default: both)"
     )
