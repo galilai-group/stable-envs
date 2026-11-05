@@ -226,9 +226,30 @@ def _rollouts(env, n: int, seed: int, steps: int, every: int, reference: bool):
                     break
             env.step(env.action_spec.sample(env.B, rng), frames=None)
     if not reference:
-        return torch.cat(states)[:n], None
+        return _cat_states(states)[:n], None
     joined = np.concatenate(inputs) if isinstance(inputs[0], np.ndarray) else [x for part in inputs for x in part]
-    return torch.cat(states)[:n], joined[:n]
+    return _cat_states(states)[:n], joined[:n]
+
+
+def _cat_states(states):
+    """Concatenate State batches whose growing fields (PushT's action history) differ in length.
+
+    Shorter fields are zero-padded along their second axis; a history's ``valid`` mask is then False on the padding.
+    """
+    lengths = {}
+    for st in states:
+        for key, value in st.items(True, True):
+            if value.dim() > 1:
+                lengths[key] = max(lengths.get(key, 0), value.shape[1])
+    padded = []
+    for st in states:
+        st = st.clone()
+        for key, value in list(st.items(True, True)):
+            if value.dim() > 1 and value.shape[1] < lengths[key]:
+                pad = value.new_zeros((value.shape[0], lengths[key] - value.shape[1], *value.shape[2:]))
+                st.set(key, torch.cat([value, pad], 1))
+        padded.append(st)
+    return torch.cat(padded)
 
 
 def _frames_of(cls, blob, device: str):
