@@ -357,7 +357,17 @@ class PhysicsKnobs:
             return
         self._apply_masses(model, row)
         keep = {name: np.array(getattr(model.stat, name)) for name in _GEOMETRIC_STATISTICS}
-        mj.mj_setConst(model, mj.MjData(model) if data is None else data)
+        data = mj.MjData(model) if data is None else data
+        mj.mj_setConst(model, data)
+        if mj.mj_version() >= 3017000:
+            # Since 3.17, setConst leaves compiler statistics unchanged. Match a
+            # recompile after mass variations (also consumed by MJX Reacher).
+            full = np.zeros((model.nv, model.nv))
+            mj.mj_fullM(model, data, full)
+            if model.nv:
+                model.stat.meaninertia = np.cumsum(np.diag(full))[-1] / model.nv
+            if model.nbody > 1:
+                model.stat.meanmass = np.cumsum(model.body_mass[1:])[-1] / (model.nbody - 1)
         for name, value in keep.items():
             if value.ndim:
                 getattr(model.stat, name)[:] = value

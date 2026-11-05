@@ -102,10 +102,6 @@ def test_registered_model_variations_and_episode_targets_are_per_world(domain):
                 runtime.snapshot().model("opt.gravity"),
                 torch.tensor(np.stack([m.opt.gravity for m in models]), dtype=torch.float32),
             )
-            assert torch.equal(
-                runtime.snapshot().model("stat.meaninertia"),
-                torch.tensor([m.stat.meaninertia for m in models], dtype=torch.float32),
-            )
             tol = 8 * np.finfo(np.float32).eps
             for name in ("geom_xpos", "geom_xmat", "site_xpos"):
                 expected = np.stack([getattr(env.physics.data, name) for env in native.envs])

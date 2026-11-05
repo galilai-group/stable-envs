@@ -22,7 +22,7 @@ from the envX commit above under Apache-2.0.
 from the [DeepMind Control Suite](https://github.com/google-deepmind/dm_control/tree/main/dm_control/suite)
 (Copyright 2017 The dm_control Authors, Apache-2.0) to batched Torch arrays.
 The contact compatibility routines in `simulation/mjwarp_runtime.py` adapt the primitive collision
-and frame construction rules of [MuJoCo 3.12.0](https://github.com/google-deepmind/mujoco/tree/3.12.0/src/engine)
+and frame construction rules of [MuJoCo 3.17.0](https://github.com/google-deepmind/mujoco/tree/3.17.0/src/engine)
 (Copyright 2021 DeepMind Technologies Limited, Apache-2.0) to runtime-local Warp kernels.
 The Apache-2.0 license text is distributed in `licenses/envX-APACHE-2.0.txt`; the copyright notices
 above apply to these adaptations.

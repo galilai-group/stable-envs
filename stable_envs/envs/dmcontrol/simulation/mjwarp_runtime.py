@@ -30,6 +30,8 @@ _TOPOLOGY = (
     "geom_bodyid",
     "geom_contype",
     "geom_conaffinity",
+    "pair_geom1",
+    "pair_geom2",
     "site_bodyid",
     "actuator_trntype",
     "actuator_dyntype",
@@ -62,19 +64,19 @@ def _load_backend():
             raise ImportError(
                 "DMC MJWarp physics requires mujoco-warp and warp-lang; install stable-envs[dmcontrol-gpu]"
             ) from error
-        if any(version.split(".")[:2] != ["3", "12"] for version in (mujoco.__version__, mujoco_warp.__version__)):
+        if any(version.split(".")[:2] != ["3", "17"] for version in (mujoco.__version__, mujoco_warp.__version__)):
             raise RuntimeError(
-                "DMC MJWarp physics requires MuJoCo and mujoco-warp 3.12; install stable-envs[dmcontrol-gpu]"
+                "DMC MJWarp physics requires MuJoCo and mujoco-warp 3.17; install stable-envs[dmcontrol-gpu]"
             )
         mjw, wp = mujoco_warp, warp
 
 
 @cache
 def _plane_capsule_frame_kernel():
-    # MuJoCo 3.12 passes the full capsule axis to mju_makeFrame, which tests
-    # the tangent length before projection. Warp 3.12 tests the projected
+    # MuJoCo 3.17 passes the full capsule axis to mju_makeFrame, which tests
+    # the tangent length before projection. Warp 3.17 tests the projected
     # length, changing the orientation of pyramidal friction constraints.
-    # See MuJoCo 3.12 engine_collision_primitive.c and engine_util_spatial.c.
+    # See MuJoCo 3.17 engine_collision_primitive.c and engine_util_spatial.c.
     # Construct this kernel only after the optional backend is loaded.
     @wp.kernel
     def repair(
@@ -130,11 +132,76 @@ def _plane_capsule_frame_kernel():
 
 
 @cache
+def _capsule_slot_kernels():
+    # A rotated near-parallel pair can have one upstream contact but two native
+    # 3.17 contacts. Reserve the missing slot before correcting its geometry.
+    Contact = wp.struct(mjw.Contact)
+
+    @wp.kernel
+    def index_contacts(nacon: wp.array[int], contact: Contact, pair_ids: wp.array2d[int], slots: wp.array3d[int]):
+        i = wp.tid()
+        if i >= nacon[0]:
+            return
+        geoms = contact.geom[i]
+        if geoms[0] < 0 or geoms[1] < 0:
+            return
+        pair = pair_ids[geoms[0], geoms[1]]
+        if pair >= 0:
+            slots[contact.worldid[i], pair, contact.geomcollisionid[i]] = i
+
+    @wp.kernel
+    def expand_contacts(
+        geom_xmat: wp.array2d[wp.mat33], slots: wp.array3d[int], contact: Contact, nacon: wp.array[int]
+    ):
+        world, pair = wp.tid()
+        first = slots[world, pair, 0]
+        second = slots[world, pair, 1]
+        if (first < 0 and second < 0) or (first >= 0 and second >= 0):
+            return
+        source = wp.max(first, second)
+        geoms = contact.geom[source]
+        r1 = geom_xmat[world, geoms[0]]
+        r2 = geom_xmat[world, geoms[1]]
+        a = wp.vec3d(wp.float64(r1[0, 2]), wp.float64(r1[1, 2]), wp.float64(r1[2, 2]))
+        b = wp.vec3d(wp.float64(r2[0, 2]), wp.float64(r2[1, 2]), wp.float64(r2[2, 2]))
+        cross = wp.cross(a, b)
+        if wp.dot(cross, cross) > wp.float64(1.0e-8) * wp.dot(a, a) * wp.dot(b, b):
+            return
+        dest = wp.atomic_add(nacon, 0, 1)
+        if dest >= contact.type.shape[0]:
+            return  # _check_result rejects the exceeded contact capacity.
+        contact.dist[dest] = contact.dist[source]
+        contact.pos[dest] = contact.pos[source]
+        contact.frame[dest] = contact.frame[source]
+        contact.includemargin[dest] = contact.includemargin[source]
+        contact.friction[dest] = contact.friction[source]
+        contact.solref[dest] = contact.solref[source]
+        contact.solreffriction[dest] = contact.solreffriction[source]
+        contact.solimp[dest] = contact.solimp[source]
+        contact.dim[dest] = contact.dim[source]
+        contact.geom[dest] = contact.geom[source]
+        # Warp omits the flex/mesh arrays for primitive-only models.
+        if contact.flex.shape[0]:
+            contact.flex[dest] = contact.flex[source]
+        if contact.elem.shape[0]:
+            contact.elem[dest] = contact.elem[source]
+        if contact.vert.shape[0]:
+            contact.vert[dest] = contact.vert[source]
+        contact.worldid[dest] = world
+        contact.type[dest] = contact.type[source]
+        contact.geomcollisionid[dest] = wp.where(first < 0, 0, 1)
+        contact.adhesion[dest] = contact.adhesion[source]
+        for j in range(contact.efc_address.shape[1]):
+            contact.efc_address[dest, j] = -1
+
+    return Contact, index_contacts, expand_contacts
+
+
+@cache
 def _capsule_contact_kernel():
-    # The capsule closest-point determinant loses its sign near parallel
-    # axes in float32, moving the contact or emitting a second one. Compute
-    # native geometry in float64, retaining MuJoCo's mjMINVAL. Live physics
-    # remains float32; genuine parallel pairs keep the upstream two contacts.
+    # MuJoCo 3.17 uses mjc_segWeights and a relative angular cutoff. Warp
+    # still uses the older determinant/endpoint algorithm. Reconstruct the
+    # native closest points in float64; integration remains float32.
     @wp.kernel
     def repair_capsule_contacts(
         geom_type: wp.array[int],
@@ -149,6 +216,9 @@ def _capsule_contact_kernel():
         frame: wp.array[wp.mat33],
         collision_id: wp.array[int],
         contact_type: wp.array[int],
+        includemargin: wp.array[float],
+        pair_ids: wp.array2d[int],
+        gaps: wp.array2d[float],
     ):
         index = wp.tid()
         if index >= nacon[0]:
@@ -171,37 +241,45 @@ def _capsule_contact_kernel():
         size2 = geom_size[world, pair[1]]
         axis1 = z1 * wp.float64(size1[1])
         axis2 = z2 * wp.float64(size2[1])
-        delta = p1 - p2
-        ma = wp.dot(axis1, axis1)
-        mb = -wp.dot(axis1, axis2)
-        mc = wp.dot(axis2, axis2)
-        u = -wp.dot(axis1, delta)
-        v = wp.dot(axis2, delta)
-        determinant = ma * mc - mb * mb
-        # Parallel axes have up to two contacts, handled by the original primitive.
-        if wp.abs(determinant) < 1.0e-15:
-            return
-        # Native nonparallel pairs have one contact. Disable the extra slot
-        # before constraint/sensor assembly without moving captured buffers.
-        if collision_id[index] > 0:
+        a = p1 - axis1
+        c = p2 - axis2
+        ab = wp.float64(2.0) * axis1
+        cd = wp.float64(2.0) * axis2
+        ca = a - c
+        dot1 = wp.dot(ab, ab)
+        dot2 = wp.dot(cd, cd)
+        dot3 = wp.dot(cd, ca)
+        dot4 = wp.dot(ab, ca)
+        dot5 = wp.dot(ab, cd)
+        s = wp.float64(0.0)
+        t = wp.float64(0.0)
+        count = int(1)  # noqa: UP018 — mutable Warp local
+        if dot1 <= 1.0e-15 and dot2 <= 1.0e-15:
+            pass
+        elif dot1 <= 1.0e-15:
+            t = wp.clamp(dot3 / dot2, wp.float64(0.0), wp.float64(1.0))
+        elif dot2 <= 1.0e-15:
+            s = wp.clamp(-dot4 / dot1, wp.float64(0.0), wp.float64(1.0))
+        else:
+            cross = wp.cross(ab, cd)
+            determinant = wp.dot(cross, cross)
+            if determinant > wp.float64(1.0e-8) * dot1 * dot2:
+                s = wp.clamp(wp.dot(cross, wp.cross(cd, ca)) / determinant, wp.float64(0.0), wp.float64(1.0))
+            else:
+                count = 2
+                s = wp.float64(collision_id[index])
+            t = (dot5 * s + dot3) / dot2
+            if t < 0.0:
+                s = wp.clamp(-dot4 / dot1, wp.float64(0.0), wp.float64(1.0))
+                t = wp.float64(0.0)
+            elif t > 1.0:
+                s = wp.clamp((dot5 - dot4) / dot1, wp.float64(0.0), wp.float64(1.0))
+                t = wp.float64(1.0)
+        if collision_id[index] >= count:
             contact_type[index] = 0
             return
-        x1 = (mc * u - mb * v) / determinant
-        x2 = (ma * v - mb * u) / determinant
-        if x1 > 1.0:
-            x1 = wp.float64(1.0)
-            x2 = (v - mb) / mc
-        elif x1 < -1.0:
-            x1 = wp.float64(-1.0)
-            x2 = (v + mb) / mc
-        if x2 > 1.0:
-            x2 = wp.float64(1.0)
-            x1 = wp.clamp((u - mb) / ma, wp.float64(-1.0), wp.float64(1.0))
-        elif x2 < -1.0:
-            x2 = wp.float64(-1.0)
-            x1 = wp.clamp((u + mb) / ma, wp.float64(-1.0), wp.float64(1.0))
-        closest1 = p1 + axis1 * x1
-        closest2 = p2 + axis2 * x2
+        closest1 = a + ab * s
+        closest2 = c + cd * t
         separation = wp.length(closest2 - closest1)
         normal = closest2 - closest1
         # Native mjraw_SphereSphere uses the axis cross product at an
@@ -230,6 +308,12 @@ def _capsule_contact_kernel():
             wp.float32(third[2]),
         )
         dist = separation - wp.float64(size1[0]) - wp.float64(size2[0])
+        # A near-parallel pair can touch at only one endpoint. Correcting or
+        # adding the other endpoint must not create a contact outside the
+        # detection band. Preserve collision-sensor flags, if present.
+        gap = gaps[world, pair_ids[pair[0], pair[1]]]
+        if dist >= wp.float64(includemargin[index] + gap):
+            contact_type[index] = contact_type[index] & ~1  # ContactType.CONSTRAINT
         center = closest1 + normal * (wp.float64(size1[0]) + wp.float64(0.5) * dist)
         distance[index] = wp.float32(dist)
         position[index] = wp.vec3(wp.float32(center[0]), wp.float32(center[1]), wp.float32(center[2]))
@@ -338,7 +422,7 @@ def _constraint_order_kernels():
 def _elliptic_hessian_kernel():
     from mujoco_warp._src import math, solver, types
 
-    # MuJoCo Warp 3.12 adds elliptic contact curvature to H with floating-point
+    # MuJoCo Warp 3.17 adds elliptic contact curvature to H with floating-point
     # atomics. Give each (world, matrix entry) one writer in constraint-row order.
     # Reuse the upstream curvature formula and retain parallelism across worlds.
     @wp.kernel
@@ -412,7 +496,7 @@ def _elliptic_hessian_kernel():
 
 
 class _DenseEllipticSolver:
-    """The 3.12 dense Newton loop with ordered elliptic Hessian accumulation.
+    """The 3.17 dense Newton loop with ordered elliptic Hessian accumulation.
 
     Solver kernels, line search, convergence, warmstart and tolerances remain
     upstream's. Context and reduction buffers belong only to this runtime.
@@ -490,16 +574,16 @@ class _DenseEllipticSolver:
         solver._update_constraint(m, d, ctx)
         self.gradient()
         wp.launch(
-            solver._solve_done(bool(m.opt.warn_overflow)),
+            solver._solve_done(int(m.opt.warn_overflow)),
             dim=d.nworld,
             inputs=[
-                m.nv,
                 m.opt.tolerance,
                 m.opt.iterations,
-                m.stat.meaninertia,
+                ctx.inertia_scale,
                 ctx.grad_dot,
                 ctx.newton_decrement,
                 ctx.improvement,
+                ctx.alpha,
                 ctx.done,
             ],
             outputs=[d.solver_niter, d.overflow, self.nsolving, ctx.done],
@@ -623,7 +707,6 @@ class WarpRuntime:
             for name in self._option_fields:
                 current = getattr(self._m.opt, name)
                 setattr(self._m.opt, name, wp.zeros(self.num_envs, dtype=current.dtype, device=self._wp_device))
-            self._m.stat.meaninertia = wp.zeros(self.num_envs, dtype=wp.float32, device=self._wp_device)
             # Use declared capacities when present; otherwise conservative DMC
             # bounds. Overflow is an error, never permission to drop contacts.
             nconmax = max(128, int(self._reference.nconmax))
@@ -637,6 +720,26 @@ class WarpRuntime:
                 capsule_count and np.any(self._reference.geom_type == mujoco.mjtGeom.mjGEOM_PLANE)
             )
             self._capsule_pairs = capsule_count > 1
+            self._capsule_pair_ids = self._capsule_slots = self._capsule_gaps = self._contact_arrays = None
+            if self._capsule_pairs:
+                capsules = np.flatnonzero(self._reference.geom_type == mujoco.mjtGeom.mjGEOM_CAPSULE)
+                pair_ids = np.full((self._reference.ngeom, self._reference.ngeom), -1, dtype=np.int32)
+                pairs = [(a, b) for i, a in enumerate(capsules) for b in capsules[i + 1 :]]
+                for i, (a, b) in enumerate(pairs):
+                    pair_ids[a, b] = pair_ids[b, a] = i
+                self._capsule_geoms = np.asarray(pairs)
+                self._capsule_gap_overrides = [
+                    (pair_ids[a, b], i)
+                    for i, (a, b) in enumerate(zip(self._reference.pair_geom1, self._reference.pair_geom2))
+                    if pair_ids[a, b] >= 0
+                ]
+                self._capsule_pair_ids = wp.array(pair_ids, dtype=int, device=self._wp_device)
+                self._capsule_slots = wp.full((self.num_envs, len(pairs), 2), -1, dtype=int, device=self._wp_device)
+                self._capsule_gaps = wp.empty((self.num_envs, len(pairs)), dtype=float, device=self._wp_device)
+                Contact, _, _ = _capsule_slot_kernels()
+                self._contact_arrays = Contact()
+                for field in fields(mjw.Contact):
+                    setattr(self._contact_arrays, field.name, getattr(self._d.contact, field.name))
             if self._plane_capsules or self._capsule_pairs:
                 self._m.callback.contactfilter = self._correct_contact_frames
             if ordered_constraints:
@@ -661,7 +764,7 @@ class WarpRuntime:
                     wp.empty(shape, dtype=int),
                     wp.empty(shape, dtype=int),
                 )
-                # Warp 3.12 invokes this hook after building constraints and
+                # Warp 3.17 invokes this hook after building constraints and
                 # before solving, in both forward() and step1(). Keep ctrl intact.
                 self._m.callback.control = self._order_constraints
             if ordered_elliptic:
@@ -714,6 +817,20 @@ class WarpRuntime:
                 device=self._wp_device,
             )
         if self._capsule_pairs:
+            _, index_contacts, expand_contacts = _capsule_slot_kernels()
+            self._capsule_slots.fill_(-1)
+            wp.launch(
+                index_contacts,
+                dim=data.naconmax,
+                inputs=[data.nacon, self._contact_arrays, self._capsule_pair_ids, self._capsule_slots],
+                device=self._wp_device,
+            )
+            wp.launch(
+                expand_contacts,
+                dim=self._capsule_slots.shape[:2],
+                inputs=[data.geom_xmat, self._capsule_slots, self._contact_arrays, data.nacon],
+                device=self._wp_device,
+            )
             wp.launch(
                 _capsule_contact_kernel(),
                 dim=data.naconmax,
@@ -730,6 +847,9 @@ class WarpRuntime:
                     data.contact.frame,
                     data.contact.geomcollisionid,
                     data.contact.type,
+                    data.contact.includemargin,
+                    self._capsule_pair_ids,
+                    self._capsule_gaps,
                 ],
                 device=self._wp_device,
             )
@@ -765,7 +885,6 @@ class WarpRuntime:
         for name in self._option_fields:
             source = "impratio" if name == "impratio_invsqrt" else name
             self._check_float32([getattr(model.opt, source) for model in models], f"opt.{source}")
-        self._check_float32([model.stat.meaninertia for model in models], "stat.meaninertia")
         self._check_float32([model.site_size for model in models], "site_size")
 
     @contextmanager
@@ -811,7 +930,14 @@ class WarpRuntime:
                 for m in models
             ]
             self._copy_native(getattr(self._m.opt, name), values)
-        self._copy_native(self._m.stat.meaninertia, [m.stat.meaninertia for m in models])
+        if self._capsule_pairs:
+            gaps = []
+            for model in models:
+                values = model.geom_gap[self._capsule_geoms].sum(axis=1)
+                for pair, explicit in self._capsule_gap_overrides:
+                    values[pair] = model.pair_gap[explicit]
+                gaps.append(values)
+            self._copy_native(self._capsule_gaps, gaps)
         # Warp deliberately skips geoms welded to the world during kinematics.
         # Native kinematics supplies their transforms after target/floor changes.
         model = models[0]
@@ -909,6 +1035,7 @@ class WarpRuntime:
         # Warp also records finite solver-budget exits in this bitmask. Native
         # MuJoCo allows those exits; retain the source's iteration settings.
         overflow = self._data_view("overflow").bitwise_and(self._capacity_overflow).any()
+        overflow |= (self._data_view("nacon") > self._d.naconmax).any()
         finite = {
             name: torch.isfinite(self._data_view(name)).all()
             for name in ("qpos", "qvel", "act", "time", "qacc_warmstart", "sensordata")
@@ -971,6 +1098,7 @@ class WarpRuntime:
             self._elliptic_solver = None
             self._acc_indices = self._acc_values = None
             self._fixed_indices = self._fixed_positions = self._fixed_rotations = None
+            self._capsule_pair_ids = self._capsule_slots = self._capsule_gaps = self._contact_arrays = None
             self._native_model_views.clear()
             self._torch_stream = self._warp_stream = None
             self._closed = True

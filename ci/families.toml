@@ -131,7 +131,7 @@ tests = [
   "test_mjwarp_*",
   "test_plate_texels.py",
 ]
-requires = ["dm-control", "mujoco"]
+requires = ["dm-control", "mujoco>=3.17,<3.18"]
 capabilities = ["gl", "swm"]
 linux_env = { MUJOCO_GL = "osmesa", PYOPENGL_PLATFORM = "osmesa" }
 shards = { pr = 3, nightly = 4 }

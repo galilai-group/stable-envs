@@ -1,4 +1,4 @@
-"""Core regressions for MuJoCo Warp 3.12 contact geometry and constraint ordering."""
+"""Core regressions for MuJoCo Warp 3.17 contact geometry and constraint ordering."""
 
 from contextlib import closing
 
@@ -116,14 +116,25 @@ def test_intersecting_capsules_use_native_normal_and_position(device):
 @pytest.mark.parametrize("device", DEVICES)
 def test_near_parallel_capsules_preserve_contacts_and_impulses(device):
     models, datas = [], []
-    # Opposite tilts choose opposite endpoints. Exactly parallel capsules keep
-    # both contacts; the separated lane must receive neither impulses nor touch.
-    for tilt, offset in ((3e-5, 0.055), (-3e-5, 0.055), (0, 0.055), (3e-5, 1)):
+    # MuJoCo 3.17 treats these small tilts as parallel and keeps both contacts;
+    # the separated lane must receive neither impulses nor touch.
+    cases = [(tilt, offset, [0, 0, 1]) for tilt, offset in ((3e-5, 0.055), (-3e-5, 0.055), (0, 0.055), (3e-5, 1))]
+    # Rotations can make upstream's cancelling float32 determinant emit only
+    # one contact. Both sides of the new native angular cutoff are covered.
+    cases += [(tilt, 0.055, [0.6, 0.8, 1]) for tilt in (3e-5, 8e-5, 1.2e-4, -1.2e-4)]
+    # Only one endpoint lies inside the contact detection band in these lanes.
+    cases += [(3e-5, offset, [0, 0, 1]) for offset in (0.059998, 0.060002)]
+    for tilt, offset, axis in cases:
+        axis = np.asarray(axis, dtype=float)
+        axis /= np.linalg.norm(axis)
+        side = np.cross([0, 1, 0], axis)
+        side /= np.linalg.norm(side)
+        fmt = lambda values: " ".join(map(str, values))
         model = mujoco.MjModel.from_xml_string(f'''<mujoco>
           <option timestep=".005" iterations="100" tolerance="1e-8" gravity="0 0 0"/>
-          <worldbody><geom type="capsule" size=".03 .125"/>
-            <body pos="{offset} 0 .05"><freejoint/>
-              <geom type="capsule" size=".03 .125" zaxis="{tilt} 0 1"/>
+          <worldbody><geom type="capsule" size=".03 .125" zaxis="{fmt(axis)}"/>
+            <body pos="{fmt(offset * side + 0.05 * axis)}"><freejoint/>
+              <geom type="capsule" size=".03 .125" zaxis="{fmt(axis + tilt * side)}"/>
               <site name="touch" type="sphere" size=".3"/>
             </body>
           </worldbody><sensor><touch site="touch"/></sensor></mujoco>''')
@@ -132,8 +143,28 @@ def test_near_parallel_capsules_preserve_contacts_and_impulses(device):
         mujoco.mj_forward(model, data)
         models.append(model)
         datas.append(data)
-    assert [data.ncon for data in datas] == [1, 1, 2, 0]
+    assert [data.ncon for data in datas] == [2, 2, 2, 0, 2, 2, 1, 1, 1, 1]
     _check_contact_step(models, datas, device)
+
+    # A gap keeps a detected endpoint without adding its constraint. Explicit
+    # pair gaps override geom gaps; both routes must match native detection.
+    for explicit in (False, True):
+        models, datas = [], []
+        for gap in (0.0, 1e-5):
+            contact = f'<contact><pair geom1="a" geom2="b" margin="2e-6" gap="{gap}"/></contact>' if explicit else ""
+            geom_gap = 9e-4 if explicit else gap / 2
+            model = mujoco.MjModel.from_xml_string(f'''<mujoco>
+              <option gravity="0 0 0"/>
+              <default><geom type="capsule" size=".03 .125" margin="1e-6" gap="{geom_gap}"/></default>
+              <worldbody><geom name="a"/><body pos=".060005 0 .05"><freejoint/>
+                <geom name="b" zaxis=".00003 0 1"/>
+              </body></worldbody>{contact}</mujoco>''')
+            data = mujoco.MjData(model)
+            mujoco.mj_forward(model, data)
+            models.append(model)
+            datas.append(data)
+        assert [data.ncon for data in datas] == [1, 2]
+        _check_contact_step(models, datas, device)
 
 
 @pytest.mark.parametrize("device", DEVICES)

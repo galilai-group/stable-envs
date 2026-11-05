@@ -81,6 +81,7 @@ snv.CartPole / snv.Pendulum / …                  concrete env classes
 ## Environments
 
 The extras together provide 75 environment classes. One Python environment cannot hold every extra.
+DM Control uses MuJoCo 3.17.
 The `robotics` extra for Fetch pins MuJoCo < 3.12, and the `ogbench-manipulation` extra for `OGBCube`
 and `OGBScene` pins MuJoCo 3.12.0. Install them in separate environments.
 

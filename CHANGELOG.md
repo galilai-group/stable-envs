@@ -9,7 +9,7 @@ All notable changes to this project are listed here. The format follows
 ### Added
 
 - The 16 DMC classes other than Reacher accept experimental `simulation_backend="mjwarp"`
-  for direct CUDA physics on MuJoCo Warp 3.12. Automatic routing and Reacher's native/MJX
+  for direct CUDA physics on MuJoCo Warp 3.17. Automatic routing and Reacher's native/MJX
   selection remain unchanged. Exact checkpoints and core CUDA integration pass; full numerical
   source/replay acceptance remains unfinished. See the DMC documentation for limitations and
   measured performance across all 16 tasks. Cheetah uses stable constraint ordering to remove

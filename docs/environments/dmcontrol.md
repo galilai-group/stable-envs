@@ -30,7 +30,8 @@ in cup is the exception: its `success` value is 1 when the ball is in the cup.
 ## Direct MuJoCo Warp physics
 
 The 16 classes other than Reacher accept `simulation_backend="mjwarp"` for direct batched physics on
-CUDA. Install `stable-envs[dmcontrol-gpu]`; this backend uses MuJoCo/MuJoCo Warp 3.12. Explicit selection
+CUDA. Install `stable-envs[dmcontrol-gpu]`; this backend uses MuJoCo/MuJoCo Warp 3.17
+and dm-control 1.0.50. Explicit selection
 raises an error if CUDA or the dependencies are unavailable. `backend` still selects rendering.
 Automatic routing is unchanged, including Reacher's existing native/MJX selection.
 
@@ -58,12 +59,11 @@ remain authoritative for resets and RNG. A pending reset consumes a control roun
 continuing lanes use a compact scratch runtime. A changed active-lane count requires a new scratch
 allocation, so mixed resets can cost more than steady-state stepping.
 
-For Warp 3.12 the runtime corrects plane–capsule friction frames and capsule–capsule geometry to
-follow native MuJoCo's [primitive collisions](https://github.com/google-deepmind/mujoco/blob/3.12.0/src/engine/engine_collision_primitive.c).
+For Warp 3.17 the runtime corrects plane–capsule friction frames and capsule–capsule geometry to
+follow native MuJoCo's [primitive collisions](https://github.com/google-deepmind/mujoco/blob/3.17.0/src/engine/engine_collision_primitive.c).
 The capsule correction uses float64 local arithmetic for closest points and intersecting-axis normals.
-This avoids choosing the wrong endpoint or creating a duplicate constraint for nearly parallel
-capsules, as observed in Hopper. Genuinely parallel pairs retain upstream handling; stored dynamics
-and integration remain float32. Focused tests compare contact geometry, impulses and touch sensors
+It follows MuJoCo 3.17's relative angular cutoff, including the native one- or two-contact
+result for near-parallel capsules. Stored dynamics and integration remain float32. Focused tests compare contact geometry, impulses and touch sensors
 against native MuJoCo. Acceleration-stage readings are cleared before stepping so touch forces do
 not accumulate from checkpoint reconstruction.
 Cheetah also orders joint-limit and contact constraints consistently before each solve, including
@@ -71,12 +71,13 @@ after checkpoint restoration and mixed resets. This removes replay variation cau
 constraint allocation; the solver equations, contacts and iteration settings stay unchanged.
 Manipulator accumulates elliptic contact curvature in constraint-row order, with one writer per
 world and Hessian entry. This removes a source of floating-point atomic-sum variation while keeping
-worlds parallel. Its DMC-local dense Newton loop reuses MuJoCo Warp 3.12's line search, convergence
+worlds parallel. Its DMC-local dense Newton loop reuses MuJoCo Warp 3.17's line search, convergence
 and factorization kernels, with the original warmstart and iteration settings.
 
 ### Validation status
 
-This backend is experimental. The implementation has passed CUDA integration for all 16 classes,
+This backend is experimental. The following numerical results were recorded on MuJoCo/Warp 3.12;
+they do not establish 3.17 numerical acceptance. The implementation passed CUDA integration for all 16 classes,
 including checkpoint ownership/restoration and rendering captured States. Full numerical source and
 resumed-rollout acceptance remains unfinished. Earlier Cheetah and Manipulator checks each passed 60 repeated CUDA
 replay comparisons (including 30 on fresh seeds), 100 independent CPU-reference comparisons and
@@ -99,6 +100,8 @@ Run the focused CUDA checks with `python scripts/ci/run_dmc_mjwarp.py`; missing 
 required cases fail this runner. These are core regression checks, not a numerical certification.
 
 ### Measured performance
+
+These measurements used MuJoCo/Warp 3.12 and have not been repeated on 3.17.
 
 All 16 environments were measured with native and Warp at batches 1, 16, 64, 256 and 1024: 160 runs,
 80 matched pairs. Measurements used an RTX A6000 on a shared AMD EPYC 7443 host, eight visible CPUs,

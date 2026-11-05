@@ -347,15 +347,15 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     "DMCCartpoleSwingup": 0.282065,  # mean 1.4428/255  see DM Control note below
     "DMCPointMassEasy": 0.730424,  # mean 0.2418/255
     #: DM Control cells drawn entirely through MJWarp (no plate), each measured on its own; the low
-    #: floors come from the skybox and checker textures. Measured on an RTX 3090, mujoco 3.12.0 +
-    #: mujoco-warp 3.12.0, MUJOCO_GL=egl.
-    "DMCCheetahRun": 0.278752,  # mean 2.0157/255
+    #: floors come from the skybox and checker textures. Measured on an H200, mujoco 3.17.0 +
+    #: mujoco-warp 3.17.0, MUJOCO_GL=egl.
+    "DMCCheetahRun": 0.278734,  # mean 2.0166/255
     #: Higher than the others: the camera is close to the body and sees less skybox.
-    "DMCQuadrupedWalk": 0.660831,  # mean 0.7827/255
-    "DMCHopperHop": 0.285289,  # mean 1.7297/255
-    "DMCHumanoidWalk": 0.369827,  # mean 1.5758/255
-    "DMCSwimmerSwimmer6": 0.591164,  # mean 1.1612/255
-    "DMCWalkerWalk": 0.444320,  # mean 1.7281/255
+    "DMCQuadrupedWalk": 0.660084,  # mean 0.7828/255
+    "DMCHopperHop": 0.284917,  # mean 1.7307/255
+    "DMCHumanoidWalk": 0.369827,  # mean 1.5763/255
+    "DMCSwimmerSwimmer6": 0.590916,  # mean 1.1604/255
+    "DMCWalkerWalk": 0.443576,  # mean 1.7291/255
     "HumanoidmazeGiantNavigate": 0.712624,  # mean 1.1539/255
     "HumanoidmazeGiantStitch": 0.712624,  # mean 1.1539/255
     "HumanoidmazeLargeNavigate": 0.725895,  # mean 0.9690/255
