@@ -41,11 +41,12 @@ package, which tests use for comparison.
 | `pusht` | PushT, PushTDiscrete | Pymunk 7.2.0, pygame, OpenCV, Shapely, Numba |
 | `pusht-reference` | reference checks only | gym-pusht |
 | `ogbench` | OGBench mazes | `ogbench`, MuJoCo |
-| `ogbench-manipulation` / `-gpu` | OGBCube, OGBScene | MuJoCo 3.12.0, OGBench 1.2.1, dm_control. `-gpu` adds MuJoCo Warp 3.12.0 and Warp 1.17.0 |
+| `ogbench-manipulation` / `-gpu` | OGBCube, OGBScene | MuJoCo 3.17.0, OGBench 1.2.1, dm_control 1.0.50. `-gpu` adds MuJoCo Warp 3.17.0 and Warp 1.17.0 |
 | `dmcontrol` | DM Control | `dm_control` 1.0.50, MuJoCo 3.17 |
 | `dmcontrol-gpu` | DM Control on CUDA with TrackCom floor reflections | `dm_control` 1.0.50, MuJoCo, MuJoCo Warp and MJX 3.17 |
 | `robotics` | Fetch | gymnasium-robotics, MuJoCo < 3.12, OpenCV |
 | `mjwarp` | Fetch on CUDA | MuJoCo Warp |
+| `mshuman` | MSHumanLocomotion | MuJoCo and MuJoCo Warp 3.17, Warp, filelock |
 | `rocket` | PyFlytRocketLanding | PyFlyt 0.29.0, pybullet 3.2.7, Pillow, SciPy |
 | `craftax` / `craftax-gpu` | Craftax | Craftax, JAX. `-gpu` takes JAX's CUDA 12 build for `device="cuda"` |
 | `miniworld` | MiniWorldMovingBlockWorld | the hlillemark/Miniworld fork, pyglet < 2 |
@@ -95,8 +96,8 @@ uv sync --python 3.12 --extra dmcontrol --group pin-dmc --group test
 ## Extra conflicts
 
 Fetch (`robotics`) needs `mujoco<3.12`, `OGBCube` and `OGBScene` (`ogbench-manipulation`) need
-`mujoco==3.12.0`, and DM Control (`dmcontrol`) needs `mujoco>=3.17,<3.18`. The `ogbench` extra accepts
-each of them. Install these three extras in separate environments.
+`mujoco==3.17.0`, and DM Control (`dmcontrol`) and MS-Human (`mshuman`) need `mujoco>=3.17,<3.18`. The
+`ogbench` extra accepts each of them. Install `robotics` in a separate environment from the other three.
 
 ## nvdiffrast
 
