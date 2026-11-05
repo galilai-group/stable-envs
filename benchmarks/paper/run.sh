@@ -146,8 +146,20 @@ for spec in "$@"; do
   }
   # gl DEVICE CMD...: run CMD under software OpenGL for CPU arms and under EGL for CUDA arms.
   gl() { local d=$1; shift; [ $d = cpu ] && sw "$@" || egl "$@"; }
+  # wait_gpu: before a CUDA job, wait up to 10 minutes while an earlier arm's OpenGL contexts still fill the GPU;
+  # a CUDA process cannot start while GPU memory is full.
+  wait_gpu() {
+    [[ $DEVICES == *cuda* ]] || return 0
+    local i used
+    for i in $(seq 60); do
+      used=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits | head -1)
+      [ "$used" -lt 4096 ] && return 0
+      sleep 10
+    done
+    echo "gpu still holds ${used} MiB"
+  }
   # once FILE CMD...: run CMD unless FILE holds a result.
-  once() { local f=$1; shift; [ -s "$f" ] && { echo "have $f"; return 0; }; "$@"; }
+  once() { local f=$1; shift; [ -s "$f" ] && { echo "have $f"; return 0; }; wait_gpu; "$@"; }
   has offline && sw $OFF states --envs "${envs[@]}" --out $S --n $N --devices $DEVICES
   if has step || has frames; then sw $ON dataset --envs "${envs[@]}" --out $D --episodes $N --length $LENGTH; fi
   for E in "${envs[@]}"; do
