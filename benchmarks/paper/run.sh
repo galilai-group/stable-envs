@@ -158,8 +158,16 @@ for spec in "$@"; do
     done
     echo "gpu still holds ${used} MiB"
   }
-  # once FILE CMD...: run CMD unless FILE holds a result.
-  once() { local f=$1; shift; [ -s "$f" ] && { echo "have $f"; return 0; }; wait_gpu; "$@"; }
+  # cuda_lost: true when a new process can no longer initialise CUDA, as after a GPU driver fault.
+  cuda_lost() { [[ $DEVICES == *cuda* ]] && [ "$(python3 -c 'import ctypes; print(ctypes.CDLL("libcuda.so.1").cuInit(0))' 2>&1)" != 0 ]; }
+  # once FILE CMD...: run CMD unless FILE holds a result; stop the run if the GPU no longer initialises CUDA.
+  once() {
+    local f=$1; shift
+    [ -s "$f" ] && { echo "have $f"; return 0; }
+    wait_gpu; "$@"
+    cuda_lost && { echo "CUDA LOST after $f"; exit 3; }
+    return 0
+  }
   has offline && sw $OFF states --envs "${envs[@]}" --out $S --n $N --devices $DEVICES
   if has step || has frames; then sw $ON dataset --envs "${envs[@]}" --out $D --episodes $N --length $LENGTH; fi
   for E in "${envs[@]}"; do
