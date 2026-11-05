@@ -187,18 +187,21 @@ for spec in "$@"; do
       # Online arms at every lane count L: ours with L lanes; the source with L envs over min(L, NCORES) workers.
       for L in $(sweep $dev); do
         p=$(( L < NCORES ? L : NCORES )); sl=$(( (L + p - 1) / p ))
+        # OGBench maze sources take hours per whole episode at 1024 lanes and more; time their first 8 steps there,
+        # and time ours on the same 8-step window as well, so both rates carry the same share of reset cost.
+        slice=$([ $dev = cuda ] && [ $fam = ogbench ] && [ $L -ge 1024 ] && [[ $E == *Maze* ]] && echo "--source-steps 8")
         COMMON="--env $E --data $D --procs $p --source-lanes $sl --lanes $L --threads $NCORES --repeats $REPEATS --episodes $L"
         if has step; then
           [ $CPU_SOURCES = 1 ] && once $n/src-step-L$L.json sw $ON run $COMMON --arms src-pipelined-step --output $n/src-step-L$L.json
           arm=$([ $dev = cpu ] && echo snv-step || echo snv-step-gpu)
           once $n/snv-step-$tag-L$L.json gl $dev $ON run $COMMON --arms $arm --output $n/snv-step-$tag-L$L.json
+          [ -n "$slice" ] && once $n/snv-step-$tag-L$L-s8.json gl $dev $ON run $COMMON --arms $arm --chunks 1 8 $slice --output $n/snv-step-$tag-L$L-s8.json
         fi
         if has frames; then
           [ $CPU_SOURCES = 1 ] && once $n/src-render-cpu-L$L.json sw $ON run $COMMON --arms src-pipelined-render --src-label cpu --ours-device cpu --output $n/src-render-cpu-L$L.json
-          # OGBench maze sources take hours per whole episode at 1024 lanes and more; time their first 8 steps there.
-          slice=$([ $fam = ogbench ] && [ $L -ge 1024 ] && [[ $E == *Maze* ]] && echo "--source-steps 8")
           [ $dev = cuda ] && [ -n "$GPUSRC" ] && once $n/src-render-gpu-L$L.json egl $ON run $COMMON --arms src-pipelined-render --src-label gpu --ours-device cuda $slice --output $n/src-render-gpu-L$L.json
           once $n/snv-render-$tag-L$L.json gl $dev $ON run $COMMON --arms snv-render-$tag --output $n/snv-render-$tag-L$L.json
+          [ -n "$slice" ] && once $n/snv-render-$tag-L$L-s8.json gl $dev $ON run $COMMON --arms snv-render-$tag --chunks 1 8 $slice --output $n/snv-render-$tag-L$L-s8.json
         fi
       done
     done

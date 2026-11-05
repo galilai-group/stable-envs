@@ -453,6 +453,8 @@ def run_ours(args, name: str, dev: str, render: bool, chunk: int) -> dict:
     data = np.load(Path(args.data) / f"{name}.npz")
     seeds, actions = data["seeds"][: args.episodes], data["actions"][: args.episodes]
     n, length = actions.shape[:2]
+    if args.source_steps:
+        length = min(length, args.source_steps)
     lanes = min(args.lanes, n)
     torch.set_num_threads(args.threads)
     env = _make_ours(name, lanes, args.size, dev)
@@ -465,7 +467,7 @@ def run_ours(args, name: str, dev: str, render: bool, chunk: int) -> dict:
         for s in groups:
             env.reset(seed=int(seeds[s]))
             for t0 in range(0, length, chunk):
-                env.step(acts[s : s + lanes, t0 : t0 + chunk], states=None, frames=frames)
+                env.step(acts[s : s + lanes, t0 : min(t0 + chunk, length)], states=None, frames=frames)
             yield lanes * length
 
     groups = list(range(0, n - lanes + 1, lanes))
@@ -482,6 +484,7 @@ def run_ours(args, name: str, dev: str, render: bool, chunk: int) -> dict:
         "device": dev,
         "execution_mode": execution_mode,
         "actions_per_call": chunk,
+        "steps_per_episode": length,
         "threads": args.threads,
         "frame_shape": shape,
         "steps_per_s": t["rate"],
@@ -662,7 +665,9 @@ def main() -> None:
     r.add_argument("--source-lanes", type=int, default=8)
     r.add_argument("--lanes", type=int, default=1024)
     r.add_argument("--episodes", type=int, default=None, help="play only the first N stored episodes")
-    r.add_argument("--source-steps", type=int, default=None, help="time only the first N steps of each source episode")
+    r.add_argument(
+        "--source-steps", type=int, default=None, help="time only the first N steps of each episode, in every arm"
+    )
     r.add_argument("--threads", type=int, default=8)
     r.add_argument("--size", type=int, default=224)
     r.add_argument("--repeats", type=int, default=10)
