@@ -36,6 +36,9 @@ All notable changes to this project are listed here. The format follows
   Numba, and so do the `navigation` and `pusht` extras. `backend="auto"` draws batches of fewer than 8 rows of the default appearance with the source.
   The `pin-classic`, `pin-navigation` and `pin-pusht`
   groups pin Numba.
+- Navigation on CPU: a Numba kernel draws the dots of TwoRoom, TwoRoomTarget, Piecewise and
+  PiecewiseZones, in parallel over frames. `backend="auto"` uses it when Numba imports. Frames are
+  byte-identical to the Torch path, and `backend="torch"` selects the Torch path.
 - Craftax: `CraftaxClassicPixels`, `CraftaxClassicSymbolic`, `CraftaxPixels` and `CraftaxSymbolic`
   run the upstream JAX simulator with all lanes in one jitted `vmap` (`craftax` / `craftax-gpu` extras).
   With Craftax, the extras provide 75 classes. Fetch and `OGBCube`/`OGBScene` pin different MuJoCo versions,

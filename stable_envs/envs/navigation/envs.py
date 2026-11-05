@@ -600,16 +600,32 @@ class _TorchNavBase(_GymReferencePort):
         tuning.on_render("navigation", IMG, n, self)
         chunk = tuning.get("nav_render_chunk", path="navigation", size=IMG, batch=n, device=self.device)
         for lo in range(0, n, chunk):
-            img[lo : min(lo + chunk, n)] = self._render_chunk(s, sty, lo, min(lo + chunk, n))
+            dst = img[lo : min(lo + chunk, n)]
+            part = self._render_chunk(s, sty, lo, min(lo + chunk, n), out=dst)
+            if part is not dst:
+                dst.copy_(part)
         return img.view(*lead, IMG, IMG, 3) if lead else img
 
-    def _render_chunk(self, s, sty, lo: int, hi: int) -> torch.Tensor:
+    def _numba_dots(self) -> bool:
+        """Draw CPU dots with the Numba compositor; ``backend="torch"`` selects the Torch path."""
+        if self.device.type != "cpu" or self.backend == "torch":
+            return False
+        from ...render import cpu_raster
+
+        return cpu_raster.available()
+
+    def _render_chunk(self, s, sty, lo: int, hi: int, out=None) -> torch.Tensor:
         k = hi - lo
         sl = lambda p: sty[p][lo:hi]
         base = self._base_image(sty, lo, hi)
         if navdot.available(self.device):
             pos, sig, col = self._dots(s[lo:hi], sl, k)
             return navdot.blend_dots(base.expand(k, IMG, IMG, 3).contiguous(), pos, sig, col)
+        if self._numba_dots():
+            from . import navdot_cpu
+
+            pos, sig, col = self._dots(s[lo:hi], sl, k)
+            return navdot_cpu.blend_dots(base.expand(k, IMG, IMG, 3), pos, sig, col, out=out)
         return self.blend_dots(base, s[lo:hi], sl, k)
 
     def _dots(self, s, sl, k):
@@ -633,14 +649,19 @@ class _TorchNavBase(_GymReferencePort):
         if self.device.type == "cuda":
             # Host-side grouping would synchronize the CUDA render loop.
             return self.base_image(lambda p: sty[p][lo:hi], k)
-        rows = sty.values[lo:hi]
-        # One host transfer serves both grouping and cache keys.
-        blob = rows.detach().cpu().contiguous().numpy().tobytes()
-        w = blob and len(blob) // k or 0
-        keys = [blob[i * w : (i + 1) * w] for i in range(k)] if w else [b""] * k
-        order: dict = {}
-        for i, key in enumerate(keys):
-            order.setdefault(key, []).append(i)
+        rows = sty.values[lo:hi].detach().cpu().contiguous()
+        # Compare bytes, as the cache keys do; one comparison replaces the per-row grouping for a shared style.
+        raw = rows.view(torch.uint8).reshape(k, -1)
+        if k > 1 and bool((raw == raw[:1]).all()):
+            blob = raw[0].numpy().tobytes()
+            order: dict = {blob: list(range(k))}
+        else:
+            blob = raw.numpy().tobytes()
+            w = blob and len(blob) // k or 0
+            keys = [blob[i * w : (i + 1) * w] for i in range(k)] if w else [b""] * k
+            order = {}
+            for i, key in enumerate(keys):
+                order.setdefault(key, []).append(i)
         if len(order) == k and k > 1:
             return self.base_image(lambda p: sty[p][lo:hi], k)
 
@@ -674,6 +695,12 @@ class _TorchNavBase(_GymReferencePort):
         k = int(pos.shape[0])
         if self.device.type == "cuda":
             return _alpha_blend(img, _gaussian_dot(self._gy, self._gx, pos, sigma), colour)
+        if self._numba_dots():
+            from . import navdot_cpu
+
+            return navdot_cpu.blend_dots(
+                img.expand(k, IMG, IMG, 3), pos.reshape(k, 1, 2), sigma.reshape(k, 1), colour.reshape(k, 1, 3)
+            )
         win = _dot_window(pos, sigma)
         wins = row_groups(
             win.cpu().numpy(), *(int(v) for v in (win[:, 0].min(), win[:, 1].max(), win[:, 2].min(), win[:, 3].max()))
@@ -1018,14 +1045,14 @@ class _PiecewiseBase(_TorchNavBase):
         super()._configure_variation(exact)
         self._layered = any(bool((self._style[flag] > 0.5).any()) for flag in self.layer_flags)
 
-    def _render_chunk(self, s, sty, lo: int, hi: int) -> torch.Tensor:
+    def _render_chunk(self, s, sty, lo: int, hi: int, out=None) -> torch.Tensor:
         # The installed Variation's flags are cached on the host, so the default path never synchronises.
         if sty is self._style:
             layered = self._layered
         else:
             layered = any(bool((sty[flag][lo:hi] > 0.5).any()) for flag in self.layer_flags)
         if not layered:
-            return super()._render_chunk(s, sty, lo, hi)
+            return super()._render_chunk(s, sty, lo, hi, out=out)
         k = hi - lo
         sl = lambda p: sty[p][lo:hi]
         img = self._base_image(sty, lo, hi).expand(k, IMG, IMG, 3)
