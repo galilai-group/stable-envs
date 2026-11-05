@@ -66,6 +66,8 @@ behaviour after termination.
 ## Memory and ownership
 
 - Snapshots and frames own their storage. Later calls do not change them.
+- A family can return one task output tensor at each step, for example `info.goal` of
+  `SimplePointMaze`. The family does not change this tensor. Do not write into it.
 - `step` renders only the selected frames.
 - Retained histories cost memory in proportion to the number of selected outputs.
 - Save the endpoint from `result["state"]`. Calling `get_state()` right after `step()` exports it again.

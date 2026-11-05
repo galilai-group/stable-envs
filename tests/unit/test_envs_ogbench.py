@@ -235,6 +235,33 @@ def test_the_dataset_siblings_of_one_scene_draw_the_same_frame(_ogbench):
     assert digests[0] == digests[1]
 
 
+def test_culled_wall_shadows_and_split_mover_tiles_keep_every_byte(_ogbench, monkeypatch):
+    """The state-observation scene draws the same frames as with every wall and one mover tile."""
+    from stable_envs.render import raycast3d as R3
+
+    casts = []
+    composite = R3.composite
+
+    def counted(*args, **kwargs):
+        casts.append(kwargs.get("cast"))
+        return composite(*args, **kwargs)
+
+    monkeypatch.setattr(R3, "composite", counted)
+    with R.REGISTRY["PointMazeLargeNavigate"](num_envs=4, device="cpu") as env:
+        rows = torch.as_tensor(env.sample_states(40, np.random.default_rng(1)))
+        near = rows[:12].clone()
+        near[:, 2:4] = near[:, 0:2] + torch.linspace(-1.5, 1.5, 12).unsqueeze(1)
+        rows = torch.cat([rows, near])
+        fast = env._render(rows)
+        single = torch.cat([env._render(rows[i : i + 1]) for i in (0, 41, 47)])
+        assert any(c is not None for c in casts) and any(c is None for c in casts)
+        monkeypatch.setattr(MAZE, "_CULL_WALLS", False)
+        monkeypatch.setattr(MAZE, "_SPLIT_MOVERS", False)
+        full = env._render(rows)
+    assert torch.equal(fast, full)
+    assert torch.equal(single, full[[0, 41, 47]])
+
+
 @pytest.mark.nightly
 @pytest.mark.parametrize("cell", ["PointMazeLargeNavigate", "AntMazeMediumNavigate"])
 def test_a_recoloured_floor_and_dimmed_light_leave_the_default_plate_unchanged(_ogbench, cell):
