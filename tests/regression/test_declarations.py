@@ -454,7 +454,7 @@ def test_every_declared_reference_version_is_the_one_measured_at_names():
 
 @pytest.mark.family("dmc")
 def test_the_dm_control_trackcom_declarations_name_the_reference_they_were_measured_against():
-    """Declared under mujoco 3.11.0; 3.12.0 re-anchors finite-plane textures (changelog item 15, commit cc7fb98c)."""
+    """Measured against the pin-dmc reference, mujoco 3.17.0, with mujoco-warp 3.17.0 on our side."""
     table = _dmc_declaration_table()
     for name in (
         "DMCCheetahRun",
@@ -464,9 +464,9 @@ def test_the_dm_control_trackcom_declarations_name_the_reference_they_were_measu
         "DMCSwimmerSwimmer6",
         "DMCQuadrupedWalk",
     ):
-        assert table[name][REFERENCE_VERSIONS_KEY] == {"mujoco": "3.12.0"}
-        assert table[name][MEASURED_WITH_KEY] == {"mujoco_warp": "3.12.0"}
-        assert "mujoco 3.12.0" in table[name]["measured_at"]
+        assert table[name][REFERENCE_VERSIONS_KEY] == {"mujoco": "3.17.0"}
+        assert table[name][MEASURED_WITH_KEY] == {"mujoco_warp": "3.17.0"}
+        assert "mujoco 3.17.0" in table[name]["measured_at"]
 
 
 OUR_RENDERER_PACKAGES = ("mujoco_warp", "mujoco-warp", "warp", "warp-lang", "nvdiffrast", "torch", "triton")

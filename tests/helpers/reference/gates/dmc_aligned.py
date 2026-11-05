@@ -43,8 +43,8 @@ OMISSIONS = {
     ],
     "quadruped": [("warmstart",), ("activation",)],
 }
-# Ball-in-Cup prefix 6 is a contact snapshot whose omitted fields change later outputs on both
-# ARM/MuJoCo 3.12 and x86/MuJoCo 3.11; at prefix 5 the omission has no effect on x86/3.11.
+# Ball-in-Cup prefix 6 is a contact snapshot whose omitted fields change later outputs on x86/MuJoCo
+# 3.17; at prefix 5 the omission has no effect there.
 PREFIXES = {"ball_in_cup": 6, "finger": 7, "manipulator": 1, "quadruped": 1}
 
 

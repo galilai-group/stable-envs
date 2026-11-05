@@ -39,6 +39,16 @@ def test_local_lanes_compile_once_and_own_model_and_data(monkeypatch):
         adapter.close()
 
 
+def test_local_lanes_keep_independent_rng_across_unseeded_reset():
+    adapter = make_local("cartpole", 2, seed=17)
+    try:
+        for state in (adapter.get_state(), adapter.reset()):
+            assert not torch.equal(state["rng", "keys"][0], state["rng", "keys"][1])
+            assert not torch.equal(state["qpos"][0], state["qpos"][1])
+    finally:
+        adapter.close()
+
+
 @pytest.mark.parametrize("num_envs", [0, -1])
 def test_local_lanes_refuse_an_empty_batch(num_envs):
     with pytest.raises(ValueError, match="num_envs must be a positive integer"):

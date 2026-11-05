@@ -8,6 +8,28 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Roadster: `RoadsterLoop`, `RoadsterMission`, `RoadsterTrafficJam`, `RoadsterRooftop` and `RoadsterCarHop`:
+  five planning tasks for a jet-powered car in MuJoCo, ported from roadster-jets into
+  `stable_envs/envs/roadster/source/`, with a complete State, the `weather.wind` / `weather.rain` physics
+  leaves and the world-model camera drawn by MuJoCo's OpenGL renderer, on the GPU with a GPU's EGL driver and on
+  the CPU otherwise (`roadster` extra: MuJoCo, Pillow). The visual Variation leaf `rendering.cinematic` draws the same State on a dark-space scene with
+  shadows and MSAA. The exhaust smoke is drawn from the exhaust history in State (`fx`), so `render(state)`
+  shows it. Large CPU batches step their lanes in worker processes and draw frames in render workers
+  (`roadster-sim` and `roadster-render` tuning paths); steps that need frames but no State build no
+  snapshot.
+- Miniworld: `MiniWorldMovingBlockWorld` runs the 3D Dynamic Blockworld of Flow Equivariant World Models
+  (`MovingBlockWorld` from the hlillemark/Miniworld fork's `flowm_release` branch) with a complete State: room and block textures,
+  block kinds, sizes, poses and velocities, the agent and its carried block, and the env's generator.
+  `preset="flowm"` (default) is the paper's dynamic dataset, `preset="flowm-textured"` its textured split and
+  `preset="upstream"` the registered env. Each lane draws 6 to 10 blocks per episode, as the dataset script does;
+  State pads to 10 blocks with a `blocks.present` mask. Frames are Miniworld's own OpenGL agent view
+  (`miniworld` extra). Large batches step in worker processes and draw `render(state)` in render workers
+  (`miniworld-sim` and `miniworld-render` tuning paths).
+- MS-Human-700: `MSHumanLocomotion` wraps the whole-body musculoskeletal locomotion model (36 DoF,
+  100 muscles) on the MuJoCo Warp backend (`mshuman` extra). Physics and State run on the env device;
+  frames come from MuJoCo's OpenGL renderer. The Apache-2.0 model is fetched from LNSGroup/MS-Human-700
+  at a pinned commit on first use, overridable with `STABLE_ENVS_MSHUMAN_HOME`. The extra needs
+  MuJoCo and MuJoCo Warp 3.17.
 - `Env.native_size`: the only frame width that a class draws, and also its `default_size`. The classic
   control classes, `SimplePointMaze` and the Gaussian-dot navigation classes set it; it is None for the
   classes that draw any size. `snv.info()` returns it.
@@ -75,6 +97,8 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- `PushT` accepts continuous actions outside [-1, 1], as stable-worldmodel does. Such an action moves the target
+  further from the agent. Discrete `PushTDiscrete` indices must still be in [0, 16).
 - `OGBCube` and `OGBScene` frames have the look of the OGBench pixel tasks (`visual-cube-single-v0`,
   `visual-scene-v0`): the arm is see-through and the goal cube is not drawn. The `reference_env()`
   builds OGBench with `ob_type="pixels"`, so it draws the same `front_pixels` camera. Before, the arm was
@@ -169,10 +193,10 @@ All notable changes to this project are listed here. The format follows
   2 to 7 times faster and reaches the speed of the source in 8 processes.
 - The PushT error for a bad `render(out=)` buffer tells that the buffer must be contiguous and match
   the frames in shape, dtype and device.
-- `OGBCube` and `OGBScene` on CUDA: `backend="auto"` draws with NVIDIA OpenGL, the source's renderer,
-  and the default `supersample` is 1 on every device. CUDA frames now equal the source. Per-frame MSE
-  against the source (0-255 scale, 256 states) changes from 24.7 to 0 for `OGBCube` and from 43.5 to 0
-  for `OGBScene`. `supersample=2` or `backend="mjwarp_fidelity"` keeps the MJWarp renderer.
+- `OGBCube` and `OGBScene` on CUDA: `backend="auto"` draws with NVIDIA OpenGL, and the default
+  `supersample` is 1 on every device. The source-MSE regression compares this path with another
+  stable-envs OpenGL instance using the same compiled appearance. `supersample=2` or
+  `backend="mjwarp_fidelity"` keeps the MJWarp renderer.
 - `OGBCube` and `OGBScene` draw OpenGL batches of 2 or more states in up to `ogb_gl_workers` worker
   processes on Linux, and read many frames back in one call. Frames do not change.
 - Fetch on CPU: on Linux, batches of at least `render_worker_min_rows` states draw with software OpenGL
@@ -191,6 +215,8 @@ All notable changes to this project are listed here. The format follows
 
 - The `dmcontrol` and `dmcontrol-gpu` extras need MuJoCo 3.17 and dm_control 1.0.50, and `dmcontrol-gpu`
   installs MuJoCo Warp and MJX 3.17. The `ogbench` and `mjwarp` extras accept MuJoCo 3.17.
+- The `ogbench-manipulation` extras pin MuJoCo 3.17.0 (and MuJoCo Warp 3.17.0 for `-gpu`) with dm_control
+  1.0.50 or later, so they install next to `dmcontrol`.
 - DM Control steps every lane in one `mujoco.batch` call on CPU threads instead of worker processes. The
   `dmc_threads` knob sets the number of threads (8 by default), at most one per lane and one per CPU in
   the process affinity. The `workers` and `worker_min_lanes` knobs no longer apply to DM Control. Reacher

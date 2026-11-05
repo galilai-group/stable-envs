@@ -19,10 +19,10 @@ from tests.helpers.reference.dmc_semantics import DMCReference as DMCFirstFamily
 DOMAINS = ("acrobot", "pendulum", "cartpole")
 root = Path("tests/fixtures/semantics/dmc_first_family")
 root.mkdir(parents=True, exist_ok=True)
-paths = {domain: root / f"{domain}_swm_176d545_mujoco312.npz" for domain in DOMAINS}
+paths = {domain: root / f"{domain}_swm_176d545_mujoco317.npz" for domain in DOMAINS}
 refuse_overwrite(paths.values(), root / "manifest.json")
 pin = pinned_commit()
-assert importlib.metadata.version("mujoco") == "3.12.0"
+assert importlib.metadata.version("mujoco") == "3.17.0"
 
 manifest = {
     "reference_commit": pin,

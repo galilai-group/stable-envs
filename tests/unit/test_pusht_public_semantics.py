@@ -82,7 +82,7 @@ def test_failed_restore_and_bad_actions_do_not_partially_mutate_batch(name, devi
             env.set_state(bad)
         assert_same_state(before, env.get_state())
         a = actions(name, 2)[:, 0]
-        a[1, 0] = 1000
+        a[1, 0] = 1000 if name == "PushTDiscrete" else np.nan
         with pytest.raises(ValueError):
             env.step(a, frames=None)
         assert_same_state(before, env.get_state())
