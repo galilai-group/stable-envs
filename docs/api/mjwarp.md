@@ -40,10 +40,10 @@ their meaning.
 
 The candidate measurements below use CUDA MJWarp fidelity at `supersample=2`, not the default
 `supersample=1` `auto` path (NVIDIA OpenGL). They compare MuJoCo/MuJoCo Warp 3.17 on one H200 at
-64×64 against source NVIDIA OpenGL. The candidate returns CUDA images; the source returns NumPy
-images, including GPU readback.
+64×64 against the registered stable-envs NVIDIA OpenGL path with the same compiled appearance. The
+MJWarp candidate returns CUDA images; the OpenGL baseline returns NumPy images, including GPU readback.
 
-| class | batch | candidate FPS | source FPS | observed ratio |
+| class | batch | candidate FPS | OpenGL baseline FPS | observed ratio |
 | --- | ---: | ---: | ---: | ---: |
 | Cube | 1 | 237 | 261 | 0.907× |
 | Cube | 64 | 8,147 | 264 | 30.8× |
@@ -58,7 +58,7 @@ loading, projection, initial transfer and batch indexing. FPS values are rounded
 are derived from the unrounded timings.
 
 These are H200-specific observed throughput ratios, not a general speedup attributable to a MuJoCo
-version or hardware class. The ratios are amplified because the source OpenGL baseline was about
+version or hardware class. The ratios are amplified because the stable-envs OpenGL baseline was about
 6–7× slower on this H200 than in the prior RTX 3090 measurements. The GPU, driver, host and MuJoCo
 version all changed, so the comparison does not isolate a hardware effect.
 
