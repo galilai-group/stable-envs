@@ -932,9 +932,7 @@ class TwoRoomTarget(_TwoRoomBase):
 
     def reset(self, seed=None, options=None):
         self._check_open("reset")
-        if seed is not None:
-            self.rng = np.random.default_rng(int(seed))
-            self._seed = int(seed)
+        self._reseed(seed)
         values = self.draw_reset_values(seed, dict(options or {}))
         agent, target = np.stack(list(values["agent.position"])), np.stack(list(values["target.position"]))
         self._set_render_state(np.concatenate([agent, target], axis=1))
@@ -1168,9 +1166,7 @@ class PiecewiseZones(_PiecewiseBase):
 
     def reset(self, seed=None, options=None):
         self._check_open("reset")
-        if seed is not None:
-            self.rng = np.random.default_rng(int(seed))
-            self._seed = int(seed)
+        self._reseed(seed)
         values = self.draw_reset_values(seed, dict(options or {}))
         self._set_render_state(np.stack(list(values["agent.position"])))
         self._live_rows = self.B
