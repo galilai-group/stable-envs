@@ -8,11 +8,11 @@ from ._cells import trackcom_cell
 _QUADRUPED_AT = (
     "224 px, camera 2 ('y', trackcom), per-frame MSE over pixels and channels on the 0-255 scale, over "
     "the 64 render rows of sample_render_rows(default_rng(20260811)), default appearance (material "
-    "self rgba .6 .3 .3, foot_back_left density 1000), NVIDIA GeForce RTX 3090 / driver 575.57.08 / "
-    "MUJOCO_GL=egl, torch 2.14.1+cu126, mujoco 3.12.0 + mujoco-warp 3.12.0 + warp-lang 1.17.0, against "
+    "self rgba .6 .3 .3, foot_back_left density 1000), NVIDIA H200 / driver 580.173.02 / "
+    "MUJOCO_GL=egl, torch 2.15.0+cu132, mujoco 3.17.0 + mujoco-warp 3.17.0 + warp-lang 1.17.0, against "
     "dm_control's physics.render at camera 2 ('y', trackcom)"
 )
-_QUADRUPED_AT_MEASURED_WITH = {"mujoco_warp": "3.12.0"}
+_QUADRUPED_AT_MEASURED_WITH = {"mujoco_warp": "3.17.0"}
 
 
 def _transcribed_quadruped_env(seed: int):
@@ -76,11 +76,11 @@ QUADRUPED_NOTE = (
 
 VISUAL_FIDELITY: dict[str, dict] = {
     "DMCQuadrupedWalk": {
-        "mse_mean": 8.3424,
-        "mse_p95": 14.7919,
-        "mse_max": 17.3164,
+        "mse_mean": 8.4171,
+        "mse_p95": 14.8732,
+        "mse_max": 17.4349,
         "measured_at": _QUADRUPED_AT,
-        "reference_versions": {"mujoco": "3.12.0"},
+        "reference_versions": {"mujoco": "3.17.0"},
         "measured_with": _QUADRUPED_AT_MEASURED_WITH,
     },
 }

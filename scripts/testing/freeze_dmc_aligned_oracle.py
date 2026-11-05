@@ -19,10 +19,10 @@ from tests.helpers.reference.dmc_semantics import DMCReference as DMCAlignedRefe
 DOMAINS = ("ball_in_cup", "finger", "manipulator", "quadruped")
 ROOT = Path("tests/fixtures/semantics/dmc_aligned")
 ROOT.mkdir(parents=True, exist_ok=True)
-PATHS = {domain: ROOT / f"{domain}_swm_176d545_mujoco312.npz" for domain in DOMAINS}
+PATHS = {domain: ROOT / f"{domain}_swm_176d545_mujoco317.npz" for domain in DOMAINS}
 refuse_overwrite(PATHS.values(), ROOT / "manifest.json", "frozen oracle")
 pin = pinned_commit()
-assert importlib.metadata.version("mujoco") == "3.12.0"
+assert importlib.metadata.version("mujoco") == "3.17.0"
 manifest = {
     "reference_commit": pin,
     "seed": 17,

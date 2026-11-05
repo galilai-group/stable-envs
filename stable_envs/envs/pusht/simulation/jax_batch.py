@@ -181,12 +181,10 @@ class PushTJaxAdapter(PushTReplayAdapter):
         allowed = (torch.int32, torch.int64) if discrete else (torch.float32, torch.float64)
         if actions.shape != (self.num_envs, 2) or actions.dtype not in allowed:
             raise ValueError("PushT actions require shape [num_envs, 2] and a supported dtype")
-        if not bool(
-            torch.isfinite(actions).all()
-            & (actions >= (-0 if discrete else -1)).all()
-            & (actions < 16 if discrete else actions <= 1).all()
-        ):
-            raise ValueError("PushT actions must be finite and within the action space")
+        if not bool(torch.isfinite(actions).all()):
+            raise ValueError("PushT action must be finite")
+        if discrete and not bool(((actions >= 0) & (actions < 16)).all()):
+            raise ValueError("PushT discrete indices must be in [0, 16)")
         if active is None:
             active = torch.ones(self.num_envs, dtype=torch.bool, device=self.device)
         else:

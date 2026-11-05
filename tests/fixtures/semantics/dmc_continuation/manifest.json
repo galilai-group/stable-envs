@@ -3,18 +3,18 @@
   "seed": 17,
   "batch": 3,
   "steps": 32,
-  "generator": "scripts/recovery/freeze_dmc_continuation_oracle.py",
+  "generator": "scripts/testing/freeze_dmc_continuation_oracle.py",
   "versions": {
     "numpy": "2.5.3",
-    "mujoco": "3.12.0",
-    "dm-control": "1.0.45",
+    "mujoco": "3.17.0",
+    "dm-control": "1.0.50",
     "stable-worldmodel": "0.0.6"
   },
   "source": "Real pinned SWM wrappers only; independent of candidate adapter",
   "domains": {
     "cheetah": {
-      "file": "cheetah_swm_176d545_mujoco312.npz",
-      "sha256": "b03c32fc48cbe101ada5b5fd742e576884404118f0e2041615ec90567710b089",
+      "file": "cheetah_swm_176d545_mujoco317.npz",
+      "sha256": "fc8b33092a6af5d778ae17ee0252025595e955c257ad4dd19099a10d45478a2e",
       "arrays": {
         "actions": {
           "shape": [
@@ -112,6 +112,54 @@
           ],
           "dtype": "float64"
         },
+        "state/physics/gravity/x": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/y": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/z": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/agent/torso_density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/agent/back_foot_density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/floor/friction": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
         "output/reward": {
           "shape": [
             32,
@@ -141,14 +189,14 @@
           ],
           "dtype": "float32"
         },
-        "output/success": {
+        "output/score": {
           "shape": [
             32,
             3
           ],
           "dtype": "float64"
         },
-        "output/score": {
+        "output/success": {
           "shape": [
             32,
             3
@@ -209,8 +257,8 @@
       }
     },
     "hopper": {
-      "file": "hopper_swm_176d545_mujoco312.npz",
-      "sha256": "954b074c876a168915c9c1fe43153dba93768ee06ccad95bee7a81d200d2171c",
+      "file": "hopper_swm_176d545_mujoco317.npz",
+      "sha256": "f7f73cb5fdd07397c0091039f8615c057fd1402e2a6bdcef87b4d3c4db96d2d7",
       "arrays": {
         "actions": {
           "shape": [
@@ -308,6 +356,54 @@
           ],
           "dtype": "float64"
         },
+        "state/physics/gravity/x": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/y": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/z": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/agent/torso_density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/agent/foot_density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/floor/friction": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
         "output/reward": {
           "shape": [
             32,
@@ -337,14 +433,14 @@
           ],
           "dtype": "float32"
         },
-        "output/success": {
+        "output/score": {
           "shape": [
             32,
             3
           ],
           "dtype": "float64"
         },
-        "output/score": {
+        "output/success": {
           "shape": [
             32,
             3
@@ -391,8 +487,8 @@
       }
     },
     "walker": {
-      "file": "walker_swm_176d545_mujoco312.npz",
-      "sha256": "505fed966e1aaa75fa7b5996acd0a0d319549b9db8fede49bbd51c81d41fe4c6",
+      "file": "walker_swm_176d545_mujoco317.npz",
+      "sha256": "d665e3fb5d02786254a5e9537d2b5a73efbe2454482ba2f384ef658e370ae130",
       "arrays": {
         "actions": {
           "shape": [
@@ -490,6 +586,62 @@
           ],
           "dtype": "float64"
         },
+        "state/physics/gravity/x": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/y": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/z": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/agent/torso_density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/agent/left_foot_density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/floor/friction": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/floor/rotation_y": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
         "output/reward": {
           "shape": [
             32,
@@ -519,14 +671,14 @@
           ],
           "dtype": "float32"
         },
-        "output/success": {
+        "output/score": {
           "shape": [
             32,
             3
           ],
           "dtype": "float64"
         },
-        "output/score": {
+        "output/success": {
           "shape": [
             32,
             3
