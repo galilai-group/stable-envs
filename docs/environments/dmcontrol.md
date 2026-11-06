@@ -33,6 +33,7 @@ All 17 classes accept `simulation_backend="mjwarp"` for direct batched physics o
 CUDA. Install `stable-envs[dmcontrol-gpu]`; this backend uses MuJoCo/MuJoCo Warp 3.17
 and dm-control 1.0.50. Explicit selection
 raises an error if CUDA or the dependencies are unavailable. `backend` still selects rendering.
+Native CPU stepping uses MuJoCo's `mujoco.batch` backend and the `dmc_threads` tuning setting.
 Automatic routing is unchanged, including Reacher's existing native/MJX selection.
 
 ```python
@@ -144,8 +145,9 @@ one frame. State/frame history is omitted.
 ![Historical native-to-Warp latency ratios for 16 DMC environments, excluding Reacher](../assets/dmc-mjwarp-speedup.png)
 
 All 16 environments had faster public stepping at batches 256 and 1024. Small batches generally
-favored native. Raw native physics uses sequential local CPU lanes; public native stepping retains
-its existing worker routing. Raw Warp includes runtime guards and stream interop, not just kernels.
+favored native. These historical measurements used sequential local CPU lanes for raw native physics
+and the earlier worker routing for public native stepping; they predate the current `mujoco.batch`
+backend. Raw Warp includes runtime guards and stream interop, not just kernels.
 
 At batch 1024, median constructor costs across tasks were 25.34 s native versus 86.74 s Warp; reset
 costs were 74.41 versus 936.15 ms, and restore costs were 39.70 versus 914.65 ms. Construction excludes

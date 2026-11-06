@@ -94,9 +94,9 @@ def test_the_manipulation_declarations_are_still_the_measured_visual_ones(cell):
     vf = cls.visual_fidelity
     for k in ("measured_at", "reference_versions", "measured_with"):
         assert k in vf, f"{cell}: visual_fidelity is missing {k}"
-    assert vf["reference_versions"] == {"mujoco": "3.12.0", "ogbench": "1.2.1"}
-    assert vf["measured_with"] == {"mujoco_warp": "3.12.0"}
-    assert "can differ from MuJoCo" in cls.visual_note and "visual_fidelity records" in cls.visual_note
+    assert vf["reference_versions"] == {"mujoco": "3.17.0", "ogbench": "1.2.1"}
+    assert vf["measured_with"] == {"mujoco_warp": "3.17.0"}
+    assert "can differ from" in cls.visual_note and "visual_fidelity" in cls.visual_note
     assert cls.default_size == MANIP.SPEC[cls.CELL]["size"]
 
 
@@ -233,6 +233,33 @@ def test_the_dataset_siblings_of_one_scene_draw_the_same_frame(_ogbench):
                 states = env.sample_states(2, np.random.default_rng(0))
             digests.append(env._render(torch.as_tensor(states)).cpu().numpy().tobytes())
     assert digests[0] == digests[1]
+
+
+def test_culled_wall_shadows_and_split_mover_tiles_keep_every_byte(_ogbench, monkeypatch):
+    """The state-observation scene draws the same frames as with every wall and one mover tile."""
+    from stable_envs.render import raycast3d as R3
+
+    casts = []
+    composite = R3.composite
+
+    def counted(*args, **kwargs):
+        casts.append(kwargs.get("cast"))
+        return composite(*args, **kwargs)
+
+    monkeypatch.setattr(R3, "composite", counted)
+    with R.REGISTRY["PointMazeLargeNavigate"](num_envs=4, device="cpu") as env:
+        rows = torch.as_tensor(env.sample_states(40, np.random.default_rng(1)))
+        near = rows[:12].clone()
+        near[:, 2:4] = near[:, 0:2] + torch.linspace(-1.5, 1.5, 12).unsqueeze(1)
+        rows = torch.cat([rows, near])
+        fast = env._render(rows)
+        single = torch.cat([env._render(rows[i : i + 1]) for i in (0, 41, 47)])
+        assert any(c is not None for c in casts) and any(c is None for c in casts)
+        monkeypatch.setattr(MAZE, "_CULL_WALLS", False)
+        monkeypatch.setattr(MAZE, "_SPLIT_MOVERS", False)
+        full = env._render(rows)
+    assert torch.equal(fast, full)
+    assert torch.equal(single, full[[0, 41, 47]])
 
 
 @pytest.mark.nightly

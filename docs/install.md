@@ -41,19 +41,36 @@ package, which tests use for comparison.
 | `pusht` | PushT, PushTDiscrete | Pymunk 7.2.0, pygame, OpenCV, Shapely, Numba |
 | `pusht-reference` | reference checks only | gym-pusht |
 | `ogbench` | OGBench mazes | `ogbench`, MuJoCo |
-| `ogbench-manipulation` / `-gpu` | OGBCube, OGBScene | MuJoCo 3.12.0, OGBench 1.2.1, dm_control. `-gpu` adds MuJoCo Warp 3.12.0 and Warp 1.17.0 |
-| `dmcontrol` | DM Control | dm_control 1.0.50 or newer, MuJoCo 3.17 |
-| `dmcontrol-gpu` | DM Control on CUDA with TrackCom floor reflections | MuJoCo and MuJoCo Warp 3.17 |
+| `ogbench-manipulation` / `-gpu` | OGBCube, OGBScene | MuJoCo 3.17.0, OGBench 1.2.1, dm_control 1.0.50. `-gpu` adds MuJoCo Warp 3.17.0 and Warp 1.17.0 |
+| `dmcontrol` | DM Control | `dm_control` 1.0.50, MuJoCo 3.17 |
+| `dmcontrol-gpu` | Explicit MJWarp physics and TrackCom floor reflections on CUDA | `dm_control` 1.0.50, MuJoCo, MuJoCo Warp and MJX 3.17 |
 | `robotics` | Fetch | gymnasium-robotics, MuJoCo < 3.12, OpenCV |
 | `mjwarp` | Fetch on CUDA | MuJoCo Warp |
+| `mshuman` | MSHumanLocomotion | MuJoCo and MuJoCo Warp 3.17, Warp, filelock |
 | `rocket` | PyFlytRocketLanding | PyFlyt 0.29.0, pybullet 3.2.7, Pillow, SciPy |
 | `craftax` / `craftax-gpu` | Craftax | Craftax, JAX. `-gpu` takes JAX's CUDA 12 build for `device="cuda"` |
+| `miniworld` | MiniWorldMovingBlockWorld | the hlillemark/Miniworld fork, pyglet < 2 |
+| `roadster` | Roadster (5 classes) | MuJoCo >= 3.11, Pillow |
 | `docs` / `dev` / `examples` / `hf` | not needed to render | docs, tests, example helpers, HuggingFace |
 
 On CUDA, TrackCom domains draw the floor reflection only with MuJoCo Warp 3.17, which `dmcontrol-gpu`
 installs. With another MuJoCo Warp version, they render without the reflection and log a warning.
+Use `simulation_backend="mjwarp"` to select experimental CUDA physics explicitly; installing the extra
+does not change automatic backend selection.
 
 The `rocket` extra resolves numpy < 2 because of PyFlyt's metadata.
+
+`MovingBlockWorld` is only in the [hlillemark/Miniworld](https://github.com/hlillemark/Miniworld) fork,
+which is not on PyPI. uv installs the fork for the `miniworld` extra from `[tool.uv.sources]`. With pip,
+install the fork first:
+
+```bash
+pip install "miniworld @ git+https://github.com/hlillemark/Miniworld@bc7972050155b67e242c07bfdccfe1eeddbf9882"
+pip install "stable-envs[miniworld]"
+```
+
+Miniworld draws with pyglet's OpenGL. On Linux the family selects pyglet's headless EGL mode unless
+`PYGLET_HEADLESS` is set, so it needs an EGL driver (Mesa's llvmpipe works without a GPU).
 
 PushT renders with pygame on CPU. `device="cuda"` places the output tensors on the GPU. The drawing
 still runs on CPU.
@@ -80,10 +97,9 @@ uv sync --python 3.12 --extra dmcontrol --group pin-dmc --group test
 
 ## Extra conflicts
 
-DM Control needs MuJoCo 3.17. Fetch (`robotics`) needs MuJoCo 3.11, OGBench manipulation pins
-3.12, and MS-Human requires a version below 3.13. Install these families in separate environments.
-The `gpu-mjwarp` dependency group belongs to `pin-dmc`; OGBench manipulation uses
-`ogbench-manipulation-gpu` instead.
+Fetch (`robotics`) needs `mujoco<3.12`, `OGBCube` and `OGBScene` (`ogbench-manipulation`) need
+`mujoco==3.17.0`, and DM Control (`dmcontrol`) and MS-Human (`mshuman`) need `mujoco>=3.17,<3.18`. The
+`ogbench` extra accepts each of them. Install `robotics` in a separate environment from the other three.
 
 ## nvdiffrast
 

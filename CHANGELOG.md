@@ -21,16 +21,37 @@ All notable changes to this project are listed here. The format follows
   of replay variation, retaining the upstream Newton equations and unchanged acceptance bounds.
   Capsule contact corrections also avoid wrong endpoints and duplicate constraints for nearly
   parallel Hopper capsules. Touch readings no longer accumulate from checkpoint reconstruction.
+- Roadster: `RoadsterLoop`, `RoadsterMission`, `RoadsterTrafficJam`, `RoadsterRooftop` and `RoadsterCarHop`:
+  five planning tasks for a jet-powered car in MuJoCo, ported from roadster-jets into
+  `stable_envs/envs/roadster/source/`, with a complete State, the `weather.wind` / `weather.rain` physics
+  leaves and the world-model camera drawn by MuJoCo's OpenGL renderer, on the GPU with a GPU's EGL driver and on
+  the CPU otherwise (`roadster` extra: MuJoCo, Pillow). The visual Variation leaf `rendering.cinematic` draws the same State on a dark-space scene with
+  shadows and MSAA. The exhaust smoke is drawn from the exhaust history in State (`fx`), so `render(state)`
+  shows it. Large CPU batches step their lanes in worker processes and draw frames in render workers
+  (`roadster-sim` and `roadster-render` tuning paths); steps that need frames but no State build no
+  snapshot.
+- Miniworld: `MiniWorldMovingBlockWorld` runs the 3D Dynamic Blockworld of Flow Equivariant World Models
+  (`MovingBlockWorld` from the hlillemark/Miniworld fork's `flowm_release` branch) with a complete State: room and block textures,
+  block kinds, sizes, poses and velocities, the agent and its carried block, and the env's generator.
+  `preset="flowm"` (default) is the paper's dynamic dataset, `preset="flowm-textured"` its textured split and
+  `preset="upstream"` the registered env. Each lane draws 6 to 10 blocks per episode, as the dataset script does;
+  State pads to 10 blocks with a `blocks.present` mask. Frames are Miniworld's own OpenGL agent view
+  (`miniworld` extra). Large batches step in worker processes and draw `render(state)` in render workers
+  (`miniworld-sim` and `miniworld-render` tuning paths).
 - MS-Human-700: `MSHumanLocomotion` wraps the whole-body musculoskeletal locomotion model (36 DoF,
   100 muscles) on the MuJoCo Warp backend (`mshuman` extra). Physics and State run on the env device;
   frames come from MuJoCo's OpenGL renderer. The Apache-2.0 model is fetched from LNSGroup/MS-Human-700
-  at a pinned commit on first use, overridable with `STABLE_ENVS_MSHUMAN_HOME`.
+  at a pinned commit on first use, overridable with `STABLE_ENVS_MSHUMAN_HOME`. The extra needs
+  MuJoCo and MuJoCo Warp 3.17.
 - Classic control on CPU: a Numba kernel draws the same primitive records as the Triton kernel, in
   parallel over frames. `backend="auto"` and `backend="port"` use it when Numba imports; otherwise the
   CPU paths below apply. Frames are byte-identical to the Torch port. The `classic` extra installs
   Numba, and so do the `navigation` and `pusht` extras. `backend="auto"` draws batches of fewer than 8 rows of the default appearance with the source.
   The `pin-classic`, `pin-navigation` and `pin-pusht`
   groups pin Numba.
+- Navigation on CPU: a Numba kernel draws the dots of TwoRoom, TwoRoomTarget, Piecewise and
+  PiecewiseZones, in parallel over frames. `backend="auto"` uses it when Numba imports. Frames are
+  byte-identical to the Torch path, and `backend="torch"` selects the Torch path.
 - Craftax: `CraftaxClassicPixels`, `CraftaxClassicSymbolic`, `CraftaxPixels` and `CraftaxSymbolic`
   run the upstream JAX simulator with all lanes in one jitted `vmap` (`craftax` / `craftax-gpu` extras).
   With Craftax, the extras provide 75 classes. Fetch and `OGBCube`/`OGBScene` pin different MuJoCo versions,
@@ -47,6 +68,26 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- `PushT` accepts continuous actions outside [-1, 1], as stable-worldmodel does. Such an action moves the target
+  further from the agent. Discrete `PushTDiscrete` indices must still be in [0, 16).
+- `PyFlytRocketLanding` on CPU: the physics worker processes draw the step frames of their running
+  lanes with TinyRenderer, in parallel. They also draw `render` batches of 2 or more States. Before, the
+  main process drew every frame. A step that returns only frames does not export a State. The frames are
+  byte-identical. One process now holds at most 511 Rocket lanes, because the frames use one more
+  PyBullet client.
+- `SimplePointMaze` draws the `info.goal` images faster. Each distinct background is drawn once with
+  Matplotlib Agg. Then only the agent disc is drawn over a copy of it, in the render worker processes on
+  Linux. The image bytes do not change. Steps return the goal image without a copy: it is the same
+  tensor at each step, and a `[B, T]` step returns a view of it along the time axis. Do not write into
+  `info.goal`.
+- OGBench point mazes, except `teleport`: the lanes of a worker step in one loop. The loop does not swap
+  the NumPy legacy RNG for each lane, because a point step draws no random numbers. A step sets the
+  ball velocity to zero, so a ball that does not touch a wall stays where it is. For such a lane the
+  step advances only the clock and does not call MuJoCo. Workers send only the State leaves that a step
+  changes. State and task outputs do not change.
+- `PointMazeLargeNavigate` on CPU: the spotlight shadow rays of a frame, and of the goal and agent
+  samples, test only the walls near them. The goal and the agent are drawn in two small tiles when their screen bounds do not meet.
+  Frames do not change.
 - Reacher with CUDA output now uses native CPU physics below 32 environments. Larger CUDA batches
   keep JAX/MJX physics. `simulation_backend` selects native, MJX or MJWarp explicitly, and
   `mjx_min_envs` changes the provisional cutoff. TwoRoom uses Torch below `jax_min_envs` and JAX at or above it.
@@ -65,19 +106,32 @@ All notable changes to this project are listed here. The format follows
   2 to 7 times faster and reaches the speed of the source in 8 processes.
 - The PushT error for a bad `render(out=)` buffer tells that the buffer must be contiguous and match
   the frames in shape, dtype and device.
-- `OGBCube` and `OGBScene` on CUDA: `backend="auto"` draws with NVIDIA OpenGL, the source's renderer,
-  and the default `supersample` is 1 on every device. CUDA frames now equal the source. Per-frame MSE
-  against the source (0-255 scale, 256 states) changes from 24.7 to 0 for `OGBCube` and from 43.5 to 0
-  for `OGBScene`. `supersample=2` or `backend="mjwarp_fidelity"` keeps the MJWarp renderer.
+- `OGBCube` and `OGBScene` on CUDA: `backend="auto"` draws with NVIDIA OpenGL, and the default
+  `supersample` is 1 on every device. The source-MSE regression compares this path with another
+  stable-envs OpenGL instance using the same compiled appearance. `supersample=2` or
+  `backend="mjwarp_fidelity"` keeps the MJWarp renderer.
 - `OGBCube` and `OGBScene` draw OpenGL batches of 2 or more states in up to `ogb_gl_workers` worker
   processes on Linux, and read many frames back in one call. Frames do not change.
 
+- The `dmcontrol` and `dmcontrol-gpu` extras need MuJoCo 3.17 and dm_control 1.0.50, and `dmcontrol-gpu`
+  installs MuJoCo Warp and MJX 3.17. The `ogbench` and `mjwarp` extras accept MuJoCo 3.17.
+- The `ogbench-manipulation` extras pin MuJoCo 3.17.0 (and MuJoCo Warp 3.17.0 for `-gpu`) with dm_control
+  1.0.50 or later, so they install next to `dmcontrol`.
+- Native DM Control steps every lane in one `mujoco.batch` call on CPU threads instead of worker processes. The
+  `dmc_threads` knob sets the number of threads (8 by default), at most one per lane and one per CPU in
+  the process affinity. The `workers` and `worker_min_lanes` knobs no longer apply to DM Control.
+  Reacher keeps its automatic native/MJX cutoff and accepts explicit MJWarp selection.
+  With 1024 lanes on 32 cores and `dmc_threads=32`, native physics-only stepping is
+  approximately 2.4 (Humanoid) to 8 (Cartpole) times faster than with 32 worker processes. Lanes copy one
+  compiled model instead of each compiling their own, so 1024 lanes build in approximately 12 s. Outputs do
+  not change.
+- A mid-episode physics `set_variation()` on DM Control now takes full effect from the next step. Before,
+  the first step after the change still used quantities computed before it.
 - One process adapter (`stable_envs._execution.process.ProcessAdapter`) runs the worker processes of
-  DM Control, classic Acrobot, Fetch, OGBench Maze and OGBench Cube/Scene. It replaces five copies of
+  classic Acrobot, Fetch, OGBench Maze and OGBench Cube/Scene. It replaces four copies of
   the worker loop. Outputs do not change.
 - With worker processes, `set_state` checks every lane in every worker before any worker restores.
-  A State that is not valid in one lane raises and changes no lane in DM Control, classic Acrobot and
-  Fetch too.
+  A State that is not valid in one lane raises and changes no lane in classic Acrobot and Fetch too.
 - PushT runs in worker processes on Linux for batches of at least `worker_min_lanes` lanes (tuning
   path `pusht-sim`).
 - `PyFlytRocketLanding` runs in worker processes on Linux for batches of at least `worker_min_lanes`

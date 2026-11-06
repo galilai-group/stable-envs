@@ -3,9 +3,9 @@
 from stable_envs._execution.protocol import SimulatorAdapter, StepPipeline
 from stable_envs.envs.classic_control.simulation.local import ClassicControlAdapter
 from stable_envs.envs.classic_control.simulation.process import AcrobotProcessAdapter
+from stable_envs.envs.dmcontrol.simulation.batch import DMCBatchAdapter
 from stable_envs.envs.dmcontrol.simulation.factory import DMCAdapter
 from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter
-from stable_envs.envs.dmcontrol.simulation.process import DMCProcessAdapter
 from stable_envs.envs.fetch.simulation.adapter import FetchAdapter
 from stable_envs.envs.fetch.simulation.process import FetchProcessAdapter
 from stable_envs.envs.ogbench.simulation.manipulation import OGBManipulationAdapter
@@ -20,20 +20,20 @@ def local_adapters(
     classic: ClassicControlAdapter,
     fetch: FetchAdapter,
     dmc: DMCAdapter,
+    dmc_batch: DMCBatchAdapter,
     dmc_warp: DMCWarpAdapter,
     maze: OGBMazeAdapter,
     manipulation: OGBManipulationAdapter,
     pusht: PushTReplayAdapter,
     rocket: RocketAdapter,
 ) -> tuple[SimulatorAdapter, ...]:
-    return classic, fetch, dmc, dmc_warp, maze, manipulation, pusht, rocket
+    return classic, fetch, dmc, dmc_batch, dmc_warp, maze, manipulation, pusht, rocket
 
 
 def process_adapters(
     classic: AcrobotProcessAdapter,
     fetch: FetchProcessAdapter,
-    dmc: DMCProcessAdapter,
     maze: OGBMazeProcessAdapter,
     manipulation: OGBManipulationProcessAdapter,
 ) -> tuple[tuple[SimulatorAdapter, StepPipeline], ...]:
-    return (classic, classic), (fetch, fetch), (dmc, dmc), (maze, maze), (manipulation, manipulation)
+    return (classic, classic), (fetch, fetch), (maze, maze), (manipulation, manipulation)

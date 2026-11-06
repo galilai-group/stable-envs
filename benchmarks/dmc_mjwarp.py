@@ -214,7 +214,7 @@ def measure_cell(name, batch, simulation_backend, args, device):
             candidate.set_state(saved)  # raw timing intentionally bypassed adapter bookkeeping
             raw_description = "two runtime.advance calls; native controls precomputed outside timing"
         models = getattr(adapter, "_models", [])
-        source = getattr(adapter, "_metadata", adapter)
+        source = getattr(adapter, "lanes", getattr(adapter, "_source", adapter))
         lanes = getattr(source, "envs", [])
         model = models[0] if models else None
         if model is None and lanes:

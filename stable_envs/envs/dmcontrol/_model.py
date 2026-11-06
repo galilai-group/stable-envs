@@ -55,12 +55,14 @@ def _check_dm_control_works() -> None:
     from dm_control import mujoco as dm_mujoco
 
     try:
+        import mujoco.batch  # noqa: F401
+
         dm_mujoco.Physics.from_xml_string("<mujoco/>")
-    except AttributeError as e:
+    except (AttributeError, ImportError) as e:
         import mujoco
 
         raise ImportError(
-            f"dm_control is installed but cannot compile a model with mujoco "
+            f"dm_control is installed but cannot run with mujoco "
             f"{mujoco.__version__}: {e}. This is a version skew, not a missing package. Supported "
             f"pair: mujoco==3.17.0 with dm_control==1.0.50."
         ) from e

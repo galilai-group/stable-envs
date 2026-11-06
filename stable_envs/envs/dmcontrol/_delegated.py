@@ -150,11 +150,9 @@ class DelegatedSemantics:
         self._check_open("step")
         return self._simulator.step(actions)
 
-    def _advance_without_snapshot(self, actions):
-        if self.simulation_backend != "mjwarp":
-            return self._step(actions)
+    def _advance_without_snapshot(self, actions, *, active=None):
         self._check_open("step")
-        return self._simulator.step(actions, capture_state=False)
+        return self._simulator.step(actions, active=active, capture_state=False)
 
     def _close(self):
         if hasattr(self, "_simulator"):

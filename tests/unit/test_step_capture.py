@@ -144,14 +144,9 @@ def test_dmc_snapshot_capture_forwarding(backend):
     env = SimpleNamespace(simulation_backend=backend, _check_open=Mock(), _simulator=Mock(), _step=Mock())
     actions = torch.zeros(3, 1)
     result = DelegatedSemantics._advance_without_snapshot(env, actions)
-    if backend == "mjwarp":
-        env._simulator.step.assert_called_once_with(actions, capture_state=False)
-        assert result is env._simulator.step.return_value
-        env._step.assert_not_called()
-    else:
-        env._step.assert_called_once_with(actions)
-        assert result is env._step.return_value
-        env._simulator.step.assert_not_called()
+    env._simulator.step.assert_called_once_with(actions, active=None, capture_state=False)
+    assert result is env._simulator.step.return_value
+    env._step.assert_not_called()
 
 
 def test_one_step_sequence_keeps_time_axis():

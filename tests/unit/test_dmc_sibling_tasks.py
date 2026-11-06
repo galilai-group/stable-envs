@@ -49,6 +49,15 @@ def _rollout(env, ref, actions):
         assert torch.equal(result["observation"], observation)
 
 
+def _chunk(env, ref, actions):
+    result = env.step(actions.transpose(1, 0, 2), states=None, frames=None)
+    for t, action in enumerate(actions):
+        expected, reward, observation = ref.step(action)
+        assert torch.equal(result["reward"][:, t], reward)
+        assert torch.equal(result["observation"][:, t], observation)
+    compare_state(_source_fields(result["state"]), expected)
+
+
 @pytest.mark.parametrize("name", CELLS)
 def test_cell_matches_the_source_task_and_restores_into_a_fresh_env(name):
     domain, task = CELLS[name]
@@ -67,7 +76,7 @@ def test_cell_matches_the_source_task_and_restores_into_a_fresh_env(name):
                 wrapper._env._step_count = ref.step_limit - 3
             env.set_state(near_limit)
             compare_state(env.get_state(), near_limit)
-            _rollout(env, ref, actions[8:16])
+            _chunk(env, ref, actions[8:16])
             resumed = env.get_state()
             assert bool((resumed["lifecycle", "step_count"] < ref.step_limit - 3).all()), "no implicit reset"
             with _make(name) as fresh:

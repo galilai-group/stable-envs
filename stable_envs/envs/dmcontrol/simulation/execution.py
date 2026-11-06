@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING
 
 import torch
 
-from ...._execution.policy import cpu_affinity, process_count
-from .factory import PROCESS_DOMAINS, DMCAdapter, make_local
-from .process import DMCProcessAdapter
+from .batch import DMCBatchAdapter
+from .factory import make_batch
+from .first_family import ReacherAdapter
 
 if TYPE_CHECKING:
     from .mjwarp import DMCWarpAdapter
@@ -34,7 +34,7 @@ def make_dmc_adapter(
     *,
     simulation_backend: str = "auto",
     mjx_min_envs: int = 32,
-) -> DMCAdapter | DMCProcessAdapter | DMCWarpAdapter:
+) -> DMCBatchAdapter | ReacherAdapter | DMCWarpAdapter:
     if simulation_backend == "mjwarp":
         if torch.device(device).type != "cuda":
             raise ValueError("simulation_backend='mjwarp' requires device='cuda'")
@@ -50,8 +50,4 @@ def make_dmc_adapter(
         from .reacher_mjx import ReacherMJXAdapter
 
         return ReacherMJXAdapter(num_envs, device, seed)
-    cpus = cpu_affinity()
-    count = process_count(num_envs, cpus, eligible=domain in PROCESS_DOMAINS, path="dmc-sim")
-    if count:
-        return DMCProcessAdapter(domain, num_envs, device, seed, processes=count, cpus=cpus)
-    return make_local(domain, num_envs, device, seed)
+    return make_batch(domain, num_envs, device, seed)

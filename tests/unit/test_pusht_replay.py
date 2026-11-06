@@ -169,9 +169,24 @@ def test_success_does_not_impose_an_auto_reset_or_permanent_stop():
         env.close()
 
 
+def test_continuous_actions_outside_the_space_step_as_the_source_does():
+    """The source moves the target by 100 * action with no clip, so 1.5 reaches further than 1.0."""
+    env = PushTReplayAdapter(1, config={"resolution": 32})
+    try:
+        start = env.get_state()
+        env.step(np.array([[1.0, 0.0]], np.float64))
+        unit = env.get_state()["current", "observation"].clone()
+        env.set_state(start)
+        env.step(np.array([[1.5, 0.0]], np.float64))
+        far = env.get_state()["current", "observation"]
+        assert far[0, 0] > unit[0, 0]
+    finally:
+        env.close()
+
+
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("bad", [-1.01, 1.01, np.inf, -np.inf, np.nan])
-def test_continuous_bounds_reject_atomically(dtype, bad):
+@pytest.mark.parametrize("bad", [np.inf, -np.inf, np.nan])
+def test_non_finite_continuous_actions_reject_atomically(dtype, bad):
     env = PushTReplayAdapter(2, config={"resolution": 32})
     try:
         before = env.get_state()
