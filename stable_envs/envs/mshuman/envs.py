@@ -1,4 +1,4 @@
-"""MS-Human-700 musculoskeletal locomotion on MuJoCo Warp."""
+"""MS-Human-700 musculoskeletal locomotion: native ``mujoco.batch`` physics on CPU, MuJoCo Warp on CUDA."""
 
 from __future__ import annotations
 
@@ -9,13 +9,14 @@ import numpy as np
 import torch
 
 from ..._core.mujoco_gl import mujoco_renderer
+from ..._core.stepping import _stack_states
 from ...env import Env, render_states_arg, require_contiguous_out
 from ...registry import register
 from ...render._resources import retain_process_lifetime
 from ...spaces import Dict
 from .assets import _COMMIT, _XML
 from .assets import model as _model
-from .simulation.adapter import WarpAdapter
+from .simulation.adapter import MSHumanBatchAdapter, MSHumanWarpAdapter
 
 _NQ, _NV, _NA, _NU = 36, 36, 100, 100
 _LOCK = threading.RLock()
@@ -54,7 +55,8 @@ class MSHumanLocomotion(Env):
         dims = (self._model.nq, self._model.nv, self._model.na, self._model.nu)
         if dims != (_NQ, _NV, _NA, _NU):
             raise ValueError(f"MS-Human-700 model dimensions changed: {dims}")
-        self._simulator = WarpAdapter(self.B, self.device, self._model)
+        adapter = MSHumanBatchAdapter if self.device.type == "cpu" else MSHumanWarpAdapter
+        self._simulator = adapter(self.B, self.device, self._model)
 
     def make_variation_space(self) -> Dict:
         return Dict({})
@@ -75,6 +77,16 @@ class MSHumanLocomotion(Env):
     def _step(self, actions):
         self._check_open("step")
         return self._simulator.step(actions)
+
+    def _stack_states(self, values):
+        if self.device.type != "cpu":
+            return _stack_states(values)
+        # Torch copies tensors over 32768 elements on OpenMP threads, which then spin against the batch's threads.
+        return values[0].apply(
+            lambda *leaves: torch.from_numpy(np.stack([leaf.numpy() for leaf in leaves], axis=1)),
+            *values[1:],
+            batch_size=[*values[0].batch_size, len(values)],
+        )
 
     @torch.no_grad()
     def _render(self, states=None, size=None, supersample=None, variation=None, style=None, out=None):

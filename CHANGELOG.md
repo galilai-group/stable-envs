@@ -34,9 +34,10 @@ All notable changes to this project are listed here. The format follows
   (`miniworld` extra). Large batches step in worker processes and draw `render(state)` in render workers
   (`miniworld-sim` and `miniworld-render` tuning paths).
 - MS-Human-700: `MSHumanLocomotion` wraps the whole-body musculoskeletal locomotion model (36 DoF,
-  100 muscles) on the MuJoCo Warp backend (`mshuman` extra). Physics and State run on the env device;
-  frames come from MuJoCo's OpenGL renderer. The Apache-2.0 model is fetched from LNSGroup/MS-Human-700
-  at a pinned commit on first use, overridable with `STABLE_ENVS_MSHUMAN_HOME`.
+  100 muscles; `mshuman` extra). CPU envs step every lane in one native `mujoco.batch` and CUDA envs step on
+  MuJoCo Warp; State is `float32` on the env device. Frames come from MuJoCo's OpenGL renderer. The
+  Apache-2.0 model is fetched from LNSGroup/MS-Human-700 at a pinned commit on first use, overridable with
+  `STABLE_ENVS_MSHUMAN_HOME`. The extra needs MuJoCo and MuJoCo Warp 3.17.
 - DM Control on CPU: one Numba kernel draws the frames of all 17 classes. Each tile of 8 × 8 pixels
   tests its camera, shadow and mirror rays only against the moving geometry that its bounds can reach.
   The kernel then shades the pixels in the float32 operation order of the Torch renderer.
@@ -48,8 +49,6 @@ All notable changes to this project are listed here. The format follows
   (`"auto"`, the default), and CPU lanes keep the Gymnasium simulator. Resets, the PCG64 streams and
   State export still come from Gymnasium. Torch steps match Gymnasium to rounding; `"gym"` or `"torch"`
   selects one backend on any device.
-  at a pinned commit on first use, overridable with `STABLE_ENVS_MSHUMAN_HOME`. The extra needs
-  MuJoCo and MuJoCo Warp 3.17.
 - Classic control on CPU: a Numba kernel draws the same primitive records as the Triton kernel, in
   parallel over frames. `backend="auto"` and `backend="port"` use it when Numba imports; otherwise the
   CPU paths below apply. Frames are byte-identical to the Torch port. The `classic` extra installs
