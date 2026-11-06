@@ -41,6 +41,7 @@ def main():
     return pytest.main(
         [
             str(ROOT / "tests/gpu/test_dmc_mjwarp.py"),
+            str(ROOT / "tests/gpu/test_dmc_mjwarp_humanoid.py"),
             str(ROOT / "tests/gpu/test_dmc_mjwarp_reacher.py"),
             str(ROOT / "tests/gpu/test_dmc_mjwarp_streams.py"),
             str(ROOT / "tests/unit/test_dmc_mjwarp_contacts.py")
@@ -49,6 +50,10 @@ def main():
             + "::test_elliptic_contact_reduction_preserves_impulses[cuda]",
             str(ROOT / "tests/unit/test_dmc_mjwarp_contacts.py")
             + "::test_near_parallel_capsules_preserve_contacts_and_impulses[cuda]",
+            str(ROOT / "tests/unit/test_dmc_mjwarp_solver.py")
+            + "::test_changed_row_order_preserves_incremental_hessian[cuda]",
+            str(ROOT / "tests/unit/test_dmc_mjwarp_solver.py")
+            + "::test_gradient_norm_preserves_completed_and_unchanged_worlds[cuda]",
             "-ra",
         ],
         plugins=[RequireEveryCase()],

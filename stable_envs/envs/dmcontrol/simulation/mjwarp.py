@@ -82,7 +82,8 @@ class DMCWarpAdapter(SimulatorAdapter):
                 self._models,
                 self.device,
                 self._nsubsteps,
-                ordered_constraints=self.key == "cheetah",
+                ordered_constraints=self.key in {"cheetah", "humanoid"},
+                ordered_pyramidal=self.key == "humanoid",
                 ordered_elliptic=self.key == "manipulator",
             )
             # make_local already performed the registered initial reset. Warm-up
@@ -266,7 +267,8 @@ class DMCWarpAdapter(SimulatorAdapter):
                         [self._models[i] for i in continuing],
                         self.device,
                         self._nsubsteps,
-                        ordered_constraints=self.key == "cheetah",
+                        ordered_constraints=self.key in {"cheetah", "humanoid"},
+                        ordered_pyramidal=self.key == "humanoid",
                         ordered_elliptic=self.key == "manipulator",
                     )
                 ids = torch.as_tensor(continuing, device=self.device)

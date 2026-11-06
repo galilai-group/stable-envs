@@ -15,6 +15,8 @@ All notable changes to this project are listed here. The format follows
   remains unfinished. See the DMC documentation for limitations and historical measured performance
   across the original 16 tasks. Cheetah uses stable constraint ordering to remove replay variation
   from parallel contact allocation, with unchanged numerical acceptance bounds.
+  Humanoid also orders incremental Newton updates and gradient-norm accumulation to make checkpoint
+  replay repeatable, including mixed resets; CUDA regressions cover 100 public calls.
   Manipulator uses ordered elliptic Hessian accumulation within each world to remove another source
   of replay variation, retaining the upstream Newton equations and unchanged acceptance bounds.
   Capsule contact corrections also avoid wrong endpoints and duplicate constraints for nearly

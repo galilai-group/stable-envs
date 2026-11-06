@@ -66,9 +66,13 @@ It follows MuJoCo 3.17's relative angular cutoff, including the native one- or t
 result for near-parallel capsules. Stored dynamics and integration remain float32. Focused tests compare contact geometry, impulses and touch sensors
 against native MuJoCo. Acceleration-stage readings are cleared before stepping so touch forces do
 not accumulate from checkpoint reconstruction.
-Cheetah also orders joint-limit and contact constraints consistently before each solve, including
+Cheetah and Humanoid order joint-limit and contact constraints consistently before each solve, including
 after checkpoint restoration and mixed resets. This removes replay variation caused by parallel
 constraint allocation; the solver equations, contacts and iteration settings stay unchanged.
+Humanoid also orders changed constraint rows before incremental Newton updates and sums each world's
+gradient norm in a fixed order, including in mixed-reset scratch runtimes. Its DMC-local Newton loop
+retains upstream warmstart, line search, incremental Hessian updates, convergence and stable-state
+shortcuts. Constraint ordering alone does not make these solver reductions deterministic.
 Manipulator accumulates elliptic contact curvature in constraint-row order, with one writer per
 world and Hessian entry. This removes a source of floating-point atomic-sum variation while keeping
 worlds parallel. Its DMC-local dense Newton loop reuses MuJoCo Warp 3.17's line search, convergence
@@ -99,7 +103,9 @@ have not been loosened.
 
 Run the focused CUDA checks with `python scripts/ci/run_dmc_mjwarp.py`; missing CUDA or skipped
 required cases fail this runner. The runner covers all 17 classes and includes Reacher's target,
-physics variation, mixed-reset and 100-call replay checks. These are core regression checks, not a
+physics variation, mixed-reset and 100-call replay checks. Humanoid has exact 100-call replay checks
+and mixed-reset checks with one or two continuing lanes, strided actions and nondefault streams.
+These are core regression checks, not a
 numerical certification.
 
 ### Measured performance

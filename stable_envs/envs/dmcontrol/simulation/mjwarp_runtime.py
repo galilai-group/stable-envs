@@ -356,7 +356,7 @@ def _constraint_order_kernels():
         world = wp.tid()
         capacity = permutation.shape[1]
         count = wp.min(nefc[world], capacity)
-        # Cheetah has few active rows. Insertion sort visits only those rows,
+        # Cheetah and Humanoid have few active rows. Insertion sort visits only those rows,
         # with independent worlds remaining parallel and no global atomics.
         for row in range(count):
             kind = rows.type[world, row]
@@ -608,6 +608,157 @@ class _DenseEllipticSolver:
                 self.iteration()
 
 
+@cache
+def _pyramidal_solver_kernels():
+    @wp.kernel(module="unique", enable_backward=False, grid_stride=False)
+    def sort_changed_ids(changed_count: wp.array[int], done: wp.array[bool], changed_ids: wp.array2d[int]):
+        world = wp.tid()
+        if done[world]:
+            return
+        for index in range(1, changed_count[world]):
+            value = changed_ids[world, index]
+            previous = index - 1
+            while previous >= 0:
+                if changed_ids[world, previous] <= value:
+                    break
+                changed_ids[world, previous + 1] = changed_ids[world, previous]
+                previous -= 1
+            changed_ids[world, previous + 1] = value
+
+    @wp.kernel(module="unique", module_options={"enable_backward": False, "fuse_fp": False}, grid_stride=False)
+    def gradient_norm(
+        nv: int,
+        stable_fast: bool,
+        state_changed_count: wp.array[int],
+        done: wp.array[bool],
+        grad: wp.array2d[float],
+        grad_dot: wp.array[float],
+    ):
+        world = wp.tid()
+        if done[world]:
+            return
+        if stable_fast:
+            if state_changed_count[world] == 0:
+                return
+        # Preserve the upstream product rounding before each addition. Padded
+        # DOFs are excluded; unchanged worlds retain their scaled stale norm.
+        total = float(0.0)  # noqa: UP018 - Warp needs a dynamic loop accumulator.
+        for dof in range(nv):
+            value = grad[world, dof]
+            total += value * value
+        grad_dot[world] = total
+
+    return sort_changed_ids, gradient_norm
+
+
+class _DensePyramidalSolver:
+    """The 3.17 incremental Newton loop with ordered row deltas and grad norms.
+
+    Keep upstream gradient/Hessian construction, factorization, line search,
+    convergence and stable-state fast paths. The only added work orders changed
+    row IDs and replaces the atomic norm before convergence reads it.
+    """
+
+    def __init__(self, model, data):
+        from mujoco_warp._src import solver, types
+
+        if (
+            model.is_sparse
+            or model.nflex
+            or not 0 < model.nv <= 50
+            or not data.njmax
+            or model.opt.solver != types.SolverType.NEWTON
+            or model.opt.cone != types.ConeType.PYRAMIDAL
+            or model.opt.integrator != types.IntegratorType.EULER
+            or model.opt.enableflags & types.EnableBit.SLEEP
+            or model.opt.noslip_iterations
+            or model.opt.deterministic != types.DeterminismType.NONE
+        ):
+            raise ValueError(
+                "Ordered pyramidal solving requires dense, awake rigid Euler/Newton worlds with 1-50 DOFs, "
+                "pyramidal contacts, no noslip and no model-wide determinism"
+            )
+        self._solver, self._types = solver, types
+        self.m, self.d = model, data
+        self.ctx = solver._create_solver_context(model, data)
+        self.nsolving = wp.empty(1, dtype=int)
+
+    def gradient(self, incremental=False):
+        m, d, ctx = self.m, self.d, self.ctx
+        sort_changed_ids, gradient_norm = _pyramidal_solver_kernels()
+        if incremental:
+            wp.launch(
+                sort_changed_ids,
+                dim=d.nworld,
+                inputs=[ctx.quad_changed_count, ctx.done],
+                outputs=[ctx.quad_changed_ids],
+            )
+            self._solver._update_gradient_incremental(m, d, ctx, stable_fast=True)
+        else:
+            self._solver._update_gradient(m, d, ctx)
+        # Cholesky reads grad and H, not grad_dot. Replace the atomic norm only
+        # after the upstream update, before _solve_done can consume it.
+        wp.launch(
+            gradient_norm,
+            dim=d.nworld,
+            inputs=[m.nv, incremental, ctx.state_changed_count, ctx.done, ctx.grad],
+            outputs=[ctx.grad_dot],
+        )
+
+    def iteration(self):
+        m, d, ctx = self.m, self.d, self.ctx
+        solver = self._solver
+        solver._linesearch(m, d, ctx)
+        wp.launch(
+            solver._zero_change_counters, dim=d.nworld, outputs=[ctx.quad_changed_count, ctx.state_changed_count]
+        )
+        solver._update_constraint(m, d, ctx, track_changes=True, stable_fast=True)
+        self.gradient(incremental=True)
+        wp.launch(
+            solver._solve_done(int(m.opt.warn_overflow)),
+            dim=d.nworld,
+            inputs=[
+                m.opt.tolerance,
+                m.opt.iterations,
+                ctx.inertia_scale,
+                ctx.grad_dot,
+                ctx.newton_decrement,
+                ctx.improvement,
+                ctx.alpha,
+                ctx.done,
+            ],
+            outputs=[d.solver_niter, d.overflow, self.nsolving, ctx.done],
+        )
+
+    def solve(self):
+        m, d, ctx = self.m, self.d, self.ctx
+        solver, types = self._solver, self._types
+        wp.launch(
+            solver._solve_init_dof(not (m.opt.disableflags & types.DisableBit.WARMSTART), False),
+            dim=(d.nworld, m.nv),
+            inputs=[d.nefc, d.qacc_warmstart, d.qacc_smooth],
+            outputs=[d.qacc, d.qfrc_constraint],
+        )
+        solver.init_context(m, d, ctx, grad=False)
+        self.gradient()
+        # The previous solve's reusable ray is invalid after the full rebuild.
+        ctx.search_unchanged.zero_()
+        self.nsolving.fill_(d.nworld)
+        if m.opt.iterations and m.opt.graph_conditional:
+            wp.capture_while(self.nsolving, while_body=self.iteration)
+        else:
+            for _ in range(m.opt.iterations):
+                self.iteration()
+        # Stable-state iterations leave qfrc_constraint stale or zeroed for
+        # converged worlds. Recover it exactly as the upstream Newton loop does.
+        wp.launch(
+            solver._qfrc_constraint_from_grad,
+            dim=(d.nworld, m.nv),
+            inputs=[d.qfrc_smooth, d.efc.Ma, ctx.grad, ctx.grad_scale],
+            outputs=[d.qfrc_constraint],
+        )
+
+
 class WarpSnapshot:
     """Borrowed B-first views, valid until the runtime is advanced or loaded."""
 
@@ -645,8 +796,19 @@ class WarpRuntime:
     subsequent loads copy values into stable buffers rather than replacing them.
     """
 
-    def __init__(self, models, device, nsubsteps, *, ordered_constraints=False, ordered_elliptic=False):
+    def __init__(
+        self,
+        models,
+        device,
+        nsubsteps,
+        *,
+        ordered_constraints=False,
+        ordered_elliptic=False,
+        ordered_pyramidal=False,
+    ):
         _load_backend()
+        if ordered_pyramidal and (not ordered_constraints or ordered_elliptic):
+            raise ValueError("Ordered pyramidal solving requires canonical constraints and no elliptic solver")
         self._capacity_overflow = sum(
             int(flag)
             for flag in mjw.OverflowType
@@ -678,6 +840,7 @@ class WarpRuntime:
         self._graph = None
         self._constraint_buffers = None
         self._elliptic_solver = None
+        self._pyramidal_solver = None
         self._model_fields = _batch_fields(mjw.Model)
         self._option_fields = _batch_fields(mjw.Option)
         self._reference = self.models[0]
@@ -771,6 +934,8 @@ class WarpRuntime:
                 if self._integrator == mujoco.mjtIntegrator.mjINT_RK4:
                     raise ValueError("Ordered elliptic solving requires split-step integration")
                 self._elliptic_solver = _DenseEllipticSolver(self._m, self._d)
+            if ordered_pyramidal:
+                self._pyramidal_solver = _DensePyramidalSolver(self._m, self._d)
             self._upload_models(self.models)
 
     def _order_constraints(self, model, data):
@@ -967,11 +1132,14 @@ class WarpRuntime:
             view.copy_(state[key].to(device=self.device, dtype=view.dtype).reshape(view.shape))
         self._data_view("geom_xpos").index_copy_(1, self._fixed_indices, self._fixed_positions)
         self._data_view("geom_xmat").index_copy_(1, self._fixed_indices, self._fixed_rotations)
-        if self._elliptic_solver is None:
+        if self._elliptic_solver is None and self._pyramidal_solver is None:
             mjw.forward(self._m, self._d)
         else:
             mjw.step1(self._m, self._d)
-            self._elliptic_forward()
+            if self._pyramidal_solver is not None:
+                self._pyramidal_forward()
+            else:
+                self._elliptic_forward()
         self._data_view("qacc_warmstart").copy_(state["warmstart"].to(self.device, torch.float32))
 
     def load(self, state, models=None):
@@ -999,6 +1167,16 @@ class WarpRuntime:
         self._elliptic_solver.solve()
         mjw.sensor_acc(self._m, self._d)
 
+    def _pyramidal_forward(self):
+        mjw.fwd_actuation(self._m, self._d)
+        mjw.fwd_acceleration(self._m, self._d)
+        self._pyramidal_solver.solve()
+        if self._m.opt.run_rne_postconstraint or (
+            not (self._m.opt.disableflags & mjw.DisableBit.SENSOR) and self._m.sensor_rne_postconstraint
+        ):
+            mjw.rne_postconstraint(self._m, self._d)
+        mjw.sensor_acc(self._m, self._d, skip_rne_postconstraint=True)
+
     def _advance(self):
         # dm_control Physics.legacy_step refreshes position/velocity after the
         # integration while retaining acceleration-stage sensors from that step.
@@ -1006,7 +1184,14 @@ class WarpRuntime:
         # load() computed acceleration sensors already. Warp's step2 adds
         # touch forces without clearing them; native sensorAcc starts afresh.
         sensors.index_fill_(1, self._acc_indices, 0)
-        if self._elliptic_solver is not None:
+        if self._pyramidal_solver is not None:
+            for substep in range(self.nsubsteps):
+                self._pyramidal_forward()
+                mjw.euler(self._m, self._d)
+                if substep + 1 < self.nsubsteps:
+                    mjw.step1(self._m, self._d)
+            torch.index_select(sensors, 1, self._acc_indices, out=self._acc_values)
+        elif self._elliptic_solver is not None:
             for substep in range(self.nsubsteps):
                 self._elliptic_forward()
                 if self._integrator in (mujoco.mjtIntegrator.mjINT_IMPLICIT, mujoco.mjtIntegrator.mjINT_IMPLICITFAST):
@@ -1096,6 +1281,7 @@ class WarpRuntime:
             self._graph = self._m = self._d = None
             self._constraint_buffers = None
             self._elliptic_solver = None
+            self._pyramidal_solver = None
             self._acc_indices = self._acc_values = None
             self._fixed_indices = self._fixed_positions = self._fixed_rotations = None
             self._capsule_pair_ids = self._capsule_slots = self._capsule_gaps = self._contact_arrays = None

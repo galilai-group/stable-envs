@@ -169,6 +169,8 @@ def test_near_parallel_capsules_preserve_contacts_and_impulses(device):
 
 @pytest.mark.parametrize("device", DEVICES)
 def test_constraint_order_preserves_contact_impulses(device):
+    from dataclasses import fields
+
     model = mujoco.MjModel.from_xml_string("""<mujoco>
       <option timestep=".005" cone="pyramidal" iterations="100" tolerance="1e-8"/>
       <worldbody><geom type="plane" size="1 1 .1"/>
@@ -179,52 +181,91 @@ def test_constraint_order_preserves_contact_impulses(device):
           <geom type="capsule" fromto="0 0 0 .2 0 0" size=".03"/>
         </body>
       </worldbody></mujoco>""")
-    datas = [mujoco.MjData(model) for _ in range(2)]
+    datas = [mujoco.MjData(model) for _ in range(3)]
     for lane, data in enumerate(datas):
         data.qpos[-1] = 0.5
-        data.qpos[2] += lane * 0.5
+        data.qpos[2] += [0, 0.5, 0.002][lane]
         data.qvel[:] = np.linspace(-0.3, 0.2, model.nv)
         mujoco.mj_forward(model, data)
-    assert [data.ncon for data in datas] == [2, 0]
+    assert [data.ncon for data in datas] == [2, 0, 2]
     state = TensorDict(
         {
             "qpos": torch.tensor(np.stack([d.qpos for d in datas])),
             "qvel": torch.tensor(np.stack([d.qvel for d in datas])),
-            "time": torch.zeros(2, 1),
-            "warmstart": torch.zeros(2, model.nv),
+            "time": torch.zeros(3, 1),
+            "warmstart": torch.zeros(3, model.nv),
         },
-        [2],
+        [3],
     ).to(device)
-    with closing(WarpRuntime([model, model], device, 1, ordered_constraints=True)) as runtime:
+    with closing(WarpRuntime([model] * 3, device, 1, ordered_constraints=True)) as runtime:
         import warp as wp
 
         runtime.load(state)
-        controls = torch.empty(2, 0, device=device)
+        controls = torch.empty(3, 0, device=device)
         runtime.advance(controls)
         expected = runtime.physical_state()
         runtime.load(state)
         with runtime._scope():
             data = runtime._d
             count = int(data.nefc.numpy()[0])
-            assert count == 9
+            assert data.nefc.numpy().tolist() == [9, 1, 9]
             rows = runtime._constraint_buffers[0]
             before = {name: wp.to_torch(getattr(rows, name)).clone() for name in rows._cls.vars}
-            addresses = wp.to_torch(data.contact.efc_address)
-            old_addresses = addresses.clone()
-            # Exchange lane 0's contact blocks and move its joint limit last,
-            # retaining the four local friction rows. Lane 1 stays intact.
+            ncontact = int(data.nacon.numpy()[0])
+            assert ncontact == 4
+            contact_views = {
+                field.name: wp.to_torch(value)
+                for field in fields(data.contact)
+                if isinstance(value := getattr(data.contact, field.name), wp.array) and value.shape[0] == data.naconmax
+            }
+            contacts_before = {name: view[:ncontact].clone() for name, view in contact_views.items()}
+            worlds = contacts_before["worldid"]
+            first = torch.nonzero(worlds == 0).flatten()
+            third = torch.nonzero(worlds == 2).flatten()
+            assert len(first) == len(third) == 2
+            # Move packed contacts across worlds and reverse both endpoint
+            # pairs. Every per-contact field moves with its physical contact.
+            contact_order = torch.arange(ncontact, device=device)
+            contact_order[first], contact_order[third] = third.flip(0), first.flip(0)
+            contact_inverse = torch.argsort(contact_order)
+            for name, view in contact_views.items():
+                view[:ncontact].copy_(contacts_before[name][contact_order])
+            ids = wp.to_torch(rows.id)
+            active_rows = torch.arange(ids.shape[1], device=device)[None, :] < wp.to_torch(data.nefc)[:, None]
+            contact_rows = active_rows & (wp.to_torch(rows.type) >= 5)
+            ids[contact_rows] = contact_inverse[ids[contact_rows].long()].to(ids.dtype)
+
+            # Exchange contact blocks and move the joint limit last, retaining
+            # the four local friction rows. The contact-free lane stays intact.
             order = torch.tensor([5, 6, 7, 8, 1, 2, 3, 4, 0], device=device)
             inverse = torch.argsort(order)
-            for name, saved in before.items():
-                wp.to_torch(getattr(rows, name))[0, :count].copy_(saved[0, order])
-            world = wp.to_torch(data.contact.worldid)
-            active = torch.arange(data.naconmax, device=device) < wp.to_torch(data.nacon)[0]
-            mask = active[:, None] & (world[:, None] == 0) & (old_addresses >= 0)
-            addresses.copy_(torch.where(mask, inverse[old_addresses.clamp(0, count - 1).long()], old_addresses))
+            row_inverse = torch.arange(ids.shape[1], device=device).repeat(3, 1)
+            for lane in (0, 2):
+                row_inverse[lane, :count] = inverse
+                for name in before:
+                    view = wp.to_torch(getattr(rows, name))
+                    view[lane, :count].copy_(view[lane, order])
+            addresses = contact_views["efc_address"][:ncontact]
+            world = contact_views["worldid"][:ncontact].long()
+            addresses.copy_(
+                torch.where(
+                    addresses >= 0,
+                    row_inverse[world[:, None], addresses.clamp(0, ids.shape[1] - 1).long()],
+                    addresses,
+                )
+            )
             runtime._order_constraints(runtime._m, data)
             for name, saved in before.items():
-                torch.testing.assert_close(wp.to_torch(getattr(rows, name)), saved, atol=0, rtol=0, equal_nan=True)
-            torch.testing.assert_close(addresses, old_addresses, atol=0, rtol=0)
+                actual = wp.to_torch(getattr(rows, name)).clone()
+                if name == "id":
+                    # Packed IDs changed; compare the physical contact each
+                    # canonical row references, not its storage address.
+                    actual[contact_rows] = contact_order[actual[contact_rows].long()].to(actual.dtype)
+                torch.testing.assert_close(actual, saved, atol=0, rtol=0, equal_nan=True)
+            for name, saved in contacts_before.items():
+                torch.testing.assert_close(
+                    contact_views[name][:ncontact], saved[contact_order], atol=0, rtol=0, equal_nan=True
+                )
         runtime.advance(controls)
         for name, value in expected.items():
             torch.testing.assert_close(runtime.physical_state()[name], value, atol=0, rtol=0)
