@@ -24,6 +24,10 @@ from the [DeepMind Control Suite](https://github.com/google-deepmind/dm_control/
 The contact compatibility routines in `simulation/mjwarp_runtime.py` adapt the primitive collision
 and frame construction rules of [MuJoCo 3.17.0](https://github.com/google-deepmind/mujoco/tree/3.17.0/src/engine)
 (Copyright 2021 DeepMind Technologies Limited, Apache-2.0) to runtime-local Warp kernels.
+The DMC-local Newton loops in the same module adapt the solver control flow from
+[MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp) 3.17.0's `_src/solver.py`
+(Copyright 2025 The Newton Developers, Apache-2.0), adding ordered reductions while retaining
+upstream solver kernels, convergence and warmstart behavior.
 The Apache-2.0 license text is distributed in `licenses/envX-APACHE-2.0.txt`; the copyright notices
 above apply to these adaptations.
 
