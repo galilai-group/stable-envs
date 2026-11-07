@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import math
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import torch
@@ -55,10 +56,27 @@ class DMCBatchAdapter(SimulatorAdapter):
         self._get_state, self._spec = mujoco.mj_getState, mujoco.mjtState.mjSTATE_INTEGRATION
         self._vel, self._error = mujoco.mjtStage.mjSTAGE_VEL, PhysicsError
         self.b = Batch(self._models[0], self.num_envs, nthread=threads)
+        # dm_control resets spend most of their time in MuJoCo calls, which release the GIL.
+        self._pool = ThreadPoolExecutor(threads) if threads > 1 else None
         self.b.set_models(self._models)
         self.task = task(self.b, self._models)
         self._count, self._reset_next = np.zeros(self.num_envs, np.int64), np.zeros(self.num_envs, bool)
         self._load(np.arange(self.num_envs))
+
+    def _reset_lanes(self, ids, seed=None):
+        """Reset lanes ``ids`` with dm_control, ``seed + i`` seeding lane ``i``; lanes share no state."""
+        envs = self.lanes.envs
+
+        def reset(i):
+            if seed is not None:
+                envs[i].task._random = np.random.RandomState(int(seed) + int(i))
+            envs[i].reset()
+
+        if self._pool is None or len(ids) < 2:
+            for i in ids:
+                reset(i)
+        else:
+            list(self._pool.map(reset, ids))
 
     def _load(self, ids):
         """Copy lanes from dm_control into the batch and forward them as dm_control's reset does."""
@@ -81,7 +99,9 @@ class DMCBatchAdapter(SimulatorAdapter):
         self.task = self._task(self.b, self._models)
 
     def reset(self, seed=None):
-        self.lanes.reset(seed)
+        self.lanes._check_open()
+        self._reset_lanes(range(self.num_envs), seed)
+        self._cumulative.fill(0)
         self._load(np.arange(self.num_envs))
         return self.get_state()
 
@@ -122,8 +142,7 @@ class DMCBatchAdapter(SimulatorAdapter):
             reset = self._reset_next.copy()
             if reset.any():
                 ids = np.flatnonzero(reset)
-                for i in ids:
-                    self.lanes.envs[i].reset()
+                self._reset_lanes(ids)
                 self._load(ids)
             self.b.ctrl[:] = ctrl
             self.b.step(~reset, self._nsub, stage=self._vel)
@@ -147,5 +166,8 @@ class DMCBatchAdapter(SimulatorAdapter):
         return TensorDict(out, [self.num_envs], device=self.device)
 
     def close(self):
+        if self._pool is not None:
+            self._pool.shutdown()
+            self._pool = None
         self.lanes.close()
         self.b = self.task = None
