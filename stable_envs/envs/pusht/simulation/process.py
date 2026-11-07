@@ -64,11 +64,11 @@ class PushTProcessAdapter(ProcessAdapter):
         }
         return leaf_tensordict(
             {
-                key: torch.as_tensor(history[key], device=self.device) if key in history else fixed[key]
+                key: torch.as_tensor(history[key], device=self._output_device) if key in history else fixed[key]
                 for key in self._keys
             },
             self.num_envs,
-            self.device,
+            self._output_device,
         )
 
     def _frame_fields(self):

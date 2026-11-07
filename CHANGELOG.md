@@ -75,6 +75,9 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- Envs that step in worker processes (OGBench, dm_control, Fetch, PyFlyt, PushT and classic control) on a
+  CUDA device keep the step bookkeeping on the CPU. At the end of `step`, the outputs move to the device.
+  The outputs do not change.
 - `PushT` accepts continuous actions outside [-1, 1], as stable-worldmodel does. Such an action moves the target
   further from the agent. Discrete `PushTDiscrete` indices must still be in [0, 16).
 - `PyFlytRocketLanding` on CPU: the physics worker processes draw the step frames of their running
