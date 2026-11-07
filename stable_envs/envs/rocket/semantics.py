@@ -41,7 +41,13 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         self, num_envs=1, size=None, supersample=None, device="cpu", backend="auto", seed=0, *, simulator_config=None
     ):
         device = Env.resolve_device(device)
-        self._simulator = make_rocket_adapter(num_envs, device, seed, simulator_config)
+        # CPU lanes draw their own step frames, at the size and supersample ``Env`` resolves.
+        frame = (
+            (int(size or self.default_size), int(1 if supersample is None else supersample))
+            if torch.device(device).type == "cpu"
+            else None
+        )
+        self._simulator = make_rocket_adapter(num_envs, device, seed, simulator_config, frame)
         try:
             Env.__init__(
                 self,
@@ -108,6 +114,11 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
 
     def _step_pipeline(self) -> StepPipeline | None:
         return step_pipeline(self._simulator)
+
+    def _render_live(self):
+        if self.device.type != "cpu":
+            return self.render()
+        return torch.from_numpy(self._simulator.render_live())
 
     def _variation_rows(self, attribute):
         keys = [key for key, _, _ in self.variation_space.flat_layout()]

@@ -2,8 +2,8 @@
 
 Run the same command in each checkout, with the same interpreter and on the same node, then compare:
 
-    python -m scripts.testing.process_ab run --family dmcontrol --out base.jsonl
-    python -m scripts.testing.process_ab run --family dmcontrol --out branch.jsonl
+    python -m scripts.testing.process_ab run --family fetch --out base.jsonl
+    python -m scripts.testing.process_ab run --family fetch --out branch.jsonl
     python -m scripts.testing.process_ab compare base.jsonl branch.jsonl
 
 ``--processes 0`` runs the local adapter. A family without process execution in a checkout runs
@@ -25,7 +25,6 @@ import torch
 
 EXECUTION = {
     "classic_control": "stable_envs.envs.classic_control.simulation.execution",
-    "dmcontrol": "stable_envs.envs.dmcontrol.simulation.execution",
     "fetch": "stable_envs.envs.fetch.simulation.execution",
     "ogbench": "stable_envs.envs.ogbench.simulation.execution",
     "pusht": "stable_envs.envs.pusht.simulation.execution",

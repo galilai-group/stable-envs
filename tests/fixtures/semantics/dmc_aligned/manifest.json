@@ -3,18 +3,18 @@
   "seed": 17,
   "batch": 3,
   "steps": 32,
-  "generator": "scripts/recovery/freeze_dmc_aligned_oracle.py",
+  "generator": "scripts/testing/freeze_dmc_aligned_oracle.py",
   "versions": {
     "numpy": "2.5.3",
-    "mujoco": "3.12.0",
-    "dm-control": "1.0.45",
+    "mujoco": "3.17.0",
+    "dm-control": "1.0.50",
     "stable-worldmodel": "0.0.6"
   },
   "source": "Real pinned SWM wrappers only; independent of candidate adapter",
   "domains": {
     "ball_in_cup": {
-      "file": "ball_in_cup_swm_176d545_mujoco312.npz",
-      "sha256": "d333c0072115ac86b6b1ea3decb01c1ebf5160667f1856269588822e6cfc9d4b",
+      "file": "ball_in_cup_swm_176d545_mujoco317.npz",
+      "sha256": "94a69c1781d81866d640c1c34a160f6dadc5639eb61efa5782e875cbaddd4621",
       "arrays": {
         "actions": {
           "shape": [
@@ -56,6 +56,14 @@
           ],
           "dtype": "float64"
         },
+        "state/task/cumulative_reward": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
         "state/lifecycle/step_count": {
           "shape": [
             33,
@@ -71,14 +79,6 @@
             1
           ],
           "dtype": "bool"
-        },
-        "state/task/cumulative_reward": {
-          "shape": [
-            33,
-            3,
-            1
-          ],
-          "dtype": "float64"
         },
         "state/rng/keys": {
           "shape": [
@@ -105,6 +105,54 @@
           "dtype": "bool"
         },
         "state/rng/cached_gaussian": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/x": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/y": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/z": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/agent/density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/ball/density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/ball/size": {
           "shape": [
             33,
             3,
@@ -141,14 +189,14 @@
           ],
           "dtype": "float32"
         },
-        "output/success": {
+        "output/score": {
           "shape": [
             32,
             3
           ],
           "dtype": "float64"
         },
-        "output/score": {
+        "output/success": {
           "shape": [
             32,
             3
@@ -174,8 +222,8 @@
       }
     },
     "finger": {
-      "file": "finger_swm_176d545_mujoco312.npz",
-      "sha256": "7a53d0dad702b3b224414cffb6149f77a1275f892129e034fad3c146091cfb95",
+      "file": "finger_swm_176d545_mujoco317.npz",
+      "sha256": "1f64499385d9cae4bbddb6dd32277f9f673e2dde1cfb0b11067d484f49ef5509",
       "arrays": {
         "actions": {
           "shape": [
@@ -217,6 +265,14 @@
           ],
           "dtype": "float64"
         },
+        "state/task/cumulative_reward": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
         "state/lifecycle/step_count": {
           "shape": [
             33,
@@ -232,14 +288,6 @@
             1
           ],
           "dtype": "bool"
-        },
-        "state/task/cumulative_reward": {
-          "shape": [
-            33,
-            3,
-            1
-          ],
-          "dtype": "float64"
         },
         "state/rng/keys": {
           "shape": [
@@ -281,6 +329,38 @@
           ],
           "dtype": "float64"
         },
+        "state/physics/agent/proximal_density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/agent/fingertip_density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/spinner/density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/spinner/friction": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
         "output/reward": {
           "shape": [
             32,
@@ -310,14 +390,14 @@
           ],
           "dtype": "float32"
         },
-        "output/success": {
+        "output/score": {
           "shape": [
             32,
             3
           ],
           "dtype": "float64"
         },
-        "output/score": {
+        "output/success": {
           "shape": [
             32,
             3
@@ -366,8 +446,8 @@
       }
     },
     "manipulator": {
-      "file": "manipulator_swm_176d545_mujoco312.npz",
-      "sha256": "685db607f4fdc48f787b51e8c0d719f7ef6f081514eed205a506d46c5adc5458",
+      "file": "manipulator_swm_176d545_mujoco317.npz",
+      "sha256": "9708c16d616fe09ec6cfb107143c5356fa4bc8f5389866c54e2edb6c67a472fe",
       "arrays": {
         "actions": {
           "shape": [
@@ -409,6 +489,14 @@
           ],
           "dtype": "float64"
         },
+        "state/task/cumulative_reward": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
         "state/lifecycle/step_count": {
           "shape": [
             33,
@@ -424,14 +512,6 @@
             1
           ],
           "dtype": "bool"
-        },
-        "state/task/cumulative_reward": {
-          "shape": [
-            33,
-            3,
-            1
-          ],
-          "dtype": "float64"
         },
         "state/rng/keys": {
           "shape": [
@@ -481,6 +561,22 @@
           ],
           "dtype": "float64"
         },
+        "state/physics/agent/upper_arm_density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/agent/hand_density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
         "output/reward": {
           "shape": [
             32,
@@ -510,14 +606,14 @@
           ],
           "dtype": "float32"
         },
-        "output/success": {
+        "output/score": {
           "shape": [
             32,
             3
           ],
           "dtype": "float64"
         },
-        "output/score": {
+        "output/success": {
           "shape": [
             32,
             3
@@ -543,8 +639,8 @@
       }
     },
     "quadruped": {
-      "file": "quadruped_swm_176d545_mujoco312.npz",
-      "sha256": "f70eeb84cf737b651cdd38e44229b68b909ede43612adb456d3aeb71b7cf0a14",
+      "file": "quadruped_swm_176d545_mujoco317.npz",
+      "sha256": "0d0ea44235d5943b80d560cd46f7e57bb069eb12cb5ff10feb5b54d4864334c8",
       "arrays": {
         "actions": {
           "shape": [
@@ -586,6 +682,14 @@
           ],
           "dtype": "float64"
         },
+        "state/task/cumulative_reward": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
         "state/lifecycle/step_count": {
           "shape": [
             33,
@@ -601,14 +705,6 @@
             1
           ],
           "dtype": "bool"
-        },
-        "state/task/cumulative_reward": {
-          "shape": [
-            33,
-            3,
-            1
-          ],
-          "dtype": "float64"
         },
         "state/rng/keys": {
           "shape": [
@@ -650,6 +746,54 @@
           ],
           "dtype": "float64"
         },
+        "state/physics/gravity/x": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/y": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/z": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/agent/torso_density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/agent/foot_back_left_density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/floor/friction": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
         "output/reward": {
           "shape": [
             32,
@@ -679,14 +823,14 @@
           ],
           "dtype": "float32"
         },
-        "output/success": {
+        "output/score": {
           "shape": [
             32,
             3
           ],
           "dtype": "float64"
         },
-        "output/score": {
+        "output/success": {
           "shape": [
             32,
             3

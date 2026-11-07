@@ -24,34 +24,42 @@ material handling.
 - Exact regression tests protect internal refactors. They do not mean the output equals source
   OpenGL. Texture filtering, coverage and shading can leave a per-class MSE.
 
-## Cube and Scene defaults on CUDA
+## Cube and Scene dispatch
 
-With `backend="auto"` on CUDA:
+Cube and Scene default to `supersample=1`. With `backend="auto"`:
 
-- Cube uses the two-pass fidelity renderer with 2× supersampling.
-- Scene uses four samples per pixel aligned with NVIDIA OpenGL, and two passes for transparency and
-  shadows. The backend bakes its static background once at the matching sample positions.
+- CPU rendering uses software OpenGL.
+- CUDA rendering at 1× sampling uses NVIDIA OpenGL with the public class's compiled appearance.
+- CUDA rendering at 2× sampling or more uses the two-pass MJWarp fidelity renderer. At 2×, Scene's
+  four samples per output pixel align with NVIDIA OpenGL.
 
-Explicit backends and sampling settings in a supplied RenderState keep their meaning. CPU rendering
-uses software OpenGL.
+Explicit backends and sampling settings, including settings stored in a supplied RenderState, keep
+their meaning.
 
-The measurements use one RTX 3090 at 64×64 and compare against source NVIDIA OpenGL on 32
-independently reached saved States. Larger batches repeat those States. Each measurement uses three
-warmups and six timed samples. Timing covers public
-rendering and synchronization. It excludes rollout, loading, projection, initial transfer and batch
-indexing. The source returns NumPy images including readback. This renderer returns CUDA images.
+## H200 Cube and Scene throughput
 
-| class | batch | ours FPS | source FPS | speedup |
+The candidate measurements below use CUDA MJWarp fidelity at `supersample=2`, not the default
+`supersample=1` `auto` path (NVIDIA OpenGL). They compare MuJoCo/MuJoCo Warp 3.17 on one H200 at
+64×64 against the registered stable-envs NVIDIA OpenGL path with the same compiled appearance. The
+MJWarp candidate returns CUDA images; the OpenGL baseline returns NumPy images, including GPU readback.
+
+| class | batch | candidate FPS | OpenGL baseline FPS | observed ratio |
 | --- | ---: | ---: | ---: | ---: |
-| Cube | 1 | 144 | 1,948 | 0.074× |
-| Cube | 64 | 4,105 | 1,791 | 2.29× |
-| Cube | 256 | 5,812 | 1,787 | 3.25× |
-| Scene | 1 | 117 | 1,641 | 0.071× |
-| Scene | 64 | 3,297 | 1,480 | 2.23× |
-| Scene | 256 | 4,769 | 1,476 | 3.23× |
+| Cube | 1 | 237 | 261 | 0.907× |
+| Cube | 64 | 8,147 | 264 | 30.8× |
+| Cube | 256 | 13,506 | 264 | 51.1× |
+| Scene | 1 | 184 | 230 | 0.803× |
+| Scene | 64 | 6,160 | 230 | 26.7× |
+| Scene | 256 | 9,971 | 230 | 43.3× |
 
-Normalized MSE against the source is 0.0006046 ± 0.0000364 (worst 0.000691) for Cube and
-0.000768 ± 0.000106 (worst 0.000950) for Scene. Both are below the 0.001 per-frame limit. Batch 1 is slower than
-the source.
+The run uses 32 independently reached saved states, repeated for larger batches, with three warmups
+and six timed samples. Timing includes public rendering and synchronization and excludes rollout,
+loading, projection, initial transfer and batch indexing. FPS values are rounded for display; ratios
+are derived from the unrounded timings.
+
+These are H200-specific observed throughput ratios, not a general speedup attributable to a MuJoCo
+version or hardware class. The ratios are amplified because the stable-envs OpenGL baseline was about
+6–7× slower on this H200 than in the prior RTX 3090 measurements. The GPU, driver, host and MuJoCo
+version all changed, so the comparison does not isolate a hardware effect.
 
 ::: stable_envs.render.mjwarp

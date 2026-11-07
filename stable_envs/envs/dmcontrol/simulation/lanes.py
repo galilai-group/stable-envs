@@ -1,14 +1,30 @@
 from __future__ import annotations
 
+from copy import copy, deepcopy
+
 import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ...._execution.process import PER_LANE
 from ...._execution.protocol import SimulatorAdapter
 from ...._execution.state_columns import require_columns
 from . import physics as _physics
+from .registered import normalized
 from .state import export_state, restore_lane
+
+
+def _clone_envs(make, seed, count):
+    """Compile once, then copy lanes with independent physics models."""
+    wrapped = make(int(seed))
+    template = wrapped._env
+    envs = [wrapped]
+    for _ in range(1, count):
+        env = copy(template)
+        env._physics = template.physics.copy(share_model=False)
+        env._physics.legacy_step = template.physics.legacy_step
+        env._task = deepcopy(template.task)
+        envs.append(normalized(env))
+    return envs
 
 
 class DMCLanes(SimulatorAdapter):
@@ -18,14 +34,13 @@ class DMCLanes(SimulatorAdapter):
     task RNG, episode-drawn model entries and the lane's physics Variation.
     """
 
-    process_methods = {"configure_physics": PER_LANE}
-    process_attributes = ("key", "action_dim", "fields", "physics_layout", "physics_dim")
-
     def __init__(self, key, num_envs, device, seed, make, fields):
         self.key = key
         self.num_envs = int(num_envs)
+        if self.num_envs < 1:
+            raise ValueError("num_envs must be a positive integer")
         self.device = torch.device(device)
-        self.envs = [make(int(seed) + i) for i in range(self.num_envs)]
+        self.envs = _clone_envs(make, seed, self.num_envs)
         self.physics = _physics.make_lanes(key, [env.physics.model.ptr for env in self.envs])
         self.fields = {**fields, **_physics.state_fields(key)}
         self._base_fields = fields
@@ -51,6 +66,9 @@ class DMCLanes(SimulatorAdapter):
         if self.physics is None:
             raise ValueError(f"{self.key} declares no physics Variation")
         self.physics.configure(values)
+        # dm_control's step begins with mj_step2, which reuses the position and velocity stages in data.
+        for env in self.envs:
+            env.physics.forward()
 
     def reset(self, seed=None):
         self._check_open()
