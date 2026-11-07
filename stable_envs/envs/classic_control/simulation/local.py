@@ -236,7 +236,7 @@ class ClassicControlAdapter(SimulatorAdapter):
         self._check_open()
         for i, env in enumerate(self.envs):
             env.reset(seed=None if seed is None else int(seed) + i, options=options)
-        return self.get_state()
+        return ClassicControlAdapter.get_state(self)
 
     def _state_values(self, env):
         base = env.unwrapped

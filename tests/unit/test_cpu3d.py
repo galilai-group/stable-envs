@@ -119,11 +119,11 @@ def test_no_gpu_runtime_is_loaded_by_a_cpu_render(se):
 @pytest.mark.parametrize("cell", CELLS)
 @pytest.mark.parametrize("size", [42, 84, pytest.param(168, marks=pytest.mark.nightly)])
 def test_window_and_footprint_bounds_are_exact(se, cell, size):
-    """The mover window and shadow footprint are conservative bounds: full casting is byte-identical."""
+    """The Torch mover window and shadow footprint are conservative bounds: full casting is byte-identical."""
     from stable_envs.render import cpu3d
 
     st = _states(cell, 6)
-    env = se.make(cell, num_envs=6, device="cpu")
+    env = se.make(cell, num_envs=6, device="cpu", backend="torch")
     ref = env._render(st, size=size).numpy()
     try:
         cpu3d.FORCE_FULL_FRAME = True

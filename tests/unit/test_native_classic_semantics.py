@@ -20,7 +20,7 @@ from tests.helpers.stepping import branch_step
 def test_classic_state_is_complete_independent_and_renderable(domain, name, owned_field):
     with se.make(name, num_envs=2, device="cpu") as env:
         state = env.reset(seed=17)
-        assert env.execution_mode == "DELEGATED_CPU"
+        assert env.execution_mode == ("DELEGATED_CPU" if env.simulation_backend == "gym" else "NATIVE_NUMPY")
         assert set(state.keys(True, True)) == set(CLASSIC_FIELDS[domain])
         for key, (width, dtype) in CLASSIC_FIELDS[domain].items():
             assert state[key].shape == (2, width)

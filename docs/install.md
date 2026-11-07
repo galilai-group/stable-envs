@@ -42,7 +42,7 @@ package, which tests use for comparison.
 | `pusht-reference` | reference checks only | gym-pusht |
 | `ogbench` | OGBench mazes | `ogbench`, MuJoCo |
 | `ogbench-manipulation` / `-gpu` | OGBCube, OGBScene | MuJoCo 3.17.0, OGBench 1.2.1, dm_control 1.0.50. `-gpu` adds MuJoCo Warp 3.17.0 and Warp 1.17.0 |
-| `dmcontrol` | DM Control | `dm_control` 1.0.50, MuJoCo 3.17 |
+| `dmcontrol` | DM Control; the compiled CPU renderer | `dm_control` 1.0.50, MuJoCo 3.17, Numba |
 | `dmcontrol-gpu` | DM Control on CUDA with TrackCom floor reflections | `dm_control` 1.0.50, MuJoCo, MuJoCo Warp and MJX 3.17 |
 | `robotics` | Fetch | gymnasium-robotics, MuJoCo < 3.12, OpenCV |
 | `mjwarp` | Fetch on CUDA | MuJoCo Warp |

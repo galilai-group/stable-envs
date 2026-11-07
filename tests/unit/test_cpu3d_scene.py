@@ -52,13 +52,13 @@ def scene_inputs(*, tilt=0, shadows=True, specular=True, size=42):
 @pytest.mark.parametrize("specular", [False, True])
 def test_cpu_scene_bounds_and_chunks_preserve_pixels(monkeypatch, specular):
     scene, args = scene_inputs(specular=specular)
-    expected = cpu3d.render(scene, *args)
+    expected = cpu3d.render(scene, *args, backend="torch")
     assert expected.shape == (19, 42, 42, 3)
     assert torch.unique(expected.reshape(-1, 3), dim=0).shape[0] > 100
-    assert torch.equal(expected, cpu3d.render(scene, *args, chunk_size=1))
+    assert torch.equal(expected, cpu3d.render(scene, *args, chunk_size=1, backend="torch"))
     monkeypatch.setattr(cpu3d, "FORCE_FULL_FRAME", True)
     monkeypatch.setattr(cpu3d, "SHADOW_TEST_ALL_HITS", True)
-    assert torch.equal(expected, cpu3d.render(scene, *args))
+    assert torch.equal(expected, cpu3d.render(scene, *args, backend="torch"))
 
 
 @pytest.mark.parametrize("tilt", [0.1, 30, 180])
