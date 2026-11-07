@@ -9,7 +9,7 @@ import torch
 from tensordict import TensorDict
 
 FIXTURES = Path(__file__).parents[1] / "fixtures" / "ogbench_renderer"
-VERSIONS = {"mujoco": "3.12.0", "ogbench": "1.2.1", "mujoco-warp": "3.12.0", "warp-lang": "1.17.0"}
+VERSIONS = {"mujoco": "3.17.0", "ogbench": "1.2.1", "mujoco-warp": "3.17.0", "warp-lang": "1.17.0"}
 CASES = (("Cube", "mjwarp"), ("Cube", "mjwarp_fidelity"), ("Scene", "mjwarp"))
 
 

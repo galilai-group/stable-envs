@@ -15,12 +15,12 @@ from tests.helpers.reference.ogbench_maze_semantics import OGBMazeReference
 
 root = Path("tests/fixtures/semantics/ogbench_maze")
 root.mkdir(parents=True, exist_ok=True)
-path = root / "swm_176d545_ogbench121_mujoco312.npz"
+path = root / "swm_176d545_ogbench121_mujoco317.npz"
 if path.exists():
     raise FileExistsError(f"Refusing to overwrite frozen semantic oracle: {path}")
 pin = pinned_commit(clean=False)
 assert importlib.metadata.version("ogbench") == "1.2.1"
-assert importlib.metadata.version("mujoco") == "3.12.0"
+assert importlib.metadata.version("mujoco") == "3.17.0"
 ref = OGBMazeReference(3)
 try:
     _, outcomes, values = rollout(

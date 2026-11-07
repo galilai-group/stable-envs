@@ -19,11 +19,11 @@ from tests.helpers.reference.dmc_semantics import DMCReference as DMCContinuatio
 DOMAINS = ("cheetah", "hopper", "walker")
 ROOT = Path("tests/fixtures/semantics/dmc_continuation")
 ROOT.mkdir(parents=True, exist_ok=True)
-PATHS = {domain: ROOT / f"{domain}_swm_176d545_mujoco312.npz" for domain in DOMAINS}
+PATHS = {domain: ROOT / f"{domain}_swm_176d545_mujoco317.npz" for domain in DOMAINS}
 refuse_overwrite(PATHS.values(), ROOT / "manifest.json")
 
 pin = pinned_commit()
-assert importlib.metadata.version("mujoco") == "3.12.0"
+assert importlib.metadata.version("mujoco") == "3.17.0"
 
 manifest = {
     "reference_commit": pin,

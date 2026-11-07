@@ -14,8 +14,13 @@ if TYPE_CHECKING:
 
 
 def make_rocket_adapter(
-    num_envs: int, device: str | torch.device, seed: int | None, config: dict | None = None
+    num_envs: int,
+    device: str | torch.device,
+    seed: int | None,
+    config: dict | None = None,
+    frame: tuple[int, int] | None = None,
 ) -> RocketAdapter | RocketProcessAdapter:
+    """``frame`` is the ``(size, supersample)`` of the TinyRenderer step frames the lanes draw, or None."""
     from .process import LANES_PER_PROCESS
 
     cpus = cpu_affinity()
@@ -29,6 +34,12 @@ def make_rocket_adapter(
 
         # A batch that needs more workers than CPUs shares them.
         return RocketProcessAdapter(
-            num_envs, device, seed, config, processes=count, cpus=cpus if cpus and len(cpus) >= count else None
+            num_envs,
+            device,
+            seed,
+            config,
+            processes=count,
+            cpus=cpus if cpus and len(cpus) >= count else None,
+            frame=frame,
         )
-    return RocketAdapter(num_envs, device, seed, config)
+    return RocketAdapter(num_envs, device, seed, config, frame)

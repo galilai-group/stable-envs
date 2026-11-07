@@ -8,7 +8,7 @@ reference dynamics are CPU MuJoCo (`float64`) stepping the pinned model. The env
 [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp) in `float32` on the env device, which is not
 bit-identical to the reference. Over the first 12 steps (24 ms) from the `init` keyframe under random
 activations, with the env on CPU, muscle activations and time stay within `1e-6` of CPU MuJoCo and `qpos` and
-`qvel` within `1e-2` and `2.5`. Across 150 such trajectories the worst gaps were `6.8e-3` in `qpos` and `1.74`
+`qvel` within `1e-2` and `2.5`. Across 150 such trajectories the worst gaps were `4.2e-3` in `qpos` and `1.07`
 in `qvel`, mostly opening at foot strike. Longer rollouts are not checked against CPU MuJoCo. Frames come from
 host-side serial MuJoCo OpenGL because MuJoCo Warp's renderer does not draw the muscle tendons, so a CUDA env
 copies its states to the host and its frames back.

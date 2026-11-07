@@ -29,15 +29,19 @@ OpenGL, configured before the first MuJoCo import. See [System setup](../system-
 
 ## Agreement with the source
 
-- The tests measure the per-frame MSE between our frames and the source frames, and compare it with a
-  recorded value for each class. See [Frame regression checks](../testing.md#frame-regression-checks).
+- The tests measure the per-frame MSE between our frames and each class's declared reference frames,
+  and compare it with a recorded value. See
+  [Frame regression checks](../testing.md#frame-regression-checks).
 - The DM Control body-tracking classes and PyFlytRocketLanding on CUDA draw with a different
   rasterizer from the source. `env.describe()["visual_fidelity"]` gives their measured MSE.
   `env.describe()["visual_note"]` tells where the frames differ.
-- OGBCube and OGBScene draw with the source's renderer, MuJoCo OpenGL. On CPU, the frames are
-  bit-exact and repeatable. On CUDA, the NVIDIA OpenGL driver can change a pixel by 1/255 between two
-  draws of the same state, on a few pixels of a few frames in each pass. The source shows the same
-  variation. See [OGBench](../environments/ogbench.md#manipulation).
+- OGBCube and OGBScene use stable-envs MuJoCo OpenGL. At `supersample=1`, the fidelity record compares
+  two OpenGL instances with the same compiled appearance; it is not an upstream-default OGBench
+  appearance comparison. CPU frames are bit-exact and repeatable. On CUDA, the NVIDIA OpenGL driver
+  can change a pixel by 1/255 between two draws of the same state, on a few pixels of a few frames in
+  each pass; the comparison renderer shows the same variation. At `supersample=2` or more, MJWarp is
+  measured against that same-style stable-envs OpenGL path. See
+  [OGBench](../environments/ogbench.md#manipulation).
 
 ## Rendering details
 
@@ -52,7 +56,7 @@ OpenGL, configured before the first MuJoCo import. See [System setup](../system-
 
 ## Versions and reproducibility
 
-- The DM Control reference profile (`pin-dmc`) is `mujoco==3.12.0` and `dm-control==1.0.45`. The
+- The DM Control reference profile (`pin-dmc`) is `mujoco==3.17.0` and `dm-control==1.0.50`. The
   `VISUAL_FIDELITY` declarations of the body-tracking cells record the versions they were measured with.
 - nvdiffrast on x86 CPU has a one-ULP batch dependence in a sparse stage. No registered class uses that
   path on CPU.

@@ -129,8 +129,6 @@ class PushTReplay:
             raise ValueError("PushT action must be finite")
         if self.discrete and (np.any(action < 0) or np.any(action >= 16)):
             raise ValueError("PushT discrete indices must be in [0, 16)")
-        if not self.discrete and (np.any(action < -1) or np.any(action > 1)):
-            raise ValueError("PushT continuous actions must be in [-1, 1]")
 
     def _reset(self, seed, options):
         options = reset_options(seed, options)
