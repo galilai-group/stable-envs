@@ -8,7 +8,7 @@
  "has_dynamics": true,
  "default_size": 224,
  "frame_shape": [224, 224, 3],
- "physics": null,
+ "physics": "native Numba on CPU",
  "renderers": {
   "cpu": "Numba dot compositor",
   "cuda": "Triton dot compositor"

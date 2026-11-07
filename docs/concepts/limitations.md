@@ -47,8 +47,9 @@ OpenGL, configured before the first MuJoCo import. See [System setup](../system-
 
 - Fetch `sky.color` at its default draws the registered gradient skybox. The official wrapper's
   `background.color` cannot express it, because `background.color` fills the sky with one colour.
-- Fetch does not draw the translucent mocap markers (the 1 cm cube and the three crosshair bars).
-  MJWarp has no alpha blending and would draw them opaque.
+- Fetch with MJWarp does not draw the translucent mocap markers (the 1 cm cube and the three
+  crosshair bars). MJWarp has no alpha blending and would draw them opaque. Fetch with OpenGL
+  (CPU, or `backend="opengl"` on CUDA) draws them at the gripper, as Gymnasium Robotics does.
 - DM Control body-tracking cells draw `floor.color` from a per-texel palette texture.
   `DMCWalkerWalk` `floor.rotation_y` tilts the floor per row.
 - OGBench `light.intensity`, `camera.angle_delta`, `cube.size` and Scene `lock_color` are per-world

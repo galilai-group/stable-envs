@@ -4,11 +4,12 @@ Every environment runs well with no setup. Chunk sizes, Triton block sizes, work
 budgets have defaults, and the library computes some defaults from the hardware. You can change them to
 trade speed against memory. Frames and State are the same for every valid value.
 
-The `simulation_backend` constructor argument selects physics for [Reacher](environments/dmcontrol.md#reacher)
-and [TwoRoom](environments/navigation.md#tworoom). Reacher chooses native CPU physics below a provisional
-cutoff of 32 environments and MJX for larger CUDA batches. TwoRoom uses Torch below `jax_min_envs`
-and JAX at or above it. Its cutoff defaults to 1 because current measurements favor JAX for one
-environment. Both cutoffs are constructor arguments and require measurements on your hardware to
+The `simulation_backend` constructor argument selects physics for [Reacher](environments/dmcontrol.md#reacher),
+[TwoRoom](environments/navigation.md#tworoom), TwoRoomTarget, Piecewise, PiecewiseZones and the
+[classic control](environments/classic-control.md#physics-backends) classes. Reacher chooses native CPU physics below a provisional
+cutoff of 32 environments and MJX for larger CUDA batches. The four navigation classes use Numba on CPU. On CUDA, TwoRoom
+uses Torch below `jax_min_envs` and JAX at or above it. Its cutoff defaults to 1 because current measurements favor JAX for
+one environment. Both cutoffs are constructor arguments and require measurements on your hardware to
 choose the fastest implementation. Reacher's backends use different precision and can produce
 different trajectories, so these arguments are separate from the tuning knobs below.
 
@@ -67,7 +68,7 @@ names one.
 | `worker_min_lanes` | 64 | none | not recorded | Smallest batch that uses worker processes, or Fetch simulator threads. For PushT, the smallest number of rendered States that uses render workers. |
 | `fetch_threads` | 4 | min(value, CPUs in the process affinity, lanes) | not recorded | Most simulator threads of an in-process Fetch batch. |
 | `dmc_threads` | 8 | min(value, CPUs in the process affinity, lanes) | not recorded | Most `mujoco.batch` threads of a DM Control batch, for CPU and CUDA output. MJX Reacher does not read it. |
-| `cpu3d_chunk` | 16 | none (TrackCom cells use a per-cell table) | Xeon Platinum 8268 | Frames per chunk of the CPU ray caster (`cpu3d`). |
+| `cpu3d_chunk` | 16 | none (TrackCom cells use a per-cell table) | Xeon Platinum 8268 | Frames per chunk of the Torch CPU ray caster (`cpu3d`, `backend="torch"`). The Numba kernel draws all frames in one call. |
 | `dmc_cpu_ray_budget` | 2^21 | 2^21 × L3 size / 35.75 MiB, rounded to a power of two, in [2^18, 2^21] | not recorded | Rays per CPU render chunk of the fixed-camera DMC cells, counting supersamples. |
 | `dmc_ray_budget` | 2^24 | min(2^24, free GPU memory / 512), rounded down to a power of two | not recorded | Rays per CUDA render chunk of the fixed-camera DMC cells. |
 | `dmc_launch_rays` | 256 × 224 × 224 | none | not recorded | Rays per MJWarp launch of the DMC TrackCom cells. This value sets worlds per launch (at most 256). |
@@ -75,8 +76,8 @@ names one.
 | `fetch_mjw_worlds` | 256 | none | not recorded | Most worlds per MJWarp launch of the Fetch cells. |
 | `ogb_mjw_worlds` | 256 | none | not recorded | Most worlds per MJWarp launch of the OGBench Cube and Scene cells. |
 | `ogb_gl_workers` | 8 | min(value, CPUs in the process affinity, rows) | not recorded | Most OpenGL worker processes of an OGBench Cube and Scene batch on Linux. A batch that uses fewer than 2 workers draws in the main process. The value 0 draws every batch in the main process. |
-| `render_workers` | 8 | min(value, CPUs in the process affinity) | not recorded | Most worker processes of a classic control CPU render batch on Linux when Numba is not installed. The values 0 and 1 draw every frame in the main process. |
-| `render_worker_min_rows` | 16 | none | not recorded | Smallest classic control CPU render batch that uses render worker processes. |
+| `render_workers` | 8 | min(value, CPUs in the process affinity) | not recorded | Most worker processes of a CPU render batch on Linux, for classic control when Numba is not installed and for Fetch (software OpenGL). Each Fetch worker has its own OpenGL context. The values 0 and 1 draw every frame in the main process. |
+| `render_worker_min_rows` | 16 | none | not recorded | Smallest classic control or Fetch CPU render batch that uses render worker processes. |
 | `ogb_context_cache_bytes` | none | min(total GPU memory / 4, free GPU memory / 2), per device | not recorded | GPU bytes the OGBench MJWarp context cache keeps. |
 | `nvd_budget_bytes` | 6 GiB | min(6 GiB, free GPU memory / 2) | not recorded | GPU bytes one nvdiffrast chunk of the Rocket cells may use. |
 | `nav_render_chunk` | 256 | none | not recorded | Frames per render chunk of the navigation cells. |
@@ -95,15 +96,17 @@ cannot read the hardware, the fallback applies.
 
 - Out of GPU memory: lower `dmc_ray_budget`, `nvd_budget_bytes`, `dmc_launch_rays`,
   `fetch_mjw_worlds`, `ogb_mjw_worlds` or `ogb_context_cache_bytes`.
-- Slow CPU rendering of DMC cells: try `cpu3d_chunk` (TrackCom cells) or `dmc_cpu_ray_budget`
-  (fixed-camera cells) in powers of two. Smaller chunks stay in the CPU cache.
+- Slow CPU rendering of DMC cells: try `dmc_cpu_ray_budget` (fixed-camera cells) in powers of two.
+  Smaller chunks stay in the CPU cache. With `backend="torch"`, also try `cpu3d_chunk` (TrackCom cells).
+  The Numba kernels use one thread for each CPU in the process affinity. To use fewer threads, set
+  `NUMBA_NUM_THREADS` before the first render.
 - Slow CPU stepping: try `workers` between 0 and the number of cores, and `worker_min_lanes`
   for small batches. The library uses worker processes only on Linux. For DM Control, try
   `dmc_threads` between 1 and the number of cores.
 - Several DM Control envs in one process, or an env beside data-loader workers: set `dmc_threads`
   so that all of their threads fit in the CPU affinity.
-- Slow classic control CPU rendering without Numba: try `render_workers` between 0 and the number of
-  cores, and `render_worker_min_rows` for small batches.
+- Slow classic control CPU rendering without Numba, or slow Fetch CPU rendering: try `render_workers`
+  between 0 and the number of cores, and `render_worker_min_rows` for small batches.
 - Classic control and navigation CPU rendering with Numba: the kernel uses one thread for each CPU in the process
   affinity. To use fewer threads, set `NUMBA_NUM_THREADS` before the first render.
 - Triton kernels on a new GPU: try the `*_warps` knobs (1, 2, 4, 8) and the `*_block` knobs in powers of two.

@@ -24,6 +24,14 @@ Bounded casts must match the unbounded Torch cast. Agreement with source OpenGL
 is measured per class. Silhouettes, antialiasing, textures and lighting can leave
 a nonzero MSE.
 
+On CPU, the DM Control renderers draw with Numba kernels when Numba imports.
+`stable_envs.render.cpu_raster.rays3d` repeats the float32 operation order of the Torch intersectors.
+Each tile of camera rays, and each packet of shadow or mirror rays, tests only the primitives whose
+inflated bounding spheres its rays can reach. `stable_envs.render.cpu_raster.suite3d` composites the
+fixed-camera plate, and `stable_envs.render.cpu_raster.scene3d` draws a CPU3D scene. Each kernel also
+shades the pixels. The kernels use the IEEE square root. Torch's CPU square root can round through
+MKL, so rare pixels differ from the Torch backend.
+
 Use `backend="auto"` for device-appropriate dispatch. Explicit `"triton"` requires
 Triton, CUDA float32 inputs on one device, and packed trailing axes. Unsupported
 explicit requests raise `ValueError`. `"auto"` uses Torch instead. The Torch cast

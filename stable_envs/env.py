@@ -742,6 +742,8 @@ class Env:
         return tuple(sampled), values
 
     def _draw_reset_lane(self, tree, lane: int, sampled, values) -> dict[str, np.ndarray]:
+        from ._core.reset_tree import sample as sample_space
+
         out = {}
         for leaf in self.reset_leaves:
             value = np.asarray(leaf.default, leaf.dtype)
@@ -750,7 +752,7 @@ class Env:
                 for part in leaf.path.split("."):
                     node = node[part]
                 for _ in range(1000):
-                    candidate = node.sample()
+                    candidate = sample_space(node)
                     if self._reset_value_ok(leaf.path, candidate, lane):
                         value = candidate
                         break
@@ -792,11 +794,14 @@ class Env:
         out = {path: np.asarray(value) for path, value in variation.items()}
         if not self.reset_leaves:
             return out
+        from ._core.reset_tree import PathSeeder
+
         lanes = []
-        # Seeding replaces every generator in the tree, so one tree serves every lane.
+        # Seeding replaces the generators that the lane reads, so one tree serves every lane.
         tree = self.reset_tree_factory()
+        seeder = PathSeeder(tree, [leaf.path for leaf in self.reset_leaves])
         for lane in range(self.B):
-            tree.seed(None if seed is None else int(seed) + lane)
+            seeder.seed(None if seed is None else int(seed) + lane)
             lanes.append(self._draw_reset_lane(tree, lane, sampled, values))
         for path in lanes[0]:
             out[path] = np.stack([row[path] for row in lanes])

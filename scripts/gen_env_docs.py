@@ -37,8 +37,8 @@ RENDER_SIZE = 160
 RENDERERS = {
     "classic_control": {"cpu": "gfxdraw port (torch)", "cuda": "gfxdraw port (fused Triton kernel)"},
     "craftax": {"cpu": "Craftax pixel renderer (JAX)", "cuda": "Craftax pixel renderer (JAX)"},
-    "dmcontrol-suite": {"cpu": "raycast3d (torch)", "cuda": "raycast3d (torch)"},
-    "dmcontrol-trackcom": {"cpu": "cpu3d", "cuda": "mjwarp"},
+    "dmcontrol-suite": {"cpu": "raycast3d (Numba)", "cuda": "raycast3d (torch)"},
+    "dmcontrol-trackcom": {"cpu": "cpu3d (Numba)", "cuda": "mjwarp"},
     "fetch": {"cpu": "opengl (MuJoCo)", "cuda": "mjwarp"},
     "miniworld": {"cpu": "opengl (Miniworld, pyglet)", "cuda": "opengl (Miniworld) on CPU, frames copied to CUDA"},
     "mshuman": {"cpu": "opengl (MuJoCo)", "cuda": "host-side serial MuJoCo OpenGL, frames copied to CUDA"},
@@ -56,8 +56,17 @@ PHYSICS = {
     "DELEGATED_CPU": "source simulator on CPU",
     "NATIVE_TORCH": "native torch on the env device",
     "NATIVE_JAX": "native JAX on the env device",
+    "NATIVE_NUMBA": "native Numba on CPU",
     "AUTO_NATIVE_MJX": "native MuJoCo on CPU; CUDA batches use native below 32 lanes, JAX/MJX otherwise",
+    "AUTO_BATCHED": "batched NumPy, or batched Torch for large CUDA batches, with Gymnasium resets",
 }
+
+
+def _execution_mode(cls, env) -> str:
+    """An ``AUTO_`` class mode, which names the physics of every device; otherwise the env's own mode, which some
+    classes choose on construction (navigation uses Numba on CPU)."""
+    mode = getattr(cls, "execution_mode", "")
+    return mode if mode.startswith("AUTO_") else getattr(env, "execution_mode", mode)
 
 
 def renderer_cell(cls) -> str:
@@ -176,7 +185,7 @@ def metadata(name: str, device: str = "cpu") -> dict:
             "has_dynamics": info["has_dynamics"],
             "default_size": info["default_size"],
             "frame_shape": list(env.frame_spec.shape),
-            "physics": PHYSICS.get(getattr(cls, "execution_mode", ""), None),
+            "physics": PHYSICS.get(_execution_mode(cls, env), None),
             "renderers": RENDERERS[renderer_cell(cls)],
             "action": action,
             "state": _state(env),

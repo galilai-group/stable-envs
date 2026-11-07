@@ -8,6 +8,7 @@ from ..._core.plate_texels import substitute as _substitute_texels
 from ..._core.plate_texels import texel_key as _texel_key
 from ..._core.plate_texels import texel_slots as _texel_slots
 from ...render import raycast3d as R3
+from ...render.cpu_raster import ray_module
 from ...render.mjwarp import effective_alpha
 from ...spaces import Box, Dict
 from ._model import (
@@ -15,6 +16,7 @@ from ._model import (
     _SCENE_CACHE,
     HIDDEN_GROUP,
     LIGHT_DIRECTIONAL,
+    SPECULAR_SCALE,
     VISIBLE_GROUPS,
     _grid_defaults,
     _grid_masks,
@@ -577,12 +579,8 @@ class DMControlSuite(_DMCModel):
         return R3.cast_nearest(sc.prims.kind, sizes, xpos, xmat, o, d)
 
     @staticmethod
-    def _occluded(sc, p, L, sl, xpos, xmat, sizes, skip=None, eps: float = 1e-6):
-        """Return whether movers block rays from ``p`` to light ``sl``.
-
-        ``skip`` excludes each ray’s originating convex primitive. Its front-facing
-        surface cannot occlude itself; back-facing illumination is already zero.
-        """
+    def _shadow_rays(p, L, sl, eps: float = 1e-6):
+        """Return origins, unit directions and lengths of rays from ``p`` to light ``sl``."""
         shape = (1,) * (p.dim() - 1) + (3,)
         if L["kind"][sl] == LIGHT_DIRECTIONAL:
             d = (-_norm(L["dir"][sl].view(shape))).expand_as(p)
@@ -591,7 +589,16 @@ class DMControlSuite(_DMCModel):
             v = L["pos"][sl].view(shape) - p
             lim = torch.sqrt(torch.clamp(_dot(v, v), min=1e-24))
             d = v / lim.unsqueeze(-1)
-        o = p + d * eps
+        return p + d * eps, d, lim
+
+    @staticmethod
+    def _occluded(sc, p, L, sl, xpos, xmat, sizes, skip=None, eps: float = 1e-6):
+        """Return whether movers block rays from ``p`` to light ``sl``.
+
+        ``skip`` excludes each ray’s originating convex primitive. Its front-facing
+        surface cannot occlude itself; back-facing illumination is already zero.
+        """
+        o, d, lim = DMControlSuite._shadow_rays(p, L, sl, eps)
         return R3.any_blocking(sc.prims.kind, sizes, xpos, xmat, o, d, lim, skip=skip)
 
     @torch.no_grad()
@@ -717,6 +724,9 @@ class DMControlSuite(_DMCModel):
         return out
 
     def _render_group(self, sc: _Scene, s: torch.Tensor, size: int, ss: int, rows=None) -> torch.Tensor:
+        rays = ray_module(self._ray_backend(), self.device)
+        if rays is not None and len(sc.prims) and all(int(k) != R3.PLANE for k in sc.prims.kind):
+            return self._render_group_rays(rays, sc, s, size, ss, rows)
         dev = self.device
         B = s.shape[0]
         R = size * ss
@@ -812,3 +822,121 @@ class DMControlSuite(_DMCModel):
         w3 = widx.unsqueeze(-1).expand(-1, -1, 3)
         # base is this render’s private canvas; in-place scatter avoids another full-frame copy.
         return base.scatter_(1, w3, torch.where(seen.unsqueeze(-1), val, base.gather(1, w3)))
+
+    def _ray_constants(self, rays, sc: _Scene, ss: int):
+        """Cache the Numba inputs that depend only on the scene: tile cones, static shadow and mirror rays, lights."""
+        from ...render.cpu_raster import suite3d
+
+        key = ("rays", int(ss))
+        hit = sc.const.get(key)
+        if hit is not None:
+            return hit
+        o, d, plate_f, tex_rgb, spec, shin, L = self._per_chunk_constants(sc, ss)
+        R = sc.size * int(ss)
+        N = R * R
+        tile = rays.TILE
+        dn = d.contiguous().numpy()
+        st = self._static_t(sc, ss).view(N)
+        out: dict = {"kinds": np.asarray(sc.prims.kind, np.int64), "dirs": dn, "origin": o.numpy()}
+        out["cones"] = rays.tile_cones(dn, R, R, tile)
+        out["static_t"] = st.contiguous().numpy()
+        out["plate"] = plate_f[0].contiguous().numpy()
+
+        def grouped(index, origins, directions):
+            starts, pixels = suite3d.tile_rays(index, R, tile)
+            order = index[pixels]
+            sphere, cone = rays.packet_bounds(origins[order], directions[order], starts)
+            return starts, pixels, sphere, cone
+
+        sl = sc.shadow_light
+        shadow_of = np.full(N, -1, np.int64)
+        shadow = (np.zeros((0, 3), np.float32),) * 4 + (np.zeros(0, np.float32), np.zeros(0, np.bool_))
+        if sl >= 0:
+            cand, dark = self._shadow_candidates(sc, ss)
+            stc = st.view(1, N)[:, cand]
+            ps = o + stc.clamp(max=1e6).unsqueeze(-1) * d[cand]
+            so, sd, slim = self._shadow_rays(ps, L, sl, eps=sc.eps)
+            shadow_of[cand.numpy()] = np.arange(cand.numel())
+            shadow = (
+                dark[0].contiguous().numpy(),
+                so[0].contiguous().numpy(),
+                sd[0].contiguous().numpy(),
+                slim[0].contiguous().numpy(),
+                (stc[0] < R3.INF).numpy(),
+            )
+        out["shadow"] = (shadow_of, *shadow[:4], shadow[4], *grouped(shadow_of, shadow[1], shadow[2]))
+        mirror_of = np.full(N, -1, np.int64)
+        mirror = (np.zeros((0, 3), np.float32),) * 3
+        if sc.reflectance > 0:
+            idx, ro, rd, surf = self._floor_rays(sc, ss)
+            mirror_of[idx.numpy()] = np.arange(idx.numel())
+            mirror = tuple(x[0].contiguous().numpy() for x in (ro, rd, surf))
+        out["mirror"] = (mirror_of, *mirror, *grouped(mirror_of, mirror[0], mirror[1]))
+        n = len(L["kind"])
+        li = np.zeros((n, 3), np.int64)
+        lf = np.zeros((n, 17), np.float32)
+        for i in range(n):
+            axis = _norm(L["dir"][i].view(1, 3))[0]
+            li[i] = (L["kind"][i], L["castshadow"][i], L["cutoff"][i] < 180.0)
+            lf[i, 0], lf[i, 1], lf[i, 2] = L["ambient"][i][0], L["diffuse"][i][0], L["specular"][i][0]
+            lf[i, 3:6] = L["pos"][i].numpy()
+            lf[i, 6:9] = (-axis).numpy()
+            lf[i, 9:12] = axis.numpy()
+            lf[i, 12:15] = L["attenuation"][i].numpy()
+            lf[i, 15] = np.float32(float(np.cos(np.deg2rad(L["cutoff"][i]))))
+            lf[i, 16] = L["exponent"][i]
+        out["lights"] = (lf, li)
+        out["materials"] = (spec.numpy(), shin.numpy(), tex_rgb.numpy())
+        r = float(sc.reflectance)
+        out["scalars"] = (np.float32(r), np.float32(1.0 - r), np.float32(sc.eps), np.float32(SPECULAR_SCALE))
+        sc.const[key] = out
+        return out
+
+    def _render_group_rays(self, rays, sc: _Scene, s: torch.Tensor, size: int, ss: int, rows=None) -> torch.Tensor:
+        """``_render_group`` in one Numba kernel: each ray tile tests only the movers whose bounds reach it."""
+        from ...render.cpu_raster import suite3d
+
+        B = s.shape[0]
+        R = size * ss
+        N = R * R
+        rc = self._ray_constants(rays, sc, ss)
+        xpos, xmat, sizes, mat_rgb = self._fk(s, sc, rows)
+        r, unreflected, eps, scale = rc["scalars"]
+        lf, li = rc["lights"]
+        spec, shin, tex = rc["materials"]
+        out = torch.empty((B, N, 3), dtype=torch.uint8)
+        frame = np.empty((B, N, 3) if ss > 1 else (0, 0, 3), np.float32)
+        suite3d.render(
+            rc["kinds"],
+            sizes.contiguous().numpy(),
+            xpos.contiguous().numpy(),
+            xmat.contiguous().numpy(),
+            rc["origin"],
+            rc["dirs"],
+            R,
+            rays.TILE,
+            rc["cones"],
+            rc["static_t"],
+            rc["plate"],
+            *rc["shadow"],
+            *rc["mirror"],
+            r,
+            unreflected,
+            mat_rgb.contiguous().numpy(),
+            spec,
+            shin,
+            tex,
+            lf,
+            li,
+            sc.shadow_light,
+            xpos.shape[1] > 1,
+            eps,
+            scale,
+            frame,
+            out.numpy(),
+            ss == 1,
+        )
+        if ss == 1:
+            return out.view(B, size, size, 3)
+        f = torch.from_numpy(frame).view(B, size, ss, size, ss, 3).sum((2, 4)) / (ss * ss)
+        return torch.clamp(torch.round(f), 0, 255).to(torch.uint8)
