@@ -63,25 +63,24 @@ pusht-reference = ["gym-pusht"]
 # TwoRoom dynamics use the core JAX dependency; CUDA needs its GPU runtime.
 navigation = ["matplotlib>=3.10", "numba>=0.60"]
 navigation-gpu = ["jax[cuda12]>=0.4.35; sys_platform == 'linux'"]
-ogbench = ["mujoco>=3.11,<3.13", "ogbench>=1.2.1,<1.3"]
+ogbench = ["mujoco>=3.11,<3.18", "ogbench>=1.2.1,<1.3"]
 # Cube/Scene semantics and renderer. Their renderers check these exact MuJoCo, OGBench and
 # MuJoCo Warp versions when they render, and the CPU semantics check the OGBench version at
 # construction. Other OGBench cells need only the extra above.
-ogbench-manipulation = ["ogbench==1.2.1", "mujoco==3.12.0", "dm-control>=1.0.45"]
+ogbench-manipulation = ["ogbench==1.2.1", "mujoco==3.17.0", "dm-control>=1.0.50"]
 ogbench-manipulation-gpu = [
   "ogbench==1.2.1",
-  "mujoco==3.12.0",
-  "dm-control>=1.0.45",
-  "mujoco-warp==3.12.0",
+  "mujoco==3.17.0",
+  "dm-control>=1.0.50",
+  "mujoco-warp==3.17.0",
   "warp-lang==1.17.0",
 ]
 # numba adds the compiled CPU renderer of every DM Control task.
-dmcontrol = ["dm-control>=1.0.44", "mujoco>=3.11,<3.13", "numba>=0.60"]
-# GPU DM Control with the TrackCom floor reflection, which needs MuJoCo Warp 3.12. Fetch keeps MuJoCo 3.11;
-# without this extra TrackCom renders on 3.11 without the reflection.
+dmcontrol = ["dm-control>=1.0.50", "mujoco>=3.17,<3.18", "numba>=0.60"]
+# GPU DM Control with the TrackCom floor reflection, which needs MuJoCo Warp 3.17.
 dmcontrol-gpu = [
-  "dm-control>=1.0.45", "mujoco>=3.12,<3.13", "mujoco-warp>=3.12,<3.13", "warp-lang>=1.16",
-  "mujoco-mjx>=3.12,<3.13", "jax[cuda12]>=0.4.35; sys_platform == 'linux'",
+  "dm-control>=1.0.50", "mujoco>=3.17,<3.18", "mujoco-warp>=3.17,<3.18", "warp-lang>=1.16",
+  "mujoco-mjx>=3.17,<3.18", "jax[cuda12]>=0.4.35; sys_platform == 'linux'",
 ]
 # gymnasium-robotics 1.4.2's Fetch setters fail with MuJoCo 3.12.
 robotics = ["gymnasium-robotics>=1.4.2,<1.5", "mujoco>=3.11,<3.12", "opencv-python-headless"]
@@ -89,16 +88,16 @@ robotics = ["gymnasium-robotics>=1.4.2,<1.5", "mujoco>=3.11,<3.12", "opencv-pyth
 # PyPI rejects direct-URL requirements and its CUDA extension needs a matching
 # local toolkit. The source install is documented in docs/install.md.
 mjwarp = [
-  "mujoco>=3.11,<3.13",
-  "mujoco-warp>=3.11,<3.13",
+  "mujoco>=3.11,<3.18",
+  "mujoco-warp>=3.11,<3.18",
   "warp-lang>=1.16",
 ]
 # MS-Human-700 musculoskeletal locomotion. Physics and frames use the MuJoCo Warp backend;
 # the model (Apache-2.0) is fetched from LNSGroup/MS-Human-700 at a pinned commit on first use.
 mshuman = [
   "filelock>=3.0",
-  "mujoco>=3.11,<3.13",
-  "mujoco-warp>=3.11,<3.13",
+  "mujoco>=3.17,<3.18",
+  "mujoco-warp>=3.17,<3.18",
   "warp-lang>=1.16",
 ]
 # Official replay-backed Rocket dynamics; GPU rendering also requires nvdiffrast and Triton.
@@ -107,7 +106,11 @@ mshuman = [
 rocket = ["pillow", "scipy", "PyFlyt==0.29.0", "pybullet==3.2.7"]
 # Craftax on CPU; craftax-gpu takes JAX's CUDA 12 build for device="cuda".
 craftax = ["craftax>=1.6.1", "jax>=0.4.30"]
+roadster = ["mujoco>=3.11", "pillow"]
 craftax-gpu = ["craftax>=1.6.1", "jax[cuda12]>=0.4.30; sys_platform == 'linux'"]
+# MovingBlockWorld is in the hlillemark/Miniworld fork, not on PyPI; uv takes it from [tool.uv.sources],
+# pip needs `pip install "miniworld @ git+https://github.com/hlillemark/Miniworld@<commit>"` first.
+miniworld = ["miniworld>=2.1", "pyglet>=1.5.27,<2"]
 hf = ["datasets>=2.14"]
 examples = ["imageio", "imageio-ffmpeg", "opencv-python"]
 # No `all` extra: Fetch needs mujoco<3.12, and nvdiffrast cannot be expressed
@@ -178,9 +181,9 @@ pin-pusht = [
 pin-dmc = [
   "numpy==2.5.3; python_version >= '3.12'",
   "gymnasium==1.3.0; python_version >= '3.12'",
-  "dm-control==1.0.45; python_version >= '3.12'",
-  "mujoco==3.12.0; python_version >= '3.12'",
-  "mujoco-mjx==3.12.0; python_version >= '3.12'",
+  "dm-control==1.0.50; python_version >= '3.12'",
+  "mujoco==3.17.0; python_version >= '3.12'",
+  "mujoco-mjx==3.17.0; python_version >= '3.12'",
   "numba==0.68.0; python_version >= '3.12'",
 ]
 pin-fetch = [
@@ -193,8 +196,8 @@ pin-ogbench = [
   "numpy==2.2.6; python_version >= '3.12'",
   "gymnasium==1.2.3; python_version >= '3.12'",
   "ogbench==1.2.1; python_version >= '3.12'",
-  "mujoco==3.12.0; python_version >= '3.12'",
-  "dm-control==1.0.45; python_version >= '3.12'",
+  "mujoco==3.17.0; python_version >= '3.12'",
+  "dm-control==1.0.50; python_version >= '3.12'",
 ]
 pin-rocket = [
   "numpy==2.5.3; python_version >= '3.12'",
@@ -208,7 +211,7 @@ pin-craftax = [
   "jaxlib==0.11.2; python_version >= '3.12'",
 ]
 # GPU add-on, combinable with pin-dmc or pin-ogbench.
-gpu-mjwarp = ["mujoco-warp==3.12.0; python_version >= '3.12'", "warp-lang==1.17.0; python_version >= '3.12'"]
+gpu-mjwarp = ["mujoco-warp==3.17.0; python_version >= '3.12'", "warp-lang==1.17.0; python_version >= '3.12'"]
 
 [tool.uv]
 environments = ["sys_platform == 'darwin'", "sys_platform == 'linux'"]
@@ -224,16 +227,21 @@ conflicts = [
     { group = "pin-rocket" },
     { group = "pin-craftax" },
   ],
-  # Fetch needs MuJoCo 3.11; these need 3.12.
+  # Fetch needs MuJoCo 3.11; these need 3.13 or later.
   [{ extra = "robotics" }, { group = "pin-dmc" }],
   [{ extra = "robotics" }, { group = "pin-ogbench" }],
   [{ extra = "robotics" }, { group = "gpu-mjwarp" }],
   [{ extra = "robotics" }, { extra = "dmcontrol-gpu" }],
   [{ extra = "robotics" }, { extra = "ogbench-manipulation" }],
   [{ extra = "robotics" }, { extra = "ogbench-manipulation-gpu" }],
+  [{ extra = "robotics" }, { extra = "mshuman" }],
   [{ extra = "dmcontrol-gpu" }, { group = "pin-fetch" }],
   [{ extra = "ogbench-manipulation" }, { group = "pin-fetch" }],
   [{ extra = "ogbench-manipulation-gpu" }, { group = "pin-fetch" }],
+  [{ extra = "mshuman" }, { group = "pin-fetch" }],
+  [{ extra = "robotics" }, { extra = "dmcontrol" }],
+  [{ extra = "dmcontrol" }, { group = "pin-fetch" }],
+  [{ group = "gpu-mjwarp" }, { group = "pin-fetch" }],
 ]
 
 # PyFlyt 0.29.0 declares numpy<2 but runs on 2.5.3 in the rocket reference profile. This
@@ -245,6 +253,7 @@ requires-dist = ["numba", "numpy", "scipy", "gymnasium", "pettingzoo", "pybullet
 
 [tool.uv.sources]
 torch = [{ index = "pytorch-cpu", group = "torch-cpu", marker = "sys_platform == 'linux'" }]
+miniworld = { git = "https://github.com/hlillemark/Miniworld", rev = "bc7972050155b67e242c07bfdccfe1eeddbf9882" }
 
 [[tool.uv.index]]
 name = "pytorch-cpu"

@@ -40,12 +40,15 @@ RENDERERS = {
     "dmcontrol-suite": {"cpu": "raycast3d (Numba)", "cuda": "raycast3d (torch)"},
     "dmcontrol-trackcom": {"cpu": "cpu3d (Numba)", "cuda": "mjwarp"},
     "fetch": {"cpu": "opengl (MuJoCo)", "cuda": "mjwarp"},
+    "miniworld": {"cpu": "opengl (Miniworld, pyglet)", "cuda": "opengl (Miniworld) on CPU, frames copied to CUDA"},
     "mshuman": {"cpu": "opengl (MuJoCo)", "cuda": "host-side serial MuJoCo OpenGL, frames copied to CUDA"},
     "navigation": {"cpu": "raster2d (torch)", "cuda": "raster2d (torch) with the Triton dot compositor"},
+    "navigation-dots": {"cpu": "Numba dot compositor", "cuda": "Triton dot compositor"},
     "ogbench-maze": {"cpu": "raycast3d (torch)", "cuda": "raycast3d (torch)"},
     "ogbench-manipulation": {"cpu": "opengl (MuJoCo)", "cuda": "mjwarp"},
     "pusht": {"cpu": "pygame (source renderer)", "cuda": "pygame on CPU, frames copied to CUDA"},
     "pyflyt": {"cpu": "tiny (TinyRenderer)", "cuda": "nvdiffrast"},
+    "roadster": {"cpu": "opengl (MuJoCo)", "cuda": "opengl (MuJoCo) on CPU, frames copied to CUDA"},
 }
 
 #: Physics placement declared by ``execution_mode``.
@@ -68,6 +71,10 @@ def renderer_cell(cls) -> str:
         from stable_envs.envs.ogbench.manipulation_semantics import ManipulationSemantics
 
         return "ogbench-manipulation" if issubclass(cls, ManipulationSemantics) else "ogbench-maze"
+    if family == "navigation":
+        from stable_envs.envs.navigation.envs import _TorchNavBase
+
+        return "navigation-dots" if issubclass(cls, _TorchNavBase) else "navigation"
     return family
 
 

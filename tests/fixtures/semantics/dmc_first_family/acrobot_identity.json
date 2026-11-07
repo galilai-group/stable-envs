@@ -7,6 +7,6 @@
   "equivalent_suite_task": "acrobot/swingup_sparse",
   "reference_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
   "oracle_manifest": "manifest.json",
-  "oracle_manifest_sha256": "e82be4c83fd23ea7618b5cd7e92ce5dc3b14023bd320be9e8b96f7ea20a443fc",
+  "oracle_manifest_sha256": "411027add5f587f30d295a20fca9fd232f2cbefcd47a3546cfb46a72dd655e76",
   "note": "Additive identity metadata only; original corpus/provenance unchanged."
 }

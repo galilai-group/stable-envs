@@ -6,10 +6,14 @@ keeps at most one transition in flight and renders owned snapshots in the parent
 
 from __future__ import annotations
 
+import sys
+
 import numpy as np
 import torch
 
 from .tensordicts import build_tensordict
+
+_NUMPY_DTYPES = {torch.uint8: np.uint8, torch.float32: np.float32, torch.float64: np.float64, torch.bool: np.bool_}
 
 
 def _actions(env, actions):
@@ -39,9 +43,12 @@ def _done(result):
     return done
 
 
-def _task_outputs(result, active, *, all_active, owned=False):
-    """Own the task outputs and zero them where a lane had already finished."""
-    out = result.exclude("state", "frame")
+def _task_outputs(result, active, *, all_active, owned=False, shared=()):
+    """Own the task outputs and zero them where a lane had already finished.
+
+    ``shared`` leaves are tensors the family never writes; they pass through and are padded when stacked.
+    """
+    out = result.exclude("state", "frame", *shared)
     # Families may guarantee fresh output storage. Padding still needs a copy:
     # once every lane finishes, result can be reused for later sequence entries.
     if not owned or not all_active:
@@ -50,6 +57,60 @@ def _task_outputs(result, active, *, all_active, owned=False):
         inactive = (~active).nonzero(as_tuple=True)[0]
         for value in out.values(True, True):
             value.index_fill_(0, inactive, 0)
+    for key in shared:
+        out[key] = result[key]
+    return out
+
+
+def _same_view(a, b):
+    return a.data_ptr() == b.data_ptr() and a.shape == b.shape and a.stride() == b.stride()
+
+
+def _refs(spares, key) -> int:
+    return sys.getrefcount(spares[key][0])
+
+
+def _padded_buffer(spares, key, like, shape):
+    """Return a tensor for a padded copy of a shared output.
+
+    On CPU the copy goes into memory that NumPy owns and that is kept for the next copy. A tensor
+    made by ``torch.from_numpy`` holds one reference to the array until its last view is freed, so
+    the reference count tells when no returned tensor uses the memory. Reused memory needs no new
+    pages.
+    """
+    if like.device.type != "cpu" or like.dtype not in _NUMPY_DTYPES:
+        return torch.empty(shape, dtype=like.dtype, device=like.device)
+    if key in spares and spares[key][0].shape == tuple(shape) and _refs(spares, key) == spares[key][1]:
+        return torch.from_numpy(spares[key][0])
+    # Count the references of the idle array the same way the check above does.
+    spares[key] = [np.empty(shape, dtype=_NUMPY_DTYPES[like.dtype]), 0]
+    spares[key][1] = _refs(spares, key)
+    return torch.from_numpy(spares[key][0])
+
+
+def _stack_outputs(history, valid, shared=(), spares=None):
+    """Stack per-step task outputs along a new time axis.
+
+    A shared leaf that is one tensor at every step becomes a view of it along time. It is copied
+    only when a lane finished, to zero the slots after the end.
+    """
+    if not shared:
+        return torch.stack(history, dim=1)
+    out = torch.stack([entry.exclude(*shared) for entry in history], dim=1)
+    ended = (~valid).nonzero(as_tuple=True)
+    padded = bool(ended[0].numel())
+    for key in shared:
+        leaves = [entry[key] for entry in history]
+        first = leaves[0]
+        if all(_same_view(leaf, first) for leaf in leaves):
+            value = first.unsqueeze(1).expand(first.shape[0], len(leaves), *first.shape[1:])
+            if padded:
+                value = _padded_buffer({} if spares is None else spares, key, first, value.shape).copy_(value)
+        else:
+            value = torch.stack(leaves, dim=1)
+        if padded:
+            value[ended] = 0
+        out[key] = value
     return out
 
 
@@ -99,6 +160,7 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
     history, saved_states, saved_frames, validity = [], {}, {}, []
     advance = getattr(env, "_advance_without_snapshot", env._step)
     outputs_owned = getattr(env, "_step_outputs_owned", False)
+    shared = tuple(getattr(env, "_shared_outputs", ()))
     # Draws the live lanes without rebuilding them from the State snapshot.
     render_live = getattr(env, "_render_live", None)
     active = torch.ones(env.num_envs, dtype=torch.bool, device=env.device)
@@ -149,7 +211,7 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
                 # Received outputs own their storage, so workers can reuse buffers while the parent renders.
                 submit(t + 1, next_active, next_all_active)
                 pending = True
-            history.append(_task_outputs(result, active, all_active=all_active, owned=outputs_owned))
+            history.append(_task_outputs(result, active, all_active=all_active, owned=outputs_owned, shared=shared))
             if t in state_times:
                 saved_states[t] = live_state
             if t in frame_times:
@@ -172,7 +234,8 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
 
     valid = torch.stack(validity, dim=1)
     out = {"state": live_state}
-    out.update((torch.stack(history, dim=1) if sequence else history[0]).items())
+    spares = env.__dict__.setdefault("_padded_output_buffers", {}) if shared else None
+    out.update((_stack_outputs(history, valid, shared, spares) if sequence else history[0]).items())
     out["valid"] = valid
     if state_indices is not None:
         out["states"] = (

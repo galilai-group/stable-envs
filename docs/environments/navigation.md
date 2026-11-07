@@ -14,6 +14,11 @@ frames = env.render()          # (8, 224, 224, 3) uint8
 
 Each class renders only at its fixed native size. To get a smaller frame, resize the output.
 
+TwoRoom, TwoRoomTarget, Piecewise and PiecewiseZones draw each dot as a normalized Gaussian over a
+base image. On CUDA, a Triton kernel draws the dots. On CPU, a Numba kernel draws them, with one frame
+for each thread. The `navigation` extra installs Numba. Both kernels give the same bytes as the Torch
+path. `backend="torch"` selects the Torch path on CPU.
+
 ## TwoRoom
 
 A wall with doors splits the arena into two rooms. The agent moves through a door to a target in the
@@ -88,5 +93,10 @@ Matplotlib figure of 500 × 500 px.
 
 **Success:** the episode terminates when the agent is inside the goal radius. The reward is 1 at the
 goal and -0.01 for every other step.
+
+**Goal image:** `info.goal` is the Matplotlib figure of the goal frame that `reset` and `set_state`
+draw. Every step returns the same image tensor. Do not write into it. For `[B, T]` actions, `info.goal`
+is a view of this image along the time axis. When a lane ends inside the sequence, `info.goal` is a
+copy with zeros after the end.
 
 <!-- env: SimplePointMaze -->

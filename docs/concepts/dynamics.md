@@ -66,6 +66,8 @@ behaviour after termination.
 ## Memory and ownership
 
 - Snapshots and frames own their storage. Later calls do not change them.
+- A family can return one task output tensor at each step, for example `info.goal` of
+  `SimplePointMaze`. The family does not change this tensor. Do not write into it.
 - `step` renders only the selected frames.
 - Retained histories cost memory in proportion to the number of selected outputs.
 - Save the endpoint from `result["state"]`. Calling `get_state()` right after `step()` exports it again.
@@ -79,13 +81,14 @@ There is no `capture`, `transition`, `unroll` or `step_sequence` method. To bran
 ## Process workers
 
 On Linux with at least four CPU cores, some families run physics in worker processes. These families
-are Fetch, most DM Control tasks, classic Acrobot, the OGBench registrations, PushT and
-`PyFlytRocketLanding`. Each process has one simulation thread and stays within the allowed CPU affinity.
-Physics stays on CPU even when rendering uses CUDA.
+are Fetch, classic Acrobot, the OGBench registrations, PushT and `PyFlytRocketLanding`. Each process has
+one simulation thread and stays within the allowed CPU affinity. DM Control steps every lane in one
+`mujoco.batch` call on `dmc_threads` threads (8 by default), at most one per lane and one per CPU in the
+affinity. Physics stays on CPU even when rendering uses CUDA.
 
-PyBullet allows 1024 clients in one process, and a Rocket restore holds two clients per lane. Thus one
-process holds at most 512 Rocket lanes. A larger Rocket batch uses enough processes to hold it, on every
-platform and for every value of the tuning knobs.
+PyBullet allows 1024 clients in one process. A Rocket restore holds two clients per lane, and the
+step frames use one more client. Thus one process holds at most 511 Rocket lanes. A larger Rocket
+batch uses enough processes to hold it, on every platform and for every value of the tuning knobs.
 
 `set_state` checks the State in every worker before any worker restores it. If one lane is not valid,
 `set_state` raises the error and no lane changes.
@@ -114,5 +117,6 @@ executor:
 - returns owned task outputs and any requested State.
 - aborts pending work on failure.
 
-Rendering stays on the calling thread, except for PushT step frames. PushT workers draw the frames of
-their running lanes.
+Rendering stays on the calling thread, except for PushT step frames and `PyFlytRocketLanding` frames
+on CPU. The workers of these families draw the frames of their running lanes. Rocket workers also draw
+`render` batches of States.

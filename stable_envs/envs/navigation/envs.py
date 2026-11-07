@@ -15,6 +15,7 @@ from ...render import _resources as _RES
 from ...render.scene import Scene2D, SceneBuilder
 from ...spaces import Box, Dict, Discrete, RGBBox
 from . import navdot
+from .maze_goal import GoalPainter, goal_frames
 
 IMG = 224
 # Playfield inset, distinct from the border stroke width.
@@ -600,16 +601,32 @@ class _TorchNavBase(_GymReferencePort):
         tuning.on_render("navigation", IMG, n, self)
         chunk = tuning.get("nav_render_chunk", path="navigation", size=IMG, batch=n, device=self.device)
         for lo in range(0, n, chunk):
-            img[lo : min(lo + chunk, n)] = self._render_chunk(s, sty, lo, min(lo + chunk, n))
+            dst = img[lo : min(lo + chunk, n)]
+            part = self._render_chunk(s, sty, lo, min(lo + chunk, n), out=dst)
+            if part is not dst:
+                dst.copy_(part)
         return img.view(*lead, IMG, IMG, 3) if lead else img
 
-    def _render_chunk(self, s, sty, lo: int, hi: int) -> torch.Tensor:
+    def _numba_dots(self) -> bool:
+        """Draw CPU dots with the Numba compositor; ``backend="torch"`` selects the Torch path."""
+        if self.device.type != "cpu" or self.backend == "torch":
+            return False
+        from ...render import cpu_raster
+
+        return cpu_raster.available()
+
+    def _render_chunk(self, s, sty, lo: int, hi: int, out=None) -> torch.Tensor:
         k = hi - lo
         sl = lambda p: sty[p][lo:hi]
         base = self._base_image(sty, lo, hi)
         if navdot.available(self.device):
             pos, sig, col = self._dots(s[lo:hi], sl, k)
             return navdot.blend_dots(base.expand(k, IMG, IMG, 3).contiguous(), pos, sig, col)
+        if self._numba_dots():
+            from . import navdot_cpu
+
+            pos, sig, col = self._dots(s[lo:hi], sl, k)
+            return navdot_cpu.blend_dots(base.expand(k, IMG, IMG, 3), pos, sig, col, out=out)
         return self.blend_dots(base, s[lo:hi], sl, k)
 
     def _dots(self, s, sl, k):
@@ -633,14 +650,19 @@ class _TorchNavBase(_GymReferencePort):
         if self.device.type == "cuda":
             # Host-side grouping would synchronize the CUDA render loop.
             return self.base_image(lambda p: sty[p][lo:hi], k)
-        rows = sty.values[lo:hi]
-        # One host transfer serves both grouping and cache keys.
-        blob = rows.detach().cpu().contiguous().numpy().tobytes()
-        w = blob and len(blob) // k or 0
-        keys = [blob[i * w : (i + 1) * w] for i in range(k)] if w else [b""] * k
-        order: dict = {}
-        for i, key in enumerate(keys):
-            order.setdefault(key, []).append(i)
+        rows = sty.values[lo:hi].detach().cpu().contiguous()
+        # Compare bytes, as the cache keys do; one comparison replaces the per-row grouping for a shared style.
+        raw = rows.view(torch.uint8).reshape(k, -1)
+        if k > 1 and bool((raw == raw[:1]).all()):
+            blob = raw[0].numpy().tobytes()
+            order: dict = {blob: list(range(k))}
+        else:
+            blob = raw.numpy().tobytes()
+            w = blob and len(blob) // k or 0
+            keys = [blob[i * w : (i + 1) * w] for i in range(k)] if w else [b""] * k
+            order = {}
+            for i, key in enumerate(keys):
+                order.setdefault(key, []).append(i)
         if len(order) == k and k > 1:
             return self.base_image(lambda p: sty[p][lo:hi], k)
 
@@ -674,6 +696,12 @@ class _TorchNavBase(_GymReferencePort):
         k = int(pos.shape[0])
         if self.device.type == "cuda":
             return _alpha_blend(img, _gaussian_dot(self._gy, self._gx, pos, sigma), colour)
+        if self._numba_dots():
+            from . import navdot_cpu
+
+            return navdot_cpu.blend_dots(
+                img.expand(k, IMG, IMG, 3), pos.reshape(k, 1, 2), sigma.reshape(k, 1), colour.reshape(k, 1, 3)
+            )
         win = _dot_window(pos, sigma)
         wins = row_groups(
             win.cpu().numpy(), *(int(v) for v in (win[:, 0].min(), win[:, 1].max(), win[:, 2].min(), win[:, 3].max()))
@@ -932,9 +960,7 @@ class TwoRoomTarget(_TwoRoomBase):
 
     def reset(self, seed=None, options=None):
         self._check_open("reset")
-        if seed is not None:
-            self.rng = np.random.default_rng(int(seed))
-            self._seed = int(seed)
+        self._reseed(seed)
         values = self.draw_reset_values(seed, dict(options or {}))
         agent, target = np.stack(list(values["agent.position"])), np.stack(list(values["target.position"]))
         self._set_render_state(np.concatenate([agent, target], axis=1))
@@ -1020,14 +1046,14 @@ class _PiecewiseBase(_TorchNavBase):
         super()._configure_variation(exact)
         self._layered = any(bool((self._style[flag] > 0.5).any()) for flag in self.layer_flags)
 
-    def _render_chunk(self, s, sty, lo: int, hi: int) -> torch.Tensor:
+    def _render_chunk(self, s, sty, lo: int, hi: int, out=None) -> torch.Tensor:
         # The installed Variation's flags are cached on the host, so the default path never synchronises.
         if sty is self._style:
             layered = self._layered
         else:
             layered = any(bool((sty[flag][lo:hi] > 0.5).any()) for flag in self.layer_flags)
         if not layered:
-            return super()._render_chunk(s, sty, lo, hi)
+            return super()._render_chunk(s, sty, lo, hi, out=out)
         k = hi - lo
         sl = lambda p: sty[p][lo:hi]
         img = self._base_image(sty, lo, hi).expand(k, IMG, IMG, 3)
@@ -1168,9 +1194,7 @@ class PiecewiseZones(_PiecewiseBase):
 
     def reset(self, seed=None, options=None):
         self._check_open("reset")
-        if seed is not None:
-            self.rng = np.random.default_rng(int(seed))
-            self._seed = int(seed)
+        self._reseed(seed)
         values = self.draw_reset_values(seed, dict(options or {}))
         self._set_render_state(np.stack(list(values["agent.position"])))
         self._live_rows = self.B
@@ -1227,6 +1251,17 @@ def _default_walls() -> tuple[np.ndarray, np.ndarray]:
 
 
 DEFAULT_WALL_SHAPE, DEFAULT_WALL_POS = _default_walls()
+_GOAL_IMAGE_PATHS = (
+    "background.color",
+    "walls.number",
+    "walls.shape",
+    "walls.positions",
+    "walls.color",
+    "goal.radius",
+    "goal.color",
+    "agent.radius",
+    "agent.color",
+)
 
 
 @register
@@ -1235,6 +1270,9 @@ class SimplePointMaze(_GymReferencePort):
 
     name = "simple-point-maze"
     execution_mode = "NATIVE_TORCH"
+    _step_outputs_owned = True
+    # The goal image is replaced at reset and restore and never written, so steps share it.
+    _shared_outputs = (("info", "goal"),)
     state_dim = 4
     state_names = ("agent_x", "agent_y", "goal_x", "goal_y")
     default_size = SIZE
@@ -1318,6 +1356,8 @@ class SimplePointMaze(_GymReferencePort):
         self._agent_position = torch.full((self.B, 2), 0.5, device=self.device, dtype=torch.float64)
         self._state_is_float64 = torch.zeros(self.B, 1, device=self.device, dtype=torch.bool)
         self._cached_goal_image = torch.zeros(self.B, SIZE, SIZE, 3, device=self.device, dtype=torch.uint8)
+        self._goal_painter = GoalPainter(WORLD)
+        self._drawing_reset, self._reset_walls = False, None
 
     def _hidden_state(self):
         return {
@@ -1354,12 +1394,32 @@ class SimplePointMaze(_GymReferencePort):
         self._state_is_float64[:n].zero_()
         return self
 
+    def _wall_rows(self):
+        """Host copies of the wall and radius leaves, read once per reset draw."""
+        rows = self._reset_walls
+        if rows is None:
+            rows = {
+                path: self._style[path].detach().cpu().numpy().reshape(self.B, -1)
+                for path in ("walls.number", "walls.positions", "walls.shape", "agent.radius", "goal.radius")
+            }
+            if self._drawing_reset:
+                self._reset_walls = rows
+        return rows
+
+    def draw_reset_values(self, seed=None, options=None):
+        self._drawing_reset, self._reset_walls = True, None
+        try:
+            return super().draw_reset_values(seed, options)
+        finally:
+            self._drawing_reset, self._reset_walls = False, None
+
     def _position_collides(self, value, lane, entity="agent"):
         p = np.asarray(value, np.float32)
-        number = int(self._style["walls.number"][lane].item())
-        positions = self._style["walls.positions"][lane].detach().cpu().numpy().reshape(MAX_WALLS, 2)
-        shapes = self._style["walls.shape"][lane].detach().cpu().numpy().reshape(MAX_WALLS, 2)
-        radius = float(self._style[f"{entity}.radius"][lane].item())
+        rows = self._wall_rows()
+        number = int(rows["walls.number"][lane, 0])
+        positions = rows["walls.positions"][lane].reshape(MAX_WALLS, 2)
+        shapes = rows["walls.shape"][lane].reshape(MAX_WALLS, 2)
+        radius = float(rows[f"{entity}.radius"][lane, 0])
         for corner, shape in zip(positions[:number], shapes[:number], strict=True):
             lo = np.minimum(corner, corner + shape)
             hi = np.maximum(corner, corner + shape)
@@ -1401,50 +1461,26 @@ class SimplePointMaze(_GymReferencePort):
         """Rebuild the source-compatible ``info.goal`` image from State and Variation.
 
         Use Matplotlib Agg for this cached task image; stepping and normal
-        rendering use the native implementation.
+        rendering use the native implementation. Step outputs share the image,
+        so replace it and never write into it.
         """
-        try:
-            from matplotlib.backends.backend_agg import FigureCanvasAgg
-            from matplotlib.figure import Figure
-            from matplotlib.patches import Circle, Rectangle
-        except ImportError as exc:
-            raise ImportError(
-                "SimplePointMaze exact info.goal output requires matplotlib (validated with 3.10.9)"
-            ) from exc
-
-        rows = self._render_state.detach().cpu().numpy()
-        cached = self._cached_goal_agent_position.detach().cpu().numpy()
-        images = []
-        for lane in range(self.B):
-            fig = Figure(figsize=(5, 5))
-            FigureCanvasAgg(fig)
-            ax = fig.subplots()
-            ax.set_xlim(0, WORLD)
-            ax.set_ylim(0, WORLD)
-            ax.set_aspect("equal")
-            ax.set_xticks([])
-            ax.set_yticks([])
-            background = self._style["background.color"][lane].detach().cpu().numpy() / 255.0
-            ax.set_facecolor(background)
-            number = int(self._style["walls.number"][lane].item())
-            shapes = self._style["walls.shape"][lane].detach().cpu().numpy().reshape(MAX_WALLS, 2)
-            positions = self._style["walls.positions"][lane].detach().cpu().numpy().reshape(MAX_WALLS, 2)
-            wall_color = self._style["walls.color"][lane].detach().cpu().numpy() / 255.0
-            for position, shape in zip(positions[:number], shapes[:number], strict=True):
-                ax.add_patch(Rectangle(position, shape[0], shape[1], facecolor=wall_color))
-            goal_color = self._style["goal.color"][lane].detach().cpu().numpy() / 255.0
-            goal_radius = float(self._style["goal.radius"][lane].item())
-            ax.add_patch(Circle(rows[lane, 2:4], goal_radius, facecolor=goal_color, alpha=0.5))
-            agent_color = self._style["agent.color"][lane].detach().cpu().numpy() / 255.0
-            agent_radius = float(self._style["agent.radius"][lane].item())
-            ax.add_patch(Circle(cached[lane], agent_radius, facecolor=agent_color))
-            fig.tight_layout(pad=0)
-            fig.canvas.draw()
-            width, height = fig.canvas.get_width_height()
-            image = np.frombuffer(fig.canvas.tostring_argb(), dtype=np.uint8).reshape(height, width, 4)[:, :, 1:]
-            images.append(image.copy())
-            fig.clear()
-        self._cached_goal_image.copy_(torch.as_tensor(np.stack(images), device=self.device))
+        n = self.B
+        style = {path: self._style[path].detach().cpu().numpy() for path in _GOAL_IMAGE_PATHS}
+        rows = dict(
+            background=style["background.color"] / 255.0,
+            number=style["walls.number"].reshape(n),
+            shapes=style["walls.shape"].reshape(n, MAX_WALLS, 2),
+            positions=style["walls.positions"].reshape(n, MAX_WALLS, 2),
+            wall_color=style["walls.color"] / 255.0,
+            goal=self._render_state[:n, 2:4].detach().cpu().numpy(),
+            goal_radius=style["goal.radius"].reshape(n),
+            goal_color=style["goal.color"] / 255.0,
+            agent=self._cached_goal_agent_position[:n].detach().cpu().numpy(),
+            agent_radius=style["agent.radius"].reshape(n),
+            agent_color=style["agent.color"] / 255.0,
+        )
+        images = goal_frames(self._goal_painter, rows, SIZE)
+        self._cached_goal_image = torch.as_tensor(images, device=self.device)
 
     def scene(self, states, variation: dict | None = None, style=None) -> Scene2D:
         s = torch.as_tensor(states, device=self.device, dtype=torch.float32).reshape(-1, 4)
@@ -1581,7 +1617,7 @@ class SimplePointMaze(_GymReferencePort):
                 "terminated": terminated,
                 "truncated": torch.zeros(n, device=self.device, dtype=torch.bool),
                 "observation": observation,
-                "info": {"goal": self._cached_goal_image[:n].clone()},
+                "info": {"goal": self._cached_goal_image if n == self.B else self._cached_goal_image[:n]},
             },
             batch_size=[n],
             device=self.device,

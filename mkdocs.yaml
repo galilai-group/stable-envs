@@ -115,11 +115,13 @@ nav:
       - Craftax: environments/craftax.md
       - DM Control: environments/dmcontrol.md
       - Fetch: environments/fetch.md
+      - Miniworld: environments/miniworld.md
       - MS-Human-700: environments/mshuman.md
       - Navigation: environments/navigation.md
       - OGBench: environments/ogbench.md
       - PushT: environments/pusht.md
       - PyFlyt: environments/pyflyt.md
+      - Roadster: environments/roadster.md
   - Reference:
       - Env: api/env.md
       - Registered environments: api/envs.md
