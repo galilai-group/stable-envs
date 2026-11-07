@@ -75,6 +75,11 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- DM Control resets run on the `mujoco.batch` threads (`dmc_threads`). The reset of each lane is
+  dm_control's `Environment.reset` without its first observation. MuJoCo releases the GIL while it computes,
+  so lanes reset in parallel. Quadruped searches its start height with direct MuJoCo calls that leave the data
+  exactly as dm_control's search does. At 256 lanes on 8 cores, a reset with 64 steps is 2.4x faster
+  for CheetahRun and 3.2x faster for QuadrupedWalk.
 - TwoRoom, TwoRoomTarget, Piecewise and PiecewiseZones on CPU: one Numba kernel moves all lanes. The
   same call returns the State, the observation, the reward and the termination flags. The kernel does
   each float32 operation of the Torch step with the same rounding, so State and task outputs do not
