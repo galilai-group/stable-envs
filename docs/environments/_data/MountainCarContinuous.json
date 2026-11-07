@@ -8,7 +8,7 @@
  "has_dynamics": true,
  "default_size": 600,
  "frame_shape": [400, 600, 3],
- "physics": "source simulator on CPU",
+ "physics": "batched NumPy, or batched Torch for large CUDA batches, with Gymnasium resets",
  "renderers": {
   "cpu": "gfxdraw port (torch)",
   "cuda": "gfxdraw port (fused Triton kernel)"

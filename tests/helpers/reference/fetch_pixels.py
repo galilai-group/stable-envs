@@ -12,6 +12,11 @@ from tests.helpers.reference.isolated import isolated_call
 from tests.helpers.reference.pixels import PixelTrace
 from tests.helpers.reference.profiles import Registration
 
+#: The contract frame size. Gymnasium Robotics draws at this size, so the wrapper's resize is an identity.
+SIZE = 64
+#: Render options of a source env that draws natively at ``SIZE``, as the original env does when built at that size.
+NATIVE = dict(render_mode="rgb_array", resolution=SIZE, width=SIZE, height=SIZE)
+
 
 def _image(source: gym.Env, device: str) -> tuple[NDArray[np.uint8], dict]:
     from OpenGL import GL
@@ -32,11 +37,11 @@ def _image(source: gym.Env, device: str) -> tuple[NDArray[np.uint8], dict]:
         software=software,
         internal_width=raw.width,
         internal_height=raw.height,
-        output_size=64,
+        output_size=SIZE,
     )
     assert software if device == "cpu" else "nvidia" in vendor.lower() and not software, identity
-    assert raw.width == raw.height == 480, identity
-    assert frame.shape == (64, 64, 3) and frame.dtype == np.uint8
+    assert raw.width == raw.height == SIZE, identity
+    assert frame.shape == (SIZE, SIZE, 3) and frame.dtype == np.uint8
     return frame, identity
 
 
@@ -68,7 +73,7 @@ def _fetch_trace(
         for lane in range(2):
             for worlds, options in (
                 (physics, {}),
-                (rendered, dict(render_mode="rgb_array", resolution=64)),
+                (rendered, NATIVE),
             ):
                 source = stack.enter_context(closing(gym.make(case.registration, **options)))
                 worlds.append(source)
@@ -169,7 +174,7 @@ def _pickandplace_trace(
                     histories[lane].append(actions[lane, step].copy())
                 rows.append(previous[lane])
                 before = snapshot(source)
-                with closing(gym.make(case.registration, render_mode="rgb_array", resolution=64)) as branch:
+                with closing(gym.make(case.registration, **NATIVE)) as branch:
                     branch.reset(seed=seed + lane, options={"variation": []})
                     branch_output = None
                     for action in histories[lane]:
@@ -222,7 +227,7 @@ def _pickandplace_mutation(case: Registration, seed: int, dtype: str, device: st
     importlib.import_module("stable_worldmodel.envs.gymnasium_robotics")
     with (
         closing(gym.make(case.registration)) as plain,
-        closing(gym.make(case.registration, render_mode="rgb_array", resolution=64)) as visual,
+        closing(gym.make(case.registration, **NATIVE)) as visual,
     ):
         for source in (plain, visual):
             source.reset(seed=seed, options={"variation": []})

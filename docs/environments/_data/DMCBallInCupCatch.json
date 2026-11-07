@@ -10,7 +10,7 @@
  "frame_shape": [84, 84, 3],
  "physics": "source simulator on CPU",
  "renderers": {
-  "cpu": "raycast3d (torch)",
+  "cpu": "raycast3d (Numba)",
   "cuda": "raycast3d (torch)"
  },
  "action": {

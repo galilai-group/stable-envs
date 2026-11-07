@@ -10,6 +10,7 @@ import torch
 
 from .. import tuning
 from . import raycast3d as R3
+from .cpu_raster import ray_module
 from .nvdiff import texture_array
 from .primitives import (
     GEOM_NAMES,
@@ -457,6 +458,7 @@ def render(
     chunk_size: int | None = None,
     plane_mat: torch.Tensor | None = None,
     plane_palette: torch.Tensor | None = None,
+    backend: str = "auto",
 ) -> torch.Tensor:
     """Render frames as (B, H, W, 3) uint8.
 
@@ -466,6 +468,9 @@ def render(
     ``plane_mat (B,3,3)`` turns the floor per row about its compiled centre, and
     ``plane_palette (B,P,3)`` recolours the scene's floor palette masks per row.
     ``chunk_size`` frames are cast at a time; None reads the ``cpu3d_chunk`` tuning knob.
+    ``backend="numba"`` draws every frame in one compiled kernel that tests each tile of rays against
+    only the movers whose bounds reach it; ``"torch"`` draws with Torch, and ``"auto"`` takes Numba
+    when it imports. The two agree except on rare pixels, where Torch's CPU square root rounds differently.
     """
     if chunk_size is None:
         chunk_size = tuning.get("cpu3d_chunk")
@@ -475,6 +480,11 @@ def render(
     W = H = scene.res
     if out is None:
         out = torch.empty((B, H, W, 3), dtype=torch.uint8, device=scene.device)
+    if ray_module(backend, scene.device) is not None:
+        _render_numba(
+            scene, cam_pos, xpos, xmat, light_pos, light_dir, mat_rgb, light_diffuse, plane_mat, plane_palette, out
+        )
+        return out
     for lo in range(0, B, chunk_size):
         hi = min(B, lo + chunk_size)
         out[lo:hi] = _render_chunk(
@@ -514,15 +524,7 @@ def _render_chunk(
     dB = d.unsqueeze(0).expand(B, N, 3)
 
     # Work relative to the camera, so every ray origin is zero.
-    xpos_rel = xpos - cam.view(B, 1, 3)
-    if K:
-        inside = (torch.sqrt(_dot(xpos_rel, xpos_rel)) <= scene.radii.view(1, K)).any()
-        if bool(inside):
-            raise ValueError(
-                "cpu3d: the camera is inside a mover's bounding sphere in this batch; the "
-                "megakernel's backface cull would then change which hit is returned and "
-                "this backend does not reproduce that case"
-            )
+    xpos_rel = _relative_movers(scene, cam, xpos)
     ppos_w = torch.as_tensor(scene.plane_pos, dtype=torch.float32, device=dev)
     ppos = ppos_w.view(1, 3) - cam  # (B,3)
     pm = torch.as_tensor(scene.plane_mat, dtype=torch.float32, device=dev) if plane_mat is None else plane_mat
@@ -650,6 +652,151 @@ def _render_chunk(
     if QUANT == "round":
         q = q + 0.5
     return torch.floor(q).clamp_(0, 255).to(torch.uint8)
+
+
+def _relative_movers(scene: Scene, cam: torch.Tensor, xpos: torch.Tensor) -> torch.Tensor:
+    """Mover positions relative to each row's camera; refuse a camera inside a mover's bound."""
+    B, K = xpos.shape[:2]
+    xpos_rel = xpos - cam.view(B, 1, 3)
+    if K:
+        inside = (torch.sqrt(_dot(xpos_rel, xpos_rel)) <= scene.radii.view(1, K)).any()
+        if bool(inside):
+            raise ValueError(
+                "cpu3d: the camera is inside a mover's bounding sphere in this batch; the "
+                "megakernel's backface cull would then change which hit is returned and "
+                "this backend does not reproduce that case"
+            )
+    return xpos_rel
+
+
+def _numba_constants(scene: Scene, rays) -> dict:
+    """Scene arrays the Numba renderer reads, built once per scene."""
+    hit = getattr(scene, "_numba", None)
+    if hit is not None:
+        return hit
+    f32 = lambda x: np.ascontiguousarray(np.asarray(x, np.float32))  # noqa: E731
+    n = scene.dirs.shape[0]
+    c: dict = {"kinds": np.asarray(scene.kinds, np.int64), "dirs": f32(scene.dirs)}
+    c["cones"] = rays.tile_cones(c["dirs"], scene.res, scene.res, rays.TILE)
+    c["plane"] = f32(scene.plane_pos)
+    c["plane_mat"] = f32(scene.plane_mat)
+    c["plane_size"] = f32(scene.plane_size[:2])
+    c["grid"] = tuple(g.numpy() for g in scene.plane_grid)
+    if scene.plane_mips is not None:
+        mips = scene.plane_mips
+        c["tex"] = (
+            mips.texels.numpy(),
+            mips.sizes.numpy(),
+            mips.offsets.numpy(),
+            np.asarray(mips.original_size, np.int64),
+        )
+        c["uv_grad"] = f32(scene.plane_uv_gradients)
+    else:
+        c["tex"] = (
+            np.zeros((0, 3), np.float32),
+            np.zeros((1, 2), np.int64),
+            np.zeros(1, np.int64),
+            np.ones(2, np.int64),
+        )
+        c["uv_grad"] = np.zeros((n, 4), np.float32)
+    pixel = 2 * math.tan(math.radians(scene.fovy) * 0.5) / scene.res
+    ts, off = scene.plane_texscale, scene.plane_texoffset
+    c["tex_affine"] = f32([ts[0], ts[1], off[0], off[1], pixel, -pixel, 0.5 * float(ts[0]), -0.5 * float(ts[1])])
+    if scene.plane_palette is not None:
+        weights, default, rest = scene.plane_palette
+        c["palette"] = (weights.texels.numpy(), default.numpy(), rest.numpy())
+    else:
+        c["palette"] = (np.zeros((0, 1), np.float32), np.zeros((0, 3), np.float32), np.zeros(3, np.float32))
+    c["materials"] = tuple(
+        t.numpy()
+        for t in (scene.prim_own_rgb, scene.prim_mat, scene.mat_tex00, scene.mat_spec, scene.mat_shin, scene.mat_emis)
+    )
+    L = scene.lights
+    c["lights_i"] = np.asarray([[x.kind, x.active, x.castshadow] for x in L], np.int64).reshape(-1, 3)
+    c["lights_cut"] = f32([math.cos(math.radians(x.cutoff_deg)) for x in L])
+    c["lights_exp"] = np.asarray([x.exponent for x in L], np.float64)
+    c["lights_amb"] = f32([x.ambient for x in L]).reshape(-1, 3)
+    c["lights_spec"] = f32([x.specular for x in L]).reshape(-1, 3)
+    c["head"] = f32(np.stack(scene.headlight))
+    c["cam_rot"] = f32(scene.xmat)
+    scene._numba = c
+    return c
+
+
+def _render_numba(
+    scene: Scene, cam, xpos, xmat, light_pos, light_dir, mat_rgb, light_diffuse, plane_mat, palette, out
+) -> None:
+    from .cpu_raster import rays3d, scene3d
+
+    B = int(cam.shape[0])
+    c = _numba_constants(scene, rays3d)
+    xpos_rel = _relative_movers(scene, cam, xpos)
+    K = len(scene.kinds)
+    sizes = np.ascontiguousarray(np.broadcast_to(scene.sizes.numpy(), (B, K, 3)))
+    pm = c["plane_mat"][None].repeat(B, 0) if plane_mat is None else plane_mat.contiguous().numpy()
+    pal_tex, pal_default, pal_rest = c["palette"]
+    if palette is None or not len(pal_default):
+        pal_rows = np.zeros((B, max(1, len(pal_default)), 3), np.float32)
+        moved = np.zeros(B, np.bool_)
+    else:
+        pal_rows = palette.contiguous().numpy()
+        moved = (palette != scene.plane_palette[1]).flatten(1).any(1).numpy()
+    own, prim_mat, tex00, spec, shin, emis = c["materials"]
+    tex, tex_sizes, tex_offsets, tex_hw = c["tex"]
+    np_ = lambda t: t.contiguous().numpy()  # noqa: E731
+    scene3d.render(
+        c["kinds"],
+        sizes,
+        np_(xpos_rel),
+        np_(xmat),
+        c["dirs"],
+        scene.res,
+        rays3d.TILE,
+        c["cones"],
+        np_(cam),
+        c["plane"],
+        np.ascontiguousarray(pm),
+        c["plane_size"],
+        c["grid"][0],
+        c["grid"][1],
+        tex,
+        tex_sizes,
+        tex_offsets,
+        tex_hw,
+        c["tex_affine"],
+        c["uv_grad"],
+        plane_mat is not None,
+        pal_tex,
+        pal_default,
+        pal_rest,
+        pal_rows,
+        moved,
+        np_(mat_rgb),
+        own,
+        prim_mat,
+        scene.nmat,
+        tex00,
+        spec,
+        shin,
+        emis,
+        scene.enable_specular,
+        c["lights_i"],
+        c["lights_cut"],
+        c["lights_exp"],
+        c["lights_amb"],
+        c["lights_spec"],
+        np_(light_pos - cam[:, None]),
+        np_(light_dir),
+        np_(light_diffuse),
+        c["head"],
+        scene.headlight_active,
+        c["cam_rot"],
+        scene.use_shadows,
+        np.float32(scene.plane_reflectance),
+        np_(scene.sky),
+        QUANT == "round",
+        out.view(B, -1, 3).numpy(),
+    )
 
 
 def _recolour(scene, palette, env, texel, u, v, gradient):

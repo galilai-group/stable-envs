@@ -163,7 +163,8 @@ def test_accepted_classic_matches_repeated_steps(name, dtype):
 
 
 def test_classic_stops_at_distinct_time_limits_without_step_or_reset(monkeypatch):
-    with snv.CartPole(num_envs=3, device="cpu") as env:
+    # Per-lane Gymnasium time limits and step counts need the Gymnasium backend.
+    with snv.CartPole(num_envs=3, device="cpu", simulation_backend="gym") as env:
         env.reset(seed=17)
         for lane, upstream in enumerate(env._simulator.envs):
             upstream._max_episode_steps = lane + 1
@@ -228,3 +229,16 @@ def test_gpu_sequence_frames_equal_repeated_steps(name):
             assert selected["states"].batch_size == torch.Size([3, len(indices)])
             for j, t in enumerate(indices):
                 assert (selected["states"][:, j] == reference[t]["state"]).all()
+
+
+def test_overlapping_thread_overrides_restore_the_count_from_before_the_first():
+    from stable_envs._core import stepping
+
+    before = torch.get_num_threads()
+    first, second = stepping._threads(1), stepping._threads(1)
+    first.__enter__()
+    second.__enter__()
+    first.__exit__(None, None, None)
+    assert torch.get_num_threads() == 1
+    second.__exit__(None, None, None)
+    assert torch.get_num_threads() == before

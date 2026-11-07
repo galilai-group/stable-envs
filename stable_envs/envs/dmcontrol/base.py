@@ -73,6 +73,10 @@ class _DMCModel(Env):
         )
         assert len(self.state_names) == self.state_dim
 
+    def _ray_backend(self) -> str:
+        """The CPU ray backend: ``"numba"`` or ``"torch"`` when the env names one, else ``"auto"``."""
+        return self.backend if self.backend in ("numba", "torch") else "auto"
+
     def _close(self) -> None:
         """Drop instance CPU scenes; shared GL and MJWarp contexts remain cached."""
         self.__dict__.pop("_cpu_scenes", None)
