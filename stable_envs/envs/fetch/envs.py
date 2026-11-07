@@ -315,6 +315,7 @@ def _build_bundle(scene: str) -> _Bundle:
     # MJWarp cannot draw sites. Hide them from the plate and render the goal as a moving geom.
     m.site_group[:] = HIDDEN_GROUP
     # Exclude translucent markers from this render model; this MJWarp path does not blend alpha.
+    marker_groups = np.array(m.geom_group[translucent], copy=True)
     m.geom_group[translucent] = HIDDEN_GROUP
     # This model is only for rendering; MJWarp MULTICCD rejects nonzero collision margins.
     m.geom_margin[:] = 0.0
@@ -339,6 +340,7 @@ def _build_bundle(scene: str) -> _Bundle:
         goal_mocap=int(m.body_mocapid[mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, "se:goalbody")]),
         robot=[g for g in range(m.ngeom) if "robot0:" in gname(g)],
         sky=_skybox(m),
+        markers=(np.asarray(translucent, np.int64), marker_groups),
     )
     b.cam_defaults = cam_defaults
     b.pristine = dict(
