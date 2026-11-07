@@ -57,6 +57,7 @@ PHYSICS = {
     "NATIVE_TORCH": "native torch on the env device",
     "NATIVE_JAX": "native JAX on the env device",
     "AUTO_NATIVE_MJX": "native MuJoCo on CPU; CUDA batches use native below 32 lanes, JAX/MJX otherwise",
+    "AUTO_BATCHED": "batched NumPy, or batched Torch for large CUDA batches, with Gymnasium resets",
 }
 
 

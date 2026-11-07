@@ -401,7 +401,7 @@ def test_classic_reports_authoritative_outputs_and_typed_state(name):
         } == set(result.keys())
         assert result["reward"].dtype == torch.float64
         assert result["terminated"].dtype == result["truncated"].dtype == torch.bool
-        assert env.execution_mode == "DELEGATED_CPU"
+        assert env.execution_mode == ("DELEGATED_CPU" if env.simulation_backend == "gym" else "NATIVE_NUMPY")
         assert set(result["state"].keys(True, True)) == {key[0] if len(key) == 1 else key for key in FULL_KEYS[name]}
         for key in result["state"].keys(True, True):
             assert result["state"][key].dtype == env.state_spec[key].dtype

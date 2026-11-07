@@ -26,6 +26,9 @@ CASES = {
     for case, limit in zip(PROFILES["native"], (500, 200, 500, 200, 999), strict=True)
 }
 EARLY = {"cartpole", "pendulum"}
+#: Batched NumPy steps equal the source steps on every device. Torch steps agree to rounding and
+#: tests/unit/test_classic_batched.py checks them.
+BACKEND = "numpy"
 
 
 def compare_state(actual, expected):
@@ -133,7 +136,7 @@ def _continuous_dtype_flag_necessity(device):
     """Show that omitting the reset-vs-stepped dtype bit changes continuation."""
     action = np.asarray([[0.1234567890123]], np.float64)
     ref = NativeClassicReference("mountain_car_continuous", 1)
-    with se.make("MountainCarContinuous", num_envs=1, device=device) as env:
+    with se.make("MountainCarContinuous", num_envs=1, device=device, simulation_backend=BACKEND) as env:
         try:
             snapshot = ref.reset(seed=17)
             compare_state(env.reset(seed=17), snapshot)
@@ -299,7 +302,7 @@ def _physical_variation(domain, device):
         "variation_values": {f"physics.{key}": np.asarray([value], np.float32) for key, value in values.items()}
     }
     ref = NativeClassicReference(domain, 1, options=options)
-    with se.make(CASES[domain]["stable_env"], num_envs=1, device=device) as env:
+    with se.make(CASES[domain]["stable_env"], num_envs=1, device=device, simulation_backend=BACKEND) as env:
         try:
             env.set_variation({f"physics.{key}": [value] for key, value in values.items()})
             check_reset_matches_reference(env, ref, seed=11)
@@ -314,11 +317,11 @@ def run_case(domain, batch, device):
     ref = NativeClassicReference(domain, batch)
     records = []
     with (
-        se.make(case["stable_env"], num_envs=batch, device=device) as env,
-        se.make(case["stable_env"], num_envs=batch, device=device) as other,
+        se.make(case["stable_env"], num_envs=batch, device=device, simulation_backend=BACKEND) as env,
+        se.make(case["stable_env"], num_envs=batch, device=device, simulation_backend=BACKEND) as other,
     ):
         try:
-            assert env.execution_mode == "DELEGATED_CPU"
+            assert env.execution_mode == "NATIVE_NUMPY"
             if domain not in EARLY:
                 _assert_default_float32_writes(domain, env)
             for seed in (0, 17, 42):
