@@ -11,11 +11,11 @@ from tests.helpers.reference.dmc_semantics import ReacherReference
 
 root = Path("tests/fixtures/semantics/reacher")
 root.mkdir(parents=True, exist_ok=True)
-path = root / "swm_176d545_mujoco312.npz"
+path = root / "swm_176d545_mujoco317.npz"
 if path.exists():
     raise FileExistsError(f"Refusing to overwrite frozen semantic oracle: {path}")
 pin = pinned_commit(clean=False)
-assert importlib.metadata.version("mujoco") == "3.12.0"
+assert importlib.metadata.version("mujoco") == "3.17.0"
 ref = ReacherReference(3)
 try:
     _, outcomes, values = rollout(ref, lambda ref: np.random.default_rng(217).uniform(-1, 1, (32, 3, 2)))

@@ -45,7 +45,7 @@ Variation that the replay starts from. See [State](../concepts/state.md#pusht-ch
 
 ## PushT
 
-The action is a relative control in [-1, 1] for each axis. It is not an absolute pixel target.
+The action is a relative control for each axis. It is not an absolute pixel target. The action space is [-1, 1], but PushT also accepts actions outside it and moves the target further, as stable-worldmodel does.
 
 <!-- env: PushT -->
 

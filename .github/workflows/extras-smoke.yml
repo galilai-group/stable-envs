@@ -56,10 +56,12 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
+      - name: Software OpenGL for CPU rendering
+        run: sudo apt-get update && sudo apt-get install -y libosmesa6-dev libgl1 libegl1
       - name: Install MuJoCo extras
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[dev,dmcontrol,ogbench]"
+          python -m pip install -e ".[dev,dmcontrol,ogbench,ogbench-manipulation,mshuman,mjwarp]"
       - name: Smoke MuJoCo extras
         env:
           MUJOCO_GL: osmesa

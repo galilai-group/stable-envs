@@ -1,7 +1,6 @@
 """Replay the frozen OGBMaze full-State corpus (recorded from stable-worldmodel) without importing it."""
 
 import hashlib
-import importlib.metadata
 import json
 from pathlib import Path
 
@@ -25,10 +24,9 @@ def test_ogbench_maze_oracle_hash():
     assert hashlib.sha256((ROOT / manifest["file"]).read_bytes()).hexdigest() == manifest["sha256"]
 
 
-@pytest.mark.skipif(importlib.metadata.version("mujoco") != "3.12.0", reason="Oracle is pinned to MuJoCo 3.12.0")
 def test_ogbench_maze_replays_independent_full_state_corpus():
     pytest.importorskip("ogbench")
-    data = np.load(ROOT / "swm_176d545_ogbench121_mujoco312.npz")
+    data = np.load(ROOT / "swm_176d545_ogbench121_mujoco317.npz")
 
     def state_at(t):
         state = TensorDict({}, [3])

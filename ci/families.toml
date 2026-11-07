@@ -131,7 +131,7 @@ tests = [
   "test_mjwarp_*",
   "test_plate_texels.py",
 ]
-requires = ["dm-control", "mujoco"]
+requires = ["dm-control", "mujoco>=3.17"]
 capabilities = ["gl", "swm"]
 linux_env = { MUJOCO_GL = "osmesa", PYOPENGL_PLATFORM = "osmesa" }
 shards = { pr = 3, nightly = 4 }
@@ -180,6 +180,13 @@ requires = ["PyFlyt==0.29.0", "pybullet==3.2.7"]
 capabilities = ["swm"]
 swm_with = ["cvxpy"]
 
+[family.roadster]
+extras = ["roadster"]
+paths = ["stable_envs/envs/roadster/**"]
+tests = ["test_roadster_*"]
+requires = ["mujoco", "pillow"]
+linux_env = { MUJOCO_GL = "osmesa", PYOPENGL_PLATFORM = "osmesa" }
+
 [family.craftax]
 extras = ["craftax"]
 groups = ["pin-craftax"]
@@ -189,3 +196,9 @@ requires = ["craftax", "jax"]
 capabilities = ["swm"]
 shards = { pr = 1, nightly = 1 }
 env_affinity = true
+
+[family.miniworld]
+extras = ["miniworld"]
+paths = ["stable_envs/envs/miniworld/**"]
+tests = ["test_miniworld_*"]
+requires = ["miniworld", "pyglet"]
