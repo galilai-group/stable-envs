@@ -589,6 +589,12 @@ def _simple_reward_boundary(device):
             ref.close()
 
 
+_EXPECTED_MODES = {
+    "cpu": {"TwoRoom": "NATIVE_NUMBA", "Piecewise": "NATIVE_NUMBA", "SimplePointMaze": "NATIVE_TORCH"},
+    "cuda": {"TwoRoom": "NATIVE_JAX", "Piecewise": "NATIVE_TORCH", "SimplePointMaze": "NATIVE_TORCH"},
+}
+
+
 def run_gate(device="cpu"):
     import stable_worldmodel
 
@@ -600,7 +606,7 @@ def run_gate(device="cpu"):
         "swm_commit": commit,
         "swm_source": str(source),
         "device": device,
-        "execution_mode": {"TwoRoom": "NATIVE_JAX", "Piecewise": "NATIVE_TORCH", "SimplePointMaze": "NATIVE_TORCH"},
+        "execution_mode": _EXPECTED_MODES[torch.device(device).type],
         "platform": platform.platform(),
         "versions": {
             name: importlib.metadata.version(name)
@@ -635,8 +641,7 @@ def run_gate(device="cpu"):
             ):
                 try:
                     with _diagnostic_case(env, ref, domain, "run_gate"):
-                        expected_mode = "NATIVE_JAX" if case["stable_env"] == "TwoRoom" else "NATIVE_TORCH"
-                        assert env.execution_mode == expected_mode
+                        assert env.execution_mode == _EXPECTED_MODES[torch.device(device).type][case["stable_env"]]
                         for seed in (0, 17, 42):
                             check_reset_matches_reference(env, ref, seed=seed)
                             snapshot = env.get_state()

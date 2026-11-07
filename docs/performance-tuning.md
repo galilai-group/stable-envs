@@ -5,11 +5,11 @@ budgets have defaults, and the library computes some defaults from the hardware.
 trade speed against memory. Frames and State are the same for every valid value.
 
 The `simulation_backend` constructor argument selects physics for [Reacher](environments/dmcontrol.md#reacher),
-[TwoRoom](environments/navigation.md#tworoom) and the
+[TwoRoom](environments/navigation.md#tworoom), TwoRoomTarget, Piecewise, PiecewiseZones and the
 [classic control](environments/classic-control.md#physics-backends) classes. Reacher chooses native CPU physics below a provisional
-cutoff of 32 environments and MJX for larger CUDA batches. TwoRoom uses Torch below `jax_min_envs`
-and JAX at or above it. Its cutoff defaults to 1 because current measurements favor JAX for one
-environment. Both cutoffs are constructor arguments and require measurements on your hardware to
+cutoff of 32 environments and MJX for larger CUDA batches. The four navigation classes use Numba on CPU. On CUDA, TwoRoom
+uses Torch below `jax_min_envs` and JAX at or above it. Its cutoff defaults to 1 because current measurements favor JAX for
+one environment. Both cutoffs are constructor arguments and require measurements on your hardware to
 choose the fastest implementation. Reacher's backends use different precision and can produce
 different trajectories, so these arguments are separate from the tuning knobs below.
 

@@ -48,11 +48,12 @@ def test_invalid_simulation_backend():
 @pytest.mark.parametrize(
     "batch,threshold,backend,expected",
     [
-        (1, 1, "auto", "jax"),
-        (7, 8, "auto", "torch"),
-        (8, 8, "auto", "jax"),
+        (1, 1, "auto", "numba"),
+        (7, 8, "auto", "numba"),
+        (8, 8, "auto", "numba"),
         (1, 8, "jax", "jax"),
         (8, 8, "torch", "torch"),
+        (8, 1, "numba", "numba"),
     ],
 )
 def test_batch_selection_matches_explicit_backend_and_restores(batch, threshold, backend, expected):
@@ -81,7 +82,7 @@ def test_invalid_jax_cutoff(threshold):
         se.TwoRoom(jax_min_envs=threshold)
 
 
-@pytest.mark.parametrize("backend", ["torch", "jax"])
+@pytest.mark.parametrize("backend", ["torch", "jax", "numba"])
 def test_collisions_with_fractional_per_lane_geometry(backend):
     positions = [[95, 100], [130, 100], [100, 49], [50, 21], [202, 100], [49, 100], [100, 130]]
     actions = torch.tensor([[1, 0], [-1, 0], [1, 0], [0, -5], [5, 0], [0, 1], [0, -1]], dtype=torch.float64)
@@ -130,7 +131,7 @@ def test_dlpack_shares_contiguous_inputs_and_step_has_no_host_conversion(monkeyp
     borrowed = from_torch(value)
     assert borrowed.unsafe_buffer_pointer() == value.data_ptr()
     assert torch.from_dlpack(borrowed).data_ptr() == value.data_ptr()
-    with se.TwoRoom(num_envs=4, device="cpu") as env:
+    with se.TwoRoom(num_envs=4, device="cpu", simulation_backend="jax") as env:
         env.reset(seed=0)
         action = torch.ones(4, 2, requires_grad=True)
         env.step(action, states=None, frames=None)  # Compile before guarding the runtime path.
@@ -207,15 +208,16 @@ def test_shared_distance_matches_cpu_norm_without_host_conversion(name, monkeypa
         assert_same_state(result["terminated"], expected < 16)
 
 
-def test_step_uses_the_observation_hook(monkeypatch):
-    with se.TwoRoom(device="cpu") as env:
+@pytest.mark.parametrize("backend", ["torch", "jax", "numba"])
+def test_step_uses_the_observation_hook(monkeypatch, backend):
+    with se.TwoRoom(device="cpu", simulation_backend=backend) as env:
         env.reset(seed=0)
         expected = torch.arange(10, dtype=torch.float32).reshape(1, 10)
         monkeypatch.setattr(env, "_observation", lambda agent, target: expected.clone())
         assert_same_state(env.step(torch.zeros(1, 2), frames=None)["observation"], expected)
 
 
-@pytest.mark.parametrize("backend", ["torch", "jax"])
+@pytest.mark.parametrize("backend", ["torch", "jax", "numba"])
 def test_continuous_action_multiply_rounds_before_position_addition(backend):
     options = {"state": [53.47578811645508, 60], "target_state": [180, 180]}
     action = torch.tensor([[-0.9868243932723999, 0.0]])
