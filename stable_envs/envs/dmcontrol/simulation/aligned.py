@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from functools import partial
+from functools import cache, partial
 from typing import Any
 
 import numpy as np
@@ -44,6 +44,50 @@ def _core(domain):
 ALIGNED_FIELDS = {domain: {**_core(domain), **_physics.state_fields(domain)} for domain in CONFIG}
 
 
+def _non_contacting_height(physics, orientation):
+    """dm_control's quadruped ``_find_non_contacting_height`` in direct MuJoCo calls.
+
+    Each attempt resets the data and runs both forward passes of ``reset_context`` with actuation disabled, so the
+    data end as dm_control leaves them. MuJoCo releases the GIL in these calls, so lanes reset in parallel threads.
+    """
+    import mujoco
+
+    m, d = physics.model.ptr, physics.data.ptr
+    adr = int(m.jnt_qposadr[mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, "root")])
+    flags = m.opt.disableflags
+    m.opt.disableflags = flags | mujoco.mjtDisableBit.mjDSBL_ACTUATION
+    try:
+        z, attempts, contacts = 0.0, 0, 1
+        while contacts > 0:
+            mujoco.mj_resetData(m, d)
+            mujoco.mj_forward(m, d)
+            d.qpos[adr : adr + 3] = 0.0, 0.0, z
+            d.qpos[adr + 3 : adr + 7] = orientation
+            mujoco.mj_forward(m, d)
+            contacts = d.ncon
+            z += 0.01
+            attempts += 1
+            if attempts > 10000:
+                raise RuntimeError("Failed to find a non-contacting configuration.")
+    finally:
+        m.opt.disableflags = flags
+
+
+@cache
+def _quadruped_move():
+    """dm_control's quadruped ``Move`` task with the height search above."""
+    from dm_control.suite import quadruped
+
+    class Move(quadruped.Move):
+        def initialize_episode(self, physics):
+            orientation = self.random.randn(4)
+            orientation /= np.linalg.norm(orientation)
+            _non_contacting_height(physics, orientation)
+            super(quadruped.Move, self).initialize_episode(physics)
+
+    return Move
+
+
 def _make_env(domain, seed):
     if "-" in domain:
         return suite_env(*domain.split("-"), seed)
@@ -68,7 +112,7 @@ def _make_env(domain, seed):
         from dm_control.suite import quadruped as module
 
         xml, assets = module.make_model(floor_size=10.0), module.common.ASSETS
-        task = module.Move(desired_speed=0.5, random=seed)
+        task = _quadruped_move()(desired_speed=0.5, random=seed)
     else:
         raise ValueError(f"Unsupported aligned DMC domain {domain!r}")
     model = source_model(module, xml, assets)
