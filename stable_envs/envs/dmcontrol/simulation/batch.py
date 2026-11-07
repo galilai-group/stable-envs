@@ -64,13 +64,19 @@ class DMCBatchAdapter(SimulatorAdapter):
         self._load(np.arange(self.num_envs))
 
     def _reset_lanes(self, ids, seed=None):
-        """Reset lanes ``ids`` with dm_control, ``seed + i`` seeding lane ``i``; lanes share no state."""
+        """Reset lanes ``ids`` with dm_control, ``seed + i`` seeding lane ``i``; lanes share no state.
+
+        This is dm_control's ``Environment.reset`` without its first observation, which the batch task computes.
+        """
         envs = self.lanes.envs
 
         def reset(i):
+            env = envs[i]._env
             if seed is not None:
-                envs[i].task._random = np.random.RandomState(int(seed) + int(i))
-            envs[i].reset()
+                env.task._random = np.random.RandomState(int(seed) + int(i))
+            env._reset_next_step, env._step_count = False, 0
+            with env.physics.reset_context():
+                env.task.initialize_episode(env.physics)
 
         if self._pool is None or len(ids) < 2:
             for i in ids:
