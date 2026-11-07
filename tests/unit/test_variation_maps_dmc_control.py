@@ -51,7 +51,7 @@ CELLS = sorted(MAPS)
 #: style leaves the mapping moves to reach it.
 DEFAULT_REACHED_THROUGH = {
     "DMCBallInCupCatch": {"light.diffuse_scale"},
-    "DMCFingerTurnHard": {"light.diffuse_scale"},
+    "DMCFingerTurnHard": {"light.diffuse_scale", "visibility.target"},
     "DMCManipulatorBringBall": {"light.diffuse_scale", "target_ball.shape", "visibility.target_ball"},
 }
 
