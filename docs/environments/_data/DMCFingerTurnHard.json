@@ -203,7 +203,7 @@
    "reset": false,
    "n": 2,
    "start": 0,
-   "default": 0
+   "default": 1
   }
  ],
  "devices": {

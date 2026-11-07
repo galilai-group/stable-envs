@@ -1,17 +1,10 @@
 from __future__ import annotations
 
-from ...spaces import Discrete
 from ._delegated import DelegatedSemantics
 
 
 class DMCAlignedSemantics(DelegatedSemantics):
     """BallInCup, Finger, Manipulator, Quadruped, PointMass and Swimmer on CPU dm_control lanes."""
-
-    def make_variation_space(self):
-        space = super().make_variation_space()
-        if self._simulator_key() == "finger":
-            space["visibility"]["target"] = Discrete(2, init_value=0)
-        return space
 
     @classmethod
     def _hideable(cls):
