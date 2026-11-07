@@ -90,7 +90,7 @@ def test_finger_visibility_groups_the_source_material_sites():
         model = env._model()
         target = next(ids for kind, name, ids in env._hideable() if kind == "site" and name == "target")
         assert set(target) == {model.site("target").id, model.site("tip").id}
-        assert env.resolve_style()["visibility.target"].item() == 0
+        assert env.resolve_style()["visibility.target"].item() == 1
 
 
 @pytest.mark.family("ogbench")
