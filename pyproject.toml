@@ -75,7 +75,8 @@ ogbench-manipulation-gpu = [
   "mujoco-warp==3.17.0",
   "warp-lang==1.17.0",
 ]
-dmcontrol = ["dm-control>=1.0.50", "mujoco>=3.17,<3.18"]
+# numba adds the compiled CPU renderer of every DM Control task.
+dmcontrol = ["dm-control>=1.0.50", "mujoco>=3.17,<3.18", "numba>=0.60"]
 # GPU DM Control with the TrackCom floor reflection, which needs MuJoCo Warp 3.17.
 dmcontrol-gpu = [
   "dm-control>=1.0.50", "mujoco>=3.17,<3.18", "mujoco-warp>=3.17,<3.18", "warp-lang>=1.16",
@@ -183,6 +184,7 @@ pin-dmc = [
   "dm-control==1.0.50; python_version >= '3.12'",
   "mujoco==3.17.0; python_version >= '3.12'",
   "mujoco-mjx==3.17.0; python_version >= '3.12'",
+  "numba==0.68.0; python_version >= '3.12'",
 ]
 pin-fetch = [
   "numpy==2.5.3; python_version >= '3.12'",

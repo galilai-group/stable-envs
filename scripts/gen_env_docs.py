@@ -37,8 +37,8 @@ RENDER_SIZE = 160
 RENDERERS = {
     "classic_control": {"cpu": "gfxdraw port (torch)", "cuda": "gfxdraw port (fused Triton kernel)"},
     "craftax": {"cpu": "Craftax pixel renderer (JAX)", "cuda": "Craftax pixel renderer (JAX)"},
-    "dmcontrol-suite": {"cpu": "raycast3d (torch)", "cuda": "raycast3d (torch)"},
-    "dmcontrol-trackcom": {"cpu": "cpu3d", "cuda": "mjwarp"},
+    "dmcontrol-suite": {"cpu": "raycast3d (Numba)", "cuda": "raycast3d (torch)"},
+    "dmcontrol-trackcom": {"cpu": "cpu3d (Numba)", "cuda": "mjwarp"},
     "fetch": {"cpu": "opengl (MuJoCo)", "cuda": "mjwarp"},
     "miniworld": {"cpu": "opengl (Miniworld, pyglet)", "cuda": "opengl (Miniworld) on CPU, frames copied to CUDA"},
     "mshuman": {"cpu": "opengl (MuJoCo)", "cuda": "host-side serial MuJoCo OpenGL, frames copied to CUDA"},
