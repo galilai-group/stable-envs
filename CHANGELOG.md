@@ -209,6 +209,9 @@ All notable changes to this project are listed here. The format follows
 
 ### Fixed
 
+- DMCFingerTurnHard draws the target sphere and the tip site by default, as dm_control's `finger-turn_hard`
+  does. `visibility.target` now defaults to 1, the same as DMCFingerTurnEasy. Set it to 0 for
+  stable-worldmodel's default, which hides both sites.
 - Classic control frames of the gfxdraw port and the Numba kernel are equal to the Gymnasium frames at
   angles within 1e-6 rad of a multiple of pi/2. The port rotates as pygame's `Vector2.rotate_rad` does: it
   wraps the angle into [0, 2 pi), rotates such angles exactly, and computes cos and sin with the C library on CPU.
