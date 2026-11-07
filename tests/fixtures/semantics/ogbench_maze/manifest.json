@@ -9,17 +9,17 @@
     "width": 224,
     "height": 224
   },
-  "file": "swm_176d545_ogbench121_mujoco312.npz",
+  "file": "swm_176d545_ogbench121_mujoco317.npz",
   "sha256": "1b5002324bcdb958e8fa90fc9ed16a41e3c5a916ea715d2562a34abc97c3ae7d",
   "seed": 17,
   "batch": 3,
   "steps": 32,
-  "generator": "scripts/recovery/freeze_ogbench_maze_oracle.py",
+  "generator": "scripts/testing/freeze_ogbench_maze_oracle.py",
   "versions": {
-    "numpy": "2.5.3",
-    "gymnasium": "1.3.0",
+    "numpy": "2.2.6",
+    "gymnasium": "1.2.3",
     "ogbench": "1.2.1",
-    "mujoco": "3.12.0",
+    "mujoco": "3.17.0",
     "stable-worldmodel": "0.0.6"
   },
   "source": "Real pinned SWM wrapper only; independent of candidate adapter",

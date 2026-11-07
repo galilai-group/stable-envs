@@ -101,4 +101,9 @@ Matplotlib figure of 500 × 500 px.
 **Success:** the episode terminates when the agent is inside the goal radius. The reward is 1 at the
 goal and -0.01 for every other step.
 
+**Goal image:** `info.goal` is the Matplotlib figure of the goal frame that `reset` and `set_state`
+draw. Every step returns the same image tensor. Do not write into it. For `[B, T]` actions, `info.goal`
+is a view of this image along the time axis. When a lane ends inside the sequence, `info.goal` is a
+copy with zeros after the end.
+
 <!-- env: SimplePointMaze -->

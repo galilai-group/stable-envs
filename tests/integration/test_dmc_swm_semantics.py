@@ -68,7 +68,7 @@ def test_dmc_full_state_semantics(gate):
                 assert env.state_spec[key].dtype == dtype
             env.set_variation({"light.diffuse_scale": [1.1]})
             assert np.array_equal(
-                env._simulator.envs[0].physics.model.opt.gravity,
+                env._simulator.lanes.envs[0].physics.model.opt.gravity,
                 np.array([0.0, 0.0, -9.81], np.float64),
             )
     result = module.run_gate(os.environ.get(device, "cpu"))

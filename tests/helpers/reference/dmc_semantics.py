@@ -239,7 +239,7 @@ def compare_models(candidate, reference, *, minimum):
 
     Returns how many arrays were compared, which must be at least ``minimum``.
     """
-    actual = candidate._simulator.envs[0].physics.model
+    actual = candidate._simulator.lanes.envs[0].physics.model
     expected = reference.envs[0].env.physics.model
     compared = 0
     for name in dir(actual):
@@ -256,7 +256,7 @@ def compare_models(candidate, reference, *, minimum):
         assert np.array_equal(left, right, equal_nan=True), name
         compared += 1
     assert compared >= minimum
-    candidate_base, reference_base = candidate._simulator.envs[0]._env, reference.envs[0].env._env
+    candidate_base, reference_base = candidate._simulator.lanes.envs[0]._env, reference.envs[0].env._env
     assert candidate_base._n_sub_steps == reference_base._n_sub_steps
     assert candidate_base._step_limit == reference_base._step_limit
     assert candidate_base.control_timestep() == reference_base.control_timestep()
