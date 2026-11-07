@@ -385,7 +385,7 @@ class ManipulationSemantics:
 
     @classmethod
     def reference_env(cls, size=None):
-        """MuJoCo's own OpenGL renderer drawing the same compiled Cube/Scene model."""
+        """MuJoCo OpenGL drawing the same compiled Cube/Scene model and appearance."""
         return cls(num_envs=1, size=size, device="cuda", backend="opengl")
 
     @classmethod
@@ -404,13 +404,14 @@ class ManipulationSemantics:
 from .manipulation import OGBCube as _CubeRenderer
 from .manipulation import OGBScene as _SceneRenderer
 
-# Per-frame MSE of the default OpenGL frames against the source; tests/fixtures/source_mse.json holds the same values.
-_OPENGL_MSE = {"Cube": (0.0, 0.0, 0.0), "Scene": (0.0, 0.0, 0.0001)}
+# Per-frame MSE of default OpenGL frames against a second stable-envs OpenGL instance with the same
+# compiled model and appearance. tests/fixtures/source_mse.json holds the CUDA measurement.
+_OPENGL_MSE = {"Cube": (0.0, 0.0, 0.0), "Scene": (0.0, 0.0, 0.0)}
 _OPENGL_NOTE = (
-    "MuJoCo OpenGL, the source's renderer, draws the frames on CPU and CUDA. On CUDA the NVIDIA driver can "
-    "change a pixel by 1/255 between two draws of one state, as it does for the source; visual_fidelity records "
-    "the measured error. With supersample 2 or more, MJWarp draws the CUDA frames, and its lighting and "
-    "transparency can differ from MuJoCo."
+    "At supersample 1, visual_fidelity is an implementation-consistency measurement against another stable-envs "
+    "MuJoCo OpenGL instance using the same compiled model and appearance; it is not an upstream-default-appearance "
+    "comparison. With supersample 2 or more, MJWarp draws CUDA frames, and its lighting and transparency can "
+    "differ from the same-style stable-envs OpenGL reference."
 )
 
 
@@ -421,9 +422,12 @@ def _opengl_fidelity(renderer):
         **renderer.visual_fidelity,
         **measured,
         "measured_at": (
-            "mujoco 3.12.0 / ogbench 1.2.1 reference; default backend and sampling; per-frame MSE over pixels "
+            "mujoco 3.17.0 / ogbench 1.2.1; default backend, supersample 1; per-frame MSE over pixels "
             "and channels on the 0-255 scale, over the 64 render rows of sample_render_rows(default_rng(20260811)); "
-            "NVIDIA GeForce RTX 3090 / driver 575.57.08 / MUJOCO_GL=egl."
+            "candidate and reference are stable-envs MuJoCo OpenGL instances with the same compiled appearance. "
+            "Measured on CPU Mesa llvmpipe (LLVM 20.1.8, torch 2.15.0+cpu) and CUDA NVIDIA H200 / driver "
+            "580.173.02 / MUJOCO_GL=egl (torch 2.15.0+cu132); tests/fixtures/source_mse.json retains the CUDA "
+            "measurement."
         ),
     }
 

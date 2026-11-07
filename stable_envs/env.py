@@ -793,8 +793,9 @@ class Env:
         if not self.reset_leaves:
             return out
         lanes = []
+        # Seeding replaces every generator in the tree, so one tree serves every lane.
+        tree = self.reset_tree_factory()
         for lane in range(self.B):
-            tree = self.reset_tree_factory()
             tree.seed(None if seed is None else int(seed) + lane)
             lanes.append(self._draw_reset_lane(tree, lane, sampled, values))
         for path in lanes[0]:
@@ -1140,12 +1141,16 @@ class Env:
             names=tuple(names),
         )
 
-    def reset(self, seed: int | None = None) -> TensorDict:
-        """Reset the environment and return full State; an explicit seed restarts its sampler."""
-        self._require_state("reset")
+    def _reseed(self, seed: int | None) -> None:
+        """Restart the State sampler from an explicit seed; ``None`` keeps the current stream."""
         if seed is not None:
             self.rng = np.random.default_rng(int(seed))
             self._seed = int(seed)
+
+    def reset(self, seed: int | None = None) -> TensorDict:
+        """Reset the environment and return full State; an explicit seed restarts its sampler."""
+        self._require_state("reset")
+        self._reseed(seed)
         self.draw_reset_values(seed)
         self._set_render_state(self.sample_states(self.B, self.rng))
         return self.state

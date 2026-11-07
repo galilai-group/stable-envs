@@ -1,0 +1,112 @@
+{
+ "class_name": "RoadsterCarHop",
+ "module": "stable_envs.envs.roadster.envs",
+ "family": "roadster",
+ "domain": "carhop",
+ "reference_id": "roadster_jets/RoadsterPlan-v0:carhop",
+ "requires_cuda": false,
+ "has_dynamics": true,
+ "default_size": 96,
+ "frame_shape": [96, 96, 3],
+ "physics": "source simulator on CPU",
+ "renderers": {
+  "cpu": "opengl (MuJoCo)",
+  "cuda": "opengl (MuJoCo) on CPU, frames copied to CUDA"
+ },
+ "action": {
+  "shape": [4],
+  "dtype": "float32",
+  "low": -1,
+  "high": 1
+ },
+ "state": [
+  {
+   "key": "sim",
+   "leaves": 11,
+   "numel": 490,
+   "dtypes": ["bool", "float64"]
+  },
+  {
+   "key": "autopilot",
+   "leaves": 3,
+   "numel": 3,
+   "dtypes": ["bool", "float64"]
+  },
+  {
+   "key": "task",
+   "leaves": 15,
+   "numel": 15,
+   "dtypes": ["bool", "float64", "int64"]
+  },
+  {
+   "key": "goal",
+   "leaves": 3,
+   "numel": 7,
+   "dtypes": ["float64"]
+  },
+  {
+   "key": "route",
+   "leaves": 5,
+   "numel": 33,
+   "dtypes": ["bool", "float64", "int64"]
+  },
+  {
+   "key": "jam",
+   "leaves": 2,
+   "numel": 4,
+   "dtypes": ["bool", "float64"]
+  },
+  {
+   "key": "weather",
+   "leaves": 11,
+   "numel": 21,
+   "dtypes": ["float64", "int64"]
+  },
+  {
+   "key": "fx",
+   "leaves": 2,
+   "numel": 1801,
+   "dtypes": ["float64", "int64"]
+  },
+  {
+   "key": "lifecycle",
+   "leaves": 1,
+   "numel": 1,
+   "dtypes": ["int64"]
+  },
+  {
+   "key": "physics",
+   "leaves": 2,
+   "numel": 2,
+   "dtypes": ["float64"]
+  }
+ ],
+ "variation": [
+  {
+   "path": "rendering.cinematic",
+   "type": "Discrete",
+   "reset": false,
+   "n": 2,
+   "start": 0,
+   "default": 0
+  },
+  {
+   "path": "weather.rain",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0,
+   "high": 1,
+   "default": 0
+  },
+  {
+   "path": "weather.wind",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0,
+   "high": 20,
+   "default": 0
+  }
+ ]
+}

@@ -9,6 +9,7 @@ import platform
 import subprocess
 from pathlib import Path
 
+import mujoco
 import numpy as np
 import torch
 
@@ -42,8 +43,8 @@ OMISSIONS = {
     ],
     "quadruped": [("warmstart",), ("activation",)],
 }
-# Ball-in-Cup prefix 6 is a contact snapshot whose omitted fields change later outputs on both
-# ARM/MuJoCo 3.12 and x86/MuJoCo 3.11; at prefix 5 the omission has no effect on x86/3.11.
+# Ball-in-Cup prefix 6 is a contact snapshot whose omitted fields change later outputs on x86/MuJoCo
+# 3.17; at prefix 5 the omission has no effect there.
 PREFIXES = {"ball_in_cup": 6, "finger": 7, "manipulator": 1, "quadruped": 1}
 
 
@@ -55,9 +56,10 @@ def _omission_experiments(domain, env, reference):
         compare_state(env.reset(seed=0), reference.reset(seed=0))
         check_step_matches_reference(env, reference, actions[:prefix])
         saved = env.get_state()
-        physics = env._simulator.envs[0].physics
-        contact_count = int(physics.data.ncon)
-        constraint_count = int(physics.data.nefc)
+        data = env._simulator.b.get_data(0)
+        mujoco.mj_forward(env._simulator.b.get_model(0), data)
+        contact_count = int(data.ncon)
+        constraint_count = int(data.nefc)
         if omitted_key[0] == "model":
             env.reset(seed=991)
         else:
@@ -170,9 +172,9 @@ def run_gate(device="cpu"):
                         check_reset_matches_reference(env, reference, seed=0)
                         evidence["construction"][domain] = {
                             "numeric_model_arrays_exact": compare_models(env, reference, minimum=500),
-                            "nq": env._simulator.envs[0].physics.model.nq,
-                            "nv": env._simulator.envs[0].physics.model.nv,
-                            "na": env._simulator.envs[0].physics.model.na,
+                            "nq": env._simulator.lanes.envs[0].physics.model.nq,
+                            "nv": env._simulator.lanes.envs[0].physics.model.nv,
+                            "na": env._simulator.lanes.envs[0].physics.model.na,
                             "action_dim": reference.action_dim,
                             "observation_dim": int(reference.envs[0].observation_space.shape[0]),
                             "control_timestep": reference.envs[0].env._env.control_timestep(),

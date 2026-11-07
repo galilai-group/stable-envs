@@ -34,10 +34,10 @@ adapter of one worker. Lane `i` of the batch gets `seed + i`.
 The local adapter declares what the parent needs:
 
 - `process_attributes` names attributes that the parent copies from a
-  one-lane prototype, for example `action_dim` or `physics_layout`. The
+  one-lane prototype, for example `action_dim` or `fields`. The
   prototype stays open in the parent as `_metadata`.
 - `process_methods` names family methods that run on every worker, for
-  example `{"configure_physics": "per_lane"}`. `ProcessAdapter.call(name, *args)`
+  example `{"configure": "per_lane"}`. `ProcessAdapter.call(name, *args)`
   runs one. For `per_lane`, each worker receives the rows of the first argument
   that it owns. For `broadcast`, every worker receives the same arguments. The
   parent joins the return values in lane order. A listed method without a

@@ -50,8 +50,8 @@ def test_invalid_last_lane_restores_no_lane():
             return state
 
         assert_atomic_restore(adapter, corrupt, ValueError, lambda a: a.step(np.zeros((4, 2))))
-        with pytest.raises(ValueError, match="PushT continuous actions must be in"):
-            adapter.step(np.full((4, 2), 2.0))
+        with pytest.raises(ValueError, match="PushT action must be finite"):
+            adapter.step(np.full((4, 2), np.nan))
         with pytest.raises(ValueError, match="Unsupported PushT reset option"):
             adapter.reset(3, {"unknown": 1})
         assert not adapter._closed

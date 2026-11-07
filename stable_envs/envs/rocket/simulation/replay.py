@@ -258,6 +258,16 @@ class RocketReplay:
             ]
         )
 
+    def render_fields(self):
+        """Body poses, the cached camera link pose and colours, as ``get_state`` records them."""
+        aviary = self.env.env
+        body = np.stack(
+            [np.concatenate(aviary.getBasePositionAndOrientation(aviary.getBodyUniqueId(i))) for i in range(3)]
+        )
+        rocket = aviary.drones[0].Id
+        link = aviary.getLinkStates(rocket, list(range(aviary.getNumJoints(rocket))), computeLinkVelocity=1)[0]
+        return body, np.concatenate([link[0], link[1]]), self.rgba()
+
     def get_state(self):
         e = self.env
         state = {
