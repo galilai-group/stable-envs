@@ -23,10 +23,12 @@ for their options and output schema.
 On CPU, PushT draws with a Numba rasterizer (see [PushT](environments/pusht.md)). Its frames equal
 the pygame frames of the pinned stable-worldmodel source, so the useful comparison is cost per frame
 against `backend="source"`, which draws with that pygame code in 8 render worker processes for batches
-of 64 or more. `python -m benchmarks.render --envs PushT --device cpu --size 224` on one node (Xeon Gold
+of 64 or more. `NUMBA_NUM_THREADS=N OMP_NUM_THREADS=N MKL_NUM_THREADS=N python -m benchmarks.render
+--envs PushT --device cpu --size 224 --batches 256,1024 --warmup 2 --repeats 7 --threads N` with N = 1
+or 64 (Numba takes its thread count from `NUMBA_NUM_THREADS`, not `--threads`) on one node (Xeon Gold
 6548Y+, 64 CPUs allocated), median of 3 runs:
 
-| backend | `--threads` | batch 256 ms/frame | batch 1,024 ms/frame |
+| backend | threads | batch 256 ms/frame | batch 1,024 ms/frame |
 |---|---:|---:|---:|
 | `"auto"` (Numba) | 1 | 0.095 | 0.093 |
 | `"auto"` (Numba) | 64 | 0.014 | 0.0082 |
