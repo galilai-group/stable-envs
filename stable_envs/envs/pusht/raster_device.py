@@ -200,20 +200,21 @@ def _put_mask(mask, slots, values):
 def _clip(records, clipped):
     """Give the line records marked in ``clipped`` the start and length of pygame's clipped run.
 
-    Such lines are rare (a body partly off the canvas), so the runs come from ``raster.clipped_line``.
+    Such lines are rare (a body partly off the canvas), so the runs come from ``raster_cpu.clipped_line``.
     """
     where = torch.nonzero(clipped)
     if not len(where):
         return
+    from .raster_cpu import clipped_line
+
     rows = records[where[:, 0], where[:, 1]].cpu().numpy()
     for rec in rows:
         x1, y1 = int(rec[R.LX]), int(rec[R.LY])
         x2, y2 = x1 + int(rec[R.LSX] * rec[R.LDX]), y1 + int(rec[R.LSY] * rec[R.LDY])
-        run = R.clipped_line(x1, y1, x2, y2)
-        if run is None:
+        sx, sy, steps = clipped_line(x1, y1, x2, y2)
+        if steps < 0:
             rec[R.KIND] = 0
-            run = x1, y1, int(rec[R.LN])
-        sx, sy, steps = run
+            steps = int(rec[R.LN])
         rec[R.LX], rec[R.LY], rec[R.LN] = sx, sy, steps
         rec[R.BX0], rec[R.BX1] = sx - steps - 1, sx + steps + 2
         rec[R.BY0], rec[R.BY1] = sy - steps - 1, sy + steps + 2

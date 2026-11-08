@@ -60,10 +60,6 @@ def _to_device(fields, device):
     return {key: out[key] for key in fields}
 
 
-#: Smallest CPU batch that ``backend="auto"`` draws with the Numba rasterizer.
-_NUMBA_MIN_ROWS = 8
-
-
 class PushT(Env):
     """Source-aligned continuous PushT with complete, replayable numeric State.
 
@@ -111,8 +107,8 @@ class PushT(Env):
         from .projection import PushTProjection
         from .simulation.execution import make_pusht_adapter
 
-        if backend not in ("auto", "source", "port", "pygame"):
-            raise ValueError("PushT backend must be 'auto', 'source' (pygame) or 'port'")
+        if backend not in ("auto", "source", "pygame"):
+            raise ValueError("PushT backend must be 'auto' or 'source' (pygame)")
         self._render_backend = "source" if backend == "pygame" else backend
         if supersample != 1:
             raise ValueError("The source PushT renderer has no supersample setting")
@@ -347,10 +343,10 @@ class PushT(Env):
                 frames = self._draw_device(fields, size)
             else:
                 frames = raster.render(fields, size, self.device, lambda rows: self._draw_pygame(rows, size))
-        elif self._cpu_port(size, len(fields["recipe/config"])):
+        elif self._cpu_port(size):
             from . import raster
 
-            frames = raster.render_cpu(fields, size, lambda rows: self._draw_pygame(rows, size))
+            frames = raster.render_cpu(fields, size, lambda rows: self._draw_pygame(rows, size), out)
         else:
             frames = torch.as_tensor(self._draw_pygame(fields, size), device=self.device)
         if out is not None:
@@ -375,23 +371,14 @@ class PushT(Env):
 
         return raster.HAVE_TRITON and raster.resize_supported(size)
 
-    def _cpu_port(self, size, count=_NUMBA_MIN_ROWS):
-        """Whether CPU output uses the Numba rasterizer, which draws the same bytes as pygame.
-
-        With ``backend="auto"``, batches of fewer than ``_NUMBA_MIN_ROWS`` rows draw with pygame, which is
-        faster for them.
-        """
+    def _cpu_port(self, size):
+        """Whether CPU output uses the Numba rasterizer, which draws the same bytes as pygame."""
         if self.device.type != "cpu" or self._render_backend == "source":
-            return False
-        if self._render_backend == "auto" and count < _NUMBA_MIN_ROWS:
             return False
         from ...render import cpu_raster
         from . import raster
 
-        ok = cpu_raster.available() and raster.resize_supported(size)
-        if self._render_backend == "port" and not ok:
-            raise ValueError(f"PushT backend='port' on CPU needs numba and a supported size, got size={size}")
-        return ok
+        return cpu_raster.available() and raster.resize_supported(size)
 
     def _draw_device(self, fields, size):
         """Draw device render fields with primitives built on the GPU."""

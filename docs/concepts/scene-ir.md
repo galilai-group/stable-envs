@@ -68,7 +68,7 @@ is the speedup of baked over unbaked. A dash means the bake is below the thresho
 | 16,384 | 2.15× | 2.26× | over the output budget |
 
 The PushT columns use the internal Scene2D PushT scene (`stable_envs/envs/pusht/legacy.py`). The public
-PushT classes render with pygame.
+PushT classes draw the pygame frames with their own Numba (CPU) and Triton (CUDA) rasterizers.
 
 ## Building a scene
 

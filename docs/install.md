@@ -70,8 +70,8 @@ pip install "stable-envs[miniworld]"
 Miniworld draws with pyglet's OpenGL. On Linux the family selects pyglet's headless EGL mode unless
 `PYGLET_HEADLESS` is set, so it needs an EGL driver (Mesa's llvmpipe works without a GPU).
 
-PushT renders with pygame on CPU. `device="cuda"` places the output tensors on the GPU. The drawing
-still runs on CPU.
+PushT renders with Numba on CPU, or with pygame when Numba is missing. With `device="cuda"` and
+Triton, it draws on the GPU.
 
 ## Reference profiles
 

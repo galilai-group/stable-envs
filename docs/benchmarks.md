@@ -20,20 +20,20 @@ for their options and output schema.
 
 ## PushT
 
-PushT draws with the source's pygame code on CPU. `device="cuda"` only places the output. Its frames
-equal the pinned stable-worldmodel source, so the useful comparison is cost per frame against that
-source on the same core. `examples/bench_pusht_source.py` renders States saved from four episodes
-both ways, on one thread, at 224 px:
+On CPU, PushT draws with a Numba rasterizer (see [PushT](environments/pusht.md)). Its frames equal
+the pygame frames of the pinned stable-worldmodel source, so the useful comparison is cost per frame
+against `backend="source"`, which draws with that pygame code in 8 render worker processes for batches
+of 64 or more. `python -m benchmarks.render --envs PushT --device cpu --size 224` on one node (Xeon Gold
+6548Y+, 64 CPUs allocated), median of 3 runs:
 
-| CPU | batch | first `env.render` ms/frame | warm `env.render` ms/frame | source ms/frame | warm vs source |
-|---|---:|---:|---:|---:|---:|
-| Apple M5 Pro | 64 | 1.08 | 0.55 | 0.66 | 1.22× |
-| Apple M5 Pro | 1,024 | 0.88 | 0.59 | 0.67 | 1.13× |
-| Xeon Platinum 8268 | 64 | 4.98 | 3.69 | 3.04 | 0.83× |
-| Xeon Platinum 8268 | 1,024 | 5.19 | 4.02 | 3.28 | 0.82× |
+| backend | `--threads` | batch 256 ms/frame | batch 1,024 ms/frame |
+|---|---:|---:|---:|
+| `"auto"` (Numba) | 1 | 0.095 | 0.093 |
+| `"auto"` (Numba) | 64 | 0.014 | 0.0082 |
+| `"source"` (pygame) | 64 | 0.184 | 0.129 |
 
-The first render of a batch builds one pymunk scene per lane. Later renders reuse it. The pygame
-drawing is the same on both sides. The difference is Python work per frame.
+`benchmarks.render` does not time the first render of a batch. It builds one pymunk scene per lane,
+and the first Numba render in a process also loads the compiled kernels.
 
 ## Notes
 
