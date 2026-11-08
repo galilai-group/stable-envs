@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import math
 import os
 
@@ -347,7 +348,12 @@ def _make_variation_space() -> Dict:
 
 def style_layout() -> dict:
     """``{path: (offset, width)}`` of the env's flat style tensor, from the space itself."""
-    return {p: (o, w) for p, o, w in _make_variation_space().flat_layout()}
+    return dict(_style_layout())
+
+
+@functools.cache
+def _style_layout() -> tuple:
+    return tuple((p, (o, w)) for p, o, w in _make_variation_space().flat_layout())
 
 
 def style_dim() -> int:

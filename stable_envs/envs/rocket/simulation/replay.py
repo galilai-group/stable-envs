@@ -98,6 +98,16 @@ def decode_rng(row):
     )
 
 
+def rng_rows_valid(rows):
+    """True when ``decode_rng`` accepts every row of ``rows``."""
+    if rows.ndim != 2 or rows.shape[1] != 11 or rows.dtype != np.int64:
+        return False
+    absent = (rows[:, 0] == 0) & ~rows.any(1)
+    words = ((rows[:, 1:] >= 0) & (rows[:, 1:] <= 0xFFFFFFFF)).all(1)
+    present = (rows[:, 0] == 1) & words & np.isin(rows[:, 9], [0, 1]) & (rows[:, 5] % 2 == 1)
+    return bool((absent | present).all())
+
+
 def generator_state(node):
     return None if node._np_random is None else copy.deepcopy(node._np_random.bit_generator.state)
 
@@ -152,6 +162,7 @@ class RocketReplay:
             raise ValueError("Rocket horizon must be positive")
         self.names = [p[1:].replace("/", ".") for p, _ in nodes(self.env.variation_space) if p]
         self.registered = {path: self.env.variation_space._walk(path).init_value.copy() for path in PAINTED}
+        self._layout = None
         if initialize:
             try:
                 self.reset(seed, options)
@@ -268,11 +279,11 @@ class RocketReplay:
         link = aviary.getLinkStates(rocket, list(range(aviary.getNumJoints(rocket))), computeLinkVelocity=1)[0]
         return body, np.concatenate([link[0], link[1]]), self.rgba()
 
-    def get_state(self):
+    def recipe(self):
+        """The configuration entries of ``get_state``, which a restored State must match."""
         e = self.env
-        state = {
+        return {
             "recipe/version": np.array(1, np.int64),
-            "recipe/seed": np.array(self.seed, np.int64),
             "recipe/config": np.array(
                 [
                     e.ceiling,
@@ -286,6 +297,17 @@ class RocketReplay:
                 [e.sparse_reward, e.angle_representation, int(e.render_mode is not None)], np.int64
             ),
             "recipe/render_resolution": np.array(e.render_resolution, np.int64),
+        }
+
+    def get_state(self):
+        e = self.env
+        recipe = self.recipe()
+        state = {
+            "recipe/version": recipe["recipe/version"],
+            "recipe/seed": np.array(self.seed, np.int64),
+            "recipe/config": recipe["recipe/config"],
+            "recipe/flags": recipe["recipe/flags"],
+            "recipe/render_resolution": recipe["recipe/render_resolution"],
             "recipe/reset_flags": np.array(
                 [
                     self.options.get("randomize_drop", False),
@@ -370,6 +392,86 @@ class RocketReplay:
         if decode_rng(state["recipe/main_rng"]) is None:
             raise ValueError("Missing main reset RNG")
         return n, post
+
+    def validate_batch(self, columns):
+        """Validate stacked rows as ``validate`` validates each row; the first axis of each column is the row.
+
+        The checks run on whole columns. When one fails, ``validate`` runs row by row and raises its error.
+        """
+        if self._columns_valid(columns):
+            return
+        for i in range(len(next(iter(columns.values()), ()))):
+            self.validate({k: v[i, ...].copy() for k, v in columns.items()})
+
+    def _columns_valid(self, columns):
+        """True when every row passes ``validate``; False when a row may fail it."""
+        if self._layout is None:
+            # The keys, shapes and dtypes of ``get_state`` do not change during the life of an engine.
+            self._layout = {key: (value.shape, value.dtype) for key, value in self.get_state().items()}
+        layout = self._layout
+        if not isinstance(columns, dict) or columns.keys() != layout.keys():
+            return False
+        lengths = columns["history/length"]
+        if not isinstance(lengths, np.ndarray) or lengths.ndim != 1:
+            return False
+        batch = len(lengths)
+        for key, value in columns.items():
+            shape, dtype = layout[key]
+            if (
+                not isinstance(value, np.ndarray)
+                or value.shape != (batch, *shape)
+                or value.dtype != dtype
+                or dtype.kind not in "biuf"
+                or (dtype.kind == "f" and not np.isfinite(value).all())
+            ):
+                return False
+        for key, value in self.recipe().items():
+            if not (columns[key] == value).all():
+                return False
+        scalars = [
+            "history/length",
+            "lifecycle/post_terminal_steps",
+            "lifecycle/last_action_dtype",
+            "recipe/seed",
+            "current/wrapper/step_count",
+            "current/wrapper/termination",
+            "current/wrapper/truncation",
+        ]
+        if any(layout[key][0] != () for key in scalars) or layout["current/wrapper/step_count"][1].kind != "i":
+            return False
+        n, post = columns["history/length"], columns["lifecycle/post_terminal_steps"]
+        if not ((n >= 0) & (n <= self.capacity) & (post >= 0)).all():
+            return False
+        # ``n + post`` below the int64 maximum, without overflow.
+        if (post >= np.iinfo(np.int64).max - n).any() or (columns["recipe/seed"] < -1).any():
+            return False
+        valid = np.arange(self.capacity) < n[:, None]
+        actions, dtypes = columns["history/actions"], columns["history/dtypes"]
+        if not np.array_equal(columns["history/valid"], valid) or actions[~valid].any() or dtypes[~valid].any():
+            return False
+        codes, last = dtypes[valid], columns["lifecycle/last_action_dtype"]
+        if not ((codes == 1) | (codes == 2)).all() or not ((last == 1) | (last == 2)).all():
+            return False
+        if (columns["current/wrapper/step_count"] != n + post).any():
+            return False
+        ended = columns["current/wrapper/termination"] != 0
+        ended |= columns["current/wrapper/truncation"] != 0
+        if ((post != 0) & ~ended).any():
+            return False
+        with np.errstate(all="ignore"):
+            lossless = (actions.astype(np.float32) == actions).all(-1)
+        if not lossless[valid & (dtypes == 1)].all():
+            return False
+        live = actions[valid]
+        fins_and_gimbals = live[:, [0, 1, 2, 5, 6]]
+        if ((fins_and_gimbals < -1) | (fins_and_gimbals > 1)).any():
+            return False
+        if ((live[:, 3:5] < 0) | (live[:, 3:5] > 1)).any():
+            return False
+        rngs = [v for k, v in columns.items() if k.endswith("/rng") or k in ["recipe/main_rng", "rng/action_space"]]
+        if any(rng.shape[1:] != (11,) for rng in rngs) or not rng_rows_valid(np.concatenate(rngs).reshape(-1, 11)):
+            return False
+        return bool((columns["recipe/main_rng"][:, 0] == 1).all())
 
     def reconstruct(self, state):
         """Validate the recipe and return a matching new engine, leaving this owner untouched."""

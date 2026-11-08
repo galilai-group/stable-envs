@@ -134,7 +134,7 @@ _SIM = (
     "rocket-sim",
     "roadster-sim",
 )
-_RENDER = ("classic-render", "fetch-opengl", "miniworld-render", "roadster-render")
+_RENDER = ("classic-render", "fetch-opengl", "miniworld-render", "roadster-render", "rocket-render")
 
 KNOBS: dict[str, Knob] = {
     k.name: k
@@ -173,7 +173,7 @@ RENDER_PATHS: dict[str, tuple[str, ...]] = {
     "OGBManipBase": ("ogb-manipulation", "ogb-sim"),
     "ogbench": ("ogb-maze", "ogb-sim"),
     "fetch": ("fetch-mjwarp", "fetch-opengl", "fetch-sim"),
-    "PyFlytRocketLanding": ("rocket-nvdiff", "rocket-sim"),
+    "PyFlytRocketLanding": ("rocket-nvdiff", "rocket-render", "rocket-sim"),
     "navigation": ("navigation", "raster2d"),
     "pusht": ("raster2d", "pusht-sim", "pusht-render"),
     "classic_control": ("gfxdraw", "classic-render", "classic-sim"),

@@ -128,5 +128,5 @@ executor:
 - aborts pending work on failure.
 
 Rendering stays on the calling thread, except for PushT step frames and `PyFlytRocketLanding` frames
-on CPU. The workers of these families draw the frames of their running lanes. Rocket workers also draw
-`render` batches of States.
+on CPU. The workers of these families draw the frames of their running lanes. Rocket `render` batches
+of States draw in render worker processes, which do not hold lanes.
