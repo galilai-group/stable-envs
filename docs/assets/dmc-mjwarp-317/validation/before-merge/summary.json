@@ -1,0 +1,258 @@
+{
+  "commit": "2858b2478f5db5c5f57c7b5c4fc89e9cf2e81da9",
+  "baseline": "b9964a7d2baef2479a33780f52e8c459cd3a891b",
+  "status": "Finished; no candidate-only failures observed in executed checks; shared baseline failures and hardware-specific skips remain.",
+  "cpu_profile": {
+    "job": "8551573",
+    "counts": {
+      "skipped": 57,
+      "passed": 741
+    },
+    "profile": "Complete DMC PR-tier selection with OSMesa and CPU Torch; expected non-CPU/missing-other-family skips retained.",
+    "groups": {
+      "": {
+        "skipped": 39
+      },
+      "tests.integration.test_dmc_batch_equivalence": {
+        "passed": 25
+      },
+      "tests.integration.test_dmc_physics_variation": {
+        "passed": 14
+      },
+      "tests.integration.test_dmc_swm_semantics": {
+        "passed": 1
+      },
+      "tests.integration.test_reacher_semantics": {
+        "passed": 1
+      },
+      "tests.integration.test_worldmodel": {
+        "passed": 1
+      },
+      "tests.regression.test_declarations": {
+        "passed": 3
+      },
+      "tests.unit.test_cpu3d": {
+        "passed": 18,
+        "skipped": 1
+      },
+      "tests.unit.test_cpu3d_reflections": {
+        "passed": 16
+      },
+      "tests.unit.test_cpu3d_scene": {
+        "passed": 6
+      },
+      "tests.unit.test_cpu3d_shadow_rays": {
+        "passed": 17
+      },
+      "tests.unit.test_dmc_mjwarp_tasks": {
+        "passed": 20
+      },
+      "tests.unit.test_dmc_oracle_replay": {
+        "passed": 29
+      },
+      "tests.unit.test_dmc_sibling_tasks": {
+        "passed": 12
+      },
+      "tests.unit.test_dmc_state_export": {
+        "skipped": 17,
+        "passed": 35
+      },
+      "tests.unit.test_dmc_tuning_invariance": {
+        "passed": 6
+      },
+      "tests.unit.test_dmcontrol_episode_quat": {
+        "passed": 12
+      },
+      "tests.unit.test_dmcontrol_tendon": {
+        "passed": 3
+      },
+      "tests.unit.test_env_docs_snapshot": {
+        "passed": 17
+      },
+      "tests.unit.test_envs_dmcontrol": {
+        "passed": 94
+      },
+      "tests.unit.test_execution_routing": {
+        "passed": 25
+      },
+      "tests.unit.test_fidelity_backends": {
+        "passed": 1
+      },
+      "tests.unit.test_import_contracts": {
+        "passed": 1
+      },
+      "tests.unit.test_mjwarp_bake_unsamplable": {
+        "passed": 11
+      },
+      "tests.unit.test_mjwarp_patch_contract": {
+        "passed": 2
+      },
+      "tests.unit.test_mjwarp_spot_semantics": {
+        "passed": 18
+      },
+      "tests.unit.test_mjwarp_texture_gaps": {
+        "passed": 20
+      },
+      "tests.unit.test_plate_texels": {
+        "passed": 23
+      },
+      "tests.unit.test_reacher_mjx": {
+        "passed": 6
+      },
+      "tests.unit.test_registry_conformance": {
+        "passed": 102
+      },
+      "tests.unit.test_registry_coverage": {
+        "passed": 69
+      },
+      "tests.unit.test_renderer_config_fixes": {
+        "passed": 1
+      },
+      "tests.unit.test_step_capture": {
+        "passed": 3
+      },
+      "tests.unit.test_variation_hooks": {
+        "passed": 19
+      },
+      "tests.unit.test_variation_maps_dmc_control": {
+        "passed": 110
+      }
+    }
+  },
+  "gpu_checks": {
+    "counts_after_replacing_missing_datasets_skips": {
+      "passed": 684,
+      "skipped": 155,
+      "failure": 20
+    },
+    "explicit_mjwarp_tests": {
+      "passed": 35,
+      "skipped": 0,
+      "failed": 0
+    },
+    "reacher_mjx": {
+      "passed": 6,
+      "skipped": 0,
+      "failed": 0
+    },
+    "shared_baseline_failures": [
+      {
+        "nodeid": "tests/gpu/test_conformance.py::test_variations_all_do_something[DMCBallInCupCatch]",
+        "message": "AssertionError: declared variations that change nothing: ['gravity.z']\nassert not ['gravity.z']",
+        "same_message_on_baseline": true
+      },
+      {
+        "nodeid": "tests/gpu/test_conformance.py::test_a_declared_task_object_is_drawn_iff_the_reference_draws_it[DMCFingerTurnHard]",
+        "message": "AssertionError: inside visibility.target's own 516 pixels the declared appearance sits 109.74/255 from the official frame and the flipped one sits 10.29/255, margin -9.6618 against a floor of 0.5. A margin at or below zero means an object is drawn that the reference does not draw, or the reverse: {'declared_value': 0, 'footprint_px': 516, 'footprint_frac': 0.004570578231292517, 'rows_with_footprint': 16, 'per_row_max_abs_diff': 0, 'presence_agree_declared': 0.0, 'presence_agree_flipped': 0.6802325581395349, 'presence_mean_abs_declared': 109.73837209302326, 'presence_mean_abs_flipped': 10.292635658914728, 'presence_margin': -9.661833929580117, 'reference_id': 'dm_control/finger-turn_hard'}\nassert -9.661833929580117 >= 0.5",
+        "same_message_on_baseline": true
+      },
+      {
+        "nodeid": "tests/gpu/test_conformance.py::test_a_declared_task_object_is_drawn_iff_the_reference_draws_it[DMCReacher]",
+        "message": "AssertionError: inside visibility.target's own 238 pixels the declared appearance sits 137.57/255 from the official frame and the flipped one sits 19.87/255, margin -5.9235 against a floor of 0.5. A margin at or below zero means an object is drawn that the reference does not draw, or the reverse: {'declared_value': 0, 'footprint_px': 238, 'footprint_frac': 0.0021081349206349205, 'rows_with_footprint': 16, 'per_row_max_abs_diff': 0, 'presence_agree_declared': 0.008403361344537815, 'presence_agree_flipped': 0.21428571428571427, 'presence_mean_abs_declared': 137.5672268907563, 'presence_mean_abs_flipped': 19.869747899159663, 'presence_margin': -5.923451046732925, 'reference_id': 'dm_control/reacher-hard'}\nassert -5.923451046732925 >= 0.5",
+        "same_message_on_baseline": true
+      },
+      {
+        "nodeid": "tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[DMCAcrobotBalance]",
+        "message": "_pickle.PicklingError: Can't pickle <class 'MonthDayNano'>: it's not found as builtins.MonthDayNano",
+        "same_message_on_baseline": true
+      },
+      {
+        "nodeid": "tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[DMCBallInCupCatch]",
+        "message": "_pickle.PicklingError: Can't pickle <class 'MonthDayNano'>: it's not found as builtins.MonthDayNano",
+        "same_message_on_baseline": true
+      },
+      {
+        "nodeid": "tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[DMCCartpoleBalance]",
+        "message": "_pickle.PicklingError: Can't pickle <class 'MonthDayNano'>: it's not found as builtins.MonthDayNano",
+        "same_message_on_baseline": true
+      },
+      {
+        "nodeid": "tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[DMCCartpoleSwingup]",
+        "message": "_pickle.PicklingError: Can't pickle <class 'MonthDayNano'>: it's not found as builtins.MonthDayNano",
+        "same_message_on_baseline": true
+      },
+      {
+        "nodeid": "tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[DMCCheetahRun]",
+        "message": "_pickle.PicklingError: Can't pickle <class 'MonthDayNano'>: it's not found as builtins.MonthDayNano",
+        "same_message_on_baseline": true
+      },
+      {
+        "nodeid": "tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[DMCFingerSpin]",
+        "message": "_pickle.PicklingError: Can't pickle <class 'MonthDayNano'>: it's not found as builtins.MonthDayNano",
+        "same_message_on_baseline": true
+      },
+      {
+        "nodeid": "tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[DMCFingerTurnEasy]",
+        "message": "_pickle.PicklingError: Can't pickle <class 'MonthDayNano'>: it's not found as builtins.MonthDayNano",
+        "same_message_on_baseline": true
+      },
+      {
+        "nodeid": "tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[DMCFingerTurnHard]",
+        "message": "_pickle.PicklingError: Can't pickle <class 'MonthDayNano'>: it's not found as builtins.MonthDayNano",
+        "same_message_on_baseline": true
+      },
+      {
+        "nodeid": "tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[DMCHopperHop]",
+        "message": "_pickle.PicklingError: Can't pickle <class 'MonthDayNano'>: it's not found as builtins.MonthDayNano",
+        "same_message_on_baseline": true
+      },
+      {
+        "nodeid": "tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[DMCHumanoidWalk]",
+        "message": "_pickle.PicklingError: Can't pickle <class 'MonthDayNano'>: it's not found as builtins.MonthDayNano",
+        "same_message_on_baseline": true
+      },
+      {
+        "nodeid": "tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[DMCManipulatorBringBall]",
+        "message": "_pickle.PicklingError: Can't pickle <class 'MonthDayNano'>: it's not found as builtins.MonthDayNano",
+        "same_message_on_baseline": true
+      },
+      {
+        "nodeid": "tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[DMCPendulumSwingup]",
+        "message": "_pickle.PicklingError: Can't pickle <class 'MonthDayNano'>: it's not found as builtins.MonthDayNano",
+        "same_message_on_baseline": true
+      },
+      {
+        "nodeid": "tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[DMCPointMassEasy]",
+        "message": "_pickle.PicklingError: Can't pickle <class 'MonthDayNano'>: it's not found as builtins.MonthDayNano",
+        "same_message_on_baseline": true
+      },
+      {
+        "nodeid": "tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[DMCQuadrupedWalk]",
+        "message": "_pickle.PicklingError: Can't pickle <class 'MonthDayNano'>: it's not found as builtins.MonthDayNano",
+        "same_message_on_baseline": true
+      },
+      {
+        "nodeid": "tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[DMCReacher]",
+        "message": "_pickle.PicklingError: Can't pickle <class 'MonthDayNano'>: it's not found as builtins.MonthDayNano",
+        "same_message_on_baseline": true
+      },
+      {
+        "nodeid": "tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[DMCSwimmerSwimmer6]",
+        "message": "_pickle.PicklingError: Can't pickle <class 'MonthDayNano'>: it's not found as builtins.MonthDayNano",
+        "same_message_on_baseline": true
+      },
+      {
+        "nodeid": "tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[DMCWalkerWalk]",
+        "message": "_pickle.PicklingError: Can't pickle <class 'MonthDayNano'>: it's not found as builtins.MonthDayNano",
+        "same_message_on_baseline": true
+      }
+    ],
+    "skip_groups": {
+      "H200_hardware_and_software_profile": 23,
+      "declared_inapplicability_or_representative_coverage": 132
+    }
+  },
+  "jobs": {
+    "original": "8547761",
+    "corrected_cpu": "8551573",
+    "dataset_followup": "8551574"
+  },
+  "archives": {
+    "results.tar.gz": "e94d68bc80b62ba5cabf7884432e9cf023d5b8887932b4c66d450b88930fcdb5",
+    "cpu-followup/results.tar.gz": "34beedd5872421850c5fbc13f49ec68339d20578369fdad76f742077c02c645a",
+    "gpu-followup/results.tar.gz": "3ef87652af00dfcad01303ee2cf2dc08abef7242af3f6fe10e7d14d02b6e1215"
+  },
+  "original_cpu_setup_failures_preserved_but_superseded": true,
+  "production_source_and_test_assertions_unchanged": true,
+  "finished_utc": "2026-11-07T08:46:25.551351+00:00"
+}

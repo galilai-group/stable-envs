@@ -1,0 +1,33 @@
+DMC MJWarp final regression validation — 2026-11-07
+
+Candidate: 2858b2478f5db5c5f57c7b5c4fc89e9cf2e81da9
+Integrated main baseline: b9964a7d2baef2479a33780f52e8c459cd3a891b
+
+Outcome: No candidate-only failure observed among executed checks.
+The broad suite is not all green: shared baseline failures and hardware-specific skips remain.
+
+Full DMC PR-tier profile (CPU, OSMesa): 741 passed, 0 failed, 57 skipped.
+The skips comprise 39 module-collection skips for absent optional families/backends, 17 CUDA cases and 1 MPS case.
+Native batch equivalence: 25 passed. Frozen oracle suite: 29 passed, including all 12 replay corpora.
+Both selected live SWM semantic gates passed.
+
+GPU selections: 684 passed, 20 failed identically on baseline, 155 skipped.
+The explicit MJWarp integration/replay/contact/solver checks account for 35 passes with zero skips.
+Reacher MJX: 6 passed. TrackCom batching: 8 passed.
+
+The 20 shared failures are:
+- Ball-in-Cup gravity variation changes no rendered pixels.
+- Finger Turn Hard and Reacher target-visibility agreement with the reference.
+- The same HuggingFace/PyArrow/dill MonthDayNano serialization error in 17 environment cases.
+All 20 failing node IDs and error messages were reproduced on integrated main under the same relevant environment.
+
+GPU skips: 23 H200/software-profile checks (17 golden frames and 6 source-image records),
+plus 132 tests that declare the case inapplicable or covered by selected representatives.
+No H200 certification is claimed from the RTX 3090 run.
+
+The initial CPU run lacked reference dependencies/package metadata, used NVIDIA EGL for a software-GL check,
+and included Warp in a CPU-only import check. Those first-run failures are retained in the original archive;
+the complete corrected CPU profile supersedes them. No test assertion, tolerance or production file was changed.
+
+Slurm: original 8547761; corrected CPU 8551573; dataset follow-up 8551574.
+Raw XML, inventories, logs, software versions and SHA-256 archive hashes accompany summary.json.

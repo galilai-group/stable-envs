@@ -1,0 +1,54 @@
+{
+  "candidate": "abd33499a54a26d6ce5cc89991af99431fad3d8a",
+  "baseline": "bdf9325c51fd657f3b9ae2729102534a0e9f456f",
+  "results": [
+    {
+      "stage": "dmc-profile",
+      "counts": {
+        "skipped": 58,
+        "passed": 771
+      },
+      "seconds": 311.788779836148
+    },
+    {
+      "stage": "shared-step-render",
+      "counts": {
+        "passed": 172,
+        "skipped": 4
+      },
+      "seconds": 50.5385110899806
+    },
+    {
+      "stage": "mjwarp-required",
+      "counts": {
+        "passed": 35
+      },
+      "seconds": 51.97788792895153
+    },
+    {
+      "stage": "reacher-mjx",
+      "counts": {
+        "passed": 6
+      },
+      "seconds": 68.78158190008253
+    },
+    {
+      "stage": "trackcom-batching",
+      "counts": {
+        "passed": 8
+      },
+      "seconds": 25.124713701196015
+    },
+    {
+      "stage": "source-visibility",
+      "counts": {
+        "passed": 2
+      },
+      "seconds": 12.07025050977245
+    }
+  ],
+  "all_commands_passed": true,
+  "source_files_verified": 1092,
+  "cpu_archive_sha256": "0cabaebafbc08fc56e7fef3c5d81ffe1eb5a2410cd42ff9e3da4c9e45d2bced9",
+  "gpu_archive_sha256": "fc7746f0c8315358b0f1f31ea3abe900e684695b3bd857826fc0bcd39cdc0069"
+}
