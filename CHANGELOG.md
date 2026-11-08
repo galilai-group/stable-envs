@@ -8,19 +8,12 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
-- All 17 DMC classes accept experimental `simulation_backend="mjwarp"`
-  for direct CUDA physics on MuJoCo Warp 3.17. Automatic routing and Reacher's native/MJX
-  selection remain unchanged. Reacher uses the shared adapter for targets, resets, physics variation
-  and checkpoints. Required CUDA checks cover all 17 classes; full numerical source/replay acceptance
-  remains unfinished. See the DMC documentation for limitations and historical measured performance
-  across the original 16 tasks. Cheetah uses stable constraint ordering to remove replay variation
-  from parallel contact allocation, with unchanged numerical acceptance bounds.
-  Humanoid also orders incremental Newton updates and gradient-norm accumulation to make checkpoint
-  replay repeatable, including mixed resets; CUDA regressions cover 100 public calls.
-  Manipulator uses ordered elliptic Hessian accumulation within each world to remove another source
-  of replay variation, retaining the upstream Newton equations and unchanged acceptance bounds.
-  Capsule contact corrections also avoid wrong endpoints and duplicate constraints for nearly
-  parallel Hopper capsules. Touch readings no longer accumulate from checkpoint reconstruction.
+- All 17 DMC classes accept experimental `simulation_backend="mjwarp"` for direct CUDA physics
+  on MuJoCo Warp 3.17. Automatic routing, including Reacher's native/MJX selection, stays unchanged.
+  The shared adapter retains native resets, RNG, targets, physics variation and checkpoints.
+  DMC-local capsule-contact corrections and ordered constraint/solver reductions support repeatable
+  checkpoint replay. CUDA regressions cover all 17 classes, with focused 100-call replay checks.
+  See the DMC documentation for the 3.17 measurements and numerical limitations.
 - Classic control `simulation_backend`: `CartPole`, `Pendulum`, `Acrobot`, `MountainCar` and
   `MountainCarContinuous` step all lanes in one batched float64 operation. With `"auto"`, the default,
   the lanes step in NumPy on the host, and 4096 or more CUDA lanes step in Torch. Below 2 lanes

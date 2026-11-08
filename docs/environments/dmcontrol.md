@@ -89,78 +89,30 @@ and factorization kernels, with the original warmstart and iteration settings.
 
 ### Validation status
 
-This backend is experimental. The following numerical results were recorded on MuJoCo/Warp 3.12;
-they do not establish 3.17 numerical acceptance. Historical CUDA integration passed for the original
-16 classes, excluding Reacher. It covered checkpoint ownership/restoration and rendering captured States.
-Full numerical source and resumed-rollout acceptance remains unfinished. Earlier Cheetah and
-Manipulator checks each passed 60 repeated CUDA
-replay comparisons (including 30 on fresh seeds), 100 independent CPU-reference comparisons and
-checks that reject missing action repetition, wrong controls and disabled contacts. Their measured
-eight-step replays were exactly equal; this is not a guarantee for arbitrary horizons or different
-devices. Manipulator also passed mixed resets, strided actions and nondefault-stream replay.
-On Hopper's recorded near-parallel contact case, the capsule correction reduced maximum eight-step
-velocity error from 2.42 to 0.0000243 and position error from 0.0090 to 0.00000127 against native MuJoCo.
-The subsequent Titan RTX run passed 100 source comparisons each for Hopper, Humanoid, Cheetah and
-Manipulator; FingerSpin retained one known warmstart failure in 80 trials. All 140 replay comparisons
-met unchanged bounds, including 60 exact Hopper replays. Some Humanoid and Manipulator replays had
-bounded differences, so the earlier exact results do not establish universal determinism.
-Follow-up covers FingerSpin contact warmstart, PointMass near-target reward coverage, and fresh
-calibration and fault-sensitivity checks for contact-heavy trajectories. Hopper's historical
-eight-step bounds are too broad to certify correctness. Exact State restoration and identical-State
-rendering are separate from numerical agreement after advancing physics. Existing thresholds and frozen fixtures
-have not been loosened.
-
 Run the focused CUDA checks with `python scripts/ci/run_dmc_mjwarp.py`; missing CUDA or skipped
-required cases fail this runner. The runner covers all 17 classes and includes Reacher's target,
-physics variation, mixed-reset and 100-call replay checks. Humanoid has exact 100-call replay checks
-and mixed-reset checks with one or two continuing lanes, strided actions and nondefault streams.
-These are core regression checks, not a
-numerical certification.
+required cases fail this runner. It covers all 17 classes, checkpoint ownership, resets, targets,
+physics variation, rendering captured States, stream ordering and contact/solver regressions.
 
-### Measured performance
+The recorded MuJoCo 3.17 evaluation passed all 35 focused CUDA checks and 51 checkpoint-replay
+cases (17 environments × three seeds, at batch 3) over 100 public calls. Exact replay in those
+cases does not establish numerical equivalence with native float64 physics. CPU/GPU errors
+grow on contact-heavy trajectories, and random actions provide limited sparse-reward coverage.
+The backend remains experimental; no new numerical acceptance threshold was applied.
 
-These historical measurements used MuJoCo/Warp 3.12 and do not include Reacher.
+[Validation reports and 100-call error curves](https://github.com/galilai-group/stable-envs/blob/782cba6f35ee316f22499c7d83402320e6012f79/docs/assets/dmc-mjwarp-317/README.md)
+include tested revisions, shared baseline failures and hardware-specific skips.
 
-The original 16 environments were measured with native and Warp at batches 1, 16, 64, 256 and 1024: 160 runs,
-80 matched pairs. Measurements used an RTX A6000 on a shared AMD EPYC 7443 host, eight visible CPUs,
-one Torch thread per process, seed 0, zero normalized actions, five warmups and ten synchronized
-samples. Each case used a fresh process. Both backends returned CUDA tensors; native physics ran on
-CPU. `python benchmarks/dmc_mjwarp.py --help` describes how to run the benchmark. Its current default
-matrix includes Reacher: 17 environments and 170 native/Warp records at the same five batch sizes.
-The all-environment sweep below predates the Cheetah, Manipulator and Hopper fixes. A matched RTX A6000
-check at the same five batch sizes, with ten warmups and 40 synchronized samples, measured 4–11%
-additional raw-physics latency and at most 1.4% additional median public-step latency for Cheetah.
-The ordering scratch buffers use 56 MiB at batch 1024. Other environments do not enable this ordering.
-For Manipulator, the same matched protocol measured 0–7% lower raw-physics latency; median public-step
-latency changed by between -1.3% and +1.6%. These checks used zero actions and exclude warm-up/capture.
-Hopper's matched follow-up used a Titan RTX with the same five batches, ten warmups and 40 samples.
-Raw-physics median latency changed by -28.1% to +4.2%; public-step medians changed by -0.3% to +10.3%.
-These measurements compare the contact correction with its parent implementation; they do not
-refresh the all-environment native/Warp curves below.
+### Benchmarking
 
-The geometric mean of native median latency divided by Warp median latency is below. Values above
-1 favor Warp. Public stepping includes final owned State and task outputs; the frame column adds
-one frame. State/frame history is omitted.
+`python benchmarks/dmc_mjwarp.py --help` describes the configurable latency and memory benchmark.
+It separates construction, reset, restore, raw physics, public stepping and rendering costs.
+The default matrix covers all 17 environments with native and MJWarp backends.
 
-| Batch | Raw physics | Public step | Public step + frame |
-|---:|---:|---:|---:|
-| 1 | 0.020× | 0.137× | 0.442× |
-| 16 | 0.241× | 0.592× | 0.747× |
-| 64 | 0.857× | 0.732× | 0.925× |
-| 256 | 3.101× | 2.111× | 1.591× |
-| 1024 | 13.343× | 7.734× | 2.982× |
-
-![Historical native-to-Warp latency ratios for 16 DMC environments, excluding Reacher](../assets/dmc-mjwarp-speedup.png)
-
-All 16 environments had faster public stepping at batches 256 and 1024. Small batches generally
-favored native. These historical measurements used sequential local CPU lanes for raw native physics
-and the earlier worker routing for public native stepping; they predate the current `mujoco.batch`
-backend. Raw Warp includes runtime guards and stream interop, not just kernels.
-
-At batch 1024, median constructor costs across tasks were 25.34 s native versus 86.74 s Warp; reset
-costs were 74.41 versus 936.15 ms, and restore costs were 39.70 versus 914.65 ms. Construction excludes
-imports and CUDA context setup; disk kernel caches can survive between processes. These single-seed,
-single-machine timings do not establish numerical correctness or training performance.
+The [MuJoCo 3.17 timing curves](https://github.com/galilai-group/stable-envs/blob/782cba6f35ee316f22499c7d83402320e6012f79/docs/assets/dmc-mjwarp-317/README.md#timing)
+compare sequential CPU, native CPU batching and RTX 3090 stepping at batches 1, 256 and 1024,
+using 100 synchronized public calls per seed. Their captions specify hardware, included work
+and aggregation. Those random-action rollout measurements use a different protocol from the
+general benchmark script.
 
 ## Acrobot
 
