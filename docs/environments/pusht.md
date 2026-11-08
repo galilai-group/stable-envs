@@ -25,12 +25,15 @@ state = env.reset(seed=0)
 frames = env.render()          # (8, 224, 224, 3) uint8
 ```
 
-PushT draws its frames with the source pygame code on CPU. A frame is the source frame for the same
-State. `device="cuda"` puts the output tensors on the GPU. Physics stays on CPU.
+A PushT frame is the source's pygame frame for the same State. `device="cuda"` puts the output tensors
+on the GPU. Physics stays on CPU.
 
-On CPU with Numba installed, `render` draws batches of 8 or more States with a Numba rasterizer. It
-uses the same primitive records as the GPU path, and its frames are byte-identical to the pygame frames.
-`backend="source"` keeps pygame; `backend="port"` uses the Numba rasterizer for every batch.
+On CPU with Numba installed, `render` draws with a Numba rasterizer. It builds the same primitive
+records as the GPU path, in parallel over States. It paints and resizes the background, goal and walls
+once for each distinct goal and colour set in the batch, then redraws only the region that the bodies
+cover in each frame. Its frames are byte-identical to the pygame frames. The first render in a process
+loads the compiled kernels, and compiles them if Numba has no cache yet. Without Numba, or with
+`backend="source"`, CPU frames are drawn with pygame.
 
 With `device="cuda"` and Triton, PushT draws the frames on the GPU. The GPU frames are byte-identical
 to the pygame frames. Frames with action markers, and the few frames that the GPU path cannot draw
