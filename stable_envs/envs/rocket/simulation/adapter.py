@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import copy
-from multiprocessing.shared_memory import SharedMemory
 
 import numpy as np
 import torch
@@ -24,25 +23,38 @@ def check_values(template, values, num_envs):
                 raise ValueError(f"Invalid Rocket Variation: {key}")
 
 
-def state_rows(state, fields, engines):
-    """Check State against ``fields`` and each row with an engine of ``engines``; return the host rows."""
-    batch = len(engines)
+def check_fields(state, fields, batch):
+    """Check that a ``[batch]`` State has the keys, shapes and dtypes of ``fields``; return its leaves."""
     if not isinstance(state, TensorDict) or state.batch_size != torch.Size([batch]):
         raise ValueError("Rocket full State requires batch [num_envs]")
-    if set(state.keys(True, True)) != set(fields):
+    leaves = dict(state.items(True, True))
+    if leaves.keys() != fields.keys():
         raise ValueError("Rocket full State keys differ")
     for key, (shape, dtype) in fields.items():
-        if state[key].shape != (batch, *shape) or state[key].dtype != dtype:
+        if leaves[key].shape != (batch, *shape) or leaves[key].dtype != dtype:
             raise ValueError(f"Invalid Rocket State leaf: {key}")
+    return leaves
+
+
+def state_columns(state, fields, template, batch):
+    """Check a ``[batch]`` State against ``fields`` and its rows with engine ``template``; return the host columns.
+
+    The lanes of one batch share one configuration, so one engine checks every row.
+    """
+    leaves = check_fields(state, fields, batch)
     # One transfer per leaf; per-row device reads cost one copy per row and leaf.
-    columns = {"/".join(k): v.detach().cpu().numpy() for k, v in state.items(True, True)}
+    columns = {"/".join(k): v.detach().cpu().numpy() for k, v in leaves.items()}
     for key, value in columns.items():
-        if not np.isfinite(value).all():
+        if value.dtype.kind not in "biu" and not np.isfinite(value).all():
             raise ValueError(f"Invalid Rocket State leaf: {tuple(key.split('/'))}")
-    rows = [{k: v[i, ...].copy() for k, v in columns.items()} for i in range(batch)]
-    for env, row in zip(engines, rows, strict=True):
-        env.validate(row)
-    return rows
+    template.validate_batch(columns)
+    return columns
+
+
+def split_rows(columns):
+    """Host columns -> one ``{key: value}`` row per lane."""
+    batch = len(columns["history/length"])
+    return [{k: v[i, ...].copy() for k, v in columns.items()} for i in range(batch)]
 
 
 class RocketAdapter(SimulatorAdapter):
@@ -52,7 +64,7 @@ class RocketAdapter(SimulatorAdapter):
     for the whole batch before replacing its current engines.
     """
 
-    process_methods = {"configure": PER_LANE, "rgba": BROADCAST, "variation_rows": BROADCAST, "draw": BROADCAST}
+    process_methods = {"configure": PER_LANE, "rgba": BROADCAST, "variation_rows": BROADCAST}
     process_attributes = ("fields",)
     action_dim = 7
 
@@ -64,7 +76,7 @@ class RocketAdapter(SimulatorAdapter):
             raise ValueError("Rocket supports CPU dynamics and CPU/CUDA State storage")
         self.envs, self._prepared = [], None
         # ``(size, supersample)`` of the TinyRenderer frames ``render_live`` draws; None draws none.
-        self.frame, self._scene, self._canvas = frame, None, None
+        self.frame, self._scene = frame, None
         try:
             for lane in range(batch):
                 self.envs.append(RocketReplay(config, None if seed is None else seed + lane))
@@ -95,13 +107,16 @@ class RocketAdapter(SimulatorAdapter):
         return torch.as_tensor(np.stack([e.rgba() for e in self.envs]), device=self.device)
 
     def validate(self, state):
-        return state_rows(state, self.fields, self.envs)
+        return state_columns(state, self.fields, self.template, self.num_envs)
+
+    def check_fields(self, state):
+        check_fields(state, self.fields, self.num_envs)
 
     def prepare_restore(self, state):
         """Replay every lane of ``state`` into new engines; the live lanes do not change."""
         if self._prepared is not None:
             raise RuntimeError("A Rocket restore is already prepared")
-        rows = self.validate(state)
+        rows = split_rows(self.validate(state))
         staged = []
         try:
             for env, row in zip(self.envs, rows, strict=True):
@@ -189,31 +204,13 @@ class RocketAdapter(SimulatorAdapter):
     def frame_shape(self):
         return None if self.frame is None else (self.frame[0], self.frame[0], 3)
 
-    def draw(self, body, links, colors, size, ss, canvas=None):
-        """Draw explicit body poses, camera link poses and colours with TinyRenderer.
-
-        ``canvas`` is ``(shared memory name, byte offset)``: the frames go there and nothing is returned.
-        """
+    def draw(self, body, links, colors, size, ss, out=None):
+        """Draw explicit body poses, camera link poses and colours with TinyRenderer, into ``out`` if given."""
         from ..render import draw_tiny, tiny_scene
 
         if self._scene is None:
             self._scene = tiny_scene()
-        if canvas is None:
-            return draw_tiny(self._scene, body, links, colors, size, ss)
-        if not len(body):
-            return None
-        name, offset = canvas
-        if self._canvas is None or self._canvas.name != name:
-            self._close_canvas()
-            self._canvas = SharedMemory(name=name)
-        out = np.ndarray((len(body), size, size, 3), np.uint8, buffer=self._canvas.buf, offset=offset)
-        draw_tiny(self._scene, body, links, colors, size, ss, out)
-        return None
-
-    def _close_canvas(self):
-        if self._canvas is not None:
-            self._canvas.close()
-            self._canvas = None
+        return draw_tiny(self._scene, body, links, colors, size, ss, out)
 
     def render_live(self):
         """Draw every lane's running scene with TinyRenderer, as ``render`` draws its State."""
@@ -241,7 +238,6 @@ class RocketAdapter(SimulatorAdapter):
         for env in self.envs:
             env.close()
         self.envs = []
-        self._close_canvas()
         if self._scene is not None:
             import pybullet
 

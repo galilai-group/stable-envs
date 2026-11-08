@@ -24,6 +24,8 @@ FIN_GEOMS = slice(geometry.GEOM_NAMES.index("fin_pos_x"), geometry.GEOM_NAMES.in
 LEG_GEOMS = slice(geometry.GEOM_NAMES.index("leg_1"), FLAME_GEOM)
 LINK_COLORS = (("fin", FIN_COLOR), ("leg", LEG_COLOR), ("booster", BOOSTER_COLOR), ("flame", FLAME_COLOR))
 FIELDS = {"source_pose": (3, 7), "camera_pose": (7,), "rgba": (6, 4)}
+#: Fewest CPU frames one ``render`` draws in render workers when the ``render_worker_min_rows`` knob is not set.
+MIN_WORKER_ROWS = 2
 
 
 def project(state):
@@ -191,14 +193,65 @@ def draw_tiny(scene, body, links, colors, size, ss, out=None):
             renderer=bullet.ER_TINY_RENDERER,
             physicsClientId=client,
         )[2]
-        image = np.asarray(raw, np.uint8).reshape(size * ss, size * ss, 4)[..., :3]
+        # PyBullet built without NumPy returns a tuple of ints; ``bytes`` reads it faster than ``np.asarray``.
+        pixels = raw if isinstance(raw, np.ndarray) else np.frombuffer(bytes(raw), np.uint8)
+        image = np.asarray(pixels, np.uint8).reshape(size * ss, size * ss, 4)[..., :3]
         if ss > 1:
             image = np.rint(image.reshape(size, ss, size, ss, 3).mean((1, 3))).astype(np.uint8)
         images[i] = image
     return images
 
 
-def render(env, state, size, ss, chunk_size=None):
+class TinyDrawer:
+    """Picklable factory of a render worker's TinyRenderer drawer."""
+
+    def __call__(self):
+        scene = tiny_scene()
+
+        def draw(args, frames):
+            body, links, colors, size, ss = args
+            draw_tiny(scene, body, links, colors, size, ss, frames)
+
+        return draw
+
+
+def draw_cpu(env, body, links, colors, size, ss, check=None):
+    """Draw with TinyRenderer: in render workers and this process on Linux, else in this process.
+
+    A frame depends only on its row, so the split does not change the frames. ``check`` runs in this
+    process before it draws its own share, while the workers draw theirs; an error it raises discards
+    the frames.
+    """
+    from ..._execution import render_pool
+
+    workers = render_pool.pool(
+        "rocket-tiny",
+        TinyDrawer(),
+        len(body),
+        "rocket-render",
+        size,
+        min_rows=MIN_WORKER_ROWS,
+        local=True,
+        name="PyFlytRocketLanding render",
+    )
+    if workers is None:
+        if check is not None:
+            check()
+        return env._simulator.draw(body, links, colors, size, ss)
+
+    def local(args, frames):
+        if check is not None:
+            check()
+        env._simulator.draw(*args, out=frames)
+
+    with workers.lock:
+        return workers.render(
+            len(body), (size, size, 3), lambda rows: (body[rows], links[rows], colors[rows], size, ss), local=local
+        )
+
+
+def render(env, state, size, ss, chunk_size=None, check=None):
+    """Draw a RenderState with explicit poses; ``check`` must pass before any frame returns."""
     if chunk_size is not None and (isinstance(chunk_size, bool) or not isinstance(chunk_size, int) or chunk_size <= 0):
         raise ValueError("chunk_size must be a positive integer")
     import pybullet as bullet
@@ -209,9 +262,11 @@ def render(env, state, size, ss, chunk_size=None):
     lock = env.__dict__.setdefault("_rocket_pixel_lock", threading.RLock())
     with lock:
         if env.device.type == "cpu":
-            return torch.from_numpy(env._simulator.draw(body, links, colors, size, ss))
+            return torch.from_numpy(draw_cpu(env, body, links, colors, size, ss, check))
         if env.device.type != "cuda":
             raise ValueError("Rocket rendering supports CPU TinyRenderer or CUDA nvdiffrast")
+        if check is not None:
+            check()
         tuning.on_render("rocket-nvdiff", size, len(state), env)
         renderer, per_world = _gpu_context(env, size, ss)
         limit = geometry.nvd_worlds(per_world, env.device, size, len(state))

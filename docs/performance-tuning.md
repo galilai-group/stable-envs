@@ -76,8 +76,8 @@ names one.
 | `fetch_mjw_worlds` | 256 | none | not recorded | Most worlds per MJWarp launch of the Fetch cells. |
 | `ogb_mjw_worlds` | 256 | none | not recorded | Most worlds per MJWarp launch of the OGBench Cube and Scene cells. |
 | `ogb_gl_workers` | 8 | min(value, CPUs in the process affinity, rows) | not recorded | Most OpenGL worker processes of an OGBench Cube and Scene batch on Linux. A batch that uses fewer than 2 workers draws in the main process. The value 0 draws every batch in the main process. |
-| `render_workers` | 8 | min(value, CPUs in the process affinity) | not recorded | Most worker processes of a CPU render batch on Linux, for classic control when Numba is not installed and for Fetch (software OpenGL). Each Fetch worker has its own OpenGL context. The values 0 and 1 draw every frame in the main process. |
-| `render_worker_min_rows` | 16 | none | not recorded | Smallest classic control or Fetch CPU render batch that uses render worker processes. |
+| `render_workers` | 8 | min(value, CPUs in the process affinity) | not recorded | Most worker processes of a CPU render batch on Linux, for classic control when Numba is not installed, for Fetch (software OpenGL) and for `PyFlytRocketLanding` (TinyRenderer). For `PyFlytRocketLanding`, the main process draws one share, so the value counts it. Each Fetch worker has its own OpenGL context. The values 0 and 1 draw every frame in the main process. |
+| `render_worker_min_rows` | 16 | none | not recorded | Smallest classic control, Fetch or `PyFlytRocketLanding` CPU render batch that uses render worker processes. `PyFlytRocketLanding` uses 2 when the knob is not set. |
 | `ogb_context_cache_bytes` | none | min(total GPU memory / 4, free GPU memory / 2), per device | not recorded | GPU bytes the OGBench MJWarp context cache keeps. |
 | `nvd_budget_bytes` | 6 GiB | min(6 GiB, free GPU memory / 2) | not recorded | GPU bytes one nvdiffrast chunk of the Rocket cells may use. |
 | `nav_render_chunk` | 256 | none | not recorded | Frames per render chunk of the navigation cells. |
@@ -105,7 +105,7 @@ cannot read the hardware, the fallback applies.
   `dmc_threads` between 1 and the number of cores.
 - Several DM Control envs in one process, or an env beside data-loader workers: set `dmc_threads`
   so that all of their threads fit in the CPU affinity.
-- Slow classic control CPU rendering without Numba, or slow Fetch CPU rendering: try `render_workers`
+- Slow classic control CPU rendering without Numba, or slow Fetch or `PyFlytRocketLanding` CPU rendering: try `render_workers`
   between 0 and the number of cores, and `render_worker_min_rows` for small batches.
 - Classic control and navigation CPU rendering with Numba: the kernel uses one thread for each CPU in the process
   affinity. To use fewer threads, set `NUMBA_NUM_THREADS` before the first render.

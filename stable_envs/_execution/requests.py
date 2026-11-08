@@ -60,12 +60,13 @@ class ProcessRequests:
         if self._pending is not None:
             raise RuntimeError(f"{self._worker_family} process request already in flight")
 
-    def _submit(self, command, payloads=None):
+    def _submit(self, command, payloads=None, order=None):
+        """Send ``payloads[i]`` to worker ``i``, in the worker order ``order`` (default: index order)."""
         self._check_idle()
         payloads = [None] * len(self._connections) if payloads is None else payloads
         try:
-            for conn, payload in zip(self._connections, payloads):
-                conn.send((command, payload))
+            for i in range(len(self._connections)) if order is None else order:
+                self._connections[i].send((command, payloads[i]))
             self._pending = command
         except BaseException:
             # Abort all owners after partial dispatch; their states may already have diverged.

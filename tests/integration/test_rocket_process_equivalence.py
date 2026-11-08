@@ -1,5 +1,8 @@
 """Rocket process lanes match local lanes, through the adapter and the public env, and large batches split."""
 
+import os
+import sys
+
 import numpy as np
 import pytest
 import torch
@@ -7,7 +10,8 @@ import torch
 pytest.importorskip("PyFlyt")
 
 import stable_envs as se  # noqa: E402
-from stable_envs._execution import policy  # noqa: E402
+from stable_envs import tuning  # noqa: E402
+from stable_envs._execution import policy, render_pool  # noqa: E402
 from stable_envs.envs.rocket import legacy  # noqa: E402
 from stable_envs.envs.rocket.simulation import execution  # noqa: E402
 from stable_envs.envs.rocket.simulation.adapter import RocketAdapter  # noqa: E402
@@ -139,7 +143,7 @@ def test_step_frames_match_state_render(monkeypatch, workers):
         out = env.step(actions, states=slice(None), frames=slice(None))
         for t in range(actions.shape[1]):
             torch.testing.assert_close(out["frames"][:, t], env.render(out["states"][:, t]), rtol=0, atol=0)
-        # RenderStates of other batch sizes split across the workers in the same way.
+        # RenderStates of other batch sizes give the same frames.
         first, last = env.to_render_state(out["states"][:, 0]), env.to_render_state(out["states"][:, -1])
         torch.testing.assert_close(env.render(first[1:3]), out["frames"][1:3, 0], rtol=0, atol=0)
         frames = torch.cat([out["frames"][:, 0], out["frames"][:, -1]])
@@ -149,3 +153,31 @@ def test_step_frames_match_state_render(monkeypatch, workers):
         torch.testing.assert_close(frames, out["frames"], rtol=0, atol=0)
     finally:
         env.close()
+
+
+@pytest.mark.skipif(
+    sys.platform != "linux" or len(getattr(os, "sched_getaffinity", lambda _: ())(0)) < 2,
+    reason="render workers run on Linux with at least 2 CPUs",
+)
+def test_state_render_in_render_workers_matches_in_process():
+    with se.make("PyFlytRocketLanding", num_envs=5, size=40, supersample=2, device="cpu", seed=3) as env:
+        env.set_variation({"rocket.body_color": np.array([10.0, 200.0, 30.0])})
+        env.reset(seed=11)
+        out = env.step(torch.as_tensor(np.stack(_actions(5, 8), axis=1)), states=slice(None), frames=None)
+        state = out["states"][:, -1]
+        rows = torch.cat([env.to_render_state(out["states"][:, t]) for t in (1, 4, 7)])
+        with tuning.override(render_workers=0):
+            serial = env.render(state), env.render(rows)
+        with tuning.override(render_workers=3):
+            split = env.render(state), env.render(rows)
+            # This process draws one share while it checks the State; a State that fails the check gives no frames.
+            bad = state.clone()
+            bad["history", "valid"][1, 0] = False
+            with pytest.raises(ValueError, match="history mask"):
+                env.render(bad)
+            again = env.render(state)
+        pools = render_pool._POOLS.items()
+        assert any(key[0] == "rocket-tiny" and isinstance(pool, render_pool.RenderPool) for key, pool in pools)
+        for a, b in zip(serial, split, strict=True):
+            assert a.dtype == torch.uint8 and torch.equal(a, b)
+        assert torch.equal(again, serial[0])
