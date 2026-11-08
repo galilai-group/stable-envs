@@ -8,7 +8,6 @@ canvas pixels that ``cv2.resize(INTER_LINEAR)`` reads, then applies the fixed-po
 
 from __future__ import annotations
 
-import math
 from functools import cache, lru_cache
 
 import numpy as np
@@ -74,6 +73,7 @@ def circle_spans(radius):
     return spans
 
 
+@cache
 def circle_table(max_radius):
     """Return ``[max_radius + 1, 2 * max_radius + 2, 2]`` span offsets; empty rows have lo > hi."""
     table = np.zeros((max_radius + 1, 2 * max_radius + 2, 2), np.int64)
@@ -82,12 +82,6 @@ def circle_table(max_radius):
         spans = circle_spans(r)
         table[r, max_radius - r : max_radius + r + 2] = spans
     return table
-
-
-@lru_cache(maxsize=4096)
-def _pow_half(n):
-    # Python's ``** 0.5`` calls C ``pow``, which need not equal ``sqrt``.
-    return float(n) ** 0.5
 
 
 class Template:
@@ -184,118 +178,6 @@ def _light(color):
     return np.rint(scaled).astype(np.int64)
 
 
-def _transform(px, py, angle, cogx, cogy):
-    """Chipmunk's body transform ``(a, b, c, d, tx, ty)`` after ``body.angle = angle; body.position = (px, py)``.
-
-    Setting the position stores the centre of gravity ``R cog + position``; the transform then
-    subtracts ``R cog`` again, which can differ from ``position`` in the last bit.
-    """
-    cos = np.array([math.cos(a) for a in angle.tolist()], np.float64)
-    sin = np.array([math.sin(a) for a in angle.tolist()], np.float64)
-    gx = (cos * cogx + -sin * cogy) + px
-    gy = (sin * cogx + cos * cogy) + py
-    tx = gx - (cogx * cos - cogy * sin)
-    ty = gy - (cogx * sin + cogy * cos)
-    return cos, sin, -sin, cos, tx, ty
-
-
-def _apply(t, x, y):
-    """``cpTransformPoint`` for local points ``x, y`` of shape ``[n]`` and per-frame transforms ``[N]``."""
-    a, b, c, d, tx, ty = (v[:, None] for v in t)
-    return a * x + c * y + tx, b * x + d * y + ty
-
-
-def _sign(v, otherwise):
-    return 1 if v > 0 else (-1 if v < 0 else otherwise)
-
-
-def _clip_line(x1, y1, x2, y2):
-    """Pygame's ``clip_line`` on the full canvas; None when the line misses it."""
-    p1 = x1 - x2
-    p2, p3 = -p1, y1 - y2
-    p4 = -p3
-    q1, q2, q3, q4 = x1, CANVAS - x1, y1, CANVAS - y1
-    nmax, pmin = 0.0, 1.0
-    if (p1 == 0 and q1 < 0) or (p2 == 0 and q2 < 0) or (p3 == 0 and q3 < 0) or (p4 == 0 and q4 < 0):
-        return None
-    for p, q, pp, qq in ((p1, q1, p2, q2), (p3, q3, p4, q4)):
-        if p:
-            r1, r2 = q / p, qq / pp
-            if p < 0:
-                nmax, pmin = max(nmax, r1) if r1 > nmax else nmax, r2 if r2 < pmin else pmin
-            else:
-                nmax, pmin = r2 if r2 > nmax else nmax, r1 if r1 < pmin else pmin
-    if nmax > pmin:
-        return None
-
-    def offset(v):
-        return int(v - 0.5) if v < 0 else int(v + 0.5)
-
-    return x1 + offset(p2 * nmax), y1 + offset(p4 * nmax), x1 + offset(p2 * pmin), y1 + offset(p4 * pmin)
-
-
-def clipped_line(x1, y1, x2, y2, width=4):
-    """Return ``(x, y, steps)`` of a ``draw_line_width`` call whose ends leave the canvas, or None.
-
-    pygame keeps the Bresenham error of the whole line, restarts it at the clipped start, and
-    continues past the clipped end while a span still touches the canvas.
-    """
-    xinc = abs(x1 - x2) <= abs(y1 - y2)
-    dx, sx = abs(x2 - x1), (1 if x1 < x2 else -1)
-    dy, sy = abs(y2 - y1), (1 if y1 < y2 else -1)
-    err = dx if dx > dy else -dy
-    err = err // 2 if err >= 0 else -((-err) // 2)
-    end_x, end_y = x2, y2
-    clipped = _clip_line(x1, y1, x2, y2)
-    if clipped is None:
-        return None
-    x1, y1, x2, y2 = clipped
-    x, y = x1, y1
-    lt = (x1 if xinc else y1) - (width - 1) // 2
-    rb = (x1 if xinc else y1) + width // 2
-    steps = 0
-    while _sign(x1 - x2, sx) != sx or _sign(y1 - y2, sy) != sy:
-        steps += 1
-        e2 = err
-        if e2 > -dx:
-            err -= dy
-            x1 += sx
-            if xinc:
-                lt, rb = lt + sx, rb + sx
-        if e2 < dy:
-            err += dx
-            y1 += sy
-            if not xinc:
-                lt, rb = lt + sy, rb + sy
-
-    def inside(px, py):
-        return 0 <= px < CANVAS and 0 <= py < CANVAS
-
-    if xinc:
-        while y1 != end_y and (inside(lt, y1) or inside(rb, y1)):
-            steps += 1
-            e2 = err
-            if e2 > -dx:
-                err -= dy
-                x1 += sx
-                lt, rb = lt + sx, rb + sx
-            if e2 < dy:
-                err += dx
-                y1 += sy
-    else:
-        while x1 != end_x and (inside(x1, lt) or inside(x1, rb)):
-            steps += 1
-            e2 = err
-            if e2 > -dx:
-                err -= dy
-                x1 += sx
-            if e2 < dy:
-                err += dx
-                y1 += sy
-                lt, rb = lt + sy, rb + sy
-    return x, y, steps
-
-
 def _unique_rows(rows):
     """``np.unique(rows, axis=0, return_index=True, return_inverse=True)[1:]`` through one byte key per row."""
     rows = np.ascontiguousarray(rows)
@@ -304,102 +186,12 @@ def _unique_rows(rows):
     return first, inverse.reshape(-1)
 
 
-def _pow_half_array(values):
-    """``float(n) ** 0.5`` per element, through C ``pow`` as Python computes it."""
-    unique, inverse = np.unique(values, return_inverse=True)
-    return np.array([_pow_half(int(v)) for v in unique.tolist()], np.float64)[inverse.reshape(-1)]
-
-
-def _record(kind, color, enabled, static, rec):
-    rec[..., KIND] = kind if enabled is None else np.where(enabled, kind, 0)
-    rec[..., COLOR] = np.reshape(color, np.shape(color) + (1,) * (rec.ndim - 1 - np.ndim(color)))
-    rec[..., STATIC] = static
-    return rec
-
-
-def _poly_rec(rec, color, xs, ys, enabled=None, static=False):
-    """``draw_fillpoly`` records ``[..., RECORD]`` for integer points ``[..., n]``."""
-    _record(POLY, color, enabled, static, rec)
-    n = xs.shape[-1]
-    rec[..., BX0], rec[..., BX1] = xs.min(-1), xs.max(-1)
-    rec[..., BY0], rec[..., BY1] = ys.min(-1), ys.max(-1)
-    rec[..., PN] = n
-    rec[..., PX : PX + n] = xs
-    rec[..., PY : PY + n] = ys
-
-
-def _circle_rec(rec, color, cx, cy, radius, enabled=None, static=False):
-    # ``pygame.draw.circle`` draws nothing for a radius below one.
-    _record(CIRCLE, color, radius >= 1 if enabled is None else enabled & (radius >= 1), static, rec)
-    rec[..., BX0], rec[..., BX1] = cx - radius, cx + radius
-    rec[..., BY0], rec[..., BY1] = cy - radius, cy + radius
-    rec[..., CX], rec[..., CY], rec[..., CR] = cx, cy, radius
-
-
-def _line_rec(rec, color, x1, y1, x2, y2, static=False):
-    """``draw_line_width`` records with width 4, including pygame's restart of clipped lines."""
-    _record(LINE, color, None, static, rec)
-    dx, dy = np.abs(x2 - x1), np.abs(y2 - y1)
-    xinc = dx <= dy
-    rec[..., LN] = np.maximum(dx, dy)
-    sx, sy = x1.copy(), y1.copy()
-    outside = (np.minimum(x1, x2) < 0) | (np.maximum(x1, x2) >= CANVAS)
-    outside |= (np.minimum(y1, y2) < 0) | (np.maximum(y1, y2) >= CANVAS)
-    for i in zip(*np.nonzero(outside)):
-        run = clipped_line(int(x1[i]), int(y1[i]), int(x2[i]), int(y2[i]))
-        if run is None:
-            rec[i + (KIND,)] = 0
-        else:
-            sx[i], sy[i], rec[i + (LN,)] = run
-    rec[..., BX0] = np.minimum(x1, x2) - xinc
-    rec[..., BX1] = np.maximum(x1, x2) + 2 * xinc
-    rec[..., BY0] = np.minimum(y1, y2) - ~xinc
-    rec[..., BY1] = np.maximum(y1, y2) + 2 * ~xinc
-    if outside.any():
-        # A clipped run restarts at the clipped point and may pass the clipped end; each step moves
-        # the minor axis at most one pixel.
-        steps = rec[..., LN]
-        rec[..., BX0] = np.where(outside, sx - steps - 1, rec[..., BX0])
-        rec[..., BX1] = np.where(outside, sx + steps + 2, rec[..., BX1])
-        rec[..., BY0] = np.where(outside, sy - steps - 1, rec[..., BY0])
-        rec[..., BY1] = np.where(outside, sy + steps + 2, rec[..., BY1])
-    rec[..., LX], rec[..., LY] = sx, sy
-    rec[..., LSX] = np.where(x1 < x2, 1, -1)
-    rec[..., LSY] = np.where(y1 < y2, 1, -1)
-    rec[..., LDX], rec[..., LDY] = dx, dy
-    # ``(dx > dy ? dx : -dy) / 2`` with C truncation.
-    rec[..., LERR] = np.where(dx > dy, dx // 2, -(dy // 2))
-    rec[..., LXINC] = xinc
-
-
-def _fat_segments(buffer, slots, color, ax, ay, bx, by, static=False):
-    """``DrawOptions.draw_fat_segment`` with radius 2 for float endpoints ``[N, E]``.
-
-    ``slots [E, 4]`` hold each edge's line, quad and two end circles.
-    """
-    n, e = ax.shape
-    p1x, p1y, p2x, p2y = (np.rint(v).astype(np.int64) for v in (ax, ay, bx, by))
-    rec = np.zeros((4, n, e, RECORD), np.int64)
-    _line_rec(rec[0], color, p1x, p1y, p2x, p2y, static)
-    o0, o1 = np.abs(p2y - p1y), np.abs(p2x - p1x)
-    drawn = (o0 != 0) | (o1 != 0)
-    squares = o0 * o0 + o1 * o1
-    scale = 2.0 / np.where(drawn, _pow_half_array(squares).reshape(squares.shape), 1.0)
-    q0, q1 = np.rint(o0 * scale).astype(np.int64), np.rint(o1 * scale).astype(np.int64)
-    xs = np.stack([p1x - q0, p1x + q0, p2x + q0, p2x - q0], -1)
-    ys = np.stack([p1y - q1, p1y + q1, p2y + q1, p2y - q1], -1)
-    _poly_rec(rec[1], color, xs, ys, drawn, static)
-    two = np.full(p1x.shape, 2, np.int64)
-    _circle_rec(rec[2], color, p1x, p1y, two, drawn, static)
-    _circle_rec(rec[3], color, p2x, p2y, two, drawn, static)
-    for role in range(4):
-        buffer[:, slots[:, role]] = rec[role]
-
-
 class _Layout:
     """Slot layout of one template: where each primitive of a frame goes, in drawing order."""
 
     def __init__(self, template):
+        from . import raster_cpu as cpu
+
         if any(len(g) != 4 for g in template.goal):
             raise NotImplementedError("The batched PushT renderer draws four-vertex goal polygons")
         slot = len(template.goal)
@@ -430,13 +222,17 @@ class _Layout:
             self.edges[body] = np.concatenate(self.edges[body]) if self.edges[body] else np.zeros((0, 4), np.int64)
         # The walls do not depend on the frame: draw their records once.
         self.wall_slots = np.array([base + np.arange(4) for _, _, base in walls], np.int64).reshape(-1, 4)
-        self.walls = np.zeros((1, self.slots, RECORD), np.int64)
-        if walls:
-            ends = np.array([[*a, *b] for a, b, _ in walls], np.float64)
-            _fat_segments(
-                self.walls, self.wall_slots, np.full(1, pack(WALL_COLOR)), *(ends[None, :, k] for k in range(4)), True
-            )
-        self.walls = self.walls[0, self.wall_slots.reshape(-1)]
+        self.walls = np.zeros((len(walls) * 4, RECORD), np.int32)
+        for k, (a, b, _) in enumerate(walls):
+            cpu.fat_segment(self.walls[4 * k : 4 * k + 4], pack(WALL_COLOR), *np.rint((*a, *b)).astype(np.int32))
+        self.walls[:, STATIC] = 1
+        polys = [self.goal, self.polys["agent"], self.polys["block"]]
+        self.shapes = np.concatenate(polys)
+        self.owners = np.repeat(np.arange(3), [len(p) for p in polys])
+        self.starts = np.concatenate([np.arange(len(self.goal)), self.fills["agent"], self.fills["block"]])
+        owner = {"agent": 1, "block": 2}
+        discs = [(owner[o], *xy, round(r), round(r - 4), s) for o, xy, r, s in self.circles if o in owner]
+        self.discs = np.array(discs, np.float64).reshape(-1, 6)
 
 
 @cache
@@ -444,25 +240,16 @@ def _layout(template):
     return _Layout(template)
 
 
-def _colors(fields, name, lanes):
-    return fields[f"owned/variation/{name}/color/current/value"][lanes].astype(np.int64)
-
-
-def _closed(xs, ys):
-    """Integer points of ``DrawOptions.draw_polygon`` and the goal: rounded, with the first point repeated."""
-    xs, ys = np.rint(xs).astype(np.int64), np.rint(ys).astype(np.int64)
-    return np.concatenate([xs, xs[..., :1]], -1), np.concatenate([ys, ys[..., :1]], -1)
-
-
 def primitives(fields):
     """Return ``(records [N, P, RECORD], counts [N], fallback [N])`` for the render fields of ``N`` rows.
 
     ``fallback`` marks rows that this renderer does not cover; draw those with pygame.
     """
+    from . import raster_cpu as cpu
+
     count = len(fields["recipe/config"])
     config = fields["recipe/config"]
     fallback = config[:, 2] != 0  # action markers
-    parts = []
     # Rows with equal anchor shape and scale fields (values and type tags) share a template.
     raw = np.concatenate(
         [
@@ -476,197 +263,48 @@ def primitives(fields):
         1,
     )
     first, inverse = _unique_rows(raw)
+    layouts = {}
     for index, lane0 in enumerate(first.tolist()):
-        lanes = np.flatnonzero(inverse == index)
         try:
-            layout = _layout(_template(template_key(fields, lane0)))
+            layouts[index] = _layout(_template(template_key(fields, lane0)))
         except NotImplementedError:
-            fallback[lanes] = True
-            continue
-        n = len(lanes)
-        buffer = np.zeros((n, layout.slots, RECORD), np.int64)
-        goal_pos = fields["owned/variation/goal/position/current/value"][lanes].astype(np.float64)
-        goal_angle = fields["owned/variation/goal/angle/current/value"][lanes].astype(np.float64).reshape(n)
-        render_goal = fields["owned/variation/rendering/render_goal/current/value"][lanes].reshape(n) != 0
-        render_goal &= config[lanes, 3] != 0
-        goals = len(layout.goal)
-        if goals:
-            goal = _transform(goal_pos[:, 0], goal_pos[:, 1], goal_angle, np.zeros(n), np.zeros(n))
-            wx, wy = _apply(goal, layout.goal[..., 0].reshape(-1), layout.goal[..., 1].reshape(-1))
-            xs, ys = _closed(wx.reshape(n, goals, 4), wy.reshape(n, goals, 4))
-            on = np.broadcast_to(render_goal[:, None], (n, goals))
-            _poly_rec(buffer[:, :goals], pack(_colors(fields, "goal", lanes)), xs, ys, on, True)
-        for body in ("agent", "block"):
-            pos = fields[f"current/body/{body}/position"][lanes]
-            cog = fields[f"current/body/{body}/center_of_gravity"][lanes]
-            angle = fields[f"current/body/{body}/angle"][lanes].reshape(n)
-            fill = _colors(fields, body, lanes)
-            fill, light = pack(fill), pack(_light(fill))
-            transform = _transform(pos[:, 0], pos[:, 1], angle, cog[:, 0], cog[:, 1])
-            local = layout.polys[body]
-            if len(local):
-                count_polys = len(local)
-                wx, wy = _apply(transform, local[..., 0].reshape(-1), local[..., 1].reshape(-1))
-                wx, wy = wx.reshape(n, count_polys, 4), wy.reshape(n, count_polys, 4)
-                xs, ys = _closed(wx, wy)
-                fills = np.zeros((n, count_polys, RECORD), np.int64)
-                _poly_rec(fills, light, xs, ys)
-                buffer[:, layout.fills[body]] = fills
-                follow = [1, 2, 3, 0]
-                _fat_segments(
-                    buffer, layout.edges[body], fill, wx.reshape(n, -1), wy.reshape(n, -1),
-                    wx[..., follow].reshape(n, -1), wy[..., follow].reshape(n, -1),
-                )  # fmt: skip
-            for owner, (ox, oy), radius, slot in layout.circles:
-                if owner == body:
-                    wx, wy = _apply(transform, np.array([ox]), np.array([oy]))
-                    cx, cy = np.rint(wx[:, 0]).astype(np.int64), np.rint(wy[:, 0]).astype(np.int64)
-                    _circle_rec(buffer[:, slot], fill, cx, cy, np.full(n, round(radius), np.int64))
-                    _circle_rec(buffer[:, slot + 1], light, cx, cy, np.full(n, round(radius - 4), np.int64))
-        buffer[:, layout.wall_slots.reshape(-1)] = layout.walls
-        parts.append((lanes, buffer))
-    width = max([1] + [rec.shape[1] for _, rec in parts])
-    records = np.zeros((count, width, RECORD), np.int32)
+            fallback[inverse == index] = True
+    records = np.empty((count, max([1] + [layout.slots for layout in layouts.values()]), RECORD), np.int32)
+    records[fallback] = 0
     counts = np.zeros(count, np.int64)
-    for lanes, rec in parts:
-        records[lanes, : rec.shape[1]] = rec
-        counts[lanes] = rec.shape[1]
+    pose = np.zeros((count, 3, 5))
+    pose[:, 0, :2] = fields["owned/variation/goal/position/current/value"]
+    pose[:, 0, 4] = fields["owned/variation/goal/angle/current/value"].reshape(count)
+    for b, body in enumerate(("agent", "block"), 1):
+        pose[:, b, :2] = fields[f"current/body/{body}/position"]
+        pose[:, b, 2:4] = fields[f"current/body/{body}/center_of_gravity"]
+        pose[:, b, 4] = fields[f"current/body/{body}/angle"].reshape(count)
+    color = np.stack([fields[f"owned/variation/{name}/color/current/value"] for name in ("goal", "agent", "block")], 1)
+    color = color.astype(np.int64)
+    goal = (fields["owned/variation/rendering/render_goal/current/value"].reshape(count) != 0) & (config[:, 3] != 0)
+    for index, layout in layouts.items():
+        lanes = np.flatnonzero(inverse == index)
+        cpu.build(
+            lanes, pose, pack(color), pack(_light(color)), goal, layout.shapes, layout.owners, layout.starts,
+            layout.discs, layout.walls, layout.wall_slots.reshape(-1), records,
+        )  # fmt: skip
+        counts[lanes] = layout.slots
     return records, counts, fallback
-
-
-def aaline_writes(fx, fy, tx, ty):
-    """Port ``draw_aaline`` for segments ``[S]``: return ordered ``(x, y, brightness, valid)`` of shape ``[S, K]``.
-
-    All arithmetic is float32 and every ``(int)`` cast truncates, as in pygame's C code.
-    """
-    f32, one = np.float32, np.float32(1)
-    fx, fy, tx, ty = (np.asarray(v, f32).copy() for v in (fx, fy, tx, ty))
-    count = len(fx)
-    with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
-        dx, dy = (tx - fx).astype(f32), (ty - fy).astype(f32)
-        point = (np.abs(dx.astype(np.float64)) < 0.0001) & (np.abs(dy.astype(np.float64)) < 0.0001)
-        # A segment of length zero is one full-brightness pixel at the rounded start point.
-        single = (
-            np.floor(fx.astype(np.float64) + 0.5).astype(np.int64),
-            np.floor(fy.astype(np.float64) + 0.5).astype(np.int64),
-        )
-        cl = ct = f32(-1.0)
-        cr = cb = f32(f32(-1.0) + f32(CANVAS) + one)
-        steep = np.abs(dx.astype(np.float64)) < np.abs(dy.astype(np.float64))
-        fx, fy = np.where(steep, fy, fx), np.where(steep, fx, fy)
-        tx, ty = np.where(steep, ty, tx), np.where(steep, tx, ty)
-        dx, dy = np.where(steep, dy, dx), np.where(steep, dx, dy)
-        back = dx < 0
-        fx, tx = np.where(back, tx, fx), np.where(back, fx, tx)
-        fy, ty = np.where(back, ty, fy), np.where(back, fy, ty)
-        dx, dy = np.where(back, -dx, dx), np.where(back, -dy, dy)
-        live = ~point & ~((tx <= cl) | (fx >= cr))
-        g = (dy / dx).astype(f32)
-        left = fx < cl
-        fy = np.where(left, (fy + (g * (cl - fx).astype(f32)).astype(f32)).astype(f32), fy)
-        fx = np.where(left, cl, fx)
-        right = tx > cr
-        ty = np.where(right, (ty + (g * (cr - tx).astype(f32)).astype(f32)).astype(f32), ty)
-        tx = np.where(right, cr, tx)
-        down = g > 0
-        live &= np.where(down, ~((ty <= ct) | (fy >= cb)), ~((fy <= ct) | (ty >= cb)))
-        a = down & (fy < ct)
-        fx = np.where(a, (fx + ((ct - fy).astype(f32) / g).astype(f32)).astype(f32), fx)
-        fy = np.where(a, ct, fy)
-        a = down & (ty > cb)
-        tx = np.where(a, (tx + ((cb - ty).astype(f32) / g).astype(f32)).astype(f32), tx)
-        ty = np.where(a, cb, ty)
-        a = ~down & (ty < ct)
-        tx = np.where(a, (tx + ((ct - ty).astype(f32) / g).astype(f32)).astype(f32), tx)
-        ty = np.where(a, ct, ty)
-        a = ~down & (fy > cb)
-        fx = np.where(a, (fx + ((cb - fy).astype(f32) / g).astype(f32)).astype(f32), fx)
-        fy = np.where(a, cb, fy)
-        fy, ty = (fy + one).astype(f32), (ty + one).astype(f32)
-        xs = np.trunc(fx).astype(np.int64)
-        ye = (fy + (g * (xs.astype(f32) - fx).astype(f32)).astype(f32)).astype(f32)
-        iy = ye.copy()
-        writes = []
-
-        def put(x, y, brightness, valid):
-            # ``steep`` swaps the axes back.
-            px, py = np.where(steep, y, x), np.where(steep, x, y)
-            inside = (px >= 0) & (px < CANVAS) & (py >= 0) & (py < CANVAS)
-            writes.append((px, py, brightness.astype(f32), valid & inside))
-
-        first = live & (tx > (cl + one).astype(f32))
-        gap = (f32(1) * (1 + xs).astype(f32) - fx).astype(f32)
-        yi = np.trunc(ye).astype(np.int64)
-        br = (ye - yi.astype(f32)).astype(f32)
-        put(xs, yi, (br * gap).astype(f32), first & (yi.astype(f32) < ye))
-        put(xs, yi - 1, ((one - br).astype(f32) * gap).astype(f32), first)
-        iy = np.where(first, (iy + g).astype(f32), iy)
-        xs = np.where(first, xs + 1, xs)
-        xe = np.ceil(tx.astype(np.float64)).astype(np.int64)
-        second = live & (fx < (cr - one).astype(f32))
-        ye2 = (ty + (g * (xe.astype(f32) - tx).astype(f32)).astype(f32)).astype(f32)
-        gap2 = ((1 - xe).astype(f32) + tx).astype(f32)
-        yi2 = np.trunc(ye2).astype(np.int64)
-        br2 = (ye2 - yi2.astype(f32)).astype(f32)
-        put(xe, yi2, (br2 * gap2).astype(f32), second & (yi2.astype(f32) < ye2))
-        put(xe, yi2 - 1, ((one - br2).astype(f32) * gap2).astype(f32), second)
-        steps = int(np.max(np.where(live, xe - xs, 0), initial=0))
-        for k in range(steps):
-            x = xs + k
-            on = live & (x < xe)
-            y = np.trunc(iy).astype(np.int64)
-            br = ((one - iy).astype(f32) + y.astype(f32)).astype(f32)
-            put(x, y - 1, br, on)
-            put(x, y, (one - br).astype(f32), on & (y.astype(f32) < iy))
-            iy = np.where(on, (iy + g).astype(f32), iy)
-    if count == 0:
-        empty = np.zeros((0, 0), np.int64)
-        return empty, empty, empty.astype(f32), empty.astype(np.bool_)
-    px = np.stack([w[0] for w in writes], 1)
-    py = np.stack([w[1] for w in writes], 1)
-    pb = np.stack([w[2] for w in writes], 1)
-    pv = np.stack([w[3] for w in writes], 1)
-    inside = (single[0] >= 0) & (single[0] < CANVAS) & (single[1] >= 0) & (single[1] < CANVAS)
-    px = np.concatenate([single[0][:, None], px], 1)
-    py = np.concatenate([single[1][:, None], py], 1)
-    pb = np.concatenate([np.ones((count, 1), f32), pb], 1)
-    pv = np.concatenate([(point & inside)[:, None], pv], 1)
-    return px, py, pb, pv
 
 
 def contact_writes(fields):
     """Return ``(x, y, brightness, colour, count)`` blend writes per frame ``[N, W]`` in drawing order."""
+    from . import raster_cpu as cpu
+
     segments = fields["current/render_segments"]
     counts = fields["current/render_segment_count"].astype(np.int64).reshape(-1)
-    frame, index = np.nonzero(np.arange(segments.shape[1])[None] < counts[:, None])
-    return compact_writes(frame, index, segments[frame, index], len(counts))
-
-
-def compact_writes(frame, index, seg, n):
-    """``contact_writes`` for the drawn segments ``seg [S, 8]`` of frames ``frame [S]`` (in index order)."""
-    # ``to_pygame`` and ``SpaceDebugColor.as_int`` round half to even.
-    ends = np.rint(seg[:, :4]).astype(np.int64)
-    color = pack(np.rint(seg[:, 4:7]).astype(np.int64))
-    px, py, pb, pv = aaline_writes(ends[:, 0], ends[:, 1], ends[:, 2], ends[:, 3])
-    per = pv.sum(1) if len(seg) else np.zeros(0, np.int64)
-    totals = np.bincount(frame, per, minlength=n).astype(np.int64)
-    width = max(1, int(totals.max(initial=0)))
-    out = np.zeros((4, n, width), np.float64)
-    if len(seg):
-        order = np.cumsum(pv, 1) - 1
-        start = np.zeros(len(seg), np.int64)
-        # Segments of one frame follow each other in index order.
-        start[1:] = np.cumsum(per)[:-1]
-        first_of_frame = np.zeros(n, np.int64)
-        first_of_frame[1:] = np.cumsum(totals)[:-1]
-        slot = start[:, None] + order - first_of_frame[frame][:, None]
-        rows = np.broadcast_to(frame[:, None], pv.shape)[pv]
-        cols = slot[pv]
-        out[0, rows, cols] = px[pv]
-        out[1, rows, cols] = py[pv]
-        out[2, rows, cols] = pb[pv]
-        out[3, rows, cols] = np.broadcast_to(color[:, None], pv.shape)[pv]
-    return out[0].astype(np.int64), out[1].astype(np.int64), out[2].astype(np.float32), out[3].astype(np.int64), totals
+    total = np.zeros(len(counts), np.int64)
+    empty = np.zeros((len(counts), 0), np.int64)
+    cpu.contacts(segments, counts, (empty, empty, empty.astype(np.float32), empty), total)
+    shape = (len(counts), max(1, int(total.max(initial=0))))
+    writes = tuple(np.zeros(shape, dtype) for dtype in (np.int64, np.int64, np.float32, np.int64))
+    cpu.contacts(segments, counts, writes, total)
+    return (*writes, total)
 
 
 @cache
@@ -685,151 +323,6 @@ def resize_supported(size):
     """Sizes whose rows OpenCV's SIMD loop covers on every instruction set, and that need no border taps."""
     s, _, _ = resize_coefficients(CANVAS, size)
     return size % 4 == 0 and size <= CANVAS and s.min() >= 0 and s.max() + 1 < CANVAS
-
-
-def _shade(records, y, x, color, table, max_radius):
-    """Paint ``records [n, P, RECORD]`` over integer grids ``y [1, R, 1]`` and ``x [1, 1, C]`` into ``color``."""
-    for p in range(records.shape[1]):
-        rec = records[:, p]
-        kind = rec[:, KIND].view(-1, 1, 1)
-        if not bool((kind != 0).any()):
-            continue
-        r = {
-            name: rec[:, index].view(-1, 1, 1)
-            for name, index in (("bx0", BX0), ("by0", BY0), ("bx1", BX1), ("by1", BY1))
-        }
-        box = (x >= r["bx0"]) & (x <= r["bx1"]) & (y >= r["by0"]) & (y <= r["by1"])
-        cover = torch.zeros_like(box)
-        if bool((kind == POLY).any()):
-            cover |= (kind == POLY) & _poly(rec, y, x)
-        if bool((kind == CIRCLE).any()):
-            cover |= (kind == CIRCLE) & _circle(rec, y, x, table, max_radius)
-        if bool((kind == LINE).any()):
-            cover |= (kind == LINE) & _line(rec, y, x)
-        color = torch.where(box & cover, rec[:, COLOR].view(-1, 1, 1).to(color.dtype), color)
-    return color
-
-
-def _poly(rec, y, x):
-    n = torch.where(rec[:, KIND] == POLY, rec[:, PN], 0).clamp(0, 5).view(-1, 1, 1)
-    xs, ys = rec[:, PX : PX + 5].view(-1, 1, 1, 5), rec[:, PY : PY + 5].view(-1, 1, 1, 5)
-    use = torch.arange(5, device=rec.device).view(1, 1, 1, 5) < n.unsqueeze(-1)
-    big = torch.iinfo(torch.int32).max
-    miny = torch.where(use, ys, big).amin(-1)
-    maxy = torch.where(use, ys, -big).amax(-1)
-    minx = torch.where(use, xs, big).amin(-1)
-    maxx = torch.where(use, xs, -big).amax(-1)
-    prev = (torch.arange(5, device=rec.device).view(1, 1, 1, 5) - 1) % n.unsqueeze(-1).clamp(min=1)
-    xa, ya = torch.gather(xs, 3, prev), torch.gather(ys, 3, prev)
-    up = ya < ys
-    y1, y2 = torch.where(up, ya, ys), torch.where(up, ys, ya)
-    x1, x2 = torch.where(up, xa, xs), torch.where(up, xs, xa)
-    edge = use & (ya != ys)
-    yy, xx = y.unsqueeze(-1), x.unsqueeze(-1)
-    on = edge & (((yy >= y1) & (yy < y2)) | ((yy == maxy.unsqueeze(-1)) & (y2 == maxy.unsqueeze(-1))))
-    den = torch.where(edge, y2 - y1, torch.ones_like(y2))
-    # ``(int)((y - y1) * (x2 - x1) / (y2 - y1) + x1)`` in double truncates the exact quotient.
-    hits = torch.where(on, torch.div((yy - y1) * (x2 - x1) + x1 * den, den, rounding_mode="trunc"), big)
-    hits, _ = torch.sort(hits, -1)
-    count = (hits != big).sum(-1)
-    inside = (count >= 2) & (x >= hits[..., 0]) & (x <= hits[..., 1])
-    inside |= (count >= 4) & (x >= hits[..., 2]) & (x <= hits[..., 3])
-    # Horizontal edges strictly between the top and bottom rows get their own span.
-    level = use & (ya == ys) & (miny.unsqueeze(-1) < ys) & (ys < maxy.unsqueeze(-1))
-    special = level & (yy == ys) & (xx >= torch.minimum(xa, xs)) & (xx <= torch.maximum(xa, xs))
-    inside = (inside & (y >= miny) & (y <= maxy)) | special.any(-1)
-    return torch.where(miny == maxy, (y == miny) & (x >= minx) & (x <= maxx), inside)
-
-
-def _circle(rec, y, x, table, max_radius):
-    cx, cy, radius = (rec[:, i].view(-1, 1, 1) for i in (CX, CY, CR))
-    dy = y - cy
-    valid = (dy >= -max_radius - 1) & (dy <= max_radius)
-    row = (dy + max_radius + 1).clamp(0, 2 * max_radius + 1)
-    span = table[radius.clamp(0, max_radius), row]
-    return valid & (x - cx >= span[..., 0]) & (x - cx <= span[..., 1])
-
-
-def _line(rec, y, x):
-    lx, ly, sx, sy, dx, dy, err, steps, xinc = (rec[:, i].view(-1, 1, 1) for i in range(LX, LXINC + 1))
-    k = (y - ly) * sy
-    nk = torch.div(k * dx + err + dy - 1, dy.clamp(min=1), rounding_mode="floor")
-    xk = lx + sx * torch.where(dy > 0, nk, 0)
-    rows = (k >= 0) & (k <= steps) & (x >= xk - 1) & (x <= xk + 2)
-    k = (x - lx) * sx
-    mk = torch.div(k * dy - err + dx - 1, dx.clamp(min=1), rounding_mode="floor")
-    yk = ly + sy * mk
-    cols = (k >= 0) & (k <= steps) & (y >= yk - 1) & (y <= yk + 2)
-    return torch.where(xinc != 0, rows, cols)
-
-
-def draw(records, background, writes, size, device, chunk=64):
-    """Return ``[N, size, size, 3]`` uint8 frames for host ``records`` and ``writes`` (see ``contact_writes``)."""
-    s, a0, a1 = resize_coefficients(CANVAS, size)
-    taps = np.unique(np.concatenate([s, s + 1]))
-    position = np.full(CANVAS, -1, np.int64)
-    position[taps] = np.arange(len(taps))
-    grid = torch.as_tensor(taps, device=device, dtype=torch.int32)
-    y, x = grid.view(1, -1, 1), grid.view(1, 1, -1)
-    max_radius = max(2, int(records[..., CR].max(initial=0)) if len(records) else 2)
-    table = torch.as_tensor(circle_table(max_radius), device=device, dtype=torch.int32)
-    i0 = torch.as_tensor(position[s], device=device)
-    i1 = torch.as_tensor(position[s + 1], device=device)
-    w0 = torch.as_tensor(a0, device=device, dtype=torch.int32)
-    w1 = torch.as_tensor(a1, device=device, dtype=torch.int32)
-    wx, wy, wb, wc, wn = writes
-    frames = []
-    for start in range(0, len(records), chunk):
-        stop = min(start + chunk, len(records))
-        rec = torch.as_tensor(records[start:stop], device=device, dtype=torch.int32)
-        color = torch.as_tensor(background[start:stop], device=device, dtype=torch.int32).view(-1, 1, 1)
-        color = color.expand(-1, len(taps), len(taps)).contiguous()
-        color = _shade(rec, y, x, color, table, max_radius)
-        color = _blend(
-            color, wx[start:stop], wy[start:stop], wb[start:stop], wc[start:stop], wn[start:stop], position, device
-        )
-        frames.append(_resize(color, i0, i1, w0, w1))
-    return torch.cat(frames) if frames else torch.zeros((0, size, size, 3), dtype=torch.uint8, device=device)
-
-
-def _blend(color, wx, wy, wb, wc, wn, position, device):
-    """Apply ``get_antialiased_color`` blends in order; writes to pixels the resize does not read are dropped."""
-    if not int(wn.max(initial=0)):
-        return color
-    n = color.shape[0]
-    rows = torch.as_tensor(position[wy], device=device)
-    cols = torch.as_tensor(position[wx], device=device)
-    bright = torch.as_tensor(wb, device=device)
-    paint = torch.as_tensor(wc, device=device)
-    frame = torch.arange(n, device=device)
-    for w in range(int(wn.max())):
-        on = (w < torch.as_tensor(wn, device=device)) & (rows[:, w] >= 0) & (cols[:, w] >= 0)
-        if not bool(on.any()):
-            continue
-        f, r, c = frame[on], rows[on, w], cols[on, w]
-        old = color[f, r, c]
-        b = bright[on, w]
-        new = paint[on, w]
-        out = torch.zeros_like(old)
-        for shift in (16, 8, 0):
-            fg = ((new >> shift) & 255).to(torch.float32)
-            bg = ((old >> shift) & 255).to(torch.float32)
-            value = (b * fg + (1 - b) * bg).to(torch.int32).clamp(0, 255)
-            out |= value << shift
-        color[f, r, c] = out
-    return color
-
-
-def _resize(color, i0, i1, w0, w1):
-    """OpenCV 5.0 uint8 INTER_LINEAR from the sampled canvas: 11-bit rows, then the SIMD vertical pass."""
-    channels = []
-    for shift in (16, 8, 0):
-        c = (color >> shift) & 255
-        h0 = c[:, i0][:, :, i0] * w0 + c[:, i0][:, :, i1] * w1
-        h1 = c[:, i1][:, :, i0] * w0 + c[:, i1][:, :, i1] * w1
-        v = (((h0 >> 4) * w0.view(-1, 1)) >> 16) + (((h1 >> 4) * w1.view(-1, 1)) >> 16)
-        channels.append(((v + 2) >> 2).clamp(0, 255).to(torch.uint8))
-    return torch.stack(channels, -1)
 
 
 try:
@@ -1447,7 +940,7 @@ def _upload(array, dtype, device):
 def _launch(records, counts, background, writes, size, device, static_index, static_out, dynamic, tile):
     s, a0, a1 = resize_coefficients(CANVAS, size)
     n = len(records)
-    max_radius = max(2, int(records[..., CR].max(initial=0)) if n else 2)
+    max_radius = max(2, int(records[..., CR].max(initial=0, where=records[..., KIND] == CIRCLE)))
     wx, wy, wb, wc, wn = writes
     out = torch.empty((n, size, size, 3), dtype=torch.uint8, device=device)
     if n == 0:
@@ -1467,35 +960,6 @@ def _launch(records, counts, background, writes, size, device, static_index, sta
     _frames_kernel[(n, triton.cdiv(size, tile))](
         *views[:12], out, views[12], static_out, views[13], out, views[1], views[1], views[1], views[1],
         views[1], out, out, records.shape[1], wx.shape[1], size, max_radius,
-        RECORD_=RECORD, TILE=tile, BIG=2**30,
-    )  # fmt: skip
-    return out
-
-
-def launch_tensors(records, counts, background, writes, size, device, tile=32):
-    """``_launch`` for device ``records``, ``counts`` and ``background``, without the goal-and-wall tile cache."""
-    s, a0, a1 = resize_coefficients(CANVAS, size)
-    n = len(records)
-    out = torch.empty((n, size, size, 3), dtype=torch.uint8, device=device)
-    if n == 0:
-        return out
-    max_radius = max(2, int(records[..., CR].max().item()))
-    wx, wy, wb, wc, wn = writes
-    flat = [
-        np.ascontiguousarray(part).astype(np.int32, copy=False).reshape(-1)
-        for part in (wx, wy, np.asarray(wb, np.float32).view(np.int32), wc, wn, s, a0, a1, circle_table(max_radius))
-    ]
-    packed = _upload(np.concatenate(flat), torch.int32, device)
-    views, offset = [], 0
-    for part in flat:
-        views.append(packed[offset : offset + len(part)])
-        offset += len(part)
-    views[2] = views[2].view(torch.float32)
-    none = torch.full((n,), -1, dtype=torch.int32, device=device)
-    _frames_kernel[(n, triton.cdiv(size, tile))](
-        records.contiguous(), counts.to(torch.int32), background.to(torch.int32), *views, out,
-        none, out, torch.zeros((n, 4), dtype=torch.int32, device=device), out, none, none, none, none,
-        none, out, out, records.shape[1], wx.shape[1], size, max_radius,
         RECORD_=RECORD, TILE=tile, BIG=2**30,
     )  # fmt: skip
     return out
@@ -1622,7 +1086,7 @@ def _device_tables(size, device):
 
 
 def draw_cuda(records, counts, background, writes, size, device, tile=32):
-    """Triton version of ``draw`` on CUDA.
+    """Return ``[N, size, size, 3]`` uint8 frames of host ``records`` and ``writes`` (see ``contact_writes``) on CUDA.
 
     Tiles that no agent, block or contact primitive reaches copy the frame that the background,
     goal and walls draw alone, which frames with the same goal and colours share.
@@ -1664,25 +1128,38 @@ def draw_cuda(records, counts, background, writes, size, device, tile=32):
     return _launch(records, counts, background, writes, size, device, index, static_out, box, tile)
 
 
-def render_cpu(fields, size, fallback, chunk=1024):
-    """Return ``[N, size, size, 3]`` uint8 CPU frames for host render ``fields`` with the Numba twin of ``draw``.
+def render_cpu(fields, size, fallback, out=None, chunk=1024):
+    """Return ``[N, size, size, 3]`` uint8 CPU frames for host render ``fields`` with the Numba rasterizer.
 
     ``fallback(rows)`` draws the rows this renderer does not cover (action markers) with pygame.
+    The frames are drawn into ``out`` when it is a matching contiguous CPU tensor.
     """
+    import numba
+
     from . import raster_cpu as cpu
 
-    count = len(fields["recipe/config"])
-    out = np.empty((count, size, size, 3), np.uint8)
-    for start in range(0, count, chunk):
-        rows = {key: value[start : start + chunk] for key, value in fields.items()}
-        records, _, unsupported = primitives(rows)
-        background = pack(rows["owned/variation/background/color/current/value"].astype(np.int64))
-        frames = cpu.draw(records, background, contact_writes(rows), size)
-        if unsupported.any():
-            lanes = np.flatnonzero(unsupported)
-            frames[lanes] = np.asarray(fallback({key: value[lanes] for key, value in rows.items()}))
-        out[start : start + len(frames)] = frames
-    return torch.from_numpy(out)
+    shape = (len(fields["recipe/config"]), size, size, 3)
+    if (
+        out is None
+        or (out.shape, out.dtype, out.device.type) != (shape, torch.uint8, "cpu")
+        or not out.is_contiguous()
+    ):
+        out = torch.empty(shape, dtype=torch.uint8)
+    threads = numba.get_num_threads()
+    numba.set_num_threads(max(1, min(threads, shape[0])))
+    try:
+        for start in range(0, shape[0], chunk):
+            rows = {key: value[start : start + chunk] for key, value in fields.items()}
+            records, _, unsupported = primitives(rows)
+            background = pack(rows["owned/variation/background/color/current/value"].astype(np.int64))
+            frames = out[start : start + chunk].numpy()
+            cpu.draw(records, background, contact_writes(rows), frames)
+            if unsupported.any():
+                lanes = np.flatnonzero(unsupported)
+                frames[lanes] = np.asarray(fallback({key: value[lanes] for key, value in rows.items()}))
+    finally:
+        numba.set_num_threads(threads)
+    return out
 
 
 def render(fields, size, device, fallback, chunk=1024):
