@@ -170,7 +170,7 @@ def test_state_render_in_render_workers_matches_in_process():
             serial = env.render(state), env.render(rows)
         with tuning.override(render_workers=3):
             split = env.render(state), env.render(rows)
-            # This process draws one share while it checks the State; a State that fails the check gives no frames.
+            # The main process checks the State while the workers draw; a State that fails gives no frames.
             bad = state.clone()
             bad["history", "valid"][1, 0] = False
             with pytest.raises(ValueError, match="history mask"):

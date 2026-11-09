@@ -24,9 +24,9 @@ TinyRenderer frames. `env.describe()["visual_fidelity"]` gives the measured agre
 
 On CPU with worker processes, the workers draw the step frames of their running lanes with
 TinyRenderer. A step then does not export a State only to draw it. On Linux, `render` draws a batch of
-2 or more States in render worker processes, for every number of lanes. The main process draws one
-share and checks the State while the workers draw theirs. Thus `render_workers` counts the main
-process, and the pool has one worker fewer. `render_worker_min_rows` sets the smallest such batch.
+2 or more States in render worker processes, for every number of lanes. The main process checks the
+State while the workers draw. `render_workers` sets the number of workers and `render_worker_min_rows`
+sets the smallest such batch.
 These frames are byte-identical to frames drawn in the main process.
 
 ```python

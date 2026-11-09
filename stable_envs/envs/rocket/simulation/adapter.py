@@ -23,8 +23,11 @@ def check_values(template, values, num_envs):
                 raise ValueError(f"Invalid Rocket Variation: {key}")
 
 
-def check_fields(state, fields, batch):
-    """Check that a ``[batch]`` State has the keys, shapes and dtypes of ``fields``; return its leaves."""
+def state_columns(state, fields, template, batch):
+    """Check a ``[batch]`` State against ``fields`` and its rows with engine ``template``; return the host columns.
+
+    The lanes of one batch share one configuration, so one engine checks every row.
+    """
     if not isinstance(state, TensorDict) or state.batch_size != torch.Size([batch]):
         raise ValueError("Rocket full State requires batch [num_envs]")
     leaves = dict(state.items(True, True))
@@ -33,15 +36,6 @@ def check_fields(state, fields, batch):
     for key, (shape, dtype) in fields.items():
         if leaves[key].shape != (batch, *shape) or leaves[key].dtype != dtype:
             raise ValueError(f"Invalid Rocket State leaf: {key}")
-    return leaves
-
-
-def state_columns(state, fields, template, batch):
-    """Check a ``[batch]`` State against ``fields`` and its rows with engine ``template``; return the host columns.
-
-    The lanes of one batch share one configuration, so one engine checks every row.
-    """
-    leaves = check_fields(state, fields, batch)
     # One transfer per leaf; per-row device reads cost one copy per row and leaf.
     columns = {"/".join(k): v.detach().cpu().numpy() for k, v in leaves.items()}
     for key, value in columns.items():
@@ -109,8 +103,6 @@ class RocketAdapter(SimulatorAdapter):
     def validate(self, state):
         return state_columns(state, self.fields, self.template, self.num_envs)
 
-    def check_fields(self, state):
-        check_fields(state, self.fields, self.num_envs)
 
     def prepare_restore(self, state):
         """Replay every lane of ``state`` into new engines; the live lanes do not change."""
@@ -204,13 +196,13 @@ class RocketAdapter(SimulatorAdapter):
     def frame_shape(self):
         return None if self.frame is None else (self.frame[0], self.frame[0], 3)
 
-    def draw(self, body, links, colors, size, ss, out=None):
-        """Draw explicit body poses, camera link poses and colours with TinyRenderer, into ``out`` if given."""
+    def draw(self, body, links, colors, size, ss):
+        """Draw explicit body poses, camera link poses and colours with TinyRenderer."""
         from ..render import draw_tiny, tiny_scene
 
         if self._scene is None:
             self._scene = tiny_scene()
-        return draw_tiny(self._scene, body, links, colors, size, ss, out)
+        return draw_tiny(self._scene, body, links, colors, size, ss)
 
     def render_live(self):
         """Draw every lane's running scene with TinyRenderer, as ``render`` draws its State."""

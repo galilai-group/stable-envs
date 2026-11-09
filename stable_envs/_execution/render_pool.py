@@ -141,14 +141,14 @@ class RenderPool(ProcessRequests):
         shape: tuple[int, ...],
         args_of: Callable[[slice], Any],
         out=None,
-        local: Callable[[Any, np.ndarray], None] | None = None,
+        during: Callable[[], None] | None = None,
     ) -> np.ndarray:
         """Return ``(count, *shape)`` uint8 frames; worker ``k`` draws the rows ``args_of(slice_k)`` describes.
 
         Without ``out``, the workers write into a new shared block that the result views, so the frames
         are not copied again. With ``out``, they write into a block kept across calls and the frames are
-        copied into ``out``. With ``local``, this process draws the last share as ``local(args, frames)``
-        while the workers draw theirs. An error from ``local`` is raised after the workers finish.
+        copied into ``out``. ``during()`` runs in this process while the workers draw; an error it raises
+        is raised after they finish, and no frames return.
         """
         nbytes = max(count * int(np.prod(shape)), 1)
         if out is None:
@@ -161,16 +161,15 @@ class RenderPool(ProcessRequests):
                 self._block = shared_memory.SharedMemory(create=True, size=nbytes)
             block = self._block
         target = block.name
-        parts = lane_slices(count, min(count, self.processes + (local is not None)))
-        mine = parts.pop() if local is not None else None
+        parts = lane_slices(count, min(count, self.processes))
         payloads = [(target, rows.start, rows.stop - rows.start, shape, args_of(rows)) for rows in parts]
         # A woken worker pinned to the CPU of this process preempts it, so that worker is woken last.
         cpu = _current_cpu()
         order = sorted(range(self.processes), key=lambda i: cpu in (self._groups[i] or ()))
         self._submit("render", payloads + [None] * (self.processes - len(parts)), order)
-        if mine is not None and local is not None:
+        if during is not None:
             try:
-                local(args_of(mine), np.ndarray((count, *shape), np.uint8, buffer=block.buf)[mine])
+                during()
             except BaseException:
                 try:
                     self._receive()
@@ -307,15 +306,12 @@ def pool(
     size: int,
     *,
     min_rows: int | None = None,
-    local: bool = False,
     **kwargs,
 ) -> RenderPool | None:
     """Return the shared pool for ``key`` when ``count`` rows use workers, or None to draw in-process.
 
-    ``min_rows`` is as in :func:`worker_count`. With ``local``, the pool has one worker fewer and leaves
-    one CPU of the affinity to this process, which draws a share of each batch (``RenderPool.render``
-    with ``local``). A pool that fails to start is logged; after ``_STARTS`` failures its key draws
-    in-process.
+    ``min_rows`` is as in :func:`worker_count`. A pool that fails to start is logged; after ``_STARTS``
+    failures its key draws in-process.
     """
     workers = worker_count(count, path, size, min_rows)
     if not workers:
@@ -331,12 +327,7 @@ def pool(
                 if isinstance(stale, RenderPool):
                     stale.close()
             try:
-                cpus = sorted(os.sched_getaffinity(0))
-                _POOLS[full] = (
-                    RenderPool(factory, workers - 1, cpus[:-1], **kwargs)
-                    if local
-                    else RenderPool(factory, workers, cpus, **kwargs)
-                )
+                _POOLS[full] = RenderPool(factory, workers, sorted(os.sched_getaffinity(0)), **kwargs)
             except Exception as exc:  # noqa: BLE001 - drawing in this process gives the same frames
                 failures = (item or 0) + 1
                 log(

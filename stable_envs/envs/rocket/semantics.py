@@ -226,7 +226,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         return self._render_state_of(state, size, supersample)
 
     def _render_state_of(self, state, size, supersample):
-        """The RenderState of a full State whose leaves have the recorded keys, shapes and dtypes."""
+        """The RenderState of a full State, without the checks of ``to_render_state``."""
         style = self._style_of(state["render", "rgba"])
         result = TensorDict(
             {
@@ -344,20 +344,20 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         for value in (size, supersample, chunk_size):
             if value is not None and (type(value) is not int or value < 1):
                 raise ValueError("Render dimensions/chunk must be positive integers")
-        check = None
         if state is None or isinstance(state, TensorDict) and "current" in state.keys():
             full = self.get_state() if state is None else state
-            self._simulator.check_fields(full)
-            state = self._render_state_of(full, size, supersample)
             # The whole State is checked while the frames are drawn; no frame returns before it passes.
             check = functools.partial(self._simulator.validate, full)
-        try:
-            b, complete, resolution, ss = self._render_dimensions(state, size, supersample)
-        except ValueError:
-            # The State's own error comes first, as when ``to_render_state`` checks it.
-            if check is not None:
+            try:
+                state = self._render_state_of(full, size, supersample)
+                b, complete, resolution, ss = self._render_dimensions(state, size, supersample)
+            except Exception:
+                # The State's own error comes first, as when ``to_render_state`` checks it.
                 check()
-            raise
+                raise
+        else:
+            check = None
+            b, complete, resolution, ss = self._render_dimensions(state, size, supersample)
         chunk = b if chunk_size is None else chunk_size
         frames = (
             rocket_render.render(self, state, resolution, ss, chunk_size, check)

@@ -7,7 +7,7 @@ from functools import partial
 import torch
 
 from ...._execution.process import ProcessAdapter
-from .adapter import RocketAdapter, check_fields, check_values, state_columns
+from .adapter import RocketAdapter, check_values, state_columns
 
 #: Lanes one process may own. A staged restore or reset holds two PyBullet clients per lane, frames
 #: use one more client, and PyBullet allows 1024 clients in one process.
@@ -42,10 +42,6 @@ class RocketProcessAdapter(ProcessAdapter):
         self._check_open()
         return state_columns(state, self.fields, self._metadata.template, self.num_envs)
 
-    def check_fields(self, state):
-        self._check_open()
-        check_fields(state, self.fields, self.num_envs)
-
     def rgba(self):
         return self.call("rgba").to(self.device)
 
@@ -65,7 +61,7 @@ class RocketProcessAdapter(ProcessAdapter):
             )
         return self._reset(seed, [(options, None if values is None else values[rows]) for rows in self._slices])
 
-    def draw(self, body, links, colors, size, ss, out=None):
-        """Draw explicit poses with TinyRenderer in this process, into ``out`` if given."""
+    def draw(self, body, links, colors, size, ss):
+        """Draw explicit poses with TinyRenderer in this process."""
         self._check_open()
-        return self._metadata.draw(body, links, colors, size, ss, out)
+        return self._metadata.draw(body, links, colors, size, ss)

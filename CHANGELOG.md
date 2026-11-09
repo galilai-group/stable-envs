@@ -104,9 +104,8 @@ All notable changes to this project are listed here. The format follows
   - One check of the whole batch replaces the State check of each row. The row check took 2 to 7 ms
     for each State with a long action history.
   - On Linux, render worker processes draw batches of 2 or more States, for every number of lanes.
-    The main process draws one share and checks the State while the workers draw theirs.
-    `render_workers` counts the main process; `render_worker_min_rows` is 2 for Rocket when it is not
-    set. Before, only batches of 64 or more lanes drew in parallel, in the physics workers.
+    The main process checks the State while the workers draw. `render_worker_min_rows` is 2 for Rocket
+    when it is not set. Before, only batches of 64 or more lanes drew in parallel, in the physics workers.
   - TinyRenderer pixels are read with `bytes` instead of `np.asarray`, which takes 0.6 ms instead of
     3.9 ms per 224 px frame. Step frames get this speed-up too.
 

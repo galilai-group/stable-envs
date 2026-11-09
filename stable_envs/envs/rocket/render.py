@@ -216,11 +216,10 @@ class TinyDrawer:
 
 
 def draw_cpu(env, body, links, colors, size, ss, check=None):
-    """Draw with TinyRenderer: in render workers and this process on Linux, else in this process.
+    """Draw with TinyRenderer: in render workers on Linux, else in this process.
 
     A frame depends only on its row, so the split does not change the frames. ``check`` runs in this
-    process before it draws its own share, while the workers draw theirs; an error it raises discards
-    the frames.
+    process while the workers draw; an error it raises discards the frames.
     """
     from ..._execution import render_pool
 
@@ -231,7 +230,6 @@ def draw_cpu(env, body, links, colors, size, ss, check=None):
         "rocket-render",
         size,
         min_rows=MIN_WORKER_ROWS,
-        local=True,
         name="PyFlytRocketLanding render",
     )
     if workers is None:
@@ -239,14 +237,9 @@ def draw_cpu(env, body, links, colors, size, ss, check=None):
             check()
         return env._simulator.draw(body, links, colors, size, ss)
 
-    def local(args, frames):
-        if check is not None:
-            check()
-        env._simulator.draw(*args, out=frames)
-
     with workers.lock:
         return workers.render(
-            len(body), (size, size, 3), lambda rows: (body[rows], links[rows], colors[rows], size, ss), local=local
+            len(body), (size, size, 3), lambda rows: (body[rows], links[rows], colors[rows], size, ss), during=check
         )
 
 
