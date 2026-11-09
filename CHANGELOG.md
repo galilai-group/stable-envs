@@ -75,6 +75,15 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- `OGBCube` and `OGBScene` step faster on CPU. A step runs the OGBench step without its observation
+  and info dictionaries, because the step outputs do not use them. The State leaves that only reset,
+  restore and `set_variation` change (the PCG64 generators other than the environment generator, the
+  task, the Variation values and the compiled model values) are kept from the last capture until one of
+  these calls. State and task outputs do not change, and a test compares them with the OGBench step.
+  On 8 cores of an AMD EPYC 9554 with 1024 lanes, `OGBCube` steps 7,398 times per second with one
+  action per call (before: 5,773) and 8,759 times with 16 actions per call (before: 7,289). `OGBScene`
+  steps 4,828 and 5,592 times per second (before: 3,755 and 4,712). The speed of steps with frames does
+  not change, because drawing the frames takes most of the time.
 - DM Control resets run on the `mujoco.batch` threads (`dmc_threads`). The reset of each lane is
   dm_control's `Environment.reset` without its first observation. MuJoCo releases the GIL while it computes,
   so lanes reset in parallel. Quadruped searches its start height with direct MuJoCo calls that leave the data
