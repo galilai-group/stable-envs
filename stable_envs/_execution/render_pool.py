@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import atexit
 import builtins
+import ctypes
 import multiprocessing as mp
 import os
 import sys
@@ -27,6 +28,13 @@ _LOCK = threading.Lock()
 _POOLS: dict[Hashable, RenderPool | int] = {}
 # Attempts to start one pool; after that its batches draw in-process.
 _STARTS = 3
+_SCHED_GETCPU = getattr(ctypes.CDLL(None), "sched_getcpu", None) if sys.platform == "linux" else None
+
+
+def _current_cpu() -> int | None:
+    """The CPU this thread runs on, or None where the platform does not report it."""
+    cpu = _SCHED_GETCPU() if _SCHED_GETCPU is not None else -1
+    return cpu if cpu >= 0 else None
 
 
 def _worker(conn, factory, cpus, software_gl):
@@ -99,6 +107,7 @@ class RenderPool(ProcessRequests):
         self.lock = threading.Lock()
         context = mp.get_context("spawn")
         groups = [None] * processes if cpus is None else [g.tolist() for g in np.array_split(cpus, processes)]
+        self._groups = groups
         try:
             for group in groups:
                 parent, child = context.Pipe()
@@ -126,12 +135,20 @@ class RenderPool(ProcessRequests):
         # A large batch can take minutes; the wait still ends when a worker exits.
         return super()._responses(timeout=24 * 3600 if timeout is None else timeout)
 
-    def render(self, count: int, shape: tuple[int, ...], args_of: Callable[[slice], Any], out=None) -> np.ndarray:
+    def render(
+        self,
+        count: int,
+        shape: tuple[int, ...],
+        args_of: Callable[[slice], Any],
+        out=None,
+        during: Callable[[], None] | None = None,
+    ) -> np.ndarray:
         """Return ``(count, *shape)`` uint8 frames; worker ``k`` draws the rows ``args_of(slice_k)`` describes.
 
         Without ``out``, the workers write into a new shared block that the result views, so the frames
         are not copied again. With ``out``, they write into a block kept across calls and the frames are
-        copied into ``out``.
+        copied into ``out``. ``during()`` runs in this process while the workers draw; an error it raises
+        is raised after they finish, and no frames return.
         """
         nbytes = max(count * int(np.prod(shape)), 1)
         if out is None:
@@ -146,7 +163,21 @@ class RenderPool(ProcessRequests):
         target = block.name
         parts = lane_slices(count, min(count, self.processes))
         payloads = [(target, rows.start, rows.stop - rows.start, shape, args_of(rows)) for rows in parts]
-        replies = self._request("render", payloads + [None] * (self.processes - len(parts)))
+        # A woken worker pinned to the CPU of this process preempts it, so that worker is woken last.
+        cpu = _current_cpu()
+        order = sorted(range(self.processes), key=lambda i: cpu in (self._groups[i] or ()))
+        self._submit("render", payloads + [None] * (self.processes - len(parts)), order)
+        if during is not None:
+            try:
+                during()
+            except BaseException:
+                try:
+                    self._receive()
+                finally:
+                    if out is None:
+                        _drop_block(block)
+                raise
+        replies = self._receive()
         failures = [reply for reply in replies if reply is not None]
         if failures:
             if out is None:
@@ -248,11 +279,18 @@ def render_rows(
     return out if out is not None else torch.from_numpy(frames)
 
 
-def worker_count(count: int, path: str, size: int) -> int:
-    """Return the number of render workers for ``count`` rows on render path ``path``, or 0 to draw in-process."""
+def worker_count(count: int, path: str, size: int, min_rows: int | None = None) -> int:
+    """Return the number of render workers for ``count`` rows on render path ``path``, or 0 to draw in-process.
+
+    ``min_rows`` replaces the fallback of the ``render_worker_min_rows`` knob for this call site.
+    """
     if IN_WORKER or sys.platform != "linux" or mp.current_process().daemon or not hasattr(os, "sched_getaffinity"):
         return 0
-    if count < int(tuning.get("render_worker_min_rows", path=path, size=size, batch=count) or 0):
+    if min_rows is None:
+        threshold = tuning.get("render_worker_min_rows", path=path, size=size, batch=count)
+    else:
+        threshold = tuning.get("render_worker_min_rows", path=path, size=size, batch=count, default=min_rows)
+    if count < int(threshold or 0):
         return 0
     workers = min(
         int(tuning.get("render_workers", path=path, size=size, batch=count) or 0), len(os.sched_getaffinity(0))
@@ -261,13 +299,21 @@ def worker_count(count: int, path: str, size: int) -> int:
 
 
 def pool(
-    key: Hashable, factory: Callable[[], Callable], count: int, path: str, size: int, **kwargs
+    key: Hashable,
+    factory: Callable[[], Callable],
+    count: int,
+    path: str,
+    size: int,
+    *,
+    min_rows: int | None = None,
+    **kwargs,
 ) -> RenderPool | None:
     """Return the shared pool for ``key`` when ``count`` rows use workers, or None to draw in-process.
 
-    A pool that fails to start is logged; after ``_STARTS`` failures its key draws in-process.
+    ``min_rows`` is as in :func:`worker_count`. A pool that fails to start is logged; after ``_STARTS``
+    failures its key draws in-process.
     """
-    workers = worker_count(count, path, size)
+    workers = worker_count(count, path, size, min_rows)
     if not workers:
         return None
     with _LOCK:

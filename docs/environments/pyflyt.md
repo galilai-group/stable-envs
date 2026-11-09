@@ -23,8 +23,11 @@ TinyRenderer draws the frames. On CUDA, nvdiffrast draws them. nvdiffrast is not
 TinyRenderer frames. `env.describe()["visual_fidelity"]` gives the measured agreement.
 
 On CPU with worker processes, the workers draw the step frames of their running lanes with
-TinyRenderer. A step then does not export a State only to draw it. The workers also draw `render`
-batches of 2 or more States. These frames are byte-identical to frames drawn in the main process.
+TinyRenderer. A step then does not export a State only to draw it. On Linux, `render` draws a batch of
+2 or more States in render worker processes, for every number of lanes. The main process checks the
+State while the workers draw. `render_workers` sets the number of workers and `render_worker_min_rows`
+sets the smallest such batch.
+These frames are byte-identical to frames drawn in the main process.
 
 ```python
 import stable_envs as snv

@@ -66,8 +66,8 @@ def _states(name):
 @pytest.mark.parametrize("size", [224, 96])
 def test_the_numba_frames_equal_the_pygame_frames(name, size):
     state = _states(name)
-    with se.make(name, num_envs=LANES, size=size, device="cpu", backend="port") as port:
-        fast = port.render(state)
+    with se.make(name, num_envs=LANES, size=size, device="cpu") as numba:
+        fast = numba.render(state)
     with se.make(name, num_envs=LANES, size=size, device="cpu", backend="source") as source:
         slow = source.render(state)
     differ = (fast != slow).flatten(1).any(1)
