@@ -8,6 +8,9 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- DMC native/MJWarp benchmarks offer an opt-in extended batch matrix through 8192 lanes and
+  a `--dry-run` preview. Reports include kernel peak host RSS through construction and worker
+  exit, including failed workers on supported platforms, alongside existing construction timing.
 - All 17 DMC classes accept experimental `simulation_backend="mjwarp"` for direct CUDA physics
   on MuJoCo Warp 3.17. Automatic routing, including Reacher's native/MJX selection, stays unchanged.
   The shared adapter retains native resets, RNG, targets, physics variation and checkpoints.

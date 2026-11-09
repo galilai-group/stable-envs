@@ -106,7 +106,30 @@ include tested revisions, shared baseline failures and hardware-specific skips.
 
 `python benchmarks/dmc_mjwarp.py --help` describes the configurable latency and memory benchmark.
 It separates construction, reset, restore, raw physics, public stepping and rendering costs.
-The default matrix covers all 17 environments with native and MJWarp backends.
+The default matrix covers all 17 environments with native and MJWarp backends at batches
+1, 16, 64, 256 and 1024. `--batches` selects arbitrary positive batch sizes;
+`--extended-batches` appends 2048, 4096 and 8192 without duplicating selected sizes.
+Preview a light/heavy task matrix without initializing CUDA, constructing environments or
+launching workers:
+
+```bash
+python benchmarks/dmc_mjwarp.py --dry-run --pretty \
+  --envs DMCPendulumSwingup,DMCCheetahRun --batches 1024 --extended-batches
+```
+
+Remove `--dry-run` and supply `--output results/dmc-mjwarp.json` to measure that matrix.
+The script requires `psutil` and `nvidia-ml-py` for measurement, but not for the preview.
+
+Construction records include wall time and memory samples. On Linux/macOS,
+`memory_after.rss_peak_self_bytes` is the operating system's process-lifetime peak resident
+host RAM through construction, including startup; later memory samples retain the high-water
+mark through their phase. Each row also includes `worker_peak_rss_bytes` collected when its
+isolated worker exits, even if it is killed before writing a result. Unsupported platforms
+report `null`. These are absolute process high-water marks, not per-phase allocation deltas
+or peak concurrent RAM summed across worker processes. On Linux, the exit-time value can
+also include the largest reaped descendant. Existing RSS sums and NVML readings remain point
+samples. `worker_exit` records the exit code and signal; a `SIGKILL` alone does not prove OOM.
+Failed cells remain explicit error rows, and the sweep continues to the next cell.
 
 The [MuJoCo 3.17 timing curves](https://github.com/galilai-group/stable-envs/blob/782cba6f35ee316f22499c7d83402320e6012f79/docs/assets/dmc-mjwarp-317/README.md#timing)
 compare sequential CPU, native CPU batching and RTX 3090 stepping at batches 1, 256 and 1024,
