@@ -10,7 +10,6 @@ from tensordict import TensorDict
 
 from ...._execution.process import PER_LANE
 from ...._execution.protocol import SimulatorAdapter
-from ...._execution.state_columns import owned_columns
 from .compatibility import MODEL_VALUES, TARGET_ALPHA, CompatibleCube, CompatibleScene, LanePool, nodes, variation_tree
 from .pcg import pcg_decode, pcg_encode
 
@@ -79,6 +78,21 @@ def task_payload(env, values):
     return result
 
 
+_GROUP_RANK = {"compatibility": 0, "physics": 1, "controller": 2, "output": 3, "lifecycle": 5, "scene": 7}
+_TASK_RANK = {"goal_observation": 4.0, "id": 4.1, "reward_id": 4.2, "success": 4.3, "payload": 6}
+_LATE_RANK = {"variation": 8, "model": 9}
+
+
+def _leaf_rank(key):
+    """Sort key that keeps the State leaf order of one combined capture; Python's sort is stable."""
+    group = key[0]
+    if group == "task":
+        return (_TASK_RANK[key[1]], 0)
+    if group == "rng":
+        return (11, 0) if key[1] == "task" else (10, key[1] != "environment")
+    return (_GROUP_RANK.get(group, _LATE_RANK.get(group, 12)), 0)
+
+
 class OGBManipulationAdapter(SimulatorAdapter):
     """CPU Cube/Scene simulators with versioned, fully restorable checkpoints.
 
@@ -105,6 +119,8 @@ class OGBManipulationAdapter(SimulatorAdapter):
         ]
         self._closed = False
         self._prepared_envs = None
+        self._order = None
+        self._static_columns = None
         fingerprint = "|".join(
             ["ogb_registered_state_v1", family]
             + [f"{p}={version(p)}" for p in ("ogbench", "mujoco", "numpy", "gymnasium")]
@@ -123,12 +139,14 @@ class OGBManipulationAdapter(SimulatorAdapter):
         if seed is not None and (not isinstance(seed, (int, np.integer)) or seed < 0):
             raise ValueError("seed must be a nonnegative integer or None")
         lanes = options if isinstance(options, list) else self.envs[0].lane_options(options, self.num_envs)
+        self._forget_static(self.envs)
         for lane, env in enumerate(self.envs):
             env.reset(seed=None if seed is None else int(seed) + lane, options=lanes[lane])
         return self.get_state()
 
-    def _values(self, env):
-        values = {("compatibility", "signature"): self.signature}
+    def _dynamic_values(self, env):
+        """The State leaves a step can change."""
+        values = {}
         for name, flag in FLAGS.items():
             size = mujoco.mj_stateSize(env.model, flag)
             if size:
@@ -143,32 +161,18 @@ class OGBManipulationAdapter(SimulatorAdapter):
                 ("output", "gripper_force"): env.data.body("ur5e/robotiq/right_pad").cfrc_ext.copy(),
                 ("output", "prev_qpos"): env._prev_qpos.copy(),
                 ("output", "prev_qvel"): env._prev_qvel.copy(),
-                ("task", "goal_observation"): env._cur_goal_ob.copy(),
-                ("task", "id"): np.array([-1 if env.cur_task_id is None else env.cur_task_id], np.int64),
-                ("task", "reward_id"): np.array(
-                    [-1 if env._reward_task_id is None else env._reward_task_id], np.int64
-                ),
                 ("task", "success"): np.array([env._success], bool),
                 ("lifecycle", "reset_next_step"): np.array([env._reset_next_step], bool),
             }
         )
-        for key, value in task_values(env).items():
-            values["task", "payload", key] = value
         if self.family == "Scene":
             for key in ("cur_button_states", "prev_button_states", "target_button_states"):
                 values["scene", key] = np.asarray(getattr(env, "_" + key), np.int64).copy()
             for key in ("target_drawer_pos", "target_window_pos"):
                 values["scene", key] = np.array([getattr(env, "_" + key)], np.float64)
-        for name in sorted(env.supported_variations):
-            node = env.variation_space._walk(name)
-            values["variation", "current", name] = np.asarray(node.value, np.float64).copy()
-            values["variation", "anchor", name] = np.asarray(node.init_value, np.float64).copy()
-        for namespace, source in [("compiled", env._model_values), ("mjcf", env._mjcf_values)]:
-            for key in MODEL_VALUES:
-                values["model", namespace, key] = source[key].copy()
-        for name, rng in rngs(env).items():
-            for key, value in pcg_encode(rng).items():
-                values["rng", name, key] = value
+        # Scene's post_step draws from the environment generator when it repairs an unstable cube.
+        for key, value in pcg_encode(env.np_random).items():
+            values["rng", "environment", key] = value
         _, key, position, flag, cached = env.task_rng.get_state()
         values.update(
             {
@@ -180,6 +184,48 @@ class OGBManipulationAdapter(SimulatorAdapter):
         )
         return values
 
+    def _static_values(self, env):
+        """The State leaves only reset, restore and ``configure`` change, cached on the lane until then.
+
+        The leaves are copies of the PCG64 generators, the task, the Variation and the compiled model values.
+        """
+        cached = getattr(env, "_snv_static", None)
+        if cached is not None:
+            return cached
+        values = {
+            ("compatibility", "signature"): self.signature,
+            ("task", "goal_observation"): env._cur_goal_ob.copy(),
+            ("task", "id"): np.array([-1 if env.cur_task_id is None else env.cur_task_id], np.int64),
+            ("task", "reward_id"): np.array([-1 if env._reward_task_id is None else env._reward_task_id], np.int64),
+        }
+        for key, value in task_values(env).items():
+            values["task", "payload", key] = value
+        for name in sorted(env.supported_variations):
+            node = env.variation_space._walk(name)
+            values["variation", "current", name] = np.asarray(node.value, np.float64).copy()
+            values["variation", "anchor", name] = np.asarray(node.init_value, np.float64).copy()
+        for namespace, source in [("compiled", env._model_values), ("mjcf", env._mjcf_values)]:
+            for key in MODEL_VALUES:
+                values["model", namespace, key] = source[key].copy()
+        for name, rng in rngs(env).items():
+            if name != "environment":
+                for key, value in pcg_encode(rng).items():
+                    values["rng", name, key] = value
+        env._snv_static = values
+        return values
+
+    def _values(self, env):
+        values = {**self._static_values(env), **self._dynamic_values(env)}
+        if self._order is None:
+            self._order = tuple(sorted(values, key=_leaf_rank))
+        return {key: values[key] for key in self._order}
+
+    def _forget_static(self, envs):
+        """Drop the cached static leaves; the next capture recomputes them."""
+        self._static_columns = None
+        for env in envs:
+            env.__dict__.pop("_snv_static", None)
+
     def _row(self, env):
         return TensorDict(
             {k: torch.as_tensor(v.copy(), device=self.device) for k, v in self._values(env).items()},
@@ -189,7 +235,23 @@ class OGBManipulationAdapter(SimulatorAdapter):
 
     def get_state(self):
         self._check_open()
-        return owned_columns((self._values(env) for env in self.envs), self.num_envs, self.device)
+        dynamic = [self._dynamic_values(env) for env in self.envs]
+        if self._static_columns is None:
+            rows = [self._static_values(env) for env in self.envs]
+            self._static_columns = {key: np.stack([row[key] for row in rows]) for key in rows[0]}
+        if self._order is None:
+            self._order = tuple(sorted({**self._static_columns, **dynamic[0]}, key=_leaf_rank))
+        columns = {}
+        for key in self._order:
+            if key in self._static_columns:
+                columns[key] = self._static_columns[key].copy()
+            else:
+                columns[key] = np.stack([row[key] for row in dynamic])
+        return TensorDict(
+            {key: torch.from_numpy(value).to(self.device) for key, value in columns.items()},
+            [self.num_envs],
+            device=self.device,
+        )
 
     def render_columns(self):
         """The State leaves a RenderState projects, as ``get_state`` holds them, as stacked NumPy columns."""
@@ -392,6 +454,7 @@ class OGBManipulationAdapter(SimulatorAdapter):
             raise RuntimeError("No Cube/Scene restore is prepared")
         previous, self.envs = self.envs, self._prepared_envs
         self._prepared_envs = None
+        self._static_columns = None
         for env in previous:
             env.close()
 
@@ -426,6 +489,7 @@ class OGBManipulationAdapter(SimulatorAdapter):
             raise ValueError("Variation batch mismatch")
         for env, value in zip(self.envs, values):
             env.validate_options({"variation": [], "variation_values": value})
+        self._forget_static(self.envs)
         for env, value in zip(self.envs, values):
             env.configure_variation(value)
 
@@ -456,17 +520,17 @@ class OGBManipulationAdapter(SimulatorAdapter):
         ):
             raise ValueError("Actions must be finite float32/float64 [num_envs, 5]")
         results = [
-            env.step(action) if active is None or active[i] else self._last_outputs[i]
+            env.transition(action) if active is None or active[i] else self._last_outputs[i]
             for i, (env, action) in enumerate(zip(self.envs, actions))
         ]
         self._last_outputs = results
         return TensorDict(
             {
                 **({"state": self.get_state()} if capture_state else {}),
-                "reward": torch.tensor([r[1] for r in results], dtype=torch.float64, device=self.device),
-                "success": torch.tensor([bool(r[4]["success"]) for r in results], device=self.device),
-                "terminated": torch.tensor([bool(r[2]) for r in results], device=self.device),
-                "truncated": torch.tensor([bool(r[3]) for r in results], device=self.device),
+                "reward": torch.tensor([r[0] for r in results], dtype=torch.float64, device=self.device),
+                "success": torch.tensor([bool(r[3]) for r in results], device=self.device),
+                "terminated": torch.tensor([bool(r[1]) for r in results], device=self.device),
+                "truncated": torch.tensor([bool(r[2]) for r in results], device=self.device),
             },
             [self.num_envs],
             device=self.device,

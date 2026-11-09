@@ -491,6 +491,34 @@ class Compatibility:
         super().post_step()
         self._cube_colors_from_variation()
 
+    def transition(self, action):
+        """``step`` without the observation and info dictionaries; returns reward, terminated, truncated, success.
+
+        The pre-step snapshot keeps the previous position and velocity and, for Scene, the button positions
+        that ``post_step`` reads. The physics, State and returned values are those of ``step``.
+        """
+        if self._reset_next_step or self._success_timing not in ("pre", "post"):
+            _, reward, terminated, truncated, info = self.step(action)
+            return reward, terminated, truncated, info["success"]
+        if self._success_timing == "pre":
+            success, terminated, reward = self._success, self.terminate_episode(), self.compute_reward()
+        self.set_control(np.array(action))
+        if self.family == "Scene":
+            self._prev_button_states = self._cur_button_states.copy()
+        self._prev_qpos = self._data.qpos.copy()
+        self._prev_qvel = self._data.qvel.copy()
+        if self.family == "Scene":
+            self._prev_ob_info = {
+                f"privileged/button_{i}_pos": self._data.joint(f"buttonbox_joint_{i}").qpos.copy()
+                for i in range(self._num_buttons)
+            }
+        mujoco.mj_step(self._model, self._data, nstep=self._n_steps)
+        mujoco.mj_rnePostConstraint(self._model, self._data)
+        self.post_step()
+        if self._success_timing == "post":
+            success, terminated, reward = self._success, self.terminate_episode(), self.compute_reward()
+        return reward, terminated, self.truncate_episode(), success
+
     def get_reset_info(self):
         info = super().get_reset_info()
         info.pop("goal", None)
