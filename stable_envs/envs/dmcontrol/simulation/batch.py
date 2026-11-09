@@ -15,6 +15,9 @@ from .state import export_state
 
 XX, XZ, ZX, ZY, ZZ = 0, 2, 6, 7, 8  # MuJoCo's row-major xmat entries
 _pow = np.frompyfunc(math.pow, 2, 1)
+#: Domains whose dm_control reset is mostly MuJoCo work: CheetahRun settles for 200 steps, Quadruped searches its
+#: start height. Their lanes reset on the batch threads; the resets of other domains are faster in one thread.
+THREADED_RESETS = frozenset({"cheetah", "quadruped"})
 
 
 def tolerance(x, *args, **kwargs):
@@ -56,8 +59,8 @@ class DMCBatchAdapter(SimulatorAdapter):
         self._get_state, self._spec = mujoco.mj_getState, mujoco.mjtState.mjSTATE_INTEGRATION
         self._vel, self._error = mujoco.mjtStage.mjSTAGE_VEL, PhysicsError
         self.b = Batch(self._models[0], self.num_envs, nthread=threads)
-        # dm_control resets spend most of their time in MuJoCo calls, which release the GIL.
-        self._pool = ThreadPoolExecutor(threads) if threads > 1 else None
+        # These resets spend most of their time in MuJoCo calls, which release the GIL.
+        self._pool = ThreadPoolExecutor(threads) if threads > 1 and lanes.key in THREADED_RESETS else None
         self.b.set_models(self._models)
         self.task = task(self.b, self._models)
         self._count, self._reset_next = np.zeros(self.num_envs, np.int64), np.zeros(self.num_envs, bool)
