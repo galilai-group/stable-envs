@@ -393,17 +393,19 @@ class RocketReplay:
             raise ValueError("Missing main reset RNG")
         return n, post
 
-    def validate_batch(self, columns):
+    def validate_batch(self, columns, checked=False):
         """Validate stacked rows as ``validate`` validates each row; the first axis of each column is the row.
 
         The checks run on whole columns. When one fails, ``validate`` runs row by row and raises its error.
+        ``checked`` skips the shape, dtype and finiteness checks of each column, which the caller made
+        against the same keys, shapes and dtypes.
         """
-        if self._columns_valid(columns):
+        if self._columns_valid(columns, checked):
             return
         for i in range(len(next(iter(columns.values()), ()))):
             self.validate({k: v[i, ...].copy() for k, v in columns.items()})
 
-    def _columns_valid(self, columns):
+    def _columns_valid(self, columns, checked=False):
         """True when every row passes ``validate``; False when a row may fail it."""
         if self._layout is None:
             # The keys, shapes and dtypes of ``get_state`` do not change during the life of an engine.
@@ -415,7 +417,7 @@ class RocketReplay:
         if not isinstance(lengths, np.ndarray) or lengths.ndim != 1:
             return False
         batch = len(lengths)
-        for key, value in columns.items():
+        for key, value in () if checked else columns.items():
             shape, dtype = layout[key]
             if (
                 not isinstance(value, np.ndarray)
