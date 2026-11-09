@@ -344,7 +344,16 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         for value in (size, supersample, chunk_size):
             if value is not None and (type(value) is not int or value < 1):
                 raise ValueError("Render dimensions/chunk must be positive integers")
-        if state is None or isinstance(state, TensorDict) and "current" in state.keys():
+        full_state = state is None or isinstance(state, TensorDict) and "current" in state.keys()
+        if full_state and self.device.type == "cpu":
+            frames = self._render_full_cpu(state, size, supersample)
+            if out is not None:
+                if out.shape != frames.shape or out.dtype != frames.dtype or out.device != frames.device:
+                    raise ValueError("Invalid Rocket render output buffer")
+                out.copy_(frames)
+                return out
+            return frames
+        if full_state:
             full = self.get_state() if state is None else state
             # The whole State is checked while the frames are drawn; no frame returns before it passes.
             check = functools.partial(self._simulator.validate, full)
@@ -381,6 +390,33 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
             out.copy_(frames)
             return out
         return frames
+
+    def _render_full_cpu(self, state, size, supersample):
+        """Draw full States with TinyRenderer; the State is checked while the frames are drawn."""
+        from . import render as rocket_render
+
+        state = self.get_state() if state is None else state
+        check = functools.partial(self._simulator.validate, state)
+        try:
+            fields = {key[1]: value.detach().cpu().numpy() for key, value in rocket_render.project(state).items()}
+            if not all(np.isfinite(value).all() for value in fields.values()):
+                raise ValueError("Invalid Rocket RenderState")
+        except Exception:
+            # The State's own error comes first, as when ``to_render_state`` checks it.
+            check()
+            raise
+        if (fields["rgba"] < 0).any() or (fields["rgba"] > 1).any():
+            check()
+            raise ValueError("Rocket RenderState rgba must lie in [0, 1]")
+        return rocket_render.render_cpu(
+            self,
+            fields["source_pose"],
+            fields["camera_pose"],
+            fields["rgba"],
+            self.size if size is None else size,
+            self.ss if supersample is None else supersample,
+            check,
+        )
 
     def _render_dimensions(self, state, size, supersample):
         """Check a RenderState; return its batch, whether it has explicit poses, and the frame size and supersample."""

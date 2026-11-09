@@ -38,10 +38,12 @@ def state_columns(state, fields, template, batch):
             raise ValueError(f"Invalid Rocket State leaf: {key}")
     # One transfer per leaf; per-row device reads cost one copy per row and leaf.
     columns = {"/".join(k): v.detach().cpu().numpy() for k, v in leaves.items()}
-    for key, value in columns.items():
-        if value.dtype.kind not in "biu" and not np.isfinite(value).all():
-            raise ValueError(f"Invalid Rocket State leaf: {tuple(key.split('/'))}")
-    template.validate_batch(columns)
+    floats = [v.reshape(batch, -1) for v in columns.values() if v.dtype.kind not in "biu"]
+    if floats and not np.isfinite(np.concatenate(floats, 1)).all():
+        for key, value in columns.items():
+            if value.dtype.kind not in "biu" and not np.isfinite(value).all():
+                raise ValueError(f"Invalid Rocket State leaf: {tuple(key.split('/'))}")
+    template.validate_batch(columns, checked=True)
     return columns
 
 

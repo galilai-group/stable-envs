@@ -243,6 +243,13 @@ def draw_cpu(env, body, links, colors, size, ss, check=None):
         )
 
 
+def render_cpu(env, body, links, colors, size, ss, check=None):
+    """Draw host body poses, camera link poses and colours on CPU; ``check`` must pass before any frame returns."""
+    env._check_open("render")
+    with env.__dict__.setdefault("_rocket_pixel_lock", threading.RLock()):
+        return torch.from_numpy(draw_cpu(env, body, links, colors, size, ss, check))
+
+
 def render(env, state, size, ss, chunk_size=None, check=None):
     """Draw a RenderState with explicit poses; ``check`` must pass before any frame returns."""
     if chunk_size is not None and (isinstance(chunk_size, bool) or not isinstance(chunk_size, int) or chunk_size <= 0):
@@ -252,10 +259,10 @@ def render(env, state, size, ss, chunk_size=None, check=None):
     env._check_open("render")
     host = {k: state["renderer", k].detach().cpu().numpy() for k in FIELDS}
     body, links, colors = host["source_pose"], host["camera_pose"], host["rgba"]
+    if env.device.type == "cpu":
+        return render_cpu(env, body, links, colors, size, ss, check)
     lock = env.__dict__.setdefault("_rocket_pixel_lock", threading.RLock())
     with lock:
-        if env.device.type == "cpu":
-            return torch.from_numpy(draw_cpu(env, body, links, colors, size, ss, check))
         if env.device.type != "cuda":
             raise ValueError("Rocket rendering supports CPU TinyRenderer or CUDA nvdiffrast")
         if check is not None:
