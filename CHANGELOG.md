@@ -97,10 +97,21 @@ All notable changes to this project are listed here. The format follows
 - `PushT` accepts continuous actions outside [-1, 1], as stable-worldmodel does. Such an action moves the target
   further from the agent. Discrete `PushTDiscrete` indices must still be in [0, 16).
 - `PyFlytRocketLanding` on CPU: the physics worker processes draw the step frames of their running
-  lanes with TinyRenderer, in parallel. They also draw `render` batches of 2 or more States. Before, the
-  main process drew every frame. A step that returns only frames does not export a State. The frames are
-  byte-identical. One process now holds at most 511 Rocket lanes, because the frames use one more
-  PyBullet client.
+  lanes with TinyRenderer, in parallel. Before, the main process drew every frame. A step that returns
+  only frames does not export a State. The frames are byte-identical. One process now holds at most 511
+  Rocket lanes, because the frames use one more PyBullet client.
+- `PyFlytRocketLanding` `render` of full States on CPU is faster:
+  - One check of the whole batch replaces the State check of each row. The row check took 2 to 7 ms
+    for each State with a long action history.
+  - On Linux, render worker processes draw batches of 2 or more States, for every number of lanes.
+    The main process checks the State while the workers draw. `render_worker_min_rows` is 2 for Rocket
+    when it is not set. Before, only batches of 64 or more lanes drew in parallel, in the physics workers.
+  - TinyRenderer pixels are read with `bytes` instead of `np.asarray`, which takes 0.6 ms instead of
+    3.9 ms per 224 px frame. Step frames get this speed-up too.
+
+  The frames are byte-identical. Invalid State gives the same errors as before.
+- CPU render worker pools wake the worker that shares the CPU of the main process last. Before, that
+  worker preempted the main process while it sent the other requests.
 - `SimplePointMaze` draws the `info.goal` images faster. Each distinct background is drawn once with
   Matplotlib Agg. Then only the agent disc is drawn over a copy of it, in the render worker processes on
   Linux. The image bytes do not change. Steps return the goal image without a copy: it is the same

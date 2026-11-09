@@ -249,3 +249,70 @@ def test_variation_values_last_one_reset_and_restore(pair):
     assert not e.reset(seed=17)["variation", "environment", "start_tilt", "value"].any()
     with pytest.raises(ValueError, match="both sampled and set"):
         e.reset(seed=17, options={"variation": ["environment"], "variation_values": values})
+
+
+def _set(key, row, index, value):
+    def mutate(columns):
+        columns[key][(row, *index)] = value
+
+    return mutate
+
+
+def _ended_after(columns):
+    columns["lifecycle/post_terminal_steps"][2] = 3
+    columns["current/wrapper/step_count"][2] += 3
+    columns["current/wrapper/truncation"][2] = 1
+
+
+def _absent_rng(columns):
+    columns["recipe/main_rng"][0] = 0
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda columns: None,
+        _ended_after,
+        _set("history/length", 1, (), 0),
+        _set("history/valid", 1, (-1,), True),
+        _set("history/actions", 0, (-1, 2), 0.5),
+        _set("history/dtypes", 2, (-1,), 1),
+        _set("history/dtypes", 1, (0,), 3),
+        _set("history/actions", 1, (1, 0), 0.1),
+        _set("history/actions", 0, (2, 1), 1.5),
+        _set("history/actions", 2, (0, 3), -0.25),
+        _set("history/actions", 1, (3, 4), 1.25),
+        _set("history/actions", 0, (4, 6), -2.0),
+        _set("lifecycle/last_action_dtype", 2, (), 3),
+        _set("lifecycle/post_terminal_steps", 1, (), 1),
+        _set("lifecycle/post_terminal_steps", 0, (), -1),
+        _set("lifecycle/post_terminal_steps", 0, (), np.iinfo(np.int64).max - 2),
+        _set("current/wrapper/step_count", 2, (), 0),
+        _set("recipe/seed", 0, (), -2),
+        _set("recipe/config", 1, (0,), 99.0),
+        _set("recipe/main_rng", 2, (5,), 2),
+        _set("recipe/main_rng", 1, (0,), 2),
+        _set("recipe/main_rng", 0, (3,), 2**32),
+        _set("rng/action_space", 1, (9,), 2),
+        _absent_rng,
+    ],
+)
+def test_batch_validation_accepts_what_row_validation_accepts(mutate):
+    with make("PyFlytRocketLanding", num_envs=3, seed=4) as env:
+        for i in range(6):
+            env.step(np.array([[0.2, -0.3, 0.1, 1, 0.4, 0.1, -0.2]] * 3, dtype=np.float32 if i % 2 else np.float64))
+        columns = {"/".join(k): v.numpy().copy() for k, v in env.get_state().items(True, True)}
+        mutate(columns)
+        engine = env._simulator.template
+
+        def outcome(check):
+            try:
+                check()
+            except (ValueError, TypeError, AssertionError) as error:
+                return type(error), str(error)
+            return None
+
+        rows = [{k: v[i, ...].copy() for k, v in columns.items()} for i in range(3)]
+        expected = outcome(lambda: [engine.validate(row) for row in rows])
+        assert outcome(lambda: engine.validate_batch(columns)) == expected
+        assert engine._columns_valid(columns) == (expected is None)
