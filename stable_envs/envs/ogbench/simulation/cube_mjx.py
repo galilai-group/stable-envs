@@ -266,7 +266,10 @@ class CubeMJXAdapter(OGBManipulationAdapter):
                 staged._upload()
                 if "mjx" in state.keys():
                     staged._data = staged._data.replace(
-                        **{name: _from_torch(state["mjx", name].to(self.device)) for name in ("cvel", "cdof_dot")}
+                        **{
+                            name: _from_torch(state["mjx", name].to(self.device)).copy()
+                            for name in ("cvel", "cdof_dot")
+                        }
                     )
                     staged._sync_state()
         except BaseException:
