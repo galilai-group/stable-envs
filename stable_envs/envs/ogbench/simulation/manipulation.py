@@ -89,6 +89,7 @@ class OGBManipulationAdapter(SimulatorAdapter):
     """
 
     execution_mode = "DELEGATED_CPU"
+    rotation_tolerance = 1e-8
     process_methods = {"configure": PER_LANE}
     process_attributes = ("family", "fields", "nq")
     action_dim = 5
@@ -217,6 +218,8 @@ class OGBManipulationAdapter(SimulatorAdapter):
             raise TypeError(
                 "Full Cube/Scene TensorDict State with batch [num_envs] required; RenderState cannot restore dynamics"
             )
+        if "mjx" in state.keys() and "mjx" not in self.template.keys():
+            raise ValueError("Cube MJX State requires a CUDA Cube environment; CPU uses a different solver")
         if set(state.keys(True, False)) != set(self.template.keys(True, False)):
             raise ValueError("Full State has missing or extra leaves")
         # Keep transfers and TensorDict traversal column-wise. The returned
@@ -263,8 +266,8 @@ class OGBManipulationAdapter(SimulatorAdapter):
                     raise ValueError("Task ID and numeric payload are inconsistent")
             rotations = row["controller", "site_xmat"].reshape(-1, 3, 3)
             if not np.allclose(
-                rotations @ rotations.transpose(0, 2, 1), np.eye(3), atol=1e-8, rtol=0
-            ) or not np.allclose(np.linalg.det(rotations), 1.0, atol=1e-8, rtol=0):
+                rotations @ rotations.transpose(0, 2, 1), np.eye(3), atol=self.rotation_tolerance, rtol=0
+            ) or not np.allclose(np.linalg.det(rotations), 1.0, atol=self.rotation_tolerance, rtol=0):
                 raise ValueError("Invalid cached site rotation")
             for namespace in ("current", "anchor"):
                 for name in sorted(self.envs[0].supported_variations):

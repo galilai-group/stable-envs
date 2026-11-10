@@ -53,6 +53,7 @@ class ManipulationSemantics:
         self._simulator = make_manipulation_adapter(
             self.CELL, num_envs, device, seed, reward_task_id, OGBManipulationAdapter
         )
+        self.execution_mode = self._simulator.execution_mode
         self._nq = self._simulator.nq
         self.state_dim = self._nq + 3 + (2 if self.CELL == "Scene" else 0)
         from .manipulation import render_state_names
