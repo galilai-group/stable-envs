@@ -13,6 +13,8 @@ All notable changes to this project are listed here. The format follows
   exit, including failed workers on supported platforms, alongside existing construction timing.
   Seeded random-action rollouts default to the PR's three seeds, 20 warmups, a checkpoint restore,
   and 100 timed calls. Reports verify matching native/MJWarp action and checkpoint hashes.
+  A focused measurement profile retains stepping, raw physics, construction and memory costs
+  while skipping repeated reset/restore and rendering measurements.
 - All 17 DMC classes accept experimental `simulation_backend="mjwarp"` for direct CUDA physics
   on MuJoCo Warp 3.17. Automatic routing, including Reacher's native/MJX selection, stays unchanged.
   The shared adapter retains native resets, RNG, targets, physics variation and checkpoints.

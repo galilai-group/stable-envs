@@ -61,6 +61,7 @@ def test_dry_run_expands_matrix_without_starting_work(tmp_path, monkeypatch, opt
         ["--seeds", "1,1"],
         ["--seeds", "1,-1"],
         ["--seeds", ""],
+        ["--measurement-profile", "unknown"],
     ],
 )
 def test_invalid_preview_never_writes_a_plan(tmp_path, monkeypatch, options):
@@ -179,12 +180,15 @@ def test_interrupted_wait_cleans_up_worker(monkeypatch):
     [(None, -9, "error"), (None, -35, "error"), ({"status": "ok"}, -9, "error"), ({"status": "ok"}, 0, "ok")],
 )
 def test_isolated_record_keeps_peak_even_without_worker_json(monkeypatch, result, returncode, expected_status):
-    args = benchmark._parser().parse_args(["--extended-batches", "--seed", "91010"])
+    args = benchmark._parser().parse_args(
+        ["--extended-batches", "--seed", "91010", "--measurement-profile", "focused"]
+    )
 
     def run(command):
         # Only the resolved cell goes to the worker; it must not expand the matrix again.
         assert command[command.index("--batches") + 1] == "8192"
         assert command[command.index("--seed") + 1] == "91010"
+        assert command[command.index("--measurement-profile") + 1] == "focused"
         assert "--seeds" not in command
         assert "--extended-batches" not in command
         if result is not None:
@@ -202,17 +206,30 @@ def test_isolated_record_keeps_peak_even_without_worker_json(monkeypatch, result
 
 
 @pytest.mark.parametrize("options,seeds", [([], [91000, 91010, 91020]), (["--seeds", "0,9"], [0, 9])])
-def test_seed_sweep_defaults_and_backend_order_are_in_preview(tmp_path, monkeypatch, options, seeds):
+@pytest.mark.parametrize("profile", ["full", "focused"])
+def test_seed_sweep_defaults_and_backend_order_are_in_preview(tmp_path, monkeypatch, options, seeds, profile):
     monkeypatch.setattr(benchmark.common, "checked_device", _unexpected)
     output = tmp_path / "plan.json"
     assert (
         benchmark.main(
-            ["--dry-run", "--envs", "DMCPendulumSwingup", "--batches", "1024", "--output", str(output), *options]
+            [
+                "--dry-run",
+                "--envs",
+                "DMCPendulumSwingup",
+                "--batches",
+                "1024",
+                "--output",
+                str(output),
+                "--measurement-profile",
+                profile,
+                *options,
+            ]
         )
         == 0
     )
     plan = json.loads(output.read_text())
     assert plan["protocol"]["seeds"] == seeds
+    assert plan["protocol"]["measurement_profile"] == profile
     assert plan["protocol"]["warmup_calls"] == 20
     assert plan["protocol"]["timed_calls"] == 100
     assert plan["record_count"] == len(seeds) * 2
@@ -296,7 +313,8 @@ def test_paired_measurements_require_identical_inputs(mismatch):
 
 
 @pytest.mark.parametrize("backend", ["native", "mjwarp"])
-def test_measurement_phases_replay_the_same_inputs_with_fake_environment(monkeypatch, backend):
+@pytest.mark.parametrize("profile", ["full", "focused"])
+def test_measurement_phases_replay_the_same_inputs_with_fake_environment(monkeypatch, backend, profile):
     actions_seen, controls_seen = [], []
 
     class FakeEnvironment:
@@ -309,6 +327,7 @@ def test_measurement_phases_replay_the_same_inputs_with_fake_environment(monkeyp
         def __init__(self):
             self.backend = "auto"
             self.count = 0
+            self.resets = 0
             self._simulator = SimpleNamespace(
                 b=SimpleNamespace(nthread=1),
                 _controls=lambda action: action.to(torch.float32),
@@ -317,6 +336,7 @@ def test_measurement_phases_replay_the_same_inputs_with_fake_environment(monkeyp
 
         def reset(self, seed):
             self.count = 0
+            self.resets += 1
             return TensorDict({"qpos": torch.zeros(2, 1, dtype=torch.float64)}, [2])
 
         def set_state(self, saved):
@@ -329,18 +349,21 @@ def test_measurement_phases_replay_the_same_inputs_with_fake_environment(monkeyp
             return {"state": self.count}
 
         def render(self, saved):
+            assert profile == "full", "focused measurements must never render"
             return None
 
         def close(self):
             self.closed = True
 
-    def profile(fn, device):
+    def profile_memory(fn, device):
         fn()
         return {}
 
     candidate = FakeEnvironment()
-    args = benchmark._parser().parse_args(["--seed", "91000", "--warmup", "2", "--repeats", "3"])
-    args.memory_probe = SimpleNamespace(sample=lambda: {}, profile=profile)
+    args = benchmark._parser().parse_args(
+        ["--seed", "91000", "--warmup", "2", "--repeats", "3", "--measurement-profile", profile]
+    )
+    args.memory_probe = SimpleNamespace(sample=lambda: {}, profile=profile_memory)
     monkeypatch.setattr(benchmark.common, "public_env", lambda name, kwargs: candidate)
     monkeypatch.setattr(benchmark.torch.cuda, "max_memory_allocated", lambda device: 0)
     monkeypatch.setattr(benchmark.torch.cuda, "max_memory_reserved", lambda device: 0)
@@ -349,8 +372,14 @@ def test_measurement_phases_replay_the_same_inputs_with_fake_environment(monkeyp
     public = [(count, action) for pixels, count, action in actions_seen if not pixels]
     pixels = [(count, action) for pixels, count, action in actions_seen if pixels]
     assert [count for count, _ in public] == [0, 1, 0, 1, 0, 1, 2, 3]
-    assert [count for count, _ in pixels] == [0, 1, 0, 1, 2, 3]
-    for seen, indices in ((public, [0, 0, 0, 1, 0, 1, 2, 0]), (pixels, [0, 1, 0, 1, 2, 0])):
+    assert [count for count, _ in pixels] == ([0, 1, 0, 1, 2, 3] if profile == "full" else [])
+    phases = [(public, [0, 0, 0, 1, 0, 1, 2, 0])]
+    if profile == "full":
+        phases.append((pixels, [0, 1, 0, 1, 2, 0]))
+    else:
+        assert candidate.resets == 1
+        assert not {"reset", "restore", "render_saved_state", "public_step_with_pixels"} & row["metrics"].keys()
+    for seen, indices in phases:
         np.testing.assert_array_equal(np.stack([action.numpy() for _, action in seen]), expected[indices])
     if backend == "mjwarp":
         np.testing.assert_array_equal(
@@ -358,5 +387,6 @@ def test_measurement_phases_replay_the_same_inputs_with_fake_environment(monkeyp
             expected[[0, 0, 1, 1, 0, 0, 1, 1, 2, 2, 0, 0]].astype(np.float32),
         )
     assert row["metadata"]["inputs"]["actions_sha256"] == hashlib.sha256(expected).hexdigest()
+    assert row["metadata"]["measurement_profile"] == profile
     assert len(row["metrics"]["public_step_no_pixels"]["samples_ms"]) == 3
     assert candidate.closed

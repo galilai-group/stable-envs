@@ -7,6 +7,8 @@ The default matrix is 17 DMC cells x batches 1,16,64,256,1024 x 3 seeds x native
 Seeded uniform actions, 20 warmups, a checkpoint restore and 100 timed calls match
 the PR #28 rollout workload. Action generation and upload happen outside timing.
 Use --dry-run to inspect the matrix without CUDA initialization or worker launches.
+Use --measurement-profile focused for construction, public stepping and raw physics
+with memory reporting, omitting repeated reset/restore and rendering measurements.
 Install psutil and nvidia-ml-py for memory measurements.
 Each environment/batch/seed/backend record runs in a fresh process so allocator
 caches from earlier records cannot contaminate its process memory measurements.
@@ -101,6 +103,7 @@ def _state_sha256(state):
 def _protocol(args):
     return {
         "name": "dmc-pr28-random-rollout/v1",
+        "measurement_profile": args.measurement_profile,
         "seeds": args.seeds,
         "action_generator": "numpy.default_rng(seed + 91717).uniform(-1, 1, (batch, calls, action_dim))",
         "action_layout": "draw lane-major, transpose to contiguous [call, lane, component] float64",
@@ -326,10 +329,10 @@ def measure_cell(name, batch, simulation_backend, args, device):
             repeats=1,
             transitions=batch,
         )
-        candidate.set_state(saved)
-        metrics["reset"] = _metric(lambda: candidate.reset(seed=args.seed), args, device)
-        metrics["restore"] = _metric(lambda: candidate.set_state(saved), args, device)
-        candidate.set_state(saved)
+        if args.measurement_profile == "full":
+            candidate.set_state(saved)
+            metrics["reset"] = _metric(lambda: candidate.reset(seed=args.seed), args, device)
+            metrics["restore"] = _metric(lambda: candidate.set_state(saved), args, device)
         metrics["public_step_no_pixels"] = _rollout_metric(
             lambda action: candidate.step(action, states=None, frames=None),
             lambda: candidate.set_state(saved),
@@ -338,17 +341,17 @@ def measure_cell(name, batch, simulation_backend, args, device):
             device,
             transitions=batch,
         )
-        candidate.set_state(saved)
-        metrics["render_saved_state"] = _metric(lambda: candidate.render(saved), args, device)
-        candidate.set_state(saved)
-        metrics["public_step_with_pixels"] = _rollout_metric(
-            lambda action: candidate.step(action, states=None, frames=slice(-1, None)),
-            lambda: candidate.set_state(saved),
-            actions,
-            args,
-            device,
-            transitions=batch,
-        )
+        if args.measurement_profile == "full":
+            candidate.set_state(saved)
+            metrics["render_saved_state"] = _metric(lambda: candidate.render(saved), args, device)
+            metrics["public_step_with_pixels"] = _rollout_metric(
+                lambda action: candidate.step(action, states=None, frames=slice(-1, None)),
+                lambda: candidate.set_state(saved),
+                actions,
+                args,
+                device,
+                transitions=batch,
+            )
         adapter = candidate._simulator
         raw_description = "native raw physics measured separately after public adapter closes"
         if simulation_backend == "mjwarp":
@@ -374,6 +377,7 @@ def measure_cell(name, batch, simulation_backend, args, device):
         if substeps is None and lanes:
             substeps = lanes[0]._env._n_sub_steps
         metadata = {
+            "measurement_profile": args.measurement_profile,
             "execution_mode": candidate.execution_mode,
             "simulation_adapter": type(adapter).__name__,
             "simulation_worker_pids": [process.pid for process in getattr(adapter, "_processes", [])],
@@ -483,6 +487,8 @@ def isolated_record(name, batch, backend, args):
             str(args.threads),
             "--backend",
             args.backend,
+            "--measurement-profile",
+            args.measurement_profile,
             "--output",
             str(output),
         ]
@@ -490,7 +496,9 @@ def isolated_record(name, batch, backend, args):
             value = getattr(args, option)
             if value is not None:
                 command.extend(("--" + option, str(value)))
+        started = time.perf_counter()
         returncode, peak, stdout_tail, stderr_tail = _run_worker(command)
+        worker_wall_seconds = time.perf_counter() - started
         if output.is_file():
             row = json.loads(output.read_text())
         else:
@@ -512,6 +520,7 @@ def isolated_record(name, batch, backend, args):
             except ValueError:
                 exit_signal = str(-returncode)  # e.g. unnamed POSIX real-time signals
         row["worker_exit"] = {"returncode": returncode, "signal": exit_signal}
+        row["worker_wall_seconds"] = worker_wall_seconds
         row["worker_peak_rss_bytes"] = peak
         row["worker_peak_rss_scope"] = (
             "wait4.ru_maxrss across the worker lifetime, including startup, construction and all measured phases; "
@@ -591,6 +600,12 @@ def _parser():
     )
     parser.add_argument(
         "--dry-run", action="store_true", help="write the requested matrix without checking CUDA or launching workers"
+    )
+    parser.add_argument(
+        "--measurement-profile",
+        choices=("full", "focused"),
+        default="full",
+        help="focused measures construction, first/no-pixel public steps, raw physics and memory; full adds reset/restore and rendering",
     )
     parser.add_argument(
         "--simulation-backends", type=common.names, default=["native", "mjwarp"], help="native,mjwarp (default: both)"

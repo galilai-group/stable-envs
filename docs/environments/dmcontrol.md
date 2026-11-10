@@ -121,6 +121,22 @@ python benchmarks/dmc_mjwarp.py --dry-run --pretty \
 Remove `--dry-run` and supply `--output results/dmc-mjwarp.json` to measure that matrix.
 The script requires `psutil` and `nvidia-ml-py` for measurement, but not for the preview.
 
+For a focused stepping and memory baseline, add `--measurement-profile focused`. This retains
+construction, first public step, steady public stepping without pixels, raw physics, and their
+memory measurements. It skips the repeated reset/restore and rendering phases; the seeded
+reset and checkpoint restores needed to initialize each rollout still run outside timing.
+The default `full` profile includes every phase. Select the same profile for both revisions.
+
+```bash
+python benchmarks/dmc_mjwarp.py --measurement-profile focused --dry-run --pretty \
+  --envs DMCPendulumSwingup,DMCCheetahRun,DMCHumanoidWalk --batches 1,256,1024
+```
+
+This matrix has 54 records. Comparing public-step and raw-physics timings helps track the
+cost of task evaluation, snapshots, validation and synchronization together; their difference
+does not isolate synchronization alone. Construction RSS and process-lifetime peak RSS help
+track host memory, with the scopes described below.
+
 The stepping workload follows the PR's random-action recipe. NumPy `default_rng(seed + 91717)`
 draws uniform `[-1, 1)` float64 actions in `[lane, call, component]` order, then transposes them
 to contiguous `[call, lane, component]` arrays. Both backends receive identical precomputed
