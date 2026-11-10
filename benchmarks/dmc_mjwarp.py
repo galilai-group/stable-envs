@@ -2,11 +2,13 @@
 
 Example: python benchmarks/dmc_mjwarp.py --output results/dmc-mjwarp.json --pretty
 
-The default matrix is 17 DMC cells x batches 1,16,64,256,1024 x native/MJWarp
-(170 records). --extended-batches appends 2048,4096,8192 to the selected batches.
+The default matrix is 17 DMC cells x batches 1,16,64,256,1024 x 3 seeds x native/MJWarp
+(510 records). --extended-batches appends 2048,4096,8192 to the selected batches.
+Seeded uniform actions, 20 warmups, a checkpoint restore and 100 timed calls match
+the PR #28 rollout workload. Action generation and upload happen outside timing.
 Use --dry-run to inspect the matrix without CUDA initialization or worker launches.
 Install psutil and nvidia-ml-py for memory measurements.
-Each environment/batch/backend record runs in a fresh process so allocator
+Each environment/batch/seed/backend record runs in a fresh process so allocator
 caches from earlier records cannot contaminate its process memory measurements.
 An output file is atomically updated after each record, so a long sweep retains
 completed measurements. Errors remain explicit records and cause a nonzero exit.
@@ -17,6 +19,7 @@ it excludes task evaluation, public snapshots, rendering and reset bookkeeping.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.metadata
 import json
 import os
@@ -31,6 +34,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+import numpy as np  # noqa: E402
 import torch  # noqa: E402
 
 from benchmarks import _common as common  # noqa: E402
@@ -59,6 +63,66 @@ CELLS = (
 )
 DEFAULT_BATCHES = (1, 16, 64, 256, 1024)
 EXTENDED_BATCHES = (2048, 4096, 8192)
+DEFAULT_SEEDS = (91000, 91010, 91020)
+ACTION_SEED_OFFSET = 91717
+
+
+def _seeds(value):
+    try:
+        values = [int(part.strip()) for part in value.split(",")]
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("seeds must be comma-separated non-negative integers") from exc
+    if any(seed < 0 for seed in values) or len(values) != len(set(values)):
+        raise argparse.ArgumentTypeError("seeds must be distinct non-negative integers")
+    return values
+
+
+def _action_array(batch, width, seed, calls):
+    """Reproduce the PR harness's lane-major PCG64 draws, including batch prefixes."""
+    return (
+        np.random.default_rng(seed + ACTION_SEED_OFFSET)
+        .uniform(-1, 1, (batch, calls, width))
+        .transpose(1, 0, 2)
+        .copy()
+    )
+
+
+def _state_sha256(state):
+    """Hash the complete checkpoint with canonical leaf order, shapes and dtypes."""
+    leaves = {(key,) if isinstance(key, str) else key: value for key, value in state.items(True, True)}
+    digest = hashlib.sha256()
+    for key, value in sorted(leaves.items()):
+        array = value.detach().cpu().numpy()
+        digest.update(json.dumps([key, array.shape, array.dtype.str]).encode())
+        digest.update(np.ascontiguousarray(array))
+    return digest.hexdigest()
+
+
+def _protocol(args):
+    return {
+        "name": "dmc-pr28-random-rollout/v1",
+        "seeds": args.seeds,
+        "action_generator": "numpy.default_rng(seed + 91717).uniform(-1, 1, (batch, calls, action_dim))",
+        "action_layout": "draw lane-major, transpose to contiguous [call, lane, component] float64",
+        "generated_calls": max(args.warmup, args.repeats),
+        "warmup_calls": args.warmup,
+        "timed_calls": args.repeats,
+        "warmup_actions": "prefix of the generated sequence; replay from index zero after checkpoint restore",
+        "initial_state": "seeded native reset checkpoint, restored before warmup and again before timing",
+        "public_step": "one action per call, two control rounds, full State/task outputs, frames=None, states=None",
+        "timing": "CUDA synchronized before and after each call; action generation/upload and restore excluded",
+        "backend_order": "requested order for even seed indices, reversed for odd seed indices",
+    }
+
+
+def _matrix(args):
+    return [
+        dict(env=name, batch=batch, seed=seed, simulation_backend=backend)
+        for name in args.envs
+        for batch in args.batches
+        for index, seed in enumerate(args.seeds)
+        for backend in (args.simulation_backends if index % 2 == 0 else args.simulation_backends[::-1])
+    ]
 
 
 def _maxrss_bytes(value):
@@ -146,7 +210,7 @@ class MemoryProbe:
         }
 
 
-def _metric(fn, args, device, *, transitions=0, warmup=None, repeats=None):
+def _metric(fn, args, device, *, transitions=0, warmup=None, repeats=None, memory_fn=None):
     value = common.measure(
         fn,
         device=device,
@@ -157,14 +221,39 @@ def _metric(fn, args, device, *, transitions=0, warmup=None, repeats=None):
         value["environment_transitions_per_second"] = transitions * 1000 / value["median_ms"]
     value["torch_peak_allocated_bytes"] = torch.cuda.max_memory_allocated(device)
     value["torch_peak_reserved_bytes"] = torch.cuda.max_memory_reserved(device)
-    value["memory"] = args.memory_probe.profile(fn, device)
+    value["memory"] = args.memory_probe.profile(fn if memory_fn is None else memory_fn, device)
+    return value
+
+
+def _rollout_metric(step, restore, actions, args, device, *, transitions):
+    """Warm the path, then replay the timed sequence from its original checkpoint."""
+    restore()
+    for action in actions[: args.warmup]:
+        step(action)
+    restore()
+    timed = iter(actions[: args.repeats])
+    result = None
+
+    def next_step():
+        nonlocal result
+        # Retain outputs through the CUDA synchronization, as in the PR harness.
+        result = step(next(timed))
+        return result
+
+    value = _metric(
+        next_step,
+        args,
+        device,
+        transitions=transitions,
+        warmup=0,
+        memory_fn=lambda: step(actions[0]),
+    )
+    value["memory"]["action_scope"] = "one additional call with sequence index 0 after the timed rollout"
     return value
 
 
 def native_raw_physics(name, batch, args, device):
     """Same models/control steps, local sequential CPU lanes, without worker IPC."""
-    import numpy as np
-
     import stable_envs as se
     from stable_envs.envs.dmcontrol.simulation.factory import make_local
 
@@ -174,18 +263,22 @@ def native_raw_physics(name, batch, args, device):
     try:
         construction_ms = (time.perf_counter() - started) * 1000
         spec = source.envs[0]._env.action_spec()
-        controls = np.broadcast_to((spec.maximum + spec.minimum) / 2, (batch, source.action_dim)).copy()
+        saved = source.get_state()
+        actions = _action_array(batch, source.action_dim, args.seed, max(args.warmup, args.repeats))
+        controls = spec.minimum + (spec.maximum - spec.minimum) / 2 * (actions + 1)
         nsubsteps = source.envs[0]._env._n_sub_steps
 
-        def physics():
+        def physics(control):
             for _ in range(2):
                 for lane, env in enumerate(source.envs):
-                    env.physics.set_control(controls[lane])
+                    env.physics.set_control(control[lane])
                     env.physics.step(nsubsteps)
 
         return {
             "raw_native_construction": {"wall_ms": construction_ms, "samples": 1},
-            "raw_physics_two_control_rounds": _metric(physics, args, device, transitions=batch),
+            "raw_physics_two_control_rounds": _rollout_metric(
+                physics, lambda: source.set_state(saved), controls, args, device, transitions=batch
+            ),
         }, {
             "raw_physics_scope": "standalone native local lanes, sequential CPU, no process IPC or task/snapshot/render",
             "control_substeps": nsubsteps,
@@ -207,8 +300,16 @@ def measure_cell(name, batch, simulation_backend, args, device):
         memory_after_construction = args.memory_probe.sample()
         if candidate.simulation_backend != simulation_backend:
             raise AssertionError(f"Requested {simulation_backend}, got {candidate.simulation_backend}")
-        actions = torch.zeros(batch, candidate.action_dim, dtype=torch.float64, device=device)
+        action_array = _action_array(batch, candidate.action_dim, args.seed, max(args.warmup, args.repeats))
+        actions = torch.as_tensor(action_array, dtype=torch.float64, device=device).unbind(0)
         saved = candidate.reset(seed=args.seed).clone()
+        inputs = {
+            "reset_seed": args.seed,
+            "action_seed": args.seed + ACTION_SEED_OFFSET,
+            "action_shape": list(action_array.shape),
+            "actions_sha256": hashlib.sha256(action_array).hexdigest(),
+            "initial_state_sha256": _state_sha256(saved),
+        }
         metrics = {
             "construction": {
                 "wall_ms": construction_ms,
@@ -218,7 +319,7 @@ def measure_cell(name, batch, simulation_backend, args, device):
             }
         }
         metrics["first_public_step"] = _metric(
-            lambda: candidate.step(actions, states=None, frames=None),
+            lambda: candidate.step(actions[0], states=None, frames=None),
             args,
             device,
             warmup=0,
@@ -229,8 +330,10 @@ def measure_cell(name, batch, simulation_backend, args, device):
         metrics["reset"] = _metric(lambda: candidate.reset(seed=args.seed), args, device)
         metrics["restore"] = _metric(lambda: candidate.set_state(saved), args, device)
         candidate.set_state(saved)
-        metrics["public_step_no_pixels"] = _metric(
-            lambda: candidate.step(actions, states=None, frames=None),
+        metrics["public_step_no_pixels"] = _rollout_metric(
+            lambda action: candidate.step(action, states=None, frames=None),
+            lambda: candidate.set_state(saved),
+            actions,
             args,
             device,
             transitions=batch,
@@ -238,8 +341,10 @@ def measure_cell(name, batch, simulation_backend, args, device):
         candidate.set_state(saved)
         metrics["render_saved_state"] = _metric(lambda: candidate.render(saved), args, device)
         candidate.set_state(saved)
-        metrics["public_step_with_pixels"] = _metric(
-            lambda: candidate.step(actions, states=None, frames=slice(-1, None)),
+        metrics["public_step_with_pixels"] = _rollout_metric(
+            lambda action: candidate.step(action, states=None, frames=slice(-1, None)),
+            lambda: candidate.set_state(saved),
+            actions,
             args,
             device,
             transitions=batch,
@@ -248,13 +353,15 @@ def measure_cell(name, batch, simulation_backend, args, device):
         raw_description = "native raw physics measured separately after public adapter closes"
         if simulation_backend == "mjwarp":
             candidate.set_state(saved)
-            controls = adapter._controls(actions)
+            controls = tuple(adapter._controls(action) for action in actions)
 
-            def raw_physics():
-                adapter._runtime.advance(controls)
-                adapter._runtime.advance(controls)
+            def raw_physics(control):
+                adapter._runtime.advance(control)
+                adapter._runtime.advance(control)
 
-            metrics["raw_physics_two_control_rounds"] = _metric(raw_physics, args, device, transitions=batch)
+            metrics["raw_physics_two_control_rounds"] = _rollout_metric(
+                raw_physics, lambda: candidate.set_state(saved), controls, args, device, transitions=batch
+            )
             candidate.set_state(saved)  # raw timing intentionally bypassed adapter bookkeeping
             raw_description = "two runtime.advance calls; native controls precomputed outside timing"
         models = getattr(adapter, "_models", [])
@@ -271,7 +378,11 @@ def measure_cell(name, batch, simulation_backend, args, device):
             "simulation_adapter": type(adapter).__name__,
             "simulation_worker_pids": [process.pid for process in getattr(adapter, "_processes", [])],
             "action_dim": candidate.action_dim,
-            "action_dtype": str(actions.dtype),
+            "action_dtype": str(actions[0].dtype),
+            "inputs": inputs,
+            "native_nthread": int(adapter.b.nthread) if simulation_backend == "native" else None,
+            "torch_num_threads": torch.get_num_threads(),
+            "cpu_affinity": sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
             "output_device": str(device),
             "physics_dtype": "float64" if simulation_backend == "native" else "float32",
             "action_repeat": 2,
@@ -305,7 +416,7 @@ def measure_cell(name, batch, simulation_backend, args, device):
 
 
 def measure_record(name, batch, backend, args, device):
-    row = dict(env=name, batch=batch, simulation_backend=backend, worker_pid=os.getpid())
+    row = dict(env=name, batch=batch, seed=args.seed, simulation_backend=backend, worker_pid=os.getpid())
     try:
         row.update(measure_cell(name, batch, backend, args, device))
         if backend == "native":
@@ -386,6 +497,7 @@ def isolated_record(name, batch, backend, args):
             row = dict(
                 env=name,
                 batch=batch,
+                seed=args.seed,
                 simulation_backend=backend,
                 status="error",
                 error_type="BenchmarkWorkerError",
@@ -409,8 +521,35 @@ def isolated_record(name, batch, backend, args):
         if row.get("status") != "ok":
             row["worker_stdout_tail"] = stdout_tail
             row["worker_stderr_tail"] = stderr_tail
-        row["process_isolation"] = "fresh process per environment/batch/backend; worker exits after this record"
+        row["process_isolation"] = "fresh process per environment/batch/seed/backend; worker exits after this record"
         return row
+
+
+def _check_paired_inputs(records, row):
+    """Reject a successful timing comparison if its backend inputs differ."""
+    if row["status"] != "ok":
+        return
+    peer = next(
+        (
+            previous
+            for previous in records
+            if previous["status"] == "ok"
+            and all(previous[key] == row[key] for key in ("env", "batch", "seed"))
+            and previous["simulation_backend"] != row["simulation_backend"]
+        ),
+        None,
+    )
+    if peer is None:
+        return
+    keys = ("actions_sha256", "initial_state_sha256")
+    differences = [key for key in keys if peer["metadata"]["inputs"][key] != row["metadata"]["inputs"][key]]
+    peer["paired_inputs_match"] = row["paired_inputs_match"] = not differences
+    if differences:
+        row.update(
+            status="error",
+            error_type="BenchmarkInputMismatch",
+            error=f"Native/MJWarp inputs differ: {', '.join(differences)}",
+        )
 
 
 def benchmark_versions():
@@ -426,9 +565,25 @@ def benchmark_versions():
 def _parser():
     parser = argparse.ArgumentParser(description=__doc__)
     common.add_common_arguments(parser, batches=True)
-    parser.set_defaults(envs=list(CELLS), batches=list(DEFAULT_BATCHES), device="cuda")
+    parser.set_defaults(
+        envs=list(CELLS), batches=list(DEFAULT_BATCHES), device="cuda", seed=None, warmup=20, repeats=100, size=32
+    )
     parser._option_string_actions["--envs"].help = "comma-separated supported DMC environment names (default: all 17)"
     parser._option_string_actions["--batches"].help = "comma-separated batch sizes (default: 1,16,64,256,1024)"
+    parser._option_string_actions["--seed"].type = common.nonnegative_int
+    parser._option_string_actions["--seed"].help = "one reset seed; replaces the default three-seed sweep"
+    parser._option_string_actions[
+        "--warmup"
+    ].help = "untimed action-prefix calls before checkpoint restore (default: 20)"
+    parser._option_string_actions[
+        "--repeats"
+    ].help = "synchronized timed calls after checkpoint restore (default: 100)"
+    parser._option_string_actions["--size"].help = "render size (default: 32, as in the PR harness), or native"
+    parser.add_argument(
+        "--seeds",
+        type=_seeds,
+        help="comma-separated reset seeds (default: 91000,91010,91020); cannot combine with --seed",
+    )
     parser.add_argument(
         "--extended-batches",
         action="store_true",
@@ -447,6 +602,11 @@ def _parser():
 def main(argv=None):
     parser = _parser()
     args = parser.parse_args(argv)
+    if args.seed is not None and args.seeds is not None:
+        parser.error("Use either --seed or --seeds")
+    args.seeds = [args.seed] if args.seed is not None else args.seeds or list(DEFAULT_SEEDS)
+    if len(args.seeds) == 1:
+        args.seed = args.seeds[0]
     if args.extended_batches:
         args.batches = list(dict.fromkeys([*args.batches, *EXTENDED_BATCHES]))
     unknown = set(args.envs) - set(CELLS)
@@ -455,18 +615,23 @@ def main(argv=None):
     if set(args.simulation_backends) - {"native", "mjwarp"}:
         parser.error("--simulation-backends accepts native,mjwarp")
     if args._worker and (
-        args.dry_run or len(args.envs) != 1 or len(args.batches) != 1 or len(args.simulation_backends) != 1
+        args.dry_run
+        or len(args.envs) != 1
+        or len(args.batches) != 1
+        or len(args.seeds) != 1
+        or len(args.simulation_backends) != 1
     ):
-        parser.error("A benchmark worker requires one environment, batch and backend, and cannot use --dry-run")
+        parser.error("A benchmark worker requires one environment, batch, seed and backend, and cannot use --dry-run")
+    matrix = _matrix(args)
     if args.dry_run:
-        records = [
-            dict(env=name, batch=batch, simulation_backend=backend)
-            for name in args.envs
-            for batch in args.batches
-            for backend in args.simulation_backends
-        ]
         common.write_json(
-            {"benchmark": "dmc-mjwarp", "dry_run": True, "record_count": len(records), "records": records},
+            {
+                "benchmark": "dmc-mjwarp",
+                "dry_run": True,
+                "protocol": _protocol(args),
+                "record_count": len(matrix),
+                "records": matrix,
+            },
             args.output,
             pretty=args.pretty,
         )
@@ -500,6 +665,7 @@ def main(argv=None):
     record = common.provenance(benchmark="dmc-mjwarp", args=args, snv_version=se.__version__)
     record.update(
         machine=machine,
+        protocol=_protocol(args),
         candidate_files={
             path.relative_to(ROOT).as_posix(): sha256(path) for path in (ROOT / "stable_envs").rglob("*.py")
         },
@@ -508,7 +674,7 @@ def main(argv=None):
             for path in (Path(__file__).resolve(), ROOT / "benchmarks/_common.py")
         },
         benchmark_versions=benchmark_versions(),
-        process_isolation="one fresh worker per environment/batch/backend; parent hardware context may remain",
+        process_isolation="one fresh worker per environment/batch/seed/backend; parent hardware context may remain",
         baseline_revision=os.environ.get("SE_DMC_MJWARP_BASELINE_REVISION"),
         baseline_scope="native from this measured worktree; baseline_revision is a caller label",
         runtime_environment={
@@ -523,18 +689,19 @@ def main(argv=None):
         complete=False,
     )
     failures = 0
-    for name in args.envs:
-        for batch in args.batches:
-            for backend in args.simulation_backends:
-                try:
-                    row = isolated_record(name, batch, backend, args)
-                except Exception as exc:
-                    row = dict(env=name, batch=batch, simulation_backend=backend, **common.error_record(exc))
-                failures += row["status"] != "ok"
-                record["records"].append(row)
-                if args.output != "-":
-                    common.write_json(record, args.output, pretty=args.pretty)
-                print(f"{name} batch={batch} {backend}: {row['status']}", file=sys.stderr, flush=True)
+    for cell in matrix:
+        worker_args = argparse.Namespace(**{**vars(args), "seed": cell["seed"]})
+        name, batch, backend, seed = (cell[key] for key in ("env", "batch", "simulation_backend", "seed"))
+        try:
+            row = isolated_record(name, batch, backend, worker_args)
+            _check_paired_inputs(record["records"], row)
+        except Exception as exc:
+            row = dict(**cell, **common.error_record(exc))
+        failures += row["status"] != "ok"
+        record["records"].append(row)
+        if args.output != "-":
+            common.write_json(record, args.output, pretty=args.pretty)
+        print(f"{name} batch={batch} seed={seed} {backend}: {row['status']}", file=sys.stderr, flush=True)
     record["complete"] = True
     common.finish_provenance(record)
     common.write_json(record, args.output, pretty=args.pretty)

@@ -107,7 +107,8 @@ include tested revisions, shared baseline failures and hardware-specific skips.
 `python benchmarks/dmc_mjwarp.py --help` describes the configurable latency and memory benchmark.
 It separates construction, reset, restore, raw physics, public stepping and rendering costs.
 The default matrix covers all 17 environments with native and MJWarp backends at batches
-1, 16, 64, 256 and 1024. `--batches` selects arbitrary positive batch sizes;
+1, 16, 64, 256 and 1024, with reset seeds 91000, 91010 and 91020 (510 records).
+`--seed` selects one seed; `--seeds` replaces the seed list. `--batches` selects arbitrary positive batch sizes;
 `--extended-batches` appends 2048, 4096 and 8192 without duplicating selected sizes.
 Preview a light/heavy task matrix without initializing CUDA, constructing environments or
 launching workers:
@@ -119,6 +120,23 @@ python benchmarks/dmc_mjwarp.py --dry-run --pretty \
 
 Remove `--dry-run` and supply `--output results/dmc-mjwarp.json` to measure that matrix.
 The script requires `psutil` and `nvidia-ml-py` for measurement, but not for the preview.
+
+The stepping workload follows the PR's random-action recipe. NumPy `default_rng(seed + 91717)`
+draws uniform `[-1, 1)` float64 actions in `[lane, call, component]` order, then transposes them
+to contiguous `[call, lane, component]` arrays. Both backends receive identical precomputed
+CUDA inputs, and smaller batches share the corresponding lane prefixes. By default, each
+stepping phase runs 20 warmup actions, restores its seeded native reset checkpoint, and replays
+the sequence from index zero for 100 timed calls. `--warmup` and `--repeats` override these counts;
+the sequence length is their maximum. Action generation, upload, control scaling for raw physics,
+and checkpoint restoration stay outside the timed intervals. The headline metric is
+`public_step_no_pixels`: complete public State/task outputs with frames and history disabled.
+Rendering and raw physics remain separate measurements. Memory profiling makes one additional
+call using action index zero after each timed rollout.
+
+Each environment/batch/seed/backend runs in a fresh process. Backend order alternates across
+seed indices. Results retain action and initial-checkpoint SHA-256 hashes; a pair with different
+inputs is marked as an error. The resolved protocol, actual native thread count, Torch thread
+count and CPU affinity are recorded. The default render size is 32, as in the original harness.
 
 Construction records include wall time and memory samples. On Linux/macOS,
 `memory_after.rss_peak_self_bytes` is the operating system's process-lifetime peak resident
@@ -133,9 +151,11 @@ Failed cells remain explicit error rows, and the sweep continues to the next cel
 
 The [MuJoCo 3.17 timing curves](https://github.com/galilai-group/stable-envs/blob/782cba6f35ee316f22499c7d83402320e6012f79/docs/assets/dmc-mjwarp-317/README.md#timing)
 compare sequential CPU, native CPU batching and RTX 3090 stepping at batches 1, 256 and 1024,
-using 100 synchronized public calls per seed. Their captions specify hardware, included work
-and aggregation. Those random-action rollout measurements use a different protocol from the
-general benchmark script.
+using 100 synchronized public calls per seed. The benchmark now matches their action recipe,
+warmup/restore sequence and public-step workload. The original harness measured both backends
+in the same process and also retained trajectories; this script isolates each seed/backend and
+records timing and memory. The charts also use an earlier simulator revision. Rerun both revisions
+on matching hardware for new performance comparisons; the old plotted values are not a new baseline.
 
 ## Acrobot
 
