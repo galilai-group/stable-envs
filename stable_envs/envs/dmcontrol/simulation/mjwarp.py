@@ -250,12 +250,14 @@ class DMCWarpAdapter(SimulatorAdapter):
         self._counts[lanes] = 0
         self._pending[lanes] = False
 
-    def _control_step(self, controls):
+    def _control_step(self, controls, *, reward_only=False):
         resetting = np.flatnonzero(self._pending)
         continuing = np.flatnonzero(~self._pending)
         if not len(resetting):
             self._runtime.advance(controls)
-            out = self._outputs(self._runtime)
+            # Only the second round's observations/info reach the caller. The
+            # first still contributes reward and commits its full checkpoint.
+            out = self._task.reward(self._runtime.snapshot()) if reward_only else self._outputs(self._runtime)
             self._save_physics(self._runtime)
         else:
             advanced = None
@@ -283,6 +285,8 @@ class DMCWarpAdapter(SimulatorAdapter):
             out["reward"].zero_()
             if advanced is not None:
                 out[torch.as_tensor(continuing, device=self.device)] = advanced
+            if reward_only:
+                out = out["reward"]
         self._counts[continuing] += 1
         self._pending[continuing] = self._counts[continuing] >= self._limits[continuing]
         self._state["lifecycle", "step_count"] = torch.as_tensor(self._counts[:, None].copy(), device=self.device)
@@ -296,9 +300,9 @@ class DMCWarpAdapter(SimulatorAdapter):
         actions, _ = self.check_step(actions, active)
         controls = self._controls(actions)
         reward = torch.zeros(self.num_envs, device=self.device, dtype=torch.float64)
-        for _ in range(2):
-            out = self._control_step(controls)
-            reward += out["reward"]
+        reward += self._control_step(controls, reward_only=True)
+        out = self._control_step(controls)
+        reward += out["reward"]
         self._state["task", "cumulative_reward"] += reward[:, None]
         out["reward"] = reward
         out["score"] = (self._state["task", "cumulative_reward"][:, 0] / 1000).clone()

@@ -120,6 +120,80 @@ def test_mixed_resets_in_both_action_repeats_match_native_lifecycle():
         source.close()
 
 
+@pytest.mark.parametrize("name", family_params(DMC_NAMES, family="dmc"))
+def test_reward_only_first_round_matches_full_outputs(name, monkeypatch):
+    resolve_family(name, family="dmc", modules=("dmcontrol._family",), subject="MJWarp reward-only round")
+    with se.make(name, num_envs=3, device="cuda", simulation_backend="mjwarp", size=32) as env:
+        adapter = env._simulator
+        checkpoint = env.reset(seed=91000)
+        actions = np.random.default_rng(91000 + 91717).uniform(-1, 1, (5, 3, env.action_dim))
+        actions = torch.as_tensor(actions, device="cuda", dtype=torch.float64)
+        control_step = adapter._control_step
+
+        # Reference path materializes all outputs in both rounds, as before the
+        # optimization. Retain every leaf to check reward, state and ownership.
+        def full_outputs(controls, *, reward_only=False):
+            output = control_step(controls)
+            return output["reward"] if reward_only else output
+
+        with monkeypatch.context() as patch:
+            patch.setattr(adapter, "_control_step", full_outputs)
+            expected = [adapter.step(action) for action in actions]
+
+        adapter.set_state(checkpoint)
+        calls = {"observation": 0, "reward": 0, "info": 0}
+
+        def count_calls(name, method):
+            def evaluate(snapshot):
+                calls[name] += 1
+                return method(snapshot)
+
+            return evaluate
+
+        with monkeypatch.context() as patch:
+            for method in calls:
+                patch.setattr(adapter._task, method, count_calls(method, getattr(adapter._task, method)))
+            actual = [adapter.step(action) for action in actions]
+        assert calls == {"observation": 5, "reward": 10, "info": 5}
+        for got, want in zip(actual, expected, strict=True):
+            assert_same_state(got, want)
+        # Mutating a returned output must not change the live checkpoint.
+        live = adapter.get_state()
+        actual[-1]["state", "qpos"].add_(1)
+        actual[-1]["reward"].zero_()
+        assert_same_state(adapter.get_state(), live)
+
+
+def test_failed_second_round_keeps_first_round_checkpoint(monkeypatch):
+    from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter
+
+    adapter = DMCWarpAdapter("cartpole-balance", 3, "cuda", 17)
+    try:
+        initial = adapter.get_state()
+        actions = torch.full((3, 1), 0.25, dtype=torch.float64, device="cuda")
+        adapter._control_step(adapter._controls(actions))
+        after_first = adapter.get_state()
+        adapter.set_state(initial)
+        advance = adapter._runtime.advance
+        rounds = 0
+
+        def fail_second(controls):
+            nonlocal rounds
+            rounds += 1
+            result = advance(controls)
+            if rounds == 2:
+                raise RuntimeError("injected second-round failure")
+            return result
+
+        monkeypatch.setattr(adapter._runtime, "advance", fail_second)
+        with pytest.raises(RuntimeError, match="injected second-round failure"):
+            adapter.step(actions)
+        assert rounds == 2
+        assert_same_state(adapter.get_state(), after_first)
+    finally:
+        adapter.close()
+
+
 def test_invalid_later_lane_restore_preserves_models_state_and_rng():
     from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter
 
