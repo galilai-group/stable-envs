@@ -169,7 +169,7 @@ def cmd_states(args) -> None:
             print(f"have {path}", flush=True)
             continue
         cls = snv.registry.REGISTRY[name]
-        size = cls.native_size or args.size
+        size = getattr(cls, "native_size", None) or args.size
         reference = has_reference_renderer(cls)
         t = time.time()
         try:

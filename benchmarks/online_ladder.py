@@ -446,7 +446,7 @@ def _make_ours(name: str, lanes: int, size: int, device: str):
     """The class at ``size``, or at its native size when it declares one."""
     import stable_envs as snv
 
-    return snv.make(name, num_envs=lanes, size=snv.registry.REGISTRY[name].native_size or size, device=device)
+    return snv.make(name, num_envs=lanes, size=getattr(snv.registry.REGISTRY[name], "native_size", None) or size, device=device)
 
 
 def run_ours(args, name: str, dev: str, render: bool, chunk: int) -> dict:
