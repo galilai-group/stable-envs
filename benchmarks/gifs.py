@@ -161,7 +161,8 @@ def main() -> None:
 
     for name in args.envs:
         cls = snv.registry.REGISTRY[name]
-        size = getattr(cls, "native_size", None) or args.size
+        native = getattr(cls, "native", None)
+        size = getattr(cls, "native_size", None) or (native[1] if native else args.size)
         try:
             ours, bridged, native, flags, how = episode(name, size, args.device, args.steps, args.seed)
             if ours.shape[1:3] != native.shape[1:3]:
