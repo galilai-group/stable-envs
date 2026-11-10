@@ -33,17 +33,18 @@ class ProcessRequests:
             raise RuntimeError(f"{self._worker_family} worker failed:\n" + "\n".join(errors))
         return results
 
-    def _spawn_workers(self, context, target, cpus, args):
+    def _spawn_workers(self, context, target, cpus, args, daemon=False):
         """Start one ``target`` worker per lane slice and store each ready reply in ``worker_info``.
 
         ``args(rows, cpus)`` returns the arguments after the worker's pipe end, with
-        ``cpus`` split evenly across workers. Callers abort on failure.
+        ``cpus`` split evenly across workers. Daemon workers cannot start processes; the
+        interpreter ends them at exit when the owner was not closed. Callers abort on failure.
         """
         processes = len(self._slices)
         groups = [None] * processes if cpus is None else [g.tolist() for g in np.array_split(cpus, processes)]
         for rows, group in zip(self._slices, groups, strict=True):
             parent, child = context.Pipe()
-            process = context.Process(target=target, args=(child, *args(rows, group)))
+            process = context.Process(target=target, args=(child, *args(rows, group)), daemon=daemon)
             try:
                 process.start()
             except BaseException:

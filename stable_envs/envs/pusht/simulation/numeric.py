@@ -237,6 +237,69 @@ def latest_fields(env):
     return result
 
 
+def install_latest(owners, values, tags, present):
+    """Set each owner's latest action from the ``current/latest`` columns of the CUDA physics."""
+    for owner, value, tag, flag in zip(owners, values, tags, present, strict=True):
+        owner.env.latest_action = value.astype(np.float32 if tag[1] == 0 else np.float64) if flag else None
+
+
+#: Most convex pieces of one body; the plus has three.
+MAX_SHAPES = 3
+_UNIT_SQUARE = [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]
+
+
+def geometry_columns(owners, shapes=None):
+    """Return the body rows and convex pieces that the CUDA physics reads, as batch columns.
+
+    Pieces are padded to ``shapes``, by default the most pieces of any body in the batch.
+    """
+    bodies = [(owner.env.agent, owner.env.block) for owner in owners]
+    counts = [max(len(body.shapes) for body in pair) for pair in bodies]
+    shapes = max(counts) if shapes is None else shapes
+    rows, vertices, centers, inverse, radii, enabled = [], [], [], [], [], []
+    for pair in bodies:
+        radius = 0.0
+        lane_vertices, lane_enabled = [], []
+        for name, body in zip(("agent", "block"), pair, strict=True):
+            polys = np.zeros((shapes, 4, 2), np.float64)
+            valid = np.zeros(shapes, np.bool_)
+            for index, shape in enumerate(
+                sorted(
+                    body.shapes,
+                    key=lambda shape: (
+                        tuple(np.array(shape.get_vertices()).ravel()) if hasattr(shape, "get_vertices") else ()
+                    ),
+                )
+            ):
+                if hasattr(shape, "get_vertices"):
+                    polys[index] = shape.get_vertices()
+                else:
+                    radius = shape.radius
+                valid[index] = True
+            # Nonzero padded edges avoid NaNs in inactive polygon contacts.
+            polys[~valid] = _UNIT_SQUARE
+            if name == "agent" and not np.isfinite(body.mass):
+                polys[:] = _UNIT_SQUARE
+            lane_vertices.append(polys)
+            lane_enabled.append(valid)
+        rows.append([[*body.position, *body.velocity, body.angle, body.angular_velocity] for body in pair])
+        vertices.append(lane_vertices)
+        centers.append([body.center_of_gravity for body in pair])
+        inverse.append([[1 / body.mass, 1 / body.moment] for body in pair])
+        radii.append(radius)
+        enabled.append(lane_enabled)
+    return {
+        "body": np.array(rows),
+        "vertices": np.array(vertices),
+        "centers": np.array(centers),
+        "inverse": np.array(inverse),
+        "radius": np.array(radii),
+        "enabled": np.array(enabled),
+        "circle": np.array([int(owner.env.variation_space["agent"]["shape"].value) == 0 for owner in owners]),
+        "shapes": np.array(counts, np.int64),
+    }
+
+
 def capture(env, collector=None, episode=None):
     """Return the ``current`` State fields of ``env`` in export order.
 
