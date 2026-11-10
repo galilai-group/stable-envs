@@ -20,6 +20,7 @@ import jax
 import jax.dlpack
 import jax.numpy as jnp
 from mujoco import mjx
+from mujoco.mjx.warp.types import DATA_NON_VMAP
 
 from .compatibility import COMPILED_FIELDS
 from .manipulation import FLAGS, OGBManipulationAdapter
@@ -153,16 +154,19 @@ class CubeMJXAdapter(OGBManipulationAdapter):
             if id(model) not in models:
                 models[id(model)] = mjx.put_model(model, device=self._jax_device, impl="warp")
             parameters.append({name: getattr(models[id(model)], name) for name in self._model_fields})
-            data.append(
-                mjx.put_data(
-                    model,
-                    copy.copy(env.data),
-                    device=self._jax_device,
-                    impl="warp",
-                    naconmax=max(512, 64 * self.num_envs),
-                    njmax=1024,
-                )
+            row = mjx.put_data(
+                model,
+                copy.copy(env.data),
+                device=self._jax_device,
+                impl="warp",
+                naconmax=64 if data else max(512, 64 * self.num_envs),
+                njmax=1024,
             )
+            if data:
+                row = row.replace(
+                    _impl=row._impl.replace(**{name: getattr(data[0]._impl, name) for name in DATA_NON_VMAP})
+                )
+            data.append(row)
         self._parameters = jax.tree.map(lambda *values: jnp.stack(values), *parameters)
         # Warp contact buffers are shared by all worlds, rather than stacked per lane.
         batch = jax.vmap(lambda _: data[0])(jnp.arange(self.num_envs))
