@@ -4,8 +4,9 @@ import numpy as np
 import pytest
 import torch
 
+from stable_envs.envs.pusht.semantics import PushT
 from stable_envs.envs.pusht.simulation.jax_batch import PushTJaxAdapter
-from stable_envs.envs.pusht.simulation.replay_batch import PushTReplayAdapter
+from stable_envs.envs.pusht.simulation.replay_batch import PushTReplayAdapter, resolve_variation
 from tests.helpers.reference.semantics import assert_same_state
 
 
@@ -171,3 +172,83 @@ def test_cpu_can_render_jax_checkpoints_but_cannot_restore_them(device, discrete
             assert frame.shape == (1, 32, 32, 3)
             assert torch.equal(frame, cpu.render(cpu.to_render_state(state)))
             assert_same_state(before, cpu.get_state())
+
+
+@pytest.mark.parametrize("discrete", [False, True])
+def test_reset_workers_match_in_process_resets(device, discrete):
+    count, config = 5, dict(resolution=32)
+    with (
+        closing(PushTJaxAdapter(count, device, 3, discrete=discrete, config=config)) as ref,
+        closing(PushTJaxAdapter(count, device, 3, discrete=discrete, config=config, processes=2)) as env,
+    ):
+        adapters = (ref, env)
+
+        def same(call):
+            expected, actual = (call(adapter) for adapter in adapters)
+            assert_same_state(actual, expected)
+            for key, value in ref.render_fields().items():
+                assert torch.equal(env.render_fields()[key], value), key
+            return actual
+
+        def play(steps):
+            for step in range(steps):
+                action = torch.tensor(
+                    [[3 + step % 5, 4]] * count if discrete else [[0.3, -0.2 + 0.1 * step]] * count, device=device
+                )
+                active = torch.arange(count, device=device) != step % count
+                same(lambda adapter, a=action, m=active: adapter.step(a, active=m))
+
+        same(lambda adapter: adapter.reset(seed=17))
+        play(3)
+        shapes = [
+            dict(variation=[], variation_values={"agent.shape": lane % 8, "block.shape": (lane + 2) % 7 + 1})
+            for lane in range(count)
+        ]
+        same(lambda adapter: adapter.reset(seed=18, options=shapes))
+        play(4)
+        values = {"block.start_position": np.linspace([120.0, 150.0], [380.0, 300.0], count)}
+        same(lambda adapter: adapter.reset(seed=19, options=dict(variation_values=values)))
+        play(2)
+
+        # Variation changes while the workers own the lanes.
+        space = ref.template.env.variation_space
+        lanes = resolve_variation(
+            space,
+            {"agent.color": np.arange(3 * count, dtype=np.uint8).reshape(count, 3), "block.scale": 45.0},
+            count,
+        )
+        for adapter in adapters:
+            adapter.install_variation(lanes, PushT.immediate_variation_leaves)
+        same(lambda adapter: adapter.get_state())
+        keys = ["agent.color", "agent.start_position", "block.scale"]
+        for attribute in ("value", "init_value"):
+            np.testing.assert_array_equal(env.variation_rows(attribute, keys), ref.variation_rows(attribute, keys))
+        same(lambda adapter: adapter.reset(seed=20))
+        play(2)
+
+        # After a restore the parent owns the lanes; the next reset gives the workers their metadata.
+        checkpoint = ref.get_state()
+        same(lambda adapter: adapter.reset(seed=21))
+        same(lambda adapter: (adapter.set_state(checkpoint), adapter.get_state())[1])
+        play(1)
+        same(lambda adapter: adapter.reset(seed=22))
+
+        # A reset that fails in one lane changes no lane.
+        before = env.get_state()
+        bad = [dict(variation=[])] * (count - 1) + [dict(variation=[], variation_values={"agent.shape": 99})]
+        for adapter in adapters:
+            with pytest.raises(ValueError):
+                adapter.reset(seed=23, options=bad)
+        assert_same_state(env.get_state(), before)
+        same(lambda adapter: adapter.reset(seed=24))
+        assert env.reset(seed=None)["current", "observation"].isfinite().all()
+
+        # The parent owners rebuilt from the batch columns equal the in-process owners.
+        same(lambda adapter: adapter.reset(seed=25))
+        assert env._stale
+        for expected, actual in zip(ref.envs, env.envs, strict=True):
+            fields = expected.static_fields()
+            assert actual.static_fields().keys() == fields.keys()
+            for key, value in fields.items():
+                np.testing.assert_array_equal(actual.static_fields()[key], value, err_msg=key)
+        assert not env._stale

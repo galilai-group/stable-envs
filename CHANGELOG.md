@@ -89,6 +89,13 @@ All notable changes to this project are listed here. The format follows
   stable-worldmodel rule, and OGBench samples only the yaw. The State leaves do not change. A State that
   you saved before this change restores correctly, but the next reset uses the new rule and gives a
   different start.
+- `PushT` and `PushTDiscrete` on CUDA reset faster. On Linux, a batch of at least `worker_min_lanes` lanes
+  resets in up to `workers` worker processes (tuning path `pusht-sim`). JAX steps the physics on the GPU,
+  as before. The workers write the State columns and the body geometry of the new episodes into shared
+  memory. The State, the frames, the rewards and the success flags do not change. On an L40S with 8 EPYC
+  cores, `PushT` runs 64-step episodes with `reset(seed)` at 64,000 steps/s with 1024 lanes and at 98,000
+  steps/s with 2048 lanes. Before, it ran at 22,000 and 25,000 steps/s. The CPU source runs at 51,000 and
+  55,000 steps/s on the same machine. A 1024-lane reset takes 0.3 s. Before, it took 2.5 s.
 - `OGBCube` and `OGBScene` step faster on CPU. A step runs the OGBench step without its observation
   and info dictionaries, because the step outputs do not use them. The State leaves that only reset,
   restore and `set_variation` change (the PCG64 generators other than the environment generator, the
