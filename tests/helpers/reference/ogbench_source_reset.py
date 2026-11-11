@@ -3,9 +3,6 @@
 OGBench draws the task from NumPy's global RNG and the settling actions from a new, unseeded action Box at
 each read. Each reference env here keeps its own global RNG, seeded as ``np.random.seed(seed)`` at each seeded
 reset, and one action Box seeded as a stable-envs lane seeds its action stream. Everything else is OGBench.
-
-The registered ``cube.size`` default is ``float32(0.02)``, where OGBench compiles 0.02. With
-``registered_size`` the reference compiles the same size, so physics and reset compare bit for bit.
 """
 
 import mujoco
@@ -19,7 +16,7 @@ from stable_envs.envs.ogbench.simulation.compatibility import legacy_seed
 PARTS = ("TIME", "QPOS", "QVEL", "ACT", "WARMSTART", "CTRL", "QFRC_APPLIED", "XFRC_APPLIED", "MOCAP_POS", "MOCAP_QUAT")
 FIELDS = ("cur_task_id", "_success", "_reset_next_step", "_prev_qpos", "_prev_qvel", "_cur_goal_ob")
 SCENE_FIELDS = ("_cur_button_states", "_target_button_states", "_target_drawer_pos", "_target_window_pos")
-MODEL_FIELDS = ("dof_damping", "site_pos")
+MODEL_FIELDS = ("dof_damping", "site_pos", "geom_size", "body_mass", "body_inertia")
 
 
 def action_seed(seed):
@@ -47,7 +44,7 @@ class _Fixed:
             np.random.set_state(outside)
 
 
-def make(family, seed, registered_size=True):
+def make(family, seed):
     base = CubeEnv if family == "Cube" else SceneEnv
     kind = "single" if family == "Cube" else "scene"
 
@@ -56,14 +53,6 @@ def make(family, seed, registered_size=True):
             base.__init__(self, env_type=kind, ob_type="states", height=224, width=224)
             self.box = ManipSpaceEnv.action_space.fget(self)
             self._reseed(seed)
-
-        def build_mjcf_model(self):
-            root = super().build_mjcf_model()
-            if registered_size:
-                for body in ("object_0", "object_target_0"):
-                    for geom in root.find("body", body).find_all("geom"):
-                        geom.size = np.full(3, float(np.float32(0.02)))
-            return root
 
     return Source(seed)
 

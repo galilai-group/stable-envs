@@ -160,6 +160,9 @@ restore also sets the next reset.
 The arm starts at the position that OGBench samples. It starts at `agent.ee_start_position` only when
 the reset options name this leaf, or when `set_variation` sets the leaf to a value that is not the default.
 
+The default model has the OGBench physics, with a cube size of 0.02. The reset and the physics are equal
+to OGBench, bit for bit.
+
 ### OGBCube
 
 The arm moves one cube to a goal pose. This is the OGBench `cube-single` task. The constructor argument `reward_task_id` selects the

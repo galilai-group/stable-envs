@@ -143,22 +143,17 @@ def test_a_named_or_configured_arm_start_pins_the_arm(family):
 
 
 @pytest.mark.parametrize("family", CLASSES)
-def test_unmodified_ogbench_differs_only_through_the_registered_cube_size(family):
-    adapter = OGBManipulationAdapter(family, 1, seed=7)
-    ref = make(family, 7, registered_size=False)
+def test_physics_stays_bit_exact_over_long_rollouts(family):
+    adapter = OGBManipulationAdapter(family, 2, seed=21)
+    refs = [make(family, 21 + lane) for lane in range(2)]
     try:
-        ref.reset(seed=7)
-        for seed in (7, None, 9):
-            if seed != 7:
-                adapter.reset(seed)
-                ref.reset(seed=seed)
-            env = adapter.envs[0]
-            ours, theirs = leaves(env, env.task_rng), leaves(ref)
-            diff = differences(ours, theirs)
-            # The settling steps touch the cube, so only their contact solution carries the size difference:
-            # the solver's warm start and the contact forces, and the goal observation by up to about 4e-5.
-            assert set(diff) <= {"WARMSTART", "cfrc_ext", "_cur_goal_ob"}, diff
-            assert np.allclose(ours["_cur_goal_ob"], theirs["_cur_goal_ob"], rtol=0, atol=1e-4)
+        for lane, ref in enumerate(refs):
+            ref.reset(seed=21 + lane)
+        for chunk in range(4):
+            _steps(adapter, refs, 50, chunk)
+            _compare(adapter, refs)
     finally:
         adapter.close()
-        ref.close()
+        for ref in refs:
+            ref.close()
+
