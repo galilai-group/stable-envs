@@ -99,7 +99,11 @@ def _tolerance(value, bounds=(0.0, 0.0), margin=0.0, sigmoid="gaussian", value_a
 
 
 class BatchTask:
-    """Device task formulas; observation order and info keys follow the source."""
+    """Device task formulas returning owned observation, reward and info tensors.
+
+    Observation order and info keys follow the source. Returned tensors must
+    remain independent of snapshot buffers and later task evaluations.
+    """
 
     def __init__(self, env):
         self.task = env.task

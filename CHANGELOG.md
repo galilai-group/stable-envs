@@ -88,6 +88,9 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- DMC MJWarp builds task output TensorDicts once per public step and copies physics
+  directly into checkpoint storage at the public dtype, removing intermediate
+  clones while preserving returned-output ownership and per-round checkpoints.
 - DMC MJWarp reuses one native reset owner with independent lane RNG checkpoints
   and compact model columns, avoiding a full native environment and static-asset
   copy per lane. Seeded/unseeded resets, mixed resets, targets and physics variation

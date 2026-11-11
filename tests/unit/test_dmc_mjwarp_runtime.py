@@ -60,6 +60,59 @@ def source_round(m, d, control, substeps):
     mujoco.mj_step1(m, d)
 
 
+@pytest.mark.parametrize(
+    "device",
+    ["cpu", pytest.param("cuda", marks=pytest.mark.skipif(not torch.cuda.is_available(), reason="requires CUDA"))],
+)
+@pytest.mark.parametrize("subset", [False, True])
+def test_copy_physical_state_preserves_clock_unselected_lanes_and_ownership(device, subset):
+    xml = XML.format(integrator="Euler").replace(
+        '<motor joint="hinge"/>', '<general joint="hinge" dyntype="filter" dynprm="0.1"/>'
+    )
+    m = mujoco.MjModel.from_xml_string(xml)
+    with closing(WarpRuntime([m, m], device, 1)) as runtime:
+        with runtime._scope():
+            for index, name in enumerate(runtime._physical.values()):
+                view = runtime._data_view(name)
+                view.copy_(torch.arange(view.numel(), device=device).reshape(view.shape) + (index + 1) / 7)
+        source = runtime.physical_state()
+        assert "activation" in source.keys()
+        batch = 4 if subset else 2
+        lanes = torch.tensor([3, 1], device=device) if subset else None
+        destination = TensorDict(
+            {
+                key: torch.full((batch, value.shape[1]), -777.0, dtype=torch.float64, device=device)
+                for key, value in source.items()
+            },
+            [batch],
+            device=device,
+        )
+        # This clock value is deliberately not representable in float32.
+        destination["time"].fill_(0.123456789012345)
+        destination["untouched"] = torch.arange(batch, device=device)[:, None]
+        expected = destination.clone()
+        selected = lanes if subset else slice(None)
+        for key, value in source.items():
+            if key != "time":
+                expected[key][selected] = value.double()
+        runtime.copy_physical_state(destination, lanes=lanes, include_time=False)
+        torch.testing.assert_close(destination, expected, atol=0, rtol=0)
+
+        # Standalone callers can also copy the runtime clock explicitly.
+        expected["time"][selected] = source["time"].double()
+        runtime.copy_physical_state(destination, lanes=lanes)
+        torch.testing.assert_close(destination, expected, atol=0, rtol=0)
+        with runtime._scope():
+            for name in runtime._physical.values():
+                runtime._data_view(name).zero_()
+        torch.testing.assert_close(destination, expected, atol=0, rtol=0)
+        # Neither direction may borrow storage from the other.
+        for key in source.keys():
+            destination[key].fill_(123)
+        for value in runtime.physical_state().values():
+            assert torch.count_nonzero(value).item() == 0
+
+
 @pytest.mark.parametrize("integrator", ["Euler", "RK4"])
 @pytest.mark.parametrize("substeps", [1, 3])
 def test_round_uses_source_integrator_and_retains_acceleration_sensors(integrator, substeps):

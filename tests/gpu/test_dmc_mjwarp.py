@@ -64,6 +64,39 @@ def test_cuda_stepping_snapshot_ownership_and_pixels(name):
         assert_same_state(env.get_state(), before_render)
 
 
+@pytest.mark.parametrize("name", family_params(DMC_NAMES, family="dmc"))
+def test_mutating_returned_leaves_preserves_live_state_and_physics(name):
+    resolve_family(name, family="dmc", modules=("dmcontrol._family",), subject="MJWarp output ownership")
+    with se.make(name, num_envs=3, device="cuda", simulation_backend="mjwarp", size=32) as env:
+        adapter = env._simulator
+        actions = torch.full((3, adapter.action_dim), 0.125, device="cuda", dtype=torch.float64)
+        for mixed in (False, True):
+            state = adapter.reset(91000)
+            if mixed:
+                limit = math.ceil(adapter._limits[0])
+                state["lifecycle", "step_count"][:, 0] = torch.tensor([limit - 1, limit, 6], device="cuda")
+                state["lifecycle", "reset_next_step"][:, 0] = torch.tensor([False, True, False], device="cuda")
+                adapter.set_state(state)
+            output = adapter.step(actions, capture_state=mixed)
+            checkpoint = adapter.get_state()
+            physics = adapter._runtime.physical_state()
+            if mixed and "info" in output.keys():
+                saved_qpos = output["state", "qpos"].clone()
+                output["info", "qpos"].fill_(123)
+                assert_same_state(output["state", "qpos"], saved_qpos)
+            for value in output.values(True, True):
+                if value.dtype == torch.bool:
+                    value.logical_not_()
+                else:
+                    value.fill_(123)
+            assert_same_state(adapter.get_state(), checkpoint)
+            assert_same_state(adapter._runtime.physical_state(), physics)
+            held = output.clone()
+            adapter.step(actions, capture_state=False)
+            adapter.reset(91020)
+            assert_same_state(output, held)
+
+
 def test_mixed_resets_in_both_action_repeats_match_native_lifecycle():
     from stable_envs.envs.dmcontrol.simulation.factory import make_local
     from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter

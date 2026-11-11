@@ -209,18 +209,13 @@ class DMCWarpAdapter(SimulatorAdapter):
         info = self._task.info(snapshot)
         if info is not None:
             values["success"], details = info
-            values["info"] = TensorDict(details, [runtime.num_envs], device=self.device)
-        return TensorDict(values, [runtime.num_envs], device=self.device).clone()
+            values["info"] = details
+        # Task methods already return owned tensors. Build the public
+        # TensorDict once, after both rounds and any mixed-reset merge.
+        return values
 
     def _save_physics(self, runtime, lanes=None):
-        for key, value in runtime.physical_state().items():
-            if key == "time":
-                continue
-            value = value.to(dtype=self.fields[key][1])
-            if lanes is None:
-                self._state[key] = value
-            else:
-                self._state[key][lanes] = value
+        runtime.copy_physical_state(self._state, lanes=lanes, include_time=False)
         # The public clock follows native double additions. Warp's float32
         # integration clock is loaded from it on restoration.
         time = self._state["time"] if lanes is None else self._state["time"][lanes]
@@ -236,8 +231,8 @@ class DMCWarpAdapter(SimulatorAdapter):
         self._source.commit(prepared)
         self._models = self._source.models
         ids = torch.as_tensor(lanes, device=self.device)
-        cumulative = self._state["task", "cumulative_reward"][ids].clone()
-        self._state[ids] = self._source.get_state()[lanes].to(self.device)
+        cumulative = self._state["task", "cumulative_reward"][ids]
+        self._state[ids] = prepared.state[lanes].to(self.device)
         self._state["task", "cumulative_reward"][ids] = cumulative
         self._counts[lanes] = 0
         self._pending[lanes] = False
@@ -276,7 +271,12 @@ class DMCWarpAdapter(SimulatorAdapter):
             out = self._outputs(self._runtime)
             out["reward"].zero_()
             if advanced is not None:
-                out[torch.as_tensor(continuing, device=self.device)] = advanced
+                for key, value in advanced.items():
+                    if key == "info":
+                        for field, column in value.items():
+                            out[key][field][ids] = column
+                    else:
+                        out[key][ids] = value
             if reward_only:
                 out = out["reward"]
         self._counts[continuing] += 1
@@ -305,12 +305,12 @@ class DMCWarpAdapter(SimulatorAdapter):
         reward += out["reward"]
         self._state["task", "cumulative_reward"] += reward[:, None]
         out["reward"] = reward
-        out["score"] = (self._state["task", "cumulative_reward"][:, 0] / 1000).clone()
+        out["score"] = self._state["task", "cumulative_reward"][:, 0] / 1000
         out["terminated"] = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
         out["truncated"] = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
         if capture_state:
             out["state"] = self.get_state()
-        return out
+        return TensorDict(out, [self.num_envs], device=self.device)
 
     def close(self):
         if not self._closed:

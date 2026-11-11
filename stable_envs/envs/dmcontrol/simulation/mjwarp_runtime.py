@@ -1358,6 +1358,26 @@ class WarpRuntime:
             self._check_result(recorded=True)
         return self.snapshot()
 
+    def copy_physical_state(self, destination, *, lanes=None, include_time=True):
+        """Copy into owned checkpoint storage, converting directly to its dtype.
+
+        ``lanes`` maps this runtime's rows into a larger checkpoint. The adapter
+        excludes time because its public clock uses native double additions.
+        """
+        self._check_open()
+        with self._scope():
+            for key, name in self._physical.items():
+                if key == "time" and not include_time:
+                    continue
+                source = self._data_view(name)
+                if key == "time":
+                    source = source.reshape(self.num_envs, 1)
+                target = destination[key]
+                if lanes is None:
+                    target.copy_(source)
+                else:
+                    target.index_copy_(0, lanes, source.to(dtype=target.dtype))
+
     def physical_state(self):
         """Owned float32 physical fields; the adapter owns public State types."""
         self._check_open()
