@@ -75,6 +75,36 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- `OGBCube` and `OGBScene` reset as OGBench 1.2.1 resets. Before, the reset used the stable-worldmodel
+  rule: the arm started at the `agent.ee_start_position` Variation leaf, and the task came from a
+  separate generator. Now the end effector starts at the position that OGBench samples from the
+  environment generator. OGBench samples the task from NumPy's global RNG, so each lane keeps its own copy
+  of that RNG in the `rng/task` leaves. A seeded reset seeds the copy as `np.random.seed(seed + lane)`
+  does, and an unseeded reset continues it. OGBench samples the two settling actions of a reset from an
+  action space that has no seed. The lanes sample them from the seeded `rng/action` generator, as before.
+  With these two inputs set, each reset gives the State of the OGBench reset, and a test compares the
+  two for each lane, for repeated resets and after a restore. The arm starts at `agent.ee_start_position`
+  only when the reset options name this leaf (in `variation` or `variation_values`), or when
+  `set_variation` sets its anchor to a value that is not the default. In these resets, the arm uses the
+  stable-worldmodel rule, and OGBench samples only the yaw. The State leaves do not change. A State that
+  you saved before this change restores correctly, but the next reset uses the new rule and gives a
+  different start.
+- `PushT` and `PushTDiscrete` on CUDA reset faster. On Linux, a batch of at least `worker_min_lanes` lanes
+  resets in up to `workers` worker processes (tuning path `pusht-sim`). JAX steps the physics on the GPU,
+  as before. The workers write the State columns and the body geometry of the new episodes into shared
+  memory. The State, the frames, the rewards and the success flags do not change. On an L40S with 8 EPYC
+  cores, `PushT` runs 64-step episodes with `reset(seed)` at 64,000 steps/s with 1024 lanes and at 98,000
+  steps/s with 2048 lanes. Before, it ran at 22,000 and 25,000 steps/s. The CPU source runs at 51,000 and
+  55,000 steps/s on the same machine. A 1024-lane reset takes 0.3 s. Before, it took 2.5 s.
+- `OGBCube` and `OGBScene` step faster on CPU. A step runs the OGBench step without its observation
+  and info dictionaries, because the step outputs do not use them. The State leaves that only reset,
+  restore and `set_variation` change (the PCG64 generators other than the environment generator, the
+  task, the Variation values and the compiled model values) are kept from the last capture until one of
+  these calls. State and task outputs do not change, and a test compares them with the OGBench step.
+  On 8 cores of an AMD EPYC 9554 with 1024 lanes, `OGBCube` steps 7,398 times per second with one
+  action per call (before: 5,773) and 8,759 times with 16 actions per call (before: 7,289). `OGBScene`
+  steps 4,828 and 5,592 times per second (before: 3,755 and 4,712). The speed of steps with frames does
+  not change, because drawing the frames takes most of the time.
 - DM Control resets skip dm_control's first observation, which the batch task computes. CheetahRun and
   QuadrupedWalk reset their lanes on the `mujoco.batch` threads (`dmc_threads`): their resets are mostly MuJoCo
   work (200 settling steps; the start-height search), and MuJoCo releases the GIL while it computes. The other

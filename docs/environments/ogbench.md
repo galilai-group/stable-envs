@@ -151,6 +151,15 @@ the frames on CPU (software OpenGL) and on CUDA (NVIDIA OpenGL). Physics runs on
 - With `supersample` 2 or more, MJWarp draws the CUDA frames. MJWarp frames can differ from MuJoCo in
   lighting and transparency.
 
+A reset is the OGBench reset. OGBench samples the task from NumPy's global RNG. Each lane keeps its own
+copy of that RNG in State (`rng/task`). A seeded reset seeds the copy as `np.random.seed(seed)` does with
+the lane seed, and an unseeded reset continues it. OGBench samples the two settling actions of a reset from
+an action space that has no seed. The lanes sample them from the seeded `rng/action` generator. Thus a
+restore also sets the next reset.
+
+The arm starts at the position that OGBench samples. It starts at `agent.ee_start_position` only when
+the reset options name this leaf, or when `set_variation` sets the leaf to a value that is not the default.
+
 ### OGBCube
 
 The arm moves one cube to a goal pose. This is the OGBench `cube-single` task. The constructor argument `reward_task_id` selects the

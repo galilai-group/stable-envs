@@ -18,6 +18,7 @@ from ....spaces import Box, Dict
 MODEL_VALUES = ("cube.size", "agent.color", "floor.color", "camera.angle_delta", "light.intensity")
 
 CUBE_SAMPLES = ("cube.start_position", "cube.start_yaw", "cube.goal_position", "cube.goal_yaw")
+ARM_START = "agent.ee_start_position"
 
 # set_variation applies these to the running episode. The rest are reset-only, and
 # agent.color waits for the source's own compile rule.
@@ -45,6 +46,13 @@ COMPILED_FIELDS = (
 )
 # MjModel arrays written per lane after compilation; lanes sharing a model swap them in.
 LANE_FIELDS = ("geom_rgba", "mat_rgba", "site_pos", "dof_damping", "actuator_gainprm", "actuator_biasprm")
+
+
+def legacy_seed(seed):
+    """The ``np.random.seed`` argument for ``seed``; a seed wider than 32 bits passes as its 32-bit words."""
+    if seed < 2**32:
+        return seed
+    return [(seed >> shift) & 0xFFFFFFFF for shift in range(0, seed.bit_length(), 32)]
 
 
 def nodes(tree, prefix="variation"):
@@ -198,9 +206,11 @@ class LanePool:
 class Compatibility:
     """Registered reset, Variation and output rules over OGBench 1.2.1.
 
-    Physics, task construction, controller and IK remain upstream. Arm reset uses
-    a configured position instead of sampling three coordinates, so RNG draw order
-    must be preserved when changing initialization.
+    Physics, task construction, controller, IK and reset remain upstream. OGBench
+    draws the task from NumPy's global RNG; each lane keeps its own copy, seeded as
+    ``np.random.seed(seed)`` at each seeded reset. The arm starts at
+    ``agent.ee_start_position`` instead of OGBench's sampled position only when the
+    reset options name that leaf or its anchor is not the registered default.
     """
 
     _pool = None
@@ -213,6 +223,7 @@ class Compatibility:
             raise ValueError("reward_task_id must be None or an integer in 0..5")
         self._action_box = None
         self._pool = pool
+        self._arm_pinned = False
         self._seed_owned(seed)
         super().__init__(
             env_type="single" if self.family == "Cube" else "scene",
@@ -285,11 +296,11 @@ class Compatibility:
 
     def _seed_owned(self, seed):
         root = np.random.SeedSequence(seed)
-        action, variation, task = root.spawn(3)
+        action, variation = root.spawn(2)
         self._construction_seed = int(root.entropy)
         self._action_seed = int(action.generate_state(1, dtype=np.uint64)[0])
         self.variation_parent = np.random.default_rng(variation)
-        self.task_rng = np.random.RandomState(int(task.generate_state(1)[0]))
+        self.task_rng = np.random.RandomState(legacy_seed(self._construction_seed))
         if self._action_box is not None:
             self._action_box.seed(self._action_seed)
 
@@ -421,6 +432,9 @@ class Compatibility:
         tree.seed(int(self.variation_parent.integers(0, 2**63, dtype=np.int64)))
         tree.reset()
         selected = set(options.get("variation", CUBE_SAMPLES if self.family == "Cube" else ()))
+        default = np.mean(self._arm_sampling_bounds, axis=0)
+        named = selected | set(options.get("variation_values", {}))
+        self._arm_pinned = ARM_START in named or not np.array_equal(tree._walk(ARM_START).init_value, default)
         # SWM visits requested leaves in the tree's sorted order, not request order.
         tree.update([name for name in tree.names() if name in selected])
         explicit_size = options.get("variation_values", {}).get("cube.size")
@@ -433,7 +447,9 @@ class Compatibility:
         return super().reset(seed=seed, options=options)
 
     def initialize_arm(self):
-        """Initialize at the configured position, consuming only the source yaw draw."""
+        """OGBench's sampled arm start; a pinned start consumes only the source yaw draw."""
+        if not self._arm_pinned:
+            return super().initialize_arm()
         eff_pos = self.variation_space["agent"]["ee_start_position"].value
         cur_ori = self._effector_down_rotation
         yaw = self.np_random.uniform(-np.pi, np.pi)
@@ -461,6 +477,34 @@ class Compatibility:
     def post_step(self):
         super().post_step()
         self._cube_colors_from_variation()
+
+    def transition(self, action):
+        """``step`` without the observation and info dictionaries; returns reward, terminated, truncated, success.
+
+        The pre-step snapshot keeps the previous position and velocity and, for Scene, the button positions
+        that ``post_step`` reads. The physics, State and returned values are those of ``step``.
+        """
+        if self._reset_next_step or self._success_timing not in ("pre", "post"):
+            _, reward, terminated, truncated, info = self.step(action)
+            return reward, terminated, truncated, info["success"]
+        if self._success_timing == "pre":
+            success, terminated, reward = self._success, self.terminate_episode(), self.compute_reward()
+        self.set_control(np.array(action))
+        if self.family == "Scene":
+            self._prev_button_states = self._cur_button_states.copy()
+        self._prev_qpos = self._data.qpos.copy()
+        self._prev_qvel = self._data.qvel.copy()
+        if self.family == "Scene":
+            self._prev_ob_info = {
+                f"privileged/button_{i}_pos": self._data.joint(f"buttonbox_joint_{i}").qpos.copy()
+                for i in range(self._num_buttons)
+            }
+        mujoco.mj_step(self._model, self._data, nstep=self._n_steps)
+        mujoco.mj_rnePostConstraint(self._model, self._data)
+        self.post_step()
+        if self._success_timing == "post":
+            success, terminated, reward = self._success, self.terminate_episode(), self.compute_reward()
+        return reward, terminated, self.truncate_episode(), success
 
     def get_reset_info(self):
         info = super().get_reset_info()

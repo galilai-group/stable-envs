@@ -408,8 +408,10 @@ def test_contact_histories_oracle_and_independent_restore(interaction, oracle):
 @pytest.mark.parametrize("family", CLASSES)
 def test_solver_and_cached_pose_fields_are_behaviorally_relevant(family):
     with CLASSES[family](seed=17) as a, CLASSES[family](seed=17) as b:
-        a.reset(17, {"task_id": 1 if family == "Cube" else 2, "variation": []})
         u = a._simulator.envs[0]
+        # The arm starts at the leaf's default, where the approach below makes contact.
+        start = {"agent.ee_start_position": np.mean(u._arm_sampling_bounds, axis=0)}
+        a.reset(17, {"task_id": 1 if family == "Cube" else 2, "variation": [], "variation_values": start})
         fixed_target = u.data.joint("object_joint_0").qpos[:3].copy()
         fixed_target[2] = 0.125
         for i in range(10 if family == "Cube" else 20):
@@ -608,3 +610,27 @@ def test_scene_drawer_window_and_button_success_boundaries():
             assert env._compute_successes()[1] == [bits[0] == 1, bits[1] == 0]
     finally:
         env.close()
+
+
+@pytest.mark.parametrize("family", CLASSES)
+def test_lean_transition_matches_upstream_step(family):
+    lanes, rng = 3, np.random.default_rng(5)
+    a = OGBManipulationAdapter(family, lanes, seed=23)
+    b = OGBManipulationAdapter(family, lanes, seed=23)
+    try:
+        for t in range(40):
+            # Long pushes toward the table reach the Scene buttons; the rest are random.
+            action = rng.uniform(-1, 1, (lanes, 5)).astype(np.float32 if t % 2 else np.float64)
+            if t % 10 < 4:
+                action[:, 2] = -1.0
+            out = a.step(action)
+            upstream = [env.step(row) for env, row in zip(b.envs, action)]
+            b._forget_static(b.envs)
+            assert_same_state(out["state"], b.get_state())
+            assert out["reward"].tolist() == [r[1] for r in upstream]
+            assert out["terminated"].tolist() == [bool(r[2]) for r in upstream]
+            assert out["truncated"].tolist() == [bool(r[3]) for r in upstream]
+            assert out["success"].tolist() == [bool(r[4]["success"]) for r in upstream]
+    finally:
+        a.close()
+        b.close()

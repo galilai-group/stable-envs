@@ -13,8 +13,9 @@ import jax.dlpack
 
 from ...._core.tensordicts import build_tensordict
 from .jax_physics import advance
-from .replay import HISTORY_KEYS
-from .replay_batch import PushTReplayAdapter
+from .numeric import MAX_SHAPES, geometry_columns, install_latest
+from .replay import HISTORY_KEYS, validate_seed
+from .replay_batch import PushTReplayAdapter, lane_options
 
 enable_x64 = jax.enable_x64 if hasattr(jax, "enable_x64") else jax.experimental.enable_x64
 
@@ -27,7 +28,14 @@ def from_torch(value):
 
 
 class PushTJaxAdapter(PushTReplayAdapter):
-    def __init__(self, batch, device="cpu", seed=0, *, discrete=False, config=None):
+    """Step PushT lanes with batched JAX physics; CPU owners supply resets, restores and Variation.
+
+    With ``processes``, owners in worker processes reset the lanes (see ``PushTResetPool``). After a
+    worker reset, the workers own the lanes' CPU engines and the batch columns hold their static fields;
+    ``envs`` rebuilds the parent owners from the columns when it is read.
+    """
+
+    def __init__(self, batch, device="cpu", seed=0, *, discrete=False, config=None, processes=0, cpus=None):
         device = torch.device(device)
         if device.type == "cuda":
             try:
@@ -38,15 +46,63 @@ class PushTJaxAdapter(PushTReplayAdapter):
                     f"PushT JAX cannot use {device}; install CUDA support with "
                     "pip install 'stable-envs[pusht-gpu]' and ensure JAX can see the selected GPU"
                 ) from exc
+        self._pool, self._pool_owns = None, False
         super().__init__(batch, device, seed, discrete=discrete, config=config)
         try:
             self._initialize_device()
+            if processes:
+                from .reset_pool import PushTResetPool
+
+                groups = {
+                    "static": self._static_columns(),
+                    "current": self._current_columns(),
+                    "geometry": geometry_columns(self.envs, MAX_SHAPES),
+                }
+                self._pool = PushTResetPool(
+                    discrete, self.template.config, batch, seed, groups, processes=processes, cpus=cpus
+                )
         except BaseException:
             self.close()
             raise
 
-    def _initialize_device(self):
-        fields = super().render_fields()
+    @property
+    def envs(self):
+        if self._stale:
+            self._materialize(sorted(self._stale))
+        return self._envs
+
+    @envs.setter
+    def envs(self, owners):
+        self._envs, self._stale = owners, set()
+
+    @property
+    def template(self):
+        if 0 in self._stale:
+            self._materialize([0])
+        return self._envs[0]
+
+    def _materialize(self, lanes):
+        """Rebuild the parent owners of ``lanes`` from the batch columns of a worker reset."""
+        for lane in lanes:
+            row = {key: np.asarray(value[lane]) for key, value in self._columns.items()}
+            owner = self._envs[lane].reconstruct_anchor(row)
+            owner._install_metadata({k.removeprefix("owned/"): v for k, v in row.items() if k.startswith("owned/")})
+            self._envs[lane].close()
+            self._envs[lane] = owner
+            self._stale.discard(lane)
+
+    def _adopt(self, columns):
+        """Install the static columns that the workers wrote; the workers now own the lanes."""
+        self._columns = columns
+        self._stale = set(range(self.num_envs))
+        self._pool_owns = True
+
+    def _static_columns(self):
+        return self._columns if self._pool_owns else super()._static_columns()
+
+    def _initialize_device(self, fields=None, geometry=None):
+        if fields is None:
+            fields = super().render_fields()
         self._fixed = {key: torch.as_tensor(value, device=self.device).clone() for key, value in fields.items()}
         self._fixed["recipe/version"].fill_(3)
         self._latest_tags = torch.tensor([[4, 0], [4, 1]], dtype=torch.uint8, device=self.device)
@@ -55,45 +111,17 @@ class PushTJaxAdapter(PushTReplayAdapter):
             dtype=torch.float64,
             device=self.device,
         )
-        bodies = []
-        geometry = []
-        shapes = max(len(getattr(owner.env, name).shapes) for owner in self.envs for name in ("agent", "block"))
-        self._circle = all(int(owner.env.variation_space["agent"]["shape"].value) == 0 for owner in self.envs)
-        for owner in self.envs:
-            row, vertices, centers, inverse, enabled = [], [], [], [], []
-            radius = 0.0
-            for name in ("agent", "block"):
-                body = getattr(owner.env, name)
-                row.append([*body.position, *body.velocity, body.angle, body.angular_velocity])
-                polys = np.zeros((shapes, 4, 2), np.float64)
-                valid = np.zeros(shapes, np.bool_)
-                for index, shape in enumerate(
-                    sorted(
-                        body.shapes,
-                        key=lambda shape: (
-                            tuple(np.array(shape.get_vertices()).ravel()) if hasattr(shape, "get_vertices") else ()
-                        ),
-                    )
-                ):
-                    if hasattr(shape, "get_vertices"):
-                        polys[index] = shape.get_vertices()
-                    else:
-                        radius = shape.radius
-                    valid[index] = True
-                # Nonzero padded edges avoid NaNs in inactive polygon contacts.
-                polys[~valid] = [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]
-                if name == "agent" and not np.isfinite(body.mass):
-                    polys[:] = [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]
-                vertices.append(polys)
-                centers.append(body.center_of_gravity)
-                inverse.append([1 / body.mass, 1 / body.moment])
-                enabled.append(valid)
-            bodies.append(row)
-            geometry.append(
-                (np.array(vertices), np.array(centers), np.array(inverse), np.array(radius), np.array(enabled))
+        if geometry is None:
+            geometry = geometry_columns(self.envs)
+        shapes = int(geometry["shapes"].max())
+        self._circle = bool(geometry["circle"].all())
+        self._body = torch.tensor(geometry["body"], device=self.device)
+        self._geometry = tuple(
+            torch.tensor(
+                geometry[key][:, :, :shapes] if key in ("vertices", "enabled") else geometry[key], device=self.device
             )
-        self._body = torch.tensor(np.array(bodies), device=self.device)
-        self._geometry = tuple(torch.tensor(np.stack([v[i] for v in geometry]), device=self.device) for i in range(5))
+            for key in ("vertices", "centers", "inverse", "radius", "enabled")
+        )
         count = shapes + shapes * 8 if self._circle else 2 * shapes**2 + 16 * shapes
         self._bias = torch.zeros(self.num_envs, 2, 3, dtype=torch.float64, device=self.device)
         self._impulse = torch.zeros(self.num_envs, count, dtype=torch.float64, device=self.device)
@@ -157,18 +185,43 @@ class PushTJaxAdapter(PushTReplayAdapter):
         self._initialize_device()
 
     def reset(self, seed=None, options=None):
-        latest = self._fixed["current/latest/value"].cpu().numpy()
-        present = self._fixed["current/latest_present"].cpu().numpy()
-        tags = self._fixed["current/latest/type"].cpu().numpy()
-        for lane, owner in enumerate(self.envs):
-            owner.env.latest_action = (
-                latest[lane].astype(np.float32 if tags[lane, 1] == 0 else np.float64) if present[lane] else None
-            )
-        return super().reset(seed, options)
+        latest = tuple(
+            self._fixed["current/" + key].cpu().numpy() for key in ("latest/value", "latest/type", "latest_present")
+        )
+        if self._pool is None:
+            install_latest(self.envs, *latest)
+            return super().reset(seed, options)
+        validate_seed(seed)
+        space = self.template.env.variation_space
+        lanes = (
+            options
+            if isinstance(options, list)
+            else [lane_options(space, options, self.num_envs, lane) for lane in range(self.num_envs)]
+        )
+        # Workers that do not own the lanes first take the owners' metadata from the columns.
+        sync = None if self._pool_owns else self._static_columns()
+        static, current, geometry = self._pool.reset(seed, lanes, latest, sync)
+        self._adopt(static)
+        self._initialize_device({**static, **current}, geometry)
+        return self.get_state()
+
+    def install_variation(self, lanes, immediate=frozenset()):
+        if not self._pool_owns:
+            return super().install_variation(lanes, immediate)
+        self._adopt(self._pool.install_variation(lanes, immediate))
+        self._install_columns(self._columns)
+
+    def variation_rows(self, attribute, keys):
+        if self._pool_owns:
+            return self._pool.variation_rows(attribute, keys)
+        return super().variation_rows(attribute, keys)
 
     def variation_changed(self):
         super().variation_changed()
-        for key, value in self._static_columns().items():
+        self._install_columns(self._static_columns())
+
+    def _install_columns(self, columns):
+        for key, value in columns.items():
             if key != "recipe/version":
                 self._fixed[key] = torch.as_tensor(value, device=self.device).clone()
 
@@ -287,18 +340,21 @@ class PushTJaxAdapter(PushTReplayAdapter):
             raise ValueError("PushT full State keys differ")
         fields = state_columns(state.select(*keys), base, self.num_envs)
         rows = [{k: np.asarray(v[i]).copy() for k, v in fields.items()} for i in range(self.num_envs)]
-        for owner, row in zip(self.envs, rows, strict=True):
+        # Checks and replays depend only on the configuration, which every lane shares.
+        template = self.template
+        for row in rows:
             if row["recipe/version"] not in (2, 3):
                 raise ValueError("PushT State version mismatch")
             checked = dict(row, **{"recipe/version": np.array(2, np.int64)})
-            owner.validate(checked)
+            template.validate(checked)
         staged = object.__new__(type(self))
         staged.__dict__ = self.__dict__.copy()
         staged.envs, staged._sources, staged._columns, staged._prepared = [], [None] * self.num_envs, {}, None
+        staged._pool, staged._pool_owns = None, False
         try:
-            for owner, row in zip(self.envs, rows, strict=True):
+            for row in rows:
                 staged.envs.append(
-                    owner.reconstruct(row) if row["recipe/version"] == 2 else owner.reconstruct_anchor(row)
+                    template.reconstruct(row) if row["recipe/version"] == 2 else template.reconstruct_anchor(row)
                 )
             staged._initialize_device()
             if new:
@@ -375,11 +431,24 @@ class PushTJaxAdapter(PushTReplayAdapter):
         if self._prepared is None:
             raise RuntimeError("No PushT restore is prepared")
         staged, self._prepared = self._prepared, None
-        for owner in self.envs:
+        for owner in self._envs:
             owner.close()
+        pool = self._pool
         self.__dict__.update(staged.__dict__)
+        self._pool = pool
 
     def discard_restore(self):
         staged, self._prepared = self._prepared, None
         if staged is not None:
             staged.close()
+
+    def close(self):
+        self.discard_restore()
+        try:
+            if self._pool is not None:
+                self._pool.close()
+        finally:
+            self._pool = None
+            for owner in self._envs:
+                owner.close()
+            self.envs = []
