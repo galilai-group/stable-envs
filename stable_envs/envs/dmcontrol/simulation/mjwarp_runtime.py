@@ -1458,6 +1458,25 @@ class WarpRuntime:
             torch.cuda.current_stream(self.device).wait_stream(self._torch_stream)
         return WarpSnapshot(self)
 
+    def release_graphs(self, *, paired=False, single=False):
+        """Release inactive execution graphs without changing physical data."""
+        self._check_open()
+        if not ((paired and self._pairs) or (single and self._graphs)):
+            return False
+        with self._scope():
+            if self._torch_stream is not None:
+                self._torch_stream.synchronize()
+            if paired:
+                for pair in self._pairs.values():
+                    pair.graph.reset()
+                    pair.close()
+                self._pairs.clear()
+            if single:
+                for graph, _ in self._graphs.values():
+                    graph.reset()
+                self._graphs.clear()
+        return True
+
     def close(self):
         if not self._closed:
             if self._torch_stream is not None:

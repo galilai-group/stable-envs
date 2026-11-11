@@ -58,19 +58,22 @@ def test_combined_invalid_inputs_preserve_pending_resets_and_recover(monkeypatch
 
     adapter = DMCWarpAdapter("cartpole-balance", 3, "cuda", 17)
     try:
+        actions = torch.zeros(3, 1, device="cuda", dtype=torch.float64)
+        adapter.step(actions)
+        pairs = dict(adapter._runtime._pairs)
         initial = adapter.get_state()
         initial["lifecycle", "reset_next_step"].fill_(True)
         adapter.set_state(initial)
         native = adapter._source.get_state()
         physics = adapter._runtime.physical_state()
         counts, pending = adapter._counts.copy(), adapter._pending.copy()
-        actions = torch.zeros(3, 1, device="cuda", dtype=torch.float64)
 
         def unexpected_mutation(*args, **kwargs):
             pytest.fail("Invalid input reached physics or reset RNG")
 
         with monkeypatch.context() as patch:
             patch.setattr(adapter._runtime, "_advance", unexpected_mutation)
+            patch.setattr(adapter._runtime, "release_graphs", unexpected_mutation)
             patch.setattr(adapter._source, "prepare_reset", unexpected_mutation)
             for bad in (float("nan"), float("inf"), -float("inf"), 1e300):
                 invalid = actions.clone()
@@ -86,6 +89,7 @@ def test_combined_invalid_inputs_preserve_pending_resets_and_recover(monkeypatch
         assert_same_state(adapter.get_state(), initial)
         assert_same_state(adapter._source.get_state(), native)
         assert_same_state(adapter._runtime.physical_state(), physics)
+        assert adapter._runtime._pairs == pairs
         np.testing.assert_array_equal(adapter._counts, counts)
         np.testing.assert_array_equal(adapter._pending, pending)
         adapter.step(actions)
@@ -155,11 +159,144 @@ def test_warmed_pair_has_one_input_and_one_result_read(monkeypatch):
 
             return conversion
 
+        def unexpected_cleanup(*args, **kwargs):
+            pytest.fail("A warmed ordinary step synchronized or cleared the allocator cache")
+
         with monkeypatch.context() as patch:
             for name in ("__bool__", "__int__", "item"):
                 patch.setattr(torch.Tensor, name, record(getattr(torch.Tensor, name)))
+            patch.setattr(torch.cuda, "empty_cache", unexpected_cleanup)
+            patch.setattr(torch.cuda, "synchronize", unexpected_cleanup)
+            patch.setattr(torch.cuda.Stream, "synchronize", unexpected_cleanup)
+            patch.setattr(torch.cuda.Event, "synchronize", unexpected_cleanup)
             adapter.step(actions)
         assert reads == ["__int__", "__int__"]
+    finally:
+        adapter.close()
+
+
+@pytest.mark.parametrize("reset_route", ["one_pending", "all_pending", "reset_in_second"])
+def test_route_switch_releases_inactive_graphs_and_preserves_outputs(reset_route, monkeypatch):
+    from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter
+
+    adapter = DMCWarpAdapter("cartpole-balance", 3, "cuda", 17)
+    try:
+        runtime, task = adapter._runtime, adapter._task
+        _require_pairs(runtime)
+        initial = adapter.get_state()
+        mixed = initial.clone()
+        counts, pending = mixed["lifecycle", "step_count"], mixed["lifecycle", "reset_next_step"]
+        counts.fill_(6)
+        limits = torch.as_tensor(np.ceil(adapter._limits), device="cuda", dtype=counts.dtype)
+        if reset_route == "all_pending":
+            counts[:, 0] = limits
+            pending.fill_(True)
+        elif reset_route == "one_pending":
+            counts[0, 0] = limits[0]
+            pending[0, 0] = True
+        else:
+            counts[0, 0] = limits[0] - 1
+        actions = torch.full((3, 1), 0.125, device="cuda", dtype=torch.float64)
+
+        # The checked path supplies a reference for both sides of the switch,
+        # including the source RNG after the pending reset has committed.
+        adapter.set_state(mixed)
+        with monkeypatch.context() as patch:
+            patch.setattr(runtime, "supports_pair", False)
+            expected_mixed = adapter.step(actions)
+            expected_native = adapter._source.get_state()
+            expected_ordinary = adapter.step(actions)
+        expected_reset = adapter.reset(None)
+
+        adapter.set_state(initial)
+        held = adapter.step(actions)
+        held_copy = held.clone()
+        pair = runtime._pairs[task]
+        assert not runtime._graphs and adapter._scratch is None
+        adapter.set_state(initial)
+        assert runtime._pairs[task] is pair, "An ordinary restore discarded its warmed pair"
+
+        first_stream, second_stream = torch.cuda.Stream(), torch.cuda.Stream()
+        with torch.cuda.stream(first_stream):
+            adapter.set_state(mixed)
+            actual_mixed = adapter.step(actions)
+        # get_state orders the previous caller stream before comparisons.
+        actual_state = adapter.get_state()
+        assert not runtime._pairs and runtime._graphs
+        scratch = adapter._scratch
+        if reset_route == "all_pending":
+            assert scratch is None
+        else:
+            assert scratch is not None and scratch.num_envs == 2
+        assert_same_state(actual_mixed, expected_mixed)
+        assert_same_state(actual_state, expected_mixed["state"])
+        assert_same_state(adapter._source.get_state(), expected_native)
+        assert_same_state(held, held_copy)
+        mixed_copy = actual_mixed.clone()
+
+        with torch.cuda.stream(second_stream):
+            actual_ordinary = adapter.step(actions)
+        adapter.get_state()
+        assert runtime._pairs[task] is not pair
+        assert not runtime._graphs and adapter._scratch is None
+        if scratch is not None:
+            assert scratch._closed
+        assert_same_state(actual_ordinary, expected_ordinary)
+        assert_same_state(actual_mixed, mixed_copy)
+        assert_same_state(held, held_copy)
+        assert_same_state(adapter.reset(None), expected_reset)
+    finally:
+        adapter.close()
+
+
+def test_failed_reset_route_after_pair_eviction_preserves_state_and_rng(monkeypatch):
+    from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter
+    from stable_envs.envs.dmcontrol.simulation.mjwarp_runtime import WarpRuntime
+
+    adapter = DMCWarpAdapter("cartpole-balance", 3, "cuda", 17)
+    try:
+        runtime = adapter._runtime
+        _require_pairs(runtime)
+        actions = torch.full((3, 1), 0.125, device="cuda", dtype=torch.float64)
+        held = adapter.step(actions)
+        held_copy = held.clone()
+        initial = adapter.get_state()
+        initial["lifecycle", "step_count"][0, 0] = math.ceil(adapter._limits[0])
+        initial["lifecycle", "reset_next_step"][0, 0] = True
+        adapter.set_state(initial)
+        assert runtime._pairs and adapter._scratch is None
+        native = adapter._source.get_state()
+        physics = runtime.physical_state()
+        check_result = WarpRuntime._check_result
+
+        def fail_continuing_round(candidate, *, recorded=False):
+            if candidate is not runtime and recorded:
+                assert not runtime._pairs, "Reset physics retained the inactive paired graph"
+                candidate._data_view("qvel")[-1, -1] = float("nan")
+                return check_result(candidate)
+            return check_result(candidate, recorded=recorded)
+
+        def unexpected_reset(*args, **kwargs):
+            pytest.fail("Failed continuing physics consumed pending reset RNG")
+
+        with monkeypatch.context() as patch:
+            patch.setattr(WarpRuntime, "_check_result", fail_continuing_round)
+            patch.setattr(adapter._source, "prepare_reset", unexpected_reset)
+            with pytest.raises(RuntimeError, match="produced nonfinite qvel"):
+                adapter.step(actions)
+        assert not runtime._pairs
+        assert_same_state(adapter.get_state(), initial)
+        assert_same_state(adapter._source.get_state(), native)
+        assert_same_state(runtime.physical_state(), physics)
+        assert_same_state(held, held_copy)
+        # Recovery must reuse the same CUDA context after releasing the pair.
+        adapter.set_state(initial)
+        output = adapter.step(actions)
+        assert output["state", "lifecycle", "step_count"].flatten().tolist() == [1, 4, 4]
+        assert not adapter._pending.any()
+        adapter.step(actions)
+        assert runtime._pairs and adapter._scratch is None
+        assert_same_state(held, held_copy)
     finally:
         adapter.close()
 

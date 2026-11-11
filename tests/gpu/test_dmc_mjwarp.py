@@ -178,6 +178,10 @@ def test_reward_only_first_round_matches_full_outputs(name, monkeypatch):
             expected = [adapter.step(action) for action in actions]
 
         adapter.set_state(checkpoint)
+        # The forced checked reference releases the inactive paired graph.
+        # Warm the selected public route again before measuring Python calls.
+        adapter.step(actions[0])
+        adapter.set_state(checkpoint)
         calls = {"observation": 0, "reward": 0, "info": 0}
 
         def count_calls(name, method):

@@ -355,7 +355,21 @@ class DMCWarpAdapter(SimulatorAdapter):
     def step(self, actions, *, active=None, capture_state=True):
         _, controls = self._prepare_step(actions, active)
         reward = torch.zeros(self.num_envs, device=self.device, dtype=torch.float64)
-        if self._runtime.supports_pair and not self._pending.any() and np.all(self._counts < self._limits - 1):
+        paired = self._runtime.supports_pair and not self._pending.any() and np.all(self._counts < self._limits - 1)
+        if paired:
+            released = self._runtime.release_graphs(single=True)
+            if self._scratch is not None:
+                self._scratch.close()
+                self._scratch = None
+                released = True
+        else:
+            released = self._runtime.release_graphs(paired=True)
+        if released and self.device.type == "cuda":
+            # Reset forwards allocate through Warp, while paired scratch uses
+            # Torch. Return unused Torch blocks to CUDA at route transitions.
+            with torch.cuda.device(self.device):
+                torch.cuda.empty_cache()
+        if paired:
             # Native resets need a host-visible success decision before RNG
             # work. Pair only calls whose two rounds both integrate every lane.
             try:
