@@ -1,6 +1,6 @@
 """Small independent MuJoCo models exercise the Warp execution boundary."""
 
-from contextlib import closing
+from contextlib import closing, nullcontext
 
 import numpy as np
 import pytest
@@ -101,6 +101,22 @@ def test_cpu_graph_memory_trim_does_not_load_cuda_driver(monkeypatch):
     monkeypatch.setattr(mjwarp_runtime, "_cuda_graph_memory_driver", unexpected_driver_load)
     with closing(WarpRuntime([model()], "cpu", 1)) as runtime:
         runtime.trim_graph_memory()
+
+
+def test_cuda_graph_memory_trim_uses_normalized_device_index(monkeypatch):
+    from stable_envs.envs.dmcontrol.simulation import mjwarp_runtime
+
+    # Match the constructor's device representation without allocating CUDA
+    # resources: Warp receives a string, while Torch retains the ordinal.
+    runtime = WarpRuntime.__new__(WarpRuntime)
+    runtime._closed = False
+    runtime.device = torch.device("cuda:3")
+    runtime._wp_device = "cuda:3"
+    ordinals = []
+    monkeypatch.setattr(runtime, "_scope", nullcontext)
+    monkeypatch.setattr(mjwarp_runtime, "_trim_cuda_graph_memory", ordinals.append)
+    runtime.trim_graph_memory()
+    assert ordinals == [3]
 
 
 def test_retained_scratch_reuses_round_storage_without_aliasing_live_allocations(monkeypatch):

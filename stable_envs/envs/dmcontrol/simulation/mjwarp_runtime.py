@@ -1530,7 +1530,7 @@ class WarpRuntime:
         self._check_open()
         if self.device.type == "cuda":
             with self._scope():
-                _trim_cuda_graph_memory(self._wp_device.ordinal)
+                _trim_cuda_graph_memory(self.device.index)
 
     def close(self):
         if not self._closed:
