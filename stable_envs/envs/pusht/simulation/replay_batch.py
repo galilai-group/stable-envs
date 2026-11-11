@@ -362,7 +362,7 @@ class PushTReplayAdapter(SimulatorAdapter):
 
     @property
     def frame_shape(self):
-        resolution = self.envs[0].config["resolution"]
+        resolution = self.template.config["resolution"]
         return (resolution, resolution, 3)
 
     def render_fields(self):

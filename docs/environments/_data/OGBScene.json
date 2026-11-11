@@ -3,7 +3,7 @@
  "module": "stable_envs.envs.ogbench.manipulation_semantics",
  "family": "ogbench",
  "domain": "scene",
- "reference_id": null,
+ "reference_id": "ogbench/visual-scene-v0",
  "requires_cuda": false,
  "has_dynamics": true,
  "default_size": 200,

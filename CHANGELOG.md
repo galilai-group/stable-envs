@@ -88,35 +88,62 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
-- DMC MJWarp mixed-reset steps skip discarded first-round observations and info,
-  retaining continuing-lane rewards and zero rewards for resetting lanes.
-- Ordinary DMC MJWarp action steps use a guarded two-round graph and one physics
-  error read. A failed first round skips the second, and a failed second round
-  retains the first checkpoint. Reset boundaries retain per-round checks.
-- DMC MJWarp combines action, active-mask and scaled-control validation into
-  one device flag read, preserving recoverable errors before physics or resets.
-- DMC MJWarp captures reward, observation and info formulas with each physics
-  round, using reward-only and full-output graph variants. Model metadata keeps
-  stable storage across restores, and returned outputs retain owned storage.
-- DMC MJWarp builds task output TensorDicts once per public step and copies physics
-  directly into checkpoint storage at the public dtype, removing intermediate
-  clones while preserving returned-output ownership and per-round checkpoints.
-- DMC MJWarp reuses one native reset owner with independent lane RNG checkpoints
-  and compact model columns, avoiding a full native environment and static-asset
-  copy per lane. Seeded/unseeded resets, mixed resets, targets and physics variation
-  retain their native behavior; preparation failures leave installed lane records intact.
-- DMC MJWarp validates scaled controls once per public step, captures finite/capacity
-  checks into one device error bitmask, caches immutable reward constants, and updates
-  ordinary-round lifecycle checkpoints on device. Per-round errors, checkpoints, reset
-  RNG behavior and standalone runtime validation are retained.
-- Ordinary DMC MJWarp steps compute only the needed reward in the first control round,
-  avoiding discarded observation/info construction while retaining both rewards and per-round
-  checkpoints. Mixed resets and returned-output ownership keep their existing behavior.
-- DM Control resets run on the `mujoco.batch` threads (`dmc_threads`). The reset of each lane is
-  dm_control's `Environment.reset` without its first observation. MuJoCo releases the GIL while it computes,
-  so lanes reset in parallel. Quadruped searches its start height with direct MuJoCo calls that leave the data
-  exactly as dm_control's search does. At 256 lanes on 8 cores, a reset with 64 steps is 2.4x faster
-  for CheetahRun and 3.2x faster for QuadrupedWalk.
+- DMC MJWarp reuses one native reset owner with compact model columns and independent lane RNG
+  checkpoints, avoiding a full native environment and static-asset copy per lane. Reset preparation
+  failures leave the installed lane records intact.
+- Ordinary DMC MJWarp steps capture both physics rounds and task formulas in one guarded graph,
+  with one input-validation read and one combined physics-result read. A failed first round skips
+  the second; a failed second round preserves the first checkpoint. Observations and info are built
+  once, both rewards are retained, and returned outputs own their storage. Lifecycle counters update
+  on device; native reset boundaries retain their success checks and RNG behavior.
+- DMC MJWarp reuses temporary GPU storage across the ordered control rounds and releases inactive
+  graph storage at reset transitions. FingerSpin with 8192 lanes now completes ordinary steps and
+  resets on an RTX 3090; returning from a reset rebuilds the ordinary execution graph.
+- `OGBCube` and `OGBScene` use the OGBench cube size. The default `cube.size` is now 0.02, as in OGBench.
+  Before, the default was the stable-worldmodel value `float32(0.02)`, which compiles to
+  0.019999999552965164. That size changed the cube mass and inertia, so contacts moved the physics away
+  from OGBench after about 100 steps. Now the default physics model, the reset and the physics are equal
+  to OGBench, bit for bit, and a test compares 200 steps for each lane. The frames do not change. The
+  default model is different from the stable-worldmodel model in the cube size, mass and inertia. A State
+  that you saved before this change keeps its cube size when you restore it.
+- `OGBCube` and `OGBScene` set `reference_id` to the OGBench pixel tasks, `ogbench/visual-cube-single-v0`
+  and `ogbench/visual-scene-v0`.
+- `OGBCube` and `OGBScene` reset as OGBench 1.2.1 resets. Before, the reset used the stable-worldmodel
+  rule: the arm started at the `agent.ee_start_position` Variation leaf, and the task came from a
+  separate generator. Now the end effector starts at the position that OGBench samples from the
+  environment generator. OGBench samples the task from NumPy's global RNG, so each lane keeps its own copy
+  of that RNG in the `rng/task` leaves. A seeded reset seeds the copy as `np.random.seed(seed + lane)`
+  does, and an unseeded reset continues it. OGBench samples the two settling actions of a reset from an
+  action space that has no seed. The lanes sample them from the seeded `rng/action` generator, as before.
+  With these two inputs set, each reset gives the State of the OGBench reset, and a test compares the
+  two for each lane, for repeated resets and after a restore. The arm starts at `agent.ee_start_position`
+  only when the reset options name this leaf (in `variation` or `variation_values`), or when
+  `set_variation` sets its anchor to a value that is not the default. In these resets, the arm uses the
+  stable-worldmodel rule, and OGBench samples only the yaw. The State leaves do not change. A State that
+  you saved before this change restores correctly, but the next reset uses the new rule and gives a
+  different start.
+- `PushT` and `PushTDiscrete` on CUDA reset faster. On Linux, a batch of at least `worker_min_lanes` lanes
+  resets in up to `workers` worker processes (tuning path `pusht-sim`). JAX steps the physics on the GPU,
+  as before. The workers write the State columns and the body geometry of the new episodes into shared
+  memory. The State, the frames, the rewards and the success flags do not change. On an L40S with 8 EPYC
+  cores, `PushT` runs 64-step episodes with `reset(seed)` at 64,000 steps/s with 1024 lanes and at 98,000
+  steps/s with 2048 lanes. Before, it ran at 22,000 and 25,000 steps/s. The CPU source runs at 51,000 and
+  55,000 steps/s on the same machine. A 1024-lane reset takes 0.3 s. Before, it took 2.5 s.
+- `OGBCube` and `OGBScene` step faster on CPU. A step runs the OGBench step without its observation
+  and info dictionaries, because the step outputs do not use them. The State leaves that only reset,
+  restore and `set_variation` change (the PCG64 generators other than the environment generator, the
+  task, the Variation values and the compiled model values) are kept from the last capture until one of
+  these calls. State and task outputs do not change, and a test compares them with the OGBench step.
+  On 8 cores of an AMD EPYC 9554 with 1024 lanes, `OGBCube` steps 7,398 times per second with one
+  action per call (before: 5,773) and 8,759 times with 16 actions per call (before: 7,289). `OGBScene`
+  steps 4,828 and 5,592 times per second (before: 3,755 and 4,712). The speed of steps with frames does
+  not change, because drawing the frames takes most of the time.
+- DM Control resets skip dm_control's first observation, which the batch task computes. CheetahRun and
+  QuadrupedWalk reset their lanes on the `mujoco.batch` threads (`dmc_threads`): their resets are mostly MuJoCo
+  work (200 settling steps; the start-height search), and MuJoCo releases the GIL while it computes. The other
+  domains reset in one thread, which is faster for their short resets. Quadruped searches its start height with
+  direct MuJoCo calls that leave the data exactly as dm_control's search does. On the Hydra EPYC 9554 with
+  8 cores, CheetahRun steps 3.4x faster and QuadrupedWalk 3.2x faster, resets included.
 - TwoRoom, TwoRoomTarget, Piecewise and PiecewiseZones on CPU: one Numba kernel moves all lanes. The
   same call returns the State, the observation, the reward and the termination flags. The kernel does
   each float32 operation of the Torch step with the same rounding, so State and task outputs do not
@@ -134,10 +161,21 @@ All notable changes to this project are listed here. The format follows
 - `PushT` accepts continuous actions outside [-1, 1], as stable-worldmodel does. Such an action moves the target
   further from the agent. Discrete `PushTDiscrete` indices must still be in [0, 16).
 - `PyFlytRocketLanding` on CPU: the physics worker processes draw the step frames of their running
-  lanes with TinyRenderer, in parallel. They also draw `render` batches of 2 or more States. Before, the
-  main process drew every frame. A step that returns only frames does not export a State. The frames are
-  byte-identical. One process now holds at most 511 Rocket lanes, because the frames use one more
-  PyBullet client.
+  lanes with TinyRenderer, in parallel. Before, the main process drew every frame. A step that returns
+  only frames does not export a State. The frames are byte-identical. One process now holds at most 511
+  Rocket lanes, because the frames use one more PyBullet client.
+- `PyFlytRocketLanding` `render` of full States on CPU is faster:
+  - One check of the whole batch replaces the State check of each row. The row check took 2 to 7 ms
+    for each State with a long action history.
+  - On Linux, render worker processes draw batches of 2 or more States, for every number of lanes.
+    The main process checks the State while the workers draw. `render_worker_min_rows` is 2 for Rocket
+    when it is not set. Before, only batches of 64 or more lanes drew in parallel, in the physics workers.
+  - TinyRenderer pixels are read with `bytes` instead of `np.asarray`, which takes 0.6 ms instead of
+    3.9 ms per 224 px frame. Step frames get this speed-up too.
+
+  The frames are byte-identical. Invalid State gives the same errors as before.
+- CPU render worker pools wake the worker that shares the CPU of the main process last. Before, that
+  worker preempted the main process while it sent the other requests.
 - `SimplePointMaze` draws the `info.goal` images faster. Each distinct background is drawn once with
   Matplotlib Agg. Then only the agent disc is drawn over a copy of it, in the render worker processes on
   Linux. The image bytes do not change. Steps return the goal image without a copy: it is the same
@@ -158,10 +196,10 @@ All notable changes to this project are listed here. The format follows
 - `PiecewiseZones` and `TwoRoomTarget` draw seeded resets from the same distribution tree as `Piecewise`
   and `TwoRoom`, so `reset(seed=k)` starts the agent (and `TwoRoomTarget`'s target) where stable-worldmodel
   does for the same seed. Before, they drew from `sample_states` and matched for no seed.
-- PushT on CPU: a Numba rasterizer draws `render` batches of 8 or more States from the same primitive
-  records as the GPU path. Frames are byte-identical to pygame. `backend` takes `"auto"`, `"source"`
-  (pygame, also `"pygame"`) or `"port"`. CPU `render` of 1024 States is approximately 1.5 times faster
-  than the pygame worker pool.
+- PushT on CPU: a Numba rasterizer draws `render` frames from the same primitive records as the GPU
+  path. Frames are byte-identical to pygame. `backend` takes `"auto"` or `"source"` (pygame, also
+  `"pygame"`). With 64 threads, CPU `render` of 1024 States at 224 px is approximately 16 times faster
+  than the pygame worker pool (`benchmarks/render.py`).
 - On CPU, classic control draws frames with the default appearance with the Gymnasium renderer when
   pygame is installed. The `backend` argument of `_render` selects `"source"` or `"port"` (the gfxdraw
   port); the default `"auto"` selects one of them. On Linux, batches of at least `render_worker_min_rows` rows draw in up to
