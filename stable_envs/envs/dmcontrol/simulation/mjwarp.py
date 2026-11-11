@@ -369,6 +369,11 @@ class DMCWarpAdapter(SimulatorAdapter):
             # Torch. Return unused Torch blocks to CUDA at route transitions.
             with torch.cuda.device(self.device):
                 torch.cuda.empty_cache()
+                if paired:
+                    # CUDA also retains inactive Warp graph-allocation blocks.
+                    # Both checked graph caches are gone before returning this
+                    # separate pool to CUDA for paired capture and restoration.
+                    self._runtime.trim_graph_memory()
         if paired:
             # Native resets need a host-visible success decision before RNG
             # work. Pair only calls whose two rounds both integrate every lane.

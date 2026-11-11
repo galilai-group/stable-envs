@@ -74,6 +74,47 @@ def _load_backend():
 
 
 @cache
+def _cuda_graph_memory_driver():
+    """Bind the public driver API for releasing unused graph allocations."""
+    import ctypes
+    import sys
+
+    names = {"linux": ("libcuda.so.1", "libcuda.so"), "win32": ("nvcuda.dll",)}.get(sys.platform, ())
+    loader = ctypes.WinDLL if sys.platform == "win32" else ctypes.CDLL
+    for name in names:
+        try:
+            driver = loader(name)
+        except OSError:
+            continue
+        try:
+            driver.cuDeviceGet.argtypes = [ctypes.POINTER(ctypes.c_int), ctypes.c_int]
+            driver.cuDeviceGet.restype = ctypes.c_int
+            driver.cuDeviceGraphMemTrim.argtypes = [ctypes.c_int]
+            driver.cuDeviceGraphMemTrim.restype = ctypes.c_int
+        except AttributeError as error:
+            raise RuntimeError("DMC MJWarp graph-cache cleanup requires CUDA driver graph-memory support") from error
+        return driver
+    raise RuntimeError("DMC MJWarp graph-cache cleanup could not load the NVIDIA CUDA driver")
+
+
+def _trim_cuda_graph_memory(ordinal):
+    import ctypes
+
+    driver = _cuda_graph_memory_driver()
+    device = ctypes.c_int()
+    result = driver.cuDeviceGet(ctypes.byref(device), ordinal)
+    if result != 0:
+        raise RuntimeError(
+            f"DMC MJWarp could not resolve CUDA device {ordinal} for graph-cache cleanup (error {result})"
+        )
+    result = driver.cuDeviceGraphMemTrim(device.value)
+    if result != 0:
+        raise RuntimeError(
+            f"DMC MJWarp could not release unused CUDA graph memory on device {ordinal} (error {result})"
+        )
+
+
+@cache
 def _result_check_kernel():
     @wp.kernel
     def check(
@@ -1476,6 +1517,20 @@ class WarpRuntime:
                     graph.reset()
                 self._graphs.clear()
         return True
+
+    def trim_graph_memory(self):
+        """Release unused graph-pool memory after all inactive graphs close.
+
+        CUDA retains physical storage from graph allocation nodes separately
+        from Torch's cache and Warp's ordinary allocator pool. The public
+        driver operation releases only unused graph memory; live graphs keep
+        their storage. Call after synchronizing and releasing both the main
+        checked graphs and any continuing-subset runtime.
+        """
+        self._check_open()
+        if self.device.type == "cuda":
+            with self._scope():
+                _trim_cuda_graph_memory(self._wp_device.ordinal)
 
     def close(self):
         if not self._closed:

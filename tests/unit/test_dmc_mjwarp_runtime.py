@@ -60,6 +60,49 @@ def source_round(m, d, control, substeps):
     mujoco.mj_step1(m, d)
 
 
+@pytest.mark.parametrize(
+    ("lookup_result", "trim_result", "message"),
+    [(0, 0, None), (101, 0, r"resolve CUDA device 3.*error 101"), (0, 2, r"graph memory on device 3.*error 2")],
+)
+def test_graph_memory_trim_resolves_driver_device_and_reports_errors(lookup_result, trim_result, message, monkeypatch):
+    import ctypes
+    from types import SimpleNamespace
+
+    from stable_envs.envs.dmcontrol.simulation import mjwarp_runtime
+
+    calls = []
+
+    def device_get(destination, ordinal):
+        calls.append(("lookup", ordinal))
+        # A CUDA driver device handle need not equal the caller's ordinal.
+        ctypes.cast(destination, ctypes.POINTER(ctypes.c_int)).contents.value = 37
+        return lookup_result
+
+    def trim(device):
+        calls.append(("trim", device))
+        return trim_result
+
+    driver = SimpleNamespace(cuDeviceGet=device_get, cuDeviceGraphMemTrim=trim)
+    monkeypatch.setattr(mjwarp_runtime, "_cuda_graph_memory_driver", lambda: driver)
+    if message is None:
+        mjwarp_runtime._trim_cuda_graph_memory(3)
+    else:
+        with pytest.raises(RuntimeError, match=message):
+            mjwarp_runtime._trim_cuda_graph_memory(3)
+    assert calls == ([("lookup", 3)] if lookup_result else [("lookup", 3), ("trim", 37)])
+
+
+def test_cpu_graph_memory_trim_does_not_load_cuda_driver(monkeypatch):
+    from stable_envs.envs.dmcontrol.simulation import mjwarp_runtime
+
+    def unexpected_driver_load():
+        pytest.fail("A CPU runtime tried to load the NVIDIA CUDA driver")
+
+    monkeypatch.setattr(mjwarp_runtime, "_cuda_graph_memory_driver", unexpected_driver_load)
+    with closing(WarpRuntime([model()], "cpu", 1)) as runtime:
+        runtime.trim_graph_memory()
+
+
 def test_retained_scratch_reuses_round_storage_without_aliasing_live_allocations(monkeypatch):
     from stable_envs.envs.dmcontrol.simulation.mjwarp_pair import _RetainedScratch
 

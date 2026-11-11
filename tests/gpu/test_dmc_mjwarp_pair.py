@@ -169,6 +169,7 @@ def test_warmed_pair_has_one_input_and_one_result_read(monkeypatch):
             patch.setattr(torch.cuda, "synchronize", unexpected_cleanup)
             patch.setattr(torch.cuda.Stream, "synchronize", unexpected_cleanup)
             patch.setattr(torch.cuda.Event, "synchronize", unexpected_cleanup)
+            patch.setattr(adapter._runtime, "trim_graph_memory", unexpected_cleanup)
             adapter.step(actions)
         assert reads == ["__int__", "__int__"]
     finally:
@@ -213,8 +214,34 @@ def test_route_switch_releases_inactive_graphs_and_preserves_outputs(reset_route
         held_copy = held.clone()
         pair = runtime._pairs[task]
         assert not runtime._graphs and adapter._scratch is None
+        events, scratch = [], None
+        empty_cache, trim_graph_memory, advance_pair = (
+            torch.cuda.empty_cache,
+            runtime.trim_graph_memory,
+            runtime.advance_pair,
+        )
+
+        def record_empty_cache():
+            events.append("torch_cache")
+            return empty_cache()
+
+        def checked_trim():
+            assert not runtime._graphs and adapter._scratch is None
+            if scratch is not None:
+                assert scratch._closed, "Trim ran before the subset graph was destroyed"
+            events.append("driver_trim")
+            return trim_graph_memory()
+
+        def record_pair(*args, **kwargs):
+            events.append("pair")
+            return advance_pair(*args, **kwargs)
+
+        monkeypatch.setattr(torch.cuda, "empty_cache", record_empty_cache)
+        monkeypatch.setattr(runtime, "trim_graph_memory", checked_trim)
+        monkeypatch.setattr(runtime, "advance_pair", record_pair)
         adapter.set_state(initial)
         assert runtime._pairs[task] is pair, "An ordinary restore discarded its warmed pair"
+        assert events == []
 
         first_stream, second_stream = torch.cuda.Stream(), torch.cuda.Stream()
         with torch.cuda.stream(first_stream):
@@ -222,6 +249,7 @@ def test_route_switch_releases_inactive_graphs_and_preserves_outputs(reset_route
             actual_mixed = adapter.step(actions)
         # get_state orders the previous caller stream before comparisons.
         actual_state = adapter.get_state()
+        assert events == ["torch_cache"], "Entering a reset route unexpectedly trimmed graph memory"
         assert not runtime._pairs and runtime._graphs
         scratch = adapter._scratch
         if reset_route == "all_pending":
@@ -234,9 +262,11 @@ def test_route_switch_releases_inactive_graphs_and_preserves_outputs(reset_route
         assert_same_state(held, held_copy)
         mixed_copy = actual_mixed.clone()
 
+        events.clear()
         with torch.cuda.stream(second_stream):
             actual_ordinary = adapter.step(actions)
         adapter.get_state()
+        assert events == ["torch_cache", "driver_trim", "pair"]
         assert runtime._pairs[task] is not pair
         assert not runtime._graphs and adapter._scratch is None
         if scratch is not None:
