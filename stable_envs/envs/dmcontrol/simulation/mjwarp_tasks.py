@@ -8,6 +8,8 @@ MuJoCo shapes with a leading world dimension (in particular xmat is [B, nbody, 9
 from __future__ import annotations
 
 import math
+from functools import cache
+from numbers import Real
 from typing import Protocol
 
 import numpy as np
@@ -58,11 +60,25 @@ def _norm(value: torch.Tensor) -> torch.Tensor:
     return torch.linalg.vector_norm(value, dim=-1)
 
 
+@cache
+def _scalar(value, dtype, device):
+    # Immutable task constants. The initial blocking upload finishes before a
+    # cached value can be reused by another adapter or CUDA stream. Retain the
+    # tensors so their storage cannot be recycled while another stream uses it.
+    return torch.tensor(value, dtype=dtype, device=device)
+
+
 def _tolerance(value, bounds=(0.0, 0.0), margin=0.0, sigmoid="gaussian", value_at_margin=0.1):
     """The registered tasks' dm_control tolerance curves, without host reads."""
     value = value.to(torch.float64)
-    lower, upper = (torch.as_tensor(v, dtype=value.dtype, device=value.device) for v in bounds)
-    margin = torch.as_tensor(margin, dtype=value.dtype, device=value.device)
+
+    def parameter(v):
+        if isinstance(v, Real):
+            return _scalar(float(v), value.dtype, value.device)
+        return torch.as_tensor(v, dtype=value.dtype, device=value.device)
+
+    lower, upper = (parameter(v) for v in bounds)
+    margin = parameter(margin)
     inside = (lower <= value) & (value <= upper)
     distance = torch.where(value < lower, lower - value, value - upper)
     # Zero margins are hard bounds; a safe denominator also prevents dormant NaNs.

@@ -70,6 +70,7 @@ class DMCWarpAdapter(SimulatorAdapter):
             self._task = bind_task(key, owner)
             self._nsubsteps = owner._env._n_sub_steps
             self._limits = np.asarray([env._env._step_limit for env in self._source.envs])
+            self._device_limits = torch.as_tensor(self._limits, device=self.device)[:, None]
             self._timesteps = torch.as_tensor(
                 [model.opt.timestep for model in self._models], device=self.device, dtype=torch.float64
             )[:, None]
@@ -250,11 +251,11 @@ class DMCWarpAdapter(SimulatorAdapter):
         self._counts[lanes] = 0
         self._pending[lanes] = False
 
-    def _control_step(self, controls, *, reward_only=False):
+    def _control_step(self, controls, *, reward_only=False, controls_validated=False):
         resetting = np.flatnonzero(self._pending)
         continuing = np.flatnonzero(~self._pending)
         if not len(resetting):
-            self._runtime.advance(controls)
+            self._runtime.advance(controls, controls_validated=controls_validated)
             # Only the second round's observations/info reach the caller. The
             # first still contributes reward and commits its full checkpoint.
             out = self._task.reward(self._runtime.snapshot()) if reward_only else self._outputs(self._runtime)
@@ -275,7 +276,7 @@ class DMCWarpAdapter(SimulatorAdapter):
                     )
                 ids = torch.as_tensor(continuing, device=self.device)
                 self._scratch.load(self._state[ids], models=[self._models[i] for i in continuing])
-                self._scratch.advance(controls[ids])
+                self._scratch.advance(controls[ids], controls_validated=controls_validated)
                 # Collect acceleration-stage sensors before reconstruction.
                 advanced = self._outputs(self._scratch)
                 self._save_physics(self._scratch, ids)
@@ -289,19 +290,27 @@ class DMCWarpAdapter(SimulatorAdapter):
                 out = out["reward"]
         self._counts[continuing] += 1
         self._pending[continuing] = self._counts[continuing] >= self._limits[continuing]
-        self._state["lifecycle", "step_count"] = torch.as_tensor(self._counts[:, None].copy(), device=self.device)
-        self._state["lifecycle", "reset_next_step"] = torch.as_tensor(
-            self._pending[:, None].copy(), device=self.device
-        )
+        if not len(resetting):
+            # Counts evolve deterministically, so retain the host mirror for
+            # reset routing while updating the checkpoint on device. Neither
+            # direction needs a transfer on ordinary rounds.
+            counts = self._state["lifecycle", "step_count"]
+            counts.add_(1)
+            torch.ge(counts, self._device_limits, out=self._state["lifecycle", "reset_next_step"])
+        else:
+            self._state["lifecycle", "step_count"] = torch.as_tensor(self._counts[:, None].copy(), device=self.device)
+            self._state["lifecycle", "reset_next_step"] = torch.as_tensor(
+                self._pending[:, None].copy(), device=self.device
+            )
         return out
 
     @_ordered
     def step(self, actions, *, active=None, capture_state=True):
         actions, _ = self.check_step(actions, active)
-        controls = self._controls(actions)
+        controls = self._runtime.validate_controls(self._controls(actions))
         reward = torch.zeros(self.num_envs, device=self.device, dtype=torch.float64)
-        reward += self._control_step(controls, reward_only=True)
-        out = self._control_step(controls)
+        reward += self._control_step(controls, reward_only=True, controls_validated=True)
+        out = self._control_step(controls, controls_validated=True)
         reward += out["reward"]
         self._state["task", "cumulative_reward"] += reward[:, None]
         out["reward"] = reward

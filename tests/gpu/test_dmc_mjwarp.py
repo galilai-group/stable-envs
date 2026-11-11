@@ -132,8 +132,8 @@ def test_reward_only_first_round_matches_full_outputs(name, monkeypatch):
 
         # Reference path materializes all outputs in both rounds, as before the
         # optimization. Retain every leaf to check reward, state and ownership.
-        def full_outputs(controls, *, reward_only=False):
-            output = control_step(controls)
+        def full_outputs(controls, *, reward_only=False, controls_validated=False):
+            output = control_step(controls, controls_validated=controls_validated)
             return output["reward"] if reward_only else output
 
         with monkeypatch.context() as patch:
@@ -177,10 +177,10 @@ def test_failed_second_round_keeps_first_round_checkpoint(monkeypatch):
         advance = adapter._runtime.advance
         rounds = 0
 
-        def fail_second(controls):
+        def fail_second(controls, **kwargs):
             nonlocal rounds
             rounds += 1
-            result = advance(controls)
+            result = advance(controls, **kwargs)
             if rounds == 2:
                 raise RuntimeError("injected second-round failure")
             return result
@@ -214,5 +214,121 @@ def test_invalid_later_lane_restore_preserves_models_state_and_rng():
         reset_after_failure = adapter.reset(None)
         adapter.set_state(before)
         assert_same_state(adapter.reset(None), reset_after_failure)
+    finally:
+        adapter.close()
+
+
+def test_invalid_actions_and_scaled_controls_preserve_pending_resets(monkeypatch):
+    from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter
+
+    adapter = DMCWarpAdapter("cartpole-balance", 3, "cuda", 17)
+    try:
+        initial = adapter.get_state()
+        initial["lifecycle", "reset_next_step"].fill_(True)
+        adapter.set_state(initial)
+        native_before = adapter._source.get_state()
+        physics_before = adapter._runtime.physical_state()
+        controls = torch.zeros(3, 1, dtype=torch.float32, device="cuda")
+        controls[2] = float("inf")
+        # Direct runtime callers retain validation by default.
+        with pytest.raises(ValueError, match="Controls must be finite"):
+            adapter._runtime.advance(controls)
+        with monkeypatch.context() as patch:
+
+            def unexpected_advance(*args, **kwargs):
+                pytest.fail("Invalid controls reached physics")
+
+            patch.setattr(adapter._runtime, "advance", unexpected_advance)
+            for bad in (float("nan"), float("inf"), 1e300):
+                actions = torch.zeros(3, 1, dtype=torch.float64, device="cuda")
+                actions[2] = bad
+                with pytest.raises(ValueError, match="finite"):
+                    adapter.step(actions)
+                assert_same_state(adapter.get_state(), initial)
+                assert_same_state(adapter._source.get_state(), native_before)
+                assert_same_state(adapter._runtime.physical_state(), physics_before)
+        # Validation errors must leave the CUDA context and reset path usable.
+        adapter.step(torch.zeros(3, 1, device="cuda"))
+        assert adapter.get_state()["lifecycle", "step_count"].flatten().tolist() == [1, 1, 1]
+    finally:
+        adapter.close()
+
+
+@pytest.mark.parametrize("failed_round", [1, 2])
+def test_nonfinite_round_preserves_last_valid_checkpoint(failed_round, monkeypatch):
+    from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter
+
+    adapter = DMCWarpAdapter("cartpole-balance", 3, "cuda", 17)
+    try:
+        initial = adapter.get_state()
+        actions = torch.full((3, 1), 0.25, dtype=torch.float64, device="cuda")
+        adapter._control_step(adapter._controls(actions))
+        after_first = adapter.get_state()
+        adapter.set_state(initial)
+        expected = adapter.step(actions)
+        adapter.set_state(initial)
+        check_result = adapter._runtime._check_result
+        rounds = 0
+
+        def fail_result(*, recorded=False):
+            nonlocal rounds
+            if recorded:
+                rounds += 1
+                if rounds == failed_round:
+                    adapter._runtime._data_view("qvel")[-1, -1] = float("nan")
+                    return check_result()
+            return check_result(recorded=recorded)
+
+        with monkeypatch.context() as patch:
+            patch.setattr(adapter._runtime, "_check_result", fail_result)
+            with pytest.raises(RuntimeError, match="produced nonfinite qvel"):
+                adapter.step(actions)
+        assert rounds == failed_round
+        assert_same_state(adapter.get_state(), initial if failed_round == 1 else after_first)
+        adapter.set_state(initial)
+        # A stale error bit must be cleared by the captured graph on replay.
+        with adapter._runtime._scope():
+            adapter._runtime._result_error.fill_(127)
+        assert_same_state(adapter.step(actions), expected)
+    finally:
+        adapter.close()
+
+
+def test_result_flags_diagnose_all_fields_and_capacity_on_cuda():
+    from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter
+    from stable_envs.envs.dmcontrol.simulation.mjwarp_runtime import _RESULT_FIELDS
+
+    adapter = DMCWarpAdapter("quadruped", 3, "cuda", 17)
+    try:
+        from stable_envs.envs.dmcontrol.simulation.mjwarp_runtime import mjw
+
+        runtime = adapter._runtime
+        with runtime._scope():
+            for name in _RESULT_FIELDS:
+                view = runtime._data_view(name).reshape(-1)
+                original = view[-1].clone()
+                view[-1] = float("inf")
+                with pytest.raises(RuntimeError, match=f"produced nonfinite {name}"):
+                    runtime._check_result()
+                view[-1] = original
+                runtime._check_result()
+            overflow = runtime._data_view("overflow")
+            original = overflow.clone()
+            for flag in mjw.OverflowType:
+                overflow.zero_()
+                overflow[-1] = int(flag)
+                if int(flag) & runtime._capacity_overflow:
+                    with pytest.raises(RuntimeError, match="capacity overflow"):
+                        runtime._check_result()
+                else:
+                    runtime._check_result()
+            overflow.copy_(original)
+            nacon = runtime._data_view("nacon")
+            original_count = nacon.clone()
+            nacon.fill_(runtime._d.naconmax + 1)
+            with pytest.raises(RuntimeError, match="capacity overflow"):
+                runtime._check_result()
+            nacon.copy_(original_count)
+            runtime._check_result()
     finally:
         adapter.close()

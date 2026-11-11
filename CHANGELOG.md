@@ -88,6 +88,10 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- DMC MJWarp validates scaled controls once per public step, captures finite/capacity
+  checks into one device error bitmask, caches immutable reward constants, and updates
+  ordinary-round lifecycle checkpoints on device. Per-round errors, checkpoints, reset
+  RNG behavior and standalone runtime validation are retained.
 - Ordinary DMC MJWarp steps compute only the needed reward in the first control round,
   avoiding discarded observation/info construction while retaining both rewards and per-round
   checkpoints. Mixed resets and returned-output ownership keep their existing behavior.

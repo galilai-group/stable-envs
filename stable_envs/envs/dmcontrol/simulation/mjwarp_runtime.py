@@ -16,6 +16,7 @@ from tensordict import TensorDict
 from ...._core.warp_cuda import require_warp_cuda
 
 _PHYSICAL = {"qpos": "qpos", "qvel": "qvel", "time": "time", "warmstart": "qacc_warmstart"}
+_RESULT_FIELDS = ("qpos", "qvel", "act", "time", "qacc_warmstart", "sensordata")
 mjw = wp = None
 _DIMENSIONS = ("nq", "nv", "nu", "na", "nbody", "njnt", "ngeom", "nsite", "ntendon", "neq", "nsensor", "nmocap")
 _TOPOLOGY = (
@@ -69,6 +70,49 @@ def _load_backend():
                 "DMC MJWarp physics requires MuJoCo and mujoco-warp 3.17; install stable-envs[dmcontrol-gpu]"
             )
         mjw, wp = mujoco_warp, warp
+
+
+@cache
+def _result_check_kernel():
+    @wp.kernel
+    def check(
+        overflow: wp.array[int],
+        nacon: wp.array[int],
+        capacity_mask: int,
+        naconmax: int,
+        qpos: wp.array2d[float],
+        qvel: wp.array2d[float],
+        act: wp.array2d[float],
+        time: wp.array[float],
+        warmstart: wp.array2d[float],
+        sensors: wp.array2d[float],
+        error: wp.array[int],
+    ):
+        world = wp.tid()
+        flags = int(0)  # noqa: UP018 - mutable Warp loop accumulator
+        if (overflow[world] & capacity_mask) != 0 or nacon[0] > naconmax:
+            flags = flags | 1
+        for i in range(qpos.shape[1]):
+            if not wp.isfinite(qpos[world, i]):
+                flags = flags | 2
+        for i in range(qvel.shape[1]):
+            if not wp.isfinite(qvel[world, i]):
+                flags = flags | 4
+        for i in range(act.shape[1]):
+            if not wp.isfinite(act[world, i]):
+                flags = flags | 8
+        if not wp.isfinite(time[world]):
+            flags = flags | 16
+        for i in range(warmstart.shape[1]):
+            if not wp.isfinite(warmstart[world, i]):
+                flags = flags | 32
+        for i in range(sensors.shape[1]):
+            if not wp.isfinite(sensors[world, i]):
+                flags = flags | 64
+        if flags != 0:
+            wp.atomic_or(error, 0, flags)
+
+    return check
 
 
 @cache
@@ -875,6 +919,8 @@ class WarpRuntime:
             nconmax = max(128, int(self._reference.nconmax))
             njmax = max(512, int(self._reference.njmax))
             self._d = mjw.make_data(self._reference, nworld=self.num_envs, nconmax=nconmax, njmax=njmax)
+            self._result_error = wp.zeros(1, dtype=int, device=self._wp_device)
+            self._result_error_view = wp.to_torch(self._result_error)
             self._acc_values = torch.empty(
                 (self.num_envs, len(sensor_indices)), dtype=torch.float32, device=self.device
             )
@@ -1216,29 +1262,50 @@ class WarpRuntime:
         mjw.step1(self._m, self._d)
         sensors.index_copy_(1, self._acc_indices, self._acc_values)
 
-    def _check_result(self):
+    def _record_result(self):
         # Warp also records finite solver-budget exits in this bitmask. Native
         # MuJoCo allows those exits; retain the source's iteration settings.
-        overflow = self._data_view("overflow").bitwise_and(self._capacity_overflow).any()
-        overflow |= (self._data_view("nacon") > self._d.naconmax).any()
-        finite = {
-            name: torch.isfinite(self._data_view(name)).all()
-            for name in ("qpos", "qvel", "act", "time", "qacc_warmstart", "sensordata")
-        }
-        # One scalar synchronization on successful rounds; inspect individual
-        # flags only to diagnose an already failed round.
-        if bool(overflow | ~torch.stack(list(finite.values())).all()):
-            if bool(overflow):
-                raise RuntimeError("DMC MJWarp contact/constraint capacity overflow")
-            failed = next(name for name, valid in finite.items() if not bool(valid))
-            raise RuntimeError(f"DMC MJWarp produced nonfinite {failed}")
+        self._result_error.zero_()
+        wp.launch(
+            _result_check_kernel(),
+            dim=self.num_envs,
+            inputs=[
+                self._d.overflow,
+                self._d.nacon,
+                self._capacity_overflow,
+                self._d.naconmax,
+                *(getattr(self._d, name) for name in _RESULT_FIELDS),
+            ],
+            outputs=[self._result_error],
+            device=self._wp_device,
+        )
 
-    def advance(self, controls):
-        """Advance one control round. No task or reset policy runs here."""
+    def _check_result(self, *, recorded=False):
+        if not recorded:
+            self._record_result()
+        # Read the captured bitmask once, including on failure. Keep the check
+        # at each round's boundary so failed physics cannot commit a checkpoint
+        # or run the next round's reset/RNG work.
+        error = int(self._result_error_view[0])
+        if error & 1:
+            raise RuntimeError("DMC MJWarp contact/constraint capacity overflow")
+        for index, name in enumerate(_RESULT_FIELDS, start=1):
+            if error & (1 << index):
+                raise RuntimeError(f"DMC MJWarp produced nonfinite {name}")
+
+    def validate_controls(self, controls):
+        """Validate scaled float32 controls before any physics or reset work."""
         self._check_open()
         controls = torch.as_tensor(controls, device=self.device, dtype=torch.float32)
         if controls.shape != (self.num_envs, self._reference.nu) or not bool(torch.isfinite(controls).all()):
             raise ValueError("Controls must be finite with shape [num_envs, nu]")
+        return controls
+
+    def advance(self, controls, *, controls_validated=False):
+        """Advance one round; the adapter may reuse its validated controls."""
+        self._check_open()
+        if not controls_validated:
+            controls = self.validate_controls(controls)
         with self._scope():
             self._data_view("ctrl").copy_(controls)
             if self.device.type == "cuda" and self._graph is None:
@@ -1249,14 +1316,16 @@ class WarpRuntime:
                 self._data_view("ctrl").copy_(controls)
                 with wp.ScopedCapture() as capture:
                     self._advance()
+                    self._record_result()
                 self._graph = capture.graph
                 self._load(checkpoint)
                 self._data_view("ctrl").copy_(controls)
             if self._graph is None:
                 self._advance()
+                self._record_result()
             else:
                 wp.capture_launch(self._graph)
-            self._check_result()
+            self._check_result(recorded=True)
         return self.snapshot()
 
     def physical_state(self):
@@ -1279,6 +1348,7 @@ class WarpRuntime:
                 self._torch_stream.wait_stream(torch.cuda.current_stream(self.device))
                 self._torch_stream.synchronize()
             self._graph = self._m = self._d = None
+            self._result_error = self._result_error_view = None
             self._constraint_buffers = None
             self._elliptic_solver = None
             self._pyramidal_solver = None
