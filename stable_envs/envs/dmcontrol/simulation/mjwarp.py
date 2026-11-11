@@ -310,21 +310,31 @@ class DMCWarpAdapter(SimulatorAdapter):
                 ids = torch.as_tensor(continuing, device=self.device)
                 self._scratch.load(self._state[ids], models=self._models.select(continuing))
                 # Collect acceleration-stage sensors before reconstruction.
-                advanced = self._scratch.advance(controls[ids], controls_validated=controls_validated, task=self._task)
+                advanced = self._scratch.advance(
+                    controls[ids],
+                    controls_validated=controls_validated,
+                    task=self._task,
+                    reward_only=reward_only,
+                )
                 self._save_physics(self._scratch, ids)
             self._reset_lanes(resetting)
             self._runtime.load(self._state, models=self._models)
-            out = self._outputs(self._runtime)
-            out["reward"].zero_()
-            if advanced is not None:
-                for key, value in advanced.items():
-                    if key == "info":
-                        for field, column in value.items():
-                            out[key][field][ids] = column
-                    else:
-                        out[key][ids] = value
             if reward_only:
-                out = out["reward"]
+                # Reset lanes contribute zero. Preserve continuing rewards from
+                # before reconstruction, without computing discarded outputs.
+                out = torch.zeros(self.num_envs, dtype=torch.float64, device=self.device)
+                if advanced is not None:
+                    out[ids] = advanced
+            else:
+                out = self._outputs(self._runtime)
+                out["reward"].zero_()
+                if advanced is not None:
+                    for key, value in advanced.items():
+                        if key == "info":
+                            for field, column in value.items():
+                                out[key][field][ids] = column
+                        else:
+                            out[key][ids] = value
         self._counts[continuing] += 1
         self._pending[continuing] = self._counts[continuing] >= self._limits[continuing]
         if not len(resetting):

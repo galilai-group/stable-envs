@@ -1,5 +1,7 @@
 """Captured task formulas must read live physics and updated model metadata."""
 
+import math
+
 import numpy as np
 import pytest
 import torch
@@ -94,3 +96,119 @@ def test_captured_task_reads_updated_native_metadata_without_recapture(monkeypat
                 assert_same_state(first_reward, expected)
                 assert_same_state(actual["reward"], expected)
                 assert_same_state(actual["success"], expected)
+
+
+@pytest.mark.parametrize("name", family_params(DMC_NAMES, family="dmc"))
+def test_reset_round_rewards_skip_discarded_outputs_and_match_full_reference(name, monkeypatch):
+    resolve_family(name, family="dmc", modules=("dmcontrol._family",), subject="MJWarp reset-round outputs")
+    with se.make(name, num_envs=3, device="cuda", simulation_backend="mjwarp", size=32) as env:
+        adapter = env._simulator
+        actions = torch.full((3, adapter.action_dim), 0.125, device="cuda", dtype=torch.float64)
+        control_step = adapter._control_step
+        for all_reset in (False, True):
+            initial = adapter.reset(91000)
+            limits = [math.ceil(value) for value in adapter._limits]
+            initial["lifecycle", "step_count"][:, 0] = torch.tensor(
+                limits if all_reset else [limits[0] - 1, limits[1], 6], device="cuda"
+            )
+            initial["lifecycle", "reset_next_step"][:, 0] = torch.tensor(
+                [True, True, True] if all_reset else [False, True, False], device="cuda"
+            )
+            initial["task", "cumulative_reward"][:, 0] = torch.tensor([11.0, 17.0, 23.0], device="cuda")
+            initial["rng", "has_gauss"].fill_(True)
+            initial["rng", "cached_gaussian"][:, 0] = torch.tensor([0.125, -0.375, 0.75], device="cuda")
+            adapter.set_state(initial)
+
+            def full_first_round(controls, *, reward_only=False, controls_validated=False):
+                output = control_step(controls, controls_validated=controls_validated)
+                return output["reward"] if reward_only else output
+
+            with monkeypatch.context() as patch:
+                patch.setattr(adapter, "_control_step", full_first_round)
+                expected = adapter.step(actions)
+            expected_native = adapter._source.get_state()
+            expected_next_reset = adapter.reset(None)
+            adapter.set_state(initial)
+            # Require cold scratch setup to honor reward_only as well. Reusing
+            # the reference's captured full graph would hide a missing flag
+            # from the Python-method checks below.
+            if adapter._scratch is not None:
+                adapter._scratch.close()
+                adapter._scratch = None
+            phase = {"reward_only": False, "reward_rounds": 0}
+
+            def checked_round(controls, *, reward_only=False, controls_validated=False):
+                phase["reward_only"] = reward_only
+                try:
+                    output = control_step(controls, reward_only=reward_only, controls_validated=controls_validated)
+                    if reward_only:
+                        phase["reward_rounds"] += 1
+                        assert output.shape == (3,) and output.dtype == torch.float64
+                        reset_reward = output if all_reset else output[1:2]
+                        assert_same_state(reset_reward, torch.zeros_like(reset_reward))
+                    return output
+                finally:
+                    phase["reward_only"] = False
+
+            def checked_formula(label, method):
+                def evaluate(snapshot):
+                    if phase["reward_only"]:
+                        pytest.fail(f"Reset reward-only round evaluated discarded {label}")
+                    return method(snapshot)
+
+                return evaluate
+
+            with monkeypatch.context() as patch:
+                patch.setattr(adapter, "_control_step", checked_round)
+                for method in ("observation", "info"):
+                    patch.setattr(adapter._task, method, checked_formula(method, getattr(adapter._task, method)))
+                actual = adapter.step(actions)
+            assert phase["reward_rounds"] == 1
+            assert_same_state(actual, expected)
+            assert_same_state(adapter._source.get_state(), expected_native)
+            assert_same_state(adapter.reset(None), expected_next_reset)
+
+
+def test_failed_continuing_reward_round_preserves_pending_resets_and_recovers(monkeypatch):
+    from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter
+
+    adapter = DMCWarpAdapter("cartpole-balance", 3, "cuda", 17)
+    try:
+        initial = adapter.get_state()
+        initial["lifecycle", "step_count"][:, 0] = torch.tensor(
+            [math.ceil(adapter._limits[0]) - 1, math.ceil(adapter._limits[1]), 6], device="cuda"
+        )
+        initial["lifecycle", "reset_next_step"][:, 0] = torch.tensor([False, True, False], device="cuda")
+        adapter.set_state(initial)
+        actions = torch.full((3, 1), 0.125, device="cuda", dtype=torch.float64)
+        expected = adapter.step(actions)
+        adapter.set_state(initial)
+        native = adapter._source.get_state()
+        physics = adapter._runtime.physical_state()
+        counts, pending = adapter._counts.copy(), adapter._pending.copy()
+        scratch = adapter._scratch
+        check_result = scratch._check_result
+
+        def fail_continuing_round(*, recorded=False):
+            if recorded:
+                scratch._data_view("qvel")[-1, -1] = float("nan")
+                return check_result()
+            return check_result(recorded=recorded)
+
+        def unexpected_reset(*args, **kwargs):
+            pytest.fail("Failed continuing physics consumed a pending lane's reset RNG")
+
+        with monkeypatch.context() as patch:
+            patch.setattr(scratch, "_check_result", fail_continuing_round)
+            patch.setattr(adapter._source, "prepare_reset", unexpected_reset)
+            with pytest.raises(RuntimeError, match="produced nonfinite qvel"):
+                adapter.step(actions)
+        assert_same_state(adapter.get_state(), initial)
+        assert_same_state(adapter._source.get_state(), native)
+        assert_same_state(adapter._runtime.physical_state(), physics)
+        np.testing.assert_array_equal(adapter._counts, counts)
+        np.testing.assert_array_equal(adapter._pending, pending)
+        adapter.set_state(initial)
+        assert_same_state(adapter.step(actions), expected)
+    finally:
+        adapter.close()

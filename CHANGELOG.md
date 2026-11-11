@@ -88,6 +88,8 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- DMC MJWarp mixed-reset steps skip discarded first-round observations and info,
+  retaining continuing-lane rewards and zero rewards for resetting lanes.
 - Ordinary DMC MJWarp action steps use a guarded two-round graph and one physics
   error read. A failed first round skips the second, and a failed second round
   retains the first checkpoint. Reset boundaries retain per-round checks.
