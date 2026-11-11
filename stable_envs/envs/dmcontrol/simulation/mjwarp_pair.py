@@ -120,6 +120,11 @@ class PairedRound:
         )
 
     def _second_round(self):
+        # The parent round and its reward finish before this conditional body.
+        # Reuse its scratch sequence only after validating the complete round;
+        # the checkpoint below copies first-round data before physics advances.
+        self._scratch.finish_capture()
+        self._scratch.begin_capture()
         # Copy only after the first round succeeds. A second-round failure can
         # then commit this checkpoint without exposing invalid physics.
         self.runtime.copy_physical_state(self.checkpoint, include_time=False)
@@ -139,9 +144,13 @@ class PairedRound:
             # Warm both round variants from the original checkpoint, restoring
             # between them. Setup never commits either speculative checkpoint.
             for round_index in (1, 2):
+                if round_index == 2:
+                    self._scratch.begin_capture()
                 with wp.ScopedAllocator(runtime._wp_device, self._scratch):
                     runtime._advance()
                     self._record_round(round_index)
+                if round_index == 2:
+                    self._scratch.finish_capture()
                 if round_index == 1:
                     runtime.copy_physical_state(self.checkpoint, include_time=False)
                 runtime._task_outputs(self.task, reward_only=round_index == 1)
@@ -152,8 +161,8 @@ class PairedRound:
             with torch.cuda.graph(graph, stream=runtime._torch_stream):
                 wp.capture_begin(external=True, force_module_load=False, capture_mode=wp.CaptureMode.GLOBAL)
                 try:
-                    # Both rounds use retained Warp scratch. In particular,
-                    # the conditional body's graph contains no allocation nodes.
+                    # The ordered rounds share one retained scratch sequence.
+                    # Neither round contains Warp allocation/free graph nodes.
                     with wp.ScopedAllocator(runtime._wp_device, self._scratch):
                         runtime._advance()
                         self._record_round(1)

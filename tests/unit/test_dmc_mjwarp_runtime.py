@@ -60,6 +60,66 @@ def source_round(m, d, control, substeps):
     mujoco.mj_step1(m, d)
 
 
+def test_retained_scratch_reuses_round_storage_without_aliasing_live_allocations(monkeypatch):
+    from stable_envs.envs.dmcontrol.simulation.mjwarp_pair import _RetainedScratch
+
+    with closing(_RetainedScratch("cpu")) as scratch:
+        sizes = [16, 48, 16]
+        pointers = [scratch.allocate(size) for size in sizes]
+        # Equal-sized allocations within a round still need independent storage.
+        assert len(set(pointers)) == len(sizes)
+        for index, buffer in enumerate(scratch.buffers):
+            buffer.fill_(index + 1)
+        for pointer, size in zip(pointers, sizes, strict=True):
+            scratch.deallocate(pointer, size)
+        assert [buffer[0].item() for buffer in scratch.buffers] == [1, 2, 3]
+
+        def unexpected_allocation(*args, **kwargs):
+            pytest.fail("A later round allocated new retained storage")
+
+        monkeypatch.setattr(torch, "empty", unexpected_allocation)
+        # The warm second round and both captured rounds reuse one sequence.
+        for _ in range(3):
+            scratch.begin_capture()
+            assert [scratch.allocate(size) for size in sizes] == pointers
+            scratch.finish_capture()
+            assert scratch.sizes == sizes
+            assert [buffer.data_ptr() for buffer in scratch.buffers] == pointers
+            assert sum(buffer.numel() for buffer in scratch.buffers) == sum(sizes)
+
+
+@pytest.mark.parametrize(
+    ("requests", "message"),
+    [
+        pytest.param([16, 32, 16], "changed a scratch allocation's size", id="changed-size"),
+        pytest.param([48, 16, 16], "changed a scratch allocation's size", id="changed-order"),
+        pytest.param([16, 48, 16, 8], "unexpected scratch storage", id="extra-allocation"),
+        pytest.param([16, 48], "omitted a recorded scratch allocation", id="omitted-allocation"),
+    ],
+)
+def test_retained_scratch_later_round_mismatch_fails_closed(requests, message, monkeypatch):
+    from stable_envs.envs.dmcontrol.simulation.mjwarp_pair import _RetainedScratch
+
+    with closing(_RetainedScratch("cpu")) as scratch:
+        sizes = [16, 48, 16]
+        pointers = [scratch.allocate(size) for size in sizes]
+        scratch.begin_capture()
+        assert [scratch.allocate(size) for size in sizes] == pointers
+        scratch.finish_capture()
+
+        def unexpected_allocation(*args, **kwargs):
+            pytest.fail("A mismatched round silently allocated replacement storage")
+
+        monkeypatch.setattr(torch, "empty", unexpected_allocation)
+        scratch.begin_capture()
+        with pytest.raises(RuntimeError, match=message):
+            for size in requests:
+                scratch.allocate(size)
+            scratch.finish_capture()
+        assert scratch.sizes == sizes
+        assert [buffer.data_ptr() for buffer in scratch.buffers] == pointers
+
+
 @pytest.mark.parametrize(
     "device",
     ["cpu", pytest.param("cuda", marks=pytest.mark.skipif(not torch.cuda.is_available(), reason="requires CUDA"))],

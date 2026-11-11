@@ -164,19 +164,66 @@ def test_warmed_pair_has_one_input_and_one_result_read(monkeypatch):
         adapter.close()
 
 
+def test_finger_pair_reuses_one_round_of_retained_scratch(monkeypatch):
+    from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter
+    from stable_envs.envs.dmcontrol.simulation.mjwarp_pair import PairedRound, _RetainedScratch
+
+    adapter = DMCWarpAdapter("finger-spin", 4, "cuda", 17)
+    try:
+        runtime = adapter._runtime
+        _require_pairs(runtime)
+        requests, rounds = [], []
+        allocate, record_round = _RetainedScratch.allocate, PairedRound._record_round
+
+        def record_allocation(scratch, size):
+            pointer = allocate(scratch, size)
+            requests.append((scratch, size, pointer))
+            return pointer
+
+        def record_boundary(pair, round_index):
+            record_round(pair, round_index)
+            assert pair.runtime is runtime
+            assert all(scratch is pair._scratch for scratch, _, _ in requests)
+            rounds.append((round_index, tuple((size, pointer) for _, size, pointer in requests)))
+            requests.clear()
+
+        monkeypatch.setattr(_RetainedScratch, "allocate", record_allocation)
+        monkeypatch.setattr(PairedRound, "_record_round", record_boundary)
+        actions = torch.full((4, adapter.action_dim), 0.25, device="cuda", dtype=torch.float64)
+        adapter.step(actions)
+        assert [index for index, _ in rounds] == [1, 2, 1, 2]
+        first = rounds[0][1]
+        assert first, "Finger physics must exercise retained scratch allocations"
+        assert all(sequence == first for _, sequence in rounds)
+        scratch = runtime._pairs[adapter._task]._scratch
+        assert scratch.sizes == [size for size, _ in first]
+        assert [buffer.data_ptr() for buffer in scratch.buffers] == [pointer for _, pointer in first]
+        assert sum(scratch.sizes) == sum(buffer.numel() for buffer in scratch.buffers)
+
+        # Replays execute recorded work without allocating another round's pool.
+        adapter.step(actions)
+        adapter.step(actions)
+        assert len(rounds) == 4 and not requests
+        assert [buffer.data_ptr() for buffer in scratch.buffers] == [pointer for _, pointer in first]
+        assert all(torch.isfinite(value).all() for value in runtime.physical_state().values())
+    finally:
+        adapter.close()
+
+
+@pytest.mark.parametrize("domain", ["cartpole-balance", "finger-spin"])
 @pytest.mark.parametrize("failed_round", [1, 2])
-def test_pair_device_failure_guards_second_round_and_recovers(failed_round, monkeypatch):
+def test_pair_device_failure_guards_second_round_and_recovers(domain, failed_round, monkeypatch):
     from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter
     from stable_envs.envs.dmcontrol.simulation.mjwarp_pair import PairedRound, PairFailure
 
-    adapter = DMCWarpAdapter("cartpole-balance", 3, "cuda", 17)
+    adapter = DMCWarpAdapter(domain, 3, "cuda", 17)
     try:
         runtime = adapter._runtime
         _require_pairs(runtime)
         initial = adapter.get_state()
         initial["task", "cumulative_reward"][:, 0] = torch.tensor([11.0, 17.0, 23.0], device="cuda")
         adapter.set_state(initial)
-        actions = torch.full((3, 1), 0.25, device="cuda", dtype=torch.float64)
+        actions = torch.full((3, adapter.action_dim), 0.25, device="cuda", dtype=torch.float64)
         adapter._control_step(adapter._controls(actions))
         after_first = adapter.get_state()
         adapter.set_state(initial)
