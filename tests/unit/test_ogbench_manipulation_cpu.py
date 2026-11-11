@@ -408,8 +408,10 @@ def test_contact_histories_oracle_and_independent_restore(interaction, oracle):
 @pytest.mark.parametrize("family", CLASSES)
 def test_solver_and_cached_pose_fields_are_behaviorally_relevant(family):
     with CLASSES[family](seed=17) as a, CLASSES[family](seed=17) as b:
-        a.reset(17, {"task_id": 1 if family == "Cube" else 2, "variation": []})
         u = a._simulator.envs[0]
+        # The arm starts at the leaf's default, where the approach below makes contact.
+        start = {"agent.ee_start_position": np.mean(u._arm_sampling_bounds, axis=0)}
+        a.reset(17, {"task_id": 1 if family == "Cube" else 2, "variation": [], "variation_values": start})
         fixed_target = u.data.joint("object_joint_0").qpos[:3].copy()
         fixed_target[2] = 0.125
         for i in range(10 if family == "Cube" else 20):

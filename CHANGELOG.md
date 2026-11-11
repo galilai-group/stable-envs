@@ -75,6 +75,20 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- `OGBCube` and `OGBScene` reset as OGBench 1.2.1 resets. Before, the reset used the stable-worldmodel
+  rule: the arm started at the `agent.ee_start_position` Variation leaf, and the task came from a
+  separate generator. Now the end effector starts at the position that OGBench samples from the
+  environment generator. OGBench samples the task from NumPy's global RNG, so each lane keeps its own copy
+  of that RNG in the `rng/task` leaves. A seeded reset seeds the copy as `np.random.seed(seed + lane)`
+  does, and an unseeded reset continues it. OGBench samples the two settling actions of a reset from an
+  action space that has no seed. The lanes sample them from the seeded `rng/action` generator, as before.
+  With these two inputs set, each reset gives the State of the OGBench reset, and a test compares the
+  two for each lane, for repeated resets and after a restore. The arm starts at `agent.ee_start_position`
+  only when the reset options name this leaf (in `variation` or `variation_values`), or when
+  `set_variation` sets its anchor to a value that is not the default. In these resets, the arm uses the
+  stable-worldmodel rule, and OGBench samples only the yaw. The State leaves do not change. A State that
+  you saved before this change restores correctly, but the next reset uses the new rule and gives a
+  different start.
 - `PushT` and `PushTDiscrete` on CUDA reset faster. On Linux, a batch of at least `worker_min_lanes` lanes
   resets in up to `workers` worker processes (tuning path `pusht-sim`). JAX steps the physics on the GPU,
   as before. The workers write the State columns and the body geometry of the new episodes into shared
