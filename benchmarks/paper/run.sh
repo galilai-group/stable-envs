@@ -191,11 +191,15 @@ for spec in "$@"; do
         # and time ours on the same 8-step window as well, so both rates carry the same share of reset cost.
         slice=$([ $dev = cuda ] && [ $fam = ogbench ] && [ $L -ge 1024 ] && [[ $E == *Maze* ]] && echo "--source-steps 8")
         COMMON="--env $E --data $D --procs $p --source-lanes $sl --lanes $L --threads $NCORES --repeats $REPEATS --episodes $L"
+        # Envs listed in SRC_CAP_FILE have a source that reaches its full rate by 8 lanes; their source cells stop at
+        # SRC_CAP_L lanes, where the rate no longer grows, and ours keeps the whole sweep.
+        srcok=1
+        grep -qx "$E" "${SRC_CAP_FILE:-/workspace/src_cap_envs}" 2>/dev/null && [ $L -gt ${SRC_CAP_L:-256} ] && srcok=0
         if has step; then
-          [ $CPU_SOURCES = 1 ] && once $n/src-step-L$L.json sw $ON run $COMMON --arms src-pipelined-step --output $n/src-step-L$L.json
+          [ $CPU_SOURCES = 1 ] && [ $srcok = 1 ] && once $n/src-step-L$L.json sw $ON run $COMMON --arms src-pipelined-step --output $n/src-step-L$L.json
           arm=$([ $dev = cpu ] && echo snv-step || echo snv-step-gpu)
           once $n/snv-step-$tag-L$L.json gl $dev $ON run $COMMON --arms $arm --output $n/snv-step-$tag-L$L.json
-          [ -n "$slice" ] && once $n/snv-step-$tag-L$L-s8.json gl $dev $ON run $COMMON --arms $arm --chunks 1 8 $slice --output $n/snv-step-$tag-L$L-s8.json
+          [ -n "$slice" ] && [ $srcok = 1 ] && once $n/snv-step-$tag-L$L-s8.json gl $dev $ON run $COMMON --arms $arm --chunks 1 8 $slice --output $n/snv-step-$tag-L$L-s8.json
         fi
         if has frames; then
           [ $CPU_SOURCES = 1 ] && once $n/src-render-cpu-L$L.json sw $ON run $COMMON --arms src-pipelined-render --src-label cpu --ours-device cpu --output $n/src-render-cpu-L$L.json
