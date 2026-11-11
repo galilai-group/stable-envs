@@ -14,6 +14,7 @@ import torch
 from tensordict import TensorDict
 
 from ...._core.warp_cuda import require_warp_cuda
+from .mjwarp_reset import WarpModelBatch
 
 _PHYSICAL = {"qpos": "qpos", "qvel": "qvel", "time": "time", "warmstart": "qacc_warmstart"}
 _RESULT_FIELDS = ("qpos", "qvel", "act", "time", "qacc_warmstart", "sensordata")
@@ -840,6 +841,11 @@ class WarpRuntime:
     subsequent loads copy values into stable buffers rather than replacing them.
     """
 
+    @staticmethod
+    def model_schema():
+        _load_backend()
+        return _batch_fields(mjw.Model), _batch_fields(mjw.Option)
+
     def __init__(
         self,
         models,
@@ -858,7 +864,7 @@ class WarpRuntime:
             for flag in mjw.OverflowType
             if flag not in (mjw.OverflowType.ITERATIONS, mjw.OverflowType.LS_ITERATIONS)
         )
-        self.models = list(models)
+        self.models = models if isinstance(models, WarpModelBatch) else list(models)
         self.num_envs = len(self.models)
         if not self.num_envs:
             raise ValueError("WarpRuntime needs at least one model")
@@ -887,7 +893,7 @@ class WarpRuntime:
         self._pyramidal_solver = None
         self._model_fields = _batch_fields(mjw.Model)
         self._option_fields = _batch_fields(mjw.Option)
-        self._reference = self.models[0]
+        self._reference = self.models.reference if isinstance(self.models, WarpModelBatch) else self.models[0]
         self._dimensions = {name: getattr(self._reference, name) for name in _DIMENSIONS}
         self._topology = {name: getattr(self._reference, name).copy() for name in _TOPOLOGY}
         self._scalar_options = {
@@ -1072,7 +1078,8 @@ class WarpRuntime:
     def _check_models(self, models):
         if len(models) != self.num_envs:
             raise ValueError("Model batch does not match the runtime")
-        for model in models:
+        # Compact batches share one immutable topology and scalar options.
+        for model in [models.reference] if isinstance(models, WarpModelBatch) else models:
             if any(getattr(model, k) != v for k, v in self._dimensions.items()):
                 raise ValueError("WarpRuntime models must have identical dimensions")
             if any(not np.array_equal(getattr(model, k), v) for k, v in self._topology.items()):
@@ -1091,6 +1098,15 @@ class WarpRuntime:
         """Preflight native models without modifying runtime buffers."""
         self._check_open()
         self._check_models(models)
+        if isinstance(models, WarpModelBatch):
+            for name in self._model_fields:
+                self._check_float32(models.columns[name], name)
+            for name, values in models.options.items():
+                self._check_float32(values, f"opt.{name}")
+            self._check_float32(models.columns["site_size"], "site_size")
+            self._check_float32(models.fixed_positions, "fixed geom positions")
+            self._check_float32(models.fixed_rotations, "fixed geom rotations")
+            return
         for name in self._model_fields:
             self._check_float32([getattr(model, name) for model in models], name)
         for name in self._option_fields:
@@ -1126,20 +1142,29 @@ class WarpRuntime:
     @staticmethod
     def _copy_native(array, values):
         view = wp.to_torch(array)
-        value = torch.as_tensor(np.stack(values), device=view.device, dtype=view.dtype)
+        value = torch.as_tensor(np.asarray(values), device=view.device, dtype=view.dtype)
         view.copy_(value.reshape(view.shape))
 
     def _upload_models(self, models):
         self.validate_models(models)
+        compact = isinstance(models, WarpModelBatch)
         for name in self._model_fields:
-            self._copy_native(getattr(self._m, name), [getattr(m, name) for m in models])
+            values = models.columns[name] if compact else [getattr(m, name) for m in models]
+            self._copy_native(getattr(self._m, name), values)
         for name in self._option_fields:
-            values = [
-                1 / np.sqrt(max(m.opt.impratio, mujoco.mjMINVAL))
-                if name == "impratio_invsqrt"
-                else getattr(m.opt, name)
-                for m in models
-            ]
+            if compact:
+                values = (
+                    1 / np.sqrt(np.maximum(models.options["impratio"], mujoco.mjMINVAL))
+                    if name == "impratio_invsqrt"
+                    else models.options[name]
+                )
+            else:
+                values = [
+                    1 / np.sqrt(max(m.opt.impratio, mujoco.mjMINVAL))
+                    if name == "impratio_invsqrt"
+                    else getattr(m.opt, name)
+                    for m in models
+                ]
             self._copy_native(getattr(self._m.opt, name), values)
         if self._capsule_pairs:
             gaps = []
@@ -1155,21 +1180,26 @@ class WarpRuntime:
         body = model.geom_bodyid
         fixed = (model.body_weldid[body] == 0) & (model.body_mocapid[model.body_rootid[body]] == -1)
         self._fixed_indices = torch.as_tensor(np.flatnonzero(fixed), device=self.device)
-        positions, rotations = [], []
-        for model in models:
-            data = mujoco.MjData(model)
-            mujoco.mj_kinematics(model, data)
-            positions.append(data.geom_xpos[fixed].copy())
-            rotations.append(data.geom_xmat[fixed].reshape(-1, 3, 3).copy())
-        self._fixed_positions = torch.as_tensor(np.stack(positions), device=self.device, dtype=torch.float32)
-        self._fixed_rotations = torch.as_tensor(np.stack(rotations), device=self.device, dtype=torch.float32)
+        if compact:
+            positions, rotations = models.fixed_positions, models.fixed_rotations
+        else:
+            positions, rotations = [], []
+            for model in models:
+                data = mujoco.MjData(model)
+                mujoco.mj_kinematics(model, data)
+                positions.append(data.geom_xpos[fixed].copy())
+                rotations.append(data.geom_xmat[fixed].reshape(-1, 3, 3).copy())
+        self._fixed_positions = torch.as_tensor(np.asarray(positions), device=self.device, dtype=torch.float32)
+        self._fixed_rotations = torch.as_tensor(np.asarray(rotations), device=self.device, dtype=torch.float32)
         # site_size is task metadata absent from Warp's physics Model.
         self._native_model_views = {
             "site_size": torch.as_tensor(
-                np.stack([m.site_size for m in models]), device=self.device, dtype=torch.float32
+                models.columns["site_size"] if compact else np.stack([m.site_size for m in models]),
+                device=self.device,
+                dtype=torch.float32,
             )
         }
-        self.models = list(models)
+        self.models = models if compact else list(models)
 
     def _load(self, state):
         mjw.reset_data(self._m, self._d)
@@ -1203,7 +1233,7 @@ class WarpRuntime:
         converted = TensorDict(converted, [self.num_envs], device=self.device)
         with self._scope():
             if models is not None:
-                self._upload_models(list(models))
+                self._upload_models(models if isinstance(models, WarpModelBatch) else list(models))
             self._load(converted)
             self._check_result()
 

@@ -332,3 +332,44 @@ def test_result_flags_diagnose_all_fields_and_capacity_on_cuda():
             runtime._check_result()
     finally:
         adapter.close()
+
+
+@pytest.mark.parametrize("name", family_params(DMC_NAMES, family="dmc"))
+def test_pooled_resets_preserve_rng_targets_and_variation(name):
+    from stable_envs.envs.dmcontrol.simulation.factory import make_local
+    from stable_envs.envs.dmcontrol.simulation.physics import LEAVES
+    from stable_envs.envs.dmcontrol.simulation.state import MODEL_FIELDS
+
+    resolve_family(name, family="dmc", modules=("dmcontrol._family",), subject="MJWarp pooled resets")
+    with se.make(name, num_envs=3, device="cuda", simulation_backend="mjwarp", size=32) as env:
+        adapter = env._simulator
+        source = make_local(adapter.key, 3, "cpu", 91000)
+        try:
+            assert len(adapter._source.envs) == 1
+            leaves = LEAVES.get(adapter.key, ())
+            if leaves:
+                values = {leaf.path: [[leaf.low], [leaf.default], [leaf.high]] for leaf in leaves}
+                adapter.configure_physics(values)
+                source.configure_physics(values)
+            state = source.reset(91020)
+            assert_same_state(adapter.reset(91020).cpu(), state)
+            limit = math.ceil(source.envs[0]._env._step_limit)
+            state["lifecycle", "step_count"][:, 0] = torch.tensor([limit - 1, limit, 6])
+            state["lifecycle", "reset_next_step"][:, 0] = torch.tensor([False, True, False])
+            state["rng", "has_gauss"].fill_(True)
+            state["rng", "cached_gaussian"][:, 0] = torch.tensor([0.125, -0.375, 0.75], dtype=torch.float64)
+            source.set_state(state)
+            adapter.set_state(state.to("cuda"))
+            actions = torch.zeros(3, adapter.action_dim, dtype=torch.float64)
+            for _ in range(3):
+                expected = source.step(actions)["state"]
+                actual = adapter.step(actions.to("cuda"))["state"].cpu()
+                for section in ("rng", "lifecycle"):
+                    assert_same_state(actual[section], expected[section])
+                for key in source.fields:
+                    if key in MODEL_FIELDS or (isinstance(key, tuple) and key[0] == "physics"):
+                        assert_same_state(actual[key], expected[key])
+            # Public reset(None) must continue each stream after mixed resets.
+            assert_same_state(adapter.reset(None).cpu(), source.reset(None))
+        finally:
+            source.close()

@@ -1,8 +1,7 @@
-"""Direct MuJoCo Warp stepping, with native DMC owners for resets and model changes."""
+"""Direct MuJoCo Warp stepping, with pooled native DMC resets and model changes."""
 
 from __future__ import annotations
 
-import copy
 from functools import wraps
 
 import numpy as np
@@ -10,7 +9,7 @@ import torch
 from tensordict import TensorDict
 
 from ...._execution.protocol import SimulatorAdapter
-from .factory import make_local
+from .mjwarp_reset import WarpResetPool
 from .mjwarp_runtime import WarpRuntime
 from .mjwarp_tasks import bind_task
 from .state import MODEL_FIELDS
@@ -44,8 +43,8 @@ def _ordered(method):
 class DMCWarpAdapter(SimulatorAdapter):
     """Batched float32 physics with the registered DMC State and reset semantics.
 
-    Native lanes own reset RNG and model variation. Their dynamics are stale
-    between resets; snapshots always come from the live Warp checkpoint instead.
+    One native owner samples resets from each lane's saved RNG and model values.
+    Between resets, snapshots come from the live Warp checkpoint.
     Public checkpoint columns retain their declared float64 dtype. A restored
     checkpoint is preserved exactly until physics next advances.
     """
@@ -61,15 +60,15 @@ class DMCWarpAdapter(SimulatorAdapter):
         self._event = None
         self._scratch = None
         self._runtime = None
-        self._source = make_local(key, self.num_envs, "cpu", seed)
+        self._source = WarpResetPool(key, self.num_envs, seed, *WarpRuntime.model_schema())
         try:
             self.fields = self._source.fields
             self.action_dim = self._source.action_dim
-            self._models = [env.physics.model.ptr for env in self._source.envs]
+            self._models = self._source.models
             owner = self._source.envs[0]
             self._task = bind_task(key, owner)
             self._nsubsteps = owner._env._n_sub_steps
-            self._limits = np.asarray([env._env._step_limit for env in self._source.envs])
+            self._limits = np.full(self.num_envs, owner._env._step_limit)
             self._device_limits = torch.as_tensor(self._limits, device=self.device)[:, None]
             self._timesteps = torch.as_tensor(
                 [model.opt.timestep for model in self._models], device=self.device, dtype=torch.float64
@@ -87,7 +86,7 @@ class DMCWarpAdapter(SimulatorAdapter):
                 ordered_pyramidal=self.key == "humanoid",
                 ordered_elliptic=self.key == "manipulator",
             )
-            # make_local already performed the registered initial reset. Warm-up
+            # The pool already performed the registered initial resets. Warm-up
             # must not draw another source reset or change its RNG sequence.
             self._install(self._source.get_state())
             if self.device.type == "cuda":
@@ -109,9 +108,9 @@ class DMCWarpAdapter(SimulatorAdapter):
         if self._closed:
             raise RuntimeError("DMCWarpAdapter is closed")
 
-    def _install(self, state):
+    def _install(self, state, models=None):
         snapshot = state.to(self.device).clone()
-        self._runtime.load(snapshot, models=self._models)
+        self._runtime.load(snapshot, models=self._models if models is None else models)
         self._state = snapshot
         self._counts = state["lifecycle", "step_count"].cpu().numpy().reshape(-1).copy()
         self._pending = state["lifecycle", "reset_next_step"].cpu().numpy().reshape(-1).copy()
@@ -119,26 +118,26 @@ class DMCWarpAdapter(SimulatorAdapter):
     @_ordered
     def configure_physics(self, values):
         self._check_open()
-        physics = self._source.physics
-        if physics is None:
-            raise ValueError(f"{self.key} declares no physics Variation")
-        # PhysicsLanes.configure applies rows sequentially. Preflight on copies
-        # so a later invalid row cannot leave native and Warp models disagreeing.
-        proposed = copy.copy(physics)
-        proposed.models = [copy.copy(model) for model in self._models]
-        proposed._data = [None] * self.num_envs
-        proposed.values = physics.values.copy()
-        proposed.configure(values)
-        self._runtime.validate_models(proposed.models)
-        self._source.configure_physics(proposed.values)
-        for key, value in self._source.physics.export().items():
-            self._state[key] = torch.as_tensor(value, device=self.device, dtype=self.fields[key][1]).clone()
-        self._runtime.load(self._state, models=self._models)
+        prepared = self._source.prepare_physics(values)
+        self._runtime.validate_models(prepared.models)
+        state = self._state.clone()
+        for key in self._source.physics.state_fields():
+            state[key] = prepared.state[key].to(self.device).clone()
+        try:
+            self._runtime.load(state, models=prepared.models)
+        except Exception:
+            self._runtime.load(self._state, models=self._models)
+            raise
+        self._source.commit(prepared)
+        self._models, self._state = self._source.models, state
 
     @_ordered
     def reset(self, seed=None):
         self._check_open()
-        self._install(self._source.reset(seed))
+        prepared = self._source.prepare_reset(seed)
+        self._install(prepared.state, prepared.models)
+        self._source.commit(prepared)
+        self._models = self._source.models
         return self.get_state()
 
     @_ordered
@@ -148,7 +147,7 @@ class DMCWarpAdapter(SimulatorAdapter):
 
     def validate(self, state):
         self._check_open()
-        rows = self._source.validate(state)
+        self._source.validate(state)
         # Validate all columns before either native owners or GPU buffers change.
         for key, (_, dtype) in self.fields.items():
             if dtype == torch.float64 and not bool(torch.isfinite(state[key]).all()):
@@ -163,18 +162,9 @@ class DMCWarpAdapter(SimulatorAdapter):
             raise ValueError("DMC RNG position must be in [0, 624]")
         if bool((state["lifecycle", "step_count"] < 0).any()):
             raise ValueError("DMC step_count must be nonnegative")
-        if rows is not None:
-            # Reuse the native variation implementation to preflight every
-            # changed row. A malformed later lane cannot partly alter earlier
-            # live models (mass/radius validation may run after field writes).
-            physics = self._source.physics
-            models = list(self._models)
-            for i, (model, row, current) in enumerate(zip(self._models, rows, physics.values, strict=True)):
-                if not np.array_equal(row, current):
-                    models[i] = copy.copy(model)
-                    physics.spec.apply(models[i], row)
-            self._runtime.validate_models(models)
-        return rows
+        prepared = self._source.prepare_state(state)
+        self._runtime.validate_models(prepared.models)
+        return prepared
 
     @_ordered
     def prepare_restore(self, state):
@@ -183,17 +173,17 @@ class DMCWarpAdapter(SimulatorAdapter):
 
     @_ordered
     def set_state(self, state):
-        self.validate(state)
+        prepared = self.validate(state)
         previous = self._state
         try:
-            self._source.set_state(state)
-            self._install(state)
+            self._install(state, prepared.models)
         except Exception:
             # A representable but physically invalid checkpoint can still make
             # forward reconstruction fail. Keep the last live checkpoint usable.
-            self._source.set_state(previous)
             self._runtime.load(previous, models=self._models)
             raise
+        self._source.commit(prepared)
+        self._models = self._source.models
 
     def check_step(self, actions, active=None):
         self._check_open()
@@ -242,8 +232,9 @@ class DMCWarpAdapter(SimulatorAdapter):
 
     def _reset_lanes(self, lanes):
         # Source reset owns all RNG draws, including cached Gaussian state.
-        for lane in lanes:
-            self._source.envs[lane].reset()
+        prepared = self._source.prepare_reset(lanes=lanes)
+        self._source.commit(prepared)
+        self._models = self._source.models
         ids = torch.as_tensor(lanes, device=self.device)
         cumulative = self._state["task", "cumulative_reward"][ids].clone()
         self._state[ids] = self._source.get_state()[lanes].to(self.device)
@@ -267,7 +258,7 @@ class DMCWarpAdapter(SimulatorAdapter):
                     if self._scratch is not None:
                         self._scratch.close()
                     self._scratch = WarpRuntime(
-                        [self._models[i] for i in continuing],
+                        self._models.select(continuing),
                         self.device,
                         self._nsubsteps,
                         ordered_constraints=self.key in {"cheetah", "humanoid"},
@@ -275,7 +266,7 @@ class DMCWarpAdapter(SimulatorAdapter):
                         ordered_elliptic=self.key == "manipulator",
                     )
                 ids = torch.as_tensor(continuing, device=self.device)
-                self._scratch.load(self._state[ids], models=[self._models[i] for i in continuing])
+                self._scratch.load(self._state[ids], models=self._models.select(continuing))
                 self._scratch.advance(controls[ids], controls_validated=controls_validated)
                 # Collect acceleration-stage sensors before reconstruction.
                 advanced = self._outputs(self._scratch)

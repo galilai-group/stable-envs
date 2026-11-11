@@ -45,6 +45,7 @@ def main():
             str(ROOT / "tests/gpu/test_dmc_mjwarp_reacher.py"),
             str(ROOT / "tests/gpu/test_dmc_mjwarp_streams.py"),
             str(ROOT / "tests/unit/test_dmc_mjwarp_validation.py"),
+            str(ROOT / "tests/unit/test_dmc_mjwarp_reset_pool.py"),
             str(ROOT / "tests/unit/test_dmc_mjwarp_contacts.py")
             + "::test_constraint_order_preserves_contact_impulses[cuda]",
             str(ROOT / "tests/unit/test_dmc_mjwarp_contacts.py")

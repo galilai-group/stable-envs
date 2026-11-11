@@ -64,7 +64,10 @@ Snapshots own their memory. This does not guarantee bitwise identical future GPU
 Rendering continues to consume State, independently of the stepping backend.
 
 Source physics substeps, RK4 and acceleration-stage sensor timing are retained. Native environments
-remain authoritative for resets and RNG. A pending reset consumes a control round with zero reward;
+remain authoritative for resets and RNG. MJWarp reuses one native reset owner and stores each lane's
+complete RNG state, episode targets, physics values and compact model columns independently. Static
+native model assets are shared instead of copied per lane. Reset sampling remains sequential on the
+CPU, and model/state storage still grows with batch size. A pending reset consumes a control round with zero reward;
 continuing lanes use a compact scratch runtime. A changed active-lane count requires a new scratch
 allocation, so mixed resets can cost more than steady-state stepping.
 

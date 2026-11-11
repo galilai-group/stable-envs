@@ -88,6 +88,10 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- DMC MJWarp reuses one native reset owner with independent lane RNG checkpoints
+  and compact model columns, avoiding a full native environment and static-asset
+  copy per lane. Seeded/unseeded resets, mixed resets, targets and physics variation
+  retain their native behavior; preparation failures leave installed lane records intact.
 - DMC MJWarp validates scaled controls once per public step, captures finite/capacity
   checks into one device error bitmask, caches immutable reward constants, and updates
   ordinary-round lifecycle checkpoints on device. Per-round errors, checkpoints, reset
