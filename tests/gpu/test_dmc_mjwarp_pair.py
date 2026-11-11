@@ -1,12 +1,22 @@
 """Input validation and two-round stepping retain recoverable public boundaries."""
 
+import math
+
 import numpy as np
 import pytest
 import torch
 
+import stable_envs as se
+from tests.gpu._shared import family_params, resolve_family
 from tests.helpers.reference.semantics import assert_same_state
 
 pytestmark = [pytest.mark.family("dmc"), pytest.mark.skipif(not torch.cuda.is_available(), reason="requires CUDA")]
+DMC_NAMES = [name for name, cls in se.registry.REGISTRY.items() if cls.family == "dmcontrol"]
+
+
+def _require_pairs(runtime):
+    if not runtime.supports_pair:
+        pytest.skip("requires CUDA graph conditionals")
 
 
 @pytest.mark.parametrize("active_device", [None, "cpu", "cuda"])
@@ -100,5 +110,191 @@ def test_combined_validation_preserves_error_priority():
             adapter.check_step(actions, torch.ones(3, 1, device="cuda"))
         with pytest.raises(ValueError, match="action must have finite shape"):
             adapter.check_step(actions[:, :0], bad_mask)
+    finally:
+        adapter.close()
+
+
+@pytest.mark.parametrize("name", family_params(DMC_NAMES, family="dmc"))
+def test_pair_matches_checked_rounds_for_registered_tasks(name, monkeypatch):
+    resolve_family(name, family="dmc", modules=("dmcontrol._family",), subject="MJWarp paired rounds")
+    with se.make(name, num_envs=3, device="cuda", simulation_backend="mjwarp", size=32) as env:
+        adapter = env._simulator
+        _require_pairs(adapter._runtime)
+        initial = adapter.reset(91000)
+        actions = torch.as_tensor(
+            np.random.default_rng(92717).uniform(-1, 1, (4, 3, adapter.action_dim)),
+            device="cuda",
+            dtype=torch.float64,
+        )
+        adapter.step(actions[0])
+        adapter.set_state(initial)
+        with monkeypatch.context() as patch:
+            patch.setattr(adapter._runtime, "supports_pair", False)
+            expected = [adapter.step(action) for action in actions]
+        adapter.set_state(initial)
+        actual = [adapter.step(action) for action in actions]
+        for got, want in zip(actual, expected, strict=True):
+            assert_same_state(got, want)
+
+
+def test_warmed_pair_has_one_input_and_one_result_read(monkeypatch):
+    from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter
+
+    adapter = DMCWarpAdapter("cartpole-balance", 3, "cuda", 17)
+    try:
+        _require_pairs(adapter._runtime)
+        actions = torch.full((3, 1), 0.25, device="cuda", dtype=torch.float64)
+        adapter.step(actions)
+        reads = []
+
+        def record(method):
+            def conversion(value):
+                if value.device.type == "cuda":
+                    reads.append(method.__name__)
+                return method(value)
+
+            return conversion
+
+        with monkeypatch.context() as patch:
+            for name in ("__bool__", "__int__", "item"):
+                patch.setattr(torch.Tensor, name, record(getattr(torch.Tensor, name)))
+            adapter.step(actions)
+        assert reads == ["__int__", "__int__"]
+    finally:
+        adapter.close()
+
+
+@pytest.mark.parametrize("failed_round", [1, 2])
+def test_pair_device_failure_guards_second_round_and_recovers(failed_round, monkeypatch):
+    from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter
+    from stable_envs.envs.dmcontrol.simulation.mjwarp_pair import PairedRound, PairFailure
+
+    adapter = DMCWarpAdapter("cartpole-balance", 3, "cuda", 17)
+    try:
+        runtime = adapter._runtime
+        _require_pairs(runtime)
+        initial = adapter.get_state()
+        initial["task", "cumulative_reward"][:, 0] = torch.tensor([11.0, 17.0, 23.0], device="cuda")
+        adapter.set_state(initial)
+        actions = torch.full((3, 1), 0.25, device="cuda", dtype=torch.float64)
+        adapter._control_step(adapter._controls(actions))
+        after_first = adapter.get_state()
+        adapter.set_state(initial)
+        native = adapter._source.get_state()
+        fault = torch.zeros((), dtype=torch.int32, device="cuda")
+        fault_matches = torch.zeros(2, dtype=torch.bool, device="cuda")
+        nonfinite = torch.full((), float("nan"), dtype=torch.float32, device="cuda")
+        rounds = torch.zeros(2, dtype=torch.int32, device="cuda")
+        record_round = PairedRound._record_round
+
+        def inject_failure(pair, round_index):
+            assert pair.runtime is runtime
+            rounds[round_index - 1].add_(1)
+            last = runtime._data_view("qvel")[-1, -1]
+            torch.eq(fault, round_index, out=fault_matches[round_index - 1])
+            torch.where(fault_matches[round_index - 1], nonfinite, last, out=last)
+            record_round(pair, round_index)
+
+        monkeypatch.setattr(PairedRound, "_record_round", inject_failure)
+        expected = adapter.step(actions)
+        adapter.set_state(initial)
+        rounds.zero_()
+        fault.fill_(failed_round)
+        with pytest.raises(PairFailure, match="produced nonfinite qvel") as caught:
+            adapter.step(actions)
+        assert caught.value.completed_rounds == failed_round - 1
+        assert rounds.tolist() == ([1, 0] if failed_round == 1 else [1, 1])
+        checkpoint = initial if failed_round == 1 else after_first
+        assert_same_state(adapter.get_state(), checkpoint)
+        assert_same_state(adapter._source.get_state(), native)
+        np.testing.assert_array_equal(adapter._counts, checkpoint["lifecycle", "step_count"].cpu().numpy()[:, 0])
+        np.testing.assert_array_equal(adapter._pending, checkpoint["lifecycle", "reset_next_step"].cpu().numpy()[:, 0])
+        assert_same_state(adapter.get_state()["task", "cumulative_reward"], initial["task", "cumulative_reward"])
+
+        # Recovery must use the same CUDA context and graph; a stale packed
+        # failure must be cleared before the following replay's guard is read.
+        fault.zero_()
+        adapter.set_state(initial)
+        runtime._pairs[adapter._task].status.fill_(127)
+        rounds.zero_()
+        assert_same_state(adapter.step(actions), expected)
+        assert rounds.tolist() == [1, 1]
+    finally:
+        adapter.close()
+
+
+@pytest.mark.parametrize("route", ["ordinary", "ends_at_limit", "reset_in_second", "pending_at_start"])
+def test_pair_routing_preserves_reset_boundaries(route, monkeypatch):
+    from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter
+
+    adapter = DMCWarpAdapter("cartpole-balance", 3, "cuda", 17)
+    try:
+        runtime = adapter._runtime
+        _require_pairs(runtime)
+        actions = torch.full((3, 1), 0.25, device="cuda", dtype=torch.float64)
+        adapter.step(actions)
+        initial = adapter.reset(91000)
+        limit = math.ceil(adapter._limits[0])
+        if route == "ends_at_limit":
+            initial["lifecycle", "step_count"][0, 0] = limit - 2
+        elif route == "reset_in_second":
+            initial["lifecycle", "step_count"][0, 0] = limit - 1
+        elif route == "pending_at_start":
+            initial["lifecycle", "step_count"][0, 0] = limit
+            initial["lifecycle", "reset_next_step"][0, 0] = True
+        adapter.set_state(initial)
+        with monkeypatch.context() as patch:
+            patch.setattr(runtime, "supports_pair", False)
+            expected = adapter.step(actions)
+        adapter.set_state(initial)
+        calls = []
+        advance_pair, control_step = runtime.advance_pair, adapter._control_step
+
+        def paired(*args, **kwargs):
+            calls.append("pair")
+            return advance_pair(*args, **kwargs)
+
+        def single(*args, **kwargs):
+            calls.append("round")
+            return control_step(*args, **kwargs)
+
+        with monkeypatch.context() as patch:
+            patch.setattr(runtime, "advance_pair", paired)
+            patch.setattr(adapter, "_control_step", single)
+            actual = adapter.step(actions)
+        assert calls == (["pair"] if route in {"ordinary", "ends_at_limit"} else ["round", "round"])
+        assert_same_state(actual, expected)
+    finally:
+        adapter.close()
+
+
+def test_failed_round_before_reset_does_not_consume_reset_rng(monkeypatch):
+    from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter
+
+    adapter = DMCWarpAdapter("cartpole-balance", 3, "cuda", 17)
+    try:
+        initial = adapter.get_state()
+        initial["lifecycle", "step_count"][0, 0] = math.ceil(adapter._limits[0]) - 1
+        adapter.set_state(initial)
+        native = adapter._source.get_state()
+        actions = torch.full((3, 1), 0.25, device="cuda", dtype=torch.float64)
+        check_result = adapter._runtime._check_result
+
+        def fail_first(*, recorded=False):
+            if recorded:
+                adapter._runtime._data_view("qvel")[-1, -1] = float("nan")
+                return check_result()
+            return check_result(recorded=recorded)
+
+        def unexpected_reset(*args, **kwargs):
+            pytest.fail("A failed first round consumed a second-round reset")
+
+        with monkeypatch.context() as patch:
+            patch.setattr(adapter._runtime, "_check_result", fail_first)
+            patch.setattr(adapter._source, "prepare_reset", unexpected_reset)
+            with pytest.raises(RuntimeError, match="produced nonfinite qvel"):
+                adapter.step(actions)
+        assert_same_state(adapter.get_state(), initial)
+        assert_same_state(adapter._source.get_state(), native)
     finally:
         adapter.close()

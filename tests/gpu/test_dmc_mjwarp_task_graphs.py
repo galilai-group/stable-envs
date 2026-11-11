@@ -31,9 +31,12 @@ def test_captured_task_outputs_match_eager_formulas_on_live_physics(name, monkey
     with se.make(name, num_envs=3, device="cuda", simulation_backend="mjwarp", size=32) as env:
         adapter = env._simulator
         action = torch.full((3, adapter.action_dim), 0.125, device="cuda", dtype=torch.float64)
-        adapter.step(action)  # Warm and capture reward-only and full-output rounds.
-        adapter.reset(91010)
         runtime, task = adapter._runtime, adapter._task
+        # Explicitly warm the single-round graphs: public steps may use a
+        # separate paired graph instead.
+        for reward_only in (True, False):
+            runtime.advance(adapter._controls(action), task=task, reward_only=reward_only)
+        adapter.reset(91010)
         methods = {name: getattr(task, name) for name in ("observation", "reward", "info")}
         for method in methods:
             monkeypatch.setattr(task, method, _unexpected_task_evaluation)
@@ -60,9 +63,12 @@ def test_captured_task_reads_updated_native_metadata_without_recapture(monkeypat
     with se.make("DMCBallInCupCatch", num_envs=3, device="cuda", simulation_backend="mjwarp", size=32) as env:
         adapter = env._simulator
         action = torch.zeros((3, adapter.action_dim), device="cuda", dtype=torch.float64)
-        adapter.step(action)
         checkpoint = adapter.get_state()
         runtime, task = adapter._runtime, adapter._task
+        for reward_only in (True, False):
+            runtime.advance(adapter._controls(action), task=task, reward_only=reward_only)
+        if runtime.supports_pair:
+            runtime.advance_pair(adapter._controls(action), task=task)
         storage = runtime._native_model_views["site_size"].data_ptr()
         for method in ("observation", "reward", "info"):
             monkeypatch.setattr(task, method, _unexpected_task_evaluation)
@@ -83,3 +89,8 @@ def test_captured_task_reads_updated_native_metadata_without_recapture(monkeypat
                 else:
                     assert_same_state(actual["reward"], expected)
                     assert_same_state(actual["success"], expected)
+            if runtime.supports_pair:
+                first_reward, actual = runtime.advance_pair(adapter._controls(action), task=task)
+                assert_same_state(first_reward, expected)
+                assert_same_state(actual["reward"], expected)
+                assert_same_state(actual["success"], expected)

@@ -88,6 +88,9 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- Ordinary DMC MJWarp action steps use a guarded two-round graph and one physics
+  error read. A failed first round skips the second, and a failed second round
+  retains the first checkpoint. Reset boundaries retain per-round checks.
 - DMC MJWarp combines action, active-mask and scaled-control validation into
   one device flag read, preserving recoverable errors before physics or resets.
 - DMC MJWarp captures reward, observation and info formulas with each physics

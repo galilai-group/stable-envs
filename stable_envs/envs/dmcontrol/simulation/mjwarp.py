@@ -9,6 +9,7 @@ import torch
 from tensordict import TensorDict
 
 from ...._execution.protocol import SimulatorAdapter
+from .mjwarp_pair import PairFailure
 from .mjwarp_reset import WarpResetPool
 from .mjwarp_runtime import WarpRuntime
 from .mjwarp_tasks import bind_task
@@ -248,16 +249,26 @@ class DMCWarpAdapter(SimulatorAdapter):
         # TensorDict once, after both rounds and any mixed-reset merge.
         return values
 
-    def _save_physics(self, runtime, lanes=None):
+    def _save_physics(self, runtime, lanes=None, *, rounds=1):
         runtime.copy_physical_state(self._state, lanes=lanes, include_time=False)
+        self._advance_clock(lanes, rounds)
+
+    def _advance_clock(self, lanes=None, rounds=1):
         # The public clock follows native double additions. Warp's float32
         # integration clock is loaded from it on restoration.
         time = self._state["time"] if lanes is None else self._state["time"][lanes]
         dt = self._timesteps if lanes is None else self._timesteps[lanes]
-        for _ in range(self._nsubsteps):
+        for _ in range(self._nsubsteps * rounds):
             time += dt
         if lanes is not None:
             self._state["time"][lanes] = time
+
+    def _commit_ordinary_lifecycle(self, rounds):
+        self._counts += rounds
+        self._pending[:] = self._counts >= self._limits
+        counts = self._state["lifecycle", "step_count"]
+        counts.add_(rounds)
+        torch.ge(counts, self._device_limits, out=self._state["lifecycle", "reset_next_step"])
 
     def _reset_lanes(self, lanes):
         # Source reset owns all RNG draws, including cached Gaussian state.
@@ -334,8 +345,25 @@ class DMCWarpAdapter(SimulatorAdapter):
     def step(self, actions, *, active=None, capture_state=True):
         _, controls = self._prepare_step(actions, active)
         reward = torch.zeros(self.num_envs, device=self.device, dtype=torch.float64)
-        reward += self._control_step(controls, reward_only=True, controls_validated=True)
-        out = self._control_step(controls, controls_validated=True)
+        if self._runtime.supports_pair and not self._pending.any() and np.all(self._counts < self._limits - 1):
+            # Native resets need a host-visible success decision before RNG
+            # work. Pair only calls whose two rounds both integrate every lane.
+            try:
+                first_reward, captured = self._runtime.advance_pair(controls, task=self._task, controls_validated=True)
+            except PairFailure as error:
+                if error.completed_rounds == 1:
+                    for key, value in error.checkpoint.items():
+                        self._state[key].copy_(value)
+                    self._advance_clock()
+                    self._commit_ordinary_lifecycle(1)
+                raise
+            self._save_physics(self._runtime, rounds=2)
+            self._commit_ordinary_lifecycle(2)
+            reward += first_reward
+            out = self._outputs(self._runtime, captured)
+        else:
+            reward += self._control_step(controls, reward_only=True, controls_validated=True)
+            out = self._control_step(controls, controls_validated=True)
         reward += out["reward"]
         self._state["task", "cumulative_reward"] += reward[:, None]
         out["reward"] = reward

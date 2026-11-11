@@ -161,7 +161,7 @@ def test_reward_only_first_round_matches_full_outputs(name, monkeypatch):
         checkpoint = env.reset(seed=91000)
         actions = np.random.default_rng(91000 + 91717).uniform(-1, 1, (5, 3, env.action_dim))
         actions = torch.as_tensor(actions, device="cuda", dtype=torch.float64)
-        # Capture both round variants before comparing their replay behavior.
+        # Warm the public path before comparing its replay behavior.
         adapter.step(actions[0])
         adapter.set_state(checkpoint)
         control_step = adapter._control_step
@@ -173,6 +173,7 @@ def test_reward_only_first_round_matches_full_outputs(name, monkeypatch):
             return output["reward"] if reward_only else output
 
         with monkeypatch.context() as patch:
+            patch.setattr(adapter._runtime, "supports_pair", False)
             patch.setattr(adapter, "_control_step", full_outputs)
             expected = [adapter.step(action) for action in actions]
 
@@ -205,6 +206,9 @@ def test_failed_second_round_keeps_first_round_checkpoint(monkeypatch):
 
     adapter = DMCWarpAdapter("cartpole-balance", 3, "cuda", 17)
     try:
+        # This checks the per-round fallback. Paired device failures and the
+        # conditional second-round guard have their own tests.
+        monkeypatch.setattr(adapter._runtime, "supports_pair", False)
         initial = adapter.get_state()
         actions = torch.full((3, 1), 0.25, dtype=torch.float64, device="cuda")
         adapter._control_step(adapter._controls(actions))
@@ -296,6 +300,7 @@ def test_nonfinite_round_preserves_last_valid_checkpoint(failed_round, monkeypat
 
     adapter = DMCWarpAdapter("cartpole-balance", 3, "cuda", 17)
     try:
+        monkeypatch.setattr(adapter._runtime, "supports_pair", False)
         initial = adapter.get_state()
         actions = torch.full((3, 1), 0.25, dtype=torch.float64, device="cuda")
         adapter._control_step(adapter._controls(actions))

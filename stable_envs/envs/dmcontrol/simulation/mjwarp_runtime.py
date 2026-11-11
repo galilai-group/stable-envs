@@ -889,6 +889,14 @@ class WarpRuntime:
         self._torch_stream = torch.cuda.Stream(device=self.device) if self.device.type == "cuda" else None
         self._warp_stream = wp.stream_from_torch(self._torch_stream) if self._torch_stream is not None else None
         self._graphs = {}
+        self._pairs = {}
+        self.supports_pair = bool(
+            self.device.type == "cuda"
+            and callable(getattr(wp, "ScopedAllocator", None))
+            and callable(getattr(wp, "capture_if", None))
+            and callable(getattr(wp, "is_conditional_graph_supported", None))
+            and wp.is_conditional_graph_supported()
+        )
         self._native_model_views = {}
         self._constraint_buffers = None
         self._elliptic_solver = None
@@ -1322,12 +1330,18 @@ class WarpRuntime:
         # Read the captured bitmask once, including on failure. Keep the check
         # at each round's boundary so failed physics cannot commit a checkpoint
         # or run the next round's reset/RNG work.
-        error = int(self._result_error_view[0])
+        message = self._result_message(int(self._result_error_view[0]))
+        if message is not None:
+            raise RuntimeError(message)
+
+    @staticmethod
+    def _result_message(error):
         if error & 1:
-            raise RuntimeError("DMC MJWarp contact/constraint capacity overflow")
+            return "DMC MJWarp contact/constraint capacity overflow"
         for index, name in enumerate(_RESULT_FIELDS, start=1):
             if error & (1 << index):
-                raise RuntimeError(f"DMC MJWarp produced nonfinite {name}")
+                return f"DMC MJWarp produced nonfinite {name}"
+        return None
 
     def validate_controls(self, controls):
         """Validate scaled float32 controls before any physics or reset work."""
@@ -1395,6 +1409,21 @@ class WarpRuntime:
             self._check_result(recorded=True)
         return self.snapshot() if task is None else outputs
 
+    def advance_pair(self, controls, *, task, controls_validated=False):
+        """Advance two ordinary rounds, preserving the last valid checkpoint."""
+        self._check_open()
+        if not self.supports_pair:
+            raise RuntimeError("DMC MJWarp paired rounds require conditional graphs and scoped allocators")
+        if not controls_validated:
+            controls = self.validate_controls(controls)
+        from .mjwarp_pair import PairedRound
+
+        with self._scope():
+            self._data_view("ctrl").copy_(controls)
+            if task not in self._pairs:
+                self._pairs[task] = PairedRound(self, task)
+            return self._pairs[task].replay()
+
     def copy_physical_state(self, destination, *, lanes=None, include_time=True):
         """Copy into owned checkpoint storage, converting directly to its dtype.
 
@@ -1434,6 +1463,9 @@ class WarpRuntime:
             if self._torch_stream is not None:
                 self._torch_stream.wait_stream(torch.cuda.current_stream(self.device))
                 self._torch_stream.synchronize()
+            for pair in self._pairs.values():
+                pair.close()
+            self._pairs.clear()
             self._graphs.clear()
             self._m = self._d = None
             self._result_error = self._result_error_view = None
