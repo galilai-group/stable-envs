@@ -27,6 +27,8 @@ def assert_models_equal(pooled, native):
             np.testing.assert_array_equal(column[lane], getattr(model, name), err_msg=name)
         for name, column in pooled.models.options.items():
             np.testing.assert_array_equal(column[lane], getattr(model.opt, name), err_msg=name)
+        for name, column in pooled.models.statistics.items():
+            np.testing.assert_array_equal(column[lane], getattr(model.stat, name), err_msg=name)
         ids = pooled.models.fixed_indices
         np.testing.assert_array_equal(pooled.models.fixed_positions[lane], env.physics.data.geom_xpos[ids])
         np.testing.assert_array_equal(

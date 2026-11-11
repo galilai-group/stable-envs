@@ -17,17 +17,17 @@ from .state import MODEL_FIELDS, export_state
 class _ModelView:
     """Read-only model attributes; large static assets belong to one prototype."""
 
-    def __init__(self, batch, lane, option=False):
-        self._batch, self._lane, self._option = batch, lane, option
+    def __init__(self, batch, lane, section=None):
+        self._batch, self._lane, self._section = batch, lane, section
 
     def __getattr__(self, name):
         batch = self._batch
-        if name == "opt" and not self._option:
-            return _ModelView(batch, self._lane, option=True)
-        columns = batch.options if self._option else batch.columns
+        if name in {"opt", "stat"} and self._section is None:
+            return _ModelView(batch, self._lane, section=name)
+        columns = {"opt": batch.options, "stat": batch.statistics}.get(self._section, batch.columns)
         if name in columns:
             return columns[name][self._lane]
-        owner = batch.reference.opt if self._option else batch.reference
+        owner = getattr(batch.reference, self._section) if self._section else batch.reference
         return getattr(owner, name)
 
 
@@ -37,7 +37,11 @@ class WarpModelBatch:
     def __init__(self, reference, count, model_fields, option_fields):
         self.reference = reference
         self.count = count
-        names = dict.fromkeys((*model_fields, "site_size", "geom_gap", "pair_gap"))
+        # Native reset/variation also uses constants which Warp does not store.
+        # Keep these small arrays, not native texture/mesh assets or MjData.
+        names = dict.fromkeys(
+            (*model_fields, "site_size", "geom_gap", "pair_gap", "bvh_aabb", "dof_M0", "dof_length", "geom_sameframe")
+        )
         self.columns = {
             name: np.empty(
                 (count, *np.shape(getattr(reference, name))), dtype=np.asarray(getattr(reference, name)).dtype
@@ -51,6 +55,7 @@ class WarpModelBatch:
             )
             for name in options
         }
+        self.statistics = {name: np.empty(count) for name in ("meaninertia", "meanmass")}
         body = reference.geom_bodyid
         fixed = (reference.body_weldid[body] == 0) & (reference.body_mocapid[reference.body_rootid[body]] == -1)
         self.fixed_indices = np.flatnonzero(fixed)
@@ -73,6 +78,7 @@ class WarpModelBatch:
         selected.count = len(lanes)
         selected.columns = {name: values[lanes].copy() for name, values in self.columns.items()}
         selected.options = {name: values[lanes].copy() for name, values in self.options.items()}
+        selected.statistics = {name: values[lanes].copy() for name, values in self.statistics.items()}
         selected.fixed_positions = self.fixed_positions[lanes].copy()
         selected.fixed_rotations = self.fixed_rotations[lanes].copy()
         return selected
@@ -86,8 +92,23 @@ class WarpModelBatch:
             values[lane] = getattr(model, name)
         for name, values in self.options.items():
             values[lane] = getattr(model.opt, name)
+        for name, values in self.statistics.items():
+            values[lane] = getattr(model.stat, name)
         self.fixed_positions[lane] = data.geom_xpos[self.fixed_indices]
         self.fixed_rotations[lane] = data.geom_xmat[self.fixed_indices].reshape(-1, 3, 3)
+
+    def restore(self, lane, physics):
+        """Select a lane without recomputing its previously derived constants."""
+        model = physics.model.ptr
+        for name, values in self.columns.items():
+            getattr(model, name)[:] = values[lane]
+        for name, values in self.options.items():
+            if values.ndim == 1:
+                setattr(model.opt, name, values[lane].item())
+            else:
+                getattr(model.opt, name)[:] = values[lane]
+        for name, values in self.statistics.items():
+            setattr(model.stat, name, values[lane].item())
 
 
 @dataclass
@@ -155,14 +176,15 @@ class WarpResetPool:
 
     def _select_owner(self, state, lane, values):
         owner, env = self._owner, self.envs[0]
+        if self._state is not None:
+            self.models.restore(lane, env.physics)
+            if self.physics is not None:
+                # Compare proposed values with this lane, not the previously
+                # selected owner. Reapplying unchanged variation can recompute
+                # constants from a later episode's target or rounded geometry.
+                owner.physics.values = self.physics.values[lane : lane + 1].copy()
         if values is not None:
-            try:
-                owner.configure_physics(values[lane : lane + 1])
-            except Exception:
-                # Native apply may fail after writing an earlier model field.
-                # Force the next selection to reinstall every physics knob.
-                owner.physics.values.fill(np.nan)
-                raise
+            owner.configure_physics(values[lane : lane + 1])
         if state is not None:
             for key in self.fields:
                 if key in MODEL_FIELDS:
