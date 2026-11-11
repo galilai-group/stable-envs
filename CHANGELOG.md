@@ -88,6 +88,8 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- DMC MJWarp combines action, active-mask and scaled-control validation into
+  one device flag read, preserving recoverable errors before physics or resets.
 - DMC MJWarp captures reward, observation and info formulas with each physics
   round, using reward-only and full-output graph variants. Model metadata keeps
   stable storage across restores, and returned outputs retain owned storage.

@@ -186,17 +186,40 @@ class DMCWarpAdapter(SimulatorAdapter):
         self._models = self._source.models
 
     def check_step(self, actions, active=None):
+        actions, _ = self._prepare_step(actions, active)
+        return actions, None
+
+    def _prepare_step(self, actions, active=None):
+        """Validate actions, active lanes and scaled controls with one device read."""
         self._check_open()
         actions = torch.as_tensor(actions, device=self.device, dtype=torch.float64).detach()
-        if actions.shape != (self.num_envs, self.action_dim) or not bool(torch.isfinite(actions).all()):
+        if actions.shape != (self.num_envs, self.action_dim):
             raise ValueError(f"{self.key} action must have finite shape (num_envs, {self.action_dim})")
+        controls = self._controls(actions)
+        error = (~torch.isfinite(actions).all()).to(torch.int32)
         if active is not None:
             active = torch.as_tensor(active)
-            if active.shape != (self.num_envs,) or not bool(active.all()):
-                raise ValueError(
-                    "Accepted DMC wrappers do not expose terminal lanes; partial active masks are unsupported"
-                )
-        return actions, None
+            if active.shape != (self.num_envs,):
+                error |= 2
+            elif active.device.type == "cpu":
+                # Host masks need no upload; only the reduced validity bit is
+                # combined with the device checks.
+                if not bool(active.all()):
+                    error |= 2
+            else:
+                error |= (~active.all()).to(device=self.device, dtype=torch.int32) * 2
+        error |= (~torch.isfinite(controls).all()).to(torch.int32) * 4
+        flags = int(error)
+        # Keep the existing diagnostic priority without reading any flag twice.
+        if flags & 1:
+            raise ValueError(f"{self.key} action must have finite shape (num_envs, {self.action_dim})")
+        if flags & 2:
+            raise ValueError(
+                "Accepted DMC wrappers do not expose terminal lanes; partial active masks are unsupported"
+            )
+        if flags & 4:
+            raise ValueError("Controls must be finite with shape [num_envs, nu]")
+        return actions, controls
 
     def _controls(self, actions):
         # Match action_scale.Wrapper's operation order, then convert to Warp's
@@ -309,8 +332,7 @@ class DMCWarpAdapter(SimulatorAdapter):
 
     @_ordered
     def step(self, actions, *, active=None, capture_state=True):
-        actions, _ = self.check_step(actions, active)
-        controls = self._runtime.validate_controls(self._controls(actions))
+        _, controls = self._prepare_step(actions, active)
         reward = torch.zeros(self.num_envs, device=self.device, dtype=torch.float64)
         reward += self._control_step(controls, reward_only=True, controls_validated=True)
         out = self._control_step(controls, controls_validated=True)
