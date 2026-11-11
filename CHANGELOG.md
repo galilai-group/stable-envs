@@ -75,6 +75,15 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- `OGBCube` and `OGBScene` use the OGBench cube size. The default `cube.size` is now 0.02, as in OGBench.
+  Before, the default was the stable-worldmodel value `float32(0.02)`, which compiles to
+  0.019999999552965164. That size changed the cube mass and inertia, so contacts moved the physics away
+  from OGBench after about 100 steps. Now the default physics model, the reset and the physics are equal
+  to OGBench, bit for bit, and a test compares 200 steps for each lane. The frames do not change. The
+  default model is different from the stable-worldmodel model in the cube size, mass and inertia. A State
+  that you saved before this change keeps its cube size when you restore it.
+- `OGBCube` and `OGBScene` set `reference_id` to the OGBench pixel tasks, `ogbench/visual-cube-single-v0`
+  and `ogbench/visual-scene-v0`.
 - `OGBCube` and `OGBScene` reset as OGBench 1.2.1 resets. Before, the reset used the stable-worldmodel
   rule: the arm started at the `agent.ee_start_position` Variation leaf, and the task came from a
   separate generator. Now the end effector starts at the position that OGBench samples from the

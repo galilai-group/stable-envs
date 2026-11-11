@@ -438,6 +438,7 @@ class OGBCube(ManipulationSemantics, _CubeRenderer):
     With ``supersample`` 2 or more on the GPU, MJWarp draws; its lighting and transparency can differ from MuJoCo.
     """
 
+    reference_id = "ogbench/visual-cube-single-v0"
     visual_fidelity = _opengl_fidelity(_CubeRenderer)
     visual_note = _OPENGL_NOTE
 
@@ -449,6 +450,7 @@ class OGBScene(ManipulationSemantics, _SceneRenderer):
     can differ from MuJoCo.
     """
 
+    reference_id = "ogbench/visual-scene-v0"
     visual_fidelity = _opengl_fidelity(_SceneRenderer)
     visual_note = _OPENGL_NOTE
 

@@ -68,7 +68,8 @@ def variation_tree(env):
 
     cube = {
         "color": box(0.0, 1.0, (1, 3), env._cube_colors[:1, :3]),
-        "size": box(0.01, 0.03, (1,), 0.02 * np.ones(1, np.float32)),
+        # OGBench compiles exactly 0.02, not float32(0.02).
+        "size": box(0.01, 0.03, (1,), np.full(1, 0.02)),
         "start_position": box(
             env._object_sampling_bounds[0:1],
             env._object_sampling_bounds[1:2],

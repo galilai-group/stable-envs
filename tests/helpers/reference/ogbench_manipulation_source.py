@@ -1,8 +1,9 @@
 """Source Cube/Scene classes with explicitly owned entropy, and engine/state capture.
 
 Reset, task, physics and rendering delegate to the pinned SWM/OGBench implementations;
-only the RNG boundaries and the arm start are owned here. The arm starts as OGBench samples it,
-unless the reset options name ``agent.ee_start_position`` or its anchor is not the default.
+only the RNG boundaries, the arm start and the default cube size are owned here. The arm starts as
+OGBench samples it, unless the reset options name ``agent.ee_start_position`` or its anchor is not the
+default. The default cube size is OGBench's 0.02, not stable-worldmodel's float32(0.02).
 """
 
 import copy
@@ -160,6 +161,7 @@ class Ownership:
         self._seed_owned(entropy_seed)
         super().__init__(*args, **kwargs)
         self.variation_space = OwnedVariation(self.variation_space, self)
+        self.variation_space["cube"]["size"].set_init_value(np.full(1, 0.02))
         self.variation_space.seed(0)  # No external entropy before the first reset.
         gym.Env.reset(self, seed=self.entropy_seed)
 
