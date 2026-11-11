@@ -102,8 +102,8 @@ cases does not establish numerical equivalence with native float64 physics. CPU/
 grow on contact-heavy trajectories, and random actions provide limited sparse-reward coverage.
 The backend remains experimental; no new numerical acceptance threshold was applied.
 
-[Validation reports and 100-call error curves](https://github.com/galilai-group/stable-envs/blob/782cba6f35ee316f22499c7d83402320e6012f79/docs/assets/dmc-mjwarp-317/README.md)
-include tested revisions, shared baseline failures and hardware-specific skips.
+[Pull request #28](https://github.com/galilai-group/stable-envs/pull/28) gives the 100-call error
+curves, the tested revisions, the shared baseline failures and the hardware-specific skips.
 
 ### Benchmarking
 
@@ -168,7 +168,7 @@ also include the largest reaped descendant. Existing RSS sums and NVML readings 
 samples. `worker_exit` records the exit code and signal; a `SIGKILL` alone does not prove OOM.
 Failed cells remain explicit error rows, and the sweep continues to the next cell.
 
-The [MuJoCo 3.17 timing curves](https://github.com/galilai-group/stable-envs/blob/782cba6f35ee316f22499c7d83402320e6012f79/docs/assets/dmc-mjwarp-317/README.md#timing)
+The MuJoCo 3.17 timing curves in [pull request #28](https://github.com/galilai-group/stable-envs/pull/28)
 compare sequential CPU, native CPU batching and RTX 3090 stepping at batches 1, 256 and 1024,
 using 100 synchronized public calls per seed. The benchmark now matches their action recipe,
 warmup/restore sequence and public-step workload. The original harness measured both backends
