@@ -68,6 +68,17 @@ def _scalar(value, dtype, device):
     return torch.tensor(value, dtype=dtype, device=device)
 
 
+@cache
+def _indices(values, device):
+    # Python-list indexing otherwise creates and uploads an index tensor on
+    # every evaluation. Warm these immutable device indices before capture.
+    return torch.tensor(values, dtype=torch.long, device=device)
+
+
+def _take(value, indices, dim=1):
+    return torch.index_select(value, dim, _indices(tuple(indices), value.device))
+
+
 def _tolerance(value, bounds=(0.0, 0.0), margin=0.0, sigmoid="gaussian", value_at_margin=0.1):
     """The registered tasks' dm_control tolerance curves, without host reads."""
     value = value.to(torch.float64)
@@ -146,7 +157,7 @@ class Acrobot(BatchTask):
         self.margin = 0 if self.task._sparse else 1
 
     def _observation(self, s):
-        xmat = s.data("xmat")[:, self.arms]
+        xmat = _take(s.data("xmat"), self.arms)
         return [xmat[:, :, _XMAT["xz"]], xmat[:, :, _XMAT["zz"]], s.data("qvel")]
 
     def _reward(self, s):
@@ -167,7 +178,7 @@ class Pendulum(BatchTask):
 
     def _observation(self, s):
         xmat = s.data("xmat")[:, self.pole]
-        return [xmat[:, [_XMAT["zz"], _XMAT["xz"]]], s.data("qvel")[:, self.hinge]]
+        return [_take(xmat, (_XMAT["zz"], _XMAT["xz"])), _take(s.data("qvel"), self.hinge)]
 
     def _reward(self, s):
         return _tolerance(s.data("xmat")[:, self.pole, _XMAT["zz"]], (self.cosine_bound, 1))
@@ -182,8 +193,8 @@ class Cartpole(BatchTask):
         self.angle_range = self.task._ANGLE_COSINE_RANGE
 
     def _observation(self, s):
-        poles = s.data("xmat")[:, 2:][:, :, [_XMAT["zz"], _XMAT["xz"]]]
-        return [s.data("qpos")[:, self.slider], poles.reshape(len(poles), -1), s.data("qvel")]
+        poles = _take(s.data("xmat")[:, 2:], (_XMAT["zz"], _XMAT["xz"]), dim=2)
+        return [_take(s.data("qpos"), self.slider), poles.reshape(len(poles), -1), s.data("qvel")]
 
     def _reward(self, s):
 
@@ -217,7 +228,7 @@ class Reacher(BatchTask):
 
     def _reward(self, s):
         size = s.model("geom_size")
-        radii = size[:, [self.target, self.finger], 0].sum(dim=1)
+        radii = _take(size, (self.target, self.finger))[:, :, 0].sum(dim=1)
         return _tolerance(_norm(self._to_target(s)), (0, radii))
 
 
@@ -235,10 +246,10 @@ class BallInCup(BatchTask):
         return [s.data("qpos"), s.data("qvel")]
 
     def _in_target(self, s):
-        target = s.data("site_xpos")[:, self.target][:, [0, 2]]
-        ball = s.data("xpos")[:, self.ball_body][:, [0, 2]]
+        target = _take(s.data("site_xpos")[:, self.target], (0, 2))
+        ball = _take(s.data("xpos")[:, self.ball_body], (0, 2))
         ball_to_target = abs(target - ball)
-        target_size = s.model("site_size")[:, self.target][:, [0, 2]]
+        target_size = _take(s.model("site_size")[:, self.target], (0, 2))
         ball_size = s.model("geom_size")[:, self.ball_geom, 0]
         return (ball_to_target < target_size - ball_size[:, None]).all(dim=1).to(torch.float64)
 
@@ -269,10 +280,10 @@ class Finger(BatchTask):
         self.spin_velocity = finger._SPIN_VELOCITY
 
     def _tip(self, sensors):
-        return sensors[:, self.tip] - sensors[:, self.spinner]
+        return _take(sensors, self.tip) - _take(sensors, self.spinner)
 
     def _target(self, sensors):
-        return sensors[:, self.target] - sensors[:, self.spinner]
+        return _take(sensors, self.target) - _take(sensors, self.spinner)
 
     def _dist_to_target(self, s):
         sensors = s.data("sensordata")
@@ -282,9 +293,9 @@ class Finger(BatchTask):
     def _observation(self, s):
         sensors = s.data("sensordata")
         obs = [
-            torch.hstack((sensors[:, self.position], self._tip(sensors))),
-            sensors[:, self.velocity],
-            torch.log1p(sensors[:, self.touch]),
+            torch.hstack((_take(sensors, self.position), self._tip(sensors))),
+            _take(sensors, self.velocity),
+            torch.log1p(_take(sensors, self.touch)),
         ]
         if not self.spin:
             obs += [self._target(sensors), self._dist_to_target(s)[:, None]]
@@ -321,15 +332,15 @@ class Manipulator(BatchTask):
         self.close = manipulator._CLOSE
 
     def _observation(self, s):
-        joint_pos = s.data("qpos")[:, self.arm_qpos]
+        joint_pos = _take(s.data("qpos"), self.arm_qpos)
         arm_pos = torch.stack([torch.sin(joint_pos), torch.cos(joint_pos)], dim=-1).reshape(len(joint_pos), -1)
         xpos, xquat = s.data("xpos"), s.data("xquat")
         hand, obj, target = (
-            torch.hstack([xpos[:, body][:, [0, 2]], xquat[:, body][:, [0, 2]]]) for body in self.bodies
+            torch.hstack([_take(xpos[:, body], (0, 2)), _take(xquat[:, body], (0, 2))]) for body in self.bodies
         )
         qvel = s.data("qvel")
-        touch = torch.log1p(s.data("sensordata")[:, self.touch])
-        return [arm_pos, qvel[:, self.arm_dof], touch, hand, obj, qvel[:, self.object_dof], target]
+        touch = torch.log1p(_take(s.data("sensordata"), self.touch))
+        return [arm_pos, _take(qvel, self.arm_dof), touch, hand, obj, _take(qvel, self.object_dof), target]
 
     def _reward(self, s):
 
@@ -362,11 +373,11 @@ class Quadruped(BatchTask):
     def _observation(self, s):
         qpos, qvel, sensors = s.data("qpos"), s.data("qvel"), s.data("sensordata")
         return [
-            torch.hstack((qpos[:, self.hinge_qpos], qvel[:, self.hinge_dof], s.data("act"))),
-            sensors[:, self.velocimeter],
+            torch.hstack((_take(qpos, self.hinge_qpos), _take(qvel, self.hinge_dof), s.data("act"))),
+            _take(sensors, self.velocimeter),
             s.data("xmat")[:, self.torso, _XMAT["zz"]],
-            sensors[:, self.imu],
-            torch.asinh(sensors[:, self.force_torque]),
+            _take(sensors, self.imu),
+            torch.asinh(_take(sensors, self.force_torque)),
         ]
 
     def _reward(self, s):
@@ -389,7 +400,7 @@ class Quadruped(BatchTask):
         return upright * move_reward
 
     def info(self, s):
-        return _state_info(s, torso_velocity=s.data("sensordata")[:, self.velocimeter])
+        return _state_info(s, torso_velocity=_take(s.data("sensordata"), self.velocimeter))
 
 
 class PointMass(BatchTask):
@@ -426,7 +437,7 @@ class Swimmer(BatchTask):
         return torch.bmm(nose_to_target[:, None, :], head)[:, 0, :2]
 
     def _observation(self, s):
-        velocities = s.data("sensordata")[:, 12:].reshape(len(s.data("qpos")), -1, 6)[:, :, [0, 1, 5]]
+        velocities = _take(s.data("sensordata")[:, 12:].reshape(len(s.data("qpos")), -1, 6), (0, 1, 5), dim=2)
         return [s.data("qpos")[:, 3:], self._nose_to_target(s), velocities.reshape(len(velocities), -1)]
 
     def _reward(self, s):
@@ -489,7 +500,7 @@ class Hopper(BatchTask):
         return xipos[:, self.torso, 2] - xipos[:, self.foot, 2]
 
     def _observation(self, s):
-        return [s.data("qpos")[:, 1:], s.data("qvel"), torch.log1p(s.data("sensordata")[:, self.touch])]
+        return [s.data("qpos")[:, 1:], s.data("qvel"), torch.log1p(_take(s.data("sensordata"), self.touch))]
 
     def _reward(self, s):
         standing = _tolerance(self._height(s), (self.stand_height, 2))
@@ -526,7 +537,7 @@ class Walker(BatchTask):
         self.stand_height = walker._STAND_HEIGHT
 
     def _observation(self, s):
-        orientations = s.data("xmat")[:, 1:][:, :, [_XMAT["xx"], _XMAT["xz"]]]
+        orientations = _take(s.data("xmat")[:, 1:], (_XMAT["xx"], _XMAT["xz"]), dim=2)
         return [
             orientations.reshape(len(orientations), -1),
             s.data("xpos")[:, self.torso, 2],
@@ -579,11 +590,11 @@ class Humanoid(BatchTask):
         xpos = s.data("xpos")
         frames = s.data("xmat")[:, self.torso].reshape(-1, 3, 3)
         torso = xpos[:, self.torso]
-        relative = xpos[:, self.limbs] - torso[:, None, :]
+        relative = _take(xpos, self.limbs) - torso[:, None, :]
         return torch.bmm(relative, frames).flatten(1)
 
     def _speed(self, s):
-        return _norm(s.data("sensordata")[:, self.com_velocity][:, [0, 1]])
+        return _norm(_take(_take(s.data("sensordata"), self.com_velocity), (0, 1)))
 
     def _observation(self, s):
         xmat = s.data("xmat")[:, self.torso]
@@ -591,8 +602,8 @@ class Humanoid(BatchTask):
             s.data("qpos")[:, 7:],
             s.data("xpos")[:, self.head, 2],
             self._extremities(s),
-            xmat[:, [_XMAT["zx"], _XMAT["zy"], _XMAT["zz"]]],
-            s.data("sensordata")[:, self.com_velocity],
+            _take(xmat, (_XMAT["zx"], _XMAT["zy"], _XMAT["zz"])),
+            _take(s.data("sensordata"), self.com_velocity),
             s.data("qvel"),
         ]
 
@@ -611,7 +622,7 @@ class Humanoid(BatchTask):
         small_control = _tolerance(s.data("ctrl"), margin=1, value_at_margin=0, sigmoid="quadratic").mean(dim=1)
         small_control = (4 + small_control) / 5
         if self.move_speed == 0:
-            horizontal_velocity = s.data("sensordata")[:, self.com_velocity][:, [0, 1]]
+            horizontal_velocity = _take(_take(s.data("sensordata"), self.com_velocity), (0, 1))
             dont_move = _tolerance(horizontal_velocity, margin=2).mean(dim=1)
             return small_control * stand_reward * dont_move
         move = _tolerance(

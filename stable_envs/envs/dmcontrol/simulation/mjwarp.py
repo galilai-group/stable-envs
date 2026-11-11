@@ -203,7 +203,18 @@ class DMCWarpAdapter(SimulatorAdapter):
         # float32 physics precision. This also accepts noncontiguous actions.
         return (self._minimum + self._scale * (actions + 1)).to(torch.float32).contiguous()
 
-    def _outputs(self, runtime):
+    def _outputs(self, runtime, captured=None):
+        if captured is not None:
+            # A replay overwrites graph-owned task buffers. This is the one
+            # ownership copy for outputs that leave the adapter. The round's
+            # reward is consumed immediately into the public reward buffer.
+            values = {"reward": captured["reward"]}
+            for key, value in captured.items():
+                if key != "reward":
+                    values[key] = (
+                        {name: column.clone() for name, column in value.items()} if key == "info" else value.clone()
+                    )
+            return values
         snapshot = runtime.snapshot()
         values = {"observation": self._task.observation(snapshot), "reward": self._task.reward(snapshot)}
         info = self._task.info(snapshot)
@@ -241,10 +252,12 @@ class DMCWarpAdapter(SimulatorAdapter):
         resetting = np.flatnonzero(self._pending)
         continuing = np.flatnonzero(~self._pending)
         if not len(resetting):
-            self._runtime.advance(controls, controls_validated=controls_validated)
+            captured = self._runtime.advance(
+                controls, controls_validated=controls_validated, task=self._task, reward_only=reward_only
+            )
             # Only the second round's observations/info reach the caller. The
             # first still contributes reward and commits its full checkpoint.
-            out = self._task.reward(self._runtime.snapshot()) if reward_only else self._outputs(self._runtime)
+            out = captured if reward_only else self._outputs(self._runtime, captured)
             self._save_physics(self._runtime)
         else:
             advanced = None
@@ -262,9 +275,8 @@ class DMCWarpAdapter(SimulatorAdapter):
                     )
                 ids = torch.as_tensor(continuing, device=self.device)
                 self._scratch.load(self._state[ids], models=self._models.select(continuing))
-                self._scratch.advance(controls[ids], controls_validated=controls_validated)
                 # Collect acceleration-stage sensors before reconstruction.
-                advanced = self._outputs(self._scratch)
+                advanced = self._scratch.advance(controls[ids], controls_validated=controls_validated, task=self._task)
                 self._save_physics(self._scratch, ids)
             self._reset_lanes(resetting)
             self._runtime.load(self._state, models=self._models)

@@ -884,10 +884,12 @@ class WarpRuntime:
         # One owned, nondefault stream is retained for the runtime lifetime.
         # Repeated stream_from_torch wrappers can unregister the same handle
         # while an outer scope still uses it, and the default stream cannot be
-        # captured. Queue both libraries on this one persistent stream instead.
-        self._warp_stream = wp.Stream(self._wp_device) if self.device.type == "cuda" else None
-        self._torch_stream = wp.stream_to_torch(self._warp_stream) if self._warp_stream is not None else None
-        self._graph = None
+        # captured. Torch creates a nonblocking stream that its graph allocator
+        # can capture; retain its Warp wrapper rather than recreating it.
+        self._torch_stream = torch.cuda.Stream(device=self.device) if self.device.type == "cuda" else None
+        self._warp_stream = wp.stream_from_torch(self._torch_stream) if self._torch_stream is not None else None
+        self._graphs = {}
+        self._native_model_views = {}
         self._constraint_buffers = None
         self._elliptic_solver = None
         self._pyramidal_solver = None
@@ -1192,13 +1194,17 @@ class WarpRuntime:
         self._fixed_positions = torch.as_tensor(np.asarray(positions), device=self.device, dtype=torch.float32)
         self._fixed_rotations = torch.as_tensor(np.asarray(rotations), device=self.device, dtype=torch.float32)
         # site_size is task metadata absent from Warp's physics Model.
-        self._native_model_views = {
-            "site_size": torch.as_tensor(
-                models.columns["site_size"] if compact else np.stack([m.site_size for m in models]),
-                device=self.device,
-                dtype=torch.float32,
-            )
-        }
+        site_size = torch.as_tensor(
+            models.columns["site_size"] if compact else np.stack([m.site_size for m in models]),
+            device=self.device,
+            dtype=torch.float32,
+        )
+        if "site_size" in self._native_model_views:
+            # Captured task formulas retain this address through reset/restore
+            # and physics variation, just like Warp's batched model arrays.
+            self._native_model_views["site_size"].copy_(site_size)
+        else:
+            self._native_model_views["site_size"] = site_size
         self.models = models if compact else list(models)
 
     def _load(self, state):
@@ -1331,32 +1337,63 @@ class WarpRuntime:
             raise ValueError("Controls must be finite with shape [num_envs, nu]")
         return controls
 
-    def advance(self, controls, *, controls_validated=False):
-        """Advance one round; the adapter may reuse its validated controls."""
+    def _task_outputs(self, task, reward_only):
+        if task is None:
+            return None
+        snapshot = WarpSnapshot(self)
+        if reward_only:
+            return task.reward(snapshot)
+        values = {"observation": task.observation(snapshot), "reward": task.reward(snapshot)}
+        info = task.info(snapshot)
+        if info is not None:
+            values["success"], values["info"] = info
+        return values
+
+    def advance(self, controls, *, controls_validated=False, task=None, reward_only=False):
+        """Advance one round, optionally capturing task formulas with physics.
+
+        Task results borrow graph storage until its next replay. The adapter
+        consumes each reward immediately and copies outputs at the public
+        ownership boundary. Standalone callers still receive a live snapshot.
+        """
         self._check_open()
         if not controls_validated:
             controls = self.validate_controls(controls)
         with self._scope():
             self._data_view("ctrl").copy_(controls)
-            if self.device.type == "cuda" and self._graph is None:
+            key = (task, reward_only)
+            if self.device.type == "cuda" and key not in self._graphs:
                 checkpoint = self.physical_state()
                 self._advance()
-                wp.synchronize_device(self._wp_device)
+                self._record_result()
+                self._task_outputs(task, reward_only)
+                self._torch_stream.synchronize()
                 self._load(checkpoint)
                 self._data_view("ctrl").copy_(controls)
-                with wp.ScopedCapture() as capture:
-                    self._advance()
-                    self._record_result()
-                self._graph = capture.graph
+                graph = torch.cuda.CUDAGraph()
+                # Torch owns the private allocation pool for task intermediates.
+                # Register the external capture with Warp so its temporary
+                # physics allocations also remain alive for graph replay.
+                with torch.cuda.graph(graph, stream=self._torch_stream):
+                    wp.capture_begin(force_module_load=False, external=True, capture_mode=wp.CaptureMode.GLOBAL)
+                    try:
+                        self._advance()
+                        self._record_result()
+                        outputs = self._task_outputs(task, reward_only)
+                    finally:
+                        wp.capture_end()
+                self._graphs[key] = (graph, outputs)
                 self._load(checkpoint)
                 self._data_view("ctrl").copy_(controls)
-            if self._graph is None:
+            if self.device.type == "cpu":
                 self._advance()
                 self._record_result()
+                outputs = self._task_outputs(task, reward_only)
             else:
-                wp.capture_launch(self._graph)
+                graph, outputs = self._graphs[key]
+                graph.replay()
             self._check_result(recorded=True)
-        return self.snapshot()
+        return self.snapshot() if task is None else outputs
 
     def copy_physical_state(self, destination, *, lanes=None, include_time=True):
         """Copy into owned checkpoint storage, converting directly to its dtype.
@@ -1397,7 +1434,8 @@ class WarpRuntime:
             if self._torch_stream is not None:
                 self._torch_stream.wait_stream(torch.cuda.current_stream(self.device))
                 self._torch_stream.synchronize()
-            self._graph = self._m = self._d = None
+            self._graphs.clear()
+            self._m = self._d = None
             self._result_error = self._result_error_view = None
             self._constraint_buffers = None
             self._elliptic_solver = None

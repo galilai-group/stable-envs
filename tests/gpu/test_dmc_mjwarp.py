@@ -161,6 +161,9 @@ def test_reward_only_first_round_matches_full_outputs(name, monkeypatch):
         checkpoint = env.reset(seed=91000)
         actions = np.random.default_rng(91000 + 91717).uniform(-1, 1, (5, 3, env.action_dim))
         actions = torch.as_tensor(actions, device="cuda", dtype=torch.float64)
+        # Capture both round variants before comparing their replay behavior.
+        adapter.step(actions[0])
+        adapter.set_state(checkpoint)
         control_step = adapter._control_step
 
         # Reference path materializes all outputs in both rounds, as before the
@@ -187,7 +190,7 @@ def test_reward_only_first_round_matches_full_outputs(name, monkeypatch):
             for method in calls:
                 patch.setattr(adapter._task, method, count_calls(method, getattr(adapter._task, method)))
             actual = [adapter.step(action) for action in actions]
-        assert calls == {"observation": 5, "reward": 10, "info": 5}
+        assert calls == {"observation": 0, "reward": 0, "info": 0}
         for got, want in zip(actual, expected, strict=True):
             assert_same_state(got, want)
         # Mutating a returned output must not change the live checkpoint.

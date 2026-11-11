@@ -44,6 +44,7 @@ def main():
             str(ROOT / "tests/gpu/test_dmc_mjwarp_humanoid.py"),
             str(ROOT / "tests/gpu/test_dmc_mjwarp_reacher.py"),
             str(ROOT / "tests/gpu/test_dmc_mjwarp_streams.py"),
+            str(ROOT / "tests/gpu/test_dmc_mjwarp_task_graphs.py"),
             str(ROOT / "tests/unit/test_dmc_mjwarp_validation.py"),
             str(ROOT / "tests/unit/test_dmc_mjwarp_reset_pool.py"),
             str(ROOT / "tests/unit/test_dmc_mjwarp_runtime.py")

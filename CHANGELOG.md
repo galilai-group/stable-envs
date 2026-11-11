@@ -88,6 +88,9 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- DMC MJWarp captures reward, observation and info formulas with each physics
+  round, using reward-only and full-output graph variants. Model metadata keeps
+  stable storage across restores, and returned outputs retain owned storage.
 - DMC MJWarp builds task output TensorDicts once per public step and copies physics
   directly into checkpoint storage at the public dtype, removing intermediate
   clones while preserving returned-output ownership and per-round checkpoints.
