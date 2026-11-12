@@ -10,6 +10,8 @@ import pytest
 import torch
 from tensordict import TensorDict
 
+from stable_envs import tuning
+
 MODEL_VALUES = ("cube.size", "agent.color", "floor.color", "camera.angle_delta", "light.intensity")
 
 
@@ -19,6 +21,7 @@ def opengl():
     pixels = ModuleType("stable_envs.envs.ogbench.simulation.render_state")
     pixels.validate = Mock()
     pixels.AGENT_MATERIALS = ("ur5e/robotiq/black", "ur5e/robotiq/pad_gray")
+    pixels.TARGET_ALPHA = 0.0
     compat = ModuleType("stable_envs.envs.ogbench.simulation.compatibility")
     compat.MODEL_VALUES = MODEL_VALUES
     compat.CompatibleCube = compat.CompatibleScene = object
@@ -29,10 +32,11 @@ def opengl():
     path = Path(__file__).parents[2] / "stable_envs/envs/ogbench/manipulation_opengl.py"
     spec = importlib.util.spec_from_file_location("stable_envs.envs.ogbench._opengl_test", path)
     module = importlib.util.module_from_spec(spec)
+    # Stubbed renderers live in this process only, so the batches draw here rather than in OpenGL workers.
     with patch.dict(
         sys.modules,
         {pixels.__name__: pixels, compat.__name__: compat, resources.__name__: resources, "mujoco": mujoco},
-    ):
+    ), tuning.override(ogb_gl_workers=0):
         spec.loader.exec_module(module)
         # A prior test may have populated the parent package attribute already.
         module.pixels = pixels
