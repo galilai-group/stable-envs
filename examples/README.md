@@ -11,6 +11,7 @@ Each script runs on CPU with small defaults, and the scripts with options list t
 | [`gallery.py`](gallery.py) | PNG sheets of reset frames, a short rollout and sampled variation for each environment |
 | [`bench_gpu_vs_cpu.py`](bench_gpu_vs_cpu.py) | `env.render(state)` throughput on CPU and CUDA, from states reset with the same seed |
 | [`bench_pusht_source.py`](bench_pusht_source.py) | PushT `env.render(state)` against the pinned stable-worldmodel PushT with one torch thread (set `NUMBA_NUM_THREADS=1` for one CPU thread; needs stable-worldmodel on `PYTHONPATH`) |
+| [`lewm/`](lewm/README.md) | training stable-worldmodel's LeWM world model on PushT frames; its own uv project, run from `examples/lewm` |
 
 ```bash
 python examples/render.py --help

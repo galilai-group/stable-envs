@@ -66,6 +66,7 @@ First public release.
 - Comparison tests check each environment against its upstream library and against stable-worldmodel, for state, simulation, tasks and pixels.
 - The tests compare frames with a recorded source MSE for each class (`tests/fixtures/source_mse.json`) and with golden frames of the project's own renderers (`tests/fixtures/golden/`).
 - `stable_envs.testing` measurement helpers, the `benchmarks/` harness, including `benchmarks/dmc_mjwarp.py` for native and MuJoCo Warp DM Control physics, and the MkDocs documentation.
+- LeWM world-model training example in `examples/lewm`.
 
 For known gaps, see the Limitations section of each [environment page](https://galilai-group.github.io/stable-envs/environments/).
 

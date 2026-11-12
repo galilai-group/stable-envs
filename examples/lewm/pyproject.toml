@@ -1,0 +1,17 @@
+[project]
+name = "stable-envs-lewm-example"
+version = "0"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+  "stable-envs[pusht]",
+  "stable-worldmodel==0.1.1",
+  "opencv-python-headless",  # stable-worldmodel 0.1.1 imports cv2 unconditionally
+  "imageio[ffmpeg]",         # and imageio; its [format] extra needs decord, which has no macOS/py3.12 wheel
+  "transformers>=4.50",      # LeWM.encode expects a Hugging Face ViT
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+stable-envs = { path = "../..", editable = true }

@@ -62,6 +62,7 @@ Pass `device="cpu"` unless you installed the CUDA extras: `device` defaults to `
 - [Store states, render later](https://galilai-group.github.io/stable-envs/tutorials/store-and-render/): collect states without rendering, save them, render them later under any variation, resume from one, and build a model batch.
 - [Randomize appearance and physics](https://galilai-group.github.io/stable-envs/tutorials/variation/): inspect a variation space, render one state in many looks, install a variation, and randomize physics per batch row at reset.
 - [Write your own environment](https://galilai-group.github.io/stable-envs/tutorials/custom-env/): subclass `snv.Env` with a state layout, start states, a step and a 2D scene, register it, and check that save and restore are exact.
+- [Train a world model (LeWM)](https://galilai-group.github.io/stable-envs/tutorials/lewm/): collect PushT episodes, cut them into windows, and train stable-worldmodel 0.1.1's LeWM with its prediction loss and SIGReg, from the `examples/lewm` uv project.
 
 ## Tuning and CLI
 

@@ -169,4 +169,4 @@ other.close()
 - Tensors you build in `_step` and `scene` go on `self.device`.
 - `register` needs `family` set, and it raises `ValueError` if another class already has the same name.
 
-Next: [`examples/`](https://github.com/galilai-group/stable-envs/tree/main/examples) has full scripts for action sequences, batched stepping, domain randomization and rendering.
+Next: [Train a world model (LeWM)](lewm.md) trains stable-worldmodel's LeWM on PushT frames. [`examples/`](https://github.com/galilai-group/stable-envs/tree/main/examples) has full scripts for action sequences, batched stepping, domain randomization and rendering.

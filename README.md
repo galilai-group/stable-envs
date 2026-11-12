@@ -65,6 +65,7 @@ The [Quickstart](https://galilai-group.github.io/stable-envs/quickstart/) covers
 ## Examples
 
 - [`examples/`](https://github.com/galilai-group/stable-envs/blob/main/examples/README.md): short scripts for rendering, batching, action sequences and domain randomization.
+- [`examples/lewm/`](https://github.com/galilai-group/stable-envs/blob/main/examples/lewm/README.md): train stable-worldmodel's LeWM world model on PushT frames, as its own uv project.
 
 ## Documentation
 

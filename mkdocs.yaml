@@ -135,6 +135,7 @@ nav:
       - Store states, render later: tutorials/store-and-render.md
       - Randomize appearance and physics: tutorials/variation.md
       - Write your own environment: tutorials/custom-env.md
+      - Train a world model (LeWM): tutorials/lewm.md
   - Performance tuning: performance-tuning.md
   - CLI: api/cli.md
   - API:

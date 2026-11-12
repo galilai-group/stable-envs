@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 EXAMPLES = ROOT / "examples"
 
 #: Directories under ``examples/`` that are outputs or vendored, not scripts to check.
-SKIP_DIRS = {"results", "media", "logs", "tables", "figures", "config", "__pycache__", ".hydra"}
+SKIP_DIRS = {"results", "media", "logs", "tables", "figures", "config", "__pycache__", ".hydra", ".venv"}
 
 
 def _scripts() -> list[Path]:
@@ -106,6 +106,7 @@ SMOKE = {
     ),
     "domain_randomization.py": ("CartPole", ["--num-envs", "4", "--device", "cpu", "--reps", "1"]),
     "gallery.py": ("CartPole", ["--envs", "CartPole", "--num-envs", "2", "--steps", "2", "--device", "cpu"]),
+    "lewm/train_lewm.py": ("PushT", ["--num-envs", "4", "--steps", "8", "--size", "64", "--iters", "2"]),
     "render.py": ("CartPole", ["--env", "CartPole", "--num-envs", "2", "--device", "cpu"]),
 }
 
