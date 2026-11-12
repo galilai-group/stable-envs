@@ -217,6 +217,11 @@ All notable changes to this project are listed here. The format follows
   to 0.9 times). The mean frame MSE against OGBench is 1.3 (Cube) and 3.0 (Scene) on the 0-255 scale. `backend="opengl"` draws the source's frames. CUDA frames do not change.
   A CPU batch with one state for each OpenGL worker (8 by default) draws in the workers. Before, a batch
   needed 16 states.
+- Classic control CPU frames are faster at small batches. The frames do not change. A step with an action
+  sequence keeps the render rows of each step and draws all the frames in one render call. The frames go
+  into memory that the env uses again when no tensor holds the frames of an earlier step. Torch uses one
+  thread during the Numba draw, so idle Torch threads do not take CPU time from the Numba threads. The
+  Numba renderer also clips the polygon edges in Numba.
 - `OGBCube` and `OGBScene` use the OGBench cube size. The default `cube.size` is now 0.02, as in OGBench.
   Before, the default was the stable-worldmodel value `float32(0.02)`, which compiles to
   0.019999999552965164. That size changed the cube mass and inertia, so contacts moved the physics away
@@ -421,6 +426,9 @@ All notable changes to this project are listed here. The format follows
 
 ### Fixed
 
+- Classic control `render` of fewer than 8 rows with a per-environment appearance draws the frames. Before,
+  it raised `ValueError`. The check for the source appearance compares with the defaults of the variation
+  space.
 - DMCFingerTurnHard draws the target sphere and the tip site by default, as dm_control's `finger-turn_hard`
   does. `visibility.target` now defaults to 1, the same as DMCFingerTurnEasy. Set it to 0 for
   stable-worldmodel's default, which hides both sites.

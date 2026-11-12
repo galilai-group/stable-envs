@@ -48,6 +48,17 @@ def edge_table(vx: torch.Tensor, vy: torch.Tensor, H: int, W: int) -> torch.Tens
     Return (M, 4, EG_W) int32 entries for the four directed edges.
     """
     M = vx.shape[0]
+    if vx.device.type == "cpu":
+        from .. import cpu_raster
+
+        if cpu_raster.available():
+            from ..cpu_raster._common import edge_table_rows
+
+            out = torch.empty((M, 4, EG_W), dtype=torch.int32)
+            edge_table_rows(
+                vx.to(torch.int64).contiguous().numpy(), vy.to(torch.int64).contiguous().numpy(), H, W, out.numpy()
+            )
+            return out
     nx, ny = vx.roll(-1, 1), vy.roll(-1, 1)
     a, b, c, d = (t.reshape(-1) for t in (vx, vy, nx, ny))
     (draw, x1, y1, x2, y2, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major, E, lo) = G.edge_geometry(a, b, c, d, W, H)

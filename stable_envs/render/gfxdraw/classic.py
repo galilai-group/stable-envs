@@ -77,7 +77,7 @@ class Ops:
 
     def __init__(self, B, H, W, device):
         self.B, self.H, self.W, self.device = B, H, W, device
-        self.meta: list[torch.Tensor] = []
+        self.meta: list = []
         self.verts: list[torch.Tensor] = []
         self.bg = None
         self.plate = None
@@ -87,6 +87,9 @@ class Ops:
         self.discs = None
 
     def _row(self, op, color, x0, y0, x1, y1, a=0, b=0, c=0, d=0):
+        if torch.device(self.device).type == "cpu":
+            self._row_host(op, color, x0, y0, x1, y1, a, b, c, d)
+            return
         B, one = self.B, torch.ones(self.B, dtype=torch.int32, device=self.device)
         col = G.to_u8(color).to(torch.int32)
 
@@ -114,6 +117,26 @@ class Ops:
                 -1,
             ).to(torch.int32)
         )
+
+    def _row_host(self, op, color, x0, y0, x1, y1, a, b, c, d):
+        """Build one record row in NumPy with the int32 arithmetic of the Torch row."""
+        B, H, W = self.B, self.H, self.W
+
+        def f(v):
+            return v.to(torch.int32).numpy().reshape(B) if torch.is_tensor(v) else np.int32(int(v))
+
+        m = np.empty((B, CM_W), np.int32)
+        m[:, CM_OP] = op
+        m[:, CM_R : CM_B + 1] = G.to_u8(color).to(torch.int32).numpy().reshape(-1, 3)
+        m[:, CM_X0] = np.clip(f(x0), 0, W - 1)
+        m[:, CM_Y0] = np.clip(np.int32(H - 1) - f(y1), 0, H - 1)
+        m[:, CM_X1] = np.clip(f(x1), 0, W - 1)
+        m[:, CM_Y1] = np.clip(np.int32(H - 1) - f(y0), 0, H - 1)
+        m[:, CM_A] = f(a)
+        m[:, CM_B2] = f(b)
+        m[:, CM_C] = f(c)
+        m[:, CM_D] = f(d)
+        self.meta.append(m)
 
     def polygon(self, verts, color):
         """Add a triangle or quad: antialiased fringe followed by opaque scanline fill."""
@@ -156,7 +179,10 @@ class Ops:
         self._row(OP_BLIT, color, origin, origin, origin + win - 1, origin + win - 1, a=flip, b=n, c=origin, d=win)
 
     def finish(self):
-        self.meta_t = torch.stack(self.meta, 1).contiguous()  # (B,P,CM_W)
+        if self.meta and isinstance(self.meta[0], np.ndarray):
+            self.meta_t = torch.from_numpy(np.stack(self.meta, 1))  # (B,P,CM_W)
+        else:
+            self.meta_t = torch.stack(self.meta, 1).contiguous()
         self.vert_t = (
             torch.stack(self.verts, 1).to(torch.int32).contiguous()
             if self.verts

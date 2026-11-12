@@ -213,12 +213,15 @@ class _Classic(Env):
             raise ValueError(f"{type(self).__name__}: backend='source' renders on CPU only")
         small = backend == "auto" and n < _NUMBA_MIN_ROWS and self._reference_draws(sty)
         if not small and self._use_numba(backend):
+            from ..._core.stepping import _threads
             from ...render.cpu_raster import classic as N
 
             geo = self._varied_geometry(sty, own=style is None and not variation)
             extra = () if geo is None else (geo,)
-            ops = self._ops(s, sty, *extra).finish()
-            img = N.render_classic_cpu(ops, out=o)
+            # Numba draws the frames in its own threads; idle Torch threads that spin beside them slow both.
+            with _threads(1):
+                ops = self._ops(s, sty, *extra).finish()
+                img = N.render_classic_cpu(ops, out=o)
             return img.view(*lead, H, W, 3) if lead else img
         if self.device.type == "cpu" and not self._use_fused():
             from ..._execution import render_pool
@@ -260,6 +263,20 @@ class _Classic(Env):
             img = cv.rgb(o)
         return img.view(*lead, H, W, 3) if lead else img
 
+    def _render_frame_rows(self, rows: torch.Tensor) -> torch.Tensor:
+        """Draw (B, F, state_dim) rows of the live lanes to (B, F, H, W, 3) frames in one render call."""
+        from ..._core.stepping import _padded_buffer
+
+        b, f = rows.shape[:2]
+        H, W = self.native
+        # Host frames reuse the memory of a previous step's frames once no tensor uses it.
+        spares = self.__dict__.setdefault("_frame_buffers", {})
+        out = _padded_buffer(spares, "frames", rows.new_empty(0, dtype=torch.uint8), (b, f, H, W, 3))
+        style = self._style
+        if f == 1 or style.shared:
+            return self._render(rows, out=out)
+        return self._render(rows, style=style.values.repeat_interleave(f, 0), out=out)
+
     @property
     def frame_shape(self) -> tuple[int, int]:
         """Return native (H, W); size denotes width and the canvas need not be square."""
@@ -295,7 +312,9 @@ class _Classic(Env):
         if not self._has_pygame:
             return False
         if self._reference_style is None:
-            self._reference_style = self.resolve_style(None, None, batch=1).values
+            # The appearance the source draws: the defaults of a new variation space, not the env's current rows.
+            fresh = torch.as_tensor(self.make_variation_space().pack(), dtype=torch.float32, device=self.device)
+            self._reference_style = fresh.reshape(1, -1)
         return bool((sty.values == self._reference_style).all())
 
     def _use_numba(self, backend: str) -> bool:

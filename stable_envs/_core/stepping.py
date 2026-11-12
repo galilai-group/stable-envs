@@ -222,6 +222,8 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
     # Frames drawn from the live lanes, here or in pipeline workers, need no State snapshot.
     pipeline_frames = pipeline is not None and getattr(pipeline, "live_frames", False)
     draws_live = render_live is not None and (pipeline is None or pipeline_frames)
+    # Families whose frames depend only on packed render rows keep the rows and draw every frame in one call.
+    draw_rows = getattr(env, "_render_frame_rows", None) if pipeline is None and render_live is None else None
     pending = False
 
     def submit(t, mask, all_active):
@@ -266,7 +268,9 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
             history.append(_task_outputs(result, active, all_active=all_active, owned=outputs_owned, shared=shared))
             if t in state_times:
                 saved_states[t] = live_state
-            if t in frame_times:
+            if t in frame_times and draw_rows is not None:
+                saved_frames[t] = env._pack_render_state(live_state)
+            elif t in frame_times:
                 with _threads(render_threads or _threads_outside_steps()):
                     if live_frame is None and pipeline_frames:
                         # Workers copied the leaves on receipt; the next step is already running.
@@ -298,11 +302,15 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
         )
         out["state_valid"] = _columns(valid, state_indices)
     if frame_indices is not None:
-        out["frames"] = (
-            torch.stack([saved_frames[t].to(env.device) for t in frame_indices], dim=1)
-            if frame_indices
-            else torch.empty((env.num_envs, 0, *env.frame_spec.shape), dtype=env.frame_spec.dtype, device=env.device)
-        )
+        if not frame_indices:
+            out["frames"] = torch.empty(
+                (env.num_envs, 0, *env.frame_spec.shape), dtype=env.frame_spec.dtype, device=env.device
+            )
+        elif draw_rows is not None:
+            with _threads(_threads_outside_steps()):
+                out["frames"] = draw_rows(torch.stack([saved_frames[t] for t in frame_indices], dim=1))
+        else:
+            out["frames"] = torch.stack([saved_frames[t].to(env.device) for t in frame_indices], dim=1)
         out["frame_valid"] = _columns(valid, frame_indices)
     if not host:
         return build_tensordict(out, [env.num_envs], env.device)

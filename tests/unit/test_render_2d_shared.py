@@ -97,3 +97,16 @@ def test_every_branch_of_the_edge_law_is_actually_reached(seed):
     assert {GF.K_VERT, GF.K_HORIZ, GF.K_GEN, GF.K_GEN + 4} <= kinds, kinds
     drawn = tab[:, GF.EG_DRAW]
     assert int((drawn != 0).sum()) and int((drawn == 0).sum()), "clip never fired both ways"
+
+
+@pytest.mark.parametrize("spread", [3, 40, 2000])
+def test_the_numba_edge_table_equals_the_torch_edge_table(spread, monkeypatch):
+    """On CPU, ``edge_table`` fills its rows with Numba; every column equals the Torch table."""
+    from stable_envs.render import cpu_raster
+
+    if not cpu_raster.available():
+        pytest.skip("numba is not installed")
+    vx, vy, H, W = _random_quads(spread, n=4000, H=400, W=600, spread=spread)
+    fast = GF.edge_table(vx, vy, H, W)
+    monkeypatch.setitem(cpu_raster._STATE, "ok", False)
+    assert torch.equal(fast, GF.edge_table(vx, vy, H, W))

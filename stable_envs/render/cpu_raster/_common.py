@@ -123,3 +123,93 @@ def fill_polygon(img, v, nv, H, W, r, g, b):
             xb = min(round16(xhi - 1), W - 1)
             for x in range(xa, xb + 1):
                 put(img, H - 1 - Y, x, r, g, b)
+
+
+@njit(cache=True)
+def _outcode(x, y, W, H):
+    c = 1 if x < 0 else (2 if x > W - 1 else 0)
+    return c | (8 if y < 0 else (4 if y > H - 1 else 0))
+
+
+@njit(cache=True)
+def edge_table_rows(vx, vy, H, W, out):
+    """Fill ``out`` (M, 4, 16) with the clipped Wu-edge rows of ``gfxdraw.fused.edge_table`` for (M, 4) quads.
+
+    The clip uses the float32 slope arithmetic of ``gfxdraw.clip_line`` with its six-iteration bound.
+    """
+    for q in range(vx.shape[0]):
+        for e in range(4):
+            x1 = vx[q, e]
+            y1 = vy[q, e]
+            x2 = vx[q, (e + 1) % 4]
+            y2 = vy[q, (e + 1) % 4]
+            draw = 0
+            done = False
+            for _ in range(6):
+                if done:
+                    break
+                c1 = _outcode(x1, y1, W, H)
+                c2 = _outcode(x2, y2, W, H)
+                if (c1 | c2) == 0:
+                    draw = 1
+                    done = True
+                    break
+                if (c1 & c2) != 0:
+                    done = True
+                    break
+                if c1 == 0:
+                    x1, x2 = x2, x1
+                    y1, y2 = y2, y1
+                    c1 = c2
+                dxne = x2 != x1
+                if dxne:
+                    m = np.float32(y2 - y1) / np.float32(x2 - x1)
+                else:
+                    m = np.float32(1.0)
+                msafe = np.float32(1.0) if m == 0 else m
+                if (c1 & 1) != 0:
+                    y1 = y1 + np.int64(np.trunc(np.float32(0 - x1) * m))
+                    x1 = 0
+                elif (c1 & 2) != 0:
+                    y1 = y1 + np.int64(np.trunc(np.float32(W - 1 - x1) * m))
+                    x1 = W - 1
+                elif (c1 & 4) != 0:
+                    if dxne:
+                        x1 = x1 + np.int64(np.trunc(np.float32(H - 1 - y1) / msafe))
+                    y1 = H - 1
+                elif (c1 & 8) != 0:
+                    if dxne:
+                        x1 = x1 + np.int64(np.trunc(np.float32(0 - y1) / msafe))
+                    y1 = 0
+            if y1 > y2:
+                xx0, yy0, dxs, dy = x2, y2, x1 - x2, y1 - y2
+            else:
+                xx0, yy0, dxs, dy = x1, y1, x2 - x1, y2 - y1
+            xdir = 1 if dxs >= 0 else -1
+            dx = abs(dxs)
+            ymaj = dy > dx
+            major = dy if ymaj else dx
+            minor = dx if ymaj else dy
+            if dx == 0:
+                kind = 1
+            elif dy == 0:
+                kind = 2
+            else:
+                kind = 4 if ymaj else 0
+            r = out[q, e]
+            r[0] = draw
+            r[1] = x1
+            r[2] = y1
+            r[3] = xx0
+            r[4] = yy0
+            r[5] = dx
+            r[6] = dy
+            r[7] = xdir
+            r[8] = kind
+            r[9] = major
+            r[10] = (minor << 16) // max(major, 1)
+            r[11] = min(xx0, xx0 + xdir * dx)
+            r[12] = min(x1, x2) - 1
+            r[13] = min(y1, y2) - 1
+            r[14] = max(x1, x2) + 1
+            r[15] = max(y1, y2) + 1
