@@ -234,6 +234,7 @@ def make_source(config: dict, size: int):
     env.max_episode_steps = math.inf if config["max_episode_steps"] is None else int(config["max_episode_steps"])
     env._se_config = repr(sorted(config.items()))
     set_room(env)
+    _COMPILED[0] = env._se_room  # the constructor's reset compiled list 1 with this room
     return env
 
 

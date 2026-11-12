@@ -599,6 +599,8 @@ All notable changes to this project are listed here. The format follows
 
 ### Fixed
 
+- Miniworld: the first `render` in a process compiles the room display list once. The render env records the
+  room that its constructor compiled, so its first frame does not compile the same room again.
 - `WarpBatch` builds its CUDA graphs when MuJoCo Warp frees temporary arrays at other points in the captured
   call than in the first call. MuJoCo Warp frees some of them only when the garbage collector runs, and the
   capture then raised `RuntimeError` ("requested temporary memory that its first call did not"), for example for
