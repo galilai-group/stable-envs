@@ -247,15 +247,11 @@ def draws_on_host(backend, device, supersample):
 def host_backend(backend, device):
     """The host backend that ``backend`` draws with on ``device``: opengl, opengl_fast or numba.
 
-    ``auto`` draws with numba on CPU when numba imports, else with opengl_fast; on CUDA it draws with opengl.
+    ``auto`` draws with opengl_fast on CPU and with opengl on CUDA.
     """
     if backend in HOST:
         return backend
-    if torch.device(device).type == "cpu":
-        from ...render import cpu_raster
-
-        return "numba" if cpu_raster.available() else "opengl_fast"
-    return "opengl"
+    return "opengl_fast" if torch.device(device).type == "cpu" else "opengl"
 
 
 def _supersample(state):

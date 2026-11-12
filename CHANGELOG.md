@@ -150,15 +150,14 @@ All notable changes to this project are listed here. The format follows
   takes an `.npz` full State with one array per field; `--state-key` and packed-row files are removed.
 - `benchmarks/dmc_mjwarp.py` uses only the public API. It no longer measures raw physics or records simulator
   internals (worker PIDs, MuJoCo thread count, model options, control substeps).
-- `OGBCube` and `OGBScene`: on CPU, `backend="auto"` draws frames with a compiled Numba rasterizer that follows
-  MuJoCo's OpenGL renderer (`backend="numba"`): the meshes and primitive tessellations, per-vertex lighting, the
-  4096 shadow map of the scene light with MuJoCo's depth offset, the floor texture with mipmaps, the skybox, the
-  see-through arm and 4 samples per pixel. The arm meshes have one vertex per 2 mm grid cell. The static geoms,
-  their shadows and the skybox are drawn once per configuration. Mean frame MSE against OGBench (0-255 scale,
-  256 States): @MSE@. Offline CPU frames on 8 cores: @SPEED@. `backend="opengl_fast"` and `backend="opengl"`
-  stay selectable; without Numba, `backend="auto"` uses `opengl_fast`. `stable_envs/render/mujoco_scene.py`
-  reads the drawn geoms, materials, textures, lights, camera and shadow settings of a MuJoCo model for
-  rasterizers that follow MuJoCo's OpenGL renderer.
+- `OGBCube` and `OGBScene`: `backend="numba"` draws CPU frames with a compiled Numba rasterizer that follows
+  MuJoCo's OpenGL renderer: the meshes and primitive tessellations, per-vertex lighting, the 4096 shadow map of
+  the scene light with MuJoCo's depth offset, the floor texture with mipmaps, the skybox, the see-through arm and
+  4 samples per pixel. The arm meshes have one vertex per 2 mm grid cell. The static geoms, their shadows and the
+  skybox are drawn once per configuration. Mean frame MSE against `backend="opengl"` on 8 States (0-255 scale):
+  about 0.6 (Cube) and 1.3 (Scene). `backend="auto"` keeps `opengl_fast` on CPU.
+  `stable_envs/render/mujoco_scene.py` reads the drawn geoms, materials, textures, lights, camera and shadow
+  settings of a MuJoCo model for rasterizers that follow MuJoCo's OpenGL renderer.
 - DM Control, `OGBCube` and `OGBScene`: `render(state)` checks only the State leaves that the frame reads.
   DM Control gives `Env.render` the drawn fields: `qpos`, the episode model entries of the task (Reacher:
   `task.target_pos`) and the physics leaves that move pixels, such as the Ball-in-Cup gravity and ball size, the
