@@ -30,7 +30,7 @@ from .simulation import render_state as pixels
 from .simulation.compatibility import MODEL_VALUES, CompatibleCube, CompatibleScene
 
 _LOCK = threading.RLock()
-_RIGS = BoundedCache(64, name="ogbench.numba_rig")
+_RIGS = BoundedCache(32, name="ogbench.numba_rig", on_evict=lambda rig: rig.env.close())
 _SHADOWS = BoundedCache(4, name="ogbench.numba_shadow")
 _SX = np.array([0.375, 0.875, 0.125, 0.625])
 _SY = np.array([0.875, 0.625, 0.375, 0.125])
@@ -39,7 +39,7 @@ DEPTH_BITS = float(2**24 - 1)
 OFFSET_FACTOR, OFFSET_UNITS = -1.5, -4.0
 CELL = 16
 # Arm meshes are drawn, and cast shadows, simplified on grids of these many metres (0 keeps them exact).
-ARM_CELL = (0.0, 0.0)
+ARM_CELL = (0.002, 0.002)
 
 
 def _key(family, columns, index, cell):
@@ -371,7 +371,8 @@ def draw(family, columns, images, cell=None):
     """Draw validated host RenderState ``columns`` into ``(B, size, size, 3)`` uint8 ``images`` in place."""
     from ...render import cpu_raster
 
-    cpu_raster.available()
+    if not cpu_raster.available():
+        raise ImportError("Cube/Scene backend='numba' requires numba")
     cell = ARM_CELL if cell is None else cell
     size, ss = (int(columns["renderer", k][0, 0]) for k in ("size", "supersample"))
     res = size * ss
@@ -506,10 +507,8 @@ def _light_corner(k, ctx, cc, ca, cl, done):
     wx = cam[0] + ex[k] * cam[3] + ey[k] * cam[6] + ew[k] * cam[9]
     wy = cam[1] + ex[k] * cam[4] + ey[k] * cam[7] + ew[k] * cam[10]
     wz = cam[2] + ex[k] * cam[5] + ey[k] * cam[8] + ew[k] * cam[11]
-    if blend:
-        _shade(wx, wy, wz, nx, ny, nz, cam, r, g, bb, spec, lut, emis, ambient, lights, 2, cc, k)
-    else:
-        _shade(wx, wy, wz, nx, ny, nz, cam, r, g, bb, spec, lut, emis, ambient, lights, 0, cc, k)
+    _shade(wx, wy, wz, nx, ny, nz, cam, r, g, bb, spec, lut, emis, ambient, lights, 2 if blend else 0, cc, k)
+    if not blend:
         _shade(wx, wy, wz, nx, ny, nz, cam, r, g, bb, spec, lut, emis, ambient, lights, 1, ca, k)
         for j in range(3):
             cl[k, j] = slook[j, 0] * wx + slook[j, 1] * wy + slook[j, 2] * wz + slook[j, 3]
@@ -517,7 +516,7 @@ def _light_corner(k, ctx, cc, ca, cl, done):
     done[k] = True
 
 
-@njit(cache=True, inline="always", error_model="numpy", fastmath=True)
+@njit(cache=True, error_model="numpy", fastmath=True)
 def _bilinear(data, off, w, h, u, v, wrap, out):
     """Bilinear lookup at texel coordinates ``(u, v)`` (texel centres at +0.5); repeat or clamp to edge."""
     x = u - 0.5
@@ -538,7 +537,7 @@ def _bilinear(data, off, w, h, u, v, wrap, out):
         out[ch] = top * (1 - fy) + bot * fy
 
 
-@njit(cache=True, inline="always", error_model="numpy", fastmath=True)
+@njit(cache=True, error_model="numpy", fastmath=True)
 def _trilinear(data, levels, first, nlev, u, v, rho, wrap, out, tmp):
     """Trilinear (``LINEAR_MIPMAP_LINEAR``) lookup at level-0 normalized ``(u, v)``; ``rho`` is the level-0 texel
     footprint of one pixel."""
@@ -560,7 +559,7 @@ def _trilinear(data, levels, first, nlev, u, v, rho, wrap, out, tmp):
             out[ch] = out[ch] * (1 - f) + tmp[ch] * f
 
 
-@njit(cache=True, inline="always", error_model="numpy", fastmath=True)
+@njit(cache=True, error_model="numpy", fastmath=True)
 def _cube_face(dx, dy, dz):
     """GL cube map face and normalized face coordinates of a direction."""
     ax, ay, az = abs(dx), abs(dy), abs(dz)
@@ -578,7 +577,7 @@ def _cube_face(dx, dy, dz):
     return f, (sc / ma + 1.0) * 0.5, (tc / ma + 1.0) * 0.5
 
 
-@njit(cache=True, inline="always", error_model="numpy", fastmath=True)
+@njit(cache=True, error_model="numpy", fastmath=True)
 def _cube_coords(f, dx, dy, dz):
     """Normalized coordinates of a direction on cube face ``f`` (for derivatives)."""
     if f == 0:
@@ -598,7 +597,7 @@ def _cube_coords(f, dx, dy, dz):
     return (sc / ma + 1.0) * 0.5, (tc / ma + 1.0) * 0.5
 
 
-@njit(cache=True, inline="always", error_model="numpy", fastmath=True)
+@njit(cache=True, error_model="numpy", fastmath=True)
 def _sample(tex, slot, mode, t0, t1, t2, dx0, dx1, dx2, dy0, dy1, dy2, out, tmp):
     """Texture colour of texture coordinate ``t`` whose neighbours one pixel right and down are ``dx`` and ``dy``."""
     data, levels, info = tex
@@ -842,7 +841,7 @@ def _tri(
 def _geom(gi, geo, tex, gp, gm, col4, cam, lights, ambient, tanh, near, slook, smap, res, y0b, y1b, buf, blend, work):
     """Draw geom ``gi``; its camera-space corners and lit colours stay in ``work`` for a second draw in the frame."""
     cpos, cnor, ctex, tris, cstarts, starts, rbound, material, powlut = geo
-    ex, ey, ew, sx, sy, cc, ca, cl, done, xf, tmp = work
+    ex, ey, ew, sx, sy, cc, ca, cl, done, xf, tmp, surv, nsurv = work
     px, py, pz = gp[0], gp[1], gp[2]
     cx, cy, cz = cam[0], cam[1], cam[2]
     rx, ry, rz = cam[3], cam[4], cam[5]
@@ -892,38 +891,52 @@ def _geom(gi, geo, tex, gp, gm, col4, cam, lights, ambient, tanh, near, slook, s
                 sx[j] = half + e * ih
                 sy[j] = half - f * ih
             done[j] = False
-    for t in range(starts[gi], starts[gi + 1]):
+    t0 = starts[gi]
+    # A second draw in the frame visits only the triangles the first draw passed to the rasterizer.
+    first = nsurv[gi] < 0
+    count = starts[gi + 1] - t0 if first else nsurv[gi]
+    ns = 0
+    for u in range(count):
+        if first:
+            t = t0 + u
+        else:
+            t = surv[t0 + u]
         k0 = tris[t, 0]
         k1 = tris[t, 1]
         k2 = tris[t, 2]
-        # Triangles that reach the near plane are not drawn; no geom of these scenes comes that close.
-        if ew[k0] < near or ew[k1] < near or ew[k2] < near:
-            continue
         x0, y0, x1, y1, x2, y2 = sx[k0], sy[k0], sx[k1], sy[k1], sx[k2], sy[k2]
-        area = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0)
-        # Counter-clockwise in GL window coordinates (y up) is clockwise here.
-        if area >= 0.0:
-            continue
-        fy0 = min(y0, min(y1, y2))
-        fy1 = max(y0, max(y1, y2))
-        if fy1 < y0b or fy0 >= y1b:
-            continue
-        fx0 = min(x0, min(x1, x2))
-        fx1 = max(x0, max(x1, x2))
-        if fx1 < 0 or fx0 >= res:
-            continue
-        if math.floor(fx1 * 4.0 - 0.5) < math.ceil(fx0 * 4.0 - 0.5) or math.floor(fy1 * 4.0 - 0.5) < math.ceil(
-            fy0 * 4.0 - 0.5
-        ):
-            continue
+        if first:
+            # Triangles that reach the near plane are not drawn; no geom of these scenes comes that close.
+            if ew[k0] < near or ew[k1] < near or ew[k2] < near:
+                continue
+            area = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0)
+            # Counter-clockwise in GL window coordinates (y up) is clockwise here.
+            if area >= 0.0:
+                continue
+            fy0 = min(y0, min(y1, y2))
+            fy1 = max(y0, max(y1, y2))
+            if fy1 < y0b or fy0 >= y1b:
+                continue
+            fx0 = min(x0, min(x1, x2))
+            fx1 = max(x0, max(x1, x2))
+            if fx1 < 0 or fx0 >= res:
+                continue
+            if math.floor(fx1 * 4.0 - 0.5) < math.ceil(fx0 * 4.0 - 0.5) or math.floor(fy1 * 4.0 - 0.5) < math.ceil(
+                fy0 * 4.0 - 0.5
+            ):
+                continue
+            surv[t0 + ns] = t
+            ns += 1
         _tri(
             x0, y0, 1.0 / ew[k0], x1, y1, 1.0 / ew[k1], x2, y2, 1.0 / ew[k2], k0, k1, k2, ctx, cc, ca, cl, done, ctex,
             texmode, texslot, tex, smap, res, y0b, y1b, buf, blend, tmp,
         )
+    if first:
+        nsurv[gi] = ns
 
 
 @njit(cache=True, error_model="numpy", fastmath=True)
-def _work_nb(ncorner, ngeom):
+def _work_nb(ncorner, ngeom, ntri):
     return (
         np.empty(ncorner),
         np.empty(ncorner),
@@ -936,6 +949,8 @@ def _work_nb(ncorner, ngeom):
         np.empty(ncorner, np.bool_),
         np.zeros(ngeom, np.bool_),
         np.empty(6),
+        np.empty(ntri, np.int32),
+        np.full(ngeom, -1, np.int64),
     )
 
 
@@ -943,7 +958,7 @@ def _work_nb(ncorner, ngeom):
 def _plate(geo, tex, geoms, gpos, gmat, rgba, cam, lights, ambient, tanh, near, res, slook, smap, buf):
     """Draw the static opaque ``geoms`` over the whole frame into the sample buffers."""
     cstarts = geo[4]
-    work = _work_nb(cstarts[-1], cstarts.shape[0] - 1)
+    work = _work_nb(cstarts[-1], cstarts.shape[0] - 1, geo[5][-1])
     for gi in geoms:
         _geom(gi, geo, tex, gpos[gi], gmat[gi], rgba[gi], cam, lights, ambient, tanh, near, slook, smap, res, 0, res, buf, False, work)
 
@@ -1068,7 +1083,7 @@ def _render(geo, tex, sets, gpos, gmat, rgba, cam, lights, ambient, tanh, near, 
             np.empty(cells * cells + 1, np.int32),
             np.empty(nsamp, np.int32),
         )
-        work = _work_nb(cstarts[-1], G)
+        work = _work_nb(cstarts[-1], G, geo[5][-1])
         nc = cast[2][-1]
         lwork = (np.empty(nc), np.empty(nc), np.empty(nc))
         for job in range(task, jobs, nthr):
@@ -1083,6 +1098,7 @@ def _frame(job, bands, per, size, ss, res, geo, tex, sets, gpos, gmat, rgba, cam
     pdepth, pcol, plit, pkind, pkey, prr, sky = plate
     depth, col, add, kind, key, rr, mv = buf
     xf = work[9]
+    nsurv = work[12]
     b = job // bands
     band = job % bands
     o0 = band * per
@@ -1101,6 +1117,7 @@ def _frame(job, bands, per, size, ss, res, geo, tex, sets, gpos, gmat, rgba, cam
         col[i] = plit[3 * s0 + i]
     for gi in range(xf.shape[0]):
         xf[gi] = False
+        nsurv[gi] = -1
     bufn = (depth, col, add, kind, key, rr, mv)
     for gi in movers:
         _geom(gi, geo, tex, gpos[b, gi], gmat[b, gi], rgba[b, gi], cam, lights, ambient, tanh, near, slook, smap, res,

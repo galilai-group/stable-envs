@@ -152,6 +152,7 @@ extras = ["ogbench", "ogbench-manipulation"]
 groups = ["pin-ogbench"]
 paths = [
   "stable_envs/envs/ogbench/**",
+  "stable_envs/render/mujoco_scene.py",
   "stable_envs/render/mjwarp/**",
   "stable_envs/render/raycast3d*",
   "stable_envs/render/primitives.py",
