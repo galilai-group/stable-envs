@@ -96,11 +96,13 @@ class LaneBatch:
         if self._pool is None or len(ids) < 2:
             work(self._datas[0], ids)
             return
-        chunks = [c for c in np.array_split(ids, self._threads) if len(c)]
-        # The calling thread takes the last chunk instead of waiting idle.
-        futures = [self._pool.submit(work, d, c) for d, c in zip(self._datas, chunks[:-1])]
+        # The threads take lanes from one queue, so a thread whose lanes step faster takes more of them. The
+        # calling thread takes lanes too instead of waiting idle.
+        lanes = iter(ids.tolist())
+        count = min(self._threads, len(ids))
+        futures = [self._pool.submit(work, d, lanes) for d in self._datas[: count - 1]]
         try:
-            work(self._datas[len(chunks) - 1], chunks[-1])
+            work(self._datas[count - 1], lanes)
         finally:
             for future in futures:
                 future.result()

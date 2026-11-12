@@ -152,6 +152,11 @@ All notable changes to this project are listed here. The format follows
   rendered frames without a copy. Frames and State do not change. Public CPU steps/s with frames and a reset
   every 64 steps, 8 cores of an AMD EPYC 7713: 13,440 at 256 environments (9,015 before) and 15,034 at 1024
   (11,167 before); with one of the 8 cores busy, 5,761 at 256 (2,808 before) and 8,555 at 1024 (4,407 before).
+- Fetch CPU batch on MuJoCo 3.11: the threads take environments from one shared queue instead of an equal
+  share each, so a thread that other processes delay steps fewer environments. Public CPU steps/s of
+  `FetchPush` with a reset every 64 steps, 8 cores: +4% at 8, +86% at 64 and +29% at 256 environments on one
+  host (AMD EPYC 7K62), and +25%, +45% and +21% with a busy process on one of the 8 cores; equal on a second
+  host (Intel Xeon Gold 6240R). State and outputs do not change.
 - OGBench mazes on CPU: a step does its Torch operations on one thread, and the render draws batches of fewer
   than 256 frames on one thread when the scene has no tracking light. With 8 Torch threads, idle Torch threads
   kept the cores busy while the `mujoco.batch` threads waited, and the time of an AntMaze episode of 64 steps with

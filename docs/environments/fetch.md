@@ -58,8 +58,9 @@ frames = env.render()
 The CPU batch does the Gymnasium Robotics step for all environments in one call: the action scaling, the
 mocap target and the gripper controls on arrays, then `mj_step` with 20 substeps for every environment, then
 the reward and the 50-step time limit on arrays. MuJoCo runs in `mujoco.batch` when the installed MuJoCo has
-it. Otherwise each of up to 8 threads calls `mj_step` on its share of the environments. Resets draw the
-object and goal positions from the PCG64 stream of each environment, as Gymnasium Robotics does. State and
+it. Otherwise up to 8 threads call `mj_step`, and each thread takes the next environment from one shared queue
+when it is done with its last one. A thread that is slower than the others then steps fewer environments.
+Resets draw the object and goal positions from the PCG64 stream of each environment, as Gymnasium Robotics does. State and
 step outputs are equal, bit for bit, to those of Gymnasium Robotics on the same MuJoCo version. A CUDA env on
 the CPU batch returns its State on CUDA.
 
