@@ -946,6 +946,16 @@ ROLLOUT_MEDIAN_QPOS, ROLLOUT_MAX_QPOS, ROLLOUT_SUCCESS_FLIPS = 0.01, 0.25, 1
 ROLLOUT_QPOS_BOUNDS = {"FetchSlide*": (0.05, 2.5)}
 
 
+def _qpos(state):
+    """The generalized positions of a State: a top-level ``qpos``, the ``physics`` group, or the maze body parts."""
+    keys = set(state.keys(True, True))
+    for key in ("qpos", ("physics", "qpos")):
+        if key in keys:
+            return state[key]
+    parts = [("root", "position"), ("root", "orientation"), ("joints", "position")]
+    return torch.cat([state[k] for k in parts if k in keys], dim=-1)
+
+
 def _exact_backend(env) -> dict:
     """Construction arguments that put ``env``'s class on an exact physics backend."""
     approximate = getattr(env, "simulation_backend", None) in APPROXIMATE_BACKENDS
@@ -1040,7 +1050,7 @@ def test_an_approximate_backend_continues_a_restored_rollout(env):
             action = policy(t, state)
             oa, ob = a.step(action, frames=None), b.step(action, frames=None)
             state = oa["state"]
-            gaps.append((state["qpos"] - ob["state"]["qpos"]).abs().max(-1).values)
+            gaps.append((_qpos(state) - _qpos(ob["state"])).abs().max(-1).values)
         gaps = torch.stack(gaps).double()
         median_bound, max_bound = next(
             (b for pattern, b in ROLLOUT_QPOS_BOUNDS.items() if fnmatch.fnmatch(cls.__name__, pattern)),
