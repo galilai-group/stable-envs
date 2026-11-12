@@ -19,7 +19,13 @@ REQUIRED_EXTRAS = {
     "pusht-gpu",
 }
 EXPECTED_AUTHORS = ("Randall Balestriero", "Sami BuGhanem")
-REQUIRED_LICENSES = {"LICENSE", "THIRD_PARTY_NOTICES.md", "licenses/envX-APACHE-2.0.txt"}
+REQUIRED_LICENSES = {
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "licenses/envX-APACHE-2.0.txt",
+    "licenses/ms-human-700-APACHE-2.0.txt",
+    "licenses/Munk2D-MIT.txt",
+}
 
 
 def _package_sources(root: Path) -> set[str]:
