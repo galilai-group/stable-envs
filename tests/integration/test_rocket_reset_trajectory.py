@@ -29,7 +29,7 @@ def test_reset_frame_and_engine_follow_the_rendering_source(seed):
     from tests.helpers.reference.rocket_semantics import capture, differences
 
     source = Oracle(render_mode="rgb_array", render_resolution=(SIZE, SIZE))
-    ours = se.make("PyFlytRocketLanding", num_envs=1, size=SIZE)
+    ours = se.make("PyFlytRocketLanding", num_envs=1, size=SIZE, simulation_backend="pybullet")
     try:
         source.reset(seed=seed, options=OPTIONS)
         ours.reset(seed=seed, options=OPTIONS)

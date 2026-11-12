@@ -90,7 +90,7 @@ def rocket_reset_leaf_gate(seed=31, steps=40) -> dict:
     low = np.asarray([-1, -1, -1, 0, 0, -1, -1], np.float64)
     actions = np.random.default_rng(seed).uniform(low, 1.0, (steps, 3, 7))
     evidence = {"stable_env": "PyFlytRocketLanding", "leaves": sorted(ROCKET_START), "seed": seed, "steps": steps}
-    with se.make("PyFlytRocketLanding", num_envs=3, device="cpu") as env:
+    with se.make("PyFlytRocketLanding", num_envs=3, device="cpu", simulation_backend="pybullet") as env:
         # Explicit per-lane values; SWM reads only init values, so its lanes take them as defaults.
         ours = env.reset(seed=seed, options={"variation_values": ROCKET_START})
         lanes, default = _RocketLanes(ROCKET_START), _RocketLanes()

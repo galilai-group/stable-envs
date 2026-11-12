@@ -15,7 +15,14 @@ def test_reached_source_pixels_and_batch_partition(scenario):
     pytest.importorskip("nvdiffrast.torch")
     torch.set_num_threads(1)
     config = dict(render_mode="rgb_array", render_resolution=(96, 96))
-    with make("PyFlytRocketLanding", num_envs=2, device="cuda", size=96, simulator_config=config) as env:
+    with make(
+        "PyFlytRocketLanding",
+        num_envs=2,
+        device="cuda",
+        size=96,
+        simulator_config=config,
+        simulation_backend="pybullet",
+    ) as env:
         env.reset(seed=17)
         actions = np.zeros((2, 7), np.float32)
         count = 302
@@ -41,7 +48,9 @@ def test_noncurrent_cuda_device_and_context_restoration():
     torch.set_num_threads(1)
     config = dict(render_mode="rgb_array", render_resolution=(96, 96))
     with torch.cuda.device(0):
-        with make("PyFlytRocketLanding", device="cuda:1", size=96, simulator_config=config) as env:
+        with make(
+            "PyFlytRocketLanding", device="cuda:1", size=96, simulator_config=config, simulation_backend="pybullet"
+        ) as env:
             env.reset(seed=17)
             for _ in range(3):
                 env.step(np.array([[0.15, -0.1, 0.2, 1, 0.5, 0.1, -0.1]], np.float32), states=None, frames=None)

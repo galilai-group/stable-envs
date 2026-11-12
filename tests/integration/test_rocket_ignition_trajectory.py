@@ -30,8 +30,8 @@ def test_flame_colour_and_cpu_frames_follow_the_rendering_source():
     from tests.helpers.reference.rocket_semantics import RocketLandingEnv as Oracle
 
     source = Oracle(render_mode="rgb_array", render_resolution=(SIZE, SIZE))
-    ours = se.make("PyFlytRocketLanding", num_envs=1, size=SIZE)
-    restored = se.make("PyFlytRocketLanding", num_envs=1, size=SIZE)
+    ours = se.make("PyFlytRocketLanding", num_envs=1, size=SIZE, simulation_backend="pybullet")
+    restored = se.make("PyFlytRocketLanding", num_envs=1, size=SIZE, simulation_backend="pybullet")
     try:
         source.reset(seed=SEED)
         ours.reset(seed=SEED)

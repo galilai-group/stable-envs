@@ -38,7 +38,9 @@ def rocket_trace(
     config, options, prefixes = SCENARIOS[scenario]
     config = dict(config, render_mode="rgb_array", render_resolution=(96, 96))
     source = []
-    with se.make("PyFlytRocketLanding", num_envs=2, size=96, simulator_config=config) as reference:
+    with se.make(
+        "PyFlytRocketLanding", num_envs=2, size=96, simulator_config=config, simulation_backend="pybullet"
+    ) as reference:
         try:
             reference.reset(seed=17, options=options)
             for lane, prefix in enumerate(prefixes):

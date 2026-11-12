@@ -75,10 +75,12 @@ def test_replay_mismatch_in_one_worker_restores_no_lane():
 
 
 def test_public_env_with_workers_matches_local(monkeypatch):
-    local = se.make("PyFlytRocketLanding", num_envs=4, size=64, device="cpu", seed=17)
+    local = se.make("PyFlytRocketLanding", num_envs=4, size=64, device="cpu", seed=17, simulation_backend="pybullet")
     with monkeypatch.context() as patch:
         patch.setattr(execution, "process_count", lambda num_envs, cpus, **_: 2)
-        remote = se.make("PyFlytRocketLanding", num_envs=4, size=64, device="cpu", seed=17)
+        remote = se.make(
+            "PyFlytRocketLanding", num_envs=4, size=64, device="cpu", seed=17, simulation_backend="pybullet"
+        )
     try:
         assert isinstance(remote._simulator, RocketProcessAdapter)
         actions = torch.as_tensor(np.stack(_actions(4, 8), axis=1))
@@ -122,7 +124,9 @@ def test_large_batches_split_across_processes(monkeypatch):
 @pytest.mark.slow
 def test_a_batch_above_one_process_restores():
     batch = LANES_PER_PROCESS + 3
-    with se.make("PyFlytRocketLanding", num_envs=batch, size=32, device="cpu", seed=3) as env:
+    with se.make(
+        "PyFlytRocketLanding", num_envs=batch, size=32, device="cpu", seed=3, simulation_backend="pybullet"
+    ) as env:
         assert isinstance(env._simulator, RocketProcessAdapter) and len(env._simulator._processes) >= 2
         actions = torch.as_tensor(np.stack(_actions(batch, 2), axis=1))
         saved = env.get_state()
@@ -135,7 +139,15 @@ def test_a_batch_above_one_process_restores():
 def test_step_frames_match_state_render(monkeypatch, workers):
     with monkeypatch.context() as patch:
         patch.setattr(execution, "process_count", lambda num_envs, cpus, **_: workers)
-        env = se.make("PyFlytRocketLanding", num_envs=4, size=40, supersample=2, device="cpu", seed=3)
+        env = se.make(
+            "PyFlytRocketLanding",
+            num_envs=4,
+            size=40,
+            supersample=2,
+            device="cpu",
+            seed=3,
+            simulation_backend="pybullet",
+        )
     try:
         assert isinstance(env._simulator, RocketProcessAdapter) == bool(workers)
         env.set_variation({"rocket.body_color": np.array([10.0, 200.0, 30.0])})
@@ -161,7 +173,9 @@ def test_step_frames_match_state_render(monkeypatch, workers):
     reason="render workers run on Linux with at least 2 CPUs",
 )
 def test_state_render_in_render_workers_matches_in_process():
-    with se.make("PyFlytRocketLanding", num_envs=5, size=40, supersample=2, device="cpu", seed=3) as env:
+    with se.make(
+        "PyFlytRocketLanding", num_envs=5, size=40, supersample=2, device="cpu", seed=3, simulation_backend="pybullet"
+    ) as env:
         env.set_variation({"rocket.body_color": np.array([10.0, 200.0, 30.0])})
         env.reset(seed=11)
         out = env.step(torch.as_tensor(np.stack(_actions(5, 8), axis=1)), states=slice(None), frames=None)

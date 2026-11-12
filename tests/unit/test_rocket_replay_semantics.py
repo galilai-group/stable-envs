@@ -14,7 +14,10 @@ from tests.helpers.reference.semantics import assert_same_state
 @pytest.fixture
 def pair():
     torch.set_num_threads(1)
-    a, b = make("PyFlytRocketLanding", num_envs=2), make("PyFlytRocketLanding", num_envs=2, seed=42)
+    a, b = (
+        make("PyFlytRocketLanding", num_envs=2, simulation_backend="pybullet"),
+        make("PyFlytRocketLanding", num_envs=2, seed=42, simulation_backend="pybullet"),
+    )
     try:
         yield a, b
     finally:
@@ -103,7 +106,9 @@ def test_seeded_future_reset_and_fresh_entropy(pair):
 
 
 def test_cpu_render_supplied_state_is_exact_and_nonmutating():
-    env = make("PyFlytRocketLanding", num_envs=2, simulator_config={"render_mode": "rgb_array"})
+    env = make(
+        "PyFlytRocketLanding", num_envs=2, simulator_config={"render_mode": "rgb_array"}, simulation_backend="pybullet"
+    )
     try:
         state = env.get_state()
         pixels = env.render(state)
@@ -298,7 +303,7 @@ def _absent_rng(columns):
     ],
 )
 def test_batch_validation_accepts_what_row_validation_accepts(mutate):
-    with make("PyFlytRocketLanding", num_envs=3, seed=4) as env:
+    with make("PyFlytRocketLanding", num_envs=3, seed=4, simulation_backend="pybullet") as env:
         for i in range(6):
             env.step(np.array([[0.2, -0.3, 0.1, 1, 0.4, 0.1, -0.2]] * 3, dtype=np.float32 if i % 2 else np.float64))
         columns = {"/".join(k): v.numpy().copy() for k, v in env.get_state().items(True, True)}

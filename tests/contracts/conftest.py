@@ -200,6 +200,7 @@ def worlds(source_case, source_identity, request):
     kwargs = dict(num_envs=2, device=request.config.getoption("--contract-device"), size=64)
     if case.family == "rocket":
         kwargs["simulator_config"] = dict(render_mode="rgb_array", render_resolution=(64, 64))
+        kwargs["simulation_backend"] = "pybullet"
     with se.make(case.name, **kwargs) as first, se.make(case.name, **kwargs) as second:
         reference = BRIDGES[case.family](case, 2)
         try:
