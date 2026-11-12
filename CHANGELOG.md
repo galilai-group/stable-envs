@@ -150,6 +150,14 @@ All notable changes to this project are listed here. The format follows
   takes an `.npz` full State with one array per field; `--state-key` and packed-row files are removed.
 - `benchmarks/dmc_mjwarp.py` uses only the public API. It no longer measures raw physics or records simulator
   internals (worker PIDs, MuJoCo thread count, model options, control substeps).
+- Fetch, `OGBCube` and `OGBScene`: `backend="raster"` draws CPU and CUDA frames with one MuJoCo rasterizer,
+  `stable_envs/render/mujoco_raster.py`. It has a Numba CPU backend and a CUDA backend (nvdiffrast and Triton).
+  Both backends read the scene arrays of `mujoco_scene.pack` and light the vertices with the same formula. The
+  CPU backend clips triangles at the near plane, keeps a plate of the static geoms for each camera, light and
+  look, and draws Cube/Scene frames equal to `backend="numba"`. Fetch and Cube/Scene get `render_semantic`:
+  segmentation and planar depth in the model of the reference env. `mujoco_scene` refuses scene features that
+  were not compared with the OpenGL renderer of the installed MuJoCo version. `backend="auto"` is unchanged.
+
 - `OGBCube` and `OGBScene`: `backend="numba"` draws CPU frames with a compiled Numba rasterizer that follows
   MuJoCo's OpenGL renderer: the meshes and primitive tessellations, per-vertex lighting, the 4096 shadow map of
   the scene light with MuJoCo's depth offset, the floor texture with mipmaps, the skybox, the see-through arm and

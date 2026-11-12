@@ -33,6 +33,8 @@ can affect physics, reset, task or appearance.
   OpenGL before importing MuJoCo. CPU OpenGL rendering rejects a hardware GL context.
 - On CUDA, `backend="nvdiff"` selects the batched CUDA rasterizer (nvdiffrast and Triton). It follows MuJoCo's
   OpenGL renderer with the simplified arm meshes of `opengl_fast`.
+- On CPU and on CUDA, `backend="raster"` selects the shared MuJoCo rasterizer
+  ([MuJoCo rasterizer](mujoco-raster.md)).
 - On CUDA, `backend="auto"` selects NVIDIA OpenGL at 1× sampling. Its fidelity record compares two
   stable-envs OpenGL instances with the same compiled appearance, not upstream-default OGBench frames.
   With `supersample=2` or more, `backend="auto"` selects the two-pass MJWarp renderer, as

@@ -32,6 +32,12 @@ average and less than 0.4 (0-255 scale). The first render after an install compi
 about 30 s. Numba keeps the compiled code in a cache for later processes. Without Numba,
 `backend="auto"` uses MuJoCo OpenGL.
 
+`backend="raster"` draws the frames with the shared MuJoCo rasterizer
+([MuJoCo rasterizer](../api/mujoco-raster.md)), on CPU and on CUDA. It reads the scene from the OpenGL render
+model, with MuJoCo's plane grid and primitive tessellations. On CUDA it needs `nvdiffrast` and `triton`.
+`render_semantic(rows)` gives the segmentation and the planar depth of compact render rows, with the goal as
+the site `target0` of the Gymnasium Robotics model.
+
 `backend="opengl"` draws the frames with MuJoCo OpenGL, as Gymnasium Robotics does. On CPU this needs a
 software OpenGL backend, and the frames are equal to the source frames. On Linux, a CPU batch of at least
 `render_worker_min_rows` states draws in up to `render_workers` worker processes. Each worker has its own

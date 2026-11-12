@@ -258,6 +258,10 @@ The frames have the look of the OGBench pixel tasks `visual-cube-single-v0` and 
   skybox, the floor grid texture and the see-through arm in MuJoCo's blend order. It uses the simplified arm
   meshes of `opengl_fast`. Install `nvdiffrast` and `triton` to use it. A draw of the same state gives the same
   frame each time, in any batch.
+- `backend="raster"` draws the frames with the shared MuJoCo rasterizer
+  ([MuJoCo rasterizer](../api/mujoco-raster.md)), on CPU and on CUDA. On CPU its frames are equal to the
+  frames of `backend="numba"`. On CUDA it reads the same scene arrays and lights the vertices with the same
+  formula. `render_semantic(rows)` gives the segmentation and the planar depth of compact render rows.
 
 A reset is the OGBench reset. OGBench samples the task from NumPy's global RNG. Each lane keeps its own
 copy of that RNG in State (`rng/task`). A seeded reset seeds the copy as `np.random.seed(seed)` does with
