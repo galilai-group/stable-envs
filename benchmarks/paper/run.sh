@@ -11,8 +11,9 @@
 #   SWEEP_CPU (1:8:64:256:1024) and SWEEP_CUDA (1:256:512:1024:2048) are the batches and lane counts, colon-separated.
 #   CPU_SOURCES=0 leaves out the source arms that run on CPU (for GPU jobs whose CPU source cells come from a CPU job).
 #   An output file that exists is kept, so a rerun with the same OUT fills in only what is missing.
-#   SMOKE=1 uses small counts. QUICK=1 is a go/no-go check: 1 repeat of a WINDOW (default 3 s) timed window and
-#   lane counts 8:256:1024 unless SWEEP_* are set; paper numbers use the default (3 repeats of 10 s).
+#   SMOKE=1 uses small counts. QUICK=1 is a go/no-go check: 3 repeats of a WINDOW (default 5 s) timed window, so each
+#   cell keeps a median and a spread, and lane counts 8:256:1024 unless SWEEP_* are set; paper numbers use the default
+#   (3 repeats of 10 s). Decide near a threshold, or on a cell whose spread is over 10%, only with paper timing.
 #   VENV_PYTHON=path reuses an existing family venv (no build, no delete); STATES_DIR=dir keeps the stored States and
 #   episodes between runs; SRC_FROM=dir copies source cells (src-*.json) measured on the same machine into OUT first.
 #   MODE=throughput runs the throughput arms, MODE=gifs one GIF per env.
@@ -33,7 +34,7 @@ mkdir -p "$OUT"/{offline,online,logs} "$WORK"
 trap 'rm -rf "$WORK"' EXIT
 if [ "${QUICK:-0}" = 1 ]; then
   SWEEP_CPU=${SWEEP_CPU:-8:256:1024}; SWEEP_CUDA=${SWEEP_CUDA:-8:256:1024}; LENGTH=32; LANES=64; SWEPISODES=64
-  REPEATS=${REPEATS:-1}; WINDOW=${WINDOW:-3}
+  REPEATS=${REPEATS:-3}; WINDOW=${WINDOW:-5}
 elif [ "${SMOKE:-0}" = 1 ]; then
   SWEEP_CPU=${SWEEP_CPU:-1:8:64}; SWEEP_CUDA=${SWEEP_CUDA:-1:64:256}; LENGTH=32; LANES=64; SWEPISODES=64
 else
