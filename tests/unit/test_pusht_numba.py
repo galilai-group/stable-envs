@@ -19,6 +19,7 @@ from tests.helpers.reference.semantics import assert_same_state  # noqa: E402
 def test_backend_routing(monkeypatch):
     from stable_envs.envs.pusht import raster
 
+    monkeypatch.setattr(raster, "HAVE_TRITON", True)
     for count in (1, 7, 8, 4096):
         assert pusht_backend(count, "cpu") == "numba"
         assert pusht_backend(count, "cuda") == "triton"
