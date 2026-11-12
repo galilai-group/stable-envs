@@ -638,7 +638,7 @@ class OGBMazeWarpAdapter(_MazeLanes):
             from mujoco.batch import Batch
 
             rb = Batch(task.model, self.num_envs, nthread=native_threads(self.num_envs))
-            self._step1 = self._capture(lambda: self.sim._mjw.step1(self.sim._m, self.sim._d))
+            self._step1 = self.sim.capture(lambda: self.sim._mjw.step1(self.sim._m, self.sim._d))
         self._sampler = MazeReset(task, self.num_envs, rb)
         f64 = dict(device=self.device, dtype=torch.float64)
         self._goal = torch.zeros(self.num_envs, 3, **f64)
@@ -658,16 +658,6 @@ class OGBMazeWarpAdapter(_MazeLanes):
         self._rng_columns = {}
         self._last = None
         self.reset(seed=seed)
-
-    def _capture(self, body):
-        sim, wp = self.sim, self.sim._wp
-        with wp.ScopedDevice(sim._wp_device):
-            body()
-            wp.synchronize()
-            with wp.ScopedCapture() as capture:
-                body()
-            wp.synchronize()
-        return capture.graph
 
     # RNG columns and teleport draws ------------------------------------------------------------------------
 

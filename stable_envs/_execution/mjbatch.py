@@ -390,6 +390,33 @@ def _overflow_kernel():
     return _OVERFLOW_KERNEL
 
 
+class _Scratch:
+    """Device memory for the temporary arrays of a captured call, reused in the order of the first call.
+
+    A buffer freed during the call serves a later request of the same size. Once ``fixed``, every request must
+    find a free buffer, as the captured call repeats the requests of the first call.
+    """
+
+    def __init__(self, device):
+        self.device = device
+        self.fixed = False
+        self._owned: list[torch.Tensor] = []
+        self._free: dict[int, list[int]] = {}
+
+    def allocate(self, size_in_bytes):
+        free = self._free.get(size_in_bytes)
+        if free:
+            return free.pop()
+        if self.fixed:
+            raise RuntimeError("A captured MuJoCo Warp call requested temporary memory that its first call did not")
+        buffer = torch.empty(max(int(size_in_bytes), 1), dtype=torch.uint8, device=self.device)
+        self._owned.append(buffer)
+        return buffer.data_ptr()
+
+    def deallocate(self, ptr, size_in_bytes):
+        self._free.setdefault(size_in_bytes, []).append(ptr)
+
+
 class WarpBatch(MjBatch):
     """B MuJoCo Warp worlds on one CUDA device, stepped by one captured CUDA graph."""
 
@@ -479,20 +506,31 @@ class WarpBatch(MjBatch):
             self._closed = False
             # Compile every kernel before the capture. Warp captures on its own stream; the graphs launch on
             # the current Torch stream.
-            self._step_body()
-            self._forward_body()
-            wp.synchronize()
-            with wp.ScopedCapture() as capture:
-                self._step_body()
-            self._step_graph = capture.graph
-            with wp.ScopedCapture() as capture:
-                self._forward_body()
-            self._forward_graph = capture.graph
-            wp.synchronize()
+            self._scratch: list[_Scratch] = []
+            self._step_graph = self.capture(self._step_body)
+            self._forward_graph = self.capture(self._forward_body)
         self._write_template(None)
         self._flag_t.zero_()
         self._launch(self._forward_graph)
         torch.cuda.synchronize(self.device)
+
+    def capture(self, body: Callable[[], None]):
+        """Run ``body`` once, then capture it in a Warp graph whose temporary arrays live in retained memory.
+
+        MuJoCo Warp allocates temporary arrays in each call. Captured as they are, they become allocation nodes,
+        and a graph with allocation nodes is slow to launch when other allocations happen between launches.
+        """
+        wp = self._wp
+        scratch = _Scratch(self.device)
+        with wp.ScopedDevice(self._wp_device), wp.ScopedAllocator(self._wp_device, scratch):
+            body()
+            wp.synchronize()
+            scratch.fixed = True
+            with wp.ScopedCapture() as capture:
+                body()
+            wp.synchronize()
+        self._scratch.append(scratch)
+        return capture.graph
 
     def _batched_fields(self, variants, requested) -> tuple[list, tuple[str, ...]]:
         """Return the variants' Warp models and the model fields that differ between them, plus ``requested``."""
@@ -674,6 +712,7 @@ class WarpBatch(MjBatch):
         self._closed = True
         self._views = {}
         self._m = self._d = self._step_graph = self._forward_graph = None
+        self._scratch = []
 
 
 def _exclude_pairs(m, model, pairs) -> None:
