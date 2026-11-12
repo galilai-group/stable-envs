@@ -215,8 +215,7 @@ class FetchWarpAdapter(FetchLanes):
         self._mocap_quat[:, self._mocap] = self._grip_quat + self._rot
         self.batch.step(ctrl, mocap_pos=self._mocap_pos, mocap_quat=self._mocap_quat, active=active)
         if t.block_gripper:
-            qpos = self._qpos.clone()
-            qpos[:, self._fingers] = 0.0
+            qpos = self._qpos.index_fill(1, self._fingers, 0.0)
             if active is not None:
                 qpos = torch.where(active[:, None], qpos, self._qpos)
             self.batch.set_physics({"qpos": qpos})

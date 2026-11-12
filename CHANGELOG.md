@@ -125,6 +125,7 @@ All notable changes to this project are listed here. The format follows
 - `WarpBatch` accepts `exclude_pairs`, geom pairs that MuJoCo Warp does not test for contact. OGBCube and
   OGBScene on MuJoCo Warp exclude the pairs of Robotiq gripper links, which make no contacts. The Cube oracle
   replay has the same outcomes and first-success steps.
+- Fetch on MuJoCo Warp: the step of the blocked-gripper tasks does not synchronize with the host.
 - Fetch: the twelve Fetch classes step all environments in one batched call. On CPU, the Gymnasium Robotics
   step runs on arrays and MuJoCo steps every environment in `mujoco.batch`, or on up to 8 threads when the
   installed MuJoCo has no `mujoco.batch`. State and outputs are equal to Gymnasium Robotics bit for bit, and
