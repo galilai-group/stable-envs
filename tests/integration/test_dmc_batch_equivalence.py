@@ -86,7 +86,7 @@ def test_batch_matches_local(domain):
     )
 
 
-@pytest.mark.parametrize("domain", ["walker", "ball_in_cup"])
+@pytest.mark.parametrize("domain", ["walker", "ball_in_cup", "cheetah"])
 def test_batch_matches_local_under_physics_variation(domain):
     rng = np.random.default_rng(3)
     values = {leaf.path: rng.uniform(leaf.low, leaf.high, 5) for leaf in LEAVES[domain]}

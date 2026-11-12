@@ -6,7 +6,6 @@ import contextlib
 import copy
 import math
 import time
-from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import torch
@@ -18,8 +17,8 @@ from .state import export_columns
 XX, XZ, ZX, ZY, ZZ = 0, 2, 6, 7, 8  # MuJoCo's row-major xmat entries
 _pow = np.frompyfunc(math.pow, 2, 1)
 #: Domains whose dm_control reset is mostly long MuJoCo calls: CheetahRun settles for 200 steps in one call. Their
-#: lanes reset on the batch threads. The resets of other domains are faster in one thread: Quadruped's height search
-#: makes many short MuJoCo calls, and threads that take the GIL back after each call wait for each other.
+#: MuJoCo Warp reset owners reset on threads. The resets of other domains are faster in one thread: Quadruped's
+#: height search makes many short MuJoCo calls, and threads that take the GIL back after each call wait for each other.
 THREADED_RESETS = frozenset({"cheetah"})
 #: MuJoCo work, in seconds, that each batch thread gets per step call. Waking a thread can cost about this much.
 THREAD_WORK = 1e-4
@@ -96,7 +95,8 @@ class DMCBatchAdapter(SimulatorAdapter):
         self._models = [env.physics.model.ptr for env in lanes.envs]
         self._transform = lanes.envs[0]._transform
         self._nsub, self._limit = lanes.envs[0]._env._n_sub_steps, lanes.envs[0]._env._step_limit
-        self._get_state, self._spec = mujoco.mj_getState, mujoco.mjtState.mjSTATE_INTEGRATION
+        self._get_state, self._set_state = mujoco.mj_getState, mujoco.mj_setState
+        self._spec = mujoco.mjtState.mjSTATE_INTEGRATION
         self._vel, self._error = mujoco.mjtStage.mjSTAGE_VEL, PhysicsError
         if fit_threads:
             nthread = step_threads(lanes.envs[0].physics, self._nsub, self.num_envs, threads)
@@ -105,8 +105,6 @@ class DMCBatchAdapter(SimulatorAdapter):
         # A persistent batch keeps each lane's MjData, so a step continues from the stages the last call computed,
         # as dm_control's step does.
         self.b = Batch(self._models[0], self.num_envs, nthread=nthread, persistent=True)
-        # These resets spend most of their time in MuJoCo calls, which release the GIL.
-        self._pool = ThreadPoolExecutor(threads) if threads > 1 and lanes.key in THREADED_RESETS else None
         self.b.set_models(self._models)
         self.task = task(self.b, self._models)
         self._live = {key: self.b.bind(name) for key, name in _LIVE.items() if key in self.fields}
@@ -116,23 +114,34 @@ class DMCBatchAdapter(SimulatorAdapter):
     def _reset_lanes(self, ids, seed=None):
         """Reset lanes ``ids`` with dm_control, ``seed + i`` seeding lane ``i``; lanes share no state.
 
-        This is dm_control's ``Environment.reset`` without its first observation, which the batch task computes.
+        This is dm_control's ``Environment.reset`` without its first observation, which the batch task computes. A
+        batch task with ``begin_reset`` runs the physics steps of the reset in the batch, on its threads: dm_control
+        does each lane's reset up to them, and ``end_reset`` finishes it.
         """
         envs = self.lanes.envs
-
-        def reset(i):
+        begin = getattr(self.task, "begin_reset", None)
+        for i in ids:
             env = envs[i]._env
             if seed is not None:
                 env.task._random = np.random.RandomState(int(seed) + int(i))
             env._reset_next_step, env._step_count = False, 0
-            with env.physics.reset_context():
-                env.task.initialize_episode(env.physics)
-
-        if self._pool is None or len(ids) < 2:
-            for i in ids:
-                reset(i)
-        else:
-            list(self._pool.map(reset, ids))
+            if begin is None:
+                with env.physics.reset_context():
+                    env.task.initialize_episode(env.physics)
+            else:
+                begin(env)
+                self._get_state(env.physics.model.ptr, env.physics.data.ptr, self.b.state[i], self._spec)
+        if begin is None or not len(ids):
+            return
+        ids = np.asarray(ids)
+        warnings = self.b.warning[ids, :, 1].copy()
+        self.b.step(ids, self.task.RESET_STEPS, stage=self._vel)
+        if (bad := ids[(self.b.warning[ids, :, 1] > warnings).any(axis=1)]).size:
+            raise self._error(f"Physics state is invalid in lanes {bad.tolist()}")
+        for i in ids:
+            physics = envs[i].physics
+            self._set_state(physics.model.ptr, physics.data.ptr, self.b.state[i], self._spec)
+            self.task.end_reset(envs[i]._env)
 
     def _load(self, ids):
         """Copy lanes from dm_control into the batch and forward them as dm_control's reset does."""
@@ -227,8 +236,5 @@ class DMCBatchAdapter(SimulatorAdapter):
         return out if self.device.type == "cpu" else out.to(self.device)
 
     def close(self):
-        if self._pool is not None:
-            self._pool.shutdown()
-            self._pool = None
         self.lanes.close()
         self.b = self.task = None

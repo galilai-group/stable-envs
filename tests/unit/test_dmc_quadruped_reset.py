@@ -28,15 +28,22 @@ def test_quadruped_height_search_leaves_the_data_of_dm_control(seed):
 
 
 @pytest.mark.family("dmc")
-@pytest.mark.parametrize(
-    ("domain", "threaded"), [("cheetah", True), ("quadruped", False), ("finger", False), ("pendulum", False)]
-)
-def test_only_mujoco_heavy_resets_use_the_reset_threads(domain, threaded):
+@pytest.mark.parametrize("seed", range(3))
+def test_cheetah_batch_reset_leaves_the_data_of_dm_control(seed):
     pytest.importorskip("dm_control")
-    from stable_envs.envs.dmcontrol.simulation.factory import make_batch
+    from stable_envs.envs.dmcontrol.simulation.factory import make_batch, make_local
 
-    adapter = make_batch(domain, 2, threads=2)
+    batch, local = make_batch("cheetah", 4, threads=2), make_local("cheetah", 4)
     try:
-        assert (adapter._pool is not None) == threaded
+        batch.reset(seed=seed)
+        local.reset(seed=seed)
+        for ours, theirs in zip(batch.lanes.envs, local.envs, strict=True):
+            a, b = ours.physics.data.ptr, theirs.physics.data.ptr
+            for name in (*FIELDS, "time", "ctrl"):
+                assert np.array_equal(getattr(a, name), getattr(b, name)), name
+            assert [w.number for w in a.warning] == [w.number for w in b.warning]
+            assert str(ours.task.random.get_state()) == str(theirs.task.random.get_state())
+            assert ours._env._step_count == theirs._env._step_count == 0
     finally:
-        adapter.close()
+        batch.close()
+        local.close()

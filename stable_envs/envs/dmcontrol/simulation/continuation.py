@@ -148,6 +148,43 @@ class HopperBatch:
 class CheetahBatch:
     """Cheetah Run batch lanes."""
 
+    #: Settling steps of dm_control's reset that the batch runs between ``begin_reset`` and ``end_reset``.
+    RESET_STEPS = 199
+
+    @staticmethod
+    def begin_reset(env):
+        """dm_control's Cheetah reset up to its 200 settling steps, and ``mj_step2`` of the first one.
+
+        dm_control's legacy step ends the first settling step with ``mj_step2`` on the stages of the state before the
+        draw. The other 199 steps and the closing ``mj_step1`` are ``mj_step`` calls, which the batch runs.
+        """
+        import mujoco
+        from dm_control.rl.control import PhysicsError
+
+        physics, task = env.physics, env.task
+        assert physics.legacy_step and physics.model.opt.integrator != mujoco.mjtIntegrator.mjINT_RK4
+        try:
+            physics.reset()
+        except PhysicsError:
+            pass
+        assert physics.model.nq == physics.model.njnt
+        is_limited = physics.model.jnt_limited == 1
+        lower, upper = physics.model.jnt_range[is_limited].T
+        physics.data.qpos[is_limited] = task.random.uniform(lower, upper)
+        with physics.check_invalid_state():
+            mujoco.mj_step2(physics.model.ptr, physics.data.ptr)
+
+    @staticmethod
+    def end_reset(env):
+        """The rest of dm_control's Cheetah reset after the settling steps."""
+        from dm_control.suite import cheetah
+
+        physics, task = env.physics, env.task
+        physics.data.time = 0
+        task._timeout_progress = 0
+        super(cheetah.Cheetah, task).initialize_episode(physics)
+        physics.after_reset()
+
     def __init__(self, b, models):
         m = models[0]
         self.torso, self.bfoot, self.ffoot = (m.body(name).id for name in ("torso", "bfoot", "ffoot"))

@@ -124,6 +124,12 @@ All notable changes to this project are listed here. The format follows
   than 256 frames on one thread when the scene has no tracking light. With 8 Torch threads, idle Torch threads
   kept the cores busy while the `mujoco.batch` threads waited, and the time of an AntMaze episode of 64 steps with
   frames changed between runs by up to 10x. Frames and State do not change.
+- `DMCCheetahRun` CPU resets run the 200 settling steps of dm_control's reset in the `mujoco.batch` of the
+  environments, on its threads. dm_control's legacy step starts with `mj_step2` on the stages of the state before
+  the random joint draw: each environment does that call, and the batch runs the other 199 `mj_step` calls and the
+  closing `mj_step1`. The data, State and RNG are bitwise those of dm_control's reset. The CPU batch adapter has no
+  reset threads. Public CPU steps/s with a reset every 64 steps, 8 cores of a Xeon Platinum 8470: 27,863 at 64
+  environments (17,212 before), 61,314 at 256 (24,204), 83,657 at 1024 (29,463).
 - `DMCQuadrupedWalk` resets search the start height with MuJoCo kinematics and collision only, as only the
   contact count is read, and then repeat dm_control's last attempt with both forward passes. The data and State
   do not change. Quadruped resets run in one thread on CPU and in one reset owner on CUDA: many short MuJoCo calls
