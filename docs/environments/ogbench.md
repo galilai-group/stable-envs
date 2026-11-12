@@ -211,6 +211,12 @@ contacts with each other and with all other geoms. The linkage has one degree of
 before two links can touch, so these pairs make no contacts in OGBench. Their bounding volumes overlap on every
 substep, and each test is a mesh-mesh collision test, so the step is faster without them.
 
+The MuJoCo Warp step does not synchronize the host. When a Scene cube leaves the workspace, OGBench puts it at
+a new position that it draws from the environment generator. The host draws the next two of these positions
+for each environment before the step, and the device uses them. The host draws again for an environment after
+it reads that the device used them, and it then prints the OGBench message. If an environment needs a third
+position before that read, the device uses the second position again.
+
 The resets, restores and Variations run OGBench's own code on one OGBench object per environment, and the
 backend then loads the result. A small CUDA batch steps faster on `mujoco.batch` than on MuJoCo Warp; use
 `simulation_backend="auto"` for this.

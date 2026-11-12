@@ -117,6 +117,10 @@ All notable changes to this project are listed here. The format follows
   from the source frames only at some edges and by rounding; the mean squared error per frame is about 0.15
   on average and less than 0.4 (0-255 scale). `backend="opengl"` keeps MuJoCo OpenGL and the exact source
   frames. `backend="numba"` selects the rasterizer. The `robotics` extra now installs Numba.
+- `OGBCube` and `OGBScene` copy the State in one array per dtype and make each leaf a view of it. A CUDA env on
+  `mujoco.batch` (`simulation_backend="auto"` or `"native"`) copies one array per dtype to the device, not one
+  per leaf. The inverse kinematics of the CPU controller skips collision detection, which it does not read.
+  An all-active CPU step passes no index list to `mujoco.batch`. State and outputs do not change.
 - `OGBCube` and `OGBScene` frames have the look of the OGBench pixel tasks (`visual-cube-single-v0`,
   `visual-scene-v0`): the arm is see-through and the goal cube is not drawn. The `reference_env()`
   builds OGBench with `ob_type="pixels"`, so it draws the same `front_pixels` camera. Before, the arm was
@@ -183,8 +187,9 @@ All notable changes to this project are listed here. The format follows
   kinematics and Jacobians and the operations of the OGBench step in the same order. The State and the outputs
   are equal to OGBench, bit for bit, and tests compare them with the per-environment OGBench step. A CUDA env
   steps on MuJoCo Warp (`float32`) at every batch size by default (`simulation_backend="default"`). One Warp
-  kernel computes the controller in `float64`, and the step does not synchronize the host (Scene synchronizes
-  once per step to find a cube that left the workspace). `"auto"` keeps `mujoco.batch` below `mjwarp_min_envs`
+  kernel computes the controller in `float64`, and the step does not synchronize the host. When a Scene cube
+  leaves the workspace, the device puts it at a position that the host drew before the step from the
+  environment generator, as OGBench draws it. `"auto"` keeps `mujoco.batch` below `mjwarp_min_envs`
   (256) CUDA environments. On the scripted OGBench Cube oracle, MuJoCo Warp gives each episode the success
   and the first-success step of OGBench.
   On an L40S with 8 EPYC 9374F cores, with uniformly random actions and a reset every 200 steps, a CPU
@@ -494,6 +499,7 @@ All notable changes to this project are listed here. The format follows
 ### Removed
 
 - The MJX physics of `OGBCube` on CUDA (`cube_mjx.py`). MuJoCo Warp steps CUDA Cube batches.
+- `mujoco-mjx` and `jax` from the `ogbench-manipulation-gpu` extra. No Cube or Scene code uses them.
 - `MJW_CHUNK` in the DMC and OGBench packages. The `dmc_min_worlds` and `ogb_mjw_worlds` tuning knobs
   set the worlds per MJWarp launch.
 - `Env.fidelity_tier`, `stable_envs.env.FIDELITY_TIERS` and the `fidelity_tier` key of `snv.info()`.
