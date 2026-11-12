@@ -26,7 +26,9 @@ frames = env.render()          # (8, 224, 224, 3) uint8
 ```
 
 A PushT frame is the source's pygame frame for the same State. `device="cuda"` puts the output tensors
-on the GPU. Physics stays on CPU.
+on the GPU, and JAX steps the physics on the GPU (`pusht-gpu` extra). Pymunk on the CPU resets the lanes.
+On Linux, a CUDA batch of at least `worker_min_lanes` lanes resets in up to `workers` processes. The
+worker processes do not change the State, the frames or the task outputs.
 
 On CPU with Numba installed, `render` draws with a Numba rasterizer. It builds the same primitive
 records as the GPU path, in parallel over States. It paints and resizes the background, goal and walls

@@ -1,4 +1,4 @@
-"""Choose CPU execution or batched JAX CUDA physics for PushT."""
+"""Choose CPU execution or batched JAX CUDA physics for PushT, with worker processes for large batches."""
 
 from __future__ import annotations
 
@@ -18,12 +18,13 @@ def make_pusht_adapter(
 ) -> PushTReplayAdapter | PushTProcessAdapter:
     import torch
 
+    cpus = cpu_affinity()
+    count = process_count(num_envs, cpus, path="pusht-sim") if type(num_envs) is int and num_envs > 0 else 0
     if torch.device(device).type == "cuda":
         from .jax_batch import PushTJaxAdapter
 
-        return PushTJaxAdapter(num_envs, device, seed, discrete=discrete, config=config)
-    cpus = cpu_affinity()
-    count = process_count(num_envs, cpus, path="pusht-sim") if type(num_envs) is int and num_envs > 0 else 0
+        # Workers reset the lanes; JAX steps them on the GPU.
+        return PushTJaxAdapter(num_envs, device, seed, discrete=discrete, config=config, processes=count, cpus=cpus)
     if count:
         from .process import PushTProcessAdapter
 

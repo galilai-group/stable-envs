@@ -1,7 +1,9 @@
 """Source Cube/Scene classes with explicitly owned entropy, and engine/state capture.
 
 Reset, task, physics and rendering delegate to the pinned SWM/OGBench implementations;
-only the RNG boundaries are owned here.
+only the RNG boundaries, the arm start and the default cube size are owned here. The arm starts as
+OGBench samples it, unless the reset options name ``agent.ee_start_position`` or its anchor is not the
+default. The default cube size is OGBench's 0.02, not stable-worldmodel's float32(0.02).
 """
 
 import copy
@@ -13,6 +15,8 @@ from ogbench.manipspace.envs.manipspace_env import ManipSpaceEnv
 from stable_worldmodel import spaces as swm_spaces
 from stable_worldmodel.envs.ogbench.cube_env import CubeEnv
 from stable_worldmodel.envs.ogbench.scene_env import SceneEnv
+
+from stable_envs.envs.ogbench.simulation.compatibility import legacy_seed
 
 PARTS = (
     "TIME",
@@ -148,6 +152,7 @@ class Ownership:
 
     def __init__(self, *args, entropy_seed=0, **kwargs):
         self.action_box = None
+        self.arm_pinned = False
         self.access_count = 0
         self.variation_seeds = []
         self.settling_actions = []
@@ -156,17 +161,19 @@ class Ownership:
         self._seed_owned(entropy_seed)
         super().__init__(*args, **kwargs)
         self.variation_space = OwnedVariation(self.variation_space, self)
+        self.variation_space["cube"]["size"].set_init_value(np.full(1, 0.02))
         self.variation_space.seed(0)  # No external entropy before the first reset.
         gym.Env.reset(self, seed=self.entropy_seed)
 
     def _seed_owned(self, seed):
         # Explicit per-stream domain separation, all derivable from the public seed.
         root = np.random.SeedSequence(seed)
-        children = root.spawn(3)
+        children = root.spawn(2)
         self.action_seed = int(children[0].generate_state(1, dtype=np.uint64)[0])
         self.variation_parent = np.random.default_rng(children[1])
-        self.task_rng = np.random.RandomState(int(children[2].generate_state(1)[0]))
         self.entropy_seed = int(root.entropy)
+        # The task draw reads NumPy's global RNG upstream, seeded here as np.random.seed(seed).
+        self.task_rng = np.random.RandomState(legacy_seed(self.entropy_seed))
         if self.action_box is not None:
             self.action_box.seed(self.action_seed)
 
@@ -189,6 +196,11 @@ class Ownership:
             if "task_id" not in options and "task_info" not in options:
                 # Use the source's existing task_id input; no copied task/reset logic.
                 options["task_id"] = int(self.task_rng.randint(1, self.num_tasks + 1))
+        anchor = self.variation_space["agent"]["ee_start_position"].init_value
+        named = set(options.get("variation", ())) | set(options.get("variation_values", {}))
+        self.arm_pinned = "agent.ee_start_position" in named or not np.array_equal(
+            anchor, np.mean(self._arm_sampling_bounds, axis=0)
+        )
         self.settling_actions = []
         self.reset_sequence = []
         self._record_reset = True
@@ -206,6 +218,8 @@ class Ownership:
     def initialize_arm(self):
         if self._record_reset:
             self.reset_sequence.append("initialize_arm")
+        if not self.arm_pinned:
+            return ManipSpaceEnv.initialize_arm(self)
         return super().initialize_arm()
 
 

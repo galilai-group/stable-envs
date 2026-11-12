@@ -25,3 +25,16 @@ def test_quadruped_height_search_leaves_the_data_of_dm_control(seed):
     for name in FIELDS:
         assert np.array_equal(getattr(ours, name), getattr(theirs, name)), name
     assert [w.number for w in ours.warning] == [w.number for w in theirs.warning]
+
+
+@pytest.mark.family("dmc")
+@pytest.mark.parametrize(("domain", "threaded"), [("cheetah", True), ("quadruped", True), ("finger", False), ("pendulum", False)])
+def test_only_mujoco_heavy_resets_use_the_reset_threads(domain, threaded):
+    pytest.importorskip("dm_control")
+    from stable_envs.envs.dmcontrol.simulation.factory import make_batch
+
+    adapter = make_batch(domain, 2, threads=2)
+    try:
+        assert (adapter._pool is not None) == threaded
+    finally:
+        adapter.close()
