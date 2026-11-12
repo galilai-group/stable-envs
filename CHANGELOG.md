@@ -80,6 +80,14 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- Fetch: the twelve Fetch classes step all environments in one batched call. On CPU, the Gymnasium Robotics
+  step runs on arrays and MuJoCo steps every environment in `mujoco.batch`, or on up to 8 threads when the
+  installed MuJoCo has no `mujoco.batch`. State and outputs are equal to Gymnasium Robotics bit for bit, and
+  the existing parity tests do not change. CUDA envs step on MuJoCo Warp at every batch size by default
+  (`simulation_backend="default"`), with the 20 substeps in one captured CUDA graph and no host
+  synchronization. `"auto"` keeps the CPU batch below `mjwarp_min_envs` (256) CUDA environments, and
+  `"source"` keeps the Gymnasium Robotics `step` per environment in worker processes. A scripted controller
+  replayed on MuJoCo Warp for 200 steps reaches the source task outcome in 124 of 128 episodes.
 - MS-Human-700: `MSHumanLocomotion` steps on the shared batched MuJoCo backend. CUDA envs step on MuJoCo Warp at
   every batch size by default (`simulation_backend="default"`); `"auto"` keeps `mujoco.batch` below
   `mjwarp_min_envs` (256) CUDA environments. The MuJoCo Warp step does not synchronize the host.

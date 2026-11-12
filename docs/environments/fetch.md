@@ -3,8 +3,7 @@
 These 12 classes port the Fetch tasks of
 [Gymnasium-Robotics](https://robotics.farama.org/envs/fetch/)
 ([Plappert et al., 2018](https://arxiv.org/abs/1802.09464)). A Fetch robot arm with seven joints and a
-parallel gripper works on a table. MuJoCo steps the physics on CPU. stable-envs follows the
-stable-worldmodel wrappers of these tasks.
+parallel gripper works on a table. stable-envs follows the stable-worldmodel wrappers of these tasks.
 
 The action has four values in [-1, 1]:
 
@@ -34,6 +33,44 @@ env = snv.FetchPush(num_envs=8)
 state = env.reset(seed=0)
 frames = env.render()
 ```
+
+## Physics backends
+
+| `simulation_backend` | CPU env | CUDA env |
+|---|---|---|
+| `"default"` (default) | CPU batch | [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp) |
+| `"auto"` | CPU batch | CPU batch below `mjwarp_min_envs` (256) environments, MuJoCo Warp from 256 |
+| `"native"` | CPU batch | CPU batch |
+| `"mjwarp"` | not supported | MuJoCo Warp |
+| `"source"` | Gymnasium Robotics `step` per environment | Gymnasium Robotics `step` per environment |
+
+The CPU batch does the Gymnasium Robotics step for all environments in one call: the action scaling, the
+mocap target and the gripper controls on arrays, then `mj_step` with 20 substeps for every environment, then
+the reward and the 50-step time limit on arrays. MuJoCo runs in `mujoco.batch` when the installed MuJoCo has
+it. Otherwise each of up to 8 threads calls `mj_step` on its share of the environments. Resets draw the
+object and goal positions from the PCG64 stream of each environment, as Gymnasium Robotics does. State and
+step outputs are equal, bit for bit, to those of Gymnasium Robotics on the same MuJoCo version. A CUDA env on
+the CPU batch returns its State on CUDA.
+
+MuJoCo Warp steps every environment in `float32`. The 20 substeps of a step run in one captured CUDA graph,
+and the step does not synchronize with the host. A step takes about 8 ms for any batch up to a few hundred
+environments, so a smaller CUDA batch steps faster with `"auto"`. Two steps from the same State can differ
+in the last bits, because MuJoCo Warp sums contact forces with atomic operations. The resets draw the same starts and goals as the CPU batch.
+The physics model has two changes, because MuJoCo Warp does not support the source model as it is:
+
+- Push, PickAndPlace and Reach turn off multi-contact and native collision detection, and keep the 1 mm
+  contact margin of the robot geoms.
+- Slide replaces the cylinder puck with a 24-sided prism of the same size and inertia, and sets the contact
+  margins to 0. MuJoCo Warp makes one contact for each cylinder pair, and with one contact the puck sinks into
+  the table.
+
+A scripted controller (reach the goal, push the block, strike the puck, or grasp and carry the block) runs
+for 200 steps on Gymnasium Robotics. Its actions are then replayed on MuJoCo Warp. Over 32 episodes for each
+task, the replayed task outcome is the same as the source outcome in 32 Reach, 30 Push, 30 Slide and 32
+PickAndPlace episodes. The largest robot joint difference is 0.0003 (Reach), 0.012 (Push) and 0.004
+(PickAndPlace). The mean block position difference is 1.4 cm (Push) and 1.5 mm (PickAndPlace). The puck of
+Slide slides freely, so small differences grow: its mean position difference is 10 cm. On the CPU source, an
+action noise of 1e-6 alone gives a mean puck position difference of 3.3 cm.
 
 ## Reach
 

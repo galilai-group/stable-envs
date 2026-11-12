@@ -67,7 +67,7 @@ names one.
 |---|---|---|---|---|
 | `workers` | 8 | min(value, CPUs in the process affinity, lanes) | not recorded | Most worker processes of a CPU simulator batch, of a PushT CUDA reset, or of a PushT render, on Linux. The value 0 steps and resets every lane, and draws every PushT frame, in the main process. |
 | `worker_min_lanes` | 64 | none | not recorded | Smallest batch that uses worker processes, or Fetch simulator threads. For PushT, the smallest number of rendered States that uses render workers. |
-| `fetch_threads` | 4 | min(value, CPUs in the process affinity, lanes) | not recorded | Most simulator threads of an in-process Fetch batch. |
+| `fetch_threads` | 4 | min(value, CPUs in the process affinity, lanes) | not recorded | Most simulator threads of an in-process Fetch batch with `simulation_backend="source"`. |
 | `dmc_threads` | 8 | min(value, CPUs in the process affinity, lanes) | not recorded | Most `mujoco.batch` threads of a DM Control batch, for CPU and CUDA output. MJX Reacher does not read it. |
 | `cpu3d_chunk` | 16 | none (TrackCom cells use a per-cell table) | Xeon Platinum 8268 | Frames per chunk of the Torch CPU ray caster (`cpu3d`, `backend="torch"`). The Numba kernel draws all frames in one call. |
 | `dmc_cpu_ray_budget` | 2^21 | 2^21 × L3 size / 35.75 MiB, rounded to a power of two, in [2^18, 2^21] | not recorded | Rays per CPU render chunk of the fixed-camera DMC cells, counting supersamples. |
