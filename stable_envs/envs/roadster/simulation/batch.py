@@ -93,7 +93,7 @@ def _columns(BT: np.ndarray, cols: np.ndarray) -> np.ndarray:
 
 
 #: Batches of at most this many wrenches allocate row by row, which costs fewer NumPy calls.
-_ROW_ALLOCATION = 2
+_ROW_ALLOCATION = 24
 
 
 def _allocate_row(B: np.ndarray, w: np.ndarray, lo: np.ndarray, hi: np.ndarray) -> np.ndarray:
