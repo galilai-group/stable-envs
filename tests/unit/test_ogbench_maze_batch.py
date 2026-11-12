@@ -110,3 +110,25 @@ def test_auto_uses_the_measured_cutoff_of_each_body():
         assert maze_backend(cutoff, "cuda", loco, "auto") == "mjwarp"
     with pytest.raises(ValueError, match="requires device='cuda'"):
         maze_backend(8, "cpu", "point", "mjwarp")
+
+
+def test_legacy_streams_draw_as_random_state():
+    from stable_envs.envs.ogbench.simulation.maze_batch import LegacyMT
+
+    seeds = [0, 1, 17, 2**32 - 1, 123456789]
+    mt = LegacyMT(len(seeds))
+    rows = np.arange(len(seeds))
+    mt.seed(rows, seeds)
+    states = [np.random.RandomState(seed) for seed in seeds]
+    # More than one block of 624 outputs, so every lane twists its key at least twice.
+    for k in range(700):
+        if k % 3 == 0:
+            got, want = mt.randint(rows, 1, 6), [s.randint(1, 6) for s in states]
+        elif k % 3 == 1:
+            got, want = mt.uniform(rows, -1.0, 1.0), [s.uniform(low=-1.0, high=1.0) for s in states]
+        else:
+            got, want = mt.randint(rows[1:3], 0, 3), [s.randint(3) for s in states[1:3]]
+        assert np.array_equal(got, np.asarray(want)), k
+    for i, state in enumerate(states):
+        _, keys, position, _, _ = state.get_state()
+        assert np.array_equal(mt.key[i], keys) and mt.pos[i] == position

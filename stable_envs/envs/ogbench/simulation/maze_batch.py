@@ -47,13 +47,14 @@ class MazeTask:
             env.close()
 
     def ij_to_xy(self, ij):
-        i, j = ij
-        return j * self.maze_unit - self.offset[0], i * self.maze_unit - self.offset[1]
+        """``MazeEnv.ij_to_xy`` of ``(n, 2)`` cells, as ``(n, 2)`` positions."""
+        return np.stack([ij[:, 1] * self.maze_unit - self.offset[0], ij[:, 0] * self.maze_unit - self.offset[1]], 1)
 
-    def add_noise(self, xy, mt):
-        random_x = mt.uniform(low=-self.noise, high=self.noise) * self.maze_unit / 4
-        random_y = mt.uniform(low=-self.noise, high=self.noise) * self.maze_unit / 4
-        return xy[0] + random_x, xy[1] + random_y
+    def add_noise(self, xy, mt, ids):
+        """``MazeEnv.add_noise`` for lanes ``ids``, drawing from their legacy streams."""
+        random_x = mt.uniform(ids, -self.noise, self.noise) * self.maze_unit / 4
+        random_y = mt.uniform(ids, -self.noise, self.noise) * self.maze_unit / 4
+        return np.stack([xy[:, 0] + random_x, xy[:, 1] + random_y], 1)
 
 
 def norm_within(diff, limit):
@@ -62,6 +63,91 @@ def norm_within(diff, limit):
     for i in np.flatnonzero(np.abs(dist - limit) <= 1e-9 * max(1.0, limit)):
         dist[i] = np.linalg.norm(diff[i])
     return dist <= limit
+
+
+class LegacyMT:
+    """NumPy's legacy ``RandomState`` (MT19937) streams of many lanes, drawn together.
+
+    ``seed``, ``randint`` and ``uniform`` give the values and the stream positions of the same
+    ``np.random.RandomState`` calls on each lane, bit for bit. The Gaussian cache is kept as it is.
+    """
+
+    N, M = 624, 397
+
+    def __init__(self, num_envs: int):
+        self.key = np.zeros((num_envs, self.N), np.uint32)
+        self.pos = np.full(num_envs, self.N, np.int64)
+        self.has_gauss = np.zeros(num_envs, bool)
+        self.gauss = np.zeros(num_envs)
+
+    def seed(self, ids, seeds):
+        """``RandomState(seed)`` for each lane of ``ids``: MT19937's ``init_genrand``."""
+        value = np.asarray(seeds, np.uint64) & 0xFFFFFFFF
+        key = np.empty((len(ids), self.N), np.uint32)
+        for pos in range(self.N):
+            key[:, pos] = value
+            value = (1812433253 * (value ^ (value >> np.uint64(30))) + np.uint64(pos + 1)) & 0xFFFFFFFF
+        self.key[ids] = key
+        self.pos[ids] = self.N
+        self.has_gauss[ids] = False
+        self.gauss[ids] = 0.0
+
+    @staticmethod
+    def _mix(key, lo, hi, nxt):
+        y = (key[:, lo:hi] & np.uint32(0x80000000)) | (nxt & np.uint32(0x7FFFFFFF))
+        return (y >> np.uint32(1)) ^ np.where(y & np.uint32(1), np.uint32(0x9908B0DF), np.uint32(0))
+
+    def _twist(self, rows):
+        """MT19937's ``mt19937_gen`` for lanes ``rows``."""
+        N, M = self.N, self.M
+        old = self.key[rows]
+        new = old.copy()
+        new[:, : N - M] = old[:, M:] ^ self._mix(old, 0, N - M, old[:, 1 : N - M + 1])
+        new[:, N - M : 2 * (N - M)] = new[:, : N - M] ^ self._mix(
+            old, N - M, 2 * (N - M), old[:, N - M + 1 : 2 * (N - M) + 1]
+        )
+        new[:, 2 * (N - M) : N - 1] = new[:, N - M : M - 1] ^ self._mix(
+            old, 2 * (N - M), N - 1, old[:, 2 * (N - M) + 1 :]
+        )
+        new[:, N - 1 :] = new[:, M - 1 : M] ^ self._mix(old, N - 1, N, new[:, :1])
+        self.key[rows] = new
+        self.pos[rows] = 0
+
+    def next32(self, rows):
+        """One tempered 32-bit output for each lane of ``rows`` (distinct lanes)."""
+        rows = np.asarray(rows, np.int64)
+        spent = rows[self.pos[rows] >= self.N]
+        if spent.size:
+            self._twist(spent)
+        y = self.key[rows, self.pos[rows]]
+        self.pos[rows] += 1
+        y ^= y >> np.uint32(11)
+        y ^= (y << np.uint32(7)) & np.uint32(0x9D2C5680)
+        y ^= (y << np.uint32(15)) & np.uint32(0xEFC60000)
+        y ^= y >> np.uint32(18)
+        return y
+
+    def uniform(self, rows, low, high):
+        """``RandomState.uniform(low, high)`` for each lane of ``rows``."""
+        a = (self.next32(rows) >> np.uint32(5)).astype(np.float64)
+        b = (self.next32(rows) >> np.uint32(6)).astype(np.float64)
+        return low + (high - low) * ((a * 67108864.0 + b) / 9007199254740992.0)
+
+    def randint(self, rows, low, high):
+        """``RandomState.randint(low, high)`` for each lane of ``rows``: masked rejection sampling."""
+        rows = np.asarray(rows, np.int64)
+        span = high - 1 - low
+        out = np.zeros(len(rows), np.int64)
+        if span == 0:
+            return out + low
+        mask = np.uint32((1 << int(span).bit_length()) - 1)
+        pending = np.arange(len(rows))
+        while pending.size:
+            value = self.next32(rows[pending]) & mask
+            ok = value <= span
+            out[pending[ok]] = value[ok]
+            pending = pending[~ok]
+        return out + low
 
 
 class MazeRandom:
@@ -73,7 +159,7 @@ class MazeRandom:
     def __init__(self, num_envs: int):
         self.num_envs = num_envs
         self.pcg = [np.random.Generator(np.random.PCG64(0)) for _ in range(num_envs)]
-        self.mt = [np.random.RandomState(0) for _ in range(num_envs)]
+        self.mt = LegacyMT(num_envs)
         fields = maze_fields("point")
         self.columns = {
             key: np.zeros((num_envs, width), dtype=np.dtype(str(dtype).removeprefix("torch.")))
@@ -84,7 +170,7 @@ class MazeRandom:
     def seed(self, ids, seed):
         for i in ids:
             self.pcg[i] = np.random.Generator(np.random.PCG64(np.random.SeedSequence(int(seed) + int(i))))
-            self.mt[i] = np.random.RandomState(int(seed) + int(i))
+        self.mt.seed(ids, int(seed) + np.asarray(ids, np.int64))
 
     def sync(self, ids):
         """Write the generators of lanes ``ids`` into the State columns."""
@@ -95,17 +181,21 @@ class MazeRandom:
             c["rng", "env_inc"][i] = uint128_bytes(pcg["state"]["inc"])
             c["rng", "env_has_uint32"][i] = pcg["has_uint32"]
             c["rng", "env_uinteger"][i] = pcg["uinteger"]
-            _, keys, position, has_gauss, cached = self.mt[i].get_state()
-            c["rng", "global_keys"][i] = keys
-            c["rng", "global_position"][i] = position
-            c["rng", "global_has_gauss"][i] = has_gauss
-            c["rng", "global_cached_gaussian"][i] = cached
+        self.sync_legacy(ids)
+
+    def sync_legacy(self, ids):
+        c, mt = self.columns, self.mt
+        c["rng", "global_keys"][ids] = mt.key[ids]
+        c["rng", "global_position"][ids, 0] = mt.pos[ids]
+        c["rng", "global_has_gauss"][ids, 0] = mt.has_gauss[ids]
+        c["rng", "global_cached_gaussian"][ids, 0] = mt.gauss[ids]
 
     def load(self, decoded):
         """Install generators decoded from State by ``decode_state``."""
+        mt = self.mt
         for i, (_, pcg, legacy) in enumerate(decoded):
             self.pcg[i].bit_generator.state = pcg
-            self.mt[i].set_state(legacy)
+            _, mt.key[i], mt.pos[i], mt.has_gauss[i], mt.gauss[i] = legacy
         self.sync(range(self.num_envs))
 
 
@@ -141,8 +231,8 @@ class MazeReset:
                 quat /= np.linalg.norm(quat)
                 qpos[i, 3:7] = quat
                 qvel[i] = 0.1 * pcg.standard_normal(self.nv)
-                for joint, (low, high) in enumerate(zip(lo, hi, strict=True), 1):
-                    qpos[i, 6 + joint] = pcg.uniform(low, high)
+                # One draw per joint in joint order, as the source's loop of scalar draws.
+                qpos[i, 7:] = pcg.uniform(lo, hi)
             rb = self.rb
             rb.reset(pending, stage=mujoco.mjtStage.mjSTAGE_NONE)
             rb.qpos[pending] = qpos[pending]
@@ -158,18 +248,17 @@ class MazeReset:
         goal[:, 2] = t.target_z
         task_id = np.zeros((n, 1), np.int64)
         init = np.zeros((n, 2))
-        for row, i in enumerate(ids):
-            mt = rand.mt[i]
-            if t.reward_task_id is not None:
-                task_id[row] = t.reward_task_id
-            else:
-                task_id[row] = mt.randint(1, t.num_tasks + 1)
-            init_ij, goal_ij = t.tasks[int(task_id[row, 0]) - 1]
-            init[row] = t.add_noise(t.ij_to_xy(init_ij), mt)
-            goal_xy = t.ij_to_xy(goal_ij)
-            if t.add_noise_to_goal:
-                goal_xy = t.add_noise(goal_xy, mt)
-            goal[row, :2] = goal_xy
+        mt = rand.mt
+        if t.reward_task_id is not None:
+            task_id[:] = t.reward_task_id
+        else:
+            task_id[:, 0] = mt.randint(ids, 1, t.num_tasks + 1)
+        ij = np.array(t.tasks)[task_id[:, 0] - 1]
+        init[:] = t.add_noise(t.ij_to_xy(ij[:, 0]), mt, ids)
+        goal_xy = t.ij_to_xy(ij[:, 1])
+        if t.add_noise_to_goal:
+            goal_xy = t.add_noise(goal_xy, mt, ids)
+        goal[:, :2] = goal_xy
         qpos = np.tile(t.qpos0, (self.num_envs, 1))
         qvel = np.zeros((self.num_envs, self.nv))
         # A seeded inner reset reseeds before each of the two draws, so they repeat each other.
@@ -215,8 +304,7 @@ class MazeOutputs:
         for centre in self.teleport_in:
             near |= norm_within(xy - centre, self.teleport_reach)
         lanes = np.asarray(ids)[near[ids]]
-        count = len(self.teleport_out)
-        return lanes, np.array([self.teleport_out[rand.mt[i].randint(count)] for i in lanes]).reshape(-1, 2)
+        return lanes, np.stack(self.teleport_out)[rand.mt.randint(lanes, 0, len(self.teleport_out))].reshape(-1, 2)
 
 
 def humanoid_observation(qpos, qvel, xpos, xmat, sensordata):
@@ -422,7 +510,7 @@ class OGBMazeBatchAdapter(_MazeLanes):
         lanes, dest = out.teleports(qpos[:, :2], ids, self._random)
         if lanes.size:
             b.qpos[lanes, :2] = dest
-            self._random.sync(lanes)
+            self._random.sync_legacy(lanes)
         if active is not None:
             idle = ~active
             values = {
@@ -506,14 +594,15 @@ class OGBMazeWarpAdapter(_MazeLanes):
 
     def _refill(self, ids):
         """Draw the next teleport destinations of lanes ``ids`` from copies of their RNGs."""
-        if not len(ids):
+        ids = np.asarray(ids, np.int64)
+        if not ids.size:
             return
+        mt = self._random.mt
+        probe = LegacyMT(len(ids))
+        probe.key[:], probe.pos[:] = mt.key[ids], mt.pos[ids]
+        rows = np.arange(len(ids))
         count = len(self._outputs.teleport_out)
-        probe = np.random.RandomState()
-        draws = np.zeros((len(ids), TELEPORT_DRAWS), np.int64)
-        for row, i in enumerate(ids):
-            probe.set_state(self._random.mt[i].get_state())
-            draws[row] = [probe.randint(count) for _ in range(TELEPORT_DRAWS)]
+        draws = np.stack([probe.randint(rows, 0, count) for _ in range(TELEPORT_DRAWS)], 1)
         index = torch.as_tensor(ids, device=self.device)
         self._draws[index] = torch.from_numpy(draws).to(self.device)
         self._used[index] = 0
@@ -525,11 +614,9 @@ class OGBMazeWarpAdapter(_MazeLanes):
         used = self._used.cpu().numpy()
         ids = np.flatnonzero(used)
         count = len(self._outputs.teleport_out)
-        for i in ids:
-            mt = self._random.mt[i]
-            for _ in range(int(used[i])):
-                mt.randint(count)
-        self._random.sync(ids)
+        for k in range(1, int(used.max(initial=0)) + 1):
+            self._random.mt.randint(np.flatnonzero(used >= k), 0, count)
+        self._random.sync_legacy(ids)
         self._upload_rng(ids)
         self._steps_since_refill = 0
 
