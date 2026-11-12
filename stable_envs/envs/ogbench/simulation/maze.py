@@ -161,6 +161,17 @@ def _resting_lanes(rest, envs, qpos):
     return clear & np.asarray(idle, bool)
 
 
+def tree(flat: dict) -> dict:
+    """Nest ``{(group, name): value}`` (or ``{name: value}``) as ``{group: {name: value}}``."""
+    out: dict = {}
+    for key, value in flat.items():
+        if isinstance(key, str):
+            out[key] = value
+        else:
+            out.setdefault(key[0], {})[key[1]] = value
+    return out
+
+
 def decode_state(state, num_envs, fields, num_tasks):
     """Return ``(host State, [(task id, PCG64 state, legacy MT19937 state)] per lane)``, or raise."""
     if not isinstance(state, TensorDict) or state.batch_size != torch.Size([num_envs]):

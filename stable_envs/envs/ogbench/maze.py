@@ -7,6 +7,7 @@ from tensordict import TensorDict
 from ... import tuning
 from ..._core.mujoco_gl import configure_mujoco_gl, mujoco_renderer
 from ..._core.plate_texels import quantise
+from ..._core.tensordicts import build_tensordict
 from ..._execution.protocol import StepPipeline, step_pipeline
 
 configure_mujoco_gl()
@@ -18,7 +19,7 @@ from ...render import raycast3d as R3
 from ...render.primitives import dot3
 from ...spaces import Box, Dict, Discrete
 from .simulation.execution import make_maze_adapter, maze_backend
-from .simulation.maze import BODIES, maze_fields
+from .simulation.maze import BODIES, maze_fields, tree
 
 # Shading totals fitted on point-agent interiors, not baked floor pixels.
 SHADE_AMBIENT, SHADE_DIFFUSE, SHADE_SPECULAR, SHADE_EXPONENT = 0.078438, 1.416189, 0.230554, 45.0
@@ -1128,6 +1129,8 @@ class MazeSemantics:
     action_dtype = torch.float32
     action_low, action_high = -1.0, 1.0
     execution_mode = "DELEGATED_CPU"
+    # Each step returns outputs in new storage.
+    _step_outputs_owned = True
 
     def __init__(self, *args, simulation_backend="default", mjwarp_min_envs=None, **kwargs):
         """Select physics at construction; outputs are on ``device``.
@@ -1198,6 +1201,12 @@ class MazeSemantics:
     def _advance_without_snapshot(self, actions, *, active=None):
         self._check_open("step")
         return self._simulator.step(actions, active=active, capture_state=False)
+
+    def _stack_states(self, values):
+        """Stack State snapshots leaf by leaf along a new time axis, without a TensorDict ``apply``."""
+        flat = [dict(value.items(True, True)) for value in values]
+        stacked = {key: torch.stack([row[key] for row in flat], 1) for key in flat[0]}
+        return build_tensordict(tree(stacked), [self.B, len(values)], values[0].device)
 
     def _step_pipeline(self) -> StepPipeline | None:
         return step_pipeline(self._simulator)

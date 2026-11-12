@@ -9,9 +9,10 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._core.tensordicts import build_tensordict
 from ...._execution.mjbatch import NativeBatch, WarpBatch, native_threads
 from ...._execution.protocol import SimulatorAdapter
-from .maze import BODIES, _make_maze, _rest_walls, decode_state, maze_fields
+from .maze import BODIES, _make_maze, _rest_walls, decode_state, maze_fields, tree
 from .pcg import uint128_bytes
 
 INFO_KEYS = ("xy", "prev_qpos", "prev_qvel", "qpos", "qvel")
@@ -425,7 +426,9 @@ class OGBMazeBatchAdapter(_MazeLanes):
             ("task", "id"): self._task_id,
             **self._random.columns,
         }
-        return TensorDict({key: torch.from_numpy(np.array(value)) for key, value in columns.items()}, [self.num_envs])
+        return build_tensordict(
+            tree({key: torch.from_numpy(np.array(value)) for key, value in columns.items()}), [self.num_envs], "cpu"
+        )
 
     def get_state(self):
         self._check_open()
@@ -516,13 +519,14 @@ class OGBMazeBatchAdapter(_MazeLanes):
             values = {
                 key: np.where(idle.reshape(-1, *[1] * (v.ndim - 1)), self._last[key], v) for key, v in values.items()
             }
+        tensors = {key: torch.from_numpy(np.array(v)) for key, v in values.items()}
         self._last = values
-        tensors = {key: torch.from_numpy(np.ascontiguousarray(v)) for key, v in values.items()}
-        info = TensorDict({key: tensors.pop(key) for key in INFO_KEYS}, [self.num_envs])
-        result = TensorDict({**tensors, "info": info}, [self.num_envs])
+        tensors["info"] = {key: tensors.pop(key) for key in INFO_KEYS}
         if capture_state:
-            result["state"] = self._host_state()
-        return result.to(self.device)
+            tensors["state"] = self._host_state()
+        if self.device.type != "cpu":
+            return TensorDict(tensors, [self.num_envs]).to(self.device)
+        return build_tensordict(tensors, [self.num_envs], "cpu")
 
     def close(self):
         if not self._closed:
@@ -646,10 +650,10 @@ class OGBMazeWarpAdapter(_MazeLanes):
             ("task", "id"): self._task_id,
             **self._rng_columns,
         }
-        return TensorDict(
-            {key: value.to(self.fields[key][1]).clone() for key, value in columns.items()},
+        return build_tensordict(
+            tree({key: value.to(self.fields[key][1]).clone() for key, value in columns.items()}),
             [self.num_envs],
-            device=self.device,
+            self.device,
         )
 
     def set_state(self, state):
@@ -745,15 +749,12 @@ class OGBMazeWarpAdapter(_MazeLanes):
                 key: torch.where(idle.view(-1, *[1] * (v.dim() - 1)), self._last[key], v) for key, v in values.items()
             }
         self._last = values
-        info = TensorDict({key: values[key] for key in INFO_KEYS}, [self.num_envs], device=self.device)
-        result = TensorDict(
-            {key: v for key, v in values.items() if key not in INFO_KEYS} | {"info": info},
-            [self.num_envs],
-            device=self.device,
-        )
+        # Leaves of one step share no storage with each other or with the next masked step.
+        tensors = {key: v.clone() for key, v in values.items() if key not in INFO_KEYS}
+        tensors["info"] = {key: values[key].clone() for key in INFO_KEYS}
         if capture_state:
-            result["state"] = self.get_state()
-        return result
+            tensors["state"] = self.get_state()
+        return build_tensordict(tensors, [self.num_envs], self.device)
 
     def _teleport_lanes(self, xy, active):
         """Move lanes within reach of an inbound teleport to their next drawn outbound teleport."""
