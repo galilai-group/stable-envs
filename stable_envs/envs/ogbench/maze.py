@@ -1203,9 +1203,21 @@ class MazeSemantics:
         return self._simulator.step(actions, active=active, capture_state=False)
 
     def _stack_states(self, values):
-        """Stack State snapshots leaf by leaf along a new time axis, without a TensorDict ``apply``."""
+        """Stack State snapshots along a new time axis: one copy per dtype, the leaves are views of it."""
         flat = [dict(value.items(True, True)) for value in values]
-        stacked = {key: torch.stack([row[key] for row in flat], 1) for key in flat[0]}
+        groups: dict = {}
+        for key, leaf in flat[0].items():
+            groups.setdefault(leaf.dtype, []).append(key)
+        stacked = {}
+        for keys in groups.values():
+            # State leaves are [B, width].
+            rows = [torch.cat([row[key] for key in keys], 1) for row in flat]
+            block = rows[0].unsqueeze(1) if len(rows) == 1 else torch.stack(rows, 1)
+            start = 0
+            for key in keys:
+                width = flat[0][key].shape[1]
+                stacked[key] = block[:, :, start : start + width]
+                start += width
         return build_tensordict(tree(stacked), [self.B, len(values)], values[0].device)
 
     def _step_pipeline(self) -> StepPipeline | None:

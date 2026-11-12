@@ -324,31 +324,33 @@ def humanoid_observation(qpos, qvel, xpos, xmat, sensordata):
 
 
 def to_device(source: dict, batch: int, device) -> dict:
-    """Copy the nested host tensors ``source`` to ``device``: one transfer per dtype, leaves are views."""
-    leaves: list = []
+    """Copy the nested contiguous host tensors ``source`` to ``device`` in one transfer; leaves are views of it."""
+    rows, layout, start = [], [], 0
 
     def walk(node, path):
+        nonlocal start
         for key, value in node.items():
             if isinstance(value, dict):
                 walk(value, (*path, key))
-            else:
-                leaves.append(((*path, key), value))
+                continue
+            raw = value.numpy().reshape(batch, -1).view(np.uint8)
+            # Each leaf starts at a multiple of 8 bytes, so that every dtype views its bytes in place.
+            pad = -raw.shape[1] % 8
+            rows.append(raw)
+            if pad:
+                rows.append(np.zeros((batch, pad), np.uint8))
+            layout.append(((*path, key), value.dtype, value.shape, start, raw.shape[1]))
+            start += raw.shape[1] + pad
 
     walk(source, ())
-    groups: dict = {}
-    for path, value in leaves:
-        groups.setdefault(value.dtype, []).append((path, value))
+    block = torch.from_numpy(np.concatenate(rows, 1)).to(device)
     out: dict = {}
-    for items in groups.values():
-        block = torch.cat([value.reshape(batch, -1) for _, value in items], 1).to(device)
-        start = 0
-        for path, value in items:
-            width = value[0].numel() if batch else 0
-            node = out
-            for part in path[:-1]:
-                node = node.setdefault(part, {})
-            node[path[-1]] = block[:, start : start + width].reshape(value.shape)
-            start += width
+    for path, dtype, shape, offset, size in layout:
+        node = out
+        for part in path[:-1]:
+            node = node.setdefault(part, {})
+        leaf = block[:, offset : offset + size].view(dtype)
+        node[path[-1]] = leaf if leaf.shape == shape else leaf.reshape(shape)
     return out
 
 
@@ -511,7 +513,7 @@ class OGBMazeBatchAdapter(_MazeLanes):
         return tree({key: torch.from_numpy(np.array(value)) for key, value in columns.items()})
 
     def _place(self, source):
-        """A TensorDict of host leaves ``source`` on the env device, with one copy per dtype."""
+        """A TensorDict of host leaves ``source`` on the env device, with one copy."""
         if self.device.type != "cpu":
             source = to_device(source, self.num_envs, self.device)
         return build_tensordict(source, [self.num_envs], self.device)
