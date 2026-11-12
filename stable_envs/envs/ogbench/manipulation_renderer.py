@@ -15,7 +15,7 @@ from .simulation import render_state as pixels
 _LOCK = threading.RLock()
 OPENGL = ("opengl", "opengl_fast")
 # Backends that draw from host RenderState columns.
-HOST = (*OPENGL, "numba")
+HOST = (*OPENGL, "numba", "raster")
 #: The batched CUDA rasterizer of manipulation_nvdiff.
 NVDIFF = "nvdiff"
 #: Families whose CUDA ``auto`` backend at 1x sampling is ``nvdiff``.
@@ -252,7 +252,7 @@ def draws_on_host(backend, device, supersample, family=None):
 
 
 def host_backend(backend, device):
-    """The host backend that ``backend`` draws with on ``device``: opengl, opengl_fast or numba.
+    """The host backend that ``backend`` draws with on ``device``: opengl, opengl_fast, numba or raster.
 
     ``auto`` draws with opengl_fast on CPU and with opengl on CUDA.
     """
@@ -306,6 +306,11 @@ def render(family, state, device, backend="auto", chunk_size=None, validated=Fal
 
             host, device, _ = manipulation_opengl.prepare(family, state, device, chunk_size, validated)
             return manipulation_numba.frames(family, manipulation_opengl.columns(host), device)
+        if chosen == "raster":
+            from . import manipulation_raster
+
+            host, device, _ = manipulation_opengl.prepare(family, state, device, chunk_size, validated)
+            return manipulation_raster.frames(family, manipulation_opengl.columns(host), device, chunk_size)
         return manipulation_opengl.render(family, state, device, chunk_size, validated, chosen == "opengl_fast")
     if backend == "auto":
         backend = "mjwarp_fidelity"
@@ -314,7 +319,7 @@ def render(family, state, device, backend="auto", chunk_size=None, validated=Fal
     pixels.validate(family, host)
     if backend not in ("auto", "mjwarp", "mjwarp_fidelity"):
         raise ValueError(
-            "Cube/Scene rendering supports mjwarp, mjwarp_fidelity, nvdiff, opengl, opengl_fast or numba backends"
+            "Cube/Scene rendering supports mjwarp, mjwarp_fidelity, nvdiff, opengl, opengl_fast, numba or raster backends"
         )
     if torch.device(device).type != "cuda":
         raise NotImplementedError("Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA")

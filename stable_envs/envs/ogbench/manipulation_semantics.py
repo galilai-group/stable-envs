@@ -296,6 +296,10 @@ class ManipulationSemantics:
             from . import manipulation_numba
 
             return self._into(manipulation_numba.frames(self.CELL, columns, self.device), out)
+        if chosen == "raster":
+            from . import manipulation_raster
+
+            return self._into(manipulation_raster.frames(self.CELL, columns, self.device, chunk_size), out)
         return self._into(manipulation_opengl.frames(self.CELL, columns, self.device, chosen == "opengl_fast"), out)
 
     def _into(self, result, out):
@@ -408,6 +412,22 @@ class ManipulationSemantics:
             checked = False
         frames = self._render_frames(state, checked, out=out, **kwargs)
         return frames.reshape(*lead, *frames.shape[1:])
+
+    def render_semantic(self, states):
+        """Segmentation and planar depth of compact render rows, drawn by ``backend="raster"``.
+
+        Returns ``(B, size, size, 2)`` ``(objid, objtype)`` pairs in the model of ``reference_env`` (-1 for
+        background) and ``(B, size, size)`` depth along the optical axis, top row first.
+        """
+        from . import manipulation_raster
+
+        rows = torch.as_tensor(np.ascontiguousarray(states) if isinstance(states, np.ndarray) else states)
+        rows = rows.detach().to("cpu", torch.float32).reshape(-1, self.state_dim)
+        cpu = torch.device("cpu")
+        appearance = self._stored_appearance(len(rows), self.size, 1, cpu)
+        state = self._rows_to_render_state(rows, None, self.size, 1, cpu, appearance)
+        columns = {key: value.numpy() for key, value in state.items(True, True)}
+        return manipulation_raster.semantic(self.CELL, columns, type(self))
 
     def sample_states(self, batch, rng=None):
         self._check_open("sample_states")
