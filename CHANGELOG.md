@@ -169,6 +169,9 @@ All notable changes to this project are listed here. The format follows
 - OGBench mazes: `env.step` stacks the `states` of a CPU env leaf by leaf with the shared core stack. On CUDA,
   MuJoCo Warp copies the State into one buffer with one call, and the `states` of a step are one copy of these
   buffers. The State values do not change.
+- Classic control on CPU: a step does not copy the State into the render rows of the env. The rows are copied
+  from the simulator when a reader needs them (`render()` without a State, the live rows). The Gymnasium
+  backend builds its State and outputs without TensorDict validation. The outputs do not change.
 - MS-Human-700: `MSHumanLocomotion` steps on the shared batched MuJoCo backend. CUDA envs step on MuJoCo Warp at
   every batch size by default (`simulation_backend="default"`); `"auto"` keeps `mujoco.batch` below
   `mjwarp_min_envs` (256) CUDA environments. The MuJoCo Warp step does not synchronize the host.

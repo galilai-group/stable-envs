@@ -134,10 +134,33 @@ class ClassicControlSemantics:
         return Spec(shape=(1,), dtype=torch.float32, low=-bound, high=bound, device=self.device)
 
     def _sync_authoritative_state(self, state):
+        self._rows_stale = False
         sim = torch.cat(
             [state[name].to(self.device, torch.float64).reshape(self.B, 1) for name in self.sim_state_names], dim=1
         )
         super().set_sim_state(sim)
+
+    def _sync_stale_rows(self):
+        """Copy the simulator's State into the simulation and render rows when a step left them behind."""
+        if self.__dict__.get("_rows_stale"):
+            self._sync_authoritative_state(self._simulator.get_state())
+
+    def _get_render_state(self):
+        self._sync_stale_rows()
+        return super()._get_render_state()
+
+    def _set_render_state(self, states, variation=None, style=None):
+        self._rows_stale = False
+        return super()._set_render_state(states, variation=variation, style=style)
+
+    def _sim_columns(self, drawn):
+        self._sync_stale_rows()
+        return super()._sim_columns(drawn)
+
+    def _render(self, states=None, *args, **kwargs):
+        if states is None:
+            self._sync_stale_rows()
+        return super()._render(states, *args, **kwargs)
 
     def sim_state(self):
         raise NotImplementedError(f"{type(self).__name__}.sim_state is unavailable; use get_state()")
@@ -178,8 +201,9 @@ class ClassicControlSemantics:
     def _step(self, actions, *, active=None):
         self._check_open("step")
         result = self._simulator.step(actions, active=active)
+        # The rows follow the simulator only when they are read.
         if not getattr(self._simulator, "writes_render_state", False):
-            self._sync_authoritative_state(result["state"])
+            self._rows_stale = True
         return result
 
     def _close(self):

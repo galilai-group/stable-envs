@@ -340,6 +340,24 @@ def test_public_batched_env_matches_gymnasium_env(domain):
         assert torch.equal(b["frames"], a["frames"])
 
 
+@pytest.mark.parametrize("backend", ["gym", "numpy"])
+@pytest.mark.parametrize("domain", DOMAINS)
+def test_render_rows_follow_the_simulator_after_steps(domain, backend):
+    """Steps leave the render rows to be read from the simulator; every reader sees the last step's State."""
+    name = CLASSES[domain]
+    with se.make(name, num_envs=3, device="cpu", simulation_backend=backend) as env:
+        env.reset(seed=2)
+        for action in _actions(domain, 4, 3)[:, :3]:
+            state = env.step(action, frames=None)["state"]
+        rows = env._pack_render_state(state)
+        assert torch.equal(env._get_render_state(), rows)
+        assert torch.equal(env._render(), env.render(state))
+        env.step(_actions(domain, 1, 4)[0][:3], frames=None)
+        assert torch.equal(env._render(), env.render())
+        env._set_render_state(rows)
+        assert torch.equal(env._get_render_state(), rows)
+
+
 @pytest.mark.gpu
 @pytest.mark.parametrize("domain", DOMAINS)
 def test_cuda_steps_match_gymnasium(domain):

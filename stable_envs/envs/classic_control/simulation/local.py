@@ -10,6 +10,7 @@ import torch
 from tensordict import TensorDict
 
 from ...._core.physics import state_key
+from ...._core.tensordicts import build_tensordict
 from ...._execution.process import PER_LANE
 from ...._execution.protocol import SimulatorAdapter
 
@@ -282,11 +283,14 @@ class ClassicControlAdapter(SimulatorAdapter):
                 column[index] = values[key]
         for j, key in enumerate(self._physics_keys):
             columns[key][:, 0] = self._physics[:, j]
-        return TensorDict(
-            {key: torch.from_numpy(value).to(self.device) for key, value in columns.items()},
-            [self.num_envs],
-            device=self.device,
-        )
+        tree: dict = {}
+        for key, value in columns.items():
+            value = torch.from_numpy(value).to(self.device)
+            if isinstance(key, str):
+                tree[key] = value
+            else:
+                tree.setdefault(key[0], {})[key[1]] = value
+        return build_tensordict(tree, [self.num_envs], self.device)
 
     def validate(self, state: TensorDict) -> None:
         """Check the schema and every lane's PCG64 state; change no simulator."""
@@ -399,7 +403,7 @@ class ClassicControlAdapter(SimulatorAdapter):
             for i, (env, action) in enumerate(zip(self.envs, self._actions(actions), strict=True))
         ]
         observations = np.stack([out[0] for out in outputs])
-        return TensorDict(
+        return build_tensordict(
             {
                 **({"state": self.get_state()} if capture_state else {}),
                 "reward": torch.tensor([out[1] for out in outputs], dtype=torch.float64, device=self.device),
@@ -409,8 +413,8 @@ class ClassicControlAdapter(SimulatorAdapter):
                 # ``info['state']`` is a float32 copy of the observation.
                 "info_state": torch.as_tensor(observations, dtype=torch.float32, device=self.device).clone(),
             },
-            batch_size=[self.num_envs],
-            device=self.device,
+            [self.num_envs],
+            self.device,
         )
 
     def close(self) -> None:
