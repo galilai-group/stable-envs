@@ -39,6 +39,8 @@ no host synchronization. ``naconmax`` (contacts of all worlds) and ``njmax`` (co
 to sizes for the batch; an overflow raises :class:`BufferOverflowError` instead of dropping contacts silently.
 ``set_physics(..., forward=True)`` forwards every world, so derived fields of the other worlds then describe
 their current state. Sensors are computed on the last substep only, as they do not act on the dynamics.
+``exclude_pairs`` removes geom pairs from MuJoCo Warp's collision candidates, as an ``<exclude>`` would: a
+family uses it for pairs whose bounding volumes overlap but which make no contact.
 
 Routing: :func:`resolve_backend`. Per-environment source resets: :class:`ResetPool`.
 
@@ -407,6 +409,7 @@ class WarpBatch(MjBatch):
         njmax: int | None = None,
         batched_fields: Sequence[str] = (),
         model_options: Mapping[str, object] | None = None,
+        exclude_pairs: Iterable[tuple[int, int]] = (),
         **_native_options,
     ):
         import mujoco
@@ -448,6 +451,7 @@ class WarpBatch(MjBatch):
                 self._m = mjw.put_model(self.model, batch_sizes={name: self.num_envs for name in self._batched})
                 for name, value in (model_options or {}).items():
                     setattr(self._m.opt, name, value)
+                _exclude_pairs(self._m, self.model, exclude_pairs)
                 self._write_variants(rows)
                 self._d = mjw.put_data(
                     self.model, template, nworld=self.num_envs, naconmax=self.naconmax, njmax=self.njmax
@@ -670,6 +674,36 @@ class WarpBatch(MjBatch):
         self._closed = True
         self._views = {}
         self._m = self._d = self._step_graph = self._forward_graph = None
+
+
+def _exclude_pairs(m, model, pairs) -> None:
+    """Remove geom pairs from MuJoCo Warp's precomputed collision candidates, as an ``<exclude>`` would."""
+    import warp as wp
+
+    drop = {(min(int(a), int(b)), max(int(a), int(b))) for a, b in pairs}
+    if not drop:
+        return
+
+    def host(value):
+        return value.numpy() if isinstance(value, wp.array) else np.asarray(value)
+
+    device = m.nxn_geom_pair_filtered.device
+    geoms, ids = host(m.nxn_geom_pair_filtered), host(m.nxn_pairid_filtered)
+    # Pairs that a collision sensor reads stay.
+    keep = np.array([(int(a), int(b)) not in drop or s >= 0 for (a, b), (_, s) in zip(geoms, ids)], dtype=bool)
+    counts = list(m.geom_pair_type_count)
+    ntypes = int((np.sqrt(8 * len(counts) + 1) - 1) / 2)
+    for a, b in geoms[~keep]:
+        i, j = sorted((int(model.geom_type[a]), int(model.geom_type[b])))
+        counts[(i * (2 * ntypes - i - 1)) // 2 + j] -= 1
+    m.nxn_geom_pair_filtered = wp.array(geoms[keep], dtype=wp.vec2i, device=device)
+    m.nxn_pairid_filtered = wp.array(ids[keep], dtype=wp.vec2i, device=device)
+    pairid = host(m.nxn_pairid).copy()
+    for k, (a, b) in enumerate(host(m.nxn_geom_pair)):
+        if (int(a), int(b)) in drop and pairid[k, 1] < 0:
+            pairid[k, 0] = -2
+    m.nxn_pairid = wp.array(pairid, dtype=wp.vec2i, device=device)
+    m.geom_pair_type_count = tuple(counts)
 
 
 def _default_naconmax(model, data, num_envs: int) -> int:

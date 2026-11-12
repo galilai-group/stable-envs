@@ -295,6 +295,21 @@ def test_mjwarp_sensors_hold_the_values_of_the_last_substep():
 
 
 @cuda
+def test_mjwarp_excluded_pairs_make_no_contacts():
+    model = _model()
+    pair = (model.geom("floor").id, model.geom("box").id)
+    box_z = model.jnt_qposadr[model.body("box").jntadr[0]] + 2
+    with WarpBatch(model, 2, "cuda") as kept, WarpBatch(model, 2, "cuda", exclude_pairs=[pair]) as dropped:
+        assert len(dropped._m.nxn_geom_pair_filtered) == len(kept._m.nxn_geom_pair_filtered) - 1
+        for _ in range(100):
+            kept.step(np.zeros((2, 2)))
+            dropped.step(np.zeros((2, 2)))
+        # The box rests on the floor, or falls through it when the pair is excluded.
+        assert kept.data("qpos")[:, box_z].min() > 0.05
+        assert dropped.data("qpos")[:, box_z].max() < -0.5
+
+
+@cuda
 def test_make_backend_builds_the_routed_backend():
     backend = resolve_backend(4, "cuda", "auto", 8)
     with make_backend(backend, _model(), 4, "cuda") as batch:

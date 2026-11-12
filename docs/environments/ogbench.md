@@ -200,6 +200,11 @@ Cube oracle, each episode ends with the same success at the same first-success s
 `tests/gpu/test_ogbench_manipulation_warp.py`). Over a few hundred steps, contacts can make the cube positions
 differ from OGBench.
 
+MuJoCo Warp does not test the links of the Robotiq gripper against each other for contact. The pads keep their
+contacts with each other and with all other geoms. The linkage has one degree of freedom, and the pads touch
+before two links can touch, so these pairs make no contacts in OGBench. Their bounding volumes overlap on every
+substep, and each test is a mesh-mesh collision test, so the step is faster without them.
+
 The resets, restores and Variations run OGBench's own code on one OGBench object per environment, and the
 backend then loads the result. A small CUDA batch steps faster on `mujoco.batch` than on MuJoCo Warp; use
 `simulation_backend="auto"` for this.

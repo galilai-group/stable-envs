@@ -131,3 +131,30 @@ def test_warp_state_has_the_cpu_leaves(family):
     finally:
         ref.close()
         gpu.close()
+
+
+def test_gripper_link_pairs_are_excluded_but_the_pads_collide():
+    _require_cuda()
+    import mujoco
+
+    from stable_envs.envs.ogbench.simulation.manipulation_batch import metadata_env
+    from stable_envs.envs.ogbench.simulation.manipulation_warp import OGBManipulationWarpAdapter, contact_exclusions
+
+    model = metadata_env("Cube").model
+
+    def body(g):
+        return mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_BODY, int(model.geom_bodyid[g]))
+
+    excluded = contact_exclusions(model)
+    assert excluded and all(
+        body(a).startswith("ur5e/robotiq/") and body(b).startswith("ur5e/robotiq/") for a, b in excluded
+    )
+    assert not any(body(a).endswith("_pad") and body(b).endswith("_pad") for a, b in excluded)
+    gpu = OGBManipulationWarpAdapter("Cube", 2, "cuda", seed=0)
+    try:
+        pairs = {tuple(p) for p in gpu.physics._m.nxn_geom_pair_filtered.numpy().tolist()}
+        assert not pairs & {(min(a, b), max(a, b)) for a, b in excluded}
+        pads = [g for g in range(model.ngeom) if body(g).endswith("_pad") and model.geom_contype[g]]
+        assert any((a, b) in pairs for a in pads for b in pads if a < b)
+    finally:
+        gpu.close()

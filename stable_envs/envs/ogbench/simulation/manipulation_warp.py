@@ -23,6 +23,26 @@ NACON_PER_ENV = 64
 NJMAX = 512
 
 
+def contact_exclusions(model) -> list[tuple[int, int]]:
+    """Geom pairs that MuJoCo Warp does not test for contact: the links of the Robotiq gripper with each other.
+
+    The linkage moves with one degree of freedom, and the pads touch before any two links do, so these pairs
+    make no contacts; their bounding volumes overlap on every substep, which costs a mesh-mesh GJK/EPA each.
+    The pads keep their contacts with each other.
+    """
+
+    def body(g):
+        return mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_BODY, int(model.geom_bodyid[g])) or ""
+
+    gripper = [
+        g
+        for g in range(model.ngeom)
+        if (model.geom_contype[g] or model.geom_conaffinity[g]) and body(g).startswith("ur5e/robotiq/")
+    ]
+    pads = {g for g in gripper if body(g).endswith("_pad")}
+    return [(a, b) for i, a in enumerate(gripper) for b in gripper[i + 1 :] if not (a in pads and b in pads)]
+
+
 def _batchable(names):
     """The names that are MuJoCo Warp model arrays with a per-world dimension."""
     import dataclasses
@@ -355,7 +375,9 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
 
     execution_mode = "NATIVE_MJWARP"
 
-    def __init__(self, family, num_envs=1, device="cuda", seed=0, reward_task_id=None, *, lanes=None):
+    def __init__(
+        self, family, num_envs=1, device="cuda", seed=0, reward_task_id=None, *, lanes=None, exclude_contacts=True
+    ):
         if family not in ("Cube", "Scene") or type(num_envs) is not int or num_envs < 1:
             raise ValueError("Cube/Scene require a positive integer batch")
         device = torch.device(device)
@@ -386,6 +408,7 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
                 # sizes that MuJoCo Warp derives from the reset state.
                 naconmax=NACON_PER_ENV * num_envs,
                 njmax=NJMAX,
+                exclude_pairs=contact_exclusions(env.model) if exclude_contacts else (),
             )
             self._control = WarpController(env, device)
         except BaseException:
