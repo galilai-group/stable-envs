@@ -120,8 +120,8 @@ def run_gate(device="cpu"):
     for batch in (1, 3):
         ref = OGBMazeReference(batch)
         with (
-            se.make("PointMazeLargeNavigate", num_envs=batch, device=device) as env,
-            se.make("PointMazeLargeNavigate", num_envs=batch, device=device) as other,
+            se.make("PointMazeLargeNavigate", num_envs=batch, device=device, **EXACT) as env,
+            se.make("PointMazeLargeNavigate", num_envs=batch, device=device, **EXACT) as other,
         ):
             try:
                 outside = np.random.get_state()
@@ -271,6 +271,9 @@ def run_gate(device="cpu"):
 
 
 #: Per-lane explicit values (three lanes) for each swm/OGBMaze-v0 appearance leaf.
+#: The gate compares State bit for bit, so CUDA envs step on the exact CPU physics, not MuJoCo Warp.
+EXACT = {"simulation_backend": "native"}
+
 APPEARANCE_CASES = {
     "floor.color": [
         [[0.9, 0.1, 0.1], [0.1, 0.1, 0.9]],
@@ -324,7 +327,7 @@ def appearance_gate(case, cell="PointMazeLargeNavigate", *, seed=23, steps=20, d
     cls = se.registry.REGISTRY[cell]
     values = STATE_CASES[case]
     options = {"variation_values": values} if values else None
-    with se.make(cell, num_envs=3, device=device) as env:
+    with se.make(cell, num_envs=3, device=device, **EXACT) as env:
         env.reset(seed=seed)
         default = env.render().cpu().numpy()
         ref = OGBMazeReference(3, loco=cls.LOCO, maze=cls.MAZE, source="swm", options=options)
@@ -376,7 +379,7 @@ def pixel_appearance_gate(cell, case, *, seed=23, device="cpu"):
         theirs.append(np.asarray(swm.render()))
     theirs = np.stack(theirs)
     rows = torch.as_tensor(np.stack(qpos), dtype=torch.float32)
-    with se.make(cell, num_envs=2, device=device) as env:
+    with se.make(cell, num_envs=2, device=device, **EXACT) as env:
         default = env._render(rows).cpu().numpy()
         env.reset(seed=seed, options={"variation_values": _ours(values, 2)})
         frames = _mse(env._render(rows).cpu().numpy(), theirs)
