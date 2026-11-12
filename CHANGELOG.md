@@ -20,6 +20,14 @@ All notable changes to this project are listed here. The format follows
   applies to MuJoCo Warp 3.12.0 and 3.17.0; other versions run MuJoCo Warp unchanged. The results are equal up to
   float32 summation order. Public steps/s at 64 environments on an L40S: OGBench Cube +15%, MS-Human +16%,
   Fetch Push +9%, OGBench Scene +7%, AntMaze +6%.
+- MuJoCo Warp backend (`WarpBatch`): the captured graphs run kinematics, body velocities and RNE with one thread
+  block per environment and one thread per body, with a block barrier between body tree levels
+  (`stable_envs/_execution/mjwarp_tree.py`). The kinematics launch also computes the geom and site poses, the
+  centers of mass, the composite inertias and the joint motion axes. This removes about 12 launches per substep,
+  and the three tree walks in which one thread follows a branch body by body. Same MuJoCo Warp versions and
+  `fused_tree_max_envs` limit as the fused tree passes; models with more than 1024 bodies keep those passes. The
+  results are equal up to float32 rounding order. Public steps/s at 64 environments on an A100: OGBench Cube +14%,
+  AntMaze +14%, DMC Walker +11%, Fetch Push +8%, DMC Hopper +7%.
 - DMC native/MJWarp benchmarks offer an opt-in extended batch matrix through 8192 lanes and
   a `--dry-run` preview. Reports include kernel peak host RSS through construction and worker
   exit, including failed workers on supported platforms, alongside existing construction timing.

@@ -50,8 +50,8 @@ fields (and options, as ``"opt.<name>"``) that hold one value per environment, f
 ``model_field``. ``step_fn(m, d)``, when given, runs in place of the ``frame_skip`` calls of ``mjw.step`` in the
 step graph, for a family whose source steps in another call order; ``capture_step`` needs the default substeps.
 Up to ``fused_tree_max_envs`` worlds, the graphs compute subtree centers of mass, composite inertias and RNE
-internal forces with one launch per pass instead of one per body tree level (:mod:`.mjwarp_fused`), on the
-MuJoCo Warp versions it supports.
+internal forces with one launch per pass instead of one per body tree level, and kinematics, body velocities and
+RNE with one thread block per world (:mod:`.mjwarp_fused`), on the MuJoCo Warp versions it supports.
 
 Routing: :func:`resolve_backend`. Per-environment source resets: :class:`ResetPool`.
 

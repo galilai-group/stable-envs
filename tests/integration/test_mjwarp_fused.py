@@ -1,4 +1,4 @@
-"""Fused MuJoCo Warp tree passes: subtree ranges, agreement with MuJoCo Warp's level loops, fallback and routing."""
+"""Fused MuJoCo Warp tree passes: subtree ranges, agreement with MuJoCo Warp's tree walks, fallback and routing."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ import mujoco
 from stable_envs._execution import mjwarp_fused
 from stable_envs._execution.mjbatch import WarpBatch
 
-# Two branches of different depth under the world, a free body, and a branch inside the arm.
+# Two branches of different depth under the world, a free body, a mocap body, and a branch inside the arm.
 XML = """
 <mujoco>
   <option timestep="0.004"/>
@@ -30,6 +30,7 @@ XML = """
         <body name="b3" pos="0.3 0 0">
           <joint type="hinge" axis="0 0 1" damping="0.2"/>
           <geom type="box" size="0.05 0.04 0.03" mass="0.4"/>
+          <site name="tip" pos="0.05 0 0"/>
           <body name="f1" pos="0.05 0.03 0">
             <joint type="slide" axis="0 1 0" range="0 0.04" damping="0.5"/>
             <geom type="box" size="0.02 0.01 0.02" mass="0.1"/>
@@ -44,6 +45,9 @@ XML = """
           <geom type="sphere" size="0.05" mass="0.2"/>
         </body>
       </body>
+    </body>
+    <body name="target" mocap="true" pos="0.2 -0.4 0.3">
+      <geom type="sphere" size="0.03" contype="0" conaffinity="0"/>
     </body>
     <body name="box" pos="0.6 0.5 0.2">
       <freejoint/>
@@ -106,31 +110,39 @@ def _is_ancestor(parent, body, k):
         k = int(parent[k])
 
 
+PATCHED = ("kinematics", "com_pos", "crb", "com_vel", "rne", "_rne_cacc_forward", "_rne_cfrc_backward")
+
+
+def _functions(smooth):
+    return tuple(getattr(smooth, name) for name in PATCHED)
+
+
 def test_unsupported_version_runs_mujoco_warp_unchanged(monkeypatch):
     smooth = pytest.importorskip("mujoco_warp._src.smooth")
-    stock = (smooth.com_pos, smooth.crb, smooth._rne_cfrc_backward)
+    stock = _functions(smooth)
     monkeypatch.setattr(mjwarp_fused.metadata, "version", lambda name: "0.0.1")
     assert not mjwarp_fused.supported()
     fake = types.SimpleNamespace(body_parentid=types.SimpleNamespace(numpy=lambda: np.array([0, 0, 1])))
     with mjwarp_fused.tree_walks(fake) as on:
         assert on is None
-        assert (smooth.com_pos, smooth.crb, smooth._rne_cfrc_backward) == stock
+        assert _functions(smooth) == stock
 
 
 def test_non_contiguous_model_runs_mujoco_warp_unchanged(monkeypatch):
     smooth = pytest.importorskip("mujoco_warp._src.smooth")
-    stock = (smooth.com_pos, smooth.crb, smooth._rne_cfrc_backward)
+    stock = _functions(smooth)
     monkeypatch.setattr(mjwarp_fused, "supported", lambda: True)
     fake = types.SimpleNamespace(body_parentid=types.SimpleNamespace(numpy=lambda: np.array([0, 0, 1, 0, 2])))
     with mjwarp_fused.tree_walks(fake) as on:
         assert on is None
-        assert (smooth.com_pos, smooth.crb, smooth._rne_cfrc_backward) == stock
+        assert _functions(smooth) == stock
     with mjwarp_fused.tree_walks(fake, enabled=False) as on:
         assert on is None
 
 
 @supported_cuda
-def test_fused_passes_agree_with_mujoco_warp_on_random_states():
+@pytest.mark.parametrize("block", [False, True], ids=["level-sums", "block-per-world"])
+def test_fused_passes_agree_with_mujoco_warp_on_random_states(block):
     import mujoco_warp as mjw
     import warp as wp
     from mujoco_warp._src import smooth
@@ -138,8 +150,11 @@ def test_fused_passes_agree_with_mujoco_warp_on_random_states():
     model = _model()
     data = mujoco.MjData(model)
     mujoco.mj_forward(model, data)
-    stock = (smooth.com_pos, smooth.crb, smooth._rne_cfrc_backward)
-    fields = ("subtree_com", "cinert", "cdof", "crb", "M", "qfrc_bias", "cfrc_int")
+    stock = _functions(smooth)
+    fields = (
+        "xpos", "xquat", "xmat", "xipos", "ximat", "xanchor", "xaxis", "geom_xpos", "geom_xmat", "site_xpos",
+        "site_xmat", "subtree_com", "cinert", "cdof", "crb", "M", "cvel", "cdof_dot", "cacc", "qfrc_bias", "cfrc_int",
+    )  # fmt: skip
     rng = np.random.default_rng(0)
     with wp.ScopedDevice("cuda:0"):
         m = mjw.put_model(model)
@@ -149,12 +164,14 @@ def test_fused_passes_agree_with_mujoco_warp_on_random_states():
             state = {
                 "qpos": qpos + 0.3 * torch.as_tensor(rng.standard_normal(qpos.shape), device="cuda"),
                 "qvel": torch.as_tensor(rng.standard_normal((B, model.nv)), device="cuda", dtype=torch.float32),
+                "qacc": torch.as_tensor(rng.standard_normal((B, model.nv)), device="cuda", dtype=torch.float32),
+                "mocap_pos": torch.as_tensor(rng.uniform(-1, 1, (B, 1, 3)), device="cuda", dtype=torch.float32),
             }
             results = []
             for fused in (False, True):
                 for name, value in state.items():
                     wp.to_torch(getattr(d, name)).copy_(value)
-                with mjwarp_fused.tree_walks(m, fused) as on:
+                with mjwarp_fused.tree_walks(m, fused, block=block) as on:
                     assert (on is not None) is fused
                     # Without the constraint solver the passes are compared alone.
                     smooth.kinematics(m, d)
@@ -162,13 +179,37 @@ def test_fused_passes_agree_with_mujoco_warp_on_random_states():
                     smooth.crb(m, d)
                     smooth.com_vel(m, d)
                     smooth.rne(m, d)
+                    result = {f: wp.to_torch(getattr(d, f)).double().clone() for f in fields}
+                    # The forward acceleration pass of rne_postconstraint.
+                    smooth._rne_cacc_forward(m, d, flg_acc=True)
+                    result["cacc_acc"] = wp.to_torch(d.cacc).double().clone()
                 wp.synchronize()
-                results.append({f: wp.to_torch(getattr(d, f)).double().clone() for f in fields})
-            for f in fields:
+                results.append(result)
+            for f in (*fields, "cacc_acc"):
                 scale = results[0][f].abs().max().clamp_min(1e-6)
                 gap = (results[0][f] - results[1][f]).abs().max() / scale
                 assert gap < 2e-6, (f, float(gap))
-    assert (smooth.com_pos, smooth.crb, smooth._rne_cfrc_backward) == stock
+    assert _functions(smooth) == stock
+
+
+@supported_cuda
+def test_block_passes_follow_the_body_count_limit(monkeypatch):
+    import mujoco_warp as mjw
+    import warp as wp
+    from mujoco_warp._src import smooth
+
+    stock = _functions(smooth)
+    with wp.ScopedDevice("cuda:0"):
+        m = mjw.put_model(_model())
+        monkeypatch.setattr(mjwarp_fused, "MAX_BLOCK_BODIES", m.nbody - 1)
+        with mjwarp_fused.tree_walks(m) as on:
+            assert on is not None
+            assert smooth.kinematics is stock[0] and smooth.rne is stock[4]
+            assert smooth.crb is not stock[2]
+        monkeypatch.setattr(mjwarp_fused, "MAX_BLOCK_BODIES", m.nbody)
+        with mjwarp_fused.tree_walks(m) as on:
+            assert smooth.kinematics is not stock[0] and smooth.rne is not stock[4]
+    assert _functions(smooth) == stock
 
 
 def _rollout(fused_tree_max_envs, steps=300):
