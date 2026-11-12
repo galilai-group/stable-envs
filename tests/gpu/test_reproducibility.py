@@ -941,9 +941,22 @@ ROLLOUT_WARMUP, ROLLOUT_STEPS = 20, 300
 #: the env that reached the State and the env restored to it: its rollout mean in the median lane, its largest
 #: value in any lane, and the lanes whose final ``success`` may differ.
 ROLLOUT_MEDIAN_QPOS, ROLLOUT_MAX_QPOS, ROLLOUT_SUCCESS_FLIPS = 0.01, 0.25, 1
+#: The median lane's accumulated reward may differ between the two envs by this fraction of its size (at least 1).
+ROLLOUT_REWARD_RTOL = 0.05
 #: Wider bounds for tasks whose own source amplifies small differences. Slide's puck slides freely and can leave
 #: the table: on CPU MuJoCo an action noise of 1e-6 alone moves it 3.3 cm on average over 200 steps.
-ROLLOUT_QPOS_BOUNDS = {"FetchSlide*": (0.05, 2.5)}
+#: MuJoCo Warp does not repeat a contact solve bit for bit, so bodies in contact are chaotic: two envs restored from
+#: the same State differ from each other as much as from the original (largest gap over 300 steps, original against
+#: restored and restored against restored: Hopper 0.85 and 1.12, Walker 0.59 and 1.04, HumanoidMaze 2.8 and 2.9,
+#: OGBScene 0.85 and 0.61, OGBCube 0.72 and 0.11). One lane drifts far in qpos while the return and the success of
+#: the median lane stay the same, which the checks below the qpos bounds cover.
+ROLLOUT_QPOS_BOUNDS = {
+    "FetchSlide*": (0.05, 2.5),
+    "DMC*": (0.01, 2.5),
+    "HumanoidMaze*": (1.0, 3.5),
+    "OGBScene*": (0.05, 2.0),
+    "OGBCube*": (0.05, 2.0),
+}
 
 
 def _qpos(state):
@@ -1046,11 +1059,14 @@ def test_an_approximate_backend_continues_a_restored_rollout(env):
         b.reset(seed=11)
         b.set_state(state)
         gaps, oa, ob = [], None, None
+        returns = []
         for t in range(ROLLOUT_WARMUP, ROLLOUT_WARMUP + ROLLOUT_STEPS):
             action = policy(t, state)
             oa, ob = a.step(action, frames=None), b.step(action, frames=None)
             state = oa["state"]
             gaps.append((_qpos(state) - _qpos(ob["state"])).abs().max(-1).values)
+            if "reward" in oa.keys():
+                returns.append(torch.stack([oa["reward"], ob["reward"]]).reshape(2, N, -1).sum(-1))
         gaps = torch.stack(gaps).double()
         median_bound, max_bound = next(
             (b for pattern, b in ROLLOUT_QPOS_BOUNDS.items() if fnmatch.fnmatch(cls.__name__, pattern)),
@@ -1059,9 +1075,15 @@ def test_an_approximate_backend_continues_a_restored_rollout(env):
         median = float(gaps.mean(0).median())
         assert median <= median_bound, f"{cls.__name__}: mean qpos gap of the median lane {median:.3g}"
         assert float(gaps.max()) <= max_bound, f"{cls.__name__}: largest qpos gap {float(gaps.max()):.3g}"
+        if returns:
+            ra, rb = torch.stack(returns).sum(0).double()
+            scale = max(1.0, float(ra.abs().median()))
+            drift = float((ra - rb).abs().median())
+            assert drift <= ROLLOUT_REWARD_RTOL * scale, f"{cls.__name__}: median lane return differs by {drift:.3g}"
         if "success" in oa.keys():
             final = lambda out: out["success"].reshape(N, -1)[:, -1]  # noqa: E731
-            flips = int((final(oa) != final(ob)).sum())
+            sa, sb = final(oa).double(), final(ob).double()
+            flips = int(((sa != sb) & ~(sa.isnan() & sb.isnan())).sum())
             assert flips <= ROLLOUT_SUCCESS_FLIPS, f"{cls.__name__}: {flips} of {N} lanes changed task outcome"
 
 
