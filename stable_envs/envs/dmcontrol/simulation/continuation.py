@@ -150,39 +150,55 @@ class CheetahBatch:
 
     #: Settling steps of dm_control's reset that the batch runs between ``begin_reset`` and ``end_reset``.
     RESET_STEPS = 199
+    #: The reset draws no normal variates, so a seeded reset leaves no cached gaussian in the task RNG.
+    RESET_DRAWS_NORMALS = False
 
     def __init__(self, b, models):
         import mujoco
 
         m = models[0]
         self.b, self._spec = b, mujoco.mjtState.mjSTATE_INTEGRATION
+        self._actuation = mujoco.mjtDisableBit.mjDSBL_ACTUATION
+        self._limits = [self._joint_limits(model) for model in models]
         self.torso, self.bfoot, self.ffoot = (m.body(name).id for name in ("torso", "bfoot", "ffoot"))
         self.speed_adr = int(m.sensor("torso_subtreelinvel").adr[0])
         self.qpos, self.qvel, self.xpos = b.bind("qpos"), b.bind("qvel"), b.bind("xpos")
         self.sensordata, self.angmom = b.bind("sensordata"), b.bind("subtree_angmom")
 
+    @staticmethod
+    def _joint_limits(m):
+        """The model, its limited joints and their ranges, which dm_control's Cheetah reset draws uniformly from."""
+        import mujoco
+
+        assert m.nq == m.njnt and m.opt.integrator != mujoco.mjtIntegrator.mjINT_RK4
+        limited = m.jnt_limited == 1
+        return m, limited, *m.jnt_range[limited].T.copy()
+
     def begin_reset(self, env, lane):
         """dm_control's Cheetah reset up to its 200 settling steps, and ``mj_step2`` of the first one.
 
         dm_control's legacy step ends the first settling step with ``mj_step2`` on the stages of the state before the
-        draw. The other 199 steps and the closing ``mj_step1`` are ``mj_step`` calls, which the batch runs.
+        draw. The other 199 steps and the closing ``mj_step1`` are ``mj_step`` calls, which the batch runs. The MuJoCo
+        calls are those of dm_control, without its wrappers. Returns the warning counts after the reset's forward pass,
+        which dm_control does not check.
         """
         import mujoco
-        from dm_control.rl.control import PhysicsError
 
-        physics, task = env.physics, env.task
-        assert physics.legacy_step and physics.model.opt.integrator != mujoco.mjtIntegrator.mjINT_RK4
-        try:
-            physics.reset()
-        except PhysicsError:
-            pass
-        assert physics.model.nq == physics.model.njnt
-        is_limited = physics.model.jnt_limited == 1
-        lower, upper = physics.model.jnt_range[is_limited].T
-        physics.data.qpos[is_limited] = task.random.uniform(lower, upper)
-        with physics.check_invalid_state():
-            mujoco.mj_step2(physics.model.ptr, physics.data.ptr)
-        mujoco.mj_getState(physics.model.ptr, physics.data.ptr, self.b.state[lane], self._spec)
+        physics = env.physics
+        assert physics.legacy_step
+        m, d = physics.model.ptr, physics.data.ptr
+        limits = self._limits[lane]
+        _, limited, lower, upper = limits if limits[0] is m else self._joint_limits(m)
+        mujoco.mj_resetData(m, d)
+        flags = m.opt.disableflags
+        m.opt.disableflags = flags | self._actuation
+        mujoco.mj_forward(m, d)
+        m.opt.disableflags = flags
+        warnings = physics._warnings.copy()
+        d.qpos[limited] = env.task.random.uniform(lower, upper)
+        mujoco.mj_step2(m, d)
+        mujoco.mj_getState(m, d, self.b.state[lane], self._spec)
+        return warnings
 
     def batch_reset(self, ids, begun):
         """The settling steps of lanes ``ids`` on the batch threads."""
@@ -196,16 +212,23 @@ class CheetahBatch:
         return begun
 
     def end_reset(self, env, lane, value):
-        """The rest of dm_control's Cheetah reset after the settling steps."""
+        """The rest of dm_control's Cheetah reset after the settling steps: time 0 and a forward pass."""
         import mujoco
-        from dm_control.suite import cheetah
+        from dm_control.rl.control import PhysicsError
 
         physics, task = env.physics, env.task
-        mujoco.mj_setState(physics.model.ptr, physics.data.ptr, self.b.state[lane], self._spec)
-        physics.data.time = 0
+        m, d = physics.model.ptr, physics.data.ptr
+        mujoco.mj_setState(m, d, self.b.state[lane], self._spec)
+        d.time = 0
         task._timeout_progress = 0
-        super(cheetah.Cheetah, task).initialize_episode(physics)
-        physics.after_reset()
+        if task.visualize_reward:
+            task.after_step(physics)
+        flags = m.opt.disableflags
+        m.opt.disableflags = flags | self._actuation
+        mujoco.mj_forward(m, d)
+        m.opt.disableflags = flags
+        if (physics._warnings > value).any():
+            raise PhysicsError(f"Physics state is invalid in lane {lane}")
 
     def reward(self):
         speed = self.sensordata[:, self.speed_adr]
