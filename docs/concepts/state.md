@@ -34,12 +34,14 @@ saved instance and of the receiving instance must be compatible.
 
 ## PushT checkpoints
 
-`PushT` and `PushTDiscrete` use complete numeric replay States. Save all fields,
-including the reset recipe, RNGs and action history. Restoring positions alone
-cannot reconstruct the physics engine's contact history. `set_state()` rebuilds
-that history, so its cost grows with the episode prefix. Ordinary `step()` does
-not restore or replay earlier steps. The history axis grows. `state_spec`
-describes the shape of the current checkpoint. It does not impose an episode limit.
+`PushT` and `PushTDiscrete` use complete numeric States. Save all fields,
+including the reset recipe, RNGs, action history and contact-solver cache
+(`current/jax`). Restoring positions alone cannot reconstruct the contact
+history. `set_state()` restores the solver cache and does not replay physics.
+A State from an earlier stable-envs release (`recipe/version` 2) holds no solver
+cache. `set_state()` replays its action history in Pymunk, so its cost grows
+with the episode prefix. The history axis grows. `state_spec` describes the
+shape of the current checkpoint. It does not impose an episode limit.
 
 ```python
 with snv.PushT(num_envs=2, device="cpu", size=96) as env:

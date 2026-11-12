@@ -1,4 +1,4 @@
-"""PushT controls with source CPU physics and batched JAX CUDA physics."""
+"""PushT controls with batched Numba CPU physics and batched Triton or JAX CUDA physics."""
 
 import copy
 
@@ -60,13 +60,16 @@ def _to_device(fields, device):
     return {key: out[key] for key in fields}
 
 
+_EXECUTION_MODES = {"triton": "NATIVE_TRITON", "jax": "NATIVE_JAX", "numba": "NATIVE_NUMBA"}
+
+
 class PushT(Env):
     """Source-aligned continuous PushT with complete, replayable numeric State.
 
     Actions are relative controls in [-1, 1], not absolute pixel targets.
-    CUDA runs batched JAX physics with DLPack tensor exchange. CPU uses Pymunk.
-    The two solvers share controls and rewards but differ numerically at contacts.
-    CUDA checkpoints restore the solver cache; CPU checkpoints replay their history.
+    Physics is a port of the source Pymunk contact solver: Triton (or JAX) on CUDA, Numba on CPU. They run
+    the same math and differ from Pymunk numerically at contacts. Resets run the source reset. Checkpoints
+    restore the solver cache.
     """
 
     family = domain = "pusht"
@@ -74,7 +77,9 @@ class PushT(Env):
     reference_id = "swm/PushT-v1"
     default_size = 224
     state_dim = 0
-    execution_mode = "DELEGATED_CPU"
+    execution_mode = "AUTO_NUMBA_TRITON"
+    #: Every step returns new reward, success, terminated and truncated tensors.
+    _step_outputs_owned = True
     cpu_render_support = "SUPPORTED_PYGAME"
     action_dim = 2
     action_dtype = torch.float32
@@ -103,9 +108,16 @@ class PushT(Env):
         *,
         render_action=False,
         with_target=True,
+        simulation_backend=None,
+        triton_min_envs=None,
     ):
+        """``simulation_backend=None`` steps Triton physics on CUDA and Numba physics on CPU.
+
+        ``"triton"`` (CUDA only), ``"jax"`` or ``"numba"`` selects one backend; Numba on CUDA steps on the
+        CPU and returns CUDA tensors. ``"auto"`` steps CUDA batches smaller than ``triton_min_envs`` with Numba.
+        """
         from .projection import PushTProjection
-        from .simulation.execution import make_pusht_adapter
+        from .simulation.execution import TRITON_MIN_ENVS, make_pusht_adapter, pusht_backend
 
         if backend not in ("auto", "source", "pygame"):
             raise ValueError("PushT backend must be 'auto' or 'source' (pygame)")
@@ -113,7 +125,9 @@ class PushT(Env):
         if supersample != 1:
             raise ValueError("The source PushT renderer has no supersample setting")
         device = torch.device(Env.resolve_device(device))
-        self.execution_mode = "NATIVE_JAX" if device.type == "cuda" else "DELEGATED_CPU"
+        triton_min_envs = TRITON_MIN_ENVS if triton_min_envs is None else triton_min_envs
+        self.simulation_backend = pusht_backend(num_envs, device, simulation_backend, triton_min_envs)
+        self.execution_mode = _EXECUTION_MODES[self.simulation_backend]
         resolution = self.default_size if size is None else size
         if render_action and resolution < 96:
             raise ValueError("Source PushT action markers require size >= 96")
@@ -123,6 +137,7 @@ class PushT(Env):
             seed,
             discrete=self.discrete,
             config=dict(resolution=resolution, render_action=render_action, with_target=with_target),
+            simulation_backend=self.simulation_backend,
         )
         self._projection = PushTProjection()
         self._render_pool = None
@@ -206,7 +221,13 @@ class PushT(Env):
             return raster.render(fields, self.size, self.device, lambda rows: self._draw_pygame(rows, self.size))
         if self.device.type == "cuda":
             return self.render()
-        return torch.as_tensor(self._simulator.render_live(), device=self.device)
+        live = self._simulator.render_fields()
+        fields = {"/".join(key): live["/".join(key)].numpy() for key, _, _ in self._render_fields}
+        if self._cpu_port(self.size):
+            from . import raster
+
+            return raster.render_cpu(fields, self.size, lambda rows: self._draw_pygame(rows, self.size))
+        return torch.as_tensor(self._draw_pygame(fields, self.size))
 
     @staticmethod
     def _stack_states(values):
@@ -422,7 +443,7 @@ class PushT(Env):
 class PushTDiscrete(PushT):
     """Source-aligned PushT with two discrete polar-action indices in [0, 16).
 
-    CUDA uses batched JAX physics and restores the contact-solver cache.
+    It steps with the same physics backends as ``PushT`` and restores the contact-solver cache.
     """
 
     name = "push-t-discrete"

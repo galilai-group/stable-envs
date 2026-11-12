@@ -15,7 +15,7 @@ snv.import_errors()     # families this interpreter could not import
 
 | classes | CPU | GPU |
 |---|---|---|
-| PushT, PushTDiscrete | source physics and Numba rendering | Triton rendering |
+| PushT, PushTDiscrete | Numba physics and Numba rendering | JAX physics and Triton rendering |
 | classic control, navigation, OGBench mazes | yes | yes |
 | Fetch (12 classes) | software OpenGL | MJWarp or explicit NVIDIA OpenGL |
 | OGBCube, OGBScene | software OpenGL | NVIDIA OpenGL, or MJWarp with `supersample` 2 or more |

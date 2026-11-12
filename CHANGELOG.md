@@ -26,6 +26,19 @@ All notable changes to this project are listed here. The format follows
   DMC-local capsule-contact corrections and ordered constraint/solver reductions support repeatable
   checkpoint replay. CUDA regressions cover all 17 classes, with focused 100-call replay checks.
   See the DMC documentation for the 3.17 measurements and numerical limitations.
+- PushT `simulation_backend`: `PushT` and `PushTDiscrete` step every environment in one batched call of a
+  port of the Pymunk contact solver. `"numba"` (the default on CPU) runs it in Numba in `float64`, in
+  parallel over environments. `"triton"` (the default on CUDA) runs it in one Triton kernel in `float32`, one
+  GPU thread per environment, and a second kernel records the actions and computes the observation, reward
+  and success. `"jax"` selects the JAX solver, which is the CUDA default when Triton is not installed.
+  `"auto"` steps CUDA batches below `triton_min_envs` (default 1) in Numba and returns CUDA tensors. The
+  source reset still runs in Pymunk, in worker processes for large batches. On an L40S with 8 CPU cores,
+  with a reset every 196 steps, CPU PushT runs at 7,100, 40,000 and 103,000 steps/s with 8, 64 and 1024
+  environments and one action per call, and at 19,000, 85,000 and 186,000 steps/s with 16 actions per
+  call. CUDA PushT runs at 5,800, 43,000 and 253,000 steps/s, and at 10,400, 66,000 and 278,000 steps/s.
+  Before, CPU PushT ran at 3,700, 10,800 and 9,000 steps/s and CUDA PushT at 835, 6,000 and 69,000
+  steps/s with one action per call. The source runs at 14,100, 23,400 and 28,200 steps/s in 8 worker
+  processes. A State takes fewer copies to build, so a CPU step with 8 environments takes about 1 ms.
 - Classic control `simulation_backend`: `CartPole`, `Pendulum`, `Acrobot`, `MountainCar` and
   `MountainCarContinuous` step all lanes in one batched float64 operation. With `"auto"`, the default,
   the lanes step in NumPy on the host, and 4096 or more CUDA lanes step in Torch. Below 2 lanes
@@ -171,6 +184,14 @@ All notable changes to this project are listed here. The format follows
   environment's own RNG. `simulation_backend="auto"` steps CUDA batches smaller than `mjwarp_min_envs` on
   `mujoco.batch`, and `"native"` and `"mjwarp"` select one backend. Before, each environment called the OGBench
   `step` in a Python loop in worker processes, on both devices.
+- `PushT` and `PushTDiscrete` on CPU step the Numba port of the Pymunk contact solver, not Pymunk. The
+  port is not bit-identical to Pymunk: its walls are half-planes, so a block pushed hard into a wall stays
+  inside, where the source block can pass through it. Over 200 steps of a scripted pushing policy from 256
+  source resets, replayed on the port, the source block leaves the board in 69 episodes. In the other 187,
+  the median block position gap at step 200 is 0.0001 px (Numba) and 0.0007 px (Triton), and 154 blocks
+  are within 1 px. Most of the other 33 first diverge near a wall. The CPU State also holds the three solver-cache leaves
+  (`current/jax`), so `set_state` restores without replaying the action history, and a CPU env restores a
+  CUDA State. A State from an earlier release (`recipe/version` 2) still restores by replay in Pymunk.
 - `OGBCube` and `OGBScene` use the OGBench cube size. The default `cube.size` is now 0.02, as in OGBench.
   Before, the default was the stable-worldmodel value `float32(0.02)`, which compiles to
   0.019999999552965164. That size changed the cube mass and inertia, so contacts moved the physics away

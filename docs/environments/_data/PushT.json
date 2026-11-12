@@ -8,7 +8,7 @@
  "has_dynamics": true,
  "default_size": 224,
  "frame_shape": [224, 224, 3],
- "physics": "source simulator on CPU",
+ "physics": "native Numba on CPU, native Triton on CUDA",
  "renderers": {
   "cpu": "pygame (source renderer)",
   "cuda": "pygame on CPU, frames copied to CUDA"
@@ -40,8 +40,8 @@
   },
   {
    "key": "current",
-   "leaves": 32,
-   "numel": 151301,
+   "leaves": 35,
+   "numel": 151343,
    "dtypes": ["bool", "float64", "int64", "uint8"]
   },
   {

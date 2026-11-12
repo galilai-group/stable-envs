@@ -8,6 +8,7 @@ pytest.importorskip("pymunk")
 
 import stable_envs as se  # noqa: E402
 from stable_envs.envs.pusht.simulation import execution  # noqa: E402
+from stable_envs.envs.pusht.simulation.numba_batch import PushTNumbaAdapter  # noqa: E402
 from stable_envs.envs.pusht.simulation.process import PushTProcessAdapter  # noqa: E402
 from stable_envs.envs.pusht.simulation.replay_batch import PushTReplayAdapter  # noqa: E402
 from tests.helpers.process_equivalence import assert_atomic_restore, assert_process_matches_local  # noqa: E402
@@ -65,7 +66,9 @@ def test_public_env_with_workers_matches_local(monkeypatch):
         patch.setattr(execution, "process_count", lambda num_envs, cpus, **_: 2)
         remote = se.make("PushT", num_envs=4, size=32, device="cpu", seed=17)
     try:
-        assert isinstance(remote._simulator, PushTProcessAdapter)
+        # Workers reset the lanes; the batched Numba step runs in this process.
+        assert isinstance(remote._simulator, PushTNumbaAdapter) and remote._simulator._pool is not None
+        pool = remote._simulator._pool
         actions = np.random.default_rng(3).uniform(-1, 1, (4, 6, 2)).astype(np.float32)
         for env in (local, remote):
             env.set_variation({"agent.color": np.arange(12, dtype=np.uint8).reshape(4, 3), "agent.scale": 25.0})
@@ -87,7 +90,7 @@ def test_public_env_with_workers_matches_local(monkeypatch):
     finally:
         local.close()
         remote.close()
-    assert all(not p.is_alive() for p in remote._simulator._processes)
+    assert all(not p.is_alive() for p in pool._processes)
 
 
 def test_routing_keeps_small_batches_local():

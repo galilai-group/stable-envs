@@ -81,7 +81,8 @@ There is no `capture`, `transition`, `unroll` or `step_sequence` method. To bran
 ## Process workers
 
 On Linux with at least four CPU cores, some families run physics in worker processes. These families
-are Fetch, classic Acrobot, the OGBench registrations, PushT and `PyFlytRocketLanding`. Each process has
+are Fetch, classic Acrobot, the OGBench registrations and `PyFlytRocketLanding`. PushT resets its
+lanes in worker processes and steps them in one batched call. Each process has
 one simulation thread and stays within the allowed CPU affinity. DM Control steps every lane in one
 `mujoco.batch` call on at most `dmc_threads` threads (8 by default), at most one per CPU in the affinity
 and one per two lanes. A call with little MuJoCo work uses fewer threads: about one thread for each 0.1 ms

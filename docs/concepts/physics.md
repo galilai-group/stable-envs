@@ -14,8 +14,8 @@ physics. Exact restoration still needs every relevant engine, controller, task, 
 field, restored in the right order.
 
 Matching frames and close solver agreement do not prove restoration. For example, PushT body
-positions and velocities alone do not restore its contact history. The released PushT State
-therefore stores the action history and replays it.
+positions and velocities alone do not restore its contact history. The PushT State therefore
+stores the contact-solver cache.
 
 Renderer-only classes refuse operations that would need a full simulator checkpoint. Simulating
 classes expose `step` with single actions or action sequences.

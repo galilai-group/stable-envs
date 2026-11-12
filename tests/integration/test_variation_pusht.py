@@ -24,7 +24,7 @@ from tests.helpers.reference.gates.variation_pusht import (  # noqa: E402
 @pytest.mark.parametrize("name", sorted(CLASSES))
 def test_leaf_matches_swm_per_lane(name, leaf):
     evidence = leaf_gate(name, leaf)
-    assert evidence["explicit"]["worst_frame_mse"] == 0.0 and evidence["sampled"]["worst_frame_mse"] == 0.0
+    assert evidence["explicit"]["reset_frame_mse"] == 0.0 and evidence["sampled"]["reset_frame_mse"] == 0.0
 
 
 @pytest.mark.parametrize("name", sorted(CLASSES))

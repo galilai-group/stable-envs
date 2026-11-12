@@ -35,7 +35,8 @@ above apply to these adaptations.
 
 `stable_envs/envs/pusht/simulation/jax_physics.py` adapts
 `src/envx/pusht/physics.py`
-from the envX commit above under Apache-2.0.
+from the envX commit above under Apache-2.0. `numba_physics.py` and `triton_physics.py` in the same
+directory port that adaptation to Numba and Triton.
 
 ## Craftax
 

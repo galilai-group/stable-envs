@@ -1,7 +1,7 @@
 # PushT
 
 PushT is a 2D manipulation task with contact. The agent is a disc. It pushes a T-shaped block into a
-target pose. [Pymunk](https://www.pymunk.org/) simulates the contact physics. The task comes from
+target pose. The source simulates the contact physics with [Pymunk](https://www.pymunk.org/). The task comes from
 Diffusion Policy ([Chi et al., 2023](https://arxiv.org/abs/2303.04137)). stable-envs follows the
 stable-worldmodel version of [gym-pusht](https://github.com/huggingface/gym-pusht).
 
@@ -26,9 +26,36 @@ frames = env.render()          # (8, 224, 224, 3) uint8
 ```
 
 A PushT frame is the source's pygame frame for the same State. `device="cuda"` puts the output tensors
-on the GPU, and JAX steps the physics on the GPU (`pusht-gpu` extra). Pymunk on the CPU resets the lanes.
-On Linux, a CUDA batch of at least `worker_min_lanes` lanes resets in up to `workers` processes. The
-worker processes do not change the State, the frames or the task outputs.
+on the GPU.
+
+## Physics backends
+
+stable-envs steps PushT with a port of the Pymunk contact solver. One call steps all environments. The port
+has three implementations of the same math:
+
+| `simulation_backend` | Device of the physics | Implementation |
+|---|---|---|
+| `"numba"` | CPU | Numba, `float64`, in parallel over environments. The default on CPU. |
+| `"triton"` | CUDA | One Triton kernel launch per step, `float32`, one GPU thread per environment. The default on CUDA. |
+| `"jax"` | the env device | JAX `vmap`, `float64`. The default on CUDA when Triton is not installed. |
+| `"auto"` | CPU or CUDA | On CUDA, `"numba"` below `triton_min_envs` environments and the CUDA default at or above it. On CPU, `"numba"`. |
+
+With `"numba"` on CUDA, the physics runs on the CPU and the State and outputs are CUDA tensors. On an
+L40S with 8 CPU cores, `"triton"` was faster than `"numba"` at every batch size, so `triton_min_envs`
+defaults to 1. A JAX step on CUDA takes about 8 ms at every batch size, and a Triton step takes about
+0.3 to 0.5 ms. The first Triton step in a process compiles the kernel (about 10 s, or 20 s for agent
+shapes other than the disc) unless Triton has it in its cache.
+
+The port is not bit-identical to Pymunk. It uses the same integration, PD control, damping and
+sequential impulse solver, but its walls are half-planes. In the source, a block pushed hard into a wall
+can pass through it. In the port, the block stays inside. The State keeps the solver cache
+(`current/jax`), so a restored State steps the same as the original on the same backend. The Numba and
+JAX backends agree to rounding. The Triton backend computes in `float32`. For the disc agent it agrees
+with them to about 0.001 px per step.
+
+Pymunk on the CPU resets the environments, with the source reset distribution. On Linux, a batch of at least
+`worker_min_lanes` lanes resets in up to `workers` processes. The worker processes do not change the
+State, the frames or the task outputs.
 
 On CPU with Numba installed, `render` draws with a Numba rasterizer. It builds the same primitive
 records as the GPU path, in parallel over States. It paints and resizes the background, goal and walls
@@ -45,8 +72,8 @@ On Linux, `render` draws a batch of at least `worker_min_lanes` States in up to 
 Step frames come from the running scenes, so a step does not export a State only to draw it. Worker
 processes do not change frames. See [Performance tuning](../performance-tuning.md).
 
-The State is a full replay checkpoint. It holds the bodies, the goal, the action history and the
-Variation that the replay starts from. See [State](../concepts/state.md#pusht-checkpoints).
+The State is a full checkpoint. It holds the bodies, the contact-solver cache, the goal, the action
+history and the reset recipe. See [State](../concepts/state.md#pusht-checkpoints).
 
 ## PushT
 
