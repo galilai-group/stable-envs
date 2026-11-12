@@ -27,12 +27,23 @@ def _body(env):
     return np.concatenate([pos, orn, vel, ang])
 
 
-#: Kernel fields and the source attributes they hold; ``step_count`` and ``physics_steps`` are compared as numbers.
+#: Kernel fields named after ``RocketLandingEnv`` attributes; flags and counters are compared as float64.
 WRAPPER_FIELDS = (
     "ang_vel", "ang_pos", "lin_vel", "lin_pos", "ground_lin_vel", "previous_ang_vel", "previous_lin_vel",
     "previous_lin_pos", "previous_ground_lin_vel", "ignition_state", "throttle_state", "previous_ignition_state",
     "previous_throttle_state", "landing_pad_contact", "step_count", "action", "state", "reward",
 )  # fmt: skip
+#: Kernel fields that hold PyFlyt drone and aviary attributes.
+ACTUATOR_FIELDS = (
+    "fin",
+    "gimbal",
+    "throttle",
+    "fuel",
+    "booster_ignition",
+    "command",
+    "physics_steps",
+    "link_velocity",
+)
 SNAPSHOT_STEP = 100
 
 
@@ -56,8 +67,8 @@ def source_fields(env):
 
 
 def kernel_fields(state, b):
-    return {k: np.asarray(state[k][b], dtype=np.float64).copy() for k in (*WRAPPER_FIELDS, "fin", "gimbal", "throttle",
-            "fuel", "booster_ignition", "command", "physics_steps", "link_velocity")}  # fmt: skip
+    keys = (*WRAPPER_FIELDS, *ACTUATOR_FIELDS)
+    return {k: np.asarray(state[k][b], dtype=np.float64).copy() for k in keys}
 
 
 def run_source(kind, seed):

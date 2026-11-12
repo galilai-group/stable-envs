@@ -18,7 +18,7 @@ OPTIONS = {
 
 
 def policy(kind, t, env):
-    """Scripted actions; the landing policies read the source state closed loop."""
+    """Scripted actions; the landing policies read ``env`` (the source or a kernel state view) closed loop."""
     if kind == "free":
         return np.zeros(7)
     if kind == "smooth":
