@@ -60,10 +60,14 @@ TinyRenderer frames. `env.describe()["visual_fidelity"]` gives the measured agre
 
 With the PyBullet backend on CPU with worker processes, the workers draw the step frames of their running lanes with
 TinyRenderer. A step then does not export a State only to draw it. On Linux, `render` draws a batch of
-2 or more States in render worker processes, for every number of lanes. The main process checks the
-State while the workers draw. `render_workers` sets the number of workers and `render_worker_min_rows`
-sets the smallest such batch.
+2 or more States in render worker processes, for every number of lanes. `render_workers` sets the number of
+workers and `render_worker_min_rows` sets the smallest such batch.
 These frames are byte-identical to frames drawn in the main process.
+
+With each backend, `render(state)` checks only the State leaves that the frame reads: the body poses, the first
+camera link pose in `current/diagnostic/cached_links` and the colours in `render/rgba`. `to_render_state(state)`
+also checks the first 13 values of `current/wrapper/state`. They check the shape, the dtype, that the values are
+finite and that the colours are in [0, 1]. `set_state` checks all the leaves.
 
 With the PyBullet backend, a step reads from PyBullet only the State leaves that a step can change: the rocket pose, velocity and fuel
 tank mass, the cached link poses, and the task, RNG and history fields. The other leaves come from the last

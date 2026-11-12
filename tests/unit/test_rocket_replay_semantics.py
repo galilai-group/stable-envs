@@ -128,6 +128,11 @@ def test_cpu_render_supplied_state_is_exact_and_nonmutating():
         bad["renderer", "camera_pose"][-1, 0] = float("nan")
         with pytest.raises(ValueError):
             env.render(bad)
+        bad = state.clone()
+        bad["current", "physics", "body_1", "quaternion"][-1, 0] = float("nan")
+        for draw in (env.render, env.to_render_state):
+            with pytest.raises(ValueError, match="body_1"):
+                draw(bad)
         assert_same_state(state, env.get_state())
     finally:
         env.close()

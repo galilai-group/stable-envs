@@ -62,6 +62,33 @@ def _to_device(fields, device):
 
 _EXECUTION_MODES = {"triton": "NATIVE_TRITON", "jax": "NATIVE_JAX", "numba": "NATIVE_NUMBA"}
 
+#: The State leaves the renderers read, besides the ``current`` value and type of each Variation leaf.
+DRAWN_LEAVES = frozenset(
+    {
+        "recipe/config",
+        "anchor/start",
+        "anchor/goal/value",
+        "anchor/goal/type",
+        *(f"current/body/{b}/{leaf}" for b in ("agent", "block") for leaf in ("position", "angle")),
+        *(f"current/body/{b}/center_of_gravity" for b in ("agent", "block")),
+        "current/latest_present",
+        "current/latest/value",
+        "current/latest/type",
+        "current/render_segments",
+        "current/render_segment_count",
+    }
+)
+
+
+def _drawn(key):
+    """Whether a renderer reads the State leaf ``key``.
+
+    Body shapes and scales come from ``anchor/variation``; colours and the goal pose come from ``owned/variation``.
+    """
+    if key.startswith(("anchor/variation/", "owned/variation/")):
+        return key.endswith(("/current/value", "/current/type"))
+    return key in DRAWN_LEAVES
+
 
 class PushT(Env):
     """Source-aligned continuous PushT with complete, replayable numeric State.
@@ -149,7 +176,7 @@ class PushT(Env):
             self._render_fields = [
                 (tuple(k.split("/")), shape, torch.from_numpy(np.empty((), dtype)).dtype)
                 for k, (shape, dtype) in self._fixed_fields.items()
-                if k.startswith(("recipe/", "anchor/", "current/", "owned/variation/")) and k != "current/goal_image"
+                if _drawn(k)
             ]
         except BaseException:
             self._simulator.close()

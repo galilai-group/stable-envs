@@ -105,6 +105,14 @@ def test_render_projection_has_no_history_and_does_not_step(name, monkeypatch):
             monkeypatch.setattr(cached[1], "step", forbidden)
         assert torch.equal(first, env.render(projected))
         assert_same_state(state, env.get_state())
+        assert ("current", "body", "agent", "velocity") not in projected.keys(True, True)
+        undrawn = state.clone()
+        undrawn["current", "body", "agent", "velocity"][0, 0] = float("nan")
+        assert torch.equal(first, env.render(undrawn))
+        drawn = state.clone()
+        drawn["current", "body", "agent", "position"][0, 0] = float("nan")
+        with pytest.raises(ValueError, match="Nonfinite PushT render field"):
+            env.render(drawn)
 
 
 def test_persistent_variation_and_reset_checkpoint(name):

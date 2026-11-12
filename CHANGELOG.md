@@ -126,6 +126,13 @@ All notable changes to this project are listed here. The format follows
   take the leafwise stack. The State values do not change. On 8 cores of an EPYC 7763 with an A100, `env.step`
   with States and one reset for each 64-step episode makes 1.36 to 1.42 times the steps/s before for 1 to 1024
   environments, and 1.15 times at 4096.
+- `PyFlytRocketLanding.render(state)` and `to_render_state(state)` check only the State leaves that the frame
+  reads: the body poses, the camera link pose, the pose rows and the colours. They check presence, shape, dtype,
+  finiteness and the colour range on these leaves, with one copy to the host. `set_state` keeps the replay,
+  history and RNG checks. A State of the Numba backends and a State of the PyBullet backend pass the same
+  checks. On CUDA with `simulation_backend="pybullet"`, `render(state)` of 256 or 1024 environments is about 3.4
+  times faster on an RTX 4090. `PushT.render(state)` and `to_render_state(state)` select and check only the
+  leaves that the renderers read; `render(state)` on CUDA is 25% to 35% faster. The frames do not change.
 - OGBench mazes on CPU: a step does its Torch operations on one thread, and the render draws batches of fewer
   than 256 frames on one thread when the scene has no tracking light. With 8 Torch threads, idle Torch threads
   kept the cores busy while the `mujoco.batch` threads waited, and the time of an AntMaze episode of 64 steps with

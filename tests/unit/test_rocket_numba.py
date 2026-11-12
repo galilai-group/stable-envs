@@ -169,6 +169,38 @@ def test_invalid_state_changes_nothing():
             assert torch.equal(after[key], value), key
 
 
+@pytest.mark.parametrize(("backend", "device"), BACKENDS)
+def test_render_checks_only_the_leaves_a_frame_reads(backend, device):
+    with make("PyFlytRocketLanding", num_envs=2, size=32, device=device, simulation_backend=backend, seed=2) as env:
+        env.reset(seed=5)
+        env.step(_smooth(2, 0), frames=None)
+        state = env.get_state()
+        frames = env.render(state)
+        undrawn = state.clone()
+        undrawn["recipe", "config"][0, 0] = 1.0
+        assert torch.equal(env.render(undrawn), frames)
+        with pytest.raises(ValueError, match="configuration"):
+            env.set_state(undrawn)
+        for key, value in [
+            (("current", "physics", "body_1", "quaternion"), float("nan")),
+            (("current", "diagnostic", "cached_links"), float("inf")),
+        ]:
+            bad = state.clone()
+            bad[key][1, 0, ...] = value
+            for draw in (env.render, env.to_render_state):
+                with pytest.raises(ValueError, match=key[-1]):
+                    draw(bad)
+        bad = state.clone()
+        bad["render", "rgba"][0, 1, 2] = 1.5
+        for draw in (env.render, env.to_render_state):
+            with pytest.raises(ValueError, match="rgba"):
+                draw(bad)
+        bad = state.clone()
+        del bad["current", "diagnostic", "cached_links"]
+        with pytest.raises(ValueError, match="cached_links"):
+            env.render(bad)
+
+
 def test_frames_of_a_state_equal_between_backends():
     """The renderer reads only the poses and colours, so a State with the same values draws the same frames."""
     batch = 2

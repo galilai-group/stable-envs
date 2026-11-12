@@ -11,6 +11,7 @@ import threading
 
 import numpy as np
 import torch
+from tensordict import TensorDict
 
 from ... import tuning
 from . import legacy as geometry
@@ -24,8 +25,52 @@ FIN_GEOMS = slice(geometry.GEOM_NAMES.index("fin_pos_x"), geometry.GEOM_NAMES.in
 LEG_GEOMS = slice(geometry.GEOM_NAMES.index("leg_1"), FLAME_GEOM)
 LINK_COLORS = (("fin", FIN_COLOR), ("leg", LEG_COLOR), ("booster", BOOSTER_COLOR), ("flame", FLAME_COLOR))
 FIELDS = {"source_pose": (3, 7), "camera_pose": (7,), "rgba": (6, 4)}
+#: ``{key: (shape, sliced)}`` for each full State leaf ``project`` reads. All are float64. The frame reads the
+#: leading ``shape`` part of a leaf after the batch axis. A ``sliced`` leaf can be larger on each axis; the
+#: other leaves have exactly this shape.
+STATE_READS = {
+    **{("current", "physics", f"body_{i}", "position"): ((3,), False) for i in range(3)},
+    **{("current", "physics", f"body_{i}", "quaternion"): ((4,), False) for i in range(3)},
+    ("current", "diagnostic", "cached_links"): ((1, 7), True),
+    ("render", "rgba"): ((6, 4), False),
+}
 #: Fewest CPU frames one ``render`` draws in render workers when the ``render_worker_min_rows`` knob is not set.
 MIN_WORKER_ROWS = 2
+
+
+def host_leaves(state, reads, batch):
+    """Check the parts of the full State leaves in ``reads`` and return them on the host, with one transfer.
+
+    It checks presence, shape, dtype and finiteness of the part a frame reads, and that colours lie in [0, 1].
+    The replay, history and RNG checks of a restore do not apply to a frame; ``set_state`` makes them.
+    """
+    if not isinstance(state, TensorDict) or state.batch_size != torch.Size([batch]):
+        raise ValueError("Rocket full State requires batch [num_envs]")
+    parts = {}
+    for key, (shape, sliced) in reads.items():
+        value = state.get(key, None)
+        if not isinstance(value, torch.Tensor):
+            raise ValueError(f"Rocket full State lacks the render leaf {key}")
+        if (
+            value.dtype != torch.float64
+            or value.ndim != 1 + len(shape)
+            or any(n < m if sliced else n != m for n, m in zip(value.shape[1:], shape, strict=True))
+        ):
+            raise ValueError(f"Invalid Rocket State leaf: {key}")
+        parts[key] = value.detach()[(slice(None), *(slice(0, n) for n in shape))] if sliced else value.detach()
+    if any(value.device.type != "cpu" for value in parts.values()):
+        flat = torch.cat([value.reshape(-1) for value in parts.values()]).cpu()
+        offset = 0
+        for key, value in parts.items():
+            parts[key] = flat[offset : offset + value.numel()].view(value.shape)
+            offset += value.numel()
+    for key, value in parts.items():
+        if not torch.isfinite(value).all():
+            raise ValueError(f"Invalid Rocket State leaf: {key}")
+    rgba = parts.get(("render", "rgba"))
+    if rgba is not None and ((rgba < 0) | (rgba > 1)).any():
+        raise ValueError("Rocket RenderState rgba must lie in [0, 1]")
+    return parts
 
 
 def project(state):
@@ -235,11 +280,10 @@ class TinyDrawer:
         return draw
 
 
-def draw_cpu(env, body, links, colors, size, ss, check=None):
+def draw_cpu(env, body, links, colors, size, ss):
     """Draw with TinyRenderer: in render workers on Linux, else in this process.
 
-    A frame depends only on its row, so the split does not change the frames. ``check`` runs in this
-    process while the workers draw; an error it raises discards the frames.
+    A frame depends only on its row, so the split does not change the frames.
     """
     from ..._execution import render_pool
 
@@ -253,48 +297,41 @@ def draw_cpu(env, body, links, colors, size, ss, check=None):
         name="PyFlytRocketLanding render",
     )
     if workers is None:
-        if check is not None:
-            check()
         return env._simulator.draw(body, links, colors, size, ss)
 
     with workers.lock:
         return workers.render(
-            len(body), (size, size, 3), lambda rows: (body[rows], links[rows], colors[rows], size, ss), during=check
+            len(body), (size, size, 3), lambda rows: (body[rows], links[rows], colors[rows], size, ss)
         )
 
 
-def render_cpu(env, body, links, colors, size, ss, check=None):
-    """Draw host body poses, camera link poses and colours on CPU; ``check`` must pass before any frame returns."""
+def render_cpu(env, body, links, colors, size, ss):
+    """Draw host body poses, camera link poses and colours on CPU."""
     env._check_open("render")
     with env.__dict__.setdefault("_rocket_pixel_lock", threading.RLock()):
-        return torch.from_numpy(draw_cpu(env, body, links, colors, size, ss, check))
+        return torch.from_numpy(draw_cpu(env, body, links, colors, size, ss))
 
 
-def render(env, state, size, ss, chunk_size=None, check=None):
-    """Draw a RenderState with explicit poses; ``check`` must pass before any frame returns."""
+def render(env, state, size, ss, chunk_size=None):
+    """Draw a RenderState with explicit poses."""
     if chunk_size is not None and (isinstance(chunk_size, bool) or not isinstance(chunk_size, int) or chunk_size <= 0):
         raise ValueError("chunk_size must be a positive integer")
     env._check_open("render")
     host = {k: state["renderer", k].detach().cpu().numpy() for k in FIELDS}
     body, links, colors = host["source_pose"], host["camera_pose"], host["rgba"]
     if env.device.type == "cpu":
-        return render_cpu(env, body, links, colors, size, ss, check)
+        return render_cpu(env, body, links, colors, size, ss)
     if env.device.type != "cuda":
         raise ValueError("Rocket rendering supports CPU TinyRenderer or CUDA nvdiffrast")
-    return draw_gpu(env, body, links, colors, size, ss, chunk_size, check=check)
+    return draw_gpu(env, body, links, colors, size, ss, chunk_size)
 
 
-def draw_gpu(env, body, links, colors, size, ss, chunk_size=None, views=None, check=None):
-    """Draw host body poses, camera link poses and colours on CUDA; ``views`` are their ``frame_views`` if known.
-
-    ``check`` must pass before any frame returns.
-    """
+def draw_gpu(env, body, links, colors, size, ss, chunk_size=None, views=None):
+    """Draw host body poses, camera link poses and colours on CUDA; ``views`` are their ``frame_views`` if known."""
     import pybullet as bullet
 
     lock = env.__dict__.setdefault("_rocket_pixel_lock", threading.RLock())
     with lock:
-        if check is not None:
-            check()
         batch = len(body)
         tuning.on_render("rocket-nvdiff", size, batch, env)
         renderer, per_world = _gpu_context(env, size, ss)

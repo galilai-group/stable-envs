@@ -185,11 +185,16 @@ def test_state_render_in_render_workers_matches_in_process():
             serial = env.render(state), env.render(rows)
         with tuning.override(render_workers=3):
             split = env.render(state), env.render(rows)
-            # The main process checks the State while the workers draw; a State that fails gives no frames.
             bad = state.clone()
-            bad["history", "valid"][1, 0] = False
-            with pytest.raises(ValueError, match="history mask"):
+            bad["render", "rgba"][1, 0, 0] = 2.0
+            with pytest.raises(ValueError, match="rgba"):
                 env.render(bad)
+            # Restore-only fields are checked by set_state, not by render.
+            restore_only = state.clone()
+            restore_only["history", "valid"][1, 0] = False
+            assert torch.equal(env.render(restore_only), serial[0])
+            with pytest.raises(ValueError, match="history mask"):
+                env.set_state(restore_only)
             again = env.render(state)
         pools = render_pool._POOLS.items()
         assert any(key[0] == "rocket-tiny" and isinstance(pool, render_pool.RenderPool) for key, pool in pools)
