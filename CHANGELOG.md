@@ -225,13 +225,28 @@ All notable changes to this project are listed here. The format follows
   `mujoco.batch`, and `"native"` and `"mjwarp"` select one backend. Before, each environment called the OGBench
   `step` in a Python loop in worker processes, on both devices.
 - `PushT` and `PushTDiscrete` on CPU step the Numba port of the Pymunk contact solver, not Pymunk. The
-  port is not bit-identical to Pymunk: its walls are half-planes, so a block pushed hard into a wall stays
-  inside, where the source block can pass through it. Over 200 steps of a scripted pushing policy from 256
-  source resets, replayed on the port, the source block leaves the board in 69 episodes. In the other 187,
-  the median block position gap at step 200 is 0.0001 px (Numba) and 0.0007 px (Triton), and 154 blocks
-  are within 1 px. Most of the other 33 first diverge near a wall. The CPU State also holds the three solver-cache leaves
-  (`current/jax`), so `set_state` restores without replaying the action history, and a CPU env restores a
-  CUDA State. A State from an earlier release (`recipe/version` 2) still restores by replay in Pymunk.
+  port is not bit-identical to Pymunk. The CPU State also holds the solver-cache leaves (`current/jax`), so
+  `set_state` restores without replaying the action history, and a CPU env restores a CUDA State. A State
+  from an earlier release (`recipe/version` 2) still restores by replay in Pymunk.
+- The PushT physics ports (Numba, Triton and JAX) follow Munk2D, the Chipmunk2D fork in pymunk 7.2.0. The
+  walls are segments of radius 2 with the Munk2D segment-polygon contacts, so a block pushed hard into a
+  wall passes through it, as in the source. Before, the walls were half-planes. An arbiter keeps its
+  contacts for 3 steps after its shapes separate, and a circle contact keeps its cached impulse when the
+  closest polygon face changes. The solver visits the shape pairs in the order that a replay of the Munk2D
+  bounding-box tree reports them. The collision slop and bias are the Munk2D `float` literals, and the
+  agent PD control runs in `float32` for `float32` actions, as stable-worldmodel computes it. A reset
+  copies the bias velocities, the cached impulses and the broadphase tree from the Pymunk reset. Contact
+  segments in frames start at the wall-side contact point, as Munk2D draws them. The State has two new
+  leaves: `current/jax/tree` and `current/jax/tree_bounds`. Over 200 steps of a scripted pushing policy
+  from 256 source resets, replayed on the CPU port, the block position gap at step 200 is at most 0.001 px
+  in all 256 episodes, including the 70 where the source block passes through a wall. Before, the median
+  gap was 0.19 px, the 90th percentile 383 px, and 112 blocks were more than 1 px away. With a sampling
+  planner that reaches the goal in 57 of 256 source episodes, the replayed success flags are equal at every
+  step, and 255 episodes stay within 2e-6 px. Triton, in `float32`, has a median gap of 0.0004 px at step
+  200; in 32 of the 256 pushing episodes its rounding grows to a different trajectory near a wall. The JAX
+  step on CUDA runs the broadphase on the CPU through a host callback and takes about 45 ms, and the first
+  Triton step compiles for about 50 s. On an L40S with 8 CPU cores and a reset every 196 steps, the Numba and
+  Triton steps/s change by -0.5% to -8.5% with 1 to 1024 environments (median of 3 runs).
 - `OGBCube` and `OGBScene` draw CPU frames with the new `opengl_fast` backend by default. It is MuJoCo
   software OpenGL with simplified arm meshes and a 2048 shadow map. The arm meshes keep one vertex per grid
   cell of 3 mm, so they keep 22 % of their triangles.

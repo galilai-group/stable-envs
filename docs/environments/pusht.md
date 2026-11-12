@@ -42,16 +42,30 @@ has three implementations of the same math:
 
 With `"numba"` on CUDA, the physics runs on the CPU and the State and outputs are CUDA tensors. On an
 L40S with 8 CPU cores, `"triton"` was faster than `"numba"` at every batch size, so `triton_min_envs`
-defaults to 1. A JAX step on CUDA takes about 8 ms at every batch size, and a Triton step takes about
-0.3 to 0.5 ms. The first Triton step in a process compiles the kernel (about 10 s, or 20 s for agent
-shapes other than the disc) unless Triton has it in its cache.
+defaults to 1. A JAX step on CUDA takes about 45 ms with 8 environments and 60 ms with 1024, because each
+substep runs the broadphase on the CPU through a host callback. A Triton step takes about 0.3 to 0.5 ms. The
+first Triton step in a process compiles the kernel (about 50 s, or 80 s for agent shapes other than the
+disc) unless Triton has it in its cache.
 
-The port is not bit-identical to Pymunk. It uses the same integration, PD control, damping and
-sequential impulse solver, but its walls are half-planes. In the source, a block pushed hard into a wall
-can pass through it. In the port, the block stays inside. The State keeps the solver cache
-(`current/jax`), so a restored State steps the same as the original on the same backend. The Numba and
-JAX backends agree to rounding. The Triton backend computes in `float32`. For the disc agent it agrees
-with them to about 0.001 px per step.
+The port follows Munk2D, the Chipmunk2D fork that pymunk 7.2.0 builds. It uses the same integration,
+PD control, damping and sequential impulse solver, and these Munk2D details:
+
+- The walls are segments with a radius of 2, and their contacts are the Munk2D segment-polygon contacts.
+  A block pushed hard into a wall can pass through it, as in the source.
+- The PD control of the agent is in `float32` for `float32` actions, as stable-worldmodel computes it.
+- The collision slop and bias come from the Munk2D defaults, which are `float` literals.
+- An arbiter keeps its contacts for 3 steps after its shapes separate, as Munk2D keeps them.
+- The solver visits the shape pairs in the order that the Munk2D bounding-box tree reports them. With
+  10 solver iterations, this order changes the result, so the port replays the tree.
+- A reset copies the bias velocities, the cached impulses and the tree from the Pymunk reset.
+
+The State keeps the solver cache and the tree (`current/jax`), so a restored State steps the same as the
+original on the same backend. The Numba and JAX backends compute in `float64` and agree with Pymunk to
+rounding. Over 200 steps of two scripted policies from 256 source resets each, the block position gap
+stays below 0.001 px in 511 of the 512 episodes. In the other episode, the agent pushes the block
+through a wall at high speed, and the rounding grows to a different trajectory. The Triton backend
+computes in `float32`. Its median gap at step 200 is 0.0004 px, but in more episodes where the block is
+pressed hard into or through a wall, the `float32` rounding grows to a different trajectory.
 
 Pymunk on the CPU resets the environments, with the source reset distribution. On Linux, a batch of at least
 `worker_min_lanes` lanes resets in up to `workers` processes. The worker processes do not change the

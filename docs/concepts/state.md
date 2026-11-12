@@ -35,7 +35,7 @@ saved instance and of the receiving instance must be compatible.
 ## PushT checkpoints
 
 `PushT` and `PushTDiscrete` use complete numeric States. Save all fields,
-including the reset recipe, RNGs, action history and contact-solver cache
+including the reset recipe, RNGs, action history, contact-solver cache and broadphase tree
 (`current/jax`). Restoring positions alone cannot reconstruct the contact
 history. `set_state()` restores the solver cache and does not replay physics.
 A State from an earlier stable-envs release (`recipe/version` 2) holds no solver
