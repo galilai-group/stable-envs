@@ -21,3 +21,13 @@ def validate_action(action: np.ndarray) -> None:
         raise AssertionError("Rocket throttle must be within [0, 1]")
     if np.any(action[5:] < -1) or np.any(action[5:] > 1):
         raise AssertionError("Rocket gimbal commands must be within [-1, 1]")
+
+
+def validate_actions(actions: np.ndarray) -> None:
+    """Validate a ``[batch, 7]`` array as ``validate_action`` validates each row, and raise its first error."""
+    if actions.dtype in (np.dtype("float32"), np.dtype("float64")) and actions.ndim == 2 and actions.shape[1] == 7:
+        low = np.array([-1.0, -1.0, -1.0, 0.0, 0.0, -1.0, -1.0])
+        if np.isfinite(actions).all() and ((actions >= low) & (actions <= 1)).all():
+            return
+    for action in actions:
+        validate_action(action)

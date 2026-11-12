@@ -8,7 +8,7 @@ from tensordict import TensorDict
 
 from ...._execution.process import BROADCAST, PER_LANE, fresh_copy
 from ...._execution.protocol import SimulatorAdapter
-from .actions import validate_action
+from .actions import validate_actions
 from .replay import RocketReplay, generator_state, install_generator
 
 
@@ -188,8 +188,7 @@ class RocketAdapter(SimulatorAdapter):
             actions = actions.detach().cpu().numpy()
         if not isinstance(actions, np.ndarray) or actions.shape != (self.num_envs, 7):
             raise ValueError("Rocket actions require shape [num_envs, 7]")
-        for action in actions:
-            validate_action(action)
+        validate_actions(actions)
         if active is not None:
             active = np.asarray(active.detach().cpu() if torch.is_tensor(active) else active, dtype=bool)
         return actions, active
@@ -200,8 +199,7 @@ class RocketAdapter(SimulatorAdapter):
             actions = actions.detach().cpu().numpy()
         if not isinstance(actions, np.ndarray) or actions.shape != (self.num_envs, 7):
             raise ValueError("Rocket actions require shape [num_envs, 7]")
-        for action in actions:
-            validate_action(action)
+        validate_actions(actions)
         results = [
             env.step(action) if active is None or active[i] else self._last_outputs[i]
             for i, (env, action) in enumerate(zip(self.envs, actions, strict=True))
