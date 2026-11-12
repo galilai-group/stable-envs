@@ -158,3 +158,32 @@ def test_gripper_link_pairs_are_excluded_but_the_pads_collide():
         assert any((a, b) in pairs for a in pads for b in pads if a < b)
     finally:
         gpu.close()
+
+
+def test_scene_cube_repair_draws_from_the_lane_generator(capsys):
+    _require_cuda()
+    from stable_envs.envs.ogbench.simulation.manipulation_batch import OGBManipulationBatchAdapter
+    from stable_envs.envs.ogbench.simulation.manipulation_warp import OGBManipulationWarpAdapter
+
+    lanes, repairs = 3, 3
+    ref = OGBManipulationBatchAdapter("Scene", lanes, seed=4)
+    gpu = OGBManipulationWarpAdapter("Scene", lanes, "cuda", seed=4)
+    cube = slice(ref._cube, ref._cube + 7)
+    rng = [("rng", "environment", key) for key in ("state", "increment", "has_uint32", "uinteger")]
+    try:
+        for _ in range(repairs):
+            # Lane 1's cube leaves the workspace; the step's post-step puts it back from the lane's generator.
+            ref._qpos[1, ref._cube] = gpu._qpos[1, gpu._cube] = 5.0
+            want = ref.step(np.zeros((lanes, 5)))["state"]
+            got = gpu.step(torch.zeros(lanes, 5, device="cuda"))["state"].cpu()
+            torch.cuda.synchronize()
+            for key in rng:
+                assert torch.equal(got[key], want[key]), key
+            np.testing.assert_allclose(got["physics", "qpos"][1, cube], want["physics", "qpos"][1, cube], atol=1e-6)
+        gpu.reset(seed=9)
+        ref.reset(seed=9)
+        printed = capsys.readouterr().out.count("Numerical instability detected")
+        assert printed == 2 * repairs
+    finally:
+        ref.close()
+        gpu.close()

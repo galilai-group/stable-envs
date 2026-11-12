@@ -21,6 +21,9 @@ _KERNELS = None
 #: Contacts per environment and constraints per environment of the MuJoCo Warp buffers.
 NACON_PER_ENV = 64
 NJMAX = 512
+#: Scene cube repairs per environment drawn ahead from its generator; the host draws more when it sees them used.
+REPAIR_DRAWS = 2
+_RNG_KEYS = ("state", "increment", "has_uint32", "uinteger")
 
 
 def contact_exclusions(model) -> list[tuple[int, int]]:
@@ -440,6 +443,11 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
                 [int(env.model.joint(name).dofadr[0]) for name in ("drawer_slide", "window_slide")], device=device
             )
             self._num_button_states = int(env._num_button_states)
+            self._rows = torch.arange(num_envs, device=device)
+            self._repair_count = torch.zeros(num_envs, dtype=torch.int32, device=device)
+            self._repair_seen = torch.zeros(num_envs, dtype=torch.int32, pin_memory=True)
+            self._repair_event = torch.cuda.Event()
+            self._repair_pending = False
         self._dirty = False
         self._load(state)
 
@@ -447,6 +455,11 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
     def envs(self):
         """The in-process OGBench objects as of the last reset or restore, or the metadata object."""
         return getattr(self.lanes, "envs", [self._meta])
+
+    def _push(self):
+        if self.family == "Scene":
+            self._poll_repairs(wait=True)
+        super()._push()
 
     def _lane_models(self, columns):
         """One MjModel per lane: the metadata model, or a copy with the compiled fields of the lane's Variation."""
@@ -476,6 +489,11 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
             key: state[key].clone() for key in self._order if key[0] != "physics" or key[1] not in _WARP_PHYSICS
         }
         host = {key: state[key].cpu().numpy() for key in self._order if key[0] in ("model", "scene")}
+        if self.family == "Scene":
+            self._repair_pending = False
+            self._repair_count.zero_()
+            rng = {key: state["rng", "environment", key].cpu().numpy() for key in _RNG_KEYS}
+            self._draw_repairs(rng, np.arange(self.num_envs))
         models = self._lane_models(host)
         ids = tuple(id(m) for m in models)
         if ids != getattr(self, "_model_ids", None):
@@ -554,7 +572,13 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
         self._check_open()
         actions, active = self.check_step(actions, active)
         mask = torch.ones(self.num_envs, dtype=torch.bool, device=self.device) if active is None else active
+        if self.family == "Scene":
+            self._poll_repairs()
         self._advance(actions.to(torch.float32).contiguous(), mask, active is None)
+        if self.family == "Scene" and not self._repair_pending:
+            self._repair_seen.copy_(self._repair_count, non_blocking=True)
+            self._repair_event.record()
+            self._repair_pending = True
         result = {key: value.clone() for key, value in self._outputs.items()}
         if capture_state:
             result["state"] = self.get_state()
@@ -614,8 +638,7 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
         c = self._columns
         cube = self._qpos[:, self._cube : self._cube + 3].to(torch.float64)
         unhealthy = mask & ((cube <= self._workspace[0] - 0.2) | (cube >= self._workspace[1] + 0.2)).any(dim=1)
-        if bool(unhealthy.any()):
-            self._repair(torch.nonzero(unhealthy).flatten().cpu().numpy())
+        self._repair(unhealthy)
         current = self._qpos[:, self._buttons].to(torch.float64)
         pressed = mask[:, None] & (button_pos > -0.02) & (current <= -0.02)
         states = c["scene", "cur_button_states"]
@@ -624,25 +647,66 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
         self._damping[:, self._lock_dofs] = torch.where(states == 0, 1e6, 2.0).to(self._damping.dtype)
         self.physics.forward()
 
-    def _repair(self, ids):
-        """OGBench's reset of a cube that left the workspace, drawing from the lane's environment generator."""
-        rng = np.random.Generator(np.random.PCG64())
-        columns = self._columns
-        for i in ids:
+    def _repair(self, unhealthy):
+        """OGBench's reset of a cube that left the workspace, with values drawn ahead from the lane's generator.
+
+        The host draws ``REPAIR_DRAWS`` repairs per lane ahead; it draws again for a lane when it sees that the lane
+        used them, which it checks without waiting for the device. A lane that needs more repairs before then
+        repeats the last drawn one.
+        """
+        c = self._columns
+        slot = self._repair_count.long().clamp(max=REPAIR_DRAWS - 1)
+        fire = unhealthy[:, None]
+        cube = slice(self._cube, self._cube + 7)
+        self._qpos[:, cube] = torch.where(fire, self._repair_qpos[self._rows, slot], self._qpos[:, cube])
+        dofs = slice(self._cube_dof, self._cube_dof + 6)
+        self._qvel[:, dofs] = torch.where(fire, 0, self._qvel[:, dofs])
+        for key in _RNG_KEYS:
+            column = c["rng", "environment", key]
+            c["rng", "environment", key] = torch.where(fire, self._repair_rng[key][self._rows, slot], column)
+        self._repair_count += unhealthy
+
+    def _draw_repairs(self, rng, lanes):
+        """Draw ``REPAIR_DRAWS`` cube repairs of ``lanes`` from their environment generators, as OGBench does."""
+        generator = np.random.Generator(np.random.PCG64())
+        qpos = np.empty((len(lanes), REPAIR_DRAWS, 7))
+        after = {key: np.empty((len(lanes), REPAIR_DRAWS, *rng[key].shape[1:]), rng[key].dtype) for key in _RNG_KEYS}
+        for row, lane in enumerate(lanes):
+            generator.bit_generator.state = pcg_decode({key: rng[key][lane] for key in _RNG_KEYS})
+            for k in range(REPAIR_DRAWS):
+                xy = generator.uniform(*self._object_bounds)
+                yaw = generator.uniform(0, 2 * np.pi)
+                qpos[row, k] = [*xy, 0.02, *lie.SO3.from_z_radians(yaw).wxyz.tolist()]
+                for key, value in pcg_encode(generator).items():
+                    after[key][row, k] = value
+        index = torch.as_tensor(lanes, device=self.device)
+        if len(lanes) == self.num_envs:
+            self._repair_qpos = torch.as_tensor(qpos, dtype=self._qpos.dtype, device=self.device)
+            self._repair_rng = {key: torch.as_tensor(value, device=self.device) for key, value in after.items()}
+        else:
+            self._repair_qpos[index] = torch.as_tensor(qpos, dtype=self._qpos.dtype, device=self.device)
+            for key, value in after.items():
+                self._repair_rng[key][index] = torch.as_tensor(value, device=self.device)
+
+    def _poll_repairs(self, wait=False):
+        """Print OGBench's message for each repair the device made, and draw new repairs for those lanes.
+
+        Without ``wait`` this reads the repair counts only when the copy of an earlier step's counts has arrived.
+        """
+        if not wait:
+            if not self._repair_pending or not self._repair_event.query():
+                return
+            self._repair_pending = False
+            if not int(self._repair_seen.sum()):
+                return
+        # The repairs of every queued step, read after they finish.
+        counts = self._repair_count.cpu().numpy()
+        lanes = np.flatnonzero(counts)
+        if not len(lanes):
+            return
+        for _ in range(int(counts.sum())):
             print("Numerical instability detected. Resetting cube positions.", flush=True)
-            rng.bit_generator.state = pcg_decode(
-                {
-                    k: columns["rng", "environment", k][i].cpu().numpy()
-                    for k in ("state", "increment", "has_uint32", "uinteger")
-                }
-            )
-            xy = rng.uniform(*self._object_bounds)
-            yaw = rng.uniform(0, 2 * np.pi)
-            values = [*xy, 0.02, *lie.SO3.from_z_radians(yaw).wxyz.tolist()]
-            self._qpos[i, self._cube : self._cube + 7] = torch.as_tensor(
-                values, dtype=self._qpos.dtype, device=self.device
-            )
-            self._qvel[i, self._cube_dof : self._cube_dof + 6] = 0
-            for key, value in pcg_encode(rng).items():
-                columns["rng", "environment", key][i] = torch.as_tensor(value, device=self.device)
+        rng = {key: self._columns["rng", "environment", key].cpu().numpy() for key in _RNG_KEYS}
+        self._draw_repairs(rng, lanes)
+        self._repair_count.zero_()
         self._dirty = True
