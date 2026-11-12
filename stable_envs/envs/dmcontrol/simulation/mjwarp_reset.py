@@ -5,7 +5,8 @@ from __future__ import annotations
 import copy
 from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
+from functools import cache
 
 import numpy as np
 import torch
@@ -14,6 +15,17 @@ from ...._execution.state_columns import require_columns
 from .batch import THREADED_RESETS
 from .factory import batch_threads, make_local
 from .state import MODEL_FIELDS, columns_to_state, model_columns, new_columns, write_row
+
+
+@cache
+def warp_batch_fields() -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """The MuJoCo Warp model and option fields that can hold one value per world."""
+    import mujoco_warp as mjw
+
+    def batched(cls):
+        return tuple(f.name for f in fields(cls) if getattr(f.type, "shape", (None,))[0] == "*")
+
+    return batched(mjw.Model), batched(mjw.Option)
 
 
 class _ModelView:

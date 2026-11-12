@@ -359,15 +359,16 @@ def measure_cell(name, batch, simulation_backend, args, device):
             controls = tuple(adapter._controls(action) for action in actions)
 
             def raw_physics(control):
-                adapter._runtime.advance(control)
-                adapter._runtime.advance(control)
+                adapter.batch.step(control)
+                adapter.batch.step(control)
 
             metrics["raw_physics_two_control_rounds"] = _rollout_metric(
                 raw_physics, lambda: candidate.set_state(saved), controls, args, device, transitions=batch
             )
             candidate.set_state(saved)  # raw timing intentionally bypassed adapter bookkeeping
-            raw_description = "two runtime.advance calls; native controls precomputed outside timing"
-        models = getattr(adapter, "_models", [])
+            raw_description = "two WarpBatch.step calls; native controls precomputed outside timing"
+        models = getattr(adapter, "_models", None) or [getattr(getattr(adapter, "batch", None), "model", None)]
+        models = [m for m in models if m is not None]
         source = getattr(adapter, "lanes", getattr(adapter, "_source", adapter))
         lanes = getattr(source, "envs", [])
         model = models[0] if models else None

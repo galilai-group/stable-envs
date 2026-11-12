@@ -82,59 +82,72 @@ with snv.DMCFingerTurnHard(num_envs=256, device="cuda", simulation_backend="mjwa
     env.set_state(checkpoint)
 ```
 
-The shared adapter owns lifecycle, the two action repetitions, native reset sampling and checkpoints.
-A private runtime owns Warp buffers, CUDA stream ordering, graph capture and physics substeps. Bound
-domain tasks compute observations, rewards and info on device; Cartpole and Finger variants share
-formulas. Existing model factories, State schemas and physical-variation calculations are reused.
+The adapter owns the lifecycle, the two action repetitions, native reset sampling and checkpoints.
+The shared `WarpBatch` backend (`stable_envs/_execution/mjbatch.py`) owns the Warp buffers and
+steps each control round in one captured CUDA graph. Bound domain tasks compute observations,
+rewards and info on the device. Cartpole and Finger variants share formulas.
 
-Warp physics uses float32; public State retains its existing shapes and dtypes, including float64
-physical columns. `set_state(s); get_state()` preserves the supplied checkpoint exactly, including
+Warp physics uses float32. The public State keeps its shapes and dtypes, including the float64
+physical columns. `set_state(s); get_state()` gives back the checkpoint exactly, including
 warmstart, activation, lifecycle, cumulative reward, complete RNG, episode targets and variation.
-Snapshots own their memory. This does not guarantee bitwise identical future GPU trajectories.
-Rendering continues to consume State, independently of the stepping backend.
+Snapshots own their memory. MuJoCo Warp does not repeat a contact solve bit for bit, so two
+rollouts from one State can differ after contacts. Rendering uses the State and does not depend on
+the stepping backend.
 
-Source physics substeps, RK4 and acceleration-stage sensor timing are retained. Native environments
-remain authoritative for resets and RNG. MJWarp stores each lane's complete RNG state, episode targets,
-physics values and compact model columns independently. Static native model assets are shared instead
-of copied per lane. For Cheetah and Quadruped, one native reset owner per `dmc_threads` thread resets a
-share of the lanes in parallel. Other tasks use one reset owner. Model and State storage grows with the
-batch size. A pending reset uses one control round with zero reward. When only some lanes reset, the
-full batch advances in the same runtime and the reset lanes get their new State afterward. The CUDA
-graphs stay captured through episode boundaries.
+Each control round follows dm_control's `legacy_step`: `mj_step2`, then `n - 1` calls of
+`mj_step`, then `mj_step1`. RK4 tasks use `n` calls of `mj_step`, then `mj_step1`. After a round,
+the data hold the position and velocity stages of the new state and the acceleration-stage sensor
+values of the last integration. Contacts, constraints and the solver are those of the MuJoCo Warp
+3.17 step, with no changes.
 
-For Warp 3.17 the runtime corrects plane–capsule friction frames and capsule–capsule geometry to
-follow native MuJoCo's [primitive collisions](https://github.com/google-deepmind/mujoco/blob/3.17.0/src/engine/engine_collision_primitive.c).
-The capsule correction uses float64 local arithmetic for closest points and intersecting-axis normals.
-It follows MuJoCo 3.17's relative angular cutoff, including the native one- or two-contact
-result for near-parallel capsules. Stored dynamics and integration remain float32. Focused tests compare contact geometry, impulses and touch sensors
-against native MuJoCo. Acceleration-stage readings are cleared before stepping so touch forces do
-not accumulate from checkpoint reconstruction.
-Cheetah and Humanoid order joint-limit and contact constraints consistently before each solve, including
-after checkpoint restoration and mixed resets. This removes replay variation caused by parallel
-constraint allocation; the solver equations, contacts and iteration settings stay unchanged.
-Humanoid also orders changed constraint rows before incremental Newton updates and sums each world's
-gradient norm in a fixed order. Its DMC-local Newton loop
-retains upstream warmstart, line search, incremental Hessian updates, convergence and stable-state
-shortcuts. Constraint ordering alone does not make these solver reductions deterministic.
-Manipulator accumulates elliptic contact curvature in constraint-row order, with one writer per
-world and Hessian entry. This removes a source of floating-point atomic-sum variation while keeping
-worlds parallel. Its DMC-local dense Newton loop reuses MuJoCo Warp 3.17's line search, convergence
-and factorization kernels, with the original warmstart and iteration settings.
+Native environments own resets and RNG. Each environment keeps its complete RNG state, episode
+targets, physics values and compact model columns. The adapter writes the model values of each
+environment into the per-environment model fields of MuJoCo Warp, and writes only the fields that
+changed. For Cheetah and Quadruped, one native reset owner per `dmc_threads` thread resets a share
+of the environments in parallel. Other tasks use one reset owner. A pending reset uses one control
+round with zero reward. When only some environments reset, the full batch advances and the reset
+environments get their new State after the round.
+
+The step does not read values from the device. Nonfinite controls or physics raise
+`dm_control.rl.control.PhysicsError` one or two steps later. A contact or constraint buffer
+overflow raises `BufferOverflowError` in the same way. `check_buffers()` on the simulator raises
+the error immediately.
 
 ### Validation status
 
-Run the focused CUDA checks with `python scripts/ci/run_dmc_mjwarp.py`; missing CUDA or skipped
-required cases fail this runner. It covers all 17 classes, checkpoint ownership, resets, targets,
-physics variation, rendering captured States, stream ordering and contact/solver regressions.
+Run the focused CUDA checks with `python scripts/ci/run_dmc_mjwarp.py`. Missing CUDA or skipped
+required cases make this runner fail. It covers all 17 classes, checkpoint ownership, resets,
+targets, physics variation, rendering of captured States, stream ordering, the legacy step order
+and the sensor timing.
 
-The recorded MuJoCo 3.17 evaluation passed all 35 focused CUDA checks and 51 checkpoint-replay
-cases (17 environments × three seeds, at batch 3) over 100 public calls. Exact replay in those
-cases does not establish numerical equivalence with native float64 physics. CPU/GPU errors
-grow on contact-heavy trajectories, and random actions provide limited sparse-reward coverage.
-The backend remains experimental; no new numerical acceptance threshold was applied.
+The table compares MuJoCo Warp with native CPU physics over 300 public calls (600 control rounds)
+from the same reset (`seed=5`), on 16 environments with slow sinusoidal actions. It gives the
+median over environments of the absolute return difference, the mean over the rollout of the
+largest `qpos` difference of the median environment, and the largest `qpos` difference.
 
-[Pull request #28](https://github.com/galilai-group/stable-envs/pull/28) gives the 100-call error
-curves, the tested revisions, the shared baseline failures and the hardware-specific skips.
+| Class | Return, CPU (median) | Return difference | Mean `qpos` difference | Largest `qpos` difference |
+|---|---:|---:|---:|---:|
+| `DMCAcrobotBalance` | 0 | 0 | 6.5e-06 | 0.0056 |
+| `DMCBallInCupCatch` | 0 | 0 | 7.8e-08 | 0.0011 |
+| `DMCCartpoleBalance` | 177 | 0.00021 | 1.6e-05 | 0.0024 |
+| `DMCCartpoleSwingup` | 0 | 0 | 7.2e-06 | 0.00055 |
+| `DMCCheetahRun` | 3.84 | 1.7e-06 | 1.4e-07 | 1.4e-06 |
+| `DMCFingerSpin` | 0 | 0 | 1.7e-06 | 6.2e-05 |
+| `DMCFingerTurnEasy` | 0 | 0 | 1.3e-06 | 4.7e-05 |
+| `DMCFingerTurnHard` | 0 | 0 | 1.3e-06 | 4.7e-05 |
+| `DMCHopperHop` | 0 | 0 | 0.00052 | 1.9 |
+| `DMCHumanoidWalk` | 0.66 | 4.9e-07 | 0.69 | 2.9 |
+| `DMCManipulatorBringBall` | 2.8e-53 | 1.3e-58 | 0.0048 | 2 |
+| `DMCPendulumSwingup` | 0 | 0 | 4.3e-07 | 3.3e-06 |
+| `DMCPointMassEasy` | 3.8e-155 | 2.6e-158 | 8.3e-08 | 1.7e-06 |
+| `DMCQuadrupedWalk` | 12.9 | 3.9e-05 | 3.4e-06 | 0.088 |
+| `DMCReacher` | 4 | 0 | 7.7e-07 | 3.9e-06 |
+| `DMCSwimmerSwimmer6` | 11.3 | 6e-06 | 3.5e-06 | 2e-05 |
+| `DMCWalkerWalk` | 16.0 | 0.024 | 0.0098 | 2 |
+
+In tasks with contacts the float32 trajectories drift apart and the drift grows over the rollout, but
+the returns stay close. Humanoid falls under these actions on both backends. Many tasks give a zero
+return under these actions, so their return difference shows little; the `qpos` columns cover them.
 
 ### Benchmarking
 
@@ -198,14 +211,6 @@ or peak concurrent RAM summed across worker processes. On Linux, the exit-time v
 also include the largest reaped descendant. Existing RSS sums and NVML readings remain point
 samples. `worker_exit` records the exit code and signal; a `SIGKILL` alone does not prove OOM.
 Failed cells remain explicit error rows, and the sweep continues to the next cell.
-
-The MuJoCo 3.17 timing curves in [pull request #28](https://github.com/galilai-group/stable-envs/pull/28)
-compare sequential CPU, native CPU batching and RTX 3090 stepping at batches 1, 256 and 1024,
-using 100 synchronized public calls per seed. The benchmark now matches their action recipe,
-warmup/restore sequence and public-step workload. The original harness measured both backends
-in the same process and also retained trajectories; this script isolates each seed/backend and
-records timing and memory. The charts also use an earlier simulator revision. Rerun both revisions
-on matching hardware for new performance comparisons; the old plotted values are not a new baseline.
 
 ## Acrobot
 

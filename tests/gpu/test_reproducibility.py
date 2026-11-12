@@ -949,9 +949,12 @@ ROLLOUT_REWARD_RTOL = 0.05
 #: the same State differ from each other as much as from the original (largest gap over 300 steps, original against
 #: restored and restored against restored: Hopper 0.85 and 1.12, Walker 0.59 and 1.04, HumanoidMaze 2.8 and 2.9,
 #: OGBScene 0.85 and 0.61, OGBCube 0.72 and 0.11). One lane drifts far in qpos while the return and the success of
-#: the median lane stay the same, which the checks below the qpos bounds cover.
+#: the median lane stay the same, which the checks below the qpos bounds cover. The DMC Humanoid falls under these
+#: actions and every lane is in contact: over three runs, mean gap of the median lane 0.27 to 0.45, largest gap 2.69
+#: to 2.74, returns equal. Against native CPU physics on 16 environments the same rollout gives 0.77 and 2.95.
 ROLLOUT_QPOS_BOUNDS = {
     "FetchSlide*": (0.05, 2.5),
+    "DMCHumanoid*": (1.0, 3.5),
     "DMC*": (0.01, 2.5),
     "HumanoidMaze*": (1.0, 3.5),
     "OGBScene*": (0.05, 2.0),

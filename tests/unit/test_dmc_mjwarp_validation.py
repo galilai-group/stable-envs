@@ -1,4 +1,4 @@
-"""Result flags retain every validation category without running physics."""
+"""The step's finiteness flags and the cached tolerance constants, without running physics."""
 
 import numpy as np
 import pytest
@@ -6,54 +6,33 @@ import torch
 
 pytest.importorskip("mujoco")
 wp = pytest.importorskip("warp")
+pytest.importorskip("dm_control")
 
-from stable_envs.envs.dmcontrol.simulation import mjwarp_runtime
 
+def test_check_kernel_flags_controls_and_each_physics_field():
+    # The kernel depends only on Warp; run it on the CPU device.
+    from stable_envs.envs.dmcontrol.simulation.mjwarp import _kernels
 
-def test_result_bitmask_reports_fields_capacity_and_clears_between_calls(monkeypatch):
-    # This kernel only depends on Warp; exercise it without requiring a matching
-    # MuJoCo physics installation or a CUDA device.
-    monkeypatch.setattr(mjwarp_runtime, "wp", wp)
     wp.init()
-    fields = {name: wp.zeros((3, 2), dtype=float, device="cpu") for name in mjwarp_runtime._RESULT_FIELDS}
-    fields["time"] = wp.zeros(3, dtype=float, device="cpu")
-    overflow = wp.zeros(3, dtype=int, device="cpu")
-    nacon = wp.zeros(1, dtype=int, device="cpu")
-    error = wp.zeros(1, dtype=int, device="cpu")
+    _, check_finite = _kernels()
+    names = ("ctrl", "qpos", "qvel", "act", "warmstart", "sensordata")
+    fields = {name: wp.zeros((3, 2), dtype=float, device="cpu") for name in names}
+    flag = wp.zeros(1, dtype=int, device="cpu")
 
     def flags():
-        error.zero_()
-        wp.launch(
-            mjwarp_runtime._result_check_kernel(),
-            dim=3,
-            inputs=[overflow, nacon, 3, 128, *fields.values()],
-            outputs=[error],
-            device="cpu",
-        )
-        return error.numpy().item()
+        flag.zero_()
+        wp.launch(check_finite, dim=3, inputs=[*fields.values(), flag], device="cpu")
+        return flag.numpy().item()
 
     assert flags() == 0
-    for index, field in enumerate(fields.values(), start=1):
+    for name, field in fields.items():
         view = wp.to_torch(field).reshape(-1)
         for value in (float("nan"), float("inf"), -float("inf")):
-            view[-1] = value  # Include a failure outside the first lane.
-            assert flags() == 1 << index
+            view[-1] = value  # A failure outside the first environment.
+            assert flags() == (1 if name == "ctrl" else 2)
         view.zero_()
         assert flags() == 0
-
-    # Finite solver-budget exits do not count as capacity failures.
-    wp.to_torch(overflow)[2] = 4
-    wp.to_torch(nacon)[0] = 128
-    assert flags() == 0
-    wp.to_torch(overflow)[2] = 5
-    assert flags() == 1
-    wp.to_torch(overflow).zero_()
-    wp.to_torch(nacon)[0] = 129
-    wp.to_torch(fields["qvel"])[1, 0] = float("nan")
-    assert flags() == 1 | 4
-    wp.to_torch(nacon).zero_()
-    wp.to_torch(fields["qvel"]).zero_()
-    # Tasks with no activation or acceleration sensors still validate.
+    # Tasks with no activation or sensors still check.
     fields["act"] = wp.zeros((3, 0), dtype=float, device="cpu")
     fields["sensordata"] = wp.zeros((3, 0), dtype=float, device="cpu")
     assert flags() == 0

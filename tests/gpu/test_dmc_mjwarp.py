@@ -10,6 +10,7 @@ import math
 import numpy as np
 import pytest
 import torch
+from tensordict import TensorDict
 
 import stable_envs as se
 from tests.gpu._shared import family_params, resolve_family
@@ -79,7 +80,7 @@ def test_mutating_returned_leaves_preserves_live_state_and_physics(name):
                 adapter.set_state(state)
             output = adapter.step(actions, capture_state=mixed)
             checkpoint = adapter.get_state()
-            physics = adapter._runtime.physical_state()
+            physics = TensorDict(adapter.batch.get_physics(), [3])
             if mixed and "info" in output.keys():
                 saved_qpos = output["state", "qpos"].clone()
                 output["info", "qpos"].fill_(123)
@@ -90,7 +91,7 @@ def test_mutating_returned_leaves_preserves_live_state_and_physics(name):
                 else:
                     value.fill_(123)
             assert_same_state(adapter.get_state(), checkpoint)
-            assert_same_state(adapter._runtime.physical_state(), physics)
+            assert_same_state(TensorDict(adapter.batch.get_physics(), [3]), physics)
             held = output.clone()
             adapter.step(actions, capture_state=False)
             adapter.reset(91020)
@@ -153,91 +154,6 @@ def test_mixed_resets_in_both_action_repeats_match_native_lifecycle():
         source.close()
 
 
-@pytest.mark.parametrize("name", family_params(DMC_NAMES, family="dmc"))
-def test_reward_only_first_round_matches_full_outputs(name, monkeypatch):
-    resolve_family(name, family="dmc", modules=("dmcontrol._family",), subject="MJWarp reward-only round")
-    with se.make(name, num_envs=3, device="cuda", simulation_backend="mjwarp", size=32) as env:
-        adapter = env._simulator
-        checkpoint = env.reset(seed=91000)
-        actions = np.random.default_rng(91000 + 91717).uniform(-1, 1, (5, 3, env.action_dim))
-        actions = torch.as_tensor(actions, device="cuda", dtype=torch.float64)
-        # Warm the public path before comparing its replay behavior.
-        adapter.step(actions[0])
-        adapter.set_state(checkpoint)
-        control_step = adapter._control_step
-
-        # Reference path materializes all outputs in both rounds, as before the
-        # optimization. Retain every leaf to check reward, state and ownership.
-        def full_outputs(controls, *, reward_only=False, controls_validated=False):
-            output = control_step(controls, controls_validated=controls_validated)
-            return output["reward"] if reward_only else output
-
-        with monkeypatch.context() as patch:
-            patch.setattr(adapter._runtime, "supports_pair", False)
-            patch.setattr(adapter, "_control_step", full_outputs)
-            expected = [adapter.step(action) for action in actions]
-
-        adapter.set_state(checkpoint)
-        # The forced checked reference releases the inactive paired graph.
-        # Warm the selected public route again before measuring Python calls.
-        adapter.step(actions[0])
-        adapter.set_state(checkpoint)
-        calls = {"observation": 0, "reward": 0, "info": 0}
-
-        def count_calls(name, method):
-            def evaluate(snapshot):
-                calls[name] += 1
-                return method(snapshot)
-
-            return evaluate
-
-        with monkeypatch.context() as patch:
-            for method in calls:
-                patch.setattr(adapter._task, method, count_calls(method, getattr(adapter._task, method)))
-            actual = [adapter.step(action) for action in actions]
-        assert calls == {"observation": 0, "reward": 0, "info": 0}
-        for got, want in zip(actual, expected, strict=True):
-            assert_same_state(got, want)
-        # Mutating a returned output must not change the live checkpoint.
-        live = adapter.get_state()
-        actual[-1]["state", "qpos"].add_(1)
-        actual[-1]["reward"].zero_()
-        assert_same_state(adapter.get_state(), live)
-
-
-def test_failed_second_round_keeps_first_round_checkpoint(monkeypatch):
-    from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter
-
-    adapter = DMCWarpAdapter("cartpole-balance", 3, "cuda", 17)
-    try:
-        # This checks the per-round fallback. Paired device failures and the
-        # conditional second-round guard have their own tests.
-        monkeypatch.setattr(adapter._runtime, "supports_pair", False)
-        initial = adapter.get_state()
-        actions = torch.full((3, 1), 0.25, dtype=torch.float64, device="cuda")
-        adapter._control_step(adapter._controls(actions))
-        after_first = adapter.get_state()
-        adapter.set_state(initial)
-        advance = adapter._runtime.advance
-        rounds = 0
-
-        def fail_second(controls, **kwargs):
-            nonlocal rounds
-            rounds += 1
-            result = advance(controls, **kwargs)
-            if rounds == 2:
-                raise RuntimeError("injected second-round failure")
-            return result
-
-        monkeypatch.setattr(adapter._runtime, "advance", fail_second)
-        with pytest.raises(RuntimeError, match="injected second-round failure"):
-            adapter.step(actions)
-        assert rounds == 2
-        assert_same_state(adapter.get_state(), after_first)
-    finally:
-        adapter.close()
-
-
 def test_invalid_later_lane_restore_preserves_models_state_and_rng():
     from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter
 
@@ -245,7 +161,7 @@ def test_invalid_later_lane_restore_preserves_models_state_and_rng():
     try:
         before = adapter.get_state()
         native_before = adapter._source.get_state()
-        masses = [model.body_mass.copy() for model in adapter._models]
+        masses = [model.body_mass.copy() for model in adapter._source.models]
         bad = before.clone()
         bad["physics", "agent", "cart_mass"][0] = 1.25
         bad["physics", "agent", "cart_mass"][2] = -1
@@ -253,7 +169,7 @@ def test_invalid_later_lane_restore_preserves_models_state_and_rng():
             adapter.set_state(bad)
         assert_same_state(adapter.get_state(), before)
         assert_same_state(adapter._source.get_state(), native_before)
-        for model, mass in zip(adapter._models, masses, strict=True):
+        for model, mass in zip(adapter._source.models, masses, strict=True):
             np.testing.assert_array_equal(model.body_mass, mass)
         reset_after_failure = adapter.reset(None)
         adapter.set_state(before)
@@ -262,119 +178,71 @@ def test_invalid_later_lane_restore_preserves_models_state_and_rng():
         adapter.close()
 
 
-def test_invalid_actions_and_scaled_controls_preserve_pending_resets(monkeypatch):
+@pytest.mark.parametrize("bad", [float("nan"), float("inf"), 1e300])
+def test_nonfinite_controls_raise_a_physics_error_and_set_state_recovers(bad):
+    from dm_control.rl.control import PhysicsError
+
     from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter
 
     adapter = DMCWarpAdapter("cartpole-balance", 3, "cuda", 17)
     try:
-        initial = adapter.get_state()
-        initial["lifecycle", "reset_next_step"].fill_(True)
-        adapter.set_state(initial)
-        native_before = adapter._source.get_state()
-        physics_before = adapter._runtime.physical_state()
-        controls = torch.zeros(3, 1, dtype=torch.float32, device="cuda")
-        controls[2] = float("inf")
-        # Direct runtime callers retain validation by default.
-        with pytest.raises(ValueError, match="Controls must be finite"):
-            adapter._runtime.advance(controls)
-        with monkeypatch.context() as patch:
-
-            def unexpected_advance(*args, **kwargs):
-                pytest.fail("Invalid controls reached physics")
-
-            patch.setattr(adapter._runtime, "advance", unexpected_advance)
-            for bad in (float("nan"), float("inf"), 1e300):
-                actions = torch.zeros(3, 1, dtype=torch.float64, device="cuda")
-                actions[2] = bad
-                with pytest.raises(ValueError, match="finite"):
-                    adapter.step(actions)
-                assert_same_state(adapter.get_state(), initial)
-                assert_same_state(adapter._source.get_state(), native_before)
-                assert_same_state(adapter._runtime.physical_state(), physics_before)
-        # Validation errors must leave the CUDA context and reset path usable.
-        adapter.step(torch.zeros(3, 1, device="cuda"))
-        assert adapter.get_state()["lifecycle", "step_count"].flatten().tolist() == [1, 1, 1]
-    finally:
-        adapter.close()
-
-
-@pytest.mark.parametrize("failed_round", [1, 2])
-def test_nonfinite_round_preserves_last_valid_checkpoint(failed_round, monkeypatch):
-    from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter
-
-    adapter = DMCWarpAdapter("cartpole-balance", 3, "cuda", 17)
-    try:
-        monkeypatch.setattr(adapter._runtime, "supports_pair", False)
         initial = adapter.get_state()
         actions = torch.full((3, 1), 0.25, dtype=torch.float64, device="cuda")
-        adapter._control_step(adapter._controls(actions))
-        after_first = adapter.get_state()
-        adapter.set_state(initial)
         expected = adapter.step(actions)
         adapter.set_state(initial)
-        check_result = adapter._runtime._check_result
-        rounds = 0
-
-        def fail_result(*, recorded=False):
-            nonlocal rounds
-            if recorded:
-                rounds += 1
-                if rounds == failed_round:
-                    adapter._runtime._data_view("qvel")[-1, -1] = float("nan")
-                    return check_result()
-            return check_result(recorded=recorded)
-
-        with monkeypatch.context() as patch:
-            patch.setattr(adapter._runtime, "_check_result", fail_result)
-            with pytest.raises(RuntimeError, match="produced nonfinite qvel"):
-                adapter.step(actions)
-        assert rounds == failed_round
-        assert_same_state(adapter.get_state(), initial if failed_round == 1 else after_first)
+        # The step reads no device values: the error comes at a later step or check_buffers.
+        invalid = actions.clone()
+        invalid[2] = bad
+        adapter.step(invalid)
+        with pytest.raises(PhysicsError, match="nonfinite controls"):
+            adapter.check_buffers()
+        adapter.check_buffers()
         adapter.set_state(initial)
-        # A stale error bit must be cleared by the captured graph on replay.
-        with adapter._runtime._scope():
-            adapter._runtime._result_error.fill_(127)
         assert_same_state(adapter.step(actions), expected)
     finally:
         adapter.close()
 
 
-def test_result_flags_diagnose_all_fields_and_capacity_on_cuda():
+@pytest.mark.parametrize("name", ["qpos", "qvel"])
+def test_nonfinite_physics_raises_at_a_later_step(name):
+    from dm_control.rl.control import PhysicsError
+
     from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter
-    from stable_envs.envs.dmcontrol.simulation.mjwarp_runtime import _RESULT_FIELDS
 
-    adapter = DMCWarpAdapter("quadruped", 3, "cuda", 17)
+    adapter = DMCWarpAdapter("cartpole-balance", 3, "cuda", 17)
     try:
-        from stable_envs.envs.dmcontrol.simulation.mjwarp_runtime import mjw
+        initial = adapter.get_state()
+        actions = torch.zeros(3, 1, dtype=torch.float64, device="cuda")
+        expected = adapter.step(actions)
+        adapter.set_state(initial)
+        adapter.batch.data(name)[-1, -1] = float("nan")
+        with pytest.raises(PhysicsError, match="nonfinite values"):
+            for _ in range(3):
+                adapter.step(actions)
+                torch.cuda.synchronize()
+        adapter.set_state(initial)
+        assert_same_state(adapter.step(actions), expected)
+        adapter.check_buffers()
+    finally:
+        adapter.close()
 
-        runtime = adapter._runtime
-        with runtime._scope():
-            for name in _RESULT_FIELDS:
-                view = runtime._data_view(name).reshape(-1)
-                original = view[-1].clone()
-                view[-1] = float("inf")
-                with pytest.raises(RuntimeError, match=f"produced nonfinite {name}"):
-                    runtime._check_result()
-                view[-1] = original
-                runtime._check_result()
-            overflow = runtime._data_view("overflow")
-            original = overflow.clone()
-            for flag in mjw.OverflowType:
-                overflow.zero_()
-                overflow[-1] = int(flag)
-                if int(flag) & runtime._capacity_overflow:
-                    with pytest.raises(RuntimeError, match="capacity overflow"):
-                        runtime._check_result()
-                else:
-                    runtime._check_result()
-            overflow.copy_(original)
-            nacon = runtime._data_view("nacon")
-            original_count = nacon.clone()
-            nacon.fill_(runtime._d.naconmax + 1)
-            with pytest.raises(RuntimeError, match="capacity overflow"):
-                runtime._check_result()
-            nacon.copy_(original_count)
-            runtime._check_result()
+
+def test_a_buffer_overflow_raises_at_a_later_step():
+    from stable_envs._execution.mjbatch import BufferOverflowError
+    from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter
+
+    adapter = DMCWarpAdapter("quadruped", 2, "cuda", 17)
+    try:
+        actions = torch.zeros(2, adapter.action_dim, dtype=torch.float64, device="cuda")
+        adapter.step(actions)
+        adapter.check_buffers()
+        # The flag the shared overflow kernel sets when a world has more constraints than njmax.
+        adapter.batch.data("nefc")[-1] = adapter.batch.njmax + 1
+        adapter.batch._flag_t.fill_(2)
+        with pytest.raises(BufferOverflowError, match="njmax"):
+            for _ in range(3):
+                adapter.step(actions)
+                torch.cuda.synchronize()
     finally:
         adapter.close()
 

@@ -44,22 +44,9 @@ def main():
             str(ROOT / "tests/gpu/test_dmc_mjwarp_humanoid.py"),
             str(ROOT / "tests/gpu/test_dmc_mjwarp_reacher.py"),
             str(ROOT / "tests/gpu/test_dmc_mjwarp_streams.py"),
-            str(ROOT / "tests/gpu/test_dmc_mjwarp_task_graphs.py"),
-            str(ROOT / "tests/gpu/test_dmc_mjwarp_pair.py"),
+            str(ROOT / "tests/gpu/test_dmc_mjwarp_legacy_step.py"),
             str(ROOT / "tests/unit/test_dmc_mjwarp_validation.py"),
             str(ROOT / "tests/unit/test_dmc_mjwarp_reset_pool.py"),
-            str(ROOT / "tests/unit/test_dmc_mjwarp_runtime.py")
-            + "::test_copy_physical_state_preserves_clock_unselected_lanes_and_ownership",
-            str(ROOT / "tests/unit/test_dmc_mjwarp_contacts.py")
-            + "::test_constraint_order_preserves_contact_impulses[cuda]",
-            str(ROOT / "tests/unit/test_dmc_mjwarp_contacts.py")
-            + "::test_elliptic_contact_reduction_preserves_impulses[cuda]",
-            str(ROOT / "tests/unit/test_dmc_mjwarp_contacts.py")
-            + "::test_near_parallel_capsules_preserve_contacts_and_impulses[cuda]",
-            str(ROOT / "tests/unit/test_dmc_mjwarp_solver.py")
-            + "::test_changed_row_order_preserves_incremental_hessian[cuda]",
-            str(ROOT / "tests/unit/test_dmc_mjwarp_solver.py")
-            + "::test_gradient_norm_preserves_completed_and_unchanged_worlds[cuda]",
             "-ra",
         ],
         plugins=[RequireEveryCase()],

@@ -10,14 +10,13 @@ mjw = pytest.importorskip("mujoco_warp")
 pytest.importorskip("dm_control")
 
 from stable_envs.envs.dmcontrol.simulation.factory import FACTORIES, make_local
-from stable_envs.envs.dmcontrol.simulation.mjwarp_reset import WarpResetPool
-from stable_envs.envs.dmcontrol.simulation.mjwarp_runtime import _batch_fields
+from stable_envs.envs.dmcontrol.simulation.mjwarp_reset import WarpResetPool, warp_batch_fields
 from stable_envs.envs.dmcontrol.simulation.physics import LEAVES
 from tests.helpers.reference.semantics import assert_same_state
 
 
 def pool(key):
-    return WarpResetPool(key, 3, 91000, _batch_fields(mjw.Model), _batch_fields(mjw.Option))
+    return WarpResetPool(key, 3, 91000, *warp_batch_fields())
 
 
 def assert_models_equal(pooled, native):
@@ -100,7 +99,7 @@ def _sharded_pool(key, threads, monkeypatch, lanes=5):
     from stable_envs.envs.dmcontrol.simulation import mjwarp_reset
 
     monkeypatch.setattr(mjwarp_reset, "batch_threads", lambda count: min(threads, count))
-    return WarpResetPool(key, lanes, 91000, _batch_fields(mjw.Model), _batch_fields(mjw.Option))
+    return WarpResetPool(key, lanes, 91000, *warp_batch_fields())
 
 
 @pytest.mark.parametrize("key", ["cheetah", "quadruped"])

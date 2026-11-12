@@ -146,6 +146,20 @@ All notable changes to this project are listed here. The format follows
   own renderer. Before, the reference was the class itself with `backend="opengl"`.
 - MuJoCo Warp steps (`WarpBatch` and the DMC runtime) compute sensors on the last substep of a step only. The
   values that a step returns do not change, and the other substeps launch fewer kernels.
+- DM Control on CUDA steps through the shared `WarpBatch` backend with the MuJoCo Warp 3.17 step as it is. A
+  control round is dm_control's `legacy_step` (`mj_step2`, `n - 1` calls of `mj_step`, then `mj_step1`) in one
+  captured CUDA graph, with the acceleration-stage sensor values of the last integration, and the task formulas
+  run in a second captured graph. The step reads no values from the device: nonfinite controls or physics
+  raise `PhysicsError` one or two steps later, and `check_buffers()` on the simulator raises at once. Before,
+  every step read the action check and a physics result from the device, and a failed control round kept the
+  last valid checkpoint. On an RTX 4090 with 8 CPU cores and a reset every 64 steps, Walker, Hopper, Swimmer,
+  Humanoid, Quadruped, Cartpole, Manipulator, Reacher and Cheetah step 1.5 to 2.1 times as fast with 1 to 8
+  environments, 1.3 to 1.8 times with 64 and 1.0 to 1.5 times with 256. With 1024 and 4096 environments the
+  native resets set the time; there the step alone is faster (Cheetah, 1024 environments: 1.80 ms against
+  2.67 ms; Quadruped, 4096: 8.4 ms against 9.8 ms). Over 300 public calls of smooth actions from the same
+  reset, the returns differ from native CPU physics as much as before; the DMC page gives the numbers.
+  Humanoid restored from a State does not repeat the original rollout bit for bit, and
+  `tests/gpu/test_reproducibility.py` bounds it as it bounds the other bodies in contact.
 - `WarpBatch` accepts `step_fn(m, d)`, which runs in place of the `frame_skip` calls of `mjw.step` in the step
   graph, for a family whose source steps in another call order. `batched_fields` also takes options as
   `"opt.<name>"`, with one value per environment, and `model_field(name)` is a live view of a batched model field
@@ -540,6 +554,10 @@ All notable changes to this project are listed here. The format follows
 
 ### Removed
 
+- The DMC copies of MuJoCo Warp internals, `dmcontrol/simulation/mjwarp_runtime.py` and `mjwarp_pair.py`
+  (1,715 lines): the dense pyramidal and elliptic Newton loops with ordered reductions, the constraint-row
+  ordering, the plane-capsule contact-frame and capsule-capsule contact corrections, and the paired two-round
+  graph. Their tests are removed with them.
 - The MJX physics of `OGBCube` on CUDA (`cube_mjx.py`). MuJoCo Warp steps CUDA Cube batches.
 - `mujoco-mjx` and `jax` from the `ogbench-manipulation-gpu` extra. No Cube or Scene code uses them.
 - `MJW_CHUNK` in the DMC and OGBench packages. The `dmc_min_worlds` and `ogb_mjw_worlds` tuning knobs
