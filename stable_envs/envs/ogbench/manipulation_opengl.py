@@ -31,7 +31,7 @@ _KINEMATICS: dict = {}
 _PINNED_ROWS = 8
 _CLUSTERED: dict = {}
 # Fast drawing per family: the shadow map size and the arm mesh clustering cell in metres.
-FAST = {"Cube": (2048, 0.003), "Scene": (2048, 0.002)}
+FAST = {"Cube": (2048, 0.003), "Scene": (2048, 0.003)}
 
 
 @lru_cache

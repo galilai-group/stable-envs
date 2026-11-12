@@ -211,9 +211,9 @@ All notable changes to this project are listed here. The format follows
   CUDA State. A State from an earlier release (`recipe/version` 2) still restores by replay in Pymunk.
 - `OGBCube` and `OGBScene` draw CPU frames with the new `opengl_fast` backend by default. It is MuJoCo
   software OpenGL with simplified arm meshes and a 2048 shadow map. The arm meshes keep one vertex per grid
-  cell of 3 mm (Cube) or 2 mm (Scene), so they keep 22 % (Cube) and 32 % (Scene) of their triangles.
+  cell of 3 mm, so they keep 22 % of their triangles.
   CPU frames are about 3 times faster. The mean frame MSE against `backend="opengl"` is 1.2 (Cube) and
-  2.5 (Scene) on the 0-255 scale. `backend="opengl"` draws the source's frames. CUDA frames do not change.
+  3.4 (Scene) on the 0-255 scale. `backend="opengl"` draws the source's frames. CUDA frames do not change.
   A CPU batch with one state for each OpenGL worker (8 by default) draws in the workers. Before, a batch
   needed 16 states.
 - `OGBCube` and `OGBScene` use the OGBench cube size. The default `cube.size` is now 0.02, as in OGBench.

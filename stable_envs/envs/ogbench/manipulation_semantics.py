@@ -425,7 +425,7 @@ _OPENGL_NOTE = (
     "comparison. With supersample 2 or more, MJWarp draws CUDA frames, and its lighting and transparency can "
     "differ from the same-style stable-envs OpenGL reference. On CPU the default backend is opengl_fast: MuJoCo "
     "OpenGL with simplified arm meshes and a 2048 shadow map. Its frames can differ from backend='opengl' "
-    "(mean frame MSE about 1.2 for Cube and 2.5 for Scene); visual_fidelity holds the backend='opengl' values."
+    "(mean frame MSE about 1.2 for Cube and 3.4 for Scene); visual_fidelity holds the backend='opengl' values."
 )
 
 

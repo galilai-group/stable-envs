@@ -219,8 +219,8 @@ The frames have the look of the OGBench pixel tasks `visual-cube-single-v0` and 
 `front_pixels` camera, a purple gripper, a see-through arm, and no goal cube.
 
 - On CPU, the default backend is `opengl_fast`. It is the same software OpenGL path with simplified arm
-  meshes and a 2048 shadow map (MuJoCo uses 4096). The arm meshes keep one vertex per grid cell of 3 mm
-  (Cube) or 2 mm (Scene). The mean frame MSE against `backend="opengl"` is 1.2 (Cube) and 2.5 (Scene) on
+  meshes and a 2048 shadow map (MuJoCo uses 4096). The arm meshes keep one vertex per grid cell of 3 mm.
+  The mean frame MSE against `backend="opengl"` is 1.2 (Cube) and 3.4 (Scene) on
   the 0-255 scale. The frames are about 3 times faster.
 - `backend="opengl"` draws the frames of the source.
 - CPU frames are bit-exact. A draw of the same state gives the same frame each time.
