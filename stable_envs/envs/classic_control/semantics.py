@@ -5,6 +5,7 @@ import torch
 
 from ..._core.style import StyleTensor
 from ..._execution.protocol import StepPipeline, step_pipeline
+from ...env import check_drawn_fields
 from ...spaces import Box, Dict
 from ...specs import Spec
 from .simulation.local import (
@@ -123,6 +124,9 @@ class ClassicControlSemantics:
 
     def _validate_state(self, state, *, batch=None):
         validate_classic_state(self.CLASSIC_DOMAIN, state, batch=batch)
+
+    def _validate_render_state(self, state):
+        check_drawn_fields(state, self._drawn_fields(), self._layout_dtypes())
 
     @property
     def action_spec(self):

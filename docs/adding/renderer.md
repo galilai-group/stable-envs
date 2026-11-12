@@ -17,6 +17,11 @@ full State → private RenderState → Frame → downstream learner packaging
 - `state_names` / `state_dim` (also `render_state_names` / `render_state_dim`), the renderer input
   layout. This is not the full State schema.
 
+`render(state)` checks only the fields that the renderer reads: the fields with a render offset, and the
+fields that `_drawn_fields` adds. It checks presence, shape and finite values. If the renderer also reads a
+hidden field, add that field in `_drawn_fields`. If a drawn value must be in a range, or is an index or a
+discrete id, check it in `_validate_render_state` or in `_render`. `set_state` checks the full State.
+
 `_get_render_state` and `_set_render_state` are renderer internals. `_unpack_render_state` may return a
 partial named projection. It must not invent velocities or RNG.
 

@@ -154,6 +154,32 @@ def _as_field(value, dtype: torch.dtype) -> torch.Tensor:
     return value if torch.is_tensor(value) else torch.as_tensor(value, dtype=dtype)
 
 
+def check_drawn_fields(state, fields, dtypes: Mapping | None = None) -> None:
+    """Check the ``(key, width)`` fields of a full State that a renderer reads.
+
+    Check presence, shape, finite values and, for keys in ``dtypes``, the dtype. The finite-value
+    check of all fields uses one host synchronization; the per-field pass only names the culprit.
+    """
+    if not isinstance(state, TensorDict):
+        raise TypeError("Expected full State (TensorDict); compact RenderState rows cannot restore dynamics")
+    if len(state.batch_size) != 1:
+        raise ValueError(f"Expected State batch [N], got {list(state.batch_size)}")
+    values = []
+    for key, width in fields:
+        value = state.get(key, None)
+        if not torch.is_tensor(value):
+            raise ValueError(f"State is missing {'.'.join(key)}, which the renderer draws")
+        if value.shape != (*state.batch_size, width):
+            raise ValueError(f"State field {'.'.join(key)} has invalid shape {tuple(value.shape)}")
+        if dtypes is not None and key in dtypes and value.dtype != dtypes[key]:
+            raise ValueError(f"State field {'.'.join(key)} has dtype {value.dtype}; expected {dtypes[key]}")
+        values.append((key, value))
+    if values and not bool(torch.stack([torch.isfinite(v).all() for _, v in values]).all()):
+        for key, value in values:
+            if not torch.isfinite(value).all():
+                raise ValueError(f"State field {'.'.join(key)} contains non-finite values")
+
+
 def render_states_arg(env, states) -> torch.Tensor:
     """Resolve private renderer input to live rows or a validated compact projection.
 
@@ -493,6 +519,26 @@ class Env:
                 if not torch.isfinite(value).all():
                     raise ValueError(f"State field {'.'.join(key)} contains non-finite values")
 
+    def _drawn_fields(self) -> tuple[tuple[tuple[str, ...], int], ...]:
+        """Return ``(key, width)`` for each State field the renderer reads.
+
+        The default is every field with a render offset. A family whose renderer also reads a
+        hidden field adds it here.
+        """
+        return tuple((key, width) for key, width, off, _ in self._state_plan() if off is not None)
+
+    def _validate_render_state(self, state: State) -> None:
+        """Check the State fields that ``render`` reads, with at most one host synchronization.
+
+        ``set_state`` checks the fields that only restore dynamics. A family that overrides
+        ``_validate_state`` and not this method keeps its full check here, because that check
+        can contain range checks on drawn fields.
+        """
+        if type(self)._validate_state is not Env._validate_state:
+            self._validate_state(state)
+            return
+        check_drawn_fields(state, self._drawn_fields())
+
     def set_state(self, state: State) -> None:
         """Restore a full State with exactly ``num_envs`` lanes under the current Variation."""
         self._require_state("set_state")
@@ -517,7 +563,7 @@ class Env:
         ``_render``; the supplied State may have a different batch size from this env.
         """
         state = self.get_state() if state is None else state
-        self._validate_state(state)
+        self._validate_render_state(state)
         return self._render(self._pack_render_state(state), **kwargs)
 
     def _get_render_state(self) -> torch.Tensor:

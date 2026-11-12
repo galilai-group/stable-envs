@@ -133,6 +133,11 @@ All notable changes to this project are listed here. The format follows
   checks. On CUDA with `simulation_backend="pybullet"`, `render(state)` of 256 or 1024 environments is about 3.4
   times faster on an RTX 4090. `PushT.render(state)` and `to_render_state(state)` select and check only the
   leaves that the renderers read; `render(state)` on CUDA is 25% to 35% faster. The frames do not change.
+- `Env.render(state)` checks only the State fields that the renderer reads: presence, shape and finite values,
+  with one host synchronization. Classic control also checks their dtype. Piecewise also checks the target
+  position, which it draws. `set_state` keeps the check of the full State. A family that overrides
+  `_validate_state` and does not override `_validate_render_state` keeps its full check in `render`. Frames do
+  not change.
 - PushT on CPU (`"numba"`): a step does its Torch operations on one thread, as the OGBench mazes do, so idle
   Torch threads do not spin on the cores of the Numba threads. A step that returns one frame hands over the
   rendered frames without a copy. Frames and State do not change. Public CPU steps/s with frames and a reset

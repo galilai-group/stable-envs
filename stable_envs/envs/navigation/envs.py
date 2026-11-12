@@ -1304,11 +1304,14 @@ class Piecewise(_HiddenTargetSemantics, _PiecewiseBase):
         """Render full State; the target, hidden from the compact rows, is drawn from it when enabled."""
         state = self.get_state() if state is None else state
         if isinstance(state, TensorDict):
-            self._frame_targets = state["target", "position"]
+            self._frame_targets = state.get(("target", "position"), None)
         try:
             return super().render(state, **kwargs)
         finally:
             self._frame_targets = None
+
+    def _drawn_fields(self):
+        return (*super()._drawn_fields(), (("target", "position"), 2))
 
     def _target_layer(self, img, s, sl, lo, hi):
         targets = self._frame_targets
