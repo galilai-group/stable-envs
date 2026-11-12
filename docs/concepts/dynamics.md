@@ -78,6 +78,15 @@ physics steps. Symbolic environments without RGB output need `frames=None`.
 There is no `capture`, `transition`, `unroll` or `step_sequence` method. To branch, use another env,
 `set_state` and `step`.
 
+## MuJoCo Warp physics
+
+On CUDA, the MuJoCo families that use MuJoCo Warp (OGBench Cube, Scene and mazes, Fetch, MS-Human) step all
+environments with one captured CUDA graph per step. At small batch sizes, the number of kernels in the graph
+sets the step time. Up to 4096 environments, the graph computes three passes over the body tree (subtree
+center of mass, composite inertia and RNE internal forces) with one kernel each, not one kernel per tree
+level. The results are equal up to float32 summation order. This applies to MuJoCo Warp 3.12.0 and 3.17.0
+only. With other versions, MuJoCo Warp runs unchanged.
+
 ## Process workers
 
 On Linux with at least four CPU cores, some families run physics in worker processes. These families

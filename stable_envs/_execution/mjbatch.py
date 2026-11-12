@@ -41,6 +41,9 @@ to sizes for the batch; an overflow raises :class:`BufferOverflowError` instead 
 their current state. Sensors are computed on the last substep only, as they do not act on the dynamics.
 ``exclude_pairs`` removes geom pairs from MuJoCo Warp's collision candidates, as an ``<exclude>`` would: a
 family uses it for pairs whose bounding volumes overlap but which make no contact.
+Up to ``fused_tree_max_envs`` worlds, the graphs compute subtree centers of mass, composite inertias and RNE
+internal forces with one launch per pass instead of one per body tree level (:mod:`.mjwarp_fused`), on the
+MuJoCo Warp versions it supports.
 
 Routing: :func:`resolve_backend`. Per-environment source resets: :class:`ResetPool`.
 
@@ -54,11 +57,15 @@ import threading
 import warnings
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
+from typing import TYPE_CHECKING
 
 import numpy as np
 import torch
 
 from .policy import cpu_affinity
+
+if TYPE_CHECKING:
+    from .mjwarp_fused import TreeWalks
 
 #: Integration state that ``get_physics`` returns and ``set_physics`` writes; mocap fields only for models with
 #: mocap bodies.
@@ -68,6 +75,8 @@ MAX_NATIVE_THREADS = 8
 #: Fields that ``mj_rnePostConstraint`` computes.
 RNE_POST_FIELDS = ("cacc", "cfrc_int", "cfrc_ext")
 BACKENDS = ("default", "auto", "native", "mjwarp")
+#: Largest MuJoCo Warp batch whose graphs use :mod:`.mjwarp_fused` tree passes.
+FUSED_TREE_MAX_ENVS = 4096
 
 
 class BufferOverflowError(RuntimeError):
@@ -437,6 +446,7 @@ class WarpBatch(MjBatch):
         batched_fields: Sequence[str] = (),
         model_options: Mapping[str, object] | None = None,
         exclude_pairs: Iterable[tuple[int, int]] = (),
+        fused_tree_max_envs: int = FUSED_TREE_MAX_ENVS,
         **_native_options,
     ):
         import mujoco
@@ -455,6 +465,7 @@ class WarpBatch(MjBatch):
         models = _model_list(models, self.num_envs)
         self.model = models[0]
         self._rne_post = bool(rne_postconstraint)
+        self.fused_tree = self.num_envs <= int(fused_tree_max_envs)
         self.fields = tuple(f for f in PHYSICS_FIELDS if not f.startswith("mocap") or self.model.nmocap)
         self.outputs = tuple(name for name in outputs if name not in self.fields)
         template = mujoco.MjData(self.model)
@@ -507,6 +518,7 @@ class WarpBatch(MjBatch):
             # Compile every kernel before the capture. Warp captures on its own stream; the graphs launch on
             # the current Torch stream.
             self._scratch: list[_Scratch] = []
+            self._fused: list[TreeWalks] = []
             self._step_graph = self.capture(self._step_body)
             self._forward_graph = self.capture(self._forward_body)
         self._write_template(None)
@@ -520,9 +532,16 @@ class WarpBatch(MjBatch):
         MuJoCo Warp allocates temporary arrays in each call. Captured as they are, they become allocation nodes,
         and a graph with allocation nodes is slow to launch when other allocations happen between launches.
         """
+        from .mjwarp_fused import tree_walks
+
         wp = self._wp
         scratch = _Scratch(self.device)
-        with wp.ScopedDevice(self._wp_device), wp.ScopedAllocator(self._wp_device, scratch):
+        with (
+            wp.ScopedDevice(self._wp_device),
+            wp.ScopedAllocator(self._wp_device, scratch),
+            tree_walks(self._m, self.fused_tree) as fused,
+        ):
+            self.fused_tree = fused is not None
             body()
             wp.synchronize()
             scratch.fixed = True
@@ -530,6 +549,8 @@ class WarpBatch(MjBatch):
                 body()
             wp.synchronize()
         self._scratch.append(scratch)
+        if fused is not None:
+            self._fused.append(fused)
         return capture.graph
 
     def _batched_fields(self, variants, requested) -> tuple[list, tuple[str, ...]]:
@@ -713,6 +734,7 @@ class WarpBatch(MjBatch):
         self._views = {}
         self._m = self._d = self._step_graph = self._forward_graph = None
         self._scratch = []
+        self._fused = []
 
 
 def _exclude_pairs(m, model, pairs) -> None:

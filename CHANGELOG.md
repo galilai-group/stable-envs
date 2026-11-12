@@ -14,6 +14,12 @@ All notable changes to this project are listed here. The format follows
   environments, batches per-environment model parameters, raises `BufferOverflowError` when the MuJoCo Warp
   contact or constraint buffers are too small, and runs per-environment source resets in a pool of threads or
   processes.
+- MuJoCo Warp backend (`WarpBatch`): the captured graphs compute subtree centers of mass, composite inertias and
+  RNE internal forces with one kernel launch per pass instead of one launch per body tree level
+  (`stable_envs/_execution/mjwarp_fused.py`), up to `fused_tree_max_envs` environments (default 4096). This
+  applies to MuJoCo Warp 3.12.0 and 3.17.0; other versions run MuJoCo Warp unchanged. The results are equal up to
+  float32 summation order. Public steps/s at 64 environments on an L40S: OGBench Cube +15%, MS-Human +16%,
+  Fetch Push +9%, OGBench Scene +7%, AntMaze +6%.
 - DMC native/MJWarp benchmarks offer an opt-in extended batch matrix through 8192 lanes and
   a `--dry-run` preview. Reports include kernel peak host RSS through construction and worker
   exit, including failed workers on supported platforms, alongside existing construction timing.
