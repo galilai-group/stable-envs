@@ -64,9 +64,11 @@ def make_batch(
 ) -> DMCBatchAdapter:
     """``make_local`` lanes stepped in one mujoco.batch on ``threads`` threads.
 
-    ``threads`` defaults to ``batch_threads``.
+    Without ``threads``, a step uses at most ``batch_threads`` threads, and fewer when its MuJoCo work is small
+    (``step_threads``).
     """
-    if threads is None:
+    fit = threads is None
+    if fit:
         threads = batch_threads(num_envs)
     lanes = make_local(domain, num_envs, device, seed)
-    return DMCBatchAdapter(lanes, BATCH_TASKS[domain], threads)
+    return DMCBatchAdapter(lanes, BATCH_TASKS[domain], threads, fit_threads=fit)

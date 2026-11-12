@@ -202,6 +202,13 @@ All notable changes to this project are listed here. The format follows
   action per call (before: 5,773) and 8,759 times with 16 actions per call (before: 7,289). `OGBScene`
   steps 4,828 and 5,592 times per second (before: 3,755 and 4,712). The speed of steps with frames does
   not change, because drawing the frames takes most of the time.
+- DM Control batches choose the number of `mujoco.batch` threads from the MuJoCo work of one step call. The
+  env times one MuJoCo step of the task when you construct it. Each thread then gets about 0.1 ms of work per
+  call and at least two environments, up to `dmc_threads`. Small batches of light tasks thus use one or two
+  threads: each thread that a call wakes adds a delay, and a thread for each CPU slows the Python thread that
+  calls the batch. With 8 environments on 8 cores, `DMCCheetahRun` used 8 threads and stepped at 0.6 times
+  the speed of dm_control in 8 worker processes. It uses one or two threads and steps at 1.9 times that
+  speed. An explicit `threads` argument to `make_batch` sets the exact number. State and outputs do not change.
 - DM Control CPU steps build their outputs and State without the per-leaf checks of `TensorDict`, and read the
   State fields of the batch through views that they bind once. Each step returns new output tensors, so the
   step dispatcher does not copy them again. State and outputs do not change.

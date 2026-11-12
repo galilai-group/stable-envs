@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import contextlib
+import copy
 import math
+import time
 from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
@@ -18,6 +20,10 @@ _pow = np.frompyfunc(math.pow, 2, 1)
 #: Domains whose dm_control reset is mostly MuJoCo work: CheetahRun settles for 200 steps, Quadruped searches its
 #: start height. Their lanes reset on the batch threads; the resets of other domains are faster in one thread.
 THREADED_RESETS = frozenset({"cheetah", "quadruped"})
+#: MuJoCo work, in seconds, that each batch thread gets per step call. Waking a thread can cost about this much.
+THREAD_WORK = 1e-4
+#: Fewest lanes per batch thread: each thread that a call waits for can be the late one.
+THREAD_LANES = 2
 
 
 def tolerance(x, *args, **kwargs):
@@ -51,6 +57,21 @@ def _put(tree, key, value):
     tree[key[-1]] = value
 
 
+def step_threads(physics, nsub, lanes, most):
+    """Threads for a step call: one per ``THREAD_WORK`` of the lanes' MuJoCo work, timed on a copy of ``physics``."""
+    most = min(most, -(-lanes // THREAD_LANES))
+    if most <= 1:
+        return 1
+    import mujoco
+
+    m, d = physics.model.ptr, copy.copy(physics.data.ptr)
+    reps, start = 0, time.perf_counter()
+    while (elapsed := time.perf_counter() - start) < 1e-3 or reps < 2:
+        mujoco.mj_step(m, d, nsub)
+        reps += 1
+    return max(1, min(most, math.ceil(lanes * elapsed / reps / THREAD_WORK)))
+
+
 #: State fields read from the batch: ``State key -> MjData field``.
 _LIVE = {"qpos": "qpos", "qvel": "qvel", "time": "time", "warmstart": "qacc_warmstart", "activation": "act"}
 
@@ -61,7 +82,8 @@ class DMCBatchAdapter(SimulatorAdapter):
     #: Each step returns fresh output tensors.
     outputs_owned = True
 
-    def __init__(self, lanes, task, threads):
+    def __init__(self, lanes, task, threads, *, fit_threads=False):
+        """Step on ``threads`` threads, or on at most that many by ``step_threads`` with ``fit_threads``."""
         import mujoco
         from dm_control.rl.control import PhysicsError
         from mujoco.batch import Batch
@@ -75,7 +97,11 @@ class DMCBatchAdapter(SimulatorAdapter):
         self._nsub, self._limit = lanes.envs[0]._env._n_sub_steps, lanes.envs[0]._env._step_limit
         self._get_state, self._spec = mujoco.mj_getState, mujoco.mjtState.mjSTATE_INTEGRATION
         self._vel, self._error = mujoco.mjtStage.mjSTAGE_VEL, PhysicsError
-        self.b = Batch(self._models[0], self.num_envs, nthread=threads)
+        if fit_threads:
+            nthread = step_threads(lanes.envs[0].physics, self._nsub, self.num_envs, threads)
+        else:
+            nthread = threads
+        self.b = Batch(self._models[0], self.num_envs, nthread=nthread)
         # These resets spend most of their time in MuJoCo calls, which release the GIL.
         self._pool = ThreadPoolExecutor(threads) if threads > 1 and lanes.key in THREADED_RESETS else None
         self.b.set_models(self._models)

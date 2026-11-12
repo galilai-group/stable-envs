@@ -20,6 +20,12 @@ then shades the pixels in the same order of float32 operations as the Torch rend
 imports. The two backends give the same frames, except for rare pixels. Torch's CPU square root can
 round differently from the IEEE square root that the kernels use.
 
+On CPU, all environments of a class step in one `mujoco.batch` call, which runs the MuJoCo steps on a
+pool of threads. `dmc_threads` sets the largest number of threads. A step with little MuJoCo work uses
+fewer threads, because each thread that the call wakes adds a delay. The class times one MuJoCo step when
+you construct it and gives each thread about 0.1 ms of work for each call, and at least two environments.
+The number of threads does not change State or outputs.
+
 Each action dimension drives one actuator of the model, in the order of the MuJoCo model. The bounds
 come from the actuator control range.
 
