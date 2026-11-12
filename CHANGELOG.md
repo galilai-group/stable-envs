@@ -32,13 +32,15 @@ All notable changes to this project are listed here. The format follows
   DMC-local capsule-contact corrections and ordered constraint/solver reductions support repeatable
   checkpoint replay. CUDA regressions cover all 17 classes, with focused 100-call replay checks.
   See the DMC documentation for the 3.17 measurements and numerical limitations.
-- `PyFlytRocketLanding` `simulation_backend`: `"numba"` (the default on CPU and CUDA) steps every environment in one
-  call of a Numba port of the PyFlyt Rocket forces and the Bullet rigid-body step, in parallel over environments.
-  Resets sample the start as the source does and settle in the same kernel. Each environment draws its thrust
-  noise from its own seeded PCG64 generator, so a seed gives the source's start state and noise. The State holds
-  physical values and the generator positions; `set_state` copies them without a replay. On CUDA the kernel runs
-  on the host and the outputs move to the device (`execution_mode="HOST_NUMBA"`). `"pybullet"` keeps the PyFlyt
-  and PyBullet engines with the replay-backed State that is exact to the source. The `rocket` extra installs
+- `PyFlytRocketLanding` `simulation_backend`: `"numba"` (the default on CPU) steps every environment in one call of
+  a Numba port of the PyFlyt Rocket forces and the Bullet rigid-body step, in parallel over environments. Resets
+  sample the start as the source does and settle in the same kernel. Each environment draws its thrust noise from
+  its own seeded PCG64 generator, so a seed gives the source's start state and noise. The State holds physical
+  values and the generator states; `set_state` copies them without a replay. With `"numba"` on CUDA the kernel runs
+  on the host and the outputs move to the device (`execution_mode="HOST_NUMBA"`). `"numba_cuda"` (the default on
+  CUDA) steps the CUDA build of the kernel, one GPU thread per environment, with each step and each reset settle in
+  one CUDA graph; `"auto"` selects it from `numba_cuda_min_envs` environments (default 1). `"pybullet"` keeps the
+  PyFlyt and PyBullet engines with the replay-backed State that is exact to the source. The `rocket` extra installs
   Numba.
 - PushT `simulation_backend`: `PushT` and `PushTDiscrete` step every environment in one batched call of a
   port of the Pymunk contact solver. `"numba"` (the default on CPU) runs it in Numba in `float64`, in

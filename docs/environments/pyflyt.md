@@ -22,10 +22,16 @@ output reports it as `success`.
 
 | `simulation_backend` | Physics | Device of the physics | `execution_mode` | State |
 |---|---|---|---|---|
-| `None` or `"numba"` (default) | Numba port of the PyFlyt forces and the Bullet rigid-body step, all environments in one call | CPU, parallel over environments | `NATIVE_NUMBA` on CPU, `HOST_NUMBA` on CUDA | physical values |
+| `"numba"` (default on CPU) | Numba port of the PyFlyt forces and the Bullet rigid-body step, all environments in one call | CPU, parallel over environments | `NATIVE_NUMBA` on CPU, `HOST_NUMBA` on CUDA | physical values |
+| `"numba_cuda"` (default on CUDA) | CUDA build of the same kernel, one GPU thread per environment, in one CUDA graph per step | CUDA | `NATIVE_NUMBA_CUDA` | physical values |
+| `"auto"` | `"numba_cuda"` on CUDA from `numba_cuda_min_envs` environments (default 1, measured on an L40S), else `"numba"` | CPU or CUDA | as the selected backend | physical values |
 | `"pybullet"` | PyFlyt 0.29.0 and PyBullet 3.2.7, one engine per environment, in worker processes for large batches | CPU | `DELEGATED_CPU` | reset recipe and action history |
 
-On CUDA, the Numba backend steps on the host and copies the outputs to the device.
+`None` selects the default of the device. With `"numba"` on CUDA, the kernel steps on the host and the outputs
+move to the device. With `"numba_cuda"`, a step reads the actions once on the host to check them; the physics,
+the State and the outputs stay on the device. A reset samples the starts and seeds the noise generators on the
+host, then settles every environment on the device. The CUDA build can round the last bits differently from the
+CPU kernel.
 
 The Numba backend models the rocket as one rigid body, as PyBullet does: all its links are fixed. It applies
 the PyFlyt body drag, the four lifting surfaces, the gimballed booster with fuel burn, and the thrust noise.
