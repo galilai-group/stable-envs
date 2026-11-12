@@ -19,6 +19,9 @@ Interface, shared by both backends:
   ``site_xpos``, ``sensordata``, ``cfrc_ext`` ...) on the backend device: CPU for the native backend, CUDA
   for MuJoCo Warp. ``read(names, env_ids=None)`` returns copies on the env device. Derived fields must be
   named in ``outputs=`` at construction: the native batch copies out only the fields bound before a call.
+- ``capture_step(before_substep)`` (MuJoCo Warp) captures a step whose substep ``k`` first launches the family's
+  Warp kernels ``before_substep(k)``, for forces that depend on the state of each substep; ``launch_step(graph)``
+  runs it.
 - ``unstable_envs()`` returns the ids of environments whose physics diverged since their last reset or
   ``set_physics``. ``check_buffers()`` raises :class:`BufferOverflowError` if a MuJoCo Warp contact or
   constraint buffer overflowed; the step also raises it, one or two steps late, without a host sync.
@@ -45,7 +48,7 @@ their current state. Sensors are computed on the last substep only, as they do n
 family uses it for pairs whose bounding volumes overlap but which make no contact. ``batched_fields`` names model
 fields (and options, as ``"opt.<name>"``) that hold one value per environment, for ``set_models`` and
 ``model_field``. ``step_fn(m, d)``, when given, runs in place of the ``frame_skip`` calls of ``mjw.step`` in the
-step graph, for a family whose source steps in another call order.
+step graph, for a family whose source steps in another call order; ``capture_step`` needs the default substeps.
 Up to ``fused_tree_max_envs`` worlds, the graphs compute subtree centers of mass, composite inertias and RNE
 internal forces with one launch per pass instead of one per body tree level (:mod:`.mjwarp_fused`), on the
 MuJoCo Warp versions it supports.
@@ -664,7 +667,7 @@ class WarpBatch(MjBatch):
     def _stream(self):
         return self._wp.stream_from_torch(torch.cuda.current_stream(self.device))
 
-    def _step_body(self) -> None:
+    def _step_body(self, before_substep: Callable[[int], None] | None = None) -> None:
         mjw, m, d = self._mjw, self._m, self._d
         if self._step_fn is not None:
             self._step_fn(m, d)
@@ -677,6 +680,8 @@ class WarpBatch(MjBatch):
                 for substep in range(self.frame_skip):
                     if substep == self.frame_skip - 1:
                         m.opt.disableflags = flags
+                    if before_substep is not None:
+                        before_substep(substep)
                     mjw.step(m, d)
             finally:
                 m.opt.disableflags = flags
@@ -687,6 +692,26 @@ class WarpBatch(MjBatch):
             dim=self.num_envs,
             inputs=[d.nacon, d.nefc, self.naconmax, self.njmax, self._flag],
         )
+
+    def capture_step(self, before_substep: Callable[[int], None]):
+        """Capture a step whose substep ``k`` first runs ``before_substep(k)``, which launches Warp kernels.
+
+        A family computes a force that depends on the state of every substep in such kernels. Run the graph
+        with ``launch_step``. A backend built with ``step_fn`` runs its own substeps: its ``step_fn`` launches such
+        kernels itself.
+        """
+        self._check_open()
+        if self._step_fn is not None:
+            raise ValueError("capture_step needs the default substeps; this backend steps through step_fn")
+        with self._wp.ScopedDevice(self._wp_device):
+            return self.capture(lambda: self._step_body(before_substep))
+
+    def launch_step(self, graph) -> None:
+        """Run a step graph from ``capture_step`` on the current Torch stream, without a host synchronization."""
+        self._check_open()
+        self._poll_overflow()
+        self._launch(graph)
+        self._record_overflow()
 
     def _forward_body(self) -> None:
         self._mjw.forward(self._m, self._d)
@@ -757,6 +782,9 @@ class WarpBatch(MjBatch):
             for name, old in zip(names, saved, strict=True):
                 new = self.data(name)
                 new.copy_(torch.where(active.reshape(-1, *([1] * (new.ndim - 1))), new, old))
+        self._record_overflow()
+
+    def _record_overflow(self) -> None:
         if not self._flag_pending:
             self._flag_host.copy_(self._flag_t, non_blocking=True)
             self._flag_event.record()
