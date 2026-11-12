@@ -13,7 +13,7 @@ import torch
 
 from ...._execution.state_columns import require_columns
 from .batch import THREADED_RESETS
-from .factory import batch_threads, make_local
+from .factory import BATCH_TASKS, batch_threads, make_local
 from .state import MODEL_FIELDS, columns_to_state, model_columns, new_columns, write_row
 
 
@@ -156,7 +156,7 @@ class WarpResetPool:
         if self.num_envs < 1:
             raise ValueError("num_envs must be a positive integer")
         self._closed = False
-        self._owners, self._pool = [], None
+        self._owners, self._pool, self._batch = [], None, None
         try:
             count = batch_threads(self.num_envs) if key in THREADED_RESETS else 1
             self._owners = [make_local(key, 1, "cpu", seed) for _ in range(count)]
@@ -218,6 +218,43 @@ class WarpResetPool:
             )
         return env
 
+    def _batch_task(self):
+        """The CPU batch task of this domain on a mujoco.batch of the nominal model, if its reset runs batched."""
+        if self._batch is None:
+            task = BATCH_TASKS[self.key]
+            if not hasattr(task, "begin_reset"):
+                self._batch = False
+            else:
+                from mujoco.batch import Batch
+
+                reference = self.models.reference
+                b = Batch(reference, self.num_envs, nthread=batch_threads(self.num_envs), persistent=True)
+                self._batch = task(b, [reference] * self.num_envs)
+        return self._batch or None
+
+    def _reset_batched(self, task, ids, seed, values, models, columns, cumulative, model_fields):
+        """Reset lanes ``ids`` with the batch task's reset hooks, which run the MuJoCo work of all lanes together.
+
+        Each lane runs ``begin_reset`` on the owner, then the batch runs ``batch_reset`` for all lanes, then each lane
+        runs ``end_reset`` on the owner again with the RNG state its ``begin_reset`` left.
+        """
+        # mujoco.batch takes lanes in increasing order.
+        order = np.argsort(ids, kind="stable")
+        lanes, owner, begun, rng = ids[order], self._owners[0], [], []
+        for lane in lanes:
+            base = self._select_owner(owner, self._state, lane, values)._env
+            if seed is not None:
+                base.task._random = np.random.RandomState(int(seed) + int(lane))
+            base._reset_next_step, base._step_count = False, 0
+            begun.append(task.begin_reset(base, lane))
+            rng.append(base.task.random.get_state())
+        for k, (lane, value) in enumerate(zip(lanes, task.batch_reset(lanes, begun), strict=True)):
+            env = self._select_owner(owner, self._state, lane, values)
+            env._env.task.random.set_state(rng[k])
+            task.end_reset(env._env, lane, value)
+            models.capture(lane, env.physics)
+            write_row(columns, order[k], env, cumulative[order[k]], model_fields)
+
     def prepare_reset(self, seed=None, lanes=None, *, initial=False):
         self._check_open()
         ids = np.arange(self.num_envs) if lanes is None else np.asarray(lanes, dtype=np.int64)
@@ -246,8 +283,14 @@ class WarpResetPool:
                 models.capture(lane, env.physics)
                 write_row(columns, position, env, cumulative[position], model_fields)
 
+        nominal = self.physics is None or np.array_equal(
+            values[ids], np.broadcast_to(self.physics.spec.nominal, values[ids].shape)
+        )
+        task = None if initial or not nominal else self._batch_task()
         shards = [shard for shard in np.array_split(np.arange(len(ids)), len(self._owners)) if len(shard)]
-        if self._pool is None or len(shards) < 2:
+        if task is not None:
+            self._reset_batched(task, ids, seed, values, models, columns, cumulative, model_fields)
+        elif self._pool is None or len(shards) < 2:
             reset_shard(self._owners[0], range(len(ids)))
         else:
             list(self._pool.map(lambda job: reset_shard(*job), zip(self._owners, shards, strict=False)))
