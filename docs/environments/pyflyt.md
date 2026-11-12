@@ -2,8 +2,7 @@
 
 `PyFlytRocketLanding` ports the rocket landing task of [PyFlyt](https://github.com/jjshoots/PyFlyt)
 ([Tai et al., 2023](https://arxiv.org/abs/2304.01305)). A rocket falls from a height with a random tilt
-and offset. The agent uses the engine and the fins to land it upright on a pad. PyFlyt and PyBullet
-step the physics on CPU.
+and offset. The agent uses the engine and the fins to land it upright on a pad. The physics runs on CPU.
 
 The action has seven values:
 
@@ -17,19 +16,49 @@ The action has seven values:
 **Success:** the source sets `env_complete` when the rocket lands on the pad at a low speed. The step
 output reports it as `success`.
 
-The class needs the `rocket` extra, which pins `PyFlyt==0.29.0` and `pybullet==3.2.7`. On CPU,
+## Simulation backends
+
+`simulation_backend` selects the physics:
+
+| `simulation_backend` | Physics | Device of the physics | `execution_mode` | State |
+|---|---|---|---|---|
+| `None` or `"numba"` (default) | Numba port of the PyFlyt forces and the Bullet rigid-body step, all environments in one call | CPU, parallel over environments | `NATIVE_NUMBA` on CPU, `HOST_NUMBA` on CUDA | physical values |
+| `"pybullet"` | PyFlyt 0.29.0 and PyBullet 3.2.7, one engine per environment, in worker processes for large batches | CPU | `DELEGATED_CPU` | reset recipe and action history |
+
+On CUDA, the Numba backend steps on the host and copies the outputs to the device.
+
+The Numba backend models the rocket as one rigid body, as PyBullet does: all its links are fixed. It applies
+the PyFlyt body drag, the four lifting surfaces, the gimballed booster with fuel burn, and the thrust noise.
+In free flight, a step agrees with PyBullet to double-precision rounding. The contacts with the ground and the
+pad are approximate. In landing rollouts of 300 or more steps, the episode outcome (crash or landing) is the
+same as the source's, and the episode can end up to 3 steps earlier or later.
+
+The thrust noise of each environment comes from its own PCG64 generator, which the reset seeds as the
+source does. The same seed gives the same start state and the same noise as PyFlyt. The State holds the
+position in each generator, so `set_state` restores the noise exactly.
+
+The State of the Numba backend holds the physical values of the kernel and the PCG64 state of each noise
+generator (`physics/*`), the Variation values and the drawn colours. The renderers read the same `current/*` and
+`render/*` leaves as with the PyBullet backend, so a State with the same poses and colours draws the same frames.
+`set_state` copies the values and does not replay the episode. The Numba backend accepts only `agent_hz=40`,
+the registered value. Use `simulation_backend="pybullet"` for the replay-backed State that is exact to the
+source, or for another `agent_hz`.
+
+## Rendering
+
+The class needs the `rocket` extra, which pins `PyFlyt==0.29.0` and `pybullet==3.2.7` and installs Numba. On CPU,
 TinyRenderer draws the frames. On CUDA, nvdiffrast draws them. nvdiffrast is not on PyPI. See
 [Install](../install.md). TinyRenderer is the source's renderer. The nvdiffrast frames differ from the
 TinyRenderer frames. `env.describe()["visual_fidelity"]` gives the measured agreement.
 
-On CPU with worker processes, the workers draw the step frames of their running lanes with
+With the PyBullet backend on CPU with worker processes, the workers draw the step frames of their running lanes with
 TinyRenderer. A step then does not export a State only to draw it. On Linux, `render` draws a batch of
 2 or more States in render worker processes, for every number of lanes. The main process checks the
 State while the workers draw. `render_workers` sets the number of workers and `render_worker_min_rows`
 sets the smallest such batch.
 These frames are byte-identical to frames drawn in the main process.
 
-A step reads from PyBullet only the State leaves that a step can change: the rocket pose, velocity and fuel
+With the PyBullet backend, a step reads from PyBullet only the State leaves that a step can change: the rocket pose, velocity and fuel
 tank mass, the cached link poses, and the task, RNG and history fields. The other leaves come from the last
 reset, configuration or restore. A zero leaf that a step does not change, such as `current/wrapper/current_goal`
 without a render mode, is a new zero tensor and is not copied. The environments do not keep a stored copy of

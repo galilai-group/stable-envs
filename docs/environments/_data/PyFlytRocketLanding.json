@@ -8,7 +8,7 @@
  "has_dynamics": true,
  "default_size": 480,
  "frame_shape": [480, 480, 3],
- "physics": "source simulator on CPU",
+ "physics": "native Numba on CPU",
  "renderers": {
   "cpu": "tiny (TinyRenderer)",
   "cuda": "nvdiffrast"
@@ -22,27 +22,21 @@
  "state": [
   {
    "key": "recipe",
-   "leaves": 8,
-   "numel": 38,
+   "leaves": 4,
+   "numel": 10,
+   "dtypes": ["float64", "int64"]
+  },
+  {
+   "key": "physics",
+   "leaves": 3,
+   "numel": 140,
    "dtypes": ["bool", "float64", "int64"]
   },
   {
-   "key": "history",
-   "leaves": 4,
-   "numel": 10819,
-   "dtypes": ["bool", "float64", "int64", "uint8"]
-  },
-  {
-   "key": "lifecycle",
-   "leaves": 2,
-   "numel": 2,
-   "dtypes": ["int64", "uint8"]
-  },
-  {
-   "key": "rng",
-   "leaves": 1,
-   "numel": 11,
-   "dtypes": ["int64"]
+   "key": "current",
+   "leaves": 8,
+   "numel": 58,
+   "dtypes": ["float64"]
   },
   {
    "key": "render",
@@ -51,22 +45,10 @@
    "dtypes": ["float64"]
   },
   {
-   "key": "current",
-   "leaves": 91,
-   "numel": 691769,
-   "dtypes": ["bool", "float64", "int64", "uint8"]
-  },
-  {
-   "key": "anchor",
-   "leaves": 13,
-   "numel": 143,
-   "dtypes": ["int64"]
-  },
-  {
    "key": "variation",
-   "leaves": 67,
-   "numel": 239,
-   "dtypes": ["float64", "int64", "uint8"]
+   "leaves": 4,
+   "numel": 64,
+   "dtypes": ["float64", "uint8"]
   }
  ],
  "variation": [
