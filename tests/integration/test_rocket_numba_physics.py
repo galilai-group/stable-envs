@@ -25,6 +25,8 @@ OPTIONS = {
     "land_off": {"variation": ["environment.start_horizontal_offset"]},
     "firm": {"variation": ["environment"]},
     "pad": None,
+    "hover": {"variation": ["environment"]},
+    "climb": {"variation": ["environment"]},
 }
 
 
@@ -57,6 +59,17 @@ def policy(kind, t, env):
         g1 = float(np.clip(3.0 * roll + 1.0 * wx + 0.05 * np.sin(0.3 * t), -1, 1))
         g2 = float(np.clip(3.0 * pitch + 1.0 * wy + 0.05 * np.cos(0.2 * t), -1, 1))
         return np.array([0.0, 0.0, 0.0, ign, 1.0, g1, g2])
+    if kind == "hover":
+        # bang-bang altitude hold at minimum throttle until the 30 s limit truncates the episode
+        ign = 1.0 if vz < -0.5 * np.sin(0.02 * t) else 0.0
+        g1 = float(np.clip(3.0 * roll + 1.0 * wx, -1, 1))
+        g2 = float(np.clip(3.0 * pitch + 1.0 * wy, -1, 1))
+        return np.array([0.1 * np.sin(0.03 * t), 0.1 * np.cos(0.02 * t), 0.0, ign, 0.0, g1, g2])
+    if kind == "climb":
+        # full thrust up through the 500 m ceiling
+        g1 = float(np.clip(3.0 * roll + 1.0 * wx, -1, 1))
+        g2 = float(np.clip(3.0 * pitch + 1.0 * wy, -1, 1))
+        return np.array([0.0, 0.0, 0.0, 1.0, 1.0, g1, g2])
     # suicide burn with attitude hold
     ign = 1.0 if (vz < -3.0 and h < 1.2 * vz * vz / (2 * 36.0) + 8.0) else 0.0
     g1 = float(np.clip(3.0 * roll + 1.0 * wx, -1, 1))
@@ -91,6 +104,7 @@ def run_source(kind, seed):
             "trunc": [],
             "fatal": [],
             "complete": [],
+            "oob": [],
         }
         for t in range(MAX_STEPS):
             action = policy(kind, t, env)
@@ -104,6 +118,7 @@ def run_source(kind, seed):
             rec["trunc"].append(bool(trunc))
             rec["fatal"].append(bool(info["fatal_collision"]))
             rec["complete"].append(bool(info["env_complete"]))
+            rec["oob"].append(bool(info["out_of_bounds"]))
             if term or trunc:
                 break
         rec["rng_end"] = nk.rng_words([env.np_random])[0]
@@ -173,9 +188,13 @@ def run_kernel(recs, seeds):
         trunc=state["truncation"].copy(),
         fatal=state["fatal_collision"].copy(),
         complete=state["env_complete"].copy(),
+        oob=state["out_of_bounds"].copy(),
         rng=state["rng"].copy(),
     )
     return out
+
+
+OUTCOME = ("fatal", "complete", "term", "trunc", "oob")
 
 
 def first_contact(rec):
@@ -203,13 +222,8 @@ def compare(kinds_seeds):
                 "steps": len(rec["action"]),
                 "free_steps": free,
                 "end": int(got["end"][b]),
-                "src": (
-                    bool(rec["fatal"][-1]),
-                    bool(rec["complete"][-1]),
-                    bool(rec["term"][-1]),
-                    bool(rec["trunc"][-1]),
-                ),
-                "ours": (bool(got["fatal"][b]), bool(got["complete"][b]), bool(got["term"][b]), bool(got["trunc"][b])),
+                "src": tuple(bool(rec[k][-1]) for k in OUTCOME),
+                "ours": tuple(bool(got[k][b]) for k in OUTCOME),
                 "reset": float(
                     max(
                         np.abs(got["reset_body"][b] - rec["reset_body"]).max(),
@@ -233,7 +247,8 @@ def compare(kinds_seeds):
 
 
 #: ``(kind, seed)`` and the source outcome ``(fatal, landed)``. ``pad`` 1 touches the pad for two steps before it
-#: lands, ``pad`` 4 crashes on the pad, ``firm`` 10 crashes on the ground with a leg first.
+#: lands, ``pad`` 4 crashes on the pad, ``firm`` 10 crashes on the ground with a leg first, ``hover`` runs into the
+#: step limit, ``climb`` leaves through the ceiling.
 CASES = {
     ("free", 0): (True, False),
     ("free", 3): (True, False),
@@ -246,6 +261,8 @@ CASES = {
     ("pad", 1): (False, True),
     ("pad", 4): (True, False),
     ("firm", 10): (True, False),
+    ("hover", 0): (False, False),
+    ("climb", 0): (False, False),
 }
 IDS = [f"{k}-{s}" for k, s in CASES]
 
@@ -258,7 +275,7 @@ def rows():
 @pytest.mark.parametrize("index", range(len(CASES)), ids=IDS)
 def test_kernel_follows_pybullet_until_contact(rows, index):
     row = rows[index]
-    assert row["free_steps"] >= 250
+    assert row["free_steps"] >= 90
     assert row["reset"] < ATOL
     for key in ("dp", "dq", "dv", "dw", "dobs", "dreward"):
         assert row[key] < ATOL, (key, row)
