@@ -240,7 +240,10 @@ All notable changes to this project are listed here. The format follows
   contacts the task reads; the visual geoms outside the car are left out of the physics model. Resets draw the
   source's per-environment start and goal on the host and write all environments in one call. The worker
   processes and the `roadster-sim` tuning path are removed. The `roadster` extra needs MuJoCo 3.17;
-  `roadster-gpu` adds MuJoCo Warp.
+  `roadster-gpu` adds MuJoCo Warp. On an RTX 4090 pod with 8 CPU cores, with a reset every episode,
+  `RoadsterTrafficJam` steps at 320, 1,400, 3,200 and 5,700 steps/s on CPU with 1, 8, 64 and 1024
+  environments (before: 230, 260, 1,370 and 1,300; the source env: 260, 1,120, 1,260 and 1,330 in 8 worker
+  processes), and at 80, 620, 3,300, 31,000 and 78,000 steps/s on CUDA with 1, 8, 64, 1024 and 4096.
 - `OGBCube` and `OGBScene` step on the shared batched MuJoCo backend. A CPU env steps every environment in one
   `mujoco.batch` call. The controller and its inverse kinematics run for all environments together, with MuJoCo's
   kinematics and Jacobians and the operations of the OGBench step in the same order. The State and the outputs
