@@ -29,6 +29,9 @@ _APPLIED: dict = {}
 _BUTTONS: dict = {}
 _KINEMATICS: dict = {}
 _PINNED_ROWS = 8
+_CLUSTERED: dict = {}
+# Fast drawing per family: the shadow map size and the arm mesh clustering cell in metres.
+FAST = {"Cube": (2048, 0.003), "Scene": (2048, 0.002)}
 
 
 @lru_cache
@@ -47,11 +50,11 @@ def _key(family, row, resolution):
     return h.hexdigest()
 
 
-def _renderer(family, row, resolution):
+def _renderer(family, row, resolution, fast=False):
     import mujoco  # noqa: F401 — selects PYOPENGL_PLATFORM before PyOpenGL loads
     from OpenGL import GL
 
-    key = _key(family, row, resolution)
+    key = _key(family, row, resolution) + ("/fast" if fast else "")
     if key not in _CACHE:
         env = (CompatibleCube if family == "Cube" else CompatibleScene)(seed=0)
         for k in MODEL_VALUES:
@@ -60,6 +63,10 @@ def _renderer(family, row, resolution):
         env.compile_model_and_data()
         env.model.vis.global_.offwidth = max(int(env.model.vis.global_.offwidth), resolution)
         env.model.vis.global_.offheight = max(int(env.model.vis.global_.offheight), resolution)
+        if fast:
+            shadow, cell = FAST[family]
+            env.model.vis.quality.shadowsize = shadow
+            cluster_meshes(env.model, cell)
         renderer = mujoco_renderer(env.model, height=resolution, width=resolution)
         renderer._gl_context.make_current()
         vendor = GL.glGetString(GL.GL_VENDOR).decode()
@@ -70,6 +77,78 @@ def _renderer(family, row, resolution):
         )
         _CACHE[key] = entry
     return _CACHE[key]
+
+
+def cluster_meshes(model, cell):
+    """Simplify the arm meshes of a private render model in place, by vertex clustering on a grid of ``cell`` metres.
+
+    Each grid cell keeps one vertex, placed where the summed plane quadrics of its faces are smallest, and only
+    the faces whose three corners fall in different cells remain. Faces keep their corner normals, so hard edges
+    stay hard. Physics never reads this model.
+    """
+    import mujoco
+
+    drawn = (model.geom_type == mujoco.mjtGeom.mjGEOM_MESH) & (model.geom_group < 3)
+    for i in sorted({int(j) for j in model.geom_dataid[drawn]}):
+        name = model.mesh(i).name
+        if not name.startswith("ur5e/"):
+            continue
+        va, vn = int(model.mesh_vertadr[i]), int(model.mesh_vertnum[i])
+        fa, fn = int(model.mesh_faceadr[i]), int(model.mesh_facenum[i])
+        key = (name, cell, vn, fn, model.mesh_vert[va : va + vn].tobytes())
+        hit = _CLUSTERED.get(key)
+        if hit is None:
+            hit = _CLUSTERED[key] = _cluster(
+                model.mesh_vert[va : va + vn].astype(np.float64),
+                model.mesh_face[fa : fa + fn].copy(),
+                model.mesh_facenormal[fa : fa + fn].copy(),
+                model.mesh_facetexcoord[fa : fa + fn].copy() if model.mesh_texcoordnum[i] > 0 else None,
+                cell,
+            )
+        rows, position, face, normal, texcoord = hit
+        model.mesh_vert[va + rows] = position
+        model.mesh_face[fa : fa + len(face)] = face
+        model.mesh_facenormal[fa : fa + len(face)] = normal
+        if texcoord is not None:
+            model.mesh_facetexcoord[fa : fa + len(face)] = texcoord
+        model.mesh_facenum[i] = len(face)
+
+
+def _cluster(vert, face, normal, texcoord, cell):
+    _, cluster = np.unique(np.floor(vert / cell).astype(np.int64), axis=0, return_inverse=True)
+    cluster = cluster.reshape(-1)
+    count = np.bincount(cluster)
+    mean = np.stack([np.bincount(cluster, vert[:, k]) for k in range(3)], 1) / count[:, None]
+    # The first vertex of each cell represents it.
+    order = np.argsort(cluster, kind="stable")
+    first = np.ones(len(vert), bool)
+    first[1:] = cluster[order][1:] != cluster[order][:-1]
+    rows = np.empty(len(count), np.int64)
+    rows[cluster[order][first]] = order[first]
+    # Area-weighted plane quadrics of the faces around each cell.
+    p0, p1, p2 = vert[face[:, 0]], vert[face[:, 1]], vert[face[:, 2]]
+    n = np.cross(p1 - p0, p2 - p0)
+    length = np.linalg.norm(n, axis=1)
+    n = n / np.maximum(length, 1e-30)[:, None]
+    area = 0.5 * length
+    qa = area[:, None, None] * n[:, :, None] * n[:, None, :]
+    qb = (area * np.sum(n * p0, 1))[:, None] * n
+    a = np.zeros((len(count), 3, 3))
+    b = np.zeros((len(count), 3))
+    for c in range(3):
+        np.add.at(a, cluster[face[:, c]], qa)
+        np.add.at(b, cluster[face[:, c]], qb)
+    w, v = np.linalg.eigh(a)
+    inverse = np.where(w > 1e-3 * w[:, -1:], 1.0 / np.maximum(w, 1e-300), 0.0)
+    r = np.einsum("cji,cj->ci", v, b - np.einsum("cij,cj->ci", a, mean))
+    position = mean + np.einsum("cij,cj->ci", v, inverse * r)
+    far = np.linalg.norm(position - mean, axis=1) > cell
+    position[far] = mean[far]
+    new = rows[cluster][face]
+    keep = (new[:, 0] != new[:, 1]) & (new[:, 1] != new[:, 2]) & (new[:, 0] != new[:, 2])
+    _, unique = np.unique(np.sort(new[keep], 1), axis=0, return_index=True)
+    index = np.flatnonzero(keep)[np.sort(unique)]
+    return rows, position, new[index], normal[index], None if texcoord is None else texcoord[index]
 
 
 def _clear_errors():
@@ -244,16 +323,16 @@ def _apply_render_button_colors(env, lock_colors):
         env.model.material(("drawer_handle", "window_handle")[index]).rgba[:] = [*color, 1.0]
 
 
-def render(family, state, device, chunk_size=None, validated=False):
+def render(family, state, device, chunk_size=None, validated=False, fast=False):
     """Render named states through OpenGL using candidate assets, in worker processes for large batches.
 
     CPU output requires software OpenGL. CUDA output uses NVIDIA OpenGL plus
-    host readback and upload.
+    host readback and upload. ``fast`` draws simplified arm meshes with a smaller shadow map.
     """
     # OpenGL consumes host model inputs anyway. Validate that same detached copy
     # rather than synchronizing CUDA once for every scalar validation predicate.
     host, device, size = prepare(family, state, device, chunk_size, validated)
-    return frames(family, columns(host), device)
+    return frames(family, columns(host), device, fast)
 
 
 def columns(host):
@@ -261,14 +340,14 @@ def columns(host):
     return {key: value.numpy() for key, value in host.items(True, True)}
 
 
-def frames(family, columns, device):
+def frames(family, columns, device, fast=False):
     """Frames of host RenderState columns on ``device``, across worker processes for large batches."""
     from . import manipulation_opengl_pool
 
     check_versions("OpenGL")
     device = torch.device(device)
     b, size = len(columns[_SIZE]), int(columns[_SIZE][0, 0])
-    shared = manipulation_opengl_pool.draw(family, columns, device.type, size)
+    shared = manipulation_opengl_pool.draw(family, columns, device.type, size, fast)
     if shared is not None:
         return torch.from_numpy(shared.copy()) if device.type == "cpu" else torch.from_numpy(shared).to(device)
     if device.type == "cuda" and b <= _PINNED_ROWS:
@@ -277,12 +356,12 @@ def frames(family, columns, device):
             staging = _PINNED.get((b, size))
             if staging is None:
                 staging = _PINNED[b, size] = torch.empty((b, size, size, 3), dtype=torch.uint8, pin_memory=True)
-            draw(family, columns, device.type, staging.numpy())
+            draw(family, columns, device.type, staging.numpy(), fast)
             result = staging.to(device, non_blocking=True)
             torch.cuda.current_stream(device).synchronize()
             return result
     images = np.empty((b, size, size, 3), dtype=np.uint8)
-    draw(family, columns, device.type, images)
+    draw(family, columns, device.type, images, fast)
     return torch.from_numpy(images) if device.type == "cpu" else torch.from_numpy(images).to(device)
 
 
@@ -312,7 +391,7 @@ class _Row:
         return torch.from_numpy(np.array(self.columns[key][self.index]))
 
 
-def draw(family, host, device_type, images):
+def draw(family, host, device_type, images, fast=False):
     """Draw validated host states (NumPy columns or a RenderState) into ``images`` with this process's OpenGL."""
     import mujoco
 
@@ -327,9 +406,11 @@ def draw(family, host, device_type, images):
     high_resolution = np.empty((size * ss, size * ss, 3), dtype=np.uint8) if ss != 1 else None
     with _LOCK:
         for packed, indices in _groups(host).items():
-            entry = _ENTRIES.get((family, size * ss, packed))
+            entry = _ENTRIES.get((family, size * ss, packed, fast))
             if entry is None:
-                entry = _ENTRIES[family, size * ss, packed] = _renderer(family, _Row(host, indices[0]), size * ss)
+                entry = _ENTRIES[family, size * ss, packed, fast] = _renderer(
+                    family, _Row(host, indices[0]), size * ss, fast
+                )
             env, renderer, vendor, gl_device = entry
             software = any(s in gl_device.lower() for s in ("llvmpipe", "softpipe", "swrast", "software rasterizer"))
             if device_type == "cpu" and not software:

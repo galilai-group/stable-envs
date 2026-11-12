@@ -259,7 +259,8 @@ class ManipulationSemantics:
             sampling = self.ss if supersample is None else supersample
             host = manipulation_renderer.draws_on_host(backend or self.backend, self.device, sampling)
             if state is None and host and hasattr(self._simulator, "render_columns"):
-                return self._draw_live(size, sampling, chunk_size, out)
+                fast = manipulation_renderer.draws_fast(backend or self.backend, self.device)
+                return self._draw_live(size, sampling, chunk_size, out, fast)
             # OpenGL reads host inputs, so only the projected leaves leave the device.
             state = self._project(state, size, supersample, host)
         elif size is not None or supersample is not None:
@@ -279,7 +280,7 @@ class ManipulationSemantics:
         """The stepping hook: frames of the live lanes."""
         return self.render()
 
-    def _draw_live(self, size, supersample, chunk_size, out):
+    def _draw_live(self, size, supersample, chunk_size, out, fast=False):
         """Draw the live lanes from simulator columns straight into OpenGL, without a RenderState TensorDict."""
         from . import manipulation_opengl
         from .simulation import render_state as pixels
@@ -291,7 +292,7 @@ class ManipulationSemantics:
             raise ValueError("RenderState requires one valid square resolution/supersampling per batch")
         columns = pixels.state_columns(self.CELL, self._simulator.render_columns(), size, supersample)
         tuning.on_render("ogb-manipulation", size, self.B, self)
-        return self._into(manipulation_opengl.frames(self.CELL, columns, self.device), out)
+        return self._into(manipulation_opengl.frames(self.CELL, columns, self.device, fast), out)
 
     def _into(self, result, out):
         if out is None:
@@ -422,7 +423,9 @@ _OPENGL_NOTE = (
     "At supersample 1, visual_fidelity is an implementation-consistency measurement against another stable-envs "
     "MuJoCo OpenGL instance using the same compiled model and appearance; it is not an upstream-default-appearance "
     "comparison. With supersample 2 or more, MJWarp draws CUDA frames, and its lighting and transparency can "
-    "differ from the same-style stable-envs OpenGL reference."
+    "differ from the same-style stable-envs OpenGL reference. On CPU the default backend is opengl_fast: MuJoCo "
+    "OpenGL with simplified arm meshes and a 2048 shadow map. Its frames can differ from backend='opengl' "
+    "(mean frame MSE about 1.2 for Cube and 2.5 for Scene); visual_fidelity holds the backend='opengl' values."
 )
 
 
@@ -433,7 +436,7 @@ def _opengl_fidelity(renderer):
         **renderer.visual_fidelity,
         **measured,
         "measured_at": (
-            "mujoco 3.17.0 / ogbench 1.2.1; default backend, supersample 1; per-frame MSE over pixels "
+            "mujoco 3.17.0 / ogbench 1.2.1; backend='opengl', supersample 1; per-frame MSE over pixels "
             "and channels on the 0-255 scale, over the 64 render rows of sample_render_rows(default_rng(20260811)); "
             "candidate and reference are stable-envs MuJoCo OpenGL instances with the same compiled appearance. "
             "Measured on CPU Mesa llvmpipe (LLVM 20.1.8, torch 2.15.0+cpu) and CUDA NVIDIA H200 / driver "
@@ -446,7 +449,8 @@ def _opengl_fidelity(renderer):
 class OGBCube(ManipulationSemantics, _CubeRenderer):
     """Cube simulation with restorable State and MuJoCo OpenGL rendering on CPU and GPU.
 
-    With ``supersample`` 2 or more on the GPU, MJWarp draws; its lighting and transparency can differ from MuJoCo.
+    On CPU the default backend, ``opengl_fast``, draws simplified arm meshes; ``backend="opengl"`` draws the
+    source's frames. With ``supersample`` 2 or more on the GPU, MJWarp draws; its lighting and transparency can differ from MuJoCo.
     """
 
     reference_id = "ogbench/visual-cube-single-v0"
@@ -457,7 +461,8 @@ class OGBCube(ManipulationSemantics, _CubeRenderer):
 class OGBScene(ManipulationSemantics, _SceneRenderer):
     """Scene simulation with restorable State and MuJoCo OpenGL rendering on CPU and GPU.
 
-    With ``supersample`` 2 or more on the GPU, MJWarp draws; its lighting, transparency, and button textures
+    On CPU the default backend, ``opengl_fast``, draws simplified arm meshes; ``backend="opengl"`` draws the
+    source's frames. With ``supersample`` 2 or more on the GPU, MJWarp draws; its lighting, transparency, and button textures
     can differ from MuJoCo.
     """
 

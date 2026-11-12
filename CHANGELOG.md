@@ -209,6 +209,11 @@ All notable changes to this project are listed here. The format follows
   are within 1 px. Most of the other 33 first diverge near a wall. The CPU State also holds the three solver-cache leaves
   (`current/jax`), so `set_state` restores without replaying the action history, and a CPU env restores a
   CUDA State. A State from an earlier release (`recipe/version` 2) still restores by replay in Pymunk.
+- `OGBCube` and `OGBScene` draw CPU frames with the new `opengl_fast` backend by default. It is MuJoCo
+  software OpenGL with simplified arm meshes and a 2048 shadow map. The arm meshes keep one vertex per grid
+  cell of 3 mm (Cube) or 2 mm (Scene), so they keep 22 % (Cube) and 32 % (Scene) of their triangles.
+  CPU frames are about 3 times faster. The mean frame MSE against `backend="opengl"` is 1.2 (Cube) and
+  2.5 (Scene) on the 0-255 scale. `backend="opengl"` draws the source's frames. CUDA frames do not change.
 - `OGBCube` and `OGBScene` use the OGBench cube size. The default `cube.size` is now 0.02, as in OGBench.
   Before, the default was the stable-worldmodel value `float32(0.02)`, which compiles to
   0.019999999552965164. That size changed the cube mass and inertia, so contacts moved the physics away

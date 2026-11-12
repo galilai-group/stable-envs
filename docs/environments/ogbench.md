@@ -218,6 +218,11 @@ backend then loads the result. A small CUDA batch steps faster on `mujoco.batch`
 The frames have the look of the OGBench pixel tasks `visual-cube-single-v0` and `visual-scene-v0`: the
 `front_pixels` camera, a purple gripper, a see-through arm, and no goal cube.
 
+- On CPU, the default backend is `opengl_fast`. It is the same software OpenGL path with simplified arm
+  meshes and a 2048 shadow map (MuJoCo uses 4096). The arm meshes keep one vertex per grid cell of 3 mm
+  (Cube) or 2 mm (Scene). The mean frame MSE against `backend="opengl"` is 1.2 (Cube) and 2.5 (Scene) on
+  the 0-255 scale. The frames are about 3 times faster.
+- `backend="opengl"` draws the frames of the source.
 - CPU frames are bit-exact. A draw of the same state gives the same frame each time.
 - CUDA frames use the same MuJoCo OpenGL path. The NVIDIA driver can change a pixel by 1/255 between
   two draws of the same state, and the same variation appears in the comparison renderer.

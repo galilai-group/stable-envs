@@ -20,7 +20,7 @@ def test_grouped_render_keeps_order_state_and_one_forward(opengl, family, supers
     # This exercises the full-forward fallback; fast Scene routing has its own tests.
     module._can_use_render_kinematics = Mock(return_value=False)
 
-    def renderer(family, row, resolution):
+    def renderer(family, row, resolution, fast=False):
         env = SimpleNamespace(
             data=SimpleNamespace(qpos=np.zeros(1), mocap_pos=np.zeros(3), mocap_quat=np.zeros(4)),
             model=SimpleNamespace(geom_rgba=np.zeros((1, 4)), material=lambda name: SimpleNamespace(rgba=np.zeros(4))),

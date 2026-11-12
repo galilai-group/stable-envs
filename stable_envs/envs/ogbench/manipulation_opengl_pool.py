@@ -50,10 +50,10 @@ def _worker(conn, family, device_type, threads):
                 os.close(fd)
                 continue
             try:
-                _, offset, columns = message
+                _, offset, columns, fast = message
                 size = int(columns[_SIZE][0, 0])
                 images = np.ndarray((len(columns[_SIZE]), size, size, 3), np.uint8, frames, offset)
-                manipulation_opengl.draw(family, columns, device_type, images)
+                manipulation_opengl.draw(family, columns, device_type, images, fast)
             except Exception:  # noqa: BLE001 - the parent raises it; this worker stays usable
                 send_failure(conn)
             else:
@@ -118,7 +118,7 @@ class _Pool:
             os.close(self.fd)
         self.capacity, self.frames, self.fd = capacity, frames, fd
 
-    def draw(self, columns, size):
+    def draw(self, columns, size, fast=False):
         """Return (B, size, size, 3) uint8 frames of validated NumPy state columns; the array views the buffer."""
         n = len(columns[_SIZE])
         frame = size * size * 3
@@ -126,7 +126,7 @@ class _Pool:
         bounds = np.linspace(0, n, min(n, len(self.processes)) + 1).astype(int)
         active = []
         for conn, lo, hi in zip(self.connections, bounds[:-1].tolist(), bounds[1:].tolist()):
-            conn.send(("draw", lo * frame, {key: value[lo:hi] for key, value in columns.items()}))
+            conn.send(("draw", lo * frame, {key: value[lo:hi] for key, value in columns.items()}, fast))
             active.append(conn)
         self._replies(active)
         return np.ndarray((n, size, size, 3), np.uint8, self.frames)
@@ -164,12 +164,14 @@ def _llvmpipe_threads(device_type, workers):
     return max(1, len(os.sched_getaffinity(0)) // workers)
 
 
-def workers(batch):
+def workers(batch, device_type="cpu"):
     """Number of OpenGL worker processes a batch of ``batch`` states uses; 0 draws in this process."""
-    if batch < 16 or not sys.platform.startswith("linux") or mp.current_process().daemon:
+    if batch < 2 or not sys.platform.startswith("linux") or mp.current_process().daemon:
         return 0
-    # Below about eight states per worker, inter-process traffic outweighs the parallel draws.
-    count = min(tuning.get("ogb_gl_workers"), len(os.sched_getaffinity(0)), batch // 8)
+    # A software frame takes far longer than its transfer, so CPU batches use one worker per state. NVIDIA frames
+    # are fast: below about eight states per worker, inter-process traffic outweighs the parallel draws.
+    rows = batch if device_type == "cpu" else batch // 8
+    count = min(tuning.get("ogb_gl_workers"), len(os.sched_getaffinity(0)), rows)
     return count if count >= 2 else 0
 
 
@@ -188,19 +190,19 @@ def _pool(family, device_type):
     return _POOLS[key], key
 
 
-def draw(family, columns, device_type, size):
+def draw(family, columns, device_type, size, fast=False):
     """Frames of validated NumPy state columns drawn by worker processes, or None when they draw in this process.
 
     The returned array is a view of the shared buffer, valid until the next call.
     """
-    if not workers(len(columns[_SIZE])):
+    if not workers(len(columns[_SIZE]), device_type):
         return None
     with _LOCK:
         pool, key = _pool(family, device_type)
         if pool is None:
             return None
         try:
-            return pool.draw(columns, size)
+            return pool.draw(columns, size, fast)
         except _WorkerError:
             raise
         except BaseException:
