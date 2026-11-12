@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+
 import numpy as np
 import torch
 from tensordict import TensorDict
@@ -7,7 +9,7 @@ from tensordict import TensorDict
 from ... import tuning
 from ..._core.mujoco_gl import configure_mujoco_gl, mujoco_renderer
 from ..._core.plate_texels import quantise
-from ..._core.stepping import _stack_states
+from ..._core.stepping import _stack_states, _threads
 from ..._execution.protocol import StepPipeline, step_pipeline
 
 configure_mujoco_gl()
@@ -169,6 +171,8 @@ _SPLIT_MOVERS = True
 # groups test fewer walls.
 _PASS_ROWS = 1024
 _CPU_PASS_ROWS = 16
+# Fewest rows of a CPU scene without lit passes that draw on more than one torch thread.
+_CPU_THREADED_ROWS = 256
 
 
 class _LightPasses:
@@ -961,44 +965,51 @@ class OGBenchMaze(Env):
             # Per-row lighting holds several float images per row; bound the rows in flight.
             rows = _CPU_PASS_ROWS if self.device.type == "cpu" else _PASS_ROWS
             step = rows if sc.passes is not None else len(idx)
-            for lo in range(0, len(idx), step):
-                part = idx[lo : lo + step]
-                sub = torch.as_tensor(part, device=self.device, dtype=torch.long)
-                mat, scale = self._agent_appearance(sc, sty, sub)
-                xpos, xmat = self._fk(s[sub], sc)
-                plate, shader, agent, lpos = sc.plate, None, None, None
-                if sc.passes is not None:
-                    size_b = torch.as_tensor(np.asarray(sc.prims_base.size), device=self.device, dtype=torch.float32)
-                    agent = (list(sc.prims_base.kind), size_b * scale.view(-1, 1, 1), xpos, xmat)
-                    lpos = sc.passes.light_pos(s[sub][:, :2])
-                    plate = sc.passes.plates(sc.plate, sc.cam, lpos, agent)
-                    shader = sc.passes.shader(lpos, agent)
-                # Advanced indexing makes buf[sub] a copy. With multiple groups, render to a
-                # temporary and assign back explicitly; one group can write directly into buf.
-                dst = buf if len(uniq) == 1 and len(part) == B else None
-                apart = self._movers_apart(sc, xpos, scale, size)
-                if apart is None:
-                    got = R3.composite(
-                        plate,
-                        sc.plate_t,
-                        sc.cam,
-                        sc.prims_base,
-                        xpos,
-                        xmat,
-                        sc.lights,
-                        size,
-                        size,
-                        supersample=ss,
-                        out=dst,
-                        tile=self.TILE,
-                        mat_rgb=mat,
-                        size_scale=scale,
-                        shader=shader,
-                    )
-                else:
-                    got = self._composite_apart(sc, apart, plate, agent, lpos, xpos, xmat, mat, scale, size, ss, dst)
-                if dst is None:
-                    buf[sub] = got
+            # Without lit passes, fewer rows draw as fast on one thread as on many.
+            one = self.device.type == "cpu" and sc.passes is None and B < _CPU_THREADED_ROWS
+            with _threads(1) if one else contextlib.nullcontext():
+                for lo in range(0, len(idx), step):
+                    part = idx[lo : lo + step]
+                    sub = torch.as_tensor(part, device=self.device, dtype=torch.long)
+                    mat, scale = self._agent_appearance(sc, sty, sub)
+                    xpos, xmat = self._fk(s[sub], sc)
+                    plate, shader, agent, lpos = sc.plate, None, None, None
+                    if sc.passes is not None:
+                        size_b = torch.as_tensor(
+                            np.asarray(sc.prims_base.size), device=self.device, dtype=torch.float32
+                        )
+                        agent = (list(sc.prims_base.kind), size_b * scale.view(-1, 1, 1), xpos, xmat)
+                        lpos = sc.passes.light_pos(s[sub][:, :2])
+                        plate = sc.passes.plates(sc.plate, sc.cam, lpos, agent)
+                        shader = sc.passes.shader(lpos, agent)
+                    # Advanced indexing makes buf[sub] a copy. With multiple groups, render to a
+                    # temporary and assign back explicitly; one group can write directly into buf.
+                    dst = buf if len(uniq) == 1 and len(part) == B else None
+                    apart = self._movers_apart(sc, xpos, scale, size)
+                    if apart is None:
+                        got = R3.composite(
+                            plate,
+                            sc.plate_t,
+                            sc.cam,
+                            sc.prims_base,
+                            xpos,
+                            xmat,
+                            sc.lights,
+                            size,
+                            size,
+                            supersample=ss,
+                            out=dst,
+                            tile=self.TILE,
+                            mat_rgb=mat,
+                            size_scale=scale,
+                            shader=shader,
+                        )
+                    else:
+                        got = self._composite_apart(
+                            sc, apart, plate, agent, lpos, xpos, xmat, mat, scale, size, ss, dst
+                        )
+                    if dst is None:
+                        buf[sub] = got
         return buf.view(*lead, size, size, 3) if lead else buf
 
     def _movers_apart(self, sc: _Scene, xpos, scale, size):
@@ -1134,6 +1145,8 @@ class MazeSemantics:
     execution_mode = "DELEGATED_CPU"
     # Each step returns outputs in new storage.
     _step_outputs_owned = True
+    # CPU batches step on mujoco.batch threads.
+    native_step_threads = True
 
     def __init__(self, *args, simulation_backend="default", mjwarp_min_envs=None, **kwargs):
         """Select physics at construction; outputs are on ``device``.

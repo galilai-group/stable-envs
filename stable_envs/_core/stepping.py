@@ -182,13 +182,19 @@ def _host_pipeline(env, pipeline) -> bool:
     return pipeline is not None and getattr(pipeline, "host_outputs", False) and env.device.type != "cpu"
 
 
+def _native_cpu_step(env) -> bool:
+    """Whether a CPU step advances on a thread pool of its own (``mujoco.batch``, Numba), not on torch threads."""
+    return env.device.type == "cpu" and getattr(env, "native_step_threads", False)
+
+
 @torch.no_grad()
 def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
     env._check_open("step")
     pipeline = getattr(env, "_step_pipeline", lambda: None)()
-    if not _host_pipeline(env, pipeline):
+    if not _host_pipeline(env, pipeline) and not _native_cpu_step(env):
         return _step(env, actions, states, frames, pipeline, render_threads=None)
-    # Host bookkeeping runs in one thread: idle intra-op threads spin on the cores of the workers.
+    # Bookkeeping runs in one thread: idle intra-op threads spin on the cores of the workers or of the
+    # native pool, and a parallel region waits for every one of its threads.
     threads = _threads_outside_steps()
     with _threads(1):
         return _step(env, actions, states, frames, pipeline, render_threads=threads)

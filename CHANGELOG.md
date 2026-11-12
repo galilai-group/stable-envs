@@ -111,6 +111,10 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- OGBench mazes on CPU: a step does its Torch operations on one thread, and the render draws batches of fewer
+  than 256 frames on one thread when the scene has no tracking light. With 8 Torch threads, idle Torch threads
+  kept the cores busy while the `mujoco.batch` threads waited, and the time of an AntMaze episode of 64 steps with
+  frames changed between runs by up to 10x. Frames and State do not change.
 - Fetch: on CPU, `backend="auto"` draws frames with a compiled Numba rasterizer that follows MuJoCo's
   OpenGL renderer: the meshes, the primitive tessellations, per-vertex lighting, 4 samples per pixel, the
   skybox and the translucent markers. It is faster than the source at every batch size. The frames differ

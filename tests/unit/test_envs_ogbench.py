@@ -271,3 +271,54 @@ def test_a_recoloured_floor_and_dimmed_light_leave_the_default_plate_unchanged(_
         varied = {"floor.color": [0.9, 0.1, 0.1, 0.1, 0.1, 0.9], "floor.pixel_encoding": [0], "light.intensity": [0.4]}
         assert not torch.equal(env._bake(env.size, varied).plate, default)
         assert torch.equal(env._bake(env.size, None).plate, default)
+
+
+def test_a_cpu_maze_step_advances_and_draws_a_small_unlit_batch_on_one_torch_thread(_ogbench, monkeypatch):
+    """Idle torch threads would spin beside the mujoco.batch threads; the count returns after the step."""
+    seen = {}
+    with R.REGISTRY["AntMazeMediumExplore"](num_envs=4, device="cpu", size=32) as env:
+        sim_step, draw = env._simulator.step, MAZE.R3.composite
+
+        def step(*args, **kwargs):
+            seen["step"] = torch.get_num_threads()
+            return sim_step(*args, **kwargs)
+
+        def composite(*args, **kwargs):
+            seen.setdefault("render", []).append(torch.get_num_threads())
+            return draw(*args, **kwargs)
+
+        monkeypatch.setattr(env._simulator, "step", step)
+        monkeypatch.setattr(MAZE.R3, "composite", composite)
+        env.reset(seed=0)
+        before = torch.get_num_threads()
+        torch.set_num_threads(2)
+        try:
+            env.step(torch.zeros(4, 8), frames=slice(None))
+            assert torch.get_num_threads() == 2
+        finally:
+            torch.set_num_threads(before)
+    assert seen["step"] == 1
+    assert seen["render"][-1] == 1
+
+
+def test_cpu_maze_frames_and_states_do_not_depend_on_the_torch_thread_count(_ogbench, monkeypatch):
+    def rollout(threads, scoped):
+        if not scoped:
+            monkeypatch.setattr(MAZE.MazeSemantics, "native_step_threads", False)
+            monkeypatch.setattr(MAZE, "_CPU_THREADED_ROWS", 0)
+        before = torch.get_num_threads()
+        torch.set_num_threads(threads)
+        try:
+            with R.REGISTRY["AntMazeMediumExplore"](num_envs=3, device="cpu", size=48) as env:
+                env.reset(seed=3)
+                actions = torch.linspace(-1, 1, 3 * 5 * 8).reshape(3, 5, 8)
+                out = env.step(actions, frames=slice(None))
+                return out["frames"], out["states"]
+        finally:
+            torch.set_num_threads(before)
+            monkeypatch.undo()
+
+    frames, states = rollout(1, scoped=True)
+    other_frames, other_states = rollout(4, scoped=False)
+    assert torch.equal(frames, other_frames)
+    assert (states == other_states).all()

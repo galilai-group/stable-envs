@@ -51,6 +51,12 @@ One call steps all the environments of a batch. The `simulation_backend` argumen
 The default `mjwarp_min_envs` is a measured batch size for each body: 4096 for PointMaze, 256 for AntMaze and
 256 for HumanoidMaze (L40S GPU, 8 CPU cores). The outputs are always on the device of the environment.
 
+On CPU, `mujoco.batch` steps the physics on its own threads. The step does its Torch operations on one thread.
+Idle Torch threads would otherwise keep the CPU cores busy while the `mujoco.batch` threads wait for them. The
+render uses the Torch thread count (`torch.set_num_threads`), but it draws batches of fewer than 256 frames on one
+thread when the scene has no tracking light (every cell except `PointMazeLargeNavigate`). The frames
+and the State do not change with the thread count.
+
 ```python
 env = snv.AntMazeMediumNavigate(num_envs=64, device="cuda", simulation_backend="auto")
 ```
