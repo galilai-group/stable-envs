@@ -22,7 +22,9 @@ Interface, shared by both backends:
 - ``unstable_envs()`` returns the ids of environments whose physics diverged since their last reset or
   ``set_physics``. ``check_buffers()`` raises :class:`BufferOverflowError` if a MuJoCo Warp contact or
   constraint buffer overflowed; the step also raises it, one or two steps late, without a host sync.
-- ``set_models(models)`` changes the per-environment model parameters; ``close()`` releases the backend.
+- ``set_models(models)`` changes the per-environment model parameters; ``model_field(name)`` is a live
+  ``[B, ...]`` tensor of per-environment values of one model field (on MuJoCo Warp, a field or ``"opt.<name>"``
+  option named in ``batched_fields``) that a family writes between steps. ``close()`` releases the backend.
 
 Native backend guarantee: the CPU backend steps float64 ``MjData`` exactly as ``mj_step(m, d, nstep)``
 followed by ``mj_rnePostConstraint(m, d)`` (when requested) on one ``MjData`` per environment, bit for bit,
@@ -41,10 +43,9 @@ to sizes for the batch; an overflow raises :class:`BufferOverflowError` instead 
 their current state. Sensors are computed on the last substep only, as they do not act on the dynamics.
 ``exclude_pairs`` removes geom pairs from MuJoCo Warp's collision candidates, as an ``<exclude>`` would: a
 family uses it for pairs whose bounding volumes overlap but which make no contact. ``batched_fields`` names model
-fields (and options, as ``"opt.<name>"``) that hold one value per environment; ``model_field(name)`` is a live
-view of one, for families that write per-environment parameters directly instead of through ``set_models``.
-``step_fn(m, d)``, when given, runs in place of the ``frame_skip`` calls of ``mjw.step`` in the step graph, for a
-family whose source steps in another call order.
+fields (and options, as ``"opt.<name>"``) that hold one value per environment, for ``set_models`` and
+``model_field``. ``step_fn(m, d)``, when given, runs in place of the ``frame_skip`` calls of ``mjw.step`` in the
+step graph, for a family whose source steps in another call order.
 Up to ``fused_tree_max_envs`` worlds, the graphs compute subtree centers of mass, composite inertias and RNE
 internal forces with one launch per pass instead of one per body tree level (:mod:`.mjwarp_fused`), on the
 MuJoCo Warp versions it supports.
@@ -241,6 +242,7 @@ class NativeBatch(MjBatch):
             self._set_models(models)
         self.fields = tuple(f for f in PHYSICS_FIELDS if not f.startswith("mocap") or self.model.nmocap)
         self._views: dict[str, torch.Tensor] = {}
+        self._model_views: dict[str, torch.Tensor] = {}
         # The batch copies out only the derived fields bound before a call.
         self.outputs = frozenset(outputs) | set(self.fields) | {"ctrl"}
         for name in self.outputs - set(RNE_POST_FIELDS if self._rne_post else ()):
@@ -289,6 +291,14 @@ class NativeBatch(MjBatch):
     def model_of(self, env: int):
         """The ``MjModel`` environment ``env`` runs on."""
         return self.model if self._models is None else self._models[env]
+
+    def model_field(self, name: str) -> torch.Tensor:
+        """Live ``[B, ...]`` per-environment values of the model field ``name`` (``mujoco.batch`` ``expand``)."""
+        self._check_open()
+        view = self._model_views.get(name)
+        if view is None:
+            view = self._model_views[name] = torch.from_numpy(self.b.expand(name))
+        return view
 
     def _baseline(self, ids) -> None:
         if ids is None:
@@ -369,6 +379,7 @@ class NativeBatch(MjBatch):
             return
         self._closed = True
         self._views = {}
+        self._model_views = {}
         self.b = None
 
 
