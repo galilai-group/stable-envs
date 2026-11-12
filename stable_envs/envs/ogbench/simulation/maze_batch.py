@@ -7,7 +7,6 @@ from types import SimpleNamespace
 import mujoco
 import numpy as np
 import torch
-from tensordict import TensorDict
 
 from ...._core.tensordicts import build_tensordict
 from ...._execution.mjbatch import NativeBatch, WarpBatch, native_threads
@@ -321,6 +320,35 @@ def humanoid_observation(qpos, qvel, xpos, xmat, sensordata):
     )
 
 
+def to_device(source: dict, batch: int, device) -> dict:
+    """Copy the nested host tensors ``source`` to ``device``: one transfer per dtype, leaves are views."""
+    leaves: list = []
+
+    def walk(node, path):
+        for key, value in node.items():
+            if isinstance(value, dict):
+                walk(value, (*path, key))
+            else:
+                leaves.append(((*path, key), value))
+
+    walk(source, ())
+    groups: dict = {}
+    for path, value in leaves:
+        groups.setdefault(value.dtype, []).append((path, value))
+    out: dict = {}
+    for items in groups.values():
+        block = torch.cat([value.reshape(batch, -1) for _, value in items], 1).to(device)
+        start = 0
+        for path, value in items:
+            width = value[0].numel() if batch else 0
+            node = out
+            for part in path[:-1]:
+                node = node.setdefault(part, {})
+            node[path[-1]] = block[:, start : start + width].reshape(value.shape)
+            start += width
+    return out
+
+
 class RestGrid:
     """``_resting_lanes``'s wall clearance test against only the walls near each ball.
 
@@ -477,13 +505,17 @@ class OGBMazeBatchAdapter(_MazeLanes):
             ("task", "id"): self._task_id,
             **self._random.columns,
         }
-        return build_tensordict(
-            tree({key: torch.from_numpy(np.array(value)) for key, value in columns.items()}), [self.num_envs], "cpu"
-        )
+        return tree({key: torch.from_numpy(np.array(value)) for key, value in columns.items()})
+
+    def _place(self, source):
+        """A TensorDict of host leaves ``source`` on the env device, with one copy per dtype."""
+        if self.device.type != "cpu":
+            source = to_device(source, self.num_envs, self.device)
+        return build_tensordict(source, [self.num_envs], self.device)
 
     def get_state(self):
         self._check_open()
-        return self._host_state().to(self.device)
+        return self._place(self._host_state())
 
     def set_state(self, state):
         host, decoded = self.validate(state)
@@ -570,9 +602,7 @@ class OGBMazeBatchAdapter(_MazeLanes):
         tensors["info"] = {key: tensors.pop(key) for key in INFO_KEYS}
         if capture_state:
             tensors["state"] = self._host_state()
-        if self.device.type != "cpu":
-            return TensorDict(tensors, [self.num_envs]).to(self.device)
-        return build_tensordict(tensors, [self.num_envs], "cpu")
+        return self._place(tensors)
 
     def close(self):
         if not self._closed:

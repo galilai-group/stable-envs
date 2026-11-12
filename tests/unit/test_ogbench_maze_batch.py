@@ -156,3 +156,18 @@ def test_the_wall_grid_gives_the_clearance_test_against_every_wall(maze):
     want = (near * near).sum(-1).min(1) > (radius + 1e-3) ** 2
     got = RestGrid(*rest).resting(xy)
     assert np.array_equal(got, want) and want.any() and not want.all()
+
+
+def test_cuda_outputs_of_the_cpu_batch_equal_its_cpu_outputs():
+    if not torch.cuda.is_available():
+        pytest.skip("requires CUDA")
+    cpu, cuda = OGBMazeBatchAdapter(4, "cpu", seed=3, loco="ant"), OGBMazeBatchAdapter(4, "cuda", seed=3, loco="ant")
+    try:
+        actions = np.random.default_rng(0).uniform(-1, 1, (4, 8)).astype(np.float32)
+        want, got = cpu.step(actions), cuda.step(actions)
+        assert got.device.type == "cuda"
+        assert_same_state(got.cpu(), want)
+        assert_same_state(cuda.get_state().cpu(), cpu.get_state())
+    finally:
+        cpu.close()
+        cuda.close()
