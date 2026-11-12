@@ -1,4 +1,4 @@
-"""The Numba classic-control renderer draws the Torch port's and the Gymnasium source's frames byte for byte."""
+"""The Numba classic-control renderer draws the Torch renderer's and the Gymnasium source's frames byte for byte."""
 
 from __future__ import annotations
 
@@ -53,7 +53,7 @@ GEOMETRY = {
 
 
 def _variation(env, n, seed):
-    """Per-lane colours from a small palette, random anti-aliasing and varied geometry where the class has any."""
+    """Per-lane colors from a small palette, random anti-aliasing and varied geometry where the class has any."""
     rng = np.random.default_rng(seed)
     palette = rng.integers(0, 256, (12, 3))
     out = {}
@@ -74,7 +74,7 @@ def _make(name, n):
 
 
 def _torch_port(name, states, var):
-    """Draw with the per-primitive Torch port, in chunks under the render-worker threshold (in this process)."""
+    """Draw with the per-primitive Torch renderer, in chunks under the render-worker threshold (in this process)."""
     env = _make(name, 1)
     env.use_fused_render = False
     parts = []
@@ -106,7 +106,7 @@ def test_the_numba_frames_equal_the_torch_port(name, varied):
 
 @pytest.mark.parametrize("name", CLASSIC)
 def test_the_numba_frames_equal_the_source_in_the_default_appearance(name):
-    """The Numba port draws the source's frame on every row, including exact multiples of pi / 2."""
+    """The Numba renderer draws the source's frame on every row, including exact multiples of pi / 2."""
     pytest.importorskip("pygame")
     pytest.importorskip("gymnasium")
     env = _make(name, 1)

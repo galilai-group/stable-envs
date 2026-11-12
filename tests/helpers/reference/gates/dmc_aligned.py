@@ -1,4 +1,4 @@
-"""Semantic gate for the four DMC tasks aligned with their pinned SWM registrations."""
+"""Semantic gate for the four DMC tasks aligned with their pinned stable-worldmodel registrations."""
 
 from __future__ import annotations
 

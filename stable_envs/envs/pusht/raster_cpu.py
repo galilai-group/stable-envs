@@ -186,7 +186,7 @@ def fat_segment(rec, color, x1, y1, x2, y2):
 
 @njit(cache=True)
 def _transform(pose):
-    # Setting the position stores the centre of gravity R cog + position; the transform subtracts R cog
+    # Setting the position stores the center of gravity R cog + position; the transform subtracts R cog
     # again, which can differ from the position in the last bit.
     px, py, cogx, cogy = pose[0], pose[1], pose[2], pose[3]
     cos, sin = _cos(pose[4]), _sin(pose[4])
@@ -456,7 +456,7 @@ def _resize(color, i0, i1, w0, w1, rows, cols, out):
         for ox in cols:
             ca, cb, xa, xb = i0[ox], i1[ox], w0[ox], w1[ox]
             p00, p01, p10, p11 = ra[ca], ra[cb], rb[ca], rb[cb]
-            # The weights of each axis sum to 2048, so equal taps resize to their own colour.
+            # The weights of each axis sum to 2048, so equal taps resize to their own color.
             if p00 == p01 == p10 == p11:
                 for ch in range(3):
                     out[oy, ox, ch] = p00 >> (16 - 8 * ch)

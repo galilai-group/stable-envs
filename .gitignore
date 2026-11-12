@@ -1,5 +1,3 @@
-AGENTS.override.md
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -219,75 +217,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
-
-# ============================================================================================
-# Generated blobs under scratch/ are never tracked.
-# ============================================================================================
-scratch/**/*.png
-scratch/**/*.jpg
-scratch/**/*.jpeg
-scratch/**/*.webp
-scratch/**/*.gif
-scratch/**/*.mp4
-scratch/**/*.pdf
-scratch/**/*.html
-scratch/**/*.npy
-scratch/**/*.npz
-scratch/**/*.pt
-scratch/**/*.pth
-scratch/**/*.ckpt
-scratch/**/*.safetensors
-scratch/**/*.parquet
-scratch/**/*.arrow
-scratch/**/*.lance/
-scratch/**/*.mjb
-scratch/**/*.out
-scratch/**/*.err
-scratch/**/logs/
-scratch/**/nohup.out
-scratch/*/out/
-scratch/*/outputs/
-scratch/*/results/
-scratch/**/*.cu
-scratch/**/*.cuh
-scratch/**/*.cpp
-scratch/**/*.cc
-scratch/**/*.hpp
-scratch/**/*.h
-scratch/**/*.inl
-scratch/**/*.obj
-scratch/**/*.stl
-scratch/**/*.dae
-scratch/**/*.mtl
-scratch/**/*.ply
-scratch/**/*.msh
-scratch/**/*.skn
-scratch/procgen/_src/
-scratch/cule/
-scratch/gpunative/
-scratch/backend3d/scenes/*.obj
-scratch/backend3d/scenes/*.stl
-
-# ============================================================================================
-# examples/ -- build artefacts
-# ============================================================================================
-# `examples/paper/` is a LaTeX project whose source (main.tex, tables/*.tex, the .sty files it
-# vendors) is tracked and whose build output is not. `examples/results/*.json` are compact
-# example outputs -- small, cited by docs -- and stay.
-examples/paper/main.pdf
-*.aux
-*.fdb_latexmk
-*.fls
-*.synctex.gz
-*.toc
-*.bbl
-*.blg
-GIT_COMMIT
-
-# The commit of a tree copied without .git. It must stay UNTRACKED: its content is the hash of the
-# commit that would contain it, so a tracked copy is always one commit stale.
-.git_sha
-
 
 # Default output directory of the example benchmarks and training scripts.
 /results/

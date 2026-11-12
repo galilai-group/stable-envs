@@ -574,7 +574,7 @@ def _label(status: str, colour: bool) -> str:
 
 
 def format_report(report: Report, colour: bool = False) -> str:
-    """Return the report as text, with ANSI status colours when ``colour``."""
+    """Return the report as text, with ANSI status colors when ``colour``."""
     from .__about__ import __version__
 
     lines = [f"stable-envs {__version__} doctor", ""]

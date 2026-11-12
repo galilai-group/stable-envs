@@ -1,4 +1,4 @@
-"""Small helpers shared by several modules: XML number formatting, fonts and rotation maths."""
+"""Small helpers shared by several modules: XML number formatting, fonts and rotation math."""
 
 from __future__ import annotations
 

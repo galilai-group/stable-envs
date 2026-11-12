@@ -1,4 +1,4 @@
-"""Classic-control acceptance checks against pinned SWM.
+"""Classic-control acceptance checks against pinned stable-worldmodel.
 
 Seeds, batches, horizons, task/action edges, Variation values and rejected actions are fixed
 per case. Source fields are never read through the candidate's export.

@@ -87,8 +87,8 @@ def _zone_map(device) -> torch.Tensor:
 def _bias_field_rgba(biases) -> np.ndarray:
     """Draw the per-zone bias arrows as uint8 RGBA ``(H, W, 4)`` with Matplotlib Agg.
 
-    The reference rasterises a quiver plot, so the arrows are reproduced by the same
-    rasteriser rather than approximated by primitives.
+    The reference rasterizes a quiver plot, so the arrows are reproduced by the same
+    rasterizer rather than approximated by primitives.
     """
     try:
         from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -1097,7 +1097,8 @@ class TwoRoomTarget(_TwoRoomBase):
     state_layout = ((("agent", "position"), 2, 0), (("target", "position"), 2, 2))
     state_bounds = {("agent", "position"): (POS_LO, POS_HI), ("target", "position"): (POS_LO, POS_HI)}
     step_reference_groups = (("agent", (0, 1), "euclidean"), ("target", (2, 3), "euclidean"))
-    # Seeded resets draw from the same tree and rejection rule as TwoRoom, so they start where SWM's TwoRoom does.
+    # Seeded resets draw from the same tree and rejection rule as TwoRoom, so they start where
+    # stable-worldmodel's TwoRoom does.
     reset_leaves = (
         ResetLeaf("agent.position", (60.0, 112.0)),
         ResetLeaf("target.position", (164.0, 112.0)),
@@ -1192,7 +1193,7 @@ class _PiecewiseBase(_TorchNavBase):
         self._layered = any(bool((self._style[flag] > 0.5).any()) for flag in self.layer_flags)
 
     def _render_chunk(self, s, sty, lo: int, hi: int, out=None) -> torch.Tensor:
-        # The installed Variation's flags are cached on the host, so the default path never synchronises.
+        # The installed Variation's flags are cached on the host, so the default path never synchronizes.
         if sty is self._style:
             layered = self._layered
         else:
@@ -1329,7 +1330,8 @@ class PiecewiseZones(_PiecewiseBase):
     """Piecewise renderer with a distinct tint for each motion-bias zone."""
 
     name = "piecewise-zones"
-    # Seeded resets draw the agent from the same tree as Piecewise, so they start where SWM's Piecewise does.
+    # Seeded resets draw the agent from the same tree as Piecewise, so they start where
+    # stable-worldmodel's Piecewise does.
     reset_leaves = (ResetLeaf("agent.position", (60.0, 112.0)),)
     reset_tree_factory = staticmethod(_piecewise_reset_tree)
 
@@ -1651,7 +1653,7 @@ class SimplePointMaze(_GymReferencePort):
         sb.add_disc(s[:, 2:4], sty["goal.radius"], goal_blend)
         sb.add_disc(s[:, 0:2], sty["agent.radius"], sty["agent.color"])
 
-        # Draw the axes border last, above walls. The grey top band is row 1, below the black row 0.
+        # Draw the axes border last, above walls. The gray top band is row 1, below the black row 0.
         grey = bg * (1.0 - SPINE_AA)
         edges = (
             (0.0, WORLD - 2 * PX, WORLD, WORLD - PX, grey),  # row 1

@@ -1,4 +1,4 @@
-"""Semantic gate for DMC Cheetah run, Hopper hop and Walker walk against pinned SWM."""
+"""Semantic gate for DMC Cheetah run, Hopper hop and Walker walk against pinned stable-worldmodel."""
 
 from __future__ import annotations
 

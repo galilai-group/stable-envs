@@ -1,6 +1,6 @@
 """Numba twin of the fixed-camera DM Control compositor: one tile of one frame per task.
 
-The static plate supplies each pixel's colour. The kernel casts the movers, their shadows on the plate,
+The static plate supplies each pixel's color. The kernel casts the movers, their shadows on the plate,
 their mirror images in the floor, and shades the covered pixels in the float32 operation order of
 ``dmcontrol._shading._shade``.
 """
@@ -50,7 +50,7 @@ def _pow_scalar(x, e):
 
 @njit(cache=True, error_model="numpy")
 def _shade(px, py, pz, nx, ny, nz, vx, vy, vz, b, k, unlit, mat_rgb, spec, shin, tex, lf, li, scale, out):
-    """``_shading._shade`` of one point times the primitive's texture colour and 255.
+    """``_shading._shade`` of one point times the primitive's texture color and 255.
 
     ``li`` rows are (kind, castshadow, spot) and ``lf`` rows are (ambient, diffuse, specular, pos x3,
     toward-light x3, axis x3, attenuation x3, cos cutoff, exponent).
@@ -200,7 +200,7 @@ def render(
         cand = np.empty(K, np.int64)
         every = np.arange(K)
         col = np.empty(3, np.float32)
-        # Mover shadows on the static surfaces: the plate's shadowed colour where a mover blocks the light.
+        # Mover shadows on the static surfaces: the plate's shadowed color where a mover blocks the light.
         a = shadow_starts[tl]
         e = shadow_starts[tl + 1]
         if shadow_light >= 0 and e > a:
@@ -244,7 +244,7 @@ def render(
                         loc = (j // res - y0) * tw + j % res - x0
                         for c in range(3):
                             base[loc, c] = dark[q, c]
-        # Mirror images: reflectance times the mover's colour plus the rest times the unreflected surface.
+        # Mirror images: reflectance times the mover's color plus the rest times the unreflected surface.
         a = mirror_starts[tl]
         e = mirror_starts[tl + 1]
         if reflectance > ZERO and e > a:

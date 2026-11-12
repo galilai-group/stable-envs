@@ -90,7 +90,7 @@ _OURS_ONLY = {
 }
 
 #: ``our path -> swm path``. swm's ``background.color`` is both the floor and the sky; the floor
-#: comes last so that the inverse mapping reads the floor colour.
+#: comes last so that the inverse mapping reads the floor color.
 _RENAMED = {"sky.color": "background.color", "floor.color": "background.color"}
 #: ``our path -> (swm path, factor)`` with ``ours = theirs * factor``.
 _SCALED = {"light.diffuse": ("light.intensity", LIGHT_FACTOR)}

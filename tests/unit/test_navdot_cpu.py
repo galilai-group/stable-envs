@@ -36,7 +36,7 @@ def test_sampled_states(cfg, B):
 
 @pytest.mark.parametrize("cfg", CONFIGS)
 def test_states_the_env_would_never_sample(cfg):
-    """Dots off the frame, on and between pixel centres, and stacked on each other."""
+    """Dots off the frame, on and between pixel centers, and stacked on each other."""
     pos = [
         (112.0, 112.0),
         (112.5, 112.5),
@@ -61,7 +61,7 @@ def test_states_the_env_would_never_sample(cfg):
 
 @pytest.mark.parametrize("cfg", CONFIGS)
 def test_per_row_styles(cfg):
-    """Per-row colours, radii and backgrounds; a few rows share a style so both base paths draw."""
+    """Per-row colors, radii and backgrounds; a few rows share a style so both base paths draw."""
     B = 12
     fast, slow = _pair(cfg, B)
     rows = np.tile(np.asarray(fast.default_style(), np.float32), (B, 1))

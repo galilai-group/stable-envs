@@ -55,7 +55,7 @@ class Autopilot:
     _B = None
 
     def _alloc_matrix(self) -> np.ndarray:
-        """6x9 normalised wrench matrix about the car's centre of mass at rest.
+        """6x9 normalized wrench matrix about the car's center of mass at rest.
 
         Cached: the CoM barely moves with the suspension.
         """

@@ -43,7 +43,7 @@ SUBSTEPS = 10  # int(1 / (dt * control_hz)), control_hz = 10
 K_P, K_V = 100.0, 20.0  # the agent's PD gains
 MASS = 1.0
 MOMENT = 3000.0  # Match gym_pusht: both inertia terms use BAR, including the stem term.
-COG = (0.0, 45.0)  # block centre of gravity, body-local
+COG = (0.0, 45.0)  # block center of gravity, body-local
 SLOP = 0.1  # space.collision_slop
 COLLISION_BIAS = 0.0017970074436457143  # space.collision_bias, == (1 - 0.1) ** 60
 BIAS_COEF = 1.0 - COLLISION_BIAS**DT  # ~0.06125, Chipmunk's per-substep correction gain
@@ -242,7 +242,7 @@ class PushT(Env):
         Inside it, use the least-penetrating face. Normals push the block away
         from the agent.
         """
-        cc = (ap - c).unsqueeze(1)  # (B,1,2), disc centre rel CoG
+        cc = (ap - c).unsqueeze(1)  # (B,1,2), disc center rel CoG
         a = rel  # (B,2,4,2)
         b = torch.roll(rel, -1, dims=2)
         e = b - a

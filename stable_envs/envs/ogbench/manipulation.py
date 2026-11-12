@@ -278,7 +278,7 @@ def _cube_geoms(u, m) -> np.ndarray:
 
 
 def _agent_materials(m, movers) -> np.ndarray:
-    """Return the agent.color material IDs, which must only colour moving geoms."""
+    """Return the agent.color material IDs, which must only color moving geoms."""
     import mujoco
 
     from .simulation.render_state import AGENT_MATERIALS
@@ -309,7 +309,7 @@ def _button_tables(u, m, nbuttons: int) -> dict | None:
         out[bits] = (np.array(m.geom_rgba, copy=True), np.array(m.mat_rgba, copy=True))
     u._cur_button_states = saved
     u._apply_button_states()
-    # The tables must differ, otherwise button bits would not select colours.
+    # The tables must differ, otherwise button bits would not select colors.
     first = out[tuple([0] * nbuttons)]
     assert any(not np.array_equal(first[0], v[0]) or not np.array_equal(first[1], v[1]) for v in out.values()), (
         "button states produce identical colour tables: SceneEnv's colour rule changed or the wrong arrays were captured"
@@ -372,7 +372,7 @@ def _build_context(cell: str, res: int, nworld: int) -> _Ctx:
     wp = require_warp_cuda("OGBench manipulation GPU rendering")
 
     b = _bundle(cell)
-    # Copy at all-zero button bits, the base of the per-world colour deltas.
+    # Copy at all-zero button bits, the base of the per-world color deltas.
     zero_bits = [0] * b.nbuttons
     saved_bits = list(getattr(b.unwrapped, "_cur_button_states", []))
     if b.nbuttons:
@@ -432,7 +432,7 @@ def _build_context(cell: str, res: int, nworld: int) -> _Ctx:
 def _ctx_button_tables(b: _Bundle, base, tables, device: str = "cuda") -> dict | None:
     """Build device button-color tables as deltas from the bundle's all-zero reference state.
 
-    Apply deltas to the prepared context colours so button changes preserve texture
+    Apply deltas to the prepared context colors so button changes preserve texture
     bakes; overlapping material edits are rejected.
     """
     if not b.nbuttons or tables is None:
@@ -897,7 +897,7 @@ class OGBManipBase(Env):
         mat[:n, idx, :3] = rgb[:n, None, :].to(mat.dtype)
 
     def _upload_button_colours(self, c, chunk, n: int, worlds=None) -> None:
-        """Upload each world's button colors from its state bits and, when given, its lock colours."""
+        """Upload each world's button colors from its state bits and, when given, its lock colors."""
         b = self._b
         bits = chunk[:, -b.nbuttons :].round().clamp(0, 1).to(torch.int64).cpu().numpy()
         codes = (bits * (1 << np.arange(b.nbuttons))).sum(1)
@@ -917,7 +917,7 @@ class OGBManipBase(Env):
             mat.index_copy_(0, sel, mt.unsqueeze(0).expand(len(sel), *mt.shape))
 
     def _lock_tables(self, c, lock):
-        """Return one lock colour's (codes, ngeom, 4) and (codes, nmat, 4) device tables for a context."""
+        """Return one lock color's (codes, ngeom, 4) and (codes, nmat, 4) device tables for a context."""
         hit = c.lock_tables.get(lock.key)
         if hit is None:
             out = _ctx_button_tables(self._b, c.colour_base, lock.tables)

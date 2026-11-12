@@ -1,4 +1,4 @@
-"""SWM variation correspondence tables, imported only by tests and regression scripts.
+"""stable-worldmodel variation correspondence tables, imported only by tests and regression scripts.
 
 They record how stable-worldmodel variation leaves relate to stable-envs Variation leaves.
 """
@@ -32,7 +32,7 @@ class VariationMap:
     #: spelled differently: an inverted binary switch is ``(-1.0, 1.0)``, a unit shift ``(1.0, k)``.
     #: The inverse is ``theirs = (ours - offset) / factor``, so a zero ``factor`` is refused.
     affine: Mapping[str, tuple[str, float, float]] = field(default_factory=dict)
-    #: ``our_path -> swm_path`` for colours held as 0-255 channels here and in [0, 1] by swm. Not a
+    #: ``our_path -> swm_path`` for colors held as 0-255 channels here and in [0, 1] by swm. Not a
     #: ``scaled`` factor of 255: swm's ``_color_swaps`` writes ``uint8(v * 255 + 0.5)``, so 0.3 is 77
     #: to swm and 76 through a bare multiply.
     rgb255: Mapping[str, str] = field(default_factory=dict)
@@ -255,7 +255,7 @@ _TWOROOM_SWM_ONLY = {
     "target.radius": "drawn only when render_target is on; see TwoRoomTarget",
     "target.position": "TwoRoomTarget carries it in the STATE, because the frame reads it",
 }
-#: Read by nothing in SWM: TwoRoom's ``_constrain_target_by_min_steps`` is commented out as the
+#: Read by nothing in stable-worldmodel: TwoRoom's ``_constrain_target_by_min_steps`` is commented out as the
 #: target leaf's ``constrain_fn`` and Piecewise has no reader at all.
 _MIN_STEPS_DEAD = {
     "task.min_steps": "dead upstream, measured by variation_navigation.min_steps_probe: min_steps 15 "
@@ -436,7 +436,7 @@ def style_from_variation(env, variation: Mapping[str, Any], base=None, strict: b
         if theirs not in flat or ours not in layout:
             continue
         o, w = layout[ours]
-        # swm's quantisation from ``GymControlWrapper.render``: ``(clip(v, 0, 1) * 255 + 0.5).astype(uint8)``.
+        # swm's quantization from ``GymControlWrapper.render``: ``(clip(v, 0, 1) * 255 + 0.5).astype(uint8)``.
         v = np.clip(np.asarray(flat[theirs], np.float64).reshape(-1)[:w], 0.0, 1.0)
         row[o : o + w] = np.floor(v * 255.0 + 0.5)
     for ours, (theirs, table) in m.enum.items():

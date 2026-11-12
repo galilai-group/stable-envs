@@ -54,7 +54,7 @@ N = 8
 #: can pick a different cuBLAS kernel (and summation order) per batch count.
 BATCH_SIZES = (1, 3, 7, 8, 64)
 
-#: Peak frame bytes one test may materialise; the large-batch check picks the biggest size from
+#: Peak frame bytes one test may materialize; the large-batch check picks the biggest size from
 #: ``BIG_BATCHES`` that fits.
 BIG_FRAME_BUDGET = 1 << 30
 BIG_BATCHES = (1024, 512, 256, 128, 64)
@@ -301,7 +301,7 @@ def test_frame_i_is_independent_of_batch_size(env):
 def test_chunked_render_states_is_chunk_independent(env, inputs):
     """``render_states(chunk=c)`` gives the same frames for every ``c``.
 
-    Catches stale output views, style rows sliced with the wrong index, and unsynchronised
+    Catches stale output views, style rows sliced with the wrong index, and unsynchronized
     host-to-device copies at chunk boundaries.
     """
     states, style = inputs

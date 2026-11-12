@@ -1,4 +1,4 @@
-"""Variation Dict sampling order, selective update and exact leaves, against SWM's own spaces."""
+"""Variation Dict sampling order, selective update and exact leaves, against stable-worldmodel's own spaces."""
 
 from __future__ import annotations
 

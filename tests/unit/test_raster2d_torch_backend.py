@@ -1,10 +1,10 @@
-"""``render_torch`` matches a frozen unoptimised torch rasterizer, on CPU, byte for byte.
+"""``render_torch`` matches a frozen unoptimized torch rasterizer, on CPU, byte for byte.
 
 ``render_torch`` skips primitive families a slot lacks, unrequested outlines and rings, padded
 degenerate edges and pixels outside a primitive's world-space bound, and groups rows with distant
 bounds into separate windows. Each skip claims that no pixel could have changed.
 
-The oracle is the unoptimised rasterizer in ``scripts/regression/raster2d/fuzz_render_torch.py``.
+The oracle is the unoptimized rasterizer in ``scripts/regression/raster2d/fuzz_render_torch.py``.
 ``tests/gpu/test_conformance.py::test_backend_agreement`` checks the fused kernel on CUDA.
 
 The generated scenes cover cases the registered envs do not produce: supersample above 1, collinear

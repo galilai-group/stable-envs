@@ -38,8 +38,8 @@ def test_mixed_action_dtypes_and_reset_restore(device, discrete):
     [
         ([480, 100, 200, 250, 0, 0, 0], [1.0, 0.0], 200, 5e-4),
         ([100, 215, 200, 200, 0, 0, 0], [0.5, 0.0], 200, 5e-4),
-        # Outside the action space, as SWM accepts. The faster agent lets float32 rounding grow: over 200 steps
-        # the largest gap measured was 0.0078 px of observation and 0.0048 of reward.
+        # Outside the action space, as stable-worldmodel accepts. The faster agent lets float32 rounding grow:
+        # over 200 steps the largest gap measured was 0.0078 px of observation and 0.0048 of reward.
         ([300, 300, 200, 250, 0, 0, 0], [1.6, -1.3], 200, 2e-2),
     ],
 )

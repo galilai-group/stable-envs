@@ -1,7 +1,7 @@
 """The five Roadster planning tasks: CPU MuJoCo simulation with restorable State and the world-model camera.
 
 Each class fixes one task of ``source.RoadsterPlanEnv`` (the simulator, autopilot, reward, success and
-horizon, ported from roadster-jets). The 4-D action ``[a_fwd, a_lat, a_up, yaw_rate]`` in [-1, 1] runs at
+horizon). The 4-D action ``[a_fwd, a_lat, a_up, yaw_rate]`` in [-1, 1] runs at
 10 Hz. Wind and rain are physics Variation leaves (``weather.wind`` in m/s, ``weather.rain`` in [0, 1]) that
 reach the source at reset, as it sets the weather per episode; State records them under ``physics.weather``.
 Frames come from the ``wm`` camera (follows the car with a fixed world orientation), 96 px by default, drawn

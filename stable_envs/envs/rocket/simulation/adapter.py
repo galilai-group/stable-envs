@@ -248,7 +248,7 @@ class RocketAdapter(SimulatorAdapter):
         return None if self.frame is None else (self.frame[0], self.frame[0], 3)
 
     def draw(self, body, links, colors, size, ss):
-        """Draw explicit body poses, camera link poses and colours with TinyRenderer."""
+        """Draw explicit body poses, camera link poses and colors with TinyRenderer."""
         from ..render import draw_tiny, tiny_scene
 
         if self._scene is None:

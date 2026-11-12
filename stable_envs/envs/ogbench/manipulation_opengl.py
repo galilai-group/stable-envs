@@ -436,7 +436,7 @@ def draw(family, host, device_type, images, fast=False):
             for index in indices:
                 for name, values in poses.items():
                     getattr(env.data, name)[:] = values[index]
-                # Colours this loop writes stay in the private model, so an unchanged appearance is not rewritten.
+                # Colors this loop writes stay in the private model, so an unchanged appearance is not rewritten.
                 look = (cube_colors[index].tobytes(), agent_colors[index].tobytes())
                 if _APPLIED.get(id(env)) != look:
                     env.variation_space._walk("cube.color")._value = cube_colors[index].copy()

@@ -48,7 +48,7 @@ def test_the_rocket_state_is_one_rigid_body_grouped_by_what_it_is():
 def test_the_rocket_refuses_a_cpu_device_by_design():
     """A ``device="cpu"`` request is refused, never served by CUDA.
 
-    With nvdiffrast installed this raises ``NotImplementedError`` naming the missing CPU rasteriser;
+    With nvdiffrast installed this raises ``NotImplementedError`` naming the missing CPU rasterizer;
     without it the ``ImportError`` for the unreachable renderer fires first. Both are accepted.
     """
     with pytest.raises((NotImplementedError, ImportError)) as e:

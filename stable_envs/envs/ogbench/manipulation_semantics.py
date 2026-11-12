@@ -340,7 +340,7 @@ class ManipulationSemantics:
         rows = rows.to(torch.float64)
         values = dict(self._appearance(style, b, size, supersample, device) if appearance is None else appearance)
         qpos = rows[:, :nq].clone()
-        # MuJoCo normalises free-joint quaternions (identity below its minimum norm) before drawing.
+        # MuJoCo normalizes free-joint quaternions (identity below its minimum norm) before drawing.
         quat = qpos[:, pixels.OBJECT_QPOS_ADR + 3 : pixels.OBJECT_QPOS_ADR + 7]
         norm = torch.linalg.vector_norm(quat, dim=-1, keepdim=True)
         identity = torch.tensor([1.0, 0.0, 0.0, 0.0], dtype=torch.float64, device=rows.device)

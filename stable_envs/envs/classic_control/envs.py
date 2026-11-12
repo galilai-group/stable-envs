@@ -180,10 +180,11 @@ class _Classic(Env):
         """Render (..., state_dim) rows to native (..., H, W, 3) uint8 frames.
 
         ``backend`` is ``"auto"``, ``"source"`` (the Gymnasium renderer; CPU and the default appearance only)
-        or ``"port"`` (the gfxdraw port). On CPU, ``"auto"`` and ``"port"`` use the compiled Numba port when
+        or ``"port"`` (gfxdraw in Numba, Triton or Torch). On CPU, ``"auto"`` and ``"port"`` use Numba when
         numba is installed, except that ``"auto"`` draws batches of fewer than 8 rows of the default appearance with
-        the source. Without numba, ``"auto"`` uses the source for the default appearance when pygame is installed
-        and the Torch port otherwise. All give the same frames.
+        the source. Without numba, ``"port"`` uses Torch and ``"auto"`` uses the source for the default appearance
+        when pygame is installed and Torch otherwise. On CUDA, ``"auto"`` and ``"port"`` use Triton when triton is
+        installed and Torch otherwise. All give the same frames.
         """
         if backend not in ("auto", "source", "port"):
             raise ValueError(f"backend must be 'auto', 'source' or 'port', got {backend!r}")
@@ -717,7 +718,7 @@ class Acrobot(ClassicControlSemantics, _Classic):
         return radii, bounds
 
     def _varied(self, s, sty):
-        """Per-lane ground row and joint radius, then both links' (B, 2, ...) quads and joint centres.
+        """Per-lane ground row and joint radius, then both links' (B, 2, ...) quads and joint centers.
 
         The whole picture scales with 500 / (2 * (l1 + l2 + 0.2)), as AcrobotEnv.render draws it.
         """

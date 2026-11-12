@@ -1,6 +1,6 @@
 """Classic-control and navigation State and renderer contracts.
 
-Classic-control cells step Gymnasium on CPU with full lifecycle/RNG State; exact SWM parity is checked
+Classic-control cells step Gymnasium on CPU with full lifecycle/RNG State; exact stable-worldmodel parity is checked
 in test_native_classic_semantics.py. TwoRoom, Piecewise and SimplePointMaze have native dynamics with
 task State; TwoRoomTarget and PiecewiseZones have structural coverage only.
 """

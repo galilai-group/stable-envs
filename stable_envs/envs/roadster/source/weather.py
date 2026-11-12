@@ -6,7 +6,7 @@ renderers do not draw. Rain also brings haze (MuJoCo's fog, scene flag mjRND_FOG
 `apply_render_flags`) and dims the sun.
 
 Two things reach the physics: the wind (mean + Ornstein-Uhlenbeck gusts, read by the sim as the car's
-airspeed for drag and crosswind yaw) and the tyre grip (a wet road). With no wind and no rain the physics
+airspeed for drag and crosswind yaw) and the tire grip (a wet road). With no wind and no rain the physics
 is that of calm, dry weather.
 """
 
@@ -21,7 +21,7 @@ BOX_LO = np.array([-16.0, -16.0, -5.0])
 BOX_HI = np.array([12.0, 8.0, 12.0])
 RAIN_VEL = np.array([-1.5, 0.8, -14.0])  # m/s, before the wind drift
 RAIN_RGBA = (0.75, 0.8, 0.9, 0.45)
-RAIN_FOG = (0.55, 0.58, 0.63)  # fog and haze colour
+RAIN_FOG = (0.55, 0.58, 0.63)  # fog and haze color
 RAIN_SUN = 0.45  # sun brightness in the heaviest rain
 
 
@@ -38,7 +38,7 @@ def xml() -> str:
 
 
 class Weather:
-    """Wind (mean + gusts, with its own RNG) and rain (strength 0..1: drops, haze, sun and tyre grip).
+    """Wind (mean + gusts, with its own RNG) and rain (strength 0..1: drops, haze, sun and tire grip).
 
     Lanes that share one compiled model each hold a ``Weather``; ``base`` (another lane's) gives the model's
     own friction, sun, haze and fog, and the lane writes its grip into the model with ``apply_grip`` before
@@ -69,7 +69,7 @@ class Weather:
         Args:
             seed: draws the wind direction, the gusts and the drop pool.
             wind: mean speed in m/s (gusts ~30 % of it) or a (vx, vy) vector.
-            rain: strength 0..1 (drops, haze and tyre grip scale with it).
+            rain: strength 0..1 (drops, haze and tire grip scale with it).
         """
         self.seed = int(seed)
         self.rain = float(np.clip(rain, 0, 1))
@@ -117,7 +117,7 @@ class Weather:
     def set_state(self, st: dict):
         """Restore a `get_state` snapshot.
 
-        The drop pool (from the seed), the mean wind, gusts, tyre grip and the gust RNG.
+        The drop pool (from the seed), the mean wind, gusts, tire grip and the gust RNG.
         """
         same = self.seed == st["seed"] and self.rain == st["rain"] and np.array_equal(self.wind_mean, st["wind_mean"])
         if not same:
@@ -130,7 +130,7 @@ class Weather:
         self._wind_rng.bit_generator.state = st["rng"]
 
     def apply_grip(self):
-        """Write this lane's tyre grip into the (possibly shared) model."""
+        """Write this lane's tire grip into the (possibly shared) model."""
         self.m.geom_friction[self.tires] = self.tire_friction * np.array([self.grip, 1.0, 1.0])
 
     @property

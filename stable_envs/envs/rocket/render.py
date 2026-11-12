@@ -192,7 +192,7 @@ def tiny_scene():
 
 
 def draw_tiny(scene, body, links, colors, size, ss, out=None):
-    """Draw ``(B, 3, 7)`` body poses, ``(B, 7)`` camera link poses and ``(B, 6, 4)`` colours to uint8 frames."""
+    """Draw ``(B, 3, 7)`` body poses, ``(B, 7)`` camera link poses and ``(B, 6, 4)`` colors to uint8 frames."""
     import pybullet as bullet
 
     client, bodies, painted = scene
@@ -264,7 +264,7 @@ def draw_cpu(env, body, links, colors, size, ss, check=None):
 
 
 def render_cpu(env, body, links, colors, size, ss, check=None):
-    """Draw host body poses, camera link poses and colours on CPU; ``check`` must pass before any frame returns."""
+    """Draw host body poses, camera link poses and colors on CPU; ``check`` must pass before any frame returns."""
     env._check_open("render")
     with env.__dict__.setdefault("_rocket_pixel_lock", threading.RLock()):
         return torch.from_numpy(draw_cpu(env, body, links, colors, size, ss, check))

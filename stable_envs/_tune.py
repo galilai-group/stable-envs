@@ -29,7 +29,7 @@ def knobs_for(env) -> list[tuning.Knob]:
 
 
 def candidates(knob: tuning.Knob, start: int, env) -> list[int]:
-    """Return ``start`` and its powers-of-two neighbours, one per distinct work split, within memory."""
+    """Return ``start`` and its powers-of-two neighbors, one per distinct work split, within memory."""
     raw = [start >> 2, start >> 1, start, start << 1, start << 2] + ([0] if knob.unit == "cpus" else [])
     free = tuning.free_cuda_bytes(env.device) if env.device.type == "cuda" else None
     frame = env.size * env.size * env.ss * env.ss

@@ -7,7 +7,7 @@ reverse.
     tests/
       unit/                       family/unit contracts. No GPU, no reference env, no checkpoint.
       integration/                several components together, including the CPU safety net
-                                  (``test_safety_net.py``) and the SWM interop suite.
+                                  (``test_safety_net.py``) and the stable-worldmodel interop suite.
       gpu/                        the registry-wide GPU suite. Needs CUDA.
         _shared.py                skip/fail conventions for family sweeps and frame comparison.
         conftest.py               resets each shared env to its default appearance per test.

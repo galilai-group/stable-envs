@@ -1,4 +1,4 @@
-"""GPU conformance suite, parameterised over the env registry.
+"""GPU conformance suite, parameterized over the env registry.
 
 Requires a CUDA device; the module skips without one.
 
@@ -194,7 +194,7 @@ def test_default_style_is_the_official_appearance(env):
 
 
 def test_color_knobs_apply_the_requested_color(env):
-    """Every RGB knob puts its colour in the frame, except leaves the class declares not applicable.
+    """Every RGB knob puts its color in the frame, except leaves the class declares not applicable.
 
     A declared leaf's lighting cannot reach unit gain, in the official renderer too (see
     ``conformance.color_exactness_applicability``). Its measured distance must still be recorded.
@@ -246,7 +246,7 @@ def test_variations_all_do_something(env):
 def test_a_declared_task_object_is_drawn_iff_the_reference_draws_it(env):
     """A task object declared by a ``visibility.*`` leaf is drawn exactly when the reference draws it.
 
-    ``interior_mask`` keeps only pixels with a flat 3x3 neighbourhood, so an object on a textured floor
+    ``interior_mask`` keeps only pixels with a flat 3x3 neighborhood, so an object on a textured floor
     has no interior pixels and the parity test cannot see it appear or disappear. This checks the
     object's own footprint instead.
     """

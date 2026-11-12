@@ -1,4 +1,4 @@
-"""Cube size, camera angle, light intensity and Scene lock colour are per-world inputs of one MJWarp context."""
+"""Cube size, camera angle, light intensity and Scene lock color are per-world inputs of one MJWarp context."""
 
 import pytest
 import torch

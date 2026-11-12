@@ -68,7 +68,7 @@ class Scene:
     a horizontal upward-facing compiled floor; a render may still tilt it per frame.
     Render poses come from MuJoCo kinematics; materials may vary per frame.
     ``plane_palette`` lists texel masks of the floor texture that a render may
-    recolour per frame; the texels outside them must share one colour.
+    recolor per frame; the texels outside them must share one color.
     """
 
     def __init__(
@@ -275,7 +275,7 @@ class Scene:
             )
 
     def _palette(self, masks):
-        """Return per-texel palette weights as a mip chain, the masks' default colours and the rest colour."""
+        """Return per-texel palette weights as a mip chain, the masks' default colors and the rest color."""
         if self.plane_tex is None:
             raise ValueError("cpu3d: a floor palette needs a textured floor")
         flat = self.plane_tex.reshape(-1, 3)
@@ -344,7 +344,7 @@ class Scene:
         return d.astype(np.float32)
 
     def mat_table(self, mat_rgb: torch.Tensor) -> torch.Tensor:
-        """Extend (B,nmat,3) colours with a defaults slot and each primitive's own RGB."""
+        """Extend (B,nmat,3) colors with a defaults slot and each primitive's own RGB."""
         B = mat_rgb.shape[0]
         own = self.prim_own_rgb.unsqueeze(0).expand(B, -1, -1)
         pad = torch.zeros((B, 1, 3), dtype=mat_rgb.dtype, device=mat_rgb.device)
@@ -465,8 +465,8 @@ def render(
     ``cam_pos (B,3)``, ``xpos (B,K,3)``, ``xmat (B,K,3,3)`` world poses of the movers,
     ``light_pos``/``light_dir (B,L,3)``, ``mat_rgb (B,nmat,3)``, ``light_diffuse (B,L,3)``: all
     float32 on the scene's device, as MuJoCo's ``mj_camlight`` produces them.
-    ``plane_mat (B,3,3)`` turns the floor per row about its compiled centre, and
-    ``plane_palette (B,P,3)`` recolours the scene's floor palette masks per row.
+    ``plane_mat (B,3,3)`` turns the floor per row about its compiled center, and
+    ``plane_palette (B,P,3)`` recolors the scene's floor palette masks per row.
     ``chunk_size`` frames are cast at a time; None reads the ``cpu3d_chunk`` tuning knob.
     ``backend="numba"`` draws every frame in one compiled kernel that tests each tile of rays against
     only the movers whose bounds reach it; ``"torch"`` draws with Torch, and ``"auto"`` takes Numba

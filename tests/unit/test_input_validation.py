@@ -395,7 +395,7 @@ def test_a_trajectory_dataset_still_accepts_a_dense_corpus():
 
 
 def test_a_strided_out_buffer_is_refused_by_name():
-    """A strided ``out`` would scatter frames across the caller's neighbouring slices."""
+    """A strided ``out`` would scatter frames across the caller's neighboring slices."""
     buf = torch.zeros((4, 3, 8, 8, 3), dtype=torch.uint8)
     with pytest.raises(ValueError) as e:
         require_contiguous_out("test", buf[:, 1])

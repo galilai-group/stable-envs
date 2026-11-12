@@ -35,7 +35,7 @@ def test_a_state_restores_into_an_env_with_another_world_and_history(preset):
         for action in _actions(0, 5):
             source.step(action, frames=None)
         saved = source.get_state()
-        restored.reset(seed=SEED + 100)  # other rooms, block colours and textures
+        restored.reset(seed=SEED + 100)  # other rooms, block colors and textures
         for action in _actions(1, 3):
             restored.step(action, frames=None)
         assert not torch.equal(restored.get_state()["blocks", "color"], saved["blocks", "color"])

@@ -13,7 +13,7 @@ def render_classic_torch(ops: C.Ops, out: torch.Tensor | None = None) -> torch.T
 
     Takes every branch the Triton kernel takes, in the same order and over the same closed form,
     but evaluates all pixels of all primitives with ``(B,H,W,3)`` intermediates. It shares no
-    optimisation with the kernel it checks.
+    optimization with the kernel it checks.
     """
     B, H, W, dev = ops.B, ops.H, ops.W, ops.device
     sh = torch.tensor(G.SHIFT, dtype=torch.int64, device=dev)

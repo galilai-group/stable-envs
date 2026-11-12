@@ -19,7 +19,13 @@ REQUIRED_EXTRAS = {
     "pusht-gpu",
 }
 EXPECTED_AUTHORS = ("Randall Balestriero", "Sami BuGhanem")
-REQUIRED_LICENSES = {"LICENSE", "THIRD_PARTY_NOTICES.md", "licenses/envX-APACHE-2.0.txt"}
+REQUIRED_LICENSES = {
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "licenses/Munk2D-MIT.txt",
+    "licenses/envX-APACHE-2.0.txt",
+    "licenses/ms-human-700-APACHE-2.0.txt",
+}
 
 
 def _package_sources(root: Path) -> set[str]:
@@ -86,6 +92,8 @@ def audit_sdist(path: Path, expected_sources: set[str]) -> None:
         names = {name.removeprefix(f"{root}/") for name in raw_names if name != root}
         required = {"README.md", "pyproject.toml", *REQUIRED_LICENSES, *expected_sources}
         assert required <= names, sorted(required - names)
+        examples = sorted(name for name in names if name == "examples" or name.startswith("examples/"))
+        assert examples == [], examples
         pkg_info = archive.extractfile(f"{root}/PKG-INFO")
         assert pkg_info is not None
         _audit_metadata(pkg_info.read().decode())

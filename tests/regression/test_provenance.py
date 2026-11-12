@@ -89,7 +89,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def _repro_constants() -> dict:
     """``N`` and ``MEASURED_ON`` out of tests/gpu/test_reproducibility.py, read as text: importing the
-    module parameterises fixtures over the registry and needs a GPU-capable interpreter."""
+    module parameterizes fixtures over the registry and needs a GPU-capable interpreter."""
     src = (ROOT / "tests" / "gpu" / "test_reproducibility.py").read_text()
     out = {}
     for n in ast.parse(src).body:

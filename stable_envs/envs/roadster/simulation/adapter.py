@@ -224,7 +224,7 @@ class RoadsterAdapter(SimulatorAdapter):
     """``num_envs`` independent ``RoadsterPlanEnv`` instances on one task, with no rendering responsibility.
 
     The lanes share one compiled MuJoCo model of the world (the tasks live in separate regions of it); each
-    writes its own tyre grip into it before it steps. Actions are clipped to [-1, 1] by the source
+    writes its own tire grip into it before it steps. Actions are clipped to [-1, 1] by the source
     autopilot. Wind and rain are installed with ``configure_physics`` and apply at the next ``reset``, as the
     source sets the weather at reset. ``simulation.process.RoadsterProcessAdapter`` runs these lanes in
     worker processes.

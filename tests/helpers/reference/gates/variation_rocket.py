@@ -1,4 +1,4 @@
-"""PyFlyt Rocket start leaves and reset colours against pinned stable_worldmodel."""
+"""PyFlyt Rocket start leaves and reset colors against pinned stable_worldmodel."""
 
 from __future__ import annotations
 
@@ -21,7 +21,8 @@ def _swm_leaf(env, path):
 
 
 class _RocketLanes:
-    """One rendering SWM Rocket per lane; ``defaults`` are installed with SWM's ``set_init_value``."""
+    """One rendering stable-worldmodel Rocket per lane; ``defaults`` are installed with stable-worldmodel's
+    ``set_init_value``."""
 
     def __init__(self, defaults=None):
         from stable_worldmodel.envs.rocket_landing.pyflyt_rocketlanding import RocketLandingEnv
@@ -86,12 +87,13 @@ def _rocket_rollout(env, lanes, actions):
 
 
 def rocket_reset_leaf_gate(seed=31, steps=40) -> dict:
-    """Rocket's start leaves per lane, explicit and sampled, and the colours reset can set, against SWM."""
+    """Rocket's start leaves per lane, explicit and sampled, and the colors reset can set, against
+    stable-worldmodel."""
     low = np.asarray([-1, -1, -1, 0, 0, -1, -1], np.float64)
     actions = np.random.default_rng(seed).uniform(low, 1.0, (steps, 3, 7))
     evidence = {"stable_env": "PyFlytRocketLanding", "leaves": sorted(ROCKET_START), "seed": seed, "steps": steps}
     with se.make("PyFlytRocketLanding", num_envs=3, device="cpu") as env:
-        # Explicit per-lane values; SWM reads only init values, so its lanes take them as defaults.
+        # Explicit per-lane values; stable-worldmodel reads only init values, so its lanes take them as defaults.
         ours = env.reset(seed=seed, options={"variation_values": ROCKET_START})
         lanes, default = _RocketLanes(ROCKET_START), _RocketLanes()
         try:
@@ -124,7 +126,7 @@ def rocket_reset_leaf_gate(seed=31, steps=40) -> dict:
             lanes.close()
         evidence["sampled"] = {"heights": view["environment.start_height_ratio"].tolist(), "exact": True}
 
-        # Colours set for one reset are drawn as SWM draws the same values once a colour reset paints.
+        # Colors set for one reset are drawn as stable-worldmodel draws the same values once a color reset paints.
         colours = {
             "rocket.body_color": np.asarray([[255, 204, 0], [12, 140, 250], [200, 30, 90]], np.uint8),
             "pad.color": np.asarray([[200, 200, 200], [104, 60, 3], [240, 132, 195]], np.uint8),

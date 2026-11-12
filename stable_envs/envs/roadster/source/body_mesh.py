@@ -1,8 +1,8 @@
 """Faceted body shell of the car (visual only).
 
 One straight-sided section per key station along the car's x axis (chassis frame: ground at z = -0.51,
-wheel centres at x = +-1.4, z = -0.16, radius 0.35), with the wheel arches cut in. Quads between
-neighbouring stations are split along the less-twisted diagonal and every triangle gets its own
+wheel centers at x = +-1.4, z = -0.16, radius 0.35), with the wheel arches cut in. Quads between
+neighboring stations are split along the less-twisted diagonal and every triangle gets its own
 vertices, so each panel is shaded flat and every crease stays sharp. Overall 4.34 m long, 2.16 m wide.
 """
 
@@ -18,7 +18,7 @@ import numpy as np
 #   yh, zh         window header (cabin) / outer foot of the rear buttress
 #   wt, ze         top edge: fender blade crest (front), roof edge (cabin), buttress crest (rear)
 #   wc, zcn        inner foot of the fender blade on the hood / rear channel edge (= top edge in the cabin)
-#   zt             centre line: hood, canopy ridge, recessed channel floor
+#   zt             center line: hood, canopy ridge, recessed channel floor
 # Plan view: raised fender blades frame a lower trapezoid hood; the canopy is a teardrop, widest at the
 # cowl just ahead of the front wheels (1.3), running as a fastback down to -1.8 between two shallow
 # buttresses; the side windows are triangles pointing at the C-pillar over the rear wheel (-1.2). The
@@ -258,10 +258,10 @@ GLASS_X = (-1.8, 1.3)
 SIDE_GLASS_X = (-1.2, 1.1)
 
 # wheel arches: (x half length at the floor, at the top), opening height by axle
-ARCH_AXLES = (1.4, -1.4)  # wheel centre x (model.WHEEL_POS); front first
+ARCH_AXLES = (1.4, -1.4)  # wheel center x (model.WHEEL_POS); front first
 ARCH_X = (0.44, 0.30)
-ARCH_Z = (0.215, 0.215)  # 3 cm over the tyre tops (wheel centre settles at z = -0.164, r = 0.35)
-ARCH_WALL_Y = 0.56  # inner arch wall (tyre inner face at 0.72; 0.57 with the wheels steered 0.5 rad)
+ARCH_Z = (0.215, 0.215)  # 3 cm over the tire tops (wheel center settles at z = -0.164, r = 0.35)
+ARCH_WALL_Y = 0.56  # inner arch wall (tire inner face at 0.72; 0.57 with the wheels steered 0.5 rad)
 
 
 def mesh_xml(name: str, V: np.ndarray, F: np.ndarray) -> str:
@@ -272,12 +272,12 @@ def mesh_xml(name: str, V: np.ndarray, F: np.ndarray) -> str:
 
 # ---------------------------------------------------------------------------------------------- faceted
 # Panel-style shell: one straight-sided section per station, quads between
-# neighbouring stations split along the less-twisted diagonal, and unshared vertices per triangle so
+# neighboring stations split along the less-twisted diagonal, and unshared vertices per triangle so
 # every panel is shaded flat and every crease stays sharp.
 # Paint, glass and the black band are *one* shell: every triangle belongs to exactly one of the three
-# meshes (overlaid slabs z-fought with the body and, on twisted quads, got wound inside out and culled).
+# meshes, because overlaid slabs z-fight with the body and, on twisted quads, wind inside out and get culled.
 
-# section vertices (+y side, then mirrored): 0 floor centre, 1 keel, 2 arch wall top, 3 floor edge / arch
+# section vertices (+y side, then mirrored): 0 floor center, 1 keel, 2 arch wall top, 3 floor edge / arch
 # ceiling edge, 4 sill band top, 5 shoulder crease, 6 sill, 7 header, 8 top edge (fender / roof /
 # buttress crest), 9 blade foot / channel edge, 10 ridge, then 11..19 mirrored (channel edge L .. keel L);
 # strip j runs from vertex j to j + 1
@@ -350,7 +350,7 @@ def _ear_clip(P: np.ndarray, idx: list[int]) -> list[tuple[int, int, int]]:
             ab, bc = pts[b] - pts[a], pts[c] - pts[b]
             cross = ab[0] * bc[1] - ab[1] * bc[0]
             if abs(cross) < 1e-12 or cross * sgn < 0:  # flat or reflex corner: not an ear (a flat one
-                continue  # is used by a neighbour's ear, so the ring's collinear edges stay in the cap)
+                continue  # is used by a neighbor's ear, so the ring's collinear edges stay in the cap)
             tri = pts[[a, b, c]]
             inside = False
             for o in order:
@@ -423,7 +423,7 @@ def shell_faceted() -> dict[str, tuple[np.ndarray, np.ndarray]]:
                 F.append(tuple(t))
                 tag.append(part)
     # end caps (tail panel, blunt nose face), split along the crease chord so the nose's lower half is
-    # the black fascia; each half is ear-clipped (the fan from a centre point fails on the two-lobed
+    # the black fascia; each half is ear-clipped (the fan from a center point fails on the two-lobed
     # buttress / channel outline of the tail)
     cr = (_STRIPS["flank"][0], _STRIPS["flank"][1] + 1)  # crease vertices R, L
     for base, lower in ((0, "body"), ((len(rings) - 1) * k, "band")):

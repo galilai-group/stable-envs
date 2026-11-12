@@ -562,7 +562,7 @@ def nvd_renderer(size, ss, device, scene_type=ND.Scene, renderer_type=ND.BatchRe
         sample_offset=(0.5, 0.5),
     )
     renderer.owns_scene = True
-    renderer.background = np.array([1.0, 1.0, 1.0])  # TinyRenderer's clear colour
+    renderer.background = np.array([1.0, 1.0, 1.0])  # TinyRenderer's clear color
     return renderer, NVD_BYTES_PER_PIXEL * (size * ss) ** 2 + NVD_BYTES_PER_VERTEX * scene.V
 
 

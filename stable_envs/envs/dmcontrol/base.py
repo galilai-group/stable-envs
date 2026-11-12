@@ -276,7 +276,7 @@ class _DMCModel(Env):
     def make_variation_space(self) -> Dict:
         """Derive supported appearance leaves and defaults from the pristine model.
 
-        Materials use float colours in [0, 1]. Visibility is binary because the
+        Materials use float colors in [0, 1]. Visibility is binary because the
         analytic renderer does not blend partial alpha. Shape choices must contain
         exactly one match for the compiled geometry, which becomes the default.
         """

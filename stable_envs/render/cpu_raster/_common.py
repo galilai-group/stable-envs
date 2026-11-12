@@ -28,7 +28,7 @@ def put(img, y, x, r, g, b):
 
 @njit(cache=True, inline="always")
 def blend_px(img, y, x, r, g, b, w):
-    """Blend colour (r, g, b) into a pixel with fringe weight ``w`` below 256."""
+    """Blend color (r, g, b) into a pixel with fringe weight ``w`` below 256."""
     a = (255 * w) >> 8
     img[y, x, 0] = blend(r, np.int64(img[y, x, 0]), a, 16)
     img[y, x, 1] = blend(g, np.int64(img[y, x, 1]), a, 8)

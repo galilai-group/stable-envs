@@ -42,7 +42,6 @@ _MAINTAINED = (
     "docs/quickstart.md",
     "docs/install.md",
     "docs/index.md",
-    "docs/gallery.md",
     "docs/environments.md",
     "docs/benchmarks.md",
     "README.md",

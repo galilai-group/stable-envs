@@ -26,7 +26,7 @@ import jax.numpy as jnp  # noqa: E402
 
 try:
     from jax import enable_x64
-except ImportError:  # Older JAX kept the context manager under experimental.
+except ImportError:  # Older JAX keeps the context manager under experimental.
     from jax.experimental import enable_x64
 
 

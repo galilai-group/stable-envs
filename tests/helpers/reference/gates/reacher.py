@@ -1,4 +1,4 @@
-"""Semantic gate for DMC Reacher Hard against pinned SWM; returns evidence."""
+"""Semantic gate for DMC Reacher Hard against pinned stable-worldmodel; returns evidence."""
 
 from __future__ import annotations
 
@@ -100,7 +100,7 @@ def run_gate(device="cpu"):
                 compare_state(got, expected)
                 assert (got["reward"] == 2).all()
                 evidence["cases"].append(dict(batch=batch, positive_reward=2.0, terminated=False, truncated=False))
-                # An underlying LAST does not truncate SWM's hard task: the next substep resets,
+                # An underlying LAST does not truncate stable-worldmodel's hard task: the next substep resets,
                 # consumes RNG and changes the target geometry.
                 check_reset_matches_reference(env, ref, seed=5)
                 actions = np.zeros((502, batch, 2))

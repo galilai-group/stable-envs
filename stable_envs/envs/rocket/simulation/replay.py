@@ -13,13 +13,13 @@ from .numeric import capture, capture_step, step_bodies
 from .task import RocketLandingEnv
 
 DTYPES = (None, np.dtype("float32"), np.dtype("float64"), np.dtype("uint8"))
-#: Colour leaves in ``render/rgba`` row order; they and the undrawn sky act on the live episode.
+#: Color leaves in ``render/rgba`` row order; they and the undrawn sky act on the live episode.
 PAINTED = ("rocket.body_color", "rocket.fin_color", "rocket.leg_color", "rocket.booster_color", "pad.color")
 IMMEDIATE = (*PAINTED, "environment.sky_color")
 
 
 def paint(env, path):
-    """Draw one colour leaf's current value the way the source's reset does."""
+    """Draw one color leaf's current value the way the source's reset does."""
     value = env.variation_space._walk(path).value / 255.0
     client = env.env._client
     if path == "pad.color":
@@ -43,7 +43,7 @@ def paint(env, path):
 
 
 def recolor_flame(env):
-    """Apply the flame colour change that the source's ``step`` makes only when it has a render mode.
+    """Apply the flame color change that the source's ``step`` makes only when it has a render mode.
 
     The pixel env renders, so its flame turns ``ignition_color`` at ignition. With a render mode the
     source has already made the change and this does nothing.
@@ -196,7 +196,7 @@ class RocketReplay:
         self.names = [p[1:].replace("/", ".") for p, _ in nodes(self.env.variation_space) if p]
         self.registered = {path: self.env.variation_space._walk(path).init_value.copy() for path in PAINTED}
         self._layout = None
-        # The last full ``get_state`` and drawn colours; leaves a step changes are read again.
+        # The last full ``get_state`` and drawn colors; leaves a step changes are read again.
         self._full, self._rgba = None, None
         if initialize:
             try:
@@ -229,7 +229,7 @@ class RocketReplay:
                 raise ValueError(f"Rocket Variation {path} is both sampled and set")
 
     def reset(self, seed=None, options=None, values=None):
-        """``values`` sets leaves for this episode only; the drawn colours among them are painted."""
+        """``values`` sets leaves for this episode only; the drawn colors among them are painted."""
         self.check_reset(seed, options, values)
         options = copy.deepcopy(options or {})
         values = dict(values or {})
@@ -250,7 +250,7 @@ class RocketReplay:
         finally:
             for path, value in defaults.items():
                 self.env.variation_space._walk(path)._init_value = value
-        # Unlike the source, a configured colour default is drawn by every reset, not only sampling ones.
+        # Unlike the source, a configured color default is drawn by every reset, not only sampling ones.
         for path in PAINTED:
             if path in values or not np.array_equal(
                 self.env.variation_space._walk(path).init_value, self.registered[path]
@@ -274,7 +274,7 @@ class RocketReplay:
         self._changed()
 
     def _changed(self):
-        """Forget the cached State and colours after a reset, configuration or restoration."""
+        """Forget the cached State and colors after a reset, configuration or restoration."""
         self._full, self._rgba = None, None
 
     def step(self, action):
@@ -299,7 +299,7 @@ class RocketReplay:
         return result
 
     def rgba(self):
-        """Drawn body, fin, leg, booster, pad and flame colours in ``render/rgba`` row order."""
+        """Drawn body, fin, leg, booster, pad and flame colors in ``render/rgba`` row order."""
         if self._rgba is None:
             self._rgba = self._read_rgba()
         return self._rgba.copy()
@@ -319,7 +319,7 @@ class RocketReplay:
         )
 
     def render_fields(self):
-        """Body poses, the cached camera link pose and colours, as ``get_state`` records them."""
+        """Body poses, the cached camera link pose and colors, as ``get_state`` records them."""
         aviary = self.env.env
         body = np.stack(
             [np.concatenate(aviary.getBasePositionAndOrientation(aviary.getBodyUniqueId(i))) for i in range(3)]

@@ -1,4 +1,4 @@
-"""Freeze a full-State OGBMaze oracle from the pinned SWM wrapper only."""
+"""Freeze a full-State OGBMaze oracle from the pinned stable-worldmodel wrapper only."""
 
 import importlib.metadata
 import json

@@ -48,7 +48,7 @@ def test_per_world_arrays_match_each_rows_own_compile(family):
     state["appearance", "camera.angle_delta"][3] = state["appearance", "camera.angle_delta"].new_tensor([[4.0, -3.0]])
     if family == "Scene":
         state["appearance", "lock_color"][4] = state["appearance", "lock_color"].new_tensor([[0.1, 0.8, 0.2]] * 2)
-    # Colours and poses are uploaded per world and never split a configuration.
+    # Colors and poses are uploaded per world and never split a configuration.
     state["pose", "qpos"][5, 0] += 0.1
     state["appearance", "cube.color"][5] = 0.2
     token, bundle = renderer.configured_bundle(family)

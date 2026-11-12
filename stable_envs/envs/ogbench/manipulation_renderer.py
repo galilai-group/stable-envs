@@ -106,7 +106,7 @@ class _Lock:
 
 
 def _lock(token, bundle, value):
-    """Scene button colour tables for one lock_color, applied by the source rule to the shared model."""
+    """Scene button color tables for one lock_color, applied by the source rule to the shared model."""
     key = (token, value.tobytes())
     hit = _LOCKS.get(key)
     if hit is not None:

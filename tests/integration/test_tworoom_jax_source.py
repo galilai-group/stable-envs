@@ -1,4 +1,4 @@
-"""TwoRoom JAX physics and shared task outputs against pinned SWM."""
+"""TwoRoom JAX physics and shared task outputs against pinned stable-worldmodel."""
 
 from contextlib import closing
 

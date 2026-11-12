@@ -76,7 +76,7 @@ class PushT(gym.Env):
         init_value=None,
     ):
         self._seed = None
-        self.window_size = ws = 512  # The size of the PyGame window
+        self.window_size = ws = 512
         self.render_size = resolution
         self.relative = relative
         self.action_scale = 100
@@ -225,8 +225,6 @@ class PushT(gym.Env):
         if init_value is not None:
             self.variation_space.set_init_value(init_value, reset_value=False)
 
-        # TODO ADD CONSTRAINT TO NOT SAMPLE OVERLAPPING START POSITIONS (block and agent)
-
         self.block_cog = block_cog
         self.damping = damping
         self.render_action = render_action
@@ -351,14 +349,13 @@ class PushT(gym.Env):
                 self.space.step(self.dt)
 
     def eval_state(self, goal_state, cur_state):
-        # success if position difference is < 20, and angle difference < np.pi/9
         goal_state = np.asarray(goal_state, dtype=np.float64)
         cur_state = np.asarray(cur_state, dtype=np.float64)
         pos_diff = np.linalg.norm(goal_state[:4] - cur_state[:4])
 
         # Compare angles modulo the block's rotational symmetry: square/+ match
-        # every 90 degrees, and Z/I match every 180 degrees. Other shapes use
-        # a full rotation, preserving the original orientation check.
+        # every 90 degrees, and Z/I match every 180 degrees. Other shapes compare
+        # over a full rotation.
         block_shape = self.shapes[int(self.variation_space["block"]["shape"].value)]
         symmetry = self.shape_symmetry_angles.get(block_shape, 2 * np.pi)
         angle_diff = np.abs(goal_state[4] - cur_state[4]) % symmetry
@@ -510,7 +507,7 @@ class PushT(gym.Env):
 
     def _setup(self):
         self.space = pymunk.Space()
-        self.space.gravity = 0, 0  # TODO add physics support
+        self.space.gravity = 0, 0
         self.space.damping = 0
         self.render_buffer = []
 
@@ -839,8 +836,6 @@ class PushT(gym.Env):
         return body
 
     def add_shape(self, shape, *args, **kwargs):
-        # Dispatch method based on the 'shape' parameter
-
         if shape == "L":
             return self.add_L(*args, **kwargs)
         elif shape == "T":

@@ -19,7 +19,7 @@ class _ReacherSemantics(DelegatedSemantics):
     @classmethod
     def reference_env(cls, size: int | None = None):
         env = super().reference_env(size)
-        # The source frame is SWM's default, which makes the target material transparent.
+        # The source frame is stable-worldmodel's default, which makes the target material transparent.
         env.physics.named.model.mat_rgba["target", 3] = 0.0
         return env
 

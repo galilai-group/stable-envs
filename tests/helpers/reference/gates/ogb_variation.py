@@ -1,6 +1,6 @@
 """Cube/Scene Variation leaves against pinned stable_worldmodel, per lane.
 
-Each lane of ours is compared with its own SWM env (``OwnedCube``/``OwnedScene``
+Each lane of ours is compared with its own stable-worldmodel env (``OwnedCube``/``OwnedScene``
 owns entropy the way our lane does): MuJoCo integration state, observations,
 infos, model arrays, every RNG stream and every Variation node, at reset and
 along a short rollout.
@@ -73,7 +73,7 @@ def _refs(family, seed, oracle):
 
 
 def _reset_refs(refs, seed, options):
-    """SWM per lane: per-lane ``variation_values`` rows are split, everything else is shared."""
+    """stable-worldmodel per lane: per-lane ``variation_values`` rows are split, everything else is shared."""
     for lane, ref in enumerate(refs):
         lane_options = dict(options)
         if "variation_values" in options:
@@ -129,7 +129,7 @@ def reset_options_gate(family, seed=31) -> dict:
 
 
 def _placement_moves_engine(family, oracle, seed) -> bool:
-    """SWM reads the cube placement leaves only in data_collection mode."""
+    """stable-worldmodel reads the cube placement leaves only in data_collection mode."""
     cls = oracle.OwnedCube if family == "Cube" else oracle.OwnedScene
     a, b = cls(entropy_seed=seed), cls(entropy_seed=seed)
     try:
@@ -163,7 +163,7 @@ def _fresh_compile(family, live):
 
 
 def set_variation_gate(family, seed=37) -> dict:
-    """``set_variation`` mid-episode: immediate model, exact restore, and SWM's next reset."""
+    """``set_variation`` mid-episode: immediate model, exact restore, and stable-worldmodel's next reset."""
     oracle = load_oracle()
     values = {
         "cube.size": np.array([[0.014], [0.02], [0.028]]),
@@ -222,7 +222,7 @@ def set_variation_gate(family, seed=37) -> dict:
                     assert torch.equal(a[key], b[key]), key
             evidence["continuation_equals_restore_steps"] = STEPS
 
-            # SWM spells set_variation as set_init_value; the next reset must match it exactly.
+            # stable-worldmodel spells set_variation as set_init_value; the next reset must match it exactly.
             for lane, ref in enumerate(refs):
                 for path, value in values.items():
                     _node(ref, path).set_init_value(_lane(value, lane, path, ref))
@@ -231,7 +231,7 @@ def set_variation_gate(family, seed=37) -> dict:
             _compare(env, refs, oracle)
             _rollout(env, refs, oracle, seed + 10)
 
-            # agent.color alone is not compiled by SWM's dirty rule; ours follows it.
+            # agent.color alone is not compiled by stable-worldmodel's dirty rule; ours follows it.
             env.set_variation({"agent.color": np.array([0.2, 0.8, 0.3])})
             for ref in refs:
                 _node(ref, "agent.color").set_init_value(np.array([0.2, 0.8, 0.3]))

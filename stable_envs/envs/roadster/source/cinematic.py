@@ -55,7 +55,7 @@ def patch_space(xml: str) -> str:
         '<headlight ambient="0.33 0.34 0.37" diffuse="0.12 0.12 0.12" specular="0.05 0.05 0.05"/>',
         xml,
     )
-    # move the sun into the chassis as a tracking light: same direction, shadow map centred on the car
+    # move the sun into the chassis as a tracking light: same direction, shadow map centered on the car
     xml = re.sub(r'\s*<light name="sun"[^>]*/>', "", xml)
     d = SUN_DIR / np.linalg.norm(SUN_DIR)
     p = -d * 60

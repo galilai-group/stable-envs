@@ -1,4 +1,4 @@
-"""Bounded full-State semantics gate against the pinned SWM Reacher wrapper."""
+"""Bounded full-State semantics gate against the pinned stable-worldmodel Reacher wrapper."""
 
 import os
 

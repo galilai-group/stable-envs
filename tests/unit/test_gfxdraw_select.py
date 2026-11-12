@@ -1,6 +1,6 @@
 """Both device branches of ``gfxdraw.select_`` draw bit-identical frames.
 
-The opaque write is ``mask ? colour : surface``: CUDA uses ``torch.where``, CPU uses the faster bitwise
+The opaque write is ``mask ? color : surface``: CUDA uses ``torch.where``, CPU uses the faster bitwise
 identity ``d ^= (d ^ s) * m``. The ``torch.where`` branch is forced on CPU to compare the two.
 """
 

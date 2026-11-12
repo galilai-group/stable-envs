@@ -24,10 +24,10 @@ On the five ``trackcom`` cells (cheetah, walker, hopper, humanoid, quadruped) th
 to 137,533 px over 8 states with ``qpos`` unchanged); the renderer derives each row's masses from the
 leaf.
 
-Classic control: ``GymControlWrapper.render`` swaps pixels exactly equal to a source colour, while
-stable-envs draws the primitive in the colour. The registered default is byte-identical on all five
-envs; a non-default colour differs on anti-aliased boundaries, where swm keeps a blend of the
-original colour (at most 0.6 % of the frame, MountainCar). ``visuals.fg`` and ``visuals.cart`` are
+Classic control: ``GymControlWrapper.render`` swaps pixels exactly equal to a source color, while
+stable-envs draws the primitive in the color. The registered default is byte-identical on all five
+envs; a non-default color differs on anti-aliased boundaries, where swm keeps a blend of the
+original color (at most 0.6 % of the frame, MountainCar). ``visuals.fg`` and ``visuals.cart`` are
 one-to-many: black is the car, terrain and flag pole on MountainCar, and the cart and track on
 CartPole, so one swm leaf drives several of ours and the inverse names the first.
 """
@@ -46,7 +46,7 @@ _AA_ONLY = {
     "such switch. See _Classic._aa_space for what it costs."
 }
 
-#: The caveat on every mapped classic-control colour; the numbers are the worst case over the five envs.
+#: The caveat on every mapped classic-control color; the numbers are the worst case over the five envs.
 _RECOLOR_NOTE = (
     "MAPPED, and NOT bit-identical away from the default. swm recolours the rendered frame by EXACT "
     "uint8 match; stable-envs draws the primitive in the colour. The two agree wherever the reference "
@@ -113,7 +113,7 @@ _CLASSIC_MAPS = {
             "background.color": "visuals.bg",
             "cart.color": "visuals.cart",
             # ONE-TO-MANY: the reference paints the track black too, so swm's ``cart`` swap hits
-            # it as well. Measured: with visuals.cart at a probe value the track changes colour in
+            # it as well. Measured: with visuals.cart at a probe value the track changes color in
             # the swm arm, and a map that moved only ``cart.color`` would leave it black.
             "track.color": "visuals.cart",
             "pole.color": "visuals.pole",
@@ -159,7 +159,7 @@ def _mountain_car(swm_id: str, *dyn: str) -> VariationMap:
 
     ``visuals.fg`` is the widest one-to-many in the family: the reference paints the car body, the 99
     terrain segments and the flag POLE all in black, so one swm leaf drives three of ours. The flag
-    cloth (204, 204, 0) and the wheels (128, 128, 128) are not black and swm therefore cannot recolour
+    cloth (204, 204, 0) and the wheels (128, 128, 128) are not black and swm therefore cannot recolor
     them at all; they are ``ours_only``.
     """
     return VariationMap(

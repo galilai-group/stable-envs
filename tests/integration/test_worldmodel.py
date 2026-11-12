@@ -1,4 +1,4 @@
-"""The frozen SWM correspondence and the test-only bridge. Not a public interop contract."""
+"""The frozen stable-worldmodel correspondence and the test-only bridge. Not a public interop contract."""
 
 from __future__ import annotations
 

@@ -1,7 +1,7 @@
 """Visual-only scenery for the loop course, the traffic-jam highway, the rooftop city and the car-hop plaza.
 
-Everything here is contype=0 / conaffinity=0 (no physics) and sits outside the flight corridors, so
-tasks, collisions and the scripted expert are unchanged.
+Everything here is contype=0 / conaffinity=0 (no physics) and sits outside the flight corridors, so it
+does not affect tasks, collisions or the scripted expert.
 """
 
 from __future__ import annotations
@@ -145,15 +145,15 @@ def loop_decor(course) -> str:
         mid = np.array([(x0 + x1) / 2, 0.0, (z0 + z1) / 2])
         L = float(np.hypot(x1 - x0, z1 - z0))
         a = np.arctan2(z1 - z0, x1 - x0)
-        n = np.array([-np.sin(a), 0.0, np.cos(a)])  # riding-surface normal (toward the loop centre)
+        n = np.array([-np.sin(a), 0.0, np.cos(a)])  # riding-surface normal (toward the loop center)
         e = f'euler="0 {-np.rad2deg(a):.4f} 0"'
         mat = "kerb_red" if i % 2 == 0 else "kerb_white"
-        for y in (c.ramp_width / 2 - 0.25, -c.ramp_width / 2 + 0.25):  # kerbs on the riding surface
+        for y in (c.ramp_width / 2 - 0.25, -c.ramp_width / 2 + 0.25):  # curbs on the riding surface
             out.append(
                 f'<geom type="box" size="{L / 2 + 0.01} 0.25 0.03" pos="{vec(mid + n * 0.03 + np.array([0, y, 0]))}" '
                 f'{e} material="{mat}" {VIS}/>'
             )
-        if i % 2 == 0:  # dashed centre line
+        if i % 2 == 0:  # dashed center line
             out.append(
                 f'<geom type="box" size="{L / 4} 0.08 0.02" pos="{vec(mid + n * 0.025)}" {e} '
                 f'rgba="1 0.85 0.2 0.9" {VIS}/>'
@@ -335,7 +335,7 @@ def city_decor(yc: float, towers, scenery) -> str:
 
 # ---------------------------------------------------------------------------------------------- car-hop plaza
 def hop_plaza(x0: float, y0: float) -> str:
-    """Paved strip for the car-hop scenario: asphalt, parking bay lines, kerbs, lamps and a few trees."""
+    """Paved strip for the car-hop scenario: asphalt, parking bay lines, curbs, lamps and a few trees."""
     out = [f'<geom type="box" size="72 11 0.006" pos="{x0 + 66} {y0} 0.006" material="asphalt" {VIS}/>']
     for x in np.arange(x0 - 4, x0 + 136, 6.0):  # bay lines on both sides of the hop lane
         for side in (-1, 1):

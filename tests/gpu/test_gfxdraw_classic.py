@@ -6,7 +6,7 @@ Three implementations draw the same picture:
     gfxdraw/classic.py    render_classic_torch              the same rules, per pixel, in torch
     gfxdraw/classic.py    render_classic (Triton)           the same again, in one kernel
 
-The first two are compared on CPU (a difference is a wrong op list: geometry, colour, order or
+The first two are compared on CPU (a difference is a wrong op list: geometry, color, order or
 window); the last two on CUDA (a difference is a Triton coding fault). ``test_fast_paths.py`` checks
 ``env.render`` end to end with the kernel on and off.
 """
@@ -68,7 +68,7 @@ def _states(env, kind, n, seed):
 def per_row_style(env, groups: int = 4, seed: int = 3):
     """A style with several distinct rows and both antialias settings in one batch.
 
-    Primitive colours, the antialias switch and MountainCar's baked terrain plate must all flow
+    Primitive colors, the antialias switch and MountainCar's baked terrain plate must all flow
     through the op list per row.
     """
     from stable_envs.testing import conformance as C
@@ -150,7 +150,7 @@ def test_the_description_carries_per_row_appearance(name):
 def test_the_kernel_is_the_description(name, kind, style_kind):
     """CUDA: the Triton kernel equals ``render_classic_torch`` on the same op list.
 
-    The ``per-row`` case drives the kernel's per-environment colour, ``aa`` flag and plate loads.
+    The ``per-row`` case drives the kernel's per-environment color, ``aa`` flag and plate loads.
     """
     if not torch.cuda.is_available():
         pytest.skip("needs a CUDA device")
@@ -170,8 +170,8 @@ def test_the_kernel_is_the_description(name, kind, style_kind):
     ops = _ops(env, s, sty).finish()
 
     if style_kind == "per-row":
-        # Check the batch really is mixed: both aa settings, distinct colours, and (MountainCar) one plate
-        # row per environment, the kernel's PLATE_B = B specialisation.
+        # Check the batch really is mixed: both aa settings, distinct colors, and (MountainCar) one plate
+        # row per environment, the kernel's PLATE_B = B specialization.
         assert len(set(ops.aa.tolist())) == 2, f"{name}: the batch does not hold both aa settings"
         cols = ops.meta_t[..., FC.CM_R : FC.CM_B + 1]
         assert int((cols != cols[:1]).any()), f"{name}: every environment drew the same colours"

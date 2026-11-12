@@ -47,7 +47,7 @@ CASES = [
     dict(rng=6, B=2, K=5, N=333, nonunit_d=True),
     dict(rng=7, B=2, K=7, N=200, degenerate=True, tangent=True, nonunit_d=True),
     # the far field, at three lever arms; `tangent` aims the rays AT the bound, which is where a
-    # cancelling distance test prunes a real hit.
+    # canceling distance test prunes a real hit.
     dict(rng=8, B=2, K=6, N=512, far=30.0, tangent=True),
     dict(rng=9, B=2, K=6, N=512, far=100.0, tangent=True),
     dict(rng=10, B=2, K=6, N=512, far=300.0, tangent=True),

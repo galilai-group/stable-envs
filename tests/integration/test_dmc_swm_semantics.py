@@ -1,4 +1,4 @@
-"""Bounded full-State semantic gates for the first-family, continuation and Humanoid DMC registrations against pinned SWM."""
+"""Bounded full-State semantic gates for the first-family, continuation and Humanoid DMC registrations against pinned stable-worldmodel."""
 
 import os
 

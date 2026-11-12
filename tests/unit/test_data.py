@@ -156,7 +156,7 @@ def test_an_empty_corpus_is_an_error_rather_than_an_empty_tensor():
 def test_a_strided_out_buffer_is_refused_rather_than_silently_scattered():
     """A non-contiguous ``out`` (e.g. ``buf[:, t]``) is refused before anything is written.
 
-    ``reshape`` would either copy (dropping the frames) or write linearly across neighbouring slices.
+    ``reshape`` would either copy (dropping the frames) or write linearly across neighboring slices.
     """
     env = RecordingEnv()
     buf = torch.zeros((4, 3, env.H, env.W, 3), dtype=torch.uint8)

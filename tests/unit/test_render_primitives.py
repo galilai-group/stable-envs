@@ -55,7 +55,7 @@ def test_mv_and_mtv_are_the_matrix_product_and_its_transpose():
 
 @pytest.mark.unit
 def test_the_unrolled_product_does_not_depend_on_the_batch_size():
-    """An elementwise product cannot see its neighbours, so the batch size cannot move it.
+    """An elementwise product cannot see its neighbors, so the batch size cannot move it.
 
     ``einsum`` lowers to ``bmm`` and cuBLAS picks a kernel by batch count, which can move the product
     by an ulp, and an ulp in the ray quadratic is a hit/miss decision. ``tests/gpu`` checks the device.
@@ -139,7 +139,7 @@ def test_primitives_bound_radius_is_the_free_function():
     size = np.array([[0.2, 0, 0], [0.1, 0.3, 0], [0.2, 0.3, 0.4], [0.1, 0.5, 0.2], [1.0, 1.0, 0.1]])
     prims = P.Primitives(kind=kinds, size=size, mat_rgb=np.zeros((5, 3)), tex_rgb=np.ones((5, 3)), spec=np.zeros(5))
     assert np.array_equal(prims.bound_radius(), P.bound_radius(kinds, size))
-    # the device form is the same numbers scaled, INF included, memoised per (device, dtype, scale)
+    # the device form is the same numbers scaled, INF included, memoized per (device, dtype, scale)
     radii = prims.radii("cpu", torch.float32, 2.0)
     assert torch.allclose(radii, torch.as_tensor(P.bound_radius(kinds, size) * 2.0, dtype=torch.float32))
     assert prims.radii("cpu", torch.float32, 2.0) is radii

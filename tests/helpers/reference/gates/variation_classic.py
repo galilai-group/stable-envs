@@ -18,11 +18,11 @@ _FAST_SPEED = {"pendulum": 14.0, "mountain_car": 0.2, "mountain_car_continuous":
 
 
 def classic_physics_gate(domain: str, seed: int = 13, steps: int = 24) -> dict:
-    """Every physics leaf of a classic-control cell, explicit and sampled, against SWM.
+    """Every physics leaf of a classic-control cell, explicit and sampled, against stable-worldmodel.
 
     Lanes sit at 10 %, 50 % and 90 % of each leaf's range; State and the whole step output
-    (reward, termination) must equal SWM's exactly. Where the cell's frame draws physics leaves
-    (CartPole's pole length, Acrobot's link lengths), every reset and step frame must equal SWM's
+    (reward, termination) must equal stable-worldmodel's exactly. Where the cell's frame draws physics leaves
+    (CartPole's pole length, Acrobot's link lengths), every reset and step frame must equal stable-worldmodel's
     too, as worst-frame normalized MSE 0. A plain reset then restores the defaults.
     """
     batch = 3

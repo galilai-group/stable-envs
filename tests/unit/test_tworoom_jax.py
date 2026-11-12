@@ -1,4 +1,4 @@
-"""Parity and buffer regressions specific to the TwoRoom JAX port."""
+"""Parity and buffer regressions specific to the TwoRoom JAX physics."""
 
 import jax
 import numpy as np

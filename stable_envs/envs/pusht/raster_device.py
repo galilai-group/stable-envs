@@ -656,7 +656,7 @@ if R.HAVE_TRITON:
 
     @triton.jit
     def _k_transform(px, py, c, s, gx_, gy_):
-        """Chipmunk body transform ``(tx, ty)`` for position, cos/sin and centre of gravity."""
+        """Chipmunk body transform ``(tx, ty)`` for position, cos/sin and center of gravity."""
         gx = libdevice.add_rn(libdevice.add_rn(libdevice.mul_rn(c, gx_), libdevice.mul_rn(-s, gy_)), px)
         gy = libdevice.add_rn(libdevice.add_rn(libdevice.mul_rn(s, gx_), libdevice.mul_rn(c, gy_)), py)
         tx = libdevice.sub_rn(gx, libdevice.sub_rn(libdevice.mul_rn(gx_, c), libdevice.mul_rn(gy_, s)))

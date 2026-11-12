@@ -115,7 +115,7 @@ craftax-gpu = ["craftax>=1.6.1", "jax[cuda12]>=0.4.30; sys_platform == 'linux'"]
 # pip needs `pip install "miniworld @ git+https://github.com/hlillemark/Miniworld@<commit>"` first.
 miniworld = ["miniworld>=2.1", "pyglet>=1.5.27,<2", "numba>=0.60"]
 hf = ["datasets>=2.14"]
-examples = ["imageio", "imageio-ffmpeg", "opencv-python"]
+examples = ["imageio", "imageio-ffmpeg", "opencv-python-headless"]
 # No `all` extra: Fetch needs mujoco<3.12, and nvdiffrast cannot be expressed
 # as PyPI metadata.
 # docs and dev repeat the dependency groups of the same name for pip installs.

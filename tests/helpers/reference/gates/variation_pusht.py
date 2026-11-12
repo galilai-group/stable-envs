@@ -1,10 +1,10 @@
 """PushT variation leaves against pinned stable_worldmodel.
 
-Each leaf is set per lane (``variation_values`` with one value per lane) and, where SWM
-samples it, drawn per lane (``variation``); one SWM PushT per lane is reset with the same seed
+Each leaf is set per lane (``variation_values`` with one value per lane) and, where stable-worldmodel
+samples it, drawn per lane (``variation``); one stable-worldmodel PushT per lane is reset with the same seed
 and options. The reset bodies, observation, goal and frame must match exactly. A short rollout's
 terminations must match too, its observations and rewards within ``ROLLOUT_ATOL`` and its frames within
-``ROLLOUT_FRAME_MSE``. A leaf must also move SWM away from its default, so the comparison is not two
+``ROLLOUT_FRAME_MSE``. A leaf must also move stable-worldmodel away from its default, so the comparison is not two
 defaults agreeing.
 """
 
@@ -157,10 +157,10 @@ CONFIGURED = {"block.shape": np.asarray([3, 5, 7])}
 
 
 def set_variation_gate(name: str = "PushT", seed: int = 41) -> dict:
-    """``set_variation`` mid-episode: appearance now, everything at the next reset, both as SWM draws it.
+    """``set_variation`` mid-episode: appearance now, everything at the next reset, both as stable-worldmodel draws it.
 
-    SWM has no ``set_variation``; its leaf ``set_value`` is what moves the running frame, and
-    ``set_init_value`` is what a later reset restores. SWM draws the goal pose cached at reset, so
+    stable-worldmodel has no ``set_variation``; its leaf ``set_value`` is what moves the running frame, and
+    ``set_init_value`` is what a later reset restores. stable-worldmodel draws the goal pose cached at reset, so
     its frame for a moved goal is the one drawn with ``goal_pose`` set to that pose.
     """
     envs = _swm_lanes(name, seed, {"variation": []})

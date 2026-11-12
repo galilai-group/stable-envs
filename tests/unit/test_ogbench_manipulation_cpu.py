@@ -1,4 +1,4 @@
-"""CPU contract and controlled SWM-oracle gates; renderer acceptance is separate."""
+"""CPU contract and controlled stable-worldmodel oracle gates; renderer acceptance is separate."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Exact semantic gate for TwoRoom, Piecewise and SimplePointMaze against pinned SWM."""
+"""Exact semantic gate for TwoRoom, Piecewise and SimplePointMaze against pinned stable-worldmodel."""
 
 from __future__ import annotations
 

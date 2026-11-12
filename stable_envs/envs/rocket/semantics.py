@@ -36,7 +36,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         {"environment.start_height_ratio", "environment.start_horizontal_offset", "environment.start_tilt"}
     )
     undrawn_variation_leaves = frozenset({"environment.sky_color"})
-    #: The source loads its original white pad unless reset options ask for colour variations.
+    #: The source loads its original white pad unless reset options ask for color variations.
     DRAWN_PAD_DEFAULT = (255.0, 255.0, 255.0)
     _render_style = None
 
@@ -286,7 +286,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         return TensorDict({("renderer", "pose"): rows.clone()}, [len(rows)], device=self.device)
 
     def default_style(self):
-        """The default Variation row with the pad colour the source actually draws by default."""
+        """The default Variation row with the pad color the source actually draws by default."""
         row = np.array(super().default_style(), np.float32)
         off, width = next((o, w) for p, o, w in self.variation_space.flat_layout() if p == "pad.color")
         row[off : off + width] = self.DRAWN_PAD_DEFAULT
@@ -326,7 +326,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         elif self._render_style is not None:
             rows = self._render_style
         else:
-            # The live colours alone; exporting and validating the whole State is not needed for them.
+            # The live colors alone; exporting and validating the whole State is not needed for them.
             rows = self._style_of(self._simulator.rgba())
             rows[:, frozen.style_layout()["flame.ignited"][0]] = 0
         if overrides:

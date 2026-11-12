@@ -1,8 +1,8 @@
-"""The registry knows stable-envs class names; the 38 SWM ids live in the test-only crosswalk.
+"""The registry knows stable-envs class names; the 38 stable-worldmodel ids live in the test-only crosswalk.
 
 Two oracles:
 
-  * the SWM ids are asserted against the frozen SWM-id -> cell mapping
+  * the stable-worldmodel ids are asserted against the frozen stable-worldmodel id -> cell mapping
     (``tests/fixtures/swm/frozen_cells.json``), from which the crosswalk is read;
   * the canonical class names are asserted against the frozen registry baseline
     (``tests/fixtures/regression/references/registry_baseline.json``).
@@ -153,7 +153,7 @@ def test_list_envs_and_info_answer_without_constructing_anything():
 
 
 def test_renamed_class_names_do_not_resolve():
-    """Renamed classes and frozen SWM ids are not public aliases."""
+    """Renamed classes and frozen stable-worldmodel ids are not public aliases."""
     samples = ("DMCAcrobotSwingup", "DMCReacherHard", "PointmazeLargeNavigate", "MujocoAnt", "PFRocketLanding")
     for old in samples:
         live = canonical_from_frozen(old)

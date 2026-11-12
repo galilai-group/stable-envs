@@ -92,7 +92,7 @@ def blend_dots(
 ) -> torch.Tensor:
     """Composite dots in order onto a CPU uint8 base ``(B, H, W, 3)``, as ``navdot.blend_dots`` does on CUDA.
 
-    Positions are (B, ND, 2), sigmas (B, ND) and colours (B, ND, 3). ``base`` may repeat one image
+    Positions are (B, ND, 2), sigmas (B, ND) and colors (B, ND, 3). ``base`` may repeat one image
     over the batch with a zero stride; that image is read once. Write into ``out`` when supplied.
     """
     B, H, W, _ = base.shape

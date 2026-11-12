@@ -122,7 +122,7 @@ NEWCELL_VARIATION_MAPS: dict[str, VariationMap] = {
         swm_id="swm/PFRocketLanding-v0",
         # Same dotted path and 0-255 units on both sides. `pad.color` rests on a model measurement:
         # the pad is out of the reference camera's view in the sampled regime, but getVisualShapeData
-        # shows our material_table reproduces swm's 3-decimal URDF quantisation (f"{v:.3f}").
+        # shows our material_table reproduces swm's 3-decimal URDF quantization (f"{v:.3f}").
         identical=(
             "rocket.body_color",
             "rocket.fin_color",
@@ -361,7 +361,7 @@ NEWCELL_VARIATION_MAPS.update(
         "SimplePointMaze": VariationMap(
             swm_id="swm/SimplePointMaze-v0",
             # Same dotted path, units and default on both sides, checked against the live space:
-            # RGBBox 0-255 for the colours, world units on the 5x5 domain for the radii and
+            # RGBBox 0-255 for the colors, world units on the 5x5 domain for the radii and
             # positions, Discrete(3, start=4) for walls.number.
             identical=(
                 "agent.color",

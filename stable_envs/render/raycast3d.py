@@ -47,7 +47,7 @@ except ImportError:  # reported by the renderer, never silent
 class Camera:
     """Pinhole camera with the near-plane frustum reported by ``mjvGLCamera``.
 
-    Keeping the frustum supports off-centre and stereo cameras.
+    Keeping the frustum supports off-center and stereo cameras.
     """
 
     pos: tuple
@@ -86,7 +86,7 @@ class Camera:
         return r, u, f
 
     def rays(self, H: int, W: int, device, dtype=torch.float32) -> tuple[torch.Tensor, torch.Tensor]:
-        """Return origin (3,) and unit directions (H*W, 3) through pixel centres, top row first."""
+        """Return origin (3,) and unit directions (H*W, 3) through pixel centers, top row first."""
         r, u, f = self.basis()
         half_h = 0.5 * (self.top - self.bottom)
         half_w = half_h * (W / H)
@@ -102,7 +102,7 @@ class Camera:
         )
 
     def project(self, pts: torch.Tensor, aspect: float = 1.0) -> torch.Tensor:
-        """Project world points (..., 3) to normalised device coordinates (..., 2).
+        """Project world points (..., 3) to normalized device coordinates (..., 2).
 
         ``aspect`` is W/H. The result is used to choose conservative screen windows.
         """
@@ -185,7 +185,7 @@ def _sphere(o, d, pos, r, normal=True):
 def _ellipsoid(o, d, pos, R, size, normal=True):
     """Intersect an ellipsoid by scaling local rays to a unit sphere.
 
-    Normals are normalised gradients in the local frame, rotated back to world space.
+    Normals are normalized gradients in the local frame, rotated back to world space.
     A nonpositive semi-axis produces a miss.
     """
     ol = mtv3(R, o - pos)
@@ -964,7 +964,7 @@ def _use_triton(backend, o, *inputs, skip=None) -> bool:
 
 
 def _launch(kinds, sizes, pos, R, o, d, lim, skip, mode):
-    # Leading strides allow expanded inputs without materialising each ray origin or size.
+    # Leading strides allow expanded inputs without materializing each ray origin or size.
     B, N = o.shape[0], o.shape[1]
     K = len(kinds)
     dev = o.device
@@ -1089,7 +1089,7 @@ def shade(
 ) -> torch.Tensor:
     """Return RGB (..., 3) in [0, 1].
 
-    White specular is added to the material-lit colour before texture modulation;
+    White specular is added to the material-lit color before texture modulation;
     texturing only the diffuse term changes highlights on textured surfaces.
     """
     amb = lamb.sum()
@@ -1152,7 +1152,7 @@ def composite(
     ``tile`` caps the conservative screen window; an oversized bound falls back to the
     full frame. ``mat_rgb`` (B, P, 3) and ``size_scale`` (B,) override appearance per
     environment. ``shader(rows, hit, normal, view, prim, mat)`` replaces ``lights``
-    and returns covered-sample colour in [0, 255].
+    and returns covered-sample color in [0, 255].
     A supplied ``out`` buffer is filled and returned as a (B, H, W, 3) view.
     ``cast`` limits the cast to these primitive indices; hits keep their index in ``prims``.
     The other primitives must not cover any sample that these can cover.
@@ -1308,7 +1308,7 @@ def screen_span(cam: Camera, prims: Primitives, xpos: torch.Tensor, H: int, W: i
     """Return (x0, y0, width, height) for projected primitive bounds, or None if unbounded.
 
     Origins are per-row device tensors; extents are host integers covering the batch.
-    Projects all eight bounding-box corners and synchronises once.
+    Projects all eight bounding-box corners and synchronizes once.
     """
     bounds = screen_bounds(cam, prims, xpos, H, W, device, bound_scale)
     if bounds is None:

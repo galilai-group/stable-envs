@@ -3,7 +3,7 @@
 A State row is drawn by rebuilding the world in a ``miniworld.envs.MovingBlockWorld`` (hlillemark/Miniworld at its
 ``flowm_release`` branch, the code frozen for the FloWM paper) as ``MiniWorldEnv.reset`` builds it after
 ``_gen_world``: one rectangular room, the agent first in the entity list, the blocks after it in placement order,
-then the default (non-randomised) parameters and the static display list. Render envs hold a GL context each and
+then the default (non-randomized) parameters and the static display list. Render envs hold a GL context each and
 are kept for the process.
 """
 
@@ -18,7 +18,7 @@ import torch
 from tensordict import TensorDict
 
 #: Fork commit the family runs and its reference gate compares against: the head of ``flowm_release``.
-#: The fork's master changes the base palette's "gray" to "grey", which changes the drawn block colours.
+#: The fork's master changes the base palette's "gray" to "grey", which changes the drawn block colors.
 FORK_COMMIT = "bc7972050155b67e242c07bfdccfe1eeddbf9882"
 FORK_URL = "https://github.com/hlillemark/Miniworld"
 
@@ -64,7 +64,7 @@ BOX, BALL = 0, 1
 ACTION_HIGH = 8
 
 #: The FloWM dynamic dataset ("SUNDAY V2" in the fork's ``scripts/old_generation_commands.py``): plain
-#: coloured boxes in the env's white-walled, concrete-floored room. Like the script's
+#: colored boxes in the env's white-walled, concrete-floored room. Like the script's
 #: ``--num-blocks-min 6 --num-blocks-max 10``, each lane draws its block count uniformly from [6, 10] at reset.
 FLOWM = {
     "room_size": 16,
@@ -78,11 +78,11 @@ FLOWM = {
     "agent_box_allow_overlap": True,
     "num_blocks": (6, 10),
     "ensure_base_palette": True,
-    # --turn-step-deg, --forward-step, --cam-fov-y: fixed (non-randomised) parameters
+    # --turn-step-deg, --forward-step, --cam-fov-y: fixed (non-randomized) parameters
     "turn_step": 90.0,
     "forward_step": 1.0,
     "cam_fov_y": 60.0,
-    # --heading-zero; the paper's script does not wrap the heading (master's later script wraps it to [0, 2pi))
+    # --heading-zero; the paper's script does not wrap the heading (the script on master wraps it to [0, 2pi))
     "heading_zero": True,
     "wrap_heading": False,
     # --steps 500 (the script drops the frame after the last step, so a 500-step limit gives the same frames)

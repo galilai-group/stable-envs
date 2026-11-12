@@ -2,7 +2,7 @@
 
 ``reset_leaf_gate`` covers a per-lane reset distribution (start and target/goal positions):
 explicit values and seeded per-lane draws must give the same reset State and first frame as
-SWM, and a short rollout must keep matching. ``appearance_gate`` covers Piecewise leaves that
+stable-worldmodel, and a short rollout must keep matching. ``appearance_gate`` covers Piecewise leaves that
 only the frame reads. ``navigation_reset_rule_gate`` checks that a plain reset restores a leaf the
 previous reset's options set.
 """
@@ -43,7 +43,8 @@ def _pixel(domain, position):
 
 
 def _start_frames(domain, starts, ours, theirs, ceiling) -> dict:
-    """First-frame agreement with SWM: the worst per-frame MSE against ``ceiling``, plus a window at each start."""
+    """First-frame agreement with stable-worldmodel: the worst per-frame MSE against ``ceiling``, plus a window
+    at each start."""
     from stable_envs.testing.conformance import frame_mse, interior_mask, pixel_agreement
 
     agreement = pixel_agreement(ours, theirs)
@@ -190,7 +191,7 @@ def _swm_value(path, value):
 
 
 def appearance_gate(seed: int = 5, steps: int = 4) -> dict:
-    """Piecewise target and bias-field leaves, per lane, against SWM's frames through a rollout."""
+    """Piecewise target and bias-field leaves, per lane, against stable-worldmodel's frames through a rollout."""
     values = _lane_values(LAYERS)
     refs = [
         NativeNavigationReference(
@@ -227,7 +228,7 @@ def appearance_gate(seed: int = 5, steps: int = 4) -> dict:
 
 
 def zones_bias_field_gate(seed: int = 5) -> dict:
-    """PiecewiseZones with the bias arrows over the zone tints, against SWM's frame."""
+    """PiecewiseZones with the bias arrows over the zone tints, against stable-worldmodel's frame."""
     config = {"rendering.render_bias_field": 1, "zones.bias_2": [0.25, 3.0]}
     ref = NativeNavigationReference(
         "piecewise",
@@ -261,9 +262,9 @@ def zones_bias_field_gate(seed: int = 5) -> dict:
 
 
 def min_steps_probe(seeds=range(5), steps: int = 8) -> dict:
-    """``task.min_steps`` at its extremes against its default, in SWM alone: reset, rollout and frames.
+    """``task.min_steps`` at its extremes against its default, in stable-worldmodel alone: reset, rollout and frames.
 
-    SWM declares the leaf and reads it only in TwoRoom's ``_constrain_target_by_min_steps``, whose
+    stable-worldmodel declares the leaf and reads it only in TwoRoom's ``_constrain_target_by_min_steps``, whose
     use as ``constrain_fn`` is commented out; Piecewise never reads it.
     """
     evidence = {}
@@ -306,7 +307,7 @@ GATES = (
 
 
 def navigation_reset_rule_gate(seed=29, steps=8) -> dict:
-    """TwoRoom ``agent.speed`` set by one reset's options, then a plain reset, stepped against SWM."""
+    """TwoRoom ``agent.speed`` set by one reset's options, then a plain reset, stepped against stable-worldmodel."""
     speed = np.asarray([6.5], np.float32)
     actions = np.random.default_rng(seed).uniform(-1, 1, (steps, 3, 2)).astype(np.float32)
     with se.make("TwoRoom", num_envs=3, device="cpu") as env:

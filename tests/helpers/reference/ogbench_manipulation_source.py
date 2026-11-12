@@ -1,6 +1,6 @@
 """Source Cube/Scene classes with explicitly owned entropy, and engine/state capture.
 
-Reset, task, physics and rendering delegate to the pinned SWM/OGBench implementations;
+Reset, task, physics and rendering delegate to the pinned stable-worldmodel/OGBench implementations;
 only the RNG boundaries, the arm start and the default cube size are owned here. The arm starts as
 OGBench samples it, unless the reset options name ``agent.ee_start_position`` or its anchor is not the
 default. The default cube size is OGBench's 0.02, not stable-worldmodel's float32(0.02).

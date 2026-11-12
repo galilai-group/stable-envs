@@ -42,7 +42,7 @@ def test_fused_matches_the_torch_path_on_sampled_states(cfg, B):
 
 @pytest.mark.parametrize("cfg", CONFIGS)
 def test_fused_matches_on_states_the_env_would_never_sample(cfg):
-    """Dots off the frame, on and between pixel centres, and stacked on each other."""
+    """Dots off the frame, on and between pixel centers, and stacked on each other."""
     env = se.make(cfg, num_envs=1, device="cuda")
     pos = [
         (112.0, 112.0),
@@ -72,9 +72,9 @@ def test_fused_matches_on_states_the_env_would_never_sample(cfg):
 
 @pytest.mark.parametrize("cfg", CONFIGS)
 def test_per_row_styles_against_the_class_s_own_torch_path(cfg):
-    """Per-row dot colours and radii through the kernel match the class's own ``env.blend_dots``.
+    """Per-row dot colors and radii through the kernel match the class's own ``env.blend_dots``.
 
-    The reference is the class method, so its dot order (each blend quantises to uint8) is what is
+    The reference is the class method, so its dot order (each blend quantizes to uint8) is what is
     compared, and per-row styles catch a kernel reading row 0 for the whole batch.
     """
     B = 6

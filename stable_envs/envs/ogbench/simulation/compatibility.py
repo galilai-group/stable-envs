@@ -459,7 +459,7 @@ class Compatibility:
         default = np.mean(self._arm_sampling_bounds, axis=0)
         named = selected | set(options.get("variation_values", {}))
         self._arm_pinned = ARM_START in named or not np.array_equal(tree._walk(ARM_START).init_value, default)
-        # SWM visits requested leaves in the tree's sorted order, not request order.
+        # stable-worldmodel visits requested leaves in the tree's sorted order, not request order.
         tree.update([name for name in tree.names() if name in selected])
         explicit_size = options.get("variation_values", {}).get("cube.size")
         # NumPy 2 weak Python scalars keep the source float32 size vector in float32;

@@ -1,4 +1,4 @@
-"""``bake_unsamplable_textures`` flattens textures MJWarp cannot sample to their mean colour.
+"""``bake_unsamplable_textures`` flattens textures MJWarp cannot sample to their mean color.
 
 It covers textures that crash the sampler (e.g. ``swm/OGBScene-v0``'s cube map on UV-less button meshes,
 which raises ``Warp CUDA error 700``), and leaves merely badly UV'd geoms, which still render, alone.
@@ -95,7 +95,7 @@ def test_the_bake_is_reversible():
 
 
 def test_the_record_is_declarable_not_just_a_count():
-    """The bake record names the material, texture, type, mean colour and geoms."""
+    """The bake record names the material, texture, type, mean color and geoms."""
     m = _cube_on_uvless_mesh()
     rec = bake_unsamplable_textures(m)["baked"][0]
     for k in ("material", "material_name", "texture", "texture_name", "tex_type", "mean_rgb", "geoms", "geom_names"):

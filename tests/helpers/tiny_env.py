@@ -14,7 +14,7 @@ NAMES = ("agent_x", "agent_y", "block_x", "block_y", "block_angle")
 class TinyEnv(StableEnv):
     """5-wide state, a 3x4 frame, one 3-wide appearance knob.
 
-    Pixel (0,0) carries ``state[0]`` and pixel (0,1) the block colour, so "did row 3 get row 3's
+    Pixel (0,0) carries ``state[0]`` and pixel (0,1) the block color, so "did row 3 get row 3's
     appearance" is an assertion on bytes. Not registered.
     """
 

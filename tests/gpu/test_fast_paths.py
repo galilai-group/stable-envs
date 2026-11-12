@@ -1,6 +1,6 @@
 """Fast-path renderers must be bit-identical to their reference paths on sampled registry states.
 
-Each case pairs an optimisation with the implementation it replaces, renders one input both ways,
+Each case pairs an optimization with the implementation it replaces, renders one input both ways,
 and compares the uint8 frames with a threshold of zero.
 """
 
@@ -89,12 +89,12 @@ def _classic_enabled() -> bool:
 
 @dataclass(frozen=True)
 class FastPath:
-    """One optimisation and what is needed to render it against the path it replaces."""
+    """One optimization and what is needed to render it against the path it replaces."""
 
     id: str
     #: What a difference means; included in the failure message.
     why: str
-    #: Registered env names this optimisation is reachable from, and the modules whose import failure
+    #: Registered env names this optimization is reachable from, and the modules whose import failure
     #: explains an empty list.
     names: tuple
     modules: tuple
@@ -107,7 +107,7 @@ class FastPath:
     prepare: Callable
     #: ``(env, payload, fast: bool) -> uint8 frames``. Called twice per case, on the same payload.
     frames: Callable
-    #: ``(env) -> str | None``. A reason this env cannot exercise the optimisation, or None.
+    #: ``(env) -> str | None``. A reason this env cannot exercise the optimization, or None.
     inapplicable: Callable = field(default=lambda env: None)
     #: Extra gate on the whole case, evaluated once at collection.
     enabled: Callable = field(default=lambda: True)
@@ -209,7 +209,7 @@ def _bounds_frames(env, states, fast: bool):
 
 
 def _trackcom_prepare(seed: int):
-    """The env's states and a per-lane variation that recolours the floor, from one generator."""
+    """The env's states and a per-lane variation that recolors the floor, from one generator."""
 
     def prepare(env):
         import numpy as np
@@ -570,7 +570,7 @@ def test_a_flat_polygon_is_not_culled():
     """A zero-area polygon is never culled by tile culling.
 
     Collinear vertices make the halfplane test cover the whole line through them, beyond the vertex
-    bounding box. The line sits at y = 32.5 because pixel centres are at half-integers here; on an
+    bounding box. The line sits at y = 32.5 because pixel centers are at half-integers here; on an
     integer coordinate it would paint nothing and the test would pass vacuously.
     """
     from stable_envs.render.scene import KIND_POLY, Scene2D

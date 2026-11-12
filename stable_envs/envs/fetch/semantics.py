@@ -167,7 +167,7 @@ class FetchSemantics:
         if (set(sampled) | set(explicit)) - self._reset_keys:
             raise ValueError("Unsupported Fetch reset Variation")
         # Variation reset uses its own Gymnasium space tree and reseeds even
-        # for seed=None, as SWM does. It never consumes simulator PCG64.
+        # for seed=None, as stable-worldmodel does. It never consumes simulator PCG64.
         leaves = _source_sampling_tree(self._has_object)
         values = []
         for lane in range(self.B):
@@ -197,7 +197,7 @@ class FetchSemantics:
         """Copy this episode's appearance into the installed Variation.
 
         Any source visual leaf detaches the table, floor and object materials, revealing
-        their geom colors (grey 0.5 instead of the material colors). ``background.color``
+        their geom colors (gray 0.5 instead of the material colors). ``background.color``
         colors the floor and fills the sky; ``light.intensity`` is absolute where
         ``light.diffuse`` scales the registered light. The next reset restores the
         registered materials first.

@@ -1,10 +1,10 @@
 """Miniworld's MovingBlockWorld, the 3D Dynamic Blockworld of Flow Equivariant World Models.
 
-Each environment is the hlillemark/Miniworld fork's ``MovingBlockWorld``: an agent in one room of coloured boxes
+Each environment is the hlillemark/Miniworld fork's ``MovingBlockWorld``: an agent in one room of colored boxes
 and balls that each move by a fixed velocity every step and bounce off walls. All environments step together
 in a Numba kernel (CPU) or a Triton kernel (CUDA) that follow the fork's step rules; resets sample the fork's reset
 distribution from a counter-based generator. The default ``preset="flowm"`` is the FloWM dynamic
-dataset: plain coloured boxes, each moving one cell per step in a cardinal direction through the agent and
+dataset: plain colored boxes, each moving one cell per step in a cardinal direction through the agent and
 each other, in a 16 x 16 grid room with 90 degree turns, unit forward steps and 500 steps.
 Each environment draws 6 to 10 blocks per episode, as the dataset script does.
 ``preset="flowm-textured"`` is the paper's textured split (random wall, floor and block textures, and balls);
@@ -57,7 +57,7 @@ def _require_fork() -> None:
 class MiniWorldMovingBlockWorld(Env):
     """MovingBlockWorld environments stepped in one batch, with complete restorable State and Miniworld's own frames.
 
-    State: the agent pose and carried block, the room textures, each block's kind, colour, texture, size,
+    State: the agent pose and carried block, the room textures, each block's kind, color, texture, size,
     pose and velocity, the reset generator's seed and episode, and the step count.
     """
 

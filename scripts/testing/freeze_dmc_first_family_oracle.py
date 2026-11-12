@@ -1,4 +1,4 @@
-"""Freeze full-State oracles for the first DMC family from the pinned SWM wrappers only."""
+"""Freeze full-State oracles for the first DMC family from the pinned stable-worldmodel wrappers only."""
 
 import importlib.metadata
 from pathlib import Path

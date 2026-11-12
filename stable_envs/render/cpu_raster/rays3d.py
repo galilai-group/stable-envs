@@ -266,7 +266,7 @@ def _overlaps(cx, cy, cz, spread, ax, ay, az, angle, kind, S, P, b, k):
 
 @njit(cache=True, error_model="numpy")
 def _packet_bounds(o, d, a, e):
-    """Return the bounding sphere (centre, radius) of origins and the direction cone (axis, half-angle)."""
+    """Return the bounding sphere (center, radius) of origins and the direction cone (axis, half-angle)."""
     cx = 0.0
     cy = 0.0
     cz = 0.0

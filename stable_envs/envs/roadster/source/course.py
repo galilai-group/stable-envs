@@ -49,7 +49,7 @@ class Course:
         return np.array([self.pad_center[0], self.pad_center[1], self.pad_height])
 
     def targets(self) -> list[np.ndarray]:
-        """Waypoints the pilot must hit in order: ring centres, then a hover point above the pad."""
+        """Waypoints the pilot must hit in order: ring centers, then a hover point above the pad."""
         pts = [np.asarray(r.center, dtype=float) for r in self.rings]
         pts.append(self.pad_top + np.array([0.0, 0.0, 1.0]))
         return pts

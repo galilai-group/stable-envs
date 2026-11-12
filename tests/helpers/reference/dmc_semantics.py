@@ -1,4 +1,4 @@
-"""Pinned-SWM State and task oracle for the twelve DMC tasks with SWM registrations.
+"""Pinned stable-worldmodel State and task oracle for the twelve DMC tasks with stable-worldmodel registrations.
 
 Source fields are read directly, never through the candidate's serializer or schema.
 ``MODEL_FIELDS`` is the only domain-specific State handling.
@@ -53,8 +53,9 @@ MODEL_FIELDS = {
 }
 ALIGNED = {"ball_in_cup", "finger", "manipulator", "quadruped"}
 _GRAVITY = ("gravity.x", "gravity.y", "gravity.z")
-# Physics leaves stable-envs State carries under ("physics", *leaf), with how SWM holds each one:
-# gravity and friction are read from SWM's compiled model, masses from the values SWM recompiled with.
+# Physics leaves stable-envs State carries under ("physics", *leaf), with how stable-worldmodel holds each one:
+# gravity and friction are read from stable-worldmodel's compiled model, masses from the values
+# stable-worldmodel recompiled with.
 PHYSICS_LEAVES = {
     "acrobot": _GRAVITY,
     "pendulum": _GRAVITY,
@@ -79,7 +80,7 @@ _FLOOR = {"cheetah": "ground"}
 
 
 def swm_physics(wrapper, domain, leaf):
-    """The value SWM actually ran for one physics leaf."""
+    """The value stable-worldmodel actually ran for one physics leaf."""
     physics = wrapper.env.physics
     if leaf.startswith("gravity."):
         return float(physics.model.opt.gravity["xyz".index(leaf[-1])])

@@ -777,7 +777,7 @@ class Env:
         return np.stack(rows)
 
     def draw_reset_values(self, seed: int | None = None, options: Mapping | None = None) -> dict[str, np.ndarray]:
-        """Resolve SWM-style reset options into ``{path: (num_envs, ...)}`` values.
+        """Resolve stable-worldmodel-style reset options into ``{path: (num_envs, ...)}`` values.
 
         Every ``reset`` goes through here. Variation leaves the options do not name return
         to their defaults (the registered values, or the last ``set_variation``); named

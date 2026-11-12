@@ -115,7 +115,7 @@ def _mat_and_tex(m, g):
     mat = np.asarray(m.geom_rgba[g], np.float64)[:3]
     tex = np.ones(3)
     if mid >= 0:
-        if np.allclose(m.geom_rgba[g], [0.5, 0.5, 0.5, 1.0]):  # compiler default -> material colour
+        if np.allclose(m.geom_rgba[g], [0.5, 0.5, 0.5, 1.0]):  # compiler default -> material color
             mat = np.asarray(m.mat_rgba[mid], np.float64)[:3]
         tid = m.mat_texid[mid]
         tid = int(np.max(tid)) if np.ndim(tid) else int(tid)
@@ -159,7 +159,7 @@ _SHADOW_EPS = 1e-3  # shadow-ray origin offset along the surface normal
 _BOX = 6  # mjGEOM_BOX
 # World-unit margin of the wall cull, far above the rounding error of a box test.
 _CULL_SLACK = 0.05
-# Centre of the padding box, far beyond every shadow ray.
+# Center of the padding box, far beyond every shadow ray.
 _FAR = 1.0e6
 _CULL_WALLS = True
 # Composite the goal and the body in separate tiles when their screen bounds do not meet.
@@ -460,7 +460,7 @@ def _scene_env(loco: str, maze: str, size: int, ob_type: str = "pixels"):
         mat_rgba=np.array(m.mat_rgba, copy=True),
         geom_rgba=np.array(m.geom_rgba, copy=True),
         # Texture bytes upload at context creation, so cache a renderer per texture mode;
-        # recoloured checkers share one renderer and upload their texels explicitly.
+        # recolored checkers share one renderer and upload their texels explicitly.
         # Keep contexts alive to avoid corrupting other live renderers during teardown.
         renderers={},
         agent=[
@@ -497,7 +497,7 @@ def _upload_xml_checker(env, loco: str) -> None:
 
 
 def _checker_masks(loco: str):
-    """Texel masks of the XML checker's two colours; pixel scenes overwrite it at construction."""
+    """Texel masks of the XML checker's two colors; pixel scenes overwrite it at construction."""
     import importlib
 
     import mujoco
@@ -603,12 +603,12 @@ class OGBenchMaze(Env):
             )
 
     def make_variation_space(self) -> Dict:
-        """Expose body, floor, wall and camera appearance with source float colour defaults.
+        """Expose body, floor, wall and camera appearance with source float color defaults.
 
         Keep RGB in [0, 1]; uint8 quantization changes MuJoCo material shading.
         """
         agent_rgb = [0.7, 0.5, 0.3]
-        # Pixel observations recolour the XML's white walls; state observations keep them.
+        # Pixel observations recolor the XML's white walls; state observations keep them.
         wall_rgb = [1.0, 1.0, 1.0] if getattr(self, "RENDER_OB_TYPE", "pixels") == "states" else [0.6, 0.6, 0.6]
         return Dict(
             {
@@ -651,7 +651,7 @@ class OGBenchMaze(Env):
         "floor.pixel_encoding",
         "light.intensity",
     )
-    #: Appearance leaves ``reset`` accepts by value or by sampling, as swm's OGBMaze does.
+    #: Appearance leaves ``reset`` accepts by value or by sampling, as stable-worldmodel's OGBMaze does.
     reset_value_paths = frozenset(
         {"agent.color", "walls.color", "floor.color", "floor.pixel_encoding", "light.intensity"}
     )
@@ -933,7 +933,7 @@ class OGBenchMaze(Env):
     ) -> torch.Tensor:
         """Render compact rows to uint8 frames, preserving leading batch dimensions.
 
-        Group only by plate-affecting styles; body colour and scale remain per row.
+        Group only by plate-affecting styles; body color and scale remain per row.
         """
         s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
@@ -1050,9 +1050,9 @@ class OGBenchMaze(Env):
         return out
 
     def _agent_appearance(self, sc: _Scene, sty, sub):
-        """Return per-geom colours and per-row scale, preserving non-self materials.
+        """Return per-geom colors and per-row scale, preserving non-self materials.
 
-        The ant’s white leg geoms distinguish its heading and must not be recoloured.
+        The ant’s white leg geoms distinguish its heading and must not be recolored.
         """
         base = torch.as_tensor(sc.agent_base, device=self.device, dtype=torch.float32)
         is_self = torch.as_tensor(sc.agent_is_self, device=self.device)
@@ -1100,7 +1100,7 @@ class OGBenchMaze(Env):
         """Construct an independent source environment for reference comparisons.
 
         A pixel scene shows the XML checker floor, which is the default ``floor.pixel_encoding=0``
-        and what swm's first reset draws. Keep its GL context alive while other renderers are in use.
+        and what stable-worldmodel's first reset draws. Keep its GL context alive while other renderers are in use.
         """
         ob_type = getattr(cls, "RENDER_OB_TYPE", "pixels")
         env = _build_reference(cls.LOCO, cls.MAZE, size, ob_type)

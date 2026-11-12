@@ -240,7 +240,7 @@ class DMControlTrackCom(_DMCModel):
 
     @classmethod
     def _mass_rows(cls) -> MassRows | None:
-        """Mass leaves move the tracking camera through subtree centres of mass; None without them."""
+        """Mass leaves move the tracking camera through subtree centers of mass; None without them."""
         if "_mass_rows_cache" not in cls.__dict__:
             key = cls._simulator_key() if hasattr(cls, "_simulator_key") else None
             rows = None if key is None else MassRows(key, cls._model())
@@ -255,7 +255,7 @@ class DMControlTrackCom(_DMCModel):
 
     @classmethod
     def _floor_slots(cls) -> dict | None:
-        """Texel slots of the floor's checker colours, or None without the suite's grid texture."""
+        """Texel slots of the floor's checker colors, or None without the suite's grid texture."""
         if "_floor_slots_cache" not in cls.__dict__:
             import mujoco
 
@@ -280,7 +280,7 @@ class DMControlTrackCom(_DMCModel):
         return cls._floor_tilt_cache
 
     def make_variation_space(self) -> Dict:
-        """Add the floor checker's two RGB colours, defaulting to the suite's material file."""
+        """Add the floor checker's two RGB colors, defaulting to the suite's material file."""
         space = super().make_variation_space()
         slots = self._floor_slots()
         if slots is None:
@@ -302,7 +302,7 @@ class DMControlTrackCom(_DMCModel):
         return torch.stack((c, z, s, z, o, z, -s, z, c), -1).reshape(-1, 3, 3)
 
     def _row_palette(self, sty, lo: int, hi: int):
-        """Per-row checker colours as the compiled texture stores them, or None when every row has the default."""
+        """Per-row checker colors as the compiled texture stores them, or None when every row has the default."""
         slots = self._floor_slots()
         if slots is None:
             return None
@@ -391,7 +391,7 @@ class DMControlTrackCom(_DMCModel):
         """Compute camera, mover and light poses on CPU from compact render rows.
 
         Preserve kinematics → comPos → camlight order so tracking uses current
-        subtree centres of mass. Restore episode model entries after the batch.
+        subtree centers of mass. Restore episode model entries after the batch.
         """
         import mujoco
 

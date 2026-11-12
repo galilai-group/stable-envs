@@ -67,7 +67,7 @@ GRAVITY = np.array([0.0, 0.0, -9.81])
 def _sweep():
     """Cases reaching all three ``mjv_catenary`` branches: slack, near-vertical and taut.
 
-    Sized like ball_in_cup: a 0.3 m string and a cup a few centimetres across.
+    Sized like ball_in_cup: a 0.3 m string and a cup a few centimeters across.
     """
     rng = np.random.default_rng(20260913)
     cases = []
@@ -82,7 +82,7 @@ def _sweep():
 
 
 def test_catenary_interior_points_are_bit_identical():
-    """The vectorised interior points equal the scalar loop's bit for bit."""
+    """The vectorized interior points equal the scalar loop's bit for bit."""
     seen = set()
     for x0, x1, length in _sweep():
         got = D.catenary(x0, x1, GRAVITY, length, 29)
@@ -100,7 +100,7 @@ def test_chain_capsules_batch_matches_the_per_polyline_version():
     nseg = 28
     for npts in (2, 3, 29):  # K = 1, 2, 28, all divisors of 28
         polys = [p for p in (D.catenary(a, b, GRAVITY, L, 29) for a, b, L in _sweep()) if len(p) == npts]
-        if len(polys) < 2:  # synthesise a second so the batch axis is real
+        if len(polys) < 2:  # synthesize a second so the batch axis is real
             polys = polys * 2
         polys = polys[:16]
         stacked = np.stack(polys)

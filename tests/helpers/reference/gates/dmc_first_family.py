@@ -1,4 +1,4 @@
-"""Semantic gate for DMC Acrobot, Pendulum and Cartpole swing-up against pinned SWM."""
+"""Semantic gate for DMC Acrobot, Pendulum and Cartpole swing-up against pinned stable-worldmodel."""
 
 from __future__ import annotations
 

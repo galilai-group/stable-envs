@@ -71,9 +71,9 @@ class GeomMass:
 
     ``per="density"`` reads the leaf as a density and ``per="mass"`` as the
     geom's explicit mass; both scale the geom's contribution to its body
-    linearly. The body's mass, centre of mass and principal inertia are
+    linearly. The body's mass, center of mass and principal inertia are
     recombined from that contribution and the rest of the body, so a body with
-    several geoms moves its centre of mass as a recompile would.
+    several geoms moves its center of mass as a recompile would.
     """
 
     leaf: str

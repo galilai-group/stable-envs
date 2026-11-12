@@ -31,7 +31,7 @@ DMCHumanoidWalk = trackcom_cell(
 )
 DMCHumanoidWalk.name = "dmc-humanoid-walk"
 DMCHumanoidWalk.reference_id = "dm_control/humanoid-walk"
-DMCHumanoidWalk.__doc__ = """SWM Humanoid Walk with CPU dm_control physics.
+DMCHumanoidWalk.__doc__ = """stable-worldmodel Humanoid Walk with CPU dm_control physics.
 
 Simulates Humanoid(move_speed=1, pure_state=False), the task swm/HumanoidDMControl-v0
 selects. Full State includes physical, RNG and lifecycle fields. CUDA selects State
