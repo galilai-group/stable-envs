@@ -212,8 +212,9 @@ All notable changes to this project are listed here. The format follows
 - `OGBCube` and `OGBScene` draw CPU frames with the new `opengl_fast` backend by default. It is MuJoCo
   software OpenGL with simplified arm meshes and a 2048 shadow map. The arm meshes keep one vertex per grid
   cell of 3 mm, so they keep 22 % of their triangles.
-  CPU frames are about 3 times faster. The mean frame MSE against `backend="opengl"` is 1.2 (Cube) and
-  3.4 (Scene) on the 0-255 scale. `backend="opengl"` draws the source's frames. CUDA frames do not change.
+  On 8 CPU cores, offline frames are 2.1 to 2.9 times as fast as OGBench in 8 processes (before: 0.3 to
+  1.0 times), and steps with frames are 2.3 to 2.7 times as fast with 8 and 64 environments (before: 0.4
+  to 0.9 times). The mean frame MSE against OGBench is 1.3 (Cube) and 3.0 (Scene) on the 0-255 scale. `backend="opengl"` draws the source's frames. CUDA frames do not change.
   A CPU batch with one state for each OpenGL worker (8 by default) draws in the workers. Before, a batch
   needed 16 states.
 - `OGBCube` and `OGBScene` use the OGBench cube size. The default `cube.size` is now 0.02, as in OGBench.
