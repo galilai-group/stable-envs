@@ -130,6 +130,12 @@ All notable changes to this project are listed here. The format follows
   than 256 frames on one thread when the scene has no tracking light. With 8 Torch threads, idle Torch threads
   kept the cores busy while the `mujoco.batch` threads waited, and the time of an AntMaze episode of 64 steps with
   frames changed between runs by up to 10x. Frames and State do not change.
+- DMC CPU batch resets with a seed reseed the task RNG of each environment in place, which gives the state of a
+  new `RandomState(seed + i)` without its entropy draw, and the State columns after a reset come from the
+  `mujoco.batch` data in array operations. `DMCCheetahRun` resets call MuJoCo directly instead of through the
+  dm_control wrappers, and read the task RNG keys in place. The data, State and RNG are bitwise those of
+  dm_control's reset. Public CPU steps/s with a reset every 64 steps, 8 cores of an EPYC 7532: 78,783 at 1024
+  environments (58,211 before; 47,489 for 8 dm_control processes), 68,723 at 256 (51,565), 37,386 at 64 (32,763).
 - `DMCQuadrupedWalk` CPU resets search the start heights of all resetting environments together: each attempt
   computes the position stage, which includes collision, of the environments still in contact on the
   `mujoco.batch` threads. Every environment finds the same height as dm_control's search, and then repeats
