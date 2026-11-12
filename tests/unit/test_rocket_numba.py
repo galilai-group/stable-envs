@@ -12,6 +12,10 @@ from stable_envs import make  # noqa: E402
 from stable_envs.envs.rocket.simulation.numba_batch import RocketNumbaAdapter  # noqa: E402
 from stable_envs.envs.rocket.simulation.task import RocketLandingEnv  # noqa: E402
 
+CUDA = torch.cuda.is_available()
+#: ``(simulation_backend, device)`` of the Numba backends this machine can run.
+BACKENDS = [("numba", "cpu")] + ([("numba_cuda", "cuda")] if CUDA else [])
+
 RESET_OPTIONS = [
     None,
     {"variation": ["environment"]},
@@ -42,22 +46,37 @@ def test_routing():
     with make("PyFlytRocketLanding", num_envs=2, simulation_backend="pybullet") as env:
         assert (env.simulation_backend, env.execution_mode) == ("pybullet", "DELEGATED_CPU")
         assert not isinstance(env._simulator, RocketNumbaAdapter)
-    if torch.cuda.is_available():
+    if CUDA:
         with make("PyFlytRocketLanding", num_envs=2, device="cuda") as env:
+            assert (env.simulation_backend, env.execution_mode) == ("numba_cuda", "NATIVE_NUMBA_CUDA")
+            assert env.get_state()["physics", "float"].device.type == "cuda"
+        for batch, backend in ((7, "numba"), (8, "numba_cuda")):
+            with make(
+                "PyFlytRocketLanding", num_envs=batch, device="cuda", simulation_backend="auto", numba_cuda_min_envs=8
+            ) as env:
+                assert env.simulation_backend == backend
+        with make("PyFlytRocketLanding", num_envs=2, device="cuda", simulation_backend="numba") as env:
             assert (env.simulation_backend, env.execution_mode) == ("numba", "HOST_NUMBA")
             assert env.get_state()["physics", "float"].device.type == "cuda"
+    with make("PyFlytRocketLanding", num_envs=2, simulation_backend="auto") as env:
+        assert env.simulation_backend == "numba"
+    with pytest.raises(ValueError, match="requires device='cuda'"):
+        make("PyFlytRocketLanding", num_envs=1, simulation_backend="numba_cuda")
     with pytest.raises(ValueError, match="simulation_backend"):
         make("PyFlytRocketLanding", num_envs=1, simulation_backend="bullet")
     with pytest.raises(ValueError, match="agent_hz"):
         make("PyFlytRocketLanding", num_envs=1, simulator_config={"agent_hz": 20})
 
 
+@pytest.mark.parametrize("backend, device", BACKENDS)
 @pytest.mark.parametrize("options", RESET_OPTIONS)
-def test_a_seed_gives_the_source_start(options):
+def test_a_seed_gives_the_source_start(options, backend, device):
     """The start observation, the start pose and the noise stream position equal ``RocketLandingEnv``'s."""
     seed, batch = 31, 3
-    with make("PyFlytRocketLanding", num_envs=batch) as env:
-        state = env.reset(seed=seed, options=options)
+    # The CUDA build may fuse multiplies and adds, which changes the last bits.
+    atol = 1e-12 if device == "cpu" else 1e-9
+    with make("PyFlytRocketLanding", num_envs=batch, device=device, simulation_backend=backend) as env:
+        state = env.reset(seed=seed, options=options).cpu()
         for lane in range(batch):
             source = RocketLandingEnv()
             try:
@@ -65,23 +84,24 @@ def test_a_seed_gives_the_source_start(options):
                 rocket = source.env.drones[0].Id
                 position, quaternion = source.env.getBasePositionAndOrientation(rocket)
                 ours = state["current", "wrapper", "state"][lane].numpy()
-                np.testing.assert_allclose(ours, observation, rtol=0, atol=1e-12)
+                np.testing.assert_allclose(ours, observation, rtol=0, atol=atol)
                 np.testing.assert_allclose(
-                    state["current", "physics", "body_1", "position"][lane].numpy(), position, rtol=0, atol=1e-12
+                    state["current", "physics", "body_1", "position"][lane].numpy(), position, rtol=0, atol=atol
                 )
                 np.testing.assert_allclose(
-                    state["current", "physics", "body_1", "quaternion"][lane].numpy(), quaternion, rtol=0, atol=1e-12
+                    state["current", "physics", "body_1", "quaternion"][lane].numpy(), quaternion, rtol=0, atol=atol
                 )
                 assert _generator_words(env._simulator._generator(lane)) == _generator_words(source.np_random)
             finally:
                 source.close()
 
 
-def test_save_restore_continue_is_exact():
+@pytest.mark.parametrize("backend, device", BACKENDS)
+def test_save_restore_continue_is_exact(backend, device):
     batch = 4
     with (
-        make("PyFlytRocketLanding", num_envs=batch, seed=5) as env,
-        make("PyFlytRocketLanding", num_envs=batch) as other,
+        make("PyFlytRocketLanding", num_envs=batch, seed=5, device=device, simulation_backend=backend) as env,
+        make("PyFlytRocketLanding", num_envs=batch, device=device, simulation_backend=backend) as other,
     ):
         env.reset(seed=9, options={"variation": ["all"]})
         # Environments that end on different steps.
@@ -192,7 +212,8 @@ END_STEP_TOLERANCE = 3
         (_smooth_policy, {"variation": ["environment"]}),
     ],
 )
-def test_rollouts_keep_the_source_outcome(policy, options):
+@pytest.mark.parametrize("backend, device", BACKENDS)
+def test_rollouts_keep_the_source_outcome(policy, options, backend, device):
     """Scripted rollouts of at least 300 steps on the source, replayed on the kernel: same outcome and end."""
     seeds = [0, 1, 2]
     rollouts = []
@@ -218,12 +239,12 @@ def test_rollouts_keep_the_source_outcome(policy, options):
     for lane, (a, _, _) in enumerate(rollouts):
         actions[lane, : len(a)] = a
         actions[lane, len(a) :] = a[-1]
-    with make("PyFlytRocketLanding", num_envs=len(seeds), seed=0) as env:
+    with make("PyFlytRocketLanding", num_envs=len(seeds), seed=0, device=device, simulation_backend=backend) as env:
         # Environment ``lane`` resets with seed ``lane``, as its source rollout did.
         env.reset(seed=0, options=options)
         positions, ends, outcomes = [], [None] * len(seeds), [None] * len(seeds)
         for t in range(length):
-            out = env.step(torch.as_tensor(actions[:, t]), frames=None)
+            out = env.step(torch.as_tensor(actions[:, t], device=device), frames=None).cpu()
             positions.append(out["state"]["current", "physics", "body_1", "position"].numpy().copy())
             terminated, truncated, success = (
                 out[k].reshape(len(seeds), -1)[:, -1].numpy() for k in ("terminated", "truncated", "success")

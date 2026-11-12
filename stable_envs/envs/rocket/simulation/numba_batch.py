@@ -188,20 +188,16 @@ class RocketNumbaAdapter(SimulatorAdapter):
             raise ValueError("Rocket supports CPU dynamics and CPU/CUDA State storage")
         self.frame = frame
         self._template = _Template(config)
-        # The kernel fields are views of one array per dtype, so that a State copies three arrays.
-        self._packed = {}
-        self.state = {}
-        #: ``{field: (group, first column, width)}`` in the packed arrays.
+        #: ``{field: (group, first column, width)}`` of the kernel fields in the ``physics/<group>`` leaves.
         self._columns = {}
         for group, dtype in _PACKED.items():
             names = [k for k, (_, d) in physics.FIELDS.items() if d == dtype]
             widths = [int(np.prod(physics.FIELDS[k][0], dtype=np.int64)) for k in names]
-            packed = self._packed[group] = np.zeros((batch, sum(widths)), dtype)
             for name, start, width in zip(names, np.cumsum([0, *widths[:-1]]), widths, strict=True):
-                self.state[name] = packed[:, start : start + width].reshape(batch, *physics.FIELDS[name][0])
                 self._columns[name] = (group, int(start), width)
-        if self.state.keys() != physics.FIELDS.keys():
+        if self._columns.keys() != physics.FIELDS.keys():
             raise RuntimeError("Rocket kernel field of an unsupported dtype")
+        self._allocate()
         self._camera = np.zeros((batch, 7))
         self._rgba = np.zeros((batch, 6, 4))
         self._seed = np.full(batch, -1, np.int64)
@@ -223,8 +219,23 @@ class RocketNumbaAdapter(SimulatorAdapter):
             for k in (0, 2):
                 self._variation[path][k][:] = np.asarray(node.init_value, np.float64)
                 self._variation[path][k + 1][:] = _code(node.init_value)
-        self.fields = {key: (value.shape[1:], torch.from_numpy(value).dtype) for key, value in self._leaves().items()}
+        self.fields = {
+            key: (tuple(value.shape[1:]), value.dtype if torch.is_tensor(value) else torch.from_numpy(value).dtype)
+            for key, value in self._leaves().items()
+        }
         self.reset(seed)
+
+    def _allocate(self):
+        """Allocate the kernel fields as views of one host array per dtype, so that a State copies three arrays."""
+        batch = self.num_envs
+        self._packed = {
+            group: np.zeros((batch, sum(w for g, _, w in self._columns.values() if g == group)), dtype)
+            for group, dtype in _PACKED.items()
+        }
+        self.state = {
+            name: self._packed[group][:, start : start + width].reshape(batch, *physics.FIELDS[name][0])
+            for name, (group, start, width) in self._columns.items()
+        }
 
     @property
     def template(self):
@@ -260,6 +271,10 @@ class RocketNumbaAdapter(SimulatorAdapter):
                     self._set(path, lane, value)
                 if path in PAINTED:
                     self._rgba[lane, _RGBA_ROW[path]] = _painted_rgba(path, tuple(np.asarray(value).tolist()))
+        self._configured()
+
+    def _configured(self):
+        """Hook run after ``configure`` changed Variation values and colours."""
 
     def variation_rows(self, attribute, keys):
         index = 2 if attribute == "init_value" else 0
@@ -267,10 +282,15 @@ class RocketNumbaAdapter(SimulatorAdapter):
 
     # -- reset ------------------------------------------------------------------------------------------------
 
-    def _generator(self, lane):
+    def _rng_rows(self):
+        """``(B, 4)`` host copy of the ``rng`` field: each environment's thrust-noise generator."""
+        return self.state["rng"].copy()
+
+    def _generator(self, lane, rows=None):
         """The lane's thrust-noise generator at the position of its next draw."""
         generator = np.random.Generator(np.random.PCG64(0))
-        generator.bit_generator.state = physics.generator_state(self.state["rng"][lane])
+        rows = self._rng_rows() if rows is None else rows
+        generator.bit_generator.state = physics.generator_state(rows[lane])
         return generator
 
     def _sample_variation(self, lane, seed, selection, values):
@@ -332,9 +352,10 @@ class RocketNumbaAdapter(SimulatorAdapter):
         spawn = np.clip(offset.astype(np.float32), -_SPAWN_LIMIT, _SPAWN_LIMIT).astype(np.float64)
         linear = np.zeros((batch, 3))
         generators = []
+        rows = self._rng_rows() if seed is None else None
         for lane in range(batch):
             if seed is None:
-                generator = self._generator(lane) if self.state["rng"][lane].any() else np.random.default_rng()
+                generator = self._generator(lane, rows) if rows[lane].any() else np.random.default_rng()
                 self._seed[lane] = -1
             else:
                 generator = np.random.default_rng(seed + lane)
@@ -355,26 +376,27 @@ class RocketNumbaAdapter(SimulatorAdapter):
         if accelerate:
             linear[:, 2] = _ENTRY_SPEED
         position = np.concatenate([spawn, start_pos[:, 2:]], 1)
-        everyone = np.ones(batch, np.bool_)
-        physics.start_state(
-            self.state,
-            everyone,
-            dict(
-                start_pos=start_pos,
-                start_orn=start_orn,
-                position=position,
-                linear_velocity=linear,
-                angular_velocity=np.zeros((batch, 3)),
-            ),
+        self._paint(selection, rocket_painted, pad_painted, values)
+        start = dict(
+            start_pos=start_pos,
+            start_orn=start_orn,
+            position=position,
+            linear_velocity=linear,
+            angular_velocity=np.zeros((batch, 3)),
         )
-        self.state["rng"][:] = physics.rng_words(generators)
+        self._start(start, physics.rng_words(generators))
+        self._last = None
+        return self.get_state()
+
+    def _start(self, start, rng):
+        """Write the sampled starts and the noise generators of every environment, then settle them."""
+        everyone = np.ones(self.num_envs, np.bool_)
+        physics.start_state(self.state, everyone, start)
+        self.state["rng"][:] = rng
         physics.settle(self.state, None, everyone)
         # The source saves and restores the engine after a reset, which caches the link poses at the reset pose.
         self._camera[:, :3] = self.state["position"]
         self._camera[:, 3:] = self.state["quaternion"]
-        self._paint(selection, rocket_painted, pad_painted, values)
-        self._last = None
-        return self.get_state()
 
     def _paint(self, selection, rocket_painted, pad_painted, values):
         """Set the drawn colours of a reset: the source's own painting, then any configured or explicit colour."""
@@ -470,22 +492,24 @@ class RocketNumbaAdapter(SimulatorAdapter):
 
     # -- State ------------------------------------------------------------------------------------------------
 
+    def _fixed_leaves(self):
+        """``{key tuple: host array}`` of the State leaves that never change: the configuration and fixed bodies."""
+        batch = self.num_envs
+        fixed = {key: np.tile(value, (batch,) + (1,) * value.ndim) for key, value in self._template.recipe().items()}
+        identity = np.zeros((batch, 4))
+        identity[:, 3] = 1.0
+        pad = np.zeros((batch, 3))
+        pad[:, 2] = 0.1
+        # The ground and the pad have fixed bases.
+        for i, position in ((0, np.zeros((batch, 3))), (2, pad)):
+            fixed[("current", "physics", f"body_{i}", "position")] = position
+            fixed[("current", "physics", f"body_{i}", "quaternion")] = identity
+        return fixed
+
     def _leaves(self):
         """``{key tuple: host array}`` of every State leaf; the arrays are views of the live values."""
         if not hasattr(self, "_fixed"):
-            batch = self.num_envs
-            fixed = {
-                key: np.tile(value, (batch,) + (1,) * value.ndim) for key, value in self._template.recipe().items()
-            }
-            identity = np.zeros((batch, 4))
-            identity[:, 3] = 1.0
-            pad = np.zeros((batch, 3))
-            pad[:, 2] = 0.1
-            # The ground and the pad have fixed bases.
-            for i, position in ((0, np.zeros((batch, 3))), (2, pad)):
-                fixed[("current", "physics", f"body_{i}", "position")] = position
-                fixed[("current", "physics", f"body_{i}", "quaternion")] = identity
-            self._fixed = fixed
+            self._fixed = self._fixed_leaves()
         fixed, state = self._fixed, self.state
         leaves = {key: fixed[key] for key in self._template.recipe()}
         leaves[("recipe", "seed")] = self._seed

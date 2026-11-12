@@ -15,12 +15,13 @@ from ...env import Env, _split_appearance
 from ...registry import REGISTRY, register
 from ...specs import CompositeSpec, Spec
 from . import legacy as frozen
-from .simulation.execution import make_rocket_adapter, rocket_backend
+from .simulation.execution import NUMBA_CUDA_MIN_ENVS, make_rocket_adapter, rocket_backend
 
 #: ``execution_mode`` per backend and device; on CUDA the Numba kernel runs on the host.
 _EXECUTION_MODES = {
     ("numba", "cpu"): "NATIVE_NUMBA",
     ("numba", "cuda"): "HOST_NUMBA",
+    ("numba_cuda", "cuda"): "NATIVE_NUMBA_CUDA",
     ("pybullet", "cpu"): "DELEGATED_CPU",
     ("pybullet", "cuda"): "DELEGATED_CPU",
 }
@@ -29,10 +30,12 @@ _EXECUTION_MODES = {
 class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
     """Rocket CPU dynamics with CPU/CUDA rendering.
 
-    ``simulation_backend=None`` or ``"numba"`` steps every environment in one Numba kernel call on the CPU,
-    with physical State; on CUDA the results move to the device. ``"pybullet"`` steps PyFlyt 0.29.0 and
-    PyBullet 3.2.7 per environment, with replay-backed State that is exact to the source. Explicit body
-    and cached camera poses drive TinyRenderer on CPU or the nvdiffrast path on CUDA.
+    ``simulation_backend="numba"`` (the CPU default) steps every environment in one Numba kernel call on the
+    CPU, with physical State; on CUDA the results move to the device. ``"numba_cuda"`` (the CUDA default) steps
+    them with the CUDA build of the kernel. ``"auto"`` selects ``"numba"`` for CUDA batches below
+    ``numba_cuda_min_envs``. ``"pybullet"`` steps PyFlyt 0.29.0 and PyBullet 3.2.7 per environment, with
+    replay-backed State that is exact to the source. Explicit body and cached camera poses drive TinyRenderer on
+    CPU or the nvdiffrast path on CUDA.
     """
 
     requires_cuda = False
@@ -61,9 +64,10 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         *,
         simulator_config=None,
         simulation_backend=None,
+        numba_cuda_min_envs=NUMBA_CUDA_MIN_ENVS,
     ):
         device = Env.resolve_device(device)
-        self.simulation_backend = rocket_backend(simulation_backend)
+        self.simulation_backend = rocket_backend(num_envs, device, simulation_backend, numba_cuda_min_envs)
         self.execution_mode = _EXECUTION_MODES[self.simulation_backend, torch.device(device).type]
         # CPU lanes draw their own step frames, at the size and supersample ``Env`` resolves.
         frame = (

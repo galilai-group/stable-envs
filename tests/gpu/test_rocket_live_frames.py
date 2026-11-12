@@ -19,11 +19,11 @@ from stable_envs.envs.rocket.simulation import execution  # noqa: E402
 from stable_envs.envs.rocket.simulation.process import RocketProcessAdapter  # noqa: E402
 
 
-@pytest.mark.parametrize("processes", [0, 2])
-def test_live_frames_equal_state_frames(monkeypatch, processes):
+@pytest.mark.parametrize("backend, processes", [("pybullet", 0), ("pybullet", 2), ("numba", 0), ("numba_cuda", 0)])
+def test_live_frames_equal_state_frames(monkeypatch, backend, processes):
     with monkeypatch.context() as patch:
         patch.setattr(execution, "process_count", lambda num_envs, cpus, **_: processes)
-        env = se.make("PyFlytRocketLanding", num_envs=4, size=64, device="cuda", seed=3)
+        env = se.make("PyFlytRocketLanding", num_envs=4, size=64, device="cuda", seed=3, simulation_backend=backend)
     try:
         assert isinstance(env._simulator, RocketProcessAdapter) == bool(processes)
         if processes:
