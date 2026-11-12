@@ -114,3 +114,36 @@ def test_cuda_kernel_skips_inactive_and_ended_environments():
     assert not torch.equal(state["position"][0], before[0])
     assert torch.equal(state["position"][1:], before[1:])
     assert reward[2].item() == 0.0 and term[2].item()
+
+
+def test_graphs_replay_the_eager_calls_bit_for_bit():
+    from stable_envs.envs.rocket.simulation import numba_cuda_physics as gk
+
+    kinds = ["smooth", "free", "hover", "smooth"] * 4
+    num = len(kinds)
+    rows = torch.as_tensor(nk.rng_words([np.random.default_rng(7 + b) for b in range(num)]))
+    eager, captured = gk.new_state(num), gk.new_state(num)
+    eager["rng"][:] = rows
+    captured["rng"][:] = rows
+    reset, step = gk.ResetGraph(captured), gk.StepGraph(captured)
+    assert all(torch.equal(captured[k], gk.new_state(num)[k]) for k in captured if k != "rng")
+    first = {k: torch.as_tensor(v, device="cuda") for k, v in start(kinds, 3).items()}
+    mask = torch.ones(num, dtype=torch.bool, device="cuda")
+    gk.start_state(eager, mask, first)
+    gk.settle(eager, None, mask)
+    reset(mask, first)
+    t = np.arange(400.0)
+    actions = torch.as_tensor(np.stack([policy("smooth", k, None) for k in t]), device="cuda")
+    for k in range(len(t)):
+        live = ~(eager["termination"] | eager["truncation"])
+        expected = gk.step(eager, actions[k].expand(num, 7), None, live)
+        got = step(actions[k].expand(num, 7), ~(captured["termination"] | captured["truncation"]))
+        assert torch.equal(got[0], expected[0]) and torch.equal(got[3]["noise_used"], expected[3]["noise_used"])
+        if k == 200:
+            # a partial reset through the graph
+            again = torch.arange(num, device="cuda") % 3 == 0
+            gk.start_state(eager, again, first)
+            gk.settle(eager, None, again)
+            reset(again, first)
+    for key in eager:
+        assert torch.equal(captured[key], eager[key]), key

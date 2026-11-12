@@ -431,6 +431,8 @@ def _aero(alpha, act):
 def _substep(b, z, pos, quat, vel, avel, lrot, lvel, fin, gim, thr_, fuel_, ign_, cmd, verts, crel):
     """One 240 Hz substep of environment ``b`` with standard-normal thrust noise ``z``.
 
+    ``crel`` is the ``(MAX_CONTACTS, 8)`` contact scratch of this environment.
+
     Return ``(pad contact, ground contact)`` as Bullet reports them after this substep.
     """
     qx, qy, qz, qw = quat[b, 0], quat[b, 1], quat[b, 2], quat[b, 3]
@@ -471,11 +473,11 @@ def _substep(b, z, pos, quat, vel, avel, lrot, lvel, fin, gim, thr_, fuel_, ign_
                 gap = low - pad_top
                 mu = FRICTION_PAD
             if mu >= 0.0 and nc < MAX_CONTACTS:
-                crel[b, nc, 0], crel[b, nc, 1], crel[b, nc, 2] = rx, ry, rz
+                crel[nc, 0], crel[nc, 1], crel[nc, 2] = rx, ry, rz
                 gap += LINEAR_SLOP
                 # target normal speed of the row: speculative when apart, erp2 push-out when penetrating
-                crel[b, nc, 3] = -gap / DT if gap > 0.0 else -gap * CONTACT_ERP / DT
-                crel[b, nc, 4] = mu
+                crel[nc, 3] = -gap / DT if gap > 0.0 else -gap * CONTACT_ERP / DT
+                crel[nc, 4] = mu
                 nc += 1
     Fx = Fy = Fz = 0.0
     Tx = Ty = Tz = 0.0  # torque about the base origin, body frame
@@ -586,11 +588,11 @@ def _substep(b, z, pos, quat, vel, avel, lrot, lvel, fin, gim, thr_, fuel_, ign_
     wwz = _clip(wwz + DT * awz, -100.0, 100.0)
     if nc > 0:
         # projected Gauss-Seidel: every normal row, then every friction row (limit from that contact's normal
-        # impulse), as btMultiBodyConstraintSolver orders them; impulses accumulate in crel[b, c, 5:8]
+        # impulse), as btMultiBodyConstraintSolver orders them; impulses accumulate in crel[c, 5:8]
         for c in range(nc):
-            crel[b, c, 5] = 0.0
-            crel[b, c, 6] = 0.0
-            crel[b, c, 7] = 0.0
+            crel[c, 5] = 0.0
+            crel[c, 6] = 0.0
+            crel[c, 7] = 0.0
         for _ in range(SOLVER_ITERATIONS):
             for kind in range(3):
                 if kind == 0:
@@ -600,7 +602,7 @@ def _substep(b, z, pos, quat, vel, avel, lrot, lvel, fin, gim, thr_, fuel_, ign_
                 else:
                     nx, ny, nz = 1.0, 0.0, 0.0
                 for c in range(nc):
-                    rx, ry, rz = crel[b, c, 0], crel[b, c, 1], crel[b, c, 2]
+                    rx, ry, rz = crel[c, 0], crel[c, 1], crel[c, 2]
                     cx, cy, cz2 = rx - cwx, ry - cwy, rz - cwz
                     pv = _cross(wwx, wwy, wwz, rx, ry, rz)
                     vn = (vx + pv[0]) * nx + (vy + pv[1]) * ny + (vz + pv[2]) * nz
@@ -609,14 +611,14 @@ def _substep(b, z, pos, quat, vel, avel, lrot, lvel, fin, gim, thr_, fuel_, ign_
                     ia = _mv(R, ib[0] / Ixx, ib[1] / Iyy, ib[2] / Izz)
                     kk = _cross(ia[0], ia[1], ia[2], cx, cy, cz2)
                     keff = 1.0 / M + kk[0] * nx + kk[1] * ny + kk[2] * nz
-                    old = crel[b, c, 5 + kind]
+                    old = crel[c, 5 + kind]
                     if kind == 0:
-                        new = _clip(old + (crel[b, c, 3] - vn) / keff, 0.0, math.inf)
+                        new = _clip(old + (crel[c, 3] - vn) / keff, 0.0, math.inf)
                     else:
-                        lim = crel[b, c, 4] * crel[b, c, 5]
+                        lim = crel[c, 4] * crel[c, 5]
                         new = _clip(old - vn / keff, -lim, lim)
                     dl = new - old
-                    crel[b, c, 5 + kind] = new
+                    crel[c, 5 + kind] = new
                     jx, jy, jz = dl * nx, dl * ny, dl * nz
                     dwx, dwy, dwz = ia[0] * dl, ia[1] * dl, ia[2] * dl
                     dv = _cross(dwx, dwy, dwz, cwx, cwy, cwz)
@@ -896,7 +898,8 @@ def _step_kernel(
                 ignition_state, throttle_state, p_ignition_state, p_throttle_state, p_render_ignition, flame_ignited,
                 pad_contact, reward, step_count, termination, truncation, out_of_bounds, fatal_collision, env_complete,
                 start_pos, start_orn,
-                actions, noise, rng, draw, noise_used, verts, crel, ceiling, max_displacement, max_steps, sparse_reward,
+                actions, noise, rng, draw, noise_used, verts, crel[b], ceiling, max_displacement, max_steps,
+                sparse_reward,
             )  # fmt: skip
 
 
@@ -984,7 +987,7 @@ def _settle_kernel(
                 ignition_state, throttle_state, p_ignition_state, p_throttle_state, p_render_ignition, flame_ignited,
                 pad_contact, reward, step_count, termination, truncation, out_of_bounds, fatal_collision, env_complete,
                 start_pos, start_orn,
-                noise, rng, draw, verts, crel,
+                noise, rng, draw, verts, crel[b],
             )  # fmt: skip
 
 
