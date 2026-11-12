@@ -259,6 +259,7 @@ class _LightPasses:
 
         pss = np.array([_spec_shin(m, g) for g in agent_ids])
         self.prim_ms, self.prim_shin = f(pss[:, 0]), f(pss[:, 1])
+        self._arrays = None
 
     def light_pos(self, xy: torch.Tensor) -> torch.Tensor:
         lp = torch.zeros(xy.shape[0], 3, device=xy.device, dtype=torch.float32)
@@ -339,10 +340,19 @@ class _LightPasses:
     def _window(self, cam, lpos, H, W):
         """Flat (B, T*T) pixel indices covering the spotlight's footprint on static geometry."""
         B = lpos.shape[0]
+        corner = self._window_corner(cam, lpos, H, W)
+        if corner is None:
+            return torch.arange(H * W, device=lpos.device).expand(B, H * W)
+        x0, y0, need = corner
+        ar = torch.arange(need, device=lpos.device)
+        return ((y0.view(B, 1, 1) + ar.view(1, -1, 1)) * W + (x0.view(B, 1, 1) + ar.view(1, 1, -1))).reshape(B, -1)
+
+    def _window_corner(self, cam, lpos, H, W):
+        """Top-left pixels (B,) and side of the square window of ``_window``; None when it is the whole frame."""
         zlo, zhi = self.zrange
         cut = self.spot["cutoff"]
         if cut >= 89.0:
-            return torch.arange(H * W, device=lpos.device).expand(B, H * W)
+            return None
         reach = (float(self.spot["offset"][2]) - zlo) * float(np.tan(np.deg2rad(cut))) + 1.0
         corners = []
         for sx in (-reach, reach):
@@ -361,11 +371,8 @@ class _LightPasses:
         span = torch.stack([(px.amax(1).ceil().long() + 1 - x0).max(), (py.amax(1).ceil().long() + 1 - y0).max()])
         need = int(span.max())
         if need >= min(H, W):
-            return torch.arange(H * W, device=lpos.device).expand(B, H * W)
-        x0 = x0.clamp(0, W - need)
-        y0 = y0.clamp(0, H - need)
-        ar = torch.arange(need, device=lpos.device)
-        return ((y0.view(B, 1, 1) + ar.view(1, -1, 1)) * W + (x0.view(B, 1, 1) + ar.view(1, 1, -1))).reshape(B, -1)
+            return None
+        return x0.clamp(0, W - need), y0.clamp(0, H - need), need
 
     def plates(self, plate, cam, lpos, agent):
         """Per-row plates: static pixels gain the tracking light and lose the agent's shadow."""
@@ -392,8 +399,225 @@ class _LightPasses:
         out.scatter_(1, idx.unsqueeze(-1).expand(B, idx.shape[1], 3), patch)
         return out.view(B, H, W, 3)
 
+    def cpu_kernel(self) -> bool:
+        """Whether ``plates_cpu`` draws this scene: Numba imports and every wall is a box."""
+        from ...render import cpu_raster
+
+        return self.wall_boxes is not None and cpu_raster.available()
+
+    def _host(self):
+        if self._arrays is None:
+            sp = self.spot
+            a = lambda t: np.ascontiguousarray(t.cpu().numpy())  # noqa: E731
+            f = lambda *x: np.array(x, np.float32)  # noqa: E731
+            spot = np.concatenate(
+                [a(sp["D"]), a(sp["s"]), a(sp["u"]), f(sp["cos_cut"], sp["tan_half"], *sp["att"], _SHADOW_EPS)]
+            )
+            spot = np.concatenate([spot, f(float(sp["castshadow"]), _CULL_SLACK)])
+            dirs = [np.concatenate([a(d["to_light"]), a(d["pos"]), a(d["fwd"]), f(d["near"])]) for d in self.shadowed]
+            self._arrays = dict(
+                hit=a(self.hit),
+                normal=a(self.normal),
+                mat=a(self.mat),
+                tex=a(self.tex),
+                ms=a(self.ms),
+                shin=a(self.shin),
+                valid=a(self.valid),
+                eye=a(self.eye),
+                spot=spot,
+                spot_col=np.stack([a(c) for c in sp["colours"]]),
+                dir_light=np.stack(dirs) if dirs else np.zeros((0, 10), np.float32),
+                to_light=np.stack([a(d["to_light"]) for d in self.shadowed]) if dirs else np.zeros((0, 3), np.float32),
+                dir_col=(
+                    np.stack([np.stack([a(c) for c in d["colours"]]) for d in self.shadowed])
+                    if dirs
+                    else np.zeros((0, 3, 3), np.float32)
+                ),
+                wall_kind=np.asarray(self.wall_kinds, np.int64),
+                wall_size=a(self.wall_size),
+                wall_pos=a(self.wall_pos),
+                wall_rot=a(self.wall_rot),
+                wall_lo=np.ascontiguousarray(self.wall_boxes[0].cpu().numpy()),
+                wall_hi=np.ascontiguousarray(self.wall_boxes[1].cpu().numpy()),
+                prim_ms=a(self.prim_ms),
+                prim_shin=a(self.prim_shin),
+            )
+        return self._arrays
+
+    def plates_cpu(self, plate, cam, lpos, agent, rows, out):
+        """``plates`` of every row into ``out`` (B, H, W, 3), as ``plates`` draws each group of ``rows`` rows.
+
+        Numba draws the pass. The square roots and powers stay Torch operations, the powers on the shapes that
+        ``plates`` gives them, so each one rounds as it does there.
+        """
+        from . import litpass_cpu as K
+
+        H, W = plate.shape[:2]
+        B = lpos.shape[0]
+        h = self._host()
+        rect = np.empty((B, 3), np.int64)
+        count = np.empty(B, np.int64)
+        start = np.empty(B, np.int64)
+        groups, at = [], 0
+        for lo in range(0, B, rows):
+            hi = min(lo + rows, B)
+            corner = self._window_corner(cam, lpos[lo:hi], H, W)
+            if corner is None:
+                rect[lo:hi] = (0, 0, W)
+                side = H * W
+            else:
+                rect[lo:hi, 0], rect[lo:hi, 1], side = corner[0].numpy(), corner[1].numpy(), corner[2]
+                rect[lo:hi, 2] = side
+                side = side * side
+            count[lo:hi] = side
+            start[lo:hi] = at + side * np.arange(hi - lo)
+            groups.append((at, (hi - lo) * side))
+            at += (hi - lo) * side
+        c = lambda t: np.ascontiguousarray(t.numpy())  # noqa: E731
+        nd = len(self.shadowed)
+        norms = torch.empty(3 + nd, at)
+        powers = torch.empty(2 + nd, at)
+        exps = torch.empty(at)
+        lp = c(lpos)
+        rowq = np.repeat(np.arange(B), count)
+        geo = (rect, rowq, start, W, h["hit"])
+        nn, pp = norms.numpy(), powers.numpy()
+        cand = np.empty((B, len(h["wall_lo"])), np.int64)
+        ncand = np.empty(B, np.int64)
+        with K.frame_threads(B):
+            base = c(plate)
+            K.prepare(
+                rect,
+                count,
+                base,
+                h["hit"],
+                h["valid"],
+                lp,
+                h["wall_lo"],
+                h["wall_hi"],
+                _CULL_SLACK,
+                out.numpy(),
+                cand,
+                ncand,
+            )
+            K.squares(*geo, h["eye"], lp, nn)
+            norms[:2].sqrt_()
+            K.halves(*geo, h["shin"], h["eye"], lp, h["spot"][:3], h["to_light"], nn, pp, exps.numpy())
+            norms[2:].sqrt_()
+            K.specular_bases(*geo, h["normal"], h["eye"], lp, h["to_light"], nn, pp)
+            for a0, n in groups:
+                e = exps[a0 : a0 + n]
+                powers[0, a0 : a0 + n].pow_(self.spot["exponent"])
+                for k in range(1, 2 + nd):
+                    powers[k, a0 : a0 + n].pow_(e)
+            kinds, size, pos, rot = agent
+            K.lit_plates(
+                rect,
+                rowq,
+                start,
+                base,
+                h["hit"],
+                h["normal"],
+                h["mat"],
+                h["tex"],
+                h["ms"],
+                h["valid"],
+                h["eye"],
+                lp,
+                h["spot"],
+                h["spot_col"],
+                h["dir_light"],
+                h["dir_col"],
+                nn,
+                pp,
+                h["wall_kind"],
+                h["wall_size"],
+                h["wall_pos"],
+                h["wall_rot"],
+                cand,
+                ncand,
+                np.asarray(kinds, np.int64),
+                c(size),
+                c(pos),
+                c(rot),
+                out.numpy(),
+            )
+        return out
+
+    def _shader_cpu(self, lpos, agent):
+        """``shader`` drawn by Numba; the square roots and powers stay Torch operations on the same shapes."""
+        from . import litpass_cpu as K
+
+        h = self._host()
+        kinds, size, pos, rot = agent
+        c = lambda t: np.ascontiguousarray(t.numpy())  # noqa: E731
+        lp, akind, asize, apos, arot = c(lpos), np.asarray(kinds, np.int64), c(size), c(pos), c(rot)
+        nb, nl = len(self.base), len(self.base) + len(self.shadowed)
+        to_light = np.concatenate([np.zeros((0, 3), np.float32), *[c(b["to_light"])[None] for b in self.base]])
+        to_light = np.concatenate([to_light, h["to_light"]])
+        lights = np.zeros((nl, 10), np.float32)
+        lights[:, :3] = to_light
+        lights[nb:] = h["dir_light"]
+        base_col = np.zeros((nb, 3, 3), np.float32)
+        for k, b in enumerate(self.base):
+            base_col[k] = np.stack([c(x) for x in b["colours"]])
+
+        def run(rows, X, n, v, ih, mat):
+            M = X.shape[0]
+            X, n, v, rows, ih, mat = c(X), c(n), c(v), c(rows), c(ih), c(mat)
+            norms = torch.empty(nl + 2, M)
+            powers = torch.empty(nl + 2, M)
+            exps = torch.empty(M)
+            nn, pp = norms.numpy(), powers.numpy()
+            with K.frame_threads(len(lp)):
+                K.sample_squares(X, v, rows, lp, to_light, nn)
+                norms[: nl + 1].sqrt_()
+                K.sample_halves(X, n, v, rows, lp, h["spot"][:3], to_light, nn, pp, ih, h["prim_shin"], exps.numpy())
+                norms[nl + 1].sqrt_()
+                K.sample_spot_bases(X, n, v, rows, lp, nn, pp)
+                powers[0].pow_(self.spot["exponent"])
+                for k in range(1, nl + 2):
+                    powers[k].pow_(exps)
+                lo = np.minimum(X.min(0), lp[rows].min(0)).astype(np.float64) - _CULL_SLACK
+                hi = np.maximum(X.max(0), lp[rows].max(0)).astype(np.float64) + _CULL_SLACK
+                cand = np.flatnonzero(((h["wall_lo"] <= hi) & (h["wall_hi"] >= lo)).all(1))
+                out = torch.empty(M, 3)
+                K.shade_samples(
+                    X,
+                    n,
+                    v,
+                    rows,
+                    ih,
+                    mat,
+                    lp,
+                    h["prim_ms"],
+                    base_col,
+                    nb,
+                    lights,
+                    h["dir_col"],
+                    h["spot"],
+                    h["spot_col"],
+                    nn,
+                    pp,
+                    h["wall_kind"],
+                    h["wall_size"],
+                    h["wall_pos"],
+                    h["wall_rot"],
+                    cand,
+                    akind,
+                    asize,
+                    apos,
+                    arot,
+                    out.numpy(),
+                )
+            return out
+
+        return run
+
     def shader(self, lpos, agent):
         """Composite shader: each moving-primitive sample summed over byte-rounded passes."""
+        if lpos.device.type == "cpu" and self.cpu_kernel():
+            return self._shader_cpu(lpos, agent)
         kinds, size, pos, rot = agent
 
         def run(rows, X, n, v, ih, mat):
@@ -967,6 +1191,22 @@ class OGBenchMaze(Env):
             step = rows if sc.passes is not None else len(idx)
             # Without lit passes, fewer rows draw as fast on one thread as on many.
             one = self.device.type == "cpu" and sc.passes is None and B < _CPU_THREADED_ROWS
+            # On CPU, one Numba pass draws the lit plates of every row of the group.
+            kernel = self.device.type == "cpu" and sc.passes is not None and sc.passes.cpu_kernel()
+            plates = None
+            if kernel:
+                plates = buf if len(uniq) == 1 else torch.empty((len(idx), size, size, 3), dtype=torch.uint8)
+                every = torch.as_tensor(idx, dtype=torch.long)
+                _, scale = self._agent_appearance(sc, sty, every)
+                xpos, xmat = self._fk(s[every], sc)
+                sc.passes.plates_cpu(
+                    sc.plate,
+                    sc.cam,
+                    sc.passes.light_pos(s[every][:, :2]),
+                    self._agent(sc, scale, xpos, xmat),
+                    rows,
+                    plates,
+                )
             with _threads(1) if one else contextlib.nullcontext():
                 for lo in range(0, len(idx), step):
                     part = idx[lo : lo + step]
@@ -975,16 +1215,16 @@ class OGBenchMaze(Env):
                     xpos, xmat = self._fk(s[sub], sc)
                     plate, shader, agent, lpos = sc.plate, None, None, None
                     if sc.passes is not None:
-                        size_b = torch.as_tensor(
-                            np.asarray(sc.prims_base.size), device=self.device, dtype=torch.float32
-                        )
-                        agent = (list(sc.prims_base.kind), size_b * scale.view(-1, 1, 1), xpos, xmat)
+                        agent = self._agent(sc, scale, xpos, xmat)
                         lpos = sc.passes.light_pos(s[sub][:, :2])
-                        plate = sc.passes.plates(sc.plate, sc.cam, lpos, agent)
+                        if plates is None:
+                            plate = sc.passes.plates(sc.plate, sc.cam, lpos, agent)
+                        else:
+                            plate = plates[lo : lo + step]
                         shader = sc.passes.shader(lpos, agent)
                     # Advanced indexing makes buf[sub] a copy. With multiple groups, render to a
                     # temporary and assign back explicitly; one group can write directly into buf.
-                    dst = buf if len(uniq) == 1 and len(part) == B else None
+                    dst = buf if len(uniq) == 1 and len(part) == B and plates is None else None
                     apart = self._movers_apart(sc, xpos, scale, size)
                     if apart is None:
                         got = R3.composite(
@@ -1011,6 +1251,11 @@ class OGBenchMaze(Env):
                     if dst is None:
                         buf[sub] = got
         return buf.view(*lead, size, size, 3) if lead else buf
+
+    def _agent(self, sc: _Scene, scale, xpos, xmat):
+        """Moving primitives (kinds, sizes, positions, rotations) of the shadow rays."""
+        size_b = torch.as_tensor(np.asarray(sc.prims_base.size), device=self.device, dtype=torch.float32)
+        return (list(sc.prims_base.kind), size_b * scale.view(-1, 1, 1), xpos, xmat)
 
     def _movers_apart(self, sc: _Scene, xpos, scale, size):
         """Return a host mask of rows whose goal and body screen bounds do not meet, or None.

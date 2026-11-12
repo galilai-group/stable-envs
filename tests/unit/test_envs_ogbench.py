@@ -262,6 +262,30 @@ def test_culled_wall_shadows_and_split_mover_tiles_keep_every_byte(_ogbench, mon
     assert torch.equal(single, full[[0, 41, 47]])
 
 
+def test_the_numba_lit_pass_draws_the_bytes_of_the_torch_lit_pass(_ogbench, monkeypatch):
+    """Groups of 16, 16 and 9 rows, with the goal near the body in some rows."""
+    pytest.importorskip("numba")
+    calls = []
+    plates_cpu = MAZE._LightPasses.plates_cpu
+
+    def counted(self, *args):
+        calls.append(len(args[2]))
+        return plates_cpu(self, *args)
+
+    monkeypatch.setattr(MAZE._LightPasses, "plates_cpu", counted)
+    with R.REGISTRY["PointMazeLargeNavigate"](num_envs=4, device="cpu") as env:
+        rows = torch.as_tensor(env.sample_states(29, np.random.default_rng(2)))
+        near = rows[:12].clone()
+        near[:, 2:4] = near[:, 0:2] + torch.linspace(-1.5, 1.5, 12).unsqueeze(1)
+        rows = torch.cat([rows, near])
+        kernel = env._render(rows)
+        assert calls == [41]
+        monkeypatch.setattr(MAZE._LightPasses, "cpu_kernel", lambda self: False)
+        reference = env._render(rows)
+    assert calls == [41]
+    assert torch.equal(kernel, reference)
+
+
 @pytest.mark.nightly
 @pytest.mark.parametrize("cell", ["PointMazeLargeNavigate", "AntMazeMediumNavigate"])
 def test_a_recoloured_floor_and_dimmed_light_leave_the_default_plate_unchanged(_ogbench, cell):

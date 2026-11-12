@@ -63,7 +63,8 @@ pusht-reference = ["gym-pusht"]
 # TwoRoom dynamics use the core JAX dependency; CUDA needs its GPU runtime.
 navigation = ["matplotlib>=3.10", "numba>=0.60"]
 navigation-gpu = ["jax[cuda12]>=0.4.35; sys_platform == 'linux'"]
-ogbench = ["mujoco>=3.11,<3.18", "ogbench>=1.2.1,<1.3"]
+# numba adds the compiled CPU lit pass of PointMaze Large.
+ogbench = ["mujoco>=3.11,<3.18", "ogbench>=1.2.1,<1.3", "numba>=0.60"]
 # Cube/Scene semantics and renderer. Their renderers check these exact MuJoCo, OGBench and
 # MuJoCo Warp versions when they render, and the CPU semantics check the OGBench version at
 # construction. Other OGBench cells need only the extra above.

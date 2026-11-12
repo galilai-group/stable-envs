@@ -156,6 +156,12 @@ All notable changes to this project are listed here. The format follows
   than 256 frames on one thread when the scene has no tracking light. With 8 Torch threads, idle Torch threads
   kept the cores busy while the `mujoco.batch` threads waited, and the time of an AntMaze episode of 64 steps with
   frames changed between runs by up to 10x. Frames and State do not change.
+- `PointMazeLargeNavigate` on CPU draws the tracking light with Numba kernels: the lit plates of all the frames of
+  a render in one pass, and the light on the body and goal samples of each composite. The Torch path did about a
+  hundred elementwise operations for each group of 16 frames, and each operation waited for all the Torch threads.
+  The square roots and the powers stay Torch operations on the same tensors, thus the frames are equal to the
+  frames of the Torch path, byte for byte. The `ogbench` extra adds Numba. Without Numba, the Torch path draws the
+  light.
 - DMC CPU batch resets with a seed reseed the task RNG of each environment in place, which gives the state of a
   new `RandomState(seed + i)` without its entropy draw, and the State columns after a reset come from the
   `mujoco.batch` data in array operations. `DMCCheetahRun` resets call MuJoCo directly instead of through the

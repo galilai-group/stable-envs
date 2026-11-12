@@ -57,6 +57,11 @@ render uses the Torch thread count (`torch.set_num_threads`), but it draws batch
 thread when the scene has no tracking light (every cell except `PointMazeLargeNavigate`). The frames
 and the State do not change with the thread count.
 
+On CPU, `PointMazeLargeNavigate` draws the tracking light on the static pixels with Numba kernels that do all
+the frames of a render in one pass. The square roots and the powers of the light stay Torch operations on the
+same tensors as the Torch path, thus the frames are equal to the frames of the Torch path, byte for byte. Without
+Numba, the Torch path draws the light. The `ogbench` extra installs Numba.
+
 ```python
 env = snv.AntMazeMediumNavigate(num_envs=64, device="cuda", simulation_backend="auto")
 ```
