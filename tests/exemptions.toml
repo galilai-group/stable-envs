@@ -28,12 +28,6 @@ checks = ["batch_render"]
 reason = "render() refuses a State whose batch is not num_envs (ValueError: Rocket full State requires batch [num_envs])"
 
 [[exemption]]
-env = "OGB*"
-family = "ogbench"
-checks = ["batch_render"]
-reason = "render() refuses a State whose batch is not num_envs (TypeError: Full Cube/Scene TensorDict State with batch [num_envs] required)"
-
-[[exemption]]
 env = "PiecewiseZones"
 family = "navigation"
 checks = ["original"]

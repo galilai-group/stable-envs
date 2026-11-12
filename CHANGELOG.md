@@ -120,6 +120,15 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- DM Control, `OGBCube` and `OGBScene`: `render(state)` checks only the State leaves that the frame reads.
+  DM Control gives `Env.render` the drawn fields: `qpos`, the episode model entries of the task (Reacher:
+  `task.target_pos`) and the physics leaves that move pixels, such as the Ball-in-Cup gravity and ball size, the
+  masses that move the tracking camera and the floor tilt. Their presence, shape and finite values are checked. Cube/Scene
+  checks that the projected leaves are present and then validates the RenderState: dtype, shape, finite values,
+  camera, target alpha, unit quaternions, colour, camera-angle and cube-size ranges and button bits. On CUDA
+  these checks use one host synchronization. `set_state` keeps the checks of the leaves that only restore
+  simulation (velocities, RNG, lifecycle, task and replay leaves). Cube/Scene `render(state)` also accepts a
+  State with a batch size different from the env. Frames do not change.
 - `PyFlytRocketLanding` with `simulation_backend="numba_cuda"` captures and stacks States with fewer copies. The
   leaves of a State are views of one device buffer, which one `torch.cat` for each packed `physics/*` leaf and
   each dtype fills, and `env.step` stacks the States of a step sequence with one `torch.stack`. Other States

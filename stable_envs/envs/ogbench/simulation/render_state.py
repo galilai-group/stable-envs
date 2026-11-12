@@ -89,14 +89,30 @@ def header(family, b, size, supersample, device):
     }
 
 
+def sources(family):
+    """The State leaf each RenderState leaf of ``project`` copies, keyed by the RenderState leaf."""
+    result = {("pose", name): ("physics", name) for name in ("qpos", "mocap_pos", "mocap_quat")}
+    for name in (*STATIC, "agent.color", "floor.color"):
+        result["appearance", name] = ("model", "compiled", name)
+    result["appearance", "cube.color"] = ("variation", "current", "cube.color")
+    if family == "Scene":
+        result["appearance", "lock_color"] = ("variation", "current", "lock_color")
+        result["pose", "buttons"] = ("scene", "cur_button_states")
+    return result
+
+
 def projected_keys(family):
     """The State leaves ``project`` reads."""
-    keys = [("physics", name) for name in ("qpos", "mocap_pos", "mocap_quat")]
-    keys += [("model", "compiled", name) for name in (*STATIC, "agent.color", "floor.color")]
-    keys.append(("variation", "current", "cube.color"))
-    if family == "Scene":
-        keys += [("variation", "current", "lock_color"), ("scene", "cur_button_states")]
-    return keys
+    return list(sources(family).values())
+
+
+def require_leaves(family, state):
+    """Check that ``state`` is a nonempty batch of full States that holds every leaf ``project`` reads."""
+    if not isinstance(state, TensorDict) or len(state.batch_size) != 1 or len(state) < 1:
+        raise TypeError("Full Cube/Scene TensorDict State with a nonempty batch is required")
+    for key in projected_keys(family):
+        if not torch.is_tensor(state.get(key, None)):
+            raise ValueError(f"Full State is missing a leaf that the frame reads: {key}")
 
 
 def state_columns(family, columns, size, supersample):
@@ -106,36 +122,39 @@ def state_columns(family, columns, size, supersample):
         ("renderer", "size"): np.full((b, 1), size, np.int64),
         ("renderer", "supersample"): np.full((b, 1), supersample, np.int64),
     }
-    for name in ("qpos", "mocap_pos", "mocap_quat"):
-        values["pose", name] = columns["physics", name]
-    for name in (*STATIC, "agent.color", "floor.color"):
-        values["appearance", name] = columns["model", "compiled", name]
-    values["appearance", "cube.color"] = columns["variation", "current", "cube.color"]
-    if family == "Scene":
-        values["appearance", "lock_color"] = columns["variation", "current", "lock_color"]
-        values["pose", "buttons"] = columns["scene", "cur_button_states"]
+    for target, source in sources(family).items():
+        values[target] = columns[source]
     return values
 
 
 def project(family, state, size, supersample, check=True):
+    """The RenderState of the leaves of ``state`` that the frame reads.
+
+    ``check`` validates the result; its errors name the State leaf a bad value comes from.
+    """
     b = len(state)
     device = state.device or state["physics", "qpos"].device
     values = header(family, b, size, supersample, device)
-    for name in ("qpos", "mocap_pos", "mocap_quat"):
-        values["pose", name] = state["physics", name].clone()
-    for name in (*STATIC, "agent.color", "floor.color"):
-        values["appearance", name] = state["model", "compiled", name].clone()
-    values["appearance", "cube.color"] = state["variation", "current", "cube.color"].clone()
-    if family == "Scene":
-        values["appearance", "lock_color"] = state["variation", "current", "lock_color"].clone()
-        values["pose", "buttons"] = state["scene", "cur_button_states"].clone()
+    leaves = sources(family)
+    for target, source in leaves.items():
+        values[target] = state[source].clone()
     result = TensorDict(values, [b], device=device)
     if check:
-        validate(family, result)
+        validate(family, result, labels=leaves)
     return result
 
 
-def validate(family, state):
+def _invalid(key, labels):
+    if labels is not None and key in labels:
+        return ValueError(f"Invalid State shape/dtype/finite value: {labels[key]}")
+    return ValueError(f"Invalid RenderState dtype/shape/value: {key}")
+
+
+def validate(family, state, labels=None):
+    """Check a RenderState. ``labels`` maps RenderState leaves to the State leaves that error messages name.
+
+    On a device, the value checks share one host synchronization.
+    """
     if not isinstance(state, TensorDict) or len(state.batch_size) != 1 or len(state) < 1:
         raise TypeError("Named Cube/Scene RenderState with a nonempty batch is required")
     schema = fields(family)
@@ -143,31 +162,30 @@ def validate(family, state):
     if set(state.keys(True, False)) != expected:
         raise ValueError("RenderState has missing or extra fields")
     if state.device is not None and state.device.type == "cpu":
-        return _validate_host(family, state, schema)
+        return _validate_host(family, state, schema, labels)
+    n = len(state)
+    leaves = {}
     for key, (shape, dtype) in schema.items():
-        value = state[key]
-        if value.shape != (len(state), *shape) or value.dtype != dtype or not torch.isfinite(value).all():
-            raise ValueError(f"Invalid RenderState dtype/shape/value: {key}")
-    sig = torch.as_tensor(signature(family), device=state["renderer", "signature"].device)
-    if not torch.all(state["renderer", "signature"] == sig):
-        raise ValueError("Incompatible renderer family/asset/schema profile")
+        value = leaves[key] = state[key]
+        if value.shape != (n, *shape) or value.dtype != dtype:
+            raise _invalid(key, labels)
+    checks = [(_invalid(key, labels), ~torch.isfinite(value).all()) for key, value in leaves.items()]
+    sig = torch.as_tensor(_signature(family), device=leaves["renderer", "signature"].device)
+    same = torch.all(leaves["renderer", "signature"] == sig)
+    checks.append((ValueError("Incompatible renderer family/asset/schema profile"), ~same))
     for name, maximum in [("size", 4096), ("supersample", 4)]:
-        value = state["renderer", name]
-        if torch.any((value < 1) | (value > maximum)) or not torch.all(value == value[0]):
-            raise ValueError("RenderState requires one valid square resolution/supersampling per batch")
-    if torch.any(state["renderer", "camera"] != 0):
-        raise ValueError("Only registered front_pixels camera is supported")
-    if not torch.all(state["appearance", "target_alpha"] == TARGET_ALPHA):
-        raise ValueError("Only the registered hidden target (alpha 0) is supported")
+        value = leaves["renderer", name]
+        bad = torch.any((value < 1) | (value > maximum)) | ~torch.all(value == value[0])
+        checks.append((ValueError("RenderState requires one valid square resolution/supersampling per batch"), bad))
+    camera = torch.any(leaves["renderer", "camera"] != 0)
+    checks.append((ValueError("Only registered front_pixels camera is supported"), camera))
+    alpha = leaves["appearance", "target_alpha"]
+    hidden = torch.all(alpha == TARGET_ALPHA)
+    checks.append((ValueError("Only the registered hidden target (alpha 0) is supported"), ~hidden))
     qadr = OBJECT_QPOS_ADR
-    for q in (state["pose", "qpos"][:, qadr + 3 : qadr + 7], state["pose", "mocap_quat"]):
-        if not torch.allclose(
-            torch.linalg.vector_norm(q, dim=-1),
-            torch.ones(len(state), dtype=q.dtype, device=q.device),
-            atol=1e-6,
-            rtol=0,
-        ):
-            raise ValueError("RenderState quaternion must be unit length")
+    for q in (leaves["pose", "qpos"][:, qadr + 3 : qadr + 7], leaves["pose", "mocap_quat"]):
+        unit = (torch.linalg.vector_norm(q, dim=-1) - 1).abs() <= 1e-6
+        checks.append((ValueError("RenderState quaternion must be unit length"), ~torch.all(unit)))
     for name in (
         "cube.color",
         "agent.color",
@@ -175,17 +193,22 @@ def validate(family, state):
         "light.intensity",
         *(("lock_color",) if family == "Scene" else ()),
     ):
-        v = state["appearance", name]
-        if torch.any((v < 0) | (v > 1)):
-            raise ValueError("RenderState color/intensity range")
-    angle = state["appearance", "camera.angle_delta"]
-    if torch.any(angle.abs() > (10 if family == "Cube" else 5)):
-        raise ValueError("RenderState camera-angle range")
-    sz = state["appearance", "cube.size"]
-    if torch.any((sz < min(0.01, float(np.float32(0.01)))) | (sz > 0.03)):
-        raise ValueError("RenderState cube-size range")
-    if family == "Scene" and torch.any((state["pose", "buttons"] < 0) | (state["pose", "buttons"] > 1)):
-        raise ValueError("RenderState button bits")
+        v = leaves["appearance", name]
+        checks.append((ValueError("RenderState color/intensity range"), torch.any((v < 0) | (v > 1))))
+    angle = leaves["appearance", "camera.angle_delta"]
+    bad = torch.any(angle.abs() > (10 if family == "Cube" else 5))
+    checks.append((ValueError("RenderState camera-angle range"), bad))
+    sz = leaves["appearance", "cube.size"]
+    bad = torch.any((sz < min(0.01, float(np.float32(0.01)))) | (sz > 0.03))
+    checks.append((ValueError("RenderState cube-size range"), bad))
+    if family == "Scene":
+        buttons = leaves["pose", "buttons"]
+        checks.append((ValueError("RenderState button bits"), torch.any((buttons < 0) | (buttons > 1))))
+    device = leaves["pose", "qpos"].device
+    failed = torch.stack([bad.to(device) for _, bad in checks]).tolist()
+    for (error, _), bad in zip(checks, failed, strict=True):
+        if bad:
+            raise error
     return state
 
 
@@ -194,7 +217,7 @@ def _signature(family):
     return signature(family)
 
 
-def _validate_host(family, state, schema):
+def _validate_host(family, state, schema, labels=None):
     """The checks of ``validate`` on NumPy views of a CPU RenderState."""
     n = len(state)
     leaves = dict(state.items(True, True))
@@ -202,10 +225,10 @@ def _validate_host(family, state, schema):
     for key, (shape, dtype) in schema.items():
         value = leaves[key]
         if value.shape != (n, *shape) or value.dtype != dtype:
-            raise ValueError(f"Invalid RenderState dtype/shape/value: {key}")
+            raise _invalid(key, labels)
         array = values[key] = value.detach().numpy()
         if array.dtype.kind == "f" and not np.isfinite(array).all():
-            raise ValueError(f"Invalid RenderState dtype/shape/value: {key}")
+            raise _invalid(key, labels)
     if not np.all(values["renderer", "signature"] == _signature(family)):
         raise ValueError("Incompatible renderer family/asset/schema profile")
     for name, maximum in [("size", 4096), ("supersample", 4)]:

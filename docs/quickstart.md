@@ -23,8 +23,7 @@ env.close()
 
 `num_envs` is the number of environments that run together. You can think of it as the batch size.
 `reset`, `step` and `set_state` use this batch. For most classes, `render(state)` also accepts a State
-with a different batch. `PyFlytRocketLanding`, `OGBCube` and `OGBScene` refuse a State whose batch is
-not `num_envs`.
+with a different batch. `PyFlytRocketLanding` refuses a State whose batch is not `num_envs`.
 
 `env.close()` stops the simulator's worker processes and frees the environment's own buffers.
 Renderer contexts that other environments share stay cached. A second call has no effect. An

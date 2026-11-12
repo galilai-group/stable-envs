@@ -235,8 +235,8 @@ class ManipulationSemantics:
         if trusted:
             state = self.get_state()
         elif state is not self.__dict__.get("_own_state"):
-            # A State this env's simulator returned needs only the RenderState checks below.
-            self._simulator.validate(state)
+            # The frame reads only the projected leaves; set_state checks the leaves that restore simulation.
+            pixels.require_leaves(self.CELL, state)
         if host:
             state = state.select(*pixels.projected_keys(self.CELL)).cpu()
         return pixels.project(self.CELL, state, size, supersample, check=not trusted)
