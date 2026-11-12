@@ -5,8 +5,10 @@
 ([Zuo et al.](https://lnsgroup.cc/research/MS-Human/)), a whole-body musculoskeletal human whose 36 degrees
 of freedom are driven by 100 muscle actuators. Upstream ships only this MJCF model and no task code, so the
 reference dynamics are CPU MuJoCo (`float64`) stepping the pinned model. A CPU env steps every lane in one
-native `mujoco.batch` call and a CUDA env steps on
-[MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp). The CPU path runs MuJoCo in `float64` but
+native `mujoco.batch` call. A CUDA env of 256 or more lanes steps on
+[MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp); a smaller CUDA env steps on `mujoco.batch`
+and returns its State on CUDA, because that is faster below 256 lanes. Set `simulation_backend` to
+`"native"` or `"mjwarp"` to select one, or `mjwarp_min_envs` to change the cutoff. The CPU path runs MuJoCo in `float64` but
 rounds the integration State to `float32` after every step, so it restores bit-for-bit and matches a
 per-lane `mj_step` loop with the same rounding exactly. Over the first 12 steps (24 ms) from the `init`
 keyframe under uniformly random activations, across 3,000 trajectories (150 for each of 20 seeds), its worst

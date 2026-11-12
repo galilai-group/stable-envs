@@ -39,11 +39,13 @@ def _cuda_problem() -> str | None:
 
 _CUDA = _cuda_problem()
 cuda_only = [pytest.mark.gpu, pytest.mark.skipif(_CUDA is not None, reason=str(_CUDA))]
-DEVICES = ["cpu", pytest.param("cuda", marks=cuda_only)]
+DEVICES = ["cpu", pytest.param("cuda", marks=cuda_only), pytest.param("cuda/mjwarp", marks=cuda_only)]
 
 
 def _make(lanes=LANES, device="cpu"):
-    return se.make("MSHumanLocomotion", num_envs=lanes, device=device)
+    """``"cuda/mjwarp"`` selects MuJoCo Warp; a plain device uses the automatic backend."""
+    device, _, backend = device.partition("/")
+    return se.make("MSHumanLocomotion", num_envs=lanes, device=device, simulation_backend=backend or "auto")
 
 
 def _actions(env, steps=STEPS, seed=SEED):
@@ -90,10 +92,25 @@ def test_cpu_env_steps_on_the_native_batch():
 
 
 @pytest.mark.parametrize("device", [pytest.param("cuda", marks=cuda_only)])
-def test_cuda_env_steps_on_mujoco_warp(device):
+def test_small_cuda_env_steps_on_the_native_batch(device):
     with _make(device=device) as env:
+        assert env.simulation_backend == "native"
+        assert type(env._simulator) is MSHumanBatchAdapter
+
+
+@pytest.mark.parametrize("device", [pytest.param("cuda", marks=cuda_only)])
+def test_cuda_env_steps_on_mujoco_warp_from_the_cutoff(device):
+    with se.make("MSHumanLocomotion", num_envs=2, device=device, mjwarp_min_envs=2) as env:
+        assert env.simulation_backend == "mjwarp"
         assert type(env._simulator) is MSHumanWarpAdapter
         assert env._simulator._step_graph is not None
+    with se.make("MSHumanLocomotion", num_envs=1, device=device, simulation_backend="mjwarp") as env:
+        assert type(env._simulator) is MSHumanWarpAdapter
+
+
+def test_mjwarp_backend_requires_cuda():
+    with pytest.raises(ValueError, match="requires device='cuda'"):
+        se.make("MSHumanLocomotion", num_envs=1, device="cpu", simulation_backend="mjwarp")
 
 
 @pytest.mark.parametrize("device", DEVICES)

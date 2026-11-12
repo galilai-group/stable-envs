@@ -34,8 +34,8 @@ All notable changes to this project are listed here. The format follows
   (`miniworld` extra). Large batches step in worker processes and draw `render(state)` in render workers
   (`miniworld-sim` and `miniworld-render` tuning paths).
 - MS-Human-700: `MSHumanLocomotion` wraps the whole-body musculoskeletal locomotion model (36 DoF,
-  100 muscles; `mshuman` extra). CPU envs step every lane in one native `mujoco.batch` and CUDA envs step on
-  MuJoCo Warp; State is `float32` on the env device. Frames come from MuJoCo's OpenGL renderer. The
+  100 muscles; `mshuman` extra). Envs step every lane in one native `mujoco.batch`; CUDA envs of 256 or more
+  lanes step on MuJoCo Warp; State is `float32` on the env device. Frames come from MuJoCo's OpenGL renderer. The
   Apache-2.0 model is fetched from LNSGroup/MS-Human-700 at a pinned commit on first use, overridable with
   `STABLE_ENVS_MSHUMAN_HOME`. The extra needs MuJoCo and MuJoCo Warp 3.17.
 - DM Control on CPU: one Numba kernel draws the frames of all 17 classes. Each tile of 8 × 8 pixels
