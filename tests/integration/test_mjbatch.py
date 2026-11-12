@@ -381,3 +381,48 @@ def test_mjwarp_step_fn_replaces_the_substeps():
         # The graph replays one step_fn call per step; Python runs it only while capturing.
         assert len(calls) == traced
         assert float(batch.data("time")[0]) - start == pytest.approx(2 * _model().opt.timestep, rel=1e-5)
+
+
+def test_native_model_field_is_a_live_view_of_every_environment():
+    with NativeBatch(_model(), 2, frame_skip=FRAME_SKIP) as batch:
+        friction = batch.model_field("geom_friction")
+        assert friction.shape == (2, *_model().geom_friction.shape)
+        friction[1, :, 0] = 0.25
+        assert batch.model_field("geom_friction") is friction
+        np.testing.assert_array_equal(friction[0].numpy(), _model().geom_friction)
+        assert (batch.model_field("geom_friction")[1, :, 0] == 0.25).all()
+
+
+@cuda
+def test_mjwarp_capture_step_runs_family_kernels_before_every_substep():
+    import warp as wp
+
+    @wp.kernel
+    def push(qfrc: wp.array2d(dtype=float), k: int):
+        env = wp.tid()
+        qfrc[env, 0] = float(k + 1)
+
+    with WarpBatch(_model(), 2, "cuda", frame_skip=FRAME_SKIP) as batch:
+        qfrc = wp.from_torch(batch.data("qfrc_applied"))
+        substeps = []
+
+        def before_substep(k):
+            substeps.append(k)
+            wp.launch(push, dim=2, inputs=[qfrc, k])
+
+        fused = len(batch._fused)
+        graph = batch.capture_step(before_substep)
+        assert substeps == list(range(FRAME_SKIP)) * 2
+        # Every capture keeps the fused tree passes of the default step graph.
+        assert len(batch._fused) == fused + (1 if batch.fused_tree else 0)
+        batch.launch_step(graph)
+        assert float(batch.data("qfrc_applied")[0, 0]) == FRAME_SKIP
+
+
+@cuda
+def test_mjwarp_capture_step_needs_the_default_substeps():
+    import mujoco_warp as mjw
+
+    with WarpBatch(_model(), 2, "cuda", frame_skip=FRAME_SKIP, step_fn=mjw.step) as batch:
+        with pytest.raises(ValueError, match="step_fn"):
+            batch.capture_step(lambda k: None)
