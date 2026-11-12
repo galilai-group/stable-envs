@@ -16,6 +16,9 @@ from .maze_process import OGBMazeProcessAdapter
 
 _AdapterT = TypeVar("_AdapterT", bound=SimulatorAdapter)
 
+# Smallest CUDA Cube batch that steps with MJX; smaller batches step faster on CPU (L40S, 8 cores).
+CUBE_MJX_MIN_ENVS = 1024
+
 
 def make_maze_adapter(
     num_envs: int,
@@ -43,7 +46,7 @@ def make_manipulation_adapter(
 ) -> _AdapterT | CubeMJXAdapter | OGBManipulationProcessAdapter:
     import torch
 
-    if family == "Cube" and torch.device(device).type == "cuda":
+    if family == "Cube" and torch.device(device).type == "cuda" and num_envs >= CUBE_MJX_MIN_ENVS:
         from .cube_mjx import CubeMJXAdapter
 
         return CubeMJXAdapter(family, num_envs, device, seed, reward_task_id)

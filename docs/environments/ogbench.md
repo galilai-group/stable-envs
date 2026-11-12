@@ -143,7 +143,8 @@ ray caster `raycast3d`. It draws the maze, the body and the floor from the State
 ## Manipulation
 
 Cube and Scene need `mujoco==3.17.0` and the `ogbench-manipulation` extra. MuJoCo OpenGL draws
-the frames on CPU (software OpenGL) and on CUDA (NVIDIA OpenGL). Physics runs on CPU with both renderers.
+the frames on CPU (software OpenGL) and on CUDA (NVIDIA OpenGL). Physics runs on CPU, except for
+`OGBCube` batches of 1024 or more environments on CUDA, which step with MJX (float32).
 
 - CPU frames are bit-exact. A draw of the same state gives the same frame each time.
 - CUDA frames use the same MuJoCo OpenGL path. The NVIDIA driver can change a pixel by 1/255 between
@@ -160,7 +161,7 @@ restore also sets the next reset.
 The arm starts at the position that OGBench samples. It starts at `agent.ee_start_position` only when
 the reset options name this leaf, or when `set_variation` sets the leaf to a value that is not the default.
 
-The default model has the OGBench physics, with a cube size of 0.02. The reset and the physics are equal
+The default model has the OGBench physics, with a cube size of 0.02. With CPU physics, the reset and the physics are equal
 to OGBench, bit for bit.
 
 ### OGBCube
