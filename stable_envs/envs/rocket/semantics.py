@@ -144,7 +144,14 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         return self._simulator.step(actions, active=active, capture_state=False)
 
     def _stack_states(self, values):
-        """Stack State snapshots along a new time axis; zero leaves that a step does not change are not copied."""
+        """Stack State snapshots along a new time axis; zero leaves that a step does not change are not copied.
+
+        The CUDA Numba simulator stacks its own States with one copy.
+        """
+        stack = getattr(self._simulator, "stack_states", None)
+        stacked = None if stack is None else stack(values)
+        if stacked is not None:
+            return stacked
         zero = self._simulator.zero_state_leaves
         stacked = stack_leaves([value.exclude(*zero) for value in values])
         for key in zero:

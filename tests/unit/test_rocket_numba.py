@@ -118,6 +118,36 @@ def test_save_restore_continue_is_exact(backend, device):
                     assert torch.equal(out[key], value), key
 
 
+@pytest.mark.skipif(not CUDA, reason="CUDA required")
+def test_cuda_states_are_one_buffer_and_stack_with_one_copy_as_the_core_does():
+    from stable_envs._core.stepping import _stack_states
+
+    batch, device = 4, "cuda"
+    with make("PyFlytRocketLanding", num_envs=batch, seed=3, device=device, simulation_backend="numba_cuda") as env:
+        env.reset(seed=3, options={"variation": ["all"]})
+        sim = env._simulator
+        states = [sim.step(torch.as_tensor(_smooth(batch, t), device=device))["state"] for t in range(3)]
+        live = sim._leaves()
+        for key, value in states[-1].items(True, True):
+            assert value.dtype == live[key].dtype and torch.equal(value, live[key]), key
+        storages = {value.untyped_storage().data_ptr() for value in states[0].values(True, True)}
+        assert len(storages) == 1
+        for count in (1, 3):
+            got, want = sim.stack_states(states[:count]), _stack_states(states[:count])
+            assert got.batch_size == want.batch_size and list(got.keys(True, True)) == list(want.keys(True, True))
+            for key in want.keys(True, True):
+                assert got[key].dtype == want[key].dtype and torch.equal(got[key], want[key]), key
+            owned = {state[key].untyped_storage().data_ptr() for state in states for key in state.keys(True, True)}
+            assert not any(got[key].untyped_storage().data_ptr() in owned for key in got.keys(True, True))
+        # States that are not one buffer of this adapter take the leafwise stack.
+        assert sim.stack_states([state.clone() for state in states]) is None
+        actions = np.stack([_smooth(batch, t) for t in range(3, 8)], 1)
+        out = env.step(torch.as_tensor(actions, device=device), frames=None)
+        assert out["states"].batch_size == (batch, 5)
+        for key, value in out["state"].items(True, True):
+            assert torch.equal(out["states"][key][:, -1], value), key
+
+
 def test_invalid_state_changes_nothing():
     with make("PyFlytRocketLanding", num_envs=2, seed=1) as env:
         before = env.get_state()

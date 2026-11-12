@@ -15,7 +15,7 @@ from ...._execution.process import leaf_tensordict
 from . import numba_cuda_physics as cuda_physics
 from . import numba_physics as physics
 from .actions import validate_actions
-from .numba_batch import _VARIATION_LEAVES, RocketNumbaAdapter
+from .numba_batch import _PACKED, _VARIATION_LEAVES, RocketNumbaAdapter
 
 _LOW = (-1.0, -1.0, -1.0, 0.0, 0.0, -1.0, -1.0)
 
@@ -72,6 +72,77 @@ def _after_step(stepped, position, velocity, rotation, flame, camera, rgba, dt):
     camera[b, 6] = w
 
 
+class _StateBuffer:
+    """Byte layout of every State leaf in one buffer.
+
+    The leaves of one dtype are adjacent and start at an 8-byte bound; the ``front`` leaves come first in their
+    dtype. ``runs`` holds ``(dtype, first element, element count, keys)`` of the other leaves of each dtype.
+    """
+
+    def __init__(self, fields, batch, front=frozenset()):
+        self.batch, self.keys, self.slots, self.runs = batch, list(fields), {}, []
+        offset = 0
+        for dtype in dict.fromkeys(dtype for _, dtype in fields.values()):
+            keys = [key for key, (_, other) in fields.items() if other == dtype]
+            keys = [key for key in keys if key in front] + [key for key in keys if key not in front]
+            run, start = [], None
+            for key in keys:
+                shape = fields[key][0]
+                if key not in front:
+                    start = offset if start is None else start
+                    run.append(key)
+                self.slots[key] = (dtype, shape, offset)
+                offset += batch * math.prod(shape) * dtype.itemsize
+            if run:
+                self.runs.append((dtype, start // dtype.itemsize, (offset - start) // dtype.itemsize, run))
+            offset = -(-offset // 8) * 8
+        self.nbytes = offset
+        #: ``(key, dtype, [batch, *shape], strides, first element)`` of each leaf in State order.
+        self.strides = []
+        for key in self.keys:
+            dtype, shape, start = self.slots[key]
+            inner = tuple(math.prod(shape[i + 1 :]) for i in range(len(shape)))
+            self.strides.append((key, dtype, (batch, *shape), (math.prod(shape), *inner), start // dtype.itemsize))
+
+    def views(self, buffer, steps=None):
+        """``{key: view}`` of the leaves in a 1-D byte ``buffer`` that holds one State or ``steps`` equal rows."""
+        flats, out = {}, {}
+        row = buffer.numel() // (steps or 1)
+        for key, dtype, shape, strides, start in self.strides:
+            flat = flats.get(dtype)
+            if flat is None:
+                flat = flats[dtype] = buffer.view(dtype)
+            if steps is None:
+                out[key] = flat.as_strided(shape, strides, start)
+            else:
+                out[key] = flat.as_strided(
+                    (shape[0], steps, *shape[1:]), (strides[0], row // dtype.itemsize, *strides[1:]), start
+                )
+        return out
+
+    def stack(self, states, device):
+        """Stack States whose leaves are views of one buffer of this layout, with one copy; None for others."""
+        head, tail = self.keys[0], self.keys[-1]
+        head_start = self.slots[head][2] // self.slots[head][0].itemsize
+        tail_start = self.slots[tail][2] // self.slots[tail][0].itemsize
+        rows, size = [], None
+        for state in states:
+            first, last = state[head], state[tail]
+            storage = first.untyped_storage()
+            size = storage.nbytes() if size is None else size
+            if (
+                storage.nbytes() != size
+                or size < self.nbytes
+                or storage.device.type != device.type
+                or first.storage_offset() != head_start
+                or last.storage_offset() != tail_start
+                or last.untyped_storage().data_ptr() != storage.data_ptr()
+            ):
+                return None
+            rows.append(torch.empty(0, dtype=torch.uint8, device=device).set_(storage))
+        return leaf_tensordict(self.views(torch.stack(rows).view(-1), len(rows)), [self.batch, len(rows)], device)
+
+
 class RocketCudaAdapter(RocketNumbaAdapter):
     """Step every Rocket environment on the GPU with the CUDA build of the Numba kernel.
 
@@ -96,6 +167,7 @@ class RocketCudaAdapter(RocketNumbaAdapter):
         self._low = torch.tensor(_LOW, dtype=torch.float64, device=device)
         self._everyone = torch.ones(batch, dtype=torch.bool, device=device)
         self._last_d = None
+        self._copies_of = self._layout = None
 
     def _rng_rows(self):
         return self.state["rng"].cpu().numpy()
@@ -228,9 +300,45 @@ class RocketCudaAdapter(RocketNumbaAdapter):
         leaves.update({("variation", name): self._uploaded[("variation", name)] for name in _VARIATION_LEAVES})
         return leaves
 
+    def _state_layout(self):
+        if self._layout is None:
+            front = frozenset(("physics", group) for group in _PACKED)
+            self._layout = _StateBuffer(self.fields, self.num_envs, front)
+        return self._layout
+
+    def stack_states(self, states):
+        """Stack States of this adapter along a new time axis with one copy; None for other States."""
+        return self._state_layout().stack(states, self.device)
+
+    def _copies(self):
+        """The sources of the State leaves: the kernel columns of each packed leaf, the flat leaves of each run."""
+        leaves, state, batch = self._leaves(), self.state, self.num_envs
+        packed = [
+            (("physics", group), [state[n].reshape(batch, -1) for n, (g, _, _) in self._columns.items() if g == group])
+            for group in _PACKED
+        ]
+        runs = [
+            (dtype, first, count, [leaves[key].reshape(-1) for key in keys])
+            for dtype, first, count, keys in self._state_layout().runs
+        ]
+        return packed, runs
+
     def get_state(self):
-        leaves = {key: value.clone() for key, value in self._leaves().items()}
-        return leaf_tensordict(leaves, self.num_envs, self.device)
+        """A State whose leaves are views of one new buffer, filled by one ``torch.cat`` per packed leaf and run."""
+        if self._uploaded is None:
+            self._upload()
+        copies = self._copies_of
+        if copies is None or copies[0] is not self._uploaded:
+            copies = self._copies_of = (self._uploaded, *self._copies())
+        _, packed, runs = copies
+        layout = self._state_layout()
+        buffer = torch.empty(layout.nbytes, dtype=torch.uint8, device=self.device)
+        views = layout.views(buffer)
+        for key, columns in packed:
+            torch.cat(columns, 1, out=views[key])
+        for dtype, first, count, sources in runs:
+            torch.cat(sources, out=buffer.view(dtype)[first : first + count])
+        return leaf_tensordict(views, self.num_envs, self.device)
 
     def rgba(self):
         return self._rgba_d.clone()

@@ -57,14 +57,14 @@ class _Views(dict):
 
 
 def leaf_tensordict(leaves, batch, device):
-    """Build a ``[batch]`` TensorDict from ``{key tuple: tensor}`` leaves on ``device``, in their order."""
+    """Build a ``[batch]`` TensorDict (or one of batch size ``batch``, a list) from ``{key tuple: tensor}`` leaves."""
     tree = {}
     for key, value in leaves.items():
         branch = tree
         for part in key[:-1]:
             branch = branch.setdefault(part, {})
         branch[key[-1]] = value
-    return build_tensordict(tree, [batch], device)
+    return build_tensordict(tree, batch if isinstance(batch, list) else [batch], device)
 
 
 def zeros(shape, dtype, device):

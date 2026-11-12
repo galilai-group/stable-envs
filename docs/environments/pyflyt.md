@@ -29,9 +29,10 @@ output reports it as `success`.
 
 `None` selects the default of the device. With `"numba"` on CUDA, the kernel steps on the host and the outputs
 move to the device. With `"numba_cuda"`, a step reads the actions once on the host to check them; the physics,
-the State and the outputs stay on the device. A reset samples the starts and seeds the noise generators on the
-host, then settles every environment on the device. The CUDA build can round the last bits differently from the
-CPU kernel.
+the State and the outputs stay on the device. The leaves of a State are views of one buffer, which a few copies
+fill, and `env.step` stacks the States of a step sequence with one copy. A reset samples the starts and seeds the
+noise generators on the host, then settles every environment on the device. The CUDA build can round the last
+bits differently from the CPU kernel.
 
 The Numba backend models the rocket as one rigid body, as PyBullet does: all its links are fixed. It applies
 the PyFlyt body drag, the four lifting surfaces, the gimballed booster with fuel burn, and the thrust noise.
