@@ -14,6 +14,7 @@ from ...render import cpu3d as C3
 from ...render import mjwarp as MW
 from ...render.mjwarp import effective_alpha
 from ...spaces import Box, Dict
+from . import warp_render
 from ._mass_rows import ARRAYS as _MASS_ARRAYS
 from ._mass_rows import MassRows
 from ._model import (
@@ -21,8 +22,6 @@ from ._model import (
     VISIBLE_GROUPS,
     _grid_defaults,
     _grid_masks,
-    _row_width,
-    _slot_element,
 )
 from .base import _DMCModel
 from .simulation import physics as _sim_physics
@@ -219,7 +218,8 @@ class DMControlTrackCom(_DMCModel):
         if self.backend == "opengl":
             return  # The explicit fidelity backend owns a separate model/context.
         if self.device.type == "cuda":
-            self._context(self.size, _launch_worlds(self.size, self.B))  # build and capture up front
+            if not warp_render.selected(self):
+                self._context(self.size, _launch_worlds(self.size, self.B))  # build and capture up front
         elif self.device.type == "cpu":
             reason = type(self).CPU_UNCERTIFIED_REASON or None
             if reason:
@@ -501,6 +501,10 @@ class DMControlTrackCom(_DMCModel):
         if self.device.type == "cpu":
             self._render_cpu(s, sty, size, buf)
             return buf.view(*lead, size, size, 3) if lead else buf
+        if warp_render.selected(self, backend):
+            tuning.on_render("dmc-trackcom", size, B, self)
+            warp_render.render(self, s, sty, size, buf, 1)
+            return buf.view(*lead, size, size, 3) if lead else buf
         worlds = _launch_worlds(size, B)
         c = self._context(size, worlds)
         masses = self._row_masses(sty, 0, B)
@@ -519,31 +523,6 @@ class DMControlTrackCom(_DMCModel):
             # MJWarp’s packed byte view is BGRA; select RGB channels explicitly.
             buf[lo:hi] = c.bgra[: hi - lo][..., [2, 1, 0]]
         return buf.view(*lead, size, size, 3) if lead else buf
-
-    @classmethod
-    def _static_slot_rows(cls) -> dict:
-        """Map world-body position slots to derived data rows requiring direct uploads.
-
-        MJWarp kinematics skips world-body geoms/sites. Updating only their model
-        positions leaves stale world poses; the identity parent frame permits direct copies.
-        """
-        hit = cls.__dict__.get("_slot_rows_cache")
-        if hit is not None:
-            return hit
-        m, pr = cls._model(), cls._pristine()
-        rows: dict = {}
-        for j, (arr, k) in enumerate(cls._slots()):
-            kind, eid = _slot_element(m, arr, k)
-            if kind not in ("geom", "site") or not arr.endswith("_pos"):
-                continue
-            bodyid = m.geom_bodyid if kind == "geom" else m.site_bodyid
-            if int(bodyid[eid]) != 0:
-                continue  # kinematics recomputes poses on non-world bodies
-            rows.setdefault((kind, eid), [np.asarray(pr[arr], np.float64)[eid].copy(), []])[1].append(
-                (j, int(k % _row_width(m, arr)))
-            )
-        cls._slot_rows_cache = rows
-        return rows
 
     def _upload(self, c: _TCtx, s: torch.Tensor, sty, lo: int, hi: int, masses=None, floor=None, palette=None) -> None:
         """Write compact rows and styles into the context’s per-world buffers."""

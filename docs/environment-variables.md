@@ -61,6 +61,8 @@ knob does and its default.
 | variable | default | effect |
 |---|---|---|
 | `STABLE_ENVS_MSHUMAN_HOME` | unset | Path to an existing MS-Human-700 checkout. Unset downloads the pinned commit into the cache (`$XDG_CACHE_HOME/stable-envs/ms-human-700`). |
+| `STABLE_ENVS_DMC_CUDA_RENDER` | `auto` | `mjwarp` makes the DM Control environments with `backend="auto"` on CUDA draw with MuJoCo Warp's ray tracer. See [DM Control](environments/dmcontrol.md#mujoco-warp-renderer). |
+| `STABLE_ENVS_DMC_WARP_OPTIONS` | unset | A JSON object of default options for the DM Control MuJoCo Warp renderer, for example `{"shadows": "one"}`. The `render_options` argument overrides each key that it sets. |
 
 ## Development
 
