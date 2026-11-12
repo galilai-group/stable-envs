@@ -1,7 +1,7 @@
 """Interfaces between an environment and its batch of simulators."""
 
 from abc import abstractmethod
-from typing import Protocol, runtime_checkable
+from typing import Protocol, cast, runtime_checkable
 
 import numpy as np
 from tensordict import TensorDict
@@ -98,6 +98,17 @@ class StepPipeline(Protocol):
         ...
 
 
+_PIPELINE_TYPES: dict[type, bool] = {}
+_PIPELINE_METHODS = ("submit_step", "receive_step", "abort_step")
+
+
 def step_pipeline(adapter: SimulatorAdapter) -> StepPipeline | None:
     """Return ``adapter`` when it supports submit/receive stepping, else None."""
-    return adapter if isinstance(adapter, StepPipeline) else None
+    cls = type(adapter)
+    pipelined = _PIPELINE_TYPES.get(cls)
+    if pipelined is None:
+        pipelined = isinstance(adapter, StepPipeline)
+        # The answer holds for every instance when the class alone decides it.
+        if all(hasattr(cls, name) for name in _PIPELINE_METHODS) or not hasattr(cls, "__getattr__"):
+            _PIPELINE_TYPES[cls] = pipelined
+    return cast(StepPipeline, adapter) if pipelined else None
