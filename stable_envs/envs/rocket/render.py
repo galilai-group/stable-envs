@@ -50,15 +50,35 @@ def project(state):
     }
 
 
-def camera_matrices(link, bullet):
+def camera_view(link, bullet):
+    """PyBullet's view matrix for camera link pose ``link``, as its tuple of 16 column-major floats."""
     rotation = np.array(bullet.getMatrixFromQuaternion(link[3:7])).reshape(3, 3)
     eye = link[:3] + rotation @ geometry.CAM_OFFSET
     angles = np.array(bullet.getEulerFromQuaternion(link[3:7]))
     angles[1] += math.radians(geometry.CAM_PITCH_DEG)
     up = np.array(bullet.getMatrixFromQuaternion(bullet.getQuaternionFromEuler(angles))).reshape(3, 3)[:, 2]
-    return bullet.computeViewMatrix(eye, link[:3], up), bullet.computeProjectionMatrixFOV(
-        geometry.CAM_FOV, 1.0, geometry.CAM_NEAR, geometry.CAM_FAR
-    )
+    return bullet.computeViewMatrix(eye, link[:3], up)
+
+
+def camera_projection(bullet):
+    return bullet.computeProjectionMatrixFOV(geometry.CAM_FOV, 1.0, geometry.CAM_NEAR, geometry.CAM_FAR)
+
+
+def camera_matrices(link, bullet):
+    return camera_view(link, bullet), camera_projection(bullet)
+
+
+def gl_matrix(matrix):
+    """A PyBullet column-major matrix tuple as a float32 ``(4, 4)`` row-major array."""
+    return np.asarray(matrix, np.float32).reshape(4, 4).T
+
+
+def frame_views(links, bullet):
+    """Float32 ``(B, 4, 4)`` view matrices of ``(B, 7)`` camera link poses."""
+    views = np.empty((len(links), 4, 4), np.float32)
+    for i, link in enumerate(links):
+        views[i] = gl_matrix(camera_view(link, bullet))
+    return views
 
 
 def _mm(a, b):
@@ -254,25 +274,34 @@ def render(env, state, size, ss, chunk_size=None, check=None):
     """Draw a RenderState with explicit poses; ``check`` must pass before any frame returns."""
     if chunk_size is not None and (isinstance(chunk_size, bool) or not isinstance(chunk_size, int) or chunk_size <= 0):
         raise ValueError("chunk_size must be a positive integer")
-    import pybullet as bullet
-
     env._check_open("render")
     host = {k: state["renderer", k].detach().cpu().numpy() for k in FIELDS}
     body, links, colors = host["source_pose"], host["camera_pose"], host["rgba"]
     if env.device.type == "cpu":
         return render_cpu(env, body, links, colors, size, ss, check)
+    if env.device.type != "cuda":
+        raise ValueError("Rocket rendering supports CPU TinyRenderer or CUDA nvdiffrast")
+    return draw_gpu(env, body, links, colors, size, ss, chunk_size, check=check)
+
+
+def draw_gpu(env, body, links, colors, size, ss, chunk_size=None, views=None, check=None):
+    """Draw host body poses, camera link poses and colours on CUDA; ``views`` are their ``frame_views`` if known.
+
+    ``check`` must pass before any frame returns.
+    """
+    import pybullet as bullet
+
     lock = env.__dict__.setdefault("_rocket_pixel_lock", threading.RLock())
     with lock:
-        if env.device.type != "cuda":
-            raise ValueError("Rocket rendering supports CPU TinyRenderer or CUDA nvdiffrast")
         if check is not None:
             check()
-        tuning.on_render("rocket-nvdiff", size, len(state), env)
+        batch = len(body)
+        tuning.on_render("rocket-nvdiff", size, batch, env)
         renderer, per_world = _gpu_context(env, size, ss)
-        limit = geometry.nvd_worlds(per_world, env.device, size, len(state))
+        limit = geometry.nvd_worlds(per_world, env.device, size, batch)
         limit = min(limit, chunk_size) if chunk_size is not None else limit
-        positions = np.zeros((len(state), geometry.N_GEOMS, 3), np.float64)
-        quaternions = np.zeros((len(state), geometry.N_GEOMS, 4), np.float64)
+        positions = np.zeros((batch, geometry.N_GEOMS, 3), np.float64)
+        quaternions = np.zeros((batch, geometry.N_GEOMS, 4), np.float64)
         quaternions[..., 3] = 1
         for source, geom in enumerate((GROUND_GEOM, BODY_GEOM, PAD_GEOM)):
             positions[:, geom], quaternions[:, geom] = body[:, source, :3], body[:, source, 3:]
@@ -283,18 +312,15 @@ def render(env, state, size, ss, chunk_size=None, check=None):
             quaternions[:, BODY_GEOM + j] = geometry.quat_mul(quaternions[:, BODY_GEOM], local_quat[j : j + 1])
         rotations = geometry.quat_to_mat(quaternions)
         geometry.cull_ground(positions, rotations, geometry.camera_pose(links[:, :3], links[:, 3:])[0])
-        model = np.zeros((len(state), geometry.N_GEOMS, 4, 4), np.float32)
+        model = np.zeros((batch, geometry.N_GEOMS, 4, 4), np.float32)
         model[..., :3, :3], model[..., :3, 3], model[..., 3, 3] = rotations, positions, 1
-        views, projections = [], []
-        for link in links:
-            view, projection = camera_matrices(link, bullet)
-            views.append(np.asarray(view, np.float32).reshape(4, 4).T)
-            projections.append(np.asarray(projection, np.float32).reshape(4, 4).T)
-        mvp = _mm(np.stack(projections)[:, None], _mm(np.stack(views)[:, None], model))
+        views = frame_views(links, bullet) if views is None else views
+        projection = gl_matrix(camera_projection(bullet))
+        mvp = _mm(projection, _mm(views[:, None], model))
         origin = positions[:, BODY_GEOM].copy()
         positions -= origin[:, None]
         eye, camera = geometry.camera_pose(links[:, :3] - origin, links[:, 3:])
-        material = np.ones((len(state), geometry.N_GEOMS, 3), np.float64)
+        material = np.ones((batch, geometry.N_GEOMS, 3), np.float64)
         material[:, BODY_GEOM] = colors[:, BODY_COLOR, :3]
         material[:, BOOSTER_GEOM] = colors[:, BOOSTER_COLOR, :3]
         material[:, FIN_GEOMS] = colors[:, FIN_COLOR : FIN_COLOR + 1, :3]
@@ -302,7 +328,7 @@ def render(env, state, size, ss, chunk_size=None, check=None):
         material[:, FLAME_GEOM] = colors[:, FLAME_COLOR, :3]
         material[:, PAD_GEOM] = colors[:, PAD_COLOR, :3]
         output = []
-        for start in range(0, len(state), limit):
+        for start in range(0, batch, limit):
             stop = start + limit
             renderer.scene.source_mvp = torch.as_tensor(mvp[start:stop], device=env.device)
             image = renderer.render(
@@ -312,7 +338,7 @@ def render(env, state, size, ss, chunk_size=None, check=None):
                 mat_rgb=torch.as_tensor(material[start:stop], dtype=torch.float32, device=env.device),
             )
             output.append(image)
-        return torch.cat(output)
+        return output[0] if len(output) == 1 else torch.cat(output)
 
 
 def close(env):

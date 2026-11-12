@@ -85,7 +85,7 @@ def process_worker(conn, factory, start, count, batch, seed, cpus, buffers, spec
         adapter = factory(count, None if seed is None else seed + start)
         views = buffer_views(buffers, specs, batch)
         rows = slice(start, start + count)
-        groups = {group: [path for path in views if path[0] == group] for group in ("state", "task")}
+        groups = {group: [path for path in views if path[0] == group] for group in ("state", "task", "fields")}
         methods = getattr(adapter, "process_methods", {})
 
         def write(group, values):
@@ -118,6 +118,10 @@ def process_worker(conn, factory, start, count, batch, seed, cpus, buffers, spec
                     write("state", result["state"])
                 if frame == FRAME_DRAW:
                     views[("frame",)][rows] = adapter.render_live()
+                elif frame == FRAME_FIELDS and groups["fields"]:
+                    fields = adapter.frame_fields()
+                    for path in groups["fields"]:
+                        views[path][rows] = fields[path[1]]
             elif command == "get_state":
                 write("state", adapter.get_state())
             elif command == "reset":
@@ -218,6 +222,13 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
             frame_shape = getattr(prototype, "frame_shape", None) if hasattr(prototype, "render_live") else None
             if frame_shape is not None:
                 self._specs[("frame",)] = (tuple(frame_shape), np.dtype(np.uint8))
+            if self.frame_mode == FRAME_FIELDS and hasattr(prototype, "frame_fields"):
+                self._specs.update(
+                    {
+                        ("fields", key): (tuple(value.shape[1:]), value.dtype)
+                        for key, value in prototype.frame_fields().items()
+                    }
+                )
             self.state_fields = {
                 key_path(key): (tuple(value.shape[1:]), value.dtype)
                 for key, value in state.items(True, True)
@@ -385,8 +396,11 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         return ("frame",) in self._specs and (self.frame_mode == FRAME_DRAW or bool(self._static))
 
     def _frame_fields(self) -> object:
-        """Copy the shared State leaves a ``FRAME_FIELDS`` frame needs; families with that mode define it."""
-        raise NotImplementedError
+        """Copy the fields a ``FRAME_FIELDS`` frame needs: the ``frame_fields`` buffers by default."""
+        fields = {key[1]: view.copy() for key, view in self._views.items() if key[0] == "fields"}
+        if not fields:
+            raise NotImplementedError
+        return fields
 
     def _fields_frame(self, fields) -> torch.Tensor:
         """Draw a step frame from ``_frame_fields`` output; families with ``FRAME_FIELDS`` define it."""

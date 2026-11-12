@@ -211,6 +211,15 @@ class RocketAdapter(SimulatorAdapter):
         body, links, colors = (np.stack(column) for column in zip(*(env.render_fields() for env in self.envs)))
         return self.draw(body, links, colors, *self.frame)
 
+    def frame_fields(self):
+        """Every lane's body poses, camera link pose, colours and float32 camera view matrix, for a GPU frame."""
+        import pybullet
+
+        from ..render import frame_views
+
+        body, links, colors = (np.stack(column) for column in zip(*(env.render_fields() for env in self.envs)))
+        return {"body": body, "link": links, "rgba": colors, "view": frame_views(links, pybullet)}
+
     def configure(self, values):
         check_values(self.envs[0], values, self.num_envs)
         for env, row in zip(self.envs, values, strict=True):

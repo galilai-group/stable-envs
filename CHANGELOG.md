@@ -132,6 +132,10 @@ All notable changes to this project are listed here. The format follows
   runs 17,989 steps/s with 1024 environments and 41,221 with 4096 (before: 5,248 and 5,479). Below 64
   environments, MuJoCo Warp is slower than `mujoco.batch` and than OGBench. Worker processes reset the
   environments of batches of 64 or more in parallel.
+- `PyFlytRocketLanding` on CUDA draws step frames from the body poses, camera link pose and colours of the
+  running lanes. The physics workers write these fields after each step, and the main process draws them on
+  the GPU while the workers run the next step. A step with frames no longer builds, copies and checks a full
+  State for each frame. The frames do not change.
 - DMC MJWarp keeps compact model columns and independent per-environment RNG checkpoints, avoiding a
   full native environment and static-asset copy per environment. Cheetah and Quadruped reset their
   environments on one native owner per `dmc_threads` thread; other tasks use one owner. Reset preparation

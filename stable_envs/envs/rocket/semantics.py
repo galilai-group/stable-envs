@@ -62,6 +62,9 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         except BaseException:
             self._simulator.close()
             raise
+        if self.device.type == "cuda" and hasattr(self._simulator, "draw_fields"):
+            # Workers write each step's ``frame_fields``; the parent draws them while the next step runs.
+            self._simulator.draw_fields = self._draw_fields
 
     def make_variation_space(self):
         return copy.deepcopy(self._simulator.template.env.variation_space)
@@ -117,9 +120,20 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         return step_pipeline(self._simulator)
 
     def _render_live(self):
-        if self.device.type != "cpu":
-            return self.render()
-        return torch.from_numpy(self._simulator.render_live())
+        if self.device.type == "cpu":
+            return torch.from_numpy(self._simulator.render_live())
+        if self.device.type == "cuda" and hasattr(self._simulator, "frame_fields"):
+            return self._draw_fields(self._simulator.frame_fields())
+        return self.render()
+
+    def _draw_fields(self, fields):
+        """Draw the live lanes' ``frame_fields`` on CUDA, without a State snapshot."""
+        from . import render as rocket_render
+
+        self._check_open("render")
+        return rocket_render.draw_gpu(
+            self, fields["body"], fields["link"], fields["rgba"], self.size, self.ss, views=fields["view"]
+        )
 
     def _variation_rows(self, attribute):
         keys = [key for key, _, _ in self.variation_space.flat_layout()]

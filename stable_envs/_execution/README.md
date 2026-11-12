@@ -61,6 +61,11 @@ The local adapter declares what the parent needs:
   of their running lanes into a shared buffer. `live_frames` is then true, and
   `submit_step(..., capture_frame=True)` returns the frame as `"frame"`. The
   step then needs no State to draw the frame.
+- `frame_fields()` (optional) returns a `{name: array}` with one row per lane.
+  When `frame_mode` is `FRAME_FIELDS` before `ProcessAdapter.__init__` runs,
+  the workers write it to shared buffers after a step that needs a frame. `take_frame()` then gives a copy of the
+  fields to the family's `_fields_frame`, which draws the frame in the parent
+  while the workers run the next step. Rocket uses this to draw CUDA frames.
 
 `policy.process_count(..., lanes_per_process=n)` gives a batch larger than `n`
 lanes enough workers to hold it. Rocket uses this for the PyBullet client limit.
