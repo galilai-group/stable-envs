@@ -76,8 +76,6 @@ ogbench-manipulation-gpu = [
   "numba>=0.60",
   "mujoco-warp==3.17.0",
   "warp-lang==1.17.0",
-  "mujoco-mjx==3.17.0",
-  "jax[cuda12]>=0.4.35; sys_platform == 'linux'",
 ]
 # numba adds the compiled CPU renderer of every DM Control task.
 dmcontrol = ["dm-control>=1.0.50", "mujoco>=3.17,<3.18", "numba>=0.60"]
