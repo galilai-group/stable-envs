@@ -222,6 +222,8 @@ All notable changes to this project are listed here. The format follows
   into memory that the env uses again when no tensor holds the frames of an earlier step. Torch uses one
   thread during the Numba draw, so idle Torch threads do not take CPU time from the Numba threads. The
   Numba renderer also clips the polygon edges in Numba.
+- `PointMazeLargeNavigate` CPU frames are faster at large batches. The frames do not change. On CPU, the
+  lit passes draw 16 rows at a time, so each shadow ray tests fewer walls.
 - `OGBCube` and `OGBScene` use the OGBench cube size. The default `cube.size` is now 0.02, as in OGBench.
   Before, the default was the stable-worldmodel value `float32(0.02)`, which compiles to
   0.019999999552965164. That size changed the cube mass and inertia, so contacts moved the physics away

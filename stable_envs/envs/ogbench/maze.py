@@ -165,8 +165,10 @@ _CULL_WALLS = True
 # Composite the goal and the body in separate tiles when their screen bounds do not meet.
 _SPLIT_MOVERS = True
 
-
+# Rows per lit pass. On CPU, each shadow ray tests the walls that some ray of its group reaches, so small
+# groups test fewer walls.
 _PASS_ROWS = 1024
+_CPU_PASS_ROWS = 16
 
 
 class _LightPasses:
@@ -957,7 +959,8 @@ class OGBenchMaze(Env):
             over = {p: uniq[gi][o : o + w] for p, (o, w) in zip(self.PLATE_PATHS, _offsets(self.PLATE_PATHS, sty))}
             sc = self._scene(size, over)
             # Per-row lighting holds several float images per row; bound the rows in flight.
-            step = _PASS_ROWS if sc.passes is not None else len(idx)
+            rows = _CPU_PASS_ROWS if self.device.type == "cpu" else _PASS_ROWS
+            step = rows if sc.passes is not None else len(idx)
             for lo in range(0, len(idx), step):
                 part = idx[lo : lo + step]
                 sub = torch.as_tensor(part, device=self.device, dtype=torch.long)
