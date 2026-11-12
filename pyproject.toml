@@ -81,7 +81,7 @@ ogbench-manipulation-gpu = [
 ]
 # numba adds the compiled CPU renderer of every DM Control task.
 dmcontrol = ["dm-control>=1.0.50", "mujoco>=3.17,<3.18", "numba>=0.60"]
-# GPU DM Control with the TrackCom floor reflection, which needs MuJoCo Warp 3.17.
+# Experimental CUDA physics and TrackCom floor reflections use MuJoCo Warp 3.17.
 dmcontrol-gpu = [
   "dm-control>=1.0.50", "mujoco>=3.17,<3.18", "mujoco-warp>=3.17,<3.18", "warp-lang>=1.16",
   "mujoco-mjx>=3.17,<3.18", "jax[cuda12]>=0.4.35; sys_platform == 'linux'",
@@ -232,7 +232,7 @@ conflicts = [
     { group = "pin-rocket" },
     { group = "pin-craftax" },
   ],
-  # Fetch needs MuJoCo 3.11; these need 3.13 or later.
+  # Fetch needs MuJoCo 3.11; these use MuJoCo 3.17.
   [{ extra = "robotics" }, { group = "pin-dmc" }],
   [{ extra = "robotics" }, { group = "pin-ogbench" }],
   [{ extra = "robotics" }, { group = "gpu-mjwarp" }],

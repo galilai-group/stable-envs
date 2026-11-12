@@ -14,6 +14,19 @@ All notable changes to this project are listed here. The format follows
   environments, batches per-environment model parameters, raises `BufferOverflowError` when the MuJoCo Warp
   contact or constraint buffers are too small, and runs per-environment source resets in a pool of threads or
   processes.
+- DMC native/MJWarp benchmarks offer an opt-in extended batch matrix through 8192 lanes and
+  a `--dry-run` preview. Reports include kernel peak host RSS through construction and worker
+  exit, including failed workers on supported platforms, alongside existing construction timing.
+  Seeded random-action rollouts default to the PR's three seeds, 20 warmups, a checkpoint restore,
+  and 100 timed calls. Reports verify matching native/MJWarp action and checkpoint hashes.
+  A focused measurement profile retains stepping, raw physics, construction and memory costs
+  while skipping repeated reset/restore and rendering measurements.
+- All 17 DMC classes accept experimental `simulation_backend="mjwarp"` for direct CUDA physics
+  on MuJoCo Warp 3.17. Automatic routing, including Reacher's native/MJX selection, stays unchanged.
+  The shared adapter retains native resets, RNG, targets, physics variation and checkpoints.
+  DMC-local capsule-contact corrections and ordered constraint/solver reductions support repeatable
+  checkpoint replay. CUDA regressions cover all 17 classes, with focused 100-call replay checks.
+  See the DMC documentation for the 3.17 measurements and numerical limitations.
 - Classic control `simulation_backend`: `CartPole`, `Pendulum`, `Acrobot`, `MountainCar` and
   `MountainCarContinuous` step all lanes in one batched float64 operation. With `"auto"`, the default,
   the lanes step in NumPy on the host, and 4096 or more CUDA lanes step in Torch. Below 2 lanes
@@ -120,6 +133,17 @@ All notable changes to this project are listed here. The format follows
   runs 17,989 steps/s with 1024 environments and 41,221 with 4096 (before: 5,248 and 5,479). Below 64
   environments, MuJoCo Warp is slower than `mujoco.batch` and than OGBench. Worker processes reset the
   environments of batches of 64 or more in parallel.
+- DMC MJWarp reuses one native reset owner with compact model columns and independent lane RNG
+  checkpoints, avoiding a full native environment and static-asset copy per lane. Reset preparation
+  failures leave the installed lane records intact.
+- Ordinary DMC MJWarp steps capture both physics rounds and task formulas in one guarded graph,
+  with one input-validation read and one combined physics-result read. A failed first round skips
+  the second; a failed second round preserves the first checkpoint. Observations and info are built
+  once, both rewards are retained, and returned outputs own their storage. Lifecycle counters update
+  on device; native reset boundaries retain their success checks and RNG behavior.
+- DMC MJWarp reuses temporary GPU storage across the ordered control rounds and releases inactive
+  graph storage at reset transitions. FingerSpin with 8192 lanes now completes ordinary steps and
+  resets on an RTX 3090; returning from a reset rebuilds the ordinary execution graph.
 - `OGBCube` and `OGBScene` use the OGBench cube size. The default `cube.size` is now 0.02, as in OGBench.
   Before, the default was the stable-worldmodel value `float32(0.02)`, which compiles to
   0.019999999552965164. That size changed the cube mass and inertia, so contacts moved the physics away
@@ -211,9 +235,9 @@ All notable changes to this project are listed here. The format follows
   samples, test only the walls near them. The goal and the agent are drawn in two small tiles when their screen bounds do not meet.
   Frames do not change.
 - Reacher with CUDA output now uses native CPU physics below 32 environments. Larger CUDA batches
-  keep JAX/MJX physics. `simulation_backend` selects either implementation and `mjx_min_envs` changes
-  the provisional cutoff. TwoRoom uses Torch below `jax_min_envs` and JAX at or above it. Its cutoff
-  defaults to 1, which keeps JAX at every batch size. Both environments allow explicit backend selection.
+  keep JAX/MJX physics. `simulation_backend` selects native, MJX or MJWarp explicitly, and
+  `mjx_min_envs` changes the provisional cutoff. TwoRoom uses Torch below `jax_min_envs` and JAX at or above it.
+  Its cutoff defaults to 1, which keeps JAX at every batch size. Both environments allow explicit backend selection.
 - `PiecewiseZones` and `TwoRoomTarget` draw seeded resets from the same distribution tree as `Piecewise`
   and `TwoRoom`, so `reset(seed=k)` starts the agent (and `TwoRoomTarget`'s target) where stable-worldmodel
   does for the same seed. Before, they drew from `sample_states` and matched for no seed.
@@ -252,10 +276,11 @@ All notable changes to this project are listed here. The format follows
   installs MuJoCo Warp and MJX 3.17. The `ogbench` and `mjwarp` extras accept MuJoCo 3.17.
 - The `ogbench-manipulation` extras pin MuJoCo 3.17.0 (and MuJoCo Warp 3.17.0 for `-gpu`) with dm_control
   1.0.50 or later, so they install next to `dmcontrol`.
-- DM Control steps every lane in one `mujoco.batch` call on CPU threads instead of worker processes. The
+- Native DM Control steps every lane in one `mujoco.batch` call on CPU threads instead of worker processes. The
   `dmc_threads` knob sets the number of threads (8 by default), at most one per lane and one per CPU in
-  the process affinity. The `workers` and `worker_min_lanes` knobs no longer apply to DM Control. Reacher
-  on CUDA still steps with MJX. With 1024 lanes on 32 cores and `dmc_threads=32`, physics-only stepping is
+  the process affinity. The `workers` and `worker_min_lanes` knobs no longer apply to DM Control.
+  Reacher keeps its automatic native/MJX cutoff and accepts explicit MJWarp selection.
+  With 1024 lanes on 32 cores and `dmc_threads=32`, native physics-only stepping is
   approximately 2.4 (Humanoid) to 8 (Cartpole) times faster than with 32 worker processes. Lanes copy one
   compiled model instead of each compiling their own, so 1024 lanes build in approximately 12 s. Outputs do
   not change.

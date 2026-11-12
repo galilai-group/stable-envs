@@ -133,6 +133,22 @@ def test_final_only_exports_one_snapshot_and_sparse_export_skips_unselected():
         assert env.exports == 3  # selected 0,2, plus mandatory final State
 
 
+@pytest.mark.family("dmc")
+@pytest.mark.parametrize("backend", ["native", "mjx", "mjwarp"])
+def test_dmc_snapshot_capture_forwarding(backend):
+    from types import SimpleNamespace
+    from unittest.mock import Mock
+
+    from stable_envs.envs.dmcontrol._delegated import DelegatedSemantics
+
+    env = SimpleNamespace(simulation_backend=backend, _check_open=Mock(), _simulator=Mock(), _step=Mock())
+    actions = torch.zeros(3, 1)
+    result = DelegatedSemantics._advance_without_snapshot(env, actions)
+    env._simulator.step.assert_called_once_with(actions, active=None, capture_state=False)
+    assert result is env._simulator.step.return_value
+    env._step.assert_not_called()
+
+
 def test_one_step_sequence_keeps_time_axis():
     with Counter() as env:
         out = env.step(torch.ones(3, 1, 1, dtype=torch.int64), frames=None)

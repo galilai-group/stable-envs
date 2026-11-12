@@ -11,7 +11,7 @@ from .simulation.physics import LEAVES
 
 
 class DelegatedSemantics:
-    """Delegate simulation to CPU dm_control lanes; ``device`` selects State and render placement.
+    """Select native DMC or explicit CUDA Warp physics; ``backend`` still selects rendering.
 
     The physics Variation leaves of the simulator are reset-time leaves and travel in State."""
 
@@ -33,12 +33,25 @@ class DelegatedSemantics:
     def _physics_paths(self) -> frozenset[str]:
         return frozenset(leaf.path for leaf in LEAVES.get(self._simulator_key(), ()))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, simulation_backend="auto", **kwargs):
+        self.simulation_backend = simulation_backend
         super().__init__(*args, **kwargs)
         self._simulator = self._make_simulator()
+        self.execution_mode = {"native": "DELEGATED_CPU", "mjx": "JAX_MJX", "mjwarp": "MUJOCO_WARP"}[
+            self.simulation_backend
+        ]
 
     def _make_simulator(self):
-        return make_dmc_adapter(self._simulator_key(), self.B, self.device, self._seed)
+        adapter = make_dmc_adapter(
+            self._simulator_key(),
+            self.B,
+            self.device,
+            self._seed,
+            simulation_backend=self.simulation_backend,
+        )
+        if self.simulation_backend == "auto":
+            self.simulation_backend = "native"
+        return adapter
 
     @property
     def _resume_fields(self):

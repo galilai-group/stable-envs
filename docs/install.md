@@ -43,7 +43,7 @@ package, which tests use for comparison.
 | `ogbench` | OGBench mazes | `ogbench`, MuJoCo |
 | `ogbench-manipulation` / `-gpu` | OGBCube, OGBScene | MuJoCo 3.17.0, OGBench 1.2.1, dm_control 1.0.50. `-gpu` adds MuJoCo Warp 3.17.0 and Warp 1.17.0 |
 | `dmcontrol` | DM Control; the compiled CPU renderer | `dm_control` 1.0.50, MuJoCo 3.17, Numba |
-| `dmcontrol-gpu` | DM Control on CUDA with TrackCom floor reflections | `dm_control` 1.0.50, MuJoCo, MuJoCo Warp and MJX 3.17 |
+| `dmcontrol-gpu` | Explicit MJWarp physics and TrackCom floor reflections on CUDA | `dm_control` 1.0.50, MuJoCo, MuJoCo Warp and MJX 3.17 |
 | `robotics` | Fetch | gymnasium-robotics, MuJoCo < 3.12, OpenCV |
 | `mjwarp` | Fetch on CUDA | MuJoCo Warp |
 | `mshuman` | MSHumanLocomotion | MuJoCo and MuJoCo Warp 3.17, Warp, filelock |
@@ -54,7 +54,9 @@ package, which tests use for comparison.
 | `docs` / `dev` / `examples` / `hf` | not needed to render | docs, tests, example helpers, HuggingFace |
 
 On CUDA, TrackCom domains draw the floor reflection only with MuJoCo Warp 3.17, which `dmcontrol-gpu`
-installs. With another MuJoCo Warp, they render without the reflection and log a warning.
+installs. With another MuJoCo Warp version, they render without the reflection and log a warning.
+Use `simulation_backend="mjwarp"` to select experimental CUDA physics explicitly; installing the extra
+does not change automatic backend selection.
 
 The `rocket` extra resolves numpy < 2 because of PyFlyt's metadata.
 

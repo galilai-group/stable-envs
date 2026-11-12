@@ -42,7 +42,7 @@ env.set_state(state)                     # restores the full State; returns None
 env.close()
 ```
 
-`env.close()` stops the simulator's worker processes and frees the environment's own
+`env.close()` stops any simulator worker processes and frees the environment's own
 buffers. Renderer contexts that other environments share stay cached. An environment is also a
 context manager: `with snv.CartPole(num_envs=64) as env:` closes it at the end of the block.
 
@@ -89,7 +89,7 @@ and `OGBScene` pins MuJoCo 3.17.0, and the `dmcontrol` and `mshuman` extras need
 |---|---:|
 | `classic_control` | 5 |
 | `craftax` | 4 |
-| `dmcontrol` | 18 |
+| `dmcontrol` | 17 |
 | `fetch` | 12 |
 | `miniworld` | 1 |
 | `mshuman` | 1 |

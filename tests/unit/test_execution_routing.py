@@ -3,6 +3,7 @@
 from types import SimpleNamespace
 
 import pytest
+import torch
 
 from stable_envs import tuning
 from stable_envs._execution import policy
@@ -14,6 +15,10 @@ def _process(*args, **kwargs):
 
 def _local(*args, **kwargs):
     return ("local", args, kwargs)
+
+
+def _batch(*args, **kwargs):
+    return ("batch", args, kwargs)
 
 
 def _classic(monkeypatch, target, batch, device):
@@ -99,6 +104,8 @@ def test_routing(monkeypatch, route, target, device, eligible, platform, batch, 
         (4096, "cpu", "auto", 32, "native"),
         (4096, "cuda", "native", 32, "native"),
         (1, "cuda", "mjx", 32, "mjx"),
+        (1, "cuda", "mjwarp", 32, "mjwarp"),
+        (64, "cuda:1", "mjwarp", 32, "mjwarp"),
         (32, "cuda", "auto", 64, "native"),
         (64, "cuda", "auto", 64, "mjx"),
     ],
@@ -108,13 +115,19 @@ def test_reacher_routes_without_changing_the_output_device(monkeypatch, batch, d
 
     from stable_envs.envs.dmcontrol.simulation import execution
 
-    monkeypatch.setattr(execution, "make_batch", _local)
+    assert execution.reacher_backend(batch, device, backend, threshold) == expected
+    monkeypatch.setattr(execution, "make_batch", _batch)
     monkeypatch.setitem(
         sys.modules,
         "stable_envs.envs.dmcontrol.simulation.reacher_mjx",
         SimpleNamespace(
             ReacherMJXAdapter=lambda *args: ("mjx", args, {}),
         ),
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "stable_envs.envs.dmcontrol.simulation.mjwarp",
+        SimpleNamespace(DMCWarpAdapter=lambda *args: ("mjwarp", args, {})),
     )
     kind, args, _ = execution.make_dmc_adapter(
         "reacher",
@@ -124,7 +137,7 @@ def test_reacher_routes_without_changing_the_output_device(monkeypatch, batch, d
         simulation_backend=backend,
         mjx_min_envs=threshold,
     )
-    assert kind == ("mjx" if expected == "mjx" else "local")
+    assert kind == (expected if expected in {"mjx", "mjwarp"} else "batch")
     assert args == ((batch, device, 17) if expected == "mjx" else ("reacher", batch, device, 17))
 
 
@@ -134,6 +147,7 @@ def test_reacher_routes_without_changing_the_output_device(monkeypatch, batch, d
     [
         ("unknown", "cuda", 32),
         ("mjx", "cpu", 32),
+        ("mjwarp", "cpu", 32),
         ("auto", "cuda", 0),
         ("auto", "cuda", True),
         ("auto", "cuda", 1.5),
@@ -144,6 +158,52 @@ def test_reacher_rejects_invalid_simulation_selection(backend, device, threshold
 
     with pytest.raises(ValueError):
         reacher_backend(1, device, backend, threshold)
+
+
+@pytest.mark.family("dmc")
+def test_dmc_warp_requires_explicit_cuda_selection(monkeypatch):
+    import sys
+
+    from stable_envs.envs.dmcontrol.simulation import execution
+
+    monkeypatch.setattr(execution, "make_batch", _batch)
+    monkeypatch.setitem(
+        sys.modules,
+        "stable_envs.envs.dmcontrol.simulation.mjwarp",
+        SimpleNamespace(DMCWarpAdapter=lambda *args: ("mjwarp", args, {})),
+    )
+    for backend in ("auto", "native", "mjwarp"):
+        result = execution.make_dmc_adapter("walker", 64, "cuda:1", 17, simulation_backend=backend)
+        assert result == ("mjwarp" if backend == "mjwarp" else "batch", ("walker", 64, "cuda:1", 17), {})
+    for domain, device, backend in (
+        ("walker", "cpu", "mjwarp"),
+        ("reacher", "cpu", "mjwarp"),
+        ("walker", "cuda", "mjx"),
+        ("walker", "cuda", "unknown"),
+    ):
+        with pytest.raises(ValueError):
+            execution.make_dmc_adapter(domain, 3, device, 17, simulation_backend=backend)
+
+
+@pytest.mark.family("dmc")
+def test_dmc_snapshot_free_step_preserves_active_mask_contract():
+    import stable_envs as se
+    from tests.helpers.reference.semantics import assert_same_state
+
+    with se.make("DMCCartpoleBalance", num_envs=3, device="cpu", simulation_backend="native", size=32) as env:
+        initial = env.get_state()
+        actions = torch.zeros(3, env.action_dim, dtype=torch.float64)
+        with pytest.raises(ValueError, match="partial active masks are unsupported"):
+            env._advance_without_snapshot(actions, active=torch.tensor([True, False, True]))
+        assert_same_state(env.get_state(), initial)
+
+        result = env._advance_without_snapshot(actions, active=torch.ones(3, dtype=torch.bool))
+        advanced = env.get_state()
+        assert "state" not in result.keys()
+        env.set_state(initial)
+        expected = env._simulator.step(actions)
+        assert_same_state(result, expected.exclude("state"))
+        assert_same_state(advanced, expected["state"])
 
 
 @pytest.fixture

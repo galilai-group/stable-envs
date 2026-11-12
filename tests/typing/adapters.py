@@ -7,6 +7,7 @@ from stable_envs.envs.classic_control.simulation.local import ClassicControlAdap
 from stable_envs.envs.classic_control.simulation.process import AcrobotProcessAdapter
 from stable_envs.envs.dmcontrol.simulation.batch import DMCBatchAdapter
 from stable_envs.envs.dmcontrol.simulation.factory import DMCAdapter
+from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter
 from stable_envs.envs.fetch.simulation.adapter import FetchAdapter
 from stable_envs.envs.fetch.simulation.process import FetchProcessAdapter
 from stable_envs.envs.ogbench.simulation.manipulation import OGBManipulationAdapter
@@ -24,12 +25,13 @@ def local_adapters(
     fetch: FetchAdapter,
     dmc: DMCAdapter,
     dmc_batch: DMCBatchAdapter,
+    dmc_warp: DMCWarpAdapter,
     maze: OGBMazeAdapter,
     manipulation: OGBManipulationAdapter,
     pusht: PushTReplayAdapter,
     rocket: RocketAdapter,
 ) -> tuple[SimulatorAdapter, ...]:
-    return classic, batched, device, fetch, dmc, dmc_batch, maze, manipulation, pusht, rocket
+    return classic, batched, device, fetch, dmc, dmc_batch, dmc_warp, maze, manipulation, pusht, rocket
 
 
 def process_adapters(
