@@ -148,6 +148,20 @@ All notable changes to this project are listed here. The format follows
 - `Env.step` costs less per call. It builds the output TensorDict and stacks the `states` leaf by leaf without
   TensorDict validation, keeps the action layout and the step pipeline check of each env, and allocates the
   `valid`, `state_valid` and `frame_valid` flags of one action batch in one tensor. The outputs do not change.
+- `PyFlytRocketLanding` State capture is faster. A step reads from PyBullet only the leaves that a step
+  can change (4 queries for each environment instead of about 60) and stacks them in the worker processes.
+  The other leaves come from the last reset, configuration or restore. A zero leaf that a step does not
+  change, such as `current/wrapper/current_goal` (480 x 480 x 3 bytes for each environment) without a
+  render mode, is a new zero tensor and is not copied. On CUDA, the outputs of the worker processes go to
+  the device when they arrive, and the unchanged leaves are copied on the device. Batch actions are checked
+  in one array operation. In the worker processes, freed memory stays allocated for the next PyBullet
+  clients, so a reset of 1024 environments takes 2.8 s instead of 3.4 s. The State is bit-identical to a
+  full read of the engine. On 8 cores of an EPYC 9354 with an L40S, `env.step` with State and one reset
+  for each 183-step episode makes 2.7k to 3.1k steps/s for 64 to 1024 environments, 3.0 to 3.5 times the
+  steps/s before, on CPU and on CUDA.
+- With worker processes and `process_static_leaves`, a step that only needs a frame from `frame_fields`
+  does not export the State. On CUDA without host outputs, the static State leaves are cached and copied
+  on the device.
 - MS-Human-700: `MSHumanLocomotion` steps on the shared batched MuJoCo backend. CUDA envs step on MuJoCo Warp at
   every batch size by default (`simulation_backend="default"`); `"auto"` keeps `mujoco.batch` below
   `mjwarp_min_envs` (256) CUDA environments. The MuJoCo Warp step does not synchronize the host.
