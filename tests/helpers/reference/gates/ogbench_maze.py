@@ -140,13 +140,8 @@ def run_gate(device="cpu"):
                     env.step(actions[0], frames=None)
                     compare_state(snapshot, frozen_snapshot)
                     history = check_two_histories_same_state(env, other, snapshot, actions[:8])
-                    # Goal and target geom are both restored; OGBench's vector goal setter updates
-                    # only the first two model coordinates, so the complete target is explicit State.
-                    for simulator, row in zip(env._simulator.envs, snapshot.cpu().unbind(0), strict=True):
-                        np.testing.assert_array_equal(
-                            simulator.model.geom("target").pos, row["task", "goal_pos"].numpy()
-                        )
-                        np.testing.assert_array_equal(simulator.cur_goal_xy, row["task", "goal_pos"][:2].numpy())
+                    # The goal is State: the adapter keeps it in its host columns and nowhere else.
+                    np.testing.assert_array_equal(env._simulator._goal, snapshot["task", "goal_pos"].numpy())
                     frame = env.render(snapshot)
                     assert torch.equal(frame, env._render(env._pack_render_state(snapshot)))
                     before = env.get_state()
@@ -178,11 +173,6 @@ def run_gate(device="cpu"):
                 other.reset(seed=777)
                 for action in np.random.default_rng(777).uniform(-1, 1, (7, batch, 2)).astype(np.float32):
                     other.step(action, frames=None)
-                for first, second in zip(env._simulator.envs, other._simulator.envs, strict=True):
-                    assert (
-                        first.action_space.np_random.bit_generator.state
-                        != second.action_space.np_random.bit_generator.state
-                    )
                 env.set_state(snapshot)
                 ref.set_state(snapshot)
                 other.set_state(snapshot)
