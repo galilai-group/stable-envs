@@ -85,6 +85,39 @@ def _body(env):
     return np.concatenate([pos, orn, vel, ang])
 
 
+#: Kernel fields and the source attributes they hold; ``step_count`` and ``physics_steps`` are compared as numbers.
+WRAPPER_FIELDS = (
+    "ang_vel", "ang_pos", "lin_vel", "lin_pos", "ground_lin_vel", "previous_ang_vel", "previous_lin_vel",
+    "previous_lin_pos", "previous_ground_lin_vel", "ignition_state", "throttle_state", "previous_ignition_state",
+    "previous_throttle_state", "landing_pad_contact", "step_count", "action", "state", "reward",
+)  # fmt: skip
+SNAPSHOT_STEP = 100
+
+
+def source_fields(env):
+    drone = env.env.drones[0]
+    surfaces = drone.lifting_surfaces.surfaces
+    fields = {k: np.asarray(getattr(env, k), dtype=np.float64) for k in WRAPPER_FIELDS}
+    fields.update(
+        fin=np.array([s.actuation for s in surfaces]),
+        gimbal=drone.booster_gimbal.gimbal_state[0],
+        throttle=np.float64(drone.boosters.throttle[0]),
+        fuel=np.float64(drone.boosters.ratio_fuel_remaining[0]),
+        booster_ignition=np.float64(drone.boosters.ignition_state[0]),
+        command=np.asarray(drone.cmd, dtype=np.float64),
+        physics_steps=np.float64(env.env.physics_steps),
+        link_velocity=np.stack(
+            [drone.bodies.local_body_velocities[0]] + [s.local_surface_velocity for s in surfaces[1:]]
+        ),
+    )
+    return {k: np.array(v, dtype=np.float64) for k, v in fields.items()}
+
+
+def kernel_fields(state, b):
+    return {k: np.asarray(state[k][b], dtype=np.float64).copy() for k in (*WRAPPER_FIELDS, "fin", "gimbal", "throttle",
+            "fuel", "booster_ignition", "command", "physics_steps", "link_velocity")}  # fmt: skip
+
+
 def run_source(kind, seed):
     """Closed-loop source rollout: actions, body states, rewards, flags, observations and the start pose."""
     env = RocketLandingEnv(render_mode=None)
@@ -95,6 +128,7 @@ def run_source(kind, seed):
             "start_orn": env.start_orn[0].copy(),
             "reset_body": _body(env),
             "reset_obs": obs.copy(),
+            "fields_reset": source_fields(env),
             "action": [],
             "body": [],
             "obs": [],
@@ -119,6 +153,8 @@ def run_source(kind, seed):
             rec["fatal"].append(bool(info["fatal_collision"]))
             rec["complete"].append(bool(info["env_complete"]))
             rec["oob"].append(bool(info["out_of_bounds"]))
+            if t == SNAPSHOT_STEP:
+                rec["fields_step"] = source_fields(env)
             if term or trunc:
                 break
         rec["rng_end"] = nk.rng_words([env.np_random])[0]
@@ -155,6 +191,8 @@ def run_kernel(recs, seeds):
             [state["position"], state["quaternion"], state["linear_velocity"], state["angular_velocity"]], 1
         ),
         "reset_obs": nk.observation(state),
+        "fields_reset": [kernel_fields(state, b) for b in range(num)],
+        "fields_step": [None] * num,
     }
     steps = max(len(r["action"]) for r in recs)
     body = np.full((num, steps, 13), np.nan)
@@ -165,6 +203,8 @@ def run_kernel(recs, seeds):
     for t in range(steps):
         actions = np.stack([r["action"][t] if t < len(r["action"]) else np.zeros(7) for r in recs])
         rew, term, trunc, info = nk.step(state, actions, None, live)
+        if t == SNAPSHOT_STEP:
+            out["fields_step"] = [kernel_fields(state, b) for b in range(num)]
         for b in np.flatnonzero(live):
             body[b, t] = np.concatenate(
                 [
@@ -241,6 +281,12 @@ def compare(kinds_seeds):
                 "return_src": float(rec["reward"].sum()),
                 "return_ours": float(np.nansum(got["reward"][b])),
                 "same_rng": bool(np.array_equal(got["rng"][b], rec["rng_end"])),
+                "dfields": max(
+                    float(np.abs(got[key][b][k] - rec[key][k]).max())
+                    for key in ("fields_reset", "fields_step")
+                    if key in rec
+                    for k in rec[key]
+                ),
             }
         )
     return rows
@@ -277,7 +323,7 @@ def test_kernel_follows_pybullet_until_contact(rows, index):
     row = rows[index]
     assert row["free_steps"] >= 90
     assert row["reset"] < ATOL
-    for key in ("dp", "dq", "dv", "dw", "dobs", "dreward"):
+    for key in ("dp", "dq", "dv", "dw", "dobs", "dreward", "dfields"):
         assert row[key] < ATOL, (key, row)
 
 
