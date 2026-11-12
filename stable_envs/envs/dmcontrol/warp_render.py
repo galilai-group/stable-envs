@@ -849,7 +849,10 @@ def _bvh(c: _Ctx) -> None:
             rc.group,
         ],
     )
-    rc.bvh.rebuild()
+    # The in-place CUDA LBVH rebuild reuses its buffers, so a captured graph stays valid. A new topology
+    # moves each world's root node.
+    rc.bvh.rebuild("lbvh")
+    c.wp.launch(upstream.compute_bvh_group_roots, dim=c.nworld, inputs=[rc.bvh.id], outputs=[rc.group_root])
 
 
 def _frame(c: _Ctx) -> None:
