@@ -202,6 +202,10 @@ All notable changes to this project are listed here. The format follows
   action per call (before: 5,773) and 8,759 times with 16 actions per call (before: 7,289). `OGBScene`
   steps 4,828 and 5,592 times per second (before: 3,755 and 4,712). The speed of steps with frames does
   not change, because drawing the frames takes most of the time.
+- DM Control steps on a persistent `mujoco.batch`, which keeps an `MjData` for each environment. A step
+  continues from the position and velocity stages that the last call computed, as dm_control's step does,
+  and does not compute them again. A physics Variation and a restored State compute the stages again with the
+  changed models. State and outputs do not change.
 - DM Control batches choose the number of `mujoco.batch` threads from the MuJoCo work of one step call. The
   env times one MuJoCo step of the task when you construct it. Each thread then gets about 0.1 ms of work per
   call and at least two environments, up to `dmc_threads`. Small batches of light tasks thus use one or two

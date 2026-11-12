@@ -101,7 +101,9 @@ class DMCBatchAdapter(SimulatorAdapter):
             nthread = step_threads(lanes.envs[0].physics, self._nsub, self.num_envs, threads)
         else:
             nthread = threads
-        self.b = Batch(self._models[0], self.num_envs, nthread=nthread)
+        # A persistent batch keeps each lane's MjData, so a step continues from the stages the last call computed,
+        # as dm_control's step does.
+        self.b = Batch(self._models[0], self.num_envs, nthread=nthread, persistent=True)
         # These resets spend most of their time in MuJoCo calls, which release the GIL.
         self._pool = ThreadPoolExecutor(threads) if threads > 1 and lanes.key in THREADED_RESETS else None
         self.b.set_models(self._models)
@@ -150,6 +152,8 @@ class DMCBatchAdapter(SimulatorAdapter):
 
     def configure_physics(self, values):
         self.lanes.configure_physics(values)
+        self.b.set_models(self._models)
+        self.b.forward(stage=self._vel)
         self.task = self._task(self.b, self._models)
 
     def reset(self, seed=None):
@@ -182,6 +186,7 @@ class DMCBatchAdapter(SimulatorAdapter):
 
     def set_state(self, state):
         self.lanes.set_state(state)
+        self.b.set_models(self._models)
         self.task = self._task(self.b, self._models)
         self._load(np.arange(self.num_envs))
 
