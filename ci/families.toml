@@ -140,7 +140,13 @@ shards = { pr = 3, nightly = 4 }
 [family.fetch]
 extras = ["robotics"]
 groups = ["pin-fetch"]
-paths = ["stable_envs/envs/fetch/**", "stable_envs/render/mjwarp/**", "stable_envs/render/cpu_raster/__init__.py"]
+paths = [
+  "stable_envs/envs/fetch/**",
+  "stable_envs/render/mjwarp/**",
+  "stable_envs/render/cpu_raster/__init__.py",
+  "stable_envs/render/mujoco_scene.py",
+  "stable_envs/render/mujoco_raster*",
+]
 tests = ["test_fetch_*", "test_envs_fetch.py", "test_variation_maps_fetch.py"]
 requires = ["gymnasium-robotics", "mujoco"]
 capabilities = ["swm"]
@@ -153,6 +159,7 @@ groups = ["pin-ogbench"]
 paths = [
   "stable_envs/envs/ogbench/**",
   "stable_envs/render/mujoco_scene.py",
+  "stable_envs/render/mujoco_raster*",
   "stable_envs/render/mjwarp/**",
   "stable_envs/render/raycast3d*",
   "stable_envs/render/primitives.py",
