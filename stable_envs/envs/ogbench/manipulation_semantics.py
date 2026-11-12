@@ -259,8 +259,8 @@ class ManipulationSemantics:
             sampling = self.ss if supersample is None else supersample
             host = manipulation_renderer.draws_on_host(backend or self.backend, self.device, sampling)
             if state is None and host and hasattr(self._simulator, "render_columns"):
-                fast = manipulation_renderer.draws_fast(backend or self.backend, self.device)
-                return self._draw_live(size, sampling, chunk_size, out, fast)
+                chosen = manipulation_renderer.host_backend(backend or self.backend, self.device)
+                return self._draw_live(size, sampling, chunk_size, out, chosen)
             # OpenGL reads host inputs, so only the projected leaves leave the device.
             state = self._project(state, size, supersample, host)
         elif size is not None or supersample is not None:
@@ -280,7 +280,7 @@ class ManipulationSemantics:
         """The stepping hook: frames of the live lanes."""
         return self.render()
 
-    def _draw_live(self, size, supersample, chunk_size, out, fast=False):
+    def _draw_live(self, size, supersample, chunk_size, out, chosen="opengl"):
         """Draw the live lanes from simulator columns straight into OpenGL, without a RenderState TensorDict."""
         from . import manipulation_opengl
         from .simulation import render_state as pixels
@@ -292,7 +292,11 @@ class ManipulationSemantics:
             raise ValueError("RenderState requires one valid square resolution/supersampling per batch")
         columns = pixels.state_columns(self.CELL, self._simulator.render_columns(), size, supersample)
         tuning.on_render("ogb-manipulation", size, self.B, self)
-        return self._into(manipulation_opengl.frames(self.CELL, columns, self.device, fast), out)
+        if chosen == "numba":
+            from . import manipulation_numba
+
+            return self._into(manipulation_numba.frames(self.CELL, columns, self.device), out)
+        return self._into(manipulation_opengl.frames(self.CELL, columns, self.device, chosen == "opengl_fast"), out)
 
     def _into(self, result, out):
         if out is None:

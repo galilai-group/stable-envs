@@ -13,6 +13,8 @@ from .simulation import render_state as pixels
 
 _LOCK = threading.RLock()
 OPENGL = ("opengl", "opengl_fast")
+# Backends that draw from host RenderState columns.
+HOST = (*OPENGL, "numba")
 
 
 VIEW = ("camera.angle_delta", "light.intensity")
@@ -239,12 +241,19 @@ def draws_on_host(backend, device, supersample):
     ``auto`` does so on CPU, and on CUDA at the source's own 1x sampling; CUDA ``auto`` at 2x or more
     keeps the MJWarp fidelity renderer.
     """
-    return backend in OPENGL or (backend == "auto" and (torch.device(device).type == "cpu" or supersample == 1))
+    return backend in HOST or (backend == "auto" and (torch.device(device).type == "cpu" or supersample == 1))
 
 
 def draws_fast(backend, device):
     """Whether OpenGL draws simplified arm meshes with a smaller shadow map: ``opengl_fast``, and ``auto`` on CPU."""
     return backend == "opengl_fast" or (backend == "auto" and torch.device(device).type == "cpu")
+
+
+def host_backend(backend, device):
+    """The host backend that ``backend`` draws with on ``device``: opengl, opengl_fast or numba."""
+    if backend in HOST:
+        return backend
+    return "opengl_fast" if draws_fast(backend, device) else "opengl"
 
 
 def _supersample(state):
@@ -258,17 +267,22 @@ def render(family, state, device, backend="auto", chunk_size=None, validated=Fal
     if draws_on_host(backend, device, _supersample(state)):
         from . import manipulation_opengl
 
-        fast = draws_fast(backend, device)
+        chosen = host_backend(backend, device)
         if backend == "auto":
-            log("DEBUG", f"Renderer backend 'auto' chose {'opengl_fast' if fast else 'opengl'} on {device}.")
-        return manipulation_opengl.render(family, state, device, chunk_size, validated, fast)
+            log("DEBUG", f"Renderer backend 'auto' chose {chosen} on {device}.")
+        if chosen == "numba":
+            from . import manipulation_numba
+
+            host, device, _ = manipulation_opengl.prepare(family, state, device, chunk_size, validated)
+            return manipulation_numba.frames(family, manipulation_opengl.columns(host), device)
+        return manipulation_opengl.render(family, state, device, chunk_size, validated, chosen == "opengl_fast")
     if backend == "auto":
         backend = "mjwarp_fidelity"
         log("DEBUG", f"Renderer backend 'auto' chose {backend} on {device}.")
     host = state.detach().cpu()
     pixels.validate(family, host)
     if backend not in ("auto", "mjwarp", "mjwarp_fidelity"):
-        raise ValueError("Cube/Scene rendering supports mjwarp, mjwarp_fidelity, opengl or opengl_fast backends")
+        raise ValueError("Cube/Scene rendering supports mjwarp, mjwarp_fidelity, opengl, opengl_fast or numba backends")
     if torch.device(device).type != "cuda":
         raise NotImplementedError("Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA")
     check_versions("unified", warp=True)
