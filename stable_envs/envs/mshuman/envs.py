@@ -9,7 +9,7 @@ import numpy as np
 import torch
 
 from ..._core.mujoco_gl import mujoco_renderer
-from ..._core.stepping import _stack_states
+from ..._core.stepping import _stack_states, _threads
 from ..._execution.mjbatch import resolve_backend
 from ...env import Env, render_states_arg, require_contiguous_out
 from ...registry import register
@@ -93,14 +93,9 @@ class MSHumanLocomotion(Env):
         return self._simulator.step(actions)
 
     def _stack_states(self, values):
-        if self.device.type != "cpu":
-            return _stack_states(values)
         # Torch copies tensors over 32768 elements on OpenMP threads, which then spin against the batch's threads.
-        return values[0].apply(
-            lambda *leaves: torch.from_numpy(np.stack([leaf.numpy() for leaf in leaves], axis=1)),
-            *values[1:],
-            batch_size=[*values[0].batch_size, len(values)],
-        )
+        with _threads(1):
+            return _stack_states(values)
 
     @torch.no_grad()
     def _render(self, states=None, size=None, supersample=None, variation=None, style=None, out=None):
