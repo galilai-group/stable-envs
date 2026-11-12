@@ -73,12 +73,14 @@ def test_frames_match_the_live_simulation_drawn_directly():
     (smoke and rain included, the flicker seeded); the rows hold float32, so a few edge pixels may differ."""
     with snv.RoadsterTrafficJam(num_envs=1, device="cpu") as env:
         env.reset(seed=SEED, options={"variation_values": {"weather.rain": [0.6]}})
-        expert = GoalExpert()
-        for _ in range(12):
-            result = env.step(expert(env._simulator.envs[0])[None].astype(np.float32), frames=None)
         src = RoadsterPlanEnv(task="traffic")
         src.reset(seed=SEED, rain=0.6)
-        src.set_state(env._simulator.envs[0].get_state())
+        expert = GoalExpert()
+        for _ in range(12):
+            action = expert(src).astype(np.float32)
+            src.step(action)
+            result = env.step(action[None], frames=None)
+        np.testing.assert_array_equal(result["state"]["sim", "qpos"][0].numpy(), src.data.qpos)
         src.model.vis.quality.offsamples = 0
         renderer = _SOURCE_RENDERERS.setdefault("traffic", mujoco_renderer(src.model, height=96, width=96))
         src.sim.draw_effects(np.random.default_rng(0))

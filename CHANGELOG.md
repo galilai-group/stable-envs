@@ -69,9 +69,8 @@ All notable changes to this project are listed here. The format follows
   leaves and the world-model camera drawn by MuJoCo's OpenGL renderer, on the GPU with a GPU's EGL driver and on
   the CPU otherwise (`roadster` extra: MuJoCo, Pillow). The visual Variation leaf `rendering.cinematic` draws the same State on a dark-space scene with
   shadows and MSAA. The exhaust smoke is drawn from the exhaust history in State (`fx`), so `render(state)`
-  shows it. Large CPU batches step their lanes in worker processes and draw frames in render workers
-  (`roadster-sim` and `roadster-render` tuning paths); steps that need frames but no State build no
-  snapshot.
+  shows it. Large CPU batches draw frames in render workers (`roadster-render` tuning path); steps that need
+  frames but no State build no snapshot.
 - Miniworld: `MiniWorldMovingBlockWorld` runs the 3D Dynamic Blockworld of Flow Equivariant World Models
   (`MovingBlockWorld` from the hlillemark/Miniworld fork's `flowm_release` branch) with a complete State: room and block textures,
   block kinds, sizes, poses and velocities, the agent and its carried block, and the reset generator.
@@ -233,6 +232,15 @@ All notable changes to this project are listed here. The format follows
   gives the fork's values from the same State, bit for bit. Resets sample the fork's reset distribution
   from a counter-based generator; State replaces the PCG64 fields with `rng.seed` and `rng.episode`. The
   worker processes and the `miniworld-sim` tuning path are removed. The `miniworld` extra installs Numba.
+- Roadster: the five classes step every environment in one batch on the shared batched MuJoCo backend
+  (`simulation_backend`, `mjwarp_min_envs`). On CPU the source's autopilot, drag and wind, fuel, course
+  bookkeeping, crash checks, cost and reward run in NumPy and MuJoCo runs in one native `mujoco.batch`, bit for
+  bit as the source env. On CUDA the same logic runs in Torch without host reads and MuJoCo runs on MuJoCo Warp
+  in float32 (approximate; replays of the source's scripted expert keep every outcome). Contact sensors give the
+  contacts the task reads; the visual geoms outside the car are left out of the physics model. Resets draw the
+  source's per-environment start and goal on the host and write all environments in one call. The worker
+  processes and the `roadster-sim` tuning path are removed. The `roadster` extra needs MuJoCo 3.17;
+  `roadster-gpu` adds MuJoCo Warp.
 - `OGBCube` and `OGBScene` step on the shared batched MuJoCo backend. A CPU env steps every environment in one
   `mujoco.batch` call. The controller and its inverse kinematics run for all environments together, with MuJoCo's
   kinematics and Jacobians and the operations of the OGBench step in the same order. The State and the outputs

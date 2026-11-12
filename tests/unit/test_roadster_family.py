@@ -14,6 +14,7 @@ pytest.importorskip("mujoco")
 import stable_envs as snv
 from stable_envs.envs.roadster.envs import CELLS
 from stable_envs.envs.roadster.simulation import adapter as A
+from stable_envs.envs.roadster.simulation.batch import RoadsterNativeAdapter
 from tests.helpers.reference.semantics import assert_same_state
 from tests.helpers.stepping import branch_step
 
@@ -65,11 +66,17 @@ def test_the_integration_state_is_split_in_mujoco_order(jam):
     """The ``sim`` columns, concatenated, are the integration state vector ``mj_getState`` writes."""
     import mujoco
 
-    lane = jam._simulator.envs[0]
+    from stable_envs.envs.roadster.source import RoadsterPlanEnv
+
+    lane = RoadsterPlanEnv(task="traffic")
+    lane.reset(seed=SEED)
+    action = _actions(jam, 1)[0]
+    lane.step(action[0])
     n = mujoco.mj_stateSize(lane.model, mujoco.mjtState.mjSTATE_INTEGRATION)
     phys = np.empty(n)
     mujoco.mj_getState(lane.model, lane.data, phys, mujoco.mjtState.mjSTATE_INTEGRATION)
-    row = jam.get_state()[0]
+    jam.reset(seed=SEED)
+    row = jam.step(action, frames=None)["state"][0]
     joined = np.concatenate([row["sim", name].numpy() for name in jam._simulator.layout])
     np.testing.assert_array_equal(joined, phys)
     assert set(jam._simulator.layout) == {
@@ -259,15 +266,22 @@ def test_render_draws_the_wm_camera_without_touching_the_simulation(jam):
 
 def test_restored_state_renders_the_same_smoke():
     """With the jets firing, a State restored into another env draws the original run's smoke."""
-    from stable_envs.envs.roadster.source import GoalExpert
+    from stable_envs.envs.roadster.source import GoalExpert, RoadsterPlanEnv
 
     with snv.RoadsterCarHop(num_envs=1, device="cpu") as source, snv.RoadsterCarHop(num_envs=1, device="cpu") as other:
         source.reset(seed=1)
         other.reset(seed=5)
+        # The expert reads the simulator: drive source envs that the batches follow bit for bit.
+        drivers = [RoadsterPlanEnv(task="carhop") for _ in range(2)]
+        drivers[0].reset(seed=1)
+        drivers[1].reset(seed=5)
         expert = GoalExpert()
         for _ in range(8):
-            result = source.step(expert(source._simulator.envs[0])[None].astype(np.float32), frames=None)
-            other.step(expert(other._simulator.envs[0])[None].astype(np.float32), frames=None)
+            actions = [expert(driver).astype(np.float32) for driver in drivers]
+            for driver, action in zip(drivers, actions, strict=True):
+                driver.step(action)
+            result = source.step(actions[0][None], frames=None)
+            other.step(actions[1][None], frames=None)
         state = result["state"]
         assert (
             state["fx", "count"].item() == 40 and state["fx", "history"].reshape(75, -1)[:40, 12:21].abs().max() > 0.05
@@ -380,10 +394,10 @@ def test_the_weather_seed_survives_the_render_row_exactly():
 
 
 def test_lanes_with_different_weather_match_lanes_simulated_alone():
-    """Lanes share one compiled model; each one's tyre grip must still apply only to that lane."""
+    """The environments share one physics batch; each one's tyre grip must still apply only to it."""
     weather = np.array([[0.0, 0.0], [9.0, 1.0], [4.0, 0.5]])
-    batch = A.RoadsterAdapter("traffic", 3)
-    alone = [A.RoadsterAdapter("traffic", 1) for _ in range(3)]
+    batch = RoadsterNativeAdapter("traffic", 3)
+    alone = [RoadsterNativeAdapter("traffic", 1) for _ in range(3)]
     try:
         batch.configure_physics(weather)
         batch.reset(SEED)

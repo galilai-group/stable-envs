@@ -959,13 +959,20 @@ ROLLOUT_QPOS_BOUNDS = {
     "HumanoidMaze*": (1.0, 3.5),
     "OGBScene*": (0.05, 2.0),
     "OGBCube*": (0.05, 2.0),
+    # Under the smooth policy a Roadster leaves a roof, clips a parked car or touches down a step earlier or later,
+    # and the paths separate by tens of metres: two envs reset alike and given the same actions differ by 50 m
+    # (Rooftop) and 95 m (TrafficJam) on an RTX 4090, and on CPU a 1e-5 m/s change of the source's velocity moves
+    # TrafficJam's car 271 m. Restored against original: median lane 1.7 m (Rooftop), largest 380 m. MuJoCo
+    # Warp's deterministic mode allocates memory inside the captured step, so the step graph cannot use it.
+    "Roadster*": (2.5, 600.0),
 }
 
 
 def _qpos(state):
-    """The generalized positions of a State: a top-level ``qpos``, the ``physics`` group, or the maze body parts."""
+    """The generalized positions of a State: a top-level ``qpos``, the ``physics`` or ``sim`` group, or the maze
+    body parts."""
     keys = set(state.keys(True, True))
-    for key in ("qpos", ("physics", "qpos")):
+    for key in ("qpos", ("physics", "qpos"), ("sim", "qpos")):
         if key in keys:
             return state[key]
     parts = [("root", "position"), ("root", "orientation"), ("joints", "position")]

@@ -109,7 +109,9 @@ mshuman = [
 rocket = ["pillow", "scipy", "PyFlyt==0.29.0", "pybullet==3.2.7", "numba>=0.60"]
 # Craftax on CPU; craftax-gpu takes JAX's CUDA 12 build for device="cuda".
 craftax = ["craftax>=1.6.1", "jax>=0.4.30"]
-roadster = ["mujoco>=3.11", "pillow"]
+roadster = ["mujoco>=3.17,<3.18", "pillow"]
+# Roadster on CUDA: MuJoCo Warp physics.
+roadster-gpu = ["mujoco>=3.17,<3.18", "mujoco-warp>=3.17,<3.18", "warp-lang>=1.16", "pillow"]
 craftax-gpu = ["craftax>=1.6.1", "jax[cuda12]>=0.4.30; sys_platform == 'linux'"]
 # MovingBlockWorld is in the hlillemark/Miniworld fork, not on PyPI; uv takes it from [tool.uv.sources],
 # pip needs `pip install "miniworld @ git+https://github.com/hlillemark/Miniworld@<commit>"` first.
@@ -240,10 +242,14 @@ conflicts = [
   [{ extra = "robotics" }, { extra = "ogbench-manipulation" }],
   [{ extra = "robotics" }, { extra = "ogbench-manipulation-gpu" }],
   [{ extra = "robotics" }, { extra = "mshuman" }],
+  [{ extra = "robotics" }, { extra = "roadster" }],
+  [{ extra = "robotics" }, { extra = "roadster-gpu" }],
   [{ extra = "dmcontrol-gpu" }, { group = "pin-fetch" }],
   [{ extra = "ogbench-manipulation" }, { group = "pin-fetch" }],
   [{ extra = "ogbench-manipulation-gpu" }, { group = "pin-fetch" }],
   [{ extra = "mshuman" }, { group = "pin-fetch" }],
+  [{ extra = "roadster" }, { group = "pin-fetch" }],
+  [{ extra = "roadster-gpu" }, { group = "pin-fetch" }],
   [{ extra = "robotics" }, { extra = "dmcontrol" }],
   [{ extra = "dmcontrol" }, { group = "pin-fetch" }],
   [{ group = "gpu-mjwarp" }, { group = "pin-fetch" }],

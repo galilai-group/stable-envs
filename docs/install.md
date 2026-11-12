@@ -50,7 +50,7 @@ package, which tests use for comparison.
 | `rocket` | PyFlytRocketLanding | PyFlyt 0.29.0, pybullet 3.2.7, Pillow, SciPy |
 | `craftax` / `craftax-gpu` | Craftax | Craftax, JAX. `-gpu` takes JAX's CUDA 12 build for `device="cuda"` |
 | `miniworld` | MiniWorldMovingBlockWorld | the hlillemark/Miniworld fork, pyglet < 2, Numba |
-| `roadster` | Roadster (5 classes) | MuJoCo >= 3.11, Pillow |
+| `roadster` / `roadster-gpu` | Roadster (5 classes) | MuJoCo 3.17, Pillow. `-gpu` adds MuJoCo Warp 3.17 and Warp |
 | `docs` / `dev` / `examples` / `hf` | not needed to render | docs, tests, example helpers, HuggingFace |
 
 On CUDA, TrackCom domains draw the floor reflection only with MuJoCo Warp 3.17, which `dmcontrol-gpu`
@@ -98,8 +98,9 @@ uv sync --python 3.12 --extra dmcontrol --group pin-dmc --group test
 ## Extra conflicts
 
 Fetch (`robotics`) needs `mujoco<3.12`, `OGBCube` and `OGBScene` (`ogbench-manipulation`) need
-`mujoco==3.17.0`, and DM Control (`dmcontrol`) and MS-Human (`mshuman`) need `mujoco>=3.17,<3.18`. The
-`ogbench` extra accepts each of them. Install `robotics` in a separate environment from the other three.
+`mujoco==3.17.0`, and DM Control (`dmcontrol`), MS-Human (`mshuman`) and Roadster (`roadster`) need
+`mujoco>=3.17,<3.18`. The `ogbench` extra accepts each of them. Install `robotics` in a separate environment
+from the others.
 
 ## nvdiffrast
 

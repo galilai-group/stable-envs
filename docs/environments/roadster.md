@@ -41,12 +41,11 @@ rasterizes on the GPU when the EGL driver is a GPU's (for example NVIDIA's) and 
 (Mesa). Frames show the car, its jet flames, exhaust smoke and blob shadow, the scenery and the rain,
 exactly as MuJoCo draws the live simulation at the same State (the smoke is regenerated from the exhaust
 history, not simulated). The pose drawn is the one MuJoCo's derived quantities refer to (one substep behind
-`sim.qpos` after a step). Physics runs on CPU; `device="cuda"` stores State and frames on the GPU.
+`sim.qpos` after a step).
 
-Large batches step their lanes in worker processes (`roadster-sim` tuning path) and draw frames in render
-workers (`roadster-render`); both give the frames and State of one process. Workers write only the State
-fields a step changes. A step that needs a frame but no State builds no snapshot: the frame is drawn from just
-the render-row fields (in-process batches read them from the live lanes) and equals what `render(state)` draws.
+Large batches draw frames in render workers (`roadster-render` tuning path); they give the frames of one
+process. A step that needs a frame but no State builds no snapshot: the frame is drawn from the render-row
+fields of the live environments and equals what `render(state)` draws.
 
 The visual Variation leaf `rendering.cinematic` (0 or 1; use a larger `size`, e.g. 512) draws the same State
 and the same `wm` camera on a dark-space scene: 8x MSAA, real shadows, fog to black, and post-processing
@@ -67,6 +66,41 @@ state = env.reset(seed=0, options={"variation_values": {"weather.wind": [8.0], "
 frames = env.render(state)                       # (4, 96, 96, 3) uint8
 out = env.step(env.action_spec.sample(4, env.rng))
 ```
+
+## Physics backends
+
+| `simulation_backend` | CPU env | CUDA env |
+|---|---|---|
+| `"default"` (default) | CPU batch | [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp) |
+| `"auto"` | CPU batch | CPU batch below `mjwarp_min_envs` (64) environments, MuJoCo Warp from 64 |
+| `"native"` | CPU batch | CPU batch |
+| `"mjwarp"` | not supported | MuJoCo Warp |
+
+Both backends step every environment in one batch. The source's autopilot, drag and wind forces, fuel, ring
+and route bookkeeping, crash checks, cost, reward and success run on arrays of environments. MuJoCo steps the
+10 substeps of each 50 Hz step one at a time, because the drag and wind force of a substep depends on the
+velocity after the previous one. The physics model is the source's world with MuJoCo contact sensors for the
+contacts that the task reads (tyres on anything, on the pad, on the ground and on the goal roof, the hull on
+anything, the car on each obstacle). The visual geoms outside the car are not in it. Sensors and these geoms
+do not change the dynamics.
+
+The CPU batch runs the task logic in NumPy and MuJoCo in one native `mujoco.batch` in float64. It steps bit
+for bit as the source env: the same `mj_step` calls with the same applied forces, and the same float64
+operations in the same order (NumPy computes a stack of small matrix products and least-squares solves with
+the same BLAS and LAPACK routines as one). A `device="cuda"` env with the CPU batch returns State on the GPU.
+
+The MuJoCo Warp backend runs the task logic in float64 Torch on the GPU, without host reads in a step, and
+MuJoCo in float32, so a rollout follows the source approximately. The autopilot's bounded least-squares jet
+allocation uses a precomputed pseudo-inverse for each set of free jets. With wind, the gusts of an action are
+drawn on the host from each environment's generator, as the source does; an environment that ends within an
+action has then drawn the gusts of the whole action. Replays of the source's scripted expert under wind and
+rain (`tests/gpu/test_roadster_mjwarp.py`, 8 environments, 300 steps) keep the outcome of every environment
+and end within 3 steps of the source. The car stays within 0.01 m of the source's path in TrafficJam and
+CarHop, 0.3 m in Rooftop and 3.4 m in Loop until the episode ends. In Mission the paths separate after the
+loop, where the source itself moves 13 m by step 300 when its start velocity changes by 1e-9 m/s.
+
+Resets draw each environment's start, goal, traffic and parked cars with the source's random draws on the host
+and write all environments to the physics batch in one call.
 
 ## RoadsterLoop
 

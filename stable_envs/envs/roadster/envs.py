@@ -4,8 +4,10 @@ Each class fixes one task of ``source.RoadsterPlanEnv`` (the simulator, autopilo
 horizon, ported from roadster-jets). The 4-D action ``[a_fwd, a_lat, a_up, yaw_rate]`` in [-1, 1] runs at
 10 Hz. Wind and rain are physics Variation leaves (``weather.wind`` in m/s, ``weather.rain`` in [0, 1]) that
 reach the source at reset, as it sets the weather per episode; State records them under ``physics.weather``.
-Frames come from the ``wm`` camera (follows the car with a fixed world orientation), 96 px by default, drawn
-by MuJoCo's OpenGL renderer on CPU; the exhaust smoke is drawn from the history in State.
+Physics steps every environment in one batch: native ``mujoco.batch`` on CPU, MuJoCo Warp on CUDA
+(``simulation_backend``). Frames come from the ``wm`` camera (follows the car with a fixed world
+orientation), 96 px by default, drawn by MuJoCo's OpenGL renderer on CPU; the exhaust smoke is drawn from the
+history in State.
 """
 
 from __future__ import annotations
@@ -26,7 +28,7 @@ from ...registry import register
 from ...spaces import Box, Dict, Discrete
 from . import render as roadster_render
 from .simulation.adapter import PHYSICS_LEAVES, RAIN_MAX, RENDER_FIELDS, TASKS, WIND_MAX
-from .simulation.execution import make_roadster_adapter
+from .simulation.execution import MJWARP_MIN_ENVS, make_roadster_adapter, roadster_backend
 
 #: The visual Variation leaf that picks the cinematic look for a frame.
 CINEMATIC = "rendering.cinematic"
@@ -37,15 +39,15 @@ _RENDER_KEYS = {
 
 
 class RoadsterBase(Env):
-    """One Roadster planning task on ``num_envs`` lanes.
+    """One Roadster planning task on ``num_envs`` environments.
 
-    Physics runs on CPU in the source env, in worker processes for batches large enough for the
-    ``roadster-sim`` tuning path; ``device`` selects where State and frames are stored.
+    The task logic runs on arrays of environments: NumPy with native ``mujoco.batch`` physics on CPU, bit for
+    bit as the source; Torch with MuJoCo Warp physics on CUDA, approximately as the source.
     """
 
     family = "roadster"
     TASK: str = ""
-    execution_mode = "DELEGATED_CPU"
+    execution_mode = "AUTO_NATIVE_MJWARP"
     cpu_render_support = "SUPPORTED_SOFTWARE_OPENGL"
     action_dim = 4
     action_dtype = torch.float32
@@ -55,14 +57,31 @@ class RoadsterBase(Env):
     reset_value_paths = frozenset(PHYSICS_LEAVES)
     reset_sample_paths = frozenset(PHYSICS_LEAVES)
 
-    def __init__(self, num_envs=1, size=None, supersample=None, device=None, backend="auto", seed=0):
-        """Build ``num_envs`` lanes of the task.
+    def __init__(
+        self,
+        num_envs=1,
+        size=None,
+        supersample=None,
+        device=None,
+        backend="auto",
+        seed=0,
+        *,
+        simulation_backend="default",
+        mjwarp_min_envs=MJWARP_MIN_ENVS,
+    ):
+        """Build ``num_envs`` environments of the task.
+
+        ``simulation_backend="default"`` steps CUDA batches on MuJoCo Warp and CPU batches on native
+        ``mujoco.batch``. ``"auto"`` steps CUDA batches of ``mjwarp_min_envs`` or more on MuJoCo Warp and every
+        other batch on native ``mujoco.batch``. ``"native"`` and ``"mjwarp"`` select explicitly.
 
         Frames show the world-model camera; the ``rendering.cinematic`` Variation leaf draws the same camera
         on the dark-space scene with shadows and MSAA (use a larger ``size``, e.g. 512).
         """
         device = Env.resolve_device(device)
-        self._simulator = make_roadster_adapter(self.TASK, int(num_envs), device)
+        self.simulation_backend = roadster_backend(int(num_envs), device, simulation_backend, mjwarp_min_envs)
+        self.execution_mode = "MUJOCO_WARP" if self.simulation_backend == "mjwarp" else "DELEGATED_CPU"
+        self._simulator = make_roadster_adapter(self.TASK, int(num_envs), device, self.simulation_backend)
         model = self._simulator.model
         self.state_dim = roadster_render.row_dim(model)
         self.state_names = roadster_render.row_names(model)
@@ -82,8 +101,6 @@ class RoadsterBase(Env):
             if self.backend not in ("auto", "opengl"):
                 raise ValueError("Roadster draws with MuJoCo's OpenGL renderer; backend must be 'auto' or 'opengl'")
             self._configure_physics()
-            if hasattr(self._simulator, "draw_fields"):  # process batches draw step frames from State fields
-                self._simulator.draw_fields = self._draw_fields
             self.reset(seed=seed)
         except BaseException:
             self._simulator.close()
@@ -244,7 +261,7 @@ def _make_classes() -> dict[str, type]:
                     domain=task,
                     reference_id=f"roadster_jets/RoadsterPlan-v0:{task}",
                     __module__=__name__,
-                    __doc__=f"Roadster ``{task}`` task: {_DOCS[task]}. CPU MuJoCo simulation with restorable State.",
+                    __doc__=f"Roadster ``{task}`` task: {_DOCS[task]}. Batched MuJoCo simulation with restorable State.",
                 ),
             )
         )

@@ -131,7 +131,6 @@ _SIM = (
     "pusht-sim",
     "pusht-render",
     "rocket-sim",
-    "roadster-sim",
 )
 _RENDER = ("classic-render", "fetch-opengl", "miniworld-render", "roadster-render", "rocket-render")
 
@@ -176,7 +175,7 @@ RENDER_PATHS: dict[str, tuple[str, ...]] = {
     "pusht": ("raster2d", "pusht-sim", "pusht-render"),
     "classic_control": ("gfxdraw", "classic-render", "classic-sim"),
     "miniworld": ("miniworld-render",),
-    "roadster": ("roadster-render", "roadster-sim"),
+    "roadster": ("roadster-render",),
 }
 
 for _k in KNOBS.values():
