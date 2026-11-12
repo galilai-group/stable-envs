@@ -35,14 +35,38 @@ The reward of each source control step is in [0, 1]. Each public action repeats 
 the sum of both rewards. The suite does not define a success criterion. Ball
 in cup is the exception: its `success` value is 1 when the ball is in the cup.
 
-## Direct MuJoCo Warp physics
+## GPU physics and backend selection
 
-All 17 classes accept `simulation_backend="mjwarp"` for direct batched physics on
-CUDA. Install `stable-envs[dmcontrol-gpu]`; this backend uses MuJoCo/MuJoCo Warp 3.17
-and dm-control 1.0.50. Explicit selection
-raises an error if CUDA or the dependencies are unavailable. `backend` still selects rendering.
-Native CPU stepping uses MuJoCo's `mujoco.batch` backend and the `dmc_threads` tuning setting.
-Automatic routing is unchanged, including Reacher's existing native/MJX selection.
+On a CUDA device, all 17 classes step with MuJoCo Warp at every batch size. On CPU they step with
+MuJoCo's `mujoco.batch` backend and the `dmc_threads` tuning setting. Install
+`stable-envs[dmcontrol-gpu]` for the GPU backend; it uses MuJoCo/MuJoCo Warp 3.17 and dm-control 1.0.50.
+`backend` still selects rendering.
+
+`simulation_backend` selects physics when you construct the environment:
+
+| Value | CPU device | CUDA device |
+|---|---|---|
+| `None` (default) | Native | MuJoCo Warp at every batch size |
+| `"native"` | Native | Native physics on CPU; State and outputs on CUDA |
+| `"mjwarp"` | Error | MuJoCo Warp |
+| `"auto"` | Native | Native below `mjwarp_min_envs`, MuJoCo Warp from there |
+
+`"auto"` is opt-in. `mjwarp_min_envs` defaults to the measured cutoff of the task in the table
+below. Pass an integer to change it. `"mjwarp"` raises an error if CUDA or the GPU dependencies are
+unavailable.
+
+The cutoff of a task is the smallest measured batch from which MuJoCo Warp steps faster than native
+physics at every larger measured batch. The measurement used public `env.step` calls with
+`states=None, frames=None` on an NVIDIA L40S with 8 CPU cores, and includes the episode reset
+(an episode is 500 public calls). Batches were 1, 8, 64, 256, 1024, 2048 and 4096.
+
+| Class | `mjwarp_min_envs` |
+|---|---:|
+| `DMCCheetahRun` | 1 |
+| `DMCFingerTurnHard`, `DMCPendulumSwingup`, `DMCPointMassEasy`, `DMCReacher` | 8 |
+| `DMCCartpoleBalance`, `DMCCartpoleSwingup`, `DMCHumanoidWalk`, `DMCQuadrupedWalk` | 64 |
+| `DMCBallInCupCatch`, `DMCHopperHop` | 256 |
+| `DMCAcrobotBalance`, `DMCFingerSpin`, `DMCFingerTurnEasy`, `DMCManipulatorBringBall`, `DMCSwimmerSwimmer6`, `DMCWalkerWalk` | 1024 |
 
 ```python
 with snv.DMCFingerTurnHard(num_envs=256, device="cuda", simulation_backend="mjwarp") as env:
@@ -291,39 +315,29 @@ A body with four legs walks forward.
 
 A planar arm with two links moves its fingertip to a random target.
 
-`simulation_backend="auto"` chooses physics when you construct the environment:
-
-| Output device | Number of environments | Physics |
-|---|---:|---|
-| CPU | Any | Native MuJoCo on CPU |
-| CUDA | Fewer than 32 | Native MuJoCo on CPU |
-| CUDA | 32 or more | JAX/MJX on CUDA |
-
-Previously, every CUDA batch used MJX, including one environment. Small CUDA batches now run
-physics on CPU and return State and observations on CUDA. Rendering still uses the requested device.
+On CUDA, Reacher steps with MuJoCo Warp by default, like the other tasks. See
+[GPU physics and backend selection](#gpu-physics-and-backend-selection) for `simulation_backend`
+and `mjwarp_min_envs`. Reacher's cutoff is 8 environments.
 
 ```python
 with snv.DMCReacher(num_envs=1, device="cuda") as env:
-    print(env.simulation_backend)  # "native"
+    print(env.simulation_backend)  # "mjwarp"
 
-with snv.DMCReacher(num_envs=1024, device="cuda") as env:
-    print(env.simulation_backend)  # "mjx"
+with snv.DMCReacher(num_envs=1, device="cuda", simulation_backend="auto") as env:
+    print(env.simulation_backend)  # "native"
 ```
 
-Set `simulation_backend="native"`, `"mjx"` or `"mjwarp"` to choose explicitly. Both GPU backends
-require CUDA and `stable-envs[dmcontrol-gpu]`. Reacher's MJWarp path uses the same adapter as the
-other DMC tasks, including native reset sampling, per-lane targets, physics variation and full
-checkpoints. Set `mjx_min_envs` to change the automatic native/MJX cutoff; MJWarp is selected explicitly.
+`simulation_backend="mjx"` selects JAX/MJX on CUDA. It needs `stable-envs[dmcontrol-gpu]`. On an
+NVIDIA L40S, MuJoCo Warp stepped Reacher faster than MJX at every batch from 1 to 4096 (for example
+1,167,156 and 552,472 steps per second at 4096 environments, including resets). Reacher's MJWarp path uses the same adapter as the
+other DMC tasks, including native reset sampling, per-environment targets, physics variation and full
+checkpoints.
 
 ```python
 with snv.DMCReacher(num_envs=256, device="cuda", simulation_backend="mjwarp") as env:
     state = env.reset(seed=7)
     result = env.step(env.action_spec.sample(256), states=None, frames=None)
 ```
-
-The default cutoff of 32 is provisional. Earlier A40 measurements compared native physics with
-CPU outputs against MJX with CUDA outputs. Those measurements used different output devices,
-so the cutoff does not guarantee the fastest choice.
 
 Native physics uses float64. MJX and MJWarp use float32 and can produce different trajectories and rewards.
 Select the same backend when comparing experiments.

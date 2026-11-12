@@ -21,8 +21,7 @@ All notable changes to this project are listed here. The format follows
   and 100 timed calls. Reports verify matching native/MJWarp action and checkpoint hashes.
   A focused measurement profile retains stepping, raw physics, construction and memory costs
   while skipping repeated reset/restore and rendering measurements.
-- All 17 DMC classes accept experimental `simulation_backend="mjwarp"` for direct CUDA physics
-  on MuJoCo Warp 3.17. Automatic routing, including Reacher's native/MJX selection, stays unchanged.
+- All 17 DMC classes accept `simulation_backend="mjwarp"` for direct CUDA physics on MuJoCo Warp 3.17.
   The shared adapter retains native resets, RNG, targets, physics variation and checkpoints.
   DMC-local capsule-contact corrections and ordered constraint/solver reductions support repeatable
   checkpoint replay. CUDA regressions cover all 17 classes, with focused 100-call replay checks.
@@ -133,17 +132,24 @@ All notable changes to this project are listed here. The format follows
   runs 17,989 steps/s with 1024 environments and 41,221 with 4096 (before: 5,248 and 5,479). Below 64
   environments, MuJoCo Warp is slower than `mujoco.batch` and than OGBench. Worker processes reset the
   environments of batches of 64 or more in parallel.
-- DMC MJWarp reuses one native reset owner with compact model columns and independent lane RNG
-  checkpoints, avoiding a full native environment and static-asset copy per lane. Reset preparation
-  failures leave the installed lane records intact.
+- DMC MJWarp keeps compact model columns and independent per-environment RNG checkpoints, avoiding a
+  full native environment and static-asset copy per environment. Cheetah and Quadruped reset their
+  environments on one native owner per `dmc_threads` thread; other tasks use one owner. Reset preparation
+  failures leave the installed records intact.
 - Ordinary DMC MJWarp steps capture both physics rounds and task formulas in one guarded graph,
   with one input-validation read and one combined physics-result read. A failed first round skips
   the second; a failed second round preserves the first checkpoint. Observations and info are built
   once, both rewards are retained, and returned outputs own their storage. Lifecycle counters update
   on device; native reset boundaries retain their success checks and RNG behavior.
-- DMC MJWarp reuses temporary GPU storage across the ordered control rounds and releases inactive
-  graph storage at reset transitions. FingerSpin with 8192 lanes now completes ordinary steps and
-  resets on an RTX 3090; returning from a reset rebuilds the ordinary execution graph.
+- DMC MJWarp reuses temporary GPU storage across the ordered control rounds. Its CUDA graphs stay
+  captured through episode boundaries: a mixed reset advances the full batch in the same runtime and
+  writes the reset States afterward, and no step clears the CUDA allocator cache.
+- DM Control on a CUDA device steps with MuJoCo Warp by default at every batch size, including
+  Reacher, which no longer defaults to native physics below 32 environments or to MJX above. On CPU the
+  default stays native. `simulation_backend="auto"` is opt-in: it uses native physics below
+  `mjwarp_min_envs` and MuJoCo Warp from there, with a measured cutoff per task. `"native"` runs physics
+  on CPU with State and outputs on CUDA, and `"mjx"` remains Reacher's explicit MJX choice. The
+  `mjx_min_envs` argument is removed.
 - `OGBCube` and `OGBScene` use the OGBench cube size. The default `cube.size` is now 0.02, as in OGBench.
   Before, the default was the stable-worldmodel value `float32(0.02)`, which compiles to
   0.019999999552965164. That size changed the cube mass and inertia, so contacts moved the physics away
@@ -279,7 +285,6 @@ All notable changes to this project are listed here. The format follows
 - Native DM Control steps every lane in one `mujoco.batch` call on CPU threads instead of worker processes. The
   `dmc_threads` knob sets the number of threads (8 by default), at most one per lane and one per CPU in
   the process affinity. The `workers` and `worker_min_lanes` knobs no longer apply to DM Control.
-  Reacher keeps its automatic native/MJX cutoff and accepts explicit MJWarp selection.
   With 1024 lanes on 32 cores and `dmc_threads=32`, native physics-only stepping is
   approximately 2.4 (Humanoid) to 8 (Cartpole) times faster than with 32 worker processes. Lanes copy one
   compiled model instead of each compiling their own, so 1024 lanes build in approximately 12 s. Outputs do

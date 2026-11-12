@@ -6,34 +6,10 @@ from tensordict import TensorDict
 from ...render import raycast3d as R3
 from ._cells import parity_cell
 from ._delegated import DelegatedSemantics
-from .simulation.execution import make_dmc_adapter, reacher_backend
 
 
 class _ReacherSemantics(DelegatedSemantics):
-    """Reacher with native CPU, CUDA MJX or explicit CUDA MuJoCo Warp physics."""
-
-    execution_mode = "AUTO_NATIVE_MJX"
-
-    def __init__(self, *args, simulation_backend="auto", mjx_min_envs=32, **kwargs):
-        """Select physics at construction and return tensors on the requested device.
-
-        ``"auto"`` uses native CPU physics below ``mjx_min_envs`` and MJX for
-        larger CUDA batches. ``"native"``, ``"mjx"`` and ``"mjwarp"`` select explicitly.
-        """
-        self.simulation_backend = simulation_backend
-        self.mjx_min_envs = mjx_min_envs
-        super().__init__(*args, simulation_backend=simulation_backend, **kwargs)
-
-    def _make_simulator(self):
-        self.simulation_backend = reacher_backend(self.B, self.device, self.simulation_backend, self.mjx_min_envs)
-        return make_dmc_adapter(
-            self._simulator_key(),
-            self.B,
-            self.device,
-            self._seed,
-            simulation_backend=self.simulation_backend,
-            mjx_min_envs=self.mjx_min_envs,
-        )
+    """Reacher with native CPU, CUDA MuJoCo Warp or CUDA MJX physics."""
 
     def make_variation_space(self):
         space = super().make_variation_space()
@@ -75,9 +51,9 @@ DMCReacher = parity_cell(
 )
 
 DMCReacher.name = "dmc-reacher"
-DMCReacher.__doc__ = """Reacher with native float64 CPU or float32 MJX/MuJoCo Warp CUDA physics.
+DMCReacher.__doc__ = """Reacher with native float64 CPU or float32 MuJoCo Warp/MJX CUDA physics.
 
-``simulation_backend="auto"`` uses native CPU physics below ``mjx_min_envs``.
-The cutoff defaults to 32. Larger CUDA batches use MJX. Set ``simulation_backend``
-to ``"native"``, ``"mjx"`` or ``"mjwarp"`` to choose explicitly. ``device`` controls output and rendering.
+On CUDA the default ``simulation_backend=None`` uses MuJoCo Warp at every batch size. ``"auto"`` uses native
+physics below ``mjwarp_min_envs`` (8 by default) and MuJoCo Warp from there. ``"native"``, ``"mjwarp"`` and
+``"mjx"`` select explicitly. ``device`` controls output and rendering.
 """

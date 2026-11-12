@@ -83,11 +83,14 @@ def test_cuda_reacher_tracks_native_physics_variation_and_resets():
         reference.close()
 
 
-@pytest.mark.parametrize("batch,backend", [(1, "native"), (31, "native"), (32, "mjx")])
-def test_auto_reacher_selects_physics_and_preserves_cuda_outputs(batch, backend):
-    with se.DMCReacher(num_envs=batch, device="cuda") as env:
+@pytest.mark.parametrize(
+    "simulation_backend,batch,backend",
+    [(None, 1, "mjwarp"), (None, 32, "mjwarp"), ("auto", 1, "native"), ("auto", 7, "native"), ("auto", 8, "mjwarp")],
+)
+def test_reacher_routes_physics_and_preserves_cuda_outputs(simulation_backend, batch, backend):
+    with se.DMCReacher(num_envs=batch, device="cuda", simulation_backend=simulation_backend) as env:
         assert env.simulation_backend == backend
-        assert env.execution_mode == ("JAX_MJX" if backend == "mjx" else "DELEGATED_CPU")
+        assert env.execution_mode == ("MUJOCO_WARP" if backend == "mjwarp" else "DELEGATED_CPU")
         checkpoint = env.reset(seed=7)
         action = torch.zeros(batch, 2, device="cuda")
         actual = env.step(action, frames=None)

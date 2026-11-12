@@ -8,7 +8,7 @@
  "has_dynamics": true,
  "default_size": 224,
  "frame_shape": [224, 224, 3],
- "physics": "source simulator on CPU",
+ "physics": "native MuJoCo on CPU; MuJoCo Warp on CUDA",
  "renderers": {
   "cpu": "cpu3d (Numba)",
   "cuda": "mjwarp"
