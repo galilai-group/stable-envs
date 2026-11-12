@@ -23,6 +23,9 @@ class RocketProcessAdapter(ProcessAdapter):
 
     name = "Rocket"
     frame_mode = FRAME_FIELDS
+    #: The State leaves that a step does not change are kept on the device, so the outputs move to it
+    #: as they arrive.
+    host_outputs = False
 
     def __init__(self, batch, device, seed, config=None, *, processes=8, cpus=None, frame=None):
         if type(batch) is not int or batch < 1:
@@ -73,6 +76,11 @@ class RocketProcessAdapter(ProcessAdapter):
                 None if seed is None else seed + lane, options, None if values is None else values[lane]
             )
         return self._reset(seed, [(options, None if values is None else values[rows]) for rows in self._slices])
+
+    @property
+    def zero_state_leaves(self):
+        """Keys of the State leaves that are zero and that a step does not change, as of the last State."""
+        return frozenset() if self._static_cache is None else self._static_zero
 
     def close(self):
         self.draw_fields = None

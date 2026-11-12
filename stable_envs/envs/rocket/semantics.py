@@ -8,6 +8,8 @@ import torch
 from tensordict import TensorDict
 
 from ..._core.style import StyleTensor
+from ..._core.tensordicts import stack_leaves
+from ..._execution.process import zeros
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env, _split_appearance
 from ...registry import REGISTRY, register
@@ -115,6 +117,15 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
     def _advance_without_snapshot(self, actions, *, active=None):
         self._check_open("step")
         return self._simulator.step(actions, active=active, capture_state=False)
+
+    def _stack_states(self, values):
+        """Stack State snapshots along a new time axis; zero leaves that a step does not change are not copied."""
+        zero = self._simulator.zero_state_leaves
+        stacked = stack_leaves([value.exclude(*zero) for value in values])
+        for key in zero:
+            leaf = values[0][key]
+            stacked[key] = zeros((*stacked.batch_size, *leaf.shape[1:]), leaf.dtype, leaf.device)
+        return stacked
 
     def _step_pipeline(self) -> StepPipeline | None:
         return step_pipeline(self._simulator)

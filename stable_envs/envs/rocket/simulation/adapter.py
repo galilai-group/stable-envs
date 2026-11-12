@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ...._execution.process import BROADCAST, PER_LANE
+from ...._execution.process import BROADCAST, PER_LANE, fresh_copy
 from ...._execution.protocol import SimulatorAdapter
 from .actions import validate_action
 from .replay import RocketReplay, generator_state, install_generator
@@ -70,7 +70,7 @@ class RocketAdapter(SimulatorAdapter):
         self.num_envs, self.device = batch, torch.device(device)
         if self.device.type not in ("cpu", "cuda"):
             raise ValueError("Rocket supports CPU dynamics and CPU/CUDA State storage")
-        self.envs, self._prepared = [], None
+        self.envs, self._prepared, self._static = [], None, None
         # ``(size, supersample)`` of the TinyRenderer frames ``render_live`` draws; None draws none.
         self.frame, self._scene = frame, None
         try:
@@ -88,16 +88,42 @@ class RocketAdapter(SimulatorAdapter):
         """A lane whose configuration and Variation space describe the batch."""
         return self.envs[0]
 
+    @property
+    def process_static_leaves(self):
+        return [tuple(key.split("/")) for key in self.envs[0].static_keys()]
+
+    def process_step_state(self):
+        """Return ``{key tuple: host array}`` for the State leaves that a step can change."""
+        rows = [env.step_leaves() for env in self.envs]
+        return {tuple(key.split("/")): np.stack([row[key] for row in rows]) for key in rows[0]}
+
+    def _static_leaves(self):
+        """``{key tuple: tensor}`` on ``device`` of the other State leaves, stacked once per reset or restore."""
+        if self._static is None:
+            rows = [env.full_leaves() for env in self.envs]
+            self._static = {
+                key: torch.from_numpy(np.stack([row["/".join(key)] for row in rows])).to(self.device)
+                for key in self.process_static_leaves
+            }
+            # Zero leaves, such as an unused image, are not copied.
+            self._zero = frozenset(key for key, value in self._static.items() if not value.any())
+        return self._static
+
+    @property
+    def zero_state_leaves(self):
+        """Keys of the State leaves that are zero and that a step does not change."""
+        self._static_leaves()
+        return self._zero
+
     def get_state(self):
-        rows = [e.get_state() for e in self.envs]
-        return TensorDict(
-            {
-                tuple(k.split("/")): torch.as_tensor(np.stack([r[k] for r in rows]), device=self.device)
-                for k in rows[0]
-            },
-            [self.num_envs],
-            device=self.device,
-        )
+        step, static = self.process_step_state(), self._static_leaves()
+        leaves = {
+            key: torch.as_tensor(step[key], device=self.device)
+            if key in step
+            else fresh_copy(static[key], key in self._zero)
+            for key in self.fields
+        }
+        return TensorDict(leaves, [self.num_envs], device=self.device)
 
     def rgba(self):
         return torch.as_tensor(np.stack([e.rgba() for e in self.envs]), device=self.device)
@@ -123,7 +149,7 @@ class RocketAdapter(SimulatorAdapter):
     def commit_restore(self):
         if self._prepared is None:
             raise RuntimeError("No Rocket restore is prepared")
-        previous, self.envs, self._prepared = self.envs, self._prepared, None
+        previous, self.envs, self._prepared, self._static = self.envs, self._prepared, None, None
         for env in previous:
             env.close()
 
@@ -152,7 +178,7 @@ class RocketAdapter(SimulatorAdapter):
             for env in staged:
                 env.close()
             raise
-        previous, self.envs = self.envs, staged
+        previous, self.envs, self._static = self.envs, staged, None
         for env in previous:
             env.close()
         return self.get_state()
@@ -221,6 +247,7 @@ class RocketAdapter(SimulatorAdapter):
 
     def configure(self, values):
         check_values(self.envs[0], values, self.num_envs)
+        self._static = None
         for env, row in zip(self.envs, values, strict=True):
             env.configure(row)
 

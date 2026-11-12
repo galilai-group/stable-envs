@@ -8,7 +8,7 @@ import pybullet as p
 
 from ...._core.space_nodes import nodes
 from .actions import validate_action
-from .numeric import capture
+from .numeric import capture, capture_step, step_bodies
 from .task import RocketLandingEnv
 
 DTYPES = (None, np.dtype("float32"), np.dtype("float64"), np.dtype("uint8"))
@@ -108,6 +108,17 @@ def rng_rows_valid(rows):
     return bool((absent | present).all())
 
 
+def current_leaves(captured):
+    """``capture`` or ``capture_step`` output -> ``current/`` State leaves."""
+    state = {}
+    for key, value in captured.items():
+        # These two source fields change bool/float types on the first step.
+        if key in ["wrapper/previous_render_ignition_state", "wrapper/ignition_state"] or value.dtype.kind == "f":
+            value = value.astype(np.float64)
+        state["current/" + key] = value
+    return state
+
+
 def generator_state(node):
     return None if node._np_random is None else copy.deepcopy(node._np_random.bit_generator.state)
 
@@ -163,6 +174,8 @@ class RocketReplay:
         self.names = [p[1:].replace("/", ".") for p, _ in nodes(self.env.variation_space) if p]
         self.registered = {path: self.env.variation_space._walk(path).init_value.copy() for path in PAINTED}
         self._layout = None
+        # The last full ``get_state`` and drawn colours; leaves a step changes are read again.
+        self._full, self._rgba = None, None
         if initialize:
             try:
                 self.reset(seed, options)
@@ -225,6 +238,7 @@ class RocketReplay:
         self.dtypes = np.zeros(self.capacity, np.uint8)
         self.length = self.post = 0
         self.last_dtype = 2
+        self._changed()
         return output
 
     def configure(self, row):
@@ -235,6 +249,11 @@ class RocketReplay:
                 node.set_value(copy.deepcopy(value))
             if path in PAINTED:
                 paint(self.env, path)
+        self._changed()
+
+    def _changed(self):
+        """Forget the cached State and colours after a reset, configuration or restoration."""
+        self._full, self._rgba = None, None
 
     def step(self, action):
         validate_action(action)
@@ -243,8 +262,11 @@ class RocketReplay:
             raise RuntimeError("Source-derived physical action bound exceeded")
         if self.env.step_count >= np.iinfo(np.int64).max - 1:
             raise OverflowError("Rocket lifecycle counter exhausted int64")
+        drawn = self.env.previous_render_ignition_state
         result = self.env.step(action.copy())
         recolor_flame(self.env)
+        if self.env.previous_render_ignition_state is not drawn:
+            self._rgba = None
         self.last_dtype = 1 if action.dtype == np.float32 else 2
         if physical:
             self.history[self.length] = action
@@ -256,6 +278,11 @@ class RocketReplay:
 
     def rgba(self):
         """Drawn body, fin, leg, booster, pad and flame colours in ``render/rgba`` row order."""
+        if self._rgba is None:
+            self._rgba = self._read_rgba()
+        return self._rgba.copy()
+
+    def _read_rgba(self):
         e = self.env
         visuals = {v[1]: np.array(v[7]) for v in e.env.getVisualShapeData(e.env.drones[0].Id)}
         return np.stack(
@@ -300,6 +327,41 @@ class RocketReplay:
         }
 
     def get_state(self):
+        full, step = self.full_leaves(), self.step_leaves()
+        return {key: (step[key] if key in step else value).copy() for key, value in full.items()}
+
+    def full_leaves(self):
+        """Every State leaf as read after the last reset, configuration or restoration.
+
+        The leaves that a step changes are out of date after a step. The caller must not change the arrays.
+        """
+        if self._full is None:
+            self._full = self.read_state()
+            self._bodies = step_bodies(self.env)
+        return self._full
+
+    def static_keys(self):
+        """The State keys that only reset, configuration and restoration change."""
+        step = self.step_leaves()
+        return [key for key in self.full_leaves() if key not in step]
+
+    def step_leaves(self):
+        """The State leaves that a step can change, as ``read_state`` reads them; some are shared arrays."""
+        self.full_leaves()
+        state = {
+            "history/actions": self.history,
+            "history/dtypes": self.dtypes,
+            "history/length": np.array(self.length, np.int64),
+            "history/valid": np.arange(self.capacity) < self.length,
+            "lifecycle/post_terminal_steps": np.array(self.post, np.int64),
+            "lifecycle/last_action_dtype": np.array(self.last_dtype, np.uint8),
+            "render/rgba": self.rgba(),
+        }
+        state.update(current_leaves(capture_step(self.env, self._bodies)))
+        return state
+
+    def read_state(self):
+        """Read every State leaf from the engine, the task and the Variation space."""
         e = self.env
         recipe = self.recipe()
         state = {
@@ -328,12 +390,8 @@ class RocketReplay:
             "lifecycle/last_action_dtype": np.array(self.last_dtype, np.uint8),
             "rng/action_space": encode_rng(generator_state(e.action_space)),
         }
-        state["render/rgba"] = self.rgba()
-        for key, value in capture(e).items():
-            # These two source fields change bool/float types on the first step.
-            if key in ["wrapper/previous_render_ignition_state", "wrapper/ignition_state"] or value.dtype.kind == "f":
-                value = value.astype(np.float64)
-            state["current/" + key] = value.copy()
+        state["render/rgba"] = self._read_rgba()
+        state.update(current_leaves(capture(e)))
         for path, node in nodes(e.variation_space):
             state["anchor/variation" + path + "/rng"] = encode_rng(e._variation_anchor[path])
             state["variation" + path + "/rng"] = encode_rng(generator_state(node))
@@ -517,6 +575,7 @@ class RocketReplay:
             )
             staged.env.np_random.bit_generator.state = decode_rng(rng)
             install_generator(staged.env.action_space, decode_rng(state["rng/action_space"]))
+            staged._changed()
             for path, node in nodes(staged.env.variation_space):
                 install_generator(node, decode_rng(state["variation" + path + "/rng"]))
                 if not hasattr(node, "spaces"):
@@ -555,6 +614,7 @@ class RocketReplay:
                     state["render/rgba"][i], replayed["render/rgba"][i]
                 ):
                     paint(self.env, path)
+        self._changed()
 
     def set_state(self, state):
         staged = self.reconstruct(state)
