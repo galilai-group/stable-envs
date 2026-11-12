@@ -48,3 +48,25 @@ def test_batch_reset_leaves_the_data_of_dm_control(domain, seed):
     finally:
         batch.close()
         local.close()
+
+
+@pytest.mark.family("dmc")
+@pytest.mark.parametrize("seed", [None, 4])
+@pytest.mark.parametrize("domain", ["cheetah", "quadruped"])
+def test_batch_reset_state_holds_the_task_rng_of_dm_control(domain, seed):
+    pytest.importorskip("dm_control")
+    import torch
+
+    from stable_envs.envs.dmcontrol.simulation.factory import make_batch, make_local
+
+    batch, local = make_batch(domain, 3, threads=2), make_local(domain, 3)
+    try:
+        for _ in range(2):
+            ours, theirs = batch.reset(seed=seed), local.reset(seed=seed)
+            for key in ("keys", "position", "has_gauss", "cached_gaussian"):
+                assert torch.equal(ours["rng", key], theirs["rng", key]), key
+            for key in ("qpos", "qvel", "time", "warmstart"):
+                assert torch.equal(ours[key], theirs[key]), key
+    finally:
+        batch.close()
+        local.close()

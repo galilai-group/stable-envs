@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import contextlib
 import copy
+import ctypes
 import math
 import time
 
@@ -12,7 +12,7 @@ import torch
 
 from ...._core.tensordicts import build_tensordict
 from ...._execution.protocol import SimulatorAdapter
-from .state import export_columns
+from .state import model_columns, new_columns, write_task_row
 
 XX, XZ, ZX, ZY, ZZ = 0, 2, 6, 7, 8  # MuJoCo's row-major xmat entries
 _pow = np.frompyfunc(math.pow, 2, 1)
@@ -97,6 +97,7 @@ class DMCBatchAdapter(SimulatorAdapter):
         self._nsub, self._limit = lanes.envs[0]._env._n_sub_steps, lanes.envs[0]._env._step_limit
         self._get_state, self._spec = mujoco.mj_getState, mujoco.mjtState.mjSTATE_INTEGRATION
         self._vel, self._error = mujoco.mjtStage.mjSTAGE_VEL, PhysicsError
+        self._actuation = mujoco.mjtDisableBit.mjDSBL_ACTUATION
         if fit_threads:
             nthread = step_threads(lanes.envs[0].physics, self._nsub, self.num_envs, threads)
         else:
@@ -108,6 +109,7 @@ class DMCBatchAdapter(SimulatorAdapter):
         self.task = task(self.b, self._models)
         self._live = {key: self.b.bind(name) for key, name in _LIVE.items() if key in self.fields}
         self._count, self._reset_next = np.zeros(self.num_envs, np.int64), np.zeros(self.num_envs, bool)
+        self._rng_views = {}
         self._load(np.arange(self.num_envs))
 
     def _reset_lanes(self, ids, seed=None):
@@ -123,7 +125,8 @@ class DMCBatchAdapter(SimulatorAdapter):
         for i in ids:
             env = envs[i]._env
             if seed is not None:
-                env.task._random = np.random.RandomState(int(seed) + int(i))
+                # Legacy seeding of the lane's RandomState gives the state of np.random.RandomState(seed + i).
+                env.task.random.seed(int(seed) + int(i))
             env._reset_next_step, env._step_count = False, 0
             if begin is None:
                 with env.physics.reset_context():
@@ -136,22 +139,66 @@ class DMCBatchAdapter(SimulatorAdapter):
         for i, value in zip(ids, self.task.batch_reset(ids, begun), strict=True):
             self.task.end_reset(envs[i]._env, i, value)
 
-    def _load(self, ids):
-        """Copy lanes from dm_control into the batch and forward them as dm_control's reset does."""
+    def _load(self, ids, seeded=False):
+        """Copy lanes from dm_control into the batch and forward them as dm_control's reset does.
+
+        ``seeded`` tells that a seeded reset just drew the lanes.
+        """
+        ids = np.asarray(ids)
         envs = [self.lanes.envs[i] for i in ids]
         self._warnings = self.b.warning[:, :, 1].copy()
-        with contextlib.ExitStack() as stack:
-            for i, env in zip(ids, envs, strict=True):
-                self._get_state(env.physics.model.ptr, env.physics.data.ptr, self.b.state[i], self._spec)
+        models = [self._models[i] for i in ids]
+        flags = [m.opt.disableflags for m in models]
+        try:
+            for i, env, m in zip(ids, envs, models, strict=True):
+                self._get_state(m, env.physics.data.ptr, self.b.state[i], self._spec)
                 self._count[i], self._reset_next[i] = env._env._step_count, env._env._reset_next_step
-                stack.enter_context(env.physics.model.disable("actuation"))
+                m.opt.disableflags |= self._actuation
             self.b.forward(ids)
-        columns = export_columns(envs, self._cumulative[ids], self.lanes._base_fields)
+        finally:
+            for m, flag in zip(models, flags, strict=True):
+                m.opt.disableflags = flag
+        columns = self._export(ids, envs, seeded and not getattr(self.task, "RESET_DRAWS_NORMALS", True))
         if len(ids) == self.num_envs:
             self._columns = columns
         else:
             for key, column in columns.items():
                 self._columns[key][ids] = column
+
+    def _export(self, ids, envs, gauss_free=False):
+        """State columns of lanes ``ids``: physics from the batch, task RNG and model entries from dm_control.
+
+        With ``gauss_free``, the task RNGs hold no cached gaussian, and their keys and positions are read in place.
+        """
+        columns = new_columns(len(ids), self.lanes._base_fields)
+        for key, name in _LIVE.items():
+            if key in columns:
+                columns[key][:] = self.b.bind(name)[ids].reshape(len(ids), -1)
+        columns["lifecycle", "step_count"][:, 0] = self._count[ids]
+        columns["lifecycle", "reset_next_step"][:, 0] = self._reset_next[ids]
+        columns["task", "cumulative_reward"][:, 0] = self._cumulative[ids]
+        model_fields = model_columns(columns)
+        if not gauss_free or model_fields:
+            for row, env in enumerate(envs):
+                write_task_row(columns, row, env, model_fields)
+            return columns
+        keys, position = columns["rng", "keys"], columns["rng", "position"]
+        for row, (i, env) in enumerate(zip(ids, envs, strict=True)):
+            keys[row], position[row] = self._rng_view(i, env.task.random)
+        columns["rng", "has_gauss"][:] = False
+        columns["rng", "cached_gaussian"][:] = 0.0
+        return columns
+
+    def _rng_view(self, lane, random):
+        """Views of the MT19937 keys and position of ``random``, the task RNG of lane ``lane``."""
+        view = self._rng_views.get(lane)
+        if view is None or view[0] is not random:
+            # numpy's mt19937_state: 624 uint32 keys, then the int position.
+            address = random._bit_generator.ctypes.state_address
+            keys = np.ctypeslib.as_array((ctypes.c_uint32 * 624).from_address(address))
+            position = np.ctypeslib.as_array((ctypes.c_int * 1).from_address(address + keys.nbytes))
+            view = self._rng_views[lane] = (random, keys, position)
+        return view[1], view[2]
 
     def configure_physics(self, values):
         self.lanes.configure_physics(values)
@@ -163,7 +210,7 @@ class DMCBatchAdapter(SimulatorAdapter):
         self.lanes._check_open()
         self._reset_lanes(range(self.num_envs), seed)
         self._cumulative.fill(0)
-        self._load(np.arange(self.num_envs))
+        self._load(np.arange(self.num_envs), seeded=seed is not None)
         return self.get_state()
 
     def get_state(self):

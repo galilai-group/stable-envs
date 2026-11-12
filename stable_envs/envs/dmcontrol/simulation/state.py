@@ -49,9 +49,6 @@ def write_row(columns, i, env, cumulative, model_fields):
     """Read live lane ``env`` into row ``i`` of ``columns``; lanes in different rows may be written concurrently."""
     physics, base = env.physics, env._env
     data = physics.data
-    algorithm, keys, position, has_gauss, cached = env.task.random.get_state()
-    if algorithm != "MT19937":
-        raise ValueError(f"Unsupported DMC RNG algorithm: {algorithm}")
     columns["qpos"][i] = data.qpos
     columns["qvel"][i] = data.qvel
     columns["time"][i] = data.time
@@ -59,14 +56,22 @@ def write_row(columns, i, env, cumulative, model_fields):
     columns["lifecycle", "step_count"][i] = base._step_count
     columns["lifecycle", "reset_next_step"][i] = base._reset_next_step
     columns["task", "cumulative_reward"][i] = cumulative
+    write_task_row(columns, i, env, model_fields)
+    if "activation" in columns:
+        columns["activation"][i] = data.act
+
+
+def write_task_row(columns, i, env, model_fields):
+    """Read the task RNG and episode-drawn model entries of lane ``env`` into row ``i`` of ``columns``."""
+    algorithm, keys, position, has_gauss, cached = env.task.random.get_state()
+    if algorithm != "MT19937":
+        raise ValueError(f"Unsupported DMC RNG algorithm: {algorithm}")
     columns["rng", "keys"][i] = keys
     columns["rng", "position"][i] = position
     columns["rng", "has_gauss"][i] = has_gauss
     columns["rng", "cached_gaussian"][i] = cached
     for key, field, index in model_fields:
-        columns[key][i] = getattr(physics.named.model, field)[index]
-    if "activation" in columns:
-        columns["activation"][i] = data.act
+        columns[key][i] = getattr(env.physics.named.model, field)[index]
 
 
 def columns_to_state(columns, device, extra=None):
