@@ -95,8 +95,7 @@ class DMCBatchAdapter(SimulatorAdapter):
         self._models = [env.physics.model.ptr for env in lanes.envs]
         self._transform = lanes.envs[0]._transform
         self._nsub, self._limit = lanes.envs[0]._env._n_sub_steps, lanes.envs[0]._env._step_limit
-        self._get_state, self._set_state = mujoco.mj_getState, mujoco.mj_setState
-        self._spec = mujoco.mjtState.mjSTATE_INTEGRATION
+        self._get_state, self._spec = mujoco.mj_getState, mujoco.mjtState.mjSTATE_INTEGRATION
         self._vel, self._error = mujoco.mjtStage.mjSTAGE_VEL, PhysicsError
         if fit_threads:
             nthread = step_threads(lanes.envs[0].physics, self._nsub, self.num_envs, threads)
@@ -115,11 +114,12 @@ class DMCBatchAdapter(SimulatorAdapter):
         """Reset lanes ``ids`` with dm_control, ``seed + i`` seeding lane ``i``; lanes share no state.
 
         This is dm_control's ``Environment.reset`` without its first observation, which the batch task computes. A
-        batch task with ``begin_reset`` runs the physics steps of the reset in the batch, on its threads: dm_control
-        does each lane's reset up to them, and ``end_reset`` finishes it.
+        batch task with ``begin_reset`` runs the MuJoCo work of the reset for all lanes in the batch, on its threads:
+        ``begin_reset`` does each lane's reset up to that work, ``batch_reset`` runs it and ``end_reset`` finishes it.
         """
         envs = self.lanes.envs
         begin = getattr(self.task, "begin_reset", None)
+        begun = []
         for i in ids:
             env = envs[i]._env
             if seed is not None:
@@ -129,19 +129,12 @@ class DMCBatchAdapter(SimulatorAdapter):
                 with env.physics.reset_context():
                     env.task.initialize_episode(env.physics)
             else:
-                begin(env)
-                self._get_state(env.physics.model.ptr, env.physics.data.ptr, self.b.state[i], self._spec)
+                begun.append(begin(env, i))
         if begin is None or not len(ids):
             return
         ids = np.asarray(ids)
-        warnings = self.b.warning[ids, :, 1].copy()
-        self.b.step(ids, self.task.RESET_STEPS, stage=self._vel)
-        if (bad := ids[(self.b.warning[ids, :, 1] > warnings).any(axis=1)]).size:
-            raise self._error(f"Physics state is invalid in lanes {bad.tolist()}")
-        for i in ids:
-            physics = envs[i].physics
-            self._set_state(physics.model.ptr, physics.data.ptr, self.b.state[i], self._spec)
-            self.task.end_reset(envs[i]._env)
+        for i, value in zip(ids, self.task.batch_reset(ids, begun), strict=True):
+            self.task.end_reset(envs[i]._env, i, value)
 
     def _load(self, ids):
         """Copy lanes from dm_control into the batch and forward them as dm_control's reset does."""

@@ -44,17 +44,43 @@ def _core(domain):
 ALIGNED_FIELDS = {domain: {**_core(domain), **_physics.state_fields(domain)} for domain in CONFIG}
 
 
-def _non_contacting_height(physics, orientation):
-    """dm_control's quadruped ``_find_non_contacting_height`` in direct MuJoCo calls.
+def _root_adr(m):
+    import mujoco
 
-    An attempt only needs the contact count, which kinematics and collision give. The attempt that finds no contact
-    then runs as dm_control runs it: reset the data and both forward passes of ``reset_context`` with actuation
-    disabled, so the data end as dm_control leaves them.
+    return int(m.jnt_qposadr[mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, "root")])
+
+
+def _place(physics, orientation, z):
+    """dm_control's last start-height attempt, which leaves the data as dm_control does.
+
+    It resets the data, then runs both forward passes of ``reset_context`` with actuation disabled.
     """
     import mujoco
 
     m, d = physics.model.ptr, physics.data.ptr
-    adr = int(m.jnt_qposadr[mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, "root")])
+    adr = _root_adr(m)
+    flags = m.opt.disableflags
+    m.opt.disableflags = flags | mujoco.mjtDisableBit.mjDSBL_ACTUATION
+    try:
+        mujoco.mj_resetData(m, d)
+        mujoco.mj_forward(m, d)
+        d.qpos[adr : adr + 3] = 0.0, 0.0, z
+        d.qpos[adr + 3 : adr + 7] = orientation
+        mujoco.mj_forward(m, d)
+    finally:
+        m.opt.disableflags = flags
+
+
+def _non_contacting_height(physics, orientation):
+    """dm_control's quadruped ``_find_non_contacting_height`` in direct MuJoCo calls.
+
+    An attempt only needs the contact count, which kinematics and collision give. The attempt that finds no contact
+    then runs as dm_control runs it (``_place``).
+    """
+    import mujoco
+
+    m, d = physics.model.ptr, physics.data.ptr
+    adr = _root_adr(m)
     z, attempts = 0.0, 0
     mujoco.mj_resetData(m, d)
     qpos = d.qpos
@@ -71,16 +97,35 @@ def _non_contacting_height(physics, orientation):
         if found:
             break
         z += 0.01
-    flags = m.opt.disableflags
-    m.opt.disableflags = flags | mujoco.mjtDisableBit.mjDSBL_ACTUATION
-    try:
-        mujoco.mj_resetData(m, d)
-        mujoco.mj_forward(m, d)
-        d.qpos[adr : adr + 3] = 0.0, 0.0, z
-        d.qpos[adr + 3 : adr + 7] = orientation
-        mujoco.mj_forward(m, d)
-    finally:
-        m.opt.disableflags = flags
+    _place(physics, orientation, z)
+
+
+def _batch_heights(b, ids, orientations, models):
+    """The heights ``_non_contacting_height`` finds for lanes ``ids`` of mujoco.batch ``b``, searched together.
+
+    Each attempt computes the position stage, which includes collision, of the lanes still in contact on the batch
+    threads. Every lane adds 0.01 to its height in the order of dm_control's search.
+    """
+    import mujoco
+
+    adr = _root_adr(models[0])
+    qpos, ncon = b.bind("qpos"), b.bind("ncon")
+    for i in ids:
+        qpos[i] = models[i].qpos0
+    qpos[ids, adr : adr + 3] = 0.0
+    qpos[ids, adr + 3 : adr + 7] = orientations
+    z, heights, active, attempts = np.zeros(len(ids)), np.zeros(len(ids)), np.arange(len(ids)), 0
+    while active.size:
+        attempts += 1
+        if attempts > 10000:
+            raise RuntimeError("Failed to find a non-contacting configuration.")
+        qpos[ids[active], adr + 2] = z[active]
+        b.forward(ids[active], stage=mujoco.mjtStage.mjSTAGE_POS)
+        found = ncon[ids[active]] == 0
+        heights[active[found]] = z[active[found]]
+        active = active[~found]
+        z[active] += 0.01
+    return heights
 
 
 @cache
@@ -292,6 +337,8 @@ class QuadrupedBatch:
     def __init__(self, b, models):
         import mujoco
 
+        self.b, self.models = b, models
+
         m, sensor = models[0], mujoco.mjtSensor
         # Gyro, accelerometer, force and torque sensors each have three values.
         sensors = lambda *types: (m.sensor_adr[np.isin(m.sensor_type, types)][:, None] + np.arange(3)).ravel()
@@ -303,6 +350,34 @@ class QuadrupedBatch:
         self.torso = m.body("torso").id
         self.qpos, self.qvel, self.act = b.bind("qpos"), b.bind("qvel"), b.bind("act")
         self.xmat, self.s = b.bind("xmat"), b.bind("sensordata")
+
+    @staticmethod
+    def begin_reset(env, lane):
+        """dm_control's Quadruped reset up to its start-height search; returns the drawn orientation."""
+        from dm_control.rl.control import PhysicsError
+
+        try:
+            env.physics.reset()
+        except PhysicsError:
+            pass
+        orientation = env.task.random.randn(4)
+        orientation /= np.linalg.norm(orientation)
+        return orientation
+
+    def batch_reset(self, ids, orientations):
+        """The start-height searches of lanes ``ids`` on the batch threads."""
+        heights = _batch_heights(self.b, ids, np.array(orientations), self.models)
+        return list(zip(orientations, heights, strict=True))
+
+    @staticmethod
+    def end_reset(env, lane, value):
+        """The rest of dm_control's Quadruped reset after the start-height search."""
+        from dm_control.suite import quadruped
+
+        orientation, z = value
+        _place(env.physics, orientation, z)
+        super(quadruped.Move, env.task).initialize_episode(env.physics)
+        env.physics.after_reset()
 
     def reward(self):
         inf = float("inf")

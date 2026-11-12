@@ -151,8 +151,17 @@ class CheetahBatch:
     #: Settling steps of dm_control's reset that the batch runs between ``begin_reset`` and ``end_reset``.
     RESET_STEPS = 199
 
-    @staticmethod
-    def begin_reset(env):
+    def __init__(self, b, models):
+        import mujoco
+
+        m = models[0]
+        self.b, self._spec = b, mujoco.mjtState.mjSTATE_INTEGRATION
+        self.torso, self.bfoot, self.ffoot = (m.body(name).id for name in ("torso", "bfoot", "ffoot"))
+        self.speed_adr = int(m.sensor("torso_subtreelinvel").adr[0])
+        self.qpos, self.qvel, self.xpos = b.bind("qpos"), b.bind("qvel"), b.bind("xpos")
+        self.sensordata, self.angmom = b.bind("sensordata"), b.bind("subtree_angmom")
+
+    def begin_reset(self, env, lane):
         """dm_control's Cheetah reset up to its 200 settling steps, and ``mj_step2`` of the first one.
 
         dm_control's legacy step ends the first settling step with ``mj_step2`` on the stages of the state before the
@@ -173,24 +182,30 @@ class CheetahBatch:
         physics.data.qpos[is_limited] = task.random.uniform(lower, upper)
         with physics.check_invalid_state():
             mujoco.mj_step2(physics.model.ptr, physics.data.ptr)
+        mujoco.mj_getState(physics.model.ptr, physics.data.ptr, self.b.state[lane], self._spec)
 
-    @staticmethod
-    def end_reset(env):
+    def batch_reset(self, ids, begun):
+        """The settling steps of lanes ``ids`` on the batch threads."""
+        import mujoco
+        from dm_control.rl.control import PhysicsError
+
+        warnings = self.b.warning[ids, :, 1].copy()
+        self.b.step(ids, self.RESET_STEPS, stage=mujoco.mjtStage.mjSTAGE_VEL)
+        if (bad := ids[(self.b.warning[ids, :, 1] > warnings).any(axis=1)]).size:
+            raise PhysicsError(f"Physics state is invalid in lanes {bad.tolist()}")
+        return begun
+
+    def end_reset(self, env, lane, value):
         """The rest of dm_control's Cheetah reset after the settling steps."""
+        import mujoco
         from dm_control.suite import cheetah
 
         physics, task = env.physics, env.task
+        mujoco.mj_setState(physics.model.ptr, physics.data.ptr, self.b.state[lane], self._spec)
         physics.data.time = 0
         task._timeout_progress = 0
         super(cheetah.Cheetah, task).initialize_episode(physics)
         physics.after_reset()
-
-    def __init__(self, b, models):
-        m = models[0]
-        self.torso, self.bfoot, self.ffoot = (m.body(name).id for name in ("torso", "bfoot", "ffoot"))
-        self.speed_adr = int(m.sensor("torso_subtreelinvel").adr[0])
-        self.qpos, self.qvel, self.xpos = b.bind("qpos"), b.bind("qvel"), b.bind("xpos")
-        self.sensordata, self.angmom = b.bind("sensordata"), b.bind("subtree_angmom")
 
     def reward(self):
         speed = self.sensordata[:, self.speed_adr]

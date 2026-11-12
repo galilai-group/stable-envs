@@ -29,11 +29,12 @@ def test_quadruped_height_search_leaves_the_data_of_dm_control(seed):
 
 @pytest.mark.family("dmc")
 @pytest.mark.parametrize("seed", range(3))
-def test_cheetah_batch_reset_leaves_the_data_of_dm_control(seed):
+@pytest.mark.parametrize("domain", ["cheetah", "quadruped"])
+def test_batch_reset_leaves_the_data_of_dm_control(domain, seed):
     pytest.importorskip("dm_control")
     from stable_envs.envs.dmcontrol.simulation.factory import make_batch, make_local
 
-    batch, local = make_batch("cheetah", 4, threads=2), make_local("cheetah", 4)
+    batch, local = make_batch(domain, 4, threads=2), make_local(domain, 4)
     try:
         batch.reset(seed=seed)
         local.reset(seed=seed)
