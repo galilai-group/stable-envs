@@ -123,3 +123,31 @@ def test_inactive_lanes_keep_their_state_and_last_outputs():
         assert not torch.equal(second["observation"][mask], first["observation"][mask])
     finally:
         gpu.close()
+
+
+def test_many_teleports_keep_the_rng_streams_of_the_cpu_batch():
+    """More teleport draws than one draw-ahead table holds, with State reads in between."""
+    lanes = 32
+    cpu, gpu = (
+        OGBMazeBatchAdapter(lanes, seed=3, maze="teleport"),
+        OGBMazeWarpAdapter(lanes, "cuda", seed=3, maze="teleport"),
+    )
+    try:
+        inbound = torch.tensor(cpu.task.teleport["teleport_in_xys"], dtype=torch.float64)
+        rng = np.random.default_rng(0)
+        for t in range(100):
+            if t % 5 == 0:
+                state = cpu.get_state()
+                state["root", "position"] = inbound[torch.as_tensor(rng.integers(len(inbound), size=lanes))] + 0.2
+                cpu.set_state(state)
+                gpu.set_state(state.to("cuda"))
+            actions = rng.uniform(-0.1, 0.1, (lanes, 2)).astype(np.float32)
+            cpu.step(actions, capture_state=t % 3 == 0)
+            gpu.step(torch.as_tensor(actions, device="cuda"), capture_state=t % 3 == 0)
+        want, got = cpu.get_state(), gpu.get_state().cpu()
+        for key in want.keys(True, True):
+            if key[0] in ("task", "rng"):
+                assert torch.equal(got[key], want[key]), key
+    finally:
+        cpu.close()
+        gpu.close()

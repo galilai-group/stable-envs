@@ -643,7 +643,9 @@ class OGBMazeWarpAdapter(_MazeLanes):
             self._tp_in = torch.as_tensor(np.stack(out.teleport_in), **f64)
             self._tp_out = torch.as_tensor(np.stack(out.teleport_out), device=self.device, dtype=self._qpos_v.dtype)
             self._draws = torch.zeros(self.num_envs, TELEPORT_DRAWS, device=self.device, dtype=torch.int64)
+            # Draws each lane's steps took from its row of ``_draws``; the host has applied ``_applied`` of them.
             self._used = torch.zeros(self.num_envs, device=self.device, dtype=torch.int64)
+            self._applied = np.zeros(self.num_envs, np.int64)
             self._steps_since_refill = 0
         self._rng_columns = {}
         self._last = None
@@ -665,12 +667,12 @@ class OGBMazeWarpAdapter(_MazeLanes):
         cols = self._random.columns
         if ids is None or not self._rng_columns:
             self._rng_columns = {key: torch.from_numpy(value.copy()).to(self.device) for key, value in cols.items()}
+            if self._teleport:
+                self._refill(np.arange(self.num_envs))
         elif len(ids):
             index = torch.as_tensor(ids, device=self.device)
             for key, value in cols.items():
                 self._rng_columns[key][index] = torch.from_numpy(value[ids]).to(self.device)
-        if self._teleport:
-            self._refill(np.arange(self.num_envs) if ids is None else ids)
 
     def _refill(self, ids):
         """Draw the next teleport destinations of lanes ``ids`` from copies of their RNGs."""
@@ -686,19 +688,22 @@ class OGBMazeWarpAdapter(_MazeLanes):
         index = torch.as_tensor(ids, device=self.device)
         self._draws[index] = torch.from_numpy(draws).to(self.device)
         self._used[index] = 0
+        self._applied[ids] = 0
 
-    def _settle_teleports(self):
-        """Advance each lane's RNG by the teleport draws its steps used, then draw ahead again."""
-        if not self._teleport:
-            return
+    def _settle_teleports(self, refill=False):
+        """Advance each lane's RNG by the teleport draws its steps took; with ``refill``, draw ahead again."""
         used = self._used.cpu().numpy()
-        ids = np.flatnonzero(used)
+        delta = used - self._applied
         count = len(self._outputs.teleport_out)
-        for k in range(1, int(used.max(initial=0)) + 1):
-            self._random.mt.randint(np.flatnonzero(used >= k), 0, count)
+        for k in range(1, int(delta.max(initial=0)) + 1):
+            self._random.mt.randint(np.flatnonzero(delta >= k), 0, count)
+        self._applied[:] = used
+        ids = np.flatnonzero(delta)
         self._random.sync_legacy(ids)
         self._upload_rng(ids)
-        self._steps_since_refill = 0
+        if refill:
+            self._refill(np.flatnonzero(used))
+            self._steps_since_refill = 0
 
     # Adapter interface --------------------------------------------------------------------------------------
 
@@ -846,7 +851,7 @@ class OGBMazeWarpAdapter(_MazeLanes):
         self._used += near
         self._steps_since_refill += 1
         if self._steps_since_refill >= TELEPORT_DRAWS:
-            self._settle_teleports()
+            self._settle_teleports(refill=True)
 
     def close(self):
         if not self._closed:
