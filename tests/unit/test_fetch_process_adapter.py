@@ -33,7 +33,7 @@ def test_process_owner_matches_local_owner_through_the_public_env(monkeypatch, t
         patch.setattr(
             semantics, "FetchAdapter", partial(FetchProcessAdapter, processes=2, threads_per_process=threads)
         )
-        candidate = snv.make(name, num_envs=5, seed=17, device="cpu", backend="opengl")
+        candidate = snv.make(name, num_envs=5, seed=17, device="cpu", backend="opengl", simulation_backend="source")
     try:
         assert_same_state(reference.get_state(), candidate.get_state())
         actions = np.random.default_rng(31).uniform(-1, 1, (5, 6, 4)).astype(np.float64)
@@ -165,7 +165,7 @@ def test_inflight_exclusion_ownership_and_close():
 
 def test_public_pipeline_renderer_failure_reaps_workers(monkeypatch):
     monkeypatch.setattr(semantics, "FetchAdapter", partial(FetchProcessAdapter, processes=2))
-    with snv.make("FetchPush", num_envs=5, device="cpu") as env:
+    with snv.make("FetchPush", num_envs=5, device="cpu", simulation_backend="source") as env:
 
         def fail(state):
             assert env._simulator._pending is not None
@@ -180,7 +180,7 @@ def test_public_pipeline_renderer_failure_reaps_workers(monkeypatch):
 
 def test_workers_finish_next_step_while_parent_consumes_owned_frame_state(monkeypatch):
     monkeypatch.setattr(semantics, "FetchAdapter", partial(FetchProcessAdapter, processes=2))
-    with snv.make("FetchPush", num_envs=5, device="cpu") as env:
+    with snv.make("FetchPush", num_envs=5, device="cpu", simulation_backend="source") as env:
         overlapped = []
 
         def render(state):

@@ -10,6 +10,7 @@ from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env, _lane_value
 from ...spaces import Box, Dict, Discrete
 from .simulation.adapter import VISUAL_LEAVES
+from .simulation.execution import MJWARP_MIN_ENVS, fetch_backend, make_fetch_adapter
 from .simulation.execution import make_fetch_adapter as FetchAdapter
 
 
@@ -43,11 +44,33 @@ class FetchSemantics:
         "rendering.transparent_arm",
     }
 
-    def __init__(self, num_envs=1, size=None, supersample=None, device="cpu", backend="auto", seed=0):
+    def __init__(
+        self,
+        num_envs=1,
+        size=None,
+        supersample=None,
+        device="cpu",
+        backend="auto",
+        seed=0,
+        *,
+        simulation_backend="default",
+        mjwarp_min_envs=MJWARP_MIN_ENVS,
+    ):
+        """``simulation_backend`` selects the physics; see ``fetch_backend``.
+
+        ``"default"`` steps on MuJoCo Warp on CUDA and on the CPU batch, bit-exact with gymnasium-robotics, on
+        CPU. ``"auto"`` steps CUDA batches smaller than ``mjwarp_min_envs`` on the CPU batch.
+        """
         device = Env.resolve_device(device)
-        self._simulator = FetchAdapter(
-            num_envs, device, seed, self.SCENE, "dense" if "Dense" in self.REF_ID else "sparse"
-        )
+        self.simulation_backend = fetch_backend(num_envs, device, simulation_backend, mjwarp_min_envs)
+        reward_type = "dense" if "Dense" in self.REF_ID else "sparse"
+        if self.simulation_backend == "source":
+            self._simulator = FetchAdapter(num_envs, device, seed, self.SCENE, reward_type)
+        else:
+            self._simulator = make_fetch_adapter(
+                num_envs, device, seed, self.SCENE, reward_type, simulation_backend=self.simulation_backend
+            )
+        self.execution_mode = self._simulator.execution_mode
         self._has_object = self._simulator.has_object
         self._nq = self._simulator.fields["qpos"][0]
         self._reset_keys = set(type(self)._reset_keys)
