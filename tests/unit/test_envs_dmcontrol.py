@@ -241,6 +241,27 @@ def test_render_of_state_packed_row_and_live_state_agree_to_the_bit(name):
         assert tuple(env.frame_spec.shape) == (env.size, env.size, 3)
 
 
+@pytest.mark.parametrize("name", ["DMCCartpoleSwingup", "DMCBallInCupCatch", "DMCReacher", "DMCWalkerWalk"])
+def test_render_of_state_checks_only_the_leaves_the_frame_reads(name):
+    with _build(name, num_envs=2, device="cpu") as env:
+        st = env.get_state()
+        frames = env.render(st)
+        unread = st.clone()
+        unread["qvel"][0, 0] = float("nan")
+        del unread["rng", "keys"]
+        assert torch.equal(env.render(unread), frames)
+        with pytest.raises(ValueError):
+            env.set_state(unread)
+        for key, _ in env._drawn_fields():
+            bad = st.clone()
+            bad[key][0, 0] = float("inf")
+            with pytest.raises(ValueError, match="non-finite"):
+                env.render(bad)
+            del bad[key]
+            with pytest.raises(ValueError, match="missing"):
+                env.render(bad)
+
+
 def test_reacher_has_one_public_registration():
     assert snv.list_envs(family="dmcontrol", domain="reacher") == ["DMCReacher"]
     assert snv.info("DMCReacher")["id"] == "dmc-reacher"

@@ -93,6 +93,56 @@ def test_uniform_batch_keeps_one_world_entry(family):
 
 
 @pytest.mark.parametrize("family,cls", [("Cube", OGBCube), ("Scene", OGBScene)])
+def test_render_of_state_checks_only_the_leaves_the_frame_reads(family, cls):
+    with cls(num_envs=3, seed=17) as env:
+        full = env.get_state()
+        frames = env.render(full)
+        unread = full.clone()
+        unread["physics", "qvel"][0, 0] = float("nan")
+        unread["rng", "task", "position"].fill_(10**6)
+        assert torch.equal(env.render(unread), frames)
+        assert torch.equal(env.render(full[:2].clone()), frames[:2])
+        with pytest.raises(ValueError):
+            env.set_state(unread)
+        for key in pixels.projected_keys(family):
+            bad = full.clone()
+            del bad[key]
+            with pytest.raises(ValueError, match="missing"):
+                env.render(bad)
+        bad = full.clone()
+        bad["physics", "qpos"][0, 0] = float("nan")
+        with pytest.raises(ValueError, match=r"\('physics', 'qpos'\)"):
+            env.render(bad)
+
+
+@pytest.mark.parametrize("family,cls", [("Cube", OGBCube), ("Scene", OGBScene)])
+def test_render_state_checks_agree_on_host_and_device(family, cls):
+    with cls(num_envs=3, seed=17) as env:
+        image_state = env.to_render_state()
+    pixels.validate(family, image_state.clone().clear_device_())
+    for key, value in [
+        (("pose", "qpos"), float("nan")),
+        (("renderer", "signature"), 0),
+        (("renderer", "camera"), 1),
+        (("renderer", "size"), 0),
+        (("appearance", "cube.size"), 0.3),
+        (("appearance", "target_alpha"), 0.2),
+        (("appearance", "camera.angle_delta"), 30),
+        (("appearance", "cube.color"), 2),
+        (("pose", "mocap_quat"), 0),
+    ]:
+        bad = image_state.clone()
+        bad[key][-1] = value
+        messages = []
+        # A TensorDict without a device takes the device branch of validate.
+        for candidate in (bad, bad.clone().clear_device_()):
+            with pytest.raises(ValueError) as error:
+                pixels.validate(family, candidate)
+            messages.append(str(error.value))
+        assert messages[0] == messages[1]
+
+
+@pytest.mark.parametrize("family,cls", [("Cube", OGBCube), ("Scene", OGBScene)])
 def test_named_render_state_boundary(family, cls):
     with cls(num_envs=3, seed=17) as env:
         full = env.get_state()
