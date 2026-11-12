@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import functools
 from importlib.metadata import version
 
 import numpy as np
@@ -108,6 +109,11 @@ def rng_rows_valid(rows):
     return bool((absent | present).all())
 
 
+@functools.cache
+def _versions():
+    return version("PyFlyt"), version("pybullet")
+
+
 def current_leaves(captured):
     """``capture`` or ``capture_step`` output -> ``current/`` State leaves."""
     state = {}
@@ -159,8 +165,8 @@ class RocketReplay:
     """
 
     def __init__(self, config=None, seed=0, options=None, *, initialize=True):
-        for name, required in [("PyFlyt", "0.29.0"), ("pybullet", "3.2.7")]:
-            if version(name) != required:
+        for name, found, required in zip(["PyFlyt", "pybullet"], _versions(), ["0.29.0", "3.2.7"], strict=True):
+            if found != required:
                 raise RuntimeError(f"Rocket requires {name}=={required}")
         self.config = dict(config or {})
         if self.config.get("angle_representation", "quaternion") != "quaternion":

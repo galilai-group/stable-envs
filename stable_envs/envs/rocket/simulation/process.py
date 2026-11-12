@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import ctypes
+import sys
 from functools import partial
 
 import torch
 
-from ...._execution.process import FRAME_DRAW, FRAME_FIELDS, ProcessAdapter
+from ...._execution.process import FRAME_DRAW, FRAME_FIELDS, ProcessAdapter, process_worker
 from .adapter import RocketAdapter, check_values, state_columns
 
 #: Lanes one process may own. A staged restore or reset holds two PyBullet clients per lane, frames
@@ -16,6 +18,24 @@ LANES_PER_PROCESS = 511
 
 def _lanes(config, frame, count, seed):
     return RocketAdapter(count, "cpu", seed, config, frame)
+
+
+def keep_freed_memory():
+    """Keep freed heap memory in this process for the next allocations.
+
+    Each PyBullet client allocates about 27 MB. A reset connects new clients before it disconnects the
+    old ones. With glibc defaults, each connect maps new pages and then writes them, which costs about
+    18 ms. When the freed clients stay in the heap, a connect costs about 2 ms.
+    """
+    if sys.platform == "linux":
+        libc = ctypes.CDLL(None)
+        libc.mallopt(-1, 2**31 - 1)  # M_TRIM_THRESHOLD
+        libc.mallopt(-3, 32 << 20)  # M_MMAP_THRESHOLD
+
+
+def rocket_worker(*args):
+    keep_freed_memory()
+    process_worker(*args)
 
 
 class RocketProcessAdapter(ProcessAdapter):
@@ -76,6 +96,9 @@ class RocketProcessAdapter(ProcessAdapter):
                 None if seed is None else seed + lane, options, None if values is None else values[lane]
             )
         return self._reset(seed, [(options, None if values is None else values[rows]) for rows in self._slices])
+
+    def _worker_target(self):
+        return rocket_worker
 
     @property
     def zero_state_leaves(self):
