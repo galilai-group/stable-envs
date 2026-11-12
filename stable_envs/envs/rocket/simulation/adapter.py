@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ...._execution.process import BROADCAST, PER_LANE, fresh_copy
+from ...._execution.process import BROADCAST, PER_LANE, fresh_copy, leaf_tensordict
 from ...._execution.protocol import SimulatorAdapter
 from .actions import validate_actions
 from .replay import RocketReplay, generator_state, install_generator
@@ -123,7 +123,7 @@ class RocketAdapter(SimulatorAdapter):
             else fresh_copy(static[key], key in self._zero)
             for key in self.fields
         }
-        return TensorDict(leaves, [self.num_envs], device=self.device)
+        return leaf_tensordict(leaves, self.num_envs, self.device)
 
     def rgba(self):
         return torch.as_tensor(np.stack([e.rgba() for e in self.envs]), device=self.device)
