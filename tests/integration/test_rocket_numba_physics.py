@@ -71,9 +71,9 @@ def kernel_fields(state, b):
     return {k: np.asarray(state[k][b], dtype=np.float64).copy() for k in keys}
 
 
-def run_source(kind, seed):
+def run_source(kind, seed, sparse_reward=False):
     """Closed-loop source rollout: actions, body states, rewards, flags, observations and the start pose."""
-    env = RocketLandingEnv(render_mode=None)
+    env = RocketLandingEnv(render_mode=None, sparse_reward=sparse_reward)
     try:
         obs, _ = env.reset(seed=seed, options=OPTIONS[kind])
         rec = {
@@ -131,7 +131,7 @@ def start_columns(recs):
     }
 
 
-def run_kernel(recs, seeds):
+def run_kernel(recs, seeds, sparse_reward=False):
     """Replay the source actions on the kernel, all rollouts in one batch, with the source noise streams."""
     num = len(recs)
     state = nk.new_state(num)
@@ -155,7 +155,7 @@ def run_kernel(recs, seeds):
     live = everyone.copy()
     for t in range(steps):
         actions = np.stack([r["action"][t] if t < len(r["action"]) else np.zeros(7) for r in recs])
-        rew, term, trunc, info = nk.step(state, actions, None, live)
+        rew, term, trunc, info = nk.step(state, actions, None, live, sparse_reward=sparse_reward)
         if t == SNAPSHOT_STEP:
             out["fields_step"] = [kernel_fields(state, b) for b in range(num)]
         for b in np.flatnonzero(live):
@@ -200,10 +200,10 @@ def quaternion_gap(a, b):
     return np.minimum(np.abs(a - b).max(-1), np.abs(a + b).max(-1))
 
 
-def compare(kinds_seeds):
+def compare(kinds_seeds, sparse_reward=False):
     """Source and kernel rollouts for ``(kind, seed)`` pairs; return one summary row per rollout."""
-    recs = [run_source(kind, seed) for kind, seed in kinds_seeds]
-    got = run_kernel(recs, [seed for _, seed in kinds_seeds])
+    recs = [run_source(kind, seed, sparse_reward) for kind, seed in kinds_seeds]
+    got = run_kernel(recs, [seed for _, seed in kinds_seeds], sparse_reward)
     rows = []
     for b, ((kind, seed), rec) in enumerate(zip(kinds_seeds, recs, strict=True)):
         free = first_contact(rec)
@@ -288,6 +288,14 @@ def test_kernel_ends_the_episode_as_the_source(rows, index):
     # the kernel draws exactly the thrust noise the source draws
     assert row["same_rng"], row
     assert row["src"][:2] == CASES[row["kind"], row["seed"]]
+
+
+def test_sparse_reward_follows_the_source():
+    for row in compare([("land", 1), ("pad", 4), ("free", 2)], sparse_reward=True):
+        assert row["ours"] == row["src"] and row["end"] == row["steps"] - 1, row
+        assert row["dreward"] < ATOL and row["dp"] < ATOL, row
+        # only the pad terms pay: 5 - 0.3 |vz| at contact, and 3 more for a landing
+        assert row["return_src"] == row["reward_src_end"]
 
 
 @pytest.mark.parametrize("seed", [0, 1, 12345])
