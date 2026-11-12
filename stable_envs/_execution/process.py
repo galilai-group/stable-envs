@@ -67,8 +67,20 @@ def leaf_tensordict(leaves, batch, device):
     return build_tensordict(tree, [batch], device)
 
 
-def _clone_all(tensors):
-    return {key: value.clone() for key, value in tensors.items()}
+def zeros(shape, dtype, device):
+    """A zero tensor; on the host, the system zeroes its pages when they are first used."""
+    if torch.device(device).type == "cpu":
+        return torch.from_numpy(np.zeros(shape, torch.empty((), dtype=dtype).numpy().dtype))
+    return torch.zeros(shape, dtype=dtype, device=device)
+
+
+def fresh_copy(value, zero=False):
+    """A copy of ``value``, which is all zero when ``zero``."""
+    return zeros(value.shape, value.dtype, value.device) if zero else value.clone()
+
+
+def _clone_all(tensors, zero=frozenset()):
+    return {key: fresh_copy(value, key in zero) for key, value in tensors.items()}
 
 
 def _shared_state(views, rows, count, leaves):
@@ -111,7 +123,8 @@ def process_worker(conn, factory, start, count, batch, seed, cpus, buffers, spec
                     capture_state=capture and not static,
                 )
                 write("task", result)
-                if static and (capture or frame == FRAME_FIELDS):
+                # A ``FRAME_FIELDS`` frame without ``frame_fields`` buffers is drawn from the State leaves.
+                if static and (capture or (frame == FRAME_FIELDS and not groups["fields"])):
                     for key, value in adapter.process_step_state().items():
                         views[("state", *key)][rows] = value
                 elif capture:
@@ -196,6 +209,7 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         self._connections, self._processes = [], []
         self._metadata = None
         self._static, self._static_cache, self._spare, self._copier = frozenset(), None, None, None
+        self._static_device, self._static_zero = None, frozenset()
         self.process_methods: dict[str, str] = {}
         try:
             # The one-lane prototype stays open for parent-side queries and checks.
@@ -290,17 +304,31 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
                 for key, view in self._views.items()
                 if key[0] == "state"
             }
-        if self._static_cache is None:
+        device = self._output_device
+        if self._static_cache is None or self._static_device != device:
             self._static_cache = {
-                key[1:]: torch.from_numpy(view.copy()) for key, view in self._views.items() if key[1:] in self._static
+                key[1:]: torch.from_numpy(view.copy()).to(device)
+                for key, view in self._views.items()
+                if key[1:] in self._static
             }
-            self._spare = None
-        cache = self._static_cache
+            # Zero leaves, such as an unused image, are not copied.
+            self._static_zero = frozenset(key for key, value in self._static_cache.items() if not value.any())
+            self._static_device, self._spare = device, None
+        cache, zero = self._static_cache, self._static_zero
+        if device.type == "cuda":
+            # A device copy is fast enough to make on the calling thread.
+            return {
+                key[1:]: fresh_copy(cache[key[1:]], key[1:] in zero)
+                if key[1:] in cache
+                else torch.from_numpy(view.copy()).to(device)
+                for key, view in self._views.items()
+                if key[0] == "state"
+            }
         # A thread copies the cache for the next snapshot while the workers step.
-        spare = self._spare.result() if self._spare is not None else _clone_all(cache)
+        spare = self._spare.result() if self._spare is not None else _clone_all(cache, zero)
         if self._copier is None:
             self._copier = ThreadPoolExecutor(1)
-        self._spare = self._copier.submit(_clone_all, cache)
+        self._spare = self._copier.submit(_clone_all, cache, zero)
         values = {}
         for key, view in self._views.items():
             if key[0] == "state":
