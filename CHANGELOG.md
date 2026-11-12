@@ -202,6 +202,9 @@ All notable changes to this project are listed here. The format follows
   action per call (before: 5,773) and 8,759 times with 16 actions per call (before: 7,289). `OGBScene`
   steps 4,828 and 5,592 times per second (before: 3,755 and 4,712). The speed of steps with frames does
   not change, because drawing the frames takes most of the time.
+- DM Control CPU steps build their outputs and State without the per-leaf checks of `TensorDict`, and read the
+  State fields of the batch through views that they bind once. Each step returns new output tensors, so the
+  step dispatcher does not copy them again. State and outputs do not change.
 - DM Control resets skip dm_control's first observation, which the batch task computes. CheetahRun and
   QuadrupedWalk reset their lanes on the `mujoco.batch` threads (`dmc_threads`): their resets are mostly MuJoCo
   work (200 settling steps; the start-height search), and MuJoCo releases the GIL while it computes. The other

@@ -81,17 +81,22 @@ def columns_to_state(columns, device, extra=None):
     )
 
 
+def export_columns(envs, cumulative, fields):
+    """Read ``fields`` of live lane owners into fresh host arrays, ``{key: (lanes, width)}``."""
+    columns = new_columns(len(envs), fields)
+    model_fields = model_columns(columns)
+    for i, env in enumerate(envs):
+        write_row(columns, i, env, cumulative[i], model_fields)
+    return columns
+
+
 def export_state(envs, cumulative, fields, device, extra=None):
     """Export fresh State columns with one device transfer per field.
 
     Read live lane owners into owned host arrays. CPU tensors retain those arrays;
     later simulation and exports cannot overwrite the snapshot.
     """
-    columns = new_columns(len(envs), fields)
-    model_fields = model_columns(columns)
-    for i, env in enumerate(envs):
-        write_row(columns, i, env, cumulative[i], model_fields)
-    return columns_to_state(columns, device, extra)
+    return columns_to_state(export_columns(envs, cumulative, fields), device, extra)
 
 
 def restore_lane(env, row, fields, cumulative, lane):

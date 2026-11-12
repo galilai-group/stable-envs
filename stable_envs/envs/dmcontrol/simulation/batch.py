@@ -8,10 +8,10 @@ from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import torch
-from tensordict import TensorDict
 
+from ...._core.tensordicts import build_tensordict
 from ...._execution.protocol import SimulatorAdapter
-from .state import export_state
+from .state import export_columns
 
 XX, XZ, ZX, ZY, ZZ = 0, 2, 6, 7, 8  # MuJoCo's row-major xmat entries
 _pow = np.frompyfunc(math.pow, 2, 1)
@@ -41,8 +41,25 @@ def scalar_tolerance(x, bounds=(0.0, 0.0), margin=0.0, sigmoid="gaussian", value
     return np.where((lower <= x) & (x <= upper), 1.0, value)
 
 
+def _put(tree, key, value):
+    """Set ``key``, a name or a tuple of names, in nested dicts."""
+    if isinstance(key, str):
+        tree[key] = value
+        return
+    for part in key[:-1]:
+        tree = tree.setdefault(part, {})
+    tree[key[-1]] = value
+
+
+#: State fields read from the batch: ``State key -> MjData field``.
+_LIVE = {"qpos": "qpos", "qvel": "qvel", "time": "time", "warmstart": "qacc_warmstart", "activation": "act"}
+
+
 class DMCBatchAdapter(SimulatorAdapter):
     """DMC lanes stepped together in one mujoco.batch; dm_control resets, restores and varies them."""
+
+    #: Each step returns fresh output tensors.
+    outputs_owned = True
 
     def __init__(self, lanes, task, threads):
         import mujoco
@@ -63,6 +80,7 @@ class DMCBatchAdapter(SimulatorAdapter):
         self._pool = ThreadPoolExecutor(threads) if threads > 1 and lanes.key in THREADED_RESETS else None
         self.b.set_models(self._models)
         self.task = task(self.b, self._models)
+        self._live = {key: self.b.bind(name) for key, name in _LIVE.items() if key in self.fields}
         self._count, self._reset_next = np.zeros(self.num_envs, np.int64), np.zeros(self.num_envs, bool)
         self._load(np.arange(self.num_envs))
 
@@ -97,11 +115,12 @@ class DMCBatchAdapter(SimulatorAdapter):
                 self._count[i], self._reset_next[i] = env._env._step_count, env._env._reset_next_step
                 stack.enter_context(env.physics.model.disable("actuation"))
             self.b.forward(ids)
-        columns = export_state(envs, self._cumulative[ids], self.lanes._base_fields, "cpu")
+        columns = export_columns(envs, self._cumulative[ids], self.lanes._base_fields)
         if len(ids) == self.num_envs:
             self._columns = columns
         else:
-            self._columns[torch.from_numpy(ids)] = columns
+            for key, column in columns.items():
+                self._columns[key][ids] = column
 
     def configure_physics(self, values):
         self.lanes.configure_physics(values)
@@ -116,21 +135,21 @@ class DMCBatchAdapter(SimulatorAdapter):
 
     def get_state(self):
         self.lanes._check_open()
-        # Torch copies tensors over 32768 elements on OpenMP threads, which then spin against the batch's threads.
-        b, state = self.b, self._columns.apply(lambda column: torch.from_numpy(column.numpy().copy()))
-        columns = {
-            "qpos": b.qpos,
-            "qvel": b.qvel,
-            "time": b.time[:, None],
-            "warmstart": b.qacc_warmstart,
+        live = {
+            **self._live,
+            "time": self._live["time"][:, None],
             ("lifecycle", "step_count"): self._count[:, None],
             ("lifecycle", "reset_next_step"): self._reset_next[:, None],
             ("task", "cumulative_reward"): self._cumulative[:, None],
-            **({"activation": b.act} if "activation" in self.fields else {}),
-            **({} if self.lanes.physics is None else self.lanes.physics.export()),
         }
-        state.update({key: torch.from_numpy(np.array(value)) for key, value in columns.items()})
-        return state.to(self.device)
+        # Fresh host copies: later steps and resets cannot change the returned snapshot.
+        state = {}
+        for key, column in self._columns.items():
+            _put(state, key, torch.from_numpy(np.array(live.get(key, column))))
+        for key, value in ({} if self.lanes.physics is None else self.lanes.physics.export()).items():
+            _put(state, key, torch.from_numpy(value))
+        state = build_tensordict(state, [self.num_envs], "cpu")
+        return state if self.device.type == "cpu" else state.to(self.device)
 
     def validate(self, state):
         return self.lanes.validate(state)
@@ -170,9 +189,10 @@ class DMCBatchAdapter(SimulatorAdapter):
             "score": torch.from_numpy(self._cumulative / 1000.0),
         }
         if (info := self.task.info()) is not None:
-            out["success"] = torch.tensor(info[0], dtype=torch.float64)
-            out["info"] = TensorDict({k: torch.from_numpy(np.array(v)) for k, v in info[1].items()}, [self.num_envs])
-        return TensorDict(out, [self.num_envs], device=self.device)
+            out["success"] = torch.from_numpy(np.array(info[0], np.float64))
+            out["info"] = {k: torch.from_numpy(np.array(v)) for k, v in info[1].items()}
+        out = build_tensordict(out, [self.num_envs], "cpu")
+        return out if self.device.type == "cpu" else out.to(self.device)
 
     def close(self):
         if self._pool is not None:

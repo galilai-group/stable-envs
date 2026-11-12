@@ -155,6 +155,10 @@ class DelegatedSemantics:
         self._simulator.set_state(state)
         self._adopt_physics_state(state)
 
+    @property
+    def _step_outputs_owned(self) -> bool:
+        return getattr(self._simulator, "outputs_owned", False)
+
     def _step_pipeline(self) -> StepPipeline | None:
         return step_pipeline(self._simulator)
 
