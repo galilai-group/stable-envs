@@ -162,6 +162,13 @@ class LanePool:
         self.models = {}
 
     def join(self, lane, key, compile_model):
+        shared = getattr(lane, "_shared", None)
+        if shared is not None and shared.key == key:
+            # The lane keeps its model; a lone lane would otherwise recompile it at every reset.
+            if shared.active is lane:
+                shared.active = None
+            lane._lane_fields = {name: value.copy() for name, value in shared.pristine.items()}
+            return
         self.leave(lane)
         shared = self.models.get(key)
         if shared is None:
