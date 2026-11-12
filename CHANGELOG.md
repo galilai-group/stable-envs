@@ -133,6 +133,11 @@ All notable changes to this project are listed here. The format follows
   checks. On CUDA with `simulation_backend="pybullet"`, `render(state)` of 256 or 1024 environments is about 3.4
   times faster on an RTX 4090. `PushT.render(state)` and `to_render_state(state)` select and check only the
   leaves that the renderers read; `render(state)` on CUDA is 25% to 35% faster. The frames do not change.
+- PushT on CPU (`"numba"`): a step does its Torch operations on one thread, as the OGBench mazes do, so idle
+  Torch threads do not spin on the cores of the Numba threads. A step that returns one frame hands over the
+  rendered frames without a copy. Frames and State do not change. Public CPU steps/s with frames and a reset
+  every 64 steps, 8 cores of an AMD EPYC 7713: 13,440 at 256 environments (9,015 before) and 15,034 at 1024
+  (11,167 before); with one of the 8 cores busy, 5,761 at 256 (2,808 before) and 8,555 at 1024 (4,407 before).
 - OGBench mazes on CPU: a step does its Torch operations on one thread, and the render draws batches of fewer
   than 256 frames on one thread when the scene has no tracking light. With 8 Torch threads, idle Torch threads
   kept the cores busy while the `mujoco.batch` threads waited, and the time of an AntMaze episode of 64 steps with

@@ -155,6 +155,10 @@ class PushT(Env):
         triton_min_envs = TRITON_MIN_ENVS if triton_min_envs is None else triton_min_envs
         self.simulation_backend = pusht_backend(num_envs, device, simulation_backend, triton_min_envs)
         self.execution_mode = _EXECUTION_MODES[self.simulation_backend]
+        # CPU batches step on Numba threads.
+        self.native_step_threads = self.simulation_backend == "numba"
+        # CPU renders return new storage.
+        self._frames_owned = device.type == "cpu"
         resolution = self.default_size if size is None else size
         if render_action and resolution < 96:
             raise ValueError("Source PushT action markers require size >= 96")

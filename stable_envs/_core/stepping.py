@@ -326,6 +326,9 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
         elif draw_rows is not None:
             with _threads(_threads_outside_steps()):
                 out["frames"] = draw_rows(torch.stack([saved_frames[t] for t in frame_indices], dim=1))
+        elif len(frame_indices) == 1 and getattr(env, "_frames_owned", False):
+            # Each frame owns new storage, so one frame needs no copy.
+            out["frames"] = saved_frames[frame_indices[0]].to(env.device).unsqueeze(1)
         else:
             out["frames"] = torch.stack([saved_frames[t].to(env.device) for t in frame_indices], dim=1)
         out["frame_valid"] = flags[-1] if single else _columns(valid, frame_indices)

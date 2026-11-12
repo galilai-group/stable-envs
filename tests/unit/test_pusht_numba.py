@@ -206,3 +206,25 @@ def test_triton_steps_like_numba(variety):
             observation = ("current", "observation")
             torch.testing.assert_close(got["state"][observation].cpu(), want["state"][observation], rtol=0, atol=0.05)
             torch.testing.assert_close(got["reward"].cpu(), want["reward"], rtol=0, atol=0.05)
+
+
+def test_cpu_frames_and_states_do_not_depend_on_the_step_thread_counts():
+    def rollout(native_threads):
+        before = torch.get_num_threads()
+        torch.set_num_threads(4)
+        try:
+            with closing(PushT(num_envs=6, size=96, device="cpu")) as env:
+                assert env.native_step_threads
+                env.native_step_threads = native_threads
+                env.reset(seed=3)
+                actions = torch.linspace(-1, 1, 6 * 5 * 2).reshape(6, 5, 2)
+                out = env.step(actions, frames=slice(None))
+                assert torch.get_num_threads() == 4
+                return out["frames"], out["states"]
+        finally:
+            torch.set_num_threads(before)
+
+    frames, states = rollout(True)
+    other_frames, other_states = rollout(False)
+    assert torch.equal(frames, other_frames)
+    assert (states == other_states).all()

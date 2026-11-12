@@ -40,6 +40,10 @@ has three implementations of the same math:
 | `"jax"` | the env device | JAX `vmap`, `float64`. The default on CUDA when Triton is not installed. |
 | `"auto"` | CPU or CUDA | On CUDA, `"numba"` below `triton_min_envs` environments and the CUDA default at or above it. On CPU, `"numba"`. |
 
+On CPU, the `"numba"` step does its Torch operations on one thread, and the physics runs on the Numba
+threads. The render uses the Torch and Numba thread counts. Idle Torch threads keep cores busy while the Numba
+threads work, and a parallel region waits for all of its threads, so one busy core makes a step slow. The frames and the State do not change with the thread count.
+
 With `"numba"` on CUDA, the physics runs on the CPU and the State and outputs are CUDA tensors. On an
 L40S with 8 CPU cores, `"triton"` was faster than `"numba"` at every batch size, so `triton_min_envs`
 defaults to 1. A JAX step on CUDA takes about 45 ms with 8 environments and 60 ms with 1024, because each
