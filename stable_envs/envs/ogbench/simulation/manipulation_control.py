@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import math
 
 import mujoco
@@ -237,7 +238,10 @@ class BatchController:
         ik = env._ik
         # A forward pass of the arm takes microseconds, so a thread pays off only for many lanes.
         threads = max(1, min(threads, num_envs // IK_LANES_PER_THREAD))
-        self._batch = NativeBatch(ik._model, num_envs, outputs=("site_xpos", "site_xmat"), nthread=threads)
+        # The IK reads kinematics only; without contacts and constraints the position stage skips collision.
+        model = copy.copy(ik._model)
+        model.opt.disableflags |= mujoco.mjtDisableBit.mjDSBL_CONSTRAINT | mujoco.mjtDisableBit.mjDSBL_CONTACT
+        self._batch = NativeBatch(model, num_envs, outputs=("site_xpos", "site_xmat"), nthread=threads)
         self._ik = self._batch.b
         self._ik_qpos = self._batch.numpy("qpos")
         self._ik_site_xpos = self._batch.numpy("site_xpos")
