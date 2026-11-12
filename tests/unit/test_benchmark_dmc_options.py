@@ -331,7 +331,7 @@ def test_measurement_phases_replay_the_same_inputs_with_fake_environment(monkeyp
             self._simulator = SimpleNamespace(
                 b=SimpleNamespace(nthread=1),
                 _controls=lambda action: action.to(torch.float32),
-                _runtime=SimpleNamespace(advance=lambda control: controls_seen.append(control.clone())),
+                batch=SimpleNamespace(step=lambda control: controls_seen.append(control.clone())),
             )
 
         def reset(self, seed):
