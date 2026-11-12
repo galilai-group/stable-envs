@@ -1,17 +1,19 @@
-"""One native reset owner with compact per-lane model and RNG checkpoints."""
+"""Native reset owners with compact per-lane model and RNG checkpoints."""
 
 from __future__ import annotations
 
 import copy
 from collections.abc import Mapping
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
 import numpy as np
 import torch
 
 from ...._execution.state_columns import require_columns
-from .factory import make_local
-from .state import MODEL_FIELDS, export_state
+from .batch import THREADED_RESETS
+from .factory import batch_threads, make_local
+from .state import MODEL_FIELDS, columns_to_state, model_columns, new_columns, write_row
 
 
 class _ModelView:
@@ -118,39 +120,32 @@ class _Prepared:
     physics_values: np.ndarray | None
 
 
-class _ResetOwners:
-    """Export each reused owner immediately, before moving to the next lane."""
-
-    def __init__(self, count, generate):
-        self.count, self.generate = count, generate
-
-    def __len__(self):
-        return self.count
-
-    def __iter__(self):
-        return self.generate()
-
-
 class WarpResetPool:
-    """Native DMC resets with one owner and independent per-lane saved state.
+    """Native DMC resets with independent per-lane saved state.
 
-    Transient native work never changes the installed lane records. Model
-    preparation can fail without committing another lane's partial updates.
+    Domains whose reset is mostly MuJoCo work use one owner per batch thread, each
+    resetting a shard of the lanes. Other domains use one owner. Transient native
+    work never changes the installed lane records. Model preparation can fail
+    without committing another lane's partial updates.
     """
 
     def __init__(self, key, num_envs, seed, model_fields, option_fields):
         self.key, self.num_envs = key, int(num_envs)
         if self.num_envs < 1:
             raise ValueError("num_envs must be a positive integer")
-        self._owner = make_local(key, 1, "cpu", seed)
-        self.envs = self._owner.envs
-        self.fields, self.action_dim = self._owner.fields, self._owner.action_dim
         self._closed = False
+        self._owners, self._pool = [], None
         try:
+            count = batch_threads(self.num_envs) if key in THREADED_RESETS else 1
+            self._owners = [make_local(key, 1, "cpu", seed) for _ in range(count)]
+            self._pool = ThreadPoolExecutor(count) if count > 1 else None
+            self._owner = self._owners[0]
+            self.envs = self._owner.envs
+            self.fields, self.action_dim = self._owner.fields, self._owner.action_dim
             reference = copy.copy(self.envs[0].physics.model.ptr)
             self.models = WarpModelBatch(reference, self.num_envs, model_fields, option_fields)
             # This holder uses the native physics layout/column validation, but
-            # only the single owner's PhysicsLanes ever applies native changes.
+            # only the owners' PhysicsLanes ever apply native changes.
             self.physics = None if self._owner.physics is None else copy.copy(self._owner.physics)
             if self.physics is not None:
                 self.physics.models = self.models
@@ -174,8 +169,8 @@ class WarpResetPool:
         if self._closed:
             raise RuntimeError("WarpResetPool is closed")
 
-    def _select_owner(self, state, lane, values):
-        owner, env = self._owner, self.envs[0]
+    def _select_owner(self, owner, state, lane, values):
+        env = owner.envs[0]
         if self._state is not None:
             self.models.restore(lane, env.physics)
             if self.physics is not None:
@@ -210,20 +205,32 @@ class WarpResetPool:
             np.zeros(len(ids)) if lanes is None else self._state["task", "cumulative_reward"][ids, 0].numpy().copy()
         )
 
-        def generate():
-            for lane in ids:
-                env = self._select_owner(self._state, lane, values)
+        columns = new_columns(len(ids), self.fields)
+        model_fields = model_columns(columns)
+
+        def reset_shard(owner, positions):
+            for position in positions:
+                lane = ids[position]
+                env = self._select_owner(owner, self._state, lane, values)
                 # make_local performed the first lane's registered initial
                 # reset already. Reuse it without consuming a second RNG draw.
                 if not (initial and lane == 0):
+                    base = env._env
                     if seed is not None:
-                        env.task._random = np.random.RandomState(int(seed) + int(lane))
-                    env.reset()
+                        base.task._random = np.random.RandomState(int(seed) + int(lane))
+                    base._reset_next_step, base._step_count = False, 0
+                    with env.physics.reset_context():
+                        base.task.initialize_episode(env.physics)
                 models.capture(lane, env.physics)
-                yield env
+                write_row(columns, position, env, cumulative[position], model_fields)
 
+        shards = [shard for shard in np.array_split(np.arange(len(ids)), len(self._owners)) if len(shard)]
+        if self._pool is None or len(shards) < 2:
+            reset_shard(self._owners[0], range(len(ids)))
+        else:
+            list(self._pool.map(lambda job: reset_shard(*job), zip(self._owners, shards, strict=False)))
         extra = None if self.physics is None else {key: value[ids] for key, value in self.physics.export().items()}
-        reset = export_state(_ResetOwners(len(ids), generate), cumulative, self.fields, "cpu", extra)
+        reset = columns_to_state(columns, "cpu", extra)
         state = reset if lanes is None else self._state.clone()
         if lanes is not None:
             state[ids] = reset
@@ -250,7 +257,7 @@ class WarpResetPool:
                 changed |= np.any(host[key].numpy() != self._state[key].numpy(), axis=1)
         models = self.models.clone() if changed.any() else self.models
         for lane in np.flatnonzero(changed):
-            env = self._select_owner(host, lane, values)
+            env = self._select_owner(self._owner, host, lane, values)
             env.physics.forward()
             models.capture(lane, env.physics)
         return _Prepared(host, models, values)
@@ -301,5 +308,8 @@ class WarpResetPool:
 
     def close(self):
         if not self._closed:
-            self._owner.close()
+            if self._pool is not None:
+                self._pool.shutdown()
+            for owner in self._owners:
+                owner.close()
             self._closed = True

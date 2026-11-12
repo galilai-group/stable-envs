@@ -53,15 +53,20 @@ def make_local(domain: str, num_envs: int, device: str | torch.device = "cpu", s
     return factory(num_envs, device, seed)
 
 
+def batch_threads(num_envs: int) -> int:
+    """The ``dmc_threads`` knob, at most one thread per CPU in the process affinity and one per lane."""
+    cpus = len(cpu_affinity() or ()) or os.cpu_count() or 1
+    return min(tuning.get("dmc_threads", path="dmc-sim", size=0, batch=num_envs) or 1, cpus, num_envs)
+
+
 def make_batch(
     domain: str, num_envs: int, device: str | torch.device = "cpu", seed: int = 0, threads: int | None = None
 ) -> DMCBatchAdapter:
     """``make_local`` lanes stepped in one mujoco.batch on ``threads`` threads.
 
-    ``threads`` defaults to the ``dmc_threads`` knob, at most one per CPU in the process affinity and one per lane.
+    ``threads`` defaults to ``batch_threads``.
     """
     if threads is None:
-        cpus = len(cpu_affinity() or ()) or os.cpu_count() or 1
-        threads = min(tuning.get("dmc_threads", path="dmc-sim", size=0, batch=num_envs) or 1, cpus, num_envs)
+        threads = batch_threads(num_envs)
     lanes = make_local(domain, num_envs, device, seed)
     return DMCBatchAdapter(lanes, BATCH_TASKS[domain], threads)

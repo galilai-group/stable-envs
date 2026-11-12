@@ -35,36 +35,43 @@ def core_fields(nq, nv, na=0):
     return fields
 
 
-def export_state(envs, cumulative, fields, device, extra=None):
-    """Export fresh State columns with one device transfer per field.
+def new_columns(batch, fields):
+    """Empty host State columns for ``batch`` lanes."""
+    return {key: np.empty((batch, width), dtype=_DTYPES[dtype]) for key, (width, dtype) in fields.items()}
 
-    Read live lane owners into owned host arrays. CPU tensors retain those arrays;
-    later simulation and exports cannot overwrite the snapshot.
-    """
-    batch = len(envs)
-    columns = {key: np.empty((batch, width), dtype=_DTYPES[dtype]) for key, (width, dtype) in fields.items()}
-    model_fields = [(key, *MODEL_FIELDS[key]) for key in columns if key in MODEL_FIELDS]
-    for i, env in enumerate(envs):
-        physics, base = env.physics, env._env
-        data = physics.data
-        algorithm, keys, position, has_gauss, cached = env.task.random.get_state()
-        if algorithm != "MT19937":
-            raise ValueError(f"Unsupported DMC RNG algorithm: {algorithm}")
-        columns["qpos"][i] = data.qpos
-        columns["qvel"][i] = data.qvel
-        columns["time"][i] = data.time
-        columns["warmstart"][i] = data.qacc_warmstart
-        columns["lifecycle", "step_count"][i] = base._step_count
-        columns["lifecycle", "reset_next_step"][i] = base._reset_next_step
-        columns["task", "cumulative_reward"][i] = cumulative[i]
-        columns["rng", "keys"][i] = keys
-        columns["rng", "position"][i] = position
-        columns["rng", "has_gauss"][i] = has_gauss
-        columns["rng", "cached_gaussian"][i] = cached
-        for key, field, index in model_fields:
-            columns[key][i] = getattr(physics.named.model, field)[index]
-        if "activation" in columns:
-            columns["activation"][i] = data.act
+
+def model_columns(columns):
+    """The episode-drawn model entries held by ``columns``: ``(key, named model field, index)``."""
+    return [(key, *MODEL_FIELDS[key]) for key in columns if key in MODEL_FIELDS]
+
+
+def write_row(columns, i, env, cumulative, model_fields):
+    """Read live lane ``env`` into row ``i`` of ``columns``; lanes in different rows may be written concurrently."""
+    physics, base = env.physics, env._env
+    data = physics.data
+    algorithm, keys, position, has_gauss, cached = env.task.random.get_state()
+    if algorithm != "MT19937":
+        raise ValueError(f"Unsupported DMC RNG algorithm: {algorithm}")
+    columns["qpos"][i] = data.qpos
+    columns["qvel"][i] = data.qvel
+    columns["time"][i] = data.time
+    columns["warmstart"][i] = data.qacc_warmstart
+    columns["lifecycle", "step_count"][i] = base._step_count
+    columns["lifecycle", "reset_next_step"][i] = base._reset_next_step
+    columns["task", "cumulative_reward"][i] = cumulative
+    columns["rng", "keys"][i] = keys
+    columns["rng", "position"][i] = position
+    columns["rng", "has_gauss"][i] = has_gauss
+    columns["rng", "cached_gaussian"][i] = cached
+    for key, field, index in model_fields:
+        columns[key][i] = getattr(physics.named.model, field)[index]
+    if "activation" in columns:
+        columns["activation"][i] = data.act
+
+
+def columns_to_state(columns, device, extra=None):
+    """Own the filled columns as a State; ``extra`` columns come from elsewhere."""
+    batch = len(next(iter(columns.values())))
     for key, value in (extra or {}).items():
         columns[key][:] = value
     # On CPU, from_numpy retains these fresh arrays. No owner/buffer is reused
@@ -72,6 +79,19 @@ def export_state(envs, cumulative, fields, device, extra=None):
     return TensorDict(
         {key: torch.from_numpy(value).to(device) for key, value in columns.items()}, [batch], device=device
     )
+
+
+def export_state(envs, cumulative, fields, device, extra=None):
+    """Export fresh State columns with one device transfer per field.
+
+    Read live lane owners into owned host arrays. CPU tensors retain those arrays;
+    later simulation and exports cannot overwrite the snapshot.
+    """
+    columns = new_columns(len(envs), fields)
+    model_fields = model_columns(columns)
+    for i, env in enumerate(envs):
+        write_row(columns, i, env, cumulative[i], model_fields)
+    return columns_to_state(columns, device, extra)
 
 
 def restore_lane(env, row, fields, cumulative, lane):

@@ -94,3 +94,33 @@ def test_invalid_later_row_keeps_installed_state_models_and_rng():
         # The scratch owner may have been partially modified; the next reset
         # must reinstall a valid lane and consume exactly its saved RNG stream.
         assert_same_state(pooled.reset(None), native.reset(None))
+
+
+def _sharded_pool(key, threads, monkeypatch, lanes=5):
+    from stable_envs.envs.dmcontrol.simulation import mjwarp_reset
+
+    monkeypatch.setattr(mjwarp_reset, "batch_threads", lambda count: min(threads, count))
+    return WarpResetPool(key, lanes, 91000, _batch_fields(mjw.Model), _batch_fields(mjw.Option))
+
+
+@pytest.mark.parametrize("key", ["cheetah", "quadruped"])
+def test_threaded_domains_reset_shards_on_one_owner_per_thread(key, monkeypatch):
+    with closing(_sharded_pool(key, 1, monkeypatch)) as single, closing(_sharded_pool(key, 3, monkeypatch)) as sharded:
+        assert len(single._owners) == 1 and single._pool is None
+        assert len(sharded._owners) == 3 and sharded._pool is not None
+        assert len({id(owner.envs[0]) for owner in sharded._owners}) == 3
+        assert_same_state(sharded.get_state(), single.get_state())
+        for seed in (None, 91020, None):
+            assert_same_state(sharded.reset(seed), single.reset(seed))
+        # A subset smaller than the owner count leaves some owners idle.
+        for lanes in ([4, 1], [0], [3, 0, 2, 1, 4]):
+            sharded.commit(sharded.prepare_reset(lanes=lanes))
+            single.commit(single.prepare_reset(lanes=lanes))
+            assert_same_state(sharded.get_state(), single.get_state())
+            for name, column in sharded.models.columns.items():
+                np.testing.assert_array_equal(column, single.models.columns[name], err_msg=name)
+
+
+def test_other_domains_reset_on_one_owner(monkeypatch):
+    with closing(_sharded_pool("walker", 8, monkeypatch)) as pooled:
+        assert len(pooled._owners) == 1 and pooled._pool is None
