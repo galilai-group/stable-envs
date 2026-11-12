@@ -39,6 +39,7 @@ class WarpModelBatch:
     def __init__(self, reference, count, model_fields, option_fields):
         self.reference = reference
         self.count = count
+        self._bound = {}
         # Native reset/variation also uses constants which Warp does not store.
         # Keep these small arrays, not native texture/mesh assets or MjData.
         names = dict.fromkeys(
@@ -88,10 +89,18 @@ class WarpModelBatch:
     def clone(self):
         return self.select(np.arange(self.count))
 
+    def _arrays(self, model):
+        """The model's column arrays, which keep their memory for the life of the model."""
+        entry = self._bound.get(id(model))
+        if entry is None:
+            entry = self._bound[id(model)] = (model, {name: getattr(model, name) for name in self.columns})
+        return entry[1]
+
     def capture(self, lane, physics):
         model, data = physics.model.ptr, physics.data.ptr
+        arrays = self._arrays(model)
         for name, values in self.columns.items():
-            values[lane] = getattr(model, name)
+            values[lane] = arrays[name]
         for name, values in self.options.items():
             values[lane] = getattr(model.opt, name)
         for name, values in self.statistics.items():
@@ -102,8 +111,9 @@ class WarpModelBatch:
     def restore(self, lane, physics):
         """Select a lane without recomputing its previously derived constants."""
         model = physics.model.ptr
+        arrays = self._arrays(model)
         for name, values in self.columns.items():
-            getattr(model, name)[:] = values[lane]
+            arrays[name][:] = values[lane]
         for name, values in self.options.items():
             if values.ndim == 1:
                 setattr(model.opt, name, values[lane].item())
