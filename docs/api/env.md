@@ -26,8 +26,10 @@ can affect physics, reset, task or appearance.
   `backend="mjwarp_fidelity"` does; its reference is that same-style stable-envs OpenGL path.
 - The default `supersample` is 1 on every device. An explicit `supersample` argument keeps its value.
   The sampling setting stored in a supplied RenderState also keeps its value.
-- On Linux, a batch of 2 or more states draws in up to `ogb_gl_workers` OpenGL worker processes
-  (see [Performance tuning](../performance-tuning.md)). The frames do not change.
+- On Linux, a batch draws in up to `ogb_gl_workers` OpenGL worker processes
+  (see [Performance tuning](../performance-tuning.md)). On CPU, the workers start when the batch has
+  one state for each worker. On CUDA, they start when the batch has 8 states for each of 2 or more
+  workers. The frames do not change.
 - An explicit `backend="mjwarp"` requires CUDA.
 - Physics runs on CPU with every backend.
 

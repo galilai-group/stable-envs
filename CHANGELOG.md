@@ -214,6 +214,8 @@ All notable changes to this project are listed here. The format follows
   cell of 3 mm (Cube) or 2 mm (Scene), so they keep 22 % (Cube) and 32 % (Scene) of their triangles.
   CPU frames are about 3 times faster. The mean frame MSE against `backend="opengl"` is 1.2 (Cube) and
   2.5 (Scene) on the 0-255 scale. `backend="opengl"` draws the source's frames. CUDA frames do not change.
+  A CPU batch with one state for each OpenGL worker (8 by default) draws in the workers. Before, a batch
+  needed 16 states.
 - `OGBCube` and `OGBScene` use the OGBench cube size. The default `cube.size` is now 0.02, as in OGBench.
   Before, the default was the stable-worldmodel value `float32(0.02)`, which compiles to
   0.019999999552965164. That size changed the cube mass and inertia, so contacts moved the physics away

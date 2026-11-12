@@ -168,10 +168,12 @@ def workers(batch, device_type="cpu"):
     """Number of OpenGL worker processes a batch of ``batch`` states uses; 0 draws in this process."""
     if batch < 2 or not sys.platform.startswith("linux") or mp.current_process().daemon:
         return 0
-    # A software frame takes far longer than its transfer, so CPU batches use one worker per state. NVIDIA frames
-    # are fast: below about eight states per worker, inter-process traffic outweighs the parallel draws.
-    rows = batch if device_type == "cpu" else batch // 8
-    count = min(tuning.get("ogb_gl_workers"), len(os.sched_getaffinity(0)), rows)
+    count = min(tuning.get("ogb_gl_workers"), len(os.sched_getaffinity(0)))
+    if device_type == "cpu":
+        # Single-threaded software workers beat one multi-threaded context once each worker has a state.
+        return count if count >= 2 and batch >= count else 0
+    # NVIDIA frames are fast: below about eight states per worker, inter-process traffic outweighs the parallel draws.
+    count = min(count, batch // 8)
     return count if count >= 2 else 0
 
 
