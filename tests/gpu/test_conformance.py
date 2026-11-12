@@ -62,7 +62,10 @@ def _installed(packages) -> dict:
 
 @pytest.fixture(scope="module", params=ENV_NAMES)
 def env(request):
-    return se.make(request.param, num_envs=16, device="cuda")
+    env = se.make(request.param, num_envs=16, device="cuda")
+    if not has_render_rows(env):
+        env.reset(seed=0)  # a replay State such as Craftax's exists only after the first reset
+    return env
 
 
 def test_registry_is_not_empty():
