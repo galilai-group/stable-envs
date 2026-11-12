@@ -18,8 +18,9 @@ _AdapterT = TypeVar("_AdapterT", bound=SimulatorAdapter)
 MJWARP_MIN_ENVS = 256
 
 
-#: Smallest CUDA maze batch that ``simulation_backend="auto"`` steps on MuJoCo Warp, per body (L40S, 8 cores).
-MAZE_MJWARP_MIN_ENVS = {"point": 256, "ant": 256, "humanoid": 256}
+#: Smallest CUDA maze batch that ``simulation_backend="auto"`` steps on MuJoCo Warp, per body: the smallest measured
+#: batch (of 1, 8, 64, 256, 1024, 4096; L40S, 8 cores) at which MuJoCo Warp steps faster than mujoco.batch.
+MAZE_MJWARP_MIN_ENVS = {"point": 4096, "ant": 256, "humanoid": 256}
 
 
 def maze_backend(

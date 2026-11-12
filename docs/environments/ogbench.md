@@ -2,7 +2,9 @@
 
 These 27 classes port environments of [OGBench](https://github.com/seohongpark/ogbench)
 ([Park et al., 2024](https://arxiv.org/abs/2410.20092)). OGBench is a benchmark for offline
-goal-conditioned reinforcement learning. MuJoCo steps the physics on CPU.
+goal-conditioned reinforcement learning. MuJoCo steps the physics: the mazes step all environments of a
+batch together on CPU or CUDA, and the manipulation tasks step on CPU, or with MJX on CUDA for large `OGBCube`
+batches.
 
 The family has two groups:
 
@@ -33,6 +35,40 @@ Each maze class name has three parts:
 
 The State holds the joint positions (`qpos`) and velocities of the body. The renderer is the analytic
 ray caster `raycast3d`. It draws the maze, the body and the floor from the State on CPU or CUDA.
+
+### Maze physics
+
+One call steps all the environments of a batch. The `simulation_backend` argument selects the physics:
+
+| `simulation_backend` | Device | Physics | Agreement with OGBench |
+| --- | --- | --- | --- |
+| `"default"` | CPU | `mujoco.batch`, float64 | Equal, bit for bit: State, observations, task outputs, resets and RNG streams. |
+| `"default"` | CUDA | MuJoCo Warp, float32 | Resets, goals, tasks, teleports and RNG streams are equal. The physics is approximate (see below). |
+| `"auto"` | CUDA | `mujoco.batch` for batches smaller than `mjwarp_min_envs`, MuJoCo Warp for larger batches | As the selected physics. |
+| `"native"` | CPU or CUDA | `mujoco.batch`, float64 | Equal, bit for bit. |
+| `"mjwarp"` | CUDA | MuJoCo Warp, float32 | As `"default"` on CUDA. |
+
+The default `mjwarp_min_envs` is a measured batch size for each body: 4096 for PointMaze, 256 for AntMaze and
+256 for HumanoidMaze (L40S GPU, 8 CPU cores). The outputs are always on the device of the environment.
+
+```python
+env = snv.AntMazeMediumNavigate(num_envs=64, device="cuda", simulation_backend="auto")
+```
+
+MuJoCo Warp agrees with MuJoCo to float32 rounding on a step without a change of contacts. When contacts start
+or stop, the contact forces of the two solvers are different, and the trajectories move apart. These are the
+median distances between the `xy` positions of MuJoCo Warp and of OGBench after 200 steps of smooth actions
+from the same State (64 environments):
+
+| Body | Median `xy` distance after 200 steps |
+| --- | --- |
+| PointMaze | less than 1e-5 |
+| AntMaze | 0.05 |
+| HumanoidMaze | 0.23 (0.11 when only the start State is rounded to float32 in MuJoCo) |
+
+A PointMaze agent that follows the OGBench subgoal oracle reaches the goal at the same step on both backends.
+MuJoCo Warp orders contacts with atomic operations, so two runs from one State can differ by rounding. Use
+`simulation_backend="native"` when you need results that are equal to OGBench.
 
 ### PointMaze
 
