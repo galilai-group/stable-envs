@@ -25,8 +25,11 @@ class PushTTritonAdapter(PushTBatchAdapter):
         vertices, centers, inverse, radius, enabled = self._geometry
         self._kernel_geometry = (vertices, centers, inverse, radius, enabled.to(torch.uint8))
         self._scratch = torch.empty(
-            triton_physics.FIELDS * self._impulse.shape[1] * self.num_envs, dtype=torch.float32, device=self.device
+            triton_physics.FIELDS.value * self._impulse.shape[1] * self.num_envs,
+            dtype=torch.float32,
+            device=self.device,
         )
+        self._work = triton_physics.workspace(self.num_envs, self._impulse.shape[1], self.device)
         self._everyone = torch.ones(self.num_envs, dtype=torch.uint8, device=self.device)
         self._refresh_symmetry()
 
@@ -38,13 +41,15 @@ class PushTTritonAdapter(PushTBatchAdapter):
         shape = self._fixed["owned/variation/block/shape/current/value"].to(torch.int64)
         self._symmetry = self._symmetries[shape].contiguous()
 
-    def _physics(self, target, active, everyone):
+    def _physics(self, target, single, active, everyone):
         # Resets and restores bind these fields to tensors that no State shares, so they change in place.
         triton_physics.advance(
             self._body,
             self._bias,
             self._impulse,
             self._identifiers,
+            (self._tree, self._tree_bounds),
+            self._tree_order,
             self._kernel_geometry,
             target.contiguous(),
             self._circle,
@@ -53,6 +58,7 @@ class PushTTritonAdapter(PushTBatchAdapter):
             self._fixed["current/render_segment_count"],
             self._fixed["current/render_segments"],
             self._scratch,
+            self._work,
         )
 
     def step(self, actions, *, active=None, capture_state=True):
@@ -80,7 +86,7 @@ class PushTTritonAdapter(PushTBatchAdapter):
         else:
             relative = actions
         target = (self._body[:, 0, :2].to(relative.dtype) + relative * 100).to(torch.float64)
-        self._physics(target, active, everyone)
+        self._physics(target, relative.dtype == torch.float32, active, everyone)
         width = self._history_width() + 1
         if width > self._actions.shape[1]:
             capacity = max(16, 2 * self._actions.shape[1])

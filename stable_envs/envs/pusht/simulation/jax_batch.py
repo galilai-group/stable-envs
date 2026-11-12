@@ -38,15 +38,19 @@ class PushTJaxAdapter(PushTBatchAdapter):
                 ) from exc
         super().__init__(batch, device, seed, **kwargs)
 
-    def _advance(self, target, active):
+    def _advance(self, target, single, active):
         with enable_x64():
             outputs = advance(
                 from_torch(self._body),
                 from_torch(self._bias),
                 from_torch(self._impulse),
                 from_torch(self._identifiers),
+                from_torch(self._tree),
+                from_torch(self._tree_bounds),
+                from_torch(self._tree_order),
                 tuple(from_torch(v) for v in self._geometry),
                 from_torch(target),
                 self._circle,
+                single,
             )
             return tuple(torch.from_dlpack(v) for v in outputs)

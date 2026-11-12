@@ -7,9 +7,11 @@ seed metadata remain integers; replay recipes contain no engine handles.
 from __future__ import annotations
 
 import copy
+import ctypes
+import struct
 
 import numpy as np
-from pymunk._chipmunk_cffi import lib
+from pymunk._chipmunk_cffi import ffi, lib
 
 DTYPES = tuple(np.dtype(v) for v in ("float32", "float64", "uint8", "int32", "int64", "bool"))
 
@@ -248,6 +250,184 @@ MAX_SHAPES = 3
 _UNIT_SQUARE = [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]
 
 
+#: Byte offsets of private Munk2D 2.0.1 fields (pymunk 7.2.0, 64-bit): cpBody ``p`` (the center of gravity)
+#: and ``v_bias``; cpArbiter
+#: ``body_b``, ``count`` and ``contacts``; cpContact size, ``r2`` and ``jnAcc``.
+_BODY_P, _BODY_BIAS = 64, 192
+_ARBITER_BODY_B, _ARBITER_COUNT, _ARBITER_CONTACTS = 64, 104, 112
+_CONTACT_SIZE, _CONTACT_R2, _CONTACT_IMPULSE = 96, 16, 56
+#: Most contacts a supported scene holds, as ``contacts.contact_segments`` bounds them.
+MAX_CONTACTS = 90
+
+
+def _address(handle):
+    return int(ffi.cast("uintptr_t", handle))
+
+
+def _doubles(address, count):
+    return tuple((ctypes.c_double * count).from_address(address))
+
+
+def _near(a, b):
+    return all(abs(x - y) <= 1e-9 for x, y in zip(a, b, strict=True))
+
+
+_BROKEN = "PushT cannot read the Pymunk solver state of this pymunk build"
+
+
+def solver_rows(env):
+    """Return the bias velocities and cached contact impulses that the last Pymunk step left.
+
+    The next Pymunk step moves each body by its bias velocity and starts its solver from the cached impulses.
+    Pymunk does not expose either, so they are read from Munk2D's structs at the pinned version; the reads are
+    checked against the public accessors. ``contacts`` rows are the contact point on body ``b`` and its normal
+    impulse, NaN past the last contact.
+    """
+    bias = np.zeros((2, 3))
+    for index, body in enumerate((env.agent, env.block)):
+        address = _address(body._body)
+        center = lib.cpBodyLocalToWorld(body._body, lib.cpBodyGetCenterOfGravity(body._body))
+        if not _near(_doubles(address + _BODY_P, 2), (center.x, center.y)):
+            raise RuntimeError(_BROKEN)
+        bias[index] = _doubles(address + _BODY_BIAS, 3)
+    contacts = np.full((MAX_CONTACTS, 3), np.nan)
+    row, seen = 0, set()
+    arbiters = []
+    for body in (env.agent, env.block):
+        body.each_arbiter(arbiters.append)
+    for arbiter in arbiters:
+        address = _address(arbiter._arbiter)
+        if address in seen:
+            continue
+        seen.add(address)
+        count = ctypes.c_int.from_address(address + _ARBITER_COUNT).value
+        points = arbiter.contact_point_set.points
+        if count != len(points):
+            raise RuntimeError(_BROKEN)
+        base = _pointer(address + _ARBITER_CONTACTS)
+        bx, by = _doubles(_pointer(address + _ARBITER_BODY_B) + _BODY_P, 2)
+        for index in range(count):
+            contact = base + index * _CONTACT_SIZE
+            rx, ry = _doubles(contact + _CONTACT_R2, 2)
+            point = (bx + rx, by + ry)
+            if not any(_near(point, p) for q in points for p in (q.point_a, q.point_b)):
+                raise RuntimeError(_BROKEN)
+            if row == MAX_CONTACTS:
+                raise RuntimeError("PushT contact cache exceeds the supported geometry bound")
+            contacts[row] = (*point, _doubles(contact + _CONTACT_IMPULSE, 1)[0])
+            row += 1
+    return bias, contacts
+
+
+#: More private Munk2D 2.0.1 layouts: cpSpace ``shapeIDCounter`` and ``dynamicShapes``; cpBBTree ``root``;
+#: cpShape ``bb`` and ``hashid``; a tree Node (``obj``, ``bb``, ``parent``, two children or a leaf's stamp and
+#: pair list) and a Pair (two threads of ``prev``, ``leaf``, ``next``).
+_SPACE_IDS, _SPACE_DYNAMIC = 128, 144
+_TREE_ROOT = 48
+_SHAPE_BB, _SHAPE_HASH = 64, 184
+_PRIMES = (5, 13, 23, 47)
+
+
+def _pointer(address):
+    return ctypes.c_void_p.from_address(address).value or 0
+
+
+def _leaf_order(hashes):
+    """The order ``cpHashSetEach`` visits leaves inserted in ``hashes`` order (``cpHashSet`` with its resizes)."""
+    size, table = _PRIMES[0], [[] for _ in range(_PRIMES[0])]
+    for count, (leaf, value) in enumerate(hashes, 1):
+        table[value % size].insert(0, (leaf, value))
+        if count >= size:
+            size = next(p for p in _PRIMES if p >= size + 1)
+            grown = [[] for _ in range(size)]
+            for chain in table:
+                for item in chain:
+                    grown[item[1] % size].insert(0, item)
+            table = grown
+    return [leaf for chain in table for leaf, _ in chain]
+
+
+_NODE = struct.Struct("<Q4dQQQ")
+_PAIR = struct.Struct("<6Q")
+
+
+def broadphase_rows(env, leaves):
+    """Return Munk2D's dynamic bounding-box tree of ``env`` in ``numba_broadphase``'s layout.
+
+    ``leaves`` maps each dynamic shape to its leaf index. Also returns the leaves in hash-set order. The
+    walls are the scene's first four shapes, so a wall's shape id is its index.
+    """
+    from . import numba_broadphase as bp
+
+    space = _address(env.space._space)
+    if ctypes.c_size_t.from_address(space + _SPACE_IDS).value != len(env.space.shapes):
+        raise RuntimeError(_BROKEN)
+    shapes, hashes = {}, []
+    for shape, leaf in leaves.items():
+        address = _address(shape._shape)
+        shapes[address] = leaf
+        if _doubles(address + _SHAPE_BB, 4) != tuple(shape.bb):
+            raise RuntimeError(_BROKEN)
+        hashes.append((leaf, ctypes.c_size_t.from_address(address + _SHAPE_HASH).value))
+
+    def other(node):
+        obj = _pointer(node)
+        if obj in shapes:
+            return index[node]
+        wall = ctypes.c_size_t.from_address(obj + _SHAPE_HASH).value
+        if wall >= 4:
+            raise RuntimeError(_BROKEN)
+        return bp.LEAVES + wall
+
+    tree = np.full(bp.WIDTH, -1, np.int64)
+    tree[1 : bp.LIST : 3] = -2
+    bounds = np.zeros((bp.NODES, 4))
+    root = _pointer(_pointer(space + _SPACE_DYNAMIC) + _TREE_ROOT)
+    index, rows, inner = {}, {}, bp.LEAVES
+    stack = [(root, -1)] if root else []
+    while stack:
+        node, parent = stack.pop()
+        obj, left, bottom, right, top, _, a, b = _NODE.unpack(ctypes.string_at(node, _NODE.size))
+        if obj:
+            this = shapes[obj]
+        else:
+            this, inner = inner, inner + 1
+            stack.extend(((b, this), (a, this)))
+        index[node], rows[node] = this, (obj, a, b)
+        tree[1 + 3 * this] = parent
+        bounds[this] = left, bottom, right, top
+        if parent < 0:
+            tree[0] = this
+    for node, this in index.items():
+        obj, a, b = rows[node]
+        if not obj:
+            tree[2 + 3 * this], tree[3 + 3 * this] = index[a], index[b]
+            continue
+        # A leaf's union field ``b`` is its pair list.
+        pair, j = b, 0
+        while pair:
+            _, first, after_first, _, second, after_second = _PAIR.unpack(ctypes.string_at(pair, _PAIR.size))
+            if first == node:
+                tree[bp.LIST + this * bp.PAIRS + j] = 2 * other(second)
+                pair = after_first
+            else:
+                tree[bp.LIST + this * bp.PAIRS + j] = 2 * other(first) + 1
+                pair = after_second
+            j += 1
+    order = np.full(bp.LEAVES, -1, np.int64)
+    visit = _leaf_order(sorted(hashes, key=lambda item: item[1]))
+    order[: len(visit)] = visit
+    return tree, bounds, order
+
+
+def _pieces(body):
+    """A body's shapes in a fixed order: by vertices, a circle first."""
+    return sorted(
+        body.shapes,
+        key=lambda shape: tuple(np.array(shape.get_vertices()).ravel()) if hasattr(shape, "get_vertices") else (),
+    )
+
+
 def geometry_columns(owners, shapes=None):
     """Return the body rows and convex pieces that the CUDA physics reads, as batch columns.
 
@@ -256,21 +436,26 @@ def geometry_columns(owners, shapes=None):
     bodies = [(owner.env.agent, owner.env.block) for owner in owners]
     counts = [max(len(body.shapes) for body in pair) for pair in bodies]
     shapes = max(counts) if shapes is None else shapes
-    rows, vertices, centers, inverse, radii, enabled = [], [], [], [], [], []
-    for pair in bodies:
+    rows, vertices, centers, inverse, radii, enabled, biases, impulses = [], [], [], [], [], [], [], []
+    trees, bounds, orders = [], [], []
+    for owner, pair in zip(owners, bodies, strict=True):
+        bias, contacts = solver_rows(owner.env)
+        biases.append(bias)
+        impulses.append(contacts)
+        pieces = [_pieces(body) for body in pair]
+        leaves = {
+            shape: MAX_SHAPES * index + rank for index, body in enumerate(pieces) for rank, shape in enumerate(body)
+        }
+        tree, bound, order = broadphase_rows(owner.env, leaves)
+        trees.append(tree)
+        bounds.append(bound)
+        orders.append(order)
         radius = 0.0
         lane_vertices, lane_enabled = [], []
-        for name, body in zip(("agent", "block"), pair, strict=True):
+        for name, body, body_pieces in zip(("agent", "block"), pair, pieces, strict=True):
             polys = np.zeros((shapes, 4, 2), np.float64)
             valid = np.zeros(shapes, np.bool_)
-            for index, shape in enumerate(
-                sorted(
-                    body.shapes,
-                    key=lambda shape: (
-                        tuple(np.array(shape.get_vertices()).ravel()) if hasattr(shape, "get_vertices") else ()
-                    ),
-                )
-            ):
+            for index, shape in enumerate(body_pieces):
                 if hasattr(shape, "get_vertices"):
                     polys[index] = shape.get_vertices()
                 else:
@@ -297,6 +482,11 @@ def geometry_columns(owners, shapes=None):
         "enabled": np.array(enabled),
         "circle": np.array([int(owner.env.variation_space["agent"]["shape"].value) == 0 for owner in owners]),
         "shapes": np.array(counts, np.int64),
+        "bias": np.array(biases),
+        "cached": np.array(impulses),
+        "tree": np.array(trees),
+        "tree_bounds": np.array(bounds),
+        "tree_order": np.array(orders),
     }
 
 

@@ -37,6 +37,9 @@ class PushTNumbaAdapter(PushTBatchAdapter):
             "bias": self._bias.numpy(),
             "impulse": self._impulse.numpy(),
             "identifiers": self._identifiers.numpy(),
+            "tree": self._tree.numpy(),
+            "tree_bounds": self._tree_bounds.numpy(),
+            "tree_order": self._tree_order.numpy(),
             "geometry": tuple(value.numpy() for value in self._geometry),
         }
         for key in (
@@ -54,9 +57,10 @@ class PushTNumbaAdapter(PushTBatchAdapter):
         self._host = host
         return host
 
-    def _advance(self, target, active):
+    def _advance(self, target, single, active):
         host = {
-            key: getattr(self, "_" + key).cpu().numpy().copy() for key in ("body", "bias", "impulse", "identifiers")
+            key: getattr(self, "_" + key).cpu().numpy().copy()
+            for key in ("body", "bias", "impulse", "identifiers", "tree", "tree_bounds")
         }
         geometry = tuple(value.cpu().numpy() for value in self._geometry)
         counts = np.zeros((self.num_envs, 2), np.int64)
@@ -66,14 +70,28 @@ class PushTNumbaAdapter(PushTBatchAdapter):
             host["bias"],
             host["impulse"],
             host["identifiers"],
+            host["tree"],
+            host["tree_bounds"],
+            self._tree_order.cpu().numpy(),
             *geometry,
             target.cpu().numpy(),
+            single,
             self._circle,
             active.cpu().numpy(),
             counts,
             lines,
         )
-        arrays = (host["body"], host["bias"], host["impulse"], host["identifiers"], counts[:, 0], lines, counts[:, 1])
+        arrays = (
+            host["body"],
+            host["bias"],
+            host["impulse"],
+            host["identifiers"],
+            host["tree"],
+            host["tree_bounds"],
+            counts[:, 0],
+            lines,
+            counts[:, 1],
+        )
         return tuple(torch.from_numpy(value).to(self.device, non_blocking=True) for value in arrays)
 
     def step(self, actions, *, active=None, capture_state=True):
@@ -106,8 +124,12 @@ class PushTNumbaAdapter(PushTBatchAdapter):
             host["bias"],
             host["impulse"],
             host["identifiers"],
+            host["tree"],
+            host["tree_bounds"],
+            host["tree_order"],
             *host["geometry"],
             target,
+            relative.dtype == np.float32,
             self._circle,
             active,
             counts,

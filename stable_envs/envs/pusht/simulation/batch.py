@@ -7,6 +7,7 @@ import torch
 from tensordict import TensorDict
 
 from ...._core.tensordicts import build_tensordict
+from .numba_physics import warm_start
 from .numeric import MAX_SHAPES, geometry_columns, install_latest
 from .replay import HISTORY_KEYS, validate_seed
 from .replay_batch import PushTReplayAdapter, lane_options
@@ -106,9 +107,26 @@ class PushTBatchAdapter(PushTReplayAdapter):
             for key in ("vertices", "centers", "inverse", "radius", "enabled")
         )
         count = shapes + shapes * 8 if self._circle else 2 * shapes**2 + 16 * shapes
-        self._bias = torch.zeros(self.num_envs, 2, 3, dtype=torch.float64, device=self.device)
-        self._impulse = torch.zeros(self.num_envs, count, dtype=torch.float64, device=self.device)
-        self._identifiers = torch.full((self.num_envs, count), -1, dtype=torch.int64, device=self.device)
+        # The reset's last Pymunk step leaves bias velocities and cached impulses for the next step.
+        impulse = np.zeros((self.num_envs, count))
+        identifiers = np.full((self.num_envs, count), -1, np.int64)
+        warm_start(
+            np.asarray(geometry["body"], np.float64),
+            np.ascontiguousarray(geometry["vertices"][:, :, :shapes], np.float64),
+            np.asarray(geometry["inverse"], np.float64),
+            np.asarray(geometry["radius"], np.float64),
+            np.ascontiguousarray(geometry["enabled"][:, :, :shapes]),
+            self._circle,
+            np.asarray(geometry["cached"], np.float64),
+            impulse,
+            identifiers,
+        )
+        self._bias = torch.tensor(geometry["bias"], dtype=torch.float64, device=self.device)
+        self._tree = torch.tensor(geometry["tree"], dtype=torch.int64, device=self.device)
+        self._tree_bounds = torch.tensor(geometry["tree_bounds"], dtype=torch.float64, device=self.device)
+        self._tree_order = torch.tensor(geometry["tree_order"], dtype=torch.int64, device=self.device)
+        self._impulse = torch.tensor(impulse, device=self.device)
+        self._identifiers = torch.tensor(identifiers, device=self.device)
         self._lengths = torch.zeros(self.num_envs, dtype=torch.int64, device=self.device)
         self._actions = torch.zeros(self.num_envs, 0, 2, dtype=torch.float64, device=self.device)
         self._codes = torch.zeros(self.num_envs, 0, dtype=torch.uint8, device=self.device)
@@ -130,7 +148,13 @@ class PushTBatchAdapter(PushTReplayAdapter):
         self._fixed["current/contacts"] = self._contacts
 
     def _solver_state(self):
-        return {"bias": self._bias, "impulse": self._impulse, "identifiers": self._identifiers}
+        return {
+            "bias": self._bias,
+            "impulse": self._impulse,
+            "identifiers": self._identifiers,
+            "tree": self._tree,
+            "tree_bounds": self._tree_bounds,
+        }
 
     def _state_fields(self, width):
         fields = dict(self._fixed)
@@ -224,8 +248,11 @@ class PushTBatchAdapter(PushTReplayAdapter):
             pool.pop(0)
         return buffer[:numel]
 
-    def _advance(self, target, active):
-        """Return the stepped body, bias, impulse, identifiers, contacts, segments and segment counts."""
+    def _advance(self, target, single, active):
+        """Return the stepped body, bias, impulse, identifiers, tree, tree bounds, contacts, segments and counts.
+
+        ``single`` says the agent's PD control runs in float32, as the source runs it for float32 actions.
+        """
         raise NotImplementedError
 
     def _swap(self, staged):
@@ -303,7 +330,7 @@ class PushTBatchAdapter(PushTReplayAdapter):
         else:
             relative = actions
         target = (self._body[:, 0, :2].to(relative.dtype) + relative * 100).to(torch.float64)
-        self._physics(target, active, everyone)
+        self._physics(target, relative.dtype == torch.float32, active, everyone)
         width = self._history_width() + 1
         if width > self._actions.shape[1]:
             capacity = max(16, 2 * self._actions.shape[1])
@@ -363,13 +390,17 @@ class PushTBatchAdapter(PushTReplayAdapter):
             self._width = int(self._lengths.max())
         return self._width
 
-    def _physics(self, target, active, everyone):
+    def _physics(self, target, single, active, everyone):
         """Step the solver State of the ``active`` lanes and set their contact and render-segment fields."""
-        body, bias, impulse, identifiers, contacts, segments, segment_count = self._advance(target, active)
+        body, bias, impulse, identifiers, tree, bounds, contacts, segments, segment_count = self._advance(
+            target, single, active
+        )
         self._body = torch.where(active[:, None, None], body, self._body)
         self._bias = torch.where(active[:, None, None], bias, self._bias)
         self._impulse = torch.where(active[:, None], impulse, self._impulse)
         self._identifiers = torch.where(active[:, None], identifiers, self._identifiers)
+        self._tree = torch.where(active[:, None], tree, self._tree)
+        self._tree_bounds = torch.where(active[:, None, None], bounds, self._tree_bounds)
         self._contacts = torch.where(active, contacts.to(torch.int64), self._contacts)
         self._fixed["current/render_segments"] = torch.where(
             active[:, None, None], segments, self._fixed["current/render_segments"]

@@ -38,6 +38,16 @@ above apply to these adaptations.
 from the envX commit above under Apache-2.0. `numba_physics.py` and `triton_physics.py` in the same
 directory port that adaptation to Numba and Triton.
 
+## Munk2D
+
+The PushT physics ports in `stable_envs/envs/pusht/simulation/` port parts of
+[Munk2D](https://github.com/viblo/Munk2D) at commit `ade7ed72849e60289eefb7a41e79ae6322fefaf3`, the
+Chipmunk2D fork that pymunk 7.2.0 builds: the wall contacts (`SegmentToPoly` and `ContactPoints` from
+`src/cpCollision.c`), the arbiter contact cache (`src/cpArbiter.c`, `src/cpSpaceStep.c`) and the
+bounding-box tree broadphase (`src/cpBBTree.c`, in `numba_broadphase.py` and `triton_broadphase.py`).
+Munk2D is MIT-licensed ("Copyright (c) 2025 Victor Blomqvist, Copyright (c) 2007-2024 Scott Lembcke and
+Howling Moon Software"). The license text is distributed in `licenses/Munk2D-MIT.txt`.
+
 ## Craftax
 
 The `craftax` family (`stable_envs/envs/craftax/`) runs

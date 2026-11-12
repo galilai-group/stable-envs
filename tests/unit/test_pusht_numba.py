@@ -73,7 +73,8 @@ def test_one_step_matches_the_jax_solver(variety):
         env.reset(5, options)
         rng = np.random.default_rng(0)
         geometry = tuple(value.numpy() for value in env._geometry)
-        names = ("body", "bias", "impulse", "identifiers")
+        order = env._tree_order.numpy()
+        names = ("body", "bias", "impulse", "identifiers", "tree", "tree_bounds")
         contacts = 0
         for _ in range(60):
             body = env._body.numpy()
@@ -82,13 +83,17 @@ def test_one_step_matches_the_jax_solver(variety):
             target = body[:, 0, :2] + 60 * toward + rng.normal(0, 20, (count, 2))
             before = {name: getattr(env, "_" + name).numpy().copy() for name in names}
             with enable_x64(), jax.default_device(jax.devices("cpu")[0]):
-                expected = [np.asarray(v) for v in advance(*before.values(), geometry, target, env._circle)]
+                expected = [
+                    np.asarray(v) for v in advance(*before.values(), order, geometry, target, env._circle, False)
+                ]
             counts = np.zeros((count, 2), np.int64)
             lines = np.zeros((count, 90, 8))
             advance_batch(
                 *(getattr(env, "_" + name).numpy() for name in names),
+                order,
                 *geometry,
                 target,
+                False,
                 env._circle,
                 np.ones(count, np.bool_),
                 counts,
@@ -99,9 +104,11 @@ def test_one_step_matches_the_jax_solver(variety):
             # An identifier matters only where it keeps an impulse; elsewhere ties between equal faces may differ.
             held = expected[2] > 0
             np.testing.assert_array_equal(env._identifiers.numpy()[held], expected[3][held])
-            np.testing.assert_array_equal(counts[:, 0], expected[4])
-            np.testing.assert_array_equal(counts[:, 1], expected[6])
-            np.testing.assert_allclose(lines, expected[5], rtol=0, atol=1e-6)
+            np.testing.assert_array_equal(env._tree.numpy(), expected[4])
+            np.testing.assert_allclose(env._tree_bounds.numpy(), expected[5], rtol=0, atol=1e-6)
+            np.testing.assert_array_equal(counts[:, 0], expected[6])
+            np.testing.assert_array_equal(counts[:, 1], expected[8])
+            np.testing.assert_allclose(lines, expected[7], rtol=0, atol=1e-6)
             contacts += int(counts[:, 0].sum())
             # Continue from the JAX state so rounding does not compound.
             for name, want in zip(names, expected, strict=False):
