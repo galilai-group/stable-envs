@@ -18,7 +18,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from benchmarks.compat import native_size, reference_gpu_render, reference_inputs, row_render_devices
+from benchmarks.compat import native_size, reference_gpu_render, reference_inputs, render_rows, row_render_devices
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -297,7 +297,7 @@ def cmd_ours(args) -> None:
                 kind, data = _frames_of(snv.registry.REGISTRY[name], blob, dev.type)
                 if kind == "rows":
                     data = torch.as_tensor(data, device=dev)
-                    render = lambda s, e: env.render_rows(data[s:e])  # noqa: E731
+                    render = lambda s, e: render_rows(env, data[s:e])  # noqa: E731
                 else:
                     data = data.to(dev)
                     render = lambda s, e: env.render(data[s:e])  # noqa: E731
@@ -437,7 +437,7 @@ def cmd_mse(args) -> None:
                 theirs, keep = cls.reference_render(ref, inputs[:n]), np.ones(n, bool)
             with snv.make(name, num_envs=n, size=blob["size"], device=args.device) as env:
                 if kind == "rows":
-                    ours = env.render_rows(data[:n]).cpu().numpy()
+                    ours = render_rows(env, data[:n]).cpu().numpy()
                 else:
                     ours = env.render(data[:n].to(env.device)).cpu().numpy()
             per_frame = C.frame_mse(ours[keep], np.asarray(theirs)[keep])
@@ -496,7 +496,7 @@ def cmd_codec(args) -> None:
             with snv.make(name, num_envs=256, size=blob["size"], device=args.device) as env:
                 if kind == "rows":
                     rows = torch.as_tensor(data, device=dev)
-                    frames = np.concatenate([env.render_rows(rows[s:e]).cpu().numpy() for s, e in _chunks(n, 256)])
+                    frames = np.concatenate([render_rows(env, rows[s:e]).cpu().numpy() for s, e in _chunks(n, 256)])
                     row["state_bytes"] = int(rows.shape[1]) * 4
                 else:
                     data = data.to(dev)

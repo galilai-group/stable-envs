@@ -22,9 +22,25 @@ def reference_gpu_render(cls):
     return _GPU_RENDER.get(parts[2]) if len(parts) > 2 and parts[1] == "envs" else None
 
 
+#: Families whose compact rows draw only on some devices (``row_render_devices`` where it exists).
+_ROW_DEVICES = {"rocket": ("cuda",)}
+
+
 def row_render_devices(cls):
-    """Devices where the class draws compact rows; none means the harness draws full States."""
-    return tuple(getattr(cls, "row_render_devices", ()))
+    """Devices where the class draws compact rows, such as ``sample_states`` returns."""
+    if hasattr(cls, "row_render_devices"):
+        return tuple(cls.row_render_devices)
+    parts = cls.__module__.split(".")
+    return _ROW_DEVICES.get(parts[2], ("cpu", "cuda")) if len(parts) > 2 and parts[1] == "envs" else ("cpu", "cuda")
+
+
+def render_rows(env, rows, **kwargs):
+    """Draw compact render rows: ``render_rows`` where it exists, else the renderer that ``render`` calls."""
+    if hasattr(env, "render_rows"):
+        return env.render_rows(rows, **kwargs)
+    import torch
+
+    return env._render(torch.as_tensor(rows, device=env.device, dtype=torch.float32), **kwargs)
 
 
 def reference_inputs(env, state):
