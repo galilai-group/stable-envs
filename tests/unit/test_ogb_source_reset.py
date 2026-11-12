@@ -156,4 +156,3 @@ def test_physics_stays_bit_exact_over_long_rollouts(family):
         adapter.close()
         for ref in refs:
             ref.close()
-

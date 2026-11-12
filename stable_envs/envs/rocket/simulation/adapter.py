@@ -105,7 +105,6 @@ class RocketAdapter(SimulatorAdapter):
     def validate(self, state):
         return state_columns(state, self.fields, self.template, self.num_envs)
 
-
     def prepare_restore(self, state):
         """Replay every lane of ``state`` into new engines; the live lanes do not change."""
         if self._prepared is not None:
