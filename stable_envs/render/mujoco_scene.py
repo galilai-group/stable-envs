@@ -5,6 +5,12 @@ triangles of its display list, its material and texture mapping, the lights as t
 them, the averaged camera, the textures with their mipmaps, the skybox and the shadow-map settings. Quads split
 into triangles as Mesa splits ``GL_QUADS``. The values are host NumPy arrays; a renderer adds the per-frame geom
 poses and colours.
+
+``pack`` turns an extracted scene into the flat arrays that the CPU and CUDA backends of ``render.mujoco_raster``
+read: corners, triangles, materials, textures, light rows, camera row and shadow matrices.
+
+The extraction follows the MuJoCo versions in ``VERIFIED``. Each version lists the scene features whose frames
+were compared with that version's OpenGL renderer; a scene that needs another feature raises NotImplementedError.
 """
 
 from __future__ import annotations
@@ -18,6 +24,29 @@ SPOT, DIRECTIONAL = 0, 1
 TEX_NONE, TEX_2D, TEX_CUBE = 0, 1, 2
 MAXPLANEGRID = 200
 TRANSPARENT_ALPHA = 0.995
+POW_STEPS = 4096
+#: Width of a light row: type, role, direction or position, ambient, diffuse, specular, attenuation, spot
+#: direction, spot cutoff cosine, exponent and the headlight flag.
+LIGHT_ROW = 23
+#: Scene features checked against the OpenGL renderer of each MuJoCo minor version (Fetch pins 3.11, Cube and
+#: Scene pin 3.17).
+VERIFIED = {
+    "3.11": frozenset({"mesh", "primitive", "plane", "transparency", "skybox", "light"}),
+    "3.17": frozenset({"mesh", "primitive", "plane", "transparency", "skybox", "light", "shadow", "texture"}),
+}
+
+
+def mujoco_version():
+    """The installed MuJoCo minor version, for example ``"3.17"``."""
+    from importlib.metadata import version
+
+    return ".".join(version("mujoco").split(".")[:2])
+
+
+def require(s, feature):
+    """Raise NotImplementedError unless ``feature`` is verified for the MuJoCo version of scene ``s``."""
+    if feature not in VERIFIED.get(s.version, frozenset()):
+        raise NotImplementedError(f"MuJoCo {s.version}: the {feature} rule of the OpenGL renderer is not verified")
 
 
 class Scene:
@@ -167,8 +196,18 @@ def box(b, numquads):
     d, nq = 2.0 / numquads, float(numquads)
     for x in range(numquads):
         for y in range(numquads):
-            top = [(x / nq, 1 - y / nq), ((x + 1) / nq, 1 - y / nq), ((x + 1) / nq, 1 - (y + 1) / nq), (x / nq, 1 - (y + 1) / nq)]
-            bot = [(x / nq, 1 - (y + 1) / nq), ((x + 1) / nq, 1 - (y + 1) / nq), ((x + 1) / nq, 1 - y / nq), (x / nq, 1 - y / nq)]
+            top = [
+                (x / nq, 1 - y / nq),
+                ((x + 1) / nq, 1 - y / nq),
+                ((x + 1) / nq, 1 - (y + 1) / nq),
+                (x / nq, 1 - (y + 1) / nq),
+            ]
+            bot = [
+                (x / nq, 1 - (y + 1) / nq),
+                ((x + 1) / nq, 1 - (y + 1) / nq),
+                ((x + 1) / nq, 1 - y / nq),
+                (x / nq, 1 - y / nq),
+            ]
             a0, a1, b0, b1 = d * x - 1, d * (x + 1) - 1, d * y - 1, d * (y + 1) - 1
             faces = (
                 ((0, 0, 1), top, ((a0, b0, 1), (a1, b0, 1), (a1, b1, 1), (a0, b1, 1))),
@@ -344,11 +383,22 @@ def texture(m, t):
 def average_camera(scn):
     """``mjv_averageCamera`` of the two scene cameras."""
     c0, c1 = scn.camera[0], scn.camera[1]
-    avg = {k: 0.5 * (np.asarray(getattr(c0, k), np.float64) + np.asarray(getattr(c1, k), np.float64)) for k in ("pos", "forward", "up")}
+    avg = {
+        k: 0.5 * (np.asarray(getattr(c0, k), np.float64) + np.asarray(getattr(c1, k), np.float64))
+        for k in ("pos", "forward", "up")
+    }
     f = avg["forward"] / np.linalg.norm(avg["forward"])
     u = avg["up"] - f * float(np.dot(avg["up"], f))
     avg["forward"], avg["up"] = f, u / np.linalg.norm(u)
-    for k in ("frustum_center", "frustum_width", "frustum_bottom", "frustum_top", "frustum_near", "frustum_far", "orthographic"):
+    for k in (
+        "frustum_center",
+        "frustum_width",
+        "frustum_bottom",
+        "frustum_top",
+        "frustum_near",
+        "frustum_far",
+        "orthographic",
+    ):
         avg[k] = 0.5 * (float(getattr(c0, k)) + float(getattr(c1, k)))
     return avg
 
@@ -403,6 +453,7 @@ def extract(m, d, camera, option=None):
     if any(int(g.objtype) != int(mujoco.mjtObj.mjOBJ_GEOM) for g in geoms):
         raise NotImplementedError("only model geoms are drawn")
     s = Scene()
+    s.version = mujoco_version()
     s.objid = np.array([g.objid for g in geoms], np.int64)
     s.type = np.array([g.type for g in geoms], np.int64)
     s.category = np.array([g.category for g in geoms], np.int64)
@@ -471,6 +522,16 @@ def extract(m, d, camera, option=None):
         s.texslot.append(slots.get(tid, -1) if mode != TEX_NONE else -1)
     s.texmode = np.asarray(s.texmode, np.int64)
     s.texslot = np.asarray(s.texslot, np.int64)
+    kinds = set(s.type.tolist())
+    for feature, present in (
+        ("mesh", MESH in kinds),
+        ("plane", PLANE in kinds),
+        ("primitive", bool(kinds - {MESH, PLANE})),
+        ("transparency", bool(s.transparent.any())),
+        ("texture", bool((s.texmode != TEX_NONE).any())),
+    ):
+        if present:
+            require(s, feature)
     # Lights in the order mjr_render enables them; a spot cutoff GL rejects (above 90 degrees) stays 180.
     lights = []
     for i in range(min(scn.nlight, 8)):
@@ -483,6 +544,7 @@ def extract(m, d, camera, option=None):
             cutoff = 180.0
         lights.append(
             {
+                "id": int(getattr(light, "id", -1)),
                 "type": kind,
                 "headlight": bool(light.headlight),
                 "castshadow": bool(light.castshadow),
@@ -503,9 +565,12 @@ def extract(m, d, camera, option=None):
     s.shadow_size = int(m.vis.quality.shadowsize)
     s.shadow_clip = float(m.stat.extent * m.vis.map.shadowclip)
     s.shadow_scale = float(m.vis.map.shadowscale)
+    if lights:
+        require(s, "light")
     s.sky = None
     for t in range(m.ntex):
         if int(m.tex_type[t]) == 2:
+            require(s, "skybox")
             s.sky = texture(m, t)
             break
     s.geom_pos = np.array([g.pos for g in geoms], np.float64)
@@ -520,6 +585,7 @@ def shadow_matrix(s, light):
     """
     if light["type"] != DIRECTIONAL:
         raise NotImplementedError("shadows from spot lights are not drawn")
+    require(s, "shadow")
     view = look_at(light["pos"], light["dir"], ortho_vec(light["dir"]))
     near, far = s.camera["frustum_near"], s.camera["frustum_far"]
     clip, n = s.shadow_clip, s.shadow_size
@@ -543,4 +609,247 @@ def shadow_lookup(s, light):
     # Window x = (x_ndc + 1) * inner / 2 + 1; lookup s * n = (x_ndc + 1) * n / 2.
     for k in range(2):
         out[k] = (win[k] - np.array([0.0, 0.0, 0.0, 1.0])) * (n / inner)
+    return out
+
+
+class Packed:
+    """Flat host arrays of one extracted scene, read by both backends of ``render.mujoco_raster``.
+
+    Geometry: ``cpos``, ``cnor``, ``ctex`` (corners), ``tris`` (corner indices), ``cstarts`` and ``starts`` (first
+    corner and first triangle of each geom) and ``rbound`` (largest corner distance from the geom frame).
+    ``material`` rows are specular, shininess (OpenGL exponent), emission, ``powlut`` row, texture mode and texture
+    slot. ``lights`` rows follow ``light_rows``. ``cam`` is position, right, up and forward; ``tanh`` the tangent
+    of half the vertical field of view. ``smat`` and ``slook`` map world points to the shadow map (see
+    ``shadow_matrix`` and ``shadow_lookup``); ``shadow_light`` is -1 without one.
+    """
+
+
+def pack_geoms(s):
+    """Corners and triangles of every drawn geom.
+
+    Corners that share a position, normal and texture coordinate are transformed and lit once per frame.
+    """
+    cpos, cnor, ctex, tris, cstarts, starts = [], [], [], [], [0], [0]
+    for v, n, t in zip(s.verts, s.normals, s.texcoords):
+        key = np.concatenate([v.reshape(-1, 3), n.reshape(-1, 3), t.reshape(-1, 3)], 1)
+        uniq, inv = np.unique(key, axis=0, return_inverse=True)
+        cpos.append(uniq[:, :3])
+        cnor.append(uniq[:, 3:6])
+        ctex.append(uniq[:, 6:9])
+        tris.append(inv.reshape(-1, 3) + cstarts[-1])
+        cstarts.append(cstarts[-1] + len(uniq))
+        starts.append(starts[-1] + len(v))
+    cpos = np.ascontiguousarray(np.concatenate(cpos), np.float64)
+    cstarts = np.asarray(cstarts, np.int64)
+    rbound = np.array([np.linalg.norm(cpos[cstarts[i] : cstarts[i + 1]], axis=1).max() for i in range(len(s.verts))])
+    return (
+        cpos,
+        np.ascontiguousarray(np.concatenate(cnor), np.float64),
+        np.ascontiguousarray(np.concatenate(ctex), np.float64),
+        np.ascontiguousarray(np.concatenate(tris), np.int64),
+        cstarts,
+        np.asarray(starts, np.int64),
+        rbound,
+    )
+
+
+def pack_textures(textures):
+    """Mip levels of every texture face in one float array.
+
+    ``levels`` rows are (offset, width, height) and ``info`` rows are (first level row, faces, levels per face).
+    """
+    data, levels, info = [], [], []
+    offset = 0
+    for chains in textures:
+        info.append((len(levels), len(chains), len(chains[0])))
+        for chain in chains:
+            for level in chain:
+                h, w = level.shape[:2]
+                data.append(level.reshape(-1).astype(np.float32) / np.float32(255.0))
+                levels.append((offset, w, h))
+                offset += h * w * 3
+    if not data:
+        return np.zeros(3, np.float32), np.zeros((1, 3), np.int64), np.zeros((1, 3), np.int64)
+    return np.concatenate(data), np.asarray(levels, np.int64), np.asarray(info, np.int64)
+
+
+def light_rows(s, shadow):
+    """Light rows of the lights of ``s``; light ``shadow`` gets the shadow role.
+
+    Columns: type, role (0 first pass, 1 shadow light), direction or position, ambient, diffuse, specular,
+    attenuation, spot direction, spot cutoff cosine (-2 for none), exponent and the headlight flag.
+    """
+    out = np.zeros((len(s.lights), LIGHT_ROW))
+    for i, light in enumerate(s.lights):
+        out[i, 0] = light["type"]
+        out[i, 1] = 1.0 if i == shadow else 0.0
+        if light["type"] == DIRECTIONAL:
+            v = -light["dir"]
+            out[i, 2:5] = v / max(np.linalg.norm(v), 1e-30)
+            out[i, 14:17] = (1.0, 0.0, 0.0)
+        else:
+            out[i, 2:5] = light["pos"]
+            out[i, 14:17] = light["attenuation"]
+        out[i, 5:8] = light["ambient"]
+        out[i, 8:11] = light["diffuse"]
+        out[i, 11:14] = light["specular"]
+        sd = light["dir"]
+        out[i, 17:20] = sd / max(np.linalg.norm(sd), 1e-30)
+        out[i, 20] = -2.0 if light["cutoff"] >= 180.0 else math.cos(math.radians(light["cutoff"]))
+        out[i, 21] = light["exponent"]
+        out[i, 22] = 1.0 if light["headlight"] else 0.0
+    return out
+
+
+def camera_row(pos, forward, up):
+    """Camera row: position, right, up and forward, as ``mjr_lookAt`` builds the view."""
+    f = np.asarray(forward, np.float64)
+    right = np.cross(f, up)
+    right /= np.linalg.norm(right)
+    up = np.cross(right, f)
+    up /= np.linalg.norm(up)
+    return np.concatenate([np.asarray(pos, np.float64), right, up, f]).astype(np.float64)
+
+
+def headlight_rows(rows, cams):
+    """Per-frame light rows (B, L, LIGHT_ROW) whose headlight shines along each frame's camera ``cams`` (B, 12)."""
+    out = np.repeat(np.asarray(rows, np.float64)[None], len(cams), 0)
+    for i in np.flatnonzero(rows[:, 22] > 0.5):
+        if int(rows[i, 0]) != DIRECTIONAL:
+            raise NotImplementedError("a spot headlight is not drawn")
+        f = cams[:, 9:12]
+        out[:, i, 2:5] = -f / np.maximum(np.linalg.norm(f, axis=1, keepdims=True), 1e-30)
+        out[:, i, 17:20] = f / np.maximum(np.linalg.norm(f, axis=1, keepdims=True), 1e-30)
+    return out
+
+
+def pack(s, cast=None):
+    """Packed arrays of extracted scene ``s``.
+
+    ``cast`` is another extraction of the same geoms whose triangles cast the shadows (for example exact meshes
+    when ``s`` draws simplified ones); by default the drawn triangles cast them.
+    """
+    p = Packed()
+    p.version = s.version
+    p.objid = s.objid.copy()
+    if any(light["castshadow"] and light["type"] != DIRECTIONAL for light in s.lights):
+        raise NotImplementedError("shadows of spot lights are not drawn")
+    shadow = [i for i, light in enumerate(s.lights) if light["castshadow"]]
+    if len(shadow) > 1:
+        raise NotImplementedError("one shadow light is drawn")
+    p.shadow_light = shadow[0] if shadow else -1
+    p.cpos, p.cnor, p.ctex, p.tris, p.cstarts, p.starts, p.rbound = pack_geoms(s)
+    if cast is None:
+        p.cast = (p.cpos, p.tris, p.cstarts, p.starts, p.rbound)
+    else:
+        if not np.array_equal(cast.objid, s.objid):
+            raise ValueError("the casting scene draws other geoms")
+        c = pack_geoms(cast)
+        p.cast = (c[0], c[3], c[4], c[5], c[6])
+    shins, row = np.unique(s.shininess * 128.0, return_inverse=True)
+    grid = np.linspace(0.0, 1.0, POW_STEPS + 1)
+    p.powlut = np.ascontiguousarray(grid[None, :] ** np.minimum(shins, 128.0)[:, None], np.float64)
+    p.material = np.stack(
+        [s.specular, s.shininess * 128.0, s.emission, row.reshape(-1).astype(np.float64), s.texmode, s.texslot], 1
+    ).astype(np.float64)
+    p.texdata, p.texlevels, p.texinfo = pack_textures(s.textures)
+    p.textures = s.textures
+    p.sky = s.sky
+    p.sky_tex = pack_textures([s.sky] if s.sky is not None else [])
+    p.has_sky = s.sky is not None
+    p.static = s.static.copy()
+    p.transparent = s.transparent.copy()
+    p.casters = np.flatnonzero(~s.static).astype(np.int64)
+    p.sort_rbound = s.rbound.astype(np.float32)
+    p.rgba = s.rgba.astype(np.float64)
+    p.type = s.type.copy()
+    p.texmode = s.texmode.copy()
+    p.texslot = s.texslot.copy()
+    p.size = s.size.copy()
+    cam = s.camera
+    if cam["orthographic"] or cam["frustum_center"] != 0.0 or cam["frustum_width"] != 0.0:
+        raise NotImplementedError("symmetric perspective cameras only are drawn")
+    p.cam = camera_row(cam["pos"], cam["forward"], cam["up"])
+    p.tanh = float(cam["frustum_top"]) / float(cam["frustum_near"])
+    p.near = float(cam["frustum_near"])
+    p.far = float(cam["frustum_far"])
+    p.lights = light_rows(s, p.shadow_light)
+    p.light_ids = np.array([light["id"] for light in s.lights], np.int64)
+    p.ambient = float(s.global_ambient)
+    p.nshadow = int(s.shadow_size)
+    if p.shadow_light >= 0:
+        light = s.lights[p.shadow_light]
+        p.smat = shadow_matrix(s, light)
+        p.slook = shadow_lookup(s, light)
+    else:
+        p.smat = np.zeros((3, 4))
+        p.slook = np.zeros((3, 4))
+    p.static_pos = s.geom_pos.copy()
+    p.static_mat = s.geom_mat.copy()
+    return p
+
+
+def transparent_order(gpos, cams, sort_rbound, alpha):
+    """MuJoCo's blend order of the translucent geoms of each frame.
+
+    Returns ranks (B, G): the position of each translucent geom when sorted by its float32 distance to the camera
+    less its bounding radius (ties in geom order), and -1 for geoms drawn opaque in that frame.
+    """
+    head = np.asarray(cams[:, :3], np.float32)
+    diff = np.asarray(gpos, np.float32) - head[:, None, :]
+    dist = np.sqrt((diff * diff).sum(-1, dtype=np.float32)).astype(np.float32) - sort_rbound[None]
+    glass = alpha < TRANSPARENT_ALPHA
+    dist = np.where(glass, dist, np.float32(np.inf))
+    order = np.argsort(dist, axis=1, kind="mergesort")
+    rank = np.empty_like(order)
+    np.put_along_axis(rank, order, np.arange(order.shape[1])[None].repeat(len(order), 0), axis=1)
+    return np.where(glass, rank, -1)
+
+
+OBJ_GEOM, OBJ_SITE = 5, 6
+
+
+def geom_keys(model, ref_model, extra=None):
+    """The ``(objid, objtype)`` of each geom of ``model`` in ``ref_model`` (``mjtObj`` numbering), -1 if none.
+
+    Geoms match by body name and by their order within the body; names must agree. ``extra`` maps geoms with no
+    counterpart, such as a geom that draws a site of the reference, to their pair.
+    """
+    import mujoco
+
+    def by_body(m):
+        out = {}
+        for g in range(int(m.ngeom)):
+            b = int(m.geom_bodyid[g])
+            out.setdefault(mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_BODY, b) or f"#{b}", []).append(g)
+        return out
+
+    def name(m, g):
+        return mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, g) or ""
+
+    extra = extra or {}
+    keys = np.full((int(model.ngeom), 2), -1, np.int64)
+    ref = by_body(ref_model)
+    for body, geoms in by_body(model).items():
+        geoms = [g for g in geoms if g not in extra]
+        if not geoms:
+            continue
+        theirs = ref.get(body, [])
+        if len(theirs) != len(geoms):
+            raise ValueError(f"body {body!r}: {len(geoms)} geoms here, {len(theirs)} in the reference")
+        for a, b in zip(geoms, theirs):
+            if name(model, a) != name(ref_model, b):
+                raise ValueError(f"geom {a} is {name(model, a)!r}, reference geom {b} is {name(ref_model, b)!r}")
+            keys[a] = (b, OBJ_GEOM)
+    for g, pair in extra.items():
+        keys[int(g)] = pair
+    return keys
+
+
+def segmentation(index, objid, keys):
+    """``(B, H, W, 2)`` reference ``(objid, objtype)`` pairs of drawn-geom indices ``index`` (-1 for background)."""
+    pairs = keys[objid]
+    out = np.full((*index.shape, 2), -1, np.int64)
+    hit = index >= 0
+    out[hit] = pairs[index[hit]]
     return out
