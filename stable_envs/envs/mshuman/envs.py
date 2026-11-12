@@ -69,6 +69,11 @@ class MSHumanLocomotion(Env):
         dims = (self._model.nq, self._model.nv, self._model.na, self._model.nu)
         if dims != (_NQ, _NV, _NA, _NU):
             raise ValueError(f"MS-Human-700 model dimensions changed: {dims}")
+        # nq == nv: every joint is a hinge or a slide with one qpos.
+        self.state_names = tuple(
+            mujoco.mj_id2name(self._model, mujoco.mjtObj.mjOBJ_JOINT, j) or f"joint{j}"
+            for j in range(self._model.njnt)
+        )
         adapter = MSHumanWarpAdapter if self.simulation_backend == "mjwarp" else MSHumanBatchAdapter
         self._simulator = adapter(self.B, self.device, self._model)
 
