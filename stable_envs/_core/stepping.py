@@ -13,7 +13,7 @@ import threading
 import numpy as np
 import torch
 
-from .tensordicts import build_tensordict
+from .tensordicts import build_tensordict, exclude_leaves, stack_leaves
 
 _NUMPY_DTYPES = {torch.uint8: np.uint8, torch.float32: np.float32, torch.float64: np.float64, torch.bool: np.bool_}
 
@@ -21,11 +21,15 @@ _NUMPY_DTYPES = {torch.uint8: np.uint8, torch.float32: np.float32, torch.float64
 def _actions(env, actions):
     # Keep action dtype and device: upstream scaling arithmetic can depend on dtype.
     a = actions if torch.is_tensor(actions) else np.asarray(actions)
-    spec = env.action_spec
-    shape = tuple(spec.shape)
+    # The action spec is fixed once the env exists; build it once.
+    layout = env.__dict__.get("_action_layout")
+    if layout is None:
+        spec = env.action_spec
+        layout = env.__dict__["_action_layout"] = (tuple(spec.shape), spec.dtype.is_floating_point)
+    shape, floating = layout
     b = env.num_envs
     # Accept discrete [B] actions without treating an ambiguous [B,T] array as a sequence.
-    if shape == (1,) and a.shape == (b,) and not spec.dtype.is_floating_point:
+    if shape == (1,) and a.shape == (b,) and not floating:
         a = a.reshape(b, 1)
     if tuple(a.shape) == (b, *shape):
         return a, False
@@ -50,11 +54,14 @@ def _task_outputs(result, active, *, all_active, owned=False, shared=()):
 
     ``shared`` leaves are tensors the family never writes; they pass through and are padded when stacked.
     """
-    out = result.exclude("state", "frame", *shared)
     # Families may guarantee fresh output storage. Padding still needs a copy:
     # once every lane finishes, result can be reused for later sequence entries.
-    if not owned or not all_active:
-        out = out.clone()
+    copy = not owned or not all_active
+    if shared:
+        out = result.exclude("state", "frame", *shared)
+        out = out.clone() if copy else out
+    else:
+        out = exclude_leaves(result, ("state", "frame"), clone=copy)
     if not all_active:
         inactive = (~active).nonzero(as_tuple=True)[0]
         for value in out.values(True, True):
@@ -118,10 +125,7 @@ def _stack_outputs(history, valid, shared=(), spares=None):
 
 def _stack_states(values):
     """Stack owned State snapshots along a new time axis, leaf by leaf."""
-    first = values[0]
-    return first.apply(
-        lambda *leaves: torch.stack(leaves, dim=1), *values[1:], batch_size=[*first.batch_size, len(values)]
-    )
+    return stack_leaves(values)
 
 
 def _selection(value, length, name):
@@ -195,10 +199,9 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
         from .dynamics import no_dynamics
 
         no_dynamics(env, "step")
+    # One action batch steps as it is; a sequence steps its time slices.
     acts, sequence = _actions(env, actions)
-    if not sequence:
-        acts = acts.unsqueeze(1) if torch.is_tensor(acts) else np.expand_dims(acts, 1)
-    length = acts.shape[1]
+    length = acts.shape[1] if sequence else 1
     state_indices = _selection(states, length, "states")
     frame_indices = _selection(frames, length, "frames")
     if frame_indices is not None and not getattr(env, "produces_rgb", True):
@@ -218,7 +221,15 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
     # the end of the step; then the outputs move to the device.
     host = _host_pipeline(env, pipeline)
     work = torch.device("cpu") if host else env.device
-    active = torch.ones(env.num_envs, dtype=torch.bool, device=work)
+    # One action needs one all-true flag column per output; a single allocation serves them all.
+    single = length == 1 and state_indices in (None, (0,)) and frame_indices in (None, (0,))
+    flags = None
+    if single:
+        count = 1 + (state_indices is not None) + (frame_indices is not None)
+        flags = torch.ones((count, env.num_envs, 1), dtype=torch.bool, device=work).unbind(0)
+        active = flags[0].view(-1)
+    else:
+        active = torch.ones(env.num_envs, dtype=torch.bool, device=work)
     # Frames drawn from the live lanes, here or in pipeline workers, need no State snapshot.
     pipeline_frames = pipeline is not None and getattr(pipeline, "live_frames", False)
     draws_live = render_live is not None and (pipeline is None or pipeline_frames)
@@ -229,7 +240,7 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
     def submit(t, mask, all_active):
         frame = t in frame_times
         pipeline.submit_step(
-            acts[:, t],
+            acts[:, t] if sequence else acts,
             # The initial mask is already known to be all true; avoid a GPU readback.
             active=None if all_active else mask,
             capture_state=t in state_times or t == length - 1 or (frame and not draws_live),
@@ -249,11 +260,11 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
                     pending = False
                     live_state, live_frame = result.get("state", None), result.get("frame", None)
             elif all_active:
-                result = advance(acts[:, t])
+                result = advance(acts[:, t] if sequence else acts)
                 live_state, live_frame = result.get("state", None), None
             elif bool(active.any()):
                 # Skip finished lanes through the family hook, without stepping and restoring them.
-                result = advance(acts[:, t], active=active)
+                result = advance(acts[:, t] if sequence else acts, active=active)
                 live_state, live_frame = result.get("state", None), None
             needs_state = t in state_times or t == length - 1 or (t in frame_times and not draws_live)
             if needs_state and live_state is None:
@@ -289,7 +300,7 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
             pipeline.abort_step()
         raise
 
-    valid = torch.stack(validity, dim=1)
+    valid = flags[0] if single else torch.stack(validity, dim=1)
     out = {"state": live_state}
     spares = env.__dict__.setdefault("_padded_output_buffers", {}) if shared else None
     out.update((_stack_outputs(history, valid, shared, spares) if sequence else history[0]).items())
@@ -300,7 +311,7 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
             if state_indices
             else live_state.unsqueeze(1)[:, :0].clone()
         )
-        out["state_valid"] = _columns(valid, state_indices)
+        out["state_valid"] = flags[1] if single else _columns(valid, state_indices)
     if frame_indices is not None:
         if not frame_indices:
             out["frames"] = torch.empty(
@@ -311,7 +322,7 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
                 out["frames"] = draw_rows(torch.stack([saved_frames[t] for t in frame_indices], dim=1))
         else:
             out["frames"] = torch.stack([saved_frames[t].to(env.device) for t in frame_indices], dim=1)
-        out["frame_valid"] = _columns(valid, frame_indices)
+        out["frame_valid"] = flags[-1] if single else _columns(valid, frame_indices)
     if not host:
         return build_tensordict(out, [env.num_envs], env.device)
     frames = out.get("frames")

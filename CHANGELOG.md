@@ -139,6 +139,9 @@ All notable changes to this project are listed here. The format follows
   synchronization. `"auto"` keeps the CPU batch below `mjwarp_min_envs` (256) CUDA environments, and
   `"source"` keeps the Gymnasium Robotics `step` per environment in worker processes. A scripted controller
   replayed on MuJoCo Warp for 200 steps reaches the source task outcome in 124 of 128 episodes.
+- `Env.step` costs less per call. It builds the output TensorDict and stacks the `states` leaf by leaf without
+  TensorDict validation, keeps the action layout and the step pipeline check of each env, and allocates the
+  `valid`, `state_valid` and `frame_valid` flags of one action batch in one tensor. The outputs do not change.
 - MS-Human-700: `MSHumanLocomotion` steps on the shared batched MuJoCo backend. CUDA envs step on MuJoCo Warp at
   every batch size by default (`simulation_backend="default"`); `"auto"` keeps `mujoco.batch` below
   `mjwarp_min_envs` (256) CUDA environments. The MuJoCo Warp step does not synchronize the host.
