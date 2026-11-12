@@ -15,7 +15,6 @@ import torch
 from tensordict import TensorDict
 
 pytest.importorskip("ogbench")
-import mujoco
 from ogbench.manipspace.envs.manipspace_env import ManipSpaceEnv
 
 from stable_envs.envs.ogbench import OGBCube, OGBScene
@@ -302,23 +301,16 @@ def test_interleaved_threaded_isolation_and_global_numpy_nonmutation():
 @pytest.mark.parametrize("family", CLASSES)
 def test_step_delegation_substeps_and_no_implicit_restore(family):
     with CLASSES[family]() as env:
-        raw = env._simulator.envs[0]
+        simulator = env._simulator
+        raw = simulator.envs[0]
         assert raw.step.__func__ is ManipSpaceEnv.step
         assert raw.set_control.__func__ is ManipSpaceEnv.set_control
-        records = []
-        original = mujoco.mj_step
-
-        def observe(*args, **kwargs):
-            records.append(kwargs.get("nstep", 1))
-            return original(*args, **kwargs)
-
-        before = raw.data.time
-        with (
-            patch.object(mujoco, "mj_step", observe),
-            patch.object(env._simulator, "set_state", side_effect=AssertionError("implicit restore")),
-        ):
-            env.step(np.array([[2.0, -3.0, 0.2, 0.8, -0.7]], np.float64), frames=None)
-        assert records == [25] and raw.data.time == pytest.approx(before + 0.05)
+        # The batch steps OGBench's 25 substeps of one control step.
+        assert simulator.physics.frame_skip == raw._n_steps == 25
+        before = float(simulator.get_state()["physics", "time"][0, 0])
+        with patch.object(simulator, "set_state", side_effect=AssertionError("implicit restore")):
+            out = env.step(np.array([[2.0, -3.0, 0.2, 0.8, -0.7]], np.float64), frames=None)
+        assert float(out["state", "physics", "time"][0, 0]) == pytest.approx(before + 0.05)
         assert np.array_equal(raw.unnormalize_action(np.ones(5)), np.array([0.05, 0.05, 0.05, 0.3, 1.0]))
 
 
@@ -365,6 +357,8 @@ def test_contact_histories_oracle_and_independent_restore(interaction, oracle):
                     assert_same_state(saved, b.get_state())
                 out = a.step(action[None], frames=None)
                 raw.step(action)
+                # The batch writes the lanes it advanced into their OGBench objects when they are read.
+                u = a._simulator.envs[0]
                 assert_oracle(u, raw, oracle)
                 if i >= 20:
                     assert_same_state(out, b.step(action[None], frames=None))
@@ -409,35 +403,47 @@ def test_contact_histories_oracle_and_independent_restore(interaction, oracle):
 def test_solver_and_cached_pose_fields_are_behaviorally_relevant(family):
     with CLASSES[family](seed=17) as a, CLASSES[family](seed=17) as b:
         u = a._simulator.envs[0]
+        cube = int(u.model.joint("object_joint_0").qposadr[0])
         # The arm starts at the leaf's default, where the approach below makes contact.
         start = {"agent.ee_start_position": np.mean(u._arm_sampling_bounds, axis=0)}
-        a.reset(17, {"task_id": 1 if family == "Cube" else 2, "variation": [], "variation_values": start})
-        fixed_target = u.data.joint("object_joint_0").qpos[:3].copy()
+        state = a.reset(17, {"task_id": 1 if family == "Cube" else 2, "variation": [], "variation_values": start})
+
+        def cube_and_pinch(state):
+            return (
+                state["physics", "qpos"][0, cube : cube + 3].numpy().copy(),
+                state["controller", "site_xpos"][0, 0].numpy().copy(),
+            )
+
+        fixed_target = cube_and_pinch(state)[0]
         fixed_target[2] = 0.125
         for i in range(10 if family == "Cube" else 20):
-            target = fixed_target.copy() if family == "Cube" else u.data.joint("object_joint_0").qpos[:3].copy()
+            position, pinch = cube_and_pinch(state)
+            target = fixed_target.copy() if family == "Cube" else position
             if family == "Scene":
                 target[2] = 0.035
             act = np.zeros((1, 5))
-            act[0, :3] = np.clip((target - u.data.site_xpos[u._pinch_site_id]) / 0.05, -1, 1)
+            act[0, :3] = np.clip((target - pinch) / 0.05, -1, 1)
             act[0, 4] = 1 if family == "Scene" and i >= 9 else -1
-            a.step(act, frames=None)
+            state = a.step(act, frames=None)["state"]
         saved = a.get_state()
-        b.set_state(saved)
-        b._simulator.envs[0].data.site_xpos[u._pinch_site_id, 0] += 0.001
+        # The cached pinch pose and the warmstart are State leaves that the next step reads.
+        moved = saved.clone()
+        moved["controller", "site_xpos"][0, 0, 0] += 0.001
+        b.set_state(moved)
         action = np.array([[0.2, -0.3, -0.1, 0.35, 0.4]])
         if family == "Cube":
-            action[0, :3] = np.clip((fixed_target - u.data.site_xpos[u._pinch_site_id]) / 0.05, -1, 1)
+            action[0, :3] = np.clip((fixed_target - cube_and_pinch(saved)[1]) / 0.05, -1, 1)
             action[0, 3:] = [0.0, -1.0]
         baseline = a.step(action, frames=None)
         changed = b.step(action, frames=None)
         assert not torch.equal(baseline["state", "physics", "qpos"], changed["state", "physics", "qpos"])
         a.set_state(saved)
-        b.set_state(saved)
+        warm = saved.clone()
         if family == "Cube":
-            b._simulator.envs[0].data.qacc_warmstart[:] = 0
+            warm["physics", "warmstart"].zero_()
         else:
-            b._simulator.envs[0].data.qacc_warmstart[:] += 1e6
+            warm["physics", "warmstart"] += 1e6
+        b.set_state(warm)
         baseline, changed = a.step(action, frames=None), b.step(action, frames=None)
         assert not torch.equal(baseline["state", "physics", "qpos"], changed["state", "physics", "qpos"])
 

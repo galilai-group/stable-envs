@@ -142,9 +142,31 @@ ray caster `raycast3d`. It draws the maze, the body and the floor from the State
 
 ## Manipulation
 
-Cube and Scene need `mujoco==3.17.0` and the `ogbench-manipulation` extra. MuJoCo OpenGL draws
-the frames on CPU (software OpenGL) and on CUDA (NVIDIA OpenGL). Physics runs on CPU, except for
-`OGBCube` batches of 1024 or more environments on CUDA, which step with MJX (float32).
+Cube and Scene need `mujoco==3.17.0` and the `ogbench-manipulation` extra (`ogbench-manipulation-gpu` for
+MuJoCo Warp). MuJoCo OpenGL draws the frames on CPU (software OpenGL) and on CUDA (NVIDIA OpenGL).
+
+| `simulation_backend` | CPU env | CUDA env |
+|---|---|---|
+| `"default"` (default) | `mujoco.batch` | [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp) |
+| `"auto"` | `mujoco.batch` | `mujoco.batch` below `mjwarp_min_envs` (256) environments, MuJoCo Warp from 256 |
+| `"native"` | `mujoco.batch` | `mujoco.batch` |
+| `"mjwarp"` | not supported | MuJoCo Warp |
+
+`mujoco.batch` steps every environment in one native call on up to 8 threads. The step does the operations of
+OGBench's step in the same order: the end-effector controller and its inverse kinematics, the 25 `mj_step`
+substeps, `mj_rnePostConstraint` and the `post_step` of the task. The State and the outputs are equal to
+OGBench, bit for bit. A CUDA env on `mujoco.batch` returns its State on CUDA.
+
+MuJoCo Warp steps the substeps of every environment in one captured CUDA graph, in `float32`. One Warp kernel
+computes the controller and its inverse kinematics in `float64`. The State has the same leaves as on CPU. Its
+physics leaves hold the `float32` values. MuJoCo Warp is approximately equal to OGBench: on the scripted OGBench
+Cube oracle, each episode ends with the same success at the same first-success step (see the test
+`tests/gpu/test_ogbench_manipulation_warp.py`). Over a few hundred steps, contacts can make the cube positions
+differ from OGBench.
+
+The resets, restores and Variations run OGBench's own code on one OGBench object per environment, and the
+backend then loads the result. A small CUDA batch steps faster on `mujoco.batch` than on MuJoCo Warp; use
+`simulation_backend="auto"` for this.
 
 - CPU frames are bit-exact. A draw of the same state gives the same frame each time.
 - CUDA frames use the same MuJoCo OpenGL path. The NVIDIA driver can change a pixel by 1/255 between
@@ -161,8 +183,8 @@ restore also sets the next reset.
 The arm starts at the position that OGBench samples. It starts at `agent.ee_start_position` only when
 the reset options name this leaf, or when `set_variation` sets the leaf to a value that is not the default.
 
-The default model has the OGBench physics, with a cube size of 0.02. With CPU physics, the reset and the physics are equal
-to OGBench, bit for bit.
+The default model has the OGBench physics, with a cube size of 0.02. With `mujoco.batch` physics, the reset and the
+physics are equal to OGBench, bit for bit.
 
 ### OGBCube
 

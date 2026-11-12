@@ -10,6 +10,7 @@ style values, because plate-baking families re-render a MuJoCo plate per distinc
 
 from __future__ import annotations
 
+import inspect
 import json
 import os
 import subprocess
@@ -935,7 +936,13 @@ def test_a_step_from_a_restored_state_matches_the_original(env):
     cls = type(env)
     if not env.has_dynamics:
         pytest.skip(f"{cls.__name__}: no dynamics")
-    with se.make(cls.__name__, num_envs=N, device="cuda") as a, se.make(cls.__name__, num_envs=N, device="cuda") as b:
+    # MuJoCo Warp with contacts is not bitwise deterministic; the MuJoCo families step this check on mujoco.batch.
+    parameters = inspect.signature(cls.__init__).parameters
+    kw = {"simulation_backend": "native"} if {"simulation_backend", "mjwarp_min_envs"} <= set(parameters) else {}
+    with (
+        se.make(cls.__name__, num_envs=N, device="cuda", **kw) as a,
+        se.make(cls.__name__, num_envs=N, device="cuda", **kw) as b,
+    ):
         rng = np.random.default_rng(6)
         b.reset(seed=11)
         b.set_state(a.reset(seed=5))

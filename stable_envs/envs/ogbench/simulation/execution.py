@@ -9,15 +9,16 @@ from ...._execution.protocol import SimulatorAdapter
 if TYPE_CHECKING:
     import torch
 
-    from .cube_mjx import CubeMJXAdapter
-    from .manipulation_process import OGBManipulationProcessAdapter
+    from .manipulation_batch import OGBManipulationBatchAdapter
+    from .manipulation_warp import OGBManipulationWarpAdapter
 
 from .maze_process import OGBMazeProcessAdapter
 
 _AdapterT = TypeVar("_AdapterT", bound=SimulatorAdapter)
 
-# Smallest CUDA Cube batch that steps with MJX; smaller batches step faster on CPU (L40S, 8 cores).
-CUBE_MJX_MIN_ENVS = 1024
+#: With ``simulation_backend="auto"``, the smallest CUDA Cube/Scene batch that steps on MuJoCo Warp; smaller CUDA
+#: batches step on native ``mujoco.batch`` and return CUDA tensors (L40S, 8 cores).
+MJWARP_MIN_ENVS = 256
 
 
 def make_maze_adapter(
@@ -42,20 +43,17 @@ def make_manipulation_adapter(
     device: str | torch.device,
     seed: int | None,
     reward_task_id: int | None,
-    local_factory: Callable[..., _AdapterT],
-) -> _AdapterT | CubeMJXAdapter | OGBManipulationProcessAdapter:
-    import torch
+    simulation_backend: str | None = "default",
+    mjwarp_min_envs: int = MJWARP_MIN_ENVS,
+) -> OGBManipulationBatchAdapter | OGBManipulationWarpAdapter:
+    """Cube/Scene lanes on the backend that ``resolve_backend`` selects: MuJoCo Warp or native ``mujoco.batch``."""
+    from ...._execution.mjbatch import resolve_backend
 
-    if family == "Cube" and torch.device(device).type == "cuda" and num_envs >= CUBE_MJX_MIN_ENVS:
-        from .cube_mjx import CubeMJXAdapter
+    backend = resolve_backend(num_envs, device, simulation_backend, mjwarp_min_envs)
+    if backend == "mjwarp":
+        from .manipulation_warp import OGBManipulationWarpAdapter
 
-        return CubeMJXAdapter(family, num_envs, device, seed, reward_task_id)
-    cpus = cpu_affinity()
-    count = process_count(num_envs, cpus, path="ogb-sim")
-    if count:
-        from .manipulation_process import OGBManipulationProcessAdapter
+        return OGBManipulationWarpAdapter(family, num_envs, device, seed, reward_task_id)
+    from .manipulation_batch import OGBManipulationBatchAdapter
 
-        return OGBManipulationProcessAdapter(
-            family, num_envs, device, seed, reward_task_id, processes=count, cpus=cpus
-        )
-    return local_factory(family, num_envs, device, seed, reward_task_id)
+    return OGBManipulationBatchAdapter(family, num_envs, device, seed, reward_task_id)

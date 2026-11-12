@@ -22,12 +22,6 @@ from the envX commit above under Apache-2.0.
 `src/envx/pusht/physics.py`
 from the envX commit above under Apache-2.0.
 
-## envX Cube
-
-`stable_envs/envs/ogbench/simulation/cube_mjx.py` adapts the controller and
-MJX-Warp stepping in `src/envx/cube/environment.py` from the envX commit above
-under Apache-2.0. The OGBench model and robot assets remain external dependencies.
-
 ## Craftax
 
 The `craftax` family (`stable_envs/envs/craftax/`) runs

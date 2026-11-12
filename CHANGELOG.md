@@ -96,6 +96,22 @@ All notable changes to this project are listed here. The format follows
   gives the fork's values from the same State, bit for bit. Resets sample the fork's reset distribution
   from a counter-based generator; State replaces the PCG64 fields with `rng.seed` and `rng.episode`. The
   worker processes and the `miniworld-sim` tuning path are removed. The `miniworld` extra installs Numba.
+- `OGBCube` and `OGBScene` step on the shared batched MuJoCo backend. A CPU env steps every environment in one
+  `mujoco.batch` call. The controller and its inverse kinematics run for all environments together, with MuJoCo's
+  kinematics and Jacobians and the operations of the OGBench step in the same order. The State and the outputs
+  are equal to OGBench, bit for bit, and tests compare them with the per-environment OGBench step. A CUDA env
+  steps on MuJoCo Warp (`float32`) at every batch size by default (`simulation_backend="default"`). One Warp
+  kernel computes the controller in `float64`, and the step does not synchronize the host (Scene synchronizes
+  once per step to find a cube that left the workspace). `"auto"` keeps `mujoco.batch` below `mjwarp_min_envs`
+  (256) CUDA environments. On the scripted OGBench Cube oracle, MuJoCo Warp gives each episode the success
+  and the first-success step of OGBench.
+  On an L40S with 8 EPYC 9374F cores, with uniformly random actions and a reset every 200 steps, a CPU
+  `OGBCube` runs 8,634 steps/s with 64 environments and 13,383 with 1024 (OGBench in 8 worker processes:
+  3,045 and 4,452; before: 3,071 and 4,440). A CUDA `OGBCube` runs 12,493 steps/s with 256 environments,
+  37,071 with 1024 and 78,671 with 4096 (before: 3,840 and 18,117 with 256 and 1024). A CUDA `OGBScene`
+  runs 17,989 steps/s with 1024 environments and 41,221 with 4096 (before: 5,248 and 5,479). Below 64
+  environments, MuJoCo Warp is slower than `mujoco.batch` and than OGBench. Worker processes reset the
+  environments of batches of 64 or more in parallel.
 - `OGBCube` and `OGBScene` use the OGBench cube size. The default `cube.size` is now 0.02, as in OGBench.
   Before, the default was the stable-worldmodel value `float32(0.02)`, which compiles to
   0.019999999552965164. That size changed the cube mass and inertia, so contacts moved the physics away
@@ -310,6 +326,7 @@ All notable changes to this project are listed here. The format follows
 
 ### Removed
 
+- The MJX physics of `OGBCube` on CUDA (`cube_mjx.py`). MuJoCo Warp steps CUDA Cube batches.
 - `MJW_CHUNK` in the DMC and OGBench packages. The `dmc_min_worlds` and `ogb_mjw_worlds` tuning knobs
   set the worlds per MJWarp launch.
 - `Env.fidelity_tier`, `stable_envs.env.FIDELITY_TIERS` and the `fidelity_tier` key of `snv.info()`.

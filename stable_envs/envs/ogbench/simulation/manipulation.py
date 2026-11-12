@@ -280,8 +280,6 @@ class OGBManipulationAdapter(SimulatorAdapter):
             raise TypeError(
                 "Full Cube/Scene TensorDict State with batch [num_envs] required; RenderState cannot restore dynamics"
             )
-        if "mjx" in state.keys() and "mjx" not in self.template.keys():
-            raise ValueError("Cube MJX State requires a CUDA Cube environment; CPU uses a different solver")
         if set(state.keys(True, False)) != set(self.template.keys(True, False)):
             raise ValueError("Full State has missing or extra leaves")
         # Keep transfers and TensorDict traversal column-wise. The returned
