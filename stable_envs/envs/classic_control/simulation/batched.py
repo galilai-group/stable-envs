@@ -56,6 +56,12 @@ def _f32(value: float) -> float:
     return float(np.float32(value))
 
 
+#: Float32 roundings of the MountainCarContinuous bounds, for lanes that hold a float32 state.
+_F32_RIGHT, _F32_LEFT, _F32_GOAL = _f32(0.6), _f32(-1.2), _f32(0.45)
+#: Wrap passes of a Torch step in each direction; a step moves an angle by less than four turns.
+_WRAP_PASSES = 4
+
+
 class _NumPy:
     """Array operations of the kernels on host NumPy arrays; outputs move to ``device``."""
 
@@ -330,6 +336,13 @@ def _acrobot(xp, s, p, a, _):
 def _wrap(xp, x):
     """Acrobot's ``wrap(x, -pi, pi)``: subtract, then add, whole turns until x is in range."""
     turn = math.pi - (-math.pi)
+    if isinstance(xp, _Torch):
+        # Fixed passes read nothing back to the host; each pass repeats the source's subtraction or addition.
+        for _ in range(_WRAP_PASSES):
+            x = torch.where(x > math.pi, x - turn, x)
+        for _ in range(_WRAP_PASSES):
+            x = torch.where(x < -math.pi, x + turn, x)
+        return x
     while bool((x > math.pi).any()):
         x = xp.where(x > math.pi, x - turn, x)
     while bool((x < -math.pi).any()):
@@ -379,14 +392,14 @@ def _mountain_car_continuous(xp, s, p, a, dtype):
     velocity = xp.where(under, -max_speed, velocity)
     wide = ~is32 | (wide & ~over & ~under)
     position = xp.where(wide, position + velocity, r32(position + r32(velocity)))
-    right = xp.where(wide, position > 0.6, position > _f32(0.6))
+    right = xp.where(wide, position > 0.6, position > _F32_RIGHT)
     position = xp.where(right, 0.6, position)
-    left = ~right & xp.where(wide, position < -1.2, position < _f32(-1.2))
+    left = ~right & xp.where(wide, position < -1.2, position < _F32_LEFT)
     position = xp.where(left, -1.2, position)
     wide = wide | right | left
-    at_wall = xp.where(wide, position == -1.2, position == _f32(-1.2))
+    at_wall = xp.where(wide, position == -1.2, position == _F32_LEFT)
     velocity = xp.where(at_wall & (velocity < 0), 0.0, velocity)
-    terminated = xp.where(wide, position >= 0.45, position >= _f32(0.45)) & (velocity >= 0)
+    terminated = xp.where(wide, position >= 0.45, position >= _F32_GOAL) & (velocity >= 0)
     reward = xp.where(terminated, 100.0, xp.full(a, 0.0)) - xp.pow2(a) * 0.1
     position, velocity = r32(position), r32(velocity)
     new = {"position": position, "velocity": velocity, ("task", "state_is_float32"): xp.flags(is32, True)}
