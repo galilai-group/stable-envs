@@ -20,11 +20,22 @@ Each task comes in three classes:
 - `Fetch<Task>Dict` has the same task and reward as `Fetch<Task>`. Its name matches the
   stable-worldmodel id `swm/Fetch<Task>Dict-v3`.
 
-Fetch needs `mujoco<3.12`. Install it in its own environment with the `robotics` extra. On CPU, MuJoCo
-OpenGL draws the frames at the requested size, as Gymnasium Robotics does. On CUDA, MJWarp draws them. See [System setup](../system-setup.md).
-On Linux, a CPU batch of at least `render_worker_min_rows` states draws in up to `render_workers`
-worker processes. Each worker has its own OpenGL context. The frames do not change. See
-[Performance tuning](../performance-tuning.md).
+Fetch needs `mujoco<3.12`. Install it in its own environment with the `robotics` extra. On CUDA, MJWarp
+draws the frames. See [System setup](../system-setup.md).
+
+On CPU, `backend="auto"` (the default) and `backend="numba"` draw the frames with a compiled Numba
+rasterizer at the requested size. The rasterizer follows MuJoCo's OpenGL renderer: the same meshes and
+primitive tessellations, per-vertex lighting with the headlight, 4 samples per pixel, the skybox, and the
+translucent mocap markers and arm blended after the opaque scene. The frames differ from the Gymnasium
+Robotics frames only at some edges and by rounding. The mean squared error per frame is about 0.15 on
+average and less than 0.4 (0-255 scale). The first render after an install compiles the rasterizer in
+about 30 s. Numba keeps the compiled code in a cache for later processes. Without Numba,
+`backend="auto"` uses MuJoCo OpenGL.
+
+`backend="opengl"` draws the frames with MuJoCo OpenGL, as Gymnasium Robotics does. On CPU this needs a
+software OpenGL backend, and the frames are equal to the source frames. On Linux, a CPU batch of at least
+`render_worker_min_rows` states draws in up to `render_workers` worker processes. Each worker has its own
+OpenGL context. The frames do not change. See [Performance tuning](../performance-tuning.md).
 
 ```python
 import stable_envs as snv

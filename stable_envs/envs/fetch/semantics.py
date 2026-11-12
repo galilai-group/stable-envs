@@ -25,7 +25,7 @@ class FetchSemantics:
     action_dim = 4
     action_dtype = torch.float32
     action_low, action_high = -1.0, 1.0
-    cpu_render_support = "SUPPORTED_SOFTWARE_OPENGL"
+    cpu_render_support = "SUPPORTED_NUMBA"
 
     @property
     def dynamics_variation_leaves(self):
@@ -268,7 +268,19 @@ class FetchSemantics:
 
     def _render(self, *args, **kwargs):
         backend = kwargs.pop("backend", self.backend)
-        if backend == "opengl" or (backend == "auto" and self.device.type != "cuda"):
+        if backend == "auto" and self.device.type != "cuda":
+            from ...render import cpu_raster
+
+            backend = "numba" if cpu_raster.available() else "opengl"
+        if backend == "numba":
+            from ...render import cpu_raster
+
+            if not cpu_raster.available():
+                raise ValueError("backend='numba' needs numba, which does not import here")
+            from . import raster
+
+            return raster.render(self, *args, **kwargs)
+        if backend == "opengl":
             from . import opengl
 
             return opengl.render(self, *args, **kwargs)

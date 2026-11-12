@@ -44,7 +44,7 @@ package, which tests use for comparison.
 | `ogbench-manipulation` / `-gpu` | OGBCube, OGBScene | MuJoCo 3.17.0, OGBench 1.2.1, dm_control 1.0.50. `-gpu` adds MuJoCo Warp 3.17.0 and Warp 1.17.0 |
 | `dmcontrol` | DM Control; the compiled CPU renderer | `dm_control` 1.0.50, MuJoCo 3.17, Numba |
 | `dmcontrol-gpu` | Explicit MJWarp physics and TrackCom floor reflections on CUDA | `dm_control` 1.0.50, MuJoCo, MuJoCo Warp and MJX 3.17 |
-| `robotics` | Fetch | gymnasium-robotics, MuJoCo < 3.12, OpenCV |
+| `robotics` | Fetch; the compiled CPU renderer | gymnasium-robotics, MuJoCo < 3.12, OpenCV, Numba |
 | `mjwarp` | Fetch on CUDA | MuJoCo Warp |
 | `mshuman` | MSHumanLocomotion | MuJoCo and MuJoCo Warp 3.17, Warp, filelock |
 | `rocket` | PyFlytRocketLanding | PyFlyt 0.29.0, pybullet 3.2.7, Pillow, SciPy |

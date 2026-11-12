@@ -105,6 +105,12 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- Fetch: on CPU, `backend="auto"` draws frames with a compiled Numba rasterizer that follows MuJoCo's
+  OpenGL renderer: the meshes, the primitive tessellations, per-vertex lighting, 4 samples per pixel, the
+  skybox and the translucent markers. It is faster than the source at every batch size. The frames differ
+  from the source frames only at some edges and by rounding; the mean squared error per frame is about 0.15
+  on average and less than 0.4 (0-255 scale). `backend="opengl"` keeps MuJoCo OpenGL and the exact source
+  frames. `backend="numba"` selects the rasterizer. The `robotics` extra now installs Numba.
 - `OGBCube` and `OGBScene` frames have the look of the OGBench pixel tasks (`visual-cube-single-v0`,
   `visual-scene-v0`): the arm is see-through and the goal cube is not drawn. The `reference_env()`
   builds OGBench with `ob_type="pixels"`, so it draws the same `front_pixels` camera. Before, the arm was

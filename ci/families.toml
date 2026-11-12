@@ -139,7 +139,7 @@ shards = { pr = 3, nightly = 4 }
 [family.fetch]
 extras = ["robotics"]
 groups = ["pin-fetch"]
-paths = ["stable_envs/envs/fetch/**", "stable_envs/render/mjwarp/**"]
+paths = ["stable_envs/envs/fetch/**", "stable_envs/render/mjwarp/**", "stable_envs/render/cpu_raster/__init__.py"]
 tests = ["test_fetch_*", "test_envs_fetch.py", "test_variation_maps_fetch.py"]
 requires = ["gymnasium-robotics", "mujoco"]
 capabilities = ["swm"]
