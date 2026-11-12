@@ -19,6 +19,9 @@ INFO_KEYS = ("xy", "prev_qpos", "prev_qvel", "qpos", "qvel")
 _LIMBS = (16, 10, 13, 7)
 #: Teleport destinations drawn ahead per lane on CUDA; the host refills them at least this often.
 TELEPORT_DRAWS = 32
+#: MuJoCo Warp constraint rows per environment and contacts per environment, by body: four times the most that
+#: native MuJoCo made in 400 steps of uniform random actions on 512 environments (8 and 3, 24 and 5, 64 and 17).
+WARP_BUFFERS = {"point": (32, 12), "ant": (96, 20), "humanoid": (256, 68)}
 
 
 class MazeTask:
@@ -624,6 +627,8 @@ class OGBMazeWarpAdapter(_MazeLanes):
     def __init__(self, num_envs, device="cuda", seed=0, *, loco="point", maze="large", task=None, **warp_options):
         self._setup(num_envs, device, loco, maze, task)
         task = self.task
+        njmax, ncon = WARP_BUFFERS[loco]
+        warp_options = {"njmax": njmax, "naconmax": ncon * self.num_envs, **warp_options}
         self.sim = WarpBatch(task.model, self.num_envs, self.device, frame_skip=task.frame_skip, **warp_options)
         rb = None
         if loco == "humanoid":
