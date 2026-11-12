@@ -2,6 +2,7 @@
 
 from stable_envs._execution.protocol import SimulatorAdapter, StepPipeline
 from stable_envs.envs.classic_control.simulation.batched import BatchedClassicAdapter
+from stable_envs.envs.classic_control.simulation.device import DeviceClassicAdapter
 from stable_envs.envs.classic_control.simulation.local import ClassicControlAdapter
 from stable_envs.envs.classic_control.simulation.process import AcrobotProcessAdapter
 from stable_envs.envs.dmcontrol.simulation.batch import DMCBatchAdapter
@@ -19,6 +20,7 @@ from stable_envs.envs.rocket.simulation.adapter import RocketAdapter
 def local_adapters(
     classic: ClassicControlAdapter,
     batched: BatchedClassicAdapter,
+    device: DeviceClassicAdapter,
     fetch: FetchAdapter,
     dmc: DMCAdapter,
     dmc_batch: DMCBatchAdapter,
@@ -27,7 +29,7 @@ def local_adapters(
     pusht: PushTReplayAdapter,
     rocket: RocketAdapter,
 ) -> tuple[SimulatorAdapter, ...]:
-    return classic, batched, fetch, dmc, dmc_batch, maze, manipulation, pusht, rocket
+    return classic, batched, device, fetch, dmc, dmc_batch, maze, manipulation, pusht, rocket
 
 
 def process_adapters(

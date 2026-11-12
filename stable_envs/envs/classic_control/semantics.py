@@ -19,32 +19,41 @@ _EXECUTION_MODES = {"gym": "DELEGATED_CPU", "numpy": "NATIVE_NUMPY", "torch": "N
 
 
 class ClassicControlSemantics:
-    """Pair the exact renderer with Gymnasium resets and batched or Gymnasium steps."""
+    """Pair the exact renderer with batched or Gymnasium steps."""
 
-    #: Gymnasium resets every backend; ``__init__`` sets the mode of the selected step backend.
+    #: ``__init__`` sets the mode of the selected step backend.
     execution_mode = "AUTO_BATCHED"
     #: Every simulator returns new output tensors on each step.
     _step_outputs_owned = True
 
-    def __init__(self, *args, simulation_backend: str = "auto", **kwargs):
-        """Select the step backend. ``"auto"`` steps all lanes at once in NumPy or Torch.
+    def __init__(self, *args, simulation_backend: str | None = None, torch_min_envs: int | None = None, **kwargs):
+        """Select the step backend.
 
-        ``"auto"`` uses Torch for ``TORCH_MIN_ENVS`` or more CUDA lanes and NumPy on the host for fewer
-        lanes. Below ``NUMPY_MIN_ENVS`` lanes it steps with Gymnasium, which is faster there.
+        By default, CUDA lanes step, reset and keep their State on the GPU in Torch, and CPU lanes step in
+        NumPy, or with Gymnasium below ``NUMPY_MIN_ENVS`` lanes, where it is faster. ``"auto"`` uses Torch
+        only for ``torch_min_envs`` (default ``TORCH_MIN_ENVS``) or more CUDA lanes, and NumPy on the host
+        for fewer lanes.
 
         ``"gym"`` steps one Gymnasium environment per lane. ``"numpy"`` or ``"torch"`` selects a batched
         backend on any device. NumPy steps equal Gymnasium steps, and Torch steps agree with them to rounding.
+        On the CPU, Gymnasium resets every backend. On CUDA, Torch resets the lanes on the GPU.
         """
         super().__init__(*args, **kwargs)
-        from .simulation.batched import BatchedClassicAdapter, classic_backend
+        from .simulation.batched import TORCH_MIN_ENVS, BatchedClassicAdapter, classic_backend
         from .simulation.execution import make_classic_adapter
 
-        self.simulation_backend = classic_backend(self.CLASSIC_DOMAIN, self.device, self.B, simulation_backend)
+        cutoff = TORCH_MIN_ENVS if torch_min_envs is None else torch_min_envs
+        self.simulation_backend = classic_backend(self.CLASSIC_DOMAIN, self.device, self.B, simulation_backend, cutoff)
         self.execution_mode = _EXECUTION_MODES[self.simulation_backend]
         if self.simulation_backend == "gym":
             self._simulator = make_classic_adapter(
                 self.CLASSIC_DOMAIN, self.B, self.device, self._seed, ClassicControlAdapter
             )
+        elif self.simulation_backend == "torch" and self.device.type == "cuda":
+            from .simulation.device import DeviceClassicAdapter
+
+            sink = (self._sim, self._render_state, self.sim_state_names, self.render_from_sim)
+            self._simulator = DeviceClassicAdapter(self.CLASSIC_DOMAIN, self.B, self.device, self._seed, sink)
         else:
             self._simulator = BatchedClassicAdapter(
                 self.CLASSIC_DOMAIN, self.B, self.device, self._seed, self.simulation_backend
@@ -158,10 +167,19 @@ class ClassicControlSemantics:
     def _step_pipeline(self) -> StepPipeline | None:
         return step_pipeline(self._simulator)
 
+    def _stack_states(self, states):
+        """Stack the States of a step sequence; the GPU simulator stacks its own States with one copy."""
+        from ..._core.stepping import _stack_states
+
+        stack = getattr(self._simulator, "stack_states", None)
+        stacked = None if stack is None else stack(states)
+        return _stack_states(states) if stacked is None else stacked
+
     def _step(self, actions, *, active=None):
         self._check_open("step")
         result = self._simulator.step(actions, active=active)
-        self._sync_authoritative_state(result["state"])
+        if not getattr(self._simulator, "writes_render_state", False):
+            self._sync_authoritative_state(result["state"])
         return result
 
     def _close(self):

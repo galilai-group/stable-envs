@@ -6,10 +6,11 @@ trade speed against memory. Frames and State are the same for every valid value.
 
 The `simulation_backend` constructor argument selects physics for [Reacher](environments/dmcontrol.md#reacher),
 [TwoRoom](environments/navigation.md#tworoom), TwoRoomTarget, Piecewise, PiecewiseZones and the
-[classic control](environments/classic-control.md#physics-backends) classes. Reacher chooses native CPU physics below a provisional
+[classic control](environments/classic-control.md#physics-backends) classes. On CUDA, the classic control classes step on the
+GPU by default. With `"auto"`, they step in NumPy on the host below `torch_min_envs` environments. Reacher chooses native CPU physics below a provisional
 cutoff of 32 environments and MJX for larger CUDA batches. The four navigation classes use Numba on CPU. On CUDA, TwoRoom
 uses Torch below `jax_min_envs` and JAX at or above it. Its cutoff defaults to 1 because current measurements favor JAX for
-one environment. Both cutoffs are constructor arguments and require measurements on your hardware to
+one environment. The cutoffs are constructor arguments and require measurements on your hardware to
 choose the fastest implementation. Reacher's backends use different precision and can produce
 different trajectories, so these arguments are separate from the tuning knobs below.
 

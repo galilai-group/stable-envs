@@ -2,8 +2,8 @@
 
 These five classes port the classic control tasks of
 [Gymnasium](https://gymnasium.farama.org/environments/classic_control/)
-([Towers et al., 2024](https://arxiv.org/abs/2407.17032)). The source simulator resets the lanes, and a
-batched port of its `step` advances all lanes at once (see [Physics backends](#physics-backends)).
+([Towers et al., 2024](https://arxiv.org/abs/2407.17032)). A batched port of the source `step` advances
+all lanes at once (see [Physics backends](#physics-backends)).
 The renderer is a port of the Gymnasium pygame `gfxdraw` code. It draws the source frame for the same
 State. On CUDA, a fused Triton kernel draws the frames. On CPU, a Numba kernel draws the same
 primitive records in parallel over frames and gives the same frames as the Triton kernel. The
@@ -26,28 +26,40 @@ masses. The Variation can change them.
 
 ## Physics backends
 
-Gymnasium resets each lane and owns its PCG64 random stream. The `simulation_backend` argument selects
-how the lanes step:
+The `simulation_backend` argument selects how the lanes step:
 
 | Value | Steps |
 | --- | --- |
-| `"auto"` (default) | `"numpy"`, or `"torch"` for 4096 or more CUDA lanes, or `"gym"` for very few lanes |
+| `None` (default) | `"torch"` on CUDA. On the CPU, `"numpy"`, or `"gym"` for very few lanes. |
+| `"auto"` | As the default on the CPU. On CUDA, `"torch"` for `torch_min_envs` or more lanes, and `"numpy"` or `"gym"` for fewer lanes. |
 | `"numpy"` | All lanes in one batched NumPy operation on the host. Outputs move to the environment device. |
 | `"torch"` | All lanes in one batched Torch operation on the environment device |
 | `"gym"` | One Gymnasium environment per lane |
 
-`"auto"` uses `"gym"` below 2 lanes for CartPole and Acrobot and below 8 lanes for
-MountainCarContinuous. At these batch sizes the Gymnasium loop is faster. Up to 4095 CUDA lanes, NumPy
-steps on the host and a copy of the outputs are faster than the Torch kernels.
+On the CPU, the default and `"auto"` use `"gym"` below 2 lanes for CartPole and Acrobot and below 8
+lanes for MountainCarContinuous. At these batch sizes the Gymnasium loop is faster. `torch_min_envs`
+is 1 by default, because on an L40S the Torch steps on the GPU are faster than the NumPy steps and the
+copy of their outputs to the GPU at every batch size from 1 to 4096.
 
-The NumPy steps give State, observations, rewards and episode flags equal to the Gymnasium steps. Torch computes `sin`, `cos` and powers with its own
-code, so Torch steps agree with Gymnasium to rounding. `env.simulation_backend` reports the selected
-backend.
+The NumPy steps give State, observations, rewards and episode flags equal to the Gymnasium steps. Torch
+computes `sin`, `cos` and powers with its own code, so Torch steps agree with Gymnasium to rounding.
+`env.simulation_backend` reports the selected backend.
+
+On the CPU, Gymnasium resets each lane and owns its PCG64 random stream for every backend.
+
+On CUDA, `"torch"` keeps the State on the GPU. One Triton kernel steps all lanes, and a CUDA graph
+replays the step, so a step does not read data back to the host. A reset draws the initial states on
+the GPU from the Gymnasium distributions. The `rng` State fields hold the key (`seed + lane`) and the
+reset count of each lane, not a PCG64 state. Thus a seed gives the same initial states each time, but
+not the Gymnasium initial states. The step does not check the range of discrete actions, because the
+check reads data back to the host. An action out of range gives undefined dynamics.
 
 ```python
-env = snv.Acrobot(num_envs=256)                                 # NumPy steps
-env = snv.Acrobot(num_envs=8192, device="cuda")                 # Torch steps on the GPU
-env = snv.Acrobot(num_envs=256, simulation_backend="gym")       # Gymnasium steps
+env = snv.Acrobot(num_envs=256)                            # NumPy steps
+env = snv.Acrobot(num_envs=64, device="cuda")              # Torch steps on the GPU
+env = snv.Acrobot(num_envs=256, simulation_backend="gym")  # Gymnasium steps
+# NumPy steps on the host, outputs on the GPU
+env = snv.Acrobot(num_envs=64, device="cuda", simulation_backend="auto", torch_min_envs=256)
 ```
 
 ## CartPole

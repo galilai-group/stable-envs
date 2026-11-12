@@ -83,6 +83,13 @@ All notable changes to this project are listed here. The format follows
 - MS-Human-700: `MSHumanLocomotion` steps on the shared batched MuJoCo backend. CUDA envs step on MuJoCo Warp at
   every batch size by default (`simulation_backend="default"`); `"auto"` keeps `mujoco.batch` below
   `mjwarp_min_envs` (256) CUDA environments. The MuJoCo Warp step does not synchronize the host.
+- Classic control on CUDA: `CartPole`, `Pendulum`, `Acrobot`, `MountainCar` and `MountainCarContinuous`
+  step on the GPU at every batch size by default. The State stays on the GPU. One Triton kernel per class
+  steps all environments, writes the outputs and the render rows, and a CUDA graph replays it, so a step does not
+  read data back to the host. Resets draw the initial states on the GPU from the Gymnasium distributions;
+  the `rng` State fields hold each environment's key and reset count. Steps agree with Gymnasium to rounding.
+  `simulation_backend="auto"` uses the NumPy steps on the host below `torch_min_envs` CUDA environments
+  (default 1). On the CPU the default does not change.
 - `OGBCube` and `OGBScene` use the OGBench cube size. The default `cube.size` is now 0.02, as in OGBench.
   Before, the default was the stable-worldmodel value `float32(0.02)`, which compiles to
   0.019999999552965164. That size changed the cube mass and inertia, so contacts moved the physics away

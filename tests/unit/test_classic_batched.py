@@ -292,12 +292,20 @@ def test_invalid_discrete_actions_raise_like_gymnasium(backend):
 
 def test_backend_selection():
     for domain, fewest in NUMPY_MIN_ENVS.items():
-        for device in ("cpu", "cuda"):
-            assert classic_backend(domain, device, fewest) == "numpy"
-            assert classic_backend(domain, device, fewest - 1) == "gym"
-        assert classic_backend(domain, "cpu", TORCH_MIN_ENVS) == "numpy"
-        assert classic_backend(domain, "cuda", TORCH_MIN_ENVS) == "torch"
-        assert classic_backend(domain, "cuda", TORCH_MIN_ENVS, "gym") == "gym"
+        for backend in (None, "auto"):
+            assert classic_backend(domain, "cpu", fewest, backend) == "numpy"
+            assert classic_backend(domain, "cpu", fewest - 1, backend) == "gym"
+            assert classic_backend(domain, "cpu", 4096, backend) == "numpy"
+        # By default CUDA lanes step on the GPU at every batch size; "auto" keeps small batches on the host.
+        for lanes in (1, fewest, 4096):
+            assert classic_backend(domain, "cuda", lanes) == "torch"
+            assert classic_backend(domain, "cuda:0", lanes, "gym") == "gym"
+        assert classic_backend(domain, "cuda", TORCH_MIN_ENVS, "auto") == "torch"
+        assert classic_backend(domain, "cuda", 16, "auto", torch_min_envs=16) == "torch"
+        assert classic_backend(domain, "cuda", 15, "auto", torch_min_envs=16) == "numpy"
+        assert classic_backend(domain, "cuda", fewest - 1, "auto", torch_min_envs=16) == "gym"
+    with pytest.raises(ValueError, match="torch_min_envs"):
+        classic_backend("cartpole", "cuda", 2, "auto", torch_min_envs=0)
     with pytest.raises(ValueError, match="simulation_backend"):
         classic_backend("cartpole", "cpu", 2, "mjx")
     for name in CLASSES.values():
@@ -347,5 +355,7 @@ def test_cuda_steps_match_gymnasium(domain):
             reference.close()
             fast.close()
     with se.make(CLASSES[domain], num_envs=8, device="cuda") as env:
-        assert env.simulation_backend == "numpy" and env.execution_mode == "NATIVE_NUMPY"
+        assert env.simulation_backend == "torch" and env.execution_mode == "NATIVE_TORCH"
         assert env.get_state()["lifecycle", "elapsed_steps"].device.type == "cuda"
+    with se.make(CLASSES[domain], num_envs=8, device="cuda", simulation_backend="auto", torch_min_envs=16) as env:
+        assert env.simulation_backend == "numpy" and env.execution_mode == "NATIVE_NUMPY"

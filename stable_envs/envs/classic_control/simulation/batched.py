@@ -542,20 +542,36 @@ class BatchedClassicAdapter(ClassicControlAdapter):
         super().close()
 
 
-#: Fewest lanes for which ``"auto"`` picks NumPy steps. Below them the per-call cost of the batched
-#: arrays exceeds the Gymnasium loop. Measured on a Xeon Platinum 8268.
+#: Fewest lanes for which the CPU default and ``"auto"`` pick NumPy steps. Below them the per-call cost of the
+#: batched arrays exceeds the Gymnasium loop. Measured on a Xeon Platinum 8268.
 NUMPY_MIN_ENVS = {"cartpole": 2, "pendulum": 1, "acrobot": 2, "mountain_car": 1, "mountain_car_continuous": 8}
-#: Fewest CUDA lanes for which ``"auto"`` picks Torch steps. Below them NumPy steps on the host and a copy
-#: of the outputs to the GPU are faster than the Torch kernel launches. Measured on an RTX A6000.
-TORCH_MIN_ENVS = 4096
+#: Fewest CUDA lanes for which ``"auto"`` picks Torch steps; below them NumPy steps on the host and the
+#: outputs are copied to the GPU. On an L40S the Torch step on the GPU is faster at every batch size.
+TORCH_MIN_ENVS = 1
+BACKENDS = ("auto", "gym", "numpy", "torch")
 
 
-def classic_backend(domain: str, device: str | torch.device, num_envs: int, backend: str = "auto") -> str:
-    """Resolve ``simulation_backend`` from the device and the lane count."""
-    if backend not in ("auto", "gym", "numpy", "torch"):
-        raise ValueError(f"simulation_backend must be 'auto', 'gym', 'numpy' or 'torch', got {backend!r}")
-    if backend != "auto":
+def classic_backend(
+    domain: str,
+    device: str | torch.device,
+    num_envs: int,
+    backend: str | None = None,
+    torch_min_envs: int = TORCH_MIN_ENVS,
+) -> str:
+    """Resolve ``simulation_backend`` from the device and the lane count.
+
+    ``None`` selects Torch on CUDA and the CPU choice of ``"auto"`` on the CPU. ``"auto"`` also uses
+    Torch on CUDA, but only for ``torch_min_envs`` or more lanes.
+    """
+    if backend is not None and backend not in BACKENDS:
+        raise ValueError(f"simulation_backend must be None, 'auto', 'gym', 'numpy' or 'torch', got {backend!r}")
+    if isinstance(torch_min_envs, bool) or not isinstance(torch_min_envs, int) or torch_min_envs < 1:
+        raise ValueError(f"torch_min_envs must be an int >= 1, got {torch_min_envs!r}")
+    cuda = torch.device(device).type == "cuda"
+    if backend is None and cuda:
+        return "torch"
+    if backend not in (None, "auto"):
         return backend
-    if torch.device(device).type == "cuda" and num_envs >= TORCH_MIN_ENVS:
+    if cuda and num_envs >= torch_min_envs:
         return "torch"
     return "numpy" if num_envs >= NUMPY_MIN_ENVS[domain] else "gym"
