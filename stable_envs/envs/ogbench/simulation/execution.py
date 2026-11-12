@@ -9,6 +9,7 @@ from ...._execution.protocol import SimulatorAdapter
 if TYPE_CHECKING:
     import torch
 
+    from .cube_mjx import CubeMJXAdapter
     from .manipulation_process import OGBManipulationProcessAdapter
 
 from .maze_process import OGBMazeProcessAdapter
@@ -39,7 +40,13 @@ def make_manipulation_adapter(
     seed: int | None,
     reward_task_id: int | None,
     local_factory: Callable[..., _AdapterT],
-) -> _AdapterT | OGBManipulationProcessAdapter:
+) -> _AdapterT | CubeMJXAdapter | OGBManipulationProcessAdapter:
+    import torch
+
+    if family == "Cube" and torch.device(device).type == "cuda":
+        from .cube_mjx import CubeMJXAdapter
+
+        return CubeMJXAdapter(family, num_envs, device, seed, reward_task_id)
     cpus = cpu_affinity()
     count = process_count(num_envs, cpus, path="ogb-sim")
     if count:
