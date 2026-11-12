@@ -32,8 +32,9 @@ These frames are byte-identical to frames drawn in the main process.
 A step reads from PyBullet only the State leaves that a step can change: the rocket pose, velocity and fuel
 tank mass, the cached link poses, and the task, RNG and history fields. The other leaves come from the last
 reset, configuration or restore. A zero leaf that a step does not change, such as `current/wrapper/current_goal`
-without a render mode, is a new zero tensor and is not copied. The State is the same as a full read of the
-engine. On CUDA, the outputs of the worker processes go to the device when they arrive.
+without a render mode, is a new zero tensor and is not copied. The environments do not keep a stored copy of
+such a leaf. The State is the same as a full read of the engine. On CUDA, the outputs of the worker
+processes go to the device when they arrive.
 
 Each PyBullet client holds about 27 MB. A reset or a restore replaces the client of one environment at a
 time: it makes the new client and then closes the old one. Thus a worker process holds at most one client

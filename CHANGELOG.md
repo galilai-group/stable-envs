@@ -163,6 +163,17 @@ All notable changes to this project are listed here. The format follows
   full read of the engine. On 8 cores of an EPYC 9354 with an L40S, `env.step` with State and one reset
   for each 183-step episode makes 2.7k to 3.1k steps/s for 64 to 1024 environments, 3.0 to 3.5 times the
   steps/s before, on CPU and on CUDA.
+- `PyFlytRocketLanding` uses less memory. A reset or a restore replaces the PyBullet client of one
+  environment at a time, so a worker process holds at most one client more than its environments. Before, a
+  worker made a new client for each environment before it closed the old clients, and its memory stayed at
+  two clients (about 54 MB) for each environment. A large State leaf that is all zero, such as
+  `current/wrapper/current_goal` without a render mode, is not stored for each environment. Reset checks
+  the arguments of every environment before it changes one. If PyBullet fails during a reset, the
+  environments before the failed one can have a new episode. A restore keeps the State of each environment
+  that it replaced and replays these States if it fails, so no environment changes. One process holds at
+  most 1022 Rocket lanes. With frames on CUDA and 8 cores of an L40S pod, the peak host memory is 37.0 GB
+  for 1024 environments (before: 67.3 GB) and 70.0 GB for 2048 environments (before: out of memory on a
+  125 GB pod). The PyFlyt source in 8 worker processes uses 37.5 GB and 70.6 GB.
 - With worker processes and `process_static_leaves`, a step that only needs a frame from `frame_fields`
   does not export the State. On CUDA without host outputs, the static State leaves are cached and copied
   on the device.

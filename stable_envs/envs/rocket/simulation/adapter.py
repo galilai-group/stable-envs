@@ -9,7 +9,7 @@ from tensordict import TensorDict
 from ...._execution.process import BROADCAST, PER_LANE, fresh_copy, leaf_tensordict
 from ...._execution.protocol import SimulatorAdapter
 from .actions import validate_actions
-from .replay import RocketReplay, generator_state, install_generator
+from .replay import RocketReplay, generator_state, install_generator, is_zero_view
 
 
 def check_values(template, values, num_envs):
@@ -104,12 +104,20 @@ class RocketAdapter(SimulatorAdapter):
         """``{key tuple: tensor}`` on ``device`` of the other State leaves, stacked once per reset or restore."""
         if self._static is None:
             rows = [env.full_leaves() for env in self.envs]
-            self._static = {
-                key: torch.from_numpy(np.stack([row["/".join(key)] for row in rows])).to(self.device)
-                for key in self.process_static_leaves
-            }
-            # Zero leaves, such as an unused image, are not copied.
-            self._zero = frozenset(key for key, value in self._static.items() if not value.any())
+            self._static, zero = {}, set()
+            for key in self.process_static_leaves:
+                column = [row["/".join(key)] for row in rows]
+                if all(is_zero_view(value) for value in column):
+                    # A large zero leaf of every lane, such as an unused image, is not stacked.
+                    value = torch.zeros((), dtype=self.fields[key][1], device=self.device)
+                    self._static[key] = value.expand(self.num_envs, *column[0].shape)
+                    zero.add(key)
+                else:
+                    self._static[key] = torch.from_numpy(np.stack(column)).to(self.device)
+                    if not self._static[key].any():
+                        zero.add(key)
+            # Zero leaves are not copied.
+            self._zero = frozenset(zero)
         return self._static
 
     @property

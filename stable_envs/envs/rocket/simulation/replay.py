@@ -114,6 +114,22 @@ def _versions():
     return version("PyFlyt"), version("pybullet")
 
 
+#: Bytes from which ``full_leaves`` keeps an all-zero leaf as a zero view.
+ZERO_VIEW_BYTES = 4096
+
+
+def zero_view(value):
+    """``value``, or a read-only zero view of its shape that holds no memory when it is large and all zero."""
+    if value.nbytes >= ZERO_VIEW_BYTES and not value.any():
+        return np.broadcast_to(np.zeros((), value.dtype), value.shape)
+    return value
+
+
+def is_zero_view(value):
+    """True for a view that ``zero_view`` makes."""
+    return value.ndim > 0 and not any(value.strides)
+
+
 def current_leaves(captured):
     """``capture`` or ``capture_step`` output -> ``current/`` State leaves."""
     state = {}
@@ -342,7 +358,7 @@ class RocketReplay:
         The leaves that a step changes are out of date after a step. The caller must not change the arrays.
         """
         if self._full is None:
-            self._full = self.read_state()
+            self._full = {key: zero_view(value) for key, value in self.read_state().items()}
             self._bodies = step_bodies(self.env)
         return self._full
 
