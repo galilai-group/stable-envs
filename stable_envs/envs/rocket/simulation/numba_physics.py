@@ -7,9 +7,12 @@ exponential-map orientation update, velocity clamp of 100 per component. PyBulle
 the link rotation of the previous substep, and reads link velocities through that rotation; the kernel keeps both.
 Free flight matches PyBullet to double rounding.
 
-Contacts are approximate: a vertex test of the rocket hull against the ground box and the pad cylinder, made from
-the pose at the start of the substep (Bullet reports contacts one substep late), and a projected Gauss-Seidel
-impulse solve with no restitution. The task logic is ``RocketLandingEnv.compute_term_trunc_reward``.
+Contacts are approximate. The kernel tests the vertices of the rocket collision shapes against the ground box and
+the pad from the pose at the start of the substep, as Bullet does (so contacts show one substep late), with Bullet's
+contact threshold of each shape and the 1 mm margin of the convex hulls PyBullet makes of URDF cylinders. A
+projected Gauss-Seidel solve with Bullet's multibody contact rows follows (speculative rows for separated points,
+``erp2`` push-out for penetrating ones, plane-space friction, no restitution, no warm start). The task logic is
+``RocketLandingEnv.compute_term_trunc_reward``.
 """
 
 from __future__ import annotations
@@ -30,14 +33,22 @@ NOISE_PER_SETTLE = SUBSTEPS_PER_AVIARY_STEP * SETTLE_AVIARY_STEPS
 OBSERVATION_DIM = 30
 START_FUEL = 0.05
 
-CONTACT_MARGIN = 0.005
 FRICTION_PAD = 0.25
 FRICTION_GROUND = 0.5
-SOLVER_ITERATIONS = 20
+#: PyBullet's solver settings: ``numSolverIterations``, ``erp2`` of contact rows, ``linearSlop``.
+SOLVER_ITERATIONS = 50
+CONTACT_ERP = 0.08
+LINEAR_SLOP = 1e-5
+#: Bullet's ``gContactBreakingThreshold``: a pair reports points closer than this factor times the bounding radius of
+#: the smaller shape.
+BREAKING_THRESHOLD_FACTOR = 0.02
+#: ``gUrdfDefaultCollisionMargin`` of the convex hulls PyBullet builds for URDF cylinders.
+HULL_MARGIN = 0.001
 MAX_CONTACTS = 64
 GROUND_HALF_EXTENT = 100.0
 PAD_RADIUS = 2.0
 PAD_TOP = 0.15
+PAD_BOTTOM = 0.05
 
 _BODY_DRAG = 0.5 * 1.225 * np.array([1.16, 1.16, 2.0]) * np.array([1.7649, 1.7649, 0.1075])
 #: Origins of the links that PyFlyt's lifting surfaces use (ids 0..3: fuel tank, booster, two fins).
@@ -66,25 +77,37 @@ _PI = 3.1415926535897932384626433832795029
 
 
 def _hull_vertices():
-    """Body-frame contact vertices: three leg boxes, booster and body cylinders (16 sides), four fin boxes."""
+    """Body-frame contact vertices ``(x, y, z, margin, contact threshold)`` of the rocket collision shapes.
+
+    Three leg boxes, four fin boxes, and the 32-sided hulls of the booster and body cylinders (vertex ``i`` at
+    angle ``2 pi i / 32`` from +y, as PyBullet's URDF importer builds them). The threshold is
+    ``BREAKING_THRESHOLD_FACTOR`` times the half diagonal of the shape's bounding box; the pad and the ground are
+    larger, so the rocket shape sets it.
+    """
     v = []
-    for yaw, (x, y) in [(0.0, (0.0, 0.35)), (4.188, (0.3031, -0.175)), (-4.188, (-0.3031, -0.175))]:
+
+    def box(center, yaw, half):
         c, s = math.cos(yaw), math.sin(yaw)
-        for sx in (-0.025, 0.025):
-            for sy in (-0.25, 0.25):
-                for sz in (-0.025, 0.025):
-                    v.append((x + c * sx - s * sy, y + s * sx + c * sy, -2.4 + sz))
+        threshold = BREAKING_THRESHOLD_FACTOR * math.sqrt(sum(h * h for h in half))
+        for sx in (-half[0], half[0]):
+            for sy in (-half[1], half[1]):
+                for sz in (-half[2], half[2]):
+                    v.append(
+                        (center[0] + c * sx - s * sy, center[1] + s * sx + c * sy, center[2] + sz, 0.0, threshold)
+                    )
+
+    for yaw, x, y in [(0.0, 0.0, 0.35), (4.188, 0.3031, -0.175), (-4.188, -0.3031, -0.175)]:
+        box((x, y, -2.4), yaw, (0.025, 0.25, 0.025))
+    for x, y, hx, hy in [(0.35, 0.0, 0.15, 0.015), (-0.35, 0.0, 0.15, 0.015), (0.0, 0.35, 0.015, 0.15),
+                         (0.0, -0.35, 0.015, 0.15)]:  # fmt: skip
+        box((x, y, 2.051), 0.0, (hx, hy, 0.15))
     for cz, r, hl in [(-2.0, 0.25, 0.25), (0.0, 0.185, 2.385)]:
-        for k in range(16):
-            a = 2 * math.pi * k / 16
+        rm, hm = r + HULL_MARGIN, hl + HULL_MARGIN
+        threshold = BREAKING_THRESHOLD_FACTOR * math.sqrt(2 * rm * rm + hm * hm)
+        for k in range(32):
+            a = 2 * math.pi * k / 32
             for sz in (-hl, hl):
-                v.append((r * math.cos(a), r * math.sin(a), cz + sz))
-    for (x, y), (hx, hy) in [((0.35, 0), (0.15, 0.015)), ((-0.35, 0), (0.15, 0.015)), ((0, 0.35), (0.015, 0.15)),
-                             ((0, -0.35), (0.015, 0.15))]:  # fmt: skip
-        for sx in (-hx, hx):
-            for sy in (-hy, hy):
-                for sz in (-0.15, 0.15):
-                    v.append((x + sx, y + sy, 2.051 + sz))
+                v.append((r * math.sin(a), r * math.cos(a), cz + sz, HULL_MARGIN, threshold))
     return np.array(v)
 
 
@@ -289,7 +312,7 @@ def _aero(alpha, act):
 
 
 @njit(cache=True)
-def _substep(b, z, pos, quat, vel, avel, lrot, lvel, fin, gim, thr_, fuel_, ign_, cmd, verts, crel, cmu):
+def _substep(b, z, pos, quat, vel, avel, lrot, lvel, fin, gim, thr_, fuel_, ign_, cmd, verts, crel):
     """One 240 Hz substep of environment ``b`` with standard-normal thrust noise ``z``.
 
     Return ``(pad contact, ground contact)`` as Bullet reports them after this substep.
@@ -313,25 +336,30 @@ def _substep(b, z, pos, quat, vel, avel, lrot, lvel, fin, gim, thr_, fuel_, ign_
     pad_hit = False
     ground_hit = False
     if pz0 < 3.5:
-        reach_pad = (PAD_RADIUS + CONTACT_MARGIN) * (PAD_RADIUS + CONTACT_MARGIN)
+        pad_top = PAD_TOP + HULL_MARGIN
         for i in range(verts.shape[0]):
             rx, ry, rz = _mv(R, verts[i, 0], verts[i, 1], verts[i, 2])
             x = rx + px0
             y = ry + py0
-            zz = rz + pz0
-            hit = False
-            mu = 0.0
-            if zz <= CONTACT_MARGIN and abs(x) <= GROUND_HALF_EXTENT and abs(y) <= GROUND_HALF_EXTENT:
+            low = rz + pz0 - verts[i, 3]
+            threshold = verts[i, 4]
+            gap = 0.0
+            mu = -1.0
+            if low < threshold and abs(x) <= GROUND_HALF_EXTENT and abs(y) <= GROUND_HALF_EXTENT:
                 ground_hit = True
-                hit = True
+                gap = low
                 mu = FRICTION_GROUND
-            if x * x + y * y <= reach_pad and zz <= PAD_TOP + CONTACT_MARGIN:
+            reach = PAD_RADIUS + HULL_MARGIN + verts[i, 3]
+            if x * x + y * y <= reach * reach and low - pad_top < threshold and low > PAD_BOTTOM - HULL_MARGIN:
                 pad_hit = True
-                hit = True
+                gap = low - pad_top
                 mu = FRICTION_PAD
-            if hit and nc < MAX_CONTACTS:
+            if mu >= 0.0 and nc < MAX_CONTACTS:
                 crel[b, nc, 0], crel[b, nc, 1], crel[b, nc, 2] = rx, ry, rz
-                cmu[b, nc] = mu
+                gap += LINEAR_SLOP
+                # target normal speed of the row: speculative when apart, erp2 push-out when penetrating
+                crel[b, nc, 3] = -gap / DT if gap > 0.0 else -gap * CONTACT_ERP / DT
+                crel[b, nc, 4] = mu
                 nc += 1
     Fx = Fy = Fz = 0.0
     Tx = Ty = Tz = 0.0  # torque about the base origin, body frame
@@ -441,22 +469,23 @@ def _substep(b, z, pos, quat, vel, avel, lrot, lvel, fin, gim, thr_, fuel_, ign_
     wwy = _clamp100(wwy + DT * awy)
     wwz = _clamp100(wwz + DT * awz)
     if nc > 0:
-        # projected Gauss-Seidel on normal and two friction rows per contact; impulses accumulate in crel[b, c, 3:6]
+        # projected Gauss-Seidel: every normal row, then every friction row (limit from that contact's normal
+        # impulse), as btMultiBodyConstraintSolver orders them; impulses accumulate in crel[b, c, 5:8]
         for c in range(nc):
-            crel[b, c, 3] = 0.0
-            crel[b, c, 4] = 0.0
             crel[b, c, 5] = 0.0
+            crel[b, c, 6] = 0.0
+            crel[b, c, 7] = 0.0
         for _ in range(SOLVER_ITERATIONS):
-            for c in range(nc):
-                rx, ry, rz = crel[b, c, 0], crel[b, c, 1], crel[b, c, 2]
-                cx, cy, cz2 = rx - cwx, ry - cwy, rz - cwz
-                for kind in range(3):
-                    if kind == 0:
-                        nx, ny, nz = 0.0, 0.0, 1.0
-                    elif kind == 1:
-                        nx, ny, nz = 1.0, 0.0, 0.0
-                    else:
-                        nx, ny, nz = 0.0, 1.0, 0.0
+            for kind in range(3):
+                if kind == 0:
+                    nx, ny, nz = 0.0, 0.0, 1.0
+                elif kind == 1:
+                    nx, ny, nz = 0.0, -1.0, 0.0
+                else:
+                    nx, ny, nz = 1.0, 0.0, 0.0
+                for c in range(nc):
+                    rx, ry, rz = crel[b, c, 0], crel[b, c, 1], crel[b, c, 2]
+                    cx, cy, cz2 = rx - cwx, ry - cwy, rz - cwz
                     pv = _cross(wwx, wwy, wwz, rx, ry, rz)
                     vn = (vx + pv[0]) * nx + (vy + pv[1]) * ny + (vz + pv[2]) * nz
                     rn = _cross(cx, cy, cz2, nx, ny, nz)
@@ -464,15 +493,14 @@ def _substep(b, z, pos, quat, vel, avel, lrot, lvel, fin, gim, thr_, fuel_, ign_
                     ia = _mv(R, ib[0] / Ixx, ib[1] / Iyy, ib[2] / Izz)
                     kk = _cross(ia[0], ia[1], ia[2], cx, cy, cz2)
                     keff = 1.0 / M + kk[0] * nx + kk[1] * ny + kk[2] * nz
-                    dl = -vn / keff
-                    old = crel[b, c, 3 + kind]
+                    old = crel[b, c, 5 + kind]
                     if kind == 0:
-                        new = max(old + dl, 0.0)
+                        new = max(old + (crel[b, c, 3] - vn) / keff, 0.0)
                     else:
-                        lim = cmu[b, c] * crel[b, c, 3]
-                        new = min(max(old + dl, -lim), lim)
+                        lim = crel[b, c, 4] * crel[b, c, 5]
+                        new = min(max(old - vn / keff, -lim), lim)
                     dl = new - old
-                    crel[b, c, 3 + kind] = new
+                    crel[b, c, 5 + kind] = new
                     jx, jy, jz = dl * nx, dl * ny, dl * nz
                     dwx, dwy, dwz = ia[0] * dl, ia[1] * dl, ia[2] * dl
                     dv = _cross(dwx, dwy, dwz, cwx, cwy, cwz)
@@ -584,7 +612,6 @@ def _aviary_step(
     physics_steps,
     verts,
     crel,
-    cmu,
 ):
     """``Aviary.step``: two substeps; return the pad and ground contact flags of the step."""
     pad = False
@@ -599,7 +626,7 @@ def _aviary_step(
             for k in range(4):
                 cmd[b, 4 + k] = action[b, 3 + k]
         p, g = _substep(
-            b, noise[b, k0 + s], pos, quat, vel, avel, lrot, lvel, fin, gim, thr, fuel, ign, cmd, verts, crel, cmu
+            b, noise[b, k0 + s], pos, quat, vel, avel, lrot, lvel, fin, gim, thr, fuel, ign, cmd, verts, crel
         )
         pad |= p
         ground |= g
@@ -614,7 +641,7 @@ def _step_kernel(
     ignition_state, throttle_state, p_ignition_state, p_throttle_state, p_render_ignition, flame_ignited,
     pad_contact, reward, step_count, termination, truncation, out_of_bounds, fatal_collision, env_complete,
     start_pos, start_orn,
-    actions, noise, active, noise_used, verts, crel, cmu, ceiling, max_displacement, max_steps, sparse_reward,
+    actions, noise, active, noise_used, verts, crel, ceiling, max_displacement, max_steps, sparse_reward,
 ):  # fmt: skip
     for b in prange(pos.shape[0]):
         if not active[b]:
@@ -646,7 +673,6 @@ def _step_kernel(
                 physics_steps,
                 verts,
                 crel,
-                cmu,
             )
             used += SUBSTEPS_PER_AVIARY_STEP
             _compute_state(
@@ -740,7 +766,7 @@ def _settle_kernel(
     ignition_state, throttle_state, p_ignition_state, p_throttle_state, p_render_ignition, flame_ignited,
     pad_contact, reward, step_count, termination, truncation, out_of_bounds, fatal_collision, env_complete,
     start_pos, start_orn,
-    noise, mask, verts, crel, cmu,
+    noise, mask, verts, crel,
 ):  # fmt: skip
     for b in prange(pos.shape[0]):
         if not mask[b]:
@@ -766,7 +792,6 @@ def _settle_kernel(
                 physics_steps,
                 verts,
                 crel,
-                cmu,
             )
         _compute_state(
             b,
@@ -891,7 +916,7 @@ def _start_kernel(
 
 
 def _scratch(num_envs):
-    return np.empty((num_envs, MAX_CONTACTS, 6)), np.empty((num_envs, MAX_CONTACTS))
+    return np.empty((num_envs, MAX_CONTACTS, 8))
 
 
 def step(
@@ -923,7 +948,7 @@ def step(
         raise ValueError("Rocket step expects actions (B, 7), noise (B, NOISE_PER_STEP) and active (B,)")
     noise_used = np.zeros(num_envs, np.int64)
     _step_kernel(
-        *_args(state), actions, noise, active, noise_used, HULL_VERTICES, *_scratch(num_envs),
+        *_args(state), actions, noise, active, noise_used, HULL_VERTICES, _scratch(num_envs),
         float(ceiling), float(max_displacement), int(max_steps), bool(sparse_reward),
     )  # fmt: skip
     info = {
@@ -973,7 +998,7 @@ def settle(state: dict[str, np.ndarray], noise_settle: np.ndarray, mask: np.ndar
     if noise_settle.shape != (num_envs, NOISE_PER_SETTLE):
         raise ValueError("Rocket settle expects noise (B, NOISE_PER_SETTLE)")
     mask = np.ascontiguousarray(mask, dtype=np.bool_)
-    _settle_kernel(*_args(state), noise_settle, mask, HULL_VERTICES, *_scratch(num_envs))
+    _settle_kernel(*_args(state), noise_settle, mask, HULL_VERTICES, _scratch(num_envs))
 
 
 def observation(state: dict[str, np.ndarray]) -> np.ndarray:
