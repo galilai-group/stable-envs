@@ -345,3 +345,39 @@ def test_reset_pool_returns_rows_in_env_order(owners, processes):
     with NativeBatch(_model(), 6) as batch:
         batch.set_physics({k: values[k] for k in ("qpos", "qvel")}, env_ids=ids)
         np.testing.assert_array_equal(batch.data("qpos").numpy()[ids], want)
+
+
+@cuda
+def test_mjwarp_per_environment_options_and_model_fields_are_live_views():
+    with WarpBatch(_model(), 2, "cuda", frame_skip=FRAME_SKIP, batched_fields=("body_mass", "opt.gravity")) as batch:
+        gravity = batch.model_field("opt.gravity")
+        assert gravity.shape == (2, 3)
+        gravity[1] = 0
+        batch.model_field("body_mass")[0, 1] = 2.0
+        start = batch.get_physics()["qpos"]
+        batch.step(torch.zeros(2, 2, device="cuda"))
+        moved = (batch.data("qpos") - start)[:, :2].abs().amax(1)
+        # The arm starts horizontal at rest: it falls under gravity and stays where it is without.
+        assert float(moved[0]) > 1e-3 and float(moved[1]) < 1e-6
+        with pytest.raises(KeyError, match="not batched"):
+            batch.model_field("geom_size")
+
+
+@cuda
+def test_mjwarp_step_fn_replaces_the_substeps():
+    calls = []
+
+    def step_fn(m, d):
+        calls.append(1)
+        import mujoco_warp as mjw
+
+        mjw.step(m, d)
+
+    with WarpBatch(_model(), 2, "cuda", frame_skip=FRAME_SKIP, step_fn=step_fn) as batch:
+        traced = len(calls)
+        start = float(batch.data("time")[0])
+        batch.step(torch.zeros(2, 2, device="cuda"))
+        batch.step(torch.zeros(2, 2, device="cuda"))
+        # The graph replays one step_fn call per step; Python runs it only while capturing.
+        assert len(calls) == traced
+        assert float(batch.data("time")[0]) - start == pytest.approx(2 * _model().opt.timestep, rel=1e-5)

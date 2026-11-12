@@ -40,7 +40,11 @@ to sizes for the batch; an overflow raises :class:`BufferOverflowError` instead 
 ``set_physics(..., forward=True)`` forwards every world, so derived fields of the other worlds then describe
 their current state. Sensors are computed on the last substep only, as they do not act on the dynamics.
 ``exclude_pairs`` removes geom pairs from MuJoCo Warp's collision candidates, as an ``<exclude>`` would: a
-family uses it for pairs whose bounding volumes overlap but which make no contact.
+family uses it for pairs whose bounding volumes overlap but which make no contact. ``batched_fields`` names model
+fields (and options, as ``"opt.<name>"``) that hold one value per environment; ``model_field(name)`` is a live
+view of one, for families that write per-environment parameters directly instead of through ``set_models``.
+``step_fn(m, d)``, when given, runs in place of the ``frame_skip`` calls of ``mjw.step`` in the step graph, for a
+family whose source steps in another call order.
 Up to ``fused_tree_max_envs`` worlds, the graphs compute subtree centers of mass, composite inertias and RNE
 internal forces with one launch per pass instead of one per body tree level (:mod:`.mjwarp_fused`), on the
 MuJoCo Warp versions it supports.
@@ -468,6 +472,7 @@ class WarpBatch(MjBatch):
         model_options: Mapping[str, object] | None = None,
         exclude_pairs: Iterable[tuple[int, int]] = (),
         fused_tree_max_envs: int = FUSED_TREE_MAX_ENVS,
+        step_fn: Callable[[object, object], None] | None = None,
         **_native_options,
     ):
         import mujoco
@@ -489,6 +494,9 @@ class WarpBatch(MjBatch):
         self.fused_tree = self.num_envs <= int(fused_tree_max_envs)
         self.fields = tuple(f for f in PHYSICS_FIELDS if not f.startswith("mocap") or self.model.nmocap)
         self.outputs = tuple(name for name in outputs if name not in self.fields)
+        self._step_fn = step_fn
+        self._batched_options = tuple(name[4:] for name in batched_fields if name.startswith("opt."))
+        batched_fields = tuple(name for name in batched_fields if not name.startswith("opt."))
         template = mujoco.MjData(self.model)
         if keyframe is None:
             mujoco.mj_resetData(self.model, template)
@@ -510,6 +518,12 @@ class WarpBatch(MjBatch):
                 self._m = mjw.put_model(self.model, batch_sizes={name: self.num_envs for name in self._batched})
                 for name, value in (model_options or {}).items():
                     setattr(self._m.opt, name, value)
+                for name in self._batched_options:
+                    value = getattr(self._m.opt, name)
+                    if not isinstance(value, wp.array):
+                        raise ValueError(f"Option field {name!r} cannot be batched per environment")
+                    per_env = np.repeat(value.numpy()[:1], self.num_envs, 0)
+                    setattr(self._m.opt, name, wp.array(per_env, dtype=value.dtype))
                 _exclude_pairs(self._m, self.model, exclude_pairs)
                 self._write_variants(rows)
                 self._d = mjw.put_data(
@@ -606,6 +620,24 @@ class WarpBatch(MjBatch):
             stacked = torch.stack([self._wp.to_torch(getattr(row, name))[0] for row in rows])
             self._wp.to_torch(getattr(self._m, name)).copy_(stacked[self._variant_index])
 
+    def model_field(self, name: str) -> torch.Tensor:
+        """A live ``[B, ...]`` view of a batched model field, or of a batched option as ``"opt.<name>"``.
+
+        Writes take effect at the next step or forward on the current Torch stream.
+        """
+        self._check_open()
+        view = self._views.get(f"model.{name}")
+        if view is None:
+            option = name.removeprefix("opt.")
+            if name.startswith("opt.") and option in self._batched_options:
+                array = getattr(self._m.opt, option)
+            elif name in self._batched:
+                array = getattr(self._m, name)
+            else:
+                raise KeyError(f"{name!r} is not batched; pass it in batched_fields= when building the backend")
+            view = self._views[f"model.{name}"] = self._wp.to_torch(array)
+        return view
+
     def set_models(self, models) -> None:
         """Write new per-environment parameters into the batched model fields; other fields must not change."""
         self._check_open()
@@ -626,17 +658,20 @@ class WarpBatch(MjBatch):
 
     def _step_body(self) -> None:
         mjw, m, d = self._mjw, self._m, self._d
-        # Sensors do not act on the dynamics: only the last substep computes them.
-        flags = m.opt.disableflags
-        if self.model.nsensor:
-            m.opt.disableflags = flags | int(mjw.DisableBit.SENSOR)
-        try:
-            for substep in range(self.frame_skip):
-                if substep == self.frame_skip - 1:
-                    m.opt.disableflags = flags
-                mjw.step(m, d)
-        finally:
-            m.opt.disableflags = flags
+        if self._step_fn is not None:
+            self._step_fn(m, d)
+        else:
+            # Sensors do not act on the dynamics: only the last substep computes them.
+            flags = m.opt.disableflags
+            if self.model.nsensor:
+                m.opt.disableflags = flags | int(mjw.DisableBit.SENSOR)
+            try:
+                for substep in range(self.frame_skip):
+                    if substep == self.frame_skip - 1:
+                        m.opt.disableflags = flags
+                    mjw.step(m, d)
+            finally:
+                m.opt.disableflags = flags
         if self._rne_post:
             mjw.rne_postconstraint(m, d)
         self._wp.launch(

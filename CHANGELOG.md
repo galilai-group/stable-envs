@@ -146,6 +146,10 @@ All notable changes to this project are listed here. The format follows
   own renderer. Before, the reference was the class itself with `backend="opengl"`.
 - MuJoCo Warp steps (`WarpBatch` and the DMC runtime) compute sensors on the last substep of a step only. The
   values that a step returns do not change, and the other substeps launch fewer kernels.
+- `WarpBatch` accepts `step_fn(m, d)`, which runs in place of the `frame_skip` calls of `mjw.step` in the step
+  graph, for a family whose source steps in another call order. `batched_fields` also takes options as
+  `"opt.<name>"`, with one value per environment, and `model_field(name)` is a live view of a batched model field
+  or option for direct per-environment writes.
 - `WarpBatch` accepts `exclude_pairs`, geom pairs that MuJoCo Warp does not test for contact. OGBCube and
   OGBScene on MuJoCo Warp exclude the pairs of Robotiq gripper links, which make no contacts. The Cube oracle
   replay has the same outcomes and first-success steps.
