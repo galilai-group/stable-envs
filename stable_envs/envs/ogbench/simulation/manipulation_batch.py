@@ -207,6 +207,7 @@ class OGBManipulationBatchAdapter:
         self._order = tuple(self.fields)
         self._views = {key[1]: self.b.bind(_BATCH_NAMES[key[1]]) for key in self._order if key[0] == "physics"}
         self._snapshot = Snapshot(self.fields, num_envs)
+        self._all = np.arange(num_envs)
         self._models = LaneModels(env, set(_model_fields()) & {*COMPILED_FIELDS, "dof_damping", "site_pos"})
         self._expanded = {}
         p = self.physics
@@ -387,9 +388,9 @@ class OGBManipulationBatchAdapter:
     def step(self, actions, *, active=None, capture_state=True):
         self._check_open()
         actions, active = self.check_step(actions, active)
-        ids = np.arange(self.num_envs) if active is None else np.flatnonzero(active)
+        ids = self._all if active is None else np.flatnonzero(active)
         if len(ids):
-            self._advance(actions[ids], ids)
+            self._advance(actions if active is None else actions[ids], ids)
             self._stale = True
         result = {key: torch.from_numpy(value.copy()).to(self.device) for key, value in self._outputs.items()}
         if capture_state:
@@ -407,7 +408,7 @@ class OGBManipulationBatchAdapter:
             button_pos = self._qpos[ids][:, self._buttons]
         c["output", "prev_qpos"][ids] = self._qpos[ids]
         c["output", "prev_qvel"][ids] = self._qvel[ids]
-        self.physics.step(active=ids)
+        self.physics.step(active=None if ids is self._all else ids)
         c["output", "gripper_force"][ids] = self._out_cfrc_ext[ids, self._pad]
         if scene:
             self._scene_post_step(ids, button_pos)
@@ -450,7 +451,7 @@ class OGBManipulationBatchAdapter:
         if damping is None:
             damping = self._expanded["dof_damping"] = self.b.expand("dof_damping")
         damping[ids[:, None], self._lock_dofs] = np.where(states[ids] == 0, 1e6, 2.0)
-        self.physics.forward(ids)
+        self.physics.forward(None if ids is self._all else ids)
 
     def _repair(self, ids):
         """OGBench's reset of a cube that left the workspace, drawing from the lane's environment generator."""
