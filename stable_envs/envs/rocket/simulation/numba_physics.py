@@ -21,6 +21,7 @@ import math
 
 import numpy as np
 from numba import njit, prange
+from numba.np.random._constants import fi_double, ki_double, wi_double, ziggurat_nor_inv_r, ziggurat_nor_r
 
 DT = 1.0 / 240.0
 GRAVITY = 9.81
@@ -165,8 +166,11 @@ FIELDS: dict[str, tuple[tuple[int, ...], np.dtype]] = {
     "env_complete": ((), _B1),
     "start_pos": ((3,), _F8),
     "start_orn": ((3,), _F8),
+    # PCG64 of the source's ``np_random`` as uint64 words (state high, state low, increment high, increment low),
+    # stored as int64; ``step`` and ``settle`` draw the thrust noise from it when they get no ``noise``
+    "rng": ((4,), _I8),
 }
-_ORDER = tuple(FIELDS)
+_ORDER = tuple(k for k in FIELDS if k != "rng")
 
 
 def new_state(num_envs: int) -> dict[str, np.ndarray]:
@@ -176,6 +180,105 @@ def new_state(num_envs: int) -> dict[str, np.ndarray]:
 
 def _args(state):
     return tuple(state[k] for k in _ORDER)
+
+
+# --------------------------------------------------------------------------------------------- PCG64 normals
+
+_U32 = np.uint64(0xFFFFFFFF)
+_MULT_HI = np.uint64(0x2360ED051FC65DA4)
+_MULT_LO = np.uint64(0x4385DF649FCCF645)
+
+
+@njit(cache=True, inline="always")
+def _mulhi(a, b):
+    a0, a1 = a & _U32, a >> np.uint64(32)
+    b0, b1 = b & _U32, b >> np.uint64(32)
+    p0, p1, p2, p3 = a0 * b0, a0 * b1, a1 * b0, a1 * b1
+    carry = ((p0 >> np.uint64(32)) + (p1 & _U32) + (p2 & _U32)) >> np.uint64(32)
+    return p3 + (p1 >> np.uint64(32)) + (p2 >> np.uint64(32)) + carry
+
+
+@njit(cache=True)
+def _next_uint64(rng, b):
+    """NumPy ``PCG64.next_uint64``: one XSL-RR 128/64 step of row ``b`` of ``rng``."""
+    sh, sl, ih, il = rng[b, 0], rng[b, 1], rng[b, 2], rng[b, 3]
+    hi = _mulhi(sl, _MULT_LO) + sh * _MULT_LO + sl * _MULT_HI
+    lo = sl * _MULT_LO
+    nlo = lo + il
+    hi = hi + ih + (np.uint64(1) if nlo < lo else np.uint64(0))
+    rng[b, 0], rng[b, 1] = hi, nlo
+    x = hi ^ nlo
+    rot = hi >> np.uint64(58)
+    return (x >> rot) | (x << ((np.uint64(64) - rot) & np.uint64(63)))
+
+
+@njit(cache=True, inline="always")
+def _next_double(rng, b):
+    return np.float64(_next_uint64(rng, b) >> np.uint64(11)) * (1.0 / 9007199254740992.0)
+
+
+@njit(cache=True)
+def _standard_normal(rng, b):
+    """NumPy ``Generator.standard_normal`` (ziggurat) on row ``b`` of ``rng``."""
+    while True:
+        r = _next_uint64(rng, b)
+        idx = r & np.uint64(0xFF)
+        r >>= np.uint64(8)
+        sign = r & np.uint64(1)
+        rabs = (r >> np.uint64(1)) & np.uint64(0x000FFFFFFFFFFFFF)
+        x = np.float64(rabs) * wi_double[idx]
+        if sign:
+            x = -x
+        if rabs < ki_double[idx]:
+            return x
+        if idx == 0:
+            while True:
+                xx = -ziggurat_nor_inv_r * np.log1p(-_next_double(rng, b))
+                yy = -np.log1p(-_next_double(rng, b))
+                if yy + yy > xx * xx:
+                    if (rabs >> np.uint64(8)) & np.uint64(1):
+                        return -(ziggurat_nor_r + xx)
+                    return ziggurat_nor_r + xx
+        elif (fi_double[idx - 1] - fi_double[idx]) * _next_double(rng, b) + fi_double[idx] < np.exp(-0.5 * x * x):
+            return x
+
+
+@njit(cache=True, parallel=True)
+def _normals_kernel(rng, out):
+    for b in prange(out.shape[0]):
+        for k in range(out.shape[1]):
+            out[b, k] = _standard_normal(rng, b)
+
+
+def rng_words(generators) -> np.ndarray:
+    """``(B, 4)`` int64 ``rng`` rows of NumPy PCG64 generators; their normal draws continue bit for bit."""
+    rows = []
+    mask = (1 << 64) - 1
+    for generator in generators:
+        state = generator.bit_generator.state
+        if state["bit_generator"] != "PCG64":
+            raise ValueError("Rocket thrust noise needs PCG64 generators")
+        s, inc = state["state"]["state"], state["state"]["inc"]
+        rows.append([s >> 64, s & mask, inc >> 64, inc & mask])
+    return np.array(rows, dtype=np.uint64).view(np.int64).reshape(len(rows), 4)
+
+
+def generator_state(words: np.ndarray) -> dict:
+    """NumPy ``PCG64`` ``bit_generator.state`` of one ``rng`` row."""
+    hi, lo, ihi, ilo = (int(w) for w in np.asarray(words, np.int64).view(np.uint64))
+    return {
+        "bit_generator": "PCG64",
+        "state": {"state": (hi << 64) | lo, "inc": (ihi << 64) | ilo},
+        "has_uint32": 0,
+        "uinteger": 0,
+    }
+
+
+def normals(rng: np.ndarray, count: int) -> np.ndarray:
+    """``(B, count)`` standard normals drawn from the ``(B, 4)`` int64 ``rng`` rows, which advance in place."""
+    out = np.empty((rng.shape[0], count))
+    _normals_kernel(rng.view(np.uint64), out)
+    return out
 
 
 # --------------------------------------------------------------------------------------------- small math
@@ -596,6 +699,8 @@ def _compute_state(
 def _aviary_step(
     b,
     noise,
+    rng,
+    draw,
     k0,
     pos,
     quat,
@@ -626,9 +731,8 @@ def _aviary_step(
             cmd[b, 3] = min(max(sp0 + sp2, -1.0), 1.0)
             for k in range(4):
                 cmd[b, 4 + k] = action[b, 3 + k]
-        p, g = _substep(
-            b, noise[b, k0 + s], pos, quat, vel, avel, lrot, lvel, fin, gim, thr, fuel, ign, cmd, verts, crel
-        )
+        z = _standard_normal(rng, b) if draw else noise[b, k0 + s]
+        p, g = _substep(b, z, pos, quat, vel, avel, lrot, lvel, fin, gim, thr, fuel, ign, cmd, verts, crel)
         pad |= p
         ground |= g
         physics_steps[b] += 1
@@ -642,7 +746,7 @@ def _step_kernel(
     ignition_state, throttle_state, p_ignition_state, p_throttle_state, p_render_ignition, flame_ignited,
     pad_contact, reward, step_count, termination, truncation, out_of_bounds, fatal_collision, env_complete,
     start_pos, start_orn,
-    actions, noise, active, noise_used, verts, crel, ceiling, max_displacement, max_steps, sparse_reward,
+    actions, noise, rng, draw, active, noise_used, verts, crel, ceiling, max_displacement, max_steps, sparse_reward,
 ):  # fmt: skip
     for b in prange(pos.shape[0]):
         if not active[b]:
@@ -657,6 +761,8 @@ def _step_kernel(
             pad, ground = _aviary_step(
                 b,
                 noise,
+                rng,
+                draw,
                 used,
                 pos,
                 quat,
@@ -767,7 +873,7 @@ def _settle_kernel(
     ignition_state, throttle_state, p_ignition_state, p_throttle_state, p_render_ignition, flame_ignited,
     pad_contact, reward, step_count, termination, truncation, out_of_bounds, fatal_collision, env_complete,
     start_pos, start_orn,
-    noise, mask, verts, crel,
+    noise, rng, draw, mask, verts, crel,
 ):  # fmt: skip
     for b in prange(pos.shape[0]):
         if not mask[b]:
@@ -776,6 +882,8 @@ def _settle_kernel(
             _aviary_step(
                 b,
                 noise,
+                rng,
+                draw,
                 a * SUBSTEPS_PER_AVIARY_STEP,
                 pos,
                 quat,
@@ -920,10 +1028,21 @@ def _scratch(num_envs):
     return np.empty((num_envs, MAX_CONTACTS, 8))
 
 
+def _noise(state, noise, shape, name):
+    """``(noise, rng, draw)`` kernel arguments: the given draws, or the ``rng`` field when ``noise`` is None."""
+    rng = state["rng"].view(np.uint64)
+    if noise is None:
+        return np.empty((1, 1)), rng, True
+    noise = np.ascontiguousarray(noise, dtype=np.float64)
+    if noise.shape != shape:
+        raise ValueError(f"Rocket {name} expects noise {shape}")
+    return noise, rng, False
+
+
 def step(
     state: dict[str, np.ndarray],
     actions: np.ndarray,
-    noise: np.ndarray,
+    noise: np.ndarray | None,
     active: np.ndarray,
     *,
     ceiling: float = 500.0,
@@ -934,8 +1053,9 @@ def step(
     """One agent step (3 aviary steps, 6 substeps) of the ``active`` environments, in place on ``state``.
 
     ``actions`` is ``(B, 7)`` float64 and already valid; ``noise`` is ``(B, NOISE_PER_STEP)`` standard-normal draws
-    in the order the source draws them. An episode that ends after an aviary step skips the rest of the step, as
-    the source does, and uses fewer draws: ``info["noise_used"]`` counts them. An environment that had already
+    in the order the source draws them, or None to draw them from the ``rng`` field as the source draws them from
+    its ``np_random``. An episode that ends after an aviary step skips the rest of the step, as the source does,
+    and uses fewer draws: ``info["noise_used"]`` counts them. An environment that had already
     ended steps nothing and gets reward 0. ``max_steps`` is ``max_duration_seconds * agent_hz``.
 
     Return ``(reward, terminated, truncated, info)``; ``info`` holds copies of ``out_of_bounds``,
@@ -943,13 +1063,13 @@ def step(
     """
     num_envs = state["position"].shape[0]
     actions = np.ascontiguousarray(actions, dtype=np.float64)
-    noise = np.ascontiguousarray(noise, dtype=np.float64)
     active = np.ascontiguousarray(active, dtype=np.bool_)
-    if actions.shape != (num_envs, 7) or noise.shape != (num_envs, NOISE_PER_STEP) or active.shape != (num_envs,):
-        raise ValueError("Rocket step expects actions (B, 7), noise (B, NOISE_PER_STEP) and active (B,)")
+    if actions.shape != (num_envs, 7) or active.shape != (num_envs,):
+        raise ValueError("Rocket step expects actions (B, 7) and active (B,)")
+    noise, rng, draw = _noise(state, noise, (num_envs, NOISE_PER_STEP), "step")
     noise_used = np.zeros(num_envs, np.int64)
     _step_kernel(
-        *_args(state), actions, noise, active, noise_used, HULL_VERTICES, _scratch(num_envs),
+        *_args(state), actions, noise, rng, draw, active, noise_used, HULL_VERTICES, _scratch(num_envs),
         float(ceiling), float(max_displacement), int(max_steps), bool(sparse_reward),
     )  # fmt: skip
     info = {
@@ -989,17 +1109,15 @@ def start_state(state: dict[str, np.ndarray], mask: np.ndarray, start: dict[str,
     _start_kernel(*_args(state), mask, *columns, fuel)
 
 
-def settle(state: dict[str, np.ndarray], noise_settle: np.ndarray, mask: np.ndarray) -> None:
+def settle(state: dict[str, np.ndarray], noise_settle: np.ndarray | None, mask: np.ndarray) -> None:
     """The 10 aviary steps (20 substeps) of ``RocketBaseEnv.end_reset`` with zero setpoint, then ``compute_state``.
 
-    ``noise_settle`` is ``(B, NOISE_PER_SETTLE)`` standard-normal draws.
+    ``noise_settle`` is ``(B, NOISE_PER_SETTLE)`` standard-normal draws, or None to draw them from ``rng``.
     """
     num_envs = state["position"].shape[0]
-    noise_settle = np.ascontiguousarray(noise_settle, dtype=np.float64)
-    if noise_settle.shape != (num_envs, NOISE_PER_SETTLE):
-        raise ValueError("Rocket settle expects noise (B, NOISE_PER_SETTLE)")
+    noise_settle, rng, draw = _noise(state, noise_settle, (num_envs, NOISE_PER_SETTLE), "settle")
     mask = np.ascontiguousarray(mask, dtype=np.bool_)
-    _settle_kernel(*_args(state), noise_settle, mask, HULL_VERTICES, _scratch(num_envs))
+    _settle_kernel(*_args(state), noise_settle, rng, draw, mask, HULL_VERTICES, _scratch(num_envs))
 
 
 def observation(state: dict[str, np.ndarray]) -> np.ndarray:

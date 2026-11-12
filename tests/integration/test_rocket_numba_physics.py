@@ -23,6 +23,8 @@ OPTIONS = {
     "smooth": {"variation": ["environment"]},
     "land": None,
     "land_off": {"variation": ["environment.start_horizontal_offset"]},
+    "firm": {"variation": ["environment"]},
+    "pad": None,
 }
 
 
@@ -47,8 +49,9 @@ def policy(kind, t, env):
     roll, pitch = env.ang_pos[0], env.ang_pos[1]
     wx, wy = env.ang_vel[0], env.ang_vel[1]
     h = z - 2.575
-    if kind in ("land", "land_off"):
-        vt = -max(1.0, np.sqrt(2 * 6.0 * max(h, 0.0)))
+    if kind in ("land", "land_off", "firm", "pad"):
+        # firm touchdowns (4.5 m/s) crash or touch without landing; then the episode goes on with contact
+        vt = -max(4.5 if kind in ("firm", "pad") else 1.0, np.sqrt(2 * 6.0 * max(h, 0.0)))
         armed = h < 1.15 * vz * vz / (2 * 30.0) + 3.0 and vz < -5.0
         ign = 1.0 if (armed or (env.ignition_state and vz < vt)) and vz < vt else 0.0
         g1 = float(np.clip(3.0 * roll + 1.0 * wx + 0.05 * np.sin(0.3 * t), -1, 1))
@@ -103,6 +106,7 @@ def run_source(kind, seed):
             rec["complete"].append(bool(info["env_complete"]))
             if term or trunc:
                 break
+        rec["rng_end"] = nk.rng_words([env.np_random])[0]
     finally:
         env.close()
     return {k: np.array(v) if isinstance(v, list) else v for k, v in rec.items()}
@@ -126,11 +130,11 @@ def start_columns(recs):
 def run_kernel(recs, seeds):
     """Replay the source actions on the kernel, all rollouts in one batch, with the source noise streams."""
     num = len(recs)
-    rngs = [np.random.default_rng(s) for s in seeds]
     state = nk.new_state(num)
+    state["rng"][:] = nk.rng_words([np.random.default_rng(s) for s in seeds])
     everyone = np.ones(num, bool)
     nk.start_state(state, everyone, start_columns(recs))
-    nk.settle(state, np.stack([r.standard_normal(nk.NOISE_PER_SETTLE) for r in rngs]), everyone)
+    nk.settle(state, None, everyone)
     out = {
         "reset_body": np.concatenate(
             [state["position"], state["quaternion"], state["linear_velocity"], state["angular_velocity"]], 1
@@ -145,11 +149,7 @@ def run_kernel(recs, seeds):
     live = everyone.copy()
     for t in range(steps):
         actions = np.stack([r["action"][t] if t < len(r["action"]) else np.zeros(7) for r in recs])
-        noise = np.zeros((num, nk.NOISE_PER_STEP))
-        for b in np.flatnonzero(live):
-            # one draw per substep the source runs; an ended episode draws no more
-            noise[b] = rngs[b].standard_normal(nk.NOISE_PER_STEP)
-        rew, term, trunc, info = nk.step(state, actions, noise, live)
+        rew, term, trunc, info = nk.step(state, actions, None, live)
         for b in np.flatnonzero(live):
             body[b, t] = np.concatenate(
                 [
@@ -173,6 +173,7 @@ def run_kernel(recs, seeds):
         trunc=state["truncation"].copy(),
         fatal=state["fatal_collision"].copy(),
         complete=state["env_complete"].copy(),
+        rng=state["rng"].copy(),
     )
     return out
 
@@ -225,20 +226,36 @@ def compare(kinds_seeds):
                 "reward_ours_end": float(got["reward"][b, got["end"][b]]) if got["end"][b] >= 0 else float("nan"),
                 "return_src": float(rec["reward"].sum()),
                 "return_ours": float(np.nansum(got["reward"][b])),
+                "same_rng": bool(np.array_equal(got["rng"][b], rec["rng_end"])),
             }
         )
     return rows
 
 
-CASES = [("free", 0), ("free", 3), ("burn", 1), ("burn", 4), ("land", 0), ("land", 2), ("smooth", 0), ("smooth", 4)]
+#: ``(kind, seed)`` and the source outcome ``(fatal, landed)``. ``pad`` 1 touches the pad for two steps before it
+#: lands, ``pad`` 4 crashes on the pad, ``firm`` 10 crashes on the ground with a leg first.
+CASES = {
+    ("free", 0): (True, False),
+    ("free", 3): (True, False),
+    ("burn", 1): (True, False),
+    ("burn", 4): (True, False),
+    ("smooth", 0): (True, False),
+    ("smooth", 4): (True, False),
+    ("land", 0): (False, True),
+    ("land", 2): (False, True),
+    ("pad", 1): (False, True),
+    ("pad", 4): (True, False),
+    ("firm", 10): (True, False),
+}
+IDS = [f"{k}-{s}" for k, s in CASES]
 
 
 @pytest.fixture(scope="module")
 def rows():
-    return compare(CASES)
+    return compare(list(CASES))
 
 
-@pytest.mark.parametrize("index", range(len(CASES)), ids=[f"{k}-{s}" for k, s in CASES])
+@pytest.mark.parametrize("index", range(len(CASES)), ids=IDS)
 def test_kernel_follows_pybullet_until_contact(rows, index):
     row = rows[index]
     assert row["free_steps"] >= 250
@@ -247,13 +264,24 @@ def test_kernel_follows_pybullet_until_contact(rows, index):
         assert row[key] < ATOL, (key, row)
 
 
-@pytest.mark.parametrize("index", range(len(CASES)), ids=[f"{k}-{s}" for k, s in CASES])
+@pytest.mark.parametrize("index", range(len(CASES)), ids=IDS)
 def test_kernel_ends_the_episode_as_the_source(rows, index):
     row = rows[index]
     assert row["ours"] == row["src"], row
     assert row["end"] == row["steps"] - 1, row
-    expected = {"free": (True, False), "burn": (True, False), "smooth": (True, False), "land": (False, True)}
-    assert row["src"][:2] == expected[row["kind"]]
+    # the kernel draws exactly the thrust noise the source draws
+    assert row["same_rng"], row
+    assert row["src"][:2] == CASES[row["kind"], row["seed"]]
+
+
+@pytest.mark.parametrize("seed", [0, 1, 12345])
+def test_rng_rows_draw_numpy_normals(seed):
+    reference = np.random.default_rng(seed)
+    rng = nk.rng_words([np.random.default_rng(seed), np.random.default_rng(seed + 1)])
+    draws = nk.normals(rng, 200_000)
+    np.testing.assert_array_equal(draws[0], reference.standard_normal(200_000))
+    np.testing.assert_array_equal(draws[1], np.random.default_rng(seed + 1).standard_normal(200_000))
+    assert nk.generator_state(rng[0]) == reference.bit_generator.state
 
 
 def test_an_ended_environment_steps_nothing():
