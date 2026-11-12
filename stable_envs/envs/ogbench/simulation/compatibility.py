@@ -570,8 +570,20 @@ class Compatibility:
         root = self._mjcf_model
         getattr(root.visual, "global").offwidth = self._render_width
         getattr(root.visual, "global").offheight = self._render_height
-        xml = mjcf_utils.to_string(root)
-        self._pool.join(self, xml, lambda: mujoco.MjModel.from_xml_string(xml=xml, assets=mjcf_utils.get_assets(root)))
+        # The MJCF is a function of MODEL_VALUES and the render size, so the key skips XML
+        # serialization, which costs more than the rest of a reset.
+        key = "|".join(
+            [self.family, str(self._render_width), str(self._render_height)]
+            + [
+                np.asarray(self._mjcf_values[k]).dtype.str + np.asarray(self._mjcf_values[k]).tobytes().hex()
+                for k in MODEL_VALUES
+            ]
+        )
+        self._pool.join(
+            self,
+            key,
+            lambda: mujoco.MjModel.from_xml_string(xml=mjcf_utils.to_string(root), assets=mjcf_utils.get_assets(root)),
+        )
         self._data = mujoco.MjData(self._model)
         self._model.opt.timestep = self._physics_timestep
         mujoco.mj_resetData(self._model, self._data)
