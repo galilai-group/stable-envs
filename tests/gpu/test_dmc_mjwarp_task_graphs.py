@@ -129,12 +129,6 @@ def test_reset_round_rewards_skip_discarded_outputs_and_match_full_reference(nam
             expected_native = adapter._source.get_state()
             expected_next_reset = adapter.reset(None)
             adapter.set_state(initial)
-            # Require cold scratch setup to honor reward_only as well. Reusing
-            # the reference's captured full graph would hide a missing flag
-            # from the Python-method checks below.
-            if adapter._scratch is not None:
-                adapter._scratch.close()
-                adapter._scratch = None
             phase = {"reward_only": False, "reward_rounds": 0}
 
             def checked_round(controls, *, reward_only=False, controls_validated=False):
@@ -186,12 +180,12 @@ def test_failed_continuing_reward_round_preserves_pending_resets_and_recovers(mo
         native = adapter._source.get_state()
         physics = adapter._runtime.physical_state()
         counts, pending = adapter._counts.copy(), adapter._pending.copy()
-        scratch = adapter._scratch
-        check_result = scratch._check_result
+        runtime = adapter._runtime
+        check_result = runtime._check_result
 
         def fail_continuing_round(*, recorded=False):
             if recorded:
-                scratch._data_view("qvel")[-1, -1] = float("nan")
+                runtime._data_view("qvel")[-1, -1] = float("nan")
                 return check_result()
             return check_result(recorded=recorded)
 
@@ -199,7 +193,7 @@ def test_failed_continuing_reward_round_preserves_pending_resets_and_recovers(mo
             pytest.fail("Failed continuing physics consumed a pending lane's reset RNG")
 
         with monkeypatch.context() as patch:
-            patch.setattr(scratch, "_check_result", fail_continuing_round)
+            patch.setattr(runtime, "_check_result", fail_continuing_round)
             patch.setattr(adapter._source, "prepare_reset", unexpected_reset)
             with pytest.raises(RuntimeError, match="produced nonfinite qvel"):
                 adapter.step(actions)

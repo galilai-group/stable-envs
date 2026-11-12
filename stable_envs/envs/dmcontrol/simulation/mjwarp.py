@@ -44,7 +44,7 @@ def _ordered(method):
 class DMCWarpAdapter(SimulatorAdapter):
     """Batched float32 physics with the registered DMC State and reset semantics.
 
-    One native owner samples resets from each lane's saved RNG and model values.
+    Native owners sample resets from each lane's saved RNG and model values.
     Between resets, snapshots come from the live Warp checkpoint.
     Public checkpoint columns retain their declared float64 dtype. A restored
     checkpoint is preserved exactly until physics next advances.
@@ -59,7 +59,6 @@ class DMCWarpAdapter(SimulatorAdapter):
             self.device = torch.device("cuda", torch.cuda.current_device())
         self._closed = False
         self._event = None
-        self._scratch = None
         self._runtime = None
         self._source = WarpResetPool(key, self.num_envs, seed, *WarpRuntime.model_schema())
         try:
@@ -294,47 +293,39 @@ class DMCWarpAdapter(SimulatorAdapter):
             out = captured if reward_only else self._outputs(self._runtime, captured)
             self._save_physics(self._runtime)
         else:
-            advanced = None
+            captured = None
             if len(continuing):
-                if self._scratch is None or self._scratch.num_envs != len(continuing):
-                    if self._scratch is not None:
-                        self._scratch.close()
-                    self._scratch = WarpRuntime(
-                        self._models.select(continuing),
-                        self.device,
-                        self._nsubsteps,
-                        ordered_constraints=self.key in {"cheetah", "humanoid"},
-                        ordered_pyramidal=self.key == "humanoid",
-                        ordered_elliptic=self.key == "manipulator",
-                    )
                 ids = torch.as_tensor(continuing, device=self.device)
-                self._scratch.load(self._state[ids], models=self._models.select(continuing))
-                # Collect acceleration-stage sensors before reconstruction.
-                advanced = self._scratch.advance(
-                    controls[ids],
-                    controls_validated=controls_validated,
-                    task=self._task,
-                    reward_only=reward_only,
-                )
-                self._save_physics(self._scratch, ids)
+                try:
+                    # Resetting lanes advance with the batch; their physics is replaced below.
+                    captured = self._runtime.advance(
+                        controls, controls_validated=controls_validated, task=self._task, reward_only=reward_only
+                    )
+                except BaseException:
+                    self._runtime.load(self._state, models=self._models)
+                    raise
+                self._save_physics(self._runtime, ids)
             self._reset_lanes(resetting)
             self._runtime.load(self._state, models=self._models)
+            rows = torch.as_tensor(resetting, device=self.device)
             if reward_only:
-                # Reset lanes contribute zero. Preserve continuing rewards from
-                # before reconstruction, without computing discarded outputs.
                 out = torch.zeros(self.num_envs, dtype=torch.float64, device=self.device)
-                if advanced is not None:
-                    out[ids] = advanced
-            else:
+                if captured is not None:
+                    out[ids] = captured[ids]
+            elif captured is None:
                 out = self._outputs(self._runtime)
                 out["reward"].zero_()
-                if advanced is not None:
-                    for key, value in advanced.items():
-                        if key == "info":
-                            for field, column in value.items():
-                                out[key][field][ids] = column
-                        else:
-                            out[key][ids] = value
+            else:
+                out = self._outputs(self._runtime, captured)
+                fresh = self._outputs(self._runtime)
+                out["reward"] = out["reward"].clone()
+                out["reward"][rows] = 0
+                for key, value in fresh.items():
+                    if key == "info":
+                        for field, column in value.items():
+                            out[key][field][rows] = column[rows]
+                    elif key != "reward":
+                        out[key][rows] = value[rows]
         self._counts[continuing] += 1
         self._pending[continuing] = self._counts[continuing] >= self._limits[continuing]
         if not len(resetting):
@@ -356,24 +347,6 @@ class DMCWarpAdapter(SimulatorAdapter):
         _, controls = self._prepare_step(actions, active)
         reward = torch.zeros(self.num_envs, device=self.device, dtype=torch.float64)
         paired = self._runtime.supports_pair and not self._pending.any() and np.all(self._counts < self._limits - 1)
-        if paired:
-            released = self._runtime.release_graphs(single=True)
-            if self._scratch is not None:
-                self._scratch.close()
-                self._scratch = None
-                released = True
-        else:
-            released = self._runtime.release_graphs(paired=True)
-        if released and self.device.type == "cuda":
-            # Reset forwards allocate through Warp, while paired scratch uses
-            # Torch. Return unused Torch blocks to CUDA at route transitions.
-            with torch.cuda.device(self.device):
-                torch.cuda.empty_cache()
-                if paired:
-                    # CUDA also retains inactive Warp graph-allocation blocks.
-                    # Both checked graph caches are gone before returning this
-                    # separate pool to CUDA for paired capture and restoration.
-                    self._runtime.trim_graph_memory()
         if paired:
             # Native resets need a host-visible success decision before RNG
             # work. Pair only calls whose two rounds both integrate every lane.
@@ -407,8 +380,7 @@ class DMCWarpAdapter(SimulatorAdapter):
         if not self._closed:
             if self._event is not None:
                 self._event.synchronize()
-            for runtime in (self._runtime, self._scratch):
-                if runtime is not None:
-                    runtime.close()
+            if self._runtime is not None:
+                self._runtime.close()
             self._source.close()
             self._closed = True

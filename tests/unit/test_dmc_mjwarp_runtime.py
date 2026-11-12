@@ -1,6 +1,6 @@
 """Small independent MuJoCo models exercise the Warp execution boundary."""
 
-from contextlib import closing, nullcontext
+from contextlib import closing
 
 import numpy as np
 import pytest
@@ -58,65 +58,6 @@ def source_round(m, d, control, substeps):
         if substeps > 1:
             mujoco.mj_step(m, d, substeps - 1)
     mujoco.mj_step1(m, d)
-
-
-@pytest.mark.parametrize(
-    ("lookup_result", "trim_result", "message"),
-    [(0, 0, None), (101, 0, r"resolve CUDA device 3.*error 101"), (0, 2, r"graph memory on device 3.*error 2")],
-)
-def test_graph_memory_trim_resolves_driver_device_and_reports_errors(lookup_result, trim_result, message, monkeypatch):
-    import ctypes
-    from types import SimpleNamespace
-
-    from stable_envs.envs.dmcontrol.simulation import mjwarp_runtime
-
-    calls = []
-
-    def device_get(destination, ordinal):
-        calls.append(("lookup", ordinal))
-        # A CUDA driver device handle need not equal the caller's ordinal.
-        ctypes.cast(destination, ctypes.POINTER(ctypes.c_int)).contents.value = 37
-        return lookup_result
-
-    def trim(device):
-        calls.append(("trim", device))
-        return trim_result
-
-    driver = SimpleNamespace(cuDeviceGet=device_get, cuDeviceGraphMemTrim=trim)
-    monkeypatch.setattr(mjwarp_runtime, "_cuda_graph_memory_driver", lambda: driver)
-    if message is None:
-        mjwarp_runtime._trim_cuda_graph_memory(3)
-    else:
-        with pytest.raises(RuntimeError, match=message):
-            mjwarp_runtime._trim_cuda_graph_memory(3)
-    assert calls == ([("lookup", 3)] if lookup_result else [("lookup", 3), ("trim", 37)])
-
-
-def test_cpu_graph_memory_trim_does_not_load_cuda_driver(monkeypatch):
-    from stable_envs.envs.dmcontrol.simulation import mjwarp_runtime
-
-    def unexpected_driver_load():
-        pytest.fail("A CPU runtime tried to load the NVIDIA CUDA driver")
-
-    monkeypatch.setattr(mjwarp_runtime, "_cuda_graph_memory_driver", unexpected_driver_load)
-    with closing(WarpRuntime([model()], "cpu", 1)) as runtime:
-        runtime.trim_graph_memory()
-
-
-def test_cuda_graph_memory_trim_uses_normalized_device_index(monkeypatch):
-    from stable_envs.envs.dmcontrol.simulation import mjwarp_runtime
-
-    # Match the constructor's device representation without allocating CUDA
-    # resources: Warp receives a string, while Torch retains the ordinal.
-    runtime = WarpRuntime.__new__(WarpRuntime)
-    runtime._closed = False
-    runtime.device = torch.device("cuda:3")
-    runtime._wp_device = "cuda:3"
-    ordinals = []
-    monkeypatch.setattr(runtime, "_scope", nullcontext)
-    monkeypatch.setattr(mjwarp_runtime, "_trim_cuda_graph_memory", ordinals.append)
-    runtime.trim_graph_memory()
-    assert ordinals == [3]
 
 
 def test_retained_scratch_reuses_round_storage_without_aliasing_live_allocations(monkeypatch):
@@ -196,8 +137,8 @@ def test_copy_physical_state_preserves_clock_unselected_lanes_and_ownership(devi
                 view.copy_(torch.arange(view.numel(), device=device).reshape(view.shape) + (index + 1) / 7)
         source = runtime.physical_state()
         assert "activation" in source.keys()
-        batch = 4 if subset else 2
-        lanes = torch.tensor([3, 1], device=device) if subset else None
+        batch = 2
+        lanes = torch.tensor([1], device=device) if subset else None
         destination = TensorDict(
             {
                 key: torch.full((batch, value.shape[1]), -777.0, dtype=torch.float64, device=device)
@@ -213,12 +154,12 @@ def test_copy_physical_state_preserves_clock_unselected_lanes_and_ownership(devi
         selected = lanes if subset else slice(None)
         for key, value in source.items():
             if key != "time":
-                expected[key][selected] = value.double()
+                expected[key][selected] = value[selected].double()
         runtime.copy_physical_state(destination, lanes=lanes, include_time=False)
         torch.testing.assert_close(destination, expected, atol=0, rtol=0)
 
         # Standalone callers can also copy the runtime clock explicitly.
-        expected["time"][selected] = source["time"].double()
+        expected["time"][selected] = source["time"][selected].double()
         runtime.copy_physical_state(destination, lanes=lanes)
         torch.testing.assert_close(destination, expected, atol=0, rtol=0)
         with runtime._scope():

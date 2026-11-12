@@ -39,7 +39,7 @@ def test_humanoid_replays_100_public_calls(seed):
                 raise AssertionError(f"Humanoid seed {seed}, replay public call {call}: {error}") from error
 
 
-@pytest.mark.parametrize("reset_together", [False, True], ids=["scratch-width2", "scratch-width1"])
+@pytest.mark.parametrize("reset_together", [False, True], ids=["staggered", "together"])
 def test_humanoid_mixed_resets_preserve_continuing_lane_across_streams(reset_together):
     device = torch.device("cuda", torch.cuda.current_device())
     first, second = torch.cuda.Stream(device=device), torch.cuda.Stream(device=device)
@@ -51,8 +51,8 @@ def test_humanoid_mixed_resets_preserve_continuing_lane_across_streams(reset_tog
                 env.step(torch.as_tensor(action, device=device), states=None, frames=None)
             initial = env.get_state()
             limit = int(env._simulator._limits[0])
-            # Staggered resets advance two scratch lanes in each round. When
-            # both reset in round one, only lane 2 advances in that scratch.
+            # Staggered resets leave two lanes resetting in different rounds. When
+            # both reset in round one, only lane 2 continues in that round.
             initial["lifecycle", "step_count"][:, 0] = torch.tensor(
                 [limit if reset_together else limit - 1, limit, 6], device=device
             )

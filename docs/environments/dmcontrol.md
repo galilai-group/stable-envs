@@ -64,12 +64,13 @@ Snapshots own their memory. This does not guarantee bitwise identical future GPU
 Rendering continues to consume State, independently of the stepping backend.
 
 Source physics substeps, RK4 and acceleration-stage sensor timing are retained. Native environments
-remain authoritative for resets and RNG. MJWarp reuses one native reset owner and stores each lane's
-complete RNG state, episode targets, physics values and compact model columns independently. Static
-native model assets are shared instead of copied per lane. Reset sampling remains sequential on the
-CPU, and model/state storage still grows with batch size. A pending reset consumes a control round with zero reward;
-continuing lanes use a compact scratch runtime. A changed active-lane count requires a new scratch
-allocation, so mixed resets can cost more than steady-state stepping.
+remain authoritative for resets and RNG. MJWarp stores each lane's complete RNG state, episode targets,
+physics values and compact model columns independently. Static native model assets are shared instead
+of copied per lane. For Cheetah and Quadruped, one native reset owner per `dmc_threads` thread resets a
+share of the lanes in parallel. Other tasks use one reset owner. Model and State storage grows with the
+batch size. A pending reset uses one control round with zero reward. When only some lanes reset, the
+full batch advances in the same runtime and the reset lanes get their new State afterward. The CUDA
+graphs stay captured through episode boundaries.
 
 For Warp 3.17 the runtime corrects plane–capsule friction frames and capsule–capsule geometry to
 follow native MuJoCo's [primitive collisions](https://github.com/google-deepmind/mujoco/blob/3.17.0/src/engine/engine_collision_primitive.c).
@@ -82,7 +83,7 @@ Cheetah and Humanoid order joint-limit and contact constraints consistently befo
 after checkpoint restoration and mixed resets. This removes replay variation caused by parallel
 constraint allocation; the solver equations, contacts and iteration settings stay unchanged.
 Humanoid also orders changed constraint rows before incremental Newton updates and sums each world's
-gradient norm in a fixed order, including in mixed-reset scratch runtimes. Its DMC-local Newton loop
+gradient norm in a fixed order. Its DMC-local Newton loop
 retains upstream warmstart, line search, incremental Hessian updates, convergence and stable-state
 shortcuts. Constraint ordering alone does not make these solver reductions deterministic.
 Manipulator accumulates elliptic contact curvature in constraint-row order, with one writer per

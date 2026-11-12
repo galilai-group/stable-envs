@@ -74,47 +74,6 @@ def _load_backend():
 
 
 @cache
-def _cuda_graph_memory_driver():
-    """Bind the public driver API for releasing unused graph allocations."""
-    import ctypes
-    import sys
-
-    names = {"linux": ("libcuda.so.1", "libcuda.so"), "win32": ("nvcuda.dll",)}.get(sys.platform, ())
-    loader = ctypes.WinDLL if sys.platform == "win32" else ctypes.CDLL
-    for name in names:
-        try:
-            driver = loader(name)
-        except OSError:
-            continue
-        try:
-            driver.cuDeviceGet.argtypes = [ctypes.POINTER(ctypes.c_int), ctypes.c_int]
-            driver.cuDeviceGet.restype = ctypes.c_int
-            driver.cuDeviceGraphMemTrim.argtypes = [ctypes.c_int]
-            driver.cuDeviceGraphMemTrim.restype = ctypes.c_int
-        except AttributeError as error:
-            raise RuntimeError("DMC MJWarp graph-cache cleanup requires CUDA driver graph-memory support") from error
-        return driver
-    raise RuntimeError("DMC MJWarp graph-cache cleanup could not load the NVIDIA CUDA driver")
-
-
-def _trim_cuda_graph_memory(ordinal):
-    import ctypes
-
-    driver = _cuda_graph_memory_driver()
-    device = ctypes.c_int()
-    result = driver.cuDeviceGet(ctypes.byref(device), ordinal)
-    if result != 0:
-        raise RuntimeError(
-            f"DMC MJWarp could not resolve CUDA device {ordinal} for graph-cache cleanup (error {result})"
-        )
-    result = driver.cuDeviceGraphMemTrim(device.value)
-    if result != 0:
-        raise RuntimeError(
-            f"DMC MJWarp could not release unused CUDA graph memory on device {ordinal} (error {result})"
-        )
-
-
-@cache
 def _result_check_kernel():
     @wp.kernel
     def check(
@@ -1468,8 +1427,9 @@ class WarpRuntime:
     def copy_physical_state(self, destination, *, lanes=None, include_time=True):
         """Copy into owned checkpoint storage, converting directly to its dtype.
 
-        ``lanes`` maps this runtime's rows into a larger checkpoint. The adapter
-        excludes time because its public clock uses native double additions.
+        ``lanes`` limits the copy to those rows of this runtime and the same rows
+        of ``destination``. The adapter excludes time because its public clock
+        uses native double additions.
         """
         self._check_open()
         with self._scope():
@@ -1483,7 +1443,7 @@ class WarpRuntime:
                 if lanes is None:
                     target.copy_(source)
                 else:
-                    target.index_copy_(0, lanes, source.to(dtype=target.dtype))
+                    target.index_copy_(0, lanes, source[lanes].to(dtype=target.dtype))
 
     def physical_state(self):
         """Owned float32 physical fields; the adapter owns public State types."""
@@ -1498,39 +1458,6 @@ class WarpRuntime:
         if self._torch_stream is not None:
             torch.cuda.current_stream(self.device).wait_stream(self._torch_stream)
         return WarpSnapshot(self)
-
-    def release_graphs(self, *, paired=False, single=False):
-        """Release inactive execution graphs without changing physical data."""
-        self._check_open()
-        if not ((paired and self._pairs) or (single and self._graphs)):
-            return False
-        with self._scope():
-            if self._torch_stream is not None:
-                self._torch_stream.synchronize()
-            if paired:
-                for pair in self._pairs.values():
-                    pair.graph.reset()
-                    pair.close()
-                self._pairs.clear()
-            if single:
-                for graph, _ in self._graphs.values():
-                    graph.reset()
-                self._graphs.clear()
-        return True
-
-    def trim_graph_memory(self):
-        """Release unused graph-pool memory after all inactive graphs close.
-
-        CUDA retains physical storage from graph allocation nodes separately
-        from Torch's cache and Warp's ordinary allocator pool. The public
-        driver operation releases only unused graph memory; live graphs keep
-        their storage. Call after synchronizing and releasing both the main
-        checked graphs and any continuing-subset runtime.
-        """
-        self._check_open()
-        if self.device.type == "cuda":
-            with self._scope():
-                _trim_cuda_graph_memory(self.device.index)
 
     def close(self):
         if not self._closed:
