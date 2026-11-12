@@ -15,18 +15,28 @@ from ...env import Env, _split_appearance
 from ...registry import REGISTRY, register
 from ...specs import CompositeSpec, Spec
 from . import legacy as frozen
-from .simulation.execution import make_rocket_adapter
+from .simulation.execution import make_rocket_adapter, rocket_backend
+
+#: ``execution_mode`` per backend and device; on CUDA the Numba kernel runs on the host.
+_EXECUTION_MODES = {
+    ("numba", "cpu"): "NATIVE_NUMBA",
+    ("numba", "cuda"): "HOST_NUMBA",
+    ("pybullet", "cpu"): "DELEGATED_CPU",
+    ("pybullet", "cuda"): "DELEGATED_CPU",
+}
 
 
 class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
-    """Rocket CPU dynamics with replay-backed State and CPU/CUDA rendering.
+    """Rocket CPU dynamics with CPU/CUDA rendering.
 
-    PyFlyt 0.29.0/PyBullet 3.2.7 run physics on CPU. Explicit body and cached camera
-    poses drive TinyRenderer on CPU or the nvdiffrast path on CUDA.
+    ``simulation_backend=None`` or ``"numba"`` steps every environment in one Numba kernel call on the CPU,
+    with physical State; on CUDA the results move to the device. ``"pybullet"`` steps PyFlyt 0.29.0 and
+    PyBullet 3.2.7 per environment, with replay-backed State that is exact to the source. Explicit body
+    and cached camera poses drive TinyRenderer on CPU or the nvdiffrast path on CUDA.
     """
 
     requires_cuda = False
-    execution_mode = "DELEGATED_CPU"
+    execution_mode = "NATIVE_NUMBA"
     cpu_render_support = "SUPPORTED_TINYRENDERER"
     action_dim = 7
     action_dtype = torch.float64
@@ -41,16 +51,27 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
     _render_style = None
 
     def __init__(
-        self, num_envs=1, size=None, supersample=None, device="cpu", backend="auto", seed=0, *, simulator_config=None
+        self,
+        num_envs=1,
+        size=None,
+        supersample=None,
+        device="cpu",
+        backend="auto",
+        seed=0,
+        *,
+        simulator_config=None,
+        simulation_backend=None,
     ):
         device = Env.resolve_device(device)
+        self.simulation_backend = rocket_backend(simulation_backend)
+        self.execution_mode = _EXECUTION_MODES[self.simulation_backend, torch.device(device).type]
         # CPU lanes draw their own step frames, at the size and supersample ``Env`` resolves.
         frame = (
             (int(size or self.default_size), int(1 if supersample is None else supersample))
             if torch.device(device).type == "cpu"
             else None
         )
-        self._simulator = make_rocket_adapter(num_envs, device, seed, simulator_config, frame)
+        self._simulator = make_rocket_adapter(num_envs, device, seed, simulator_config, frame, self.simulation_backend)
         try:
             Env.__init__(
                 self,
@@ -131,6 +152,10 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         return step_pipeline(self._simulator)
 
     def _render_live(self):
+        if self.device.type == "cpu" and hasattr(self._simulator, "live_fields"):
+            from . import render as rocket_render
+
+            return rocket_render.render_cpu(self, *self._simulator.live_fields(), self.size, self.ss)
         if self.device.type == "cpu":
             return torch.from_numpy(self._simulator.render_live())
         if self.device.type == "cuda" and hasattr(self._simulator, "frame_fields"):

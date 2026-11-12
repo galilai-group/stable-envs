@@ -1,16 +1,29 @@
-"""Choose local or process execution for a Rocket batch."""
+"""Choose the Rocket physics backend: the Numba kernel, or PyFlyt and PyBullet in this process or in workers."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from ...._execution.policy import cpu_affinity, process_count
-from .adapter import RocketAdapter
 
 if TYPE_CHECKING:
     import torch
 
+    from .adapter import RocketAdapter
+    from .numba_batch import RocketNumbaAdapter
     from .process import RocketProcessAdapter
+
+#: Backends that ``simulation_backend`` accepts; ``None`` selects ``"numba"``.
+SIMULATION_BACKENDS = ("numba", "pybullet")
+
+
+def rocket_backend(backend: str | None = None) -> str:
+    """Return ``"numba"`` or ``"pybullet"``; ``None`` selects ``"numba"`` on CPU and on CUDA."""
+    if backend is None:
+        return "numba"
+    if backend not in SIMULATION_BACKENDS:
+        raise ValueError("simulation_backend must be None, 'numba' or 'pybullet'")
+    return backend
 
 
 def make_rocket_adapter(
@@ -19,8 +32,14 @@ def make_rocket_adapter(
     seed: int | None,
     config: dict | None = None,
     frame: tuple[int, int] | None = None,
-) -> RocketAdapter | RocketProcessAdapter:
-    """``frame`` is the ``(size, supersample)`` of the TinyRenderer step frames the lanes draw, or None."""
+    simulation_backend: str | None = None,
+) -> RocketNumbaAdapter | RocketAdapter | RocketProcessAdapter:
+    """``frame`` is the ``(size, supersample)`` of the TinyRenderer step frames, or None."""
+    if rocket_backend(simulation_backend) == "numba":
+        from .numba_batch import RocketNumbaAdapter
+
+        return RocketNumbaAdapter(num_envs, device, seed, config, frame)
+    from .adapter import RocketAdapter
     from .process import LANES_PER_PROCESS
 
     cpus = cpu_affinity()

@@ -16,6 +16,7 @@ from stable_envs.envs.ogbench.simulation.maze import OGBMazeAdapter
 from stable_envs.envs.ogbench.simulation.maze_process import OGBMazeProcessAdapter
 from stable_envs.envs.pusht.simulation.replay_batch import PushTReplayAdapter
 from stable_envs.envs.rocket.simulation.adapter import RocketAdapter
+from stable_envs.envs.rocket.simulation.numba_batch import RocketNumbaAdapter
 
 
 def local_adapters(
@@ -30,8 +31,9 @@ def local_adapters(
     manipulation: OGBManipulationAdapter,
     pusht: PushTReplayAdapter,
     rocket: RocketAdapter,
+    rocket_numba: RocketNumbaAdapter,
 ) -> tuple[SimulatorAdapter, ...]:
-    return classic, batched, device, fetch, dmc, dmc_batch, dmc_warp, maze, manipulation, pusht, rocket
+    return classic, batched, device, fetch, dmc, dmc_batch, dmc_warp, maze, manipulation, pusht, rocket, rocket_numba
 
 
 def process_adapters(
