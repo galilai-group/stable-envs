@@ -176,8 +176,14 @@ def _make_source(name: str, size: int, gpu: bool = False):
         domain, task = sid.split("/", 1)[1].split("-", 1)
         return _DMCSource(domain, task, snv.registry.REGISTRY[name].CAMERA, size)
     if sid.startswith("ogbench/"):
-        # The class's own reference: the OGBench env and the floor that SNV's frames are compared against.
-        return _GymSource(snv.registry.REGISTRY[name].reference_env(size=size))
+        cls = snv.registry.REGISTRY[name]
+        if hasattr(cls, "LOCO"):
+            # A maze with state observations: a step draws nothing, as in ours, and render() draws one frame.
+            # The pixel-observation reference that the frame MSE uses draws a frame inside every step.
+            from stable_envs.envs.ogbench.maze import _build_reference
+
+            return _GymSource(_build_reference(cls.LOCO, cls.MAZE, size, "states"))
+        return _GymSource(cls.reference_env(size=size))
     if sid.startswith("Fetch"):
         import gymnasium_robotics
 
