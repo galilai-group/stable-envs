@@ -14,7 +14,7 @@ from ...._core.tensordicts import build_tensordict
 from ...._execution.mjbatch import WarpBatch
 from .compatibility import COMPILED_FIELDS, compiled_fields
 from .manipulation import site_ids
-from .manipulation_batch import LaneModels, OGBManipulationBatchAdapter, make_lanes, metadata_env, nest
+from .manipulation_batch import LaneModels, OGBManipulationBatchAdapter, Snapshot, make_lanes, metadata_env
 from .pcg import pcg_decode, pcg_encode
 
 _KERNELS = None
@@ -391,6 +391,7 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
             self._meta = env = metadata_env(family)
             self.fields, self.nq = self.lanes.fields, self.lanes.nq
             self._order = tuple(self.fields)
+            self._snapshot = Snapshot(self.fields, num_envs)
             # Variations recompile these fields per lane, and Scene's locks and targets set damping and sites.
             batched = _batchable((*COMPILED_FIELDS, "dof_damping", "site_pos"))
             self._models = LaneModels(env, ())
@@ -523,14 +524,11 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
 
     def get_state(self):
         self._check_open()
-        columns = {}
-        for key in self._order:
-            if key[0] == "physics" and key[1] in _WARP_PHYSICS:
-                value = self.physics.data(_WARP_PHYSICS[key[1]])
-                columns[key] = value.reshape(self.num_envs, -1).to(torch.float64)
-            else:
-                columns[key] = self._columns[key].clone()
-        return build_tensordict(nest(columns), [self.num_envs], self.device)
+        columns = dict(self._columns)
+        for name, field in _WARP_PHYSICS.items():
+            if ("physics", name) in self.fields:
+                columns["physics", name] = self.physics.data(field).to(torch.float64)
+        return self._snapshot.build(columns, self.device)
 
     def configure(self, values):
         self._check_open()

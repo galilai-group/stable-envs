@@ -6,8 +6,9 @@ import mujoco
 import numpy as np
 import torch
 from ogbench.manipspace import lie, mjcf_utils
+from tensordict import TensorDict
 
-from ...._core.tensordicts import build_tensordict
+from ...._core.tensordicts import _device, build_tensordict
 from ...._execution.mjbatch import NativeBatch, native_threads
 from ...._execution.policy import cpu_affinity, process_count
 from .compatibility import COMPILED_FIELDS, MODEL_VALUES, CompatibleCube, CompatibleScene, compiled_fields, values_key
@@ -20,15 +21,50 @@ _BATCH_NAMES = {name: "qacc_warmstart" if name == "warmstart" else name for name
 _BATCH_NAMES["plugin"] = "plugin_state"
 
 
-def nest(columns):
-    """The nested dictionary of ``{tuple key: tensor}`` columns."""
-    root = {}
-    for key, value in columns.items():
-        node = root
-        for part in key[:-1]:
-            node = node.setdefault(part, {})
-        node[key[-1]] = value
-    return root
+class Snapshot:
+    """Owned State copies of ``fields``: one array per dtype, copied in one call, and a view of it per leaf."""
+
+    def __init__(self, fields, num_envs):
+        self._batch = torch.Size([num_envs])
+        groups, self._leaves = {}, []
+        for key, (shape, dtype) in fields.items():
+            kind = torch.empty((), dtype=dtype).numpy().dtype
+            start = groups.get(kind, 0)
+            size = num_envs * int(np.prod(shape, dtype=np.int64))
+            groups[kind] = start + size
+            self._leaves.append((key, kind, start, start + size, (num_envs, *shape)))
+        self._groups = {kind: [leaf for leaf in self._leaves if leaf[1] == kind] for kind in groups}
+        self._sizes = {
+            kind: [stop - start for _, _, start, stop, _ in leaves] for kind, leaves in self._groups.items()
+        }
+        # Parents first, so that each dictionary exists before its children.
+        self._parents = sorted({key[:i] for key, *_ in self._leaves for i in range(1, len(key))}, key=len)
+
+    def build(self, columns, device):
+        """A TensorDict of copies of ``columns`` on ``device``: ``{key: (B, ...) values of the field's dtype}``.
+
+        The values are NumPy arrays, or tensors on ``device``.
+        """
+        nodes = {(): {}}
+        for parent in self._parents:
+            nodes[parent] = nodes[parent[:-1]][parent[-1]] = {}
+        for kind, leaves in self._groups.items():
+            if torch.is_tensor(columns[leaves[0][0]]):
+                parts = torch.cat([columns[leaf[0]].reshape(-1) for leaf in leaves]).split_with_sizes(
+                    self._sizes[kind]
+                )
+            else:
+                flat = np.concatenate([columns[leaf[0]] for leaf in leaves], axis=None, dtype=kind)
+                if device.type == "cpu":
+                    for key, _, start, stop, shape in leaves:
+                        nodes[key[:-1]][key[-1]] = torch.from_numpy(flat[start:stop].reshape(shape))
+                    continue
+                # One host-to-device copy per dtype.
+                parts = torch.from_numpy(flat).to(device).split_with_sizes(self._sizes[kind])
+            for (key, _, _, _, shape), part in zip(leaves, parts):
+                nodes[key[:-1]][key[-1]] = part.view(shape)
+        # Every leaf has the batch and the device, so the TensorDict needs no checks.
+        return TensorDict._new_unsafe(nodes[()], batch_size=self._batch, device=_device(device))
 
 
 def physics_model(env):
@@ -170,6 +206,7 @@ class OGBManipulationBatchAdapter:
         self.fields, self.nq = self.lanes.fields, self.lanes.nq
         self._order = tuple(self.fields)
         self._views = {key[1]: self.b.bind(_BATCH_NAMES[key[1]]) for key in self._order if key[0] == "physics"}
+        self._snapshot = Snapshot(self.fields, num_envs)
         self._models = LaneModels(env, set(_model_fields()) & {*COMPILED_FIELDS, "dof_damping", "site_pos"})
         self._expanded = {}
         p = self.physics
@@ -272,18 +309,10 @@ class OGBManipulationBatchAdapter:
 
     def get_state(self):
         self._check_open()
-        columns = {}
-        for key in self._order:
-            if key[0] == "physics":
-                value = self._views[key[1]]
-                columns[key] = (value != 0) if key[1] == "eq_active" else value.reshape(self.num_envs, -1).copy()
-            else:
-                columns[key] = self._columns[key].copy()
-        return build_tensordict(
-            nest({key: torch.from_numpy(v).to(self.device) for key, v in columns.items()}),
-            [self.num_envs],
-            self.device,
-        )
+        columns = dict(self._columns)
+        for name, value in self._views.items():
+            columns["physics", name] = (value != 0) if name == "eq_active" else value
+        return self._snapshot.build(columns, self.device)
 
     def render_columns(self):
         from .render_state import projected_keys
