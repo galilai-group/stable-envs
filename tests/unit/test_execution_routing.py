@@ -37,8 +37,6 @@ def _fetch(monkeypatch, target, batch, device):
     return execution.make_fetch_adapter(*args), args, {}, {"threads_per_process": 1}
 
 
-
-
 #: (family, route, target, devices, whether the target may use processes)
 TARGETS = [
     ("classic", _classic, "acrobot", ("cpu", "cuda"), True),
