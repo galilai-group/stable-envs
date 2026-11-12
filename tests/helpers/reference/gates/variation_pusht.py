@@ -3,9 +3,9 @@
 Each leaf is set per lane (``variation_values`` with one value per lane) and, where SWM
 samples it, drawn per lane (``variation``); one SWM PushT per lane is reset with the same seed
 and options. The reset bodies, observation, goal and frame must match exactly. A short rollout's
-terminations must match too, and its observations and rewards within ``ROLLOUT_ATOL``. Rollout frames
-are reported, not gated: sub-pixel pose gaps move edge pixels. A leaf must also move SWM away
-from its default, so the comparison is not two defaults agreeing.
+terminations must match too, its observations and rewards within ``ROLLOUT_ATOL`` and its frames within
+``ROLLOUT_FRAME_MSE``. A leaf must also move SWM away from its default, so the comparison is not two
+defaults agreeing.
 """
 
 from __future__ import annotations
@@ -34,9 +34,11 @@ WITH = {"agent.angle": {"agent.shape": np.asarray([3, 3, 3])}}
 SAMPLED = tuple(EXPLICIT)
 BODY_FIELDS = ("position", "velocity", "angle", "angular_velocity", "center_of_gravity", "mass", "moment")
 STEPS = 6
-#: The rollout steps a port of the Pymunk contact solver (Numba on CPU, JAX on CUDA), not Pymunk itself.
-#: Over these random contacts the largest gap measured was 0.29 px of block position.
-ROLLOUT_ATOL = 1.0
+#: The rollout steps a port of the Pymunk contact solver (Numba on CPU), not Pymunk itself. Over these
+#: rollouts the largest observation or reward gap measured was 1.1e-13, and every frame was equal.
+ROLLOUT_ATOL = 1e-9
+#: Mean squared error over the pixels of one rollout frame: about one pixel of a 224 px frame.
+ROLLOUT_FRAME_MSE = 0.5
 
 
 def _swm(name):
@@ -139,6 +141,7 @@ def leaf_gate(name: str, leaf: str, seed: int = 31) -> dict:
     for case in ("explicit", "sampled"):
         if case in evidence:
             assert evidence[case]["reset_frame_mse"] <= 1e-3, evidence[case]
+            assert evidence[case]["rollout_frame_mse"] <= ROLLOUT_FRAME_MSE, evidence[case]
     return evidence
 
 

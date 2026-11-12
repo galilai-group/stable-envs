@@ -1,8 +1,8 @@
 """PushT batched physics against the stable-worldmodel source over 200 steps of a scripted pushing policy.
 
 The policy runs closed loop on the source. Its actions are replayed on stable-envs from the same reset, and
-the T-block poses are compared. The source block can pass through a wall under a hard push; the port's
-walls hold it, so lanes where the source block leaves the board are not compared.
+the T-block poses and success flags are compared in every episode, also where the source block passes
+through a wall.
 """
 
 from importlib.metadata import PackageNotFoundError, version
@@ -40,6 +40,7 @@ def _source_episodes():
 
     actions = np.zeros((EPISODES, STEPS, 2), np.float32)
     poses = np.zeros((EPISODES, STEPS + 1, 7))
+    success = np.zeros((EPISODES, STEPS), bool)
     for lane in range(EPISODES):
         env = gym.make("swm/PushT-v1", resolution=64)
         obs, _ = env.reset(seed=SEED + lane)
@@ -49,10 +50,10 @@ def _source_episodes():
         for t in range(STEPS):
             action = _policy(obs["state"], goal, t, action)
             actions[lane, t] = action
-            obs, *_ = env.step(actions[lane, t])
+            obs, _, success[lane, t], *_ = env.step(actions[lane, t])
             poses[lane, t + 1] = obs["state"]
         env.close()
-    return actions, poses
+    return actions, poses, success
 
 
 @pytest.fixture(scope="module")
@@ -66,21 +67,27 @@ def _devices():
 
 @pytest.mark.parametrize("device", _devices())
 def test_scripted_pushing_tracks_the_source(source, device):
-    actions, poses = source
+    actions, poses, success = source
     with se.make("PushT", num_envs=EPISODES, size=64, device=device) as env:
         state = env.reset(seed=SEED)
         np.testing.assert_array_equal(state["current", "observation"].cpu().numpy(), poses[:, 0])
-        ours = [poses[:, 0]]
+        ours, done = [poses[:, 0]], []
         sequence = torch.as_tensor(actions, device=device)
         for t in range(STEPS):
-            ours.append(env.step(sequence[:, t], frames=None)["state"]["current", "observation"].cpu().numpy())
-    ours = np.stack(ours, 1)
-    inside = ((poses[:, :, 2:4] >= 0) & (poses[:, :, 2:4] <= 512)).all(axis=(1, 2))
-    gap = np.linalg.norm(ours[inside, :, 2:4] - poses[inside, :, 2:4], axis=2)
-    # Measured with 32 of the 48 source blocks on the board: median gaps of 0.0004 px (CPU, float64) and
-    # 0.0007 px (CUDA, float32) at step 200, and 91% of blocks within 1 px. Contact near the walls makes the
-    # other blocks diverge.
-    assert inside.sum() >= EPISODES // 2
-    assert np.median(gap[:, 50]) < 0.05
-    assert np.median(gap[:, -1]) < 0.1
-    assert (gap[:, -1] < 2.0).mean() >= 0.75
+            out = env.step(sequence[:, t], frames=None)
+            ours.append(out["state"]["current", "observation"].cpu().numpy())
+            done.append(out["terminated"].cpu().numpy().reshape(EPISODES))
+    ours, done = np.stack(ours, 1), np.stack(done, 1)
+    gap = np.linalg.norm(ours[:, :, 2:4] - poses[:, :, 2:4], axis=2)
+    outside = ((poses[:, :, 2:4] < 0) | (poses[:, :, 2:4] > 512)).any(axis=(1, 2))
+    # The source block leaves the board in 16 of the 48 episodes; the port follows it through the wall.
+    assert outside.sum() >= 8
+    np.testing.assert_array_equal(done, success)
+    if device == "cpu":
+        # Measured (Numba, float64): the largest gap in any episode at any step was 3.3e-8 px.
+        assert gap.max() < 1e-6
+    else:
+        # Measured (Triton, float32): a median gap of 0.0004 px at step 200, and 39 of 48 blocks within 1 px.
+        # float32 rounding grows chaotically where the block is pressed hard into or through a wall.
+        assert np.median(gap[:, -1]) < 0.01
+        assert (gap[:, -1] < 1.0).mean() >= 0.75
