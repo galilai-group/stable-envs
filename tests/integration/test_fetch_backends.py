@@ -177,7 +177,7 @@ def test_mjwarp_rollouts_reach_the_source_outcomes(task):
 
 
 @cuda
-def test_mjwarp_masks_restores_and_routing():
+def test_mjwarp_resets_masks_and_routing():
     from stable_envs.envs.fetch.simulation.mjwarp import FetchWarpAdapter
 
     adapter = FetchWarpAdapter(6, "cuda", seed=3, task="PickAndPlace")
@@ -198,11 +198,6 @@ def test_mjwarp_masks_restores_and_routing():
         for key in ("qpos", "qvel", ("controller", "position"), ("lifecycle", "elapsed_steps")):
             assert torch.equal(out["state"][key].cpu()[held], start[key].cpu()[held]), key
         assert out["state"]["lifecycle", "elapsed_steps"].cpu()[~held].eq(1).all()
-        adapter.set_state(start)
-        first = adapter.step(actions)["state"]
-        adapter.set_state(start)
-        again = adapter.step(actions)["state"]
-        assert torch.allclose(first["qpos"], again["qpos"], atol=1e-5)
     finally:
         adapter.close()
     with snv.make("FetchReach", num_envs=2, device="cuda") as env:

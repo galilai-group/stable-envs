@@ -10,7 +10,7 @@ style values, because plate-baking families re-render a MuJoCo plate per distinc
 
 from __future__ import annotations
 
-import inspect
+import fnmatch
 import json
 import os
 import subprocess
@@ -931,14 +931,37 @@ def test_variation_dict_and_style_tensor_agree(env, inputs):
 # ------------------------------------------------------------------ 7. stepping from a restored State
 
 
+#: Default CUDA physics backends that are approximate: float32 and not bitwise reproducible, since contact
+#: solving reduces with atomics. An env whose default is one of them also accepts ``simulation_backend="native"``,
+#: an exact backend.
+APPROXIMATE_BACKENDS = frozenset({"mjwarp"})
+#: Steps to the restored State, then steps of the continued rollout, for approximate backends.
+ROLLOUT_WARMUP, ROLLOUT_STEPS = 20, 300
+#: Bounds on a continued rollout of an approximate backend, on the largest ``qpos`` difference per step between
+#: the env that reached the State and the env restored to it: its rollout mean in the median lane, its largest
+#: value in any lane, and the lanes whose final ``success`` may differ.
+ROLLOUT_MEDIAN_QPOS, ROLLOUT_MAX_QPOS, ROLLOUT_SUCCESS_FLIPS = 0.01, 0.25, 1
+#: Wider bounds for tasks whose own source amplifies small differences. Slide's puck slides freely and can leave
+#: the table: on CPU MuJoCo an action noise of 1e-6 alone moves it 3.3 cm on average over 200 steps.
+ROLLOUT_QPOS_BOUNDS = {"FetchSlide*": (0.05, 2.5)}
+
+
+def _exact_backend(env) -> dict:
+    """Construction arguments that put ``env``'s class on an exact physics backend."""
+    approximate = getattr(env, "simulation_backend", None) in APPROXIMATE_BACKENDS
+    return {"simulation_backend": "native"} if approximate else {}
+
+
 def test_a_step_from_a_restored_state_matches_the_original(env):
-    """Stepping an env restored to State ``s`` gives the same States as stepping the env that reached ``s``."""
+    """Stepping an env restored to State ``s`` gives the same States as stepping the env that reached ``s``.
+
+    Envs whose default CUDA physics is approximate run this on their exact backend; the rollout test below
+    checks the approximate one.
+    """
     cls = type(env)
     if not env.has_dynamics:
         pytest.skip(f"{cls.__name__}: no dynamics")
-    # MuJoCo Warp with contacts is not bitwise deterministic; the MuJoCo families step this check on mujoco.batch.
-    parameters = inspect.signature(cls.__init__).parameters
-    kw = {"simulation_backend": "native"} if {"simulation_backend", "mjwarp_min_envs"} <= set(parameters) else {}
+    kw = _exact_backend(env)
     with (
         se.make(cls.__name__, num_envs=N, device="cuda", **kw) as a,
         se.make(cls.__name__, num_envs=N, device="cuda", **kw) as b,
@@ -952,6 +975,84 @@ def test_a_step_from_a_restored_state_matches_the_original(env):
             sb = b.step(action, frames=None)["state"]
             for key in sa.keys(True, True):
                 assert torch.equal(sa[key], sb[key]), f"{cls.__name__}: step {t} diverges at {key}"
+
+
+def _smooth_policy(env):
+    """Slow sinusoids inside the action bounds, one phase and frequency per lane and action."""
+    spec = env.action_spec
+    shape = (N, *spec.shape)
+    low = np.broadcast_to(np.asarray(-1.0 if spec.low is None else spec.low, np.float64), shape)
+    high = np.broadcast_to(np.asarray(1.0 if spec.high is None else spec.high, np.float64), shape)
+    rng = np.random.default_rng(3)
+    phase, freq = rng.uniform(0, 2 * np.pi, shape), rng.uniform(0.02, 0.08, shape)
+    mid, half = 0.5 * (low + high), 0.25 * (high - low)
+
+    def act(t, state):
+        return torch.as_tensor(mid + half * np.sin(freq * t + phase), dtype=spec.dtype, device=env.device)
+
+    return act
+
+
+def _fetch_policy(env):
+    """The scripted Fetch controller (reach, push, strike, grasp and carry), closed loop on the env's sites."""
+    from tests.helpers.reference.fetch_policy import scripted_actions
+
+    task, sim = env.SCENE, env._simulator
+    phase, count = np.zeros(N, int), np.zeros(N, int)
+
+    def act(t, state):
+        if t == 0:
+            phase[:], count[:] = 0, 0
+        sites = torch.as_tensor(sim._site_xpos).cpu().numpy().astype(np.float64)
+        grip, obj = sites[:, sim.task.grip_site], sites[:, sim.task.goal_site]
+        goal = state["goal"].cpu().numpy()
+        return torch.as_tensor(scripted_actions(task, grip, obj, goal, phase, count), device=env.device)
+
+    return act
+
+
+#: Family policies for the continued rollout; other families use ``_smooth_policy``.
+ROLLOUT_POLICIES = {"fetch": _fetch_policy}
+
+
+def test_an_approximate_backend_continues_a_restored_rollout(env):
+    """An env restored to State ``s`` follows the env that reached ``s`` over a long rollout of the same actions.
+
+    For approximate backends only, which do not reproduce a step bit for bit. The actions come from a policy run
+    closed loop on the env that reached ``s``; the restored env replays them.
+    """
+    cls = type(env)
+    if getattr(env, "simulation_backend", None) not in APPROXIMATE_BACKENDS:
+        pytest.skip(f"{cls.__name__}: its default backend is exact; the bitwise restore test covers it")
+    with se.make(cls.__name__, num_envs=N, device="cuda") as a, se.make(cls.__name__, num_envs=N, device="cuda") as b:
+        limits = getattr(a._simulator, "_set_episode_limits", None)
+        for e in (a, b):
+            if limits is not None:
+                e._simulator._set_episode_limits(np.full(N, ROLLOUT_WARMUP + ROLLOUT_STEPS + 1))
+        policy = ROLLOUT_POLICIES.get(a.family, _smooth_policy)(a)
+        state = a.reset(seed=5)
+        for t in range(ROLLOUT_WARMUP):
+            state = a.step(policy(t, state), frames=None)["state"]
+        b.reset(seed=11)
+        b.set_state(state)
+        gaps, oa, ob = [], None, None
+        for t in range(ROLLOUT_WARMUP, ROLLOUT_WARMUP + ROLLOUT_STEPS):
+            action = policy(t, state)
+            oa, ob = a.step(action, frames=None), b.step(action, frames=None)
+            state = oa["state"]
+            gaps.append((state["qpos"] - ob["state"]["qpos"]).abs().max(-1).values)
+        gaps = torch.stack(gaps).double()
+        median_bound, max_bound = next(
+            (b for pattern, b in ROLLOUT_QPOS_BOUNDS.items() if fnmatch.fnmatch(cls.__name__, pattern)),
+            (ROLLOUT_MEDIAN_QPOS, ROLLOUT_MAX_QPOS),
+        )
+        median = float(gaps.mean(0).median())
+        assert median <= median_bound, f"{cls.__name__}: mean qpos gap of the median lane {median:.3g}"
+        assert float(gaps.max()) <= max_bound, f"{cls.__name__}: largest qpos gap {float(gaps.max()):.3g}"
+        if "success" in oa.keys():
+            final = lambda out: out["success"].reshape(N, -1)[:, -1]  # noqa: E731
+            flips = int((final(oa) != final(ob)).sum())
+            assert flips <= ROLLOUT_SUCCESS_FLIPS, f"{cls.__name__}: {flips} of {N} lanes changed task outcome"
 
 
 # ------------------------------------------------------------------ 8. the reference renderer
