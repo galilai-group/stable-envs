@@ -147,13 +147,56 @@ class CubeMJXAdapter(OGBManipulationAdapter):
         self._advance = jax.jit(jax.vmap(self._physics_step))
         self._select = jax.jit(jax.vmap(lambda old, new, active: old.where(active, new)))
 
-    def _upload(self):
-        models, data, parameters = {}, [], []
+    def _put_parameters(self):
+        models, parameters = {}, []
         for env in self.envs:
             model = env.model
             if id(model) not in models:
                 models[id(model)] = mjx.put_model(model, device=self._jax_device, impl="warp")
             parameters.append({name: getattr(models[id(model)], name) for name in self._model_fields})
+        self._parameters = jax.tree.map(lambda *values: jnp.stack(values), *parameters)
+        self._model_ids = [id(env.model) for env in self.envs]
+
+    def _upload(self, full=False):
+        if full:
+            self._put_all()
+            return
+        if not hasattr(self, "_data"):
+            self._put_parameters()
+            env = self.envs[0]
+            row = mjx.put_data(
+                env.model,
+                copy.copy(env.data),
+                device=self._jax_device,
+                impl="warp",
+                naconmax=max(512, 64 * self.num_envs),
+                njmax=1024,
+            )
+            batch = jax.vmap(lambda _: row)(jnp.arange(self.num_envs))
+            self._data = jax.tree.map(lambda target, value: target if target.ndim > value.ndim else value, batch, row)
+        elif [id(env.model) for env in self.envs] != self._model_ids:
+            self._put_parameters()
+        # Write each lane's restored dynamic State into the batch instead of one put_data
+        # per lane; the step recomputes the derived fields.
+        self._state = super().get_state()
+        values = {}
+        for name in FLAGS:
+            key = ("physics", name)
+            if key in self._state.keys(True, True):
+                target = getattr(self._data, "qacc_warmstart" if name == "warmstart" else name)
+                value = self._state[key].to(torch.from_dlpack(target).dtype).reshape(target.shape)
+                values["qacc_warmstart" if name == "warmstart" else name] = _from_torch(value).copy()
+        for name in ("cvel", "cdof_dot"):
+            stacked = np.stack([getattr(env.data, name) for env in self.envs]).astype(np.float32)
+            values[name] = jax.device_put(stacked, self._jax_device)
+        self._data = self._data.replace(**values)
+        self._finish_upload()
+
+    def _put_all(self):
+        self._put_parameters()
+        data = []
+        for env in self.envs:
+            model = env.model
             row = mjx.put_data(
                 model,
                 copy.copy(env.data),
@@ -167,13 +210,15 @@ class CubeMJXAdapter(OGBManipulationAdapter):
                     _impl=row._impl.replace(**{name: getattr(data[0]._impl, name) for name in DATA_NON_VMAP})
                 )
             data.append(row)
-        self._parameters = jax.tree.map(lambda *values: jnp.stack(values), *parameters)
         # Warp contact buffers are shared by all worlds, rather than stacked per lane.
         batch = jax.vmap(lambda _: data[0])(jnp.arange(self.num_envs))
         self._data = jax.tree.map(
             lambda target, *rows: jnp.stack(rows) if target.ndim > rows[0].ndim else rows[0], batch, *data
         )
         self._state = super().get_state()
+        self._finish_upload()
+
+    def _finish_upload(self):
         # put_data recomputes kinematics; the source controller uses the saved, pre-integration pose.
         self._data = self._data.replace(
             site_xpos=self._data.site_xpos.at[:, self._pinch_site_id].set(
