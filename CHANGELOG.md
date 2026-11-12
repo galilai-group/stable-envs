@@ -8,6 +8,12 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- Shared batched MuJoCo backend (`stable_envs/_execution/mjbatch.py`) for the MuJoCo families: native
+  `mujoco.batch` on CPU, bit-exact with one float64 `MjData` per environment, and MuJoCo Warp on CUDA, with the
+  substeps of one step in one captured CUDA graph. It writes and reads the integration State of a subset of
+  environments, batches per-environment model parameters, raises `BufferOverflowError` when the MuJoCo Warp
+  contact or constraint buffers are too small, and runs per-environment source resets in a pool of threads or
+  processes.
 - Classic control `simulation_backend`: `CartPole`, `Pendulum`, `Acrobot`, `MountainCar` and
   `MountainCarContinuous` step all lanes in one batched float64 operation. With `"auto"`, the default,
   the lanes step in NumPy on the host, and 4096 or more CUDA lanes step in Torch. Below 2 lanes
