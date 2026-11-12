@@ -233,13 +233,13 @@ def _standard_normal(rng, b):
             return x
         if idx == 0:
             while True:
-                xx = -ziggurat_nor_inv_r * np.log1p(-_next_double(rng, b))
-                yy = -np.log1p(-_next_double(rng, b))
+                xx = -ziggurat_nor_inv_r * math.log1p(-_next_double(rng, b))
+                yy = -math.log1p(-_next_double(rng, b))
                 if yy + yy > xx * xx:
                     if (rabs >> np.uint64(8)) & np.uint64(1):
                         return -(ziggurat_nor_r + xx)
                     return ziggurat_nor_r + xx
-        elif (fi_double[idx - 1] - fi_double[idx]) * _next_double(rng, b) + fi_double[idx] < np.exp(-0.5 * x * x):
+        elif (fi_double[idx - 1] - fi_double[idx]) * _next_double(rng, b) + fi_double[idx] < math.exp(-0.5 * x * x):
             return x
 
 
@@ -348,8 +348,20 @@ def _cross(ax, ay, az, bx, by, bz):
 
 
 @njit(cache=True, inline="always")
-def _clamp100(x):
-    return min(max(x, -100.0), 100.0)
+def _drag(v, coefficient):
+    """``-sign(v) * coefficient * v * v``, as PyFlyt computes body drag with ``np.sign``."""
+    sign = 1.0 if v > 0.0 else (-1.0 if v < 0.0 else 0.0)
+    return -sign * coefficient * v * v
+
+
+@njit(cache=True, inline="always")
+def _clip(x, low, high):
+    """``min(max(x, low), high)``; builtin ``min`` and ``max`` do not compile for CUDA."""
+    if x < low:
+        return low
+    if x > high:
+        return high
+    return x
 
 
 @njit(cache=True, inline="always")
@@ -471,9 +483,9 @@ def _substep(b, z, pos, quat, vel, avel, lrot, lvel, fin, gim, thr_, fuel_, ign_
     vx, vy, vz = lvel[b, 0, 0], lvel[b, 0, 1], lvel[b, 0, 2]
     dx_, dy_, dz_ = _mv(
         Q,
-        -np.sign(vx) * _BODY_DRAG[0] * vx * vx,
-        -np.sign(vy) * _BODY_DRAG[1] * vy * vy,
-        -np.sign(vz) * _BODY_DRAG[2] * vz * vz,
+        _drag(vx, _BODY_DRAG[0]),
+        _drag(vy, _BODY_DRAG[1]),
+        _drag(vz, _BODY_DRAG[2]),
     )
     Fx += dx_
     Fy += dy_
@@ -525,7 +537,7 @@ def _substep(b, z, pos, quat, vel, avel, lrot, lvel, fin, gim, thr_, fuel_, ign_
     if not (fuel > 0.0):
         thr = 0.0
     fuel -= thr * _FUEL_RATE * DT
-    fuel = min(max(fuel, 0.0), 1.0)
+    fuel = _clip(fuel, 0.0, 1.0)
     thr_[b] = thr
     fuel_[b] = fuel
     th = thr * _MAX_THRUST
@@ -566,12 +578,12 @@ def _substep(b, z, pos, quat, vel, avel, lrot, lvel, fin, gim, thr_, fuel_, ign_
     t2 = _cross(wwx, wwy, wwz, cwx, cwy, cwz)
     t3 = _cross(wwx, wwy, wwz, t2[0], t2[1], t2[2])
     aox, aoy, aoz = acx - t1[0] - t3[0], acy - t1[1] - t3[1], acz - t1[2] - t3[2]
-    vx = _clamp100(vel[b, 0] + DT * aox)
-    vy = _clamp100(vel[b, 1] + DT * aoy)
-    vz = _clamp100(vel[b, 2] + DT * aoz)
-    wwx = _clamp100(wwx + DT * awx)
-    wwy = _clamp100(wwy + DT * awy)
-    wwz = _clamp100(wwz + DT * awz)
+    vx = _clip(vel[b, 0] + DT * aox, -100.0, 100.0)
+    vy = _clip(vel[b, 1] + DT * aoy, -100.0, 100.0)
+    vz = _clip(vel[b, 2] + DT * aoz, -100.0, 100.0)
+    wwx = _clip(wwx + DT * awx, -100.0, 100.0)
+    wwy = _clip(wwy + DT * awy, -100.0, 100.0)
+    wwz = _clip(wwz + DT * awz, -100.0, 100.0)
     if nc > 0:
         # projected Gauss-Seidel: every normal row, then every friction row (limit from that contact's normal
         # impulse), as btMultiBodyConstraintSolver orders them; impulses accumulate in crel[b, c, 5:8]
@@ -599,10 +611,10 @@ def _substep(b, z, pos, quat, vel, avel, lrot, lvel, fin, gim, thr_, fuel_, ign_
                     keff = 1.0 / M + kk[0] * nx + kk[1] * ny + kk[2] * nz
                     old = crel[b, c, 5 + kind]
                     if kind == 0:
-                        new = max(old + (crel[b, c, 3] - vn) / keff, 0.0)
+                        new = _clip(old + (crel[b, c, 3] - vn) / keff, 0.0, math.inf)
                     else:
                         lim = crel[b, c, 4] * crel[b, c, 5]
-                        new = min(max(old - vn / keff, -lim), lim)
+                        new = _clip(old - vn / keff, -lim, lim)
                     dl = new - old
                     crel[b, c, 5 + kind] = new
                     jx, jy, jz = dl * nx, dl * ny, dl * nz
@@ -725,10 +737,10 @@ def _aviary_step(
     for s in range(SUBSTEPS_PER_AVIARY_STEP):
         if physics_steps[b] % 2 == 0:
             sp0, sp1, sp2 = action[b, 0], action[b, 1], action[b, 2]
-            cmd[b, 0] = min(max(sp1 + sp2, -1.0), 1.0)
-            cmd[b, 1] = min(max(sp1 - sp2, -1.0), 1.0)
-            cmd[b, 2] = min(max(sp0 - sp2, -1.0), 1.0)
-            cmd[b, 3] = min(max(sp0 + sp2, -1.0), 1.0)
+            cmd[b, 0] = _clip(sp1 + sp2, -1.0, 1.0)
+            cmd[b, 1] = _clip(sp1 - sp2, -1.0, 1.0)
+            cmd[b, 2] = _clip(sp0 - sp2, -1.0, 1.0)
+            cmd[b, 3] = _clip(sp0 + sp2, -1.0, 1.0)
             for k in range(4):
                 cmd[b, 4 + k] = action[b, 3 + k]
         z = _standard_normal(rng, b) if draw else noise[b, k0 + s]
@@ -737,6 +749,132 @@ def _aviary_step(
         ground |= g
         physics_steps[b] += 1
     return pad, ground
+
+
+@njit(cache=True)
+def _agent_step(
+    b,
+    pos, quat, vel, avel, lrot, lvel, fin, gim, thr, fuel, ign, cmd, action, physics_steps,
+    obs, ang_vel, ang_pos, lin_vel, lin_pos, ground_lin_vel, p_ang_vel, p_lin_vel, p_lin_pos, p_ground_lin_vel,
+    ignition_state, throttle_state, p_ignition_state, p_throttle_state, p_render_ignition, flame_ignited,
+    pad_contact, reward, step_count, termination, truncation, out_of_bounds, fatal_collision, env_complete,
+    start_pos, start_orn,
+    actions, noise, rng, draw, noise_used, verts, crel, ceiling, max_displacement, max_steps, sparse_reward,
+):  # fmt: skip
+    """``RocketBaseEnv.step`` of environment ``b``: three aviary steps, ``compute_state`` and the task after each."""
+    for i in range(7):
+        action[b, i] = actions[b, i]
+    r = 0.0
+    used = 0
+    for a in range(AVIARY_STEPS_PER_AGENT_STEP):
+        if termination[b] or truncation[b]:
+            break
+        pad, ground = _aviary_step(
+            b,
+            noise,
+            rng,
+            draw,
+            used,
+            pos,
+            quat,
+            vel,
+            avel,
+            lrot,
+            lvel,
+            fin,
+            gim,
+            thr,
+            fuel,
+            ign,
+            cmd,
+            action,
+            physics_steps,
+            verts,
+            crel,
+        )
+        used += SUBSTEPS_PER_AVIARY_STEP
+        _compute_state(
+            b,
+            pos,
+            quat,
+            vel,
+            avel,
+            ign,
+            fuel,
+            thr,
+            fin,
+            gim,
+            action,
+            pad_contact,
+            obs,
+            ang_vel,
+            ang_pos,
+            lin_vel,
+            lin_pos,
+            ground_lin_vel,
+            p_ang_vel,
+            p_lin_vel,
+            p_lin_pos,
+            p_ground_lin_vel,
+            ignition_state,
+            throttle_state,
+            p_ignition_state,
+            p_throttle_state,
+        )
+        # compute_base_term_trunc_reward
+        if step_count[b] > max_steps:
+            truncation[b] = True
+        if ground or lin_pos[b, 2] < 0.0:
+            fatal_collision[b] = True
+            termination[b] = True
+        if _norm2(lin_pos[b, 0], lin_pos[b, 1]) > max_displacement or lin_pos[b, 2] > ceiling:
+            out_of_bounds[b] = True
+            termination[b] = True
+        if not sparse_reward:
+            lateral_progress = _norm2(p_lin_pos[b, 0], p_lin_pos[b, 1]) - _norm2(lin_pos[b, 0], lin_pos[b, 1])
+            vertical_progress = p_lin_pos[b, 2] - lin_pos[b, 2]
+            lateral_distance = _norm2(lin_pos[b, 0], lin_pos[b, 1]) + 0.1
+            deceleration_progress = (
+                (ground_lin_vel[b, 2] - p_ground_lin_vel[b, 2] + 1.0)
+                / math.exp(lin_pos[b, 2])
+                * (1.0 if ground_lin_vel[b, 2] < 0.0 else -1.0)
+            )
+            r += (
+                -0.3
+                + (0.3 / lateral_distance)
+                + (10.0 * lateral_progress)
+                + (0.2 * vertical_progress)
+                + (4.0 * deceleration_progress)
+                - (1.0 * abs(ang_vel[b, 2]))
+                - (1.0 * _norm2(ang_pos[b, 0], ang_pos[b, 1]))
+            )
+        if not pad:
+            pad_contact[b] = 0.0
+            continue
+        pad_contact[b] = 1.0
+        r += 5.0 - (0.3 * abs(ground_lin_vel[b, 2]))
+        pav = _norm3(p_ang_vel[b, 0], p_ang_vel[b, 1], p_ang_vel[b, 2])
+        plv = _norm3(p_lin_vel[b, 0], p_lin_vel[b, 1], p_lin_vel[b, 2])
+        if pav > 10.0 or plv > 5.0:
+            termination[b] = True
+            fatal_collision[b] = True
+            continue
+        if (
+            pav < 5.0
+            and plv < 4.0
+            and _norm2(ang_pos[b, 0], ang_pos[b, 1]) < 0.6
+            and _norm2(lin_pos[b, 0], lin_pos[b, 1]) < 12.0
+            and lin_pos[b, 2] < 3.0
+        ):
+            truncation[b] = True
+            env_complete[b] = True
+            r += 3.0
+    step_count[b] += 1
+    reward[b] = r
+    noise_used[b] = used
+    if ignition_state[b] != p_render_ignition[b]:
+        p_render_ignition[b] = ignition_state[b]
+        flame_ignited[b] = True
 
 
 @njit(cache=True, parallel=True)
@@ -749,121 +887,82 @@ def _step_kernel(
     actions, noise, rng, draw, active, noise_used, verts, crel, ceiling, max_displacement, max_steps, sparse_reward,
 ):  # fmt: skip
     for b in prange(pos.shape[0]):
-        if not active[b]:
-            continue
-        for i in range(7):
-            action[b, i] = actions[b, i]
-        r = 0.0
-        used = 0
-        for a in range(AVIARY_STEPS_PER_AGENT_STEP):
-            if termination[b] or truncation[b]:
-                break
-            pad, ground = _aviary_step(
+        if active[b]:
+            _agent_step(
                 b,
-                noise,
-                rng,
-                draw,
-                used,
-                pos,
-                quat,
-                vel,
-                avel,
-                lrot,
-                lvel,
-                fin,
-                gim,
-                thr,
-                fuel,
-                ign,
-                cmd,
-                action,
-                physics_steps,
-                verts,
-                crel,
-            )
-            used += SUBSTEPS_PER_AVIARY_STEP
-            _compute_state(
-                b,
-                pos,
-                quat,
-                vel,
-                avel,
-                ign,
-                fuel,
-                thr,
-                fin,
-                gim,
-                action,
-                pad_contact,
-                obs,
-                ang_vel,
-                ang_pos,
-                lin_vel,
-                lin_pos,
-                ground_lin_vel,
-                p_ang_vel,
-                p_lin_vel,
-                p_lin_pos,
-                p_ground_lin_vel,
-                ignition_state,
-                throttle_state,
-                p_ignition_state,
-                p_throttle_state,
-            )
-            # compute_base_term_trunc_reward
-            if step_count[b] > max_steps:
-                truncation[b] = True
-            if ground or lin_pos[b, 2] < 0.0:
-                fatal_collision[b] = True
-                termination[b] = True
-            if _norm2(lin_pos[b, 0], lin_pos[b, 1]) > max_displacement or lin_pos[b, 2] > ceiling:
-                out_of_bounds[b] = True
-                termination[b] = True
-            if not sparse_reward:
-                lateral_progress = _norm2(p_lin_pos[b, 0], p_lin_pos[b, 1]) - _norm2(lin_pos[b, 0], lin_pos[b, 1])
-                vertical_progress = p_lin_pos[b, 2] - lin_pos[b, 2]
-                lateral_distance = _norm2(lin_pos[b, 0], lin_pos[b, 1]) + 0.1
-                deceleration_progress = (
-                    (ground_lin_vel[b, 2] - p_ground_lin_vel[b, 2] + 1.0)
-                    / math.exp(lin_pos[b, 2])
-                    * (1.0 if ground_lin_vel[b, 2] < 0.0 else -1.0)
-                )
-                r += (
-                    -0.3
-                    + (0.3 / lateral_distance)
-                    + (10.0 * lateral_progress)
-                    + (0.2 * vertical_progress)
-                    + (4.0 * deceleration_progress)
-                    - (1.0 * abs(ang_vel[b, 2]))
-                    - (1.0 * _norm2(ang_pos[b, 0], ang_pos[b, 1]))
-                )
-            if not pad:
-                pad_contact[b] = 0.0
-                continue
-            pad_contact[b] = 1.0
-            r += 5.0 - (0.3 * abs(ground_lin_vel[b, 2]))
-            pav = _norm3(p_ang_vel[b, 0], p_ang_vel[b, 1], p_ang_vel[b, 2])
-            plv = _norm3(p_lin_vel[b, 0], p_lin_vel[b, 1], p_lin_vel[b, 2])
-            if pav > 10.0 or plv > 5.0:
-                termination[b] = True
-                fatal_collision[b] = True
-                continue
-            if (
-                pav < 5.0
-                and plv < 4.0
-                and _norm2(ang_pos[b, 0], ang_pos[b, 1]) < 0.6
-                and _norm2(lin_pos[b, 0], lin_pos[b, 1]) < 12.0
-                and lin_pos[b, 2] < 3.0
-            ):
-                truncation[b] = True
-                env_complete[b] = True
-                r += 3.0
-        step_count[b] += 1
-        reward[b] = r
-        noise_used[b] = used
-        if ignition_state[b] != p_render_ignition[b]:
-            p_render_ignition[b] = ignition_state[b]
-            flame_ignited[b] = True
+                pos, quat, vel, avel, lrot, lvel, fin, gim, thr, fuel, ign, cmd, action, physics_steps,
+                obs, ang_vel, ang_pos, lin_vel, lin_pos, ground_lin_vel,
+                p_ang_vel, p_lin_vel, p_lin_pos, p_ground_lin_vel,
+                ignition_state, throttle_state, p_ignition_state, p_throttle_state, p_render_ignition, flame_ignited,
+                pad_contact, reward, step_count, termination, truncation, out_of_bounds, fatal_collision, env_complete,
+                start_pos, start_orn,
+                actions, noise, rng, draw, noise_used, verts, crel, ceiling, max_displacement, max_steps, sparse_reward,
+            )  # fmt: skip
+
+
+@njit(cache=True)
+def _settle_env(
+    b,
+    pos, quat, vel, avel, lrot, lvel, fin, gim, thr, fuel, ign, cmd, action, physics_steps,
+    obs, ang_vel, ang_pos, lin_vel, lin_pos, ground_lin_vel, p_ang_vel, p_lin_vel, p_lin_pos, p_ground_lin_vel,
+    ignition_state, throttle_state, p_ignition_state, p_throttle_state, p_render_ignition, flame_ignited,
+    pad_contact, reward, step_count, termination, truncation, out_of_bounds, fatal_collision, env_complete,
+    start_pos, start_orn,
+    noise, rng, draw, verts, crel,
+):  # fmt: skip
+    """``RocketBaseEnv.end_reset`` of environment ``b``: ten aviary steps with zero setpoint, then ``compute_state``."""
+    for a in range(SETTLE_AVIARY_STEPS):
+        _aviary_step(
+            b,
+            noise,
+            rng,
+            draw,
+            a * SUBSTEPS_PER_AVIARY_STEP,
+            pos,
+            quat,
+            vel,
+            avel,
+            lrot,
+            lvel,
+            fin,
+            gim,
+            thr,
+            fuel,
+            ign,
+            cmd,
+            action,
+            physics_steps,
+            verts,
+            crel,
+        )
+    _compute_state(
+        b,
+        pos,
+        quat,
+        vel,
+        avel,
+        ign,
+        fuel,
+        thr,
+        fin,
+        gim,
+        action,
+        pad_contact,
+        obs,
+        ang_vel,
+        ang_pos,
+        lin_vel,
+        lin_pos,
+        ground_lin_vel,
+        p_ang_vel,
+        p_lin_vel,
+        p_lin_pos,
+        p_ground_lin_vel,
+        ignition_state,
+        throttle_state,
+        p_ignition_state,
+        p_throttle_state,
+    )
 
 
 @njit(cache=True, parallel=True)
@@ -876,60 +975,105 @@ def _settle_kernel(
     noise, rng, draw, mask, verts, crel,
 ):  # fmt: skip
     for b in prange(pos.shape[0]):
-        if not mask[b]:
-            continue
-        for a in range(SETTLE_AVIARY_STEPS):
-            _aviary_step(
+        if mask[b]:
+            _settle_env(
                 b,
-                noise,
-                rng,
-                draw,
-                a * SUBSTEPS_PER_AVIARY_STEP,
-                pos,
-                quat,
-                vel,
-                avel,
-                lrot,
-                lvel,
-                fin,
-                gim,
-                thr,
-                fuel,
-                ign,
-                cmd,
-                action,
-                physics_steps,
-                verts,
-                crel,
-            )
-        _compute_state(
-            b,
-            pos,
-            quat,
-            vel,
-            avel,
-            ign,
-            fuel,
-            thr,
-            fin,
-            gim,
-            action,
-            pad_contact,
-            obs,
-            ang_vel,
-            ang_pos,
-            lin_vel,
-            lin_pos,
-            ground_lin_vel,
-            p_ang_vel,
-            p_lin_vel,
-            p_lin_pos,
-            p_ground_lin_vel,
-            ignition_state,
-            throttle_state,
-            p_ignition_state,
-            p_throttle_state,
-        )
+                pos, quat, vel, avel, lrot, lvel, fin, gim, thr, fuel, ign, cmd, action, physics_steps,
+                obs, ang_vel, ang_pos, lin_vel, lin_pos, ground_lin_vel,
+                p_ang_vel, p_lin_vel, p_lin_pos, p_ground_lin_vel,
+                ignition_state, throttle_state, p_ignition_state, p_throttle_state, p_render_ignition, flame_ignited,
+                pad_contact, reward, step_count, termination, truncation, out_of_bounds, fatal_collision, env_complete,
+                start_pos, start_orn,
+                noise, rng, draw, verts, crel,
+            )  # fmt: skip
+
+
+@njit(cache=True)
+def _start_env(
+    b,
+    pos, quat, vel, avel, lrot, lvel, fin, gim, thr, fuel, ign, cmd, action, physics_steps,
+    obs, ang_vel, ang_pos, lin_vel, lin_pos, ground_lin_vel, p_ang_vel, p_lin_vel, p_lin_pos, p_ground_lin_vel,
+    ignition_state, throttle_state, p_ignition_state, p_throttle_state, p_render_ignition, flame_ignited,
+    pad_contact, reward, step_count, termination, truncation, out_of_bounds, fatal_collision, env_complete,
+    start_pos, start_orn,
+    s_start_pos, s_start_orn, s_position, s_linvel, s_angvel, s_fuel,
+):  # fmt: skip
+    """Reset values and the sampled start of environment ``b``."""
+    x, y, z, w = _quaternion_from_euler(s_start_orn[b, 0], s_start_orn[b, 1], s_start_orn[b, 2])
+    quat[b, 0], quat[b, 1], quat[b, 2], quat[b, 3] = x, y, z, w
+    R = _rotmat(x, y, z, w)
+    for i in range(9):
+        lrot[b, i] = R[i]
+    for i in range(3):
+        start_pos[b, i] = s_start_pos[b, i]
+        start_orn[b, i] = s_start_orn[b, i]
+        # the drone state PyFlyt reads in the first compute_state: created pose, before the velocity reset
+        pos[b, i] = s_start_pos[b, i]
+        vel[b, i] = 0.0
+        avel[b, i] = 0.0
+        ang_vel[b, i] = 0.0
+        ang_pos[b, i] = 0.0
+        lin_vel[b, i] = 0.0
+        lin_pos[b, i] = 0.0
+        ground_lin_vel[b, i] = 0.0
+    for k in range(4):
+        fin[b, k] = 0.0
+        for i in range(3):
+            lvel[b, k, i] = 0.0
+    gim[b, 0] = 0.0
+    gim[b, 1] = 0.0
+    for i in range(8):
+        cmd[b, i] = 0.0
+    for i in range(7):
+        action[b, i] = 0.0
+    thr[b] = 0.0
+    fuel[b] = s_fuel[b]
+    ign[b] = 0.0
+    physics_steps[b] = 0
+    ignition_state[b] = 0.0
+    throttle_state[b] = 0.0
+    p_render_ignition[b] = 0.0
+    flame_ignited[b] = False
+    pad_contact[b] = 0.0
+    reward[b] = 0.0
+    step_count[b] = 0
+    termination[b] = False
+    truncation[b] = False
+    out_of_bounds[b] = False
+    fatal_collision[b] = False
+    env_complete[b] = False
+    _compute_state(
+        b,
+        pos,
+        quat,
+        vel,
+        avel,
+        ign,
+        fuel,
+        thr,
+        fin,
+        gim,
+        action,
+        pad_contact,
+        obs,
+        ang_vel,
+        ang_pos,
+        lin_vel,
+        lin_pos,
+        ground_lin_vel,
+        p_ang_vel,
+        p_lin_vel,
+        p_lin_pos,
+        p_ground_lin_vel,
+        ignition_state,
+        throttle_state,
+        p_ignition_state,
+        p_throttle_state,
+    )
+    for i in range(3):
+        pos[b, i] = s_position[b, i]
+        vel[b, i] = s_linvel[b, i]
+        avel[b, i] = s_angvel[b, i]
 
 
 @njit(cache=True, parallel=True)
@@ -942,83 +1086,17 @@ def _start_kernel(
     mask, s_start_pos, s_start_orn, s_position, s_linvel, s_angvel, s_fuel,
 ):  # fmt: skip
     for b in prange(pos.shape[0]):
-        if not mask[b]:
-            continue
-        x, y, z, w = _quaternion_from_euler(s_start_orn[b, 0], s_start_orn[b, 1], s_start_orn[b, 2])
-        quat[b, 0], quat[b, 1], quat[b, 2], quat[b, 3] = x, y, z, w
-        R = _rotmat(x, y, z, w)
-        for i in range(9):
-            lrot[b, i] = R[i]
-        for i in range(3):
-            start_pos[b, i] = s_start_pos[b, i]
-            start_orn[b, i] = s_start_orn[b, i]
-            # the drone state PyFlyt reads in the first compute_state: created pose, before the velocity reset
-            pos[b, i] = s_start_pos[b, i]
-            vel[b, i] = 0.0
-            avel[b, i] = 0.0
-            ang_vel[b, i] = 0.0
-            ang_pos[b, i] = 0.0
-            lin_vel[b, i] = 0.0
-            lin_pos[b, i] = 0.0
-            ground_lin_vel[b, i] = 0.0
-        for k in range(4):
-            fin[b, k] = 0.0
-            for i in range(3):
-                lvel[b, k, i] = 0.0
-        gim[b, 0] = 0.0
-        gim[b, 1] = 0.0
-        for i in range(8):
-            cmd[b, i] = 0.0
-        for i in range(7):
-            action[b, i] = 0.0
-        thr[b] = 0.0
-        fuel[b] = s_fuel[b]
-        ign[b] = 0.0
-        physics_steps[b] = 0
-        ignition_state[b] = 0.0
-        throttle_state[b] = 0.0
-        p_render_ignition[b] = 0.0
-        flame_ignited[b] = False
-        pad_contact[b] = 0.0
-        reward[b] = 0.0
-        step_count[b] = 0
-        termination[b] = False
-        truncation[b] = False
-        out_of_bounds[b] = False
-        fatal_collision[b] = False
-        env_complete[b] = False
-        _compute_state(
-            b,
-            pos,
-            quat,
-            vel,
-            avel,
-            ign,
-            fuel,
-            thr,
-            fin,
-            gim,
-            action,
-            pad_contact,
-            obs,
-            ang_vel,
-            ang_pos,
-            lin_vel,
-            lin_pos,
-            ground_lin_vel,
-            p_ang_vel,
-            p_lin_vel,
-            p_lin_pos,
-            p_ground_lin_vel,
-            ignition_state,
-            throttle_state,
-            p_ignition_state,
-            p_throttle_state,
-        )
-        for i in range(3):
-            pos[b, i] = s_position[b, i]
-            vel[b, i] = s_linvel[b, i]
-            avel[b, i] = s_angvel[b, i]
+        if mask[b]:
+            _start_env(
+                b,
+                pos, quat, vel, avel, lrot, lvel, fin, gim, thr, fuel, ign, cmd, action, physics_steps,
+                obs, ang_vel, ang_pos, lin_vel, lin_pos, ground_lin_vel,
+                p_ang_vel, p_lin_vel, p_lin_pos, p_ground_lin_vel,
+                ignition_state, throttle_state, p_ignition_state, p_throttle_state, p_render_ignition, flame_ignited,
+                pad_contact, reward, step_count, termination, truncation, out_of_bounds, fatal_collision, env_complete,
+                start_pos, start_orn,
+                s_start_pos, s_start_orn, s_position, s_linvel, s_angvel, s_fuel,
+            )  # fmt: skip
 
 
 # --------------------------------------------------------------------------------------------- public API
