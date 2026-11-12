@@ -129,6 +129,7 @@ tests = [
   "test_variation_maps_dmc_*",
   "test_variation_hooks.py",
   "test_mjwarp_*",
+  "test_mjbatch*",
   "test_plate_texels.py",
 ]
 requires = ["dm-control", "mujoco>=3.17,<3.18"]
